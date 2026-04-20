@@ -15,8 +15,9 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { desc, eq, sql } from 'drizzle-orm'
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 import {
+  CheckInActivityStreakStatusEnum,
   CheckInDailyStreakConfigStatusEnum,
   CheckInDailyStreakPublishStrategyEnum,
 } from './check-in.constant'
@@ -121,7 +122,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         '日常连续签到配置不存在',
       )
     }
-    return this.toDailyStreakConfigDetail(current)
+    return this.loadDailyStreakConfigDetail(current.id)
   }
 
   async getDailyStreakConfigHistoryPage(
@@ -139,21 +140,16 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     return {
       ...page,
-      list: page.list.map((item) => this.toDailyStreakConfigDetail(item)),
+      list: await Promise.all(
+        page.list.map(async (item) =>
+          this.loadDailyStreakConfigDetail(item.id),
+        ),
+      ),
     }
   }
 
   async getDailyStreakConfigHistoryDetail(query: { id: number }) {
-    const config = await this.db.query.checkInDailyStreakConfig.findFirst({
-      where: { id: query.id },
-    })
-    if (!config) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '日常连续签到配置不存在',
-      )
-    }
-    return this.toDailyStreakConfigDetail(config)
+    return this.loadDailyStreakConfigDetail(query.id)
   }
 
   async publishDailyStreakConfig(
@@ -173,14 +169,12 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
       const now = new Date()
       const latest = await this.findLatestDailyStreakConfig(tx)
-      const configs = (await this.listDailyStreakConfigs(tx)).filter(
-        (config) =>
-          config.status !== CheckInDailyStreakConfigStatusEnum.DRAFT &&
-          config.status !== CheckInDailyStreakConfigStatusEnum.TERMINATED,
-      )
+      const configs = await this.listDailyStreakConfigs(tx)
 
       for (const config of configs.filter(
         (item) =>
+          item.status !== CheckInDailyStreakConfigStatusEnum.DRAFT &&
+          item.status !== CheckInDailyStreakConfigStatusEnum.TERMINATED &&
           item.effectiveFrom < effectiveFrom &&
           (item.effectiveTo === null || item.effectiveTo > effectiveFrom),
       )) {
@@ -202,7 +196,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       }
 
       for (const config of configs.filter(
-        (item) => item.effectiveFrom >= effectiveFrom,
+        (item) =>
+          item.status !== CheckInDailyStreakConfigStatusEnum.DRAFT &&
+          item.status !== CheckInDailyStreakConfigStatusEnum.TERMINATED &&
+          item.effectiveFrom >= effectiveFrom,
       )) {
         await tx
           .update(this.checkInDailyStreakConfigTable)
@@ -213,25 +210,29 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           .where(eq(this.checkInDailyStreakConfigTable.id, config.id))
       }
 
-      await tx.insert(this.checkInDailyStreakConfigTable).values({
-        version: (latest?.version ?? 0) + 1,
-        status: this.resolveDailyStreakConfigStatus(
-          {
-            status:
-              effectiveFrom > now
-                ? CheckInDailyStreakConfigStatusEnum.SCHEDULED
-                : CheckInDailyStreakConfigStatusEnum.ACTIVE,
-            effectiveFrom,
-            effectiveTo: null,
-          },
-          now,
-        ),
-        publishStrategy: dto.publishStrategy,
-        rewardRules,
-        effectiveFrom,
-        effectiveTo: null,
-        updatedById: adminUserId,
-      })
+      const [createdConfig] = await tx
+        .insert(this.checkInDailyStreakConfigTable)
+        .values({
+          version: (latest?.version ?? 0) + 1,
+          status:
+            effectiveFrom > now
+              ? CheckInDailyStreakConfigStatusEnum.SCHEDULED
+              : CheckInDailyStreakConfigStatusEnum.ACTIVE,
+          publishStrategy: dto.publishStrategy,
+          effectiveFrom,
+          effectiveTo: null,
+          updatedById: adminUserId,
+        })
+        .returning({ id: this.checkInDailyStreakConfigTable.id })
+
+      if (!createdConfig) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '日常连续签到配置创建失败',
+        )
+      }
+
+      await this.replaceDailyStreakRules(createdConfig.id, rewardRules, tx)
     })
 
     return true
@@ -324,16 +325,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   async getActivityStreakDetail(query: { id: number }) {
-    const activity = await this.db.query.checkInActivityStreak.findFirst({
-      where: { id: query.id },
-    })
-    if (!activity) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '活动连续签到不存在',
-      )
-    }
-    return this.toActivityStreakDetail(activity)
+    return this.loadActivityStreakDetail(query.id)
   }
 
   async createActivityStreak(
@@ -341,14 +333,27 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     adminUserId: number,
   ) {
     const rewardRules = this.normalizeStreakRewardRules(dto.rewardRules)
-    await this.db.insert(this.checkInActivityStreakTable).values({
-      activityKey: dto.activityKey.trim(),
-      title: dto.title.trim(),
-      status: dto.status,
-      effectiveFrom: this.parseDateTime(dto.effectiveFrom, '活动开始时间'),
-      effectiveTo: this.parseDateTime(dto.effectiveTo, '活动结束时间'),
-      rewardRules,
-      updatedById: adminUserId,
+    await this.drizzle.withTransaction(async (tx) => {
+      const [createdActivity] = await tx
+        .insert(this.checkInActivityStreakTable)
+        .values({
+          activityKey: dto.activityKey.trim(),
+          title: dto.title.trim(),
+          status: dto.status,
+          effectiveFrom: this.parseDateTime(dto.effectiveFrom, '活动开始时间'),
+          effectiveTo: this.parseDateTime(dto.effectiveTo, '活动结束时间'),
+          updatedById: adminUserId,
+        })
+        .returning({ id: this.checkInActivityStreakTable.id })
+
+      if (!createdActivity) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '活动连续签到创建失败',
+        )
+      }
+
+      await this.replaceActivityStreakRules(createdActivity.id, rewardRules, tx)
     })
     return true
   }
@@ -358,18 +363,29 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     adminUserId: number,
   ) {
     const rewardRules = this.normalizeStreakRewardRules(dto.rewardRules)
-    await this.db
-      .update(this.checkInActivityStreakTable)
-      .set({
-        activityKey: dto.activityKey.trim(),
-        title: dto.title.trim(),
-        status: dto.status,
-        effectiveFrom: this.parseDateTime(dto.effectiveFrom, '活动开始时间'),
-        effectiveTo: this.parseDateTime(dto.effectiveTo, '活动结束时间'),
-        rewardRules,
-        updatedById: adminUserId,
-      })
-      .where(eq(this.checkInActivityStreakTable.id, dto.id))
+    await this.drizzle.withTransaction(async (tx) => {
+      const [updatedActivity] = await tx
+        .update(this.checkInActivityStreakTable)
+        .set({
+          activityKey: dto.activityKey.trim(),
+          title: dto.title.trim(),
+          status: dto.status,
+          effectiveFrom: this.parseDateTime(dto.effectiveFrom, '活动开始时间'),
+          effectiveTo: this.parseDateTime(dto.effectiveTo, '活动结束时间'),
+          updatedById: adminUserId,
+        })
+        .where(eq(this.checkInActivityStreakTable.id, dto.id))
+        .returning({ id: this.checkInActivityStreakTable.id })
+
+      if (!updatedActivity) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '活动连续签到不存在',
+        )
+      }
+
+      await this.replaceActivityStreakRules(updatedActivity.id, rewardRules, tx)
+    })
     return true
   }
 
@@ -416,9 +432,12 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       )
     }
 
-    await this.db
-      .delete(this.checkInActivityStreakTable)
-      .where(eq(this.checkInActivityStreakTable.id, query.id))
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.deleteActivityRules(query.id, tx)
+      await tx
+        .delete(this.checkInActivityStreakTable)
+        .where(eq(this.checkInActivityStreakTable.id, query.id))
+    })
     return true
   }
 
@@ -471,10 +490,24 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return parsed
   }
 
-  private toDailyStreakConfigDetail(
-    config: typeof this.checkInDailyStreakConfigTable.$inferSelect,
+  private async loadDailyStreakConfigDetail(
+    configId: number,
+    db: Db = this.db,
   ) {
-    const definition = this.parseDailyStreakConfigDefinition(config)
+    const config = await db.query.checkInDailyStreakConfig.findFirst({
+      where: { id: configId },
+    })
+    if (!config) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '日常连续签到配置不存在',
+      )
+    }
+    const rewardRules = await this.loadDailyStreakRules(config.id, db)
+    const definition = this.parseDailyStreakConfigDefinition({
+      ...config,
+      rewardRules,
+    })
     const now = new Date()
     const status = this.resolveDailyStreakConfigStatus(config, now)
 
@@ -492,10 +525,18 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
   }
 
-  private toActivityStreakDetail(
-    activity: typeof this.checkInActivityStreakTable.$inferSelect,
-  ) {
-    const definition = this.parseActivityStreakDefinition(activity)
+  private async loadActivityStreakDetail(activityId: number, db: Db = this.db) {
+    const activity = await db.query.checkInActivityStreak.findFirst({
+      where: { id: activityId },
+    })
+    if (!activity) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '活动连续签到不存在',
+      )
+    }
+    const rewardRules = await this.loadActivityStreakRules(activity.id, db)
+    const definition = this.parseActivityStreakDefinition(activity, rewardRules)
     return {
       id: activity.id,
       activityKey: definition.activityKey,
@@ -506,6 +547,181 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       rewardRules: definition.rewardRules,
       createdAt: activity.createdAt,
       updatedAt: activity.updatedAt,
+    }
+  }
+
+  private async loadDailyStreakRules(configId: number, db: Db = this.db) {
+    const rules = await db
+      .select()
+      .from(this.checkInDailyStreakRuleTable)
+      .where(eq(this.checkInDailyStreakRuleTable.configId, configId))
+      .orderBy(
+        asc(this.checkInDailyStreakRuleTable.streakDays),
+        asc(this.checkInDailyStreakRuleTable.id),
+      )
+    const ruleIds = rules.map((rule) => rule.id)
+    const rewardItems =
+      ruleIds.length === 0
+        ? []
+        : await db
+            .select()
+            .from(this.checkInDailyStreakRuleRewardItemTable)
+            .where(
+              inArray(
+                this.checkInDailyStreakRuleRewardItemTable.ruleId,
+                ruleIds,
+              ),
+            )
+            .orderBy(
+              asc(this.checkInDailyStreakRuleRewardItemTable.sortOrder),
+              asc(this.checkInDailyStreakRuleRewardItemTable.id),
+            )
+    const rewardMap = new Map<number, typeof rewardItems>()
+    for (const item of rewardItems) {
+      const list = rewardMap.get(item.ruleId) ?? []
+      list.push(item)
+      rewardMap.set(item.ruleId, list)
+    }
+    return this.toStreakRewardRuleViews(
+      rules.map((rule) => ({
+        ...rule,
+        rewardItems: rewardMap.get(rule.id) ?? [],
+      })),
+    )
+  }
+
+  private async loadActivityStreakRules(activityId: number, db: Db = this.db) {
+    const rules = await db
+      .select()
+      .from(this.checkInActivityStreakRuleTable)
+      .where(eq(this.checkInActivityStreakRuleTable.activityId, activityId))
+      .orderBy(
+        asc(this.checkInActivityStreakRuleTable.streakDays),
+        asc(this.checkInActivityStreakRuleTable.id),
+      )
+    const ruleIds = rules.map((rule) => rule.id)
+    const rewardItems =
+      ruleIds.length === 0
+        ? []
+        : await db
+            .select()
+            .from(this.checkInActivityStreakRuleRewardItemTable)
+            .where(
+              inArray(
+                this.checkInActivityStreakRuleRewardItemTable.ruleId,
+                ruleIds,
+              ),
+            )
+            .orderBy(
+              asc(this.checkInActivityStreakRuleRewardItemTable.sortOrder),
+              asc(this.checkInActivityStreakRuleRewardItemTable.id),
+            )
+    const rewardMap = new Map<number, typeof rewardItems>()
+    for (const item of rewardItems) {
+      const list = rewardMap.get(item.ruleId) ?? []
+      list.push(item)
+      rewardMap.set(item.ruleId, list)
+    }
+    return this.toStreakRewardRuleViews(
+      rules.map((rule) => ({
+        ...rule,
+        rewardItems: rewardMap.get(rule.id) ?? [],
+      })),
+    )
+  }
+
+  private async replaceDailyStreakRules(
+    configId: number,
+    rewardRules: ReturnType<
+      CheckInDefinitionService['normalizeStreakRewardRules']
+    >,
+    tx: Db,
+  ) {
+    const createdRules = await tx
+      .insert(this.checkInDailyStreakRuleTable)
+      .values(
+        rewardRules.map((rule) => ({
+          configId,
+          ruleCode: rule.ruleCode,
+          streakDays: rule.streakDays,
+          repeatable: rule.repeatable,
+          status: rule.status,
+        })),
+      )
+      .returning({ id: this.checkInDailyStreakRuleTable.id })
+
+    const rewardItemValues = createdRules.flatMap((createdRule, index) =>
+      rewardRules[index]!.rewardItems.map((item, sortOrder) => ({
+        ruleId: createdRule.id,
+        assetType: item.assetType,
+        assetKey: item.assetKey,
+        amount: item.amount,
+        sortOrder,
+      })),
+    )
+    if (rewardItemValues.length > 0) {
+      await tx
+        .insert(this.checkInDailyStreakRuleRewardItemTable)
+        .values(rewardItemValues)
+    }
+  }
+
+  private async replaceActivityStreakRules(
+    activityId: number,
+    rewardRules: ReturnType<
+      CheckInDefinitionService['normalizeStreakRewardRules']
+    >,
+    tx: Db,
+  ) {
+    await this.deleteActivityRules(activityId, tx)
+
+    const createdRules = await tx
+      .insert(this.checkInActivityStreakRuleTable)
+      .values(
+        rewardRules.map((rule) => ({
+          activityId,
+          ruleCode: rule.ruleCode,
+          streakDays: rule.streakDays,
+          repeatable: rule.repeatable,
+          status: rule.status,
+        })),
+      )
+      .returning({ id: this.checkInActivityStreakRuleTable.id })
+
+    const rewardItemValues = createdRules.flatMap((createdRule, index) =>
+      rewardRules[index]!.rewardItems.map((item, sortOrder) => ({
+        ruleId: createdRule.id,
+        assetType: item.assetType,
+        assetKey: item.assetKey,
+        amount: item.amount,
+        sortOrder,
+      })),
+    )
+    if (rewardItemValues.length > 0) {
+      await tx
+        .insert(this.checkInActivityStreakRuleRewardItemTable)
+        .values(rewardItemValues)
+    }
+  }
+
+  private async deleteActivityRules(activityId: number, tx: Db) {
+    const existingRules = await tx
+      .select({ id: this.checkInActivityStreakRuleTable.id })
+      .from(this.checkInActivityStreakRuleTable)
+      .where(eq(this.checkInActivityStreakRuleTable.activityId, activityId))
+    const existingRuleIds = existingRules.map((rule) => rule.id)
+    if (existingRuleIds.length > 0) {
+      await tx
+        .delete(this.checkInActivityStreakRuleRewardItemTable)
+        .where(
+          inArray(
+            this.checkInActivityStreakRuleRewardItemTable.ruleId,
+            existingRuleIds,
+          ),
+        )
+      await tx
+        .delete(this.checkInActivityStreakRuleTable)
+        .where(eq(this.checkInActivityStreakRuleTable.activityId, activityId))
     }
   }
 }

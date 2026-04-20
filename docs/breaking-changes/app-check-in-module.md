@@ -22,6 +22,21 @@
 
 ## Daily Streak Contract Changes
 
+### Relational streak rule model
+
+日常连续签到奖励不再来自单条配置里的 `rewardRules json`。
+
+现在的事实源改为：
+
+- 日常连续签到配置头表
+- 日常连续签到按天规则表
+- 日常连续签到规则奖励项表
+
+业务语义：
+
+- “第几天有什么奖励”改为数据库中的**一天一条规则记录**
+- 每条规则下的奖励项也改为独立明细记录
+
 ### Removed runtime fields
 
 以下日常连续签到运行时字段已从 app 合同下线：
@@ -86,6 +101,8 @@
 - `scopeType=1`：日常连续签到
 - `scopeType=2`：活动连续签到
 
+同时，grant 的奖励快照不再来自 `rewardItems json`，而是来自 grant 奖励项明细表。
+
 ## Action Response Changes
 
 `POST app/check-in/sign` / `POST app/check-in/makeup` 响应中：
@@ -106,3 +123,4 @@
 - 客户端不得再依赖 round 运行时字段解释连续签到状态。
 - 活动连续签到需要改走独立 activity 读模型。
 - app 不再读取草稿、下线、归档或已失效的活动详情。
+- 连续签到奖励现在是关系型按天规则模型，不再从 streak 配置 JSON 中读取。

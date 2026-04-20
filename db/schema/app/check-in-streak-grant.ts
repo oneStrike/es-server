@@ -29,14 +29,16 @@ export const checkInStreakGrant = pgTable(
     scopeType: smallint().notNull(),
     /** 日常连续签到配置版本 ID。 */
     configVersionId: integer(),
+    /** 日常连续签到规则 ID。 */
+    dailyRuleId: integer(),
     /** 活动连续签到活动 ID。 */
     activityId: integer(),
+    /** 活动连续签到规则 ID。 */
+    activityRuleId: integer(),
     /** 命中的规则编码。 */
     ruleCode: varchar({ length: 50 }).notNull(),
     /** 命中的连续签到阈值。 */
     streakDays: integer().notNull(),
-    /** 奖励快照。 */
-    rewardItems: jsonb().notNull(),
     /** 是否允许重复发放。 */
     repeatable: boolean().default(false).notNull(),
     /** 触发本次奖励的签到日期。 */
@@ -65,7 +67,11 @@ export const checkInStreakGrant = pgTable(
     index('check_in_streak_grant_config_version_id_idx').on(
       table.configVersionId,
     ),
+    index('check_in_streak_grant_daily_rule_id_idx').on(table.dailyRuleId),
     index('check_in_streak_grant_activity_id_idx').on(table.activityId),
+    index('check_in_streak_grant_activity_rule_id_idx').on(
+      table.activityRuleId,
+    ),
     index('check_in_streak_grant_user_trigger_sign_date_idx').on(
       table.userId,
       table.triggerSignDate,
@@ -86,8 +92,16 @@ export const checkInStreakGrant = pgTable(
       sql`${table.configVersionId} is null or ${table.configVersionId} > 0`,
     ),
     check(
+      'check_in_streak_grant_daily_rule_id_positive_chk',
+      sql`${table.dailyRuleId} is null or ${table.dailyRuleId} > 0`,
+    ),
+    check(
       'check_in_streak_grant_activity_id_positive_chk',
       sql`${table.activityId} is null or ${table.activityId} > 0`,
+    ),
+    check(
+      'check_in_streak_grant_activity_rule_id_positive_chk',
+      sql`${table.activityRuleId} is null or ${table.activityRuleId} > 0`,
     ),
     check(
       'check_in_streak_grant_reward_settlement_id_positive_chk',
@@ -98,11 +112,15 @@ export const checkInStreakGrant = pgTable(
       sql`(
         ${table.scopeType} = 1
         and ${table.configVersionId} is not null
+        and ${table.dailyRuleId} is not null
         and ${table.activityId} is null
+        and ${table.activityRuleId} is null
       ) or (
         ${table.scopeType} = 2
         and ${table.configVersionId} is null
+        and ${table.dailyRuleId} is null
         and ${table.activityId} is not null
+        and ${table.activityRuleId} is not null
       )`,
     ),
   ],

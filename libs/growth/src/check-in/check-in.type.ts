@@ -1,12 +1,17 @@
 import type {
   CheckInActivityStreakInsert,
+  CheckInActivityStreakRuleInsert,
+  CheckInActivityStreakRuleRewardItemInsert,
   CheckInActivityStreakProgressInsert,
   CheckInDailyStreakConfigInsert,
+  CheckInDailyStreakRuleInsert,
+  CheckInDailyStreakRuleRewardItemInsert,
   CheckInDailyStreakProgressInsert,
   CheckInMakeupAccountInsert,
   CheckInMakeupFactInsert,
   CheckInRecordInsert,
   CheckInStreakGrantInsert,
+  CheckInStreakGrantRewardItemInsert,
 } from '@db/schema'
 import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
 
@@ -150,13 +155,14 @@ export type CreateCheckInGrantInput = Pick<
   | 'userId'
   | 'scopeType'
   | 'configVersionId'
+  | 'dailyRuleId'
   | 'activityId'
+  | 'activityRuleId'
   | 'triggerSignDate'
   | 'rewardSettlementId'
   | 'bizKey'
   | 'ruleCode'
   | 'streakDays'
-  | 'rewardItems'
   | 'repeatable'
   | 'context'
 >
@@ -167,10 +173,21 @@ export type CreateCheckInDailyStreakConfigInput = Pick<
   | 'version'
   | 'status'
   | 'publishStrategy'
-  | 'rewardRules'
   | 'effectiveFrom'
   | 'effectiveTo'
   | 'updatedById'
+>
+
+/** 日常连续签到规则写入入参。 */
+export type CreateCheckInDailyStreakRuleInput = Pick<
+  CheckInDailyStreakRuleInsert,
+  'configId' | 'ruleCode' | 'streakDays' | 'repeatable' | 'status'
+>
+
+/** 日常连续签到规则奖励项写入入参。 */
+export type CreateCheckInDailyStreakRuleRewardItemInput = Pick<
+  CheckInDailyStreakRuleRewardItemInsert,
+  'ruleId' | 'assetType' | 'assetKey' | 'amount' | 'sortOrder'
 >
 
 /** 日常连续签到进度写入入参。 */
@@ -187,8 +204,19 @@ export type CreateCheckInActivityStreakInput = Pick<
   | 'status'
   | 'effectiveFrom'
   | 'effectiveTo'
-  | 'rewardRules'
   | 'updatedById'
+>
+
+/** 活动连续签到规则写入入参。 */
+export type CreateCheckInActivityStreakRuleInput = Pick<
+  CheckInActivityStreakRuleInsert,
+  'activityId' | 'ruleCode' | 'streakDays' | 'repeatable' | 'status'
+>
+
+/** 活动连续签到规则奖励项写入入参。 */
+export type CreateCheckInActivityStreakRuleRewardItemInput = Pick<
+  CheckInActivityStreakRuleRewardItemInsert,
+  'ruleId' | 'assetType' | 'assetKey' | 'amount' | 'sortOrder'
 >
 
 /** 活动连续签到进度写入入参。 */
@@ -221,8 +249,16 @@ export interface CheckInGrantRuleSnapshot {
 export interface CheckInGrantScopeSnapshot {
   scopeType: CheckInStreakScopeTypeEnum
   configVersionId: number | null
+  dailyRuleId: number | null
   activityId: number | null
+  activityRuleId: number | null
 }
+
+/** 连续签到发放快照奖励项写入入参。 */
+export type CreateCheckInStreakGrantRewardItemInput = Pick<
+  CheckInStreakGrantRewardItemInsert,
+  'grantId' | 'assetType' | 'assetKey' | 'amount' | 'sortOrder'
+>
 
 /** 重算连续签到聚合结果。 */
 export interface CheckInStreakAggregation {

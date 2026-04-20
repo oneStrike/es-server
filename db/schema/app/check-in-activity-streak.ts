@@ -3,7 +3,6 @@ import {
   check,
   index,
   integer,
-  jsonb,
   pgTable,
   smallint,
   timestamp,
@@ -31,10 +30,6 @@ export const checkInActivityStreak = pgTable(
     effectiveFrom: timestamp({ withTimezone: true, precision: 6 }).notNull(),
     /** 活动结束时间。 */
     effectiveTo: timestamp({ withTimezone: true, precision: 6 }).notNull(),
-    /** 连续奖励规则列表。 */
-    rewardRules: jsonb()
-      .default(sql`'[]'::jsonb`)
-      .notNull(),
     /** 最近更新人 ID。 */
     updatedById: integer(),
     /** 创建时间。 */

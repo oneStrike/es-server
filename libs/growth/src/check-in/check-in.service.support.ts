@@ -1,18 +1,21 @@
 import type { Db, DrizzleService } from '@db/core'
 import type {
   CheckInActivityStreakSelect,
+  CheckInActivityStreakRuleRewardItemSelect,
+  CheckInActivityStreakRuleSelect,
   CheckInConfigSelect,
   CheckInDailyStreakConfigSelect,
+  CheckInDailyStreakRuleRewardItemSelect,
+  CheckInDailyStreakRuleSelect,
   CheckInMakeupAccountSelect,
   CheckInRecordSelect,
+  CheckInStreakGrantRewardItemSelect,
   CheckInStreakGrantSelect,
   GrowthRewardSettlementSelect,
 } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { SQL } from 'drizzle-orm'
-import type {
-  CheckInDailyStreakPublishStrategyEnum
-} from './check-in.constant';
+import type { CheckInDailyStreakPublishStrategyEnum } from './check-in.constant'
 import type {
   CheckInActivityStreakDefinition,
   CheckInDailyStreakConfigDefinition,
@@ -99,8 +102,24 @@ export abstract class CheckInServiceSupport {
     return this.drizzle.schema.checkInDailyStreakProgress
   }
 
+  protected get checkInDailyStreakRuleTable() {
+    return this.drizzle.schema.checkInDailyStreakRule
+  }
+
+  protected get checkInDailyStreakRuleRewardItemTable() {
+    return this.drizzle.schema.checkInDailyStreakRuleRewardItem
+  }
+
   protected get checkInActivityStreakTable() {
     return this.drizzle.schema.checkInActivityStreak
+  }
+
+  protected get checkInActivityStreakRuleTable() {
+    return this.drizzle.schema.checkInActivityStreakRule
+  }
+
+  protected get checkInActivityStreakRuleRewardItemTable() {
+    return this.drizzle.schema.checkInActivityStreakRuleRewardItem
   }
 
   protected get checkInActivityStreakProgressTable() {
@@ -109,6 +128,10 @@ export abstract class CheckInServiceSupport {
 
   protected get checkInStreakGrantTable() {
     return this.drizzle.schema.checkInStreakGrant
+  }
+
+  protected get checkInStreakGrantRewardItemTable() {
+    return this.drizzle.schema.checkInStreakGrantRewardItem
   }
 
   protected get growthRewardSettlementTable() {
@@ -469,24 +492,17 @@ export abstract class CheckInServiceSupport {
   protected parseDailyStreakConfigDefinition(
     config: Pick<
       CheckInDailyStreakConfigSelect,
-      | 'version'
-      | 'status'
-      | 'publishStrategy'
-      | 'rewardRules'
-      | 'effectiveFrom'
-      | 'effectiveTo'
-    >,
+      'version' | 'status' | 'publishStrategy' | 'effectiveFrom' | 'effectiveTo'
+    > & {
+      rewardRules: CheckInStreakRewardRuleView[]
+    },
   ) {
     return {
       version: config.version,
       status: config.status as CheckInDailyStreakConfigStatusEnum,
       publishStrategy:
         config.publishStrategy as CheckInDailyStreakPublishStrategyEnum,
-      rewardRules: this.normalizeStreakRewardRules(
-        Array.isArray(config.rewardRules)
-          ? (config.rewardRules as CheckInStreakRewardRuleView[])
-          : [],
-      ),
+      rewardRules: this.normalizeStreakRewardRules(config.rewardRules),
       effectiveFrom: config.effectiveFrom,
       effectiveTo: config.effectiveTo ?? null,
     } satisfies CheckInDailyStreakConfigDefinition
@@ -581,13 +597,9 @@ export abstract class CheckInServiceSupport {
   protected parseActivityStreakDefinition(
     activity: Pick<
       CheckInActivityStreakSelect,
-      | 'activityKey'
-      | 'title'
-      | 'status'
-      | 'effectiveFrom'
-      | 'effectiveTo'
-      | 'rewardRules'
+      'activityKey' | 'title' | 'status' | 'effectiveFrom' | 'effectiveTo'
     >,
+    rewardRules: CheckInStreakRewardRuleView[],
   ) {
     return {
       activityKey: activity.activityKey,
@@ -595,12 +607,176 @@ export abstract class CheckInServiceSupport {
       status: activity.status as CheckInActivityStreakStatusEnum,
       effectiveFrom: activity.effectiveFrom,
       effectiveTo: activity.effectiveTo,
-      rewardRules: this.normalizeStreakRewardRules(
-        Array.isArray(activity.rewardRules)
-          ? (activity.rewardRules as CheckInStreakRewardRuleView[])
-          : [],
-      ),
+      rewardRules: this.normalizeStreakRewardRules(rewardRules),
     } satisfies CheckInActivityStreakDefinition
+  }
+
+  protected toStreakRewardRuleViews(
+    rules: Array<
+      Pick<
+        CheckInDailyStreakRuleSelect | CheckInActivityStreakRuleSelect,
+        'ruleCode' | 'streakDays' | 'repeatable' | 'status'
+      > & {
+        rewardItems: Array<
+          Pick<
+            | CheckInDailyStreakRuleRewardItemSelect
+            | CheckInActivityStreakRuleRewardItemSelect,
+            'assetType' | 'assetKey' | 'amount'
+          >
+        >
+      }
+    >,
+  ) {
+    return this.normalizeStreakRewardRules(
+      rules.map((rule) => ({
+        ruleCode: rule.ruleCode,
+        streakDays: rule.streakDays,
+        repeatable: rule.repeatable,
+        status: rule.status,
+        rewardItems: rule.rewardItems.map((item) => ({
+          assetType: item.assetType,
+          assetKey: item.assetKey,
+          amount: item.amount,
+        })),
+      })),
+    )
+  }
+
+  protected async loadDailyStreakRewardRuleRows(
+    configId: number,
+    db: Db = this.db,
+  ) {
+    const rules = await db
+      .select()
+      .from(this.checkInDailyStreakRuleTable)
+      .where(eq(this.checkInDailyStreakRuleTable.configId, configId))
+      .orderBy(
+        asc(this.checkInDailyStreakRuleTable.streakDays),
+        asc(this.checkInDailyStreakRuleTable.id),
+      )
+
+    const ruleIds = rules.map((rule) => rule.id)
+    const rewardItems =
+      ruleIds.length === 0
+        ? []
+        : await db
+            .select()
+            .from(this.checkInDailyStreakRuleRewardItemTable)
+            .where(
+              inArray(
+                this.checkInDailyStreakRuleRewardItemTable.ruleId,
+                ruleIds,
+              ),
+            )
+            .orderBy(
+              asc(this.checkInDailyStreakRuleRewardItemTable.sortOrder),
+              asc(this.checkInDailyStreakRuleRewardItemTable.id),
+            )
+
+    const rewardMap = new Map<number, typeof rewardItems>()
+    for (const item of rewardItems) {
+      const items = rewardMap.get(item.ruleId) ?? []
+      items.push(item)
+      rewardMap.set(item.ruleId, items)
+    }
+
+    return rules.map((rule) => ({
+      ...rule,
+      rewardItems: rewardMap.get(rule.id) ?? [],
+    }))
+  }
+
+  protected async loadDailyStreakRewardRules(
+    configId: number,
+    db: Db = this.db,
+  ) {
+    return this.toStreakRewardRuleViews(
+      await this.loadDailyStreakRewardRuleRows(configId, db),
+    )
+  }
+
+  protected async loadActivityStreakRewardRuleRows(
+    activityId: number,
+    db: Db = this.db,
+  ) {
+    const rules = await db
+      .select()
+      .from(this.checkInActivityStreakRuleTable)
+      .where(eq(this.checkInActivityStreakRuleTable.activityId, activityId))
+      .orderBy(
+        asc(this.checkInActivityStreakRuleTable.streakDays),
+        asc(this.checkInActivityStreakRuleTable.id),
+      )
+
+    const ruleIds = rules.map((rule) => rule.id)
+    const rewardItems =
+      ruleIds.length === 0
+        ? []
+        : await db
+            .select()
+            .from(this.checkInActivityStreakRuleRewardItemTable)
+            .where(
+              inArray(
+                this.checkInActivityStreakRuleRewardItemTable.ruleId,
+                ruleIds,
+              ),
+            )
+            .orderBy(
+              asc(this.checkInActivityStreakRuleRewardItemTable.sortOrder),
+              asc(this.checkInActivityStreakRuleRewardItemTable.id),
+            )
+
+    const rewardMap = new Map<number, typeof rewardItems>()
+    for (const item of rewardItems) {
+      const items = rewardMap.get(item.ruleId) ?? []
+      items.push(item)
+      rewardMap.set(item.ruleId, items)
+    }
+
+    return rules.map((rule) => ({
+      ...rule,
+      rewardItems: rewardMap.get(rule.id) ?? [],
+    }))
+  }
+
+  protected async loadActivityStreakRewardRules(
+    activityId: number,
+    db: Db = this.db,
+  ) {
+    return this.toStreakRewardRuleViews(
+      await this.loadActivityStreakRewardRuleRows(activityId, db),
+    )
+  }
+
+  protected async buildGrantRewardItemMap(
+    grantIds: number[],
+    db: Db = this.db,
+  ) {
+    if (grantIds.length === 0) {
+      return new Map<number, CheckInRewardItems>()
+    }
+
+    const rewardItems = await db
+      .select()
+      .from(this.checkInStreakGrantRewardItemTable)
+      .where(inArray(this.checkInStreakGrantRewardItemTable.grantId, grantIds))
+      .orderBy(
+        asc(this.checkInStreakGrantRewardItemTable.sortOrder),
+        asc(this.checkInStreakGrantRewardItemTable.id),
+      )
+
+    const rewardMap = new Map<number, CheckInRewardItems>()
+    for (const item of rewardItems) {
+      const list = rewardMap.get(item.grantId) ?? []
+      list.push({
+        assetType: item.assetType,
+        assetKey: item.assetKey,
+        amount: item.amount,
+      })
+      rewardMap.set(item.grantId, list)
+    }
+
+    return rewardMap
   }
 
   protected async getCurrentConfig(db: Db = this.db) {
@@ -1427,8 +1603,8 @@ export abstract class CheckInServiceSupport {
           | 'settledAt'
           | 'lastError'
         >
-        | null
-        | undefined,
+      | null
+      | undefined,
   ): CheckInRewardSettlementSummaryDto | null {
     if (!settlement) {
       return null

@@ -243,10 +243,29 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.adminUser.id,
       alias: 'CheckInDailyStreakConfigUpdatedBy',
     }),
+    rules: r.many.checkInDailyStreakRule(),
     grants: r.many.checkInStreakGrant({
       from: r.checkInDailyStreakConfig.id,
       to: r.checkInStreakGrant.configVersionId,
       alias: 'DailyStreakConfigGrants',
+    }),
+  },
+  checkInDailyStreakRule: {
+    config: r.one.checkInDailyStreakConfig({
+      from: r.checkInDailyStreakRule.configId,
+      to: r.checkInDailyStreakConfig.id,
+    }),
+    rewardItems: r.many.checkInDailyStreakRuleRewardItem(),
+    grants: r.many.checkInStreakGrant({
+      from: r.checkInDailyStreakRule.id,
+      to: r.checkInStreakGrant.dailyRuleId,
+      alias: 'DailyRuleGrants',
+    }),
+  },
+  checkInDailyStreakRuleRewardItem: {
+    rule: r.one.checkInDailyStreakRule({
+      from: r.checkInDailyStreakRuleRewardItem.ruleId,
+      to: r.checkInDailyStreakRule.id,
     }),
   },
   checkInDailyStreakProgress: {
@@ -273,11 +292,30 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.adminUser.id,
       alias: 'CheckInActivityStreakUpdatedBy',
     }),
+    rules: r.many.checkInActivityStreakRule(),
     progresses: r.many.checkInActivityStreakProgress(),
     grants: r.many.checkInStreakGrant({
       from: r.checkInActivityStreak.id,
       to: r.checkInStreakGrant.activityId,
       alias: 'ActivityStreakGrants',
+    }),
+  },
+  checkInActivityStreakRule: {
+    activity: r.one.checkInActivityStreak({
+      from: r.checkInActivityStreakRule.activityId,
+      to: r.checkInActivityStreak.id,
+    }),
+    rewardItems: r.many.checkInActivityStreakRuleRewardItem(),
+    grants: r.many.checkInStreakGrant({
+      from: r.checkInActivityStreakRule.id,
+      to: r.checkInStreakGrant.activityRuleId,
+      alias: 'ActivityRuleGrants',
+    }),
+  },
+  checkInActivityStreakRuleRewardItem: {
+    rule: r.one.checkInActivityStreakRule({
+      from: r.checkInActivityStreakRuleRewardItem.ruleId,
+      to: r.checkInActivityStreakRule.id,
     }),
   },
   checkInActivityStreakProgress: {
@@ -310,14 +348,31 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.checkInDailyStreakConfig.id,
       alias: 'StreakGrantDailyConfig',
     }),
+    dailyRule: r.one.checkInDailyStreakRule({
+      from: r.checkInStreakGrant.dailyRuleId,
+      to: r.checkInDailyStreakRule.id,
+      alias: 'StreakGrantDailyRule',
+    }),
     activity: r.one.checkInActivityStreak({
       from: r.checkInStreakGrant.activityId,
       to: r.checkInActivityStreak.id,
       alias: 'StreakGrantActivity',
     }),
+    activityRule: r.one.checkInActivityStreakRule({
+      from: r.checkInStreakGrant.activityRuleId,
+      to: r.checkInActivityStreakRule.id,
+      alias: 'StreakGrantActivityRule',
+    }),
+    rewardItems: r.many.checkInStreakGrantRewardItem(),
     rewardSettlement: r.one.growthRewardSettlement({
       from: r.checkInStreakGrant.rewardSettlementId,
       to: r.growthRewardSettlement.id,
+    }),
+  },
+  checkInStreakGrantRewardItem: {
+    grant: r.one.checkInStreakGrant({
+      from: r.checkInStreakGrantRewardItem.grantId,
+      to: r.checkInStreakGrant.id,
     }),
   },
   task: {

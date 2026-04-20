@@ -3,7 +3,6 @@ import {
   check,
   index,
   integer,
-  jsonb,
   pgTable,
   smallint,
   timestamp,
@@ -26,10 +25,6 @@ export const checkInDailyStreakConfig = pgTable(
     status: smallint().default(0).notNull(),
     /** 发布策略（1=立即生效；2=次日生效；3=指定时间生效）。 */
     publishStrategy: smallint().notNull(),
-    /** 连续奖励规则列表。 */
-    rewardRules: jsonb()
-      .default(sql`'[]'::jsonb`)
-      .notNull(),
     /** 生效开始时间。 */
     effectiveFrom: timestamp({ withTimezone: true, precision: 6 }).notNull(),
     /** 生效结束时间。 */

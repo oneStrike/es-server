@@ -40,8 +40,13 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     )
     const currentDailyConfig =
       await this.getRequiredCurrentDailyStreakConfig(now)
-    const configDefinition =
-      this.parseDailyStreakConfigDefinition(currentDailyConfig)
+    const dailyRewardRules = await this.loadDailyStreakRewardRules(
+      currentDailyConfig.id,
+    )
+    const configDefinition = this.parseDailyStreakConfigDefinition({
+      ...currentDailyConfig,
+      rewardRules: dailyRewardRules,
+    })
     const progress = await this.db.query.checkInDailyStreakProgress.findFirst({
       where: { userId },
     })
@@ -275,34 +280,42 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
 
     return {
       ...page,
-      list: page.list.map((activity) => {
-        const progress = progressMap.get(activity.id)
-        const definition = this.parseActivityStreakDefinition(activity)
-        const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
-          progress?.currentStreak ?? 0,
-          progress?.lastSignedDate,
-          today,
-        )
-
-        return {
-          id: activity.id,
-          activityKey: activity.activityKey,
-          title: activity.title,
-          status: activity.status,
-          effectiveFrom: activity.effectiveFrom,
-          effectiveTo: activity.effectiveTo,
-          currentStreak: effectiveCurrentStreak,
-          lastSignedDate: this.resolveEffectiveLastSignedDate(
+      list: await Promise.all(
+        page.list.map(async (activity) => {
+          const progress = progressMap.get(activity.id)
+          const rewardRules = await this.loadActivityStreakRewardRules(
+            activity.id,
+          )
+          const definition = this.parseActivityStreakDefinition(
+            activity,
+            rewardRules,
+          )
+          const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
+            progress?.currentStreak ?? 0,
             progress?.lastSignedDate,
             today,
-          ),
-          nextReward:
-            this.resolveNextStreakReward(
-              definition.rewardRules,
-              effectiveCurrentStreak,
-            ) ?? null,
-        }
-      }),
+          )
+
+          return {
+            id: activity.id,
+            activityKey: activity.activityKey,
+            title: activity.title,
+            status: activity.status,
+            effectiveFrom: activity.effectiveFrom,
+            effectiveTo: activity.effectiveTo,
+            currentStreak: effectiveCurrentStreak,
+            lastSignedDate: this.resolveEffectiveLastSignedDate(
+              progress?.lastSignedDate,
+              today,
+            ),
+            nextReward:
+              this.resolveNextStreakReward(
+                definition.rewardRules,
+                effectiveCurrentStreak,
+              ) ?? null,
+          }
+        }),
+      ),
     }
   }
 
@@ -326,7 +339,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         },
       })
     const today = this.formatDateOnly(now)
-    const definition = this.parseActivityStreakDefinition(activity)
+    const rewardRules = await this.loadActivityStreakRewardRules(activity.id)
+    const definition = this.parseActivityStreakDefinition(activity, rewardRules)
     const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
       progress?.currentStreak ?? 0,
       progress?.lastSignedDate,
@@ -335,11 +349,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
 
     return {
       id: activity.id,
-      activityKey: activity.activityKey,
-      title: activity.title,
-      status: activity.status,
-      effectiveFrom: activity.effectiveFrom,
-      effectiveTo: activity.effectiveTo,
+      activityKey: definition.activityKey,
+      title: definition.title,
+      status: definition.status,
+      effectiveFrom: definition.effectiveFrom,
+      effectiveTo: definition.effectiveTo,
       currentStreak: effectiveCurrentStreak,
       streakStartedAt:
         effectiveCurrentStreak > 0 && progress?.streakStartedAt
@@ -552,6 +566,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       )
       .orderBy(asc(this.checkInStreakGrantTable.id))
 
+    const rewardItemMap = await this.buildGrantRewardItemMap(
+      grants.map((grant) => grant.id),
+    )
     const settlementMap = await this.buildSettlementMapById(
       grants
         .map((grant) => grant.rewardSettlementId)
@@ -564,12 +581,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       userId: grant.userId,
       scopeType: grant.scopeType,
       configVersionId: grant.configVersionId,
+      dailyRuleId: grant.dailyRuleId,
       activityId: grant.activityId,
+      activityRuleId: grant.activityRuleId,
       ruleCode: grant.ruleCode,
       streakDays: grant.streakDays,
-      rewardItems: this.parseStoredRewardItems(grant.rewardItems, {
-        allowEmpty: false,
-      })!,
+      rewardItems: rewardItemMap.get(grant.id) ?? [],
       repeatable: grant.repeatable,
       triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
       rewardSettlementId: grant.rewardSettlementId,
@@ -579,79 +596,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
           )
         : null,
     }))
-  }
-
-  private buildGrantReconciliationCondition(
-    query: QueryCheckInReconciliationDto,
-  ) {
-    const hasGrantFilters =
-      query.scopeType !== undefined ||
-      query.configVersionId !== undefined ||
-      query.activityId !== undefined ||
-      query.grantId !== undefined ||
-      query.grantSettlementStatus != null
-
-    if (!hasGrantFilters) {
-      return undefined
-    }
-
-    const conditions: SQL[] = [
-      eq(this.checkInStreakGrantTable.userId, this.checkInRecordTable.userId),
-      eq(
-        this.checkInStreakGrantTable.triggerSignDate,
-        this.checkInRecordTable.signDate,
-      ),
-    ]
-
-    if (query.scopeType !== undefined) {
-      conditions.push(
-        eq(this.checkInStreakGrantTable.scopeType, query.scopeType),
-      )
-    }
-    if (query.configVersionId !== undefined) {
-      conditions.push(
-        eq(this.checkInStreakGrantTable.configVersionId, query.configVersionId),
-      )
-    }
-    if (query.activityId !== undefined) {
-      conditions.push(
-        eq(this.checkInStreakGrantTable.activityId, query.activityId),
-      )
-    }
-    if (query.grantId !== undefined) {
-      conditions.push(eq(this.checkInStreakGrantTable.id, query.grantId))
-    }
-
-    if (query.grantSettlementStatus != null) {
-      return exists(
-        this.db
-          .select({ id: this.checkInStreakGrantTable.id })
-          .from(this.checkInStreakGrantTable)
-          .leftJoin(
-            this.growthRewardSettlementTable,
-            eq(
-              this.checkInStreakGrantTable.rewardSettlementId,
-              this.growthRewardSettlementTable.id,
-            ),
-          )
-          .where(
-            and(
-              ...conditions,
-              eq(
-                this.growthRewardSettlementTable.settlementStatus,
-                query.grantSettlementStatus,
-              ),
-            ),
-          ),
-      )
-    }
-
-    return exists(
-      this.db
-        .select({ id: this.checkInStreakGrantTable.id })
-        .from(this.checkInStreakGrantTable)
-        .where(and(...conditions)),
-    )
   }
 
   private async buildGrantMapForRecords(
@@ -682,6 +626,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         asc(this.checkInStreakGrantTable.id),
       )
 
+    const rewardItemMap = await this.buildGrantRewardItemMap(
+      grants.map((grant) => grant.id),
+    )
     const settlementMap = await this.buildSettlementMapById(
       grants
         .map((grant) => grant.rewardSettlementId)
@@ -699,12 +646,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         userId: grant.userId,
         scopeType: grant.scopeType,
         configVersionId: grant.configVersionId,
+        dailyRuleId: grant.dailyRuleId,
         activityId: grant.activityId,
+        activityRuleId: grant.activityRuleId,
         ruleCode: grant.ruleCode,
         streakDays: grant.streakDays,
-        rewardItems: this.parseStoredRewardItems(grant.rewardItems, {
-          allowEmpty: false,
-        })!,
+        rewardItems: rewardItemMap.get(grant.id) ?? [],
         repeatable: grant.repeatable,
         triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
         rewardSettlementId: grant.rewardSettlementId,
@@ -717,6 +664,75 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       grantMap.set(key, items)
     }
     return grantMap
+  }
+
+  private buildGrantReconciliationCondition(
+    query: QueryCheckInReconciliationDto,
+  ) {
+    const grantConditions: SQL[] = []
+
+    if (query.scopeType !== undefined) {
+      grantConditions.push(
+        eq(this.checkInStreakGrantTable.scopeType, query.scopeType),
+      )
+    }
+    if (query.configVersionId !== undefined) {
+      grantConditions.push(
+        eq(this.checkInStreakGrantTable.configVersionId, query.configVersionId),
+      )
+    }
+    if (query.activityId !== undefined) {
+      grantConditions.push(
+        eq(this.checkInStreakGrantTable.activityId, query.activityId),
+      )
+    }
+    if (query.grantId !== undefined) {
+      grantConditions.push(eq(this.checkInStreakGrantTable.id, query.grantId))
+    }
+    if (query.grantSettlementStatus != null) {
+      grantConditions.push(
+        exists(
+          this.db
+            .select({ id: this.growthRewardSettlementTable.id })
+            .from(this.growthRewardSettlementTable)
+            .where(
+              and(
+                eq(
+                  this.growthRewardSettlementTable.id,
+                  this.checkInStreakGrantTable.rewardSettlementId,
+                ),
+                eq(
+                  this.growthRewardSettlementTable.settlementStatus,
+                  query.grantSettlementStatus,
+                ),
+              ),
+            ),
+        ),
+      )
+    }
+
+    if (grantConditions.length === 0) {
+      return undefined
+    }
+
+    return exists(
+      this.db
+        .select({ id: this.checkInStreakGrantTable.id })
+        .from(this.checkInStreakGrantTable)
+        .where(
+          and(
+            eq(
+              this.checkInStreakGrantTable.userId,
+              this.checkInRecordTable.userId,
+            ),
+            eq(
+              this.checkInStreakGrantTable.triggerSignDate,
+              this.checkInRecordTable.signDate,
+            ),
+            ...grantConditions,
+          ),
+        ),
+    )
   }
 
   private toConfigDetailView(

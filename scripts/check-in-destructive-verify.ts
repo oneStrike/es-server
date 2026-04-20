@@ -86,16 +86,17 @@ function verifyContractFiles(): CheckResult[] {
         'app controller switched to daily summary + activity routes without round contracts',
     },
     {
-      ok: adminBreakingDoc.includes('仅支持三种发布策略'),
-      label: 'admin breaking doc only advertises supported publish strategies',
+      ok:
+        adminBreakingDoc.includes('按天规则') ||
+        adminBreakingDoc.includes('一天一条规则'),
+      label: 'admin breaking doc describes relational day-rule streak model',
     },
     {
       ok:
-        appBreakingDoc.includes('仅返回当前对 app 用户可见的活动') &&
-        appBreakingDoc.includes(
-          'app 不再读取草稿、下线、归档或已失效的活动详情',
-        ),
-      label: 'app breaking doc documents activity visibility gate',
+        appBreakingDoc.includes('按天规则') ||
+        appBreakingDoc.includes('grant 奖励项快照明细'),
+      label:
+        'app breaking doc describes relational streak rule and grant item model',
     },
   ]
 }
@@ -128,6 +129,14 @@ async function run() {
         label: 'check_in_daily_streak_config exists',
       },
       {
+        ok: await tableExists(pool, 'check_in_daily_streak_rule'),
+        label: 'check_in_daily_streak_rule exists',
+      },
+      {
+        ok: await tableExists(pool, 'check_in_daily_streak_rule_reward_item'),
+        label: 'check_in_daily_streak_rule_reward_item exists',
+      },
+      {
         ok: await tableExists(pool, 'check_in_daily_streak_progress'),
         label: 'check_in_daily_streak_progress exists',
       },
@@ -136,12 +145,27 @@ async function run() {
         label: 'check_in_activity_streak exists',
       },
       {
+        ok: await tableExists(pool, 'check_in_activity_streak_rule'),
+        label: 'check_in_activity_streak_rule exists',
+      },
+      {
+        ok: await tableExists(
+          pool,
+          'check_in_activity_streak_rule_reward_item',
+        ),
+        label: 'check_in_activity_streak_rule_reward_item exists',
+      },
+      {
         ok: await tableExists(pool, 'check_in_activity_streak_progress'),
         label: 'check_in_activity_streak_progress exists',
       },
       {
         ok: await tableExists(pool, 'check_in_streak_grant'),
         label: 'check_in_streak_grant exists',
+      },
+      {
+        ok: await tableExists(pool, 'check_in_streak_grant_reward_item'),
+        label: 'check_in_streak_grant_reward_item exists',
       },
     ]
 
@@ -159,6 +183,11 @@ async function run() {
         {
           ok: (await tableCount(pool, 'check_in_streak_grant')) === 0,
           label: 'shared streak grant row count = 0 after reset',
+        },
+        {
+          ok:
+            (await tableCount(pool, 'check_in_streak_grant_reward_item')) === 0,
+          label: 'grant reward item row count = 0 after reset',
         },
       )
     }
