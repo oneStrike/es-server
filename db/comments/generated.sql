@@ -650,7 +650,6 @@ COMMENT ON COLUMN "public"."sensitive_word"."level" IS E'敏感词级别（1=严
 COMMENT ON COLUMN "public"."sensitive_word"."type" IS E'敏感词类型（1=政治, 2=色情, 3=暴力, 4=广告, 5=其他）';
 COMMENT ON COLUMN "public"."sensitive_word"."match_mode" IS E'匹配模式（1=精确匹配；2=模糊匹配）';
 COMMENT ON COLUMN "public"."sensitive_word"."is_enabled" IS E'是否启用';
-COMMENT ON COLUMN "public"."sensitive_word"."version" IS E'版本号（用于乐观锁）';
 COMMENT ON COLUMN "public"."sensitive_word"."remark" IS E'备注';
 COMMENT ON COLUMN "public"."sensitive_word"."created_by" IS E'创建人ID';
 COMMENT ON COLUMN "public"."sensitive_word"."updated_by" IS E'更新人ID';

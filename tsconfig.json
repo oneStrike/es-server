@@ -6,72 +6,28 @@
     "experimentalDecorators": true,
     "module": "commonjs",
     "paths": {
-      "@db": [
-        "./db"
-      ],
-      "@db/*": [
-        "./db/*"
-      ],
-      "@libs/platform/*": [
-        "./libs/platform/src/*"
-      ],
-      "@libs/app-content/*": [
-        "./libs/app-content/src/*"
-      ],
-      "@libs/app-config": [
-        "./libs/config/src/app-config"
-      ],
-      "@libs/app-config/*": [
-        "./libs/config/src/app-config/*"
-      ],
-      "@libs/config/*": [
-        "./libs/config/src/*"
-      ],
-      "@libs/dictionary": [
-        "./libs/config/src/dictionary"
-      ],
-      "@libs/dictionary/*": [
-        "./libs/config/src/dictionary/*"
-      ],
-      "@libs/forum/*": [
-        "./libs/forum/src/*"
-      ],
-      "@libs/growth/*": [
-        "./libs/growth/src/*"
-      ],
-      "@libs/content/*": [
-        "./libs/content/src/*"
-      ],
-      "@libs/system-config": [
-        "./libs/config/src/system-config"
-      ],
-      "@libs/system-config/*": [
-        "./libs/config/src/system-config/*"
-      ],
-      "@libs/sensitive-word": [
-        "./libs/moderation/sensitive-word/src"
-      ],
-      "@libs/sensitive-word/*": [
-        "./libs/moderation/sensitive-word/src/*"
-      ],
-      "@libs/growth/task": [
-        "./libs/growth/src/task"
-      ],
-      "@libs/growth/task/*": [
-        "./libs/growth/src/task/*"
-      ],
-      "@libs/interaction/*": [
-        "./libs/interaction/src/*"
-      ],
-      "@libs/message/*": [
-        "./libs/message/src/*"
-      ],
-      "@libs/user/*": [
-        "./libs/user/src/*"
-      ],
-      "@libs/identity/*": [
-        "./libs/identity/src/*"
-      ]
+      "@db": ["./db"],
+      "@db/*": ["./db/*"],
+      "@libs/platform/*": ["./libs/platform/src/*"],
+      "@libs/app-content/*": ["./libs/app-content/src/*"],
+      "@libs/app-config": ["./libs/config/src/app-config"],
+      "@libs/app-config/*": ["./libs/config/src/app-config/*"],
+      "@libs/config/*": ["./libs/config/src/*"],
+      "@libs/dictionary": ["./libs/config/src/dictionary"],
+      "@libs/dictionary/*": ["./libs/config/src/dictionary/*"],
+      "@libs/forum/*": ["./libs/forum/src/*"],
+      "@libs/growth/*": ["./libs/growth/src/*"],
+      "@libs/content/*": ["./libs/content/src/*"],
+      "@libs/system-config": ["./libs/config/src/system-config"],
+      "@libs/system-config/*": ["./libs/config/src/system-config/*"],
+      "@libs/sensitive-word": ["./libs/moderation/sensitive-word/src"],
+      "@libs/sensitive-word/*": ["./libs/moderation/sensitive-word/src/*"],
+      "@libs/growth/task": ["./libs/growth/src/task"],
+      "@libs/growth/task/*": ["./libs/growth/src/task/*"],
+      "@libs/interaction/*": ["./libs/interaction/src/*"],
+      "@libs/message/*": ["./libs/message/src/*"],
+      "@libs/user/*": ["./libs/user/src/*"],
+      "@libs/identity/*": ["./libs/identity/src/*"]
     },
     "resolveJsonModule": true,
     "allowJs": true,
@@ -79,7 +35,7 @@
     "strictNullChecks": true,
     "noFallthroughCasesInSwitch": false,
     "noImplicitAny": false,
-    "declaration": true,
+    "declaration": false,
     "outDir": "./dist",
     "removeComments": true,
     "sourceMap": true,
@@ -94,11 +50,7 @@
     "scripts/**/*",
     "src/**/*",
     "db/**/*",
-    "test/**/*",
     "*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "exclude": ["node_modules", "dist", "test/**/*"]
 }

@@ -1,18 +1,19 @@
 import type { sensitiveWord } from '@db/schema'
+import type {
+  BaseSensitiveWordHitDto,
+  SensitiveWordDetectDto,
+  SensitiveWordDetectResponseDto,
+  SensitiveWordReplaceDto,
+} from './dto/sensitive-word.dto'
 import type { SensitiveWordLevelEnum } from './sensitive-word-constant'
 import type {
   FuzzyMatchResult,
-  MatchedWord,
   MatchResult,
   SensitiveWordDetectedHit,
-  SensitiveWordDetectResult,
+  SensitiveWordHitFieldKey,
   SensitiveWordInternalDetectResult,
 } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
-import {
-  SensitiveWordDetectDto,
-  SensitiveWordReplaceDto,
-} from './dto/sensitive-word.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import { MatchModeEnum } from './sensitive-word-constant'
 import { ACAutomaton } from './utils/ac-automaton'
@@ -31,10 +32,6 @@ export class SensitiveWordDetectService implements OnModuleInit {
   private wordMap: Map<string, typeof sensitiveWord.$inferSelect>
   private isInitialized: boolean
 
-  /**
-   * 构造函数
-   * @param cacheService - 缓存服务
-   */
   constructor(private readonly cacheService: SensitiveWordCacheService) {
     this.automaton = new ACAutomaton()
     this.fuzzyMatcher = new FuzzyMatcher()
@@ -42,89 +39,79 @@ export class SensitiveWordDetectService implements OnModuleInit {
     this.isInitialized = false
   }
 
-  /**
-   * 模块初始化钩子
-   * 预加载缓存并初始化敏感词检测器
-   */
+  // 启动时优先预热缓存，缓存链路失败后回退数据库直读。
   async onModuleInit(): Promise<void> {
     try {
-      await this.cacheService.preloadCache()
-      const words = await this.cacheService.getAllWords()
+      const words = await this.loadWordsWithFallback({ preloadCache: true })
       this.initialize(words)
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      this.logger.warn(`敏感词检测器初始化失败，已回退为空缓存：${message}`)
-      this.initialize([])
+      this.handleInitializationFailure(error)
     }
   }
 
-  /**
-   * 初始化敏感词检测器
-   * @param words - 敏感词列表
-   */
+  // 成功加载空词库也视为就绪，避免把“无词”误判成初始化失败。
   initialize(words: Array<typeof sensitiveWord.$inferSelect>) {
-    if (!words || words.length === 0) {
-      this.automaton.clear()
-      this.wordMap.clear()
-      this.isInitialized = false
+    this.resetDetector()
+
+    const activeWords = words.filter((word) => word.isEnabled && word.word)
+    if (activeWords.length === 0) {
+      this.isInitialized = true
+      this.logger.log('初始化敏感词检测器，共 0 个敏感词')
       return
     }
 
-    const exactWordList = words
-      .filter((w) => w.isEnabled && w.word)
-      .filter((w) => w.matchMode === MatchModeEnum.EXACT)
-      .map((w) => w.word)
+    const exactWordList = activeWords
+      .filter((word) => word.matchMode === MatchModeEnum.EXACT)
+      .map((word) => word.word)
+    const fuzzyWordList = activeWords
+      .filter((word) => word.matchMode === MatchModeEnum.FUZZY)
+      .map((word) => word.word)
 
     this.automaton.build(exactWordList)
-
-    const fuzzyWordList = words
-      .filter(
-        (w) => w.isEnabled && w.word && w.matchMode === MatchModeEnum.FUZZY,
-      )
-      .map((w) => w.word)
-
     this.fuzzyMatcher.setWords(fuzzyWordList)
 
-    this.wordMap.clear()
-    words.forEach((w) => {
-      if (w.isEnabled && w.word) {
-        this.wordMap.set(w.word, w)
-      }
+    activeWords.forEach((word) => {
+      this.wordMap.set(word.word, word)
     })
-
     this.isInitialized = true
     this.logger.log(
       `初始化敏感词检测器，共 ${this.wordMap.size} 个敏感词（${exactWordList.length} 个精确匹配，${fuzzyWordList.length} 个模糊匹配）`,
     )
   }
 
-  /**
-   * 重新加载敏感词
-   * 从缓存中重新加载敏感词数据并初始化检测器
-   */
+  // 重新加载词库时同样允许缓存失败后回退数据库直读。
   async reloadWords(): Promise<void> {
-    const words = await this.cacheService.getAllWords()
+    const words = await this.loadWordsWithFallback()
     this.initialize(words)
-    this.logger.log('已从缓存重新加载敏感词')
+    this.logger.log('已重新加载敏感词')
   }
 
-  /**
-   * 获取包含内部元数据的敏感词命中结果。
-   * 该结果供写路径记录命中统计与替换裁剪使用，不直接暴露给 HTTP 层。
-   */
+  // 单字段场景默认标记为 content，保证位置语义稳定。
   getMatchedWordsWithMetadata(
     dto: SensitiveWordDetectDto,
   ): SensitiveWordInternalDetectResult {
-    const { content } = dto
+    return this.getMatchedWordsWithMetadataBySegments([
+      {
+        field: 'content',
+        content: dto.content,
+      },
+    ])
+  }
 
-    if (!this.isInitialized || !content) {
+  // 多字段场景分段检测，避免字段边界拼接制造假命中。
+  getMatchedWordsWithMetadataBySegments(
+    inputs: Array<{ field: SensitiveWordHitFieldKey, content: string }>,
+  ): SensitiveWordInternalDetectResult {
+    if (!this.isInitialized) {
       return {
         hits: [],
         publicHits: [],
       }
     }
 
-    const hits = this.collectDetectedHits(content)
+    const hits = inputs.flatMap((input) =>
+      input.content ? this.collectDetectedHits(input.content, input.field) : [],
+    )
 
     return {
       hits,
@@ -133,48 +120,26 @@ export class SensitiveWordDetectService implements OnModuleInit {
     }
   }
 
-  /**
-   * 获取内容中匹配的敏感词列表
-   * @param dto 检测参数，包含文本与匹配模式
-   * @returns 匹配的敏感词列表
-   */
-  getMatchedWords(dto: SensitiveWordDetectDto): SensitiveWordDetectResult {
+  // 对外检测接口直接复用结构化响应 DTO。
+  getMatchedWords(dto: SensitiveWordDetectDto): SensitiveWordDetectResponseDto {
     const result = this.getMatchedWordsWithMetadata(dto)
-
     return {
       hits: result.publicHits,
       highestLevel: result.highestLevel,
     }
   }
 
-  /**
-   * 检测内容中的敏感词
-   * @param dto - 检测请求对象
-   * @returns 检测结果，包含最高敏感词级别和匹配的敏感词列表
-   */
-  detect(dto: SensitiveWordDetectDto) {
-    const result = this.getMatchedWords(dto)
-
-    return {
-      highestLevel: result.highestLevel,
-      hits: result.hits || [],
-    }
+  // 管理端 detect 接口保持和 getMatchedWords 一致。
+  detect(dto: SensitiveWordDetectDto): SensitiveWordDetectResponseDto {
+    return this.getMatchedWords(dto)
   }
 
-  /**
-   * 获取文件的敏感词最高等级
-   * @param dto - 检测请求对象
-   * @returns 敏感词最高等级，如果没有敏感词则返回 undefined
-   */
+  // 获取文本命中的最高敏感词等级。
   getHighestSensitiveWordLevel(dto: SensitiveWordDetectDto) {
     return this.getMatchedWordsWithMetadata(dto).highestLevel
   }
 
-  /**
-   * 替换文本中的敏感词
-   * @param dto - 替换请求对象
-   * @returns 替换后的文本
-   */
+  // 替换逻辑仍只作用于单段文本，不参与多字段位置合并。
   replaceSensitiveWords(dto: SensitiveWordReplaceDto) {
     if (!this.isInitialized || !dto.content) {
       return dto.content
@@ -182,7 +147,6 @@ export class SensitiveWordDetectService implements OnModuleInit {
 
     const { hits } = this.getMatchedWordsWithMetadata(dto)
     const replacementHits = this.resolveReplacementHits(hits)
-
     if (replacementHits.length === 0) {
       return dto.content
     }
@@ -190,13 +154,48 @@ export class SensitiveWordDetectService implements OnModuleInit {
     return this.replaceWords(dto.content, replacementHits, dto.replaceChar)
   }
 
-  /**
-   * 替换文本中的敏感词（内部方法）
-   * @param text - 原始文本
-   * @param matchedWords - 匹配到的敏感词列表
-   * @param replaceChar - 替换字符，仅在敏感词未配置替换词时使用
-   * @returns 替换后的文本
-   */
+  // 检测器状态用于管理端自检。
+  isReady(): boolean {
+    return this.isInitialized
+  }
+
+  // 当前已加载词数来自内存词表快照。
+  getWordCount(): number {
+    return this.wordMap.size
+  }
+
+  // 缓存链路失败时回退数据库直读，避免审核在故障窗口内直接失效。
+  private async loadWordsWithFallback(options: { preloadCache?: boolean } = {}) {
+    try {
+      if (options.preloadCache) {
+        await this.cacheService.preloadCache()
+      }
+
+      return await this.cacheService.getAllWords()
+    } catch (cacheError) {
+      const cacheMessage =
+        cacheError instanceof Error ? cacheError.message : String(cacheError)
+      this.logger.warn(`敏感词缓存读取失败，回退数据库直读：${cacheMessage}`)
+      return this.cacheService.loadAllWordsFromDb()
+    }
+  }
+
+  // 完全初始化失败时明确回到未就绪状态，而不是继续输出空命中结论。
+  private handleInitializationFailure(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    this.resetDetector()
+    this.logger.error(`敏感词检测器初始化失败：${message}`)
+  }
+
+  // 每次重建前清空自动机、模糊匹配器和内存索引。
+  private resetDetector() {
+    this.automaton.clear()
+    this.fuzzyMatcher.setWords([])
+    this.wordMap.clear()
+    this.isInitialized = false
+  }
+
+  // 替换时仅处理不重叠命中区间，避免重复覆盖文本。
   private replaceWords(
     text: string,
     matchedWords: SensitiveWordDetectedHit[],
@@ -223,35 +222,24 @@ export class SensitiveWordDetectService implements OnModuleInit {
     return result
   }
 
-  /**
-   * 检查检测器是否已初始化
-   * @returns 是否已初始化
-   */
-  isReady(): boolean {
-    return this.isInitialized
-  }
-
-  /**
-   * 获取敏感词数量
-   * @returns 敏感词数量
-   */
-  getWordCount(): number {
-    return this.wordMap.size
-  }
-
-  /**
-   * 收集所有模式下的命中结果，并在同一词条同一区间维度做去重。
-   */
-  private collectDetectedHits(content: string): SensitiveWordDetectedHit[] {
+  // 单段文本内部先做去重与冲突裁剪，再回传带字段来源的命中结果。
+  private collectDetectedHits(
+    content: string,
+    field: SensitiveWordHitFieldKey,
+  ): SensitiveWordDetectedHit[] {
     const exactHits = this.normalizeResults(
       this.automaton.match(content),
       MatchModeEnum.EXACT,
+      field,
     )
-    const fuzzyHits = this.normalizeFuzzyResults(this.fuzzyMatcher.match(content))
+    const fuzzyHits = this.normalizeFuzzyResults(
+      this.fuzzyMatcher.match(content),
+      field,
+    )
 
     const dedupeMap = new Map<string, SensitiveWordDetectedHit>()
     ;[...exactHits, ...fuzzyHits].forEach((hit) => {
-      const key = `${hit.sensitiveWordId}:${hit.start}:${hit.end}`
+      const key = `${hit.field}:${hit.sensitiveWordId}:${hit.start}:${hit.end}`
       const existing = dedupeMap.get(key)
       if (!existing || this.compareHitPriority(hit, existing) < 0) {
         dedupeMap.set(key, hit)
@@ -265,12 +253,11 @@ export class SensitiveWordDetectService implements OnModuleInit {
     )
   }
 
-  /**
-   * 将 AC / BK-Tree 原始结果归一化为内部富命中结构。
-   */
+  // 将 AC 自动机结果归一化为内部富命中结构。
   private normalizeResults(
     results: Array<MatchResult | FuzzyMatchResult>,
     matchMode: MatchModeEnum,
+    field: SensitiveWordHitFieldKey,
   ): SensitiveWordDetectedHit[] {
     return results.flatMap((result) => {
       const wordInfo = this.wordMap.get(result.word)
@@ -288,17 +275,21 @@ export class SensitiveWordDetectService implements OnModuleInit {
           type: wordInfo.type,
           replaceWord: wordInfo.replaceWord,
           matchMode: wordInfo.matchMode,
+          field,
         },
       ]
     })
   }
 
-  /**
-   * 归一化模糊匹配结果，并按“同词条同起点”保留最佳候选。
-   * BK-Tree 会产出多个不同长度的候选子串，这里统一裁成稳定结果。
-   */
-  private normalizeFuzzyResults(results: FuzzyMatchResult[]) {
-    const candidateMap = new Map<string, SensitiveWordDetectedHit & { distance: number }>()
+  // 模糊匹配结果按“同字段 + 同词条 + 同起点”保留最佳候选。
+  private normalizeFuzzyResults(
+    results: FuzzyMatchResult[],
+    field: SensitiveWordHitFieldKey,
+  ) {
+    const candidateMap = new Map<
+      string,
+      SensitiveWordDetectedHit & { distance: number }
+    >()
 
     results.forEach((result) => {
       const wordInfo = this.wordMap.get(result.word)
@@ -315,9 +306,10 @@ export class SensitiveWordDetectService implements OnModuleInit {
         type: wordInfo.type,
         replaceWord: wordInfo.replaceWord,
         matchMode: wordInfo.matchMode,
+        field,
         distance: result.distance,
       }
-      const key = `${candidate.sensitiveWordId}:${candidate.start}`
+      const key = `${candidate.field}:${candidate.sensitiveWordId}:${candidate.start}`
       const existing = candidateMap.get(key)
 
       if (
@@ -339,17 +331,16 @@ export class SensitiveWordDetectService implements OnModuleInit {
         if (prev.start !== next.start) {
           return prev.start - next.start
         }
-
         if (prev.distance !== next.distance) {
           return prev.distance - next.distance
         }
-
         return this.compareHitPriority(prev, next)
       })
       .forEach((candidate) => {
         const lastCandidate = collapsedCandidates.at(-1)
         if (
           lastCandidate &&
+          lastCandidate.field === candidate.field &&
           lastCandidate.sensitiveWordId === candidate.sensitiveWordId &&
           candidate.start <= lastCandidate.end
         ) {
@@ -369,10 +360,8 @@ export class SensitiveWordDetectService implements OnModuleInit {
     return collapsedCandidates.map(({ distance: _distance, ...hit }) => hit)
   }
 
-  /**
-   * 将内部富命中结构裁成对外命中结构。
-   */
-  private toPublicHit(hit: SensitiveWordDetectedHit): MatchedWord {
+  // 对外命中结果保留字段来源，避免多字段场景的位置语义丢失。
+  private toPublicHit(hit: SensitiveWordDetectedHit): BaseSensitiveWordHitDto {
     return {
       word: hit.word,
       start: hit.start,
@@ -380,13 +369,11 @@ export class SensitiveWordDetectService implements OnModuleInit {
       level: hit.level,
       type: hit.type,
       replaceWord: hit.replaceWord,
+      field: hit.field,
     }
   }
 
-  /**
-   * 计算命中结果中的最高敏感等级。
-   * 数值越小表示等级越高。
-   */
+  // 数值越小表示敏感等级越高。
   private resolveHighestLevel(
     hits: SensitiveWordDetectedHit[],
   ): SensitiveWordLevelEnum | undefined {
@@ -394,15 +381,11 @@ export class SensitiveWordDetectService implements OnModuleInit {
       if (current === undefined || hit.level < current) {
         return hit.level
       }
-
       return current
     }, undefined)
   }
 
-  /**
-   * 替换前裁剪重叠命中区间。
-   * 优先级固定为：start 更小优先；同 start 取更长命中；再取更高严重级；最后取 EXACT。
-   */
+  // 替换前只保留一组不重叠且优先级最高的命中区间。
   private resolveReplacementHits(hits: SensitiveWordDetectedHit[]) {
     const sortedHits = this.collapseOverlappingWordHits(
       [...hits].sort((prev, next) => this.compareHitPriority(prev, next)),
@@ -414,17 +397,13 @@ export class SensitiveWordDetectService implements OnModuleInit {
       if (lastSelected && hit.start <= lastSelected.end) {
         continue
       }
-
       selectedHits.push(hit)
     }
 
     return selectedHits
   }
 
-  /**
-   * 统一比较命中优先级。
-   * 兼容检测结果排序、同位命中去重与替换冲突裁剪。
-   */
+  // 优先级依次为：起点更小、命中更长、等级更高、EXACT 优先、结束位置更小、词典序。
   private compareHitPriority(
     prev: SensitiveWordDetectedHit,
     next: SensitiveWordDetectedHit,
@@ -454,10 +433,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
     return prev.word.localeCompare(next.word)
   }
 
-  /**
-   * 折叠同一词条的重叠命中区间。
-   * 主要用于压缩 BK-Tree 产出的相邻候选，避免同一处模糊命中被重复上报。
-   */
+  // 只折叠同字段、同词条的重叠区间，避免跨字段结果被错误合并。
   private collapseOverlappingWordHits(hits: SensitiveWordDetectedHit[]) {
     const collapsedHits: SensitiveWordDetectedHit[] = []
 
@@ -465,6 +441,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
       const lastHit = collapsedHits.at(-1)
       if (
         lastHit &&
+        lastHit.field === hit.field &&
         lastHit.sensitiveWordId === hit.sensitiveWordId &&
         hit.start <= lastHit.end
       ) {

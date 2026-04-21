@@ -628,6 +628,16 @@ export class ForumTopicService {
     }
   }
 
+  // 分别检测标题和正文，避免字段拼接制造跨边界假命中。
+  private detectTopicSensitiveWords(title: string, content: string) {
+    return this.sensitiveWordDetectService.getMatchedWordsWithMetadataBySegments(
+      [
+        { field: 'title' as const, content: title },
+        { field: 'content' as const, content },
+      ].filter((segment) => segment.content.length > 0),
+    )
+  }
+
   /**
    * 将主题审核状态映射为统一事件治理状态。
    * 当前 CREATE_TOPIC 事件是否可进入主链路，统一以该状态判断。
@@ -739,10 +749,10 @@ export class ForumTopicService {
       sectionId,
     )
 
-    const { hits, publicHits, highestLevel } =
-      this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
-        content: topicData.content + topicData.title,
-      })
+    const { hits, publicHits, highestLevel } = this.detectTopicSensitiveWords(
+      topicData.title,
+      topicData.content,
+    )
 
     const reviewPolicy = section.topicReviewPolicy as ForumReviewPolicyEnum
 
@@ -1425,10 +1435,10 @@ export class ForumTopicService {
     const nextTitle = updateData.title ?? topic.title
     const nextContent = updateData.content ?? topic.content
 
-    const { hits, publicHits, highestLevel } =
-      this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
-        content: nextContent + nextTitle,
-      })
+    const { hits, publicHits, highestLevel } = this.detectTopicSensitiveWords(
+      nextTitle,
+      nextContent,
+    )
 
     const { auditStatus, isHidden } = this.calculateAuditStatus(
       reviewPolicy,

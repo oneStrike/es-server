@@ -3,20 +3,15 @@ import { BKTree } from './bk-tree'
 
 /**
  * 模糊匹配器类
- * 基于Levenshtein距离算法实现模糊字符串匹配
- * 集成 BK-Tree 数据结构以提升大规模数据下的查询性能
+ * 基于 Levenshtein 距离和 BK-Tree 实现模糊敏感词匹配
  */
 export class FuzzyMatcher {
   private words: string[]
   private maxDistance: number
   private bkTree: BKTree
   private useBKTree: boolean
+  private maxWordLength: number
 
-  /**
-   * 构造函数
-   * @param maxDistance - 最大编辑距离，默认为2
-   * @param useBKTree - 是否使用 BK-Tree 优化，默认为 true
-   */
   constructor(maxDistance: number = 2, useBKTree: boolean = true) {
     if (maxDistance < 0) {
       throw new Error('maxDistance 必须为非负数')
@@ -25,30 +20,31 @@ export class FuzzyMatcher {
     this.maxDistance = maxDistance
     this.bkTree = new BKTree(maxDistance)
     this.useBKTree = useBKTree
+    this.maxWordLength = 0
   }
 
-  /**
-   * 设置待匹配的敏感词列表
-   * @param words - 敏感词列表
-   */
+  // 设置待匹配词表，并同步 BK-Tree 与最长词长度。
   setWords(words: string[]) {
     if (!words) {
       this.words = []
+      this.maxWordLength = 0
       if (this.useBKTree) {
         this.bkTree.build([])
       }
       return
     }
-    this.words = words.filter((w) => w && w.length > 0)
+
+    this.words = words.filter((word) => word && word.length > 0)
+    this.maxWordLength = this.words.reduce(
+      (current, word) => Math.max(current, word.length),
+      0,
+    )
     if (this.useBKTree) {
       this.bkTree.build(this.words)
     }
   }
 
-  /**
-   * 设置最大编辑距离
-   * @param distance - 最大编辑距离
-   */
+  // 动态调整最大编辑距离后，重建 BK-Tree 保持查询边界一致。
   setMaxDistance(distance: number) {
     if (distance < 0) {
       throw new Error('maxDistance 必须为非负数')
@@ -60,51 +56,26 @@ export class FuzzyMatcher {
     }
   }
 
-  /**
-   * 检查文本中是否包含任何模糊匹配的敏感词
-   * @param text - 待检查的文本
-   * @returns 是否包含匹配的敏感词
-   */
+  // 判断文本中是否存在任意模糊命中。
   hasMatch(text: string): boolean {
-    if (!text || text.length === 0) {
+    if (!text || text.length === 0 || this.words.length === 0) {
       return false
     }
 
-    if (this.words.length === 0) {
-      return false
-    }
-
-    const results = this.match(text)
-    return results.length > 0
+    return this.match(text).length > 0
   }
 
-  /**
-   * 在文本中查找第一个模糊匹配的敏感词
-   * @param text - 待匹配的文本
-   * @returns 第一个匹配结果，如果没有匹配则返回null
-   */
+  // 返回第一个模糊命中，供只关心“是否命中”的场景复用。
   findFirstMatch(text: string) {
-    if (!text || text.length === 0) {
-      return null
-    }
-
-    if (this.words.length === 0) {
+    if (!text || text.length === 0 || this.words.length === 0) {
       return null
     }
 
     const results = this.match(text)
-    if (results.length === 0) {
-      return null
-    }
-
-    return results[0]
+    return results.length > 0 ? results[0] : null
   }
 
-  /**
-   * 在文本中执行模糊匹配
-   * @param text - 待匹配的文本
-   * @returns 模糊匹配结果列表
-   */
+  // 根据当前策略选择 BK-Tree 或暴力匹配。
   match(text: string) {
     if (!text || text.length === 0) {
       return []
@@ -117,29 +88,29 @@ export class FuzzyMatcher {
     return this.matchBruteForce(text)
   }
 
-  /**
-   * 使用 BK-Tree 进行模糊匹配
-   * 适用于大规模敏感词场景，性能更优
-   * @param text - 待匹配的文本
-   * @returns 模糊匹配结果列表
-   */
+  // BK-Tree 路径按“最长词长 + 最大编辑距离”扩窗，避免长词被固定常数截断。
   private matchWithBKTree(text: string) {
     const results: FuzzyMatchResult[] = []
     const textLen = text.length
+    const maxWindowLength = Math.max(
+      1,
+      this.maxWordLength + this.maxDistance,
+    )
 
     for (let i = 0; i < textLen; i++) {
-        const maxEnd = Math.min(i + this.maxDistance * 2 + 10, textLen)
-        for (let j = i + 1; j <= maxEnd; j++) {
-          const substring = text.substring(i, j)
-          const matchedWords = this.bkTree.search(substring)
+      const maxEnd = Math.min(i + maxWindowLength, textLen)
+      for (let j = i + 1; j <= maxEnd; j++) {
+        const substring = text.substring(i, j)
+        const matchedWords = this.bkTree.search(substring)
 
-          for (const word of matchedWords) {
-            if (!this.quickFilter(word, substring)) {
-              continue
-            }
-            const distance = this.calculateLevenshteinDistance(word, substring)
-            if (distance <= this.maxDistance) {
-              results.push({
+        for (const word of matchedWords) {
+          if (!this.quickFilter(word, substring)) {
+            continue
+          }
+
+          const distance = this.calculateLevenshteinDistance(word, substring)
+          if (distance <= this.maxDistance) {
+            results.push({
               word,
               start: i,
               end: j - 1,
@@ -153,29 +124,18 @@ export class FuzzyMatcher {
     return results.sort((a, b) => a.start - b.start)
   }
 
-  /**
-   * 使用暴力算法进行模糊匹配
-   * 适用于小规模敏感词场景
-   * @param text - 待匹配的文本
-   * @returns 模糊匹配结果列表
-   */
+  // 小规模词表时回退暴力匹配，避免 BK-Tree 构建开销。
   private matchBruteForce(text: string) {
     const results: FuzzyMatchResult[] = []
 
     for (const word of this.words) {
-      const matches = this.matchWord(text, word)
-      results.push(...matches)
+      results.push(...this.matchWord(text, word))
     }
 
     return results.sort((a, b) => a.start - b.start)
   }
 
-  /**
-   * 匹配单个敏感词
-   * @param text - 待匹配的文本
-   * @param word - 敏感词
-   * @returns 模糊匹配结果列表
-   */
+  // 针对单个词条做滑窗模糊匹配。
   private matchWord(text: string, word: string) {
     const results: FuzzyMatchResult[] = []
     const wordLen = word.length
@@ -190,7 +150,6 @@ export class FuzzyMatcher {
       }
 
       const distance = this.calculateLevenshteinDistance(word, substring)
-
       if (distance <= this.maxDistance) {
         results.push({
           word,
@@ -204,13 +163,7 @@ export class FuzzyMatcher {
     return results
   }
 
-  /**
-   * 快速过滤明显不匹配的情况
-   * 通过字符集合差异和长度差异快速判断是否需要计算完整编辑距离
-   * @param word - 敏感词
-   * @param substring - 待匹配子串
-   * @returns 是否可能匹配
-   */
+  // 先用长度和字符集合过滤明显不可能的候选，减少完整距离计算。
   private quickFilter(word: string, substring: string) {
     if (Math.abs(word.length - substring.length) > this.maxDistance) {
       return false
@@ -233,13 +186,7 @@ export class FuzzyMatcher {
     return true
   }
 
-  /**
-   * 计算两个字符串的Levenshtein距离
-   * 使用滚动数组优化空间复杂度，并添加提前终止机制
-   * @param str1 - 第一个字符串
-   * @param str2 - 第二个字符串
-   * @returns 编辑距离
-   */
+  // 使用滚动数组计算 Levenshtein 距离，并在超阈值时提前终止。
   private calculateLevenshteinDistance(str1: string, str2: string) {
     const len1 = str1.length
     const len2 = str2.length

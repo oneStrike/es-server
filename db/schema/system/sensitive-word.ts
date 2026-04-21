@@ -44,10 +44,6 @@ export const sensitiveWord = pgTable("sensitive_word", {
    */
   isEnabled: boolean().default(true).notNull(),
   /**
-   * 版本号（用于乐观锁）
-   */
-  version: integer().default(0).notNull(),
-  /**
    * 备注
    */
   remark: varchar({ length: 500 }),
@@ -104,6 +100,14 @@ export const sensitiveWord = pgTable("sensitive_word", {
      * 创建时间索引
      */
     index("sensitive_word_created_at_idx").on(table.createdAt),
+    check(
+      'sensitive_word_level_valid_chk',
+      sql`${table.level} in (1, 2, 3)`,
+    ),
+    check(
+      'sensitive_word_type_valid_chk',
+      sql`${table.type} in (1, 2, 3, 4, 5)`,
+    ),
     check(
       'sensitive_word_match_mode_valid_chk',
       sql`${table.matchMode} in (1, 2)`,

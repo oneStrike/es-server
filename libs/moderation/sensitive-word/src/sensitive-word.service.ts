@@ -1,16 +1,13 @@
 import type { SQL } from 'drizzle-orm'
-import type {
-  SensitiveWordStatisticsResponse,
-} from './sensitive-word.types'
 import { buildLikePattern, DrizzleService } from '@db/core'
-
-import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
+import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 import { Injectable } from '@nestjs/common'
 import { and, eq, like } from 'drizzle-orm'
 import {
   CreateSensitiveWordDto,
   QuerySensitiveWordDto,
   SensitiveWordStatisticsQueryDto,
+  SensitiveWordStatisticsResponseDto,
   UpdateSensitiveWordDto,
 } from './dto/sensitive-word.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
@@ -62,6 +59,7 @@ export class SensitiveWordService {
     return this.drizzle.ext.findPagination(this.sensitiveWord, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...dto,
+      orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
     })
   }
 
@@ -139,10 +137,10 @@ export class SensitiveWordService {
    */
   async getStatistics(
     dto: SensitiveWordStatisticsQueryDto,
-  ): Promise<SensitiveWordStatisticsResponse> {
+  ): Promise<SensitiveWordStatisticsResponseDto> {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 
-    let data: SensitiveWordStatisticsResponse['data']
+    let data: SensitiveWordStatisticsResponseDto['data']
 
     switch (type) {
       case StatisticsTypeEnum.LEVEL:

@@ -13,6 +13,7 @@ import { NumberProperty } from '@libs/platform/decorators/validate/number-proper
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
+import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -170,11 +171,10 @@ export class BaseCommentDto extends BaseDto {
 
   @ArrayProperty({
     description: '敏感词命中记录',
-    itemType: 'string',
-    example: ['敏感词1'],
+    itemClass: BaseSensitiveWordHitDto,
     required: false,
   })
-  sensitiveWordHits?: string[] | null
+  sensitiveWordHits?: BaseSensitiveWordHitDto[] | null
 
   @StringProperty({
     description: '评论提交时解析到的国家/地区',

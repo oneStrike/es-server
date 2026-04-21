@@ -1,84 +1,161 @@
-# ES Server Review Matrix
+# ES Server Normative Review Matrix
 
-每次使用 `$es-server-code-review` 时，在读完 `AGENTS.md` 与 `.trae/rules/*` 之后，必须按下面的矩阵推进。矩阵不是可选笔记，而是强制完工条件。
+每次使用 `$es-server-code-review` 时，在读完 `AGENTS.md` 与 `.trae/rules/*` 之后，必须先把本矩阵展开成“规则点级”工作矩阵，再开始审查代码。矩阵不是可选笔记，而是强制完工条件。
 
 ## 使用方式
 
-- 先复制本矩阵，再把每一项状态填成 `未开始`、`进行中`、`已完成`、`阻塞`。
-- 每个规则文档至少留 1 条检查证据；不能只在有问题时才提到该规则。
-- 同时维护两类 findings：
-  - `规范问题`：违反仓库规范、会造成漂移或维护风险的实现。
-  - `缺陷 / 风险问题`：真实 bug、契约回归、错误语义、权限、事务、通知、migration 等问题。
-- 每个可疑实现 / 每条 finding 都要做一次“规则 × 代码面”交叉映射；不要只按首个命中的症状、首条规则或首个高优问题收口。
-- 在矩阵未全部完成前，不要宣布审查结束。
+- 工作矩阵的最小单位是“单条规范点”，不是“单份规范文件”。
+- 先按下文“规则点展开清单”把每份规范文档中的全部规范性 bullet 逐条展开到工作矩阵。
+- 每条规则点都必须填写：
+  - `状态`：`未开始`、`进行中`、`已完成`、`不适用`、`阻塞`
+  - `来源`：文档名 + 小节名 + 条目序号
+  - `规则点`：原文或等义转述
+  - `适用范围`：本次审查对应的文件 / 符号 / 链路
+  - `证据 / 理由`：`file:line`、检查结论，或不适用 / 阻塞原因
+- `不适用` 必须说明为何对本次范围不适用；`阻塞` 必须说明缺失信息与下一步。
+- 同一规则文档只有在其全部规则点都闭合后，才允许标记为完成。
+- `正反例`、`示例` 只用于解释和取证，不能替代规则点本身。
+- 若 `.trae/rules/` 当前内容与本清单不一致，先同步补齐工作矩阵，再继续审查。
 
-## Finding Cross-Check
+## 单条规则点记录模板
 
-- 对每个可疑点，逐份回看适用规则文档；不要因为某条规则已经命中就默认其他规则不再相关。
-- 对每个可疑点，同时检查相关代码面：模块本体、上下游调用点、DTO、types、schema、migration、tests。
-- 若同一实现同时构成 `规范问题` 与 `缺陷 / 风险问题`，分别记录；不能用一条 finding 吞掉另一条。
-- 只有当该点位的适用规则与相关代码面都检查过，才能把这个点位视为闭合。
+```md
+- 状态：未开始
+- 来源：03-dto.md / 复用与收敛 / 第 3 条
+- 规则点：跨模块复用 DTO 时，先导入目标 DTO，再做字段裁剪或合并
+- 适用范围：<file / symbol / chain>
+- 证据 / 理由：<file:line，或不适用 / 阻塞说明>
+```
 
-## Rule Matrix
+## 规则点展开清单
 
-- `PROJECT_RULES.md`
-  - 是否遵守项目级最小约束、验证基线、提交与交付要求。
-- `01-import-boundaries.md`
-  - 是否存在 barrel、越层导入、DTO 拉起运行时依赖、错误的目录级入口。
-- `02-controller.md`
-  - 路由命名、Swagger、返回语义、controller 薄层、兼容性方案是否正确。
-- `03-dto.md`
-  - DTO 是否在 `libs/*` 收口、是否重复定义、组合方式是否正确、文档 / 校验 / contract 是否对齐。
-- `04-typescript-types.md`
-  - `*.type.ts` 是否只承载内部结构，是否重复 DTO，同构结构是否直接复用。
-- `05-comments.md`
-  - 方法注释是否存在，是否解释约束 / 原因，是否有重复注释、废话注释、字段注释缺失。
-- `06-error-handling.md`
-  - 可预期业务失败是否用了 `BusinessException + BusinessErrorCode`，是否错误地下沉为 HTTP 异常。
-- `07-drizzle.md`
-  - schema / query / transaction / migration / comments / check 约束是否同步，值域是否闭合。
-- `08-testing.md`
-  - 是否有相关 spec，是否覆盖行为变更、错误语义、事务、计数、通知、幂等与回归风险。
+### `PROJECT_RULES.md`
 
-## Scope Matrix
+- 决策顺序：逐条展开 1-4。
+- 兼容性例外：展开“规范与稳定契约冲突时兼容性优先，并记录冲突点与暂行决策”。
 
-- 模块本体：owner 文件、主要 service / controller / resolver / module。
-- 上游调用点：controller、scheduler、consumer、event handler、job、command、facade。
-- 下游消费者：mapper、serializer、projection、notification、query consumer、adapter。
-- DTO：输入 / 输出 DTO、字段组合、文档与校验。
-- types：`*.type.ts`、`*.types.ts`、推导类型、内部结构。
-- schema：`db/schema/**/*`、注释、check、闭集值域、推导类型。
-- migration：本轮 schema 变化对应的 migration、历史数据处理、`db/comments/generated.sql`。
-- tests：相关 `*.spec.ts`、是否覆盖行为、错误语义、事务、通知、幂等、回归风险。
+### `01-import-boundaries.md`
 
-## Bug-Hunt Lanes
+- `核心原则`：逐条展开全部 bullet。
+- `明确禁止`：逐条展开全部 bullet。
+- `分层导入规则`：逐条展开全部 bullet。
+- `例外白名单`：逐条展开全部 bullet。
+- `正反例`：只作为取证样例，不替代规则点。
 
-- 规范违例：即使暂时不报错，也会造成漂移、错误语义或维护风险的实现。
-- 用户可感知 bug：错误通知、错误可见性、错误返回、错误排序、错误分页、错误状态流转。
-- 权限与审核：越权、隐藏态 / 审核态处理错误、不可见内容提前外泄。
-- 通知与去重：重复通知、自通知、遗漏通知、projection key 不合理、补偿链路缺失。
-- 事务与计数：事实写入、计数器、奖励、补偿、删除级联是否一致。
-- schema 与 migration：缺少 check、字段值域漂移、schema 与 DTO / service 不一致、历史数据迁移风险。
-- 错误语义：错误码错、异常类型错、吞异常、错误 message 驱动业务分支。
-- 测试缺口：没有 spec、spec 未覆盖关键风险、只测 happy path。
+### `02-controller.md`
 
-## Completion Checklist
+- `核心原则`：逐条展开全部 bullet。
+- `路由规范`：逐条展开全部 bullet。
+- `Swagger 规范`：逐条展开全部 bullet。
+- `返回语义`：逐条展开全部 bullet。
+- `权限与审计`：逐条展开全部 bullet。
+- `兼容与维护`：逐条展开全部 bullet。
 
-- `Rules checked: 9/9`
-- `Bug-hunt lanes checked: 8/8`
-- `Scope completion: complete`
-- 所有 findings 已完成适用规则与相关代码面的交叉映射
-- `规范问题` 与 `缺陷 / 风险问题` 两个区域都已输出
-- 开放问题、剩余风险、测试缺口已说明
+### `03-dto.md`
+
+- `默认动作`：逐条展开全部 bullet。
+- `分层与职责`：逐条展开全部 bullet。
+- `命名约定`：逐条展开全部 bullet。
+- `复用与收敛`：逐条展开全部 bullet。
+- `禁止项`：逐条展开全部 bullet。
+- `枚举字段描述规范`：逐条展开全部 bullet。
+- `正反例`：只作为取证样例，不替代规则点。
+
+### `04-typescript-types.md`
+
+- `默认动作`：逐条展开全部 bullet。
+- `放置规则`：逐条展开全部 bullet。
+- `复用与推导`：逐条展开全部 bullet。
+- `` `type` 与 `interface` ``：逐条展开全部 bullet。
+- `边界类型`：逐条展开全部 bullet。
+- `禁止项`：逐条展开全部 bullet。
+- `正反例`：只作为取证样例，不替代规则点。
+
+### `05-comments.md`
+
+- `默认动作`：逐条展开全部 bullet。
+- `注释形式`：逐条展开全部 bullet。
+- `必须写注释的场景`：逐条展开全部 bullet。
+- `如何写`：逐条展开全部 bullet。
+- `数据表字段注释要求`：逐条展开全部 bullet。
+- `禁止项`：逐条展开全部 bullet。
+- `正反例`：只作为取证样例，不替代规则点。
+
+### `06-error-handling.md`
+
+- `仓库约定`：逐条展开全部 bullet。
+- `默认动作`：逐条展开全部 bullet。
+- `分层职责`：逐条展开全部 bullet。
+- `错误码与映射`：逐条展开全部 bullet。
+- `日志与诊断`：逐条展开全部 bullet。
+- `禁止项`：逐条展开全部 bullet。
+- `正反例`：只作为取证样例，不替代规则点。
+
+### `07-drizzle.md`
+
+- `仓库约定`：逐条展开全部 bullet。
+- `默认动作`：逐条展开全部 bullet。
+- `查询与写路径`：逐条展开全部 bullet。
+- `原生 SQL`：逐条展开全部 bullet。
+- `Schema 与 migration 联动`：逐条展开全部 bullet。
+- `破坏性更新`：逐条展开全部 bullet。
+- `禁止项`：逐条展开全部 bullet。
+- `正反例`：只作为取证样例，不替代规则点。
+
+### `08-testing.md`
+
+- `仓库约定`：逐条展开全部 bullet。
+- `默认动作`：逐条展开全部 bullet。
+- `何时必须补测试`：逐条展开全部 bullet。
+- `测试层次`：逐条展开全部 bullet。
+- `如何写`：逐条展开全部 bullet。
+- `默认验证命令`：逐条展开全部 bullet。
+- `禁止项`：逐条展开全部 bullet。
+- `正反例`：只作为取证样例，不替代规则点。
+
+## 代码范围矩阵
+
+- `模块本体`：owner 文件、主要 service / controller / resolver / module。
+- `上游调用点`：controller、scheduler、consumer、event handler、job、command、facade。
+- `下游消费者`：mapper、serializer、projection、notification、query consumer、adapter。
+- `DTO`：输入 / 输出 DTO、字段组合、文档与校验。
+- `types`：`*.type.ts`、`*.types.ts`、推导类型、内部结构。
+- `schema`：`db/schema/**/*`、注释、check、闭集值域、推导类型。
+- `migration`：本轮 schema 变化对应的 migration、历史数据处理、`db/comments/generated.sql`。
+- `tests`：相关 `*.spec.ts`、是否覆盖行为、错误语义、事务、通知、幂等、回归风险。
+
+每个代码面至少补充：
+
+- `状态`
+- `涉及的规则文档 / 规则点`
+- `已检查的 owner 文件`
+- `剩余阻塞或不适用原因`
+
+## 完成检查
+
+- `.trae/rules/` 当前全部文件已纳入矩阵。
+- 每份规范文档中的每条规范点都已登记。
+- 工作矩阵里不再存在 `未开始`、`进行中` 条目。
+- 所有 `已完成` 条目都带有证据。
+- 所有 `不适用` 条目都带有明确理由。
+- 若仍有 `阻塞` 条目，输出必须明确标注“审查未完成”，并列出阻塞点。
+- 代码范围矩阵已闭合，未留下 owner 文件、上下游、DTO、types、schema、migration、tests 的盲区。
+- 输出已包含：
+  - `Rules checked: <n>/<n>`
+  - `Rule points closed: <n>/<n>`
+  - `Scope completion: complete | incomplete`
+  - `一、规范问题`
+  - `二、规则点覆盖完成情况`
+  - `三、开放问题 / 假设`
+  - `四、剩余风险 / 未闭合项`
 
 ## Stop Condition
 
 - 发现 P1 / P2 / P3 都不是结束信号。
-- 某个文件或链路已发现严重问题，也不是跳过其他规则项和其他范围文件的理由。
+- 某个文件或链路已发现明显违例，也不是跳过其他规则点和其他代码面的理由。
 - 只有当：
-  - 9 份规范文档全部对照完成；
-  - 相关上下游链路已检查；
-  - bug-hunt 车道全部过一遍；
-  - 规范问题与缺陷 / 风险问题都已输出；
-  - 剩余风险和测试缺口已说明；
-    才允许结束审查。
+  - 当前 `.trae/rules/` 全部规范文档已展开并完成；
+  - 每条规则点都处于 `已完成` 或 `不适用`；
+  - 必要代码范围已检查；
+  - 剩余风险和未闭合项已交代清楚；
+    才允许宣布审查完成。

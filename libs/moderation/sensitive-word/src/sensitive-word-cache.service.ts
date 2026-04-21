@@ -37,12 +37,7 @@ export class SensitiveWordCacheService {
     return this.drizzle.schema.sensitiveWord
   }
 
-  /**
-   * 通用缓存查询方法
-   * 优先从缓存读取，缓存未命中时执行查询函数并更新缓存
-   * @param config - 缓存查询配置
-   * @returns 查询结果
-   */
+  // 通用缓存读取：命中缓存直接返回，未命中时回源数据库并回填缓存。
   private async getFromCache<T>(config: CacheQueryConfig<T>) {
     let data = await this.cacheManager.get<T[]>(config.cacheKey)
 
@@ -59,37 +54,30 @@ export class SensitiveWordCacheService {
     return data
   }
 
-  /**
-   * 获取所有启用的敏感词
-   * 优先从缓存读取，缓存未命中时从数据库查询并更新缓存
-   * @returns 敏感词列表
-   */
+  // 直接从数据库读取启用中的敏感词，供缓存降级场景复用。
+  async loadAllWordsFromDb(): Promise<SensitiveWord[]> {
+    return this.db
+      .select()
+      .from(this.sensitiveWord)
+      .where(eq(this.sensitiveWord.isEnabled, true))
+  }
+
+  // 正常路径优先读缓存，缓存未命中时回源数据库。
   async getAllWords(): Promise<SensitiveWord[]> {
     return this.getFromCache<SensitiveWord>({
       cacheKey: SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS,
       logMessage: (words) => `已缓存 ${words.length} 个敏感词`,
-      queryFn: async () =>
-        this.db
-          .select()
-          .from(this.sensitiveWord)
-          .where(eq(this.sensitiveWord.isEnabled, true)),
+      queryFn: async () => this.loadAllWordsFromDb(),
     })
   }
 
-  /**
-   * 清除所有敏感词缓存
-   * 包括所有维度的缓存和总缓存
-   */
+  // 写路径变更后统一清理全量词缓存。
   async invalidateAll(): Promise<void> {
     await this.cacheManager.del(SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS)
     this.logger.log('已清除所有敏感词缓存')
   }
 
-  /**
-   * 预加载敏感词缓存
-   * 在应用启动时调用，提前将敏感词数据加载到缓存中
-   * 仅预热全量词缓存，避免维护无消费方使用的维度缓存分支
-   */
+  // 应用启动时预热全量词缓存。
   async preloadCache(): Promise<void> {
     this.logger.log('正在预加载敏感词缓存...')
     const allWords = await this.getAllWords()

@@ -75,15 +75,6 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   matchMode!: MatchModeEnum
 
-  @NumberProperty({
-    description: '版本号（乐观锁）',
-    required: true,
-    example: 0,
-    default: 0,
-    validation: false,
-  })
-  version!: number
-
   @StringProperty({
     description: '备注',
     maxLength: 500,
@@ -164,6 +155,14 @@ export class BaseSensitiveWordHitDto {
   type!: SensitiveWordTypeEnum
 
   @StringProperty({
+    description: '命中字段（title=标题；content=正文）',
+    example: 'content',
+    required: false,
+    validation: false,
+  })
+  field?: string
+
+  @StringProperty({
     description: '替换词',
     example: '***',
     required: false,
@@ -174,7 +173,6 @@ export class BaseSensitiveWordHitDto {
 
 export class CreateSensitiveWordDto extends OmitType(BaseSensitiveWordDto, [
   ...OMIT_BASE_FIELDS,
-  'version',
   'createdBy',
   'updatedBy',
   'hitCount',
@@ -184,11 +182,6 @@ export class CreateSensitiveWordDto extends OmitType(BaseSensitiveWordDto, [
 export class UpdateSensitiveWordDto extends IntersectionType(
   CreateSensitiveWordDto,
   IdDto,
-) {}
-
-export class UpdateSensitiveWordStatusDto extends IntersectionType(
-  IdDto,
-  PickType(BaseSensitiveWordDto, ['isEnabled'] as const),
 ) {}
 
 export class QuerySensitiveWordDto extends IntersectionType(
