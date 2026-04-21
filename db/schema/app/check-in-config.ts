@@ -19,7 +19,7 @@ export const checkInConfig = pgTable(
   {
     /** 全局签到配置主键。 */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    /** 是否启用签到功能。 */
+    /** 是否启用签到功能（0=关闭，1=启用）。 */
     isEnabled: smallint().default(1).notNull(),
     /** 补签周期类型（1=按自然周，2=按自然月）。 */
     makeupPeriodType: smallint().notNull(),
@@ -63,6 +63,5 @@ export const checkInConfig = pgTable(
   ],
 )
 
-export type CheckInConfig = typeof checkInConfig.$inferSelect
-export type CheckInConfigSelect = CheckInConfig
+export type CheckInConfigSelect = typeof checkInConfig.$inferSelect
 export type CheckInConfigInsert = typeof checkInConfig.$inferInsert

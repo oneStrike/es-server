@@ -221,7 +221,7 @@ COMMENT ON COLUMN "public"."chat_message"."edited_at" IS E'编辑时间';
 COMMENT ON COLUMN "public"."chat_message"."revoked_at" IS E'撤回时间';
 COMMENT ON TABLE "public"."check_in_config" IS E'全局签到配置。\n\n当前签到域只允许存在一套全局配置，不再保留多计划和未来生效时间窗语义。';
 COMMENT ON COLUMN "public"."check_in_config"."id" IS E'全局签到配置主键。';
-COMMENT ON COLUMN "public"."check_in_config"."is_enabled" IS E'是否启用签到功能。';
+COMMENT ON COLUMN "public"."check_in_config"."is_enabled" IS E'是否启用签到功能（0=关闭，1=启用）。';
 COMMENT ON COLUMN "public"."check_in_config"."makeup_period_type" IS E'补签周期类型（1=按自然周，2=按自然月）。';
 COMMENT ON COLUMN "public"."check_in_config"."periodic_allowance" IS E'每周期系统发放的补签额度。';
 COMMENT ON COLUMN "public"."check_in_config"."base_reward_items" IS E'默认基础奖励项。';

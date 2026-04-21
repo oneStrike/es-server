@@ -1,10 +1,9 @@
-import type { GrowthRewardItem } from '../reward-item.type'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule.constant'
 
-export class GrowthRewardItemDto implements GrowthRewardItem {
+export class GrowthRewardItemDto {
   @EnumProperty({
     description: '奖励资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）',
     example: GrowthRewardRuleAssetTypeEnum.POINTS,

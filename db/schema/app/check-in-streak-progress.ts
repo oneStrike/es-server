@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm'
-import { check, date, integer, pgTable, timestamp, unique } from 'drizzle-orm/pg-core'
+import {
+  check,
+  date,
+  integer,
+  pgTable,
+  timestamp,
+  unique,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 连续签到用户进度。
@@ -43,6 +50,7 @@ export const checkInStreakProgress = pgTable(
   ],
 )
 
-export type CheckInStreakProgress = typeof checkInStreakProgress.$inferSelect
-export type CheckInStreakProgressSelect = CheckInStreakProgress
-export type CheckInStreakProgressInsert = typeof checkInStreakProgress.$inferInsert
+export type CheckInStreakProgressSelect =
+  typeof checkInStreakProgress.$inferSelect
+export type CheckInStreakProgressInsert =
+  typeof checkInStreakProgress.$inferInsert

@@ -89,6 +89,5 @@ export const checkInStreakRule = pgTable(
   ],
 )
 
-export type CheckInStreakRule = typeof checkInStreakRule.$inferSelect
-export type CheckInStreakRuleSelect = CheckInStreakRule
+export type CheckInStreakRuleSelect = typeof checkInStreakRule.$inferSelect
 export type CheckInStreakRuleInsert = typeof checkInStreakRule.$inferInsert

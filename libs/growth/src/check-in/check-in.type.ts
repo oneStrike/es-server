@@ -1,34 +1,43 @@
+import type { CheckInStreakRuleSelect } from '@db/schema'
 import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
 import type {
-  CheckInMakeupPeriodTypeEnum,
   CheckInMakeupSourceTypeEnum,
-  CheckInPatternRewardRuleTypeEnum,
   CheckInRewardSourceTypeEnum,
-  CheckInStreakConfigStatusEnum,
-  CheckInStreakPublishStrategyEnum,
 } from './check-in.constant'
+import type { CheckInDateRewardRuleFieldsDto } from './dto/check-in-date-reward-rule.dto'
+import type { BaseCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
+import type {
+  CheckInCalendarDayDto,
+  CheckInMakeupSummaryDto,
+  CheckInReconciliationPageItemDto,
+} from './dto/check-in-runtime.dto'
+import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
+import type { BaseCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 
-/** 具体日期奖励规则。 */
-export interface CheckInDateRewardRuleView {
-  rewardDate: string
+/** 基于日期奖励 DTO 收敛出的内部日期奖励视图。 */
+export type CheckInDateRewardRuleView = Pick<
+  CheckInDateRewardRuleFieldsDto,
+  'rewardDate'
+> & {
   rewardItems: GrowthRewardItems
 }
 
-/** 周期模式奖励规则。 */
-export interface CheckInPatternRewardRuleView {
-  patternType: CheckInPatternRewardRuleTypeEnum
+/** 基于模式奖励 DTO 收敛出的内部周期奖励视图。 */
+export type CheckInPatternRewardRuleView = Pick<
+  BaseCheckInPatternRewardRuleDto,
+  'patternType'
+> & {
   weekday: number | null
   monthDay: number | null
   rewardItems: GrowthRewardItems
 }
 
-/** 连续奖励规则。 */
-export interface CheckInStreakRewardRuleView {
-  ruleCode: string
-  streakDays: number
+/** 基于连续奖励 DTO 收敛出的内部连续奖励视图。 */
+export type CheckInStreakRewardRuleView = Pick<
+  Required<BaseCheckInStreakRewardRuleDto>,
+  'ruleCode' | 'streakDays' | 'repeatable' | 'status'
+> & {
   rewardItems: GrowthRewardItems
-  repeatable: boolean
-  status: CheckInStreakConfigStatusEnum
 }
 
 /** 全局签到奖励定义。 */
@@ -38,34 +47,39 @@ export interface CheckInRewardDefinition {
   patternRewardRules: CheckInPatternRewardRuleView[]
 }
 
-/** 连续签到记录版本定义。 */
-export interface CheckInStreakRuleDefinition {
-  ruleCode: string
-  streakDays: number
-  version: number
-  status: CheckInStreakConfigStatusEnum
-  publishStrategy: CheckInStreakPublishStrategyEnum
+/** 基于签到规则 schema 收敛出的内部连续签到版本定义。 */
+export type CheckInStreakRuleDefinition = Pick<
+  CheckInStreakRuleSelect,
+  | 'ruleCode'
+  | 'streakDays'
+  | 'version'
+  | 'status'
+  | 'publishStrategy'
+  | 'repeatable'
+  | 'effectiveFrom'
+  | 'effectiveTo'
+> & {
   rewardItems: GrowthRewardItems
-  repeatable: boolean
-  effectiveFrom: Date
-  effectiveTo: Date | null
 }
 
-/** 当前补签周期窗口。 */
-export interface CheckInMakeupWindowView {
-  periodType: CheckInMakeupPeriodTypeEnum
-  periodKey: string
-  periodStartDate: string
-  periodEndDate: string
-}
+/** 基于补签摘要 DTO 收敛出的内部补签窗口视图。 */
+export type CheckInMakeupWindowView = Pick<
+  CheckInMakeupSummaryDto,
+  'periodType' | 'periodKey' | 'periodStartDate' | 'periodEndDate'
+>
 
-/** 当前补签账户读模型。 */
-export interface CheckInMakeupAccountView extends CheckInMakeupWindowView {
-  periodicGranted: number
-  periodicUsed: number
-  periodicRemaining: number
-  eventAvailable: number
-}
+/** 基于补签摘要 DTO 收敛出的内部补签账户读模型。 */
+export type CheckInMakeupAccountView = Pick<
+  CheckInMakeupSummaryDto,
+  | 'periodType'
+  | 'periodKey'
+  | 'periodStartDate'
+  | 'periodEndDate'
+  | 'periodicGranted'
+  | 'periodicUsed'
+  | 'periodicRemaining'
+  | 'eventAvailable'
+>
 
 /** 当前签到日命中的基础奖励解析结果。 */
 export interface CheckInResolvedReward {
@@ -73,6 +87,53 @@ export interface CheckInResolvedReward {
   resolvedRewardRuleKey: string | null
   resolvedRewardItems: GrowthRewardItems | null
 }
+
+/** 基于连续奖励 DTO 收敛出的内部连续奖励展示视图。 */
+export type CheckInGrantItemView = Pick<
+  CheckInGrantItemDto,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'userId'
+  | 'ruleId'
+  | 'ruleCode'
+  | 'streakDays'
+  | 'rewardItems'
+  | 'repeatable'
+  | 'triggerSignDate'
+  | 'rewardSettlementId'
+  | 'rewardSettlement'
+>
+
+/** 基于日历 DTO 收敛出的内部日历日视图。 */
+export type CheckInCalendarDayView = Pick<
+  CheckInCalendarDayDto,
+  | 'signDate'
+  | 'dayIndex'
+  | 'isToday'
+  | 'isFuture'
+  | 'isSigned'
+  | 'grantCount'
+  | 'rewardItems'
+  | 'rewardSettlement'
+>
+
+/** 基于对账 DTO 收敛出的内部对账分页项视图。 */
+export type CheckInReconciliationPageItemView = Pick<
+  CheckInReconciliationPageItemDto,
+  | 'recordId'
+  | 'userId'
+  | 'signDate'
+  | 'recordType'
+  | 'rewardSettlementId'
+  | 'resolvedRewardSourceType'
+  | 'resolvedRewardRuleKey'
+  | 'resolvedRewardItems'
+  | 'rewardSettlement'
+  | 'grants'
+  | 'createdAt'
+  | 'updatedAt'
+>
 
 /** 重算连续签到聚合结果。 */
 export interface CheckInStreakAggregation {

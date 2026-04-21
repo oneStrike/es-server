@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm'
-import { check, index, integer, pgTable, smallint, varchar } from 'drizzle-orm/pg-core'
+import {
+  check,
+  index,
+  integer,
+  pgTable,
+  smallint,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 连续签到规则奖励项。
@@ -43,8 +50,7 @@ export const checkInStreakRuleRewardItem = pgTable(
   ],
 )
 
-export type CheckInStreakRuleRewardItem =
+export type CheckInStreakRuleRewardItemSelect =
   typeof checkInStreakRuleRewardItem.$inferSelect
-export type CheckInStreakRuleRewardItemSelect = CheckInStreakRuleRewardItem
 export type CheckInStreakRuleRewardItemInsert =
   typeof checkInStreakRuleRewardItem.$inferInsert

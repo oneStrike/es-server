@@ -13,7 +13,7 @@ import {
   RepairCheckInRewardResponseDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
 import {
-  CheckInRecordItemDto,
+  CheckInReconciliationPageItemDto,
   QueryCheckInReconciliationDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
@@ -27,6 +27,7 @@ import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 @ApiTags('签到管理')
 @Controller('admin/check-in')
 export class CheckInController {
+  // 注入签到门面服务，统一复用 libs 内的真实业务实现。
   constructor(private readonly checkInService: CheckInService) {}
 
   @Get('config/detail')
@@ -34,6 +35,7 @@ export class CheckInController {
     summary: '查询签到配置详情',
     model: CheckInConfigDetailResponseDto,
   })
+  // 查询后台签到配置详情。
   async getConfigDetail() {
     return this.checkInService.getConfigDetail()
   }
@@ -46,6 +48,7 @@ export class CheckInController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
+  // 更新后台签到配置主体。
   async updateConfig(
     @Body() body: UpdateCheckInConfigDto,
     @CurrentUser('sub') userId: number,
@@ -61,6 +64,7 @@ export class CheckInController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
+  // 仅更新签到启停开关。
   async updateEnabled(
     @Body() body: UpdateCheckInEnabledDto,
     @CurrentUser('sub') userId: number,
@@ -73,6 +77,7 @@ export class CheckInController {
     summary: '分页查询连续签到记录',
     model: CheckInStreakRuleDetailResponseDto,
   })
+  // 分页查询连续签到规则代表版本。
   async getStreakRulePage(@Query() query: QueryCheckInStreakRulePageDto) {
     return this.checkInService.getStreakRulePage(query)
   }
@@ -82,6 +87,7 @@ export class CheckInController {
     summary: '查询连续签到记录详情',
     model: CheckInStreakRuleDetailResponseDto,
   })
+  // 查询单条连续签到规则详情。
   async getStreakRuleDetail(@Query() query: IdDto) {
     return this.checkInService.getStreakRuleDetail(query)
   }
@@ -91,6 +97,7 @@ export class CheckInController {
     summary: '分页查询连续签到记录历史',
     model: CheckInStreakRuleDetailResponseDto,
   })
+  // 分页查询同一阈值规则的历史版本。
   async getStreakRuleHistoryPage(
     @Query() query: QueryCheckInStreakRuleHistoryPageDto,
   ) {
@@ -102,6 +109,7 @@ export class CheckInController {
     summary: '查询连续签到记录历史详情',
     model: CheckInStreakRuleDetailResponseDto,
   })
+  // 查询某条历史版本规则详情。
   async getStreakRuleHistoryDetail(@Query() query: IdDto) {
     return this.checkInService.getStreakRuleHistoryDetail(query)
   }
@@ -114,6 +122,7 @@ export class CheckInController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
+  // 发布新的连续签到规则版本。
   async publishStreakRule(
     @Body() body: PublishCheckInStreakRuleDto,
     @CurrentUser('sub') userId: number,
@@ -129,6 +138,7 @@ export class CheckInController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
+  // 终止当前仍可终止的连续签到规则版本。
   async terminateStreakRule(
     @Body() body: IdDto,
     @CurrentUser('sub') userId: number,
@@ -139,8 +149,9 @@ export class CheckInController {
   @Get('reconciliation/page')
   @ApiPageDoc({
     summary: '分页查询签到对账结果',
-    model: CheckInRecordItemDto,
+    model: CheckInReconciliationPageItemDto,
   })
+  // 分页查询签到奖励对账结果。
   async getReconciliationPage(@Query() query: QueryCheckInReconciliationDto) {
     return this.checkInService.getReconciliationPage(query)
   }
@@ -153,6 +164,7 @@ export class CheckInController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
+  // 手动触发签到奖励补偿重试。
   async repairReward(
     @Body() body: RepairCheckInRewardDto,
     @CurrentUser('sub') userId: number,

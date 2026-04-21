@@ -30,6 +30,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { LocalUploadProvider } from './local-upload.provider'
 import { QiniuUploadProvider } from './qiniu-upload.provider'
 import { SuperbedUploadProvider } from './superbed-upload.provider'
+import { resolveImageDimensionsFromFile } from './upload-image-dimension.util'
 import { UPLOAD_CONFIG_PROVIDER, UploadProviderEnum } from './upload.types'
 
 const pump = promisify(pipeline)
@@ -38,6 +39,7 @@ const SCENE_NAME_REGEX = /^[\w-]+$/
 const PATH_SEGMENT_REGEX = /^[\w.-]+$/
 const LEADING_DOT_REGEX = /^\./
 const TRAILING_EXTENSION_REGEX = /\.[^.]+$/
+const TRAILING_DIMENSION_SUFFIX_REGEX = /[-_]\d+x\d+$/
 const RESERVED_PATH_SEGMENTS = new Set(['.', '..'])
 
 interface MultipartFieldLike {
@@ -103,13 +105,6 @@ export class UploadService {
       throw new BadRequestException('不被允许的文件类型')
     }
 
-    const finalName = `${uuidv4()}.${ext}`
-    const objectKey = this.buildObjectKey(
-      scene,
-      fileCategory,
-      finalName,
-      pathSegments,
-    )
     const tempPath = join(this.uploadConfig.tmpDir, `.${uuidv4()}.uploading`)
 
     await fs.mkdir(this.uploadConfig.tmpDir, { recursive: true })
@@ -125,6 +120,17 @@ export class UploadService {
       }
 
       const stats = await fs.stat(tempPath)
+      const finalName = await this.resolveStoredFinalName(
+        tempPath,
+        ext,
+        fileCategory,
+      )
+      const objectKey = this.buildObjectKey(
+        scene,
+        fileCategory,
+        finalName,
+        pathSegments,
+      )
       const preparedFile = {
         tempPath,
         objectKey,
@@ -191,7 +197,12 @@ export class UploadService {
       throw new BadRequestException('上传路径不合法')
     }
 
-    const finalName = this.resolveFinalName(ext, options.finalName)
+    const finalName = await this.resolveStoredFinalName(
+      options.localPath,
+      ext,
+      fileCategory,
+      options.finalName,
+    )
     const objectKey = posix.join(...normalizedObjectKeySegments, finalName)
     const stats = await fs.stat(options.localPath)
     const preparedFile: PreparedUploadFile = {
@@ -373,6 +384,44 @@ export class UploadService {
     return `${nameWithoutExt}.${ext}`
   }
 
+  /** 为图片文件拼接尺寸后缀；尺寸不可用时保持原始文件名。 */
+  private async resolveStoredFinalName(
+    tempPath: string,
+    ext: string,
+    fileCategory: UploadFileCategory,
+    finalName?: string,
+  ) {
+    const normalizedFinalName = this.resolveFinalName(ext, finalName)
+    if (fileCategory !== 'image') {
+      return normalizedFinalName
+    }
+
+    const imageDimensions = await resolveImageDimensionsFromFile(tempPath)
+    if (!imageDimensions) {
+      return normalizedFinalName
+    }
+
+    return this.appendImageDimensionsToFinalName(
+      normalizedFinalName,
+      imageDimensions.width,
+      imageDimensions.height,
+    )
+  }
+
+  /** 将图片尺寸规范化为单个后缀，避免重复追加历史尺寸片段。 */
+  private appendImageDimensionsToFinalName(
+    finalName: string,
+    width: number,
+    height: number,
+  ) {
+    const extension = extname(finalName)
+    const nameWithoutExt = finalName
+      .replace(TRAILING_EXTENSION_REGEX, '')
+      .replace(TRAILING_DIMENSION_SUFFIX_REGEX, '')
+
+    return `${nameWithoutExt}-${width}x${height}${extension}`
+  }
+
   /**
    * 解析文件扩展名、MIME 和业务分类。
    * 优先信任探测结果，再回退到原始文件名和请求头信息，避免仅凭客户端声明放行。
@@ -399,12 +448,14 @@ export class UploadService {
       return null
     }
 
+    const requestMimeValue =
+      requestMime && requestMime !== 'application/octet-stream'
+        ? requestMime.toLowerCase()
+        : ''
     const mime =
       UPLOAD_CUSTOM_MIME_BY_EXT[ext] ||
       detectedMime?.toLowerCase() ||
-      (requestMime && requestMime !== 'application/octet-stream'
-        ? requestMime.toLowerCase()
-        : '') ||
+      requestMimeValue ||
       this.lookupMimeByExt(ext)
 
     if (!mime) {

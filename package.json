@@ -76,6 +76,7 @@
     "fastify-plugin": "^5.1.0",
     "file-type": "^22.0.1",
     "form-data": "^4.0.5",
+    "image-size": "^2.0.2",
     "ip2region.js": "3.1.8",
     "joi": "^18.1.2",
     "keyv": "^5.6.0",

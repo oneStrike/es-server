@@ -86,14 +86,19 @@ export class BaseForumTopicDto extends BaseDto {
   })
   images!: string[]
 
-  @ArrayProperty({
-    description: '主题视频列表',
+  @JsonProperty({
+    description: '主题视频 JSON 值',
     required: true,
-    default: [],
-    itemType: 'string',
-    example: ['https://cdn.example.com/forum/topic-1.mp4'],
+    validation: false,
+    example: [
+      {
+        url: 'https://cdn.example.com/forum/topic-1.mp4',
+        poster: 'https://cdn.example.com/forum/topic-1.jpg',
+        duration: 12,
+      },
+    ],
   })
-  videos!: string[]
+  videos!: JsonValue
 
   @NumberProperty({
     description: '关联的板块ID',

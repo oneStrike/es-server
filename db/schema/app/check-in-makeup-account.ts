@@ -84,7 +84,7 @@ export const checkInMakeupAccount = pgTable(
   ],
 )
 
-export type CheckInMakeupAccount = typeof checkInMakeupAccount.$inferSelect
-export type CheckInMakeupAccountSelect = CheckInMakeupAccount
+export type CheckInMakeupAccountSelect =
+  typeof checkInMakeupAccount.$inferSelect
 export type CheckInMakeupAccountInsert =
   typeof checkInMakeupAccount.$inferInsert

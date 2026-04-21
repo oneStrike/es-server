@@ -18,6 +18,7 @@ import { ApiTags } from '@nestjs/swagger'
 @ApiTags('签到')
 @Controller('app/check-in')
 export class CheckInController {
+  // 注入签到门面服务，保持 controller 为协议层薄封装。
   constructor(private readonly checkInService: CheckInService) {}
 
   @Get('summary')
@@ -25,6 +26,7 @@ export class CheckInController {
     summary: '获取当前签到摘要',
     model: CheckInSummaryResponseDto,
   })
+  // 返回当前用户的签到摘要、补签摘要和连续签到摘要。
   async getSummary(@CurrentUser('sub') userId: number) {
     return this.checkInService.getSummary(userId)
   }
@@ -34,6 +36,7 @@ export class CheckInController {
     summary: '获取当前周期签到日历',
     model: CheckInCalendarResponseDto,
   })
+  // 返回当前补签周期内的签到日历视图。
   async getCalendar(@CurrentUser('sub') userId: number) {
     return this.checkInService.getCalendar(userId)
   }
@@ -43,6 +46,7 @@ export class CheckInController {
     summary: '分页获取我的签到记录',
     model: CheckInRecordItemDto,
   })
+  // 分页返回当前用户的签到记录。
   async getMyRecords(
     @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
@@ -55,6 +59,7 @@ export class CheckInController {
     summary: '分页获取签到排行榜',
     model: CheckInLeaderboardItemDto,
   })
+  // 分页返回当前连续签到排行榜。
   async getLeaderboardPage(@Query() query: QueryCheckInLeaderboardDto) {
     return this.checkInService.getLeaderboardPage(query)
   }
@@ -64,6 +69,7 @@ export class CheckInController {
     summary: '今日签到',
     model: CheckInActionResponseDto,
   })
+  // 为当前用户执行今天的签到动作。
   async sign(@CurrentUser('sub') userId: number) {
     return this.checkInService.signToday(userId)
   }
@@ -73,6 +79,7 @@ export class CheckInController {
     summary: '补签',
     model: CheckInActionResponseDto,
   })
+  // 为当前用户执行指定自然日的补签。
   async makeup(
     @Body() body: MakeupCheckInDto,
     @CurrentUser('sub') userId: number,

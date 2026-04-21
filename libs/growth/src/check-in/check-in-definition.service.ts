@@ -1,3 +1,4 @@
+import type { CheckInStreakRuleSelect } from '@db/schema'
 import type {
   PublishCheckInStreakRuleDto,
   QueryCheckInStreakRuleHistoryPageDto,
@@ -56,20 +57,21 @@ interface StreakRulePageOrderItem {
   field: StreakRulePageOrderField
 }
 
-interface StreakRulePageRow {
-  createdAt: Date
-  effectiveFrom: Date
-  effectiveTo: Date | null
-  id: number
-  publishStrategy: number
-  repeatable: boolean
-  ruleCode: string
-  status: number
-  streakDays: number
-  updatedAt: Date
-  updatedById: number | null
-  version: number
-}
+type StreakRulePageRow = Pick<
+  CheckInStreakRuleSelect,
+  | 'id'
+  | 'ruleCode'
+  | 'streakDays'
+  | 'version'
+  | 'status'
+  | 'publishStrategy'
+  | 'effectiveFrom'
+  | 'effectiveTo'
+  | 'repeatable'
+  | 'updatedById'
+  | 'createdAt'
+  | 'updatedAt'
+>
 
 /**
  * 签到定义管理服务。
@@ -78,6 +80,7 @@ interface StreakRulePageRow {
  */
 @Injectable()
 export class CheckInDefinitionService extends CheckInServiceSupport {
+  // 注入签到定义管理所需的数据库与账本依赖。
   constructor(
     drizzle: DrizzleService,
     growthLedgerService: GrowthLedgerService,
@@ -85,6 +88,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     super(drizzle, growthLedgerService)
   }
 
+  // 查询当前唯一有效的全局签到配置详情。
   async getConfigDetail() {
     const config = await this.getRequiredConfig()
     const rewardDefinition = this.parseRewardDefinition(config)
@@ -102,6 +106,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
   }
 
+  // 更新全局签到配置，并在缺失时自动创建首条配置。
   async updateConfig(dto: UpdateCheckInConfigDto, adminUserId: number) {
     const normalized = {
       isEnabled: dto.isEnabled ? 1 : 0,
@@ -132,6 +137,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return true
   }
 
+  // 单独更新签到开关，避免覆盖其他配置字段。
   async updateEnabled(dto: UpdateCheckInEnabledDto, adminUserId: number) {
     const current = await this.getRequiredConfig()
     await this.db
@@ -144,6 +150,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return true
   }
 
+  // 查询连续签到规则主列表，并按代表版本分页返回。
   async getStreakRulePage(query: QueryCheckInStreakRulePageDto) {
     const now = new Date()
     const selectedRules = this.sortStreakRulePageRows(
@@ -165,10 +172,12 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
   }
 
+  // 查询单条连续签到规则的详情视图。
   async getStreakRuleDetail(query: { id: number }) {
     return this.getStreakRuleHistoryDetail(query)
   }
 
+  // 查询某个连续签到规则编码下的全部历史版本。
   async getStreakRuleHistoryPage(query: QueryCheckInStreakRuleHistoryPageDto) {
     const ruleCode = this.buildStreakRuleCode(query.streakDays)
     const rules = await this.listStreakRuleVersionsByCode(ruleCode)
@@ -185,6 +194,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
   }
 
+  // 查询某个历史规则版本详情，不存在时返回业务异常。
   async getStreakRuleHistoryDetail(query: { id: number }) {
     const rule = await this.db.query.checkInStreakRule.findFirst({
       where: { id: query.id },
@@ -198,6 +208,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return this.buildStreakRuleDetailView(rule)
   }
 
+  // 发布新的连续签到规则版本，并桥接旧版本的生效窗口。
   async publishStreakRule(
     dto: PublishCheckInStreakRuleDto,
     adminUserId: number,
@@ -289,6 +300,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return true
   }
 
+  // 终止指定规则版本，并在排期版本场景下回补前驱窗口。
   async terminateStreakRule(query: { id: number }, adminUserId: number) {
     await this.drizzle.withTransaction(async (tx) => {
       await tx.execute(
@@ -378,6 +390,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return true
   }
 
+  // 构建单条规则详情；若规则缺失则统一转成资源不存在异常。
   private async buildStreakRuleDetailView(
     rule: StreakRulePageRow,
     at = new Date(),
@@ -464,6 +477,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return this.extractExecutedRows<StreakRulePageRow>(rowsResult)
   }
 
+  // 按解析后的排序项对规则代表行做应用层二次排序。
   private sortStreakRulePageRows(
     rows: StreakRulePageRow[],
     orderBy: string | undefined,
@@ -486,6 +500,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     })
   }
 
+  // 解析分页排序参数，并限制在允许的字段和方向集合内。
   private parseStreakRulePageOrderBy(
     orderBy?: string,
   ): StreakRulePageOrderItem[] {
@@ -528,6 +543,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     })
   }
 
+  // 比较两条规则在指定排序字段下的先后顺序。
   private compareStreakRulePageField(
     left: StreakRulePageRow,
     right: StreakRulePageRow,
@@ -558,6 +574,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return 0
   }
 
+  // 读取指定排序字段的可比较值，并对状态字段做动态状态换算。
   private getStreakRulePageSortValue(
     rule: StreakRulePageRow,
     field: StreakRulePageOrderField,
@@ -589,6 +606,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
   }
 
+  // 生成用于 SQL 侧解析动态状态的 CASE 表达式。
   private buildResolvedStreakRuleStatusSql(at: Date): SQL {
     return sql`
       CASE
@@ -605,6 +623,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     `
   }
 
+  // 生成代表行窗口函数的排序表达式。
   private buildRepresentativeRowOrderBySql(
     status: QueryCheckInStreakRulePageDto['status'],
   ): SQL {
@@ -627,6 +646,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return sql`version DESC, id DESC`
   }
 
+  // 统一把 Drizzle execute 结果收敛成强类型行数组。
   private extractExecutedRows<T>(
     result: { rows?: T[] | null } | object | null | undefined,
   ) {
@@ -641,6 +661,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   /**
    * 批量构建连续签到记录详情，避免列表页按行重复查询奖励项。
    */
+  // 批量构建规则详情视图，并补齐奖励项和当前状态信息。
   private async buildStreakRuleDetailViews(
     rules: StreakRulePageRow[],
     at = new Date(),
@@ -696,6 +717,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     })
   }
 
+  // 根据发布策略解析规则真正的生效时间。
   private resolvePublishEffectiveFrom(
     dto: Pick<PublishCheckInStreakRuleDto, 'effectiveFrom' | 'publishStrategy'>,
     now: Date,
@@ -726,6 +748,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return effectiveFrom
   }
 
+  // 根据生效时间推导新发布规则的初始状态。
   private resolvePublishedRuleStatus(effectiveFrom: Date) {
     return effectiveFrom > new Date()
       ? CheckInStreakConfigStatusEnum.SCHEDULED

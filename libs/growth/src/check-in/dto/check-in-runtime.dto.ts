@@ -6,6 +6,7 @@ import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PickType } from '@nestjs/swagger'
@@ -128,6 +129,34 @@ export class CheckInRecordItemDto extends BaseCheckInRecordDto {
     validation: false,
   })
   rewardSettlement?: CheckInRewardSettlementSummaryDto | null
+}
+
+export class CheckInReconciliationPageItemDto extends IntersectionType(
+  PickType(BaseDto, ['createdAt', 'updatedAt'] as const),
+  PickType(CheckInRecordItemDto, [
+    'signDate',
+    'recordType',
+    'rewardSettlementId',
+    'resolvedRewardSourceType',
+    'resolvedRewardRuleKey',
+    'resolvedRewardItems',
+    'grants',
+    'rewardSettlement',
+  ] as const),
+) {
+  @NumberProperty({
+    description: '签到记录 ID。',
+    example: 1,
+    validation: false,
+  })
+  recordId!: number
+
+  @NumberProperty({
+    description: '用户 ID。',
+    example: 1,
+    validation: false,
+  })
+  userId!: number
 }
 
 class CheckInPeriodWindowDto {

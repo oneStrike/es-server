@@ -102,6 +102,5 @@ export const checkInRecord = pgTable(
   ],
 )
 
-export type CheckInRecord = typeof checkInRecord.$inferSelect
-export type CheckInRecordSelect = CheckInRecord
+export type CheckInRecordSelect = typeof checkInRecord.$inferSelect
 export type CheckInRecordInsert = typeof checkInRecord.$inferInsert

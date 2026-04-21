@@ -77,6 +77,5 @@ export const checkInStreakGrant = pgTable(
   ],
 )
 
-export type CheckInStreakGrant = typeof checkInStreakGrant.$inferSelect
-export type CheckInStreakGrantSelect = CheckInStreakGrant
+export type CheckInStreakGrantSelect = typeof checkInStreakGrant.$inferSelect
 export type CheckInStreakGrantInsert = typeof checkInStreakGrant.$inferInsert

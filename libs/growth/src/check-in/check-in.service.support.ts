@@ -15,6 +15,7 @@ import type {
   CheckInDateRewardRuleView,
   CheckInMakeupAccountView,
   CheckInMakeupConsumePlanItem,
+  CheckInMakeupWindowView,
   CheckInPatternRewardRuleView,
   CheckInResolvedReward,
   CheckInRewardDefinition,
@@ -51,6 +52,18 @@ import {
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
+type CheckInRewardSettlementSummaryRecord = Pick<
+  GrowthRewardSettlementSelect,
+  | 'id'
+  | 'settlementStatus'
+  | 'settlementResultType'
+  | 'ledgerRecordIds'
+  | 'retryCount'
+  | 'lastRetryAt'
+  | 'settledAt'
+  | 'lastError'
+>
+
 /**
  * 统一签到域 support 基类。
  *
@@ -59,63 +72,78 @@ dayjs.extend(timezone)
 export abstract class CheckInServiceSupport {
   protected readonly logger = new Logger(CheckInServiceSupport.name)
 
+  // 注入签到域共享的数据库访问和账本依赖。
   constructor(
     protected readonly drizzle: DrizzleService,
     protected readonly growthLedgerService: GrowthLedgerService,
   ) {}
 
+  // 暴露当前 Drizzle 数据库实例。
   protected get db() {
     return this.drizzle.db
   }
 
+  // 暴露签到配置表 owner。
   protected get checkInConfigTable() {
     return this.drizzle.schema.checkInConfig
   }
 
+  // 暴露补签事实表 owner。
   protected get checkInMakeupFactTable() {
     return this.drizzle.schema.checkInMakeupFact
   }
 
+  // 暴露补签账户表 owner。
   protected get checkInMakeupAccountTable() {
     return this.drizzle.schema.checkInMakeupAccount
   }
 
+  // 暴露签到事实表 owner。
   protected get checkInRecordTable() {
     return this.drizzle.schema.checkInRecord
   }
 
+  // 暴露连续签到规则表 owner。
   protected get checkInStreakRuleTable() {
     return this.drizzle.schema.checkInStreakRule
   }
 
+  // 暴露连续签到规则奖励项表 owner。
   protected get checkInStreakRuleRewardItemTable() {
     return this.drizzle.schema.checkInStreakRuleRewardItem
   }
 
+  // 暴露连续签到进度表 owner。
   protected get checkInStreakProgressTable() {
     return this.drizzle.schema.checkInStreakProgress
   }
 
+  // 暴露连续签到奖励发放表 owner。
   protected get checkInStreakGrantTable() {
     return this.drizzle.schema.checkInStreakGrant
   }
 
+  // 暴露连续签到奖励发放奖励项表 owner。
   protected get checkInStreakGrantRewardItemTable() {
     return this.drizzle.schema.checkInStreakGrantRewardItem
   }
 
+  // 暴露通用成长奖励补偿表 owner。
   protected get growthRewardSettlementTable() {
     return this.drizzle.schema.growthRewardSettlement
   }
 
+  // 读取应用统一配置的时区。
   protected getAppTimeZone() {
     return getAppTimeZone()
   }
 
+  // 把 Date 或日期字符串规范化成 YYYY-MM-DD。
   protected formatDateOnly(value: Date | string) {
     return formatDateOnlyInAppTimeZone(value)
   }
 
+  // 解析日期字符串；非法时统一抛协议层参数错误。
   protected parseDateOnly(value: string, fieldLabel = '日期') {
     const parsed = parseDateOnlyInAppTimeZone(value)
     if (!parsed) {
@@ -124,6 +152,7 @@ export abstract class CheckInServiceSupport {
     return this.formatDateOnly(parsed)
   }
 
+  // 把 Date / string / null 统一折叠成日期字符串或空串。
   protected toDateOnlyValue(value: string | Date | null | undefined) {
     if (!value) {
       return ''
@@ -131,6 +160,7 @@ export abstract class CheckInServiceSupport {
     return typeof value === 'string' ? value : this.formatDateOnly(value)
   }
 
+  // 仅在输入是普通对象时返回可安全读取的记录结构。
   protected asRecord<T>(value: T) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return undefined
@@ -138,18 +168,22 @@ export abstract class CheckInServiceSupport {
     return value as Record<string, unknown>
   }
 
+  // 仅在输入是数组时返回原数组。
   protected asArray<T>(value: T) {
     return Array.isArray(value) ? value : undefined
   }
 
+  // 提取异常可读信息，用于日志和诊断输出。
   protected stringifyError(error: unknown) {
     return error instanceof Error ? error.message : String(error)
   }
 
+  // 生成连续签到规则的稳定编码。
   protected buildStreakRuleCode(streakDays: number) {
     return `streak-day-${streakDays}`
   }
 
+  // 解析并校验奖励项列表，必要时做去重和空值控制。
   protected parseRewardItems(
     value?: GrowthRewardItems | null,
     options: { allowEmpty: boolean } = { allowEmpty: true },
@@ -187,6 +221,7 @@ export abstract class CheckInServiceSupport {
     return rewardItems
   }
 
+  // 从持久化 JSON 中恢复奖励项列表，并复用统一校验逻辑。
   protected parseStoredRewardItems<T>(
     value: T,
     options: { allowEmpty: boolean } = { allowEmpty: true },
@@ -198,6 +233,7 @@ export abstract class CheckInServiceSupport {
     )
   }
 
+  // 解析单条奖励项，并限制在签到域支持的字段集合内。
   protected parseRewardItem(
     value: unknown,
     index: number,
@@ -247,6 +283,7 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  // 规范化具体日期奖励规则，并校验日期和奖励项合法性。
   protected normalizeDateRewardRules(
     rules:
       | CheckInDateRewardRuleFieldsDto[]
@@ -275,6 +312,7 @@ export abstract class CheckInServiceSupport {
     )
   }
 
+  // 规范化周期奖励规则，并按周/月模式校验字段组合。
   protected normalizePatternRewardRules(
     rules:
       | BaseCheckInPatternRewardRuleDto[]
@@ -386,6 +424,7 @@ export abstract class CheckInServiceSupport {
     )
   }
 
+  // 规范化连续奖励规则，并补齐默认编码、状态和重复发放标记。
   protected normalizeStreakRewardRules(
     rules:
       | BaseCheckInStreakRewardRuleDto[]
@@ -437,6 +476,7 @@ export abstract class CheckInServiceSupport {
     })
   }
 
+  // 从配置表记录中解析出运行时使用的奖励定义。
   protected parseRewardDefinition(
     config: Pick<
       CheckInConfigSelect,
@@ -464,6 +504,7 @@ export abstract class CheckInServiceSupport {
     } satisfies CheckInRewardDefinition
   }
 
+  // 把规则表记录和奖励项快照收敛成内部规则版本定义。
   protected parseStreakRuleDefinition(
     rule: Pick<
       CheckInStreakRuleSelect,
@@ -494,6 +535,7 @@ export abstract class CheckInServiceSupport {
     } satisfies CheckInStreakRuleDefinition
   }
 
+  // 按当前时间解析连续签到规则的真实生命周期状态。
   protected resolveStreakRuleStatus(
     rule: Pick<
       CheckInStreakRuleSelect,
@@ -516,6 +558,7 @@ export abstract class CheckInServiceSupport {
     return CheckInStreakConfigStatusEnum.ACTIVE
   }
 
+  // 计算按签到日期回看配置时应使用的查询时间点。
   protected resolveConfigLookupAt(signDate: string) {
     return dayjs
       .tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
@@ -523,6 +566,7 @@ export abstract class CheckInServiceSupport {
       .toDate()
   }
 
+  // 按规则 ID 批量加载规则奖励项，并按规则分组返回。
   protected async loadStreakRewardRuleRowsByIds(
     targetRuleIds: number[],
     db: Db = this.db,
@@ -568,6 +612,7 @@ export abstract class CheckInServiceSupport {
     }))
   }
 
+  // 查询某个规则编码下的全部历史版本，并补齐奖励项快照。
   protected async listStreakRuleVersionsByCode(
     ruleCode: string,
     db: Db = this.db,
@@ -582,6 +627,7 @@ export abstract class CheckInServiceSupport {
       )
   }
 
+  // 查询某个规则编码下的最新版本。
   protected async findLatestStreakRuleVersion(
     ruleCode: string,
     db: Db = this.db,
@@ -598,6 +644,7 @@ export abstract class CheckInServiceSupport {
     return rule
   }
 
+  // 断言当前激活规则中不存在重复的连续签到天数。
   protected assertNoDuplicatedActiveStreakDays(
     rules: Array<Pick<CheckInStreakRuleSelect, 'id' | 'streakDays'>>,
   ) {
@@ -612,6 +659,7 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  // 查询某个时点生效的全部连续签到规则。
   protected async listActiveStreakRulesAt(at: Date | string, db: Db = this.db) {
     const lookupAt =
       typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
@@ -643,6 +691,7 @@ export abstract class CheckInServiceSupport {
     )
   }
 
+  // 把规则表行转换成运行时使用的连续奖励视图。
   protected toStreakRewardRuleViews(
     rules: Array<
       Pick<
@@ -681,6 +730,7 @@ export abstract class CheckInServiceSupport {
     )
   }
 
+  // 批量加载连续奖励发放记录对应的奖励项快照。
   protected async buildGrantRewardItemMap(
     grantIds: number[],
     db: Db = this.db,
@@ -712,6 +762,7 @@ export abstract class CheckInServiceSupport {
     return rewardMap
   }
 
+  // 读取当前唯一的签到配置；配置缺失时返回空值。
   protected async getCurrentConfig(db: Db = this.db) {
     const [config] = await db
       .select()
@@ -724,6 +775,7 @@ export abstract class CheckInServiceSupport {
     return config
   }
 
+  // 读取当前签到配置；缺失时统一抛资源不存在异常。
   protected async getRequiredConfig(db: Db = this.db) {
     const config = await this.getCurrentConfig(db)
     if (!config) {
@@ -735,6 +787,7 @@ export abstract class CheckInServiceSupport {
     return config
   }
 
+  // 读取当前已启用的签到配置；未开启时统一抛业务异常。
   protected async getEnabledConfig(db: Db = this.db) {
     const config = await this.getRequiredConfig(db)
     if (config.isEnabled !== 1) {
@@ -746,10 +799,11 @@ export abstract class CheckInServiceSupport {
     return config
   }
 
+  // 按补签周期类型计算某个自然日所在的周期窗口。
   protected buildMakeupWindow(
     date: string,
     periodType: CheckInMakeupPeriodTypeEnum,
-  ) {
+  ): CheckInMakeupWindowView {
     const targetDate = dayjs
       .tz(date, 'YYYY-MM-DD', this.getAppTimeZone())
       .startOf('day')
@@ -777,15 +831,17 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  // 判断目标签到日期是否仍位于当前补签窗口内。
   protected isDateWithinMakeupWindow(
     signDate: string,
-    window: ReturnType<CheckInServiceSupport['buildMakeupWindow']>,
+    window: CheckInMakeupWindowView,
   ) {
     return (
       signDate >= window.periodStartDate && signDate <= window.periodEndDate
     )
   }
 
+  // 查询用户最近一次补签账户快照。
   protected async getLatestAccount(userId: number, db: Db = this.db) {
     const [account] = await db
       .select()
@@ -796,6 +852,7 @@ export abstract class CheckInServiceSupport {
     return account
   }
 
+  // 查询当前周期对应的补签账户。
   protected async getCurrentMakeupAccount(
     userId: number,
     periodType: CheckInMakeupPeriodTypeEnum,
@@ -816,6 +873,7 @@ export abstract class CheckInServiceSupport {
     return account
   }
 
+  // 构建当前周期的补签账户读模型，不存在账户时回退到默认视图。
   protected async buildCurrentMakeupAccountView(
     userId: number,
     config: CheckInConfigSelect,
@@ -855,6 +913,7 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  // 确保当前周期补签账户存在，并在跨周期时完成滚动初始化。
   protected async ensureCurrentMakeupAccount(
     userId: number,
     config: CheckInConfigSelect,
@@ -970,6 +1029,7 @@ export abstract class CheckInServiceSupport {
     return concurrent
   }
 
+  // 根据当前账户余额决定本次补签应消费哪类额度。
   protected buildMakeupConsumePlan(
     account: Pick<
       CheckInMakeupAccountSelect,
@@ -1004,6 +1064,7 @@ export abstract class CheckInServiceSupport {
     )
   }
 
+  // 在事务内写入补签消费事实并乐观更新当前账户。
   protected async consumeMakeupAllowance(
     account: CheckInMakeupAccountSelect,
     consumePlan: CheckInMakeupConsumePlanItem[],
@@ -1064,6 +1125,7 @@ export abstract class CheckInServiceSupport {
     return nextAccount
   }
 
+  // 校验目标用户是否存在，避免后续事实写入出现悬空引用。
   protected async ensureUserExists(userId: number, db: Db = this.db) {
     const user = await db.query.appUser.findFirst({
       where: { id: userId },
@@ -1077,6 +1139,7 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  // 读取或初始化连续签到进度，处理并发首建场景。
   protected async getOrCreateStreakProgress(userId: number, tx: Db) {
     const existing = await tx.query.checkInStreakProgress.findFirst({
       where: { userId },
@@ -1114,6 +1177,7 @@ export abstract class CheckInServiceSupport {
     return concurrent
   }
 
+  // 按签到记录序列重算连续签到聚合结果。
   protected recomputeStreakAggregation(
     records: Pick<CheckInRecordSelect, 'signDate'>[],
     options?: { streakStartedAt?: string | null },
@@ -1172,6 +1236,7 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  // 解析某个签到日期命中的基础奖励来源和快照。
   protected resolveRewardForDate(
     rewardDefinition: CheckInRewardDefinition,
     date: string,
@@ -1216,6 +1281,7 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  // 按优先级解析某日命中的周期模式奖励规则。
   protected resolvePatternRewardRuleByPriority(
     rules: CheckInPatternRewardRuleView[],
     periodType: CheckInMakeupPeriodTypeEnum,
@@ -1249,6 +1315,7 @@ export abstract class CheckInServiceSupport {
     )
   }
 
+  // 生成周期奖励规则的稳定业务键。
   protected buildPatternRuleKey(rule: CheckInPatternRewardRuleView) {
     if (rule.patternType === CheckInPatternRewardRuleTypeEnum.WEEKDAY) {
       return `WEEKDAY:${rule.weekday}`
@@ -1259,6 +1326,7 @@ export abstract class CheckInServiceSupport {
     return 'MONTH_LAST_DAY'
   }
 
+  // 解析下一档仍可命中的连续奖励规则。
   protected resolveNextStreakReward(
     rules: CheckInStreakRewardRuleView[],
     currentStreak: number,
@@ -1271,6 +1339,7 @@ export abstract class CheckInServiceSupport {
     return nextRule ?? undefined
   }
 
+  // 根据最后签到日期判断当前连续天数是否仍然有效。
   protected resolveEffectiveCurrentStreak(
     currentStreak: number,
     lastSignedDate: string | Date | null | undefined,
@@ -1282,6 +1351,7 @@ export abstract class CheckInServiceSupport {
     return this.isEffectiveStreakDate(lastSignedDate, today) ? currentStreak : 0
   }
 
+  // 根据连续有效性返回最近一次有效签到日期。
   protected resolveEffectiveLastSignedDate(
     lastSignedDate: string | Date | null | undefined,
     today: string,
@@ -1292,6 +1362,7 @@ export abstract class CheckInServiceSupport {
     return this.toDateOnlyValue(lastSignedDate) || undefined
   }
 
+  // 判断最近签到日期是否仍属于当前连续区间。
   protected isEffectiveStreakDate(
     lastSignedDate: string | Date | null | undefined,
     today: string,
@@ -1312,6 +1383,7 @@ export abstract class CheckInServiceSupport {
     )
   }
 
+  // 构建用于排行榜和活跃状态筛选的连续进度条件。
   protected buildActiveStreakProgressWhere(today: string): SQL {
     const yesterday = dayjs
       .tz(today, 'YYYY-MM-DD', this.getAppTimeZone())
@@ -1327,6 +1399,7 @@ export abstract class CheckInServiceSupport {
     )!
   }
 
+  // 解析当前可触发的连续奖励规则，并处理重复发放语义。
   protected resolveEligibleGrantRules(
     rules: CheckInStreakRewardRuleView[],
     streakByDate: Record<string, number>,
@@ -1395,21 +1468,9 @@ export abstract class CheckInServiceSupport {
     return candidates
   }
 
+  // 把补偿事实映射成对外使用的补偿摘要。
   protected toRewardSettlementSummary(
-    settlement:
-      | Pick<
-          GrowthRewardSettlementSelect,
-          | 'id'
-          | 'settlementStatus'
-          | 'settlementResultType'
-          | 'ledgerRecordIds'
-          | 'retryCount'
-          | 'lastRetryAt'
-          | 'settledAt'
-          | 'lastError'
-        >
-        | null
-        | undefined,
+    settlement: CheckInRewardSettlementSummaryRecord | null | undefined,
   ): CheckInRewardSettlementSummaryDto | null {
     if (!settlement) {
       return null
@@ -1420,6 +1481,7 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  // 按 ID 批量查询奖励补偿事实，并收敛成 Map 便于后续复用。
   protected async buildSettlementMapById(ids: number[], db: Db = this.db) {
     if (ids.length === 0) {
       return new Map<number, GrowthRewardSettlementSelect>()
@@ -1432,6 +1494,7 @@ export abstract class CheckInServiceSupport {
     return new Map(rows.map((row) => [row.id, row]))
   }
 
+  // 找出字符串列表中的第一个重复值。
   protected findDuplicateValue(values: string[]) {
     const seen = new Set<string>()
     for (const value of values) {
@@ -1443,6 +1506,7 @@ export abstract class CheckInServiceSupport {
     return undefined
   }
 
+  // 比较两条周期奖励规则的排序优先级。
   protected comparePatternRewardRules(
     left: CheckInPatternRewardRuleView,
     right: CheckInPatternRewardRuleView,

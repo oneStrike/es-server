@@ -1,13 +1,11 @@
-import {
-  GrowthRewardSettlementResultTypeEnum,
-  GrowthRewardSettlementStatusEnum,
-} from '@libs/growth/growth-reward/growth-reward.constant'
+import { BaseGrowthRewardSettlementDto } from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
 import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { BaseDto } from '@libs/platform/dto/base.dto'
+import { PickType } from '@nestjs/swagger'
 import {
   CheckInRecordTypeEnum,
   CheckInRewardSourceTypeEnum,
@@ -64,66 +62,16 @@ export class BaseCheckInRecordDto extends BaseDto {
   rewardSettlementId?: number | null
 }
 
-export class CheckInRewardSettlementSummaryDto {
-  @NumberProperty({
-    description: '奖励补偿记录 ID。',
-    example: 1,
-    validation: false,
-  })
-  id!: number
-
-  @EnumProperty({
-    description: '补偿状态（0=待补偿重试；1=已补偿成功；2=终态失败）。',
-    example: GrowthRewardSettlementStatusEnum.PENDING,
-    enum: GrowthRewardSettlementStatusEnum,
-    validation: false,
-  })
-  settlementStatus!: GrowthRewardSettlementStatusEnum
-
-  @EnumProperty({
-    description: '补偿结果类型（1=真实落账；2=命中幂等；3=处理失败）。',
-    example: GrowthRewardSettlementResultTypeEnum.APPLIED,
-    enum: GrowthRewardSettlementResultTypeEnum,
-    required: false,
-    validation: false,
-  })
-  settlementResultType?: GrowthRewardSettlementResultTypeEnum | null
-
-  @ArrayProperty({
-    description: '关联到账本记录 ID 列表。',
-    itemType: 'number',
-    validation: false,
-  })
-  ledgerRecordIds!: number[]
-
-  @NumberProperty({
-    description: '重试次数。',
-    example: 0,
-    validation: false,
-  })
-  retryCount!: number
-
-  @StringProperty({
-    description: '最近一次重试时间。',
-    example: '2026-04-19T12:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  lastRetryAt?: string | Date | null
-
-  @StringProperty({
-    description: '最近一次落定时间。',
-    example: '2026-04-19T12:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  settledAt?: string | Date | null
-
-  @StringProperty({
-    description: '最近一次失败原因。',
-    example: '签到奖励发放失败',
-    required: false,
-    validation: false,
-  })
-  lastError?: string | null
-}
+export class CheckInRewardSettlementSummaryDto extends PickType(
+  BaseGrowthRewardSettlementDto,
+  [
+    'id',
+    'settlementStatus',
+    'settlementResultType',
+    'ledgerRecordIds',
+    'retryCount',
+    'lastRetryAt',
+    'settledAt',
+    'lastError',
+  ] as const,
+) {}

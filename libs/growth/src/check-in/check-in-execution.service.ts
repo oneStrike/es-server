@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
-import type { CheckInRewardItems } from './check-in.type'
+import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
 import type {
   MakeupCheckInDto,
   RepairCheckInRewardDto,
@@ -33,6 +33,10 @@ import {
 import { CheckInServiceSupport } from './check-in.service.support'
 
 const CHECK_IN_WRITE_RETRY_LIMIT = 3
+interface CheckInSignAction {
+  recordId: number
+  triggeredGrantIds: number[]
+}
 
 /**
  * 签到执行服务。
@@ -41,6 +45,7 @@ const CHECK_IN_WRITE_RETRY_LIMIT = 3
  */
 @Injectable()
 export class CheckInExecutionService extends CheckInServiceSupport {
+  // 注入签到执行所需的数据库、账本与奖励补偿服务。
   constructor(
     drizzle: DrizzleService,
     growthLedgerService: GrowthLedgerService,
@@ -49,6 +54,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     super(drizzle, growthLedgerService)
   }
 
+  // 为当前自然日执行正常签到。
   async signToday(userId: number) {
     return this.performSign({
       userId,
@@ -59,6 +65,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     })
   }
 
+  // 为指定历史自然日执行补签。
   async makeup(dto: MakeupCheckInDto, userId: number) {
     return this.performSign({
       userId,
@@ -69,6 +76,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     })
   }
 
+  // 按目标类型触发基础奖励或连续奖励的补偿重试。
   async repairReward(dto: RepairCheckInRewardDto, adminUserId: number) {
     if (dto.targetType === CheckInRepairTargetTypeEnum.RECORD_REWARD) {
       if (!dto.recordId) {
@@ -97,6 +105,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
+  // 统一执行签到/补签主流程，并在事务内完成事实写入和奖励补偿。
   private async performSign(input: {
     userId: number
     signDate: string
@@ -127,9 +136,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     const config = await this.getEnabledConfig()
     const rewardDefinition = this.parseRewardDefinition(config)
-    let action:
-      | { recordId: number, triggeredGrantIds: number[] }
-      | undefined
+    let action: CheckInSignAction | undefined
 
     for (let attempt = 0; attempt < CHECK_IN_WRITE_RETRY_LIMIT; attempt++) {
       try {
@@ -164,7 +171,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
             this.assertMakeupAllowed(input.signDate, today, window)
             const consumePlan = this.buildMakeupConsumePlan(account)
-            account = await this.consumeMakeupAllowance(account, consumePlan, tx)
+            account = await this.consumeMakeupAllowance(
+              account,
+              consumePlan,
+              tx,
+            )
           }
 
           const rewardResolution = this.resolveRewardForDate(
@@ -259,6 +270,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return this.buildActionResponse(action.recordId, action.triggeredGrantIds)
   }
 
+  // 根据最新连续签到状态计算并发放本次命中的连续奖励。
   private async processStreakGrants(userId: number, tx: Db, now: Date) {
     const progress = await this.getOrCreateStreakProgress(userId, tx)
     const records = await this.listUserRecords(userId, tx)
@@ -283,13 +295,18 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     for (const [triggerSignDate, streak] of Object.entries(
       aggregation.streakByDate,
     )) {
-      if (aggregation.streakStartedAt && triggerSignDate < aggregation.streakStartedAt) {
+      if (
+        aggregation.streakStartedAt &&
+        triggerSignDate < aggregation.streakStartedAt
+      ) {
         continue
       }
 
-      const ruleLookupAt =
-        triggerSignDate === today ? now : triggerSignDate
-      const activeRuleRows = await this.listActiveStreakRulesAt(ruleLookupAt, tx)
+      const ruleLookupAt = triggerSignDate === today ? now : triggerSignDate
+      const activeRuleRows = await this.listActiveStreakRulesAt(
+        ruleLookupAt,
+        tx,
+      )
       const activeRules = this.toStreakRewardRuleViews(
         activeRuleRows,
         ruleLookupAt,
@@ -304,7 +321,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         aggregation.streakStartedAt,
       )
 
-      const ruleIdMap = new Map(activeRuleRows.map((rule) => [rule.ruleCode, rule.id]))
+      const ruleIdMap = new Map(
+        activeRuleRows.map((rule) => [rule.ruleCode, rule.id]),
+      )
 
       for (const candidate of grantCandidates) {
         const ruleId = ruleIdMap.get(candidate.rule.ruleCode)
@@ -346,7 +365,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         if (!grant) {
           continue
         }
-        await this.insertGrantRewardItems(grant.id, candidate.rule.rewardItems, tx)
+        await this.insertGrantRewardItems(
+          grant.id,
+          candidate.rule.rewardItems,
+          tx,
+        )
         triggeredGrantIds.push(grant.id)
       }
     }
@@ -355,6 +378,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return triggeredGrantIds
   }
 
+  // 校验补签日期是否仍位于当前可补签窗口内。
   private assertMakeupAllowed(
     signDate: string,
     today: string,
@@ -374,6 +398,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
+  // 组装签到动作响应，补齐账户、奖励和连续签到摘要。
   private async buildActionResponse(
     recordId: number,
     triggeredGrantIds: number[],
@@ -428,9 +453,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
+  // 为基础签到奖励创建或执行补偿结算。
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number, isRetry?: boolean },
+    context: {
+      actorUserId?: number
+      isRetry?: boolean
+    },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -524,9 +553,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
+  // 为连续签到奖励创建或执行补偿结算。
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number, isRetry?: boolean },
+    context: {
+      actorUserId?: number
+      isRetry?: boolean
+    },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -597,7 +630,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         throw error
       }
 
-      const message = error instanceof Error ? error.message : '连续奖励发放失败'
+      const message =
+        error instanceof Error ? error.message : '连续奖励发放失败'
       this.logger.warn(
         `check_in_streak_grant_reward_failed grantId=${grantId} error=${message}`,
       )
@@ -626,11 +660,12 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
+  // 按奖励项逐条落到账本，并返回每条落账结果。
   private async applyRewardItems(
     tx: Db,
     input: {
       userId: number
-      rewardItems: CheckInRewardItems
+      rewardItems: GrowthRewardItems
       baseBizKey: string
       source: GrowthLedgerSourceEnum
       actorUserId?: number
@@ -670,6 +705,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
+  // 将奖励规则资产类型映射到账本资产类型。
   private resolveLedgerAssetType(assetType: GrowthRewardRuleAssetTypeEnum) {
     if (
       assetType !== GrowthRewardRuleAssetTypeEnum.POINTS &&
@@ -684,12 +720,14 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       : GrowthAssetTypeEnum.EXPERIENCE
   }
 
+  // 生成签到奖励落账备注，便于后续排障和审计。
   private buildRewardItemRemark(assetType: GrowthRewardRuleAssetTypeEnum) {
     return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
       ? '签到奖励（积分）'
       : '签到奖励（经验）'
   }
 
+  // 汇总账本落账结果，收敛成补偿结果类型。
   private resolveRewardResultType(results: GrowthLedgerApplyResult[]) {
     if (results.some((result) => result.duplicated !== true)) {
       return CheckInRewardResultTypeEnum.APPLIED
@@ -697,6 +735,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return CheckInRewardResultTypeEnum.IDEMPOTENT
   }
 
+  // 读取用户全部签到记录，供连续签到重算使用。
   private async listUserRecords(userId: number, tx: Db) {
     return tx
       .select({
@@ -710,9 +749,14 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       )
   }
 
+  // 根据最新签到记录重算并更新连续签到进度。
   private async updateStreakProgress(
-    progress: Awaited<ReturnType<CheckInExecutionService['getOrCreateStreakProgress']>>,
-    aggregation: ReturnType<CheckInExecutionService['recomputeStreakAggregation']>,
+    progress: Awaited<
+      ReturnType<CheckInExecutionService['getOrCreateStreakProgress']>
+    >,
+    aggregation: ReturnType<
+      CheckInExecutionService['recomputeStreakAggregation']
+    >,
     tx: Db,
   ) {
     const [updated] = await tx
@@ -738,9 +782,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
+  // 把连续奖励快照奖励项逐条写入关系表。
   private async insertGrantRewardItems(
     grantId: number,
-    rewardItems: CheckInRewardItems,
+    rewardItems: GrowthRewardItems,
     tx: Db,
   ) {
     if (rewardItems.length === 0) {
@@ -757,10 +802,12 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     )
   }
 
+  // 生成签到事实的稳定幂等键。
   private buildRecordBizKey(userId: number, signDate: string) {
     return `checkin:record:user:${userId}:date:${signDate}`
   }
 
+  // 生成连续奖励发放事实的稳定幂等键。
   private buildGrantBizKey(
     userId: number,
     ruleCode: string,
@@ -778,10 +825,12 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     ].join(':')
   }
 
+  // 生成基础奖励补偿事实的稳定幂等键。
   private buildBaseRewardBizKey(recordId: number, userId: number) {
     return `checkin:base:record:${recordId}:user:${userId}`
   }
 
+  // 生成连续奖励补偿事实的稳定幂等键。
   private buildStreakRewardBizKey(
     grantId: number,
     ruleCode: string,
@@ -790,6 +839,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return `checkin:streak:grant:${grantId}:rule:${ruleCode}:user:${userId}`
   }
 
+  // 确保基础奖励存在结算事实，必要时补建待处理记录。
   private async ensureRecordRewardSettlement(
     record: {
       id: number
@@ -829,6 +879,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return settlement
   }
 
+  // 确保连续奖励存在结算事实，必要时补建待处理记录。
   private async ensureGrantRewardSettlement(
     grant: {
       id: number
@@ -870,6 +921,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return settlement
   }
 
+  // 读取奖励补偿记录，不存在时统一返回资源不存在异常。
   private async getSettlementById(id: number, tx?: Db) {
     return (tx ?? this.db).query.growthRewardSettlement.findFirst({
       where: { id },

@@ -49,7 +49,7 @@ export const forumTopic = pgTable("forum_topic", {
   /**
    * 视频列表
    */
-  videos: varchar({ length: 500 }).array().default(sql`ARRAY[]::varchar[]`).notNull(),
+  videos: jsonb().default(sql`'[]'::jsonb`).notNull(),
   /**
    * 是否置顶
    */

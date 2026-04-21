@@ -50,8 +50,7 @@ export const checkInStreakGrantRewardItem = pgTable(
   ],
 )
 
-export type CheckInStreakGrantRewardItem =
+export type CheckInStreakGrantRewardItemSelect =
   typeof checkInStreakGrantRewardItem.$inferSelect
-export type CheckInStreakGrantRewardItemSelect = CheckInStreakGrantRewardItem
 export type CheckInStreakGrantRewardItemInsert =
   typeof checkInStreakGrantRewardItem.$inferInsert

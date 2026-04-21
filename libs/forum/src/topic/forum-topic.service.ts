@@ -35,6 +35,7 @@ import { MentionSourceTypeEnum } from '@libs/interaction/mention/mention.constan
 import { MentionService } from '@libs/interaction/mention/mention.service'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { extractPlainTextFromRichTextContent } from '@libs/platform/utils'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
@@ -67,7 +68,6 @@ import {
 } from './dto/forum-topic.dto'
 import {
   FORUM_TOPIC_IMAGE_MAX_COUNT,
-  FORUM_TOPIC_VIDEO_MAX_COUNT,
 } from './forum-topic.constant'
 
 type PublicTopicPageRow = Pick<
@@ -447,12 +447,12 @@ export class ForumTopicService {
   }
 
   /**
-   * 规范化论坛主题媒体列表。
+   * 规范化论坛主题图片列表。
    * - 去除空白字符串
    * - 保留首个出现顺序并去重
    * - 统一校验单项长度与数量上限
    */
-  private normalizeMediaList(
+  private normalizeImageList(
     value: string[] | null | undefined,
     options: {
       label: string
@@ -492,6 +492,34 @@ export class ForumTopicService {
   }
 
   /**
+   * 规范化论坛主题视频 JSON 值。
+   * 创建时默认空数组，更新时未传字段保留当前值；一旦显式传入则整字段覆盖旧值。
+   */
+  private normalizeVideoValue(
+    value: ForumTopicSelect['videos'] | null | undefined,
+    options: {
+      fallback: ForumTopicSelect['videos']
+    },
+  ) {
+    if (value === undefined) {
+      return options.fallback
+    }
+
+    const candidate = value ?? []
+
+    try {
+      const serialized = JSON.stringify(candidate)
+      if (serialized === undefined) {
+        throw new Error('invalid json')
+      }
+
+      return JSON.parse(serialized) as ForumTopicSelect['videos']
+    } catch {
+      throw new BadRequestException('videos 必须是合法 JSON')
+    }
+  }
+
+  /**
    * 统一规范化论坛主题媒体输入。
    * 创建时补空数组，更新时对未传字段保留当前值。
    */
@@ -503,14 +531,12 @@ export class ForumTopicService {
     },
   ) {
     return {
-      images: this.normalizeMediaList(media.images, {
+      images: this.normalizeImageList(media.images, {
         label: '图片',
         maxCount: FORUM_TOPIC_IMAGE_MAX_COUNT,
         fallback: fallback.images,
       }),
-      videos: this.normalizeMediaList(media.videos, {
-        label: '视频',
-        maxCount: FORUM_TOPIC_VIDEO_MAX_COUNT,
+      videos: this.normalizeVideoValue(media.videos, {
         fallback: fallback.videos,
       }),
     }
@@ -638,7 +664,7 @@ export class ForumTopicService {
     )
   }
 
-  // 为创建主题补齐标题；未传标题时回退到正文前 30 个字符。
+  // 为创建主题补齐标题；未传标题时优先从富文本正文提纯可读文本再截取前 30 个字符。
   private resolveCreateTopicTitle(
     title: CreateForumTopicDto['title'],
     content: CreateForumTopicDto['content'],
@@ -648,7 +674,8 @@ export class ForumTopicService {
       return normalizedTitle
     }
 
-    return content.trim().slice(0, 30)
+    const fallbackTitle = extractPlainTextFromRichTextContent(content)
+    return (fallbackTitle || content.trim()).slice(0, 30)
   }
 
   /**
@@ -1028,7 +1055,7 @@ export class ForumTopicService {
       geoCity: topic.geoCity ?? undefined,
       geoIsp: topic.geoIsp ?? undefined,
       images: topic.images,
-      videos: topic.videos,
+      videos: topic.videos as JsonValue,
       isPinned: topic.isPinned,
       isFeatured: topic.isFeatured,
       isLocked: topic.isLocked,
