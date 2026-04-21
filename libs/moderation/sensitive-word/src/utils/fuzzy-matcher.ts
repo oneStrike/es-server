@@ -89,10 +89,7 @@ export class FuzzyMatcher {
   private matchWithBKTree(text: string) {
     const results: FuzzyMatchResult[] = []
     const textLen = text.length
-    const maxWindowLength = Math.max(
-      1,
-      this.maxWordLength + this.maxDistance,
-    )
+    const maxWindowLength = Math.max(1, this.maxWordLength + this.maxDistance)
 
     for (let i = 0; i < textLen; i++) {
       const maxEnd = Math.min(i + maxWindowLength, textLen)
@@ -176,11 +173,7 @@ export class FuzzyMatcher {
       return false
     }
 
-    if (wordSet.size - commonChars > this.maxDistance) {
-      return false
-    }
-
-    return true
+    return wordSet.size - commonChars <= this.maxDistance
   }
 
   // 使用滚动数组计算 Levenshtein 距离，并在超阈值时提前终止。

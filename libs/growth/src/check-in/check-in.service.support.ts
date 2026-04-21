@@ -9,6 +9,7 @@ import type {
   GrowthRewardSettlementSelect,
 } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
+import type { GrowthRewardItems } from '@libs/growth/reward-rule/reward-item.type'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInDateRewardRuleView,
@@ -17,15 +18,14 @@ import type {
   CheckInPatternRewardRuleView,
   CheckInResolvedReward,
   CheckInRewardDefinition,
-  CheckInRewardItems,
   CheckInStreakAggregation,
   CheckInStreakRewardRuleView,
   CheckInStreakRuleDefinition,
 } from './check-in.type'
-import type { CreateCheckInDateRewardRuleDto } from './dto/check-in-date-reward-rule.dto'
-import type { CreateCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
+import type { CheckInDateRewardRuleFieldsDto } from './dto/check-in-date-reward-rule.dto'
+import type { BaseCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
 import type { CheckInRewardSettlementSummaryDto } from './dto/check-in-record.dto'
-import type { CreateCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
+import type { BaseCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -151,7 +151,7 @@ export abstract class CheckInServiceSupport {
   }
 
   protected parseRewardItems(
-    value?: CheckInRewardItems | null,
+    value?: GrowthRewardItems | null,
     options: { allowEmpty: boolean } = { allowEmpty: true },
   ) {
     if (value === null || value === undefined) {
@@ -193,7 +193,7 @@ export abstract class CheckInServiceSupport {
   ) {
     const rewardItems = this.asArray(value)
     return this.parseRewardItems(
-      rewardItems as CheckInRewardItems | undefined,
+      rewardItems as GrowthRewardItems | undefined,
       options,
     )
   }
@@ -201,7 +201,7 @@ export abstract class CheckInServiceSupport {
   protected parseRewardItem(
     value: unknown,
     index: number,
-  ): NonNullable<CheckInRewardItems>[number] {
+  ): NonNullable<GrowthRewardItems>[number] {
     const record = this.asRecord(value)
     if (!record) {
       throw new BadRequestException(`rewardItems[${index}] 必须是对象`)
@@ -249,7 +249,7 @@ export abstract class CheckInServiceSupport {
 
   protected normalizeDateRewardRules(
     rules:
-      | CreateCheckInDateRewardRuleDto[]
+      | CheckInDateRewardRuleFieldsDto[]
       | CheckInDateRewardRuleView[]
       | undefined,
   ) {
@@ -277,7 +277,7 @@ export abstract class CheckInServiceSupport {
 
   protected normalizePatternRewardRules(
     rules:
-      | CreateCheckInPatternRewardRuleDto[]
+      | BaseCheckInPatternRewardRuleDto[]
       | CheckInPatternRewardRuleView[]
       | undefined,
     periodType: CheckInMakeupPeriodTypeEnum,
@@ -388,7 +388,7 @@ export abstract class CheckInServiceSupport {
 
   protected normalizeStreakRewardRules(
     rules:
-      | CreateCheckInStreakRewardRuleDto[]
+      | BaseCheckInStreakRewardRuleDto[]
       | CheckInStreakRewardRuleView[]
       | undefined,
   ) {
@@ -476,7 +476,7 @@ export abstract class CheckInServiceSupport {
       | 'effectiveTo'
       | 'repeatable'
     > & {
-      rewardItems: CheckInRewardItems
+      rewardItems: GrowthRewardItems
     },
   ) {
     return {
@@ -547,7 +547,9 @@ export abstract class CheckInServiceSupport {
         : await db
             .select()
             .from(this.checkInStreakRuleRewardItemTable)
-            .where(inArray(this.checkInStreakRuleRewardItemTable.ruleId, ruleIds))
+            .where(
+              inArray(this.checkInStreakRuleRewardItemTable.ruleId, ruleIds),
+            )
             .orderBy(
               asc(this.checkInStreakRuleRewardItemTable.sortOrder),
               asc(this.checkInStreakRuleRewardItemTable.id),
@@ -566,7 +568,10 @@ export abstract class CheckInServiceSupport {
     }))
   }
 
-  protected async listStreakRuleVersionsByCode(ruleCode: string, db: Db = this.db) {
+  protected async listStreakRuleVersionsByCode(
+    ruleCode: string,
+    db: Db = this.db,
+  ) {
     return db
       .select()
       .from(this.checkInStreakRuleTable)
@@ -577,7 +582,10 @@ export abstract class CheckInServiceSupport {
       )
   }
 
-  protected async findLatestStreakRuleVersion(ruleCode: string, db: Db = this.db) {
+  protected async findLatestStreakRuleVersion(
+    ruleCode: string,
+    db: Db = this.db,
+  ) {
     const [rule] = await db
       .select()
       .from(this.checkInStreakRuleTable)
@@ -604,11 +612,9 @@ export abstract class CheckInServiceSupport {
     }
   }
 
-  protected async listActiveStreakRulesAt(
-    at: Date | string,
-    db: Db = this.db,
-  ) {
-    const lookupAt = typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
+  protected async listActiveStreakRulesAt(at: Date | string, db: Db = this.db) {
+    const lookupAt =
+      typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
     const rules = await db
       .select()
       .from(this.checkInStreakRuleTable)
@@ -658,7 +664,8 @@ export abstract class CheckInServiceSupport {
     >,
     at: Date | string = new Date(),
   ) {
-    const lookupAt = typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
+    const lookupAt =
+      typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
     return this.normalizeStreakRewardRules(
       rules.map((rule) => ({
         ruleCode: rule.ruleCode,
@@ -679,7 +686,7 @@ export abstract class CheckInServiceSupport {
     db: Db = this.db,
   ) {
     if (grantIds.length === 0) {
-      return new Map<number, CheckInRewardItems>()
+      return new Map<number, GrowthRewardItems>()
     }
 
     const rewardItems = await db
@@ -691,7 +698,7 @@ export abstract class CheckInServiceSupport {
         asc(this.checkInStreakGrantRewardItemTable.id),
       )
 
-    const rewardMap = new Map<number, CheckInRewardItems>()
+    const rewardMap = new Map<number, GrowthRewardItems>()
     for (const item of rewardItems) {
       const list = rewardMap.get(item.grantId) ?? []
       list.push({
@@ -730,7 +737,7 @@ export abstract class CheckInServiceSupport {
 
   protected async getEnabledConfig(db: Db = this.db) {
     const config = await this.getRequiredConfig(db)
-    if (config.enabled !== 1) {
+    if (config.isEnabled !== 1) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '签到功能未开启',
@@ -1323,7 +1330,10 @@ export abstract class CheckInServiceSupport {
   protected resolveEligibleGrantRules(
     rules: CheckInStreakRewardRuleView[],
     streakByDate: Record<string, number>,
-    existingGrants: Pick<CheckInStreakGrantSelect, 'ruleCode' | 'triggerSignDate'>[],
+    existingGrants: Pick<
+      CheckInStreakGrantSelect,
+      'ruleCode' | 'triggerSignDate'
+    >[],
     streakStartedAt?: string,
   ) {
     const scopedExistingGrants = streakStartedAt

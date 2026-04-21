@@ -8,7 +8,7 @@ import { NumberProperty } from '@libs/platform/decorators/validate/number-proper
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
-import { PickType } from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { CheckInMakeupPeriodTypeEnum } from '../check-in.constant'
 import { CheckInConfigDetailResponseDto } from './check-in-definition.dto'
 import {
@@ -16,7 +16,7 @@ import {
   CheckInRewardSettlementSummaryDto,
 } from './check-in-record.dto'
 import { CheckInGrantItemDto } from './check-in-streak-reward-grant.dto'
-import { CheckInStreakRewardRuleItemDto } from './check-in-streak-reward-rule.dto'
+import { BaseCheckInStreakRewardRuleDto } from './check-in-streak-reward-rule.dto'
 
 export class QueryCheckInLeaderboardDto extends PickType(PageDto, [
   'pageIndex',
@@ -79,7 +79,24 @@ export class CheckInLeaderboardUserDto extends PickType(BaseAppUserDto, [
   'avatarUrl',
 ] as const) {}
 
-export class CheckInLeaderboardItemDto {
+class CheckInStreakRuntimeFieldsDto {
+  @NumberProperty({
+    description: '当前连续签到天数。',
+    example: 3,
+    validation: false,
+  })
+  currentStreak!: number
+
+  @StringProperty({
+    description: '最近一次有效签到日期。',
+    example: '2026-04-19',
+    required: false,
+    validation: false,
+  })
+  lastSignedDate?: string
+}
+
+export class CheckInLeaderboardItemDto extends CheckInStreakRuntimeFieldsDto {
   @NumberProperty({
     description: '排行榜名次。',
     example: 1,
@@ -93,21 +110,6 @@ export class CheckInLeaderboardItemDto {
     validation: false,
   })
   user!: CheckInLeaderboardUserDto
-
-  @NumberProperty({
-    description: '当前连续签到天数。',
-    example: 5,
-    validation: false,
-  })
-  currentStreak!: number
-
-  @StringProperty({
-    description: '最近一次有效签到日期。',
-    example: '2026-04-19',
-    required: false,
-    validation: false,
-  })
-  lastSignedDate?: string
 }
 
 export class CheckInRecordItemDto extends BaseCheckInRecordDto {
@@ -128,9 +130,9 @@ export class CheckInRecordItemDto extends BaseCheckInRecordDto {
   rewardSettlement?: CheckInRewardSettlementSummaryDto | null
 }
 
-export class CheckInMakeupSummaryDto {
+class CheckInPeriodWindowDto {
   @NumberProperty({
-    description: '当前补签周期类型（1=按自然周；2=按自然月）。',
+    description: '补签周期类型（1=按自然周；2=按自然月）。',
     example: CheckInMakeupPeriodTypeEnum.WEEKLY,
     validation: false,
   })
@@ -156,7 +158,9 @@ export class CheckInMakeupSummaryDto {
     validation: false,
   })
   periodEndDate!: string
+}
 
+export class CheckInMakeupSummaryDto extends CheckInPeriodWindowDto {
   @NumberProperty({
     description: '当前周期系统发放额度。',
     example: 2,
@@ -186,14 +190,7 @@ export class CheckInMakeupSummaryDto {
   eventAvailable!: number
 }
 
-export class CheckInStreakSummaryDto {
-  @NumberProperty({
-    description: '当前连续签到天数。',
-    example: 3,
-    validation: false,
-  })
-  currentStreak!: number
-
+export class CheckInStreakSummaryDto extends CheckInStreakRuntimeFieldsDto {
   @StringProperty({
     description: '当前连续区间开始日期。',
     example: '2026-04-17',
@@ -202,22 +199,14 @@ export class CheckInStreakSummaryDto {
   })
   streakStartedAt?: string
 
-  @StringProperty({
-    description: '最近一次有效签到日期。',
-    example: '2026-04-19',
-    required: false,
-    validation: false,
-  })
-  lastSignedDate?: string
-
   @NestedProperty({
     description: '下一档连续奖励。',
-    type: CheckInStreakRewardRuleItemDto,
+    type: BaseCheckInStreakRewardRuleDto,
     required: false,
     nullable: false,
     validation: false,
   })
-  nextReward?: CheckInStreakRewardRuleItemDto | null
+  nextReward?: BaseCheckInStreakRewardRuleDto | null
 }
 
 export class CheckInSummaryResponseDto {
@@ -320,35 +309,7 @@ export class CheckInCalendarDayDto {
   rewardSettlement?: CheckInRewardSettlementSummaryDto | null
 }
 
-export class CheckInCalendarResponseDto {
-  @NumberProperty({
-    description: '补签周期类型（1=按自然周；2=按自然月）。',
-    example: CheckInMakeupPeriodTypeEnum.WEEKLY,
-    validation: false,
-  })
-  periodType!: CheckInMakeupPeriodTypeEnum
-
-  @StringProperty({
-    description: '补签周期键。',
-    example: 'week-2026-04-14',
-    validation: false,
-  })
-  periodKey!: string
-
-  @StringProperty({
-    description: '周期开始日期。',
-    example: '2026-04-14',
-    validation: false,
-  })
-  periodStartDate!: string
-
-  @StringProperty({
-    description: '周期结束日期。',
-    example: '2026-04-20',
-    validation: false,
-  })
-  periodEndDate!: string
-
+export class CheckInCalendarResponseDto extends CheckInPeriodWindowDto {
   @ArrayProperty({
     description: '周期内日历列表。',
     itemClass: CheckInCalendarDayDto,
@@ -357,4 +318,3 @@ export class CheckInCalendarResponseDto {
   days!: CheckInCalendarDayDto[]
 }
 
-export class CheckInReconciliationItemDto extends CheckInRecordItemDto {}

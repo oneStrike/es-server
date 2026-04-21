@@ -559,7 +559,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const rewardDefinition = this.parseRewardDefinition(config)
     return {
       id: config.id,
-      enabled: config.enabled === 1,
+      isEnabled: config.isEnabled === 1,
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
       baseRewardItems: rewardDefinition.baseRewardItems,

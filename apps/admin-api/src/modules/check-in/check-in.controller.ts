@@ -2,8 +2,6 @@ import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import {
   CheckInConfigDetailResponseDto,
   CheckInStreakRuleDetailResponseDto,
-  CheckInStreakRuleHistoryPageItemDto,
-  CheckInStreakRulePageItemDto,
   PublishCheckInStreakRuleDto,
   QueryCheckInStreakRuleHistoryPageDto,
   QueryCheckInStreakRulePageDto,
@@ -15,7 +13,7 @@ import {
   RepairCheckInRewardResponseDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
 import {
-  CheckInReconciliationItemDto,
+  CheckInRecordItemDto,
   QueryCheckInReconciliationDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
@@ -73,7 +71,7 @@ export class CheckInController {
   @Get('streak/page')
   @ApiPageDoc({
     summary: '分页查询连续签到记录',
-    model: CheckInStreakRulePageItemDto,
+    model: CheckInStreakRuleDetailResponseDto,
   })
   async getStreakRulePage(@Query() query: QueryCheckInStreakRulePageDto) {
     return this.checkInService.getStreakRulePage(query)
@@ -91,7 +89,7 @@ export class CheckInController {
   @Get('streak/history/page')
   @ApiPageDoc({
     summary: '分页查询连续签到记录历史',
-    model: CheckInStreakRuleHistoryPageItemDto,
+    model: CheckInStreakRuleDetailResponseDto,
   })
   async getStreakRuleHistoryPage(
     @Query() query: QueryCheckInStreakRuleHistoryPageDto,
@@ -141,7 +139,7 @@ export class CheckInController {
   @Get('reconciliation/page')
   @ApiPageDoc({
     summary: '分页查询签到对账结果',
-    model: CheckInReconciliationItemDto,
+    model: CheckInRecordItemDto,
   })
   async getReconciliationPage(@Query() query: QueryCheckInReconciliationDto) {
     return this.checkInService.getReconciliationPage(query)

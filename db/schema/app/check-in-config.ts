@@ -20,7 +20,7 @@ export const checkInConfig = pgTable(
     /** 全局签到配置主键。 */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     /** 是否启用签到功能。 */
-    enabled: smallint().default(1).notNull(),
+    isEnabled: smallint().default(1).notNull(),
     /** 补签周期类型（1=按自然周，2=按自然月）。 */
     makeupPeriodType: smallint().notNull(),
     /** 每周期系统发放的补签额度。 */
@@ -47,8 +47,11 @@ export const checkInConfig = pgTable(
       .notNull(),
   },
   (table) => [
-    index('check_in_config_enabled_idx').on(table.enabled),
-    check('check_in_config_enabled_valid_chk', sql`${table.enabled} in (0, 1)`),
+    index('check_in_config_is_enabled_idx').on(table.isEnabled),
+    check(
+      'check_in_config_is_enabled_valid_chk',
+      sql`${table.isEnabled} in (0, 1)`,
+    ),
     check(
       'check_in_config_makeup_period_type_valid_chk',
       sql`${table.makeupPeriodType} in (1, 2)`,

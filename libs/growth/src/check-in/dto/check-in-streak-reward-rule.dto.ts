@@ -6,7 +6,7 @@ import { NumberProperty } from '@libs/platform/decorators/validate/number-proper
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { CheckInStreakConfigStatusEnum } from '../check-in.constant'
 
-class CheckInStreakRewardRuleFieldsDto {
+export class BaseCheckInStreakRewardRuleDto {
   @StringProperty({
     description: '连续奖励规则编码。',
     example: 'streak-day-7',
@@ -41,7 +41,3 @@ class CheckInStreakRewardRuleFieldsDto {
   })
   status?: CheckInStreakConfigStatusEnum
 }
-
-export class CreateCheckInStreakRewardRuleDto extends CheckInStreakRewardRuleFieldsDto {}
-
-export class CheckInStreakRewardRuleItemDto extends CheckInStreakRewardRuleFieldsDto {}

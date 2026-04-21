@@ -1,8 +1,7 @@
 import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { ArrayProperty, StringProperty } from '@libs/platform/decorators'
 
-class CheckInDateRewardRuleFieldsDto {
+export class CheckInDateRewardRuleFieldsDto {
   @StringProperty({
     description: '奖励生效日期，格式为 YYYY-MM-DD。',
     example: '2026-04-19',
@@ -15,7 +14,3 @@ class CheckInDateRewardRuleFieldsDto {
   })
   rewardItems!: GrowthRewardItemDto[]
 }
-
-export class CreateCheckInDateRewardRuleDto extends CheckInDateRewardRuleFieldsDto {}
-
-export class CheckInDateRewardRuleItemDto extends CheckInDateRewardRuleFieldsDto {}

@@ -11,7 +11,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { desc, eq, sql, type SQL } from 'drizzle-orm'
+import { eq, SQL, sql } from 'drizzle-orm'
 import {
   CheckInStreakConfigStatusEnum,
   CheckInStreakPublishStrategyEnum,
@@ -91,7 +91,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     return {
       id: config.id,
-      enabled: config.enabled === 1,
+      isEnabled: config.isEnabled === 1,
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
       baseRewardItems: rewardDefinition.baseRewardItems,
@@ -104,7 +104,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   async updateConfig(dto: UpdateCheckInConfigDto, adminUserId: number) {
     const normalized = {
-      enabled: dto.enabled ? 1 : 0,
+      isEnabled: dto.isEnabled ? 1 : 0,
       makeupPeriodType: dto.makeupPeriodType,
       periodicAllowance: dto.periodicAllowance,
       baseRewardItems: this.parseRewardItems(dto.baseRewardItems, {
@@ -137,7 +137,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     await this.db
       .update(this.checkInConfigTable)
       .set({
-        enabled: dto.enabled ? 1 : 0,
+        isEnabled: dto.isEnabled ? 1 : 0,
         updatedById: adminUserId,
       })
       .where(eq(this.checkInConfigTable.id, current.id))
@@ -329,10 +329,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         .where(eq(this.checkInStreakRuleTable.id, current.id))
 
       if (status === CheckInStreakConfigStatusEnum.SCHEDULED) {
-        const candidates = (await this.listStreakRuleVersionsByCode(
-          current.ruleCode,
-          tx,
-        )).filter(
+        const candidates = (
+          await this.listStreakRuleVersionsByCode(current.ruleCode, tx)
+        ).filter(
           (rule) =>
             rule.id !== current.id &&
             rule.status !== CheckInStreakConfigStatusEnum.DRAFT &&
@@ -341,13 +340,15 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         const predecessor = [...candidates]
           .filter((rule) => rule.effectiveFrom < current.effectiveFrom)
           .sort((left, right) => {
-            const diff = right.effectiveFrom.getTime() - left.effectiveFrom.getTime()
+            const diff =
+              right.effectiveFrom.getTime() - left.effectiveFrom.getTime()
             return diff !== 0 ? diff : right.id - left.id
           })[0]
         const successor = [...candidates]
           .filter((rule) => rule.effectiveFrom > current.effectiveFrom)
           .sort((left, right) => {
-            const diff = left.effectiveFrom.getTime() - right.effectiveFrom.getTime()
+            const diff =
+              left.effectiveFrom.getTime() - right.effectiveFrom.getTime()
             return diff !== 0 ? diff : left.id - right.id
           })[0]
 
@@ -485,7 +486,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     })
   }
 
-  private parseStreakRulePageOrderBy(orderBy?: string): StreakRulePageOrderItem[] {
+  private parseStreakRulePageOrderBy(
+    orderBy?: string,
+  ): StreakRulePageOrderItem[] {
     if (!orderBy?.trim()) {
       return [...STREAK_RULE_PAGE_DEFAULT_ORDER]
     }

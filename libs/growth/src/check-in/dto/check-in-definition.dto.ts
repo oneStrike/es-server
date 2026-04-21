@@ -1,34 +1,29 @@
 import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+import { BaseDto, PageDto } from '@libs/platform/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+
 import {
   CheckInMakeupPeriodTypeEnum,
-  CheckInStreakConfigStatusEnum,
   CheckInStreakPublishStrategyEnum,
 } from '../check-in.constant'
-import {
-  CheckInDateRewardRuleItemDto,
-  CreateCheckInDateRewardRuleDto,
-} from './check-in-date-reward-rule.dto'
-import {
-  CheckInPatternRewardRuleItemDto,
-  CreateCheckInPatternRewardRuleDto,
-} from './check-in-pattern-reward-rule.dto'
-import {
-  CheckInStreakRewardRuleItemDto,
-} from './check-in-streak-reward-rule.dto'
+import { CheckInDateRewardRuleFieldsDto } from './check-in-date-reward-rule.dto'
+import { BaseCheckInPatternRewardRuleDto } from './check-in-pattern-reward-rule.dto'
+import { BaseCheckInStreakRewardRuleDto } from './check-in-streak-reward-rule.dto'
 
 export class UpdateCheckInConfigDto {
   @BooleanProperty({
     description: '是否启用签到功能。',
     example: true,
   })
-  enabled!: boolean
+  isEnabled!: boolean
 
   @EnumProperty({
     description: '补签周期类型（1=按自然周；2=按自然月）。',
@@ -53,110 +48,44 @@ export class UpdateCheckInConfigDto {
 
   @ArrayProperty({
     description: '具体日期奖励规则列表。',
-    itemClass: CreateCheckInDateRewardRuleDto,
+    itemClass: CheckInDateRewardRuleFieldsDto,
     required: false,
   })
-  dateRewardRules?: CreateCheckInDateRewardRuleDto[]
+  dateRewardRules?: CheckInDateRewardRuleFieldsDto[]
 
   @ArrayProperty({
     description: '周期模式奖励规则列表。',
-    itemClass: CreateCheckInPatternRewardRuleDto,
+    itemClass: BaseCheckInPatternRewardRuleDto,
     required: false,
   })
-  patternRewardRules?: CreateCheckInPatternRewardRuleDto[]
+  patternRewardRules?: BaseCheckInPatternRewardRuleDto[]
 }
 
-export class UpdateCheckInEnabledDto {
-  @BooleanProperty({
-    description: '签到功能开关。',
-    example: true,
-  })
-  enabled!: boolean
-}
+export class UpdateCheckInEnabledDto extends PickType(UpdateCheckInConfigDto, [
+  'isEnabled',
+] as const) {}
 
-export class CheckInConfigDetailResponseDto extends BaseDto {
-  @BooleanProperty({
-    description: '签到功能开关。',
-    example: true,
-    validation: false,
-  })
-  enabled!: boolean
+export class CheckInConfigDetailResponseDto extends IntersectionType(
+  BaseDto,
+  UpdateCheckInConfigDto,
+) {}
 
-  @EnumProperty({
-    description: '补签周期类型（1=按自然周；2=按自然月）。',
-    example: CheckInMakeupPeriodTypeEnum.WEEKLY,
-    enum: CheckInMakeupPeriodTypeEnum,
-    validation: false,
-  })
-  makeupPeriodType!: CheckInMakeupPeriodTypeEnum
+export class QueryCheckInStreakRulePageDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseCheckInStreakRewardRuleDto, ['streakDays', 'status'] as const),
+  ),
+) {}
 
-  @NumberProperty({
-    description: '每周期系统发放的补签额度。',
-    example: 2,
-    validation: false,
-  })
-  periodicAllowance!: number
+export class QueryCheckInStreakRuleHistoryPageDto extends IntersectionType(
+  PageDto,
+  PickType(BaseCheckInStreakRewardRuleDto, ['streakDays'] as const),
+) {}
 
-  @ArrayProperty({
-    description: '默认基础奖励项。',
-    itemClass: GrowthRewardItemDto,
-    required: false,
-    validation: false,
-  })
-  baseRewardItems?: GrowthRewardItemDto[] | null
-
-  @ArrayProperty({
-    description: '具体日期奖励规则列表。',
-    itemClass: CheckInDateRewardRuleItemDto,
-    validation: false,
-  })
-  dateRewardRules!: CheckInDateRewardRuleItemDto[]
-
-  @ArrayProperty({
-    description: '周期模式奖励规则列表。',
-    itemClass: CheckInPatternRewardRuleItemDto,
-    validation: false,
-  })
-  patternRewardRules!: CheckInPatternRewardRuleItemDto[]
-}
-
-export class QueryCheckInStreakRulePageDto extends PageDto {
-  @NumberProperty({
-    description: '连续签到天数阈值。',
-    example: 7,
-    min: 1,
-    required: false,
-    validation: false,
-  })
-  streakDays?: number
-
-  @EnumProperty({
-    description: '记录状态（0=草稿；1=已排期；2=生效中；3=已过期；4=已终止）。',
-    example: CheckInStreakConfigStatusEnum.ACTIVE,
-    enum: CheckInStreakConfigStatusEnum,
-    required: false,
-    validation: false,
-  })
-  status?: CheckInStreakConfigStatusEnum
-}
-
-export class QueryCheckInStreakRuleHistoryPageDto extends PageDto {
-  @NumberProperty({
-    description: '连续签到天数阈值。',
-    example: 7,
-    min: 1,
-  })
-  streakDays!: number
-}
-
-export class PublishCheckInStreakRuleDto {
-  @NumberProperty({
-    description: '命中奖励所需的连续签到天数。',
-    example: 7,
-    min: 1,
-  })
-  streakDays!: number
-
+export class PublishCheckInStreakRuleDto extends PickType(
+  BaseCheckInStreakRewardRuleDto,
+  ['streakDays', 'repeatable', 'rewardItems'] as const,
+) {
   @EnumProperty({
     description: '发布策略（1=立即生效；2=次日生效；3=指定时间生效）。',
     example: CheckInStreakPublishStrategyEnum.NEXT_DAY,
@@ -170,50 +99,24 @@ export class PublishCheckInStreakRuleDto {
     required: false,
   })
   effectiveFrom?: string
-
-  @BooleanProperty({
-    description: '是否允许重复发放。',
-    example: false,
-    required: false,
-  })
-  repeatable?: boolean
-
-  @ArrayProperty({
-    description: '连续签到奖励项列表。',
-    itemClass: GrowthRewardItemDto,
-  })
-  rewardItems!: GrowthRewardItemDto[]
 }
 
-export class CheckInStreakRuleDetailResponseDto extends BaseDto {
-  @StringProperty({
-    description: '连续签到记录稳定编码。',
-    example: 'streak-day-7',
-    validation: false,
-  })
-  ruleCode!: string
-
-  @NumberProperty({
-    description: '命中奖励所需的连续签到天数。',
-    example: 7,
-    validation: false,
-  })
-  streakDays!: number
-
+export class CheckInStreakRuleDetailResponseDto extends IntersectionType(
+  BaseDto,
+  PickType(BaseCheckInStreakRewardRuleDto, [
+    'ruleCode',
+    'streakDays',
+    'status',
+    'repeatable',
+    'rewardItems',
+  ] as const),
+) {
   @NumberProperty({
     description: '记录版本号。',
     example: 2,
     validation: false,
   })
   version!: number
-
-  @EnumProperty({
-    description: '记录状态（0=草稿；1=已排期；2=生效中；3=已过期；4=已终止）。',
-    example: CheckInStreakConfigStatusEnum.ACTIVE,
-    enum: CheckInStreakConfigStatusEnum,
-    validation: false,
-  })
-  status!: CheckInStreakConfigStatusEnum
 
   @EnumProperty({
     description: '发布策略（1=立即生效；2=次日生效；3=指定时间生效）。',
@@ -244,22 +147,4 @@ export class CheckInStreakRuleDetailResponseDto extends BaseDto {
     validation: false,
   })
   effectiveTo?: string | Date | null
-
-  @BooleanProperty({
-    description: '是否允许重复发放。',
-    example: false,
-    validation: false,
-  })
-  repeatable!: boolean
-
-  @ArrayProperty({
-    description: '连续签到奖励项列表。',
-    itemClass: GrowthRewardItemDto,
-    validation: false,
-  })
-  rewardItems!: GrowthRewardItemDto[]
 }
-
-export class CheckInStreakRulePageItemDto extends CheckInStreakRuleDetailResponseDto {}
-
-export class CheckInStreakRuleHistoryPageItemDto extends CheckInStreakRuleDetailResponseDto {}

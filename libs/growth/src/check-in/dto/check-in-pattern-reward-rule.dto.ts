@@ -4,7 +4,7 @@ import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { CheckInPatternRewardRuleTypeEnum } from '../check-in.constant'
 
-class CheckInPatternRewardRuleFieldsDto {
+export class BaseCheckInPatternRewardRuleDto {
   @EnumProperty({
     description:
       '周期模式类型（1=按周固定星期几；2=按月固定日期；3=按月最后一天）。',
@@ -35,7 +35,3 @@ class CheckInPatternRewardRuleFieldsDto {
   })
   rewardItems!: GrowthRewardItemDto[]
 }
-
-export class CreateCheckInPatternRewardRuleDto extends CheckInPatternRewardRuleFieldsDto {}
-
-export class CheckInPatternRewardRuleItemDto extends CheckInPatternRewardRuleFieldsDto {}
