@@ -1,4 +1,4 @@
 interface:
   display_name: 'ES Server 严格审查'
   short_description: '中文输出，规范问题和缺陷问题都必须查完整'
-  default_prompt: '使用 $es-server-code-review 审查这个 es-server 变更，先完整重读 .trae/rules，再用中文分别输出规范问题与缺陷问题，并在审查矩阵全部完成前不要结束。'
+  default_prompt: '使用 $es-server-code-review 审查这个 es-server 变更，先完整重读 .trae/rules，再对每个可疑点交叉映射所有适用规则与相关代码面，用中文分别输出规范问题与缺陷问题，并在审查矩阵全部完成前不要结束。'
