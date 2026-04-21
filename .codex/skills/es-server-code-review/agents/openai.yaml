@@ -1,4 +1,4 @@
 interface:
-  display_name: 'ES Server 审查'
-  short_description: '先读全量规则并跑完整审查矩阵，发现问题后也不能提前结束'
-  default_prompt: 'Use $es-server-code-review to review this es-server module. Read every file under .trae/rules, complete the full review matrix, and keep reviewing after the first findings.'
+  display_name: 'ES Server 严格审查'
+  short_description: '中文输出，规范问题和缺陷问题都必须查完整'
+  default_prompt: '使用 $es-server-code-review 审查这个 es-server 变更，先完整重读 .trae/rules，再用中文分别输出规范问题与缺陷问题，并在审查矩阵全部完成前不要结束。'
