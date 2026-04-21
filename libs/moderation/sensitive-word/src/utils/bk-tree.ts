@@ -1,7 +1,4 @@
-/**
- * BK-Tree 节点类
- * 用于构建 Burkhard-Keller 树，支持基于编辑距离的模糊搜索
- */
+// BK-Tree 节点类，用于构建 Burkhard-Keller 树，支持基于编辑距离的模糊搜索。
 export class BKTreeNode {
   word: string
   children: Map<number, BKTreeNode>
@@ -12,35 +9,23 @@ export class BKTreeNode {
   }
 }
 
-/**
- * BK-Tree 类
- * 一种基于编辑距离的树形数据结构，用于高效的模糊字符串搜索
- * 时间复杂度：构建 O(n log n)，查询 O(log n) 平均情况
- */
+// BK-Tree 类，一种基于编辑距离的树形数据结构，用于高效的模糊字符串搜索。
+// 时间复杂度：构建 O(n log n)，查询 O(log n) 平均情况。
 export class BKTree {
   private root: BKTreeNode | null = null
   private maxDistance: number = 2
 
-  /**
-   * 构造函数
-   * @param maxDistance - 最大编辑距离，默认为2
-   */
+  // 构造函数，参数 maxDistance 为最大编辑距离，默认为 2。
   constructor(maxDistance: number = 2) {
     this.maxDistance = maxDistance
   }
 
-  /**
-   * 设置最大编辑距离
-   * @param distance - 最大编辑距离
-   */
+  // 设置最大编辑距离。
   setMaxDistance(distance: number) {
     this.maxDistance = distance
   }
 
-  /**
-   * 构建 BK-Tree
-   * @param words - 敏感词列表
-   */
+  // 构建 BK-Tree。
   build(words: string[]) {
     this.root = null
     for (const word of words) {
@@ -50,10 +35,7 @@ export class BKTree {
     }
   }
 
-  /**
-   * 插入单词到 BK-Tree
-   * @param word - 待插入的单词
-   */
+  // 插入单词到 BK-Tree。
   private insert(word: string) {
     if (!this.root) {
       this.root = new BKTreeNode(word)
@@ -75,11 +57,7 @@ export class BKTree {
     }
   }
 
-  /**
-   * 搜索与给定单词距离小于等于 maxDistance 的所有单词
-   * @param query - 查询单词
-   * @returns 匹配的单词列表
-   */
+  // 搜索与给定单词距离小于等于 maxDistance 的所有单词。
   search(query: string) {
     if (!this.root) {
       return []
@@ -90,12 +68,7 @@ export class BKTree {
     return results
   }
 
-  /**
-   * 递归搜索 BK-Tree
-   * @param node - 当前节点
-   * @param query - 查询单词
-   * @param results - 结果列表
-   */
+  // 递归搜索 BK-Tree。
   private searchRecursive(node: BKTreeNode, query: string, results: string[]) {
     const distance = this.calculateLevenshteinDistance(query, node.word)
 
@@ -113,13 +86,7 @@ export class BKTree {
     }
   }
 
-  /**
-   * 计算两个字符串的 Levenshtein 距离
-   * 使用滚动数组优化空间复杂度，并添加提前终止机制
-   * @param str1 - 第一个字符串
-   * @param str2 - 第二个字符串
-   * @returns 编辑距离
-   */
+  // 计算两个字符串的 Levenshtein 距离，使用滚动数组优化空间复杂度，并添加提前终止机制。
   private calculateLevenshteinDistance(str1: string, str2: string) {
     const len1 = str1.length
     const len2 = str2.length

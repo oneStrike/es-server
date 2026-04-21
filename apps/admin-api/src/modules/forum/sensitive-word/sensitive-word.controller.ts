@@ -9,10 +9,7 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
-/**
- * 敏感词管理控制器
- * 提供敏感词管理、检测、统计相关的API接口
- */
+// 敏感词管理控制器，提供敏感词管理、检测、统计相关的 API 接口。
 @ApiTags('论坛管理/敏感词管理')
 @Controller('admin/forum/sensitive-word')
 export class SensitiveWordController {
@@ -22,11 +19,7 @@ export class SensitiveWordController {
     private readonly detectService: SensitiveWordDetectService,
   ) {}
 
-  /**
-   * 获取敏感词分页列表
-   * @param query - 查询参数
-   * @returns 敏感词分页数据
-   */
+  // 获取敏感词分页列表。
   @Get('page')
   @ApiPageDoc({
     summary: '获取敏感词分页列表',
@@ -36,11 +29,7 @@ export class SensitiveWordController {
     return this.sensitiveWordService.getSensitiveWordPage(query)
   }
 
-  /**
-   * 创建敏感词
-   * @param body - 创建敏感词请求对象
-   * @returns 创建的敏感词信息
-   */
+  // 创建敏感词。
   @Post('create')
   @ApiAuditDoc({
     summary: '创建敏感词',
@@ -53,11 +42,7 @@ export class SensitiveWordController {
     return this.sensitiveWordService.createSensitiveWord(body)
   }
 
-  /**
-   * 更新敏感词
-   * @param body - 更新敏感词请求对象
-   * @returns 更新后的敏感词信息
-   */
+  // 更新敏感词。
   @Post('update')
   @ApiAuditDoc({
     summary: '更新敏感词',
@@ -70,11 +55,7 @@ export class SensitiveWordController {
     return this.sensitiveWordService.updateSensitiveWord(body)
   }
 
-  /**
-   * 删除敏感词
-   * @param body - 删除敏感词请求对象
-   * @returns 删除结果
-   */
+  // 删除敏感词。
   @Post('delete')
   @ApiAuditDoc({
     summary: '删除敏感词',
@@ -87,11 +68,7 @@ export class SensitiveWordController {
     return this.sensitiveWordService.deleteSensitiveWord(body)
   }
 
-  /**
-   * 更新敏感词状态
-   * @param body - 更新状态请求对象
-   * @returns 更新结果
-   */
+  // 更新敏感词状态。
   @Post('update-status')
   @ApiAuditDoc({
     summary: '更新敏感词状态',
@@ -104,11 +81,7 @@ export class SensitiveWordController {
     return this.sensitiveWordService.updateSensitiveWordStatus(body)
   }
 
-  /**
-   * 检测文本中的敏感词
-   * @param body - 检测请求对象
-   * @returns 检测结果
-   */
+  // 检测文本中的敏感词。
   @Post('detect')
   @ApiDoc({
     summary: '检测文本中的敏感词',
@@ -118,11 +91,7 @@ export class SensitiveWordController {
     return this.detectService.getMatchedWords(body)
   }
 
-  /**
-   * 获取统计查询结果
-   * @param query - 统计查询请求对象
-   * @returns 统计查询结果
-   */
+  // 获取统计查询结果。
   @Get('stats')
   @ApiDoc({
     summary: '获取统计查询结果',
@@ -132,10 +101,7 @@ export class SensitiveWordController {
     return this.sensitiveWordService.getStatistics(query)
   }
 
-  /**
-   * 获取完整统计数据
-   * @returns 完整统计数据
-   */
+  // 获取完整统计数据。
   @Get('stats/full')
   @ApiDoc({
     summary: '获取完整统计数据',
@@ -145,11 +111,7 @@ export class SensitiveWordController {
     return this.statisticsService.getStatistics()
   }
 
-  /**
-   * 替换文本中的敏感词
-   * @param body - 替换请求对象
-   * @returns 替换后的文本
-   */
+  // 替换文本中的敏感词。
   @Post('replace')
   @ApiDoc({
     summary: '替换文本中的敏感词',
@@ -161,11 +123,7 @@ export class SensitiveWordController {
     }
   }
 
-  /**
-   * 获取文本中敏感词的最高等级
-   * @param body - 检测请求对象
-   * @returns 敏感词最高等级
-   */
+  // 获取文本中敏感词的最高等级。
   @Post('detect/highest-level')
   @ApiDoc({
     summary: '获取文本中敏感词的最高等级',
@@ -179,10 +137,7 @@ export class SensitiveWordController {
     }
   }
 
-  /**
-   * 检查敏感词检测器状态
-   * @returns 检测器状态
-   */
+  // 检查敏感词检测器状态。
   @Get('detect/status')
   @ApiDoc({
     summary: '检查敏感词检测器状态',
@@ -195,10 +150,7 @@ export class SensitiveWordController {
     }
   }
 
-  /**
-   * 获取当前加载的敏感词数量
-   * @returns 敏感词数量
-   */
+  // 获取当前加载的敏感词数量。
   @Get('count')
   @ApiDoc({
     summary: '获取当前加载的敏感词数量',

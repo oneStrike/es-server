@@ -28,11 +28,11 @@ export const sensitiveWord = pgTable("sensitive_word", {
    */
   replaceWord: varchar({ length: 100 }),
   /**
-   * 敏感词级别（1=严重, 2=一般, 3=轻微）
+   * 敏感词级别（1=严重；2=一般；3=轻微）
    */
   level: smallint().default(2).notNull(),
   /**
-   * 敏感词类型（1=政治, 2=色情, 3=暴力, 4=广告, 5=其他）
+   * 敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）
    */
   type: smallint().default(5).notNull(),
   /**

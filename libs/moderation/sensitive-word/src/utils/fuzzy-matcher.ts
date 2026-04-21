@@ -1,10 +1,7 @@
 import type { FuzzyMatchResult } from '../sensitive-word.types'
 import { BKTree } from './bk-tree'
 
-/**
- * 模糊匹配器类
- * 基于 Levenshtein 距离和 BK-Tree 实现模糊敏感词匹配
- */
+// 模糊匹配器类，基于 Levenshtein 距离和 BK-Tree 实现模糊敏感词匹配。
 export class FuzzyMatcher {
   private words: string[]
   private maxDistance: number
@@ -65,7 +62,7 @@ export class FuzzyMatcher {
     return this.match(text).length > 0
   }
 
-  // 返回第一个模糊命中，供只关心“是否命中”的场景复用。
+  // 返回第一个模糊命中，供只关心"是否命中"的场景复用。
   findFirstMatch(text: string) {
     if (!text || text.length === 0 || this.words.length === 0) {
       return null
@@ -88,7 +85,7 @@ export class FuzzyMatcher {
     return this.matchBruteForce(text)
   }
 
-  // BK-Tree 路径按“最长词长 + 最大编辑距离”扩窗，避免长词被固定常数截断。
+  // BK-Tree 路径按"最长词长 + 最大编辑距离"扩窗，避免长词被固定常数截断。
   private matchWithBKTree(text: string) {
     const results: FuzzyMatchResult[] = []
     const textLen = text.length

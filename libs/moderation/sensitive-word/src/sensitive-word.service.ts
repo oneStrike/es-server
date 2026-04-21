@@ -15,10 +15,7 @@ import { StatisticsTypeEnum } from './sensitive-word-constant'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'
 import { SensitiveWordStatisticsService } from './sensitive-word-statistics.service'
 
-/**
- * 敏感词服务类
- * 负责敏感词的增删改查、状态管理以及统计分析
- */
+// 敏感词服务类，负责敏感词的增删改查、状态管理以及统计分析。
 @Injectable()
 export class SensitiveWordService {
   constructor(
@@ -28,23 +25,19 @@ export class SensitiveWordService {
     private readonly statisticsService: SensitiveWordStatisticsService,
   ) {}
 
-  /** 数据库连接实例 */
+  // 数据库连接实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** 敏感词表 */
+  // 敏感词表。
   private get sensitiveWord() {
     return this.drizzle.schema.sensitiveWord
   }
 
-  /**
-   * 获取敏感词列表
-   * @param dto 查询条件
-   * @returns 分页结果
-   */
+  // 获取敏感词列表。
   async getSensitiveWordPage(dto: QuerySensitiveWordDto) {
-    // 构建查询条件
+    // 构建查询条件。
     const conditions: SQL[] = []
     if (dto.word) {
       conditions.push(like(this.sensitiveWord.word, buildLikePattern(dto.word)!))
@@ -63,11 +56,7 @@ export class SensitiveWordService {
     })
   }
 
-  /**
-   * 创建敏感词
-   * @param dto 创建参数
-   * @returns 新建敏感词
-   */
+  // 创建敏感词。
   async createSensitiveWord(dto: CreateSensitiveWordDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db
@@ -80,11 +69,7 @@ export class SensitiveWordService {
     return true
   }
 
-  /**
-   * 更新敏感词
-   * @param dto 更新参数
-   * @returns 更新后的敏感词
-   */
+  // 更新敏感词。
   async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
     const { id, ...updateData } = dto
     await this.drizzle.withErrorHandling(() =>
@@ -98,10 +83,7 @@ export class SensitiveWordService {
     return true
   }
 
-  /**
-   * 删除敏感词
-   * @returns 删除结果
-   */
+  // 删除敏感词。
   async deleteSensitiveWord(dto: { id: number }) {
     await this.drizzle.withErrorHandling(() =>
       this.db
@@ -113,11 +95,7 @@ export class SensitiveWordService {
     return true
   }
 
-  /**
-   * 更新敏感词状态
-   * @param dto 状态更新参数
-   * @returns 更新结果
-   */
+  // 更新敏感词状态。
   async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db
@@ -130,11 +108,7 @@ export class SensitiveWordService {
     return true
   }
 
-  /**
-   * 获取统计查询结果
-   * @param dto 统计查询参数
-   * @returns 统计结果
-   */
+  // 获取统计查询结果。
   async getStatistics(
     dto: SensitiveWordStatisticsQueryDto,
   ): Promise<SensitiveWordStatisticsResponseDto> {

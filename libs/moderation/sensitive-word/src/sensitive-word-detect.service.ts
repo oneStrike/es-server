@@ -1,6 +1,5 @@
 import type { sensitiveWord } from '@db/schema'
 import type {
-  BaseSensitiveWordHitDto,
   SensitiveWordDetectDto,
   SensitiveWordDetectResponseDto,
   SensitiveWordReplaceDto,
@@ -10,6 +9,7 @@ import type {
   FuzzyMatchResult,
   MatchResult,
   SensitiveWordDetectedHit,
+  SensitiveWordHitBase,
   SensitiveWordHitFieldKey,
   SensitiveWordInternalDetectResult,
 } from './sensitive-word.types'
@@ -361,7 +361,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 对外命中结果保留字段来源，避免多字段场景的位置语义丢失。
-  private toPublicHit(hit: SensitiveWordDetectedHit): BaseSensitiveWordHitDto {
+  private toPublicHit(hit: SensitiveWordDetectedHit): SensitiveWordHitBase {
     return {
       word: hit.word,
       start: hit.start,

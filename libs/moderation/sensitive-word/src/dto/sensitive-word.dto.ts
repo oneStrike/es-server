@@ -1,17 +1,23 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import type { SensitiveWordHitBase } from '../sensitive-word.types'
+
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+
 import {
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+
 import {
   MatchModeEnum,
   SensitiveWordLevelEnum,
@@ -19,9 +25,7 @@ import {
   StatisticsTypeEnum,
 } from '../sensitive-word-constant'
 
-/**
- * 敏感词基础DTO
- */
+// 敏感词基础 DTO。
 export class BaseSensitiveWordDto extends BaseDto {
   @StringProperty({
     description: '敏感词',
@@ -116,7 +120,8 @@ export class BaseSensitiveWordDto extends BaseDto {
   lastHitAt?: Date | null
 }
 
-export class BaseSensitiveWordHitDto {
+// 敏感词命中结果 DTO，复用 BaseSensitiveWordDto 中的字段。
+export class SensitiveWordHitDto implements SensitiveWordHitBase {
   @StringProperty({
     description: '敏感词内容',
     example: '测试',
@@ -171,6 +176,9 @@ export class BaseSensitiveWordHitDto {
   replaceWord?: string | null
 }
 
+// 保持向后兼容的别名。
+export { SensitiveWordHitDto as BaseSensitiveWordHitDto }
+
 export class CreateSensitiveWordDto extends OmitType(BaseSensitiveWordDto, [
   ...OMIT_BASE_FIELDS,
   'createdBy',
@@ -220,10 +228,10 @@ export class SensitiveWordReplaceDto extends SensitiveWordDetectDto {
 export class SensitiveWordDetectResponseDto {
   @ArrayProperty({
     description: '命中的敏感词列表',
-    itemClass: BaseSensitiveWordHitDto,
+    itemClass: SensitiveWordHitDto,
     validation: false,
   })
-  hits!: BaseSensitiveWordHitDto[]
+  hits!: SensitiveWordHitDto[]
 
   @EnumProperty({
     description: '最高敏感等级（1=严重；2=一般；3=轻微）',
@@ -235,6 +243,12 @@ export class SensitiveWordDetectResponseDto {
   highestLevel?: SensitiveWordLevelEnum
 }
 
+// 敏感词最高等级响应 DTO，复用 SensitiveWordDetectResponseDto 的 highestLevel 字段。
+export class SensitiveWordHighestLevelResponseDto extends PickType(
+  SensitiveWordDetectResponseDto,
+  ['highestLevel'] as const,
+) {}
+
 export class SensitiveWordReplaceResponseDto {
   @StringProperty({
     description: '替换后的文本',
@@ -242,17 +256,6 @@ export class SensitiveWordReplaceResponseDto {
     validation: false,
   })
   replacedText!: string
-}
-
-export class SensitiveWordHighestLevelResponseDto {
-  @EnumProperty({
-    description: '敏感词最高等级（1=严重；2=一般；3=轻微）',
-    example: SensitiveWordLevelEnum.SEVERE,
-    enum: SensitiveWordLevelEnum,
-    required: false,
-    validation: false,
-  })
-  highestLevel?: SensitiveWordLevelEnum
 }
 
 export class SensitiveWordDetectStatusResponseDto {
@@ -374,7 +377,8 @@ export class SensitiveWordTopHitStatisticsDto {
   lastHitAt?: Date
 }
 
-export class SensitiveWordStatisticsQueryDto {
+// 统计类型字段 DTO，供 Query 和 Response 复用。
+class StatisticsTypeFieldDto {
   @EnumProperty({
     description:
       '统计类型（按级别统计；按类型统计；热门敏感词统计；最近命中统计）',
@@ -385,16 +389,9 @@ export class SensitiveWordStatisticsQueryDto {
   type?: StatisticsTypeEnum
 }
 
-export class SensitiveWordStatisticsResponseDto {
-  @EnumProperty({
-    description:
-      '统计类型（按级别统计；按类型统计；热门敏感词统计；最近命中统计）',
-    enum: StatisticsTypeEnum,
-    example: StatisticsTypeEnum.LEVEL,
-    validation: false,
-  })
-  type!: StatisticsTypeEnum
+export class SensitiveWordStatisticsQueryDto extends StatisticsTypeFieldDto {}
 
+export class SensitiveWordStatisticsResponseDto extends StatisticsTypeFieldDto {
   @ArrayProperty({
     description: '统计结果',
     itemClass: Object,
