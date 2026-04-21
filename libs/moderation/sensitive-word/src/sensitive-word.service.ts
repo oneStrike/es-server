@@ -40,7 +40,9 @@ export class SensitiveWordService {
     // 构建查询条件。
     const conditions: SQL[] = []
     if (dto.word) {
-      conditions.push(like(this.sensitiveWord.word, buildLikePattern(dto.word)!))
+      conditions.push(
+        like(this.sensitiveWord.word, buildLikePattern(dto.word)!),
+      )
     }
 
     ;['isEnabled', 'level', 'type', 'matchMode'].forEach((key) => {
@@ -59,9 +61,7 @@ export class SensitiveWordService {
   // 创建敏感词。
   async createSensitiveWord(dto: CreateSensitiveWordDto) {
     await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.sensitiveWord)
-        .values(dto),
+      this.db.insert(this.sensitiveWord).values(dto),
     )
 
     await this.cacheService.invalidateAll()
@@ -72,11 +72,14 @@ export class SensitiveWordService {
   // 更新敏感词。
   async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
     const { id, ...updateData } = dto
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.sensitiveWord)
-        .set(updateData)
-        .where(eq(this.sensitiveWord.id, id)), { notFound: `ID【${id}】数据不存在` },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.sensitiveWord)
+          .set(updateData)
+          .where(eq(this.sensitiveWord.id, id)),
+      { notFound: `ID【${id}】数据不存在` },
+    )
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
@@ -85,10 +88,13 @@ export class SensitiveWordService {
 
   // 删除敏感词。
   async deleteSensitiveWord(dto: { id: number }) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.sensitiveWord)
-        .where(eq(this.sensitiveWord.id, dto.id)), { notFound: `ID【${dto.id}】数据不存在` },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .delete(this.sensitiveWord)
+          .where(eq(this.sensitiveWord.id, dto.id)),
+      { notFound: `ID【${dto.id}】数据不存在` },
+    )
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
@@ -97,11 +103,14 @@ export class SensitiveWordService {
 
   // 更新敏感词状态。
   async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.sensitiveWord)
-        .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.sensitiveWord.id, dto.id)), { notFound: `ID【${dto.id}】数据不存在` },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.sensitiveWord)
+          .set({ isEnabled: dto.isEnabled })
+          .where(eq(this.sensitiveWord.id, dto.id)),
+      { notFound: `ID【${dto.id}】数据不存在` },
+    )
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
@@ -109,9 +118,7 @@ export class SensitiveWordService {
   }
 
   // 获取统计查询结果。
-  async getStatistics(
-    dto: SensitiveWordStatisticsQueryDto,
-  ): Promise<SensitiveWordStatisticsResponseDto> {
+  async getStatistics(dto: SensitiveWordStatisticsQueryDto) {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 
     let data: SensitiveWordStatisticsResponseDto['data']

@@ -3,7 +3,7 @@ import type { CacheQueryConfig } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
 import { sensitiveWord } from '@db/schema'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import {
   SENSITIVE_WORD_CACHE_KEYS,
@@ -20,8 +20,6 @@ type SensitiveWord = typeof sensitiveWord.$inferSelect
  */
 @Injectable()
 export class SensitiveWordCacheService {
-  private readonly logger = new Logger(SensitiveWordCacheService.name)
-
   constructor(
     private readonly drizzle: DrizzleService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -48,14 +46,13 @@ export class SensitiveWordCacheService {
         data,
         SENSITIVE_WORD_CACHE_TTL.LONG,
       )
-      this.logger.log(config.logMessage(data))
     }
 
     return data
   }
 
   // 直接从数据库读取启用中的敏感词，供缓存降级场景复用。
-  async loadAllWordsFromDb(): Promise<SensitiveWord[]> {
+  async loadAllWordsFromDb() {
     return this.db
       .select()
       .from(this.sensitiveWord)
@@ -63,26 +60,20 @@ export class SensitiveWordCacheService {
   }
 
   // 正常路径优先读缓存，缓存未命中时回源数据库。
-  async getAllWords(): Promise<SensitiveWord[]> {
+  async getAllWords() {
     return this.getFromCache<SensitiveWord>({
       cacheKey: SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS,
-      logMessage: (words) => `已缓存 ${words.length} 个敏感词`,
       queryFn: async () => this.loadAllWordsFromDb(),
     })
   }
 
   // 写路径变更后统一清理全量词缓存。
-  async invalidateAll(): Promise<void> {
+  async invalidateAll() {
     await this.cacheManager.del(SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS)
-    this.logger.log('已清除所有敏感词缓存')
   }
 
   // 应用启动时预热全量词缓存。
-  async preloadCache(): Promise<void> {
-    this.logger.log('正在预加载敏感词缓存...')
-    const allWords = await this.getAllWords()
-    this.logger.log(
-      `敏感词缓存预加载成功，共加载 ${allWords.length} 个敏感词`,
-    )
+  async preloadCache() {
+    await this.getAllWords()
   }
 }

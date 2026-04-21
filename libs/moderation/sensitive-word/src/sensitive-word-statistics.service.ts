@@ -3,9 +3,7 @@ import type {
   SensitiveWordStatisticsDataDto,
   SensitiveWordTopHitStatisticsDto,
 } from './dto/sensitive-word.dto'
-import type {
-  RecordSensitiveWordEntityHitsInput,
-} from './sensitive-word.types'
+import type { RecordSensitiveWordEntityHitsInput } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
 import {
   startOfTodayInAppTimeZone,
@@ -51,7 +49,7 @@ export class SensitiveWordStatisticsService {
    * 包含所有维度的统计信息
    * @returns 完整的统计数据
    */
-  async getStatistics(): Promise<SensitiveWordStatisticsDataDto> {
+  async getStatistics() {
     const [
       totalWords,
       enabledWords,
@@ -235,7 +233,7 @@ export class SensitiveWordStatisticsService {
    * 返回命中次数最高的20个敏感词
    * @returns 热门敏感词列表
    */
-  async getTopHitWords(): Promise<SensitiveWordTopHitStatisticsDto[]> {
+  async getTopHitWords() {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,
@@ -263,7 +261,7 @@ export class SensitiveWordStatisticsService {
    * 返回最近命中的20个敏感词，按最后命中时间倒序排列
    * @returns 最近命中的敏感词列表
    */
-  async getRecentHitWords(): Promise<SensitiveWordTopHitStatisticsDto[]> {
+  async getRecentHitWords() {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,

@@ -1,4 +1,3 @@
-import type { sensitiveWord } from '@db/schema'
 import type {
   MatchModeEnum,
   SensitiveWordHitEntityTypeEnum,
@@ -7,11 +6,14 @@ import type {
   SensitiveWordTypeEnum,
 } from './sensitive-word-constant'
 
-// 敏感词实体类型（从数据库查询的结果）。
-export type SensitiveWord = typeof sensitiveWord.$inferSelect
-
 // 命中字段键。
 export type SensitiveWordHitFieldKey = 'title' | 'content'
+
+// 多字段场景分段检测
+export interface SensitiveWordHitSegment {
+  field: SensitiveWordHitFieldKey
+  content: string
+}
 
 // 敏感词命中基础结构，供 DTO 和内部类型共同使用。
 export interface SensitiveWordHitBase {
@@ -29,13 +31,6 @@ export interface SensitiveWordDetectedHit extends SensitiveWordHitBase {
   sensitiveWordId: number
   matchMode: MatchModeEnum
   field?: SensitiveWordHitFieldKey
-}
-
-// 内部检测结果。
-export interface SensitiveWordInternalDetectResult {
-  hits: SensitiveWordDetectedHit[]
-  publicHits: SensitiveWordHitBase[]
-  highestLevel?: SensitiveWordLevelEnum
 }
 
 // 命中实体类型键。
@@ -74,7 +69,6 @@ export const SensitiveWordHitOperationTypeMap: Record<
 // 缓存查询配置。
 export interface CacheQueryConfig<T> {
   cacheKey: string
-  logMessage: (data: T[]) => string
   queryFn: () => Promise<T[]>
 }
 

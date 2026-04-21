@@ -1,7 +1,6 @@
-import type { sensitiveWord } from '@db/schema'
+import type { SensitiveWordSelect } from '@db/schema'
 import type {
   SensitiveWordDetectDto,
-  SensitiveWordDetectResponseDto,
   SensitiveWordReplaceDto,
 } from './dto/sensitive-word.dto'
 import type { SensitiveWordLevelEnum } from './sensitive-word-constant'
@@ -9,11 +8,10 @@ import type {
   FuzzyMatchResult,
   MatchResult,
   SensitiveWordDetectedHit,
-  SensitiveWordHitBase,
   SensitiveWordHitFieldKey,
-  SensitiveWordInternalDetectResult,
+  SensitiveWordHitSegment,
 } from './sensitive-word.types'
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import { MatchModeEnum } from './sensitive-word-constant'
 import { ACAutomaton } from './utils/ac-automaton'
@@ -26,10 +24,9 @@ import { FuzzyMatcher } from './utils/fuzzy-matcher'
  */
 @Injectable()
 export class SensitiveWordDetectService implements OnModuleInit {
-  private readonly logger = new Logger(SensitiveWordDetectService.name)
   private automaton: ACAutomaton
   private fuzzyMatcher: FuzzyMatcher
-  private wordMap: Map<string, typeof sensitiveWord.$inferSelect>
+  private wordMap: Map<string, SensitiveWordSelect>
   private isInitialized: boolean
 
   constructor(private readonly cacheService: SensitiveWordCacheService) {
@@ -40,7 +37,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 启动时优先预热缓存，缓存链路失败后回退数据库直读。
-  async onModuleInit(): Promise<void> {
+  async onModuleInit() {
     try {
       const words = await this.loadWordsWithFallback({ preloadCache: true })
       this.initialize(words)
@@ -50,13 +47,12 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 成功加载空词库也视为就绪，避免把“无词”误判成初始化失败。
-  initialize(words: Array<typeof sensitiveWord.$inferSelect>) {
+  initialize(words: SensitiveWordSelect[]) {
     this.resetDetector()
 
     const activeWords = words.filter((word) => word.isEnabled && word.word)
     if (activeWords.length === 0) {
       this.isInitialized = true
-      this.logger.log('初始化敏感词检测器，共 0 个敏感词')
       return
     }
 
@@ -74,22 +70,16 @@ export class SensitiveWordDetectService implements OnModuleInit {
       this.wordMap.set(word.word, word)
     })
     this.isInitialized = true
-    this.logger.log(
-      `初始化敏感词检测器，共 ${this.wordMap.size} 个敏感词（${exactWordList.length} 个精确匹配，${fuzzyWordList.length} 个模糊匹配）`,
-    )
   }
 
   // 重新加载词库时同样允许缓存失败后回退数据库直读。
-  async reloadWords(): Promise<void> {
+  async reloadWords() {
     const words = await this.loadWordsWithFallback()
     this.initialize(words)
-    this.logger.log('已重新加载敏感词')
   }
 
   // 单字段场景默认标记为 content，保证位置语义稳定。
-  getMatchedWordsWithMetadata(
-    dto: SensitiveWordDetectDto,
-  ): SensitiveWordInternalDetectResult {
+  getMatchedWordsWithMetadata(dto: SensitiveWordDetectDto) {
     return this.getMatchedWordsWithMetadataBySegments([
       {
         field: 'content',
@@ -99,9 +89,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 多字段场景分段检测，避免字段边界拼接制造假命中。
-  getMatchedWordsWithMetadataBySegments(
-    inputs: Array<{ field: SensitiveWordHitFieldKey, content: string }>,
-  ): SensitiveWordInternalDetectResult {
+  getMatchedWordsWithMetadataBySegments(inputs: SensitiveWordHitSegment[]) {
     if (!this.isInitialized) {
       return {
         hits: [],
@@ -110,7 +98,12 @@ export class SensitiveWordDetectService implements OnModuleInit {
     }
 
     const hits = inputs.flatMap((input) =>
-      input.content ? this.collectDetectedHits(input.content, input.field) : [],
+      input.content
+        ? this.collectDetectedHits({
+            content: input.content,
+            field: input.field,
+          })
+        : [],
     )
 
     return {
@@ -121,7 +114,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 对外检测接口直接复用结构化响应 DTO。
-  getMatchedWords(dto: SensitiveWordDetectDto): SensitiveWordDetectResponseDto {
+  getMatchedWords(dto: SensitiveWordDetectDto) {
     const result = this.getMatchedWordsWithMetadata(dto)
     return {
       hits: result.publicHits,
@@ -130,7 +123,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 管理端 detect 接口保持和 getMatchedWords 一致。
-  detect(dto: SensitiveWordDetectDto): SensitiveWordDetectResponseDto {
+  detect(dto: SensitiveWordDetectDto) {
     return this.getMatchedWords(dto)
   }
 
@@ -155,36 +148,33 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 检测器状态用于管理端自检。
-  isReady(): boolean {
+  isReady() {
     return this.isInitialized
   }
 
   // 当前已加载词数来自内存词表快照。
-  getWordCount(): number {
+  getWordCount() {
     return this.wordMap.size
   }
 
   // 缓存链路失败时回退数据库直读，避免审核在故障窗口内直接失效。
-  private async loadWordsWithFallback(options: { preloadCache?: boolean } = {}) {
+  private async loadWordsWithFallback(
+    options: { preloadCache?: boolean } = {},
+  ) {
     try {
       if (options.preloadCache) {
         await this.cacheService.preloadCache()
       }
 
       return await this.cacheService.getAllWords()
-    } catch (cacheError) {
-      const cacheMessage =
-        cacheError instanceof Error ? cacheError.message : String(cacheError)
-      this.logger.warn(`敏感词缓存读取失败，回退数据库直读：${cacheMessage}`)
+    } catch {
       return this.cacheService.loadAllWordsFromDb()
     }
   }
 
   // 完全初始化失败时明确回到未就绪状态，而不是继续输出空命中结论。
-  private handleInitializationFailure(error: unknown) {
-    const message = error instanceof Error ? error.message : String(error)
+  private handleInitializationFailure(_error: unknown) {
     this.resetDetector()
-    this.logger.error(`敏感词检测器初始化失败：${message}`)
   }
 
   // 每次重建前清空自动机、模糊匹配器和内存索引。
@@ -200,7 +190,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
     text: string,
     matchedWords: SensitiveWordDetectedHit[],
     replaceChar?: string,
-  ): string {
+  ) {
     if (matchedWords.length === 0) {
       return text
     }
@@ -223,10 +213,8 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 单段文本内部先做去重与冲突裁剪，再回传带字段来源的命中结果。
-  private collectDetectedHits(
-    content: string,
-    field: SensitiveWordHitFieldKey,
-  ): SensitiveWordDetectedHit[] {
+  private collectDetectedHits(input: SensitiveWordHitSegment) {
+    const { content, field } = input
     const exactHits = this.normalizeResults(
       this.automaton.match(content),
       MatchModeEnum.EXACT,
@@ -258,7 +246,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
     results: Array<MatchResult | FuzzyMatchResult>,
     matchMode: MatchModeEnum,
     field: SensitiveWordHitFieldKey,
-  ): SensitiveWordDetectedHit[] {
+  ) {
     return results.flatMap((result) => {
       const wordInfo = this.wordMap.get(result.word)
       if (!wordInfo || wordInfo.matchMode !== matchMode) {
@@ -361,7 +349,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 对外命中结果保留字段来源，避免多字段场景的位置语义丢失。
-  private toPublicHit(hit: SensitiveWordDetectedHit): SensitiveWordHitBase {
+  private toPublicHit(hit: SensitiveWordDetectedHit) {
     return {
       word: hit.word,
       start: hit.start,
@@ -374,9 +362,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 数值越小表示敏感等级越高。
-  private resolveHighestLevel(
-    hits: SensitiveWordDetectedHit[],
-  ): SensitiveWordLevelEnum | undefined {
+  private resolveHighestLevel(hits: SensitiveWordDetectedHit[]) {
     return hits.reduce<SensitiveWordLevelEnum | undefined>((current, hit) => {
       if (current === undefined || hit.level < current) {
         return hit.level
