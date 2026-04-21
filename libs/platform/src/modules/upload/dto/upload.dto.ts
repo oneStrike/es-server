@@ -1,6 +1,6 @@
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 
 export class UploadFileDto {
   @StringProperty({
@@ -24,7 +24,7 @@ export class UploadResponseDto {
   @StringProperty({
     description: '文件路径',
     required: true,
-    example: '/files/shared/2026-03-28/document/document_20231107.pdf',
+    example: '/files/shared/document/2026-03-28/document_20231107.pdf',
     validation: false,
   })
   filePath!: string

@@ -242,8 +242,9 @@ export class UploadService {
     }
     const { message } = error.response
     return (
-      typeof message === 'string'
-      || (Array.isArray(message) && message.some((item) => typeof item === 'string'))
+      typeof message === 'string' ||
+      (Array.isArray(message) &&
+        message.some((item) => typeof item === 'string'))
     )
   }
 
@@ -315,7 +316,7 @@ export class UploadService {
     }
   }
 
-  /** 构建最终 objectKey，未显式传路径时按日期和文件分类自动分桶。 */
+  /** 构建最终 objectKey，未显式传路径时按文件分类和日期自动分桶。 */
   private buildObjectKey(
     scene: string,
     fileCategory: UploadFileCategory,
@@ -330,7 +331,7 @@ export class UploadService {
 
     const dateStr = formatDateOnlyInAppTimeZone(new Date())
 
-    return posix.join(scene, dateStr, fileCategory, finalName)
+    return posix.join(scene, fileCategory, dateStr, finalName)
   }
 
   /** 规范化并校验上传路径片段，阻止非法路径段和目录穿越。 */
@@ -404,7 +405,7 @@ export class UploadService {
       (requestMime && requestMime !== 'application/octet-stream'
         ? requestMime.toLowerCase()
         : '') ||
-        this.lookupMimeByExt(ext)
+      this.lookupMimeByExt(ext)
 
     if (!mime) {
       return null

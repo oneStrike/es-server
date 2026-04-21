@@ -319,14 +319,21 @@ export class ForumTopicWritableFieldsDto extends IntersectionType(
   PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
 ) {}
 
+export class CreateForumTopicWritableFieldsDto extends IntersectionType(
+  PartialType(PickType(BaseForumTopicDto, ['title'] as const)),
+  PickType(BaseForumTopicDto, ['content'] as const),
+  RequiredMentionDraftListDto,
+  PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
+) {}
+
 export class CreateForumTopicDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['sectionId', 'userId'] as const),
-  ForumTopicWritableFieldsDto,
+  CreateForumTopicWritableFieldsDto,
 ) {}
 
 export class CreateUserForumTopicDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['sectionId'] as const),
-  ForumTopicWritableFieldsDto,
+  CreateForumTopicWritableFieldsDto,
 ) {}
 
 export class UpdateForumTopicDto extends IntersectionType(

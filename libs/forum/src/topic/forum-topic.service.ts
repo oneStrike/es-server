@@ -638,6 +638,19 @@ export class ForumTopicService {
     )
   }
 
+  // 为创建主题补齐标题；未传标题时回退到正文前 30 个字符。
+  private resolveCreateTopicTitle(
+    title: CreateForumTopicDto['title'],
+    content: CreateForumTopicDto['content'],
+  ) {
+    const normalizedTitle = title?.trim()
+    if (normalizedTitle) {
+      return normalizedTitle
+    }
+
+    return content.trim().slice(0, 30)
+  }
+
   /**
    * 将主题审核状态映射为统一事件治理状态。
    * 当前 CREATE_TOPIC 事件是否可进入主链路，统一以该状态判断。
@@ -743,6 +756,7 @@ export class ForumTopicService {
   ) {
     const { sectionId, userId, images, videos, ...topicData } = createTopicDto
     const mentions = this.ensureMentionsProvided(createTopicDto.mentions)
+    const title = this.resolveCreateTopicTitle(topicData.title, topicData.content)
 
     const section = await this.forumPermissionService.ensureUserCanCreateTopic(
       userId,
@@ -750,7 +764,7 @@ export class ForumTopicService {
     )
 
     const { hits, publicHits, highestLevel } = this.detectTopicSensitiveWords(
-      topicData.title,
+      title,
       topicData.content,
     )
 
@@ -771,6 +785,7 @@ export class ForumTopicService {
 
     const createPayload = {
       ...topicData,
+      title,
       bodyTokens: bodyTokens.length ? bodyTokens : null,
       sectionId,
       userId,

@@ -1,5 +1,3 @@
-import type { SensitiveWordHitBase } from '../sensitive-word.types'
-
 import {
   ArrayProperty,
   BooleanProperty,
@@ -42,7 +40,7 @@ export class BaseSensitiveWordDto extends BaseDto {
     example: '***',
     default: '***',
   })
-  replaceWord?: string
+  replaceWord?: string | null
 
   @BooleanProperty({
     description: '是否启用',
@@ -120,15 +118,13 @@ export class BaseSensitiveWordDto extends BaseDto {
   lastHitAt?: Date | null
 }
 
-// 敏感词命中结果 DTO，复用 BaseSensitiveWordDto 中的字段。
-export class SensitiveWordHitDto implements SensitiveWordHitBase {
-  @StringProperty({
-    description: '敏感词内容',
-    example: '测试',
-    validation: false,
-  })
-  word!: string
-
+// 敏感词命中结果 DTO
+export class SensitiveWordHitDto extends PickType(BaseSensitiveWordDto, [
+  'word',
+  'level',
+  'type',
+  'replaceWord',
+] as const) {
   @NumberProperty({
     description: '起始位置',
     example: 0,
@@ -143,22 +139,6 @@ export class SensitiveWordHitDto implements SensitiveWordHitBase {
   })
   end!: number
 
-  @EnumProperty({
-    description: '敏感词级别（1=严重；2=一般；3=轻微）',
-    example: SensitiveWordLevelEnum.SEVERE,
-    enum: SensitiveWordLevelEnum,
-    validation: false,
-  })
-  level!: SensitiveWordLevelEnum
-
-  @EnumProperty({
-    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
-    example: SensitiveWordTypeEnum.POLITICS,
-    enum: SensitiveWordTypeEnum,
-    validation: false,
-  })
-  type!: SensitiveWordTypeEnum
-
   @StringProperty({
     description: '命中字段（title=标题；content=正文）',
     example: 'content',
@@ -166,14 +146,6 @@ export class SensitiveWordHitDto implements SensitiveWordHitBase {
     validation: false,
   })
   field?: string
-
-  @StringProperty({
-    description: '替换词',
-    example: '***',
-    required: false,
-    validation: false,
-  })
-  replaceWord?: string | null
 }
 
 // 保持向后兼容的别名。
@@ -283,53 +255,32 @@ export class SensitiveWordCountResponseDto {
   count!: number
 }
 
-export class SensitiveWordLevelStatisticsDto {
-  @EnumProperty({
-    description: '敏感词级别（1=严重；2=一般；3=轻微）',
-    enum: SensitiveWordLevelEnum,
-    example: SensitiveWordLevelEnum.SEVERE,
-    validation: false,
-  })
-  level!: SensitiveWordLevelEnum
-
+// 敏感词级别字段 DTO，供统计类 DTO 复用。
+class SensitiveWordLevelFieldDto extends PickType(BaseSensitiveWordDto, [
+  'level',
+] as const) {
   @StringProperty({
     description: '级别名称',
     example: '严重',
     validation: false,
   })
   levelName!: string
-
-  @NumberProperty({
-    description: '词数量',
-    example: 10,
-    validation: false,
-  })
-  count!: number
-
-  @NumberProperty({
-    description: '命中次数',
-    example: 100,
-    validation: false,
-  })
-  hitCount!: number
 }
 
-export class SensitiveWordTypeStatisticsDto {
-  @EnumProperty({
-    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
-    enum: SensitiveWordTypeEnum,
-    example: SensitiveWordTypeEnum.POLITICS,
-    validation: false,
-  })
-  type!: SensitiveWordTypeEnum
-
+// 敏感词类型字段 DTO，供统计类 DTO 复用。
+class SensitiveWordTypeFieldDto extends PickType(BaseSensitiveWordDto, [
+  'type',
+] as const) {
   @StringProperty({
     description: '类型名称',
     example: '政治',
     validation: false,
   })
   typeName!: string
+}
 
+// 敏感词统计基础字段 DTO，供级别和类型统计复用。
+class SensitiveWordStatisticsBaseDto {
   @NumberProperty({
     description: '词数量',
     example: 10,
@@ -345,29 +296,20 @@ export class SensitiveWordTypeStatisticsDto {
   hitCount!: number
 }
 
-export class SensitiveWordTopHitStatisticsDto {
-  @StringProperty({ description: '敏感词', example: '测试', validation: false })
-  word!: string
+export class SensitiveWordLevelStatisticsDto extends IntersectionType(
+  SensitiveWordLevelFieldDto,
+  SensitiveWordStatisticsBaseDto,
+) {}
 
-  @NumberProperty({ description: '命中次数', example: 20, validation: false })
-  hitCount!: number
+export class SensitiveWordTypeStatisticsDto extends IntersectionType(
+  SensitiveWordTypeFieldDto,
+  SensitiveWordStatisticsBaseDto,
+) {}
 
-  @EnumProperty({
-    description: '敏感词级别（1=严重；2=一般；3=轻微）',
-    enum: SensitiveWordLevelEnum,
-    example: SensitiveWordLevelEnum.SEVERE,
-    validation: false,
-  })
-  level!: SensitiveWordLevelEnum
-
-  @EnumProperty({
-    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
-    enum: SensitiveWordTypeEnum,
-    example: SensitiveWordTypeEnum.POLITICS,
-    validation: false,
-  })
-  type!: SensitiveWordTypeEnum
-
+export class SensitiveWordTopHitStatisticsDto extends IntersectionType(
+  PickType(BaseSensitiveWordDto, ['word', 'level', 'type'] as const),
+  PickType(SensitiveWordStatisticsBaseDto, ['hitCount'] as const),
+) {
   @StringProperty({
     description: '最后命中时间',
     example: '2026-03-19T12:00:00.000Z',
