@@ -1,4 +1,4 @@
 interface:
   display_name: 'ES Server 审查'
-  short_description: '每次先通读全部规则，再审查 es-server 模块规范违例与实际 bug'
-  default_prompt: 'Use $es-server-code-review to review this es-server module. Read every file under .trae/rules first, then surface code-spec violations and concrete bugs first.'
+  short_description: '先读全量规则并跑完整审查矩阵，发现问题后也不能提前结束'
+  default_prompt: 'Use $es-server-code-review to review this es-server module. Read every file under .trae/rules, complete the full review matrix, and keep reviewing after the first findings.'
