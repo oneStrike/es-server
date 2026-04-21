@@ -8,11 +8,10 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 
 import {
   IntersectionType,
-  OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
@@ -114,12 +113,44 @@ export class BaseEmojiPackDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateEmojiPackDto extends OmitType(BaseEmojiPackDto, [
-  ...OMIT_BASE_FIELDS,
-  'createdById',
-  'updatedById',
-  'deletedAt',
+class CreateEmojiPackWritableFieldsDto extends PickType(BaseEmojiPackDto, [
+  'code',
+  'name',
+  'description',
+  'iconUrl',
+  'sceneType',
 ] as const) {}
+
+class CreateEmojiPackOptionalFieldsDto {
+  @NumberProperty({
+    description: '排序值',
+    example: 10,
+    required: false,
+    min: 0,
+  })
+  sortOrder?: number
+
+  @BooleanProperty({
+    description: '启用状态',
+    example: true,
+    default: true,
+    required: false,
+  })
+  isEnabled?: boolean
+
+  @BooleanProperty({
+    description: '是否在选择器可见',
+    example: true,
+    default: true,
+    required: false,
+  })
+  visibleInPicker?: boolean
+}
+
+export class CreateEmojiPackDto extends IntersectionType(
+  CreateEmojiPackWritableFieldsDto,
+  CreateEmojiPackOptionalFieldsDto,
+) {}
 
 export class UpdateEmojiPackDto extends IntersectionType(
   PartialType(CreateEmojiPackDto),
@@ -258,12 +289,47 @@ export class BaseEmojiAssetDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateEmojiAssetDto extends OmitType(BaseEmojiAssetDto, [
-  ...OMIT_BASE_FIELDS,
-  'createdById',
-  'updatedById',
-  'deletedAt',
+class CreateEmojiAssetWritableFieldsDto extends PickType(BaseEmojiAssetDto, [
+  'packId',
+  'kind',
+  'shortcode',
+  'unicodeSequence',
+  'imageUrl',
+  'staticUrl',
+  'category',
+  'keywords',
 ] as const) {}
+
+class CreateEmojiAssetOptionalFieldsDto {
+  @BooleanProperty({
+    description: '是否动图',
+    example: false,
+    default: false,
+    required: false,
+  })
+  isAnimated?: boolean
+
+  @NumberProperty({
+    description: '排序值',
+    example: 10,
+    required: false,
+    min: 0,
+  })
+  sortOrder?: number
+
+  @BooleanProperty({
+    description: '启用状态',
+    example: true,
+    default: true,
+    required: false,
+  })
+  isEnabled?: boolean
+}
+
+export class CreateEmojiAssetDto extends IntersectionType(
+  CreateEmojiAssetWritableFieldsDto,
+  CreateEmojiAssetOptionalFieldsDto,
+) {}
 
 export class UpdateEmojiAssetDto extends IntersectionType(
   PartialType(CreateEmojiAssetDto),

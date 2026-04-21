@@ -29,7 +29,6 @@ import {
   CheckInRecordTypeEnum,
   CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
-  CheckInStreakConfigStatusEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
@@ -129,10 +128,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     const config = await this.getEnabledConfig()
     const rewardDefinition = this.parseRewardDefinition(config)
     let action:
-      | {
-          recordId: number
-          triggeredGrantIds: number[]
-        }
+      | { recordId: number, triggeredGrantIds: number[] }
       | undefined
 
     for (let attempt = 0; attempt < CHECK_IN_WRITE_RETRY_LIMIT; attempt++) {
@@ -267,31 +263,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     const progress = await this.getOrCreateStreakProgress(userId, tx)
     const records = await this.listUserRecords(userId, tx)
     const aggregation = this.recomputeStreakAggregation(records)
-    const configs = (await this.listStreakConfigs(tx)).filter(
-      (config) =>
-        config.status !== CheckInStreakConfigStatusEnum.DRAFT &&
-        config.status !== CheckInStreakConfigStatusEnum.TERMINATED,
-    )
-
-    const streakByConfigId = new Map<number, Record<string, number>>()
-    for (const [triggerSignDate, streak] of Object.entries(
-      aggregation.streakByDate,
-    )) {
-      const config = this.resolveStreakConfigForSignDate(triggerSignDate, configs)
-      if (!config) {
-        continue
-      }
-      const scoped = streakByConfigId.get(config.id) ?? {}
-      scoped[triggerSignDate] = streak
-      streakByConfigId.set(config.id, scoped)
-    }
+    const today = this.formatDateOnly(now)
 
     const existingGrants = await tx
       .select({
         id: this.checkInStreakGrantTable.id,
         ruleCode: this.checkInStreakGrantTable.ruleCode,
         triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
-        configId: this.checkInStreakGrantTable.configId,
       })
       .from(this.checkInStreakGrantTable)
       .where(eq(this.checkInStreakGrantTable.userId, userId))
@@ -302,32 +280,31 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     const triggeredGrantIds: number[] = []
 
-    for (const config of configs) {
-      const scopedStreakByDate = streakByConfigId.get(config.id)
-      if (!scopedStreakByDate) {
+    for (const [triggerSignDate, streak] of Object.entries(
+      aggregation.streakByDate,
+    )) {
+      if (aggregation.streakStartedAt && triggerSignDate < aggregation.streakStartedAt) {
         continue
       }
 
-      const rewardRules = await this.loadStreakRewardRules(config.id, tx)
+      const ruleLookupAt =
+        triggerSignDate === today ? now : triggerSignDate
+      const activeRuleRows = await this.listActiveStreakRulesAt(ruleLookupAt, tx)
+      const activeRules = this.toStreakRewardRuleViews(
+        activeRuleRows,
+        ruleLookupAt,
+      )
       const grantCandidates = this.resolveEligibleGrantRules(
-        rewardRules,
-        scopedStreakByDate,
-        existingGrants
-          .filter((grant) => grant.configId === config.id)
-          .map((grant) => ({
-            ruleCode: grant.ruleCode,
-            triggerSignDate: grant.triggerSignDate,
-          })),
+        activeRules,
+        { [triggerSignDate]: streak },
+        existingGrants.map((grant) => ({
+          ruleCode: grant.ruleCode,
+          triggerSignDate: grant.triggerSignDate,
+        })),
         aggregation.streakStartedAt,
       )
 
-      const configRules = await tx
-        .select()
-        .from(this.checkInStreakRuleTable)
-        .where(eq(this.checkInStreakRuleTable.configId, config.id))
-      const ruleIdMap = new Map(
-        configRules.map((rule) => [rule.ruleCode, rule.id]),
-      )
+      const ruleIdMap = new Map(activeRuleRows.map((rule) => [rule.ruleCode, rule.id]))
 
       for (const candidate of grantCandidates) {
         const ruleId = ruleIdMap.get(candidate.rule.ruleCode)
@@ -341,13 +318,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           .insert(this.checkInStreakGrantTable)
           .values({
             userId,
-            configId: config.id,
             ruleId,
             triggerSignDate: candidate.triggerSignDate,
             rewardSettlementId: null,
             bizKey: this.buildGrantBizKey(
               userId,
-              config.id,
               candidate.rule.ruleCode,
               candidate.triggerSignDate,
             ),
@@ -455,7 +430,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number; isRetry?: boolean },
+    context: { actorUserId?: number, isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -551,7 +526,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number; isRetry?: boolean },
+    context: { actorUserId?: number, isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -788,15 +763,12 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   private buildGrantBizKey(
     userId: number,
-    configId: number,
     ruleCode: string,
     triggerSignDate: string,
   ) {
     return [
       'checkin',
       'grant',
-      'config',
-      configId,
       'rule',
       ruleCode,
       'user',
@@ -861,7 +833,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     grant: {
       id: number
       userId: number
-      configId: number
       ruleId: number
       ruleCode: string
       triggerSignDate: string | Date
@@ -882,7 +853,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         {
           grantId: grant.id,
           userId: grant.userId,
-          configId: grant.configId,
           ruleId: grant.ruleId,
           ruleCode: grant.ruleCode,
           triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),

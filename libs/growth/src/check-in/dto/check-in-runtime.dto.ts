@@ -49,14 +49,6 @@ export class QueryCheckInReconciliationDto extends PageDto {
   userId?: number
 
   @NumberProperty({
-    description: '连续签到配置 ID。',
-    example: 1,
-    required: false,
-    validation: false,
-  })
-  configId?: number
-
-  @NumberProperty({
     description: '连续签到规则 ID。',
     example: 1,
     required: false,

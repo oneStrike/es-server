@@ -44,14 +44,6 @@ export enum CheckInRewardSourceTypeEnum {
   PATTERN_RULE = 3,
 }
 
-/** 连续奖励规则状态枚举。 */
-export enum CheckInStreakRewardRuleStatusEnum {
-  /** 已停用。 */
-  DISABLED = 0,
-  /** 已启用。 */
-  ENABLED = 1,
-}
-
 /** 连续签到配置状态枚举。 */
 export enum CheckInStreakConfigStatusEnum {
   /** 草稿。 */

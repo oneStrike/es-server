@@ -616,10 +616,12 @@ export class CommentService {
         .where(and(...replyConditions))
         .as('t')
 
-      loadedPreviewReplies = await this.db
+      loadedPreviewReplies = (await this.db
         .select()
         .from(subquery)
-        .where(lte(subquery.rn, params.previewReplyLimit)) as typeof previewReplies
+        .where(
+          lte(subquery.rn, params.previewReplyLimit),
+        )) as typeof previewReplies
 
       for (const reply of loadedPreviewReplies) {
         if (
@@ -904,6 +906,34 @@ export class CommentService {
       return
     }
 
+    let replyTarget:
+      | {
+          id: number
+          userId: number
+          content: string
+        }
+      | undefined
+
+    if (comment.replyToId) {
+      replyTarget = await tx.query.userComment.findFirst({
+        where: {
+          id: comment.replyToId,
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          id: true,
+          userId: true,
+          content: true,
+        },
+      })
+    }
+
+    const replyTargetUserId = comment.replyTargetUserId ?? replyTarget?.userId
+    const excludedMentionReceiverUserIds =
+      replyTargetUserId && replyTargetUserId !== comment.userId
+        ? [replyTargetUserId]
+        : []
+
     await this.mentionService.dispatchCommentMentionsInTx(tx, {
       commentId: comment.id,
       actorUserId: comment.userId,
@@ -911,26 +941,12 @@ export class CommentService {
       targetId: comment.targetId,
       content: comment.content,
       targetDisplayTitle: meta.targetDisplayTitle,
+      excludedReceiverUserIds: excludedMentionReceiverUserIds,
     })
 
     if (!comment.replyToId) {
       return
     }
-
-    const replyTarget = await tx.query.userComment.findFirst({
-      where: {
-        id: comment.replyToId,
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        id: true,
-        userId: true,
-        content: true,
-      },
-    })
-
-    // 查询被回复的评论，获取被回复者信息
-    const replyTargetUserId = comment.replyTargetUserId ?? replyTarget?.userId
 
     // 被回复评论不存在或自己回复自己，无需通知
     if (!replyTargetUserId || replyTargetUserId === comment.userId) {
@@ -1026,7 +1042,7 @@ export class CommentService {
   ) {
     const authorDeltas = new Map<
       number,
-      { commentCount: number, receivedLikeCount: number }
+      { commentCount: number; receivedLikeCount: number }
     >()
 
     for (const comment of comments) {

@@ -3,7 +3,6 @@ import type {
   CheckInConfigSelect,
   CheckInMakeupAccountSelect,
   CheckInRecordSelect,
-  CheckInStreakConfigSelect,
   CheckInStreakGrantSelect,
   CheckInStreakRuleRewardItemSelect,
   CheckInStreakRuleSelect,
@@ -20,8 +19,8 @@ import type {
   CheckInRewardDefinition,
   CheckInRewardItems,
   CheckInStreakAggregation,
-  CheckInStreakConfigDefinition,
   CheckInStreakRewardRuleView,
+  CheckInStreakRuleDefinition,
 } from './check-in.type'
 import type { CreateCheckInDateRewardRuleDto } from './dto/check-in-date-reward-rule.dto'
 import type { CreateCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
@@ -47,7 +46,6 @@ import {
   CheckInPatternRewardRuleTypeEnum,
   CheckInRewardSourceTypeEnum,
   CheckInStreakConfigStatusEnum,
-  CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 
 dayjs.extend(utc)
@@ -84,10 +82,6 @@ export abstract class CheckInServiceSupport {
 
   protected get checkInRecordTable() {
     return this.drizzle.schema.checkInRecord
-  }
-
-  protected get checkInStreakConfigTable() {
-    return this.drizzle.schema.checkInStreakConfig
   }
 
   protected get checkInStreakRuleTable() {
@@ -150,6 +144,10 @@ export abstract class CheckInServiceSupport {
 
   protected stringifyError(error: unknown) {
     return error instanceof Error ? error.message : String(error)
+  }
+
+  protected buildStreakRuleCode(streakDays: number) {
+    return `streak-day-${streakDays}`
   }
 
   protected parseRewardItems(
@@ -395,13 +393,14 @@ export abstract class CheckInServiceSupport {
       | undefined,
   ) {
     const normalizedRules = (rules ?? []).map((rule) => {
-      const ruleCode = rule.ruleCode.trim()
-      if (!ruleCode) {
-        throw new BadRequestException('连续奖励规则编码不能为空')
-      }
       if (!Number.isInteger(rule.streakDays) || rule.streakDays <= 0) {
         throw new BadRequestException('连续奖励阈值必须为正整数')
       }
+      const rawRuleCode =
+        'ruleCode' in rule && typeof rule.ruleCode === 'string'
+          ? rule.ruleCode.trim()
+          : ''
+      const ruleCode = rawRuleCode || this.buildStreakRuleCode(rule.streakDays)
 
       return {
         ruleCode,
@@ -410,7 +409,7 @@ export abstract class CheckInServiceSupport {
           allowEmpty: false,
         })!,
         repeatable: rule.repeatable ?? false,
-        status: rule.status ?? CheckInStreakRewardRuleStatusEnum.ENABLED,
+        status: rule.status ?? CheckInStreakConfigStatusEnum.ACTIVE,
       } satisfies CheckInStreakRewardRuleView
     })
 
@@ -465,41 +464,53 @@ export abstract class CheckInServiceSupport {
     } satisfies CheckInRewardDefinition
   }
 
-  protected parseStreakConfigDefinition(
-    config: Pick<
-      CheckInStreakConfigSelect,
-      'version' | 'status' | 'publishStrategy' | 'effectiveFrom' | 'effectiveTo'
+  protected parseStreakRuleDefinition(
+    rule: Pick<
+      CheckInStreakRuleSelect,
+      | 'ruleCode'
+      | 'streakDays'
+      | 'version'
+      | 'status'
+      | 'publishStrategy'
+      | 'effectiveFrom'
+      | 'effectiveTo'
+      | 'repeatable'
     > & {
-      rewardRules: CheckInStreakRewardRuleView[]
+      rewardItems: CheckInRewardItems
     },
   ) {
     return {
-      version: config.version,
-      status: config.status as CheckInStreakConfigStatusEnum,
-      publishStrategy: config.publishStrategy,
-      rewardRules: this.normalizeStreakRewardRules(config.rewardRules),
-      effectiveFrom: config.effectiveFrom,
-      effectiveTo: config.effectiveTo ?? null,
-    } satisfies CheckInStreakConfigDefinition
+      ruleCode: rule.ruleCode,
+      streakDays: rule.streakDays,
+      version: rule.version,
+      status: rule.status as CheckInStreakConfigStatusEnum,
+      publishStrategy: rule.publishStrategy,
+      rewardItems: this.parseRewardItems(rule.rewardItems, {
+        allowEmpty: false,
+      })!,
+      repeatable: rule.repeatable,
+      effectiveFrom: rule.effectiveFrom,
+      effectiveTo: rule.effectiveTo ?? null,
+    } satisfies CheckInStreakRuleDefinition
   }
 
-  protected resolveStreakConfigStatus(
-    config: Pick<
-      CheckInStreakConfigSelect,
+  protected resolveStreakRuleStatus(
+    rule: Pick<
+      CheckInStreakRuleSelect,
       'status' | 'effectiveFrom' | 'effectiveTo'
     >,
     at = new Date(),
   ) {
-    if (config.status === CheckInStreakConfigStatusEnum.DRAFT) {
+    if (rule.status === CheckInStreakConfigStatusEnum.DRAFT) {
       return CheckInStreakConfigStatusEnum.DRAFT
     }
-    if (config.status === CheckInStreakConfigStatusEnum.TERMINATED) {
+    if (rule.status === CheckInStreakConfigStatusEnum.TERMINATED) {
       return CheckInStreakConfigStatusEnum.TERMINATED
     }
-    if (config.effectiveFrom > at) {
+    if (rule.effectiveFrom > at) {
       return CheckInStreakConfigStatusEnum.SCHEDULED
     }
-    if (config.effectiveTo && config.effectiveTo <= at) {
+    if (rule.effectiveTo && rule.effectiveTo <= at) {
       return CheckInStreakConfigStatusEnum.EXPIRED
     }
     return CheckInStreakConfigStatusEnum.ACTIVE
@@ -512,33 +523,20 @@ export abstract class CheckInServiceSupport {
       .toDate()
   }
 
-  protected resolveStreakConfigForSignDate(
-    signDate: string,
-    configs: Array<
-      Pick<
-        CheckInStreakConfigSelect,
-        'id' | 'status' | 'effectiveFrom' | 'effectiveTo'
-      >
-    >,
-  ) {
-    const lookupAt = this.resolveConfigLookupAt(signDate)
-    return configs.find(
-      (config) =>
-        this.resolveStreakConfigStatus(config, lookupAt) ===
-        CheckInStreakConfigStatusEnum.ACTIVE,
-    )
-  }
-
-  protected async loadStreakRewardRuleRows(
-    configId: number,
+  protected async loadStreakRewardRuleRowsByIds(
+    targetRuleIds: number[],
     db: Db = this.db,
   ) {
+    if (targetRuleIds.length === 0) {
+      return []
+    }
     const rules = await db
       .select()
       .from(this.checkInStreakRuleTable)
-      .where(eq(this.checkInStreakRuleTable.configId, configId))
+      .where(inArray(this.checkInStreakRuleTable.id, targetRuleIds))
       .orderBy(
         asc(this.checkInStreakRuleTable.streakDays),
+        asc(this.checkInStreakRuleTable.version),
         asc(this.checkInStreakRuleTable.id),
       )
 
@@ -568,9 +566,74 @@ export abstract class CheckInServiceSupport {
     }))
   }
 
-  protected async loadStreakRewardRules(configId: number, db: Db = this.db) {
-    return this.toStreakRewardRuleViews(
-      await this.loadStreakRewardRuleRows(configId, db),
+  protected async listStreakRuleVersionsByCode(ruleCode: string, db: Db = this.db) {
+    return db
+      .select()
+      .from(this.checkInStreakRuleTable)
+      .where(eq(this.checkInStreakRuleTable.ruleCode, ruleCode))
+      .orderBy(
+        desc(this.checkInStreakRuleTable.version),
+        desc(this.checkInStreakRuleTable.id),
+      )
+  }
+
+  protected async findLatestStreakRuleVersion(ruleCode: string, db: Db = this.db) {
+    const [rule] = await db
+      .select()
+      .from(this.checkInStreakRuleTable)
+      .where(eq(this.checkInStreakRuleTable.ruleCode, ruleCode))
+      .orderBy(
+        desc(this.checkInStreakRuleTable.version),
+        desc(this.checkInStreakRuleTable.id),
+      )
+      .limit(1)
+    return rule
+  }
+
+  protected assertNoDuplicatedActiveStreakDays(
+    rules: Array<Pick<CheckInStreakRuleSelect, 'id' | 'streakDays'>>,
+  ) {
+    const duplicateStreakDays = this.findDuplicateValue(
+      rules.map((rule) => String(rule.streakDays)),
+    )
+    if (duplicateStreakDays) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        `连续签到规则存在多个生效版本：streakDays=${duplicateStreakDays}`,
+      )
+    }
+  }
+
+  protected async listActiveStreakRulesAt(
+    at: Date | string,
+    db: Db = this.db,
+  ) {
+    const lookupAt = typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
+    const rules = await db
+      .select()
+      .from(this.checkInStreakRuleTable)
+      .where(
+        and(
+          sql`${this.checkInStreakRuleTable.status} <> ${CheckInStreakConfigStatusEnum.DRAFT}`,
+          sql`${this.checkInStreakRuleTable.status} <> ${CheckInStreakConfigStatusEnum.TERMINATED}`,
+          sql`${this.checkInStreakRuleTable.effectiveFrom} <= ${lookupAt}`,
+          or(
+            sql`${this.checkInStreakRuleTable.effectiveTo} is null`,
+            sql`${this.checkInStreakRuleTable.effectiveTo} > ${lookupAt}`,
+          ),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInStreakRuleTable.streakDays),
+        desc(this.checkInStreakRuleTable.version),
+        desc(this.checkInStreakRuleTable.id),
+      )
+
+    this.assertNoDuplicatedActiveStreakDays(rules)
+
+    return this.loadStreakRewardRuleRowsByIds(
+      rules.map((rule) => rule.id),
+      db,
     )
   }
 
@@ -578,7 +641,12 @@ export abstract class CheckInServiceSupport {
     rules: Array<
       Pick<
         CheckInStreakRuleSelect,
-        'ruleCode' | 'streakDays' | 'repeatable' | 'status'
+        | 'ruleCode'
+        | 'streakDays'
+        | 'repeatable'
+        | 'status'
+        | 'effectiveFrom'
+        | 'effectiveTo'
       > & {
         rewardItems: Array<
           Pick<
@@ -588,13 +656,15 @@ export abstract class CheckInServiceSupport {
         >
       }
     >,
+    at: Date | string = new Date(),
   ) {
+    const lookupAt = typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
     return this.normalizeStreakRewardRules(
       rules.map((rule) => ({
         ruleCode: rule.ruleCode,
         streakDays: rule.streakDays,
         repeatable: rule.repeatable,
-        status: rule.status,
+        status: this.resolveStreakRuleStatus(rule, lookupAt),
         rewardItems: rule.rewardItems.map((item) => ({
           assetType: item.assetType,
           assetKey: item.assetKey,
@@ -667,60 +737,6 @@ export abstract class CheckInServiceSupport {
       )
     }
     return config
-  }
-
-  protected async getCurrentStreakConfig(at = new Date(), db: Db = this.db) {
-    const rows = await db
-      .select()
-      .from(this.checkInStreakConfigTable)
-      .where(
-        and(
-          sql`${this.checkInStreakConfigTable.status} <> ${CheckInStreakConfigStatusEnum.DRAFT}`,
-          sql`${this.checkInStreakConfigTable.status} <> ${CheckInStreakConfigStatusEnum.TERMINATED}`,
-          sql`${this.checkInStreakConfigTable.effectiveFrom} <= ${at}`,
-          or(
-            sql`${this.checkInStreakConfigTable.effectiveTo} is null`,
-            sql`${this.checkInStreakConfigTable.effectiveTo} > ${at}`,
-          ),
-        ),
-      )
-      .orderBy(
-        desc(this.checkInStreakConfigTable.effectiveFrom),
-        desc(this.checkInStreakConfigTable.id),
-      )
-      .limit(2)
-
-    if (rows.length > 1) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '当前存在多个生效中的连续签到配置',
-      )
-    }
-    return rows[0]
-  }
-
-  protected async getRequiredCurrentStreakConfig(
-    at = new Date(),
-    db: Db = this.db,
-  ) {
-    const config = await this.getCurrentStreakConfig(at, db)
-    if (!config) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '连续签到配置不存在',
-      )
-    }
-    return config
-  }
-
-  protected async listStreakConfigs(db: Db = this.db) {
-    return db
-      .select()
-      .from(this.checkInStreakConfigTable)
-      .orderBy(
-        desc(this.checkInStreakConfigTable.effectiveFrom),
-        desc(this.checkInStreakConfigTable.id),
-      )
   }
 
   protected buildMakeupWindow(
@@ -1241,9 +1257,7 @@ export abstract class CheckInServiceSupport {
     currentStreak: number,
   ) {
     const nextRule = rules
-      .filter(
-        (rule) => rule.status === CheckInStreakRewardRuleStatusEnum.ENABLED,
-      )
+      .filter((rule) => rule.status === CheckInStreakConfigStatusEnum.ACTIVE)
       .sort((left, right) => left.streakDays - right.streakDays)
       .find((rule) => rule.streakDays > currentStreak)
 
@@ -1336,7 +1350,7 @@ export abstract class CheckInServiceSupport {
     }> = []
 
     for (const rule of rules) {
-      if (rule.status !== CheckInStreakRewardRuleStatusEnum.ENABLED) {
+      if (rule.status !== CheckInStreakConfigStatusEnum.ACTIVE) {
         continue
       }
 
@@ -1384,8 +1398,8 @@ export abstract class CheckInServiceSupport {
           | 'settledAt'
           | 'lastError'
         >
-      | null
-      | undefined,
+        | null
+        | undefined,
   ): CheckInRewardSettlementSummaryDto | null {
     if (!settlement) {
       return null

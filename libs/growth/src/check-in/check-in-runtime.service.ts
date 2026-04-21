@@ -34,8 +34,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       config,
       today,
     )
-    const currentConfig = await this.getRequiredCurrentStreakConfig(now)
-    const rewardRules = await this.loadStreakRewardRules(currentConfig.id)
+    const activeRules = await this.listActiveStreakRulesAt(now)
+    const rewardRules = this.toStreakRewardRuleViews(activeRules, now)
     const progress = await this.db.query.checkInStreakProgress.findFirst({
       where: { userId },
     })
@@ -421,7 +421,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       createdAt: grant.createdAt,
       updatedAt: grant.updatedAt,
       userId: grant.userId,
-      configId: grant.configId,
       ruleId: grant.ruleId,
       ruleCode: grant.ruleCode,
       streakDays: grant.streakDays,
@@ -481,7 +480,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         createdAt: grant.createdAt,
         updatedAt: grant.updatedAt,
         userId: grant.userId,
-        configId: grant.configId,
         ruleId: grant.ruleId,
         ruleCode: grant.ruleCode,
         streakDays: grant.streakDays,
@@ -505,9 +503,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   ) {
     const grantConditions: SQL[] = []
 
-    if (query.configId !== undefined) {
-      grantConditions.push(eq(this.checkInStreakGrantTable.configId, query.configId))
-    }
     if (query.ruleId !== undefined) {
       grantConditions.push(eq(this.checkInStreakGrantTable.ruleId, query.ruleId))
     }

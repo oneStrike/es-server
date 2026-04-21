@@ -21,7 +21,6 @@ import {
 } from './check-in-pattern-reward-rule.dto'
 import {
   CheckInStreakRewardRuleItemDto,
-  CreateCheckInStreakRewardRuleDto,
 } from './check-in-streak-reward-rule.dto'
 
 export class UpdateCheckInConfigDto {
@@ -121,7 +120,43 @@ export class CheckInConfigDetailResponseDto extends BaseDto {
   patternRewardRules!: CheckInPatternRewardRuleItemDto[]
 }
 
-export class PublishCheckInStreakConfigDto {
+export class QueryCheckInStreakRulePageDto extends PageDto {
+  @NumberProperty({
+    description: '连续签到天数阈值。',
+    example: 7,
+    min: 1,
+    required: false,
+    validation: false,
+  })
+  streakDays?: number
+
+  @EnumProperty({
+    description: '记录状态（0=草稿；1=已排期；2=生效中；3=已过期；4=已终止）。',
+    example: CheckInStreakConfigStatusEnum.ACTIVE,
+    enum: CheckInStreakConfigStatusEnum,
+    required: false,
+    validation: false,
+  })
+  status?: CheckInStreakConfigStatusEnum
+}
+
+export class QueryCheckInStreakRuleHistoryPageDto extends PageDto {
+  @NumberProperty({
+    description: '连续签到天数阈值。',
+    example: 7,
+    min: 1,
+  })
+  streakDays!: number
+}
+
+export class PublishCheckInStreakRuleDto {
+  @NumberProperty({
+    description: '命中奖励所需的连续签到天数。',
+    example: 7,
+    min: 1,
+  })
+  streakDays!: number
+
   @EnumProperty({
     description: '发布策略（1=立即生效；2=次日生效；3=指定时间生效）。',
     example: CheckInStreakPublishStrategyEnum.NEXT_DAY,
@@ -136,23 +171,44 @@ export class PublishCheckInStreakConfigDto {
   })
   effectiveFrom?: string
 
-  @ArrayProperty({
-    description: '连续签到奖励规则列表。',
-    itemClass: CreateCheckInStreakRewardRuleDto,
+  @BooleanProperty({
+    description: '是否允许重复发放。',
+    example: false,
+    required: false,
   })
-  rewardRules!: CreateCheckInStreakRewardRuleDto[]
+  repeatable?: boolean
+
+  @ArrayProperty({
+    description: '连续签到奖励项列表。',
+    itemClass: GrowthRewardItemDto,
+  })
+  rewardItems!: GrowthRewardItemDto[]
 }
 
-export class CheckInStreakConfigDetailResponseDto extends BaseDto {
+export class CheckInStreakRuleDetailResponseDto extends BaseDto {
+  @StringProperty({
+    description: '连续签到记录稳定编码。',
+    example: 'streak-day-7',
+    validation: false,
+  })
+  ruleCode!: string
+
   @NumberProperty({
-    description: '配置版本号。',
-    example: 1,
+    description: '命中奖励所需的连续签到天数。',
+    example: 7,
+    validation: false,
+  })
+  streakDays!: number
+
+  @NumberProperty({
+    description: '记录版本号。',
+    example: 2,
     validation: false,
   })
   version!: number
 
   @EnumProperty({
-    description: '配置状态（0=草稿；1=已排期；2=生效中；3=已过期；4=已终止）。',
+    description: '记录状态（0=草稿；1=已排期；2=生效中；3=已过期；4=已终止）。',
     example: CheckInStreakConfigStatusEnum.ACTIVE,
     enum: CheckInStreakConfigStatusEnum,
     validation: false,
@@ -168,7 +224,7 @@ export class CheckInStreakConfigDetailResponseDto extends BaseDto {
   publishStrategy!: CheckInStreakPublishStrategyEnum
 
   @BooleanProperty({
-    description: '是否为当前生效配置。',
+    description: '是否为当前生效版本。',
     example: true,
     validation: false,
   })
@@ -189,14 +245,21 @@ export class CheckInStreakConfigDetailResponseDto extends BaseDto {
   })
   effectiveTo?: string | Date | null
 
-  @ArrayProperty({
-    description: '连续签到奖励规则列表。',
-    itemClass: CheckInStreakRewardRuleItemDto,
+  @BooleanProperty({
+    description: '是否允许重复发放。',
+    example: false,
     validation: false,
   })
-  rewardRules!: CheckInStreakRewardRuleItemDto[]
+  repeatable!: boolean
+
+  @ArrayProperty({
+    description: '连续签到奖励项列表。',
+    itemClass: GrowthRewardItemDto,
+    validation: false,
+  })
+  rewardItems!: GrowthRewardItemDto[]
 }
 
-export class QueryCheckInStreakConfigHistoryPageDto extends PageDto {}
+export class CheckInStreakRulePageItemDto extends CheckInStreakRuleDetailResponseDto {}
 
-export class CheckInStreakConfigHistoryPageItemDto extends CheckInStreakConfigDetailResponseDto {}
+export class CheckInStreakRuleHistoryPageItemDto extends CheckInStreakRuleDetailResponseDto {}

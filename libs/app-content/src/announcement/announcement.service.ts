@@ -2,17 +2,24 @@ import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
+import { EnablePlatformEnum } from '@libs/platform/constant/base.constant'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gte, isNull, lte, or, sql } from 'drizzle-orm'
+import { and, arrayOverlaps, eq, gte, isNull, lte, or, sql } from 'drizzle-orm'
 import { AnnouncementNotificationFanoutService } from './announcement-notification-fanout.service'
 import {
   CreateAnnouncementDto,
   QueryAnnouncementDto,
   UpdateAnnouncementDto,
 } from './dto/announcement.dto'
+
+const ENABLE_PLATFORM_VALUES = new Set<number>(
+  Object.values(EnablePlatformEnum).filter(
+    (value): value is number => typeof value === 'number',
+  ),
+)
 
 /**
  * 系统公告服务
@@ -67,20 +74,29 @@ export class AppAnnouncementService {
       }
     }
 
-    const [createdAnnouncement] = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.appAnnouncement)
-        .values({
-          ...others,
-          pageId: pageId ?? null,
-        })
-        .returning({
-          id: this.appAnnouncement.id,
-        }),
-    )
+    await this.drizzle.withTransaction(
+      async (tx) => {
+        const createdAnnouncements = await tx
+          .insert(this.appAnnouncement)
+          .values({
+            ...others,
+            pageId: pageId ?? null,
+          })
+          .returning({
+            id: this.appAnnouncement.id,
+          })
 
-    await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
-      createdAnnouncement?.id,
+        const [createdAnnouncement] = this.drizzle.assertNotEmpty(
+          createdAnnouncements,
+          '公告创建失败',
+        )
+
+        await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
+          createdAnnouncement.id,
+          tx,
+        )
+      },
+      { duplicate: '公告已存在' },
     )
     return true
   }
@@ -122,12 +138,8 @@ export class AppAnnouncementService {
       conditions.push(gte(this.appAnnouncement.publishEndTime, publishEndTime))
     }
     if (platforms && platforms.length > 0) {
-      const platformArray = sql`ARRAY[${sql.join(
-        platforms.map((item) => sql`${item}`),
-        sql`, `,
-      )}]::integer[]`
       conditions.push(
-        sql`${this.appAnnouncement.enablePlatform} && ${platformArray}`,
+        arrayOverlaps(this.appAnnouncement.enablePlatform, platforms),
       )
     }
     if (queryAnnouncementDto.announcementType !== undefined) {
@@ -242,15 +254,18 @@ export class AppAnnouncementService {
       nextUpdateData.pageId = pageId
     }
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appAnnouncement)
-          .set(nextUpdateData)
-          .where(eq(this.appAnnouncement.id, id)),
-      { notFound: '公告不存在' },
-    )
-    await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(id)
+    await this.drizzle.withTransaction(async (tx) => {
+      const result = await tx
+        .update(this.appAnnouncement)
+        .set(nextUpdateData)
+        .where(eq(this.appAnnouncement.id, id))
+
+      this.drizzle.assertAffectedRows(result, '公告不存在')
+      await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
+        id,
+        tx,
+      )
+    })
     return true
   }
 
@@ -258,17 +273,18 @@ export class AppAnnouncementService {
    * 切换公告发布状态，并在成功后重新入队公告通知 fanout 任务。
    */
   async updateAnnouncementStatus(dto: UpdatePublishedStatusDto) {
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appAnnouncement)
-          .set({ isPublished: dto.isPublished })
-          .where(eq(this.appAnnouncement.id, dto.id)),
-      { notFound: '公告不存在' },
-    )
-    await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
-      dto.id,
-    )
+    await this.drizzle.withTransaction(async (tx) => {
+      const result = await tx
+        .update(this.appAnnouncement)
+        .set({ isPublished: dto.isPublished })
+        .where(eq(this.appAnnouncement.id, dto.id))
+
+      this.drizzle.assertAffectedRows(result, '公告不存在')
+      await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
+        dto.id,
+        tx,
+      )
+    })
     return true
   }
 
@@ -277,25 +293,27 @@ export class AppAnnouncementService {
    */
   async deleteAnnouncement(dto: IdDto) {
     const { id } = dto
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appAnnouncement)
-          .set({ isPublished: false })
-          .where(eq(this.appAnnouncement.id, id)),
-      { notFound: '公告不存在' },
-    )
-    await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
-      id,
-    )
+    await this.drizzle.withTransaction(async (tx) => {
+      const result = await tx
+        .update(this.appAnnouncement)
+        .set({ isPublished: false })
+        .where(eq(this.appAnnouncement.id, id))
+
+      this.drizzle.assertAffectedRows(result, '公告不存在')
+      await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
+        id,
+        tx,
+      )
+    })
     return true
   }
 
   /**
-   * 查询公告详情并补齐关联页面快照，未命中时返回 `undefined`。
+   * 查询公告详情并补齐关联页面快照。
+   * 未命中时统一抛出业务异常，保持详情接口错误语义一致。
    */
   async findAnnouncementDetail(dto: IdDto) {
-    return this.db.query.appAnnouncement.findFirst({
+    const announcement = await this.db.query.appAnnouncement.findFirst({
       where: { id: dto.id },
       with: {
         appPage: {
@@ -308,6 +326,15 @@ export class AppAnnouncementService {
         },
       },
     })
+
+    if (!announcement) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '公告不存在',
+      )
+    }
+
+    return announcement
   }
 
   /**
@@ -344,12 +371,16 @@ export class AppAnnouncementService {
     }
 
     if (!Array.isArray(parsedValue)) {
-      throw new BadRequestException('启用平台筛选必须是数字数组')
+      throw new BadRequestException('启用平台筛选必须是平台枚举值数组')
     }
 
     const platforms = parsedValue.map((item) => Number(item))
-    if (platforms.some((item) => !Number.isInteger(item) || item <= 0)) {
-      throw new BadRequestException('启用平台筛选必须是数字数组')
+    if (
+      platforms.some(
+        (item) => !Number.isInteger(item) || !ENABLE_PLATFORM_VALUES.has(item),
+      )
+    ) {
+      throw new BadRequestException('启用平台筛选必须是平台枚举值数组')
     }
 
     return platforms.length > 0 ? [...new Set(platforms)] : undefined

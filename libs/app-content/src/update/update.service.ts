@@ -363,8 +363,7 @@ export class AppUpdateService {
         AppUpdatePackageSourceEnum.CUSTOM,
       ].includes(dto.packageSourceType)
     ) {
-      console.log(1111, packageUrl)
-      if (!this.isHttpUrl(packageUrl)) {
+      if (!this.isHttpsUrl(packageUrl)) {
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
           '外部安装包地址必须是合法的 HTTPS URL',
@@ -432,6 +431,14 @@ export class AppUpdateService {
    */
   private isHttpUrl(value?: string | null) {
     return Boolean(value && HTTP_URL_REGEXP.test(value))
+  }
+
+  /**
+   * 判断是否为 HTTPS URL。
+   * 外部下载地址和中转页地址只允许加密链路，避免发布明文下载入口。
+   */
+  private isHttpsUrl(value?: string | null) {
+    return Boolean(value && /^https:\/\//i.test(value) && this.isHttpUrl(value))
   }
 
   /**

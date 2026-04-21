@@ -3,8 +3,7 @@ import { Injectable } from '@nestjs/common'
 import { EmojiCatalogService } from './emoji-catalog.service'
 import { EMOJI_SHORTCODE_REGEX } from './emoji.constant'
 
-const EMOJI_UNICODE_REGEX =
-  /\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*/gu
+const EMOJI_UNICODE_REGEX = new RegExp('\\p{RGI_Emoji}', 'gv')
 
 /**
  * 将文本解析为普通文本、Unicode 表情和自定义短码三类 token。
@@ -93,7 +92,7 @@ export class EmojiParserService {
 
   /**
    * 将文本段拆分为普通文本和 Unicode 表情 token。
-   * - 使用正则匹配 Unicode 表情符号（Extended_Pictographic）。
+   * - 使用 RGI_Emoji 正则匹配完整 Unicode 表情序列。
    * - 命中平台托管 Unicode 资源时补齐 emojiAssetId。
    * - 递归调用 pushTextToken 合并连续的普通文本。
    */

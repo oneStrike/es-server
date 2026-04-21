@@ -16,13 +16,6 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
   userId!: number
 
   @NumberProperty({
-    description: '连续签到配置 ID。',
-    example: 1,
-    validation: false,
-  })
-  configId!: number
-
-  @NumberProperty({
     description: '连续签到规则 ID。',
     example: 1,
     validation: false,

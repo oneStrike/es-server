@@ -219,7 +219,6 @@ export class GrowthRewardSettlementService {
     params: {
       grantId: number
       userId: number
-      configId: number
       ruleId: number
       ruleCode: string
       triggerSignDate: string
@@ -241,7 +240,6 @@ export class GrowthRewardSettlementService {
       kind: 'check_in_streak_reward',
       grantId: params.grantId,
       userId: params.userId,
-      configId: params.configId,
       ruleId: params.ruleId,
       ruleCode: params.ruleCode,
       triggerSignDate: params.triggerSignDate,

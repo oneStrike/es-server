@@ -236,23 +236,11 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       alias: 'CheckInConfigUpdatedBy',
     }),
   },
-  checkInStreakConfig: {
-    updatedBy: r.one.adminUser({
-      from: r.checkInStreakConfig.updatedById,
-      to: r.adminUser.id,
-      alias: 'CheckInStreakConfigUpdatedBy',
-    }),
-    rules: r.many.checkInStreakRule(),
-    grants: r.many.checkInStreakGrant({
-      from: r.checkInStreakConfig.id,
-      to: r.checkInStreakGrant.configId,
-      alias: 'StreakConfigGrants',
-    }),
-  },
   checkInStreakRule: {
-    config: r.one.checkInStreakConfig({
-      from: r.checkInStreakRule.configId,
-      to: r.checkInStreakConfig.id,
+    updatedBy: r.one.adminUser({
+      from: r.checkInStreakRule.updatedById,
+      to: r.adminUser.id,
+      alias: 'CheckInStreakRuleUpdatedBy',
     }),
     rewardItems: r.many.checkInStreakRuleRewardItem(),
     grants: r.many.checkInStreakGrant({
@@ -299,11 +287,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     user: r.one.appUser({
       from: r.checkInStreakGrant.userId,
       to: r.appUser.id,
-    }),
-    config: r.one.checkInStreakConfig({
-      from: r.checkInStreakGrant.configId,
-      to: r.checkInStreakConfig.id,
-      alias: 'StreakGrantConfig',
     }),
     rule: r.one.checkInStreakRule({
       from: r.checkInStreakGrant.ruleId,

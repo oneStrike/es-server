@@ -1,7 +1,8 @@
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type {
-  PublishCheckInStreakConfigDto,
-  QueryCheckInStreakConfigHistoryPageDto,
+  PublishCheckInStreakRuleDto,
+  QueryCheckInStreakRuleHistoryPageDto,
+  QueryCheckInStreakRulePageDto,
   UpdateCheckInConfigDto,
   UpdateCheckInEnabledDto,
 } from './dto/check-in-definition.dto'
@@ -43,27 +44,31 @@ export class CheckInService {
     return this.checkInDefinitionService.updateEnabled(dto, adminUserId)
   }
 
-  async getStreakConfigDetail() {
-    return this.checkInDefinitionService.getStreakConfigDetail()
+  async getStreakRulePage(query: QueryCheckInStreakRulePageDto) {
+    return this.checkInDefinitionService.getStreakRulePage(query)
   }
 
-  async getStreakConfigHistoryPage(query: QueryCheckInStreakConfigHistoryPageDto) {
-    return this.checkInDefinitionService.getStreakConfigHistoryPage(query)
+  async getStreakRuleDetail(query: { id: number }) {
+    return this.checkInDefinitionService.getStreakRuleDetail(query)
   }
 
-  async getStreakConfigHistoryDetail(query: { id: number }) {
-    return this.checkInDefinitionService.getStreakConfigHistoryDetail(query)
+  async getStreakRuleHistoryPage(query: QueryCheckInStreakRuleHistoryPageDto) {
+    return this.checkInDefinitionService.getStreakRuleHistoryPage(query)
   }
 
-  async publishStreakConfig(
-    dto: PublishCheckInStreakConfigDto,
+  async getStreakRuleHistoryDetail(query: { id: number }) {
+    return this.checkInDefinitionService.getStreakRuleHistoryDetail(query)
+  }
+
+  async publishStreakRule(
+    dto: PublishCheckInStreakRuleDto,
     adminUserId: number,
   ) {
-    return this.checkInDefinitionService.publishStreakConfig(dto, adminUserId)
+    return this.checkInDefinitionService.publishStreakRule(dto, adminUserId)
   }
 
-  async terminateStreakConfig(query: { id: number }, adminUserId: number) {
-    return this.checkInDefinitionService.terminateStreakConfig(query, adminUserId)
+  async terminateStreakRule(query: { id: number }, adminUserId: number) {
+    return this.checkInDefinitionService.terminateStreakRule(query, adminUserId)
   }
 
   async getSummary(userId: number) {

@@ -4,12 +4,12 @@ import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-prop
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { CheckInStreakRewardRuleStatusEnum } from '../check-in.constant'
+import { CheckInStreakConfigStatusEnum } from '../check-in.constant'
 
 class CheckInStreakRewardRuleFieldsDto {
   @StringProperty({
     description: '连续奖励规则编码。',
-    example: 'default-round-day-7',
+    example: 'streak-day-7',
   })
   ruleCode!: string
 
@@ -34,12 +34,12 @@ class CheckInStreakRewardRuleFieldsDto {
   repeatable?: boolean
 
   @EnumProperty({
-    description: '规则状态（0=停用；1=启用）。',
-    example: CheckInStreakRewardRuleStatusEnum.ENABLED,
-    enum: CheckInStreakRewardRuleStatusEnum,
+    description: '记录状态（0=草稿；1=已排期；2=生效中；3=已过期；4=已终止）。',
+    example: CheckInStreakConfigStatusEnum.ACTIVE,
+    enum: CheckInStreakConfigStatusEnum,
     required: false,
   })
-  status?: CheckInStreakRewardRuleStatusEnum
+  status?: CheckInStreakConfigStatusEnum
 }
 
 export class CreateCheckInStreakRewardRuleDto extends CheckInStreakRewardRuleFieldsDto {}

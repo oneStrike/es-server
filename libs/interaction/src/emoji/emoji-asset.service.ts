@@ -4,7 +4,7 @@ import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import {
   CreateEmojiAssetDto,
@@ -17,8 +17,6 @@ import {
 } from './dto/emoji.dto'
 import {
   EmojiAssetKindEnum as AssetKind,
-  EmojiSceneEnum,
-  isEmojiScene,
 } from './emoji.constant'
 
 /**
@@ -99,12 +97,10 @@ export class EmojiAssetService {
   /**
    * 创建表情包。
    * - 自动计算 sortOrder（未指定时取当前最大排序值 +1）。
-   * - sceneType 必须包含至少一个有效场景。
-   * @throws BadRequestException sceneType 校验失败
+   * - sceneType 合法性由 DTO 负责校验。
    * @throws BusinessException 表情包编码已存在（由 withErrorHandling 转换）
    */
   async createPack(dto: CreateEmojiPackDto, adminUserId: number) {
-    this.validateSceneType(dto.sceneType)
     const sortOrder =
       dto.sortOrder ??
       (await this.drizzle.ext.maxOrder({
@@ -119,6 +115,7 @@ export class EmojiAssetService {
           name: dto.name,
           description: dto.description,
           iconUrl: dto.iconUrl,
+          isEnabled: dto.isEnabled ?? true,
           visibleInPicker: dto.visibleInPicker ?? true,
           sceneType: dto.sceneType,
           sortOrder,
@@ -133,15 +130,11 @@ export class EmojiAssetService {
   /**
    * 更新表情包。
    * - 允许部分字段更新，未传入的字段保持原值。
-   * - 若更新 sceneType，需重新校验场景有效性。
+   * - sceneType 合法性由 DTO 负责校验。
    * @throws BusinessException 表情包不存在或已删除
    * @throws BusinessException 表情包编码已存在（由 withErrorHandling 转换）
    */
   async updatePack(dto: UpdateEmojiPackDto, adminUserId: number) {
-    if (dto.sceneType) {
-      this.validateSceneType(dto.sceneType)
-    }
-
     const { id, ...updateData } = dto
     await this.drizzle.withErrorHandling(
       () =>
@@ -191,14 +184,12 @@ export class EmojiAssetService {
   /**
    * 更新表情包场景类型。
    * - 独立接口用于单独修改场景可见性。
-   * @throws BadRequestException sceneType 校验失败
    * @throws BusinessException 表情包不存在或已删除
    */
   async updatePackSceneType(
     dto: UpdateEmojiPackSceneTypeDto,
     adminUserId: number,
   ) {
-    this.validateSceneType(dto.sceneType)
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -232,7 +223,7 @@ export class EmojiAssetService {
    * 删除表情包（软删除）。
    * - 删除前校验：若表情包下存在未删除的资源，禁止删除以避免孤儿资源。
    * @throws BusinessException 表情包不存在或已删除
-   * @throws BadRequestException 表情包下仍有资源
+   * @throws BusinessException 表情包下仍有资源
    */
   async deletePack(id: number) {
     // 删除前保护：存在未删除资源时禁止删除表情包，避免孤儿资源。
@@ -345,7 +336,7 @@ export class EmojiAssetService {
    * 创建表情资源。
    * - 自动计算 sortOrder（未指定时取当前包内最大排序值 +1）。
    * - 根据 kind 校验必填字段：CUSTOM 需 shortcode+imageUrl，UNICODE 需 unicodeSequence。
-   * @throws BadRequestException 表情包不存在或字段校验失败
+   * @throws BusinessException 表情包不存在或字段校验失败
    */
   async createAsset(dto: CreateEmojiAssetDto, adminUserId: number) {
     await this.ensurePackExists(dto.packId)
@@ -366,7 +357,7 @@ export class EmojiAssetService {
         ...dto,
         sortOrder,
         isAnimated: dto.isAnimated ?? false,
-        isEnabled: true,
+        isEnabled: dto.isEnabled ?? true,
         createdById: adminUserId,
         updatedById: adminUserId,
       }),
@@ -379,7 +370,7 @@ export class EmojiAssetService {
    * - 允许部分字段更新，未传入的字段保持原值。
    * - 若更新 kind，需重新校验字段完整性。
    * @throws BusinessException 表情资源不存在或已删除
-   * @throws BadRequestException 目标表情包不存在或字段校验失败
+   * @throws BusinessException 目标表情包不存在或字段校验失败
    */
   async updateAsset(dto: UpdateEmojiAssetDto, adminUserId: number) {
     if (dto.packId !== undefined) {
@@ -476,26 +467,10 @@ export class EmojiAssetService {
   }
 
   /**
-   * 校验场景类型数组有效性。
-   * - 至少包含一个场景。
-   * - 所有值必须是 EmojiSceneEnum 中定义的有效场景。
-   * @throws BadRequestException 场景类型为空或包含无效值
-   */
-  private validateSceneType(sceneType: EmojiSceneEnum[]) {
-    const unique = [...new Set(sceneType)]
-    if (unique.length === 0) {
-      throw new BadRequestException('sceneType 至少包含一个场景')
-    }
-    if (!unique.every(isEmojiScene)) {
-      throw new BadRequestException('未知的场景类型')
-    }
-  }
-
-  /**
    * 根据资源类型校验字段完整性。
    * - CUSTOM 类型：必须提供 shortcode 和 imageUrl。
    * - UNICODE 类型：必须提供 unicodeSequence。
-   * @throws BadRequestException 字段不满足类型要求
+   * @throws BusinessException 字段不满足类型要求
    */
   private validateAssetPayload(
     kind: CreateEmojiAssetDto['kind'],
@@ -503,21 +478,30 @@ export class EmojiAssetService {
   ) {
     if (kind === AssetKind.CUSTOM) {
       if (!payload.shortcode) {
-        throw new BadRequestException('custom 表情必须填写 shortcode')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          'custom 表情必须填写 shortcode',
+        )
       }
       if (!payload.imageUrl) {
-        throw new BadRequestException('custom 表情必须填写 imageUrl')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          'custom 表情必须填写 imageUrl',
+        )
       }
     }
     if (kind === AssetKind.UNICODE && !payload.unicodeSequence) {
-      throw new BadRequestException('unicode 表情必须填写 unicodeSequence')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'unicode 表情必须填写 unicodeSequence',
+      )
     }
   }
 
   /**
    * 校验表情包存在且未删除。
    * - 用于创建/更新表情资源前的外键前置校验。
-   * @throws BadRequestException 表情包不存在或已删除
+   * @throws BusinessException 表情包不存在或已删除
    */
   private async ensurePackExists(packId: number) {
     const pack = await this.db.query.emojiPack.findFirst({

@@ -72,14 +72,26 @@ export class EmojiCatalogService {
   }
 
   /**
-   * 构建表情包有效状态条件。
+   * 构建表情包业务可用条件。
    * - 条件包括：已启用、未删除、当前场景可见。
+   * - 不包含选择器可见性，供解析和兼容路径复用。
    */
-  private buildActivePackCondition(scene: EmojiSceneEnum) {
+  private buildAvailablePackCondition(scene: EmojiSceneEnum) {
     return and(
       eq(this.emojiPack.isEnabled, true),
       isNull(this.emojiPack.deletedAt),
       this.buildSceneContainsCondition(scene),
+    )!
+  }
+
+  /**
+   * 构建选择器可见的表情包条件。
+   * - 在业务可用条件基础上追加 visibleInPicker，供目录/搜索/recent 使用。
+   */
+  private buildPickerVisiblePackCondition(scene: EmojiSceneEnum) {
+    return and(
+      this.buildAvailablePackCondition(scene),
+      eq(this.emojiPack.visibleInPicker, true),
     )!
   }
 
@@ -158,7 +170,7 @@ export class EmojiCatalogService {
         sortOrder: this.emojiPack.sortOrder,
       })
       .from(this.emojiPack)
-      .where(this.buildActivePackCondition(scene))
+      .where(this.buildPickerVisiblePackCondition(scene))
       .orderBy(this.emojiPack.sortOrder, this.emojiPack.id)
 
     if (packs.length === 0) {
@@ -270,7 +282,7 @@ export class EmojiCatalogService {
       .where(
         and(
           this.buildActiveAssetCondition(),
-          this.buildActivePackCondition(scene),
+          this.buildPickerVisiblePackCondition(scene),
           searchCondition,
         ),
       )
@@ -329,7 +341,7 @@ export class EmojiCatalogService {
           eq(this.emojiRecentUsage.userId, userId),
           eq(this.emojiRecentUsage.scene, scene),
           this.buildActiveAssetCondition(),
-          this.buildActivePackCondition(scene),
+          this.buildPickerVisiblePackCondition(scene),
         ),
       )
       .orderBy(
@@ -415,7 +427,7 @@ export class EmojiCatalogService {
         and(
           inArray(this.emojiAsset.id, targetAssetIds),
           this.buildActiveAssetCondition(),
-          this.buildActivePackCondition(scene),
+          this.buildAvailablePackCondition(scene),
         ),
       )
     const activeIds = new Set(targets.map((item) => item.id))
@@ -453,7 +465,7 @@ export class EmojiCatalogService {
       .where(
         and(
           this.buildActiveAssetCondition(),
-          this.buildActivePackCondition(scene),
+          this.buildAvailablePackCondition(scene),
           eq(this.emojiAsset.kind, EmojiAssetKindEnum.CUSTOM),
           isNotNull(this.emojiAsset.shortcode),
           inArray(this.emojiAsset.shortcode, uniqueShortcodes),
@@ -504,7 +516,7 @@ export class EmojiCatalogService {
       .where(
         and(
           this.buildActiveAssetCondition(),
-          this.buildActivePackCondition(scene),
+          this.buildAvailablePackCondition(scene),
           eq(this.emojiAsset.kind, EmojiAssetKindEnum.UNICODE),
           isNotNull(this.emojiAsset.unicodeSequence),
           inArray(this.emojiAsset.unicodeSequence, uniqueUnicodeSequences),

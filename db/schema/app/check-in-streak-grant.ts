@@ -24,8 +24,6 @@ export const checkInStreakGrant = pgTable(
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     /** 发放归属用户 ID。 */
     userId: integer().notNull(),
-    /** 归属配置版本 ID。 */
-    configId: integer().notNull(),
     /** 归属规则 ID。 */
     ruleId: integer().notNull(),
     /** 命中的规则编码快照。 */
@@ -56,7 +54,6 @@ export const checkInStreakGrant = pgTable(
       table.userId,
       table.bizKey,
     ),
-    index('check_in_streak_grant_config_id_idx').on(table.configId),
     index('check_in_streak_grant_rule_id_idx').on(table.ruleId),
     index('check_in_streak_grant_user_trigger_sign_date_idx').on(
       table.userId,
@@ -64,10 +61,6 @@ export const checkInStreakGrant = pgTable(
     ),
     index('check_in_streak_grant_reward_settlement_id_idx').on(
       table.rewardSettlementId,
-    ),
-    check(
-      'check_in_streak_grant_config_id_positive_chk',
-      sql`${table.configId} > 0`,
     ),
     check(
       'check_in_streak_grant_rule_id_positive_chk',

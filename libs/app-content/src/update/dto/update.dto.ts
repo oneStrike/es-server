@@ -266,7 +266,7 @@ export class AppUpdateCheckResponseDto extends IntersectionType(
   hasUpdate!: boolean
 
   @EnumProperty({
-    description: '更新类型（optional=普通更新；force=强制更新）',
+    description: '更新类型（普通更新=可稍后升级；强制更新=必须升级后继续使用）',
     example: AppUpdateTypeEnum.FORCE,
     enum: AppUpdateTypeEnum,
     required: false,

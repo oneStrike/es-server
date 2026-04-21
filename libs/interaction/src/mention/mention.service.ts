@@ -11,6 +11,8 @@ import { DrizzleService } from '@db/core'
 import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
 import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { UserService } from '@libs/user/user.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
@@ -38,9 +40,7 @@ export class MentionService {
    * 构建正文 token。
    * 先校验 mentions 区间，再把 mention token 与 emoji token 按原始顺序拼回。
    */
-  async buildBodyTokens(
-    input: BuildMentionBodyTokensInput,
-  ) {
+  async buildBodyTokens(input: BuildMentionBodyTokensInput) {
     const normalizedMentions = this.normalizeMentions(
       input.content,
       input.mentions,
@@ -144,7 +144,10 @@ export class MentionService {
       (item) => !availableUserIds.has(item.userId),
     )
     if (invalidMention) {
-      throw new BadRequestException('被提及用户不存在或不可用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '被提及用户不存在或不可用',
+      )
     }
 
     const rows = normalizedMentions.map((mention) => ({
@@ -158,7 +161,9 @@ export class MentionService {
 
     await input.tx.insert(this.userMention).values(rows)
 
-    const mentionedUserIds = [...new Set(rows.map((row) => row.mentionedUserId))]
+    const mentionedUserIds = [
+      ...new Set(rows.map((row) => row.mentionedUserId)),
+    ]
     const pendingUserIds = [
       ...new Set(
         rows
@@ -181,37 +186,44 @@ export class MentionService {
     tx: ReplaceMentionsInTxInput['tx'],
     input: DispatchCommentMentionsInTxInput,
   ) {
-    const receiverUserIds = await this.getPendingMentionReceiverUserIds(
+    const pendingReceiverUserIds = await this.getPendingMentionReceiverUserIds(
       tx,
       MentionSourceTypeEnum.COMMENT,
       input.commentId,
     )
-    if (receiverUserIds.length === 0) {
+    if (pendingReceiverUserIds.length === 0) {
       return
     }
 
-    const actor = await this.getActorSnapshot(tx, input.actorUserId)
-    for (const receiverUserId of receiverUserIds) {
-      await this.messageDomainEventPublisher.publishInTx(
-        tx,
-        this.messageDomainEventFactoryService.buildCommentMentionEvent({
-          receiverUserId,
-          actorUserId: input.actorUserId,
-          commentId: input.commentId,
-          targetType: input.targetType,
-          targetId: input.targetId,
-          actorNickname: actor?.nickname,
-          commentExcerpt: input.content,
-          targetDisplayTitle: input.targetDisplayTitle,
-        }),
-      )
+    const receiverUserIds = this.resolveDispatchReceiverUserIds(
+      pendingReceiverUserIds,
+      [input.actorUserId, ...(input.excludedReceiverUserIds ?? [])],
+    )
+
+    if (receiverUserIds.length > 0) {
+      const actor = await this.getActorSnapshot(tx, input.actorUserId)
+      for (const receiverUserId of receiverUserIds) {
+        await this.messageDomainEventPublisher.publishInTx(
+          tx,
+          this.messageDomainEventFactoryService.buildCommentMentionEvent({
+            receiverUserId,
+            actorUserId: input.actorUserId,
+            commentId: input.commentId,
+            targetType: input.targetType,
+            targetId: input.targetId,
+            actorNickname: actor?.nickname,
+            commentExcerpt: input.content,
+            targetDisplayTitle: input.targetDisplayTitle,
+          }),
+        )
+      }
     }
 
     await this.markMentionReceiversNotifiedInTx(
       tx,
       MentionSourceTypeEnum.COMMENT,
       input.commentId,
-      receiverUserIds,
+      pendingReceiverUserIds,
     )
   }
 
@@ -223,34 +235,41 @@ export class MentionService {
     tx: ReplaceMentionsInTxInput['tx'],
     input: DispatchTopicMentionsInTxInput,
   ) {
-    const receiverUserIds = await this.getPendingMentionReceiverUserIds(
+    const pendingReceiverUserIds = await this.getPendingMentionReceiverUserIds(
       tx,
       MentionSourceTypeEnum.FORUM_TOPIC,
       input.topicId,
     )
-    if (receiverUserIds.length === 0) {
+    if (pendingReceiverUserIds.length === 0) {
       return
     }
 
-    const actor = await this.getActorSnapshot(tx, input.actorUserId)
-    for (const receiverUserId of receiverUserIds) {
-      await this.messageDomainEventPublisher.publishInTx(
-        tx,
-        this.messageDomainEventFactoryService.buildTopicMentionEvent({
-          receiverUserId,
-          actorUserId: input.actorUserId,
-          topicId: input.topicId,
-          actorNickname: actor?.nickname,
-          topicTitle: input.topicTitle,
-        }),
-      )
+    const receiverUserIds = this.resolveDispatchReceiverUserIds(
+      pendingReceiverUserIds,
+      [input.actorUserId, ...(input.excludedReceiverUserIds ?? [])],
+    )
+
+    if (receiverUserIds.length > 0) {
+      const actor = await this.getActorSnapshot(tx, input.actorUserId)
+      for (const receiverUserId of receiverUserIds) {
+        await this.messageDomainEventPublisher.publishInTx(
+          tx,
+          this.messageDomainEventFactoryService.buildTopicMentionEvent({
+            receiverUserId,
+            actorUserId: input.actorUserId,
+            topicId: input.topicId,
+            actorNickname: actor?.nickname,
+            topicTitle: input.topicTitle,
+          }),
+        )
+      }
     }
 
     await this.markMentionReceiversNotifiedInTx(
       tx,
       MentionSourceTypeEnum.FORUM_TOPIC,
       input.topicId,
-      receiverUserIds,
+      pendingReceiverUserIds,
     )
   }
 
@@ -328,6 +347,20 @@ export class MentionService {
     }
 
     return normalizedMentions
+  }
+
+  /**
+   * 过滤当前这次真正需要补发通知的接收人。
+   * 自提及和已被其他通知链路覆盖的接收人只回写 notifiedAt，不重复落通知。
+   */
+  private resolveDispatchReceiverUserIds(
+    receiverUserIds: number[],
+    excludedReceiverUserIds: number[],
+  ) {
+    const excludedReceiverUserIdSet = new Set(excludedReceiverUserIds)
+    return receiverUserIds.filter(
+      (receiverUserId) => !excludedReceiverUserIdSet.has(receiverUserId),
+    )
   }
 
   /**

@@ -1,12 +1,13 @@
 import type { Db } from '@db/core'
+import type { CommentTargetTypeEnum } from '../comment/comment.constant'
 import type { EmojiSceneEnum } from '../emoji/emoji.constant'
+import type { MentionDraftDto } from './dto/mention.dto'
 import type { MentionSourceTypeEnum } from './mention.constant'
 
 /**
  * 已规范化的提及草稿。
  * 在进入持久化和 token 构建前，确保 nickname 与正文切片一致。
  */
-/** 稳定领域类型 `NormalizedMentionDraft`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface NormalizedMentionDraft {
   userId: number
   nickname: string
@@ -17,15 +18,12 @@ export interface NormalizedMentionDraft {
 
 /**
  * mention 草稿快照。
- * 与 DTO 字段保持一致，但仅用于内部解析/事务链路，避免 type 文件直接依赖 HTTP DTO。
+ * 直接复用 DTO 的稳定字段子集，避免 service 输入与 HTTP contract 漂移。
  */
-/** 稳定领域类型 `MentionDraftSnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface MentionDraftSnapshot {
-  userId: number
-  nickname: string
-  start: number
-  end: number
-}
+export type MentionDraftSnapshot = Pick<
+  MentionDraftDto,
+  'userId' | 'nickname' | 'start' | 'end'
+>
 
 /**
  * mention token 构建输入。
@@ -53,10 +51,11 @@ export interface ReplaceMentionsInTxInput {
 export interface DispatchCommentMentionsInTxInput {
   commentId: number
   actorUserId: number
-  targetType: number
+  targetType: CommentTargetTypeEnum
   targetId: number
   content: string
   targetDisplayTitle?: string
+  excludedReceiverUserIds?: number[]
 }
 
 /**
@@ -66,6 +65,7 @@ export interface DispatchTopicMentionsInTxInput {
   topicId: number
   actorUserId: number
   topicTitle: string
+  excludedReceiverUserIds?: number[]
 }
 
 /**

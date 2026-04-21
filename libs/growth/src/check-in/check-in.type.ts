@@ -2,7 +2,6 @@ import type {
   CheckInMakeupAccountInsert,
   CheckInMakeupFactInsert,
   CheckInRecordInsert,
-  CheckInStreakConfigInsert,
   CheckInStreakGrantInsert,
   CheckInStreakGrantRewardItemInsert,
   CheckInStreakProgressInsert,
@@ -17,7 +16,6 @@ import type {
   CheckInRewardSourceTypeEnum,
   CheckInStreakConfigStatusEnum,
   CheckInStreakPublishStrategyEnum,
-  CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 
 /** 稳定领域类型 `CheckInRewardItems`。 */
@@ -43,7 +41,7 @@ export interface CheckInStreakRewardRuleView {
   streakDays: number
   rewardItems: CheckInRewardItems
   repeatable: boolean
-  status: CheckInStreakRewardRuleStatusEnum
+  status: CheckInStreakConfigStatusEnum
 }
 
 /** 全局签到奖励定义。 */
@@ -53,12 +51,15 @@ export interface CheckInRewardDefinition {
   patternRewardRules: CheckInPatternRewardRuleView[]
 }
 
-/** 连续签到配置定义。 */
-export interface CheckInStreakConfigDefinition {
+/** 连续签到记录版本定义。 */
+export interface CheckInStreakRuleDefinition {
+  ruleCode: string
+  streakDays: number
   version: number
   status: CheckInStreakConfigStatusEnum
   publishStrategy: CheckInStreakPublishStrategyEnum
-  rewardRules: CheckInStreakRewardRuleView[]
+  rewardItems: CheckInRewardItems
+  repeatable: boolean
   effectiveFrom: Date
   effectiveTo: Date | null
 }
@@ -132,26 +133,18 @@ export type CreateCheckInRecordInput = Pick<
   | 'context'
 >
 
-/** 连续签到配置写入入参。 */
-export type CreateCheckInStreakConfigInput = Pick<
-  CheckInStreakConfigInsert,
-  | 'version'
-  | 'status'
-  | 'publishStrategy'
-  | 'effectiveFrom'
-  | 'effectiveTo'
-  | 'updatedById'
->
-
 /** 连续签到规则写入入参。 */
 export type CreateCheckInStreakRuleInput = Pick<
   CheckInStreakRuleInsert,
-  | 'configId'
   | 'ruleCode'
   | 'streakDays'
+  | 'version'
+  | 'publishStrategy'
+  | 'effectiveFrom'
+  | 'effectiveTo'
   | 'repeatable'
   | 'status'
-  | 'sortOrder'
+  | 'updatedById'
 >
 
 /** 连续签到规则奖励项写入入参。 */
@@ -178,7 +171,6 @@ export type CreateCheckInStreakProgressInput = Pick<
 export type CreateCheckInGrantInput = Pick<
   CheckInStreakGrantInsert,
   | 'userId'
-  | 'configId'
   | 'ruleId'
   | 'triggerSignDate'
   | 'rewardSettlementId'

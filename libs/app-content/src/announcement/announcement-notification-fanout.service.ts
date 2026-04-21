@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type { AppAnnouncementNotificationFanoutTaskSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
@@ -47,9 +48,12 @@ export class AnnouncementNotificationFanoutService {
     return this.drizzle.schema.appAnnouncementNotificationFanoutTask
   }
 
-  async enqueueAnnouncementFanout(announcementId: number) {
-    const announcement =
-      await this.loadAnnouncementDecisionSnapshot(announcementId)
+  // 在公告写事务内复用同一 fanout 入队逻辑，避免内容状态与任务状态分裂。
+  async enqueueAnnouncementFanout(announcementId: number, tx: Db = this.db) {
+    const announcement = await this.loadAnnouncementDecisionSnapshot(
+      announcementId,
+      tx,
+    )
     if (!announcement) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -60,7 +64,7 @@ export class AnnouncementNotificationFanoutService {
     const desiredEventKey = this.resolveAnnouncementEventKey(announcement)
     const now = new Date()
     await this.drizzle.withErrorHandling(() =>
-      this.db
+      tx
         .insert(this.fanoutTask)
         .values({
           announcementId,
@@ -340,8 +344,11 @@ export class AnnouncementNotificationFanoutService {
     return [...new Set(rows.map((row) => row.receiverUserId))]
   }
 
-  private async loadAnnouncementDecisionSnapshot(announcementId: number) {
-    return this.db.query.appAnnouncement.findFirst({
+  private async loadAnnouncementDecisionSnapshot(
+    announcementId: number,
+    db: Db = this.db,
+  ) {
+    return db.query.appAnnouncement.findFirst({
       where: { id: announcementId },
       columns: {
         id: true,
