@@ -35,8 +35,8 @@ export const notificationDelivery = pgTable(
     categoryKey: varchar({ length: 80 }),
     /** 任务 ID（task_reminder 场景冗余列，用于对账与查询）。 */
     taskId: integer(),
-    /** 任务分配 ID（task_reminder 场景冗余列，用于对账与查询）。 */
-    assignmentId: integer(),
+    /** 任务实例 ID（task_reminder 场景冗余列，用于对账与查询）。 */
+    instanceId: integer('assignment_id'),
     /** 提醒子类型（task_reminder 场景冗余列，用于对账与查询）。 */
     reminderKind: varchar({ length: 40 }),
     /** 关联的站内通知 ID。 */
@@ -90,7 +90,7 @@ export const notificationDelivery = pgTable(
     ),
     index('notification_delivery_assignment_kind_idx').on(
       table.categoryKey,
-      table.assignmentId,
+      table.instanceId,
       table.reminderKind,
       table.id.desc(),
     ),
@@ -98,7 +98,7 @@ export const notificationDelivery = pgTable(
       table.categoryKey,
       table.reminderKind,
       table.status,
-      table.assignmentId,
+      table.instanceId,
     ),
     index('notification_delivery_event_id_idx').on(table.eventId),
     check(
@@ -107,7 +107,7 @@ export const notificationDelivery = pgTable(
     ),
     check(
       'notification_delivery_task_reminder_lookup_required_chk',
-      sql`${table.categoryKey} <> 'task_reminder' OR (${table.taskId} IS NOT NULL AND ${table.assignmentId} IS NOT NULL AND ${table.reminderKind} IS NOT NULL)`,
+      sql`${table.categoryKey} <> 'task_reminder' OR (${table.taskId} IS NOT NULL AND ${table.instanceId} IS NOT NULL AND ${table.reminderKind} IS NOT NULL)`,
     ),
   ],
 )

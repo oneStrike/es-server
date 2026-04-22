@@ -25,9 +25,11 @@ import {
   growthLedgerRecord,
   growthRewardRule,
   growthRuleUsageCounter,
-  task,
-  taskAssignment,
-  taskProgressLog,
+  taskDefinition,
+  taskEventLog,
+  taskInstance,
+  taskInstanceStep,
+  taskStep,
   userAssetBalance,
   userBadge,
   userBadgeAssignment,
@@ -347,32 +349,74 @@ const TASK_FIXTURES = [
     title: '每日阅读付费章节',
     description: '每天完成一次付费章节阅读。',
     cover: 'https://static.example.com/tasks/read-chapter.jpg',
-    type: 2,
-    status: 2,
+    sceneType: 2,
+    status: 1,
     claimMode: 1,
-    completeMode: 1,
-    targetCount: 1,
+    completionPolicy: 1,
+    repeatType: 1,
     rewardItems: [
-      { assetType: 1, assetKey: '', amount: 5 },
-      { assetType: 2, assetKey: '', amount: 12 },
+      {
+        assetType: GrowthAssetTypeEnum.POINTS,
+        assetKey: '',
+        amount: 5,
+      },
+      {
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+        amount: 12,
+      },
     ],
-    repeatRule: { type: 'daily' },
+    step: {
+      stepKey: 'step_001',
+      title: '阅读章节',
+      description: '阅读任意一章漫画章节后推进任务。',
+      stepNo: 1,
+      triggerMode: 2,
+      progressMode: 2,
+      eventCode: 300,
+      targetValue: 1,
+      templateKey: 'COMIC_CHAPTER_READ',
+      filterPayload: null,
+      uniqueDimensionKey: null,
+      dedupeScope: null,
+    },
   },
   {
     code: 'daily_forum_interaction',
     title: '每日参与讨论',
     description: '每天参与一次主题讨论或回复。',
     cover: 'https://static.example.com/tasks/forum-interaction.jpg',
-    type: 2,
-    status: 2,
+    sceneType: 2,
+    status: 1,
     claimMode: 2,
-    completeMode: 1,
-    targetCount: 1,
+    completionPolicy: 1,
+    repeatType: 1,
     rewardItems: [
-      { assetType: 1, assetKey: '', amount: 3 },
-      { assetType: 2, assetKey: '', amount: 8 },
+      {
+        assetType: GrowthAssetTypeEnum.POINTS,
+        assetKey: '',
+        amount: 3,
+      },
+      {
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+        amount: 8,
+      },
     ],
-    repeatRule: { type: 'daily' },
+    step: {
+      stepKey: 'step_001',
+      title: '参与讨论',
+      description: '完成一次手动互动后推进任务。',
+      stepNo: 1,
+      triggerMode: 1,
+      progressMode: 1,
+      eventCode: null,
+      targetValue: 1,
+      templateKey: null,
+      filterPayload: null,
+      uniqueDimensionKey: null,
+      dedupeScope: null,
+    },
   },
 ] as const
 
@@ -704,24 +748,80 @@ export async function seedAppCoreDomain(db: Db) {
   console.log('  ✓ 公告完成')
 
   for (const taskFixture of TASK_FIXTURES) {
-    const existing = await db.query.task.findFirst({
-      where: eq(task.code, taskFixture.code),
+    const existing = await db.query.taskDefinition.findFirst({
+      where: eq(taskDefinition.code, taskFixture.code),
     })
 
     const payload = {
-      ...taskFixture,
-      isEnabled: true,
+      code: taskFixture.code,
+      title: taskFixture.title,
+      description: taskFixture.description,
+      cover: taskFixture.cover,
+      sceneType: taskFixture.sceneType,
+      status: taskFixture.status,
       priority: taskFixture.code === 'daily_read_chapter' ? 3 : 2,
+      claimMode: taskFixture.claimMode,
+      completionPolicy: taskFixture.completionPolicy,
+      repeatType: taskFixture.repeatType,
       createdById: admin?.id ?? null,
       updatedById: admin?.id ?? null,
-      publishStartAt: SEED_TIMELINE.releaseDay,
-      publishEndAt: addHours(SEED_TIMELINE.seedAt, 240),
+      startAt: SEED_TIMELINE.releaseDay,
+      endAt: addHours(SEED_TIMELINE.seedAt, 240),
+      rewardItems: taskFixture.rewardItems,
     }
 
     if (!existing) {
-      await db.insert(task).values(payload)
+      const [createdTask] = await db
+        .insert(taskDefinition)
+        .values(payload)
+        .returning()
+      await db.insert(taskStep).values({
+        taskId: createdTask.id,
+        stepKey: taskFixture.step.stepKey,
+        title: taskFixture.step.title,
+        description: taskFixture.step.description,
+        stepNo: taskFixture.step.stepNo,
+        triggerMode: taskFixture.step.triggerMode,
+        progressMode: taskFixture.step.progressMode,
+        eventCode: taskFixture.step.eventCode,
+        targetValue: taskFixture.step.targetValue,
+        templateKey: taskFixture.step.templateKey,
+        filterPayload: taskFixture.step.filterPayload,
+        uniqueDimensionKey: taskFixture.step.uniqueDimensionKey,
+        dedupeScope: taskFixture.step.dedupeScope,
+      })
     } else {
-      await db.update(task).set(payload).where(eq(task.id, existing.id))
+      await db
+        .update(taskDefinition)
+        .set(payload)
+        .where(eq(taskDefinition.id, existing.id))
+
+      const existingStep = await db.query.taskStep.findFirst({
+        where: and(eq(taskStep.taskId, existing.id), eq(taskStep.stepNo, 1)),
+      })
+      const stepPayload = {
+        taskId: existing.id,
+        stepKey: taskFixture.step.stepKey,
+        title: taskFixture.step.title,
+        description: taskFixture.step.description,
+        stepNo: taskFixture.step.stepNo,
+        triggerMode: taskFixture.step.triggerMode,
+        progressMode: taskFixture.step.progressMode,
+        eventCode: taskFixture.step.eventCode,
+        targetValue: taskFixture.step.targetValue,
+        templateKey: taskFixture.step.templateKey,
+        filterPayload: taskFixture.step.filterPayload,
+        uniqueDimensionKey: taskFixture.step.uniqueDimensionKey,
+        dedupeScope: taskFixture.step.dedupeScope,
+      }
+      if (!existingStep) {
+        await db.insert(taskStep).values(stepPayload)
+      } else {
+        await db
+          .update(taskStep)
+          .set(stepPayload)
+          .where(eq(taskStep.id, existingStep.id))
+      }
     }
   }
   console.log('  ✓ 任务完成')
@@ -1399,7 +1499,7 @@ export async function seedAppActivityDomain(db: Db) {
   const ledgerFixtures = [
     {
       userId: userA.id,
-      assetType: 1,
+      assetType: GrowthAssetTypeEnum.POINTS,
       delta: -30,
       beforeValue: 120,
       afterValue: 90,
@@ -1414,7 +1514,7 @@ export async function seedAppActivityDomain(db: Db) {
     },
     {
       userId: userA.id,
-      assetType: 2,
+      assetType: GrowthAssetTypeEnum.EXPERIENCE,
       delta: 20,
       beforeValue: 260,
       afterValue: 280,
@@ -1533,11 +1633,11 @@ export async function seedAppActivityDomain(db: Db) {
   }
   console.log('  ✓ 成长流水完成')
 
-  const readChapterTask = await db.query.task.findFirst({
-    where: eq(task.code, 'daily_read_chapter'),
+  const readChapterTask = await db.query.taskDefinition.findFirst({
+    where: eq(taskDefinition.code, 'daily_read_chapter'),
   })
-  const forumTask = await db.query.task.findFirst({
-    where: eq(task.code, 'daily_forum_interaction'),
+  const forumTask = await db.query.taskDefinition.findFirst({
+    where: eq(taskDefinition.code, 'daily_forum_interaction'),
   })
 
   if (readChapterTask) {
@@ -1545,10 +1645,10 @@ export async function seedAppActivityDomain(db: Db) {
       taskId: readChapterTask.id,
       userId: userA.id,
       cycleKey: '20260320',
-      status: 3,
-      progress: 1,
-      target: 1,
-      taskSnapshot: {
+      status: 2,
+      rewardApplicable: 1,
+      rewardSettlementId: null,
+      snapshotPayload: {
         code: readChapterTask.code,
         title: readChapterTask.title,
       },
@@ -1559,45 +1659,100 @@ export async function seedAppActivityDomain(db: Db) {
       expiredAt: null,
     }
 
-    const existingAssignment = await db.query.taskAssignment.findFirst({
+    const existingAssignment = await db.query.taskInstance.findFirst({
       where: and(
-        eq(taskAssignment.taskId, readChapterTask.id),
-        eq(taskAssignment.userId, userA.id),
-        eq(taskAssignment.cycleKey, '20260320'),
+        eq(taskInstance.taskId, readChapterTask.id),
+        eq(taskInstance.userId, userA.id),
+        eq(taskInstance.cycleKey, '20260320'),
       ),
     })
 
     let currentAssignment = existingAssignment
     if (!currentAssignment) {
       ;[currentAssignment] = await db
-        .insert(taskAssignment)
+        .insert(taskInstance)
         .values(assignmentPayload)
         .returning()
     } else {
       ;[currentAssignment] = await db
-        .update(taskAssignment)
+        .update(taskInstance)
         .set(assignmentPayload)
-        .where(eq(taskAssignment.id, currentAssignment.id))
+        .where(eq(taskInstance.id, currentAssignment.id))
         .returning()
+    }
+
+    const [readChapterStep] = await db
+      .select()
+      .from(taskStep)
+      .where(eq(taskStep.taskId, readChapterTask.id))
+      .limit(1)
+
+    if (readChapterStep) {
+      const existingStep = await db.query.taskInstanceStep.findFirst({
+        where: and(
+          eq(taskInstanceStep.instanceId, currentAssignment.id),
+          eq(taskInstanceStep.stepId, readChapterStep.id),
+        ),
+      })
+      const stepPayload = {
+        instanceId: currentAssignment.id,
+        stepId: readChapterStep.id,
+        status: 2,
+        currentValue: 1,
+        targetValue: 1,
+        completedAt: addHours(SEED_TIMELINE.seedAt, -2),
+        context: { chapterId: aotChapterTwo.id },
+        version: 1,
+      }
+      if (!existingStep) {
+        await db.insert(taskInstanceStep).values(stepPayload)
+      } else {
+        await db
+          .update(taskInstanceStep)
+          .set(stepPayload)
+          .where(eq(taskInstanceStep.id, existingStep.id))
+      }
     }
 
     const progressLogs = [
       {
-        assignmentId: currentAssignment.id,
+        taskId: readChapterTask.id,
+        stepId: readChapterStep?.id ?? null,
+        instanceId: currentAssignment.id,
+        instanceStepId: currentAssignment.id,
         userId: userA.id,
         actionType: 1,
+        progressSource: 1,
+        accepted: true,
         delta: 0,
         beforeValue: 0,
         afterValue: 0,
+        targetType: null,
+        targetId: null,
+        dimensionKey: null,
+        dimensionValue: null,
+        occurredAt: addHours(SEED_TIMELINE.seedAt, -3),
         context: { source: 'seed' },
       },
       {
-        assignmentId: currentAssignment.id,
+        taskId: readChapterTask.id,
+        stepId: readChapterStep?.id ?? null,
+        instanceId: currentAssignment.id,
+        instanceStepId: currentAssignment.id,
         userId: userA.id,
+        eventCode: 300,
+        eventBizKey: 'seed:read:daily_read_chapter:userA:20260320',
         actionType: 2,
+        progressSource: 2,
+        accepted: true,
         delta: 1,
         beforeValue: 0,
         afterValue: 1,
+        targetType: 'comic_chapter',
+        targetId: aotChapterTwo.id,
+        dimensionKey: null,
+        dimensionValue: null,
+        occurredAt: addHours(SEED_TIMELINE.seedAt, -2),
         context: { chapterId: aotChapterTwo.id },
       },
       {
@@ -1612,26 +1767,26 @@ export async function seedAppActivityDomain(db: Db) {
     ] as const
 
     for (const progressLog of progressLogs) {
-      const existingLog = await db.query.taskProgressLog.findFirst({
+      const existingLog = await db.query.taskEventLog.findFirst({
         where: and(
-          eq(taskProgressLog.assignmentId, progressLog.assignmentId),
-          eq(taskProgressLog.actionType, progressLog.actionType),
-          eq(taskProgressLog.afterValue, progressLog.afterValue),
+          eq(taskEventLog.instanceId, progressLog.instanceId),
+          eq(taskEventLog.actionType, progressLog.actionType),
+          eq(taskEventLog.afterValue, progressLog.afterValue),
         ),
       })
 
       if (!existingLog) {
-        await db.insert(taskProgressLog).values(progressLog)
+        await db.insert(taskEventLog).values(progressLog)
       }
     }
   }
 
   if (forumTask) {
-    const existingAssignment = await db.query.taskAssignment.findFirst({
+    const existingAssignment = await db.query.taskInstance.findFirst({
       where: and(
-        eq(taskAssignment.taskId, forumTask.id),
-        eq(taskAssignment.userId, userB.id),
-        eq(taskAssignment.cycleKey, '20260320'),
+        eq(taskInstance.taskId, forumTask.id),
+        eq(taskInstance.userId, userB.id),
+        eq(taskInstance.cycleKey, '20260320'),
       ),
     })
 
@@ -1640,9 +1795,9 @@ export async function seedAppActivityDomain(db: Db) {
       userId: userB.id,
       cycleKey: '20260320',
       status: 2,
-      progress: 0,
-      target: 1,
-      taskSnapshot: { code: forumTask.code, title: forumTask.title },
+      rewardApplicable: 1,
+      rewardSettlementId: null,
+      snapshotPayload: { code: forumTask.code, title: forumTask.title },
       context: { source: 'seed', topicId: whiteNightTopic.id },
       version: 1,
       claimedAt: addHours(SEED_TIMELINE.seedAt, -1),
@@ -1653,32 +1808,75 @@ export async function seedAppActivityDomain(db: Db) {
     let currentAssignment = existingAssignment
     if (!currentAssignment) {
       ;[currentAssignment] = await db
-        .insert(taskAssignment)
+        .insert(taskInstance)
         .values(forumAssignmentPayload)
         .returning()
     } else {
       ;[currentAssignment] = await db
-        .update(taskAssignment)
+        .update(taskInstance)
         .set(forumAssignmentPayload)
-        .where(eq(taskAssignment.id, currentAssignment.id))
+        .where(eq(taskInstance.id, currentAssignment.id))
         .returning()
     }
 
-    const existingClaimLog = await db.query.taskProgressLog.findFirst({
+    const [forumStep] = await db
+      .select()
+      .from(taskStep)
+      .where(eq(taskStep.taskId, forumTask.id))
+      .limit(1)
+
+    if (forumStep) {
+      const existingStep = await db.query.taskInstanceStep.findFirst({
+        where: and(
+          eq(taskInstanceStep.instanceId, currentAssignment.id),
+          eq(taskInstanceStep.stepId, forumStep.id),
+        ),
+      })
+      const stepPayload = {
+        instanceId: currentAssignment.id,
+        stepId: forumStep.id,
+        status: 0,
+        currentValue: 0,
+        targetValue: 1,
+        completedAt: null,
+        context: { topicId: whiteNightTopic.id },
+        version: 1,
+      }
+      if (!existingStep) {
+        await db.insert(taskInstanceStep).values(stepPayload)
+      } else {
+        await db
+          .update(taskInstanceStep)
+          .set(stepPayload)
+          .where(eq(taskInstanceStep.id, existingStep.id))
+      }
+    }
+
+    const existingClaimLog = await db.query.taskEventLog.findFirst({
       where: and(
-        eq(taskProgressLog.assignmentId, currentAssignment.id),
-        eq(taskProgressLog.actionType, 1),
+        eq(taskEventLog.instanceId, currentAssignment.id),
+        eq(taskEventLog.actionType, 1),
       ),
     })
 
     if (!existingClaimLog) {
-      await db.insert(taskProgressLog).values({
-        assignmentId: currentAssignment.id,
+      await db.insert(taskEventLog).values({
+        taskId: forumTask.id,
+        stepId: forumStep?.id ?? null,
+        instanceId: currentAssignment.id,
+        instanceStepId: currentAssignment.id,
         userId: userB.id,
         actionType: 1,
+        progressSource: 1,
+        accepted: true,
         delta: 0,
         beforeValue: 0,
         afterValue: 0,
+        targetType: null,
+        targetId: null,
+        dimensionKey: null,
+        dimensionValue: null,
+        occurredAt: addHours(SEED_TIMELINE.seedAt, -1),
         context: { source: 'seed' },
       })
     }

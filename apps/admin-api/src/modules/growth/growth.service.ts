@@ -1,16 +1,18 @@
-import type {
-  QueryGrowthRewardSettlementPageDto,
-} from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
-import type { QueryGrowthRuleEventPageDto } from '@libs/growth/growth/dto/growth.dto';
+import type { QueryGrowthRewardSettlementPageDto } from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
+import type { QueryGrowthRuleEventPageDto } from '@libs/growth/growth/dto/growth.dto'
 import { DrizzleService } from '@db/core'
-import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service';
-import { EventDefinitionConsumerEnum, EventDefinitionImplStatusEnum } from '@libs/growth/event-definition/event-definition.type';
+import {
+  EventDefinitionConsumerEnum,
+  EventDefinitionImplStatusEnum,
+} from '@libs/growth/event-definition/event-definition.constant'
+import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { GrowthRewardSettlementRetryService } from '@libs/growth/growth-reward/growth-reward-settlement-retry.service'
 import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
-import { normalizeTaskType, TaskObjectiveTypeEnum, TaskStatusEnum } from '@libs/growth/task/task.constant';
+import { normalizeTaskType, TaskDefinitionStatusEnum, TaskStepTriggerModeEnum } from '@libs/growth/task/task.constant'
+
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 
 @Injectable()
 export class GrowthService {
@@ -53,7 +55,11 @@ export class GrowthService {
   }
 
   private get taskTable() {
-    return this.drizzle.schema.task
+    return this.drizzle.schema.taskDefinition
+  }
+
+  private get taskStepTable() {
+    return this.drizzle.schema.taskStep
   }
 
   /**
@@ -146,8 +152,8 @@ export class GrowthService {
           return false
         }
         if (
-          query.hasBaseReward !== undefined
-          && item.hasBaseReward !== query.hasBaseReward
+          query.hasBaseReward !== undefined &&
+          item.hasBaseReward !== query.hasBaseReward
         ) {
           return false
         }
@@ -181,17 +187,21 @@ export class GrowthService {
     return this.db
       .select({
         id: this.taskTable.id,
-        type: this.taskTable.type,
+        type: this.taskTable.sceneType,
         status: this.taskTable.status,
-        isEnabled: this.taskTable.isEnabled,
-        eventCode: this.taskTable.eventCode,
+        isEnabled: sql<boolean>`${this.taskTable.status} = 1`,
+        eventCode: this.taskStepTable.eventCode,
       })
       .from(this.taskTable)
+      .innerJoin(
+        this.taskStepTable,
+        eq(this.taskStepTable.taskId, this.taskTable.id),
+      )
       .where(
         and(
           isNull(this.taskTable.deletedAt),
-          eq(this.taskTable.objectiveType, TaskObjectiveTypeEnum.EVENT_COUNT),
-          inArray(this.taskTable.eventCode, ruleTypes),
+          eq(this.taskStepTable.triggerMode, TaskStepTriggerModeEnum.EVENT),
+          inArray(this.taskStepTable.eventCode, ruleTypes),
         ),
       )
   }
@@ -205,14 +215,17 @@ export class GrowthService {
       eventCode: number | null
     }>,
   ) {
-    const taskBindingMap = new Map<number, {
-      exists: boolean
-      relatedTaskCount: number
-      publishedTaskCount: number
-      enabledTaskCount: number
-      sceneTypes: number[]
-      taskIds: number[]
-    }>()
+    const taskBindingMap = new Map<
+      number,
+      {
+        exists: boolean
+        relatedTaskCount: number
+        publishedTaskCount: number
+        enabledTaskCount: number
+        sceneTypes: number[]
+        taskIds: number[]
+      }
+    >()
 
     for (const taskRow of taskRows) {
       if (!taskRow.eventCode) {
@@ -236,11 +249,14 @@ export class GrowthService {
         exists: true,
         relatedTaskCount: current.relatedTaskCount + 1,
         publishedTaskCount:
-          current.publishedTaskCount
-          + (taskRow.status === TaskStatusEnum.PUBLISHED ? 1 : 0),
-        enabledTaskCount: current.enabledTaskCount + (taskRow.isEnabled ? 1 : 0),
+          current.publishedTaskCount +
+          (taskRow.status === TaskDefinitionStatusEnum.ACTIVE ? 1 : 0),
+        enabledTaskCount:
+          current.enabledTaskCount + (taskRow.isEnabled ? 1 : 0),
         sceneTypes: nextSceneTypes.sort((prev, next) => prev - next),
-        taskIds: [...current.taskIds, taskRow.id].sort((prev, next) => prev - next),
+        taskIds: [...current.taskIds, taskRow.id].sort(
+          (prev, next) => prev - next,
+        ),
       })
     }
 

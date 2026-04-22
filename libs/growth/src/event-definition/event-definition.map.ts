@@ -1,14 +1,20 @@
-import type { EventDefinition, EventDefinitionMap } from './event-definition.type'
-import { GROWTH_RULE_TYPE_VALUES, GrowthRuleTypeEnum } from '../growth-rule.constant'
+import type { GrowthRuleTypeKey } from '../growth-rule.constant'
+import type {
+  EventDefinition,
+  EventDefinitionDraft,
+  EventDefinitionMap,
+} from './event-definition.type'
+import {
+  GROWTH_RULE_TYPE_VALUES,
+  GrowthRuleTypeEnum,
+} from '../growth-rule.constant'
 import {
   EventDefinitionConsumerEnum,
   EventDefinitionDomainEnum,
   EventDefinitionEntityTypeEnum,
   EventDefinitionGovernanceGateEnum,
   EventDefinitionImplStatusEnum,
-} from './event-definition.type'
-
-type GrowthRuleTypeKey = keyof typeof GrowthRuleTypeEnum
+} from './event-definition.constant'
 
 const GROWTH_ONLY = [EventDefinitionConsumerEnum.GROWTH] as const
 const GROWTH_TASK = [
@@ -32,15 +38,15 @@ const GROWTH_TASK_GOVERNANCE = [
   EventDefinitionConsumerEnum.GOVERNANCE,
 ] as const
 
+// 统一补齐事件编码、稳定 key、默认账本备注和消费者数组拷贝。
 function createEventDefinition(
   code: GrowthRuleTypeEnum,
-  definition: Omit<EventDefinition, 'code' | 'key' | 'consumers'> & {
-    consumers: ReadonlyArray<EventDefinitionConsumerEnum>
-  },
+  definition: EventDefinitionDraft,
 ): EventDefinition {
   return {
     code,
     key: GrowthRuleTypeEnum[code] as GrowthRuleTypeKey,
+    ledgerRemark: definition.ledgerRemark ?? definition.label,
     ...definition,
     consumers: [...definition.consumers],
   }
@@ -55,6 +61,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.CREATE_TOPIC,
     {
       label: '发表主题',
+      ledgerRemark: '发表帖子',
       domain: EventDefinitionDomainEnum.FORUM,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.FORUM_TOPIC,
@@ -81,6 +88,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.TOPIC_LIKED,
     {
       label: '主题被点赞',
+      ledgerRemark: '点赞帖子',
       domain: EventDefinitionDomainEnum.FORUM,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.FORUM_TOPIC,
@@ -107,6 +115,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.TOPIC_FAVORITED,
     {
       label: '主题被收藏',
+      ledgerRemark: '收藏帖子',
       domain: EventDefinitionDomainEnum.FORUM,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.FORUM_TOPIC,
@@ -120,6 +129,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.DAILY_CHECK_IN,
     {
       label: '每日签到（预留）',
+      ledgerRemark: '每日签到',
       domain: EventDefinitionDomainEnum.ENGAGEMENT,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.CHECK_IN,
@@ -131,6 +141,7 @@ export const EVENT_DEFINITION_MAP = {
   ),
   [GrowthRuleTypeEnum.ADMIN]: createEventDefinition(GrowthRuleTypeEnum.ADMIN, {
     label: '管理端人工调整',
+    ledgerRemark: '管理端人工调整',
     domain: EventDefinitionDomainEnum.SYSTEM,
     subjectType: EventDefinitionEntityTypeEnum.ADMIN_OPERATION,
     targetType: EventDefinitionEntityTypeEnum.USER,
@@ -143,6 +154,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.TOPIC_VIEW,
     {
       label: '主题浏览',
+      ledgerRemark: '浏览帖子',
       domain: EventDefinitionDomainEnum.FORUM,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.FORUM_TOPIC,
@@ -156,6 +168,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.TOPIC_REPORT,
     {
       label: '主题举报提交（历史兼容）',
+      ledgerRemark: '举报帖子',
       domain: EventDefinitionDomainEnum.FORUM,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
@@ -169,6 +182,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.TOPIC_COMMENT,
     {
       label: '主题被评论',
+      ledgerRemark: '帖子被评论',
       domain: EventDefinitionDomainEnum.FORUM,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.FORUM_TOPIC,
@@ -208,6 +222,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMMENT_REPORT,
     {
       label: '评论举报提交（历史兼容）',
+      ledgerRemark: '举报评论',
       domain: EventDefinitionDomainEnum.COMMENT,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
@@ -221,6 +236,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_WORK_VIEW,
     {
       label: '漫画作品浏览',
+      ledgerRemark: '浏览漫画作品',
       domain: EventDefinitionDomainEnum.COMIC_WORK,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.COMIC_WORK,
@@ -234,6 +250,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_WORK_LIKE,
     {
       label: '漫画作品点赞',
+      ledgerRemark: '点赞漫画作品',
       domain: EventDefinitionDomainEnum.COMIC_WORK,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.COMIC_WORK,
@@ -247,6 +264,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_WORK_FAVORITE,
     {
       label: '漫画作品收藏',
+      ledgerRemark: '收藏漫画作品',
       domain: EventDefinitionDomainEnum.COMIC_WORK,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.COMIC_WORK,
@@ -260,6 +278,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_WORK_REPORT,
     {
       label: '漫画作品举报提交（历史兼容）',
+      ledgerRemark: '举报漫画作品',
       domain: EventDefinitionDomainEnum.COMIC_WORK,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
@@ -286,6 +305,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_WORK_VIEW,
     {
       label: '小说作品浏览',
+      ledgerRemark: '浏览小说作品',
       domain: EventDefinitionDomainEnum.NOVEL_WORK,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.NOVEL_WORK,
@@ -299,6 +319,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_WORK_LIKE,
     {
       label: '小说作品点赞',
+      ledgerRemark: '点赞小说作品',
       domain: EventDefinitionDomainEnum.NOVEL_WORK,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.NOVEL_WORK,
@@ -312,6 +333,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_WORK_FAVORITE,
     {
       label: '小说作品收藏',
+      ledgerRemark: '收藏小说作品',
       domain: EventDefinitionDomainEnum.NOVEL_WORK,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.NOVEL_WORK,
@@ -325,6 +347,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_WORK_REPORT,
     {
       label: '小说作品举报提交（历史兼容）',
+      ledgerRemark: '举报小说作品',
       domain: EventDefinitionDomainEnum.NOVEL_WORK,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
@@ -351,6 +374,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_CHAPTER_READ,
     {
       label: '漫画章节阅读',
+      ledgerRemark: '阅读漫画章节',
       domain: EventDefinitionDomainEnum.COMIC_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.COMIC_CHAPTER,
@@ -364,6 +388,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE,
     {
       label: '漫画章节点赞',
+      ledgerRemark: '点赞漫画章节',
       domain: EventDefinitionDomainEnum.COMIC_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.COMIC_CHAPTER,
@@ -377,6 +402,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_CHAPTER_PURCHASE,
     {
       label: '漫画章节购买',
+      ledgerRemark: '购买漫画章节',
       domain: EventDefinitionDomainEnum.COMIC_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.COMIC_CHAPTER,
@@ -390,6 +416,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_CHAPTER_DOWNLOAD,
     {
       label: '漫画章节下载',
+      ledgerRemark: '下载漫画章节',
       domain: EventDefinitionDomainEnum.COMIC_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.COMIC_CHAPTER,
@@ -403,6 +430,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_CHAPTER_EXCHANGE,
     {
       label: '漫画章节兑换',
+      ledgerRemark: '兑换漫画章节',
       domain: EventDefinitionDomainEnum.COMIC_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.COMIC_CHAPTER,
@@ -416,6 +444,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.COMIC_CHAPTER_REPORT,
     {
       label: '漫画章节举报提交（历史兼容）',
+      ledgerRemark: '举报漫画章节',
       domain: EventDefinitionDomainEnum.COMIC_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
@@ -442,6 +471,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_CHAPTER_READ,
     {
       label: '小说章节阅读',
+      ledgerRemark: '阅读小说章节',
       domain: EventDefinitionDomainEnum.NOVEL_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.NOVEL_CHAPTER,
@@ -455,6 +485,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_CHAPTER_LIKE,
     {
       label: '小说章节点赞',
+      ledgerRemark: '点赞小说章节',
       domain: EventDefinitionDomainEnum.NOVEL_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.NOVEL_CHAPTER,
@@ -468,6 +499,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_CHAPTER_PURCHASE,
     {
       label: '小说章节购买',
+      ledgerRemark: '购买小说章节',
       domain: EventDefinitionDomainEnum.NOVEL_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.NOVEL_CHAPTER,
@@ -481,6 +513,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_CHAPTER_DOWNLOAD,
     {
       label: '小说章节下载',
+      ledgerRemark: '下载小说章节',
       domain: EventDefinitionDomainEnum.NOVEL_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.NOVEL_CHAPTER,
@@ -494,6 +527,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_CHAPTER_EXCHANGE,
     {
       label: '小说章节兑换',
+      ledgerRemark: '兑换小说章节',
       domain: EventDefinitionDomainEnum.NOVEL_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.NOVEL_CHAPTER,
@@ -507,6 +541,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.NOVEL_CHAPTER_REPORT,
     {
       label: '小说章节举报提交（历史兼容）',
+      ledgerRemark: '举报小说章节',
       domain: EventDefinitionDomainEnum.NOVEL_CHAPTER,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
@@ -533,6 +568,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.BADGE_EARNED,
     {
       label: '获得徽章',
+      ledgerRemark: '获得徽章',
       domain: EventDefinitionDomainEnum.BADGE,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.BADGE,
@@ -546,6 +582,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.PROFILE_COMPLETE,
     {
       label: '完善个人资料',
+      ledgerRemark: '完善个人资料',
       domain: EventDefinitionDomainEnum.PROFILE,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.USER_PROFILE,
@@ -559,6 +596,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.AVATAR_UPLOAD,
     {
       label: '上传头像',
+      ledgerRemark: '上传头像',
       domain: EventDefinitionDomainEnum.PROFILE,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.USER_PROFILE,
@@ -572,6 +610,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.FOLLOW_USER,
     {
       label: '关注用户',
+      ledgerRemark: '关注用户',
       domain: EventDefinitionDomainEnum.SOCIAL,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.USER,
@@ -585,6 +624,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.BE_FOLLOWED,
     {
       label: '被关注',
+      ledgerRemark: '被关注',
       domain: EventDefinitionDomainEnum.SOCIAL,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.USER,
@@ -598,6 +638,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.SHARE_CONTENT,
     {
       label: '分享内容',
+      ledgerRemark: '分享内容',
       domain: EventDefinitionDomainEnum.SOCIAL,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.CONTENT,
@@ -611,6 +652,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.INVITE_USER,
     {
       label: '邀请用户',
+      ledgerRemark: '邀请用户',
       domain: EventDefinitionDomainEnum.SOCIAL,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.USER,
@@ -624,6 +666,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.REPORT_VALID,
     {
       label: '举报裁决有效',
+      ledgerRemark: '举报裁决有效',
       domain: EventDefinitionDomainEnum.REPORT,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.REPORT,
@@ -637,6 +680,7 @@ export const EVENT_DEFINITION_MAP = {
     GrowthRuleTypeEnum.REPORT_INVALID,
     {
       label: '举报裁决无效',
+      ledgerRemark: '举报裁决无效',
       domain: EventDefinitionDomainEnum.REPORT,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.REPORT,

@@ -15,6 +15,7 @@ import { formatDateKeyInAppTimeZone } from '@libs/platform/utils/time'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import { QueryGrowthLedgerPageDto } from './dto/growth-ledger-record.dto'
+import { resolveGrowthLedgerRemark } from './growth-ledger-remark'
 import {
   GrowthAssetTypeEnum,
   GrowthAuditDecisionEnum,
@@ -98,7 +99,6 @@ export class GrowthLedgerService {
       ruleType,
       bizKey,
       source = GrowthLedgerSourceEnum.GROWTH_RULE,
-      remark,
       targetType,
       targetId,
       context,
@@ -268,6 +268,12 @@ export class GrowthLedgerService {
       amount: delta,
     })
     const beforeValue = afterValue - delta
+    const remark = resolveGrowthLedgerRemark({
+      assetType,
+      source,
+      action: GrowthLedgerActionEnum.GRANT,
+      ruleType,
+    })
 
     const recordId = await this.insertLedgerRecord(tx, {
       userId,
@@ -336,7 +342,6 @@ export class GrowthLedgerService {
       action,
       amount,
       bizKey,
-      remark,
       targetType,
       targetId,
       context,
@@ -424,6 +429,11 @@ export class GrowthLedgerService {
     }
 
     const beforeValue = afterValue - signedDelta
+    const remark = resolveGrowthLedgerRemark({
+      assetType,
+      source: params.source,
+      action,
+    })
 
     const recordId = await this.insertLedgerRecord(tx, {
       userId,

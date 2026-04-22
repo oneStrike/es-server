@@ -1,4 +1,4 @@
-import { NumberProperty } from '@libs/platform/decorators'
+import { NumberProperty, StringProperty } from '@libs/platform/decorators'
 
 export class UserPointStatsFieldsDto {
   @NumberProperty({
@@ -67,4 +67,14 @@ export class UserExperienceDeltaFieldsDto {
     validation: false,
   })
   afterExperience!: number
+}
+
+export class UserGrowthRemarkFieldDto {
+  @StringProperty({
+    description: '按成长事件规则归一化后的说明文案',
+    example: '浏览漫画作品',
+    required: false,
+    validation: false,
+  })
+  remark?: string
 }

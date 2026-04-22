@@ -10,6 +10,7 @@ import {
 import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION } from '../../event-definition/event-definition.constant'
+import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import { GrowthRewardItemDto } from '../../reward-rule/dto/reward-item.dto'
 import {
@@ -116,14 +117,6 @@ export class GrowthRewardSettlementGrowthEventPayloadDto {
   })
   source!: string
 
-  @StringProperty({
-    description: '补充备注',
-    example: '主题点赞触发成长奖励',
-    required: false,
-    validation: false,
-  })
-  remark?: string
-
   @NumberProperty({
     description: '目标类型',
     example: 3,
@@ -159,11 +152,11 @@ export class GrowthRewardSettlementTaskRewardPayloadDto {
   kind!: 'task_reward'
 
   @NumberProperty({
-    description: '任务分配 ID',
+    description: '任务实例 ID',
     example: 88,
     validation: false,
   })
-  assignmentId!: number
+  instanceId!: number
 
   @NumberProperty({
     description: '任务 ID',
@@ -185,8 +178,8 @@ export class GrowthRewardSettlementTaskRewardPayloadDto {
     itemClass: GrowthRewardItemDto,
     validation: false,
     example: [
-      { assetType: 1, amount: 10 },
-      { assetType: 2, amount: 5 },
+      { assetType: GrowthAssetTypeEnum.POINTS, amount: 10 },
+      { assetType: GrowthAssetTypeEnum.EXPERIENCE, amount: 5 },
     ],
   })
   rewardItems?: GrowthRewardItemDto[] | null
@@ -241,7 +234,7 @@ export class GrowthRewardSettlementCheckInRecordRewardPayloadDto {
     required: false,
     itemClass: GrowthRewardItemDto,
     validation: false,
-    example: [{ assetType: 1, amount: 5 }],
+    example: [{ assetType: GrowthAssetTypeEnum.POINTS, amount: 5 }],
   })
   rewardItems?: GrowthRewardItemDto[] | null
 }
@@ -295,7 +288,7 @@ export class GrowthRewardSettlementCheckInStreakRewardPayloadDto {
     required: false,
     itemClass: GrowthRewardItemDto,
     validation: false,
-    example: [{ assetType: 2, amount: 7 }],
+    example: [{ assetType: GrowthAssetTypeEnum.EXPERIENCE, amount: 7 }],
   })
   rewardItems?: GrowthRewardItemDto[] | null
 }
@@ -353,7 +346,7 @@ export class BaseGrowthRewardSettlementDto extends BaseDto {
   source!: string
 
   @NumberProperty({
-    description: '来源事实主键（任务奖励通常为 assignmentId）',
+    description: '来源事实主键（任务奖励通常为 instanceId）',
     example: 88,
     required: false,
     validation: false,

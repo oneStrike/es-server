@@ -57,7 +57,6 @@ export class BrowseLogGrowthService {
         eventEnvelope: browseRecordedEvent,
         bizKey: baseBizKey,
         source: 'browse_log',
-        remark: `浏览目标 #${targetId}`,
         targetType,
       })
     } catch (error) {

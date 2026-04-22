@@ -61,7 +61,6 @@ export interface ApplyRuleParams {
   ruleType: number
   bizKey: string
   source?: string
-  remark?: string
   targetType?: number
   targetId?: number
   context?: Record<string, unknown>
@@ -79,7 +78,6 @@ export interface ApplyDeltaParams {
   amount: number
   bizKey: string
   source: string
-  remark?: string
   targetType?: number
   targetId?: number
   context?: Record<string, unknown>

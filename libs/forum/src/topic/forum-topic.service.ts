@@ -10,7 +10,7 @@ import type {
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
 
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
@@ -66,9 +66,7 @@ import {
   UpdateForumTopicLockedDto,
   UpdateForumTopicPinnedDto,
 } from './dto/forum-topic.dto'
-import {
-  FORUM_TOPIC_IMAGE_MAX_COUNT,
-} from './forum-topic.constant'
+import { FORUM_TOPIC_IMAGE_MAX_COUNT } from './forum-topic.constant'
 
 type PublicTopicPageRow = Pick<
   ForumTopicSelect,
@@ -783,7 +781,10 @@ export class ForumTopicService {
   ) {
     const { sectionId, userId, images, videos, ...topicData } = createTopicDto
     const mentions = this.ensureMentionsProvided(createTopicDto.mentions)
-    const title = this.resolveCreateTopicTitle(topicData.title, topicData.content)
+    const title = this.resolveCreateTopicTitle(
+      topicData.title,
+      topicData.content,
+    )
 
     const section = await this.forumPermissionService.ensureUserCanCreateTopic(
       userId,
@@ -918,7 +919,6 @@ export class ForumTopicService {
         eventEnvelope: topicCreatedEvent,
         bizKey: `forum:topic:create:${topic.id}:user:${userId}`,
         source: 'forum_topic',
-        remark: `create forum topic #${topic.id}`,
       })
     }
 
@@ -1924,7 +1924,6 @@ export class ForumTopicService {
       eventEnvelope: topicApprovedEvent,
       bizKey: `forum:topic:create:${params.topicId}:user:${params.userId}`,
       source: 'forum_topic',
-      remark: `approve forum topic #${params.topicId}`,
     })
   }
 

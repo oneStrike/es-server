@@ -4,15 +4,15 @@ import * as schema from '../schema'
 export const adminRelations = defineRelationsPart(schema, (r) => ({
   adminUser: {
     tokens: r.many.adminUserToken(),
-    createdTasks: r.many.task({
+    createdTasks: r.many.taskDefinition({
       from: r.adminUser.id,
-      to: r.task.createdById,
-      alias: 'TaskCreatedBy',
+      to: r.taskDefinition.createdById,
+      alias: 'TaskDefinitionCreatedBy',
     }),
-    updatedTasks: r.many.task({
+    updatedTasks: r.many.taskDefinition({
       from: r.adminUser.id,
-      to: r.task.updatedById,
-      alias: 'TaskUpdatedBy',
+      to: r.taskDefinition.updatedById,
+      alias: 'TaskDefinitionUpdatedBy',
     }),
     updatedAppConfigs: r.many.appConfig({
       from: r.adminUser.id,

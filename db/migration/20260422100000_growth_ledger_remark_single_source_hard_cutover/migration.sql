@@ -1,0 +1,111 @@
+WITH "resolved_growth_ledger_remark" AS (
+  SELECT
+    "record"."id",
+    CASE
+      WHEN "record"."rule_type" = 1 THEN '发表帖子'
+      WHEN "record"."rule_type" = 2 THEN '发表回复'
+      WHEN "record"."rule_type" = 3 THEN '点赞帖子'
+      WHEN "record"."rule_type" = 4 THEN '回复被点赞'
+      WHEN "record"."rule_type" = 5 THEN '收藏帖子'
+      WHEN "record"."rule_type" = 6 THEN '每日签到'
+      WHEN "record"."rule_type" = 7 THEN '管理端人工调整'
+      WHEN "record"."rule_type" = 8 THEN '浏览帖子'
+      WHEN "record"."rule_type" = 9 THEN '举报帖子'
+      WHEN "record"."rule_type" = 10 THEN '发表评论'
+      WHEN "record"."rule_type" = 11 THEN '评论被点赞'
+      WHEN "record"."rule_type" = 12 THEN '举报评论'
+      WHEN "record"."rule_type" = 16 THEN '帖子被评论'
+      WHEN "record"."rule_type" = 100 THEN '浏览漫画作品'
+      WHEN "record"."rule_type" = 101 THEN '点赞漫画作品'
+      WHEN "record"."rule_type" = 102 THEN '收藏漫画作品'
+      WHEN "record"."rule_type" = 103 THEN '举报漫画作品'
+      WHEN "record"."rule_type" = 104 THEN '漫画作品被评论'
+      WHEN "record"."rule_type" = 200 THEN '浏览小说作品'
+      WHEN "record"."rule_type" = 201 THEN '点赞小说作品'
+      WHEN "record"."rule_type" = 202 THEN '收藏小说作品'
+      WHEN "record"."rule_type" = 203 THEN '举报小说作品'
+      WHEN "record"."rule_type" = 204 THEN '小说作品被评论'
+      WHEN "record"."rule_type" = 300 THEN '阅读漫画章节'
+      WHEN "record"."rule_type" = 301 THEN '点赞漫画章节'
+      WHEN "record"."rule_type" = 302 THEN '购买漫画章节'
+      WHEN "record"."rule_type" = 303 THEN '下载漫画章节'
+      WHEN "record"."rule_type" = 304 THEN '兑换漫画章节'
+      WHEN "record"."rule_type" = 305 THEN '举报漫画章节'
+      WHEN "record"."rule_type" = 306 THEN '漫画章节被评论'
+      WHEN "record"."rule_type" = 400 THEN '阅读小说章节'
+      WHEN "record"."rule_type" = 401 THEN '点赞小说章节'
+      WHEN "record"."rule_type" = 402 THEN '购买小说章节'
+      WHEN "record"."rule_type" = 403 THEN '下载小说章节'
+      WHEN "record"."rule_type" = 404 THEN '兑换小说章节'
+      WHEN "record"."rule_type" = 405 THEN '举报小说章节'
+      WHEN "record"."rule_type" = 406 THEN '小说章节被评论'
+      WHEN "record"."rule_type" = 600 THEN '获得徽章'
+      WHEN "record"."rule_type" = 601 THEN '完善个人资料'
+      WHEN "record"."rule_type" = 602 THEN '上传头像'
+      WHEN "record"."rule_type" = 700 THEN '关注用户'
+      WHEN "record"."rule_type" = 701 THEN '被关注'
+      WHEN "record"."rule_type" = 702 THEN '分享内容'
+      WHEN "record"."rule_type" = 703 THEN '邀请用户'
+      WHEN "record"."rule_type" = 800 THEN '举报裁决有效'
+      WHEN "record"."rule_type" = 801 THEN '举报裁决无效'
+      WHEN "record"."source" = 'task_bonus' AND "record"."asset_type" = 1 THEN '任务奖励（积分）'
+      WHEN "record"."source" = 'task_bonus' AND "record"."asset_type" = 2 THEN '任务奖励（经验）'
+      WHEN "record"."source" = 'task_bonus' AND "record"."asset_type" = 3 THEN '任务奖励（道具）'
+      WHEN "record"."source" = 'task_bonus' AND "record"."asset_type" = 4 THEN '任务奖励（虚拟货币）'
+      WHEN "record"."source" = 'task_bonus' AND "record"."asset_type" = 5 THEN '任务奖励（等级）'
+      WHEN "record"."source" = 'check_in_base_bonus' AND "record"."asset_type" = 1 THEN '签到奖励（积分）'
+      WHEN "record"."source" = 'check_in_base_bonus' AND "record"."asset_type" = 2 THEN '签到奖励（经验）'
+      WHEN "record"."source" = 'check_in_base_bonus' AND "record"."asset_type" = 3 THEN '签到奖励（道具）'
+      WHEN "record"."source" = 'check_in_base_bonus' AND "record"."asset_type" = 4 THEN '签到奖励（虚拟货币）'
+      WHEN "record"."source" = 'check_in_base_bonus' AND "record"."asset_type" = 5 THEN '签到奖励（等级）'
+      WHEN "record"."source" = 'check_in_streak_bonus' AND "record"."asset_type" = 1 THEN '连续签到奖励（积分）'
+      WHEN "record"."source" = 'check_in_streak_bonus' AND "record"."asset_type" = 2 THEN '连续签到奖励（经验）'
+      WHEN "record"."source" = 'check_in_streak_bonus' AND "record"."asset_type" = 3 THEN '连续签到奖励（道具）'
+      WHEN "record"."source" = 'check_in_streak_bonus' AND "record"."asset_type" = 4 THEN '连续签到奖励（虚拟货币）'
+      WHEN "record"."source" = 'check_in_streak_bonus' AND "record"."asset_type" = 5 THEN '连续签到奖励（等级）'
+      WHEN "record"."source" = 'purchase'
+        AND "record"."asset_type" = 1
+        AND "record"."delta" < 0 THEN '购买章节'
+      WHEN "record"."source" = 'comic_sync'
+        AND "record"."asset_type" = 1
+        AND "record"."delta" < 0 THEN '漫画系统积分消费'
+      WHEN "record"."source" = 'comic_sync'
+        AND "record"."asset_type" = 1
+        AND "record"."delta" >= 0 THEN '漫画系统积分增加'
+      WHEN "record"."source" = 'admin_app_user_module'
+        AND "record"."asset_type" = 1
+        AND "record"."delta" < 0 THEN '管理端人工扣减积分'
+      WHEN "record"."source" = 'admin_app_user_module'
+        AND "record"."asset_type" = 2
+        AND "record"."delta" < 0 THEN '管理端人工扣减经验'
+      WHEN "record"."source" = 'admin_app_user_module'
+        AND "record"."asset_type" = 1
+        AND "record"."delta" >= 0 THEN '管理端人工发放积分'
+      WHEN "record"."source" = 'admin_app_user_module'
+        AND "record"."asset_type" = 2
+        AND "record"."delta" >= 0 THEN '管理端人工发放经验'
+      WHEN "record"."source" = 'point_service'
+        AND "record"."asset_type" = 1
+        AND "record"."delta" < 0 THEN '扣减积分'
+      WHEN "record"."source" = 'point_service'
+        AND "record"."asset_type" = 1
+        AND "record"."delta" >= 0 THEN '发放积分'
+      WHEN "record"."delta" < 0 AND "record"."asset_type" = 1 THEN '扣减积分'
+      WHEN "record"."delta" < 0 AND "record"."asset_type" = 2 THEN '扣减经验'
+      WHEN "record"."delta" < 0 AND "record"."asset_type" = 3 THEN '扣减道具'
+      WHEN "record"."delta" < 0 AND "record"."asset_type" = 4 THEN '扣减虚拟货币'
+      WHEN "record"."delta" < 0 AND "record"."asset_type" = 5 THEN '扣减等级'
+      WHEN "record"."asset_type" = 1 THEN '发放积分'
+      WHEN "record"."asset_type" = 2 THEN '发放经验'
+      WHEN "record"."asset_type" = 3 THEN '发放道具'
+      WHEN "record"."asset_type" = 4 THEN '发放虚拟货币'
+      WHEN "record"."asset_type" = 5 THEN '发放等级'
+      ELSE '资产变动'
+    END AS "remark"
+  FROM "growth_ledger_record" AS "record"
+)
+UPDATE "growth_ledger_record" AS "record"
+SET "remark" = "resolved"."remark"
+FROM "resolved_growth_ledger_remark" AS "resolved"
+WHERE "record"."id" = "resolved"."id"
+  AND "record"."remark" IS DISTINCT FROM "resolved"."remark";

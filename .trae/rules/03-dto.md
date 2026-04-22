@@ -29,6 +29,7 @@
 - DTO 组合工具统一使用 `@nestjs/swagger` 的 `PickType`、`OmitType`、`PartialType`、`IntersectionType`。
 - 优先用组合工具复用字段，避免字段复制、重复定义。
 - 跨模块复用 DTO 时，先导入目标 DTO，再做字段裁剪或合并；禁止重复定义其他模块已存在的字段。
+- 同一 owner 模块内，若某个字段语义已经在 `BaseXxxDto`、同域基础 DTO 或同域稳定场景 DTO 中定义过，后续 DTO 必须优先通过 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 复用；`QueryXxxDto`、筛选字段块 DTO 也不例外，禁止在另一个 DTO 文件里把同义字段重新手写一遍。
 - DTO 文件禁止引入 `*.type.ts`；内部类型应反向复用 DTO 或 Drizzle，不允许 DTO 反向依赖 type。
 - Controller 返回基础类型时，不要为了“统一都叫 DTO”额外包一层空心 DTO；只有当响应需要字段文档、嵌套结构、可扩展返回 contract 或校验语义时，才定义输出 DTO。
 - 字段选择默认规则：保留字段更少时用 `PickType`；排除字段更少时用 `OmitType`。
@@ -48,6 +49,7 @@
 - 禁止在 DTO 文件中引入 `*.type.ts`。
 - 禁止在 DTO 文件中承载 service 调用、数据库访问或业务计算逻辑。
 - 禁止在 DTO 文件中新增“字段完全复制但只改类名”的跨模块 DTO。
+- 禁止在同一 owner 模块的多个 DTO 文件中，对同一业务语义字段重复声明装饰器、类型和描述文案；若基础 DTO 已有对应字段，必须从基础 DTO 选取，而不是再写一套同义字段。
 - 禁止新增既不服务字段校验、也不服务文档描述、只为了代替 `type` 存在的空心 DTO。
 - 禁止在 DTO 文件中为了复用局部装饰器文案，新增 `*_DESCRIPTION`、`*_EXAMPLE`、`*_MESSAGE` 这类只服务当前文件的短文本常量。
 - 禁止通过 `*.public.dto.ts`、`response.dto.ts`、`detail.dto.ts` 拆出仅做转发的文件；若属于同一 owner 域，优先收口在同一个 owner DTO 文件中。
@@ -71,5 +73,6 @@
 - 禁止：在 DTO 文件里 `import type { GrowthRewardItem } from '../reward-item.type'` 再把内部 type 暴露成 DTO 字段来源。
 - 禁止：在 `apps/app-api` 下新增一个和 `libs/forum/.../forum-topic.dto.ts` 同构的 `forum-topic.dto.ts`。
 - 禁止：为了少写几行，把 `BaseAppUserDto` 的字段重新抄一份到 `ForumTopicUserDto`。
+- 禁止：在同一模块里，`sceneType`、`status`、`userId` 这类已在基础 DTO 中存在的字段，又在 `query.dto.ts`、`app.dto.ts`、`admin.dto.ts` 里重新定义一遍。
 - 禁止：新增 `forum-topic.public.dto.ts` 只为了转发或改名现有 DTO。
 - 禁止：为 `description: '通知分类键...'`、`example: 'comment_reply,topic_like'` 这类只在当前 DTO 文件内使用的短文本，再额外定义 `NOTIFICATION_CATEGORY_KEY_DESCRIPTION`、`NOTIFICATION_CATEGORY_KEYS_FILTER_DESCRIPTION` 之类常量。

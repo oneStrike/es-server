@@ -1,5 +1,6 @@
 import type { AppUserSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { formatDateTimeInAppTimeZone } from '@libs/platform/utils/time'
@@ -85,16 +86,23 @@ export class UserService {
       .where(
         and(
           eq(this.userAssetBalance.userId, userId),
-          inArray(this.userAssetBalance.assetType, [1, 2]),
+          inArray(this.userAssetBalance.assetType, [
+            GrowthAssetTypeEnum.POINTS,
+            GrowthAssetTypeEnum.EXPERIENCE,
+          ]),
           eq(this.userAssetBalance.assetKey, ''),
         ),
       )
 
     return {
       points:
-        rows.find((item) => item.assetType === 1)?.balance ?? 0,
+        rows.find(
+          (item) => item.assetType === GrowthAssetTypeEnum.POINTS,
+        )?.balance ?? 0,
       experience:
-        rows.find((item) => item.assetType === 2)?.balance ?? 0,
+        rows.find(
+          (item) => item.assetType === GrowthAssetTypeEnum.EXPERIENCE,
+        )?.balance ?? 0,
     }
   }
 

@@ -187,7 +187,6 @@ export class PurchaseService {
             amount: paidPrice,
             bizKey: `purchase:${record.id}:consume`,
             source: 'purchase',
-            remark: '购买积分扣减',
             targetType,
             targetId,
             context: {

@@ -6,6 +6,10 @@ import type {
   QueryGrowthRewardSettlementPageDto,
 } from './dto/growth-reward-settlement.dto'
 import type {
+  DispatchDefinedGrowthEventPayload,
+} from './types/growth-event-dispatch.type'
+import type { GrowthRuleRewardSettlementResult } from './types/growth-reward-result.type'
+import type {
   EnsureCheckInRecordRewardSettlementParams,
   EnsureCheckInStreakRewardSettlementParams,
   EnsureManualSettlementParams,
@@ -14,8 +18,6 @@ import type {
   UpdateSettlementStatePayload,
   UpsertGrowthEventSettlementPayload,
 } from './types/growth-reward-settlement.type'
-import type { DispatchDefinedGrowthEventPayload } from './types/growth-event-dispatch.type'
-import type { GrowthRuleRewardSettlementResult } from './types/growth-reward-result.type'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -474,7 +476,6 @@ export class GrowthRewardSettlementService {
       },
       bizKey: input.bizKey,
       source: input.source,
-      remark: input.remark,
       targetType: input.targetType,
       targetId: input.targetId,
       context: input.context,

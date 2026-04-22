@@ -1,6 +1,7 @@
 import type { Db } from '@db/core'
 import type { GrowthRewardSettlementSelect } from '@db/schema'
 import type { CheckInRewardResultTypeEnum } from '../../check-in/check-in.constant'
+import type { GrowthLedgerSourceEnum } from '../../growth-ledger/growth-ledger.constant'
 import type { GrowthRewardItems } from '../../reward-rule/reward-item.type'
 import type {
   GrowthRewardSettlementCheckInRecordRewardPayloadDto,
@@ -9,10 +10,8 @@ import type {
 } from '../dto/growth-reward-settlement.dto'
 import type {
   GrowthRewardSettlementResultTypeEnum,
-  GrowthRewardSettlementStatusEnum,
   GrowthRewardSettlementTypeEnum,
 } from '../growth-reward.constant'
-import type { GrowthLedgerSourceEnum } from '../../growth-ledger/growth-ledger.constant'
 
 /** 手工补偿链路允许写入的补偿载荷。 */
 export type ManualGrowthRewardSettlementPayload =
@@ -90,7 +89,7 @@ export type UpsertGrowthEventSettlementPayload = Pick<
 /** 任务奖励补偿快照里的最小主键视图。 */
 export type StoredTaskRewardPayloadIdentity = Pick<
   GrowthRewardSettlementTaskRewardPayloadDto,
-  'assignmentId' | 'taskId' | 'userId'
+  'instanceId' | 'taskId' | 'userId'
 >
 
 /** 签到基础奖励补偿快照里的最小主键视图。 */

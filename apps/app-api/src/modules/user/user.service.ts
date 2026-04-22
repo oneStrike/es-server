@@ -340,10 +340,18 @@ export class UserService {
    * @returns 积分记录分页数据
    */
   async getUserPointRecords(userId: number, query: QueryMyPointRecordDto) {
-    return this.userPointService.getPointRecordPage({
+    const page = await this.userPointService.getPointRecordPage({
       ...query,
       userId,
     })
+
+    return {
+      ...page,
+      list: page.list.map((item) => {
+        const { bizKey: _bizKey, context: _context, ...rest } = item
+        return rest
+      }),
+    }
   }
 
   /**
@@ -448,10 +456,23 @@ export class UserService {
     userId: number,
     query: QueryMyExperienceRecordDto,
   ) {
-    return this.userExperienceService.getExperienceRecordPage({
+    const page = await this.userExperienceService.getExperienceRecordPage({
       ...query,
       userId,
     })
+
+    return {
+      ...page,
+      list: page.list.map((item) => {
+        const {
+          bizKey: _bizKey,
+          context: _context,
+          updatedAt: _updatedAt,
+          ...rest
+        } = item
+        return rest
+      }),
+    }
   }
 
   /**

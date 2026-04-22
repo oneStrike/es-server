@@ -17,6 +17,7 @@
 
 - `*.type.ts`：单一 owner 域、单一主题的稳定类型文件，例如 `forum-topic.type.ts`、`task.type.ts`。
 - `types/*.type.ts`：当同一 owner 模块下存在多组职责明确的类型时，可建立专门 `types/` 目录按主题拆分，例如 `growth-reward/types/growth-reward-result.type.ts`、`growth-reward/types/growth-reward-settlement.type.ts`。
+- 同一 owner 模块一旦已经建立 `types/` 目录，后续新增或继续维护的 owner type 默认进入 `types/*.type.ts`；不要一边保留模块根下的 `xxx.type.ts`，一边继续把同域类型新增到 `types/`，形成双入口。
 - `apps/*` 可以定义入口层专属类型，例如装饰器 metadata、全局声明合并、框架适配参数；但不得重复声明 `libs/*` 已有的业务类型。
 - 新增类型文件时，默认贴近 owner 模块放置；不要新增 `*.public.type.ts`、`common.type.ts`、`shared.type.ts` 这类语义泛化文件。
 - 禁止新增 `*.types.ts`；若历史上已存在，默认收敛到同域 `*.type.ts`。
@@ -30,6 +31,7 @@
 - 若只需要 1~3 个字段，先判断能否通过索引访问类型、联合类型或恰当的 `Pick` / `Omit` 表达；不要为了规避 `Pick` / `Omit` 再手写一份重复实体字段的对象结构。
 - `type` 可以依赖 DTO 或 Drizzle；DTO 不得反向依赖 `*.type.ts`。
 - 若所需结构已存在于 DTO 中，优先从 DTO 组合；不要再声明一份字段完全相同的 `type` / `interface`。
+- 同一 owner 模块内，若某个结构或字段语义已经能从基础 DTO、同域 DTO、Drizzle schema 或既有 owner type 推导出来，禁止在另一个 `*.type.ts` 里重新手写一份等义结构；即使字段只有 1-3 个，也应优先用索引访问类型、`Pick`、`Omit` 或已有 owner type 收口。
 - 若所需结构本身需要 Swagger 文档或字段校验，就应该继续定义为 DTO；不要把本应是 DTO 的结构下沉成 `type`。
 - 若所需结构只是内部领域类型，不承担文档和校验职责，也无法从 DTO 组合得到，才允许定义新的 `type` / `interface`。
 - 若所需结构已存在于 schema select / insert 类型中，优先从 schema 推导；不要手写数据库字段镜像类型。
@@ -55,6 +57,7 @@
 ## 禁止项
 
 - 禁止在 `*.type.ts` 中重复声明 DTO 同构结构。
+- 禁止在同一 owner 模块内同时维护“根目录 `xxx.type.ts` + `types/*.type.ts`”两套并行 owner type 入口；若模块已经采用 `types/` 目录，新类型必须继续落在 `types/` 下。
 - 禁止为了“统一都叫 DTO”而新增无文档价值、无校验价值的空心 DTO。
 - 禁止期待通过新增 `type` 替代本应承担文档 / 校验职责的 DTO。
 - 禁止在类型文件中承载 service 调用、数据库访问或业务执行逻辑。
@@ -79,6 +82,7 @@
 - 禁止：为了让内部结构“看起来统一”，新建一个不带校验和文档价值的 `UserSummaryDto` 替代 `type TopicAuthorView = Pick<BaseAppUserDto, ...>`。
 - 禁止：内部只想拿一个字段子集时，新建 `UserSummaryDto` 但既不用于 Swagger，也不参与校验。
 - 禁止：为了复用 `BaseAppUserDto` 的字段，重新手写一个同构 `ForumTopicUserShape`。
+- 禁止：模块里已经有 `types/` 目录，却继续把同域稳定类型留在模块根，比如同时出现 `task.type.ts` 和 `types/*.type.ts` 并长期共存。
 - 禁止：为了规避 `Pick` / `Omit`，重新手写一份和 DTO / Drizzle 字段同构的对象结构。
 - 禁止：本质是多种来源并列的输入，却拆成多层 `Pick` + 包装类型，而不是直接写联合类型。
 - 禁止：同一个字段子集先在 `OrderField` 里写一遍字面量联合，又在 `Row` 里再写一遍完全相同的 `Pick` 字段列表。

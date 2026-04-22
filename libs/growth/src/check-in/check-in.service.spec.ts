@@ -5,44 +5,23 @@ import type {
   CheckInStreakRewardRuleView,
   StreakRulePageOrderItem,
 } from './check-in.type'
+import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 import { CheckInDefinitionService } from './check-in-definition.service'
 import { CheckInStreakConfigStatusEnum } from './check-in.constant'
-import { CheckInServiceSupport } from './check-in.service.support'
-
-class CheckInSupportHarness extends CheckInServiceSupport {
-  constructor() {
-    super({} as never, {} as never)
-  }
-
-  recomputeAggregation(
-    records: CheckInRecordDateOnlyView[],
-    options?: CheckInStreakAggregationOptions,
-  ) {
-    return this.recomputeStreakAggregation(records, options)
-  }
-
-  resolveGrantRules(
-    rules: CheckInStreakRewardRuleView[],
-    streakByDate: Record<string, number>,
-    existingGrants: CheckInGrantTriggerView[],
-    streakStartedAt?: string,
-  ) {
-    return this.resolveEligibleGrantRules(
-      rules,
-      streakByDate,
-      existingGrants,
-      streakStartedAt,
-    )
-  }
-}
+import { CheckInStreakService } from './check-in-streak.service'
 
 describe('check-in helpers', () => {
   function createDefinitionService() {
-    return new CheckInDefinitionService({} as never, {} as never)
+    return new CheckInDefinitionService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
   }
 
-  function createSupportHarness() {
-    return new CheckInSupportHarness()
+  function createStreakService() {
+    return new CheckInStreakService({} as never, {} as never)
   }
 
   it('uses the default streak rule page sort when orderBy is empty', () => {
@@ -78,9 +57,9 @@ describe('check-in helpers', () => {
   })
 
   it('recomputes streak aggregation from unsorted records and honors scope start', () => {
-    const support = createSupportHarness()
+    const streakService = createStreakService()
 
-    const aggregation = support.recomputeAggregation(
+    const aggregation = streakService.recomputeStreakAggregation(
       [
         { signDate: '2026-04-18' },
         { signDate: '2026-04-16' },
@@ -102,23 +81,35 @@ describe('check-in helpers', () => {
   })
 
   it('keeps non-repeatable grants single-fire and skips repeatable grants that already exist', () => {
-    const support = createSupportHarness()
+    const streakService = createStreakService()
 
-    const candidates = support.resolveGrantRules(
+    const candidates = streakService.resolveEligibleGrantRules(
       [
         {
           ruleCode: 'streak-day-2',
           streakDays: 2,
           repeatable: false,
           status: CheckInStreakConfigStatusEnum.ACTIVE,
-          rewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
+          rewardItems: [
+            {
+              assetType: GrowthAssetTypeEnum.POINTS,
+              assetKey: '',
+              amount: 10,
+            },
+          ],
         },
         {
           ruleCode: 'streak-day-3',
           streakDays: 3,
           repeatable: true,
           status: CheckInStreakConfigStatusEnum.ACTIVE,
-          rewardItems: [{ assetType: 1, assetKey: '', amount: 20 }],
+          rewardItems: [
+            {
+              assetType: GrowthAssetTypeEnum.POINTS,
+              assetKey: '',
+              amount: 20,
+            },
+          ],
         },
       ],
       {

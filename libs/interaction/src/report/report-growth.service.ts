@@ -1,8 +1,8 @@
-import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
-import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type';
-import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
-import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
+import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { Injectable, Logger } from '@nestjs/common'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 
@@ -38,10 +38,6 @@ export class ReportGrowthService {
         eventEnvelope,
         bizKey: `report:handle:${eventEnvelope.targetId}:status:${context.reportStatus}`,
         source: 'report_handle',
-        remark:
-          eventEnvelope.code === GrowthRuleTypeEnum.REPORT_VALID
-            ? `举报裁决有效 #${eventEnvelope.targetId}`
-            : `举报裁决无效 #${eventEnvelope.targetId}`,
         targetType: context.reportedTargetType,
         targetId: context.reportedTargetId,
       })

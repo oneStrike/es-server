@@ -99,7 +99,7 @@ export class AdminAppUserExperienceStatsDto {
 
 export class AdminAppUserGrowthRuleActionDto extends IntersectionType(
   AdminAppUserManualOperationDto,
-  PickType(UserGrowthRuleActionDto, ['remark'] as const),
+  PickType(UserGrowthRuleActionDto, ['operationNote'] as const),
 ) {
   @EnumProperty({
     description: GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION,
@@ -380,12 +380,12 @@ export class ConsumeAdminAppUserPointsDto extends AdminAppUserManualOperationDto
   exchangeId?: number
 
   @StringProperty({
-    description: '备注',
-    example: '管理员扣减积分',
+    description: '内部操作备注，仅用于审计与排障，不会作为用户账本说明文案',
+    example: '管理员扣减积分，保留工单号',
     required: false,
     maxLength: 500,
   })
-  remark?: string
+  operationNote?: string
 }
 
 export class AdminAppUserBadgeOperationResultDto extends UserIdDto {

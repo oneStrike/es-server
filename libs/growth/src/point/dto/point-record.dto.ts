@@ -4,9 +4,7 @@ import { StringProperty } from '@libs/platform/decorators/validate/string-proper
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
-import {
-  BaseGrowthRecordSharedDto,
-} from '../../growth/dto/growth-shared.dto'
+import { BaseGrowthRecordSharedDto } from '../../growth/dto/growth-shared.dto'
 
 export class BaseUserPointRecordDto extends BaseGrowthRecordSharedDto {
   @EnumProperty({
@@ -89,10 +87,10 @@ export class ConsumeUserPointsDto {
   exchangeId?: number
 
   @StringProperty({
-    description: '备注',
-    example: '管理员扣减积分',
+    description: '内部操作备注，仅用于审计与排障，不会作为用户账本说明文案',
+    example: '管理员扣减积分，保留工单号',
     required: false,
     maxLength: 500,
   })
-  remark?: string
+  operationNote?: string
 }

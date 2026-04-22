@@ -1,9 +1,12 @@
 import type { UserCommentSelect } from '@db/schema'
-import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
-import { canConsumeEventEnvelopeByConsumer, createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
-import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
-import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
+import {
+  canConsumeEventEnvelopeByConsumer,
+  createDefinedEventEnvelope,
+} from '@libs/growth/event-definition/event-envelope.type'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()
@@ -13,7 +16,10 @@ export class CommentGrowthService {
   ) {}
 
   async rewardCommentCreated(
-    params: Pick<UserCommentSelect, 'userId' | 'id' | 'targetType' | 'targetId'> & {
+    params: Pick<
+      UserCommentSelect,
+      'userId' | 'id' | 'targetType' | 'targetId'
+    > & {
       occurredAt?: Date
       eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum>
     },
@@ -27,8 +33,8 @@ export class CommentGrowthService {
       eventEnvelope,
     } = params
     if (
-      eventEnvelope
-      && !canConsumeEventEnvelopeByConsumer(
+      eventEnvelope &&
+      !canConsumeEventEnvelopeByConsumer(
         eventEnvelope,
         EventDefinitionConsumerEnum.GROWTH,
       )
@@ -52,7 +58,6 @@ export class CommentGrowthService {
       eventEnvelope: eventEnvelope ?? fallbackEventEnvelope,
       bizKey: baseBizKey,
       source: 'comment',
-      remark: `发表评论 #${commentId}`,
       targetType,
       targetId,
     })
@@ -67,8 +72,7 @@ export class CommentGrowthService {
       return
     }
 
-    const baseBizKey =
-      `comment:liked:${commentId}:liker:${likerUserId}:author:${authorUserId}`
+    const baseBizKey = `comment:liked:${commentId}:liker:${likerUserId}:author:${authorUserId}`
 
     const commentLikedEvent = createDefinedEventEnvelope({
       code: GrowthRuleTypeEnum.COMMENT_LIKED,
@@ -84,7 +88,6 @@ export class CommentGrowthService {
       eventEnvelope: commentLikedEvent,
       bizKey: baseBizKey,
       source: 'comment_like',
-      remark: `评论被点赞 #${commentId}`,
     })
   }
 }

@@ -29,6 +29,7 @@ import {
 } from '@nestjs/swagger'
 import {
   UserExperienceDeltaFieldsDto,
+  UserGrowthRemarkFieldDto,
   UserPointDeltaFieldsDto,
 } from './app-user-growth-shared.dto'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
@@ -131,8 +132,11 @@ export class UserPointRecordDto extends IntersectionType(
     'beforeValue',
     'afterValue',
     'bizKey',
+    'context',
+    'remark',
     'updatedAt',
   ] as const),
+  UserGrowthRemarkFieldDto,
   UserPointDeltaFieldsDto,
 ) {}
 
@@ -154,8 +158,11 @@ export class UserExperienceRecordDto extends IntersectionType(
     'beforeValue',
     'afterValue',
     'bizKey',
+    'context',
+    'remark',
     'updatedAt',
   ] as const),
+  UserGrowthRemarkFieldDto,
   UserExperienceDeltaFieldsDto,
 ) {}
 

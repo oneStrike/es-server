@@ -2,11 +2,15 @@ import type { PublishMessageDomainEventInput } from '@libs/message/eventing/mess
 import type {
   TaskAutoAssignedReminderEventInput,
   TaskExpiringSoonReminderEventInput,
+  TaskReminderEventKey,
+  TaskReminderMessage,
   TaskReminderNotificationEventInput,
+  TaskReminderNotificationKind,
   TaskReminderNotificationPayload,
+  TaskReminderRewardAssetType,
   TaskReminderRewardSummary,
   TaskRewardGrantedReminderEventInput,
-} from './task.type'
+} from './types/task.type'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import { normalizeTaskType, TaskReminderKindEnum } from './task.constant'
 
@@ -15,6 +19,7 @@ import { normalizeTaskType, TaskReminderKindEnum } from './task.constant'
  * 统一生成任务提醒领域事件与稳定 projectionKey/context 合同。
  */
 export class TaskNotificationService {
+  // 生成自动加入任务提醒事件。
   createAutoAssignedReminderEvent(
     params: TaskAutoAssignedReminderEventInput,
   ): PublishMessageDomainEventInput {
@@ -24,6 +29,7 @@ export class TaskNotificationService {
     })
   }
 
+  // 生成即将过期提醒事件。
   createExpiringSoonReminderEvent(
     params: TaskExpiringSoonReminderEventInput,
   ): PublishMessageDomainEventInput {
@@ -34,6 +40,7 @@ export class TaskNotificationService {
     })
   }
 
+  // 生成奖励到账提醒事件。
   createRewardGrantedReminderEvent(
     params: TaskRewardGrantedReminderEventInput,
   ): PublishMessageDomainEventInput {
@@ -45,18 +52,22 @@ export class TaskNotificationService {
     })
   }
 
-  buildAutoAssignedReminderBizKey(assignmentId: number) {
-    return `task:reminder:auto-assigned:assignment:${assignmentId}`
+  // 构建自动加入任务提醒的幂等键。
+  buildAutoAssignedReminderBizKey(instanceId: number) {
+    return `task:reminder:auto-assigned:instance:${instanceId}`
   }
 
-  buildExpiringSoonReminderBizKey(assignmentId: number) {
-    return `task:reminder:expiring:assignment:${assignmentId}`
+  // 构建即将过期提醒的幂等键。
+  buildExpiringSoonReminderBizKey(instanceId: number) {
+    return `task:reminder:expiring:instance:${instanceId}`
   }
 
-  buildRewardGrantedReminderBizKey(assignmentId: number) {
-    return `task:reminder:reward:assignment:${assignmentId}`
+  // 构建奖励到账提醒的幂等键。
+  buildRewardGrantedReminderBizKey(instanceId: number) {
+    return `task:reminder:reward:instance:${instanceId}`
   }
 
+  // 组装统一的任务提醒领域事件。
   private buildTaskReminderDomainEvent(
     params: TaskReminderNotificationEventInput,
   ): PublishMessageDomainEventInput {
@@ -90,7 +101,7 @@ export class TaskNotificationService {
       },
       reminder: {
         kind: normalizedReminderKind,
-        assignmentId: params.assignmentId,
+        instanceId: params.instanceId,
         cycleKey: params.cycleKey,
         expiredAt: params.expiredAt,
       },
@@ -115,9 +126,10 @@ export class TaskNotificationService {
     }
   }
 
+  // 把任务提醒枚举映射成通知 payload 子类型。
   private mapReminderKind(
     reminderKind: TaskReminderKindEnum,
-  ): TaskReminderNotificationPayload['reminder']['kind'] {
+  ): TaskReminderNotificationKind {
     if (reminderKind === TaskReminderKindEnum.AUTO_ASSIGNED) {
       return 'auto_assigned'
     }
@@ -130,9 +142,10 @@ export class TaskNotificationService {
     throw new Error(`Unsupported task reminder kind: ${reminderKind}`)
   }
 
+  // 判断奖励资产是否允许透出到任务提醒。
   private isNotificationTaskRewardAssetType(
     assetType: GrowthRewardRuleAssetTypeEnum,
-  ): assetType is NonNullable<TaskReminderRewardSummary>['items'][number]['assetType'] {
+  ): assetType is TaskReminderRewardAssetType {
     return (
       assetType === GrowthRewardRuleAssetTypeEnum.POINTS ||
       assetType === GrowthRewardRuleAssetTypeEnum.EXPERIENCE ||
@@ -142,9 +155,10 @@ export class TaskNotificationService {
     )
   }
 
+  // 解析任务提醒对应的消息事件键。
   private resolveTaskReminderEventKey(
     params: TaskReminderNotificationEventInput,
-  ): PublishMessageDomainEventInput['eventKey'] {
+  ): TaskReminderEventKey {
     if (params.reminderKind === TaskReminderKindEnum.AUTO_ASSIGNED) {
       return 'task.reminder.auto_assigned'
     }
@@ -157,7 +171,10 @@ export class TaskNotificationService {
     throw new Error(`Unsupported task reminder kind: ${params.reminderKind}`)
   }
 
-  private buildTaskReminderMessage(params: TaskReminderNotificationEventInput) {
+  // 生成任务提醒标题与正文。
+  private buildTaskReminderMessage(
+    params: TaskReminderNotificationEventInput,
+  ): TaskReminderMessage {
     if (params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED) {
       const rewardParts: string[] = []
       for (const rewardItem of params.rewardItems ?? []) {

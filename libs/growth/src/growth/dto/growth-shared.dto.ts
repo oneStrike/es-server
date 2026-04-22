@@ -118,8 +118,8 @@ export class BaseGrowthRecordSharedDto extends IdDto {
   bizKey!: string
 
   @StringProperty({
-    description: '备注',
-    example: '备注说明',
+    description: '账本说明文案',
+    example: '浏览漫画作品',
     required: false,
     maxLength: 500,
   })
@@ -156,10 +156,10 @@ export class UserGrowthRuleActionDto extends UserIdDto {
   ruleType!: GrowthRuleTypeEnum
 
   @StringProperty({
-    description: '备注',
-    example: '管理员补发奖励',
+    description: '内部操作备注，仅用于审计与排障，不会作为用户账本说明文案',
+    example: '管理员补发奖励，保留原工单号',
     required: false,
     maxLength: 500,
   })
-  remark?: string
+  operationNote?: string
 }

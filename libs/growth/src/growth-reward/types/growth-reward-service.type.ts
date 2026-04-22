@@ -3,9 +3,8 @@ import type { GrowthRewardRuleSelect } from '@db/schema'
 import type { EventEnvelope } from '../../event-definition/event-envelope.type'
 import type { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import type { GrowthRewardItems } from '../../reward-rule/reward-item.type'
-import type { TaskRewardAssetResult } from './growth-reward-result.type'
-import type { GrowthRuleRewardAssetResult } from './growth-reward-result.type'
-import type { TaskAssignmentRewardResultTypeEnum } from '../../task/task.constant'
+import type { TaskRewardSettlementResultTypeEnum } from '../../task/task.constant'
+import type { GrowthRuleRewardAssetResult, TaskRewardAssetResult } from './growth-reward-result.type'
 
 /** 按成长规则发奖时使用的内部入参。 */
 export interface RewardByRuleParams {
@@ -13,7 +12,6 @@ export interface RewardByRuleParams {
   ruleType: GrowthRuleTypeEnum
   bizKey: string
   source: string
-  remark?: string
   targetType?: number
   targetId?: number
   context?: Record<string, unknown>
@@ -25,7 +23,7 @@ export interface RewardByRuleParams {
 export interface RewardTaskCompleteParams {
   userId: number
   taskId: number
-  assignmentId: number
+  instanceId: number
   rewardItems?: GrowthRewardItems | null
   eventEnvelope?: EventEnvelope
 }
@@ -48,7 +46,7 @@ export interface BuildTaskRewardSettlementResultParams {
   rewardItems: GrowthRewardItems
   settledAt: Date
   rewardResults: TaskRewardAssetResult[]
-  resultType: TaskAssignmentRewardResultTypeEnum
+  resultType: TaskRewardSettlementResultTypeEnum
   errorMessage?: string
 }
 

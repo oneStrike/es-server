@@ -36,6 +36,14 @@ interface LedgerRecordShape {
   context?: Record<string, unknown> | null
 }
 
+function buildOperationNoteContext(operationNote?: string) {
+  if (typeof operationNote !== 'string' || operationNote.trim() === '') {
+    return undefined
+  }
+
+  return { operationNote: operationNote.trim() }
+}
+
 /**
  * 积分服务类
  * 对外保留原有方法签名，内部统一切换到 GrowthLedger 写入。
@@ -77,7 +85,7 @@ export class UserPointService {
       source?: string
     },
   ) {
-    const { userId, ruleType, remark } = addPointsDto
+    const { userId, ruleType, operationNote } = addPointsDto
 
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
@@ -95,7 +103,7 @@ export class UserPointService {
       this.buildStableBizKey('point:rule', {
         userId,
         ruleType,
-        remark,
+        operationNote,
         source: addPointsDto.source,
       })
 
@@ -106,7 +114,7 @@ export class UserPointService {
         ruleType,
         bizKey,
         source: addPointsDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE,
-        remark,
+        context: buildOperationNoteContext(operationNote),
       })
 
       if (!result.success && !result.duplicated) {
@@ -145,7 +153,7 @@ export class UserPointService {
       source?: string
     },
   ) {
-    const { userId, points, remark, targetType, targetId, exchangeId } =
+    const { userId, points, operationNote, targetType, targetId, exchangeId } =
       consumePointsDto
 
     /**
@@ -161,10 +169,14 @@ export class UserPointService {
           targetType,
           targetId,
           exchangeId,
-          remark,
+          operationNote,
           source: consumePointsDto.source,
         })
       const source = consumePointsDto.source ?? 'point_service'
+      const context = {
+        ...(exchangeId ? { exchangeId } : {}),
+        ...(buildOperationNoteContext(operationNote) ?? {}),
+      }
 
       const result = await this.growthLedgerService.applyDelta(trx, {
         userId,
@@ -173,10 +185,9 @@ export class UserPointService {
         amount: points,
         bizKey,
         source,
-        remark,
         targetType,
         targetId,
-        context: exchangeId ? { exchangeId } : undefined,
+        context: Object.keys(context).length > 0 ? context : undefined,
       })
 
       if (!result.success && !result.duplicated) {
@@ -428,7 +439,6 @@ export class UserPointService {
           points,
         }),
         source: 'comic_sync',
-        remark: operation === 'add' ? '漫画系统积分增加' : '漫画系统积分消费',
       })
 
       if (!ledger.success && !ledger.duplicated) {
@@ -487,13 +497,13 @@ export class UserPointService {
    * 根据规则类型获取积分
    * @param userId 用户ID
    * @param ruleType 规则类型
-   * @param remark 备注
+   * @param operationNote 内部操作备注
    * @returns 操作结果
    */
   async addPointsByRuleType(
     userId: number,
     ruleType: GrowthRuleTypeEnum,
-    remark?: string,
+    operationNote?: string,
     extra?: {
       bizKey?: string
       source?: string
@@ -504,7 +514,7 @@ export class UserPointService {
     return this.addPoints({
       userId,
       ruleType,
-      remark,
+      operationNote,
       bizKey: extra?.bizKey,
       source: extra?.source,
     })

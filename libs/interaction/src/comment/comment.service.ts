@@ -10,7 +10,7 @@ import type {
 } from './comment.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
@@ -912,7 +912,7 @@ export class CommentService {
           userId: number
           content: string
         }
-      | undefined
+        | undefined
 
     if (comment.replyToId) {
       replyTarget = await tx.query.userComment.findFirst({
@@ -1042,7 +1042,7 @@ export class CommentService {
   ) {
     const authorDeltas = new Map<
       number,
-      { commentCount: number; receivedLikeCount: number }
+      { commentCount: number, receivedLikeCount: number }
     >()
 
     for (const comment of comments) {

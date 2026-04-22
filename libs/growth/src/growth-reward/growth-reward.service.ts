@@ -7,6 +7,13 @@ import type {
   GrowthRewardItems,
 } from '../reward-rule/reward-item.type'
 import type {
+  GrowthRewardApplyResultList,
+  GrowthRuleRewardAssetResult,
+  GrowthRuleRewardSettlementResult,
+  TaskRewardAssetResult,
+  TaskRewardSettlementResult,
+} from './types/growth-reward-result.type'
+import type {
   BuildRuleRewardSettlementResultParams,
   BuildTaskRewardSettlementResultParams,
   GrowthRewardRuleAssetIdentity,
@@ -15,13 +22,6 @@ import type {
   RewardTaskCompleteParams,
   RunWithOptionalTransactionCallback,
 } from './types/growth-reward-service.type'
-import type {
-  GrowthRewardApplyResultList,
-  GrowthRuleRewardAssetResult,
-  GrowthRuleRewardSettlementResult,
-  TaskRewardAssetResult,
-  TaskRewardSettlementResult,
-} from './types/growth-reward-result.type'
 import { DrizzleService } from '@db/core'
 import { Injectable, Logger } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
@@ -34,7 +34,7 @@ import {
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
-import { TaskAssignmentRewardResultTypeEnum } from '../task/task.constant'
+import { TaskRewardSettlementResultTypeEnum } from '../task/task.constant'
 import {
   GrowthRewardDedupeResultEnum,
   TaskRewardAssetSkipReasonEnum,
@@ -108,7 +108,6 @@ export class UserGrowthRewardService {
             ruleType: params.ruleType,
             bizKey: this.buildRuleRewardBizKey(params.bizKey, rewardRule),
             source: GrowthLedgerSourceEnum.GROWTH_RULE,
-            remark: params.remark,
             targetType: params.targetType,
             targetId: params.targetId,
             context: this.buildRuleRewardContext(params),
@@ -143,8 +142,7 @@ export class UserGrowthRewardService {
         ledgerRecordIds: rewardResults
           .map((item) => item.result.recordId)
           .filter((id): id is number => typeof id === 'number'),
-        failureReason: rewardResults.find((item) => item.result.reason)?.result
-          .reason,
+        failureReason: rewardResults.find((item) => item.result.reason)?.result.reason,
         rewardResults,
         errorMessage:
           error instanceof Error
@@ -210,8 +208,8 @@ export class UserGrowthRewardService {
       'task',
       'complete',
       params.taskId,
-      'assignment',
-      params.assignmentId,
+      'instance',
+      params.instanceId,
       'user',
       params.userId,
     ].join(':')
@@ -221,7 +219,7 @@ export class UserGrowthRewardService {
         rewardItems,
         settledAt,
         rewardResults: [],
-        resultType: TaskAssignmentRewardResultTypeEnum.APPLIED,
+        resultType: TaskRewardSettlementResultTypeEnum.APPLIED,
       })
     }
 
@@ -240,7 +238,6 @@ export class UserGrowthRewardService {
             amount: rewardItem.amount,
             bizKey: this.buildTaskRewardItemBizKey(baseBizKey, rewardItem),
             source: GrowthLedgerSourceEnum.TASK_BONUS,
-            remark: this.buildTaskRewardRemark(rewardItem.assetType),
             targetId: params.taskId,
             context,
           })
@@ -261,7 +258,7 @@ export class UserGrowthRewardService {
       })
     } catch (error) {
       this.logger.warn(
-        `reward_task_complete_failed userId=${params.userId} taskId=${params.taskId} assignmentId=${params.assignmentId} eventKey=${params.eventEnvelope?.key ?? 'TASK_COMPLETE'} error=${
+        `reward_task_complete_failed userId=${params.userId} taskId=${params.taskId} instanceId=${params.instanceId} eventKey=${params.eventEnvelope?.key ?? 'TASK_COMPLETE'} error=${
           error instanceof Error ? error.message : String(error)
         }`,
       )
@@ -273,7 +270,7 @@ export class UserGrowthRewardService {
         rewardResults: rewardItems.map((rewardItem) =>
           this.toTaskRewardAssetResult(rewardItem, undefined, true),
         ),
-        resultType: TaskAssignmentRewardResultTypeEnum.FAILED,
+        resultType: TaskRewardSettlementResultTypeEnum.FAILED,
         errorMessage:
           error instanceof Error
             ? error.message
@@ -291,7 +288,7 @@ export class UserGrowthRewardService {
       .filter((id): id is number => typeof id === 'number')
 
     return {
-      success: params.resultType !== TaskAssignmentRewardResultTypeEnum.FAILED,
+      success: params.resultType !== TaskRewardSettlementResultTypeEnum.FAILED,
       resultType: params.resultType,
       source: GrowthLedgerSourceEnum.TASK_BONUS,
       bizKey: params.bizKey,
@@ -348,22 +345,22 @@ export class UserGrowthRewardService {
   private resolveTaskRewardResultType(results: TaskRewardAssetResult[]) {
     const attemptedResults = results.filter((item) => !item.skipped)
     if (attemptedResults.length === 0) {
-      return TaskAssignmentRewardResultTypeEnum.APPLIED
+      return TaskRewardSettlementResultTypeEnum.APPLIED
     }
     if (attemptedResults.every((item) => item.duplicated)) {
-      return TaskAssignmentRewardResultTypeEnum.IDEMPOTENT
+      return TaskRewardSettlementResultTypeEnum.IDEMPOTENT
     }
-    return TaskAssignmentRewardResultTypeEnum.APPLIED
+    return TaskRewardSettlementResultTypeEnum.APPLIED
   }
 
   // 把任务奖励结果类型映射成通用补偿链路使用的幂等结果。
   private toTaskRewardDedupeResult(
-    resultType: TaskAssignmentRewardResultTypeEnum,
+    resultType: TaskRewardSettlementResultTypeEnum,
   ) {
-    if (resultType === TaskAssignmentRewardResultTypeEnum.IDEMPOTENT) {
+    if (resultType === TaskRewardSettlementResultTypeEnum.IDEMPOTENT) {
       return GrowthRewardDedupeResultEnum.IDEMPOTENT
     }
-    if (resultType === TaskAssignmentRewardResultTypeEnum.FAILED) {
+    if (resultType === TaskRewardSettlementResultTypeEnum.FAILED) {
       return GrowthRewardDedupeResultEnum.FAILED
     }
     return GrowthRewardDedupeResultEnum.APPLIED
@@ -439,17 +436,17 @@ export class UserGrowthRewardService {
     }`
   }
 
-  // 规整任务奖励上下文，缺省时补齐 assignment 与 task 的最小事实字段。
+  // 规整任务奖励上下文，缺省时补齐 task instance 与 task 的最小事实字段。
   private buildTaskRewardContext(params: RewardTaskCompleteParams) {
     const context = this.asJsonObject(params.eventEnvelope?.context) ?? {
       taskId: params.taskId,
-      assignmentId: params.assignmentId,
+      instanceId: params.instanceId,
     }
 
     return {
       ...context,
       taskId: params.taskId,
-      assignmentId: params.assignmentId,
+      instanceId: params.instanceId,
       eventCode: params.eventEnvelope?.code,
       eventKey: params.eventEnvelope?.key,
       governanceStatus: params.eventEnvelope?.governanceStatus,
@@ -547,13 +544,6 @@ export class UserGrowthRewardService {
         ? 'POINTS'
         : 'EXPERIENCE'
     return `${baseBizKey}:${assetSegment}`
-  }
-
-  // 生成任务奖励账本备注，便于后台区分不同资产来源。
-  private buildTaskRewardRemark(assetType: GrowthRewardRuleAssetTypeEnum) {
-    return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
-      ? '任务完成奖励（积分）'
-      : '任务完成奖励（经验）'
   }
 
   // 生成任务奖励失败日志里的资产中文标签。

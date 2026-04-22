@@ -5,10 +5,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import {
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
@@ -70,7 +67,7 @@ export class UserExperienceService {
       adminUserId?: number
     },
   ) {
-    const { userId, ruleType, remark } = addExperienceDto
+    const { userId, ruleType, operationNote } = addExperienceDto
 
     const user = await this.db.query.appUser.findFirst({
       where: {
@@ -95,7 +92,7 @@ export class UserExperienceService {
         ruleType,
         targetType: addExperienceDto.targetType,
         targetId: addExperienceDto.targetId,
-        remark,
+        operationNote,
         source,
         adminUserId: addExperienceDto.adminUserId,
       })
@@ -107,7 +104,6 @@ export class UserExperienceService {
         ruleType,
         bizKey,
         source,
-        remark,
         targetType: addExperienceDto.targetType,
         targetId: addExperienceDto.targetId,
         context,
@@ -360,7 +356,7 @@ export class UserExperienceService {
     ruleType: GrowthRuleTypeEnum
     targetType?: number
     targetId?: number
-    remark?: string
+    operationNote?: string
     source: string
     adminUserId?: number
   }) {
@@ -373,7 +369,7 @@ export class UserExperienceService {
       ruleType: params.ruleType,
       targetType: params.targetType,
       targetId: params.targetId,
-      remark: params.remark,
+      operationNote: params.operationNote,
       source: params.source,
     })
   }
@@ -383,20 +379,23 @@ export class UserExperienceService {
   }
 
   private buildAddExperienceContext(
-    addExperienceDto: Pick<UserGrowthRuleActionDto, never> & {
+    addExperienceDto: Pick<UserGrowthRuleActionDto, 'operationNote'> & {
       context?: Record<string, unknown>
       adminUserId?: number
     },
   ) {
     if (
       !addExperienceDto.context &&
-      addExperienceDto.adminUserId === undefined
+      addExperienceDto.adminUserId === undefined &&
+      (addExperienceDto.operationNote === undefined ||
+        addExperienceDto.operationNote.trim() === '')
     ) {
       return undefined
     }
 
     return {
       ...(addExperienceDto.context ?? {}),
+      operationNote: addExperienceDto.operationNote?.trim() || undefined,
       actorUserId: addExperienceDto.adminUserId,
     }
   }

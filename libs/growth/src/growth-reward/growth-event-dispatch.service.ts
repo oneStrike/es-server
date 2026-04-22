@@ -2,8 +2,8 @@ import type {
   DispatchDefinedGrowthEventPayload,
   DispatchDefinedGrowthEventResult,
 } from './types/growth-event-dispatch.type'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
 import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
 import { TaskService } from '@libs/growth/task/task.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -96,7 +96,6 @@ export class GrowthEventDispatchService {
       ruleType: input.eventEnvelope.code,
       bizKey: input.bizKey,
       source: input.source,
-      remark: input.remark,
       targetType: input.targetType,
       targetId: input.targetId ?? input.eventEnvelope.targetId,
       context: this.buildEventRewardContext(input),
@@ -118,7 +117,10 @@ export class GrowthEventDispatchService {
   }
 
   // 规整事件奖励上下文，补齐账本落账和补偿排障需要的稳定字段。
+  // 规整事件奖励上下文，补齐账本落账和补偿排障需要的稳定字段。
   private buildEventRewardContext(input: DispatchDefinedGrowthEventPayload) {
+    const occurredAt = input.eventEnvelope.occurredAt
+
     return {
       ...(input.eventEnvelope.context ?? {}),
       ...(input.context ?? {}),
@@ -130,7 +132,7 @@ export class GrowthEventDispatchService {
       eventTargetType: input.eventEnvelope.targetType,
       eventOperatorId: input.eventEnvelope.operatorId,
       governanceStatus: input.eventEnvelope.governanceStatus,
-      occurredAt: input.eventEnvelope.occurredAt.toISOString(),
+      occurredAt: occurredAt ? occurredAt.toISOString() : undefined,
     }
   }
 }

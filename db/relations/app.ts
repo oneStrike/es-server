@@ -152,8 +152,9 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     checkInStreakProgresses: r.many.checkInStreakProgress(),
     checkInStreakGrants: r.many.checkInStreakGrant(),
     checkInRecords: r.many.checkInRecord(),
-    taskAssignments: r.many.taskAssignment(),
-    taskProgressLogs: r.many.taskProgressLog(),
+    taskInstances: r.many.taskInstance(),
+    taskStepUniqueFacts: r.many.taskStepUniqueFact(),
+    taskEventLogs: r.many.taskEventLog(),
     userLikes: r.many.userLike(),
     userFavorites: r.many.userFavorite(),
     browseLogs: r.many.userBrowseLog(),
@@ -221,6 +222,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     user: r.one.appUser({
       from: r.growthRewardSettlement.userId,
       to: r.appUser.id,
+    }),
+    taskInstances: r.many.taskInstance({
+      from: r.growthRewardSettlement.id,
+      to: r.taskInstance.rewardSettlementId,
     }),
   },
   growthRuleUsageCounter: {
@@ -305,34 +310,91 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.checkInStreakGrant.id,
     }),
   },
-  task: {
-    assignments: r.many.taskAssignment(),
+  taskDefinition: {
+    steps: r.many.taskStep(),
+    instances: r.many.taskInstance(),
     createdBy: r.one.adminUser({
-      from: r.task.createdById,
+      from: r.taskDefinition.createdById,
       to: r.adminUser.id,
-      alias: 'TaskCreatedBy',
+      alias: 'TaskDefinitionCreatedBy',
     }),
     updatedBy: r.one.adminUser({
-      from: r.task.updatedById,
+      from: r.taskDefinition.updatedById,
       to: r.adminUser.id,
-      alias: 'TaskUpdatedBy',
+      alias: 'TaskDefinitionUpdatedBy',
     }),
   },
-  taskAssignment: {
-    task: r.one.task({ from: r.taskAssignment.taskId, to: r.task.id }),
-    user: r.one.appUser({ from: r.taskAssignment.userId, to: r.appUser.id }),
+  taskStep: {
+    task: r.one.taskDefinition({
+      from: r.taskStep.taskId,
+      to: r.taskDefinition.id,
+    }),
+    instanceSteps: r.many.taskInstanceStep(),
+    uniqueFacts: r.many.taskStepUniqueFact(),
+    eventLogs: r.many.taskEventLog(),
+  },
+  taskInstance: {
+    task: r.one.taskDefinition({
+      from: r.taskInstance.taskId,
+      to: r.taskDefinition.id,
+    }),
+    user: r.one.appUser({
+      from: r.taskInstance.userId,
+      to: r.appUser.id,
+    }),
     rewardSettlement: r.one.growthRewardSettlement({
-      from: r.taskAssignment.rewardSettlementId,
+      from: r.taskInstance.rewardSettlementId,
       to: r.growthRewardSettlement.id,
     }),
-    progressLogs: r.many.taskProgressLog(),
+    steps: r.many.taskInstanceStep(),
+    eventLogs: r.many.taskEventLog(),
   },
-  taskProgressLog: {
-    assignment: r.one.taskAssignment({
-      from: r.taskProgressLog.assignmentId,
-      to: r.taskAssignment.id,
+  taskInstanceStep: {
+    instance: r.one.taskInstance({
+      from: r.taskInstanceStep.instanceId,
+      to: r.taskInstance.id,
     }),
-    user: r.one.appUser({ from: r.taskProgressLog.userId, to: r.appUser.id }),
+    step: r.one.taskStep({
+      from: r.taskInstanceStep.stepId,
+      to: r.taskStep.id,
+    }),
+    eventLogs: r.many.taskEventLog(),
+  },
+  taskStepUniqueFact: {
+    task: r.one.taskDefinition({
+      from: r.taskStepUniqueFact.taskId,
+      to: r.taskDefinition.id,
+    }),
+    step: r.one.taskStep({
+      from: r.taskStepUniqueFact.stepId,
+      to: r.taskStep.id,
+    }),
+    user: r.one.appUser({
+      from: r.taskStepUniqueFact.userId,
+      to: r.appUser.id,
+    }),
+  },
+  taskEventLog: {
+    task: r.one.taskDefinition({
+      from: r.taskEventLog.taskId,
+      to: r.taskDefinition.id,
+    }),
+    step: r.one.taskStep({
+      from: r.taskEventLog.stepId,
+      to: r.taskStep.id,
+    }),
+    instance: r.one.taskInstance({
+      from: r.taskEventLog.instanceId,
+      to: r.taskInstance.id,
+    }),
+    instanceStep: r.one.taskInstanceStep({
+      from: r.taskEventLog.instanceStepId,
+      to: r.taskInstanceStep.id,
+    }),
+    user: r.one.appUser({
+      from: r.taskEventLog.userId,
+      to: r.appUser.id,
+    }),
   },
   userBadge: {
     assignments: r.many.userBadgeAssignment(),

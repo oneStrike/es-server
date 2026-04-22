@@ -1,14 +1,14 @@
+import type { DispatchDefinedGrowthEventPayload } from './types/growth-event-dispatch.type'
+import type {
+  GrowthRewardApplyResultList,
+  GrowthRuleRewardSettlementResult,
+} from './types/growth-reward-result.type'
 import type {
   StoredCheckInRecordRewardPayloadIdentity,
   StoredCheckInStreakRewardPayloadIdentity,
   StoredTaskRewardPayloadIdentity,
   UpdateSettlementStatePayload,
 } from './types/growth-reward-settlement.type'
-import type { DispatchDefinedGrowthEventPayload } from './types/growth-event-dispatch.type'
-import type {
-  GrowthRewardApplyResultList,
-  GrowthRuleRewardSettlementResult,
-} from './types/growth-reward-result.type'
 import { CheckInRepairTargetTypeEnum } from '@libs/growth/check-in/check-in.constant'
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import { TaskService } from '@libs/growth/task/task.service'
@@ -79,10 +79,7 @@ export class GrowthRewardSettlementRetryService {
         record.settlementType === GrowthRewardSettlementTypeEnum.TASK_REWARD
       ) {
         const taskPayload = this.parseStoredTaskPayload(record.requestPayload)
-        await this.taskService.retryTaskAssignmentReward(
-          taskPayload.assignmentId,
-          true,
-        )
+        await this.taskService.retryTaskInstanceReward(taskPayload.instanceId)
         const latest = await this.growthRewardSettlementStore.getSettlementById(
           record.id,
         )
@@ -283,13 +280,13 @@ export class GrowthRewardSettlementRetryService {
       payload && typeof payload === 'object' && !Array.isArray(payload)
         ? (payload as Record<string, unknown>)
         : null
-    const assignmentId = Number(record?.assignmentId)
+    const instanceId = Number(record?.instanceId)
     const taskId = Number(record?.taskId)
     const userId = Number(record?.userId)
-    if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+    if (!Number.isInteger(instanceId) || instanceId <= 0) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
-        '任务奖励补偿记录载荷损坏，assignmentId 缺失',
+        '任务奖励补偿记录载荷损坏，instanceId 缺失',
       )
     }
     if (
@@ -304,7 +301,7 @@ export class GrowthRewardSettlementRetryService {
       )
     }
     return {
-      assignmentId,
+      instanceId,
       taskId,
       userId,
     }
@@ -422,10 +419,6 @@ export class GrowthRewardSettlementRetryService {
       } as DispatchDefinedGrowthEventPayload['eventEnvelope'],
       bizKey: record.bizKey,
       source: record.source,
-      remark:
-        typeof record.remark === 'string' && record.remark.trim() !== ''
-          ? record.remark
-          : undefined,
       targetType: Number.isInteger(record.targetType)
         ? Number(record.targetType)
         : undefined,

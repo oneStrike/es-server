@@ -23,6 +23,8 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { startOfNextDayInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq, sql } from 'drizzle-orm'
+import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
+import { CheckInStreakService } from './check-in-streak.service'
 import {
   CheckInStreakConfigStatusEnum,
   CheckInStreakPublishStrategyEnum,
@@ -60,6 +62,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   constructor(
     drizzle: DrizzleService,
     growthLedgerService: GrowthLedgerService,
+    private readonly checkInRewardPolicyService: CheckInRewardPolicyService,
+    private readonly checkInStreakService: CheckInStreakService,
   ) {
     super(drizzle, growthLedgerService)
   }
@@ -67,7 +71,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   // 查询当前唯一有效的全局签到配置详情。
   async getConfigDetail() {
     const config = await this.getRequiredConfig()
-    const rewardDefinition = this.parseRewardDefinition(config)
+    const rewardDefinition =
+      this.checkInRewardPolicyService.parseRewardDefinition(config)
 
     return {
       id: config.id,
@@ -88,14 +93,21 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       isEnabled: dto.isEnabled ? 1 : 0,
       makeupPeriodType: dto.makeupPeriodType,
       periodicAllowance: dto.periodicAllowance,
-      baseRewardItems: this.parseRewardItems(dto.baseRewardItems, {
-        allowEmpty: true,
-      }),
-      dateRewardRules: this.normalizeDateRewardRules(dto.dateRewardRules),
-      patternRewardRules: this.normalizePatternRewardRules(
-        dto.patternRewardRules,
-        dto.makeupPeriodType,
+      baseRewardItems: this.checkInRewardPolicyService.parseRewardItems(
+        dto.baseRewardItems,
+        {
+          allowEmpty: true,
+        },
       ),
+      dateRewardRules:
+        this.checkInRewardPolicyService.normalizeDateRewardRules(
+          dto.dateRewardRules,
+        ),
+      patternRewardRules:
+        this.checkInRewardPolicyService.normalizePatternRewardRules(
+          dto.patternRewardRules,
+          dto.makeupPeriodType,
+        ),
       updatedById: adminUserId,
     }
 
@@ -155,8 +167,12 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   // 查询某个连续签到规则编码下的全部历史版本。
   async getStreakRuleHistoryPage(query: QueryCheckInStreakRuleHistoryPageDto) {
-    const ruleCode = this.buildStreakRuleCode(query.streakDays)
-    const rules = await this.listStreakRuleVersionsByCode(ruleCode)
+    const ruleCode = this.checkInStreakService.buildStreakRuleCode(
+      query.streakDays,
+    )
+    const rules = await this.checkInStreakService.listStreakRuleVersionsByCode(
+      ruleCode,
+    )
     const pageIndex = query.pageIndex ?? 1
     const pageSize = query.pageSize ?? 20
     const start = (pageIndex - 1) * pageSize
@@ -193,20 +209,31 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       throw new BadRequestException('连续奖励阈值必须为正整数')
     }
 
-    const rewardItems = this.parseRewardItems(dto.rewardItems, {
-      allowEmpty: false,
-    })!
+    const rewardItems = this.checkInRewardPolicyService.parseRewardItems(
+      dto.rewardItems,
+      {
+        allowEmpty: false,
+      },
+    )!
     const now = new Date()
     const effectiveFrom = this.resolvePublishEffectiveFrom(dto, now)
-    const ruleCode = this.buildStreakRuleCode(dto.streakDays)
+    const ruleCode = this.checkInStreakService.buildStreakRuleCode(
+      dto.streakDays,
+    )
 
     await this.drizzle.withTransaction(async (tx) => {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(${CHECK_IN_STREAK_MUTATION_LOCK_KEY})`,
       )
 
-      const latest = await this.findLatestStreakRuleVersion(ruleCode, tx)
-      const existing = await this.listStreakRuleVersionsByCode(ruleCode, tx)
+      const latest = await this.checkInStreakService.findLatestStreakRuleVersion(
+        ruleCode,
+        tx,
+      )
+      const existing = await this.checkInStreakService.listStreakRuleVersionsByCode(
+        ruleCode,
+        tx,
+      )
 
       for (const rule of existing.filter(
         (item) =>
@@ -219,7 +246,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           .update(this.checkInStreakRuleTable)
           .set({
             effectiveTo: effectiveFrom,
-            status: this.resolveStreakRuleStatus(
+            status: this.checkInStreakService.resolveStreakRuleStatus(
               {
                 status: rule.status,
                 effectiveFrom: rule.effectiveFrom,
@@ -294,7 +321,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       }
 
       const now = new Date()
-      const status = this.resolveStreakRuleStatus(current, now)
+      const status = this.checkInStreakService.resolveStreakRuleStatus(
+        current,
+        now,
+      )
       if (
         status !== CheckInStreakConfigStatusEnum.SCHEDULED &&
         status !== CheckInStreakConfigStatusEnum.ACTIVE
@@ -318,7 +348,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
       if (status === CheckInStreakConfigStatusEnum.SCHEDULED) {
         const candidates = (
-          await this.listStreakRuleVersionsByCode(current.ruleCode, tx)
+          await this.checkInStreakService.listStreakRuleVersionsByCode(
+            current.ruleCode,
+            tx,
+          )
         ).filter(
           (rule) =>
             rule.id !== current.id &&
@@ -349,7 +382,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           .update(this.checkInStreakRuleTable)
           .set({
             effectiveTo: bridgedEffectiveTo,
-            status: this.resolveStreakRuleStatus(
+            status: this.checkInStreakService.resolveStreakRuleStatus(
               {
                 status: predecessor.status,
                 effectiveFrom: predecessor.effectiveFrom,
@@ -563,7 +596,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       case 'version':
         return rule.version
       case 'status':
-        return this.resolveStreakRuleStatus(rule, at)
+        return this.checkInStreakService.resolveStreakRuleStatus(rule, at)
       case 'publishStrategy':
         return rule.publishStrategy
       case 'repeatable':
@@ -637,7 +670,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       return []
     }
 
-    const loadedRules = await this.loadStreakRewardRuleRowsByIds(
+    const loadedRules = await this.checkInStreakService.loadStreakRewardRuleRowsByIds(
       rules.map((rule) => rule.id),
     )
     const loadedRuleMap = new Map(loadedRules.map((rule) => [rule.id, rule]))
@@ -651,9 +684,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         )
       }
 
-      const definition = this.parseStreakRuleDefinition({
+      const definition = this.checkInRewardPolicyService.parseStreakRuleDefinition(
+        {
         ...ruleWithItems,
-        rewardItems: this.parseRewardItems(
+        rewardItems: this.checkInRewardPolicyService.parseRewardItems(
           ruleWithItems.rewardItems.map((item) => ({
             amount: item.amount,
             assetKey: item.assetKey,
@@ -663,8 +697,12 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             allowEmpty: false,
           },
         )!,
-      })
-      const status = this.resolveStreakRuleStatus(ruleWithItems, at)
+      },
+      )
+      const status = this.checkInStreakService.resolveStreakRuleStatus(
+        ruleWithItems,
+        at,
+      )
 
       return {
         id: rule.id,

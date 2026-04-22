@@ -91,7 +91,7 @@ export class MessageNotificationDeliveryService {
       fallbackReason: result.fallbackReason ?? null,
       failureReason,
       taskId: taskReminderFacts.taskId,
-      assignmentId: taskReminderFacts.assignmentId,
+      instanceId: taskReminderFacts.instanceId,
       reminderKind: taskReminderFacts.reminderKind,
     })
   }
@@ -133,14 +133,12 @@ export class MessageNotificationDeliveryService {
       fallbackReason: null,
       failureReason: input.failureReason,
       taskId: taskReminderFacts.taskId,
-      assignmentId: taskReminderFacts.assignmentId,
+      instanceId: taskReminderFacts.instanceId,
       reminderKind: taskReminderFacts.reminderKind,
     })
   }
 
-  async getNotificationDeliveryPage(
-    query: QueryNotificationDeliveryPageDto,
-  ) {
+  async getNotificationDeliveryPage(query: QueryNotificationDeliveryPageDto) {
     const conditions: SQL[] = []
 
     if (query.status) {
@@ -166,10 +164,7 @@ export class MessageNotificationDeliveryService {
     }
     if (query.projectionKey?.trim()) {
       conditions.push(
-        eq(
-          this.notificationDelivery.projectionKey,
-          query.projectionKey.trim(),
-        ),
+        eq(this.notificationDelivery.projectionKey, query.projectionKey.trim()),
       )
     }
     if (query.eventId?.trim()) {
@@ -216,24 +211,28 @@ export class MessageNotificationDeliveryService {
       .offset((pageIndex - 1) * pageSize)
 
     return {
-      list: rows.map((item) => ({
-        ...item,
-        eventId: item.eventId.toString(),
-        dispatchId: item.dispatchId.toString(),
-        status: item.status as MessageNotificationDispatchStatusEnum,
-        categoryLabel:
-          item.categoryKey &&
-          MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(
-            item.categoryKey as MessageNotificationCategoryKey,
-          )
-            ? getMessageNotificationCategoryLabel(
-                item.categoryKey as MessageNotificationCategoryKey,
-              )
-            : undefined,
-        statusLabel: getMessageNotificationDispatchStatusLabel(
-          item.status as MessageNotificationDispatchStatusEnum,
-        ),
-      })),
+      list: rows.map((item) => {
+        const { instanceId, ...rest } = item
+        return {
+          ...rest,
+          instanceId,
+          eventId: item.eventId.toString(),
+          dispatchId: item.dispatchId.toString(),
+          status: item.status as MessageNotificationDispatchStatusEnum,
+          categoryLabel:
+            item.categoryKey &&
+            MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(
+              item.categoryKey as MessageNotificationCategoryKey,
+            )
+              ? getMessageNotificationCategoryLabel(
+                  item.categoryKey as MessageNotificationCategoryKey,
+                )
+              : undefined,
+          statusLabel: getMessageNotificationDispatchStatusLabel(
+            item.status as MessageNotificationDispatchStatusEnum,
+          ),
+        }
+      }),
       total: Number(totalRow?.count ?? 0),
       pageIndex,
       pageSize,
@@ -253,7 +252,7 @@ export class MessageNotificationDeliveryService {
     fallbackReason: string | null
     failureReason?: string | null
     taskId?: number
-    assignmentId?: number
+    instanceId?: number
     reminderKind?: string
   }) {
     const attemptedAt = new Date()
@@ -269,7 +268,7 @@ export class MessageNotificationDeliveryService {
           projectionKey: input.projectionKey ?? null,
           categoryKey: input.categoryKey ?? null,
           taskId: input.taskId ?? null,
-          assignmentId: input.assignmentId ?? null,
+          instanceId: input.instanceId ?? null,
           reminderKind: input.reminderKind ?? null,
           notificationId: input.notificationId,
           status: input.status,
@@ -287,7 +286,7 @@ export class MessageNotificationDeliveryService {
             projectionKey: input.projectionKey ?? null,
             categoryKey: input.categoryKey ?? null,
             taskId: input.taskId ?? null,
-            assignmentId: input.assignmentId ?? null,
+            instanceId: input.instanceId ?? null,
             reminderKind: input.reminderKind ?? null,
             notificationId: input.notificationId,
             status: input.status,
@@ -367,7 +366,7 @@ export class MessageNotificationDeliveryService {
     if (categoryKey !== 'task_reminder') {
       return {
         taskId: undefined,
-        assignmentId: undefined,
+        instanceId: undefined,
         reminderKind: undefined,
       }
     }
@@ -384,7 +383,7 @@ export class MessageNotificationDeliveryService {
       taskId:
         this.parseOptionalReceiverUserId(object?.id) ??
         this.parseOptionalReceiverUserId(event.targetId),
-      assignmentId: this.parseOptionalReceiverUserId(reminder?.assignmentId),
+      instanceId: this.parseOptionalReceiverUserId(reminder?.instanceId),
       reminderKind: this.parseOptionalString(reminder?.kind),
     }
   }
@@ -393,18 +392,18 @@ export class MessageNotificationDeliveryService {
     categoryKey: string | undefined,
     facts: {
       taskId?: number
-      assignmentId?: number
+      instanceId?: number
       reminderKind?: string
     },
   ) {
     if (
       categoryKey === 'task_reminder' &&
       (typeof facts.taskId !== 'number' ||
-        typeof facts.assignmentId !== 'number' ||
+        typeof facts.instanceId !== 'number' ||
         typeof facts.reminderKind !== 'string')
     ) {
       throw new Error(
-        'task_reminder delivery must provide taskId, assignmentId and reminderKind typed lookup facts',
+        'task_reminder delivery must provide taskId, instanceId and reminderKind typed lookup facts',
       )
     }
   }

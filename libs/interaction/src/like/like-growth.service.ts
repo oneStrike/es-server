@@ -123,7 +123,6 @@ export class LikeGrowthService {
         eventEnvelope: likeCreatedEvent,
         bizKey: baseBizKey,
         source: 'like',
-        remark: `点赞目标 #${likeCreatedEvent.targetId}`,
         targetType,
       })
     } catch (error) {
@@ -166,7 +165,6 @@ export class LikeGrowthService {
         eventEnvelope: commentLikedEvent,
         bizKey: baseBizKey,
         source: 'comment_like',
-        remark: `评论被点赞 #${commentLikedEvent.targetId}`,
       })
     } catch (error) {
       this.logger.warn(

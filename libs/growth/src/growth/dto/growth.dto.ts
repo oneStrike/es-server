@@ -2,7 +2,7 @@ import {
   EventDefinitionDomainEnum,
   EventDefinitionGovernanceGateEnum,
   EventDefinitionImplStatusEnum,
-} from '@libs/growth/event-definition/event-definition.type'
+} from '@libs/growth/event-definition/event-definition.constant'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'

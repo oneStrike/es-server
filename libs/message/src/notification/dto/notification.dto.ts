@@ -7,11 +7,7 @@ import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.
 import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { BaseForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
-import {
-  BaseTaskAssignmentDto,
-  BaseTaskDto,
-  QueryTaskAssignmentReconciliationDto,
-} from '@libs/growth/task/dto/task.dto'
+import { BaseTaskDefinitionDto } from '@libs/growth/task/dto/task-view.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -213,13 +209,17 @@ export class NotificationAnnouncementSnapshotDto extends PickType(
  * 在通知中展示任务的基本信息
  * 用于任务提醒类通知场景
  */
-export class NotificationTaskSnapshotDto extends PickType(BaseTaskDto, [
-  'id',
-  'code',
-  'cover',
-  'title',
-  'type',
-]) {
+export class NotificationTaskSnapshotDto extends PickType(
+  BaseTaskDefinitionDto,
+  ['id', 'code', 'cover', 'title'] as const,
+) {
+  @NumberProperty({
+    description: '任务场景类型（1=新手引导；2=日常；4=活动）',
+    example: 2,
+    validation: false,
+  })
+  type!: number
+
   @StringProperty({
     description: '对象类型，固定为 task',
     example: 'task',
@@ -236,12 +236,31 @@ export class NotificationTaskSnapshotDto extends PickType(BaseTaskDto, [
  * - expiring_soon: 任务即将过期提醒
  * - reward_granted: 任务奖励到账提醒
  */
-class NotificationTaskReminderOptionalFieldsDto extends PartialType(
-  IntersectionType(
-    PickType(BaseTaskAssignmentDto, ['cycleKey', 'expiredAt']),
-    PickType(QueryTaskAssignmentReconciliationDto, ['assignmentId']),
-  ),
-) {}
+class NotificationTaskReminderOptionalFieldsDto {
+  @StringProperty({
+    description: '周期键',
+    example: '2026-04-22',
+    required: false,
+    validation: false,
+  })
+  cycleKey?: string
+
+  @DateProperty({
+    description: '过期时间',
+    example: '2026-04-23T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  expiredAt?: Date
+
+  @NumberProperty({
+    description: '任务实例 ID',
+    example: 88,
+    required: false,
+    validation: false,
+  })
+  instanceId?: number
+}
 
 export class NotificationTaskReminderInfoDto extends NotificationTaskReminderOptionalFieldsDto {
   @StringProperty({
@@ -310,8 +329,7 @@ export interface NotificationCommentActionDataDto {
   parentContainer?: NotificationWorkSnapshotDto
 }
 
-export interface NotificationCommentReplyDataDto
-  extends NotificationCommentActionDataDto {
+export interface NotificationCommentReplyDataDto extends NotificationCommentActionDataDto {
   parentComment?: NotificationCommentSnapshotDto
 }
 
@@ -361,21 +379,19 @@ function createNotificationCommentContainerOneOfSchemas() {
 }
 
 function createNotificationDataAnyOfSchemas() {
-  const commentReplyProperties: Record<
-    string,
-    SchemaObject | ReferenceObject
-  > = {
-    object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
-    container: {
-      oneOf: createNotificationCommentContainerOneOfSchemas(),
-    },
-    parentContainer: {
-      $ref: getSchemaPath(NotificationWorkSnapshotDto),
-    },
-    parentComment: {
-      $ref: getSchemaPath(NotificationCommentSnapshotDto),
-    },
-  }
+  const commentReplyProperties: Record<string, SchemaObject | ReferenceObject> =
+    {
+      object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
+      container: {
+        oneOf: createNotificationCommentContainerOneOfSchemas(),
+      },
+      parentContainer: {
+        $ref: getSchemaPath(NotificationWorkSnapshotDto),
+      },
+      parentComment: {
+        $ref: getSchemaPath(NotificationCommentSnapshotDto),
+      },
+    }
 
   const commentActionProperties: Record<
     string,
@@ -519,12 +535,12 @@ export class BaseUserNotificationDto extends BaseDto {
       },
       reminder: {
         kind: 'reward_granted',
-        assignmentId: 10,
+        instanceId: 10,
       },
       reward: {
         items: [
           {
-            assetType: 1,
+            assetType: GrowthRewardRuleAssetTypeEnum.POINTS,
             amount: 5,
           },
         ],
