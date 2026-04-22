@@ -1,10 +1,13 @@
 import { BaseGrowthRewardSettlementDto } from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
 import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto } from '@libs/platform/dto/base.dto'
+import {
+  ArrayProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+import { BaseDto } from '@libs/platform/dto'
 import { PickType } from '@nestjs/swagger'
 import {
   CheckInRecordTypeEnum,

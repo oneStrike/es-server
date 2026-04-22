@@ -1,10 +1,13 @@
 import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto } from '@libs/platform/dto/base.dto'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+import { BaseDto } from '@libs/platform/dto'
 import { CheckInRewardSettlementSummaryDto } from './check-in-record.dto'
 
 export class BaseCheckInStreakRewardGrantDto extends BaseDto {

@@ -1,7 +1,10 @@
 import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import {
+  ArrayProperty,
+  EnumProperty,
+  NumberProperty,
+} from '@libs/platform/decorators'
+
 import { CheckInPatternRewardRuleTypeEnum } from '../check-in.constant'
 
 export class BaseCheckInPatternRewardRuleDto {

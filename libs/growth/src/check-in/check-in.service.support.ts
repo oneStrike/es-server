@@ -25,19 +25,18 @@ import type {
 } from './check-in.type'
 import type { CheckInDateRewardRuleFieldsDto } from './dto/check-in-date-reward-rule.dto'
 import type { BaseCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
-import type { CheckInRewardSettlementSummaryDto } from './dto/check-in-record.dto'
 import type { BaseCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
+  addDaysToDateOnlyInAppTimeZone,
+  diffDateOnlyInAppTimeZone,
+  endOfDayInAppTimeZone,
   formatDateOnlyInAppTimeZone,
-  getAppTimeZone,
+  getDateOnlyPartsInAppTimeZone,
   parseDateOnlyInAppTimeZone,
 } from '@libs/platform/utils/time'
 import { BadRequestException, Logger } from '@nestjs/common'
-import dayjs from 'dayjs'
-import timezone from 'dayjs/plugin/timezone'
-import utc from 'dayjs/plugin/utc'
 import { and, asc, desc, eq, gt, inArray, or, sql } from 'drizzle-orm'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
@@ -48,9 +47,6 @@ import {
   CheckInRewardSourceTypeEnum,
   CheckInStreakConfigStatusEnum,
 } from './check-in.constant'
-
-dayjs.extend(utc)
-dayjs.extend(timezone)
 
 type CheckInRewardSettlementSummaryRecord = Pick<
   GrowthRewardSettlementSelect,
@@ -133,11 +129,6 @@ export abstract class CheckInServiceSupport {
     return this.drizzle.schema.growthRewardSettlement
   }
 
-  // 读取应用统一配置的时区。
-  protected getAppTimeZone() {
-    return getAppTimeZone()
-  }
-
   // 把 Date 或日期字符串规范化成 YYYY-MM-DD。
   protected formatDateOnly(value: Date | string) {
     return formatDateOnlyInAppTimeZone(value)
@@ -171,11 +162,6 @@ export abstract class CheckInServiceSupport {
   // 仅在输入是数组时返回原数组。
   protected asArray<T>(value: T) {
     return Array.isArray(value) ? value : undefined
-  }
-
-  // 提取异常可读信息，用于日志和诊断输出。
-  protected stringifyError(error: unknown) {
-    return error instanceof Error ? error.message : String(error)
   }
 
   // 生成连续签到规则的稳定编码。
@@ -234,10 +220,7 @@ export abstract class CheckInServiceSupport {
   }
 
   // 解析单条奖励项，并限制在签到域支持的字段集合内。
-  protected parseRewardItem(
-    value: unknown,
-    index: number,
-  ): NonNullable<GrowthRewardItems>[number] {
+  protected parseRewardItem(value: unknown, index: number) {
     const record = this.asRecord(value)
     if (!record) {
       throw new BadRequestException(`rewardItems[${index}] 必须是对象`)
@@ -560,10 +543,7 @@ export abstract class CheckInServiceSupport {
 
   // 计算按签到日期回看配置时应使用的查询时间点。
   protected resolveConfigLookupAt(signDate: string) {
-    return dayjs
-      .tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
-      .startOf('day')
-      .toDate()
+    return parseDateOnlyInAppTimeZone(signDate)!
   }
 
   // 按规则 ID 批量加载规则奖励项，并按规则分组返回。
@@ -804,30 +784,30 @@ export abstract class CheckInServiceSupport {
     date: string,
     periodType: CheckInMakeupPeriodTypeEnum,
   ): CheckInMakeupWindowView {
-    const targetDate = dayjs
-      .tz(date, 'YYYY-MM-DD', this.getAppTimeZone())
-      .startOf('day')
+    const dateParts = getDateOnlyPartsInAppTimeZone(date)
+    if (!dateParts) {
+      throw new BadRequestException('日期非法')
+    }
 
     if (periodType === CheckInMakeupPeriodTypeEnum.WEEKLY) {
-      const weekday = targetDate.day()
-      const offset = weekday === 0 ? 6 : weekday - 1
-      const periodStart = targetDate.subtract(offset, 'day')
-      const periodEnd = periodStart.add(6, 'day')
+      const periodStartDate = addDaysToDateOnlyInAppTimeZone(
+        date,
+        -(dateParts.weekday - 1),
+      )!
+      const periodEndDate = addDaysToDateOnlyInAppTimeZone(periodStartDate, 6)!
       return {
         periodType,
-        periodKey: `week-${periodStart.format('YYYY-MM-DD')}`,
-        periodStartDate: periodStart.format('YYYY-MM-DD'),
-        periodEndDate: periodEnd.format('YYYY-MM-DD'),
+        periodKey: `week-${periodStartDate}`,
+        periodStartDate,
+        periodEndDate,
       }
     }
 
-    const periodStart = targetDate.startOf('month')
-    const periodEnd = targetDate.endOf('month').startOf('day')
     return {
       periodType,
-      periodKey: `month-${periodStart.format('YYYY-MM-DD')}`,
-      periodStartDate: periodStart.format('YYYY-MM-DD'),
-      periodEndDate: periodEnd.format('YYYY-MM-DD'),
+      periodKey: `month-${dateParts.monthStartDate}`,
+      periodStartDate: dateParts.monthStartDate,
+      periodEndDate: dateParts.monthEndDate,
     }
   }
 
@@ -940,6 +920,7 @@ export abstract class CheckInServiceSupport {
         previous.periodicGranted - previous.periodicUsed,
         0,
       )
+      const periodStartAt = parseDateOnlyInAppTimeZone(window.periodStartDate)!
       if (periodicRemaining > 0) {
         await tx
           .insert(this.checkInMakeupFactTable)
@@ -949,8 +930,8 @@ export abstract class CheckInServiceSupport {
             sourceType: CheckInMakeupSourceTypeEnum.PERIODIC_ALLOWANCE,
             amount: 0,
             consumedAmount: periodicRemaining,
-            effectiveAt: new Date(`${window.periodStartDate}T00:00:00.000Z`),
-            expiresAt: new Date(`${window.periodStartDate}T00:00:00.000Z`),
+            effectiveAt: periodStartAt,
+            expiresAt: periodStartAt,
             periodType: previous.periodType,
             periodKey: previous.periodKey,
             sourceRef: null,
@@ -966,6 +947,10 @@ export abstract class CheckInServiceSupport {
       }
     }
 
+    const periodStartAt = parseDateOnlyInAppTimeZone(window.periodStartDate)!
+    const periodEndAt = endOfDayInAppTimeZone(
+      parseDateOnlyInAppTimeZone(window.periodEndDate)!,
+    )
     const grantedFactRows = await tx
       .insert(this.checkInMakeupFactTable)
       .values({
@@ -974,8 +959,8 @@ export abstract class CheckInServiceSupport {
         sourceType: CheckInMakeupSourceTypeEnum.PERIODIC_ALLOWANCE,
         amount: config.periodicAllowance,
         consumedAmount: 0,
-        effectiveAt: new Date(`${window.periodStartDate}T00:00:00.000Z`),
-        expiresAt: new Date(`${window.periodEndDate}T23:59:59.999Z`),
+        effectiveAt: periodStartAt,
+        expiresAt: periodEndAt,
         periodType: window.periodType,
         periodKey: window.periodKey,
         sourceRef: null,
@@ -1206,12 +1191,7 @@ export abstract class CheckInServiceSupport {
       const signDate = this.toDateOnlyValue(record.signDate)
       if (
         previousDate &&
-        dayjs
-          .tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
-          .diff(
-            dayjs.tz(previousDate, 'YYYY-MM-DD', this.getAppTimeZone()),
-            'day',
-          ) === 1
+        diffDateOnlyInAppTimeZone(signDate, previousDate) === 1
       ) {
         streak += 1
       } else {
@@ -1226,10 +1206,10 @@ export abstract class CheckInServiceSupport {
       currentStreak: latestDate ? streakByDate[latestDate] : 0,
       streakStartedAt:
         latestDate && streakByDate[latestDate] > 0
-          ? dayjs
-              .tz(latestDate, 'YYYY-MM-DD', this.getAppTimeZone())
-              .subtract(streakByDate[latestDate] - 1, 'day')
-              .format('YYYY-MM-DD')
+          ? addDaysToDateOnlyInAppTimeZone(
+              latestDate,
+              -(streakByDate[latestDate] - 1),
+            )
           : undefined,
       lastSignedDate: latestDate,
       streakByDate,
@@ -1287,22 +1267,23 @@ export abstract class CheckInServiceSupport {
     periodType: CheckInMakeupPeriodTypeEnum,
     date: string,
   ) {
-    const targetDate = dayjs.tz(date, 'YYYY-MM-DD', this.getAppTimeZone())
+    const dateParts = getDateOnlyPartsInAppTimeZone(date)
+    if (!dateParts) {
+      return undefined
+    }
 
     if (periodType === CheckInMakeupPeriodTypeEnum.WEEKLY) {
-      const weekday = targetDate.day() === 0 ? 7 : targetDate.day()
       return rules.find(
         (rule) =>
           rule.patternType === CheckInPatternRewardRuleTypeEnum.WEEKDAY &&
-          rule.weekday === weekday,
+          rule.weekday === dateParts.weekday,
       )
     }
 
-    const monthDay = targetDate.date()
     const monthLastDayRule = rules.find(
       (rule) =>
         rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
-        monthDay === targetDate.daysInMonth(),
+        dateParts.dayOfMonth === dateParts.daysInMonth,
     )
     if (monthLastDayRule) {
       return monthLastDayRule
@@ -1311,7 +1292,7 @@ export abstract class CheckInServiceSupport {
     return rules.find(
       (rule) =>
         rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
-        rule.monthDay === monthDay,
+        rule.monthDay === dateParts.dayOfMonth,
     )
   }
 
@@ -1372,10 +1353,10 @@ export abstract class CheckInServiceSupport {
       return false
     }
 
-    const yesterday = dayjs
-      .tz(today, 'YYYY-MM-DD', this.getAppTimeZone())
-      .subtract(1, 'day')
-      .format('YYYY-MM-DD')
+    const yesterday = addDaysToDateOnlyInAppTimeZone(today, -1)
+    if (!yesterday) {
+      return false
+    }
 
     return (
       normalizedLastSignedDate === today ||
@@ -1385,10 +1366,10 @@ export abstract class CheckInServiceSupport {
 
   // 构建用于排行榜和活跃状态筛选的连续进度条件。
   protected buildActiveStreakProgressWhere(today: string): SQL {
-    const yesterday = dayjs
-      .tz(today, 'YYYY-MM-DD', this.getAppTimeZone())
-      .subtract(1, 'day')
-      .format('YYYY-MM-DD')
+    const yesterday = addDaysToDateOnlyInAppTimeZone(today, -1)
+    if (!yesterday) {
+      throw new BadRequestException('日期非法')
+    }
 
     return and(
       gt(this.checkInStreakProgressTable.currentStreak, 0),
@@ -1471,7 +1452,7 @@ export abstract class CheckInServiceSupport {
   // 把补偿事实映射成对外使用的补偿摘要。
   protected toRewardSettlementSummary(
     settlement: CheckInRewardSettlementSummaryRecord | null | undefined,
-  ): CheckInRewardSettlementSummaryDto | null {
+  ) {
     if (!settlement) {
       return null
     }

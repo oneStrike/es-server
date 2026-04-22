@@ -10,8 +10,8 @@ import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { startOfNextDayInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import dayjs from 'dayjs'
 import { eq, SQL, sql } from 'drizzle-orm'
 import {
   CheckInStreakConfigStatusEnum,
@@ -727,11 +727,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
 
     if (dto.publishStrategy === CheckInStreakPublishStrategyEnum.NEXT_DAY) {
-      return dayjs(now)
-        .tz(this.getAppTimeZone())
-        .add(1, 'day')
-        .startOf('day')
-        .toDate()
+      return startOfNextDayInAppTimeZone(now)
     }
 
     if (!dto.effectiveFrom) {
