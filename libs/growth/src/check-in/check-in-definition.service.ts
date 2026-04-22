@@ -1,4 +1,14 @@
-import type { CheckInStreakRuleSelect } from '@db/schema'
+import type { SQL } from 'drizzle-orm'
+import type {
+  CheckInExecutedRowsResult,
+  CheckInPublishEffectiveInput,
+  CheckInRuleIdQuery,
+  StreakRulePageOrderField,
+  StreakRulePageOrderItem,
+  StreakRulePageQuery,
+  StreakRulePageRow,
+  StreakRulePageStatus,
+} from './check-in.type'
 import type {
   PublishCheckInStreakRuleDto,
   QueryCheckInStreakRuleHistoryPageDto,
@@ -12,7 +22,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfNextDayInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { eq, SQL, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import {
   CheckInStreakConfigStatusEnum,
   CheckInStreakPublishStrategyEnum,
@@ -38,40 +48,6 @@ const STREAK_RULE_PAGE_SORTABLE_FIELDS = new Set([
   'createdAt',
   'updatedAt',
 ] as const)
-
-type StreakRulePageOrderField =
-  | 'id'
-  | 'ruleCode'
-  | 'streakDays'
-  | 'version'
-  | 'status'
-  | 'publishStrategy'
-  | 'repeatable'
-  | 'effectiveFrom'
-  | 'effectiveTo'
-  | 'createdAt'
-  | 'updatedAt'
-type StreakRulePageOrderDirection = 'asc' | 'desc'
-interface StreakRulePageOrderItem {
-  direction: StreakRulePageOrderDirection
-  field: StreakRulePageOrderField
-}
-
-type StreakRulePageRow = Pick<
-  CheckInStreakRuleSelect,
-  | 'id'
-  | 'ruleCode'
-  | 'streakDays'
-  | 'version'
-  | 'status'
-  | 'publishStrategy'
-  | 'effectiveFrom'
-  | 'effectiveTo'
-  | 'repeatable'
-  | 'updatedById'
-  | 'createdAt'
-  | 'updatedAt'
->
 
 /**
  * 签到定义管理服务。
@@ -173,7 +149,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   // 查询单条连续签到规则的详情视图。
-  async getStreakRuleDetail(query: { id: number }) {
+  async getStreakRuleDetail(query: CheckInRuleIdQuery) {
     return this.getStreakRuleHistoryDetail(query)
   }
 
@@ -195,7 +171,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   // 查询某个历史规则版本详情，不存在时返回业务异常。
-  async getStreakRuleHistoryDetail(query: { id: number }) {
+  async getStreakRuleHistoryDetail(query: CheckInRuleIdQuery) {
     const rule = await this.db.query.checkInStreakRule.findFirst({
       where: { id: query.id },
     })
@@ -301,7 +277,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   // 终止指定规则版本，并在排期版本场景下回补前驱窗口。
-  async terminateStreakRule(query: { id: number }, adminUserId: number) {
+  async terminateStreakRule(query: CheckInRuleIdQuery, adminUserId: number) {
     await this.drizzle.withTransaction(async (tx) => {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(${CHECK_IN_STREAK_MUTATION_LOCK_KEY})`,
@@ -406,13 +382,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return detail
   }
 
-  /**
-   * 查询连续签到主页面的代表行。
-   *
-   * 通过窗口函数在数据库侧为每个 `ruleCode` 只保留一条代表版本，避免把全部历史版本加载到应用层后再做分组。
-   */
+  // 查询连续签到主页面的代表行。
+  // 通过窗口函数在数据库侧为每个 ruleCode 只保留一条代表版本，避免在应用层重复分组。
   private async listStreakRulePageRows(
-    query: Pick<QueryCheckInStreakRulePageDto, 'status' | 'streakDays'>,
+    query: StreakRulePageQuery,
     at: Date,
   ) {
     const rowsResult = await this.db.execute(sql`
@@ -624,9 +597,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   // 生成代表行窗口函数的排序表达式。
-  private buildRepresentativeRowOrderBySql(
-    status: QueryCheckInStreakRulePageDto['status'],
-  ): SQL {
+  private buildRepresentativeRowOrderBySql(status: StreakRulePageStatus): SQL {
     if (status === CheckInStreakConfigStatusEnum.SCHEDULED) {
       return sql`effective_from ASC, version DESC, id ASC`
     }
@@ -647,9 +618,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   // 统一把 Drizzle execute 结果收敛成强类型行数组。
-  private extractExecutedRows<T>(
-    result: { rows?: T[] | null } | object | null | undefined,
-  ) {
+  private extractExecutedRows<T>(result: CheckInExecutedRowsResult<T>) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
     }
@@ -658,10 +627,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return Array.isArray(rows) ? rows : []
   }
 
-  /**
-   * 批量构建连续签到记录详情，避免列表页按行重复查询奖励项。
-   */
-  // 批量构建规则详情视图，并补齐奖励项和当前状态信息。
+  // 批量构建规则详情视图。
+  // 这里一次性补齐奖励项和动态状态，避免列表页按行重复查询。
   private async buildStreakRuleDetailViews(
     rules: StreakRulePageRow[],
     at = new Date(),
@@ -719,7 +686,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   // 根据发布策略解析规则真正的生效时间。
   private resolvePublishEffectiveFrom(
-    dto: Pick<PublishCheckInStreakRuleDto, 'effectiveFrom' | 'publishStrategy'>,
+    dto: CheckInPublishEffectiveInput,
     now: Date,
   ) {
     if (dto.publishStrategy === CheckInStreakPublishStrategyEnum.IMMEDIATE) {

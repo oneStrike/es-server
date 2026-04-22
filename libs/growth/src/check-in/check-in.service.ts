@@ -1,4 +1,5 @@
 import type { PageDto } from '@libs/platform/dto/page.dto'
+import type { CheckInRuleIdQuery } from './check-in.type'
 import type {
   PublishCheckInStreakRuleDto,
   QueryCheckInStreakRuleHistoryPageDto,
@@ -54,7 +55,7 @@ export class CheckInService {
   }
 
   // 查询单条连续签到规则详情。
-  async getStreakRuleDetail(query: { id: number }) {
+  async getStreakRuleDetail(query: CheckInRuleIdQuery) {
     return this.checkInDefinitionService.getStreakRuleDetail(query)
   }
 
@@ -64,7 +65,7 @@ export class CheckInService {
   }
 
   // 查询某个连续签到规则的历史详情。
-  async getStreakRuleHistoryDetail(query: { id: number }) {
+  async getStreakRuleHistoryDetail(query: CheckInRuleIdQuery) {
     return this.checkInDefinitionService.getStreakRuleHistoryDetail(query)
   }
 
@@ -77,7 +78,7 @@ export class CheckInService {
   }
 
   // 终止当前仍可终止的连续签到规则版本。
-  async terminateStreakRule(query: { id: number }, adminUserId: number) {
+  async terminateStreakRule(query: CheckInRuleIdQuery, adminUserId: number) {
     return this.checkInDefinitionService.terminateStreakRule(query, adminUserId)
   }
 

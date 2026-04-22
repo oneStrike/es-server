@@ -2,30 +2,41 @@ import type { Db, DrizzleService } from '@db/core'
 import type {
   CheckInConfigSelect,
   CheckInMakeupAccountSelect,
-  CheckInRecordSelect,
-  CheckInStreakGrantSelect,
-  CheckInStreakRuleRewardItemSelect,
-  CheckInStreakRuleSelect,
   GrowthRewardSettlementSelect,
 } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { GrowthRewardItems } from '@libs/growth/reward-rule/reward-item.type'
 import type { SQL } from 'drizzle-orm'
 import type {
+  CheckInActiveStreakDayRule,
+  CheckInAllowEmptyOption,
+  CheckInDateLike,
+  CheckInDateRewardRuleInput,
   CheckInDateRewardRuleView,
+  CheckInEligibleGrantCandidate,
+  CheckInGrantTriggerView,
+  CheckInMakeupAccountBalance,
   CheckInMakeupAccountView,
   CheckInMakeupConsumePlanItem,
   CheckInMakeupWindowView,
+  CheckInNullableDateLike,
+  CheckInOptionalRewardItems,
+  CheckInOptionalRewardSettlementSummary,
+  CheckInPatternRewardRuleInput,
   CheckInPatternRewardRuleView,
+  CheckInRecordDateOnlyView,
   CheckInResolvedReward,
   CheckInRewardDefinition,
+  CheckInRewardDefinitionSource,
   CheckInStreakAggregation,
+  CheckInStreakAggregationOptions,
+  CheckInStreakRewardRuleInput,
   CheckInStreakRewardRuleView,
   CheckInStreakRuleDefinition,
+  CheckInStreakRuleDefinitionSource,
+  CheckInStreakRuleStatusWindow,
+  CheckInStreakRuleViewSource,
 } from './check-in.type'
-import type { CheckInDateRewardRuleFieldsDto } from './dto/check-in-date-reward-rule.dto'
-import type { BaseCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
-import type { BaseCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -47,18 +58,6 @@ import {
   CheckInRewardSourceTypeEnum,
   CheckInStreakConfigStatusEnum,
 } from './check-in.constant'
-
-type CheckInRewardSettlementSummaryRecord = Pick<
-  GrowthRewardSettlementSelect,
-  | 'id'
-  | 'settlementStatus'
-  | 'settlementResultType'
-  | 'ledgerRecordIds'
-  | 'retryCount'
-  | 'lastRetryAt'
-  | 'settledAt'
-  | 'lastError'
->
 
 /**
  * 统一签到域 support 基类。
@@ -130,7 +129,7 @@ export abstract class CheckInServiceSupport {
   }
 
   // 把 Date 或日期字符串规范化成 YYYY-MM-DD。
-  protected formatDateOnly(value: Date | string) {
+  protected formatDateOnly(value: CheckInDateLike) {
     return formatDateOnlyInAppTimeZone(value)
   }
 
@@ -144,7 +143,7 @@ export abstract class CheckInServiceSupport {
   }
 
   // 把 Date / string / null 统一折叠成日期字符串或空串。
-  protected toDateOnlyValue(value: string | Date | null | undefined) {
+  protected toDateOnlyValue(value: CheckInNullableDateLike) {
     if (!value) {
       return ''
     }
@@ -171,8 +170,8 @@ export abstract class CheckInServiceSupport {
 
   // 解析并校验奖励项列表，必要时做去重和空值控制。
   protected parseRewardItems(
-    value?: GrowthRewardItems | null,
-    options: { allowEmpty: boolean } = { allowEmpty: true },
+    value: CheckInOptionalRewardItems,
+    options: CheckInAllowEmptyOption = { allowEmpty: true },
   ) {
     if (value === null || value === undefined) {
       if (options.allowEmpty) {
@@ -210,7 +209,7 @@ export abstract class CheckInServiceSupport {
   // 从持久化 JSON 中恢复奖励项列表，并复用统一校验逻辑。
   protected parseStoredRewardItems<T>(
     value: T,
-    options: { allowEmpty: boolean } = { allowEmpty: true },
+    options: CheckInAllowEmptyOption = { allowEmpty: true },
   ) {
     const rewardItems = this.asArray(value)
     return this.parseRewardItems(
@@ -267,12 +266,7 @@ export abstract class CheckInServiceSupport {
   }
 
   // 规范化具体日期奖励规则，并校验日期和奖励项合法性。
-  protected normalizeDateRewardRules(
-    rules:
-      | CheckInDateRewardRuleFieldsDto[]
-      | CheckInDateRewardRuleView[]
-      | undefined,
-  ) {
+  protected normalizeDateRewardRules(rules?: CheckInDateRewardRuleInput[]) {
     const normalizedRules = (rules ?? []).map(
       (rule) =>
         ({
@@ -297,13 +291,10 @@ export abstract class CheckInServiceSupport {
 
   // 规范化周期奖励规则，并按周/月模式校验字段组合。
   protected normalizePatternRewardRules(
-    rules:
-      | BaseCheckInPatternRewardRuleDto[]
-      | CheckInPatternRewardRuleView[]
-      | undefined,
+    rules: CheckInPatternRewardRuleInput[] = [],
     periodType: CheckInMakeupPeriodTypeEnum,
   ) {
-    const normalizedRules = (rules ?? []).map((rule) => {
+    const normalizedRules = rules.map((rule) => {
       const patternType = rule.patternType
       const weekday = rule.weekday == null ? null : Number(rule.weekday)
       const monthDay = rule.monthDay == null ? null : Number(rule.monthDay)
@@ -408,12 +399,7 @@ export abstract class CheckInServiceSupport {
   }
 
   // 规范化连续奖励规则，并补齐默认编码、状态和重复发放标记。
-  protected normalizeStreakRewardRules(
-    rules:
-      | BaseCheckInStreakRewardRuleDto[]
-      | CheckInStreakRewardRuleView[]
-      | undefined,
-  ) {
+  protected normalizeStreakRewardRules(rules?: CheckInStreakRewardRuleInput[]) {
     const normalizedRules = (rules ?? []).map((rule) => {
       if (!Number.isInteger(rule.streakDays) || rule.streakDays <= 0) {
         throw new BadRequestException('连续奖励阈值必须为正整数')
@@ -460,15 +446,7 @@ export abstract class CheckInServiceSupport {
   }
 
   // 从配置表记录中解析出运行时使用的奖励定义。
-  protected parseRewardDefinition(
-    config: Pick<
-      CheckInConfigSelect,
-      | 'makeupPeriodType'
-      | 'baseRewardItems'
-      | 'dateRewardRules'
-      | 'patternRewardRules'
-    >,
-  ) {
+  protected parseRewardDefinition(config: CheckInRewardDefinitionSource) {
     return {
       baseRewardItems: this.parseStoredRewardItems(config.baseRewardItems, {
         allowEmpty: true,
@@ -488,21 +466,7 @@ export abstract class CheckInServiceSupport {
   }
 
   // 把规则表记录和奖励项快照收敛成内部规则版本定义。
-  protected parseStreakRuleDefinition(
-    rule: Pick<
-      CheckInStreakRuleSelect,
-      | 'ruleCode'
-      | 'streakDays'
-      | 'version'
-      | 'status'
-      | 'publishStrategy'
-      | 'effectiveFrom'
-      | 'effectiveTo'
-      | 'repeatable'
-    > & {
-      rewardItems: GrowthRewardItems
-    },
-  ) {
+  protected parseStreakRuleDefinition(rule: CheckInStreakRuleDefinitionSource) {
     return {
       ruleCode: rule.ruleCode,
       streakDays: rule.streakDays,
@@ -520,10 +484,7 @@ export abstract class CheckInServiceSupport {
 
   // 按当前时间解析连续签到规则的真实生命周期状态。
   protected resolveStreakRuleStatus(
-    rule: Pick<
-      CheckInStreakRuleSelect,
-      'status' | 'effectiveFrom' | 'effectiveTo'
-    >,
+    rule: CheckInStreakRuleStatusWindow,
     at = new Date(),
   ) {
     if (rule.status === CheckInStreakConfigStatusEnum.DRAFT) {
@@ -626,7 +587,7 @@ export abstract class CheckInServiceSupport {
 
   // 断言当前激活规则中不存在重复的连续签到天数。
   protected assertNoDuplicatedActiveStreakDays(
-    rules: Array<Pick<CheckInStreakRuleSelect, 'id' | 'streakDays'>>,
+    rules: CheckInActiveStreakDayRule[],
   ) {
     const duplicateStreakDays = this.findDuplicateValue(
       rules.map((rule) => String(rule.streakDays)),
@@ -640,7 +601,10 @@ export abstract class CheckInServiceSupport {
   }
 
   // 查询某个时点生效的全部连续签到规则。
-  protected async listActiveStreakRulesAt(at: Date | string, db: Db = this.db) {
+  protected async listActiveStreakRulesAt(
+    at: CheckInDateLike,
+    db: Db = this.db,
+  ) {
     const lookupAt =
       typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
     const rules = await db
@@ -673,25 +637,8 @@ export abstract class CheckInServiceSupport {
 
   // 把规则表行转换成运行时使用的连续奖励视图。
   protected toStreakRewardRuleViews(
-    rules: Array<
-      Pick<
-        CheckInStreakRuleSelect,
-        | 'ruleCode'
-        | 'streakDays'
-        | 'repeatable'
-        | 'status'
-        | 'effectiveFrom'
-        | 'effectiveTo'
-      > & {
-        rewardItems: Array<
-          Pick<
-            CheckInStreakRuleRewardItemSelect,
-            'assetType' | 'assetKey' | 'amount'
-          >
-        >
-      }
-    >,
-    at: Date | string = new Date(),
+    rules: CheckInStreakRuleViewSource[],
+    at: CheckInDateLike = new Date(),
   ) {
     const lookupAt =
       typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
@@ -1016,10 +963,7 @@ export abstract class CheckInServiceSupport {
 
   // 根据当前账户余额决定本次补签应消费哪类额度。
   protected buildMakeupConsumePlan(
-    account: Pick<
-      CheckInMakeupAccountSelect,
-      'periodicGranted' | 'periodicUsed' | 'eventAvailable'
-    >,
+    account: CheckInMakeupAccountBalance,
   ): CheckInMakeupConsumePlanItem[] {
     const periodicRemaining = Math.max(
       account.periodicGranted - account.periodicUsed,
@@ -1164,8 +1108,8 @@ export abstract class CheckInServiceSupport {
 
   // 按签到记录序列重算连续签到聚合结果。
   protected recomputeStreakAggregation(
-    records: Pick<CheckInRecordSelect, 'signDate'>[],
-    options?: { streakStartedAt?: string | null },
+    records: CheckInRecordDateOnlyView[],
+    options?: CheckInStreakAggregationOptions,
   ): CheckInStreakAggregation {
     const startDate = options?.streakStartedAt
       ? this.toDateOnlyValue(options.streakStartedAt)
@@ -1323,7 +1267,7 @@ export abstract class CheckInServiceSupport {
   // 根据最后签到日期判断当前连续天数是否仍然有效。
   protected resolveEffectiveCurrentStreak(
     currentStreak: number,
-    lastSignedDate: string | Date | null | undefined,
+    lastSignedDate: CheckInNullableDateLike,
     today: string,
   ) {
     if (currentStreak <= 0) {
@@ -1334,7 +1278,7 @@ export abstract class CheckInServiceSupport {
 
   // 根据连续有效性返回最近一次有效签到日期。
   protected resolveEffectiveLastSignedDate(
-    lastSignedDate: string | Date | null | undefined,
+    lastSignedDate: CheckInNullableDateLike,
     today: string,
   ) {
     if (!this.isEffectiveStreakDate(lastSignedDate, today)) {
@@ -1345,7 +1289,7 @@ export abstract class CheckInServiceSupport {
 
   // 判断最近签到日期是否仍属于当前连续区间。
   protected isEffectiveStreakDate(
-    lastSignedDate: string | Date | null | undefined,
+    lastSignedDate: CheckInNullableDateLike,
     today: string,
   ) {
     const normalizedLastSignedDate = this.toDateOnlyValue(lastSignedDate)
@@ -1384,10 +1328,7 @@ export abstract class CheckInServiceSupport {
   protected resolveEligibleGrantRules(
     rules: CheckInStreakRewardRuleView[],
     streakByDate: Record<string, number>,
-    existingGrants: Pick<
-      CheckInStreakGrantSelect,
-      'ruleCode' | 'triggerSignDate'
-    >[],
+    existingGrants: CheckInGrantTriggerView[],
     streakStartedAt?: string,
   ) {
     const scopedExistingGrants = streakStartedAt
@@ -1408,10 +1349,7 @@ export abstract class CheckInServiceSupport {
     const streakEntries = Object.entries(streakByDate).sort(([left], [right]) =>
       left.localeCompare(right),
     )
-    const candidates: Array<{
-      rule: CheckInStreakRewardRuleView
-      triggerSignDate: string
-    }> = []
+    const candidates: CheckInEligibleGrantCandidate[] = []
 
     for (const rule of rules) {
       if (rule.status !== CheckInStreakConfigStatusEnum.ACTIVE) {
@@ -1451,7 +1389,7 @@ export abstract class CheckInServiceSupport {
 
   // 把补偿事实映射成对外使用的补偿摘要。
   protected toRewardSettlementSummary(
-    settlement: CheckInRewardSettlementSummaryRecord | null | undefined,
+    settlement: CheckInOptionalRewardSettlementSummary,
   ) {
     if (!settlement) {
       return null

@@ -25,14 +25,16 @@
 ## 复用与推导
 
 - 类型复用优先顺序：已有 DTO -> 从 DTO 组合出的 TypeScript 类型 -> Drizzle schema / infer 类型 -> 既有 owner type -> 新增 `type` / `interface`。
-- 优先复用 DTO、Drizzle 类型和既有 owner type，常用方式包括 `Pick`、`Omit`、`Partial`、交叉类型、联合类型、索引访问类型和 `typeof` 推导。
+- 优先复用 DTO、Drizzle 类型和既有 owner type，常用方式包括联合类型、索引访问类型、`Pick`、`Omit`、`Partial`、交叉类型和 `typeof` 推导。
+- 若语义本质是“几种输入 / 状态 / 来源的并列集合”，优先使用联合类型；不要先为每种分支各写一层 `Pick` 再做交叉或包装。
+- 若只需要 1~3 个字段，先判断能否通过索引访问类型、联合类型或恰当的 `Pick` / `Omit` 表达；不要为了规避 `Pick` / `Omit` 再手写一份重复实体字段的对象结构。
 - `type` 可以依赖 DTO 或 Drizzle；DTO 不得反向依赖 `*.type.ts`。
 - 若所需结构已存在于 DTO 中，优先从 DTO 组合；不要再声明一份字段完全相同的 `type` / `interface`。
 - 若所需结构本身需要 Swagger 文档或字段校验，就应该继续定义为 DTO；不要把本应是 DTO 的结构下沉成 `type`。
 - 若所需结构只是内部领域类型，不承担文档和校验职责，也无法从 DTO 组合得到，才允许定义新的 `type` / `interface`。
 - 若所需结构已存在于 schema select / insert 类型中，优先从 schema 推导；不要手写数据库字段镜像类型。
 - 基于 Drizzle `typeof table.$inferSelect / $inferInsert` 导出的公共类型，统一直接命名为 `XxxSelect`、`XxxInsert`；不要先定义 `Xxx = typeof table.$inferSelect`，再把 `XxxSelect = Xxx` 作为二次别名。
-- 字段裁剪默认规则：保留字段更少时用 `Pick`；排除字段更少时用 `Omit`。
+- 字段裁剪默认规则：保留字段更少时用 `Pick`；排除字段更少时用 `Omit`；如果两边都不占明显优势，优先继续从 DTO / Drizzle 字段索引或交叉 / 联合组合推导，而不是重复声明实体字段。
 - 禁止无意义别名：若新类型只是原类型改名，且没有新增语义、边界或复用价值，直接使用原类型。
 
 ## `type` 与 `interface`
@@ -64,6 +66,8 @@
 
 - 允许：`type CommentVisibleState = Pick<UserCommentSelect, 'auditStatus' | 'isHidden' | 'deletedAt'>`
 - 允许：`type TopicAuthorView = Pick<BaseAppUserDto, 'id' | 'nickname' | 'avatarUrl'>`，前提是它只是内部类型视图，DTO 侧没有必要新增一个只为改名存在的类。
+- 允许：`type RewardRuleInput = DateRewardRuleDto | PatternRewardRuleDto`，前提是它表达的是多种输入来源的并列集合。
+- 允许：`type TopicAuthorView = Omit<BaseAuthorDto, 'permissions'> & { permissions: AuthorPermissionView }`，前提是排除字段更少、且替换后的字段语义更清楚。
 - 允许：`interface ForumTopicClientContext extends GeoSnapshot { userAgent?: string }`
 - 允许：`type SessionClientContext = ClientRequestContext`，前提是它表达了稳定业务语义。
 - 允许：在事件、模板、开放 payload 边界使用 `Record<string, unknown>`，但后续必须收窄。
@@ -71,6 +75,8 @@
 - 禁止：为了让内部结构“看起来统一”，新建一个不带校验和文档价值的 `UserSummaryDto` 替代 `type TopicAuthorView = Pick<BaseAppUserDto, ...>`。
 - 禁止：内部只想拿一个字段子集时，新建 `UserSummaryDto` 但既不用于 Swagger，也不参与校验。
 - 禁止：为了复用 `BaseAppUserDto` 的字段，重新手写一个同构 `ForumTopicUserShape`。
+- 禁止：为了规避 `Pick` / `Omit`，重新手写一份和 DTO / Drizzle 字段同构的对象结构。
+- 禁止：本质是多种来源并列的输入，却拆成多层 `Pick` + 包装类型，而不是直接写联合类型。
 - 禁止：把 HTTP 返回体结构改写成 `*.type.ts` 类型，再让 Controller 手动拼响应。
 - 禁止：在 `forum-topic.service.ts`、`task.service.ts` 这类业务文件里直接声明顶层 `interface QueryRow`、`type ResultView = ...`；这类类型应移动到同域 `*.type.ts`。
 - 禁止：在 `updateSettlementState(payload: Pick<GrowthRewardSettlementSelect, ...>)`、`ensureManualSettlement(params: { ... })`、`runWithOptionalTransaction(callback: (tx) => ...)` 这类签名里直接写复杂类型。

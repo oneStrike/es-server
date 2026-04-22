@@ -2,6 +2,17 @@ import type { Db } from '@db/core'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
 import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
 import type {
+  CheckInGrantRewardSettlementSource,
+  CheckInMakeupWindowView,
+  CheckInPerformSignInput,
+  CheckInRecordRewardSettlementSource,
+  CheckInRewardApplyInput,
+  CheckInRewardSettlementContext,
+  CheckInSignAction,
+  CheckInStreakAggregation,
+  CheckInStreakProgressSnapshot,
+} from './check-in.type'
+import type {
   MakeupCheckInDto,
   RepairCheckInRewardDto,
 } from './dto/check-in-execution.dto'
@@ -33,10 +44,6 @@ import {
 import { CheckInServiceSupport } from './check-in.service.support'
 
 const CHECK_IN_WRITE_RETRY_LIMIT = 3
-interface CheckInSignAction {
-  recordId: number
-  triggeredGrantIds: number[]
-}
 
 /**
  * 签到执行服务。
@@ -106,13 +113,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   }
 
   // 统一执行签到/补签主流程，并在事务内完成事实写入和奖励补偿。
-  private async performSign(input: {
-    userId: number
-    signDate: string
-    recordType: CheckInRecordTypeEnum
-    operatorType: CheckInOperatorTypeEnum
-    context?: Record<string, unknown>
-  }) {
+  private async performSign(input: CheckInPerformSignInput) {
     const now = new Date()
     const today = this.formatDateOnly(now)
     if (
@@ -382,7 +383,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   private assertMakeupAllowed(
     signDate: string,
     today: string,
-    window: ReturnType<CheckInExecutionService['buildMakeupWindow']>,
+    window: CheckInMakeupWindowView,
   ) {
     if (signDate >= today) {
       throw new BusinessException(
@@ -456,10 +457,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   // 为基础签到奖励创建或执行补偿结算。
   private async settleRecordReward(
     recordId: number,
-    context: {
-      actorUserId?: number
-      isRetry?: boolean
-    },
+    context: CheckInRewardSettlementContext,
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -556,10 +554,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   // 为连续签到奖励创建或执行补偿结算。
   private async settleGrantReward(
     grantId: number,
-    context: {
-      actorUserId?: number
-      isRetry?: boolean
-    },
+    context: CheckInRewardSettlementContext,
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -661,16 +656,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   }
 
   // 按奖励项逐条落到账本，并返回每条落账结果。
-  private async applyRewardItems(
-    tx: Db,
-    input: {
-      userId: number
-      rewardItems: GrowthRewardItems
-      baseBizKey: string
-      source: GrowthLedgerSourceEnum
-      actorUserId?: number
-    },
-  ) {
+  private async applyRewardItems(tx: Db, input: CheckInRewardApplyInput) {
     const results: GrowthLedgerApplyResult[] = []
 
     for (const rewardItem of input.rewardItems) {
@@ -751,12 +737,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   // 根据最新签到记录重算并更新连续签到进度。
   private async updateStreakProgress(
-    progress: Awaited<
-      ReturnType<CheckInExecutionService['getOrCreateStreakProgress']>
-    >,
-    aggregation: ReturnType<
-      CheckInExecutionService['recomputeStreakAggregation']
-    >,
+    progress: CheckInStreakProgressSnapshot,
+    aggregation: CheckInStreakAggregation,
     tx: Db,
   ) {
     const [updated] = await tx
@@ -841,13 +823,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   // 确保基础奖励存在结算事实，必要时补建待处理记录。
   private async ensureRecordRewardSettlement(
-    record: {
-      id: number
-      userId: number
-      signDate: string | Date
-      resolvedRewardItems: unknown
-      rewardSettlementId?: number | null
-    },
+    record: CheckInRecordRewardSettlementSource,
     tx?: Db,
   ) {
     const existing = record.rewardSettlementId
@@ -881,15 +857,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   // 确保连续奖励存在结算事实，必要时补建待处理记录。
   private async ensureGrantRewardSettlement(
-    grant: {
-      id: number
-      userId: number
-      ruleId: number
-      ruleCode: string
-      triggerSignDate: string | Date
-      rewardItems: unknown
-      rewardSettlementId?: number | null
-    },
+    grant: CheckInGrantRewardSettlementSource,
     tx?: Db,
   ) {
     const existing = grant.rewardSettlementId

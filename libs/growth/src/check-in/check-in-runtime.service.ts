@@ -1,9 +1,11 @@
+import type { CheckInConfigSelect, CheckInRecordSelect } from '@db/schema'
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInCalendarDayView,
   CheckInGrantItemView,
   CheckInReconciliationPageItemView,
+  CheckInRecordGrantLookup,
 } from './check-in.type'
 import type {
   QueryCheckInLeaderboardDto,
@@ -376,9 +378,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   // 构建单条签到记录的对外展示视图。
-  private async buildRecordItemView(
-    record: typeof this.checkInRecordTable.$inferSelect,
-  ) {
+  private async buildRecordItemView(record: CheckInRecordSelect) {
     const settlementMap = await this.buildSettlementMapById(
       typeof record.rewardSettlementId === 'number'
         ? [record.rewardSettlementId]
@@ -462,9 +462,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
 
   // 批量构建签到记录到连续奖励列表的映射。
   private async buildGrantMapForRecords(
-    records: Array<
-      Pick<typeof this.checkInRecordTable.$inferSelect, 'userId' | 'signDate'>
-    >,
+    records: CheckInRecordGrantLookup[],
   ): Promise<Map<string, CheckInGrantItemView[]>> {
     if (records.length === 0) {
       return new Map<string, CheckInGrantItemView[]>()
@@ -586,9 +584,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   // 把配置表记录映射成对外的配置详情 DTO 结构。
-  private toConfigDetailView(
-    config: typeof this.checkInConfigTable.$inferSelect,
-  ) {
+  private toConfigDetailView(config: CheckInConfigSelect) {
     const rewardDefinition = this.parseRewardDefinition(config)
     return {
       id: config.id,

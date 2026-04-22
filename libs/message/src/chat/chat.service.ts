@@ -1,6 +1,6 @@
 import type { PostgresErrorSourceObject } from '@db/core'
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
-import type { PageDto } from '@libs/platform/dto/page.dto'
+import type { PageDto } from '@libs/platform/dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing'
 import { DrizzleService } from '@db/core'
 import {
