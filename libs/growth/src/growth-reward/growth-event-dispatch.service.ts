@@ -1,7 +1,7 @@
 import type {
   DispatchDefinedGrowthEventPayload,
   DispatchDefinedGrowthEventResult,
-} from './growth-reward.types'
+} from './types/growth-event-dispatch.type'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
 import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
@@ -24,10 +24,7 @@ export class GrowthEventDispatchService {
     private readonly taskService: TaskService,
   ) {}
 
-  /**
-   * 派发已进入定义层的成长事件。
-   * producer 统一提供稳定 envelope 与 bizKey，派发层负责判断 consumer 可消费性，并发放基础奖励。
-   */
+  // 派发已进入定义层的成长事件，并按 consumer 能力分别触发任务推进与基础奖励。
   async dispatchDefinedEvent(
     input: DispatchDefinedGrowthEventPayload,
   ): Promise<DispatchDefinedGrowthEventResult> {
@@ -48,18 +45,18 @@ export class GrowthEventDispatchService {
     const growthDeclared = definition.consumers.includes(
       EventDefinitionConsumerEnum.GROWTH,
     )
-    const taskEligible
-      = definition.consumers.includes(EventDefinitionConsumerEnum.TASK)
-        && canConsumeEventEnvelopeByConsumer(
-          input.eventEnvelope,
-          EventDefinitionConsumerEnum.TASK,
-        )
-    const notificationEligible
-      = definition.consumers.includes(EventDefinitionConsumerEnum.NOTIFICATION)
-        && canConsumeEventEnvelopeByConsumer(
-          input.eventEnvelope,
-          EventDefinitionConsumerEnum.NOTIFICATION,
-        )
+    const taskEligible =
+      definition.consumers.includes(EventDefinitionConsumerEnum.TASK) &&
+      canConsumeEventEnvelopeByConsumer(
+        input.eventEnvelope,
+        EventDefinitionConsumerEnum.TASK,
+      )
+    const notificationEligible =
+      definition.consumers.includes(EventDefinitionConsumerEnum.NOTIFICATION) &&
+      canConsumeEventEnvelopeByConsumer(
+        input.eventEnvelope,
+        EventDefinitionConsumerEnum.NOTIFICATION,
+      )
     let taskHandled = false
     let taskResult: DispatchDefinedGrowthEventResult['taskResult']
     let taskErrorMessage: string | undefined
@@ -120,6 +117,7 @@ export class GrowthEventDispatchService {
     }
   }
 
+  // 规整事件奖励上下文，补齐账本落账和补偿排障需要的稳定字段。
   private buildEventRewardContext(input: DispatchDefinedGrowthEventPayload) {
     return {
       ...(input.eventEnvelope.context ?? {}),

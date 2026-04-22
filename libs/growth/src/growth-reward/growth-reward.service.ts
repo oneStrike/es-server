@@ -1,14 +1,27 @@
 import type { Db } from '@db/core'
-import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { JsonObject } from '@libs/platform/utils/jsonParse'
 import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.internal'
-import type { GrowthRewardItem, GrowthRewardItems } from '../reward-rule/reward-item.type'
+import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
+  GrowthRewardItem,
+  GrowthRewardItems,
+} from '../reward-rule/reward-item.type'
+import type {
+  BuildRuleRewardSettlementResultParams,
+  BuildTaskRewardSettlementResultParams,
+  GrowthRewardRuleAssetIdentity,
+  GrowthRewardRuleProjection,
+  RewardByRuleParams,
+  RewardTaskCompleteParams,
+  RunWithOptionalTransactionCallback,
+} from './types/growth-reward-service.type'
+import type {
+  GrowthRewardApplyResultList,
   GrowthRuleRewardAssetResult,
   GrowthRuleRewardSettlementResult,
   TaskRewardAssetResult,
   TaskRewardSettlementResult,
-} from './growth-reward.types'
+} from './types/growth-reward-result.type'
 import { DrizzleService } from '@db/core'
 import { Injectable, Logger } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
@@ -20,31 +33,12 @@ import {
   GrowthLedgerSourceEnum,
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
-import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import { TaskAssignmentRewardResultTypeEnum } from '../task/task.constant'
-import { GrowthRewardDedupeResultEnum } from './growth-reward.types'
-
-interface RewardByRuleParams {
-  userId: number
-  ruleType: GrowthRuleTypeEnum
-  bizKey: string
-  source: string
-  remark?: string
-  targetType?: number
-  targetId?: number
-  context?: Record<string, unknown>
-  occurredAt?: Date
-  tx?: Db
-}
-
-interface RewardTaskCompleteParams {
-  userId: number
-  taskId: number
-  assignmentId: number
-  rewardItems?: GrowthRewardItems | null
-  eventEnvelope?: EventEnvelope
-}
+import {
+  GrowthRewardDedupeResultEnum,
+  TaskRewardAssetSkipReasonEnum,
+} from './types/growth-reward-result.type'
 
 /**
  * 用户成长奖励服务
@@ -60,14 +54,12 @@ export class UserGrowthRewardService {
     private readonly drizzle: DrizzleService,
   ) {}
 
+  // 统一收口成长奖励规则表访问。
   private get growthRewardRule() {
     return this.drizzle.schema.growthRewardRule
   }
 
-  /**
-   * 按规则类型发放奖励。
-   * 统一遍历规则表中该事件已配置的所有资产，不再只固定处理积分/经验双分支。
-   */
+  // 按事件规则逐项发放奖励，并把多资产落账结果收口成统一结算结果。
   async tryRewardByRule(
     params: RewardByRuleParams,
   ): Promise<GrowthRuleRewardSettlementResult> {
@@ -111,7 +103,7 @@ export class UserGrowthRewardService {
         for (const rewardRule of enabledRules) {
           const result = await this.growthLedgerService.applyByRule(tx, {
             userId: params.userId,
-            assetType: rewardRule.assetType as unknown as GrowthAssetTypeEnum,
+            assetType: this.toLedgerRuleAssetType(rewardRule.assetType),
             assetKey: rewardRule.assetKey,
             ruleType: params.ruleType,
             bizKey: this.buildRuleRewardBizKey(params.bizKey, rewardRule),
@@ -123,7 +115,7 @@ export class UserGrowthRewardService {
             occurredAt: params.occurredAt,
           })
           rewardResults.push({
-            assetType: rewardRule.assetType as GrowthRewardRuleAssetTypeEnum,
+            assetType: rewardRule.assetType,
             assetKey: rewardRule.assetKey,
             result,
           })
@@ -151,7 +143,8 @@ export class UserGrowthRewardService {
         ledgerRecordIds: rewardResults
           .map((item) => item.result.recordId)
           .filter((id): id is number => typeof id === 'number'),
-        failureReason: rewardResults.find((item) => item.result.reason)?.result.reason,
+        failureReason: rewardResults.find((item) => item.result.reason)?.result
+          .reason,
         rewardResults,
         errorMessage:
           error instanceof Error
@@ -161,16 +154,10 @@ export class UserGrowthRewardService {
     }
   }
 
-  /**
-   * 记录未成功落账的规则奖励结果。
-   * 规则缺失、禁用或命中限额时不会抛异常，需要在这里补齐可观测性。
-   */
+  // 为被规则拒绝的奖励落账补齐诊断日志，避免补偿链路只留下空泛失败信息。
   private logSkippedRuleReward(
     params: RewardByRuleParams,
-    rewardRule: {
-      assetType: GrowthRewardRuleAssetTypeEnum
-      assetKey: string
-    },
+    rewardRule: GrowthRewardRuleAssetIdentity,
     result?: GrowthLedgerApplyResult,
   ) {
     if (!result || result.success || result.duplicated) {
@@ -184,12 +171,10 @@ export class UserGrowthRewardService {
     )
   }
 
+  // 规则奖励只允许成功或幂等命中，其他结果一律抛错交给补偿链路接管。
   private ensureRuleRewardApplySucceeded(
     params: RewardByRuleParams,
-    rewardRule: {
-      assetType: GrowthRewardRuleAssetTypeEnum
-      assetKey: string
-    },
+    rewardRule: GrowthRewardRuleAssetIdentity,
     result?: GrowthLedgerApplyResult,
   ) {
     if (
@@ -200,22 +185,14 @@ export class UserGrowthRewardService {
       return
     }
 
-    this.logSkippedRuleReward(
-      params,
-      rewardRule,
-      result,
-    )
+    this.logSkippedRuleReward(params, rewardRule, result)
 
-    throw new Error(
-      this.buildRuleRewardRejectedMessage(rewardRule, result),
-    )
+    throw new Error(this.buildRuleRewardRejectedMessage(rewardRule, result))
   }
 
+  // 把规则拒绝原因规整成稳定可观测的错误消息。
   private buildRuleRewardRejectedMessage(
-    rewardRule: {
-      assetType: GrowthRewardRuleAssetTypeEnum
-      assetKey: string
-    },
+    rewardRule: GrowthRewardRuleAssetIdentity,
     result: GrowthLedgerApplyResult,
   ) {
     return `基础奖励发放失败（assetType=${rewardRule.assetType} assetKey=${rewardRule.assetKey || ''}）：${
@@ -223,10 +200,7 @@ export class UserGrowthRewardService {
     }`
   }
 
-  /**
-   * 发放任务完成奖励
-   * 根据统一 `rewardItems[]` 合同逐项发放任务奖励。
-   */
+  // 根据统一 rewardItems 合同逐项发放任务完成奖励，并维护任务奖励幂等语义。
   async tryRewardTaskComplete(
     params: RewardTaskCompleteParams,
   ): Promise<TaskRewardSettlementResult> {
@@ -271,10 +245,7 @@ export class UserGrowthRewardService {
             context,
           })
 
-          this.ensureTaskRewardApplySucceeded(
-            rewardItem,
-            applyResult,
-          )
+          this.ensureTaskRewardApplySucceeded(rewardItem, applyResult)
           rewardResults.push(
             this.toTaskRewardAssetResult(rewardItem, applyResult),
           )
@@ -311,14 +282,10 @@ export class UserGrowthRewardService {
     }
   }
 
-  private buildTaskRewardSettlementResult(params: {
-    bizKey: string
-    rewardItems: GrowthRewardItems
-    settledAt: Date
-    rewardResults: TaskRewardAssetResult[]
-    resultType: TaskAssignmentRewardResultTypeEnum
-    errorMessage?: string
-  }): TaskRewardSettlementResult {
+  // 把任务奖励逐项结果归并成稳定结算返回体。
+  private buildTaskRewardSettlementResult(
+    params: BuildTaskRewardSettlementResultParams,
+  ): TaskRewardSettlementResult {
     const ledgerRecordIds = params.rewardResults
       .map((reward) => reward.recordId)
       .filter((id): id is number => typeof id === 'number')
@@ -336,10 +303,10 @@ export class UserGrowthRewardService {
     }
   }
 
-  private buildRuleRewardSettlementResult(params: {
-    params: RewardByRuleParams
-    rewardResults: GrowthRuleRewardAssetResult[]
-  }): GrowthRuleRewardSettlementResult {
+  // 把规则奖励逐项落账结果归并成统一结算结果。
+  private buildRuleRewardSettlementResult(
+    params: BuildRuleRewardSettlementResultParams,
+  ): GrowthRuleRewardSettlementResult {
     const ledgerRecordIds = params.rewardResults
       .map((item) => item.result.recordId)
       .filter((id): id is number => typeof id === 'number')
@@ -359,9 +326,8 @@ export class UserGrowthRewardService {
     }
   }
 
-  private resolveRuleRewardDedupeResult(
-    results: Array<GrowthLedgerApplyResult | undefined>,
-  ) {
+  // 根据逐项落账结果归并通用成长奖励的幂等结论。
+  private resolveRuleRewardDedupeResult(results: GrowthRewardApplyResultList) {
     const attemptedResults = results.filter(
       (result): result is GrowthLedgerApplyResult => Boolean(result),
     )
@@ -378,6 +344,7 @@ export class UserGrowthRewardService {
     return GrowthRewardDedupeResultEnum.SKIPPED
   }
 
+  // 根据逐项任务奖励结果判断整体结算类型。
   private resolveTaskRewardResultType(results: TaskRewardAssetResult[]) {
     const attemptedResults = results.filter((item) => !item.skipped)
     if (attemptedResults.length === 0) {
@@ -389,6 +356,7 @@ export class UserGrowthRewardService {
     return TaskAssignmentRewardResultTypeEnum.APPLIED
   }
 
+  // 把任务奖励结果类型映射成通用补偿链路使用的幂等结果。
   private toTaskRewardDedupeResult(
     resultType: TaskAssignmentRewardResultTypeEnum,
   ) {
@@ -401,6 +369,7 @@ export class UserGrowthRewardService {
     return GrowthRewardDedupeResultEnum.APPLIED
   }
 
+  // 把账本逐项落账结果转换成任务奖励项级别的稳定视图。
   private toTaskRewardAssetResult(
     rewardItem: GrowthRewardItem,
     result?: GrowthLedgerApplyResult,
@@ -414,7 +383,7 @@ export class UserGrowthRewardService {
         success: true,
         duplicated: false,
         skipped: true,
-        reason: 'not_configured',
+        reason: TaskRewardAssetSkipReasonEnum.NOT_CONFIGURED,
       }
     }
 
@@ -442,6 +411,7 @@ export class UserGrowthRewardService {
     }
   }
 
+  // 任务奖励只允许成功或幂等命中，其他结果统一交给补偿链路处理。
   private ensureTaskRewardApplySucceeded(
     rewardItem: GrowthRewardItem,
     result?: GrowthLedgerApplyResult,
@@ -459,6 +429,7 @@ export class UserGrowthRewardService {
     )
   }
 
+  // 把任务奖励拒绝原因转换成稳定错误消息，便于补偿记录和日志统一检索。
   private buildTaskRewardRejectedMessage(
     assetType: GrowthRewardRuleAssetTypeEnum,
     result: GrowthLedgerApplyResult,
@@ -468,8 +439,9 @@ export class UserGrowthRewardService {
     }`
   }
 
+  // 规整任务奖励上下文，缺省时补齐 assignment 与 task 的最小事实字段。
   private buildTaskRewardContext(params: RewardTaskCompleteParams) {
-    const context = this.asRecord(params.eventEnvelope?.context) ?? {
+    const context = this.asJsonObject(params.eventEnvelope?.context) ?? {
       taskId: params.taskId,
       assignmentId: params.assignmentId,
     }
@@ -485,6 +457,7 @@ export class UserGrowthRewardService {
     }
   }
 
+  // 规整规则奖励上下文，并补写统一的 rewardSource 字段。
   private buildRuleRewardContext(params: RewardByRuleParams) {
     if (!params.context && !params.source) {
       return undefined
@@ -496,7 +469,11 @@ export class UserGrowthRewardService {
     }
   }
 
-  private async listRewardRulesByType(tx: Db, ruleType: GrowthRuleTypeEnum) {
+  // 读取指定事件规则下启用判断所需的最小奖励规则字段。
+  private async listRewardRulesByType(
+    tx: Db,
+    ruleType: GrowthRuleTypeEnum,
+  ): Promise<GrowthRewardRuleProjection[]> {
     return tx
       .select({
         id: this.growthRewardRule.id,
@@ -508,16 +485,18 @@ export class UserGrowthRewardService {
       .where(eq(this.growthRewardRule.type, ruleType))
   }
 
+  // 为同一业务事实下的不同资产生成稳定幂等键。
   private buildRuleRewardBizKey(
     bizKey: string,
-    rewardRule: { assetType: number, assetKey: string },
+    rewardRule: GrowthRewardRuleAssetIdentity,
   ) {
     return `${bizKey}:asset:${rewardRule.assetType}:${rewardRule.assetKey || ''}`
   }
 
+  // 已有事务时直接复用，否则由奖励服务自行开启事务。
   private async runWithOptionalTransaction<T>(
     tx: Db | undefined,
-    callback: (runner: Db) => Promise<T>,
+    callback: RunWithOptionalTransactionCallback<T>,
   ) {
     if (tx) {
       return callback(tx)
@@ -525,23 +504,20 @@ export class UserGrowthRewardService {
     return this.drizzle.withTransaction(callback)
   }
 
-  /** 解析任务奖励项列表。当前任务奖励链路只接受积分/经验资产。 */
+  // 解析任务奖励项快照，只接收任务链路允许的积分/经验资产。
   private parseRewardItems(input: unknown): GrowthRewardItems {
     if (!Array.isArray(input)) {
       return []
     }
 
     return input.flatMap((item) => {
-      const record = this.asRecord(item)
+      const record = this.asJsonObject(item)
       if (!record) {
         return []
       }
 
-      const assetType = Number(record.assetType)
-      if (
-        assetType !== GrowthRewardRuleAssetTypeEnum.POINTS
-        && assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
-      ) {
+      const assetType = this.readTaskRewardAssetType(record.assetType)
+      if (assetType === null) {
         return []
       }
 
@@ -550,15 +526,18 @@ export class UserGrowthRewardService {
         return []
       }
 
-      return [{
-        assetType,
-        assetKey:
-          typeof record.assetKey === 'string' ? record.assetKey.trim() : '',
-        amount,
-      }]
+      return [
+        {
+          assetType,
+          assetKey:
+            typeof record.assetKey === 'string' ? record.assetKey.trim() : '',
+          amount,
+        },
+      ]
     })
   }
 
+  // 为任务奖励单个资产生成稳定幂等键，避免积分与经验互相覆盖。
   private buildTaskRewardItemBizKey(
     baseBizKey: string,
     rewardItem: GrowthRewardItem,
@@ -570,44 +549,65 @@ export class UserGrowthRewardService {
     return `${baseBizKey}:${assetSegment}`
   }
 
-  private buildTaskRewardRemark(
-    assetType: GrowthRewardRuleAssetTypeEnum,
-  ) {
+  // 生成任务奖励账本备注，便于后台区分不同资产来源。
+  private buildTaskRewardRemark(assetType: GrowthRewardRuleAssetTypeEnum) {
     return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
       ? '任务完成奖励（积分）'
       : '任务完成奖励（经验）'
   }
 
-  private buildTaskRewardAssetLabel(
-    assetType: GrowthRewardRuleAssetTypeEnum,
-  ) {
+  // 生成任务奖励失败日志里的资产中文标签。
+  private buildTaskRewardAssetLabel(assetType: GrowthRewardRuleAssetTypeEnum) {
     return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
       ? '积分/POINTS'
       : '经验/EXPERIENCE'
   }
 
+  // 把奖励规则资产类型映射为账本资产类型，避免使用不安全的双重断言。
+  private toLedgerRuleAssetType(
+    assetType: GrowthRewardRuleAssetTypeEnum,
+  ): GrowthAssetTypeEnum {
+    switch (assetType) {
+      case GrowthRewardRuleAssetTypeEnum.POINTS:
+        return GrowthAssetTypeEnum.POINTS
+      case GrowthRewardRuleAssetTypeEnum.EXPERIENCE:
+        return GrowthAssetTypeEnum.EXPERIENCE
+      case GrowthRewardRuleAssetTypeEnum.ITEM:
+        return GrowthAssetTypeEnum.ITEM
+      case GrowthRewardRuleAssetTypeEnum.CURRENCY:
+        return GrowthAssetTypeEnum.CURRENCY
+      case GrowthRewardRuleAssetTypeEnum.LEVEL:
+        return GrowthAssetTypeEnum.LEVEL
+      default:
+        throw new Error(`基础奖励资产类型不受支持：${assetType}`)
+    }
+  }
+
+  // 把任务链路允许的奖励资产映射为账本资产类型，并拒绝越界资产。
   private toLedgerAssetType(
     assetType: GrowthRewardRuleAssetTypeEnum,
-  ) {
+  ): GrowthAssetTypeEnum {
     if (
-      assetType !== GrowthRewardRuleAssetTypeEnum.POINTS
-      && assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
+      assetType !== GrowthRewardRuleAssetTypeEnum.POINTS &&
+      assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
     ) {
-      throw new Error(`Unsupported task reward asset type: ${assetType}`)
+      throw new Error(`任务奖励资产类型不受支持：${assetType}`)
     }
     return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
       ? GrowthAssetTypeEnum.POINTS
       : GrowthAssetTypeEnum.EXPERIENCE
   }
 
-  private asRecord<T>(input: T): JsonObject | null {
+  // 仅在输入为普通 JSON 对象时返回对象视图，避免数组和原始值误入上下文拼装。
+  private asJsonObject(input: unknown): JsonObject | null {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       return null
     }
     return input as JsonObject
   }
 
-  private readPositiveInt<T>(input: T) {
+  // 从松散输入中读取正整数，非法值统一回落为 0。
+  private readPositiveInt(input: unknown) {
     if (typeof input === 'number' && Number.isFinite(input) && input > 0) {
       return Math.floor(input)
     }
@@ -620,5 +620,22 @@ export class UserGrowthRewardService {
     }
 
     return 0
+  }
+
+  // 从任务奖励快照里读取当前链路允许的资产类型。
+  private readTaskRewardAssetType(
+    input: unknown,
+  ):
+    | GrowthRewardRuleAssetTypeEnum.POINTS
+    | GrowthRewardRuleAssetTypeEnum.EXPERIENCE
+    | null {
+    const assetType = Number(input)
+    if (assetType === GrowthRewardRuleAssetTypeEnum.POINTS) {
+      return GrowthRewardRuleAssetTypeEnum.POINTS
+    }
+    if (assetType === GrowthRewardRuleAssetTypeEnum.EXPERIENCE) {
+      return GrowthRewardRuleAssetTypeEnum.EXPERIENCE
+    }
+    return null
   }
 }

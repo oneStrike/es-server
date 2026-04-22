@@ -1,29 +1,43 @@
 import type { Db } from '@db/core'
-import type { GrowthRewardSettlementSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import type { QueryGrowthRewardSettlementPageDto } from './dto/growth-reward-settlement.dto'
 import type {
-  DispatchDefinedGrowthEventPayload,
-  GrowthRuleRewardSettlementResult,
-  SerializedDispatchDefinedGrowthEventPayload,
-} from './growth-reward.types'
+  GrowthRewardSettlementCheckInRecordRewardPayloadDto,
+  GrowthRewardSettlementCheckInStreakRewardPayloadDto,
+  QueryGrowthRewardSettlementPageDto,
+} from './dto/growth-reward-settlement.dto'
+import type {
+  EnsureCheckInRecordRewardSettlementParams,
+  EnsureCheckInStreakRewardSettlementParams,
+  EnsureManualSettlementParams,
+  SyncManualSettlementResultInput,
+  SyncManualSettlementResultOptions,
+  UpdateSettlementStatePayload,
+  UpsertGrowthEventSettlementPayload,
+} from './types/growth-reward-settlement.type'
+import type { DispatchDefinedGrowthEventPayload } from './types/growth-event-dispatch.type'
+import type { GrowthRuleRewardSettlementResult } from './types/growth-reward-result.type'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
+  GrowthLedgerFailReasonEnum,
+  GrowthLedgerSourceEnum,
+} from '../growth-ledger/growth-ledger.constant'
+import {
   GrowthRewardSettlementResultTypeEnum,
   GrowthRewardSettlementStatusEnum,
   GrowthRewardSettlementTypeEnum,
 } from './growth-reward.constant'
+import { GrowthRewardDedupeResultEnum } from './types/growth-reward-result.type'
 
-const NON_RETRYABLE_FAILURE_REASONS = new Set([
-  'rule_not_found',
-  'rule_disabled',
-  'rule_zero',
-  'daily_limit',
-  'total_limit',
+const NON_RETRYABLE_FAILURE_REASONS = new Set<GrowthLedgerFailReasonEnum>([
+  GrowthLedgerFailReasonEnum.RULE_NOT_FOUND,
+  GrowthLedgerFailReasonEnum.RULE_DISABLED,
+  GrowthLedgerFailReasonEnum.RULE_ZERO,
+  GrowthLedgerFailReasonEnum.DAILY_LIMIT,
+  GrowthLedgerFailReasonEnum.TOTAL_LIMIT,
 ])
 
 /**
@@ -35,18 +49,17 @@ const NON_RETRYABLE_FAILURE_REASONS = new Set([
 export class GrowthRewardSettlementService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  // 统一收口默认数据库句柄。
   private get db() {
     return this.drizzle.db
   }
 
+  // 统一收口奖励补偿事实表访问。
   private get growthRewardSettlement() {
     return this.drizzle.schema.growthRewardSettlement
   }
 
-  /**
-   * 记录抛异常导致的奖励失败。
-   * 该类失败默认视为可重试，写入待补偿状态。
-   */
+  // 记录执行异常导致的奖励失败，并把该事实标记为待补偿重试。
   async recordExceptionSettlement(
     input: DispatchDefinedGrowthEventPayload,
     error: unknown,
@@ -60,10 +73,7 @@ export class GrowthRewardSettlementService {
     })
   }
 
-  /**
-   * 记录未成功落账的基础奖励结果。
-   * 能明确判定为规则拒绝的场景记为终态失败，其余保持待补偿。
-   */
+  // 记录规则拒绝或落账未成功的基础奖励结果，并收口最终补偿状态。
   async recordUnsuccessfulSettlement(
     input: DispatchDefinedGrowthEventPayload,
     growthResult: GrowthRuleRewardSettlementResult,
@@ -81,9 +91,7 @@ export class GrowthRewardSettlementService {
     })
   }
 
-  /**
-   * 若此前存在失败事实，则在自然重试或人工补偿成功后关闭记录。
-   */
+  // 若此前存在失败事实，则在自然重试或人工补偿成功后关闭该记录。
   async markSettlementSucceeded(
     userId: number,
     bizKey: string,
@@ -109,9 +117,7 @@ export class GrowthRewardSettlementService {
     })
   }
 
-  /**
-   * 分页查询通用成长奖励补偿记录。
-   */
+  // 按查询条件分页读取通用成长奖励补偿记录。
   async getSettlementPage(query: QueryGrowthRewardSettlementPageDto) {
     const conditions: SQL[] = []
 
@@ -148,18 +154,14 @@ export class GrowthRewardSettlementService {
     })
   }
 
-  /**
-   * 按主键读取单条 settlement。
-   */
+  // 按主键读取单条补偿记录。
   async getSettlementById(id: number) {
     return this.db.query.growthRewardSettlement.findFirst({
       where: { id },
     })
   }
 
-  /**
-   * 分页批量扫描 pending settlement 主键。
-   */
+  // 扫描待补偿记录主键，供批量重试链路逐条处理。
   async listPendingSettlementIds(limit: number) {
     return this.db
       .select({ id: this.growthRewardSettlement.id })
@@ -174,14 +176,9 @@ export class GrowthRewardSettlementService {
       .limit(limit)
   }
 
+  // 为签到基础奖励补齐唯一补偿事实，避免 record 与 settlement 状态脱节。
   async ensureCheckInRecordRewardSettlement(
-    params: {
-      recordId: number
-      userId: number
-      configId: number
-      signDate: string
-      rewardItems?: Record<string, unknown>[] | null
-    },
+    params: EnsureCheckInRecordRewardSettlementParams,
     tx?: Db,
   ) {
     const bizKey = [
@@ -192,21 +189,22 @@ export class GrowthRewardSettlementService {
       'user',
       params.userId,
     ].join(':')
-    const requestPayload = {
-      kind: 'check_in_record_reward',
-      recordId: params.recordId,
-      userId: params.userId,
-      configId: params.configId,
-      signDate: params.signDate,
-      rewardItems: params.rewardItems ?? null,
-    }
+    const requestPayload: GrowthRewardSettlementCheckInRecordRewardPayloadDto =
+      {
+        kind: 'check_in_record_reward',
+        recordId: params.recordId,
+        userId: params.userId,
+        configId: params.configId,
+        signDate: params.signDate,
+        rewardItems: params.rewardItems ?? null,
+      }
 
     return this.ensureManualSettlement(
       {
         userId: params.userId,
         bizKey,
         settlementType: GrowthRewardSettlementTypeEnum.CHECK_IN_RECORD_REWARD,
-        source: 'check_in_base_bonus',
+        source: GrowthLedgerSourceEnum.CHECK_IN_BASE_BONUS,
         sourceRecordId: params.recordId,
         eventOccurredAt: new Date(`${params.signDate}T00:00:00.000Z`),
         requestPayload,
@@ -215,15 +213,9 @@ export class GrowthRewardSettlementService {
     )
   }
 
+  // 为连续签到奖励补齐唯一补偿事实，避免 grant 与 settlement 状态脱节。
   async ensureCheckInStreakRewardSettlement(
-    params: {
-      grantId: number
-      userId: number
-      ruleId: number
-      ruleCode: string
-      triggerSignDate: string
-      rewardItems?: Record<string, unknown>[] | null
-    },
+    params: EnsureCheckInStreakRewardSettlementParams,
     tx?: Db,
   ) {
     const bizKey = [
@@ -236,22 +228,23 @@ export class GrowthRewardSettlementService {
       'user',
       params.userId,
     ].join(':')
-    const requestPayload = {
-      kind: 'check_in_streak_reward',
-      grantId: params.grantId,
-      userId: params.userId,
-      ruleId: params.ruleId,
-      ruleCode: params.ruleCode,
-      triggerSignDate: params.triggerSignDate,
-      rewardItems: params.rewardItems ?? null,
-    }
+    const requestPayload: GrowthRewardSettlementCheckInStreakRewardPayloadDto =
+      {
+        kind: 'check_in_streak_reward',
+        grantId: params.grantId,
+        userId: params.userId,
+        ruleId: params.ruleId,
+        ruleCode: params.ruleCode,
+        triggerSignDate: params.triggerSignDate,
+        rewardItems: params.rewardItems ?? null,
+      }
 
     return this.ensureManualSettlement(
       {
         userId: params.userId,
         bizKey,
         settlementType: GrowthRewardSettlementTypeEnum.CHECK_IN_STREAK_REWARD,
-        source: 'check_in_streak_bonus',
+        source: GrowthLedgerSourceEnum.CHECK_IN_STREAK_BONUS,
         sourceRecordId: params.grantId,
         eventOccurredAt: new Date(`${params.triggerSignDate}T00:00:00.000Z`),
         requestPayload,
@@ -260,15 +253,11 @@ export class GrowthRewardSettlementService {
     )
   }
 
+  // 同步任务/签到补偿链路的最终处理结果，并维护补偿重试元数据。
   async syncManualSettlementResult(
     settlementId: number,
-    result: {
-      success: boolean
-      resultType: number
-      ledgerRecordIds: number[]
-      errorMessage?: string | null
-    },
-    options?: { isRetry?: boolean, tx?: Db },
+    result: SyncManualSettlementResultInput,
+    options?: SyncManualSettlementResultOptions,
   ) {
     const runner = options?.tx ?? this.db
     const current = await runner.query.growthRewardSettlement.findFirst({
@@ -292,8 +281,7 @@ export class GrowthRewardSettlementService {
         settlementStatus: result.success
           ? GrowthRewardSettlementStatusEnum.SUCCESS
           : GrowthRewardSettlementStatusEnum.PENDING,
-        settlementResultType:
-          result.resultType as GrowthRewardSettlementResultTypeEnum,
+        settlementResultType: result.resultType,
         ledgerRecordIds: result.ledgerRecordIds,
         retryCount: options?.isRetry
           ? current.retryCount + 1
@@ -308,16 +296,9 @@ export class GrowthRewardSettlementService {
     )
   }
 
+  // 以 userId + bizKey 为唯一键补建人工补偿事实，不重复创建第二条记录。
   private async ensureManualSettlement(
-    params: {
-      userId: number
-      bizKey: string
-      settlementType: GrowthRewardSettlementTypeEnum
-      source: string
-      sourceRecordId: number
-      eventOccurredAt: Date
-      requestPayload: Record<string, unknown>
-    },
+    params: EnsureManualSettlementParams,
     tx?: Db,
   ) {
     const runner = tx ?? this.db
@@ -371,14 +352,10 @@ export class GrowthRewardSettlementService {
     return existing
   }
 
+  // upsert 通用成长事件补偿事实，保证后续重试链路能拿到稳定快照。
   private async upsertGrowthEventSettlement(
     input: DispatchDefinedGrowthEventPayload,
-    payload: {
-      settlementStatus: GrowthRewardSettlementStatusEnum
-      settlementResultType: GrowthRewardSettlementResultTypeEnum
-      ledgerRecordIds: number[]
-      lastError: string
-    },
+    payload: UpsertGrowthEventSettlementPayload,
   ) {
     const requestPayload = this.serializePayload(input)
     await this.drizzle.withErrorHandling(() =>
@@ -426,18 +403,10 @@ export class GrowthRewardSettlementService {
     )
   }
 
+  // 按主键更新补偿状态字段，供 bridge、retry 和人工补偿链路复用。
   async updateSettlementState(
     id: number,
-    payload: Pick<
-      GrowthRewardSettlementSelect,
-      | 'settlementResultType'
-      | 'ledgerRecordIds'
-      | 'settlementStatus'
-      | 'retryCount'
-      | 'lastRetryAt'
-      | 'settledAt'
-      | 'lastError'
-    >,
+    payload: UpdateSettlementStatePayload,
     tx?: Db,
   ) {
     const runner = tx ?? this.db
@@ -449,6 +418,7 @@ export class GrowthRewardSettlementService {
     )
   }
 
+  // 根据失败原因判断当前补偿记录应保持待重试还是直接落为终态失败。
   private resolveFailureStatus(growthResult: GrowthRuleRewardSettlementResult) {
     if (
       growthResult.failureReason &&
@@ -459,13 +429,13 @@ export class GrowthRewardSettlementService {
 
     const results = growthResult.rewardResults
       .map((item) => item.result)
-      .filter((item) => item !== undefined)
+      .filter((item): item is NonNullable<typeof item> => item !== undefined)
 
     if (
       results.length > 0 &&
       results.every(
         (item) =>
-          item.success !== true &&
+          !item.success &&
           item.duplicated !== true &&
           item.reason !== undefined &&
           NON_RETRYABLE_FAILURE_REASONS.has(item.reason),
@@ -477,18 +447,18 @@ export class GrowthRewardSettlementService {
     return GrowthRewardSettlementStatusEnum.PENDING
   }
 
+  // 把规则奖励幂等结果映射成补偿记录的结果类型。
   private resolveSuccessResultType(
     growthResult: GrowthRuleRewardSettlementResult,
   ) {
-    if (growthResult.dedupeResult === 'idempotent') {
+    if (growthResult.dedupeResult === GrowthRewardDedupeResultEnum.IDEMPOTENT) {
       return GrowthRewardSettlementResultTypeEnum.IDEMPOTENT
     }
     return GrowthRewardSettlementResultTypeEnum.APPLIED
   }
 
-  private serializePayload(
-    input: DispatchDefinedGrowthEventPayload,
-  ): SerializedDispatchDefinedGrowthEventPayload {
+  // 序列化通用成长事件补偿重放所需的最小稳定快照。
+  private serializePayload(input: DispatchDefinedGrowthEventPayload) {
     return {
       eventEnvelope: {
         code: input.eventEnvelope.code,

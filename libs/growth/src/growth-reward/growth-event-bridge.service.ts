@@ -1,7 +1,7 @@
 import type {
   DispatchDefinedGrowthEventPayload,
   DispatchDefinedGrowthEventResult,
-} from './growth-reward.types'
+} from './types/growth-event-dispatch.type'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { GrowthEventDispatchService } from './growth-event-dispatch.service'
 import { GrowthRewardSettlementService } from './growth-reward-settlement.service'
@@ -21,10 +21,7 @@ export class GrowthEventBridgeService {
     private readonly growthRewardSettlementService: GrowthRewardSettlementService,
   ) {}
 
-  /**
-   * 派发已进入定义层的成长事件。
-   * producer 统一提供稳定 envelope 与 bizKey；桥接层负责在派发后维护补偿事实。
-   */
+  // 派发已进入定义层的成长事件，并在派发后同步维护补偿事实状态。
   async dispatchDefinedEvent(
     input: DispatchDefinedGrowthEventPayload,
   ): Promise<DispatchDefinedGrowthEventResult> {

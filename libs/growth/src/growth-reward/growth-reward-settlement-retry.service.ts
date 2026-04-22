@@ -1,13 +1,21 @@
 import type {
-  DispatchDefinedGrowthEventPayload,
+  StoredCheckInRecordRewardPayloadIdentity,
+  StoredCheckInStreakRewardPayloadIdentity,
+  StoredTaskRewardPayloadIdentity,
+  UpdateSettlementStatePayload,
+} from './types/growth-reward-settlement.type'
+import type { DispatchDefinedGrowthEventPayload } from './types/growth-event-dispatch.type'
+import type {
+  GrowthRewardApplyResultList,
   GrowthRuleRewardSettlementResult,
-} from './growth-reward.types'
+} from './types/growth-reward-result.type'
 import { CheckInRepairTargetTypeEnum } from '@libs/growth/check-in/check-in.constant'
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import { TaskService } from '@libs/growth/task/task.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
+import { GrowthLedgerFailReasonEnum } from '../growth-ledger/growth-ledger.constant'
 import { GrowthEventDispatchService } from './growth-event-dispatch.service'
 import { GrowthRewardSettlementService } from './growth-reward-settlement.service'
 import {
@@ -15,13 +23,14 @@ import {
   GrowthRewardSettlementStatusEnum,
   GrowthRewardSettlementTypeEnum,
 } from './growth-reward.constant'
+import { GrowthRewardDedupeResultEnum } from './types/growth-reward-result.type'
 
-const NON_RETRYABLE_FAILURE_REASONS = new Set([
-  'rule_not_found',
-  'rule_disabled',
-  'rule_zero',
-  'daily_limit',
-  'total_limit',
+const NON_RETRYABLE_FAILURE_REASONS = new Set<GrowthLedgerFailReasonEnum>([
+  GrowthLedgerFailReasonEnum.RULE_NOT_FOUND,
+  GrowthLedgerFailReasonEnum.RULE_DISABLED,
+  GrowthLedgerFailReasonEnum.RULE_ZERO,
+  GrowthLedgerFailReasonEnum.DAILY_LIMIT,
+  GrowthLedgerFailReasonEnum.TOTAL_LIMIT,
 ])
 
 /**
@@ -38,10 +47,7 @@ export class GrowthRewardSettlementRetryService {
     private readonly checkInService: CheckInService,
   ) {}
 
-  /**
-   * 手动重试单条待补偿记录。
-   * 返回 `true` 表示本次补偿成功，`false` 表示仍未成功。
-   */
+  // 手动重试单条待补偿记录，并把本次处理结果同步回补偿事实。
   async retrySettlement(id: number, adminUserId?: number) {
     const record = await this.growthRewardSettlementStore.getSettlementById(id)
 
@@ -69,7 +75,9 @@ export class GrowthRewardSettlementRetryService {
     const lastRetryAt = new Date()
 
     try {
-      if (record.settlementType === GrowthRewardSettlementTypeEnum.TASK_REWARD) {
+      if (
+        record.settlementType === GrowthRewardSettlementTypeEnum.TASK_REWARD
+      ) {
         const taskPayload = this.parseStoredTaskPayload(record.requestPayload)
         await this.taskService.retryTaskAssignmentReward(
           taskPayload.assignmentId,
@@ -78,12 +86,14 @@ export class GrowthRewardSettlementRetryService {
         const latest = await this.growthRewardSettlementStore.getSettlementById(
           record.id,
         )
-        return latest?.settlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
+        return (
+          latest?.settlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
+        )
       }
 
       if (
-        record.settlementType
-        === GrowthRewardSettlementTypeEnum.CHECK_IN_RECORD_REWARD
+        record.settlementType ===
+        GrowthRewardSettlementTypeEnum.CHECK_IN_RECORD_REWARD
       ) {
         const checkInRecordPayload = this.parseStoredCheckInRecordPayload(
           record.requestPayload,
@@ -98,12 +108,14 @@ export class GrowthRewardSettlementRetryService {
         const latest = await this.growthRewardSettlementStore.getSettlementById(
           record.id,
         )
-        return latest?.settlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
+        return (
+          latest?.settlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
+        )
       }
 
       if (
-        record.settlementType
-        === GrowthRewardSettlementTypeEnum.CHECK_IN_STREAK_REWARD
+        record.settlementType ===
+        GrowthRewardSettlementTypeEnum.CHECK_IN_STREAK_REWARD
       ) {
         const checkInGrantPayload = this.parseStoredCheckInGrantPayload(
           record.requestPayload,
@@ -118,15 +130,20 @@ export class GrowthRewardSettlementRetryService {
         const latest = await this.growthRewardSettlementStore.getSettlementById(
           record.id,
         )
-        return latest?.settlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
+        return (
+          latest?.settlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
+        )
       }
 
       const payload = this.parseStoredGrowthEventPayload(record.requestPayload)
       const dispatchResult =
         await this.growthEventDispatchService.dispatchDefinedEvent(payload)
 
-      if (dispatchResult.growthHandled && dispatchResult.growthResult?.success) {
-        await this.growthRewardSettlementStore.updateSettlementState(record.id, {
+      if (
+        dispatchResult.growthHandled &&
+        dispatchResult.growthResult?.success
+      ) {
+        const payload: UpdateSettlementStatePayload = {
           settlementStatus: GrowthRewardSettlementStatusEnum.SUCCESS,
           settlementResultType: this.resolveSuccessResultType(
             dispatchResult.growthResult,
@@ -136,25 +153,34 @@ export class GrowthRewardSettlementRetryService {
           lastRetryAt,
           settledAt: new Date(),
           lastError: null,
-        })
+        }
+        await this.growthRewardSettlementStore.updateSettlementState(
+          record.id,
+          payload,
+        )
         return true
       }
 
       const growthResult = dispatchResult.growthResult
-      await this.growthRewardSettlementStore.updateSettlementState(record.id, {
+      const failedPayload: UpdateSettlementStatePayload = {
         settlementStatus: growthResult
           ? this.resolveFailureStatus(growthResult)
           : GrowthRewardSettlementStatusEnum.PENDING,
         settlementResultType: GrowthRewardSettlementResultTypeEnum.FAILED,
-        ledgerRecordIds: growthResult?.ledgerRecordIds ?? record.ledgerRecordIds,
+        ledgerRecordIds:
+          growthResult?.ledgerRecordIds ?? record.ledgerRecordIds,
         retryCount: nextRetryCount,
         lastRetryAt,
         settledAt: null,
         lastError: growthResult?.errorMessage ?? '成长奖励补偿未成功',
-      })
+      }
+      await this.growthRewardSettlementStore.updateSettlementState(
+        record.id,
+        failedPayload,
+      )
       return false
     } catch (error) {
-      await this.growthRewardSettlementStore.updateSettlementState(record.id, {
+      const exceptionPayload: UpdateSettlementStatePayload = {
         settlementStatus: this.resolveRetryExceptionStatus(error),
         settlementResultType: GrowthRewardSettlementResultTypeEnum.FAILED,
         ledgerRecordIds: record.ledgerRecordIds,
@@ -162,14 +188,16 @@ export class GrowthRewardSettlementRetryService {
         lastRetryAt,
         settledAt: null,
         lastError: error instanceof Error ? error.message : String(error),
-      })
+      }
+      await this.growthRewardSettlementStore.updateSettlementState(
+        record.id,
+        exceptionPayload,
+      )
       return false
     }
   }
 
-  /**
-   * 批量扫描并重试待补偿记录。
-   */
+  // 批量扫描并重试待补偿记录，返回本轮扫描与成功统计。
   async retryPendingSettlementsBatch(limit = 100, adminUserId?: number) {
     const records =
       await this.growthRewardSettlementStore.listPendingSettlementIds(
@@ -190,28 +218,27 @@ export class GrowthRewardSettlementRetryService {
     }
   }
 
-  private resolveFailureStatus(
-    growthResult: GrowthRuleRewardSettlementResult,
-  ) {
-    if (
-      growthResult.failureReason
-      && NON_RETRYABLE_FAILURE_REASONS.has(growthResult.failureReason)
-    ) {
+  // 根据失败原因判断重试后的补偿记录应保持待处理还是直接转终态。
+  private resolveFailureStatus(growthResult: GrowthRuleRewardSettlementResult) {
+    if (this.isNonRetryableFailureReason(growthResult.failureReason)) {
       return GrowthRewardSettlementStatusEnum.TERMINAL
     }
 
     const results = growthResult.rewardResults
       .map((item) => item.result)
-      .filter((item) => item !== undefined)
+      .filter(
+        (item): item is NonNullable<GrowthRewardApplyResultList[number]> =>
+          item !== undefined,
+      )
 
     if (
-      results.length > 0
-      && results.every(
+      results.length > 0 &&
+      results.every(
         (item) =>
-          item.success !== true
-          && item.duplicated !== true
-          && item.reason !== undefined
-          && NON_RETRYABLE_FAILURE_REASONS.has(item.reason),
+          item.success !== true &&
+          item.duplicated !== true &&
+          item.reason !== undefined &&
+          NON_RETRYABLE_FAILURE_REASONS.has(item.reason),
       )
     ) {
       return GrowthRewardSettlementStatusEnum.TERMINAL
@@ -220,22 +247,27 @@ export class GrowthRewardSettlementRetryService {
     return GrowthRewardSettlementStatusEnum.PENDING
   }
 
+  // 判断失败原因是否明确属于不可重试的规则拒绝。
+  private isNonRetryableFailureReason(reason?: GrowthLedgerFailReasonEnum) {
+    return reason !== undefined && NON_RETRYABLE_FAILURE_REASONS.has(reason)
+  }
+
+  // 把规则奖励幂等结果映射成补偿结果类型。
   private resolveSuccessResultType(
     growthResult: GrowthRuleRewardSettlementResult,
   ) {
-    if (growthResult.dedupeResult === 'idempotent') {
+    if (growthResult.dedupeResult === GrowthRewardDedupeResultEnum.IDEMPOTENT) {
       return GrowthRewardSettlementResultTypeEnum.IDEMPOTENT
     }
     return GrowthRewardSettlementResultTypeEnum.APPLIED
   }
 
+  // 仅把确定无法通过再次重试恢复的异常视为终态失败。
   private resolveRetryExceptionStatus(error: unknown) {
     if (
-      error instanceof BusinessException
-      && (
-        error.code === BusinessErrorCode.STATE_CONFLICT
-        || error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
-      )
+      error instanceof BusinessException &&
+      (error.code === BusinessErrorCode.STATE_CONFLICT ||
+        error.code === BusinessErrorCode.RESOURCE_NOT_FOUND)
     ) {
       return GrowthRewardSettlementStatusEnum.TERMINAL
     }
@@ -243,7 +275,10 @@ export class GrowthRewardSettlementRetryService {
     return GrowthRewardSettlementStatusEnum.PENDING
   }
 
-  private parseStoredTaskPayload(payload: unknown) {
+  // 解析任务奖励补偿快照，并校验重试所需的最小主键字段。
+  private parseStoredTaskPayload(
+    payload: unknown,
+  ): StoredTaskRewardPayloadIdentity {
     const record =
       payload && typeof payload === 'object' && !Array.isArray(payload)
         ? (payload as Record<string, unknown>)
@@ -258,10 +293,10 @@ export class GrowthRewardSettlementRetryService {
       )
     }
     if (
-      !Number.isInteger(taskId)
-      || taskId <= 0
-      || !Number.isInteger(userId)
-      || userId <= 0
+      !Number.isInteger(taskId) ||
+      taskId <= 0 ||
+      !Number.isInteger(userId) ||
+      userId <= 0
     ) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
@@ -275,7 +310,10 @@ export class GrowthRewardSettlementRetryService {
     }
   }
 
-  private parseStoredCheckInRecordPayload(payload: unknown) {
+  // 解析签到基础奖励补偿快照，并校验 recordId。
+  private parseStoredCheckInRecordPayload(
+    payload: unknown,
+  ): StoredCheckInRecordRewardPayloadIdentity {
     const record =
       payload && typeof payload === 'object' && !Array.isArray(payload)
         ? (payload as Record<string, unknown>)
@@ -290,7 +328,10 @@ export class GrowthRewardSettlementRetryService {
     return { recordId }
   }
 
-  private parseStoredCheckInGrantPayload(payload: unknown) {
+  // 解析连续签到奖励补偿快照，并校验 grantId。
+  private parseStoredCheckInGrantPayload(
+    payload: unknown,
+  ): StoredCheckInStreakRewardPayloadIdentity {
     const record =
       payload && typeof payload === 'object' && !Array.isArray(payload)
         ? (payload as Record<string, unknown>)
@@ -305,6 +346,7 @@ export class GrowthRewardSettlementRetryService {
     return { grantId }
   }
 
+  // 解析通用成长事件补偿快照，并恢复 dispatch 层可消费的事件入参。
   private parseStoredGrowthEventPayload(
     payload: unknown,
   ): DispatchDefinedGrowthEventPayload {
@@ -313,9 +355,9 @@ export class GrowthRewardSettlementRetryService {
         ? (payload as Record<string, unknown>)
         : null
     const eventEnvelopeRecord =
-      record?.eventEnvelope
-      && typeof record.eventEnvelope === 'object'
-      && !Array.isArray(record.eventEnvelope)
+      record?.eventEnvelope &&
+      typeof record.eventEnvelope === 'object' &&
+      !Array.isArray(record.eventEnvelope)
         ? (record.eventEnvelope as Record<string, unknown>)
         : null
 
@@ -325,24 +367,24 @@ export class GrowthRewardSettlementRetryService {
     const occurredAt = new Date(String(eventEnvelopeRecord?.occurredAt))
 
     if (
-      !record
-      || !eventEnvelopeRecord
-      || !Number.isInteger(code)
-      || !Number.isInteger(subjectId)
-      || !Number.isInteger(targetId)
-      || Number.isNaN(occurredAt.getTime())
-      || typeof record.bizKey !== 'string'
-      || record.bizKey.trim() === ''
-      || typeof record.source !== 'string'
-      || record.source.trim() === ''
-      || typeof eventEnvelopeRecord.key !== 'string'
-      || eventEnvelopeRecord.key.trim() === ''
-      || typeof eventEnvelopeRecord.subjectType !== 'string'
-      || eventEnvelopeRecord.subjectType.trim() === ''
-      || typeof eventEnvelopeRecord.targetType !== 'string'
-      || eventEnvelopeRecord.targetType.trim() === ''
-      || typeof eventEnvelopeRecord.governanceStatus !== 'string'
-      || eventEnvelopeRecord.governanceStatus.trim() === ''
+      !record ||
+      !eventEnvelopeRecord ||
+      !Number.isInteger(code) ||
+      !Number.isInteger(subjectId) ||
+      !Number.isInteger(targetId) ||
+      Number.isNaN(occurredAt.getTime()) ||
+      typeof record.bizKey !== 'string' ||
+      record.bizKey.trim() === '' ||
+      typeof record.source !== 'string' ||
+      record.source.trim() === '' ||
+      typeof eventEnvelopeRecord.key !== 'string' ||
+      eventEnvelopeRecord.key.trim() === '' ||
+      typeof eventEnvelopeRecord.subjectType !== 'string' ||
+      eventEnvelopeRecord.subjectType.trim() === '' ||
+      typeof eventEnvelopeRecord.targetType !== 'string' ||
+      eventEnvelopeRecord.targetType.trim() === '' ||
+      typeof eventEnvelopeRecord.governanceStatus !== 'string' ||
+      eventEnvelopeRecord.governanceStatus.trim() === ''
     ) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
@@ -351,13 +393,15 @@ export class GrowthRewardSettlementRetryService {
     }
 
     const context =
-      record.context && typeof record.context === 'object' && !Array.isArray(record.context)
+      record.context &&
+      typeof record.context === 'object' &&
+      !Array.isArray(record.context)
         ? (record.context as Record<string, unknown>)
         : undefined
     const eventContext =
-      eventEnvelopeRecord.context
-      && typeof eventEnvelopeRecord.context === 'object'
-      && !Array.isArray(eventEnvelopeRecord.context)
+      eventEnvelopeRecord.context &&
+      typeof eventEnvelopeRecord.context === 'object' &&
+      !Array.isArray(eventEnvelopeRecord.context)
         ? (eventEnvelopeRecord.context as Record<string, unknown>)
         : undefined
 
@@ -369,10 +413,9 @@ export class GrowthRewardSettlementRetryService {
         subjectId,
         targetType: eventEnvelopeRecord.targetType,
         targetId,
-        operatorId:
-          Number.isInteger(eventEnvelopeRecord.operatorId)
-            ? Number(eventEnvelopeRecord.operatorId)
-            : undefined,
+        operatorId: Number.isInteger(eventEnvelopeRecord.operatorId)
+          ? Number(eventEnvelopeRecord.operatorId)
+          : undefined,
         occurredAt,
         governanceStatus: eventEnvelopeRecord.governanceStatus,
         context: eventContext,
@@ -383,10 +426,12 @@ export class GrowthRewardSettlementRetryService {
         typeof record.remark === 'string' && record.remark.trim() !== ''
           ? record.remark
           : undefined,
-      targetType:
-        Number.isInteger(record.targetType) ? Number(record.targetType) : undefined,
-      targetId:
-        Number.isInteger(record.targetId) ? Number(record.targetId) : undefined,
+      targetType: Number.isInteger(record.targetType)
+        ? Number(record.targetType)
+        : undefined,
+      targetId: Number.isInteger(record.targetId)
+        ? Number(record.targetId)
+        : undefined,
       context,
     }
   }

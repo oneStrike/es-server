@@ -11,7 +11,7 @@ import type { PublishMessageDomainEventInput } from '@libs/message/eventing/mess
 import type { Dayjs } from 'dayjs'
 import type { SQL } from 'drizzle-orm'
 import type { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
-import type { TaskRewardSettlementResult } from '../growth-reward/growth-reward.types'
+import type { TaskRewardSettlementResult } from '../growth-reward/types/growth-reward-result.type'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   QueryTaskAssignmentReconciliationDto,
@@ -827,10 +827,10 @@ export abstract class TaskServiceSupport {
       JSON.stringify(
         this.asRecord(dto.objectiveConfig) ?? dto.objectiveConfig ?? null,
       ) !==
-      JSON.stringify(
+        JSON.stringify(
           this.asRecord(taskRecord.objectiveConfig) ??
-          taskRecord.objectiveConfig ??
-          null,
+            taskRecord.objectiveConfig ??
+            null,
         )
     const publishWindowChanged =
       (dto.publishStartAt !== undefined &&
@@ -838,8 +838,8 @@ export abstract class TaskServiceSupport {
           dto.publishStartAt ?? null,
           taskRecord.publishStartAt ?? null,
         )) ||
-        (dto.publishEndAt !== undefined &&
-          !this.isSameNullableDate(
+      (dto.publishEndAt !== undefined &&
+        !this.isSameNullableDate(
           dto.publishEndAt ?? null,
           taskRecord.publishEndAt ?? null,
         ))
@@ -2103,7 +2103,7 @@ export abstract class TaskServiceSupport {
       ),
       objectiveType: normalizeTaskObjectiveType(
         this.readSnapshotPositiveInt(snapshot?.objectiveType) ??
-        liveTask?.objectiveType,
+          liveTask?.objectiveType,
       ),
       eventCode:
         this.readSnapshotPositiveInt(snapshot?.eventCode) ??

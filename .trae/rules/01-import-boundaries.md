@@ -25,6 +25,7 @@
 - DTO 文件允许导入 DTO 组合 helper；当前允许：`@nestjs/swagger` 中的 `PickType`、`PartialType`、`OmitType`、`IntersectionType`。这类导入仅用于 DTO 字段裁剪、合并和可选化，不视为“拉起运行时对象”。
 - DTO 文件禁止导入：任何 barrel、`*.service.ts`、`*.module.ts`、`*.resolver.ts`，以及会引入业务行为的 provider、service、repository、entity、module 级依赖。
 - Service / Resolver / Module / Controller 必须直连具体文件，不通过 DTO barrel。
+- 业务域 `types/` 目录下的类型文件同样必须直连具体 `*.type.ts` 文件；禁止导入 `../types`、`@libs/foo/bar/types` 这类目录语义路径。
 - `apps/*` 也必须直连具体文件，不是例外。
 
 ## 例外白名单
@@ -43,8 +44,10 @@
 - 允许：`import { BaseDto, IdDto } from '@libs/platform/dto'`
 - 允许：`import { GeoModule } from '@libs/platform/modules/geo'`
 - 允许：`import { UploadService } from '@libs/platform/modules/upload/upload.service'`
+- 允许：`import type { GrowthRuleRewardSettlementResult } from '@libs/growth/growth-reward/types/growth-reward-result.type'`
 - 允许：`import { PickType } from '@nestjs/swagger'`
 - 禁止：`import { UploadModule } from '@libs/platform/modules'`
+- 禁止：`import type { GrowthRuleRewardSettlementResult } from '@libs/growth/growth-reward/types'`
 - 禁止：`import { relationX } from '@db/relations'`
 - 禁止：`import { ForumTopicService } from '../forum-topic.service'`
 - 禁止：`import { ForumModule } from '../forum.module'`

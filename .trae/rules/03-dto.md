@@ -5,7 +5,7 @@
 ## 默认动作
 
 - 业务场景 DTO 统一定义在 `libs/*`；`apps/*` 只消费 DTO，不新增 `*.dto.ts`。
-- HTTP Controller 的入参必须使用 DTO；出参优先使用输出 DTO，但允许 `boolean`、`number`、`string` 等基础类型作为稳定 contract；非 HTTP 的内部领域结构放在 `*.type.ts` / `*.types.ts`，不要混进 DTO 文件。
+- HTTP Controller 的入参必须使用 DTO；出参优先使用输出 DTO，但允许 `boolean`、`number`、`string` 等基础类型作为稳定 contract；非 HTTP 的内部领域结构统一放在 `*.type.ts`，需要按职责拆分时可放在 owner 模块的 `types/*.type.ts` 中，不要混进 DTO 文件。
 - DTO 中的定义必须直接服务 Swagger 文档、字段校验或对外 contract；如果一个结构既不服务文档，也不服务校验，就不要为了“统一都叫 DTO”硬造 DTO。
 - 若跨模块复用现有字段，默认导入目标 DTO 并组合；不要在当前模块手写复制别的模块字段。
 - 实体字段与物理约束以 Drizzle Table 为准；`BaseXxxDto` 及其衍生字段默认向对应 Drizzle table / schema 看齐，不手写脱锚字段。
@@ -14,7 +14,7 @@
 
 - `libs/platform`：基础 DTO 复用层。
 - `libs/*`：owner 域 DTO 定义层，承载实体基类 DTO（`BaseXxxDto`）与场景 DTO。
-- `libs/*/*.type.ts`：仅承载非 HTTP 的内部领域结构。
+- `libs/*/*.type.ts`、`libs/*/**/types/*.type.ts`：仅承载非 HTTP 的内部领域结构。
 - `apps/*`：入口装配层，仅消费 DTO。
 
 ## 命名约定
@@ -29,7 +29,7 @@
 - DTO 组合工具统一使用 `@nestjs/swagger` 的 `PickType`、`OmitType`、`PartialType`、`IntersectionType`。
 - 优先用组合工具复用字段，避免字段复制、重复定义。
 - 跨模块复用 DTO 时，先导入目标 DTO，再做字段裁剪或合并；禁止重复定义其他模块已存在的字段。
-- DTO 文件禁止引入 `*.type.ts`、`*.types.ts`；内部类型应反向复用 DTO 或 Drizzle，不允许 DTO 反向依赖 type。
+- DTO 文件禁止引入 `*.type.ts`；内部类型应反向复用 DTO 或 Drizzle，不允许 DTO 反向依赖 type。
 - Controller 返回基础类型时，不要为了“统一都叫 DTO”额外包一层空心 DTO；只有当响应需要字段文档、嵌套结构、可扩展返回 contract 或校验语义时，才定义输出 DTO。
 - 字段选择默认规则：保留字段更少时用 `PickType`；排除字段更少时用 `OmitType`。
 - `PartialType` 仅用于现有字段集的“整体可选化”；优先写成 `PartialType(CreateXxxDto)` 或 `PartialType(PickType(...))`，不要重新手写一份“几乎一样但全可选”的 DTO。
@@ -45,7 +45,7 @@
 ## 禁止项
 
 - 禁止在 `apps/*` 新增同构 DTO。
-- 禁止在 DTO 文件中引入 `*.type.ts`、`*.types.ts`。
+- 禁止在 DTO 文件中引入 `*.type.ts`。
 - 禁止在 DTO 文件中承载 service 调用、数据库访问或业务计算逻辑。
 - 禁止在 DTO 文件中新增“字段完全复制但只改类名”的跨模块 DTO。
 - 禁止新增既不服务字段校验、也不服务文档描述、只为了代替 `type` 存在的空心 DTO。

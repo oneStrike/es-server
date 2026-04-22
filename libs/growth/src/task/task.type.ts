@@ -1,5 +1,5 @@
 import type {
-  GrowthRewardSettlement,
+  GrowthRewardSettlementSelect,
   Task,
   TaskAssignment,
   TaskProgressLogInsert,
@@ -265,14 +265,14 @@ export interface TaskAssignmentWithTaskRow extends TaskAssignment {
  * assignment 关联的奖励结算摘要行。
  */
 export interface TaskRewardSettlementRelationRow {
-  id: GrowthRewardSettlement['id']
-  settlementStatus: GrowthRewardSettlement['settlementStatus']
-  settlementResultType: GrowthRewardSettlement['settlementResultType']
-  retryCount: GrowthRewardSettlement['retryCount']
-  lastRetryAt: GrowthRewardSettlement['lastRetryAt']
-  settledAt: GrowthRewardSettlement['settledAt']
-  lastError: GrowthRewardSettlement['lastError']
-  ledgerRecordIds: GrowthRewardSettlement['ledgerRecordIds']
+  id: GrowthRewardSettlementSelect['id']
+  settlementStatus: GrowthRewardSettlementSelect['settlementStatus']
+  settlementResultType: GrowthRewardSettlementSelect['settlementResultType']
+  retryCount: GrowthRewardSettlementSelect['retryCount']
+  lastRetryAt: GrowthRewardSettlementSelect['lastRetryAt']
+  settledAt: GrowthRewardSettlementSelect['settledAt']
+  lastError: GrowthRewardSettlementSelect['lastError']
+  ledgerRecordIds: GrowthRewardSettlementSelect['ledgerRecordIds']
 }
 
 /**
