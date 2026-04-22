@@ -105,13 +105,22 @@ export interface CheckInRuleIdQuery {
   id: number
 }
 
+type CheckInReplaceFields<TBase, TOverride> = Omit<TBase, keyof TOverride> &
+  TOverride
+
+type CheckInRewardItemsView<TBase> = CheckInReplaceFields<
+  TBase,
+  { rewardItems: GrowthRewardItems }
+>
+
+type CheckInNullableRewardItemsView<TBase> = CheckInReplaceFields<
+  TBase,
+  { rewardItems: GrowthRewardItems | null }
+>
+
 /** 基于日期奖励 DTO 收敛出的内部日期奖励视图。 */
-export type CheckInDateRewardRuleView = Omit<
-  CheckInDateRewardRuleFieldsDto,
-  'rewardItems'
-> & {
-  rewardItems: GrowthRewardItems
-}
+export type CheckInDateRewardRuleView =
+  CheckInRewardItemsView<CheckInDateRewardRuleFieldsDto>
 
 /** 允许传入标准 DTO 或已归一化视图的日期奖励输入。 */
 export type CheckInDateRewardRuleInput =
@@ -119,12 +128,8 @@ export type CheckInDateRewardRuleInput =
   | CheckInDateRewardRuleView
 
 /** 基于模式奖励 DTO 收敛出的内部周期奖励视图。 */
-export type CheckInPatternRewardRuleView = Omit<
-  BaseCheckInPatternRewardRuleDto,
-  'rewardItems'
-> & {
-  rewardItems: GrowthRewardItems
-}
+export type CheckInPatternRewardRuleView =
+  CheckInRewardItemsView<BaseCheckInPatternRewardRuleDto>
 
 /** 允许传入标准 DTO 或已归一化视图的周期奖励输入。 */
 export type CheckInPatternRewardRuleInput =
@@ -132,12 +137,9 @@ export type CheckInPatternRewardRuleInput =
   | CheckInPatternRewardRuleView
 
 /** 基于连续奖励 DTO 收敛出的内部连续奖励视图。 */
-export type CheckInStreakRewardRuleView = Omit<
-  Required<BaseCheckInStreakRewardRuleDto>,
-  'rewardItems'
-> & {
-  rewardItems: GrowthRewardItems
-}
+export type CheckInStreakRewardRuleView = CheckInRewardItemsView<
+  Required<BaseCheckInStreakRewardRuleDto>
+>
 
 /** 允许传入标准 DTO 或已归一化视图的连续奖励输入。 */
 export type CheckInStreakRewardRuleInput =
@@ -157,7 +159,10 @@ export interface CheckInRewardDefinition {
 /** 解析奖励定义时依赖的最小配置字段集。 */
 export type CheckInRewardDefinitionSource = Pick<
   CheckInConfigSelect,
-  'makeupPeriodType' | 'baseRewardItems' | 'dateRewardRules' | 'patternRewardRules'
+  | 'makeupPeriodType'
+  | 'baseRewardItems'
+  | 'dateRewardRules'
+  | 'patternRewardRules'
 >
 
 /** 连续签到规则的公共字段骨架。 */
@@ -202,7 +207,12 @@ export type CheckInStreakRewardItemSnapshot = Pick<
 /** 转换成连续奖励展示视图前依赖的规则行结构。 */
 export type CheckInStreakRuleViewSource = Pick<
   CheckInStreakRuleSelect,
-  'ruleCode' | 'streakDays' | 'repeatable' | 'status' | 'effectiveFrom' | 'effectiveTo'
+  | 'ruleCode'
+  | 'streakDays'
+  | 'repeatable'
+  | 'status'
+  | 'effectiveFrom'
+  | 'effectiveTo'
 > & {
   rewardItems: CheckInStreakRewardItemSnapshot[]
 }
@@ -230,12 +240,7 @@ export interface CheckInResolvedReward {
 }
 
 /** 基于连续奖励 DTO 收敛出的内部连续奖励展示视图。 */
-export type CheckInGrantItemView = Omit<
-  CheckInGrantItemDto,
-  'rewardItems'
-> & {
-  rewardItems: GrowthRewardItems
-}
+export type CheckInGrantItemView = CheckInRewardItemsView<CheckInGrantItemDto>
 
 /** 连续奖励去重与重复发放判断依赖的历史发放字段。 */
 export type CheckInGrantTriggerView = Pick<
@@ -250,30 +255,25 @@ export interface CheckInEligibleGrantCandidate {
 }
 
 /** 基于日历 DTO 收敛出的内部日历日视图。 */
-export type CheckInCalendarDayView = Omit<
-  CheckInCalendarDayDto,
-  'rewardItems'
-> & {
-  rewardItems: GrowthRewardItems | null
-}
+export type CheckInCalendarDayView =
+  CheckInNullableRewardItemsView<CheckInCalendarDayDto>
 
 /** 基于对账 DTO 收敛出的内部对账分页项视图。 */
-export type CheckInReconciliationPageItemView = Omit<
+export type CheckInReconciliationPageItemView = CheckInReplaceFields<
   CheckInReconciliationPageItemDto,
-  'resolvedRewardItems' | 'grants'
-> & {
-  resolvedRewardItems: GrowthRewardItems | null
-  grants: CheckInGrantItemView[]
-}
+  {
+    resolvedRewardItems: GrowthRewardItems | null
+    grants: CheckInGrantItemView[]
+  }
+>
+
+type CheckInRecordLookupRow = Pick<CheckInRecordSelect, 'userId' | 'signDate'>
 
 /** 运行时读取记录日期时依赖的最小字段集。 */
-export type CheckInRecordDateOnlyView = Pick<CheckInRecordSelect, 'signDate'>
+export type CheckInRecordDateOnlyView = Pick<CheckInRecordLookupRow, 'signDate'>
 
 /** 运行时批量关联连续奖励时依赖的签到记录定位字段。 */
-export type CheckInRecordGrantLookup = Pick<
-  CheckInRecordSelect,
-  'userId' | 'signDate'
->
+export type CheckInRecordGrantLookup = CheckInRecordLookupRow
 
 /** 重算连续签到聚合结果。 */
 export interface CheckInStreakAggregation {
@@ -320,8 +320,8 @@ export type CheckInExecutedRowsResult<T> =
   | null
   | undefined
 
-/** 连续签到分页允许排序的字段集合。 */
-export type StreakRulePageOrderField =
+type StreakRulePageSortableRow = Pick<
+  CheckInStreakRuleSelect,
   | 'id'
   | 'ruleCode'
   | 'streakDays'
@@ -333,6 +333,10 @@ export type StreakRulePageOrderField =
   | 'effectiveTo'
   | 'createdAt'
   | 'updatedAt'
+>
+
+/** 连续签到分页允许排序的字段集合。 */
+export type StreakRulePageOrderField = keyof StreakRulePageSortableRow
 
 /** 连续签到分页排序方向。 */
 export type StreakRulePageOrderDirection = 'asc' | 'desc'
@@ -344,21 +348,8 @@ export interface StreakRulePageOrderItem {
 }
 
 /** 连续签到主列表代表行。 */
-export type StreakRulePageRow = Pick<
-  CheckInStreakRuleSelect,
-  | 'id'
-  | 'ruleCode'
-  | 'streakDays'
-  | 'version'
-  | 'status'
-  | 'publishStrategy'
-  | 'effectiveFrom'
-  | 'effectiveTo'
-  | 'repeatable'
-  | 'updatedById'
-  | 'createdAt'
-  | 'updatedAt'
->
+export type StreakRulePageRow = StreakRulePageSortableRow &
+  Pick<CheckInStreakRuleSelect, 'updatedById'>
 
 /** 连续签到主列表查询真正依赖的过滤字段。 */
 export type StreakRulePageQuery = Pick<

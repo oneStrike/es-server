@@ -35,6 +35,8 @@
 - 若所需结构已存在于 schema select / insert 类型中，优先从 schema 推导；不要手写数据库字段镜像类型。
 - 基于 Drizzle `typeof table.$inferSelect / $inferInsert` 导出的公共类型，统一直接命名为 `XxxSelect`、`XxxInsert`；不要先定义 `Xxx = typeof table.$inferSelect`，再把 `XxxSelect = Xxx` 作为二次别名。
 - 字段裁剪默认规则：保留字段更少时用 `Pick`；排除字段更少时用 `Omit`；如果两边都不占明显优势，优先继续从 DTO / Drizzle 字段索引或交叉 / 联合组合推导，而不是重复声明实体字段。
+- 若多个类型共享同一组字段来源，先抽一个共享基类型、字段元组或键集合，再通过 `keyof`、`Pick`、交叉类型等继续派生；不要把同一串字段字面量在多个类型里重复写两遍。
+- 若一组类型只是“同一个 DTO / schema 类型替换少数字段”，优先在局部定义一次 `ReplaceFields` / `Override` 这类 helper 后复用；不要在同文件里重复写多组等价的 `Omit<...> & { ... }`。
 - 禁止无意义别名：若新类型只是原类型改名，且没有新增语义、边界或复用价值，直接使用原类型。
 
 ## `type` 与 `interface`
@@ -68,6 +70,8 @@
 - 允许：`type TopicAuthorView = Pick<BaseAppUserDto, 'id' | 'nickname' | 'avatarUrl'>`，前提是它只是内部类型视图，DTO 侧没有必要新增一个只为改名存在的类。
 - 允许：`type RewardRuleInput = DateRewardRuleDto | PatternRewardRuleDto`，前提是它表达的是多种输入来源的并列集合。
 - 允许：`type TopicAuthorView = Omit<BaseAuthorDto, 'permissions'> & { permissions: AuthorPermissionView }`，前提是排除字段更少、且替换后的字段语义更清楚。
+- 允许：`type TopicSortableRow = Pick<TopicSelect, 'id' | 'status' | 'createdAt'>`，再写 `type TopicOrderField = keyof TopicSortableRow`。
+- 允许：`type RewardItemView<T> = Omit<T, 'rewardItems'> & { rewardItems: RewardItem[] }`，前提是它只在当前 owner 类型文件内服务于一组同模式派生。
 - 允许：`interface ForumTopicClientContext extends GeoSnapshot { userAgent?: string }`
 - 允许：`type SessionClientContext = ClientRequestContext`，前提是它表达了稳定业务语义。
 - 允许：在事件、模板、开放 payload 边界使用 `Record<string, unknown>`，但后续必须收窄。
@@ -77,6 +81,8 @@
 - 禁止：为了复用 `BaseAppUserDto` 的字段，重新手写一个同构 `ForumTopicUserShape`。
 - 禁止：为了规避 `Pick` / `Omit`，重新手写一份和 DTO / Drizzle 字段同构的对象结构。
 - 禁止：本质是多种来源并列的输入，却拆成多层 `Pick` + 包装类型，而不是直接写联合类型。
+- 禁止：同一个字段子集先在 `OrderField` 里写一遍字面量联合，又在 `Row` 里再写一遍完全相同的 `Pick` 字段列表。
+- 禁止：在同一文件里出现多组结构相同、只改字段名的 `Omit<...> & { ... }`，却不提炼出局部可复用 helper。
 - 禁止：把 HTTP 返回体结构改写成 `*.type.ts` 类型，再让 Controller 手动拼响应。
 - 禁止：在 `forum-topic.service.ts`、`task.service.ts` 这类业务文件里直接声明顶层 `interface QueryRow`、`type ResultView = ...`；这类类型应移动到同域 `*.type.ts`。
 - 禁止：在 `updateSettlementState(payload: Pick<GrowthRewardSettlementSelect, ...>)`、`ensureManualSettlement(params: { ... })`、`runWithOptionalTransaction(callback: (tx) => ...)` 这类签名里直接写复杂类型。
