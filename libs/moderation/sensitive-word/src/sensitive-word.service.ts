@@ -117,7 +117,7 @@ export class SensitiveWordService {
     return true
   }
 
-  // 获取统计查询结果。
+  // 获取统计查询结果
   async getStatistics(dto: SensitiveWordStatisticsQueryDto) {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 
