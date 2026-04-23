@@ -118,18 +118,6 @@ export enum TaskStepTriggerModeEnum {
 }
 
 /**
- * 新任务模型中的步骤进度模式枚举。
- */
-export enum TaskStepProgressModeEnum {
-  /** 首次命中即完成。 */
-  ONCE = 1,
-  /** 每次命中都累计。 */
-  COUNT = 2,
-  /** 只有命中新对象才累计。 */
-  UNIQUE_COUNT = 3,
-}
-
-/**
  * 新任务模型中的唯一计数范围枚举。
  */
 export enum TaskStepDedupeScopeEnum {

@@ -9,6 +9,8 @@ export default antfu(
       'prisma/seed/**',
       '**/*.spec.ts',
       '**/*.spec.js',
+      '**/*.sql',
+      'docs/**',
     ],
 
     formatters: {

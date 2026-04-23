@@ -74,7 +74,11 @@ export class TaskService {
   async getTaskTemplateOptions() {
     return {
       list: this.taskEventTemplateRegistry.listTemplates().map((template) => {
-        const { eventCode: _eventCode, ...rest } = template
+        const {
+          eventCode: _eventCode,
+          uniqueDimension: _uniqueDimension,
+          ...rest
+        } = template
         return rest
       }),
     }

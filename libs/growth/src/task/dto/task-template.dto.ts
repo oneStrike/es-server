@@ -6,7 +6,6 @@ import { ArrayProperty } from '@libs/platform/decorators/validate/array-property
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { TaskStepProgressModeEnum } from '../task.constant'
 
 export class TaskTemplateFilterFieldDto {
   @StringProperty({
@@ -36,38 +35,6 @@ export class TaskTemplateFilterFieldDto {
     maxLength: 255,
   })
   description!: string
-}
-
-export class TaskTemplateUniqueDimensionDto {
-  @StringProperty({
-    description: '唯一维度稳定键',
-    example: 'object_id',
-    maxLength: 80,
-  })
-  key!: string
-
-  @StringProperty({
-    description: '运营侧可见名称',
-    example: '目标对象 ID',
-    maxLength: 80,
-  })
-  label!: string
-
-  @EnumProperty({
-    description:
-      '唯一维度来源（target_id=直接使用目标对象 ID；context_key=从事件上下文中读取）',
-    example: 'target_id',
-    enum: { TARGET_ID: 'target_id', CONTEXT_KEY: 'context_key' },
-  })
-  source!: 'target_id' | 'context_key'
-
-  @StringProperty({
-    description: '当来源为上下文字段时使用的 context key',
-    example: 'workId',
-    required: false,
-    maxLength: 80,
-  })
-  contextKey?: string
 }
 
 export class TaskTemplateFilterValueDto {
@@ -124,13 +91,6 @@ export class TaskEventTemplateOptionDto {
   })
   isSelectable!: boolean
 
-  @ArrayProperty({
-    description: '支持的步骤进度模式列表',
-    example: [TaskStepProgressModeEnum.ONCE, TaskStepProgressModeEnum.COUNT],
-    itemEnum: TaskStepProgressModeEnum,
-  })
-  supportedProgressModes!: TaskStepProgressModeEnum[]
-
   @EnumProperty({
     description:
       '命中的目标实体类型（如 comic_work=漫画作品；novel_work=小说作品；content=内容；user=用户）',
@@ -139,20 +99,11 @@ export class TaskEventTemplateOptionDto {
   })
   targetEntityType!: EventDefinitionEntityTypeEnum
 
-  @StringProperty({
-    description: '默认唯一维度键',
-    example: 'object_id',
-    required: false,
-    maxLength: 80,
+  @BooleanProperty({
+    description: '当前模板是否支持按不同对象累计',
+    example: true,
   })
-  defaultUniqueDimensionKey?: string
-
-  @ArrayProperty({
-    description: '可选唯一维度列表',
-    itemClass: TaskTemplateUniqueDimensionDto,
-    example: [{ key: 'object_id', label: '目标对象 ID', source: 'target_id' }],
-  })
-  availableUniqueDimensions!: TaskTemplateUniqueDimensionDto[]
+  supportsUniqueCounting!: boolean
 
   @ArrayProperty({
     description: '可选过滤字段列表',
@@ -171,7 +122,7 @@ export class TaskEventTemplateOptionDto {
   @ArrayProperty({
     description: '需要在后台显式展示的提醒文案',
     itemType: 'string',
-    example: ['若选择“按唯一对象累计”，必须同时配置唯一维度与去重范围。'],
+    example: ['若启用按不同对象累计，将按模板默认唯一维度自动去重。'],
   })
   warningHints!: string[]
 }
@@ -186,16 +137,8 @@ export class TaskTemplateOptionsResponseDto {
         label: '漫画作品浏览',
         implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
         isSelectable: true,
-        supportedProgressModes: [
-          TaskStepProgressModeEnum.ONCE,
-          TaskStepProgressModeEnum.COUNT,
-          TaskStepProgressModeEnum.UNIQUE_COUNT,
-        ],
         targetEntityType: EventDefinitionEntityTypeEnum.COMIC_WORK,
-        defaultUniqueDimensionKey: 'object_id',
-        availableUniqueDimensions: [
-          { key: 'object_id', label: '目标对象 ID', source: 'target_id' },
-        ],
+        supportsUniqueCounting: true,
         availableFilterFields: [
           {
             key: 'targetType',
@@ -205,7 +148,7 @@ export class TaskTemplateOptionsResponseDto {
           },
         ],
         warningHints: [
-          '若选择“按唯一对象累计”，必须同时配置唯一维度与去重范围。',
+          '若启用按不同对象累计，将按模板默认唯一维度自动去重。',
         ],
       },
     ],

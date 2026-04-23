@@ -31,7 +31,6 @@ import {
   TaskDefinitionStatusEnum,
   TaskInstanceStatusEnum,
   TaskRepeatCycleEnum,
-  TaskStepProgressModeEnum,
   TaskStepTriggerModeEnum,
   TaskVisibleStatusEnum,
 } from './task.constant'
@@ -130,11 +129,9 @@ export abstract class TaskServiceSupport {
         description: row.description ?? undefined,
         stepNo: row.stepNo,
         triggerMode: row.triggerMode,
-        progressMode: row.progressMode,
         targetValue: row.targetValue,
         templateKey: row.templateKey ?? undefined,
         filters: this.normalizeTaskFilterValues(row.filterPayload),
-        uniqueDimensionKey: row.uniqueDimensionKey ?? undefined,
         dedupeScope: row.dedupeScope ?? undefined,
       })
       result.set(row.taskId, current)
@@ -237,14 +234,12 @@ export abstract class TaskServiceSupport {
       cover: taskRecord.cover ?? undefined,
       sceneType: taskRecord.sceneType,
       status: taskRecord.status,
-      priority: taskRecord.priority,
+      sortOrder: taskRecord.sortOrder,
       claimMode: taskRecord.claimMode,
       completionPolicy: taskRecord.completionPolicy,
       repeatType: taskRecord.repeatType,
-      repeatTimezone: taskRecord.repeatTimezone ?? undefined,
       startAt: taskRecord.startAt,
       endAt: taskRecord.endAt,
-      audienceSegmentId: taskRecord.audienceSegmentId ?? undefined,
       rewardItems: Array.isArray(taskRecord.rewardItems)
         ? taskRecord.rewardItems
         : null,
@@ -296,7 +291,7 @@ export abstract class TaskServiceSupport {
   protected buildTaskDefinitionOrderBy(params: QueryTaskDefinitionPageDto) {
     return this.drizzle.buildOrderBy(params.orderBy, {
       table: this.taskDefinitionTable,
-      fallbackOrderBy: { id: 'desc' },
+      fallbackOrderBy: { sortOrder: 'asc', id: 'asc' },
     })
   }
 
@@ -368,7 +363,7 @@ export abstract class TaskServiceSupport {
     step: TaskStepWriteInput,
     templateSelectable: boolean,
     templateEventCode?: number | null,
-    supportedProgressModes?: readonly number[],
+    templateSupportsUniqueCounting?: boolean,
   ) {
     if (!step.title?.trim()) {
       throw new BadRequestException('step.title 不能为空')
@@ -379,24 +374,17 @@ export abstract class TaskServiceSupport {
     if (!Object.values(TaskStepTriggerModeEnum).includes(step.triggerMode)) {
       throw new BadRequestException('step.triggerMode 仅支持 MANUAL、EVENT')
     }
-    if (!Object.values(TaskStepProgressModeEnum).includes(step.progressMode)) {
-      throw new BadRequestException(
-        'step.progressMode 仅支持 ONCE、COUNT、UNIQUE_COUNT',
-      )
-    }
 
     if (step.triggerMode === TaskStepTriggerModeEnum.MANUAL) {
       if (
         step.eventCode !== undefined ||
         step.templateKey !== undefined ||
-        this.hasTaskFilterPayload(step.filterPayload)
+        this.hasTaskFilterPayload(step.filterPayload) ||
+        step.dedupeScope !== undefined
       ) {
         throw new BadRequestException(
-          '手动步骤不能配置 eventCode、templateKey 或过滤条件',
+          '手动步骤不能配置 eventCode、templateKey、过滤条件或去重范围',
         )
-      }
-      if (step.progressMode === TaskStepProgressModeEnum.UNIQUE_COUNT) {
-        throw new BadRequestException('手动步骤当前不支持 UNIQUE_COUNT')
       }
     }
 
@@ -416,30 +404,9 @@ export abstract class TaskServiceSupport {
       ) {
         throw new BadRequestException('step.eventCode 与模板事件编码不一致')
       }
-      if (
-        supportedProgressModes &&
-        !supportedProgressModes.includes(step.progressMode)
-      ) {
-        throw new BadRequestException('当前模板不支持所选 progressMode')
+      if (step.dedupeScope !== undefined && !templateSupportsUniqueCounting) {
+        throw new BadRequestException('当前模板不支持按不同对象累计')
       }
-    }
-
-    if (step.progressMode === TaskStepProgressModeEnum.UNIQUE_COUNT) {
-      if (!step.uniqueDimensionKey?.trim()) {
-        throw new BadRequestException(
-          'UNIQUE_COUNT 步骤必须配置 uniqueDimensionKey',
-        )
-      }
-      if (!step.dedupeScope) {
-        throw new BadRequestException('UNIQUE_COUNT 步骤必须配置 dedupeScope')
-      }
-    } else if (
-      step.uniqueDimensionKey !== undefined ||
-      step.dedupeScope !== undefined
-    ) {
-      throw new BadRequestException(
-        '只有 UNIQUE_COUNT 步骤允许配置 uniqueDimensionKey 和 dedupeScope',
-      )
     }
   }
 
@@ -495,11 +462,10 @@ export abstract class TaskServiceSupport {
       description: taskRecord.description ?? undefined,
       cover: taskRecord.cover ?? undefined,
       sceneType: taskRecord.sceneType,
-      priority: taskRecord.priority,
+      sortOrder: taskRecord.sortOrder,
       claimMode: taskRecord.claimMode,
       completionPolicy: taskRecord.completionPolicy,
       repeatType: taskRecord.repeatType,
-      repeatTimezone: taskRecord.repeatTimezone ?? undefined,
       startAt: taskRecord.startAt,
       endAt: taskRecord.endAt,
       rewardItems: Array.isArray(taskRecord.rewardItems)

@@ -6,7 +6,6 @@ import { TaskNotificationService } from './task-notification.service'
 import {
   TaskClaimModeEnum,
   TaskRepeatCycleEnum,
-  TaskStepProgressModeEnum,
   TaskStepTriggerModeEnum,
 } from './task.constant'
 
@@ -20,7 +19,6 @@ describe('task execution cycle helpers', () => {
   it('builds weekly cycle key from the Monday of the configured week', () => {
     const task = {
       repeatType: TaskRepeatCycleEnum.WEEKLY,
-      repeatTimezone: 'Asia/Shanghai',
     } as never
 
     const cycleKey = (
@@ -35,7 +33,6 @@ describe('task execution cycle helpers', () => {
   it('expires daily instances at the next natural-day boundary', () => {
     const task = {
       repeatType: TaskRepeatCycleEnum.DAILY,
-      repeatTimezone: 'Asia/Shanghai',
       endAt: null,
     } as never
 
@@ -51,7 +48,6 @@ describe('task execution cycle helpers', () => {
   it('caps cycle expiration by task endAt when endAt is earlier', () => {
     const task = {
       repeatType: TaskRepeatCycleEnum.DAILY,
-      repeatTimezone: 'Asia/Shanghai',
       endAt: new Date('2026-04-22T12:00:00.000Z'),
     } as never
 
@@ -62,6 +58,37 @@ describe('task execution cycle helpers', () => {
     ).buildTaskExpiredAt(task, new Date('2026-04-22T08:00:00.000Z'))
 
     expect(expiredAt?.toISOString()).toBe('2026-04-22T12:00:00.000Z')
+  })
+
+  it('ignores legacy repeatTimezone when building cycle keys', () => {
+    const task = {
+      repeatType: TaskRepeatCycleEnum.DAILY,
+      repeatTimezone: 'America/Los_Angeles',
+    } as never
+
+    const cycleKey = (
+      service as unknown as {
+        buildTaskCycleKey: (task: unknown, now: Date) => string
+      }
+    ).buildTaskCycleKey(task, new Date('2026-04-22T16:30:00.000Z'))
+
+    expect(cycleKey).toBe('2026-04-23')
+  })
+
+  it('ignores legacy repeatTimezone when calculating expiration', () => {
+    const task = {
+      repeatType: TaskRepeatCycleEnum.DAILY,
+      repeatTimezone: 'America/Los_Angeles',
+      endAt: null,
+    } as never
+
+    const expiredAt = (
+      service as unknown as {
+        buildTaskExpiredAt: (task: unknown, now: Date) => Date | null
+      }
+    ).buildTaskExpiredAt(task, new Date('2026-04-22T16:30:00.000Z'))
+
+    expect(expiredAt?.toISOString()).toBe('2026-04-23T16:00:00.000Z')
   })
 })
 
@@ -77,9 +104,9 @@ describe('task template contract hard cutover', () => {
             label: '漫画作品浏览',
             implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
             isSelectable: true,
-            supportedProgressModes: [TaskStepProgressModeEnum.COUNT],
             targetEntityType: 'comic_work',
-            availableUniqueDimensions: [],
+            supportsUniqueCounting: false,
+            uniqueDimension: undefined,
             availableFilterFields: [],
             warningHints: [],
           },
@@ -96,9 +123,8 @@ describe('task template contract hard cutover', () => {
           label: '漫画作品浏览',
           implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
           isSelectable: true,
-          supportedProgressModes: [TaskStepProgressModeEnum.COUNT],
           targetEntityType: 'comic_work',
-          availableUniqueDimensions: [],
+          supportsUniqueCounting: false,
           availableFilterFields: [],
           warningHints: [],
         },
@@ -273,13 +299,11 @@ describe('task manual execution hard cutover', () => {
         id: 11,
         claimMode: TaskClaimModeEnum.MANUAL,
         repeatType: TaskRepeatCycleEnum.ONCE,
-        repeatTimezone: 'Asia/Shanghai',
         rewardItems: null,
       } as never)
     jest.spyOn(service as never, 'getSingleTaskStepOrThrow').mockResolvedValue({
       id: 601,
       triggerMode: TaskStepTriggerModeEnum.MANUAL,
-      progressMode: TaskStepProgressModeEnum.ONCE,
       targetValue: 1,
     } as never)
     tx.query.taskInstance.findFirst.mockResolvedValue({
@@ -323,5 +347,58 @@ describe('task reminder payload hard cutover', () => {
       },
     })
     expect(event.context?.payload).not.toHaveProperty('reminder.assignmentId')
+  })
+})
+
+describe('task available list hard cutover', () => {
+  it('orders candidate tasks by sortOrder then id', async () => {
+    const schema = {
+      taskDefinition: {
+        deletedAt: Symbol('deletedAt'),
+        status: Symbol('status'),
+        claimMode: Symbol('claimMode'),
+        startAt: Symbol('startAt'),
+        endAt: Symbol('endAt'),
+        sceneType: Symbol('sceneType'),
+        sortOrder: Symbol('sortOrder'),
+        id: Symbol('id'),
+      },
+    }
+    const orderBy = jest.fn().mockResolvedValue([])
+    const where = jest.fn(() => ({ orderBy }))
+    const from = jest.fn(() => ({ where }))
+    const select = jest.fn(() => ({ from }))
+    const drizzle = {
+      schema,
+      db: { select },
+      buildPage: jest.fn().mockReturnValue({
+        pageIndex: 1,
+        pageSize: 20,
+        limit: 20,
+        offset: 0,
+      }),
+    }
+    const service = new TaskExecutionService(
+      drizzle as never,
+      {} as never,
+      {} as never,
+    )
+    ;(service as never as { filterClaimableTaskDefinitionsForUser: jest.Mock })
+      .filterClaimableTaskDefinitionsForUser = jest.fn().mockResolvedValue([])
+    ;(service as never as { getTaskStepSummaryMap: jest.Mock })
+      .getTaskStepSummaryMap = jest.fn().mockResolvedValue(new Map())
+
+    await expect(service.getAvailableTasks({} as never, 1001)).resolves.toEqual(
+      {
+        list: [],
+        total: 0,
+        pageIndex: 1,
+        pageSize: 20,
+      },
+    )
+    expect(orderBy).toHaveBeenCalledWith(
+      schema.taskDefinition.sortOrder,
+      schema.taskDefinition.id,
+    )
   })
 })

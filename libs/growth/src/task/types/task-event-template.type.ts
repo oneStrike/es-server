@@ -6,7 +6,6 @@ import type {
   GrowthRuleTypeEnum,
   GrowthRuleTypeKey,
 } from '@libs/growth/growth-rule.constant'
-import type { TaskStepProgressModeEnum } from '../task.constant'
 
 /**
  * 任务模板可配置的过滤字段定义。
@@ -25,18 +24,16 @@ export interface TaskEventTemplateFilterField {
 }
 
 /**
- * 任务模板支持的唯一维度定义。
+ * 任务模板内部使用的唯一维度定义。
  *
- * 每个维度都必须能映射到确定的提取来源，避免执行层临时猜字段。
+ * 仅供执行层从命中事件里提取稳定维度值，不直接暴露给后台表单合同。
  */
 export interface TaskEventTemplateUniqueDimension {
   /** 唯一维度稳定键。 */
   key: string
-  /** 运营侧可见名称。 */
-  label: string
-  /** 唯一维度来源。 */
+  /** 唯一维度值来源。 */
   source: 'target_id' | 'context_key'
-  /** 当来源为 `context_key` 时使用的上下文字段名。 */
+  /** 当来源为上下文字段时使用的 context key。 */
   contextKey?: string
 }
 
@@ -56,14 +53,12 @@ export interface TaskEventTemplate {
   implStatus: EventDefinitionImplStatusEnum
   /** 当前是否允许正式创建为生效任务。 */
   isSelectable: boolean
-  /** 支持的步骤进度模式列表。 */
-  supportedProgressModes: TaskStepProgressModeEnum[]
   /** 命中的目标实体类型。 */
   targetEntityType: EventDefinitionEntityTypeEnum
-  /** 默认唯一维度键。 */
-  defaultUniqueDimensionKey?: string
-  /** 可选唯一维度列表。 */
-  availableUniqueDimensions: TaskEventTemplateUniqueDimension[]
+  /** 当前模板是否支持按不同对象累计。 */
+  supportsUniqueCounting: boolean
+  /** 模板内部使用的默认唯一维度。 */
+  uniqueDimension?: TaskEventTemplateUniqueDimension
   /** 可选过滤字段列表。 */
   availableFilterFields: TaskEventTemplateFilterField[]
   /** 需要在后台显式展示的提醒文案。 */

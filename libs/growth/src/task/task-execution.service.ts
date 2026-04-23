@@ -58,7 +58,6 @@ import {
   TaskInstanceStatusEnum,
   TaskRepeatCycleEnum,
   TaskStepDedupeScopeEnum,
-  TaskStepProgressModeEnum,
   TaskStepTriggerModeEnum,
 } from './task.constant'
 import { TaskServiceSupport } from './task.service.support'
@@ -101,10 +100,7 @@ export class TaskExecutionService extends TaskServiceSupport {
             : undefined,
         ),
       )
-      .orderBy(
-        desc(this.taskDefinitionTable.priority),
-        desc(this.taskDefinitionTable.createdAt),
-      )
+      .orderBy(this.taskDefinitionTable.sortOrder, this.taskDefinitionTable.id)
 
     const filtered = await this.filterClaimableTaskDefinitionsForUser(
       rows,
@@ -444,8 +440,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         instance.id,
         step,
       )
-      const canCompleteImmediately =
-        step.progressMode === TaskStepProgressModeEnum.ONCE
+      const canCompleteImmediately = step.targetValue === 1
 
       if (
         !canCompleteImmediately &&
@@ -988,10 +983,9 @@ export class TaskExecutionService extends TaskServiceSupport {
 
       let dimension: TaskUniqueDimensionResolvedValue | null = null
 
-      if (params.step.progressMode === TaskStepProgressModeEnum.UNIQUE_COUNT) {
+      if (params.step.dedupeScope) {
         dimension = this.taskEventTemplateRegistry.resolveUniqueDimensionValue(
           params.step.templateKey ?? '',
-          params.step.uniqueDimensionKey ?? '',
           params.targetId,
           params.context,
         )
@@ -1088,10 +1082,10 @@ export class TaskExecutionService extends TaskServiceSupport {
           : await this.createOrGetTaskInstanceStep(tx, instance.id, params.step)
       const instanceStep = resolvedInstanceStep.instanceStep
 
-      const nextCurrentValue =
-        params.step.progressMode === TaskStepProgressModeEnum.ONCE
-          ? 1
-          : Math.min(instanceStep.targetValue, instanceStep.currentValue + 1)
+      const nextCurrentValue = Math.min(
+        instanceStep.targetValue,
+        instanceStep.currentValue + 1,
+      )
       const nextStepStatus =
         nextCurrentValue >= instanceStep.targetValue
           ? TaskInstanceStatusEnum.COMPLETED
@@ -1145,10 +1139,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         afterValue: nextCurrentValue,
         targetType: params.targetType,
         targetId: params.targetId,
-        dimensionKey:
-          params.step.progressMode === TaskStepProgressModeEnum.UNIQUE_COUNT
-            ? (params.step.uniqueDimensionKey ?? null)
-            : null,
+        dimensionKey: dimension?.key ?? null,
         dimensionValue: dimension?.value ?? null,
         occurredAt: params.occurredAt,
         context: params.context,
@@ -1417,7 +1408,7 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 计算任务周期键。
   private buildTaskCycleKey(task: TaskDefinitionSelect, now: Date) {
-    const dateParts = this.getTaskCycleDateParts(task.repeatTimezone, now)
+    const dateParts = this.getTaskCycleDateParts(now)
 
     if (task.repeatType === TaskRepeatCycleEnum.DAILY) {
       return `${dateParts.year}-${dateParts.month}-${dateParts.date}`
@@ -1435,12 +1426,9 @@ export class TaskExecutionService extends TaskServiceSupport {
     return 'once'
   }
 
-  // 按任务时区提取周期切分所需的日期片段。
-  private getTaskCycleDateParts(
-    repeatTimezone: string | null,
-    value: Date,
-  ): TaskCycleDateParts {
-    const timeZone = repeatTimezone?.trim() || getAppTimeZone()
+  // 按应用时区提取周期切分所需的日期片段。
+  private getTaskCycleDateParts(value: Date): TaskCycleDateParts {
+    const timeZone = getAppTimeZone()
     const anchor = dayjs(value).tz(timeZone)
     const year = anchor.format('YYYY')
     const month = anchor.format('MM')
@@ -1471,7 +1459,7 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 计算任务实例过期时间。
   private buildTaskExpiredAt(task: TaskDefinitionSelect, now: Date) {
-    const timeZone = task.repeatTimezone?.trim() || getAppTimeZone()
+    const timeZone = getAppTimeZone()
     const anchor = dayjs(now).tz(timeZone)
     let cycleExpiredAt: Date | null = null
 

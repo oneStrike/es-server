@@ -49,12 +49,10 @@ export interface TaskStepWriteInput {
   title: string
   description?: string
   triggerMode: TaskStepSelect['triggerMode']
-  progressMode: TaskStepSelect['progressMode']
   eventCode?: TaskStepSelect['eventCode']
   targetValue: TaskStepSelect['targetValue']
   templateKey?: TaskStepSelect['templateKey']
   filterPayload?: TaskStepSelect['filterPayload']
-  uniqueDimensionKey?: TaskStepSelect['uniqueDimensionKey']
   dedupeScope?: TaskStepSelect['dedupeScope']
 }
 
@@ -85,11 +83,9 @@ export interface TaskStepSummaryView {
   description?: string
   stepNo: TaskStepSelect['stepNo']
   triggerMode: TaskStepSelect['triggerMode']
-  progressMode: TaskStepSelect['progressMode']
   targetValue: TaskStepSelect['targetValue']
   templateKey?: string
   filters?: TaskStepFilterValueView[]
-  uniqueDimensionKey?: string
   dedupeScope?: number
 }
 

@@ -17,7 +17,6 @@ import {
 } from '@libs/growth/event-definition/event-definition.constant'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { TaskStepProgressModeEnum } from './task.constant'
 
 /**
  * Task 侧事件模板注册表。
@@ -152,14 +151,11 @@ export class TaskEventTemplateRegistry {
   // 按模板定义提取唯一维度值。
   resolveUniqueDimensionValue(
     templateKey: string,
-    uniqueDimensionKey: string,
     targetId: number,
     context?: EventEnvelopeContext,
   ): TaskUniqueDimensionResolvedValue | null {
     const template = this.getTemplateByKey(templateKey)
-    const dimension = template?.availableUniqueDimensions.find(
-      (item) => item.key === uniqueDimensionKey,
-    )
+    const dimension = template?.uniqueDimension
 
     if (!template || !dimension) {
       return null
@@ -193,7 +189,7 @@ export class TaskEventTemplateRegistry {
 
   // 把底层事件定义映射成 task 专属模板。
   private toTaskEventTemplate(definition: EventDefinition): TaskEventTemplate {
-    const uniqueDimensions = this.resolveTemplateUniqueDimensions(
+    const uniqueDimension = this.resolveTemplateUniqueDimension(
       definition.targetType,
     )
     return {
@@ -203,12 +199,9 @@ export class TaskEventTemplateRegistry {
       implStatus: definition.implStatus,
       isSelectable:
         definition.implStatus === EventDefinitionImplStatusEnum.IMPLEMENTED,
-      supportedProgressModes: this.resolveSupportedProgressModes(
-        definition.targetType,
-      ),
       targetEntityType: definition.targetType,
-      defaultUniqueDimensionKey: uniqueDimensions[0]?.key,
-      availableUniqueDimensions: uniqueDimensions,
+      supportsUniqueCounting: Boolean(uniqueDimension),
+      uniqueDimension,
       availableFilterFields: this.resolveTemplateFilterFields(
         definition.targetType,
       ),
@@ -216,35 +209,18 @@ export class TaskEventTemplateRegistry {
     }
   }
 
-  // 解析模板支持的进度模式。
-  private resolveSupportedProgressModes(
+  // 解析模板支持的默认唯一维度。
+  private resolveTemplateUniqueDimension(
     targetType: EventDefinitionEntityTypeEnum,
-  ) {
-    if (this.supportsUniqueCount(targetType)) {
-      return [
-        TaskStepProgressModeEnum.ONCE,
-        TaskStepProgressModeEnum.COUNT,
-        TaskStepProgressModeEnum.UNIQUE_COUNT,
-      ]
-    }
-    return [TaskStepProgressModeEnum.ONCE, TaskStepProgressModeEnum.COUNT]
-  }
-
-  // 解析模板支持的唯一维度。
-  private resolveTemplateUniqueDimensions(
-    targetType: EventDefinitionEntityTypeEnum,
-  ): TaskEventTemplateUniqueDimension[] {
+  ): TaskEventTemplateUniqueDimension | undefined {
     if (!this.supportsUniqueCount(targetType)) {
-      return []
+      return undefined
     }
 
-    return [
-      {
-        key: 'object_id',
-        label: '目标对象 ID',
-        source: 'target_id',
-      },
-    ]
+    return {
+      key: 'object_id',
+      source: 'target_id',
+    }
   }
 
   // 解析模板支持的过滤字段。
@@ -273,7 +249,7 @@ export class TaskEventTemplateRegistry {
       hints.push('当前事件尚未接通正式 producer，不能创建为生效任务。')
     }
     if (this.supportsUniqueCount(definition.targetType)) {
-      hints.push('若选择“按唯一对象累计”，必须同时配置唯一维度与去重范围。')
+      hints.push('若启用按不同对象累计，将按模板默认唯一维度自动去重。')
     }
 
     return hints

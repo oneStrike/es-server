@@ -13,7 +13,17 @@ import { NumberProperty } from '@libs/platform/decorators/validate/number-proper
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { BaseDto } from '@libs/platform/dto/base.dto'
 import { PickType } from '@nestjs/swagger'
-import { TaskClaimModeEnum, TaskCompletionPolicyEnum, TaskDefinitionStatusEnum, TaskInstanceStatusEnum, TaskRepeatCycleEnum, TaskStepDedupeScopeEnum, TaskStepProgressModeEnum, TaskStepTriggerModeEnum, TaskTypeEnum, TaskVisibleStatusEnum } from '../task.constant'
+import {
+  TaskClaimModeEnum,
+  TaskCompletionPolicyEnum,
+  TaskDefinitionStatusEnum,
+  TaskInstanceStatusEnum,
+  TaskRepeatCycleEnum,
+  TaskStepDedupeScopeEnum,
+  TaskStepTriggerModeEnum,
+  TaskTypeEnum,
+  TaskVisibleStatusEnum,
+} from '../task.constant'
 
 import { TaskTemplateFilterValueDto } from './task-template.dto'
 
@@ -63,10 +73,10 @@ export class BaseTaskDefinitionDto extends BaseDto {
   status!: TaskDefinitionStatusEnum
 
   @NumberProperty({
-    description: '任务优先级（0=默认优先级，数值越大越靠前）',
-    example: 10,
+    description: '排序值（0=默认排序，数值越小越靠前）',
+    example: 1,
   })
-  priority!: number
+  sortOrder!: number
 
   @EnumProperty({
     description: '领取方式（1=自动领取；2=手动领取）',
@@ -89,14 +99,6 @@ export class BaseTaskDefinitionDto extends BaseDto {
   })
   repeatType!: TaskRepeatCycleEnum
 
-  @StringProperty({
-    description: '重复周期时区',
-    example: 'Asia/Shanghai',
-    required: false,
-    maxLength: 64,
-  })
-  repeatTimezone?: string
-
   @DateProperty({
     description: '生效开始时间',
     example: '2026-04-22T00:00:00.000Z',
@@ -110,14 +112,6 @@ export class BaseTaskDefinitionDto extends BaseDto {
     required: false,
   })
   endAt?: Date | null
-
-  @StringProperty({
-    description: '受众分群键',
-    example: 'new_user_segment',
-    required: false,
-    maxLength: 80,
-  })
-  audienceSegmentId?: string
 
   @ArrayProperty({
     description: '任务完成后统一发放的奖励项列表',
@@ -164,15 +158,8 @@ export class TaskStepSummaryDto extends BaseDto {
   })
   triggerMode!: TaskStepTriggerModeEnum
 
-  @EnumProperty({
-    description: '步骤进度模式（1=一次完成；2=普通累计；3=按唯一对象累计）',
-    example: TaskStepProgressModeEnum.UNIQUE_COUNT,
-    enum: TaskStepProgressModeEnum,
-  })
-  progressMode!: TaskStepProgressModeEnum
-
   @NumberProperty({
-    description: '目标值',
+    description: '完成次数',
     example: 5,
   })
   targetValue!: number
@@ -192,14 +179,6 @@ export class TaskStepSummaryDto extends BaseDto {
     required: false,
   })
   filters?: TaskTemplateFilterValueDto[] | null
-
-  @StringProperty({
-    description: '唯一维度键',
-    example: 'object_id',
-    required: false,
-    maxLength: 80,
-  })
-  uniqueDimensionKey?: string
 
   @EnumProperty({
     description: '去重范围（1=按周期唯一；2=终身唯一）',
@@ -287,14 +266,12 @@ export class AdminTaskDefinitionListItemDto extends PickType(
     'cover',
     'sceneType',
     'status',
-    'priority',
+    'sortOrder',
     'claimMode',
     'completionPolicy',
     'repeatType',
-    'repeatTimezone',
     'startAt',
     'endAt',
-    'audienceSegmentId',
     'rewardItems',
   ] as const,
 ) {

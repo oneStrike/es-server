@@ -33,18 +33,14 @@ export const taskStep = pgTable(
     stepNo: smallint().notNull(),
     /** 触发方式。1=手动；2=事件驱动。 */
     triggerMode: smallint().notNull(),
-    /** 进度模式。1=一次完成；2=普通累计；3=按唯一对象累计。 */
-    progressMode: smallint().notNull(),
     /** 目标事件编码；手动步骤为空。 */
     eventCode: integer(),
-    /** 目标值；必须为大于 0 的整数。 */
+    /** 完成次数；必须为大于 0 的整数。 */
     targetValue: integer().default(1).notNull(),
     /** 事件模板键。 */
     templateKey: varchar({ length: 80 }),
     /** 步骤过滤配置；只允许由模板层生成的结构写入。 */
     filterPayload: jsonb(),
-    /** 唯一维度键；仅 `unique_count` 步骤使用。 */
-    uniqueDimensionKey: varchar({ length: 80 }),
     /** 去重范围。1=按周期唯一；2=终身唯一。 */
     dedupeScope: smallint(),
     /** 创建时间。 */
@@ -72,10 +68,6 @@ export const taskStep = pgTable(
       'task_step_trigger_mode_valid_chk',
       sql`${table.triggerMode} in (1, 2)`,
     ),
-    check(
-      'task_step_progress_mode_valid_chk',
-      sql`${table.progressMode} in (1, 2, 3)`,
-    ),
     check('task_step_target_value_positive_chk', sql`${table.targetValue} > 0`),
     check(
       'task_step_event_code_positive_chk',
@@ -89,10 +81,6 @@ export const taskStep = pgTable(
     check(
       'task_step_template_key_not_blank_chk',
       sql`${table.templateKey} is null or btrim(${table.templateKey}) <> ''`,
-    ),
-    check(
-      'task_step_unique_dimension_key_not_blank_chk',
-      sql`${table.uniqueDimensionKey} is null or btrim(${table.uniqueDimensionKey}) <> ''`,
     ),
     check(
       'task_step_dedupe_scope_valid_chk',

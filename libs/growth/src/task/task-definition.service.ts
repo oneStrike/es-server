@@ -1,5 +1,6 @@
 import type { TaskStepSelect } from '@db/schema'
 import type { TaskStepWriteInput } from './types/task.type'
+import { randomBytes } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -15,7 +16,6 @@ import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import {
   TaskCompletionPolicyEnum,
   TaskRepeatCycleEnum,
-  TaskStepProgressModeEnum,
   TaskStepTriggerModeEnum,
 } from './task.constant'
 import { TaskServiceSupport } from './task.service.support'
@@ -41,8 +41,10 @@ export class TaskDefinitionService extends TaskServiceSupport {
     adminUserId: number,
   ) {
     this.ensureTaskDefinitionWriteInput(input)
+    const code = this.buildTaskDefinitionCode(input.sceneType)
+    const taskTitle = input.title
 
-    const normalizedStep = this.buildTaskStepWriteInput(input.step)
+    const normalizedStep = this.buildTaskStepWriteInput(input.step, taskTitle)
     const template = normalizedStep.templateKey
       ? this.taskEventTemplateRegistry.getTemplateByKey(
           normalizedStep.templateKey,
@@ -52,7 +54,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
       normalizedStep,
       template?.isSelectable ?? false,
       template?.eventCode,
-      template?.supportedProgressModes,
+      template?.supportsUniqueCounting,
     )
 
     await this.drizzle.withErrorHandling(
@@ -61,21 +63,19 @@ export class TaskDefinitionService extends TaskServiceSupport {
           const [taskDefinition] = await tx
             .insert(this.taskDefinitionTable)
             .values({
-              code: input.code,
+              code,
               title: input.title,
               description: input.description,
               cover: input.cover,
               sceneType: input.sceneType,
               status: input.status,
-              priority: input.priority,
+              sortOrder: input.sortOrder,
               claimMode: input.claimMode,
               completionPolicy:
                 input.completionPolicy ?? TaskCompletionPolicyEnum.ALL_STEPS,
               repeatType: input.repeatType ?? TaskRepeatCycleEnum.ONCE,
-              repeatTimezone: input.repeatTimezone,
               startAt: input.startAt,
               endAt: input.endAt,
-              audienceSegmentId: input.audienceSegmentId,
               rewardItems: input.rewardItems ?? null,
               createdById: adminUserId,
               updatedById: adminUserId,
@@ -89,12 +89,10 @@ export class TaskDefinitionService extends TaskServiceSupport {
             description: normalizedStep.description,
             stepNo: 1,
             triggerMode: normalizedStep.triggerMode,
-            progressMode: normalizedStep.progressMode,
             eventCode: normalizedStep.eventCode ?? null,
             targetValue: normalizedStep.targetValue,
             templateKey: normalizedStep.templateKey ?? null,
             filterPayload: normalizedStep.filterPayload ?? null,
-            uniqueDimensionKey: normalizedStep.uniqueDimensionKey ?? null,
             dedupeScope: normalizedStep.dedupeScope ?? null,
           })
         }),
@@ -174,6 +172,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
     adminUserId: number,
   ) {
     const existing = await this.getTaskDefinitionRecordOrThrow(input.id)
+    const nextTaskTitle = input.title ?? existing.title
     const currentStep = await this.db.query.taskStep.findFirst({
       where: {
         taskId: input.id,
@@ -191,7 +190,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
     this.ensureTaskDefinitionWriteInput(input)
 
     const nextStep: TaskStepWriteInput | null = input.step
-      ? this.buildTaskStepWriteInput(input.step, currentStep)
+      ? this.buildTaskStepWriteInput(input.step, nextTaskTitle, currentStep)
       : null
 
     const template = nextStep?.templateKey
@@ -202,7 +201,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
         nextStep,
         template?.isSelectable ?? false,
         template?.eventCode,
-        template?.supportedProgressModes,
+        template?.supportsUniqueCounting,
       )
     }
 
@@ -212,7 +211,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
           await tx
             .update(this.taskDefinitionTable)
             .set({
-              code: input.code ?? existing.code,
+              code: existing.code,
               title: input.title ?? existing.title,
               description:
                 input.description !== undefined
@@ -221,22 +220,14 @@ export class TaskDefinitionService extends TaskServiceSupport {
               cover: input.cover !== undefined ? input.cover : existing.cover,
               sceneType: input.sceneType ?? existing.sceneType,
               status: input.status ?? existing.status,
-              priority: input.priority ?? existing.priority,
+              sortOrder: input.sortOrder ?? existing.sortOrder,
               claimMode: input.claimMode ?? existing.claimMode,
               completionPolicy:
                 input.completionPolicy ?? existing.completionPolicy,
               repeatType: input.repeatType ?? existing.repeatType,
-              repeatTimezone:
-                input.repeatTimezone !== undefined
-                  ? input.repeatTimezone
-                  : existing.repeatTimezone,
               startAt:
                 input.startAt !== undefined ? input.startAt : existing.startAt,
               endAt: input.endAt !== undefined ? input.endAt : existing.endAt,
-              audienceSegmentId:
-                input.audienceSegmentId !== undefined
-                  ? input.audienceSegmentId
-                  : existing.audienceSegmentId,
               rewardItems:
                 input.rewardItems !== undefined
                   ? input.rewardItems
@@ -249,16 +240,26 @@ export class TaskDefinitionService extends TaskServiceSupport {
             await tx
               .update(this.taskStepTable)
               .set({
-                title: nextStep.title,
+                title: nextTaskTitle,
                 description: nextStep.description,
                 triggerMode: nextStep.triggerMode,
-                progressMode: nextStep.progressMode,
                 eventCode: nextStep.eventCode ?? null,
                 targetValue: nextStep.targetValue,
                 templateKey: nextStep.templateKey ?? null,
                 filterPayload: nextStep.filterPayload ?? null,
-                uniqueDimensionKey: nextStep.uniqueDimensionKey ?? null,
                 dedupeScope: nextStep.dedupeScope ?? null,
+              })
+              .where(
+                and(
+                  eq(this.taskStepTable.taskId, input.id),
+                  eq(this.taskStepTable.stepNo, 1),
+                ),
+              )
+          } else if (nextTaskTitle !== currentStep.title) {
+            await tx
+              .update(this.taskStepTable)
+              .set({
+                title: nextTaskTitle,
               })
               .where(
                 and(
@@ -307,16 +308,13 @@ export class TaskDefinitionService extends TaskServiceSupport {
   // 把外部单步骤写入合同归一化成内部持久化视图。
   private buildTaskStepWriteInput(
     input: Partial<CreateTaskStepDto>,
+    taskTitle: string,
     currentStep?: TaskStepSelect,
   ): TaskStepWriteInput {
     const triggerMode =
       input.triggerMode ??
       currentStep?.triggerMode ??
       TaskStepTriggerModeEnum.MANUAL
-    const progressMode =
-      input.progressMode ??
-      currentStep?.progressMode ??
-      TaskStepProgressModeEnum.ONCE
     let templateKey: string | undefined
 
     if (triggerMode !== TaskStepTriggerModeEnum.MANUAL) {
@@ -355,16 +353,9 @@ export class TaskDefinitionService extends TaskServiceSupport {
           filters,
         )
       : null
-    let uniqueDimensionKey: string | undefined
     let dedupeScope: number | undefined
 
-    if (progressMode === TaskStepProgressModeEnum.UNIQUE_COUNT) {
-      if (input.uniqueDimensionKey !== undefined) {
-        uniqueDimensionKey = input.uniqueDimensionKey ?? undefined
-      } else {
-        uniqueDimensionKey = currentStep?.uniqueDimensionKey ?? undefined
-      }
-
+    if (triggerMode === TaskStepTriggerModeEnum.EVENT) {
       if (input.dedupeScope !== undefined) {
         dedupeScope = input.dedupeScope ?? undefined
       } else {
@@ -373,16 +364,40 @@ export class TaskDefinitionService extends TaskServiceSupport {
     }
 
     return {
-      title: input.title ?? currentStep?.title ?? '',
+      title: taskTitle,
       description,
       triggerMode,
-      progressMode,
       eventCode: template?.eventCode,
       targetValue: input.targetValue ?? currentStep?.targetValue ?? 1,
       templateKey,
       filterPayload,
-      uniqueDimensionKey,
       dedupeScope,
+    }
+  }
+
+  // 生成任务稳定编码，避免由管理端维护业务编码。
+  private buildTaskDefinitionCode(sceneType: number) {
+    const scenePrefix = this.resolveTaskSceneCodePrefix(sceneType)
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:TZ.]/g, '')
+      .slice(0, 14)
+    const suffix = randomBytes(3).toString('hex')
+
+    return `task-${scenePrefix}-${timestamp}-${suffix}`
+  }
+
+  // 根据任务场景生成稳定编码前缀。
+  private resolveTaskSceneCodePrefix(sceneType: number) {
+    switch (sceneType) {
+      case 1:
+        return 'onboarding'
+      case 2:
+        return 'daily'
+      case 4:
+        return 'campaign'
+      default:
+        return 'task'
     }
   }
 }

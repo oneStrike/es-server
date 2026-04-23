@@ -21,7 +21,7 @@ export const taskDefinition = pgTable(
   {
     /** 任务头主键。 */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    /** 任务稳定编码。 */
+    /** 任务稳定编码；由服务端自动生成。 */
     code: varchar({ length: 50 }).notNull(),
     /** 任务标题。 */
     title: varchar({ length: 200 }).notNull(),
@@ -33,22 +33,18 @@ export const taskDefinition = pgTable(
     sceneType: smallint().notNull(),
     /** 任务状态。0=草稿；1=生效中；2=已暂停；3=已归档。 */
     status: smallint().notNull(),
-    /** 任务优先级。0=默认优先级，数值越大越靠前。 */
-    priority: smallint().default(0).notNull(),
+    /** 排序值。0=默认排序，数值越小越靠前。 */
+    sortOrder: smallint().default(0).notNull(),
     /** 领取方式。1=自动领取；2=手动领取。 */
     claimMode: smallint().notNull(),
     /** 完成聚合策略。1=所有步骤完成即完成。 */
     completionPolicy: smallint().default(1).notNull(),
     /** 重复周期类型。0=一次性；1=每日；2=每周；3=每月。 */
     repeatType: smallint().default(0).notNull(),
-    /** 周期切分使用的 IANA 时区标识。 */
-    repeatTimezone: varchar({ length: 64 }),
     /** 生效开始时间。 */
     startAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 生效结束时间。 */
     endAt: timestamp({ withTimezone: true, precision: 6 }),
-    /** 受众分群键；开放值，由上层配置系统约束。 */
-    audienceSegmentId: varchar({ length: 80 }),
     /** 完成任务后统一发放的奖励项列表。 */
     rewardItems: jsonb(),
     /** 创建人 ID。 */
@@ -73,8 +69,8 @@ export const taskDefinition = pgTable(
     index('task_definition_status_idx').on(table.status),
     /** 场景类型索引。 */
     index('task_definition_scene_type_idx').on(table.sceneType),
-    /** 优先级索引。 */
-    index('task_definition_priority_idx').on(table.priority),
+    /** 排序值索引。 */
+    index('task_definition_sort_order_idx').on(table.sortOrder),
     /** 生效开始时间索引。 */
     index('task_definition_start_at_idx').on(table.startAt),
     /** 生效结束时间索引。 */
@@ -90,8 +86,8 @@ export const taskDefinition = pgTable(
       sql`${table.status} in (0, 1, 2, 3)`,
     ),
     check(
-      'task_definition_priority_non_negative_chk',
-      sql`${table.priority} >= 0`,
+      'task_definition_sort_order_non_negative_chk',
+      sql`${table.sortOrder} >= 0`,
     ),
     check(
       'task_definition_claim_mode_valid_chk',
@@ -112,14 +108,6 @@ export const taskDefinition = pgTable(
     check(
       'task_definition_title_not_blank_chk',
       sql`btrim(${table.title}) <> ''`,
-    ),
-    check(
-      'task_definition_repeat_timezone_not_blank_chk',
-      sql`${table.repeatTimezone} is null or btrim(${table.repeatTimezone}) <> ''`,
-    ),
-    check(
-      'task_definition_audience_segment_id_not_blank_chk',
-      sql`${table.audienceSegmentId} is null or btrim(${table.audienceSegmentId}) <> ''`,
     ),
     check(
       'task_definition_publish_window_valid_chk',

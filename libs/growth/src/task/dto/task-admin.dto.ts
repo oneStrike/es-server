@@ -14,10 +14,12 @@ export class CreateTaskStepDto extends OmitType(TaskStepSummaryDto, [
   ...OMIT_BASE_FIELDS,
   'stepKey',
   'stepNo',
+  'title',
 ] as const) {}
 
 export class CreateTaskDefinitionDto extends OmitType(BaseTaskDefinitionDto, [
   ...OMIT_BASE_FIELDS,
+  'code',
 ] as const) {
   @NestedProperty({
     description: '唯一步骤定义',
