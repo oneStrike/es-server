@@ -1,4 +1,4 @@
-import type { DrizzleService } from '@db/core';
+import type { DrizzleService } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateTaskDefinitionDto,
@@ -29,6 +29,7 @@ import {
   TaskClaimModeEnum,
   TaskCompletionPolicyEnum,
   TaskDefinitionStatusEnum,
+  TaskInstanceStatusEnum,
   TaskRepeatCycleEnum,
   TaskStepProgressModeEnum,
   TaskStepTriggerModeEnum,
@@ -462,25 +463,24 @@ export abstract class TaskServiceSupport {
 
   // 统一映射用户可见状态。
   protected resolveTaskVisibleStatus(params: TaskVisibleStatusInput) {
-    if (params.status === 3) {
-      return TaskVisibleStatusEnum.EXPIRED
+    switch (params.status) {
+      case TaskInstanceStatusEnum.EXPIRED:
+        return TaskVisibleStatusEnum.EXPIRED
+      case TaskInstanceStatusEnum.IN_PROGRESS:
+        return TaskVisibleStatusEnum.IN_PROGRESS
+      case TaskInstanceStatusEnum.PENDING:
+        return TaskVisibleStatusEnum.CLAIMED
+      case TaskInstanceStatusEnum.COMPLETED:
+        if (params.rewardApplicable !== 1) {
+          return TaskVisibleStatusEnum.COMPLETED
+        }
+        return params.rewardSettlementStatus ===
+          GrowthRewardSettlementStatusEnum.SUCCESS
+          ? TaskVisibleStatusEnum.REWARD_GRANTED
+          : TaskVisibleStatusEnum.REWARD_PENDING
+      default:
+        return TaskVisibleStatusEnum.UNAVAILABLE
     }
-    if (params.status === 1) {
-      return TaskVisibleStatusEnum.IN_PROGRESS
-    }
-    if (params.status === 0) {
-      return TaskVisibleStatusEnum.CLAIMED
-    }
-    if (params.status === 2) {
-      if (params.rewardApplicable !== 1) {
-        return TaskVisibleStatusEnum.COMPLETED
-      }
-      return params.rewardSettlementStatus ===
-        GrowthRewardSettlementStatusEnum.SUCCESS
-        ? TaskVisibleStatusEnum.REWARD_GRANTED
-        : TaskVisibleStatusEnum.REWARD_PENDING
-    }
-    return TaskVisibleStatusEnum.UNAVAILABLE
   }
 
   // 映射 app 可领取任务卡片。
@@ -532,15 +532,20 @@ export abstract class TaskServiceSupport {
       !Array.isArray(filterPayload)
     ) {
       return Object.entries(filterPayload as Record<string, unknown>).map(
-        ([key, value]) => ({
-          key,
-          value:
-            typeof value === 'string'
-              ? value
-              : value === null || value === undefined
-                ? ''
-                : JSON.stringify(value),
-        }),
+        ([key, value]) => {
+          let normalizedValue = JSON.stringify(value)
+
+          if (typeof value === 'string') {
+            normalizedValue = value
+          } else if (value === null || value === undefined) {
+            normalizedValue = ''
+          }
+
+          return {
+            key,
+            value: normalizedValue,
+          }
+        },
       )
     }
 

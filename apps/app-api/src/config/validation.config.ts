@@ -2,9 +2,14 @@ import Joi from 'joi'
 
 export const appConfigValidationSchema = {
   /**
-   * 应用服务端口
+   * App API 服务端口
    */
-  APP_PORT: Joi.number().port().default(8080),
+  APP_API_PORT: Joi.number().port().default(8081),
+
+  /**
+   * 旧版通用端口变量，保留兼容。
+   */
+  APP_PORT: Joi.number().port(),
 
   /**
    * 应用名称

@@ -6,13 +6,14 @@ import { registerAs } from '@nestjs/config'
 export const AppConfigRegister = registerAs('app', (): AppConfigInterface => {
   const {
     APP_NAME = 'app-api',
-    APP_PORT = '8080',
+    APP_API_PORT,
+    APP_PORT,
     APP_VERSION = '1.0.0',
   } = process.env
   return {
     name: APP_NAME,
     version: APP_VERSION,
-    port: Number(APP_PORT),
+    port: Number(APP_API_PORT ?? APP_PORT ?? '8081'),
     globalApiPrefix: 'api',
     swaggerConfig: {
       enable: isDevelopment(),

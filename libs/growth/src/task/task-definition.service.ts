@@ -309,14 +309,24 @@ export class TaskDefinitionService extends TaskServiceSupport {
     input: Partial<CreateTaskStepDto>,
     currentStep?: TaskStepSelect,
   ): TaskStepWriteInput {
-    const triggerMode = input.triggerMode ?? currentStep?.triggerMode
-    const progressMode = input.progressMode ?? currentStep?.progressMode
-    const templateKey =
-      triggerMode === TaskStepTriggerModeEnum.MANUAL
-        ? undefined
-        : input.templateKey !== undefined
-          ? (input.templateKey ?? undefined)
-          : (currentStep?.templateKey ?? undefined)
+    const triggerMode =
+      input.triggerMode ??
+      currentStep?.triggerMode ??
+      TaskStepTriggerModeEnum.MANUAL
+    const progressMode =
+      input.progressMode ??
+      currentStep?.progressMode ??
+      TaskStepProgressModeEnum.ONCE
+    let templateKey: string | undefined
+
+    if (triggerMode !== TaskStepTriggerModeEnum.MANUAL) {
+      if (input.templateKey !== undefined) {
+        templateKey = input.templateKey ?? undefined
+      } else {
+        templateKey = currentStep?.templateKey ?? undefined
+      }
+    }
+
     const currentFilters = this.taskEventTemplateRegistry.buildFilterValues(
       currentStep?.templateKey ?? undefined,
       (currentStep?.filterPayload as
@@ -324,51 +334,55 @@ export class TaskDefinitionService extends TaskServiceSupport {
       | null
       | undefined) ?? undefined,
     )
-    const filters =
-      triggerMode === 1
-        ? []
-        : input.filters !== undefined
-          ? (input.filters ?? [])
-          : currentFilters
+    let filters = currentFilters
+
+    if (triggerMode === TaskStepTriggerModeEnum.MANUAL) {
+      filters = []
+    } else if (input.filters !== undefined) {
+      filters = input.filters ?? []
+    }
+
     const template = templateKey
       ? this.taskEventTemplateRegistry.getTemplateByKey(templateKey)
       : null
+    const description =
+      input.description !== undefined
+        ? input.description
+        : (currentStep?.description ?? undefined)
+    const filterPayload = templateKey
+      ? this.taskEventTemplateRegistry.normalizeFilterPayload(
+          templateKey,
+          filters,
+        )
+      : null
+    let uniqueDimensionKey: string | undefined
+    let dedupeScope: number | undefined
+
+    if (progressMode === TaskStepProgressModeEnum.UNIQUE_COUNT) {
+      if (input.uniqueDimensionKey !== undefined) {
+        uniqueDimensionKey = input.uniqueDimensionKey ?? undefined
+      } else {
+        uniqueDimensionKey = currentStep?.uniqueDimensionKey ?? undefined
+      }
+
+      if (input.dedupeScope !== undefined) {
+        dedupeScope = input.dedupeScope ?? undefined
+      } else {
+        dedupeScope = currentStep?.dedupeScope ?? undefined
+      }
+    }
 
     return {
       title: input.title ?? currentStep?.title ?? '',
-      description:
-        input.description !== undefined
-          ? input.description
-          : (currentStep?.description ?? undefined),
-      triggerMode:
-        triggerMode ??
-        currentStep?.triggerMode ??
-        TaskStepTriggerModeEnum.MANUAL,
-      progressMode:
-        progressMode ??
-        currentStep?.progressMode ??
-        TaskStepProgressModeEnum.ONCE,
+      description,
+      triggerMode,
+      progressMode,
       eventCode: template?.eventCode,
       targetValue: input.targetValue ?? currentStep?.targetValue ?? 1,
       templateKey,
-      filterPayload: templateKey
-        ? this.taskEventTemplateRegistry.normalizeFilterPayload(
-            templateKey,
-            filters,
-          )
-        : null,
-      uniqueDimensionKey:
-        progressMode === TaskStepProgressModeEnum.UNIQUE_COUNT
-          ? input.uniqueDimensionKey !== undefined
-            ? (input.uniqueDimensionKey ?? undefined)
-            : (currentStep?.uniqueDimensionKey ?? undefined)
-          : undefined,
-      dedupeScope:
-        progressMode === TaskStepProgressModeEnum.UNIQUE_COUNT
-          ? input.dedupeScope !== undefined
-            ? (input.dedupeScope ?? undefined)
-            : (currentStep?.dedupeScope ?? undefined)
-          : undefined,
+      filterPayload,
+      uniqueDimensionKey,
+      dedupeScope,
     }
   }
 }

@@ -6,14 +6,15 @@ import { registerAs } from '@nestjs/config'
 export const AppConfigRegister = registerAs('app', (): AppConfigInterface => {
   const {
     APP_NAME = 'admin-api',
-    APP_PORT = '8080',
+    ADMIN_API_PORT,
+    APP_PORT,
     APP_VERSION = '1.0.0',
     APP_DEFAULT_PASSWORD = 'Aa@123456',
   } = process.env
   return {
     name: APP_NAME,
     version: APP_VERSION,
-    port: Number(APP_PORT),
+    port: Number(ADMIN_API_PORT ?? APP_PORT ?? '8080'),
     globalApiPrefix: 'api',
     defaultPassword: APP_DEFAULT_PASSWORD,
     swaggerConfig: {

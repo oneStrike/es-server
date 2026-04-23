@@ -1,6 +1,5 @@
-import type { Db, DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
-import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { GrowthRewardItems } from '@libs/growth/reward-rule/reward-item.type'
 import type {
   CheckInGrantRewardSettlementSource,
@@ -9,11 +8,13 @@ import type {
   CheckInRewardApplyInput,
   CheckInRewardSettlementContext,
 } from './check-in.type'
+import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerSourceEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
 import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
