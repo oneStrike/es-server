@@ -10,13 +10,10 @@ import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import {
-  ContentTypeEnum,
-  WorkViewPermissionEnum,
-} from '@libs/platform/constant/content.constant'
+import { BusinessErrorCode, ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
-import { isNotNil } from '@libs/platform/utils/is'
+import { isNotNil } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { WorkAuthorService } from '../../author/author.service'

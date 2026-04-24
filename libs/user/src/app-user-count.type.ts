@@ -2,7 +2,6 @@
  * app_user_count 可原子更新的计数字段名。
  * 用于限制计数变更只能落在受支持的聚合列上。
  */
-/** 稳定领域类型 `AppUserCountField`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type AppUserCountField =
   | 'commentCount'
   | 'likeCount'
@@ -20,7 +19,6 @@ export type AppUserCountField =
  * 用户主动关注出去的分项聚合结果。
  * 仅覆盖 following 维度，不包含 followersCount。
  */
-/** 稳定领域类型 `AppUserFollowingCountAggregation`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface AppUserFollowingCountAggregation {
   followingUserCount: number
   followingAuthorCount: number
@@ -28,11 +26,10 @@ export interface AppUserFollowingCountAggregation {
 }
 
 /**
- * 基于事实表重建后的完整用户计数读模型。
- * 用于 upsert app_user_count 前后的稳定聚合结构。
+ * 用户计数读模型快照。
+ * 供读取、修复和重建 `app_user_count` 的服务链路复用统一结构。
  */
-/** 稳定领域类型 `RebuiltAppUserCountResult`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface RebuiltAppUserCountResult {
+export interface AppUserCountSnapshot {
   userId: number
   commentCount: number
   likeCount: number

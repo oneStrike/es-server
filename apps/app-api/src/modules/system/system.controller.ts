@@ -8,9 +8,9 @@ import { BaseAppPageDto } from '@libs/app-content/page/dto/page.dto';
 import { AppPageService } from '@libs/app-content/page/page.service';
 import { AppUpdateCheckDto, AppUpdateCheckResponseDto } from '@libs/app-content/update/dto/update.dto';
 import { AppUpdateService } from '@libs/app-content/update/update.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { Public } from '@libs/platform/decorators/public.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
+import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators';
+
+import { IdDto } from '@libs/platform/dto';
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

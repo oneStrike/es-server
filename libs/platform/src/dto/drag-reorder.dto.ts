@@ -1,4 +1,4 @@
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { NumberProperty } from '@libs/platform/decorators';
 
 export class DragReorderDto {
   @NumberProperty({

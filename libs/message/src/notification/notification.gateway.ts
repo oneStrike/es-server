@@ -5,7 +5,7 @@ import type {
   WsSendPayload,
 } from './notification-websocket.types'
 import process from 'node:process'
-import { isDevelopment } from '@libs/platform/utils/env';
+import { isDevelopment } from '@libs/platform/utils';
 import { Injectable } from '@nestjs/common'
 import {
   ConnectedSocket,

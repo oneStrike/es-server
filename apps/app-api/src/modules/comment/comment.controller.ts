@@ -10,7 +10,7 @@ import {
 } from '@libs/interaction/comment/dto/comment.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { GeoService } from '@libs/platform/modules/geo'
+import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

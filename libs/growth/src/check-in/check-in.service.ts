@@ -1,4 +1,4 @@
-import type { PageDto } from '@libs/platform/dto/page.dto'
+import type { PageDto } from '@libs/platform/dto'
 import type { CheckInRuleIdQuery } from './check-in.type'
 import type {
   PublishCheckInStreakRuleDto,

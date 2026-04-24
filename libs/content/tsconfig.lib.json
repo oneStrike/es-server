@@ -1,8 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../dist/libs/content",
-    "declaration": true
+    "declaration": true,
+    "outDir": "../../dist/libs/content"
   },
   "include": ["src/**/*"],
   "exclude": ["src/**/*.spec.ts", "test/**/*"]

@@ -1,5 +1,5 @@
-import { CryptoModule } from '@libs/platform/modules/crypto/crypto.module';
-import { SMS_CONFIG_PROVIDER } from '@libs/platform/modules/sms/sms.types';
+import { CryptoModule } from '@libs/platform/modules/crypto/crypto.module'
+import { SMS_CONFIG_PROVIDER } from '@libs/platform/modules/sms/sms.types'
 import { UPLOAD_CONFIG_PROVIDER } from '@libs/platform/modules/upload/upload.types'
 import { Module } from '@nestjs/common'
 import { ConfigReader } from './config-reader'

@@ -1,4 +1,4 @@
-import type { DbQueryOrderBy } from '@libs/platform/config/db.config'
+import type { DbQueryOrderBy } from '@libs/platform/config'
 import type { JwtSignOptions } from '@nestjs/jwt'
 
 /**

@@ -4,8 +4,8 @@ import {
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from '@libs/interaction/purchase/purchase.constant'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
+import { BusinessErrorCode, WorkViewPermissionEnum } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import {
   Injectable,

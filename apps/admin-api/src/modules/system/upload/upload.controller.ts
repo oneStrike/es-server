@@ -1,7 +1,8 @@
 import type { FastifyRequest } from 'fastify'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto'
+import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
+
 import { Controller, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'

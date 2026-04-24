@@ -1,5 +1,5 @@
-import { ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { AuditItemDto, AuditPageRequestDto } from '@libs/platform/modules/audit/dto/audit.dto'
+import { ApiPageDoc } from '@libs/platform/decorators'
+import { AuditItemDto, AuditPageRequestDto } from '@libs/platform/modules/audit/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuditService } from './audit.service'

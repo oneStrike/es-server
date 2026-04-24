@@ -1,7 +1,6 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { UserPointStatsFieldsDto } from '@libs/user/dto/app-user-growth-shared.dto'
-import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
+import { AppUserResponseDto } from '@libs/user/dto/base-app-user.dto'
 import {
   ChangeMyPhoneDto,
   QueryMyBadgeDto,
@@ -33,7 +32,7 @@ export class UserController {
   @Get('profile')
   @ApiDoc({
     summary: '获取当前用户资料',
-    model: BaseAppUserDto,
+    model: AppUserResponseDto,
   })
   async getProfile(@CurrentUser('sub') userId: number) {
     return this.userService.getUserProfile(userId)

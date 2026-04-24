@@ -1,8 +1,8 @@
 import { BaseWorkDto, CreateWorkDto, QueryWorkDto, UpdateWorkDto, UpdateWorkHotDto, UpdateWorkNewDto, UpdateWorkRecommendedDto, UpdateWorkStatusDto } from '@libs/content/work/core/dto/work.dto';
 import { WorkService } from '@libs/content/work/core/work.service';
-import { WorkTypeEnum } from '@libs/platform/constant/content.constant';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
+import { WorkTypeEnum } from '@libs/platform/constant';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
+import { IdDto } from '@libs/platform/dto';
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

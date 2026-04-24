@@ -127,18 +127,7 @@ export class MessageNotificationTemplateService {
         }),
       )
     } catch (error) {
-      const drizzleError =
-        error instanceof Error
-          ? error
-          : typeof error === 'object' && error !== null
-            ? (error as PostgresErrorSourceObject)
-            : undefined
-      if (this.drizzle.isUniqueViolation(drizzleError)) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-          '该通知分类的模板已存在',
-        )
-      }
+      this.throwIfTemplateCategoryAlreadyExists(error)
       throw error
     }
 
@@ -205,18 +194,7 @@ export class MessageNotificationTemplateService {
         { notFound: '通知模板不存在' },
       )
     } catch (error) {
-      const drizzleError =
-        error instanceof Error
-          ? error
-          : typeof error === 'object' && error !== null
-            ? (error as PostgresErrorSourceObject)
-            : undefined
-      if (this.drizzle.isUniqueViolation(drizzleError)) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-          '该通知分类的模板已存在',
-        )
-      }
+      this.throwIfTemplateCategoryAlreadyExists(error)
       throw error
     }
 
@@ -435,6 +413,18 @@ export class MessageNotificationTemplateService {
     this.templateCache.delete(categoryKey)
   }
 
+  private throwIfTemplateCategoryAlreadyExists(error: unknown): void {
+    const postgresErrorSource = this.getPostgresErrorSource(error)
+    if (!this.drizzle.isUniqueViolation(postgresErrorSource)) {
+      return
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+      '该通知分类的模板已存在',
+    )
+  }
+
   private ensureTemplatePlaceholdersValid(
     templateText: string,
     fieldName: 'titleTemplate' | 'contentTemplate',
@@ -462,6 +452,18 @@ export class MessageNotificationTemplateService {
     }
     const normalized = value?.trim()
     return normalized || null
+  }
+
+  private getPostgresErrorSource(
+    error: unknown,
+  ): Error | PostgresErrorSourceObject | undefined {
+    if (error instanceof Error) {
+      return error
+    }
+    if (typeof error === 'object' && error !== null) {
+      return error as PostgresErrorSourceObject
+    }
+    return undefined
   }
 
   private ensureSupportedCategoryKey<T>(value: T) {

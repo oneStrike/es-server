@@ -23,7 +23,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import {
   formatDateOnlyInAppTimeZone,
   startOfTodayInAppTimeZone,
-} from '@libs/platform/utils/time'
+} from '@libs/platform/utils'
 import {
   ChangeMyPhoneDto,
   QueryMyBadgeDto,

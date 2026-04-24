@@ -1,5 +1,4 @@
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { NestedProperty, NumberProperty } from '@libs/platform/decorators'
 
 /**
  * 购买价格读模型。

@@ -1,6 +1,5 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { ArrayProperty, EnumProperty, NestedProperty } from '@libs/platform/decorators'
+
 import { PickType } from '@nestjs/swagger'
 import { TaskVisibleStatusEnum } from '../task.constant'
 import {

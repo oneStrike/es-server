@@ -1,16 +1,12 @@
 import type { requestLog } from '@db/schema'
-import type {
-  AuditPageRequestDto,
-  CreateRequestLogDto,
-  CreateRequestLogSimpleDto,
-} from '@libs/platform/modules/audit/dto/audit.dto'
+import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto'
 import type { FastifyRequest } from 'fastify'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { GeoService } from '@libs/platform/modules/geo'
+import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { buildRequestLogFields } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, or } from 'drizzle-orm'

@@ -1,5 +1,5 @@
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { ApiDoc, CurrentUser } from '@libs/platform/decorators';
+
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { BaseSystemConfigDto, UpdateSystemConfigDto } from '@libs/system-config/dto/config.dto';
 import { SystemConfigService } from '@libs/system-config/system-config.service';

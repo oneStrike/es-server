@@ -1,6 +1,6 @@
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { EnumProperty, NestedProperty } from '@libs/platform/decorators'
+
+import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto'
 import { IntersectionType, OmitType, PartialType } from '@nestjs/swagger'
 import { TaskDefinitionStatusEnum } from '../task.constant'
 import {

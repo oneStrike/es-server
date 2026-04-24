@@ -1,5 +1,5 @@
 import type { Db } from '../../db-client'
-import { TokenTypeEnum } from '@libs/platform/modules/auth/token-storage.types'
+import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
 import { eq } from 'drizzle-orm'
 import { adminUser, adminUserToken } from '../../../schema'
 import {

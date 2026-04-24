@@ -1,12 +1,12 @@
 import type { FastifyRequest } from 'fastify'
 import { LoginResponseDto, UserLoginDto } from '@libs/identity/dto/admin-auth.dto';
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { Public } from '@libs/platform/decorators/public.decorator';
+import { ApiDoc, Public } from '@libs/platform/decorators';
+
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
-import { CaptchaDto } from '@libs/platform/modules/captcha/dto/captcha.dto';
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
-import { GeoService } from '@libs/platform/modules/geo';
+import { RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto';
+import { CaptchaDto } from '@libs/platform/modules/captcha/dto'
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
+import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

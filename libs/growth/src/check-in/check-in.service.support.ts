@@ -9,7 +9,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import {
   formatDateOnlyInAppTimeZone,
   parseDateOnlyInAppTimeZone,
-} from '@libs/platform/utils/time'
+} from '@libs/platform/utils'
 import { BadRequestException, Logger } from '@nestjs/common'
 import { desc } from 'drizzle-orm'
 

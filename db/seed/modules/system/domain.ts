@@ -1,5 +1,5 @@
 import type { Db } from '../../db-client'
-import { ApiTypeEnum } from '@libs/platform/constant/base.constant'
+import { ApiTypeEnum } from '@libs/platform/constant'
 import { and, desc, eq } from 'drizzle-orm'
 import {
   adminUser,

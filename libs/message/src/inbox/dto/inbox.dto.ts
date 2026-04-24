@@ -1,7 +1,5 @@
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { DateProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+
 import { BaseNotificationUnreadDto } from '../../notification/dto/notification-unread.dto'
 /**
  * 收件箱通知摘要 DTO。

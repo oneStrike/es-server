@@ -2,7 +2,7 @@ import type { Db } from '@db/core'
 import type { IReadingStateResolver } from '@libs/interaction/reading-state/interfaces/reading-state-resolver.interface'
 import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import { ContentTypeEnum } from '@libs/platform/constant'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 
 /**

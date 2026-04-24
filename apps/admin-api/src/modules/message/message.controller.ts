@@ -1,6 +1,6 @@
 import { MessageDispatchPageItemDto, MessageNotificationDeliveryItemDto, MessageWsMonitorSummaryDto, QueryMessageDispatchPageDto, QueryMessageWsMonitorDto, RetryMessageNotificationDeliveryDto } from '@libs/message/monitor/dto/message-monitor.dto';
 import { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

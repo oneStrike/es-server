@@ -1,7 +1,6 @@
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { CheckVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto'
-import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
+import { NestedProperty, StringProperty } from '@libs/platform/decorators';
+import { CheckVerifyCodeDto } from '@libs/platform/modules/sms/dto'
+import { AppUserResponseDto, BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
 import {
   IntersectionType,
   OmitType,
@@ -52,7 +51,7 @@ export class RefreshTokenDto extends OmitType(TokenDto, [
  * 登录成功后返回的用户快照 DTO。
  * 仅保留客户端登录态初始化需要的稳定字段。
  */
-export class AuthUserDto extends PickType(BaseAppUserDto, [
+export class AuthUserDto extends PickType(AppUserResponseDto, [
   'id',
   'account',
   'phoneNumber',

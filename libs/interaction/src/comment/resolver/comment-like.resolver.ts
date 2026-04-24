@@ -4,8 +4,8 @@ import { appUser, userComment } from '@db/schema'
 
 import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant'
+import { BusinessErrorCode, CommentLevelEnum } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'

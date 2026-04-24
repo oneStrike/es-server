@@ -4,7 +4,7 @@ import type {
 } from '@libs/platform/config'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
 import type { SQL } from '../drizzle.type'
-import { jsonParse } from '@libs/platform/utils/jsonParse'
+import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException } from '@nestjs/common'
 import { asc, desc, getColumns } from 'drizzle-orm'
 

@@ -1,14 +1,31 @@
 import type { AppUserSelect } from '@db/schema'
-import { DrizzleService } from '@db/core'
+import type { AppUserCountSnapshot } from './app-user-count.type'
+import type {
+  UserBanAccessSource,
+  UserBanGuardSource,
+  UserGrowthSnapshot,
+  UserMentionCandidatePageResult,
+  UserStatusSource,
+} from './user.type'
+import {
+  buildILikeCondition,
+  DrizzleService,
+} from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { formatDateTimeInAppTimeZone } from '@libs/platform/utils/time'
+import { formatDateTimeInAppTimeZone } from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { ForbiddenException, Injectable } from '@nestjs/common'
-import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
-import { QueryUserMentionPageDto } from './dto/user-self.dto'
+import { AppUserResponseDto } from './dto/base-app-user.dto'
+import {
+  QueryUserMentionPageDto,
+  UserLevelSummaryDto,
+  UserMentionCandidateDto,
+  UserStatusSummaryDto,
+} from './dto/user-self.dto'
 
 /**
  * 用户域共享服务。
@@ -22,29 +39,32 @@ export class UserService {
     private readonly appUserCountService: AppUserCountService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
+  // 复用应用用户表。
   private get appUser() {
     return this.drizzle.schema.appUser
   }
 
+  // 复用等级规则表。
   private get userLevelRule() {
     return this.drizzle.schema.userLevelRule
   }
 
+  // 复用用户徽章分配表。
   private get userBadgeAssignment() {
     return this.drizzle.schema.userBadgeAssignment
   }
 
+  // 复用用户资产余额表。
   private get userAssetBalance() {
     return this.drizzle.schema.userAssetBalance
   }
 
-  /**
-   * 确保用户存在
-   */
+  // 确保用户存在。
   async ensureUserExists(userId: number): Promise<AppUserSelect> {
     const [user] = await this.db
       .select()
@@ -60,9 +80,7 @@ export class UserService {
     return user
   }
 
-  /**
-   * 获取用户基础信息
-   */
+  // 获取用户基础信息。
   async findById(userId: number): Promise<AppUserSelect | undefined> {
     const [user] = await this.db
       .select()
@@ -72,11 +90,9 @@ export class UserService {
     return user
   }
 
-  /**
-   * 读取用户成长余额快照。
-   * 当前统一返回积分与经验两类热余额，供用户域和权限域复用。
-   */
-  async getUserGrowthSnapshot(userId: number) {
+  // 读取用户成长余额快照。
+  // 当前统一返回积分与经验两类热余额，供用户域和权限域复用。
+  async getUserGrowthSnapshot(userId: number): Promise<UserGrowthSnapshot> {
     const rows = await this.db
       .select({
         assetType: this.userAssetBalance.assetType,
@@ -106,14 +122,14 @@ export class UserService {
     }
   }
 
-  /**
-   * 批量查询当前仍可被提及的用户。
-   * 仅返回 mention 场景需要的最小字段集。
-   */
-  async findAvailableUsersByIds(userIds: number[]) {
+  // 批量查询当前仍可被提及的用户。
+  // 仅返回 mention 场景需要的最小字段集。
+  async findAvailableUsersByIds(
+    userIds: number[],
+  ): Promise<UserMentionCandidateDto[]> {
     const uniqueUserIds = [...new Set(userIds)]
     if (uniqueUserIds.length === 0) {
-      return [] as Array<Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl'>>
+      return []
     }
 
     return this.db
@@ -132,11 +148,11 @@ export class UserService {
       )
   }
 
-  /**
-   * 分页查询提及候选用户。
-   * 空关键字直接返回空页，避免把接口误用成通用用户搜索。
-   */
-  async queryMentionCandidates(query: QueryUserMentionPageDto) {
+  // 分页查询提及候选用户。
+  // 空关键字直接返回空页，避免把接口误用成通用用户搜索。
+  async queryMentionCandidates(
+    query: QueryUserMentionPageDto,
+  ): Promise<UserMentionCandidatePageResult> {
     const keyword = query.q?.trim()
     const page = this.drizzle.buildPage(
       {
@@ -162,43 +178,30 @@ export class UserService {
     const condition = and(
       eq(this.appUser.isEnabled, true),
       isNull(this.appUser.deletedAt),
-      sql`${this.appUser.nickname} ILIKE ${`%${keyword}%`}`,
+      buildILikeCondition(this.appUser.nickname, keyword),
     )
 
-    const [list, totalRows] = await Promise.all([
-      this.db
-        .select({
-          id: this.appUser.id,
-          nickname: this.appUser.nickname,
-          avatarUrl: this.appUser.avatarUrl,
-        })
-        .from(this.appUser)
-        .where(condition)
-        .orderBy(desc(this.appUser.id))
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db
-        .select({
-          count: sql<number>`count(*)::int`,
-        })
-        .from(this.appUser)
-        .where(condition),
-    ])
-
-    const total = Number(totalRows[0]?.count ?? 0)
-    return {
-      list,
-      total,
+    const pageResult = await this.drizzle.ext.findPagination(this.appUser, {
+      where: condition,
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
-      totalPages: total === 0 ? 0 : Math.ceil(total / page.pageSize),
+      orderBy: query.orderBy?.trim()
+        ? query.orderBy
+        : { id: 'desc' as const },
+      pick: ['id', 'nickname', 'avatarUrl'] as const,
+    })
+
+    return {
+      ...pageResult,
+      totalPages:
+        pageResult.total === 0
+          ? 0
+          : Math.ceil(pageResult.total / pageResult.pageSize),
     }
   }
 
-  /**
-   * 判断状态码是否属于禁言态。
-   * 禁言态会限制发帖和回复，但不阻断登录。
-   */
+  // 判断状态码是否属于禁言态。
+  // 禁言态会限制发帖和回复，但不阻断登录。
   isMutedStatus(status: number) {
     return (
       status === UserStatusEnum.MUTED ||
@@ -206,10 +209,8 @@ export class UserService {
     )
   }
 
-  /**
-   * 判断状态码是否属于封禁态。
-   * 封禁态会直接阻断登录，并驱动统一的封禁提示文案。
-   */
+  // 判断状态码是否属于封禁态。
+  // 封禁态会直接阻断登录，并驱动统一的封禁提示文案。
   isBannedStatus(status: number) {
     return (
       status === UserStatusEnum.BANNED ||
@@ -217,22 +218,15 @@ export class UserService {
     )
   }
 
-  /**
-   * 将限制结束时间格式化为 app 时区文案。
-   * 统一由核心服务处理，避免不同入口拼出不一致的时间字符串。
-   */
+  // 将限制结束时间格式化为 app 时区文案。
+  // 统一由核心服务处理，避免不同入口拼出不一致的时间字符串。
   private formatRestrictionUntil(date: Date) {
     return formatDateTimeInAppTimeZone(date)
   }
 
-  /**
-   * 生成封禁态访问提示文案。
-   * 该文案会复用到登录、鉴权守卫和密码校验等入口，要求原因与解封时间口径一致。
-   */
-  buildBanAccessMessage(user: {
-    banReason: string | null
-    banUntil: Date | null
-  }) {
+  // 生成封禁态访问提示文案。
+  // 该文案会复用到登录、鉴权守卫和密码校验等入口，要求原因与解封时间口径一致。
+  buildBanAccessMessage(user: UserBanAccessSource) {
     const parts = ['账号已被封禁']
 
     if (user.banReason?.trim()) {
@@ -248,28 +242,20 @@ export class UserService {
     return parts.join('，')
   }
 
-  /**
-   * 校验当前用户是否处于封禁态。
-   * 若命中封禁，直接抛出稳定业务异常，避免上层入口各自实现封禁分支。
-   */
-  ensureAppUserNotBanned(user: {
-    status: number
-    banReason: string | null
-    banUntil: Date | null
-  }): void {
+  // 校验当前用户是否处于封禁态。
+  // 若命中封禁，统一抛出稳定 403 文案，避免上层入口各自实现封禁分支。
+  ensureAppUserNotBanned(user: UserBanGuardSource): void {
     if (this.isBannedStatus(user.status)) {
       throw new ForbiddenException(this.buildBanAccessMessage(user))
     }
   }
 
-  /**
-   * 将数据库用户实体映射为安全的对外用户对象。
-   * 运行时明确排除 deletedAt 等内部审计字段，避免响应泄露只靠 Swagger 隐藏兜底。
-   */
+  // 将数据库用户实体映射为安全的对外用户对象。
+  // 运行时明确排除 deletedAt 等内部审计字段，避免响应泄露只靠 Swagger 隐藏兜底。
   mapBaseUser(
     user: AppUserSelect,
-    growth?: { points: number, experience: number },
-  ) {
+    growth?: UserGrowthSnapshot,
+  ): AppUserResponseDto {
     return {
       id: user.id,
       account: user.account,
@@ -295,16 +281,9 @@ export class UserService {
     }
   }
 
-  /**
-   * 构建用户状态摘要。
-   * 统一收敛登录、发帖、回复、点赞、收藏和关注能力的判定口径。
-   */
-  buildUserStatus(user: {
-    isEnabled: boolean
-    status: number
-    banReason: string | null
-    banUntil: Date | null
-  }) {
+  // 构建用户状态摘要。
+  // 统一收敛登录、发帖、回复、点赞、收藏和关注能力的判定口径。
+  buildUserStatus(user: UserStatusSource): UserStatusSummaryDto {
     const isMuted = this.isMutedStatus(user.status)
     const isBanned = this.isBannedStatus(user.status)
     const canLogin = user.isEnabled && !isBanned
@@ -331,16 +310,12 @@ export class UserService {
     }
   }
 
-  /**
-   * 获取用户计数
-   */
-  async getUserCounts(userId: number) {
+  // 获取用户计数。
+  async getUserCounts(userId: number): Promise<AppUserCountSnapshot> {
     return this.appUserCountService.getUserCounts(userId)
   }
 
-  /**
-   * 获取用户徽章总数
-   */
+  // 获取用户徽章总数。
   async getBadgeCount(userId: number): Promise<number> {
     const [rows] = await this.db
       .select({ count: sql<number>`count(*)::int` })
@@ -349,10 +324,8 @@ export class UserService {
     return Number(rows?.count ?? 0)
   }
 
-  /**
-   * 获取等级信息
-   */
-  async getLevelInfo(levelId: number) {
+  // 获取等级信息。
+  async getLevelInfo(levelId: number): Promise<UserLevelSummaryDto | undefined> {
     const [level] = await this.db
       .select({
         id: this.userLevelRule.id,
@@ -364,6 +337,15 @@ export class UserService {
       .from(this.userLevelRule)
       .where(eq(this.userLevelRule.id, levelId))
       .limit(1)
+
     return level
+      ? {
+          id: level.id,
+          name: level.name,
+          icon: level.icon ?? undefined,
+          color: level.color ?? undefined,
+          requiredExperience: level.requiredExperience,
+        }
+      : undefined
   }
 }

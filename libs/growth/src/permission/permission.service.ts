@@ -1,6 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
+import { BusinessErrorCode, WorkViewPermissionEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'

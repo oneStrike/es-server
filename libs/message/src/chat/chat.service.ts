@@ -1,7 +1,7 @@
 import type { PostgresErrorSourceObject } from '@db/core'
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type { PageDto } from '@libs/platform/dto'
-import type { DomainEventRecord } from '@libs/platform/modules/eventing'
+import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import { DrizzleService } from '@db/core'
 import {
   appUser,
@@ -15,10 +15,8 @@ import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import {
-  DomainEventConsumerEnum,
-  DomainEventDispatchService,
-} from '@libs/platform/modules/eventing'
+import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
+import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   and,

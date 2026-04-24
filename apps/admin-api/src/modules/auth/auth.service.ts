@@ -2,20 +2,16 @@ import type { UserLoginDto } from '@libs/identity/dto/admin-auth.dto'
 import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
 import { AuthSessionService } from '@libs/identity/session.service'
-import {
-  AuthConstants,
-  AuthErrorMessages,
-} from '@libs/platform/modules/auth/auth.constant'
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
-import {
-  RefreshTokenDto,
-  TokenDto,
-} from '@libs/platform/modules/auth/dto/auth-scene.dto'
+import { RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto'
+import { AuthConstants, AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
+
 import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
-import { isProduction } from '@libs/platform/utils/env'
+
+import { isProduction } from '@libs/platform/utils'
 import {
   BadRequestException,
   ForbiddenException,

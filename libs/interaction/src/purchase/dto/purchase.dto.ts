@@ -1,13 +1,10 @@
 import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
 import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
-import { WorkTypeEnum } from '@libs/platform/constant/content.constant'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { WorkTypeEnum } from '@libs/platform/constant'
+import { DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+
+import { BaseDto, PageDto } from '@libs/platform/dto'
+
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   PaymentMethodEnum,

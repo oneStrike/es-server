@@ -1,4 +1,5 @@
 import type { DrizzleErrorMessages } from '../drizzle.type'
+import type {PostgresErrorSource} from './postgres-error';
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -9,8 +10,8 @@ import {
 import {
   getPostgresError,
   PostgresDefaultMessages,
-  PostgresErrorCode,
-  type PostgresErrorSource,
+  PostgresErrorCode
+
 } from './postgres-error'
 
 type PostgresErrorInput = PostgresErrorSource

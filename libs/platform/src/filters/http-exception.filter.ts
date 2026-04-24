@@ -6,7 +6,7 @@ import {
   PlatformErrorCode,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { LoggerService } from '@libs/platform/modules/logger'
+import { LoggerService } from '@libs/platform/modules/logger/logger.service'
 import { buildRequestLogFields } from '@libs/platform/utils'
 import {
   ArgumentsHost,

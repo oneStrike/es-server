@@ -1,15 +1,12 @@
 import type { Db } from '@db/core'
-import type {
-  SensitiveWordStatisticsDataDto,
-  SensitiveWordTopHitStatisticsDto,
-} from './dto/sensitive-word.dto'
+
 import type { RecordSensitiveWordEntityHitsInput } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
 import {
   startOfTodayInAppTimeZone,
   subtractDaysInAppTimeZone,
   subtractMonthsInAppTimeZone,
-} from '@libs/platform/utils/time'
+} from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { desc, eq, gt, isNotNull, sql } from 'drizzle-orm'
 import {

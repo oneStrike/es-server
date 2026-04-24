@@ -1,4 +1,4 @@
-import type { ClientRequestContext } from '@libs/platform/utils/request-parse.types'
+import type { ClientRequestContext } from '@libs/platform/utils'
 import type { OnModuleDestroy } from '@nestjs/common'
 import type { FastifyRequest } from 'fastify'
 import type { Searcher } from 'ip2region.js'
@@ -16,7 +16,7 @@ import {
   extractClientRequestContext,
   extractIpAddress,
   extractRequestContext,
-} from '@libs/platform/utils/requestParse'
+} from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import * as ip2region from 'ip2region.js'
 import { GEO_RUNTIME_SOURCE, GEO_SOURCE } from './geo.types'

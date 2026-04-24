@@ -5,7 +5,7 @@ import {
   GrowthLedgerActionEnum,
   GrowthRuleUsageSlotTypeEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
-import { TokenTypeEnum } from '@libs/platform/modules/auth/token-storage.types'
+import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
   adminUser,

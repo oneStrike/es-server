@@ -1,5 +1,5 @@
 import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
-import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing'
+import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
 
 export type MessageDomainEventKey =
   | 'comment.replied'

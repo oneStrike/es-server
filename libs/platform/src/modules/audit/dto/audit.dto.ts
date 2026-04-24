@@ -1,7 +1,7 @@
 import {
   ApiTypeEnum,
   HttpMethodEnum,
-} from '@libs/platform/constant/base.constant'
+} from '@libs/platform/constant'
 import {
   BooleanProperty,
   EnumProperty,

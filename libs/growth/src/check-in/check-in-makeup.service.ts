@@ -18,7 +18,7 @@ import {
   endOfDayInAppTimeZone,
   getDateOnlyPartsInAppTimeZone,
   parseDateOnlyInAppTimeZone,
-} from '@libs/platform/utils/time'
+} from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq } from 'drizzle-orm'
 import {

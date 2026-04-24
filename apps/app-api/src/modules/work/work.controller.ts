@@ -3,10 +3,9 @@ import { PageWorkDto, QueryWorkCommentPageDto, QueryWorkDto, QueryWorkTypeDto, W
 import { WorkService } from '@libs/content/work/core/work.service';
 import { CommentService } from '@libs/interaction/comment/comment.service';
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
+import { ApiDoc, ApiPageDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators';
+
+import { IdDto } from '@libs/platform/dto';
 import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils';
 import { Controller, Get, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

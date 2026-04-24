@@ -3,11 +3,8 @@ import { DrizzleService } from '@db/core'
 import { IPurchaseTargetResolver } from '@libs/interaction/purchase/interfaces/purchase-target-resolver.interface'
 import { PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.constant'
 import { PurchaseService } from '@libs/interaction/purchase/purchase.service'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import {
-  ContentTypeEnum,
-  WorkViewPermissionEnum,
-} from '@libs/platform/constant/content.constant'
+import { BusinessErrorCode, ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ContentPermissionService } from '../../../permission/content-permission.service'

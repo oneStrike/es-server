@@ -1,4 +1,4 @@
-import type { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant/base.constant';
+import type { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant';
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
 import type { StructuredObject, StructuredValue } from './jsonParse'
 

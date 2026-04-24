@@ -1,8 +1,8 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
+
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Ip2regionRuntimeStatusDto } from '@libs/platform/modules/geo'
+import { Ip2regionRuntimeStatusDto } from '@libs/platform/modules/geo/dto'
 import { Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'

@@ -6,14 +6,10 @@ import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { UserGrowthRuleActionDto } from '@libs/growth/growth/dto/growth-shared.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
 import { BaseUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { RegexProperty } from '@libs/platform/decorators/validate/regex-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { UserIdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { EnumProperty, NestedProperty, NumberProperty, RegexProperty, StringProperty } from '@libs/platform/decorators'
+
+import { PageDto, UserIdDto } from '@libs/platform/dto'
+
 import {
   IntersectionType,
   OmitType,
@@ -30,7 +26,7 @@ import {
   UserPointStatsFieldsDto,
 } from './app-user-growth-shared.dto'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
-import { BaseAppUserDto } from './base-app-user.dto'
+import { AppUserResponseDto, BaseAppUserDto } from './base-app-user.dto'
 
 class AdminAppUserManualOperationDto extends UserIdDto {
   @RegexProperty({
@@ -109,7 +105,7 @@ export class AdminAppUserGrowthRuleActionDto extends IntersectionType(
   ruleType!: GrowthRuleTypeEnum
 }
 
-export class AdminAppUserPageItemDto extends BaseAppUserDto {
+export class AdminAppUserPageItemDto extends AppUserResponseDto {
   @StringProperty({
     description: '等级名称',
     example: '新手',
@@ -127,7 +123,7 @@ export class AdminAppUserPageItemDto extends BaseAppUserDto {
   counts!: AdminAppUserCountDto
 }
 
-export class AdminAppUserDetailDto extends BaseAppUserDto {
+export class AdminAppUserDetailDto extends AppUserResponseDto {
   @NestedProperty({
     description: '等级信息',
     type: AdminAppUserLevelDto,
@@ -279,25 +275,10 @@ export class UpdateAdminAppUserEnabledDto extends PickType(BaseAppUserDto, [
   'isEnabled',
 ] as const) {}
 
-export class UpdateAdminAppUserStatusDto extends PickType(BaseAppUserDto, [
-  'id',
-  'status',
-] as const) {
-  @StringProperty({
-    description: '封禁或禁言原因',
-    example: '违反社区规范',
-    required: false,
-    maxLength: 500,
-  })
-  banReason?: string
-
-  @DateProperty({
-    description: '封禁或禁言截止时间',
-    example: '2026-03-08T10:00:00.000Z',
-    required: false,
-  })
-  banUntil?: Date
-}
+export class UpdateAdminAppUserStatusDto extends IntersectionType(
+  PickType(BaseAppUserDto, ['id', 'status'] as const),
+  PartialType(PickType(BaseAppUserDto, ['banReason', 'banUntil'] as const)),
+) {}
 
 export class AdminAppUserPointRecordDto extends IntersectionType(
   OmitType(BaseUserPointRecordDto, [

@@ -12,15 +12,11 @@ import { BaseNotificationUnreadDto } from '@libs/message/notification/dto/notifi
 import {
   BooleanProperty,
   DateProperty,
-  EnumProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
-import { UserIdDto } from '@libs/platform/dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
-import { UserStatusEnum } from '@libs/user/app-user.constant'
+import { PageDto, UserIdDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,
@@ -30,6 +26,7 @@ import {
 import {
   UserExperienceDeltaFieldsDto,
   UserGrowthRemarkFieldDto,
+  UserGrowthSnapshotFieldsDto,
   UserPointDeltaFieldsDto,
 } from './app-user-growth-shared.dto'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
@@ -178,22 +175,10 @@ export class UserCountDto extends OmitType(BaseAppUserCountDto, [
 /**
  * 用户状态摘要 DTO。
  */
-export class UserStatusSummaryDto {
-  @BooleanProperty({
-    description: '账号是否可用',
-    example: true,
-    validation: false,
-  })
-  isEnabled!: boolean
-
-  @EnumProperty({
-    description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
-    enum: UserStatusEnum,
-    example: UserStatusEnum.NORMAL,
-    validation: false,
-  })
-  status!: UserStatusEnum
-
+export class UserStatusSummaryDto extends PickType(BaseAppUserDto, [
+  'isEnabled',
+  'status',
+] as const) {
   @BooleanProperty({
     description: '账号是否可以登录',
     example: true,
@@ -326,21 +311,7 @@ export class UserCenterUserDto extends PickType(BaseAppUserDto, [
 /**
  * 用户中心成长信息 DTO。
  */
-export class UserCenterGrowthDto {
-  @NumberProperty({
-    description: '当前积分',
-    example: 120,
-    validation: false,
-  })
-  points!: number
-
-  @NumberProperty({
-    description: '当前经验值',
-    example: 350,
-    validation: false,
-  })
-  experience!: number
-
+export class UserCenterGrowthDto extends UserGrowthSnapshotFieldsDto {
   @NumberProperty({
     description: '当前等级ID',
     example: 1,
@@ -417,47 +388,13 @@ export class UserCenterTaskDto {
 /**
  * 用户中心资料 DTO。
  */
-export class UserCenterProfileDto {
-  @StringProperty({
-    description: '用户签名',
-    example: '持续输出，永不停歇。',
-    required: false,
-    validation: false,
-  })
-  signature?: string
-
-  @StringProperty({
-    description: '用户简介',
-    example: '一段简短的自我介绍。',
-    required: false,
-    validation: false,
-  })
-  bio?: string
-
-  @EnumProperty({
-    description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
-    enum: UserStatusEnum,
-    example: UserStatusEnum.NORMAL,
-    validation: false,
-  })
-  status!: UserStatusEnum
-
-  @StringProperty({
-    description: '限制原因',
-    example: '违反平台规则。',
-    required: false,
-    validation: false,
-  })
-  banReason?: string
-
-  @DateProperty({
-    description: '限制到期时间',
-    example: '2026-03-08T10:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  banUntil?: Date
-
+export class UserCenterProfileDto extends PickType(BaseAppUserDto, [
+  'signature',
+  'bio',
+  'status',
+  'banReason',
+  'banUntil',
+] as const) {
   @NestedProperty({
     description: '用户计数',
     type: UserCountDto,

@@ -1,7 +1,4 @@
-import type {
-  DomainEventDispatchRecord,
-  DomainEventRecord,
-} from '@libs/platform/modules/eventing'
+import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type { NotificationUserSnapshot } from '../notification/notification-contract.type'
 import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
 import type {

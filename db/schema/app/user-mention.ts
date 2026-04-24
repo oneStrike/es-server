@@ -4,14 +4,14 @@
 
 import { sql } from 'drizzle-orm'
 import {
+  check,
   index,
   integer,
   pgTable,
   smallint,
   timestamp,
-  unique,
+unique
 } from 'drizzle-orm/pg-core'
-import { check } from 'drizzle-orm/pg-core'
 
 /**
  * 用户提及事实表

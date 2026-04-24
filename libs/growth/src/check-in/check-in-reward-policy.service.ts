@@ -16,7 +16,7 @@ import type {
 } from './check-in.type'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import { getDateOnlyPartsInAppTimeZone } from '@libs/platform/utils/time'
+import { getDateOnlyPartsInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {

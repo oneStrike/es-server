@@ -2,10 +2,10 @@ import type { FastifyRequest } from 'fastify'
 import { ComicArchiveImportService } from '@libs/content/work/content/comic-archive-import.service';
 import { ComicContentService } from '@libs/content/work/content/comic-content.service';
 import { ComicArchiveTaskIdDto, ComicArchiveTaskResponseDto, ConfirmComicArchiveDto, DeleteComicContentDto, MoveComicContentDto, PreviewComicArchiveDto, UpdateComicContentDto, UploadContentDto } from '@libs/content/work/content/dto/content.dto';
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
+import { ApiDoc } from '@libs/platform/decorators';
+import { IdDto } from '@libs/platform/dto';
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto';
+import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'

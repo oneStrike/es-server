@@ -21,7 +21,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import {
   addDaysToDateOnlyInAppTimeZone,
   diffDateOnlyInAppTimeZone,
-} from '@libs/platform/utils/time'
+} from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, inArray, or, sql } from 'drizzle-orm'
 import { CheckInStreakConfigStatusEnum } from './check-in.constant'

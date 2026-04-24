@@ -1,6 +1,4 @@
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { DateProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
 
 export class UploadFileDto {
   @StringProperty({

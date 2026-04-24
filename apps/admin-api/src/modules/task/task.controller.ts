@@ -14,9 +14,9 @@ import {
   TaskInstanceViewDto,
 } from '@libs/growth/task/dto/task-view.dto'
 import { TaskService } from '@libs/growth/task/task.service'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   Body,

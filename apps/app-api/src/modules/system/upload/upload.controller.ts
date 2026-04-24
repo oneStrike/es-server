@@ -1,7 +1,8 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto'
+import { ApiDoc } from '@libs/platform/decorators'
+import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
+
 import { Controller, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

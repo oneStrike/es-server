@@ -1,6 +1,4 @@
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { JsonProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
 
 /**
  * 日期范围

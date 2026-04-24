@@ -1,5 +1,5 @@
 import type { Db, PostgresErrorSourceObject } from '@db/core'
-import type { JsonValue } from '@libs/platform/utils/jsonParse'
+import type { JsonValue } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
 import type {
   CommentModerationState,
@@ -19,11 +19,8 @@ import {
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import {
-  AuditRoleEnum,
-  AuditStatusEnum,
-} from '@libs/platform/constant/audit.constant'
+import { AuditRoleEnum, AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'

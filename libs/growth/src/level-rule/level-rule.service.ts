@@ -4,7 +4,7 @@ import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 import {
