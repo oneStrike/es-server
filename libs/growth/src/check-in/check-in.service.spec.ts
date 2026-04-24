@@ -17,6 +17,7 @@ describe('check-in helpers', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     )
   }
 

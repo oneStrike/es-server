@@ -122,6 +122,12 @@ type CheckInNullableRewardItemsView<TBase> = CheckInReplaceFields<
 export type CheckInDateRewardRuleView =
   CheckInRewardItemsView<CheckInDateRewardRuleFieldsDto>
 
+/** 持久化配置里用于冻结历史语义的日期奖励视图，可显式表达“当日无奖励”。 */
+export type CheckInStoredDateRewardRuleView = CheckInReplaceFields<
+  CheckInDateRewardRuleView,
+  { rewardItems: GrowthRewardItems | null }
+>
+
 /** 允许传入标准 DTO 或已归一化视图的日期奖励输入。 */
 export type CheckInDateRewardRuleInput =
   | CheckInDateRewardRuleFieldsDto
@@ -152,7 +158,7 @@ export type CheckInOptionalRewardItems = GrowthRewardItems | null | undefined
 /** 全局签到奖励定义。 */
 export interface CheckInRewardDefinition {
   baseRewardItems: GrowthRewardItems | null
-  dateRewardRules: CheckInDateRewardRuleView[]
+  dateRewardRules: CheckInStoredDateRewardRuleView[]
   patternRewardRules: CheckInPatternRewardRuleView[]
 }
 

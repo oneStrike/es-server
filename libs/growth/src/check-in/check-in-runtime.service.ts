@@ -618,7 +618,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
       baseRewardItems: rewardDefinition.baseRewardItems,
-      dateRewardRules: rewardDefinition.dateRewardRules,
+      dateRewardRules:
+        this.checkInRewardPolicyService.toEditableDateRewardRules(
+          rewardDefinition.dateRewardRules,
+        ),
       patternRewardRules: rewardDefinition.patternRewardRules,
       createdAt: config.createdAt,
       updatedAt: config.updatedAt,

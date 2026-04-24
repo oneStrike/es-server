@@ -2,6 +2,7 @@ import 'reflect-metadata'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
+import { CheckInDefinitionService } from './check-in-definition.service'
 import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
@@ -27,6 +28,16 @@ describe('check-in provider metadata', () => {
       DrizzleService,
       GrowthLedgerService,
       GrowthRewardSettlementService,
+    ])
+
+    expect(
+      Reflect.getMetadata('design:paramtypes', CheckInDefinitionService),
+    ).toEqual([
+      DrizzleService,
+      GrowthLedgerService,
+      CheckInMakeupService,
+      CheckInRewardPolicyService,
+      CheckInStreakService,
     ])
   })
 })

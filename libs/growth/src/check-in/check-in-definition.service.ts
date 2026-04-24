@@ -3,7 +3,9 @@ import type {
   CheckInDateRewardRuleView,
   CheckInExecutedRowsResult,
   CheckInPublishEffectiveInput,
+  CheckInRewardDefinition,
   CheckInRuleIdQuery,
+  CheckInStoredDateRewardRuleView,
   StreakRulePageOrderField,
   StreakRulePageOrderItem,
   StreakRulePageQuery,
@@ -21,12 +23,17 @@ import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { startOfNextDayInAppTimeZone } from '@libs/platform/utils'
+import {
+  addDaysToDateOnlyInAppTimeZone,
+  startOfNextDayInAppTimeZone,
+} from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq, sql } from 'drizzle-orm'
+import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInStreakService } from './check-in-streak.service'
 import {
+  CheckInMakeupPeriodTypeEnum,
   CheckInStreakConfigStatusEnum,
   CheckInStreakPublishStrategyEnum,
 } from './check-in.constant'
@@ -63,6 +70,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   constructor(
     drizzle: DrizzleService,
     growthLedgerService: GrowthLedgerService,
+    private readonly checkInMakeupService: CheckInMakeupService,
     private readonly checkInRewardPolicyService: CheckInRewardPolicyService,
     private readonly checkInStreakService: CheckInStreakService,
   ) {
@@ -81,7 +89,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
       baseRewardItems: rewardDefinition.baseRewardItems,
-      dateRewardRules: rewardDefinition.dateRewardRules,
+      dateRewardRules:
+        this.checkInRewardPolicyService.toEditableDateRewardRules(
+          rewardDefinition.dateRewardRules,
+        ),
       patternRewardRules: rewardDefinition.patternRewardRules,
       createdAt: config.createdAt,
       updatedAt: config.updatedAt,
@@ -128,13 +139,18 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     const currentRewardDefinition =
       this.checkInRewardPolicyService.parseRewardDefinition(current)
+    const lockedPastDateRewardRules = this.buildLockedPastDateRewardRules(
+      currentRewardDefinition,
+      Number(current.makeupPeriodType) as CheckInMakeupPeriodTypeEnum,
+      today,
+    )
 
     await this.db
       .update(this.checkInConfigTable)
       .set({
         ...normalized,
         dateRewardRules: this.mergeDateRewardRulesForUpdate(
-          currentRewardDefinition.dateRewardRules,
+          lockedPastDateRewardRules,
           normalizedDateRewardRules,
           today,
         ),
@@ -681,16 +697,48 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   // 更新配置时锁定今天之前的具体日期奖励，避免后台改动回溯污染历史自然日语义。
   private mergeDateRewardRulesForUpdate(
-    currentRules: CheckInDateRewardRuleView[],
+    lockedPastRules: CheckInStoredDateRewardRuleView[],
     incomingRules: CheckInDateRewardRuleView[],
     today: string,
   ) {
-    const lockedPastRules = currentRules.filter(
-      (rule) => rule.rewardDate < today,
-    )
     const editableRules = incomingRules.filter((rule) => rule.rewardDate >= today)
 
     return [...lockedPastRules, ...editableRules].sort((left, right) =>
+      left.rewardDate.localeCompare(right.rewardDate),
+    )
+  }
+
+  // 把当前周期里今天之前已经生效过的奖励语义固化成具体日期规则，避免后续修改回写历史自然日。
+  private buildLockedPastDateRewardRules(
+    rewardDefinition: CheckInRewardDefinition,
+    periodType: CheckInMakeupPeriodTypeEnum,
+    today: string,
+  ) {
+    const lockedRuleMap = new Map(
+      rewardDefinition.dateRewardRules
+        .filter((rule) => rule.rewardDate < today)
+        .map((rule) => [rule.rewardDate, rule] as const),
+    )
+    const window = this.checkInMakeupService.buildMakeupWindow(today, periodType)
+
+    let cursor = window.periodStartDate
+    while (cursor < today) {
+      const resolvedReward =
+        this.checkInRewardPolicyService.resolveRewardForDate(
+          rewardDefinition,
+          cursor,
+          periodType,
+        ).resolvedRewardItems
+
+      lockedRuleMap.set(cursor, {
+        rewardDate: cursor,
+        rewardItems: resolvedReward,
+      })
+
+      cursor = addDaysToDateOnlyInAppTimeZone(cursor, 1)!
+    }
+
+    return [...lockedRuleMap.values()].sort((left, right) =>
       left.rewardDate.localeCompare(right.rewardDate),
     )
   }

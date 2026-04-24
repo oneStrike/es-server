@@ -66,4 +66,36 @@ describe('check-in reward policy service', () => {
       streakDays: 5,
     })
   })
+
+  it('treats stored date locks with null reward items as explicit no-reward history', () => {
+    const service = createService()
+
+    const result = service.resolveRewardForDate(
+      {
+        baseRewardItems: [{ assetType: 1, assetKey: '', amount: 1 }],
+        dateRewardRules: [
+          {
+            rewardDate: '2026-04-22',
+            rewardItems: null,
+          },
+        ],
+        patternRewardRules: [
+          {
+            patternType: 1,
+            weekday: 3,
+            monthDay: null,
+            rewardItems: [{ assetType: 1, assetKey: '', amount: 5 }],
+          },
+        ],
+      },
+      '2026-04-22',
+      CheckInMakeupPeriodTypeEnum.WEEKLY,
+    )
+
+    expect(result).toEqual({
+      resolvedRewardSourceType: null,
+      resolvedRewardRuleKey: null,
+      resolvedRewardItems: null,
+    })
+  })
 })

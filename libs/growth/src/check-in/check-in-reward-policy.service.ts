@@ -9,6 +9,7 @@ import type {
   CheckInResolvedReward,
   CheckInRewardDefinition,
   CheckInRewardDefinitionSource,
+  CheckInStoredDateRewardRuleView,
   CheckInStreakRewardRuleInput,
   CheckInStreakRewardRuleView,
   CheckInStreakRuleDefinition,
@@ -113,6 +114,43 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
 
     return normalizedRules.sort((left, right) =>
       left.rewardDate.localeCompare(right.rewardDate),
+    )
+  }
+
+  // 从持久化配置恢复日期奖励规则，并保留“无奖励历史日期”的显式冻结状态。
+  parseStoredDateRewardRules(rules?: unknown[]) {
+    const normalizedRules = (rules ?? []).map(
+      (rule) =>
+        ({
+          rewardDate: this.parseDateOnly(
+            (this.asRecord(rule)?.rewardDate as string) ?? '',
+            '奖励日期',
+          ),
+          rewardItems: this.parseStoredRewardItems(
+            this.asRecord(rule)?.rewardItems,
+            {
+              allowEmpty: true,
+            },
+          ),
+        }) satisfies CheckInStoredDateRewardRuleView,
+    )
+
+    const duplicateRewardDate = this.findDuplicateValue(
+      normalizedRules.map((item) => item.rewardDate),
+    )
+    if (duplicateRewardDate) {
+      throw new BadRequestException(`具体日期奖励重复：${duplicateRewardDate}`)
+    }
+
+    return normalizedRules.sort((left, right) =>
+      left.rewardDate.localeCompare(right.rewardDate),
+    )
+  }
+
+  // 过滤仅用于内部冻结语义的“无奖励日期”，返回对外可编辑的具体日期奖励列表。
+  toEditableDateRewardRules(rules: CheckInStoredDateRewardRuleView[]) {
+    return rules.filter(
+      (rule): rule is CheckInDateRewardRuleView => Array.isArray(rule.rewardItems),
     )
   }
 
@@ -279,9 +317,9 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       baseRewardItems: this.parseStoredRewardItems(config.baseRewardItems, {
         allowEmpty: true,
       }),
-      dateRewardRules: this.normalizeDateRewardRules(
+      dateRewardRules: this.parseStoredDateRewardRules(
         Array.isArray(config.dateRewardRules)
-          ? (config.dateRewardRules as CheckInDateRewardRuleView[])
+          ? config.dateRewardRules
           : [],
       ),
       patternRewardRules: this.normalizePatternRewardRules(
@@ -320,6 +358,13 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       (item) => item.rewardDate === date,
     )
     if (dateRule) {
+      if (!dateRule.rewardItems) {
+        return {
+          resolvedRewardSourceType: null,
+          resolvedRewardRuleKey: null,
+          resolvedRewardItems: null,
+        }
+      }
       return {
         resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
         resolvedRewardRuleKey: `DATE:${dateRule.rewardDate}`,
