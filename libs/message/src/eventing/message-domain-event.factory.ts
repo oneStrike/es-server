@@ -15,7 +15,7 @@ export class MessageDomainEventFactoryService {
 
   private normalizeTopicTitle(value?: string) {
     const normalized = value?.trim()
-    return normalized || '你的主题'
+    return normalized || ''
   }
 
   private normalizeDisplayText(value?: string) {
@@ -331,7 +331,9 @@ export class MessageDomainEventFactoryService {
     )
     const replyExcerpt =
       this.normalizeExcerpt(input.replyExcerpt) ?? targetDisplayTitle
-    const parentCommentExcerpt = this.normalizeExcerpt(input.parentCommentExcerpt)
+    const parentCommentExcerpt = this.normalizeExcerpt(
+      input.parentCommentExcerpt,
+    )
     return {
       eventKey: 'comment.replied',
       subjectType: 'user',

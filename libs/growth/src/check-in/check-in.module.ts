@@ -1,6 +1,7 @@
 import { GrowthLedgerModule } from '@libs/growth/growth-ledger/growth-ledger.module'
 import { GrowthRewardSettlementModule } from '@libs/growth/growth-reward/growth-reward-settlement.module'
 import { Module } from '@nestjs/common'
+import { CheckInCalendarReadModelService } from './check-in-calendar-read-model.service'
 import { CheckInDefinitionService } from './check-in-definition.service'
 import { CheckInExecutionService } from './check-in-execution.service'
 import { CheckInMakeupService } from './check-in-makeup.service'
@@ -17,6 +18,7 @@ import { CheckInService } from './check-in.service'
     CheckInMakeupService,
     CheckInStreakService,
     CheckInSettlementService,
+    CheckInCalendarReadModelService,
     CheckInDefinitionService,
     CheckInExecutionService,
     CheckInRuntimeService,

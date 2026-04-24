@@ -1,4 +1,6 @@
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
+import { CheckInCalendarDetailResponseDto } from '@libs/growth/check-in/dto/check-in-calendar-app.dto'
+import { QueryCheckInCalendarDetailDto } from '@libs/growth/check-in/dto/check-in-calendar-query.dto'
 import {
   CheckInActionResponseDto,
   MakeupCheckInDto,
@@ -39,6 +41,19 @@ export class CheckInController {
   // 返回当前补签周期内的签到日历视图。
   async getCalendar(@CurrentUser('sub') userId: number) {
     return this.checkInService.getCalendar(userId)
+  }
+
+  @Get('calendar/detail')
+  @ApiDoc({
+    summary: '获取目标日期所属周期的签到日历',
+    model: CheckInCalendarDetailResponseDto,
+  })
+  // 返回当前用户在目标日期所属周期内的签到日历视图。
+  async getCalendarDetail(
+    @Query() query: QueryCheckInCalendarDetailDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.checkInService.getCalendarDetail(query, userId)
   }
 
   @Get('my/page')

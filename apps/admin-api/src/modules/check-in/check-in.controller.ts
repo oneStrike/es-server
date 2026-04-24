@@ -1,5 +1,15 @@
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import {
+  AdminCheckInCalendarDetailResponseDto,
+  AdminCheckInSignedUserPageItemDto,
+  AdminUserCheckInCalendarDetailResponseDto,
+} from '@libs/growth/check-in/dto/check-in-calendar-admin.dto'
+import {
+  QueryAdminCheckInSignedUserPageDto,
+  QueryAdminUserCheckInCalendarDetailDto,
+  QueryCheckInCalendarDetailDto,
+} from '@libs/growth/check-in/dto/check-in-calendar-query.dto'
+import {
   CheckInConfigDetailResponseDto,
   CheckInStreakRuleDetailResponseDto,
   PublishCheckInStreakRuleDto,
@@ -38,6 +48,38 @@ export class CheckInController {
   // 查询后台签到配置详情。
   async getConfigDetail() {
     return this.checkInService.getConfigDetail()
+  }
+
+  @Get('calendar/detail')
+  @ApiDoc({
+    summary: '查询目标周期全局签到日历',
+    model: AdminCheckInCalendarDetailResponseDto,
+  })
+  // 查询后台目标日期所属周期的全局签到日历汇总。
+  async getCalendarDetail(@Query() query: QueryCheckInCalendarDetailDto) {
+    return this.checkInService.getAdminCalendarDetail(query)
+  }
+
+  @Get('calendar/user/detail')
+  @ApiDoc({
+    summary: '查询指定用户目标周期签到日历',
+    model: AdminUserCheckInCalendarDetailResponseDto,
+  })
+  // 查询后台指定用户在目标日期所属周期的签到日历。
+  async getUserCalendarDetail(
+    @Query() query: QueryAdminUserCheckInCalendarDetailDto,
+  ) {
+    return this.checkInService.getAdminUserCalendarDetail(query)
+  }
+
+  @Get('calendar/signed-user/page')
+  @ApiPageDoc({
+    summary: '分页查询某日已签用户列表',
+    model: AdminCheckInSignedUserPageItemDto,
+  })
+  // 分页查询指定自然日的已签用户列表。
+  async getSignedUserPage(@Query() query: QueryAdminCheckInSignedUserPageDto) {
+    return this.checkInService.getAdminSignedUserPage(query)
   }
 
   @Post('config/update')

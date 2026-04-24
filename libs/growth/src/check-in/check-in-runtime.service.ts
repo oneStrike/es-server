@@ -2,7 +2,6 @@ import type { CheckInConfigSelect, CheckInRecordSelect } from '@db/schema'
 import type { PageDto } from '@libs/platform/dto'
 import type { SQL } from 'drizzle-orm'
 import type {
-  CheckInCalendarDayView,
   CheckInGrantItemView,
   CheckInReconciliationPageItemView,
   CheckInRecordGrantLookup,
@@ -13,9 +12,9 @@ import type {
 } from './dto/check-in-runtime.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import { addDaysToDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, exists, gte, inArray, lte } from 'drizzle-orm'
+import { CheckInCalendarReadModelService } from './check-in-calendar-read-model.service'
 import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
@@ -37,6 +36,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     private readonly checkInMakeupService: CheckInMakeupService,
     private readonly checkInStreakService: CheckInStreakService,
     private readonly checkInSettlementService: CheckInSettlementService,
+    private readonly checkInCalendarReadModelService: CheckInCalendarReadModelService,
   ) {
     super(drizzle, growthLedgerService)
   }
@@ -99,72 +99,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
 
   // 查询当前补签周期内的签到日历视图。
   async getCalendar(userId: number) {
-    const today = this.formatDateOnly(new Date())
-    const config = await this.getRequiredConfig()
-    const rewardDefinition =
-      this.checkInRewardPolicyService.parseRewardDefinition(config)
-    const makeup = await this.checkInMakeupService.buildCurrentMakeupAccountView(
+    return this.checkInCalendarReadModelService.getCurrentUserCalendarByTargetDate(
       userId,
-      config,
-      today,
+      this.formatDateOnly(new Date()),
     )
-    const records = await this.listRecordsInDateRange(
-      userId,
-      makeup.periodStartDate,
-      makeup.periodEndDate,
-    )
-    const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
-      records
-        .map((record) => record.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
-    )
-    const grantMap = await this.buildGrantMapForRecords(records)
-    const recordMap = new Map(
-      records.map((record) => [this.toDateOnlyValue(record.signDate), record]),
-    )
-
-    const days: CheckInCalendarDayView[] = []
-    let cursor = makeup.periodStartDate
-    let dayIndex = 1
-    while (cursor <= makeup.periodEndDate) {
-      const record = recordMap.get(cursor)
-      const rewardItems = record
-        ? this.checkInRewardPolicyService.parseStoredRewardItems(
-            record.resolvedRewardItems,
-            {
-            allowEmpty: true,
-            },
-          )
-        : this.checkInRewardPolicyService.resolveRewardForDate(
-            rewardDefinition,
-            cursor,
-            makeup.periodType,
-          ).resolvedRewardItems
-      days.push({
-        signDate: cursor,
-        dayIndex,
-        isToday: cursor === today,
-        isFuture: cursor > today,
-        isSigned: !!record,
-        grantCount: grantMap.get(`${userId}:${cursor}`)?.length ?? 0,
-        rewardItems,
-        rewardSettlement: record?.rewardSettlementId
-          ? this.checkInSettlementService.toRewardSettlementSummary(
-              settlementMap.get(record.rewardSettlementId) ?? null,
-            )
-          : null,
-      } satisfies CheckInCalendarDayView)
-      cursor = addDaysToDateOnlyInAppTimeZone(cursor, 1)!
-      dayIndex += 1
-    }
-
-    return {
-      periodType: makeup.periodType,
-      periodKey: makeup.periodKey,
-      periodStartDate: makeup.periodStartDate,
-      periodEndDate: makeup.periodEndDate,
-      days,
-    }
   }
 
   // 分页查询当前用户的签到记录，并补齐奖励和连续奖励信息。
@@ -378,28 +316,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       )
       .limit(1)
     return record
-  }
-
-  // 查询指定日期区间内的签到记录。
-  private async listRecordsInDateRange(
-    userId: number,
-    startDate: string,
-    endDate: string,
-  ) {
-    return this.db
-      .select()
-      .from(this.checkInRecordTable)
-      .where(
-        and(
-          eq(this.checkInRecordTable.userId, userId),
-          gte(this.checkInRecordTable.signDate, startDate),
-          lte(this.checkInRecordTable.signDate, endDate),
-        ),
-      )
-      .orderBy(
-        asc(this.checkInRecordTable.signDate),
-        asc(this.checkInRecordTable.id),
-      )
   }
 
   // 构建单条签到记录的对外展示视图。

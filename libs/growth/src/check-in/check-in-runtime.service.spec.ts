@@ -26,6 +26,15 @@ describe('check-in runtime service orchestration', () => {
       resolveEffectiveLastSignedDate: jest.fn().mockReturnValue('2026-04-21'),
     }
     const settlementService = {}
+    const calendarReadModelService = {
+      getCurrentUserCalendarByTargetDate: jest.fn().mockResolvedValue({
+        periodType: 1,
+        periodKey: 'week-2026-04-21',
+        periodStartDate: '2026-04-21',
+        periodEndDate: '2026-04-27',
+        days: [],
+      }),
+    }
     const drizzle = {
       db: {
         query: {
@@ -47,6 +56,7 @@ describe('check-in runtime service orchestration', () => {
       makeupService as never,
       streakService as never,
       settlementService as never,
+      calendarReadModelService as never,
     )
 
     ;(
@@ -86,6 +96,7 @@ describe('check-in runtime service orchestration', () => {
       rewardPolicyService,
       makeupService,
       streakService,
+      calendarReadModelService,
     }
   }
 
@@ -113,5 +124,22 @@ describe('check-in runtime service orchestration', () => {
     expect(makeupService.buildCurrentMakeupAccountView).toHaveBeenCalled()
     expect(streakService.listActiveStreakRulesAt).toHaveBeenCalled()
     expect(rewardPolicyService.resolveNextStreakReward).toHaveBeenCalled()
+  })
+
+  it('delegates old current-period calendar to the target-date calendar read model with today', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-24T10:00:00.000Z'))
+    const { service, calendarReadModelService } = createService()
+
+    const calendar = await service.getCalendar(9)
+
+    expect(
+      calendarReadModelService.getCurrentUserCalendarByTargetDate,
+    ).toHaveBeenCalledWith(9, '2026-04-24')
+    expect(calendar).toMatchObject({
+      periodType: 1,
+      periodKey: 'week-2026-04-21',
+    })
+
+    jest.useRealTimers()
   })
 })
