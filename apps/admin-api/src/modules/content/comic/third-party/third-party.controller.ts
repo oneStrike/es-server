@@ -1,5 +1,5 @@
 import { ChapterContentComicRequestDto, DetailComicRequestDto, PlatformResponseDto, SearchComicItemDto, SearchComicRequestDto, THIRD_PARTY_COMIC_CHAPTER_CONTENT_SCHEMA, THIRD_PARTY_COMIC_CHAPTER_SCHEMA, THIRD_PARTY_COMIC_DETAIL_SCHEMA } from '@libs/content/work/content/dto/content.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ComicThirdPartyService } from './third-party-service'

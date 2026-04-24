@@ -1,10 +1,8 @@
 import { ForumAppUserInfoDto } from '@libs/forum/profile/dto/profile.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+
+import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
 import {

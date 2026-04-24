@@ -2,10 +2,7 @@ import {
   EventDefinitionEntityTypeEnum,
   EventDefinitionImplStatusEnum,
 } from '@libs/growth/event-definition/event-definition.constant'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { ArrayProperty, BooleanProperty, EnumProperty, StringProperty } from '@libs/platform/decorators'
 
 export class TaskTemplateFilterFieldDto {
   @StringProperty({

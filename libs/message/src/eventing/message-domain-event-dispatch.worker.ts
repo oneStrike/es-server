@@ -1,8 +1,5 @@
-import {
-  DOMAIN_EVENT_DISPATCH_MAX_RETRY,
-  DomainEventConsumerEnum,
-  DomainEventDispatchService,
-} from '@libs/platform/modules/eventing'
+import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
+import { DOMAIN_EVENT_DISPATCH_MAX_RETRY, DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { Injectable } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { MessageNotificationDeliveryService } from '../notification/notification-delivery.service'

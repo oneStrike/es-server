@@ -1,7 +1,5 @@
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { BooleanProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 
 /**
  * 论坛板块分组公开摘要 DTO。

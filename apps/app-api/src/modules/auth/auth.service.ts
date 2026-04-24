@@ -6,17 +6,12 @@ import { UserProfileService } from '@libs/forum/profile/profile.service'
 import { AuthSessionService } from '@libs/identity/session.service'
 import { BusinessErrorCode, GenderEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import {
-  AuthConstants,
-  AuthDefaultValue,
-  AuthErrorMessages,
-  AuthService as BaseAuthService,
-  LoginDto,
-  LoginGuardService,
-  RefreshTokenDto,
-  TokenDto,
-} from '@libs/platform/modules/auth'
-import { RsaService, ScryptService } from '@libs/platform/modules/crypto'
+import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
+import { LoginDto, RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto'
+import { AuthConstants, AuthDefaultValue, AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
+import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import {

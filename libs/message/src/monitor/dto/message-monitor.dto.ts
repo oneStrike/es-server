@@ -4,12 +4,8 @@ import {
   getMessageNotificationDispatchStatusLabel,
   MessageNotificationDispatchStatusEnum,
 } from '@libs/message/notification/notification.constant'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { BooleanProperty, DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto'
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { IntersectionType, PartialType } from '@nestjs/swagger'
 

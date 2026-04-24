@@ -5,7 +5,7 @@ import { setupMultipart } from './multipart'
 import { setupApp } from './app.setup'
 import { setupSwagger } from './swagger'
 
-jest.mock('@libs/platform/utils/env', () => ({
+jest.mock('@libs/platform/utils', () => ({
   isDevelopment: () => false,
 }))
 

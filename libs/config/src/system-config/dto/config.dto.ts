@@ -1,10 +1,6 @@
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto';
+import { AuditStatusEnum } from '@libs/platform/constant';
+import { BooleanProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
+import { BaseDto, IdDto } from '@libs/platform/dto';
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 

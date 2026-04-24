@@ -1,5 +1,5 @@
 import { createKeyv } from '@keyv/redis'
-import { isDevelopment } from '@libs/platform/utils/env';
+import { isDevelopment } from '@libs/platform/utils';
 import { CacheModule } from '@nestjs/cache-manager'
 import { DynamicModule, Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'

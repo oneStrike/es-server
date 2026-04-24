@@ -1,14 +1,17 @@
 import type { Db } from '@db/core'
 import type {
   AppUserCountField,
+  AppUserCountSnapshot,
   AppUserFollowingCountAggregation,
-  RebuiltAppUserCountResult,
 } from './app-user-count.type'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
@@ -17,68 +20,63 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class AppUserCountService {
-  /**
-   * 关注用户目标类型值。
-   * 与 follow 模块解耦，避免用户域反向依赖 interaction follow 常量。
-   */
-  private readonly userFollowTargetType = 1
-  private readonly authorFollowTargetType = 2
-  private readonly forumSectionFollowTargetType = 3
-  private readonly forumTopicLikeTargetType = 3
-  private readonly forumTopicFavoriteTargetType = 3
-  private readonly commentLikeTargetType = 6
-
   constructor(private readonly drizzle: DrizzleService) {}
 
+  // 复用共享数据库连接实例。
   private get db() {
     return this.drizzle.db
   }
 
+  // 复用用户计数读模型表。
   private get appUserCount() {
     return this.drizzle.schema.appUserCount
   }
 
+  // 复用用户关注事实表。
   private get userFollow() {
     return this.drizzle.schema.userFollow
   }
 
+  // 复用用户点赞事实表。
   private get userLike() {
     return this.drizzle.schema.userLike
   }
 
+  // 复用用户收藏事实表。
   private get userFavorite() {
     return this.drizzle.schema.userFavorite
   }
 
+  // 复用用户评论事实表。
   private get userComment() {
     return this.drizzle.schema.userComment
   }
 
+  // 复用论坛主题事实表。
   private get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
-  /**
-   * 将 follow 表 targetType 映射为 app_user_count 的具体分项字段。
-   * 若出现未知类型，直接抛出业务异常，避免把计数写进错误字段。
-   */
-  private resolveFollowingCountField(targetType: number) {
+  // 将 follow 表 targetType 映射为 app_user_count 的具体分项字段。
+  // 若出现未知类型，抛出稳定业务异常，避免把计数写进错误字段。
+  private resolveFollowingCountField(targetType: FollowTargetTypeEnum) {
     switch (targetType) {
-      case this.userFollowTargetType:
+      case FollowTargetTypeEnum.USER:
         return 'followingUserCount'
-      case this.authorFollowTargetType:
+      case FollowTargetTypeEnum.AUTHOR:
         return 'followingAuthorCount'
-      case this.forumSectionFollowTargetType:
+      case FollowTargetTypeEnum.FORUM_SECTION:
         return 'followingSectionCount'
       default:
-        throw new BadRequestException(`不支持的关注类型: ${targetType}`)
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `不支持的关注类型: ${targetType}`,
+        )
     }
   }
 
-  /**
-   * 基于 follow 事实表聚合用户主动关注出去的分项数量。
-   * 这里只统计 following 维度，不包含 followersCount。
-   */
+  // 基于 follow 事实表聚合用户主动关注出去的分项数量。
+  // 这里只统计 following 维度，不包含 followersCount。
   private async getFollowingCounts(
     client: Db,
     userId: number,
@@ -106,11 +104,9 @@ export class AppUserCountService {
     return counts
   }
 
-  /**
-   * 读取用户聚合计数读模型。
-   * 若计数记录尚未初始化，统一返回 0，保证上层始终拿到稳定结构。
-   */
-  async getUserCounts(userId: number) {
+  // 读取用户聚合计数读模型。
+  // 若计数记录尚未初始化，统一返回 0，保证上层始终拿到稳定结构。
+  async getUserCounts(userId: number): Promise<AppUserCountSnapshot> {
     const counts = await this.db
       .select({
         userId: this.appUserCount.userId,
@@ -150,10 +146,8 @@ export class AppUserCountService {
     }
   }
 
-  /**
-   * 初始化用户聚合计数读模型。
-   * 新建用户时统一写入 0 值，避免后续增减路径反复补记录。
-   */
+  // 初始化用户聚合计数读模型。
+  // 新建用户时统一写入 0 值，避免后续增减路径反复补记录。
   async initUserCounts(tx: Db | undefined, userId: number) {
     const client = tx ?? this.db
     await client.insert(this.appUserCount).values({
@@ -172,10 +166,8 @@ export class AppUserCountService {
     })
   }
 
-  /**
-   * 原子更新单个计数字段。
-   * 统一处理 delta=0 短路、事务透传，以及“目标不存在/计数不足”的异常翻译。
-   */
+  // 原子更新单个计数字段。
+  // 统一处理 delta=0 短路、事务透传，以及“目标不存在/计数不足”的异常翻译。
   private async updateCountField(
     tx: Db | undefined,
     userId: number,
@@ -209,49 +201,40 @@ export class AppUserCountService {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_NOT_FOUND,
           message,
+          { cause: error },
         )
       }
       throw error
     }
   }
 
-  /**
-   * 更新用户评论数。
-   */
+  // 更新用户评论数。
   async updateCommentCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'commentCount', delta)
   }
 
-  /**
-   * 更新用户点赞数。
-   */
+  // 更新用户点赞数。
   async updateLikeCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'likeCount', delta)
   }
 
-  /**
-   * 更新用户收藏数。
-   */
+  // 更新用户收藏数。
   async updateFavoriteCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'favoriteCount', delta)
   }
 
-  /**
-   * 按关注目标类型更新用户发起关注分项数量
-   */
+  // 按关注目标类型更新用户发起关注分项数量。
   async updateFollowingCountByTargetType(
     tx: Db | undefined,
     userId: number,
-    targetType: number,
+    targetType: FollowTargetTypeEnum,
     delta: number,
   ) {
     const field = this.resolveFollowingCountField(targetType)
     await this.updateCountField(tx, userId, field, delta)
   }
 
-  /**
-   * 更新用户粉丝数量。
-   */
+  // 更新用户粉丝数量。
   async updateFollowersCount(
     tx: Db | undefined,
     userId: number,
@@ -260,10 +243,8 @@ export class AppUserCountService {
     await this.updateCountField(tx, userId, 'followersCount', delta)
   }
 
-  /**
-   * 根据 follow 事实表重建用户关注相关计数。
-   * 仅回填关注分项与 followersCount，不改动其他计数字段。
-   */
+  // 根据 follow 事实表重建用户关注相关计数。
+  // 仅回填关注分项与 followersCount，不改动其他计数字段。
   async rebuildFollowCounts(tx: Db | undefined, userId: number) {
     const client = tx ?? this.db
     const [followingCounts, followersRow] = await Promise.all([
@@ -273,7 +254,7 @@ export class AppUserCountService {
         .from(this.userFollow)
         .where(
           and(
-            eq(this.userFollow.targetType, this.userFollowTargetType),
+            eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
             eq(this.userFollow.targetId, userId),
           ),
         )
@@ -311,14 +292,12 @@ export class AppUserCountService {
     }
   }
 
-  /**
-   * 根据事实表重建 app_user_count 的全部核心聚合字段。
-   * 该方法以事实表为准，不依赖现有读模型值。
-   */
+  // 根据事实表重建 app_user_count 的全部核心聚合字段。
+  // 该方法以事实表为准，不依赖现有读模型值。
   async rebuildUserCounts(
     tx: Db | undefined,
     userId: number,
-  ): Promise<RebuiltAppUserCountResult> {
+  ): Promise<AppUserCountSnapshot> {
     const client = tx ?? this.db
     const [
       commentRow,
@@ -357,7 +336,7 @@ export class AppUserCountService {
         .from(this.userFollow)
         .where(
           and(
-            eq(this.userFollow.targetType, this.userFollowTargetType),
+            eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
             eq(this.userFollow.targetId, userId),
           ),
         )
@@ -383,7 +362,7 @@ export class AppUserCountService {
             isNull(this.userComment.deletedAt),
           ),
         )
-        .where(eq(this.userLike.targetType, this.commentLikeTargetType))
+        .where(eq(this.userLike.targetType, LikeTargetTypeEnum.COMMENT))
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int` })
@@ -396,7 +375,7 @@ export class AppUserCountService {
             isNull(this.forumTopic.deletedAt),
           ),
         )
-        .where(eq(this.userLike.targetType, this.forumTopicLikeTargetType))
+        .where(eq(this.userLike.targetType, LikeTargetTypeEnum.FORUM_TOPIC))
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int` })
@@ -410,12 +389,12 @@ export class AppUserCountService {
           ),
         )
         .where(
-          eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType),
+          eq(this.userFavorite.targetType, FavoriteTargetTypeEnum.FORUM_TOPIC),
         )
         .then((rows) => rows[0]),
     ])
 
-    const rebuiltCounts: RebuiltAppUserCountResult = {
+    const rebuiltCounts: AppUserCountSnapshot = {
       userId,
       commentCount: Number(commentRow?.count ?? 0),
       likeCount: Number(likeRow?.count ?? 0),
@@ -455,9 +434,7 @@ export class AppUserCountService {
     return rebuiltCounts
   }
 
-  /**
-   * 更新用户论坛主题数。
-   */
+  // 更新用户论坛主题数。
   async updateForumTopicCount(
     tx: Db | undefined,
     userId: number,
@@ -466,9 +443,7 @@ export class AppUserCountService {
     await this.updateCountField(tx, userId, 'forumTopicCount', delta)
   }
 
-  /**
-   * 更新用户评论收到的点赞数。
-   */
+  // 更新用户评论收到的点赞数。
   async updateCommentReceivedLikeCount(
     tx: Db | undefined,
     userId: number,
@@ -477,9 +452,7 @@ export class AppUserCountService {
     await this.updateCountField(tx, userId, 'commentReceivedLikeCount', delta)
   }
 
-  /**
-   * 更新用户论坛主题收到的点赞数。
-   */
+  // 更新用户论坛主题收到的点赞数。
   async updateForumTopicReceivedLikeCount(
     tx: Db | undefined,
     userId: number,
@@ -493,9 +466,7 @@ export class AppUserCountService {
     )
   }
 
-  /**
-   * 更新用户论坛主题收到的收藏数。
-   */
+  // 更新用户论坛主题收到的收藏数。
   async updateForumTopicReceivedFavoriteCount(
     tx: Db | undefined,
     userId: number,

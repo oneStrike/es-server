@@ -3,8 +3,8 @@ import type { Type } from '@nestjs/common/interfaces/type.interface'
 import type { ValidationError } from 'class-validator'
 import type { PlatformModuleOptions } from './platform.module.types'
 import { DrizzleModule } from '@db/core'
-import { EventingModule } from '@libs/platform/modules/eventing'
-import { LoggerModule } from '@libs/platform/modules/logger'
+import { EventingModule } from '@libs/platform/modules/eventing/eventing.module'
+import { LoggerModule } from '@libs/platform/modules/logger/logger.module'
 import {
   BadRequestException,
   DynamicModule,

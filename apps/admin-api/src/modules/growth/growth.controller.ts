@@ -8,8 +8,8 @@ import {
   GrowthRuleEventPageItemDto,
   QueryGrowthRuleEventPageDto,
 } from '@libs/growth/growth/dto/growth.dto'
-import { ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

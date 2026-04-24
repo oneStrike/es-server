@@ -1,4 +1,4 @@
-import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module';
+import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
 import { DynamicModule, Module, Provider } from '@nestjs/common'
 import { AuthSessionService } from './session.service'
 

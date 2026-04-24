@@ -1,4 +1,4 @@
-import type { JsonValue } from '@libs/platform/utils/jsonParse'
+import type { JsonValue } from '@libs/platform/utils'
 import {
   ArrayProperty,
   BooleanProperty,

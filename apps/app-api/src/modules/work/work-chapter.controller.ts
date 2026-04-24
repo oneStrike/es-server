@@ -12,10 +12,9 @@ import { ComicContentService } from '@libs/content/work/content/comic-content.se
 import { NovelContentService } from '@libs/content/work/content/novel-content.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
-import { OptionalAuth } from '@libs/platform/decorators/public.decorator'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
+
+import { IdDto } from '@libs/platform/dto'
 import {
   extractRequestContext,
   serializeDeviceInfo,

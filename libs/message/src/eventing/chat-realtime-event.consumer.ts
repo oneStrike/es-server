@@ -1,4 +1,4 @@
-import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing'
+import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type { MessageChatService } from '../chat/chat.service'
 import { Injectable } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'

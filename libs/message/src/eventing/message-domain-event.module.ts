@@ -1,4 +1,4 @@
-import { EventingModule } from '@libs/platform/modules/eventing'
+import { EventingModule } from '@libs/platform/modules/eventing/eventing.module'
 import { Module } from '@nestjs/common'
 import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageNotificationModule } from '../notification/notification.module'

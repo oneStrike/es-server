@@ -10,8 +10,9 @@ import { buildILikeCondition, DrizzleService } from '@db/core'
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant'
+import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/helpers'
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
+
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 import {
   ForbiddenException,

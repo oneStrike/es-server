@@ -1,6 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import { buildLikePattern, DrizzleService } from '@db/core'
-import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
+import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
 import { and, eq, like } from 'drizzle-orm'
 import {

@@ -2,7 +2,7 @@ import { UserPermissionModule } from '@libs/growth/permission/permission.module'
 import { UserPointModule } from '@libs/growth/point/point.module';
 import { InteractionModule } from '@libs/interaction/interaction.module';
 import { ReportModule } from '@libs/interaction/report/report.module';
-import { UploadModule } from '@libs/platform/modules/upload/upload.module';
+import { UploadModule } from '@libs/platform/modules/upload/upload.module'
 import { SystemConfigModule } from '@libs/system-config/system-config.module';
 import { Module } from '@nestjs/common'
 import { WorkAuthorModule } from '../author/author.module';

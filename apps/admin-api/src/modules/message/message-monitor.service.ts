@@ -15,10 +15,8 @@ import {
 
 import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
 import { parsePositiveBigintQueryId } from '@libs/message/notification/notification-query-id.util'
-import {
-  DomainEventConsumerEnum,
-  DomainEventDispatchService,
-} from '@libs/platform/modules/eventing'
+import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
+import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, gte, sql } from 'drizzle-orm'
 
@@ -41,57 +39,9 @@ export class MessageMonitorService {
   }
 
   async getNotificationDispatchPage(query: QueryMessageDispatchPageDto) {
-    const conditions: SQL[] = [
-      eq(domainEventDispatch.consumer, DomainEventConsumerEnum.NOTIFICATION),
-    ]
-
-    if (query.dispatchStatus) {
-      conditions.push(eq(domainEventDispatch.status, query.dispatchStatus))
-    }
-    if (query.deliveryStatus) {
-      conditions.push(eq(notificationDelivery.status, query.deliveryStatus))
-    }
-    if (query.eventKey?.trim()) {
-      conditions.push(eq(domainEvent.eventKey, query.eventKey.trim()))
-    }
-    if (query.domain?.trim()) {
-      conditions.push(eq(domainEvent.domain, query.domain.trim()))
-    }
-    if (query.receiverUserId !== undefined) {
-      conditions.push(
-        eq(notificationDelivery.receiverUserId, query.receiverUserId),
-      )
-    }
-    if (query.projectionKey?.trim()) {
-      conditions.push(
-        eq(notificationDelivery.projectionKey, query.projectionKey.trim()),
-      )
-    }
-    if (query.eventId?.trim()) {
-      conditions.push(
-        eq(
-          domainEventDispatch.eventId,
-          parsePositiveBigintQueryId(query.eventId, 'eventId'),
-        ),
-      )
-    }
-    if (query.dispatchId?.trim()) {
-      conditions.push(
-        eq(
-          domainEventDispatch.id,
-          parsePositiveBigintQueryId(query.dispatchId, 'dispatchId'),
-        ),
-      )
-    }
-
-    const pageIndex =
-      Number.isInteger(query.pageIndex) && Number(query.pageIndex) > 0
-        ? Number(query.pageIndex)
-        : 1
-    const pageSize =
-      Number.isInteger(query.pageSize) && Number(query.pageSize) > 0
-        ? Math.min(Number(query.pageSize), 100)
-        : 15
+    const conditions = this.buildDispatchPageConditions(query)
+    const pageIndex = this.normalizePositiveInteger(query.pageIndex, 1)
+    const pageSize = this.normalizePositiveInteger(query.pageSize, 15, 100)
     const whereClause = and(...conditions)
 
     const [totalRow] = await this.db
@@ -200,19 +150,95 @@ export class MessageMonitorService {
       requestCount,
       ackSuccessCount,
       ackErrorCount,
-      ackSuccessRate: ackTotalCount
-        ? Number((ackSuccessCount / ackTotalCount).toFixed(4))
-        : 0,
-      avgAckLatencyMs: ackTotalCount
-        ? Number((ackLatencyTotalMs / ackTotalCount).toFixed(4))
-        : 0,
+      ackSuccessRate: this.calculateRate(ackSuccessCount, ackTotalCount),
+      avgAckLatencyMs: this.calculateRate(ackLatencyTotalMs, ackTotalCount),
       reconnectCount,
       resyncTriggerCount,
       resyncSuccessCount,
-      resyncSuccessRate: resyncTriggerCount
-        ? Number((resyncSuccessCount / resyncTriggerCount).toFixed(4))
-        : 0,
+      resyncSuccessRate: this.calculateRate(
+        resyncSuccessCount,
+        resyncTriggerCount,
+      ),
     }
+  }
+
+  private buildDispatchPageConditions(
+    query: QueryMessageDispatchPageDto,
+  ): SQL[] {
+    const conditions: SQL[] = [
+      eq(domainEventDispatch.consumer, DomainEventConsumerEnum.NOTIFICATION),
+    ]
+    const eventKey = this.getTrimmedString(query.eventKey)
+    const domain = this.getTrimmedString(query.domain)
+    const projectionKey = this.getTrimmedString(query.projectionKey)
+    const eventId = this.parseOptionalQueryId(query.eventId, 'eventId')
+    const dispatchId = this.parseOptionalQueryId(query.dispatchId, 'dispatchId')
+
+    if (query.dispatchStatus) {
+      conditions.push(eq(domainEventDispatch.status, query.dispatchStatus))
+    }
+    if (query.deliveryStatus) {
+      conditions.push(eq(notificationDelivery.status, query.deliveryStatus))
+    }
+    if (eventKey) {
+      conditions.push(eq(domainEvent.eventKey, eventKey))
+    }
+    if (domain) {
+      conditions.push(eq(domainEvent.domain, domain))
+    }
+    if (query.receiverUserId !== undefined) {
+      conditions.push(
+        eq(notificationDelivery.receiverUserId, query.receiverUserId),
+      )
+    }
+    if (projectionKey) {
+      conditions.push(eq(notificationDelivery.projectionKey, projectionKey))
+    }
+    if (eventId !== undefined) {
+      conditions.push(eq(domainEventDispatch.eventId, eventId))
+    }
+    if (dispatchId !== undefined) {
+      conditions.push(eq(domainEventDispatch.id, dispatchId))
+    }
+
+    return conditions
+  }
+
+  private getTrimmedString(value?: string): string | undefined {
+    const normalizedValue = value?.trim()
+    return normalizedValue || undefined
+  }
+
+  private parseOptionalQueryId(
+    value: string | undefined,
+    fieldName: string,
+  ): bigint | undefined {
+    const normalizedValue = this.getTrimmedString(value)
+    if (!normalizedValue) {
+      return undefined
+    }
+    return parsePositiveBigintQueryId(normalizedValue, fieldName)
+  }
+
+  private normalizePositiveInteger(
+    value: number | undefined,
+    defaultValue: number,
+    maxValue?: number,
+  ): number {
+    if (!Number.isInteger(value) || Number(value) <= 0) {
+      return defaultValue
+    }
+    if (maxValue === undefined) {
+      return Number(value)
+    }
+    return Math.min(Number(value), maxValue)
+  }
+
+  private calculateRate(numerator: number, denominator: number): number {
+    if (!denominator) {
+      return 0
+    }
+    return Number((numerator / denominator).toFixed(4))
   }
 
   private normalizeWindowHours(windowHours?: number) {

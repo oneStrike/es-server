@@ -26,7 +26,7 @@ import { BaseDto, IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
-import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
+import { AppUserResponseDto, BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
@@ -614,7 +614,7 @@ class AdminForumTopicUserLevelDto extends PickType(BaseUserLevelRuleDto, [
   'sortOrder',
 ] as const) {}
 
-class AdminForumTopicUserDto extends PickType(BaseAppUserDto, [
+class AdminForumTopicUserDto extends PickType(AppUserResponseDto, [
   'id',
   'nickname',
   'avatarUrl',

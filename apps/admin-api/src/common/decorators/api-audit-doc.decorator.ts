@@ -1,7 +1,7 @@
-import type { ApiDocOptions } from '@libs/platform/decorators/api-doc.decorator'
+import type { ApiDocOptions } from '@libs/platform/decorators'
 import type { Type } from '@nestjs/common'
 import type { AuditMetadata } from './audit.types'
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator'
+import { ApiDoc } from '@libs/platform/decorators'
 import { applyDecorators } from '@nestjs/common'
 import { Audit } from './audit.decorator'
 

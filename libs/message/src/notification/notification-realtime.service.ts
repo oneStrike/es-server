@@ -1,4 +1,4 @@
-import type { StructuredValue } from '@libs/platform/utils/jsonParse'
+import type { StructuredValue } from '@libs/platform/utils'
 import type { UserNotificationDto } from './dto/notification.dto'
 import type { NotificationUnreadSummary } from './notification-unread.type'
 import { Injectable } from '@nestjs/common'

@@ -1,4 +1,4 @@
-import type { PageDto } from '@libs/platform/dto/page.dto'
+import type { PageDto } from '@libs/platform/dto'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm'

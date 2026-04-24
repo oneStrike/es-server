@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { ContentTypeEnum } from '@libs/platform/constant/content.constant';
+import type { ContentTypeEnum } from '@libs/platform/constant';
 
 /**
  * 阅读状态中使用的章节快照

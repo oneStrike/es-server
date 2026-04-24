@@ -2,11 +2,11 @@ import type { ForumTopicClientContext } from '@libs/forum/topic/forum-topic.type
 import type { FastifyRequest } from 'fastify'
 import { AdminForumTopicDetailDto, AdminForumTopicPageItemDto, CreateForumTopicDto, QueryForumTopicDto, UpdateForumTopicAuditStatusDto, UpdateForumTopicDto, UpdateForumTopicFeaturedDto, UpdateForumTopicHiddenDto, UpdateForumTopicLockedDto, UpdateForumTopicPinnedDto } from '@libs/forum/topic/dto/forum-topic.dto';
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
+
+import { IdDto } from '@libs/platform/dto';
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { GeoService } from '@libs/platform/modules/geo';
+import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'

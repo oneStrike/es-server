@@ -8,9 +8,9 @@ import {
   TaskProgressDto,
 } from '@libs/growth/task/dto/task-query.dto'
 import { TaskService } from '@libs/growth/task/task.service'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

@@ -11,7 +11,7 @@ import type {
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { formatDateKeyInAppTimeZone } from '@libs/platform/utils/time'
+import { formatDateKeyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import { QueryGrowthLedgerPageDto } from './dto/growth-ledger-record.dto'

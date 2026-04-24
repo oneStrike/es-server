@@ -1,6 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { BaseValidateOptions } from './types'
-import { isDevelopment } from '@libs/platform/utils/env';
+import { isDevelopment } from '@libs/platform/utils';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger'
 
 /**

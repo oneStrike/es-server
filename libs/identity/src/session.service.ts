@@ -1,8 +1,13 @@
-import type { ITokenStorageService } from '@libs/platform/modules/auth/auth.types';
+import type { ITokenStorageService } from '@libs/platform/modules/auth/types';
 import type { SessionClientContext } from './session.type'
-import { AuthDefaultValue, AuthErrorMessages, RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant';
-import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service';
-import { TokenTypeEnum } from '@libs/platform/modules/auth/token-storage.types'
+import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
+import {
+  AuthDefaultValue,
+  AuthErrorMessages,
+  RevokeTokenReasonEnum,
+} from '@libs/platform/modules/auth/helpers';
+import { TokenTypeEnum } from '@libs/platform/modules/auth/types';
+
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 
 @Injectable()

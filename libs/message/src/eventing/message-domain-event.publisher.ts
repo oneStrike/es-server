@@ -1,10 +1,7 @@
 import type { Db } from '@db/core'
-import type {
-  PublishDomainEventBatchResult,
-  PublishDomainEventResult,
-} from '@libs/platform/modules/eventing'
+import type { PublishDomainEventBatchResult, PublishDomainEventResult } from '@libs/platform/modules/eventing/domain-event.type'
 import type { PublishMessageDomainEventInput } from './message-event.type'
-import { DomainEventPublisher } from '@libs/platform/modules/eventing'
+import { DomainEventPublisher } from '@libs/platform/modules/eventing/domain-event-publisher.service'
 import { Injectable } from '@nestjs/common'
 import { getMessageDomainEventDefinition } from './message-event.constant'
 

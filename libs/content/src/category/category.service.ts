@@ -2,9 +2,9 @@ import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
-import { jsonParse } from '@libs/platform/utils/jsonParse'
+import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, arrayOverlaps, eq, isNull } from 'drizzle-orm'
 import {

@@ -1,6 +1,5 @@
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule.constant'
 
 export class GrowthRewardItemDto {

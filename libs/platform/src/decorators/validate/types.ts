@@ -1,4 +1,4 @@
-import type { JsonObject, JsonValue } from '@libs/platform/utils/jsonParse'
+import type { JsonObject, JsonValue } from '@libs/platform/utils'
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { TransformFnParams } from 'class-transformer'
 

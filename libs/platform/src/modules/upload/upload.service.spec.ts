@@ -1,8 +1,8 @@
-import type { UploadConfigInterface } from '@libs/platform/config/upload.types'
+import type { UploadConfigInterface } from '@libs/platform/config'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { UploadConfig } from '@libs/platform/config/upload.config'
+import { UploadConfig } from '@libs/platform/config'
 import { fileTypeFromFile } from 'file-type'
 import { UploadService } from './upload.service'
 

@@ -1,6 +1,6 @@
 import type { appUser, work, workChapter } from '@db/schema'
 
-import type { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
+import type { WorkViewPermissionEnum } from '@libs/platform/constant'
 
 /**
  * 章节购买价格快照。

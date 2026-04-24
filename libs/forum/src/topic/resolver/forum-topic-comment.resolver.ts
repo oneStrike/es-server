@@ -8,8 +8,8 @@ import {
   MessageDomainEventFactoryService,
 } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'

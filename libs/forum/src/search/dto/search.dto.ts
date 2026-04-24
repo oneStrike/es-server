@@ -1,8 +1,6 @@
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
+
+import { PageDto } from '@libs/platform/dto';
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '../search.constant'
 
 /**

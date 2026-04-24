@@ -1,7 +1,5 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { ArrayProperty, BooleanProperty, DateProperty, NumberProperty } from '@libs/platform/decorators';
+
 import { IntersectionType, PickType } from '@nestjs/swagger'
 
 /**

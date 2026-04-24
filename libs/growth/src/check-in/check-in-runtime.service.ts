@@ -1,5 +1,5 @@
 import type { CheckInConfigSelect, CheckInRecordSelect } from '@db/schema'
-import type { PageDto } from '@libs/platform/dto/page.dto'
+import type { PageDto } from '@libs/platform/dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInCalendarDayView,
@@ -13,7 +13,7 @@ import type {
 } from './dto/check-in-runtime.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import { addDaysToDateOnlyInAppTimeZone } from '@libs/platform/utils/time'
+import { addDaysToDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, exists, gte, inArray, lte } from 'drizzle-orm'
 import { CheckInMakeupService } from './check-in-makeup.service'

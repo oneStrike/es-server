@@ -1,7 +1,7 @@
 import { ClearReadingHistoryDto, DeleteReadingHistoryDto, QueryReadingHistoryDto, ReadingHistoryWorkDto } from '@libs/interaction/reading-state/dto/reading-state.dto';
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
+
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

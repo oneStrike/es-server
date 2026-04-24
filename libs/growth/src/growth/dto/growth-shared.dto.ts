@@ -6,8 +6,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
-import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { BaseDto, IdDto, UserIdDto } from '@libs/platform/dto'
+
 import {
   GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION,
   GROWTH_RULE_TYPE_RULE_DTO_DESCRIPTION,

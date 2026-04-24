@@ -8,7 +8,7 @@ import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import {
   HttpException,

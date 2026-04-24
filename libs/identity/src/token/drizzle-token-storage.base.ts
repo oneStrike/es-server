@@ -5,11 +5,11 @@ import type {
   TokenStorageFindManyOptions,
   TokenStorageUpdateInput,
   TokenStorageWhereInput,
-} from '@libs/platform/modules/auth/token-storage.types'
+} from '@libs/platform/modules/auth/types'
 import type { Cache } from 'cache-manager'
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { BaseTokenStorageService } from '@libs/platform/modules/auth/base-token-storage.service';
+import { BaseTokenStorageService } from '@libs/platform/modules/auth/base-token-storage.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject } from '@nestjs/common'
 import { and, eq, gt, inArray, isNotNull, isNull, lt } from 'drizzle-orm'

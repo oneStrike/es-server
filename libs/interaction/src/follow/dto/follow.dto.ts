@@ -1,12 +1,9 @@
 import { BaseAuthorDto } from '@libs/content/author/dto/author.dto';
 import { PublicForumSectionListItemDto } from '@libs/forum/section/dto/forum-section.dto';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty } from '@libs/platform/decorators';
+
+import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto';
+
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { FollowTargetTypeEnum } from '../follow.constant'

@@ -1,5 +1,5 @@
 import type { AppUserSelect } from '@db/schema'
-import type { StructuredValue } from '@libs/platform/utils/jsonParse'
+import type { StructuredValue } from '@libs/platform/utils'
 import type {
   NotificationAnnouncementSnapshotDto,
   NotificationChapterSnapshotDto,

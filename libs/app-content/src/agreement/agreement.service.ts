@@ -2,7 +2,7 @@ import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'

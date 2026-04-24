@@ -1,4 +1,4 @@
-import { GeoModule } from '@libs/platform/modules/geo'
+import { GeoModule } from '@libs/platform/modules/geo/geo.module'
 import { Module } from '@nestjs/common'
 import { AuthModule } from './auth/auth.module'
 import { CheckInModule } from './check-in/check-in.module'

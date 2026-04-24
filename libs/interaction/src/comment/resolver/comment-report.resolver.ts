@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant'
+import { BusinessErrorCode, CommentLevelEnum } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { IReportTargetResolver } from '../../report/interfaces/report-target-resolver.interface'

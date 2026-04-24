@@ -1,8 +1,8 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import { BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 import { Injectable } from '@nestjs/common'

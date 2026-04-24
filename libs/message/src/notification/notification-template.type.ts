@@ -1,4 +1,4 @@
-import type { StructuredValue } from '@libs/platform/utils/jsonParse'
+import type { StructuredValue } from '@libs/platform/utils'
 import type { NotificationUserSnapshot } from './notification-contract.type'
 import type { MessageNotificationCategoryKey } from './notification.constant'
 

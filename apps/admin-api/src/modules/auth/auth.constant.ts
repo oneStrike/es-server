@@ -1,4 +1,4 @@
-import { createAuthRedisKeys } from '@libs/platform/modules/auth/auth.helpers';
+import { createAuthRedisKeys } from '@libs/platform/modules/auth/helpers';
 
 export enum AdminAuthCacheKeys {
   /** 登录验证码 Key 前缀 */

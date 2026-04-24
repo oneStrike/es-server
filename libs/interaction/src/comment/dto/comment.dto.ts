@@ -1,18 +1,11 @@
-import type { JsonValue } from '@libs/platform/utils/jsonParse'
+import type { JsonValue } from '@libs/platform/utils'
 import {
   AuditRoleEnum,
   AuditStatusEnum,
-} from '@libs/platform/constant/audit.constant'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+} from '@libs/platform/constant'
+import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, JsonProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'

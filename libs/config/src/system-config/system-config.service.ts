@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { StructuredValue } from '@libs/platform/utils/jsonParse'
+import type { StructuredValue } from '@libs/platform/utils'
 import type { Cache } from 'cache-manager'
 import type { ConfigAllowedTemplate } from './system-config.type'
 import { DrizzleService } from '@db/core'
@@ -8,7 +8,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { AesService } from '@libs/platform/modules/crypto/aes.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
-import { isMasked, maskString } from '@libs/platform/utils/mask'
+import { isMasked, maskString } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import {
   BadRequestException,

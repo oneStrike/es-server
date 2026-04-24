@@ -22,7 +22,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
-import { GeoService } from '@libs/platform/modules/geo'
+import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import {
   extractRequestContext,
   serializeDeviceInfo,

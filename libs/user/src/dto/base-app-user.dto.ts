@@ -1,13 +1,12 @@
 import {
   GenderEnum,
-} from '@libs/platform/constant/profile.constant'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto } from '@libs/platform/dto/base.dto'
+} from '@libs/platform/constant'
+import { BooleanProperty, DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+
+import { BaseDto } from '@libs/platform/dto'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
+import { IntersectionType } from '@nestjs/swagger'
+import { UserGrowthSnapshotFieldsDto } from './app-user-growth-shared.dto'
 
 /**
  * 应用用户对外基类 DTO
@@ -101,22 +100,6 @@ export class BaseAppUserDto extends BaseDto {
   })
   birthDate?: string | Date | null
 
-  @NumberProperty({
-    description: '积分',
-    example: 100,
-    default: 0,
-    required: true,
-  })
-  points!: number
-
-  @NumberProperty({
-    description: '经验值',
-    example: 500,
-    default: 0,
-    required: true,
-  })
-  experience!: number
-
   @EnumProperty({
     description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
@@ -165,3 +148,12 @@ export class BaseAppUserDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+
+/**
+ * 应用用户完整响应 DTO。
+ * 在基础用户字段上显式组合成长余额快照，避免 `BaseAppUserDto` 与单表 schema 脱锚。
+ */
+export class AppUserResponseDto extends IntersectionType(
+  BaseAppUserDto,
+  UserGrowthSnapshotFieldsDto,
+) {}

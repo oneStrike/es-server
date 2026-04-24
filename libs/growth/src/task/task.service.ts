@@ -1,5 +1,5 @@
 import type { TaskEventProgressInput } from './types/task.type'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
 import {
   CreateTaskDefinitionDto,

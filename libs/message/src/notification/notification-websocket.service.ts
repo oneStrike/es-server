@@ -15,7 +15,7 @@ import {
   PlatformErrorCode,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { isDevelopment } from '@libs/platform/utils/env'
+import { isDevelopment } from '@libs/platform/utils'
 import {
   BadRequestException,
   HttpException,

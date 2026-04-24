@@ -10,7 +10,7 @@ import {
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 import {

@@ -1,7 +1,4 @@
-import type {
-  DomainEventDispatchRecord,
-  DomainEventRecord,
-} from '@libs/platform/modules/eventing'
+import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type { SQL } from 'drizzle-orm'
 import type { NotificationProjectionApplyResult } from '../eventing/message-event.type'
 import type { QueryNotificationDeliveryPageDto } from './dto/notification.dto'

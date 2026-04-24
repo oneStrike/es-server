@@ -4,7 +4,7 @@ import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { applyCountDelta } from '@db/extensions'
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'

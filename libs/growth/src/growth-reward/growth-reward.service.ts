@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { JsonObject } from '@libs/platform/utils/jsonParse'
+import type { JsonObject } from '@libs/platform/utils'
 import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.internal'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {

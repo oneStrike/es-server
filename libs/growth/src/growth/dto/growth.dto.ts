@@ -5,13 +5,9 @@ import {
 } from '@libs/growth/event-definition/event-definition.constant'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { ArrayProperty, BooleanProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+
+import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType } from '@nestjs/swagger'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 
