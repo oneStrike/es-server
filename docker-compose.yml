@@ -102,12 +102,12 @@ services:
       - no-new-privileges:true
     ports:
       # 使用环境变量控制端口映射，默认 8081
-      - '${APP_API_PORT}:8080'
+      - '${APP_API_PORT}:8081'
     env_file:
       - ./.env
     environment:
       - APP_NAME=app-api
-      - APP_PORT=8080
+      - APP_PORT=8081
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
       # 配置隔离映射

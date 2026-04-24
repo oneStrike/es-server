@@ -1,5 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import type {
+  CheckInDateRewardRuleView,
   CheckInExecutedRowsResult,
   CheckInPublishEffectiveInput,
   CheckInRuleIdQuery,
@@ -89,6 +90,11 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   // 更新全局签到配置，并在缺失时自动创建首条配置。
   async updateConfig(dto: UpdateCheckInConfigDto, adminUserId: number) {
+    const normalizedDateRewardRules =
+      this.checkInRewardPolicyService.normalizeDateRewardRules(
+        dto.dateRewardRules,
+      )
+    const today = this.formatDateOnly(new Date())
     const normalized = {
       isEnabled: dto.isEnabled ? 1 : 0,
       makeupPeriodType: dto.makeupPeriodType,
@@ -99,10 +105,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           allowEmpty: true,
         },
       ),
-      dateRewardRules:
-        this.checkInRewardPolicyService.normalizeDateRewardRules(
-          dto.dateRewardRules,
-        ),
       patternRewardRules:
         this.checkInRewardPolicyService.normalizePatternRewardRules(
           dto.patternRewardRules,
@@ -113,13 +115,30 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     const current = await this.getCurrentConfig()
     if (!current) {
-      await this.db.insert(this.checkInConfigTable).values(normalized)
+      await this.db.insert(this.checkInConfigTable).values({
+        ...normalized,
+        dateRewardRules: this.mergeDateRewardRulesForUpdate(
+          [],
+          normalizedDateRewardRules,
+          today,
+        ),
+      })
       return true
     }
 
+    const currentRewardDefinition =
+      this.checkInRewardPolicyService.parseRewardDefinition(current)
+
     await this.db
       .update(this.checkInConfigTable)
-      .set(normalized)
+      .set({
+        ...normalized,
+        dateRewardRules: this.mergeDateRewardRulesForUpdate(
+          currentRewardDefinition.dateRewardRules,
+          normalizedDateRewardRules,
+          today,
+        ),
+      })
       .where(eq(this.checkInConfigTable.id, current.id))
 
     return true
@@ -658,6 +677,22 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     const rows = (result as { rows?: T[] | null }).rows
     return Array.isArray(rows) ? rows : []
+  }
+
+  // 更新配置时锁定今天之前的具体日期奖励，避免后台改动回溯污染历史自然日语义。
+  private mergeDateRewardRulesForUpdate(
+    currentRules: CheckInDateRewardRuleView[],
+    incomingRules: CheckInDateRewardRuleView[],
+    today: string,
+  ) {
+    const lockedPastRules = currentRules.filter(
+      (rule) => rule.rewardDate < today,
+    )
+    const editableRules = incomingRules.filter((rule) => rule.rewardDate >= today)
+
+    return [...lockedPastRules, ...editableRules].sort((left, right) =>
+      left.rewardDate.localeCompare(right.rewardDate),
+    )
   }
 
   // 批量构建规则详情视图。
