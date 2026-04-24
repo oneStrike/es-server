@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common'
 import { EmojiCatalogService } from './emoji-catalog.service'
 import { EMOJI_SHORTCODE_REGEX } from './emoji.constant'
 
-const EMOJI_UNICODE_REGEX = new RegExp('\\p{RGI_Emoji}', 'gv')
+const EMOJI_UNICODE_REGEX = /\p{RGI_Emoji}/gv
 
 /**
  * 将文本解析为普通文本、Unicode 表情和自定义短码三类 token。
@@ -33,7 +33,9 @@ export class EmojiParserService {
       (match) => match[1],
     )
     const unicodeSequences = Array.from(
-      body.matchAll(new RegExp(EMOJI_UNICODE_REGEX.source, EMOJI_UNICODE_REGEX.flags)),
+      body.matchAll(
+        new RegExp(EMOJI_UNICODE_REGEX.source, EMOJI_UNICODE_REGEX.flags),
+      ),
       (match) => match[0],
     )
     const [shortcodeAssetMap, unicodeAssetMap] = await Promise.all([
