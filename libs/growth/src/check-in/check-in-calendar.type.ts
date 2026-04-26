@@ -1,10 +1,14 @@
 import type { CheckInRecordSelect, CheckInStreakGrantSelect } from '@db/schema'
-import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
+import type { CheckInRewardItems } from './check-in.type'
 
 /** 签到日历聚合时读取的最小签到事实字段集。 */
 export type CheckInCalendarRecordAggregateSource = Pick<
   CheckInRecordSelect,
-  'userId' | 'signDate' | 'recordType' | 'resolvedRewardItems'
+  | 'userId'
+  | 'signDate'
+  | 'recordType'
+  | 'resolvedRewardItems'
+  | 'resolvedRewardOverviewIconUrl'
 >
 
 /** 签到日历统计连续奖励触发次数时读取的最小发放字段集。 */
@@ -23,6 +27,8 @@ export interface CheckInAdminCalendarDayAggregate {
   normalSignCount: number
   makeupSignCount: number
   streakRewardTriggerCount: number
-  baseRewardConfigProjectionOverview: GrowthRewardItems | null
-  baseRewardActualOverview: GrowthRewardItems | null
+  baseRewardConfigProjectionOverview: CheckInRewardItems | null
+  baseRewardConfigProjectionOverviewIconUrl: string | null
+  baseRewardActualOverview: CheckInRewardItems | null
+  baseRewardActualOverviewIconUrl: string | null
 }

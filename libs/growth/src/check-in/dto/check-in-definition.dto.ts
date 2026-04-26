@@ -1,4 +1,3 @@
-import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -16,6 +15,7 @@ import {
 } from '../check-in.constant'
 import { CheckInDateRewardRuleFieldsDto } from './check-in-date-reward-rule.dto'
 import { BaseCheckInPatternRewardRuleDto } from './check-in-pattern-reward-rule.dto'
+import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 import { BaseCheckInStreakRewardRuleDto } from './check-in-streak-reward-rule.dto'
 
 export class UpdateCheckInConfigDto {
@@ -41,10 +41,26 @@ export class UpdateCheckInConfigDto {
 
   @ArrayProperty({
     description: '默认基础奖励项。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
     required: false,
   })
-  baseRewardItems?: GrowthRewardItemDto[] | null
+  baseRewardItems?: CheckInRewardItemDto[] | null
+
+  @StringProperty({
+    description: '补签图标 URL。',
+    example: 'https://cdn.example.com/check-in/makeup.png',
+    required: false,
+    maxLength: 500,
+  })
+  makeupIconUrl?: string | null
+
+  @StringProperty({
+    description: '基础奖励日历汇总图标 URL。',
+    example: 'https://cdn.example.com/check-in/reward-overview.png',
+    required: false,
+    maxLength: 500,
+  })
+  rewardOverviewIconUrl?: string | null
 
   @ArrayProperty({
     description: '具体日期奖励规则列表。',

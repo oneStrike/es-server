@@ -193,6 +193,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
                 ? (rewardResolution.resolvedRewardRuleKey ?? null)
                 : null,
               resolvedRewardItems: rewardResolution.resolvedRewardItems ?? null,
+              resolvedRewardOverviewIconUrl: rewardResolution.resolvedRewardItems
+                ? rewardResolution.resolvedRewardOverviewIconUrl
+                : null,
+              resolvedMakeupIconUrl:
+                input.recordType === CheckInRecordTypeEnum.MAKEUP
+                  ? rewardDefinition.makeupIconUrl
+                  : null,
               rewardSettlementId: null,
               bizKey: this.buildRecordBizKey(input.userId, input.signDate),
               operatorType: input.operatorType,
@@ -445,6 +452,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           allowEmpty: true,
         },
       ),
+      resolvedRewardOverviewIconUrl: record.resolvedRewardOverviewIconUrl,
+      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
       rewardSettlement:
         this.checkInSettlementService.toRewardSettlementSummary(settlement),
       currentMakeupPeriodType: makeup.periodType,

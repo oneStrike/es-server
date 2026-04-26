@@ -1,5 +1,4 @@
 import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
-import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -19,6 +18,7 @@ import {
   BaseCheckInRecordDto,
   CheckInRewardSettlementSummaryDto,
 } from './check-in-record.dto'
+import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 import { CheckInGrantItemDto } from './check-in-streak-reward-grant.dto'
 import { BaseCheckInStreakRewardRuleDto } from './check-in-streak-reward-rule.dto'
 
@@ -143,6 +143,8 @@ export class CheckInReconciliationPageItemDto extends IntersectionType(
     'resolvedRewardSourceType',
     'resolvedRewardRuleKey',
     'resolvedRewardItems',
+    'resolvedRewardOverviewIconUrl',
+    'resolvedMakeupIconUrl',
     'grants',
     'rewardSettlement',
   ] as const),
@@ -325,11 +327,27 @@ export class CheckInCalendarDayDto {
 
   @ArrayProperty({
     description: '该日基础奖励快照。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
     required: false,
     validation: false,
   })
-  rewardItems?: GrowthRewardItemDto[] | null
+  rewardItems?: CheckInRewardItemDto[] | null
+
+  @StringProperty({
+    description: '该日基础奖励概览图标 URL。',
+    example: 'https://cdn.example.com/check-in/reward-overview.png',
+    required: false,
+    validation: false,
+  })
+  rewardOverviewIconUrl?: string | null
+
+  @StringProperty({
+    description: '该日补签图标 URL；普通签到日或未签到日为空。',
+    example: 'https://cdn.example.com/check-in/makeup.png',
+    required: false,
+    validation: false,
+  })
+  makeupIconUrl?: string | null
 
   @NestedProperty({
     description: '该日基础奖励补偿摘要。',

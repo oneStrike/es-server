@@ -4,7 +4,15 @@ import { CheckInSettlementService } from './check-in-settlement.service'
 describe('check-in settlement service', () => {
   function createService() {
     return new CheckInSettlementService(
-      {} as never,
+      {
+        schema: {
+          checkInStreakGrantRewardItem: {
+            grantId: 'grantId',
+            sortOrder: 'sortOrder',
+            id: 'id',
+          },
+        },
+      } as never,
       {} as never,
       {} as never,
     )
@@ -59,5 +67,66 @@ describe('check-in settlement service', () => {
     ).resolveRewardResultType([{ duplicated: true }, { duplicated: true }])
 
     expect(resultType).toBe(CheckInRewardResultTypeEnum.IDEMPOTENT)
+  })
+
+  it('writes and reads streak reward item icons in grant snapshots', async () => {
+    const service = createService()
+    const insertedValues = jest.fn().mockResolvedValue(undefined)
+    const tx = {
+      insert: jest.fn().mockReturnValue({
+        values: insertedValues,
+      }),
+      select: jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            orderBy: jest.fn().mockResolvedValue([
+              {
+                grantId: 66,
+                assetType: 1,
+                assetKey: '',
+                amount: 20,
+                iconUrl: 'https://cdn.example.com/streak.png',
+                sortOrder: 0,
+                id: 1,
+              },
+            ]),
+          }),
+        }),
+      }),
+    }
+
+    await service.insertGrantRewardItems(
+      66,
+      [
+        {
+          assetType: 1,
+          assetKey: '',
+          amount: 20,
+          iconUrl: 'https://cdn.example.com/streak.png',
+        },
+      ],
+      tx as never,
+    )
+
+    expect(insertedValues).toHaveBeenCalledWith([
+      {
+        grantId: 66,
+        assetType: 1,
+        assetKey: '',
+        amount: 20,
+        iconUrl: 'https://cdn.example.com/streak.png',
+        sortOrder: 0,
+      },
+    ])
+
+    const rewardItemMap = await service.buildGrantRewardItemMap([66], tx as never)
+    expect(rewardItemMap.get(66)).toEqual([
+      {
+        assetType: 1,
+        assetKey: '',
+        amount: 20,
+        iconUrl: 'https://cdn.example.com/streak.png',
+      },
+    ])
   })
 })

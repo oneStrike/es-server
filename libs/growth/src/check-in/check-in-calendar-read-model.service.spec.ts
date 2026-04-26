@@ -5,12 +5,27 @@ import { CheckInCalendarReadModelService } from './check-in-calendar-read-model.
 describe('check-in calendar read-model service', () => {
   function createService() {
     const rewardPolicyService = {
-      parseRewardDefinition: jest.fn().mockReturnValue({ definition: true }),
+      parseRewardDefinition: jest.fn().mockReturnValue({
+        definition: true,
+        makeupIconUrl: 'https://cdn.example.com/makeup.png',
+      }),
       resolveRewardForDate: jest.fn().mockImplementation((_, date) => ({
         resolvedRewardItems:
           date === '2026-04-21'
-            ? [{ assetType: 1, assetKey: '', amount: 99 }]
+            ? [
+                {
+                  assetType: 1,
+                  assetKey: '',
+                  amount: 99,
+                  iconUrl: 'https://cdn.example.com/projection-item.png',
+                },
+              ]
             : null,
+        resolvedRewardOverviewIconUrl:
+          date === '2026-04-21'
+            ? 'https://cdn.example.com/projection-overview.png'
+            : null,
+        resolvedMakeupIconUrl: null,
       })),
       parseStoredRewardItems: jest
         .fn()
@@ -108,6 +123,8 @@ describe('check-in calendar read-model service', () => {
       makeupPeriodType: 1,
       periodicAllowance: 2,
       isEnabled: 1,
+      makeupIconUrl: 'https://cdn.example.com/makeup.png',
+      rewardOverviewIconUrl: 'https://cdn.example.com/default-overview.png',
     })
     ;(
       service as unknown as {
@@ -129,6 +146,9 @@ describe('check-in calendar read-model service', () => {
         signDate: '2026-04-21',
         recordType: 1,
         rewardSettlementId: null,
+        resolvedRewardOverviewIconUrl:
+          'https://cdn.example.com/frozen-overview.png',
+        resolvedMakeupIconUrl: null,
         resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 8 }],
       },
     ])
@@ -156,13 +176,24 @@ describe('check-in calendar read-model service', () => {
         userId: 9,
         signDate: '2026-04-21',
         recordType: 1,
+        resolvedRewardOverviewIconUrl:
+          'https://cdn.example.com/frozen-overview.png',
         resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
       },
       {
         userId: 10,
         signDate: '2026-04-21',
         recordType: 2,
-        resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 5 }],
+        resolvedRewardOverviewIconUrl:
+          'https://cdn.example.com/frozen-overview.png',
+        resolvedRewardItems: [
+          {
+            assetType: 1,
+            assetKey: '',
+            amount: 5,
+            iconUrl: 'https://cdn.example.com/makeup-item.png',
+          },
+        ],
       },
     ])
     ;(
@@ -222,14 +253,21 @@ describe('check-in calendar read-model service', () => {
       isSigned: true,
       grantCount: 2,
       rewardItems: [{ assetType: 1, assetKey: '', amount: 8 }],
+      rewardOverviewIconUrl: 'https://cdn.example.com/frozen-overview.png',
+      makeupIconUrl: null,
     })
     expect(calendar.days[1]).toMatchObject({
       signDate: '2026-04-22',
       isSigned: false,
       rewardItems: null,
+      rewardOverviewIconUrl: null,
+      makeupIconUrl: null,
     })
     expect(rewardPolicyService.resolveRewardForDate).toHaveBeenCalledWith(
-      { definition: true },
+      {
+        definition: true,
+        makeupIconUrl: 'https://cdn.example.com/makeup.png',
+      },
       '2026-04-22',
       1,
     )
@@ -252,11 +290,26 @@ describe('check-in calendar read-model service', () => {
       makeupSignCount: 1,
       streakRewardTriggerCount: 2,
       baseRewardConfigProjectionOverview: [
-        { assetType: 1, assetKey: '', amount: 99 },
+        {
+          assetType: 1,
+          assetKey: '',
+          amount: 99,
+          iconUrl: 'https://cdn.example.com/projection-item.png',
+        },
       ],
+      baseRewardConfigProjectionOverviewIconUrl:
+        'https://cdn.example.com/projection-overview.png',
       baseRewardActualOverview: [
-        { assetType: 1, assetKey: '', amount: 15 },
+        { assetType: 1, assetKey: '', amount: 10 },
+        {
+          assetType: 1,
+          assetKey: '',
+          amount: 5,
+          iconUrl: 'https://cdn.example.com/makeup-item.png',
+        },
       ],
+      baseRewardActualOverviewIconUrl:
+        'https://cdn.example.com/frozen-overview.png',
     })
   })
 

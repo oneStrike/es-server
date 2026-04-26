@@ -1,4 +1,3 @@
-import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -9,6 +8,7 @@ import {
 
 import { BaseDto } from '@libs/platform/dto'
 import { CheckInRewardSettlementSummaryDto } from './check-in-record.dto'
+import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 
 export class BaseCheckInStreakRewardGrantDto extends BaseDto {
   @NumberProperty({
@@ -41,10 +41,10 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
 
   @ArrayProperty({
     description: '冻结的连续奖励快照。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
     validation: false,
   })
-  rewardItems!: GrowthRewardItemDto[]
+  rewardItems!: CheckInRewardItemDto[]
 
   @BooleanProperty({
     description: '是否允许重复发放。',

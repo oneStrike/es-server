@@ -1,5 +1,5 @@
-import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import { ArrayProperty, StringProperty } from '@libs/platform/decorators'
+import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 
 export class CheckInDateRewardRuleFieldsDto {
   @StringProperty({
@@ -10,7 +10,15 @@ export class CheckInDateRewardRuleFieldsDto {
 
   @ArrayProperty({
     description: '具体日期奖励项列表。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
   })
-  rewardItems!: GrowthRewardItemDto[]
+  rewardItems!: CheckInRewardItemDto[]
+
+  @StringProperty({
+    description: '该日期奖励概览图标 URL。',
+    example: 'https://cdn.example.com/check-in/date-overview.png',
+    required: false,
+    maxLength: 500,
+  })
+  rewardOverviewIconUrl?: string | null
 }

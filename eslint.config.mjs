@@ -1,4 +1,7 @@
+import { fileURLToPath } from 'node:url'
 import antfu from '@antfu/eslint-config'
+
+const tsconfigPath = fileURLToPath(new URL('./tsconfig.json', import.meta.url))
 
 export default antfu(
   {
@@ -17,7 +20,7 @@ export default antfu(
       prettier: true,
     },
     typescript: {
-      tsconfigPath: 'tsconfig.json',
+      tsconfigPath,
     },
     stylistic: {
       indent: 2,

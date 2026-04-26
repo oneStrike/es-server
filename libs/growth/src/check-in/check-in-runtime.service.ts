@@ -276,6 +276,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
                   allowEmpty: true,
                 },
               ),
+            resolvedRewardOverviewIconUrl:
+              record.resolvedRewardOverviewIconUrl,
+            resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
             rewardSettlement: record.rewardSettlementId
               ? this.checkInSettlementService.toRewardSettlementSummary(
                   settlementMap.get(record.rewardSettlementId) ?? null,
@@ -345,6 +348,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
           allowEmpty: true,
         },
       ),
+      resolvedRewardOverviewIconUrl: record.resolvedRewardOverviewIconUrl,
+      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
       rewardSettlement: record.rewardSettlementId
         ? this.checkInSettlementService.toRewardSettlementSummary(
             settlementMap.get(record.rewardSettlementId) ?? null,
@@ -533,6 +538,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       isEnabled: config.isEnabled === 1,
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
+      makeupIconUrl: rewardDefinition.makeupIconUrl,
+      rewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl,
       baseRewardItems: rewardDefinition.baseRewardItems,
       dateRewardRules:
         this.checkInRewardPolicyService.toEditableDateRewardRules(

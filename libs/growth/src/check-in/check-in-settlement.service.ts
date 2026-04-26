@@ -1,11 +1,11 @@
 import type { Db } from '@db/core'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
-import type { GrowthRewardItems } from '@libs/growth/reward-rule/reward-item.type'
 import type {
   CheckInGrantRewardSettlementSource,
   CheckInOptionalRewardSettlementSummary,
   CheckInRecordRewardSettlementSource,
   CheckInRewardApplyInput,
+  CheckInRewardItems,
   CheckInRewardSettlementContext,
 } from './check-in.type'
 import { DrizzleService } from '@db/core'
@@ -271,7 +271,7 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   // 批量加载连续奖励发放记录对应的奖励项快照。
   async buildGrantRewardItemMap(grantIds: number[], db: Db = this.db) {
     if (grantIds.length === 0) {
-      return new Map<number, GrowthRewardItems>()
+      return new Map<number, CheckInRewardItems>()
     }
 
     const rewardItems = await db
@@ -283,13 +283,14 @@ export class CheckInSettlementService extends CheckInServiceSupport {
         asc(this.checkInStreakGrantRewardItemTable.id),
       )
 
-    const rewardMap = new Map<number, GrowthRewardItems>()
+    const rewardMap = new Map<number, CheckInRewardItems>()
     for (const item of rewardItems) {
       const list = rewardMap.get(item.grantId) ?? []
       list.push({
         assetType: item.assetType,
         assetKey: item.assetKey,
         amount: item.amount,
+        iconUrl: item.iconUrl,
       })
       rewardMap.set(item.grantId, list)
     }
@@ -300,7 +301,7 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   // 把连续奖励快照奖励项逐条写入关系表。
   async insertGrantRewardItems(
     grantId: number,
-    rewardItems: GrowthRewardItems,
+    rewardItems: CheckInRewardItems,
     tx: Db,
   ) {
     if (rewardItems.length === 0) {
@@ -312,6 +313,7 @@ export class CheckInSettlementService extends CheckInServiceSupport {
         assetType: item.assetType,
         assetKey: item.assetKey,
         amount: item.amount,
+        iconUrl: item.iconUrl ?? null,
         sortOrder,
       })),
     )
@@ -329,7 +331,7 @@ export class CheckInSettlementService extends CheckInServiceSupport {
       }
       throw new InternalServerErrorException('签到奖励快照缺失')
     }
-    return rewardItems as GrowthRewardItems
+    return rewardItems as CheckInRewardItems
   }
 
   // 按奖励项逐条落到账本，并返回每条落账结果。

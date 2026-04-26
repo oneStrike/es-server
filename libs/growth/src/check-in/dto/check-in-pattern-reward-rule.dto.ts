@@ -1,11 +1,12 @@
-import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import {
   ArrayProperty,
   EnumProperty,
   NumberProperty,
+  StringProperty,
 } from '@libs/platform/decorators'
 
 import { CheckInPatternRewardRuleTypeEnum } from '../check-in.constant'
+import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 
 export class BaseCheckInPatternRewardRuleDto {
   @EnumProperty({
@@ -34,7 +35,15 @@ export class BaseCheckInPatternRewardRuleDto {
 
   @ArrayProperty({
     description: '周期模式奖励项列表。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
   })
-  rewardItems!: GrowthRewardItemDto[]
+  rewardItems!: CheckInRewardItemDto[]
+
+  @StringProperty({
+    description: '该周期奖励概览图标 URL。',
+    example: 'https://cdn.example.com/check-in/pattern-overview.png',
+    required: false,
+    maxLength: 500,
+  })
+  rewardOverviewIconUrl?: string | null
 }

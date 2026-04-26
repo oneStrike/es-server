@@ -26,6 +26,8 @@ export const checkInStreakRuleRewardItem = pgTable(
     assetKey: varchar({ length: 50 }).default('').notNull(),
     /** 奖励数量。 */
     amount: integer().notNull(),
+    /** 连续奖励项图标 URL。 */
+    iconUrl: varchar({ length: 500 }),
     /** 排序值。0=默认顺序。 */
     sortOrder: smallint().default(0).notNull(),
   },
@@ -43,6 +45,7 @@ export const checkInStreakRuleRewardItem = pgTable(
       'check_in_streak_rule_reward_item_amount_positive_chk',
       sql`${table.amount} > 0`,
     ),
+    index('check_in_streak_rule_reward_item_icon_url_idx').on(table.iconUrl),
     check(
       'check_in_streak_rule_reward_item_sort_order_non_negative_chk',
       sql`${table.sortOrder} >= 0`,

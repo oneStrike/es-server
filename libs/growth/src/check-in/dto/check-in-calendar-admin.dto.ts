@@ -1,4 +1,3 @@
-import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -8,6 +7,7 @@ import {
 } from '@libs/platform/decorators'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { PickType } from '@nestjs/swagger'
+import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 import { CheckInCalendarResponseDto, CheckInRecordItemDto } from './check-in-runtime.dto'
 
 class CheckInCalendarWindowDto extends PickType(CheckInCalendarResponseDto, [
@@ -77,19 +77,35 @@ export class AdminCheckInCalendarDayDto {
   @ArrayProperty({
     description:
       '当前生效配置对该日期的奖励规则投影视图；这是 current-config projection，不是历史冻结配置快照。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
     required: false,
     validation: false,
   })
-  baseRewardConfigProjectionOverview?: GrowthRewardItemDto[] | null
+  baseRewardConfigProjectionOverview?: CheckInRewardItemDto[] | null
+
+  @StringProperty({
+    description: '当前生效配置对该日期的奖励概览图标 URL。',
+    example: 'https://cdn.example.com/check-in/reward-overview.png',
+    required: false,
+    validation: false,
+  })
+  baseRewardConfigProjectionOverviewIconUrl?: string | null
 
   @ArrayProperty({
     description: '按签到事实冻结奖励快照聚合出的当日基础奖励实际概览。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
     required: false,
     validation: false,
   })
-  baseRewardActualOverview?: GrowthRewardItemDto[] | null
+  baseRewardActualOverview?: CheckInRewardItemDto[] | null
+
+  @StringProperty({
+    description: '按签到事实冻结奖励快照聚合出的当日基础奖励概览图标 URL。',
+    example: 'https://cdn.example.com/check-in/reward-overview.png',
+    required: false,
+    validation: false,
+  })
+  baseRewardActualOverviewIconUrl?: string | null
 }
 
 export class AdminCheckInCalendarDetailResponseDto extends CheckInCalendarWindowDto {

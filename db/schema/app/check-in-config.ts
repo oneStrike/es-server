@@ -7,6 +7,7 @@ import {
   pgTable,
   smallint,
   timestamp,
+  varchar,
 } from 'drizzle-orm/pg-core'
 
 /**
@@ -25,13 +26,17 @@ export const checkInConfig = pgTable(
     makeupPeriodType: smallint().notNull(),
     /** 每周期系统发放的补签额度。 */
     periodicAllowance: integer().default(0).notNull(),
-    /** 默认基础奖励项。 */
+    /** 补签图标 URL。 */
+    makeupIconUrl: varchar({ length: 500 }),
+    /** 基础奖励日历汇总图标 URL。 */
+    rewardOverviewIconUrl: varchar({ length: 500 }),
+    /** 默认基础奖励项；reward item 允许携带签到域专属图标元数据。 */
     baseRewardItems: jsonb(),
-    /** 具体日期奖励规则列表。 */
+    /** 具体日期奖励规则列表；每条规则允许独立配置奖励概览图标。 */
     dateRewardRules: jsonb()
       .default(sql`'[]'::jsonb`)
       .notNull(),
-    /** 周期模式奖励规则列表。 */
+    /** 周期模式奖励规则列表；每条规则允许独立配置奖励概览图标。 */
     patternRewardRules: jsonb()
       .default(sql`'[]'::jsonb`)
       .notNull(),

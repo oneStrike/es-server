@@ -201,6 +201,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
           assetType: item.assetType,
           assetKey: item.assetKey,
           amount: item.amount,
+          iconUrl: item.iconUrl,
         })),
       }))
       .sort((left, right) => {

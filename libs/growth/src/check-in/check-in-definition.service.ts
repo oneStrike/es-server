@@ -88,6 +88,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       isEnabled: config.isEnabled === 1,
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
+      makeupIconUrl: rewardDefinition.makeupIconUrl,
+      rewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl,
       baseRewardItems: rewardDefinition.baseRewardItems,
       dateRewardRules:
         this.checkInRewardPolicyService.toEditableDateRewardRules(
@@ -110,6 +112,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       isEnabled: dto.isEnabled ? 1 : 0,
       makeupPeriodType: dto.makeupPeriodType,
       periodicAllowance: dto.periodicAllowance,
+      makeupIconUrl: dto.makeupIconUrl?.trim() || null,
+      rewardOverviewIconUrl: dto.rewardOverviewIconUrl?.trim() || null,
       baseRewardItems: this.checkInRewardPolicyService.parseRewardItems(
         dto.baseRewardItems,
         {
@@ -329,6 +333,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           amount: item.amount,
           assetKey: item.assetKey,
           assetType: item.assetType,
+          iconUrl: item.iconUrl ?? null,
           ruleId: insertedRule.id,
           sortOrder,
         })),
@@ -723,16 +728,16 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     let cursor = window.periodStartDate
     while (cursor < today) {
-      const resolvedReward =
-        this.checkInRewardPolicyService.resolveRewardForDate(
-          rewardDefinition,
-          cursor,
-          periodType,
-        ).resolvedRewardItems
+      const resolvedReward = this.checkInRewardPolicyService.resolveRewardForDate(
+        rewardDefinition,
+        cursor,
+        periodType,
+      )
 
       lockedRuleMap.set(cursor, {
         rewardDate: cursor,
-        rewardItems: resolvedReward,
+        rewardItems: resolvedReward.resolvedRewardItems,
+        rewardOverviewIconUrl: resolvedReward.resolvedRewardOverviewIconUrl,
       })
 
       cursor = addDaysToDateOnlyInAppTimeZone(cursor, 1)!
@@ -775,6 +780,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             amount: item.amount,
             assetKey: item.assetKey,
             assetType: item.assetType,
+            iconUrl: item.iconUrl,
           })),
           {
             allowEmpty: false,

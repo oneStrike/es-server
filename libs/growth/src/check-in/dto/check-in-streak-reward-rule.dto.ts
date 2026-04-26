@@ -1,4 +1,3 @@
-import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -8,6 +7,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { CheckInStreakConfigStatusEnum } from '../check-in.constant'
+import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 
 export class BaseCheckInStreakRewardRuleDto {
   @StringProperty({
@@ -25,9 +25,9 @@ export class BaseCheckInStreakRewardRuleDto {
 
   @ArrayProperty({
     description: '连续奖励奖励项列表。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
   })
-  rewardItems!: GrowthRewardItemDto[]
+  rewardItems!: CheckInRewardItemDto[]
 
   @BooleanProperty({
     description: '是否允许重复发放。',

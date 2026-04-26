@@ -9,7 +9,10 @@ import type {
   GrowthRewardSettlementSelect,
 } from '@db/schema'
 import type { GrowthLedgerSourceEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
-import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
+import type {
+  GrowthRewardItem,
+  GrowthRewardItems,
+} from '../reward-rule/reward-item.type'
 import type {
   CheckInMakeupSourceTypeEnum,
   CheckInOperatorTypeEnum,
@@ -40,6 +43,14 @@ export type CheckInNullableDateLike = Date | string | null | undefined
 export interface CheckInAllowEmptyOption {
   allowEmpty: boolean
 }
+
+/** 稳定领域类型 `CheckInRewardItem`。用于签到域的奖励展示与快照语义。 */
+export interface CheckInRewardItem extends GrowthRewardItem {
+  iconUrl?: string | null
+}
+
+/** 稳定领域类型 `CheckInRewardItems`。仅供签到域内部和签到 DTO 复用。 */
+export type CheckInRewardItems = CheckInRewardItem[]
 
 /** 签到动作上下文的开放键集合。 */
 export type CheckInSignRequestContext = Record<string, unknown>
@@ -110,12 +121,12 @@ type CheckInReplaceFields<TBase, TOverride> = Omit<TBase, keyof TOverride> &
 
 type CheckInRewardItemsView<TBase> = CheckInReplaceFields<
   TBase,
-  { rewardItems: GrowthRewardItems }
+  { rewardItems: CheckInRewardItems }
 >
 
 type CheckInNullableRewardItemsView<TBase> = CheckInReplaceFields<
   TBase,
-  { rewardItems: GrowthRewardItems | null }
+  { rewardItems: CheckInRewardItems | null }
 >
 
 /** 基于日期奖励 DTO 收敛出的内部日期奖励视图。 */
@@ -125,7 +136,7 @@ export type CheckInDateRewardRuleView =
 /** 持久化配置里用于冻结历史语义的日期奖励视图，可显式表达“当日无奖励”。 */
 export type CheckInStoredDateRewardRuleView = CheckInReplaceFields<
   CheckInDateRewardRuleView,
-  { rewardItems: GrowthRewardItems | null }
+  { rewardItems: CheckInRewardItems | null }
 >
 
 /** 允许传入标准 DTO 或已归一化视图的日期奖励输入。 */
@@ -153,19 +164,23 @@ export type CheckInStreakRewardRuleInput =
   | CheckInStreakRewardRuleView
 
 /** 奖励项解析时允许为空的输入载荷。 */
-export type CheckInOptionalRewardItems = GrowthRewardItems | null | undefined
+export type CheckInOptionalRewardItems = CheckInRewardItems | null | undefined
 
 /** 全局签到奖励定义。 */
 export interface CheckInRewardDefinition {
-  baseRewardItems: GrowthRewardItems | null
+  baseRewardItems: CheckInRewardItems | null
   dateRewardRules: CheckInStoredDateRewardRuleView[]
   patternRewardRules: CheckInPatternRewardRuleView[]
+  makeupIconUrl: string | null
+  rewardOverviewIconUrl: string | null
 }
 
 /** 解析奖励定义时依赖的最小配置字段集。 */
 export type CheckInRewardDefinitionSource = Pick<
   CheckInConfigSelect,
   | 'makeupPeriodType'
+  | 'makeupIconUrl'
+  | 'rewardOverviewIconUrl'
   | 'baseRewardItems'
   | 'dateRewardRules'
   | 'patternRewardRules'
@@ -186,7 +201,7 @@ type CheckInStreakRuleBase = Pick<
 
 /** 基于签到规则 schema 收敛出的内部连续签到版本定义。 */
 export type CheckInStreakRuleDefinition = CheckInStreakRuleBase & {
-  rewardItems: GrowthRewardItems
+  rewardItems: CheckInRewardItems
 }
 
 /** 解析连续签到版本定义时依赖的规则快照。 */
@@ -207,7 +222,7 @@ export type CheckInActiveStreakDayRule = Pick<
 /** 连续签到规则奖励项的最小快照字段集。 */
 export type CheckInStreakRewardItemSnapshot = Pick<
   CheckInStreakRuleRewardItemSelect,
-  'assetType' | 'assetKey' | 'amount'
+  'assetType' | 'assetKey' | 'amount' | 'iconUrl'
 >
 
 /** 转换成连续奖励展示视图前依赖的规则行结构。 */
@@ -242,7 +257,9 @@ export type CheckInMakeupAccountBalance = Pick<
 export interface CheckInResolvedReward {
   resolvedRewardSourceType: CheckInRewardSourceTypeEnum | null
   resolvedRewardRuleKey: string | null
-  resolvedRewardItems: GrowthRewardItems | null
+  resolvedRewardItems: CheckInRewardItems | null
+  resolvedRewardOverviewIconUrl: string | null
+  resolvedMakeupIconUrl: string | null
 }
 
 /** 基于连续奖励 DTO 收敛出的内部连续奖励展示视图。 */
@@ -268,7 +285,7 @@ export type CheckInCalendarDayView =
 export type CheckInReconciliationPageItemView = CheckInReplaceFields<
   CheckInReconciliationPageItemDto,
   {
-    resolvedRewardItems: GrowthRewardItems | null
+    resolvedRewardItems: CheckInRewardItems | null
     grants: CheckInGrantItemView[]
   }
 >

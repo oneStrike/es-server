@@ -1,4 +1,3 @@
-import type { GrowthRewardItems } from '@libs/growth/reward-rule/reward-item.type'
 import type {
   CheckInAllowEmptyOption,
   CheckInDateRewardRuleInput,
@@ -87,10 +86,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
     options: CheckInAllowEmptyOption = { allowEmpty: true },
   ) {
     const rewardItems = this.asArray(value)
-    return this.parseRewardItems(
-      rewardItems as GrowthRewardItems | undefined,
-      options,
-    )
+    return this.parseRewardItems(rewardItems as CheckInOptionalRewardItems, options)
   }
 
   // 规范化具体日期奖励规则，并校验日期和奖励项合法性。
@@ -102,6 +98,9 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           rewardItems: this.parseRewardItems(rule.rewardItems, {
             allowEmpty: false,
           })!,
+          rewardOverviewIconUrl: this.normalizeIconUrl(
+            'rewardOverviewIconUrl' in rule ? rule.rewardOverviewIconUrl : null,
+          ),
         }) satisfies CheckInDateRewardRuleView,
     )
 
@@ -131,6 +130,9 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
             {
               allowEmpty: true,
             },
+          ),
+          rewardOverviewIconUrl: this.normalizeIconUrl(
+            this.asRecord(rule)?.rewardOverviewIconUrl,
           ),
         }) satisfies CheckInStoredDateRewardRuleView,
     )
@@ -222,6 +224,9 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
         rewardItems: this.parseRewardItems(rule.rewardItems, {
           allowEmpty: false,
         })!,
+        rewardOverviewIconUrl: this.normalizeIconUrl(
+          'rewardOverviewIconUrl' in rule ? rule.rewardOverviewIconUrl : null,
+        ),
       } satisfies CheckInPatternRewardRuleView
     })
 
@@ -328,6 +333,8 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           : [],
         Number(config.makeupPeriodType) as CheckInMakeupPeriodTypeEnum,
       ),
+      makeupIconUrl: this.normalizeIconUrl(config.makeupIconUrl),
+      rewardOverviewIconUrl: this.normalizeIconUrl(config.rewardOverviewIconUrl),
     } satisfies CheckInRewardDefinition
   }
 
@@ -363,12 +370,17 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           resolvedRewardSourceType: null,
           resolvedRewardRuleKey: null,
           resolvedRewardItems: null,
+          resolvedRewardOverviewIconUrl: null,
+          resolvedMakeupIconUrl: null,
         }
       }
       return {
         resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
         resolvedRewardRuleKey: `DATE:${dateRule.rewardDate}`,
         resolvedRewardItems: dateRule.rewardItems,
+        resolvedRewardOverviewIconUrl:
+          dateRule.rewardOverviewIconUrl ?? rewardDefinition.rewardOverviewIconUrl,
+        resolvedMakeupIconUrl: null,
       }
     }
 
@@ -382,6 +394,10 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
         resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
         resolvedRewardRuleKey: this.buildPatternRuleKey(patternRule),
         resolvedRewardItems: patternRule.rewardItems,
+        resolvedRewardOverviewIconUrl:
+          patternRule.rewardOverviewIconUrl ??
+          rewardDefinition.rewardOverviewIconUrl,
+        resolvedMakeupIconUrl: null,
       }
     }
 
@@ -390,6 +406,8 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
         resolvedRewardSourceType: CheckInRewardSourceTypeEnum.BASE_REWARD,
         resolvedRewardRuleKey: null,
         resolvedRewardItems: rewardDefinition.baseRewardItems,
+        resolvedRewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl,
+        resolvedMakeupIconUrl: null,
       }
     }
 
@@ -397,6 +415,8 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       resolvedRewardSourceType: null,
       resolvedRewardRuleKey: null,
       resolvedRewardItems: null,
+      resolvedRewardOverviewIconUrl: null,
+      resolvedMakeupIconUrl: null,
     }
   }
 
@@ -421,7 +441,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
     }
 
     const unsupportedKeys = Object.keys(record).filter(
-      (key) => !['assetType', 'assetKey', 'amount'].includes(key),
+      (key) => !['assetType', 'assetKey', 'amount', 'iconUrl'].includes(key),
     )
     if (unsupportedKeys.length > 0) {
       throw new BadRequestException(
@@ -457,7 +477,17 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       assetType,
       assetKey,
       amount,
+      iconUrl: this.normalizeIconUrl(record.iconUrl),
     }
+  }
+
+  // 统一规整签到图标 URL；空串与非字符串统一视为 null。
+  private normalizeIconUrl(value: unknown) {
+    if (typeof value !== 'string') {
+      return null
+    }
+    const iconUrl = value.trim()
+    return iconUrl || null
   }
 
   // 按优先级解析某日命中的周期模式奖励规则。

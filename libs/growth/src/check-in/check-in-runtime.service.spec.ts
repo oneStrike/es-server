@@ -89,6 +89,8 @@ describe('check-in runtime service orchestration', () => {
     ).toConfigDetailView = jest.fn().mockReturnValue({
       id: 1,
       isEnabled: true,
+      makeupIconUrl: 'https://cdn.example.com/makeup.png',
+      rewardOverviewIconUrl: 'https://cdn.example.com/reward-overview.png',
     })
 
     return {
@@ -107,7 +109,13 @@ describe('check-in runtime service orchestration', () => {
     const summary = await service.getSummary(9)
 
     expect(summary).toMatchObject({
-      config: { id: 1, isEnabled: true },
+      config: {
+        id: 1,
+        isEnabled: true,
+        makeupIconUrl: 'https://cdn.example.com/makeup.png',
+        rewardOverviewIconUrl:
+          'https://cdn.example.com/reward-overview.png',
+      },
       makeup: {
         periodType: 1,
         periodKey: 'week-2026-04-20',

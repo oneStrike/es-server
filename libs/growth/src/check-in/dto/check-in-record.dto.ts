@@ -1,5 +1,4 @@
 import { BaseGrowthRewardSettlementDto } from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
-import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import {
   ArrayProperty,
   EnumProperty,
@@ -13,6 +12,7 @@ import {
   CheckInRecordTypeEnum,
   CheckInRewardSourceTypeEnum,
 } from '../check-in.constant'
+import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 
 export class BaseCheckInRecordDto extends BaseDto {
   @StringProperty({
@@ -50,11 +50,27 @@ export class BaseCheckInRecordDto extends BaseDto {
 
   @ArrayProperty({
     description: '冻结的基础奖励快照。',
-    itemClass: GrowthRewardItemDto,
+    itemClass: CheckInRewardItemDto,
     required: false,
     validation: false,
   })
-  resolvedRewardItems?: GrowthRewardItemDto[] | null
+  resolvedRewardItems?: CheckInRewardItemDto[] | null
+
+  @StringProperty({
+    description: '冻结的基础奖励概览图标 URL。',
+    example: 'https://cdn.example.com/check-in/reward-overview.png',
+    required: false,
+    validation: false,
+  })
+  resolvedRewardOverviewIconUrl?: string | null
+
+  @StringProperty({
+    description: '冻结的补签图标 URL；普通签到时为空。',
+    example: 'https://cdn.example.com/check-in/makeup.png',
+    required: false,
+    validation: false,
+  })
+  resolvedMakeupIconUrl?: string | null
 
   @NumberProperty({
     description: '关联的奖励补偿记录 ID。',

@@ -11,11 +11,26 @@ describe('check-in reward policy service', () => {
 
     const result = service.resolveRewardForDate(
       {
-        baseRewardItems: [{ assetType: 1, assetKey: '', amount: 1 }],
+        baseRewardItems: [
+          {
+            assetType: 1,
+            assetKey: '',
+            amount: 1,
+            iconUrl: 'https://cdn.example.com/base.png',
+          },
+        ],
         dateRewardRules: [
           {
             rewardDate: '2026-04-22',
-            rewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
+            rewardItems: [
+              {
+                assetType: 1,
+                assetKey: '',
+                amount: 10,
+                iconUrl: 'https://cdn.example.com/date-item.png',
+              },
+            ],
+            rewardOverviewIconUrl: 'https://cdn.example.com/date-overview.png',
           },
         ],
         patternRewardRules: [
@@ -26,6 +41,8 @@ describe('check-in reward policy service', () => {
             rewardItems: [{ assetType: 1, assetKey: '', amount: 5 }],
           },
         ],
+        makeupIconUrl: 'https://cdn.example.com/makeup.png',
+        rewardOverviewIconUrl: 'https://cdn.example.com/default-overview.png',
       },
       '2026-04-22',
       CheckInMakeupPeriodTypeEnum.WEEKLY,
@@ -34,7 +51,17 @@ describe('check-in reward policy service', () => {
     expect(result).toMatchObject({
       resolvedRewardSourceType: 2,
       resolvedRewardRuleKey: 'DATE:2026-04-22',
-      resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
+      resolvedRewardItems: [
+        {
+          assetType: 1,
+          assetKey: '',
+          amount: 10,
+          iconUrl: 'https://cdn.example.com/date-item.png',
+        },
+      ],
+      resolvedRewardOverviewIconUrl:
+        'https://cdn.example.com/date-overview.png',
+      resolvedMakeupIconUrl: null,
     })
   })
 
@@ -77,6 +104,7 @@ describe('check-in reward policy service', () => {
           {
             rewardDate: '2026-04-22',
             rewardItems: null,
+            rewardOverviewIconUrl: 'https://cdn.example.com/date-overview.png',
           },
         ],
         patternRewardRules: [
@@ -87,6 +115,8 @@ describe('check-in reward policy service', () => {
             rewardItems: [{ assetType: 1, assetKey: '', amount: 5 }],
           },
         ],
+        makeupIconUrl: 'https://cdn.example.com/makeup.png',
+        rewardOverviewIconUrl: 'https://cdn.example.com/default-overview.png',
       },
       '2026-04-22',
       CheckInMakeupPeriodTypeEnum.WEEKLY,
@@ -96,6 +126,52 @@ describe('check-in reward policy service', () => {
       resolvedRewardSourceType: null,
       resolvedRewardRuleKey: null,
       resolvedRewardItems: null,
+      resolvedRewardOverviewIconUrl: null,
+      resolvedMakeupIconUrl: null,
     })
+  })
+
+  it('accepts iconUrl on check-in reward items but still rejects unknown fields', () => {
+    const service = createService()
+
+    expect(
+      service.parseRewardItems(
+        [
+          {
+            assetType: 1,
+            assetKey: '',
+            amount: 8,
+            iconUrl: 'https://cdn.example.com/reward-points.png',
+          },
+        ],
+        {
+          allowEmpty: false,
+        },
+      ),
+    ).toEqual([
+      {
+        assetType: 1,
+        assetKey: '',
+        amount: 8,
+        iconUrl: 'https://cdn.example.com/reward-points.png',
+      },
+    ])
+
+    expect(() =>
+      service.parseRewardItems(
+        [
+          {
+            assetType: 1,
+            assetKey: '',
+            amount: 8,
+            iconUrl: 'https://cdn.example.com/reward-points.png',
+            badge: 'unexpected',
+          },
+        ] as never,
+        {
+          allowEmpty: false,
+        },
+      ),
+    ).toThrow('暂不支持字段')
   })
 })

@@ -26,6 +26,8 @@ describe('check-in definition service orchestration', () => {
           isEnabled: number
           makeupPeriodType: number
           periodicAllowance: number
+          makeupIconUrl: string | null
+          rewardOverviewIconUrl: string | null
           baseRewardItems: unknown
           dateRewardRules: unknown
           patternRewardRules: unknown
@@ -79,6 +81,8 @@ describe('check-in definition service orchestration', () => {
           isEnabled: number
           makeupPeriodType: number
           periodicAllowance: number
+          makeupIconUrl: string | null
+          rewardOverviewIconUrl: string | null
           baseRewardItems: unknown
           dateRewardRules: unknown
           patternRewardRules: unknown
@@ -95,6 +99,8 @@ describe('check-in definition service orchestration', () => {
             isEnabled: 1,
             makeupPeriodType: CheckInMakeupPeriodTypeEnum.WEEKLY,
             periodicAllowance: 2,
+            makeupIconUrl: null,
+            rewardOverviewIconUrl: null,
             baseRewardItems: null,
             dateRewardRules: [],
             patternRewardRules: [],
@@ -126,6 +132,79 @@ describe('check-in definition service orchestration', () => {
     ).resolves.toBe(true)
 
     expect(drizzle.db.update).toHaveBeenCalled()
+  })
+
+  it('persists root-level icon fields and reward item icons when updating config', async () => {
+    const { service, updateSet } = createService()
+
+    await expect(
+      service.updateConfig(
+        {
+          isEnabled: true,
+          makeupPeriodType: CheckInMakeupPeriodTypeEnum.WEEKLY,
+          periodicAllowance: 2,
+          makeupIconUrl: 'https://cdn.example.com/makeup.png',
+          rewardOverviewIconUrl:
+            'https://cdn.example.com/reward-overview.png',
+          baseRewardItems: [
+            {
+              assetType: 1,
+              assetKey: '',
+              amount: 1,
+              iconUrl: 'https://cdn.example.com/base.png',
+            },
+          ],
+          dateRewardRules: [
+            {
+              rewardDate: '2026-04-24',
+              rewardItems: [
+                {
+                  assetType: 1,
+                  assetKey: '',
+                  amount: 30,
+                  iconUrl: 'https://cdn.example.com/date-item.png',
+                },
+              ],
+              rewardOverviewIconUrl:
+                'https://cdn.example.com/date-overview.png',
+            },
+          ],
+          patternRewardRules: [],
+        } as never,
+        99,
+      ),
+    ).resolves.toBe(true)
+
+    expect(updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        makeupIconUrl: 'https://cdn.example.com/makeup.png',
+        rewardOverviewIconUrl:
+          'https://cdn.example.com/reward-overview.png',
+        baseRewardItems: [
+          {
+            assetType: 1,
+            assetKey: '',
+            amount: 1,
+            iconUrl: 'https://cdn.example.com/base.png',
+          },
+        ],
+        dateRewardRules: expect.arrayContaining([
+          {
+            rewardDate: '2026-04-24',
+            rewardItems: [
+              {
+                assetType: 1,
+                assetKey: '',
+                amount: 30,
+                iconUrl: 'https://cdn.example.com/date-item.png',
+              },
+            ],
+            rewardOverviewIconUrl:
+              'https://cdn.example.com/date-overview.png',
+          },
+        ]),
+      }),
+    )
   })
 
   it('preserves past date rewards while still allowing today reward updates', async () => {
@@ -176,22 +255,34 @@ describe('check-in definition service orchestration', () => {
     expect(updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
         dateRewardRules: expect.arrayContaining([
-          {
+          expect.objectContaining({
             rewardDate: '2026-04-22',
-            rewardItems: [{ assetType: 1, assetKey: '', amount: 8 }],
-          },
-          {
+            rewardItems: [
+              { assetType: 1, assetKey: '', amount: 8, iconUrl: null },
+            ],
+            rewardOverviewIconUrl: null,
+          }),
+          expect.objectContaining({
             rewardDate: '2026-04-23',
-            rewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
-          },
-          {
+            rewardItems: [
+              { assetType: 1, assetKey: '', amount: 10, iconUrl: null },
+            ],
+            rewardOverviewIconUrl: null,
+          }),
+          expect.objectContaining({
             rewardDate: '2026-04-24',
-            rewardItems: [{ assetType: 1, assetKey: '', amount: 30 }],
-          },
-          {
+            rewardItems: [
+              { assetType: 1, assetKey: '', amount: 30, iconUrl: null },
+            ],
+            rewardOverviewIconUrl: null,
+          }),
+          expect.objectContaining({
             rewardDate: '2026-04-25',
-            rewardItems: [{ assetType: 2, assetKey: '', amount: 40 }],
-          },
+            rewardItems: [
+              { assetType: 2, assetKey: '', amount: 40, iconUrl: null },
+            ],
+            rewardOverviewIconUrl: null,
+          }),
         ]),
       }),
     )
@@ -230,14 +321,20 @@ describe('check-in definition service orchestration', () => {
     expect(insertValues).toHaveBeenCalledWith(
       expect.objectContaining({
         dateRewardRules: [
-          {
+          expect.objectContaining({
             rewardDate: '2026-04-24',
-            rewardItems: [{ assetType: 1, assetKey: '', amount: 30 }],
-          },
-          {
+            rewardItems: [
+              { assetType: 1, assetKey: '', amount: 30, iconUrl: null },
+            ],
+            rewardOverviewIconUrl: null,
+          }),
+          expect.objectContaining({
             rewardDate: '2026-04-25',
-            rewardItems: [{ assetType: 2, assetKey: '', amount: 40 }],
-          },
+            rewardItems: [
+              { assetType: 2, assetKey: '', amount: 40, iconUrl: null },
+            ],
+            rewardOverviewIconUrl: null,
+          }),
         ],
       }),
     )
@@ -282,14 +379,18 @@ describe('check-in definition service orchestration', () => {
     expect(updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
         dateRewardRules: expect.arrayContaining([
-          {
+          expect.objectContaining({
             rewardDate: '2026-04-24',
-            rewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
-          },
-          {
+            rewardItems: [
+              { assetType: 1, assetKey: '', amount: 10, iconUrl: null },
+            ],
+            rewardOverviewIconUrl: null,
+          }),
+          expect.objectContaining({
             rewardDate: '2026-04-25',
             rewardItems: null,
-          },
+            rewardOverviewIconUrl: null,
+          }),
         ]),
       }),
     )
@@ -420,7 +521,14 @@ describe('check-in definition service orchestration', () => {
         {
           streakDays: 7,
           repeatable: false,
-          rewardItems: [{ assetType: 1, assetKey: '', amount: 20 }],
+          rewardItems: [
+            {
+              assetType: 1,
+              assetKey: '',
+              amount: 20,
+              iconUrl: 'https://cdn.example.com/streak.png',
+            },
+          ],
           publishStrategy: CheckInStreakPublishStrategyEnum.NEXT_DAY,
         } as never,
         88,
@@ -444,6 +552,7 @@ describe('check-in definition service orchestration', () => {
         amount: 20,
         assetKey: '',
         assetType: 1,
+        iconUrl: 'https://cdn.example.com/streak.png',
         ruleId: 66,
         sortOrder: 0,
       },

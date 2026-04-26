@@ -1,5 +1,4 @@
 import type { CheckInRecordSelect } from '@db/schema'
-import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
 import type {
   CheckInAdminCalendarDayAggregate,
   CheckInCalendarGrantCountSource,
@@ -8,6 +7,7 @@ import type {
 import type {
   CheckInCalendarDayView,
   CheckInGrantItemView,
+  CheckInRewardItems,
   CheckInRewardSettlementSummaryRecord,
 } from './check-in.type'
 import type { QueryAdminCheckInSignedUserPageDto } from './dto/check-in-calendar-query.dto'
@@ -79,7 +79,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
           rewardDefinition,
           cursor,
           Number(config.makeupPeriodType) as CheckInMakeupPeriodTypeEnum,
-        ).resolvedRewardItems
+        )
       const records = recordBucketMap.get(cursor) ?? []
       days.push({
         signDate: cursor,
@@ -96,8 +96,12 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
           CheckInRecordTypeEnum.MAKEUP,
         ),
         streakRewardTriggerCount: grantCountMap.get(cursor) ?? 0,
-        baseRewardConfigProjectionOverview: rewardProjection,
+        baseRewardConfigProjectionOverview: rewardProjection.resolvedRewardItems,
+        baseRewardConfigProjectionOverviewIconUrl:
+          rewardProjection.resolvedRewardOverviewIconUrl,
         baseRewardActualOverview: this.aggregateRewardItemsFromRecords(records),
+        baseRewardActualOverviewIconUrl:
+          this.aggregateRewardOverviewIconFromRecords(records),
       })
       cursor = addDaysToDateOnlyInAppTimeZone(cursor, 1)!
       dayIndex += 1
@@ -175,6 +179,11 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     let dayIndex = 1
     while (cursor <= window.periodEndDate) {
       const record = recordMap.get(cursor)
+      const rewardProjection = this.checkInRewardPolicyService.resolveRewardForDate(
+        rewardDefinition,
+        cursor,
+        window.periodType,
+      )
       const rewardItems = record
         ? this.checkInRewardPolicyService.parseStoredRewardItems(
             record.resolvedRewardItems,
@@ -182,11 +191,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
               allowEmpty: true,
             },
           )
-        : this.checkInRewardPolicyService.resolveRewardForDate(
-            rewardDefinition,
-            cursor,
-            window.periodType,
-          ).resolvedRewardItems
+        : rewardProjection.resolvedRewardItems
       days.push({
         signDate: cursor,
         dayIndex,
@@ -195,6 +200,13 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         isSigned: !!record,
         grantCount: grantCountMap.get(cursor) ?? 0,
         rewardItems,
+        rewardOverviewIconUrl: record
+          ? record.resolvedRewardOverviewIconUrl
+          : rewardProjection.resolvedRewardOverviewIconUrl,
+        makeupIconUrl:
+          record?.recordType === CheckInRecordTypeEnum.MAKEUP
+            ? record.resolvedMakeupIconUrl
+            : null,
         rewardSettlement: record?.rewardSettlementId
           ? this.checkInSettlementService.toRewardSettlementSummary(
               settlementMap.get(record.rewardSettlementId) ?? null,
@@ -266,6 +278,8 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         signDate: this.checkInRecordTable.signDate,
         recordType: this.checkInRecordTable.recordType,
         resolvedRewardItems: this.checkInRecordTable.resolvedRewardItems,
+        resolvedRewardOverviewIconUrl:
+          this.checkInRecordTable.resolvedRewardOverviewIconUrl,
       })
       .from(this.checkInRecordTable)
       .where(
@@ -379,7 +393,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
   private aggregateRewardItemsFromRecords(
     rows: CheckInCalendarRecordAggregateSource[],
   ) {
-    const rewardItemMap = new Map<string, GrowthRewardItems[number]>()
+    const rewardItemMap = new Map<string, CheckInRewardItems[number]>()
     for (const row of rows) {
       const rewardItems = this.checkInRewardPolicyService.parseStoredRewardItems(
         row.resolvedRewardItems,
@@ -391,12 +405,13 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         continue
       }
       for (const rewardItem of rewardItems) {
-        const rewardKey = `${rewardItem.assetType}:${rewardItem.assetKey ?? ''}`
+        const rewardKey = `${rewardItem.assetType}:${rewardItem.assetKey ?? ''}:${rewardItem.iconUrl ?? ''}`
         const previous = rewardItemMap.get(rewardKey)
         rewardItemMap.set(rewardKey, {
           assetType: rewardItem.assetType,
           assetKey: rewardItem.assetKey ?? '',
           amount: (previous?.amount ?? 0) + rewardItem.amount,
+          iconUrl: rewardItem.iconUrl ?? null,
         })
       }
     }
@@ -407,6 +422,21 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
       ),
     )
     return rewardOverview.length > 0 ? rewardOverview : null
+  }
+
+  // 聚合后台当日基础奖励实际概览图标；若同日存在多个不同图标则返回空值。
+  private aggregateRewardOverviewIconFromRecords(
+    rows: CheckInCalendarRecordAggregateSource[],
+  ) {
+    const iconSet = new Set(
+      rows
+        .map((row) => row.resolvedRewardOverviewIconUrl?.trim())
+        .filter((iconUrl): iconUrl is string => Boolean(iconUrl)),
+    )
+    if (iconSet.size !== 1) {
+      return null
+    }
+    return [...iconSet][0]
   }
 
   // 构建已签用户列表所需的用户摘要映射。
