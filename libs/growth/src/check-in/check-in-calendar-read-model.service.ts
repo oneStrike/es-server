@@ -513,6 +513,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         ruleCode: grant.ruleCode,
         streakDays: grant.streakDays,
         rewardItems: rewardItemMap.get(grant.id) ?? [],
+        rewardOverviewIconUrl: grant.rewardOverviewIconUrl ?? null,
         repeatable: grant.repeatable,
         triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
         rewardSettlementId: grant.rewardSettlementId,

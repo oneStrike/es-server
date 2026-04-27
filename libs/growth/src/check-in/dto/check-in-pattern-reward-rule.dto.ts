@@ -21,7 +21,6 @@ export class BaseCheckInPatternRewardRuleDto {
     description: '按周固定星期几时使用，1=周一；7=周日。',
     example: 1,
     required: false,
-    validation: false,
   })
   weekday?: number | null
 
@@ -29,7 +28,6 @@ export class BaseCheckInPatternRewardRuleDto {
     description: '按月固定日期时使用，1..31。',
     example: 15,
     required: false,
-    validation: false,
   })
   monthDay?: number | null
 

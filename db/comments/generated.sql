@@ -259,7 +259,7 @@ COMMENT ON COLUMN "public"."check_in_makeup_fact"."source_ref" IS E'关联业务
 COMMENT ON COLUMN "public"."check_in_makeup_fact"."biz_key" IS E'幂等业务键。';
 COMMENT ON COLUMN "public"."check_in_makeup_fact"."context" IS E'扩展上下文。';
 COMMENT ON COLUMN "public"."check_in_makeup_fact"."created_at" IS E'创建时间。';
-COMMENT ON TABLE "public"."check_in_record" IS E'每日签到事实。\n\n同一用户在同一自然日只能拥有一条签到事实。奖励配置在写入时直接冻结到\n`resolvedRewardItems`，后续配置更新不回溯影响历史事实。';
+COMMENT ON TABLE "public"."check_in_record" IS E'每日签到事实。\n\n同一用户在同一自然日只能拥有一条签到事实。奖励配置在写入时直接冻结到\n`resolvedRewardItems` 和相关图标快照字段，后续配置更新不回溯影响历史事实。';
 COMMENT ON COLUMN "public"."check_in_record"."id" IS E'签到记录主键。';
 COMMENT ON COLUMN "public"."check_in_record"."user_id" IS E'记录归属用户 ID。';
 COMMENT ON COLUMN "public"."check_in_record"."sign_date" IS E'签到自然日。';
@@ -283,6 +283,7 @@ COMMENT ON COLUMN "public"."check_in_streak_grant"."rule_id" IS E'归属规则 I
 COMMENT ON COLUMN "public"."check_in_streak_grant"."rule_code" IS E'命中的规则编码快照。';
 COMMENT ON COLUMN "public"."check_in_streak_grant"."streak_days" IS E'命中的连续签到阈值快照。';
 COMMENT ON COLUMN "public"."check_in_streak_grant"."repeatable" IS E'是否允许重复发放。';
+COMMENT ON COLUMN "public"."check_in_streak_grant"."reward_overview_icon_url" IS E'连续奖励概览图标快照 URL。';
 COMMENT ON COLUMN "public"."check_in_streak_grant"."trigger_sign_date" IS E'触发本次奖励的签到日期。';
 COMMENT ON COLUMN "public"."check_in_streak_grant"."reward_settlement_id" IS E'关联的奖励结算记录 ID。';
 COMMENT ON COLUMN "public"."check_in_streak_grant"."biz_key" IS E'幂等业务键。';
@@ -316,6 +317,7 @@ COMMENT ON COLUMN "public"."check_in_streak_rule"."publish_strategy" IS E'发布
 COMMENT ON COLUMN "public"."check_in_streak_rule"."effective_from" IS E'生效开始时间。';
 COMMENT ON COLUMN "public"."check_in_streak_rule"."effective_to" IS E'生效结束时间。';
 COMMENT ON COLUMN "public"."check_in_streak_rule"."repeatable" IS E'是否允许重复发放。';
+COMMENT ON COLUMN "public"."check_in_streak_rule"."reward_overview_icon_url" IS E'连续奖励概览图标 URL。';
 COMMENT ON COLUMN "public"."check_in_streak_rule"."updated_by_id" IS E'最近更新人 ID。';
 COMMENT ON COLUMN "public"."check_in_streak_rule"."created_at" IS E'创建时间。';
 COMMENT ON COLUMN "public"."check_in_streak_rule"."updated_at" IS E'最近更新时间。';

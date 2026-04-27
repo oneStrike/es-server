@@ -37,6 +37,8 @@ export const checkInStreakRule = pgTable(
     effectiveTo: timestamp({ withTimezone: true, precision: 6 }),
     /** 是否允许重复发放。 */
     repeatable: boolean().default(false).notNull(),
+    /** 连续奖励概览图标 URL。 */
+    rewardOverviewIconUrl: varchar({ length: 500 }),
     /** 最近更新人 ID。 */
     updatedById: integer(),
     /** 创建时间。 */
@@ -62,6 +64,9 @@ export const checkInStreakRule = pgTable(
     index('check_in_streak_rule_status_idx').on(table.status),
     index('check_in_streak_rule_effective_from_idx').on(table.effectiveFrom),
     index('check_in_streak_rule_effective_to_idx').on(table.effectiveTo),
+    index('check_in_streak_rule_reward_overview_icon_url_idx').on(
+      table.rewardOverviewIconUrl,
+    ),
     check(
       'check_in_streak_rule_streak_days_positive_chk',
       sql`${table.streakDays} > 0`,

@@ -521,6 +521,8 @@ describe('check-in definition service orchestration', () => {
         {
           streakDays: 7,
           repeatable: false,
+          rewardOverviewIconUrl:
+            'https://cdn.example.com/streak-overview.png',
           rewardItems: [
             {
               assetType: 1,
@@ -539,6 +541,7 @@ describe('check-in definition service orchestration', () => {
       updatedById: 88,
       version: 4,
       ruleCode: 'streak-day-7',
+      rewardOverviewIconUrl: 'https://cdn.example.com/streak-overview.png',
     })
     expect(harness.insertedRuleValues[0].effectiveFrom).toEqual(
       startOfNextDayInAppTimeZone(new Date('2026-04-24T04:00:00.000Z')),

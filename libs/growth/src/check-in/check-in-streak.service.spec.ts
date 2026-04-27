@@ -62,4 +62,37 @@ describe('check-in streak service', () => {
       ),
     ).toBe(CheckInStreakConfigStatusEnum.SCHEDULED)
   })
+
+  it('keeps streak rule overview icon when mapping runtime rule views', () => {
+    const service = createService()
+
+    expect(
+      service.toStreakRewardRuleViews([
+        {
+          ruleCode: 'streak-day-7',
+          streakDays: 7,
+          repeatable: false,
+          status: CheckInStreakConfigStatusEnum.ACTIVE,
+          effectiveFrom: new Date('2026-04-20T00:00:00.000Z'),
+          effectiveTo: null,
+          rewardOverviewIconUrl:
+            'https://cdn.example.com/streak-overview.png',
+          rewardItems: [
+            {
+              assetType: 1,
+              assetKey: '',
+              amount: 20,
+              iconUrl: 'https://cdn.example.com/streak-item.png',
+            },
+          ],
+        },
+      ] as never),
+    ).toEqual([
+      expect.objectContaining({
+        ruleCode: 'streak-day-7',
+        rewardOverviewIconUrl:
+          'https://cdn.example.com/streak-overview.png',
+      }),
+    ])
+  })
 })

@@ -32,6 +32,8 @@ export const checkInStreakGrant = pgTable(
     streakDays: integer().notNull(),
     /** 是否允许重复发放。 */
     repeatable: boolean().default(false).notNull(),
+    /** 连续奖励概览图标快照 URL。 */
+    rewardOverviewIconUrl: varchar({ length: 500 }),
     /** 触发本次奖励的签到日期。 */
     triggerSignDate: date().notNull(),
     /** 关联的奖励结算记录 ID。 */
@@ -58,6 +60,9 @@ export const checkInStreakGrant = pgTable(
     index('check_in_streak_grant_user_trigger_sign_date_idx').on(
       table.userId,
       table.triggerSignDate,
+    ),
+    index('check_in_streak_grant_reward_overview_icon_url_idx').on(
+      table.rewardOverviewIconUrl,
     ),
     index('check_in_streak_grant_reward_settlement_id_idx').on(
       table.rewardSettlementId,

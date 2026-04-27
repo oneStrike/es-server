@@ -1,6 +1,9 @@
-import { AppConfigService } from '@libs/app-config/config.service';
-import { BaseAppConfigDto, UpdateAppConfigDto } from '@libs/app-config/dto/config.dto';
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators';
+import { AppConfigService } from '@libs/app-config/config.service'
+import {
+  BaseAppConfigDto,
+  UpdateAppConfigDto,
+} from '@libs/app-config/dto/config.dto'
+import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post } from '@nestjs/common'
@@ -14,9 +17,7 @@ import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 @ApiTags('APP管理/应用配置')
 @Controller('admin/app-config')
 export class AppConfigController {
-  constructor(
-    private readonly appConfigService: AppConfigService,
-  ) { }
+  constructor(private readonly appConfigService: AppConfigService) {}
 
   @Get('active')
   @ApiDoc({

@@ -91,6 +91,7 @@ describe('check-in helpers', () => {
           streakDays: 2,
           repeatable: false,
           status: CheckInStreakConfigStatusEnum.ACTIVE,
+          rewardOverviewIconUrl: null,
           rewardItems: [
             {
               assetType: GrowthAssetTypeEnum.POINTS,
@@ -104,6 +105,7 @@ describe('check-in helpers', () => {
           streakDays: 3,
           repeatable: true,
           status: CheckInStreakConfigStatusEnum.ACTIVE,
+          rewardOverviewIconUrl: null,
           rewardItems: [
             {
               assetType: GrowthAssetTypeEnum.POINTS,

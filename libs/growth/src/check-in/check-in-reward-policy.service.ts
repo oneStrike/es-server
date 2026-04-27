@@ -287,6 +287,9 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
         rewardItems: this.parseRewardItems(rule.rewardItems, {
           allowEmpty: false,
         })!,
+        rewardOverviewIconUrl: this.normalizeIconUrl(
+          'rewardOverviewIconUrl' in rule ? rule.rewardOverviewIconUrl : null,
+        ),
         repeatable: rule.repeatable ?? false,
         status: rule.status ?? CheckInStreakConfigStatusEnum.ACTIVE,
       } satisfies CheckInStreakRewardRuleView
@@ -349,6 +352,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       rewardItems: this.parseRewardItems(rule.rewardItems, {
         allowEmpty: false,
       })!,
+      rewardOverviewIconUrl: this.normalizeIconUrl(rule.rewardOverviewIconUrl),
       repeatable: rule.repeatable,
       effectiveFrom: rule.effectiveFrom,
       effectiveTo: rule.effectiveTo ?? null,

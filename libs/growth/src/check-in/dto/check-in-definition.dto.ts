@@ -100,7 +100,7 @@ export class QueryCheckInStreakRuleHistoryPageDto extends IntersectionType(
 
 export class PublishCheckInStreakRuleDto extends PickType(
   BaseCheckInStreakRewardRuleDto,
-  ['streakDays', 'repeatable', 'rewardItems'] as const,
+  ['streakDays', 'repeatable', 'rewardItems', 'rewardOverviewIconUrl'] as const,
 ) {
   @EnumProperty({
     description: '发布策略（1=立即生效；2=次日生效；3=指定时间生效）。',
@@ -125,6 +125,7 @@ export class CheckInStreakRuleDetailResponseDto extends IntersectionType(
     'status',
     'repeatable',
     'rewardItems',
+    'rewardOverviewIconUrl',
   ] as const),
 ) {
   @NumberProperty({

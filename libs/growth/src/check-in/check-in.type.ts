@@ -197,6 +197,7 @@ type CheckInStreakRuleBase = Pick<
   | 'effectiveFrom'
   | 'effectiveTo'
   | 'repeatable'
+  | 'rewardOverviewIconUrl'
 >
 
 /** 基于签到规则 schema 收敛出的内部连续签到版本定义。 */
@@ -234,6 +235,7 @@ export type CheckInStreakRuleViewSource = Pick<
   | 'status'
   | 'effectiveFrom'
   | 'effectiveTo'
+  | 'rewardOverviewIconUrl'
 > & {
   rewardItems: CheckInStreakRewardItemSnapshot[]
 }

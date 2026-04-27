@@ -25,7 +25,11 @@ describe('check-in runtime service orchestration', () => {
       resolveEffectiveCurrentStreak: jest.fn().mockReturnValue(3),
       resolveEffectiveLastSignedDate: jest.fn().mockReturnValue('2026-04-21'),
     }
-    const settlementService = {}
+    const settlementService = {
+      buildGrantRewardItemMap: jest.fn().mockResolvedValue(new Map()),
+      buildSettlementMapById: jest.fn().mockResolvedValue(new Map()),
+      toRewardSettlementSummary: jest.fn().mockImplementation((value) => value),
+    }
     const calendarReadModelService = {
       getCurrentUserCalendarByTargetDate: jest.fn().mockResolvedValue({
         periodType: 1,
@@ -45,6 +49,20 @@ describe('check-in runtime service orchestration', () => {
               lastSignedDate: '2026-04-21',
             }),
           },
+        },
+        select: jest.fn().mockReturnValue({
+          from: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              orderBy: jest.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      },
+      schema: {
+        checkInStreakGrant: {
+          userId: 'userId',
+          triggerSignDate: 'triggerSignDate',
+          id: 'id',
         },
       },
     }
@@ -99,6 +117,8 @@ describe('check-in runtime service orchestration', () => {
       makeupService,
       streakService,
       calendarReadModelService,
+      settlementService,
+      drizzle,
     }
   }
 
@@ -149,5 +169,66 @@ describe('check-in runtime service orchestration', () => {
     })
 
     jest.useRealTimers()
+  })
+
+  it('returns frozen streak overview icon from grant snapshots', async () => {
+    const { service, settlementService, drizzle } = createService()
+
+    drizzle.db.select = jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnValue({
+          orderBy: jest.fn().mockResolvedValue([
+            {
+              id: 51,
+              userId: 9,
+              ruleId: 7,
+              ruleCode: 'streak-day-7',
+              streakDays: 7,
+              rewardOverviewIconUrl:
+                'https://cdn.example.com/streak-overview.png',
+              repeatable: false,
+              triggerSignDate: '2026-04-23',
+              rewardSettlementId: null,
+              createdAt: '2026-04-23T00:00:00.000Z',
+              updatedAt: '2026-04-23T00:00:00.000Z',
+            },
+          ]),
+        }),
+      }),
+    })
+    settlementService.buildGrantRewardItemMap = jest
+      .fn()
+      .mockResolvedValue(
+        new Map([
+          [
+            51,
+            [
+              {
+                assetType: 1,
+                assetKey: '',
+                amount: 20,
+                iconUrl: 'https://cdn.example.com/streak-item.png',
+              },
+            ],
+          ],
+        ]),
+      )
+
+    const grants = await (
+      service as unknown as {
+        listGrantsForRecord: (
+          userId: number,
+          signDate: string,
+        ) => Promise<unknown[]>
+      }
+    ).listGrantsForRecord(9, '2026-04-23')
+
+    expect(grants).toEqual([
+      expect.objectContaining({
+        id: 51,
+        rewardOverviewIconUrl:
+          'https://cdn.example.com/streak-overview.png',
+      }),
+    ])
   })
 })

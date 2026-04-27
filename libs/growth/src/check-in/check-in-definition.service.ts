@@ -320,6 +320,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           effectiveTo: null,
           publishStrategy: dto.publishStrategy,
           repeatable: dto.repeatable ?? false,
+          rewardOverviewIconUrl: dto.rewardOverviewIconUrl?.trim() || null,
           ruleCode,
           status: this.resolvePublishedRuleStatus(effectiveFrom),
           streakDays: dto.streakDays,
@@ -793,20 +794,21 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         at,
       )
 
-      return {
-        id: rule.id,
-        ruleCode: definition.ruleCode,
-        streakDays: definition.streakDays,
-        version: definition.version,
-        status,
-        publishStrategy: definition.publishStrategy,
-        isCurrent: status === CheckInStreakConfigStatusEnum.ACTIVE,
-        effectiveFrom: definition.effectiveFrom,
-        effectiveTo: definition.effectiveTo,
-        rewardItems: definition.rewardItems,
-        repeatable: definition.repeatable,
-        createdAt: rule.createdAt,
-        updatedAt: rule.updatedAt,
+        return {
+          id: rule.id,
+          ruleCode: definition.ruleCode,
+          streakDays: definition.streakDays,
+          version: definition.version,
+          status,
+          publishStrategy: definition.publishStrategy,
+          isCurrent: status === CheckInStreakConfigStatusEnum.ACTIVE,
+          effectiveFrom: definition.effectiveFrom,
+          effectiveTo: definition.effectiveTo,
+          rewardItems: definition.rewardItems,
+          rewardOverviewIconUrl: definition.rewardOverviewIconUrl,
+          repeatable: definition.repeatable,
+          createdAt: rule.createdAt,
+          updatedAt: rule.updatedAt,
       }
     })
   }

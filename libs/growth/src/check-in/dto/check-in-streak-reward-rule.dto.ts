@@ -29,6 +29,14 @@ export class BaseCheckInStreakRewardRuleDto {
   })
   rewardItems!: CheckInRewardItemDto[]
 
+  @StringProperty({
+    description: '连续奖励概览图标 URL。',
+    example: 'https://cdn.example.com/check-in/streak-overview.png',
+    required: false,
+    maxLength: 500,
+  })
+  rewardOverviewIconUrl?: string | null
+
   @BooleanProperty({
     description: '是否允许重复发放。',
     example: false,

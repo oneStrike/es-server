@@ -340,22 +340,23 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         }
         const [grant] = await tx
           .insert(this.checkInStreakGrantTable)
-          .values({
-            userId,
-            ruleId,
-            triggerSignDate: candidate.triggerSignDate,
-            rewardSettlementId: null,
+            .values({
+              userId,
+              ruleId,
+              triggerSignDate: candidate.triggerSignDate,
+              rewardSettlementId: null,
             bizKey: this.buildGrantBizKey(
               userId,
               candidate.rule.ruleCode,
               candidate.triggerSignDate,
-            ),
-            ruleCode: candidate.rule.ruleCode,
-            streakDays: candidate.rule.streakDays,
-            repeatable: candidate.rule.repeatable,
-            context: {
-              source:
-                candidate.triggerSignDate === this.formatDateOnly(now)
+              ),
+              ruleCode: candidate.rule.ruleCode,
+              streakDays: candidate.rule.streakDays,
+              repeatable: candidate.rule.repeatable,
+              rewardOverviewIconUrl: candidate.rule.rewardOverviewIconUrl ?? null,
+              context: {
+                source:
+                  candidate.triggerSignDate === this.formatDateOnly(now)
                   ? 'sign'
                   : 'recompute',
             },

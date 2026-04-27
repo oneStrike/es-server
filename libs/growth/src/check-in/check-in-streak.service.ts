@@ -197,6 +197,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
         streakDays: rule.streakDays,
         repeatable: rule.repeatable,
         status: this.resolveStreakRuleStatus(rule, lookupAt),
+        rewardOverviewIconUrl: rule.rewardOverviewIconUrl ?? null,
         rewardItems: rule.rewardItems.map((item) => ({
           assetType: item.assetType,
           assetKey: item.assetKey,
