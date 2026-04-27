@@ -243,6 +243,27 @@ export class CheckInStreakSummaryDto extends CheckInStreakRuntimeFieldsDto {
   nextReward?: BaseCheckInStreakRewardRuleDto | null
 }
 
+export class CheckInStreakDetailProgressDto extends PickType(
+  CheckInStreakSummaryDto,
+  ['currentStreak', 'streakStartedAt', 'lastSignedDate'] as const,
+) {}
+
+export class CheckInStreakDetailResponseDto {
+  @NestedProperty({
+    description: '当前连续签到进度。',
+    type: CheckInStreakDetailProgressDto,
+    validation: false,
+  })
+  progress!: CheckInStreakDetailProgressDto
+
+  @ArrayProperty({
+    description: '当前生效的连续签到奖励规则列表。',
+    itemClass: BaseCheckInStreakRewardRuleDto,
+    validation: false,
+  })
+  rewardRules!: BaseCheckInStreakRewardRuleDto[]
+}
+
 export class CheckInSummaryResponseDto {
   @NestedProperty({
     description: '当前全局签到配置。',

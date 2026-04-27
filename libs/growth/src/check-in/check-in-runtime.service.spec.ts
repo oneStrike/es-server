@@ -154,6 +154,44 @@ describe('check-in runtime service orchestration', () => {
     expect(rewardPolicyService.resolveNextStreakReward).toHaveBeenCalled()
   })
 
+  it('returns streak detail with effective progress and active reward rules', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-24T10:00:00.000Z'))
+    const { service, streakService } = createService()
+
+    streakService.toStreakRewardRuleViews = jest.fn().mockReturnValue([
+      {
+        ruleCode: 'streak-day-3',
+        streakDays: 3,
+        rewardItems: [{ assetType: 1, assetKey: '', amount: 30 }],
+        rewardOverviewIconUrl: 'https://cdn.example.com/streak-day-3.png',
+        repeatable: false,
+        status: 2,
+      },
+    ])
+
+    await expect(
+      (
+        service as CheckInRuntimeService & {
+          getStreakDetail: (userId: number) => Promise<unknown>
+        }
+      ).getStreakDetail(9),
+    ).resolves.toMatchObject({
+      progress: {
+        currentStreak: 3,
+        streakStartedAt: '2026-04-19',
+        lastSignedDate: '2026-04-21',
+      },
+      rewardRules: [
+        {
+          ruleCode: 'streak-day-3',
+          streakDays: 3,
+        },
+      ],
+    })
+
+    jest.useRealTimers()
+  })
+
   it('delegates old current-period calendar to the target-date calendar read model with today', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-04-24T10:00:00.000Z'))
     const { service, calendarReadModelService } = createService()

@@ -9,6 +9,7 @@ import {
   CheckInCalendarResponseDto,
   CheckInLeaderboardItemDto,
   CheckInRecordItemDto,
+  CheckInStreakDetailResponseDto,
   CheckInSummaryResponseDto,
   QueryCheckInLeaderboardDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
@@ -31,6 +32,16 @@ export class CheckInController {
   // 返回当前用户的签到摘要、补签摘要和连续签到摘要。
   async getSummary(@CurrentUser('sub') userId: number) {
     return this.checkInService.getSummary(userId)
+  }
+
+  @Get('streak/detail')
+  @ApiDoc({
+    summary: '获取连续签到详情',
+    model: CheckInStreakDetailResponseDto,
+  })
+  // 返回当前用户的连续签到进度和当前生效奖励规则列表。
+  async getStreakDetail(@CurrentUser('sub') userId: number) {
+    return this.checkInService.getStreakDetail(userId)
   }
 
   @Get('calendar')

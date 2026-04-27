@@ -94,6 +94,11 @@ export class CheckInService {
     return this.checkInRuntimeService.getSummary(userId)
   }
 
+  // 查询 app 侧连续签到详情。
+  async getStreakDetail(userId: number) {
+    return this.checkInRuntimeService.getStreakDetail(userId)
+  }
+
   // 查询 app 侧当前周期签到日历。
   async getCalendar(userId: number) {
     return this.checkInRuntimeService.getCalendar(userId)

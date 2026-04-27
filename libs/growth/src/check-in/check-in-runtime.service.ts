@@ -97,6 +97,44 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     }
   }
 
+  // 查询 app 侧连续签到详情，返回当前有效进度和全部生效奖励规则。
+  async getStreakDetail(userId: number) {
+    const now = new Date()
+    const today = this.formatDateOnly(now)
+    const activeRules = await this.checkInStreakService.listActiveStreakRulesAt(
+      now,
+    )
+    const rewardRules = this.checkInStreakService.toStreakRewardRuleViews(
+      activeRules,
+      now,
+    )
+    const progress = await this.db.query.checkInStreakProgress.findFirst({
+      where: { userId },
+    })
+    const effectiveCurrentStreak =
+      this.checkInStreakService.resolveEffectiveCurrentStreak(
+        progress?.currentStreak ?? 0,
+        progress?.lastSignedDate,
+        today,
+      )
+
+    return {
+      progress: {
+        currentStreak: effectiveCurrentStreak,
+        streakStartedAt:
+          effectiveCurrentStreak > 0 && progress?.streakStartedAt
+            ? this.toDateOnlyValue(progress.streakStartedAt)
+            : undefined,
+        lastSignedDate:
+          this.checkInStreakService.resolveEffectiveLastSignedDate(
+            progress?.lastSignedDate,
+            today,
+          ),
+      },
+      rewardRules,
+    }
+  }
+
   // 查询当前补签周期内的签到日历视图。
   async getCalendar(userId: number) {
     return this.checkInCalendarReadModelService.getCurrentUserCalendarByTargetDate(
