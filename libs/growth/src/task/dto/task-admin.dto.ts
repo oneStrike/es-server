@@ -42,8 +42,6 @@ export class UpdateTaskDefinitionStatusDto extends IdDto {
   status!: TaskDefinitionStatusEnum
 }
 
-export class QueryTaskDefinitionDetailDto extends IdDto {}
-
 export {
   QueryTaskDefinitionPageDto,
   QueryTaskInstancePageDto,

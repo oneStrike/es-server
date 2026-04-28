@@ -5,7 +5,6 @@ import {
   PublicForumHashtagSearchItemDto,
   QueryForumHashtagCommentPageDto,
   QueryForumHashtagTopicPageDto,
-  QueryPublicForumHashtagHotPageDto,
   QueryPublicForumHashtagSearchDto,
 } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
 import { ForumHashtagService } from '@libs/forum/hashtag/forum-hashtag.service'
@@ -16,7 +15,7 @@ import {
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -42,7 +41,7 @@ export class ForumHashtagController {
     model: PublicForumHashtagHotPageItemDto,
   })
   async getHotPage(
-    @Query() query: QueryPublicForumHashtagHotPageDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumHashtagService.getHotHashtagPage({

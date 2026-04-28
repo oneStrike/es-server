@@ -39,7 +39,8 @@
 - 仅当文案需要跨文件共享、属于事实源长文本、或必须参与受控拼接时，才允许提取装饰器元信息常量；“少写几次同一句话”不构成提取理由。
 - 禁止新增 DTO barrel。
 - 禁止为了缩短路径、绕过组合工具或“看起来更像返回体”而新增纯别名 DTO。
-- 允许语义型别名 DTO：仅当它仍然服务接口文档、字段校验或稳定返回 contract，同时能表达明确业务语义、对齐返回命名、或为后续扩展预留位置时才允许，例如 `XxxResponseDto extends XxxDetailDto {}`。
+- 平台通用 DTO（如 `IdDto`、`IdsDto`、`UserIdDto`、`PageDto`）只允许直接使用；禁止通过 `extends` 创建空心别名再改名，例如 `QueryXxxPageDto extends PageDto {}`、`QueryXxxDetailDto extends IdDto {}`。
+- 允许语义型别名 DTO：仅当它仍然服务接口文档、字段校验或稳定返回 contract，同时能表达明确业务语义、对齐返回命名、或为后续扩展预留位置时才允许，例如 `XxxResponseDto extends XxxDetailDto {}`；该例外不适用于平台通用 DTO。
 - `contract: false` 仅用于排除不对外字段、写入专用字段或内部辅助字段；不要用它掩盖一个本应拆出去的内部结构。
 - 枚举数组字段统一使用 `ArrayProperty` + `itemEnum`，类型为 `XxxEnum[]`。
 
@@ -51,6 +52,7 @@
 - 禁止在 DTO 文件中新增“字段完全复制但只改类名”的跨模块 DTO。
 - 禁止在同一 owner 模块的多个 DTO 文件中，对同一业务语义字段重复声明装饰器、类型和描述文案；若基础 DTO 已有对应字段，必须从基础 DTO 选取，而不是再写一套同义字段。
 - 禁止新增既不服务字段校验、也不服务文档描述、只为了代替 `type` 存在的空心 DTO。
+- 禁止为平台通用 DTO 新增空心别名或改名包装；需要单个 `id`、分页参数、`userId`、`ids` 时，直接在 controller / service 签名中使用 `IdDto`、`PageDto`、`UserIdDto`、`IdsDto`。
 - 禁止在 DTO 文件中为了复用局部装饰器文案，新增 `*_DESCRIPTION`、`*_EXAMPLE`、`*_MESSAGE` 这类只服务当前文件的短文本常量。
 - 禁止通过 `*.public.dto.ts`、`response.dto.ts`、`detail.dto.ts` 拆出仅做转发的文件；若属于同一 owner 域，优先收口在同一个 owner DTO 文件中。
 
@@ -68,11 +70,13 @@
 - 允许：导入跨模块 DTO 后组合，例如 `PickType(BaseAppUserDto, ['id', 'nickname'] as const)`。
 - 允许：`ForumTopicWritableFieldsDto`、`UserPointDeltaFieldsDto` 这类语义明确、可复用的字段块 DTO。
 - 允许：`UserNotificationDto extends BaseUserNotificationDto {}`，前提是它用于稳定返回体命名或后续扩展锚点。
+- 允许：热门话题分页接口直接把 controller 入参声明为 `PageDto`，而不是额外定义 `QueryPublicForumHashtagHotPageDto extends PageDto {}`。
 - 允许：Controller 直接返回 `boolean`、`number`、`string` 等基础类型，前提是接口 contract 本身就是该基础类型，且不需要额外字段描述或嵌套结构。
 - 允许：长文案、事实源说明或跨文件共享文案提取为常量，例如多个 DTO/文档共用的统一提示语。
 - 禁止：在 DTO 文件里 `import type { GrowthRewardItem } from '../reward-item.type'` 再把内部 type 暴露成 DTO 字段来源。
 - 禁止：在 `apps/app-api` 下新增一个和 `libs/forum/.../forum-topic.dto.ts` 同构的 `forum-topic.dto.ts`。
 - 禁止：为了少写几行，把 `BaseAppUserDto` 的字段重新抄一份到 `ForumTopicUserDto`。
 - 禁止：在同一模块里，`sceneType`、`status`、`userId` 这类已在基础 DTO 中存在的字段，又在 `query.dto.ts`、`app.dto.ts`、`admin.dto.ts` 里重新定义一遍。
+- 禁止：新增 `QueryPublicForumHashtagHotPageDto extends PageDto {}`、`QueryTaskDefinitionDetailDto extends IdDto {}` 这类平台通用 DTO 的空心别名。
 - 禁止：新增 `forum-topic.public.dto.ts` 只为了转发或改名现有 DTO。
 - 禁止：为 `description: '通知分类键...'`、`example: 'comment_reply,topic_like'` 这类只在当前 DTO 文件内使用的短文本，再额外定义 `NOTIFICATION_CATEGORY_KEY_DESCRIPTION`、`NOTIFICATION_CATEGORY_KEYS_FILTER_DESCRIPTION` 之类常量。

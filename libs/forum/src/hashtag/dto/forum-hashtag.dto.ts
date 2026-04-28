@@ -182,9 +182,10 @@ export class ForumHashtagBriefDto extends PickType(BaseForumHashtagDto, [
 ] as const) {}
 
 /**
- * forum 话题公开详情 DTO。
+ * forum 话题用户关注状态字段 DTO。
+ * 供公开详情、搜索项等需要展示当前用户关注状态的 DTO 复用。
  */
-export class PublicForumHashtagDetailDto extends ForumHashtagBriefDto {
+class ForumHashtagFollowContextFieldsDto {
   @BooleanProperty({
     description: '当前用户是否已关注该话题',
     example: true,
@@ -193,6 +194,14 @@ export class PublicForumHashtagDetailDto extends ForumHashtagBriefDto {
   })
   isFollowed!: boolean
 }
+
+/**
+ * forum 话题公开详情 DTO。
+ */
+export class PublicForumHashtagDetailDto extends IntersectionType(
+  ForumHashtagBriefDto,
+  ForumHashtagFollowContextFieldsDto,
+) {}
 
 /**
  * forum 话题热门分页项 DTO。
@@ -210,15 +219,10 @@ export class PublicForumHashtagHotPageItemDto extends PublicForumHashtagDetailDt
 /**
  * forum 话题搜索项 DTO。
  */
-export class PublicForumHashtagSearchItemDto extends ForumHashtagBriefDto {
-  @BooleanProperty({
-    description: '当前用户是否已关注该话题',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  isFollowed!: boolean
-}
+export class PublicForumHashtagSearchItemDto extends IntersectionType(
+  ForumHashtagBriefDto,
+  ForumHashtagFollowContextFieldsDto,
+) {}
 
 /**
  * forum 话题创建 DTO。
@@ -296,11 +300,6 @@ export class QueryPublicForumHashtagSearchDto {
   })
   limit?: number
 }
-
-/**
- * forum 话题公开热门分页 DTO。
- */
-export class QueryPublicForumHashtagHotPageDto extends PageDto {}
 
 /**
  * forum 话题关联主题分页 DTO。
