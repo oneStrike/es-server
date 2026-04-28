@@ -42,9 +42,6 @@ export class ForumSectionController {
     @Query() query: QueryPublicForumSectionDetailDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    return this.forumSectionService.getVisibleSectionDetail(
-      query.id,
-      userId ?? query.userId,
-    )
+    return this.forumSectionService.getVisibleSectionDetail(query.id, userId)
   }
 }

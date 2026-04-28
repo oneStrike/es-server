@@ -301,6 +301,7 @@ export class ForumSectionGroupService {
   async swapSectionGroupSortOrder(dto: SwapForumSectionGroupSortDto) {
     return this.drizzle.ext.swapField(this.forumSectionGroup, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
+      recordWhere: sql`${this.forumSectionGroup.deletedAt} is null`,
     })
   }
 

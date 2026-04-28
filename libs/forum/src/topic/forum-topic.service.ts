@@ -72,6 +72,7 @@ import {
   ForumHashtagReferenceSourceTypeEnum,
 } from '../hashtag/forum-hashtag.constant'
 import { ForumPermissionService } from '../permission/forum-permission.service'
+import { FORUM_SECTION_MUTATION_LOCK_NAMESPACE } from '../section/forum-section.constant'
 import {
   CreateForumTopicDto,
   MoveForumTopicDto,
@@ -171,6 +172,13 @@ export class ForumTopicService {
 
   get forumHashtagReferenceTable() {
     return this.drizzle.schema.forumHashtagReference
+  }
+
+  // 串行化同一板块的删板块与发帖写路径，避免删除后仍写入新主题。
+  private async lockSectionForMutation(client: Db, sectionId: number) {
+    await client.execute(
+      sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_MUTATION_LOCK_NAMESPACE}, ${sectionId})`,
+    )
   }
 
   /**
@@ -1010,12 +1018,10 @@ export class ForumTopicService {
       mentions,
     } = createTopicDto
 
-    const section = await this.forumPermissionService.ensureUserCanCreateTopic(
+    await this.forumPermissionService.ensureUserCanCreateTopic(
       userId,
       sectionId,
     )
-
-    const reviewPolicy = section.topicReviewPolicy as ForumReviewPolicyEnum
 
     const media = this.normalizeTopicMedia({ images, videos })
 
@@ -1031,12 +1037,46 @@ export class ForumTopicService {
           },
           userId,
         )
+        await this.lockSectionForMutation(tx, sectionId)
+        const liveSection = await tx.query.forumSection.findFirst({
+          where: {
+            id: sectionId,
+            deletedAt: { isNull: true },
+            isEnabled: true,
+          },
+          columns: {
+            id: true,
+            groupId: true,
+            deletedAt: true,
+            isEnabled: true,
+            topicReviewPolicy: true,
+          },
+          with: {
+            group: {
+              columns: {
+                isEnabled: true,
+                deletedAt: true,
+              },
+            },
+          },
+        })
+        if (
+          !liveSection ||
+          !this.forumPermissionService.isSectionPubliclyAvailable(liveSection)
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '板块不存在或已禁用',
+          )
+        }
         const title = this.resolveCreateTopicTitle(
           inputTitle,
           compiledBody.plainText,
         )
         const { hits, publicHits, highestLevel } =
           this.detectTopicSensitiveWords(title, compiledBody.plainText)
+        const reviewPolicy =
+          liveSection.topicReviewPolicy as ForumReviewPolicyEnum
         const { auditStatus, isHidden } = this.calculateAuditStatus(
           reviewPolicy,
           highestLevel,

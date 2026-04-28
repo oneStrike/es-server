@@ -19,6 +19,7 @@ import {
   UpdateForumSectionDto,
   UpdateForumSectionEnabledDto,
 } from './dto/forum-section.dto'
+import { FORUM_SECTION_MUTATION_LOCK_NAMESPACE } from './forum-section.constant'
 
 /**
  * 论坛板块服务。
@@ -65,6 +66,13 @@ export class ForumSectionService {
         sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE}, ${groupId})`,
       )
     }
+  }
+
+  // 串行化单个板块的删改与发帖写操作，避免删除与新主题写入交错。
+  private async lockSectionForMutation(client: Db, sectionId: number) {
+    await client.execute(
+      sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_MUTATION_LOCK_NAMESPACE}, ${sectionId})`,
+    )
   }
 
   /**
@@ -393,53 +401,44 @@ export class ForumSectionService {
    * - 关联分组与等级规则时需校验目标存在性
    */
   async createSection(createSectionDto: CreateForumSectionDto) {
-    const { name, groupId, userLevelRuleId, ...sectionData } = createSectionDto
+    const { groupId, userLevelRuleId, ...sectionData } = createSectionDto
 
-    const existed = await this.db.query.forumSection.findFirst({
-      where: { name, deletedAt: { isNull: true } },
-      columns: { id: true },
-    })
-    if (existed) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-        '板块名称已存在',
-      )
-    }
-
-    await this.drizzle.withTransaction(async (tx) => {
-      if (groupId) {
-        await this.lockSectionGroupsForMutation(tx, [groupId])
-        const group = await tx.query.forumSectionGroup.findFirst({
-          where: { id: groupId, deletedAt: { isNull: true } },
-          columns: { id: true },
-        })
-        if (!group) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '板块分组不存在',
-          )
+    await this.drizzle.withTransaction(
+      async (tx) => {
+        if (groupId !== undefined && groupId !== null) {
+          await this.lockSectionGroupsForMutation(tx, [groupId])
+          const group = await tx.query.forumSectionGroup.findFirst({
+            where: { id: groupId, deletedAt: { isNull: true } },
+            columns: { id: true },
+          })
+          if (!group) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '板块分组不存在',
+            )
+          }
         }
-      }
-      if (userLevelRuleId) {
-        const levelRule = await tx.query.userLevelRule.findFirst({
-          where: { id: userLevelRuleId },
-          columns: { id: true },
-        })
-        if (!levelRule) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '用户等级规则不存在',
-          )
+        if (userLevelRuleId !== undefined && userLevelRuleId !== null) {
+          const levelRule = await tx.query.userLevelRule.findFirst({
+            where: { id: userLevelRuleId },
+            columns: { id: true },
+          })
+          if (!levelRule) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '用户等级规则不存在',
+            )
+          }
         }
-      }
 
-      await tx.insert(this.forumSection).values({
-        name,
-        ...sectionData,
-        userLevelRuleId,
-        groupId,
-      })
-    })
+        await tx.insert(this.forumSection).values({
+          ...sectionData,
+          userLevelRuleId,
+          groupId,
+        })
+      },
+      { duplicate: '板块名称已存在' },
+    )
     return true
   }
 
@@ -563,90 +562,87 @@ export class ForumSectionService {
    */
   async updateSection(updateSectionDto: UpdateForumSectionDto) {
     const { id, name, groupId, ...updateData } = updateSectionDto
-    await this.drizzle.withTransaction(async (tx) => {
-      const existingSection = await tx.query.forumSection.findFirst({
-        where: { id, deletedAt: { isNull: true } },
-      })
-
-      if (!existingSection) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '论坛板块不存在',
-        )
-      }
-
-      if (groupId !== undefined) {
-        await this.lockSectionGroupsForMutation(tx, [existingSection.groupId, groupId])
-      }
-
-      if (name && name !== existingSection.name) {
-        const duplicateSection = await tx.query.forumSection.findFirst({
-          where: {
-            name,
-            deletedAt: { isNull: true },
-          },
+    await this.drizzle.withTransaction(
+      async (tx) => {
+        const existingSection = await tx.query.forumSection.findFirst({
+          where: { id, deletedAt: { isNull: true } },
         })
-        if (duplicateSection && duplicateSection.id !== id) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-            '板块名称已存在',
-          )
-        }
-      }
 
-      const updatePayload: Record<string, unknown> = {
-        name,
-        ...updateData,
-      }
-
-      if (
-        updateData.userLevelRuleId !== undefined &&
-        updateData.userLevelRuleId !== existingSection.userLevelRuleId
-      ) {
-        if (updateData.userLevelRuleId === null) {
-          updatePayload.userLevelRuleId = null
-        } else {
-          const levelRule = await tx.query.userLevelRule.findFirst({
-            where: { id: updateData.userLevelRuleId },
-            columns: { id: true },
-          })
-
-          if (!levelRule) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_NOT_FOUND,
-              '用户等级规则不存在',
-            )
-          }
-        }
-      }
-
-      if (groupId && groupId !== existingSection.groupId) {
-        const group = await tx.query.forumSectionGroup.findFirst({
-          where: { id: groupId, deletedAt: { isNull: true } },
-          columns: { id: true },
-        })
-        if (!group) {
+        if (!existingSection) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '板块分组不存在',
+            '论坛板块不存在',
           )
         }
-        updatePayload.groupId = groupId
-      } else if (groupId === null && existingSection.groupId !== null) {
-        updatePayload.groupId = null
-      }
 
-      const result = await tx
-        .update(this.forumSection)
-        .set(updatePayload)
-        .where(
-          and(
-            eq(this.forumSection.id, id),
-            isNull(this.forumSection.deletedAt),
-          ),
-        )
-      this.drizzle.assertAffectedRows(result, '论坛板块不存在')
-    })
+        if (groupId !== undefined) {
+          await this.lockSectionGroupsForMutation(tx, [
+            existingSection.groupId,
+            groupId,
+          ])
+        }
+
+        const updatePayload: Record<string, unknown> = {
+          ...updateData,
+        }
+        if (name !== undefined) {
+          updatePayload.name = name
+        }
+
+        if (
+          updateData.userLevelRuleId !== undefined &&
+          updateData.userLevelRuleId !== existingSection.userLevelRuleId
+        ) {
+          if (updateData.userLevelRuleId === null) {
+            updatePayload.userLevelRuleId = null
+          } else {
+            const levelRule = await tx.query.userLevelRule.findFirst({
+              where: { id: updateData.userLevelRuleId },
+              columns: { id: true },
+            })
+
+            if (!levelRule) {
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                '用户等级规则不存在',
+              )
+            }
+          }
+        }
+
+        if (
+          groupId !== undefined &&
+          groupId !== null &&
+          groupId !== existingSection.groupId
+        ) {
+          const group = await tx.query.forumSectionGroup.findFirst({
+            where: { id: groupId, deletedAt: { isNull: true } },
+            columns: { id: true },
+          })
+          if (!group) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '板块分组不存在',
+            )
+          }
+          updatePayload.groupId = groupId
+        } else if (groupId === null && existingSection.groupId !== null) {
+          updatePayload.groupId = null
+        }
+
+        const result = await tx
+          .update(this.forumSection)
+          .set(updatePayload)
+          .where(
+            and(
+              eq(this.forumSection.id, id),
+              isNull(this.forumSection.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+      },
+      { duplicate: '板块名称已存在' },
+    )
     return true
   }
 
@@ -655,26 +651,37 @@ export class ForumSectionService {
    * 存在主题时禁止删除，避免孤立数据。
    */
   async deleteSection(id: number) {
-    const section = await this.db.query.forumSection.findFirst({
-      where: { id, deletedAt: { isNull: true } },
-    })
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.lockSectionForMutation(tx, id)
 
-    if (!section) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '论坛板块不存在',
-      )
-    }
+      const section = await tx.query.forumSection.findFirst({
+        where: { id, deletedAt: { isNull: true } },
+        columns: { id: true },
+      })
 
-    if (section.topicCount > 0) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        `该板块还有 ${section.topicCount} 个主题，无法删除`,
-      )
-    }
+      if (!section) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '论坛板块不存在',
+        )
+      }
 
-    const result = await this.drizzle.withErrorHandling(() =>
-      this.db
+      const liveTopic = await tx.query.forumTopic.findFirst({
+        where: {
+          sectionId: id,
+          deletedAt: { isNull: true },
+        },
+        columns: { id: true },
+      })
+
+      if (liveTopic) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '该板块还有主题，无法删除',
+        )
+      }
+
+      const result = await tx
         .update(this.forumSection)
         .set({ deletedAt: new Date() })
         .where(
@@ -682,9 +689,9 @@ export class ForumSectionService {
             eq(this.forumSection.id, id),
             isNull(this.forumSection.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+        )
+      this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+    })
     return true
   }
 
@@ -716,6 +723,7 @@ export class ForumSectionService {
     return this.drizzle.ext.swapField(this.forumSection, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
       sourceField: 'groupId',
+      recordWhere: sql`${this.forumSection.deletedAt} is null`,
     })
   }
 }

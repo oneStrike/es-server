@@ -6,8 +6,7 @@ import {
   DragReorderDto,
   IdDto,
   OMIT_BASE_FIELDS,
-PageDto,
-UserIdDto
+  PageDto,
 } from '@libs/platform/dto'
 
 import {
@@ -164,6 +163,7 @@ export class CreateForumSectionDto extends OmitType(BaseForumSectionDto, [
   'lastTopicId',
   'topicCount',
   'commentCount',
+  'followersCount',
   'lastPostAt',
   'deletedAt',
 ] as const) {}
@@ -244,10 +244,7 @@ export class AdminForumSectionTreeSectionDto extends OmitType(
 /**
  * 查询公开板块详情 DTO。
  */
-export class QueryPublicForumSectionDetailDto extends IntersectionType(
-  IdDto,
-  PartialType(UserIdDto),
-) {}
+export class QueryPublicForumSectionDetailDto extends IdDto {}
 
 /**
  * 公开板块分组摘要 DTO。

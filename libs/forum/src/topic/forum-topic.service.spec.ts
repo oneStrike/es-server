@@ -1,4 +1,4 @@
-import { AuditStatusEnum } from '@libs/platform/constant'
+import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { ForumTopicService } from './forum-topic.service'
 
 type ForumTopicServicePrivateApi = {
@@ -271,6 +271,142 @@ describe('forumTopicService helpers', () => {
       drizzle,
       forumCounterService,
       forumHashtagReferenceService,
+      service,
+      tx,
+    }
+  }
+
+  function createCreateTopicServiceHarness() {
+    const execute = jest.fn().mockResolvedValue({ rows: [] })
+    const forumSectionFindFirst = jest.fn().mockResolvedValue({
+      id: 3,
+      groupId: null,
+      deletedAt: null,
+      isEnabled: true,
+      topicReviewPolicy: 1,
+      group: null,
+    })
+    const returning = jest.fn().mockResolvedValue([
+      {
+        id: 33,
+        title: '测试主题',
+        userId: 12,
+        sectionId: 3,
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+        deletedAt: null,
+        createdAt: new Date('2026-04-28T00:00:00.000Z'),
+      },
+    ])
+    const tx = {
+      execute,
+      query: {
+        forumSection: {
+          findFirst: forumSectionFindFirst,
+        },
+      },
+      insert: jest.fn(() => ({
+        values: jest.fn(() => ({
+          returning,
+        })),
+      })),
+    }
+    const drizzle = {
+      db: {
+        transaction: jest.fn(
+          async (callback: (client: typeof tx) => Promise<unknown>) =>
+            callback(tx),
+        ),
+      },
+      schema: {
+        forumTopic: {},
+      },
+      withErrorHandling: jest.fn(async (callback: () => Promise<unknown>) =>
+        callback(),
+      ),
+    }
+    const forumPermissionService = {
+      ensureUserCanCreateTopic: jest.fn().mockResolvedValue({
+        id: 3,
+        topicReviewPolicy: 1,
+      }),
+      isSectionPubliclyAvailable: jest.fn().mockReturnValue(true),
+    }
+    const forumCounterService = {
+      updateUserForumTopicCount: jest.fn().mockResolvedValue(undefined),
+      syncSectionVisibleState: jest.fn().mockResolvedValue(undefined),
+    }
+    const actionLogService = {
+      createActionLog: jest.fn().mockResolvedValue(true),
+    }
+    const mentionService = {
+      replaceMentionsInTx: jest.fn().mockResolvedValue(undefined),
+      dispatchTopicMentionsInTx: jest.fn().mockResolvedValue(undefined),
+    }
+    const emojiCatalogService = {
+      recordRecentUsageInTx: jest.fn().mockResolvedValue(undefined),
+    }
+    const sensitiveWordStatisticsService = {
+      recordEntityHitsInTx: jest.fn().mockResolvedValue(undefined),
+    }
+    const forumHashtagReferenceService = {
+      replaceReferencesInTx: jest.fn().mockResolvedValue(undefined),
+    }
+    const growthEventBridgeService = {
+      dispatchDefinedEvent: jest.fn().mockResolvedValue(undefined),
+    }
+
+    const service = new ForumTopicService(
+      drizzle as never,
+      growthEventBridgeService as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      forumCounterService as never,
+      {} as never,
+      actionLogService as never,
+      forumPermissionService as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      mentionService as never,
+      emojiCatalogService as never,
+      sensitiveWordStatisticsService as never,
+      {} as never,
+      forumHashtagReferenceService as never,
+    )
+    jest
+      .spyOn(
+        service as unknown as ForumTopicServicePrivateApi,
+        'materializeTopicBodyInTx',
+      )
+      .mockResolvedValue({
+        plainText: '测试正文',
+        body: {
+          type: 'doc',
+          content: [],
+        },
+        bodyTokens: [],
+        mentionFacts: [],
+        emojiRecentUsageItems: [],
+        hashtagFacts: [],
+      } as never)
+    jest
+      .spyOn(
+        service as unknown as ForumTopicServicePrivateApi,
+        'detectTopicSensitiveWords',
+      )
+      .mockReturnValue({
+        hits: [],
+        publicHits: [],
+        highestLevel: undefined,
+      } as never)
+
+    return {
+      forumPermissionService,
+      forumSectionFindFirst,
       service,
       tx,
     }
@@ -760,5 +896,56 @@ describe('forumTopicService helpers', () => {
         },
       }),
     )
+  })
+
+  it('locks and rechecks section availability before inserting a new topic', async () => {
+    const { forumPermissionService, forumSectionFindFirst, service, tx } =
+      createCreateTopicServiceHarness()
+    const lockSpy = jest.spyOn(
+      service as unknown as {
+        lockSectionForMutation: (...args: unknown[]) => Promise<void>
+      },
+      'lockSectionForMutation',
+    )
+
+    await expect(
+      service.createForumTopic({
+        sectionId: 3,
+        userId: 12,
+        bodyMode: 'plain',
+        plainText: '测试正文',
+      } as never),
+    ).resolves.toEqual({ id: 33 })
+
+    expect(forumPermissionService.ensureUserCanCreateTopic).toHaveBeenCalledWith(
+      12,
+      3,
+    )
+    expect(lockSpy).toHaveBeenCalledWith(tx, 3)
+    expect(forumSectionFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: 3,
+          isEnabled: true,
+        }),
+      }),
+    )
+  })
+
+  it('rejects topic creation when the section disappears after the pre-check', async () => {
+    const { forumSectionFindFirst, service } = createCreateTopicServiceHarness()
+    forumSectionFindFirst.mockResolvedValue(null)
+
+    await expect(
+      service.createForumTopic({
+        sectionId: 3,
+        userId: 12,
+        bodyMode: 'plain',
+        plainText: '测试正文',
+      } as never),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.RESOURCE_NOT_FOUND,
+      message: '板块不存在或已禁用',
+    })
   })
 })

@@ -1,8 +1,8 @@
-import type { Db, PgTable, TableConfig } from '../core/drizzle.type'
+import type { Db, PgTable, SQL, TableConfig } from '../core/drizzle.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { InternalServerErrorException } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 /**
  * 生成临时值用于字段交换
@@ -39,6 +39,7 @@ function generateTemporaryValue(
  * @param options.where - 要交换的两条记录的 ID 条件
  * @param options.field - 要交换的字段名，默认为 'sortOrder'
  * @param options.sourceField - 来源字段名（可选），用于验证两条记录是否属于同一来源
+ * @param options.recordWhere - 附加到两条记录查询/更新上的共享过滤条件
  * @returns 交换成功返回 true
  * @throws BadRequestException - 当字段不存在、数据不存在或不是同一来源时抛出
  */
@@ -49,9 +50,10 @@ export async function swapField(
     where: [{ id: number }, { id: number }]
     field?: string
     sourceField?: string
+    recordWhere?: SQL
   },
 ): Promise<boolean> {
-  const { where, field = 'sortOrder', sourceField } = options
+  const { where, field = 'sortOrder', sourceField, recordWhere } = options
   const tableRef = table as object
 
   // 验证必要字段是否存在
@@ -70,6 +72,11 @@ export async function swapField(
     throw new InternalServerErrorException(`字段 "${sourceField}" 不存在`)
   }
 
+  const buildRecordWhere = (id: number) =>
+    recordWhere
+      ? and(eq(idColumn as never, id), recordWhere)!
+      : eq(idColumn as never, id)
+
   // 在事务中执行交换操作
   return db.transaction(async (tx) => {
     // 构建查询字段
@@ -82,12 +89,12 @@ export async function swapField(
     const [record1] = await tx
       .select(selectFields as never)
       .from(table)
-      .where(eq(idColumn as never, where[0].id))
+      .where(buildRecordWhere(where[0].id) as never)
       .limit(1)
     const [record2] = await tx
       .select(selectFields as never)
       .from(table)
-      .where(eq(idColumn as never, where[1].id))
+      .where(buildRecordWhere(where[1].id) as never)
       .limit(1)
 
     if (!record1 || !record2) {
@@ -121,19 +128,19 @@ export async function swapField(
     await tx
       .update(table)
       .set({ [field]: temporaryValue } as never)
-      .where(eq(idColumn as never, where[0].id))
+      .where(buildRecordWhere(where[0].id) as never)
 
     // 2. 将第二条记录的值设为第一条记录的原值
     await tx
       .update(table)
       .set({ [field]: value1 } as never)
-      .where(eq(idColumn as never, where[1].id))
+      .where(buildRecordWhere(where[1].id) as never)
 
     // 3. 将第一条记录的值设为第二条记录的原值
     await tx
       .update(table)
       .set({ [field]: value2 } as never)
-      .where(eq(idColumn as never, where[0].id))
+      .where(buildRecordWhere(where[0].id) as never)
 
     return true
   })

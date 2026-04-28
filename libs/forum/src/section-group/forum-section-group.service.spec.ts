@@ -8,6 +8,7 @@ describe('ForumSectionGroupService', () => {
     const forumSectionGroupFindFirst = jest.fn()
     const updateWhere = jest.fn().mockResolvedValue({ rowCount: 1 })
     const execute = jest.fn().mockResolvedValue({ rows: [] })
+    const swapField = jest.fn().mockResolvedValue(true)
     const tx = {
       execute,
       query: {
@@ -41,7 +42,12 @@ describe('ForumSectionGroupService', () => {
         })),
       },
       schema: {
-        forumSectionGroup: {},
+        forumSectionGroup: {
+          deletedAt: 'forum_section_group.deleted_at',
+        },
+      },
+      ext: {
+        swapField,
       },
       assertAffectedRows: jest.fn(),
       withErrorHandling: jest.fn(async (callback: () => Promise<unknown>) =>
@@ -65,6 +71,7 @@ describe('ForumSectionGroupService', () => {
       forumSectionGroupFindFirst,
       updateWhere,
       execute,
+      swapField,
     }
   }
 
@@ -261,5 +268,26 @@ describe('ForumSectionGroupService', () => {
         sections: [],
       },
     ])
+  })
+
+  it('passes a live-row guard into section-group sort swapping', async () => {
+    const { service, swapField } = createService()
+
+    await expect(
+      service.swapSectionGroupSortOrder({
+        dragId: 1,
+        targetId: 2,
+      }),
+    ).resolves.toBe(true)
+
+    expect(swapField).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deletedAt: 'forum_section_group.deleted_at',
+      }),
+      expect.objectContaining({
+        where: [{ id: 1 }, { id: 2 }],
+        recordWhere: expect.anything(),
+      }),
+    )
   })
 })

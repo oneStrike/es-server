@@ -11,6 +11,7 @@ import {
   pgTable,
   smallint,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -95,6 +96,12 @@ export const forumSection = pgTable('forum_section', {
    */
   deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
+  /**
+   * 唯一索引: name（仅未删除板块）
+   */
+    uniqueIndex('forum_section_name_live_key').on(
+      table.name,
+    ).where(sql`${table.deletedAt} is null`),
   /**
    * 分组索引
    */
