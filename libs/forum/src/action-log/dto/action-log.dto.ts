@@ -1,12 +1,14 @@
-import { DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
-
-import { IdDto, PageDto } from '@libs/platform/dto';
-
 import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+import { IdDto, PageDto } from '@libs/platform/dto'
+
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -26,7 +28,8 @@ export class BaseForumActionLogDto extends IdDto {
   userId!: number
 
   @EnumProperty({
-    description: '操作类型（1=置顶主题；2=取消置顶；3=加精主题；4=取消加精；5=锁定主题；6=解锁主题；7=删除主题；8=移动主题；9=审核主题；10=删除回复）',
+    description:
+      '操作类型（1=创建主题；2=创建评论；3=点赞主题；4=取消点赞主题；5=点赞评论；6=取消点赞评论；7=收藏主题；8=取消收藏主题；9=更新主题；10=更新评论；11=删除主题；12=删除评论）',
     example: ForumUserActionTypeEnum.CREATE_TOPIC,
     required: true,
     enum: ForumUserActionTypeEnum,
@@ -34,7 +37,7 @@ export class BaseForumActionLogDto extends IdDto {
   actionType!: ForumUserActionTypeEnum
 
   @EnumProperty({
-    description: '操作目标类型（1=主题；2=回复）',
+    description: '操作目标类型（1=主题；2=评论）',
     example: ForumUserActionTargetTypeEnum.TOPIC,
     required: true,
     enum: ForumUserActionTargetTypeEnum,
@@ -142,19 +145,21 @@ export class CreateForumActionLogDto extends PickType(BaseForumActionLogDto, [
   'geoIsp',
   'geoSource',
 ] as const) {
-  @StringProperty({
-    description: '操作前数据',
-    example: '{"title":"旧标题"}',
+  @JsonProperty({
+    description: '操作前数据快照',
     required: false,
+    validation: false,
+    example: { title: '旧标题' },
   })
-  beforeData?: string
+  beforeData?: unknown
 
-  @StringProperty({
-    description: '操作后数据',
-    example: '{"title":"新标题"}',
+  @JsonProperty({
+    description: '操作后数据快照',
     required: false,
+    validation: false,
+    example: { title: '新标题' },
   })
-  afterData?: string
+  afterData?: unknown
 
   @StringProperty({
     description: '操作 IP 地址',

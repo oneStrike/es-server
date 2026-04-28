@@ -1,7 +1,15 @@
-import { DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
+import {
+  DateProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto';
-import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '../search.constant'
+import { PageDto } from '@libs/platform/dto'
+import {
+  ForumSearchSortTypeEnum,
+  ForumSearchTypeEnum,
+} from '../search.constant'
 
 /**
  * 论坛搜索查询 DTO。
@@ -34,7 +42,15 @@ export class ForumSearchDto extends PageDto {
   sectionId?: number
 
   @NumberProperty({
-    description: '标签ID',
+    description: '话题ID',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  hashtagId?: number
+
+  @NumberProperty({
+    description: '兼容旧标签ID筛选；与 hashtagId 等价，后续将移除',
     example: 1,
     required: false,
     min: 1,

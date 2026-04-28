@@ -37,6 +37,15 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumSection.id,
     }),
   },
+  forumHashtag: {
+    references: r.many.forumHashtagReference(),
+  },
+  forumHashtagReference: {
+    hashtag: r.one.forumHashtag({
+      from: r.forumHashtagReference.hashtagId,
+      to: r.forumHashtag.id,
+    }),
+  },
   forumModeratorSection: {
     moderator: r.one.forumModerator({
       from: r.forumModeratorSection.moderatorId,
@@ -77,13 +86,6 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
     sections: r.many.forumSection(),
     moderators: r.many.forumModerator(),
   },
-  forumTag: {
-    topicTags: r.many.forumTopicTag(),
-    topics: r.many.forumTopic({
-      from: r.forumTag.id.through(r.forumTopicTag.tagId),
-      to: r.forumTopic.id.through(r.forumTopicTag.topicId),
-    }),
-  },
   forumTopic: {
     section: r.one.forumSection({
       from: r.forumTopic.sectionId,
@@ -103,18 +105,6 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       from: r.forumTopic.id,
       to: r.forumSection.lastTopicId,
       alias: 'LastTopic',
-    }),
-    topicTags: r.many.forumTopicTag(),
-    tags: r.many.forumTag({
-      from: r.forumTopic.id.through(r.forumTopicTag.topicId),
-      to: r.forumTag.id.through(r.forumTopicTag.tagId),
-    }),
-  },
-  forumTopicTag: {
-    tag: r.one.forumTag({ from: r.forumTopicTag.tagId, to: r.forumTag.id }),
-    topic: r.one.forumTopic({
-      from: r.forumTopicTag.topicId,
-      to: r.forumTopic.id,
     }),
   },
   forumUserActionLog: {

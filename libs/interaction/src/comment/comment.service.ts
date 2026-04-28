@@ -5,11 +5,18 @@ import type {
   CommentModerationState,
   CommentVisibleState,
   CommentWriteContext,
+  MaterializedCommentBodyWriteResult,
   TransactionRetryOptions,
   VisibleCommentEffectPayload,
 } from './comment.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
+import { ForumHashtagBodyService } from '@libs/forum/hashtag/forum-hashtag-body.service'
+import { ForumHashtagReferenceService } from '@libs/forum/hashtag/forum-hashtag-reference.service'
+import {
+  ForumHashtagCreateSourceTypeEnum,
+  ForumHashtagReferenceSourceTypeEnum,
+} from '@libs/forum/hashtag/forum-hashtag.constant'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
   canConsumeEventEnvelopeByConsumer,
@@ -17,9 +24,20 @@ import {
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
+import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
+import { createBodyDocFromPlainText } from '@libs/interaction/body/body-text.helper'
+import { BodyValidatorService } from '@libs/interaction/body/body-validator.service'
+import {
+  BODY_VERSION_V1,
+  BodySceneEnum,
+} from '@libs/interaction/body/body.constant'
 import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
-import { AuditRoleEnum, AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+import {
+  AuditRoleEnum,
+  AuditStatusEnum,
+  BusinessErrorCode,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
@@ -30,7 +48,6 @@ import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, inArray, isNull, lte, max, or, sql } from 'drizzle-orm'
 import { EmojiCatalogService } from '../emoji/emoji-catalog.service'
-import { buildRecentEmojiUsageItems } from '../emoji/emoji-recent-usage.helper'
 import { EmojiSceneEnum } from '../emoji/emoji.constant'
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
@@ -46,8 +63,8 @@ import {
   QueryMyCommentPageDto,
   QueryTargetCommentsDto,
   ReplyCommentBodyDto,
-  UpdateAdminCommentAuditStatusDto,
-  UpdateAdminCommentHiddenDto,
+  UpdateCommentAuditStatusDto,
+  UpdateCommentHiddenDto,
 } from './dto/comment.dto'
 import {
   CommentTargetMeta,
@@ -77,9 +94,13 @@ export class CommentService {
     private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
+    private readonly bodyValidatorService: BodyValidatorService,
+    private readonly bodyCompilerService: BodyCompilerService,
     private readonly mentionService: MentionService,
     private readonly emojiCatalogService: EmojiCatalogService,
     private readonly sensitiveWordStatisticsService: SensitiveWordStatisticsService,
+    private readonly forumHashtagBodyService: ForumHashtagBodyService,
+    private readonly forumHashtagReferenceService: ForumHashtagReferenceService,
   ) {}
 
   private get db() {
@@ -88,6 +109,10 @@ export class CommentService {
 
   private get userComment() {
     return this.drizzle.schema.userComment
+  }
+
+  private get forumTopic() {
+    return this.drizzle.schema.forumTopic
   }
 
   private get appUser() {
@@ -380,20 +405,78 @@ export class CommentService {
     return rest
   }
 
-  /**
-   * 校验正文写入链路已显式传入 mentions。
-   * 新规则要求评论正文必须显式携带 mentions，空数组表示无提及。
-   */
-  private ensureMentionsProvided(
-    mentions:
-      | CreateCommentBodyDto['mentions']
-      | ReplyCommentBodyDto['mentions'],
-  ) {
+  // 在事务内将评论正文物化为带 hashtag 事实的 canonical body 编译结果。
+  private async materializeCommentBodyInTx(
+    tx: Db,
+    content: string,
+    actorUserId: number,
+    targetType: CommentTargetTypeEnum,
+    mentions: CreateCommentBodyDto['mentions'] | ReplyCommentBodyDto['mentions'],
+  ): Promise<MaterializedCommentBodyWriteResult> {
     if (!Array.isArray(mentions)) {
       throw new BadRequestException('mentions 为必填字段；无提及时请传空数组')
     }
 
-    return mentions
+    const body = createBodyDocFromPlainText(content, {
+      mentions,
+    })
+    const validatedBody = this.bodyValidatorService.validateBodyOrThrow(
+      body,
+      BodySceneEnum.COMMENT,
+    )
+
+    if (targetType !== CommentTargetTypeEnum.FORUM_TOPIC) {
+      const compiledBody = await this.bodyCompilerService.compile(
+        validatedBody,
+        BodySceneEnum.COMMENT,
+      )
+      return {
+        ...compiledBody,
+        hashtagFacts: [],
+      }
+    }
+
+    const materialized = await this.forumHashtagBodyService.materializeBodyInTx(
+      {
+        tx,
+        body: validatedBody,
+        actorUserId,
+        createSourceType: ForumHashtagCreateSourceTypeEnum.COMMENT_BODY,
+      },
+    )
+    const compiledBody = await this.bodyCompilerService.compile(
+      materialized.body,
+      BodySceneEnum.COMMENT,
+    )
+
+    return {
+      ...compiledBody,
+      hashtagFacts: materialized.hashtagFacts,
+    }
+  }
+
+  // 判断论坛主题当前是否对外可见。
+  private async isForumTopicVisibleInTx(tx: Db, topicId: number) {
+    const topic = await tx.query.forumTopic.findFirst({
+      where: {
+        id: topicId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        auditStatus: true,
+        isHidden: true,
+        deletedAt: true,
+      },
+    })
+
+    return (
+      !!topic &&
+      this.isVisible({
+        auditStatus: topic.auditStatus,
+        isHidden: topic.isHidden,
+        deletedAt: topic.deletedAt,
+      })
+    )
   }
 
   private omitGeoSource<T>(item: T): Omit<T, 'geoSource'> {
@@ -542,6 +625,7 @@ export class CommentService {
       userId: number
       actualReplyToId: number | null
       replyToId: number | null
+      body: JsonValue
       content: string
       bodyTokens: JsonValue
       likeCount: number
@@ -560,6 +644,7 @@ export class CommentService {
         userId: number
         actualReplyToId: number
         replyToId: number | null
+        body: JsonValue
         content: string
         bodyTokens: JsonValue
         likeCount: number
@@ -593,6 +678,7 @@ export class CommentService {
           userId: this.userComment.userId,
           actualReplyToId: this.userComment.actualReplyToId,
           replyToId: this.userComment.replyToId,
+          body: this.userComment.body,
           content: this.userComment.content,
           bodyTokens: this.userComment.bodyTokens,
           likeCount: this.userComment.likeCount,
@@ -657,6 +743,7 @@ export class CommentService {
         userId: reply.userId,
         actualReplyToId: reply.actualReplyToId,
         replyToId: reply.replyToId,
+        body: reply.body,
         content: reply.content,
         bodyTokens: reply.bodyTokens,
         likeCount: reply.likeCount,
@@ -1085,14 +1172,7 @@ export class CommentService {
     input: CreateCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
   ) {
-    const { userId, targetType, targetId, content } = input
-    const mentions = this.ensureMentionsProvided(input.mentions)
-    const bodyTokens = await this.mentionService.buildBodyTokens({
-      content,
-      mentions,
-      scene: EmojiSceneEnum.COMMENT,
-    })
-    const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
+    const { userId, targetType, targetId, content, mentions } = input
 
     // 校验用户是否有权限在该目标下评论
     await this.commentPermissionService.ensureCanComment(
@@ -1101,9 +1181,6 @@ export class CommentService {
       targetId,
     )
 
-    // 根据敏感词检测结果确定审核决策
-    const decision = this.resolveAuditDecision(content)
-    const { statisticsHits, ...persistedDecision } = decision
     const resolver = this.getResolver(targetType)
 
     const created = await this.drizzle.withErrorHandling(
@@ -1112,6 +1189,15 @@ export class CommentService {
           async () =>
             this.db.transaction(async (tx) => {
               await resolver.ensureCanComment(tx, targetId)
+              const compiledBody = await this.materializeCommentBodyInTx(
+                tx,
+                content,
+                userId,
+                targetType,
+                mentions,
+              )
+              const decision = this.resolveAuditDecision(compiledBody.plainText)
+              const { statisticsHits, ...persistedDecision } = decision
 
               const [floorResult] = await tx
                 .select({
@@ -1133,8 +1219,13 @@ export class CommentService {
                   targetType,
                   targetId,
                   userId,
-                  content,
-                  bodyTokens: bodyTokens.length ? bodyTokens : null,
+                  content: compiledBody.plainText,
+                  body: compiledBody.body as unknown as JsonValue,
+                  bodyTokens:
+                    compiledBody.bodyTokens.length > 0
+                      ? (compiledBody.bodyTokens as JsonValue)
+                      : null,
+                  bodyVersion: BODY_VERSION_V1,
                   floor,
                   ...persistedDecision,
                   geoCountry: context.geoCountry,
@@ -1168,14 +1259,37 @@ export class CommentService {
                 tx,
                 sourceType: MentionSourceTypeEnum.COMMENT,
                 sourceId: newComment.id,
-                content,
-                mentions,
+                content: compiledBody.plainText,
+                mentions: compiledBody.mentionFacts,
               })
               await this.emojiCatalogService.recordRecentUsageInTx(tx, {
                 userId,
                 scene: EmojiSceneEnum.COMMENT,
-                items: recentUsageItems,
+                items: compiledBody.emojiRecentUsageItems,
               })
+              if (targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
+                const meta = await resolver.resolveMeta(tx, targetId)
+                if (!meta.sectionId) {
+                  throw new BusinessException(
+                    BusinessErrorCode.RESOURCE_NOT_FOUND,
+                    '帖子板块信息缺失',
+                  )
+                }
+                await this.forumHashtagReferenceService.replaceReferencesInTx({
+                  tx,
+                  sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+                  sourceId: newComment.id,
+                  topicId: targetId,
+                  sectionId: meta.sectionId,
+                  userId,
+                  sourceAuditStatus: decision.auditStatus,
+                  sourceIsHidden: decision.isHidden,
+                  isSourceVisible:
+                    this.isVisible({ ...decision, deletedAt: null }) &&
+                    (await this.isForumTopicVisibleInTx(tx, targetId)),
+                  hashtagFacts: compiledBody.hashtagFacts,
+                })
+              }
 
               await this.appUserCountService.updateCommentCount(tx, userId, 1)
 
@@ -1256,14 +1370,7 @@ export class CommentService {
     input: ReplyCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
   ) {
-    const { userId, content, replyToId } = input
-    const mentions = this.ensureMentionsProvided(input.mentions)
-    const bodyTokens = await this.mentionService.buildBodyTokens({
-      content,
-      mentions,
-      scene: EmojiSceneEnum.COMMENT,
-    })
-    const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
+    const { userId, content, replyToId, mentions } = input
 
     // 查询被回复的评论
     const replyTo = await this.db.query.userComment.findFirst({
@@ -1310,13 +1417,19 @@ export class CommentService {
       ? (replyTo.actualReplyToId ?? replyTo.id)
       : replyTo.id
 
-    // 根据敏感词检测结果确定审核决策
-    const decision = this.resolveAuditDecision(content)
-    const { statisticsHits, ...persistedDecision } = decision
     const resolver = this.getResolver(targetType as CommentTargetTypeEnum)
 
     const created = await this.drizzle.withTransaction(async (tx) => {
       await resolver.ensureCanComment(tx, targetId)
+      const compiledBody = await this.materializeCommentBodyInTx(
+        tx,
+        content,
+        userId,
+        targetType as CommentTargetTypeEnum,
+        mentions,
+      )
+      const decision = this.resolveAuditDecision(compiledBody.plainText)
+      const { statisticsHits, ...persistedDecision } = decision
 
       const [newComment] = await tx
         .insert(this.userComment)
@@ -1324,8 +1437,13 @@ export class CommentService {
           targetType,
           targetId,
           userId,
-          content,
-          bodyTokens: bodyTokens.length ? bodyTokens : null,
+          content: compiledBody.plainText,
+          body: compiledBody.body as unknown as JsonValue,
+          bodyTokens:
+            compiledBody.bodyTokens.length > 0
+              ? (compiledBody.bodyTokens as JsonValue)
+              : null,
+          bodyVersion: BODY_VERSION_V1,
           replyToId,
           actualReplyToId,
           ...persistedDecision,
@@ -1357,14 +1475,37 @@ export class CommentService {
         tx,
         sourceType: MentionSourceTypeEnum.COMMENT,
         sourceId: newComment.id,
-        content,
-        mentions,
+        content: compiledBody.plainText,
+        mentions: compiledBody.mentionFacts,
       })
       await this.emojiCatalogService.recordRecentUsageInTx(tx, {
         userId,
         scene: EmojiSceneEnum.COMMENT,
-        items: recentUsageItems,
+        items: compiledBody.emojiRecentUsageItems,
       })
+      if (targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
+        const meta = await resolver.resolveMeta(tx, targetId)
+        if (!meta.sectionId) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '帖子板块信息缺失',
+          )
+        }
+        await this.forumHashtagReferenceService.replaceReferencesInTx({
+          tx,
+          sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+          sourceId: newComment.id,
+          topicId: targetId,
+          sectionId: meta.sectionId,
+          userId,
+          sourceAuditStatus: decision.auditStatus,
+          sourceIsHidden: decision.isHidden,
+          isSourceVisible:
+            this.isVisible({ ...decision, deletedAt: null }) &&
+            (await this.isForumTopicVisibleInTx(tx, targetId)),
+          hashtagFacts: compiledBody.hashtagFacts,
+        })
+      }
 
       await this.appUserCountService.updateCommentCount(tx, userId, 1)
 
@@ -1460,6 +1601,7 @@ export class CommentService {
           targetType: true,
           targetId: true,
           replyToId: true,
+          content: true,
           createdAt: true,
           auditStatus: true,
           isHidden: true,
@@ -1494,6 +1636,11 @@ export class CommentService {
         sourceType: MentionSourceTypeEnum.COMMENT,
         sourceIds: deleteScopeIds,
       })
+      await this.forumHashtagReferenceService.deleteReferencesInTx({
+        tx,
+        sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+        sourceIds: deleteScopeIds,
+      })
 
       await this.rollbackDeletedCommentAuthorCounts(tx, deleteScopeComments)
 
@@ -1525,6 +1672,7 @@ export class CommentService {
             targetType: found.targetType as CommentTargetTypeEnum,
             targetId: found.targetId,
             replyToId: found.replyToId,
+            content: found.content,
             createdAt: found.createdAt,
           },
           meta,
@@ -1567,6 +1715,7 @@ export class CommentService {
         'targetType',
         'targetId',
         'userId',
+        'body',
         'content',
         'bodyTokens',
         'floor',
@@ -1697,6 +1846,7 @@ export class CommentService {
                   userId: this.userComment.userId,
                   targetType: this.userComment.targetType,
                   targetId: this.userComment.targetId,
+                  body: this.userComment.body,
                   content: this.userComment.content,
                   bodyTokens: this.userComment.bodyTokens,
                   floor: this.userComment.floor,
@@ -1747,6 +1897,7 @@ export class CommentService {
               'userId',
               'targetType',
               'targetId',
+              'body',
               'content',
               'bodyTokens',
               'floor',
@@ -1812,6 +1963,7 @@ export class CommentService {
             return {
               id: reply.id,
               userId: reply.userId,
+              body: reply.body,
               content: reply.content,
               bodyTokens: reply.bodyTokens,
               replyToId: reply.replyToId,
@@ -2060,7 +2212,7 @@ export class CommentService {
    * 已进入终态的评论不允许回退为待审核。
    */
   async updateCommentAuditStatus(
-    input: UpdateAdminCommentAuditStatusDto & {
+    input: UpdateCommentAuditStatusDto & {
       auditById: number
       auditRole?: AuditRoleEnum
     },
@@ -2157,6 +2309,27 @@ export class CommentService {
           )
         }
 
+        if (current.targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
+          const topicVisible = await this.isForumTopicVisibleInTx(
+            tx,
+            current.targetId,
+          )
+          await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
+            tx,
+            sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+            sourceId: current.id,
+            sourceAuditStatus: input.auditStatus,
+            sourceIsHidden: current.isHidden,
+            isSourceVisible:
+              topicVisible &&
+              this.isVisible({
+                auditStatus: input.auditStatus,
+                isHidden: current.isHidden,
+                deletedAt: null,
+              }),
+          })
+        }
+
         return this.syncCommentVisibilityTransition(tx, {
           current: current as CommentModerationState,
           nextAuditStatus: input.auditStatus,
@@ -2190,7 +2363,7 @@ export class CommentService {
    * 更新评论隐藏状态。
    * 仅在可见性真正发生变化时同步评论计数与目标派生字段。
    */
-  async updateCommentHidden(input: UpdateAdminCommentHiddenDto) {
+  async updateCommentHidden(input: UpdateCommentHiddenDto) {
     const current = await this.db.query.userComment.findFirst({
       where: {
         id: input.id,
@@ -2267,6 +2440,27 @@ export class CommentService {
             BusinessErrorCode.STATE_CONFLICT,
             '评论状态已变化，请刷新后重试',
           )
+        }
+
+        if (current.targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
+          const topicVisible = await this.isForumTopicVisibleInTx(
+            tx,
+            current.targetId,
+          )
+          await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
+            tx,
+            sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+            sourceId: current.id,
+            sourceAuditStatus: current.auditStatus as AuditStatusEnum,
+            sourceIsHidden: input.isHidden,
+            isSourceVisible:
+              topicVisible &&
+              this.isVisible({
+                auditStatus: current.auditStatus as AuditStatusEnum,
+                isHidden: input.isHidden,
+                deletedAt: null,
+              }),
+          })
         }
 
         return this.syncCommentVisibilityTransition(tx, {

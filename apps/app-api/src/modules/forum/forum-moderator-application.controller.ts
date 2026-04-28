@@ -2,8 +2,8 @@ import {
   CreateForumModeratorApplicationDto,
   ForumModeratorApplicationDto,
   QueryForumModeratorApplicationDto,
-} from '@libs/forum/moderator-application/dto/moderator-application.dto'
-import { ForumModeratorApplicationService } from '@libs/forum/moderator-application/moderator-application.service'
+} from '@libs/forum/moderator/dto/moderator-application.dto'
+import { ForumModeratorApplicationService } from '@libs/forum/moderator/moderator-application.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'

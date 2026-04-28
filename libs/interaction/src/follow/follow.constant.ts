@@ -9,4 +9,6 @@ export enum FollowTargetTypeEnum {
   AUTHOR = 2,
   /** 论坛板块 */
   FORUM_SECTION = 3,
+  /** 论坛话题（hashtag） */
+  FORUM_HASHTAG = 4,
 }

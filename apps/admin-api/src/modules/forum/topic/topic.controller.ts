@@ -1,10 +1,23 @@
-import type { ForumTopicClientContext } from '@libs/forum/topic/forum-topic.type';
+import type { ForumTopicClientContext } from '@libs/forum/topic/forum-topic.type'
 import type { FastifyRequest } from 'fastify'
-import { AdminForumTopicDetailDto, AdminForumTopicPageItemDto, CreateForumTopicDto, QueryForumTopicDto, UpdateForumTopicAuditStatusDto, UpdateForumTopicDto, UpdateForumTopicFeaturedDto, UpdateForumTopicHiddenDto, UpdateForumTopicLockedDto, UpdateForumTopicPinnedDto } from '@libs/forum/topic/dto/forum-topic.dto';
-import { ForumTopicService } from '@libs/forum/topic/forum-topic.service';
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
+import { ForumModeratorGovernanceService } from '@libs/forum/moderator/moderator-governance.service'
+import {
+  AdminForumTopicDetailDto,
+  AdminForumTopicPageItemDto,
+  CreateForumTopicDto,
+  MoveForumTopicDto,
+  QueryForumTopicDto,
+  UpdateForumTopicAuditStatusDto,
+  UpdateForumTopicDto,
+  UpdateForumTopicFeaturedDto,
+  UpdateForumTopicHiddenDto,
+  UpdateForumTopicLockedDto,
+  UpdateForumTopicPinnedDto,
+} from '@libs/forum/topic/dto/forum-topic.dto'
+import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto';
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
@@ -15,6 +28,7 @@ import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 @Controller('admin/forum/topic')
 export class ForumTopicController {
   constructor(
+    private readonly forumModeratorGovernanceService: ForumModeratorGovernanceService,
     private readonly forumTopicService: ForumTopicService,
     private readonly geoService: GeoService,
   ) {}
@@ -41,7 +55,9 @@ export class ForumTopicController {
       sectionId: topic.sectionId,
       userId: topic.userId,
       title: topic.title,
+      body: topic.body,
       content: topic.content,
+      bodyTokens: topic.bodyTokens,
       images: topic.images ?? [],
       videos: topic.videos ?? [],
       isPinned: topic.isPinned,
@@ -61,14 +77,16 @@ export class ForumTopicController {
       lastCommentUserId: topic.lastCommentUserId,
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
-      topicTags: (topic.topicTags ?? []).map(
-        (item: Record<string, unknown>) => ({
-          id: item.id,
-          topicId: item.topicId,
-          tagId: item.tagId,
-          createdAt: item.createdAt,
-        }),
-      ),
+      hashtags: (topic.hashtags ?? []).map((item: Record<string, unknown>) => ({
+        id: item.id,
+        slug: item.slug,
+        displayName: item.displayName,
+        description: item.description,
+        topicRefCount: item.topicRefCount,
+        commentRefCount: item.commentRefCount,
+        followerCount: item.followerCount,
+        lastReferencedAt: item.lastReferencedAt,
+      })),
       section: topic.section
         ? {
             id: topic.section.id,
@@ -146,7 +164,7 @@ export class ForumTopicController {
   @Post('create')
   @ApiAuditDoc({
     summary: '创建论坛主题',
-    model: Boolean,
+    model: IdDto,
     audit: {
       actionType: AuditActionTypeEnum.CREATE,
     },
@@ -186,11 +204,37 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.DELETE,
     },
   })
-  async delete(@Body() body: IdDto, @Req() req: FastifyRequest) {
-    return this.forumTopicService.deleteTopic(
-      body.id,
+  async delete(
+    @Body() body: IdDto,
+    @Req() req: FastifyRequest,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.deleteTopic(
+      body,
+      {
+        actorType: 'admin',
+        actorUserId: userId,
+      },
       await this.buildTopicClientContext(req),
     )
+  }
+
+  @Post('move')
+  @ApiAuditDoc({
+    summary: '移动论坛主题板块',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async move(
+    @Body() body: MoveForumTopicDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.moveTopic(body, {
+      actorType: 'admin',
+      actorUserId: userId,
+    })
   }
 
   @Post('update-pinned')
@@ -201,8 +245,14 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updatePinned(@Body() body: UpdateForumTopicPinnedDto) {
-    return this.forumTopicService.updateTopicPinned(body)
+  async updatePinned(
+    @Body() body: UpdateForumTopicPinnedDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.updateTopicPinned(body, {
+      actorType: 'admin',
+      actorUserId: userId,
+    })
   }
 
   @Post('update-featured')
@@ -213,8 +263,14 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updateFeatured(@Body() body: UpdateForumTopicFeaturedDto) {
-    return this.forumTopicService.updateTopicFeatured(body)
+  async updateFeatured(
+    @Body() body: UpdateForumTopicFeaturedDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.updateTopicFeatured(body, {
+      actorType: 'admin',
+      actorUserId: userId,
+    })
   }
 
   @Post('update-locked')
@@ -225,8 +281,14 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updateLocked(@Body() body: UpdateForumTopicLockedDto) {
-    return this.forumTopicService.updateTopicLocked(body)
+  async updateLocked(
+    @Body() body: UpdateForumTopicLockedDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.updateTopicLocked(body, {
+      actorType: 'admin',
+      actorUserId: userId,
+    })
   }
 
   @Post('update-hidden')
@@ -237,8 +299,14 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updateHidden(@Body() body: UpdateForumTopicHiddenDto) {
-    return this.forumTopicService.updateTopicHidden(body)
+  async updateHidden(
+    @Body() body: UpdateForumTopicHiddenDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.updateTopicHidden(body, {
+      actorType: 'admin',
+      actorUserId: userId,
+    })
   }
 
   @Post('update-audit-status')
@@ -249,7 +317,13 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updateAuditStatus(@Body() body: UpdateForumTopicAuditStatusDto) {
-    return this.forumTopicService.updateTopicAuditStatus(body)
+  async updateAuditStatus(
+    @Body() body: UpdateForumTopicAuditStatusDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.updateTopicAuditStatus(body, {
+      actorType: 'admin',
+      actorUserId: userId,
+    })
   }
 }

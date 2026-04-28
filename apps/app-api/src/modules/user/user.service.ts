@@ -92,6 +92,7 @@ export class UserService {
       followingUserCount: counts?.followingUserCount ?? 0,
       followingAuthorCount: counts?.followingAuthorCount ?? 0,
       followingSectionCount: counts?.followingSectionCount ?? 0,
+      followingHashtagCount: counts?.followingHashtagCount ?? 0,
       followersCount: counts?.followersCount ?? 0,
       forumTopicCount: counts?.forumTopicCount ?? 0,
       commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,

@@ -1,5 +1,6 @@
 import {
   FollowAuthorPageItemDto,
+  FollowHashtagPageItemDto,
   FollowSectionPageItemDto,
   FollowStatusResponseDto,
   FollowTargetDto,
@@ -89,6 +90,21 @@ export class FollowController {
     @CurrentUser('sub') currentUserId: number,
   ) {
     return this.followService.getFollowedSectionPage({
+      ...query,
+      userId: query.userId || currentUserId,
+    })
+  }
+
+  @Get('hashtag/page')
+  @ApiPageDoc({
+    summary: '分页查询用户关注的话题',
+    model: FollowHashtagPageItemDto,
+  })
+  async followedHashtagPage(
+    @Query() query: QueryUserFollowPageDto,
+    @CurrentUser('sub') currentUserId: number,
+  ) {
+    return this.followService.getFollowedHashtagPage({
       ...query,
       userId: query.userId || currentUserId,
     })

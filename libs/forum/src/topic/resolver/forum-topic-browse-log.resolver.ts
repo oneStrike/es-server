@@ -8,6 +8,7 @@ import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
+import { ForumPermissionService } from '../../permission/forum-permission.service'
 
 /**
  * 论坛帖子浏览日志解析器
@@ -24,6 +25,7 @@ export class ForumTopicBrowseLogResolver
     private readonly browseLogService: BrowseLogService,
     private readonly drizzle: DrizzleService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
   private get forumTopic() {
@@ -72,8 +74,17 @@ export class ForumTopicBrowseLogResolver
       with: {
         section: {
           columns: {
-            isEnabled: true,
+            groupId: true,
             deletedAt: true,
+            isEnabled: true,
+          },
+          with: {
+            group: {
+              columns: {
+                isEnabled: true,
+                deletedAt: true,
+              },
+            },
           },
         },
       },
@@ -82,8 +93,7 @@ export class ForumTopicBrowseLogResolver
     if (
       !topic ||
       !topic.section ||
-      topic.section.deletedAt ||
-      !topic.section.isEnabled
+      !this.forumPermissionService.isSectionPubliclyAvailable(topic.section)
     ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,

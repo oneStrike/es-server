@@ -14,7 +14,13 @@ import { AuditStatusEnum, BusinessErrorCode, SceneTypeEnum } from '@libs/platfor
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
+import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../../action-log/action-log.service'
 import { ForumCounterService } from '../../counter/forum-counter.service'
+import { ForumPermissionService } from '../../permission/forum-permission.service'
 
 /**
  * 论坛主题点赞解析器
@@ -33,6 +39,8 @@ export class ForumTopicLikeResolver
     private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
     private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly forumPermissionService: ForumPermissionService,
+    private readonly actionLogService: ForumUserActionLogService,
   ) {}
 
   /**
@@ -63,8 +71,17 @@ export class ForumTopicLikeResolver
       with: {
         section: {
           columns: {
-            isEnabled: true,
+            groupId: true,
             deletedAt: true,
+            isEnabled: true,
+          },
+          with: {
+            group: {
+              columns: {
+                isEnabled: true,
+                deletedAt: true,
+              },
+            },
           },
         },
       },
@@ -73,8 +90,7 @@ export class ForumTopicLikeResolver
     if (
       !topic ||
       !topic.section ||
-      topic.section.deletedAt ||
-      !topic.section.isEnabled
+      !this.forumPermissionService.isSectionPubliclyAvailable(topic.section)
     ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -139,6 +155,13 @@ export class ForumTopicLikeResolver
     actorUserId: number,
     meta: LikeTargetMeta,
   ) {
+    await this.actionLogService.createActionLogInTx(tx, {
+      userId: actorUserId,
+      actionType: ForumUserActionTypeEnum.LIKE_TOPIC,
+      targetType: ForumUserActionTargetTypeEnum.TOPIC,
+      targetId,
+    })
+
     const receiverUserId = meta.ownerUserId
     if (!receiverUserId || receiverUserId === actorUserId) {
       return
@@ -162,6 +185,22 @@ export class ForumTopicLikeResolver
     )
   }
 
+  /**
+   * 取消点赞后写入论坛用户操作日志。
+   */
+  async postUnlikeHook(
+    tx: Db,
+    targetId: number,
+    actorUserId: number,
+  ) {
+    await this.actionLogService.createActionLogInTx(tx, {
+      userId: actorUserId,
+      actionType: ForumUserActionTypeEnum.UNLIKE_TOPIC,
+      targetType: ForumUserActionTargetTypeEnum.TOPIC,
+      targetId,
+    })
+  }
+
   async batchGetDetails(targetIds: number[]) {
     if (targetIds.length === 0) {
       return new Map()
@@ -183,8 +222,17 @@ export class ForumTopicLikeResolver
       with: {
         section: {
           columns: {
-            isEnabled: true,
+            groupId: true,
             deletedAt: true,
+            isEnabled: true,
+          },
+          with: {
+            group: {
+              columns: {
+                isEnabled: true,
+                deletedAt: true,
+              },
+            },
           },
         },
       },
@@ -192,7 +240,8 @@ export class ForumTopicLikeResolver
 
     const visibleTopics = topics.filter(
       (topic) =>
-        topic.section && !topic.section.deletedAt && topic.section.isEnabled,
+        topic.section &&
+        this.forumPermissionService.isSectionPubliclyAvailable(topic.section),
     )
 
     return new Map(

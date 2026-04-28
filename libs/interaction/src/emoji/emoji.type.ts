@@ -1,4 +1,8 @@
-import type { EmojiAssetSelect, EmojiPackSelect, EmojiRecentUsageSelect } from '@db/schema'
+import type {
+  EmojiAssetSelect,
+  EmojiPackSelect,
+  EmojiRecentUsageSelect,
+} from '@db/schema'
 
 import type { EmojiSceneEnum } from './emoji.constant'
 
@@ -68,7 +72,17 @@ export type ValidateEmojiAssetPayload = Partial<
 /** 稳定领域类型 `EmojiAssetSnapshotRow`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type EmojiAssetSnapshotRow = Pick<
   EmojiAssetSelect,
-  'id' | 'kind' | 'shortcode' | 'unicodeSequence' | 'imageUrl' | 'staticUrl' | 'isAnimated' | 'category' | 'keywords' | 'packId' | 'sortOrder'
+  | 'id'
+  | 'kind'
+  | 'shortcode'
+  | 'unicodeSequence'
+  | 'imageUrl'
+  | 'staticUrl'
+  | 'isAnimated'
+  | 'category'
+  | 'keywords'
+  | 'packId'
+  | 'sortOrder'
 > & {
   packCode: EmojiPackSelect['code']
   packName: EmojiPackSelect['name']
@@ -145,7 +159,7 @@ export interface EmojiParseInput {
 
 /**
  * 文本解析输出 token。
- * - 保留 text / unicode / custom 三种结构
+ * - 供 bodyTokens 复用的统一正文 token 结构
  */
 /** 稳定领域类型 `EmojiParseToken`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type EmojiParseToken =
@@ -173,4 +187,11 @@ export type EmojiParseToken =
       staticUrl?: string
       isAnimated: boolean
       ariaLabel?: string
+    }
+    | {
+      type: 'forumHashtag'
+      hashtagId: number
+      slug: string
+      displayName: string
+      text: string
     }

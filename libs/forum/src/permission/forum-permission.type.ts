@@ -1,6 +1,16 @@
 import type { ForumSectionSelect, UserLevelRuleSelect } from '@db/schema'
 
 /**
+ * 板块访问拒绝原因码。
+ * 用于稳定映射异常语义，避免通过中文提示文案反推错误类型。
+ */
+export type ForumSectionAccessDeniedCode =
+  | 'SECTION_UNAVAILABLE'
+  | 'LOGIN_REQUIRED'
+  | 'USER_DISABLED'
+  | 'LEVEL_REQUIRED'
+
+/**
  * 发帖权限校验使用的用户上下文。
  * 包含用户状态、经验值以及发帖频控所需的等级规则字段。
  */
@@ -26,9 +36,16 @@ export interface ForumPostingUserContext
 export interface ForumSectionPermissionContext
   extends Pick<
     ForumSectionSelect,
-    'id' | 'name' | 'isEnabled' | 'topicReviewPolicy' | 'userLevelRuleId'
+    | 'id'
+    | 'groupId'
+    | 'deletedAt'
+    | 'name'
+    | 'isEnabled'
+    | 'topicReviewPolicy'
+    | 'userLevelRuleId'
   > {
   requiredExperience: number | null
+  isPubliclyAvailable: boolean
 }
 
 /**
@@ -50,5 +67,6 @@ export interface ForumAccessUserContext {
 export interface ForumSectionAccessState {
   canAccess: boolean
   requiredExperience: number | null
+  accessDeniedCode?: ForumSectionAccessDeniedCode
   accessDeniedReason?: string
 }

@@ -1,4 +1,13 @@
-import { index, integer, pgTable, smallint, timestamp, unique } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import {
+  check,
+  index,
+  integer,
+  pgTable,
+  smallint,
+  timestamp,
+  unique,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 用户关注事实表
@@ -62,6 +71,14 @@ export const userFollow = pgTable(
     index('user_follow_target_type_target_id_idx').on(
       table.targetType,
       table.targetId,
+    ),
+    /**
+     * 关注目标类型闭集约束
+     * 1=用户，2=作者，3=论坛板块，4=论坛话题（hashtag）
+     */
+    check(
+      'user_follow_target_type_valid_chk',
+      sql`${table.targetType} in (1, 2, 3, 4)`,
     ),
   ],
 )

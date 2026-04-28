@@ -1,3 +1,4 @@
+import { ForumSectionTreeNodeDto } from '@libs/forum/section-group/dto/forum-section-group.dto'
 import { BaseForumSectionDto, CreateForumSectionDto, ForumSectionFollowCountRepairResultDto, QueryForumSectionDto, SwapForumSectionSortDto, UpdateForumSectionDto, UpdateForumSectionEnabledDto } from '@libs/forum/section/dto/forum-section.dto';
 import { ForumSectionService } from '@libs/forum/section/forum-section.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
@@ -33,6 +34,8 @@ export class ForumSectionController {
   @Get('tree')
   @ApiDoc({
     summary: '查看板块树',
+    model: ForumSectionTreeNodeDto,
+    isArray: true,
   })
   async getSectionTree() {
     return this.forumSectionService.getSectionTree()

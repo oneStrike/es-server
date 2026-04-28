@@ -67,6 +67,8 @@ export class AppUserCountService {
         return 'followingAuthorCount'
       case FollowTargetTypeEnum.FORUM_SECTION:
         return 'followingSectionCount'
+      case FollowTargetTypeEnum.FORUM_HASHTAG:
+        return 'followingHashtagCount'
       default:
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -94,6 +96,7 @@ export class AppUserCountService {
       followingUserCount: 0,
       followingAuthorCount: 0,
       followingSectionCount: 0,
+      followingHashtagCount: 0,
     }
 
     for (const row of rows) {
@@ -116,6 +119,7 @@ export class AppUserCountService {
         followingUserCount: this.appUserCount.followingUserCount,
         followingAuthorCount: this.appUserCount.followingAuthorCount,
         followingSectionCount: this.appUserCount.followingSectionCount,
+        followingHashtagCount: this.appUserCount.followingHashtagCount,
         followersCount: this.appUserCount.followersCount,
         forumTopicCount: this.appUserCount.forumTopicCount,
         commentReceivedLikeCount: this.appUserCount.commentReceivedLikeCount,
@@ -137,6 +141,7 @@ export class AppUserCountService {
       followingUserCount: counts?.followingUserCount ?? 0,
       followingAuthorCount: counts?.followingAuthorCount ?? 0,
       followingSectionCount: counts?.followingSectionCount ?? 0,
+      followingHashtagCount: counts?.followingHashtagCount ?? 0,
       followersCount: counts?.followersCount ?? 0,
       forumTopicCount: counts?.forumTopicCount ?? 0,
       commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
@@ -158,6 +163,7 @@ export class AppUserCountService {
       followingUserCount: 0,
       followingAuthorCount: 0,
       followingSectionCount: 0,
+      followingHashtagCount: 0,
       followersCount: 0,
       forumTopicCount: 0,
       commentReceivedLikeCount: 0,
@@ -402,6 +408,7 @@ export class AppUserCountService {
       followingUserCount: followingCounts.followingUserCount,
       followingAuthorCount: followingCounts.followingAuthorCount,
       followingSectionCount: followingCounts.followingSectionCount,
+      followingHashtagCount: followingCounts.followingHashtagCount,
       followersCount: Number(followersRow?.count ?? 0),
       forumTopicCount: Number(forumTopicRow?.count ?? 0),
       commentReceivedLikeCount: Number(commentReceivedLikeRow?.count ?? 0),

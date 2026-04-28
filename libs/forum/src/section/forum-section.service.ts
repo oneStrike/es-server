@@ -1,4 +1,4 @@
-import type { SQL } from 'drizzle-orm'
+import type { Db, SQL } from '@db/core'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
@@ -6,9 +6,11 @@ import { FollowService } from '@libs/interaction/follow/follow.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumPermissionService } from '../permission/forum-permission.service'
+import { FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE } from '../section-group/forum-section-group.constant'
+import { ForumSectionGroupService } from '../section-group/forum-section-group.service'
 import {
   CreateForumSectionDto,
   QueryForumSectionDto,
@@ -30,6 +32,7 @@ export class ForumSectionService {
     private readonly forumPermissionService: ForumPermissionService,
     private readonly followService: FollowService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly forumSectionGroupService: ForumSectionGroupService,
   ) {}
 
   private get db() {
@@ -48,6 +51,22 @@ export class ForumSectionService {
     return this.drizzle.schema.userLevelRule
   }
 
+  // 对会写 forum_section.group_id 的路径加事务级 advisory lock，和删分组共用同一命名空间。
+  private async lockSectionGroupsForMutation(
+    client: Db,
+    groupIds: Array<number | null | undefined>,
+  ) {
+    const uniqueGroupIds = [...new Set(groupIds.filter(Boolean) as number[])].sort(
+      (left, right) => left - right,
+    )
+
+    for (const groupId of uniqueGroupIds) {
+      await client.execute(
+        sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE}, ${groupId})`,
+      )
+    }
+  }
+
   /**
    * 分批处理 ID 列表，避免单次操作数据量过大。
    * 用于全量重建等运维场景，按批次串行推进。
@@ -64,50 +83,57 @@ export class ForumSectionService {
   }
 
   /**
-   * 判断板块挂载的分组是否可展示。
-   * 未分组板块允许直接展示；有分组时要求分组启用且未删除。
+   * 查询公开可见板块原始行。
+   * 支持按分组或指定 ID 集合裁剪，但始终复用同一套公开可见规则。
    */
-  private isAvailablePublicGroup(
-    group?: {
-      isEnabled: boolean
-      deletedAt: Date | null
-    } | null,
-  ) {
-    return Boolean(group && group.isEnabled && !group.deletedAt)
-  }
+  private async getVisibleSectionRows(options?: {
+    groupId?: number
+    isUngrouped?: boolean
+    sectionIds?: number[]
+  }) {
+    const uniqueSectionIds = options?.sectionIds
+      ? [...new Set(options.sectionIds)]
+      : undefined
 
-  /**
-   * 查询板块可见列表。
-   * - 仅返回启用且未删除的板块
-   * - 有分组的板块要求分组也处于启用状态
-   * - 列表侧不拦截访问权限，统一返回 canAccess 与限制提示
-   * - 默认按分组排序、板块排序输出，便于应用侧直接渲染
-   */
-  async getVisibleSectionList(query: QueryPublicForumSectionDto = {}) {
+    if (uniqueSectionIds && uniqueSectionIds.length === 0) {
+      return []
+    }
+
     const sections = await this.db.query.forumSection.findMany({
-      where: {
-        isEnabled: true,
-        deletedAt: {
-          isNull: true,
-        },
-        groupId: query.groupId,
-      },
-      columns: {
-        id: true,
-        groupId: true,
-        userLevelRuleId: true,
-        name: true,
-        description: true,
-        icon: true,
-        cover: true,
-        sortOrder: true,
-        isEnabled: true,
-        topicReviewPolicy: true,
-        topicCount: true,
-        commentCount: true,
-        followersCount: true,
-        lastPostAt: true,
-      },
+      where:
+        uniqueSectionIds !== undefined
+          ? {
+              id: { in: uniqueSectionIds },
+              isEnabled: true,
+              deletedAt: {
+                isNull: true,
+              },
+            }
+          : options?.groupId === undefined
+            && !options?.isUngrouped
+            ? {
+                isEnabled: true,
+                deletedAt: {
+                  isNull: true,
+                },
+              }
+            : options?.isUngrouped
+              ? {
+                  isEnabled: true,
+                  deletedAt: {
+                    isNull: true,
+                  },
+                  groupId: {
+                    isNull: true,
+                  },
+                }
+              : {
+                  isEnabled: true,
+                  deletedAt: {
+                    isNull: true,
+                  },
+                  groupId: options.groupId,
+                },
       with: {
         group: {
           columns: {
@@ -123,10 +149,9 @@ export class ForumSectionService {
       orderBy: (section, { asc }) => [asc(section.sortOrder), asc(section.id)],
     })
 
-    const visibleSections = sections
+    return sections
       .filter(
-        (section) =>
-          !section.groupId || this.isAvailablePublicGroup(section.group),
+        (section) => this.forumPermissionService.isSectionPubliclyAvailable(section),
       )
       .sort((left, right) => {
         const leftGroupSortOrder =
@@ -140,35 +165,53 @@ export class ForumSectionService {
           left.id - right.id
         )
       })
-      .map(({ group, ...section }) => section)
+  }
 
-    if (visibleSections.length === 0) {
+  /**
+   * 将公开板块原始行映射为应用侧公开 DTO 所需字段。
+   * 统一补齐访问状态与关注状态，避免多入口各自拼装。
+   */
+  private async mapVisibleSectionListItems(
+    sections: Awaited<ReturnType<ForumSectionService['getVisibleSectionRows']>>,
+    userId?: number,
+  ) {
+    if (sections.length === 0) {
       return []
     }
 
-    const sectionIds = visibleSections.map((section) => section.id)
+    const sectionIds = sections.map((section) => section.id)
     const [accessStateMap, followStatusMap] = await Promise.all([
-      this.forumPermissionService.getSectionAccessStateMap(
-        sectionIds,
-        query.userId,
-      ),
-      query.userId
+      this.forumPermissionService.getSectionAccessStateMap(sectionIds, userId),
+      userId
         ? this.followService.checkStatusBatch(
             FollowTargetTypeEnum.FORUM_SECTION,
             sectionIds,
-            query.userId,
+            userId,
           )
         : Promise.resolve(new Map<number, boolean>()),
     ])
 
-    return visibleSections.map((section) => {
+    return sections.map((section) => {
       const accessState = accessStateMap.get(section.id) ?? {
         canAccess: true,
         requiredExperience: null,
       }
 
       return {
-        ...section,
+        id: section.id,
+        groupId: section.groupId,
+        userLevelRuleId: section.userLevelRuleId,
+        name: section.name,
+        description: section.description,
+        icon: section.icon,
+        cover: section.cover,
+        sortOrder: section.sortOrder,
+        isEnabled: section.isEnabled,
+        topicReviewPolicy: section.topicReviewPolicy,
+        topicCount: section.topicCount,
+        commentCount: section.commentCount,
+        followersCount: section.followersCount,
+        lastPostAt: section.lastPostAt,
         canAccess: accessState.canAccess,
         requiredExperience: accessState.requiredExperience,
         accessDeniedReason: accessState.canAccess
@@ -177,6 +220,30 @@ export class ForumSectionService {
         isFollowed: followStatusMap.get(section.id) ?? false,
       }
     })
+  }
+
+  /**
+   * 批量查询公开可见板块列表项。
+   * 供关注列表等聚合场景复用统一的公开 contract。
+   */
+  async batchGetVisibleSectionListItems(sectionIds: number[], userId?: number) {
+    const sections = await this.getVisibleSectionRows({ sectionIds })
+    return this.mapVisibleSectionListItems(sections, userId)
+  }
+
+  /**
+   * 查询板块可见列表。
+   * - 仅返回启用且未删除的板块
+   * - 有分组的板块要求分组也处于启用状态
+   * - 列表侧不拦截访问权限，统一返回 canAccess 与限制提示
+   * - 默认按分组排序、板块排序输出，便于应用侧直接渲染
+   */
+  async getVisibleSectionList(query: QueryPublicForumSectionDto = {}) {
+    const sections = await this.getVisibleSectionRows({
+      groupId: query.groupId,
+      isUngrouped: query.isUngrouped,
+    })
+    return this.mapVisibleSectionListItems(sections, query.userId)
   }
 
   /**
@@ -195,6 +262,7 @@ export class ForumSectionService {
       columns: {
         id: true,
         groupId: true,
+        deletedAt: true,
         userLevelRuleId: true,
         name: true,
         description: true,
@@ -234,7 +302,7 @@ export class ForumSectionService {
       )
     }
 
-    if (section.groupId && !this.isAvailablePublicGroup(section.group)) {
+    if (!this.forumPermissionService.isSectionPubliclyAvailable(section)) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '板块不存在',
@@ -251,7 +319,7 @@ export class ForumSectionService {
         }
         | undefined
 
-    if (group && this.isAvailablePublicGroup(group)) {
+    if (group) {
       publicGroup = {
         id: group.id,
         name: group.name,
@@ -338,39 +406,40 @@ export class ForumSectionService {
       )
     }
 
-    if (groupId) {
-      const group = await this.db.query.forumSectionGroup.findFirst({
-        where: { id: groupId, deletedAt: { isNull: true } },
-        columns: { id: true },
-      })
-      if (!group) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '板块分组不存在',
-        )
+    await this.drizzle.withTransaction(async (tx) => {
+      if (groupId) {
+        await this.lockSectionGroupsForMutation(tx, [groupId])
+        const group = await tx.query.forumSectionGroup.findFirst({
+          where: { id: groupId, deletedAt: { isNull: true } },
+          columns: { id: true },
+        })
+        if (!group) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '板块分组不存在',
+          )
+        }
       }
-    }
-    if (userLevelRuleId) {
-      const levelRule = await this.db.query.userLevelRule.findFirst({
-        where: { id: userLevelRuleId },
-        columns: { id: true },
-      })
-      if (!levelRule) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '用户等级规则不存在',
-        )
+      if (userLevelRuleId) {
+        const levelRule = await tx.query.userLevelRule.findFirst({
+          where: { id: userLevelRuleId },
+          columns: { id: true },
+        })
+        if (!levelRule) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '用户等级规则不存在',
+          )
+        }
       }
-    }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.forumSection).values({
+      await tx.insert(this.forumSection).values({
         name,
         ...sectionData,
         userLevelRuleId,
         groupId,
-      }),
-    )
+      })
+    })
     return true
   }
 
@@ -378,12 +447,7 @@ export class ForumSectionService {
    * 获取板块分组树形结构，用于管理端板块配置页渲染。
    */
   async getSectionTree() {
-    return this.db.query.forumSectionGroup.findMany({
-      where: {
-        deletedAt: { isNull: true },
-      },
-      orderBy: (group, { asc }) => [asc(group.sortOrder), asc(group.id)],
-    })
+    return this.forumSectionGroupService.getAdminSectionTree()
   }
 
   /**
@@ -392,7 +456,7 @@ export class ForumSectionService {
    * 未显式传入排序时，默认遵循板块手动排序顺序。
    */
   async getSectionPage(queryForumSectionDto: QueryForumSectionDto) {
-    const { name, groupId, ...otherDto } = queryForumSectionDto
+    const { name, groupId, isUngrouped, ...otherDto } = queryForumSectionDto
     const conditions: SQL[] = [isNull(this.forumSection.deletedAt)]
 
     if (otherDto.isEnabled !== undefined) {
@@ -403,8 +467,12 @@ export class ForumSectionService {
         eq(this.forumSection.topicReviewPolicy, otherDto.topicReviewPolicy),
       )
     }
-    if (groupId !== undefined) {
-      conditions.push(eq(this.forumSection.groupId, groupId))
+    if (isUngrouped) {
+      conditions.push(isNull(this.forumSection.groupId))
+    } else if (groupId !== undefined) {
+      conditions.push(
+        eq(this.forumSection.groupId, groupId),
+      )
     }
     if (name) {
       conditions.push(buildILikeCondition(this.forumSection.name, name)!)
@@ -495,77 +563,80 @@ export class ForumSectionService {
    */
   async updateSection(updateSectionDto: UpdateForumSectionDto) {
     const { id, name, groupId, ...updateData } = updateSectionDto
-
-    const existingSection = await this.db.query.forumSection.findFirst({
-      where: { id, deletedAt: { isNull: true } },
-    })
-
-    if (!existingSection) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '论坛板块不存在',
-      )
-    }
-
-    if (name && name !== existingSection.name) {
-      const duplicateSection = await this.db.query.forumSection.findFirst({
-        where: {
-          name,
-          deletedAt: { isNull: true },
-        },
+    await this.drizzle.withTransaction(async (tx) => {
+      const existingSection = await tx.query.forumSection.findFirst({
+        where: { id, deletedAt: { isNull: true } },
       })
-      if (duplicateSection && duplicateSection.id !== id) {
+
+      if (!existingSection) {
         throw new BusinessException(
-          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-          '板块名称已存在',
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '论坛板块不存在',
         )
       }
-    }
 
-    const updatePayload: Record<string, unknown> = {
-      name,
-      ...updateData,
-    }
+      if (groupId !== undefined) {
+        await this.lockSectionGroupsForMutation(tx, [existingSection.groupId, groupId])
+      }
 
-    if (
-      updateData.userLevelRuleId !== undefined &&
-      updateData.userLevelRuleId !== existingSection.userLevelRuleId
-    ) {
-      if (updateData.userLevelRuleId === null) {
-        updatePayload.userLevelRuleId = null
-      } else {
-        const levelRule = await this.db.query.userLevelRule.findFirst({
-          where: { id: updateData.userLevelRuleId },
-          columns: { id: true },
+      if (name && name !== existingSection.name) {
+        const duplicateSection = await tx.query.forumSection.findFirst({
+          where: {
+            name,
+            deletedAt: { isNull: true },
+          },
         })
-
-        if (!levelRule) {
+        if (duplicateSection && duplicateSection.id !== id) {
           throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '用户等级规则不存在',
+            BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+            '板块名称已存在',
           )
         }
       }
-    }
 
-    if (groupId && groupId !== existingSection.groupId) {
-      const group = await this.db.query.forumSectionGroup.findFirst({
-        where: { id: groupId, deletedAt: { isNull: true } },
-        columns: { id: true },
-      })
-      if (!group) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '板块分组不存在',
-        )
+      const updatePayload: Record<string, unknown> = {
+        name,
+        ...updateData,
       }
-      updatePayload.groupId = groupId
-    } else if (groupId === null && existingSection.groupId !== null) {
-      updatePayload.groupId = null
-    }
 
-    const result = await this.drizzle.withErrorHandling(() =>
-      this.db
+      if (
+        updateData.userLevelRuleId !== undefined &&
+        updateData.userLevelRuleId !== existingSection.userLevelRuleId
+      ) {
+        if (updateData.userLevelRuleId === null) {
+          updatePayload.userLevelRuleId = null
+        } else {
+          const levelRule = await tx.query.userLevelRule.findFirst({
+            where: { id: updateData.userLevelRuleId },
+            columns: { id: true },
+          })
+
+          if (!levelRule) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '用户等级规则不存在',
+            )
+          }
+        }
+      }
+
+      if (groupId && groupId !== existingSection.groupId) {
+        const group = await tx.query.forumSectionGroup.findFirst({
+          where: { id: groupId, deletedAt: { isNull: true } },
+          columns: { id: true },
+        })
+        if (!group) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '板块分组不存在',
+          )
+        }
+        updatePayload.groupId = groupId
+      } else if (groupId === null && existingSection.groupId !== null) {
+        updatePayload.groupId = null
+      }
+
+      const result = await tx
         .update(this.forumSection)
         .set(updatePayload)
         .where(
@@ -573,9 +644,9 @@ export class ForumSectionService {
             eq(this.forumSection.id, id),
             isNull(this.forumSection.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+        )
+      this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+    })
     return true
   }
 

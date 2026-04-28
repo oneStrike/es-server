@@ -4,6 +4,16 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { and, gte, sql } from 'drizzle-orm'
 
 /**
+ * 计数器增量失败原因码。
+ * 统一通过 cause.code 透传给调用方，避免业务层再去匹配 message 文本。
+ */
+export const CountDeltaFailureCauseCode = {
+  FIELD_NOT_FOUND: 'count_delta_field_not_found',
+  TARGET_NOT_FOUND: 'count_delta_target_not_found',
+  INSUFFICIENT_COUNT: 'count_delta_insufficient_count',
+} as const
+
+/**
  * 应用计数器增量更新
  * 用于对指定字段进行原子性的增减操作，如点赞数、评论数等统计字段
  * @param db - 数据库连接实例
@@ -31,6 +41,11 @@ export async function applyCountDelta(
     throw new BusinessException(
       BusinessErrorCode.RESOURCE_NOT_FOUND,
       `字段 "${field}" 不存在`,
+      {
+        cause: {
+          code: CountDeltaFailureCauseCode.FIELD_NOT_FOUND,
+        },
+      },
     )
   }
 
@@ -46,6 +61,11 @@ export async function applyCountDelta(
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '目标不存在',
+        {
+          cause: {
+            code: CountDeltaFailureCauseCode.TARGET_NOT_FOUND,
+          },
+        },
       )
     }
     return
@@ -61,9 +81,23 @@ export async function applyCountDelta(
     .returning()
 
   if (updated.length === 0) {
+    const existsRow = await db
+      .select({ marker: sql<number>`1` })
+      .from(table)
+      .where(where)
+      .limit(1)
+
     throw new BusinessException(
       BusinessErrorCode.RESOURCE_NOT_FOUND,
-      '目标不存在或计数不足',
+      existsRow.length > 0 ? '目标不存在或计数不足' : '目标不存在',
+      {
+        cause: {
+          code:
+            existsRow.length > 0
+              ? CountDeltaFailureCauseCode.INSUFFICIENT_COUNT
+              : CountDeltaFailureCauseCode.TARGET_NOT_FOUND,
+        },
+      },
     )
   }
 }

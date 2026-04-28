@@ -40,5 +40,8 @@ export interface IFollowTargetResolver {
   /**
    * 批量获取目标详情，用于关注列表聚合展示
    */
-  batchGetDetails?: (targetIds: number[]) => Promise<Map<number, unknown>>
+  batchGetDetails?: (
+    targetIds: number[],
+    userId?: number,
+  ) => Promise<Map<number, unknown>>
 }

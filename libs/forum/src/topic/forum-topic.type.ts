@@ -1,5 +1,9 @@
 import type { ForumTopicSelect } from '@db/schema'
+import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
+import type { MentionDraftSnapshot } from '@libs/interaction/mention/mention.type'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
+import type { JsonValue } from '@libs/platform/utils'
+import type { MaterializedForumHashtagFact } from '../hashtag/forum-hashtag.type'
 
 /**
  * 论坛主题媒体输入。
@@ -20,4 +24,29 @@ export interface ForumTopicClientContext extends GeoSnapshot {
 /** 稳定领域类型 `PublicForumTopicDetailContext`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface PublicForumTopicDetailContext extends ForumTopicClientContext {
   userId?: number
+}
+
+/**
+ * topic 正文写入字段。
+ * - 对应 DTO 中的 `bodyMode + plainText/body` 组合。
+ */
+export interface TopicBodyWriteFields {
+  bodyMode: 'plain' | 'rich'
+  plainText?: string
+  body?: JsonValue
+  mentions?: MentionDraftSnapshot[]
+}
+
+/**
+ * 主题正文解析结果。
+ * - 统一承载 body compiler 的派生产物，供 create/update 共用。
+ */
+export interface TopicBodyWriteResult extends CompiledBodyResult {}
+
+/**
+ * 主题正文物化结果。
+ * - 在 body compiler 结果上补充 hashtag 引用事实，供 topic 写路径统一复用。
+ */
+export interface MaterializedTopicBodyWriteResult extends TopicBodyWriteResult {
+  hashtagFacts: MaterializedForumHashtagFact[]
 }

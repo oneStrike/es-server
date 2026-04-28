@@ -2,7 +2,8 @@
  * Auto-converted from legacy schema.
  */
 
-import { index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { check, index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、评论、点赞、收藏等操作
@@ -83,9 +84,23 @@ export const forumUserActionLog = pgTable("forum_user_action_log", {
      */
     index("forum_user_action_log_action_type_idx").on(table.actionType),
     /**
+     * 操作类型闭集约束
+     */
+    check(
+      "forum_user_action_log_action_type_valid_chk",
+      sql`${table.actionType} in (1,2,3,4,5,6,7,8,9,10,11,12)`,
+    ),
+    /**
      * 目标类型与目标ID索引
      */
     index("forum_user_action_log_target_type_target_id_idx").on(table.targetType, table.targetId),
+    /**
+     * 目标类型闭集约束
+     */
+    check(
+      "forum_user_action_log_target_type_valid_chk",
+      sql`${table.targetType} in (1, 2)`,
+    ),
     /**
      * IP 地址索引
      */

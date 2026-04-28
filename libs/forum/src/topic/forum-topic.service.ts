@@ -6,7 +6,9 @@ import type { SQL } from 'drizzle-orm'
 import type {
   ForumTopicClientContext,
   ForumTopicMediaInput,
+  MaterializedTopicBodyWriteResult,
   PublicForumTopicDetailContext,
+  TopicBodyWriteFields,
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
 
@@ -19,11 +21,18 @@ import {
 import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
+import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
+import { createBodyDocFromPlainText } from '@libs/interaction/body/body-text.helper'
+import { BodyValidatorService } from '@libs/interaction/body/body-validator.service'
+import {
+  BODY_VERSION_V1,
+  BodyInputModeEnum,
+  BodySceneEnum,
+} from '@libs/interaction/body/body.constant'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
-import { buildRecentEmojiUsageItems } from '@libs/interaction/emoji/emoji-recent-usage.helper'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -33,9 +42,12 @@ import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { MentionSourceTypeEnum } from '@libs/interaction/mention/mention.constant'
 import { MentionService } from '@libs/interaction/mention/mention.service'
-import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+import {
+  AuditRoleEnum,
+  AuditStatusEnum,
+  BusinessErrorCode,
+} from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { extractPlainTextFromRichTextContent } from '@libs/platform/utils'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
@@ -45,7 +57,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -53,9 +65,16 @@ import {
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumReviewPolicyEnum } from '../forum.constant'
+import { ForumHashtagBodyService } from '../hashtag/forum-hashtag-body.service'
+import { ForumHashtagReferenceService } from '../hashtag/forum-hashtag-reference.service'
+import {
+  ForumHashtagCreateSourceTypeEnum,
+  ForumHashtagReferenceSourceTypeEnum,
+} from '../hashtag/forum-hashtag.constant'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   CreateForumTopicDto,
+  MoveForumTopicDto,
   PublicForumTopicDetailDto,
   QueryForumTopicDto,
   QueryPublicForumTopicDto,
@@ -125,9 +144,13 @@ export class ForumTopicService {
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
     private readonly followService: FollowService,
+    private readonly bodyValidatorService: BodyValidatorService,
+    private readonly bodyCompilerService: BodyCompilerService,
     private readonly mentionService: MentionService,
     private readonly emojiCatalogService: EmojiCatalogService,
     private readonly sensitiveWordStatisticsService: SensitiveWordStatisticsService,
+    private readonly forumHashtagBodyService: ForumHashtagBodyService,
+    private readonly forumHashtagReferenceService: ForumHashtagReferenceService,
   ) {}
 
   private get db() {
@@ -144,6 +167,10 @@ export class ForumTopicService {
 
   get userFollowTable() {
     return this.drizzle.schema.userFollow
+  }
+
+  get forumHashtagReferenceTable() {
+    return this.drizzle.schema.forumHashtagReference
   }
 
   /**
@@ -178,18 +205,43 @@ export class ForumTopicService {
    * 仅返回列表展示所需字段，供公开分页等场景复用。
    */
   private async getTopicSectionBrief(sectionId: number) {
-    return this.db.query.forumSection.findFirst({
+    const section = await this.db.query.forumSection.findFirst({
       where: {
         id: sectionId,
         deletedAt: { isNull: true },
       },
       columns: {
         id: true,
+        groupId: true,
+        deletedAt: true,
+        isEnabled: true,
         name: true,
         icon: true,
         cover: true,
       },
+      with: {
+        group: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
     })
+
+    if (
+      !section ||
+      !this.forumPermissionService.isSectionPubliclyAvailable(section)
+    ) {
+      return null
+    }
+
+    return {
+      id: section.id,
+      name: section.name,
+      icon: section.icon,
+      cover: section.cover,
+    }
   }
 
   /**
@@ -223,13 +275,80 @@ export class ForumTopicService {
       },
       columns: {
         id: true,
+        groupId: true,
+        deletedAt: true,
+        isEnabled: true,
         name: true,
         icon: true,
         cover: true,
       },
+      with: {
+        group: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
     })
 
-    return new Map(sections.map((section) => [section.id, section]))
+    const visibleSections = options?.requireEnabled
+      ? sections.filter((section) =>
+          this.forumPermissionService.isSectionPubliclyAvailable(section),
+        )
+      : sections
+
+    return new Map(
+      visibleSections.map((section) => [
+        section.id,
+        {
+          id: section.id,
+          name: section.name,
+          icon: section.icon,
+          cover: section.cover,
+        },
+      ]),
+    )
+  }
+
+  /**
+   * 加载主题关联的话题列表。
+   * 统一按 sourceType=topic 的引用事实表读取，替代已删除的旧 tag 关系表。
+   */
+  private async getTopicHashtags(topicId: number) {
+    return this.db
+      .select({
+        id: this.drizzle.schema.forumHashtag.id,
+        slug: this.drizzle.schema.forumHashtag.slug,
+        displayName: this.drizzle.schema.forumHashtag.displayName,
+        description: this.drizzle.schema.forumHashtag.description,
+        topicRefCount: this.drizzle.schema.forumHashtag.topicRefCount,
+        commentRefCount: this.drizzle.schema.forumHashtag.commentRefCount,
+        followerCount: this.drizzle.schema.forumHashtag.followerCount,
+        lastReferencedAt: this.drizzle.schema.forumHashtag.lastReferencedAt,
+      })
+      .from(this.drizzle.schema.forumHashtagReference)
+      .innerJoin(
+        this.drizzle.schema.forumHashtag,
+        eq(
+          this.drizzle.schema.forumHashtag.id,
+          this.drizzle.schema.forumHashtagReference.hashtagId,
+        ),
+      )
+      .where(
+        and(
+          eq(
+            this.drizzle.schema.forumHashtagReference.sourceType,
+            ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          ),
+          eq(this.drizzle.schema.forumHashtagReference.sourceId, topicId),
+          isNull(this.drizzle.schema.forumHashtag.deletedAt),
+        ),
+      )
+      .orderBy(
+        desc(this.drizzle.schema.forumHashtagReference.createdAt),
+        desc(this.drizzle.schema.forumHashtag.id),
+      )
   }
 
   private buildPublicTopicPageSelect() {
@@ -287,6 +406,7 @@ export class ForumTopicService {
 
     const followingUserIds: number[] = []
     const followingSectionIds: number[] = []
+    const followingHashtagIds: number[] = []
     for (const follow of follows) {
       if (follow.targetType === FollowTargetTypeEnum.USER) {
         followingUserIds.push(follow.targetId)
@@ -295,13 +415,56 @@ export class ForumTopicService {
 
       if (follow.targetType === FollowTargetTypeEnum.FORUM_SECTION) {
         followingSectionIds.push(follow.targetId)
+        continue
+      }
+
+      if (follow.targetType === FollowTargetTypeEnum.FORUM_HASHTAG) {
+        followingHashtagIds.push(follow.targetId)
       }
     }
 
     return {
       followingUserIds: [...new Set(followingUserIds)],
       followingSectionIds: [...new Set(followingSectionIds)],
+      followingHashtagIds: [...new Set(followingHashtagIds)],
     }
+  }
+
+  /**
+   * 解析已关注话题对应的公开主题集合。
+   * 仅消费 sourceType=topic 且当前公开可见的引用事实。
+   */
+  private async getVisibleTopicIdsByHashtagIds(
+    hashtagIds: number[],
+    visibleSectionIds: number[],
+  ) {
+    if (hashtagIds.length === 0) {
+      return []
+    }
+
+    const rows = await this.db
+      .select({
+        topicId: this.forumHashtagReferenceTable.topicId,
+      })
+      .from(this.forumHashtagReferenceTable)
+      .where(
+        and(
+          inArray(this.forumHashtagReferenceTable.hashtagId, hashtagIds),
+          eq(
+            this.forumHashtagReferenceTable.sourceType,
+            ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          ),
+          eq(this.forumHashtagReferenceTable.isSourceVisible, true),
+          visibleSectionIds.length > 0
+            ? inArray(
+                this.forumHashtagReferenceTable.sectionId,
+                visibleSectionIds,
+              )
+            : undefined,
+        ),
+      )
+
+    return [...new Set(rows.map((row) => row.topicId))]
   }
 
   private async hydratePublicTopicPageItems(
@@ -540,18 +703,52 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 校验论坛主题正文写入链路显式传入 mentions。
-   * 新规则要求主题创建和正文更新都必须携带 mentions，空数组表示无提及。
-   */
-  private ensureMentionsProvided(
-    mentions: CreateForumTopicDto['mentions'] | UpdateForumTopicDto['mentions'],
-  ) {
-    if (!Array.isArray(mentions)) {
-      throw new BadRequestException('mentions 为必填字段；无提及时请传空数组')
+  // 在事务内将 topic DTO 的双模输入物化为带 hashtag 事实的 canonical body 编译结果。
+  private async materializeTopicBodyInTx(
+    tx: Db,
+    input: TopicBodyWriteFields,
+    actorUserId: number,
+  ): Promise<MaterializedTopicBodyWriteResult> {
+    let bodyDoc
+    if (input.bodyMode === BodyInputModeEnum.PLAIN) {
+      const plainText = input.plainText?.trim()
+      if (!plainText) {
+        throw new BadRequestException('bodyMode=plain 时必须提供 plainText')
+      }
+      if (!Array.isArray(input.mentions)) {
+        throw new BadRequestException(
+          'bodyMode=plain 时必须提供 mentions；无提及时请传空数组',
+        )
+      }
+      bodyDoc = createBodyDocFromPlainText(plainText, {
+        mentions: input.mentions,
+      })
+    } else if (input.bodyMode === BodyInputModeEnum.RICH) {
+      bodyDoc = this.bodyValidatorService.validateBodyOrThrow(
+        input.body,
+        BodySceneEnum.TOPIC,
+      )
+    } else {
+      throw new BadRequestException('bodyMode 非法')
     }
 
-    return mentions
+    const materialized = await this.forumHashtagBodyService.materializeBodyInTx(
+      {
+        tx,
+        body: bodyDoc,
+        actorUserId,
+        createSourceType: ForumHashtagCreateSourceTypeEnum.TOPIC_BODY,
+      },
+    )
+    const compiledBody = await this.bodyCompilerService.compile(
+      materialized.body,
+      BodySceneEnum.TOPIC,
+    )
+
+    return {
+      ...compiledBody,
+      hashtagFacts: materialized.hashtagFacts,
+    }
   }
 
   /**
@@ -590,8 +787,18 @@ export class ForumTopicService {
         deletedAt: { isNull: true },
       },
       columns: {
+        groupId: true,
+        deletedAt: true,
         topicReviewPolicy: true,
         isEnabled: true,
+      },
+      with: {
+        group: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
       },
     })
 
@@ -602,7 +809,10 @@ export class ForumTopicService {
       )
     }
 
-    if (options?.requireEnabled && !section.isEnabled) {
+    if (
+      options?.requireEnabled &&
+      !this.forumPermissionService.isSectionPubliclyAvailable(section)
+    ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '板块不存在或已禁用',
@@ -665,15 +875,24 @@ export class ForumTopicService {
   // 为创建主题补齐标题；未传标题时优先从富文本正文提纯可读文本再截取前 30 个字符。
   private resolveCreateTopicTitle(
     title: CreateForumTopicDto['title'],
-    content: CreateForumTopicDto['content'],
+    plainText: string,
   ) {
     const normalizedTitle = title?.trim()
     if (normalizedTitle) {
       return normalizedTitle
     }
 
-    const fallbackTitle = extractPlainTextFromRichTextContent(content)
-    return (fallbackTitle || content.trim()).slice(0, 30)
+    return plainText.trim().slice(0, 30)
+  }
+
+  // 用户编辑主题时，未传 title 则保持原标题；仅显式传值时才更新标题。
+  private resolveUpdateTopicTitle(currentTitle: string, title?: string) {
+    const normalizedTitle = title?.trim()
+    if (normalizedTitle) {
+      return normalizedTitle
+    }
+
+    return currentTitle
   }
 
   /**
@@ -779,57 +998,70 @@ export class ForumTopicService {
     createTopicDto: CreateForumTopicDto,
     context: ForumTopicClientContext = {},
   ) {
-    const { sectionId, userId, images, videos, ...topicData } = createTopicDto
-    const mentions = this.ensureMentionsProvided(createTopicDto.mentions)
-    const title = this.resolveCreateTopicTitle(
-      topicData.title,
-      topicData.content,
-    )
+    const {
+      sectionId,
+      userId,
+      images,
+      videos,
+      title: inputTitle,
+      bodyMode,
+      plainText,
+      body,
+      mentions,
+    } = createTopicDto
 
     const section = await this.forumPermissionService.ensureUserCanCreateTopic(
       userId,
       sectionId,
     )
 
-    const { hits, publicHits, highestLevel } = this.detectTopicSensitiveWords(
-      title,
-      topicData.content,
-    )
-
     const reviewPolicy = section.topicReviewPolicy as ForumReviewPolicyEnum
-
-    const { auditStatus, isHidden } = this.calculateAuditStatus(
-      reviewPolicy,
-      highestLevel,
-    )
-    const bodyTokens = await this.mentionService.buildBodyTokens({
-      content: topicData.content,
-      mentions,
-      scene: EmojiSceneEnum.FORUM,
-    })
-    const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
 
     const media = this.normalizeTopicMedia({ images, videos })
 
-    const createPayload = {
-      ...topicData,
-      title,
-      bodyTokens: bodyTokens.length ? bodyTokens : null,
-      sectionId,
-      userId,
-      geoCountry: context.geoCountry ?? undefined,
-      geoProvince: context.geoProvince ?? undefined,
-      geoCity: context.geoCity ?? undefined,
-      geoIsp: context.geoIsp ?? undefined,
-      geoSource: context.geoSource ?? undefined,
-      ...media,
-      auditStatus,
-      sensitiveWordHits: publicHits.length ? publicHits : undefined,
-      isHidden,
-    }
-
     const topic = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        const compiledBody = await this.materializeTopicBodyInTx(
+          tx,
+          {
+            bodyMode,
+            plainText,
+            body,
+            mentions,
+          },
+          userId,
+        )
+        const title = this.resolveCreateTopicTitle(
+          inputTitle,
+          compiledBody.plainText,
+        )
+        const { hits, publicHits, highestLevel } =
+          this.detectTopicSensitiveWords(title, compiledBody.plainText)
+        const { auditStatus, isHidden } = this.calculateAuditStatus(
+          reviewPolicy,
+          highestLevel,
+        )
+        const createPayload = {
+          title,
+          content: compiledBody.plainText,
+          body: compiledBody.body as unknown as JsonValue,
+          bodyTokens:
+            compiledBody.bodyTokens.length > 0
+              ? (compiledBody.bodyTokens as JsonValue)
+              : null,
+          bodyVersion: BODY_VERSION_V1,
+          sectionId,
+          userId,
+          geoCountry: context.geoCountry ?? undefined,
+          geoProvince: context.geoProvince ?? undefined,
+          geoCity: context.geoCity ?? undefined,
+          geoIsp: context.geoIsp ?? undefined,
+          geoSource: context.geoSource ?? undefined,
+          ...media,
+          auditStatus,
+          sensitiveWordHits: publicHits.length ? publicHits : undefined,
+          isHidden,
+        }
         const [newTopic] = await tx
           .insert(this.forumTopicTable)
           .values(createPayload)
@@ -847,21 +1079,32 @@ export class ForumTopicService {
           tx,
           sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
           sourceId: newTopic.id,
-          content: topicData.content,
-          mentions,
+          content: compiledBody.plainText,
+          mentions: compiledBody.mentionFacts,
         })
         await this.emojiCatalogService.recordRecentUsageInTx(tx, {
           userId,
           scene: EmojiSceneEnum.FORUM,
-          items: recentUsageItems,
+          items: compiledBody.emojiRecentUsageItems,
         })
-
-        await this.forumCounterService.updateTopicRelatedCounts(
+        await this.forumHashtagReferenceService.replaceReferencesInTx({
           tx,
+          sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          sourceId: newTopic.id,
+          topicId: newTopic.id,
           sectionId,
           userId,
-          1,
-        )
+          sourceAuditStatus: newTopic.auditStatus as AuditStatusEnum,
+          sourceIsHidden: newTopic.isHidden,
+          isSourceVisible: this.isTopicVisible({
+            auditStatus: newTopic.auditStatus as AuditStatusEnum,
+            isHidden: newTopic.isHidden,
+            deletedAt: newTopic.deletedAt,
+          }),
+          hashtagFacts: compiledBody.hashtagFacts,
+        })
+
+        await this.forumCounterService.updateUserForumTopicCount(tx, userId, 1)
         await this.forumCounterService.syncSectionVisibleState(tx, sectionId)
 
         if (
@@ -932,7 +1175,6 @@ export class ForumTopicService {
         deletedAt: { isNull: true },
       },
       with: {
-        topicTags: true,
         section: true,
         user: {
           with: {
@@ -951,7 +1193,10 @@ export class ForumTopicService {
     }
 
     if (!topic.user) {
-      return topic
+      return {
+        ...topic,
+        hashtags: await this.getTopicHashtags(topic.id),
+      }
     }
 
     const growth = await this.growthBalanceQueryService.getUserGrowthSnapshot(
@@ -960,6 +1205,7 @@ export class ForumTopicService {
 
     return {
       ...topic,
+      hashtags: await this.getTopicHashtags(topic.id),
       user: {
         ...topic.user,
         points: growth.points,
@@ -980,13 +1226,6 @@ export class ForumTopicService {
         isHidden: false,
       },
       with: {
-        tags: {
-          columns: {
-            id: true,
-            icon: true,
-            name: true,
-          },
-        },
         user: {
           columns: {
             id: true,
@@ -1027,7 +1266,7 @@ export class ForumTopicService {
    * 构建公开主题详情响应。
    * 显式裁剪 app/public 可见字段，避免把审核、治理等后台字段直接透传到外部契约。
    */
-  private buildPublicTopicDetail(
+  private async buildPublicTopicDetail(
     topic: Awaited<ReturnType<ForumTopicService['getVisiblePublicTopic']>>,
     interaction: {
       liked: boolean
@@ -1035,7 +1274,7 @@ export class ForumTopicService {
       isFollowed: boolean
       viewCount: number
     },
-  ): PublicForumTopicDetailDto {
+  ): Promise<PublicForumTopicDetailDto> {
     if (!topic.user) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1048,6 +1287,7 @@ export class ForumTopicService {
       sectionId: topic.sectionId,
       userId: topic.userId,
       title: topic.title,
+      body: topic.body as JsonValue,
       content: topic.content,
       bodyTokens: topic.bodyTokens as JsonValue | undefined,
       geoCountry: topic.geoCountry ?? undefined,
@@ -1074,11 +1314,7 @@ export class ForumTopicService {
         avatarUrl: topic.user.avatarUrl ?? undefined,
         isFollowed: interaction.isFollowed,
       },
-      tags: topic.tags.map((tag) => ({
-        id: tag.id,
-        name: tag.name,
-        icon: tag.icon ?? undefined,
-      })),
+      hashtags: await this.getTopicHashtags(topic.id),
     }
   }
 
@@ -1319,11 +1555,15 @@ export class ForumTopicService {
       )
     }
 
-    const { followingUserIds, followingSectionIds } =
+    const { followingUserIds, followingSectionIds, followingHashtagIds } =
       await this.getFollowingFeedTargetIds(query.userId)
     const visibleSectionIds = new Set(sectionIds)
     const followedVisibleSectionIds = followingSectionIds.filter((id) =>
       visibleSectionIds.has(id),
+    )
+    const followedHashtagTopicIds = await this.getVisibleTopicIdsByHashtagIds(
+      followingHashtagIds,
+      [...visibleSectionIds],
     )
     const followConditions: SQL[] = []
 
@@ -1335,6 +1575,11 @@ export class ForumTopicService {
     if (followedVisibleSectionIds.length > 0) {
       followConditions.push(
         inArray(this.forumTopicTable.sectionId, followedVisibleSectionIds),
+      )
+    }
+    if (followedHashtagTopicIds.length > 0) {
+      followConditions.push(
+        inArray(this.forumTopicTable.id, followedHashtagTopicIds),
       )
     }
 
@@ -1457,8 +1702,16 @@ export class ForumTopicService {
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
   ) {
-    const { id, images, videos, ...updateData } = updateForumTopicDto
-    const mentions = this.ensureMentionsProvided(updateForumTopicDto.mentions)
+    const {
+      id,
+      images,
+      videos,
+      title: nextTitleInput,
+      bodyMode,
+      plainText,
+      body,
+      mentions,
+    } = updateForumTopicDto
 
     if (topic.isLocked) {
       throw new BusinessException(
@@ -1474,25 +1727,6 @@ export class ForumTopicService {
       },
     )
 
-    const nextTitle = updateData.title ?? topic.title
-    const nextContent = updateData.content ?? topic.content
-
-    const { hits, publicHits, highestLevel } = this.detectTopicSensitiveWords(
-      nextTitle,
-      nextContent,
-    )
-
-    const { auditStatus, isHidden } = this.calculateAuditStatus(
-      reviewPolicy,
-      highestLevel,
-    )
-    const bodyTokens = await this.mentionService.buildBodyTokens({
-      content: nextContent,
-      mentions,
-      scene: EmojiSceneEnum.FORUM,
-    })
-    const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
-
     const media = this.normalizeTopicMedia(
       { images, videos },
       {
@@ -1501,17 +1735,43 @@ export class ForumTopicService {
       },
     )
 
-    const updatePayload = {
-      ...updateData,
-      ...media,
-      bodyTokens: bodyTokens.length ? bodyTokens : null,
-      auditStatus,
-      sensitiveWordHits: publicHits.length ? publicHits : null,
-      isHidden,
-    }
-
     const updatedTopic = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        const compiledBody = await this.materializeTopicBodyInTx(
+          tx,
+          {
+            bodyMode,
+            plainText,
+            body,
+            mentions,
+          },
+          actorUserId,
+        )
+        const nextTitle = this.resolveUpdateTopicTitle(
+          topic.title,
+          nextTitleInput,
+        )
+        const nextContent = compiledBody.plainText
+        const { hits, publicHits, highestLevel } =
+          this.detectTopicSensitiveWords(nextTitle, nextContent)
+        const { auditStatus, isHidden } = this.calculateAuditStatus(
+          reviewPolicy,
+          highestLevel,
+        )
+        const updatePayload = {
+          title: nextTitle,
+          content: compiledBody.plainText,
+          body: compiledBody.body as unknown as JsonValue,
+          ...media,
+          bodyTokens:
+            compiledBody.bodyTokens.length > 0
+              ? (compiledBody.bodyTokens as JsonValue)
+              : null,
+          bodyVersion: BODY_VERSION_V1,
+          auditStatus,
+          sensitiveWordHits: publicHits.length ? publicHits : null,
+          isHidden,
+        }
         const [nextTopic] = await tx
           .update(this.forumTopicTable)
           .set(updatePayload)
@@ -1541,18 +1801,43 @@ export class ForumTopicService {
           tx,
           sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
           sourceId: nextTopic.id,
-          content: nextContent,
-          mentions,
+          content: compiledBody.plainText,
+          mentions: compiledBody.mentionFacts,
         })
         await this.emojiCatalogService.recordRecentUsageInTx(tx, {
           userId: actorUserId,
           scene: EmojiSceneEnum.FORUM,
-          items: recentUsageItems,
+          items: compiledBody.emojiRecentUsageItems,
+        })
+        await this.forumHashtagReferenceService.replaceReferencesInTx({
+          tx,
+          sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          sourceId: nextTopic.id,
+          topicId: nextTopic.id,
+          sectionId: topic.sectionId,
+          userId: nextTopic.userId,
+          sourceAuditStatus: nextTopic.auditStatus as AuditStatusEnum,
+          sourceIsHidden: nextTopic.isHidden,
+          isSourceVisible: this.isTopicVisible({
+            auditStatus: nextTopic.auditStatus as AuditStatusEnum,
+            isHidden: nextTopic.isHidden,
+            deletedAt: nextTopic.deletedAt,
+          }),
+          hashtagFacts: compiledBody.hashtagFacts,
         })
 
         await this.forumCounterService.syncSectionVisibleState(
           tx,
           topic.sectionId,
+        )
+        await this.forumHashtagReferenceService.syncCommentVisibilityByTopicInTx(
+          tx,
+          nextTopic.id,
+          this.isTopicVisible({
+            auditStatus: nextTopic.auditStatus as AuditStatusEnum,
+            isHidden: nextTopic.isHidden,
+            deletedAt: nextTopic.deletedAt,
+          }),
         )
 
         if (
@@ -1616,6 +1901,7 @@ export class ForumTopicService {
   private async deleteTopicWithCurrent(
     topic: ForumTopicSelect,
     context: ForumTopicClientContext = {},
+    actorUserId = topic.userId,
   ) {
     const { id } = topic
     await this.drizzle.withErrorHandling(async () =>
@@ -1659,15 +1945,24 @@ export class ForumTopicService {
           sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
           sourceIds: [id],
         })
+        await this.forumHashtagReferenceService.deleteReferencesInTx({
+          tx,
+          sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          sourceIds: [id],
+        })
         await this.mentionService.deleteMentionsInTx({
           tx,
           sourceType: MentionSourceTypeEnum.COMMENT,
           sourceIds: commentRows.map((item) => item.id),
         })
-
-        await this.forumCounterService.updateTopicRelatedCounts(
+        await this.forumHashtagReferenceService.deleteReferencesInTx({
           tx,
-          topic.sectionId,
+          sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+          sourceIds: commentRows.map((item) => item.id),
+        })
+
+        await this.forumCounterService.updateUserForumTopicCount(
+          tx,
           topic.userId,
           -1,
         )
@@ -1733,7 +2028,7 @@ export class ForumTopicService {
     )
 
     await this.actionLogService.createActionLog({
-      userId: topic.userId,
+      userId: actorUserId,
       actionType: ForumUserActionTypeEnum.DELETE_TOPIC,
       targetType: ForumUserActionTargetTypeEnum.TOPIC,
       targetId: id,
@@ -1750,9 +2045,84 @@ export class ForumTopicService {
     return true
   }
 
-  async deleteTopic(id: number, context: ForumTopicClientContext = {}) {
+  async deleteTopic(
+    id: number,
+    context: ForumTopicClientContext = {},
+    actorUserId?: number,
+  ) {
     const topic = await this.getActiveTopicOrThrow(id)
-    return this.deleteTopicWithCurrent(topic, context)
+    return this.deleteTopicWithCurrent(
+      topic,
+      context,
+      actorUserId ?? topic.userId,
+    )
+  }
+
+  /**
+   * 移动主题到新的板块。
+   * 会同时重建来源板块与目标板块的可见主题统计，避免聚合口径漂移。
+   */
+  async moveTopic(input: MoveForumTopicDto) {
+    const currentTopic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id: input.id,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        sectionId: true,
+      },
+    })
+
+    if (!currentTopic) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
+
+    if (currentTopic.sectionId === input.sectionId) {
+      return true
+    }
+
+    await this.getSectionTopicReviewPolicy(input.sectionId, {
+      requireEnabled: true,
+      notFoundMessage: '目标板块不存在或已禁用',
+    })
+
+    await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const result = await tx
+          .update(this.forumTopicTable)
+          .set({
+            sectionId: input.sectionId,
+          })
+          .where(
+            and(
+              eq(this.forumTopicTable.id, input.id),
+              eq(this.forumTopicTable.sectionId, currentTopic.sectionId),
+              isNull(this.forumTopicTable.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '主题不存在')
+
+        await this.forumHashtagReferenceService.syncSectionIdsByTopicInTx(
+          tx,
+          input.id,
+          input.sectionId,
+        )
+
+        await Promise.all([
+          this.forumCounterService.syncSectionVisibleState(
+            tx,
+            currentTopic.sectionId,
+          ),
+          this.forumCounterService.syncSectionVisibleState(tx, input.sectionId),
+        ])
+      }),
+    )
+
+    return true
   }
 
   /**
@@ -1869,6 +2239,27 @@ export class ForumTopicService {
           tx,
           currentTopic.sectionId,
         )
+        await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
+          tx,
+          sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          sourceId: currentTopic.id,
+          sourceAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
+          sourceIsHidden: updateTopicHiddenDto.isHidden,
+          isSourceVisible: this.isTopicVisible({
+            auditStatus: currentTopic.auditStatus as AuditStatusEnum,
+            isHidden: updateTopicHiddenDto.isHidden,
+            deletedAt: null,
+          }),
+        })
+        await this.forumHashtagReferenceService.syncCommentVisibilityByTopicInTx(
+          tx,
+          currentTopic.id,
+          this.isTopicVisible({
+            auditStatus: currentTopic.auditStatus as AuditStatusEnum,
+            isHidden: updateTopicHiddenDto.isHidden,
+            deletedAt: null,
+          }),
+        )
         await this.syncTopicMentionVisibilityTransitionInTx(tx, {
           topicId: currentTopic.id,
           actorUserId: currentTopic.userId,
@@ -1933,6 +2324,10 @@ export class ForumTopicService {
    */
   async updateTopicAuditStatus(
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
+    options?: {
+      auditById?: number
+      auditRole?: AuditRoleEnum
+    },
   ) {
     const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
     const currentTopic = await this.db.query.forumTopic.findFirst({
@@ -1964,6 +2359,9 @@ export class ForumTopicService {
           .set({
             auditStatus,
             auditReason,
+            auditById: options?.auditById ?? null,
+            auditRole: options?.auditRole ?? null,
+            auditAt: new Date(),
           })
           .where(
             and(
@@ -1976,6 +2374,27 @@ export class ForumTopicService {
         await this.forumCounterService.syncSectionVisibleState(
           tx,
           currentTopic.sectionId,
+        )
+        await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
+          tx,
+          sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          sourceId: currentTopic.id,
+          sourceAuditStatus: auditStatus,
+          sourceIsHidden: currentTopic.isHidden,
+          isSourceVisible: this.isTopicVisible({
+            auditStatus,
+            isHidden: currentTopic.isHidden,
+            deletedAt: null,
+          }),
+        })
+        await this.forumHashtagReferenceService.syncCommentVisibilityByTopicInTx(
+          tx,
+          currentTopic.id,
+          this.isTopicVisible({
+            auditStatus,
+            isHidden: currentTopic.isHidden,
+            deletedAt: null,
+          }),
         )
         await this.syncTopicMentionVisibilityTransitionInTx(tx, {
           topicId: currentTopic.id,
@@ -2032,6 +2451,6 @@ export class ForumTopicService {
       throw new ForbiddenException('无权删除该主题')
     }
 
-    return this.deleteTopicWithCurrent(topic, context)
+    return this.deleteTopicWithCurrent(topic, context, userId)
   }
 }

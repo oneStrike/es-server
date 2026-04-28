@@ -39,6 +39,11 @@ export const appUserCount = pgTable(
      */
     followingSectionCount: integer().default(0).notNull(),
     /**
+     * 关注论坛话题总数
+     * 基于 user_follow 事实表中 targetType=4 的记录可重建
+     */
+    followingHashtagCount: integer().default(0).notNull(),
+    /**
      * 被关注总数
      * 当前仅统计其他用户对本用户的关注
      */

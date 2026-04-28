@@ -97,6 +97,13 @@ export class ConfigReader implements OnModuleInit {
   }
 
   /**
+   * 获取 forum 话题（hashtag）配置
+   */
+  getForumHashtagConfig() {
+    return this.config.forumHashtagConfig
+  }
+
+  /**
    * 获取上传配置
    */
   getUploadConfig() {

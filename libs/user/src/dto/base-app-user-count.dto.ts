@@ -1,4 +1,4 @@
-import { DateProperty, NumberProperty } from '@libs/platform/decorators';
+import { DateProperty, NumberProperty } from '@libs/platform/decorators'
 
 /**
  * 应用用户计数基类 DTO
@@ -59,6 +59,14 @@ export class BaseAppUserCountDto {
     validation: false,
   })
   followingSectionCount!: number
+
+  @NumberProperty({
+    description: '关注论坛话题总数',
+    example: 3,
+    default: 0,
+    validation: false,
+  })
+  followingHashtagCount!: number
 
   @NumberProperty({
     description: '用户粉丝总数',

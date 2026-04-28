@@ -14,7 +14,10 @@ export const PG_CONNECTION = DRIZZLE_DB
 export const DrizzlePoolProvider: Provider = {
   provide: DRIZZLE_POOL,
   useFactory: (configService: ConfigService): Pool => {
-    const connectionString = configService.get<string>('db.connection')
+    const connectionString =
+      configService.get<string>('db.connection') ??
+      configService.get<string>('DATABASE_URL') ??
+      process.env.DATABASE_URL
     if (!connectionString) {
       throw new Error('Missing db.connection (DATABASE_URL) configuration')
     }

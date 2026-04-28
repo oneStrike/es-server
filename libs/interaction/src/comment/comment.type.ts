@@ -1,8 +1,8 @@
 import type { UserCommentSelect } from '@db/schema'
+import type { MaterializedForumHashtagFact } from '@libs/forum/hashtag/forum-hashtag.type'
+import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
-import type {
-  CommentTargetMeta,
-} from './interfaces/comment-target-resolver.interface'
+import type { CommentTargetMeta } from './interfaces/comment-target-resolver.interface'
 
 /**
  * 事务冲突重试配置。
@@ -77,4 +77,18 @@ export type CommentModerationState = Pick<
   | 'deletedAt'
 > & {
   replyTargetUserId?: number
+}
+
+/**
+ * 评论正文解析结果。
+ * - 评论写链路统一通过 canonical body 编译后再落库。
+ */
+export interface CommentBodyWriteResult extends CompiledBodyResult {}
+
+/**
+ * 评论正文物化结果。
+ * - 在 body compiler 结果上补充 hashtag 引用事实，供 forum-topic comment 写链路复用。
+ */
+export interface MaterializedCommentBodyWriteResult extends CommentBodyWriteResult {
+  hashtagFacts: MaterializedForumHashtagFact[]
 }

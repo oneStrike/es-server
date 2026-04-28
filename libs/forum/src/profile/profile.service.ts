@@ -1,38 +1,27 @@
 import type { Db } from '@db/core'
-import type { AppUserCountSelect, AppUserSelect } from '@db/schema'
+import type { AppUserSelect } from '@db/schema'
 
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
-import { UserPointService } from '@libs/growth/point/point.service'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
-import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { ForumPermissionService } from '../permission/forum-permission.service'
 import { QueryUserProfileListDto, UpdateUserStatusDto } from './dto/profile.dto'
-
-type UserCountRow = Pick<
-  AppUserCountSelect,
-  | 'userId'
-  | 'commentCount'
-  | 'likeCount'
-  | 'favoriteCount'
-  | 'followingUserCount'
-  | 'followingAuthorCount'
-  | 'followingSectionCount'
-  | 'followersCount'
-  | 'forumTopicCount'
-  | 'commentReceivedLikeCount'
-  | 'forumTopicReceivedLikeCount'
-  | 'forumTopicReceivedFavoriteCount'
->
+import {
+  MyProfileTopicPageQuery,
+  ProfileGrowthSnapshot,
+  ProfileUserCountRow,
+  PublicUserProfileTopicPageQuery,
+} from './profile.type'
 
 /**
  * 用户资料服务
@@ -42,13 +31,12 @@ type UserCountRow = Pick<
 export class UserProfileService {
   constructor(
     private readonly drizzle: DrizzleService,
-    /** 用户积分服务 */
-    protected readonly pointService: UserPointService,
     /** 收藏服务 */
     protected readonly favoriteService: FavoriteService,
     /** 点赞服务 */
     protected readonly likeService: LikeService,
     private readonly appUserCountService: AppUserCountService,
+    private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
   private get db() {
@@ -91,7 +79,8 @@ export class UserProfileService {
     return this.drizzle.schema.userLevelRule
   }
 
-  private mapCountRow(counts: UserCountRow | undefined, userId: number) {
+  // 将用户计数读模型映射为稳定的 profile 聚合结构。
+  private mapCountRow(counts: ProfileUserCountRow | undefined, userId: number) {
     return {
       userId,
       commentCount: counts?.commentCount ?? 0,
@@ -100,6 +89,7 @@ export class UserProfileService {
       followingUserCount: counts?.followingUserCount ?? 0,
       followingAuthorCount: counts?.followingAuthorCount ?? 0,
       followingSectionCount: counts?.followingSectionCount ?? 0,
+      followingHashtagCount: counts?.followingHashtagCount ?? 0,
       followersCount: counts?.followersCount ?? 0,
       forumTopicCount: counts?.forumTopicCount ?? 0,
       commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
@@ -109,10 +99,8 @@ export class UserProfileService {
     }
   }
 
-  private mapUser(
-    user: AppUserSelect,
-    growth: { points: number, experience: number },
-  ) {
+  // 将 app_user 行与成长快照映射为 profile 侧稳定用户视图。
+  private mapUser(user: AppUserSelect, growth: ProfileGrowthSnapshot) {
     return {
       id: user.id,
       account: user.account,
@@ -139,10 +127,8 @@ export class UserProfileService {
     }
   }
 
-  /**
-   * 获取论坛主题场景使用的用户简要信息。
-   * 仅返回主题列表展示所需的最小字段，避免公开接口暴露过多资料。
-   */
+  // 获取论坛主题场景使用的用户简要信息。
+  // 仅返回主题列表展示所需的最小字段，避免公开接口暴露过多资料。
   private async getTopicUserBriefById(userId: number) {
     return this.db.query.appUser.findFirst({
       where: { id: userId },
@@ -154,19 +140,78 @@ export class UserProfileService {
     })
   }
 
-  /**
-   * 构建用户主题列表使用的正文摘要 SQL。
-   * 直接在数据库侧截取前 60 个字符，避免列表读取完整正文。
-   */
+  // 构建用户主题列表使用的正文摘要 SQL。
+  // 直接在数据库侧截取前 60 个字符，避免列表读取完整正文。
   private buildTopicContentSnippetSql() {
     return sql<string>`left(trim(${this.forumTopic.content}), 60)`
   }
 
-  /**
-   * 查询用户资料列表
-   * @param queryDto - 查询参数，包含用户ID、昵称、状态等过滤条件
-   * @returns 分页的用户资料列表，包含用户信息和徽章信息
-   */
+  // 复用 profile 模块统一的用户计数查询字段，避免多处手写后再次漂移。
+  private buildUserCountSelect() {
+    return {
+      userId: this.appUserCount.userId,
+      commentCount: this.appUserCount.commentCount,
+      likeCount: this.appUserCount.likeCount,
+      favoriteCount: this.appUserCount.favoriteCount,
+      followingUserCount: this.appUserCount.followingUserCount,
+      followingAuthorCount: this.appUserCount.followingAuthorCount,
+      followingSectionCount: this.appUserCount.followingSectionCount,
+      followingHashtagCount: this.appUserCount.followingHashtagCount,
+      followersCount: this.appUserCount.followersCount,
+      forumTopicCount: this.appUserCount.forumTopicCount,
+      commentReceivedLikeCount: this.appUserCount.commentReceivedLikeCount,
+      forumTopicReceivedLikeCount:
+        this.appUserCount.forumTopicReceivedLikeCount,
+      forumTopicReceivedFavoriteCount:
+        this.appUserCount.forumTopicReceivedFavoriteCount,
+    }
+  }
+
+  // 按用户 ID 列表批量读取 profile 计数快照。
+  private async getUserCountRowsByUserIds(userIds: number[]) {
+    if (userIds.length === 0) {
+      return [] as ProfileUserCountRow[]
+    }
+
+    return this.db
+      .select(this.buildUserCountSelect())
+      .from(this.appUserCount)
+      .where(inArray(this.appUserCount.userId, userIds))
+  }
+
+  // 读取单个用户的 profile 计数快照。
+  private async getUserCountRow(userId: number) {
+    const [count] = await this.db
+      .select(this.buildUserCountSelect())
+      .from(this.appUserCount)
+      .where(eq(this.appUserCount.userId, userId))
+
+    return count
+  }
+
+  // 解析公开用户主题页在当前查看者语义下可访问的板块范围。
+  // 统一复用论坛公开访问规则，不再混合“我的全部主题”语义。
+  private async resolvePublicUserTopicVisibleSectionIds(
+    viewerUserId?: number,
+    query?: PublicUserProfileTopicPageQuery,
+  ) {
+    if (query?.sectionId !== undefined) {
+      await this.forumPermissionService.ensureUserCanAccessSection(
+        query.sectionId,
+        viewerUserId,
+        {
+          requireEnabled: true,
+          notFoundMessage: '板块不存在',
+        },
+      )
+      return [query.sectionId]
+    }
+
+    return this.forumPermissionService.getAccessibleSectionIds(viewerUserId)
+  }
+
+  // 查询用户资料列表。
+  // 聚合用户基础资料、计数快照、徽章与成长余额。
   async queryProfileList(queryDto: QueryUserProfileListDto) {
     const { levelId, status, nickname, ...rest } = queryDto
 
@@ -193,28 +238,7 @@ export class UserProfileService {
       ...rest,
     })
     const userIds = page.list.map((item) => item.id)
-    const counts = userIds.length
-      ? await this.db
-          .select({
-            userId: this.appUserCount.userId,
-            commentCount: this.appUserCount.commentCount,
-            likeCount: this.appUserCount.likeCount,
-            favoriteCount: this.appUserCount.favoriteCount,
-            followingUserCount: this.appUserCount.followingUserCount,
-            followingAuthorCount: this.appUserCount.followingAuthorCount,
-            followingSectionCount: this.appUserCount.followingSectionCount,
-            followersCount: this.appUserCount.followersCount,
-            forumTopicCount: this.appUserCount.forumTopicCount,
-            commentReceivedLikeCount:
-              this.appUserCount.commentReceivedLikeCount,
-            forumTopicReceivedLikeCount:
-              this.appUserCount.forumTopicReceivedLikeCount,
-            forumTopicReceivedFavoriteCount:
-              this.appUserCount.forumTopicReceivedFavoriteCount,
-          })
-          .from(this.appUserCount)
-          .where(inArray(this.appUserCount.userId, userIds))
-      : []
+    const counts = await this.getUserCountRowsByUserIds(userIds)
     const countMap = new Map(counts.map((item) => [item.userId, item]))
     const badgeRows = userIds.length
       ? await this.db
@@ -242,7 +266,9 @@ export class UserProfileService {
       badgeMap.set(row.userId, list)
     }
 
-    const growthMap = await this.buildGrowthSnapshotMap(page.list.map((item) => item.id))
+    const growthMap = await this.buildGrowthSnapshotMap(
+      page.list.map((item) => item.id),
+    )
 
     const list = page.list.map((item) => {
       const growth = growthMap.get(item.id) ?? { points: 0, experience: 0 }
@@ -256,12 +282,8 @@ export class UserProfileService {
     return { ...page, list }
   }
 
-  /**
-   * 查看用户资料
-   * @param userId - 用户ID
-   * @returns 用户资料详情，包含用户信息和徽章信息
-   * @throws Error 用户不存在
-   */
+  // 查看用户资料。
+  // 返回基础资料、计数快照、成长余额与用户徽章。
   async getProfile(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
@@ -274,25 +296,7 @@ export class UserProfileService {
       )
     }
     const growth = await this.getGrowthSnapshot(user.id)
-    const [counts] = await this.db
-      .select({
-        userId: this.appUserCount.userId,
-        commentCount: this.appUserCount.commentCount,
-        likeCount: this.appUserCount.likeCount,
-        favoriteCount: this.appUserCount.favoriteCount,
-        followingUserCount: this.appUserCount.followingUserCount,
-        followingAuthorCount: this.appUserCount.followingAuthorCount,
-        followingSectionCount: this.appUserCount.followingSectionCount,
-        followersCount: this.appUserCount.followersCount,
-        forumTopicCount: this.appUserCount.forumTopicCount,
-        commentReceivedLikeCount: this.appUserCount.commentReceivedLikeCount,
-        forumTopicReceivedLikeCount:
-          this.appUserCount.forumTopicReceivedLikeCount,
-        forumTopicReceivedFavoriteCount:
-          this.appUserCount.forumTopicReceivedFavoriteCount,
-      })
-      .from(this.appUserCount)
-      .where(eq(this.appUserCount.userId, userId))
+    const counts = await this.getUserCountRow(userId)
     const userBadges = await this.db
       .select({
         userId: this.userBadgeAssignment.userId,
@@ -318,11 +322,8 @@ export class UserProfileService {
     }
   }
 
-  /**
-   * 更新用户资料状态
-   * @param updateDto - 更新参数，包含用户ID、状态和封禁原因
-   * @throws Error 用户不存在
-   */
+  // 更新用户资料状态。
+  // 仅允许修改状态及其封禁附属字段。
   async updateProfileStatus(updateDto: UpdateUserStatusDto): Promise<void> {
     const { id: userId, status, banReason, banUntil } = updateDto
 
@@ -345,24 +346,170 @@ export class UserProfileService {
     )
   }
 
-  /**
-   * 查看指定用户发布的主题，并补充当前查看者对这些主题的交互状态、用户简要信息与板块简要信息。
-   * @param targetUserId - 被查看的用户 ID
-   * @param viewerUserId - 当前查看者用户 ID
-   * @returns 分页的主题列表，包含板块信息、liked/favorited 状态和发帖用户简要信息
-   */
-  async getUserTopics(
+  // 查看指定用户发布的公开主题。
+  // 始终复用 forum public topic 的可见性约束，不混入“我的主题”私有视图。
+  async getPublicUserTopics(
     targetUserId: number,
-    viewerUserId: number,
-    query?: {
-      sectionId?: number
-      pageIndex?: number
-      pageSize?: number
-      orderBy?: string
-    },
+    viewerUserId?: number,
+    query?: PublicUserProfileTopicPageQuery,
   ) {
+    const pageQuery = this.drizzle.buildPage({
+      pageIndex: query?.pageIndex,
+      pageSize: query?.pageSize,
+    })
+    const visibleSectionIds =
+      await this.resolvePublicUserTopicVisibleSectionIds(viewerUserId, query)
+
+    if (visibleSectionIds.length === 0) {
+      return {
+        list: [],
+        total: 0,
+        pageIndex: pageQuery.pageIndex,
+        pageSize: pageQuery.pageSize,
+      }
+    }
+
     const conditions: SQL[] = [
       eq(this.forumTopic.userId, targetUserId),
+      isNull(this.forumTopic.deletedAt),
+      eq(this.forumTopic.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.forumTopic.isHidden, false),
+      inArray(this.forumTopic.sectionId, visibleSectionIds),
+    ]
+
+    if (query?.sectionId !== undefined) {
+      conditions.push(eq(this.forumTopic.sectionId, query.sectionId))
+    }
+
+    const where = and(...conditions)
+    const order = this.drizzle.buildOrderBy(query?.orderBy, {
+      table: this.forumTopic,
+      fallbackOrderBy: { createdAt: 'desc' },
+    })
+    const listQuery = this.db
+      .select({
+        id: this.forumTopic.id,
+        sectionId: this.forumTopic.sectionId,
+        userId: this.forumTopic.userId,
+        title: this.forumTopic.title,
+        contentSnippet: this.buildTopicContentSnippetSql(),
+        geoCountry: this.forumTopic.geoCountry,
+        geoProvince: this.forumTopic.geoProvince,
+        geoCity: this.forumTopic.geoCity,
+        geoIsp: this.forumTopic.geoIsp,
+        images: this.forumTopic.images,
+        videos: this.forumTopic.videos,
+        isPinned: this.forumTopic.isPinned,
+        isFeatured: this.forumTopic.isFeatured,
+        isLocked: this.forumTopic.isLocked,
+        viewCount: this.forumTopic.viewCount,
+        commentCount: this.forumTopic.commentCount,
+        likeCount: this.forumTopic.likeCount,
+        favoriteCount: this.forumTopic.favoriteCount,
+        lastCommentAt: this.forumTopic.lastCommentAt,
+        createdAt: this.forumTopic.createdAt,
+      })
+      .from(this.forumTopic)
+      .where(where)
+      .limit(pageQuery.limit)
+      .offset(pageQuery.offset)
+    const [pageList, total] = await Promise.all([
+      order.orderBySql.length > 0
+        ? listQuery.orderBy(...order.orderBySql)
+        : listQuery,
+      this.db.$count(this.forumTopic, where),
+    ])
+    const page = {
+      list: pageList,
+      total,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
+    }
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const topicIds = page.list.map((item) => item.id)
+    const sectionIds = [
+      ...new Set(page.list.map((item) => item.sectionId).filter((id) => !!id)),
+    ]
+    const [likedMap, favoritedMap, sections, user] = await Promise.all([
+      viewerUserId
+        ? this.likeService.checkStatusBatch(
+            LikeTargetTypeEnum.FORUM_TOPIC,
+            topicIds,
+            viewerUserId,
+          )
+        : Promise.resolve(new Map<number, boolean>()),
+      viewerUserId
+        ? this.favoriteService.checkStatusBatch(
+            FavoriteTargetTypeEnum.FORUM_TOPIC,
+            topicIds,
+            viewerUserId,
+          )
+        : Promise.resolve(new Map<number, boolean>()),
+      sectionIds.length
+        ? this.db
+            .select({
+              id: this.forumSection.id,
+              name: this.forumSection.name,
+              icon: this.forumSection.icon,
+              cover: this.forumSection.cover,
+            })
+            .from(this.forumSection)
+            .where(
+              and(
+                inArray(this.forumSection.id, sectionIds),
+                isNull(this.forumSection.deletedAt),
+              ),
+            )
+        : Promise.resolve<
+            Array<{
+              id: number
+              name: string
+              icon: string | null
+              cover: string | null
+            }>
+          >([]),
+      this.getTopicUserBriefById(targetUserId),
+    ])
+    const sectionMap = new Map(sections.map((item) => [item.id, item]))
+    const list = page.list
+      .map((item) => {
+        const section = item.sectionId
+          ? (sectionMap.get(item.sectionId) ?? null)
+          : null
+
+        if (!section) {
+          return null
+        }
+
+        return {
+          ...item,
+          geoCountry: item.geoCountry ?? undefined,
+          geoProvince: item.geoProvince ?? undefined,
+          geoCity: item.geoCity ?? undefined,
+          geoIsp: item.geoIsp ?? undefined,
+          liked: likedMap.get(item.id) ?? false,
+          favorited: favoritedMap.get(item.id) ?? false,
+          user,
+          section,
+        }
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+    return { ...page, list }
+  }
+
+  // 查看我的论坛主题。
+  // 返回当前用户全部未删除主题，并保留治理状态供自助管理使用。
+  async getMyTopics(userId: number, query?: MyProfileTopicPageQuery) {
+    const pageQuery = this.drizzle.buildPage({
+      pageIndex: query?.pageIndex,
+      pageSize: query?.pageSize,
+    })
+    const conditions: SQL[] = [
+      eq(this.forumTopic.userId, userId),
       isNull(this.forumTopic.deletedAt),
     ]
 
@@ -371,10 +518,6 @@ export class UserProfileService {
     }
 
     const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage({
-      pageIndex: query?.pageIndex,
-      pageSize: query?.pageSize,
-    })
     const order = this.drizzle.buildOrderBy(query?.orderBy, {
       table: this.forumTopic,
       fallbackOrderBy: { createdAt: 'desc' },
@@ -432,12 +575,12 @@ export class UserProfileService {
       this.likeService.checkStatusBatch(
         LikeTargetTypeEnum.FORUM_TOPIC,
         topicIds,
-        viewerUserId,
+        userId,
       ),
       this.favoriteService.checkStatusBatch(
         FavoriteTargetTypeEnum.FORUM_TOPIC,
         topicIds,
-        viewerUserId,
+        userId,
       ),
       sectionIds.length
         ? this.db
@@ -462,10 +605,14 @@ export class UserProfileService {
               cover: string | null
             }>
           >([]),
-      this.getTopicUserBriefById(targetUserId),
+      this.getTopicUserBriefById(userId),
     ])
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
     const list = page.list.map((item) => {
+      const section = item.sectionId
+        ? (sectionMap.get(item.sectionId) ?? null)
+        : null
+
       return {
         ...item,
         geoCountry: item.geoCountry ?? undefined,
@@ -475,19 +622,14 @@ export class UserProfileService {
         liked: likedMap.get(item.id) ?? false,
         favorited: favoritedMap.get(item.id) ?? false,
         user,
-        section: item.sectionId
-          ? (sectionMap.get(item.sectionId) ?? null)
-          : null,
+        section,
       }
     })
     return { ...page, list }
   }
 
-  /**
-   * 获取我的收藏
-   * @param userId - 用户ID
-   * @returns 分页的收藏列表，包含主题信息
-   */
+  // 获取我的收藏。
+  // 返回当前用户收藏的论坛主题及收藏时间。
   async getMyFavorites(userId: number) {
     const result = await this.favoriteService.getUserTopicFavorites({
       userId,
@@ -529,11 +671,8 @@ export class UserProfileService {
     }
   }
 
-  /**
-   * 查看积分记录
-   * @param userId - 用户ID
-   * @returns 分页的积分记录列表
-   */
+  // 查看积分记录。
+  // 仅返回 points 资产对应的成长流水。
   async getPointRecords(userId: number) {
     const page = await this.drizzle.ext.findPagination(
       this.growthLedgerRecord,
@@ -560,12 +699,8 @@ export class UserProfileService {
     }
   }
 
-  /**
-   * 初始化用户资料
-   * @param tx - 事务客户端
-   * @param userId - 用户 ID
-   * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
-   */
+  // 初始化用户资料。
+  // 为新用户补齐默认等级、成长余额与计数读模型。
   async initUserProfile(tx: Db | undefined, userId: number) {
     const client = tx ?? this.db
     const [defaultLevel] = await client
@@ -606,7 +741,10 @@ export class UserProfileService {
     await this.appUserCountService.initUserCounts(client, userId)
   }
 
-  private async getGrowthSnapshot(userId: number) {
+  // 读取单个用户的成长余额快照。
+  private async getGrowthSnapshot(
+    userId: number,
+  ): Promise<ProfileGrowthSnapshot> {
     const rows = await this.db
       .select({
         assetType: this.userAssetBalance.assetType,
@@ -626,18 +764,21 @@ export class UserProfileService {
 
     return {
       points:
-        rows.find((item) => item.assetType === GrowthAssetTypeEnum.POINTS)?.balance
-        ?? 0,
+        rows.find((item) => item.assetType === GrowthAssetTypeEnum.POINTS)
+          ?.balance ?? 0,
       experience:
-        rows.find((item) => item.assetType === GrowthAssetTypeEnum.EXPERIENCE)?.balance
-        ?? 0,
+        rows.find((item) => item.assetType === GrowthAssetTypeEnum.EXPERIENCE)
+          ?.balance ?? 0,
     }
   }
 
-  private async buildGrowthSnapshotMap(userIds: number[]) {
+  // 按用户 ID 列表批量构建成长余额快照。
+  private async buildGrowthSnapshotMap(
+    userIds: number[],
+  ): Promise<Map<number, ProfileGrowthSnapshot>> {
     const uniqueUserIds = [...new Set(userIds)]
     if (uniqueUserIds.length === 0) {
-      return new Map<number, { points: number, experience: number }>()
+      return new Map<number, ProfileGrowthSnapshot>()
     }
 
     const rows = await this.db
@@ -658,7 +799,7 @@ export class UserProfileService {
         ),
       )
 
-    const growthMap = new Map<number, { points: number, experience: number }>()
+    const growthMap = new Map<number, ProfileGrowthSnapshot>()
     for (const userId of uniqueUserIds) {
       growthMap.set(userId, { points: 0, experience: 0 })
     }

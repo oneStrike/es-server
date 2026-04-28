@@ -13,8 +13,14 @@ import { MessageDomainEventPublisher as MessageDomainEventPublisherService } fro
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, OnModuleInit } from '@nestjs/common'
+import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../../action-log/action-log.service'
 import { ForumCounterService } from '../../counter/forum-counter.service'
+import { ForumPermissionService } from '../../permission/forum-permission.service'
 import { ForumTopicService } from '../forum-topic.service'
 
 /**
@@ -34,7 +40,9 @@ export class ForumTopicFavoriteResolver
     private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
     private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly forumPermissionService: ForumPermissionService,
     private readonly forumTopicService: ForumTopicService,
+    private readonly actionLogService: ForumUserActionLogService,
   ) {}
 
   /**
@@ -64,8 +72,17 @@ export class ForumTopicFavoriteResolver
       with: {
         section: {
           columns: {
-            isEnabled: true,
+            groupId: true,
             deletedAt: true,
+            isEnabled: true,
+          },
+          with: {
+            group: {
+              columns: {
+                isEnabled: true,
+                deletedAt: true,
+              },
+            },
           },
         },
       },
@@ -74,8 +91,7 @@ export class ForumTopicFavoriteResolver
     if (
       !topic ||
       !topic.section ||
-      topic.section.deletedAt ||
-      !topic.section.isEnabled
+      !this.forumPermissionService.isSectionPubliclyAvailable(topic.section)
     ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -138,6 +154,13 @@ export class ForumTopicFavoriteResolver
     actorUserId: number,
     options: FavoriteTargetContext,
   ) {
+    await this.actionLogService.createActionLogInTx(tx, {
+      userId: actorUserId,
+      actionType: ForumUserActionTypeEnum.FAVORITE_TOPIC,
+      targetType: ForumUserActionTargetTypeEnum.TOPIC,
+      targetId,
+    })
+
     const { ownerUserId: receiverUserId, targetTitle } = options
 
     if (receiverUserId === undefined || receiverUserId === actorUserId) {
@@ -160,6 +183,22 @@ export class ForumTopicFavoriteResolver
         topicTitle: targetTitle,
       }),
     )
+  }
+
+  /**
+   * 取消收藏后写入论坛用户操作日志。
+   */
+  async postUnfavoriteHook(
+    tx: Db,
+    targetId: number,
+    actorUserId: number,
+  ) {
+    await this.actionLogService.createActionLogInTx(tx, {
+      userId: actorUserId,
+      actionType: ForumUserActionTypeEnum.UNFAVORITE_TOPIC,
+      targetType: ForumUserActionTargetTypeEnum.TOPIC,
+      targetId,
+    })
   }
 
   /**

@@ -1,6 +1,6 @@
 import { AssignForumModeratorSectionDto, CreateForumModeratorDto, ForumModeratorDto, QueryForumModeratorDto, UpdateForumModeratorDto } from '@libs/forum/moderator/dto/moderator.dto';
 import { ForumModeratorService } from '@libs/forum/moderator/moderator.service';
-import { ApiPageDoc } from '@libs/platform/decorators';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
 import { IdDto } from '@libs/platform/dto';
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -19,6 +19,15 @@ export class ModeratorController {
   })
   async getModeratorList(@Query() query: QueryForumModeratorDto) {
     return this.forumModeratorService.getModeratorPage(query)
+  }
+
+  @Get('detail')
+  @ApiDoc({
+    summary: '查看版主详情',
+    model: ForumModeratorDto,
+  })
+  async getModeratorDetail(@Query() query: IdDto) {
+    return this.forumModeratorService.getModeratorDetail(query.id)
   }
 
   @Post('create')

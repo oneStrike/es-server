@@ -37,7 +37,7 @@ export class BaseForumSectionDto extends BaseDto {
     required: false,
     min: 1,
   })
-  groupId?: number
+  groupId?: number | null
 
   @NumberProperty({
     description: '用户等级规则ID（为空表示所有用户）',
@@ -173,22 +173,41 @@ export class UpdateForumSectionDto extends IntersectionType(
   PartialType(CreateForumSectionDto),
 ) {}
 
-export class QueryForumSectionDto extends IntersectionType(
+/**
+ * 板块分组筛选 DTO。
+ * `isUngrouped=true` 时表示仅筛选未分组板块，并忽略 `groupId`。
+ */
+export class ForumSectionGroupQueryFilterDto {
+  @NumberProperty({
+    description: '板块分组ID；仅在筛选指定分组时传入',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  groupId?: number
+
+  @BooleanProperty({
+    description: '是否仅筛选未分组板块；为 true 时忽略 groupId',
+    example: false,
+    required: false,
+    default: false,
+  })
+  isUngrouped?: boolean
+}
+
+class ForumSectionQueryPageBaseDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumSectionDto, [
-      'name',
-      'isEnabled',
-      'topicReviewPolicy',
-      'groupId',
-    ] as const),
+    PickType(BaseForumSectionDto, ['name', 'isEnabled', 'topicReviewPolicy'] as const),
   ),
 ) {}
 
-export class QueryPublicForumSectionDto extends PickType(
-  PartialType(BaseForumSectionDto),
-  ['groupId'] as const,
-) {
+export class QueryForumSectionDto extends IntersectionType(
+  ForumSectionGroupQueryFilterDto,
+  ForumSectionQueryPageBaseDto,
+) {}
+
+export class QueryPublicForumSectionDto extends ForumSectionGroupQueryFilterDto {
   @NumberProperty({
     description: '当前用户 ID（用于补充访问状态）',
     example: 1,
@@ -211,6 +230,15 @@ export class SwapForumSectionSortDto extends PickType(DragReorderDto, [
 export class ForumSectionFollowCountRepairResultDto extends IntersectionType(
   IdDto,
   PickType(BaseForumSectionDto, ['followersCount'] as const),
+) {}
+
+/**
+ * 管理端板块树节点中的板块信息 DTO。
+ * 供板块配置页复用完整板块快照，避免再二次查询详情。
+ */
+export class AdminForumSectionTreeSectionDto extends OmitType(
+  BaseForumSectionDto,
+  ['deletedAt'] as const,
 ) {}
 
 /**

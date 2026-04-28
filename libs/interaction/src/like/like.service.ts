@@ -224,6 +224,10 @@ export class LikeService {
 
       await this.appUserCountService.updateLikeCount(tx, userId, -1)
       await resolver.applyCountDelta(tx, targetId, -1)
+
+      if (resolver.postUnlikeHook) {
+        await resolver.postUnlikeHook(tx, targetId, userId)
+      }
     })
   }
 

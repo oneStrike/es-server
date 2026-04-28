@@ -44,6 +44,15 @@ export interface IFavoriteTargetResolver {
   ) => Promise<void>
 
   /**
+   * 取消收藏后的后续钩子（在事务内执行，可用于记录日志等回退副作用）
+   */
+  postUnfavoriteHook?: (
+    tx: Db,
+    targetId: number,
+    actorUserId: number,
+  ) => Promise<void>
+
+  /**
    * (可选) 批量获取目标的详情信息，用于在收藏分页接口中进行数据聚合展示
    * @param targetIds 目标 ID 列表
    * @param userId 当前用户 ID，用于补充用户态字段

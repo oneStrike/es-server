@@ -1,7 +1,7 @@
 import type { UserLevelRuleSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
-import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+import { ForumPermissionService } from '@libs/forum/permission/forum-permission.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
@@ -11,7 +11,10 @@ import { CommentTargetTypeEnum } from './comment.constant'
 
 @Injectable()
 export class CommentPermissionService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly forumPermissionService: ForumPermissionService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -71,84 +74,13 @@ export class CommentPermissionService {
       targetType === CommentTargetTypeEnum.FORUM_TOPIC &&
       typeof targetId === 'number'
     ) {
-      await this.ensureForumTopicSectionAccess(targetId, {
-        experience: await this.getUserExperience(userId),
-      })
+      await this.forumPermissionService.ensureUserCanAccessTopicSection(
+        targetId,
+        userId,
+      )
     }
 
     await this.ensureUserLevelRateLimit(userId, user.level)
-  }
-
-  private async ensureForumTopicSectionAccess(
-    topicId: number,
-    user: { experience: number },
-  ) {
-    const topic = await this.db.query.forumTopic.findFirst({
-      where: {
-        id: topicId,
-        deletedAt: { isNull: true },
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-      },
-      columns: { id: true },
-      with: {
-        section: {
-          columns: {
-            id: true,
-            isEnabled: true,
-            deletedAt: true,
-            userLevelRuleId: true,
-          },
-          with: {
-            userLevelRule: {
-              columns: {
-                requiredExperience: true,
-              },
-            },
-          },
-        },
-      },
-    })
-
-    if (
-      !topic ||
-      !topic.section ||
-      topic.section.deletedAt ||
-      !topic.section.isEnabled
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '帖子不存在',
-      )
-    }
-
-    const requiredExperience = topic.section.userLevelRule?.requiredExperience
-    if (
-      topic.section.userLevelRuleId &&
-      requiredExperience !== undefined &&
-      requiredExperience !== null &&
-      user.experience < requiredExperience
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.QUOTA_NOT_ENOUGH,
-        '当前板块需要更高等级',
-      )
-    }
-  }
-
-  private async getUserExperience(userId: number) {
-    const balance = await this.db.query.userAssetBalance.findFirst({
-      where: {
-        userId,
-        assetType: GrowthAssetTypeEnum.EXPERIENCE,
-        assetKey: '',
-      },
-      columns: {
-        balance: true,
-      },
-    })
-
-    return balance?.balance ?? 0
   }
 
   private async ensureUserLevelRateLimit(

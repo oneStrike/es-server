@@ -1,15 +1,18 @@
 import type { JsonValue } from '@libs/platform/utils'
+import { ForumHashtagBriefDto } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
 import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
-import { BaseForumTagDto } from '@libs/forum/tag/dto/forum-tag.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
+import { BodyInputModeEnum } from '@libs/interaction/body/body.constant'
+import {
+  BodyInputModeDto,
+  OptionalBodyDocDto,
+  PlainTextBodyInputDto,
+} from '@libs/interaction/body/dto/body.dto'
 import {
   CommentOnlyAuthorDto,
   CommentSortDto,
 } from '@libs/interaction/comment/dto/comment.dto'
-import {
-  MentionDraftDto,
-  RequiredMentionDraftListDto,
-} from '@libs/interaction/mention/dto/mention.dto'
+import { MentionDraftDto } from '@libs/interaction/mention/dto/mention.dto'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -26,8 +29,13 @@ import { BaseDto, IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
-import { AppUserResponseDto, BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
+import {
+  AppUserResponseDto,
+  BaseAppUserDto,
+} from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
+import { IsArray, IsDefined, ValidateIf, ValidateNested } from 'class-validator'
 
 /**
  * 论坛主题基础 DTO。
@@ -43,11 +51,35 @@ export class BaseForumTopicDto extends BaseDto {
   title!: string
 
   @StringProperty({
-    description: '主题内容',
+    description: '主题正文纯文本派生值',
     example: '我想学习TypeScript，有什么好的学习资源推荐吗？',
     required: true,
   })
   content!: string
+
+  @JsonProperty({
+    description: '主题 canonical 正文文档',
+    required: true,
+    validation: false,
+    example: {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '富文本主题正文 ' },
+            {
+              type: 'forumHashtag',
+              hashtagId: 77,
+              slug: 'typescript',
+              displayName: 'TypeScript',
+            },
+          ],
+        },
+      ],
+    },
+  })
+  body!: JsonValue
 
   @JsonProperty({
     description: '主题正文解析 token（表情与提及混合输出）',
@@ -61,18 +93,17 @@ export class BaseForumTopicDto extends BaseDto {
         nickname: '测试用户',
         text: '@测试用户',
       },
+      {
+        type: 'forumHashtag',
+        hashtagId: 77,
+        slug: 'typescript',
+        displayName: 'TypeScript',
+        text: '#TypeScript',
+      },
       { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
     ],
   })
   bodyTokens?: JsonValue | null
-
-  @ArrayProperty({
-    description: '结构化提及列表，仅写入时使用',
-    required: false,
-    itemClass: MentionDraftDto,
-    contract: false,
-  })
-  mentions?: MentionDraftDto[]
 
   @ArrayProperty({
     description: '主题图片列表',
@@ -235,6 +266,15 @@ export class BaseForumTopicDto extends BaseDto {
   })
   version!: number
 
+  @NumberProperty({
+    description: '正文版本（1=v1）',
+    example: 1,
+    required: true,
+    default: 1,
+    validation: false,
+  })
+  bodyVersion!: number
+
   @ArrayProperty({
     description: '敏感词命中记录',
     itemClass: BaseSensitiveWordHitDto,
@@ -318,16 +358,33 @@ export class BaseForumTopicDto extends BaseDto {
  * 论坛主题可编辑字段 DTO。
  * 统一约束标题、正文和可选媒体列表，避免 app/admin 入口重复声明。
  */
-export class ForumTopicWritableFieldsDto extends IntersectionType(
-  PickType(BaseForumTopicDto, ['title', 'content'] as const),
-  RequiredMentionDraftListDto,
-  PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
-) {}
+class TopicBodyWritableFieldsDto extends IntersectionType(
+  BodyInputModeDto,
+  OptionalBodyDocDto,
+  PlainTextBodyInputDto,
+) {
+  @ValidateIf(
+    (value: TopicBodyWritableFieldsDto) =>
+      value.bodyMode === BodyInputModeEnum.PLAIN,
+  )
+  @IsDefined({ message: 'bodyMode=plain 时 mentions 不能为空' })
+  @IsArray({ message: 'mentions 必须是数组类型' })
+  @ValidateNested({ each: true })
+  @Type(() => MentionDraftDto)
+  @ArrayProperty({
+    description:
+      '正文中的结构化提及列表；仅 bodyMode=plain 时必传，无提及时传空数组',
+    required: false,
+    itemClass: MentionDraftDto,
+    validation: false,
+    default: [],
+  })
+  mentions?: MentionDraftDto[]
+}
 
 export class CreateForumTopicWritableFieldsDto extends IntersectionType(
   PartialType(PickType(BaseForumTopicDto, ['title'] as const)),
-  PickType(BaseForumTopicDto, ['content'] as const),
-  RequiredMentionDraftListDto,
+  TopicBodyWritableFieldsDto,
   PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
 ) {}
 
@@ -343,7 +400,13 @@ export class CreateUserForumTopicDto extends IntersectionType(
 
 export class UpdateForumTopicDto extends IntersectionType(
   IdDto,
-  ForumTopicWritableFieldsDto,
+  IntersectionType(
+    PartialType(PickType(BaseForumTopicDto, ['title'] as const)),
+    IntersectionType(
+      TopicBodyWritableFieldsDto,
+      PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
+    ),
+  ),
 ) {}
 
 export class QueryForumTopicDto extends IntersectionType(
@@ -373,9 +436,14 @@ export class QueryPublicForumTopicDto extends IntersectionType(
   PartialType(PickType(BaseForumTopicDto, ['sectionId'] as const)),
 ) {}
 
-export class QueryUserForumTopicDto extends IntersectionType(
+export class QueryPublicUserForumTopicDto extends IntersectionType(
   PageDto,
-  PartialType(UserIdDto),
+  UserIdDto,
+  PartialType(PickType(BaseForumTopicDto, ['sectionId'] as const)),
+) {}
+
+export class QueryMyForumTopicDto extends IntersectionType(
+  PageDto,
   PartialType(PickType(BaseForumTopicDto, ['sectionId'] as const)),
 ) {}
 
@@ -466,18 +534,13 @@ export class PublicForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   section!: ForumTopicSectionBriefDto
 }
 
-export class ForumTopicTagItemDto extends PickType(BaseForumTagDto, [
-  'id',
-  'name',
-  'icon',
-] as const) {}
-
 export class PublicForumTopicDetailDto extends IntersectionType(
   PickType(BaseForumTopicDto, [
     'id',
     'sectionId',
     'userId',
     'title',
+    'body',
     'content',
     'bodyTokens',
     'geoCountry',
@@ -508,15 +571,15 @@ export class PublicForumTopicDetailDto extends IntersectionType(
   user!: PublicForumTopicDetailUserDto
 
   @ArrayProperty({
-    description: '标签',
+    description: '话题',
     required: true,
     validation: false,
-    itemClass: ForumTopicTagItemDto,
+    itemClass: ForumHashtagBriefDto,
   })
-  tags!: ForumTopicTagItemDto[]
+  hashtags!: ForumHashtagBriefDto[]
 }
 
-export class UserForumTopicItemDto extends IntersectionType(
+export class MyForumTopicItemDto extends IntersectionType(
   PublicForumTopicPageItemDto,
   PickType(BaseForumTopicDto, ['auditStatus'] as const),
 ) {}
@@ -553,39 +616,10 @@ export class UpdateForumTopicHiddenDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['isHidden'] as const),
 ) {}
 
-class AdminForumTopicTagRelationDto {
-  @NumberProperty({
-    description: '关联ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
-  @NumberProperty({
-    description: '主题ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  topicId!: number
-
-  @NumberProperty({
-    description: '标签ID',
-    example: 2,
-    required: true,
-    validation: false,
-  })
-  tagId!: number
-
-  @DateProperty({
-    description: '创建时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: true,
-    validation: false,
-  })
-  createdAt!: Date
-}
+export class MoveForumTopicDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['sectionId'] as const),
+) {}
 
 class AdminForumTopicSectionDto extends PickType(BaseForumSectionDto, [
   'id',
@@ -651,7 +685,9 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'sectionId',
   'userId',
   'title',
+  'body',
   'content',
+  'bodyTokens',
   'images',
   'videos',
   'isPinned',
@@ -673,12 +709,12 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'updatedAt',
 ] as const) {
   @ArrayProperty({
-    description: '主题标签关联',
-    itemClass: AdminForumTopicTagRelationDto,
+    description: '主题关联话题',
+    itemClass: ForumHashtagBriefDto,
     required: true,
     validation: false,
   })
-  topicTags!: AdminForumTopicTagRelationDto[]
+  hashtags!: ForumHashtagBriefDto[]
 
   @NestedProperty({
     description: '所属板块',

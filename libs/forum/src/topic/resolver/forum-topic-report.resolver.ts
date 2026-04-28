@@ -6,6 +6,7 @@ import { AuditStatusEnum, BusinessErrorCode, SceneTypeEnum } from '@libs/platfor
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
+import { ForumPermissionService } from '../../permission/forum-permission.service'
 
 /**
  * 论坛主题举报解析器
@@ -18,7 +19,10 @@ export class ForumTopicReportResolver
   /** 目标类型：论坛主题 */
   readonly targetType = ReportTargetTypeEnum.FORUM_TOPIC
 
-  constructor(private readonly reportService: ReportService) {}
+  constructor(
+    private readonly reportService: ReportService,
+    private readonly forumPermissionService: ForumPermissionService,
+  ) {}
 
   /**
    * 模块初始化时注册解析器到举报服务
@@ -51,8 +55,17 @@ export class ForumTopicReportResolver
       with: {
         section: {
           columns: {
-            isEnabled: true,
+            groupId: true,
             deletedAt: true,
+            isEnabled: true,
+          },
+          with: {
+            group: {
+              columns: {
+                isEnabled: true,
+                deletedAt: true,
+              },
+            },
           },
         },
       },
@@ -61,8 +74,7 @@ export class ForumTopicReportResolver
     if (
       !topic ||
       !topic.section ||
-      topic.section.deletedAt ||
-      !topic.section.isEnabled
+      !this.forumPermissionService.isSectionPubliclyAvailable(topic.section)
     ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,

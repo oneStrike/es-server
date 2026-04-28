@@ -187,6 +187,10 @@ export class FavoriteService {
 
       await this.appUserCountService.updateFavoriteCount(tx, userId, -1)
       await resolver.applyCountDelta(tx, targetId, -1)
+
+      if (resolver.postUnfavoriteHook) {
+        await resolver.postUnfavoriteHook(tx, targetId, userId)
+      }
     })
   }
 

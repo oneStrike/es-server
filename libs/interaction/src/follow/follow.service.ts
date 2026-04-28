@@ -282,7 +282,7 @@ export class FollowService {
 
     const startedAt = Date.now()
     try {
-      const detailMap = await resolver.batchGetDetails(targetIds)
+      const detailMap = await resolver.batchGetDetails(targetIds, query.userId)
       if (detailMap.size < targetIds.length) {
         this.logger.warn(
           `follow_detail_partial_missing targetType=${targetType} batchSize=${targetIds.length} resolvedSize=${detailMap.size} missingSize=${targetIds.length - detailMap.size} elapsedMs=${Date.now() - startedAt}`,
@@ -362,6 +362,31 @@ export class FollowService {
             ...(section as Record<string, unknown>),
             isFollowed: true,
           },
+        }
+      }),
+    }
+  }
+
+  /**
+   * 分页查询指定用户关注的话题。
+   */
+  async getFollowedHashtagPage(query: FollowPageCommandDto) {
+    const { page, detailMap } = await this.getFollowPageByTargetType(
+      query,
+      FollowTargetTypeEnum.FORUM_HASHTAG,
+    )
+
+    return {
+      ...page,
+      list: page.list.map((item) => {
+        const hashtag = detailMap.get(item.targetId)
+        if (!hashtag || typeof hashtag !== 'object') {
+          return item
+        }
+
+        return {
+          ...item,
+          hashtag,
         }
       }),
     }

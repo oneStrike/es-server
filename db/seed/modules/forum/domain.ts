@@ -8,9 +8,7 @@ import {
   forumModeratorSection,
   forumSection,
   forumSectionGroup,
-  forumTag,
   forumTopic,
-  forumTopicTag,
   forumUserActionLog,
   userLevelRule,
   work,
@@ -70,29 +68,6 @@ const SECTION_FIXTURES = [
   },
 ] as const
 
-const TAG_FIXTURES = [
-  {
-    name: '剧情讨论',
-    description: '围绕情节推进、伏笔与节奏的讨论标签。',
-    sortOrder: 1,
-  },
-  {
-    name: '设定考据',
-    description: '适合梳理世界观、时间线与设定细节。',
-    sortOrder: 2,
-  },
-  {
-    name: '推荐安利',
-    description: '适合整理推荐理由、入坑指南与阅读顺序。',
-    sortOrder: 3,
-  },
-  {
-    name: '新人报到',
-    description: '社区介绍与新用户欢迎话题标签。',
-    sortOrder: 4,
-  },
-] as const
-
 const TOPIC_FIXTURES = [
   {
     sectionName: '进击的巨人',
@@ -101,7 +76,6 @@ const TOPIC_FIXTURES = [
     content: '把前三卷埋下的关键线索重新梳理了一遍，欢迎补充遗漏细节。',
     isPinned: true,
     isFeatured: true,
-    tagNames: ['剧情讨论', '设定考据'],
     createdAt: new Date('2026-03-19T10:00:00.000Z'),
   },
   {
@@ -112,7 +86,6 @@ const TOPIC_FIXTURES = [
       '这部作品我二刷之后更能感受到人物关系带来的压迫感，想看看大家的阅读重点。',
     isPinned: false,
     isFeatured: true,
-    tagNames: ['剧情讨论', '推荐安利'],
     createdAt: new Date('2026-03-19T12:30:00.000Z'),
   },
   {
@@ -122,7 +95,6 @@ const TOPIC_FIXTURES = [
     content: '刚进社区，先把最近想补的漫画和小说列出来，后面慢慢追更。',
     isPinned: false,
     isFeatured: false,
-    tagNames: ['新人报到'],
     createdAt: new Date('2026-03-19T15:00:00.000Z'),
   },
 ] as const
@@ -201,30 +173,6 @@ export async function seedForumReferenceDomain(db: Db) {
     }
   }
   console.log('  ✓ 公共板块完成')
-
-  for (const tagFixture of TAG_FIXTURES) {
-    const existing = await db.query.forumTag.findFirst({
-      where: eq(forumTag.name, tagFixture.name),
-    })
-
-    if (!existing) {
-      await db.insert(forumTag).values({
-        ...tagFixture,
-        isEnabled: true,
-        useCount: 0,
-      })
-    } else {
-      await db
-        .update(forumTag)
-        .set({
-          ...tagFixture,
-          isEnabled: true,
-          useCount: existing.useCount ?? 0,
-        })
-        .where(eq(forumTag.id, existing.id))
-    }
-  }
-  console.log('  ✓ 论坛标签完成')
 
   console.log('✅ 论坛参考数据完成')
 }
@@ -407,29 +355,6 @@ export async function seedForumActivityDomain(db: Db) {
         .returning()
     }
 
-    for (const tagName of topicFixture.tagNames) {
-      const tag = await db.query.forumTag.findFirst({
-        where: eq(forumTag.name, tagName),
-      })
-      if (!tag) {
-        continue
-      }
-
-      const existingTopicTag = await db.query.forumTopicTag.findFirst({
-        where: and(
-          eq(forumTopicTag.topicId, currentTopic.id),
-          eq(forumTopicTag.tagId, tag.id),
-        ),
-      })
-
-      if (!existingTopicTag) {
-        await db.insert(forumTopicTag).values({
-          topicId: currentTopic.id,
-          tagId: tag.id,
-        })
-      }
-    }
-
     const existingActionLog = await db.query.forumUserActionLog.findFirst({
       where: and(
         eq(forumUserActionLog.userId, user.id),
@@ -483,21 +408,6 @@ export async function seedForumActivityDomain(db: Db) {
     }
   }
   console.log('  ✓ 版主操作日志完成')
-
-  const tags = await db.query.forumTag.findMany()
-  for (const tag of tags) {
-    const relations = await db.query.forumTopicTag.findMany({
-      where: eq(forumTopicTag.tagId, tag.id),
-    })
-
-    await db
-      .update(forumTag)
-      .set({
-        useCount: relations.length,
-      })
-      .where(eq(forumTag.id, tag.id))
-  }
-  console.log('  ✓ 标签统计完成')
 
   for (const sectionId of touchedSectionIds) {
     const currentSection = await db.query.forumSection.findFirst({

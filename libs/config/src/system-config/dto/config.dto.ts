@@ -1,6 +1,12 @@
-import { AuditStatusEnum } from '@libs/platform/constant';
-import { BooleanProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
-import { BaseDto, IdDto } from '@libs/platform/dto';
+import { AuditStatusEnum } from '@libs/platform/constant'
+import {
+  BooleanProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+import { BaseDto, IdDto } from '@libs/platform/dto'
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
@@ -214,6 +220,21 @@ export class ContentReviewPolicyDto {
   recordHits?: boolean
 }
 
+/**
+ * forum 话题（hashtag）配置
+ */
+export class ForumHashtagConfigDto {
+  @NumberProperty({
+    description:
+      '话题创建模式（1=仅引用已存在且可用话题；2=正文中允许自动创建话题）',
+    example: 2,
+    required: false,
+    min: 1,
+    max: 2,
+  })
+  creationMode?: number
+}
+
 // ============================================================================
 // 上传配置
 // ============================================================================
@@ -317,7 +338,8 @@ export class SuperbedUploadConfigDto {
 
 export class UploadConfigDto {
   @EnumProperty({
-    description: '上传提供方（local=本地存储；qiniu=七牛云存储；superbed=Superbed图床）',
+    description:
+      '上传提供方（local=本地存储；qiniu=七牛云存储；superbed=Superbed图床）',
     enum: UploadProviderEnum,
     example: UploadProviderEnum.LOCAL,
     required: false,
@@ -436,6 +458,17 @@ export class BaseSystemConfigDto extends BaseDto {
   contentReviewPolicy?: ContentReviewPolicyDto | null
 
   @NestedProperty({
+    description: 'forum 话题配置',
+    type: ForumHashtagConfigDto,
+    example: {
+      creationMode: 2,
+    },
+    required: false,
+    nullable: false,
+  })
+  forumHashtagConfig?: ForumHashtagConfigDto | null
+
+  @NestedProperty({
     description: '上传配置',
     type: UploadConfigDto,
     example: {
@@ -473,6 +506,7 @@ export class UpdateSystemConfigDto extends IntersectionType(
       'siteConfig',
       'maintenanceConfig',
       'contentReviewPolicy',
+      'forumHashtagConfig',
       'uploadConfig',
     ] as const),
   ),

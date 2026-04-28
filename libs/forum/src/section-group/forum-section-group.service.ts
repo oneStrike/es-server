@@ -1,4 +1,4 @@
-import type { SQL } from 'drizzle-orm'
+import type { Db, SQL } from '@db/core'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
@@ -6,16 +6,18 @@ import { FollowService } from '@libs/interaction/follow/follow.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   CreateForumSectionGroupDto,
+  ForumSectionTreeNodeDto,
   QueryForumSectionGroupDto,
   QueryVisibleForumSectionGroupCommandDto,
   SwapForumSectionGroupSortDto,
   UpdateForumSectionGroupDto,
   UpdateForumSectionGroupEnabledDto,
 } from './dto/forum-section-group.dto'
+import { FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE } from './forum-section-group.constant'
 
 /**
  * 论坛板块分组服务。
@@ -42,6 +44,13 @@ export class ForumSectionGroupService {
   /** 板块表。 */
   get forumSection() {
     return this.drizzle.schema.forumSection
+  }
+
+  // 串行化单个分组的删除与关联治理写操作，避免并发下出现悬空引用。
+  private async lockSectionGroupForMutation(client: Db, groupId: number) {
+    await client.execute(
+      sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE}, ${groupId})`,
+    )
   }
 
   /**
@@ -233,43 +242,55 @@ export class ForumSectionGroupService {
    * 删除前会阻止仍挂有板块的分组被移除，避免产生悬空的板块归属关系。
    */
   async deleteSectionGroup(id: number) {
-    const group = await this.db.query.forumSectionGroup.findFirst({
-      where: { id, deletedAt: { isNull: true } },
-      with: {
-        sections: {
-          where: { deletedAt: { isNull: true } },
-          columns: { id: true },
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.lockSectionGroupForMutation(tx, id)
+
+      const group = await tx.query.forumSectionGroup.findFirst({
+        where: { id, deletedAt: { isNull: true } },
+        with: {
+          sections: {
+            where: { deletedAt: { isNull: true } },
+            columns: { id: true },
+          },
+          moderators: {
+            where: { deletedAt: { isNull: true } },
+            columns: { id: true },
+          },
         },
-      },
-    })
+      })
 
-    if (!group) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '板块分组不存在',
-      )
-    }
+      if (!group) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '板块分组不存在',
+        )
+      }
 
-    if (group.sections.length > 0) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '该分组下还有板块，无法删除',
-      )
-    }
+      if (group.sections.length > 0) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '该分组下还有板块，无法删除',
+        )
+      }
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.forumSectionGroup)
-          .set({ deletedAt: new Date() })
-          .where(
-            and(
-              eq(this.forumSectionGroup.id, id),
-              isNull(this.forumSectionGroup.deletedAt),
-            ),
+      if (group.moderators.length > 0) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '该分组下还有版主，无法删除',
+        )
+      }
+
+      const result = await tx
+        .update(this.forumSectionGroup)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            eq(this.forumSectionGroup.id, id),
+            isNull(this.forumSectionGroup.deletedAt),
           ),
-      { notFound: '板块分组不存在' },
-    )
+        )
+      this.drizzle.assertAffectedRows(result, '板块分组不存在')
+    })
     return true
   }
 
@@ -307,63 +328,54 @@ export class ForumSectionGroupService {
     return true
   }
 
-  /**
-   * 获取全部启用中的板块分组及其启用板块。
-   * 该接口供后台配置页一次性读取树形结构，不返回已删除或未启用节点。
-   */
-  async getAllEnabledGroups() {
-    const groups = await this.db
-      .select({
-        id: this.forumSectionGroup.id,
-        name: this.forumSectionGroup.name,
-        description: this.forumSectionGroup.description,
-        sortOrder: this.forumSectionGroup.sortOrder,
-        isEnabled: this.forumSectionGroup.isEnabled,
-        maxModerators: this.forumSectionGroup.maxModerators,
-        createdAt: this.forumSectionGroup.createdAt,
-        updatedAt: this.forumSectionGroup.updatedAt,
-      })
-      .from(this.forumSectionGroup)
-      .where(
-        and(
-          eq(this.forumSectionGroup.isEnabled, true),
-          isNull(this.forumSectionGroup.deletedAt),
-        ),
-      )
-      .orderBy(
-        asc(this.forumSectionGroup.sortOrder),
-        asc(this.forumSectionGroup.id),
-      )
-    const groupIds = groups.map((group) => group.id)
-    const sections = groupIds.length
-      ? await this.db
-          .select({
-            id: this.forumSection.id,
-            groupId: this.forumSection.groupId,
-            name: this.forumSection.name,
-            description: this.forumSection.description,
-            sortOrder: this.forumSection.sortOrder,
-            topicCount: this.forumSection.topicCount,
-          })
-          .from(this.forumSection)
-          .where(
-            and(
-              inArray(this.forumSection.groupId, groupIds),
-              eq(this.forumSection.isEnabled, true),
-              isNull(this.forumSection.deletedAt),
-            ),
-          )
-          .orderBy(asc(this.forumSection.sortOrder), asc(this.forumSection.id))
-      : []
+  // 按管理端配置页所需结构返回板块树，保留空分组与未分组板块节点。
+  async getAdminSectionTree(): Promise<ForumSectionTreeNodeDto[]> {
+    const groups = await this.db.query.forumSectionGroup.findMany({
+      where: {
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        deletedAt: false,
+      },
+      orderBy: (group, { asc }) => [asc(group.sortOrder), asc(group.id)],
+    })
 
-    return groups.map((group) => ({
-      ...group,
-      sections: sections
-        .filter((section) => section.groupId === group.id)
-        .map((section) => ({
-          ...section,
-          _count: { topics: section.topicCount },
-        })),
+    const sections = await this.db.query.forumSection.findMany({
+      where: {
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        deletedAt: false,
+      },
+      orderBy: (section, { asc }) => [asc(section.sortOrder), asc(section.id)],
+    })
+
+    const groupIds = new Set(groups.map((group) => group.id))
+    const sectionsByGroup = new Map<number, typeof sections>()
+    const ungroupedSections: typeof sections = []
+
+    for (const section of sections) {
+      if (section.groupId && groupIds.has(section.groupId)) {
+        const list = sectionsByGroup.get(section.groupId) ?? []
+        list.push(section)
+        sectionsByGroup.set(section.groupId, list)
+        continue
+      }
+
+      ungroupedSections.push(section)
+    }
+
+    const nodes: ForumSectionTreeNodeDto[] = groups.map((group) => ({
+      isUngrouped: false,
+      group,
+      sections: sectionsByGroup.get(group.id) ?? [],
     }))
+
+    nodes.push({
+      isUngrouped: true,
+      sections: ungroupedSections,
+    })
+
+    return nodes
   }
 }

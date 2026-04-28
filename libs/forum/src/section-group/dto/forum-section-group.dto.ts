@@ -1,5 +1,15 @@
-import { PublicForumSectionListItemDto } from '@libs/forum/section/dto/forum-section.dto'
-import { ArrayProperty, BooleanProperty, DateProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  AdminForumSectionTreeSectionDto,
+  PublicForumSectionListItemDto,
+} from '@libs/forum/section/dto/forum-section.dto'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { BaseDto, DragReorderDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
@@ -104,6 +114,45 @@ export class SwapForumSectionGroupSortDto extends PickType(DragReorderDto, [
   'dragId',
   'targetId',
 ] as const) {}
+
+/**
+ * 管理端板块树节点中的分组信息 DTO。
+ * 保留分组管理所需的稳定字段，供配置页直接展示与编辑。
+ */
+export class AdminForumSectionTreeGroupDto extends OmitType(
+  BaseForumSectionGroupDto,
+  ['deletedAt'] as const,
+) {}
+
+/**
+ * 管理端板块树节点 DTO。
+ * group 为空时代表未分组板块集合。
+ */
+export class ForumSectionTreeNodeDto {
+  @BooleanProperty({
+    description: '是否为未分组节点',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  isUngrouped!: boolean
+
+  @NestedProperty({
+    description: '分组信息；未分组节点为空',
+    required: false,
+    type: AdminForumSectionTreeGroupDto,
+    validation: false,
+  })
+  group?: AdminForumSectionTreeGroupDto
+
+  @ArrayProperty({
+    description: '该节点下的板块列表',
+    itemClass: AdminForumSectionTreeSectionDto,
+    required: true,
+    validation: false,
+  })
+  sections!: AdminForumSectionTreeSectionDto[]
+}
 
 /**
  * 公开板块分组列表项 DTO。

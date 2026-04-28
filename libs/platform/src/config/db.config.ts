@@ -26,13 +26,11 @@ export function resolveDbQueryConfig(
   }
 }
 
-export const DbConfig: DbConfigInterface = {
-  // 数据库连接配置
-  connection: process.env.DATABASE_URL,
-  query: resolveDbQueryConfig(),
-}
-
 export const DbConfigRegister = registerAs(
   'db',
-  (): DbConfigInterface => DbConfig,
+  (): DbConfigInterface => ({
+    // 数据库连接配置
+    connection: process.env.DATABASE_URL,
+    query: resolveDbQueryConfig(),
+  }),
 )

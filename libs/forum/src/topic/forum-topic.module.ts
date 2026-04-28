@@ -1,20 +1,22 @@
 import { GrowthLedgerModule } from '@libs/growth/growth-ledger/growth-ledger.module'
-import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module';
-import { BrowseLogModule } from '@libs/interaction/browse-log/browse-log.module';
-import { CommentModule } from '@libs/interaction/comment/comment.module';
-import { EmojiModule } from '@libs/interaction/emoji/emoji.module';
-import { FavoriteModule } from '@libs/interaction/favorite/favorite.module';
-import { FollowModule } from '@libs/interaction/follow/follow.module';
-import { LikeModule } from '@libs/interaction/like/like.module';
-import { MentionModule } from '@libs/interaction/mention/mention.module';
-import { ReportModule } from '@libs/interaction/report/report.module';
-import { MessageModule } from '@libs/message/message.module';
-import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module';
-import { UserModule } from '@libs/user/user.module';
+import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module'
+import { BodyModule } from '@libs/interaction/body/body.module'
+import { BrowseLogModule } from '@libs/interaction/browse-log/browse-log.module'
+import { CommentModule } from '@libs/interaction/comment/comment.module'
+import { EmojiModule } from '@libs/interaction/emoji/emoji.module'
+import { FavoriteModule } from '@libs/interaction/favorite/favorite.module'
+import { FollowModule } from '@libs/interaction/follow/follow.module'
+import { LikeModule } from '@libs/interaction/like/like.module'
+import { MentionModule } from '@libs/interaction/mention/mention.module'
+import { ReportModule } from '@libs/interaction/report/report.module'
+import { MessageModule } from '@libs/message/message.module'
+import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module'
+import { UserModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
-import { ForumPermissionModule } from '../permission/forum-permission.module';
+import { ForumHashtagModule } from '../hashtag/forum-hashtag.module'
+import { ForumPermissionModule } from '../permission/forum-permission.module'
 import { ForumTopicService } from './forum-topic.service'
 import { ForumTopicBrowseLogResolver } from './resolver/forum-topic-browse-log.resolver'
 import { ForumTopicCommentResolver } from './resolver/forum-topic-comment.resolver'
@@ -32,6 +34,7 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     GrowthLedgerModule,
     SensitiveWordModule,
     MessageModule,
+    BodyModule,
     BrowseLogModule,
     CommentModule,
     EmojiModule,
@@ -42,6 +45,7 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     ReportModule,
     UserModule,
     ForumCounterModule,
+    ForumHashtagModule,
     ForumPermissionModule,
     ForumUserActionLogModule,
   ],

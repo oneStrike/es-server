@@ -1,4 +1,4 @@
-import type { SQL } from 'drizzle-orm'
+import type { Db, SQL } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
@@ -23,12 +23,17 @@ export class ForumUserActionLogService {
     return this.drizzle.schema.forumUserActionLog
   }
 
-  /**
-   * 创建用户操作日志
-   * @param dto - 操作日志选项对象
-   * @returns 创建的操作日志记录
-   */
-  async createActionLog(dto: CreateForumActionLogDto) {
+  // 将日志前后快照统一序列化为 JSON 字符串，避免各调用方重复处理。
+  private serializeSnapshot(snapshot?: unknown) {
+    if (snapshot === undefined) {
+      return null
+    }
+
+    return typeof snapshot === 'string' ? snapshot : JSON.stringify(snapshot)
+  }
+
+  // 向指定数据库上下文写入一条正式用户操作日志。
+  private async insertActionLog(db: Db, dto: CreateForumActionLogDto) {
     const {
       userId,
       actionType,
@@ -46,23 +51,15 @@ export class ForumUserActionLogService {
     } = dto
 
     const data = await this.drizzle.withErrorHandling(() =>
-      this.db
+      db
         .insert(this.forumUserActionLog)
         .values({
           userId,
           actionType,
           targetType,
           targetId,
-          beforeData: beforeData
-            ? typeof beforeData === 'string'
-              ? beforeData
-              : JSON.stringify(beforeData)
-            : null,
-          afterData: afterData
-            ? typeof afterData === 'string'
-              ? afterData
-              : JSON.stringify(afterData)
-            : null,
+          beforeData: this.serializeSnapshot(beforeData),
+          afterData: this.serializeSnapshot(afterData),
           ipAddress,
           userAgent,
           geoCountry,
@@ -73,7 +70,25 @@ export class ForumUserActionLogService {
         })
         .returning(),
     )
+
     return data[0]
+  }
+
+  /**
+   * 创建用户操作日志
+   * @param dto - 操作日志选项对象
+   * @returns 创建的操作日志记录
+   */
+  async createActionLog(dto: CreateForumActionLogDto) {
+    return this.insertActionLog(this.db, dto)
+  }
+
+  /**
+   * 在现有事务中写入一条用户操作日志。
+   * 供论坛交互链路在事务内复用，避免日志脱离主写入上下文。
+   */
+  async createActionLogInTx(tx: Db, dto: CreateForumActionLogDto) {
+    return this.insertActionLog(tx, dto)
   }
 
   /**
@@ -100,6 +115,7 @@ export class ForumUserActionLogService {
 
     return this.drizzle.ext.findPagination(this.forumUserActionLog, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: { createdAt: 'desc' },
       ...pageDto,
     })
   }

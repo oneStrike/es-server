@@ -1,10 +1,17 @@
-import { BaseAuthorDto } from '@libs/content/author/dto/author.dto';
-import { PublicForumSectionListItemDto } from '@libs/forum/section/dto/forum-section.dto';
-import { BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty } from '@libs/platform/decorators';
+import { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
+import { ForumHashtagBriefDto } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
+import { PublicForumSectionListItemDto } from '@libs/forum/section/dto/forum-section.dto'
+import {
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+} from '@libs/platform/decorators'
 
-import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto';
+import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 
-import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { FollowTargetTypeEnum } from '../follow.constant'
 
@@ -119,6 +126,14 @@ export class FollowUserBriefDto extends PickType(BaseAppUserDto, [
   followingSectionCount?: number
 
   @NumberProperty({
+    description: '关注话题数',
+    example: 3,
+    required: false,
+    validation: false,
+  })
+  followingHashtagCount?: number
+
+  @NumberProperty({
     description: '粉丝数',
     example: 34,
     required: false,
@@ -171,6 +186,20 @@ export class FollowSectionPageItemDto extends BaseFollowDto {
     nullable: false,
   })
   section!: PublicForumSectionListItemDto
+}
+
+/**
+ * 关注话题分页项 DTO。
+ */
+export class FollowHashtagPageItemDto extends BaseFollowDto {
+  @NestedProperty({
+    description: '话题信息',
+    type: ForumHashtagBriefDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  hashtag!: ForumHashtagBriefDto
 }
 
 /**

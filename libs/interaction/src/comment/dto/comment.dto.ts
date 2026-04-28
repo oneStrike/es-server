@@ -1,21 +1,44 @@
 import type { JsonValue } from '@libs/platform/utils'
+import { RequiredMentionDraftListDto } from '@libs/interaction/mention/dto/mention.dto'
+import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
-  AuditRoleEnum,
-  AuditStatusEnum,
-} from '@libs/platform/constant'
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, JsonProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import {
-  MentionDraftDto,
-  RequiredMentionDraftListDto,
-} from '../../mention/dto/mention.dto'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from '../comment.constant'
 
-export class BaseCommentDto extends BaseDto {
+/**
+ * 评论正文纯文本字段来源。
+ * - 写入时表示客户端提交的原始纯文本。
+ * - 读取时表示 canonical body 派生的纯文本。
+ */
+class CommentContentFieldDto {
+  @StringProperty({
+    description:
+      '评论正文纯文本；写入时为原始输入，读取时为 canonical body 派生值',
+    example: '写得很棒 #TypeScript',
+    required: true,
+    minLength: 1,
+    maxLength: 2000,
+  })
+  content!: string
+}
+
+export class BaseCommentDto extends IntersectionType(
+  BaseDto,
+  CommentContentFieldDto,
+) {
   @EnumProperty({
     description:
       '目标类型（1=漫画作品；2=小说作品；3=漫画章节；4=小说章节；5=论坛主题）',
@@ -41,14 +64,29 @@ export class BaseCommentDto extends BaseDto {
   })
   userId!: number
 
-  @StringProperty({
-    description: '评论内容',
-    example: '写得很棒',
+  @JsonProperty({
+    description: '评论 canonical 正文文档',
     required: true,
-    minLength: 1,
-    maxLength: 2000,
+    validation: false,
+    example: {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '评论正文 ' },
+            {
+              type: 'forumHashtag',
+              hashtagId: 77,
+              slug: 'typescript',
+              displayName: 'TypeScript',
+            },
+          ],
+        },
+      ],
+    },
   })
-  content!: string
+  body!: JsonValue
 
   @JsonProperty({
     description: '评论正文解析 token（表情与提及混合输出）',
@@ -70,17 +108,16 @@ export class BaseCommentDto extends BaseDto {
         imageUrl: 'https://cdn.example.com/emoji/smile.gif',
         isAnimated: true,
       },
+      {
+        type: 'forumHashtag',
+        hashtagId: 77,
+        slug: 'typescript',
+        displayName: 'TypeScript',
+        text: '#TypeScript',
+      },
     ],
   })
   bodyTokens?: JsonValue | null
-
-  @ArrayProperty({
-    description: '结构化提及列表，仅写入时使用',
-    required: false,
-    itemClass: MentionDraftDto,
-    contract: false,
-  })
-  mentions?: MentionDraftDto[]
 
   @NumberProperty({
     description: '楼层号',
@@ -161,6 +198,15 @@ export class BaseCommentDto extends BaseDto {
     default: 0,
   })
   likeCount!: number
+
+  @NumberProperty({
+    description: '正文版本（1=v1）',
+    example: 1,
+    required: true,
+    default: 1,
+    validation: false,
+  })
+  bodyVersion!: number
 
   @ArrayProperty({
     description: '敏感词命中记录',
@@ -264,8 +310,12 @@ export class ReplyTargetDto {
   replyToId!: number
 }
 
+/**
+ * 评论写入正文输入 DTO。
+ * - 复用 owner 字段定义，避免读写合同在同文件内漂移。
+ */
 export class CommentWritableFieldsDto extends IntersectionType(
-  PickType(BaseCommentDto, ['content'] as const),
+  PickType(CommentContentFieldDto, ['content'] as const),
   RequiredMentionDraftListDto,
 ) {}
 
@@ -363,7 +413,7 @@ export class QueryAdminCommentPageDto extends IntersectionType(
   keyword?: string
 }
 
-export class UpdateAdminCommentAuditStatusDto extends IntersectionType(
+export class UpdateCommentAuditStatusDto extends IntersectionType(
   IdDto,
   PickType(BaseCommentDto, ['auditStatus', 'auditReason'] as const),
 ) {
@@ -378,7 +428,7 @@ export class UpdateAdminCommentAuditStatusDto extends IntersectionType(
   auditById?: number
 }
 
-export class UpdateAdminCommentHiddenDto extends IntersectionType(
+export class UpdateCommentHiddenDto extends IntersectionType(
   IdDto,
   PickType(BaseCommentDto, ['isHidden'] as const),
 ) {}
@@ -417,6 +467,7 @@ export class CommentReplyItemDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
+  'body',
   'content',
   'bodyTokens',
   'floor',
@@ -477,6 +528,7 @@ export class CommentPreviewReplyDto extends IntersectionType(
   PickType(BaseCommentDto, [
     'id',
     'userId',
+    'body',
     'content',
     'bodyTokens',
     'replyToId',
@@ -498,6 +550,7 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
+  'body',
   'content',
   'bodyTokens',
   'floor',
@@ -566,6 +619,7 @@ export class MyCommentPageItemDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
+  'body',
   'content',
   'bodyTokens',
   'floor',
@@ -631,6 +685,7 @@ export class AdminCommentPageItemDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
+  'body',
   'content',
   'bodyTokens',
   'floor',
@@ -662,6 +717,7 @@ export class AdminCommentDetailDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
+  'body',
   'content',
   'bodyTokens',
   'floor',

@@ -1,9 +1,15 @@
-import { CommentService } from '@libs/interaction/comment/comment.service';
-import { AdminCommentDetailDto, AdminCommentPageItemDto, QueryAdminCommentPageDto, UpdateAdminCommentAuditStatusDto, UpdateAdminCommentHiddenDto } from '@libs/interaction/comment/dto/comment.dto';
-import { AuditRoleEnum } from '@libs/platform/constant';
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
+import { ForumModeratorGovernanceService } from '@libs/forum/moderator/moderator-governance.service'
+import { CommentService } from '@libs/interaction/comment/comment.service'
+import {
+  AdminCommentDetailDto,
+  AdminCommentPageItemDto,
+  QueryAdminCommentPageDto,
+  UpdateCommentAuditStatusDto,
+  UpdateCommentHiddenDto,
+} from '@libs/interaction/comment/dto/comment.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto';
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -12,7 +18,10 @@ import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 @ApiTags('内容治理/评论处理')
 @Controller('admin/comment')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) {}
+  constructor(
+    private readonly commentService: CommentService,
+    private readonly forumModeratorGovernanceService: ForumModeratorGovernanceService,
+  ) {}
 
   @Get('page')
   @ApiPageDoc({
@@ -41,13 +50,12 @@ export class CommentController {
     },
   })
   async updateAuditStatus(
-    @Body() body: UpdateAdminCommentAuditStatusDto,
+    @Body() body: UpdateCommentAuditStatusDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.commentService.updateCommentAuditStatus({
-      ...body,
-      auditById: userId,
-      auditRole: AuditRoleEnum.ADMIN,
+    return this.forumModeratorGovernanceService.updateCommentAuditStatus(body, {
+      actorType: 'admin',
+      actorUserId: userId,
     })
   }
 
@@ -59,7 +67,13 @@ export class CommentController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updateHidden(@Body() body: UpdateAdminCommentHiddenDto) {
-    return this.commentService.updateCommentHidden(body)
+  async updateHidden(
+    @Body() body: UpdateCommentHiddenDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.updateCommentHidden(body, {
+      actorType: 'admin',
+      actorUserId: userId,
+    })
   }
 }

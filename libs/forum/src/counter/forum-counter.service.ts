@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { applyCountDelta } from '@db/extensions'
+import { applyCountDelta, CountDeltaFailureCauseCode } from '@db/extensions'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
@@ -91,14 +91,34 @@ export class ForumCounterService {
     this.drizzle.assertAffectedRows(result, message)
   }
 
-  private rethrowNotFound<T>(error: T, message: string) {
+  private rethrowCountDeltaNotFound(
+    error: unknown,
+    message: string,
+  ): never {
     if (
-      error instanceof BusinessException &&
-      error.code === BusinessErrorCode.RESOURCE_NOT_FOUND &&
-      !error.message.includes('计数不足')
+      !(error instanceof BusinessException) ||
+      error.code !== BusinessErrorCode.RESOURCE_NOT_FOUND
     ) {
-      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message)
+      throw error
     }
+
+    const causeCode =
+      typeof error.cause === 'object' &&
+      error.cause !== null &&
+      'code' in error.cause
+        ? (error.cause as { code?: unknown }).code
+        : undefined
+
+    if (causeCode === CountDeltaFailureCauseCode.INSUFFICIENT_COUNT) {
+      throw error
+    }
+
+    if (causeCode === CountDeltaFailureCauseCode.TARGET_NOT_FOUND) {
+      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message, {
+        cause: error.cause ?? error,
+      })
+    }
+
     throw error
   }
 
@@ -136,7 +156,7 @@ export class ForumCounterService {
       }
       await this.drizzle.withErrorHandling(async () => execute(this.db))
     } catch (error) {
-      this.rethrowNotFound(error, message)
+      this.rethrowCountDeltaNotFound(error, message)
     }
   }
 
@@ -174,7 +194,7 @@ export class ForumCounterService {
       }
       await this.drizzle.withErrorHandling(async () => execute(this.db))
     } catch (error) {
-      this.rethrowNotFound(error, message)
+      this.rethrowCountDeltaNotFound(error, message)
     }
   }
 
@@ -551,27 +571,6 @@ export class ForumCounterService {
       userId,
       delta,
     )
-  }
-
-  /**
-   * 批量更新主题相关的所有计数
-   * 包括板块主题数、用户论坛主题数。
-   * 主题创建/删除等复合写路径统一通过该入口推进，避免跨模块调用顺序不一致。
-   * @param tx - 事务对象
-   * @param sectionId - 版块ID
-   * @param userId - 用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   */
-  async updateTopicRelatedCounts(
-    tx: Db | undefined,
-    sectionId: number,
-    userId: number,
-    delta: number,
-  ) {
-    await Promise.all([
-      this.updateSectionTopicCount(tx, sectionId, delta),
-      this.updateUserForumTopicCount(tx, userId, delta),
-    ])
   }
 
   /**

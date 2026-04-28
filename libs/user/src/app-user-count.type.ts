@@ -9,6 +9,7 @@ export type AppUserCountField =
   | 'followingUserCount'
   | 'followingAuthorCount'
   | 'followingSectionCount'
+  | 'followingHashtagCount'
   | 'followersCount'
   | 'forumTopicCount'
   | 'commentReceivedLikeCount'
@@ -23,6 +24,7 @@ export interface AppUserFollowingCountAggregation {
   followingUserCount: number
   followingAuthorCount: number
   followingSectionCount: number
+  followingHashtagCount: number
 }
 
 /**
@@ -37,6 +39,7 @@ export interface AppUserCountSnapshot {
   followingUserCount: number
   followingAuthorCount: number
   followingSectionCount: number
+  followingHashtagCount: number
   followersCount: number
   forumTopicCount: number
   commentReceivedLikeCount: number

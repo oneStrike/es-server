@@ -1135,8 +1135,8 @@ export async function seedAppActivityDomain(db: Db) {
       await db.insert(forumUserActionLog).values({
         userId: comment.userId,
         targetId: comment.id,
-        actionType: 3,
-        targetType: 3,
+        actionType: 2,
+        targetType: 2,
         afterData: JSON.stringify({ content: comment.content }),
         ipAddress: '127.0.0.1',
         userAgent: 'seed-script/comment',

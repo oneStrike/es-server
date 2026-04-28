@@ -65,6 +65,19 @@ export interface ILikeTargetResolver {
   ) => Promise<void>
 
   /**
+   * 取消点赞成功后钩子（可选）
+   * 在事务内执行，可用于记录日志等回退后的附加副作用
+   * @param tx - 事务客户端
+   * @param targetId - 目标ID
+   * @param actorUserId - 执行取消点赞的用户ID
+   */
+  postUnlikeHook?: (
+    tx: Db,
+    targetId: number,
+    actorUserId: number,
+  ) => Promise<void>
+
+  /**
    * 批量获取目标详情（可选）
    * 用于用户点赞列表聚合展示目标详情
    * @param targetIds - 目标ID数组

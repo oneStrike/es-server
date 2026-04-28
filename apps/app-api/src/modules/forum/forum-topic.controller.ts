@@ -3,13 +3,14 @@ import type { FastifyRequest } from 'fastify'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
 import {
   CreateUserForumTopicDto,
+  MyForumTopicItemDto,
   PublicForumTopicDetailDto,
   PublicForumTopicPageItemDto,
   QueryForumTopicCommentPageDto,
+  QueryMyForumTopicDto,
   QueryPublicForumTopicDto,
-  QueryUserForumTopicDto,
+  QueryPublicUserForumTopicDto,
   UpdateForumTopicDto,
-  UserForumTopicItemDto,
 } from '@libs/forum/topic/dto/forum-topic.dto'
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
@@ -148,15 +149,32 @@ export class ForumTopicController {
   }
 
   @Get('user/page')
+  @OptionalAuth()
   @ApiPageDoc({
-    summary: '分页查询用户发布的主题',
-    model: UserForumTopicItemDto,
+    summary: '分页查询指定用户的公开主题',
+    model: PublicForumTopicPageItemDto,
   })
-  async getUserTopicPage(
-    @Query() query: QueryUserForumTopicDto,
+  async getPublicUserTopicPage(
+    @Query() query: QueryPublicUserForumTopicDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    return this.userProfileService.getPublicUserTopics(
+      query.userId,
+      userId,
+      query,
+    )
+  }
+
+  @Get('my/page')
+  @ApiPageDoc({
+    summary: '分页查询我的论坛主题',
+    model: MyForumTopicItemDto,
+  })
+  async getMyTopicPage(
+    @Query() query: QueryMyForumTopicDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.userProfileService.getUserTopics(query.userId ?? userId, userId, query)
+    return this.userProfileService.getMyTopics(userId, query)
   }
 
   @Post('create')

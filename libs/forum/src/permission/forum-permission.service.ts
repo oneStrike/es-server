@@ -6,7 +6,7 @@ import type {
 } from './forum-permission.type'
 import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
-import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
@@ -130,6 +130,66 @@ export class ForumPermissionService {
   }
 
   /**
+   * 判断板块在公开访问语义下是否可用。
+   * 板块本身必须启用；若挂载分组，则分组也必须启用且未删除。
+   */
+  isSectionPubliclyAvailable(
+    section: Pick<
+      ForumSectionPermissionContext,
+      'groupId' | 'deletedAt' | 'isEnabled'
+    > & {
+      group?: {
+        isEnabled: boolean
+        deletedAt: Date | null
+      } | null
+    },
+  ) {
+    if (section.deletedAt) {
+      return false
+    }
+
+    if (!section.isEnabled) {
+      return false
+    }
+
+    if (!section.groupId) {
+      return true
+    }
+
+    return Boolean(
+      section.group && section.group.isEnabled && !section.group.deletedAt,
+    )
+  }
+
+  /**
+   * 将板块查询结果归一化为访问状态计算所需字段。
+   * 统一在这里补齐 requiredExperience 与公开可见性，避免各入口各自复制同一套映射。
+   */
+  private buildSectionAccessContext(
+    section: Pick<
+      ForumSectionPermissionContext,
+      'groupId' | 'deletedAt' | 'isEnabled' | 'userLevelRuleId'
+    > & {
+      group?: {
+        isEnabled: boolean
+        deletedAt: Date | null
+      } | null
+      userLevelRule?: {
+        requiredExperience: number
+      } | null
+    },
+  ) {
+    return {
+      groupId: section.groupId,
+      deletedAt: section.deletedAt,
+      isEnabled: section.isEnabled,
+      isPubliclyAvailable: this.isSectionPubliclyAvailable(section),
+      userLevelRuleId: section.userLevelRuleId,
+      requiredExperience: section.userLevelRule?.requiredExperience ?? null,
+    }
+  }
+
+  /**
    * 获取板块权限上下文，包含等级规则与所需经验值。
    */
   private async getSectionPermissionContext(
@@ -146,12 +206,20 @@ export class ForumPermissionService {
       },
       columns: {
         id: true,
+        groupId: true,
+        deletedAt: true,
         name: true,
         isEnabled: true,
         topicReviewPolicy: true,
         userLevelRuleId: true,
       },
       with: {
+        group: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
         userLevelRule: {
           columns: {
             requiredExperience: true,
@@ -167,7 +235,9 @@ export class ForumPermissionService {
       )
     }
 
-    if (options?.requireEnabled && !section.isEnabled) {
+    const accessContext = this.buildSectionAccessContext(section)
+
+    if (options?.requireEnabled && !accessContext.isPubliclyAvailable) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '板块不存在或已禁用',
@@ -176,7 +246,8 @@ export class ForumPermissionService {
 
     return {
       ...section,
-      requiredExperience: section.userLevelRule?.requiredExperience ?? null,
+      requiredExperience: accessContext.requiredExperience,
+      isPubliclyAvailable: accessContext.isPubliclyAvailable,
     }
   }
 
@@ -229,16 +300,21 @@ export class ForumPermissionService {
     accessState: ForumSectionAccessState,
   ): never {
     const reason = accessState.accessDeniedReason ?? '当前操作不允许执行'
+    const accessDeniedCode = accessState.accessDeniedCode ?? 'USER_DISABLED'
 
-    if (reason.includes('请先登录')) {
-      throw new UnauthorizedException(reason)
+    switch (accessDeniedCode) {
+      case 'LOGIN_REQUIRED':
+        throw new UnauthorizedException(reason)
+      case 'LEVEL_REQUIRED':
+        throw new BusinessException(BusinessErrorCode.QUOTA_NOT_ENOUGH, reason)
+      case 'SECTION_UNAVAILABLE':
+        throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, reason)
+      case 'USER_DISABLED':
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          reason,
+        )
     }
-
-    if (reason.includes('更高等级')) {
-      throw new BusinessException(BusinessErrorCode.QUOTA_NOT_ENOUGH, reason)
-    }
-
-    throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, reason)
   }
 
   /**
@@ -248,7 +324,11 @@ export class ForumPermissionService {
   private resolveSectionAccessState(
     section: Pick<
       ForumSectionPermissionContext,
-      'userLevelRuleId' | 'requiredExperience'
+      | 'groupId'
+      | 'isEnabled'
+      | 'isPubliclyAvailable'
+      | 'userLevelRuleId'
+      | 'requiredExperience'
     >,
     user?:
       | ForumAccessUserContext
@@ -259,6 +339,15 @@ export class ForumPermissionService {
       section.userLevelRuleId && section.requiredExperience !== null
         ? section.requiredExperience
         : null
+
+    if (!section.isPubliclyAvailable) {
+      return {
+        canAccess: false,
+        requiredExperience,
+        accessDeniedCode: 'SECTION_UNAVAILABLE',
+        accessDeniedReason: '板块不存在或已禁用',
+      }
+    }
 
     if (requiredExperience === null) {
       return {
@@ -271,6 +360,7 @@ export class ForumPermissionService {
       return {
         canAccess: false,
         requiredExperience,
+        accessDeniedCode: 'LOGIN_REQUIRED',
         accessDeniedReason: '请先登录后访问该板块',
       }
     }
@@ -279,6 +369,7 @@ export class ForumPermissionService {
       return {
         canAccess: false,
         requiredExperience,
+        accessDeniedCode: 'USER_DISABLED',
         accessDeniedReason: '用户不存在或已被禁用',
       }
     }
@@ -287,6 +378,7 @@ export class ForumPermissionService {
       return {
         canAccess: false,
         requiredExperience,
+        accessDeniedCode: 'LEVEL_REQUIRED',
         accessDeniedReason: '当前板块需要更高等级访问',
       }
     }
@@ -390,6 +482,40 @@ export class ForumPermissionService {
   }
 
   /**
+   * 校验当前用户是否可访问指定主题所属板块。
+   * 供评论等目标链路复用 forum 侧统一的板块公开访问事实源。
+   */
+  async ensureUserCanAccessTopicSection(topicId: number, userId: number) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id: topicId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        sectionId: true,
+        auditStatus: true,
+        isHidden: true,
+      },
+    })
+
+    if (
+      !topic ||
+      topic.auditStatus !== AuditStatusEnum.APPROVED ||
+      topic.isHidden
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
+    }
+
+    return this.ensureUserCanAccessSection(topic.sectionId, userId, {
+      requireEnabled: true,
+      notFoundMessage: '帖子不存在',
+    })
+  }
+
+  /**
    * 校验当前用户是否可访问指定板块。
    * 仅检查板块等级限制，不涉及发帖频控。
    */
@@ -423,9 +549,18 @@ export class ForumPermissionService {
         },
         columns: {
           id: true,
+          groupId: true,
+          deletedAt: true,
+          isEnabled: true,
           userLevelRuleId: true,
         },
         with: {
+          group: {
+            columns: {
+              isEnabled: true,
+              deletedAt: true,
+            },
+          },
           userLevelRule: {
             columns: {
               requiredExperience: true,
@@ -439,11 +574,7 @@ export class ForumPermissionService {
     return sections
       .filter((section) => {
         const accessState = this.resolveSectionAccessState(
-          {
-            userLevelRuleId: section.userLevelRuleId,
-            requiredExperience:
-              section.userLevelRule?.requiredExperience ?? null,
-          },
+          this.buildSectionAccessContext(section),
           user,
         )
         return accessState.canAccess
@@ -471,9 +602,18 @@ export class ForumPermissionService {
         },
         columns: {
           id: true,
+          groupId: true,
+          deletedAt: true,
+          isEnabled: true,
           userLevelRuleId: true,
         },
         with: {
+          group: {
+            columns: {
+              isEnabled: true,
+              deletedAt: true,
+            },
+          },
           userLevelRule: {
             columns: {
               requiredExperience: true,
@@ -489,11 +629,7 @@ export class ForumPermissionService {
       accessMap.set(
         section.id,
         this.resolveSectionAccessState(
-          {
-            userLevelRuleId: section.userLevelRuleId,
-            requiredExperience:
-              section.userLevelRule?.requiredExperience ?? null,
-          },
+          this.buildSectionAccessContext(section),
           user,
         ),
       )

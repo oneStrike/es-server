@@ -1,11 +1,12 @@
 import type { ForumTopicSelect } from '@db/schema'
 import { buildLikePattern, DrizzleService } from '@db/core'
 
-import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
-import { AuditStatusEnum } from '@libs/platform/constant';
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
-import { ForumPermissionService } from '../permission/forum-permission.service';
+import { ForumHashtagReferenceSourceTypeEnum } from '../hashtag/forum-hashtag.constant'
+import { ForumPermissionService } from '../permission/forum-permission.service'
 import { ForumSearchDto, ForumSearchResultDto } from './dto/search.dto'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 
@@ -35,9 +36,14 @@ export class ForumSearchService {
     return this.drizzle.schema.userComment
   }
 
-  /** forum_topic_tag 表访问入口。 */
-  get forumTopicTag() {
-    return this.drizzle.schema.forumTopicTag
+  /** forum_hashtag_reference 表访问入口。 */
+  get forumHashtagReference() {
+    return this.drizzle.schema.forumHashtagReference
+  }
+
+  /** forum_hashtag 表访问入口。 */
+  get forumHashtag() {
+    return this.drizzle.schema.forumHashtag
   }
 
   /** forum_section 表访问入口。 */
@@ -172,8 +178,7 @@ export class ForumSearchService {
       }
     }
 
-    const createdAtDiff =
-      right.createdAt.getTime() - left.createdAt.getTime()
+    const createdAtDiff = right.createdAt.getTime() - left.createdAt.getTime()
     if (createdAtDiff !== 0) {
       return createdAtDiff
     }
@@ -215,16 +220,84 @@ export class ForumSearchService {
   }
 
   /**
-   * 解析标签对应的主题 ID 集合。
-   * 空集合会在上层被快速短路，避免继续执行无意义的全文筛选。
+   * 解析话题筛选 ID。
+   * - 新合同使用 hashtagId。
+   * - 兼容期内继续接受旧 tagId，优先采用新字段。
    */
-  private async getTopicIdsByTag(tagId: number) {
-    const topicIds = await this.db
-      .select({ topicId: this.forumTopicTag.topicId })
-      .from(this.forumTopicTag)
-      .where(eq(this.forumTopicTag.tagId, tagId))
+  private resolveHashtagFilterId(
+    dto: Pick<ForumSearchDto, 'hashtagId' | 'tagId'>,
+  ) {
+    return dto.hashtagId ?? dto.tagId
+  }
 
-    return [...new Set(topicIds.map((item) => item.topicId))]
+  /**
+   * 构建评论搜索的话题过滤条件。
+   * - 兼容期内同时接受“主题命中 hashtag”与“评论自身命中 hashtag”两种来源。
+   */
+  private buildCommentHashtagFilterCondition(params: {
+    topicIdsByHashtag?: number[]
+    commentIdsByHashtag?: number[]
+  }) {
+    const conditions = [
+      params.topicIdsByHashtag?.length
+        ? inArray(this.forumTopic.id, params.topicIdsByHashtag)
+        : undefined,
+      params.commentIdsByHashtag?.length
+        ? inArray(this.userComment.id, params.commentIdsByHashtag)
+        : undefined,
+    ].filter(Boolean)
+
+    if (conditions.length === 0) {
+      return undefined
+    }
+
+    if (conditions.length === 1) {
+      return conditions[0]
+    }
+
+    return or(...(conditions as [any, ...any[]]))
+  }
+
+  /**
+   * 解析话题对应的来源 ID 集合。
+   * publicOnly 模式只保留当前公开可见引用。
+   */
+  private async getSourceIdsByHashtag(
+    hashtagId: number,
+    sourceType: ForumHashtagReferenceSourceTypeEnum,
+    options: {
+      publicOnly: boolean
+    },
+  ) {
+    const rows = options.publicOnly
+      ? await this.db
+          .select({ sourceId: this.forumHashtagReference.sourceId })
+          .from(this.forumHashtagReference)
+          .innerJoin(
+            this.forumHashtag,
+            eq(this.forumHashtagReference.hashtagId, this.forumHashtag.id),
+          )
+          .where(
+            and(
+              eq(this.forumHashtagReference.hashtagId, hashtagId),
+              eq(this.forumHashtagReference.sourceType, sourceType),
+              eq(this.forumHashtagReference.isSourceVisible, true),
+              eq(this.forumHashtag.auditStatus, AuditStatusEnum.APPROVED),
+              eq(this.forumHashtag.isHidden, false),
+              isNull(this.forumHashtag.deletedAt),
+            ),
+          )
+      : await this.db
+          .select({ sourceId: this.forumHashtagReference.sourceId })
+          .from(this.forumHashtagReference)
+          .where(
+            and(
+              eq(this.forumHashtagReference.hashtagId, hashtagId),
+              eq(this.forumHashtagReference.sourceType, sourceType),
+            ),
+          )
+
+    return [...new Set(rows.map((item) => item.sourceId))]
   }
 
   /**
@@ -346,7 +419,10 @@ export class ForumSearchService {
         userNickname: user?.nickname ?? '',
         userAvatarUrl: user?.avatarUrl ?? undefined,
         commentId: comment.commentId,
-        commentContentSnippet: this.buildSnippet(comment.commentContent, keyword),
+        commentContentSnippet: this.buildSnippet(
+          comment.commentContent,
+          keyword,
+        ),
         createdAt: comment.createdAt,
         commentCount: comment.commentCount,
         viewCount: comment.viewCount,
@@ -415,7 +491,7 @@ export class ForumSearchService {
 
   /**
    * 搜索主题。
-   * public 模式下会叠加审核与隐藏过滤，并支持按标签缩小结果集。
+   * public 模式下会叠加审核与隐藏过滤，并支持按话题引用缩小结果集。
    */
   private async searchTopics(
     dto: ForumSearchDto,
@@ -426,6 +502,18 @@ export class ForumSearchService {
   ) {
     const sectionIds = await this.resolveSectionScope(dto.sectionId, options)
     if (sectionIds && sectionIds.length === 0) {
+      return this.createEmptyPage(dto)
+    }
+
+    const hashtagFilterId = this.resolveHashtagFilterId(dto)
+    const topicIdsByHashtag = hashtagFilterId
+      ? await this.getSourceIdsByHashtag(
+          hashtagFilterId,
+          ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          options,
+        )
+      : undefined
+    if (topicIdsByHashtag && topicIdsByHashtag.length === 0) {
       return this.createEmptyPage(dto)
     }
 
@@ -445,12 +533,10 @@ export class ForumSearchService {
           ? eq(this.forumTopic.sectionId, sectionIds[0])
           : inArray(this.forumTopic.sectionId, sectionIds)
         : undefined,
+      topicIdsByHashtag
+        ? inArray(this.forumTopic.id, topicIdsByHashtag)
+        : undefined,
     ].filter(Boolean)
-
-    if (dto.tagId) {
-      const ids = await this.getTopicIdsByTag(dto.tagId)
-      conditions.push(ids.length ? inArray(this.forumTopic.id, ids) : eq(this.forumTopic.id, -1))
-    }
 
     const page = await this.drizzle.ext.findPagination(this.forumTopic, {
       where: and(...(conditions as [any, ...any[]])),
@@ -466,7 +552,8 @@ export class ForumSearchService {
 
   /**
    * 搜索评论。
-   * 评论搜索通过 join 主题表继承板块、审核和标签过滤条件，保证结果和主题搜索口径一致。
+   * 评论搜索通过 join 主题表继承板块和审核过滤。
+   * hashtag 兼容期内同时接受主题级引用与评论级引用，保证旧 tag 搜索口径不被收窄。
    */
   private async searchComments(
     dto: ForumSearchDto,
@@ -480,13 +567,35 @@ export class ForumSearchService {
       return this.createEmptyPage(dto)
     }
 
-    const topicIdsByTag = dto.tagId ? await this.getTopicIdsByTag(dto.tagId) : undefined
-    if (topicIdsByTag && topicIdsByTag.length === 0) {
+    const hashtagFilterId = this.resolveHashtagFilterId(dto)
+    const [topicIdsByHashtag, commentIdsByHashtag] = hashtagFilterId
+      ? await Promise.all([
+          this.getSourceIdsByHashtag(
+            hashtagFilterId,
+            ForumHashtagReferenceSourceTypeEnum.TOPIC,
+            options,
+          ),
+          this.getSourceIdsByHashtag(
+            hashtagFilterId,
+            ForumHashtagReferenceSourceTypeEnum.COMMENT,
+            options,
+          ),
+        ])
+      : [undefined, undefined]
+    if (
+      hashtagFilterId &&
+      (topicIdsByHashtag?.length ?? 0) === 0 &&
+      (commentIdsByHashtag?.length ?? 0) === 0
+    ) {
       return this.createEmptyPage(dto)
     }
 
     const page = this.drizzle.buildPage(dto)
     const keywordLike = buildLikePattern(dto.keyword)!
+    const commentHashtagFilter = this.buildCommentHashtagFilterCondition({
+      topicIdsByHashtag,
+      commentIdsByHashtag,
+    })
     const conditions = [
       eq(this.userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
       isNull(this.userComment.deletedAt),
@@ -506,9 +615,7 @@ export class ForumSearchService {
           ? eq(this.forumTopic.sectionId, sectionIds[0])
           : inArray(this.forumTopic.sectionId, sectionIds)
         : undefined,
-      topicIdsByTag
-        ? inArray(this.forumTopic.id, topicIdsByTag)
-        : undefined,
+      commentHashtagFilter,
     ].filter(Boolean)
 
     const where = and(...(conditions as [any, ...any[]]))
@@ -529,7 +636,10 @@ export class ForumSearchService {
           favoriteCount: this.forumTopic.favoriteCount,
         })
         .from(this.userComment)
-        .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
+        .innerJoin(
+          this.forumTopic,
+          eq(this.userComment.targetId, this.forumTopic.id),
+        )
         .where(where)
         .orderBy(...this.getCommentOrderBy(dto.sort))
         .limit(page.limit)
@@ -539,7 +649,10 @@ export class ForumSearchService {
           total: sql<number>`count(*)::int`,
         })
         .from(this.userComment)
-        .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
+        .innerJoin(
+          this.forumTopic,
+          eq(this.userComment.targetId, this.forumTopic.id),
+        )
         .where(where),
     ])
 

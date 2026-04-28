@@ -2,12 +2,22 @@
  * Auto-converted from legacy schema.
  */
 
-import { boolean, index, integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  pgTable,
+  smallint,
+  timestamp,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 论坛板块表 - 管理论坛板块信息，包括板块名称、描述、统计信息等
  */
-export const forumSection = pgTable("forum_section", {
+export const forumSection = pgTable('forum_section', {
   /**
    * 主键ID
    */
@@ -49,9 +59,9 @@ export const forumSection = pgTable("forum_section", {
    */
   isEnabled: boolean().default(true).notNull(),
   /**
-   * 主题审核策略 （0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）
+   * 主题审核策略（0=不审核；1=严重敏感词触发审核；2=一般敏感词触发审核；3=轻度敏感词触发审核；4=强制人工审核）
    */
-  topicReviewPolicy: integer().default(1).notNull(),
+  topicReviewPolicy: smallint().default(1).notNull(),
   /**
    * 备注信息
    */
@@ -88,32 +98,36 @@ export const forumSection = pgTable("forum_section", {
   /**
    * 分组索引
    */
-  index("forum_section_group_id_idx").on(table.groupId),
+    index('forum_section_group_id_idx').on(table.groupId),
   /**
    * 排序索引
    */
-  index("forum_section_sort_order_idx").on(table.sortOrder),
+    index('forum_section_sort_order_idx').on(table.sortOrder),
   /**
    * 启用状态索引
    */
-  index("forum_section_is_enabled_idx").on(table.isEnabled),
+    index('forum_section_is_enabled_idx').on(table.isEnabled),
   /**
    * 主题数索引
    */
-  index("forum_section_topic_count_idx").on(table.topicCount),
+    index('forum_section_topic_count_idx').on(table.topicCount),
   /**
    * 最后发表时间索引
    */
-  index("forum_section_last_post_at_idx").on(table.lastPostAt),
+    index('forum_section_last_post_at_idx').on(table.lastPostAt),
   /**
    * 创建时间索引
    */
-  index("forum_section_created_at_idx").on(table.createdAt),
+    index('forum_section_created_at_idx').on(table.createdAt),
   /**
    * 删除时间索引
    */
-  index("forum_section_deleted_at_idx").on(table.deletedAt),
+    index('forum_section_deleted_at_idx').on(table.deletedAt),
+    check(
+      'forum_section_topic_review_policy_valid_chk',
+      sql`${table.topicReviewPolicy} in (0, 1, 2, 3, 4)`,
+    ),
 ]);
 
-export type ForumSectionSelect = typeof forumSection.$inferSelect;
-export type ForumSectionInsert = typeof forumSection.$inferInsert;
+export type ForumSectionSelect = typeof forumSection.$inferSelect
+export type ForumSectionInsert = typeof forumSection.$inferInsert

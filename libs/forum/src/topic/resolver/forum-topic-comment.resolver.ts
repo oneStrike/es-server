@@ -1,6 +1,5 @@
 import type { Db } from '@db/core'
-import type { VisibleCommentEffectPayload } from '@libs/interaction/comment/comment.type'
-import type { CommentTargetMeta } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
+import type { CommentTargetHookPayload, CommentTargetMeta } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
@@ -11,8 +10,14 @@ import { MessageDomainEventPublisher as MessageDomainEventPublisherService } fro
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, OnModuleInit } from '@nestjs/common'
+import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../../action-log/action-log.service'
 import { ForumCounterService } from '../../counter/forum-counter.service'
+import { ForumPermissionService } from '../../permission/forum-permission.service'
 
 /**
  * 论坛帖子评论解析器
@@ -30,7 +35,73 @@ export class ForumTopicCommentResolver
     private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
     private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly actionLogService: ForumUserActionLogService,
+    private readonly forumPermissionService: ForumPermissionService,
   ) {}
+
+  /**
+   * 读取评论目标主题快照。
+   * 用户侧写入链要求主题当前可公开评论；内部治理链只要求主题与板块仍存在。
+   */
+  private async getTopicCommentTargetSnapshot(
+    tx: Db,
+    targetId: number,
+    options: {
+      requirePublicVisible: boolean
+    },
+  ) {
+    const topic = await tx.query.forumTopic.findFirst({
+      where: {
+        id: targetId,
+        deletedAt: { isNull: true },
+        ...(options.requirePublicVisible
+          ? {
+              auditStatus: AuditStatusEnum.APPROVED,
+              isHidden: false,
+            }
+          : {}),
+      },
+      columns: {
+        isLocked: true,
+        userId: true,
+        sectionId: true,
+        title: true,
+      },
+      with: {
+        section: {
+          columns: {
+            groupId: true,
+            isEnabled: true,
+            deletedAt: true,
+          },
+          with: {
+            group: {
+              columns: {
+                isEnabled: true,
+                deletedAt: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (
+      !topic ||
+      !topic.section ||
+      topic.section.deletedAt ||
+      !topic.section.isEnabled ||
+      (options.requirePublicVisible &&
+        !this.forumPermissionService.isSectionPubliclyAvailable(topic.section))
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
+    }
+
+    return topic
+  }
 
   /**
    * 模块初始化时注册解析器
@@ -58,35 +129,9 @@ export class ForumTopicCommentResolver
    * @throws 当帖子不存在或被锁定时抛出 BadRequestException
    */
   async ensureCanComment(tx: Db, targetId: number) {
-    const topic = await tx.query.forumTopic.findFirst({
-      where: {
-        id: targetId,
-        deletedAt: { isNull: true },
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-      },
-      columns: { isLocked: true },
-      with: {
-        section: {
-          columns: {
-            isEnabled: true,
-            deletedAt: true,
-          },
-        },
-      },
+    const topic = await this.getTopicCommentTargetSnapshot(tx, targetId, {
+      requirePublicVisible: true,
     })
-
-    if (
-      !topic ||
-      !topic.section ||
-      topic.section.deletedAt ||
-      !topic.section.isEnabled
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '帖子不存在',
-      )
-    }
 
     if (topic.isLocked) {
       throw new BusinessException(
@@ -105,35 +150,9 @@ export class ForumTopicCommentResolver
    * @returns 目标元信息，包含所有者用户ID
    */
   async resolveMeta(tx: Db, targetId: number) {
-    const topic = await tx.query.forumTopic.findFirst({
-      where: {
-        id: targetId,
-        deletedAt: { isNull: true },
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-      },
-      columns: { userId: true, sectionId: true, title: true },
-      with: {
-        section: {
-          columns: {
-            isEnabled: true,
-            deletedAt: true,
-          },
-        },
-      },
+    const topic = await this.getTopicCommentTargetSnapshot(tx, targetId, {
+      requirePublicVisible: false,
     })
-
-    if (
-      !topic ||
-      !topic.section ||
-      topic.section.deletedAt ||
-      !topic.section.isEnabled
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '帖子不存在',
-      )
-    }
 
     return {
       ownerUserId: topic.userId,
@@ -144,7 +163,7 @@ export class ForumTopicCommentResolver
 
   async postCommentHook(
     tx: Db,
-    comment: VisibleCommentEffectPayload,
+    comment: CommentTargetHookPayload & { content: string },
     meta: CommentTargetMeta,
   ) {
     if (!meta.sectionId) {
@@ -156,6 +175,19 @@ export class ForumTopicCommentResolver
 
     await this.forumCounterService.syncTopicCommentState(tx, comment.targetId)
     await this.forumCounterService.syncSectionVisibleState(tx, meta.sectionId)
+    await this.actionLogService.createActionLogInTx(tx, {
+      userId: comment.userId,
+      actionType: ForumUserActionTypeEnum.CREATE_COMMENT,
+      targetType: ForumUserActionTargetTypeEnum.COMMENT,
+      targetId: comment.id,
+      afterData: JSON.stringify({
+        id: comment.id,
+        targetId: comment.targetId,
+        replyToId: comment.replyToId,
+        content: comment.content,
+        createdAt: comment.createdAt,
+      }),
+    })
 
     if (comment.replyToId) {
       return
@@ -188,10 +220,7 @@ export class ForumTopicCommentResolver
 
   async postDeleteCommentHook(
     tx: Db,
-    comment: {
-      userId: number
-      targetId: number
-    },
+    comment: CommentTargetHookPayload,
     meta: CommentTargetMeta,
   ) {
     if (!meta.sectionId) {
@@ -203,5 +232,18 @@ export class ForumTopicCommentResolver
 
     await this.forumCounterService.syncTopicCommentState(tx, comment.targetId)
     await this.forumCounterService.syncSectionVisibleState(tx, meta.sectionId)
+    await this.actionLogService.createActionLogInTx(tx, {
+      userId: comment.userId,
+      actionType: ForumUserActionTypeEnum.DELETE_COMMENT,
+      targetType: ForumUserActionTargetTypeEnum.COMMENT,
+      targetId: comment.id,
+      beforeData: JSON.stringify({
+        id: comment.id,
+        targetId: comment.targetId,
+        replyToId: comment.replyToId,
+        content: comment.content,
+        createdAt: comment.createdAt,
+      }),
+    })
   }
 }

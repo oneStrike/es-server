@@ -2,13 +2,19 @@ import type { Db } from '@db/core'
 import type { ForumModeratorSelect, ForumSectionSelect } from '@db/schema'
 
 import type { SQL } from 'drizzle-orm'
-import type { NormalizedModeratorScope } from './moderator.type'
+import type {
+  ForumModeratorGroupLimitOptions,
+  ForumModeratorPermissionGrant,
+  NormalizedModeratorScope,
+  NormalizeModeratorScopeOptions,
+} from './moderator.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, or } from 'drizzle-orm'
+import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm'
+import { FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE } from '../section-group/forum-section-group.constant'
 import {
   AssignForumModeratorSectionDto,
   CreateForumModeratorDto,
@@ -60,6 +66,22 @@ export class ForumModeratorService {
     return this.drizzle.schema.appUser
   }
 
+  // 对同一分组的治理写路径加事务级 advisory lock，避免并发删除和配额校验互相穿透。
+  private async lockSectionGroupsForMutation(
+    client: Db,
+    groupIds: Array<number | null | undefined>,
+  ) {
+    const uniqueGroupIds = [...new Set(groupIds.filter(Boolean) as number[])].sort(
+      (left, right) => left - right,
+    )
+
+    for (const groupId of uniqueGroupIds) {
+      await client.execute(
+        sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE}, ${groupId})`,
+      )
+    }
+  }
+
   /**
    * 归一化权限数组。
    * 仅保留仓库定义的合法权限值，并按系统标准顺序返回，避免写库时出现脏枚举或乱序数组。
@@ -96,11 +118,25 @@ export class ForumModeratorService {
   }
 
   /**
+   * 返回当前有效版主记录。
+   * moderator governance 会复用这条查询来绑定 moderatorId 与 actor userId。
+   */
+  private async getActiveModeratorByUserId(userId: number) {
+    return this.db.query.forumModerator.findFirst({
+      where: {
+        userId,
+        isEnabled: true,
+        deletedAt: { isNull: true },
+      },
+    })
+  }
+
+  /**
    * 校验目标用户存在且未软删除。
    * 创建版主前提前失败，避免事务内才发现脏 userId。
    */
-  private async ensureUserExists(userId: number) {
-    const user = await this.db.query.appUser.findFirst({
+  private async ensureUserExists(userId: number, client: Db = this.db) {
+    const user = await client.query.appUser.findFirst({
       where: {
         id: userId,
         deletedAt: { isNull: true },
@@ -120,13 +156,16 @@ export class ForumModeratorService {
    * 校验版主分组存在。
    * 仅分组版主路径允许写入 groupId，因此在角色归一化阶段完成该约束。
    */
-  private async ensureGroupExists(groupId: number) {
-    const group = await this.db.query.forumSectionGroup.findFirst({
+  private async ensureGroupExists(groupId: number, client: Db = this.db) {
+    const group = await client.query.forumSectionGroup.findFirst({
       where: {
         id: groupId,
         deletedAt: { isNull: true },
       },
-      columns: { id: true },
+      columns: {
+        id: true,
+        maxModerators: true,
+      },
     })
 
     if (!group) {
@@ -135,20 +174,61 @@ export class ForumModeratorService {
         `分组ID不存在: ${groupId}`,
       )
     }
+
+    return group
+  }
+
+  // 校验分组版主数量上限，避免分组配置只停留在展示层。
+  private async ensureGroupModeratorCapacity(
+    groupId: number,
+    options: ForumModeratorGroupLimitOptions,
+  ) {
+    const client = options.client ?? this.db
+    await this.lockSectionGroupsForMutation(client, [groupId])
+    const group = await this.ensureGroupExists(groupId, client)
+
+    if (!options.nextIsEnabled || group.maxModerators === 0) {
+      return
+    }
+
+    const moderators = await client.query.forumModerator.findMany({
+      where: {
+        groupId,
+        roleType: ForumModeratorRoleTypeEnum.GROUP,
+        isEnabled: true,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+      },
+    })
+    const effectiveCount = moderators.filter(
+      (moderator) => moderator.id !== options.excludeModeratorId,
+    ).length
+
+    if (effectiveCount >= group.maxModerators) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该分组版主数量已达上限',
+      )
+    }
   }
 
   /**
    * 校验并去重板块 ID 列表。
    * 返回值会保留调用方传入顺序，缺失板块会一次性汇总为业务异常。
    */
-  private async ensureSectionIdsExist(sectionIds: number[]) {
+  private async ensureSectionIdsExist(
+    sectionIds: number[],
+    client: Db = this.db,
+  ) {
     const uniqueSectionIds = [...new Set(sectionIds)]
 
     if (uniqueSectionIds.length === 0) {
       return uniqueSectionIds
     }
 
-    const sections = await this.db
+    const sections = await client
       .select({ id: this.forumSection.id })
       .from(this.forumSection)
       .where(
@@ -177,8 +257,11 @@ export class ForumModeratorService {
    * 查询版主当前绑定的板块作用域。
    * update/assign 路径都依赖该快照来决定增量清理与补写策略。
    */
-  private async getModeratorSectionScopes(moderatorId: number) {
-    return this.db
+  private async getModeratorSectionScopes(
+    moderatorId: number,
+    client: Db = this.db,
+  ) {
+    return client
       .select({
         sectionId: this.forumModeratorSection.sectionId,
         permissions: this.forumModeratorSection.permissions,
@@ -195,18 +278,13 @@ export class ForumModeratorService {
     input: {
       roleType?: number
       groupId?: number | null
+      isEnabled?: boolean
       permissions?: Array<number | null | undefined> | null
       sectionIds?: number[]
     },
-    options: {
-      current?: Pick<
-        ForumModeratorSelect,
-        'roleType' | 'groupId' | 'permissions'
-      >
-      currentSectionIds?: number[]
-      isCreate?: boolean
-    } = {},
+    options: NormalizeModeratorScopeOptions = {},
   ): Promise<NormalizedModeratorScope> {
+    const client = options.client ?? this.db
     const roleType = (input.roleType ?? options.current?.roleType) as
       | ForumModeratorRoleTypeEnum
       | undefined
@@ -240,12 +318,17 @@ export class ForumModeratorService {
         input.groupId === undefined
           ? (options.current?.groupId ?? null)
           : input.groupId
+      const nextIsEnabled = input.isEnabled ?? options.current?.isEnabled ?? true
 
       if (!groupId) {
         throw new BadRequestException('分组版主必须指定 groupId')
       }
 
-      await this.ensureGroupExists(groupId)
+      await this.ensureGroupModeratorCapacity(groupId, {
+        client,
+        excludeModeratorId: options.current?.id,
+        nextIsEnabled,
+      })
 
       return {
         roleType,
@@ -258,7 +341,7 @@ export class ForumModeratorService {
     const sectionIds =
       input.sectionIds === undefined
         ? [...(options.currentSectionIds ?? [])]
-        : await this.ensureSectionIdsExist(input.sectionIds)
+        : await this.ensureSectionIdsExist(input.sectionIds, client)
 
     if (options.isCreate && sectionIds.length === 0) {
       throw new BadRequestException('板块版主必须至少绑定一个板块')
@@ -301,7 +384,7 @@ export class ForumModeratorService {
     sectionIds: number[],
     customPermissions?: ForumModeratorPermissionEnum[] | null,
   ) {
-    const uniqueSectionIds = await this.ensureSectionIdsExist(sectionIds)
+    const uniqueSectionIds = await this.ensureSectionIdsExist(sectionIds, tx)
     const normalizedCustomPermissions =
       this.normalizePermissions(customPermissions)
     const existingScopes = await tx
@@ -545,10 +628,10 @@ export class ForumModeratorService {
    * 创建版主。
    * 同一用户只允许存在一条有效版主记录；若命中已软删除旧记录，则在事务内复活并重建作用域。
    */
-  async createModerator(input: CreateForumModeratorDto) {
-    await this.ensureUserExists(input.userId)
+  private async createModeratorInTx(tx: Db, input: CreateForumModeratorDto) {
+    await this.ensureUserExists(input.userId, tx)
 
-    const existing = await this.db.query.forumModerator.findFirst({
+    const existing = await tx.query.forumModerator.findFirst({
       where: {
         userId: input.userId,
       },
@@ -562,46 +645,62 @@ export class ForumModeratorService {
       )
     }
 
-    const scope = await this.normalizeScope(input, { isCreate: true })
+    const scope = await this.normalizeScope(input, {
+      client: tx,
+      isCreate: true,
+    })
+
+    const moderatorData = {
+      groupId: scope.groupId,
+      roleType: scope.roleType,
+      permissions: scope.permissions,
+      isEnabled: input.isEnabled ?? true,
+      remark: input.remark ?? null,
+    }
+
+    const moderatorId = existing?.id
+      ? existing.id
+      : (
+          await tx
+            .insert(this.forumModerator)
+            .values({
+              userId: input.userId,
+              ...moderatorData,
+            })
+            .returning({ id: this.forumModerator.id })
+        )[0].id
+
+    if (existing?.id) {
+      const result = await tx
+        .update(this.forumModerator)
+        .set({
+          ...moderatorData,
+          deletedAt: null,
+        })
+        .where(eq(this.forumModerator.id, existing.id))
+      this.drizzle.assertAffectedRows(result, '版主不存在')
+    }
+
+    if (scope.roleType === ForumModeratorRoleTypeEnum.SECTION) {
+      await this.syncModeratorSections(tx, moderatorId, scope.sectionIds)
+    } else {
+      await this.clearModeratorSections(tx, moderatorId)
+    }
+  }
+
+  /**
+   * 创建版主。
+   * 同一用户只允许存在一条有效版主记录；若命中已软删除旧记录，则在事务内复活并重建作用域。
+   */
+  async createModerator(input: CreateForumModeratorDto, tx?: Db) {
+    if (tx) {
+      await this.createModeratorInTx(tx, input)
+      return true
+    }
 
     await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const moderatorData = {
-          groupId: scope.groupId,
-          roleType: scope.roleType,
-          permissions: scope.permissions,
-          isEnabled: input.isEnabled ?? true,
-          remark: input.remark ?? null,
-        }
-
-        const moderatorId = existing?.id
-          ? existing.id
-          : (
-              await tx
-                .insert(this.forumModerator)
-                .values({
-                  userId: input.userId,
-                  ...moderatorData,
-                })
-                .returning({ id: this.forumModerator.id })
-            )[0].id
-
-        if (existing?.id) {
-          const result = await tx
-            .update(this.forumModerator)
-            .set({
-              ...moderatorData,
-              deletedAt: null,
-            })
-            .where(eq(this.forumModerator.id, existing.id))
-          this.drizzle.assertAffectedRows(result, '版主不存在')
-        }
-
-        if (scope.roleType === ForumModeratorRoleTypeEnum.SECTION) {
-          await this.syncModeratorSections(tx, moderatorId, scope.sectionIds)
-        } else {
-          await this.clearModeratorSections(tx, moderatorId)
-        }
+      this.db.transaction(async (innerTx) => {
+        await this.createModeratorInTx(innerTx, input)
       }),
     )
 
@@ -612,18 +711,24 @@ export class ForumModeratorService {
    * 根据版主申请创建板块版主。
    * 审核通过后仅授予申请板块的 section 版主身份。
    */
-  async createSectionModeratorFromApplication(input: {
-    userId: number
-    sectionId: number
-    permissions?: ForumModeratorPermissionEnum[]
-  }) {
-    return this.createModerator({
-      userId: input.userId,
-      roleType: ForumModeratorRoleTypeEnum.SECTION,
-      permissions: input.permissions,
-      sectionIds: [input.sectionId],
-      isEnabled: true,
-    })
+  async createSectionModeratorFromApplication(
+    input: {
+      userId: number
+      sectionId: number
+      permissions?: ForumModeratorPermissionEnum[]
+    },
+    tx?: Db,
+  ) {
+    return this.createModerator(
+      {
+        userId: input.userId,
+        roleType: ForumModeratorRoleTypeEnum.SECTION,
+        permissions: input.permissions,
+        sectionIds: [input.sectionId],
+        isEnabled: true,
+      },
+      tx,
+    )
   }
 
   /**
@@ -787,29 +892,136 @@ export class ForumModeratorService {
   }
 
   /**
+   * 校验版主是否对指定板块具备某项治理权限。
+   * admin 与 moderator 的分流在 governance service 中处理；本方法只负责 moderator 视角的强校验。
+   */
+  async ensureModeratorPermissionForSection(
+    userId: number,
+    sectionId: number,
+    permission: ForumModeratorPermissionEnum,
+  ): Promise<ForumModeratorPermissionGrant> {
+    const moderator = await this.getActiveModeratorByUserId(userId)
+
+    if (!moderator) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '当前用户不是可用版主',
+      )
+    }
+
+    const section = await this.db.query.forumSection.findFirst({
+      where: {
+        id: sectionId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        groupId: true,
+      },
+    })
+
+    if (!section) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块不存在',
+      )
+    }
+
+    const basePermissions = this.normalizePermissions(moderator.permissions ?? [])
+    let grantedPermissions = basePermissions
+
+    if (moderator.roleType === ForumModeratorRoleTypeEnum.GROUP) {
+      if (!section.groupId || section.groupId !== moderator.groupId) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '当前版主无权治理该板块',
+        )
+      }
+    } else if (moderator.roleType === ForumModeratorRoleTypeEnum.SECTION) {
+      const scope = await this.db.query.forumModeratorSection.findFirst({
+        where: {
+          moderatorId: moderator.id,
+          sectionId,
+        },
+        columns: {
+          permissions: true,
+        },
+      })
+
+      if (!scope) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '当前版主无权治理该板块',
+        )
+      }
+
+      grantedPermissions = this.mergePermissions(
+        basePermissions,
+        scope.permissions ?? [],
+      )
+    }
+
+    if (!grantedPermissions.includes(permission)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `当前版主缺少【${FORUM_MODERATOR_PERMISSION_LABELS[permission]}】权限`,
+      )
+    }
+
+    return {
+      moderatorId: moderator.id,
+      moderatorUserId: moderator.userId,
+      roleType: moderator.roleType,
+      sectionId: section.id,
+      grantedPermissions,
+    }
+  }
+
+  /**
    * 更新版主信息。
    * 角色切换会触发作用域重算，并在同一事务内同步清理或重建板块绑定。
    */
   async updateModerator(input: UpdateForumModeratorDto) {
-    const moderator = await this.db.query.forumModerator.findFirst({
-      where: { id: input.id, deletedAt: { isNull: true } },
-    })
-
-    if (!moderator) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '版主不存在',
-      )
-    }
-
-    const currentSectionScopes = await this.getModeratorSectionScopes(input.id)
-    const scope = await this.normalizeScope(input, {
-      current: moderator,
-      currentSectionIds: currentSectionScopes.map((item) => item.sectionId),
-    })
-
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        const moderator = await tx.query.forumModerator.findFirst({
+          where: { id: input.id, deletedAt: { isNull: true } },
+        })
+
+        if (!moderator) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '版主不存在',
+          )
+        }
+
+        const targetRoleType = (input.roleType ?? moderator.roleType) as
+          | ForumModeratorRoleTypeEnum
+          | undefined
+        const targetGroupId =
+          targetRoleType === ForumModeratorRoleTypeEnum.GROUP
+            ? input.groupId === undefined
+              ? moderator.groupId
+              : input.groupId
+            : null
+
+        await this.lockSectionGroupsForMutation(tx, [
+          moderator.roleType === ForumModeratorRoleTypeEnum.GROUP
+            ? moderator.groupId
+            : null,
+          targetGroupId,
+        ])
+
+        const currentSectionScopes = await this.getModeratorSectionScopes(
+          input.id,
+          tx,
+        )
+        const scope = await this.normalizeScope(input, {
+          client: tx,
+          current: moderator,
+          currentSectionIds: currentSectionScopes.map((item) => item.sectionId),
+        })
+
         const result = await tx
           .update(this.forumModerator)
           .set({

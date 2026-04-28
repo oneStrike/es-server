@@ -24,6 +24,9 @@ export const CONFIG_SECURITY_META: Record<
   contentReviewPolicy: {
     sensitivePaths: [],
   },
+  forumHashtagConfig: {
+    sensitivePaths: [],
+  },
   uploadConfig: {
     sensitivePaths: ['qiniu.accessKey', 'qiniu.secretKey', 'superbed.token'],
   },
@@ -122,6 +125,12 @@ export const DEFAULT_CONFIG = {
     },
     /** 是否记录敏感词命中明细（默认：记录） */
     recordHits: true,
+  },
+
+  // forum 话题（hashtag）配置
+  forumHashtagConfig: {
+    /** 话题创建模式（1=仅引用已存在且可用话题，2=正文中允许自动创建话题） */
+    creationMode: 2,
   },
 
   // 上传配置

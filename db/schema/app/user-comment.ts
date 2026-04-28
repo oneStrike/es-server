@@ -2,8 +2,10 @@
  * Auto-converted from legacy schema.
  */
 
+import { sql } from 'drizzle-orm'
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -42,10 +44,19 @@ export const userComment = pgTable(
      */
     content: text().notNull(),
     /**
+     * canonical 正文文档。
+     * 评论正文的唯一真相源；运行时不再依赖原始 content 作为输入来源。
+     */
+    body: jsonb().notNull(),
+    /**
      * 评论正文解析 token 缓存
      * 用于持久化 EmojiParser 输出，读路径可直接复用
      */
     bodyTokens: jsonb(),
+    /**
+     * 正文版本（1=v1）。
+     */
+    bodyVersion: smallint().default(1).notNull(),
     /**
      * 楼层号
      */
@@ -226,6 +237,17 @@ export const userComment = pgTable(
      * 删除时间索引
      */
     index('user_comment_deleted_at_idx').on(table.deletedAt),
+    /**
+     * 正文版本索引
+     */
+    index('user_comment_body_version_idx').on(table.bodyVersion),
+    /**
+     * 正文版本闭集约束
+     */
+    check(
+      'user_comment_body_version_valid_chk',
+      sql`${table.bodyVersion} in (1)`,
+    ),
   ],
 )
 
