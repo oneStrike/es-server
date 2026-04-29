@@ -2,17 +2,13 @@ import type { JsonValue } from '@libs/platform/utils'
 import { ForumHashtagBriefDto } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
 import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
-import { BodyInputModeEnum } from '@libs/interaction/body/body.constant'
 import {
-  BodyInputModeDto,
-  OptionalBodyDocDto,
-  PlainTextBodyInputDto,
+  HtmlBodyInputDto,
 } from '@libs/interaction/body/dto/body.dto'
 import {
   CommentOnlyAuthorDto,
   CommentSortDto,
 } from '@libs/interaction/comment/dto/comment.dto'
-import { MentionDraftDto } from '@libs/interaction/mention/dto/mention.dto'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -34,8 +30,6 @@ import {
   BaseAppUserDto,
 } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { Type } from 'class-transformer'
-import { IsArray, IsDefined, ValidateIf, ValidateNested } from 'class-validator'
 
 /**
  * 论坛主题基础 DTO。
@@ -51,16 +45,26 @@ export class BaseForumTopicDto extends BaseDto {
   title!: string
 
   @StringProperty({
-    description: '主题正文纯文本派生值',
+    description: '主题正文 HTML；对外唯一正文表示',
+    example:
+      '<p>我想学习 <span data-node="hashtag" data-hashtag-id="77" data-slug="typescript">#TypeScript</span></p>',
+    required: true,
+  })
+  html!: string
+
+  @StringProperty({
+    description: '主题正文纯文本派生值；仅供内部搜索、摘要和审核链路使用',
     example: '我想学习TypeScript，有什么好的学习资源推荐吗？',
     required: true,
+    contract: false,
   })
   content!: string
 
   @JsonProperty({
-    description: '主题 canonical 正文文档',
+    description: '主题 canonical 正文文档；仅供内部链路使用',
     required: true,
     validation: false,
+    contract: false,
     example: {
       type: 'doc',
       content: [
@@ -80,30 +84,6 @@ export class BaseForumTopicDto extends BaseDto {
     },
   })
   body!: JsonValue
-
-  @JsonProperty({
-    description: '主题正文解析 token（表情与提及混合输出）',
-    required: false,
-    validation: false,
-    example: [
-      { type: 'text', text: '欢迎来到论坛 ' },
-      {
-        type: 'mentionUser',
-        userId: 9,
-        nickname: '测试用户',
-        text: '@测试用户',
-      },
-      {
-        type: 'forumHashtag',
-        hashtagId: 77,
-        slug: 'typescript',
-        displayName: 'TypeScript',
-        text: '#TypeScript',
-      },
-      { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
-    ],
-  })
-  bodyTokens?: JsonValue | null
 
   @ArrayProperty({
     description: '主题图片列表',
@@ -358,29 +338,7 @@ export class BaseForumTopicDto extends BaseDto {
  * 论坛主题可编辑字段 DTO。
  * 统一约束标题、正文和可选媒体列表，避免 app/admin 入口重复声明。
  */
-class TopicBodyWritableFieldsDto extends IntersectionType(
-  BodyInputModeDto,
-  OptionalBodyDocDto,
-  PlainTextBodyInputDto,
-) {
-  @ValidateIf(
-    (value: TopicBodyWritableFieldsDto) =>
-      value.bodyMode === BodyInputModeEnum.PLAIN,
-  )
-  @IsDefined({ message: 'bodyMode=plain 时 mentions 不能为空' })
-  @IsArray({ message: 'mentions 必须是数组类型' })
-  @ValidateNested({ each: true })
-  @Type(() => MentionDraftDto)
-  @ArrayProperty({
-    description:
-      '正文中的结构化提及列表；仅 bodyMode=plain 时必传，无提及时传空数组',
-    required: false,
-    itemClass: MentionDraftDto,
-    validation: false,
-    default: [],
-  })
-  mentions?: MentionDraftDto[]
-}
+class TopicBodyWritableFieldsDto extends HtmlBodyInputDto {}
 
 export class CreateForumTopicWritableFieldsDto extends IntersectionType(
   PartialType(PickType(BaseForumTopicDto, ['title'] as const)),
@@ -540,9 +498,7 @@ export class PublicForumTopicDetailDto extends IntersectionType(
     'sectionId',
     'userId',
     'title',
-    'body',
-    'content',
-    'bodyTokens',
+    'html',
     'geoCountry',
     'geoProvince',
     'geoCity',
@@ -685,9 +641,7 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'sectionId',
   'userId',
   'title',
-  'body',
-  'content',
-  'bodyTokens',
+  'html',
   'images',
   'videos',
   'isPinned',

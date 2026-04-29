@@ -1,5 +1,9 @@
 # Forum Topic / Comment Body Contract Breaking Change
 
+> 本文档描述的是旧一轮 `plain/rich -> canonical body` 的正文模型切换。
+> 当前生效的最新协议硬切说明请优先查看：
+> `docs/breaking-changes/forum-body-html-hard-cutover.md`
+
 ## Scope
 
 - API:

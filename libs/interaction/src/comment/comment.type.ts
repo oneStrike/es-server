@@ -90,5 +90,6 @@ export interface CommentBodyWriteResult extends CompiledBodyResult {}
  * - 在 body compiler 结果上补充 hashtag 引用事实，供 forum-topic comment 写链路复用。
  */
 export interface MaterializedCommentBodyWriteResult extends CommentBodyWriteResult {
+  html: string
   hashtagFacts: MaterializedForumHashtagFact[]
 }

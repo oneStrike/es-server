@@ -4,7 +4,7 @@ import { DECORATORS } from '@nestjs/swagger/dist/constants'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseCommentDto } from './comment.dto'
 
-describe('comment.dto sensitive-word hit contract', () => {
+describe('comment.dto html contract', () => {
   it('transforms sensitiveWordHits into structured hit objects', () => {
     const dto = plainToInstance(BaseCommentDto, {
       sensitiveWordHits: [
@@ -21,91 +21,74 @@ describe('comment.dto sensitive-word hit contract', () => {
     expect(dto.sensitiveWordHits?.[0]).toBeInstanceOf(BaseSensitiveWordHitDto)
   })
 
-  it('documents create-comment content as raw input text instead of a derived field', () => {
+  it('documents create-comment html as the only write contract', () => {
     const originalNodeEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'development'
     jest.resetModules()
 
     const { CreateCommentBodyDto } = require('./comment.dto')
-    const metadata = Reflect.getMetadata(
+    const htmlMetadata = Reflect.getMetadata(
       DECORATORS.API_MODEL_PROPERTIES,
       CreateCommentBodyDto.prototype,
-      'content',
-    ) as {
-      description?: string
-    }
-
-    process.env.NODE_ENV = originalNodeEnv
-
-    expect(metadata?.description).toBe(
-      '评论正文纯文本；写入时为原始输入，读取时为 canonical body 派生值',
-    )
-  })
-
-  it('documents create-comment mentions as required structured metadata', () => {
-    const originalNodeEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
-    jest.resetModules()
-
-    const { CreateCommentBodyDto } = require('./comment.dto')
-    const metadata = Reflect.getMetadata(
-      DECORATORS.API_MODEL_PROPERTIES,
-      CreateCommentBodyDto.prototype,
-      'mentions',
+      'html',
     ) as {
       description?: string
       required?: boolean
     }
+    const contentMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      CreateCommentBodyDto.prototype,
+      'content',
+    )
 
     process.env.NODE_ENV = originalNodeEnv
 
-    expect(metadata?.description).toBe(
-      '正文中的结构化提及列表；无提及时传空数组',
-    )
-    expect(metadata?.required).toBe(true)
+    expect(htmlMetadata?.description).toBe('评论正文 HTML；对外唯一正文表示')
+    expect(htmlMetadata?.required).toBe(true)
+    expect(contentMetadata).toBeUndefined()
   })
 
-  it('documents reply-comment mentions as required structured metadata', () => {
+  it('documents reply-comment html as the only write contract', () => {
     const originalNodeEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'development'
     jest.resetModules()
 
     const { ReplyCommentBodyDto } = require('./comment.dto')
-    const metadata = Reflect.getMetadata(
+    const htmlMetadata = Reflect.getMetadata(
       DECORATORS.API_MODEL_PROPERTIES,
       ReplyCommentBodyDto.prototype,
-      'mentions',
+      'html',
     ) as {
       description?: string
       required?: boolean
     }
+    const mentionsMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ReplyCommentBodyDto.prototype,
+      'mentions',
+    )
 
     process.env.NODE_ENV = originalNodeEnv
 
-    expect(metadata?.description).toBe(
-      '正文中的结构化提及列表；无提及时传空数组',
-    )
-    expect(metadata?.required).toBe(true)
+    expect(htmlMetadata?.description).toBe('评论正文 HTML；对外唯一正文表示')
+    expect(htmlMetadata?.required).toBe(true)
+    expect(mentionsMetadata).toBeUndefined()
   })
 
-  it('documents comment bodyTokens examples with forum hashtag nodes', () => {
+  it('does not expose comment bodyTokens in public comment dto', () => {
     const originalNodeEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'development'
     jest.resetModules()
 
-    const { BaseCommentDto } = require('./comment.dto')
+    const { TargetCommentItemDto } = require('./comment.dto')
     const metadata = Reflect.getMetadata(
       DECORATORS.API_MODEL_PROPERTIES,
-      BaseCommentDto.prototype,
+      TargetCommentItemDto.prototype,
       'bodyTokens',
-    ) as {
-      example?: Array<{ type?: string }>
-    }
+    )
 
     process.env.NODE_ENV = originalNodeEnv
 
-    expect(
-      metadata?.example?.some((item) => item.type === 'forumHashtag'),
-    ).toBe(true)
+    expect(metadata).toBeUndefined()
   })
 })

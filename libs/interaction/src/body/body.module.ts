@@ -1,6 +1,7 @@
 import { EmojiModule } from '@libs/interaction/emoji/emoji.module'
 import { Module } from '@nestjs/common'
 import { BodyCompilerService } from './body-compiler.service'
+import { BodyHtmlCodecService } from './body-html-codec.service'
 import { BodyValidatorService } from './body-validator.service'
 
 /**
@@ -9,7 +10,7 @@ import { BodyValidatorService } from './body-validator.service'
  */
 @Module({
   imports: [EmojiModule],
-  providers: [BodyCompilerService, BodyValidatorService],
-  exports: [BodyCompilerService, BodyValidatorService],
+  providers: [BodyCompilerService, BodyValidatorService, BodyHtmlCodecService],
+  exports: [BodyCompilerService, BodyValidatorService, BodyHtmlCodecService],
 })
 export class BodyModule {}

@@ -1,10 +1,8 @@
 import type { JsonValue } from '@libs/platform/utils'
 import {
-  EnumProperty,
   JsonProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BodyInputModeEnum } from '../body.constant'
 
 /**
  * canonical body 文档 DTO。
@@ -47,51 +45,16 @@ export class BodyDocDto {
 }
 
 /**
- * topic 正文输入模式 DTO。
- * - `plain` 表示提交纯文本；`rich` 表示提交结构化正文。
+ * 正文 HTML 输入 DTO。
+ * - 对外唯一写入合同，纯文本编辑器也必须输出最小 HTML。
  */
-export class BodyInputModeDto {
-  @EnumProperty({
-    description: '正文输入模式（plain=纯文本；rich=富文本）',
-    required: true,
-    enum: BodyInputModeEnum,
-    example: BodyInputModeEnum.PLAIN,
-  })
-  bodyMode!: BodyInputModeEnum
-}
-
-/**
- * topic 纯文本正文 DTO。
- * - 仅在 `bodyMode=plain` 时使用。
- */
-export class PlainTextBodyInputDto {
+export class HtmlBodyInputDto {
   @StringProperty({
-    description: '纯文本正文；仅 bodyMode=plain 时使用',
-    required: false,
+    description: '正文 HTML；唯一写入合同，纯文本编辑器也需输出最小 HTML',
+    required: true,
     minLength: 1,
-    example: '欢迎来到论坛 @测试用户 :smile:',
+    example:
+      '<p>欢迎 <span data-node="mention" data-user-id="9" data-nickname="测试用户">@测试用户</span></p>',
   })
-  plainText?: string
-}
-
-/**
- * 可选 body DTO。
- * - 仅在 `bodyMode=rich` 时使用。
- */
-export class OptionalBodyDocDto {
-  @JsonProperty({
-    description: '结构化正文文档；仅 bodyMode=rich 时使用',
-    required: false,
-    validation: false,
-    example: {
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [{ type: 'text', text: '富文本主题正文' }],
-        },
-      ],
-    },
-  })
-  body?: JsonValue
+  html!: string
 }

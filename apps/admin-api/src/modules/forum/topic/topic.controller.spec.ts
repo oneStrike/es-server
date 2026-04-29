@@ -12,7 +12,7 @@ type TopicControllerPrivateApi = {
 }
 
 describe('ForumTopicController detail mapping', () => {
-  it('keeps bodyTokens on the admin detail payload', () => {
+  it('maps admin detail payload to html-only body exposure', () => {
     const controller = new ForumTopicController(
       {} as never,
       {} as never,
@@ -25,21 +25,12 @@ describe('ForumTopicController detail mapping', () => {
         sectionId: 2,
         userId: 3,
         title: '主题标题',
-        body: {
-          type: 'doc',
-          content: [
-            {
-              type: 'paragraph',
-              content: [{ type: 'text', text: '正文' }],
-            },
-          ],
-        },
-        content: '正文',
-        bodyTokens: [{ type: 'text', text: '正文' }],
+        html: '<p>正文</p>',
       },
     )
 
-    expect(result.bodyTokens).toEqual([{ type: 'text', text: '正文' }])
+    expect(result.html).toBe('<p>正文</p>')
+    expect(result).not.toHaveProperty('bodyTokens')
   })
 
   it('documents admin create response data as IdDto instead of boolean', () => {

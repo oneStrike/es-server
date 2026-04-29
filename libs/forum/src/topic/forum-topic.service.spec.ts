@@ -1,4 +1,5 @@
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+import { BadRequestException } from '@nestjs/common'
 import { ForumTopicService } from './forum-topic.service'
 
 type ForumTopicServicePrivateApi = {
@@ -27,15 +28,7 @@ type ForumTopicServicePrivateApi = {
   materializeTopicBodyInTx: (
     tx: unknown,
     input: {
-      bodyMode: 'plain' | 'rich'
-      plainText?: string
-      body?: unknown
-      mentions?: Array<{
-        userId: number
-        nickname: string
-        start: number
-        end: number
-      }>
+      html?: string
     },
     actorUserId: number,
   ) => Promise<{
@@ -384,6 +377,7 @@ describe('forumTopicService helpers', () => {
       )
       .mockResolvedValue({
         plainText: '测试正文',
+        html: '<p>测试正文</p>',
         body: {
           type: 'doc',
           content: [],
@@ -413,6 +407,19 @@ describe('forumTopicService helpers', () => {
   }
 
   function createMaterializeTopicBodyHarness() {
+    const bodyHtmlCodecService = {
+      parseHtmlOrThrow: jest.fn((html: string) => ({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: html }],
+          },
+        ],
+      })),
+      renderHtml: jest.fn((body: { content?: Array<{ content?: Array<{ text?: string }> }> }) =>
+        `<p>${body.content?.[0]?.content?.[0]?.text ?? ''}</p>`),
+    }
     const bodyCompilerService = {
       compile: jest.fn(async (body: unknown) => ({
         body,
@@ -444,7 +451,7 @@ describe('forumTopicService helpers', () => {
       {} as never,
       {} as never,
       {} as never,
-      {} as never,
+      bodyHtmlCodecService as never,
       bodyCompilerService as never,
       {} as never,
       {} as never,
@@ -455,6 +462,7 @@ describe('forumTopicService helpers', () => {
 
     return {
       service,
+      bodyHtmlCodecService,
       bodyCompilerService,
       forumHashtagBodyService,
     }
@@ -747,65 +755,38 @@ describe('forumTopicService helpers', () => {
     )
   })
 
-  it('requires explicit mention metadata when materializing plain topic body', async () => {
+  it('rejects blank topic html through protocol-layer bad request', async () => {
     const { service } = createMaterializeTopicBodyHarness()
 
     await expect(
       (service as unknown as ForumTopicServicePrivateApi).materializeTopicBodyInTx(
         {} as never,
         {
-          bodyMode: 'plain',
-          plainText: '欢迎 @测试用户',
+          html: '   ',
         },
         9,
       ),
-    ).rejects.toMatchObject({
-      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      message: 'bodyMode=plain 时必须提供 mentions；无提及时请传空数组',
-    })
+    ).rejects.toThrow(BadRequestException)
   })
 
-  it('reports missing plainText for plain topic body through business codes', async () => {
-    const { service } = createMaterializeTopicBodyHarness()
-
-    await expect(
-      (service as unknown as ForumTopicServicePrivateApi).materializeTopicBodyInTx(
-        {} as never,
-        {
-          bodyMode: 'plain',
-          plainText: '   ',
-          mentions: [],
-        },
-        9,
-      ),
-    ).rejects.toMatchObject({
-      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      message: 'bodyMode=plain 时必须提供 plainText',
-    })
-  })
-
-  it('materializes plain topic body into structured mention and emoji nodes before compilation', async () => {
-    const { forumHashtagBodyService, service } = createMaterializeTopicBodyHarness()
+  it('materializes topic html into canonical body before hashtag processing', async () => {
+    const { bodyHtmlCodecService, forumHashtagBodyService, service } =
+      createMaterializeTopicBodyHarness()
 
     await (
       service as unknown as ForumTopicServicePrivateApi
     ).materializeTopicBodyInTx(
       {} as never,
       {
-        bodyMode: 'plain',
-        plainText: '欢迎 @测试用户 使用 :smile:\n第二行😀',
-        mentions: [
-          {
-            userId: 9,
-            nickname: '测试用户',
-            start: 3,
-            end: 8,
-          },
-        ],
+        html: '<p>欢迎来到论坛</p>',
       },
       9,
     )
 
+    expect(bodyHtmlCodecService.parseHtmlOrThrow).toHaveBeenCalledWith(
+      '<p>欢迎来到论坛</p>',
+      'topic',
+    )
     expect(forumHashtagBodyService.materializeBodyInTx).toHaveBeenCalledWith(
       expect.objectContaining({
         body: {
@@ -813,15 +794,7 @@ describe('forumTopicService helpers', () => {
           content: [
             {
               type: 'paragraph',
-              content: [
-                { type: 'text', text: '欢迎 ' },
-                { type: 'mentionUser', userId: 9, nickname: '测试用户' },
-                { type: 'text', text: ' 使用 ' },
-                { type: 'emojiCustom', shortcode: 'smile' },
-                { type: 'hardBreak' },
-                { type: 'text', text: '第二行' },
-                { type: 'emojiUnicode', unicodeSequence: '😀' },
-              ],
+              content: [{ type: 'text', text: '<p>欢迎来到论坛</p>' }],
             },
           ],
         },
@@ -953,9 +926,8 @@ describe('forumTopicService helpers', () => {
       service.createForumTopic({
         sectionId: 3,
         userId: 12,
-        bodyMode: 'plain',
-        plainText: '测试正文',
-      } as never),
+        html: '<p>测试正文</p>',
+      }),
     ).resolves.toEqual({ id: 33 })
 
     expect(forumPermissionService.ensureUserCanCreateTopic).toHaveBeenCalledWith(
@@ -981,9 +953,8 @@ describe('forumTopicService helpers', () => {
       service.createForumTopic({
         sectionId: 3,
         userId: 12,
-        bodyMode: 'plain',
-        plainText: '测试正文',
-      } as never),
+        html: '<p>测试正文</p>',
+      }),
     ).rejects.toMatchObject({
       code: BusinessErrorCode.RESOURCE_NOT_FOUND,
       message: '板块不存在或已禁用',

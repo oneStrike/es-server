@@ -7,15 +7,9 @@ type CommentServicePrivateApi = {
   compensateVisibleCommentEffects: (...args: unknown[]) => Promise<void>
   materializeCommentBodyInTx: (
     tx: unknown,
-    content: string,
+    html: string,
     actorUserId: number,
     targetType: number,
-    mentions?: Array<{
-      userId: number
-      nickname: string
-      start: number
-      end: number
-    }>,
   ) => Promise<{
     body: {
       type: 'doc'
@@ -66,8 +60,18 @@ function createCommentServiceHarness() {
 }
 
 function createMaterializeCommentBodyHarness() {
-  const bodyValidatorService = {
-    validateBodyOrThrow: jest.fn((body: unknown) => body),
+  const bodyHtmlCodecService = {
+    parseHtmlOrThrow: jest.fn((html: string) => ({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: html }],
+        },
+      ],
+    })),
+    renderHtml: jest.fn((body: { content?: Array<{ content?: Array<{ text?: string }> }> }) =>
+      `<p>${body.content?.[0]?.content?.[0]?.text ?? ''}</p>`),
   }
   const bodyCompilerService = {
     compile: jest.fn(async (body: unknown) => ({
@@ -97,7 +101,7 @@ function createMaterializeCommentBodyHarness() {
     {} as never,
     {} as never,
     {} as never,
-    bodyValidatorService as never,
+    bodyHtmlCodecService as never,
     bodyCompilerService as never,
     {} as never,
     {} as never,
@@ -108,6 +112,7 @@ function createMaterializeCommentBodyHarness() {
 
   return {
     service,
+    bodyHtmlCodecService,
     forumHashtagBodyService,
   }
 }
@@ -173,7 +178,7 @@ describe('CommentService mention notification coordination', () => {
     ).toHaveBeenCalledTimes(1)
   })
 
-  it('requires explicit mention metadata when materializing plain comment body', async () => {
+  it('rejects blank comment html before materialization', async () => {
     const harness = createMaterializeCommentBodyHarness()
 
     await expect(
@@ -181,33 +186,29 @@ describe('CommentService mention notification coordination', () => {
         harness.service as unknown as CommentServicePrivateApi
       ).materializeCommentBodyInTx(
         {} as never,
-        '欢迎 @测试用户',
+        '   ',
         9,
         5,
       ),
-    ).rejects.toThrow('mentions')
+    ).rejects.toThrow('html 不能为空')
   })
 
-  it('materializes plain comment body into structured mention and emoji nodes before compilation', async () => {
+  it('materializes comment html into canonical body before hashtag processing', async () => {
     const harness = createMaterializeCommentBodyHarness()
 
     await (
       harness.service as unknown as CommentServicePrivateApi
     ).materializeCommentBodyInTx(
       {} as never,
-      '欢迎 @测试用户 使用 :smile:\n第二行😀',
+      '<p>评论正文</p>',
       9,
       5,
-      [
-        {
-          userId: 9,
-          nickname: '测试用户',
-          start: 3,
-          end: 8,
-        },
-      ],
     )
 
+    expect(harness.bodyHtmlCodecService.parseHtmlOrThrow).toHaveBeenCalledWith(
+      '<p>评论正文</p>',
+      'comment',
+    )
     expect(harness.forumHashtagBodyService.materializeBodyInTx).toHaveBeenCalledWith(
       expect.objectContaining({
         body: {
@@ -215,15 +216,7 @@ describe('CommentService mention notification coordination', () => {
           content: [
             {
               type: 'paragraph',
-              content: [
-                { type: 'text', text: '欢迎 ' },
-                { type: 'mentionUser', userId: 9, nickname: '测试用户' },
-                { type: 'text', text: ' 使用 ' },
-                { type: 'emojiCustom', shortcode: 'smile' },
-                { type: 'hardBreak' },
-                { type: 'text', text: '第二行' },
-                { type: 'emojiUnicode', unicodeSequence: '😀' },
-              ],
+              content: [{ type: 'text', text: '<p>评论正文</p>' }],
             },
           ],
         },

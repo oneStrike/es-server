@@ -1,10 +1,9 @@
-import type { JsonValue } from '@libs/platform/utils'
 import type { EmojiParseToken, EmojiRecentUsageItem } from '../emoji/emoji.type'
 import type {
   MentionDraftSnapshot,
   NormalizedMentionDraft,
 } from '../mention/mention.type'
-import type { BodyInputModeEnum, BodySceneEnum } from './body.constant'
+import type { BodySceneEnum } from './body.constant'
 
 /**
  * 文本 mark。
@@ -207,33 +206,6 @@ export interface CompiledBodyResult {
   mentionFacts: NormalizedMentionDraft[]
   emojiRecentUsageItems: EmojiRecentUsageItem[]
 }
-
-/**
- * topic 纯文本写入输入。
- * - 用于在 service 内把双模 DTO 收敛为明确的入站语义。
- */
-export interface TopicPlainBodyWriteInput {
-  bodyMode: BodyInputModeEnum.PLAIN
-  plainText: string
-  mentions?: MentionDraftSnapshot[]
-}
-
-/**
- * topic 富文本写入输入。
- * - 要求客户端直接提交 canonical body。
- */
-export interface TopicRichBodyWriteInput {
-  bodyMode: BodyInputModeEnum.RICH
-  body: JsonValue
-}
-
-/**
- * topic 双模写入语义。
- * - 仅供内部服务链路收敛 DTO 使用。
- */
-export type TopicBodyWriteInput =
-  | TopicPlainBodyWriteInput
-  | TopicRichBodyWriteInput
 
 /**
  * migration 辅助输入。

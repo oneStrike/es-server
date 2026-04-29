@@ -47,7 +47,13 @@ export const forumTopic = pgTable(
      */
     title: varchar({ length: 200 }).notNull(),
     /**
-     * 内容
+     * 正文 HTML。
+     * 对外唯一正文表示，纯文本编辑器也需输出最小 HTML。
+     */
+    html: text().notNull(),
+    /**
+     * 正文纯文本派生列。
+     * 供搜索、摘要、审核与摘录链路复用，不再表示客户端原始输入。
      */
     content: text().notNull(),
     /**
@@ -55,11 +61,6 @@ export const forumTopic = pgTable(
      * 主题正文的唯一真相源；运行时不再依赖原始 content 作为输入来源。
      */
     body: jsonb().notNull(),
-    /**
-     * 正文解析 token 缓存
-     * 存储 EmojiParser 结果，供详情渲染直接使用
-     */
-    bodyTokens: jsonb(),
     /**
      * 正文版本。
      * 1=当前 canonical body v1

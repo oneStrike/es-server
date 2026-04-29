@@ -1,16 +1,6 @@
 import { EmojiSceneEnum } from '../emoji/emoji.constant'
 
 /**
- * 正文输入模式。
- * - `plain` 表示客户端提交纯文本，由服务端包装成 canonical body。
- * - `rich` 表示客户端直接提交结构化富文本 body。
- */
-export enum BodyInputModeEnum {
-  PLAIN = 'plain',
-  RICH = 'rich',
-}
-
-/**
  * 正文场景。
  * - `topic` 使用更宽的富文本 schema。
  * - `comment` 只允许受限的纯文本增强 schema。

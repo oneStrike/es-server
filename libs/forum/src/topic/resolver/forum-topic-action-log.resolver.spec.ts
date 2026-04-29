@@ -115,6 +115,7 @@ describe('forum topic action-log resolver hooks', () => {
         { publishInTx: jest.fn() },
         { buildTopicLikedEvent: jest.fn() },
         {},
+        {},
         actionLogService,
       ],
     ) as ForumTopicLikeResolver
@@ -174,6 +175,7 @@ describe('forum topic action-log resolver hooks', () => {
         { registerResolver: jest.fn() },
         { publishInTx: jest.fn() },
         { buildTopicFavoritedEvent: jest.fn() },
+        {},
         {},
         {},
         actionLogService,

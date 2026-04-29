@@ -6,6 +6,7 @@ import type {
   BodyTextMark,
 } from './body.type'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { assertSafeBodyLinkHref } from './body-link.helper'
 import {
   BODY_TEXT_MARK_TYPES,
   BodySceneEnum,
@@ -254,12 +255,12 @@ export class BodyValidatorService {
       }
 
       if (mark.type === 'link') {
-        if (typeof mark.href !== 'string' || mark.href.trim().length === 0) {
+        if (typeof mark.href !== 'string') {
           throw new BadRequestException(`${nextPath}.href 不能为空`)
         }
         return {
           type: 'link',
-          href: mark.href.trim(),
+          href: assertSafeBodyLinkHref(mark.href),
         }
       }
 

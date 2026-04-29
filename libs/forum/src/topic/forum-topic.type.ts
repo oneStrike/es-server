@@ -1,8 +1,6 @@
 import type { ForumTopicSelect } from '@db/schema'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
-import type { MentionDraftSnapshot } from '@libs/interaction/mention/mention.type'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
-import type { JsonValue } from '@libs/platform/utils'
 import type { MaterializedForumHashtagFact } from '../hashtag/forum-hashtag.type'
 
 /**
@@ -62,13 +60,10 @@ export type PublicTopicPageRow = Pick<
 
 /**
  * topic 正文写入字段。
- * - 对应 DTO 中的 `bodyMode + plainText/body` 组合。
+ * - 对应 DTO 中的 HTML-only 正文合同。
  */
 export interface TopicBodyWriteFields {
-  bodyMode: 'plain' | 'rich'
-  plainText?: string
-  body?: JsonValue
-  mentions?: MentionDraftSnapshot[]
+  html: string
 }
 
 /**
@@ -82,5 +77,6 @@ export interface TopicBodyWriteResult extends CompiledBodyResult {}
  * - 在 body compiler 结果上补充 hashtag 引用事实，供 topic 写路径统一复用。
  */
 export interface MaterializedTopicBodyWriteResult extends TopicBodyWriteResult {
+  html: string
   hashtagFacts: MaterializedForumHashtagFact[]
 }

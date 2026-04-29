@@ -39,7 +39,7 @@ export function extractPlainTextFromRichTextContent(content: string) {
  * 统一清洗富文本提纯后的标题候选文本。
  * 负责解码常见 HTML 实体，并把连续空白折叠为单个空格。
  */
-function normalizeRichTextPlainText(text: string) {
+export function normalizeRichTextPlainText(text: string) {
   return decodeHtmlEntities(text)
     .replace(/\s+/g, ' ')
     .trim()
@@ -49,7 +49,7 @@ function normalizeRichTextPlainText(text: string) {
  * 解码富文本正文里高频出现的 HTML 实体。
  * 仅覆盖标题/摘要链路常见转义，避免把标签原文带进读取侧文本。
  */
-function decodeHtmlEntities(text: string) {
+export function decodeHtmlEntities(text: string) {
   return text
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')

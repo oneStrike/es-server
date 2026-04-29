@@ -631,9 +631,7 @@ export class ForumHashtagService {
           topicId: this.forumTopic.id,
           topicTitle: this.forumTopic.title,
           userId: this.userComment.userId,
-          body: this.userComment.body,
-          content: this.userComment.content,
-          bodyTokens: this.userComment.bodyTokens,
+          html: this.userComment.html,
           likeCount: this.userComment.likeCount,
           createdAt: this.userComment.createdAt,
         })
@@ -663,8 +661,6 @@ export class ForumHashtagService {
     return {
       list: rows.map((item) => ({
         ...item,
-        body: item.body,
-        bodyTokens: item.bodyTokens,
         user: userMap.get(item.userId),
       })),
       total,

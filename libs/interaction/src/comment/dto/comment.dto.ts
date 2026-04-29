@@ -1,5 +1,4 @@
 import type { JsonValue } from '@libs/platform/utils'
-import { RequiredMentionDraftListDto } from '@libs/interaction/mention/dto/mention.dto'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -19,25 +18,24 @@ import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from '../comment.constant'
 
 /**
- * 评论正文纯文本字段来源。
- * - 写入时表示客户端提交的原始纯文本。
- * - 读取时表示 canonical body 派生的纯文本。
+ * 评论正文 HTML 字段来源。
+ * - 对外读写统一使用 HTML，不再暴露 raw content / bodyTokens。
  */
-class CommentContentFieldDto {
+class CommentHtmlFieldDto {
   @StringProperty({
-    description:
-      '评论正文纯文本；写入时为原始输入，读取时为 canonical body 派生值',
-    example: '写得很棒 #TypeScript',
+    description: '评论正文 HTML；对外唯一正文表示',
+    example:
+      '<p>写得很棒 <span data-node="hashtag" data-hashtag-id="77" data-slug="typescript">#TypeScript</span></p>',
     required: true,
     minLength: 1,
     maxLength: 2000,
   })
-  content!: string
+  html!: string
 }
 
 export class BaseCommentDto extends IntersectionType(
   BaseDto,
-  CommentContentFieldDto,
+  CommentHtmlFieldDto,
 ) {
   @EnumProperty({
     description:
@@ -65,9 +63,10 @@ export class BaseCommentDto extends IntersectionType(
   userId!: number
 
   @JsonProperty({
-    description: '评论 canonical 正文文档',
+    description: '评论 canonical 正文文档；仅供内部链路使用',
     required: true,
     validation: false,
+    contract: false,
     example: {
       type: 'doc',
       content: [
@@ -88,36 +87,13 @@ export class BaseCommentDto extends IntersectionType(
   })
   body!: JsonValue
 
-  @JsonProperty({
-    description: '评论正文解析 token（表情与提及混合输出）',
-    required: false,
-    validation: false,
-    example: [
-      { type: 'text', text: 'hello ' },
-      {
-        type: 'mentionUser',
-        userId: 9,
-        nickname: '测试用户',
-        text: '@测试用户',
-      },
-      {
-        type: 'emojiCustom',
-        emojiAssetId: 1001,
-        shortcode: 'smile',
-        packCode: 'default',
-        imageUrl: 'https://cdn.example.com/emoji/smile.gif',
-        isAnimated: true,
-      },
-      {
-        type: 'forumHashtag',
-        hashtagId: 77,
-        slug: 'typescript',
-        displayName: 'TypeScript',
-        text: '#TypeScript',
-      },
-    ],
+  @StringProperty({
+    description: '评论正文纯文本派生值；仅供内部搜索、摘录和审核链路使用',
+    example: '写得很棒 #TypeScript',
+    required: true,
+    contract: false,
   })
-  bodyTokens?: JsonValue | null
+  content!: string
 
   @NumberProperty({
     description: '楼层号',
@@ -314,10 +290,9 @@ export class ReplyTargetDto {
  * 评论写入正文输入 DTO。
  * - 复用 owner 字段定义，避免读写合同在同文件内漂移。
  */
-export class CommentWritableFieldsDto extends IntersectionType(
-  PickType(CommentContentFieldDto, ['content'] as const),
-  RequiredMentionDraftListDto,
-) {}
+export class CommentWritableFieldsDto extends PickType(CommentHtmlFieldDto, [
+  'html',
+] as const) {}
 
 export class CreateCommentBodyDto extends IntersectionType(
   CommentTargetDto,
@@ -467,9 +442,7 @@ export class CommentReplyItemDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
-  'body',
-  'content',
-  'bodyTokens',
+  'html',
   'floor',
   'replyToId',
   'likeCount',
@@ -528,9 +501,7 @@ export class CommentPreviewReplyDto extends IntersectionType(
   PickType(BaseCommentDto, [
     'id',
     'userId',
-    'body',
-    'content',
-    'bodyTokens',
+    'html',
     'replyToId',
     'likeCount',
     'geoCountry',
@@ -550,9 +521,7 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
-  'body',
-  'content',
-  'bodyTokens',
+  'html',
   'floor',
   'likeCount',
   'geoCountry',
@@ -619,9 +588,7 @@ export class MyCommentPageItemDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
-  'body',
-  'content',
-  'bodyTokens',
+  'html',
   'floor',
   'replyToId',
   'actualReplyToId',
@@ -662,7 +629,7 @@ export class AdminCommentUserDto extends PickType(BaseAppUserDto, [
 export class AdminCommentReplyTargetDto extends PickType(BaseCommentDto, [
   'id',
   'userId',
-  'content',
+  'html',
   'replyToId',
   'actualReplyToId',
   'auditStatus',
@@ -685,9 +652,7 @@ export class AdminCommentPageItemDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
-  'body',
-  'content',
-  'bodyTokens',
+  'html',
   'floor',
   'replyToId',
   'actualReplyToId',
@@ -717,9 +682,7 @@ export class AdminCommentDetailDto extends PickType(BaseCommentDto, [
   'targetType',
   'targetId',
   'userId',
-  'body',
-  'content',
-  'bodyTokens',
+  'html',
   'floor',
   'replyToId',
   'actualReplyToId',

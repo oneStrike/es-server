@@ -40,7 +40,13 @@ export const userComment = pgTable(
      */
     userId: integer().notNull(),
     /**
-     * 评论内容
+     * 评论正文 HTML。
+     * 对外唯一正文表示，纯文本编辑器也需输出最小 HTML。
+     */
+    html: text().notNull(),
+    /**
+     * 评论纯文本派生列。
+     * 供搜索、摘录和审核链路复用，不再表示客户端原始输入。
      */
     content: text().notNull(),
     /**
@@ -48,11 +54,6 @@ export const userComment = pgTable(
      * 评论正文的唯一真相源；运行时不再依赖原始 content 作为输入来源。
      */
     body: jsonb().notNull(),
-    /**
-     * 评论正文解析 token 缓存
-     * 用于持久化 EmojiParser 输出，读路径可直接复用
-     */
-    bodyTokens: jsonb(),
     /**
      * 正文版本（1=v1）。
      */

@@ -25,8 +25,7 @@ import {
 } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
-import { createBodyDocFromPlainText } from '@libs/interaction/body/body-text.helper'
-import { BodyValidatorService } from '@libs/interaction/body/body-validator.service'
+import { BodyHtmlCodecService } from '@libs/interaction/body/body-html-codec.service'
 import {
   BODY_VERSION_V1,
   BodySceneEnum,
@@ -94,7 +93,7 @@ export class CommentService {
     private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
-    private readonly bodyValidatorService: BodyValidatorService,
+    private readonly bodyHtmlCodecService: BodyHtmlCodecService,
     private readonly bodyCompilerService: BodyCompilerService,
     private readonly mentionService: MentionService,
     private readonly emojiCatalogService: EmojiCatalogService,
@@ -408,20 +407,16 @@ export class CommentService {
   // 在事务内将评论正文物化为带 hashtag 事实的 canonical body 编译结果。
   private async materializeCommentBodyInTx(
     tx: Db,
-    content: string,
+    html: string,
     actorUserId: number,
     targetType: CommentTargetTypeEnum,
-    mentions: CreateCommentBodyDto['mentions'] | ReplyCommentBodyDto['mentions'],
   ): Promise<MaterializedCommentBodyWriteResult> {
-    if (!Array.isArray(mentions)) {
-      throw new BadRequestException('mentions 为必填字段；无提及时请传空数组')
+    const normalizedHtml = html.trim()
+    if (!normalizedHtml) {
+      throw new BadRequestException('html 不能为空')
     }
-
-    const body = createBodyDocFromPlainText(content, {
-      mentions,
-    })
-    const validatedBody = this.bodyValidatorService.validateBodyOrThrow(
-      body,
+    const validatedBody = this.bodyHtmlCodecService.parseHtmlOrThrow(
+      normalizedHtml,
       BodySceneEnum.COMMENT,
     )
 
@@ -430,8 +425,13 @@ export class CommentService {
         validatedBody,
         BodySceneEnum.COMMENT,
       )
+      const canonicalHtml = this.bodyHtmlCodecService.renderHtml(
+        validatedBody,
+        BodySceneEnum.COMMENT,
+      )
       return {
         ...compiledBody,
+        html: canonicalHtml,
         hashtagFacts: [],
       }
     }
@@ -448,9 +448,14 @@ export class CommentService {
       materialized.body,
       BodySceneEnum.COMMENT,
     )
+    const canonicalHtml = this.bodyHtmlCodecService.renderHtml(
+      materialized.body,
+      BodySceneEnum.COMMENT,
+    )
 
     return {
       ...compiledBody,
+      html: canonicalHtml,
       hashtagFacts: materialized.hashtagFacts,
     }
   }
@@ -625,9 +630,8 @@ export class CommentService {
       userId: number
       actualReplyToId: number | null
       replyToId: number | null
-      body: JsonValue
+      html: string
       content: string
-      bodyTokens: JsonValue
       likeCount: number
       geoCountry: string | null
       geoProvince: string | null
@@ -644,9 +648,8 @@ export class CommentService {
         userId: number
         actualReplyToId: number
         replyToId: number | null
-        body: JsonValue
+        html: string
         content: string
-        bodyTokens: JsonValue
         likeCount: number
         geoCountry?: string
         geoProvince?: string
@@ -678,9 +681,8 @@ export class CommentService {
           userId: this.userComment.userId,
           actualReplyToId: this.userComment.actualReplyToId,
           replyToId: this.userComment.replyToId,
-          body: this.userComment.body,
+          html: this.userComment.html,
           content: this.userComment.content,
-          bodyTokens: this.userComment.bodyTokens,
           likeCount: this.userComment.likeCount,
           geoCountry: this.userComment.geoCountry,
           geoProvince: this.userComment.geoProvince,
@@ -743,9 +745,8 @@ export class CommentService {
         userId: reply.userId,
         actualReplyToId: reply.actualReplyToId,
         replyToId: reply.replyToId,
-        body: reply.body,
+        html: reply.html,
         content: reply.content,
-        bodyTokens: reply.bodyTokens,
         likeCount: reply.likeCount,
         geoCountry: reply.geoCountry ?? undefined,
         geoProvince: reply.geoProvince ?? undefined,
@@ -1172,7 +1173,7 @@ export class CommentService {
     input: CreateCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
   ) {
-    const { userId, targetType, targetId, content, mentions } = input
+    const { userId, targetType, targetId, html } = input
 
     // 校验用户是否有权限在该目标下评论
     await this.commentPermissionService.ensureCanComment(
@@ -1191,10 +1192,9 @@ export class CommentService {
               await resolver.ensureCanComment(tx, targetId)
               const compiledBody = await this.materializeCommentBodyInTx(
                 tx,
-                content,
+                html,
                 userId,
                 targetType,
-                mentions,
               )
               const decision = this.resolveAuditDecision(compiledBody.plainText)
               const { statisticsHits, ...persistedDecision } = decision
@@ -1219,12 +1219,9 @@ export class CommentService {
                   targetType,
                   targetId,
                   userId,
+                  html: compiledBody.html,
                   content: compiledBody.plainText,
                   body: compiledBody.body as unknown as JsonValue,
-                  bodyTokens:
-                    compiledBody.bodyTokens.length > 0
-                      ? (compiledBody.bodyTokens as JsonValue)
-                      : null,
                   bodyVersion: BODY_VERSION_V1,
                   floor,
                   ...persistedDecision,
@@ -1240,6 +1237,7 @@ export class CommentService {
                   targetType: this.userComment.targetType,
                   targetId: this.userComment.targetId,
                   replyToId: this.userComment.replyToId,
+                  html: this.userComment.html,
                   content: this.userComment.content,
                   createdAt: this.userComment.createdAt,
                 })
@@ -1370,7 +1368,7 @@ export class CommentService {
     input: ReplyCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
   ) {
-    const { userId, content, replyToId, mentions } = input
+    const { userId, html, replyToId } = input
 
     // 查询被回复的评论
     const replyTo = await this.db.query.userComment.findFirst({
@@ -1423,10 +1421,9 @@ export class CommentService {
       await resolver.ensureCanComment(tx, targetId)
       const compiledBody = await this.materializeCommentBodyInTx(
         tx,
-        content,
+        html,
         userId,
         targetType as CommentTargetTypeEnum,
-        mentions,
       )
       const decision = this.resolveAuditDecision(compiledBody.plainText)
       const { statisticsHits, ...persistedDecision } = decision
@@ -1437,12 +1434,9 @@ export class CommentService {
           targetType,
           targetId,
           userId,
+          html: compiledBody.html,
           content: compiledBody.plainText,
           body: compiledBody.body as unknown as JsonValue,
-          bodyTokens:
-            compiledBody.bodyTokens.length > 0
-              ? (compiledBody.bodyTokens as JsonValue)
-              : null,
           bodyVersion: BODY_VERSION_V1,
           replyToId,
           actualReplyToId,
@@ -1459,6 +1453,7 @@ export class CommentService {
           targetType: this.userComment.targetType,
           targetId: this.userComment.targetId,
           replyToId: this.userComment.replyToId,
+          html: this.userComment.html,
           content: this.userComment.content,
           createdAt: this.userComment.createdAt,
         })
@@ -1715,9 +1710,7 @@ export class CommentService {
         'targetType',
         'targetId',
         'userId',
-        'body',
-        'content',
-        'bodyTokens',
+        'html',
         'floor',
         'replyToId',
         'actualReplyToId',
@@ -1846,9 +1839,7 @@ export class CommentService {
                   userId: this.userComment.userId,
                   targetType: this.userComment.targetType,
                   targetId: this.userComment.targetId,
-                  body: this.userComment.body,
-                  content: this.userComment.content,
-                  bodyTokens: this.userComment.bodyTokens,
+                  html: this.userComment.html,
                   floor: this.userComment.floor,
                   likeCount: this.userComment.likeCount,
                   geoCountry: this.userComment.geoCountry,
@@ -1897,9 +1888,7 @@ export class CommentService {
               'userId',
               'targetType',
               'targetId',
-              'body',
-              'content',
-              'bodyTokens',
+              'html',
               'floor',
               'likeCount',
               'geoCountry',
@@ -1963,9 +1952,7 @@ export class CommentService {
             return {
               id: reply.id,
               userId: reply.userId,
-              body: reply.body,
-              content: reply.content,
-              bodyTokens: reply.bodyTokens,
+              html: reply.html,
               replyToId: reply.replyToId,
               likeCount: reply.likeCount,
               geoCountry: reply.geoCountry,
@@ -2033,6 +2020,31 @@ export class CommentService {
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: this.buildCommentOrderBy(query.sort),
+      pick: [
+        'id',
+        'targetType',
+        'targetId',
+        'userId',
+        'html',
+        'floor',
+        'replyToId',
+        'actualReplyToId',
+        'isHidden',
+        'auditStatus',
+        'auditById',
+        'auditRole',
+        'auditReason',
+        'auditAt',
+        'likeCount',
+        'sensitiveWordHits',
+        'geoCountry',
+        'geoProvince',
+        'geoCity',
+        'geoIsp',
+        'deletedAt',
+        'createdAt',
+        'updatedAt',
+      ],
     })
 
     const replyTargetMap = await this.getReplyTargetMap(
@@ -2117,6 +2129,26 @@ export class CommentService {
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+      pick: [
+        'id',
+        'targetType',
+        'targetId',
+        'userId',
+        'html',
+        'floor',
+        'replyToId',
+        'actualReplyToId',
+        'isHidden',
+        'auditStatus',
+        'auditById',
+        'auditRole',
+        'auditReason',
+        'auditAt',
+        'likeCount',
+        'sensitiveWordHits',
+        'createdAt',
+        'updatedAt',
+      ],
     })
 
     if (page.list.length === 0) {
@@ -2159,6 +2191,27 @@ export class CommentService {
         id: commentId,
         deletedAt: { isNull: true },
       },
+      columns: {
+        id: true,
+        targetType: true,
+        targetId: true,
+        userId: true,
+        html: true,
+        floor: true,
+        replyToId: true,
+        actualReplyToId: true,
+        isHidden: true,
+        auditStatus: true,
+        auditById: true,
+        auditRole: true,
+        auditReason: true,
+        auditAt: true,
+        likeCount: true,
+        sensitiveWordHits: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
       with: {
         user: {
           columns: {
@@ -2173,7 +2226,7 @@ export class CommentService {
           columns: {
             id: true,
             userId: true,
-            content: true,
+            html: true,
             replyToId: true,
             actualReplyToId: true,
             auditStatus: true,

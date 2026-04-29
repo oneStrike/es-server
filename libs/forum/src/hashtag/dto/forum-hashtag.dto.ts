@@ -1,11 +1,9 @@
-import type { JsonValue } from '@libs/platform/utils'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  JsonProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
@@ -363,36 +361,13 @@ export class ForumHashtagCommentPageItemDto {
   })
   userId!: number
 
-  @JsonProperty({
-    description: '评论 canonical 正文文档',
-    required: true,
-    validation: false,
-    example: {
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [{ type: 'text', text: '评论正文' }],
-        },
-      ],
-    },
-  })
-  body!: JsonValue
-
   @StringProperty({
-    description: '评论正文纯文本派生值',
-    example: '#TypeScript 的类型推导太香了',
+    description: '评论正文 HTML；对外唯一正文表示',
+    example:
+      '<p><span data-node="hashtag" data-hashtag-id="77" data-slug="typescript">#TypeScript</span> 的类型推导太香了</p>',
     validation: false,
   })
-  content!: string
-
-  @JsonProperty({
-    description: '评论正文解析 token',
-    required: false,
-    validation: false,
-    example: [{ type: 'text', text: '评论正文' }],
-  })
-  bodyTokens?: JsonValue | null
+  html!: string
 
   @NumberProperty({
     description: '评论点赞数',

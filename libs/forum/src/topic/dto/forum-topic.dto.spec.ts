@@ -1,71 +1,78 @@
 import 'reflect-metadata'
 import { DECORATORS } from '@nestjs/swagger/dist/constants'
 
-describe('forum-topic dto plain mention contract', () => {
-  it('documents create topic plain mentions as required structured metadata', () => {
+describe('forum-topic dto html contract', () => {
+  it('documents create topic html as the only write contract', () => {
     const originalNodeEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'development'
     jest.resetModules()
 
     const { CreateUserForumTopicDto } = require('./forum-topic.dto')
-    const metadata = Reflect.getMetadata(
+    const htmlMetadata = Reflect.getMetadata(
       DECORATORS.API_MODEL_PROPERTIES,
       CreateUserForumTopicDto.prototype,
-      'mentions',
+      'html',
     ) as {
       description?: string
       required?: boolean
     }
+    const bodyModeMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      CreateUserForumTopicDto.prototype,
+      'bodyMode',
+    )
 
     process.env.NODE_ENV = originalNodeEnv
 
-    expect(metadata?.description).toBe(
-      '正文中的结构化提及列表；仅 bodyMode=plain 时必传，无提及时传空数组',
+    expect(htmlMetadata?.description).toBe(
+      '正文 HTML；唯一写入合同，纯文本编辑器也需输出最小 HTML',
     )
-    expect(metadata?.required).toBe(false)
+    expect(htmlMetadata?.required).toBe(true)
+    expect(bodyModeMetadata).toBeUndefined()
   })
 
-  it('documents update topic plain mentions as required structured metadata', () => {
+  it('documents update topic html as the only write contract', () => {
     const originalNodeEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'development'
     jest.resetModules()
 
     const { UpdateForumTopicDto } = require('./forum-topic.dto')
-    const metadata = Reflect.getMetadata(
+    const htmlMetadata = Reflect.getMetadata(
       DECORATORS.API_MODEL_PROPERTIES,
       UpdateForumTopicDto.prototype,
-      'mentions',
+      'html',
     ) as {
       description?: string
       required?: boolean
     }
+    const plainTextMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      UpdateForumTopicDto.prototype,
+      'plainText',
+    )
 
     process.env.NODE_ENV = originalNodeEnv
 
-    expect(metadata?.description).toBe(
-      '正文中的结构化提及列表；仅 bodyMode=plain 时必传，无提及时传空数组',
+    expect(htmlMetadata?.description).toBe(
+      '正文 HTML；唯一写入合同，纯文本编辑器也需输出最小 HTML',
     )
-    expect(metadata?.required).toBe(false)
+    expect(plainTextMetadata).toBeUndefined()
   })
 
-  it('documents topic bodyTokens examples with forum hashtag nodes', () => {
+  it('does not expose topic bodyTokens in public topic dto', () => {
     const originalNodeEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'development'
     jest.resetModules()
 
-    const { BaseForumTopicDto } = require('./forum-topic.dto')
+    const { PublicForumTopicDetailDto } = require('./forum-topic.dto')
     const metadata = Reflect.getMetadata(
       DECORATORS.API_MODEL_PROPERTIES,
-      BaseForumTopicDto.prototype,
+      PublicForumTopicDetailDto.prototype,
       'bodyTokens',
-    ) as {
-      example?: Array<{ type?: string }>
-    }
+    )
 
     process.env.NODE_ENV = originalNodeEnv
 
-    expect(
-      metadata?.example?.some((item) => item.type === 'forumHashtag'),
-    ).toBe(true)
+    expect(metadata).toBeUndefined()
   })
 })

@@ -23,11 +23,9 @@ import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-bal
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
-import { createBodyDocFromPlainText } from '@libs/interaction/body/body-text.helper'
-import { BodyValidatorService } from '@libs/interaction/body/body-validator.service'
+import { BodyHtmlCodecService } from '@libs/interaction/body/body-html-codec.service'
 import {
   BODY_VERSION_V1,
-  BodyInputModeEnum,
   BodySceneEnum,
 } from '@libs/interaction/body/body.constant'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
@@ -54,6 +52,7 @@ import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
 } from '@nestjs/common'
@@ -120,7 +119,7 @@ export class ForumTopicService {
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
     private readonly followService: FollowService,
-    private readonly bodyValidatorService: BodyValidatorService,
+    private readonly bodyHtmlCodecService: BodyHtmlCodecService,
     private readonly bodyCompilerService: BodyCompilerService,
     private readonly mentionService: MentionService,
     private readonly emojiCatalogService: EmojiCatalogService,
@@ -696,35 +695,14 @@ export class ForumTopicService {
     input: TopicBodyWriteFields,
     actorUserId: number,
   ): Promise<MaterializedTopicBodyWriteResult> {
-    let bodyDoc
-    if (input.bodyMode === BodyInputModeEnum.PLAIN) {
-      const plainText = input.plainText?.trim()
-      if (!plainText) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          'bodyMode=plain 时必须提供 plainText',
-        )
-      }
-      if (!Array.isArray(input.mentions)) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          'bodyMode=plain 时必须提供 mentions；无提及时请传空数组',
-        )
-      }
-      bodyDoc = createBodyDocFromPlainText(plainText, {
-        mentions: input.mentions,
-      })
-    } else if (input.bodyMode === BodyInputModeEnum.RICH) {
-      bodyDoc = this.bodyValidatorService.validateBodyOrThrow(
-        input.body,
-        BodySceneEnum.TOPIC,
-      )
-    } else {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        'bodyMode 非法',
-      )
+    const normalizedHtml = input.html?.trim()
+    if (!normalizedHtml) {
+      throw new BadRequestException('html 不能为空')
     }
+    const bodyDoc = this.bodyHtmlCodecService.parseHtmlOrThrow(
+      normalizedHtml,
+      BodySceneEnum.TOPIC,
+    )
 
     const materialized = await this.forumHashtagBodyService.materializeBodyInTx(
       {
@@ -738,9 +716,14 @@ export class ForumTopicService {
       materialized.body,
       BodySceneEnum.TOPIC,
     )
+    const canonicalHtml = this.bodyHtmlCodecService.renderHtml(
+      materialized.body,
+      BodySceneEnum.TOPIC,
+    )
 
     return {
       ...compiledBody,
+      html: canonicalHtml,
       hashtagFacts: materialized.hashtagFacts,
     }
   }
@@ -998,10 +981,7 @@ export class ForumTopicService {
       images,
       videos,
       title: inputTitle,
-      bodyMode,
-      plainText,
-      body,
-      mentions,
+      html,
     } = createTopicDto
 
     await this.forumPermissionService.ensureUserCanCreateTopic(
@@ -1016,10 +996,7 @@ export class ForumTopicService {
         const compiledBody = await this.materializeTopicBodyInTx(
           tx,
           {
-            bodyMode,
-            plainText,
-            body,
-            mentions,
+            html,
           },
           userId,
         )
@@ -1069,12 +1046,9 @@ export class ForumTopicService {
         )
         const createPayload = {
           title,
+          html: compiledBody.html,
           content: compiledBody.plainText,
           body: compiledBody.body as unknown as JsonValue,
-          bodyTokens:
-            compiledBody.bodyTokens.length > 0
-              ? (compiledBody.bodyTokens as JsonValue)
-              : null,
           bodyVersion: BODY_VERSION_V1,
           sectionId,
           userId,
@@ -1313,9 +1287,7 @@ export class ForumTopicService {
       sectionId: topic.sectionId,
       userId: topic.userId,
       title: topic.title,
-      body: topic.body as JsonValue,
-      content: topic.content,
-      bodyTokens: topic.bodyTokens as JsonValue | undefined,
+      html: topic.html,
       geoCountry: topic.geoCountry ?? undefined,
       geoProvince: topic.geoProvince ?? undefined,
       geoCity: topic.geoCity ?? undefined,
@@ -1733,10 +1705,7 @@ export class ForumTopicService {
       images,
       videos,
       title: nextTitleInput,
-      bodyMode,
-      plainText,
-      body,
-      mentions,
+      html,
     } = updateForumTopicDto
 
     if (topic.isLocked) {
@@ -1766,10 +1735,7 @@ export class ForumTopicService {
         const compiledBody = await this.materializeTopicBodyInTx(
           tx,
           {
-            bodyMode,
-            plainText,
-            body,
-            mentions,
+            html,
           },
           actorUserId,
         )
@@ -1786,13 +1752,10 @@ export class ForumTopicService {
         )
         const updatePayload = {
           title: nextTitle,
+          html: compiledBody.html,
           content: compiledBody.plainText,
           body: compiledBody.body as unknown as JsonValue,
           ...media,
-          bodyTokens:
-            compiledBody.bodyTokens.length > 0
-              ? (compiledBody.bodyTokens as JsonValue)
-              : null,
           bodyVersion: BODY_VERSION_V1,
           auditStatus,
           sensitiveWordHits: publicHits.length ? publicHits : null,
