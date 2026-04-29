@@ -1,7 +1,11 @@
 import type { ForumTopicSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import { buildLikePattern, DrizzleService } from '@db/core'
+import type {
+  ForumSearchCondition,
+  ForumSearchConditionTuple,
+} from './search.type'
 
+import { buildLikePattern, DrizzleService } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
@@ -10,10 +14,6 @@ import { ForumHashtagReferenceSourceTypeEnum } from '../hashtag/forum-hashtag.co
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import { ForumSearchDto, ForumSearchResultDto } from './dto/search.dto'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
-import type {
-  ForumSearchCondition,
-  ForumSearchConditionTuple,
-} from './search.type'
 
 /**
  * 论坛搜索服务。

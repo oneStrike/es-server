@@ -1,5 +1,4 @@
-import type { AppUserCountSelect } from '@db/schema'
-import { userBadge } from '@db/schema'
+import type { AppUserCountSelect, userBadge } from '@db/schema'
 import type {
   QueryMyForumTopicDto,
   QueryPublicUserForumTopicDto,

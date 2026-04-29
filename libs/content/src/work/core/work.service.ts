@@ -1,7 +1,14 @@
 import type { WorkSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import type {
+  BuildPublicWorkDetailParams,
+  WorkDetailContext,
+  WorkFlagUpdateInput,
+  WorkPageConditionOptions,
+  WorkPaginationOptions,
+} from './work.type'
 
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -9,12 +16,12 @@ import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
+
 import {
   BusinessErrorCode,
   ContentTypeEnum,
   WorkRootViewPermissionEnum,
 } from '@libs/platform/constant'
-
 import { BusinessException } from '@libs/platform/exceptions'
 import { isNotNil } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
@@ -27,13 +34,6 @@ import {
   UpdateWorkDto,
   UpdateWorkStatusDto,
 } from './dto/work.dto'
-import type {
-  BuildPublicWorkDetailParams,
-  WorkDetailContext,
-  WorkFlagUpdateInput,
-  WorkPageConditionOptions,
-  WorkPaginationOptions,
-} from './work.type'
 
 const PAGE_WORK_PICK_FIELDS = [
   'id',

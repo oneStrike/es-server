@@ -1,17 +1,17 @@
 import type { Db } from '@db/core'
-import { DrizzleService } from '@db/core'
-import { applyCountDelta, CountDeltaFailureCauseCode } from '@db/extensions'
-import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
-
-import { BusinessException } from '@libs/platform/exceptions'
-import { AppUserCountService } from '@libs/user/app-user-count.service'
-import { Injectable } from '@nestjs/common'
-import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import type {
   ForumCounterMutationOperation,
   ForumSectionCountField,
   ForumTopicCountField,
 } from './forum-counter.type'
+import { DrizzleService } from '@db/core'
+import { applyCountDelta, CountDeltaFailureCauseCode } from '@db/extensions'
+
+import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
+import { Injectable } from '@nestjs/common'
+import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛领域计数服务

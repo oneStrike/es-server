@@ -1,6 +1,11 @@
 import type { Db, SQL } from '@db/core'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import type {
+  ForumSectionBatchHandler,
+  ForumVisibleSectionQueryOptions,
+  ForumVisibleSectionRow,
+} from './forum-section.type'
 
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -20,11 +25,6 @@ import {
   UpdateForumSectionEnabledDto,
 } from './dto/forum-section.dto'
 import { FORUM_SECTION_MUTATION_LOCK_NAMESPACE } from './forum-section.constant'
-import type {
-  ForumSectionBatchHandler,
-  ForumVisibleSectionQueryOptions,
-  ForumVisibleSectionRow,
-} from './forum-section.type'
 
 /**
  * 论坛板块服务。

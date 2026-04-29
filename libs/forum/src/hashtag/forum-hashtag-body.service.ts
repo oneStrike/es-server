@@ -4,8 +4,8 @@ import type {
   BodyInlineNode,
 } from '@libs/interaction/body/body.type'
 import type {
-  ForumHashtagRecordMap,
   ForumHashtagCandidate,
+  ForumHashtagRecordMap,
   ForumHashtagTextNode,
   MaterializeForumHashtagBodyInTxInput,
   MaterializeForumHashtagBodyResult,

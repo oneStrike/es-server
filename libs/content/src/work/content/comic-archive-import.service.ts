@@ -574,7 +574,7 @@ export class ComicArchiveImportService {
   // 构建 matched Item。
   private buildMatchedItem(
     path: string,
-    chapter: { id: number; title: string; content: string | null },
+    chapter: { id: number, title: string, content: string | null },
     imagePaths: string[],
   ): ComicArchiveMatchedItemRecord {
     const existingContents = this.parseChapterContents(chapter.content)

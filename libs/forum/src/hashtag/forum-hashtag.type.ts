@@ -1,8 +1,7 @@
 import type { Db } from '@db/core'
 import type { ForumHashtagSelect } from '@db/schema'
-import type { BodyDoc } from '@libs/interaction/body/body.type'
+import type { BodyDoc, BodyInlineNode } from '@libs/interaction/body/body.type'
 import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
-import type { BodyInlineNode } from '@libs/interaction/body/body.type'
 import type {
   ForumHashtagCreateSourceTypeEnum,
   ForumHashtagReferenceSourceTypeEnum,

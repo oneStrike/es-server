@@ -7,8 +7,8 @@ import type {
   ForumTopicClientContext,
   ForumTopicMediaInput,
   MaterializedTopicBodyWriteResult,
-  PublicTopicPageRow,
   PublicForumTopicDetailContext,
+  PublicTopicPageRow,
   TopicBodyWriteFields,
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService } from '@db/core'

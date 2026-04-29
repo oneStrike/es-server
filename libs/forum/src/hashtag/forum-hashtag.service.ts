@@ -1,5 +1,15 @@
-import type { ForumHashtagSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
+import type {
+  CreateForumHashtagInput,
+  ForumHashtagAdminPageQuery,
+  ForumHashtagHotPageQuery,
+  ForumHashtagLinkedContentPageQuery,
+  ForumHashtagVisibilityState,
+  UpdateForumHashtagAuditStatusInput,
+  UpdateForumHashtagAuditStatusOptions,
+  UpdateForumHashtagHiddenInput,
+  UpdateForumHashtagInput,
+} from './forum-hashtag.type'
 import { DrizzleService } from '@db/core'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -8,7 +18,6 @@ import { FollowService } from '@libs/interaction/follow/follow.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import {
-  AuditRoleEnum,
   AuditStatusEnum,
   BusinessErrorCode,
 } from '@libs/platform/constant'
@@ -21,17 +30,6 @@ import {
   ForumHashtagCreateSourceTypeEnum,
   ForumHashtagReferenceSourceTypeEnum,
 } from './forum-hashtag.constant'
-import type {
-  CreateForumHashtagInput,
-  ForumHashtagAdminPageQuery,
-  ForumHashtagHotPageQuery,
-  ForumHashtagLinkedContentPageQuery,
-  ForumHashtagVisibilityState,
-  UpdateForumHashtagAuditStatusInput,
-  UpdateForumHashtagAuditStatusOptions,
-  UpdateForumHashtagHiddenInput,
-  UpdateForumHashtagInput,
-} from './forum-hashtag.type'
 
 /**
  * forum 话题资源服务。
