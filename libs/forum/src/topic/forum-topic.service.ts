@@ -7,6 +7,7 @@ import type {
   ForumTopicClientContext,
   ForumTopicMediaInput,
   MaterializedTopicBodyWriteResult,
+  PublicTopicPageRow,
   PublicForumTopicDetailContext,
   TopicBodyWriteFields,
 } from './forum-topic.type'
@@ -53,7 +54,6 @@ import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
 } from '@nestjs/common'
@@ -87,31 +87,6 @@ import {
   UpdateForumTopicPinnedDto,
 } from './dto/forum-topic.dto'
 import { FORUM_TOPIC_IMAGE_MAX_COUNT } from './forum-topic.constant'
-
-type PublicTopicPageRow = Pick<
-  ForumTopicSelect,
-  | 'id'
-  | 'sectionId'
-  | 'userId'
-  | 'title'
-  | 'geoCountry'
-  | 'geoProvince'
-  | 'geoCity'
-  | 'geoIsp'
-  | 'images'
-  | 'videos'
-  | 'isPinned'
-  | 'isFeatured'
-  | 'isLocked'
-  | 'viewCount'
-  | 'commentCount'
-  | 'likeCount'
-  | 'favoriteCount'
-  | 'lastCommentAt'
-  | 'createdAt'
-> & {
-  contentSnippet: string
-}
 
 const DEFAULT_PUBLIC_TOPIC_FEED_ORDER: Array<Record<string, 'asc' | 'desc'>> = [
   { isPinned: 'desc' as const },
@@ -652,7 +627,8 @@ export class ForumTopicService {
     }
 
     if (normalizedList.length > options.maxCount) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         `${options.label}最多支持 ${options.maxCount} 个`,
       )
     }
@@ -684,7 +660,10 @@ export class ForumTopicService {
 
       return JSON.parse(serialized) as ForumTopicSelect['videos']
     } catch {
-      throw new BadRequestException('videos 必须是合法 JSON')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'videos 必须是合法 JSON',
+      )
     }
   }
 
@@ -721,10 +700,14 @@ export class ForumTopicService {
     if (input.bodyMode === BodyInputModeEnum.PLAIN) {
       const plainText = input.plainText?.trim()
       if (!plainText) {
-        throw new BadRequestException('bodyMode=plain 时必须提供 plainText')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          'bodyMode=plain 时必须提供 plainText',
+        )
       }
       if (!Array.isArray(input.mentions)) {
-        throw new BadRequestException(
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
           'bodyMode=plain 时必须提供 mentions；无提及时请传空数组',
         )
       }
@@ -737,7 +720,10 @@ export class ForumTopicService {
         BodySceneEnum.TOPIC,
       )
     } else {
-      throw new BadRequestException('bodyMode 非法')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'bodyMode 非法',
+      )
     }
 
     const materialized = await this.forumHashtagBodyService.materializeBodyInTx(

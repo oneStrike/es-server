@@ -21,27 +21,18 @@ export class WorkComicChapterLikeResolver
   /** 作品类型：1 表示漫画 */
   private readonly workType = 1
 
+  // 初始化 WorkComicChapterLikeResolver 依赖。
   constructor(
     private readonly likeService: LikeService,
     private readonly workCounterService: WorkCounterService,
   ) {}
 
-  /**
-   * 模块初始化时注册解析器到点赞服务
-   * 使点赞服务能够识别并处理漫画章节类型的点赞请求
-   */
+  // 模块初始化时注册解析器到点赞服务，使点赞服务能够识别并处理漫画章节类型的点赞请求。
   onModuleInit() {
     this.likeService.registerResolver(this)
   }
 
-  /**
-   * 解析目标漫画章节的场景元数据
-   * 验证章节存在性并返回场景类型和场景ID，用于统一交互记录的场景标识
-   * @param tx - 事务客户端
-   * @param targetId - 章节ID
-   * @returns 包含场景类型和场景ID的元数据对象
-   * @throws BusinessException 当章节不存在时抛出异常
-   */
+  // 解析目标漫画章节的场景元数据，验证章节存在性并返回场景类型和场景ID，用于统一交互记录的场景标识。
   async resolveMeta(tx: Db, targetId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
@@ -65,13 +56,7 @@ export class WorkComicChapterLikeResolver
     }
   }
 
-  /**
-   * 应用点赞计数增量
-   * 当用户点赞或取消点赞时，更新漫画章节的点赞计数
-   * @param tx - 事务客户端
-   * @param targetId - 章节ID
-   * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
-   */
+  // 应用点赞计数增量，当用户点赞或取消点赞时，更新漫画章节的点赞计数。
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkChapterLikeCount(
       tx,

@@ -1,6 +1,8 @@
 import type { Db } from '@db/core'
+import type { ForumHashtagSelect } from '@db/schema'
 import type { BodyDoc } from '@libs/interaction/body/body.type'
-import type { AuditStatusEnum } from '@libs/platform/constant'
+import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
+import type { BodyInlineNode } from '@libs/interaction/body/body.type'
 import type {
   ForumHashtagCreateSourceTypeEnum,
   ForumHashtagReferenceSourceTypeEnum,
@@ -24,6 +26,69 @@ export interface MaterializedForumHashtagFact {
   slug: string
   displayName: string
   occurrenceCount: number
+}
+
+export type ForumHashtagVisibilityState = Pick<
+  ForumHashtagSelect,
+  'auditStatus' | 'isHidden' | 'deletedAt'
+>
+
+export interface ForumHashtagRecord {
+  id: number
+  slug: string
+  displayName: string
+}
+
+export type ForumHashtagRecordMap = Map<string, ForumHashtagRecord>
+
+export type ForumHashtagTextNode = BodyInlineNode & { type: 'text' }
+
+export interface CreateForumHashtagInput {
+  displayName: string
+  description?: string
+  manualBoost?: number
+}
+
+export interface UpdateForumHashtagInput {
+  id: number
+  description?: string | null
+  manualBoost?: number
+}
+
+export interface UpdateForumHashtagHiddenInput {
+  id: number
+  isHidden: boolean
+}
+
+export interface UpdateForumHashtagAuditStatusInput {
+  id: number
+  auditStatus: AuditStatusEnum
+  auditReason?: string
+}
+
+export interface UpdateForumHashtagAuditStatusOptions {
+  auditById?: number
+  auditRole?: AuditRoleEnum
+}
+
+export interface ForumHashtagAdminPageQuery {
+  pageIndex: number
+  pageSize: number
+  keyword?: string
+  auditStatus?: AuditStatusEnum
+  isHidden?: boolean
+}
+
+export interface ForumHashtagHotPageQuery {
+  pageIndex: number
+  pageSize: number
+  userId?: number
+}
+
+export interface ForumHashtagLinkedContentPageQuery {
+  pageIndex: number
+  pageSize: number
+  userId?: number
 }
 
 /**

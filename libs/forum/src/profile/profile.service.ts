@@ -19,6 +19,8 @@ import { QueryUserProfileListDto, UpdateUserStatusDto } from './dto/profile.dto'
 import {
   MyProfileTopicPageQuery,
   ProfileGrowthSnapshot,
+  ProfileTopicSectionBrief,
+  ProfileUserBadgeRow,
   ProfileUserCountRow,
   PublicUserProfileTopicPageQuery,
 } from './profile.type'
@@ -259,7 +261,7 @@ export class UserProfileService {
             asc(this.userBadgeAssignment.badgeId),
           )
       : []
-    const badgeMap = new Map<number, any[]>()
+    const badgeMap = new Map<number, ProfileUserBadgeRow[]>()
     for (const row of badgeRows) {
       const list = badgeMap.get(row.userId) ?? []
       list.push({ createdAt: row.createdAt, badge: row.badge })
@@ -464,14 +466,7 @@ export class UserProfileService {
                 isNull(this.forumSection.deletedAt),
               ),
             )
-        : Promise.resolve<
-            Array<{
-              id: number
-              name: string
-              icon: string | null
-              cover: string | null
-            }>
-          >([]),
+        : Promise.resolve<ProfileTopicSectionBrief[]>([]),
       this.getTopicUserBriefById(targetUserId),
     ])
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
@@ -597,14 +592,7 @@ export class UserProfileService {
                 isNull(this.forumSection.deletedAt),
               ),
             )
-        : Promise.resolve<
-            Array<{
-              id: number
-              name: string
-              icon: string | null
-              cover: string | null
-            }>
-          >([]),
+        : Promise.resolve<ProfileTopicSectionBrief[]>([]),
       this.getTopicUserBriefById(userId),
     ])
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
@@ -660,7 +648,7 @@ export class UserProfileService {
     const topicMap = new Map(topicsWithSection.map((t) => [t.id, t]))
     const orderedTopics = topicIds
       .map((id) => topicMap.get(id))
-      .filter(Boolean) as Array<{ id: number }>
+      .filter((topic): topic is NonNullable<typeof topic> => Boolean(topic))
 
     return {
       list: orderedTopics.map((topic) => ({

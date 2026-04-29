@@ -7,10 +7,11 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
-
-type ForumSectionCountField = 'topicCount' | 'commentCount' | 'followersCount'
-
-type ForumTopicCountField = 'viewCount' | 'likeCount' | 'favoriteCount'
+import type {
+  ForumCounterMutationOperation,
+  ForumSectionCountField,
+  ForumTopicCountField,
+} from './forum-counter.type'
 
 /**
  * 论坛领域计数服务
@@ -79,9 +80,7 @@ export class ForumCounterService {
    */
   private async executeCountUpdate(
     tx: Db | undefined,
-    operation: (
-      client: Db,
-    ) => Promise<{ rowCount?: number | null } | unknown[]>,
+    operation: ForumCounterMutationOperation,
     message: string,
   ) {
     const client = tx ?? this.db

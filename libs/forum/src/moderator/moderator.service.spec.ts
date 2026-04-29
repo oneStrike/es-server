@@ -86,6 +86,19 @@ describe('ForumModeratorService', () => {
     expect(execute).toHaveBeenCalledTimes(1)
   })
 
+  it('reports invalid moderator role types through business codes', async () => {
+    const { privateApi } = createService()
+
+    await expect(
+      privateApi.normalizeScope({
+        roleType: 999,
+      }),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: '版主角色类型不合法',
+    })
+  })
+
   it('excludes the current moderator when revalidating the same group quota', async () => {
     const { forumModeratorFindMany, forumSectionGroupFindFirst, privateApi } =
       createService()

@@ -20,32 +20,24 @@ export class WorkNovelLikeResolver
   /** 目标类型：小说作品 */
   readonly targetType = LikeTargetTypeEnum.WORK_NOVEL
 
+  // 初始化 WorkNovelLikeResolver 依赖。
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
     private readonly workCounterService: WorkCounterService,
   ) {}
 
+  // 读取 db。
   private get db() {
     return this.drizzle.db
   }
 
-  /**
-   * 模块初始化时注册解析器到点赞服务
-   * 使点赞服务能够识别并处理小说作品类型的点赞请求
-   */
+  // 模块初始化时注册解析器到点赞服务，使点赞服务能够识别并处理小说作品类型的点赞请求。
   onModuleInit() {
     this.likeService.registerResolver(this)
   }
 
-  /**
-   * 解析目标小说作品的场景元数据
-   * 验证作品存在性并返回场景类型和场景ID，用于统一交互记录的场景标识
-   * @param tx - 事务客户端
-   * @param targetId - 作品ID
-   * @returns 包含场景类型和场景ID的元数据对象
-   * @throws BusinessException 当作品不存在时抛出异常
-   */
+  // 解析目标小说作品的场景元数据，验证作品存在性并返回场景类型和场景ID，用于统一交互记录的场景标识。
   async resolveMeta(tx: Db, targetId: number) {
     const target = await tx.query.work.findFirst({
       where: {
@@ -70,13 +62,7 @@ export class WorkNovelLikeResolver
     }
   }
 
-  /**
-   * 应用点赞计数增量
-   * 当用户点赞或取消点赞时，更新小说作品的点赞计数
-   * @param tx - 事务客户端
-   * @param targetId - 作品ID
-   * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
-   */
+  // 应用点赞计数增量，当用户点赞或取消点赞时，更新小说作品的点赞计数。
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkLikeCount(
       tx,
@@ -87,12 +73,7 @@ export class WorkNovelLikeResolver
     )
   }
 
-  /**
-   * 批量获取小说作品详情
-   * 用于在点赞列表或通知中展示作品的名称、封面等基本信息
-   * @param targetIds - 作品ID数组
-   * @returns 作品ID到作品详情的映射Map
-   */
+  // 批量获取小说作品详情，用于在点赞列表或通知中展示作品的名称、封面等基本信息。
   async batchGetDetails(targetIds: number[]) {
     if (targetIds.length === 0) {
       return new Map()

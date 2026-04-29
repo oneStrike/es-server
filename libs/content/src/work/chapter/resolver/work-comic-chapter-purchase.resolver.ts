@@ -3,7 +3,11 @@ import { DrizzleService } from '@db/core'
 import { IPurchaseTargetResolver } from '@libs/interaction/purchase/interfaces/purchase-target-resolver.interface'
 import { PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.constant'
 import { PurchaseService } from '@libs/interaction/purchase/purchase.service'
-import { BusinessErrorCode, ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  ContentTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
@@ -22,6 +26,7 @@ export class WorkComicChapterPurchaseResolver
   /** 作品类型：1 表示漫画 */
   private readonly workType = ContentTypeEnum.COMIC
 
+  // 初始化 WorkComicChapterPurchaseResolver 依赖。
   constructor(
     private readonly purchaseService: PurchaseService,
     private readonly drizzle: DrizzleService,
@@ -29,24 +34,22 @@ export class WorkComicChapterPurchaseResolver
     private readonly contentPermissionService: ContentPermissionService,
   ) {}
 
+  // 读取 db。
   private get db() {
     return this.drizzle.db
   }
 
+  // 读取 workChapter。
   private get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
-  /**
-   * 模块初始化时注册解析器
-   */
+  // 模块初始化时注册解析器。
   onModuleInit() {
     this.purchaseService.registerResolver(this)
   }
 
-  /**
-   * 校验是否可以购买并获取价格
-   */
+  // 校验是否可以购买并获取价格。
   async ensurePurchaseable(targetId: number) {
     const permission =
       await this.contentPermissionService.resolveChapterPermission(targetId)
@@ -80,9 +83,7 @@ export class WorkComicChapterPurchaseResolver
     }
   }
 
-  /**
-   * 更新购买计数
-   */
+  // 更新购买计数。
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkChapterPurchaseCount(
       tx,

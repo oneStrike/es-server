@@ -1,45 +1,21 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { applyCountDelta } from '@db/extensions'
-import { AuditStatusEnum, BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
+import { applyCountDelta, CountDeltaFailureCauseCode } from '@db/extensions'
+import {
+  AuditStatusEnum,
+  BusinessErrorCode,
+  ContentTypeEnum,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-
-type WorkCountField =
-  | 'viewCount'
-  | 'favoriteCount'
-  | 'likeCount'
-  | 'commentCount'
-  | 'downloadCount'
-
-type WorkChapterCountField =
-  | 'viewCount'
-  | 'likeCount'
-  | 'commentCount'
-  | 'purchaseCount'
-  | 'downloadCount'
-
-interface RebuiltWorkCounts {
-  workId: number
-  workType: number
-  viewCount: number
-  likeCount: number
-  favoriteCount: number
-  commentCount: number
-  downloadCount: number
-}
-
-interface RebuiltWorkChapterCounts {
-  chapterId: number
-  workType: number
-  viewCount: number
-  likeCount: number
-  commentCount: number
-  purchaseCount: number
-  downloadCount: number
-}
+import type {
+  RebuiltWorkChapterCounts,
+  RebuiltWorkCounts,
+  WorkChapterCountField,
+  WorkCountField,
+} from './work-counter.type'
 
 /**
  * 内容域作品计数服务
@@ -61,44 +37,55 @@ export class WorkCounterService {
   private readonly chapterNovelPurchaseDownloadTargetType = 2
   private readonly purchaseSuccessStatus = 1
 
+  // 初始化 WorkCounterService 依赖。
   constructor(private readonly drizzle: DrizzleService) {}
 
+  // 读取 db。
   private get db() {
     return this.drizzle.db
   }
 
+  // 读取 work。
   private get work() {
     return this.drizzle.schema.work
   }
 
+  // 读取 workChapter。
   private get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
+  // 读取 userLike。
   private get userLike() {
     return this.drizzle.schema.userLike
   }
 
+  // 读取 userFavorite。
   private get userFavorite() {
     return this.drizzle.schema.userFavorite
   }
 
+  // 读取 userBrowseLog。
   private get userBrowseLog() {
     return this.drizzle.schema.userBrowseLog
   }
 
+  // 读取 userComment。
   private get userComment() {
     return this.drizzle.schema.userComment
   }
 
+  // 读取 userPurchaseRecord。
   private get userPurchaseRecord() {
     return this.drizzle.schema.userPurchaseRecord
   }
 
+  // 读取 userDownloadRecord。
   private get userDownloadRecord() {
     return this.drizzle.schema.userDownloadRecord
   }
 
+  // 执行 runCountUpdate。
   private async runCountUpdate(
     tx: Db | undefined,
     operation: (client: Db) => Promise<void>,
@@ -111,17 +98,48 @@ export class WorkCounterService {
     await this.drizzle.withErrorHandling(async () => operation(this.db))
   }
 
-  private rethrowNotFound<T>(error: T, message: string) {
+  // 执行 rethrowNotFound。
+  private rethrowNotFound(error: unknown, message: string): never {
     if (
-      error instanceof BusinessException &&
-      error.code === BusinessErrorCode.RESOURCE_NOT_FOUND &&
-      !error.message.includes('计数不足')
+      !(error instanceof BusinessException) ||
+      error.code !== BusinessErrorCode.RESOURCE_NOT_FOUND
     ) {
-      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message)
+      throw error
     }
+
+    const causeCode =
+      typeof error.cause === 'object' &&
+      error.cause !== null &&
+      'code' in error.cause
+        ? (error.cause as { code?: unknown }).code
+        : undefined
+
+    if (causeCode === CountDeltaFailureCauseCode.INSUFFICIENT_COUNT) {
+      throw error
+    }
+
+    if (causeCode === CountDeltaFailureCauseCode.TARGET_NOT_FOUND) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        message,
+        {
+          cause: error.cause ?? error,
+        },
+      )
+    }
+
     throw error
   }
 
+  // 执行 throwUnsupportedWorkType。
+  private throwUnsupportedWorkType(): never {
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '不支持的作品类型',
+    )
+  }
+
+  // 获取 work Like Target Type。
   private getWorkLikeTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.workComicTargetType
@@ -129,9 +147,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.workNovelTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 获取 work Favorite Target Type。
   private getWorkFavoriteTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.workComicTargetType
@@ -139,9 +158,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.workNovelTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 获取 work Browse Target Type。
   private getWorkBrowseTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.workComicTargetType
@@ -149,9 +169,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.workNovelTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 获取 work Comment Target Type。
   private getWorkCommentTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.workComicTargetType
@@ -159,9 +180,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.workNovelTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 获取 work Chapter Like Target Type。
   private getWorkChapterLikeTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.chapterComicLikeTargetType
@@ -169,9 +191,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.chapterNovelLikeTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 获取 work Chapter Browse Target Type。
   private getWorkChapterBrowseTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.chapterComicBrowseCommentTargetType
@@ -179,9 +202,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.chapterNovelBrowseCommentTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 获取 work Chapter Comment Target Type。
   private getWorkChapterCommentTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.chapterComicBrowseCommentTargetType
@@ -189,9 +213,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.chapterNovelBrowseCommentTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 获取 work Chapter Purchase Target Type。
   private getWorkChapterPurchaseTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.chapterComicPurchaseDownloadTargetType
@@ -199,9 +224,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.chapterNovelPurchaseDownloadTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 获取 work Chapter Download Target Type。
   private getWorkChapterDownloadTargetType(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
       return this.chapterComicPurchaseDownloadTargetType
@@ -209,9 +235,10 @@ export class WorkCounterService {
     if (workType === ContentTypeEnum.NOVEL) {
       return this.chapterNovelPurchaseDownloadTargetType
     }
-    throw new BadRequestException('不支持的作品类型')
+    this.throwUnsupportedWorkType()
   }
 
+  // 更新 work Count Field。
   private async updateWorkCountField(
     tx: Db | undefined,
     workId: number,
@@ -245,6 +272,7 @@ export class WorkCounterService {
     }
   }
 
+  // 更新 work Chapter Count Field。
   private async updateWorkChapterCountField(
     tx: Db | undefined,
     chapterId: number,
@@ -277,6 +305,7 @@ export class WorkCounterService {
     }
   }
 
+  // 更新 work Like Count。
   async updateWorkLikeCount(
     tx: Db | undefined,
     workId: number,
@@ -294,6 +323,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work Favorite Count。
   async updateWorkFavoriteCount(
     tx: Db | undefined,
     workId: number,
@@ -311,6 +341,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work Comment Count。
   async updateWorkCommentCount(
     tx: Db | undefined,
     workId: number,
@@ -328,6 +359,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work View Count。
   async updateWorkViewCount(
     tx: Db | undefined,
     workId: number,
@@ -345,6 +377,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work Download Count。
   async updateWorkDownloadCount(
     tx: Db | undefined,
     workId: number,
@@ -362,6 +395,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work Chapter Like Count。
   async updateWorkChapterLikeCount(
     tx: Db | undefined,
     chapterId: number,
@@ -379,6 +413,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work Chapter Comment Count。
   async updateWorkChapterCommentCount(
     tx: Db | undefined,
     chapterId: number,
@@ -396,6 +431,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work Chapter View Count。
   async updateWorkChapterViewCount(
     tx: Db | undefined,
     chapterId: number,
@@ -413,6 +449,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work Chapter Purchase Count。
   async updateWorkChapterPurchaseCount(
     tx: Db | undefined,
     chapterId: number,
@@ -430,6 +467,7 @@ export class WorkCounterService {
     )
   }
 
+  // 更新 work Chapter Download Count。
   async updateWorkChapterDownloadCount(
     tx: Db | undefined,
     chapterId: number,
@@ -447,10 +485,7 @@ export class WorkCounterService {
     )
   }
 
-  /**
-   * 下载记录写入后，同时维护章节与所属作品的下载计数。
-   * 作品级 downloadCount 的口径定义为“作品下所有章节下载记录总数”。
-   */
+  // 下载记录写入后，同时维护章节与所属作品的下载计数，作品级 downloadCount 的口径定义为“作品下所有章节下载记录总数”。
   async updateWorkDownloadCountsByChapter(
     tx: Db | undefined,
     chapterId: number,
@@ -526,10 +561,7 @@ export class WorkCounterService {
     )
   }
 
-  /**
-   * 根据点赞/收藏/浏览/评论/下载事实表重建作品对象计数。
-   * 评分属于作品元数据，不由计数 owner service 维护。
-   */
+  // 根据点赞/收藏/浏览/评论/下载事实表重建作品对象计数，评分属于作品元数据，不由计数 owner service 维护。
   async rebuildWorkCounts(
     tx: Db | undefined,
     workId: number,
@@ -628,9 +660,7 @@ export class WorkCounterService {
     }
   }
 
-  /**
-   * 根据点赞/浏览/评论/购买/下载事实表重建章节对象计数。
-   */
+  // 根据点赞/浏览/评论/购买/下载事实表重建章节对象计数。
   async rebuildWorkChapterCounts(
     tx: Db | undefined,
     chapterId: number,

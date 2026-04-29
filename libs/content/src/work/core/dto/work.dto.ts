@@ -4,10 +4,18 @@ import { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
 import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
 import { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import {
+  WorkRootViewPermissionEnum,
   WorkTypeEnum,
-  WorkViewPermissionEnum,
 } from '@libs/platform/constant'
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 
@@ -33,7 +41,7 @@ export class BaseWorkDto extends BaseDto {
     description: '作品名称',
     example: '进击的巨人',
     required: true,
-    maxLength: 100,
+    maxLength: 80,
   })
   name!: string
 
@@ -160,12 +168,12 @@ export class BaseWorkDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '阅读规则（-1=继承作品；0=所有人可见；1=登录用户可见；2=会员可见；3=需购买可见）',
-    example: WorkViewPermissionEnum.ALL,
+      '阅读规则（0=所有人可见；1=登录用户可见；2=会员可见；3=需购买可见）',
+    example: WorkRootViewPermissionEnum.ALL,
     required: true,
-    enum: WorkViewPermissionEnum,
+    enum: WorkRootViewPermissionEnum,
   })
-  viewRule!: WorkViewPermissionEnum
+  viewRule!: WorkRootViewPermissionEnum
 
   @NumberProperty({
     description: '阅读所需会员等级ID',

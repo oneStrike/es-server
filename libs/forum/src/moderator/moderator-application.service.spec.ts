@@ -1,3 +1,4 @@
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { ForumModeratorApplicationService } from './moderator-application.service'
 import { ForumModeratorApplicationStatusEnum } from './moderator-application.constant'
 
@@ -134,5 +135,28 @@ describe('ForumModeratorApplicationService', () => {
       },
       tx,
     )
+  })
+
+  it('reports empty application permissions through business codes', async () => {
+    const { service } = createService()
+    const privateApi = service as unknown as {
+      ensureApplicantExists: (applicantId: number) => Promise<void>
+      ensureUserNotModerator: (applicantId: number) => Promise<void>
+      ensureSectionExists: (sectionId: number) => Promise<void>
+    }
+    privateApi.ensureApplicantExists = jest.fn().mockResolvedValue(undefined)
+    privateApi.ensureUserNotModerator = jest.fn().mockResolvedValue(undefined)
+    privateApi.ensureSectionExists = jest.fn().mockResolvedValue(undefined)
+
+    await expect(
+      service.createApplication(9, {
+        sectionId: 6,
+        permissions: [],
+        reason: '想参与管理',
+      }),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: '申请权限不能为空',
+    })
   })
 })

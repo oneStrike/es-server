@@ -3,8 +3,16 @@ import {
   PurchasePricingDto,
   PurchasePricingFieldsDto,
 } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
-import { WorkViewPermissionEnum } from '@libs/platform/constant'
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 
@@ -19,8 +27,13 @@ export class BaseWorkChapterDto extends BaseDto {
   @NumberProperty({ description: '作品ID', example: 1, required: true })
   workId!: number
 
-  @NumberProperty({ description: '作品类型（1=漫画，2=小说）', example: 1, required: true })
-  workType!: number
+  @EnumProperty({
+    description: '作品类型（1=漫画；2=小说）',
+    example: WorkTypeEnum.COMIC,
+    required: true,
+    enum: WorkTypeEnum,
+  })
+  workType!: WorkTypeEnum
 
   @StringProperty({
     description: '章节标题',
@@ -71,7 +84,8 @@ export class BaseWorkChapterDto extends BaseDto {
   publishAt?: Date
 
   @EnumProperty({
-    description: '查看规则（-1=继承作品；0=所有人可见；1=登录用户可见；2=会员可见；3=需购买可见）',
+    description:
+      '查看规则（-1=继承作品；0=所有人可见；1=登录用户可见；2=会员可见；3=需购买可见）',
     example: WorkViewPermissionEnum.INHERIT,
     required: true,
     enum: WorkViewPermissionEnum,
@@ -177,6 +191,7 @@ export class BaseWorkChapterDto extends BaseDto {
 
 export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
   ...OMIT_BASE_FIELDS,
+  'isPublished',
   'viewCount',
   'likeCount',
   'commentCount',

@@ -4,7 +4,7 @@ import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, SQL } from 'drizzle-orm'
 import {
   AuditForumModeratorApplicationDto,
@@ -292,7 +292,10 @@ export class ForumModeratorApplicationService {
 
     const permissions = this.normalizePermissions(input.permissions)
     if (permissions.length === 0) {
-      throw new BadRequestException('申请权限不能为空')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '申请权限不能为空',
+      )
     }
 
     const existing = await this.db.query.forumModeratorApplication.findFirst({

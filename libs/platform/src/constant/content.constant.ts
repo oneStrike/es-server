@@ -23,9 +23,26 @@ export enum WorkTypeEnum {
 }
 
 /**
- * 作品可见权限枚举
+ * 作品级可见权限枚举。
+ * 仅用于 work.view_rule，不包含章节继承父级的特殊值。
+ */
+export enum WorkRootViewPermissionEnum {
+  /** 所有人可见 */
+  ALL = 0,
+  /** 登录用户可见 */
+  LOGGED_IN = 1,
+  /** 会员可见 */
+  MEMBER = 2,
+  /** 需购买可见 */
+  PURCHASE = 3,
+}
+
+/**
+ * 章节可见权限枚举。
+ * 章节允许通过 INHERIT 继承作品级权限。
  */
 export enum WorkViewPermissionEnum {
+  /** 继承父级权限 */
   INHERIT = -1,
   /** 所有人可见 */
   ALL = 0,

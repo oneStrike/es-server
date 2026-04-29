@@ -1,4 +1,5 @@
 import type { AppUserCountSelect } from '@db/schema'
+import { userBadge } from '@db/schema'
 import type {
   QueryMyForumTopicDto,
   QueryPublicUserForumTopicDto,
@@ -32,6 +33,26 @@ export type ProfileUserCountRow = Pick<
 export interface ProfileGrowthSnapshot {
   points: number
   experience: number
+}
+
+/**
+ * profile 资料页使用的用户徽章行。
+ * 聚合 badge 指派时间与徽章快照，供列表/详情复用。
+ */
+export interface ProfileUserBadgeRow {
+  createdAt: Date
+  badge: typeof userBadge.$inferSelect
+}
+
+/**
+ * profile 主题列表使用的板块简要信息。
+ * 供公开主题页和我的主题页复用。
+ */
+export interface ProfileTopicSectionBrief {
+  id: number
+  name: string
+  icon: string | null
+  cover: string | null
 }
 
 /**

@@ -20,26 +20,24 @@ export class WorkNovelChapterDownloadResolver
   /** 作品类型：2 表示小说 */
   private readonly workType = 2
 
+  // 初始化 WorkNovelChapterDownloadResolver 依赖。
   constructor(
     private readonly downloadService: DownloadService,
     private readonly drizzle: DrizzleService,
     private readonly workCounterService: WorkCounterService,
   ) {}
 
+  // 读取 workChapter。
   private get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
-  /**
-   * 模块初始化时注册解析器
-   */
+  // 模块初始化时注册解析器。
   onModuleInit() {
     this.downloadService.registerResolver(this)
   }
 
-  /**
-   * 检查下载权限并获取内容
-   */
+  // 检查下载权限并获取内容。
   async ensureDownloadable(tx: Db, targetId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
@@ -67,9 +65,7 @@ export class WorkNovelChapterDownloadResolver
     return chapter.content
   }
 
-  /**
-   * 更新下载计数
-   */
+  // 更新下载计数。
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkDownloadCountsByChapter(
       tx,

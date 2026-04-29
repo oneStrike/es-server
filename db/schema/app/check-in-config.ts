@@ -53,6 +53,10 @@ export const checkInConfig = pgTable(
   },
   (table) => [
     index('check_in_config_is_enabled_idx').on(table.isEnabled),
+    index('check_in_config_makeup_icon_url_idx').on(table.makeupIconUrl),
+    index('check_in_config_reward_overview_icon_url_idx').on(
+      table.rewardOverviewIconUrl,
+    ),
     check(
       'check_in_config_is_enabled_valid_chk',
       sql`${table.isEnabled} in (0, 1)`,

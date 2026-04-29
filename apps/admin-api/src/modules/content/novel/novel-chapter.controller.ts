@@ -4,7 +4,7 @@ import {
   UpdateWorkChapterDto,
 } from '@libs/content/work/chapter/dto/work-chapter.dto'
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
-import { ContentTypeEnum } from '@libs/platform/constant'
+import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto } from '@libs/platform/dto'
 
@@ -30,7 +30,7 @@ export class NovelChapterController {
   async create(@Body() body: CreateWorkChapterDto) {
     return this.workChapterService.createChapter({
       ...body,
-      workType: ContentTypeEnum.NOVEL,
+      workType: WorkTypeEnum.NOVEL,
     })
   }
 

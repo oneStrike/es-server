@@ -14,7 +14,7 @@ import { BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { jsonParse } from '@libs/platform/utils'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
@@ -25,6 +25,8 @@ import {
 import {
   SwapWorkChapterNumbersInput,
   WorkChapterDetailContext,
+  WorkChapterPageContext,
+  WorkChapterPublicDetailRow,
 } from './work-chapter.type'
 
 /**
@@ -33,6 +35,7 @@ import {
  */
 @Injectable()
 export class WorkChapterService {
+  // 初始化 WorkChapterService 依赖。
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
@@ -43,36 +46,33 @@ export class WorkChapterService {
     private readonly readingStateService: ReadingStateService,
   ) {}
 
-  /** 统一复用当前模块的 Drizzle 数据库实例。 */
+  // 统一复用当前模块的 Drizzle 数据库实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** work_chapter 表访问入口。 */
+  // work_chapter 表访问入口。
   get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
-  /** work 表访问入口。 */
+  // work 表访问入口。
   get work() {
     return this.drizzle.schema.work
   }
 
-  /** app_user 表访问入口。 */
+  // app_user 表访问入口。
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  /** user_level_rule 表访问入口。 */
+  // user_level_rule 表访问入口。
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
   }
 
-  /**
-   * 构建 app/public 章节详情响应。
-   * 明确裁剪 remark、删除标记和后台挂载对象，避免公开接口直接暴露内部字段。
-   */
-  private buildPublicChapterDetail(chapter: Record<string, any>) {
+  // 构建 app/public 章节详情响应，明确裁剪 remark、删除标记和后台挂载对象，避免公开接口直接暴露内部字段。
+  private buildPublicChapterDetail(chapter: WorkChapterPublicDetailRow) {
     return {
       id: chapter.id,
       workId: chapter.workId,
@@ -103,13 +103,7 @@ export class WorkChapterService {
     }
   }
 
-  /**
-   * 创建章节
-   * @param createDto - 创建章节参数，包含 workId、章节号等信息
-   * @returns 新创建的章节
-   * @throws BadRequestException 关联的作品不存在
-   * @throws BadRequestException 该作品下章节号已存在（唯一约束冲突）
-   */
+  // 创建章节。
   async createChapter(createDto: CreateWorkChapterDto) {
     const { workId } = createDto
 
@@ -132,14 +126,10 @@ export class WorkChapterService {
     return true
   }
 
-  /**
-   * 分页查询章节列表
-   * @param dto - 查询参数，支持按 workId、title 筛选
-   * @returns 分页章节列表
-   */
+  // 分页查询章节列表。
   async getChapterPage(
     dto: QueryWorkChapterDto,
-    context: { userId?: number, bypassVisibilityCheck?: boolean } = {},
+    context: WorkChapterPageContext = {},
   ) {
     const { userId, bypassVisibilityCheck = false } = context
     const conditions: SQL[] = [isNull(this.workChapter.deletedAt)]
@@ -239,6 +229,7 @@ export class WorkChapterService {
     }
   }
 
+  // 获取 chapter Comment Target。
   async getChapterCommentTarget(id: number) {
     const chapter = await this.db.query.workChapter.findFirst({
       where: {
@@ -296,14 +287,7 @@ export class WorkChapterService {
     )
   }
 
-  /**
-   * 获取章节详情
-   * 未登录用户返回基础信息，登录用户额外返回交互状态（点赞、收藏、下载、购买）
-   * @param id - 章节ID
-   * @param context - 当前用户与请求上下文（可选）
-   * @returns 章节详情，包含作品信息、等级要求、交互状态
-   * @throws BadRequestException 章节不存在
-   */
+  // 获取章节详情，未登录用户返回基础信息，登录用户额外返回交互状态（点赞、收藏、下载、购买）。
   async getChapterDetail(id: number, context: WorkChapterDetailContext = {}) {
     const { userId, ipAddress, device, bypassVisibilityCheck = false } = context
     const chapter = await this.db.query.workChapter.findFirst({
@@ -440,12 +424,7 @@ export class WorkChapterService {
     }
   }
 
-  /**
-   * 获取上一章详情
-   * @param id - 当前章节ID
-   * @param context - 当前用户与请求上下文（可选）
-   * @returns 上一章详情，不存在则返回 null
-   */
+  // 获取上一章详情。
   async getPreviousChapterDetail(
     id: number,
     context: WorkChapterDetailContext = {},
@@ -453,12 +432,7 @@ export class WorkChapterService {
     return this.getAdjacentChapterDetail(id, 'previous', context)
   }
 
-  /**
-   * 获取下一章详情
-   * @param id - 当前章节ID
-   * @param context - 当前用户与请求上下文（可选）
-   * @returns 下一章详情，不存在则返回 null
-   */
+  // 获取下一章详情。
   async getNextChapterDetail(
     id: number,
     context: WorkChapterDetailContext = {},
@@ -466,15 +440,7 @@ export class WorkChapterService {
     return this.getAdjacentChapterDetail(id, 'next', context)
   }
 
-  /**
-   * 获取相邻章节详情（私有方法）
-   * 根据 sortOrder 查找相邻章节
-   * @param id - 当前章节ID
-   * @param direction - 方向：'previous' 上一章 | 'next' 下一章
-   * @param context - 当前用户与请求上下文（可选）
-   * @returns 相邻章节详情，不存在则返回 null
-   * @throws BadRequestException 当前章节不存在
-   */
+  // 获取相邻章节详情（私有方法），根据 sortOrder 查找相邻章节。
   private async getAdjacentChapterDetail(
     id: number,
     direction: 'previous' | 'next',
@@ -522,14 +488,7 @@ export class WorkChapterService {
     return this.getChapterDetail(adjacentChapter.id, context)
   }
 
-  /**
-   * 更新章节
-   * @param dto - 更新参数，包含章节ID和待更新字段
-   * @returns 更新后的章节
-   * @throws BadRequestException 指定的阅读会员等级不存在
-   * @throws BadRequestException 该作品下章节号已存在（唯一约束冲突）
-   * @throws BadRequestException 章节不存在
-   */
+  // 更新章节。
   async updateChapter(dto: UpdateWorkChapterDto) {
     const { id, ...updateData } = dto
     const { requiredViewLevelId } = updateData
@@ -566,12 +525,7 @@ export class WorkChapterService {
     return true
   }
 
-  /**
-   * 删除章节
-   * @param id - 章节ID
-   * @returns 被删除的章节
-   * @throws BadRequestException 章节不存在
-   */
+  // 删除章节。
   async deleteChapter(id: number) {
     await this.drizzle.withErrorHandling(
       () =>
@@ -589,11 +543,7 @@ export class WorkChapterService {
     return true
   }
 
-  /**
-   * 交换章节排序（拖拽重排）
-   * @param dto - 拖拽参数，包含 dragId 和 targetId
-   * @returns 交换结果
-   */
+  // 交换章节排序（拖拽重排）。
   async swapChapterNumbers(dto: SwapWorkChapterNumbersInput) {
     return this.drizzle.ext.swapField(this.workChapter, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],

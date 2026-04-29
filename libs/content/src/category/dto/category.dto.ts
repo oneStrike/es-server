@@ -1,7 +1,19 @@
 import { ContentTypeEnum } from '@libs/platform/constant'
-import { ArrayProperty, BooleanProperty, JsonProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
-import { BaseDto, DragReorderDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import {
+  BaseDto,
+  DragReorderDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
 
 import {
   IntersectionType,

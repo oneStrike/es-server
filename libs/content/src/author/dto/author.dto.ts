@@ -1,5 +1,13 @@
 import { GenderEnum } from '@libs/platform/constant'
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, JsonProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 

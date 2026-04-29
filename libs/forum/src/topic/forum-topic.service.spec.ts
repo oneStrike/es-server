@@ -728,6 +728,25 @@ describe('forumTopicService helpers', () => {
     expect(media.videos).toEqual(videos)
   })
 
+  it('reports invalid topic video payloads through business codes', () => {
+    const service = createService()
+    const circularVideos: { self?: unknown[] }[] = []
+    circularVideos.push({ self: circularVideos })
+
+    expect(() =>
+      (
+        service as unknown as ForumTopicServicePrivateApi
+      ).normalizeTopicMedia({
+        videos: circularVideos,
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        message: 'videos 必须是合法 JSON',
+      }),
+    )
+  })
+
   it('requires explicit mention metadata when materializing plain topic body', async () => {
     const { service } = createMaterializeTopicBodyHarness()
 
@@ -740,7 +759,29 @@ describe('forumTopicService helpers', () => {
         },
         9,
       ),
-    ).rejects.toThrow('mentions')
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: 'bodyMode=plain 时必须提供 mentions；无提及时请传空数组',
+    })
+  })
+
+  it('reports missing plainText for plain topic body through business codes', async () => {
+    const { service } = createMaterializeTopicBodyHarness()
+
+    await expect(
+      (service as unknown as ForumTopicServicePrivateApi).materializeTopicBodyInTx(
+        {} as never,
+        {
+          bodyMode: 'plain',
+          plainText: '   ',
+          mentions: [],
+        },
+        9,
+      ),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: 'bodyMode=plain 时必须提供 plainText',
+    })
   })
 
   it('materializes plain topic body into structured mention and emoji nodes before compilation', async () => {

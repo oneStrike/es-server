@@ -22,31 +22,24 @@ export class WorkNovelChapterBrowseLogResolver
   /** 作品类型：2 表示小说 */
   private readonly workType = 2
 
+  // 初始化 WorkNovelChapterBrowseLogResolver 依赖。
   constructor(
     private readonly browseLogService: BrowseLogService,
     private readonly drizzle: DrizzleService,
     private readonly workCounterService: WorkCounterService,
   ) {}
 
+  // 读取 workChapter。
   private get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
-  /**
-   * 模块初始化时注册解析器
-   */
+  // 模块初始化时注册解析器。
   onModuleInit() {
     this.browseLogService.registerResolver(this)
   }
 
-  /**
-   * 应用浏览计数增量
-   * 更新小说章节的浏览数
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标章节ID
-   * @param delta - 变更量
-   */
+  // 应用浏览计数增量，更新小说章节的浏览数。
   applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
     async (tx, targetId, delta) => {
       await this.workCounterService.updateWorkChapterViewCount(
@@ -58,13 +51,7 @@ export class WorkNovelChapterBrowseLogResolver
       )
     }
 
-  /**
-   * 校验小说章节是否有效
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标章节ID
-   * @throws 当章节不存在时抛出 BadRequestException
-   */
+  // 校验小说章节是否有效。
   ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
     tx,
     targetId,

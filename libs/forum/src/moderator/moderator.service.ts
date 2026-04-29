@@ -12,7 +12,7 @@ import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import { FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE } from '../section-group/forum-section-group.constant'
 import {
@@ -297,7 +297,10 @@ export class ForumModeratorService {
         ForumModeratorRoleTypeEnum.SECTION,
       ].includes(roleType)
     ) {
-      throw new BadRequestException('版主角色类型不合法')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '版主角色类型不合法',
+      )
     }
 
     if (roleType === ForumModeratorRoleTypeEnum.SUPER) {
@@ -321,7 +324,10 @@ export class ForumModeratorService {
       const nextIsEnabled = input.isEnabled ?? options.current?.isEnabled ?? true
 
       if (!groupId) {
-        throw new BadRequestException('分组版主必须指定 groupId')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '分组版主必须指定 groupId',
+        )
       }
 
       await this.ensureGroupModeratorCapacity(groupId, {
@@ -344,7 +350,10 @@ export class ForumModeratorService {
         : await this.ensureSectionIdsExist(input.sectionIds, client)
 
     if (options.isCreate && sectionIds.length === 0) {
-      throw new BadRequestException('板块版主必须至少绑定一个板块')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '板块版主必须至少绑定一个板块',
+      )
     }
 
     if (
@@ -353,7 +362,10 @@ export class ForumModeratorService {
       options.current?.roleType !== ForumModeratorRoleTypeEnum.SECTION &&
       input.sectionIds === undefined
     ) {
-      throw new BadRequestException('切换为板块版主时必须传 sectionIds')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '切换为板块版主时必须传 sectionIds',
+      )
     }
 
     return {
@@ -785,7 +797,10 @@ export class ForumModeratorService {
     }
 
     if (moderator.roleType !== ForumModeratorRoleTypeEnum.SECTION) {
-      throw new BadRequestException('仅板块版主支持分配板块')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '仅板块版主支持分配板块',
+      )
     }
 
     await this.drizzle.withErrorHandling(async () =>

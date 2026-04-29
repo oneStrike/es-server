@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import { workAuthorRelation, workChapter } from '@db/schema'
+import { DrizzleService } from '@db/core'
 
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { CommentService } from '@libs/interaction/comment/comment.service'
@@ -22,26 +22,29 @@ export class WorkComicChapterCommentResolver
   /** 作品类型：1 表示漫画 */
   private readonly workType = 1
 
+  // 初始化 WorkComicChapterCommentResolver 依赖。
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly commentService: CommentService,
     private readonly workCounterService: WorkCounterService,
   ) {}
 
-  /**
-   * 模块初始化时注册解析器
-   */
+  // 作品章节表。
+  private get workChapter() {
+    return this.drizzle.schema.workChapter
+  }
+
+  // 作品作者关系表。
+  private get workAuthorRelation() {
+    return this.drizzle.schema.workAuthorRelation
+  }
+
+  // 模块初始化时注册解析器。
   onModuleInit() {
     this.commentService.registerResolver(this)
   }
 
-  /**
-   * 应用评论计数增量
-   * 更新漫画章节的评论数
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标章节ID
-   * @param delta - 变更量（+1 增加，-1 减少）
-   */
+  // 应用评论计数增量，更新漫画章节的评论数。
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkChapterCommentCount(
       tx,
@@ -52,14 +55,7 @@ export class WorkComicChapterCommentResolver
     )
   }
 
-  /**
-   * 校验是否允许对该漫画章节发表评论
-   * 检查章节是否存在、是否允许评论
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标章节ID
-   * @throws 当章节不存在或不允许评论时抛出 BadRequestException
-   */
+  // 校验是否允许对该漫画章节发表评论，检查章节是否存在、是否允许评论。
   async ensureCanComment(tx: Db, targetId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
@@ -85,25 +81,18 @@ export class WorkComicChapterCommentResolver
     }
   }
 
-  /**
-   * 解析漫画章节的元信息
-   * 获取章节所属作品的作者ID，用于发送被评论通知
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标章节ID
-   * @returns 目标元信息，包含所有者用户ID
-   */
+  // 解析漫画章节的元信息，获取章节所属作品的作者ID，用于发送被评论通知。
   async resolveMeta(tx: Db, targetId: number) {
     const [author] = await tx
       .select({
-        authorId: workAuthorRelation.authorId,
+        authorId: this.workAuthorRelation.authorId,
       })
-      .from(workChapter)
+      .from(this.workChapter)
       .innerJoin(
-        workAuthorRelation,
-        eq(workAuthorRelation.workId, workChapter.workId),
+        this.workAuthorRelation,
+        eq(this.workAuthorRelation.workId, this.workChapter.workId),
       )
-      .where(eq(workChapter.id, targetId))
+      .where(eq(this.workChapter.id, targetId))
       .limit(1)
 
     return {

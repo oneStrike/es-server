@@ -20,6 +20,11 @@ import {
   UpdateForumSectionEnabledDto,
 } from './dto/forum-section.dto'
 import { FORUM_SECTION_MUTATION_LOCK_NAMESPACE } from './forum-section.constant'
+import type {
+  ForumSectionBatchHandler,
+  ForumVisibleSectionQueryOptions,
+  ForumVisibleSectionRow,
+} from './forum-section.type'
 
 /**
  * 论坛板块服务。
@@ -82,7 +87,7 @@ export class ForumSectionService {
   private async processIdsInBatches(
     ids: number[],
     batchSize: number,
-    handler: (batchIds: number[]) => Promise<void>,
+    handler: ForumSectionBatchHandler,
   ) {
     for (let index = 0; index < ids.length; index += batchSize) {
       const batchIds = ids.slice(index, index + batchSize)
@@ -94,11 +99,7 @@ export class ForumSectionService {
    * 查询公开可见板块原始行。
    * 支持按分组或指定 ID 集合裁剪，但始终复用同一套公开可见规则。
    */
-  private async getVisibleSectionRows(options?: {
-    groupId?: number
-    isUngrouped?: boolean
-    sectionIds?: number[]
-  }) {
+  private async getVisibleSectionRows(options?: ForumVisibleSectionQueryOptions) {
     const uniqueSectionIds = options?.sectionIds
       ? [...new Set(options.sectionIds)]
       : undefined
@@ -180,7 +181,7 @@ export class ForumSectionService {
    * 统一补齐访问状态与关注状态，避免多入口各自拼装。
    */
   private async mapVisibleSectionListItems(
-    sections: Awaited<ReturnType<ForumSectionService['getVisibleSectionRows']>>,
+    sections: ForumVisibleSectionRow[],
     userId?: number,
   ) {
     if (sections.length === 0) {

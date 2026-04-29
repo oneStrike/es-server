@@ -12,6 +12,7 @@ import { UploadContentDto } from './dto/content.dto'
 
 @Injectable()
 export class NovelContentService {
+  // 初始化 NovelContentService 依赖。
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly uploadService: UploadService,
@@ -19,18 +20,17 @@ export class NovelContentService {
     private readonly readingStateService: ReadingStateService,
   ) {}
 
+  // 读取 db。
   private get db() {
     return this.drizzle.db
   }
 
+  // 读取 workChapter。
   get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
-  /**
-   * 获取章节内容（带权限校验）
-   * 用户端使用
-   */
+  // 获取章节内容（带权限校验），用户端使用。
   async getChapterContentWithPermission(chapterId: number, userId?: number) {
     const result = await this.contentPermissionService.checkChapterAccess(
       chapterId,
@@ -53,10 +53,7 @@ export class NovelContentService {
     return chapter.content
   }
 
-  /**
-   * 获取章节内容（无权限校验）
-   * 管理端使用
-   */
+  // 获取章节内容（无权限校验），管理端使用。
   async getChapterContent(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId, deletedAt: { isNull: true } },
@@ -75,6 +72,7 @@ export class NovelContentService {
     return chapter.content
   }
 
+  // 上传 chapter Content。
   async uploadChapterContent(req: FastifyRequest, query: UploadContentDto) {
     const chapterId = query.chapterId
 
@@ -118,6 +116,7 @@ export class NovelContentService {
     return file
   }
 
+  // 删除 chapter Content。
   async deleteChapterContent(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId, deletedAt: { isNull: true } },

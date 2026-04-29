@@ -20,6 +20,7 @@ export class WorkNovelFavoriteResolver
   /** 目标类型：小说作品 */
   readonly targetType = FavoriteTargetTypeEnum.WORK_NOVEL
 
+  // 初始化 WorkNovelFavoriteResolver 依赖。
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
@@ -27,25 +28,17 @@ export class WorkNovelFavoriteResolver
     private readonly workService: WorkService,
   ) {}
 
+  // 读取 db。
   private get db() {
     return this.drizzle.db
   }
 
-  /**
-   * 模块初始化时注册解析器到收藏服务
-   * 使收藏服务能够识别并处理小说作品类型的收藏请求
-   */
+  // 模块初始化时注册解析器到收藏服务，使收藏服务能够识别并处理小说作品类型的收藏请求。
   onModuleInit() {
     this.favoriteService.registerResolver(this)
   }
 
-  /**
-   * 验证目标小说作品是否存在
-   * @param tx - 事务客户端
-   * @param targetId - 作品ID
-   * @returns 空对象（收藏服务要求的接口规范）
-   * @throws BadRequestException 当作品不存在时抛出异常
-   */
+  // 验证目标小说作品是否存在。
   async ensureExists(tx: Db, targetId: number) {
     const target = await tx.query.work.findFirst({
       where: {
@@ -67,13 +60,7 @@ export class WorkNovelFavoriteResolver
     return {}
   }
 
-  /**
-   * 应用收藏计数增量
-   * 当用户收藏或取消收藏时，更新小说作品的收藏计数
-   * @param tx - 事务客户端
-   * @param targetId - 作品ID
-   * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
-   */
+  // 应用收藏计数增量，当用户收藏或取消收藏时，更新小说作品的收藏计数。
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkFavoriteCount(
       tx,
@@ -84,13 +71,7 @@ export class WorkNovelFavoriteResolver
     )
   }
 
-  /**
-   * 批量获取小说作品详情
-   * 用于在收藏列表中展示与作品分页项一致的详情字段
-   * @param targetIds - 作品ID数组
-   * @param userId - 当前用户ID，用于补充作者关注状态
-   * @returns 作品ID到作品详情的映射Map
-   */
+  // 批量获取小说作品详情，用于在收藏列表中展示与作品分页项一致的详情字段。
   async batchGetDetails(targetIds: number[], userId?: number) {
     return this.workService.batchGetPageWorkDetails(
       targetIds,

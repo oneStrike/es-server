@@ -1,5 +1,4 @@
 import type { WorkSelect } from '@db/schema'
-import type { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
@@ -10,11 +9,15 @@ import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
-import { BusinessErrorCode, ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  ContentTypeEnum,
+  WorkRootViewPermissionEnum,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { isNotNil } from '@libs/platform/utils'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { WorkAuthorService } from '../../author/author.service'
 import { ContentPermissionService } from '../../permission/content-permission.service'
@@ -24,6 +27,13 @@ import {
   UpdateWorkDto,
   UpdateWorkStatusDto,
 } from './dto/work.dto'
+import type {
+  BuildPublicWorkDetailParams,
+  WorkDetailContext,
+  WorkFlagUpdateInput,
+  WorkPageConditionOptions,
+  WorkPaginationOptions,
+} from './work.type'
 
 const PAGE_WORK_PICK_FIELDS = [
   'id',
@@ -46,29 +56,13 @@ const PAGE_WORK_PICK_FIELDS = [
 ] as const
 
 /**
- * 作品详情上下文接口
- * 用于传递用户访问作品详情时的上下文信息
- */
-interface WorkDetailContext {
-  /** 用户ID */
-  userId?: number
-  /** IP地址 */
-  ipAddress?: string
-  /** 设备信息 */
-  device?: string
-  /** 用户代理字符串 */
-  userAgent?: string
-  /** 是否跳过 app 侧可见性约束，供管理端复用详情查询 */
-  bypassVisibilityCheck?: boolean
-}
-
-/**
  * 作品服务类
  * 负责作品的全生命周期管理，包括创建、更新、查询、删除等操作
  * 同时处理与作品相关的用户交互（点赞、收藏、浏览）
  */
 @Injectable()
 export class WorkService {
+  // 初始化 WorkService 依赖。
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly workAuthorService: WorkAuthorService,
@@ -80,65 +74,62 @@ export class WorkService {
     private readonly contentPermissionService: ContentPermissionService,
   ) {}
 
-  /** 统一复用当前模块的 Drizzle 数据库实例。 */
+  // 统一复用当前模块的 Drizzle 数据库实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** work 表访问入口。 */
+  // work 表访问入口。
   get work() {
     return this.drizzle.schema.work
   }
 
-  /** work_chapter 表访问入口。 */
+  // work_chapter 表访问入口。
   get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
-  /** app_user 表访问入口。 */
+  // app_user 表访问入口。
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  /** forum_section 表访问入口。 */
+  // forum_section 表访问入口。
   get forumSection() {
     return this.drizzle.schema.forumSection
   }
 
-  /** work_author 表访问入口。 */
+  // work_author 表访问入口。
   get workAuthor() {
     return this.drizzle.schema.workAuthor
   }
 
-  /** work_category 表访问入口。 */
+  // work_category 表访问入口。
   get workCategory() {
     return this.drizzle.schema.workCategory
   }
 
-  /** work_tag 表访问入口。 */
+  // work_tag 表访问入口。
   get workTag() {
     return this.drizzle.schema.workTag
   }
 
-  /** work_author_relation 表访问入口。 */
+  // work_author_relation 表访问入口。
   get workAuthorRelation() {
     return this.drizzle.schema.workAuthorRelation
   }
 
-  /** work_category_relation 表访问入口。 */
+  // work_category_relation 表访问入口。
   get workCategoryRelation() {
     return this.drizzle.schema.workCategoryRelation
   }
 
-  /** work_tag_relation 表访问入口。 */
+  // work_tag_relation 表访问入口。
   get workTagRelation() {
     return this.drizzle.schema.workTagRelation
   }
 
-  /**
-   * 构建作品列表页的最小字段投影。
-   * 列表查询统一复用这一组 select 字段，避免不同分页接口出现字段面不一致。
-   */
+  // 构建作品列表页的最小字段投影，列表查询统一复用这一组 select 字段，避免不同分页接口出现字段面不一致。
   private getPageWorkSelectFields() {
     return {
       id: this.work.id,
@@ -161,17 +152,8 @@ export class WorkService {
     }
   }
 
-  /**
-   * 构建 app/public 作品详情响应。
-   * 公开场景显式裁剪运营内部字段，避免基础表字段变更后意外外泄。
-   */
-  private buildPublicWorkDetail(params: {
-    work: Record<string, any>
-    authors: Array<Record<string, any>>
-    categories: Array<Record<string, any>>
-    tags: Array<Record<string, any>>
-    chapterPurchasePricing: PurchasePricingDto | null
-  }) {
+  // 构建 app/public 作品详情响应，公开场景显式裁剪运营内部字段，避免基础表字段变更后意外外泄。
+  private buildPublicWorkDetail(params: BuildPublicWorkDetailParams) {
     const { work, authors, categories, tags, chapterPurchasePricing } = params
     return {
       id: work.id,
@@ -214,13 +196,7 @@ export class WorkService {
     }
   }
 
-  /**
-   * 验证作品和用户是否存在
-   * @param id 作品ID
-   * @param userId 用户ID
-   * @returns 包含作品和用户信息的对象
-   * @throws BadRequestException 当作品或用户不存在时抛出异常
-   */
+  // 验证作品和用户是否存在。
   async verifyWorkAndUserExist(id: number, userId: number) {
     const [work, user] = await Promise.all([
       this.db.query.work.findFirst({
@@ -247,14 +223,7 @@ export class WorkService {
     return { work, user }
   }
 
-  /**
-   * 验证作品关联的作者、分类、标签是否存在且已启用
-   * 业务规则：作品必须关联有效的作者、分类和标签，且这些关联项必须处于启用状态
-   * @param authorIds 作者ID列表
-   * @param categoryIds 分类ID列表
-   * @param tagIds 标签ID列表
-   * @throws BadRequestException 当任何关联项不存在或已禁用时抛出异常
-   */
+  // 验证作品关联的作者、分类、标签是否存在且已启用，业务规则：作品必须关联有效的作者、分类和标签，且这些关联项必须处于启用状态。
   private async validateWorkRelations(
     authorIds: number[],
     categoryIds: number[],
@@ -312,21 +281,7 @@ export class WorkService {
     }
   }
 
-  /**
-   * 创建作品
-   * 事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：
-   * 1. 创建作品基础信息
-   * 2. 创建作者、分类、标签关联
-   * 3. 更新关联作者的作品数量（+1）
-   *
-   * 业务规则：
-   * 1. 同类型下作品名称必须唯一
-   * 2. 关联的作者、分类、标签必须存在且已启用
-   * 3. 作者和分类按传入顺序设置排序权重
-   * @param createWorkDto 创建作品的数据
-   * @returns 创建的作品信息
-   * @throws BadRequestException 当作品名称重复或关联项无效时抛出异常
-   */
+  // 创建作品，事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：。
   async createWork(createWorkDto: CreateWorkDto) {
     const { authorIds, categoryIds, tagIds, ...workData } = createWorkDto
     const normalizedWorkData = {
@@ -413,24 +368,7 @@ export class WorkService {
     )
   }
 
-  /**
-   * 更新作品
-   * 事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：
-   * 1. 更新作品基础信息
-   * 2. 删除并重建作者关联（全量替换）
-   * 3. 删除并重建分类关联（全量替换）
-   * 4. 删除并重建标签关联（全量替换）
-   * 5. 更新作者作品数量（处理新增和移除的作者）
-   *
-   * 业务规则：
-   * - 同类型下作品名称必须唯一
-   * - 关联的作者、分类、标签必须存在且已启用
-   * - 采用先删除后重建的策略更新关联关系，确保数据一致性
-   *
-   * @param updateWorkDto 更新作品的数据
-   * @returns 更新后的作品信息
-   * @throws BadRequestException 当作品不存在、名称重复或关联项无效时抛出异常
-   */
+  // 更新作品，事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：。
   async updateWork(updateWorkDto: UpdateWorkDto) {
     const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
     const normalizedUpdateData = {
@@ -609,12 +547,7 @@ export class WorkService {
     )
   }
 
-  /**
-   * 更新作品发布状态
-   * @param body 请求体
-   * @returns 更新结果
-   * @throws BadRequestException 当作品不存在时抛出异常
-   */
+  // 更新作品发布状态。
   async updateStatus(body: UpdateWorkStatusDto) {
     const work = await this.db.query.work.findFirst({
       where: { id: body.id, deletedAt: { isNull: true } },
@@ -649,19 +582,8 @@ export class WorkService {
     )
   }
 
-  /**
-   * 批量更新作品标志位（发布/推荐/热门/新作）
-   * 用于管理端快速切换作品的展示状态
-   */
-  async updateWorkFlags(
-    id: number,
-    data: Partial<{
-      isPublished: boolean
-      isRecommended: boolean
-      isHot: boolean
-      isNew: boolean
-    }>,
-  ) {
+  // 批量更新作品标志位（发布/推荐/热门/新作），用于管理端快速切换作品的展示状态。
+  async updateWorkFlags(id: number, data: WorkFlagUpdateInput) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.work)
@@ -672,10 +594,7 @@ export class WorkService {
     return true
   }
 
-  /**
-   * 按类型分页查询作品的通用方法
-   * 支持热门、新作、推荐等标志位过滤，返回精简字段列表以优化列表页性能
-   */
+  // 按类型分页查询作品的通用方法，支持热门、新作、推荐等标志位过滤，返回精简字段列表以优化列表页性能。
   async getWorkTypePage(dto: QueryWorkDto, userId?: number) {
     return this.paginateWorkList(dto, userId, {
       forcePublished: true,
@@ -683,10 +602,7 @@ export class WorkService {
     })
   }
 
-  /**
-   * 批量获取作品分页项详情。
-   * 供收藏列表等聚合接口复用，保持与作品分页接口字段语义一致。
-   */
+  // 批量获取作品分页项详情，供收藏列表等聚合接口复用，保持与作品分页接口字段语义一致。
   async batchGetPageWorkDetails(
     targetIds: number[],
     type: WorkSelect['type'],
@@ -721,14 +637,10 @@ export class WorkService {
     return new Map(page.list.map((item) => [item.id, item]))
   }
 
-  /**
-   * 构建作品分页查询条件。
-   * app 侧列表可通过 forcePublished 固定限制为已发布作品；
-   * 管理端列表则沿用传入的 isPublished 过滤语义。
-   */
+  // 构建作品分页查询条件，app 侧列表可通过 forcePublished 固定限制为已发布作品。
   private buildWorkPageConditions(
     queryWorkDto: QueryWorkDto,
-    options?: { forcePublished?: boolean },
+    options?: WorkPageConditionOptions,
   ): SQL[] {
     const {
       name,
@@ -801,6 +713,7 @@ export class WorkService {
         authorConditions.push(
           buildILikeCondition(this.workAuthor.name, normalizedAuthor)!,
         )
+        // 使用 exists 子查询避免 join 扩大 work 主表行数，保持分页总数只按作品去重统计。
         conditions.push(sql`
           exists (
             select 1
@@ -811,6 +724,7 @@ export class WorkService {
           )
         `)
       } else {
+        // 使用 exists 子查询按作者关系过滤，避免 join 后同一作品因多个关系行重复出现。
         conditions.push(sql`
           exists (
             select 1
@@ -822,6 +736,7 @@ export class WorkService {
     }
 
     if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+      // 使用 exists 子查询按分类关系过滤，保持分页查询仍以 work 主表为唯一计数口径。
       conditions.push(sql`
         exists (
           select 1
@@ -833,6 +748,7 @@ export class WorkService {
     }
 
     if (Array.isArray(tagIds) && tagIds.length > 0) {
+      // 使用 exists 子查询按标签关系过滤，避免多标签匹配时重复 work 行。
       conditions.push(sql`
         exists (
           select 1
@@ -846,17 +762,11 @@ export class WorkService {
     return conditions
   }
 
-  /**
-   * 作品列表分页。
-   * 先复用共享分页查询 work 主表，再批量补充作者、分类与标签关系。
-   */
+  // 作品列表分页，先复用共享分页查询 work 主表，再批量补充作者、分类与标签关系。
   private async paginateWorkList(
     dto: QueryWorkDto,
     userId?: number,
-    options?: {
-      forcePublished?: boolean
-      selectPageFields?: boolean
-    },
+    options?: WorkPaginationOptions,
   ) {
     const where = and(...this.buildWorkPageConditions(dto, options))
     if (options?.selectPageFields) {
@@ -881,11 +791,7 @@ export class WorkService {
     return this.attachWorkRelations(page, userId)
   }
 
-  /**
-   * 批量附加作品的关联数据（作者、分类、标签）
-   * 采用批量查询 + 内存映射的方式避免 N+1 查询问题
-   * 若传入 userId，会额外查询用户对各作者的关注状态
-   */
+  // 批量附加作品的关联数据（作者、分类、标签），采用批量查询 + 内存映射的方式避免 N+1 查询问题。
   private async attachWorkRelations<TWork extends { id: number }>(
     page: {
       list: TWork[]
@@ -981,25 +887,12 @@ export class WorkService {
     }
   }
 
-  /**
-   * 分页查询作品（支持多条件组合过滤）
-   * 查询说明：
-   * - 名称、发布者支持模糊匹配（ILIKE）
-   * - 作者支持按 ID 精确筛选和名称模糊筛选
-   * - 分类、标签支持按 ID 列表筛选
-   * - 其他字段（类型、发布状态、连载状态等）支持精确匹配
-   */
+  // 分页查询作品（支持多条件组合过滤），查询说明：。
   async getWorkPage(dto: QueryWorkDto, userId?: number) {
     return this.paginateWorkList(dto, userId)
   }
 
-  /**
-   * 获取作品的评论目标信息
-   * 业务规则：
-   * - 仅已发布的作品才能评论
-   * - 根据作品类型映射到对应的评论目标类型（漫画/小说）
-   * - 其他类型作品不支持评论
-   */
+  // 获取作品的评论目标信息，业务规则：。
   async getWorkCommentTarget(id: number) {
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -1044,12 +937,7 @@ export class WorkService {
     )
   }
 
-  /**
-   * 获取作品详情
-   * @param id 作品ID
-   * @returns 作品详情信息（包含作者、分类、标签关联）
-   * @throws BadRequestException 当作品不存在时抛出异常
-   */
+  // 获取作品详情。
   async getWorkDetail(id: number, context: WorkDetailContext = {}) {
     const {
       userId,
@@ -1111,7 +999,7 @@ export class WorkService {
         )
     const chapterPurchasePricing = bypassVisibilityCheck
       ? null
-      : workData.viewRule === WorkViewPermissionEnum.PURCHASE
+      : workData.viewRule === WorkRootViewPermissionEnum.PURCHASE
         ? this.contentPermissionService.buildPurchasePricing(
             workData.chapterPrice,
             chapterPayableRate ?? 1,
@@ -1260,18 +1148,7 @@ export class WorkService {
     }
   }
 
-  /**
-   * 删除作品（软删除）
-   * 事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：
-   * 1. 检查作品是否存在及关联章节
-   * 2. 获取作品的关联作者列表
-   * 3. 软删除作品
-   * 4. 更新关联作者的作品数量（-1）
-   *
-   * @param id 作品ID
-   * @returns 删除结果
-   * @throws BadRequestException 当作品不存在或有关联章节时抛出异常
-   */
+  // 删除作品（软删除），事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：。
   async deleteWork(id: number) {
     // 检查作品是否还有未删除的章节
     const chapterCount = await this.db.$count(

@@ -5,6 +5,8 @@ import type { Dirent } from 'node:fs'
 import type {
   ComicArchiveIgnoredItemSnapshot,
   ComicArchiveMatchedItemRecord,
+  ComicArchivePreviewChapter,
+  ComicArchivePreviewChapterMap,
   ComicArchiveTaskRecord,
 } from './comic-archive-import.type'
 import { createWriteStream, promises as fs } from 'node:fs'
@@ -31,7 +33,7 @@ import {
   ComicArchiveImportItemStatusEnum,
   ComicArchivePreviewModeEnum,
   ComicArchiveTaskStatusEnum,
-} from './comic-archive-import.type'
+} from './comic-archive-import.constant'
 import {
   ComicArchiveIgnoredItemDto,
   ComicArchiveResultItemDto,
@@ -65,6 +67,7 @@ export class ComicArchiveImportService {
   private readonly logger = new Logger(ComicArchiveImportService.name)
   private readonly uploadConfig: UploadConfigInterface
 
+  // 初始化 ComicArchiveImportService 依赖。
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly uploadService: UploadService,
@@ -73,26 +76,27 @@ export class ComicArchiveImportService {
     this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
   }
 
+  // 读取 db。
   private get db() {
     return this.drizzle.db
   }
 
+  // 读取 work。
   private get work() {
     return this.drizzle.schema.work
   }
 
+  // 读取 workChapter。
   private get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
+  // 读取 workComicArchiveImportTask。
   private get workComicArchiveImportTask() {
     return this.drizzle.schema.workComicArchiveImportTask
   }
 
-  /**
-   * 预解析漫画压缩包并返回前端确认结果。
-   * 预解析阶段只产出草稿任务，不会写章节内容，也不会上传页面图片到最终 provider。
-   */
+  // 预解析漫画压缩包并返回前端确认结果，预解析阶段只产出草稿任务，不会写章节内容，也不会上传页面图片到最终 provider。
   async previewArchive(
     req: FastifyRequest,
     input: PreviewComicArchiveDto,
@@ -179,17 +183,17 @@ export class ComicArchiveImportService {
     }
   }
 
-  /**
-   * 确认漫画压缩包导入任务。
-   * 用户确认后仅把草稿任务推进到 pending，由后台 worker 执行正式导入。
-   */
+  // 确认漫画压缩包导入任务，用户确认后仅把草稿任务推进到 pending，由后台 worker 执行正式导入。
   async confirmArchive(input: ConfirmComicArchiveDto) {
     const draftRecord = await this.readTaskRecord(input.taskId)
     const record = await this.assertDraftTaskAvailable(draftRecord)
 
     const confirmedChapterIds = [...new Set(input.confirmedChapterIds)]
     if (confirmedChapterIds.length === 0) {
-      throw new BadRequestException('请至少确认一个可导入章节')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '请至少确认一个可导入章节',
+      )
     }
 
     const matchedChapterIds = new Set(
@@ -198,7 +202,10 @@ export class ComicArchiveImportService {
     if (
       confirmedChapterIds.some((chapterId) => !matchedChapterIds.has(chapterId))
     ) {
-      throw new BadRequestException('存在未通过预解析确认的章节')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '存在未通过预解析确认的章节',
+      )
     }
 
     record.confirmedChapterIds = confirmedChapterIds
@@ -208,20 +215,14 @@ export class ComicArchiveImportService {
     return true
   }
 
-  /**
-   * 查询漫画压缩包导入任务详情。
-   * 前端可用该接口轮询预解析草稿和后台导入执行状态。
-   */
+  // 查询漫画压缩包导入任务详情，前端可用该接口轮询预解析草稿和后台导入执行状态。
   async getArchiveDetail(input: ComicArchiveTaskIdDto) {
     const record = await this.readTaskRecord(input.taskId)
     const latestRecord = await this.refreshExpiredDraftTask(record)
     return this.toTaskView(latestRecord)
   }
 
-  /**
-   * 消费待处理的漫画压缩包导入任务。
-   * 任务元数据统一走数据库持久化，worker 只依赖 taskId 定位本地临时目录。
-   */
+  // 消费待处理的漫画压缩包导入任务，任务元数据统一走数据库持久化，worker 只依赖 taskId 定位本地临时目录。
   async consumePendingTasks() {
     await this.cleanupTasks()
 
@@ -234,6 +235,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 执行 processTask。
   private async processTask(record: ComicArchiveTaskRecord) {
     let successCount = 0
     let failureCount = 0
@@ -305,6 +307,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 执行 importChapter。
   private async importChapter(
     record: ComicArchiveTaskRecord,
     matchedItem: ComicArchiveMatchedItemRecord,
@@ -345,15 +348,12 @@ export class ComicArchiveImportService {
     return contents
   }
 
+  // 构建 preview Result。
   private async buildPreviewResult(
     input: PreviewComicArchiveDto,
     archiveName: string,
     extractDir: string,
-    chapters: Array<{
-      id: number
-      title: string
-      content: string | null
-    }>,
+    chapters: ComicArchivePreviewChapter[],
   ) {
     const chapterMap = new Map(chapters.map((chapter) => [chapter.id, chapter]))
     const rootEntries = await fs.readdir(extractDir, { withFileTypes: true })
@@ -379,13 +379,11 @@ export class ComicArchiveImportService {
     )
   }
 
+  // 构建 multi Chapter Preview。
   private async buildMultiChapterPreview(
     extractDir: string,
     rootEntries: Dirent[],
-    chapterMap: Map<
-      number,
-      { id: number, title: string, content: string | null }
-    >,
+    chapterMap: ComicArchivePreviewChapterMap,
   ) {
     const matchedItems: ComicArchiveMatchedItemRecord[] = []
     const ignoredItems: ComicArchiveIgnoredItemSnapshot[] = []
@@ -456,15 +454,13 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 构建 single Chapter Preview。
   private async buildSingleChapterPreview(
     input: PreviewComicArchiveDto,
     archiveName: string,
     extractDir: string,
     rootEntries: Dirent[],
-    chapterMap: Map<
-      number,
-      { id: number, title: string, content: string | null }
-    >,
+    chapterMap: ComicArchivePreviewChapterMap,
   ) {
     const matchedItems: ComicArchiveMatchedItemRecord[] = []
     const ignoredItems: ComicArchiveIgnoredItemSnapshot[] = []
@@ -541,6 +537,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 执行 collectImmediateImagePaths。
   private collectImmediateImagePaths(
     dirPath: string,
     entries: Dirent[],
@@ -574,9 +571,10 @@ export class ComicArchiveImportService {
     )
   }
 
+  // 构建 matched Item。
   private buildMatchedItem(
     path: string,
-    chapter: { id: number, title: string, content: string | null },
+    chapter: { id: number; title: string; content: string | null },
     imagePaths: string[],
   ): ComicArchiveMatchedItemRecord {
     const existingContents = this.parseChapterContents(chapter.content)
@@ -599,6 +597,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 解析 chapter Contents。
   private parseChapterContents(content: string | null) {
     if (!content) {
       return []
@@ -608,6 +607,7 @@ export class ComicArchiveImportService {
     return Array.isArray(parsed) ? parsed : []
   }
 
+  // 执行 extractArchive。
   private async extractArchive(archivePath: string, extractDir: string) {
     try {
       const zip = await unzipper.Open.file(archivePath)
@@ -636,6 +636,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 执行 shouldAutoIgnoreArchivePath。
   private shouldAutoIgnoreArchivePath(entryPath: string) {
     return entryPath
       .split('/')
@@ -645,6 +646,7 @@ export class ComicArchiveImportService {
       )
   }
 
+  // 归一化 archive Segments。
   private normalizeArchiveSegments(entryPath: string) {
     if (entryPath.startsWith('/') || WINDOWS_ABSOLUTE_PATH_RE.test(entryPath)) {
       throw new BadRequestException('压缩包路径不合法')
@@ -662,6 +664,7 @@ export class ComicArchiveImportService {
     return segments
   }
 
+  // 执行 isAllowedImageFile。
   private isAllowedImageFile(fileName: string) {
     const ext = extname(fileName).toLowerCase()
     const normalizedExt = ext.startsWith('.') ? ext.slice(1) : ext
@@ -671,10 +674,12 @@ export class ComicArchiveImportService {
     )
   }
 
+  // 执行 shouldAutoIgnoreName。
   private shouldAutoIgnoreName(name: string) {
     return AUTO_IGNORED_ENTRY_NAMES.has(name) || name.startsWith('.')
   }
 
+  // 加载 work Chapters。
   private async loadWorkChapters(workId: number) {
     return this.db.query.workChapter.findMany({
       where: {
@@ -692,6 +697,7 @@ export class ComicArchiveImportService {
     })
   }
 
+  // 执行 assertWorkExists。
   private async assertWorkExists(workId: number) {
     if (
       !(await this.drizzle.ext.exists(
@@ -706,6 +712,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 执行 assertDraftTaskAvailable。
   private async assertDraftTaskAvailable(record: ComicArchiveTaskRecord) {
     const latestRecord = await this.refreshExpiredDraftTask(record)
     if (latestRecord.status === ComicArchiveTaskStatusEnum.EXPIRED) {
@@ -725,6 +732,7 @@ export class ComicArchiveImportService {
     return latestRecord
   }
 
+  // 执行 refreshExpiredDraftTask。
   private async refreshExpiredDraftTask(record: ComicArchiveTaskRecord) {
     if (
       record.status !== ComicArchiveTaskStatusEnum.DRAFT ||
@@ -739,7 +747,10 @@ export class ComicArchiveImportService {
     return record
   }
 
-  private toTaskView(record: ComicArchiveTaskRecord): ComicArchiveTaskResponseDto {
+  // 执行 toTaskView。
+  private toTaskView(
+    record: ComicArchiveTaskRecord,
+  ): ComicArchiveTaskResponseDto {
     return {
       taskId: record.taskId,
       workId: record.workId,
@@ -759,6 +770,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 执行 cleanupTasks。
   private async cleanupTasks() {
     const now = new Date()
     const retentionCutoff = new Date(
@@ -807,18 +819,22 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 获取 task Root Dir。
   private getTaskRootDir() {
     return join(this.uploadConfig.tmpDir, 'comic-archive-import')
   }
 
+  // 获取 task Dir。
   private getTaskDir(taskId: string) {
     return join(this.getTaskRootDir(), taskId)
   }
 
+  // 获取 task Extract Dir。
   private getTaskExtractDir(taskId: string) {
     return join(this.getTaskDir(taskId), 'extract')
   }
 
+  // 执行 claimNextPendingTask。
   private async claimNextPendingTask() {
     const [pendingTask] = await this.db
       .select({
@@ -869,6 +885,7 @@ export class ComicArchiveImportService {
     return this.toTaskRecord(rows[0])
   }
 
+  // 创建 task Record。
   private async createTaskRecord(record: ComicArchiveTaskRecord) {
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.workComicArchiveImportTask).values({
@@ -879,6 +896,7 @@ export class ComicArchiveImportService {
     )
   }
 
+  // 执行 readTaskRecord。
   private async readTaskRecord(taskId: string) {
     const record = await this.tryReadTaskRecord(taskId)
     if (!record) {
@@ -890,6 +908,7 @@ export class ComicArchiveImportService {
     return record
   }
 
+  // 执行 tryReadTaskRecord。
   private async tryReadTaskRecord(taskId: string) {
     const [row] = await this.db
       .select()
@@ -900,6 +919,7 @@ export class ComicArchiveImportService {
     return row ? this.toTaskRecord(row) : null
   }
 
+  // 更新 task Record。
   private async updateTaskRecord(record: ComicArchiveTaskRecord) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -910,6 +930,7 @@ export class ComicArchiveImportService {
     this.drizzle.assertAffectedRows(result, '导入任务不存在')
   }
 
+  // 执行 safeUpdateTaskRecord。
   private async safeUpdateTaskRecord(record: ComicArchiveTaskRecord) {
     try {
       await this.updateTaskRecord(record)
@@ -921,6 +942,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 构建 task Persist Values。
   private buildTaskPersistValues(record: ComicArchiveTaskRecord) {
     return {
       workId: record.workId,
@@ -943,10 +965,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  /**
-   * 把数据库行收敛成稳定的领域任务记录。
-   * JSONB 字段会做最小归一化，避免脏数据直接透出到接口层。
-   */
+  // 把数据库行收敛成稳定的领域任务记录，JSONB 字段会做最小归一化，避免脏数据直接透出到接口层。
   private toTaskRecord(
     row: WorkComicArchiveImportTaskSelect,
   ): ComicArchiveTaskRecord {
@@ -975,6 +994,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 归一化 summary。
   private normalizeSummary<T>(value: T): ComicArchiveSummaryDto {
     const record = this.asObject(value)
     return {
@@ -984,6 +1004,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 归一化 ignored Items。
   private normalizeIgnoredItems<T>(value: T): ComicArchiveIgnoredItemDto[] {
     if (!Array.isArray(value)) {
       return []
@@ -999,9 +1020,8 @@ export class ComicArchiveImportService {
     })
   }
 
-  private normalizeMatchedItems<T>(
-    value: T,
-  ): ComicArchiveMatchedItemRecord[] {
+  // 归一化 matched Items。
+  private normalizeMatchedItems<T>(value: T): ComicArchiveMatchedItemRecord[] {
     if (!Array.isArray(value)) {
       return []
     }
@@ -1023,6 +1043,7 @@ export class ComicArchiveImportService {
     })
   }
 
+  // 归一化 result Items。
   private normalizeResultItems<T>(value: T): ComicArchiveResultItemDto[] {
     if (!Array.isArray(value)) {
       return []
@@ -1040,6 +1061,7 @@ export class ComicArchiveImportService {
     })
   }
 
+  // 归一化 confirmed Chapter Ids。
   private normalizeConfirmedChapterIds<T>(value: T) {
     if (!Array.isArray(value)) {
       return []
@@ -1050,6 +1072,7 @@ export class ComicArchiveImportService {
       .filter((chapterId) => chapterId > 0)
   }
 
+  // 归一化 task Status。
   private normalizeTaskStatus<T>(value: T): ComicArchiveTaskStatusEnum {
     if (
       value === ComicArchiveTaskStatusEnum.DRAFT ||
@@ -1066,6 +1089,7 @@ export class ComicArchiveImportService {
     throw new InternalServerErrorException('漫画压缩包导入任务状态非法')
   }
 
+  // 归一化 preview Mode。
   private normalizePreviewMode<T>(value: T): ComicArchivePreviewModeEnum {
     if (
       value === ComicArchivePreviewModeEnum.SINGLE_CHAPTER ||
@@ -1076,6 +1100,7 @@ export class ComicArchiveImportService {
     throw new InternalServerErrorException('漫画压缩包导入任务模式非法')
   }
 
+  // 归一化 import Item Status。
   private normalizeImportItemStatus<T>(
     value: T,
   ): ComicArchiveImportItemStatusEnum {
@@ -1089,6 +1114,7 @@ export class ComicArchiveImportService {
     throw new InternalServerErrorException('漫画压缩包导入结果状态非法')
   }
 
+  // 归一化 ignore Reason。
   private normalizeIgnoreReason<T>(value: T): ComicArchiveIgnoreReasonEnum {
     return Object.values(ComicArchiveIgnoreReasonEnum).includes(
       value as ComicArchiveIgnoreReasonEnum,
@@ -1097,30 +1123,36 @@ export class ComicArchiveImportService {
       : ComicArchiveIgnoreReasonEnum.INVALID_IMAGE_FILE
   }
 
+  // 执行 asObject。
   private asObject<T>(value: T) {
     return typeof value === 'object' && value !== null
       ? (value as Record<string, unknown>)
       : null
   }
 
+  // 执行 asString。
   private asString<T>(value: T) {
     return typeof value === 'string' ? value : ''
   }
 
+  // 执行 asNumber。
   private asNumber<T>(value: T) {
     return typeof value === 'number' && Number.isFinite(value) ? value : 0
   }
 
+  // 执行 asBoolean。
   private asBoolean<T>(value: T) {
     return typeof value === 'boolean' ? value : false
   }
 
+  // 执行 asStringArray。
   private asStringArray<T>(value: T) {
     return Array.isArray(value)
       ? value.filter((item): item is string => typeof item === 'string')
       : []
   }
 
+  // 执行 stringifyError。
   private stringifyError<T>(error: T) {
     if (error instanceof Error) {
       return error.message
@@ -1137,6 +1169,7 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 消费 stream。
   private async consumeStream(stream: NodeJS.ReadableStream) {
     return new Promise<void>((resolve) => {
       stream.on('end', resolve)

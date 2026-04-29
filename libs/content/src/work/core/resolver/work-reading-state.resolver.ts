@@ -4,6 +4,7 @@ import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { Injectable, OnModuleInit } from '@nestjs/common'
+import type { WorkReadingChapterRef } from '../work.type'
 
 /**
  * 作品阅读状态解析器
@@ -23,18 +24,18 @@ export class WorkReadingStateResolver
    */
   readonly workType = ContentTypeEnum.COMIC
 
+  // 初始化 WorkReadingStateResolver 依赖。
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly readingStateService: ReadingStateService,
   ) {}
 
+  // 读取 db。
   private get db() {
     return this.drizzle.db
   }
 
-  /**
-   * 模块初始化时注册解析器
-   */
+  // 模块初始化时注册解析器。
   onModuleInit() {
     this.readingStateService.registerResolver(this)
     // 如果小说也走这套逻辑，也注册一下 (旧模型中 work 类型包含了漫画和小说)
@@ -44,9 +45,7 @@ export class WorkReadingStateResolver
     } as WorkReadingStateResolver)
   }
 
-  /**
-   * 解析章节快照
-   */
+  // 解析章节快照。
   async resolveChapterSnapshot(
     _tx: Db | undefined,
     workId: number,
@@ -79,9 +78,8 @@ export class WorkReadingStateResolver
     }
   }
 
-  async resolveChapterSnapshots(
-    refs: Array<{ workId: number, chapterId: number }>,
-  ) {
+  // 解析 chapter Snapshots。
+  async resolveChapterSnapshots(refs: WorkReadingChapterRef[]) {
     if (refs.length === 0) {
       return []
     }
@@ -125,12 +123,7 @@ export class WorkReadingStateResolver
     })
   }
 
-  /**
-   * 解析作品快照列表
-   *
-   * @param workIds - 作品ID列表
-   * @returns 作品快照列表
-   */
+  // 解析作品快照列表。
   async resolveWorkSnapshots(workIds: number[]) {
     if (workIds.length === 0) {
       return []
@@ -160,12 +153,7 @@ export class WorkReadingStateResolver
     }))
   }
 
-  /**
-   * 根据章节ID获取作品关联信息
-   *
-   * @param chapterId - 章节ID
-   * @returns 作品关联信息，包含作品ID和类型
-   */
+  // 根据章节ID获取作品关联信息。
   async resolveWorkInfoByChapter(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId },

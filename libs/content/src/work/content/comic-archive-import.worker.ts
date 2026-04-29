@@ -8,10 +8,12 @@ import { ComicArchiveImportService } from './comic-archive-import.service'
  */
 @Injectable()
 export class ComicArchiveImportWorker {
+  // 初始化 ComicArchiveImportWorker 依赖。
   constructor(
     private readonly comicArchiveImportService: ComicArchiveImportService,
   ) {}
 
+  // 消费 pending Tasks。
   @Cron('*/5 * * * * *')
   async consumePendingTasks() {
     await this.comicArchiveImportService.consumePendingTasks()

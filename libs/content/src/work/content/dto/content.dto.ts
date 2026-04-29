@@ -1,11 +1,20 @@
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
-import { IdDto, PageDto } from '@libs/platform/dto';
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import { PickType } from '@nestjs/swagger'
 import {
+  ComicArchiveIgnoreReasonEnum,
   ComicArchiveImportItemStatusEnum,
   ComicArchivePreviewModeEnum,
   ComicArchiveTaskStatusEnum,
-} from '../comic-archive-import.type'
+} from '../comic-archive-import.constant'
 
 export class UploadContentDto {
   @NumberProperty({ description: '章节ID', example: 1, required: true })
@@ -21,15 +30,29 @@ class ChapterIdDto {
 }
 
 export class UpdateComicContentDto extends ChapterIdDto {
-  @NumberProperty({ description: '内容索引', example: 0, required: true, min: 0 })
+  @NumberProperty({
+    description: '内容索引',
+    example: 0,
+    required: true,
+    min: 0,
+  })
   index!: number
 
-  @StringProperty({ description: '内容路径', example: '/uploads/comic/1/chapter/1/1.jpg', required: true })
+  @StringProperty({
+    description: '内容路径',
+    example: '/uploads/comic/1/chapter/1/1.jpg',
+    required: true,
+  })
   content!: string
 }
 
 export class DeleteComicContentDto extends ChapterIdDto {
-  @ArrayProperty({ description: '内容索引列表', itemType: 'number', example: [0, 1], required: true })
+  @ArrayProperty({
+    description: '内容索引列表',
+    itemType: 'number',
+    example: [0, 1],
+    required: true,
+  })
   index!: number[]
 }
 
@@ -37,7 +60,12 @@ export class MoveComicContentDto extends ChapterIdDto {
   @NumberProperty({ description: '源索引', example: 0, required: true, min: 0 })
   fromIndex!: number
 
-  @NumberProperty({ description: '目标索引', example: 1, required: true, min: 0 })
+  @NumberProperty({
+    description: '目标索引',
+    example: 1,
+    required: true,
+    min: 0,
+  })
   toIndex!: number
 }
 
@@ -54,7 +82,11 @@ export class PreviewComicArchiveDto {
 }
 
 export class ComicArchiveTaskIdDto {
-  @StringProperty({ description: '导入任务ID', example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650', required: true })
+  @StringProperty({
+    description: '导入任务ID',
+    example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
+    required: true,
+  })
   taskId!: string
 }
 
@@ -69,26 +101,54 @@ export class ConfirmComicArchiveDto extends ComicArchiveTaskIdDto {
 }
 
 export class ComicArchiveSummaryDto {
-  @NumberProperty({ description: '可导入章节数', example: 2, required: true, validation: false })
+  @NumberProperty({
+    description: '可导入章节数',
+    example: 2,
+    required: true,
+    validation: false,
+  })
   matchedChapterCount!: number
 
-  @NumberProperty({ description: '忽略项数量', example: 3, required: true, validation: false })
+  @NumberProperty({
+    description: '忽略项数量',
+    example: 3,
+    required: true,
+    validation: false,
+  })
   ignoredItemCount!: number
 
-  @NumberProperty({ description: '有效图片总数', example: 45, required: true, validation: false })
+  @NumberProperty({
+    description: '有效图片总数',
+    example: 45,
+    required: true,
+    validation: false,
+  })
   imageCount!: number
 }
 
 export class ComicArchiveIgnoredItemDto {
-  @StringProperty({ description: '被忽略的路径', example: 'chapter-12', required: true, validation: false })
+  @StringProperty({
+    description: '被忽略的路径',
+    example: 'chapter-12',
+    required: true,
+    validation: false,
+  })
   path!: string
 
-  @NumberProperty({ description: '忽略原因码', example: 1001, required: true, validation: false })
-  reason!: number
+  @EnumProperty({
+    description:
+      '忽略原因码（1001=章节目录名非法；1002=章节不存在；1003=嵌套目录忽略；1004=缺少章节ID；1005=图片文件非法）',
+    example: ComicArchiveIgnoreReasonEnum.INVALID_CHAPTER_ID_DIR,
+    enum: ComicArchiveIgnoreReasonEnum,
+    required: true,
+    validation: false,
+  })
+  reason!: ComicArchiveIgnoreReasonEnum
 
   @StringProperty({
     description: '友好提示信息',
-    example: '目录 chapter-12 不是有效的章节 ID，已忽略。多章节压缩包只支持使用章节 ID 作为一级目录名。',
+    example:
+      '目录 chapter-12 不是有效的章节 ID，已忽略。多章节压缩包只支持使用章节 ID 作为一级目录名。',
     required: true,
     validation: false,
   })
@@ -96,33 +156,74 @@ export class ComicArchiveIgnoredItemDto {
 }
 
 export class ComicArchiveMatchedItemDto {
-  @StringProperty({ description: '匹配来源路径', example: '101', required: true, validation: false })
+  @StringProperty({
+    description: '匹配来源路径',
+    example: '101',
+    required: true,
+    validation: false,
+  })
   path!: string
 
-  @NumberProperty({ description: '章节ID', example: 101, required: true, validation: false })
+  @NumberProperty({
+    description: '章节ID',
+    example: 101,
+    required: true,
+    validation: false,
+  })
   chapterId!: number
 
-  @StringProperty({ description: '章节标题', example: '第101话', required: true, validation: false })
+  @StringProperty({
+    description: '章节标题',
+    example: '第101话',
+    required: true,
+    validation: false,
+  })
   chapterTitle!: string
 
-  @NumberProperty({ description: '压缩包内图片数量', example: 23, required: true, validation: false })
+  @NumberProperty({
+    description: '压缩包内图片数量',
+    example: 23,
+    required: true,
+    validation: false,
+  })
   imageCount!: number
 
-  @BooleanProperty({ description: '章节当前是否已有内容', example: true, required: true, validation: false })
+  @BooleanProperty({
+    description: '章节当前是否已有内容',
+    example: true,
+    required: true,
+    validation: false,
+  })
   hasExistingContent!: boolean
 
-  @NumberProperty({ description: '章节当前已有图片数量', example: 18, required: true, validation: false })
+  @NumberProperty({
+    description: '章节当前已有图片数量',
+    example: 18,
+    required: true,
+    validation: false,
+  })
   existingImageCount!: number
 
-  @StringProperty({ description: '导入模式', example: 'replace', required: true, validation: false })
+  @StringProperty({
+    description: '导入模式',
+    example: 'replace',
+    required: true,
+    validation: false,
+  })
   importMode!: string
 
-  @StringProperty({ description: '匹配结果说明', example: '目录 101 已匹配到章节 101，可在确认后导入。', required: true, validation: false })
+  @StringProperty({
+    description: '匹配结果说明',
+    example: '目录 101 已匹配到章节 101，可在确认后导入。',
+    required: true,
+    validation: false,
+  })
   message!: string
 
   @StringProperty({
     description: '覆盖提示信息',
-    example: '章节 101 当前已有 18 张图片。确认导入后会用压缩包内容整体覆盖，旧资源首版不会自动删除。',
+    example:
+      '章节 101 当前已有 18 张图片。确认导入后会用压缩包内容整体覆盖，旧资源首版不会自动删除。',
     required: true,
     validation: false,
   })
@@ -130,13 +231,28 @@ export class ComicArchiveMatchedItemDto {
 }
 
 export class ComicArchiveResultItemDto {
-  @NumberProperty({ description: '章节ID', example: 101, required: true, validation: false })
+  @NumberProperty({
+    description: '章节ID',
+    example: 101,
+    required: true,
+    validation: false,
+  })
   chapterId!: number
 
-  @StringProperty({ description: '章节标题', example: '第101话', required: true, validation: false })
+  @StringProperty({
+    description: '章节标题',
+    example: '第101话',
+    required: true,
+    validation: false,
+  })
   chapterTitle!: string
 
-  @NumberProperty({ description: '已导入图片数量', example: 23, required: true, validation: false })
+  @NumberProperty({
+    description: '已导入图片数量',
+    example: 23,
+    required: true,
+    validation: false,
+  })
   importedImageCount!: number
 
   @EnumProperty({
@@ -148,12 +264,22 @@ export class ComicArchiveResultItemDto {
   })
   status!: ComicArchiveImportItemStatusEnum
 
-  @StringProperty({ description: '执行结果说明', example: '章节 101 导入成功', required: true, validation: false })
+  @StringProperty({
+    description: '执行结果说明',
+    example: '章节 101 导入成功',
+    required: true,
+    validation: false,
+  })
   message!: string
 }
 
 export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
-  @NumberProperty({ description: '作品ID', example: 1, required: true, validation: false })
+  @NumberProperty({
+    description: '作品ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
   workId!: number
 
   @EnumProperty({
@@ -166,7 +292,8 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
   mode!: ComicArchivePreviewModeEnum
 
   @EnumProperty({
-    description: '任务状态（0=草稿；1=待处理；2=处理中；3=成功；4=部分失败；5=失败；6=已过期；7=已取消）',
+    description:
+      '任务状态（0=草稿；1=待处理；2=处理中；3=成功；4=部分失败；5=失败；6=已过期；7=已取消）',
     example: ComicArchiveTaskStatusEnum.DRAFT,
     enum: ComicArchiveTaskStatusEnum,
     required: true,
@@ -174,7 +301,12 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
   })
   status!: ComicArchiveTaskStatusEnum
 
-  @BooleanProperty({ description: '是否需要用户确认', example: true, required: true, validation: false })
+  @BooleanProperty({
+    description: '是否需要用户确认',
+    example: true,
+    required: true,
+    validation: false,
+  })
   requireConfirm!: boolean
 
   @ArrayProperty({
@@ -204,7 +336,12 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
   })
   resultItems!: ComicArchiveResultItemDto[]
 
-  @StringProperty({ description: '最后一次错误信息', example: '', required: false, validation: false })
+  @StringProperty({
+    description: '最后一次错误信息',
+    example: '',
+    required: false,
+    validation: false,
+  })
   lastError?: string | null
 
   @DateProperty({
@@ -281,21 +418,42 @@ export class ChapterContentComicRequestDto extends DetailComicRequestDto {
   chapterId!: string
 }
 
+/**
+ * 第三方平台漫画详情原始响应结构。
+ * 作为 Swagger schema 透出开放 JSON 对象。
+ */
 export const THIRD_PARTY_COMIC_DETAIL_SCHEMA = {
+  // JSON schema 顶层类型。
   type: 'object',
+  // 第三方响应字段开放，不在本服务内枚举。
   additionalProperties: true,
+  // Swagger 展示用中文说明。
   description: '第三方平台漫画详情原始数据',
 } as const
 
+/**
+ * 第三方平台漫画章节原始响应结构。
+ * 作为 Swagger schema 透出开放 JSON 对象。
+ */
 export const THIRD_PARTY_COMIC_CHAPTER_SCHEMA = {
+  // JSON schema 顶层类型。
   type: 'object',
+  // 第三方响应字段开放，不在本服务内枚举。
   additionalProperties: true,
+  // Swagger 展示用中文说明。
   description: '第三方平台漫画章节原始数据',
 } as const
 
+/**
+ * 第三方平台漫画章节内容原始响应结构。
+ * 作为 Swagger schema 透出开放 JSON 对象。
+ */
 export const THIRD_PARTY_COMIC_CHAPTER_CONTENT_SCHEMA = {
+  // JSON schema 顶层类型。
   type: 'object',
+  // 第三方响应字段开放，不在本服务内枚举。
   additionalProperties: true,
+  // Swagger 展示用中文说明。
   description: '第三方平台漫画章节内容原始数据',
 } as const
 

@@ -70,6 +70,7 @@ export class BaseForumActionLogDto extends IdDto {
     description: '操作IP地址',
     example: '127.0.0.1',
     required: false,
+    maxLength: 45,
   })
   ipAddress?: string
 
@@ -78,6 +79,7 @@ export class BaseForumActionLogDto extends IdDto {
     example:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     required: false,
+    maxLength: 500,
   })
   userAgent?: string
 
@@ -165,6 +167,7 @@ export class CreateForumActionLogDto extends PickType(BaseForumActionLogDto, [
     description: '操作 IP 地址',
     example: '127.0.0.1',
     required: false,
+    maxLength: 45,
   })
   ipAddress?: string
 
@@ -172,6 +175,7 @@ export class CreateForumActionLogDto extends PickType(BaseForumActionLogDto, [
     description: '用户代理',
     example: 'Mozilla/5.0',
     required: false,
+    maxLength: 500,
   })
   userAgent?: string
 }

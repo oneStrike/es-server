@@ -1,4 +1,5 @@
 import type { ForumTopicSelect } from '@db/schema'
+import type { SQL } from 'drizzle-orm'
 import { buildLikePattern, DrizzleService } from '@db/core'
 
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
@@ -9,6 +10,10 @@ import { ForumHashtagReferenceSourceTypeEnum } from '../hashtag/forum-hashtag.co
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import { ForumSearchDto, ForumSearchResultDto } from './dto/search.dto'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
+import type {
+  ForumSearchCondition,
+  ForumSearchConditionTuple,
+} from './search.type'
 
 /**
  * 论坛搜索服务。
@@ -230,6 +235,18 @@ export class ForumSearchService {
     return dto.hashtagId ?? dto.tagId
   }
 
+  private compactConditions(
+    conditions: ForumSearchCondition[],
+  ): ForumSearchConditionTuple | undefined {
+    const filtered = conditions.filter(
+      (condition): condition is SQL => Boolean(condition),
+    )
+
+    return filtered.length > 0
+      ? (filtered as ForumSearchConditionTuple)
+      : undefined
+  }
+
   /**
    * 构建评论搜索的话题过滤条件。
    * - 兼容期内同时接受“主题命中 hashtag”与“评论自身命中 hashtag”两种来源。
@@ -238,24 +255,24 @@ export class ForumSearchService {
     topicIdsByHashtag?: number[]
     commentIdsByHashtag?: number[]
   }) {
-    const conditions = [
+    const conditionTuple = this.compactConditions([
       params.topicIdsByHashtag?.length
         ? inArray(this.forumTopic.id, params.topicIdsByHashtag)
         : undefined,
       params.commentIdsByHashtag?.length
         ? inArray(this.userComment.id, params.commentIdsByHashtag)
         : undefined,
-    ].filter(Boolean)
+    ])
 
-    if (conditions.length === 0) {
+    if (!conditionTuple) {
       return undefined
     }
 
-    if (conditions.length === 1) {
-      return conditions[0]
+    if (conditionTuple.length === 1) {
+      return conditionTuple[0]
     }
 
-    return or(...(conditions as [any, ...any[]]))
+    return or(...conditionTuple)
   }
 
   /**
@@ -518,7 +535,7 @@ export class ForumSearchService {
     }
 
     const keywordLike = buildLikePattern(dto.keyword)!
-    const conditions = [
+    const conditionTuple = this.compactConditions([
       isNull(this.forumTopic.deletedAt),
       or(
         ilike(this.forumTopic.title, keywordLike),
@@ -536,10 +553,10 @@ export class ForumSearchService {
       topicIdsByHashtag
         ? inArray(this.forumTopic.id, topicIdsByHashtag)
         : undefined,
-    ].filter(Boolean)
+    ])!
 
     const page = await this.drizzle.ext.findPagination(this.forumTopic, {
-      where: and(...(conditions as [any, ...any[]])),
+      where: and(...conditionTuple),
       ...dto,
       orderBy: this.getTopicOrderBy(dto.sort),
     })
@@ -596,7 +613,7 @@ export class ForumSearchService {
       topicIdsByHashtag,
       commentIdsByHashtag,
     })
-    const conditions = [
+    const conditionTuple = this.compactConditions([
       eq(this.userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
       isNull(this.userComment.deletedAt),
       ilike(this.userComment.content, keywordLike),
@@ -616,9 +633,9 @@ export class ForumSearchService {
           : inArray(this.forumTopic.sectionId, sectionIds)
         : undefined,
       commentHashtagFilter,
-    ].filter(Boolean)
+    ])!
 
-    const where = and(...(conditions as [any, ...any[]]))
+    const where = and(...conditionTuple)
 
     const [rows, totalRows] = await Promise.all([
       this.db

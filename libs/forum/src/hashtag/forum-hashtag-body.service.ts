@@ -4,7 +4,9 @@ import type {
   BodyInlineNode,
 } from '@libs/interaction/body/body.type'
 import type {
+  ForumHashtagRecordMap,
   ForumHashtagCandidate,
+  ForumHashtagTextNode,
   MaterializeForumHashtagBodyInTxInput,
   MaterializeForumHashtagBodyResult,
 } from './forum-hashtag.type'
@@ -146,19 +148,12 @@ export class ForumHashtagBodyService {
   private async materializeCandidateMapInTx(
     input: MaterializeForumHashtagBodyInTxInput,
     candidates: ForumHashtagCandidate[],
-  ) {
+  ): Promise<ForumHashtagRecordMap> {
     const uniqueCandidates = [
       ...new Map(candidates.map((item) => [item.slug, item] as const)).values(),
     ]
     if (uniqueCandidates.length === 0) {
-      return new Map<
-        string,
-        {
-          id: number
-          slug: string
-          displayName: string
-        }
-      >()
+      return new Map()
     }
 
     const existingRows = await input.tx
@@ -272,8 +267,8 @@ export class ForumHashtagBodyService {
 
   // 把文本节点拆成 text + forumHashtag node。
   private splitTextNodeByHashtags(
-    node: BodyInlineNode & { type: 'text' },
-    hashtagMap: Map<string, { id: number, slug: string, displayName: string }>,
+    node: ForumHashtagTextNode,
+    hashtagMap: ForumHashtagRecordMap,
     occurrenceMap: Map<number, number>,
   ) {
     const pieces: BodyInlineNode[] = []
@@ -331,7 +326,7 @@ export class ForumHashtagBodyService {
   // 用正式资源替换正文里的 hashtag 候选。
   private rewriteBodyWithHashtags(
     body: BodyDoc,
-    hashtagMap: Map<string, { id: number, slug: string, displayName: string }>,
+    hashtagMap: ForumHashtagRecordMap,
   ) {
     const occurrenceMap = new Map<number, number>()
 

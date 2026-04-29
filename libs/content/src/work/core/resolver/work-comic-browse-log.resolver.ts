@@ -22,31 +22,24 @@ export class WorkComicBrowseLogResolver
   /** 作品类型：1 表示漫画 */
   private readonly workType = 1
 
+  // 初始化 WorkComicBrowseLogResolver 依赖。
   constructor(
     private readonly browseLogService: BrowseLogService,
     private readonly drizzle: DrizzleService,
     private readonly workCounterService: WorkCounterService,
   ) {}
 
+  // 读取 work。
   private get work() {
     return this.drizzle.schema.work
   }
 
-  /**
-   * 模块初始化时注册解析器
-   */
+  // 模块初始化时注册解析器。
   onModuleInit() {
     this.browseLogService.registerResolver(this)
   }
 
-  /**
-   * 应用浏览计数增量
-   * 更新漫画作品的浏览数
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标作品ID
-   * @param delta - 变更量
-   */
+  // 应用浏览计数增量，更新漫画作品的浏览数。
   applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
     async (tx, targetId, delta) => {
       await this.workCounterService.updateWorkViewCount(
@@ -58,13 +51,7 @@ export class WorkComicBrowseLogResolver
       )
     }
 
-  /**
-   * 校验漫画作品是否有效
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标作品ID
-   * @throws 当作品不存在时抛出 BadRequestException
-   */
+  // 校验漫画作品是否有效。
   ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
     tx,
     targetId,

@@ -6,7 +6,7 @@ import { BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 import { jsonParse } from '@libs/platform/utils'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
@@ -18,6 +18,7 @@ import {
 
 @Injectable()
 export class ComicContentService {
+  // 初始化 ComicContentService 依赖。
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly uploadService: UploadService,
@@ -25,18 +26,17 @@ export class ComicContentService {
     private readonly readingStateService: ReadingStateService,
   ) {}
 
+  // 读取 db。
   private get db() {
     return this.drizzle.db
   }
 
+  // 读取 workChapter。
   get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
-  /**
-   * 获取章节内容（带权限校验）
-   * 用户端使用
-   */
+  // 获取章节内容（带权限校验），用户端使用。
   async getChapterContentsWithPermission(chapterId: number, userId?: number) {
     const result = await this.contentPermissionService.checkChapterAccess(
       chapterId,
@@ -75,14 +75,12 @@ export class ComicContentService {
     }
   }
 
-  /**
-   * 获取章节内容（无权限校验）
-   * 管理端使用
-   */
+  // 获取章节内容（无权限校验），管理端使用。
   async getChapterContents(chapterId: number) {
     return this.getChapterContentsInternal(chapterId)
   }
 
+  // 新增 chapter Content。
   async addChapterContent(req: FastifyRequest, query: UploadContentDto) {
     const chapterId = query.chapterId
 
@@ -130,13 +128,17 @@ export class ComicContentService {
     return file
   }
 
+  // 更新 chapter Content。
   async updateChapterContent(body: UpdateComicContentDto) {
     const { chapterId, index, content } = body
 
     const contents: string[] = await this.getChapterContentsInternal(chapterId)
 
     if (index < 0 || index >= contents.length) {
-      throw new BadRequestException('索引超出范围')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '索引超出范围',
+      )
     }
 
     contents[index] = content
@@ -158,6 +160,7 @@ export class ComicContentService {
     return true
   }
 
+  // 删除 chapter Content。
   async deleteChapterContent(dto: DeleteComicContentDto) {
     const { chapterId, index } = dto
 
@@ -192,6 +195,7 @@ export class ComicContentService {
     return true
   }
 
+  // 移动 chapter Content。
   async moveChapterContent(body: MoveComicContentDto) {
     const { chapterId, fromIndex, toIndex } = body
 
@@ -203,7 +207,10 @@ export class ComicContentService {
       toIndex < 0 ||
       toIndex >= contents.length
     ) {
-      throw new BadRequestException('索引超出范围')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '索引超出范围',
+      )
     }
 
     const [movedContent] = contents.splice(fromIndex, 1)
@@ -226,6 +233,7 @@ export class ComicContentService {
     return true
   }
 
+  // 清空 chapter Contents。
   async clearChapterContents(chapterId: number) {
     await this.drizzle.withErrorHandling(
       () =>
@@ -244,10 +252,7 @@ export class ComicContentService {
     return true
   }
 
-  /**
-   * 内部方法：获取章节内容（不进行权限校验）
-   * 用于其他方法内部调用或管理端直接调用
-   */
+  // 内部方法：获取章节内容（不进行权限校验），用于其他方法内部调用或管理端直接调用。
   private async getChapterContentsInternal(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId, deletedAt: { isNull: true } },
@@ -265,11 +270,7 @@ export class ComicContentService {
     return this.parseContent(chapter?.content)
   }
 
-  /**
-   * 解析漫画章节内容
-   * @param content 原始内容字符串
-   * @returns 图片路径列表
-   */
+  // 解析漫画章节内容。
   parseContent(content: string | null | undefined): string[] {
     if (!content) {
       return []

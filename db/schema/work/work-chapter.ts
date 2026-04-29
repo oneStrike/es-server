@@ -139,10 +139,9 @@ export const workChapter = pgTable(
     /**
      * 唯一索引: workId, sortOrder（仅未删除章节）
      */
-    uniqueIndex('work_chapter_work_id_sort_order_live_idx').on(
-      table.workId,
-      table.sortOrder,
-    ).where(sql`${table.deletedAt} is null`),
+    uniqueIndex('work_chapter_work_id_sort_order_live_idx')
+      .on(table.workId, table.sortOrder)
+      .where(sql`${table.deletedAt} is null`),
     /**
      * 索引: deletedAt
      */
@@ -200,13 +199,39 @@ export const workChapter = pgTable(
      */
     index('work_chapter_work_type_idx').on(table.workType),
     /**
+     * 作品类型闭合值域约束
+     */
+    check('work_chapter_work_type_valid_chk', sql`${table.workType} in (1, 2)`),
+    /**
+     * 章节阅读规则闭合值域约束
+     */
+    check(
+      'work_chapter_view_rule_valid_chk',
+      sql`${table.viewRule} in (-1, 0, 1, 2, 3)`,
+    ),
+    /**
      * 计数字段非负约束
      */
-    check('work_chapter_view_count_non_negative_chk', sql`${table.viewCount} >= 0`),
-    check('work_chapter_like_count_non_negative_chk', sql`${table.likeCount} >= 0`),
-    check('work_chapter_comment_count_non_negative_chk', sql`${table.commentCount} >= 0`),
-    check('work_chapter_purchase_count_non_negative_chk', sql`${table.purchaseCount} >= 0`),
-    check('work_chapter_download_count_non_negative_chk', sql`${table.downloadCount} >= 0`),
+    check(
+      'work_chapter_view_count_non_negative_chk',
+      sql`${table.viewCount} >= 0`,
+    ),
+    check(
+      'work_chapter_like_count_non_negative_chk',
+      sql`${table.likeCount} >= 0`,
+    ),
+    check(
+      'work_chapter_comment_count_non_negative_chk',
+      sql`${table.commentCount} >= 0`,
+    ),
+    check(
+      'work_chapter_purchase_count_non_negative_chk',
+      sql`${table.purchaseCount} >= 0`,
+    ),
+    check(
+      'work_chapter_download_count_non_negative_chk',
+      sql`${table.downloadCount} >= 0`,
+    ),
   ],
 )
 

@@ -30,36 +30,35 @@ export class WorkAuthorService {
    */
   private readonly authorFollowTargetType = 2
 
+  // 初始化 WorkAuthorService 依赖。
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 数据库连接实例。 */
+  // 数据库连接实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** 作者表。 */
+  // 作者表。
   get workAuthor() {
     return this.drizzle.schema.workAuthor
   }
 
-  /** 关注关系表。 */
+  // 关注关系表。
   private get userFollow() {
     return this.drizzle.schema.userFollow
   }
 
-  /** 作品表。 */
+  // 作品表。
   private get work() {
     return this.drizzle.schema.work
   }
 
-  /** 作者-作品关联表。 */
+  // 作者-作品关联表。
   private get workAuthorRelation() {
     return this.drizzle.schema.workAuthorRelation
   }
 
-  /**
-   * 按批次处理作者 ID，避免全量重建时单次并发过高。
-   */
+  // 按批次处理作者 ID，避免全量重建时单次并发过高。
   private async processIdsInBatches(
     ids: number[],
     batchSize: number,
@@ -71,10 +70,7 @@ export class WorkAuthorService {
     }
   }
 
-  /**
-   * 按增量更新作者粉丝数。
-   * 该方法供关注域写路径调用；若未传事务，则在独立错误处理上下文中执行。
-   */
+  // 按增量更新作者粉丝数，该方法供关注域写路径调用；若未传事务，则在独立错误处理上下文中执行。
   async updateAuthorFollowersCount(
     tx: Db | undefined,
     authorId: number,
@@ -97,10 +93,7 @@ export class WorkAuthorService {
       : this.drizzle.withErrorHandling(async () => execute(this.db)))
   }
 
-  /**
-   * 批量更新作者作品数。
-   * 供作品创建、改作者、删除等写路径统一委托，避免散落在 work service 中手写 delta。
-   */
+  // 批量更新作者作品数，供作品创建、改作者、删除等写路径统一委托，避免散落在 work service 中手写 delta。
   async updateAuthorWorkCounts(
     tx: Db | undefined,
     authorIds: number[],
@@ -125,10 +118,7 @@ export class WorkAuthorService {
       : this.drizzle.withErrorHandling(async () => execute(this.db)))
   }
 
-  /**
-   * 根据 follow 事实表重建作者粉丝数。
-   * 重建时只统计当前存在的关注关系，并要求作者记录未被软删除。
-   */
+  // 根据 follow 事实表重建作者粉丝数，重建时只统计当前存在的关注关系，并要求作者记录未被软删除。
   async rebuildAuthorFollowersCount(tx: Db | undefined, authorId: number) {
     const client = tx ?? this.db
     const row = await client
@@ -172,10 +162,7 @@ export class WorkAuthorService {
     }
   }
 
-  /**
-   * 根据作者-作品关系事实表重建作者作品数。
-   * 口径定义为“作者关联的未删除作品数量”。
-   */
+  // 根据作者-作品关系事实表重建作者作品数，口径定义为“作者关联的未删除作品数量”。
   async rebuildAuthorWorkCount(tx: Db | undefined, authorId: number) {
     const client = tx ?? this.db
     const row = await client
@@ -221,10 +208,7 @@ export class WorkAuthorService {
     }
   }
 
-  /**
-   * 在非事务上下文中重建作者粉丝数。
-   * 用于管理端修复入口与离线运维场景。
-   */
+  // 在非事务上下文中重建作者粉丝数，用于管理端修复入口与离线运维场景。
   async rebuildAuthorFollowersCountById(
     input: IdDto,
   ): Promise<AuthorFollowCountRepairResultDto> {
@@ -235,10 +219,7 @@ export class WorkAuthorService {
     }
   }
 
-  /**
-   * 全量重建作者粉丝数。
-   * 当前用于管理端运维入口，按批次串行推进以避免单次压力过大。
-   */
+  // 全量重建作者粉丝数，当前用于管理端运维入口，按批次串行推进以避免单次压力过大。
   async rebuildAllAuthorFollowersCount(batchSize = 200) {
     const authorIds = await this.db
       .select({ id: this.workAuthor.id })
@@ -258,10 +239,7 @@ export class WorkAuthorService {
     return true
   }
 
-  /**
-   * 在非事务上下文中重建作者作品数。
-   * 用于管理端修复入口与离线运维场景。
-   */
+  // 在非事务上下文中重建作者作品数，用于管理端修复入口与离线运维场景。
   async rebuildAuthorWorkCountById(
     input: IdDto,
   ): Promise<AuthorWorkCountRepairResultDto> {
@@ -272,9 +250,7 @@ export class WorkAuthorService {
     }
   }
 
-  /**
-   * 全量重建作者作品数。
-   */
+  // 全量重建作者作品数。
   async rebuildAllAuthorWorkCount(batchSize = 200) {
     const authorIds = await this.db
       .select({ id: this.workAuthor.id })
@@ -294,10 +270,7 @@ export class WorkAuthorService {
     return true
   }
 
-  /**
-   * 创建作者。
-   * 默认值交给数据库字段默认语义处理，唯一约束和其他写入异常统一走 `withErrorHandling`。
-   */
+  // 创建作者，默认值交给数据库字段默认语义处理，唯一约束和其他写入异常统一走 `withErrorHandling`。
   async createAuthor(createAuthorInput: CreateAuthorDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.workAuthor).values(createAuthorInput),
@@ -305,10 +278,7 @@ export class WorkAuthorService {
     return true
   }
 
-  /**
-   * 分页查询作者列表。
-   * `type` 以 JSON 字符串形式传入，兼容 query 参数的序列化方式；分页结果默认隐藏后台备注和长描述。
-   */
+  // 分页查询作者列表，`type` 以 JSON 字符串形式传入，兼容 query 参数的序列化方式；分页结果默认隐藏后台备注和长描述。
   async getAuthorPage(queryAuthorDto: QueryAuthorDto) {
     const {
       name,
@@ -357,10 +327,7 @@ export class WorkAuthorService {
     })
   }
 
-  /**
-   * 获取作者详情。
-   * 仅返回未软删除的作者记录，未命中时按业务异常处理。
-   */
+  // 获取作者详情，仅返回未软删除的作者记录，未命中时按业务异常处理。
   async getAuthorDetail(input: IdDto) {
     const author = await this.db.query.workAuthor.findFirst({
       where: { id: input.id, deletedAt: { isNull: true } },
@@ -376,10 +343,7 @@ export class WorkAuthorService {
     return author
   }
 
-  /**
-   * 更新作者基础资料。
-   * 该入口不处理粉丝数、作品数等冗余字段重建，只负责编辑侧可写字段。
-   */
+  // 更新作者基础资料，该入口不处理粉丝数、作品数等冗余字段重建，只负责编辑侧可写字段。
   async updateAuthor(updateAuthorDto: UpdateAuthorDto) {
     const { id, ...updateData } = updateAuthorDto
 
@@ -396,9 +360,7 @@ export class WorkAuthorService {
     return true
   }
 
-  /**
-   * 切换作者启用状态。
-   */
+  // 切换作者启用状态。
   async updateAuthorStatus(input: UpdateAuthorStatusDto) {
     await this.drizzle.withErrorHandling(
       () =>
@@ -416,10 +378,7 @@ export class WorkAuthorService {
     return true
   }
 
-  /**
-   * 切换作者推荐状态。
-   * 推荐位只影响前台展示，不改变启用状态和其他资料字段。
-   */
+  // 切换作者推荐状态，推荐位只影响前台展示，不改变启用状态和其他资料字段。
   async updateAuthorRecommended(input: UpdateAuthorRecommendedDto) {
     await this.drizzle.withErrorHandling(
       () =>
@@ -437,10 +396,7 @@ export class WorkAuthorService {
     return true
   }
 
-  /**
-   * 软删除作者
-   * 删除前会校验作者存在且没有任何未删除作品关联，避免内容域出现悬空作者引用。
-   */
+  // 软删除作者，删除前会校验作者存在且没有任何未删除作品关联，避免内容域出现悬空作者引用。
   async deleteAuthor(input: IdDto) {
     const existingAuthor = await this.db.query.workAuthor.findFirst({
       where: { id: input.id, deletedAt: { isNull: true } },

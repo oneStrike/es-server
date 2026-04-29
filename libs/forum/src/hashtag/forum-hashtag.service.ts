@@ -1,6 +1,4 @@
-import type {
-  ForumHashtagSelect,
-} from '@db/schema'
+import type { ForumHashtagSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
@@ -23,6 +21,17 @@ import {
   ForumHashtagCreateSourceTypeEnum,
   ForumHashtagReferenceSourceTypeEnum,
 } from './forum-hashtag.constant'
+import type {
+  CreateForumHashtagInput,
+  ForumHashtagAdminPageQuery,
+  ForumHashtagHotPageQuery,
+  ForumHashtagLinkedContentPageQuery,
+  ForumHashtagVisibilityState,
+  UpdateForumHashtagAuditStatusInput,
+  UpdateForumHashtagAuditStatusOptions,
+  UpdateForumHashtagHiddenInput,
+  UpdateForumHashtagInput,
+} from './forum-hashtag.type'
 
 /**
  * forum 话题资源服务。
@@ -67,9 +76,7 @@ export class ForumHashtagService {
   }
 
   // 判断 hashtag 是否公开可见。
-  private isPublic(
-    hashtag: Pick<ForumHashtagSelect, 'auditStatus' | 'isHidden' | 'deletedAt'>,
-  ) {
+  private isPublic(hashtag: ForumHashtagVisibilityState) {
     return (
       hashtag.auditStatus === AuditStatusEnum.APPROVED &&
       hashtag.isHidden === false &&
@@ -149,14 +156,7 @@ export class ForumHashtagService {
    * 管理端创建话题资源。
    * 资源创建后名称不可变，因此这里只允许创建时写 displayName。
    */
-  async createHashtag(
-    input: {
-      displayName: string
-      description?: string
-      manualBoost?: number
-    },
-    adminUserId: number,
-  ) {
+  async createHashtag(input: CreateForumHashtagInput, adminUserId: number) {
     const displayName = input.displayName.normalize('NFKC').trim()
     const slug = this.normalizeSlug(displayName)
     if (!displayName || !slug) {
@@ -187,11 +187,7 @@ export class ForumHashtagService {
   }
 
   // 更新话题资源的可运营字段。
-  async updateHashtag(input: {
-    id: number
-    description?: string | null
-    manualBoost?: number
-  }) {
+  async updateHashtag(input: UpdateForumHashtagInput) {
     const result = await this.db
       .update(this.forumHashtag)
       .set({
@@ -210,7 +206,7 @@ export class ForumHashtagService {
   }
 
   // 更新话题隐藏状态。
-  async updateHashtagHidden(input: { id: number, isHidden: boolean }) {
+  async updateHashtagHidden(input: UpdateForumHashtagHiddenInput) {
     const result = await this.db
       .update(this.forumHashtag)
       .set({
@@ -229,8 +225,8 @@ export class ForumHashtagService {
 
   // 更新话题审核状态。
   async updateHashtagAuditStatus(
-    input: { id: number, auditStatus: AuditStatusEnum, auditReason?: string },
-    options?: { auditById?: number, auditRole?: AuditRoleEnum },
+    input: UpdateForumHashtagAuditStatusInput,
+    options?: UpdateForumHashtagAuditStatusOptions,
   ) {
     const result = await this.db
       .update(this.forumHashtag)
@@ -253,13 +249,7 @@ export class ForumHashtagService {
   }
 
   // 查询管理端话题分页。
-  async getHashtagPage(query: {
-    pageIndex: number
-    pageSize: number
-    keyword?: string
-    auditStatus?: AuditStatusEnum
-    isHidden?: boolean
-  }) {
+  async getHashtagPage(query: ForumHashtagAdminPageQuery) {
     const conditions: SQL[] = [isNull(this.forumHashtag.deletedAt)]
 
     if (query.keyword?.trim()) {
@@ -349,11 +339,7 @@ export class ForumHashtagService {
   }
 
   // 查询 app 侧热门话题分页。
-  async getHotHashtagPage(query: {
-    pageIndex: number
-    pageSize: number
-    userId?: number
-  }) {
+  async getHotHashtagPage(query: ForumHashtagHotPageQuery) {
     const hotScoreSql = this.buildHotScoreSql()
     const page = this.drizzle.buildPage(query)
     const [list, total] = await Promise.all([
@@ -473,11 +459,7 @@ export class ForumHashtagService {
   // 查询话题关联的公开主题分页。
   async getHashtagTopicPage(
     hashtagId: number,
-    query: {
-      pageIndex: number
-      pageSize: number
-      userId?: number
-    },
+    query: ForumHashtagLinkedContentPageQuery,
   ) {
     await this.getPublicHashtagDetail(hashtagId, query.userId)
     const visibleSectionIds =
@@ -619,11 +601,7 @@ export class ForumHashtagService {
   // 查询话题关联的公开评论分页。
   async getHashtagCommentPage(
     hashtagId: number,
-    query: {
-      pageIndex: number
-      pageSize: number
-      userId?: number
-    },
+    query: ForumHashtagLinkedContentPageQuery,
   ) {
     await this.getPublicHashtagDetail(hashtagId, query.userId)
     const visibleSectionIds =

@@ -9,21 +9,55 @@ import type { MaterializedForumHashtagFact } from '../hashtag/forum-hashtag.type
  * 论坛主题媒体输入。
  * 图片仍使用字符串数组，视频改为原样 JSON 值；controller 可按需省略字段。
  */
-/** 稳定领域类型 `ForumTopicMediaInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type ForumTopicMediaInput = Partial<
   Pick<ForumTopicSelect, 'images' | 'videos'>
 >
 
-/** 稳定领域类型 `ForumTopicClientContext`。仅供内部领域/服务链路复用，避免重复定义。 */
+/**
+ * 论坛主题链路使用的客户端上下文。
+ * 统一收口属地、IP 与 UA 信息，供写路径和日志复用。
+ */
 export interface ForumTopicClientContext extends GeoSnapshot {
   ipAddress?: string
   userAgent?: string
   device?: string
 }
 
-/** 稳定领域类型 `PublicForumTopicDetailContext`。仅供内部领域/服务链路复用，避免重复定义。 */
+/**
+ * 公开主题详情加载上下文。
+ * 在客户端上下文上补充当前查看者 ID。
+ */
 export interface PublicForumTopicDetailContext extends ForumTopicClientContext {
   userId?: number
+}
+
+/**
+ * 公开主题分页查询结果行。
+ * 供公开分页查询与 hydrate 阶段共享同一行结构。
+ */
+export type PublicTopicPageRow = Pick<
+  ForumTopicSelect,
+  | 'id'
+  | 'sectionId'
+  | 'userId'
+  | 'title'
+  | 'geoCountry'
+  | 'geoProvince'
+  | 'geoCity'
+  | 'geoIsp'
+  | 'images'
+  | 'videos'
+  | 'isPinned'
+  | 'isFeatured'
+  | 'isLocked'
+  | 'viewCount'
+  | 'commentCount'
+  | 'likeCount'
+  | 'favoriteCount'
+  | 'lastCommentAt'
+  | 'createdAt'
+> & {
+  contentSnippet: string
 }
 
 /**
