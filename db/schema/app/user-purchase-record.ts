@@ -4,6 +4,7 @@
 
 import { sql } from 'drizzle-orm'
 import {
+  check,
   index,
   integer,
   numeric,
@@ -110,6 +111,30 @@ export const userPurchaseRecord = pgTable(
       table.targetType,
       table.createdAt,
       table.targetId,
+    ),
+    check(
+      'user_purchase_record_target_type_valid_chk',
+      sql`${table.targetType} in (1, 2)`,
+    ),
+    check(
+      'user_purchase_record_status_valid_chk',
+      sql`${table.status} in (1, 2, 3, 4)`,
+    ),
+    check(
+      'user_purchase_record_payment_method_valid_chk',
+      sql`${table.paymentMethod} in (1, 2, 3, 4)`,
+    ),
+    check(
+      'user_purchase_record_original_price_non_negative_chk',
+      sql`${table.originalPrice} >= 0`,
+    ),
+    check(
+      'user_purchase_record_paid_price_non_negative_chk',
+      sql`${table.paidPrice} >= 0`,
+    ),
+    check(
+      'user_purchase_record_payable_rate_range_chk',
+      sql`${table.payableRate} >= 0 and ${table.payableRate} <= 1`,
     ),
   ],
 )

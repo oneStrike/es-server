@@ -1,23 +1,11 @@
-import type { Db as CoreDb } from '../core/drizzle.type'
+import type { Db, SeedQueryConfig } from './db-client.type'
 import process from 'node:process'
 import * as operators from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import * as schema from '../schema'
 
-export type Db = Omit<CoreDb, 'query'> & {
-  query: Record<
-    string,
-    {
-      findFirst?: (config?: {
-        where?: object | ((table: object, ops: typeof operators) => object)
-      }) => Promise<object | undefined>
-      findMany?: (config?: {
-        where?: object | ((table: object, ops: typeof operators) => object)
-      }) => Promise<object[]>
-    }
-  >
-}
+export type { Db } from './db-client.type'
 
 export function getDatabaseUrl() {
   const url = process.env.DATABASE_URL
@@ -47,9 +35,7 @@ export function createDbClient(connectionString: string) {
         }
 
         return {
-          findFirst: async (config?: {
-            where?: object | ((table: object, ops: typeof operators) => object)
-          }) => {
+          findFirst: async (config?: SeedQueryConfig) => {
             const where =
               typeof config?.where === 'function'
                 ? config.where(table, operators)
@@ -60,9 +46,7 @@ export function createDbClient(connectionString: string) {
                 : await db.select().from(table).where(where).limit(1)
             return rows[0]
           },
-          findMany: async (config?: {
-            where?: object | ((table: object, ops: typeof operators) => object)
-          }) => {
+          findMany: async (config?: SeedQueryConfig) => {
             const where =
               typeof config?.where === 'function'
                 ? config.where(table, operators)

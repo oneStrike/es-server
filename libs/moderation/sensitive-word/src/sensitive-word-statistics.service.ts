@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
 
-import type { RecordSensitiveWordEntityHitsInput } from './sensitive-word.types'
+import type { RecordSensitiveWordEntityHitsInput } from './sensitive-word.type'
 import { DrizzleService } from '@db/core'
 import {
   startOfTodayInAppTimeZone,
@@ -16,7 +16,7 @@ import {
 import {
   SensitiveWordHitEntityTypeMap,
   SensitiveWordHitOperationTypeMap,
-} from './sensitive-word.types'
+} from './sensitive-word.type'
 
 /**
  * 敏感词统计服务

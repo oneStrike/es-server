@@ -1,4 +1,13 @@
 /**
+ * 请求头中携带 request id 的最小结构。
+ */
+export interface RequestIdHeaderCarrier {
+  headers?: {
+    'x-request-id'?: string
+  }
+}
+
+/**
  * PlatformModule 配置选项
  */
 export interface PlatformModuleOptions {

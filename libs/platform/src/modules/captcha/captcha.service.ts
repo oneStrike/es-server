@@ -1,5 +1,5 @@
 import type { Cache } from 'cache-manager'
-import type { CaptchaConfig } from './captcha.types'
+import type { CaptchaConfig } from './captcha.type'
 import { Buffer } from 'node:buffer'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'

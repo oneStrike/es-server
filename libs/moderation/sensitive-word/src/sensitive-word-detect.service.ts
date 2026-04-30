@@ -10,7 +10,7 @@ import type {
   SensitiveWordDetectedHit,
   SensitiveWordHitFieldKey,
   SensitiveWordHitSegment,
-} from './sensitive-word.types'
+} from './sensitive-word.type'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import { MatchModeEnum } from './sensitive-word-constant'

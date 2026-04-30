@@ -1,4 +1,4 @@
-import type { RegexPropertyOptions } from './types'
+import type { RegexPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsOptional, IsString, Matches } from 'class-validator'

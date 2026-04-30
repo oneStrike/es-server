@@ -1,35 +1,21 @@
-import type { DbQueryConfig, DbQueryOrderBy } from '@libs/platform/config'
+import type { DbQueryConfig } from '@libs/platform/config'
 import type { InferSelectModel } from 'drizzle-orm'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
-import type { Db, SQL } from '../core/drizzle.type'
+import type { Db } from '../core/drizzle.type'
+import type {
+  FindPaginationOptions,
+  FindPaginationResultItem,
+} from './findPagination.type'
 import { resolveDbQueryConfig } from '@libs/platform/config'
 import { InternalServerErrorException } from '@nestjs/common'
 import { getTableColumns } from 'drizzle-orm'
 import { buildDrizzleOrderBy } from '../core/query/order-by'
 import { buildDrizzlePageQuery } from '../core/query/page-query'
 
-type FindPaginationOrderBy = DbQueryOrderBy | string
-
-export interface FindPaginationOptions<
-  TTable extends AnyPgTable,
-  TOmit extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
-  TPick extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
-> {
-  where?: SQL
-  pageIndex?: number | string
-  pageSize?: number | string
-  orderBy?: FindPaginationOrderBy
-  omit?: TOmit
-  pick?: TPick
-}
-
-type FindPaginationResultItem<
-  TTable extends AnyPgTable,
-  TOmit extends readonly (keyof InferSelectModel<TTable> & string)[],
-  TPick extends readonly (keyof InferSelectModel<TTable> & string)[],
-> = TPick extends []
-  ? Omit<InferSelectModel<TTable>, TOmit[number]>
-  : Pick<InferSelectModel<TTable>, TPick[number]>
+export type {
+  FindPaginationOptions,
+  FindPaginationResultItem,
+} from './findPagination.type'
 
 /**
  * 提供单表分页查询的统一实现。
@@ -68,7 +54,10 @@ export async function findPagination<
     throw new InternalServerErrorException('不支持 pick 和 omit 同时使用')
   }
   const hasPick = pickedFields.size > 0
-  const tableColumns = getTableColumns(table as never) as Record<string, unknown>
+  const tableColumns = getTableColumns(table as never) as Record<
+    string,
+    unknown
+  >
   const invalidPickedFields = [...pickedFields].filter(
     (field) => !tableColumns[field],
   )
@@ -94,14 +83,10 @@ export async function findPagination<
   )
   const selectedColumnCount = Object.keys(selectedColumns).length
   if (hasPick && selectedColumnCount === 0) {
-    throw new InternalServerErrorException(
-      'pick 未指定任何有效字段',
-    )
+    throw new InternalServerErrorException('pick 未指定任何有效字段')
   }
   if (omittedFields.size > 0 && selectedColumnCount === 0) {
-    throw new InternalServerErrorException(
-      'omit 排除了所有可选字段',
-    )
+    throw new InternalServerErrorException('omit 排除了所有可选字段')
   }
 
   const baseQuery =
@@ -110,9 +95,7 @@ export async function findPagination<
       : selectedColumnCount > 0
         ? db.select(selectedColumns as never).from(table as AnyPgTable)
         : (() => {
-            throw new InternalServerErrorException(
-              'pick 未指定任何有效字段',
-            )
+            throw new InternalServerErrorException('pick 未指定任何有效字段')
           })()
   const listQuery = baseQuery
     .where(where)

@@ -8,7 +8,7 @@ import type {
   WsReadPayload,
   WsRequestEnvelope,
   WsSendPayload,
-} from './notification-websocket.types'
+} from './notification-websocket.type'
 import process from 'node:process'
 import {
   getPlatformErrorCode,
@@ -621,7 +621,7 @@ export class MessageWebSocketService {
       response !== null &&
       'message' in response
     ) {
-      const message = (response as { message?: string | string[] | null }).message
+      const { message } = response as { message?: string | string[] | null }
       if (typeof message === 'string' && message.trim()) {
         return message
       }

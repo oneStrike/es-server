@@ -19,6 +19,7 @@ export const environmentValidationSchema = Joi.object({
   JWT_EXPIRATION_IN: Joi.string().default('4h'),
   JWT_REFRESH_EXPIRATION_IN: Joi.string().default('7d'),
   JWT_JWT_ISSUER: Joi.string().required(),
+  JWT_JWT_AUD: Joi.string().required(),
   JWT_STRATEGY_KEY: Joi.string().optional(),
 
   // 日志配置

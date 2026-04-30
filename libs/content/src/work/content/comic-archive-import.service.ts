@@ -235,7 +235,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  // 执行 processTask。
+  // 执行已确认任务，逐章导入并持续回写任务进度。
   private async processTask(record: ComicArchiveTaskRecord) {
     let successCount = 0
     let failureCount = 0
@@ -307,7 +307,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  // 执行 importChapter。
+  // 导入单个章节图片，并用上传后的图片路径整体覆盖章节内容。
   private async importChapter(
     record: ComicArchiveTaskRecord,
     matchedItem: ComicArchiveMatchedItemRecord,
@@ -348,7 +348,7 @@ export class ComicArchiveImportService {
     return contents
   }
 
-  // 构建 preview Result。
+  // 根据解压后的根目录结构构建单章节或多章节预览结果。
   private async buildPreviewResult(
     input: PreviewComicArchiveDto,
     archiveName: string,
@@ -367,19 +367,23 @@ export class ComicArchiveImportService {
         : ComicArchivePreviewModeEnum.SINGLE_CHAPTER
 
     if (mode === ComicArchivePreviewModeEnum.MULTI_CHAPTER) {
-      return this.buildMultiChapterPreview(extractDir, rootEntries, chapterMap)
+      return this.buildMultiChapterPreview(
+        extractDir,
+        visibleRootEntries,
+        chapterMap,
+      )
     }
 
     return this.buildSingleChapterPreview(
       input,
       archiveName,
       extractDir,
-      rootEntries,
+      visibleRootEntries,
       chapterMap,
     )
   }
 
-  // 构建 multi Chapter Preview。
+  // 构建多章节压缩包预览，每个一级目录对应一个章节 ID。
   private async buildMultiChapterPreview(
     extractDir: string,
     rootEntries: Dirent[],
@@ -388,11 +392,7 @@ export class ComicArchiveImportService {
     const matchedItems: ComicArchiveMatchedItemRecord[] = []
     const ignoredItems: ComicArchiveIgnoredItemSnapshot[] = []
 
-    const visibleRootEntries = rootEntries.filter(
-      (entry) => !this.shouldAutoIgnoreName(entry.name),
-    )
-
-    for (const entry of visibleRootEntries) {
+    for (const entry of rootEntries) {
       if (entry.isFile()) {
         ignoredItems.push({
           path: entry.name,
@@ -454,7 +454,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  // 构建 single Chapter Preview。
+  // 构建单章节压缩包预览，仅扫描根目录下的图片文件。
   private async buildSingleChapterPreview(
     input: PreviewComicArchiveDto,
     archiveName: string,
@@ -464,11 +464,8 @@ export class ComicArchiveImportService {
   ) {
     const matchedItems: ComicArchiveMatchedItemRecord[] = []
     const ignoredItems: ComicArchiveIgnoredItemSnapshot[] = []
-    const visibleRootEntries = rootEntries.filter(
-      (entry) => !this.shouldAutoIgnoreName(entry.name),
-    )
 
-    for (const entry of visibleRootEntries) {
+    for (const entry of rootEntries) {
       if (entry.isDirectory()) {
         ignoredItems.push({
           path: entry.name,
@@ -478,15 +475,10 @@ export class ComicArchiveImportService {
       }
     }
 
-    const imagePaths = visibleRootEntries
+    const imagePaths = rootEntries
       .filter((entry) => entry.isFile() && this.isAllowedImageFile(entry.name))
       .map((entry) => join(extractDir, entry.name))
-      .sort((left, right) =>
-        basename(left).localeCompare(basename(right), undefined, {
-          numeric: true,
-          sensitivity: 'base',
-        }),
-      )
+      .sort((left, right) => this.compareImagePathName(left, right))
 
     if (!input.chapterId) {
       ignoredItems.push({
@@ -537,7 +529,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  // 执行 collectImmediateImagePaths。
+  // 收集当前目录下允许导入的图片路径，嵌套目录只记录为忽略项。
   private collectImmediateImagePaths(
     dirPath: string,
     entries: Dirent[],
@@ -564,17 +556,22 @@ export class ComicArchiveImportService {
       })
 
     return imagePaths.sort((left, right) =>
-      basename(left).localeCompare(basename(right), undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      }),
+      this.compareImagePathName(left, right),
     )
+  }
+
+  // 按文件名自然排序图片路径，保证 2.jpg 排在 10.jpg 之前。
+  private compareImagePathName(left: string, right: string) {
+    return basename(left).localeCompare(basename(right), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    })
   }
 
   // 构建 matched Item。
   private buildMatchedItem(
     path: string,
-    chapter: { id: number, title: string, content: string | null },
+    chapter: ComicArchivePreviewChapter,
     imagePaths: string[],
   ): ComicArchiveMatchedItemRecord {
     const existingContents = this.parseChapterContents(chapter.content)
@@ -597,7 +594,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  // 解析 chapter Contents。
+  // 解析章节已有漫画图片列表，脏数据按空列表处理。
   private parseChapterContents(content: string | null) {
     if (!content) {
       return []
@@ -607,7 +604,7 @@ export class ComicArchiveImportService {
     return Array.isArray(parsed) ? parsed : []
   }
 
-  // 执行 extractArchive。
+  // 解压 zip 到任务临时目录，并拒绝绝对路径或目录穿越。
   private async extractArchive(archivePath: string, extractDir: string) {
     try {
       const zip = await unzipper.Open.file(archivePath)
@@ -636,7 +633,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  // 执行 shouldAutoIgnoreArchivePath。
+  // 判断压缩包路径是否属于系统目录或隐藏文件。
   private shouldAutoIgnoreArchivePath(entryPath: string) {
     return entryPath
       .split('/')
@@ -646,7 +643,7 @@ export class ComicArchiveImportService {
       )
   }
 
-  // 归一化 archive Segments。
+  // 归一化压缩包条目路径分段，防止绝对路径和目录穿越。
   private normalizeArchiveSegments(entryPath: string) {
     if (entryPath.startsWith('/') || WINDOWS_ABSOLUTE_PATH_RE.test(entryPath)) {
       throw new BadRequestException('压缩包路径不合法')
@@ -664,17 +661,16 @@ export class ComicArchiveImportService {
     return segments
   }
 
-  // 执行 isAllowedImageFile。
+  // 判断文件扩展名是否属于当前上传配置允许的图片类型。
   private isAllowedImageFile(fileName: string) {
-    const ext = extname(fileName).toLowerCase()
-    const normalizedExt = ext.startsWith('.') ? ext.slice(1) : ext
+    const normalizedExt = extname(fileName).toLowerCase().slice(1)
     return Boolean(
       normalizedExt &&
       this.uploadConfig.allowExtensions.image.includes(normalizedExt),
     )
   }
 
-  // 执行 shouldAutoIgnoreName。
+  // 判断文件或目录名是否应在预览中自动忽略。
   private shouldAutoIgnoreName(name: string) {
     return AUTO_IGNORED_ENTRY_NAMES.has(name) || name.startsWith('.')
   }

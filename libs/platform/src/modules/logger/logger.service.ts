@@ -1,5 +1,5 @@
 import type { Logger } from 'winston'
-import type { LoggerConfig } from './types'
+import type { LoggerConfig } from './logger.type'
 import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ClsService } from 'nestjs-cls'

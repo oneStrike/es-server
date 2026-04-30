@@ -7,16 +7,13 @@ import type {
   UserMentionCandidatePageResult,
   UserStatusSource,
 } from './user.type'
-import {
-  buildILikeCondition,
-  DrizzleService,
-} from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { formatDateTimeInAppTimeZone } from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import { ForbiddenException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
 import { AppUserResponseDto } from './dto/base-app-user.dto'
@@ -112,13 +109,11 @@ export class UserService {
 
     return {
       points:
-        rows.find(
-          (item) => item.assetType === GrowthAssetTypeEnum.POINTS,
-        )?.balance ?? 0,
+        rows.find((item) => item.assetType === GrowthAssetTypeEnum.POINTS)
+          ?.balance ?? 0,
       experience:
-        rows.find(
-          (item) => item.assetType === GrowthAssetTypeEnum.EXPERIENCE,
-        )?.balance ?? 0,
+        rows.find((item) => item.assetType === GrowthAssetTypeEnum.EXPERIENCE)
+          ?.balance ?? 0,
     }
   }
 
@@ -185,9 +180,7 @@ export class UserService {
       where: condition,
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
-      orderBy: query.orderBy?.trim()
-        ? query.orderBy
-        : { id: 'desc' as const },
+      orderBy: query.orderBy?.trim() ? query.orderBy : { id: 'desc' as const },
       pick: ['id', 'nickname', 'avatarUrl'] as const,
     })
 
@@ -246,7 +239,10 @@ export class UserService {
   // 若命中封禁，统一抛出稳定 403 文案，避免上层入口各自实现封禁分支。
   ensureAppUserNotBanned(user: UserBanGuardSource): void {
     if (this.isBannedStatus(user.status)) {
-      throw new ForbiddenException(this.buildBanAccessMessage(user))
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        this.buildBanAccessMessage(user),
+      )
     }
   }
 
@@ -325,7 +321,9 @@ export class UserService {
   }
 
   // 获取等级信息。
-  async getLevelInfo(levelId: number): Promise<UserLevelSummaryDto | undefined> {
+  async getLevelInfo(
+    levelId: number,
+  ): Promise<UserLevelSummaryDto | undefined> {
     const [level] = await this.db
       .select({
         id: this.userLevelRule.id,

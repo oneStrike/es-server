@@ -1,4 +1,4 @@
-import type { MatchResult, TrieNode } from '../sensitive-word.types'
+import type { MatchResult, TrieNode } from '../sensitive-word.type'
 import { createTrieNode } from './trie-node'
 
 // AC 自动机类（Aho-Corasick Automaton），基于 AC 自动机算法实现的多模式字符串匹配。

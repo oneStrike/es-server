@@ -2,7 +2,7 @@ import type {
   PreparedUploadFile,
   UploadExecutionResult,
   UploadSystemConfig,
-} from './upload.types'
+} from './upload.type'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import * as qiniu from 'qiniu'
 

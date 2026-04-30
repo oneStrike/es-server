@@ -1,8 +1,5 @@
 import type { RevokeTokenReasonEnum } from './auth.constant'
-import type {
-  CreateTokenInput,
-  ITokenEntity,
-} from './token-storage.types'
+import type { CreateTokenInput, ITokenEntity } from './token-storage.type'
 
 type JwtPayloadField =
   | string
@@ -46,9 +43,15 @@ export interface ITokenStorageService {
 
   createTokens: (data: CreateTokenInput[]) => Promise<number>
 
-  revokeByJti: (jti: string, reason: RevokeTokenReasonEnum) => Promise<void> | void
+  revokeByJti: (
+    jti: string,
+    reason: RevokeTokenReasonEnum,
+  ) => Promise<void> | void
 
-  revokeByJtis: (jtis: string[], reason: RevokeTokenReasonEnum) => Promise<void> | void
+  revokeByJtis: (
+    jtis: string[],
+    reason: RevokeTokenReasonEnum,
+  ) => Promise<void> | void
 
   /**
    * 原子消费 token：仅当 token 未撤销且未过期时标记为已撤销。
@@ -57,7 +60,10 @@ export interface ITokenStorageService {
    */
   consumeByJti: (jti: string, reason: RevokeTokenReasonEnum) => Promise<boolean>
 
-  revokeAllByUserId: (userId: number, reason: RevokeTokenReasonEnum) => Promise<void> | void
+  revokeAllByUserId: (
+    userId: number,
+    reason: RevokeTokenReasonEnum,
+  ) => Promise<void> | void
 
   findActiveTokensByUserId: (userId: number) => Promise<ITokenEntity[]>
 

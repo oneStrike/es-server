@@ -36,6 +36,23 @@ export class ComicContentService {
     return this.drizzle.schema.workChapter
   }
 
+  // 持久化漫画章节内容，统一处理章节不存在时的业务错误。
+  private async saveChapterContent(chapterId: number, content: string | null) {
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ content })
+          .where(
+            and(
+              eq(this.workChapter.id, chapterId),
+              isNull(this.workChapter.deletedAt),
+            ),
+          ),
+      { notFound: '章节不存在' },
+    )
+  }
+
   // 获取章节内容（带权限校验），用户端使用。
   async getChapterContentsWithPermission(chapterId: number, userId?: number) {
     const result = await this.contentPermissionService.checkChapterAccess(
@@ -111,19 +128,7 @@ export class ComicContentService {
 
     contents.push(file.filePath)
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.workChapter)
-          .set({ content: JSON.stringify(contents) })
-          .where(
-            and(
-              eq(this.workChapter.id, chapterId),
-              isNull(this.workChapter.deletedAt),
-            ),
-          ),
-      { notFound: '章节不存在' },
-    )
+    await this.saveChapterContent(chapterId, JSON.stringify(contents))
 
     return file
   }
@@ -143,19 +148,7 @@ export class ComicContentService {
 
     contents[index] = content
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.workChapter)
-          .set({ content: JSON.stringify(contents) })
-          .where(
-            and(
-              eq(this.workChapter.id, chapterId),
-              isNull(this.workChapter.deletedAt),
-            ),
-          ),
-      { notFound: '章节不存在' },
-    )
+    await this.saveChapterContent(chapterId, JSON.stringify(contents))
 
     return true
   }
@@ -176,20 +169,9 @@ export class ComicContentService {
     index.sort((a, b) => b - a)
     index.forEach((i) => contents.splice(i, 1))
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.workChapter)
-          .set({
-            content: contents.length > 0 ? JSON.stringify(contents) : null,
-          })
-          .where(
-            and(
-              eq(this.workChapter.id, chapterId),
-              isNull(this.workChapter.deletedAt),
-            ),
-          ),
-      { notFound: '章节不存在' },
+    await this.saveChapterContent(
+      chapterId,
+      contents.length > 0 ? JSON.stringify(contents) : null,
     )
 
     return true
@@ -216,38 +198,14 @@ export class ComicContentService {
     const [movedContent] = contents.splice(fromIndex, 1)
     contents.splice(toIndex, 0, movedContent)
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.workChapter)
-          .set({ content: JSON.stringify(contents) })
-          .where(
-            and(
-              eq(this.workChapter.id, chapterId),
-              isNull(this.workChapter.deletedAt),
-            ),
-          ),
-      { notFound: '章节不存在' },
-    )
+    await this.saveChapterContent(chapterId, JSON.stringify(contents))
 
     return true
   }
 
   // 清空 chapter Contents。
   async clearChapterContents(chapterId: number) {
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.workChapter)
-          .set({ content: null })
-          .where(
-            and(
-              eq(this.workChapter.id, chapterId),
-              isNull(this.workChapter.deletedAt),
-            ),
-          ),
-      { notFound: '章节不存在' },
-    )
+    await this.saveChapterContent(chapterId, null)
 
     return true
   }

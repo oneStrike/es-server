@@ -31,8 +31,9 @@ export interface WsAckPayload {
 }
 
 /** 稳定领域类型 `NativeWsRequestEnvelope`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface NativeWsRequestEnvelope<TPayload = object>
-  extends WsRequestEnvelope<TPayload> {
+export interface NativeWsRequestEnvelope<
+  TPayload = object,
+> extends WsRequestEnvelope<TPayload> {
   event?: string
   token?: string
 }

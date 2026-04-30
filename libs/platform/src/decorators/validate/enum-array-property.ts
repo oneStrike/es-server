@@ -1,5 +1,5 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
-import type { EnumArrayPropertyOptions } from './types'
+import type { EnumArrayPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import {
@@ -86,7 +86,7 @@ export function EnumArrayProperty(options: EnumArrayPropertyOptions) {
           return value
         }
 
-        return value.map(item => normalizeEnumArrayItem(item, enumArtifacts))
+        return value.map((item) => normalizeEnumArrayItem(item, enumArtifacts))
       }),
     )
 

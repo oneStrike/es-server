@@ -1,14 +1,23 @@
 import type { Db, PostgresErrorSourceObject } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 import type { SessionClientContext } from '@libs/identity/session.type'
+import { randomInt } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
 import { AuthSessionService } from '@libs/identity/session.service'
 import { BusinessErrorCode, GenderEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
-import { LoginDto, RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto'
-import { AuthConstants, AuthDefaultValue, AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
+import {
+  LoginDto,
+  RefreshTokenDto,
+  TokenDto,
+} from '@libs/platform/modules/auth/dto'
+import {
+  AuthConstants,
+  AuthDefaultValue,
+  AuthErrorMessages,
+} from '@libs/platform/modules/auth/helpers'
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
@@ -77,7 +86,7 @@ export class AuthService {
       attempt < APP_USER_ACCOUNT_MAX_RETRIES;
       attempt += 1
     ) {
-      const randomAccount = Math.floor(100000 + Math.random() * 900000)
+      const randomAccount = randomInt(100000, 1000000)
       const [existingUser] = await tx
         .select({ id: this.appUserTable.id })
         .from(this.appUserTable)
@@ -312,7 +321,7 @@ export class AuthService {
    */
   private sanitizeUser(
     user: AppUserSelect,
-    growth: { points: number, experience: number },
+    growth: { points: number; experience: number },
   ) {
     return {
       id: user.id,

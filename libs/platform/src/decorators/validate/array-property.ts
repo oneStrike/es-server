@@ -1,5 +1,5 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
-import type { ArrayPropertyOptions } from './types'
+import type { ArrayPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform, Type } from 'class-transformer'
 import {
@@ -310,7 +310,7 @@ export function ArrayProperty<T = string | number | boolean>(
               ? Number
               : String
             : primitiveHelpers?.apiType) ??
-            Object,
+          Object,
         isArray: true,
       }
 

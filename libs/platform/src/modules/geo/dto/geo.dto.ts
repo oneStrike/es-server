@@ -1,4 +1,4 @@
-import type { GeoRuntimeSource } from '../geo.types'
+import type { GeoRuntimeSource } from '../geo.type'
 import {
   BooleanProperty,
   DateProperty,
@@ -6,7 +6,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { GEO_RUNTIME_SOURCE } from '../geo.types'
+import { GEO_RUNTIME_SOURCE } from '../geo.type'
 
 /**
  * ip2region 运行状态 DTO。

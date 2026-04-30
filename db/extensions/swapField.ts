@@ -1,4 +1,6 @@
-import type { Db, PgTable, SQL, TableConfig } from '../core/drizzle.type'
+import type { Db, PgTable, TableConfig } from '../core/drizzle.type'
+import type { SwapFieldOptions } from './swapField.type'
+import { randomUUID } from 'node:crypto'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { InternalServerErrorException } from '@nestjs/common'
@@ -23,7 +25,7 @@ function generateTemporaryValue(
 
   // 字符串类型：生成带时间戳和随机数的临时字符串
   if (typeof value1 === 'string' && typeof value2 === 'string') {
-    return `__temp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}__`
+    return `__temp_${Date.now()}_${randomUUID()}__`
   }
 
   // 其他类型：使用时间戳作为临时值
@@ -46,12 +48,7 @@ function generateTemporaryValue(
 export async function swapField(
   db: Db,
   table: PgTable<TableConfig>,
-  options: {
-    where: [{ id: number }, { id: number }]
-    field?: string
-    sourceField?: string
-    recordWhere?: SQL
-  },
+  options: SwapFieldOptions,
 ): Promise<boolean> {
   const { where, field = 'sortOrder', sourceField, recordWhere } = options
   const tableRef = table as object
@@ -80,7 +77,9 @@ export async function swapField(
   // 在事务中执行交换操作
   return db.transaction(async (tx) => {
     // 构建查询字段
-    const selectFields: Record<string, object> = { [field]: fieldColumn as object }
+    const selectFields: Record<string, object> = {
+      [field]: fieldColumn as object,
+    }
     if (sourceField && sourceColumn) {
       selectFields[sourceField] = sourceColumn as object
     }

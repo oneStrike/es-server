@@ -1,4 +1,4 @@
-import type { FuzzyMatchResult } from '../sensitive-word.types'
+import type { FuzzyMatchResult } from '../sensitive-word.type'
 import { BKTree } from './bk-tree'
 
 // 模糊匹配器类，基于 Levenshtein 距离和 BK-Tree 实现模糊敏感词匹配。

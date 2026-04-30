@@ -1,5 +1,5 @@
 import type { AuthConfigInterface } from '@libs/platform/types'
-import type { ITokenStorageService, JwtPayload } from './auth.types'
+import type { ITokenStorageService, JwtPayload } from './auth.type'
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'

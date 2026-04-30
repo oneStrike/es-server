@@ -1,7 +1,20 @@
-export const SEED_PASSWORD_HASH =
-  'e54d37047759e69ae2ffd34850ce3281.0275adf4e59d2e4e5d64f8694e327a0e8960a81bcecde7b47eaf3d76878f50b1b8ec520eb1bc0171336ec0dfb07f78611672be9fa335e1834cff45ebb68a98ac'
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 
-export const SEED_ADMIN_USERNAME = 'admin'
+export const SEED_ADMIN_USERNAME =
+  process.env.SEED_ADMIN_USERNAME?.trim() || 'admin'
+
+export const SEED_ACCOUNT_PASSWORD = 'Seed@123456'
+
+const SEED_PASSWORD_SALT = 'seed-password-salt-v1'
+const scryptService = new ScryptService()
+
+// 生成 seed 账号入库密码哈希，明文只作为本地联调登录口令保留在 seed 层。
+export function createSeedPasswordHash() {
+  return scryptService.encryptPassword(
+    SEED_ACCOUNT_PASSWORD,
+    SEED_PASSWORD_SALT,
+  )
+}
 
 export const SEED_PLATFORM_ALL = [1, 2, 3]
 

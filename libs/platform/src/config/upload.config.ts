@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from 'node:path'
 import process from 'node:process'
-import { parseBytes } from '@libs/platform/utils';
+import { parseBytes } from '@libs/platform/utils'
 import { registerAs } from '@nestjs/config'
 import mime from 'mime-types'
 
@@ -80,7 +80,7 @@ export const UploadConfig = {
   allowMimeTypesFlat,
 }
 
-export type { UploadConfigInterface } from './upload.types'
+export type { UploadConfigInterface } from './upload.type'
 /**
  * 注册上传配置
  */ // 注册上传配置

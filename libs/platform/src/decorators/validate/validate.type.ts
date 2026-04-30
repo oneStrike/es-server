@@ -105,6 +105,9 @@ type ArrayPropertyShape<T> =
   | ClassArrayPropertyShape<T>
   | EnumValueArrayPropertyShape
 
+/**
+ * 通用数组属性装饰器选项。
+ */
 export type ArrayPropertyOptions<T = string | number | boolean> =
   BaseValidateOptions & {
     /** 示例值 */

@@ -1,12 +1,13 @@
 import type { ApiDocOptions } from '@libs/platform/decorators'
 import type { Type } from '@nestjs/common'
-import type { AuditMetadata } from './audit.types'
+import type { AuditMetadata } from './audit.type'
 import { ApiDoc } from '@libs/platform/decorators'
 import { applyDecorators } from '@nestjs/common'
 import { Audit } from './audit.decorator'
 
 export interface ApiAuditDocOptions<TModel> extends ApiDocOptions<TModel> {
-  audit: Pick<AuditMetadata, 'actionType'> & Partial<Pick<AuditMetadata, 'content'>>
+  audit: Pick<AuditMetadata, 'actionType'> &
+    Partial<Pick<AuditMetadata, 'content'>>
 }
 
 /**

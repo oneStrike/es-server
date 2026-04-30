@@ -1,6 +1,7 @@
 import type { DrizzleService } from '@db/core'
 import type { AdminAppUserCountDto } from '@libs/user/dto/admin-app-user.dto'
 import type { UserService as UserCoreService } from '@libs/user/user.service'
+import { randomInt } from 'node:crypto'
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -166,7 +167,7 @@ export abstract class AppUserServiceSupport {
    * 新建后台创建用户时仍沿用现有随机账号策略，避免与既有注册口径漂移。
    */
   protected async generateUniqueAccount() {
-    const randomAccount = Math.floor(100000 + Math.random() * 900000)
+    const randomAccount = randomInt(100000, 1000000)
     const [existingUser] = await this.db
       .select({ id: this.appUserTable.id })
       .from(this.appUserTable)

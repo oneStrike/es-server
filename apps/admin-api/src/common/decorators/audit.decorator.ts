@@ -1,4 +1,4 @@
-import type { AuditMetadata } from './audit.types'
+import type { AuditMetadata } from './audit.type'
 import { SetMetadata } from '@nestjs/common'
 
 /**

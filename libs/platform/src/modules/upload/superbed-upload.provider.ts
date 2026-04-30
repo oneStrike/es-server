@@ -3,7 +3,7 @@ import type {
   PreparedUploadFile,
   UploadExecutionResult,
   UploadSystemConfig,
-} from './upload.types'
+} from './upload.type'
 import { createReadStream } from 'node:fs'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import axios from 'axios'

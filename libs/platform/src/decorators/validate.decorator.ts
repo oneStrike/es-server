@@ -11,4 +11,4 @@ export * from './validate/object-property'
 export * from './validate/regex-property'
 export * from './validate/string-property'
 // 导出类型定义
-export * from './validate/types'
+export * from './validate/validate.type'

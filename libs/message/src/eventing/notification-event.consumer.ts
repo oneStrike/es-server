@@ -1,5 +1,8 @@
 import type { UserNotificationSelect } from '@db/schema'
-import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
+import type {
+  DomainEventDispatchRecord,
+  DomainEventRecord,
+} from '@libs/platform/modules/eventing/domain-event.type'
 import type { NotificationActorSource } from '../notification/notification-public.mapper'
 import type { NotificationEventHandler } from './message-event.type'
 import { DrizzleService } from '@db/core'
@@ -10,7 +13,9 @@ import { MessageNotificationRealtimeService } from '../notification/notification
 import { getMessageDomainEventDefinition } from './message-event.constant'
 import { NotificationProjectionService } from './notification-projection.service'
 
-export function getNotificationEventPayload(event: DomainEventRecord) {
+export function getNotificationEventPayload(
+  event: DomainEventRecord,
+): Record<string, unknown> | null {
   const payload = event.context?.payload
   if (payload === undefined) {
     return {
@@ -28,150 +33,66 @@ export function getNotificationEventPayload(event: DomainEventRecord) {
   }
 }
 
+function getNotificationExpiresAt(event: DomainEventRecord): Date | undefined {
+  if (!event.context?.expiresAt) {
+    return undefined
+  }
+  return new Date(String(event.context.expiresAt))
+}
+
+function createNotificationEventHandler(
+  mode: 'append' | 'upsert',
+  includeExpiresAt = false,
+): NotificationEventHandler {
+  return ({ definition, event }) => {
+    const command = {
+      mode,
+      receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
+      categoryKey: definition.notification!.categoryKey,
+      projectionKey: String(event.context?.projectionKey ?? ''),
+      mandatory: definition.notification!.mandatory,
+      actorUserId: event.operatorId ?? undefined,
+      title: String(event.context?.title ?? ''),
+      content: String(event.context?.content ?? ''),
+      payload: getNotificationEventPayload(event),
+    }
+
+    if (!includeExpiresAt) {
+      return command
+    }
+
+    return {
+      ...command,
+      expiresAt: getNotificationExpiresAt(event),
+    }
+  }
+}
+
+const appendNotificationEventHandler = createNotificationEventHandler('append')
+const expiringAppendNotificationEventHandler = createNotificationEventHandler(
+  'append',
+  true,
+)
+const upsertNotificationEventHandler = createNotificationEventHandler('upsert')
+
 const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
-  'comment.replied': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
-  'comment.mentioned': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
-  'comment.liked': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
-  'topic.liked': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
-  'topic.favorited': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
-  'topic.commented': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
-  'topic.mentioned': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
-  'user.followed': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
-  'announcement.published': ({ definition, event }) => ({
-    mode: 'upsert' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
+  'comment.replied': appendNotificationEventHandler,
+  'comment.mentioned': appendNotificationEventHandler,
+  'comment.liked': appendNotificationEventHandler,
+  'topic.liked': appendNotificationEventHandler,
+  'topic.favorited': appendNotificationEventHandler,
+  'topic.commented': appendNotificationEventHandler,
+  'topic.mentioned': appendNotificationEventHandler,
+  'user.followed': appendNotificationEventHandler,
+  'announcement.published': upsertNotificationEventHandler,
   'announcement.unpublished': ({ event }) => ({
     mode: 'delete' as const,
     receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
     projectionKey: String(event.context?.projectionKey ?? ''),
   }),
-  'task.reminder.auto_assigned': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    expiresAt: event.context?.expiresAt
-      ? new Date(String(event.context.expiresAt))
-      : undefined,
-    payload: getNotificationEventPayload(event),
-  }),
-  'task.reminder.expiring': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    expiresAt: event.context?.expiresAt
-      ? new Date(String(event.context.expiresAt))
-      : undefined,
-    payload: getNotificationEventPayload(event),
-  }),
-  'task.reminder.reward_granted': ({ definition, event }) => ({
-    mode: 'append' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    categoryKey: definition.notification!.categoryKey,
-    projectionKey: String(event.context?.projectionKey ?? ''),
-    mandatory: definition.notification!.mandatory,
-    actorUserId: event.operatorId ?? undefined,
-    title: String(event.context?.title ?? ''),
-    content: String(event.context?.content ?? ''),
-    payload: getNotificationEventPayload(event),
-  }),
+  'task.reminder.auto_assigned': expiringAppendNotificationEventHandler,
+  'task.reminder.expiring': expiringAppendNotificationEventHandler,
+  'task.reminder.reward_granted': appendNotificationEventHandler,
 }
 
 /**

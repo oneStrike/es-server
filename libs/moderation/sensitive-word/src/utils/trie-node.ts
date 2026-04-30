@@ -1,4 +1,4 @@
-import type { TrieNode } from '../sensitive-word.types'
+import type { TrieNode } from '../sensitive-word.type'
 
 export function createTrieNode(depth: number = 0): TrieNode {
   return {

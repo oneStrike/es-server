@@ -1,5 +1,6 @@
 import type { AppUserSelect } from '@db/schema'
-import { GenderEnum } from '@libs/platform/constant'
+import { BusinessErrorCode, GenderEnum } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { UserStatusEnum } from './app-user.constant'
 import { UserService } from './user.service'
 
@@ -124,5 +125,30 @@ describe('UserService core mapping contract', () => {
       totalPages: 0,
     })
     expect(drizzle.ext.findPagination).not.toHaveBeenCalled()
+  })
+
+  it('throws business error when banned user is blocked from app actions', () => {
+    const { service } = createService()
+
+    expect(() =>
+      service.ensureAppUserNotBanned({
+        status: UserStatusEnum.PERMANENT_BANNED,
+        banReason: '违规发言',
+        banUntil: null,
+      }),
+    ).toThrow(BusinessException)
+
+    expect(() =>
+      service.ensureAppUserNotBanned({
+        status: UserStatusEnum.PERMANENT_BANNED,
+        banReason: '违规发言',
+        banUntil: null,
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        message: '账号已被封禁，原因：违规发言，解封时间：永久封禁',
+      }),
+    )
   })
 })

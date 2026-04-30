@@ -1,4 +1,4 @@
-import type { ITokenStorageService } from './auth.types'
+import type { ITokenStorageService } from './auth.type'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 

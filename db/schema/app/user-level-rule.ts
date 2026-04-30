@@ -4,6 +4,7 @@
 
 import {
   boolean,
+  check,
   index,
   integer,
   numeric,
@@ -13,6 +14,7 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 /**
  * 用户等级规则表 - 定义用户等级规则，包括等级名称、所需经验、等级权益等
@@ -118,6 +120,50 @@ export const userLevelRule = pgTable(
     index('user_level_rule_is_enabled_sort_order_idx').on(
       table.isEnabled,
       table.sortOrder,
+    ),
+    check(
+      'user_level_rule_required_experience_non_negative_chk',
+      sql`${table.requiredExperience} >= 0`,
+    ),
+    check(
+      'user_level_rule_login_days_non_negative_chk',
+      sql`${table.loginDays} >= 0`,
+    ),
+    check(
+      'user_level_rule_sort_order_non_negative_chk',
+      sql`${table.sortOrder} >= 0`,
+    ),
+    check(
+      'user_level_rule_daily_topic_limit_non_negative_chk',
+      sql`${table.dailyTopicLimit} >= 0`,
+    ),
+    check(
+      'user_level_rule_daily_reply_comment_limit_non_negative_chk',
+      sql`${table.dailyReplyCommentLimit} >= 0`,
+    ),
+    check(
+      'user_level_rule_post_interval_non_negative_chk',
+      sql`${table.postInterval} >= 0`,
+    ),
+    check(
+      'user_level_rule_daily_like_limit_non_negative_chk',
+      sql`${table.dailyLikeLimit} >= 0`,
+    ),
+    check(
+      'user_level_rule_daily_favorite_limit_non_negative_chk',
+      sql`${table.dailyFavoriteLimit} >= 0`,
+    ),
+    check(
+      'user_level_rule_blacklist_limit_non_negative_chk',
+      sql`${table.blacklistLimit} >= 0`,
+    ),
+    check(
+      'user_level_rule_work_collection_limit_non_negative_chk',
+      sql`${table.workCollectionLimit} >= 0`,
+    ),
+    check(
+      'user_level_rule_purchase_payable_rate_range_chk',
+      sql`${table.purchasePayableRate} >= 0 and ${table.purchasePayableRate} <= 1`,
     ),
   ],
 )

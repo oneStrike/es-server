@@ -1,8 +1,12 @@
 import type { ITokenStorageService } from '@libs/platform/modules/auth/types'
+import { randomInt } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { ChangePasswordDto, ForgotPasswordDto } from '@libs/platform/modules/auth/dto'
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+} from '@libs/platform/modules/auth/dto'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/helpers'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
@@ -46,25 +50,33 @@ export class PasswordService {
     const lowercase = 'abcdefghijklmnopqrstuvwxyz'
     const numbers = '0123456789'
     const special = '!@#$%^&*'
+    const pick = (characters: string) =>
+      characters[randomInt(characters.length)]
 
     let password = ''
 
     for (let i = 0; i < 2; i++) {
-      password += uppercase[Math.floor(Math.random() * uppercase.length)]
-      password += lowercase[Math.floor(Math.random() * lowercase.length)]
-      password += numbers[Math.floor(Math.random() * numbers.length)]
-      password += special[Math.floor(Math.random() * special.length)]
+      password += pick(uppercase)
+      password += pick(lowercase)
+      password += pick(numbers)
+      password += pick(special)
     }
 
     const allChars = uppercase + lowercase + numbers + special
     for (let i = 0; i < 8; i++) {
-      password += allChars[Math.floor(Math.random() * allChars.length)]
+      password += pick(allChars)
     }
 
-    return password
-      .split('')
-      .sort(() => Math.random() - 0.5)
-      .join('')
+    const passwordChars = password.split('')
+    for (let index = passwordChars.length - 1; index > 0; index--) {
+      const swapIndex = randomInt(index + 1)
+      ;[passwordChars[index], passwordChars[swapIndex]] = [
+        passwordChars[swapIndex],
+        passwordChars[index],
+      ]
+    }
+
+    return passwordChars.join('')
   }
 
   /**

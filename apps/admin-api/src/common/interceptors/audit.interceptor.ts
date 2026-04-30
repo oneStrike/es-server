@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import type { AuditMetadata } from '../decorators/audit.types'
+import type { AuditMetadata } from '../decorators/audit.type'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   CallHandler,
@@ -58,8 +58,8 @@ export class AuditInterceptor implements NestInterceptor {
       // 从请求中获取用户信息
       const user = request.user
       const parsedUserId = Number(user?.sub)
-      const userId
-        = Number.isFinite(parsedUserId) && parsedUserId > 0
+      const userId =
+        Number.isFinite(parsedUserId) && parsedUserId > 0
           ? parsedUserId
           : undefined
       const username = user?.username

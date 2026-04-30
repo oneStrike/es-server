@@ -5,8 +5,11 @@ import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { GeoService, resolveGeoManagedStorageDir } from '@libs/platform/modules/geo/geo.service'
-import { GEO_RUNTIME_SOURCE } from '@libs/platform/modules/geo/geo.types'
+import {
+  GeoService,
+  resolveGeoManagedStorageDir,
+} from '@libs/platform/modules/geo/geo.service'
+import { GEO_RUNTIME_SOURCE } from '@libs/platform/modules/geo/geo.type'
 import { LoggerService } from '@libs/platform/modules/logger/logger.service'
 import {
   BadRequestException,

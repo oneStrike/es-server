@@ -4,14 +4,13 @@ import { eq } from 'drizzle-orm'
 import { adminUser, adminUserToken } from '../../../schema'
 import {
   createAvatar,
+  createSeedPasswordHash,
   SEED_ADMIN_USERNAME,
-  SEED_PASSWORD_HASH,
   SEED_TIMELINE,
 } from '../../shared'
 
 const ADMIN_FIXTURE = {
   username: SEED_ADMIN_USERNAME,
-  password: SEED_PASSWORD_HASH,
   mobile: '13800138099',
   avatar: createAvatar('seed-admin'),
   role: 1,
@@ -35,18 +34,22 @@ const ADMIN_TOKEN_FIXTURE = {
 
 export async function seedAdminDomain(db: Db) {
   console.log('🌱 初始化管理员域数据...')
+  const adminFixture = {
+    ...ADMIN_FIXTURE,
+    password: await createSeedPasswordHash(),
+  }
 
   let admin = await db.query.adminUser.findFirst({
-    where: eq(adminUser.username, ADMIN_FIXTURE.username),
+    where: eq(adminUser.username, adminFixture.username),
   })
 
   if (!admin) {
-    ;[admin] = await db.insert(adminUser).values(ADMIN_FIXTURE).returning()
+    ;[admin] = await db.insert(adminUser).values(adminFixture).returning()
     console.log(`  ✓ 管理员创建: ${admin.username}`)
   } else {
     ;[admin] = await db
       .update(adminUser)
-      .set(ADMIN_FIXTURE)
+      .set(adminFixture)
       .where(eq(adminUser.id, admin.id))
       .returning()
     console.log(`  ↺ 管理员更新: ${admin.username}`)

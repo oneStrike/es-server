@@ -8,7 +8,7 @@ import type {
   GeoReloadFileInfo,
   GeoRuntimeStatus,
   GeoSnapshot,
-} from './geo.types'
+} from './geo.type'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
 import process from 'node:process'
@@ -19,7 +19,7 @@ import {
 } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import * as ip2region from 'ip2region.js'
-import { GEO_RUNTIME_SOURCE, GEO_SOURCE } from './geo.types'
+import { GEO_RUNTIME_SOURCE, GEO_SOURCE } from './geo.type'
 
 const DEFAULT_IP2REGION_DB_PATH = resolve(
   process.cwd(),
@@ -272,10 +272,7 @@ export class GeoService implements OnModuleDestroy {
    * 基于给定文件路径生成运行状态。
    * 热切换场景优先使用调用方已知的元信息，避免额外依赖磁盘 stat。
    */
-  private buildStatusFromFile(
-    filePath: string,
-    info: GeoReloadFileInfo = {},
-  ) {
+  private buildStatusFromFile(filePath: string, info: GeoReloadFileInfo = {}) {
     const fileStat = existsSync(filePath) ? statSync(filePath) : undefined
 
     return {

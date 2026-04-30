@@ -1,6 +1,6 @@
 import type { ForumTopicSelect } from '@db/schema'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
-import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
+import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { MaterializedForumHashtagFact } from '../hashtag/forum-hashtag.type'
 
 /**

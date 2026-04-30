@@ -1,5 +1,5 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
-import type { NestedPropertyOptions } from './types'
+import type { NestedPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Type } from 'class-transformer'
 import {

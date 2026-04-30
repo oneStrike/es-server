@@ -281,7 +281,7 @@ export class WorkService {
     }
   }
 
-  // 创建作品，事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：。
+  // 创建作品，并在同一事务中创建论坛板块、关系记录和作者作品计数。
   async createWork(createWorkDto: CreateWorkDto) {
     const { authorIds, categoryIds, tagIds, ...workData } = createWorkDto
     const normalizedWorkData = {
@@ -291,7 +291,7 @@ export class WorkService {
         : undefined,
     }
 
-    // 验证作品名称在同一类型下是否已存在
+    // 同类型作品名称必须保持唯一，软删除作品不参与冲突判断。
     const existingWork = await this.db.query.work.findFirst({
       where: {
         name: normalizedWorkData.name,
@@ -307,10 +307,9 @@ export class WorkService {
       )
     }
 
-    // 验证关联的作者、分类、标签是否存在且已启用
+    // 作品只允许关联当前有效的作者、分类和标签。
     await this.validateWorkRelations(authorIds, categoryIds, tagIds)
 
-    // 使用事务确保作品创建和作者作品数更新的一致性
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const [createdSection] = await tx
@@ -368,7 +367,7 @@ export class WorkService {
     )
   }
 
-  // 更新作品，事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：。
+  // 更新作品基础资料，并在事务内同步论坛板块与可选关系。
   async updateWork(updateWorkDto: UpdateWorkDto) {
     const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
     const normalizedUpdateData = {
@@ -393,7 +392,7 @@ export class WorkService {
       )
     }
 
-    // 如果更新名称，需要验证同类型下是否重名
+    // 作品名称变更时才校验同类型重名，避免无关更新多查一次。
     if (isNotNil(updateData.name) && updateData.name !== existingWork.name) {
       const duplicateWork = await this.db.query.work.findFirst({
         where: {
@@ -411,7 +410,7 @@ export class WorkService {
       }
     }
 
-    // 验证关联的作者、分类、标签是否存在且已启用（仅当传入了对应ID时验证）
+    // 仅在调用方显式传入关系 ID 时校验关系有效性。
     if (authorIds?.length || categoryIds?.length || tagIds?.length) {
       await this.validateWorkRelations(
         authorIds ?? [],
@@ -420,7 +419,6 @@ export class WorkService {
       )
     }
 
-    // 获取原有关联的作者ID列表
     const originalAuthorIds = existingWork.authorRelations.map(
       (rel) => rel.authorId,
     )
@@ -428,11 +426,6 @@ export class WorkService {
       isNotNil(updateData.name) && updateData.name !== existingWork.name
     const shouldSyncSectionDescription = isNotNil(updateData.description)
     const shouldSyncSectionEnabled = isNotNil(updateData.isPublished)
-
-    /**
-     * 事务处理：使用 $transaction 确保所有更新操作的原子性
-     * 如果其中任何一步失败，整个事务会回滚，保证数据一致性
-     */
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const result = await tx
@@ -482,7 +475,6 @@ export class WorkService {
             )
           }
 
-          // 计算新增和移除的作者，更新作品数量
           const addedAuthorIds = authorIds.filter(
             (aid) => !originalAuthorIds.includes(aid),
           )
@@ -490,7 +482,6 @@ export class WorkService {
             (aid) => !authorIds.includes(aid),
           )
 
-          // 新增作者的作品数 +1
           if (addedAuthorIds.length > 0) {
             await this.workAuthorService.updateAuthorWorkCounts(
               tx,
@@ -499,7 +490,6 @@ export class WorkService {
             )
           }
 
-          // 移除作者的作品数 -1
           if (removedAuthorIds.length > 0) {
             await this.workAuthorService.updateAuthorWorkCounts(
               tx,
@@ -887,12 +877,12 @@ export class WorkService {
     }
   }
 
-  // 分页查询作品（支持多条件组合过滤），查询说明：。
+  // 分页查询作品，复用作品列表条件构建与关系附加逻辑。
   async getWorkPage(dto: QueryWorkDto, userId?: number) {
     return this.paginateWorkList(dto, userId)
   }
 
-  // 获取作品的评论目标信息，业务规则：。
+  // 获取作品评论目标，未发布或不存在的作品不能创建评论。
   async getWorkCommentTarget(id: number) {
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -997,9 +987,9 @@ export class WorkService {
       : await this.contentPermissionService.resolveUserPurchasePayableRate(
           userId,
         )
-    const chapterPurchasePricing = bypassVisibilityCheck
-      ? null
-      : workData.viewRule === WorkRootViewPermissionEnum.PURCHASE
+    const chapterPurchasePricing =
+      !bypassVisibilityCheck &&
+      workData.viewRule === WorkRootViewPermissionEnum.PURCHASE
         ? this.contentPermissionService.buildPurchasePricing(
             workData.chapterPrice,
             chapterPayableRate ?? 1,
@@ -1070,6 +1060,14 @@ export class WorkService {
       ])
 
     const continueChapter = readingState?.continueChapter
+    const continueChapterView = continueChapter
+      ? {
+          id: continueChapter.id,
+          title: continueChapter.title,
+          subtitle: continueChapter.subtitle ?? undefined,
+          sortOrder: continueChapter.sortOrder,
+        }
+      : undefined
 
     // 历史记录和阅读状态服务于不同目的：
     // - user_browse_log 保持只追加的浏览轨迹和计数器
@@ -1111,14 +1109,7 @@ export class WorkService {
         favorited,
         viewed: true,
         lastReadAt: now,
-        continueChapter: continueChapter
-          ? {
-              id: continueChapter.id,
-              title: continueChapter.title,
-              subtitle: continueChapter.subtitle ?? undefined,
-              sortOrder: continueChapter.sortOrder,
-            }
-          : undefined,
+        continueChapter: continueChapterView,
       }
     }
 
@@ -1137,20 +1128,13 @@ export class WorkService {
       favorited,
       viewed: true,
       lastReadAt: now,
-      continueChapter: continueChapter
-        ? {
-            id: continueChapter.id,
-            title: continueChapter.title,
-            subtitle: continueChapter.subtitle ?? undefined,
-            sortOrder: continueChapter.sortOrder,
-          }
-        : undefined,
+      continueChapter: continueChapterView,
     }
   }
 
-  // 删除作品（软删除），事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：。
+  // 软删除作品，并在同一事务中停用关联论坛板块和扣减作者作品数。
   async deleteWork(id: number) {
-    // 检查作品是否还有未删除的章节
+    // 仍有未删除章节的作品不能软删除，避免产生悬空章节。
     const chapterCount = await this.db.$count(
       this.workChapter,
       and(eq(this.workChapter.workId, id), isNull(this.workChapter.deletedAt)),
@@ -1163,7 +1147,6 @@ export class WorkService {
       )
     }
 
-    // 获取作品信息，检查是否存在并获取关联作者
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
       with: {
@@ -1180,7 +1163,6 @@ export class WorkService {
       )
     }
 
-    // 使用事务确保作品删除和作者作品数更新的一致性
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const result = await tx
@@ -1199,7 +1181,6 @@ export class WorkService {
             .where(eq(this.forumSection.id, work.forumSectionId))
         }
 
-        // 更新关联作者的作品数量（-1）
         const authorIds = work.authorRelations.map((rel) => rel.authorId)
         if (authorIds.length > 0) {
           await this.workAuthorService.updateAuthorWorkCounts(tx, authorIds, -1)

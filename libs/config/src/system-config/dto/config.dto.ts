@@ -7,7 +7,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto } from '@libs/platform/dto'
-import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 // ============================================================================

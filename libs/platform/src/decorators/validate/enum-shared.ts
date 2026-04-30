@@ -1,4 +1,4 @@
-import type { EnumLike } from './types'
+import type { EnumLike } from './validate.type'
 import { getNumberEnumValues, isNumberEnum } from '@libs/platform/utils'
 import { IsEnum, IsIn } from 'class-validator'
 

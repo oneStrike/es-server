@@ -9,9 +9,9 @@ import {
   UploadConfigRegister,
 } from '@libs/platform/config'
 import { HttpExceptionFilter } from '@libs/platform/filters'
+import { PlatformModule } from '@libs/platform/bootstrap'
 import { JwtAuthGuard } from '@libs/platform/modules/auth/auth.guard'
 import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
-import { PlatformModule } from '@libs/platform/platform.module'
 import { getEnv } from '@libs/platform/utils'
 import { UserModule as UserCoreModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'

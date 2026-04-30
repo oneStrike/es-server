@@ -1,4 +1,4 @@
-import type { DatePropertyOptions } from './types'
+import type { DatePropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsDate, IsOptional } from 'class-validator'

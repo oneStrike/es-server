@@ -1,5 +1,6 @@
 import {
   bigint,
+  check,
   index,
   integer,
   jsonb,
@@ -10,6 +11,7 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 /**
  * 聊天消息表（仅私聊）。
@@ -104,5 +106,10 @@ export const chatMessage = pgTable(
       table.senderId,
       table.createdAt.desc(),
     ),
+    check(
+      'chat_message_message_type_valid_chk',
+      sql`${table.messageType} in (1, 2, 3)`,
+    ),
+    check('chat_message_status_valid_chk', sql`${table.status} in (1, 2, 3)`),
   ],
 )

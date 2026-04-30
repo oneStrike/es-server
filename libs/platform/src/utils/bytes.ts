@@ -3,7 +3,7 @@
  * 提供字节数与可读格式之间的转换功能
  */
 
-import type { BytesOptions, ByteUnit } from './bytes.types'
+import type { BytesOptions, ByteUnit } from './bytes.type'
 
 /**
  * 字节解析正则表达式（模块作用域，避免重复编译）

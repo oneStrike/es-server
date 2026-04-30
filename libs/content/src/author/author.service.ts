@@ -58,6 +58,14 @@ export class WorkAuthorService {
     return this.drizzle.schema.workAuthorRelation
   }
 
+  // 构建未软删除作者的查询条件，统一约束作者写入和计数修复入口。
+  private activeAuthorWhere(authorId: number): SQL {
+    return and(
+      eq(this.workAuthor.id, authorId),
+      isNull(this.workAuthor.deletedAt),
+    )!
+  }
+
   // 按批次处理作者 ID，避免全量重建时单次并发过高。
   private async processIdsInBatches(
     ids: number[],
@@ -70,6 +78,16 @@ export class WorkAuthorService {
     }
   }
 
+  // 获取当前未软删除作者 ID 列表，供全量计数修复入口复用。
+  private async getActiveAuthorIds(): Promise<number[]> {
+    return this.db
+      .select({ id: this.workAuthor.id })
+      .from(this.workAuthor)
+      .where(isNull(this.workAuthor.deletedAt))
+      .orderBy(this.workAuthor.id)
+      .then((rows) => rows.map((row) => row.id))
+  }
+
   // 按增量更新作者粉丝数，该方法供关注域写路径调用；若未传事务，则在独立错误处理上下文中执行。
   async updateAuthorFollowersCount(
     tx: Db | undefined,
@@ -80,13 +98,10 @@ export class WorkAuthorService {
       return
     }
 
-    const where = and(
-      eq(this.workAuthor.id, authorId),
-      isNull(this.workAuthor.deletedAt),
-    )
+    const where = this.activeAuthorWhere(authorId)
 
     const execute = async (client: Db) =>
-      applyCountDelta(client, this.workAuthor, where!, 'followersCount', delta)
+      applyCountDelta(client, this.workAuthor, where, 'followersCount', delta)
 
     await (tx
       ? execute(tx)
@@ -137,22 +152,12 @@ export class WorkAuthorService {
       ? await tx
           .update(this.workAuthor)
           .set({ followersCount })
-          .where(
-            and(
-              eq(this.workAuthor.id, authorId),
-              isNull(this.workAuthor.deletedAt),
-            ),
-          )
+          .where(this.activeAuthorWhere(authorId))
       : await this.drizzle.withErrorHandling(() =>
           this.db
             .update(this.workAuthor)
             .set({ followersCount })
-            .where(
-              and(
-                eq(this.workAuthor.id, authorId),
-                isNull(this.workAuthor.deletedAt),
-              ),
-            ),
+            .where(this.activeAuthorWhere(authorId)),
         )
     this.drizzle.assertAffectedRows(result, '作者不存在')
 
@@ -183,22 +188,12 @@ export class WorkAuthorService {
       ? await tx
           .update(this.workAuthor)
           .set({ workCount })
-          .where(
-            and(
-              eq(this.workAuthor.id, authorId),
-              isNull(this.workAuthor.deletedAt),
-            ),
-          )
+          .where(this.activeAuthorWhere(authorId))
       : await this.drizzle.withErrorHandling(() =>
           this.db
             .update(this.workAuthor)
             .set({ workCount })
-            .where(
-              and(
-                eq(this.workAuthor.id, authorId),
-                isNull(this.workAuthor.deletedAt),
-              ),
-            ),
+            .where(this.activeAuthorWhere(authorId)),
         )
     this.drizzle.assertAffectedRows(result, '作者不存在')
 
@@ -221,12 +216,7 @@ export class WorkAuthorService {
 
   // 全量重建作者粉丝数，当前用于管理端运维入口，按批次串行推进以避免单次压力过大。
   async rebuildAllAuthorFollowersCount(batchSize = 200) {
-    const authorIds = await this.db
-      .select({ id: this.workAuthor.id })
-      .from(this.workAuthor)
-      .where(isNull(this.workAuthor.deletedAt))
-      .orderBy(this.workAuthor.id)
-      .then((rows) => rows.map((row) => row.id))
+    const authorIds = await this.getActiveAuthorIds()
 
     await this.processIdsInBatches(authorIds, batchSize, async (ids) => {
       await Promise.all(
@@ -252,12 +242,7 @@ export class WorkAuthorService {
 
   // 全量重建作者作品数。
   async rebuildAllAuthorWorkCount(batchSize = 200) {
-    const authorIds = await this.db
-      .select({ id: this.workAuthor.id })
-      .from(this.workAuthor)
-      .where(isNull(this.workAuthor.deletedAt))
-      .orderBy(this.workAuthor.id)
-      .then((rows) => rows.map((row) => row.id))
+    const authorIds = await this.getActiveAuthorIds()
 
     await this.processIdsInBatches(authorIds, batchSize, async (ids) => {
       await Promise.all(
@@ -352,9 +337,7 @@ export class WorkAuthorService {
         this.db
           .update(this.workAuthor)
           .set(updateData)
-          .where(
-            and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)),
-          ),
+          .where(this.activeAuthorWhere(id)),
       { notFound: '作者不存在' },
     )
     return true
@@ -367,12 +350,7 @@ export class WorkAuthorService {
         this.db
           .update(this.workAuthor)
           .set({ isEnabled: input.isEnabled })
-          .where(
-            and(
-              eq(this.workAuthor.id, input.id),
-              isNull(this.workAuthor.deletedAt),
-            ),
-          ),
+          .where(this.activeAuthorWhere(input.id)),
       { notFound: '作者不存在' },
     )
     return true
@@ -385,12 +363,7 @@ export class WorkAuthorService {
         this.db
           .update(this.workAuthor)
           .set({ isRecommended: input.isRecommended })
-          .where(
-            and(
-              eq(this.workAuthor.id, input.id),
-              isNull(this.workAuthor.deletedAt),
-            ),
-          ),
+          .where(this.activeAuthorWhere(input.id)),
       { notFound: '作者不存在' },
     )
     return true
@@ -433,12 +406,7 @@ export class WorkAuthorService {
         this.db
           .update(this.workAuthor)
           .set({ deletedAt: new Date() })
-          .where(
-            and(
-              eq(this.workAuthor.id, input.id),
-              isNull(this.workAuthor.deletedAt),
-            ),
-          ),
+          .where(this.activeAuthorWhere(input.id)),
       { notFound: '作者不存在' },
     )
     return true

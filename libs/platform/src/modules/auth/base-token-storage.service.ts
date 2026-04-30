@@ -1,12 +1,12 @@
 import type { Cache } from 'cache-manager'
-import type { ITokenStorageService } from './auth.types'
+import type { ITokenStorageService } from './auth.type'
 import type {
   CreateTokenInput,
   ITokenEntity,
   TokenStorageFindManyOptions,
   TokenStorageUpdateInput,
   TokenStorageWhereInput,
-} from './token-storage.types'
+} from './token-storage.type'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 import { RevokeTokenReasonEnum } from './auth.constant'
@@ -14,9 +14,9 @@ import { RevokeTokenReasonEnum } from './auth.constant'
 const INVALID_TOKEN_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
 @Injectable()
-export abstract class BaseTokenStorageService<T extends ITokenEntity>
-  implements ITokenStorageService
-{
+export abstract class BaseTokenStorageService<
+  T extends ITokenEntity,
+> implements ITokenStorageService {
   constructor(@Inject(CACHE_MANAGER) protected readonly cacheManager: Cache) {}
 
   /** 创建单条 token 记录，具体落库由子类实现。 */
@@ -41,7 +41,9 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
   ): Promise<T[]>
 
   /** 按条件批量删除 token 记录。 */
-  protected abstract deleteManyItems(where: TokenStorageWhereInput): Promise<number>
+  protected abstract deleteManyItems(
+    where: TokenStorageWhereInput,
+  ): Promise<number>
 
   /** 计算 token 距离过期的剩余毫秒数，供缓存 TTL 复用。 */
   private getTokenTtlMs(expiresAt: Date) {
@@ -89,17 +91,29 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
 
     const token = await this.findByJti(jti)
     if (!token) {
-      await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
+      await this.cacheManager.set(
+        `token:${jti}`,
+        'invalid',
+        INVALID_TOKEN_CACHE_TTL_MS,
+      )
       return false
     }
 
     if (token.revokedAt) {
-      await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
+      await this.cacheManager.set(
+        `token:${jti}`,
+        'invalid',
+        INVALID_TOKEN_CACHE_TTL_MS,
+      )
       return false
     }
 
     if (new Date() > token.expiresAt) {
-      await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
+      await this.cacheManager.set(
+        `token:${jti}`,
+        'invalid',
+        INVALID_TOKEN_CACHE_TTL_MS,
+      )
       return false
     }
 
@@ -109,7 +123,11 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
       return true
     }
 
-    await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
+    await this.cacheManager.set(
+      `token:${jti}`,
+      'invalid',
+      INVALID_TOKEN_CACHE_TTL_MS,
+    )
     return false
   }
 
@@ -122,7 +140,11 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
         revokeReason: reason,
       },
     )
-    await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
+    await this.cacheManager.set(
+      `token:${jti}`,
+      'invalid',
+      INVALID_TOKEN_CACHE_TTL_MS,
+    )
   }
 
   /** 批量撤销多条 token，并同步写入无效缓存。 */
@@ -136,7 +158,11 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     )
     await Promise.all(
       jtis.map(async (jti) =>
-        this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS),
+        this.cacheManager.set(
+          `token:${jti}`,
+          'invalid',
+          INVALID_TOKEN_CACHE_TTL_MS,
+        ),
       ),
     )
   }
@@ -160,20 +186,27 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
         revokeReason: reason,
       },
     )
-    await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
+    await this.cacheManager.set(
+      `token:${jti}`,
+      'invalid',
+      INVALID_TOKEN_CACHE_TTL_MS,
+    )
     return affectedRows > 0
   }
 
   /** 撤销指定用户的全部有效 token。 */
   async revokeAllByUserId(userId: number, reason: RevokeTokenReasonEnum) {
-    const tokens = await this.findManyItems({
-      userId,
-      revokedAt: null,
-    }, {
-      select: {
-        jti: true,
+    const tokens = await this.findManyItems(
+      {
+        userId,
+        revokedAt: null,
       },
-    })
+      {
+        select: {
+          jti: true,
+        },
+      },
+    )
 
     await this.updateManyItems(
       {
@@ -188,7 +221,11 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
 
     await Promise.all(
       tokens.map(async (token) =>
-        this.cacheManager.set(`token:${token.jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS),
+        this.cacheManager.set(
+          `token:${token.jti}`,
+          'invalid',
+          INVALID_TOKEN_CACHE_TTL_MS,
+        ),
       ),
     )
   }

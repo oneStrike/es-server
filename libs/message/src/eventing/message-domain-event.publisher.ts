@@ -1,5 +1,9 @@
 import type { Db } from '@db/core'
-import type { PublishDomainEventBatchResult, PublishDomainEventResult } from '@libs/platform/modules/eventing/domain-event.type'
+import type {
+  PublishDomainEventBatchResult,
+  PublishDomainEventInput,
+  PublishDomainEventResult,
+} from '@libs/platform/modules/eventing/domain-event.type'
 import type { PublishMessageDomainEventInput } from './message-event.type'
 import { DomainEventPublisher } from '@libs/platform/modules/eventing/domain-event-publisher.service'
 import { Injectable } from '@nestjs/common'
@@ -16,28 +20,33 @@ export class MessageDomainEventPublisher {
   async publish(
     input: PublishMessageDomainEventInput,
   ): Promise<PublishDomainEventResult> {
-    const definition = getMessageDomainEventDefinition(input.eventKey)
-    return this.domainEventPublisher.publish({
-      eventKey: input.eventKey,
-      domain: definition.domain,
-      idempotencyKey: this.resolveIdempotencyKey(input),
-      subjectType: input.subjectType,
-      subjectId: input.subjectId,
-      targetType: input.targetType,
-      targetId: input.targetId,
-      operatorId: input.operatorId,
-      occurredAt: input.occurredAt,
-      consumers: [...definition.consumers],
-      context: input.context,
-    })
+    return this.domainEventPublisher.publish(this.buildPublishInput(input))
   }
 
   async publishInTx(
     tx: Db,
     input: PublishMessageDomainEventInput,
   ): Promise<PublishDomainEventResult> {
+    return this.domainEventPublisher.publishInTx(
+      tx,
+      this.buildPublishInput(input),
+    )
+  }
+
+  async publishMany(
+    inputs: PublishMessageDomainEventInput[],
+  ): Promise<PublishDomainEventBatchResult> {
+    return this.domainEventPublisher.publishManyByIdempotencyKey(
+      inputs.map((input) => this.buildPublishInput(input)),
+    )
+  }
+
+  // 按消息域定义补齐通用领域事件发布入参。
+  private buildPublishInput(
+    input: PublishMessageDomainEventInput,
+  ): PublishDomainEventInput {
     const definition = getMessageDomainEventDefinition(input.eventKey)
-    return this.domainEventPublisher.publishInTx(tx, {
+    return {
       eventKey: input.eventKey,
       domain: definition.domain,
       idempotencyKey: this.resolveIdempotencyKey(input),
@@ -49,33 +58,12 @@ export class MessageDomainEventPublisher {
       occurredAt: input.occurredAt,
       consumers: [...definition.consumers],
       context: input.context,
-    })
+    }
   }
 
-  async publishMany(
-    inputs: PublishMessageDomainEventInput[],
-  ): Promise<PublishDomainEventBatchResult> {
-    return this.domainEventPublisher.publishManyByIdempotencyKey(
-      inputs.map((input) => {
-        const definition = getMessageDomainEventDefinition(input.eventKey)
-        return {
-          eventKey: input.eventKey,
-          domain: definition.domain,
-          idempotencyKey: this.resolveIdempotencyKey(input),
-          subjectType: input.subjectType,
-          subjectId: input.subjectId,
-          targetType: input.targetType,
-          targetId: input.targetId,
-          operatorId: input.operatorId,
-          occurredAt: input.occurredAt,
-          consumers: [...definition.consumers],
-          context: input.context,
-        }
-      }),
-    )
-  }
-
-  private resolveIdempotencyKey(input: PublishMessageDomainEventInput) {
+  private resolveIdempotencyKey(
+    input: PublishMessageDomainEventInput,
+  ): string | undefined {
     if (
       typeof input.idempotencyKey === 'string' &&
       input.idempotencyKey.trim()

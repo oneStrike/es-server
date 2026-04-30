@@ -1,16 +1,18 @@
 import type { SendSmsVerifyCodeResponseBody } from '@alicloud/dypnsapi20170525'
-import type {
-  SmsAliyunConfig,
-  SmsConfigProvider,
-} from './sms.types'
+import type { SmsAliyunConfig, SmsConfigProvider } from './sms.type'
 import Credential, { Config } from '@alicloud/credentials'
 import Dypnsapi20170525, * as $Dypnsapi20170525 from '@alicloud/dypnsapi20170525'
 import * as $OpenApi from '@alicloud/openapi-client'
 import * as $Util from '@alicloud/tea-util'
 import { Inject, Injectable, Logger } from '@nestjs/common'
+import { maskString } from '../../utils/mask'
 import { CheckVerifyCodeDto, SendVerifyCodeDto } from './dto/sms.dto'
-import { SmsErrorMap, SmsErrorMessages, SmsTemplateCodeEnum } from './sms.constant'
-import { SMS_CONFIG_PROVIDER } from './sms.types'
+import {
+  SmsErrorMap,
+  SmsErrorMessages,
+  SmsTemplateCodeEnum,
+} from './sms.constant'
+import { SMS_CONFIG_PROVIDER } from './sms.type'
 
 /**
  * 阿里云短信验证码服务
@@ -107,6 +109,7 @@ export class SmsService {
    */
   async checkVerifyCode(dto: CheckVerifyCodeDto): Promise<boolean> {
     const { phone, code } = dto
+    const maskedPhone = maskString(phone, 3, 4)
 
     const client = this.getClient()
     const runtime = new $Util.RuntimeOptions({})
@@ -126,7 +129,7 @@ export class SmsService {
 
     const isPassed = response.model?.verifyResult === 'PASS'
     this.logger.log(
-      `验证码核验${isPassed ? '成功' : '失败'} - 手机号: ${phone}`,
+      `验证码核验${isPassed ? '成功' : '失败'} - 手机号: ${maskedPhone}`,
     )
 
     return isPassed
@@ -143,6 +146,7 @@ export class SmsService {
    */
   async sendVerifyCode(dto: SendVerifyCodeDto): Promise<boolean> {
     const { phone, templateCode } = dto
+    const maskedPhone = maskString(phone, 3, 4)
 
     try {
       const { sms: smsConfig } = this.configProvider.getAliyunConfig()
@@ -151,7 +155,8 @@ export class SmsService {
       const runtime = new $Util.RuntimeOptions({})
 
       // 使用传入的模板编码，或默认登录/注册模板编码
-      const finalTemplateCode = templateCode || SmsTemplateCodeEnum.LOGIN_REGISTER
+      const finalTemplateCode =
+        templateCode || SmsTemplateCodeEnum.LOGIN_REGISTER
 
       const sendSmsVerifyCodeRequest =
         new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
@@ -176,11 +181,11 @@ export class SmsService {
         throw new Error(SmsErrorMap[response?.code || '验证码服务异常'])
       }
 
-      this.logger.log(`验证码发送成功 - 手机号: ${phone}`)
+      this.logger.log(`验证码发送成功 - 手机号: ${maskedPhone}`)
 
       return true
     } catch (error) {
-      this.logger.error(`验证码发送失败 - 手机号: ${phone}`, error)
+      this.logger.error(`验证码发送失败 - 手机号: ${maskedPhone}`, error)
       return false
     }
   }

@@ -1,10 +1,19 @@
 import type { DynamicModule, Type } from '@nestjs/common'
 
+/**
+ * 上传模块配置提供器注入 token。
+ */
 export const UPLOAD_CONFIG_PROVIDER = 'UPLOAD_CONFIG_PROVIDER'
 
+/**
+ * 上传 provider 类型。
+ */
 export enum UploadProviderEnum {
+  /** 本地文件系统。 */
   LOCAL = 'local',
+  /** 七牛云对象存储。 */
   QINIU = 'qiniu',
+  /** Superbed 图床。 */
   SUPERBED = 'superbed',
 }
 
@@ -12,7 +21,6 @@ export enum UploadProviderEnum {
  * 七牛上传系统配置。
  * 约束鉴权、空间、域名和对象前缀等稳定参数。
  */
-/** 稳定领域类型 `UploadSystemQiniuConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadSystemQiniuConfig {
   accessKey: string
   secretKey: string
@@ -28,7 +36,6 @@ export interface UploadSystemQiniuConfig {
  * Superbed 上传系统配置。
  * 约束 token、分类以及可选的图像处理开关。
  */
-/** 稳定领域类型 `UploadSystemSuperbedConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadSystemSuperbedConfig {
   token: string
   categories: string
@@ -41,7 +48,6 @@ export interface UploadSystemSuperbedConfig {
  * 上传系统总配置。
  * 统一描述当前启用的 provider 与各 provider 的子配置。
  */
-/** 稳定领域类型 `UploadSystemConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadSystemConfig {
   provider: UploadProviderEnum
   superbedNonImageFallbackToLocal: boolean
@@ -53,7 +59,6 @@ export interface UploadSystemConfig {
  * 上传配置提供器契约。
  * 动态模块通过该接口向上传服务暴露最终生效配置。
  */
-/** 稳定领域类型 `UploadConfigProvider`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadConfigProvider {
   getUploadConfig: () => UploadSystemConfig
 }
@@ -66,10 +71,26 @@ export interface UploadModuleOptions {
 }
 
 /**
+ * multipart 表单字段的最小读取结构。
+ */
+export interface MultipartFieldLike {
+  type?: string
+  value?: string | number
+}
+
+/**
+ * 外部上传 SDK 响应错误消息的最小结构。
+ */
+export interface UploadResponseCarrier {
+  response?: {
+    message?: string | string[]
+  }
+}
+
+/**
  * 上传文件大类。
  * 用于场景校验、对象 key 规划和 provider 兼容处理。
  */
-/** 稳定领域类型 `UploadFileCategory`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type UploadFileCategory =
   | 'image'
   | 'audio'
@@ -78,7 +99,9 @@ export type UploadFileCategory =
   | 'archive'
   | 'package'
 
-/** 稳定领域类型 `PreparedUploadFile`。仅供内部领域/服务链路复用，避免重复定义。 */
+/**
+ * 已完成校验和对象 key 规划的待上传文件。
+ */
 export interface PreparedUploadFile {
   tempPath: string
   objectKey: string
@@ -91,7 +114,9 @@ export interface PreparedUploadFile {
   fileSize: number
 }
 
-/** 稳定领域类型 `UploadExecutionResult`。仅供内部领域/服务链路复用，避免重复定义。 */
+/**
+ * provider 执行上传后的最小结果。
+ */
 export interface UploadExecutionResult {
   filePath: string
 }
@@ -100,7 +125,6 @@ export interface UploadExecutionResult {
  * 本地文件二次上传参数。
  * 用于压缩包解压后的文件继续复用统一上传 provider 流程。
  */
-/** 稳定领域类型 `UploadLocalFileOptions`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadLocalFileOptions {
   localPath: string
   objectKeySegments: string[]
@@ -112,7 +136,6 @@ export interface UploadLocalFileOptions {
  * 上传结果。
  * - 用于 service 返回文件上传后的稳定元数据
  */
-/** 稳定领域类型 `UploadResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadResult {
   filename: string
   originalName: string

@@ -1,4 +1,7 @@
-import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
+import type {
+  DomainEventDispatchRecord,
+  DomainEventRecord,
+} from '@libs/platform/modules/eventing/domain-event.type'
 import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
 import type {
   NotificationProjectionApplyResult,
@@ -15,28 +18,23 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function toPositiveInteger(value: unknown) {
+function toPositiveInteger(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
     return value
   }
   return undefined
 }
 
-function toNonEmptyString(value: unknown) {
-  return typeof value === 'string' && value.trim().length > 0
-    ? value
-    : undefined
+function toNonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return undefined
+  }
+  return value
 }
 
-function compactRecord<T extends Record<string, unknown>>(value: T) {
+function compactRecord<T extends Record<string, unknown>>(value: T): T {
   const entries = Object.entries(value).filter(([, item]) => item !== undefined)
   return Object.fromEntries(entries) as T
-}
-
-function extractPositiveInteger<T>(value: T) {
-  return typeof value === 'number' && Number.isInteger(value) && value > 0
-    ? value
-    : undefined
 }
 
 /**
@@ -291,7 +289,7 @@ export class NotificationProjectionService {
       isPlainRecord(payload.object)
     ) {
       return {
-        announcementId: extractPositiveInteger(payload.object.id),
+        announcementId: toPositiveInteger(payload.object.id),
       }
     }
 

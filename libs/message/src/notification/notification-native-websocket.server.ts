@@ -1,7 +1,11 @@
 import type { Server as HttpServer, IncomingMessage } from 'node:http'
 import type { Socket as NodeSocket } from 'node:net'
 import type { WebSocket } from 'ws'
-import type { NativeWsRequestEnvelope } from './notification-websocket.types'
+import type {
+  NativeWsRequestEnvelope,
+  WsReadPayload,
+  WsSendPayload,
+} from './notification-websocket.type'
 import { Buffer } from 'node:buffer'
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common'
 import { WebSocketServer } from 'ws'
@@ -196,9 +200,7 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     if (event === 'chat.send') {
       const ack = await this.messageWebSocketService.handleChatSend(
         state.userId,
-        envelope as NativeWsRequestEnvelope<
-          import('./notification-websocket.types').WsSendPayload
-        >,
+        envelope as NativeWsRequestEnvelope<WsSendPayload>,
       )
       client.send(this.messageWebSocketService.createNativeAckMessage(ack))
       return
@@ -207,9 +209,7 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     if (event === 'chat.read') {
       const ack = await this.messageWebSocketService.handleChatRead(
         state.userId,
-        envelope as NativeWsRequestEnvelope<
-          import('./notification-websocket.types').WsReadPayload
-        >,
+        envelope as NativeWsRequestEnvelope<WsReadPayload>,
       )
       client.send(this.messageWebSocketService.createNativeAckMessage(ack))
       return

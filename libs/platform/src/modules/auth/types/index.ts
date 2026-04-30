@@ -1,3 +1,3 @@
-export * from '../auth.types'
-export * from '../login-guard.types'
-export * from '../token-storage.types'
+export * from '../auth.type'
+export * from '../login-guard.type'
+export * from '../token-storage.type'

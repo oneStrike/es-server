@@ -1,5 +1,5 @@
 import type { adminUserToken, appUserToken } from '@db/schema'
-import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
+import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { DeviceInfo } from '@libs/platform/utils'
 
 /**
@@ -7,7 +7,9 @@ import type { DeviceInfo } from '@libs/platform/utils'
  * 1=访问令牌，2=刷新令牌。
  */
 export enum TokenTypeEnum {
+  /** 访问令牌。 */
   ACCESS = 1,
+  /** 刷新令牌。 */
   REFRESH = 2,
 }
 
@@ -15,7 +17,6 @@ export enum TokenTypeEnum {
  * Token 实体接口
  * 定义 Token 数据的标准结构
  */
-/** 稳定领域类型 `ITokenEntity`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type ITokenEntity =
   | typeof appUserToken.$inferSelect
   | typeof adminUserToken.$inferSelect
@@ -24,7 +25,6 @@ export type ITokenEntity =
  * 创建 Token 入参。
  * 用于持久化 access/refresh token 的核心字段。
  */
-/** 稳定领域类型 `CreateTokenInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface CreateTokenInput extends GeoSnapshot {
   /** 用户 ID */
   userId: number
@@ -42,18 +42,27 @@ export interface CreateTokenInput extends GeoSnapshot {
   userAgent?: string
 }
 
+/**
+ * Token 存储查询条件。
+ */
 export interface TokenStorageWhereInput {
   jti?: string | { in?: string[] }
   userId?: number
-  revokedAt?: null | { not?: null, lt?: Date }
-  expiresAt?: { gt?: Date, lt?: Date }
+  revokedAt?: null | { not?: null; lt?: Date }
+  expiresAt?: { gt?: Date; lt?: Date }
 }
 
+/**
+ * Token 存储更新字段。
+ */
 export interface TokenStorageUpdateInput {
   revokedAt?: Date | null
   revokeReason?: number
 }
 
+/**
+ * Token 批量查询选项。
+ */
 export interface TokenStorageFindManyOptions {
   select?: {
     jti?: boolean
@@ -69,7 +78,6 @@ export interface TokenStorageFindManyOptions {
  * @template UpdateInput 更新参数类型
  * @template WhereInput 查询条件类型
  */
-/** 稳定领域类型 `ITokenDelegate`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface ITokenDelegate<
   T,
   CreateInput = Record<string, never>,
@@ -82,7 +90,7 @@ export interface ITokenDelegate<
   createMany: (args: { data: CreateInput[] }) => Promise<number>
   /** 查询单条 */
   findUnique: (args: {
-    where: WhereInput & { jti?: string, id?: number }
+    where: WhereInput & { jti?: string; id?: number }
   }) => Promise<T | null>
   /** 查询多条 */
   findMany: (args: {
@@ -90,9 +98,12 @@ export interface ITokenDelegate<
     select?: { jti?: boolean }
   }) => Promise<T[]>
   /** 更新单条 */
-  update: (args: { where: WhereInput, data: UpdateInput }) => Promise<T>
+  update: (args: { where: WhereInput; data: UpdateInput }) => Promise<T>
   /** 批量更新 */
-  updateMany: (args: { where: WhereInput, data: UpdateInput }) => Promise<number>
+  updateMany: (args: {
+    where: WhereInput
+    data: UpdateInput
+  }) => Promise<number>
   /** 批量删除 */
   deleteMany: (args: { where: WhereInput }) => Promise<number>
 }

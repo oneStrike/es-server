@@ -1,7 +1,10 @@
 import type { Provider } from '@nestjs/common/interfaces/modules/provider.interface'
 import type { Type } from '@nestjs/common/interfaces/type.interface'
 import type { ValidationError } from 'class-validator'
-import type { PlatformModuleOptions } from './platform.module.types'
+import type {
+  PlatformModuleOptions,
+  RequestIdHeaderCarrier,
+} from './platform.module.type'
 import { DrizzleModule } from '@db/core'
 import { EventingModule } from '@libs/platform/modules/eventing/eventing.module'
 import { LoggerModule } from '@libs/platform/modules/logger/logger.module'
@@ -18,12 +21,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
 import { CustomCacheModule } from './modules/cache/cache.module'
 import { HealthModule } from './modules/health/health.module'
-
-interface RequestIdHeaderCarrier {
-  headers?: {
-    'x-request-id'?: string
-  }
-}
 
 function flattenValidationErrors(
   errors: ValidationError[],

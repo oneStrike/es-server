@@ -1,5 +1,5 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
-import type { NumberPropertyOptions } from './types'
+import type { NumberPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsNumber, IsOptional, Max, Min } from 'class-validator'

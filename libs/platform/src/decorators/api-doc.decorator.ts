@@ -6,6 +6,7 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger'
+import { ApiSuccessCode } from '../constant'
 
 /**
  * API 文档装饰器配置
@@ -40,7 +41,7 @@ function baseResponse(summary: string) {
             code: {
               type: 'number',
               description: '响应状态码',
-              example: 200,
+              example: ApiSuccessCode,
             },
             message: {
               type: 'string',
@@ -93,7 +94,8 @@ export function ApiDoc<TModel extends Type<object>>(
           schema: {
             ...baseResponse(summary).content['application/json'].schema,
             properties: {
-              ...baseResponse(summary).content['application/json'].schema.properties,
+              ...baseResponse(summary).content['application/json'].schema
+                .properties,
               ...(dataSchema && { data: dataSchema }),
             },
           },
@@ -137,7 +139,8 @@ export function ApiPageDoc<TModel extends Type<object>>(
           schema: {
             ...baseResponse(summary).content['application/json'].schema,
             properties: {
-              ...baseResponse(summary).content['application/json'].schema.properties,
+              ...baseResponse(summary).content['application/json'].schema
+                .properties,
               data: {
                 type: 'object',
                 properties: {

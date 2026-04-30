@@ -49,9 +49,9 @@ import {
   addHours,
   addMinutes,
   createAvatar,
+  createSeedPasswordHash,
   SEED_ACCOUNTS,
   SEED_ADMIN_USERNAME,
-  SEED_PASSWORD_HASH,
   SEED_PLATFORM_ALL,
   SEED_TIMELINE,
 } from '../../shared'
@@ -525,6 +525,7 @@ export async function seedAppCoreDomain(db: Db) {
   const levelIdByName = new Map<string, number>(
     levelRules.map((item) => [item.name, item.id]),
   )
+  const seedPasswordHash = await createSeedPasswordHash()
 
   for (const userFixture of USER_FIXTURES) {
     const existing = await db.query.appUser.findFirst({
@@ -537,7 +538,7 @@ export async function seedAppCoreDomain(db: Db) {
       emailAddress: userFixture.emailAddress,
       levelId: levelIdByName.get(userFixture.levelName) ?? null,
       nickname: userFixture.nickname,
-      password: SEED_PASSWORD_HASH,
+      password: seedPasswordHash,
       avatarUrl: userFixture.avatarUrl,
       signature: userFixture.signature,
       bio: userFixture.bio,

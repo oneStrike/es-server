@@ -1,7 +1,7 @@
 import type { UserCommentSelect } from '@db/schema'
 import type { MaterializedForumHashtagFact } from '@libs/forum/hashtag/forum-hashtag.type'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
-import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
+import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { CommentTargetMeta } from './interfaces/comment-target-resolver.interface'
 
 /**

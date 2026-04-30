@@ -1,5 +1,5 @@
 import type { Cache } from 'cache-manager'
-import type { LoginGuardConfig } from './login-guard.types'
+import type { LoginGuardConfig } from './login-guard.type'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import {
   HttpException,

@@ -48,14 +48,10 @@ import {
   QueryChatConversationMessagesDto,
   SendChatMessageDto,
 } from './dto/chat.dto'
+import type { ChatMessageCreatedDomainEventPayload } from './chat.type'
 
 /** 数字字符串正则表达式（模块作用域，避免重复编译） */
 const DIGIT_STRING_REGEX = /^\d+$/
-
-interface ChatMessageCreatedDomainEventPayload {
-  conversationId: number
-  messageId: string
-}
 
 /**
  * 私聊聊天服务
@@ -326,7 +322,7 @@ export class MessageChatService {
         unreadCount: number
         lastReadAt: Date | null
         lastReadMessageId: bigint | null
-        user: { id: number, nickname: string | null, avatar: string | null }
+        user: { id: number; nickname: string | null; avatar: string | null }
       }>
     >()
     for (const member of members) {
@@ -1207,7 +1203,7 @@ export class MessageChatService {
    */
   private async getMessageMapByIds(ids: bigint[]) {
     if (!ids.length) {
-      return new Map<string, { id: bigint, content: string }>()
+      return new Map<string, { id: bigint; content: string }>()
     }
     const rows = await this.db
       .select({

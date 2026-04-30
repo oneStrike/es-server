@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
+  check,
   index,
   integer,
   pgTable,
@@ -97,5 +98,9 @@ export const chatConversationMember = pgTable(
      * 会话与用户复合主键
      */
     primaryKey({ columns: [table.conversationId, table.userId] }),
+    check(
+      'chat_conversation_member_role_valid_chk',
+      sql`${table.role} in (1, 2)`,
+    ),
   ],
 )

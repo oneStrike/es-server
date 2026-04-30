@@ -12,9 +12,13 @@ export type GeoSource = typeof GEO_SOURCE
  * 统一给运行状态、DTO 文档和管理端展示复用，避免字面量分叉。
  */
 export const GEO_RUNTIME_SOURCE = {
+  /** 使用管理端上传并已激活的属地库。 */
   MANAGED_ACTIVE: 'managed-active',
+  /** 使用显式配置路径中的属地库。 */
   CONFIGURED_PATH: 'configured-path',
+  /** 使用默认路径中的属地库。 */
   DEFAULT_PATH: 'default-path',
+  /** 当前进程没有可用属地库。 */
   UNAVAILABLE: 'unavailable',
 } as const
 
@@ -22,7 +26,6 @@ export const GEO_RUNTIME_SOURCE = {
  * 统一属地快照。
  * 所有写入链路与对外 DTO 统一复用这一组固定字段。
  */
-/** 稳定领域类型 `GeoSnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface GeoSnapshot {
   geoCountry?: string | null
   geoProvince?: string | null
@@ -35,7 +38,6 @@ export interface GeoSnapshot {
  * 属地查询结果。
  * 与持久化快照保持同构，便于直接透传到客户端上下文与写库链路。
  */
-/** 稳定领域类型 `GeoLookupResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type GeoLookupResult = GeoSnapshot
 
 /**

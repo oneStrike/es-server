@@ -13,11 +13,11 @@ import {
   UpdateTagSortDto,
 } from './dto/tag.dto'
 
-@Injectable()
 /**
  * 作品标签领域服务，负责标签的增删改查、排序调整与启用状态维护。
  * 对“禁用/删除”这类会影响线上可见性的操作，统一执行关联作品存在性校验。
  */
+@Injectable()
 export class WorkTagService {
   // 初始化 WorkTagService 依赖。
   constructor(private readonly drizzle: DrizzleService) {}

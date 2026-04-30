@@ -5,9 +5,11 @@ import type {
   UploadConfigProvider,
   UploadFileCategory,
   UploadLocalFileOptions,
+  UploadResponseCarrier,
   UploadResult,
   UploadSystemConfig,
-} from './upload.types'
+  MultipartFieldLike,
+} from './upload.type'
 import { Buffer as NodeBuffer } from 'node:buffer'
 import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, extname, join, posix } from 'node:path'
@@ -31,7 +33,7 @@ import { LocalUploadProvider } from './local-upload.provider'
 import { QiniuUploadProvider } from './qiniu-upload.provider'
 import { SuperbedUploadProvider } from './superbed-upload.provider'
 import { resolveImageDimensionsFromFile } from './upload-image-dimension.util'
-import { UPLOAD_CONFIG_PROVIDER, UploadProviderEnum } from './upload.types'
+import { UPLOAD_CONFIG_PROVIDER, UploadProviderEnum } from './upload.type'
 
 const pump = promisify(pipeline)
 const DEFAULT_UPLOAD_SCENE = 'shared'
@@ -41,17 +43,6 @@ const LEADING_DOT_REGEX = /^\./
 const TRAILING_EXTENSION_REGEX = /\.[^.]+$/
 const TRAILING_DIMENSION_SUFFIX_REGEX = /[-_]\d+x\d+$/
 const RESERVED_PATH_SEGMENTS = new Set(['.', '..'])
-
-interface MultipartFieldLike {
-  type?: string
-  value?: string | number
-}
-
-interface UploadResponseCarrier {
-  response?: {
-    message?: string | string[]
-  }
-}
 
 /**
  * 上传服务。
@@ -537,7 +528,6 @@ export class UploadService {
       }
     }
     const normalizedScene = scene?.trim()
-    console.log(normalizedScene)
     if (
       !normalizedScene ||
       !SCENE_NAME_REGEX.test(normalizedScene) ||

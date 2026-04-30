@@ -85,7 +85,7 @@ export class WorkCounterService {
     return this.drizzle.schema.userDownloadRecord
   }
 
-  // 执行 runCountUpdate。
+  // 在可选事务内执行计数更新，未传事务时统一进入共享错误处理。
   private async runCountUpdate(
     tx: Db | undefined,
     operation: (client: Db) => Promise<void>,
@@ -98,7 +98,7 @@ export class WorkCounterService {
     await this.drizzle.withErrorHandling(async () => operation(this.db))
   }
 
-  // 执行 rethrowNotFound。
+  // 将计数更新底层的目标不存在错误转换为调用方提供的业务文案。
   private rethrowNotFound(error: unknown, message: string): never {
     if (
       !(error instanceof BusinessException) ||
@@ -131,7 +131,7 @@ export class WorkCounterService {
     throw error
   }
 
-  // 执行 throwUnsupportedWorkType。
+  // 拒绝内容域当前不支持的作品类型，避免错误目标类型继续写入计数。
   private throwUnsupportedWorkType(): never {
     throw new BusinessException(
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -139,103 +139,92 @@ export class WorkCounterService {
     )
   }
 
-  // 获取 work Like Target Type。
+  // 根据作品类型返回作品级交互目标类型，点赞、收藏、浏览和评论共享同一套映射。
+  private getWorkTargetType(workType: number) {
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return this.workComicTargetType
+      case ContentTypeEnum.NOVEL:
+        return this.workNovelTargetType
+      default:
+        this.throwUnsupportedWorkType()
+    }
+  }
+
+  // 获取作品点赞目标类型。
   private getWorkLikeTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.workComicTargetType
-    }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.workNovelTargetType
-    }
-    this.throwUnsupportedWorkType()
+    return this.getWorkTargetType(workType)
   }
 
-  // 获取 work Favorite Target Type。
+  // 获取作品收藏目标类型。
   private getWorkFavoriteTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.workComicTargetType
-    }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.workNovelTargetType
-    }
-    this.throwUnsupportedWorkType()
+    return this.getWorkTargetType(workType)
   }
 
-  // 获取 work Browse Target Type。
+  // 获取作品浏览目标类型。
   private getWorkBrowseTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.workComicTargetType
-    }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.workNovelTargetType
-    }
-    this.throwUnsupportedWorkType()
+    return this.getWorkTargetType(workType)
   }
 
-  // 获取 work Comment Target Type。
+  // 获取作品评论目标类型。
   private getWorkCommentTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.workComicTargetType
-    }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.workNovelTargetType
-    }
-    this.throwUnsupportedWorkType()
+    return this.getWorkTargetType(workType)
   }
 
-  // 获取 work Chapter Like Target Type。
+  // 获取章节点赞目标类型。
   private getWorkChapterLikeTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.chapterComicLikeTargetType
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return this.chapterComicLikeTargetType
+      case ContentTypeEnum.NOVEL:
+        return this.chapterNovelLikeTargetType
+      default:
+        this.throwUnsupportedWorkType()
     }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.chapterNovelLikeTargetType
-    }
-    this.throwUnsupportedWorkType()
   }
 
-  // 获取 work Chapter Browse Target Type。
+  // 根据作品类型返回章节浏览/评论目标类型。
+  private getWorkChapterBrowseCommentTargetType(workType: number) {
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return this.chapterComicBrowseCommentTargetType
+      case ContentTypeEnum.NOVEL:
+        return this.chapterNovelBrowseCommentTargetType
+      default:
+        this.throwUnsupportedWorkType()
+    }
+  }
+
+  // 获取章节浏览目标类型。
   private getWorkChapterBrowseTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.chapterComicBrowseCommentTargetType
-    }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.chapterNovelBrowseCommentTargetType
-    }
-    this.throwUnsupportedWorkType()
+    return this.getWorkChapterBrowseCommentTargetType(workType)
   }
 
-  // 获取 work Chapter Comment Target Type。
+  // 获取章节评论目标类型。
   private getWorkChapterCommentTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.chapterComicBrowseCommentTargetType
-    }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.chapterNovelBrowseCommentTargetType
-    }
-    this.throwUnsupportedWorkType()
+    return this.getWorkChapterBrowseCommentTargetType(workType)
   }
 
-  // 获取 work Chapter Purchase Target Type。
+  // 根据作品类型返回章节购买/下载目标类型。
+  private getWorkChapterPurchaseDownloadTargetType(workType: number) {
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return this.chapterComicPurchaseDownloadTargetType
+      case ContentTypeEnum.NOVEL:
+        return this.chapterNovelPurchaseDownloadTargetType
+      default:
+        this.throwUnsupportedWorkType()
+    }
+  }
+
+  // 获取章节购买目标类型。
   private getWorkChapterPurchaseTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.chapterComicPurchaseDownloadTargetType
-    }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.chapterNovelPurchaseDownloadTargetType
-    }
-    this.throwUnsupportedWorkType()
+    return this.getWorkChapterPurchaseDownloadTargetType(workType)
   }
 
-  // 获取 work Chapter Download Target Type。
+  // 获取章节下载目标类型。
   private getWorkChapterDownloadTargetType(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return this.chapterComicPurchaseDownloadTargetType
-    }
-    if (workType === ContentTypeEnum.NOVEL) {
-      return this.chapterNovelPurchaseDownloadTargetType
-    }
-    this.throwUnsupportedWorkType()
+    return this.getWorkChapterPurchaseDownloadTargetType(workType)
   }
 
   // 更新 work Count Field。

@@ -3,9 +3,9 @@ import type {
   WsReadPayload,
   WsRequestEnvelope,
   WsSendPayload,
-} from './notification-websocket.types'
+} from './notification-websocket.type'
 import process from 'node:process'
-import { isDevelopment } from '@libs/platform/utils';
+import { isDevelopment } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import {
   ConnectedSocket,
@@ -23,12 +23,19 @@ const MESSAGE_WS_CORS_ORIGINS = (process.env.MESSAGE_WS_CORS_ORIGINS || '')
   .map((item) => item.trim())
   .filter(Boolean)
 
-const MESSAGE_WS_CORS_ORIGIN =
-  MESSAGE_WS_CORS_ORIGINS.length > 0
-    ? MESSAGE_WS_CORS_ORIGINS.includes('*')
-      ? true
-      : MESSAGE_WS_CORS_ORIGINS
-    : !!isDevelopment()
+function getMessageWsCorsOrigin(): boolean | string[] {
+  if (MESSAGE_WS_CORS_ORIGINS.length === 0) {
+    return !!isDevelopment()
+  }
+
+  if (MESSAGE_WS_CORS_ORIGINS.includes('*')) {
+    return true
+  }
+
+  return MESSAGE_WS_CORS_ORIGINS
+}
+
+const MESSAGE_WS_CORS_ORIGIN = getMessageWsCorsOrigin()
 
 @Injectable()
 @WebSocketGateway({

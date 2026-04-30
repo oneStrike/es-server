@@ -7,7 +7,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AesService } from '@libs/platform/modules/crypto/aes.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
-import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
 import { isMasked, maskString } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import {
@@ -150,7 +150,7 @@ export class SystemConfigService implements OnModuleInit {
 
         const mergedValue = this.deepMerge(
           this.cloneConfig(
-            ((currentConfig)[key] ??
+            (currentConfig[key] ??
               (DEFAULT_CONFIG as Record<string, unknown>)[key]) as Record<
               string,
               unknown
@@ -159,12 +159,10 @@ export class SystemConfigService implements OnModuleInit {
           processedInput,
         )
 
-        ;(nextConfig)[key] = mergedValue
+        nextConfig[key] = mergedValue
       }
 
-      this.validateUploadConfig(
-        (nextConfig).uploadConfig,
-      )
+      this.validateUploadConfig(nextConfig.uploadConfig)
 
       const snapshot = this.buildPersistedSnapshot(nextConfig, userId)
 
@@ -367,7 +365,9 @@ export class SystemConfigService implements OnModuleInit {
     const maskedConfig = this.cloneConfig(config)
 
     for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
-      const configItem = maskedConfig[key] as Record<string, unknown> | undefined
+      const configItem = maskedConfig[key] as
+        | Record<string, unknown>
+        | undefined
       if (!configItem) {
         continue
       }
@@ -431,7 +431,9 @@ export class SystemConfigService implements OnModuleInit {
   /**
    * 判断值是否为可递归处理的普通对象。
    */
-  private isPlainObject<T>(value: T): value is Extract<T, Record<string, unknown>> {
+  private isPlainObject<T>(
+    value: T,
+  ): value is Extract<T, Record<string, unknown>> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
   }
 
@@ -486,12 +488,12 @@ export class SystemConfigService implements OnModuleInit {
         return undefined
       }
       current = current[segment] as
-      | Record<string, unknown>
-      | string
-      | number
-      | boolean
-      | null
-      | undefined
+        | Record<string, unknown>
+        | string
+        | number
+        | boolean
+        | null
+        | undefined
     }
     return current
   }

@@ -1,5 +1,5 @@
 import type { Cache } from 'cache-manager'
-import type { CacheQueryConfig } from './sensitive-word.types'
+import type { CacheQueryConfig } from './sensitive-word.type'
 import { DrizzleService } from '@db/core'
 import { sensitiveWord } from '@db/schema'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'

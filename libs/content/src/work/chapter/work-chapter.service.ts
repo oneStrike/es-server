@@ -206,26 +206,28 @@ export class WorkChapterService {
 
     return {
       ...page,
-      list: page.list.map((chapter) => ({
-        id: chapter.id,
-        isPreview: chapter.isPreview,
-        cover: chapter.cover,
-        title: chapter.title,
-        subtitle: chapter.subtitle,
-        canComment: chapter.canComment,
-        sortOrder: chapter.sortOrder,
-        viewRule: permissionMap.get(chapter.id)?.viewRule ?? chapter.viewRule,
-        canDownload:
-          permissionMap.get(chapter.id)?.canDownload ?? chapter.canDownload,
-        requiredViewLevelId:
-          permissionMap.get(chapter.id)?.requiredViewLevelId ??
-          chapter.requiredViewLevelId,
-        purchasePricing: permissionMap.get(chapter.id)?.purchasePricing ?? null,
-        publishAt: chapter.publishAt,
-        createdAt: chapter.createdAt,
-        updatedAt: chapter.updatedAt,
-        isPublished: chapter.isPublished,
-      })),
+      list: page.list.map((chapter) => {
+        const permission = permissionMap.get(chapter.id)
+
+        return {
+          id: chapter.id,
+          isPreview: chapter.isPreview,
+          cover: chapter.cover,
+          title: chapter.title,
+          subtitle: chapter.subtitle,
+          canComment: chapter.canComment,
+          sortOrder: chapter.sortOrder,
+          viewRule: permission?.viewRule ?? chapter.viewRule,
+          canDownload: permission?.canDownload ?? chapter.canDownload,
+          requiredViewLevelId:
+            permission?.requiredViewLevelId ?? chapter.requiredViewLevelId,
+          purchasePricing: permission?.purchasePricing ?? null,
+          publishAt: chapter.publishAt,
+          createdAt: chapter.createdAt,
+          updatedAt: chapter.updatedAt,
+          isPublished: chapter.isPublished,
+        }
+      }),
     }
   }
 

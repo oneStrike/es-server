@@ -1,5 +1,5 @@
 import type { DynamicModule, Type } from '@nestjs/common'
-import type { UploadModuleOptions } from './upload.types'
+import type { UploadModuleOptions } from './upload.type'
 import { Module } from '@nestjs/common'
 import { LocalUploadProvider } from './local-upload.provider'
 import { QiniuUploadProvider } from './qiniu-upload.provider'

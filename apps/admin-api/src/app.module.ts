@@ -1,3 +1,4 @@
+import { PlatformModule } from '@libs/platform/bootstrap'
 import {
   AuthConfigRegister,
   DbConfigRegister,
@@ -10,7 +11,6 @@ import {
 import { HttpExceptionFilter } from '@libs/platform/filters'
 import { JwtAuthGuard } from '@libs/platform/modules/auth/auth.guard'
 import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
-import { PlatformModule } from '@libs/platform/platform.module'
 import { getEnv } from '@libs/platform/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'

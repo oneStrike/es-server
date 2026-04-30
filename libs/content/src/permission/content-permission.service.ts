@@ -277,45 +277,40 @@ export class ContentPermissionService {
       return true
     }
 
-    if (viewRule === WorkViewPermissionEnum.ALL) {
-      return true
-    }
-
-    if (viewRule === WorkViewPermissionEnum.INHERIT) {
-      return true
-    }
-
-    if (viewRule === WorkViewPermissionEnum.LOGGED_IN) {
-      await this.validateUserExists(userId)
-      return true
-    }
-
-    if (viewRule === WorkViewPermissionEnum.MEMBER) {
-      const user = await this.getUserWithLevel(userId)
-      await this.validateMemberPermission(user, requiredExperience)
-      return true
-    }
-
-    if (viewRule === WorkViewPermissionEnum.PURCHASE) {
-      if (scope !== 'chapter' || !chapterId) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          PERMISSION_ERROR_MESSAGE.WORK_PURCHASE_UNSUPPORTED,
-        )
+    switch (viewRule) {
+      case WorkViewPermissionEnum.ALL:
+      case WorkViewPermissionEnum.INHERIT:
+        return true
+      case WorkViewPermissionEnum.LOGGED_IN:
+        await this.validateUserExists(userId)
+        return true
+      case WorkViewPermissionEnum.MEMBER: {
+        const user = await this.getUserWithLevel(userId)
+        await this.validateMemberPermission(user, requiredExperience)
+        return true
       }
-      await this.validateUserExists(userId)
-      if (!(await this.validateChapterPurchasePermission(userId, chapterId))) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          PERMISSION_ERROR_MESSAGE.CHAPTER_PURCHASE_REQUIRED,
+      case WorkViewPermissionEnum.PURCHASE:
+        if (scope !== 'chapter' || !chapterId) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            PERMISSION_ERROR_MESSAGE.WORK_PURCHASE_UNSUPPORTED,
+          )
+        }
+        await this.validateUserExists(userId)
+        if (
+          !(await this.validateChapterPurchasePermission(userId, chapterId))
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            PERMISSION_ERROR_MESSAGE.CHAPTER_PURCHASE_REQUIRED,
+          )
+        }
+        return true
+      default:
+        throw new InternalServerErrorException(
+          PERMISSION_ERROR_MESSAGE.UNKNOWN_PERMISSION_TYPE,
         )
-      }
-      return true
     }
-
-    throw new InternalServerErrorException(
-      PERMISSION_ERROR_MESSAGE.UNKNOWN_PERMISSION_TYPE,
-    )
   }
 
   // 检查作品访问权限（公开接口），用于业务层调用，校验用户是否有权访问指定作品。
@@ -393,39 +388,31 @@ export class ContentPermissionService {
     userId?: number,
   ): Promise<ResolvedChapterPermission> {
     const payableRate = await this.resolveUserPurchasePayableRate(userId)
+    let viewRule = chapter.viewRule as WorkViewPermissionEnum
+    let requiredViewLevelId = chapter.requiredViewLevelId ?? null
+    let requiredExperience =
+      chapter.requiredViewLevel?.requiredExperience ?? null
+    let purchasePrice = chapter.price
 
     if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
       const workPermission = await this.resolveWorkPermission(chapter.workId)
-      const viewRule = workPermission.viewRule as WorkViewPermissionEnum
-      return {
-        workType: chapter.workType,
-        viewRule,
-        isPreview: chapter.isPreview,
-        canDownload: chapter.canDownload,
-        requiredViewLevelId: workPermission.requiredViewLevelId ?? null,
-        requiredExperience:
-          workPermission.requiredViewLevel?.requiredExperience ?? null,
-        purchasePricing:
-          viewRule === WorkViewPermissionEnum.PURCHASE
-            ? this.buildPurchasePricing(
-                workPermission.chapterPrice,
-                payableRate,
-              )
-            : null,
-      }
+      viewRule = workPermission.viewRule as WorkViewPermissionEnum
+      requiredViewLevelId = workPermission.requiredViewLevelId ?? null
+      requiredExperience =
+        workPermission.requiredViewLevel?.requiredExperience ?? null
+      purchasePrice = workPermission.chapterPrice
     }
 
-    const viewRule = chapter.viewRule as WorkViewPermissionEnum
     return {
       workType: chapter.workType,
       viewRule,
       isPreview: chapter.isPreview,
       canDownload: chapter.canDownload,
-      requiredViewLevelId: chapter.requiredViewLevelId ?? null,
-      requiredExperience: chapter.requiredViewLevel?.requiredExperience ?? null,
+      requiredViewLevelId,
+      requiredExperience,
       purchasePricing:
         viewRule === WorkViewPermissionEnum.PURCHASE
-          ? this.buildPurchasePricing(chapter.price, payableRate)
+          ? this.buildPurchasePricing(purchasePrice, payableRate)
           : null,
     }
   }

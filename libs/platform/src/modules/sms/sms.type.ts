@@ -1,3 +1,6 @@
+/**
+ * 短信模块配置提供器注入 token。
+ */
 export const SMS_CONFIG_PROVIDER = 'SMS_CONFIG_PROVIDER'
 
 /** 稳定领域类型 `SmsAliyunConfig`。仅供内部领域/服务链路复用，避免重复定义。 */

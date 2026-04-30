@@ -1,4 +1,4 @@
-import type { JsonPropertyOptions } from './types'
+import type { JsonPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsJSON, IsOptional } from 'class-validator'

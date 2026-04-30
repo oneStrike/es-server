@@ -24,7 +24,7 @@ export const AliyunConfig = {
   accessKeySecret: process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET,
 }
 
-export type { AliyunConfigInterface } from './aliyun.types'
+export type { AliyunConfigInterface } from './aliyun.type'
 
 /**
  * 注册阿里云配置

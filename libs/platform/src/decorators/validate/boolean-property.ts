@@ -1,4 +1,4 @@
-import type { BooleanPropertyOptions } from './types'
+import type { BooleanPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsBoolean, IsOptional } from 'class-validator'
