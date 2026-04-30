@@ -17,6 +17,7 @@
 - 常规分页默认使用 `drizzle.ext.findPagination(...)`。
 - 分页统一采用 1-based `pageIndex`。
 - 动态查询条件默认使用 `SQL[]` 收集，再通过 `and(...)` / `or(...)` 组合。
+- Drizzle relational query 的对象式 `where` 存在多分支时，必须先用命名的基础条件和作用域条件配合 `if / else if` 线性构造；不要把多套条件对象塞进嵌套三元表达式。
 - 排序字段必须显式声明；禁止依赖数据库返回“自然顺序”。
 
 ## 查询与写路径
@@ -55,6 +56,7 @@
 - 禁止在业务层直接 new Drizzle 或绕开 `DrizzleService` 访问数据库。
 - 禁止隐式事务；事务上下文必须显式透传。
 - 禁止分页不写排序字段。
+- 禁止在 Drizzle 查询参数中用嵌套三元表达式构造 `where`、`orderBy` 或字段投影；多分支条件必须改成命名变量、`if / else if`、`SQL[]` 条件数组或已有扩展能力。
 - 禁止把闭集业务值域留在 `varchar` / `integer[]` 中继续漂移。
 - 禁止用原生 SQL 字符串拼接代替 `sql` 模板。
 - 禁止 schema、DTO、常量 / 枚举、migration 四层脱节。
@@ -68,4 +70,5 @@
 - 允许：闭集状态字段使用 `smallint().default(1).notNull()` 并补 `check(...)`
 - 禁止：在 service 内自行创建新的数据库连接或 Drizzle 实例。
 - 禁止：`db.execute('UPDATE ... ' + userInput)`
+- 禁止：`where: flag ? { ...base, a } : other ? { ...base, b } : { ...base }`
 - 禁止：schema 已改为数字枚举，但 DTO / 常量仍保留旧字符串值域。

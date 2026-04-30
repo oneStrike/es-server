@@ -62,9 +62,9 @@ export class ForumSectionService {
     client: Db,
     groupIds: Array<number | null | undefined>,
   ) {
-    const uniqueGroupIds = [...new Set(groupIds.filter(Boolean) as number[])].sort(
-      (left, right) => left - right,
-    )
+    const uniqueGroupIds = [
+      ...new Set(groupIds.filter(Boolean) as number[]),
+    ].sort((left, right) => left - right)
 
     for (const groupId of uniqueGroupIds) {
       await client.execute(
@@ -99,7 +99,9 @@ export class ForumSectionService {
    * 查询公开可见板块原始行。
    * 支持按分组或指定 ID 集合裁剪，但始终复用同一套公开可见规则。
    */
-  private async getVisibleSectionRows(options?: ForumVisibleSectionQueryOptions) {
+  private async getVisibleSectionRows(
+    options?: ForumVisibleSectionQueryOptions,
+  ) {
     const uniqueSectionIds = options?.sectionIds
       ? [...new Set(options.sectionIds)]
       : undefined
@@ -108,41 +110,25 @@ export class ForumSectionService {
       return []
     }
 
+    const baseWhere = {
+      isEnabled: true,
+      deletedAt: { isNull: true },
+    } as const
+    let scopeWhere = {}
+
+    if (uniqueSectionIds !== undefined) {
+      scopeWhere = { id: { in: uniqueSectionIds } }
+    } else if (options?.isUngrouped) {
+      scopeWhere = { groupId: { isNull: true } }
+    } else if (options?.groupId !== undefined) {
+      scopeWhere = { groupId: options.groupId }
+    }
+
     const sections = await this.db.query.forumSection.findMany({
-      where:
-        uniqueSectionIds !== undefined
-          ? {
-              id: { in: uniqueSectionIds },
-              isEnabled: true,
-              deletedAt: {
-                isNull: true,
-              },
-            }
-          : options?.groupId === undefined
-            && !options?.isUngrouped
-            ? {
-                isEnabled: true,
-                deletedAt: {
-                  isNull: true,
-                },
-              }
-            : options?.isUngrouped
-              ? {
-                  isEnabled: true,
-                  deletedAt: {
-                    isNull: true,
-                  },
-                  groupId: {
-                    isNull: true,
-                  },
-                }
-              : {
-                  isEnabled: true,
-                  deletedAt: {
-                    isNull: true,
-                  },
-                  groupId: options.groupId,
-                },
+      where: {
+        ...baseWhere,
+        ...scopeWhere,
+      },
       with: {
         group: {
           columns: {
@@ -159,8 +145,8 @@ export class ForumSectionService {
     })
 
     return sections
-      .filter(
-        (section) => this.forumPermissionService.isSectionPubliclyAvailable(section),
+      .filter((section) =>
+        this.forumPermissionService.isSectionPubliclyAvailable(section),
       )
       .sort((left, right) => {
         const leftGroupSortOrder =
@@ -319,23 +305,14 @@ export class ForumSectionService {
     }
 
     const { group, work, ...data } = section
-    let publicGroup:
-      | {
-          id: number
-          name: string
-          description: string | null
-          sortOrder: number
+    const publicGroup = group
+      ? {
+          id: group.id,
+          name: group.name,
+          description: group.description,
+          sortOrder: group.sortOrder,
         }
-        | undefined
-
-    if (group) {
-      publicGroup = {
-        id: group.id,
-        name: group.name,
-        description: group.description,
-        sortOrder: group.sortOrder,
-      }
-    }
+      : undefined
 
     const [followStatus, accessStateMap] = await Promise.all([
       userId
@@ -470,9 +447,7 @@ export class ForumSectionService {
     if (isUngrouped) {
       conditions.push(isNull(this.forumSection.groupId))
     } else if (groupId !== undefined) {
-      conditions.push(
-        eq(this.forumSection.groupId, groupId),
-      )
+      conditions.push(eq(this.forumSection.groupId, groupId))
     }
     if (name) {
       conditions.push(buildILikeCondition(this.forumSection.name, name)!)

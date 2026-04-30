@@ -1,7 +1,31 @@
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { ForumSectionService } from './forum-section.service'
 
-describe('ForumSectionService', () => {
+describe('forum section service', () => {
+  const createVisibleSectionService = () => {
+    const findMany = jest.fn().mockResolvedValue([])
+    const service = new ForumSectionService(
+      {
+        db: {
+          query: {
+            forumSection: {
+              findMany,
+            },
+          },
+        },
+      } as never,
+      { isSectionPubliclyAvailable: jest.fn().mockReturnValue(true) } as never,
+      {} as never,
+      {} as never,
+      { getAdminSectionTree: jest.fn() } as never,
+    )
+
+    return {
+      findMany,
+      service,
+    }
+  }
+
   it('delegates admin tree assembly to the section-group service', async () => {
     const tree = [
       {
@@ -26,7 +50,81 @@ describe('ForumSectionService', () => {
     )
 
     await expect(service.getSectionTree()).resolves.toBe(tree)
-    expect(forumSectionGroupService.getAdminSectionTree).toHaveBeenCalledTimes(1)
+    expect(forumSectionGroupService.getAdminSectionTree).toHaveBeenCalledTimes(
+      1,
+    )
+  })
+
+  it('builds visible section query scopes from public list filters', async () => {
+    const { findMany, service } = createVisibleSectionService()
+
+    await service.getVisibleSectionList()
+    expect(findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: {
+          isEnabled: true,
+          deletedAt: { isNull: true },
+        },
+      }),
+    )
+
+    await service.getVisibleSectionList({ isUngrouped: true })
+    expect(findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: {
+          isEnabled: true,
+          deletedAt: { isNull: true },
+          groupId: { isNull: true },
+        },
+      }),
+    )
+
+    await service.getVisibleSectionList({ groupId: 7 })
+    expect(findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: {
+          isEnabled: true,
+          deletedAt: { isNull: true },
+          groupId: 7,
+        },
+      }),
+    )
+
+    await service.getVisibleSectionList({ groupId: 7, isUngrouped: true })
+    expect(findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: {
+          isEnabled: true,
+          deletedAt: { isNull: true },
+          groupId: { isNull: true },
+        },
+      }),
+    )
+  })
+
+  it('uses unique section ids as the visible section batch scope', async () => {
+    const { findMany, service } = createVisibleSectionService()
+
+    await service.batchGetVisibleSectionListItems([3, 3, 4])
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          isEnabled: true,
+          deletedAt: { isNull: true },
+          id: { in: [3, 4] },
+        },
+      }),
+    )
+  })
+
+  it('skips visible section batch queries for empty id lists', async () => {
+    const { findMany, service } = createVisibleSectionService()
+
+    await expect(service.batchGetVisibleSectionListItems([])).resolves.toEqual(
+      [],
+    )
+    expect(findMany).not.toHaveBeenCalled()
   })
 
   it('locks the target group before creating a grouped section', async () => {
@@ -93,10 +191,9 @@ describe('ForumSectionService', () => {
 
     expect(lockSpy).toHaveBeenCalledWith(tx, [3])
     expect(insertValues).toHaveBeenCalled()
-    expect(drizzle.withTransaction).toHaveBeenCalledWith(
-      expect.any(Function),
-      { duplicate: '板块名称已存在' },
-    )
+    expect(drizzle.withTransaction).toHaveBeenCalledWith(expect.any(Function), {
+      duplicate: '板块名称已存在',
+    })
   })
 
   it('locks both current and target groups before moving a section to another group', async () => {
@@ -166,10 +263,9 @@ describe('ForumSectionService', () => {
 
     expect(lockSpy).toHaveBeenCalledWith(tx, [5, 3])
     expect(updateWhere).toHaveBeenCalled()
-    expect(drizzle.withTransaction).toHaveBeenCalledWith(
-      expect.any(Function),
-      { duplicate: '板块名称已存在' },
-    )
+    expect(drizzle.withTransaction).toHaveBeenCalledWith(expect.any(Function), {
+      duplicate: '板块名称已存在',
+    })
   })
 
   it('blocks deleting a section when live topics still exist in the fact table', async () => {

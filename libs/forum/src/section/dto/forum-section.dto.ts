@@ -1,5 +1,12 @@
 import { ForumSectionGroupSummaryDto } from '@libs/forum/section-group/dto/forum-section-group-summary.dto'
-import { BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import {
   BaseDto,
@@ -198,7 +205,11 @@ export class ForumSectionGroupQueryFilterDto {
 class ForumSectionQueryPageBaseDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumSectionDto, ['name', 'isEnabled', 'topicReviewPolicy'] as const),
+    PickType(BaseForumSectionDto, [
+      'name',
+      'isEnabled',
+      'topicReviewPolicy',
+    ] as const),
   ),
 ) {}
 
