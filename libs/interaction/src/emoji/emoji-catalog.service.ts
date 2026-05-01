@@ -1,9 +1,12 @@
 import type { Db } from '@db/core'
+import type { SQL } from 'drizzle-orm'
 import type {
   EmojiAssetSnapshot,
   EmojiAssetSnapshotRow,
   EmojiCatalogPack,
+  EmojiRecentAllSceneListInput,
   EmojiRecentItem,
+  EmojiRecentListInput,
   EmojiRecentUsageItem,
   EmojiShortcodeAsset,
   EmojiUnicodeAsset,
@@ -24,11 +27,7 @@ import {
   or,
   sql,
 } from 'drizzle-orm'
-import {
-  QueryEmojiCatalogDto,
-  QueryEmojiRecentDto,
-  QueryEmojiSearchDto,
-} from './dto/emoji.dto'
+import { QueryEmojiCatalogDto, QueryEmojiSearchDto } from './dto/emoji.dto'
 import {
   EMOJI_RECENT_LIMIT_DEFAULT,
   EMOJI_RECENT_LIMIT_MAX,
@@ -71,24 +70,20 @@ export class EmojiCatalogService {
     return sql`${this.emojiPack.sceneType} @> ARRAY[${scene}]::smallint[]`
   }
 
-  /**
-   * 构建表情包业务可用条件。
-   * - 条件包括：已启用、未删除、当前场景可见。
-   * - 不包含选择器可见性，供解析和兼容路径复用。
-   */
-  private buildAvailablePackCondition(scene: EmojiSceneEnum) {
-    return and(
+  // 构建表情包业务可用条件；scene 存在时再限定当前场景可见。
+  private buildAvailablePackCondition(scene?: EmojiSceneEnum) {
+    const conditions: SQL[] = [
       eq(this.emojiPack.isEnabled, true),
       isNull(this.emojiPack.deletedAt),
-      this.buildSceneContainsCondition(scene),
-    )!
+    ]
+    if (scene !== undefined) {
+      conditions.push(this.buildSceneContainsCondition(scene))
+    }
+    return and(...conditions)!
   }
 
-  /**
-   * 构建选择器可见的表情包条件。
-   * - 在业务可用条件基础上追加 visibleInPicker，供目录/搜索/recent 使用。
-   */
-  private buildPickerVisiblePackCondition(scene: EmojiSceneEnum) {
+  // 构建选择器可见的表情包条件，供目录、搜索和 recent 使用。
+  private buildPickerVisiblePackCondition(scene?: EmojiSceneEnum) {
     return and(
       this.buildAvailablePackCondition(scene),
       eq(this.emojiPack.visibleInPicker, true),
@@ -151,16 +146,8 @@ export class EmojiCatalogService {
     }
   }
 
-  /**
-   * 获取指定场景下的表情目录。
-   * - 只返回当前场景可见且启用的表情包及其资源。
-   * - 结果按表情包排序值、资源排序值组织。
-   */
-  async listCatalog(
-    input: QueryEmojiCatalogDto,
-  ): Promise<EmojiCatalogPack[]> {
-    const scene = input.scene ?? EmojiSceneEnum.CHAT
-
+  // 获取指定场景或全场景下的表情目录。
+  async listCatalog(input: QueryEmojiCatalogDto): Promise<EmojiCatalogPack[]> {
     const packs = await this.db
       .select({
         id: this.emojiPack.id,
@@ -170,7 +157,7 @@ export class EmojiCatalogService {
         sortOrder: this.emojiPack.sortOrder,
       })
       .from(this.emojiPack)
-      .where(this.buildPickerVisiblePackCondition(scene))
+      .where(this.buildPickerVisiblePackCondition(input.scene))
       .orderBy(this.emojiPack.sortOrder, this.emojiPack.id)
 
     if (packs.length === 0) {
@@ -235,14 +222,8 @@ export class EmojiCatalogService {
     }))
   }
 
-  /**
-   * 按关键字搜索表情资源。
-   * - 搜索范围包括 shortcode、category、unicodeSequence 和 keywords。
-   * - 只返回当前场景可见且启用的资源。
-   * - 结果数量受 EMOJI_SEARCH_LIMIT_MAX 限制。
-   */
+  // 按关键字搜索指定场景或全场景下的表情资源。
   async search(input: QueryEmojiSearchDto): Promise<EmojiAssetSnapshot[]> {
-    const scene = input.scene ?? EmojiSceneEnum.CHAT
     const keyword = input.q.trim()
     if (!keyword) {
       return []
@@ -282,7 +263,7 @@ export class EmojiCatalogService {
       .where(
         and(
           this.buildActiveAssetCondition(),
-          this.buildPickerVisiblePackCondition(scene),
+          this.buildPickerVisiblePackCondition(input.scene),
           searchCondition,
         ),
       )
@@ -296,17 +277,13 @@ export class EmojiCatalogService {
     return rows.map((row) => this.toAssetSnapshot(row))
   }
 
-  /**
-   * 获取用户最近使用的表情列表。
-   * - 按最后使用时间倒序、使用次数倒序排列。
-   * - 当时间和次数相同时，按 emojiAssetId 升序稳定决胜。
-   * - 只返回当前场景可见且启用的资源。
-   * - 结果数量受 EMOJI_RECENT_LIMIT_MAX 限制。
-   */
-  async listRecent(
-    input: QueryEmojiRecentDto & { userId: number },
-  ): Promise<EmojiRecentItem[]> {
-    const scene = input.scene ?? EmojiSceneEnum.CHAT
+  // 获取用户指定场景或全场景聚合后的最近使用表情列表。
+  async listRecent(input: EmojiRecentListInput): Promise<EmojiRecentItem[]> {
+    if (input.scene === undefined) {
+      return this.listAllSceneRecent(input)
+    }
+
+    const { scene } = input
     const { userId } = input
     const limit = this.normalizeRecentLimit(input.limit)
 
@@ -349,6 +326,75 @@ export class EmojiCatalogService {
         desc(this.emojiRecentUsage.useCount),
         asc(this.emojiRecentUsage.emojiAssetId),
       )
+      .limit(limit)
+
+    return rows.map((row) => ({
+      ...this.toAssetSnapshot(row),
+      lastUsedAt: row.lastUsedAt,
+      useCount: row.useCount,
+    }))
+  }
+
+  // 跨场景聚合用户最近使用表情，避免响应里出现无法区分 scene 的重复资源。
+  private async listAllSceneRecent(
+    input: EmojiRecentAllSceneListInput,
+  ): Promise<EmojiRecentItem[]> {
+    const { userId } = input
+    const limit = this.normalizeRecentLimit(input.limit)
+    const lastUsedAtSql = sql<Date>`max(${this.emojiRecentUsage.lastUsedAt})`
+    const useCountSql = sql<number>`sum(${this.emojiRecentUsage.useCount})::int`
+
+    const rows = await this.db
+      .select({
+        id: this.emojiAsset.id,
+        kind: this.emojiAsset.kind,
+        shortcode: this.emojiAsset.shortcode,
+        unicodeSequence: this.emojiAsset.unicodeSequence,
+        imageUrl: this.emojiAsset.imageUrl,
+        staticUrl: this.emojiAsset.staticUrl,
+        isAnimated: this.emojiAsset.isAnimated,
+        category: this.emojiAsset.category,
+        keywords: this.emojiAsset.keywords,
+        packId: this.emojiPack.id,
+        packCode: this.emojiPack.code,
+        packName: this.emojiPack.name,
+        packIconUrl: this.emojiPack.iconUrl,
+        packSortOrder: this.emojiPack.sortOrder,
+        sortOrder: this.emojiAsset.sortOrder,
+        lastUsedAt: lastUsedAtSql,
+        useCount: useCountSql,
+      })
+      .from(this.emojiRecentUsage)
+      .innerJoin(
+        this.emojiAsset,
+        eq(this.emojiRecentUsage.emojiAssetId, this.emojiAsset.id),
+      )
+      .innerJoin(this.emojiPack, eq(this.emojiAsset.packId, this.emojiPack.id))
+      .where(
+        and(
+          eq(this.emojiRecentUsage.userId, userId),
+          this.buildActiveAssetCondition(),
+          this.buildPickerVisiblePackCondition(),
+        ),
+      )
+      .groupBy(
+        this.emojiAsset.id,
+        this.emojiAsset.kind,
+        this.emojiAsset.shortcode,
+        this.emojiAsset.unicodeSequence,
+        this.emojiAsset.imageUrl,
+        this.emojiAsset.staticUrl,
+        this.emojiAsset.isAnimated,
+        this.emojiAsset.category,
+        this.emojiAsset.keywords,
+        this.emojiPack.id,
+        this.emojiPack.code,
+        this.emojiPack.name,
+        this.emojiPack.iconUrl,
+        this.emojiPack.sortOrder,
+        this.emojiAsset.sortOrder,
+      )
+      .orderBy(desc(lastUsedAtSql), desc(useCountSql), asc(this.emojiAsset.id))
       .limit(limit)
 
     return rows.map((row) => ({
@@ -418,7 +464,9 @@ export class EmojiCatalogService {
       return []
     }
 
-    const targetAssetIds = [...new Set(sanitizedItems.map((item) => item.emojiAssetId))]
+    const targetAssetIds = [
+      ...new Set(sanitizedItems.map((item) => item.emojiAssetId)),
+    ]
     const targets = await tx
       .select({ id: this.emojiAsset.id })
       .from(this.emojiAsset)
@@ -501,7 +549,9 @@ export class EmojiCatalogService {
     scene: EmojiSceneEnum,
     unicodeSequences: string[],
   ): Promise<Map<string, EmojiUnicodeAsset>> {
-    const uniqueUnicodeSequences = [...new Set(unicodeSequences.filter(Boolean))]
+    const uniqueUnicodeSequences = [
+      ...new Set(unicodeSequences.filter(Boolean)),
+    ]
     if (uniqueUnicodeSequences.length === 0) {
       return new Map()
     }

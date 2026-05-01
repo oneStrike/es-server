@@ -705,6 +705,7 @@ COMMENT ON COLUMN "public"."sys_config"."id" IS E'主键id';
 COMMENT ON COLUMN "public"."sys_config"."updated_by_id" IS E'最后修改人ID';
 COMMENT ON COLUMN "public"."sys_config"."aliyun_config" IS E'阿里云配置（JSON格式，包含 accessKeyId/accessKeySecret）';
 COMMENT ON COLUMN "public"."sys_config"."site_config" IS E'站点基础配置（JSON格式，名称/描述/关键词/Logo等）';
+COMMENT ON COLUMN "public"."sys_config"."operation_config" IS E'运营配置（JSON格式，包含话题创建模式等运营侧配置）';
 COMMENT ON COLUMN "public"."sys_config"."maintenance_config" IS E'维护模式配置（JSON格式，开关与提示文案）';
 COMMENT ON COLUMN "public"."sys_config"."content_review_policy" IS E'内容审核策略（JSON格式，敏感词等级处理策略）';
 COMMENT ON COLUMN "public"."sys_config"."upload_config" IS E'上传配置（JSON格式，包含 provider/七牛/Superbed 配置）';

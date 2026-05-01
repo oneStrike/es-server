@@ -97,10 +97,17 @@ export class ConfigReader implements OnModuleInit {
   }
 
   /**
+   * 获取运营配置
+   */
+  getOperationConfig() {
+    return this.config.operationConfig
+  }
+
+  /**
    * 获取 forum 话题（hashtag）配置
    */
   getForumHashtagConfig() {
-    return this.config.forumHashtagConfig
+    return this.config.operationConfig.forumHashtagConfig
   }
 
   /**

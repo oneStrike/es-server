@@ -235,6 +235,19 @@ export class ForumHashtagConfigDto {
   creationMode?: number
 }
 
+/**
+ * 运营配置
+ */
+export class OperationConfigDto {
+  @NestedProperty({
+    description: 'forum 话题配置',
+    type: ForumHashtagConfigDto,
+    required: false,
+    nullable: false,
+  })
+  forumHashtagConfig?: ForumHashtagConfigDto | null
+}
+
 // ============================================================================
 // 上传配置
 // ============================================================================
@@ -423,6 +436,19 @@ export class BaseSystemConfigDto extends BaseDto {
   siteConfig?: SiteConfigDto | null
 
   @NestedProperty({
+    description: '运营配置',
+    type: OperationConfigDto,
+    example: {
+      forumHashtagConfig: {
+        creationMode: 2,
+      },
+    },
+    required: false,
+    nullable: false,
+  })
+  operationConfig?: OperationConfigDto | null
+
+  @NestedProperty({
     description: '维护配置',
     type: MaintenanceConfigDto,
     example: {
@@ -456,17 +482,6 @@ export class BaseSystemConfigDto extends BaseDto {
     nullable: false,
   })
   contentReviewPolicy?: ContentReviewPolicyDto | null
-
-  @NestedProperty({
-    description: 'forum 话题配置',
-    type: ForumHashtagConfigDto,
-    example: {
-      creationMode: 2,
-    },
-    required: false,
-    nullable: false,
-  })
-  forumHashtagConfig?: ForumHashtagConfigDto | null
 
   @NestedProperty({
     description: '上传配置',
@@ -504,9 +519,9 @@ export class UpdateSystemConfigDto extends IntersectionType(
     PickType(BaseSystemConfigDto, [
       'aliyunConfig',
       'siteConfig',
+      'operationConfig',
       'maintenanceConfig',
       'contentReviewPolicy',
-      'forumHashtagConfig',
       'uploadConfig',
     ] as const),
   ),

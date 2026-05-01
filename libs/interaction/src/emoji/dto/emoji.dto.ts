@@ -10,11 +10,7 @@ import {
 
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   EMOJI_SCENE_VALUES,
   EmojiAssetKindEnum,
@@ -351,11 +347,10 @@ export class QueryEmojiAssetDto extends IntersectionType(
 
 export class QueryEmojiCatalogDto {
   @EnumProperty({
-    description: '场景（1=聊天；2=评论；3=论坛主题）',
+    description: '场景（1=聊天；2=评论；3=论坛主题；不传返回全部场景）',
     enum: EmojiSceneEnum,
     example: EmojiSceneEnum.CHAT,
     required: false,
-    default: EmojiSceneEnum.CHAT,
   })
   scene?: EmojiSceneEnum
 }

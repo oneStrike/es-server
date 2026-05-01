@@ -28,13 +28,22 @@ export interface EmojiSceneQueryParams {
 
 /**
  * 最近使用列表查询输入。
- * - 关联用户和场景返回最近使用记录
+ * - scene 为空时按全场景聚合最近使用记录。
  */
-/** 稳定领域类型 `EmojiRecentListInput`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface EmojiRecentListInput extends EmojiSceneQueryParams {
+export interface EmojiRecentListInput {
   userId: EmojiRecentUsageSelect['userId']
+  scene?: EmojiSceneEnum
   limit?: number
 }
+
+/**
+ * 全场景最近使用查询输入。
+ * - 仅供 catalog service 聚合 recent 记录时复用。
+ */
+export type EmojiRecentAllSceneListInput = Pick<
+  EmojiRecentListInput,
+  'userId' | 'limit'
+>
 
 /**
  * 最近使用聚合项。

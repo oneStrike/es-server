@@ -7,7 +7,6 @@ import {
   QueryEmojiSearchDto,
 } from '@libs/interaction/emoji/dto/emoji.dto'
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
-import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 
 import { Controller, Get, Query } from '@nestjs/common'
@@ -18,10 +17,6 @@ import { ApiTags } from '@nestjs/swagger'
 export class EmojiController {
   constructor(private readonly emojiCatalogService: EmojiCatalogService) {}
 
-  private resolveScene(scene?: EmojiSceneEnum) {
-    return scene ?? EmojiSceneEnum.CHAT
-  }
-
   @Get('catalog/list')
   @ApiDoc({
     summary: '获取表情目录',
@@ -31,7 +26,7 @@ export class EmojiController {
   @Public()
   async getCatalog(@Query() query: QueryEmojiCatalogDto) {
     return this.emojiCatalogService.listCatalog({
-      scene: this.resolveScene(query.scene),
+      scene: query.scene,
     })
   }
 
@@ -44,7 +39,7 @@ export class EmojiController {
   @Public()
   async search(@Query() query: QueryEmojiSearchDto) {
     return this.emojiCatalogService.search({
-      scene: this.resolveScene(query.scene),
+      scene: query.scene,
       q: query.q,
       limit: query.limit,
     })
@@ -62,7 +57,7 @@ export class EmojiController {
   ) {
     return this.emojiCatalogService.listRecent({
       userId,
-      scene: this.resolveScene(query.scene),
+      scene: query.scene,
       limit: query.limit,
     })
   }

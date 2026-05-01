@@ -405,6 +405,7 @@ export class SystemConfigService implements OnModuleInit {
       siteConfig: config.siteConfig,
       maintenanceConfig: config.maintenanceConfig,
       contentReviewPolicy: config.contentReviewPolicy,
+      operationConfig: config.operationConfig,
       uploadConfig: config.uploadConfig,
       updatedById: userId,
     }

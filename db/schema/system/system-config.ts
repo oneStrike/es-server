@@ -33,6 +33,10 @@ export const systemConfig = snakeCase.table(
      */
     siteConfig: jsonb(),
     /**
+     * 运营配置（JSON格式，包含话题创建模式等运营侧配置）
+     */
+    operationConfig: jsonb(),
+    /**
      * 维护模式配置（JSON格式，开关与提示文案）
      */
     maintenanceConfig: jsonb(),
