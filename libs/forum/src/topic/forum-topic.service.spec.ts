@@ -1,4 +1,5 @@
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import { BadRequestException } from '@nestjs/common'
 import { ForumTopicService } from './forum-topic.service'
 
@@ -390,7 +391,7 @@ describe('forumTopicService helpers', () => {
           plainText: '测试正文',
           segments: [{ type: 'text', text: '测试正文' }],
         },
-        bodyTokens: [],
+        bodyTokens: [] as EmojiParseToken[],
         mentionFacts: [],
         emojiRecentUsageItems: [],
         hashtagFacts: [],
@@ -434,7 +435,7 @@ describe('forumTopicService helpers', () => {
       compile: jest.fn(async (body: unknown) => ({
         body,
         plainText: '欢迎 @测试用户 使用 :smile:',
-        bodyTokens: [],
+        bodyTokens: [] as EmojiParseToken[],
         mentionFacts: [],
         emojiRecentUsageItems: [],
       })),
@@ -816,30 +817,70 @@ describe('forumTopicService helpers', () => {
     )
   })
 
-  it('derives content preview from the materialized canonical body', async () => {
-    const { forumHashtagBodyService, service } =
+  it('derives content preview from compiled body tokens', async () => {
+    const { bodyCompilerService, forumHashtagBodyService, service } =
       createMaterializeTopicBodyHarness()
+    const materializedBody = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '欢迎 ' },
+            { type: 'mentionUser', userId: 9, nickname: '测试用户' },
+            { type: 'text', text: ' 使用 ' },
+            { type: 'emojiCustom', shortcode: 'smile' },
+            { type: 'text', text: ' 关注 ' },
+            {
+              type: 'forumHashtag',
+              hashtagId: 77,
+              slug: 'typescript',
+              displayName: 'TypeScript',
+            },
+            { type: 'text', text: ' ' },
+            { type: 'emojiUnicode', unicodeSequence: '😀' },
+          ],
+        },
+      ],
+    } as const
     forumHashtagBodyService.materializeBodyInTx.mockResolvedValueOnce({
-      body: {
-        type: 'doc',
-        content: [
-          {
-            type: 'paragraph',
-            content: [
-              { type: 'text', text: '欢迎 ' },
-              { type: 'mentionUser', userId: 9, nickname: '测试用户' },
-              { type: 'text', text: ' 关注 ' },
-              {
-                type: 'forumHashtag',
-                hashtagId: 77,
-                slug: 'typescript',
-                displayName: 'TypeScript',
-              },
-            ],
-          },
-        ],
-      },
+      body: materializedBody,
       hashtagFacts: [],
+    })
+    bodyCompilerService.compile.mockResolvedValueOnce({
+      body: materializedBody,
+      plainText: '欢迎 @测试用户 使用 :smile: 关注 #TypeScript 😀',
+      bodyTokens: [
+        { type: 'text', text: '欢迎 ' },
+        {
+          type: 'mentionUser',
+          text: '@测试用户',
+          userId: 9,
+          nickname: '测试用户',
+        },
+        { type: 'text', text: ' 使用 ' },
+        {
+          type: 'emojiCustom',
+          emojiAssetId: 1001,
+          shortcode: 'smile',
+          packCode: 'default',
+          imageUrl: 'https://cdn.example.com/emoji/smile.gif',
+          staticUrl: 'https://cdn.example.com/emoji/smile.png',
+          isAnimated: true,
+        },
+        { type: 'text', text: ' 关注 ' },
+        {
+          type: 'forumHashtag',
+          text: '#TypeScript',
+          hashtagId: 77,
+          slug: 'typescript',
+          displayName: 'TypeScript',
+        },
+        { type: 'text', text: ' ' },
+        { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1002 },
+      ],
+      mentionFacts: [],
+      emojiRecentUsageItems: [],
     })
 
     const result = await (
@@ -853,10 +894,18 @@ describe('forumTopicService helpers', () => {
     )
 
     expect(result.contentPreview).toEqual({
-      plainText: '欢迎 @测试用户 关注 #TypeScript',
+      plainText: '欢迎 @测试用户 使用 :smile: 关注 #TypeScript 😀',
       segments: [
         { type: 'text', text: '欢迎 ' },
         { type: 'mention', text: '@测试用户', userId: 9, nickname: '测试用户' },
+        { type: 'text', text: ' 使用 ' },
+        {
+          type: 'emoji',
+          text: ':smile:',
+          kind: 2,
+          shortcode: 'smile',
+          emojiAssetId: 1001,
+        },
         { type: 'text', text: ' 关注 ' },
         {
           type: 'hashtag',
@@ -864,6 +913,14 @@ describe('forumTopicService helpers', () => {
           hashtagId: 77,
           slug: 'typescript',
           displayName: 'TypeScript',
+        },
+        { type: 'text', text: ' ' },
+        {
+          type: 'emoji',
+          text: '😀',
+          kind: 1,
+          unicodeSequence: '😀',
+          emojiAssetId: 1002,
         },
       ],
     })

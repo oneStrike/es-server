@@ -189,12 +189,12 @@ export type EmojiParseToken =
     }
     | {
       type: 'emojiCustom'
-      emojiAssetId: EmojiAssetSelect['id']
       shortcode: string
-      packCode: string
-      imageUrl: string
+      emojiAssetId?: EmojiAssetSelect['id']
+      packCode?: string
+      imageUrl?: string
       staticUrl?: string
-      isAnimated: boolean
+      isAnimated?: boolean
       ariaLabel?: string
     }
     | {

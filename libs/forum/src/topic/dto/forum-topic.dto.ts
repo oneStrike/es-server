@@ -7,6 +7,7 @@ import {
   CommentOnlyAuthorDto,
   CommentSortDto,
 } from '@libs/interaction/comment/dto/comment.dto'
+import { EmojiAssetKindEnum } from '@libs/interaction/emoji/emoji.constant'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -31,11 +32,12 @@ import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
  * 论坛主题列表预览片段 DTO。
- * mention 与 hashtag 片段由前端按目标字段生成跳转。
+ * mention、hashtag 与 emoji 片段由前端按目标字段生成跳转或渲染。
  */
 export class ForumTopicContentPreviewSegmentDto {
   @StringProperty({
-    description: '片段类型：text=普通文本；mention=@用户；hashtag=#话题',
+    description:
+      '片段类型：text=普通文本；mention=@用户；hashtag=#话题；emoji=表情',
     example: 'mention',
     required: true,
     validation: false,
@@ -89,6 +91,40 @@ export class ForumTopicContentPreviewSegmentDto {
     validation: false,
   })
   displayName?: string
+
+  @EnumProperty({
+    description:
+      '表情资源类型（1=Unicode 表情；2=自定义表情）；type=emoji 时返回',
+    example: EmojiAssetKindEnum.CUSTOM,
+    required: false,
+    enum: EmojiAssetKindEnum,
+    validation: false,
+  })
+  kind?: EmojiAssetKindEnum
+
+  @StringProperty({
+    description: 'Unicode 表情序列；type=emoji 且 kind=1 时返回',
+    example: '😀',
+    required: false,
+    validation: false,
+  })
+  unicodeSequence?: string
+
+  @StringProperty({
+    description: '自定义表情短码；type=emoji 且 kind=2 时返回',
+    example: 'smile',
+    required: false,
+    validation: false,
+  })
+  shortcode?: string
+
+  @NumberProperty({
+    description: '表情资源 ID；type=emoji 且命中平台资源时返回',
+    example: 1001,
+    required: false,
+    validation: false,
+  })
+  emojiAssetId?: number
 }
 
 /**
@@ -143,7 +179,7 @@ export class BaseForumTopicDto extends BaseDto {
   content!: string
 
   @NestedProperty({
-    description: '主题列表预览；包含普通文本、@用户、#话题片段',
+    description: '主题列表预览；包含普通文本、@用户、#话题、表情片段',
     required: true,
     type: ForumTopicContentPreviewDto,
     validation: false,

@@ -4,6 +4,27 @@ import { DECORATORS } from '@nestjs/swagger/dist/constants'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseCommentDto } from './comment.dto'
 
+function getSwaggerPropertyMetadata(dto: object, propertyKey: string) {
+  return Reflect.getMetadata(
+    DECORATORS.API_MODEL_PROPERTIES,
+    dto,
+    propertyKey,
+  ) as {
+    description?: string
+    nullable?: boolean
+    required?: boolean
+  }
+}
+
+function loadCommentDtoForSwagger() {
+  const originalNodeEnv = process.env.NODE_ENV
+  process.env.NODE_ENV = 'development'
+  jest.resetModules()
+  const dto = require('./comment.dto')
+  process.env.NODE_ENV = originalNodeEnv
+  return dto
+}
+
 describe('comment.dto html contract', () => {
   it('transforms sensitiveWordHits into structured hit objects', () => {
     const dto = plainToInstance(BaseCommentDto, {
@@ -90,5 +111,54 @@ describe('comment.dto html contract', () => {
     process.env.NODE_ENV = originalNodeEnv
 
     expect(metadata).toBeUndefined()
+  })
+
+  it('documents my comment target summary for list display', () => {
+    const { MyCommentPageItemDto } = loadCommentDtoForSwagger()
+
+    const metadata = getSwaggerPropertyMetadata(
+      MyCommentPageItemDto.prototype,
+      'targetSummary',
+    )
+
+    expect(metadata?.description).toBe('评论目标展示摘要')
+    expect(metadata?.nullable).toBe(true)
+    expect(metadata?.required).toBe(false)
+  })
+
+  it('documents admin comment list target and reply summaries', () => {
+    const { AdminCommentPageItemDto } = loadCommentDtoForSwagger()
+
+    const targetMetadata = getSwaggerPropertyMetadata(
+      AdminCommentPageItemDto.prototype,
+      'targetSummary',
+    )
+    const replyMetadata = getSwaggerPropertyMetadata(
+      AdminCommentPageItemDto.prototype,
+      'replyToSummary',
+    )
+
+    expect(targetMetadata?.description).toBe('评论目标展示摘要')
+    expect(targetMetadata?.nullable).toBe(true)
+    expect(replyMetadata?.description).toBe('被回复评论展示摘要')
+    expect(replyMetadata?.nullable).toBe(true)
+  })
+
+  it('documents admin comment detail target and auditor summaries', () => {
+    const { AdminCommentDetailDto } = loadCommentDtoForSwagger()
+
+    const targetMetadata = getSwaggerPropertyMetadata(
+      AdminCommentDetailDto.prototype,
+      'targetSummary',
+    )
+    const auditorMetadata = getSwaggerPropertyMetadata(
+      AdminCommentDetailDto.prototype,
+      'auditorSummary',
+    )
+
+    expect(targetMetadata?.description).toBe('评论目标展示摘要')
+    expect(targetMetadata?.nullable).toBe(true)
+    expect(auditorMetadata?.description).toBe('审核人展示摘要')
+    expect(auditorMetadata?.nullable).toBe(true)
   })
 })

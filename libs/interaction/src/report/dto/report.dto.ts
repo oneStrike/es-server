@@ -1,12 +1,22 @@
+import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import {
-  CommentLevelEnum,
-  SceneTypeEnum,
-} from '@libs/platform/constant'
-import { DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  InteractionActorSummaryDto,
+  InteractionAppUserSummaryDto,
+  InteractionReportCommentSummaryDto,
+  InteractionReportTargetSummaryDto,
+  InteractionSceneSummaryDto,
+} from '../../summary/dto/interaction-summary.dto'
 import {
   ReportReasonEnum,
   ReportStatusEnum,
@@ -196,4 +206,85 @@ export class HandleAdminReportDto extends IdDto {
 export class HandleAdminReportCommandDto extends IntersectionType(
   HandleAdminReportDto,
   PickType(BaseReportDto, ['handlerId'] as const),
+) {}
+
+class ReportTargetSceneSummaryFieldsDto {
+  @NestedProperty({
+    description: '举报目标展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionReportTargetSummaryDto,
+    validation: false,
+  })
+  targetSummary?: InteractionReportTargetSummaryDto | null
+
+  @NestedProperty({
+    description: '举报业务场景展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionSceneSummaryDto,
+    validation: false,
+  })
+  sceneSummary?: InteractionSceneSummaryDto | null
+}
+
+class ReportCommentSummaryFieldDto {
+  @NestedProperty({
+    description: '被举报评论展示摘要；仅举报目标为评论时返回',
+    required: false,
+    nullable: true,
+    type: InteractionReportCommentSummaryDto,
+    validation: false,
+  })
+  commentSummary?: InteractionReportCommentSummaryDto | null
+}
+
+class AdminReportActorSummaryFieldsDto {
+  @NestedProperty({
+    description: '举报人展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionAppUserSummaryDto,
+    validation: false,
+  })
+  reporterSummary?: InteractionAppUserSummaryDto | null
+
+  @NestedProperty({
+    description: '处理人展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionActorSummaryDto,
+    validation: false,
+  })
+  handlerSummary?: InteractionActorSummaryDto | null
+}
+
+class AdminReportPageSummaryFieldsDto extends IntersectionType(
+  AdminReportActorSummaryFieldsDto,
+  ReportTargetSceneSummaryFieldsDto,
+) {}
+
+class AdminReportDetailSummaryFieldsDto extends IntersectionType(
+  AdminReportPageSummaryFieldsDto,
+  ReportCommentSummaryFieldDto,
+) {}
+
+export class MyReportPageItemDto extends IntersectionType(
+  BaseReportDto,
+  ReportTargetSceneSummaryFieldsDto,
+) {}
+
+export class MyReportDetailDto extends IntersectionType(
+  MyReportPageItemDto,
+  ReportCommentSummaryFieldDto,
+) {}
+
+export class AdminReportPageItemDto extends IntersectionType(
+  BaseReportDto,
+  AdminReportPageSummaryFieldsDto,
+) {}
+
+export class AdminReportDetailDto extends IntersectionType(
+  BaseReportDto,
+  AdminReportDetailSummaryFieldsDto,
 ) {}

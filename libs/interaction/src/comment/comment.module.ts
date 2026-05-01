@@ -5,6 +5,7 @@ import { BodyModule } from '@libs/interaction/body/body.module'
 import { EmojiModule } from '@libs/interaction/emoji/emoji.module'
 import { LikeModule } from '@libs/interaction/like/like.module'
 import { MentionModule } from '@libs/interaction/mention/mention.module'
+import { InteractionSummaryModule } from '@libs/interaction/summary/interaction-summary.module'
 import { MessageModule } from '@libs/message/message.module'
 import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module'
 import { SystemConfigModule } from '@libs/system-config/system-config.module'
@@ -27,6 +28,7 @@ import { CommentReportResolver } from './resolver/comment-report.resolver'
     EmojiModule,
     LikeModule,
     MentionModule,
+    InteractionSummaryModule,
     MessageModule,
     UserModule,
   ],

@@ -1,4 +1,8 @@
-import { BooleanProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  BooleanProperty,
+  EnumProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -8,10 +12,10 @@ import {
 } from '../notification.constant'
 
 export class BaseMessageNotificationTemplateDto extends BaseDto {
-  @StringProperty({
+  @EnumProperty({
     description: '通知分类键，表示模板所属通知业务分类',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
-    maxLength: 80,
+    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
   categoryKey!: MessageNotificationCategoryKey
 

@@ -101,8 +101,8 @@ export class BodyCompilerService {
       plainText += shortcodeText
       if (!asset) {
         bodyTokens.push({
-          type: 'text',
-          text: shortcodeText,
+          type: 'emojiCustom',
+          shortcode: emojiNode.shortcode,
         })
         return
       }

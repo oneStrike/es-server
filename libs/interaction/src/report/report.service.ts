@@ -1,11 +1,16 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
+import type {
+  CreateUserReportOptions,
+  CreateUserReportPayload,
+} from './report.type'
 import { DrizzleService } from '@db/core'
 import {
   createDefinedEventEnvelope,
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
+import { InteractionSummaryReadService } from '@libs/interaction/summary/interaction-summary-read.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -19,28 +24,6 @@ import {
 import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
 import { ReportGrowthService } from './report-growth.service'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
-
-type CreateUserReportPayload = CreateReportCommandDto &
-  Pick<
-    {
-      sceneType: number
-      sceneId: number
-      commentLevel?: number | null
-      status?: ReportStatusEnum
-      handlerId?: number | null
-      handlingNote?: string | null
-    },
-    | 'sceneType'
-    | 'sceneId'
-    | 'commentLevel'
-    | 'status'
-    | 'handlerId'
-    | 'handlingNote'
-  >
-
-interface CreateUserReportOptions {
-  duplicateMessage?: string
-}
 
 /**
  * 举报服务
@@ -58,6 +41,7 @@ export class ReportService {
   constructor(
     private readonly reportGrowthService: ReportGrowthService,
     private readonly drizzle: DrizzleService,
+    private readonly interactionSummaryReadService: InteractionSummaryReadService,
   ) {}
 
   private get db() {
@@ -209,7 +193,7 @@ export class ReportService {
       conditions.push(eq(this.userReport.status, query.status))
     }
 
-    return this.drizzle.ext.findPagination(this.userReport, {
+    const page = await this.drizzle.ext.findPagination(this.userReport, {
       where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
@@ -217,6 +201,30 @@ export class ReportService {
         createdAt: 'desc',
       },
     })
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const [targetSummaryMap, sceneSummaryMap] = await Promise.all([
+      this.interactionSummaryReadService.getReportTargetSummaryMap(page.list),
+      this.interactionSummaryReadService.getSceneSummaryMap(page.list),
+    ])
+
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        targetSummary:
+          targetSummaryMap.get(
+            this.interactionSummaryReadService.buildTargetSummaryKey(item),
+          ) ?? null,
+        sceneSummary:
+          sceneSummaryMap.get(
+            this.interactionSummaryReadService.buildSceneSummaryKey(item),
+          ) ?? null,
+      })),
+    }
   }
 
   /**
@@ -244,7 +252,34 @@ export class ReportService {
       )
     }
 
-    return report
+    const [targetSummaryMap, sceneSummaryMap, commentSummaryMap] =
+      await Promise.all([
+        this.interactionSummaryReadService.getReportTargetSummaryMap([report], {
+          detail: true,
+        }),
+        this.interactionSummaryReadService.getSceneSummaryMap([report]),
+        this.interactionSummaryReadService.getReportCommentSummaryMap(
+          report.targetType === ReportTargetTypeEnum.COMMENT
+            ? [report.targetId]
+            : [],
+        ),
+      ])
+
+    return {
+      ...report,
+      targetSummary:
+        targetSummaryMap.get(
+          this.interactionSummaryReadService.buildTargetSummaryKey(report),
+        ) ?? null,
+      sceneSummary:
+        sceneSummaryMap.get(
+          this.interactionSummaryReadService.buildSceneSummaryKey(report),
+        ) ?? null,
+      commentSummary:
+        report.targetType === ReportTargetTypeEnum.COMMENT
+          ? (commentSummaryMap.get(report.targetId) ?? null)
+          : null,
+    }
   }
 
   /**
@@ -290,12 +325,55 @@ export class ReportService {
       ? query.orderBy
       : { createdAt: 'desc' as const, id: 'desc' as const }
 
-    return this.drizzle.ext.findPagination(this.userReport, {
+    const page = await this.drizzle.ext.findPagination(this.userReport, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy,
     })
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const [
+      reporterSummaryMap,
+      handlerSummaryMap,
+      targetSummaryMap,
+      sceneSummaryMap,
+    ] = await Promise.all([
+      this.interactionSummaryReadService.getAppUserSummaryMap(
+        page.list.map((item) => item.reporterId),
+      ),
+      this.interactionSummaryReadService.getAdminActorSummaryMap(
+        page.list.map((item) => item.handlerId),
+      ),
+      this.interactionSummaryReadService.getReportTargetSummaryMap(page.list),
+      this.interactionSummaryReadService.getSceneSummaryMap(page.list),
+    ])
+
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        reporterSummary: reporterSummaryMap.get(item.reporterId) ?? null,
+        handlerSummary: item.handlerId
+          ? (handlerSummaryMap.get(
+              this.interactionSummaryReadService.buildAdminActorSummaryKey(
+                item.handlerId,
+              ),
+            ) ?? null)
+          : null,
+        targetSummary:
+          targetSummaryMap.get(
+            this.interactionSummaryReadService.buildTargetSummaryKey(item),
+          ) ?? null,
+        sceneSummary:
+          sceneSummaryMap.get(
+            this.interactionSummaryReadService.buildSceneSummaryKey(item),
+          ) ?? null,
+      })),
+    }
   }
 
   /**
@@ -316,7 +394,53 @@ export class ReportService {
       )
     }
 
-    return report
+    const [
+      reporterSummaryMap,
+      handlerSummaryMap,
+      targetSummaryMap,
+      sceneSummaryMap,
+      commentSummaryMap,
+    ] = await Promise.all([
+      this.interactionSummaryReadService.getAppUserSummaryMap([
+        report.reporterId,
+      ]),
+      this.interactionSummaryReadService.getAdminActorSummaryMap([
+        report.handlerId,
+      ]),
+      this.interactionSummaryReadService.getReportTargetSummaryMap([report], {
+        detail: true,
+      }),
+      this.interactionSummaryReadService.getSceneSummaryMap([report]),
+      this.interactionSummaryReadService.getReportCommentSummaryMap(
+        report.targetType === ReportTargetTypeEnum.COMMENT
+          ? [report.targetId]
+          : [],
+      ),
+    ])
+
+    return {
+      ...report,
+      reporterSummary: reporterSummaryMap.get(report.reporterId) ?? null,
+      handlerSummary: report.handlerId
+        ? (handlerSummaryMap.get(
+            this.interactionSummaryReadService.buildAdminActorSummaryKey(
+              report.handlerId,
+            ),
+          ) ?? null)
+        : null,
+      targetSummary:
+        targetSummaryMap.get(
+          this.interactionSummaryReadService.buildTargetSummaryKey(report),
+        ) ?? null,
+      sceneSummary:
+        sceneSummaryMap.get(
+          this.interactionSummaryReadService.buildSceneSummaryKey(report),
+        ) ?? null,
+      commentSummary:
+        report.targetType === ReportTargetTypeEnum.COMMENT
+          ? (commentSummaryMap.get(report.targetId) ?? null)
+          : null,
+    }
   }
 
   /**

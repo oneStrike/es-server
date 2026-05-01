@@ -99,9 +99,76 @@ describe('forum-topic dto html contract', () => {
     process.env.NODE_ENV = originalNodeEnv
 
     expect(contentPreviewMetadata?.description).toBe(
-      '主题列表预览；包含普通文本、@用户、#话题片段',
+      '主题列表预览；包含普通文本、@用户、#话题、表情片段',
     )
     expect(contentPreviewMetadata?.required).toBe(true)
     expect(contentSnippetMetadata).toBeUndefined()
+  })
+
+  it('documents topic preview emoji segment identity fields without display urls', () => {
+    const originalNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    jest.resetModules()
+
+    const { ForumTopicContentPreviewSegmentDto } = require('./forum-topic.dto')
+    const typeMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'type',
+    ) as {
+      description?: string
+    }
+    const kindMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'kind',
+    )
+    const unicodeSequenceMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'unicodeSequence',
+    )
+    const shortcodeMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'shortcode',
+    )
+    const emojiAssetIdMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'emojiAssetId',
+    )
+    const imageUrlMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'imageUrl',
+    )
+    const staticUrlMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'staticUrl',
+    )
+    const isAnimatedMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'isAnimated',
+    )
+    const ariaLabelMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      ForumTopicContentPreviewSegmentDto.prototype,
+      'ariaLabel',
+    )
+
+    process.env.NODE_ENV = originalNodeEnv
+
+    expect(typeMetadata?.description).toContain('emoji=表情')
+    expect(kindMetadata).toBeDefined()
+    expect(unicodeSequenceMetadata).toBeDefined()
+    expect(shortcodeMetadata).toBeDefined()
+    expect(emojiAssetIdMetadata).toBeDefined()
+    expect(imageUrlMetadata).toBeUndefined()
+    expect(staticUrlMetadata).toBeUndefined()
+    expect(isAnimatedMetadata).toBeUndefined()
+    expect(ariaLabelMetadata).toBeUndefined()
   })
 })

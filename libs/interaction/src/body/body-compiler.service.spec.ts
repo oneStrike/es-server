@@ -282,4 +282,35 @@ describe('BodyCompilerService', () => {
       emojiRecentUsageItems: [],
     })
   })
+
+  it('keeps unresolved explicit custom emoji as semantic tokens without asset fields', async () => {
+    const harness = createHarness()
+    const body = harness.validator.validateBodyOrThrow(
+      {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'emojiCustom', shortcode: 'missing' }],
+          },
+        ],
+      },
+      BodySceneEnum.TOPIC,
+    )
+
+    await expect(
+      harness.compiler.compile(body, BodySceneEnum.TOPIC),
+    ).resolves.toEqual({
+      body,
+      plainText: ':missing:',
+      bodyTokens: [
+        {
+          type: 'emojiCustom',
+          shortcode: 'missing',
+        },
+      ],
+      mentionFacts: [],
+      emojiRecentUsageItems: [],
+    })
+  })
 })

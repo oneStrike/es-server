@@ -1,8 +1,13 @@
-import { BaseReportDto, HandleAdminReportDto, QueryAdminReportPageDto } from '@libs/interaction/report/dto/report.dto';
-import { ReportService } from '@libs/interaction/report/report.service';
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
+import {
+  AdminReportDetailDto,
+  AdminReportPageItemDto,
+  HandleAdminReportDto,
+  QueryAdminReportPageDto,
+} from '@libs/interaction/report/dto/report.dto'
+import { ReportService } from '@libs/interaction/report/report.service'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto';
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -16,7 +21,7 @@ export class ReportController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询举报记录',
-    model: BaseReportDto,
+    model: AdminReportPageItemDto,
   })
   async getPage(@Query() query: QueryAdminReportPageDto) {
     return this.reportService.getAdminReportPage(query)
@@ -25,7 +30,7 @@ export class ReportController {
   @Get('detail')
   @ApiDoc({
     summary: '获取举报详情',
-    model: BaseReportDto,
+    model: AdminReportDetailDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.reportService.getAdminReportDetail(query.id)

@@ -1,9 +1,4 @@
-import type {
-  BodyBlockNode,
-  BodyDoc,
-  BodyInlineNode,
-  BodyListItemNode,
-} from '@libs/interaction/body/body.type'
+import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type {
   BuildForumTopicContentPreviewOptions,
   ForumTopicContentPreview,
@@ -15,10 +10,10 @@ import {
 } from './forum-topic.constant'
 
 /**
- * 从 canonical body 派生列表预览。
+ * 从编译后的正文 token 派生列表预览。
  */
 export function buildForumTopicContentPreview(
-  body: BodyDoc,
+  bodyTokens: EmojiParseToken[],
   options: BuildForumTopicContentPreviewOptions = {},
 ): ForumTopicContentPreview {
   const maxLength = normalizePositiveInteger(
@@ -38,74 +33,20 @@ export function buildForumTopicContentPreview(
     return preview
   }
 
-  for (let index = 0; index < body.content.length; index += 1) {
-    if (isPreviewFull(preview, maxLength, maxSegments)) {
-      break
-    }
-    if (index > 0) {
-      appendPreviewSegment(
-        { type: 'text', text: '\n\n' },
-        preview,
-        maxLength,
-        maxSegments,
-      )
-    }
-    appendBlockPreview(body.content[index], preview, maxLength, maxSegments)
-  }
+  appendBodyTokens(bodyTokens, preview, maxLength, maxSegments)
 
   return preview
 }
 
-// 追加单个顶层块的预览片段。
-function appendBlockPreview(
-  block: BodyBlockNode,
+// 按顺序追加 body compiler 生成的预览片段。
+function appendBodyTokens(
+  bodyTokens: EmojiParseToken[],
   preview: ForumTopicContentPreview,
   maxLength: number,
   maxSegments: number,
 ) {
-  switch (block.type) {
-    case 'paragraph':
-    case 'heading':
-    case 'blockquote':
-    case 'listItem':
-      appendInlineNodes(block.content, preview, maxLength, maxSegments)
-      break
-    case 'bulletList':
-    case 'orderedList':
-      appendListItems(block.content, preview, maxLength, maxSegments)
-      break
-  }
-}
-
-// 追加列表项内容，并在相邻列表项之间保留单换行。
-function appendListItems(
-  items: BodyListItemNode[],
-  preview: ForumTopicContentPreview,
-  maxLength: number,
-  maxSegments: number,
-) {
-  items.forEach((item, index) => {
-    if (index > 0) {
-      appendPreviewSegment(
-        { type: 'text', text: '\n' },
-        preview,
-        maxLength,
-        maxSegments,
-      )
-    }
-    appendInlineNodes(item.content, preview, maxLength, maxSegments)
-  })
-}
-
-// 按顺序追加行内节点转换出的预览片段。
-function appendInlineNodes(
-  nodes: BodyInlineNode[],
-  preview: ForumTopicContentPreview,
-  maxLength: number,
-  maxSegments: number,
-) {
-  for (const node of nodes) {
-    const segment = buildSegmentFromInlineNode(node)
+  for (const token of bodyTokens) {
+    const segment = buildSegmentFromBodyToken(token)
     if (!segment) {
       continue
     }
@@ -116,42 +57,52 @@ function appendInlineNodes(
   }
 }
 
-// 将 canonical body 行内节点转换为列表预览片段。
-function buildSegmentFromInlineNode(
-  node: BodyInlineNode,
+// 将编译后的正文 token 转换为列表预览片段。
+function buildSegmentFromBodyToken(
+  token: EmojiParseToken,
 ): ForumTopicContentPreviewSegment | undefined {
-  switch (node.type) {
+  switch (token.type) {
     case 'text':
-      return node.text ? { type: 'text', text: node.text } : undefined
-    case 'hardBreak':
-      return { type: 'text', text: '\n' }
+      return token.text ? { type: 'text', text: token.text } : undefined
     case 'mentionUser': {
-      const nickname = node.nickname.trim()
+      const nickname = token.nickname.trim()
       return nickname
         ? {
             type: 'mention',
-            text: `@${nickname}`,
-            userId: node.userId,
+            text: token.text || `@${nickname}`,
+            userId: token.userId,
             nickname,
           }
         : undefined
     }
     case 'emojiUnicode':
-      return node.unicodeSequence
-        ? { type: 'text', text: node.unicodeSequence }
+      return token.unicodeSequence
+        ? {
+            type: 'emoji',
+            text: token.unicodeSequence,
+            kind: 1,
+            unicodeSequence: token.unicodeSequence,
+            ...(token.emojiAssetId ? { emojiAssetId: token.emojiAssetId } : {}),
+          }
         : undefined
     case 'emojiCustom':
-      return node.shortcode
-        ? { type: 'text', text: `:${node.shortcode}:` }
+      return token.shortcode
+        ? {
+            type: 'emoji',
+            text: `:${token.shortcode}:`,
+            kind: 2,
+            shortcode: token.shortcode,
+            ...(token.emojiAssetId ? { emojiAssetId: token.emojiAssetId } : {}),
+          }
         : undefined
     case 'forumHashtag': {
-      const displayName = node.displayName.trim()
+      const displayName = token.displayName.trim()
       return displayName
         ? {
             type: 'hashtag',
-            text: `#${displayName}`,
-            hashtagId: node.hashtagId,
-            slug: node.slug,
+            text: token.text || `#${displayName}`,
+            hashtagId: token.hashtagId,
+            slug: token.slug,
             displayName,
           }
         : undefined
@@ -177,7 +128,7 @@ function appendPreviewSegment(
   }
 
   const nextSegment =
-    nextText.length === segment.text.length
+    countCharacters(nextText) === countCharacters(segment.text)
       ? segment
       : {
           type: 'text' as const,

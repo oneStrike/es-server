@@ -23,25 +23,20 @@ import {
 } from './notification.constant'
 
 const TEMPLATE_PLACEHOLDER_REGEXP = /\{\{\s*([\w.]+)\s*\}\}/g
-const NOTIFICATION_TEMPLATE_CACHE_TTL_MS = 60 * 1000
-const NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST = new Set([
-  'categoryKey',
-  'receiverUserId',
-  'actorUserId',
-  'title',
-  'content',
-  'expiresAt',
-  'actor',
-  'data',
-])
-
-interface NotificationTemplateCacheEntry {
-  expiresAt: number
-  template: {
-    id: number
-    titleTemplate: string
-    contentTemplate: string
-  } | null
+const NOTIFICATION_TEMPLATE_PLACEHOLDER_ALLOWLIST: Record<
+  MessageNotificationCategoryKey,
+  ReadonlySet<string>
+> = {
+  comment_reply: new Set(['actor.nickname', 'data.object.snippet']),
+  comment_mention: new Set(['actor.nickname', 'data.object.snippet']),
+  comment_like: new Set(['actor.nickname', 'data.object.snippet']),
+  topic_like: new Set(['actor.nickname', 'data.object.title']),
+  topic_favorited: new Set(['actor.nickname', 'data.object.title']),
+  topic_commented: new Set(['actor.nickname', 'data.object.snippet']),
+  topic_mentioned: new Set(['actor.nickname', 'data.object.title']),
+  user_followed: new Set(['actor.nickname']),
+  system_announcement: new Set(['title', 'content']),
+  task_reminder: new Set(['title', 'content']),
 }
 
 type NotificationTemplateContextValue =
@@ -56,10 +51,6 @@ type NotificationTemplateContextValue =
 @Injectable()
 export class MessageNotificationTemplateService {
   private readonly logger = new Logger(MessageNotificationTemplateService.name)
-  private readonly templateCache = new Map<
-    MessageNotificationCategoryKey,
-    NotificationTemplateCacheEntry
-  >()
 
   constructor(private readonly drizzle: DrizzleService) {}
 
@@ -113,8 +104,16 @@ export class MessageNotificationTemplateService {
       input.contentTemplate,
       '通知正文模板不能为空',
     )
-    this.ensureTemplatePlaceholdersValid(titleTemplate, 'titleTemplate')
-    this.ensureTemplatePlaceholdersValid(contentTemplate, 'contentTemplate')
+    this.ensureTemplatePlaceholdersValid(
+      categoryKey,
+      titleTemplate,
+      'titleTemplate',
+    )
+    this.ensureTemplatePlaceholdersValid(
+      categoryKey,
+      contentTemplate,
+      'contentTemplate',
+    )
 
     try {
       await this.drizzle.withErrorHandling(() =>
@@ -131,7 +130,6 @@ export class MessageNotificationTemplateService {
       throw error
     }
 
-    this.invalidateTemplateCache(categoryKey)
     return true
   }
 
@@ -159,8 +157,16 @@ export class MessageNotificationTemplateService {
           )
         : current.contentTemplate
 
-    this.ensureTemplatePlaceholdersValid(nextTitleTemplate, 'titleTemplate')
-    this.ensureTemplatePlaceholdersValid(nextContentTemplate, 'contentTemplate')
+    this.ensureTemplatePlaceholdersValid(
+      nextCategoryKey,
+      nextTitleTemplate,
+      'titleTemplate',
+    )
+    this.ensureTemplatePlaceholdersValid(
+      nextCategoryKey,
+      nextContentTemplate,
+      'contentTemplate',
+    )
 
     const updateData: Partial<typeof this.notificationTemplate.$inferInsert> =
       {}
@@ -198,8 +204,6 @@ export class MessageNotificationTemplateService {
       throw error
     }
 
-    this.invalidateTemplateCache(currentCategoryKey)
-    this.invalidateTemplateCache(nextCategoryKey)
     return true
   }
 
@@ -207,7 +211,7 @@ export class MessageNotificationTemplateService {
     input: UpdateNotificationTemplateEnabledDto,
   ) {
     const current = await this.getNotificationTemplateDetail(input.id)
-    const categoryKey = this.ensureSupportedCategoryKey(current.categoryKey)
+    this.ensureSupportedCategoryKey(current.categoryKey)
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -216,13 +220,12 @@ export class MessageNotificationTemplateService {
           .where(eq(this.notificationTemplate.id, input.id)),
       { notFound: '通知模板不存在' },
     )
-    this.invalidateTemplateCache(categoryKey)
     return true
   }
 
   async deleteNotificationTemplate(id: number) {
     const current = await this.getNotificationTemplateDetail(id)
-    const categoryKey = this.ensureSupportedCategoryKey(current.categoryKey)
+    this.ensureSupportedCategoryKey(current.categoryKey)
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -230,7 +233,6 @@ export class MessageNotificationTemplateService {
           .where(eq(this.notificationTemplate.id, id)),
       { notFound: '通知模板不存在' },
     )
-    this.invalidateTemplateCache(categoryKey)
     return true
   }
 
@@ -381,15 +383,7 @@ export class MessageNotificationTemplateService {
   private async getEnabledNotificationTemplate(
     categoryKey: MessageNotificationCategoryKey,
   ) {
-    const cached = this.templateCache.get(categoryKey)
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.template
-    }
-    if (cached) {
-      this.templateCache.delete(categoryKey)
-    }
-
-    const template = await this.db.query.notificationTemplate.findFirst({
+    return this.db.query.notificationTemplate.findFirst({
       where: {
         categoryKey,
         isEnabled: true,
@@ -400,17 +394,6 @@ export class MessageNotificationTemplateService {
         contentTemplate: true,
       },
     })
-
-    this.templateCache.set(categoryKey, {
-      expiresAt: Date.now() + NOTIFICATION_TEMPLATE_CACHE_TTL_MS,
-      template: template ?? null,
-    })
-
-    return template
-  }
-
-  private invalidateTemplateCache(categoryKey: MessageNotificationCategoryKey) {
-    this.templateCache.delete(categoryKey)
   }
 
   private throwIfTemplateCategoryAlreadyExists(error: unknown): void {
@@ -426,9 +409,12 @@ export class MessageNotificationTemplateService {
   }
 
   private ensureTemplatePlaceholdersValid(
+    categoryKey: MessageNotificationCategoryKey,
     templateText: string,
     fieldName: 'titleTemplate' | 'contentTemplate',
   ) {
+    const allowedPlaceholders =
+      NOTIFICATION_TEMPLATE_PLACEHOLDER_ALLOWLIST[categoryKey]
     const placeholders = new Set(
       Array.from(
         templateText.matchAll(TEMPLATE_PLACEHOLDER_REGEXP),
@@ -437,11 +423,10 @@ export class MessageNotificationTemplateService {
     )
 
     for (const path of placeholders) {
-      if (NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST.has(path)) {
-        continue
-      }
-      if (!path.startsWith('data.') && !path.startsWith('actor.')) {
-        throw new BadRequestException(`${fieldName} 存在非法占位符: ${path}`)
+      if (!allowedPlaceholders.has(path)) {
+        throw new BadRequestException(
+          `${fieldName} 存在当前通知分类不支持的占位符: ${path}`,
+        )
       }
     }
   }

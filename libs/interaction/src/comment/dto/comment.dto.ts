@@ -15,6 +15,11 @@ import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  InteractionActorSummaryDto,
+  InteractionCommentTargetSummaryDto,
+  InteractionReplyCommentSummaryDto,
+} from '../../summary/dto/interaction-summary.dto'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from '../comment.constant'
 
 /**
@@ -616,6 +621,15 @@ export class MyCommentPageItemDto extends PickType(BaseCommentDto, [
     validation: false,
   })
   replyTo?: CommentReplyTargetDto
+
+  @NestedProperty({
+    description: '评论目标展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionCommentTargetSummaryDto,
+    validation: false,
+  })
+  targetSummary?: InteractionCommentTargetSummaryDto | null
 }
 
 export class AdminCommentUserDto extends PickType(BaseAppUserDto, [
@@ -675,6 +689,24 @@ export class AdminCommentPageItemDto extends PickType(BaseCommentDto, [
     validation: false,
   })
   user!: AdminCommentUserDto
+
+  @NestedProperty({
+    description: '评论目标展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionCommentTargetSummaryDto,
+    validation: false,
+  })
+  targetSummary?: InteractionCommentTargetSummaryDto | null
+
+  @NestedProperty({
+    description: '被回复评论展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionReplyCommentSummaryDto,
+    validation: false,
+  })
+  replyToSummary?: InteractionReplyCommentSummaryDto | null
 }
 
 export class AdminCommentDetailDto extends PickType(BaseCommentDto, [
@@ -706,6 +738,24 @@ export class AdminCommentDetailDto extends PickType(BaseCommentDto, [
     validation: false,
   })
   user!: AdminCommentUserDto
+
+  @NestedProperty({
+    description: '评论目标展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionCommentTargetSummaryDto,
+    validation: false,
+  })
+  targetSummary?: InteractionCommentTargetSummaryDto | null
+
+  @NestedProperty({
+    description: '审核人展示摘要',
+    required: false,
+    nullable: true,
+    type: InteractionActorSummaryDto,
+    validation: false,
+  })
+  auditorSummary?: InteractionActorSummaryDto | null
 
   @NestedProperty({
     description: '被回复评论简要信息',

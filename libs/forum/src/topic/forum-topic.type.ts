@@ -23,14 +23,24 @@ interface HashtagPreviewSegment {
   displayName: string
 }
 
+interface EmojiPreviewSegment {
+  type: 'emoji'
+  text: string
+  kind: 1 | 2
+  emojiAssetId?: number
+  unicodeSequence?: string
+  shortcode?: string
+}
+
 /**
  * 论坛主题列表预览片段。
- * text 仅展示；mention 与 hashtag 由前端按 ID/slug 生成可点击跳转。
+ * text 仅展示；mention/hashtag/emoji 由前端按目标字段生成可交互或可渲染片段。
  */
 export type ForumTopicContentPreviewSegment =
   | TextPreviewSegment
   | MentionPreviewSegment
   | HashtagPreviewSegment
+  | EmojiPreviewSegment
 
 /**
  * 论坛主题列表预览。

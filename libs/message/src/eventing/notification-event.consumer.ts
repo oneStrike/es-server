@@ -37,7 +37,47 @@ function getNotificationExpiresAt(event: DomainEventRecord): Date | undefined {
   if (!event.context?.expiresAt) {
     return undefined
   }
-  return new Date(String(event.context.expiresAt))
+  const expiresAt = new Date(String(event.context.expiresAt))
+  if (Number.isNaN(expiresAt.getTime())) {
+    throw new TypeError(
+      'notification event context.expiresAt must be a valid date',
+    )
+  }
+  return expiresAt
+}
+
+function requireNotificationContextPositiveInteger(
+  event: DomainEventRecord,
+  fieldName: 'receiverUserId',
+) {
+  const value = event.context?.[fieldName]
+  const numericValue =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim().length > 0
+        ? Number(value)
+        : Number.NaN
+
+  if (!Number.isInteger(numericValue) || numericValue <= 0) {
+    throw new TypeError(
+      `notification event context.${fieldName} must be a positive integer`,
+    )
+  }
+
+  return numericValue
+}
+
+function requireNotificationContextNonEmptyString(
+  event: DomainEventRecord,
+  fieldName: 'content' | 'projectionKey' | 'title',
+) {
+  const value = event.context?.[fieldName]
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new TypeError(
+      `notification event context.${fieldName} must be a non-empty string`,
+    )
+  }
+  return value.trim()
 }
 
 function createNotificationEventHandler(
@@ -47,13 +87,19 @@ function createNotificationEventHandler(
   return ({ definition, event }) => {
     const command = {
       mode,
-      receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
+      receiverUserId: requireNotificationContextPositiveInteger(
+        event,
+        'receiverUserId',
+      ),
       categoryKey: definition.notification!.categoryKey,
-      projectionKey: String(event.context?.projectionKey ?? ''),
+      projectionKey: requireNotificationContextNonEmptyString(
+        event,
+        'projectionKey',
+      ),
       mandatory: definition.notification!.mandatory,
       actorUserId: event.operatorId ?? undefined,
-      title: String(event.context?.title ?? ''),
-      content: String(event.context?.content ?? ''),
+      title: requireNotificationContextNonEmptyString(event, 'title'),
+      content: requireNotificationContextNonEmptyString(event, 'content'),
       payload: getNotificationEventPayload(event),
     }
 
@@ -87,8 +133,14 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
   'announcement.published': upsertNotificationEventHandler,
   'announcement.unpublished': ({ event }) => ({
     mode: 'delete' as const,
-    receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
-    projectionKey: String(event.context?.projectionKey ?? ''),
+    receiverUserId: requireNotificationContextPositiveInteger(
+      event,
+      'receiverUserId',
+    ),
+    projectionKey: requireNotificationContextNonEmptyString(
+      event,
+      'projectionKey',
+    ),
   }),
   'task.reminder.auto_assigned': expiringAppendNotificationEventHandler,
   'task.reminder.expiring': expiringAppendNotificationEventHandler,

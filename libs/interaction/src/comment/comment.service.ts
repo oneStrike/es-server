@@ -52,6 +52,7 @@ import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
 import { MentionSourceTypeEnum } from '../mention/mention.constant'
 import { MentionService } from '../mention/mention.service'
+import { InteractionSummaryReadService } from '../summary/interaction-summary-read.service'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from './comment.constant'
@@ -100,6 +101,7 @@ export class CommentService {
     private readonly sensitiveWordStatisticsService: SensitiveWordStatisticsService,
     private readonly forumHashtagBodyService: ForumHashtagBodyService,
     private readonly forumHashtagReferenceService: ForumHashtagReferenceService,
+    private readonly interactionSummaryReadService: InteractionSummaryReadService,
   ) {}
 
   private get db() {
@@ -2047,15 +2049,18 @@ export class CommentService {
       ],
     })
 
-    const replyTargetMap = await this.getReplyTargetMap(
-      page.list
-        .map((item) =>
-          this.getReplyTargetId(item.replyToId, item.actualReplyToId),
-        )
-        .filter(
-          (replyToId): replyToId is number => typeof replyToId === 'number',
-        ),
-    )
+    const [replyTargetMap, targetSummaryMap] = await Promise.all([
+      this.getReplyTargetMap(
+        page.list
+          .map((item) =>
+            this.getReplyTargetId(item.replyToId, item.actualReplyToId),
+          )
+          .filter(
+            (replyToId): replyToId is number => typeof replyToId === 'number',
+          ),
+      ),
+      this.interactionSummaryReadService.getCommentTargetSummaryMap(page.list),
+    ])
 
     return {
       ...page,
@@ -2071,6 +2076,10 @@ export class CommentService {
 
         return {
           ...this.omitGeoSource(item),
+          targetSummary:
+            targetSummaryMap.get(
+              this.interactionSummaryReadService.buildTargetSummaryKey(item),
+            ) ?? null,
           ...(replyTo ? { replyTo } : {}),
         }
       }),
@@ -2156,18 +2165,24 @@ export class CommentService {
     }
 
     const userIds = [...new Set(page.list.map((item) => item.userId))]
-    const users = userIds.length
-      ? await this.db
-          .select({
-            id: this.appUser.id,
-            nickname: this.appUser.nickname,
-            avatarUrl: this.appUser.avatarUrl,
-            isEnabled: this.appUser.isEnabled,
-            status: this.appUser.status,
-          })
-          .from(this.appUser)
-          .where(inArray(this.appUser.id, userIds))
-      : []
+    const [users, targetSummaryMap, replyToSummaryMap] = await Promise.all([
+      userIds.length
+        ? this.db
+            .select({
+              id: this.appUser.id,
+              nickname: this.appUser.nickname,
+              avatarUrl: this.appUser.avatarUrl,
+              isEnabled: this.appUser.isEnabled,
+              status: this.appUser.status,
+            })
+            .from(this.appUser)
+            .where(inArray(this.appUser.id, userIds))
+        : [],
+      this.interactionSummaryReadService.getCommentTargetSummaryMap(page.list),
+      this.interactionSummaryReadService.getReplyCommentSummaryMap(
+        page.list.map((item) => item.replyToId),
+      ),
+    ])
     const userMap = new Map(users.map((item) => [item.id, item] as const))
 
     return {
@@ -2176,6 +2191,13 @@ export class CommentService {
         return {
           ...this.omitGeoSource(item),
           user: userMap.get(item.userId) ?? undefined,
+          targetSummary:
+            targetSummaryMap.get(
+              this.interactionSummaryReadService.buildTargetSummaryKey(item),
+            ) ?? null,
+          replyToSummary: item.replyToId
+            ? (replyToSummaryMap.get(item.replyToId) ?? null)
+            : null,
         }
       }),
     }
@@ -2256,7 +2278,33 @@ export class CommentService {
       )
     }
 
-    return this.omitGeoSource(comment)
+    const [targetSummaryMap, auditorSummaryMap] = await Promise.all([
+      this.interactionSummaryReadService.getCommentTargetSummaryMap([comment], {
+        detail: true,
+      }),
+      this.interactionSummaryReadService.getAuditorSummaryMap([
+        {
+          auditById: comment.auditById,
+          auditRole: comment.auditRole as AuditRoleEnum | null,
+        },
+      ]),
+    ])
+    const auditorSummaryKey =
+      this.interactionSummaryReadService.buildAuditorSummaryKey({
+        auditById: comment.auditById,
+        auditRole: comment.auditRole as AuditRoleEnum | null,
+      })
+
+    return {
+      ...this.omitGeoSource(comment),
+      targetSummary:
+        targetSummaryMap.get(
+          this.interactionSummaryReadService.buildTargetSummaryKey(comment),
+        ) ?? null,
+      auditorSummary: auditorSummaryKey
+        ? (auditorSummaryMap.get(auditorSummaryKey) ?? null)
+        : null,
+    }
   }
 
   /**

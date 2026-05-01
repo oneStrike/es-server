@@ -58,7 +58,7 @@ export const forumTopic = snakeCase.table(
     content: text().notNull(),
     /**
      * 列表预览派生 JSON。
-     * 写入时由 canonical body 生成，供 topic 列表渲染可点击用户提及与话题标签；不作为详情正文来源。
+     * 写入时由 canonical body 生成，供 topic 列表渲染用户提及、话题标签与表情语义片段；不作为详情正文来源。
      */
     contentPreview: jsonb().notNull(),
     /**

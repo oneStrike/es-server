@@ -717,7 +717,7 @@ export class ForumTopicService {
     return {
       ...compiledBody,
       html: canonicalHtml,
-      contentPreview: buildForumTopicContentPreview(materialized.body),
+      contentPreview: buildForumTopicContentPreview(compiledBody.bodyTokens),
       hashtagFacts: materialized.hashtagFacts,
     }
   }
