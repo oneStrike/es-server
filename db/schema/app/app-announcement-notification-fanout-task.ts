@@ -3,8 +3,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -14,7 +14,7 @@ import {
  * 公告通知扇出任务表。
  * 用于记录公告消息中心通知的扇出进度。
  */
-export const appAnnouncementNotificationFanoutTask = pgTable(
+export const appAnnouncementNotificationFanoutTask = snakeCase.table(
   'app_announcement_notification_fanout_task',
   {
     /** 主键 ID。 */

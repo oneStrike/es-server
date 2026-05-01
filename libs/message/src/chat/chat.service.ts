@@ -2,14 +2,15 @@ import type { PostgresErrorSourceObject } from '@db/core'
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type { PageDto } from '@libs/platform/dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
+import type { ChatMessageCreatedDomainEventPayload } from './chat.type'
 import { DrizzleService } from '@db/core'
+
 import {
   appUser,
   chatConversation,
   chatConversationMember,
   chatMessage,
 } from '@db/schema'
-
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
 import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
@@ -18,23 +19,12 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
 import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  gt,
-  inArray,
-  isNull,
-  lt,
-  ne,
-  or,
-  sql,
-} from 'drizzle-orm'
+import { and, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import { MessageDomainEventPublisher } from '../eventing/message-domain-event.publisher'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
+import { MessageChatReadQueryService } from './chat-read-query.service'
 import {
   CHAT_MESSAGE_PAGE_LIMIT_DEFAULT,
   CHAT_MESSAGE_PAGE_LIMIT_MAX,
@@ -48,7 +38,6 @@ import {
   QueryChatConversationMessagesDto,
   SendChatMessageDto,
 } from './dto/chat.dto'
-import type { ChatMessageCreatedDomainEventPayload } from './chat.type'
 
 /** 数字字符串正则表达式（模块作用域，避免重复编译） */
 const DIGIT_STRING_REGEX = /^\d+$/
@@ -82,6 +71,7 @@ export class MessageChatService {
     private readonly messageWsMonitorService: MessageWsMonitorService,
     private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
     private readonly domainEventDispatchService: DomainEventDispatchService,
+    private readonly chatReadQueryService: MessageChatReadQueryService,
   ) {}
 
   private get db() {
@@ -253,29 +243,11 @@ export class MessageChatService {
             isNull(chatConversationMember.leftAt),
           ),
         ),
-      this.db
-        .select({
-          id: chatConversation.id,
-          bizKey: chatConversation.bizKey,
-          lastMessageId: chatConversation.lastMessageId,
-          lastMessageAt: chatConversation.lastMessageAt,
-          lastSenderId: chatConversation.lastSenderId,
-        })
-        .from(chatConversation)
-        .innerJoin(
-          chatConversationMember,
-          and(
-            eq(chatConversationMember.conversationId, chatConversation.id),
-            eq(chatConversationMember.userId, userId),
-            isNull(chatConversationMember.leftAt),
-          ),
-        )
-        .orderBy(
-          sql`${chatConversation.lastMessageAt} desc nulls last`,
-          desc(chatConversation.id),
-        )
-        .offset(page.offset)
-        .limit(page.limit),
+      this.chatReadQueryService.getConversationList({
+        userId,
+        limit: page.limit,
+        offset: page.offset,
+      }),
     ])
 
     if (conversationRows.length === 0) {
@@ -322,7 +294,7 @@ export class MessageChatService {
         unreadCount: number
         lastReadAt: Date | null
         lastReadMessageId: bigint | null
-        user: { id: number; nickname: string | null; avatar: string | null }
+        user: { id: number, nickname: string | null, avatar: string | null }
       }>
     >()
     for (const member of members) {
@@ -394,18 +366,12 @@ export class MessageChatService {
     await this.ensureConversationMember(conversationId, userId)
     if (afterSeq !== undefined) {
       this.recordResyncTriggeredMetric()
-      const messages = await this.db
-        .select()
-        .from(chatMessage)
-        .where(
-          and(
-            eq(chatMessage.conversationId, conversationId),
-            ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
-            gt(chatMessage.messageSeq, afterSeq),
-          ),
-        )
-        .orderBy(asc(chatMessage.messageSeq))
-        .limit(limit + 1)
+      const messages =
+        await this.chatReadQueryService.getConversationMessagesAfter({
+          conversationId,
+          afterSeq,
+          limit: limit + 1,
+        })
       const hasMore = messages.length > limit
       const list = messages
         .slice(0, limit)
@@ -417,17 +383,17 @@ export class MessageChatService {
         hasMore,
       }
     }
-    const where = and(
-      eq(chatMessage.conversationId, conversationId),
-      ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
-      cursor !== undefined ? lt(chatMessage.messageSeq, cursor) : undefined,
-    )
-    const messages = await this.db
-      .select()
-      .from(chatMessage)
-      .where(where)
-      .orderBy(desc(chatMessage.messageSeq))
-      .limit(limit + 1)
+    const messages =
+      cursor !== undefined
+        ? await this.chatReadQueryService.getConversationMessagesBefore({
+            conversationId,
+            cursor,
+            limit: limit + 1,
+          })
+        : await this.chatReadQueryService.getConversationMessages({
+            conversationId,
+            limit: limit + 1,
+          })
     const hasMore = messages.length > limit
     const list = messages
       .slice(0, limit)
@@ -1203,7 +1169,7 @@ export class MessageChatService {
    */
   private async getMessageMapByIds(ids: bigint[]) {
     if (!ids.length) {
-      return new Map<string, { id: bigint; content: string }>()
+      return new Map<string, { id: bigint, content: string }>()
     }
     const rows = await this.db
       .select({

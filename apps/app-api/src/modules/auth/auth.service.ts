@@ -321,7 +321,7 @@ export class AuthService {
    */
   private sanitizeUser(
     user: AppUserSelect,
-    growth: { points: number; experience: number },
+    growth: { points: number, experience: number },
   ) {
     return {
       id: user.id,

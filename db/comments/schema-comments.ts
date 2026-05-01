@@ -1,7 +1,11 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import { getTableColumns, getTableName, getTableUniqueName, isTable } from 'drizzle-orm'
-import { CasingCache } from 'drizzle-orm/casing'
+import {
+  getTableColumns,
+  getTableName,
+  getTableUniqueName,
+  isTable,
+} from 'drizzle-orm'
 import { Pool } from 'pg'
 import ts from 'typescript'
 import * as runtimeSchema from '../schema'
@@ -9,7 +13,6 @@ import * as runtimeSchema from '../schema'
 const DB_DIR = resolve(__dirname, '..')
 const SCHEMA_DIR = resolve(DB_DIR, 'schema')
 const DEFAULT_OUTPUT_PATH = resolve(DB_DIR, 'comments', 'generated.sql')
-const PG_CASING = new CasingCache('snake_case')
 const WINDOWS_NEWLINE_REGEX = /\r\n/g
 
 type WarningKind =
@@ -59,7 +62,9 @@ export interface ApplySchemaCommentsOptions extends BuildSchemaCommentsOptions {
   databaseUrl: string
 }
 
-export function getSchemaCommentsOutputPath(outputPath: string = DEFAULT_OUTPUT_PATH): string {
+export function getSchemaCommentsOutputPath(
+  outputPath: string = DEFAULT_OUTPUT_PATH,
+): string {
   return outputPath
 }
 
@@ -127,7 +132,7 @@ export function buildSchemaCommentsArtifact(
 
     for (const [columnKey, column] of Object.entries(runtimeColumns)) {
       const columnComment = sourceTable.columnComments.get(columnKey)
-      const columnName = PG_CASING.getColumnCasing(column)
+      const columnName = column.name
 
       if (!columnComment) {
         warnings.push({
@@ -210,7 +215,8 @@ export async function applySchemaComments(
   }
 
   return {
-    appliedStatementCount: artifact.tableCommentCount + artifact.columnCommentCount,
+    appliedStatementCount:
+      artifact.tableCommentCount + artifact.columnCommentCount,
     outputPath: artifact.outputPath,
   }
 }
@@ -238,7 +244,9 @@ function parseSchemaSourceComments() {
           continue
         }
 
-        const columnsDefinition = getPgTableColumnsDefinition(declaration.initializer)
+        const columnsDefinition = getTableColumnsDefinition(
+          declaration.initializer,
+        )
 
         if (columnsDefinition === undefined) {
           continue
@@ -308,17 +316,19 @@ function listSchemaSourceFiles(directoryPath: string) {
 }
 
 function hasExportModifier(node: ts.Node) {
-  return Boolean(node.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword))
+  return Boolean(
+    node.modifiers?.some(
+      (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword,
+    ),
+  )
 }
 
-function getPgTableColumnsDefinition(
-  initializer: ts.Expression,
-) {
+function getTableColumnsDefinition(initializer: ts.Expression) {
   if (!ts.isCallExpression(initializer)) {
     return undefined
   }
 
-  if (!isPgTableExpression(initializer.expression)) {
+  if (!isSnakeCaseTableExpression(initializer.expression)) {
     return undefined
   }
 
@@ -332,14 +342,20 @@ function getPgTableColumnsDefinition(
     return columnsArgument
   }
 
-  if (ts.isArrowFunction(columnsArgument) || ts.isFunctionExpression(columnsArgument)) {
+  if (
+    ts.isArrowFunction(columnsArgument) ||
+    ts.isFunctionExpression(columnsArgument)
+  ) {
     const body = columnsArgument.body
 
     if (ts.isObjectLiteralExpression(body)) {
       return body
     }
 
-    if (ts.isParenthesizedExpression(body) && ts.isObjectLiteralExpression(body.expression)) {
+    if (
+      ts.isParenthesizedExpression(body) &&
+      ts.isObjectLiteralExpression(body.expression)
+    ) {
       return body.expression
     }
   }
@@ -347,20 +363,23 @@ function getPgTableColumnsDefinition(
   return null
 }
 
-function isPgTableExpression(expression: ts.LeftHandSideExpression) {
-  if (ts.isIdentifier(expression)) {
-    return expression.text === 'pgTable'
-  }
-
-  if (ts.isPropertyAccessExpression(expression)) {
-    return expression.name.text === 'pgTable'
+function isSnakeCaseTableExpression(expression: ts.LeftHandSideExpression) {
+  if (
+    ts.isPropertyAccessExpression(expression) &&
+    expression.expression.getText() === 'snakeCase'
+  ) {
+    return expression.name.text === 'table'
   }
 
   return false
 }
 
 function getPropertyName(name: ts.PropertyName) {
-  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
+  if (
+    ts.isIdentifier(name) ||
+    ts.isStringLiteral(name) ||
+    ts.isNumericLiteral(name)
+  ) {
     return name.text
   }
 
@@ -368,7 +387,9 @@ function getPropertyName(name: ts.PropertyName) {
 }
 
 function getNodeJsDoc(node: ts.Node) {
-  const jsDocNodes = ts.getJSDocCommentsAndTags(node).filter((entry): entry is ts.JSDoc => ts.isJSDoc(entry))
+  const jsDocNodes = ts
+    .getJSDocCommentsAndTags(node)
+    .filter((entry): entry is ts.JSDoc => ts.isJSDoc(entry))
 
   if (jsDocNodes.length === 0) {
     return null
@@ -378,9 +399,7 @@ function getNodeJsDoc(node: ts.Node) {
   return normalizeJsDocComment(renderJsDocComment(lastDoc.comment))
 }
 
-function renderJsDocComment(
-  comment: ts.JSDoc['comment'],
-) {
+function renderJsDocComment(comment: ts.JSDoc['comment']) {
   if (typeof comment === 'string') {
     return comment
   }
@@ -404,7 +423,7 @@ function normalizeJsDocComment(comment: string) {
   const normalizedLines = comment
     .replace(WINDOWS_NEWLINE_REGEX, '\n')
     .split('\n')
-    .map(line => line.trim())
+    .map((line) => line.trim())
 
   while (normalizedLines[0] === '') {
     normalizedLines.shift()
@@ -430,12 +449,12 @@ function safeReadFile(filePath: string) {
 }
 
 function quoteQualifiedName(...parts: string[]) {
-  return parts.map(part => `"${part.replaceAll('"', '""')}"`).join('.')
+  return parts.map((part) => `"${part.replaceAll('"', '""')}"`).join('.')
 }
 
 function toPgTextLiteral(value: string) {
   return `E'${value
     .replaceAll('\\', '\\\\')
-    .replaceAll('\'', '\'\'')
+    .replaceAll("'", "''")
     .replaceAll('\n', '\\n')}'`
 }

@@ -48,8 +48,8 @@ export interface CreateTokenInput extends GeoSnapshot {
 export interface TokenStorageWhereInput {
   jti?: string | { in?: string[] }
   userId?: number
-  revokedAt?: null | { not?: null; lt?: Date }
-  expiresAt?: { gt?: Date; lt?: Date }
+  revokedAt?: null | { not?: null, lt?: Date }
+  expiresAt?: { gt?: Date, lt?: Date }
 }
 
 /**
@@ -90,7 +90,7 @@ export interface ITokenDelegate<
   createMany: (args: { data: CreateInput[] }) => Promise<number>
   /** 查询单条 */
   findUnique: (args: {
-    where: WhereInput & { jti?: string; id?: number }
+    where: WhereInput & { jti?: string, id?: number }
   }) => Promise<T | null>
   /** 查询多条 */
   findMany: (args: {
@@ -98,7 +98,7 @@ export interface ITokenDelegate<
     select?: { jti?: boolean }
   }) => Promise<T[]>
   /** 更新单条 */
-  update: (args: { where: WhereInput; data: UpdateInput }) => Promise<T>
+  update: (args: { where: WhereInput, data: UpdateInput }) => Promise<T>
   /** 批量更新 */
   updateMany: (args: {
     where: WhereInput

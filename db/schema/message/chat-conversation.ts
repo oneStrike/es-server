@@ -2,7 +2,7 @@ import {
   bigint,
   index,
   integer,
-  pgTable,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -12,7 +12,7 @@ import {
  * 聊天会话表（仅私聊）。
  * 主要承载会话级快照字段，供会话列表与消息中心快速读取。
  */
-export const chatConversation = pgTable(
+export const chatConversation = snakeCase.table(
   'chat_conversation',
   {
     /**

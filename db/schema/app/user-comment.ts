@@ -9,8 +9,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   text,
   timestamp,
   varchar,
@@ -20,7 +20,7 @@ import {
  * 用户评论表
  * 统一存储作品评论、章节评论和论坛回复
  */
-export const userComment = pgTable(
+export const userComment = snakeCase.table(
   'user_comment',
   {
     /**

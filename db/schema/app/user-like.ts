@@ -7,8 +7,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core'
@@ -17,7 +17,7 @@ import {
  * 用户点赞记录表
  * 统一存储作品、章节、论坛主题、评论的点赞行为
  */
-export const userLike = pgTable(
+export const userLike = snakeCase.table(
   'user_like',
   {
     /**

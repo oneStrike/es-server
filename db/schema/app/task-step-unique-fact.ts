@@ -4,8 +4,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  *
  * 显式记录某用户在某步骤下已计入过的唯一对象，避免把“同对象只算一次”隐藏在事件幂等键语义里。
  */
-export const taskStepUniqueFact = pgTable(
+export const taskStepUniqueFact = snakeCase.table(
   'task_step_unique_fact',
   {
     /** 唯一计数事实主键。 */

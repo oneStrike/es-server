@@ -2,7 +2,7 @@ import {
   boolean,
   index,
   integer,
-  pgTable,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -12,7 +12,7 @@ import {
  * 通知模板表。
  * 以 categoryKey 为唯一稳定配置键。
  */
-export const notificationTemplate = pgTable(
+export const notificationTemplate = snakeCase.table(
   'notification_template',
   {
     /** 主键 ID。 */

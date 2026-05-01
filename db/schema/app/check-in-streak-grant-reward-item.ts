@@ -3,8 +3,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -13,7 +13,7 @@ import {
  *
  * 一条 grant 下的每个奖励项单独持久化，避免继续使用 JSON snapshot。
  */
-export const checkInStreakGrantRewardItem = pgTable(
+export const checkInStreakGrantRewardItem = snakeCase.table(
   'check_in_streak_grant_reward_item',
   {
     /** 奖励项主键。 */

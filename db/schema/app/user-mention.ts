@@ -7,17 +7,17 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
-unique
+  unique,
 } from 'drizzle-orm/pg-core'
 
 /**
  * 用户提及事实表
  * 统一记录评论与论坛主题中的 @ 用户事实，并标记通知是否已补发。
  */
-export const userMention = pgTable(
+export const userMention = snakeCase.table(
   'user_mention',
   {
     /**

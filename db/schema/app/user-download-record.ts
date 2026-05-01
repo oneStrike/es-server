@@ -7,8 +7,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core'
@@ -18,7 +18,7 @@ import {
  * 记录用户对作品、章节等内容的下载操作
  * 支持下载计数统计和用户下载历史查询
  */
-export const userDownloadRecord = pgTable(
+export const userDownloadRecord = snakeCase.table(
   'user_download_record',
   {
     /**

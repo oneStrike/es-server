@@ -20,8 +20,6 @@ export function createDbClient(connectionString: string) {
 
   const db = drizzle({
     client: pool,
-    schema,
-    casing: 'snake_case',
     logger: process.env.NODE_ENV === 'development',
   }) as Db
 

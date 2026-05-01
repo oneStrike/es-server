@@ -3,8 +3,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  * 作为补签资格判断和高频读取的唯一 owner，按当前周期 bucket 保存系统额度，
  * 并与活动补签卡余额同表维护。
  */
-export const checkInMakeupAccount = pgTable(
+export const checkInMakeupAccount = snakeCase.table(
   'check_in_makeup_account',
   {
     /** 补签账户主键。 */

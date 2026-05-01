@@ -4,8 +4,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
@@ -15,7 +15,7 @@ import {
  *
  * 当前签到域只允许存在一套全局配置，不再保留多计划和未来生效时间窗语义。
  */
-export const checkInConfig = pgTable(
+export const checkInConfig = snakeCase.table(
   'check_in_config',
   {
     /** 全局签到配置主键。 */

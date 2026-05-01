@@ -3,8 +3,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -13,7 +13,7 @@ import {
  *
  * 一条奖励项一条记录，按 `sortOrder` 保持展示顺序。
  */
-export const checkInStreakRuleRewardItem = pgTable(
+export const checkInStreakRuleRewardItem = snakeCase.table(
   'check_in_streak_rule_reward_item',
   {
     /** 奖励项主键。 */

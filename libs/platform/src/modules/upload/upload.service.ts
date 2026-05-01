@@ -1,6 +1,7 @@
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { FastifyRequest } from 'fastify'
 import type {
+  MultipartFieldLike,
   PreparedUploadFile,
   UploadConfigProvider,
   UploadFileCategory,
@@ -8,7 +9,6 @@ import type {
   UploadResponseCarrier,
   UploadResult,
   UploadSystemConfig,
-  MultipartFieldLike,
 } from './upload.type'
 import { Buffer as NodeBuffer } from 'node:buffer'
 import { createWriteStream, promises as fs } from 'node:fs'

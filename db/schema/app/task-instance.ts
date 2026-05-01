@@ -4,8 +4,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  *
  * 表示某用户在某个周期内命中的一次任务实例；具体步骤进度由 `task_instance_step` 承载。
  */
-export const taskInstance = pgTable(
+export const taskInstance = snakeCase.table(
   'task_instance',
   {
     /** 实例主键。 */

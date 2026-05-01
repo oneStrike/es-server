@@ -3,8 +3,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -15,7 +15,7 @@ import {
  *
  * 以单行累计值替代历史槽位扫描，实现规则维度的 daily/total/cooldown 计数。
  */
-export const growthRuleUsageCounter = pgTable(
+export const growthRuleUsageCounter = snakeCase.table(
   'growth_rule_usage_counter',
   {
     /** 主键 ID。 */

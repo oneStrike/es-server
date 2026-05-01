@@ -310,7 +310,7 @@ export function ArrayProperty<T = string | number | boolean>(
               ? Number
               : String
             : primitiveHelpers?.apiType) ??
-          Object,
+            Object,
         isArray: true,
       }
 

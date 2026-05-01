@@ -4,8 +4,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  *
  * 每条记录独立维护某个连续签到天阈值的生命周期与奖励定义。
  */
-export const checkInStreakRule = pgTable(
+export const checkInStreakRule = snakeCase.table(
   'check_in_streak_rule',
   {
     /** 规则主键。 */

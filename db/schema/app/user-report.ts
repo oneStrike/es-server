@@ -7,8 +7,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -18,7 +18,7 @@ import {
  * 用户举报记录表
  * 统一存储作品、章节、论坛主题、评论、用户的举报行为
  */
-export const userReport = pgTable(
+export const userReport = snakeCase.table(
   'user_report',
   {
     /**

@@ -4,8 +4,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -15,7 +15,7 @@ import {
  * App 更新发布表。
  * 每个平台维护多条历史版本，只有一条可处于发布态。
  */
-export const appUpdateRelease = pgTable(
+export const appUpdateRelease = snakeCase.table(
   'app_update_release',
   {
     /**

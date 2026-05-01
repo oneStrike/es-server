@@ -7,9 +7,9 @@ import {
   check,
   index,
   integer,
-  pgTable,
   primaryKey,
   smallint,
+  snakeCase,
   timestamp,
 } from 'drizzle-orm/pg-core'
 
@@ -17,7 +17,7 @@ import {
  * 用户作品阅读状态表
  * 用于保存用户对作品（漫画/小说）的阅读进度状态
  */
-export const userWorkReadingState = pgTable(
+export const userWorkReadingState = snakeCase.table(
   'user_work_reading_state',
   {
     /**

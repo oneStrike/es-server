@@ -5,8 +5,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -18,7 +18,7 @@ import {
  * 同一用户在同一自然日只能拥有一条签到事实。奖励配置在写入时直接冻结到
  * `resolvedRewardItems` 和相关图标快照字段，后续配置更新不回溯影响历史事实。
  */
-export const checkInRecord = pgTable(
+export const checkInRecord = snakeCase.table(
   'check_in_record',
   {
     /** 签到记录主键。 */

@@ -4,8 +4,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  *
  * 第一步正式能力仍只开放单步骤任务，但模型层保留步骤边界，便于未来扩展。
  */
-export const taskStep = pgTable(
+export const taskStep = snakeCase.table(
   'task_step',
   {
     /** 步骤主键。 */

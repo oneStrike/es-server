@@ -8,8 +8,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
@@ -17,7 +17,7 @@ import {
 /**
  * 用户徽章表 - 存储通用用户徽章信息
  */
-export const userBadge = pgTable(
+export const userBadge = snakeCase.table(
   'user_badge',
   {
     /**

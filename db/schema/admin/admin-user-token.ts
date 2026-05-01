@@ -8,8 +8,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -18,7 +18,7 @@ import {
 /**
  * 管理端用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
  */
-export const adminUserToken = pgTable(
+export const adminUserToken = snakeCase.table(
   'admin_user_token',
   {
     /**

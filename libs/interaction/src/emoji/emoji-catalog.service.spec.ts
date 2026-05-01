@@ -42,7 +42,7 @@ describe('EmojiCatalogService picker visibility', () => {
     await service.listCatalog({ scene: EmojiSceneEnum.CHAT })
 
     expect(compileCondition(capturedCondition)).toContain(
-      '"emoji_pack"."visibleInPicker"',
+      '"emoji_pack"."visible_in_picker"',
     )
   })
 
@@ -84,7 +84,7 @@ describe('EmojiCatalogService picker visibility', () => {
     })
 
     expect(compileCondition(capturedCondition)).toContain(
-      '"emoji_pack"."visibleInPicker"',
+      '"emoji_pack"."visible_in_picker"',
     )
   })
 
@@ -128,7 +128,7 @@ describe('EmojiCatalogService picker visibility', () => {
     })
 
     expect(compileCondition(capturedCondition)).toContain(
-      '"emoji_pack"."visibleInPicker"',
+      '"emoji_pack"."visible_in_picker"',
     )
   })
 })

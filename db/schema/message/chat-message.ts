@@ -1,23 +1,23 @@
+import { sql } from 'drizzle-orm'
 import {
   bigint,
   check,
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   text,
   timestamp,
   unique,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
 
 /**
  * 聊天消息表（仅私聊）。
  * 同时承担消息回放、游标分页与会话快照更新的事实源职责。
  */
-export const chatMessage = pgTable(
+export const chatMessage = snakeCase.table(
   'chat_message',
   {
     /**
@@ -113,3 +113,6 @@ export const chatMessage = pgTable(
     check('chat_message_status_valid_chk', sql`${table.status} in (1, 2, 3)`),
   ],
 )
+
+export type ChatMessageSelect = typeof chatMessage.$inferSelect
+export type ChatMessageInsert = typeof chatMessage.$inferInsert

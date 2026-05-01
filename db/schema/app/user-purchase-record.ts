@@ -8,8 +8,8 @@ import {
   index,
   integer,
   numeric,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   uniqueIndex,
   varchar,
@@ -20,7 +20,7 @@ import {
  * 记录用户对作品、章节等内容的购买操作
  * 支持购买历史查询和消费统计
  */
-export const userPurchaseRecord = pgTable(
+export const userPurchaseRecord = snakeCase.table(
   'user_purchase_record',
   {
     /**

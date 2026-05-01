@@ -5,9 +5,9 @@ import {
   check,
   index,
   integer,
-  pgTable,
   primaryKey,
   smallint,
+  snakeCase,
   timestamp,
 } from 'drizzle-orm/pg-core'
 
@@ -15,7 +15,7 @@ import {
  * 聊天会话成员表（仅私聊）。
  * 读路径高度依赖“活跃成员（leftAt is null）”语义，因此活跃成员查询必须有独立索引支撑。
  */
-export const chatConversationMember = pgTable(
+export const chatConversationMember = snakeCase.table(
   'chat_conversation_member',
   {
     /**

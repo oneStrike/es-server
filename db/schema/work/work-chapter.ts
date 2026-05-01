@@ -4,8 +4,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   text,
   timestamp,
   uniqueIndex,
@@ -19,7 +19,7 @@ import {
  * 作品章节表
  * 存储漫画/小说章节信息与统计数据
  */
-export const workChapter = pgTable(
+export const workChapter = snakeCase.table(
   'work_chapter',
   {
     /**

@@ -3,8 +3,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -15,7 +15,7 @@ import {
  *
  * 作为积分、经验、道具、虚拟货币、等级等可计量资产的统一热余额来源。
  */
-export const userAssetBalance = pgTable(
+export const userAssetBalance = snakeCase.table(
   'user_asset_balance',
   {
     /** 主键 ID。 */

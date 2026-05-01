@@ -4,8 +4,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -17,7 +17,7 @@ import {
  * 统一承载通用成长事件、任务奖励、签到基础奖励、签到连续奖励的补偿事实，
  * 用于保留 durable 失败事实、支持后台分页排障与后续补偿重试。
  */
-export const growthRewardSettlement = pgTable(
+export const growthRewardSettlement = snakeCase.table(
   'growth_reward_settlement',
   {
     /** 主键 ID。 */

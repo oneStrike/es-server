@@ -5,7 +5,7 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -15,7 +15,7 @@ import {
  * 用户通知投影表。
  * 只承载通知中心对用户可见的读模型，不再承担 producer 侧通知类型事实源职责。
  */
-export const userNotification = pgTable(
+export const userNotification = snakeCase.table(
   'user_notification',
   {
     /** 主键 ID。 */

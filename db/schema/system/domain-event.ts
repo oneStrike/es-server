@@ -3,7 +3,7 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -13,7 +13,7 @@ import {
  * 通用领域事件表。
  * 只存放“发生了什么”的事实，不存放按 consumer 拆开的处理状态。
  */
-export const domainEvent = pgTable(
+export const domainEvent = snakeCase.table(
   'domain_event',
   {
     /** 主键 ID。 */

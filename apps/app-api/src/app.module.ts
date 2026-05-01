@@ -1,3 +1,4 @@
+import { PlatformModule } from '@libs/platform/bootstrap'
 import {
   AliyunConfigRegister,
   AuthConfigRegister,
@@ -9,7 +10,6 @@ import {
   UploadConfigRegister,
 } from '@libs/platform/config'
 import { HttpExceptionFilter } from '@libs/platform/filters'
-import { PlatformModule } from '@libs/platform/bootstrap'
 import { JwtAuthGuard } from '@libs/platform/modules/auth/auth.guard'
 import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
 import { getEnv } from '@libs/platform/utils'

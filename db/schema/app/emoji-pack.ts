@@ -4,8 +4,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  * - 管理表情包基础信息、展示排序与可见场景。
  * - sceneType 使用 smallint[] 存储支持场景集合，当前取值：1(chat)/2(comment)/3(forum)。
  */
-export const emojiPack = pgTable(
+export const emojiPack = snakeCase.table(
   'emoji_pack',
   {
     /**
@@ -67,7 +67,10 @@ export const emojiPack = pgTable(
      * - 1=聊天，2=评论，3=论坛。
      * - 默认对聊天、评论、论坛全场景可见。
      */
-    sceneType: smallint().array().default(sql`ARRAY[1,2,3]::smallint[]`).notNull(),
+    sceneType: smallint()
+      .array()
+      .default(sql`ARRAY[1,2,3]::smallint[]`)
+      .notNull(),
     /**
      * 创建人后台用户 ID。
      * - 为空表示历史数据或未记录来源。
@@ -82,12 +85,16 @@ export const emojiPack = pgTable(
      * 创建时间（UTC）。
      * - 默认写入当前数据库时间。
      */
-    createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
+    createdAt: timestamp({ withTimezone: true, precision: 6 })
+      .defaultNow()
+      .notNull(),
     /**
      * 更新时间（UTC）。
      * - 每次更新记录时自动刷新。
      */
-    updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp({ withTimezone: true, precision: 6 })
+      .$onUpdate(() => new Date())
+      .notNull(),
     /**
      * 软删除时间（UTC）。
      * - 非空表示该记录已逻辑删除。

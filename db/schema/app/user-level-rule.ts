@@ -2,24 +2,24 @@
  * Auto-converted from legacy schema.
  */
 
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
   index,
   integer,
   numeric,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
 
 /**
  * 用户等级规则表 - 定义用户等级规则，包括等级名称、所需经验、等级权益等
  */
-export const userLevelRule = pgTable(
+export const userLevelRule = snakeCase.table(
   'user_level_rule',
   {
     /**

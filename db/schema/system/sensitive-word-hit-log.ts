@@ -3,8 +3,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
@@ -12,7 +12,7 @@ import {
 /**
  * 敏感词命中明细表 - 记录业务审核流量中的实际命中
  */
-export const sensitiveWordHitLog = pgTable(
+export const sensitiveWordHitLog = snakeCase.table(
   'sensitive_word_hit_log',
   {
     /**

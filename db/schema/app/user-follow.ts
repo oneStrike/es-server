@@ -3,8 +3,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core'
@@ -13,7 +13,7 @@ import {
  * 用户关注事实表
  * 统一记录用户对用户、作者、论坛板块等目标的单向关注关系
  */
-export const userFollow = pgTable(
+export const userFollow = snakeCase.table(
   'user_follow',
   {
     /**

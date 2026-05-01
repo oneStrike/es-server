@@ -1,4 +1,10 @@
 import type { PageDto } from '@libs/platform/dto'
+import type {
+  InboxLatestChatSummary,
+  InboxLatestNotificationRow,
+  InboxRawRowsResult,
+  InboxTimelineRawRow,
+} from './inbox.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm'
@@ -7,42 +13,37 @@ import {
   getMessageNotificationCategoryLabel,
   MessageNotificationCategoryKey,
 } from '../notification/notification.constant'
-
-export interface InboxLatestChatSummary {
-  conversationId: number
-  lastMessageId?: string
-  lastMessageAt?: Date
-  lastMessageContent?: string
-  lastSenderId?: number
-}
+import { MessageInboxSummaryQueryService } from './inbox-summary-query.service'
 
 @Injectable()
 export class MessageInboxService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly summaryQueryService: MessageInboxSummaryQueryService,
+  ) {}
 
+  // 获取统一 Drizzle 数据库入口。
   private get db() {
     return this.drizzle.db
   }
 
+  // 获取用户通知读模型表。
   private get notification() {
     return this.drizzle.schema.userNotification
   }
 
+  // 获取聊天会话读模型表。
   private get conversation() {
     return this.drizzle.schema.chatConversation
   }
 
+  // 获取聊天会话成员表。
   private get conversationMember() {
     return this.drizzle.schema.chatConversationMember
   }
 
-  private get chatMessage() {
-    return this.drizzle.schema.chatMessage
-  }
-
-  private extractRows<T>(
-    result: { rows?: T[] | null } | object | null | undefined,
-  ) {
+  // 从原生 SQL 查询结果中提取 rows。
+  private extractRows<T>(result: InboxRawRowsResult<T>) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
     }
@@ -50,6 +51,7 @@ export class MessageInboxService {
     return Array.isArray(rows) ? rows : []
   }
 
+  // 构造当前用户未过期通知的基础可见条件。
   private buildNotificationWhere(userId: number, now: Date) {
     return and(
       eq(this.notification.receiverUserId, userId),
@@ -60,15 +62,9 @@ export class MessageInboxService {
     )
   }
 
+  // 将最新通知行裁剪为 inbox 对外摘要结构。
   private buildLatestNotificationOutput(
-    latestNotification?: {
-      id: number
-      categoryKey: string
-      title: string
-      content: string
-      createdAt: Date
-      expiresAt: Date | null
-    },
+    latestNotification?: InboxLatestNotificationRow,
     now = new Date(),
   ) {
     return latestNotification &&
@@ -86,57 +82,24 @@ export class MessageInboxService {
       : undefined
   }
 
+  // 查询通知中心未读分类汇总。
   async getNotificationUnreadSummary(userId: number, now = new Date()) {
-    const rows = await this.db
-      .select({
-        categoryKey: this.notification.categoryKey,
-        count: sql<number>`count(*)::int`,
-      })
-      .from(this.notification)
-      .where(
-        and(
-          this.buildNotificationWhere(userId, now),
-          eq(this.notification.isRead, false),
-        ),
-      )
-      .groupBy(this.notification.categoryKey)
+    const rows = await this.summaryQueryService.getNotificationUnreadSummary({
+      userId,
+      now,
+    })
 
     return buildNotificationUnreadSummary(rows)
   }
 
+  // 查询通知中心摘要，不包含最新聊天摘要。
   async getNotificationSummary(userId: number) {
     const now = new Date()
-    const notificationWhere = this.buildNotificationWhere(userId, now)
     const [notificationUnread, chatUnreadAgg, latestNotificationRows] =
       await Promise.all([
         this.getNotificationUnreadSummary(userId, now),
-        this.db
-          .select({
-            unreadCount: sql<number>`coalesce(sum(${this.conversationMember.unreadCount}), 0)`,
-          })
-          .from(this.conversationMember)
-          .where(
-            and(
-              eq(this.conversationMember.userId, userId),
-              isNull(this.conversationMember.leftAt),
-            ),
-          ),
-        this.db
-          .select({
-            id: this.notification.id,
-            categoryKey: this.notification.categoryKey,
-            title: this.notification.title,
-            content: this.notification.content,
-            createdAt: this.notification.createdAt,
-            expiresAt: this.notification.expiresAt,
-          })
-          .from(this.notification)
-          .where(notificationWhere)
-          .orderBy(
-            sql`${this.notification.createdAt} desc`,
-            sql`${this.notification.id} desc`,
-          )
-          .limit(1),
+        this.summaryQueryService.getChatUnreadAggregate({ userId }),
+        this.summaryQueryService.getLatestNotification({ userId, now }),
       ])
 
     const chatUnreadCount = Number(chatUnreadAgg[0]?.unreadCount ?? 0)
@@ -152,9 +115,9 @@ export class MessageInboxService {
     }
   }
 
+  // 查询消息中心聚合摘要，包含通知和最新聊天。
   async getSummary(userId: number) {
     const now = new Date()
-    const notificationWhere = this.buildNotificationWhere(userId, now)
     const [
       notificationUnread,
       chatUnreadAgg,
@@ -162,55 +125,9 @@ export class MessageInboxService {
       latestConversationRows,
     ] = await Promise.all([
       this.getNotificationUnreadSummary(userId, now),
-      this.db
-        .select({
-          unreadCount: sql<number>`coalesce(sum(${this.conversationMember.unreadCount}), 0)`,
-        })
-        .from(this.conversationMember)
-        .where(
-          and(
-            eq(this.conversationMember.userId, userId),
-            isNull(this.conversationMember.leftAt),
-          ),
-        ),
-      this.db
-        .select({
-          id: this.notification.id,
-          categoryKey: this.notification.categoryKey,
-          title: this.notification.title,
-          content: this.notification.content,
-          createdAt: this.notification.createdAt,
-          expiresAt: this.notification.expiresAt,
-        })
-        .from(this.notification)
-        .where(notificationWhere)
-        .orderBy(
-          sql`${this.notification.createdAt} desc`,
-          sql`${this.notification.id} desc`,
-        )
-        .limit(1),
-      this.db
-        .select({
-          id: this.conversation.id,
-          lastMessageId: this.conversation.lastMessageId,
-          lastMessageAt: this.conversation.lastMessageAt,
-          lastSenderId: this.conversation.lastSenderId,
-        })
-        .from(this.conversation)
-        .innerJoin(
-          this.conversationMember,
-          and(
-            eq(this.conversationMember.conversationId, this.conversation.id),
-            eq(this.conversationMember.userId, userId),
-            isNull(this.conversationMember.leftAt),
-          ),
-        )
-        .where(isNotNull(this.conversation.lastMessageAt))
-        .orderBy(
-          sql`${this.conversation.lastMessageAt} desc`,
-          sql`${this.conversation.id} desc`,
-        )
-        .limit(1),
+      this.summaryQueryService.getChatUnreadAggregate({ userId }),
+      this.summaryQueryService.getLatestNotification({ userId, now }),
+      this.summaryQueryService.getLatestConversation({ userId }),
     ])
 
     const chatUnreadCount = Number(chatUnreadAgg[0]?.unreadCount ?? 0)
@@ -223,11 +140,8 @@ export class MessageInboxService {
 
     if (latestConversation) {
       const lastMessage = latestConversation.lastMessageId
-        ? await this.db.query.chatMessage.findFirst({
-            where: { id: latestConversation.lastMessageId },
-            columns: {
-              content: true,
-            },
+        ? await this.summaryQueryService.getLatestChatMessage({
+            messageId: latestConversation.lastMessageId,
           })
         : null
 
@@ -255,6 +169,7 @@ export class MessageInboxService {
     }
   }
 
+  // 查询消息中心 timeline，保留原生 SQL UNION 语义。
   async getTimeline(userId: number, dto: PageDto) {
     const page = this.drizzle.buildPage(dto, {
       maxPageSize: 100,
@@ -316,19 +231,15 @@ export class MessageInboxService {
         `),
       ])
 
-    const timeline = this.extractRows<{
-      sourceType: 'notification' | 'chat'
-      createdAt: Date
-      title: string
-      content: string | null
-      bizId: string
-    }>(timelineResult).map((item) => ({
-      sourceType: item.sourceType,
-      createdAt: item.createdAt,
-      title: item.title,
-      content: item.content ?? '',
-      bizId: item.bizId,
-    }))
+    const timeline = this.extractRows<InboxTimelineRawRow>(timelineResult).map(
+      (item) => ({
+        sourceType: item.sourceType,
+        createdAt: item.createdAt,
+        title: item.title,
+        content: item.content ?? '',
+        bizId: item.bizId,
+      }),
+    )
 
     return {
       list: timeline,

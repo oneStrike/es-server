@@ -7,8 +7,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
@@ -19,7 +19,7 @@ import {
  * 用于浏览历史查询、热度统计、推荐算法等
  * 支持用户删除浏览记录
  */
-export const userBrowseLog = pgTable(
+export const userBrowseLog = snakeCase.table(
   'user_browse_log',
   {
     /**

@@ -4,8 +4,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  *
  * 统一记录补签额度的发放、消费和过期，作为补签额度的唯一事实来源。
  */
-export const checkInMakeupFact = pgTable(
+export const checkInMakeupFact = snakeCase.table(
   'check_in_makeup_fact',
   {
     /** 补签事实主键。 */

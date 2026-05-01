@@ -1,10 +1,10 @@
-import { integer, pgTable, timestamp } from 'drizzle-orm/pg-core'
+import { integer, snakeCase, timestamp } from 'drizzle-orm/pg-core'
 
 /**
  * 应用用户计数表
  * 承载高频读取的用户聚合读模型字段
  */
-export const appUserCount = pgTable(
+export const appUserCount = snakeCase.table(
   'app_user_count',
   {
     /**

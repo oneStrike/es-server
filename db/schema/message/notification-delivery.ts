@@ -5,8 +5,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  * 通知 consumer 处理结果表。
  * 记录 notification consumer 对单条 dispatch 的最终业务处理结果。
  */
-export const notificationDelivery = pgTable(
+export const notificationDelivery = snakeCase.table(
   'notification_delivery',
   {
     /** 主键 ID。 */

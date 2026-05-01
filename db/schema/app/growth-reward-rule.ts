@@ -4,8 +4,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -17,7 +17,7 @@ import {
  * 使用 `type + assetType + assetKey` 统一描述成长事件对应的资产规则，
  * 替代历史 `user_point_rule` / `user_experience_rule` 双表模型。
  */
-export const growthRewardRule = pgTable(
+export const growthRewardRule = snakeCase.table(
   'growth_reward_rule',
   {
     /** 主键 ID。 */

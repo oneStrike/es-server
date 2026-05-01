@@ -1,6 +1,6 @@
+export { PlatformModule } from '../platform.module'
 export { setupApp } from './app.setup'
 export { setupCompression } from './compression'
 export { logStartupInfo } from './logStartupInfo'
 export { setupMultipart } from './multipart'
 export { setupSwagger } from './swagger'
-export { PlatformModule } from '../platform.module'

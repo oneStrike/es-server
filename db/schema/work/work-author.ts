@@ -7,8 +7,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -17,7 +17,7 @@ import {
 /**
  * 作者信息模型
  */
-export const workAuthor = pgTable(
+export const workAuthor = snakeCase.table(
   'work_author',
   {
     /**

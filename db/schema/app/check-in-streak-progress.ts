@@ -3,7 +3,7 @@ import {
   check,
   date,
   integer,
-  pgTable,
+  snakeCase,
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core'
@@ -13,7 +13,7 @@ import {
  *
  * 运行时只记录用户当前连续状态，不再区分日常与活动两套进度。
  */
-export const checkInStreakProgress = pgTable(
+export const checkInStreakProgress = snakeCase.table(
   'check_in_streak_progress',
   {
     /** 进度主键。 */

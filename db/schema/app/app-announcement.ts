@@ -8,8 +8,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   text,
   timestamp,
   varchar,
@@ -18,7 +18,7 @@ import {
 /**
  * 系统公告表 - 存储平台公告、活动公告、维护公告等信息
  */
-export const appAnnouncement = pgTable(
+export const appAnnouncement = snakeCase.table(
   'app_announcement',
   {
     /**

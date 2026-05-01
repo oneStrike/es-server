@@ -4,8 +4,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -15,7 +15,7 @@ import {
  * 通用领域事件分发表。
  * 一条领域事件会按 consumer 拆分成多条 dispatch 记录，分别追踪处理状态。
  */
-export const domainEventDispatch = pgTable(
+export const domainEventDispatch = snakeCase.table(
   'domain_event_dispatch',
   {
     /** 主键 ID。 */

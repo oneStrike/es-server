@@ -5,15 +5,15 @@
 import {
   index,
   integer,
-  pgTable,
   primaryKey,
+  snakeCase,
   timestamp,
 } from 'drizzle-orm/pg-core'
 
 /**
  * 系统公告阅读记录表 - 记录用户已读的公告
  */
-export const appAnnouncementRead = pgTable(
+export const appAnnouncementRead = snakeCase.table(
   'app_announcement_read',
   {
     /**

@@ -7,8 +7,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core'
@@ -18,7 +18,7 @@ import {
  * 记录用户对各类目标（漫画、小说、论坛主题）的收藏操作
  * 支持收藏计数统计和用户收藏列表查询
  */
-export const userFavorite = pgTable(
+export const userFavorite = snakeCase.table(
   'user_favorite',
   {
     /**

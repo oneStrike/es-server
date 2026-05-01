@@ -1,11 +1,23 @@
 import { sql } from 'drizzle-orm'
-import { boolean, check, index, integer, jsonb, pgTable, smallint, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  smallint,
+  snakeCase,
+  text,
+  timestamp,
+  unique,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 漫画压缩包导入任务表。
  * 统一持久化预解析草稿、用户确认结果和后台导入执行状态。
  */
-export const workComicArchiveImportTask = pgTable(
+export const workComicArchiveImportTask = snakeCase.table(
   'work_comic_archive_import_task',
   {
     /**
@@ -83,13 +95,17 @@ export const workComicArchiveImportTask = pgTable(
     /**
      * 创建时间。
      */
-    createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
+    createdAt: timestamp({ withTimezone: true, precision: 6 })
+      .defaultNow()
+      .notNull(),
     /**
      * 更新时间。
      */
-    updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp({ withTimezone: true, precision: 6 })
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
-  table => [
+  (table) => [
     /**
      * 任务ID唯一约束。
      */
@@ -134,5 +150,7 @@ export const workComicArchiveImportTask = pgTable(
   ],
 )
 
-export type WorkComicArchiveImportTaskSelect = typeof workComicArchiveImportTask.$inferSelect
-export type WorkComicArchiveImportTaskInsert = typeof workComicArchiveImportTask.$inferInsert
+export type WorkComicArchiveImportTaskSelect =
+  typeof workComicArchiveImportTask.$inferSelect
+export type WorkComicArchiveImportTaskInsert =
+  typeof workComicArchiveImportTask.$inferInsert

@@ -3,9 +3,9 @@ import {
   check,
   index,
   integer,
-  pgTable,
   primaryKey,
   smallint,
+  snakeCase,
   timestamp,
 } from 'drizzle-orm/pg-core'
 
@@ -14,7 +14,7 @@ import {
  * - 记录用户在不同场景的最近使用轨迹与累计次数。
  * - 采用 (userId, scene, emojiAssetId) 复合主键做幂等聚合更新。
  */
-export const emojiRecentUsage = pgTable(
+export const emojiRecentUsage = snakeCase.table(
   'emoji_recent_usage',
   {
     /**

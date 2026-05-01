@@ -4,8 +4,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -14,7 +14,7 @@ import {
 /**
  * 通用敏感词表 - 存储敏感词信息，用于内容过滤和审核
  */
-export const sensitiveWord = pgTable(
+export const sensitiveWord = snakeCase.table(
   'sensitive_word',
   {
     /**

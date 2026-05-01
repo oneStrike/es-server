@@ -488,12 +488,12 @@ export class SystemConfigService implements OnModuleInit {
         return undefined
       }
       current = current[segment] as
-        | Record<string, unknown>
-        | string
-        | number
-        | boolean
-        | null
-        | undefined
+      | Record<string, unknown>
+      | string
+      | number
+      | boolean
+      | null
+      | undefined
     }
     return current
   }

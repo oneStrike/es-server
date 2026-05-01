@@ -4,8 +4,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core'
@@ -15,7 +15,7 @@ import {
  *
  * 表示某个任务实例下，某个步骤当前的独立进度事实。
  */
-export const taskInstanceStep = pgTable(
+export const taskInstanceStep = snakeCase.table(
   'task_instance_step',
   {
     /** 实例步骤主键。 */

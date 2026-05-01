@@ -6,7 +6,7 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -17,7 +17,7 @@ import {
  *
  * 统一记录单一连续签到模型下的奖励发放头信息。
  */
-export const checkInStreakGrant = pgTable(
+export const checkInStreakGrant = snakeCase.table(
   'check_in_streak_grant',
   {
     /** 发放事实主键。 */

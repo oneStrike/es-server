@@ -5,8 +5,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   uniqueIndex,
   varchar,
@@ -17,7 +17,7 @@ import {
  * - 存储每一个可渲染表情条目（unicode/custom）。
  * - 通过 packId 归属到具体表情包。
  */
-export const emojiAsset = pgTable(
+export const emojiAsset = snakeCase.table(
   'emoji_asset',
   {
     /**
@@ -95,12 +95,16 @@ export const emojiAsset = pgTable(
     /**
      * 创建时间（UTC）。
      */
-    createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
+    createdAt: timestamp({ withTimezone: true, precision: 6 })
+      .defaultNow()
+      .notNull(),
     /**
      * 更新时间（UTC）。
      * - 每次更新时自动刷新。
      */
-    updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
+    updatedAt: timestamp({ withTimezone: true, precision: 6 })
+      .$onUpdate(() => new Date())
+      .notNull(),
     /**
      * 软删除时间（UTC）。
      */
@@ -141,7 +145,9 @@ export const emojiAsset = pgTable(
      */
     uniqueIndex('emoji_asset_shortcode_live_key')
       .on(table.shortcode)
-      .where(sql`${table.shortcode} is not null and ${table.deletedAt} is null`),
+      .where(
+        sql`${table.shortcode} is not null and ${table.deletedAt} is null`,
+      ),
     /**
      * 检查约束：kind 仅允许 1/2。
      */

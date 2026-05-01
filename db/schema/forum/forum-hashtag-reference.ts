@@ -4,8 +4,8 @@ import {
   check,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core'
@@ -14,7 +14,7 @@ import {
  * forum 话题引用事实表
  * 记录 hashtag 与 forum topic / forum topic comment 的当前引用关系。
  */
-export const forumHashtagReference = pgTable(
+export const forumHashtagReference = snakeCase.table(
   'forum_hashtag_reference',
   {
     /**

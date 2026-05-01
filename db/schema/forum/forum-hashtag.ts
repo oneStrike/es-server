@@ -5,8 +5,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  * forum 话题（hashtag）资源表
  * 统一承载 forum 域内全局唯一、跨版块归一聚合的话题资源。
  */
-export const forumHashtag = pgTable(
+export const forumHashtag = snakeCase.table(
   'forum_hashtag',
   {
     /**

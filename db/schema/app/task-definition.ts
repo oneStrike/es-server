@@ -4,8 +4,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   unique,
   varchar,
@@ -16,7 +16,7 @@ import {
  *
  * 只承载运营侧可管理的任务头信息；步骤、实例和唯一计数事实分别由独立表承载。
  */
-export const taskDefinition = pgTable(
+export const taskDefinition = snakeCase.table(
   'task_definition',
   {
     /** 任务头主键。 */

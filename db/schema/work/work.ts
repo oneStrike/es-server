@@ -10,8 +10,8 @@ import {
   doublePrecision,
   index,
   integer,
-  pgTable,
   smallint,
+  snakeCase,
   text,
   timestamp,
   unique,
@@ -22,7 +22,7 @@ import {
  * 作品表
  * 统一存储漫画与小说的基础信息
  */
-export const work = pgTable(
+export const work = snakeCase.table(
   'work',
   {
     /**

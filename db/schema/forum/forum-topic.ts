@@ -9,8 +9,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   text,
   timestamp,
   varchar,
@@ -19,7 +19,7 @@ import {
 /**
  * 论坛主题表
  */
-export const forumTopic = pgTable(
+export const forumTopic = snakeCase.table(
   'forum_topic',
   {
     /**

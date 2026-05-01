@@ -17,7 +17,6 @@ export default defineConfig({
     table: '__drizzle_migrations__',
     schema: 'public',
   },
-  casing: 'snake_case',
   breakpoints: true,
   strict: true,
   verbose: true,

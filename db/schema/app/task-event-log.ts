@@ -5,8 +5,8 @@ import {
   index,
   integer,
   jsonb,
-  pgTable,
   smallint,
+  snakeCase,
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
@@ -16,7 +16,7 @@ import {
  *
  * 统一记录步骤推进、手动操作、拒绝原因与事件上下文，兼顾排障与对账。
  */
-export const taskEventLog = pgTable(
+export const taskEventLog = snakeCase.table(
   'task_event_log',
   {
     /** 日志主键。 */
