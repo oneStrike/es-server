@@ -39,6 +39,10 @@ type ForumTopicServicePrivateApi = {
         content: Array<Record<string, unknown>>
       }>
     }
+    contentPreview: {
+      plainText: string
+      segments: Array<Record<string, unknown>>
+    }
   }>
   deleteTopicWithCurrent: (
     topic: {
@@ -53,7 +57,7 @@ type ForumTopicServicePrivateApi = {
     },
     context?: Record<string, unknown>,
   ) => Promise<void>
-  moveTopic: (input: { id: number, sectionId: number }) => Promise<boolean>
+  moveTopic: (input: { id: number; sectionId: number }) => Promise<boolean>
   getTopicSectionBriefMap: (
     sectionIds: number[],
     options?: {
@@ -382,6 +386,10 @@ describe('forumTopicService helpers', () => {
           type: 'doc',
           content: [],
         },
+        contentPreview: {
+          plainText: '测试正文',
+          segments: [{ type: 'text', text: '测试正文' }],
+        },
         bodyTokens: [],
         mentionFacts: [],
         emojiRecentUsageItems: [],
@@ -417,8 +425,10 @@ describe('forumTopicService helpers', () => {
           },
         ],
       })),
-      renderHtml: jest.fn((body: { content?: Array<{ content?: Array<{ text?: string }> }> }) =>
-        `<p>${body.content?.[0]?.content?.[0]?.text ?? ''}</p>`),
+      renderHtml: jest.fn(
+        (body: { content?: Array<{ content?: Array<{ text?: string }> }> }) =>
+          `<p>${body.content?.[0]?.content?.[0]?.text ?? ''}</p>`,
+      ),
     }
     const bodyCompilerService = {
       compile: jest.fn(async (body: unknown) => ({
@@ -430,12 +440,10 @@ describe('forumTopicService helpers', () => {
       })),
     }
     const forumHashtagBodyService = {
-      materializeBodyInTx: jest.fn(
-        async ({ body }: { body: unknown }) => ({
-          body,
-          hashtagFacts: [],
-        }),
-      ),
+      materializeBodyInTx: jest.fn(async ({ body }: { body: unknown }) => ({
+        body,
+        hashtagFacts: [],
+      })),
     }
 
     const service = new ForumTopicService(
@@ -480,7 +488,11 @@ describe('forumTopicService helpers', () => {
           } | null
         }) =>
           !section.groupId ||
-          Boolean(section.group && section.group.isEnabled && !section.group.deletedAt),
+          Boolean(
+            section.group &&
+            section.group.isEnabled &&
+            !section.group.deletedAt,
+          ),
       ),
     }
     const service = new ForumTopicService(
@@ -565,7 +577,9 @@ describe('forumTopicService helpers', () => {
           section.isEnabled &&
           (!section.groupId ||
             Boolean(
-              section.group && section.group.isEnabled && !section.group.deletedAt,
+              section.group &&
+              section.group.isEnabled &&
+              !section.group.deletedAt,
             )),
       ),
     }
@@ -742,9 +756,7 @@ describe('forumTopicService helpers', () => {
     circularVideos.push({ self: circularVideos })
 
     expect(() =>
-      (
-        service as unknown as ForumTopicServicePrivateApi
-      ).normalizeTopicMedia({
+      (service as unknown as ForumTopicServicePrivateApi).normalizeTopicMedia({
         videos: circularVideos,
       }),
     ).toThrow(
@@ -759,7 +771,9 @@ describe('forumTopicService helpers', () => {
     const { service } = createMaterializeTopicBodyHarness()
 
     await expect(
-      (service as unknown as ForumTopicServicePrivateApi).materializeTopicBodyInTx(
+      (
+        service as unknown as ForumTopicServicePrivateApi
+      ).materializeTopicBodyInTx(
         {} as never,
         {
           html: '   ',
@@ -802,6 +816,59 @@ describe('forumTopicService helpers', () => {
     )
   })
 
+  it('derives content preview from the materialized canonical body', async () => {
+    const { forumHashtagBodyService, service } =
+      createMaterializeTopicBodyHarness()
+    forumHashtagBodyService.materializeBodyInTx.mockResolvedValueOnce({
+      body: {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', text: '欢迎 ' },
+              { type: 'mentionUser', userId: 9, nickname: '测试用户' },
+              { type: 'text', text: ' 关注 ' },
+              {
+                type: 'forumHashtag',
+                hashtagId: 77,
+                slug: 'typescript',
+                displayName: 'TypeScript',
+              },
+            ],
+          },
+        ],
+      },
+      hashtagFacts: [],
+    })
+
+    const result = await (
+      service as unknown as ForumTopicServicePrivateApi
+    ).materializeTopicBodyInTx(
+      {} as never,
+      {
+        html: '<p>欢迎 <span>@测试用户</span></p>',
+      },
+      9,
+    )
+
+    expect(result.contentPreview).toEqual({
+      plainText: '欢迎 @测试用户 关注 #TypeScript',
+      segments: [
+        { type: 'text', text: '欢迎 ' },
+        { type: 'mention', text: '@测试用户', userId: 9, nickname: '测试用户' },
+        { type: 'text', text: ' 关注 ' },
+        {
+          type: 'hashtag',
+          text: '#TypeScript',
+          hashtagId: 77,
+          slug: 'typescript',
+          displayName: 'TypeScript',
+        },
+      ],
+    })
+  })
+
   it('deletes hidden topics without decrementing visible section topic count', async () => {
     const { forumCounterService, service, tx } =
       createDeleteTopicServiceHarness()
@@ -832,12 +899,8 @@ describe('forumTopicService helpers', () => {
   })
 
   it('syncs hashtag reference section ids when moving a topic', async () => {
-    const {
-      forumCounterService,
-      forumHashtagReferenceService,
-      service,
-      tx,
-    } = createMoveTopicServiceHarness()
+    const { forumCounterService, forumHashtagReferenceService, service, tx } =
+      createMoveTopicServiceHarness()
 
     await expect(
       (service as unknown as ForumTopicServicePrivateApi).moveTopic({
@@ -866,10 +929,9 @@ describe('forumTopicService helpers', () => {
     const { forumPermissionService, service } = createSectionBriefMapHarness()
 
     await expect(
-      (service as unknown as ForumTopicServicePrivateApi).getTopicSectionBriefMap(
-        [3, 4],
-        { requireEnabled: true },
-      ),
+      (
+        service as unknown as ForumTopicServicePrivateApi
+      ).getTopicSectionBriefMap([3, 4], { requireEnabled: true }),
     ).resolves.toEqual(
       new Map([
         [
@@ -890,7 +952,8 @@ describe('forumTopicService helpers', () => {
   })
 
   it('treats disabled section groups as unavailable when resolving a required topic review policy', async () => {
-    const { forumPermissionService, service } = createSectionReviewPolicyHarness()
+    const { forumPermissionService, service } =
+      createSectionReviewPolicyHarness()
 
     await expect(
       (
@@ -900,7 +963,9 @@ describe('forumTopicService helpers', () => {
       }),
     ).rejects.toThrow('板块不存在或已禁用')
 
-    expect(forumPermissionService.isSectionPubliclyAvailable).toHaveBeenCalledWith(
+    expect(
+      forumPermissionService.isSectionPubliclyAvailable,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({
         groupId: 11,
         isEnabled: true,
@@ -930,10 +995,9 @@ describe('forumTopicService helpers', () => {
       }),
     ).resolves.toEqual({ id: 33 })
 
-    expect(forumPermissionService.ensureUserCanCreateTopic).toHaveBeenCalledWith(
-      12,
-      3,
-    )
+    expect(
+      forumPermissionService.ensureUserCanCreateTopic,
+    ).toHaveBeenCalledWith(12, 3)
     expect(lockSpy).toHaveBeenCalledWith(tx, 3)
     expect(forumSectionFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({

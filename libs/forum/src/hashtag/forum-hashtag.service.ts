@@ -17,10 +17,7 @@ import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
-import {
-  AuditStatusEnum,
-  BusinessErrorCode,
-} from '@libs/platform/constant'
+import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
@@ -530,7 +527,7 @@ export class ForumHashtagService {
         favoriteCount: this.forumTopic.favoriteCount,
         lastCommentAt: this.forumTopic.lastCommentAt,
         createdAt: this.forumTopic.createdAt,
-        contentSnippet: sql<string>`left(trim(${this.forumTopic.content}), 60)`,
+        contentPreview: this.forumTopic.contentPreview,
       })
       .from(this.forumTopic)
       .where(

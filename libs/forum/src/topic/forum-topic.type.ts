@@ -3,6 +3,52 @@ import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { MaterializedForumHashtagFact } from '../hashtag/forum-hashtag.type'
 
+interface TextPreviewSegment {
+  type: 'text'
+  text: string
+}
+
+interface MentionPreviewSegment {
+  type: 'mention'
+  text: string
+  userId: number
+  nickname: string
+}
+
+interface HashtagPreviewSegment {
+  type: 'hashtag'
+  text: string
+  hashtagId: number
+  slug: string
+  displayName: string
+}
+
+/**
+ * 论坛主题列表预览片段。
+ * text 仅展示；mention 与 hashtag 由前端按 ID/slug 生成可点击跳转。
+ */
+export type ForumTopicContentPreviewSegment =
+  | TextPreviewSegment
+  | MentionPreviewSegment
+  | HashtagPreviewSegment
+
+/**
+ * 论坛主题列表预览。
+ * 由 canonical body 派生并物化，列表接口直接读取该 JSON。
+ */
+export interface ForumTopicContentPreview {
+  plainText: string
+  segments: ForumTopicContentPreviewSegment[]
+}
+
+/**
+ * 构建论坛主题列表预览的配置。
+ */
+export interface BuildForumTopicContentPreviewOptions {
+  maxLength?: number
+  maxSegments?: number
+}
+
 /**
  * 论坛主题媒体输入。
  * 图片仍使用字符串数组，视频改为原样 JSON 值；controller 可按需省略字段。
@@ -55,7 +101,7 @@ export type PublicTopicPageRow = Pick<
   | 'lastCommentAt'
   | 'createdAt'
 > & {
-  contentSnippet: string
+  contentPreview: ForumTopicContentPreview
 }
 
 /**
@@ -78,5 +124,6 @@ export interface TopicBodyWriteResult extends CompiledBodyResult {}
  */
 export interface MaterializedTopicBodyWriteResult extends TopicBodyWriteResult {
   html: string
+  contentPreview: ForumTopicContentPreview
   hashtagFacts: MaterializedForumHashtagFact[]
 }

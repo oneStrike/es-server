@@ -63,6 +63,7 @@ describe('UserProfileService', () => {
       userId: 'forumTopic.userId',
       title: 'forumTopic.title',
       content: 'forumTopic.content',
+      contentPreview: 'forumTopic.contentPreview',
       geoCountry: 'forumTopic.geoCountry',
       geoProvince: 'forumTopic.geoProvince',
       geoCity: 'forumTopic.geoCity',
@@ -212,7 +213,10 @@ describe('UserProfileService', () => {
         sectionId: 3,
         userId: 9,
         title: '公开主题',
-        contentSnippet: '公开正文',
+        contentPreview: {
+          plainText: '公开正文',
+          segments: [{ type: 'text', text: '公开正文' }],
+        },
         geoCountry: null,
         geoProvince: null,
         geoCity: null,
@@ -307,6 +311,9 @@ describe('UserProfileService', () => {
     expect(result.list).toHaveLength(1)
     expect(result.list[0]).toMatchObject({
       id: 11,
+      contentPreview: {
+        plainText: '公开正文',
+      },
       liked: true,
       favorited: false,
     })
@@ -320,7 +327,10 @@ describe('UserProfileService', () => {
         sectionId: 5,
         userId: 9,
         title: '待审核主题',
-        contentSnippet: '待审核正文',
+        contentPreview: {
+          plainText: '待审核正文',
+          segments: [{ type: 'text', text: '待审核正文' }],
+        },
         geoCountry: null,
         geoProvince: null,
         geoCity: null,

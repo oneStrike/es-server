@@ -53,7 +53,8 @@
 - forum topic / comment 对外不再暴露 `body`
 - forum topic / comment 对外不再暴露 `content`
 - forum topic / comment 对外不再暴露 `bodyTokens`
-- `contentSnippet`、`commentExcerpt` 这类 purpose-specific 摘要字段可继续保留
+- forum topic 列表对外使用结构化 `contentPreview` 作为摘要读取模型，不再暴露旧 `contentSnippet`
+- `commentExcerpt` 这类 comment-side purpose-specific 摘要字段可继续保留
 
 ## Storage Model
 
@@ -86,7 +87,7 @@
 以下链路继续依赖内部 `content`，但不再从外部 DTO 暴露 raw content：
 
 - forum search snippet
-- profile topic snippet
+- profile topic preview
 - forum hashtag comment page 摘要链路
 - comment like / reply / mention 通知摘录
 - 审核与敏感词检测链路

@@ -75,4 +75,33 @@ describe('forum-topic dto html contract', () => {
 
     expect(metadata).toBeUndefined()
   })
+
+  it('documents public topic list preview as structured contentPreview only', () => {
+    const originalNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    jest.resetModules()
+
+    const { PublicForumTopicPageItemDto } = require('./forum-topic.dto')
+    const contentPreviewMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      PublicForumTopicPageItemDto.prototype,
+      'contentPreview',
+    ) as {
+      description?: string
+      required?: boolean
+    }
+    const contentSnippetMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      PublicForumTopicPageItemDto.prototype,
+      'contentSnippet',
+    )
+
+    process.env.NODE_ENV = originalNodeEnv
+
+    expect(contentPreviewMetadata?.description).toBe(
+      '主题列表预览；包含普通文本、@用户、#话题片段',
+    )
+    expect(contentPreviewMetadata?.required).toBe(true)
+    expect(contentSnippetMetadata).toBeUndefined()
+  })
 })

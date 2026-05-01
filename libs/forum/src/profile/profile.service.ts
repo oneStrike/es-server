@@ -13,7 +13,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
 import { Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import { QueryUserProfileListDto, UpdateUserStatusDto } from './dto/profile.dto'
 import {
@@ -140,12 +140,6 @@ export class UserProfileService {
         avatarUrl: true,
       },
     })
-  }
-
-  // 构建用户主题列表使用的正文摘要 SQL。
-  // 直接在数据库侧截取前 60 个字符，避免列表读取完整正文。
-  private buildTopicContentSnippetSql() {
-    return sql<string>`left(trim(${this.forumTopic.content}), 60)`
   }
 
   // 复用 profile 模块统一的用户计数查询字段，避免多处手写后再次漂移。
@@ -394,7 +388,7 @@ export class UserProfileService {
         sectionId: this.forumTopic.sectionId,
         userId: this.forumTopic.userId,
         title: this.forumTopic.title,
-        contentSnippet: this.buildTopicContentSnippetSql(),
+        contentPreview: this.forumTopic.contentPreview,
         geoCountry: this.forumTopic.geoCountry,
         geoProvince: this.forumTopic.geoProvince,
         geoCity: this.forumTopic.geoCity,
@@ -523,7 +517,7 @@ export class UserProfileService {
         sectionId: this.forumTopic.sectionId,
         userId: this.forumTopic.userId,
         title: this.forumTopic.title,
-        contentSnippet: this.buildTopicContentSnippetSql(),
+        contentPreview: this.forumTopic.contentPreview,
         geoCountry: this.forumTopic.geoCountry,
         geoProvince: this.forumTopic.geoProvince,
         geoCity: this.forumTopic.geoCity,

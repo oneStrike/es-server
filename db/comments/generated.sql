@@ -507,6 +507,7 @@ COMMENT ON COLUMN "public"."forum_topic"."audit_by_id" IS E'审核人ID';
 COMMENT ON COLUMN "public"."forum_topic"."title" IS E'标题';
 COMMENT ON COLUMN "public"."forum_topic"."html" IS E'正文 HTML。\n对外唯一正文表示，纯文本编辑器也需输出最小 HTML。';
 COMMENT ON COLUMN "public"."forum_topic"."content" IS E'正文纯文本派生列。\n供搜索、摘要、审核与摘录链路复用，不再表示客户端原始输入。';
+COMMENT ON COLUMN "public"."forum_topic"."content_preview" IS E'列表预览派生 JSON。\n写入时由 canonical body 生成，供 topic 列表渲染可点击用户提及与话题标签；不作为详情正文来源。';
 COMMENT ON COLUMN "public"."forum_topic"."body" IS E'canonical 正文文档。\n主题正文的唯一真相源；运行时不再依赖原始 content 作为输入来源。';
 COMMENT ON COLUMN "public"."forum_topic"."body_version" IS E'正文版本。\n1=当前 canonical body v1';
 COMMENT ON COLUMN "public"."forum_topic"."images" IS E'图片列表';

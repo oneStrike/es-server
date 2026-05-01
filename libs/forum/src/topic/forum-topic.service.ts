@@ -85,6 +85,7 @@ import {
   UpdateForumTopicLockedDto,
   UpdateForumTopicPinnedDto,
 } from './dto/forum-topic.dto'
+import { buildForumTopicContentPreview } from './forum-topic-preview.helper'
 import { FORUM_TOPIC_IMAGE_MAX_COUNT } from './forum-topic.constant'
 
 const DEFAULT_PUBLIC_TOPIC_FEED_ORDER: Array<Record<string, 'asc' | 'desc'>> = [
@@ -339,7 +340,7 @@ export class ForumTopicService {
       sectionId: this.forumTopicTable.sectionId,
       userId: this.forumTopicTable.userId,
       title: this.forumTopicTable.title,
-      contentSnippet: this.buildTopicContentSnippetSql(),
+      contentPreview: this.forumTopicTable.contentPreview,
       geoCountry: this.forumTopicTable.geoCountry,
       geoProvince: this.forumTopicTable.geoProvince,
       geoCity: this.forumTopicTable.geoCity,
@@ -582,14 +583,6 @@ export class ForumTopicService {
   }
 
   /**
-   * 构建主题列表使用的正文摘要 SQL。
-   * 直接在数据库侧截取前 60 个字符，避免列表查询搬运完整正文。
-   */
-  private buildTopicContentSnippetSql() {
-    return sql<string>`left(trim(${this.forumTopicTable.content}), 60)`
-  }
-
-  /**
    * 规范化论坛主题图片列表。
    * - 去除空白字符串
    * - 保留首个出现顺序并去重
@@ -724,6 +717,7 @@ export class ForumTopicService {
     return {
       ...compiledBody,
       html: canonicalHtml,
+      contentPreview: buildForumTopicContentPreview(materialized.body),
       hashtagFacts: materialized.hashtagFacts,
     }
   }
@@ -1049,6 +1043,7 @@ export class ForumTopicService {
           html: compiledBody.html,
           content: compiledBody.plainText,
           body: compiledBody.body as unknown as JsonValue,
+          contentPreview: compiledBody.contentPreview as unknown as JsonValue,
           bodyVersion: BODY_VERSION_V1,
           sectionId,
           userId,
@@ -1447,7 +1442,7 @@ export class ForumTopicService {
         sectionId: this.forumTopicTable.sectionId,
         userId: this.forumTopicTable.userId,
         title: this.forumTopicTable.title,
-        contentSnippet: this.buildTopicContentSnippetSql(),
+        contentPreview: this.forumTopicTable.contentPreview,
         geoCountry: this.forumTopicTable.geoCountry,
         geoProvince: this.forumTopicTable.geoProvince,
         geoCity: this.forumTopicTable.geoCity,
@@ -1662,7 +1657,7 @@ export class ForumTopicService {
           sectionId: topic.sectionId,
           userId: topic.userId,
           title: topic.title,
-          contentSnippet: topic.contentSnippet,
+          contentPreview: topic.contentPreview,
           geoCountry: topic.geoCountry ?? undefined,
           geoProvince: topic.geoProvince ?? undefined,
           geoCity: topic.geoCity ?? undefined,
@@ -1755,6 +1750,7 @@ export class ForumTopicService {
           html: compiledBody.html,
           content: compiledBody.plainText,
           body: compiledBody.body as unknown as JsonValue,
+          contentPreview: compiledBody.contentPreview as unknown as JsonValue,
           ...media,
           bodyVersion: BODY_VERSION_V1,
           auditStatus,
@@ -1979,10 +1975,12 @@ export class ForumTopicService {
             (commentCountByUser.get(comment.userId) ?? 0) + 1,
           )
           if (comment.likeCount > 0) {
+            const nextReceivedLikeCount =
+              (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
+              comment.likeCount
             commentReceivedLikeCountByUser.set(
               comment.userId,
-              (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-              comment.likeCount,
+              nextReceivedLikeCount,
             )
           }
         }

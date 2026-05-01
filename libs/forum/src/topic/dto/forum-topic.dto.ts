@@ -2,9 +2,7 @@ import type { JsonValue } from '@libs/platform/utils'
 import { ForumHashtagBriefDto } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
 import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
-import {
-  HtmlBodyInputDto,
-} from '@libs/interaction/body/dto/body.dto'
+import { HtmlBodyInputDto } from '@libs/interaction/body/dto/body.dto'
 import {
   CommentOnlyAuthorDto,
   CommentSortDto,
@@ -30,6 +28,90 @@ import {
   BaseAppUserDto,
 } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+
+/**
+ * 论坛主题列表预览片段 DTO。
+ * mention 与 hashtag 片段由前端按目标字段生成跳转。
+ */
+export class ForumTopicContentPreviewSegmentDto {
+  @StringProperty({
+    description: '片段类型：text=普通文本；mention=@用户；hashtag=#话题',
+    example: 'mention',
+    required: true,
+    validation: false,
+  })
+  type!: string
+
+  @StringProperty({
+    description: '片段展示文本',
+    example: '@测试用户',
+    required: true,
+    validation: false,
+  })
+  text!: string
+
+  @NumberProperty({
+    description: '被提及用户 ID；type=mention 时返回',
+    example: 9,
+    required: false,
+    validation: false,
+  })
+  userId?: number
+
+  @StringProperty({
+    description: '被提及用户昵称；type=mention 时返回',
+    example: '测试用户',
+    required: false,
+    validation: false,
+  })
+  nickname?: string
+
+  @NumberProperty({
+    description: '话题 ID；type=hashtag 时返回',
+    example: 77,
+    required: false,
+    validation: false,
+  })
+  hashtagId?: number
+
+  @StringProperty({
+    description: '话题 slug；type=hashtag 时返回',
+    example: 'typescript',
+    required: false,
+    validation: false,
+  })
+  slug?: string
+
+  @StringProperty({
+    description: '话题展示名；type=hashtag 时返回',
+    example: 'TypeScript',
+    required: false,
+    validation: false,
+  })
+  displayName?: string
+}
+
+/**
+ * 论坛主题列表预览 DTO。
+ * 由 canonical body 物化，列表接口直接返回。
+ */
+export class ForumTopicContentPreviewDto {
+  @StringProperty({
+    description: '预览纯文本',
+    example: '欢迎 @测试用户 关注 #TypeScript',
+    required: true,
+    validation: false,
+  })
+  plainText!: string
+
+  @ArrayProperty({
+    description: '预览片段',
+    itemClass: ForumTopicContentPreviewSegmentDto,
+    required: true,
+    validation: false,
+  })
+  segments!: ForumTopicContentPreviewSegmentDto[]
+}
 
 /**
  * 论坛主题基础 DTO。
@@ -59,6 +141,15 @@ export class BaseForumTopicDto extends BaseDto {
     contract: false,
   })
   content!: string
+
+  @NestedProperty({
+    description: '主题列表预览；包含普通文本、@用户、#话题片段',
+    required: true,
+    type: ForumTopicContentPreviewDto,
+    validation: false,
+    nullable: false,
+  })
+  contentPreview!: ForumTopicContentPreviewDto
 
   @JsonProperty({
     description: '主题 canonical 正文文档；仅供内部链路使用',
@@ -448,15 +539,8 @@ export class PublicForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'favoriteCount',
   'lastCommentAt',
   'createdAt',
+  'contentPreview',
 ] as const) {
-  @StringProperty({
-    description: '主题简要内容（正文前 60 个字符）',
-    example: '我最近在整理一份入门 TypeScript 的学习路线，先从类型系统开始...',
-    required: true,
-    validation: false,
-  })
-  contentSnippet!: string
-
   @BooleanProperty({
     description: '当前用户是否已点赞',
     example: true,
@@ -711,12 +795,5 @@ export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'lastCommentUserId',
   'createdAt',
   'updatedAt',
-] as const) {
-  @StringProperty({
-    description: '主题简要内容（正文前 60 个字符）',
-    example: '我最近在整理一份入门 TypeScript 的学习路线，先从类型系统开始...',
-    required: true,
-    validation: false,
-  })
-  contentSnippet!: string
-}
+  'contentPreview',
+] as const) {}
