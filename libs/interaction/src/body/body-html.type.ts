@@ -15,26 +15,20 @@ export interface BodyHtmlTagToken {
 
 /**
  * 受限 HTML 中的特殊内联节点上下文。
- * - 用于在 `<span data-node=...>` 范围内收集文本，再映射为 canonical inline node。
+ * - 用于在 `<span|a data-node=...>` 范围内收集文本，再映射为 canonical inline node。
  */
 export interface BodyHtmlInlineNodeContext {
-  nodeType: 'mention' | 'hashtag' | 'emoji'
+  tagName: 'span' | 'a'
+  nodeType: 'mention' | 'hashtag' | 'emoji' | 'text'
   attributes: Record<string, string>
   textContent: string
 }
 
 /**
  * HTML 解析中的块级栈元素。
- * - list 容器与普通块级节点共享同一套栈模型。
+ * - 直接保存 canonical block，避免维护一份额外的 block type 状态。
  */
 export interface BodyHtmlBlockStackEntry {
-  blockType:
-    | 'paragraph'
-    | 'heading'
-    | 'blockquote'
-    | 'bulletList'
-    | 'orderedList'
-    | 'listItem'
   block: BodyBlockNode
 }
 

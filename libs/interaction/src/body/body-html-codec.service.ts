@@ -5,18 +5,9 @@ import type {
   BodyHtmlTagToken,
 } from './body-html.type'
 import type { BodySceneEnum } from './body.constant'
-import type {
-  BodyDoc,
-  BodyInlineNode,
-  BodyTextMark,
-} from './body.type'
-import {
-  decodeHtmlEntities,
-} from '@libs/platform/utils'
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common'
+import type { BodyDoc, BodyInlineNode, BodyTextMark } from './body.type'
+import { decodeHtmlEntities } from '@libs/platform/utils'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { assertSafeBodyLinkHref } from './body-link.helper'
 import { BodyValidatorService } from './body-validator.service'
 
@@ -41,10 +32,7 @@ export class BodyHtmlCodecService {
   constructor(private readonly bodyValidatorService: BodyValidatorService) {}
 
   // 将受限 HTML 解析成 canonical body，并按 scene 统一校验。
-  parseHtmlOrThrow(
-    html: string,
-    scene: BodySceneEnum,
-  ): BodyDoc {
+  parseHtmlOrThrow(html: string, scene: BodySceneEnum): BodyDoc {
     const normalizedHtml = html.trim()
     if (!normalizedHtml) {
       throw new BadRequestException('html 不能为空')
@@ -57,10 +45,7 @@ export class BodyHtmlCodecService {
   }
 
   // 将 canonical body 渲染成规范化 HTML。
-  renderHtml(
-    body: BodyDoc,
-    scene: BodySceneEnum,
-  ) {
+  renderHtml(body: BodyDoc, scene: BodySceneEnum) {
     const validatedBody = this.bodyValidatorService.validateBodyOrThrow(
       body,
       scene,
@@ -171,7 +156,6 @@ export class BodyHtmlCodecService {
       }
       body.content.push(paragraph)
       blockStack.push({
-        blockType: 'paragraph',
         block: paragraph,
       })
     }
@@ -271,11 +255,22 @@ export class BodyHtmlCodecService {
       }
     }
 
-    if (specialInlineStack.length > 0 || markStack.length > 0 || blockStack.length > 0) {
-      while (blockStack.length > 0 && blockStack.at(-1)?.blockType === 'paragraph') {
+    if (
+      specialInlineStack.length > 0 ||
+      markStack.length > 0 ||
+      blockStack.length > 0
+    ) {
+      while (
+        blockStack.length > 0 &&
+        blockStack.at(-1)?.block.type === 'paragraph'
+      ) {
         blockStack.pop()
       }
-      if (specialInlineStack.length > 0 || markStack.length > 0 || blockStack.length > 0) {
+      if (
+        specialInlineStack.length > 0 ||
+        markStack.length > 0 ||
+        blockStack.length > 0
+      ) {
         throw new BadRequestException('HTML 标签未正确闭合')
       }
     }
@@ -306,7 +301,7 @@ export class BodyHtmlCodecService {
           ? { type: 'paragraph', content: [] }
           : { type: 'blockquote', content: [] }
       body.content.push(block)
-      blockStack.push({ blockType: tagName === 'p' ? 'paragraph' : 'blockquote', block })
+      blockStack.push({ block })
       return
     }
 
@@ -320,7 +315,7 @@ export class BodyHtmlCodecService {
         content: [],
       }
       body.content.push(block)
-      blockStack.push({ blockType: 'heading', block })
+      blockStack.push({ block })
       return
     }
 
@@ -330,13 +325,10 @@ export class BodyHtmlCodecService {
       }
       const block =
         tagName === 'ul'
-          ? { type: 'bulletList', content: [] as BodyHtmlInlineContainer[] }
-          : { type: 'orderedList', content: [] as BodyHtmlInlineContainer[] }
-      body.content.push(block as never)
-      blockStack.push({
-        blockType: tagName === 'ul' ? 'bulletList' : 'orderedList',
-        block: block as never,
-      })
+          ? { type: 'bulletList' as const, content: [] }
+          : { type: 'orderedList' as const, content: [] }
+      body.content.push(block)
+      blockStack.push({ block })
       return
     }
 
@@ -353,9 +345,32 @@ export class BodyHtmlCodecService {
         throw new BadRequestException('<li> 必须位于列表容器中')
       }
       const item: BodyHtmlInlineContainer = { type: 'listItem', content: [] }
-      listContainer.content.push(item as never)
-      blockStack.push({ blockType: 'listItem', block: item })
+      listContainer.content.push(item)
+      blockStack.push({ block: item })
       return
+    }
+
+    if (tagName === 'span' || tagName === 'a') {
+      const nodeType = token.attributes?.['data-node']
+      if (nodeType !== undefined) {
+        if (!currentInlineContainer()) {
+          throw new BadRequestException(
+            `<${tagName} data-node="${nodeType}"> 缺少块级容器`,
+          )
+        }
+        const href = token.attributes?.href
+        const canonicalNodeType = this.normalizeDataNodeType(nodeType)
+        if (canonicalNodeType !== 'text' && tagName === 'a' && href) {
+          assertSafeBodyLinkHref(href)
+        }
+        specialInlineStack.push({
+          tagName,
+          nodeType: canonicalNodeType,
+          attributes: token.attributes ?? {},
+          textContent: '',
+        })
+        return
+      }
     }
 
     if (tagName in INLINE_MARK_TAG_MAP) {
@@ -372,25 +387,6 @@ export class BodyHtmlCodecService {
       }
       markStack.push({ type: markType })
       return
-    }
-
-    if (tagName === 'span') {
-      const nodeType = token.attributes?.['data-node']
-      if (
-        nodeType === 'mention' ||
-        nodeType === 'hashtag' ||
-        nodeType === 'emoji'
-      ) {
-        if (!currentInlineContainer()) {
-          throw new BadRequestException(`<span data-node="${nodeType}"> 缺少块级容器`)
-        }
-        specialInlineStack.push({
-          nodeType,
-          attributes: token.attributes ?? {},
-          textContent: '',
-        })
-        return
-      }
     }
 
     throw new BadRequestException(`当前 HTML 白名单不支持标签 <${tagName}>`)
@@ -418,7 +414,8 @@ export class BodyHtmlCodecService {
       if (nodeType !== 'emoji') {
         throw new BadRequestException('<img> 只允许作为 emoji 节点使用')
       }
-      const unicodeSequence = token.attributes?.['data-unicode-sequence']?.trim()
+      const unicodeSequence =
+        token.attributes?.['data-unicode-sequence']?.trim()
       const shortcode = token.attributes?.['data-shortcode']?.trim()
       if (unicodeSequence) {
         appendInlineNode({ type: 'emojiUnicode', unicodeSequence })
@@ -428,7 +425,9 @@ export class BodyHtmlCodecService {
         appendInlineNode({ type: 'emojiCustom', shortcode })
         return
       }
-      throw new BadRequestException('emoji img 缺少 data-unicode-sequence 或 data-shortcode')
+      throw new BadRequestException(
+        'emoji img 缺少 data-unicode-sequence 或 data-shortcode',
+      )
     }
 
     if (scene === 'topic' && tagName === 'hr') {
@@ -448,68 +447,89 @@ export class BodyHtmlCodecService {
   ) {
     const tagName = token.name ?? ''
 
-    if (tagName in INLINE_MARK_TAG_MAP) {
-      markStack.pop()
-      return
+    if (tagName === 'span' || tagName === 'a') {
+      const currentSpecialInline = specialInlineStack.at(-1)
+      if (currentSpecialInline?.tagName !== tagName) {
+        if (tagName === 'span') {
+          throw new BadRequestException('span 标签闭合顺序非法')
+        }
+        markStack.pop()
+        return
+      }
+      const specialInline = currentSpecialInline
+      specialInlineStack.pop()
+
+      switch (specialInline.nodeType) {
+        case 'text':
+          if (specialInline.textContent) {
+            appendInlineNode({
+              type: 'text',
+              text: specialInline.textContent,
+            })
+          }
+          return
+        case 'mention': {
+          const userId = Number(specialInline.attributes['data-user-id'])
+          const nickname =
+            specialInline.attributes['data-nickname']?.trim() ??
+            specialInline.textContent.replace(/^@/, '').trim()
+          if (!Number.isInteger(userId) || userId <= 0 || !nickname) {
+            throw new BadRequestException(
+              'mention span 缺少合法 data-user-id 或 data-nickname',
+            )
+          }
+          appendInlineNode({
+            type: 'mentionUser',
+            userId,
+            nickname,
+          })
+          return
+        }
+        case 'emoji': {
+          const unicodeSequence =
+            specialInline.attributes['data-unicode-sequence']?.trim() ??
+            specialInline.textContent.trim()
+          if (!unicodeSequence) {
+            throw new BadRequestException('emoji span 缺少 data-unicode-sequence')
+          }
+          appendInlineNode({
+            type: 'emojiUnicode',
+            unicodeSequence,
+          })
+          return
+        }
+        case 'hashtag': {
+          const displayName = (
+            specialInline.attributes['data-display-name'] ??
+            specialInline.textContent.replace(/^#/, '')
+          ).trim()
+          const hashtagId = Number(specialInline.attributes['data-hashtag-id'])
+          const slug =
+            specialInline.attributes['data-slug']?.trim() ??
+            displayName.toLowerCase()
+          if (!displayName) {
+            throw new BadRequestException('hashtag span 缺少展示文本')
+          }
+          if (Number.isInteger(hashtagId) && hashtagId > 0) {
+            appendInlineNode({
+              type: 'forumHashtag',
+              hashtagId,
+              slug,
+              displayName,
+            })
+            return
+          }
+          appendInlineNode({
+            type: 'text',
+            text: `#${displayName}`,
+          })
+          return
+        }
+      }
     }
 
-    if (tagName === 'span') {
-      const specialInline = specialInlineStack.pop()
-      if (!specialInline) {
-        throw new BadRequestException('span 标签闭合顺序非法')
-      }
-
-      if (specialInline.nodeType === 'mention') {
-        const userId = Number(specialInline.attributes['data-user-id'])
-        const nickname =
-          specialInline.attributes['data-nickname']?.trim() ??
-          specialInline.textContent.replace(/^@/, '').trim()
-        if (!Number.isInteger(userId) || userId <= 0 || !nickname) {
-          throw new BadRequestException('mention span 缺少合法 data-user-id 或 data-nickname')
-        }
-        appendInlineNode({
-          type: 'mentionUser',
-          userId,
-          nickname,
-        })
-        return
-      }
-
-      if (specialInline.nodeType === 'emoji') {
-        const unicodeSequence =
-          specialInline.attributes['data-unicode-sequence']?.trim() ??
-          specialInline.textContent.trim()
-        if (!unicodeSequence) {
-          throw new BadRequestException('emoji span 缺少 data-unicode-sequence')
-        }
-        appendInlineNode({
-          type: 'emojiUnicode',
-          unicodeSequence,
-        })
-        return
-      }
-
-      const displayName = specialInline.textContent.replace(/^#/, '').trim()
-      const hashtagId = Number(specialInline.attributes['data-hashtag-id'])
-      const slug =
-        specialInline.attributes['data-slug']?.trim() ??
-        displayName.toLowerCase()
-      if (!displayName) {
-        throw new BadRequestException('hashtag span 缺少展示文本')
-      }
-      if (Number.isInteger(hashtagId) && hashtagId > 0) {
-        appendInlineNode({
-          type: 'forumHashtag',
-          hashtagId,
-          slug,
-          displayName,
-        })
-        return
-      }
-      appendInlineNode({
-        type: 'text',
-        text: `#${displayName}`,
-      })
+    if (tagName in INLINE_MARK_TAG_MAP) {
+      markStack.pop()
       return
     }
 
@@ -526,18 +546,27 @@ export class BodyHtmlCodecService {
         throw new BadRequestException(`标签 </${tagName}> 缺少匹配的开始标签`)
       }
 
-      const expectedTag =
-        current.blockType === 'paragraph'
-          ? 'p'
-          : current.blockType === 'blockquote'
-            ? 'blockquote'
-            : current.blockType === 'heading'
-              ? `h${(current.block as Extract<BodyHtmlInlineContainer, { type: 'heading' }>).level}`
-              : current.blockType === 'bulletList'
-                ? 'ul'
-                : current.blockType === 'orderedList'
-                  ? 'ol'
-                  : 'li'
+      let expectedTag: string
+      switch (current.block.type) {
+        case 'paragraph':
+          expectedTag = 'p'
+          break
+        case 'blockquote':
+          expectedTag = 'blockquote'
+          break
+        case 'heading':
+          expectedTag = `h${current.block.level}`
+          break
+        case 'bulletList':
+          expectedTag = 'ul'
+          break
+        case 'orderedList':
+          expectedTag = 'ol'
+          break
+        case 'listItem':
+          expectedTag = 'li'
+          break
+      }
       if (expectedTag !== tagName) {
         throw new BadRequestException(`标签 </${tagName}> 与开始标签不匹配`)
       }
@@ -546,6 +575,20 @@ export class BodyHtmlCodecService {
     }
 
     throw new BadRequestException(`当前 HTML 白名单不支持标签 </${tagName}>`)
+  }
+
+  // 仅识别稳定 data-node 值；未知值按普通文本降级。
+  private normalizeDataNodeType(
+    nodeType: string,
+  ): BodyHtmlInlineNodeContext['nodeType'] {
+    switch (nodeType) {
+      case 'mention':
+      case 'hashtag':
+      case 'emoji':
+        return nodeType
+      default:
+        return 'text'
+    }
   }
 
   // 渲染块级节点为规范化 HTML。
@@ -568,7 +611,9 @@ export class BodyHtmlCodecService {
       case 'listItem':
         return `<li>${this.renderInlineNodes(block.content)}</li>`
       default:
-        throw new Error(`Unsupported body block node: ${(block as { type: string }).type}`)
+        throw new Error(
+          `Unsupported body block node: ${(block as { type: string }).type}`,
+        )
     }
   }
 
@@ -590,7 +635,9 @@ export class BodyHtmlCodecService {
           case 'forumHashtag':
             return `<span data-node="hashtag" data-hashtag-id="${node.hashtagId}" data-slug="${this.escapeHtmlAttribute(node.slug)}">#${this.escapeHtmlText(node.displayName)}</span>`
           default:
-            throw new Error(`Unsupported body inline node: ${(node as { type: string }).type}`)
+            throw new Error(
+              `Unsupported body inline node: ${(node as { type: string }).type}`,
+            )
         }
       })
       .join('')
@@ -599,8 +646,8 @@ export class BodyHtmlCodecService {
   // 渲染文本节点，并按固定顺序重建 marks。
   private renderTextNode(text: string, marks?: BodyTextMark[]) {
     let rendered = this.escapeHtmlText(text)
-    const orderedMarks = [...(marks ?? [])].sort((left, right) =>
-      this.getMarkOrder(left) - this.getMarkOrder(right),
+    const orderedMarks = [...(marks ?? [])].sort(
+      (left, right) => this.getMarkOrder(left) - this.getMarkOrder(right),
     )
 
     for (const mark of orderedMarks.reverse()) {
