@@ -1,11 +1,14 @@
 import type { Db } from '@db/core'
 import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
 
+import type { InteractionAuditorSummaryKey } from '@libs/interaction/summary/interaction-summary.type'
 import type { JsonValue } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
 import type {
+  AdminTopicPageRow,
   ForumTopicClientContext,
   ForumTopicMediaInput,
+  ForumTopicRelationIdCandidates,
   MaterializedTopicBodyWriteResult,
   PublicForumTopicDetailContext,
   PublicTopicPageRow,
@@ -41,6 +44,7 @@ import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { MentionSourceTypeEnum } from '@libs/interaction/mention/mention.constant'
 import { MentionService } from '@libs/interaction/mention/mention.service'
+import { InteractionSummaryReadService } from '@libs/interaction/summary/interaction-summary-read.service'
 import {
   AuditRoleEnum,
   AuditStatusEnum,
@@ -127,6 +131,7 @@ export class ForumTopicService {
     private readonly sensitiveWordStatisticsService: SensitiveWordStatisticsService,
     private readonly forumHashtagBodyService: ForumHashtagBodyService,
     private readonly forumHashtagReferenceService: ForumHashtagReferenceService,
+    private readonly interactionSummaryReadService: InteractionSummaryReadService,
   ) {}
 
   private get db() {
@@ -147,6 +152,13 @@ export class ForumTopicService {
 
   get forumHashtagReferenceTable() {
     return this.drizzle.schema.forumHashtagReference
+  }
+
+  // 去重并过滤正数 ID，避免批量摘要查询带入无效条件。
+  private uniquePositiveIds(ids: ForumTopicRelationIdCandidates) {
+    return [...new Set(ids)].filter(
+      (id): id is number => typeof id === 'number' && id > 0,
+    )
   }
 
   // 串行化同一板块的删板块与发帖写路径，避免删除后仍写入新主题。
@@ -292,6 +304,150 @@ export class ForumTopicService {
         },
       ]),
     )
+  }
+
+  // 批量获取后台主题列表所需的发帖用户摘要。
+  private async getAdminTopicUserSummaryMap(userIds: number[]) {
+    const uniqueUserIds = this.uniquePositiveIds(userIds)
+    if (uniqueUserIds.length === 0) {
+      return new Map<
+        number,
+        {
+          id: number
+          nickname: string
+          avatarUrl: string | null
+          status: number
+          isEnabled: boolean
+          levelName: string | null
+        }
+      >()
+    }
+
+    const users = await this.db.query.appUser.findMany({
+      where: {
+        id: { in: uniqueUserIds },
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        nickname: true,
+        avatarUrl: true,
+        status: true,
+        isEnabled: true,
+      },
+      with: {
+        level: {
+          columns: {
+            name: true,
+          },
+        },
+      },
+    })
+
+    return new Map(
+      users.map((user) => [
+        user.id,
+        {
+          id: user.id,
+          nickname: user.nickname,
+          avatarUrl: user.avatarUrl,
+          status: user.status,
+          isEnabled: user.isEnabled,
+          levelName: user.level?.name ?? null,
+        },
+      ]),
+    )
+  }
+
+  // 批量获取后台主题列表所需的板块摘要。
+  private async getAdminTopicSectionSummaryMap(sectionIds: number[]) {
+    const uniqueSectionIds = this.uniquePositiveIds(sectionIds)
+    if (uniqueSectionIds.length === 0) {
+      return new Map<
+        number,
+        {
+          id: number
+          name: string
+          isEnabled: boolean
+          topicReviewPolicy: number
+          groupName: string | null
+        }
+      >()
+    }
+
+    const sections = await this.db.query.forumSection.findMany({
+      where: {
+        id: { in: uniqueSectionIds },
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        name: true,
+        isEnabled: true,
+        topicReviewPolicy: true,
+      },
+      with: {
+        group: {
+          columns: {
+            name: true,
+            deletedAt: true,
+          },
+        },
+      },
+    })
+
+    return new Map(
+      sections.map((section) => [
+        section.id,
+        {
+          id: section.id,
+          name: section.name,
+          isEnabled: section.isEnabled,
+          topicReviewPolicy: section.topicReviewPolicy,
+          groupName:
+            section.group && !section.group.deletedAt
+              ? section.group.name
+              : null,
+        },
+      ]),
+    )
+  }
+
+  // 为后台主题分页条目补齐发帖用户与所属板块摘要。
+  private async hydrateAdminTopicPageItems(items: AdminTopicPageRow[]) {
+    if (items.length === 0) {
+      return []
+    }
+
+    const [userSummaryMap, sectionSummaryMap] = await Promise.all([
+      this.getAdminTopicUserSummaryMap(items.map((item) => item.userId)),
+      this.getAdminTopicSectionSummaryMap(items.map((item) => item.sectionId)),
+    ])
+
+    return items.map((item) => ({
+      ...item,
+      userSummary: userSummaryMap.get(item.userId) ?? null,
+      sectionSummary: sectionSummaryMap.get(item.sectionId) ?? null,
+    }))
+  }
+
+  // 获取主题审核人展示摘要。
+  private async getTopicAuditorSummary(topic: InteractionAuditorSummaryKey) {
+    const auditor = {
+      auditById: topic.auditById ?? undefined,
+      auditRole: topic.auditRole ?? undefined,
+    }
+    const key =
+      this.interactionSummaryReadService.buildAuditorSummaryKey(auditor)
+
+    if (!key) {
+      return null
+    }
+
+    const auditorSummaryMap =
+      await this.interactionSummaryReadService.getAuditorSummaryMap([auditor])
+
+    return auditorSummaryMap.get(key) ?? null
   }
 
   /**
@@ -1187,10 +1343,19 @@ export class ForumTopicService {
       )
     }
 
+    const [hashtags, auditorSummary] = await Promise.all([
+      this.getTopicHashtags(topic.id),
+      this.getTopicAuditorSummary({
+        auditById: topic.auditById,
+        auditRole: topic.auditRole as AuditRoleEnum | null,
+      }),
+    ])
+
     if (!topic.user) {
       return {
         ...topic,
-        hashtags: await this.getTopicHashtags(topic.id),
+        hashtags,
+        auditorSummary,
       }
     }
 
@@ -1200,7 +1365,8 @@ export class ForumTopicService {
 
     return {
       ...topic,
-      hashtags: await this.getTopicHashtags(topic.id),
+      hashtags,
+      auditorSummary,
       user: {
         ...topic.user,
         points: growth.points,
@@ -1478,7 +1644,7 @@ export class ForumTopicService {
     ])
 
     return {
-      list,
+      list: await this.hydrateAdminTopicPageItems(list),
       total,
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,

@@ -9,6 +9,7 @@ import { FollowModule } from '@libs/interaction/follow/follow.module'
 import { LikeModule } from '@libs/interaction/like/like.module'
 import { MentionModule } from '@libs/interaction/mention/mention.module'
 import { ReportModule } from '@libs/interaction/report/report.module'
+import { InteractionSummaryModule } from '@libs/interaction/summary/interaction-summary.module'
 import { MessageModule } from '@libs/message/message.module'
 import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module'
 import { UserModule } from '@libs/user/user.module'
@@ -43,6 +44,7 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     LikeModule,
     MentionModule,
     ReportModule,
+    InteractionSummaryModule,
     UserModule,
     ForumCounterModule,
     ForumHashtagModule,

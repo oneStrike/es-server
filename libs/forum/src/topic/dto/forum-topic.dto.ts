@@ -8,6 +8,7 @@ import {
   CommentSortDto,
 } from '@libs/interaction/comment/dto/comment.dto'
 import { EmojiAssetKindEnum } from '@libs/interaction/emoji/emoji.constant'
+import { InteractionActorSummaryDto } from '@libs/interaction/summary/dto/interaction-summary.dto'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -756,6 +757,35 @@ class AdminForumTopicUserDto extends PickType(AppUserResponseDto, [
   level!: AdminForumTopicUserLevelDto
 }
 
+export class AdminForumTopicUserSummaryDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+  'status',
+  'isEnabled',
+] as const) {
+  @StringProperty({
+    description: '论坛等级名称',
+    example: 'Lv2',
+    required: false,
+    validation: false,
+  })
+  levelName?: string | null
+}
+
+export class AdminForumTopicSectionSummaryDto extends PickType(
+  BaseForumSectionDto,
+  ['id', 'name', 'isEnabled', 'topicReviewPolicy'] as const,
+) {
+  @StringProperty({
+    description: '所属分组名称',
+    example: '综合讨论',
+    required: false,
+    validation: false,
+  })
+  groupName?: string | null
+}
+
 export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'id',
   'sectionId',
@@ -801,12 +831,21 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
 
   @NestedProperty({
     description: '发帖用户',
-    required: true,
+    required: false,
     type: AdminForumTopicUserDto,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  user!: AdminForumTopicUserDto
+  user?: AdminForumTopicUserDto | null
+
+  @NestedProperty({
+    description: '审核人摘要',
+    required: false,
+    type: InteractionActorSummaryDto,
+    validation: false,
+    nullable: true,
+  })
+  auditorSummary?: InteractionActorSummaryDto | null
 }
 
 export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
@@ -832,4 +871,22 @@ export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'createdAt',
   'updatedAt',
   'contentPreview',
-] as const) {}
+] as const) {
+  @NestedProperty({
+    description: '发帖用户摘要',
+    required: false,
+    type: AdminForumTopicUserSummaryDto,
+    validation: false,
+    nullable: true,
+  })
+  userSummary?: AdminForumTopicUserSummaryDto | null
+
+  @NestedProperty({
+    description: '所属板块摘要',
+    required: false,
+    type: AdminForumTopicSectionSummaryDto,
+    validation: false,
+    nullable: true,
+  })
+  sectionSummary?: AdminForumTopicSectionSummaryDto | null
+}

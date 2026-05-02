@@ -171,4 +171,81 @@ describe('forum-topic dto html contract', () => {
     expect(isAnimatedMetadata).toBeUndefined()
     expect(ariaLabelMetadata).toBeUndefined()
   })
+
+  it('documents admin topic page user and section summaries', () => {
+    const originalNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    jest.resetModules()
+
+    const { AdminForumTopicPageItemDto } = require('./forum-topic.dto')
+    const userSummaryMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      AdminForumTopicPageItemDto.prototype,
+      'userSummary',
+    ) as {
+      nullable?: boolean
+      required?: boolean
+    }
+    const sectionSummaryMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      AdminForumTopicPageItemDto.prototype,
+      'sectionSummary',
+    ) as {
+      nullable?: boolean
+      required?: boolean
+    }
+
+    process.env.NODE_ENV = originalNodeEnv
+
+    expect(userSummaryMetadata?.required).toBe(false)
+    expect(userSummaryMetadata?.nullable).toBe(true)
+    expect(sectionSummaryMetadata?.required).toBe(false)
+    expect(sectionSummaryMetadata?.nullable).toBe(true)
+  })
+
+  it('documents admin topic detail nullable user and auditor summary', () => {
+    const originalNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    jest.resetModules()
+
+    const { AdminForumTopicDetailDto } = require('./forum-topic.dto')
+    const {
+      InteractionActorSummaryDto,
+    } = require('@libs/interaction/summary/dto/interaction-summary.dto')
+    const userMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      AdminForumTopicDetailDto.prototype,
+      'user',
+    ) as {
+      nullable?: boolean
+      required?: boolean
+    }
+    const auditorSummaryMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      AdminForumTopicDetailDto.prototype,
+      'auditorSummary',
+    ) as {
+      nullable?: boolean
+      required?: boolean
+    }
+    const avatarMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      InteractionActorSummaryDto.prototype,
+      'avatar',
+    )
+    const avatarUrlMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      InteractionActorSummaryDto.prototype,
+      'avatarUrl',
+    )
+
+    process.env.NODE_ENV = originalNodeEnv
+
+    expect(userMetadata?.required).toBe(false)
+    expect(userMetadata?.nullable).toBe(true)
+    expect(auditorSummaryMetadata?.required).toBe(false)
+    expect(auditorSummaryMetadata?.nullable).toBe(true)
+    expect(avatarMetadata).toBeDefined()
+    expect(avatarUrlMetadata).toBeUndefined()
+  })
 })

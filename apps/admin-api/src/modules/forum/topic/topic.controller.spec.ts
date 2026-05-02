@@ -12,24 +12,39 @@ type TopicControllerPrivateApi = {
 }
 
 describe('ForumTopicController detail mapping', () => {
-  it('maps admin detail payload to html-only body exposure', () => {
+  it('maps admin detail payload to html-only body exposure and auditor summary', () => {
     const controller = new ForumTopicController(
       {} as never,
       {} as never,
       {} as never,
     )
 
-    const result = (controller as unknown as TopicControllerPrivateApi).mapTopicDetail(
-      {
-        id: 1,
-        sectionId: 2,
-        userId: 3,
-        title: '主题标题',
-        html: '<p>正文</p>',
+    const result = (
+      controller as unknown as TopicControllerPrivateApi
+    ).mapTopicDetail({
+      id: 1,
+      sectionId: 2,
+      userId: 3,
+      title: '主题标题',
+      html: '<p>正文</p>',
+      auditorSummary: {
+        id: 6,
+        username: 'audit-admin',
+        nickname: '审核员',
+        roleName: '超级管理员',
+        avatar: 'https://cdn.example.com/admin/avatar.png',
       },
-    )
+    })
 
     expect(result.html).toBe('<p>正文</p>')
+    expect(result.auditorSummary).toEqual({
+      id: 6,
+      username: 'audit-admin',
+      nickname: '审核员',
+      roleName: '超级管理员',
+      avatar: 'https://cdn.example.com/admin/avatar.png',
+    })
+    expect(result.auditorSummary).not.toHaveProperty('avatarUrl')
     expect(result).not.toHaveProperty('bodyTokens')
   })
 

@@ -115,6 +115,45 @@ export type PublicTopicPageRow = Pick<
 }
 
 /**
+ * 后台主题分页查询结果行。
+ * 与后台分页 DTO 的基础主题字段保持一致，摘要字段在 hydrate 阶段补齐。
+ */
+export type AdminTopicPageRow = Pick<
+  ForumTopicSelect,
+  | 'id'
+  | 'sectionId'
+  | 'userId'
+  | 'title'
+  | 'contentPreview'
+  | 'geoCountry'
+  | 'geoProvince'
+  | 'geoCity'
+  | 'geoIsp'
+  | 'images'
+  | 'videos'
+  | 'isPinned'
+  | 'isFeatured'
+  | 'isLocked'
+  | 'isHidden'
+  | 'auditStatus'
+  | 'auditReason'
+  | 'auditAt'
+  | 'viewCount'
+  | 'likeCount'
+  | 'commentCount'
+  | 'favoriteCount'
+  | 'lastCommentAt'
+  | 'lastCommentUserId'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+/**
+ * 批量关联查询前收集到的可选 ID 候选列表。
+ */
+export type ForumTopicRelationIdCandidates = Array<number | null | undefined>
+
+/**
  * topic 正文写入字段。
  * - 对应 DTO 中的 HTML-only 正文合同。
  */

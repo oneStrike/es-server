@@ -1,4 +1,8 @@
-import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+import {
+  AuditRoleEnum,
+  AuditStatusEnum,
+  BusinessErrorCode,
+} from '@libs/platform/constant'
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import { BadRequestException } from '@nestjs/common'
 import { ForumTopicService } from './forum-topic.service'
@@ -106,7 +110,207 @@ describe('forumTopicService helpers', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     )
+  }
+
+  function createAdminPageServiceHarness() {
+    const listRows = [
+      {
+        id: 101,
+        sectionId: 21,
+        userId: 11,
+        title: '有摘要主题',
+      },
+      {
+        id: 102,
+        sectionId: 22,
+        userId: 12,
+        title: '缺失关联主题',
+      },
+    ]
+    const offset = jest.fn().mockReturnValue(Promise.resolve(listRows))
+    const limit = jest.fn(() => ({ offset }))
+    const where = jest.fn(() => ({ limit }))
+    const from = jest.fn(() => ({ where }))
+    const select = jest.fn(() => ({ from }))
+    const appUserFindMany = jest.fn().mockResolvedValue([
+      {
+        id: 11,
+        nickname: '发帖用户',
+        avatarUrl: 'https://cdn.example.com/app/avatar.png',
+        status: 1,
+        isEnabled: true,
+        level: {
+          name: 'Lv2',
+          deletedAt: null,
+        },
+      },
+    ])
+    const forumSectionFindMany = jest.fn().mockResolvedValue([
+      {
+        id: 21,
+        name: '需求反馈',
+        isEnabled: false,
+        topicReviewPolicy: 2,
+        group: {
+          name: '已停用分组',
+          isEnabled: false,
+          deletedAt: null,
+        },
+      },
+    ])
+    const drizzle = {
+      db: {
+        select,
+        $count: jest.fn().mockResolvedValue(2),
+        query: {
+          appUser: {
+            findMany: appUserFindMany,
+          },
+          forumSection: {
+            findMany: forumSectionFindMany,
+          },
+        },
+      },
+      schema: {
+        forumTopic: {
+          id: 'forumTopic.id',
+          sectionId: 'forumTopic.sectionId',
+          userId: 'forumTopic.userId',
+          title: 'forumTopic.title',
+          content: 'forumTopic.content',
+          contentPreview: 'forumTopic.contentPreview',
+          geoCountry: 'forumTopic.geoCountry',
+          geoProvince: 'forumTopic.geoProvince',
+          geoCity: 'forumTopic.geoCity',
+          geoIsp: 'forumTopic.geoIsp',
+          images: 'forumTopic.images',
+          videos: 'forumTopic.videos',
+          isPinned: 'forumTopic.isPinned',
+          isFeatured: 'forumTopic.isFeatured',
+          isLocked: 'forumTopic.isLocked',
+          isHidden: 'forumTopic.isHidden',
+          auditStatus: 'forumTopic.auditStatus',
+          auditReason: 'forumTopic.auditReason',
+          auditAt: 'forumTopic.auditAt',
+          viewCount: 'forumTopic.viewCount',
+          likeCount: 'forumTopic.likeCount',
+          commentCount: 'forumTopic.commentCount',
+          favoriteCount: 'forumTopic.favoriteCount',
+          lastCommentAt: 'forumTopic.lastCommentAt',
+          lastCommentUserId: 'forumTopic.lastCommentUserId',
+          createdAt: 'forumTopic.createdAt',
+          updatedAt: 'forumTopic.updatedAt',
+          deletedAt: 'forumTopic.deletedAt',
+        },
+      },
+      buildPage: jest.fn().mockReturnValue({
+        limit: 10,
+        offset: 0,
+        pageIndex: 1,
+        pageSize: 10,
+      }),
+      buildOrderBy: jest.fn().mockReturnValue({
+        orderBySql: [],
+      }),
+    }
+    const service = new ForumTopicService(
+      drizzle as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+
+    return {
+      appUserFindMany,
+      forumSectionFindMany,
+      service,
+    }
+  }
+
+  function createAdminDetailServiceHarness(topic: Record<string, unknown>) {
+    const auditorSummary = {
+      id: 7,
+      username: 'audit-admin',
+      nickname: '审核员',
+      roleName: '超级管理员',
+      avatar: 'https://cdn.example.com/admin/avatar.png',
+    }
+    const interactionSummaryReadService = {
+      buildAuditorSummaryKey: jest.fn().mockReturnValue('admin:7'),
+      getAuditorSummaryMap: jest
+        .fn()
+        .mockResolvedValue(new Map([['admin:7', auditorSummary]])),
+    }
+    const growthBalanceQueryService = {
+      getUserGrowthSnapshot: jest.fn().mockResolvedValue({ points: 88 }),
+    }
+    const drizzle = {
+      db: {
+        query: {
+          forumTopic: {
+            findFirst: jest.fn().mockResolvedValue(topic),
+          },
+        },
+      },
+      schema: {
+        forumTopic: {},
+      },
+    }
+    const service = new ForumTopicService(
+      drizzle as never,
+      {} as never,
+      growthBalanceQueryService as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      interactionSummaryReadService as never,
+    )
+    jest
+      .spyOn(
+        service as unknown as {
+          getTopicHashtags: (topicId: number) => Promise<unknown[]>
+        },
+        'getTopicHashtags',
+      )
+      .mockResolvedValue([])
+
+    return {
+      auditorSummary,
+      growthBalanceQueryService,
+      interactionSummaryReadService,
+      service,
+    }
   }
 
   function createDeleteTopicServiceHarness() {
@@ -184,6 +388,7 @@ describe('forumTopicService helpers', () => {
       {} as never,
       {} as never,
       forumHashtagReferenceService as never,
+      {} as never,
     )
 
     return {
@@ -252,6 +457,7 @@ describe('forumTopicService helpers', () => {
       {} as never,
       {} as never,
       forumHashtagReferenceService as never,
+      {} as never,
     )
     jest
       .spyOn(
@@ -374,6 +580,7 @@ describe('forumTopicService helpers', () => {
       sensitiveWordStatisticsService as never,
       {} as never,
       forumHashtagReferenceService as never,
+      {} as never,
     )
     jest
       .spyOn(
@@ -467,6 +674,7 @@ describe('forumTopicService helpers', () => {
       {} as never,
       forumHashtagBodyService as never,
       {} as never,
+      {} as never,
     )
 
     return {
@@ -554,6 +762,7 @@ describe('forumTopicService helpers', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     )
 
     return {
@@ -622,6 +831,7 @@ describe('forumTopicService helpers', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     )
 
     return {
@@ -629,6 +839,122 @@ describe('forumTopicService helpers', () => {
       service,
     }
   }
+
+  it('hydrates admin topic page user and section summaries without dropping orphaned rows', async () => {
+    const { appUserFindMany, forumSectionFindMany, service } =
+      createAdminPageServiceHarness()
+
+    await expect(
+      service.getTopics({
+        pageIndex: 1,
+        pageSize: 10,
+      }),
+    ).resolves.toEqual({
+      list: [
+        {
+          id: 101,
+          sectionId: 21,
+          userId: 11,
+          title: '有摘要主题',
+          userSummary: {
+            id: 11,
+            nickname: '发帖用户',
+            avatarUrl: 'https://cdn.example.com/app/avatar.png',
+            status: 1,
+            isEnabled: true,
+            levelName: 'Lv2',
+          },
+          sectionSummary: {
+            id: 21,
+            name: '需求反馈',
+            isEnabled: false,
+            topicReviewPolicy: 2,
+            groupName: '已停用分组',
+          },
+        },
+        {
+          id: 102,
+          sectionId: 22,
+          userId: 12,
+          title: '缺失关联主题',
+          userSummary: null,
+          sectionSummary: null,
+        },
+      ],
+      total: 2,
+      pageIndex: 1,
+      pageSize: 10,
+    })
+    expect(appUserFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        with: expect.objectContaining({
+          level: expect.any(Object),
+        }),
+      }),
+    )
+    expect(forumSectionFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        with: expect.objectContaining({
+          group: expect.any(Object),
+        }),
+      }),
+    )
+  })
+
+  it('returns auditor summary for admin topic details even when the app user row is missing', async () => {
+    const { auditorSummary, growthBalanceQueryService, service } =
+      createAdminDetailServiceHarness({
+        id: 301,
+        userId: 99,
+        auditById: 7,
+        auditRole: AuditRoleEnum.ADMIN,
+        user: null,
+      })
+
+    await expect(service.getTopicById(301)).resolves.toMatchObject({
+      id: 301,
+      user: null,
+      hashtags: [],
+      auditorSummary,
+    })
+    expect(
+      growthBalanceQueryService.getUserGrowthSnapshot,
+    ).not.toHaveBeenCalled()
+  })
+
+  it('returns auditor summary with avatar instead of avatarUrl when topic user exists', async () => {
+    const { auditorSummary, growthBalanceQueryService, service } =
+      createAdminDetailServiceHarness({
+        id: 302,
+        userId: 18,
+        auditById: 7,
+        auditRole: AuditRoleEnum.ADMIN,
+        user: {
+          id: 18,
+          nickname: '发帖用户',
+          counts: null,
+          level: null,
+        },
+      })
+
+    const result = await service.getTopicById(302)
+
+    expect(result).toMatchObject({
+      id: 302,
+      auditorSummary,
+      user: {
+        id: 18,
+        points: 88,
+      },
+    })
+    expect(
+      (result as unknown as { auditorSummary?: Record<string, unknown> })
+        .auditorSummary,
+    ).not.toHaveProperty('avatarUrl')
+    expect(
+      growthBalanceQueryService.getUserGrowthSnapshot,
+    ).toHaveBeenCalledWith(18)
+  })
 
   it('uses the explicit title when deriving the create title', () => {
     const service = createService()
@@ -695,6 +1021,7 @@ describe('forumTopicService helpers', () => {
       {} as never,
       {} as never,
       sensitiveWordDetectService as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,

@@ -133,6 +133,7 @@ export class ForumTopicController {
               : null,
           }
         : null,
+      auditorSummary: topic.auditorSummary ?? null,
     }
   }
 
