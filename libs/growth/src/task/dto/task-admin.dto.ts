@@ -3,11 +3,6 @@ import { EnumProperty, NestedProperty } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto'
 import { IntersectionType, OmitType, PartialType } from '@nestjs/swagger'
 import { TaskDefinitionStatusEnum } from '../task.constant'
-import {
-  QueryTaskDefinitionPageDto,
-  QueryTaskInstancePageDto,
-  QueryTaskReconciliationPageDto,
-} from './task-query.dto'
 import { BaseTaskDefinitionDto, TaskStepSummaryDto } from './task-view.dto'
 
 export class CreateTaskStepDto extends OmitType(TaskStepSummaryDto, [
@@ -40,10 +35,4 @@ export class UpdateTaskDefinitionStatusDto extends IdDto {
     enum: TaskDefinitionStatusEnum,
   })
   status!: TaskDefinitionStatusEnum
-}
-
-export {
-  QueryTaskDefinitionPageDto,
-  QueryTaskInstancePageDto,
-  QueryTaskReconciliationPageDto,
 }

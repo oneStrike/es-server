@@ -1,11 +1,13 @@
 import {
   CreateTaskDefinitionDto,
-  QueryTaskDefinitionPageDto,
-  QueryTaskInstancePageDto,
-  QueryTaskReconciliationPageDto,
   UpdateTaskDefinitionDto,
   UpdateTaskDefinitionStatusDto,
 } from '@libs/growth/task/dto/task-admin.dto'
+import {
+  QueryTaskDefinitionPageDto,
+  QueryTaskInstancePageDto,
+  QueryTaskReconciliationPageDto,
+} from '@libs/growth/task/dto/task-query.dto'
 import { TaskTemplateOptionsResponseDto } from '@libs/growth/task/dto/task-template.dto'
 import {
   AdminTaskDefinitionDetailDto,

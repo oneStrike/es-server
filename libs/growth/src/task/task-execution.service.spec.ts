@@ -1,8 +1,11 @@
 import { EventDefinitionImplStatusEnum } from '@libs/growth/event-definition/event-definition.constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { TaskService } from './task.service'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import { TaskExecutionService } from './task-execution.service'
 import { TaskNotificationService } from './task-notification.service'
+import { TaskServiceSupport } from './task.service.support'
 import {
   TaskClaimModeEnum,
   TaskRepeatCycleEnum,
@@ -156,6 +159,52 @@ describe('task template contract hard cutover', () => {
         },
       ),
     ).toBe(false)
+  })
+})
+
+describe('task domain business exception contract', () => {
+  class TaskServiceSupportHarness extends TaskServiceSupport {
+    // 触发任务定义发布时间窗口校验。
+    rejectInvalidWindow() {
+      this.ensureTaskDefinitionWindow(
+        new Date('2026-05-02T00:00:00.000Z'),
+        new Date('2026-05-01T00:00:00.000Z'),
+      )
+    }
+  }
+
+  it('uses business exception for task definition validation failures', () => {
+    const support = new TaskServiceSupportHarness({} as never)
+
+    expect(() => support.rejectInvalidWindow()).toThrow(BusinessException)
+    expect(() => support.rejectInvalidWindow()).toThrow(
+      expect.objectContaining({
+        code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        message: '生效开始时间不能晚于生效结束时间',
+      }),
+    )
+  })
+
+  it('uses business exception for task template filter validation failures', () => {
+    const registry = new TaskEventTemplateRegistry({
+      listEventDefinitions: jest.fn().mockReturnValue([]),
+    } as never)
+
+    expect(() =>
+      registry.normalizeFilterPayload('missing-template', [
+        { key: 'targetType', value: 'comic_work' },
+      ]),
+    ).toThrow(BusinessException)
+    expect(() =>
+      registry.normalizeFilterPayload('missing-template', [
+        { key: 'targetType', value: 'comic_work' },
+      ]),
+    ).toThrow(
+      expect.objectContaining({
+        code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        message: '事件步骤模板不存在',
+      }),
+    )
   })
 })
 

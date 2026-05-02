@@ -15,6 +15,7 @@ import type {
 } from '@libs/message/notification/notification-contract.type'
 import type { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import type { GrowthRewardItem } from '../../reward-rule/reward-item.type'
+import type { CreateTaskStepDto } from '../dto/task-admin.dto'
 import type { TaskReminderKindEnum } from '../task.constant'
 
 /** 任务事件推进入参。 */
@@ -43,6 +44,9 @@ export interface TaskStepFilterValueView {
   label?: string
   value: string
 }
+
+/** 任务步骤写入合同的外部输入字段集。 */
+export type TaskStepWriteSourceInput = Partial<CreateTaskStepDto>
 
 /** 任务步骤写入合同的内部归一化视图。 */
 export interface TaskStepWriteInput {

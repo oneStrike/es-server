@@ -16,7 +16,9 @@ import {
   EventDefinitionImplStatusEnum,
 } from '@libs/growth/event-definition/event-definition.constant'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 
 /**
  * Task 侧事件模板注册表。
@@ -74,7 +76,10 @@ export class TaskEventTemplateRegistry {
 
     const template = templateKey ? this.getTemplateByKey(templateKey) : null
     if (!template) {
-      throw new BadRequestException('事件步骤模板不存在')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '事件步骤模板不存在',
+      )
     }
 
     const fieldMap = new Map(
@@ -88,10 +93,16 @@ export class TaskEventTemplateRegistry {
       const field = fieldMap.get(key)
 
       if (!field) {
-        throw new BadRequestException(`当前模板不支持过滤字段 ${filter.key}`)
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `当前模板不支持过滤字段 ${filter.key}`,
+        )
       }
       if (!value) {
-        throw new BadRequestException(`过滤字段 ${filter.key} 的值不能为空`)
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `过滤字段 ${filter.key} 的值不能为空`,
+        )
       }
 
       payload[key] = this.parseFilterValue(field.valueType, value, filter.key)
@@ -272,7 +283,10 @@ export class TaskEventTemplateRegistry {
     if (valueType === 'number') {
       const parsed = Number(value)
       if (!Number.isFinite(parsed)) {
-        throw new BadRequestException(`过滤字段 ${key} 必须是合法数字`)
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `过滤字段 ${key} 必须是合法数字`,
+        )
       }
       return parsed
     }
@@ -282,7 +296,10 @@ export class TaskEventTemplateRegistry {
     if (value === 'false') {
       return false
     }
-    throw new BadRequestException(`过滤字段 ${key} 必须是 true 或 false`)
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      `过滤字段 ${key} 必须是 true 或 false`,
+    )
   }
 
   // 解析过滤字段在事件外壳中的真实取值。

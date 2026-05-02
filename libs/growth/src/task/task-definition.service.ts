@@ -1,5 +1,9 @@
 import type { TaskStepSelect } from '@db/schema'
-import type { TaskStepWriteInput } from './types/task.type'
+import type { QueryTaskDefinitionPageDto } from './dto/task-query.dto'
+import type {
+  TaskStepWriteInput,
+  TaskStepWriteSourceInput,
+} from './types/task.type'
 import { randomBytes } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -8,8 +12,6 @@ import { Injectable } from '@nestjs/common'
 import { and, eq, sql } from 'drizzle-orm'
 import {
   CreateTaskDefinitionDto,
-  CreateTaskStepDto,
-  QueryTaskDefinitionPageDto,
   UpdateTaskDefinitionDto,
 } from './dto/task-admin.dto'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
@@ -307,7 +309,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
 
   // 把外部单步骤写入合同归一化成内部持久化视图。
   private buildTaskStepWriteInput(
-    input: Partial<CreateTaskStepDto>,
+    input: TaskStepWriteSourceInput,
     taskTitle: string,
     currentStep?: TaskStepSelect,
   ): TaskStepWriteInput {

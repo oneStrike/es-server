@@ -3,14 +3,14 @@ import { IdDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
 import {
   CreateTaskDefinitionDto,
-  QueryTaskDefinitionPageDto,
-  QueryTaskInstancePageDto,
-  QueryTaskReconciliationPageDto,
   UpdateTaskDefinitionDto,
 } from './dto/task-admin.dto'
 import {
   QueryAvailableTaskPageDto,
   QueryMyTaskPageDto,
+  QueryTaskDefinitionPageDto,
+  QueryTaskInstancePageDto,
+  QueryTaskReconciliationPageDto,
   TaskProgressDto,
 } from './dto/task-query.dto'
 import { TaskDefinitionService } from './task-definition.service'

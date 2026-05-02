@@ -2,10 +2,10 @@ import type { DrizzleService } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateTaskDefinitionDto,
-  QueryTaskDefinitionPageDto,
   UpdateTaskDefinitionDto,
 } from './dto/task-admin.dto'
 import type { AppAvailableTaskPageItemDto } from './dto/task-app.dto'
+import type { QueryTaskDefinitionPageDto } from './dto/task-query.dto'
 import type {
   AdminTaskDefinitionDetailDto,
   AdminTaskDefinitionListItemDto,
@@ -23,7 +23,6 @@ import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/gro
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException } from '@nestjs/common'
 import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import {
   TaskClaimModeEnum,
@@ -309,14 +308,18 @@ export abstract class TaskServiceSupport {
     endAt?: Date | null,
   ) {
     if (startAt && endAt && startAt.getTime() > endAt.getTime()) {
-      throw new BadRequestException('生效开始时间不能晚于生效结束时间')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '生效开始时间不能晚于生效结束时间',
+      )
     }
   }
 
   // 校验任务头场景类型。
   protected ensureTaskDefinitionSceneType(sceneType: number) {
     if (!Object.values(TaskTypeEnum).includes(sceneType)) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         'sceneType 仅支持 ONBOARDING、DAILY、CAMPAIGN',
       )
     }
@@ -325,7 +328,8 @@ export abstract class TaskServiceSupport {
   // 校验任务头状态。
   protected ensureTaskDefinitionStatus(status: number) {
     if (!Object.values(TaskDefinitionStatusEnum).includes(status)) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         'status 仅支持 DRAFT、ACTIVE、PAUSED、ARCHIVED',
       )
     }
@@ -334,7 +338,10 @@ export abstract class TaskServiceSupport {
   // 校验任务头领取方式。
   protected ensureTaskDefinitionClaimMode(claimMode: number) {
     if (!Object.values(TaskClaimModeEnum).includes(claimMode)) {
-      throw new BadRequestException('claimMode 仅支持 AUTO、MANUAL')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'claimMode 仅支持 AUTO、MANUAL',
+      )
     }
   }
 
@@ -342,7 +349,10 @@ export abstract class TaskServiceSupport {
   protected ensureTaskCompletionPolicy(completionPolicy?: number | null) {
     const policy = completionPolicy ?? TaskCompletionPolicyEnum.ALL_STEPS
     if (!Object.values(TaskCompletionPolicyEnum).includes(policy)) {
-      throw new BadRequestException('completionPolicy 当前仅支持 ALL_STEPS')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'completionPolicy 当前仅支持 ALL_STEPS',
+      )
     }
     return policy
   }
@@ -351,7 +361,8 @@ export abstract class TaskServiceSupport {
   protected ensureTaskRepeatType(repeatType?: number | null) {
     const value = repeatType ?? TaskRepeatCycleEnum.ONCE
     if (!Object.values(TaskRepeatCycleEnum).includes(value)) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         'repeatType 仅支持 ONCE、DAILY、WEEKLY、MONTHLY',
       )
     }
@@ -366,13 +377,22 @@ export abstract class TaskServiceSupport {
     templateSupportsUniqueCounting?: boolean,
   ) {
     if (!step.title?.trim()) {
-      throw new BadRequestException('step.title 不能为空')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'step.title 不能为空',
+      )
     }
     if (!Number.isInteger(step.targetValue) || step.targetValue <= 0) {
-      throw new BadRequestException('step.targetValue 必须是大于 0 的整数')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'step.targetValue 必须是大于 0 的整数',
+      )
     }
     if (!Object.values(TaskStepTriggerModeEnum).includes(step.triggerMode)) {
-      throw new BadRequestException('step.triggerMode 仅支持 MANUAL、EVENT')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'step.triggerMode 仅支持 MANUAL、EVENT',
+      )
     }
 
     if (step.triggerMode === TaskStepTriggerModeEnum.MANUAL) {
@@ -382,7 +402,8 @@ export abstract class TaskServiceSupport {
         this.hasTaskFilterPayload(step.filterPayload) ||
         step.dedupeScope !== undefined
       ) {
-        throw new BadRequestException(
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
           '手动步骤不能配置 eventCode、templateKey、过滤条件或去重范围',
         )
       }
@@ -390,22 +411,37 @@ export abstract class TaskServiceSupport {
 
     if (step.triggerMode === TaskStepTriggerModeEnum.EVENT) {
       if (!step.templateKey) {
-        throw new BadRequestException('事件步骤必须配置 templateKey')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '事件步骤必须配置 templateKey',
+        )
       }
       if (step.eventCode === undefined || step.eventCode === null) {
-        throw new BadRequestException('事件步骤必须配置 eventCode')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '事件步骤必须配置 eventCode',
+        )
       }
       if (!templateSelectable) {
-        throw new BadRequestException('当前模板未正式接通，不能创建为生效任务')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '当前模板未正式接通，不能创建为生效任务',
+        )
       }
       if (
         typeof templateEventCode === 'number' &&
         step.eventCode !== templateEventCode
       ) {
-        throw new BadRequestException('step.eventCode 与模板事件编码不一致')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          'step.eventCode 与模板事件编码不一致',
+        )
       }
       if (step.dedupeScope !== undefined && !templateSupportsUniqueCounting) {
-        throw new BadRequestException('当前模板不支持按不同对象累计')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '当前模板不支持按不同对象累计',
+        )
       }
     }
   }
