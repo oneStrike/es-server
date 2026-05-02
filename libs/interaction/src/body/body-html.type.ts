@@ -58,3 +58,16 @@ export type BodyHtmlInlineContainer = Extract<
   BodyBlockNode,
   { content: BodyInlineNode[] }
 >
+
+/**
+ * HTML 解析阶段获取当前 inline 容器的回调。
+ * - 用于把解析栈访问能力以命名类型传入子处理方法。
+ */
+export type BodyHtmlInlineContainerResolver =
+  () => BodyHtmlInlineContainer | null
+
+/**
+ * HTML 解析阶段追加 inline 节点的回调。
+ * - 用于把节点写入能力以命名类型传入子处理方法。
+ */
+export type BodyHtmlInlineNodeAppender = (node: BodyInlineNode) => void

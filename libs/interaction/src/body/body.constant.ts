@@ -6,7 +6,9 @@ import { EmojiSceneEnum } from '../emoji/emoji.constant'
  * - `comment` 只允许受限的纯文本增强 schema。
  */
 export enum BodySceneEnum {
+  // 论坛主题正文，允许富文本块级结构。
   TOPIC = 'topic',
+  // 评论正文，限制为段落型增强文本。
   COMMENT = 'comment',
 }
 

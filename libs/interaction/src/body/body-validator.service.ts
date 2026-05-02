@@ -50,38 +50,41 @@ export class BodyValidatorService {
     if (!this.isRecord(rawBlock) || typeof rawBlock.type !== 'string') {
       throw new BadRequestException(`${path} 必须是合法块级节点`)
     }
+    const blockType = rawBlock.type
 
     const allowedBlockTypes =
       scene === BodySceneEnum.TOPIC
         ? TOPIC_BODY_BLOCK_TYPES
         : COMMENT_BODY_BLOCK_TYPES
 
-    if (!allowedBlockTypes.includes(rawBlock.type as never)) {
+    if (!allowedBlockTypes.includes(blockType as never)) {
       throw new BadRequestException(`${path}.type 不允许在当前场景使用`)
     }
 
-    switch (rawBlock.type) {
+    switch (blockType) {
       case 'paragraph':
       case 'blockquote':
         return {
-          type: rawBlock.type,
+          type: blockType,
           content: this.validateInlineContentOrThrow(
             rawBlock.content,
             `${path}.content`,
           ),
         }
       case 'heading': {
+        const level = rawBlock.level
         if (
-          !Number.isInteger(rawBlock.level) ||
-          rawBlock.level < 1 ||
-          rawBlock.level > 6
+          typeof level !== 'number' ||
+          !Number.isInteger(level) ||
+          level < 1 ||
+          level > 6
         ) {
           throw new BadRequestException(`${path}.level 必须是 1-6 的整数`)
         }
 
         return {
           type: 'heading',
-          level: rawBlock.level,
+          level,
           content: this.validateInlineContentOrThrow(
             rawBlock.content,
             `${path}.content`,
@@ -99,7 +102,7 @@ export class BodyValidatorService {
       case 'bulletList':
       case 'orderedList':
         return {
-          type: rawBlock.type,
+          type: blockType,
           content: this.validateListItemsOrThrow(
             rawBlock.content,
             `${path}.content`,
@@ -154,8 +157,9 @@ export class BodyValidatorService {
     if (!this.isRecord(rawNode) || typeof rawNode.type !== 'string') {
       throw new BadRequestException(`${path} 必须是合法内联节点`)
     }
+    const nodeType = rawNode.type
 
-    switch (rawNode.type) {
+    switch (nodeType) {
       case 'text':
         if (typeof rawNode.text !== 'string') {
           throw new BadRequestException(`${path}.text 必须是字符串`)
@@ -169,65 +173,78 @@ export class BodyValidatorService {
         return {
           type: 'hardBreak',
         }
-      case 'mentionUser':
-        if (!Number.isInteger(rawNode.userId) || rawNode.userId <= 0) {
+      case 'mentionUser': {
+        const userId = rawNode.userId
+        const nickname = rawNode.nickname
+        if (
+          typeof userId !== 'number' ||
+          !Number.isInteger(userId) ||
+          userId <= 0
+        ) {
           throw new BadRequestException(`${path}.userId 必须是正整数`)
         }
-        if (
-          typeof rawNode.nickname !== 'string' ||
-          rawNode.nickname.trim().length === 0
-        ) {
+        if (typeof nickname !== 'string' || nickname.trim().length === 0) {
           throw new BadRequestException(`${path}.nickname 不能为空`)
         }
         return {
           type: 'mentionUser',
-          userId: rawNode.userId,
-          nickname: rawNode.nickname.trim(),
+          userId,
+          nickname: nickname.trim(),
         }
-      case 'emojiUnicode':
+      }
+      case 'emojiUnicode': {
+        const unicodeSequence = rawNode.unicodeSequence
         if (
-          typeof rawNode.unicodeSequence !== 'string' ||
-          rawNode.unicodeSequence.length === 0
+          typeof unicodeSequence !== 'string' ||
+          unicodeSequence.length === 0
         ) {
           throw new BadRequestException(`${path}.unicodeSequence 不能为空`)
         }
         return {
           type: 'emojiUnicode',
-          unicodeSequence: rawNode.unicodeSequence,
+          unicodeSequence,
         }
-      case 'emojiCustom':
+      }
+      case 'emojiCustom': {
+        const shortcode = rawNode.shortcode
         if (
-          typeof rawNode.shortcode !== 'string' ||
-          !/^[a-z0-9_]{2,32}$/.test(rawNode.shortcode)
+          typeof shortcode !== 'string' ||
+          !/^[a-z0-9_]{2,32}$/.test(shortcode)
         ) {
           throw new BadRequestException(`${path}.shortcode 非法`)
         }
         return {
           type: 'emojiCustom',
-          shortcode: rawNode.shortcode,
+          shortcode,
         }
-      case 'forumHashtag':
-        if (!Number.isInteger(rawNode.hashtagId) || rawNode.hashtagId <= 0) {
+      }
+      case 'forumHashtag': {
+        const hashtagId = rawNode.hashtagId
+        const slug = rawNode.slug
+        const displayName = rawNode.displayName
+        if (
+          typeof hashtagId !== 'number' ||
+          !Number.isInteger(hashtagId) ||
+          hashtagId <= 0
+        ) {
           throw new BadRequestException(`${path}.hashtagId 必须是正整数`)
         }
-        if (
-          typeof rawNode.slug !== 'string' ||
-          rawNode.slug.trim().length === 0
-        ) {
+        if (typeof slug !== 'string' || slug.trim().length === 0) {
           throw new BadRequestException(`${path}.slug 不能为空`)
         }
         if (
-          typeof rawNode.displayName !== 'string' ||
-          rawNode.displayName.trim().length === 0
+          typeof displayName !== 'string' ||
+          displayName.trim().length === 0
         ) {
           throw new BadRequestException(`${path}.displayName 不能为空`)
         }
         return {
           type: 'forumHashtag',
-          hashtagId: rawNode.hashtagId,
-          slug: rawNode.slug.trim(),
-          displayName: rawNode.displayName.trim(),
+          hashtagId,
+          slug: slug.trim(),
+          displayName: displayName.trim(),
         }
+      }
       default:
         throw new BadRequestException(`${path}.type 不支持`)
     }
@@ -250,11 +267,12 @@ export class BodyValidatorService {
       if (!this.isRecord(mark) || typeof mark.type !== 'string') {
         throw new BadRequestException(`${nextPath} 必须是合法 mark`)
       }
-      if (!BODY_TEXT_MARK_TYPES.includes(mark.type as never)) {
+      const markType = mark.type
+      if (!BODY_TEXT_MARK_TYPES.includes(markType as never)) {
         throw new BadRequestException(`${nextPath}.type 不支持`)
       }
 
-      if (mark.type === 'link') {
+      if (markType === 'link') {
         if (typeof mark.href !== 'string') {
           throw new BadRequestException(`${nextPath}.href 不能为空`)
         }
@@ -265,13 +283,13 @@ export class BodyValidatorService {
       }
 
       return {
-        type: mark.type,
+        type: markType,
       } as BodyTextMark
     })
   }
 
   // 判断未知值是否为 object record。
-  private isRecord(value: unknown): value is Record<string, any> {
+  private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
   }
 }

@@ -3,29 +3,12 @@ import type {
   BodyDoc,
   BodyInlineNode,
   BodyListItemNode,
+  BodySegment,
   PlainTextBodyBuildOptions,
+  PlainTextBodyMentionInputList,
 } from './body.type'
 import { BadRequestException } from '@nestjs/common'
 import { EMOJI_SHORTCODE_REGEX } from '../emoji/emoji.constant'
-
-type BodySegment =
-  | {
-      type: 'text'
-      text: string
-    }
-    | {
-      type: 'mentionUser'
-      userId: number
-      nickname: string
-    }
-    | {
-      type: 'emojiUnicode'
-      unicodeSequence: string
-    }
-    | {
-      type: 'emojiCustom'
-      shortcode: string
-    }
 
 const EMOJI_UNICODE_REGEX = /\p{RGI_Emoji}/gv
 
@@ -168,7 +151,9 @@ function createSegmentsFromPlainText(
 
   for (const mention of normalizedMentions) {
     if (mention.start > cursor) {
-      segments.push(...createSegmentsFromText(plainText.slice(cursor, mention.start)))
+      segments.push(
+        ...createSegmentsFromText(plainText.slice(cursor, mention.start)),
+      )
     }
 
     segments.push({
@@ -275,7 +260,7 @@ function createSegmentsFromUnicodeText(text: string): BodySegment[] {
  */
 function normalizeMentionSnapshots(
   plainText: string,
-  mentions?: PlainTextBodyBuildOptions['mentions'],
+  mentions?: PlainTextBodyMentionInputList,
 ) {
   if (!mentions?.length) {
     return []

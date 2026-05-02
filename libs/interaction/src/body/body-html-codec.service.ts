@@ -1,11 +1,18 @@
 import type {
   BodyHtmlBlockStackEntry,
   BodyHtmlInlineContainer,
+  BodyHtmlInlineContainerResolver,
+  BodyHtmlInlineNodeAppender,
   BodyHtmlInlineNodeContext,
   BodyHtmlTagToken,
 } from './body-html.type'
 import type { BodySceneEnum } from './body.constant'
-import type { BodyDoc, BodyInlineNode, BodyTextMark } from './body.type'
+import type {
+  BodyBlockNode,
+  BodyDoc,
+  BodyInlineNode,
+  BodyTextMark,
+} from './body.type'
 import { decodeHtmlEntities } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { assertSafeBodyLinkHref } from './body-link.helper'
@@ -291,7 +298,7 @@ export class BodyHtmlCodecService {
     blockStack: BodyHtmlBlockStackEntry[],
     markStack: BodyTextMark[],
     specialInlineStack: BodyHtmlInlineNodeContext[],
-    currentInlineContainer: () => BodyHtmlInlineContainer | null,
+    currentInlineContainer: BodyHtmlInlineContainerResolver,
   ) {
     const tagName = token.name ?? ''
 
@@ -396,8 +403,8 @@ export class BodyHtmlCodecService {
   private handleSelfClosingTagOrThrow(
     token: BodyHtmlTagToken,
     scene: BodySceneEnum,
-    currentInlineContainer: () => BodyHtmlInlineContainer | null,
-    appendInlineNode: (node: BodyInlineNode) => void,
+    currentInlineContainer: BodyHtmlInlineContainerResolver,
+    appendInlineNode: BodyHtmlInlineNodeAppender,
   ) {
     const tagName = token.name ?? ''
     if (!currentInlineContainer()) {
@@ -443,7 +450,7 @@ export class BodyHtmlCodecService {
     markStack: BodyTextMark[],
     specialInlineStack: BodyHtmlInlineNodeContext[],
     blockStack: BodyHtmlBlockStackEntry[],
-    appendInlineNode: (node: BodyInlineNode) => void,
+    appendInlineNode: BodyHtmlInlineNodeAppender,
   ) {
     const tagName = token.name ?? ''
 
@@ -490,7 +497,9 @@ export class BodyHtmlCodecService {
             specialInline.attributes['data-unicode-sequence']?.trim() ??
             specialInline.textContent.trim()
           if (!unicodeSequence) {
-            throw new BadRequestException('emoji span 缺少 data-unicode-sequence')
+            throw new BadRequestException(
+              'emoji span 缺少 data-unicode-sequence',
+            )
           }
           appendInlineNode({
             type: 'emojiUnicode',
@@ -592,7 +601,7 @@ export class BodyHtmlCodecService {
   }
 
   // 渲染块级节点为规范化 HTML。
-  private renderBlock(block: BodyDoc['content'][number]): string {
+  private renderBlock(block: BodyBlockNode): string {
     switch (block.type) {
       case 'paragraph':
         return `<p>${this.renderInlineNodes(block.content)}</p>`

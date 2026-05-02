@@ -94,6 +94,42 @@ export type BodyInlineNode =
   | BodyForumHashtagNode
 
 /**
+ * 用户提及 inline 节点。
+ * - 供 compiler 等内部链路避免重复书写交叉类型。
+ */
+export type BodyMentionUserInlineNode = Extract<
+  BodyInlineNode,
+  { type: 'mentionUser' }
+>
+
+/**
+ * Unicode emoji inline 节点。
+ * - 供 compiler 等内部链路避免重复书写交叉类型。
+ */
+export type BodyEmojiUnicodeInlineNode = Extract<
+  BodyInlineNode,
+  { type: 'emojiUnicode' }
+>
+
+/**
+ * custom emoji inline 节点。
+ * - 供 compiler 等内部链路避免重复书写交叉类型。
+ */
+export type BodyEmojiCustomInlineNode = Extract<
+  BodyInlineNode,
+  { type: 'emojiCustom' }
+>
+
+/**
+ * forum hashtag inline 节点。
+ * - 供 compiler 等内部链路避免重复书写交叉类型。
+ */
+export type BodyForumHashtagInlineNode = Extract<
+  BodyInlineNode,
+  { type: 'forumHashtag' }
+>
+
+/**
  * 段落节点。
  * - 纯文本与富文本正文都可复用。
  */
@@ -188,12 +224,41 @@ export interface BodyValidationInput {
 }
 
 /**
+ * 纯文本正文构造中的 mention 输入列表。
+ * - 与 `PlainTextBodyBuildOptions.mentions` 保持同一边界。
+ */
+export type PlainTextBodyMentionInputList = MentionDraftSnapshot[]
+
+/**
  * 纯文本正文构造输入。
  * - 用于把 `plainText + mentions` 收敛成 canonical body。
  */
 export interface PlainTextBodyBuildOptions {
-  mentions?: MentionDraftSnapshot[]
+  mentions?: PlainTextBodyMentionInputList
 }
+
+/**
+ * plain text / legacy token 进入 canonical body 前的线性 segment。
+ * - 供纯文本构造和 migration helper 复用同一输入边界。
+ */
+export type BodySegment =
+  | {
+      type: 'text'
+      text: string
+    }
+    | {
+      type: 'mentionUser'
+      userId: number
+      nickname: string
+    }
+    | {
+      type: 'emojiUnicode'
+      unicodeSequence: string
+    }
+    | {
+      type: 'emojiCustom'
+      shortcode: string
+    }
 
 /**
  * body 编译结果。

@@ -1,9 +1,14 @@
+import type { EmojiParseToken } from '../emoji/emoji.type'
 import type { NormalizedMentionDraft } from '../mention/mention.type'
 import type { BodySceneEnum } from './body.constant'
 import type {
   BodyBlockNode,
   BodyDoc,
+  BodyEmojiCustomInlineNode,
+  BodyEmojiUnicodeInlineNode,
+  BodyForumHashtagInlineNode,
   BodyInlineNode,
+  BodyMentionUserInlineNode,
   CompiledBodyResult,
 } from './body.type'
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
@@ -42,9 +47,7 @@ export class BodyCompilerService {
     ])
 
     const mentionFacts: NormalizedMentionDraft[] = []
-    const bodyTokens: Array<
-      Awaited<ReturnType<EmojiParserService['parse']>>[number]
-    > = []
+    const bodyTokens: EmojiParseToken[] = []
     let plainText = ''
 
     const appendText = async (text: string) => {
@@ -60,9 +63,7 @@ export class BodyCompilerService {
       )
     }
 
-    const appendMention = (
-      mention: BodyInlineNode & { type: 'mentionUser' },
-    ) => {
+    const appendMention = (mention: BodyMentionUserInlineNode) => {
       const text = `@${mention.nickname}`
       const start = plainText.length
       plainText += text
@@ -82,7 +83,7 @@ export class BodyCompilerService {
     }
 
     const appendExplicitUnicodeEmoji = (
-      emojiNode: BodyInlineNode & { type: 'emojiUnicode' },
+      emojiNode: BodyEmojiUnicodeInlineNode,
     ) => {
       plainText += emojiNode.unicodeSequence
       bodyTokens.push({
@@ -94,7 +95,7 @@ export class BodyCompilerService {
     }
 
     const appendExplicitCustomEmoji = (
-      emojiNode: BodyInlineNode & { type: 'emojiCustom' },
+      emojiNode: BodyEmojiCustomInlineNode,
     ) => {
       const shortcodeText = `:${emojiNode.shortcode}:`
       const asset = customEmojiMap.get(emojiNode.shortcode)
@@ -119,9 +120,7 @@ export class BodyCompilerService {
       })
     }
 
-    const appendForumHashtag = (
-      hashtagNode: BodyInlineNode & { type: 'forumHashtag' },
-    ) => {
+    const appendForumHashtag = (hashtagNode: BodyForumHashtagInlineNode) => {
       const text = `#${hashtagNode.displayName}`
       plainText += text
       bodyTokens.push({
@@ -154,10 +153,14 @@ export class BodyCompilerService {
           case 'forumHashtag':
             appendForumHashtag(node)
             break
-          default:
+          default: {
+            const unsupportedNode: never = node
             throw new Error(
-              `Unsupported body inline node: ${(node as any).type}`,
+              `Unsupported body inline node: ${this.describeUnsupportedNodeType(
+                unsupportedNode,
+              )}`,
             )
+          }
         }
       }
     }
@@ -179,8 +182,14 @@ export class BodyCompilerService {
             await renderInlineNodes(block.content[index].content)
           }
           break
-        default:
-          throw new Error(`Unsupported body block node: ${(block as any).type}`)
+        default: {
+          const unsupportedBlock: never = block
+          throw new Error(
+            `Unsupported body block node: ${this.describeUnsupportedNodeType(
+              unsupportedBlock,
+            )}`,
+          )
+        }
       }
     }
 
@@ -198,6 +207,15 @@ export class BodyCompilerService {
       mentionFacts,
       emojiRecentUsageItems: buildRecentEmojiUsageItems(bodyTokens),
     }
+  }
+
+  // 描述未知节点类型，供穷尽分支的兜底错误使用。
+  private describeUnsupportedNodeType(node: unknown) {
+    if (typeof node === 'object' && node !== null && 'type' in node) {
+      return String((node as { type?: unknown }).type)
+    }
+
+    return 'unknown'
   }
 
   // 预先收集显式 emoji 节点，避免逐节点重复查 catalog。
