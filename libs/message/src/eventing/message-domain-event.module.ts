@@ -1,7 +1,7 @@
 import { EventingModule } from '@libs/platform/modules/eventing/eventing.module'
 import { Module } from '@nestjs/common'
 import { MessageInboxModule } from '../inbox/inbox.module'
-import { MessageNotificationModule } from '../notification/notification.module'
+import { MessageNotificationCoreModule } from '../notification/notification-core.module'
 import { ChatRealtimeEventConsumer } from './chat-realtime-event.consumer'
 import { MessageDomainEventDispatchWorker } from './message-domain-event-dispatch.worker'
 import { MessageDomainEventFactoryService } from './message-domain-event.factory'
@@ -10,7 +10,7 @@ import { NotificationEventConsumer } from './notification-event.consumer'
 import { NotificationProjectionService } from './notification-projection.service'
 
 @Module({
-  imports: [EventingModule, MessageNotificationModule, MessageInboxModule],
+  imports: [EventingModule, MessageNotificationCoreModule, MessageInboxModule],
   providers: [
     MessageDomainEventPublisher,
     MessageDomainEventFactoryService,

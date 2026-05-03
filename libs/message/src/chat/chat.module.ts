@@ -3,14 +3,14 @@ import { Module } from '@nestjs/common'
 import { MessageDomainEventModule } from '../eventing/message-domain-event.module'
 import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageMonitorModule } from '../monitor/monitor.module'
-import { MessageNotificationModule } from '../notification/notification.module'
+import { MessageNotificationCoreModule } from '../notification/notification-core.module'
 import { MessageChatReadQueryService } from './chat-read-query.service'
 import { MESSAGE_CHAT_SERVICE_TOKEN } from './chat.constant'
 import { MessageChatService } from './chat.service'
 
 @Module({
   imports: [
-    MessageNotificationModule,
+    MessageNotificationCoreModule,
     MessageInboxModule,
     MessageMonitorModule,
     MessageDomainEventModule,

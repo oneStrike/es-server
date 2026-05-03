@@ -1,6 +1,7 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { logStartupInfo, setupApp } from '@libs/platform/bootstrap';
+import process from 'node:process'
+import { logStartupInfo, setupApp } from '@libs/platform/bootstrap'
 
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
@@ -53,4 +54,7 @@ async function bootstrap() {
   }
 }
 
-void bootstrap()
+void bootstrap().catch((error) => {
+  console.error('管理端服务启动失败:', error)
+  process.exitCode = 1
+})
