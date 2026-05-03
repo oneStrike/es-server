@@ -1,4 +1,4 @@
-import type { JsonValue } from '@libs/platform/utils'
+import type { ReferenceObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -10,7 +10,12 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { PickType } from '@nestjs/swagger'
+import {
+  ApiExtraModels,
+  ApiProperty,
+  getSchemaPath,
+  PickType,
+} from '@nestjs/swagger'
 import {
   CHAT_MESSAGE_CLIENT_MESSAGE_ID_MAX_LENGTH,
   CHAT_MESSAGE_CONTENT_MAX_LENGTH,
@@ -113,6 +118,193 @@ export class MarkConversationReadDto {
   messageId!: string
 }
 
+/** 聊天消息普通文本 token */
+export class ChatMessageBodyTextTokenDto {
+  @StringProperty({
+    description: 'token 类型',
+    example: 'text',
+    validation: false,
+  })
+  type!: 'text'
+
+  @StringProperty({
+    description: '文本内容',
+    example: 'hello ',
+    validation: false,
+  })
+  text!: string
+}
+
+/** 聊天消息用户提及 token */
+export class ChatMessageBodyMentionUserTokenDto {
+  @StringProperty({
+    description: 'token 类型',
+    example: 'mentionUser',
+    validation: false,
+  })
+  type!: 'mentionUser'
+
+  @NumberProperty({
+    description: '被提及用户 ID',
+    example: 10002,
+    validation: false,
+  })
+  userId!: number
+
+  @StringProperty({
+    description: '被提及用户昵称',
+    example: 'Tom',
+    validation: false,
+  })
+  nickname!: string
+
+  @StringProperty({
+    description: '原始提及文本',
+    example: '@Tom',
+    validation: false,
+  })
+  text!: string
+}
+
+/** 聊天消息 Unicode 表情 token */
+export class ChatMessageBodyEmojiUnicodeTokenDto {
+  @StringProperty({
+    description: 'token 类型',
+    example: 'emojiUnicode',
+    validation: false,
+  })
+  type!: 'emojiUnicode'
+
+  @StringProperty({
+    description: 'Unicode 表情序列',
+    example: '😀',
+    validation: false,
+  })
+  unicodeSequence!: string
+
+  @NumberProperty({
+    description: '关联表情资源 ID',
+    example: 1001,
+    required: false,
+    validation: false,
+  })
+  emojiAssetId?: number
+}
+
+/** 聊天消息自定义表情 token */
+export class ChatMessageBodyEmojiCustomTokenDto {
+  @StringProperty({
+    description: 'token 类型',
+    example: 'emojiCustom',
+    validation: false,
+  })
+  type!: 'emojiCustom'
+
+  @StringProperty({
+    description: '自定义表情 shortcode',
+    example: 'party',
+    validation: false,
+  })
+  shortcode!: string
+
+  @NumberProperty({
+    description: '关联表情资源 ID',
+    example: 1002,
+    required: false,
+    validation: false,
+  })
+  emojiAssetId?: number
+
+  @StringProperty({
+    description: '表情包编码',
+    example: 'default',
+    required: false,
+    validation: false,
+  })
+  packCode?: string
+
+  @StringProperty({
+    description: '动图地址',
+    example: 'https://example.com/emoji/party.gif',
+    required: false,
+    validation: false,
+  })
+  imageUrl?: string
+
+  @StringProperty({
+    description: '静态图地址',
+    example: 'https://example.com/emoji/party.png',
+    required: false,
+    validation: false,
+  })
+  staticUrl?: string
+
+  @BooleanProperty({
+    description: '是否为动图',
+    example: true,
+    required: false,
+    validation: false,
+  })
+  isAnimated?: boolean
+
+  @StringProperty({
+    description: '无障碍文本',
+    example: 'party',
+    required: false,
+    validation: false,
+  })
+  ariaLabel?: string
+}
+
+/** 聊天消息论坛话题 token */
+export class ChatMessageBodyForumHashtagTokenDto {
+  @StringProperty({
+    description: 'token 类型',
+    example: 'forumHashtag',
+    validation: false,
+  })
+  type!: 'forumHashtag'
+
+  @NumberProperty({
+    description: '话题 ID',
+    example: 20001,
+    validation: false,
+  })
+  hashtagId!: number
+
+  @StringProperty({
+    description: '话题 slug',
+    example: 'weekly-reading',
+    validation: false,
+  })
+  slug!: string
+
+  @StringProperty({
+    description: '话题展示名称',
+    example: '每周阅读',
+    validation: false,
+  })
+  displayName!: string
+
+  @StringProperty({
+    description: '原始话题文本',
+    example: '#每周阅读',
+    validation: false,
+  })
+  text!: string
+}
+
+// 生成聊天消息 bodyTokens 的 Swagger oneOf schema 引用。
+function createChatMessageBodyTokenOneOfSchemas() {
+  return [
+    { $ref: getSchemaPath(ChatMessageBodyTextTokenDto) },
+    { $ref: getSchemaPath(ChatMessageBodyMentionUserTokenDto) },
+    { $ref: getSchemaPath(ChatMessageBodyEmojiUnicodeTokenDto) },
+    { $ref: getSchemaPath(ChatMessageBodyEmojiCustomTokenDto) },
+    { $ref: getSchemaPath(ChatMessageBodyForumHashtagTokenDto) },
+  ] satisfies ReferenceObject[]
+}
+
 /** 聊天对方用户基础信息 */
 export class BaseChatPeerDto {
   @NumberProperty({
@@ -139,6 +331,13 @@ export class BaseChatPeerDto {
 }
 
 /** 聊天消息基础数据传输对象 */
+@ApiExtraModels(
+  ChatMessageBodyTextTokenDto,
+  ChatMessageBodyMentionUserTokenDto,
+  ChatMessageBodyEmojiUnicodeTokenDto,
+  ChatMessageBodyEmojiCustomTokenDto,
+  ChatMessageBodyForumHashtagTokenDto,
+)
 export class BaseChatMessageDto {
   @StringProperty({
     description: '消息ID（BigInt）',
@@ -178,16 +377,26 @@ export class BaseChatMessageDto {
   })
   content!: string
 
-  @JsonProperty({
-    description: '消息正文解析 token（EmojiParser 输出）',
+  @ApiProperty({
+    description:
+      '消息正文语义 token；用于渲染普通文本、提及、话题与表情。当前聊天发送链路主要产生 text/emoji token，历史空值会被省略。',
     required: false,
-    validation: false,
+    type: 'array',
+    items: {
+      oneOf: createChatMessageBodyTokenOneOfSchemas(),
+    },
     example: [
       { type: 'text', text: 'hello ' },
       { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
     ],
   })
-  bodyTokens?: JsonValue
+  bodyTokens?: Array<
+    | ChatMessageBodyTextTokenDto
+    | ChatMessageBodyMentionUserTokenDto
+    | ChatMessageBodyEmojiUnicodeTokenDto
+    | ChatMessageBodyEmojiCustomTokenDto
+    | ChatMessageBodyForumHashtagTokenDto
+  >
 
   @StringProperty({
     description: '客户端幂等键',

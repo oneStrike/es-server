@@ -3,7 +3,7 @@ import {
   AuditStatusEnum,
   BusinessErrorCode,
 } from '@libs/platform/constant'
-import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
+import type { BodyToken } from '@libs/interaction/body/body-token.type'
 import { BadRequestException } from '@nestjs/common'
 import { ForumTopicService } from './forum-topic.service'
 
@@ -598,7 +598,7 @@ describe('forumTopicService helpers', () => {
           plainText: '测试正文',
           segments: [{ type: 'text', text: '测试正文' }],
         },
-        bodyTokens: [] as EmojiParseToken[],
+        bodyTokens: [] as BodyToken[],
         mentionFacts: [],
         emojiRecentUsageItems: [],
         hashtagFacts: [],
@@ -642,7 +642,7 @@ describe('forumTopicService helpers', () => {
       compile: jest.fn(async (body: unknown) => ({
         body,
         plainText: '欢迎 @测试用户 使用 :smile:',
-        bodyTokens: [] as EmojiParseToken[],
+        bodyTokens: [] as BodyToken[],
         mentionFacts: [],
         emojiRecentUsageItems: [],
       })),

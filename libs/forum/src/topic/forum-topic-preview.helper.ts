@@ -1,4 +1,4 @@
-import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
+import type { BodyToken } from '@libs/interaction/body/body-token.type'
 import type {
   BuildForumTopicContentPreviewOptions,
   ForumTopicContentPreview,
@@ -13,7 +13,7 @@ import {
  * 从编译后的正文 token 派生列表预览。
  */
 export function buildForumTopicContentPreview(
-  bodyTokens: EmojiParseToken[],
+  bodyTokens: BodyToken[],
   options: BuildForumTopicContentPreviewOptions = {},
 ): ForumTopicContentPreview {
   const maxLength = normalizePositiveInteger(
@@ -40,7 +40,7 @@ export function buildForumTopicContentPreview(
 
 // 按顺序追加 body compiler 生成的预览片段。
 function appendBodyTokens(
-  bodyTokens: EmojiParseToken[],
+  bodyTokens: BodyToken[],
   preview: ForumTopicContentPreview,
   maxLength: number,
   maxSegments: number,
@@ -59,7 +59,7 @@ function appendBodyTokens(
 
 // 将编译后的正文 token 转换为列表预览片段。
 function buildSegmentFromBodyToken(
-  token: EmojiParseToken,
+  token: BodyToken,
 ): ForumTopicContentPreviewSegment | undefined {
   switch (token.type) {
     case 'text':

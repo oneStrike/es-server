@@ -23,8 +23,26 @@ type ChatReadQueryMock = jest.Mocked<
   >
 >
 
+type DispatchMessageCreatedPayloadAccess = {
+  dispatchMessageCreatedPayload(payload: {
+    conversationId: number
+    messageId: string
+  }): Promise<void>
+}
+
 function asDependency<T>(value: unknown = {}) {
   return value as T
+}
+
+function dispatchMessageCreatedPayload(
+  service: MessageChatService,
+  payload: Parameters<
+    DispatchMessageCreatedPayloadAccess['dispatchMessageCreatedPayload']
+  >[0],
+) {
+  return (
+    service as unknown as DispatchMessageCreatedPayloadAccess
+  ).dispatchMessageCreatedPayload(payload)
 }
 
 function createMessage(overrides: Partial<ChatMessageSelect> = {}) {
@@ -502,6 +520,74 @@ describe('chat.service write path', () => {
       }),
     ).rejects.toThrow(conflict)
     expect(mocks.transaction).toHaveBeenCalledTimes(3)
+  })
+})
+
+describe('chat.service realtime message fanout', () => {
+  it('passes stored bodyTokens through chat.message.new payloads', async () => {
+    const { service, mocks } = createService()
+    const bodyTokens = [
+      { type: 'text', text: 'hello ' },
+      { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
+    ] as const
+
+    mocks.chatMessageFindFirst.mockResolvedValueOnce(
+      createMessage({
+        id: 204n,
+        bodyTokens: bodyTokens as unknown as ChatMessageSelect['bodyTokens'],
+      }),
+    )
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
+      {
+        userId: 7,
+        unreadCount: 2,
+        lastReadAt: null,
+        lastReadMessageId: null,
+      },
+    ])
+
+    await dispatchMessageCreatedPayload(service, {
+      conversationId: 10,
+      messageId: '204',
+    })
+
+    expect(
+      mocks.messageNotificationRealtimeService.emitChatMessageNew,
+    ).toHaveBeenCalledWith(7, {
+      conversationId: 10,
+      message: expect.objectContaining({
+        id: '204',
+        bodyTokens,
+      }),
+    })
+  })
+
+  it('keeps null bodyTokens as undefined in chat.message.new payloads', async () => {
+    const { service, mocks } = createService()
+    mocks.chatMessageFindFirst.mockResolvedValueOnce(
+      createMessage({
+        id: 205n,
+        bodyTokens: null,
+      }),
+    )
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
+      {
+        userId: 7,
+        unreadCount: 2,
+        lastReadAt: null,
+        lastReadMessageId: null,
+      },
+    ])
+
+    await dispatchMessageCreatedPayload(service, {
+      conversationId: 10,
+      messageId: '205',
+    })
+
+    const [, payload] =
+      mocks.messageNotificationRealtimeService.emitChatMessageNew.mock.calls[0]
+
+    expect(payload.message.bodyTokens).toBeUndefined()
   })
 })
 

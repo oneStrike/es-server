@@ -1,9 +1,9 @@
-import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
+import type { BodyToken } from '@libs/interaction/body/body-token.type'
 import { buildForumTopicContentPreview } from './forum-topic-preview.helper'
 
 describe('buildForumTopicContentPreview', () => {
   it('keeps mention, hashtag and emoji segments semantic in topic previews', () => {
-    const bodyTokens: EmojiParseToken[] = [
+    const bodyTokens: BodyToken[] = [
       { type: 'text', text: '欢迎 ' },
       {
         type: 'mentionUser',
@@ -69,7 +69,7 @@ describe('buildForumTopicContentPreview', () => {
   })
 
   it('caps preview text by character count', () => {
-    const bodyTokens: EmojiParseToken[] = [{ type: 'text', text: 'abcdef' }]
+    const bodyTokens: BodyToken[] = [{ type: 'text', text: 'abcdef' }]
 
     const preview = buildForumTopicContentPreview(bodyTokens, {
       maxLength: 3,
@@ -82,9 +82,7 @@ describe('buildForumTopicContentPreview', () => {
   })
 
   it('keeps compiler-provided spacing between top-level blocks', () => {
-    const bodyTokens: EmojiParseToken[] = [
-      { type: 'text', text: '第一段\n\n第二段' },
-    ]
+    const bodyTokens: BodyToken[] = [{ type: 'text', text: '第一段\n\n第二段' }]
 
     const preview = buildForumTopicContentPreview(bodyTokens)
 
@@ -95,7 +93,7 @@ describe('buildForumTopicContentPreview', () => {
   })
 
   it('does not expose partially truncated entities as clickable segments', () => {
-    const bodyTokens: EmojiParseToken[] = [
+    const bodyTokens: BodyToken[] = [
       {
         type: 'mentionUser',
         text: '@测试用户',
@@ -115,7 +113,7 @@ describe('buildForumTopicContentPreview', () => {
   })
 
   it('does not expose partially truncated emoji as semantic segments', () => {
-    const bodyTokens: EmojiParseToken[] = [
+    const bodyTokens: BodyToken[] = [
       {
         type: 'emojiCustom',
         emojiAssetId: 1001,
@@ -137,7 +135,7 @@ describe('buildForumTopicContentPreview', () => {
   })
 
   it('keeps unresolved custom emoji semantic without display resource fields', () => {
-    const bodyTokens: EmojiParseToken[] = [
+    const bodyTokens: BodyToken[] = [
       {
         type: 'emojiCustom',
         shortcode: 'missing',
@@ -160,7 +158,7 @@ describe('buildForumTopicContentPreview', () => {
   })
 
   it('caps preview segments by configured segment count', () => {
-    const bodyTokens: EmojiParseToken[] = [
+    const bodyTokens: BodyToken[] = [
       { type: 'text', text: 'A' },
       { type: 'mentionUser', text: '@小明', userId: 9, nickname: '小明' },
       { type: 'text', text: 'B' },

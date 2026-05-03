@@ -1,28 +1,37 @@
-import type { EmojiParseToken, EmojiRecentUsageItem } from '../emoji/emoji.type'
+import type { EmojiRecentUsageItem } from '../emoji/emoji.type'
 import type {
   MentionDraftSnapshot,
   NormalizedMentionDraft,
 } from '../mention/mention.type'
+import type { BodyToken } from './body-token.type'
 import type { BodySceneEnum } from './body.constant'
+
+interface BodyBoldTextMark {
+  type: 'bold'
+}
+
+interface BodyItalicTextMark {
+  type: 'italic'
+}
+
+interface BodyUnderlineTextMark {
+  type: 'underline'
+}
+
+interface BodyLinkTextMark {
+  type: 'link'
+  href: string
+}
 
 /**
  * 文本 mark。
  * - 仅承载正文结构化语义，不直接参与 bodyTokens 展示缓存。
  */
 export type BodyTextMark =
-  | {
-      type: 'bold'
-    }
-    | {
-      type: 'italic'
-    }
-    | {
-      type: 'underline'
-    }
-    | {
-      type: 'link'
-      href: string
-    }
+  | BodyBoldTextMark
+  | BodyItalicTextMark
+  | BodyUnderlineTextMark
+  | BodyLinkTextMark
 
 /**
  * 纯文本节点。
@@ -237,28 +246,36 @@ export interface PlainTextBodyBuildOptions {
   mentions?: PlainTextBodyMentionInputList
 }
 
+interface BodyTextSegment {
+  type: 'text'
+  text: string
+}
+
+interface BodyMentionUserSegment {
+  type: 'mentionUser'
+  userId: number
+  nickname: string
+}
+
+interface BodyEmojiUnicodeSegment {
+  type: 'emojiUnicode'
+  unicodeSequence: string
+}
+
+interface BodyEmojiCustomSegment {
+  type: 'emojiCustom'
+  shortcode: string
+}
+
 /**
  * plain text / legacy token 进入 canonical body 前的线性 segment。
  * - 供纯文本构造和 migration helper 复用同一输入边界。
  */
 export type BodySegment =
-  | {
-      type: 'text'
-      text: string
-    }
-    | {
-      type: 'mentionUser'
-      userId: number
-      nickname: string
-    }
-    | {
-      type: 'emojiUnicode'
-      unicodeSequence: string
-    }
-    | {
-      type: 'emojiCustom'
-      shortcode: string
-    }
+  | BodyTextSegment
+  | BodyMentionUserSegment
+  | BodyEmojiUnicodeSegment
+  | BodyEmojiCustomSegment
 
 /**
  * body 编译结果。
@@ -267,7 +284,7 @@ export type BodySegment =
 export interface CompiledBodyResult {
   body: BodyDoc
   plainText: string
-  bodyTokens: EmojiParseToken[]
+  bodyTokens: BodyToken[]
   mentionFacts: NormalizedMentionDraft[]
   emojiRecentUsageItems: EmojiRecentUsageItem[]
 }
@@ -282,26 +299,34 @@ export interface LegacyMentionFactInput {
   end: number
 }
 
+interface LegacyBodyTextTokenNode {
+  type: 'text'
+  text: string
+}
+
+interface LegacyBodyMentionUserTokenNode {
+  type: 'mentionUser'
+  userId: number
+  nickname: string
+  text: string
+}
+
+interface LegacyBodyEmojiUnicodeTokenNode {
+  type: 'emojiUnicode'
+  unicodeSequence: string
+}
+
+interface LegacyBodyEmojiCustomTokenNode {
+  type: 'emojiCustom'
+  shortcode: string
+}
+
 /**
  * legacy token 节点。
  * - 供 migration helper 识别旧 bodyTokens 中的最小可用结构。
  */
 export type LegacyBodyTokenNode =
-  | {
-      type: 'text'
-      text: string
-    }
-    | {
-      type: 'mentionUser'
-      userId: number
-      nickname: string
-      text: string
-    }
-    | {
-      type: 'emojiUnicode'
-      unicodeSequence: string
-    }
-    | {
-      type: 'emojiCustom'
-      shortcode: string
-    }
+  | LegacyBodyTextTokenNode
+  | LegacyBodyMentionUserTokenNode
+  | LegacyBodyEmojiUnicodeTokenNode
+  | LegacyBodyEmojiCustomTokenNode

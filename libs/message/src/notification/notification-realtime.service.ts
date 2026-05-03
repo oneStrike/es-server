@@ -1,50 +1,13 @@
-import type { StructuredValue } from '@libs/platform/utils'
 import type { UserNotificationDto } from './dto/notification.dto'
-import type { NotificationUnreadSummary } from './notification-unread.type'
+import type {
+  NotificationChatConversationUpdatePayload,
+  NotificationChatMessageNewPayload,
+  NotificationDeletedPayload,
+  NotificationInboxSummaryUpdatedPayload,
+  NotificationReadSyncPayload,
+} from './notification-realtime.type'
 import { Injectable } from '@nestjs/common'
 import { MessageWebSocketService } from './notification-websocket.service'
-
-interface NotificationDeletedPayload {
-  id: number
-}
-
-interface NotificationReadSyncPayload {
-  id?: number
-  readAt: Date
-}
-
-interface NotificationChatMessageNewPayload {
-  conversationId: number
-  message: {
-    id: string
-    conversationId: number
-    messageSeq: string
-    senderId: number
-    messageType: number
-    content: string
-    payload?: StructuredValue
-    createdAt: Date
-  }
-}
-
-interface NotificationChatConversationUpdatePayload {
-  conversationId: number
-  unreadCount: number
-  lastReadAt?: Date
-  lastReadMessageId?: string
-  lastMessageId?: string
-  lastMessageAt?: Date
-  lastSenderId?: number
-  lastMessageContent?: string
-}
-
-interface NotificationInboxSummaryUpdatedPayload {
-  notificationUnread: NotificationUnreadSummary
-  chatUnreadCount: number
-  totalUnreadCount: number
-  latestNotification?: StructuredValue
-  latestChat?: StructuredValue
-}
 
 @Injectable()
 export class MessageNotificationRealtimeService {

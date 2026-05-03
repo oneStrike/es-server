@@ -1,4 +1,7 @@
+import type { BodyToken } from '@libs/interaction/body/body-token.type'
+import type { StructuredValue } from '@libs/platform/utils'
 import type { ChatMessageTypeEnum } from './chat.constant'
+import type { BaseChatMessageDto } from './dto/chat.dto'
 
 /**
  * 聊天消息创建后投递到消息域事件总线的 payload。
@@ -6,6 +9,18 @@ import type { ChatMessageTypeEnum } from './chat.constant'
 export interface ChatMessageCreatedDomainEventPayload {
   conversationId: number
   messageId: string
+}
+
+/**
+ * 聊天消息统一输出结构。
+ * - 复用 HTTP 消息 DTO 字段，实时推送只替换运行时载荷类型。
+ */
+export type ChatMessageOutput = Omit<
+  BaseChatMessageDto,
+  'bodyTokens' | 'payload'
+> & {
+  bodyTokens?: BodyToken[]
+  payload?: StructuredValue
 }
 
 /**

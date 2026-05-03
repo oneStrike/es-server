@@ -1,5 +1,5 @@
-import type { EmojiParseToken } from '../emoji/emoji.type'
 import type { NormalizedMentionDraft } from '../mention/mention.type'
+import type { BodyToken } from './body-token.type'
 import type { BodySceneEnum } from './body.constant'
 import type {
   BodyBlockNode,
@@ -47,7 +47,7 @@ export class BodyCompilerService {
     ])
 
     const mentionFacts: NormalizedMentionDraft[] = []
-    const bodyTokens: EmojiParseToken[] = []
+    const bodyTokens: BodyToken[] = []
     let plainText = ''
 
     const appendText = async (text: string) => {

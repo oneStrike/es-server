@@ -1,11 +1,12 @@
 import type { PostgresErrorSourceObject } from '@db/core'
-import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
+import type { BodyToken } from '@libs/interaction/body/body-token.type'
 import type { PageDto } from '@libs/platform/dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type {
   ChatConversationMemberOutputSource,
   ChatMessageContentSource,
   ChatMessageCreatedDomainEventPayload,
+  ChatMessageOutput,
 } from './chat.type'
 import { DrizzleService } from '@db/core'
 
@@ -708,7 +709,7 @@ export class MessageChatService {
     userId: number,
     messageType: number,
     content: string,
-    bodyTokens: EmojiParseToken[],
+    bodyTokens: BodyToken[],
     payload?: Record<string, unknown>,
     clientMessageId?: string,
   ): Promise<{
@@ -889,7 +890,7 @@ export class MessageChatService {
    * - 仅统计带 emojiAssetId 的 token，忽略普通文本和未托管 Unicode。
    * - 同一条消息内先按 emojiAssetId 聚合，减少事务中的 upsert 次数。
    */
-  private buildRecentEmojiUsageItems(bodyTokens: EmojiParseToken[]) {
+  private buildRecentEmojiUsageItems(bodyTokens: BodyToken[]) {
     const useCountMap = new Map<number, number>()
     for (const token of bodyTokens) {
       if (
@@ -1174,16 +1175,18 @@ export class MessageChatService {
    * @param item - 消息数据
    * @returns 格式化的消息输出
    */
-  private toMessageOutput(item: typeof chatMessage.$inferSelect) {
+  private toMessageOutput(
+    item: typeof chatMessage.$inferSelect,
+  ): ChatMessageOutput {
     return {
       id: item.id.toString(),
       conversationId: item.conversationId,
       messageSeq: item.messageSeq.toString(),
       senderId: item.senderId,
       clientMessageId: item.clientMessageId ?? undefined,
-      messageType: item.messageType,
+      messageType: item.messageType as ChatMessageTypeEnum,
       content: item.content,
-      bodyTokens: item.bodyTokens ?? undefined,
+      bodyTokens: (item.bodyTokens as BodyToken[] | null) ?? undefined,
       payload: item.payload ?? undefined,
       createdAt: item.createdAt,
     }

@@ -1,11 +1,12 @@
-import type { EmojiParseToken, EmojiRecentUsageItem } from './emoji.type'
+import type { BodyToken } from '../body/body-token.type'
+import type { EmojiRecentUsageItem } from './emoji.type'
 
 /**
  * 从正文 token 提取最近使用表情聚合项。
  * 仅统计平台托管且带 emojiAssetId 的 token，并在单条正文内先聚合 useCount。
  */
 export function buildRecentEmojiUsageItems(
-  bodyTokens: EmojiParseToken[],
+  bodyTokens: BodyToken[],
 ): EmojiRecentUsageItem[] {
   const useCountMap = new Map<number, number>()
 

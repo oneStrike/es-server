@@ -3,6 +3,7 @@ import type {
   EmojiPackSelect,
   EmojiRecentUsageSelect,
 } from '@db/schema'
+import type { BodyToken } from '../body/body-token.type'
 
 import type { EmojiSceneEnum } from './emoji.constant'
 
@@ -167,40 +168,8 @@ export interface EmojiParseInput {
 }
 
 /**
- * 文本解析输出 token。
- * - 供 bodyTokens 复用的统一正文 token 结构
+ * 文本解析输出 token 兼容别名。
+ * - canonical owner 已迁移到 body-token.type.ts 的 BodyToken。
+ * @deprecated 使用 BodyToken；保留别名用于过渡兼容。
  */
-/** 稳定领域类型 `EmojiParseToken`。仅供内部领域/服务链路复用，避免重复定义。 */
-export type EmojiParseToken =
-  | {
-      type: 'text'
-      text: string
-    }
-    | {
-      type: 'mentionUser'
-      userId: number
-      nickname: string
-      text: string
-    }
-    | {
-      type: 'emojiUnicode'
-      unicodeSequence: string
-      emojiAssetId?: EmojiAssetSelect['id']
-    }
-    | {
-      type: 'emojiCustom'
-      shortcode: string
-      emojiAssetId?: EmojiAssetSelect['id']
-      packCode?: string
-      imageUrl?: string
-      staticUrl?: string
-      isAnimated?: boolean
-      ariaLabel?: string
-    }
-    | {
-      type: 'forumHashtag'
-      hashtagId: number
-      slug: string
-      displayName: string
-      text: string
-    }
+export type EmojiParseToken = BodyToken
