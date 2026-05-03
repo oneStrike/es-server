@@ -479,6 +479,46 @@ describe('chat.service write path', () => {
     ).toHaveBeenCalledWith(501n, 'chat_realtime')
   })
 
+  it('stores image messages without parsing or persisting bodyTokens', async () => {
+    const { service, mocks } = createService()
+    const insertedMessage = createMessage({
+      id: 206n,
+      conversationId: 10,
+      messageSeq: 6n,
+      senderId: 7,
+      messageType: ChatMessageTypeEnum.IMAGE,
+      content: 'image-file-1',
+      payload: { fileId: 'image-file-1' },
+    })
+    mocks.chatMessageFindFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ messageSeq: 5n })
+    mocks.insertReturning.mockResolvedValue([insertedMessage])
+
+    const result = await service.sendMessage(7, {
+      conversationId: 10,
+      messageType: ChatMessageTypeEnum.IMAGE,
+      content: 'image-file-1',
+      payload: JSON.stringify({ fileId: 'image-file-1' }),
+    })
+
+    expect(result).toMatchObject({
+      id: '206',
+      messageSeq: '6',
+      deduplicated: false,
+    })
+    expect(mocks.emojiParserService.parse).not.toHaveBeenCalled()
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageType: ChatMessageTypeEnum.IMAGE,
+        bodyTokens: null,
+      }),
+    )
+    expect(
+      mocks.emojiCatalogService.recordRecentUsageInTx,
+    ).not.toHaveBeenCalled()
+  })
+
   it('falls back to an existing idempotent message after a unique conflict', async () => {
     const { service, mocks } = createService()
     const conflict = new Error('duplicate clientMessageId')

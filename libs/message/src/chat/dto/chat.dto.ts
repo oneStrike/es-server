@@ -135,37 +135,6 @@ export class ChatMessageBodyTextTokenDto {
   text!: string
 }
 
-/** 聊天消息用户提及 token */
-export class ChatMessageBodyMentionUserTokenDto {
-  @StringProperty({
-    description: 'token 类型',
-    example: 'mentionUser',
-    validation: false,
-  })
-  type!: 'mentionUser'
-
-  @NumberProperty({
-    description: '被提及用户 ID',
-    example: 10002,
-    validation: false,
-  })
-  userId!: number
-
-  @StringProperty({
-    description: '被提及用户昵称',
-    example: 'Tom',
-    validation: false,
-  })
-  nickname!: string
-
-  @StringProperty({
-    description: '原始提及文本',
-    example: '@Tom',
-    validation: false,
-  })
-  text!: string
-}
-
 /** 聊天消息 Unicode 表情 token */
 export class ChatMessageBodyEmojiUnicodeTokenDto {
   @StringProperty({
@@ -256,52 +225,12 @@ export class ChatMessageBodyEmojiCustomTokenDto {
   ariaLabel?: string
 }
 
-/** 聊天消息论坛话题 token */
-export class ChatMessageBodyForumHashtagTokenDto {
-  @StringProperty({
-    description: 'token 类型',
-    example: 'forumHashtag',
-    validation: false,
-  })
-  type!: 'forumHashtag'
-
-  @NumberProperty({
-    description: '话题 ID',
-    example: 20001,
-    validation: false,
-  })
-  hashtagId!: number
-
-  @StringProperty({
-    description: '话题 slug',
-    example: 'weekly-reading',
-    validation: false,
-  })
-  slug!: string
-
-  @StringProperty({
-    description: '话题展示名称',
-    example: '每周阅读',
-    validation: false,
-  })
-  displayName!: string
-
-  @StringProperty({
-    description: '原始话题文本',
-    example: '#每周阅读',
-    validation: false,
-  })
-  text!: string
-}
-
 // 生成聊天消息 bodyTokens 的 Swagger oneOf schema 引用。
 function createChatMessageBodyTokenOneOfSchemas() {
   return [
     { $ref: getSchemaPath(ChatMessageBodyTextTokenDto) },
-    { $ref: getSchemaPath(ChatMessageBodyMentionUserTokenDto) },
     { $ref: getSchemaPath(ChatMessageBodyEmojiUnicodeTokenDto) },
     { $ref: getSchemaPath(ChatMessageBodyEmojiCustomTokenDto) },
-    { $ref: getSchemaPath(ChatMessageBodyForumHashtagTokenDto) },
   ] satisfies ReferenceObject[]
 }
 
@@ -333,10 +262,8 @@ export class BaseChatPeerDto {
 /** 聊天消息基础数据传输对象 */
 @ApiExtraModels(
   ChatMessageBodyTextTokenDto,
-  ChatMessageBodyMentionUserTokenDto,
   ChatMessageBodyEmojiUnicodeTokenDto,
   ChatMessageBodyEmojiCustomTokenDto,
-  ChatMessageBodyForumHashtagTokenDto,
 )
 export class BaseChatMessageDto {
   @StringProperty({
@@ -379,7 +306,7 @@ export class BaseChatMessageDto {
 
   @ApiProperty({
     description:
-      '消息正文语义 token；用于渲染普通文本、提及、话题与表情。当前聊天发送链路主要产生 text/emoji token，历史空值会被省略。',
+      '文本消息正文语义 token；用于渲染普通文本与表情。媒体消息和历史空值会被省略。',
     required: false,
     type: 'array',
     items: {
@@ -392,10 +319,8 @@ export class BaseChatMessageDto {
   })
   bodyTokens?: Array<
     | ChatMessageBodyTextTokenDto
-    | ChatMessageBodyMentionUserTokenDto
     | ChatMessageBodyEmojiUnicodeTokenDto
     | ChatMessageBodyEmojiCustomTokenDto
-    | ChatMessageBodyForumHashtagTokenDto
   >
 
   @StringProperty({

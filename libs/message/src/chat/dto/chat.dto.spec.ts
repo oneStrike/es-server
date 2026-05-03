@@ -28,12 +28,17 @@ describe('chat dto body token contract', () => {
     expect(metadata?.required).toBe(false)
     expect(metadata?.type).toBe('array')
     expect(metadata?.description).toContain('消息正文语义 token')
-    expect(metadata?.items?.oneOf?.map((item) => item.$ref)).toEqual([
+    const tokenSchemaRefs = metadata?.items?.oneOf?.map((item) => item.$ref)
+    expect(tokenSchemaRefs).toEqual([
       '#/components/schemas/ChatMessageBodyTextTokenDto',
-      '#/components/schemas/ChatMessageBodyMentionUserTokenDto',
       '#/components/schemas/ChatMessageBodyEmojiUnicodeTokenDto',
       '#/components/schemas/ChatMessageBodyEmojiCustomTokenDto',
-      '#/components/schemas/ChatMessageBodyForumHashtagTokenDto',
     ])
+    expect(tokenSchemaRefs).not.toContain(
+      '#/components/schemas/ChatMessageBodyMentionUserTokenDto',
+    )
+    expect(tokenSchemaRefs).not.toContain(
+      '#/components/schemas/ChatMessageBodyForumHashtagTokenDto',
+    )
   })
 })

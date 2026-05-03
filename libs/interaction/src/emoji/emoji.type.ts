@@ -168,8 +168,10 @@ export interface EmojiParseInput {
 }
 
 /**
- * 文本解析输出 token 兼容别名。
- * - canonical owner 已迁移到 body-token.type.ts 的 BodyToken。
- * @deprecated 使用 BodyToken；保留别名用于过渡兼容。
+ * 文本解析输出 token。
+ * 仅表示 EmojiParserService 能产出的普通文本与表情 token 子集。
  */
-export type EmojiParseToken = BodyToken
+export type EmojiParseToken = Extract<
+  BodyToken,
+  { type: 'text' | 'emojiUnicode' | 'emojiCustom' }
+>

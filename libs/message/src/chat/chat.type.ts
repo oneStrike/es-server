@@ -1,7 +1,13 @@
-import type { BodyToken } from '@libs/interaction/body/body-token.type'
+import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type { StructuredValue } from '@libs/platform/utils'
 import type { ChatMessageTypeEnum } from './chat.constant'
 import type { BaseChatMessageDto } from './dto/chat.dto'
+
+/**
+ * 聊天文本消息正文 token。
+ * 仅承载普通文本与表情语义，不包含论坛提及或话题能力。
+ */
+export type ChatBodyToken = EmojiParseToken
 
 /**
  * 聊天消息创建后投递到消息域事件总线的 payload。
@@ -19,7 +25,7 @@ export type ChatMessageOutput = Omit<
   BaseChatMessageDto,
   'bodyTokens' | 'payload'
 > & {
-  bodyTokens?: BodyToken[]
+  bodyTokens?: ChatBodyToken[]
   payload?: StructuredValue
 }
 

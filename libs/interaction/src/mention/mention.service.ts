@@ -1,4 +1,5 @@
 import type { AppUserSelect } from '@db/schema'
+import type { BodyToken } from '../body/body-token.type'
 import type {
   BuildMentionBodyTokensInput,
   DeleteMentionsInTxInput,
@@ -56,7 +57,7 @@ export class MentionService {
       })
     }
 
-    const tokens: Awaited<ReturnType<EmojiParserService['parse']>> = []
+    const tokens: BodyToken[] = []
     let cursor = 0
 
     for (const mention of normalizedMentions) {

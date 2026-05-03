@@ -1,5 +1,4 @@
-import type { BodyToken } from '../body/body-token.type'
-import type { EmojiParseInput } from './emoji.type'
+import type { EmojiParseInput, EmojiParseToken } from './emoji.type'
 import { Injectable } from '@nestjs/common'
 import { EmojiCatalogService } from './emoji-catalog.service'
 import { EMOJI_SHORTCODE_REGEX } from './emoji.constant'
@@ -21,7 +20,7 @@ export class EmojiParserService {
    * - 命中平台托管资源的 token 会补齐 emojiAssetId，供最近使用统计复用。
    * - 剩余文本段再拆分 Unicode 表情，最后合并连续文本 token。
    */
-  async parse(input: EmojiParseInput): Promise<BodyToken[]> {
+  async parse(input: EmojiParseInput): Promise<EmojiParseToken[]> {
     const body = input.body || ''
     if (!body) {
       return []
@@ -50,7 +49,7 @@ export class EmojiParserService {
       ),
     ])
 
-    const tokens: BodyToken[] = []
+    const tokens: EmojiParseToken[] = []
     let cursor = 0
     const shortcodeRegex = new RegExp(
       EMOJI_SHORTCODE_REGEX.source,
@@ -100,7 +99,7 @@ export class EmojiParserService {
    * - 递归调用 pushTextToken 合并连续的普通文本。
    */
   private pushTextSegment(
-    tokens: BodyToken[],
+    tokens: EmojiParseToken[],
     segment: string,
     unicodeAssetMap: Map<string, { emojiAssetId: number }>,
   ) {
@@ -137,7 +136,7 @@ export class EmojiParserService {
    * - 如果最后一个 token 已是文本类型，则合并到该 token。
    * - 避免生成连续的文本 token，减少结果数组长度。
    */
-  private pushTextToken(tokens: BodyToken[], text: string) {
+  private pushTextToken(tokens: EmojiParseToken[], text: string) {
     if (!text) {
       return
     }

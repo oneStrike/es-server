@@ -1,8 +1,8 @@
 import type { PostgresErrorSourceObject } from '@db/core'
-import type { BodyToken } from '@libs/interaction/body/body-token.type'
 import type { PageDto } from '@libs/platform/dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type {
+  ChatBodyToken,
   ChatConversationMemberOutputSource,
   ChatMessageContentSource,
   ChatMessageCreatedDomainEventPayload,
@@ -18,6 +18,7 @@ import {
 } from '@db/schema'
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
 import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
+import { buildRecentEmojiUsageItems } from '@libs/interaction/emoji/emoji-recent-usage.helper'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -420,10 +421,13 @@ export class MessageChatService {
       normalizedInput.payloadObject,
       normalizedInput.clientMessageId,
     )
-    const bodyTokens = await this.emojiParserService.parse({
-      body: normalizedInput.content,
-      scene: EmojiSceneEnum.CHAT,
-    })
+    const bodyTokens =
+      normalizedInput.messageType === ChatMessageTypeEnum.TEXT
+        ? await this.emojiParserService.parse({
+            body: normalizedInput.content,
+            scene: EmojiSceneEnum.CHAT,
+          })
+        : []
     const result = await this.createMessageWithRetry(
       normalizedInput.conversationId,
       userId,
@@ -709,7 +713,7 @@ export class MessageChatService {
     userId: number,
     messageType: number,
     content: string,
-    bodyTokens: BodyToken[],
+    bodyTokens: ChatBodyToken[],
     payload?: Record<string, unknown>,
     clientMessageId?: string,
   ): Promise<{
@@ -801,7 +805,7 @@ export class MessageChatService {
           } satisfies ChatMessageCreatedDomainEventPayload
 
           if (messageType === ChatMessageTypeEnum.TEXT) {
-            const recentUsageItems = this.buildRecentEmojiUsageItems(bodyTokens)
+            const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
             await this.emojiCatalogService.recordRecentUsageInTx(tx, {
               userId,
               scene: EmojiSceneEnum.CHAT,
@@ -883,34 +887,6 @@ export class MessageChatService {
       }
     }
     throw lastError
-  }
-
-  /**
-   * 从消息正文 token 提取最近使用聚合项。
-   * - 仅统计带 emojiAssetId 的 token，忽略普通文本和未托管 Unicode。
-   * - 同一条消息内先按 emojiAssetId 聚合，减少事务中的 upsert 次数。
-   */
-  private buildRecentEmojiUsageItems(bodyTokens: BodyToken[]) {
-    const useCountMap = new Map<number, number>()
-    for (const token of bodyTokens) {
-      if (
-        token.type === 'text' ||
-        token.type === 'mentionUser' ||
-        !('emojiAssetId' in token) ||
-        !token.emojiAssetId
-      ) {
-        continue
-      }
-      useCountMap.set(
-        token.emojiAssetId,
-        (useCountMap.get(token.emojiAssetId) ?? 0) + 1,
-      )
-    }
-
-    return Array.from(useCountMap, ([emojiAssetId, useCount]) => ({
-      emojiAssetId,
-      useCount,
-    }))
   }
 
   /**
@@ -1186,7 +1162,7 @@ export class MessageChatService {
       clientMessageId: item.clientMessageId ?? undefined,
       messageType: item.messageType as ChatMessageTypeEnum,
       content: item.content,
-      bodyTokens: (item.bodyTokens as BodyToken[] | null) ?? undefined,
+      bodyTokens: (item.bodyTokens as ChatBodyToken[] | null) ?? undefined,
       payload: item.payload ?? undefined,
       createdAt: item.createdAt,
     }

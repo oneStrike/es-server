@@ -3,6 +3,7 @@ import 'reflect-metadata'
 import type { DrizzleService } from '@db/core'
 import { userMention } from '@db/schema'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { MentionSourceTypeEnum } from './mention.constant'
 import { MentionService } from './mention.service'
@@ -52,11 +53,45 @@ function createMentionServiceHarness() {
 
   return {
     service,
+    emojiParserService,
     userService,
     messageDomainEventPublisher,
     messageDomainEventFactoryService,
   }
 }
+
+describe('MentionService body token composition', () => {
+  it('composes parser emoji tokens and mention tokens in source order', async () => {
+    const harness = createMentionServiceHarness()
+    harness.emojiParserService.parse
+      .mockResolvedValueOnce([{ type: 'emojiCustom', shortcode: 'ok' }])
+      .mockResolvedValueOnce([
+        { type: 'text', text: ' done ' },
+        { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
+      ])
+
+    await expect(
+      harness.service.buildBodyTokens({
+        content: ':ok: @Tom done 😀',
+        mentions: [{ userId: 7, nickname: 'Tom', start: 5, end: 9 }],
+        scene: EmojiSceneEnum.COMMENT,
+      }),
+    ).resolves.toEqual([
+      { type: 'emojiCustom', shortcode: 'ok' },
+      { type: 'mentionUser', userId: 7, nickname: 'Tom', text: '@Tom' },
+      { type: 'text', text: ' done ' },
+      { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
+    ])
+    expect(harness.emojiParserService.parse).toHaveBeenNthCalledWith(1, {
+      body: ':ok: ',
+      scene: EmojiSceneEnum.COMMENT,
+    })
+    expect(harness.emojiParserService.parse).toHaveBeenNthCalledWith(2, {
+      body: ' done 😀',
+      scene: EmojiSceneEnum.COMMENT,
+    })
+  })
+})
 
 describe('MentionService notification dispatch', () => {
   it('suppresses self topic mentions and still marks pending rows notified', async () => {
