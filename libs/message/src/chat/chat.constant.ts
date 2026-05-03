@@ -30,5 +30,13 @@ export enum ChatMessageStatusEnum {
 export const CHAT_MESSAGE_PAGE_LIMIT_DEFAULT = 20
 /** 聊天消息分页最大条数 */
 export const CHAT_MESSAGE_PAGE_LIMIT_MAX = 100
+/** 聊天消息正文最大字符数 */
+export const CHAT_MESSAGE_CONTENT_MAX_LENGTH = 5000
+/** 聊天客户端幂等键最大字符数 */
+export const CHAT_MESSAGE_CLIENT_MESSAGE_ID_MAX_LENGTH = 64
+/** 聊天消息扩展载荷最大序列化字节数 */
+export const CHAT_MESSAGE_PAYLOAD_MAX_BYTES = 16 * 1024
+/** 聊天消息扩展载荷最大嵌套深度 */
+export const CHAT_MESSAGE_PAYLOAD_MAX_DEPTH = 6
 /** 聊天服务注入令牌 */
 export const MESSAGE_CHAT_SERVICE_TOKEN = 'MESSAGE_CHAT_SERVICE'

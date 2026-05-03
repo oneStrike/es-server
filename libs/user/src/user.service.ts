@@ -1,6 +1,7 @@
 import type { AppUserSelect } from '@db/schema'
 import type { AppUserCountSnapshot } from './app-user-count.type'
 import type {
+  AppUserAccessCheckResult,
   UserBanAccessSource,
   UserBanGuardSource,
   UserGrowthSnapshot,
@@ -12,7 +13,10 @@ import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.co
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { formatDateTimeInAppTimeZone } from '@libs/platform/utils'
-import { UserStatusEnum } from '@libs/user/app-user.constant'
+import {
+  AppUserAccessMessages,
+  UserStatusEnum,
+} from '@libs/user/app-user.constant'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
@@ -85,6 +89,55 @@ export class UserService {
       .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
       .limit(1)
     return user
+  }
+
+  // 检查 APP 用户是否可访问应用入口。
+  // 只返回稳定状态结果，不抛 HTTP / WS 协议异常，避免入口层语义互相泄漏。
+  async getAppUserAccessCheck(
+    userId: number,
+  ): Promise<AppUserAccessCheckResult> {
+    const user = await this.db.query.appUser.findFirst({
+      where: {
+        id: userId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        isEnabled: true,
+        status: true,
+        banReason: true,
+        banUntil: true,
+      },
+    })
+
+    if (!user) {
+      return {
+        allowed: false,
+        reason: 'not_found',
+      }
+    }
+
+    if (!user.isEnabled) {
+      return {
+        allowed: false,
+        reason: 'disabled',
+        message: AppUserAccessMessages.ACCOUNT_DISABLED,
+      }
+    }
+
+    if (this.isBannedStatus(user.status)) {
+      return {
+        allowed: false,
+        reason: 'banned',
+        code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        message: this.buildBanAccessMessage(user),
+      }
+    }
+
+    return {
+      allowed: true,
+      user,
+    }
   }
 
   // 读取用户成长余额快照。

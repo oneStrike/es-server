@@ -4,6 +4,7 @@ import type { Server, Socket } from 'socket.io'
 import type { WebSocket } from 'ws'
 import type { MessageChatService } from '../chat/chat.service'
 import type {
+  NativeWsAuthResult,
   WsAckPayload,
   WsReadPayload,
   WsRequestEnvelope,
@@ -11,24 +12,20 @@ import type {
 } from './notification-websocket.type'
 import process from 'node:process'
 import {
+  BusinessErrorCode,
   getPlatformErrorCode,
   PlatformErrorCode,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
 import { isDevelopment } from '@libs/platform/utils'
-import {
-  BadRequestException,
-  HttpException,
-  Injectable,
-  Logger,
-} from '@nestjs/common'
+import { UserService } from '@libs/user/user.service'
+import { HttpException, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
-import {
-  ChatMessageTypeEnum,
-  MESSAGE_CHAT_SERVICE_TOKEN,
-} from '../chat/chat.constant'
+import { normalizeChatMessageSendInput } from '../chat/chat-message-boundary'
+import { MESSAGE_CHAT_SERVICE_TOKEN } from '../chat/chat.constant'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 
 const DIGIT_STRING_REGEX = /^\d+$/
@@ -47,6 +44,7 @@ export class MessageWebSocketService {
     private readonly configService: ConfigService,
     private readonly moduleRef: ModuleRef,
     private readonly messageWsMonitorService: MessageWsMonitorService,
+    private readonly userCoreService: UserService,
   ) {}
 
   /**
@@ -86,14 +84,87 @@ export class MessageWebSocketService {
    * 解析 Socket.IO 握手里的用户身份。
    */
   async resolveSocketIoUserId(client: Socket) {
-    return this.authenticateToken(this.extractSocketIoToken(client))
+    const userId = await this.authenticateToken(
+      this.extractSocketIoToken(client),
+    )
+    return this.resolveAllowedUserId(userId)
   }
 
   /**
    * 解析原生 WS 握手请求里的用户身份。
    */
   async resolveNativeRequestUserId(request: IncomingMessage) {
-    return this.authenticateToken(this.extractNativeRequestToken(request))
+    const authResult = await this.resolveNativeRequestAuth(request)
+    return authResult.userId
+  }
+
+  /**
+   * 解析原生 WS 初始握手请求，并保留失败协议语义。
+   */
+  async resolveNativeRequestAuth(
+    request: IncomingMessage,
+  ): Promise<NativeWsAuthResult> {
+    const token = this.extractNativeRequestToken(request)
+    if (!token) {
+      return {
+        userId: null,
+        message: 'Authentication required',
+        shouldClose: false,
+      }
+    }
+
+    return this.resolveNativeAuthToken(token)
+  }
+
+  /**
+   * 解析原生 WS auth 事件中的 token，并复用共享用户状态事实源。
+   */
+  async resolveNativeAuthToken(
+    token?: string | null,
+  ): Promise<NativeWsAuthResult> {
+    const userId = await this.authenticateToken(token)
+    if (!userId) {
+      return {
+        userId: null,
+        code: 40101,
+        message: 'Authentication failed',
+        shouldClose: false,
+      }
+    }
+
+    const accessCheck = await this.userCoreService.getAppUserAccessCheck(userId)
+    if (accessCheck.allowed) {
+      return {
+        userId,
+        message: 'ok',
+        shouldClose: false,
+      }
+    }
+
+    if (accessCheck.reason === 'not_found') {
+      return {
+        userId: null,
+        code: 40101,
+        message: AuthErrorMessages.LOGIN_INVALID,
+        shouldClose: true,
+      }
+    }
+
+    if (accessCheck.reason === 'disabled') {
+      return {
+        userId: null,
+        code: PlatformErrorCode.FORBIDDEN,
+        message: accessCheck.message,
+        shouldClose: true,
+      }
+    }
+
+    return {
+      userId: null,
+      code: accessCheck.code,
+      message: accessCheck.message,
+      shouldClose: true,
+    }
   }
 
   /**
@@ -132,6 +203,49 @@ export class MessageWebSocketService {
       return userId
     } catch {
       return null
+    }
+  }
+
+  // 解析已通过 token 校验的用户是否仍允许进入 WS。
+  private async resolveAllowedUserId(userId: number | null) {
+    if (!userId) {
+      return null
+    }
+
+    const accessCheck = await this.userCoreService.getAppUserAccessCheck(userId)
+    return accessCheck.allowed ? userId : null
+  }
+
+  // 构造事件级用户状态拒绝 ack，供 chat.send/read 前置拦截复用。
+  private async buildAccessDeniedAck(
+    userId: number,
+    requestId: string,
+  ): Promise<WsAckPayload | null> {
+    const accessCheck = await this.userCoreService.getAppUserAccessCheck(userId)
+    if (accessCheck.allowed) {
+      return null
+    }
+
+    if (accessCheck.reason === 'not_found') {
+      return {
+        requestId,
+        code: 40101,
+        message: 'Unauthorized',
+      }
+    }
+
+    if (accessCheck.reason === 'disabled') {
+      return {
+        requestId,
+        code: PlatformErrorCode.FORBIDDEN,
+        message: accessCheck.message,
+      }
+    }
+
+    return {
+      requestId,
+      code: accessCheck.code,
+      message: accessCheck.message,
     }
   }
 
@@ -240,8 +354,25 @@ export class MessageWebSocketService {
       )
     }
 
+    const accessDeniedAck = await this.buildAccessDeniedAck(userId, requestId)
+    if (accessDeniedAck) {
+      return this.finishAck(accessDeniedAck, requestStartAt)
+    }
+
     const payload = body?.payload
-    if (!payload || !this.isValidSendPayload(payload)) {
+    if (!payload) {
+      return this.finishAck(
+        {
+          requestId,
+          code: 40001,
+          message: 'Invalid chat.send payload',
+        },
+        requestStartAt,
+      )
+    }
+
+    const normalizedPayload = normalizeChatMessageSendInput(payload)
+    if (!normalizedPayload.ok) {
       return this.finishAck(
         {
           requestId,
@@ -253,17 +384,12 @@ export class MessageWebSocketService {
     }
 
     try {
-      const clientMessageId =
-        typeof payload.clientMessageId === 'string' &&
-        payload.clientMessageId.trim()
-          ? payload.clientMessageId.trim()
-          : undefined
       const result = await this.getMessageChatService().sendMessage(userId, {
-        conversationId: payload.conversationId,
-        messageType: payload.messageType as ChatMessageTypeEnum,
-        content: payload.content.trim(),
-        clientMessageId,
-        payload: this.stringifyPayloadObject(payload.payload),
+        conversationId: normalizedPayload.value.conversationId,
+        messageType: normalizedPayload.value.messageType,
+        content: normalizedPayload.value.content,
+        clientMessageId: normalizedPayload.value.clientMessageId,
+        payload: normalizedPayload.value.payloadJson,
       })
 
       return this.finishAck(
@@ -273,7 +399,7 @@ export class MessageWebSocketService {
           message: 'ok',
           data: {
             ...result,
-            clientMessageId,
+            clientMessageId: normalizedPayload.value.clientMessageId,
           },
         },
         requestStartAt,
@@ -321,6 +447,11 @@ export class MessageWebSocketService {
         },
         requestStartAt,
       )
+    }
+
+    const accessDeniedAck = await this.buildAccessDeniedAck(userId, requestId)
+    if (accessDeniedAck) {
+      return this.finishAck(accessDeniedAck, requestStartAt)
     }
 
     const payload = body?.payload
@@ -421,10 +552,25 @@ export class MessageWebSocketService {
   /**
    * 构造原生 WS 鉴权失败消息。
    */
-  createNativeAuthErrorMessage() {
+  createNativeAuthErrorMessage(
+    code = 40101,
+    message = 'Authentication failed',
+  ) {
     return this.createNativeEventMessage('ws.auth.error', {
-      message: 'Authentication failed',
+      code,
+      message,
     })
+  }
+
+  /**
+   * 判断 ack 后是否需要主动断开客户端连接。
+   */
+  shouldDisconnectAfterAck(ack: WsAckPayload) {
+    return (
+      ack.code === 40101 ||
+      ack.code === PlatformErrorCode.FORBIDDEN ||
+      ack.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
+    )
   }
 
   /**
@@ -513,67 +659,6 @@ export class MessageWebSocketService {
   private isPositiveInteger<T>(value: T) {
     const normalized = Number(value)
     return Number.isInteger(normalized) && normalized > 0
-  }
-
-  /**
-   * 校验消息类型是否在聊天协议允许的枚举集合内。
-   */
-  private isValidMessageType<T>(value: T) {
-    return (
-      value === ChatMessageTypeEnum.TEXT || value === ChatMessageTypeEnum.IMAGE
-    )
-  }
-
-  /**
-   * 校验聊天发送载荷。
-   * 仅允许结构稳定的 conversationId、messageType、content 与可选 payload。
-   */
-  private isValidSendPayload(payload: WsSendPayload) {
-    if (!this.isPositiveInteger(payload.conversationId)) {
-      return false
-    }
-    if (!this.isValidMessageType(payload.messageType)) {
-      return false
-    }
-    if (typeof payload.content !== 'string' || !payload.content.trim()) {
-      return false
-    }
-    if (
-      payload.clientMessageId !== undefined &&
-      (typeof payload.clientMessageId !== 'string' ||
-        !payload.clientMessageId.trim() ||
-        payload.clientMessageId.trim().length > 64)
-    ) {
-      return false
-    }
-    if (
-      payload.payload !== undefined &&
-      (typeof payload.payload !== 'object' ||
-        payload.payload === null ||
-        Array.isArray(payload.payload))
-    ) {
-      return false
-    }
-    return true
-  }
-
-  /**
-   * 把可选扩展 payload 收敛成 JSON 字符串。
-   */
-  private stringifyPayloadObject<T>(payload: T) {
-    if (payload === undefined) {
-      return undefined
-    }
-
-    if (
-      typeof payload !== 'object' ||
-      payload === null ||
-      Array.isArray(payload)
-    ) {
-      throw new BadRequestException('payload 必须是 JSON 对象')
-    }
-
-    return JSON.stringify(payload)
   }
 
   /**

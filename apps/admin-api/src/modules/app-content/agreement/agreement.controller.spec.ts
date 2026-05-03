@@ -6,6 +6,7 @@ import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { DECORATORS } from '@nestjs/swagger/dist/constants'
+import { AGREEMENT_HTML_CSP } from '@libs/app-content/agreement/agreement-html'
 import { QueryAgreementDto } from '@libs/app-content/agreement/dto/agreement.dto'
 import { AgreementController } from './agreement.controller'
 
@@ -81,9 +82,6 @@ function createController(
     configService,
   ) as unknown as AgreementControllerTestApi
 }
-
-const AGREEMENT_HTML_CSP =
-  "default-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; img-src https: data:; media-src https: data:; style-src 'unsafe-inline'"
 
 describe('AgreementController admin access path contract', () => {
   let agreementService: AgreementServiceMock

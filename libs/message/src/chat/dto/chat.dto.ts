@@ -11,7 +11,11 @@ import {
 } from '@libs/platform/decorators'
 
 import { PickType } from '@nestjs/swagger'
-import { ChatMessageTypeEnum } from '../chat.constant'
+import {
+  CHAT_MESSAGE_CLIENT_MESSAGE_ID_MAX_LENGTH,
+  CHAT_MESSAGE_CONTENT_MAX_LENGTH,
+  ChatMessageTypeEnum,
+} from '../chat.constant'
 
 export class OpenDirectConversationDto {
   @NumberProperty({
@@ -75,7 +79,7 @@ export class SendChatMessageDto {
   @StringProperty({
     description: '消息内容',
     example: 'hello',
-    maxLength: 5000,
+    maxLength: CHAT_MESSAGE_CONTENT_MAX_LENGTH,
   })
   content!: string
 
@@ -83,7 +87,7 @@ export class SendChatMessageDto {
     description: '客户端幂等键',
     example: 'cmsg_9d7a4a0b',
     required: false,
-    maxLength: 64,
+    maxLength: CHAT_MESSAGE_CLIENT_MESSAGE_ID_MAX_LENGTH,
   })
   clientMessageId?: string
 
@@ -170,7 +174,7 @@ export class BaseChatMessageDto {
   @StringProperty({
     description: '消息内容',
     example: 'hello',
-    maxLength: 5000,
+    maxLength: CHAT_MESSAGE_CONTENT_MAX_LENGTH,
   })
   content!: string
 
@@ -189,7 +193,7 @@ export class BaseChatMessageDto {
     description: '客户端幂等键',
     example: 'cmsg_9d7a4a0b',
     required: false,
-    maxLength: 64,
+    maxLength: CHAT_MESSAGE_CLIENT_MESSAGE_ID_MAX_LENGTH,
   })
   clientMessageId?: string
 
@@ -254,7 +258,7 @@ export class BaseChatConversationDto {
     description: '最后消息内容',
     example: 'hello',
     required: false,
-    maxLength: 5000,
+    maxLength: CHAT_MESSAGE_CONTENT_MAX_LENGTH,
   })
   lastMessageContent?: string
 

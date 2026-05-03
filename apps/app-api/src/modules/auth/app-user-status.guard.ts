@@ -1,5 +1,5 @@
-import { DrizzleService } from '@db/core'
 import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
+import { BusinessException } from '@libs/platform/exceptions'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
@@ -10,13 +10,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { AppAuthErrorMessages } from './auth.constant'
 
 @Injectable()
 export class AppUserStatusGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly drizzle: DrizzleService,
     private readonly userCoreService: UserCoreService,
   ) {}
 
@@ -38,29 +36,19 @@ export class AppUserStatusGuard implements CanActivate {
       return true
     }
 
-    const user = await this.drizzle.db.query.appUser.findFirst({
-      where: {
-        id: userId,
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        id: true,
-        isEnabled: true,
-        status: true,
-        banReason: true,
-        banUntil: true,
-      },
-    })
+    const accessCheck = await this.userCoreService.getAppUserAccessCheck(userId)
+    if (accessCheck.allowed) {
+      return true
+    }
 
-    if (!user) {
+    if (accessCheck.reason === 'not_found') {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
-    if (!user.isEnabled) {
-      throw new ForbiddenException(AppAuthErrorMessages.ACCOUNT_DISABLED)
+    if (accessCheck.reason === 'disabled') {
+      throw new ForbiddenException(accessCheck.message)
     }
 
-    this.userCoreService.ensureAppUserNotBanned(user)
-    return true
+    throw new BusinessException(accessCheck.code, accessCheck.message)
   }
 }

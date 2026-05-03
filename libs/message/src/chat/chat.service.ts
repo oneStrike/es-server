@@ -2,7 +2,11 @@ import type { PostgresErrorSourceObject } from '@db/core'
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type { PageDto } from '@libs/platform/dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
-import type { ChatMessageCreatedDomainEventPayload } from './chat.type'
+import type {
+  ChatConversationMemberOutputSource,
+  ChatMessageContentSource,
+  ChatMessageCreatedDomainEventPayload,
+} from './chat.type'
 import { DrizzleService } from '@db/core'
 
 import {
@@ -24,6 +28,7 @@ import { MessageDomainEventPublisher } from '../eventing/message-domain-event.pu
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
+import { assertChatMessageSendInput } from './chat-message-boundary'
 import { MessageChatReadQueryService } from './chat-read-query.service'
 import {
   CHAT_MESSAGE_PAGE_LIMIT_DEFAULT,
@@ -287,16 +292,7 @@ export class MessageChatService {
       ),
     ])
 
-    const memberMap = new Map<
-      number,
-      Array<{
-        userId: number
-        unreadCount: number
-        lastReadAt: Date | null
-        lastReadMessageId: bigint | null
-        user: { id: number, nickname: string | null, avatar: string | null }
-      }>
-    >()
+    const memberMap = new Map<number, ChatConversationMemberOutputSource[]>()
     for (const member of members) {
       const list = memberMap.get(member.conversationId) ?? []
       list.push({
@@ -418,35 +414,23 @@ export class MessageChatService {
    * @returns 消息ID、序列号等信息
    */
   async sendMessage(userId: number, dto: SendChatMessageDto) {
-    const conversationId = this.parsePositiveInteger(
-      dto.conversationId,
-      'conversationId',
-    )
-    const messageType = this.parseMessageType(dto.messageType)
-    const content = dto.content?.trim()
-    if (!content) {
-      throw new BadRequestException('消息内容不能为空')
-    }
-    const clientMessageId = this.normalizeClientMessageId(dto.clientMessageId)
-
-    // 解析并规范化消息载荷
-    const messagePayload = this.parseJsonPayload(dto.payload)
+    const normalizedInput = assertChatMessageSendInput(dto)
     const normalizedPayload = this.attachClientMessageId(
-      messagePayload,
-      clientMessageId,
+      normalizedInput.payloadObject,
+      normalizedInput.clientMessageId,
     )
     const bodyTokens = await this.emojiParserService.parse({
-      body: content,
+      body: normalizedInput.content,
       scene: EmojiSceneEnum.CHAT,
     })
     const result = await this.createMessageWithRetry(
-      conversationId,
+      normalizedInput.conversationId,
       userId,
-      messageType,
-      content,
+      normalizedInput.messageType,
+      normalizedInput.content,
       bodyTokens,
       normalizedPayload,
-      clientMessageId,
+      normalizedInput.clientMessageId,
     )
 
     const message = this.toMessageOutput(result.message)
@@ -459,7 +443,7 @@ export class MessageChatService {
 
     return {
       id: message.id,
-      conversationId,
+      conversationId: normalizedInput.conversationId,
       messageId: message.id,
       messageSeq: message.messageSeq,
       createdAt: message.createdAt,
@@ -1169,7 +1153,7 @@ export class MessageChatService {
    */
   private async getMessageMapByIds(ids: bigint[]) {
     if (!ids.length) {
-      return new Map<string, { id: bigint, content: string }>()
+      return new Map<string, ChatMessageContentSource>()
     }
     const rows = await this.db
       .select({
@@ -1360,76 +1344,6 @@ export class MessageChatService {
       throw new BadRequestException(`${fieldName} 必须是合法的整数字符串`)
     }
     return BigInt(cursor.trim())
-  }
-
-  /**
-   * 解析 JSON 载荷
-   *
-   * @param payload - JSON 字符串
-   * @returns 解析后的 JSON 对象或 undefined
-   * @throws BadRequestException 如果 JSON 格式无效
-   */
-  private parseJsonPayload(payload?: string) {
-    if (!payload || !payload.trim()) {
-      return undefined
-    }
-    try {
-      const data = JSON.parse(payload) as Record<string, unknown>
-      if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-        throw new BadRequestException('payload 必须是 JSON 对象')
-      }
-      return data
-    } catch {
-      throw new BadRequestException('payload 不是有效的 JSON 格式')
-    }
-  }
-
-  /**
-   * 解析并校验消息类型
-   *
-   * 客户端支持的消息类型：TEXT(文本)、IMAGE(图片)
-   *
-   * @param value - 原始值
-   * @returns 消息类型枚举值
-   * @throws BadRequestException 如果消息类型无效
-   */
-  private parseMessageType<T>(value: T) {
-    const messageType = Number(value)
-    if (!Number.isInteger(messageType)) {
-      throw new BadRequestException('messageType 无效')
-    }
-    if (
-      messageType !== ChatMessageTypeEnum.TEXT &&
-      messageType !== ChatMessageTypeEnum.IMAGE
-    ) {
-      throw new BadRequestException('messageType 无效')
-    }
-    return messageType
-  }
-
-  /**
-   * 标准化客户端消息ID
-   *
-   * 校验规则：
-   * - 必须是非空字符串
-   * - 最大长度64个字符
-   *
-   * @param clientMessageId - 原始客户端消息ID
-   * @returns 标准化后的ID或 undefined
-   * @throws BadRequestException 如果格式无效
-   */
-  private normalizeClientMessageId(clientMessageId?: string) {
-    if (clientMessageId === undefined) {
-      return undefined
-    }
-    if (typeof clientMessageId !== 'string' || !clientMessageId.trim()) {
-      throw new BadRequestException('clientMessageId 必须是非空字符串')
-    }
-    const normalized = clientMessageId.trim()
-    if (normalized.length > 64) {
-      throw new BadRequestException('clientMessageId 最长不能超过 64 个字符')
-    }
-    return normalized
   }
 
   /**

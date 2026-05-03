@@ -1,4 +1,5 @@
 import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
+import { UserModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { MessageInboxModule } from '../inbox/inbox.module'
@@ -18,6 +19,7 @@ import { MessageNotificationService } from './notification.service'
     JwtAuthModule,
     MessageInboxModule,
     MessageMonitorModule,
+    UserModule,
   ],
   providers: [
     MessageWebSocketService,

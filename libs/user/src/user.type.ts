@@ -45,3 +45,70 @@ export type UserStatusSource = Pick<
   AppUserSelect,
   'isEnabled' | 'status' | 'banReason' | 'banUntil'
 >
+
+/**
+ * APP 用户访问检查依赖的最小字段集。
+ * HTTP guard 与 WebSocket 入口只消费判定结果，不直接读取 app_user。
+ */
+export type AppUserAccessCheckUser = Pick<
+  AppUserSelect,
+  'id' | 'isEnabled' | 'status' | 'banReason' | 'banUntil'
+>
+
+/**
+ * APP 用户访问检查结果。
+ * 共享事实源只表达状态，不抛入口协议异常。
+ */
+export interface AppUserAccessAllowedResult {
+  allowed: true
+  user: AppUserAccessCheckUser
+}
+
+/**
+ * APP 用户不存在或已删除时的访问检查结果。
+ */
+export interface AppUserAccessNotFoundResult {
+  allowed: false
+  reason: 'not_found'
+}
+
+/**
+ * APP 用户被禁用时的访问检查结果。
+ */
+export interface AppUserAccessDisabledResult {
+  allowed: false
+  reason: 'disabled'
+  message: string
+}
+
+/**
+ * APP 用户被封禁时的访问检查结果。
+ */
+export interface AppUserAccessBannedResult {
+  allowed: false
+  reason: 'banned'
+  code: number
+  message: string
+}
+
+/**
+ * APP 用户访问拒绝原因到结果结构的映射。
+ */
+export interface AppUserAccessDeniedResultMap {
+  not_found: AppUserAccessNotFoundResult
+  disabled: AppUserAccessDisabledResult
+  banned: AppUserAccessBannedResult
+}
+
+/**
+ * APP 用户访问检查拒绝结果。
+ */
+export type AppUserAccessDeniedResult =
+  AppUserAccessDeniedResultMap[keyof AppUserAccessDeniedResultMap]
+
+/**
+ * APP 用户访问检查的完整判定结果。
+ */
+export type AppUserAccessCheckResult =
+  | AppUserAccessAllowedResult
+  | AppUserAccessDeniedResult

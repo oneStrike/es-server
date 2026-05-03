@@ -6,7 +6,15 @@ import { UserService } from './user.service'
 
 describe('UserService core mapping contract', () => {
   function createService() {
+    const appUserFindFirst = jest.fn()
     const drizzle = {
+      db: {
+        query: {
+          appUser: {
+            findFirst: appUserFindFirst,
+          },
+        },
+      },
       buildPage: jest.fn().mockReturnValue({
         pageIndex: 1,
         pageSize: 10,
@@ -26,6 +34,7 @@ describe('UserService core mapping contract', () => {
     return {
       service,
       drizzle,
+      appUserFindFirst,
     }
   }
 
@@ -150,5 +159,80 @@ describe('UserService core mapping contract', () => {
         message: '账号已被封禁，原因：违规发言，解封时间：永久封禁',
       }),
     )
+  })
+
+  it('returns an allowed app user access check result for an active user', async () => {
+    const { service, appUserFindFirst } = createService()
+    const user = {
+      id: 7,
+      isEnabled: true,
+      status: UserStatusEnum.NORMAL,
+      banReason: null,
+      banUntil: null,
+    }
+    appUserFindFirst.mockResolvedValue(user)
+
+    await expect(service.getAppUserAccessCheck(7)).resolves.toEqual({
+      allowed: true,
+      user,
+    })
+    expect(appUserFindFirst).toHaveBeenCalledWith({
+      where: {
+        id: 7,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        isEnabled: true,
+        status: true,
+        banReason: true,
+        banUntil: true,
+      },
+    })
+  })
+
+  it('returns not_found for a missing or deleted app user without throwing', async () => {
+    const { service, appUserFindFirst } = createService()
+    appUserFindFirst.mockResolvedValue(null)
+
+    await expect(service.getAppUserAccessCheck(7)).resolves.toEqual({
+      allowed: false,
+      reason: 'not_found',
+    })
+  })
+
+  it('returns disabled for a disabled app user without throwing', async () => {
+    const { service, appUserFindFirst } = createService()
+    appUserFindFirst.mockResolvedValue({
+      id: 7,
+      isEnabled: false,
+      status: UserStatusEnum.NORMAL,
+      banReason: null,
+      banUntil: null,
+    })
+
+    await expect(service.getAppUserAccessCheck(7)).resolves.toEqual({
+      allowed: false,
+      reason: 'disabled',
+      message: '账号已被禁用，请联系管理员',
+    })
+  })
+
+  it('returns banned with the shared ban message without throwing platform exceptions', async () => {
+    const { service, appUserFindFirst } = createService()
+    appUserFindFirst.mockResolvedValue({
+      id: 7,
+      isEnabled: true,
+      status: UserStatusEnum.PERMANENT_BANNED,
+      banReason: '违规发言',
+      banUntil: null,
+    })
+
+    await expect(service.getAppUserAccessCheck(7)).resolves.toEqual({
+      allowed: false,
+      reason: 'banned',
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: '账号已被封禁，原因：违规发言，解封时间：永久封禁',
+    })
   })
 })

@@ -87,7 +87,7 @@ export class MessageGateway
       body,
     )
     client.emit('chat.ack', ack)
-    if (ack.code === 40101) {
+    if (this.messageWebSocketService.shouldDisconnectAfterAck(ack)) {
       client.disconnect(true)
     }
   }
@@ -102,7 +102,7 @@ export class MessageGateway
       body,
     )
     client.emit('chat.ack', ack)
-    if (ack.code === 40101) {
+    if (this.messageWebSocketService.shouldDisconnectAfterAck(ack)) {
       client.disconnect(true)
     }
   }

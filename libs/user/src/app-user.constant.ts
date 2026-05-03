@@ -10,6 +10,15 @@ export const UserDefaults = {
 }
 
 /**
+ * APP 用户访问状态文案。
+ * 放在用户域共享常量中，避免 apps 入口常量反向泄漏到 libs。
+ */
+export const AppUserAccessMessages = {
+  /** 账号被管理员禁用时的统一访问提示。 */
+  ACCOUNT_DISABLED: '账号已被禁用，请联系管理员',
+} as const
+
+/**
  * APP 用户状态枚举。
  * 收敛登录、发帖、评论等能力判断所依赖的统一状态语义。
  */

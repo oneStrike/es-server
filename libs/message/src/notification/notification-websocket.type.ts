@@ -30,6 +30,14 @@ export interface WsAckPayload {
   data?: StructuredValue
 }
 
+/** 稳定领域类型 `NativeWsAuthResult`。原生 WS 鉴权阶段的协议映射结果。 */
+export interface NativeWsAuthResult {
+  userId: number | null
+  code?: number
+  message: string
+  shouldClose: boolean
+}
+
 /** 稳定领域类型 `NativeWsRequestEnvelope`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface NativeWsRequestEnvelope<
   TPayload = object,

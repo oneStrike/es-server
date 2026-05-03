@@ -64,30 +64,24 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
   private async handleConnection(client: WebSocket, request: IncomingMessage) {
     const state: NativeWsClientState = { userId: null }
 
-    const bindUser = (userId: number) => {
-      if (state.userId === userId) {
+    const initialAuthPromise = (async () => {
+      const authResult =
+        await this.messageWebSocketService.resolveNativeRequestAuth(request)
+      if (authResult.userId) {
+        this.bindNativeUser(state, client, authResult.userId)
         return
       }
 
-      if (state.userId) {
-        this.messageWebSocketService.unregisterNativeClient(
-          state.userId,
-          client,
+      if (authResult.code) {
+        client.send(
+          this.messageWebSocketService.createNativeAuthErrorMessage(
+            authResult.code,
+            authResult.message,
+          ),
         )
-      }
-
-      state.userId = userId
-      this.messageWebSocketService.registerNativeClient(userId, client)
-      client.send(
-        this.messageWebSocketService.createNativeAuthOkMessage(userId),
-      )
-    }
-
-    const initialAuthPromise = (async () => {
-      const userId =
-        await this.messageWebSocketService.resolveNativeRequestUserId(request)
-      if (userId) {
-        bindUser(userId)
+        if (authResult.shouldClose) {
+          this.closeClient(state, client)
+        }
         return
       }
 
@@ -160,24 +154,25 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
 
     if (event === 'auth') {
       const token = this.extractAuthToken(envelope)
-      const userId = await this.messageWebSocketService.authenticateToken(token)
-      if (!userId) {
-        client.send(this.messageWebSocketService.createNativeAuthErrorMessage())
+      const authResult =
+        await this.messageWebSocketService.resolveNativeAuthToken(token)
+      if (!authResult.userId) {
+        if (authResult.shouldClose) {
+          this.unbindNativeUser(state, client)
+        }
+        client.send(
+          this.messageWebSocketService.createNativeAuthErrorMessage(
+            authResult.code ?? 40101,
+            authResult.message,
+          ),
+        )
+        if (authResult.shouldClose) {
+          this.closeClient(state, client)
+        }
         return
       }
 
-      if (state.userId && state.userId !== userId) {
-        this.messageWebSocketService.unregisterNativeClient(
-          state.userId,
-          client,
-        )
-      }
-
-      state.userId = userId
-      this.messageWebSocketService.registerNativeClient(userId, client)
-      client.send(
-        this.messageWebSocketService.createNativeAuthOkMessage(userId),
-      )
+      this.bindNativeUser(state, client, authResult.userId)
       return
     }
 
@@ -203,6 +198,9 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
         envelope as NativeWsRequestEnvelope<WsSendPayload>,
       )
       client.send(this.messageWebSocketService.createNativeAckMessage(ack))
+      if (this.messageWebSocketService.shouldDisconnectAfterAck(ack)) {
+        this.closeClient(state, client)
+      }
       return
     }
 
@@ -212,6 +210,9 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
         envelope as NativeWsRequestEnvelope<WsReadPayload>,
       )
       client.send(this.messageWebSocketService.createNativeAckMessage(ack))
+      if (this.messageWebSocketService.shouldDisconnectAfterAck(ack)) {
+        this.closeClient(state, client)
+      }
       return
     }
 
@@ -224,6 +225,40 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     )
   }
 
+  // 绑定原生 WS 连接到指定用户，并在切换身份时清理旧绑定。
+  private bindNativeUser(
+    state: NativeWsClientState,
+    client: WebSocket,
+    userId: number,
+  ) {
+    if (state.userId === userId) {
+      return
+    }
+
+    this.unbindNativeUser(state, client)
+
+    state.userId = userId
+    this.messageWebSocketService.registerNativeClient(userId, client)
+    client.send(this.messageWebSocketService.createNativeAuthOkMessage(userId))
+  }
+
+  // 解除原生 WS 连接上的用户绑定。
+  private unbindNativeUser(state: NativeWsClientState, client: WebSocket) {
+    if (!state.userId) {
+      return
+    }
+
+    this.messageWebSocketService.unregisterNativeClient(state.userId, client)
+    state.userId = null
+  }
+
+  // 主动关闭原生 WS 客户端前先回收用户连接映射。
+  private closeClient(state: NativeWsClientState, client: WebSocket) {
+    this.unbindNativeUser(state, client)
+    client.close()
+  }
+
+  // 从原生 WS auth 事件信封中提取 token。
   private extractAuthToken(envelope: NativeWsRequestEnvelope) {
     if (typeof envelope.token === 'string' && envelope.token.trim()) {
       return envelope.token.trim()
@@ -244,6 +279,7 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     return null
   }
 
+  // 判断 HTTP upgrade 请求是否属于消息 WS 入口。
   private isMessagePath(request: IncomingMessage) {
     try {
       const host =
@@ -257,6 +293,7 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     }
   }
 
+  // 标准化原生 WS 请求 ID。
   private normalizeRequestId(requestId?: string) {
     if (typeof requestId !== 'string' || !requestId.trim()) {
       return null
@@ -265,6 +302,7 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     return requestId.trim().slice(0, 100)
   }
 
+  // 关闭 WS server 并移除 HTTP upgrade 监听。
   private close() {
     if (this.httpServer && this.upgradeListener) {
       this.httpServer.off('upgrade', this.upgradeListener)
