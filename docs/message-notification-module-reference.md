@@ -38,7 +38,7 @@
 - `libs/message/src/notification/notification-delivery.service.ts`
   - 记录 notification consumer 对 dispatch 的处理结果。
 - `libs/message/src/notification/notification-realtime.service.ts`
-  - 负责 websocket/实时同步。
+  - 负责基于 Nest `WsAdapter` 的原生 WebSocket 实时同步。
 
 ### 2.2 数据表
 

@@ -1,8 +1,5 @@
-import type { IncomingMessage } from 'node:http'
-import type { Socket } from 'socket.io'
 import type { WebSocket } from 'ws'
 import type {
-  NativeWsRequestEnvelope,
   WsReadPayload,
   WsRequestEnvelope,
   WsSendPayload,
@@ -13,39 +10,7 @@ import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { JwtService } from '@nestjs/jwt'
 import { ChatMessageTypeEnum } from '../chat/chat.constant'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
-import { MessageNativeWebSocketServer } from './notification-native-websocket.server'
 import { MessageWebSocketService } from './notification-websocket.service'
-
-interface NativeAuthResult {
-  userId: number | null
-  code?: number
-  message: string
-  shouldClose: boolean
-}
-
-interface NativeServerHarness {
-  handleConnection(client: WebSocket, request: IncomingMessage): Promise<void>
-  handleMessage(
-    client: WebSocket,
-    state: { userId: number | null },
-    rawMessage: string,
-  ): Promise<void>
-}
-
-function buildSocket(token = 'access-token') {
-  return {
-    handshake: {
-      auth: { token },
-      headers: {},
-    },
-  } as unknown as Socket
-}
-
-function buildNativeRequest(token?: string) {
-  return {
-    headers: token ? { authorization: `Bearer ${token}` } : {},
-  } as IncomingMessage
-}
 
 function buildSendEnvelope(
   overrides: Partial<WsRequestEnvelope<Partial<WsSendPayload>>> = {},
@@ -145,79 +110,73 @@ function createService() {
     chatService,
     configService,
     jwtService,
+    messageWsMonitorService,
     userCoreService,
   }
 }
 
-function createNativeClient() {
+function createNativeClient(readyState = 1) {
   return {
     send: jest.fn(),
     close: jest.fn(),
-    on: jest.fn(),
-    readyState: 1,
-  } as unknown as WebSocket
-}
-
-function createNativeServerMock(
-  initialAuth: NativeAuthResult,
-  authEvent: NativeAuthResult = initialAuth,
-) {
-  const messageWebSocketService = {
-    resolveNativeRequestAuth: jest.fn().mockResolvedValue(initialAuth),
-    resolveNativeAuthToken: jest.fn().mockResolvedValue(authEvent),
-    createNativeAuthRequiredMessage: jest.fn().mockReturnValue('auth-required'),
-    createNativeAuthOkMessage: jest
-      .fn()
-      .mockImplementation((userId: number) => `auth-ok:${userId}`),
-    createNativeAuthErrorMessage: jest
-      .fn()
-      .mockImplementation((code: number, message: string) =>
-        JSON.stringify({ event: 'ws.auth.error', data: { code, message } }),
-      ),
-    createNativeEventMessage: jest.fn().mockReturnValue('event-message'),
-    createNativeErrorMessage: jest.fn().mockReturnValue('error-message'),
-    createNativeAckMessage: jest.fn().mockReturnValue('ack-message'),
-    handleChatSend: jest.fn(),
-    handleChatRead: jest.fn(),
-    shouldDisconnectAfterAck: jest.fn().mockReturnValue(false),
-    registerNativeClient: jest.fn(),
-    unregisterNativeClient: jest.fn(),
-  }
-
-  return {
-    server: new MessageNativeWebSocketServer(
-      messageWebSocketService as never,
-    ) as unknown as NativeServerHarness,
-    messageWebSocketService,
+    readyState,
+  } as unknown as WebSocket & {
+    send: jest.Mock
+    close: jest.Mock
+    readyState: number
   }
 }
 
-async function flushMicrotasks() {
-  await new Promise<void>((resolve) => {
-    setImmediate(resolve)
-  })
+function parseMessage(value: string) {
+  return JSON.parse(value) as {
+    event: string
+    data?: unknown
+  }
 }
 
-describe('MessageWebSocketService auth and access checks', () => {
-  it('returns userId for a valid access token and active app user', async () => {
+describe('MessageWebSocketService native auth', () => {
+  it('binds an active user after auth event with canonical token data', async () => {
     const { service, userCoreService } = createService()
+    const client = createNativeClient()
+    service.initializeNativeClient(client)
 
-    await expect(service.resolveSocketIoUserId(buildSocket())).resolves.toBe(7)
+    const result = await service.authenticateNativeClient(client, {
+      token: 'access-token',
+    })
+
+    expect(result.shouldClose).toBe(false)
+    expect(parseMessage(result.message)).toEqual({
+      event: 'ws.auth.ok',
+      data: { userId: 7 },
+    })
+    expect(service.getNativeClientUserId(client)).toBe(7)
     expect(userCoreService.getAppUserAccessCheck).toHaveBeenCalledWith(7)
   })
 
-  it('returns null for an invalid token without checking user state', async () => {
+  it('returns auth error for an invalid token without binding the client', async () => {
     const { service, jwtService, userCoreService } = createService()
     jwtService.verifyAsync.mockRejectedValue(new Error('invalid token'))
+    const client = createNativeClient()
+    service.initializeNativeClient(client)
 
-    await expect(
-      service.resolveSocketIoUserId(buildSocket()),
-    ).resolves.toBeNull()
+    const result = await service.authenticateNativeClient(client, {
+      token: 'bad-token',
+    })
+
+    expect(result.shouldClose).toBe(false)
+    expect(parseMessage(result.message)).toEqual({
+      event: 'ws.auth.error',
+      data: {
+        code: 40101,
+        message: 'Authentication failed',
+      },
+    })
+    expect(service.getNativeClientUserId(client)).toBeNull()
     expect(userCoreService.getAppUserAccessCheck).not.toHaveBeenCalled()
   })
 
   it.each([
-    ['missing or deleted', { allowed: false, reason: 'not_found' }],
+    ['missing or deleted', { allowed: false, reason: 'not_found' }, 40101],
     [
       'disabled',
       {
@@ -225,6 +184,7 @@ describe('MessageWebSocketService auth and access checks', () => {
         reason: 'disabled',
         message: '账号已被禁用，请联系管理员',
       },
+      PlatformErrorCode.FORBIDDEN,
     ],
     [
       'banned',
@@ -234,15 +194,28 @@ describe('MessageWebSocketService auth and access checks', () => {
         code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
         message: '账号已被封禁，原因：违规发言，解封时间：永久封禁',
       },
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
     ],
-  ])('returns null for %s app users during auth', async (_label, result) => {
-    const { service, userCoreService } = createService()
-    userCoreService.getAppUserAccessCheck.mockResolvedValue(result)
+  ])(
+    'returns terminal auth error for %s app users',
+    async (_label, result, code) => {
+      const { service, userCoreService } = createService()
+      userCoreService.getAppUserAccessCheck.mockResolvedValue(result)
+      const client = createNativeClient()
+      service.initializeNativeClient(client)
 
-    await expect(
-      service.resolveNativeRequestUserId(buildNativeRequest('access-token')),
-    ).resolves.toBeNull()
-  })
+      const authResult = await service.authenticateNativeClient(client, {
+        token: 'access-token',
+      })
+
+      expect(authResult.shouldClose).toBe(true)
+      expect(parseMessage(authResult.message)).toMatchObject({
+        event: 'ws.auth.error',
+        data: { code },
+      })
+      expect(service.getNativeClientUserId(client)).toBeNull()
+    },
+  )
 })
 
 describe('MessageWebSocketService event-level status checks', () => {
@@ -423,145 +396,90 @@ describe('MessageWebSocketService send payload boundary', () => {
   })
 })
 
-describe('MessageNativeWebSocketServer auth routing', () => {
-  it('sends auth required and keeps the socket open for an initial request without token', async () => {
-    const { server, messageWebSocketService } = createNativeServerMock({
-      userId: null,
-      message: 'Authentication required',
-      shouldClose: false,
+describe('MessageWebSocketService native broadcasting', () => {
+  it('broadcasts events to all open native clients for a user', async () => {
+    const { service } = createService()
+    const firstClient = createNativeClient()
+    const secondClient = createNativeClient()
+
+    service.initializeNativeClient(firstClient)
+    service.initializeNativeClient(secondClient)
+    await service.authenticateNativeClient(firstClient, { token: 'token-1' })
+    await service.authenticateNativeClient(secondClient, { token: 'token-2' })
+
+    service.emitToUser(7, 'notification.created', { id: 1 })
+
+    const expectedMessage = JSON.stringify({
+      event: 'notification.created',
+      data: { id: 1 },
     })
-    const client = createNativeClient()
-
-    await server.handleConnection(client, buildNativeRequest())
-    await flushMicrotasks()
-
-    expect(client.send).toHaveBeenCalledWith('auth-required')
-    expect(client.close).not.toHaveBeenCalled()
-    expect(messageWebSocketService.registerNativeClient).not.toHaveBeenCalled()
+    expect(firstClient.send).toHaveBeenCalledWith(expectedMessage)
+    expect(secondClient.send).toHaveBeenCalledWith(expectedMessage)
   })
 
-  it('sends auth ok and binds the initial active request user', async () => {
-    const { server, messageWebSocketService } = createNativeServerMock({
-      userId: 7,
-      message: 'ok',
-      shouldClose: false,
-    })
-    const client = createNativeClient()
+  it('removes closed clients before broadcasting', async () => {
+    const { service } = createService()
+    const closedClient = createNativeClient(3)
+    const openClient = createNativeClient()
 
-    await server.handleConnection(client, buildNativeRequest('access-token'))
-    await flushMicrotasks()
+    service.initializeNativeClient(closedClient)
+    service.initializeNativeClient(openClient)
+    await service.authenticateNativeClient(closedClient, { token: 'token-1' })
+    await service.authenticateNativeClient(openClient, { token: 'token-2' })
 
-    expect(client.send).toHaveBeenCalledWith('auth-ok:7')
-    expect(messageWebSocketService.registerNativeClient).toHaveBeenCalledWith(
-      7,
-      client,
-    )
-    expect(client.close).not.toHaveBeenCalled()
+    service.emitToUser(7, 'notification.created', { id: 1 })
+
+    expect(closedClient.send).not.toHaveBeenCalled()
+    expect(openClient.send).toHaveBeenCalledTimes(1)
+
+    service.emitToUser(7, 'notification.updated', { id: 2 })
+
+    expect(closedClient.send).not.toHaveBeenCalled()
+    expect(openClient.send).toHaveBeenCalledTimes(2)
   })
 
-  it.each([
-    ['deleted or missing', 40101, AuthErrorMessages.LOGIN_INVALID],
-    ['disabled', PlatformErrorCode.FORBIDDEN, '账号已被禁用，请联系管理员'],
-    [
-      'banned',
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '账号已被封禁，原因：违规发言，解封时间：永久封禁',
-    ],
-  ])(
-    'sends auth error and closes initial %s users',
-    async (_label, code, message) => {
-      const { server, messageWebSocketService } = createNativeServerMock({
-        userId: null,
-        code,
-        message,
-        shouldClose: true,
-      })
-      const client = createNativeClient()
-
-      await server.handleConnection(client, buildNativeRequest('access-token'))
-      await flushMicrotasks()
-
-      expect(
-        messageWebSocketService.createNativeAuthErrorMessage,
-      ).toHaveBeenCalledWith(code, message)
-      expect(client.close).toHaveBeenCalled()
-    },
-  )
-
-  it('handles invalid auth events without binding or closing', async () => {
-    const { server, messageWebSocketService } = createNativeServerMock(
-      {
-        userId: null,
-        message: 'Authentication required',
-        shouldClose: false,
-      },
-      {
-        userId: null,
-        code: 40101,
-        message: 'Authentication failed',
-        shouldClose: false,
-      },
-    )
+  it('unregisters native clients and stops later broadcasts to that connection', async () => {
+    const { service } = createService()
     const client = createNativeClient()
-    const state = { userId: null }
 
-    await server.handleMessage(
-      client,
-      state,
-      JSON.stringify({ event: 'auth', token: 'bad-token' }),
-    )
+    service.initializeNativeClient(client)
+    await service.authenticateNativeClient(client, { token: 'access-token' })
 
-    expect(messageWebSocketService.resolveNativeAuthToken).toHaveBeenCalledWith(
-      'bad-token',
-    )
+    service.unregisterNativeClient(client)
+    service.emitToUser(7, 'notification.created', { id: 1 })
+
+    expect(service.getNativeClientUserId(client)).toBeNull()
+    expect(client.send).not.toHaveBeenCalled()
+  })
+
+  it('serializes ack and error frames with native event/data envelopes', () => {
+    const { service } = createService()
+
     expect(
-      messageWebSocketService.createNativeAuthErrorMessage,
-    ).toHaveBeenCalledWith(40101, 'Authentication failed')
-    expect(state.userId).toBeNull()
-    expect(client.close).not.toHaveBeenCalled()
+      JSON.parse(
+        service.createNativeAckMessage({
+          requestId: 'req-1',
+          code: 0,
+          message: 'ok',
+        }),
+      ),
+    ).toEqual({
+      event: 'chat.ack',
+      data: {
+        requestId: 'req-1',
+        code: 0,
+        message: 'ok',
+      },
+    })
+    expect(
+      JSON.parse(service.createNativeErrorMessage(40001, 'Bad input')),
+    ).toEqual({
+      event: 'ws.error',
+      data: {
+        requestId: null,
+        code: 40001,
+        message: 'Bad input',
+      },
+    })
   })
-
-  it.each([
-    ['deleted or missing', 40101, AuthErrorMessages.LOGIN_INVALID],
-    ['disabled', PlatformErrorCode.FORBIDDEN, '账号已被禁用，请联系管理员'],
-    [
-      'banned',
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '账号已被封禁，原因：违规发言，解封时间：永久封禁',
-    ],
-  ])(
-    'unregisters and closes auth event for %s users',
-    async (_label, code, message) => {
-      const { server, messageWebSocketService } = createNativeServerMock(
-        {
-          userId: null,
-          message: 'Authentication required',
-          shouldClose: false,
-        },
-        {
-          userId: null,
-          code,
-          message,
-          shouldClose: true,
-        },
-      )
-      const client = createNativeClient()
-      const state = { userId: 7 }
-
-      await server.handleMessage(
-        client,
-        state,
-        JSON.stringify({ event: 'auth', token: 'access-token' }),
-      )
-
-      expect(
-        messageWebSocketService.unregisterNativeClient,
-      ).toHaveBeenCalledWith(7, client)
-      expect(
-        messageWebSocketService.createNativeAuthErrorMessage,
-      ).toHaveBeenCalledWith(code, message)
-      expect(state.userId).toBeNull()
-      expect(client.close).toHaveBeenCalled()
-    },
-  )
 })

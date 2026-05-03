@@ -1,12 +1,11 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { MessageNativeWebSocketServer } from '@libs/message/notification/notification-native-websocket.server';
-import { logStartupInfo, setupApp } from '@libs/platform/bootstrap';
+import { MessageWsAdapter } from '@libs/message/notification/notification-ws.adapter'
+import { logStartupInfo, setupApp } from '@libs/platform/bootstrap'
 
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
-import { IoAdapter } from '@nestjs/platform-socket.io'
 import { AppModule } from './app.module'
 
 interface HotModule {
@@ -34,10 +33,9 @@ async function bootstrap() {
 
   const appConfig = app.get(ConfigService).get<AppConfigInterface>('app')!
   await setupApp(app, fastifyAdapter, appConfig)
-  app.useWebSocketAdapter(new IoAdapter(app))
+  app.useWebSocketAdapter(new MessageWsAdapter(app))
 
   await app.listen(appConfig.port, '0.0.0.0')
-  app.get(MessageNativeWebSocketServer).attach(app.getHttpServer())
   logStartupInfo(appConfig.port, appConfig.swaggerConfig.path)
 
   if (module.hot) {

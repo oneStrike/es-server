@@ -1,5 +1,6 @@
-import type { Server, Socket } from 'socket.io'
+import type { ServerOptions, WebSocket } from 'ws'
 import type {
+  WsAuthPayload,
   WsReadPayload,
   WsRequestEnvelope,
   WsSendPayload,
@@ -12,107 +13,105 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets'
 import { MessageWebSocketService } from './notification-websocket.service'
 
-const MESSAGE_WS_CORS_ORIGINS = (process.env.MESSAGE_WS_CORS_ORIGINS || '')
-  .split(',')
-  .map((item) => item.trim())
-  .filter(Boolean)
+const MESSAGE_WS_CORS_ORIGINS_ENV = 'MESSAGE_WS_CORS_ORIGINS'
 
-function getMessageWsCorsOrigin(): boolean | string[] {
-  if (MESSAGE_WS_CORS_ORIGINS.length === 0) {
-    return !!isDevelopment()
-  }
+// 读取消息 WS 来源白名单；空配置在生产环境默认拒绝跨站握手。
+function getMessageWsAllowedOrigins() {
+  return (process.env[MESSAGE_WS_CORS_ORIGINS_ENV] || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
 
-  if (MESSAGE_WS_CORS_ORIGINS.includes('*')) {
+// 判断 native ws 握手 Origin 是否允许，保持原 Socket.IO CORS 语义。
+function isMessageWsOriginAllowed(origin?: string) {
+  const allowedOrigins = getMessageWsAllowedOrigins()
+  if (allowedOrigins.includes('*')) {
     return true
   }
 
-  return MESSAGE_WS_CORS_ORIGINS
+  if (!allowedOrigins.length) {
+    return !!isDevelopment()
+  }
+
+  return typeof origin === 'string' && allowedOrigins.includes(origin)
 }
 
-const MESSAGE_WS_CORS_ORIGIN = getMessageWsCorsOrigin()
+const messageWsVerifyClient: ServerOptions['verifyClient'] = (info) =>
+  isMessageWsOriginAllowed(info.origin)
 
 @Injectable()
-@WebSocketGateway({
-  namespace: '/message',
-  cors: {
-    origin: MESSAGE_WS_CORS_ORIGIN,
-    credentials: MESSAGE_WS_CORS_ORIGIN !== false,
-  },
-})
+@WebSocketGateway({ path: '/message', verifyClient: messageWsVerifyClient })
 export class MessageGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(
     private readonly messageWebSocketService: MessageWebSocketService,
   ) {}
 
-  afterInit(server: Server) {
-    this.messageWebSocketService.bindSocketServer(server)
+  // 建立 native ws 连接后先进入未鉴权状态，浏览器客户端随后发送 auth 事件。
+  handleConnection(client: WebSocket) {
+    this.messageWebSocketService.initializeNativeClient(client)
+    client.send(this.messageWebSocketService.createNativeAuthRequiredMessage())
   }
 
-  async handleConnection(client: Socket) {
-    const userId =
-      await this.messageWebSocketService.resolveSocketIoUserId(client)
-    if (!userId) {
-      client.disconnect(true)
-      return
-    }
-
-    client.data.userId = userId
-    void client.join(this.messageWebSocketService.getUserRoom(userId))
+  // 连接关闭时回收 service 中维护的用户连接索引。
+  handleDisconnect(client: WebSocket) {
+    this.messageWebSocketService.unregisterNativeClient(client)
   }
 
-  handleDisconnect(client: Socket) {
-    const userId = Number(client.data.userId)
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return
+  @SubscribeMessage('auth')
+  async handleAuth(
+    @ConnectedSocket() client: WebSocket,
+    @MessageBody() body: WsAuthPayload,
+  ) {
+    const result = await this.messageWebSocketService.authenticateNativeClient(
+      client,
+      body,
+    )
+    client.send(result.message)
+    if (result.shouldClose) {
+      client.close()
     }
+  }
 
-    void client.leave(this.messageWebSocketService.getUserRoom(userId))
+  @SubscribeMessage('ping')
+  handlePing(@ConnectedSocket() client: WebSocket) {
+    client.send(this.messageWebSocketService.createNativeEventMessage('pong'))
   }
 
   @SubscribeMessage('chat.send')
   async handleChatSend(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: WebSocket,
     @MessageBody() body: WsRequestEnvelope<WsSendPayload>,
   ) {
     const ack = await this.messageWebSocketService.handleChatSend(
-      this.extractAuthenticatedUserId(client),
+      this.messageWebSocketService.getNativeClientUserId(client),
       body,
     )
-    client.emit('chat.ack', ack)
+    client.send(this.messageWebSocketService.createNativeAckMessage(ack))
     if (this.messageWebSocketService.shouldDisconnectAfterAck(ack)) {
-      client.disconnect(true)
+      client.close()
     }
   }
 
   @SubscribeMessage('chat.read')
   async handleChatRead(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: WebSocket,
     @MessageBody() body: WsRequestEnvelope<WsReadPayload>,
   ) {
     const ack = await this.messageWebSocketService.handleChatRead(
-      this.extractAuthenticatedUserId(client),
+      this.messageWebSocketService.getNativeClientUserId(client),
       body,
     )
-    client.emit('chat.ack', ack)
+    client.send(this.messageWebSocketService.createNativeAckMessage(ack))
     if (this.messageWebSocketService.shouldDisconnectAfterAck(ack)) {
-      client.disconnect(true)
+      client.close()
     }
-  }
-
-  private extractAuthenticatedUserId(client: Socket) {
-    const userId = Number(client.data.userId)
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return null
-    }
-
-    return userId
   }
 }

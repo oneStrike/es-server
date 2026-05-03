@@ -1,16 +1,16 @@
 import type { AuthConfigInterface } from '@libs/platform/types'
-import type { IncomingMessage } from 'node:http'
-import type { Server, Socket } from 'socket.io'
 import type { WebSocket } from 'ws'
 import type { MessageChatService } from '../chat/chat.service'
 import type {
   NativeWsAuthResult,
+  NativeWsClientState,
+  NativeWsGatewaySendResult,
   WsAckPayload,
+  WsAuthPayload,
   WsReadPayload,
   WsRequestEnvelope,
   WsSendPayload,
 } from './notification-websocket.type'
-import process from 'node:process'
 import {
   BusinessErrorCode,
   getPlatformErrorCode,
@@ -18,7 +18,6 @@ import {
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
-import { isDevelopment } from '@libs/platform/utils'
 import { UserService } from '@libs/user/user.service'
 import { HttpException, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -35,9 +34,12 @@ const NATIVE_WS_OPEN = 1
 export class MessageWebSocketService {
   private readonly logger = new Logger(MessageWebSocketService.name)
   private readonly nativeClientsByUserId = new Map<number, Set<WebSocket>>()
+  private readonly nativeClientState = new WeakMap<
+    WebSocket,
+    NativeWsClientState
+  >()
 
   private messageChatService?: MessageChatService
-  private socketServer?: Server
 
   constructor(
     private readonly jwtService: JwtService,
@@ -47,73 +49,37 @@ export class MessageWebSocketService {
     private readonly userCoreService: UserService,
   ) {}
 
-  /**
-   * 解析 Socket.IO 的跨域白名单配置。
-   * 本地开发默认放开，生产环境仅使用显式配置的来源列表。
-   */
-  getSocketIoCorsOrigin() {
-    const origins = (process.env.MESSAGE_WS_CORS_ORIGINS || '')
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean)
-
-    if (origins.length > 0) {
-      return origins.includes('*') ? true : origins
-    }
-
-    return !!isDevelopment()
+  // 初始化 native ws 客户端状态，连接建立后等待 auth 事件绑定用户。
+  initializeNativeClient(client: WebSocket) {
+    this.nativeClientState.set(client, { userId: null })
   }
 
-  /**
-   * 绑定 Socket.IO 服务实例。
-   * 供 gateway 初始化后把底层 server 注入到消息推送服务中。
-   */
-  bindSocketServer(server: Server) {
-    this.socketServer = server
-  }
-
-  /**
-   * 生成用户专属房间名。
-   * Socket.IO 与原生 WS 都使用同一套 user room 语义。
-   */
-  getUserRoom(userId: number) {
-    return `user:${userId}`
-  }
-
-  /**
-   * 解析 Socket.IO 握手里的用户身份。
-   */
-  async resolveSocketIoUserId(client: Socket) {
-    const userId = await this.authenticateToken(
-      this.extractSocketIoToken(client),
-    )
-    return this.resolveAllowedUserId(userId)
-  }
-
-  /**
-   * 解析原生 WS 握手请求里的用户身份。
-   */
-  async resolveNativeRequestUserId(request: IncomingMessage) {
-    const authResult = await this.resolveNativeRequestAuth(request)
-    return authResult.userId
-  }
-
-  /**
-   * 解析原生 WS 初始握手请求，并保留失败协议语义。
-   */
-  async resolveNativeRequestAuth(
-    request: IncomingMessage,
-  ): Promise<NativeWsAuthResult> {
-    const token = this.extractNativeRequestToken(request)
-    if (!token) {
+  // 处理 native ws auth 事件，成功时把连接绑定到当前用户。
+  async authenticateNativeClient(
+    client: WebSocket,
+    payload: WsAuthPayload,
+  ): Promise<NativeWsGatewaySendResult> {
+    const authResult = await this.resolveNativeAuthToken(payload?.token)
+    if (!authResult.userId) {
       return {
-        userId: null,
-        message: 'Authentication required',
-        shouldClose: false,
+        message: this.createNativeAuthErrorMessage(
+          authResult.code ?? 40101,
+          authResult.message,
+        ),
+        shouldClose: authResult.shouldClose,
       }
     }
 
-    return this.resolveNativeAuthToken(token)
+    this.bindNativeUser(client, authResult.userId)
+    return {
+      message: this.createNativeAuthOkMessage(authResult.userId),
+      shouldClose: false,
+    }
+  }
+
+  // 读取 native ws 客户端当前绑定的用户 ID，未鉴权时返回 null。
+  getNativeClientUserId(client: WebSocket) {
+    return this.nativeClientState.get(client)?.userId ?? null
   }
 
   /**
@@ -206,16 +172,6 @@ export class MessageWebSocketService {
     }
   }
 
-  // 解析已通过 token 校验的用户是否仍允许进入 WS。
-  private async resolveAllowedUserId(userId: number | null) {
-    if (!userId) {
-      return null
-    }
-
-    const accessCheck = await this.userCoreService.getAppUserAccessCheck(userId)
-    return accessCheck.allowed ? userId : null
-  }
-
   // 构造事件级用户状态拒绝 ack，供 chat.send/read 前置拦截复用。
   private async buildAccessDeniedAck(
     userId: number,
@@ -249,14 +205,23 @@ export class MessageWebSocketService {
     }
   }
 
-  /**
-   * 注册原生 WS 客户端连接。
-   * 同一用户允许持有多个连接，并记录一次重连指标。
-   */
-  registerNativeClient(userId: number, client: WebSocket) {
+  // 把 native ws 连接绑定到指定用户，并在身份切换时回收旧绑定。
+  private bindNativeUser(client: WebSocket, userId: number) {
     if (!Number.isInteger(userId) || userId <= 0) {
       return
     }
+
+    const state = this.nativeClientState.get(client) ?? { userId: null }
+    if (state.userId === userId) {
+      return
+    }
+
+    if (state.userId) {
+      this.removeNativeClientFromUser(state.userId, client)
+    }
+
+    state.userId = userId
+    this.nativeClientState.set(client, state)
 
     let clients = this.nativeClientsByUserId.get(userId)
     if (!clients) {
@@ -268,11 +233,18 @@ export class MessageWebSocketService {
     this.recordReconnectMetric()
   }
 
-  /**
-   * 注销原生 WS 客户端连接。
-   * 当用户没有剩余连接时同步回收映射项。
-   */
-  unregisterNativeClient(userId: number, client: WebSocket) {
+  // 注销 native ws 客户端连接，并同步回收用户连接索引。
+  unregisterNativeClient(client: WebSocket) {
+    const userId = this.nativeClientState.get(client)?.userId
+    if (userId) {
+      this.removeNativeClientFromUser(userId, client)
+    }
+
+    this.nativeClientState.delete(client)
+  }
+
+  // 从指定用户连接集合中移除一个 native ws 客户端。
+  private removeNativeClientFromUser(userId: number, client: WebSocket) {
     const clients = this.nativeClientsByUserId.get(userId)
     if (!clients) {
       return
@@ -286,15 +258,11 @@ export class MessageWebSocketService {
 
   /**
    * 向指定用户广播事件。
-   * 同时覆盖 Socket.IO 房间和原生 WS 连接集合。
+   * 仅覆盖 Nest WsAdapter 管理的 native ws 连接集合。
    */
   emitToUser<TPayload>(userId: number, event: string, payload: TPayload) {
     if (!Number.isInteger(userId) || userId <= 0) {
       return
-    }
-
-    if (this.socketServer) {
-      this.socketServer.to(this.getUserRoom(userId)).emit(event, payload)
     }
 
     const nativeClients = this.nativeClientsByUserId.get(userId)
@@ -305,7 +273,7 @@ export class MessageWebSocketService {
     const message = this.createNativeEventMessage(event, payload)
     for (const client of [...nativeClients]) {
       if (client.readyState !== NATIVE_WS_OPEN) {
-        this.unregisterNativeClient(userId, client)
+        this.unregisterNativeClient(client)
         continue
       }
 
@@ -315,7 +283,7 @@ export class MessageWebSocketService {
         this.logger.warn(
           `Failed to push native WS event: ${this.stringifyError(error)}`,
         )
-        this.unregisterNativeClient(userId, client)
+        this.unregisterNativeClient(client)
       }
     }
   }
@@ -513,7 +481,7 @@ export class MessageWebSocketService {
   createNativeAckMessage(payload: WsAckPayload) {
     return JSON.stringify({
       event: 'chat.ack',
-      ...payload,
+      data: payload,
     })
   }
 
@@ -527,9 +495,11 @@ export class MessageWebSocketService {
   ) {
     return JSON.stringify({
       event: 'ws.error',
-      requestId,
-      code,
-      message,
+      data: {
+        requestId,
+        code,
+        message,
+      },
     })
   }
 
@@ -599,47 +569,6 @@ export class MessageWebSocketService {
     }
 
     return this.messageChatService
-  }
-
-  /**
-   * 从 Socket.IO 握手中提取访问令牌。
-   */
-  private extractSocketIoToken(client: Socket) {
-    const authToken = client.handshake.auth?.token
-    if (typeof authToken === 'string' && authToken.trim()) {
-      return this.normalizeBearerToken(authToken)
-    }
-
-    const headerToken = client.handshake.headers?.authorization
-    if (typeof headerToken === 'string' && headerToken.trim()) {
-      return this.normalizeBearerToken(headerToken)
-    }
-
-    return null
-  }
-
-  /**
-   * 从原生 WS 请求中提取访问令牌。
-   * 只接受 Authorization 头，避免通过 URL query 暴露 access token。
-   */
-  private extractNativeRequestToken(request: IncomingMessage) {
-    const authorization = request.headers.authorization
-    if (typeof authorization === 'string' && authorization.trim()) {
-      return this.normalizeBearerToken(authorization)
-    }
-
-    return null
-  }
-
-  /**
-   * 标准化 Bearer token 字符串。
-   */
-  private normalizeBearerToken(value: string) {
-    const token = value.trim()
-    if (token.startsWith('Bearer ')) {
-      return token.slice(7)
-    }
-    return token
   }
 
   /**
