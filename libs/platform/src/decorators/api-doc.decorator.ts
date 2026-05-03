@@ -2,7 +2,9 @@ import type { Type } from '@nestjs/common'
 import { applyDecorators } from '@nestjs/common'
 import {
   ApiExtraModels,
+  ApiOkResponse,
   ApiOperation,
+  ApiProduces,
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger'
@@ -21,6 +23,19 @@ export interface ApiDocOptions<TModel> {
   model?: Type<TModel> | Record<string, any>
   /** 是否返回数组 */
   isArray?: boolean
+}
+
+/**
+ * HTML 响应文档配置。
+ * 用于少数直接返回 text/html、不会经过 JSON envelope 包装的接口。
+ */
+export interface ApiHtmlDocOptions {
+  /** 接口摘要 */
+  summary: string
+  /** 响应描述 */
+  description?: string
+  /** HTML 示例 */
+  example?: string
 }
 
 // 工具函数：判断是否是类
@@ -60,6 +75,7 @@ export function ApiDoc<TModel extends Type<object>>(
 ) {
   const { summary, model, isArray } = options
   let dataSchema
+  const response = baseResponse(summary)
   const decorators = [ApiOperation({ summary })]
 
   if (model) {
@@ -88,13 +104,13 @@ export function ApiDoc<TModel extends Type<object>>(
   }
   decorators.push(
     ApiResponse({
-      ...baseResponse(summary),
+      ...response,
       content: {
         'application/json': {
           schema: {
-            ...baseResponse(summary).content['application/json'].schema,
+            ...response.content['application/json'].schema,
             properties: {
-              ...baseResponse(summary).content['application/json'].schema.properties,
+              ...response.content['application/json'].schema.properties,
               ...(dataSchema && { data: dataSchema }),
             },
           },
@@ -106,11 +122,36 @@ export function ApiDoc<TModel extends Type<object>>(
   return applyDecorators(...decorators)
 }
 
+/**
+ * HTML 响应文档装饰器。
+ * 保持 ApiDoc 的 JSON envelope 语义，只为 text/html 成功响应提供受控例外。
+ */
+export function ApiHtmlDoc(options: ApiHtmlDocOptions) {
+  const { summary, description = `${summary}成功`, example } = options
+
+  return applyDecorators(
+    ApiOperation({ summary }),
+    ApiProduces('text/html'),
+    ApiOkResponse({
+      description,
+      content: {
+        'text/html': {
+          schema: {
+            type: 'string',
+            ...(example && { example }),
+          },
+        },
+      },
+    }),
+  )
+}
+
 export function ApiPageDoc<TModel extends Type<object>>(
   options: ApiDocOptions<TModel>,
 ) {
   const { summary, model } = options
   let dataSchema
+  const response = baseResponse(summary)
   const decorators = [ApiOperation({ summary })]
 
   if (model) {
@@ -132,13 +173,13 @@ export function ApiPageDoc<TModel extends Type<object>>(
 
   decorators.push(
     ApiResponse({
-      ...baseResponse(summary),
+      ...response,
       content: {
         'application/json': {
           schema: {
-            ...baseResponse(summary).content['application/json'].schema,
+            ...response.content['application/json'].schema,
             properties: {
-              ...baseResponse(summary).content['application/json'].schema.properties,
+              ...response.content['application/json'].schema.properties,
               data: {
                 type: 'object',
                 properties: {

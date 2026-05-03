@@ -96,3 +96,23 @@ export class QueryPublishedAgreementDto extends PartialType(
 export class AgreementListItemDto extends OmitType(BaseAgreementDto, [
   'content',
 ] as const) {}
+
+export class AgreementAccessFieldsDto {
+  @StringProperty({
+    description: '协议 HTML 访问路径',
+    example: '/api/admin/agreement/access?id=1',
+    required: true,
+    maxLength: 500,
+  })
+  accessPath!: string
+}
+
+export class AdminAgreementListItemDto extends IntersectionType(
+  AgreementListItemDto,
+  AgreementAccessFieldsDto,
+) {}
+
+export class AdminAgreementDetailDto extends IntersectionType(
+  BaseAgreementDto,
+  AgreementAccessFieldsDto,
+) {}
