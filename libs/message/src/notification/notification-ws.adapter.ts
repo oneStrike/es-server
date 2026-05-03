@@ -52,7 +52,7 @@ export class MessageWsAdapter extends WsAdapter {
     rawMessage: NativeWsAdapterMessageEvent | NativeWsAdapterMessageTuple,
     handlersMap: Map<string, MessageMappingProperties>,
     transform: (data: unknown) => Observable<unknown>,
-  ) {
+  ): Observable<unknown> {
     const message = this.parseMessage(client, rawMessage)
     if (!message) {
       return EMPTY
@@ -85,8 +85,11 @@ export class MessageWsAdapter extends WsAdapter {
 
     try {
       const message = this.messageParser(data) as NativeWsAdapterMessage | void
-      const event =
-        typeof message?.event === 'string' ? message.event.trim() : ''
+      let event = ''
+      if (typeof message?.event === 'string') {
+        event = message.event.trim()
+      }
+
       if (!event) {
         this.sendProtocolError(
           client,
@@ -125,15 +128,22 @@ export class MessageWsAdapter extends WsAdapter {
   }
 
   // 从 canonical data 中提取 requestId，避免协议错误丢失客户端关联 ID。
-  private extractRequestId(data: unknown) {
+  private extractRequestId(data: unknown): string | null {
     if (typeof data !== 'object' || data === null || !('requestId' in data)) {
       return null
     }
 
     const requestId = (data as { requestId?: unknown }).requestId
-    return typeof requestId === 'string' && requestId.trim()
-      ? requestId.trim().slice(0, 100)
-      : null
+    if (typeof requestId !== 'string') {
+      return null
+    }
+
+    const normalizedRequestId = requestId.trim()
+    if (!normalizedRequestId) {
+      return null
+    }
+
+    return normalizedRequestId.slice(0, 100)
   }
 
   // 发送统一 ws.error 帧，保持协议层错误对客户端可见。

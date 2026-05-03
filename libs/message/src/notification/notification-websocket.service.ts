@@ -471,8 +471,9 @@ export class MessageWebSocketService {
   /**
    * 构造原生 WS 事件消息体。
    */
-  createNativeEventMessage<TPayload>(event: string, data?: TPayload) {
-    return JSON.stringify(data === undefined ? { event } : { event, data })
+  createNativeEventMessage<TPayload>(event: string, data?: TPayload): string {
+    const message = data === undefined ? { event } : { event, data }
+    return JSON.stringify(message)
   }
 
   /**
@@ -585,7 +586,7 @@ export class MessageWebSocketService {
   /**
    * 判断输入值是否为正整数。
    */
-  private isPositiveInteger<T>(value: T) {
+  private isPositiveInteger(value: unknown): boolean {
     const normalized = Number(value)
     return Number.isInteger(normalized) && normalized > 0
   }
@@ -593,7 +594,7 @@ export class MessageWebSocketService {
   /**
    * 把领域异常映射为 websocket ack 错误码。
    */
-  private mapErrorToAck<T>(error: T) {
+  private mapErrorToAck(error: unknown) {
     if (error instanceof BusinessException) {
       return {
         code: error.code,
@@ -687,7 +688,7 @@ export class MessageWebSocketService {
   /**
    * 把未知错误对象收敛成日志可读文本。
    */
-  private stringifyError<T>(error: T) {
+  private stringifyError(error: unknown): string {
     if (error instanceof Error) {
       return error.message
     }

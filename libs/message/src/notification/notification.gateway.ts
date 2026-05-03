@@ -21,7 +21,7 @@ import { MessageWebSocketService } from './notification-websocket.service'
 const MESSAGE_WS_CORS_ORIGINS_ENV = 'MESSAGE_WS_CORS_ORIGINS'
 
 // 读取消息 WS 来源白名单；空配置在生产环境默认拒绝跨站握手。
-function getMessageWsAllowedOrigins() {
+function getMessageWsAllowedOrigins(): string[] {
   return (process.env[MESSAGE_WS_CORS_ORIGINS_ENV] || '')
     .split(',')
     .map((item) => item.trim())
@@ -29,7 +29,7 @@ function getMessageWsAllowedOrigins() {
 }
 
 // 判断 native ws 握手 Origin 是否允许，保持原 Socket.IO CORS 语义。
-function isMessageWsOriginAllowed(origin?: string) {
+function isMessageWsOriginAllowed(origin?: string): boolean {
   const allowedOrigins = getMessageWsAllowedOrigins()
   if (allowedOrigins.includes('*')) {
     return true
@@ -42,8 +42,10 @@ function isMessageWsOriginAllowed(origin?: string) {
   return typeof origin === 'string' && allowedOrigins.includes(origin)
 }
 
-const messageWsVerifyClient: ServerOptions['verifyClient'] = (info) =>
-  isMessageWsOriginAllowed(info.origin)
+const messageWsVerifyClient: ServerOptions['verifyClient'] =
+  function verifyMessageWsClient(info): boolean {
+    return isMessageWsOriginAllowed(info.origin)
+  }
 
 @Injectable()
 @WebSocketGateway({ path: '/message', verifyClient: messageWsVerifyClient })

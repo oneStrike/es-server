@@ -8,6 +8,7 @@ import type {
 } from './dto/notification-template.dto'
 import type { NotificationUserSnapshot } from './notification-contract.type'
 import type {
+  NotificationTemplateContextValue,
   NotificationTemplateRenderContext,
   NotificationTemplateRenderResult,
   RenderNotificationTemplateInput,
@@ -38,15 +39,6 @@ const NOTIFICATION_TEMPLATE_PLACEHOLDER_ALLOWLIST: Record<
   system_announcement: new Set(['title', 'content']),
   task_reminder: new Set(['title', 'content']),
 }
-
-type NotificationTemplateContextValue =
-  | object
-  | string
-  | number
-  | boolean
-  | Date
-  | undefined
-  | null
 
 @Injectable()
 export class MessageNotificationTemplateService {
@@ -451,7 +443,9 @@ export class MessageNotificationTemplateService {
     return undefined
   }
 
-  private ensureSupportedCategoryKey<T>(value: T) {
+  private ensureSupportedCategoryKey(
+    value: unknown,
+  ): MessageNotificationCategoryKey {
     if (typeof value !== 'string' || !value.trim()) {
       throw new BadRequestException('通知分类非法')
     }
@@ -462,7 +456,7 @@ export class MessageNotificationTemplateService {
     return categoryKey
   }
 
-  private stringifyError<T>(error: T) {
+  private stringifyError(error: unknown): string {
     if (error instanceof Error) {
       return error.message
     }
