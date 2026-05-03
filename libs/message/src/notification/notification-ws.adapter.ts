@@ -6,11 +6,16 @@ import type {
   NativeWsAdapterMessageEvent,
   NativeWsAdapterMessageTuple,
 } from './notification-websocket.type'
+import { Buffer } from 'node:buffer'
 import { WsAdapter } from '@nestjs/platform-ws'
 import { EMPTY, fromEvent } from 'rxjs'
 import { filter, first, mergeMap, share, takeUntil } from 'rxjs/operators'
 
 const NATIVE_WS_OPEN = 1
+type NativeWsAdapterIncomingMessage =
+  | NativeWsAdapterMessageEvent
+  | NativeWsAdapterMessageTuple
+type NativeWsAdapterMessageData = NativeWsAdapterMessageTuple[0]
 
 export class MessageWsAdapter extends WsAdapter {
   // 绑定 native ws 消息处理器，并把协议层解析失败显式转成 ws.error。
@@ -25,11 +30,15 @@ export class MessageWsAdapter extends WsAdapter {
     })
 
     const close$ = fromEvent(client as never, 'close').pipe(share(), first())
-    const source$ = fromEvent(client as never, 'message').pipe(
+    const source$ = fromEvent(
+      client as never,
+      'message',
+      (...args: unknown[]) => this.normalizeMessageEventArgs(args),
+    ).pipe(
       mergeMap((message) =>
         this.bindMessageHandlerForClient(
           client,
-          message as NativeWsAdapterMessageEvent | NativeWsAdapterMessageTuple,
+          message,
           handlersMap,
           transform,
         ).pipe(filter((result) => result !== undefined && result !== null)),
@@ -75,7 +84,7 @@ export class MessageWsAdapter extends WsAdapter {
   // 将 ws EventTarget / EventEmitter 两种 message 形态归一成业务帧。
   private parseMessage(
     client: NativeWsAdapterClient,
-    rawMessage: NativeWsAdapterMessageEvent | NativeWsAdapterMessageTuple,
+    rawMessage: NativeWsAdapterIncomingMessage,
   ): NativeWsAdapterMessage | null {
     const { data, isBinary } = this.normalizeRawMessage(rawMessage)
     if (isBinary || typeof data !== 'string') {
@@ -110,21 +119,72 @@ export class MessageWsAdapter extends WsAdapter {
     }
   }
 
-  // 兼容 Node EventEmitter 测试夹具与 ws EventTarget 运行时事件。
-  private normalizeRawMessage(
-    rawMessage: NativeWsAdapterMessageEvent | NativeWsAdapterMessageTuple,
-  ) {
-    if (Array.isArray(rawMessage)) {
-      return {
-        data: rawMessage[0],
-        isBinary: rawMessage[1] === true,
-      }
+  // 保留 ws EventEmitter 的第二个 isBinary 参数，避免文本 Buffer 被误判。
+  private normalizeMessageEventArgs(
+    args: unknown[],
+  ): NativeWsAdapterIncomingMessage {
+    if (args.length > 1) {
+      return [
+        args[0] as NativeWsAdapterMessageData,
+        args[1] === true,
+      ]
     }
 
-    return {
-      data: rawMessage.data,
-      isBinary: typeof rawMessage.data !== 'string',
+    return args[0] as NativeWsAdapterMessageEvent
+  }
+
+  // 兼容 Node EventEmitter 测试夹具与 ws EventTarget 运行时事件。
+  private normalizeRawMessage(
+    rawMessage: NativeWsAdapterIncomingMessage,
+  ) {
+    if (Array.isArray(rawMessage)) {
+      return this.normalizeMessageData(rawMessage[0], rawMessage[1] === true)
     }
+
+    if (this.isNativeMessageEvent(rawMessage)) {
+      return this.normalizeMessageData(
+        rawMessage.data,
+        typeof rawMessage.data !== 'string',
+      )
+    }
+
+    return this.normalizeMessageData(
+      rawMessage as NativeWsAdapterMessageData,
+      false,
+    )
+  }
+
+  private isNativeMessageEvent(
+    value: NativeWsAdapterIncomingMessage,
+  ): value is NativeWsAdapterMessageEvent {
+    return typeof value === 'object' && value !== null && 'data' in value
+  }
+
+  private normalizeMessageData(
+    data: NativeWsAdapterMessageData,
+    isBinary: boolean,
+  ) {
+    if (isBinary) {
+      return { data, isBinary: true }
+    }
+
+    if (typeof data === 'string') {
+      return { data, isBinary: false }
+    }
+
+    if (Buffer.isBuffer(data)) {
+      return { data: data.toString('utf8'), isBinary: false }
+    }
+
+    if (data instanceof ArrayBuffer) {
+      return { data: Buffer.from(data).toString('utf8'), isBinary: false }
+    }
+
+    if (Array.isArray(data)) {
+      return { data: Buffer.concat(data).toString('utf8'), isBinary: false }
+    }
+
+    return { data, isBinary: true }
   }
 
   // 从 canonical data 中提取 requestId，避免协议错误丢失客户端关联 ID。

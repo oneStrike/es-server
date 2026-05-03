@@ -47,6 +47,31 @@ describe('MessageWsAdapter protocol errors', () => {
     })
   })
 
+  it('dispatches text frames emitted as Buffer by ws server runtime', () => {
+    const adapter = new MessageWsAdapter({})
+    const client = createClient()
+    const callback = jest.fn().mockReturnValue({ handled: true })
+
+    adapter.bindMessageHandlers(
+      client,
+      [{ message: 'auth', callback } as never],
+      (result) => of({ event: 'handled', data: result }),
+    )
+    client.emit(
+      'message',
+      Buffer.from(
+        JSON.stringify({ event: 'auth', data: { token: 'access-token' } }),
+      ),
+      false,
+    )
+
+    expect(callback).toHaveBeenCalledWith({ token: 'access-token' }, 'auth')
+    expect(parseFrame(client.send.mock.calls[0][0])).toEqual({
+      event: 'handled',
+      data: { handled: true },
+    })
+  })
+
   it('returns ws.error when a client sends malformed JSON', () => {
     const adapter = new MessageWsAdapter({})
     const client = createClient()
