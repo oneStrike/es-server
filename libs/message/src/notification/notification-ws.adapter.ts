@@ -144,7 +144,7 @@ export class MessageWsAdapter extends WsAdapter {
     if (this.isNativeMessageEvent(rawMessage)) {
       return this.normalizeMessageData(
         rawMessage.data,
-        typeof rawMessage.data !== 'string',
+        this.isNativeMessageEventBinary(rawMessage),
       )
     }
 
@@ -158,6 +158,11 @@ export class MessageWsAdapter extends WsAdapter {
     value: NativeWsAdapterIncomingMessage,
   ): value is NativeWsAdapterMessageEvent {
     return typeof value === 'object' && value !== null && 'data' in value
+  }
+
+  private isNativeMessageEventBinary(value: NativeWsAdapterMessageEvent) {
+    const maybeBinary = (value as { isBinary?: unknown }).isBinary
+    return maybeBinary === true
   }
 
   private normalizeMessageData(
