@@ -27,6 +27,7 @@ type AppUserProfileUpdateInput = Partial<
     AppUserInsert,
     | 'nickname'
     | 'avatarUrl'
+    | 'profileBackgroundImageUrl'
     | 'phoneNumber'
     | 'emailAddress'
     | 'genderType'
@@ -89,6 +90,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
               phoneNumber: dto.phoneNumber,
               emailAddress: dto.emailAddress,
               avatarUrl: dto.avatarUrl,
+              profileBackgroundImageUrl: dto.profileBackgroundImageUrl,
               signature: dto.signature,
               bio: dto.bio,
               genderType: dto.genderType ?? GenderEnum.UNKNOWN,
@@ -135,6 +137,9 @@ export class AppUserCommandService extends AppUserServiceSupport {
     }
     if (dto.avatarUrl !== undefined) {
       userData.avatarUrl = dto.avatarUrl
+    }
+    if (dto.profileBackgroundImageUrl !== undefined) {
+      userData.profileBackgroundImageUrl = dto.profileBackgroundImageUrl
     }
     if (dto.phoneNumber !== undefined) {
       userData.phoneNumber = dto.phoneNumber

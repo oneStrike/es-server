@@ -56,6 +56,10 @@ export const appUser = snakeCase.table(
      */
     avatarUrl: varchar({ length: 500 }),
     /**
+     * 个人主页背景图片URL
+     */
+    profileBackgroundImageUrl: varchar({ length: 500 }),
+    /**
      * 个性签名
      */
     signature: varchar({ length: 200 }),

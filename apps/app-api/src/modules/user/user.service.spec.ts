@@ -121,3 +121,125 @@ describe('App UserService ledger record mapping', () => {
     })
   })
 })
+
+describe('App UserService profile background image contract', () => {
+  function createUpdateChain() {
+    const where = jest.fn().mockResolvedValue(undefined)
+    const set = jest.fn().mockReturnValue({ where })
+    const update = jest.fn().mockReturnValue({ set })
+
+    return { set, update, where }
+  }
+
+  function createServiceForProfile(overrides?: {
+    updateChain?: ReturnType<typeof createUpdateChain>
+    user?: Record<string, unknown>
+  }) {
+    const updateChain = overrides?.updateChain ?? createUpdateChain()
+    const user = {
+      id: 7,
+      account: 'user007',
+      phoneNumber: '13800000000',
+      nickname: '测试用户',
+      avatarUrl: 'https://cdn.example.com/avatar.png',
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
+      emailAddress: 'user007@example.com',
+      genderType: 1,
+      birthDate: '2000-01-01',
+      levelId: 3,
+      signature: '保持更新',
+      bio: '个人简介',
+      status: 1,
+      banReason: null,
+      banUntil: null,
+      ...overrides?.user,
+    }
+    const drizzle = {
+      db: {
+        update: updateChain.update,
+      },
+      schema: {
+        appUser: {
+          id: 'appUser.id',
+        },
+      },
+      withErrorHandling: jest.fn(async (callback: () => Promise<unknown>) =>
+        callback(),
+      ),
+      isUniqueViolation: jest.fn().mockReturnValue(false),
+    }
+    const userCoreService = {
+      ensureUserExists: jest.fn().mockResolvedValue(user),
+      getBadgeCount: jest.fn().mockResolvedValue(2),
+      getLevelInfo: jest.fn().mockResolvedValue({
+        id: 3,
+        name: '新手',
+        icon: 'https://cdn.example.com/level.png',
+        color: '#1677ff',
+      }),
+      getUserCounts: jest.fn().mockResolvedValue({ commentCount: 1 }),
+      getUserGrowthSnapshot: jest.fn().mockResolvedValue({
+        points: 100,
+        experience: 200,
+      }),
+    }
+    const userAssetsService = {
+      getUserAssetsSummary: jest.fn().mockResolvedValue({ favoriteCount: 4 }),
+    }
+    const taskService = {
+      getUserTaskSummary: jest.fn().mockResolvedValue({ claimableCount: 1 }),
+    }
+    const messageInboxService = {
+      getSummary: jest.fn().mockResolvedValue({
+        notificationUnread: { total: 0 },
+        totalUnreadCount: 0,
+      }),
+    }
+
+    const service = new UserService(
+      drizzle as never,
+      userCoreService as never,
+      {} as never,
+      userAssetsService as never,
+      {} as never,
+      {} as never,
+      taskService as never,
+      messageInboxService as never,
+    )
+
+    return {
+      service,
+      updateChain,
+      userCoreService,
+    }
+  }
+
+  it('writes profileBackgroundImageUrl when updating my profile', async () => {
+    const { service, updateChain } = createServiceForProfile()
+
+    await service.updateUserProfile(7, {
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
+    } as never)
+
+    expect(updateChain.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        profileBackgroundImageUrl:
+          'https://cdn.example.com/profile-background.png',
+      }),
+    )
+  })
+
+  it('returns profileBackgroundImageUrl in the user center user section', async () => {
+    const { service } = createServiceForProfile()
+
+    const result = await service.getUserCenter(7)
+
+    expect(result.user).toMatchObject({
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
+    })
+    expect(result.profile).not.toHaveProperty('profileBackgroundImageUrl')
+  })
+})

@@ -153,6 +153,7 @@ export class UserService {
             .set({
               nickname: dto.nickname,
               avatarUrl: dto.avatarUrl,
+              profileBackgroundImageUrl: dto.profileBackgroundImageUrl,
               emailAddress: dto.emailAddress,
               genderType: dto.genderType,
               signature: dto.signature,
@@ -285,6 +286,7 @@ export class UserService {
         phoneNumber: user.phoneNumber ?? undefined,
         nickname: user.nickname,
         avatarUrl: user.avatarUrl ?? undefined,
+        profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? undefined,
         emailAddress: user.emailAddress ?? undefined,
         genderType: user.genderType,
         birthDate: user.birthDate ?? undefined,

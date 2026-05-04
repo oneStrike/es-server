@@ -6,7 +6,14 @@ import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { UserGrowthRuleActionDto } from '@libs/growth/growth/dto/growth-shared.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
 import { BaseUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
-import { DateProperty, EnumProperty, NestedProperty, NumberProperty, RegexProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  RegexProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { PageDto, UserIdDto } from '@libs/platform/dto'
 
@@ -240,6 +247,7 @@ export class CreateAdminAppUserDto extends IntersectionType(
       'phoneNumber',
       'emailAddress',
       'avatarUrl',
+      'profileBackgroundImageUrl',
       'genderType',
       'birthDate',
       'isEnabled',
@@ -276,6 +284,7 @@ export class UpdateAdminAppUserProfileDto extends IntersectionType(
     PickType(BaseAppUserDto, [
       'nickname',
       'avatarUrl',
+      'profileBackgroundImageUrl',
       'phoneNumber',
       'emailAddress',
       'genderType',

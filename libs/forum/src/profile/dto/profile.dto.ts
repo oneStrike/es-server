@@ -10,6 +10,7 @@ export class ForumAppUserInfoDto extends PickType(BaseAppUserDto, [
   'account',
   'nickname',
   'avatarUrl',
+  'profileBackgroundImageUrl',
   'signature',
   'bio',
   'phoneNumber',

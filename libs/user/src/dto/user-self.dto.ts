@@ -69,6 +69,7 @@ export class UpdateMyProfileDto extends PartialType(
   PickType(BaseAppUserDto, [
     'nickname',
     'avatarUrl',
+    'profileBackgroundImageUrl',
     'emailAddress',
     'genderType',
     'birthDate',
@@ -303,6 +304,7 @@ export class UserCenterUserDto extends PickType(BaseAppUserDto, [
   'phoneNumber',
   'nickname',
   'avatarUrl',
+  'profileBackgroundImageUrl',
   'emailAddress',
   'genderType',
   'birthDate',

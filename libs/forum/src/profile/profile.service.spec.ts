@@ -470,6 +470,8 @@ describe('UserProfileService', () => {
             levelId: null,
             nickname: '用户007',
             avatarUrl: null,
+            profileBackgroundImageUrl:
+              'https://cdn.example.com/profile-background.png',
             signature: null,
             bio: null,
             isEnabled: true,
@@ -500,6 +502,10 @@ describe('UserProfileService', () => {
       followingHashtagCount: 7,
       followingSectionCount: 6,
       followingAuthorCount: 5,
+    })
+    expect(result).toMatchObject({
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
     })
   })
 })

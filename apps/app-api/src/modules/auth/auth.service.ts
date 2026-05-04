@@ -329,6 +329,7 @@ export class AuthService {
       phoneNumber: user.phoneNumber ?? undefined,
       nickname: user.nickname,
       avatarUrl: user.avatarUrl ?? undefined,
+      profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? undefined,
       emailAddress: user.emailAddress ?? undefined,
       genderType: user.genderType ?? GenderEnum.UNKNOWN,
       birthDate: user.birthDate ?? undefined,

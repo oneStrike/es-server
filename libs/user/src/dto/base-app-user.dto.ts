@@ -1,7 +1,11 @@
+import { GenderEnum } from '@libs/platform/constant'
 import {
-  GenderEnum,
-} from '@libs/platform/constant'
-import { BooleanProperty, DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto } from '@libs/platform/dto'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
@@ -59,6 +63,14 @@ export class BaseAppUserDto extends BaseDto {
     maxLength: 500,
   })
   avatarUrl?: string | null
+
+  @StringProperty({
+    description: '个人主页背景图片URL',
+    example: 'https://example.com/profile-background.png',
+    required: false,
+    maxLength: 500,
+  })
+  profileBackgroundImageUrl?: string | null
 
   @StringProperty({
     description: '个性签名',

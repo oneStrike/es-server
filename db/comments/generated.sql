@@ -141,6 +141,7 @@ COMMENT ON COLUMN "public"."app_user"."level_id" IS E'等级ID';
 COMMENT ON COLUMN "public"."app_user"."nickname" IS E'昵称';
 COMMENT ON COLUMN "public"."app_user"."password" IS E'密码（加密存储）';
 COMMENT ON COLUMN "public"."app_user"."avatar_url" IS E'头像URL';
+COMMENT ON COLUMN "public"."app_user"."profile_background_image_url" IS E'个人主页背景图片URL';
 COMMENT ON COLUMN "public"."app_user"."signature" IS E'个性签名';
 COMMENT ON COLUMN "public"."app_user"."bio" IS E'个人简介';
 COMMENT ON COLUMN "public"."app_user"."is_enabled" IS E'是否启用';

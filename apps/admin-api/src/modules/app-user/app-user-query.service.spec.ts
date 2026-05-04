@@ -94,6 +94,7 @@ describe('AppUserQueryService admin contract assembly', () => {
           id: user.id,
           account: user.account,
           nickname: user.nickname,
+          profileBackgroundImageUrl: user.profileBackgroundImageUrl,
           points: growth?.points ?? 0,
           experience: growth?.experience ?? 0,
         }),
@@ -128,7 +129,12 @@ describe('AppUserQueryService admin contract assembly', () => {
     const { drizzle, growthBalanceQueryService, service, userCoreService } =
       createService()
     const deletedAt = new Date('2026-05-01T00:00:00.000Z')
-    const deletedUser = createUser({ id: 7, deletedAt })
+    const deletedUser = createUser({
+      id: 7,
+      deletedAt,
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
+    })
     const activeUser = createUser({ id: 8, deletedAt: null, levelId: null })
 
     drizzle.ext.findPagination.mockResolvedValue({
@@ -169,14 +175,16 @@ describe('AppUserQueryService admin contract assembly', () => {
       id: 7,
       deletedAt,
       levelName: '新手',
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
     })
     expect(result.list[1]).toMatchObject({
       id: 8,
       deletedAt: undefined,
     })
-    expect(userCoreService.mapBaseUser.mock.results[0]?.value).not.toHaveProperty(
-      'deletedAt',
-    )
+    expect(
+      userCoreService.mapBaseUser.mock.results[0]?.value,
+    ).not.toHaveProperty('deletedAt')
   })
 
   it('keeps active detail on ensureUserExists and exposes only non-deleted detail data', async () => {
@@ -186,7 +194,11 @@ describe('AppUserQueryService admin contract assembly', () => {
       service,
       userCoreService,
     } = createService()
-    const user = createUser({ deletedAt: null })
+    const user = createUser({
+      deletedAt: null,
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
+    })
     const pointStats = { currentPoints: 80, todayEarned: 5 }
     const experienceStats = {
       currentExperience: 120,
@@ -220,12 +232,14 @@ describe('AppUserQueryService admin contract assembly', () => {
       id: 7,
       deletedAt: undefined,
       badgeCount: 2,
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
       pointStats,
       experienceStats,
     })
-    expect(userCoreService.mapBaseUser.mock.results[0]?.value).not.toHaveProperty(
-      'deletedAt',
-    )
+    expect(
+      userCoreService.mapBaseUser.mock.results[0]?.value,
+    ).not.toHaveProperty('deletedAt')
   })
 
   it('does not widen detail capability for deleted users', async () => {
@@ -242,8 +256,12 @@ describe('AppUserQueryService admin contract assembly', () => {
 
     await expect(service.getAppUserDetail(9)).rejects.toThrow('APP 用户不存在')
     expect(userCoreService.ensureUserExists).toHaveBeenCalledWith(9)
-    expect(growthBalanceQueryService.getUserGrowthSnapshot).not.toHaveBeenCalled()
+    expect(
+      growthBalanceQueryService.getUserGrowthSnapshot,
+    ).not.toHaveBeenCalled()
     expect(appUserGrowthService.getAppUserPointStats).not.toHaveBeenCalled()
-    expect(appUserGrowthService.getAppUserExperienceStats).not.toHaveBeenCalled()
+    expect(
+      appUserGrowthService.getAppUserExperienceStats,
+    ).not.toHaveBeenCalled()
   })
 })

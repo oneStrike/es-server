@@ -40,7 +40,7 @@ describe('UserService core mapping contract', () => {
 
   it('maps app user response with growth snapshot defaults and without deletedAt leakage', () => {
     const { service } = createService()
-    const user: AppUserSelect = {
+    const user: AppUserSelect & { profileBackgroundImageUrl: string } = {
       id: 7,
       account: 'user007',
       phoneNumber: '13800000000',
@@ -49,6 +49,8 @@ describe('UserService core mapping contract', () => {
       nickname: '测试用户',
       password: 'hashed-password',
       avatarUrl: 'https://cdn.example.com/avatar.png',
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
       signature: '保持更新',
       bio: '个人简介',
       isEnabled: true,
@@ -74,6 +76,8 @@ describe('UserService core mapping contract', () => {
       levelId: 3,
       nickname: '测试用户',
       avatarUrl: 'https://cdn.example.com/avatar.png',
+      profileBackgroundImageUrl:
+        'https://cdn.example.com/profile-background.png',
       signature: '保持更新',
       bio: '个人简介',
       isEnabled: true,

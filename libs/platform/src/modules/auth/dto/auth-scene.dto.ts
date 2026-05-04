@@ -1,6 +1,9 @@
-import { NestedProperty, StringProperty } from '@libs/platform/decorators';
+import { NestedProperty, StringProperty } from '@libs/platform/decorators'
 import { CheckVerifyCodeDto } from '@libs/platform/modules/sms/dto'
-import { AppUserResponseDto, BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
+import {
+  AppUserResponseDto,
+  BaseAppUserDto,
+} from '@libs/user/dto/base-app-user.dto'
 import {
   IntersectionType,
   OmitType,
@@ -57,6 +60,7 @@ export class AuthUserDto extends PickType(AppUserResponseDto, [
   'phoneNumber',
   'nickname',
   'avatarUrl',
+  'profileBackgroundImageUrl',
   'emailAddress',
   'genderType',
   'birthDate',

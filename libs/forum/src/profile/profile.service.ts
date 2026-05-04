@@ -111,6 +111,7 @@ export class UserProfileService {
       levelId: user.levelId ?? undefined,
       nickname: user.nickname,
       avatarUrl: user.avatarUrl ?? undefined,
+      profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? undefined,
       signature: user.signature ?? undefined,
       bio: user.bio ?? undefined,
       isEnabled: user.isEnabled,
