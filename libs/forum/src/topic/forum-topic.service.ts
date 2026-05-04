@@ -1387,6 +1387,26 @@ export class ForumTopicService {
         isHidden: false,
       },
       with: {
+        section: {
+          columns: {
+            id: true,
+            groupId: true,
+            deletedAt: true,
+            isEnabled: true,
+            name: true,
+            cover: true,
+            topicCount: true,
+            followersCount: true,
+          },
+          with: {
+            group: {
+              columns: {
+                isEnabled: true,
+                deletedAt: true,
+              },
+            },
+          },
+        },
         user: {
           columns: {
             id: true,
@@ -1419,6 +1439,12 @@ export class ForumTopicService {
         '主题作者不存在',
       )
     }
+    if (!topic.section) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
 
     return topic
   }
@@ -1440,6 +1466,12 @@ export class ForumTopicService {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '主题作者不存在',
+      )
+    }
+    if (!topic.section) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
       )
     }
 
@@ -1472,6 +1504,13 @@ export class ForumTopicService {
         nickname: topic.user.nickname,
         avatarUrl: topic.user.avatarUrl ?? undefined,
         isFollowed: interaction.isFollowed,
+      },
+      section: {
+        id: topic.section.id,
+        name: topic.section.name,
+        cover: topic.section.cover,
+        topicCount: topic.section.topicCount,
+        followersCount: topic.section.followersCount,
       },
       hashtags: await this.getTopicHashtags(topic.id),
     }

@@ -1,9 +1,10 @@
+import type { BodyToken } from '@libs/interaction/body/body-token.type'
+import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import {
   AuditRoleEnum,
   AuditStatusEnum,
   BusinessErrorCode,
 } from '@libs/platform/constant'
-import type { BodyToken } from '@libs/interaction/body/body-token.type'
 import { BadRequestException } from '@nestjs/common'
 import { ForumTopicService } from './forum-topic.service'
 
@@ -310,6 +311,120 @@ describe('forumTopicService helpers', () => {
       growthBalanceQueryService,
       interactionSummaryReadService,
       service,
+    }
+  }
+
+  function createPublicDetailServiceHarness(
+    topic: Record<string, unknown> | null,
+  ) {
+    const forumTopicFindFirst = jest.fn().mockResolvedValue(topic)
+    const drizzle = {
+      db: {
+        query: {
+          forumTopic: {
+            findFirst: forumTopicFindFirst,
+          },
+        },
+      },
+      schema: {
+        forumHashtag: {
+          id: 'forumHashtag.id',
+        },
+        forumHashtagReference: {},
+      },
+    }
+    const browseLogService = {
+      recordBrowseLogSafely: jest.fn().mockResolvedValue(undefined),
+    }
+    const forumPermissionService = {
+      ensureUserCanAccessSection: jest.fn().mockResolvedValue(undefined),
+    }
+    const likeService = {
+      checkLikeStatus: jest.fn().mockResolvedValue(true),
+    }
+    const favoriteService = {
+      checkFavoriteStatus: jest.fn().mockResolvedValue(false),
+    }
+    const followService = {
+      checkFollowStatus: jest.fn().mockResolvedValue({ isFollowing: true }),
+    }
+    const service = new ForumTopicService(
+      drizzle as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      browseLogService as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      forumPermissionService as never,
+      likeService as never,
+      favoriteService as never,
+      followService as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+    jest
+      .spyOn(
+        service as unknown as {
+          getTopicHashtags: (topicId: number) => Promise<unknown[]>
+        },
+        'getTopicHashtags',
+      )
+      .mockResolvedValue([])
+
+    return {
+      browseLogService,
+      favoriteService,
+      followService,
+      forumPermissionService,
+      forumTopicFindFirst,
+      likeService,
+      service,
+    }
+  }
+
+  function createPublicDetailTopic() {
+    return {
+      id: 51,
+      sectionId: 7,
+      userId: 12,
+      title: '公开主题',
+      html: '<p>公开主题正文</p>',
+      geoCountry: null,
+      geoProvince: null,
+      geoCity: null,
+      geoIsp: null,
+      images: [],
+      videos: [],
+      isPinned: false,
+      isFeatured: false,
+      isLocked: false,
+      viewCount: 20,
+      commentCount: 3,
+      likeCount: 4,
+      favoriteCount: 5,
+      lastCommentAt: null,
+      createdAt: new Date('2026-05-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-05-02T00:00:00.000Z'),
+      user: {
+        id: 12,
+        nickname: '主题作者',
+        avatarUrl: 'https://cdn.example.com/avatar.png',
+      },
+      section: {
+        id: 7,
+        name: '技术交流',
+        cover: 'https://cdn.example.com/forum/section-cover.png',
+        topicCount: 42,
+        followersCount: 88,
+      },
     }
   }
 
@@ -954,6 +1069,111 @@ describe('forumTopicService helpers', () => {
     expect(
       growthBalanceQueryService.getUserGrowthSnapshot,
     ).toHaveBeenCalledWith(18)
+  })
+
+  it('returns section statistics in anonymous public topic details', async () => {
+    const {
+      favoriteService,
+      followService,
+      forumPermissionService,
+      forumTopicFindFirst,
+      likeService,
+      service,
+    } = createPublicDetailServiceHarness(createPublicDetailTopic())
+
+    await expect(service.getPublicTopicById(51)).resolves.toMatchObject({
+      id: 51,
+      liked: false,
+      favorited: false,
+      user: {
+        id: 12,
+        isFollowed: false,
+      },
+      section: {
+        id: 7,
+        name: '技术交流',
+        cover: 'https://cdn.example.com/forum/section-cover.png',
+        topicCount: 42,
+        followersCount: 88,
+      },
+    })
+    expect(forumTopicFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        with: expect.objectContaining({
+          section: expect.objectContaining({
+            columns: expect.objectContaining({
+              cover: true,
+              followersCount: true,
+              topicCount: true,
+            }),
+          }),
+        }),
+      }),
+    )
+    expect(
+      forumPermissionService.ensureUserCanAccessSection,
+    ).toHaveBeenCalledWith(7, undefined, {
+      requireEnabled: true,
+      notFoundMessage: '主题不存在',
+    })
+    expect(likeService.checkLikeStatus).not.toHaveBeenCalled()
+    expect(favoriteService.checkFavoriteStatus).not.toHaveBeenCalled()
+    expect(followService.checkFollowStatus).not.toHaveBeenCalled()
+  })
+
+  it('keeps logged-in public topic detail interaction semantics with section statistics', async () => {
+    const { browseLogService, service } = createPublicDetailServiceHarness(
+      createPublicDetailTopic(),
+    )
+
+    await expect(
+      service.getPublicTopicById(51, {
+        userId: 99,
+        ipAddress: '127.0.0.1',
+        device: 'ios',
+      }),
+    ).resolves.toMatchObject({
+      id: 51,
+      viewCount: 21,
+      liked: true,
+      favorited: false,
+      user: {
+        id: 12,
+        isFollowed: true,
+      },
+      section: {
+        id: 7,
+        name: '技术交流',
+        cover: 'https://cdn.example.com/forum/section-cover.png',
+        topicCount: 42,
+        followersCount: 88,
+      },
+    })
+    expect(browseLogService.recordBrowseLogSafely).toHaveBeenCalledWith(
+      BrowseLogTargetTypeEnum.FORUM_TOPIC,
+      51,
+      99,
+      '127.0.0.1',
+      'ios',
+      undefined,
+      {
+        skipTargetValidation: true,
+        deferPostProcess: true,
+      },
+    )
+  })
+
+  it('rejects public topic details when the visible section relation is missing', async () => {
+    const topic = {
+      ...createPublicDetailTopic(),
+      section: null,
+    }
+    const { service } = createPublicDetailServiceHarness(topic)
+
+    await expect(service.getPublicTopicById(51)).rejects.toMatchObject({
+      code: BusinessErrorCode.RESOURCE_NOT_FOUND,
+      message: '主题不存在',
+    })
   })
 
   it('uses the explicit title when deriving the create title', () => {

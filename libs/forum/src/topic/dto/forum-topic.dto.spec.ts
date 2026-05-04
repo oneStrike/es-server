@@ -76,6 +76,61 @@ describe('forum-topic dto html contract', () => {
     expect(metadata).toBeUndefined()
   })
 
+  it('documents public topic detail section statistics', () => {
+    const originalNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    jest.resetModules()
+
+    const {
+      ForumTopicDetailSectionDto,
+      PublicForumTopicDetailDto,
+    } = require('./forum-topic.dto')
+    const sectionMetadata = Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      PublicForumTopicDetailDto.prototype,
+      'section',
+    ) as {
+      description?: string
+      required?: boolean
+      nullable?: boolean
+    }
+
+    process.env.NODE_ENV = originalNodeEnv
+
+    expect(ForumTopicDetailSectionDto).toBeDefined()
+    expect(sectionMetadata?.description).toBe('所属板块')
+    expect(sectionMetadata?.required).toBe(true)
+    expect(sectionMetadata?.nullable).toBe(false)
+
+    if (!ForumTopicDetailSectionDto) {
+      return
+    }
+
+    for (const field of [
+      'id',
+      'name',
+      'cover',
+      'topicCount',
+      'followersCount',
+    ]) {
+      expect(
+        Reflect.getMetadata(
+          DECORATORS.API_MODEL_PROPERTIES,
+          ForumTopicDetailSectionDto.prototype,
+          field,
+        ),
+      ).toBeDefined()
+    }
+
+    expect(
+      Reflect.getMetadata(
+        DECORATORS.API_MODEL_PROPERTIES,
+        ForumTopicDetailSectionDto.prototype,
+        'icon',
+      ),
+    ).toBeUndefined()
+  })
+
   it('documents public topic list preview as structured contentPreview only', () => {
     const originalNodeEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'development'

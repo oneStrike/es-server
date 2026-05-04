@@ -540,6 +540,14 @@ export class ForumTopicSectionBriefDto extends PickType(BaseForumSectionDto, [
   'cover',
 ] as const) {}
 
+export class ForumTopicDetailSectionDto extends PickType(BaseForumSectionDto, [
+  'id',
+  'name',
+  'cover',
+  'topicCount',
+  'followersCount',
+] as const) {}
+
 export class ForumTopicUserBriefDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',
@@ -646,6 +654,15 @@ export class PublicForumTopicDetailDto extends IntersectionType(
     validation: false,
   })
   user!: PublicForumTopicDetailUserDto
+
+  @NestedProperty({
+    description: '所属板块',
+    required: true,
+    type: ForumTopicDetailSectionDto,
+    validation: false,
+    nullable: false,
+  })
+  section!: ForumTopicDetailSectionDto
 
   @ArrayProperty({
     description: '话题',
