@@ -112,6 +112,17 @@ export interface PreparedUploadFile {
   fileCategory: UploadFileCategory
   scene: string
   fileSize: number
+  width?: number
+  height?: number
+}
+
+/**
+ * 规范化后的存储文件名与可选图片尺寸。
+ */
+export interface StoredUploadNameResult {
+  finalName: string
+  width?: number
+  height?: number
 }
 
 /**
@@ -143,6 +154,9 @@ export interface UploadResult {
   fileSize: number
   mimeType: string
   fileType: string
+  fileCategory: UploadFileCategory
   scene: string
+  width?: number
+  height?: number
   uploadTime: Date
 }

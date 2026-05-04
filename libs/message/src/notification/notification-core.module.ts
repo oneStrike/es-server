@@ -1,4 +1,5 @@
 import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
+import { SystemConfigModule } from '@libs/system-config/system-config.module'
 import { UserModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
@@ -14,6 +15,7 @@ import { MessageNotificationService } from './notification.service'
 @Module({
   imports: [
     ConfigModule,
+    SystemConfigModule,
     JwtAuthModule,
     MessageInboxModule,
     MessageMonitorModule,

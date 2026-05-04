@@ -212,7 +212,7 @@ COMMENT ON COLUMN "public"."chat_message"."conversation_id" IS E'会话ID';
 COMMENT ON COLUMN "public"."chat_message"."message_seq" IS E'会话内递增序号';
 COMMENT ON COLUMN "public"."chat_message"."sender_id" IS E'发送用户ID';
 COMMENT ON COLUMN "public"."chat_message"."client_message_id" IS E'客户端幂等键（同发送者同会话下唯一）';
-COMMENT ON COLUMN "public"."chat_message"."message_type" IS E'消息类型（1=文本,2=图片,3=系统）';
+COMMENT ON COLUMN "public"."chat_message"."message_type" IS E'消息类型（1=文本,2=图片,3=语音,4=视频,99=系统）';
 COMMENT ON COLUMN "public"."chat_message"."content" IS E'文本内容';
 COMMENT ON COLUMN "public"."chat_message"."body_tokens" IS E'正文解析 token 缓存\n持久化 EmojiParser 输出，供消息渲染与回放使用';
 COMMENT ON COLUMN "public"."chat_message"."payload" IS E'扩展载荷';

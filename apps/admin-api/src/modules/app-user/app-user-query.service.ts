@@ -179,6 +179,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
           item,
           growthMap.get(item.id),
         ),
+        deletedAt: item.deletedAt ?? undefined,
         levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
         counts: this.mapAdminAppUserCounts(countMap.get(item.id)),
       })),
@@ -209,6 +210,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
 
     return {
       ...this.userCoreService.mapBaseUser(user, growth),
+      deletedAt: user.deletedAt ?? undefined,
       level: level
         ? {
             id: level.id,

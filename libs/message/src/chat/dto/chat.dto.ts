@@ -1,10 +1,10 @@
+import type { JsonObject } from '@libs/platform/utils'
 import type { ReferenceObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
 import {
   ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  JsonProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
@@ -19,7 +19,9 @@ import {
 import {
   CHAT_MESSAGE_CLIENT_MESSAGE_ID_MAX_LENGTH,
   CHAT_MESSAGE_CONTENT_MAX_LENGTH,
+  CHAT_SENDABLE_MESSAGE_TYPES,
   ChatMessageTypeEnum,
+  ChatSendMessageTypeEnum,
 } from '../chat.constant'
 
 export class OpenDirectConversationDto {
@@ -67,6 +69,185 @@ export class QueryChatConversationMessagesDto extends PickType(
   ['conversationId', 'cursor', 'afterSeq', 'limit'] as const,
 ) {}
 
+/** 图片聊天消息载荷 */
+export class ImageChatMessagePayloadDto {
+  @StringProperty({
+    description: '上传接口返回的文件路径',
+    example: '/files/chat/image/2026-05-04/photo-1200x800.png',
+    validation: false,
+  })
+  filePath!: string
+
+  @StringProperty({
+    description: '文件分类，图片固定为 image',
+    example: 'image',
+    validation: false,
+  })
+  fileCategory!: 'image'
+
+  @StringProperty({
+    description: '文件 MIME 类型',
+    example: 'image/png',
+    validation: false,
+  })
+  mimeType!: string
+
+  @NumberProperty({
+    description: '文件大小',
+    example: 102400,
+    validation: false,
+  })
+  fileSize!: number
+
+  @NumberProperty({
+    description: '图片宽度',
+    example: 1200,
+    required: false,
+    validation: false,
+  })
+  width?: number
+
+  @NumberProperty({
+    description: '图片高度',
+    example: 800,
+    required: false,
+    validation: false,
+  })
+  height?: number
+
+  @StringProperty({
+    description: '原始文件名',
+    example: 'photo.png',
+    required: false,
+    validation: false,
+  })
+  originalName?: string
+}
+
+/** 语音聊天消息载荷 */
+export class VoiceChatMessagePayloadDto {
+  @StringProperty({
+    description: '上传接口返回的文件路径',
+    example: '/files/chat/audio/2026-05-04/voice.mp3',
+    validation: false,
+  })
+  filePath!: string
+
+  @StringProperty({
+    description: '文件分类，语音固定为 audio',
+    example: 'audio',
+    validation: false,
+  })
+  fileCategory!: 'audio'
+
+  @StringProperty({
+    description: '文件 MIME 类型',
+    example: 'audio/mpeg',
+    validation: false,
+  })
+  mimeType!: string
+
+  @NumberProperty({
+    description: '文件大小',
+    example: 204800,
+    validation: false,
+  })
+  fileSize!: number
+
+  @NumberProperty({
+    description: '语音时长（秒）',
+    example: 12.5,
+    validation: false,
+  })
+  durationSeconds!: number
+
+  @StringProperty({
+    description: '原始文件名',
+    example: 'voice.mp3',
+    required: false,
+    validation: false,
+  })
+  originalName?: string
+}
+
+/** 视频聊天消息载荷 */
+export class VideoChatMessagePayloadDto {
+  @StringProperty({
+    description: '上传接口返回的文件路径',
+    example: '/files/chat/video/2026-05-04/clip.mp4',
+    validation: false,
+  })
+  filePath!: string
+
+  @StringProperty({
+    description: '文件分类，视频固定为 video',
+    example: 'video',
+    validation: false,
+  })
+  fileCategory!: 'video'
+
+  @StringProperty({
+    description: '文件 MIME 类型',
+    example: 'video/mp4',
+    validation: false,
+  })
+  mimeType!: string
+
+  @NumberProperty({
+    description: '文件大小',
+    example: 4096000,
+    validation: false,
+  })
+  fileSize!: number
+
+  @NumberProperty({
+    description: '视频时长（秒）',
+    example: 30.5,
+    required: false,
+    validation: false,
+  })
+  durationSeconds?: number
+
+  @NumberProperty({
+    description: '视频宽度',
+    example: 1920,
+    required: false,
+    validation: false,
+  })
+  width?: number
+
+  @NumberProperty({
+    description: '视频高度',
+    example: 1080,
+    required: false,
+    validation: false,
+  })
+  height?: number
+
+  @StringProperty({
+    description: '原始文件名',
+    example: 'clip.mp4',
+    required: false,
+    validation: false,
+  })
+  originalName?: string
+}
+
+// 生成聊天消息 payload 的 Swagger anyOf schema 引用。
+function createChatMessagePayloadAnyOfSchemas() {
+  return [
+    { type: 'object', additionalProperties: true },
+    { $ref: getSchemaPath(ImageChatMessagePayloadDto) },
+    { $ref: getSchemaPath(VoiceChatMessagePayloadDto) },
+    { $ref: getSchemaPath(VideoChatMessagePayloadDto) },
+  ]
+}
+
+@ApiExtraModels(
+  ImageChatMessagePayloadDto,
+  VoiceChatMessagePayloadDto,
+  VideoChatMessagePayloadDto,
+)
 export class SendChatMessageDto {
   @NumberProperty({
     description: '会话 ID',
@@ -75,18 +256,19 @@ export class SendChatMessageDto {
   conversationId!: number
 
   @EnumProperty({
-    description: '消息类型（1=文本；2=图片）',
-    example: ChatMessageTypeEnum.TEXT,
-    enum: ChatMessageTypeEnum,
+    description: '客户端可发送消息类型（1=文本；2=图片；3=语音；4=视频）',
+    example: ChatSendMessageTypeEnum.TEXT,
+    enum: ChatSendMessageTypeEnum,
   })
-  messageType!: ChatMessageTypeEnum
+  messageType!: (typeof CHAT_SENDABLE_MESSAGE_TYPES)[number]
 
   @StringProperty({
-    description: '消息内容',
+    description: '消息内容；文本必填，图片/语音/视频可省略并规范化为空字符串',
     example: 'hello',
+    required: false,
     maxLength: CHAT_MESSAGE_CONTENT_MAX_LENGTH,
   })
-  content!: string
+  content?: string
 
   @StringProperty({
     description: '客户端幂等键',
@@ -96,12 +278,26 @@ export class SendChatMessageDto {
   })
   clientMessageId?: string
 
-  @JsonProperty({
-    description: '扩展载荷',
-    example: '{"image":"https://example.com/a.png"}',
+  @ApiProperty({
+    description:
+      '扩展载荷；文本消息可传普通 JSON 对象，图片/语音/视频必须传对应媒体载荷对象且来自 scene=chat 上传结果。',
+    anyOf: createChatMessagePayloadAnyOfSchemas(),
+    example: {
+      filePath: '/files/chat/image/2026-05-04/photo-1200x800.png',
+      fileCategory: 'image',
+      mimeType: 'image/png',
+      fileSize: 102400,
+      width: 1200,
+      height: 800,
+      originalName: 'photo.png',
+    },
     required: false,
   })
-  payload?: string
+  payload?:
+    | JsonObject
+    | ImageChatMessagePayloadDto
+    | VoiceChatMessagePayloadDto
+    | VideoChatMessagePayloadDto
 }
 
 export class MarkConversationReadDto {
@@ -264,6 +460,9 @@ export class BaseChatPeerDto {
   ChatMessageBodyTextTokenDto,
   ChatMessageBodyEmojiUnicodeTokenDto,
   ChatMessageBodyEmojiCustomTokenDto,
+  ImageChatMessagePayloadDto,
+  VoiceChatMessagePayloadDto,
+  VideoChatMessagePayloadDto,
 )
 export class BaseChatMessageDto {
   @StringProperty({
@@ -291,7 +490,7 @@ export class BaseChatMessageDto {
   senderId!: number
 
   @EnumProperty({
-    description: '消息类型（1=文本,2=图片）',
+    description: '消息类型（1=文本；2=图片；3=语音；4=视频；99=系统）',
     example: ChatMessageTypeEnum.TEXT,
     enum: ChatMessageTypeEnum,
   })
@@ -331,12 +530,26 @@ export class BaseChatMessageDto {
   })
   clientMessageId?: string
 
-  @JsonProperty({
-    description: '扩展载荷',
-    example: '{"image":"https://example.com/a.png"}',
+  @ApiProperty({
+    description:
+      '扩展载荷；文本/系统消息为普通 JSON 对象，媒体消息为图片/语音/视频载荷对象。',
+    anyOf: createChatMessagePayloadAnyOfSchemas(),
+    example: {
+      filePath: '/files/chat/image/2026-05-04/photo-1200x800.png',
+      fileCategory: 'image',
+      mimeType: 'image/png',
+      fileSize: 102400,
+      width: 1200,
+      height: 800,
+      originalName: 'photo.png',
+    },
     required: false,
   })
-  payload?: string
+  payload?:
+    | JsonObject
+    | ImageChatMessagePayloadDto
+    | VoiceChatMessagePayloadDto
+    | VideoChatMessagePayloadDto
 
   @DateProperty({
     description: '创建时间',

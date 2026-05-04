@@ -88,6 +88,9 @@ describe('UploadService', () => {
     )
     expect(result.filename).toBe('cover-1x1.png')
     expect(result.filePath).toBe('/files/shared/cover/cover-1x1.png')
+    expect(result.fileCategory).toBe('image')
+    expect(result.width).toBe(1)
+    expect(result.height).toBe(1)
   })
 
   it('keeps non-image finalName unchanged when uploading local files', async () => {
@@ -112,5 +115,8 @@ describe('UploadService', () => {
     )
     expect(result.filename).toBe('notes.txt')
     expect(result.filePath).toBe('/files/shared/docs/notes.txt')
+    expect(result.fileCategory).toBe('document')
+    expect(result.width).toBeUndefined()
+    expect(result.height).toBeUndefined()
   })
 })

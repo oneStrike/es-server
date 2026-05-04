@@ -1,6 +1,16 @@
 import type { PostgresErrorSourceObject } from '@db/core'
+import type { UploadConfigInterface } from '@libs/platform/config'
 import type { PageDto } from '@libs/platform/dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
+import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
+import type { JsonObject } from '@libs/platform/utils'
+import type {
+  ChatMediaMessagePayload,
+  ChatMessageOutputPayload,
+  ChatSendMessagePayload,
+  ChatTextMessagePayload,
+} from './chat-media-payload.type'
+import type { ChatSendMessageType } from './chat-message-type.type'
 import type {
   ChatBodyToken,
   ChatConversationMemberOutputSource,
@@ -24,12 +34,21 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
 import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { UPLOAD_CONFIG_PROVIDER } from '@libs/platform/modules/upload/upload.type'
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  Optional,
+} from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { and, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import { MessageDomainEventPublisher } from '../eventing/message-domain-event.publisher'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
+import { buildChatMediaOriginPolicy } from './chat-media-origin-policy'
 import { assertChatMessageSendInput } from './chat-message-boundary'
 import { MessageChatReadQueryService } from './chat-read-query.service'
 import {
@@ -38,6 +57,7 @@ import {
   ChatConversationMemberRoleEnum,
   ChatMessageStatusEnum,
   ChatMessageTypeEnum,
+  ChatSendMessageTypeEnum,
 } from './chat.constant'
 import {
   MarkConversationReadDto,
@@ -68,6 +88,7 @@ const DIGIT_STRING_REGEX = /^\d+$/
 @Injectable()
 export class MessageChatService {
   private readonly logger = new Logger(MessageChatService.name)
+  private readonly uploadConfig: UploadConfigInterface
 
   constructor(
     private readonly drizzle: DrizzleService,
@@ -79,7 +100,13 @@ export class MessageChatService {
     private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
     private readonly domainEventDispatchService: DomainEventDispatchService,
     private readonly chatReadQueryService: MessageChatReadQueryService,
-  ) {}
+    private readonly configService: ConfigService,
+    @Optional()
+    @Inject(UPLOAD_CONFIG_PROVIDER)
+    private readonly uploadConfigProvider?: UploadConfigProvider,
+  ) {
+    this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
+  }
 
   private get db() {
     return this.drizzle.db
@@ -416,13 +443,19 @@ export class MessageChatService {
    * @returns 消息ID、序列号等信息
    */
   async sendMessage(userId: number, dto: SendChatMessageDto) {
-    const normalizedInput = assertChatMessageSendInput(dto)
-    const normalizedPayload = this.attachClientMessageId(
-      normalizedInput.payloadObject,
-      normalizedInput.clientMessageId,
+    const normalizedInput = assertChatMessageSendInput(
+      dto,
+      this.createMediaOriginPolicy(),
     )
+    const normalizedPayload =
+      normalizedInput.messageType === ChatSendMessageTypeEnum.TEXT
+        ? this.attachClientMessageId(
+            normalizedInput.payload as ChatTextMessagePayload,
+            normalizedInput.clientMessageId,
+          )
+        : normalizedInput.payload
     const bodyTokens =
-      normalizedInput.messageType === ChatMessageTypeEnum.TEXT
+      normalizedInput.messageType === ChatSendMessageTypeEnum.TEXT
         ? await this.emojiParserService.parse({
             body: normalizedInput.content,
             scene: EmojiSceneEnum.CHAT,
@@ -711,10 +744,10 @@ export class MessageChatService {
   private async createMessageWithRetry(
     conversationId: number,
     userId: number,
-    messageType: number,
+    messageType: ChatSendMessageType,
     content: string,
     bodyTokens: ChatBodyToken[],
-    payload?: Record<string, unknown>,
+    payload?: ChatSendMessagePayload,
     clientMessageId?: string,
   ): Promise<{
     message: typeof chatMessage.$inferSelect
@@ -804,7 +837,7 @@ export class MessageChatService {
             messageId: message.id.toString(),
           } satisfies ChatMessageCreatedDomainEventPayload
 
-          if (messageType === ChatMessageTypeEnum.TEXT) {
+          if (messageType === ChatSendMessageTypeEnum.TEXT) {
             const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
             await this.emojiCatalogService.recordRecentUsageInTx(tx, {
               userId,
@@ -1163,9 +1196,203 @@ export class MessageChatService {
       messageType: item.messageType as ChatMessageTypeEnum,
       content: item.content,
       bodyTokens: (item.bodyTokens as ChatBodyToken[] | null) ?? undefined,
-      payload: item.payload ?? undefined,
+      payload: this.normalizeMessageOutputPayload(
+        item.messageType as ChatMessageTypeEnum,
+        item.payload,
+      ),
       createdAt: item.createdAt,
     }
+  }
+
+  // 按消息类型收敛输出载荷，避免历史行污染发送侧 payload 合同。
+  private normalizeMessageOutputPayload(
+    messageType: ChatMessageTypeEnum,
+    payload: unknown,
+  ): ChatMessageOutputPayload | undefined {
+    if (payload === null || payload === undefined) {
+      return undefined
+    }
+
+    switch (messageType) {
+      case ChatMessageTypeEnum.IMAGE:
+      case ChatMessageTypeEnum.VOICE:
+      case ChatMessageTypeEnum.VIDEO:
+        return this.isMediaOutputPayload(messageType, payload)
+          ? payload
+          : undefined
+      case ChatMessageTypeEnum.TEXT:
+      case ChatMessageTypeEnum.SYSTEM:
+        return this.isJsonObjectPayload(payload) ? payload : undefined
+      default:
+        return undefined
+    }
+  }
+
+  // 判断媒体输出 payload 是否匹配当前图片/语音/视频载荷合同。
+  private isMediaOutputPayload(
+    messageType: ChatMessageTypeEnum,
+    payload: unknown,
+  ): payload is ChatMediaMessagePayload {
+    if (!this.isJsonObjectPayload(payload)) {
+      return false
+    }
+
+    switch (messageType) {
+      case ChatMessageTypeEnum.IMAGE:
+        return this.isImageOutputPayload(payload)
+      case ChatMessageTypeEnum.VOICE:
+        return this.isVoiceOutputPayload(payload)
+      case ChatMessageTypeEnum.VIDEO:
+        return this.isVideoOutputPayload(payload)
+      case ChatMessageTypeEnum.TEXT:
+      case ChatMessageTypeEnum.SYSTEM:
+        return false
+      default:
+        return false
+    }
+  }
+
+  // 判断图片输出 payload 是否为当前合同形状。
+  private isImageOutputPayload(payload: JsonObject) {
+    return (
+      this.hasOnlyOutputPayloadKeys(payload, [
+        'filePath',
+        'fileCategory',
+        'mimeType',
+        'fileSize',
+        'width',
+        'height',
+        'originalName',
+      ]) &&
+      this.isCommonMediaOutputPayload(payload, 'image', 'image/') &&
+      this.isOptionalPositiveSafeInteger(payload.width) &&
+      this.isOptionalPositiveSafeInteger(payload.height)
+    )
+  }
+
+  // 判断语音输出 payload 是否为当前合同形状。
+  private isVoiceOutputPayload(payload: JsonObject) {
+    return (
+      this.hasOnlyOutputPayloadKeys(payload, [
+        'filePath',
+        'fileCategory',
+        'mimeType',
+        'fileSize',
+        'durationSeconds',
+        'originalName',
+      ]) &&
+      this.isCommonMediaOutputPayload(payload, 'audio', 'audio/') &&
+      this.isPositiveFiniteNumber(payload.durationSeconds)
+    )
+  }
+
+  // 判断视频输出 payload 是否为当前合同形状。
+  private isVideoOutputPayload(payload: JsonObject) {
+    return (
+      this.hasOnlyOutputPayloadKeys(payload, [
+        'filePath',
+        'fileCategory',
+        'mimeType',
+        'fileSize',
+        'durationSeconds',
+        'width',
+        'height',
+        'originalName',
+      ]) &&
+      this.isCommonMediaOutputPayload(payload, 'video', 'video/') &&
+      this.isOptionalPositiveFiniteNumber(payload.durationSeconds) &&
+      this.isOptionalPositiveSafeInteger(payload.width) &&
+      this.isOptionalPositiveSafeInteger(payload.height)
+    )
+  }
+
+  // 校验媒体输出 payload 的通用字段。
+  private isCommonMediaOutputPayload(
+    payload: JsonObject,
+    fileCategory: 'image' | 'audio' | 'video',
+    mimePrefix: 'image/' | 'audio/' | 'video/',
+  ) {
+    return (
+      payload.fileCategory === fileCategory &&
+      typeof payload.filePath === 'string' &&
+      Boolean(payload.filePath.trim()) &&
+      typeof payload.mimeType === 'string' &&
+      payload.mimeType.trim().toLowerCase().startsWith(mimePrefix) &&
+      this.isPositiveSafeInteger(payload.fileSize) &&
+      this.isOptionalString(payload.originalName)
+    )
+  }
+
+  // 校验输出 payload 顶层字段白名单。
+  private hasOnlyOutputPayloadKeys(
+    payload: JsonObject,
+    allowedKeys: readonly string[],
+  ) {
+    const allowedKeySet = new Set(allowedKeys)
+    return Object.keys(payload).every((key) => allowedKeySet.has(key))
+  }
+
+  // 判断值是否为普通 JSON 对象，供文本/系统历史 payload 输出兜底。
+  private isJsonObjectPayload(payload: unknown): payload is JsonObject {
+    return (
+      this.isPlainObject(payload) &&
+      Object.values(payload).every((value) => this.isJsonValuePayload(value))
+    )
+  }
+
+  // 递归判断值是否可作为 JSON payload 输出。
+  private isJsonValuePayload(value: unknown): boolean {
+    if (value === null) {
+      return true
+    }
+    if (typeof value === 'string' || typeof value === 'boolean') {
+      return true
+    }
+    if (typeof value === 'number') {
+      return Number.isFinite(value)
+    }
+    if (Array.isArray(value)) {
+      return value.every((item) => this.isJsonValuePayload(item))
+    }
+    if (this.isPlainObject(value)) {
+      return Object.values(value).every((item) => this.isJsonValuePayload(item))
+    }
+    return false
+  }
+
+  // 判断值是否为普通对象，排除 Date、Array 等非 JSON 对象。
+  private isPlainObject(value: unknown): value is Record<string, unknown> {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return false
+    }
+
+    const prototype = Object.getPrototypeOf(value)
+    return prototype === Object.prototype || prototype === null
+  }
+
+  // 校验正安全整数。
+  private isPositiveSafeInteger(value: unknown) {
+    return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+  }
+
+  // 校验可选正安全整数。
+  private isOptionalPositiveSafeInteger(value: unknown) {
+    return value === undefined || this.isPositiveSafeInteger(value)
+  }
+
+  // 校验正有限数。
+  private isPositiveFiniteNumber(value: unknown) {
+    return typeof value === 'number' && Number.isFinite(value) && value > 0
+  }
+
+  // 校验可选正有限数。
+  private isOptionalPositiveFiniteNumber(value: unknown) {
+    return value === undefined || this.isPositiveFiniteNumber(value)
+  }
+
+  // 校验可选字符串。
+  private isOptionalString(value: unknown) {
+    return value === undefined || typeof value === 'string'
   }
 
   /**
@@ -1337,9 +1564,9 @@ export class MessageChatService {
    * @throws BadRequestException 如果原始载荷不是 JSON 对象
    */
   private attachClientMessageId(
-    payload: Record<string, unknown> | undefined,
+    payload: ChatTextMessagePayload,
     clientMessageId?: string,
-  ): Record<string, unknown> | undefined {
+  ): ChatTextMessagePayload {
     if (!clientMessageId) {
       return payload
     }
@@ -1352,6 +1579,14 @@ export class MessageChatService {
       ...payload,
       clientMessageId,
     }
+  }
+
+  // 构造聊天媒体上传来源校验策略，保证 service 与 WS 使用同一套规则。
+  private createMediaOriginPolicy() {
+    return buildChatMediaOriginPolicy({
+      uploadConfig: this.uploadConfig,
+      systemUploadConfig: this.uploadConfigProvider?.getUploadConfig(),
+    })
   }
 
   private recordResyncTriggeredMetric() {

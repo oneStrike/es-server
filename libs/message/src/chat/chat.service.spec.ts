@@ -10,7 +10,12 @@ import type { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import type { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
 import type { MessageChatReadQueryService } from './chat-read-query.service'
 import { BadRequestException } from '@nestjs/common'
-import { ChatMessageStatusEnum, ChatMessageTypeEnum } from './chat.constant'
+import { UploadConfig } from '@libs/platform/config'
+import {
+  ChatMessageStatusEnum,
+  ChatMessageTypeEnum,
+  ChatSendMessageTypeEnum,
+} from './chat.constant'
 import { MessageChatService } from './chat.service'
 
 type ChatReadQueryMock = jest.Mocked<
@@ -169,6 +174,11 @@ function createService() {
     getConversationMessagesBefore: jest.fn().mockResolvedValue([]),
     getConversationMessagesAfter: jest.fn().mockResolvedValue([]),
   }
+  const configService = {
+    get: jest.fn((key: string) =>
+      key === 'upload' ? UploadConfig : undefined,
+    ),
+  }
 
   return {
     service: new MessageChatService(
@@ -183,10 +193,12 @@ function createService() {
       asDependency<MessageDomainEventPublisher>(messageDomainEventPublisher),
       asDependency<DomainEventDispatchService>(domainEventDispatchService),
       asDependency<MessageChatReadQueryService>(chatReadQueryService),
+      configService as never,
     ),
     mocks: {
       findConversationMember,
       chatReadQueryService,
+      configService,
       wsMonitorService,
       drizzle,
       tx,
@@ -314,21 +326,18 @@ describe('chat.service send boundary', () => {
   it.each([
     ['blank content', { content: '   ' }],
     ['content length 5001', { content: 'a'.repeat(5001) }],
-    ['invalid JSON payload', { payload: '{bad' }],
-    ['JSON array payload', { payload: '[]' }],
-    ['JSON null payload', { payload: 'null' }],
+    ['string payload', { payload: '{"trace":"ok"}' }],
+    ['JSON array payload', { payload: [] }],
+    ['JSON null payload', { payload: null }],
     [
       'payload deeper than 6 levels',
       {
-        payload: JSON.stringify({
+        payload: {
           a: { b: { c: { d: { e: { f: { g: true } } } } } },
-        }),
+        },
       },
     ],
-    [
-      'payload larger than 16 KiB',
-      { payload: JSON.stringify({ text: '好'.repeat(6000) }) },
-    ],
+    ['payload larger than 16 KiB', { payload: { text: '好'.repeat(6000) } }],
   ])(
     'rejects %s before emoji parsing and database transaction',
     async (_label, dto) => {
@@ -337,10 +346,10 @@ describe('chat.service send boundary', () => {
       await expect(
         service.sendMessage(7, {
           conversationId: 10,
-          messageType: ChatMessageTypeEnum.TEXT,
+          messageType: ChatSendMessageTypeEnum.TEXT,
           content: 'hello',
           ...dto,
-        }),
+        } as never),
       ).rejects.toThrow(BadRequestException)
       expect(mocks.emojiParserService.parse).not.toHaveBeenCalled()
       expect(mocks.transaction).not.toHaveBeenCalled()
@@ -370,7 +379,7 @@ describe('chat.service send boundary', () => {
 
     const result = await service.sendMessage(7, {
       conversationId: 10,
-      messageType: ChatMessageTypeEnum.TEXT,
+      messageType: ChatSendMessageTypeEnum.TEXT,
       content: 'a'.repeat(5000),
       clientMessageId: 'b'.repeat(64),
     })
@@ -400,7 +409,7 @@ describe('chat.service write path', () => {
 
     const result = await service.sendMessage(7, {
       conversationId: 10,
-      messageType: ChatMessageTypeEnum.TEXT,
+      messageType: ChatSendMessageTypeEnum.TEXT,
       content: 'hello',
       clientMessageId: 'client-1',
     })
@@ -435,10 +444,10 @@ describe('chat.service write path', () => {
 
     const result = await service.sendMessage(7, {
       conversationId: 10,
-      messageType: ChatMessageTypeEnum.TEXT,
+      messageType: ChatSendMessageTypeEnum.TEXT,
       content: 'hello',
       clientMessageId: 'client-2',
-      payload: JSON.stringify({ extra: true }),
+      payload: { extra: true },
     })
 
     expect(result).toMatchObject({
@@ -479,45 +488,83 @@ describe('chat.service write path', () => {
     ).toHaveBeenCalledWith(501n, 'chat_realtime')
   })
 
-  it('stores image messages without parsing or persisting bodyTokens', async () => {
-    const { service, mocks } = createService()
-    const insertedMessage = createMessage({
-      id: 206n,
-      conversationId: 10,
-      messageSeq: 6n,
-      senderId: 7,
-      messageType: ChatMessageTypeEnum.IMAGE,
-      content: 'image-file-1',
-      payload: { fileId: 'image-file-1' },
-    })
-    mocks.chatMessageFindFirst
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ messageSeq: 5n })
-    mocks.insertReturning.mockResolvedValue([insertedMessage])
+  it.each([
+    [
+      ChatSendMessageTypeEnum.IMAGE,
+      {
+        filePath: '/files/chat/image/2026-05-04/photo.png',
+        fileCategory: 'image',
+        mimeType: 'image/png',
+        fileSize: 1024,
+        width: 1200,
+        height: 800,
+      },
+    ],
+    [
+      ChatSendMessageTypeEnum.VOICE,
+      {
+        filePath: '/files/chat/audio/2026-05-04/voice.mp3',
+        fileCategory: 'audio',
+        mimeType: 'audio/mpeg',
+        fileSize: 2048,
+        durationSeconds: 12.5,
+      },
+    ],
+    [
+      ChatSendMessageTypeEnum.VIDEO,
+      {
+        filePath: '/files/chat/video/2026-05-04/clip.mp4',
+        fileCategory: 'video',
+        mimeType: 'video/mp4',
+        fileSize: 4096,
+        durationSeconds: 30,
+      },
+    ],
+  ])(
+    'stores media messageType=%s without parsing or persisting bodyTokens',
+    async (messageType, payload) => {
+      const { service, mocks } = createService()
+      const insertedMessage = createMessage({
+        id: 206n,
+        conversationId: 10,
+        messageSeq: 6n,
+        senderId: 7,
+        messageType,
+        content: '',
+        payload,
+      })
+      mocks.chatMessageFindFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ messageSeq: 5n })
+      mocks.insertReturning.mockResolvedValue([insertedMessage])
 
-    const result = await service.sendMessage(7, {
-      conversationId: 10,
-      messageType: ChatMessageTypeEnum.IMAGE,
-      content: 'image-file-1',
-      payload: JSON.stringify({ fileId: 'image-file-1' }),
-    })
+      const result = await service.sendMessage(7, {
+        conversationId: 10,
+        messageType,
+        payload,
+        clientMessageId: 'client-media',
+      })
 
-    expect(result).toMatchObject({
-      id: '206',
-      messageSeq: '6',
-      deduplicated: false,
-    })
-    expect(mocks.emojiParserService.parse).not.toHaveBeenCalled()
-    expect(mocks.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        messageType: ChatMessageTypeEnum.IMAGE,
-        bodyTokens: null,
-      }),
-    )
-    expect(
-      mocks.emojiCatalogService.recordRecentUsageInTx,
-    ).not.toHaveBeenCalled()
-  })
+      expect(result).toMatchObject({
+        id: '206',
+        messageSeq: '6',
+        deduplicated: false,
+      })
+      expect(mocks.emojiParserService.parse).not.toHaveBeenCalled()
+      expect(mocks.insertValues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messageType,
+          content: '',
+          bodyTokens: null,
+          payload,
+          clientMessageId: 'client-media',
+        }),
+      )
+      expect(
+        mocks.emojiCatalogService.recordRecentUsageInTx,
+      ).not.toHaveBeenCalled()
+    },
+  )
 
   it('falls back to an existing idempotent message after a unique conflict', async () => {
     const { service, mocks } = createService()
@@ -534,7 +581,7 @@ describe('chat.service write path', () => {
 
     const result = await service.sendMessage(7, {
       conversationId: 10,
-      messageType: ChatMessageTypeEnum.TEXT,
+      messageType: ChatSendMessageTypeEnum.TEXT,
       content: 'hello',
       clientMessageId: 'client-3',
     })
@@ -555,7 +602,7 @@ describe('chat.service write path', () => {
     await expect(
       service.sendMessage(7, {
         conversationId: 10,
-        messageType: ChatMessageTypeEnum.TEXT,
+        messageType: ChatSendMessageTypeEnum.TEXT,
         content: 'hello',
       }),
     ).rejects.toThrow(conflict)
@@ -628,6 +675,150 @@ describe('chat.service realtime message fanout', () => {
       mocks.messageNotificationRealtimeService.emitChatMessageNew.mock.calls[0]
 
     expect(payload.message.bodyTokens).toBeUndefined()
+  })
+
+  it('emits media messages with empty content and unpolluted payloads', async () => {
+    const { service, mocks } = createService()
+    const mediaPayload = {
+      filePath: '/files/chat/image/2026-05-04/photo.png',
+      fileCategory: 'image',
+      mimeType: 'image/png',
+      fileSize: 1024,
+    }
+    mocks.chatMessageFindFirst.mockResolvedValueOnce(
+      createMessage({
+        id: 207n,
+        messageType: ChatMessageTypeEnum.IMAGE,
+        content: '',
+        payload: mediaPayload,
+        clientMessageId: 'client-media',
+      }),
+    )
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
+      {
+        userId: 7,
+        unreadCount: 2,
+        lastReadAt: null,
+        lastReadMessageId: null,
+      },
+    ])
+
+    await dispatchMessageCreatedPayload(service, {
+      conversationId: 10,
+      messageId: '207',
+    })
+
+    expect(
+      mocks.messageNotificationRealtimeService.emitChatMessageNew,
+    ).toHaveBeenCalledWith(7, {
+      conversationId: 10,
+      message: expect.objectContaining({
+        id: '207',
+        content: '',
+        payload: mediaPayload,
+        clientMessageId: 'client-media',
+      }),
+    })
+  })
+
+  it('emits system messages with object payloads through read-side fallback', async () => {
+    const { service, mocks } = createService()
+    const systemPayload = {
+      kind: 'conversation.notice',
+      text: 'created',
+    }
+    mocks.chatMessageFindFirst.mockResolvedValueOnce(
+      createMessage({
+        id: 208n,
+        messageType: ChatMessageTypeEnum.SYSTEM,
+        content: '',
+        payload: systemPayload,
+      }),
+    )
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
+      {
+        userId: 7,
+        unreadCount: 2,
+        lastReadAt: null,
+        lastReadMessageId: null,
+      },
+    ])
+
+    await dispatchMessageCreatedPayload(service, {
+      conversationId: 10,
+      messageId: '208',
+    })
+
+    const [, payload] =
+      mocks.messageNotificationRealtimeService.emitChatMessageNew.mock.calls[0]
+
+    expect(payload.message).toMatchObject({
+      id: '208',
+      messageType: ChatMessageTypeEnum.SYSTEM,
+      payload: systemPayload,
+    })
+  })
+
+  it('omits non-object system payloads in realtime outputs', async () => {
+    const { service, mocks } = createService()
+    mocks.chatMessageFindFirst.mockResolvedValueOnce(
+      createMessage({
+        id: 209n,
+        messageType: ChatMessageTypeEnum.SYSTEM,
+        payload: ['legacy'],
+      }),
+    )
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
+      {
+        userId: 7,
+        unreadCount: 2,
+        lastReadAt: null,
+        lastReadMessageId: null,
+      },
+    ])
+
+    await dispatchMessageCreatedPayload(service, {
+      conversationId: 10,
+      messageId: '209',
+    })
+
+    const [, payload] =
+      mocks.messageNotificationRealtimeService.emitChatMessageNew.mock.calls[0]
+
+    expect(payload.message.payload).toBeUndefined()
+  })
+
+  it('omits malformed media payloads in realtime outputs', async () => {
+    const { service, mocks } = createService()
+    mocks.chatMessageFindFirst.mockResolvedValueOnce(
+      createMessage({
+        id: 210n,
+        messageType: ChatMessageTypeEnum.IMAGE,
+        payload: {
+          filePath: '/files/chat/image/2026-05-04/photo.png',
+          fileCategory: 'image',
+          mimeType: 'image/png',
+        },
+      }),
+    )
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
+      {
+        userId: 7,
+        unreadCount: 2,
+        lastReadAt: null,
+        lastReadMessageId: null,
+      },
+    ])
+
+    await dispatchMessageCreatedPayload(service, {
+      conversationId: 10,
+      messageId: '210',
+    })
+
+    const [, payload] =
+      mocks.messageNotificationRealtimeService.emitChatMessageNew.mock.calls[0]
+
+    expect(payload.message.payload).toBeUndefined()
   })
 })
 

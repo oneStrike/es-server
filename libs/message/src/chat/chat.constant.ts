@@ -12,9 +12,28 @@ export enum ChatMessageTypeEnum {
   TEXT = 1,
   /** 图片消息 */
   IMAGE = 2,
+  /** 语音消息 */
+  VOICE = 3,
+  /** 视频消息 */
+  VIDEO = 4,
   /** 系统消息 */
-  SYSTEM = 3,
+  SYSTEM = 99,
 }
+
+/** 客户端可发送的聊天消息类型枚举 */
+export enum ChatSendMessageTypeEnum {
+  /** 文本消息 */
+  TEXT = 1,
+  /** 图片消息 */
+  IMAGE = 2,
+  /** 语音消息 */
+  VOICE = 3,
+  /** 视频消息 */
+  VIDEO = 4,
+}
+
+/** 客户端可发送的聊天消息类型集合 */
+export const CHAT_SENDABLE_MESSAGE_TYPES = [1, 2, 3, 4] as const
 
 /** 聊天消息状态枚举 */
 export enum ChatMessageStatusEnum {

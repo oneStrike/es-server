@@ -5,10 +5,14 @@ import type {
   WsSendPayload,
 } from './notification-websocket.type'
 import { BusinessErrorCode, PlatformErrorCode } from '@libs/platform/constant'
+import { UploadConfig } from '@libs/platform/config'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { JwtService } from '@nestjs/jwt'
-import { ChatMessageTypeEnum } from '../chat/chat.constant'
+import {
+  ChatMessageTypeEnum,
+  ChatSendMessageTypeEnum,
+} from '../chat/chat.constant'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageWebSocketService } from './notification-websocket.service'
 
@@ -17,7 +21,7 @@ function buildSendEnvelope(
 ): WsRequestEnvelope<WsSendPayload> {
   const payload = {
     conversationId: 10,
-    messageType: ChatMessageTypeEnum.TEXT,
+    messageType: ChatSendMessageTypeEnum.TEXT,
     content: 'hello',
     ...(overrides.payload ?? {}),
   } as WsSendPayload
@@ -59,6 +63,9 @@ function createService() {
       }
       if (key === 'rsa.publicKey') {
         return 'public-key'
+      }
+      if (key === 'upload') {
+        return UploadConfig
       }
       return undefined
     }),
@@ -106,6 +113,7 @@ function createService() {
       moduleRef as never,
       messageWsMonitorService as unknown as MessageWsMonitorService,
       userCoreService as never,
+      undefined,
     ),
     chatService,
     configService,
@@ -342,7 +350,8 @@ describe('MessageWebSocketService send payload boundary', () => {
     ['clientMessageId length 65', { clientMessageId: 'a'.repeat(65) }],
     ['array payload', { payload: [] }],
     ['null payload', { payload: null }],
-    ['scalar payload', { payload: 'bad' }],
+    ['scalar payload', { payload: 1 }],
+    ['string payload', { payload: '{"trace":"ok"}' }],
     [
       'payload deeper than 6 levels',
       { payload: { a: { b: { c: { d: { e: { f: { g: true } } } } } } } },
@@ -356,10 +365,10 @@ describe('MessageWebSocketService send payload boundary', () => {
       buildSendEnvelope({
         payload: {
           conversationId: 10,
-          messageType: ChatMessageTypeEnum.TEXT,
+          messageType: ChatSendMessageTypeEnum.TEXT,
           content: 'hello',
           ...payloadOverride,
-        },
+        } as never,
       }),
     )
 
@@ -368,7 +377,7 @@ describe('MessageWebSocketService send payload boundary', () => {
     expect(chatService.sendMessage).not.toHaveBeenCalled()
   })
 
-  it('accepts boundary-sized content and clientMessageId and serializes valid payload once', async () => {
+  it('accepts boundary-sized content and clientMessageId and passes valid payload objects', async () => {
     const { service, chatService } = createService()
     const payloadObject = { trace: 'ok' }
 
@@ -377,7 +386,7 @@ describe('MessageWebSocketService send payload boundary', () => {
       buildSendEnvelope({
         payload: {
           conversationId: 10,
-          messageType: ChatMessageTypeEnum.TEXT,
+          messageType: ChatSendMessageTypeEnum.TEXT,
           content: 'a'.repeat(5000),
           clientMessageId: 'b'.repeat(64),
           payload: payloadObject,
@@ -388,11 +397,75 @@ describe('MessageWebSocketService send payload boundary', () => {
     expect(ack).toMatchObject({ requestId: 'req-1', code: 0 })
     expect(chatService.sendMessage).toHaveBeenCalledWith(7, {
       conversationId: 10,
-      messageType: ChatMessageTypeEnum.TEXT,
+      messageType: ChatSendMessageTypeEnum.TEXT,
       content: 'a'.repeat(5000),
       clientMessageId: 'b'.repeat(64),
-      payload: JSON.stringify(payloadObject),
+      payload: payloadObject,
     })
+  })
+
+  it('accepts valid media payloads without content and keeps payload objects unstringified', async () => {
+    const { service, chatService } = createService()
+    const mediaPayload = {
+      filePath: '/files/chat/audio/2026-05-04/voice.mp3',
+      fileCategory: 'audio',
+      mimeType: 'audio/mpeg',
+      fileSize: 2048,
+      durationSeconds: 12.5,
+    }
+
+    const ack = await service.handleChatSend(
+      7,
+      buildSendEnvelope({
+        payload: {
+          conversationId: 10,
+          messageType: ChatSendMessageTypeEnum.VOICE,
+          content: undefined,
+          payload: mediaPayload,
+        },
+      }),
+    )
+
+    expect(ack).toMatchObject({ requestId: 'req-1', code: 0 })
+    expect(chatService.sendMessage).toHaveBeenCalledWith(7, {
+      conversationId: 10,
+      messageType: ChatSendMessageTypeEnum.VOICE,
+      content: '',
+      clientMessageId: undefined,
+      payload: mediaPayload,
+    })
+  })
+
+  it('rejects stringified media payloads and internal system messages', async () => {
+    const { service, chatService } = createService()
+    const mediaPayload = {
+      filePath: '/files/chat/image/2026-05-04/photo.png',
+      fileCategory: 'image',
+      mimeType: 'image/png',
+      fileSize: 1024,
+    }
+
+    for (const payload of [
+      {
+        conversationId: 10,
+        messageType: ChatSendMessageTypeEnum.IMAGE,
+        payload: JSON.stringify(mediaPayload),
+      },
+      {
+        conversationId: 10,
+        messageType: ChatMessageTypeEnum.SYSTEM,
+        payload: mediaPayload,
+      },
+    ]) {
+      const ack = await service.handleChatSend(
+        7,
+        buildSendEnvelope({ payload: payload as never }),
+      )
+
+      expect(ack).toMatchObject({ requestId: 'req-1', code: 40001 })
+    }
+
+    expect(chatService.sendMessage).not.toHaveBeenCalled()
   })
 })
 

@@ -1,6 +1,11 @@
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
-import type { StructuredValue } from '@libs/platform/utils'
-import type { ChatMessageTypeEnum } from './chat.constant'
+import type {
+  ChatMediaMessagePayload,
+  ChatMessageOutputPayload,
+  ChatSendMessagePayload,
+  ChatTextMessagePayload,
+} from './chat-media-payload.type'
+import type { ChatSendMessageType } from './chat-message-type.type'
 import type { BaseChatMessageDto } from './dto/chat.dto'
 
 /**
@@ -26,7 +31,7 @@ export type ChatMessageOutput = Omit<
   'bodyTokens' | 'payload'
 > & {
   bodyTokens?: ChatBodyToken[]
-  payload?: StructuredValue
+  payload?: ChatMessageOutputPayload
 }
 
 /**
@@ -63,7 +68,7 @@ export interface ChatMessageContentSource {
 export interface ChatMessageSendBoundaryInput {
   conversationId: unknown
   messageType: unknown
-  content: unknown
+  content?: unknown
   clientMessageId?: unknown
   payload?: unknown
 }
@@ -73,11 +78,10 @@ export interface ChatMessageSendBoundaryInput {
  */
 export interface NormalizedChatMessageSendInput {
   conversationId: number
-  messageType: ChatMessageTypeEnum
+  messageType: ChatSendMessageType
   content: string
   clientMessageId?: string
-  payloadObject?: Record<string, unknown>
-  payloadJson?: string
+  payload?: ChatSendMessagePayload
 }
 
 /**
@@ -119,11 +123,10 @@ export type NormalizeClientMessageIdResult =
   | ChatMessageSendBoundaryFailure
 
 /**
- * 扩展载荷的对象与 JSON 字符串双形态。
+ * 扩展载荷的对象形态。
  */
 export interface NormalizedPayloadValue {
-  object: Record<string, unknown>
-  json: string
+  payload: ChatSendMessagePayload
 }
 
 /**
@@ -139,7 +142,7 @@ export interface NormalizePayloadSuccess {
  */
 export interface NormalizePayloadObjectSuccess {
   ok: true
-  value: NormalizedPayloadValue
+  value: ChatTextMessagePayload
 }
 
 /**
@@ -154,4 +157,19 @@ export type NormalizePayloadResult =
  */
 export type NormalizePayloadObjectResult =
   | NormalizePayloadObjectSuccess
+  | ChatMessageSendBoundaryFailure
+
+/**
+ * 媒体扩展载荷规范化成功结果。
+ */
+export interface NormalizeMediaPayloadSuccess {
+  ok: true
+  value: ChatMediaMessagePayload
+}
+
+/**
+ * 媒体扩展载荷规范化结果。
+ */
+export type NormalizeMediaPayloadResult =
+  | NormalizeMediaPayloadSuccess
   | ChatMessageSendBoundaryFailure

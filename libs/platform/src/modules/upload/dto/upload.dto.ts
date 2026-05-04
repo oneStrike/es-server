@@ -1,4 +1,8 @@
-import { DateProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  DateProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 export class UploadFileDto {
   @StringProperty({
@@ -58,6 +62,30 @@ export class UploadResponseDto {
     validation: false,
   })
   fileType!: string
+
+  @StringProperty({
+    description: '文件分类',
+    required: true,
+    example: 'image',
+    validation: false,
+  })
+  fileCategory!: string
+
+  @NumberProperty({
+    description: '图片宽度',
+    required: false,
+    example: 1200,
+    validation: false,
+  })
+  width?: number
+
+  @NumberProperty({
+    description: '图片高度',
+    required: false,
+    example: 800,
+    validation: false,
+  })
+  height?: number
 
   @StringProperty({
     description: '原始文件名',

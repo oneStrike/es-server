@@ -1,5 +1,7 @@
 import { EmojiModule } from '@libs/interaction/emoji/emoji.module'
+import { SystemConfigModule } from '@libs/system-config/system-config.module'
 import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
 import { MessageDomainEventModule } from '../eventing/message-domain-event.module'
 import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageMonitorModule } from '../monitor/monitor.module'
@@ -10,6 +12,8 @@ import { MessageChatService } from './chat.service'
 
 @Module({
   imports: [
+    ConfigModule,
+    SystemConfigModule,
     MessageNotificationCoreModule,
     MessageInboxModule,
     MessageMonitorModule,

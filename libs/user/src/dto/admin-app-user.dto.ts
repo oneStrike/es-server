@@ -6,7 +6,7 @@ import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { UserGrowthRuleActionDto } from '@libs/growth/growth/dto/growth-shared.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
 import { BaseUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
-import { EnumProperty, NestedProperty, NumberProperty, RegexProperty, StringProperty } from '@libs/platform/decorators'
+import { DateProperty, EnumProperty, NestedProperty, NumberProperty, RegexProperty, StringProperty } from '@libs/platform/decorators'
 
 import { PageDto, UserIdDto } from '@libs/platform/dto'
 
@@ -106,6 +106,14 @@ export class AdminAppUserGrowthRuleActionDto extends IntersectionType(
 }
 
 export class AdminAppUserPageItemDto extends AppUserResponseDto {
+  @DateProperty({
+    description: '删除时间',
+    example: '2026-03-27T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  declare deletedAt?: Date | null
+
   @StringProperty({
     description: '等级名称',
     example: '新手',
@@ -124,6 +132,14 @@ export class AdminAppUserPageItemDto extends AppUserResponseDto {
 }
 
 export class AdminAppUserDetailDto extends AppUserResponseDto {
+  @DateProperty({
+    description: '删除时间',
+    example: '2026-03-27T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  declare deletedAt?: Date | null
+
   @NestedProperty({
     description: '等级信息',
     type: AdminAppUserLevelDto,

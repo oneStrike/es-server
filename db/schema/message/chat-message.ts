@@ -41,7 +41,7 @@ export const chatMessage = snakeCase.table(
      */
     clientMessageId: varchar({ length: 64 }),
     /**
-     * 消息类型（1=文本,2=图片,3=系统）
+     * 消息类型（1=文本,2=图片,3=语音,4=视频,99=系统）
      */
     messageType: smallint().notNull(),
     /**
@@ -108,7 +108,7 @@ export const chatMessage = snakeCase.table(
     ),
     check(
       'chat_message_message_type_valid_chk',
-      sql`${table.messageType} in (1, 2, 3)`,
+      sql`${table.messageType} in (1, 2, 3, 4, 99)`,
     ),
     check('chat_message_status_valid_chk', sql`${table.status} in (1, 2, 3)`),
   ],

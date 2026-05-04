@@ -1,6 +1,8 @@
 import type { StructuredValue } from '@libs/platform/utils'
-
 import type { Buffer } from 'node:buffer'
+import type { ChatSendMessagePayload } from '../chat/chat-media-payload.type'
+
+import type { ChatSendMessageType } from '../chat/chat-message-type.type'
 
 /** 稳定领域类型 `WsRequestEnvelope`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface WsRequestEnvelope<TPayload> {
@@ -13,9 +15,9 @@ export interface WsRequestEnvelope<TPayload> {
 export interface WsSendPayload {
   conversationId: number
   clientMessageId?: string
-  messageType: number
-  content: string
-  payload?: StructuredValue
+  messageType: ChatSendMessageType
+  content?: string
+  payload?: ChatSendMessagePayload
 }
 
 /** 稳定领域类型 `WsReadPayload`。仅供内部领域/服务链路复用，避免重复定义。 */

@@ -1,3 +1,5 @@
+import type { UploadConfigInterface } from '@libs/platform/config'
+import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { AuthConfigInterface } from '@libs/platform/types'
 import type { WebSocket } from 'ws'
 import type { MessageChatService } from '../chat/chat.service'
@@ -18,11 +20,19 @@ import {
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
+import { UPLOAD_CONFIG_PROVIDER } from '@libs/platform/modules/upload/upload.type'
 import { UserService } from '@libs/user/user.service'
-import { HttpException, Injectable, Logger } from '@nestjs/common'
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  Logger,
+  Optional,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
+import { buildChatMediaOriginPolicy } from '../chat/chat-media-origin-policy'
 import { normalizeChatMessageSendInput } from '../chat/chat-message-boundary'
 import { MESSAGE_CHAT_SERVICE_TOKEN } from '../chat/chat.constant'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
@@ -33,6 +43,7 @@ const NATIVE_WS_OPEN = 1
 @Injectable()
 export class MessageWebSocketService {
   private readonly logger = new Logger(MessageWebSocketService.name)
+  private readonly uploadConfig: UploadConfigInterface
   private readonly nativeClientsByUserId = new Map<number, Set<WebSocket>>()
   private readonly nativeClientState = new WeakMap<
     WebSocket,
@@ -47,7 +58,12 @@ export class MessageWebSocketService {
     private readonly moduleRef: ModuleRef,
     private readonly messageWsMonitorService: MessageWsMonitorService,
     private readonly userCoreService: UserService,
-  ) {}
+    @Optional()
+    @Inject(UPLOAD_CONFIG_PROVIDER)
+    private readonly uploadConfigProvider?: UploadConfigProvider,
+  ) {
+    this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
+  }
 
   // 初始化 native ws 客户端状态，连接建立后等待 auth 事件绑定用户。
   initializeNativeClient(client: WebSocket) {
@@ -339,7 +355,10 @@ export class MessageWebSocketService {
       )
     }
 
-    const normalizedPayload = normalizeChatMessageSendInput(payload)
+    const normalizedPayload = normalizeChatMessageSendInput(
+      payload,
+      this.createMediaOriginPolicy(),
+    )
     if (!normalizedPayload.ok) {
       return this.finishAck(
         {
@@ -357,7 +376,7 @@ export class MessageWebSocketService {
         messageType: normalizedPayload.value.messageType,
         content: normalizedPayload.value.content,
         clientMessageId: normalizedPayload.value.clientMessageId,
-        payload: normalizedPayload.value.payloadJson,
+        payload: normalizedPayload.value.payload,
       })
 
       return this.finishAck(
@@ -381,6 +400,14 @@ export class MessageWebSocketService {
         requestStartAt,
       )
     }
+  }
+
+  // 构造聊天媒体上传来源校验策略，保持 WS 预校验与 service 入口一致。
+  private createMediaOriginPolicy() {
+    return buildChatMediaOriginPolicy({
+      uploadConfig: this.uploadConfig,
+      systemUploadConfig: this.uploadConfigProvider?.getUploadConfig(),
+    })
   }
 
   /**

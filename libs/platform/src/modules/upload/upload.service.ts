@@ -3,6 +3,7 @@ import type { FastifyRequest } from 'fastify'
 import type {
   MultipartFieldLike,
   PreparedUploadFile,
+  StoredUploadNameResult,
   UploadConfigProvider,
   UploadFileCategory,
   UploadLocalFileOptions,
@@ -111,11 +112,12 @@ export class UploadService {
       }
 
       const stats = await fs.stat(tempPath)
-      const finalName = await this.resolveStoredFinalName(
+      const storedName = await this.resolveStoredFinalName(
         tempPath,
         ext,
         fileCategory,
       )
+      const finalName = storedName.finalName
       const objectKey = this.buildObjectKey(
         scene,
         fileCategory,
@@ -132,6 +134,8 @@ export class UploadService {
         fileCategory,
         scene,
         fileSize: stats.size,
+        width: storedName.width,
+        height: storedName.height,
       }
 
       return await this.uploadPreparedFile(preparedFile)
@@ -188,12 +192,13 @@ export class UploadService {
       throw new BadRequestException('上传路径不合法')
     }
 
-    const finalName = await this.resolveStoredFinalName(
+    const storedName = await this.resolveStoredFinalName(
       options.localPath,
       ext,
       fileCategory,
       options.finalName,
     )
+    const finalName = storedName.finalName
     const objectKey = posix.join(...normalizedObjectKeySegments, finalName)
     const stats = await fs.stat(options.localPath)
     const preparedFile: PreparedUploadFile = {
@@ -206,6 +211,8 @@ export class UploadService {
       fileCategory,
       scene: normalizedObjectKeySegments[0] ?? DEFAULT_UPLOAD_SCENE,
       fileSize: stats.size,
+      width: storedName.width,
+      height: storedName.height,
     }
 
     return this.uploadPreparedFile(preparedFile)
@@ -313,7 +320,10 @@ export class UploadService {
       fileSize: preparedFile.fileSize,
       mimeType: preparedFile.mimeType,
       fileType: preparedFile.ext,
+      fileCategory: preparedFile.fileCategory,
       scene: preparedFile.scene,
+      width: preparedFile.width,
+      height: preparedFile.height,
       uploadTime: new Date(),
     }
   }
@@ -381,22 +391,26 @@ export class UploadService {
     ext: string,
     fileCategory: UploadFileCategory,
     finalName?: string,
-  ) {
+  ): Promise<StoredUploadNameResult> {
     const normalizedFinalName = this.resolveFinalName(ext, finalName)
     if (fileCategory !== 'image') {
-      return normalizedFinalName
+      return { finalName: normalizedFinalName }
     }
 
     const imageDimensions = await resolveImageDimensionsFromFile(tempPath)
     if (!imageDimensions) {
-      return normalizedFinalName
+      return { finalName: normalizedFinalName }
     }
 
-    return this.appendImageDimensionsToFinalName(
-      normalizedFinalName,
-      imageDimensions.width,
-      imageDimensions.height,
-    )
+    return {
+      finalName: this.appendImageDimensionsToFinalName(
+        normalizedFinalName,
+        imageDimensions.width,
+        imageDimensions.height,
+      ),
+      width: imageDimensions.width,
+      height: imageDimensions.height,
+    }
   }
 
   /** 将图片尺寸规范化为单个后缀，避免重复追加历史尺寸片段。 */
