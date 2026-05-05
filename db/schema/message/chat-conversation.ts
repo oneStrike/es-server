@@ -1,5 +1,6 @@
 import {
   bigint,
+  boolean,
   index,
   integer,
   snakeCase,
@@ -35,6 +36,10 @@ export const chatConversation = snakeCase.table(
      * 最后发言人ID（快照字段）
      */
     lastSenderId: integer(),
+    /**
+     * 是否曾经成功发送过消息
+     */
+    hasMessages: boolean().default(false).notNull(),
     /**
      * 创建时间
      */

@@ -11,12 +11,15 @@ import type { MessageNotificationRealtimeService } from '../notification/notific
 import type { MessageChatReadQueryService } from './chat-read-query.service'
 import { BadRequestException } from '@nestjs/common'
 import { UploadConfig } from '@libs/platform/config'
+import { PgDialect } from 'drizzle-orm/pg-core/dialect'
 import {
   ChatMessageStatusEnum,
   ChatMessageTypeEnum,
   ChatSendMessageTypeEnum,
 } from './chat.constant'
 import { MessageChatService } from './chat.service'
+
+const dialect = new PgDialect()
 
 type ChatReadQueryMock = jest.Mocked<
   Pick<
@@ -72,6 +75,32 @@ function createMessage(overrides: Partial<ChatMessageSelect> = {}) {
 }
 
 function createService() {
+  const totalQueryCapture: { where?: unknown } = {}
+  const totalQueryWhere = jest.fn().mockResolvedValue([{ total: 0 }])
+  const memberQueryWhere = jest.fn().mockResolvedValue([])
+  const messageMapQueryWhere = jest.fn().mockResolvedValue([])
+  const select = jest.fn((selection: Record<string, unknown>) => {
+    const keys = Object.keys(selection)
+    const isTotalQuery = keys.includes('total')
+    const isMessageMapQuery =
+      keys.length === 2 && keys.includes('id') && keys.includes('content')
+    const builder: Record<string, jest.Mock> = {}
+
+    builder.from = jest.fn(() => builder)
+    builder.innerJoin = jest.fn(() => builder)
+    builder.where = jest.fn((condition: unknown) => {
+      if (isTotalQuery) {
+        totalQueryCapture.where = condition
+        return totalQueryWhere(condition)
+      }
+      if (isMessageMapQuery) {
+        return messageMapQueryWhere(condition)
+      }
+      return memberQueryWhere(condition)
+    })
+
+    return builder
+  })
   const findConversationMember = jest.fn().mockResolvedValue({
     leftAt: null,
   })
@@ -122,6 +151,7 @@ function createService() {
   )
   const drizzle = {
     db: {
+      select,
       query: {
         chatConversationMember: {
           findFirst: findConversationMember,
@@ -136,6 +166,17 @@ function createService() {
       },
       transaction,
     },
+    buildPage: jest.fn((dto: { pageIndex?: number; pageSize?: number }) => {
+      const pageIndex = dto.pageIndex ?? 1
+      const pageSize = dto.pageSize ?? 20
+
+      return {
+        pageIndex,
+        pageSize,
+        limit: pageSize,
+        offset: (pageIndex - 1) * pageSize,
+      }
+    }),
     withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
     assertAffectedRows: jest.fn(),
     isUniqueViolation: jest.fn().mockReturnValue(false),
@@ -201,6 +242,13 @@ function createService() {
       configService,
       wsMonitorService,
       drizzle,
+      totalQueryWhere,
+      memberQueryWhere,
+      messageMapQueryWhere,
+      totalQueryWhereSql: () =>
+        totalQueryCapture.where
+          ? dialect.sqlToQuery(totalQueryCapture.where as never).sql
+          : '',
       tx,
       transaction,
       txChatConversationMemberFindFirst,
@@ -224,6 +272,87 @@ function createService() {
     },
   }
 }
+
+describe('chat.service conversation list visibility', () => {
+  it('excludes conversations without sent messages from conversation list total', async () => {
+    const { service, mocks } = createService()
+    mocks.totalQueryWhere.mockResolvedValueOnce([{ total: 0 }])
+    mocks.chatReadQueryService.getConversationList.mockResolvedValueOnce([])
+
+    const result = await service.getConversationList(7, {
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    expect(mocks.totalQueryWhereSql()).toContain(
+      '"chat_conversation"."has_messages" = $',
+    )
+    expect(result).toMatchObject({
+      list: [],
+      total: 0,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+  })
+
+  it('maps conversations with sent messages even when last-message snapshot is cleared', async () => {
+    const { service, mocks } = createService()
+    mocks.totalQueryWhere.mockResolvedValueOnce([{ total: 1 }])
+    mocks.chatReadQueryService.getConversationList.mockResolvedValueOnce([
+      {
+        id: 10,
+        bizKey: 'direct:7:8',
+        lastMessageId: null,
+        lastMessageAt: null,
+        lastSenderId: null,
+      },
+    ])
+    mocks.memberQueryWhere.mockResolvedValueOnce([
+      {
+        conversationId: 10,
+        userId: 7,
+        unreadCount: 0,
+        lastReadAt: null,
+        lastReadMessageId: null,
+        userProfileId: 7,
+        userNickname: 'self',
+        userAvatar: null,
+      },
+      {
+        conversationId: 10,
+        userId: 8,
+        unreadCount: 0,
+        lastReadAt: null,
+        lastReadMessageId: null,
+        userProfileId: 8,
+        userNickname: 'peer',
+        userAvatar: 'https://example.test/avatar.png',
+      },
+    ])
+
+    const result = await service.getConversationList(7, {
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    expect(result.total).toBe(1)
+    expect(result.list[0]).toMatchObject({
+      id: 10,
+      bizKey: 'direct:7:8',
+      unreadCount: 0,
+      peerUser: {
+        id: 8,
+        nickname: 'peer',
+        avatar: 'https://example.test/avatar.png',
+      },
+    })
+    expect(result.list[0].lastMessageId).toBeUndefined()
+    expect(result.list[0].lastMessageAt).toBeUndefined()
+    expect(result.list[0].lastSenderId).toBeUndefined()
+    expect(result.list[0].lastMessageContent).toBeUndefined()
+    expect(mocks.messageMapQueryWhere).not.toHaveBeenCalled()
+  })
+})
 
 describe('chat.service prepared read queries', () => {
   it('uses the initial prepared message query when no cursor is provided', async () => {
@@ -467,6 +596,7 @@ describe('chat.service write path', () => {
     expect(mocks.update).toHaveBeenCalledTimes(2)
     expect(mocks.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
+        hasMessages: true,
         lastMessageId: 202n,
         lastSenderId: 7,
       }),

@@ -271,10 +271,15 @@ export class MessageChatService {
       this.db
         .select({ total: sql<number>`count(*)` })
         .from(chatConversationMember)
+        .innerJoin(
+          chatConversation,
+          eq(chatConversation.id, chatConversationMember.conversationId),
+        )
         .where(
           and(
             eq(chatConversationMember.userId, userId),
             isNull(chatConversationMember.leftAt),
+            eq(chatConversation.hasMessages, true),
           ),
         ),
       this.chatReadQueryService.getConversationList({
@@ -849,6 +854,7 @@ export class MessageChatService {
           const updateConversationResult = await tx
             .update(chatConversation)
             .set({
+              hasMessages: true,
               lastMessageId: message.id,
               lastMessageAt: message.createdAt,
               lastSenderId: userId,

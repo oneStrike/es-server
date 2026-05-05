@@ -195,6 +195,7 @@ COMMENT ON COLUMN "public"."chat_conversation"."biz_key" IS E'业务键（direct
 COMMENT ON COLUMN "public"."chat_conversation"."last_message_id" IS E'最后一条消息ID（快照字段）';
 COMMENT ON COLUMN "public"."chat_conversation"."last_message_at" IS E'最后一条消息时间（快照字段）';
 COMMENT ON COLUMN "public"."chat_conversation"."last_sender_id" IS E'最后发言人ID（快照字段）';
+COMMENT ON COLUMN "public"."chat_conversation"."has_messages" IS E'是否曾经成功发送过消息';
 COMMENT ON COLUMN "public"."chat_conversation"."created_at" IS E'创建时间';
 COMMENT ON COLUMN "public"."chat_conversation"."updated_at" IS E'更新时间';
 COMMENT ON TABLE "public"."chat_conversation_member" IS E'聊天会话成员表（仅私聊）。\n读路径高度依赖“活跃成员（leftAt is null）”语义，因此活跃成员查询必须有独立索引支撑。';

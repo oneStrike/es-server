@@ -73,6 +73,7 @@ export class MessageChatReadQueryService {
           isNull(this.drizzle.schema.chatConversationMember.leftAt),
         ),
       )
+      .where(eq(this.drizzle.schema.chatConversation.hasMessages, true))
       .orderBy(
         sql`${this.drizzle.schema.chatConversation.lastMessageAt} desc nulls last`,
         desc(this.drizzle.schema.chatConversation.id),
@@ -164,7 +165,9 @@ export class MessageChatReadQueryService {
   }
 
   // 查询会话游标之前的历史消息。
-  async getConversationMessagesBefore(params: ChatMessageBeforeCursorQueryInput) {
+  async getConversationMessagesBefore(
+    params: ChatMessageBeforeCursorQueryInput,
+  ) {
     return this.conversationMessagesBeforeQuery.execute(params)
   }
 

@@ -93,6 +93,9 @@ describe('MessageChatReadQueryService', () => {
     expect(compileSql(conversationListQuery.joins[0].condition)).toContain(
       '"chat_conversation_member"."left_at" is null',
     )
+    expect(compileSql(conversationListQuery.where)).toContain(
+      '"chat_conversation"."has_messages" = $',
+    )
     expect(compileSql(conversationListQuery.orderBy[0])).toContain(
       '"chat_conversation"."last_message_at" desc nulls last',
     )

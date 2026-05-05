@@ -169,6 +169,7 @@ export async function seedMessageDomain(db: Db) {
     ;[conversation] = await db
       .update(chatConversation)
       .set({
+        hasMessages: true,
         lastMessageId: lastMessage.id,
         lastMessageAt: lastMessage.createdAt,
         lastSenderId: lastMessage.senderId,
