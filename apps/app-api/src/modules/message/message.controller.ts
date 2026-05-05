@@ -1,3 +1,5 @@
+import type { FastifyRequest } from 'fastify'
+import { MessageChatUploadService } from '@libs/message/chat/chat-upload.service'
 import { MessageChatService } from '@libs/message/chat/chat.service'
 import {
   ChatConversationDto,
@@ -22,8 +24,9 @@ import { MessageNotificationService } from '@libs/message/notification/notificat
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto, PageDto } from '@libs/platform/dto'
+import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
 
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('消息')
@@ -34,6 +37,7 @@ export class MessageController {
     private readonly messageNotificationPreferenceService: MessageNotificationPreferenceService,
     private readonly messageChatService: MessageChatService,
     private readonly messageInboxService: MessageInboxService,
+    private readonly messageChatUploadService: MessageChatUploadService,
   ) {}
 
   @Get('notification/page')
@@ -142,6 +146,16 @@ export class MessageController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageChatService.getConversationMessages(userId, query)
+  }
+
+  // 上传聊天媒体文件，scene 与 provider 兼容策略由消息域服务收口。
+  @Post('chat/media/upload')
+  @ApiDoc({
+    summary: '上传聊天媒体文件',
+    model: UploadResponseDto,
+  })
+  async uploadChatMedia(@Req() req: FastifyRequest) {
+    return this.messageChatUploadService.uploadMedia(req)
   }
 
   @Get('inbox/summary')

@@ -6,6 +6,7 @@ import type {
   StoredUploadNameResult,
   UploadConfigProvider,
   UploadFileCategory,
+  UploadFileOptions,
   UploadLocalFileOptions,
   UploadResponseCarrier,
   UploadResult,
@@ -65,12 +66,17 @@ export class UploadService {
     this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
   }
 
-  async uploadFile(data: FastifyRequest, pathSegments?: string[]) {
+  // 处理 multipart 上传，并支持单次 scene、文件分类和 provider 策略覆盖。
+  async uploadFile(
+    data: FastifyRequest,
+    pathSegments?: string[],
+    options: UploadFileOptions = {},
+  ) {
     const targetFile = await data.file()
     if (!targetFile) {
       throw new BadRequestException('上传文件不能为空')
     }
-    const scene = this.extractScene(targetFile.fields.scene)
+    const scene = this.resolveUploadScene(targetFile.fields.scene, options)
 
     if (!scene) {
       await this.consumeStream(targetFile.file)
@@ -93,6 +99,10 @@ export class UploadService {
 
     const { ext, mime, fileCategory } = resolvedFileType
     if (!this.uploadConfig.allowMimeTypesFlat.includes(mime)) {
+      await this.consumeStream(targetFile.file)
+      throw new BadRequestException('不被允许的文件类型')
+    }
+    if (!this.isAllowedFileCategory(fileCategory, options)) {
       await this.consumeStream(targetFile.file)
       throw new BadRequestException('不被允许的文件类型')
     }
@@ -138,7 +148,7 @@ export class UploadService {
         height: storedName.height,
       }
 
-      return await this.uploadPreparedFile(preparedFile)
+      return await this.uploadPreparedFile(preparedFile, options)
     } catch (error) {
       const responseCarrier =
         typeof error === 'object' && error !== null
@@ -298,15 +308,25 @@ export class UploadService {
    * 执行统一上传流程并映射为标准响应结构。
    * 所有 provider 成功后都在这里收口返回字段，避免控制器感知底层差异。
    */
-  private async uploadPreparedFile(preparedFile: PreparedUploadFile) {
+  private async uploadPreparedFile(
+    preparedFile: PreparedUploadFile,
+    options: UploadFileOptions = {},
+  ) {
     this.assertFileSizeWithinLimit(preparedFile.fileSize)
 
     const systemUploadConfig = this.getSystemUploadConfig()
-    const provider = this.resolveProvider(
+    const defaultProvider = this.resolveProvider(
       systemUploadConfig.provider,
       preparedFile.fileCategory,
       systemUploadConfig.superbedNonImageFallbackToLocal,
     )
+    const provider =
+      options.resolveProvider?.({
+        file: preparedFile,
+        systemConfig: systemUploadConfig,
+        configuredProvider: systemUploadConfig.provider,
+        defaultProvider,
+      }) ?? defaultProvider
     const result = await this.uploadByProvider(
       provider,
       preparedFile,
@@ -541,7 +561,24 @@ export class UploadService {
         scene = String(firstField.value)
       }
     }
-    const normalizedScene = scene?.trim()
+    return scene ? this.normalizeSceneName(scene) : null
+  }
+
+  // 解析单次上传场景；显式覆盖时忽略客户端 multipart scene。
+  private resolveUploadScene<T>(
+    sceneField: T,
+    options: UploadFileOptions,
+  ): string | null {
+    if (options.sceneOverride !== undefined) {
+      return this.normalizeSceneName(options.sceneOverride)
+    }
+
+    return this.extractScene(sceneField)
+  }
+
+  // 规范化场景名，复用 multipart scene 的同一值域。
+  private normalizeSceneName(scene: string) {
+    const normalizedScene = scene.trim()
     if (
       !normalizedScene ||
       !SCENE_NAME_REGEX.test(normalizedScene) ||
@@ -551,6 +588,17 @@ export class UploadService {
     }
 
     return normalizedScene
+  }
+
+  // 判断单次上传策略是否允许当前文件分类。
+  private isAllowedFileCategory(
+    fileCategory: UploadFileCategory,
+    options: UploadFileOptions,
+  ) {
+    return (
+      !options.allowedFileCategories ||
+      options.allowedFileCategories.includes(fileCategory)
+    )
   }
 
   /**

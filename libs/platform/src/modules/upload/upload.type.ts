@@ -117,6 +117,29 @@ export interface PreparedUploadFile {
 }
 
 /**
+ * provider 选择钩子的上下文。
+ * 调用方只能基于已完成校验的文件与系统配置选择 provider，不接触底层流或临时文件生命周期。
+ */
+export interface UploadProviderResolutionContext {
+  file: PreparedUploadFile
+  systemConfig: UploadSystemConfig
+  configuredProvider: UploadProviderEnum
+  defaultProvider: UploadProviderEnum
+}
+
+/**
+ * 单次上传的通用策略选项。
+ * 默认不传时保持公共上传入口的既有 provider、scene 和分类语义。
+ */
+export interface UploadFileOptions {
+  sceneOverride?: string
+  allowedFileCategories?: readonly UploadFileCategory[]
+  resolveProvider?: (
+    context: UploadProviderResolutionContext,
+  ) => UploadProviderEnum | undefined
+}
+
+/**
  * 规范化后的存储文件名与可选图片尺寸。
  */
 export interface StoredUploadNameResult {
