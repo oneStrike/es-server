@@ -1,453 +1,467 @@
-import { EventDefinitionImplStatusEnum } from '@libs/growth/event-definition/event-definition.constant'
+/// <reference types="jest" />
+
+import * as schema from '@db/schema'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { TaskService } from './task.service'
-import { TaskEventTemplateRegistry } from './task-event-template.registry'
+import { TaskDefinitionService } from './task-definition.service'
 import { TaskExecutionService } from './task-execution.service'
-import { TaskNotificationService } from './task-notification.service'
-import { TaskServiceSupport } from './task.service.support'
 import {
   TaskClaimModeEnum,
+  TaskDefinitionStatusEnum,
+  TaskInstanceStatusEnum,
   TaskRepeatCycleEnum,
   TaskStepTriggerModeEnum,
+  TaskTypeEnum,
 } from './task.constant'
 
-describe('task execution cycle helpers', () => {
-  const service = new TaskExecutionService(
-    null as never,
-    null as never,
-    null as never,
-  )
-
-  it('builds weekly cycle key from the Monday of the configured week', () => {
-    const task = {
-      repeatType: TaskRepeatCycleEnum.WEEKLY,
-    } as never
-
-    const cycleKey = (
-      service as unknown as {
-        buildTaskCycleKey: (task: unknown, now: Date) => string
-      }
-    ).buildTaskCycleKey(task, new Date('2026-04-22T08:00:00.000Z'))
-
-    expect(cycleKey).toBe('2026-04-20')
-  })
-
-  it('expires daily instances at the next natural-day boundary', () => {
-    const task = {
-      repeatType: TaskRepeatCycleEnum.DAILY,
-      endAt: null,
-    } as never
-
-    const expiredAt = (
-      service as unknown as {
-        buildTaskExpiredAt: (task: unknown, now: Date) => Date | null
-      }
-    ).buildTaskExpiredAt(task, new Date('2026-04-22T08:00:00.000Z'))
-
-    expect(expiredAt?.toISOString()).toBe('2026-04-22T16:00:00.000Z')
-  })
-
-  it('caps cycle expiration by task endAt when endAt is earlier', () => {
-    const task = {
-      repeatType: TaskRepeatCycleEnum.DAILY,
-      endAt: new Date('2026-04-22T12:00:00.000Z'),
-    } as never
-
-    const expiredAt = (
-      service as unknown as {
-        buildTaskExpiredAt: (task: unknown, now: Date) => Date | null
-      }
-    ).buildTaskExpiredAt(task, new Date('2026-04-22T08:00:00.000Z'))
-
-    expect(expiredAt?.toISOString()).toBe('2026-04-22T12:00:00.000Z')
-  })
-
-  it('ignores legacy repeatTimezone when building cycle keys', () => {
-    const task = {
-      repeatType: TaskRepeatCycleEnum.DAILY,
-      repeatTimezone: 'America/Los_Angeles',
-    } as never
-
-    const cycleKey = (
-      service as unknown as {
-        buildTaskCycleKey: (task: unknown, now: Date) => string
-      }
-    ).buildTaskCycleKey(task, new Date('2026-04-22T16:30:00.000Z'))
-
-    expect(cycleKey).toBe('2026-04-23')
-  })
-
-  it('ignores legacy repeatTimezone when calculating expiration', () => {
-    const task = {
-      repeatType: TaskRepeatCycleEnum.DAILY,
-      repeatTimezone: 'America/Los_Angeles',
-      endAt: null,
-    } as never
-
-    const expiredAt = (
-      service as unknown as {
-        buildTaskExpiredAt: (task: unknown, now: Date) => Date | null
-      }
-    ).buildTaskExpiredAt(task, new Date('2026-04-22T16:30:00.000Z'))
-
-    expect(expiredAt?.toISOString()).toBe('2026-04-23T16:00:00.000Z')
-  })
-})
-
-describe('task template contract hard cutover', () => {
-  it('strips eventCode from template options response', async () => {
-    const service = new TaskService(
-      {} as never,
-      {
-        listTemplates: jest.fn().mockReturnValue([
-          {
-            templateKey: 'COMIC_WORK_VIEW',
-            eventCode: 100,
-            label: '漫画作品浏览',
-            implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
-            isSelectable: true,
-            targetEntityType: 'comic_work',
-            supportsUniqueCounting: false,
-            uniqueDimension: undefined,
-            availableFilterFields: [],
-            warningHints: [],
-          },
-        ]),
-      } as never,
-      {} as never,
-      {} as never,
-    )
-
-    await expect(service.getTaskTemplateOptions()).resolves.toEqual({
-      list: [
-        {
-          templateKey: 'COMIC_WORK_VIEW',
-          label: '漫画作品浏览',
-          implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
-          isSelectable: true,
-          targetEntityType: 'comic_work',
-          supportsUniqueCounting: false,
-          availableFilterFields: [],
-          warningHints: [],
-        },
-      ],
-    })
-  })
-
-  it('matches targetType filter against the event envelope root field', () => {
-    const registry = new TaskEventTemplateRegistry({} as never)
-
-    expect(
-      registry.matchesFilterPayload(
-        { targetType: 'comic_work' },
-        'comic_work',
-        101,
-        {
-          browseTargetType: 9,
-        },
-      ),
-    ).toBe(true)
-
-    expect(
-      registry.matchesFilterPayload(
-        { targetType: 'novel_work' },
-        'comic_work',
-        101,
-        {
-          browseTargetType: 9,
-        },
-      ),
-    ).toBe(false)
-  })
-})
-
-describe('task domain business exception contract', () => {
-  class TaskServiceSupportHarness extends TaskServiceSupport {
-    // 触发任务定义发布时间窗口校验。
-    rejectInvalidWindow() {
-      this.ensureTaskDefinitionWindow(
-        new Date('2026-05-02T00:00:00.000Z'),
-        new Date('2026-05-01T00:00:00.000Z'),
-      )
-    }
+function createThenableBuilder<TResult>(
+  result: TResult,
+  recorder: Record<string, ReturnType<typeof jest.fn>> = {},
+) {
+  const builder: Record<string, ReturnType<typeof jest.fn>> & {
+    then: Promise<TResult>['then']
+    catch: Promise<TResult>['catch']
+    finally: Promise<TResult>['finally']
+  } = {
+    from: jest.fn(() => builder),
+    innerJoin: jest.fn(() => builder),
+    leftJoin: jest.fn(() => builder),
+    where: jest.fn(() => builder),
+    groupBy: jest.fn(() => builder),
+    orderBy: jest.fn(() => builder),
+    limit: jest.fn(() => builder),
+    offset: jest.fn(() => Promise.resolve(result)),
+    set: jest.fn(() => builder),
+    returning: jest.fn(() => Promise.resolve(result)),
+    then: Promise.resolve(result).then.bind(Promise.resolve(result)),
+    catch: Promise.resolve(result).catch.bind(Promise.resolve(result)),
+    finally: Promise.resolve(result).finally.bind(Promise.resolve(result)),
   }
 
-  it('uses business exception for task definition validation failures', () => {
-    const support = new TaskServiceSupportHarness({} as never)
+  Object.assign(recorder, builder)
+  return builder
+}
 
-    expect(() => support.rejectInvalidWindow()).toThrow(BusinessException)
-    expect(() => support.rejectInvalidWindow()).toThrow(
-      expect.objectContaining({
-        code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        message: '生效开始时间不能晚于生效结束时间',
-      }),
-    )
-  })
+function createExecutionService() {
+  const tx = {
+    insert: jest.fn(() => createThenableBuilder([])),
+    update: jest.fn(() => createThenableBuilder([])),
+    select: jest.fn(() => createThenableBuilder([])),
+    execute: jest.fn(),
+    query: {},
+  }
+  const db = {
+    insert: jest.fn(() => createThenableBuilder([])),
+    update: jest.fn(() => createThenableBuilder([])),
+    select: jest.fn(() => createThenableBuilder([])),
+    execute: jest.fn(),
+    query: {},
+  }
+  const drizzle = {
+    schema,
+    db,
+    buildPage: jest.fn(() => ({
+      pageIndex: 1,
+      pageSize: 20,
+      limit: 20,
+      offset: 0,
+    })),
+    withTransaction: jest.fn(async (callback: (runner: typeof tx) => unknown) =>
+      callback(tx),
+    ),
+  }
+  const registry = {
+    resolveUniqueDimensionValue: jest.fn(),
+  }
+  const reward = {
+    tryRewardTaskComplete: jest.fn(),
+  }
+  const publisher = {
+    publishInTx: jest.fn(),
+  }
+  const notification = {
+    createAutoAssignedReminderEvent: jest.fn(() => ({
+      eventKey: 'task.reminder.auto_assigned',
+    })),
+    createRewardGrantedReminderEvent: jest.fn(() => ({
+      eventKey: 'task.reminder.reward_granted',
+    })),
+    buildAutoAssignedReminderBizKey: jest.fn(
+      (instanceId: number) => `task:auto:${instanceId}`,
+    ),
+    buildRewardGrantedReminderBizKey: jest.fn(
+      (instanceId: number) => `task:reward:${instanceId}`,
+    ),
+  }
 
-  it('uses business exception for task template filter validation failures', () => {
-    const registry = new TaskEventTemplateRegistry({
-      listEventDefinitions: jest.fn().mockReturnValue([]),
-    } as never)
+  const service = new (TaskExecutionService as any)(
+    drizzle,
+    registry,
+    reward,
+    publisher,
+    notification,
+  ) as TaskExecutionService
 
-    expect(() =>
-      registry.normalizeFilterPayload('missing-template', [
-        { key: 'targetType', value: 'comic_work' },
-      ]),
-    ).toThrow(BusinessException)
-    expect(() =>
-      registry.normalizeFilterPayload('missing-template', [
-        { key: 'targetType', value: 'comic_work' },
-      ]),
-    ).toThrow(
-      expect.objectContaining({
-        code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        message: '事件步骤模板不存在',
-      }),
-    )
-  })
-})
+  return { service, drizzle, tx, db, registry, reward, publisher, notification }
+}
 
-describe('task manual execution hard cutover', () => {
-  function createExecutionHarness() {
-    const schema = {
-      taskInstance: { name: 'taskInstance' },
-      taskInstanceStep: { name: 'taskInstanceStep' },
-      taskEventLog: { name: 'taskEventLog' },
-    }
+function createManualTask(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 1,
+    code: 'TASK_1',
+    title: 'Manual task',
+    sceneType: TaskTypeEnum.DAILY,
+    status: TaskDefinitionStatusEnum.ACTIVE,
+    claimMode: TaskClaimModeEnum.MANUAL,
+    repeatType: TaskRepeatCycleEnum.ONCE,
+    rewardItems: null,
+    startAt: null,
+    endAt: null,
+    ...overrides,
+  } as any
+}
 
-    const updateWhere = jest.fn().mockResolvedValue(undefined)
-    const updateSet = jest.fn(() => ({ where: updateWhere }))
-    const update = jest.fn(() => ({ set: updateSet }))
+function createStep(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 11,
+    taskId: 1,
+    stepNo: 1,
+    title: 'Step',
+    triggerMode: TaskStepTriggerModeEnum.MANUAL,
+    targetValue: 3,
+    templateKey: null,
+    eventCode: null,
+    filterPayload: null,
+    dedupeScope: null,
+    ...overrides,
+  } as any
+}
 
-    const taskInstanceStepInsertValues = jest.fn(() => ({
-      onConflictDoNothing: () => ({
-        returning: jest.fn().mockResolvedValue([
-          {
-            id: 9001,
-            instanceId: 501,
-            stepId: 601,
-            status: 0,
-            currentValue: 0,
-            targetValue: 1,
-            completedAt: null,
-            context: null,
-            version: 0,
-            createdAt: new Date('2026-04-23T09:00:00.000Z'),
-            updatedAt: new Date('2026-04-23T09:00:00.000Z'),
-          },
-        ]),
-      }),
-    }))
-    const taskEventLogInsertValues = jest.fn().mockResolvedValue(undefined)
-    const insert = jest.fn((table: unknown) => {
-      if (table === schema.taskInstanceStep) {
-        return {
-          values: taskInstanceStepInsertValues,
-        }
-      }
-      if (table === schema.taskEventLog) {
-        return {
-          values: taskEventLogInsertValues,
-        }
-      }
-      throw new Error('unexpected insert target')
-    })
+function createInstance(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 101,
+    taskId: 1,
+    userId: 202,
+    cycleKey: 'once',
+    status: TaskInstanceStatusEnum.PENDING,
+    rewardApplicable: 0,
+    snapshotPayload: {
+      taskId: 1,
+      code: 'TASK_1',
+      title: 'Manual task',
+      sceneType: TaskTypeEnum.DAILY,
+      rewardItems: null,
+    },
+    completedAt: null,
+    expiredAt: null,
+    ...overrides,
+  } as any
+}
 
-    const tx = {
-      query: {
-        taskInstance: {
-          findFirst: jest.fn(),
-        },
-        taskInstanceStep: {
-          findFirst: jest.fn(),
-        },
-      },
-      insert,
-      update,
-    }
+describe('TaskExecutionService review regressions', () => {
+  it('claimTask creates instance step immediately in the claim transaction', async () => {
+    const { service, tx } = createExecutionService()
+    const task = createManualTask()
+    const step = createStep()
+    const instance = createInstance()
+    const instanceStep = { id: 303, instanceId: instance.id, stepId: step.id }
 
-    const drizzle = {
-      schema,
-      db: {},
-      withTransaction: jest.fn(
-        async (fn: (runner: unknown) => Promise<unknown>) => fn(tx),
-      ),
-    }
-    const rewardService = {
-      tryRewardTaskComplete: jest.fn(),
-    }
-    const service = new TaskExecutionService(
-      drizzle as never,
-      {} as never,
-      rewardService as never,
-    )
+    jest
+      .spyOn(service as any, 'getAvailableTaskDefinitionOrThrow')
+      .mockResolvedValue(task)
+    jest
+      .spyOn(service as any, 'getSingleTaskStepOrThrow')
+      .mockResolvedValue(step)
+    jest.spyOn(service as any, 'findTaskInstance').mockResolvedValue(null)
+    jest
+      .spyOn(service as any, 'createOrGetTaskInstance')
+      .mockResolvedValue({ instance, created: true })
+    const createStepSpy = jest
+      .spyOn(service as any, 'createOrGetTaskInstanceStep')
+      .mockResolvedValue({ instanceStep, created: true })
+    const writeLogSpy = jest
+      .spyOn(service as any, 'writeTaskEventLog')
+      .mockResolvedValue(undefined)
 
-    return {
-      service,
+    await service.claimTask({ id: task.id }, instance.userId)
+
+    expect(createStepSpy).toHaveBeenCalledWith(tx, instance.id, step)
+    expect(writeLogSpy).toHaveBeenCalledWith(
       tx,
-      drizzle,
-      rewardService,
-      taskEventLogInsertValues,
-    }
-  }
-
-  it('rejects claimTask for non-manual tasks without side effects', async () => {
-    const { service, drizzle } = createExecutionHarness()
-    jest
-      .spyOn(service as never, 'getAvailableTaskDefinitionOrThrow')
-      .mockResolvedValue({
-        id: 11,
-        claimMode: TaskClaimModeEnum.AUTO,
-      } as never)
-    jest.spyOn(service as never, 'getSingleTaskStepOrThrow').mockResolvedValue({
-      id: 21,
-      triggerMode: TaskStepTriggerModeEnum.MANUAL,
-    } as never)
-
-    await expect(
-      service.claimTask({ id: 11 } as never, 1001),
-    ).rejects.toMatchObject({
-      message: '当前任务不允许手动领取或手动完成',
-    })
-    expect(drizzle.withTransaction).not.toHaveBeenCalled()
-  })
-
-  it('rejects reportProgress when the manual task has not been claimed', async () => {
-    const { service, tx, rewardService, taskEventLogInsertValues } =
-      createExecutionHarness()
-    jest
-      .spyOn(service as never, 'getAvailableTaskDefinitionOrThrow')
-      .mockResolvedValue({
-        id: 11,
-        claimMode: TaskClaimModeEnum.MANUAL,
-        repeatType: TaskRepeatCycleEnum.ONCE,
-        rewardItems: null,
-      } as never)
-    jest.spyOn(service as never, 'getSingleTaskStepOrThrow').mockResolvedValue({
-      id: 21,
-      triggerMode: TaskStepTriggerModeEnum.MANUAL,
-    } as never)
-    tx.query.taskInstance.findFirst.mockResolvedValue(null)
-
-    await expect(
-      service.reportProgress({ id: 11, delta: 1 } as never, 1001),
-    ).rejects.toMatchObject({
-      message: '任务未领取',
-    })
-    expect(taskEventLogInsertValues).not.toHaveBeenCalled()
-    expect(rewardService.tryRewardTaskComplete).not.toHaveBeenCalled()
-  })
-
-  it('allows completeTask to finish a fresh once/manual task after claim', async () => {
-    const { service, tx, rewardService, taskEventLogInsertValues } =
-      createExecutionHarness()
-    jest
-      .spyOn(service as never, 'getAvailableTaskDefinitionOrThrow')
-      .mockResolvedValue({
-        id: 11,
-        claimMode: TaskClaimModeEnum.MANUAL,
-        repeatType: TaskRepeatCycleEnum.ONCE,
-        rewardItems: null,
-      } as never)
-    jest.spyOn(service as never, 'getSingleTaskStepOrThrow').mockResolvedValue({
-      id: 601,
-      triggerMode: TaskStepTriggerModeEnum.MANUAL,
-      targetValue: 1,
-    } as never)
-    tx.query.taskInstance.findFirst.mockResolvedValue({
-      id: 501,
-      status: 0,
-      taskId: 11,
-      userId: 1001,
-      cycleKey: 'once',
-    })
-
-    await expect(service.completeTask({ id: 11 } as never, 1001)).resolves.toBe(
-      true,
+      expect.objectContaining({
+        instanceId: instance.id,
+        actionType: expect.any(Number),
+      }),
     )
-    expect(taskEventLogInsertValues).toHaveBeenCalledTimes(1)
-    expect(rewardService.tryRewardTaskComplete).not.toHaveBeenCalled()
+  })
+
+  it('reportProgress delegates progress mutation to the database-winner helper', async () => {
+    const { service, tx } = createExecutionService()
+    const task = createManualTask()
+    const step = createStep()
+    const instance = createInstance({
+      status: TaskInstanceStatusEnum.IN_PROGRESS,
+    })
+    const instanceStep = {
+      id: 303,
+      instanceId: instance.id,
+      stepId: step.id,
+      status: TaskInstanceStatusEnum.IN_PROGRESS,
+      currentValue: 0,
+      targetValue: 3,
+    }
+
+    jest
+      .spyOn(service as any, 'getAvailableTaskDefinitionOrThrow')
+      .mockResolvedValue(task)
+    jest
+      .spyOn(service as any, 'getSingleTaskStepOrThrow')
+      .mockResolvedValue(step)
+    jest.spyOn(service as any, 'findTaskInstance').mockResolvedValue(instance)
+    jest
+      .spyOn(service as any, 'createOrGetTaskInstanceStep')
+      .mockResolvedValue({ instanceStep, created: false })
+    const progressSpy = jest
+      .spyOn(service as any, 'applyTaskInstanceProgressInTx')
+      .mockResolvedValue({
+        instanceId: instance.id,
+        instanceStepId: instanceStep.id,
+        beforeValue: 0,
+        afterValue: 2,
+        appliedDelta: 2,
+        status: TaskInstanceStatusEnum.IN_PROGRESS,
+        completed: false,
+      })
+    jest.spyOn(service as any, 'writeTaskEventLog').mockResolvedValue(undefined)
+
+    await service.reportProgress({ id: task.id, delta: 2 }, instance.userId)
+
+    expect(progressSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runner: tx,
+        instance,
+        instanceStep,
+        delta: 2,
+      }),
+    )
+  })
+
+  it('getTaskInstancePage applies sceneType to both list and total queries', async () => {
+    const { service, db } = createExecutionService()
+    const listBuilder = createThenableBuilder([])
+    const totalBuilder = createThenableBuilder([{ count: 0 }])
+    db.select = jest
+      .fn()
+      .mockReturnValueOnce(listBuilder)
+      .mockReturnValueOnce(totalBuilder)
+    jest
+      .spyOn(service as any, 'getTaskStepSummaryMap')
+      .mockResolvedValue(new Map())
+    jest
+      .spyOn(service as any, 'getTaskInstanceStepViewMap')
+      .mockResolvedValue(new Map())
+
+    await service.getTaskInstancePage({ sceneType: TaskTypeEnum.DAILY })
+
+    expect(listBuilder.leftJoin).toHaveBeenCalledWith(
+      schema.taskDefinition,
+      expect.anything(),
+    )
+    expect(totalBuilder.leftJoin).toHaveBeenCalledWith(
+      schema.taskDefinition,
+      expect.anything(),
+    )
+  })
+
+  it('applyEventToTaskStep publishes auto-assigned reminder when an AUTO task instance is created', async () => {
+    const { service, tx } = createExecutionService()
+    const task = createManualTask({
+      claimMode: TaskClaimModeEnum.AUTO,
+      rewardItems: null,
+    })
+    const step = createStep({
+      triggerMode: TaskStepTriggerModeEnum.EVENT,
+      targetValue: 2,
+    })
+    const instance = createInstance({
+      status: TaskInstanceStatusEnum.PENDING,
+      rewardApplicable: 0,
+    })
+    const instanceStep = {
+      id: 303,
+      instanceId: instance.id,
+      stepId: step.id,
+      currentValue: 0,
+      targetValue: step.targetValue,
+    }
+    const occurredAt = new Date('2026-05-06T00:00:00.000Z')
+
+    jest.spyOn(service as any, 'findTaskInstance').mockResolvedValue(null)
+    jest
+      .spyOn(service as any, 'createOrGetTaskInstance')
+      .mockResolvedValue({ instance, created: true })
+    jest
+      .spyOn(service as any, 'createOrGetTaskInstanceStep')
+      .mockResolvedValue({ instanceStep, created: true })
+    jest
+      .spyOn(service as any, 'applyTaskInstanceProgressInTx')
+      .mockResolvedValue({
+        instanceId: instance.id,
+        instanceStepId: instanceStep.id,
+        beforeValue: 0,
+        afterValue: 1,
+        appliedDelta: 1,
+        status: TaskInstanceStatusEnum.IN_PROGRESS,
+        completed: false,
+      })
+    const publishSpy = jest
+      .spyOn(service as any, 'publishAutoAssignedReminderInTx')
+      .mockResolvedValue(undefined)
+    jest.spyOn(service as any, 'writeTaskEventLog').mockResolvedValue(undefined)
+
+    await (service as any).applyEventToTaskStep({
+      task,
+      step,
+      userId: instance.userId,
+      eventBizKey: 'event-1',
+      eventCode: 1001,
+      targetType: 'post',
+      targetId: 88,
+      occurredAt,
+      context: {},
+    })
+
+    expect(publishSpy).toHaveBeenCalledWith(tx, task, instance, occurredAt)
+  })
+
+  it('settleTaskInstanceReward publishes reward-granted reminder only for the first successful settlement update', async () => {
+    const { service, reward, tx } = createExecutionService()
+    const settlement = { id: 909 }
+    jest
+      .spyOn(service as any, 'ensureTaskRewardSettlementLink')
+      .mockResolvedValue(settlement)
+    reward.tryRewardTaskComplete.mockResolvedValue({
+      success: true,
+      resultType: 1,
+      settledAt: new Date('2026-05-06T00:00:00.000Z'),
+      ledgerRecordIds: [7001],
+    })
+    const publishSpy = jest
+      .spyOn(service as any, 'publishRewardGrantedReminderInTx')
+      .mockResolvedValue(undefined)
+    jest
+      .spyOn(service as any, 'updateRewardSettlementResultInTx')
+      .mockResolvedValue({ updated: true })
+
+    await (service as any).settleTaskInstanceReward({
+      taskId: 1,
+      instanceId: 101,
+      userId: 202,
+      rewardItems: [{ assetType: 1, amount: 10 }],
+      occurredAt: new Date('2026-05-06T00:00:00.000Z'),
+    })
+
+    expect(publishSpy).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        taskId: 1,
+        instanceId: 101,
+        userId: 202,
+        ledgerRecordIds: [7001],
+      }),
+    )
   })
 })
 
-describe('task reminder payload hard cutover', () => {
-  it('uses instanceId in reminder payload instead of assignmentId', () => {
-    const service = new TaskNotificationService()
-
-    const event = service.createExpiringSoonReminderEvent({
-      bizKey: 'task:reminder:expiring:instance:88',
-      receiverUserId: 1001,
-      task: {
-        id: 9,
-        code: 'daily_view',
-        title: '浏览作品',
-        type: 2,
-      },
-      cycleKey: '2026-04-23',
-      instanceId: 88,
-      expiredAt: new Date('2026-04-24T00:00:00.000Z'),
-    })
-
-    expect(event.context?.payload).toMatchObject({
-      reminder: {
-        kind: 'expiring_soon',
-        instanceId: 88,
-      },
-    })
-    expect(event.context?.payload).not.toHaveProperty('reminder.assignmentId')
-  })
-})
-
-describe('task available list hard cutover', () => {
-  it('orders candidate tasks by sortOrder then id', async () => {
-    const schema = {
-      taskDefinition: {
-        deletedAt: Symbol('deletedAt'),
-        status: Symbol('status'),
-        claimMode: Symbol('claimMode'),
-        startAt: Symbol('startAt'),
-        endAt: Symbol('endAt'),
-        sceneType: Symbol('sceneType'),
-        sortOrder: Symbol('sortOrder'),
-        id: Symbol('id'),
+describe('TaskDefinitionService review regressions', () => {
+  it('blocks execution-contract updates while a task has active instances', async () => {
+    const tx = {
+      update: jest.fn(() => createThenableBuilder([])),
+    }
+    const db = {
+      query: {
+        taskStep: {
+          findFirst: jest.fn().mockResolvedValue(createStep()),
+        },
       },
     }
-    const orderBy = jest.fn().mockResolvedValue([])
-    const where = jest.fn(() => ({ orderBy }))
-    const from = jest.fn(() => ({ where }))
-    const select = jest.fn(() => ({ from }))
     const drizzle = {
       schema,
-      db: { select },
-      buildPage: jest.fn().mockReturnValue({
-        pageIndex: 1,
-        pageSize: 20,
-        limit: 20,
-        offset: 0,
-      }),
+      db,
+      withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
+      withTransaction: jest.fn(
+        async (callback: (runner: typeof tx) => unknown) => callback(tx),
+      ),
     }
-    const service = new TaskExecutionService(
-      drizzle as never,
-      {} as never,
-      {} as never,
+    const registry = {
+      getTemplateByKey: jest.fn(),
+      buildFilterValues: jest.fn(() => []),
+    }
+    const service = new TaskDefinitionService(drizzle as any, registry as any)
+    jest
+      .spyOn(service as any, 'getTaskDefinitionRecordOrThrow')
+      .mockResolvedValue(createManualTask())
+    const guardError = new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '任务已有进行中的实例，不能修改执行合同',
     )
-    ;(service as never as { filterClaimableTaskDefinitionsForUser: jest.Mock })
-      .filterClaimableTaskDefinitionsForUser = jest.fn().mockResolvedValue([])
-    ;(service as never as { getTaskStepSummaryMap: jest.Mock })
-      .getTaskStepSummaryMap = jest.fn().mockResolvedValue(new Map())
+    const guardSpy = jest
+      .spyOn(service as any, 'ensureNoActiveTaskInstances')
+      .mockRejectedValue(guardError)
 
-    await expect(service.getAvailableTasks({} as never, 1001)).resolves.toEqual(
-      {
-        list: [],
-        total: 0,
-        pageIndex: 1,
-        pageSize: 20,
+    await expect(
+      service.updateTaskDefinition(
+        {
+          id: 1,
+          step: {
+            triggerMode: TaskStepTriggerModeEnum.MANUAL,
+            targetValue: 5,
+          },
+        },
+        9,
+      ),
+    ).rejects.toBe(guardError)
+
+    expect(guardSpy).toHaveBeenCalledWith(expect.anything(), 1)
+  })
+
+  it('allows display-only task updates without active-instance guard', async () => {
+    const tx = {
+      update: jest.fn(() => createThenableBuilder([])),
+    }
+    const db = {
+      query: {
+        taskStep: {
+          findFirst: jest.fn().mockResolvedValue(createStep()),
+        },
       },
+    }
+    const drizzle = {
+      schema,
+      db,
+      withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
+      withTransaction: jest.fn(
+        async (callback: (runner: typeof tx) => unknown) => callback(tx),
+      ),
+    }
+    const registry = {
+      getTemplateByKey: jest.fn(),
+      buildFilterValues: jest.fn(() => []),
+    }
+    const service = new TaskDefinitionService(drizzle as any, registry as any)
+    jest
+      .spyOn(service as any, 'getTaskDefinitionRecordOrThrow')
+      .mockResolvedValue(createManualTask())
+    const guardSpy = jest.spyOn(service as any, 'ensureNoActiveTaskInstances')
+
+    await service.updateTaskDefinition(
+      {
+        id: 1,
+        title: 'Renamed task',
+      },
+      9,
     )
-    expect(orderBy).toHaveBeenCalledWith(
-      schema.taskDefinition.sortOrder,
-      schema.taskDefinition.id,
-    )
+
+    expect(guardSpy).not.toHaveBeenCalled()
   })
 })

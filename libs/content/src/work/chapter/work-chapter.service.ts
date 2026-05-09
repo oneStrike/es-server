@@ -66,11 +66,6 @@ export class WorkChapterService {
     return this.drizzle.schema.appUser
   }
 
-  // user_level_rule 表访问入口。
-  get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
-  }
-
   // 构建 app/public 章节详情响应，明确裁剪 remark、删除标记和后台挂载对象，避免公开接口直接暴露内部字段。
   private buildPublicChapterDetail(chapter: WorkChapterPublicDetailRow) {
     return {
@@ -493,20 +488,6 @@ export class WorkChapterService {
   // 更新章节。
   async updateChapter(dto: UpdateWorkChapterDto) {
     const { id, ...updateData } = dto
-    const { requiredViewLevelId } = updateData
-
-    if (
-      requiredViewLevelId &&
-      !(await this.drizzle.ext.exists(
-        this.userLevelRule,
-        eq(this.userLevelRule.id, requiredViewLevelId),
-      ))
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '指定的阅读会员等级不存在',
-      )
-    }
 
     await this.drizzle.withErrorHandling(
       () =>

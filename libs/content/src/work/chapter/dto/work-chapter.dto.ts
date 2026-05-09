@@ -1,8 +1,4 @@
 import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
-import {
-  PurchasePricingDto,
-  PurchasePricingFieldsDto,
-} from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -13,7 +9,6 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 
 import {
@@ -22,6 +17,11 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+
+import {
+  ContentPurchasePricingDto,
+  ContentPurchasePricingFieldsDto,
+} from '../../../permission/dto/content-purchase-pricing.dto'
 
 export class BaseWorkChapterDto extends BaseDto {
   @NumberProperty({ description: '作品ID', example: 1, required: true })
@@ -85,7 +85,7 @@ export class BaseWorkChapterDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '查看规则（-1=继承作品；0=所有人可见；1=登录用户可见；2=会员可见；3=需购买可见）',
+      '查看规则（-1=继承作品；0=所有人可见；1=登录用户可见；2=VIP可见；3=需购买可见）',
     example: WorkViewPermissionEnum.INHERIT,
     required: true,
     enum: WorkViewPermissionEnum,
@@ -93,7 +93,7 @@ export class BaseWorkChapterDto extends BaseDto {
   viewRule!: WorkViewPermissionEnum
 
   @NumberProperty({
-    description: '阅读所需会员等级ID',
+    description: '历史阅读等级ID（目标态不参与阅读权限）',
     example: 1,
     required: false,
   })
@@ -254,12 +254,12 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
 ] as const) {
   @NestedProperty({
     description: '购买价格信息',
-    type: PurchasePricingDto,
+    type: ContentPurchasePricingDto,
     required: false,
     validation: false,
     nullable: true,
   })
-  purchasePricing!: PurchasePricingDto | null
+  purchasePricing!: ContentPurchasePricingDto | null
 }
 
 class ChapterUserStatusFieldsDto {
@@ -317,7 +317,7 @@ class WorkChapterDetailBodyBaseDto extends PickType(BaseWorkChapterDto, [
 
 class WorkChapterDetailBodyDto extends IntersectionType(
   WorkChapterDetailBodyBaseDto,
-  PurchasePricingFieldsDto,
+  ContentPurchasePricingFieldsDto,
 ) {}
 
 /**

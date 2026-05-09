@@ -11,6 +11,7 @@ import type {
   TaskReminderRewardSummary,
   TaskRewardGrantedReminderEventInput,
 } from './types/task.type'
+import { Injectable } from '@nestjs/common'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import { normalizeTaskType, TaskReminderKindEnum } from './task.constant'
 
@@ -18,6 +19,7 @@ import { normalizeTaskType, TaskReminderKindEnum } from './task.constant'
  * 任务提醒事件组装器。
  * 统一生成任务提醒领域事件与稳定 projectionKey/context 合同。
  */
+@Injectable()
 export class TaskNotificationService {
   // 生成自动加入任务提醒事件。
   createAutoAssignedReminderEvent(

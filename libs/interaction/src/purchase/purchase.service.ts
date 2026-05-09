@@ -2,25 +2,37 @@ import type { PostgresErrorSourceObject } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type { PurchasePricingDto } from './dto/purchase-pricing.dto'
 import { DrizzleService } from '@db/core'
+import {
+  ContentEntitlementGrantSourceEnum,
+  ContentEntitlementTargetTypeEnum,
+} from '@libs/content/permission/content-entitlement.constant'
+import { ContentEntitlementService } from '@libs/content/permission/content-entitlement.service'
 import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
+import { WorkCounterService } from '@libs/content/work/counter/work-counter.service'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import { BusinessErrorCode } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  ContentTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
+import { CouponRedemptionTargetTypeEnum } from '../monetization/monetization.constant'
+import { MonetizationService } from '../monetization/monetization.service'
 import {
   PurchaseChapterResultDto,
   PurchaseTargetCommandDto,
   QueryPurchasedWorkChapterCommandDto,
   QueryPurchasedWorkCommandDto,
 } from './dto/purchase.dto'
-import { IPurchaseTargetResolver } from './interfaces/purchase-target-resolver.interface'
 import {
+  PaymentMethodEnum,
   PURCHASE_WORK_CHAPTER_TARGET_TYPES,
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
@@ -34,15 +46,14 @@ const PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL = sql.join(
 @Injectable()
 export class PurchaseService {
   private readonly logger = new Logger(PurchaseService.name)
-  private readonly resolvers = new Map<
-    PurchaseTargetTypeEnum,
-    IPurchaseTargetResolver
-  >()
 
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
     private readonly drizzle: DrizzleService,
     private readonly contentPermissionService: ContentPermissionService,
+    private readonly contentEntitlementService: ContentEntitlementService,
+    private readonly workCounterService: WorkCounterService,
+    private readonly monetizationService: MonetizationService,
   ) {}
 
   private get db() {
@@ -53,36 +64,15 @@ export class PurchaseService {
     return this.drizzle.schema.userPurchaseRecord
   }
 
-  /**
-   * 注册购买目标解析器
-   */
-  registerResolver(resolver: IPurchaseTargetResolver) {
-    if (this.resolvers.has(resolver.targetType)) {
-      console.warn(
-        `Purchase resolver for type ${resolver.targetType} is being overwritten.`,
-      )
-    }
-    this.resolvers.set(resolver.targetType, resolver)
-  }
-
-  /**
-   * 获取指定的购买解析器
-   */
-  private getResolver(targetType: PurchaseTargetTypeEnum) {
-    const resolver = this.resolvers.get(targetType)
-    if (!resolver) {
-      throw new BadRequestException('不支持的购买业务类型')
-    }
-    return resolver
-  }
-
   private isUniqueConstraintError(
     error: Error | PostgresErrorSourceObject | null | undefined,
   ) {
     return this.drizzle.isUniqueViolation(error)
   }
 
-  private extractRows<T>(result: { rows?: T[] | null } | object | null | undefined) {
+  private extractRows<T>(
+    result: { rows?: T[] | null } | object | null | undefined,
+  ) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
     }
@@ -90,9 +80,12 @@ export class PurchaseService {
     return Array.isArray(rows) ? rows : []
   }
 
-  private buildPurchaseCreatedAtFilter(startDate?: string, endDate?: string) {
+  private buildPurchaseCreatedAtFilter(
+    startDate?: string,
+    endDate?: string,
+    columnRef = this.buildPurchaseCreatedAtExpression(),
+  ) {
     const filters: SQL[] = []
-    const columnRef = sql`upr.created_at`
     const dateRange = buildDateOnlyRangeInAppTimeZone(startDate, endDate)
 
     if (dateRange?.gte) {
@@ -110,6 +103,10 @@ export class PurchaseService {
     return sql` AND ${sql.join(filters, sql` AND `)}`
   }
 
+  private buildPurchaseCreatedAtExpression() {
+    return sql`COALESCE(upr.created_at, uce.created_at)`
+  }
+
   /**
    * 校验购买条件并获取价格
    */
@@ -117,8 +114,74 @@ export class PurchaseService {
     targetType: PurchaseTargetTypeEnum,
     targetId: number,
   ) {
-    const resolver = this.getResolver(targetType)
-    return resolver.ensurePurchaseable(targetId)
+    return this.ensureChapterPurchaseable(targetType, targetId)
+  }
+
+  // 将购买目标类型映射为内容作品类型。
+  private resolveWorkType(targetType: PurchaseTargetTypeEnum) {
+    if (targetType === PurchaseTargetTypeEnum.COMIC_CHAPTER) {
+      return ContentTypeEnum.COMIC
+    }
+    if (targetType === PurchaseTargetTypeEnum.NOVEL_CHAPTER) {
+      return ContentTypeEnum.NOVEL
+    }
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '不支持的购买业务类型',
+    )
+  }
+
+  // 将购买目标类型映射为内容权益目标类型。
+  private resolveEntitlementTargetType(targetType: PurchaseTargetTypeEnum) {
+    if (targetType === PurchaseTargetTypeEnum.COMIC_CHAPTER) {
+      return ContentEntitlementTargetTypeEnum.COMIC_CHAPTER
+    }
+    if (targetType === PurchaseTargetTypeEnum.NOVEL_CHAPTER) {
+      return ContentEntitlementTargetTypeEnum.NOVEL_CHAPTER
+    }
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '不支持的购买权益目标类型',
+    )
+  }
+
+  // 校验章节可购买并返回价格快照所需的原价。
+  private async ensureChapterPurchaseable(
+    targetType: PurchaseTargetTypeEnum,
+    targetId: number,
+  ) {
+    const permission =
+      await this.contentPermissionService.resolveChapterPermission(targetId)
+    const expectedWorkType = this.resolveWorkType(targetType)
+
+    if (permission.workType !== expectedWorkType) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
+    }
+
+    if (permission.viewRule !== WorkViewPermissionEnum.PURCHASE) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该章节不支持购买',
+      )
+    }
+
+    if (
+      !permission.purchasePricing ||
+      permission.purchasePricing.originalPrice < 0
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '章节价格配置错误',
+      )
+    }
+
+    return {
+      originalPrice: permission.purchasePricing.originalPrice,
+      workType: expectedWorkType,
+    }
   }
 
   /**
@@ -146,24 +209,56 @@ export class PurchaseService {
   async purchaseTarget(
     input: PurchaseTargetCommandDto,
   ): Promise<PurchaseChapterResultDto> {
-    const { targetType, targetId, userId, paymentMethod, outTradeNo } = input
-    const resolver = this.getResolver(targetType)
-
-    const { originalPrice } = await resolver.ensurePurchaseable(targetId)
-    const purchasePricing =
-      await this.contentPermissionService.resolvePurchasePricing(
-        originalPrice,
-        userId,
+    const {
+      targetType,
+      targetId,
+      userId,
+      paymentMethod,
+      outTradeNo,
+      couponInstanceId,
+    } = input
+    if (paymentMethod !== PaymentMethodEnum.CURRENCY) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '章节购买仅支持虚拟币余额支付',
       )
-    const paidPrice = purchasePricing.payablePrice
-    const payableRate = purchasePricing.payableRate.toFixed(2)
+    }
+
+    const { originalPrice, workType } = await this.ensureChapterPurchaseable(
+      targetType,
+      targetId,
+    )
+    const entitlementTargetType = this.resolveEntitlementTargetType(targetType)
 
     this.logger.log(
-      `purchase_start userId=${userId} targetType=${targetType} targetId=${targetId} originalPrice=${originalPrice} paidPrice=${paidPrice}`,
+      `purchase_start userId=${userId} targetType=${targetType} targetId=${targetId} originalPrice=${originalPrice} couponInstanceId=${couponInstanceId ?? 'none'}`,
     )
 
     try {
       return await this.db.transaction(async (tx) => {
+        const discount = couponInstanceId
+          ? await this.monetizationService.reserveDiscountCoupon(tx, {
+              userId,
+              couponInstanceId,
+              targetType:
+                targetType === PurchaseTargetTypeEnum.COMIC_CHAPTER
+                  ? CouponRedemptionTargetTypeEnum.COMIC_CHAPTER
+                  : CouponRedemptionTargetTypeEnum.NOVEL_CHAPTER,
+              targetId,
+              originalPrice,
+            })
+          : undefined
+        const purchasePricing = await this.contentPermissionService
+          .resolvePurchasePricing(originalPrice)
+          .then((pricing) => ({
+            ...pricing,
+            payablePrice: discount?.paidPrice ?? pricing.payablePrice,
+            discountAmount: discount?.discountAmount ?? pricing.discountAmount,
+          }))
+        const paidPrice = purchasePricing.payablePrice
+        const payableRate =
+          originalPrice > 0 ? (paidPrice / originalPrice).toFixed(2) : '1.00'
+
         const [record] = await tx
           .insert(this.userPurchaseRecord)
           .values({
@@ -173,6 +268,9 @@ export class PurchaseService {
             originalPrice,
             paidPrice,
             payableRate,
+            discountAmount: purchasePricing.discountAmount,
+            couponInstanceId,
+            discountSource: discount ? 1 : 0,
             status: PurchaseStatusEnum.SUCCESS,
             paymentMethod,
             outTradeNo,
@@ -182,7 +280,8 @@ export class PurchaseService {
         if (paidPrice > 0) {
           const consumeResult = await this.growthLedgerService.applyDelta(tx, {
             userId,
-            assetType: GrowthAssetTypeEnum.POINTS,
+            assetType: GrowthAssetTypeEnum.CURRENCY,
+            assetKey: 'reading_coin',
             action: GrowthLedgerActionEnum.CONSUME,
             amount: paidPrice,
             bizKey: `purchase:${record.id}:consume`,
@@ -199,11 +298,11 @@ export class PurchaseService {
           if (!consumeResult.success && !consumeResult.duplicated) {
             if (consumeResult.reason === 'insufficient_balance') {
               this.logger.warn(
-                `purchase_failed_points_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${paidPrice}`,
+                `purchase_failed_currency_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${paidPrice}`,
               )
               throw new BusinessException(
                 BusinessErrorCode.QUOTA_NOT_ENOUGH,
-                '积分不足',
+                '虚拟币余额不足',
               )
             }
             this.logger.warn(
@@ -211,13 +310,36 @@ export class PurchaseService {
             )
             throw new BusinessException(
               BusinessErrorCode.STATE_CONFLICT,
-              '积分扣减失败，请稍后重试',
+              '虚拟币扣减失败，请稍后重试',
             )
           }
         }
 
+        await this.contentEntitlementService.grantPurchaseEntitlement(tx, {
+          userId,
+          targetType: entitlementTargetType,
+          targetId,
+          sourceId: record.id,
+          grantSnapshot: {
+            originalPrice,
+            paidPrice,
+            payableRate,
+            paymentMethod,
+            outTradeNo,
+            couponInstanceId,
+            discountAmount: purchasePricing.discountAmount,
+            discountSource: discount ? 1 : 0,
+          },
+        })
+
         // 更新各业务方购买计数
-        await resolver.applyCountDelta(tx, targetId, 1)
+        await this.workCounterService.updateWorkChapterPurchaseCount(
+          tx,
+          targetId,
+          workType,
+          1,
+          '章节不存在',
+        )
 
         this.logger.log(
           `purchase_success userId=${userId} targetType=${targetType} targetId=${targetId} originalPrice=${originalPrice} paidPrice=${paidPrice} purchaseId=${record.id}`,
@@ -231,6 +353,9 @@ export class PurchaseService {
           status: record.status,
           paymentMethod: record.paymentMethod,
           outTradeNo: record.outTradeNo,
+          discountAmount: record.discountAmount,
+          couponInstanceId: record.couponInstanceId,
+          discountSource: record.discountSource,
           createdAt: record.createdAt,
           updatedAt: record.updatedAt,
           purchasePricing,
@@ -291,6 +416,7 @@ export class PurchaseService {
       startDate,
       endDate,
     )
+    const purchaseCreatedAt = this.buildPurchaseCreatedAtExpression()
     const workTypeFilter = workType
       ? sql` AND w.type = ${workType}`
       : sql.empty()
@@ -303,27 +429,33 @@ export class PurchaseService {
           w.name AS "workName",
           w.cover AS "workCover",
           COUNT(*)::bigint AS "purchasedChapterCount",
-          MAX(upr.created_at) AS "lastPurchasedAt"
-        FROM user_purchase_record upr
-        INNER JOIN work_chapter wc ON wc.id = upr.target_id
+          MAX(${purchaseCreatedAt}) AS "lastPurchasedAt"
+        FROM user_content_entitlement uce
+        LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
+        INNER JOIN work_chapter wc ON wc.id = uce.target_id
         INNER JOIN work w ON w.id = wc.work_id
-        WHERE upr.user_id = ${userId}
-          AND upr.status = ${status}
-          AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+        WHERE uce.user_id = ${userId}
+          AND uce.status = 1
+          AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
+          AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+          AND (upr.id IS NULL OR upr.status = ${status})
           ${workTypeFilter}
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
-        ORDER BY MAX(upr.created_at) DESC
+        ORDER BY MAX(${purchaseCreatedAt}) DESC
         LIMIT ${page.limit} OFFSET ${page.offset}
       `),
       this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
-        FROM user_purchase_record upr
-        INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        FROM user_content_entitlement uce
+        LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
+        INNER JOIN work_chapter wc ON wc.id = uce.target_id
         INNER JOIN work w ON w.id = wc.work_id
-        WHERE upr.user_id = ${userId}
-          AND upr.status = ${status}
-          AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+        WHERE uce.user_id = ${userId}
+          AND uce.status = 1
+          AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
+          AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+          AND (upr.id IS NULL OR upr.status = ${status})
           ${workTypeFilter}
           ${createdAtFilter}
       `),
@@ -376,6 +508,7 @@ export class PurchaseService {
       startDate,
       endDate,
     )
+    const purchaseCreatedAt = this.buildPurchaseCreatedAtExpression()
     const workTypeFilter = workType
       ? sql` AND wc.work_type = ${workType}`
       : sql.empty()
@@ -383,18 +516,21 @@ export class PurchaseService {
     const [rowsResult, totalRowsResult] = await Promise.all([
       this.db.execute(sql`
         SELECT
-          upr.id AS "id",
-          upr.target_type AS "targetType",
-          upr.target_id AS "targetId",
-          upr.user_id AS "userId",
-          upr.original_price AS "originalPrice",
-          upr.paid_price AS "paidPrice",
-          upr.payable_rate AS "payableRate",
-          upr.status AS "status",
-          upr.payment_method AS "paymentMethod",
+          COALESCE(upr.id, uce.id) AS "id",
+          uce.target_type AS "targetType",
+          uce.target_id AS "targetId",
+          uce.user_id AS "userId",
+          COALESCE(upr.original_price, 0) AS "originalPrice",
+          COALESCE(upr.paid_price, 0) AS "paidPrice",
+          COALESCE(upr.payable_rate, 1.00) AS "payableRate",
+          COALESCE(upr.status, 1) AS "status",
+          COALESCE(upr.payment_method, 1) AS "paymentMethod",
           upr.out_trade_no AS "outTradeNo",
-          upr.created_at AS "createdAt",
-          upr.updated_at AS "updatedAt",
+          COALESCE(upr.discount_amount, 0) AS "discountAmount",
+          upr.coupon_instance_id AS "couponInstanceId",
+          COALESCE(upr.discount_source, 0) AS "discountSource",
+          ${purchaseCreatedAt} AS "createdAt",
+          COALESCE(upr.updated_at, uce.updated_at) AS "updatedAt",
           wc.id AS "chapterId",
           wc.work_id AS "chapterWorkId",
           wc.work_type AS "chapterWorkType",
@@ -404,26 +540,32 @@ export class PurchaseService {
           wc.sort_order AS "chapterSortOrder",
           wc.is_published AS "chapterIsPublished",
           wc.publish_at AS "chapterPublishAt"
-        FROM user_purchase_record upr
-        INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        FROM user_content_entitlement uce
+        LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
+        INNER JOIN work_chapter wc ON wc.id = uce.target_id
         INNER JOIN work w ON w.id = wc.work_id
-        WHERE upr.user_id = ${userId}
-          AND upr.status = ${status}
-          AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+        WHERE uce.user_id = ${userId}
+          AND uce.status = 1
+          AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
+          AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+          AND (upr.id IS NULL OR upr.status = ${status})
           AND wc.work_id = ${workId}
           ${workTypeFilter}
           ${createdAtFilter}
-        ORDER BY upr.created_at DESC
+        ORDER BY ${purchaseCreatedAt} DESC
         LIMIT ${page.limit} OFFSET ${page.offset}
       `),
       this.db.execute(sql`
         SELECT COUNT(*)::bigint AS "total"
-        FROM user_purchase_record upr
-        INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        FROM user_content_entitlement uce
+        LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
+        INNER JOIN work_chapter wc ON wc.id = uce.target_id
         INNER JOIN work w ON w.id = wc.work_id
-        WHERE upr.user_id = ${userId}
-          AND upr.status = ${status}
-          AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+        WHERE uce.user_id = ${userId}
+          AND uce.status = 1
+          AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
+          AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+          AND (upr.id IS NULL OR upr.status = ${status})
           AND wc.work_id = ${workId}
           ${workTypeFilter}
           ${createdAtFilter}
@@ -440,6 +582,9 @@ export class PurchaseService {
       status: number
       paymentMethod: number
       outTradeNo: string | null
+      discountAmount: number
+      couponInstanceId: number | null
+      discountSource: number
       createdAt: Date
       updatedAt: Date
       chapterId: number
@@ -469,6 +614,9 @@ export class PurchaseService {
         status: row.status,
         paymentMethod: row.paymentMethod,
         outTradeNo: row.outTradeNo,
+        discountAmount: row.discountAmount,
+        couponInstanceId: row.couponInstanceId,
+        discountSource: row.discountSource,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         chapter: {

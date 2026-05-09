@@ -1,7 +1,13 @@
 import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
 import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { WorkTypeEnum } from '@libs/platform/constant'
-import { DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto, PageDto } from '@libs/platform/dto'
 
@@ -48,9 +54,9 @@ export class BasePurchaseRecordDto extends BaseDto {
   status?: PurchaseStatusEnum
 
   @EnumProperty({
-    description: '支付方式（1=积分）',
+    description: '支付方式（1=虚拟币余额；2=支付宝；3=微信；4=历史积分购买）',
     enum: PaymentMethodEnum,
-    example: PaymentMethodEnum.POINTS,
+    example: PaymentMethodEnum.CURRENCY,
     required: true,
   })
   paymentMethod!: PaymentMethodEnum
@@ -61,6 +67,30 @@ export class BasePurchaseRecordDto extends BaseDto {
     required: false,
   })
   outTradeNo?: string | null
+
+  @NumberProperty({
+    description: '折扣金额快照',
+    example: 10,
+    min: 0,
+    required: false,
+  })
+  discountAmount?: number
+
+  @NumberProperty({
+    description: '折扣券实例 ID',
+    example: 1,
+    required: false,
+  })
+  couponInstanceId?: number | null
+
+  @NumberProperty({
+    description: '折扣来源（0=无折扣；1=折扣券）',
+    example: 1,
+    min: 0,
+    max: 1,
+    required: false,
+  })
+  discountSource?: number
 }
 
 export class PurchaseTargetBodyDto extends PickType(BasePurchaseRecordDto, [
@@ -68,6 +98,7 @@ export class PurchaseTargetBodyDto extends PickType(BasePurchaseRecordDto, [
   'targetType',
   'paymentMethod',
   'outTradeNo',
+  'couponInstanceId',
 ] as const) {}
 
 export class PurchaseTargetCommandDto extends IntersectionType(

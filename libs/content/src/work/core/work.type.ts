@@ -2,7 +2,7 @@ import type { WorkSelect } from '@db/schema'
 import type { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
 import type { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
 import type { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
-import type { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
+import type { ContentPurchasePricingDto } from '../../permission/dto/content-purchase-pricing.dto'
 
 /**
  * 作品详情请求上下文。
@@ -92,7 +92,7 @@ export interface BuildPublicWorkDetailParams {
   authors: WorkPublicDetailAuthor[]
   categories: WorkPublicDetailCategory[]
   tags: WorkPublicDetailTag[]
-  chapterPurchasePricing: PurchasePricingDto | null
+  chapterPurchasePricing: ContentPurchasePricingDto | null
 }
 
 /**

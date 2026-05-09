@@ -35,7 +35,8 @@ export class WorkCounterService {
   private readonly chapterNovelLikeTargetType = 5
   private readonly chapterComicPurchaseDownloadTargetType = 1
   private readonly chapterNovelPurchaseDownloadTargetType = 2
-  private readonly purchaseSuccessStatus = 1
+  private readonly purchaseGrantSource = 1
+  private readonly entitlementActiveStatus = 1
 
   // 初始化 WorkCounterService 依赖。
   constructor(private readonly drizzle: DrizzleService) {}
@@ -75,9 +76,9 @@ export class WorkCounterService {
     return this.drizzle.schema.userComment
   }
 
-  // 读取 userPurchaseRecord。
-  private get userPurchaseRecord() {
-    return this.drizzle.schema.userPurchaseRecord
+  // 读取 userContentEntitlement。
+  private get userContentEntitlement() {
+    return this.drizzle.schema.userContentEntitlement
   }
 
   // 读取 userDownloadRecord。
@@ -689,11 +690,18 @@ export class WorkCounterService {
           ),
         ),
         client.$count(
-          this.userPurchaseRecord,
+          this.userContentEntitlement,
           and(
-            eq(this.userPurchaseRecord.targetType, purchaseTargetType),
-            eq(this.userPurchaseRecord.targetId, chapterId),
-            eq(this.userPurchaseRecord.status, this.purchaseSuccessStatus),
+            eq(this.userContentEntitlement.targetType, purchaseTargetType),
+            eq(this.userContentEntitlement.targetId, chapterId),
+            eq(
+              this.userContentEntitlement.grantSource,
+              this.purchaseGrantSource,
+            ),
+            eq(
+              this.userContentEntitlement.status,
+              this.entitlementActiveStatus,
+            ),
           ),
         ),
         client.$count(

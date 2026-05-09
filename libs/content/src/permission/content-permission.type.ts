@@ -1,4 +1,4 @@
-import type { appUser, work, workChapter } from '@db/schema'
+import type { work, workChapter } from '@db/schema'
 
 import type { WorkViewPermissionEnum } from '@libs/platform/constant'
 
@@ -14,14 +14,6 @@ export interface PurchasePricingSnapshot {
 }
 
 /**
- * 携带等级快照的用户结构。
- * 供会员权限校验复用，避免 service 内部散落临时对象类型。
- */
-export type UserWithLevel = typeof appUser.$inferSelect & {
-  level: { requiredExperience: number } | null
-}
-
-/**
  * 章节权限判定所需的最小章节快照。
  * 字段范围控制在权限、价格和功能开关相关字段，避免把整章实体在权限链路里到处透传。
  */
@@ -30,14 +22,11 @@ export type PermissionChapterData = Pick<
   | 'workId'
   | 'workType'
   | 'viewRule'
-  | 'requiredViewLevelId'
   | 'price'
   | 'canDownload'
   | 'canComment'
   | 'isPreview'
-> & {
-  requiredViewLevel: { requiredExperience: number } | null
-}
+>
 
 /**
  * 作品权限判定所需的最小作品快照。
@@ -45,10 +34,8 @@ export type PermissionChapterData = Pick<
  */
 export type WorkPermissionData = Pick<
   typeof work.$inferSelect,
-  'viewRule' | 'requiredViewLevelId' | 'chapterPrice' | 'canComment'
-> & {
-  requiredViewLevel: { requiredExperience: number } | null
-}
+  'viewRule' | 'chapterPrice' | 'canComment'
+>
 
 /**
  * 统一的访问规则上下文。

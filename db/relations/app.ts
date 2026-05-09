@@ -4,6 +4,14 @@ import * as schema from '../schema'
 export const appRelations = defineRelationsPart(schema, (r) => ({
   appAgreement: {
     agreementLogs: r.many.appAgreementLog(),
+    membershipPageConfigs: r.many.membershipPageConfig({
+      from: r.appAgreement.id.through(
+        r.membershipPageConfigAgreement.agreementId,
+      ),
+      to: r.membershipPageConfig.id.through(
+        r.membershipPageConfigAgreement.pageConfigId,
+      ),
+    }),
   },
   appAgreementLog: {
     agreement: r.one.appAgreement({
@@ -172,6 +180,14 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     }),
     userDownloadRecords: r.many.userDownloadRecord(),
     userPurchaseRecords: r.many.userPurchaseRecord(),
+    contentEntitlements: r.many.userContentEntitlement(),
+    membershipSubscriptions: r.many.userMembershipSubscription(),
+    membershipAutoRenewAgreements: r.many.membershipAutoRenewAgreement(),
+    membershipBenefitClaimRecords: r.many.membershipBenefitClaimRecord(),
+    paymentOrders: r.many.paymentOrder(),
+    userCouponInstances: r.many.userCouponInstance(),
+    couponRedemptionRecords: r.many.couponRedemptionRecord(),
+    adRewardRecords: r.many.adRewardRecord(),
     emojiRecentUsageRecords: r.many.emojiRecentUsage(),
   },
   emojiAsset: {
@@ -472,6 +488,160 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     user: r.one.appUser({
       from: r.userPurchaseRecord.userId,
       to: r.appUser.id,
+    }),
+    purchaseEntitlements: r.many.userContentEntitlement({
+      from: r.userPurchaseRecord.id,
+      to: r.userContentEntitlement.sourceId,
+      alias: 'PurchaseEntitlements',
+    }),
+  },
+  userContentEntitlement: {
+    user: r.one.appUser({
+      from: r.userContentEntitlement.userId,
+      to: r.appUser.id,
+    }),
+    purchaseRecord: r.one.userPurchaseRecord({
+      from: r.userContentEntitlement.sourceId,
+      to: r.userPurchaseRecord.id,
+      alias: 'PurchaseEntitlementRecord',
+    }),
+  },
+  membershipPlan: {
+    subscriptions: r.many.userMembershipSubscription(),
+    autoRenewAgreements: r.many.membershipAutoRenewAgreement(),
+    benefits: r.many.membershipPlanBenefit(),
+    claimRecords: r.many.membershipBenefitClaimRecord(),
+  },
+  membershipPageConfig: {
+    agreements: r.many.appAgreement({
+      from: r.membershipPageConfig.id.through(
+        r.membershipPageConfigAgreement.pageConfigId,
+      ),
+      to: r.appAgreement.id.through(
+        r.membershipPageConfigAgreement.agreementId,
+      ),
+    }),
+  },
+  membershipPageConfigAgreement: {
+    pageConfig: r.one.membershipPageConfig({
+      from: r.membershipPageConfigAgreement.pageConfigId,
+      to: r.membershipPageConfig.id,
+    }),
+    agreement: r.one.appAgreement({
+      from: r.membershipPageConfigAgreement.agreementId,
+      to: r.appAgreement.id,
+    }),
+  },
+  membershipBenefitDefinition: {
+    planBenefits: r.many.membershipPlanBenefit(),
+    claimRecords: r.many.membershipBenefitClaimRecord(),
+  },
+  membershipPlanBenefit: {
+    plan: r.one.membershipPlan({
+      from: r.membershipPlanBenefit.planId,
+      to: r.membershipPlan.id,
+    }),
+    benefit: r.one.membershipBenefitDefinition({
+      from: r.membershipPlanBenefit.benefitId,
+      to: r.membershipBenefitDefinition.id,
+    }),
+  },
+  membershipBenefitClaimRecord: {
+    user: r.one.appUser({
+      from: r.membershipBenefitClaimRecord.userId,
+      to: r.appUser.id,
+    }),
+    plan: r.one.membershipPlan({
+      from: r.membershipBenefitClaimRecord.planId,
+      to: r.membershipPlan.id,
+    }),
+    benefit: r.one.membershipBenefitDefinition({
+      from: r.membershipBenefitClaimRecord.benefitId,
+      to: r.membershipBenefitDefinition.id,
+    }),
+    subscription: r.one.userMembershipSubscription({
+      from: r.membershipBenefitClaimRecord.subscriptionId,
+      to: r.userMembershipSubscription.id,
+    }),
+  },
+  userMembershipSubscription: {
+    user: r.one.appUser({
+      from: r.userMembershipSubscription.userId,
+      to: r.appUser.id,
+    }),
+    plan: r.one.membershipPlan({
+      from: r.userMembershipSubscription.planId,
+      to: r.membershipPlan.id,
+    }),
+    benefitClaimRecords: r.many.membershipBenefitClaimRecord(),
+  },
+  membershipAutoRenewAgreement: {
+    user: r.one.appUser({
+      from: r.membershipAutoRenewAgreement.userId,
+      to: r.appUser.id,
+    }),
+    plan: r.one.membershipPlan({
+      from: r.membershipAutoRenewAgreement.planId,
+      to: r.membershipPlan.id,
+    }),
+    providerConfig: r.one.paymentProviderConfig({
+      from: r.membershipAutoRenewAgreement.providerConfigId,
+      to: r.paymentProviderConfig.id,
+    }),
+  },
+  paymentProviderConfig: {
+    orders: r.many.paymentOrder(),
+    autoRenewAgreements: r.many.membershipAutoRenewAgreement(),
+  },
+  paymentOrder: {
+    user: r.one.appUser({
+      from: r.paymentOrder.userId,
+      to: r.appUser.id,
+    }),
+    providerConfig: r.one.paymentProviderConfig({
+      from: r.paymentOrder.providerConfigId,
+      to: r.paymentProviderConfig.id,
+    }),
+    autoRenewAgreement: r.one.membershipAutoRenewAgreement({
+      from: r.paymentOrder.autoRenewAgreementId,
+      to: r.membershipAutoRenewAgreement.id,
+    }),
+  },
+  adProviderConfig: {
+    rewardRecords: r.many.adRewardRecord(),
+  },
+  adRewardRecord: {
+    user: r.one.appUser({
+      from: r.adRewardRecord.userId,
+      to: r.appUser.id,
+    }),
+    providerConfig: r.one.adProviderConfig({
+      from: r.adRewardRecord.adProviderConfigId,
+      to: r.adProviderConfig.id,
+    }),
+  },
+  couponDefinition: {
+    instances: r.many.userCouponInstance(),
+  },
+  userCouponInstance: {
+    user: r.one.appUser({
+      from: r.userCouponInstance.userId,
+      to: r.appUser.id,
+    }),
+    definition: r.one.couponDefinition({
+      from: r.userCouponInstance.couponDefinitionId,
+      to: r.couponDefinition.id,
+    }),
+    redemptionRecords: r.many.couponRedemptionRecord(),
+  },
+  couponRedemptionRecord: {
+    user: r.one.appUser({
+      from: r.couponRedemptionRecord.userId,
+      to: r.appUser.id,
+    }),
+    couponInstance: r.one.userCouponInstance({
+      from: r.couponRedemptionRecord.couponInstanceId,
+      to: r.userCouponInstance.id,
     }),
   },
   userReport: {

@@ -1,5 +1,8 @@
 import { DrizzleService } from '@db/core'
-import { BusinessErrorCode, WorkViewPermissionEnum } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
@@ -62,20 +65,20 @@ export class UserPermissionService {
    *
    * @param viewRule - 视图权限规则枚举值
    * @param userId - 用户ID（可选）
-   * @param requiredViewLevelId - 要求的会员等级ID（可选）
+   * @param _requiredViewLevelId - 历史等级阅读字段，目标态不再用于内容阅读
    *
    * 权限规则说明：
    * - ALL: 所有人可见，无需验证
    * - INHERIT: 继承父级权限，无需验证
    * - LOGGED_IN: 需要登录，验证用户存在即可
-   * - MEMBER: 需要会员身份，可进一步限制最低等级
+   * - VIP: 内容 VIP 阅读必须由 content 权限服务判定
    *
    * @throws BadRequestException 当权限不足时抛出异常
    */
   async validateViewPermission(
     viewRule: WorkViewPermissionEnum,
     userId?: number,
-    requiredViewLevelId?: number | null,
+    _requiredViewLevelId?: number | null,
   ) {
     // 所有人可见或继承权限时，直接放行
     if (
@@ -93,44 +96,19 @@ export class UserPermissionService {
       )
     }
 
-    const user = await this.getUserWithLevel(userId)
+    await this.getUserWithLevel(userId)
 
     // 仅需登录即可访问
     if (viewRule === WorkViewPermissionEnum.LOGGED_IN) {
       return
     }
 
-    // 需要会员身份
-    if (viewRule === WorkViewPermissionEnum.MEMBER) {
-      // 验证用户是否有会员等级
-      if (!user.levelId || !user.level) {
-        throw new BusinessException(
-          BusinessErrorCode.QUOTA_NOT_ENOUGH,
-          '会员等级不足',
-        )
-      }
-
-      // 如果指定了最低等级要求，验证用户等级是否满足
-      if (requiredViewLevelId) {
-        const requiredLevel = await this.db.query.userLevelRule.findFirst({
-          where: { id: requiredViewLevelId },
-        })
-
-        if (!requiredLevel) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '指定的阅读会员等级不存在',
-          )
-        }
-
-        // 比较用户当前等级与要求等级的经验值
-        if (user.level.requiredExperience < requiredLevel.requiredExperience) {
-          throw new BusinessException(
-            BusinessErrorCode.QUOTA_NOT_ENOUGH,
-            '会员等级不足',
-          )
-        }
-      }
+    // VIP 阅读不再由成长等级服务判定，避免等级重新参与内容阅读。
+    if (viewRule === WorkViewPermissionEnum.VIP) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'VIP 阅读权限请使用内容权限服务判定',
+      )
     }
   }
 

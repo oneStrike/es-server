@@ -107,6 +107,9 @@ export class UserService {
    */
   private mapUserCenterAssets(assets?: Partial<BaseUserAssetsSummaryDto>) {
     return {
+      currencyBalance: assets?.currencyBalance ?? 0,
+      vipExpiresAt: assets?.vipExpiresAt ?? null,
+      availableCouponCount: assets?.availableCouponCount ?? 0,
       purchasedWorkCount: assets?.purchasedWorkCount ?? 0,
       purchasedChapterCount: assets?.purchasedChapterCount ?? 0,
       downloadedWorkCount: assets?.downloadedWorkCount ?? 0,

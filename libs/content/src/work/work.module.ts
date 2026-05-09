@@ -12,13 +12,11 @@ import { WorkComicChapterBrowseLogResolver } from './chapter/resolver/work-comic
 import { WorkComicChapterCommentResolver } from './chapter/resolver/work-comic-chapter-comment.resolver'
 import { WorkComicChapterDownloadResolver } from './chapter/resolver/work-comic-chapter-download.resolver'
 import { WorkComicChapterLikeResolver } from './chapter/resolver/work-comic-chapter-like.resolver'
-import { WorkComicChapterPurchaseResolver } from './chapter/resolver/work-comic-chapter-purchase.resolver'
 import { WorkComicChapterReportResolver } from './chapter/resolver/work-comic-chapter-report.resolver'
 import { WorkNovelChapterBrowseLogResolver } from './chapter/resolver/work-novel-chapter-browse-log.resolver'
 import { WorkNovelChapterCommentResolver } from './chapter/resolver/work-novel-chapter-comment.resolver'
 import { WorkNovelChapterDownloadResolver } from './chapter/resolver/work-novel-chapter-download.resolver'
 import { WorkNovelChapterLikeResolver } from './chapter/resolver/work-novel-chapter-like.resolver'
-import { WorkNovelChapterPurchaseResolver } from './chapter/resolver/work-novel-chapter-purchase.resolver'
 import { WorkNovelChapterReportResolver } from './chapter/resolver/work-novel-chapter-report.resolver'
 import { WorkChapterService } from './chapter/work-chapter.service'
 import { ComicArchiveImportService } from './content/comic-archive-import.service'
@@ -78,8 +76,6 @@ import { WorkService } from './core/work.service'
     WorkNovelChapterCommentResolver,
     WorkComicChapterDownloadResolver,
     WorkNovelChapterDownloadResolver,
-    WorkComicChapterPurchaseResolver,
-    WorkNovelChapterPurchaseResolver,
     WorkReadingStateResolver,
     WorkComicBrowseLogResolver,
     WorkNovelBrowseLogResolver,

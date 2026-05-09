@@ -1,12 +1,18 @@
-import { DrizzleService } from '@db/core'
+import type { TaskExpiredInstanceRawRow } from './types/task.type'
+import { DrizzleService, extractRows } from '@db/core'
 import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { Injectable } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { TaskExecutionService } from './task-execution.service'
 import { TaskNotificationService } from './task-notification.service'
-import { TASK_EXPIRING_SOON_REMINDER_HOURS, TaskDefinitionStatusEnum, TaskEventActionTypeEnum, TaskInstanceStatusEnum } from './task.constant'
-
+import {
+  TASK_EXPIRING_SOON_REMINDER_HOURS,
+  TaskDefinitionStatusEnum,
+  TaskEventActionTypeEnum,
+  TaskEventProgressSourceEnum,
+  TaskInstanceStatusEnum,
+} from './task.constant'
 import { TaskServiceSupport } from './task.service.support'
 
 /**
@@ -16,13 +22,12 @@ import { TaskServiceSupport } from './task.service.support'
  */
 @Injectable()
 export class TaskRuntimeService extends TaskServiceSupport {
-  private readonly taskNotificationService = new TaskNotificationService()
-
   // 注入运行时调度需要的数据库、消息和执行服务。
   constructor(
     drizzle: DrizzleService,
     private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
     private readonly taskExecutionService: TaskExecutionService,
+    private readonly taskNotificationService: TaskNotificationService,
   ) {
     super(drizzle)
   }
@@ -31,62 +36,76 @@ export class TaskRuntimeService extends TaskServiceSupport {
   @Cron('0 */5 * * * *')
   async expireTaskInstances() {
     const now = new Date()
-    const rows = await this.db
-      .select({
-        id: this.taskInstanceTable.id,
-        taskId: this.taskInstanceTable.taskId,
-        userId: this.taskInstanceTable.userId,
-      })
-      .from(this.taskInstanceTable)
-      .where(
-        and(
-          isNull(this.taskInstanceTable.deletedAt),
-          inArray(this.taskInstanceTable.status, [
-            TaskInstanceStatusEnum.PENDING,
-            TaskInstanceStatusEnum.IN_PROGRESS,
-          ]),
-          lte(this.taskInstanceTable.expiredAt, now),
+    return this.drizzle.withTransaction(async (tx) => {
+      // 使用原生 SQL 是为了在同一事务语句中锁定到期实例、更新实例和步骤，并返回事件日志所需投影。
+      const result = await tx.execute(sql`
+        WITH due_instances AS (
+          SELECT
+            id,
+            task_id,
+            user_id
+          FROM task_instance
+          WHERE deleted_at IS NULL
+            AND status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+            AND expired_at <= ${now}
+          FOR UPDATE
         ),
-      )
+        updated_instances AS (
+          UPDATE task_instance i
+          SET
+            status = ${TaskInstanceStatusEnum.EXPIRED},
+            version = i.version + 1
+          FROM due_instances
+          WHERE i.id = due_instances.id
+            AND i.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+          RETURNING
+            i.id AS instance_id,
+            i.task_id,
+            i.user_id
+        ),
+        updated_steps AS (
+          UPDATE task_instance_step s
+          SET
+            status = ${TaskInstanceStatusEnum.EXPIRED},
+            version = s.version + 1
+          FROM updated_instances
+          WHERE s.instance_id = updated_instances.instance_id
+            AND s.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+          RETURNING s.id
+        )
+        SELECT
+          instance_id AS "instanceId",
+          task_id AS "taskId",
+          user_id AS "userId"
+        FROM updated_instances
+      `)
+      const rows = extractRows<TaskExpiredInstanceRawRow>(result)
 
-    if (rows.length === 0) {
-      return 0
-    }
+      if (rows.length > 0) {
+        await tx.insert(this.taskEventLogTable).values(
+          rows.map((row) => ({
+            taskId: row.taskId,
+            instanceId: row.instanceId,
+            userId: row.userId,
+            actionType: TaskEventActionTypeEnum.EXPIRE,
+            progressSource: TaskEventProgressSourceEnum.SYSTEM,
+            accepted: true,
+            delta: 0,
+            beforeValue: 0,
+            afterValue: 0,
+            occurredAt: now,
+          })),
+        )
+      }
 
-    const instanceIds = rows.map((item) => item.id)
-    await this.drizzle.withTransaction(async (tx) => {
-      await tx
-        .update(this.taskInstanceStepTable)
-        .set({
-          status: TaskInstanceStatusEnum.EXPIRED,
-          version: sql`${this.taskInstanceStepTable.version} + 1`,
-        })
-        .where(inArray(this.taskInstanceStepTable.instanceId, instanceIds))
-
-      await tx
-        .update(this.taskInstanceTable)
-        .set({
-          status: TaskInstanceStatusEnum.EXPIRED,
-          version: sql`${this.taskInstanceTable.version} + 1`,
-        })
-        .where(inArray(this.taskInstanceTable.id, instanceIds))
+      return rows.length
     })
+  }
 
-    for (const row of rows) {
-      await this.db.insert(this.taskEventLogTable).values({
-        taskId: row.taskId,
-        instanceId: row.id,
-        userId: row.userId,
-        actionType: TaskEventActionTypeEnum.EXPIRE,
-        progressSource: 3,
-        accepted: true,
-        delta: 0,
-        beforeValue: 0,
-        afterValue: 0,
-      })
-    }
-
-    return rows.length
+  // 定时补建旧实例缺失的步骤快照。
+  @Cron('15 */10 * * * *')
+  async repairMissingActiveTaskInstanceSteps() {
+    return this.taskExecutionService.repairMissingActiveTaskInstanceSteps(500)
   }
 
   // 定时补偿已完成但奖励未成功的实例。
