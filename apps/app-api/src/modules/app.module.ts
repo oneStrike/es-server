@@ -11,6 +11,7 @@ import { FollowModule } from './follow/follow.module'
 import { ForumModule } from './forum/forum.module'
 import { LikeModule } from './like/like.module'
 import { MessageModule } from './message/message.module'
+import { MonetizationModule } from './monetization/monetization.module'
 import { PurchaseModule } from './purchase/purchase.module'
 import { ReadingHistoryModule } from './reading-history/reading-history.module'
 import { ReportModule } from './report/report.module'
@@ -37,6 +38,7 @@ import { WorkModule } from './work/work.module'
     SystemModule,
     CommentModule,
     MessageModule,
+    MonetizationModule,
     ReportModule,
     DownloadModule,
     PurchaseModule,

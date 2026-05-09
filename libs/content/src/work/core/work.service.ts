@@ -982,17 +982,11 @@ export class WorkService {
     }
 
     const { authors, categories, tags, ...workData } = work
-    const chapterPayableRate = bypassVisibilityCheck
-      ? undefined
-      : await this.contentPermissionService.resolveUserPurchasePayableRate(
-          userId,
-        )
     const chapterPurchasePricing =
       !bypassVisibilityCheck &&
       workData.viewRule === WorkRootViewPermissionEnum.PURCHASE
         ? this.contentPermissionService.buildPurchasePricing(
             workData.chapterPrice,
-            chapterPayableRate ?? 1,
           )
         : null
 

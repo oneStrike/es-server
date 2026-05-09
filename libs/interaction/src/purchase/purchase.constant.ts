@@ -22,6 +22,12 @@ export enum PurchaseStatusEnum {
 }
 
 export enum PaymentMethodEnum {
-  /** 积分 */
-  POINTS = 1,
+  /** 虚拟币余额 */
+  CURRENCY = 1,
+  /** 支付宝 */
+  ALIPAY = 2,
+  /** 微信 */
+  WECHAT = 3,
+  /** 历史积分购买快照，只读展示，不允许新请求使用 */
+  LEGACY_POINTS = 4,
 }

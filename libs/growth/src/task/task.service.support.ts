@@ -1,4 +1,4 @@
-import type { DrizzleService } from '@db/core'
+import type { Db, DrizzleService } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateTaskDefinitionDto,
@@ -217,6 +217,30 @@ export abstract class TaskServiceSupport {
     }
 
     return result
+  }
+
+  // 断言任务没有仍在执行中的实例，避免运营侧改写已领取实例的执行合同。
+  protected async ensureNoActiveTaskInstances(runner: Db, taskId: number) {
+    const rows = await runner
+      .select({ count: sql<number>`count(*)::int` })
+      .from(this.taskInstanceTable)
+      .where(
+        and(
+          isNull(this.taskInstanceTable.deletedAt),
+          eq(this.taskInstanceTable.taskId, taskId),
+          inArray(this.taskInstanceTable.status, [
+            TaskInstanceStatusEnum.PENDING,
+            TaskInstanceStatusEnum.IN_PROGRESS,
+          ]),
+        ),
+      )
+
+    if (Number(rows[0]?.count ?? 0) > 0) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务已有进行中的实例，不能修改执行合同',
+      )
+    }
   }
 
   // 把任务头记录映射成管理端列表投影。

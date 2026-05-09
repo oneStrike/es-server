@@ -1,6 +1,6 @@
 import type { WorkChapterSelect } from '@db/schema'
-import type { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import type { WorkViewPermissionEnum } from '@libs/platform/constant'
+import type { ContentPurchasePricingDto } from '../../permission/dto/content-purchase-pricing.dto'
 
 /**
  * 章节拖拽排序入参。
@@ -64,5 +64,5 @@ export type WorkChapterPublicDetailRow = Pick<
   content: string | string[] | null
   resolvedViewRule?: WorkViewPermissionEnum
   resolvedRequiredViewLevelId?: number | null
-  purchasePricing?: PurchasePricingDto | null
+  purchasePricing?: ContentPurchasePricingDto | null
 }

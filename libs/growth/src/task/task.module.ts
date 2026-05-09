@@ -5,6 +5,7 @@ import { UserGrowthRewardModule } from '../growth-reward/growth-reward.module'
 import { TaskDefinitionService } from './task-definition.service'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import { TaskExecutionService } from './task-execution.service'
+import { TaskNotificationService } from './task-notification.service'
 import { TaskRuntimeService } from './task-runtime.service'
 import { TaskService } from './task.service'
 
@@ -18,6 +19,7 @@ import { TaskService } from './task.service'
     TaskDefinitionService,
     TaskEventTemplateRegistry,
     TaskExecutionService,
+    TaskNotificationService,
     TaskRuntimeService,
     TaskService,
   ],

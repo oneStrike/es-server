@@ -52,6 +52,18 @@ export const userPurchaseRecord = snakeCase.table(
      */
     payableRate: numeric({ precision: 3, scale: 2 }).default('1.00').notNull(),
     /**
+     * 折扣金额快照
+     */
+    discountAmount: integer().default(0).notNull(),
+    /**
+     * 折扣券实例 ID
+     */
+    couponInstanceId: integer(),
+    /**
+     * 折扣来源（0=无折扣, 1=折扣券）
+     */
+    discountSource: smallint().default(0).notNull(),
+    /**
      * 购买状态（1=成功, 2=失败, 3=退款中, 4=已退款）
      */
     status: smallint().default(1).notNull(),
@@ -135,6 +147,14 @@ export const userPurchaseRecord = snakeCase.table(
     check(
       'user_purchase_record_payable_rate_range_chk',
       sql`${table.payableRate} >= 0 and ${table.payableRate} <= 1`,
+    ),
+    check(
+      'user_purchase_record_discount_amount_non_negative_chk',
+      sql`${table.discountAmount} >= 0`,
+    ),
+    check(
+      'user_purchase_record_discount_source_valid_chk',
+      sql`${table.discountSource} in (0, 1)`,
     ),
   ],
 )

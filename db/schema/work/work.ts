@@ -110,7 +110,7 @@ export const work = snakeCase.table(
      */
     lastUpdated: timestamp({ withTimezone: true, precision: 6 }),
     /**
-     * 阅读规则（0=所有人可见，1=登录用户可见，2=会员可见，3=需购买可见）
+     * 阅读规则（0=所有人可见，1=登录用户可见，2=VIP可见，3=需购买可见）
      */
     viewRule: smallint().default(0).notNull(),
     /**

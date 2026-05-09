@@ -1,5 +1,11 @@
 import type { Db } from '@db/core'
-import type { TaskDefinitionSelect, TaskStepSelect } from '@db/schema'
+import type {
+  TaskDefinitionSelect,
+  TaskInstanceSelect,
+  TaskStepSelect,
+} from '@db/schema'
+import type { TaskRewardSettlementResult } from '@libs/growth/growth-reward/types/growth-reward-result.type'
+import type { GrowthRewardItem } from '../reward-rule/reward-item.type'
 import type {
   TaskCycleDateParts,
   TaskEventLogWriteInput,
@@ -7,19 +13,25 @@ import type {
   TaskEventProgressResult,
   TaskInstanceEventApplyParams,
   TaskInstanceEventApplyResult,
+  TaskInstanceProgressApplyInput,
+  TaskInstanceProgressApplyResult,
   TaskInstanceResolveResult,
   TaskInstanceStepResolveResult,
   TaskInstanceStepViewRecord,
   TaskLatestEventSummaryRecord,
+  TaskProgressUpdateRawRow,
   TaskReconciliationInstanceRecord,
+  TaskReminderSnapshotPayload,
+  TaskRewardGrantedPublishInput,
   TaskRewardSettlementBizKeyInput,
   TaskRewardSettlementInput,
   TaskRewardSettlementLinkInput,
+  TaskRewardSettlementUpdateResult,
   TaskUniqueDimensionResolvedValue,
   TaskUniqueFactInsertInput,
   TaskUniqueFactSummaryRecord,
 } from './types/task.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, extractRows } from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
   canConsumeEventEnvelopeByConsumer,
@@ -31,6 +43,7 @@ import {
   GrowthRewardSettlementTypeEnum,
 } from '@libs/growth/growth-reward/growth-reward.constant'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward/growth-reward.service'
+import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -48,6 +61,7 @@ import {
   TaskProgressDto,
 } from './dto/task-query.dto'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
+import { TaskNotificationService } from './task-notification.service'
 import {
   TASK_COMPLETE_EVENT_CODE,
   TASK_COMPLETE_EVENT_KEY,
@@ -77,6 +91,8 @@ export class TaskExecutionService extends TaskServiceSupport {
     drizzle: DrizzleService,
     private readonly taskEventTemplateRegistry: TaskEventTemplateRegistry,
     private readonly userGrowthRewardService: UserGrowthRewardService,
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
+    private readonly taskNotificationService: TaskNotificationService,
   ) {
     super(drizzle)
   }
@@ -295,6 +311,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         cycleKey,
         now,
       )
+      await this.createOrGetTaskInstanceStep(tx, resolved.instance.id, step)
       await this.writeTaskEventLog(tx, {
         taskId: task.id,
         instanceId: resolved.instance.id,
@@ -346,66 +363,48 @@ export class TaskExecutionService extends TaskServiceSupport {
         instance.id,
         step,
       )
-      const nextCurrentValue = Math.min(
-        instanceStep.targetValue,
-        instanceStep.currentValue + dto.delta,
-      )
-      const nextStatus =
-        nextCurrentValue >= instanceStep.targetValue
-          ? TaskInstanceStatusEnum.COMPLETED
-          : TaskInstanceStatusEnum.IN_PROGRESS
-
-      await tx
-        .update(this.taskInstanceStepTable)
-        .set({
-          currentValue: nextCurrentValue,
-          status: nextStatus,
-          completedAt:
-            nextStatus === TaskInstanceStatusEnum.COMPLETED ? now : null,
-          version: sql`${this.taskInstanceStepTable.version} + 1`,
-        })
-        .where(eq(this.taskInstanceStepTable.id, instanceStep.id))
-
-      await tx
-        .update(this.taskInstanceTable)
-        .set({
-          status: nextStatus,
-          completedAt:
-            nextStatus === TaskInstanceStatusEnum.COMPLETED ? now : null,
-          version: sql`${this.taskInstanceTable.version} + 1`,
-        })
-        .where(eq(this.taskInstanceTable.id, instance.id))
+      const progress = await this.applyTaskInstanceProgressInTx({
+        runner: tx,
+        instance,
+        instanceStep,
+        delta: dto.delta,
+        occurredAt: now,
+      })
 
       await this.writeTaskEventLog(tx, {
         taskId: task.id,
         stepId: step.id,
-        instanceId: instance.id,
-        instanceStepId: instanceStep.id,
+        instanceId: progress.instanceId,
+        instanceStepId: progress.instanceStepId,
         userId,
         actionType:
-          nextStatus === TaskInstanceStatusEnum.COMPLETED
+          progress.status === TaskInstanceStatusEnum.COMPLETED
             ? TaskEventActionTypeEnum.COMPLETE
             : TaskEventActionTypeEnum.PROGRESS,
         progressSource: TaskEventProgressSourceEnum.MANUAL,
         accepted: true,
-        delta: nextCurrentValue - instanceStep.currentValue,
-        beforeValue: instanceStep.currentValue,
-        afterValue: nextCurrentValue,
+        delta: progress.appliedDelta,
+        beforeValue: progress.beforeValue,
+        afterValue: progress.afterValue,
         occurredAt: now,
       })
 
       return {
         instanceId: instance.id,
-        completed: nextStatus === TaskInstanceStatusEnum.COMPLETED,
+        completed: progress.completed,
+        rewardItems: this.resolveTaskRewardItems(
+          instance.snapshotPayload,
+          task.rewardItems,
+        ),
       }
     })
 
-    if (result.completed && this.hasRewardItems(task.rewardItems)) {
+    if (result.completed && this.hasRewardItems(result.rewardItems)) {
       await this.settleTaskInstanceReward({
         taskId: task.id,
         instanceId: result.instanceId,
         userId,
-        rewardItems: task.rewardItems,
+        rewardItems: result.rewardItems,
         occurredAt: now,
       })
     }
@@ -440,7 +439,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         instance.id,
         step,
       )
-      const canCompleteImmediately = step.targetValue === 1
+      const canCompleteImmediately = instanceStep.targetValue === 1
 
       if (
         !canCompleteImmediately &&
@@ -452,55 +451,52 @@ export class TaskExecutionService extends TaskServiceSupport {
         )
       }
 
-      const nextCurrentValue = canCompleteImmediately
-        ? instanceStep.targetValue
-        : instanceStep.currentValue
-
-      await tx
-        .update(this.taskInstanceStepTable)
-        .set({
-          currentValue: nextCurrentValue,
-          status: TaskInstanceStatusEnum.COMPLETED,
-          completedAt: now,
-          version: sql`${this.taskInstanceStepTable.version} + 1`,
-        })
-        .where(eq(this.taskInstanceStepTable.id, instanceStep.id))
-
-      await tx
-        .update(this.taskInstanceTable)
-        .set({
-          status: TaskInstanceStatusEnum.COMPLETED,
-          completedAt: now,
-          version: sql`${this.taskInstanceTable.version} + 1`,
-        })
-        .where(eq(this.taskInstanceTable.id, instance.id))
+      const progress = canCompleteImmediately
+        ? await this.applyTaskInstanceProgressInTx({
+            runner: tx,
+            instance,
+            instanceStep,
+            delta: instanceStep.targetValue,
+            occurredAt: now,
+          })
+        : await this.completeReadyTaskInstanceStepInTx({
+            runner: tx,
+            instance,
+            instanceStep,
+            delta: 0,
+            occurredAt: now,
+          })
 
       await this.writeTaskEventLog(tx, {
         taskId: task.id,
         stepId: step.id,
-        instanceId: instance.id,
-        instanceStepId: instanceStep.id,
+        instanceId: progress.instanceId,
+        instanceStepId: progress.instanceStepId,
         userId,
         actionType: TaskEventActionTypeEnum.COMPLETE,
         progressSource: TaskEventProgressSourceEnum.MANUAL,
         accepted: true,
-        delta: nextCurrentValue - instanceStep.currentValue,
-        beforeValue: instanceStep.currentValue,
-        afterValue: nextCurrentValue,
+        delta: progress.appliedDelta,
+        beforeValue: progress.beforeValue,
+        afterValue: progress.afterValue,
         occurredAt: now,
       })
 
       return {
         instanceId: instance.id,
+        rewardItems: this.resolveTaskRewardItems(
+          instance.snapshotPayload,
+          task.rewardItems,
+        ),
       }
     })
 
-    if (this.hasRewardItems(task.rewardItems)) {
+    if (this.hasRewardItems(result.rewardItems)) {
       await this.settleTaskInstanceReward({
         taskId: task.id,
         instanceId: result.instanceId,
         userId,
-        rewardItems: task.rewardItems,
+        rewardItems: result.rewardItems,
         occurredAt: now,
       })
     }
@@ -521,6 +517,9 @@ export class TaskExecutionService extends TaskServiceSupport {
         : undefined,
       queryDto.status !== undefined
         ? eq(this.taskInstanceTable.status, queryDto.status)
+        : undefined,
+      queryDto.sceneType !== undefined
+        ? eq(this.taskDefinitionTable.sceneType, queryDto.sceneType)
         : undefined,
     )
 
@@ -550,6 +549,10 @@ export class TaskExecutionService extends TaskServiceSupport {
     const totalRows = await this.db
       .select({ count: sql<number>`count(*)::int` })
       .from(this.taskInstanceTable)
+      .leftJoin(
+        this.taskDefinitionTable,
+        eq(this.taskInstanceTable.taskId, this.taskDefinitionTable.id),
+      )
       .where(where)
 
     const taskIds = rows
@@ -982,6 +985,7 @@ export class TaskExecutionService extends TaskServiceSupport {
       }
 
       let dimension: TaskUniqueDimensionResolvedValue | null = null
+      let uniqueFactId: number | null = null
 
       if (params.step.dedupeScope) {
         dimension = this.taskEventTemplateRegistry.resolveUniqueDimensionValue(
@@ -1031,7 +1035,7 @@ export class TaskExecutionService extends TaskServiceSupport {
           context: params.context,
         })
 
-        if (!inserted) {
+        if (!inserted.created) {
           await this.writeTaskEventLog(tx, {
             taskId: params.task.id,
             stepId: params.step.id,
@@ -1058,6 +1062,7 @@ export class TaskExecutionService extends TaskServiceSupport {
             duplicate: true,
           }
         }
+        uniqueFactId = inserted.id
       }
 
       const resolvedInstance: TaskInstanceResolveResult = existingInstance
@@ -1082,61 +1087,49 @@ export class TaskExecutionService extends TaskServiceSupport {
           : await this.createOrGetTaskInstanceStep(tx, instance.id, params.step)
       const instanceStep = resolvedInstanceStep.instanceStep
 
-      const nextCurrentValue = Math.min(
-        instanceStep.targetValue,
-        instanceStep.currentValue + 1,
-      )
-      const nextStepStatus =
-        nextCurrentValue >= instanceStep.targetValue
-          ? TaskInstanceStatusEnum.COMPLETED
-          : TaskInstanceStatusEnum.IN_PROGRESS
-      const nextTaskStatus = nextStepStatus
+      if (
+        resolvedInstance.created &&
+        params.task.claimMode === TaskClaimModeEnum.AUTO
+      ) {
+        await this.publishAutoAssignedReminderInTx(
+          tx,
+          params.task,
+          instance,
+          params.occurredAt,
+        )
+      }
 
-      await tx
-        .update(this.taskInstanceStepTable)
-        .set({
-          currentValue: nextCurrentValue,
-          status: nextStepStatus,
-          completedAt:
-            nextStepStatus === TaskInstanceStatusEnum.COMPLETED
-              ? params.occurredAt
-              : null,
-          version: sql`${this.taskInstanceStepTable.version} + 1`,
-        })
-        .where(eq(this.taskInstanceStepTable.id, instanceStep.id))
+      const progress = await this.applyTaskInstanceProgressInTx({
+        runner: tx,
+        instance,
+        instanceStep,
+        delta: 1,
+        occurredAt: params.occurredAt,
+      })
 
-      await tx
-        .update(this.taskInstanceTable)
-        .set({
-          status: nextTaskStatus,
-          completedAt:
-            nextTaskStatus === TaskInstanceStatusEnum.COMPLETED
-              ? params.occurredAt
-              : null,
-          version: sql`${this.taskInstanceTable.version} + 1`,
-        })
-        .where(eq(this.taskInstanceTable.id, instance.id))
+      if (progress.appliedDelta <= 0 && uniqueFactId) {
+        await tx
+          .delete(this.taskStepUniqueFactTable)
+          .where(eq(this.taskStepUniqueFactTable.id, uniqueFactId))
+      }
 
       await this.writeTaskEventLog(tx, {
         taskId: params.task.id,
         stepId: params.step.id,
-        instanceId: instance.id,
-        instanceStepId: instanceStep.id,
+        instanceId: progress.instanceId,
+        instanceStepId: progress.instanceStepId,
         userId: params.userId,
         eventCode: params.eventCode,
         eventBizKey: params.eventBizKey,
         actionType:
-          nextTaskStatus === TaskInstanceStatusEnum.COMPLETED
+          progress.status === TaskInstanceStatusEnum.COMPLETED
             ? TaskEventActionTypeEnum.COMPLETE
             : TaskEventActionTypeEnum.PROGRESS,
         progressSource: TaskEventProgressSourceEnum.EVENT,
         accepted: true,
-        delta:
-          nextCurrentValue > instanceStep.currentValue
-            ? nextCurrentValue - instanceStep.currentValue
-            : 0,
-        beforeValue: instanceStep.currentValue,
-        afterValue: nextCurrentValue,
+        delta: progress.appliedDelta,
+        beforeValue: progress.beforeValue,
+        afterValue: progress.afterValue,
         targetType: params.targetType,
         targetId: params.targetId,
         dimensionKey: dimension?.key ?? null,
@@ -1147,23 +1140,254 @@ export class TaskExecutionService extends TaskServiceSupport {
 
       return {
         instanceId: instance.id,
-        progressed: nextTaskStatus !== TaskInstanceStatusEnum.COMPLETED,
-        completed: nextTaskStatus === TaskInstanceStatusEnum.COMPLETED,
+        progressed: progress.status !== TaskInstanceStatusEnum.COMPLETED,
+        completed: progress.completed,
         duplicate: false,
+        rewardItems: this.resolveTaskRewardItems(
+          instance.snapshotPayload,
+          params.task.rewardItems,
+        ),
       }
     })
 
-    if (result.completed && this.hasRewardItems(params.task.rewardItems)) {
+    if (
+      result.completed &&
+      'rewardItems' in result &&
+      this.hasRewardItems(result.rewardItems)
+    ) {
       await this.settleTaskInstanceReward({
         taskId: params.task.id,
         instanceId: result.instanceId!,
         userId: params.userId,
-        rewardItems: params.task.rewardItems,
+        rewardItems: result.rewardItems,
         occurredAt: params.occurredAt,
       })
     }
 
     return result
+  }
+
+  // 原子推进实例步骤，并以数据库锁定后的真实 before/after 作为唯一事实来源。
+  private async applyTaskInstanceProgressInTx(
+    params: TaskInstanceProgressApplyInput,
+  ): Promise<TaskInstanceProgressApplyResult> {
+    if (!Number.isInteger(params.delta) || params.delta <= 0) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '进度增量必须是大于 0 的整数',
+      )
+    }
+
+    const result = await params.runner.execute(sql`
+      WITH locked_progress AS (
+        SELECT
+          s.id AS instance_step_id,
+          s.instance_id,
+          s.current_value AS before_value,
+          s.target_value,
+          LEAST(s.target_value, s.current_value + ${params.delta}) AS after_value
+        FROM task_instance_step s
+        INNER JOIN task_instance i
+          ON i.id = s.instance_id
+        WHERE s.id = ${params.instanceStep.id}
+          AND s.instance_id = ${params.instance.id}
+          AND i.id = ${params.instance.id}
+          AND i.deleted_at IS NULL
+          AND s.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+          AND i.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+        FOR UPDATE OF s, i
+      ),
+      updated_step AS (
+        UPDATE task_instance_step s
+        SET
+          current_value = locked_progress.after_value,
+          status = CASE
+            WHEN locked_progress.after_value >= locked_progress.target_value
+              THEN ${TaskInstanceStatusEnum.COMPLETED}
+            ELSE ${TaskInstanceStatusEnum.IN_PROGRESS}
+          END,
+          completed_at = CASE
+            WHEN locked_progress.after_value >= locked_progress.target_value
+              THEN ${params.occurredAt}
+            ELSE NULL
+          END,
+          version = s.version + 1
+        FROM locked_progress
+        WHERE s.id = locked_progress.instance_step_id
+        RETURNING
+          s.id AS instance_step_id,
+          s.instance_id,
+          locked_progress.before_value,
+          s.current_value AS after_value,
+          s.target_value,
+          s.status
+      ),
+      updated_instance AS (
+        UPDATE task_instance i
+        SET
+          status = updated_step.status,
+          completed_at = CASE
+            WHEN updated_step.status = ${TaskInstanceStatusEnum.COMPLETED}
+              THEN ${params.occurredAt}
+            ELSE NULL
+          END,
+          version = i.version + 1
+        FROM updated_step
+        WHERE i.id = updated_step.instance_id
+        RETURNING i.id AS instance_id, i.status
+      )
+      SELECT
+        updated_instance.instance_id AS "instanceId",
+        updated_step.instance_step_id AS "instanceStepId",
+        updated_step.before_value AS "beforeValue",
+        updated_step.after_value AS "afterValue",
+        updated_step.after_value - updated_step.before_value AS "appliedDelta",
+        updated_step.target_value AS "targetValue",
+        updated_step.status AS "status"
+      FROM updated_step
+      INNER JOIN updated_instance
+        ON updated_instance.instance_id = updated_step.instance_id
+    `)
+
+    return this.toTaskProgressApplyResult(result)
+  }
+
+  // 原子完成已满足目标值的实例步骤。
+  private async completeReadyTaskInstanceStepInTx(
+    params: TaskInstanceProgressApplyInput,
+  ): Promise<TaskInstanceProgressApplyResult> {
+    const result = await params.runner.execute(sql`
+      WITH locked_progress AS (
+        SELECT
+          s.id AS instance_step_id,
+          s.instance_id,
+          s.current_value AS before_value,
+          s.target_value
+        FROM task_instance_step s
+        INNER JOIN task_instance i
+          ON i.id = s.instance_id
+        WHERE s.id = ${params.instanceStep.id}
+          AND s.instance_id = ${params.instance.id}
+          AND i.id = ${params.instance.id}
+          AND i.deleted_at IS NULL
+          AND s.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+          AND i.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+          AND s.current_value >= s.target_value
+        FOR UPDATE OF s, i
+      ),
+      updated_step AS (
+        UPDATE task_instance_step s
+        SET
+          status = ${TaskInstanceStatusEnum.COMPLETED},
+          completed_at = ${params.occurredAt},
+          version = s.version + 1
+        FROM locked_progress
+        WHERE s.id = locked_progress.instance_step_id
+        RETURNING
+          s.id AS instance_step_id,
+          s.instance_id,
+          locked_progress.before_value,
+          s.current_value AS after_value,
+          s.target_value,
+          s.status
+      ),
+      updated_instance AS (
+        UPDATE task_instance i
+        SET
+          status = ${TaskInstanceStatusEnum.COMPLETED},
+          completed_at = ${params.occurredAt},
+          version = i.version + 1
+        FROM updated_step
+        WHERE i.id = updated_step.instance_id
+        RETURNING i.id AS instance_id, i.status
+      )
+      SELECT
+        updated_instance.instance_id AS "instanceId",
+        updated_step.instance_step_id AS "instanceStepId",
+        updated_step.before_value AS "beforeValue",
+        updated_step.after_value AS "afterValue",
+        updated_step.after_value - updated_step.before_value AS "appliedDelta",
+        updated_step.target_value AS "targetValue",
+        updated_step.status AS "status"
+      FROM updated_step
+      INNER JOIN updated_instance
+        ON updated_instance.instance_id = updated_step.instance_id
+    `)
+
+    return this.toTaskProgressApplyResult(result)
+  }
+
+  // 将原生 SQL 返回值规整成步骤推进结果。
+  private toTaskProgressApplyResult(
+    result: { rows?: TaskProgressUpdateRawRow[] | null } | object | null,
+  ): TaskInstanceProgressApplyResult {
+    const row = extractRows<TaskProgressUpdateRawRow>(result)[0]
+    if (!row) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '任务状态已变更，请刷新后重试',
+      )
+    }
+
+    return {
+      instanceId: Number(row.instanceId),
+      instanceStepId: Number(row.instanceStepId),
+      beforeValue: Number(row.beforeValue),
+      afterValue: Number(row.afterValue),
+      appliedDelta: Number(row.appliedDelta),
+      targetValue: Number(row.targetValue),
+      status: Number(row.status) as TaskInstanceStatusEnum,
+      completed: Number(row.status) === TaskInstanceStatusEnum.COMPLETED,
+    }
+  }
+
+  // 修复旧数据中已领取但缺失步骤快照的活跃实例。
+  async repairMissingActiveTaskInstanceSteps(limit = 500) {
+    const cappedLimit = Math.max(1, Math.min(Math.floor(limit), 500))
+    return this.drizzle.withTransaction(async (tx) => {
+      const result = await tx.execute(sql`
+        WITH missing_steps AS (
+          SELECT
+            i.id AS instance_id,
+            s.id AS step_id,
+            s.target_value
+          FROM task_instance i
+          INNER JOIN task_step s
+            ON s.task_id = i.task_id
+           AND s.step_no = 1
+          LEFT JOIN task_instance_step tis
+            ON tis.instance_id = i.id
+           AND tis.step_id = s.id
+          WHERE i.deleted_at IS NULL
+            AND i.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+            AND tis.id IS NULL
+          ORDER BY i.id
+          LIMIT ${cappedLimit}
+        ),
+        inserted AS (
+          INSERT INTO task_instance_step (
+            instance_id,
+            step_id,
+            status,
+            current_value,
+            target_value
+          )
+          SELECT
+            instance_id,
+            step_id,
+            ${TaskInstanceStatusEnum.PENDING},
+            0,
+            target_value
+          FROM missing_steps
+          ON CONFLICT (instance_id, step_id) DO NOTHING
+          RETURNING id
+        )
+        SELECT count(*)::int AS "insertedCount"
+        FROM inserted
+      `)
+      const row = extractRows<{ insertedCount: number }>(result)[0]
+      return Number(row?.insertedCount ?? 0)
+    })
   }
 
   // 创建或复用任务实例。
@@ -1335,7 +1559,10 @@ export class TaskExecutionService extends TaskServiceSupport {
       .onConflictDoNothing()
       .returning({ id: this.taskStepUniqueFactTable.id })
 
-    return Boolean(created)
+    return {
+      created: Boolean(created),
+      id: created?.id ?? null,
+    }
   }
 
   // 写入一次任务事件日志。
@@ -1882,7 +2109,34 @@ export class TaskExecutionService extends TaskServiceSupport {
         }),
       })
 
-    await this.db
+    await this.drizzle.withTransaction(async (tx) => {
+      const updateResult = await this.updateRewardSettlementResultInTx(
+        tx,
+        settlement.id,
+        rewardResult,
+      )
+
+      if (rewardResult.success && updateResult.updated) {
+        await this.publishRewardGrantedReminderInTx(tx, {
+          taskId: params.taskId,
+          instanceId: params.instanceId,
+          userId: params.userId,
+          rewardItems: (this.normalizeRewardItems(params.rewardItems) ??
+            []) as GrowthRewardItem[],
+          ledgerRecordIds: rewardResult.ledgerRecordIds,
+          occurredAt: rewardResult.settledAt,
+        })
+      }
+    })
+  }
+
+  // 只允许非成功结算事实被本次结果改写，避免补偿重试重复发布奖励到账提醒。
+  private async updateRewardSettlementResultInTx(
+    runner: Db,
+    settlementId: number,
+    rewardResult: TaskRewardSettlementResult,
+  ): Promise<TaskRewardSettlementUpdateResult> {
+    const [updated] = await runner
       .update(this.growthRewardSettlementTable)
       .set({
         settlementStatus: rewardResult.success
@@ -1895,6 +2149,111 @@ export class TaskExecutionService extends TaskServiceSupport {
           ? null
           : (rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试'),
       })
-      .where(eq(this.growthRewardSettlementTable.id, settlement.id))
+      .where(
+        and(
+          eq(this.growthRewardSettlementTable.id, settlementId),
+          sql`${this.growthRewardSettlementTable.settlementStatus} <> ${GrowthRewardSettlementStatusEnum.SUCCESS}`,
+        ),
+      )
+      .returning({ id: this.growthRewardSettlementTable.id })
+
+    return {
+      updated: Boolean(updated),
+    }
+  }
+
+  // 在任务实例首次自动创建时写入自动加入提醒 outbox。
+  private async publishAutoAssignedReminderInTx(
+    runner: Db,
+    task: TaskDefinitionSelect,
+    instance: TaskInstanceSelect,
+    occurredAt: Date,
+  ) {
+    await this.messageDomainEventPublisher.publishInTx(runner, {
+      ...this.taskNotificationService.createAutoAssignedReminderEvent({
+        bizKey: this.taskNotificationService.buildAutoAssignedReminderBizKey(
+          instance.id,
+        ),
+        receiverUserId: instance.userId,
+        task: {
+          id: task.id,
+          code: task.code,
+          title: task.title,
+          type: task.sceneType,
+        },
+        cycleKey: instance.cycleKey,
+        instanceId: instance.id,
+      }),
+      occurredAt,
+    })
+  }
+
+  // 在奖励首次成功结算时写入奖励到账提醒 outbox。
+  private async publishRewardGrantedReminderInTx(
+    runner: Db,
+    params: TaskRewardGrantedPublishInput,
+  ) {
+    const [row] = await runner
+      .select({
+        instance: this.taskInstanceTable,
+        task: this.taskDefinitionTable,
+      })
+      .from(this.taskInstanceTable)
+      .leftJoin(
+        this.taskDefinitionTable,
+        eq(this.taskInstanceTable.taskId, this.taskDefinitionTable.id),
+      )
+      .where(eq(this.taskInstanceTable.id, params.instanceId))
+      .limit(1)
+
+    await this.messageDomainEventPublisher.publishInTx(runner, {
+      ...this.taskNotificationService.createRewardGrantedReminderEvent({
+        bizKey: this.taskNotificationService.buildRewardGrantedReminderBizKey(
+          params.instanceId,
+        ),
+        receiverUserId: params.userId,
+        task: this.resolveReminderTaskInfo(
+          row?.instance?.snapshotPayload,
+          row?.task ?? null,
+          params.taskId,
+        ),
+        cycleKey: row?.instance?.cycleKey,
+        instanceId: params.instanceId,
+        rewardItems: params.rewardItems,
+        ledgerRecordIds: params.ledgerRecordIds,
+      }),
+      occurredAt: params.occurredAt,
+    })
+  }
+
+  // 解析提醒所需的任务信息，优先使用实例快照以保护历史合同。
+  private resolveReminderTaskInfo(
+    snapshotPayload: unknown,
+    task: TaskDefinitionSelect | null,
+    taskId: number,
+  ) {
+    const snapshot = this.resolveTaskReminderSnapshot(snapshotPayload)
+
+    return {
+      id: taskId,
+      code: snapshot?.code ?? task?.code ?? `task-${taskId}`,
+      title: snapshot?.title ?? task?.title ?? '任务',
+      type: snapshot?.sceneType ?? task?.sceneType,
+    }
+  }
+
+  // 从实例快照中提取任务提醒可用字段。
+  private resolveTaskReminderSnapshot(
+    snapshotPayload: unknown,
+  ): TaskReminderSnapshotPayload | null {
+    if (
+      !snapshotPayload ||
+      typeof snapshotPayload !== 'object' ||
+      Array.isArray(snapshotPayload)
+    ) {
+      return null
+    }
+
+    return snapshotPayload as TaskReminderSnapshotPayload
   }
 }

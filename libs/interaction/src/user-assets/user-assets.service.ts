@@ -4,13 +4,21 @@ import type {
   UserAssetsSummary,
 } from './user-assets.type'
 import { DrizzleService } from '@db/core'
+import {
+  CONTENT_PURCHASE_ENTITLEMENT_TARGET_TYPES,
+  ContentEntitlementGrantSourceEnum,
+  ContentEntitlementStatusEnum,
+  MembershipSubscriptionStatusEnum,
+} from '@libs/content/permission/content-entitlement.constant'
+
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
 import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from '../download/download.constant'
 import {
-  PURCHASE_WORK_CHAPTER_TARGET_TYPES,
-  PurchaseStatusEnum,
-} from '../purchase/purchase.constant'
+  CouponInstanceStatusEnum,
+  READING_COIN_ASSET_KEY,
+} from '../monetization/monetization.constant'
 
 @Injectable()
 export class UserAssetsService {
@@ -36,8 +44,20 @@ export class UserAssetsService {
     return this.drizzle.schema.userBrowseLog
   }
 
-  private get userPurchaseRecord() {
-    return this.drizzle.schema.userPurchaseRecord
+  private get userContentEntitlement() {
+    return this.drizzle.schema.userContentEntitlement
+  }
+
+  private get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
+  }
+
+  private get userMembershipSubscription() {
+    return this.drizzle.schema.userMembershipSubscription
+  }
+
+  private get userCouponInstance() {
+    return this.drizzle.schema.userCouponInstance
   }
 
   private get userDownloadRecord() {
@@ -48,9 +68,7 @@ export class UserAssetsService {
     return this.drizzle.schema.workChapter
   }
 
-  async getUserAssetsSummary(
-    userId: number,
-  ): Promise<UserAssetsSummary> {
+  async getUserAssetsSummary(userId: number): Promise<UserAssetsSummary> {
     const [
       commentCount,
       likeCount,
@@ -60,6 +78,9 @@ export class UserAssetsService {
       downloadedChapterCount,
       purchasedWorkRows,
       downloadedWorkRows,
+      currencyBalanceRow,
+      vipRows,
+      availableCouponCount,
     ] = await Promise.all([
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
@@ -84,13 +105,20 @@ export class UserAssetsService {
         .where(eq(this.userBrowseLog.userId, userId)),
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
-        .from(this.userPurchaseRecord)
+        .from(this.userContentEntitlement)
         .where(
           and(
-            eq(this.userPurchaseRecord.userId, userId),
-            eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
-            inArray(this.userPurchaseRecord.targetType, [
-              ...PURCHASE_WORK_CHAPTER_TARGET_TYPES,
+            eq(this.userContentEntitlement.userId, userId),
+            eq(
+              this.userContentEntitlement.grantSource,
+              ContentEntitlementGrantSourceEnum.PURCHASE,
+            ),
+            eq(
+              this.userContentEntitlement.status,
+              ContentEntitlementStatusEnum.ACTIVE,
+            ),
+            inArray(this.userContentEntitlement.targetType, [
+              ...CONTENT_PURCHASE_ENTITLEMENT_TARGET_TYPES,
             ]),
           ),
         ),
@@ -111,17 +139,24 @@ export class UserAssetsService {
             UserAssetsDistinctWorkCountRow['total']
           >`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
         })
-        .from(this.userPurchaseRecord)
+        .from(this.userContentEntitlement)
         .innerJoin(
           this.workChapter,
-          eq(this.workChapter.id, this.userPurchaseRecord.targetId),
+          eq(this.workChapter.id, this.userContentEntitlement.targetId),
         )
         .where(
           and(
-            eq(this.userPurchaseRecord.userId, userId),
-            eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
-            inArray(this.userPurchaseRecord.targetType, [
-              ...PURCHASE_WORK_CHAPTER_TARGET_TYPES,
+            eq(this.userContentEntitlement.userId, userId),
+            eq(
+              this.userContentEntitlement.grantSource,
+              ContentEntitlementGrantSourceEnum.PURCHASE,
+            ),
+            eq(
+              this.userContentEntitlement.status,
+              ContentEntitlementStatusEnum.ACTIVE,
+            ),
+            inArray(this.userContentEntitlement.targetType, [
+              ...CONTENT_PURCHASE_ENTITLEMENT_TARGET_TYPES,
             ]),
           ),
         ),
@@ -144,9 +179,50 @@ export class UserAssetsService {
             ]),
           ),
         ),
+      this.db.query.userAssetBalance.findFirst({
+        where: {
+          userId,
+          assetType: GrowthAssetTypeEnum.CURRENCY,
+          assetKey: READING_COIN_ASSET_KEY,
+        },
+        columns: {
+          balance: true,
+        },
+      }),
+      this.db
+        .select({
+          vipExpiresAt: sql<Date | null>`max(${this.userMembershipSubscription.endsAt})`,
+        })
+        .from(this.userMembershipSubscription)
+        .where(
+          and(
+            eq(this.userMembershipSubscription.userId, userId),
+            eq(
+              this.userMembershipSubscription.status,
+              MembershipSubscriptionStatusEnum.ACTIVE,
+            ),
+            gt(this.userMembershipSubscription.endsAt, new Date()),
+          ),
+        ),
+      this.db
+        .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
+        .from(this.userCouponInstance)
+        .where(
+          and(
+            eq(this.userCouponInstance.userId, userId),
+            eq(
+              this.userCouponInstance.status,
+              CouponInstanceStatusEnum.AVAILABLE,
+            ),
+            gt(this.userCouponInstance.remainingUses, 0),
+          ),
+        ),
     ])
 
     return {
+      currencyBalance: currencyBalanceRow?.balance ?? 0,
+      vipExpiresAt: vipRows[0]?.vipExpiresAt ?? null,
+      availableCouponCount: Number(availableCouponCount[0]?.count ?? 0),
       purchasedWorkCount: Number(purchasedWorkRows[0]?.total ?? 0n),
       purchasedChapterCount: Number(purchasedChapterCount[0]?.count ?? 0),
       downloadedWorkCount: Number(downloadedWorkRows[0]?.total ?? 0n),

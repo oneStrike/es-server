@@ -14,6 +14,7 @@ import { ContentModule } from './content/content.module'
 import { ForumModule } from './forum/forum.module'
 import { GrowthModule } from './growth/growth.module'
 import { MessageModule } from './message/message.module'
+import { MonetizationModule } from './monetization/monetization.module'
 import { AdminReportModule } from './report/report.module'
 import { SystemConfigModule } from './system/config/system-config.module'
 import { DictionaryModule } from './system/dictionary/dictionary.module'
@@ -42,6 +43,7 @@ import { TaskModule } from './task/task.module'
     ForumModule,
     AdminReportModule,
     MessageModule,
+    MonetizationModule,
     TaskModule,
     GrowthModule,
   ],

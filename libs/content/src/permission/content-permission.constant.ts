@@ -9,10 +9,8 @@ export const PERMISSION_ERROR_MESSAGE = {
   CHAPTER_NOT_FOUND: '章节不存在',
   // 用户不存在或已软删除时的提示。
   USER_NOT_FOUND: '用户不存在',
-  // 用户等级经验不足以访问会员内容时的提示。
-  MEMBER_LEVEL_INSUFFICIENT: '会员等级不足',
-  // 配置的阅读会员等级不存在时的提示。
-  REQUIRED_MEMBER_LEVEL_NOT_FOUND: '指定的阅读会员等级不存在',
+  // 用户没有有效 VIP 订阅时的提示。
+  VIP_SUBSCRIPTION_REQUIRED: '请先开通 VIP',
   // 章节需要购买但当前用户未购买时的提示。
   CHAPTER_PURCHASE_REQUIRED: '请先购买该章节',
   // 作品级权限被错误配置为购买权限时的提示。

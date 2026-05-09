@@ -31,8 +31,8 @@ export enum WorkRootViewPermissionEnum {
   ALL = 0,
   /** 登录用户可见 */
   LOGGED_IN = 1,
-  /** 会员可见 */
-  MEMBER = 2,
+  /** VIP 可见 */
+  VIP = 2,
   /** 需购买可见 */
   PURCHASE = 3,
 }
@@ -48,8 +48,8 @@ export enum WorkViewPermissionEnum {
   ALL = 0,
   /** 登录用户可见 */
   LOGGED_IN = 1,
-  /** 会员可见 */
-  MEMBER = 2,
+  /** VIP 可见 */
+  VIP = 2,
   /** 需购买可见 */
   PURCHASE = 3,
 }

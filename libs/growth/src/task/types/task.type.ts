@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type {
   GrowthRewardSettlementSelect,
   TaskDefinitionSelect,
@@ -16,7 +17,10 @@ import type {
 import type { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import type { GrowthRewardItem } from '../../reward-rule/reward-item.type'
 import type { CreateTaskStepDto } from '../dto/task-admin.dto'
-import type { TaskReminderKindEnum } from '../task.constant'
+import type {
+  TaskInstanceStatusEnum,
+  TaskReminderKindEnum,
+} from '../task.constant'
 
 /** 任务事件推进入参。 */
 export interface TaskEventProgressInput {
@@ -149,6 +153,7 @@ export interface TaskInstanceEventApplyResult {
   progressed: boolean
   completed: boolean
   duplicate: boolean
+  rewardItems?: unknown
 }
 
 /** 写入唯一计数事实时的内部入参。 */
@@ -220,6 +225,67 @@ export interface TaskInstanceResolveResult {
 export interface TaskInstanceStepResolveResult {
   instanceStep: TaskInstanceStepSelect
   created: boolean
+}
+
+/** 单次任务实例步骤进度推进入参。 */
+export interface TaskInstanceProgressApplyInput {
+  runner: Db
+  instance: TaskInstanceSelect
+  instanceStep: TaskInstanceStepSelect
+  delta: number
+  occurredAt: Date
+}
+
+/** 单次任务实例步骤进度推进结果。 */
+export interface TaskInstanceProgressApplyResult {
+  instanceId: number
+  instanceStepId: number
+  beforeValue: number
+  afterValue: number
+  appliedDelta: number
+  targetValue: number
+  status: TaskInstanceStatusEnum
+  completed: boolean
+}
+
+/** 任务奖励到账通知投递入参。 */
+export interface TaskRewardGrantedPublishInput {
+  taskId: number
+  instanceId: number
+  userId: number
+  rewardItems: GrowthRewardItem[]
+  ledgerRecordIds: number[]
+  occurredAt: Date
+}
+
+/** 原生 SQL 进度推进返回行。 */
+export interface TaskProgressUpdateRawRow {
+  instanceId: number
+  instanceStepId: number
+  beforeValue: number
+  afterValue: number
+  appliedDelta: number
+  targetValue: number
+  status: number
+}
+
+/** 到期任务实例批量关闭 SQL 返回行。 */
+export interface TaskExpiredInstanceRawRow {
+  instanceId: number
+  taskId: number
+  userId: number
+}
+
+/** 奖励结算补偿更新结果。 */
+export interface TaskRewardSettlementUpdateResult {
+  updated: boolean
+}
+
+/** 任务提醒快照中的最小任务载荷。 */
+export interface TaskReminderSnapshotPayload {
+  code?: string | null
+  title?: string | null
+  sceneType?: number | null
 }
 
 /** 对账查询中实例作用域的最小视图。 */

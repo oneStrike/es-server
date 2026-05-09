@@ -5,10 +5,16 @@ import {
   GrowthLedgerActionEnum,
   GrowthRuleUsageSlotTypeEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import {
+  MembershipBenefitGrantPolicyEnum,
+  MembershipBenefitTypeEnum,
+  MembershipPlanTierEnum,
+} from '@libs/interaction/monetization/monetization.constant'
 import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
   adminUser,
+  adProviderConfig,
   appAgreement,
   appAgreementLog,
   appAnnouncement,
@@ -18,6 +24,8 @@ import {
   appUser,
   appUserCount,
   appUserToken,
+  couponDefinition,
+  currencyPackage,
   forumSection,
   forumTopic,
   forumUserActionLog,
@@ -25,6 +33,12 @@ import {
   growthLedgerRecord,
   growthRewardRule,
   growthRuleUsageCounter,
+  membershipBenefitDefinition,
+  membershipPageConfig,
+  membershipPageConfigAgreement,
+  membershipPlan,
+  membershipPlanBenefit,
+  paymentProviderConfig,
   taskDefinition,
   taskEventLog,
   taskInstance,
@@ -35,10 +49,13 @@ import {
   userBadgeAssignment,
   userBrowseLog,
   userComment,
+  userContentEntitlement,
+  userCouponInstance,
   userDownloadRecord,
   userFavorite,
   userLevelRule,
   userLike,
+  userMembershipSubscription,
   userPurchaseRecord,
   userReport,
   userWorkReadingState,
@@ -106,7 +123,7 @@ const LEVEL_FIXTURES = [
     dailyFavoriteLimit: 20,
     blacklistLimit: 30,
     workCollectionLimit: 120,
-    purchasePayableRate: '0.95',
+    purchasePayableRate: '1.00',
   },
   {
     name: '资深读者',
@@ -125,7 +142,7 @@ const LEVEL_FIXTURES = [
     dailyFavoriteLimit: 50,
     blacklistLimit: 50,
     workCollectionLimit: 300,
-    purchasePayableRate: '0.90',
+    purchasePayableRate: '1.00',
   },
 ] as const
 
@@ -174,6 +191,199 @@ const REWARD_RULE_FIXTURES = [
     dailyLimit: 80,
     totalLimit: 0,
     remark: '回复经验奖励',
+  },
+] as const
+
+const MEMBERSHIP_PLAN_FIXTURES = [
+  {
+    name: '月度 VIP',
+    planKey: 'vip_monthly',
+    tier: MembershipPlanTierEnum.VIP,
+    priceAmount: 1800,
+    originalPriceAmount: 3000,
+    durationDays: 30,
+    displayTag: '体验价',
+    bonusPointAmount: 100,
+    autoRenewEnabled: false,
+    sortOrder: 1,
+    isEnabled: true,
+  },
+  {
+    name: '月度超级 VIP',
+    planKey: 'super_vip_monthly',
+    tier: MembershipPlanTierEnum.SUPER_VIP,
+    priceAmount: 2590,
+    originalPriceAmount: 5000,
+    durationDays: 30,
+    displayTag: '热门',
+    bonusPointAmount: 340,
+    autoRenewEnabled: true,
+    sortOrder: 2,
+    isEnabled: true,
+  },
+] as const
+
+const MEMBERSHIP_BENEFIT_FIXTURES = [
+  {
+    code: 'daily_gift',
+    name: '每日礼包',
+    icon: 'calendar',
+    benefitType: MembershipBenefitTypeEnum.DISPLAY,
+    description: '订阅期每日可领取礼包',
+    sortOrder: 1,
+    isEnabled: true,
+  },
+  {
+    code: 'no_ad_reading',
+    name: '无广告阅读',
+    icon: 'no-ad',
+    benefitType: MembershipBenefitTypeEnum.NO_AD_POLICY,
+    description: '订阅期内免除阅读广告',
+    sortOrder: 2,
+    isEnabled: true,
+  },
+  {
+    code: 'early_access',
+    name: '漫画抢先看',
+    icon: 'early-access',
+    benefitType: MembershipBenefitTypeEnum.EARLY_ACCESS_POLICY,
+    description: '订阅期内获得优先看权益',
+    sortOrder: 3,
+    isEnabled: true,
+  },
+] as const
+
+const MEMBERSHIP_PAGE_CONFIG_FIXTURES = [
+  {
+    pageKey: 'vip_subscription',
+    title: 'VIP会员',
+    memberNoticeItems: [
+      '会员到期后自动续费，可随时在设置中取消',
+      '超级VIP包含普通VIP所有权益及额外专属特权',
+      '如有疑问请联系客服',
+    ],
+    autoRenewNotice: '自动续费可随时取消',
+    checkoutAgreementText: '开通即同意《会员服务协议》和《隐私政策》',
+    submitButtonTemplate: '¥{price} 确认协议并开通',
+    sortOrder: 1,
+    isEnabled: true,
+  },
+] as const
+
+const CURRENCY_PACKAGE_FIXTURES = [
+  {
+    packageKey: 'reading_coin_1000',
+    name: '1000 阅读币',
+    price: 1000,
+    currencyAmount: 1000,
+    bonusAmount: 100,
+    sortOrder: 1,
+    isEnabled: true,
+  },
+] as const
+
+const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
+  {
+    channel: 1,
+    paymentScene: 1,
+    platform: 1,
+    environment: 1,
+    clientAppKey: 'default-app',
+    appId: 'seed-alipay-app',
+    mchId: 'seed-alipay-mch',
+    notifyUrl:
+      'https://example.com/app/monetization/payment-notification/create',
+    returnUrl: null,
+    configVersion: 1,
+    credentialVersionRef: 'seed://payment/alipay/v1',
+    configMetadata: {
+      keyFingerprint: 'seed-alipay',
+      verifySecretEnvKey: 'ES_PAYMENT_ALIPAY_NOTIFY_SECRET',
+    },
+    sortOrder: 1,
+    isEnabled: true,
+  },
+  {
+    channel: 2,
+    paymentScene: 1,
+    platform: 1,
+    environment: 1,
+    clientAppKey: 'default-app',
+    appId: 'seed-wechat-app',
+    mchId: 'seed-wechat-mch',
+    notifyUrl:
+      'https://example.com/app/monetization/payment-notification/create',
+    returnUrl: null,
+    configVersion: 1,
+    credentialVersionRef: 'seed://payment/wechat/v1',
+    configMetadata: {
+      keyFingerprint: 'seed-wechat',
+      verifySecretEnvKey: 'ES_PAYMENT_WECHAT_NOTIFY_SECRET',
+    },
+    sortOrder: 2,
+    isEnabled: true,
+  },
+] as const
+
+const AD_PROVIDER_CONFIG_FIXTURES = [
+  {
+    provider: 1,
+    platform: 1,
+    environment: 1,
+    clientAppKey: 'default-app',
+    appId: 'seed-pangle-app',
+    placementKey: 'seed-low-price-reward',
+    targetScope: 1,
+    dailyLimit: 3,
+    configVersion: 1,
+    credentialVersionRef: 'seed://ad/pangle/v1',
+    callbackUrl:
+      'https://example.com/app/monetization/ad-reward/verification/create',
+    configMetadata: {
+      keyFingerprint: 'seed-pangle',
+      verifySecretEnvKey: 'ES_AD_PANGLE_SSV_SECRET',
+    },
+    sortOrder: 1,
+    isEnabled: true,
+  },
+] as const
+
+const COUPON_DEFINITION_FIXTURES = [
+  {
+    name: '章节阅读券',
+    couponType: 1,
+    targetScope: 1,
+    discountAmount: 0,
+    discountRateBps: 10000,
+    usageLimit: 1,
+    validDays: 30,
+    budgetLimit: 0,
+    configPayload: { seed: true },
+    isEnabled: true,
+  },
+  {
+    name: '章节九折券',
+    couponType: 2,
+    targetScope: 1,
+    discountAmount: 0,
+    discountRateBps: 9000,
+    usageLimit: 1,
+    validDays: 30,
+    budgetLimit: 0,
+    configPayload: { seed: true },
+    isEnabled: true,
+  },
+  {
+    name: 'VIP 试用卡',
+    couponType: 3,
+    targetScope: 2,
+    discountAmount: 0,
+    discountRateBps: 10000,
+    usageLimit: 1,
+    validDays: 7,
+    budgetLimit: 0,
+    configPayload: { seed: true },
+    isEnabled: true,
   },
 ] as const
 
@@ -475,6 +685,221 @@ export async function seedAppCoreDomain(db: Db) {
   }
   console.log('  ✓ 成长奖励规则完成')
 
+  for (const planFixture of MEMBERSHIP_PLAN_FIXTURES) {
+    const [existing] = await db
+      .select()
+      .from(membershipPlan)
+      .where(eq(membershipPlan.planKey, planFixture.planKey))
+      .limit(1)
+
+    if (!existing) {
+      await db.insert(membershipPlan).values(planFixture)
+    } else {
+      await db
+        .update(membershipPlan)
+        .set(planFixture)
+        .where(eq(membershipPlan.id, existing.id))
+    }
+  }
+
+  for (const benefitFixture of MEMBERSHIP_BENEFIT_FIXTURES) {
+    const [existing] = await db
+      .select()
+      .from(membershipBenefitDefinition)
+      .where(eq(membershipBenefitDefinition.code, benefitFixture.code))
+      .limit(1)
+
+    if (!existing) {
+      await db.insert(membershipBenefitDefinition).values(benefitFixture)
+    } else {
+      await db
+        .update(membershipBenefitDefinition)
+        .set(benefitFixture)
+        .where(eq(membershipBenefitDefinition.id, existing.id))
+    }
+  }
+
+  for (const pageConfigFixture of MEMBERSHIP_PAGE_CONFIG_FIXTURES) {
+    const [existing] = await db
+      .select()
+      .from(membershipPageConfig)
+      .where(eq(membershipPageConfig.pageKey, pageConfigFixture.pageKey))
+      .limit(1)
+
+    if (!existing) {
+      await db.insert(membershipPageConfig).values(pageConfigFixture)
+    } else {
+      await db
+        .update(membershipPageConfig)
+        .set(pageConfigFixture)
+        .where(eq(membershipPageConfig.id, existing.id))
+    }
+  }
+
+  const benefitRows = await db.select().from(membershipBenefitDefinition)
+  const planRows = await db.select().from(membershipPlan)
+  const benefitByCode = new Map(benefitRows.map((row) => [row.code, row]))
+  const planByKey = new Map(planRows.map((row) => [row.planKey, row]))
+  const planBenefitFixtures = [
+    {
+      planKey: 'vip_monthly',
+      benefitCode: 'daily_gift',
+      grantPolicy: MembershipBenefitGrantPolicyEnum.DISPLAY_ONLY,
+      benefitValue: { displayText: '每日礼包' },
+      sortOrder: 1,
+      isEnabled: true,
+    },
+    {
+      planKey: 'super_vip_monthly',
+      benefitCode: 'no_ad_reading',
+      grantPolicy: MembershipBenefitGrantPolicyEnum.ACTIVE_DURING_SUBSCRIPTION,
+      benefitValue: {
+        adScope: 'reading',
+        durationPolicy: 'subscription_period',
+      },
+      sortOrder: 1,
+      isEnabled: true,
+    },
+    {
+      planKey: 'super_vip_monthly',
+      benefitCode: 'early_access',
+      grantPolicy: MembershipBenefitGrantPolicyEnum.ACTIVE_DURING_SUBSCRIPTION,
+      benefitValue: {
+        contentScope: 'comic_chapter',
+        advanceHours: 24,
+      },
+      sortOrder: 2,
+      isEnabled: true,
+    },
+  ] as const
+
+  for (const fixture of planBenefitFixtures) {
+    const plan = planByKey.get(fixture.planKey)
+    const benefit = benefitByCode.get(fixture.benefitCode)
+    if (!plan || !benefit) {
+      continue
+    }
+    const [existing] = await db
+      .select()
+      .from(membershipPlanBenefit)
+      .where(
+        and(
+          eq(membershipPlanBenefit.planId, plan.id),
+          eq(membershipPlanBenefit.benefitId, benefit.id),
+        ),
+      )
+      .limit(1)
+    const payload = {
+      planId: plan.id,
+      benefitId: benefit.id,
+      grantPolicy: fixture.grantPolicy,
+      benefitValue: fixture.benefitValue,
+      sortOrder: fixture.sortOrder,
+      isEnabled: fixture.isEnabled,
+    }
+    if (!existing) {
+      await db.insert(membershipPlanBenefit).values(payload)
+    } else {
+      await db
+        .update(membershipPlanBenefit)
+        .set(payload)
+        .where(eq(membershipPlanBenefit.id, existing.id))
+    }
+  }
+
+  for (const packageFixture of CURRENCY_PACKAGE_FIXTURES) {
+    const [existing] = await db
+      .select()
+      .from(currencyPackage)
+      .where(eq(currencyPackage.packageKey, packageFixture.packageKey))
+      .limit(1)
+
+    if (!existing) {
+      await db.insert(currencyPackage).values(packageFixture)
+    } else {
+      await db
+        .update(currencyPackage)
+        .set(packageFixture)
+        .where(eq(currencyPackage.id, existing.id))
+    }
+  }
+
+  for (const configFixture of PAYMENT_PROVIDER_CONFIG_FIXTURES) {
+    const [existing] = await db
+      .select()
+      .from(paymentProviderConfig)
+      .where(
+        and(
+          eq(paymentProviderConfig.channel, configFixture.channel),
+          eq(paymentProviderConfig.paymentScene, configFixture.paymentScene),
+          eq(paymentProviderConfig.platform, configFixture.platform),
+          eq(paymentProviderConfig.clientAppKey, configFixture.clientAppKey),
+          eq(paymentProviderConfig.appId, configFixture.appId),
+          eq(paymentProviderConfig.mchId, configFixture.mchId),
+          eq(paymentProviderConfig.environment, configFixture.environment),
+        ),
+      )
+      .limit(1)
+
+    if (!existing) {
+      await db.insert(paymentProviderConfig).values(configFixture)
+    } else {
+      await db
+        .update(paymentProviderConfig)
+        .set(configFixture)
+        .where(eq(paymentProviderConfig.id, existing.id))
+    }
+  }
+
+  for (const configFixture of AD_PROVIDER_CONFIG_FIXTURES) {
+    const [existing] = await db
+      .select()
+      .from(adProviderConfig)
+      .where(
+        and(
+          eq(adProviderConfig.provider, configFixture.provider),
+          eq(adProviderConfig.platform, configFixture.platform),
+          eq(adProviderConfig.clientAppKey, configFixture.clientAppKey),
+          eq(adProviderConfig.appId, configFixture.appId),
+          eq(adProviderConfig.placementKey, configFixture.placementKey),
+          eq(adProviderConfig.environment, configFixture.environment),
+        ),
+      )
+      .limit(1)
+
+    if (!existing) {
+      await db.insert(adProviderConfig).values(configFixture)
+    } else {
+      await db
+        .update(adProviderConfig)
+        .set(configFixture)
+        .where(eq(adProviderConfig.id, existing.id))
+    }
+  }
+
+  for (const couponFixture of COUPON_DEFINITION_FIXTURES) {
+    const [existing] = await db
+      .select()
+      .from(couponDefinition)
+      .where(
+        and(
+          eq(couponDefinition.name, couponFixture.name),
+          eq(couponDefinition.couponType, couponFixture.couponType),
+        ),
+      )
+      .limit(1)
+
+    if (!existing) {
+      await db.insert(couponDefinition).values(couponFixture)
+    } else {
+      await db
+        .update(couponDefinition)
+        .set(couponFixture)
+        .where(eq(couponDefinition.id, existing.id))
+    }
+  }
+  console.log('  ✓ 变现基础配置完成')
+
   for (const badgeFixture of BADGE_FIXTURES) {
     const existing = await db.query.userBadge.findFirst({
       where: eq(userBadge.name, badgeFixture.name),
@@ -581,6 +1006,12 @@ export async function seedAppCoreDomain(db: Db) {
         assetKey: '',
         balance: userFixture.experience,
       },
+      {
+        userId: user.id,
+        assetType: GrowthAssetTypeEnum.CURRENCY,
+        assetKey: 'reading_coin',
+        balance: 300,
+      },
     ] as const
 
     for (const balanceFixture of balanceFixtures) {
@@ -603,6 +1034,113 @@ export async function seedAppCoreDomain(db: Db) {
     }
   }
   console.log('  ✓ 用户资产余额完成')
+
+  const [seedVipPlan] = await db
+    .select()
+    .from(membershipPlan)
+    .where(eq(membershipPlan.planKey, 'vip_monthly'))
+    .limit(1)
+  const vipSeedUsers = await db.query.appUser.findMany({
+    where: inArray(appUser.account, [
+      SEED_ACCOUNTS.readerA,
+      SEED_ACCOUNTS.readerB,
+    ]),
+  })
+
+  if (seedVipPlan) {
+    for (const user of vipSeedUsers) {
+      const [existingSubscription] = await db
+        .select()
+        .from(userMembershipSubscription)
+        .where(
+          and(
+            eq(userMembershipSubscription.userId, user.id),
+            eq(userMembershipSubscription.sourceType, 3),
+            eq(userMembershipSubscription.sourceId, seedVipPlan.id),
+          ),
+        )
+        .limit(1)
+      const subscriptionFixture = {
+        userId: user.id,
+        planId: seedVipPlan.id,
+        sourceType: 3,
+        sourceId: seedVipPlan.id,
+        status: 1,
+        startsAt: SEED_TIMELINE.seedAt,
+        endsAt: addHours(SEED_TIMELINE.seedAt, 24 * 30),
+        sourceSnapshot: {
+          source: 'seed',
+          planKey: seedVipPlan.planKey,
+          durationDays: seedVipPlan.durationDays,
+        },
+      }
+
+      if (!existingSubscription) {
+        await db.insert(userMembershipSubscription).values(subscriptionFixture)
+      } else {
+        await db
+          .update(userMembershipSubscription)
+          .set(subscriptionFixture)
+          .where(eq(userMembershipSubscription.id, existingSubscription.id))
+      }
+    }
+  }
+
+  const [readingCouponDefinition] = await db
+    .select()
+    .from(couponDefinition)
+    .where(eq(couponDefinition.name, '章节阅读券'))
+    .limit(1)
+  const [discountCouponDefinition] = await db
+    .select()
+    .from(couponDefinition)
+    .where(eq(couponDefinition.name, '章节九折券'))
+    .limit(1)
+  const couponSeedUser = vipSeedUsers[0]
+  const seedCouponDefinitions = [
+    readingCouponDefinition,
+    discountCouponDefinition,
+  ].filter((item): item is NonNullable<typeof item> => !!item)
+
+  if (couponSeedUser) {
+    for (const definition of seedCouponDefinitions) {
+      const [existingCoupon] = await db
+        .select()
+        .from(userCouponInstance)
+        .where(
+          and(
+            eq(userCouponInstance.userId, couponSeedUser.id),
+            eq(userCouponInstance.couponDefinitionId, definition.id),
+            eq(userCouponInstance.sourceType, 3),
+          ),
+        )
+        .limit(1)
+      const couponFixture = {
+        userId: couponSeedUser.id,
+        couponDefinitionId: definition.id,
+        couponType: definition.couponType,
+        status: 1,
+        remainingUses: definition.usageLimit,
+        sourceType: 3,
+        sourceId: definition.id,
+        expiresAt: addHours(SEED_TIMELINE.seedAt, 24 * 30),
+        grantSnapshot: {
+          source: 'seed',
+          couponName: definition.name,
+        },
+      }
+
+      if (!existingCoupon) {
+        await db.insert(userCouponInstance).values(couponFixture)
+      } else {
+        await db
+          .update(userCouponInstance)
+          .set(couponFixture)
+          .where(eq(userCouponInstance.id, existingCoupon.id))
+      }
+    }
+  }
+  console.log('  ✓ VIP 与券实例完成')
 
   const tokenFixtures = [
     {
@@ -704,6 +1242,44 @@ export async function seedAppCoreDomain(db: Db) {
     }
   }
   console.log('  ✓ 协议完成')
+
+  const [vipPageConfig] = await db
+    .select()
+    .from(membershipPageConfig)
+    .where(eq(membershipPageConfig.pageKey, 'vip_subscription'))
+    .limit(1)
+  const membershipAgreementRows = await db
+    .select()
+    .from(appAgreement)
+    .where(inArray(appAgreement.title, ['用户协议', '隐私政策']))
+  const membershipAgreementByTitle = new Map(
+    membershipAgreementRows.map((agreement) => [agreement.title, agreement]),
+  )
+  if (vipPageConfig) {
+    const membershipAgreementLinks = ['用户协议', '隐私政策'].flatMap(
+      (title, sortOrder) => {
+        const agreement = membershipAgreementByTitle.get(title)
+        return agreement
+          ? [
+              {
+                pageConfigId: vipPageConfig.id,
+                agreementId: agreement.id,
+                sortOrder,
+              },
+            ]
+          : []
+      },
+    )
+    await db
+      .delete(membershipPageConfigAgreement)
+      .where(eq(membershipPageConfigAgreement.pageConfigId, vipPageConfig.id))
+    if (membershipAgreementLinks.length > 0) {
+      await db
+        .insert(membershipPageConfigAgreement)
+        .values(membershipAgreementLinks)
+    }
+  }
+  console.log('  ✓ 会员订阅页协议关联完成')
 
   for (const announcementFixture of ANNOUNCEMENT_FIXTURES) {
     const page = announcementFixture.pageCode
@@ -1273,7 +1849,10 @@ export async function seedAppActivityDomain(db: Db) {
       originalPrice: 30,
       paidPrice: 30,
       payableRate: '1.00',
-      status: 2,
+      discountAmount: 0,
+      couponInstanceId: null,
+      discountSource: 0,
+      status: 1,
       paymentMethod: 1,
       outTradeNo: 'seed-purchase-aot-chapter-2',
       createdAt: addHours(SEED_TIMELINE.seedAt, -3),
@@ -1286,7 +1865,10 @@ export async function seedAppActivityDomain(db: Db) {
       originalPrice: 25,
       paidPrice: 25,
       payableRate: '1.00',
-      status: 2,
+      discountAmount: 0,
+      couponInstanceId: null,
+      discountSource: 0,
+      status: 1,
       paymentMethod: 1,
       outTradeNo: 'seed-purchase-byh-chapter-2',
       createdAt: addHours(SEED_TIMELINE.seedAt, -2),
@@ -1305,12 +1887,73 @@ export async function seedAppActivityDomain(db: Db) {
     })
 
     if (!existingPurchase) {
-      await db.insert(userPurchaseRecord).values(purchaseFixture)
+      const [purchase] = await db
+        .insert(userPurchaseRecord)
+        .values(purchaseFixture)
+        .returning()
+      await db.insert(userContentEntitlement).values({
+        userId: purchase.userId,
+        targetType: purchase.targetType,
+        targetId: purchase.targetId,
+        grantSource: 1,
+        sourceId: purchase.id,
+        status: 1,
+        startsAt: purchase.createdAt,
+        grantSnapshot: {
+          originalPrice: purchase.originalPrice,
+          paidPrice: purchase.paidPrice,
+          payableRate: purchase.payableRate,
+          paymentMethod: purchase.paymentMethod,
+          outTradeNo: purchase.outTradeNo,
+          source: 'seed',
+        },
+        createdAt: purchase.createdAt,
+        updatedAt: purchase.updatedAt,
+      })
     } else {
       await db
         .update(userPurchaseRecord)
         .set(purchaseFixture)
         .where(eq(userPurchaseRecord.id, existingPurchase.id))
+      const [existingEntitlement] = await db
+        .select()
+        .from(userContentEntitlement)
+        .where(
+          and(
+            eq(userContentEntitlement.userId, existingPurchase.userId),
+            eq(userContentEntitlement.targetType, existingPurchase.targetType),
+            eq(userContentEntitlement.targetId, existingPurchase.targetId),
+            eq(userContentEntitlement.grantSource, 1),
+          ),
+        )
+        .limit(1)
+      const entitlementFixture = {
+        userId: purchaseFixture.userId,
+        targetType: purchaseFixture.targetType,
+        targetId: purchaseFixture.targetId,
+        grantSource: 1,
+        sourceId: existingPurchase.id,
+        status: 1,
+        startsAt: purchaseFixture.createdAt,
+        grantSnapshot: {
+          originalPrice: purchaseFixture.originalPrice,
+          paidPrice: purchaseFixture.paidPrice,
+          payableRate: purchaseFixture.payableRate,
+          paymentMethod: purchaseFixture.paymentMethod,
+          outTradeNo: purchaseFixture.outTradeNo,
+          source: 'seed',
+        },
+        createdAt: purchaseFixture.createdAt,
+        updatedAt: purchaseFixture.updatedAt,
+      }
+      if (!existingEntitlement) {
+        await db.insert(userContentEntitlement).values(entitlementFixture)
+      } else {
+        await db
+          .update(userContentEntitlement)
+          .set(entitlementFixture)
+          .where(eq(userContentEntitlement.id, existingEntitlement.id))
+      }
     }
   }
   console.log('  ✓ 购买记录完成')
@@ -1468,13 +2111,13 @@ export async function seedAppActivityDomain(db: Db) {
   }
   console.log('  ✓ 徽章发放完成')
 
-  const [pointPurchaseRule] = await db
+  const [currencyPurchaseRule] = await db
     .select()
     .from(growthRewardRule)
     .where(
       and(
         eq(growthRewardRule.type, 302),
-        eq(growthRewardRule.assetType, GrowthAssetTypeEnum.POINTS),
+        eq(growthRewardRule.assetType, GrowthAssetTypeEnum.CURRENCY),
       ),
     )
     .limit(1)
@@ -1492,17 +2135,18 @@ export async function seedAppActivityDomain(db: Db) {
   const ledgerFixtures = [
     {
       userId: userA.id,
-      assetType: GrowthAssetTypeEnum.POINTS,
+      assetType: GrowthAssetTypeEnum.CURRENCY,
+      assetKey: 'reading_coin',
       delta: -30,
-      beforeValue: 120,
-      afterValue: 90,
+      beforeValue: 300,
+      afterValue: 270,
       bizKey: 'purchase:seed:aot:chapter-2',
       source: 'purchase',
       ruleType: 302,
-      ruleId: pointPurchaseRule?.id ?? null,
+      ruleId: currencyPurchaseRule?.id ?? null,
       targetType: 2,
       targetId: aotChapterTwo.id,
-      remark: 'seed: 漫画章节购买扣点',
+      remark: 'seed: 漫画章节购买扣虚拟币',
       context: { source: 'seed', target: 'aot-chapter-2' },
     },
     {
@@ -1545,7 +2189,8 @@ export async function seedAppActivityDomain(db: Db) {
       userId: userA.id,
       requestId: 'seed-request-purchase',
       bizKey: 'purchase:seed:aot:chapter-2',
-      assetType: GrowthAssetTypeEnum.POINTS,
+      assetType: GrowthAssetTypeEnum.CURRENCY,
+      assetKey: 'reading_coin',
       action: GrowthLedgerActionEnum.CONSUME,
       ruleType: 302,
       decision: GrowthAuditDecisionEnum.ALLOW,
@@ -1590,9 +2235,9 @@ export async function seedAppActivityDomain(db: Db) {
   const slotFixtures = [
     {
       userId: userA.id,
-      assetType: GrowthAssetTypeEnum.POINTS,
-      assetKey: '',
-      ruleKey: 'points:302',
+      assetType: GrowthAssetTypeEnum.CURRENCY,
+      assetKey: 'reading_coin',
+      ruleKey: 'currency:reading_coin:purchase',
       scopeType: GrowthRuleUsageSlotTypeEnum.TOTAL,
       scopeKey: 'purchase:seed:aot:chapter-2',
       usedCount: 1,
@@ -2069,13 +2714,17 @@ export async function seedAppActivityDomain(db: Db) {
         eq(userDownloadRecord.targetId, target.row.id),
       ),
     })
-    const purchases = await db.query.userPurchaseRecord.findMany({
-      where: and(
-        eq(userPurchaseRecord.targetType, target.purchaseTargetType),
-        eq(userPurchaseRecord.targetId, target.row.id),
-        eq(userPurchaseRecord.status, 2),
-      ),
-    })
+    const purchases = await db
+      .select()
+      .from(userContentEntitlement)
+      .where(
+        and(
+          eq(userContentEntitlement.targetType, target.purchaseTargetType),
+          eq(userContentEntitlement.targetId, target.row.id),
+          eq(userContentEntitlement.grantSource, 1),
+          eq(userContentEntitlement.status, 1),
+        ),
+      )
 
     await db
       .update(workChapter)

@@ -2,7 +2,6 @@ import { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
 import { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
 import { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
 import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
-import { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import {
   WorkRootViewPermissionEnum,
   WorkTypeEnum,
@@ -16,7 +15,6 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 
 import {
@@ -25,6 +23,8 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+
+import { ContentPurchasePricingDto } from '../../../permission/dto/content-purchase-pricing.dto'
 import { BaseWorkChapterDto } from '../../chapter/dto/work-chapter.dto'
 import { WorkSerialStatusEnum } from '../work.constant'
 
@@ -168,7 +168,7 @@ export class BaseWorkDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '阅读规则（0=所有人可见；1=登录用户可见；2=会员可见；3=需购买可见）',
+      '阅读规则（0=所有人可见；1=登录用户可见；2=VIP可见；3=需购买可见）',
     example: WorkRootViewPermissionEnum.ALL,
     required: true,
     enum: WorkRootViewPermissionEnum,
@@ -176,7 +176,7 @@ export class BaseWorkDto extends BaseDto {
   viewRule!: WorkRootViewPermissionEnum
 
   @NumberProperty({
-    description: '阅读所需会员等级ID',
+    description: '历史阅读等级ID（目标态不参与阅读权限）',
     example: 1,
     required: false,
   })
@@ -531,12 +531,12 @@ class WorkDetailExtraDto extends PickType(BaseWorkDto, [
 ] as const) {
   @NestedProperty({
     description: '章节默认购买价格信息',
-    type: PurchasePricingDto,
+    type: ContentPurchasePricingDto,
     required: false,
     validation: false,
     nullable: true,
   })
-  chapterPurchasePricing!: PurchasePricingDto | null
+  chapterPurchasePricing!: ContentPurchasePricingDto | null
 }
 
 class WorkDetailBodyDto extends IntersectionType(

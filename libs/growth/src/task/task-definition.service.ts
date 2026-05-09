@@ -206,10 +206,20 @@ export class TaskDefinitionService extends TaskServiceSupport {
         template?.supportsUniqueCounting,
       )
     }
+    const shouldGuardExecutionContract = this.hasExecutionContractChange(
+      existing,
+      currentStep,
+      input,
+      nextStep,
+    )
 
     await this.drizzle.withErrorHandling(
       async () =>
         this.drizzle.withTransaction(async (tx) => {
+          if (shouldGuardExecutionContract) {
+            await this.ensureNoActiveTaskInstances(tx, input.id)
+          }
+
           await tx
             .update(this.taskDefinitionTable)
             .set({
@@ -285,11 +295,15 @@ export class TaskDefinitionService extends TaskServiceSupport {
     this.ensureTaskDefinitionStatus(status)
 
     await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.taskDefinitionTable)
-          .set({ status })
-          .where(eq(this.taskDefinitionTable.id, id)),
+      async () =>
+        this.drizzle.withTransaction(async (tx) => {
+          await this.ensureNoActiveTaskInstances(tx, id)
+
+          return tx
+            .update(this.taskDefinitionTable)
+            .set({ status })
+            .where(eq(this.taskDefinitionTable.id, id))
+        }),
       { notFound: '任务不存在' },
     )
     return true
@@ -299,12 +313,79 @@ export class TaskDefinitionService extends TaskServiceSupport {
   async deleteTaskDefinition(id: number) {
     await this.getTaskDefinitionRecordOrThrow(id)
 
-    await this.db
-      .update(this.taskDefinitionTable)
-      .set({ deletedAt: new Date() })
-      .where(eq(this.taskDefinitionTable.id, id))
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.ensureNoActiveTaskInstances(tx, id)
+
+      await tx
+        .update(this.taskDefinitionTable)
+        .set({ deletedAt: new Date() })
+        .where(eq(this.taskDefinitionTable.id, id))
+    })
 
     return true
+  }
+
+  // 判断本次更新是否触及已领取实例必须冻结的执行合同。
+  private hasExecutionContractChange(
+    existing: typeof this.taskDefinitionTable.$inferSelect,
+    currentStep: TaskStepSelect,
+    input: UpdateTaskDefinitionDto,
+    nextStep: TaskStepWriteInput | null,
+  ) {
+    if (
+      this.hasScalarChange(input.sceneType, existing.sceneType) ||
+      this.hasScalarChange(input.status, existing.status) ||
+      this.hasScalarChange(input.claimMode, existing.claimMode) ||
+      this.hasScalarChange(input.completionPolicy, existing.completionPolicy) ||
+      this.hasScalarChange(input.repeatType, existing.repeatType) ||
+      this.hasDateChange(input.startAt, existing.startAt) ||
+      this.hasDateChange(input.endAt, existing.endAt)
+    ) {
+      return true
+    }
+
+    if (!nextStep) {
+      return false
+    }
+
+    return (
+      nextStep.triggerMode !== currentStep.triggerMode ||
+      nextStep.targetValue !== currentStep.targetValue ||
+      this.normalizeNullableValue(nextStep.eventCode) !==
+      this.normalizeNullableValue(currentStep.eventCode) ||
+      this.normalizeNullableValue(nextStep.templateKey) !==
+      this.normalizeNullableValue(currentStep.templateKey) ||
+      this.normalizeNullableValue(nextStep.dedupeScope) !==
+      this.normalizeNullableValue(currentStep.dedupeScope) ||
+      !this.isJsonEqual(nextStep.filterPayload, currentStep.filterPayload)
+    )
+  }
+
+  // 判断可选标量字段是否显式变更。
+  private hasScalarChange<T>(nextValue: T | undefined, currentValue: T) {
+    return nextValue !== undefined && nextValue !== currentValue
+  }
+
+  // 将可空合同字段统一收敛，避免 undefined/null 误判。
+  private normalizeNullableValue<T>(value: T | null | undefined) {
+    return value ?? null
+  }
+
+  // 判断可选日期字段是否显式变更。
+  private hasDateChange(
+    nextValue: Date | null | undefined,
+    currentValue: Date | null,
+  ) {
+    if (nextValue === undefined) {
+      return false
+    }
+
+    return (nextValue?.getTime() ?? null) !== (currentValue?.getTime() ?? null)
+  }
+
+  // 判断 JSON 合同字段是否等价。
+  private isJsonEqual(left: unknown, right: unknown) {
+    return JSON.stringify(left ?? null) === JSON.stringify(right ?? null)
   }
 
   // 把外部单步骤写入合同归一化成内部持久化视图。

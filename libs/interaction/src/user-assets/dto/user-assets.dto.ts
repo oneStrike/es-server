@@ -1,6 +1,28 @@
-import { NumberProperty } from '@libs/platform/decorators';
+import { DateProperty, NumberProperty } from '@libs/platform/decorators'
 
 export class BaseUserAssetsSummaryDto {
+  @NumberProperty({
+    description: '虚拟币余额',
+    example: 1000,
+    validation: false,
+  })
+  currencyBalance!: number
+
+  @DateProperty({
+    description: 'VIP 到期时间',
+    example: '2026-06-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  vipExpiresAt!: Date | null
+
+  @NumberProperty({
+    description: '可用券数量',
+    example: 3,
+    validation: false,
+  })
+  availableCouponCount!: number
+
   @NumberProperty({
     description: '已购买作品数',
     example: 5,

@@ -14,6 +14,7 @@ import { EmojiModule } from './emoji/emoji.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { FollowModule } from './follow/follow.module'
 import { LikeModule } from './like/like.module'
+import { MonetizationModule } from './monetization/monetization.module'
 import { PurchaseModule } from './purchase/purchase.module'
 import { ReadingStateModule } from './reading-state/reading-state.module'
 import { ReportModule } from './report/report.module'
@@ -32,6 +33,7 @@ import { UserAssetsModule } from './user-assets/user-assets.module'
     CommentModule,
     ReportModule,
     DownloadModule,
+    MonetizationModule,
     PurchaseModule,
     UserAssetsModule,
   ],
@@ -46,6 +48,7 @@ import { UserAssetsModule } from './user-assets/user-assets.module'
     CommentModule,
     ReportModule,
     DownloadModule,
+    MonetizationModule,
     PurchaseModule,
     UserAssetsModule,
   ],
