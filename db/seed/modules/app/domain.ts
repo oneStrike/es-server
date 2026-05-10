@@ -9,7 +9,7 @@ import {
   MembershipBenefitGrantPolicyEnum,
   MembershipBenefitTypeEnum,
   MembershipPlanTierEnum,
-} from '@libs/interaction/monetization/monetization.constant'
+} from '@libs/interaction/membership/membership.constant'
 import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
@@ -36,6 +36,7 @@ import {
   membershipBenefitDefinition,
   membershipPageConfig,
   membershipPageConfigAgreement,
+  membershipPageConfigPlan,
   membershipPlan,
   membershipPlanBenefit,
   paymentProviderConfig,
@@ -292,7 +293,7 @@ const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
     appId: 'seed-alipay-app',
     mchId: 'seed-alipay-mch',
     notifyUrl:
-      'https://example.com/app/monetization/payment-notification/create',
+      'https://example.com/app/payment/notification/create',
     returnUrl: null,
     configVersion: 1,
     credentialVersionRef: 'seed://payment/alipay/v1',
@@ -312,7 +313,7 @@ const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
     appId: 'seed-wechat-app',
     mchId: 'seed-wechat-mch',
     notifyUrl:
-      'https://example.com/app/monetization/payment-notification/create',
+      'https://example.com/app/payment/notification/create',
     returnUrl: null,
     configVersion: 1,
     credentialVersionRef: 'seed://payment/wechat/v1',
@@ -338,7 +339,7 @@ const AD_PROVIDER_CONFIG_FIXTURES = [
     configVersion: 1,
     credentialVersionRef: 'seed://ad/pangle/v1',
     callbackUrl:
-      'https://example.com/app/monetization/ad-reward/verification/create',
+      'https://example.com/app/ad-reward/verification/create',
     configMetadata: {
       keyFingerprint: 'seed-pangle',
       verifySecretEnvKey: 'ES_AD_PANGLE_SSV_SECRET',
@@ -738,8 +739,37 @@ export async function seedAppCoreDomain(db: Db) {
 
   const benefitRows = await db.select().from(membershipBenefitDefinition)
   const planRows = await db.select().from(membershipPlan)
+  const pageConfigRows = await db.select().from(membershipPageConfig)
   const benefitByCode = new Map(benefitRows.map((row) => [row.code, row]))
   const planByKey = new Map(planRows.map((row) => [row.planKey, row]))
+  const pageConfigByKey = new Map(
+    pageConfigRows.map((row) => [row.pageKey, row]),
+  )
+  const vipPageConfig = pageConfigByKey.get('vip_subscription')
+  if (vipPageConfig) {
+    const pagePlanLinks = ['vip_monthly', 'super_vip_monthly'].flatMap(
+      (planKey, sortOrder) => {
+        const plan = planByKey.get(planKey)
+        return plan
+          ? [
+              {
+                pageConfigId: vipPageConfig.id,
+                planId: plan.id,
+                sortOrder,
+              },
+            ]
+          : []
+      },
+    )
+    await db
+      .delete(membershipPageConfigPlan)
+      .where(eq(membershipPageConfigPlan.pageConfigId, vipPageConfig.id))
+    if (pagePlanLinks.length > 0) {
+      await db.insert(membershipPageConfigPlan).values(pagePlanLinks)
+    }
+  }
+  console.log('  ✓ 会员订阅页套餐关联完成')
+
   const planBenefitFixtures = [
     {
       planKey: 'vip_monthly',
@@ -1243,7 +1273,7 @@ export async function seedAppCoreDomain(db: Db) {
   }
   console.log('  ✓ 协议完成')
 
-  const [vipPageConfig] = await db
+  const [vipAgreementPageConfig] = await db
     .select()
     .from(membershipPageConfig)
     .where(eq(membershipPageConfig.pageKey, 'vip_subscription'))
@@ -1255,14 +1285,14 @@ export async function seedAppCoreDomain(db: Db) {
   const membershipAgreementByTitle = new Map(
     membershipAgreementRows.map((agreement) => [agreement.title, agreement]),
   )
-  if (vipPageConfig) {
+  if (vipAgreementPageConfig) {
     const membershipAgreementLinks = ['用户协议', '隐私政策'].flatMap(
       (title, sortOrder) => {
         const agreement = membershipAgreementByTitle.get(title)
         return agreement
           ? [
               {
-                pageConfigId: vipPageConfig.id,
+                pageConfigId: vipAgreementPageConfig.id,
                 agreementId: agreement.id,
                 sortOrder,
               },
@@ -1272,7 +1302,12 @@ export async function seedAppCoreDomain(db: Db) {
     )
     await db
       .delete(membershipPageConfigAgreement)
-      .where(eq(membershipPageConfigAgreement.pageConfigId, vipPageConfig.id))
+      .where(
+        eq(
+          membershipPageConfigAgreement.pageConfigId,
+          vipAgreementPageConfig.id,
+        ),
+      )
     if (membershipAgreementLinks.length > 0) {
       await db
         .insert(membershipPageConfigAgreement)

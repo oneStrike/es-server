@@ -14,11 +14,9 @@ import {
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
+import { CouponInstanceStatusEnum } from '../coupon/coupon.constant'
 import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from '../download/download.constant'
-import {
-  CouponInstanceStatusEnum,
-  READING_COIN_ASSET_KEY,
-} from '../monetization/monetization.constant'
+import { READING_COIN_ASSET_KEY } from '../wallet/wallet.constant'
 
 @Injectable()
 export class UserAssetsService {
@@ -231,6 +229,18 @@ export class UserAssetsService {
       likeCount: Number(likeCount[0]?.count ?? 0),
       viewCount: Number(viewCount[0]?.count ?? 0),
       commentCount: Number(commentCount[0]?.count ?? 0),
+    }
+  }
+
+  // 获取钱包详情所需的资产摘要子集，保持跨资产读模型归属在 user-assets。
+  async getWalletDetail(userId: number) {
+    const summary = await this.getUserAssetsSummary(userId)
+    return {
+      currencyBalance: summary.currencyBalance,
+      vipExpiresAt: summary.vipExpiresAt,
+      availableCouponCount: summary.availableCouponCount,
+      purchasedChapterCount: summary.purchasedChapterCount,
+      purchasedWorkCount: summary.purchasedWorkCount,
     }
   }
 }

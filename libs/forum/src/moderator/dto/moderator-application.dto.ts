@@ -1,5 +1,12 @@
 import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
-import { ArrayProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 

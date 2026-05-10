@@ -10,11 +10,6 @@ import { ContentEntitlementService } from '@libs/content/permission/content-enti
 import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import { WorkCounterService } from '@libs/content/work/counter/work-counter.service'
 import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerActionEnum,
-} from '@libs/growth/growth-ledger/growth-ledger.constant'
-import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import {
   BusinessErrorCode,
   ContentTypeEnum,
   WorkViewPermissionEnum,
@@ -23,8 +18,9 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
-import { CouponRedemptionTargetTypeEnum } from '../monetization/monetization.constant'
-import { MonetizationService } from '../monetization/monetization.service'
+import { CouponRedemptionTargetTypeEnum } from '../coupon/coupon.constant'
+import { CouponService } from '../coupon/coupon.service'
+import { WalletService } from '../wallet/wallet.service'
 import {
   PurchaseChapterResultDto,
   PurchaseTargetCommandDto,
@@ -48,12 +44,12 @@ export class PurchaseService {
   private readonly logger = new Logger(PurchaseService.name)
 
   constructor(
-    private readonly growthLedgerService: GrowthLedgerService,
     private readonly drizzle: DrizzleService,
     private readonly contentPermissionService: ContentPermissionService,
     private readonly contentEntitlementService: ContentEntitlementService,
     private readonly workCounterService: WorkCounterService,
-    private readonly monetizationService: MonetizationService,
+    private readonly couponService: CouponService,
+    private readonly walletService: WalletService,
   ) {}
 
   private get db() {
@@ -237,7 +233,7 @@ export class PurchaseService {
     try {
       return await this.db.transaction(async (tx) => {
         const discount = couponInstanceId
-          ? await this.monetizationService.reserveDiscountCoupon(tx, {
+          ? await this.couponService.reserveDiscountCoupon(tx, {
               userId,
               couponInstanceId,
               targetType:
@@ -278,41 +274,15 @@ export class PurchaseService {
           .returning()
 
         if (paidPrice > 0) {
-          const consumeResult = await this.growthLedgerService.applyDelta(tx, {
+          await this.walletService.consumeForPurchase(tx, {
             userId,
-            assetType: GrowthAssetTypeEnum.CURRENCY,
-            assetKey: 'reading_coin',
-            action: GrowthLedgerActionEnum.CONSUME,
             amount: paidPrice,
-            bizKey: `purchase:${record.id}:consume`,
-            source: 'purchase',
+            purchaseId: record.id,
+            paymentMethod,
+            outTradeNo,
             targetType,
             targetId,
-            context: {
-              purchaseId: record.id,
-              paymentMethod,
-              outTradeNo,
-            },
           })
-
-          if (!consumeResult.success && !consumeResult.duplicated) {
-            if (consumeResult.reason === 'insufficient_balance') {
-              this.logger.warn(
-                `purchase_failed_currency_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${paidPrice}`,
-              )
-              throw new BusinessException(
-                BusinessErrorCode.QUOTA_NOT_ENOUGH,
-                '虚拟币余额不足',
-              )
-            }
-            this.logger.warn(
-              `purchase_failed_ledger_reject userId=${userId} targetType=${targetType} targetId=${targetId} reason=${consumeResult.reason ?? 'unknown'}`,
-            )
-            throw new BusinessException(
-              BusinessErrorCode.STATE_CONFLICT,
-              '虚拟币扣减失败，请稍后重试',
-            )
-          }
         }
 
         await this.contentEntitlementService.grantPurchaseEntitlement(tx, {

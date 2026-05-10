@@ -511,6 +511,12 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     autoRenewAgreements: r.many.membershipAutoRenewAgreement(),
     benefits: r.many.membershipPlanBenefit(),
     claimRecords: r.many.membershipBenefitClaimRecord(),
+    pageConfigs: r.many.membershipPageConfig({
+      from: r.membershipPlan.id.through(r.membershipPageConfigPlan.planId),
+      to: r.membershipPageConfig.id.through(
+        r.membershipPageConfigPlan.pageConfigId,
+      ),
+    }),
   },
   membershipPageConfig: {
     agreements: r.many.appAgreement({
@@ -521,6 +527,12 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
         r.membershipPageConfigAgreement.agreementId,
       ),
     }),
+    plans: r.many.membershipPlan({
+      from: r.membershipPageConfig.id.through(
+        r.membershipPageConfigPlan.pageConfigId,
+      ),
+      to: r.membershipPlan.id.through(r.membershipPageConfigPlan.planId),
+    }),
   },
   membershipPageConfigAgreement: {
     pageConfig: r.one.membershipPageConfig({
@@ -530,6 +542,16 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     agreement: r.one.appAgreement({
       from: r.membershipPageConfigAgreement.agreementId,
       to: r.appAgreement.id,
+    }),
+  },
+  membershipPageConfigPlan: {
+    pageConfig: r.one.membershipPageConfig({
+      from: r.membershipPageConfigPlan.pageConfigId,
+      to: r.membershipPageConfig.id,
+    }),
+    plan: r.one.membershipPlan({
+      from: r.membershipPageConfigPlan.planId,
+      to: r.membershipPlan.id,
     }),
   },
   membershipBenefitDefinition: {

@@ -71,9 +71,9 @@ export class ForumModeratorService {
     client: Db,
     groupIds: Array<number | null | undefined>,
   ) {
-    const uniqueGroupIds = [...new Set(groupIds.filter(Boolean) as number[])].sort(
-      (left, right) => left - right,
-    )
+    const uniqueGroupIds = [
+      ...new Set(groupIds.filter(Boolean) as number[]),
+    ].sort((left, right) => left - right)
 
     for (const groupId of uniqueGroupIds) {
       await client.execute(
@@ -321,7 +321,8 @@ export class ForumModeratorService {
         input.groupId === undefined
           ? (options.current?.groupId ?? null)
           : input.groupId
-      const nextIsEnabled = input.isEnabled ?? options.current?.isEnabled ?? true
+      const nextIsEnabled =
+        input.isEnabled ?? options.current?.isEnabled ?? true
 
       if (!groupId) {
         throw new BusinessException(
@@ -942,7 +943,9 @@ export class ForumModeratorService {
       )
     }
 
-    const basePermissions = this.normalizePermissions(moderator.permissions ?? [])
+    const basePermissions = this.normalizePermissions(
+      moderator.permissions ?? [],
+    )
     let grantedPermissions = basePermissions
 
     if (moderator.roleType === ForumModeratorRoleTypeEnum.GROUP) {

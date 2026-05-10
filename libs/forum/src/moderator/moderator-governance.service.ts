@@ -165,7 +165,9 @@ export class ForumModeratorGovernanceService {
   private async resolveCommentModeratorGrant(
     actor: ForumModeratorGovernanceActor,
     comment: Awaited<
-      ReturnType<ForumModeratorGovernanceService['getCommentGovernanceSnapshot']>
+      ReturnType<
+        ForumModeratorGovernanceService['getCommentGovernanceSnapshot']
+      >
     >,
     permission: ForumModeratorPermissionEnum,
   ) {

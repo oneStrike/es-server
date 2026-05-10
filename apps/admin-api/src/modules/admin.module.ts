@@ -1,5 +1,6 @@
 import { GeoModule } from '@libs/platform/modules/geo/geo.module'
 import { Module } from '@nestjs/common'
+import { AdminAdRewardModule } from './ad-reward/ad-reward.module'
 import { AdminUserModule } from './admin-user/admin-user.module'
 import { AgreementModule } from './app-content/agreement/agreement.module'
 import { AdminAnnouncementModule } from './app-content/announcement/announcement.module'
@@ -11,16 +12,19 @@ import { AuthModule } from './auth/auth.module'
 import { CheckInModule } from './check-in/check-in.module'
 import { AdminCommentModule } from './comment/comment.module'
 import { ContentModule } from './content/content.module'
+import { AdminCouponModule } from './coupon/coupon.module'
 import { ForumModule } from './forum/forum.module'
 import { GrowthModule } from './growth/growth.module'
+import { AdminMembershipModule } from './membership/membership.module'
 import { MessageModule } from './message/message.module'
-import { MonetizationModule } from './monetization/monetization.module'
+import { AdminPaymentModule } from './payment/payment.module'
 import { AdminReportModule } from './report/report.module'
 import { SystemConfigModule } from './system/config/system-config.module'
 import { DictionaryModule } from './system/dictionary/dictionary.module'
 import { Ip2regionModule } from './system/ip2region/ip2region.module'
 import { UploadModule } from './system/upload/upload.module'
 import { TaskModule } from './task/task.module'
+import { AdminWalletModule } from './wallet/wallet.module'
 
 @Module({
   imports: [
@@ -43,7 +47,11 @@ import { TaskModule } from './task/task.module'
     ForumModule,
     AdminReportModule,
     MessageModule,
-    MonetizationModule,
+    AdminWalletModule,
+    AdminCouponModule,
+    AdminPaymentModule,
+    AdminMembershipModule,
+    AdminAdRewardModule,
     TaskModule,
     GrowthModule,
   ],

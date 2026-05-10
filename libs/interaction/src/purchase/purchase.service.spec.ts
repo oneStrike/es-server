@@ -35,7 +35,7 @@ function flattenSqlText(input: unknown): string {
   return ''
 }
 
-describe('PurchaseService monetization contract', () => {
+describe('PurchaseService domain split contract', () => {
   it('writes discount snapshot, consumes currency, and grants purchase entitlement in one transaction', async () => {
     const tx = {
       insert: jest.fn(() =>
@@ -70,9 +70,6 @@ describe('PurchaseService monetization contract', () => {
       isUniqueViolation: jest.fn(() => false),
       withErrorHandling: jest.fn(),
     }
-    const growthLedgerService = {
-      applyDelta: jest.fn(() => Promise.resolve({ success: true })),
-    }
     const contentPermissionService = {
       resolveChapterPermission: jest.fn(() =>
         Promise.resolve({
@@ -101,7 +98,7 @@ describe('PurchaseService monetization contract', () => {
     const workCounterService = {
       updateWorkChapterPurchaseCount: jest.fn(),
     }
-    const monetizationService = {
+    const couponService = {
       reserveDiscountCoupon: jest.fn(() =>
         Promise.resolve({
           paidPrice: 27,
@@ -112,13 +109,16 @@ describe('PurchaseService monetization contract', () => {
         }),
       ),
     }
+    const walletService = {
+      consumeForPurchase: jest.fn(() => Promise.resolve({ success: true })),
+    }
     const service = new (PurchaseService as any)(
-      growthLedgerService,
       drizzle,
       contentPermissionService,
       contentEntitlementService,
       workCounterService,
-      monetizationService,
+      couponService,
+      walletService,
     ) as PurchaseService
 
     const result = await service.purchaseChapter({
@@ -130,7 +130,7 @@ describe('PurchaseService monetization contract', () => {
       couponInstanceId: 44,
     })
 
-    expect(monetizationService.reserveDiscountCoupon).toHaveBeenCalledWith(tx, {
+    expect(couponService.reserveDiscountCoupon).toHaveBeenCalledWith(tx, {
       userId: 33,
       couponInstanceId: 44,
       targetType: 1,
@@ -138,12 +138,12 @@ describe('PurchaseService monetization contract', () => {
       originalPrice: 30,
     })
     expect(tx.insert).toHaveBeenCalledWith(schema.userPurchaseRecord)
-    expect(growthLedgerService.applyDelta).toHaveBeenCalledWith(
+    expect(walletService.consumeForPurchase).toHaveBeenCalledWith(
       tx,
       expect.objectContaining({
         amount: 27,
-        assetType: 4,
-        assetKey: 'reading_coin',
+        purchaseId: 11,
+        paymentMethod: PaymentMethodEnum.CURRENCY,
       }),
     )
     expect(
@@ -181,8 +181,8 @@ describe('PurchaseService monetization contract', () => {
       withErrorHandling: jest.fn(),
     }
     const service = new (PurchaseService as any)(
-      {},
       drizzle,
+      {},
       {},
       {},
       {},
