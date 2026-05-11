@@ -1595,12 +1595,22 @@ export class MessageChatService {
     })
   }
 
+  // 记录重同步触发指标，失败只写诊断日志。
   private recordResyncTriggeredMetric() {
-    void this.messageWsMonitorService.recordResyncTriggered().catch(() => {})
+    void this.messageWsMonitorService.recordResyncTriggered().catch((error) => {
+      this.logger.warn(
+        `Failed to record WS resync trigger metric: ${this.stringifyError(error)}`,
+      )
+    })
   }
 
+  // 记录重同步成功指标，失败只写诊断日志。
   private recordResyncSuccessMetric() {
-    void this.messageWsMonitorService.recordResyncSuccess().catch(() => {})
+    void this.messageWsMonitorService.recordResyncSuccess().catch((error) => {
+      this.logger.warn(
+        `Failed to record WS resync success metric: ${this.stringifyError(error)}`,
+      )
+    })
   }
 
   private stringifyError<T>(error: T) {

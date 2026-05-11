@@ -1,0 +1,11 @@
+{
+  "code": 200,
+  "message": "请求成功",
+  "results": {
+    "chapter": {
+      "uuid": "chapter-empty",
+      "name": "空章节",
+      "contents": []
+    }
+  }
+}

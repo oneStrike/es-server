@@ -283,6 +283,12 @@ export class WorkService {
 
   // 创建作品，并在同一事务中创建论坛板块、关系记录和作者作品计数。
   async createWork(createWorkDto: CreateWorkDto) {
+    await this.createWorkReturningId(createWorkDto)
+    return true
+  }
+
+  // 创建作品并返回本地作品 ID，供需要继续编排章节/内容的导入链路复用。
+  async createWorkReturningId(createWorkDto: CreateWorkDto) {
     const { authorIds, categoryIds, tagIds, ...workData } = createWorkDto
     const normalizedWorkData = {
       ...workData,
@@ -362,7 +368,7 @@ export class WorkService {
           )
         }
 
-        return true
+        return createdWork.id
       }),
     )
   }

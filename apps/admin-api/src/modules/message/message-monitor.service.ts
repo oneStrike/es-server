@@ -6,39 +6,60 @@ import type { QueryNotificationDeliveryPageDto } from '@libs/message/notificatio
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 
-import {
-  domainEvent,
-  domainEventDispatch,
-  messageWsMetric,
-  notificationDelivery,
-} from '@db/schema'
-
 import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
 import { parsePositiveBigintQueryId } from '@libs/message/notification/notification-query-id.util'
 import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
 import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { and, desc, eq, gte, sql } from 'drizzle-orm'
 
 @Injectable()
 export class MessageMonitorService {
+  private readonly logger = new Logger(MessageMonitorService.name)
+
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly messageNotificationDeliveryService: MessageNotificationDeliveryService,
     private readonly domainEventDispatchService: DomainEventDispatchService,
   ) {}
 
+  // 读取注入的数据库客户端。
   private get db() {
     return this.drizzle.db
   }
 
+  // 读取领域事件表。
+  private get domainEvent() {
+    return this.drizzle.schema.domainEvent
+  }
+
+  // 读取领域事件 dispatch 表。
+  private get domainEventDispatch() {
+    return this.drizzle.schema.domainEventDispatch
+  }
+
+  // 读取通知投递表。
+  private get notificationDelivery() {
+    return this.drizzle.schema.notificationDelivery
+  }
+
+  // 读取 WebSocket 指标表。
+  private get messageWsMetric() {
+    return this.drizzle.schema.messageWsMetric
+  }
+
+  // 查询通知投递分页，复用通知投递领域服务的对外契约。
   async getNotificationDeliveryPage(query: QueryNotificationDeliveryPageDto) {
     return this.messageNotificationDeliveryService.getNotificationDeliveryPage(
       query,
     )
   }
 
+  // 查询通知 dispatch 监控分页。
   async getNotificationDispatchPage(query: QueryMessageDispatchPageDto) {
+    const domainEvent = this.domainEvent
+    const domainEventDispatch = this.domainEventDispatch
+    const notificationDelivery = this.notificationDelivery
     const conditions = this.buildDispatchPageConditions(query)
     const pageIndex = this.normalizePositiveInteger(query.pageIndex, 1)
     const pageSize = this.normalizePositiveInteger(query.pageSize, 15, 100)
@@ -100,22 +121,29 @@ export class MessageMonitorService {
     }
   }
 
+  // 按 dispatch ID 重试通知投递，输入非法直接按协议错误抛出。
   async retryNotificationDeliveryByDispatchId(dispatchId: string) {
-    const normalizedDispatchId = dispatchId.trim()
-    if (!normalizedDispatchId) {
-      return false
-    }
+    const parsedDispatchId = parsePositiveBigintQueryId(
+      dispatchId,
+      'dispatchId',
+    )
+
     try {
       return await this.domainEventDispatchService.retryFailedDispatch(
-        BigInt(normalizedDispatchId),
+        parsedDispatchId,
         DomainEventConsumerEnum.NOTIFICATION,
       )
-    } catch {
-      return false
+    } catch (error) {
+      this.logger.warn(
+        `Failed to retry notification dispatch ${parsedDispatchId.toString()} for ${DomainEventConsumerEnum.NOTIFICATION}: ${this.stringifyError(error)}`,
+      )
+      throw error
     }
   }
 
+  // 汇总 WebSocket 监控指标窗口。
   async getWsMonitorSummary(query: QueryMessageWsMonitorDto) {
+    const messageWsMetric = this.messageWsMetric
     const now = new Date()
     const windowHours = this.normalizeWindowHours(query.windowHours)
     const windowStartAt = new Date(now.getTime() - windowHours * 60 * 60 * 1000)
@@ -162,9 +190,13 @@ export class MessageMonitorService {
     }
   }
 
+  // 构造通知 dispatch 监控查询条件。
   private buildDispatchPageConditions(
     query: QueryMessageDispatchPageDto,
   ): SQL[] {
+    const domainEvent = this.domainEvent
+    const domainEventDispatch = this.domainEventDispatch
+    const notificationDelivery = this.notificationDelivery
     const conditions: SQL[] = [
       eq(domainEventDispatch.consumer, DomainEventConsumerEnum.NOTIFICATION),
     ]
@@ -174,10 +206,10 @@ export class MessageMonitorService {
     const eventId = this.parseOptionalQueryId(query.eventId, 'eventId')
     const dispatchId = this.parseOptionalQueryId(query.dispatchId, 'dispatchId')
 
-    if (query.dispatchStatus) {
+    if (query.dispatchStatus !== undefined) {
       conditions.push(eq(domainEventDispatch.status, query.dispatchStatus))
     }
-    if (query.deliveryStatus) {
+    if (query.deliveryStatus !== undefined) {
       conditions.push(eq(notificationDelivery.status, query.deliveryStatus))
     }
     if (eventKey) {
@@ -186,7 +218,7 @@ export class MessageMonitorService {
     if (domain) {
       conditions.push(eq(domainEvent.domain, domain))
     }
-    if (query.receiverUserId !== undefined) {
+    if (query.receiverUserId != null) {
       conditions.push(
         eq(notificationDelivery.receiverUserId, query.receiverUserId),
       )
@@ -204,13 +236,15 @@ export class MessageMonitorService {
     return conditions
   }
 
-  private getTrimmedString(value?: string): string | undefined {
+  // 去除字符串首尾空白，空字符串按未传处理。
+  private getTrimmedString(value?: string | null): string | undefined {
     const normalizedValue = value?.trim()
     return normalizedValue || undefined
   }
 
+  // 解析可选正整数字符串查询条件。
   private parseOptionalQueryId(
-    value: string | undefined,
+    value: string | null | undefined,
     fieldName: string,
   ): bigint | undefined {
     const normalizedValue = this.getTrimmedString(value)
@@ -220,6 +254,7 @@ export class MessageMonitorService {
     return parsePositiveBigintQueryId(normalizedValue, fieldName)
   }
 
+  // 规整分页正整数，非法值回落到默认值。
   private normalizePositiveInteger(
     value: number | undefined,
     defaultValue: number,
@@ -234,6 +269,7 @@ export class MessageMonitorService {
     return Math.min(Number(value), maxValue)
   }
 
+  // 计算四位小数比率，分母为空时返回 0。
   private calculateRate(numerator: number, denominator: number): number {
     if (!denominator) {
       return 0
@@ -241,10 +277,26 @@ export class MessageMonitorService {
     return Number((numerator / denominator).toFixed(4))
   }
 
+  // 规整 WS 指标查询窗口。
   private normalizeWindowHours(windowHours?: number) {
     if (!Number.isFinite(Number(windowHours))) {
       return 24
     }
     return Math.min(Math.max(1, Math.floor(Number(windowHours))), 168)
+  }
+
+  // 把未知错误对象收敛成日志可读文本。
+  private stringifyError(error: unknown) {
+    if (error instanceof Error) {
+      return error.message
+    }
+    if (typeof error === 'string') {
+      return error
+    }
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return 'unknown'
+    }
   }
 }

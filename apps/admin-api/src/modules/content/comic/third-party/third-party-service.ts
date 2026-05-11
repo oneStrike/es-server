@@ -2,55 +2,55 @@ import type {
   ChapterContentComicRequestDto,
   DetailComicRequestDto,
   SearchComicRequestDto,
+  ThirdPartyComicImportPreviewRequestDto,
+  ThirdPartyComicImportRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { CopyService } from './libs/copy.service'
+import { Injectable } from '@nestjs/common'
+import { ComicThirdPartyRegistry } from './providers/comic-third-party.registry'
+import { ThirdPartyComicImportService } from './services/third-party-comic-import.service'
 
 @Injectable()
 export class ComicThirdPartyService {
-  constructor(private readonly copy: CopyService) {}
+  // 注入 provider registry 和导入服务，当前服务只做协议层转发。
+  constructor(
+    private readonly registry: ComicThirdPartyRegistry,
+    private readonly importService: ThirdPartyComicImportService,
+  ) {}
 
-  private resolvePlatform(platform: string) {
-    const provider = this[platform as keyof this] as CopyService | undefined
-    if (!provider || typeof provider.searchWord !== 'function') {
-      throw new BadRequestException('暂不支持该平台')
-    }
-    return provider
+  // 获取当前可用的第三方漫画平台列表。
+  listPlatforms() {
+    return this.registry.listPlatforms()
   }
 
-  /**
-   * 搜索漫画
-   * @param searchDto 搜索参数
-   * @returns 搜索结果
-   */
+  // 转发第三方漫画搜索请求到对应 provider。
   async searchComic(searchDto: SearchComicRequestDto) {
-    return this.resolvePlatform(searchDto.platform).searchWord(searchDto)
+    return this.registry.resolve(searchDto.platform).searchComics(searchDto)
   }
 
-  /**
-   * 获取漫画详情
-   * @param searchDto 搜索参数
-   * @returns 漫画详情
-   */
+  // 转发第三方漫画详情请求到对应 provider。
   async detail(searchDto: DetailComicRequestDto) {
-    return this.resolvePlatform(searchDto.platform).detail(searchDto)
+    return this.registry.resolve(searchDto.platform).getDetail(searchDto)
   }
 
-  /**
-   * 获取漫画章节
-   * @param searchDto 搜索参数
-   * @returns 漫画章节
-   */
+  // 转发第三方漫画章节列表请求到对应 provider。
   async chapter(searchDto: DetailComicRequestDto) {
-    return this.resolvePlatform(searchDto.platform).chapter(searchDto)
+    return this.registry.resolve(searchDto.platform).getChapters(searchDto)
   }
 
-  /**
-   * 获取漫画章节内容
-   * @param searchDto 搜索参数
-   * @returns 漫画章节内容
-   */
+  // 转发第三方漫画章节内容请求到对应 provider。
   async content(searchDto: ChapterContentComicRequestDto) {
-    return this.resolvePlatform(searchDto.platform).content(searchDto)
+    return this.registry
+      .resolve(searchDto.platform)
+      .getChapterContent(searchDto)
+  }
+
+  // 生成第三方漫画导入前预览，不产生本地写入副作用。
+  async previewImport(dto: ThirdPartyComicImportPreviewRequestDto) {
+    return this.importService.previewImport(dto)
+  }
+
+  // 确认执行第三方漫画导入，写入作品和章节数据。
+  async confirmImport(dto: ThirdPartyComicImportRequestDto) {
+    return this.importService.confirmImport(dto)
   }
 }

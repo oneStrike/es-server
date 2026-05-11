@@ -1,0 +1,76 @@
+{
+  "code": 200,
+  "message": "请求成功",
+  "results": {
+    "is_lock": false,
+    "is_login": false,
+    "is_mobile_bind": false,
+    "is_vip": false,
+    "popular": 76518599,
+    "groups": {
+      "default": {
+        "path_word": "default",
+        "count": 3,
+        "name": "默认"
+      }
+    },
+    "comic": {
+      "uuid": "3b65f136-a419-11eb-a88c-024352452ce0",
+      "b_404": false,
+      "b_hidden": false,
+      "ban": 0,
+      "name": "我獨自升級",
+      "alias": "Solo Leveling",
+      "path_word": "woduzishenji",
+      "close_comment": false,
+      "close_roast": false,
+      "free_type": 1,
+      "restrict": {
+        "value": 0,
+        "display": "普通"
+      },
+      "reclass": {
+        "value": "hot",
+        "display": "热门"
+      },
+      "females": [],
+      "males": [],
+      "clubs": [],
+      "seo_baidu": "",
+      "region": {
+        "value": "kr",
+        "display": "韩国"
+      },
+      "status": {
+        "value": "finish",
+        "display": "已完结"
+      },
+      "author": [
+        {
+          "name": "DUBU",
+          "path_word": "DUBU"
+        },
+        {
+          "name": "Chugong",
+          "path_word": "Chugong"
+        }
+      ],
+      "theme": [
+        {
+          "name": "冒险",
+          "path_word": "maoxian"
+        }
+      ],
+      "parodies": [],
+      "brief": "这是一个弱小猎人独自升级的故事。",
+      "datetime_updated": "2023-10-11",
+      "cover": "https://sw.mangafunb.fun/w/woduzishenji/cover/1651527590.jpg.328x422.jpg",
+      "last_chapter": {
+        "name": "第200话",
+        "uuid": "chapter-200"
+      },
+      "popular": 76518599,
+      "channel": []
+    }
+  }
+}

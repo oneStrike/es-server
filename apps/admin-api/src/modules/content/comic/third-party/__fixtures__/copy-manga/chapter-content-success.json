@@ -1,0 +1,44 @@
+{
+  "code": 200,
+  "message": "请求成功",
+  "results": {
+    "is_lock": false,
+    "is_login": false,
+    "is_mobile_bind": false,
+    "is_vip": false,
+    "comic": {
+      "uuid": "3b65f136-a419-11eb-a88c-024352452ce0",
+      "name": "我獨自升級",
+      "path_word": "woduzishenji",
+      "cover": "https://sw.mangafunb.fun/w/woduzishenji/cover/1651527590.jpg.328x422.jpg"
+    },
+    "chapter": {
+      "index": 0,
+      "uuid": "chapter-001",
+      "count": 2,
+      "size": 2,
+      "name": "第1话",
+      "comic_id": "3b65f136-a419-11eb-a88c-024352452ce0",
+      "comic_path_word": "woduzishenji",
+      "group_id": "default",
+      "group_path_word": "default",
+      "type": 1,
+      "img_type": 1,
+      "datetime_created": "2021-04-01T00:00:00+08:00",
+      "prev": "",
+      "next": "chapter-002",
+      "contents": [
+        {
+          "uuid": "image-001",
+          "url": "https://sw.mangafunb.fun/w/woduzishenji/chapter-001/001.jpg"
+        },
+        {
+          "uuid": "image-002",
+          "url": "https://sw.mangafunb.fun/w/woduzishenji/chapter-001/002.jpg"
+        }
+      ],
+      "words": [0, 1],
+      "is_long": false
+    }
+  }
+}

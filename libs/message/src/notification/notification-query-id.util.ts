@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common'
-
-const POSITIVE_BIGINT_QUERY_ID_REGEX = /^[1-9]\d*$/
+import {
+  POSITIVE_BIGINT_QUERY_ID_MESSAGE_SUFFIX,
+  POSITIVE_BIGINT_QUERY_ID_REGEX,
+} from './notification-query-id.constant'
 
 /**
  * 解析查询参数中的 bigint ID。
@@ -9,7 +11,9 @@ const POSITIVE_BIGINT_QUERY_ID_REGEX = /^[1-9]\d*$/
 export function parsePositiveBigintQueryId(value: string, fieldName: string) {
   const normalized = value.trim()
   if (!POSITIVE_BIGINT_QUERY_ID_REGEX.test(normalized)) {
-    throw new BadRequestException(`${fieldName} 必须是合法的正整数字符串`)
+    throw new BadRequestException(
+      `${fieldName} ${POSITIVE_BIGINT_QUERY_ID_MESSAGE_SUFFIX}`,
+    )
   }
 
   return BigInt(normalized)

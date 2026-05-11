@@ -44,6 +44,15 @@
 - `contract: false` 仅用于排除不对外字段、写入专用字段或内部辅助字段；不要用它掩盖一个本应拆出去的内部结构。
 - 枚举数组字段统一使用 `ArrayProperty` + `itemEnum`，类型为 `XxxEnum[]`。
 
+## 字段校验归属
+
+- **只有纯输出 DTO 字段必须显式设置 `validation: false`**。纯输出字段只服务 Swagger / OpenAPI 文档和返回 contract，不经过 `ValidationPipe`，不得挂载 class-validator / class-transformer 请求阶段元数据。
+- **入参字段，以及同一语义同时用于入参和出参的字段，必须保留默认 `validation: true`**。不要为了把输出 DTO 关掉校验而拆出一套重复字段；应定义一个 validation-enabled 的 owner 字段，再用 `PickType`、`PartialType`、`IntersectionType` 派生查询、命令和输出 DTO。
+- 当共享字段在查询场景需要可选化时，必须从 required owner 字段通过 `PartialType(PickType(...))` 或等价组合派生；不要把 owner 字段本身改成 `required: false` 来迁就查询条件，除非该字段的真实输出 contract 也允许缺省或为 null。
+- 当输出字段只是输入字段的别名、左连接 nullable 视图或派生展示字段时，应建立语义明确的字段块 DTO 作为当前 API contract owner，并在注释或命名中体现别名/nullable 边界；不得在 Query DTO 和 PageItem DTO 中各手写一份装饰器。
+- `validation: false` 与 `contract: false` 不是同一件事：前者保留对外文档但关闭请求校验元数据，后者隐藏对外文档并用于非对外字段。不要混用。
+- 测试输出 DTO contract 时，优先验证 Swagger / contract metadata 或 service 返回形状；不要用 class-validator 结果证明纯输出字段“有效”。测试输入 DTO 时，必须继续验证 class-validator 行为。
+
 ## 禁止项
 
 - 禁止在 `apps/*` 新增同构 DTO。
@@ -52,6 +61,8 @@
 - 禁止在 DTO 文件中新增“字段完全复制但只改类名”的跨模块 DTO。
 - 禁止在同一 owner 模块的多个 DTO 文件中，对同一业务语义字段重复声明装饰器、类型和描述文案；若基础 DTO 已有对应字段，必须从基础 DTO 选取，而不是再写一套同义字段。
 - 禁止新增既不服务字段校验、也不服务文档描述、只为了代替 `type` 存在的空心 DTO。
+- 禁止纯输出 DTO 字段遗漏 `validation: false`，导致返回模型意外携带请求阶段校验/转换元数据。
+- 禁止把同一业务语义字段拆成“输入一份、输出一份”来规避 `validation` 归属；只要输入和输出都需要该字段，就必须收敛到同一个 validation-enabled 字段来源。
 - 禁止为平台通用 DTO 新增空心别名或改名包装；需要单个 `id`、分页参数、`userId`、`ids` 时，直接在 controller / service 签名中使用 `IdDto`、`PageDto`、`UserIdDto`、`IdsDto`。
 - 禁止在 DTO 文件中为了复用局部装饰器文案，新增 `*_DESCRIPTION`、`*_EXAMPLE`、`*_MESSAGE` 这类只服务当前文件的短文本常量。
 - 禁止通过 `*.public.dto.ts`、`response.dto.ts`、`detail.dto.ts` 拆出仅做转发的文件；若属于同一 owner 域，优先收口在同一个 owner DTO 文件中。

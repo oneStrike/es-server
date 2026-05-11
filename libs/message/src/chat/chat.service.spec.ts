@@ -9,7 +9,7 @@ import type { MessageInboxService } from '../inbox/inbox.service'
 import type { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import type { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
 import type { MessageChatReadQueryService } from './chat-read-query.service'
-import { BadRequestException } from '@nestjs/common'
+import { BadRequestException, Logger } from '@nestjs/common'
 import { UploadConfig } from '@libs/platform/config'
 import { PgDialect } from 'drizzle-orm/pg-core/dialect'
 import {
@@ -448,6 +448,60 @@ describe('chat.service prepared read queries', () => {
     expect(mocks.wsMonitorService.recordResyncSuccess).toHaveBeenCalled()
     expect(result.hasMore).toBe(false)
     expect(result.nextCursor).toBe('11')
+  })
+
+  it('logs resync trigger metric failures without failing pagination', async () => {
+    const { service, mocks } = createService()
+    const warnSpy = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined)
+    mocks.wsMonitorService.recordResyncTriggered.mockRejectedValueOnce(
+      new Error('metric trigger failed'),
+    )
+    mocks.chatReadQueryService.getConversationMessagesAfter.mockResolvedValue([
+      createMessage({ id: 103n, messageSeq: 11n }),
+    ])
+
+    const result = await service.getConversationMessages(7, {
+      conversationId: 10,
+      afterSeq: '10',
+      limit: 20,
+    })
+    await Promise.resolve()
+
+    expect(result.nextCursor).toBe('11')
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('metric trigger failed'),
+    )
+
+    warnSpy.mockRestore()
+  })
+
+  it('logs resync success metric failures without failing pagination', async () => {
+    const { service, mocks } = createService()
+    const warnSpy = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined)
+    mocks.wsMonitorService.recordResyncSuccess.mockRejectedValueOnce(
+      new Error('metric success failed'),
+    )
+    mocks.chatReadQueryService.getConversationMessagesAfter.mockResolvedValue([
+      createMessage({ id: 103n, messageSeq: 11n }),
+    ])
+
+    const result = await service.getConversationMessages(7, {
+      conversationId: 10,
+      afterSeq: '10',
+      limit: 20,
+    })
+    await Promise.resolve()
+
+    expect(result.nextCursor).toBe('11')
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('metric success failed'),
+    )
+
+    warnSpy.mockRestore()
   })
 })
 

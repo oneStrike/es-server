@@ -154,7 +154,7 @@ export class MessageNotificationDeliveryService {
         eq(this.notificationDelivery.eventKey, query.eventKey.trim()),
       )
     }
-    if (query.receiverUserId !== undefined) {
+    if (query.receiverUserId != null) {
       conditions.push(
         eq(this.notificationDelivery.receiverUserId, query.receiverUserId),
       )

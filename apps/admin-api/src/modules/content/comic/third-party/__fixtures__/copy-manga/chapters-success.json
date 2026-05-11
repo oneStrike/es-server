@@ -1,0 +1,43 @@
+{
+  "code": 200,
+  "message": "请求成功",
+  "results": {
+    "total": 3,
+    "limit": 3,
+    "offset": 0,
+    "list": [
+      {
+        "index": 0,
+        "uuid": "chapter-001",
+        "count": 12,
+        "size": 12,
+        "name": "第1话",
+        "comic_id": "3b65f136-a419-11eb-a88c-024352452ce0",
+        "comic_path_word": "woduzishenji",
+        "group_id": "default",
+        "group_path_word": "default",
+        "type": 1,
+        "img_type": 1,
+        "datetime_created": "2021-04-01T00:00:00+08:00",
+        "prev": "",
+        "next": "chapter-002"
+      },
+      {
+        "index": 1,
+        "uuid": "chapter-002",
+        "count": 10,
+        "size": 10,
+        "name": "第2话",
+        "comic_id": "3b65f136-a419-11eb-a88c-024352452ce0",
+        "comic_path_word": "woduzishenji",
+        "group_id": "default",
+        "group_path_word": "default",
+        "type": 1,
+        "img_type": 1,
+        "datetime_created": "2021-04-02T00:00:00+08:00",
+        "prev": "chapter-001",
+        "next": "chapter-003"
+      }
+    ]
+  }
+}

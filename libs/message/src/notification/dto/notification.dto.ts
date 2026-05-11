@@ -36,10 +36,10 @@ import {
   getMessageNotificationCategoryLabel,
   MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   MessageNotificationCategoryKey,
-  MessageNotificationDispatchStatusEnum,
   MessageNotificationPreferenceSourceEnum,
 } from '../notification.constant'
 import { NotificationDeliveryLookupFilterDto } from './notification-delivery-filter.dto'
+import { BaseNotificationDeliveryDto } from './notification-delivery.dto'
 import { BaseNotificationUnreadDto } from './notification-unread.dto'
 
 /**
@@ -651,24 +651,10 @@ export class UpdateUserNotificationPreferencesDto {
  * 用于管理后台查询通知投递记录
  * 可按投递状态和通知分类键筛选
  */
-class BaseNotificationDeliveryQueryDto extends NotificationDeliveryLookupFilterDto {
-  @EnumProperty({
-    description:
-      '业务投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
-    example: MessageNotificationDispatchStatusEnum.FAILED,
-    required: false,
-    enum: MessageNotificationDispatchStatusEnum,
-  })
-  status?: MessageNotificationDispatchStatusEnum
-
-  @EnumProperty({
-    description: '通知分类键，表示通知所属业务分类',
-    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.TASK_REMINDER,
-    required: false,
-    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
-  })
-  categoryKey?: MessageNotificationCategoryKey
-}
+class BaseNotificationDeliveryQueryDto extends IntersectionType(
+  NotificationDeliveryLookupFilterDto,
+  PartialType(PickType(BaseNotificationDeliveryDto, ['status'] as const)),
+) {}
 
 /**
  * 分页查询通知投递记录 DTO

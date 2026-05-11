@@ -100,6 +100,12 @@ export class WorkChapterService {
 
   // 创建章节。
   async createChapter(createDto: CreateWorkChapterDto) {
+    await this.createChapterReturningId(createDto)
+    return true
+  }
+
+  // 创建章节并返回本地章节 ID，供导入链路继续写入图片内容。
+  async createChapterReturningId(createDto: CreateWorkChapterDto) {
     const { workId } = createDto
 
     if (
@@ -114,11 +120,21 @@ export class WorkChapterService {
       )
     }
 
-    await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.workChapter).values(createDto),
-      { duplicate: '该作品下章节号已存在' },
-    )
-    return true
+    return this.drizzle.withErrorHandling(async () => {
+      const [createdChapter] = await this.db
+        .insert(this.workChapter)
+        .values(createDto)
+        .returning({ id: this.workChapter.id })
+
+      if (!createdChapter) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '章节创建结果不存在',
+        )
+      }
+
+      return createdChapter.id
+    }, { duplicate: '该作品下章节号已存在' })
   }
 
   // 分页查询章节列表。

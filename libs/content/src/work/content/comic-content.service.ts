@@ -210,6 +210,16 @@ export class ComicContentService {
     return true
   }
 
+  // 整体替换章节图片内容，导入链路必须在全部图片上传成功后才调用。
+  async replaceChapterContents(chapterId: number, contents: string[]) {
+    await this.saveChapterContent(
+      chapterId,
+      contents.length > 0 ? JSON.stringify(contents) : null,
+    )
+
+    return true
+  }
+
   // 内部方法：获取章节内容（不进行权限校验），用于其他方法内部调用或管理端直接调用。
   private async getChapterContentsInternal(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({

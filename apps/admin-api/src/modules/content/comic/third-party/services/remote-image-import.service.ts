@@ -1,0 +1,246 @@
+import type { ThirdPartyComicImageDto } from '@libs/content/work/content/dto/content.dto'
+import type { LookupAddress } from 'node:dns'
+import type { LookupFunction } from 'node:net'
+import { Buffer } from 'node:buffer'
+import { lookup } from 'node:dns/promises'
+import { promises as fs } from 'node:fs'
+import { Agent as HttpsAgent } from 'node:https'
+import { isIP } from 'node:net'
+import { tmpdir } from 'node:os'
+import { basename, extname, join } from 'node:path'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { UploadService } from '@libs/platform/modules/upload/upload.service'
+import { Injectable } from '@nestjs/common'
+import axios from 'axios'
+import { v4 as uuidv4 } from 'uuid'
+
+const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
+const MAX_REMOTE_IMAGE_COUNT = 200
+const COPY_MANGA_IMAGE_HOST_PATTERN = /^[a-z0-9-]+\.mangafunb\.fun$/i
+
+interface SafeRemoteImageUrl {
+  url: URL
+  address: LookupAddress
+}
+
+@Injectable()
+export class RemoteImageImportService {
+  // 注入统一上传服务，远程图片落地后仍复用现有上传策略。
+  constructor(private readonly uploadService: UploadService) {}
+
+  // 下载并上传单张第三方图片，失败时保持业务异常语义。
+  async importImage(url: string, objectKeySegments: string[]) {
+    const localPath = await this.downloadToTemp(url)
+    try {
+      const uploadResult = await this.uploadService.uploadLocalFile({
+        localPath,
+        objectKeySegments,
+        originalName: this.resolveOriginalName(url),
+      })
+      return uploadResult.filePath
+    } finally {
+      await fs.rm(localPath, { force: true }).catch(() => undefined)
+    }
+  }
+
+  // 按三方顺序批量导入图片，并限制单次导入规模。
+  async importImages(
+    images: ThirdPartyComicImageDto[],
+    objectKeySegments: string[],
+  ) {
+    if (images.length > MAX_REMOTE_IMAGE_COUNT) {
+      throw this.remoteImageError('远程图片数量超过限制')
+    }
+
+    const filePaths: string[] = []
+    for (const image of images) {
+      filePaths.push(await this.importImage(image.url, objectKeySegments))
+    }
+    return filePaths
+  }
+
+  // 将远程图片下载到临时文件，下载连接必须使用已校验的 DNS 结果。
+  private async downloadToTemp(url: string) {
+    const safeRemote = await this.assertSafeUrl(url)
+    const response = await axios.get<ArrayBuffer>(safeRemote.url.toString(), {
+      responseType: 'arraybuffer',
+      timeout: 15000,
+      maxRedirects: 0,
+      maxContentLength: MAX_REMOTE_IMAGE_BYTES,
+      maxBodyLength: MAX_REMOTE_IMAGE_BYTES,
+      httpsAgent: new HttpsAgent({
+        lookup: this.createPinnedLookup(
+          safeRemote.url.hostname,
+          safeRemote.address,
+        ),
+      }),
+      validateStatus: (status) => status >= 200 && status < 300,
+    })
+
+    const contentType = String(response.headers['content-type'] || '')
+    if (!contentType.toLowerCase().startsWith('image/')) {
+      throw this.remoteImageError('远程资源不是图片')
+    }
+
+    const buffer = Buffer.from(response.data)
+    if (buffer.length > MAX_REMOTE_IMAGE_BYTES) {
+      throw this.remoteImageError('远程图片大小超过限制')
+    }
+
+    const tempDir = await fs.mkdtemp(join(tmpdir(), 'third-party-comic-'))
+    const fileName = `${uuidv4()}${this.resolveExtension(safeRemote.url, contentType)}`
+    const localPath = join(tempDir, fileName)
+    await fs.writeFile(localPath, buffer)
+    return localPath
+  }
+
+  // 校验 URL、域名和 DNS 结果，并返回后续请求必须复用的安全地址。
+  private async assertSafeUrl(url: string): Promise<SafeRemoteImageUrl> {
+    let parsedUrl: URL
+    try {
+      parsedUrl = new URL(url)
+    } catch {
+      throw this.remoteImageError('远程图片地址不合法')
+    }
+
+    if (parsedUrl.protocol !== 'https:') {
+      throw this.remoteImageError('远程图片必须使用 HTTPS')
+    }
+    if (!COPY_MANGA_IMAGE_HOST_PATTERN.test(parsedUrl.hostname)) {
+      throw this.remoteImageError('远程图片域名不在允许范围内')
+    }
+
+    const addresses = await lookup(parsedUrl.hostname, { all: true })
+    if (
+      addresses.length === 0 ||
+      addresses.some((address) => this.isUnsafeAddress(address.address))
+    ) {
+      throw this.remoteImageError('远程图片解析到不安全地址')
+    }
+
+    return {
+      url: parsedUrl,
+      address: addresses[0],
+    }
+  }
+
+  // 为 axios 连接固定已验证地址，避免校验后再次进行不受控 DNS 解析。
+  private createPinnedLookup(
+    expectedHostname: string,
+    address: LookupAddress,
+  ): LookupFunction {
+    return (hostname, options, callback) => {
+      if (hostname !== expectedHostname) {
+        callback(
+          Object.assign(new Error('远程图片请求域名与校验域名不一致'), {
+            code: 'ERR_REMOTE_IMAGE_HOST_CHANGED',
+          }),
+          '',
+          0,
+        )
+        return
+      }
+
+      if (options.all) {
+        callback(null, [address])
+        return
+      }
+
+      callback(null, address.address, address.family)
+    }
+  }
+
+  // 判断 DNS 地址是否落入内网、环回、链路本地、多播或保留地址段。
+  private isUnsafeAddress(address: string) {
+    const family = isIP(address)
+    if (family === 4) {
+      return this.isUnsafeIpv4Address(address)
+    }
+    if (family === 6) {
+      return this.isUnsafeIpv6Address(address)
+    }
+
+    return true
+  }
+
+  // 判断 IPv4 地址是否属于不允许服务端访问的地址段。
+  private isUnsafeIpv4Address(address: string) {
+    const parts = address.split('.').map((part) => Number(part))
+    if (
+      parts.length !== 4 ||
+      parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)
+    ) {
+      return true
+    }
+
+    const [a, b, c] = parts
+    return (
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 0 && c === 0) ||
+      (a === 192 && b === 0 && c === 2) ||
+      (a === 192 && b === 168) ||
+      (a === 198 && (b === 18 || b === 19)) ||
+      (a === 198 && b === 51 && c === 100) ||
+      (a === 203 && b === 0 && c === 113) ||
+      a >= 224
+    )
+  }
+
+  // 判断 IPv6 地址是否属于不允许服务端访问的地址段。
+  private isUnsafeIpv6Address(address: string) {
+    const normalizedAddress = address.toLowerCase()
+    const mappedIpv4 = normalizedAddress.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/)
+    if (mappedIpv4) {
+      return this.isUnsafeIpv4Address(mappedIpv4[1])
+    }
+
+    return (
+      normalizedAddress === '::' ||
+      normalizedAddress === '::1' ||
+      normalizedAddress.startsWith('fe8') ||
+      normalizedAddress.startsWith('fe9') ||
+      normalizedAddress.startsWith('fea') ||
+      normalizedAddress.startsWith('feb') ||
+      normalizedAddress.startsWith('fc') ||
+      normalizedAddress.startsWith('fd') ||
+      normalizedAddress.startsWith('ff') ||
+      normalizedAddress.startsWith('2001:db8')
+    )
+  }
+
+  // 从原始 URL 中提取上传展示用文件名。
+  private resolveOriginalName(url: string) {
+    const parsedUrl = new URL(url)
+    const name = basename(parsedUrl.pathname)
+    return name || 'remote-image'
+  }
+
+  // 优先沿用路径扩展名，缺省时根据响应 MIME 推导图片扩展名。
+  private resolveExtension(url: URL, contentType: string) {
+    const pathExtension = extname(url.pathname)
+    if (pathExtension) {
+      return pathExtension
+    }
+    if (contentType.includes('png')) {
+      return '.png'
+    }
+    if (contentType.includes('webp')) {
+      return '.webp'
+    }
+    return '.jpg'
+  }
+
+  // 统一远程图片导入失败的业务异常码。
+  private remoteImageError(message: string) {
+    return new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message,
+    )
+  }
+}

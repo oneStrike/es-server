@@ -1,11 +1,41 @@
+import { WorkModule } from '@libs/content/work/work.module'
+import { UploadModule } from '@libs/platform/modules/upload/upload.module'
+import { SystemConfigModule } from '@libs/system-config/system-config.module'
 import { Module } from '@nestjs/common'
-import { CopyService } from './libs/copy.service'
+import {
+  COMIC_THIRD_PARTY_PROVIDERS,
+  ComicThirdPartyRegistry,
+} from './providers/comic-third-party.registry'
+import { CopyMangaHttpClient } from './providers/copy-manga-http.client'
+import { CopyMangaProvider } from './providers/copy-manga.provider'
+import { RemoteImageImportService } from './services/remote-image-import.service'
+import { ThirdPartyComicImportService } from './services/third-party-comic-import.service'
 import { ComicThirdPartyService } from './third-party-service'
 import { ComicThirdPartyController } from './third-party.controller'
 
 @Module({
+  imports: [
+    WorkModule,
+    UploadModule.register({
+      imports: [SystemConfigModule],
+    }),
+  ],
   controllers: [ComicThirdPartyController],
-  providers: [ComicThirdPartyService, CopyService],
+  providers: [
+    ComicThirdPartyService,
+    ComicThirdPartyRegistry,
+    CopyMangaHttpClient,
+    CopyMangaProvider,
+    RemoteImageImportService,
+    ThirdPartyComicImportService,
+    {
+      provide: COMIC_THIRD_PARTY_PROVIDERS,
+      useFactory: (copyMangaProvider: CopyMangaProvider) => [
+        copyMangaProvider,
+      ],
+      inject: [CopyMangaProvider],
+    },
+  ],
   exports: [ComicThirdPartyService],
 })
 export class ComicThirdPartyModule {}
