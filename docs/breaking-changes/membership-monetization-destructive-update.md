@@ -49,12 +49,18 @@ Server route mapping:
 
 Admin IA mapping:
 
-| Old admin surface                       | New admin surface                                                   |
-| --------------------------------------- | ------------------------------------------------------------------- |
-| `/monetization-manager/currency-coupon` | `/wallet-manager/currency-package` and `/coupon-manager/definition` |
-| `/monetization-manager/payment-config`  | `/payment-manager`                                                  |
-| `/monetization-manager/vip-config`      | `/membership-manager`                                               |
-| `/monetization-manager/ad-config`       | `/ad-reward-manager`                                                |
+| Old admin surface                       | New admin surface                                                                                          |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `/monetization-manager/currency-coupon` | `/payment-rights/currency-package` and `/payment-rights/coupon-definition`                                 |
+| `/monetization-manager/payment-config`  | `/config-manager/payment-config`                                                                           |
+| `/monetization-manager/vip-config`      | `/payment-rights/membership`                                                                               |
+| `/monetization-manager/ad-config`       | `/config-manager/ad-config`                                                                                |
+| `/system-manager/system-config`         | `/config-manager/system-config`                                                                            |
+| `/payment-manager`                      | `/config-manager/payment-config` for provider config; `/payment-rights/payment-order` for order operations |
+| `/wallet-manager/currency-package`      | `/payment-rights/currency-package`                                                                         |
+| `/coupon-manager/definition`            | `/payment-rights/coupon-definition`                                                                        |
+| `/membership-manager`                   | `/payment-rights/membership`                                                                               |
+| `/ad-reward-manager`                    | `/config-manager/ad-config`                                                                                |
 
 Ownership after split:
 

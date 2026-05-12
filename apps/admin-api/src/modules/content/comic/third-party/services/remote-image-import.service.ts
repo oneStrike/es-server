@@ -11,6 +11,7 @@ import { basename, extname, join } from 'node:path'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
+import { ConfigReader } from '@libs/system-config/config-reader'
 import { Injectable } from '@nestjs/common'
 import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
@@ -21,13 +22,16 @@ const COPY_MANGA_IMAGE_HOST_PATTERN = /^[a-z0-9-]+\.mangafunb\.fun$/i
 
 interface SafeRemoteImageUrl {
   url: URL
-  address: LookupAddress
+  address?: LookupAddress
 }
 
 @Injectable()
 export class RemoteImageImportService {
   // 注入统一上传服务，远程图片落地后仍复用现有上传策略。
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(
+    private readonly uploadService: UploadService,
+    private readonly configReader: ConfigReader,
+  ) {}
 
   // 下载并上传单张第三方图片，失败时保持业务异常语义。
   async importImage(url: string, objectKeySegments: string[]) {
@@ -60,7 +64,7 @@ export class RemoteImageImportService {
     return filePaths
   }
 
-  // 将远程图片下载到临时文件，下载连接必须使用已校验的 DNS 结果。
+  // 将远程图片下载到临时文件，默认固定已校验 DNS 结果。
   private async downloadToTemp(url: string) {
     const safeRemote = await this.assertSafeUrl(url)
     const response = await axios.get<ArrayBuffer>(safeRemote.url.toString(), {
@@ -69,12 +73,16 @@ export class RemoteImageImportService {
       maxRedirects: 0,
       maxContentLength: MAX_REMOTE_IMAGE_BYTES,
       maxBodyLength: MAX_REMOTE_IMAGE_BYTES,
-      httpsAgent: new HttpsAgent({
-        lookup: this.createPinnedLookup(
-          safeRemote.url.hostname,
-          safeRemote.address,
-        ),
-      }),
+      ...(safeRemote.address
+        ? {
+            httpsAgent: new HttpsAgent({
+              lookup: this.createPinnedLookup(
+                safeRemote.url.hostname,
+                safeRemote.address,
+              ),
+            }),
+          }
+        : {}),
       validateStatus: (status) => status >= 200 && status < 300,
     })
 
@@ -95,7 +103,7 @@ export class RemoteImageImportService {
     return localPath
   }
 
-  // 校验 URL、域名和 DNS 结果，并返回后续请求必须复用的安全地址。
+  // 校验 URL、域名和 DNS 结果；系统安全配置关闭地址防护时只保留基础 URL 约束。
   private async assertSafeUrl(url: string): Promise<SafeRemoteImageUrl> {
     let parsedUrl: URL
     try {
@@ -111,6 +119,12 @@ export class RemoteImageImportService {
       throw this.remoteImageError('远程图片域名不在允许范围内')
     }
 
+    if (!this.isAddressGuardEnabled()) {
+      return {
+        url: parsedUrl,
+      }
+    }
+
     const addresses = await lookup(parsedUrl.hostname, { all: true })
     if (
       addresses.length === 0 ||
@@ -123,6 +137,12 @@ export class RemoteImageImportService {
       url: parsedUrl,
       address: addresses[0],
     }
+  }
+
+  // 读取系统安全配置，决定是否启用 DNS 内网地址防护。
+  private isAddressGuardEnabled() {
+    return this.configReader.getRemoteImageImportSecurityConfig()
+      .enableAddressGuard
   }
 
   // 为 axios 连接固定已验证地址，避免校验后再次进行不受控 DNS 解析。

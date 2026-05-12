@@ -1,4 +1,5 @@
 import type { UploadService } from '@libs/platform/modules/upload/upload.service'
+import type { ConfigReader } from '@libs/system-config/config-reader'
 import axios from 'axios'
 import { lookup } from 'node:dns/promises'
 import { promises as fs } from 'node:fs'
@@ -33,18 +34,25 @@ describe('RemoteImageImportService', () => {
     mockedLookup.mockResolvedValueOnce(addresses as never)
   }
 
-  function createService() {
+  function createService(enableAddressGuard = true) {
     const uploadService = {
       uploadLocalFile: jest.fn(async () => ({
         filePath: '/uploads/comic/remote.jpg',
+      })),
+    }
+    const configReader = {
+      getRemoteImageImportSecurityConfig: jest.fn(() => ({
+        enableAddressGuard,
       })),
     }
 
     return {
       service: new RemoteImageImportService(
         uploadService as unknown as UploadService,
+        configReader as unknown as ConfigReader,
       ),
       uploadService,
+      configReader,
     }
   }
 
@@ -59,8 +67,8 @@ describe('RemoteImageImportService', () => {
     jest.restoreAllMocks()
   })
 
-  it('uses the validated DNS answer for the outbound image request', async () => {
-    const { service, uploadService } = createService()
+  it('uses the validated DNS answer for the outbound image request by default', async () => {
+    const { service, uploadService, configReader } = createService()
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
     mockedAxiosGet.mockImplementationOnce(async (_url, config) => {
       const lookupFromAgent = config?.httpsAgent?.options?.lookup
@@ -102,10 +110,29 @@ describe('RemoteImageImportService', () => {
         originalName: '001.jpg',
       }),
     )
+    expect(configReader.getRemoteImageImportSecurityConfig).toHaveBeenCalled()
     expect(fs.rm).toHaveBeenCalledWith(
       expect.stringContaining('third-party-comic-test'),
       { force: true },
     )
+  })
+
+  it('skips DNS address guard when system security config disables it', async () => {
+    const { service, configReader } = createService(false)
+    mockedAxiosGet.mockImplementationOnce(async (_url, config) => {
+      expect(config?.httpsAgent).toBeUndefined()
+      return {
+        data: Buffer.from([1, 2, 3]),
+        headers: { 'content-type': 'image/jpeg' },
+      }
+    })
+
+    await expect(
+      service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
+    ).resolves.toBe('/uploads/comic/remote.jpg')
+
+    expect(mockedLookup).not.toHaveBeenCalled()
+    expect(configReader.getRemoteImageImportSecurityConfig).toHaveBeenCalled()
   })
 
   it('rejects non-HTTPS URLs before DNS lookup or download', async () => {

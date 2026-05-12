@@ -111,6 +111,20 @@ export class ConfigReader implements OnModuleInit {
   }
 
   /**
+   * 获取安全配置
+   */
+  getSecurityConfig() {
+    return this.config.securityConfig
+  }
+
+  /**
+   * 获取远程图片导入安全配置
+   */
+  getRemoteImageImportSecurityConfig() {
+    return this.config.securityConfig.remoteImageImport
+  }
+
+  /**
    * 获取上传配置
    */
   getUploadConfig() {

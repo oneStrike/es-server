@@ -28,6 +28,10 @@ export const CONFIG_SECURITY_META: Record<
   operationConfig: {
     sensitivePaths: [],
   },
+  // 安全配置：无敏感字段
+  securityConfig: {
+    sensitivePaths: [],
+  },
   // 上传配置：包含七牛和 Superbed 密钥等敏感字段
   uploadConfig: {
     sensitivePaths: ['qiniu.accessKey', 'qiniu.secretKey', 'superbed.token'],
@@ -135,6 +139,15 @@ export const DEFAULT_CONFIG = {
     forumHashtagConfig: {
       /** 话题创建模式（1=仅引用已存在且可用话题，2=正文中允许自动创建话题） */
       creationMode: 2,
+    },
+  },
+
+  // 安全配置
+  securityConfig: {
+    /** 远程图片导入安全配置 */
+    remoteImageImport: {
+      /** 是否启用 DNS 不安全地址防护（默认开启） */
+      enableAddressGuard: true,
     },
   },
 

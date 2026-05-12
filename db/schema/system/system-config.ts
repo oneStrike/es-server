@@ -37,6 +37,10 @@ export const systemConfig = snakeCase.table(
      */
     operationConfig: jsonb(),
     /**
+     * 安全配置（JSON格式，包含远程图片导入安全开关）
+     */
+    securityConfig: jsonb(),
+    /**
      * 维护模式配置（JSON格式，开关与提示文案）
      */
     maintenanceConfig: jsonb(),

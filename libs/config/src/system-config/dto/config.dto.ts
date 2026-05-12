@@ -249,6 +249,36 @@ export class OperationConfigDto {
 }
 
 // ============================================================================
+// 安全配置
+// ============================================================================
+
+/**
+ * 远程图片导入安全配置
+ */
+export class RemoteImageImportSecurityConfigDto {
+  @BooleanProperty({
+    description: '是否启用远程图片 DNS 不安全地址防护',
+    example: true,
+    default: true,
+    required: false,
+  })
+  enableAddressGuard?: boolean
+}
+
+/**
+ * 安全配置
+ */
+export class SecurityConfigDto {
+  @NestedProperty({
+    description: '远程图片导入安全配置',
+    type: RemoteImageImportSecurityConfigDto,
+    required: false,
+    nullable: false,
+  })
+  remoteImageImport?: RemoteImageImportSecurityConfigDto | null
+}
+
+// ============================================================================
 // 上传配置
 // ============================================================================
 
@@ -449,6 +479,19 @@ export class BaseSystemConfigDto extends BaseDto {
   operationConfig?: OperationConfigDto | null
 
   @NestedProperty({
+    description: '安全配置',
+    type: SecurityConfigDto,
+    example: {
+      remoteImageImport: {
+        enableAddressGuard: true,
+      },
+    },
+    required: false,
+    nullable: false,
+  })
+  securityConfig?: SecurityConfigDto | null
+
+  @NestedProperty({
     description: '维护配置',
     type: MaintenanceConfigDto,
     example: {
@@ -520,6 +563,7 @@ export class UpdateSystemConfigDto extends IntersectionType(
       'aliyunConfig',
       'siteConfig',
       'operationConfig',
+      'securityConfig',
       'maintenanceConfig',
       'contentReviewPolicy',
       'uploadConfig',

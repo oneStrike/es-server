@@ -16,6 +16,7 @@ import { ComicThirdPartyController } from './third-party.controller'
 @Module({
   imports: [
     WorkModule,
+    SystemConfigModule,
     UploadModule.register({
       imports: [SystemConfigModule],
     }),
@@ -30,9 +31,7 @@ import { ComicThirdPartyController } from './third-party.controller'
     ThirdPartyComicImportService,
     {
       provide: COMIC_THIRD_PARTY_PROVIDERS,
-      useFactory: (copyMangaProvider: CopyMangaProvider) => [
-        copyMangaProvider,
-      ],
+      useFactory: (copyMangaProvider: CopyMangaProvider) => [copyMangaProvider],
       inject: [CopyMangaProvider],
     },
   ],
