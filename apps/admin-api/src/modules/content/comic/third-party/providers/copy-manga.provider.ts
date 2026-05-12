@@ -139,15 +139,20 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
       '获取第三方章节内容失败',
     )
     const chapter = results.chapter
+    if (!chapter?.uuid) {
+      throw this.providerError('第三方章节内容为空')
+    }
+
+    const chapterUuid = chapter.uuid
     const images = (chapter?.contents ?? [])
-      .filter((item) => item.uuid && item.url)
+      .filter((item) => Boolean(item.url))
       .map((item, index) => ({
-        providerImageId: item.uuid!,
+        providerImageId: this.resolveImageProviderId(chapterUuid, item, index),
         url: item.url!,
         sortOrder: index + 1,
       }))
 
-    if (!chapter?.uuid || images.length === 0) {
+    if (images.length === 0) {
       throw this.providerError('第三方章节内容为空')
     }
 
@@ -214,6 +219,14 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     suffix: string,
   ) {
     return `/api/v3/comic/${dto.comicId}/chapter${suffix}/${dto.chapterId}`
+  }
+
+  private resolveImageProviderId(
+    chapterUuid: string,
+    item: { uuid?: string },
+    index: number,
+  ) {
+    return item.uuid ?? `${chapterUuid}:${index + 1}`
   }
 
   private resolveChapterApiSuffix(version?: number) {

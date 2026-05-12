@@ -117,14 +117,49 @@ describe('CopyMangaProvider', () => {
     expect(content.providerChapterId).toBe('chapter-001')
     expect(content.images).toEqual([
       {
-        providerImageId: 'image-001',
+        providerImageId: 'chapter-001:1',
         url: 'https://sw.mangafunb.fun/w/woduzishenji/chapter-001/001.jpg',
         sortOrder: 1,
       },
       {
-        providerImageId: 'image-002',
+        providerImageId: 'chapter-001:2',
         url: 'https://sw.mangafunb.fun/w/woduzishenji/chapter-001/002.jpg',
         sortOrder: 2,
+      },
+    ])
+  })
+
+  it('keeps provider image uuids when CopyManga returns them', async () => {
+    const { provider } = createProvider({
+      '/api/v3/comic/woduzishenji/chapter/chapter-001': {
+        ...chapterContentSuccess,
+        results: {
+          ...chapterContentSuccess.results,
+          chapter: {
+            ...chapterContentSuccess.results.chapter,
+            contents: [
+              {
+                uuid: 'image-001',
+                url: 'https://sw.mangafunb.fun/w/woduzishenji/chapter-001/001.jpg',
+              },
+            ],
+          },
+        },
+      },
+    })
+
+    const content = await provider.getChapterContent({
+      chapterId: 'chapter-001',
+      chapterApiVersion: 1,
+      comicId: 'woduzishenji',
+      platform: 'copy',
+    })
+
+    expect(content.images).toEqual([
+      {
+        providerImageId: 'image-001',
+        url: 'https://sw.mangafunb.fun/w/woduzishenji/chapter-001/001.jpg',
+        sortOrder: 1,
       },
     ])
   })
@@ -145,6 +180,30 @@ describe('CopyMangaProvider', () => {
     expect(httpClient.getJson).toHaveBeenCalledWith(
       '/api/v3/comic/woduzishenji/chapter2/chapter-001',
     )
+  })
+
+  it('throws when chapter content items do not have usable urls', async () => {
+    const { provider } = createProvider({
+      '/api/v3/comic/woduzishenji/chapter/chapter-001': {
+        ...chapterContentSuccess,
+        results: {
+          ...chapterContentSuccess.results,
+          chapter: {
+            ...chapterContentSuccess.results.chapter,
+            contents: [{ uuid: 'image-001' }],
+          },
+        },
+      },
+    })
+
+    await expect(
+      provider.getChapterContent({
+        chapterId: 'chapter-001',
+        chapterApiVersion: 1,
+        comicId: 'woduzishenji',
+        platform: 'copy',
+      }),
+    ).rejects.toThrow(BusinessException)
   })
 
   it('throws classified business errors for empty provider payloads', async () => {
