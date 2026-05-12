@@ -425,6 +425,13 @@ export class ChapterContentComicRequestDto extends DetailComicRequestDto {
     example: '654321',
   })
   chapterId!: string
+
+  @NumberProperty({
+    required: false,
+    description: '三方章节内容接口版本；CopyManga type=1 使用 chapter，type>=2 使用 chapterN',
+    example: 1,
+  })
+  chapterApiVersion?: number
 }
 
 /** 第三方漫画导入模式。 */
@@ -794,6 +801,14 @@ export class ThirdPartyComicChapterDto {
     validation: false,
   })
   imageCount?: number
+
+  @NumberProperty({
+    description: '三方章节内容接口版本',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  chapterApiVersion?: number
 
   @StringProperty({
     description: '三方章节创建时间',
@@ -1246,6 +1261,13 @@ export class ThirdPartyComicImportChapterItemDto {
     required: true,
   })
   providerChapterId!: string
+
+  @NumberProperty({
+    description: '三方章节内容接口版本',
+    example: 1,
+    required: false,
+  })
+  chapterApiVersion?: number
 
   @EnumProperty({
     description: '章节导入动作（create=新建章节；update=更新已有章节）',

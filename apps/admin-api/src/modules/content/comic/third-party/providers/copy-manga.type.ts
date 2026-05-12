@@ -78,6 +78,7 @@ export interface CopyMangaChapterResults {
     size?: number
     name?: string
     group_path_word?: string
+    type?: number
     datetime_created?: string
   }>
 }

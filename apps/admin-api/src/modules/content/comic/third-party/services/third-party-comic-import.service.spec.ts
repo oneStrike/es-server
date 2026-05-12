@@ -45,6 +45,7 @@ describe('ThirdPartyComicImportService', () => {
   const chapters = [
     {
       providerChapterId: 'chapter-001',
+      chapterApiVersion: 1,
       title: '第1话',
       group: 'default',
       sortOrder: 1,
@@ -197,6 +198,7 @@ describe('ThirdPartyComicImportService', () => {
       chapters: [
         {
           action: ThirdPartyComicImportChapterActionEnum.UPDATE,
+          chapterApiVersion: 1,
           importImages: true,
           overwriteContent: true,
           providerChapterId: 'chapter-001',
@@ -213,6 +215,12 @@ describe('ThirdPartyComicImportService', () => {
     })
 
     expect(result.status).toBe(ThirdPartyComicImportStatusEnum.PARTIAL_FAILED)
+    expect(provider.getChapterContent).toHaveBeenCalledWith({
+      chapterApiVersion: 1,
+      chapterId: 'chapter-001',
+      comicId: 'woduzishenji',
+      platform: 'copy',
+    })
     expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
   })
 })

@@ -23,20 +23,20 @@ describe('CopyMangaHttpClient', () => {
     getMock.mockReset()
   })
 
-  it('rethrows the same discovery error and does not call content API', async () => {
+  it('classifies discovery request failures after three attempts', async () => {
     const discoveryError = new Error('network down')
-    getMock.mockRejectedValueOnce(discoveryError)
+    getMock.mockRejectedValue(discoveryError)
     const client = createClient()
 
-    await expect(client.getJson('/api/v3/search/comic')).rejects.toBe(
-      discoveryError,
+    await expect(client.getJson('/api/v3/search/comic')).rejects.toThrow(
+      BusinessException,
     )
 
-    expect(getMock).toHaveBeenCalledTimes(1)
+    expect(getMock).toHaveBeenCalledTimes(3)
   })
 
-  it('fails closed on non-success discovery code before content API request', async () => {
-    getMock.mockResolvedValueOnce({
+  it('retries non-success discovery code before failing closed', async () => {
+    getMock.mockResolvedValue({
       data: { code: 500, message: 'maintenance' },
     })
     const client = createClient()
@@ -45,7 +45,7 @@ describe('CopyMangaHttpClient', () => {
       BusinessException,
     )
 
-    expect(getMock).toHaveBeenCalledTimes(1)
+    expect(getMock).toHaveBeenCalledTimes(3)
   })
 
   it('fails closed on malformed discovery api results before content API request', async () => {
@@ -126,6 +126,78 @@ describe('CopyMangaHttpClient', () => {
     expect(getMock).toHaveBeenNthCalledWith(
       3,
       'https://api-b.copy.test/api/v3/search/comic',
+      expect.any(Object),
+    )
+  })
+
+  it('classifies exhausted content API failures after three attempts', async () => {
+    getMock
+      .mockResolvedValueOnce({
+        data: {
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        },
+      })
+      .mockRejectedValue(new Error('404 upstream'))
+    const client = createClient()
+
+    await expect(
+      client.getJson('/api/v3/comic/demo/chapter/demo'),
+    ).rejects.toThrow(BusinessException)
+    expect(getMock).toHaveBeenCalledTimes(4)
+    expect(getMock).toHaveBeenNthCalledWith(
+      2,
+      'https://api-a.copy.test/api/v3/comic/demo/chapter/demo',
+      expect.any(Object),
+    )
+    expect(getMock).toHaveBeenNthCalledWith(
+      3,
+      'https://api-a.copy.test/api/v3/comic/demo/chapter/demo',
+      expect.any(Object),
+    )
+    expect(getMock).toHaveBeenNthCalledWith(
+      4,
+      'https://api-a.copy.test/api/v3/comic/demo/chapter/demo',
+      expect.any(Object),
+    )
+  })
+
+  it('caps content retries to three attempts across discovered hosts', async () => {
+    getMock
+      .mockResolvedValueOnce({
+        data: {
+          code: 200,
+          results: {
+            api: [
+              ['api-a.copy.test'],
+              ['api-b.copy.test'],
+              ['api-c.copy.test'],
+              ['api-d.copy.test'],
+            ],
+          },
+        },
+      })
+      .mockRejectedValue(new Error('upstream unavailable'))
+    const client = createClient()
+
+    await expect(client.getJson('/api/v3/search/comic')).rejects.toThrow(
+      BusinessException,
+    )
+
+    expect(getMock).toHaveBeenCalledTimes(4)
+    expect(getMock).toHaveBeenNthCalledWith(
+      2,
+      'https://api-a.copy.test/api/v3/search/comic',
+      expect.any(Object),
+    )
+    expect(getMock).toHaveBeenNthCalledWith(
+      3,
+      'https://api-b.copy.test/api/v3/search/comic',
+      expect.any(Object),
+    )
+    expect(getMock).toHaveBeenNthCalledWith(
+      4,
+      'https://api-c.copy.test/api/v3/search/comic',
       expect.any(Object),
     )
   })

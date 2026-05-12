@@ -281,6 +281,7 @@ export class ThirdPartyComicImportService {
 
       const content = await provider.getChapterContent({
         chapterId: chapter.providerChapterId,
+        chapterApiVersion: chapter.chapterApiVersion,
         comicId: dto.comicId,
         platform: dto.platform,
       })

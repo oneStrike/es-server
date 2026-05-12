@@ -127,6 +127,7 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
       group: chapter.group_path_word ?? group,
       sortOrder: (chapter.index ?? index) + 1,
       imageCount: chapter.size ?? chapter.count,
+      chapterApiVersion: chapter.type,
       datetimeCreated: chapter.datetime_created,
     }))
   }
@@ -134,9 +135,7 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
   // 获取 CopyManga 章节图片列表并保持三方图片顺序。
   async getChapterContent(dto: ChapterContentComicRequestDto) {
     const results = this.unwrapResults<CopyMangaChapterContentResults>(
-      await this.httpClient.getJson(
-        `/api/v3/comic/${dto.comicId}/chapter2/${dto.chapterId}`,
-      ),
+      await this.fetchChapterContent(dto),
       '获取第三方章节内容失败',
     )
     const chapter = results.chapter
@@ -183,6 +182,45 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       message,
     )
+  }
+
+  private async fetchChapterContent(dto: ChapterContentComicRequestDto) {
+    let lastError: unknown
+    for (const path of this.buildChapterContentPaths(dto)) {
+      try {
+        return await this.httpClient.getJson(path)
+      } catch (error) {
+        lastError = error
+      }
+    }
+
+    throw lastError
+  }
+
+  private buildChapterContentPaths(dto: ChapterContentComicRequestDto) {
+    const suffix = this.resolveChapterApiSuffix(dto.chapterApiVersion)
+    if (suffix !== undefined) {
+      return [this.buildChapterContentPath(dto, suffix)]
+    }
+
+    return [
+      this.buildChapterContentPath(dto, ''),
+      this.buildChapterContentPath(dto, '2'),
+    ]
+  }
+
+  private buildChapterContentPath(
+    dto: ChapterContentComicRequestDto,
+    suffix: string,
+  ) {
+    return `/api/v3/comic/${dto.comicId}/chapter${suffix}/${dto.chapterId}`
+  }
+
+  private resolveChapterApiSuffix(version?: number) {
+    if (typeof version !== 'number') {
+      return undefined
+    }
+    return version >= 2 ? String(version) : ''
   }
 
   // 将 CopyManga 命名对象列表收敛为可展示名称数组。

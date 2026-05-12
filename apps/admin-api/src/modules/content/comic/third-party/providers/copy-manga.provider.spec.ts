@@ -86,6 +86,7 @@ describe('CopyMangaProvider', () => {
         group: 'default',
         sortOrder: 1,
         imageCount: 12,
+        chapterApiVersion: 1,
       }),
       expect.objectContaining({
         providerChapterId: 'chapter-002',
@@ -93,22 +94,26 @@ describe('CopyMangaProvider', () => {
         group: 'default',
         sortOrder: 2,
         imageCount: 10,
+        chapterApiVersion: 1,
       }),
     ])
   })
 
-  it('normalizes chapter content images in provider order', async () => {
-    const { provider } = createProvider({
-      '/api/v3/comic/woduzishenji/chapter2/chapter-001':
-        chapterContentSuccess,
+  it('uses the versioned chapter content endpoint from the chapter row', async () => {
+    const { httpClient, provider } = createProvider({
+      '/api/v3/comic/woduzishenji/chapter/chapter-001': chapterContentSuccess,
     })
 
     const content = await provider.getChapterContent({
       chapterId: 'chapter-001',
+      chapterApiVersion: 1,
       comicId: 'woduzishenji',
       platform: 'copy',
     })
 
+    expect(httpClient.getJson).toHaveBeenCalledWith(
+      '/api/v3/comic/woduzishenji/chapter/chapter-001',
+    )
     expect(content.providerChapterId).toBe('chapter-001')
     expect(content.images).toEqual([
       {
@@ -122,6 +127,24 @@ describe('CopyMangaProvider', () => {
         sortOrder: 2,
       },
     ])
+  })
+
+  it('keeps chapter2 for chapter content version 2', async () => {
+    const { httpClient, provider } = createProvider({
+      '/api/v3/comic/woduzishenji/chapter2/chapter-001':
+        chapterContentSuccess,
+    })
+
+    await provider.getChapterContent({
+      chapterId: 'chapter-001',
+      chapterApiVersion: 2,
+      comicId: 'woduzishenji',
+      platform: 'copy',
+    })
+
+    expect(httpClient.getJson).toHaveBeenCalledWith(
+      '/api/v3/comic/woduzishenji/chapter2/chapter-001',
+    )
   })
 
   it('throws classified business errors for empty provider payloads', async () => {
@@ -143,6 +166,7 @@ describe('CopyMangaProvider', () => {
     await expect(
       provider.getChapterContent({
         chapterId: 'chapter-empty',
+        chapterApiVersion: 2,
         comicId: 'woduzishenji',
         platform: 'copy',
       }),
