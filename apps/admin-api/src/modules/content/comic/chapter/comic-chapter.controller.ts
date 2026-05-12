@@ -6,7 +6,7 @@ import {
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto } from '@libs/platform/dto'
+import { DragReorderDto, IdDto, IdsDto } from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -70,14 +70,14 @@ export class ComicChapterController {
 
   @Post('delete')
   @ApiAuditDoc({
-    summary: '删除漫画章节',
+    summary: '批量删除漫画章节',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.DELETE,
     },
   })
-  async delete(@Body() query: IdDto) {
-    return this.workChapterService.deleteChapter(query.id)
+  async delete(@Body() body: IdsDto) {
+    return this.workChapterService.deleteChapters(body.ids)
   }
 
   @Post('swap-sort-order')

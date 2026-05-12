@@ -15,7 +15,7 @@ import { BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   CreateWorkChapterDto,
@@ -120,21 +120,24 @@ export class WorkChapterService {
       )
     }
 
-    return this.drizzle.withErrorHandling(async () => {
-      const [createdChapter] = await this.db
-        .insert(this.workChapter)
-        .values(createDto)
-        .returning({ id: this.workChapter.id })
+    return this.drizzle.withErrorHandling(
+      async () => {
+        const [createdChapter] = await this.db
+          .insert(this.workChapter)
+          .values(createDto)
+          .returning({ id: this.workChapter.id })
 
-      if (!createdChapter) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '章节创建结果不存在',
-        )
-      }
+        if (!createdChapter) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '章节创建结果不存在',
+          )
+        }
 
-      return createdChapter.id
-    }, { duplicate: '该作品下章节号已存在' })
+        return createdChapter.id
+      },
+      { duplicate: '该作品下章节号已存在' },
+    )
   }
 
   // 分页查询章节列表。
@@ -526,6 +529,11 @@ export class WorkChapterService {
 
   // 删除章节。
   async deleteChapter(id: number) {
+    return this.deleteChapters([id])
+  }
+
+  // 批量删除章节。
+  async deleteChapters(ids: number[]) {
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -533,7 +541,7 @@ export class WorkChapterService {
           .set({ deletedAt: new Date() })
           .where(
             and(
-              eq(this.workChapter.id, id),
+              inArray(this.workChapter.id, ids),
               isNull(this.workChapter.deletedAt),
             ),
           ),
