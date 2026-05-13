@@ -10,8 +10,10 @@ import { randomUUID } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { getAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, eq, isNull, lte, or } from 'drizzle-orm'
+import dayjs from 'dayjs'
+import { and, asc, eq, gte, isNull, lte, or } from 'drizzle-orm'
 import {
   BACKGROUND_TASK_CLAIM_TIMEOUT_SECONDS,
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
@@ -118,6 +120,14 @@ export class BackgroundTaskService {
     }
     if (input.status !== undefined) {
       conditions.push(eq(this.backgroundTask.status, input.status))
+    }
+    const startDate = this.parseCreatedAtFilter(input.startDate, 'start')
+    if (startDate) {
+      conditions.push(gte(this.backgroundTask.createdAt, startDate))
+    }
+    const endDate = this.parseCreatedAtFilter(input.endDate, 'end')
+    if (endDate) {
+      conditions.push(lte(this.backgroundTask.createdAt, endDate))
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -588,6 +598,57 @@ export class BackgroundTaskService {
       status === BackgroundTaskStatusEnum.PROCESSING ||
       status === BackgroundTaskStatusEnum.FINALIZING
     )
+  }
+
+  // 解析后台任务列表创建时间筛选，兼容 admin DatePicker 的日期时间格式。
+  private parseCreatedAtFilter(
+    value: null | string | undefined,
+    bound: 'end' | 'start',
+  ) {
+    const trimmedValue = value?.trim()
+    if (!trimmedValue) {
+      return undefined
+    }
+
+    for (const { dateOnly, format, pattern } of [
+      {
+        format: 'YYYY-MM-DD HH:mm:ss',
+        pattern: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+      },
+      {
+        format: 'YYYY-MM-DDTHH:mm:ss',
+        pattern: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/,
+      },
+      {
+        dateOnly: true,
+        format: 'YYYY-MM-DD',
+        pattern: /^\d{4}-\d{2}-\d{2}$/,
+      },
+    ]) {
+      if (!pattern.test(trimmedValue)) {
+        continue
+      }
+      const parsedValue = dayjs.tz(trimmedValue, format, getAppTimeZone())
+      if (
+        parsedValue.isValid() &&
+        parsedValue.format(format) === trimmedValue
+      ) {
+        return dateOnly && bound === 'end'
+          ? parsedValue.endOf('day').toDate()
+          : parsedValue.toDate()
+      }
+    }
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/.test(
+        trimmedValue,
+      )
+    ) {
+      return undefined
+    }
+
+    const parsedIsoValue = dayjs(trimmedValue)
+    return parsedIsoValue.isValid() ? parsedIsoValue.toDate() : undefined
   }
 
   // 转换数据库行为接口 DTO。

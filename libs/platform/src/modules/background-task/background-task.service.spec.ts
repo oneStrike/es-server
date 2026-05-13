@@ -64,6 +64,64 @@ describe('BackgroundTaskService', () => {
     }
   }
 
+  function createPagingService() {
+    const findPagination = jest.fn(async () => ({
+      list: [createBackgroundTaskRow()],
+      pageIndex: 1,
+      pageSize: 10,
+      total: 1,
+    }))
+    const drizzle = {
+      db: {},
+      ext: {
+        findPagination,
+      },
+      schema: {
+        backgroundTask: {
+          createdAt: 'createdAt',
+          id: 'id',
+          status: 'status',
+          taskId: 'taskId',
+          taskType: 'taskType',
+        },
+      },
+    }
+
+    return {
+      findPagination,
+      service: new BackgroundTaskService(drizzle as never, {} as never),
+    }
+  }
+
+  function collectDateValues(value: unknown) {
+    const dates: Date[] = []
+    const visited = new WeakSet<object>()
+
+    function visit(item: unknown) {
+      if (item instanceof Date) {
+        dates.push(item)
+        return
+      }
+      if (Array.isArray(item)) {
+        item.forEach(visit)
+        return
+      }
+      if (typeof item !== 'object' || item === null || visited.has(item)) {
+        return
+      }
+      visited.add(item)
+      Object.values(item).forEach(visit)
+    }
+
+    visit(value)
+    return dates
+  }
+
+  function getLastPaginationWhere(findPagination: jest.Mock) {
+    const lastCall = findPagination.mock.calls.at(-1)
+    return lastCall?.[1]?.where
+  }
+
   it('creates pending task records without executing handler work', async () => {
     const createdAt = new Date('2026-05-13T03:00:00.000Z')
     const { insertChain, registry, service } = createService({
@@ -124,6 +182,118 @@ describe('BackgroundTaskService', () => {
         payload: {},
       }),
     ).rejects.toThrow(BusinessException)
+  })
+
+  it('filters page results from the created start datetime', async () => {
+    const { findPagination, service } = createPagingService()
+
+    await service.getTaskPage({
+      pageIndex: 1,
+      pageSize: 10,
+      startDate: '2026-05-13 08:30:00',
+    })
+
+    expect(findPagination).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 10,
+        where: expect.anything(),
+      }),
+    )
+  })
+
+  it('filters page results until the created end datetime', async () => {
+    const { findPagination, service } = createPagingService()
+
+    await service.getTaskPage({
+      endDate: '2026-05-13 18:45:00',
+      pageIndex: 1,
+      pageSize: 10,
+    })
+
+    expect(findPagination).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 10,
+        where: expect.anything(),
+      }),
+    )
+  })
+
+  it('normalizes date-only created end filters to the end of the app day', async () => {
+    const { findPagination, service } = createPagingService()
+
+    await service.getTaskPage({
+      endDate: '2026-05-13',
+      pageIndex: 1,
+      pageSize: 10,
+    })
+
+    expect(
+      collectDateValues(getLastPaginationWhere(findPagination)).map((date) =>
+        date.toISOString(),
+      ),
+    ).toContain('2026-05-13T15:59:59.999Z')
+  })
+
+  it('ignores invalid created datetime filters without failing pagination', async () => {
+    const { findPagination, service } = createPagingService()
+
+    await service.getTaskPage({
+      endDate: 'still-not-a-date',
+      pageIndex: 1,
+      pageSize: 10,
+      startDate: 'not-a-date',
+    })
+
+    expect(findPagination).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 10,
+        where: undefined,
+      }),
+    )
+  })
+
+  it('ignores impossible created datetime filters', async () => {
+    const { findPagination, service } = createPagingService()
+
+    await service.getTaskPage({
+      endDate: '2026-02-31 18:45:00',
+      pageIndex: 1,
+      pageSize: 10,
+    })
+
+    expect(findPagination).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 10,
+        where: undefined,
+      }),
+    )
+  })
+
+  it('accepts ISO created datetime filters', async () => {
+    const { findPagination, service } = createPagingService()
+
+    await service.getTaskPage({
+      pageIndex: 1,
+      pageSize: 10,
+      startDate: '2026-05-13T08:30:00.000Z',
+    })
+
+    expect(findPagination).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 10,
+        where: expect.anything(),
+      }),
+    )
   })
 
   it('rolls back instead of marking success when cancellation wins during finalizing', async () => {
