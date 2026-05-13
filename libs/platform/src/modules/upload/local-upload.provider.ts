@@ -4,6 +4,7 @@ import { mkdir, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { UploadProviderEnum } from './upload.type'
 
 @Injectable()
 export class LocalUploadProvider {
@@ -21,11 +22,17 @@ export class LocalUploadProvider {
     await mkdir(dirname(targetPath), { recursive: true })
     await rename(file.tempPath, targetPath)
 
+    const filePath = this.joinUrlPath(
+      this.uploadConfig.localUrlPrefix,
+      file.objectKey,
+    )
     return {
-      filePath: this.joinUrlPath(
-        this.uploadConfig.localUrlPrefix,
-        file.objectKey,
-      ),
+      filePath,
+      deleteTarget: {
+        provider: UploadProviderEnum.LOCAL,
+        filePath,
+        objectKey: file.objectKey,
+      },
     }
   }
 

@@ -6,7 +6,7 @@ import {
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto } from '@libs/platform/dto'
+import { DragReorderDto, IdDto, IdsDto } from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -78,6 +78,18 @@ export class NovelChapterController {
   })
   async delete(@Body() query: IdDto) {
     return this.workChapterService.deleteChapter(query.id)
+  }
+
+  @Post('batch-delete')
+  @ApiAuditDoc({
+    summary: '批量删除小说章节',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
+  })
+  async batchDelete(@Body() body: IdsDto) {
+    return this.workChapterService.deleteChapters(body.ids)
   }
 
   @Post('swap-sort-order')

@@ -153,6 +153,7 @@ export interface StoredUploadNameResult {
  */
 export interface UploadExecutionResult {
   filePath: string
+  deleteTarget: UploadDeleteTarget
 }
 
 /**
@@ -164,6 +165,25 @@ export interface UploadLocalFileOptions {
   objectKeySegments: string[]
   originalName?: string
   finalName?: string
+}
+
+/**
+ * 已上传文件的删除句柄。
+ * 后台补偿逻辑直接依赖该句柄，不再通过公开 URL 反推 provider 或对象位置。
+ */
+export interface UploadDeleteTarget {
+  provider: UploadProviderEnum
+  filePath: string
+  objectKey?: string
+}
+
+/**
+ * 内部上传结果。
+ * 统一返回对外展示字段与后台补偿所需的删除句柄。
+ */
+export interface UploadStoredFileResult {
+  upload: UploadResult
+  deleteTarget: UploadDeleteTarget
 }
 
 /**

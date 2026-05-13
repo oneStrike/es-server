@@ -87,6 +87,7 @@ export * from './message/notification-preference'
 export * from './message/notification-template'
 export * from './message/user-notification'
 
+export * from './system/background-task'
 export * from './system/domain-event'
 export * from './system/domain-event-dispatch'
 export * from './system/request-log'

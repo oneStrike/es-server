@@ -49,7 +49,7 @@ export class ComicThirdPartyService {
     return this.importService.previewImport(dto)
   }
 
-  // 确认执行第三方漫画导入，写入作品和章节数据。
+  // 确认第三方漫画导入，创建后台任务并立即返回。
   async confirmImport(dto: ThirdPartyComicImportRequestDto) {
     return this.importService.confirmImport(dto)
   }

@@ -70,13 +70,25 @@ export class ComicChapterController {
 
   @Post('delete')
   @ApiAuditDoc({
-    summary: '批量删除漫画章节',
+    summary: '删除漫画章节',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.DELETE,
     },
   })
   async delete(@Body() body: IdsDto) {
+    return this.workChapterService.deleteChapters(body.ids)
+  }
+
+  @Post('batch-delete')
+  @ApiAuditDoc({
+    summary: '批量删除漫画章节',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
+  })
+  async batchDelete(@Body() body: IdsDto) {
     return this.workChapterService.deleteChapters(body.ids)
   }
 

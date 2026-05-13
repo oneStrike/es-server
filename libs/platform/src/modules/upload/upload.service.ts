@@ -5,11 +5,13 @@ import type {
   PreparedUploadFile,
   StoredUploadNameResult,
   UploadConfigProvider,
+  UploadDeleteTarget,
   UploadFileCategory,
   UploadFileOptions,
   UploadLocalFileOptions,
   UploadResponseCarrier,
   UploadResult,
+  UploadStoredFileResult,
   UploadSystemConfig,
 } from './upload.type'
 import { Buffer as NodeBuffer } from 'node:buffer'
@@ -176,6 +178,15 @@ export class UploadService {
   async uploadLocalFile(
     options: UploadLocalFileOptions,
   ): Promise<UploadResult> {
+    return (await this.uploadLocalFileWithDeleteTarget(options)).upload
+  }
+
+  /**
+   * 将本地文件继续走统一上传 provider 流程，并返回后台补偿所需的删除句柄。
+   */
+  async uploadLocalFileWithDeleteTarget(
+    options: UploadLocalFileOptions,
+  ): Promise<UploadStoredFileResult> {
     const detectedFileType = await fileTypeFromFile(options.localPath).catch(
       () => null,
     )
@@ -225,7 +236,29 @@ export class UploadService {
       height: storedName.height,
     }
 
-    return this.uploadPreparedFile(preparedFile)
+    return this.uploadPreparedFileWithDeleteTarget(preparedFile)
+  }
+
+  /**
+   * 按 provider 删除已上传文件。
+   * 后台任务回滚必须只依赖上传时生成的删除句柄。
+   */
+  async deleteUploadedFile(target: UploadDeleteTarget) {
+    switch (target.provider) {
+      case UploadProviderEnum.QINIU:
+        return this.qiniuUploadProvider.delete(
+          target,
+          this.getSystemUploadConfig(),
+        )
+      case UploadProviderEnum.SUPERBED:
+        return this.superbedUploadProvider.delete(
+          target,
+          this.getSystemUploadConfig(),
+        )
+      case UploadProviderEnum.LOCAL:
+      default:
+        return this.deleteLocalFileByObjectKey(target.objectKey)
+    }
   }
 
   /**
@@ -312,6 +345,19 @@ export class UploadService {
     preparedFile: PreparedUploadFile,
     options: UploadFileOptions = {},
   ) {
+    return (
+      await this.uploadPreparedFileWithDeleteTarget(preparedFile, options)
+    ).upload
+  }
+
+  /**
+   * 执行统一上传流程并返回删除句柄。
+   * 删除句柄由 provider 在上传成功时一并产出，供后台补偿链直接消费。
+   */
+  private async uploadPreparedFileWithDeleteTarget(
+    preparedFile: PreparedUploadFile,
+    options: UploadFileOptions = {},
+  ): Promise<UploadStoredFileResult> {
     this.assertFileSizeWithinLimit(preparedFile.fileSize)
 
     const systemUploadConfig = this.getSystemUploadConfig()
@@ -334,18 +380,37 @@ export class UploadService {
     )
 
     return {
-      filename: preparedFile.finalName,
-      originalName: preparedFile.originalName,
-      filePath: result.filePath,
-      fileSize: preparedFile.fileSize,
-      mimeType: preparedFile.mimeType,
-      fileType: preparedFile.ext,
-      fileCategory: preparedFile.fileCategory,
-      scene: preparedFile.scene,
-      width: preparedFile.width,
-      height: preparedFile.height,
-      uploadTime: new Date(),
+      deleteTarget: result.deleteTarget,
+      upload: {
+        filename: preparedFile.finalName,
+        originalName: preparedFile.originalName,
+        filePath: result.filePath,
+        fileSize: preparedFile.fileSize,
+        mimeType: preparedFile.mimeType,
+        fileType: preparedFile.ext,
+        fileCategory: preparedFile.fileCategory,
+        scene: preparedFile.scene,
+        width: preparedFile.width,
+        height: preparedFile.height,
+        uploadTime: new Date(),
+      },
     }
+  }
+
+  /**
+   * 根据 object key 删除本地文件，缺失文件按幂等成功处理。
+   */
+  private async deleteLocalFileByObjectKey(objectKey?: string) {
+    const normalizedSegments = this.normalizePathSegments(
+      (objectKey ?? '').split('/'),
+    )
+    if (normalizedSegments.length === 0) {
+      throw new BadRequestException('本地删除缺少对象 key')
+    }
+
+    await fs.rm(join(this.uploadConfig.localDir, ...normalizedSegments), {
+      force: true,
+    })
   }
 
   /** 构建最终 objectKey，未显式传路径时按文件分类和日期自动分桶。 */

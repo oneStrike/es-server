@@ -10,10 +10,10 @@ import {
   ThirdPartyComicImportPreviewDto,
   ThirdPartyComicImportPreviewRequestDto,
   ThirdPartyComicImportRequestDto,
-  ThirdPartyComicImportResultDto,
 } from '@libs/content/work/content/dto/content.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
+import { BackgroundTaskDto } from '@libs/platform/modules/background-task/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
@@ -89,13 +89,15 @@ export class ComicThirdPartyController {
 
   @Post('import/confirm')
   @ApiAuditDoc({
-    summary: '确认第三方漫画导入',
-    model: ThirdPartyComicImportResultDto,
+    summary: '确认第三方漫画导入并创建后台任务（破坏性移除同步结果）',
+    model: BackgroundTaskDto,
     audit: {
       actionType: AuditActionTypeEnum.IMPORT,
+      content:
+        '确认第三方漫画导入并创建后台任务，旧同步导入结果已按迁移说明破坏性移除',
     },
   })
-  // 确认并执行第三方漫画导入。
+  // 确认第三方漫画导入并创建后台任务。
   async confirmImport(@Body() body: ThirdPartyComicImportRequestDto) {
     return this.thirdPartyService.confirmImport(body)
   }

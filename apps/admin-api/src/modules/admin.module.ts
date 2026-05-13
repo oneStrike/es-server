@@ -9,6 +9,7 @@ import { AppPageModule } from './app-content/page/page.module'
 import { AppUpdateModule } from './app-content/update/update.module'
 import { AppUserModule } from './app-user/app-user.module'
 import { AuthModule } from './auth/auth.module'
+import { AdminBackgroundTaskModule } from './background-task/background-task.module'
 import { CheckInModule } from './check-in/check-in.module'
 import { AdminCommentModule } from './comment/comment.module'
 import { ContentModule } from './content/content.module'
@@ -29,6 +30,7 @@ import { AdminWalletModule } from './wallet/wallet.module'
 @Module({
   imports: [
     GeoModule,
+    AdminBackgroundTaskModule,
     AuthModule,
     AppUserModule,
     CheckInModule,

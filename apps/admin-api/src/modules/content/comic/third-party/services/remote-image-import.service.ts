@@ -1,5 +1,6 @@
 import type { ThirdPartyComicImageDto } from '@libs/content/work/content/dto/content.dto'
 import type { UploadConfigInterface } from '@libs/platform/config'
+import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { LookupAddress } from 'node:dns'
 import type { LookupFunction } from 'node:net'
 import { Buffer } from 'node:buffer'
@@ -43,12 +44,11 @@ export class RemoteImageImportService {
   async importImage(url: string, objectKeySegments: string[]) {
     const downloadedFile = await this.downloadToTemp(url)
     try {
-      const uploadResult = await this.uploadService.uploadLocalFile({
+      return await this.uploadService.uploadLocalFileWithDeleteTarget({
         localPath: downloadedFile.localPath,
         objectKeySegments,
         originalName: this.resolveOriginalName(url),
       })
-      return uploadResult.filePath
     } finally {
       await fs
         .rm(downloadedFile.tempDir, { force: true, recursive: true })
@@ -60,6 +60,10 @@ export class RemoteImageImportService {
   async importImages(
     images: ThirdPartyComicImageDto[],
     objectKeySegments: string[],
+    onImported?: (importedFile: {
+      filePath: string
+      deleteTarget: UploadDeleteTarget
+    }) => Promise<void>,
   ) {
     if (images.length > MAX_REMOTE_IMAGE_COUNT) {
       throw this.remoteImageError('远程图片数量超过限制')
@@ -67,9 +71,19 @@ export class RemoteImageImportService {
 
     const filePaths: string[] = []
     for (const image of images) {
-      filePaths.push(await this.importImage(image.url, objectKeySegments))
+      const importedFile = await this.importImage(image.url, objectKeySegments)
+      filePaths.push(importedFile.upload.filePath)
+      await onImported?.({
+        filePath: importedFile.upload.filePath,
+        deleteTarget: importedFile.deleteTarget,
+      })
     }
     return filePaths
+  }
+
+  // 删除导入时上传的图片。
+  async deleteImportedFile(target: UploadDeleteTarget) {
+    return this.uploadService.deleteUploadedFile(target)
   }
 
   // 将远程图片下载到临时文件，默认固定已校验 DNS 结果。

@@ -1,6 +1,7 @@
 import type FormData from 'form-data'
 import type {
   PreparedUploadFile,
+  UploadDeleteTarget,
   UploadExecutionResult,
   UploadSystemConfig,
 } from './upload.type'
@@ -8,6 +9,7 @@ import { createReadStream } from 'node:fs'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import axios from 'axios'
 import NodeFormData from 'form-data'
+import { UploadProviderEnum } from './upload.type'
 
 @Injectable()
 export class SuperbedUploadProvider {
@@ -50,12 +52,44 @@ export class SuperbedUploadProvider {
 
       return {
         filePath: data.url,
+        deleteTarget: {
+          provider: UploadProviderEnum.SUPERBED,
+          filePath: data.url,
+        },
       }
     } catch (error) {
       if (error instanceof InternalServerErrorException) {
         throw error
       }
       throw new InternalServerErrorException('Superbed 上传失败')
+    }
+  }
+
+  async delete(target: UploadDeleteTarget, systemConfig: UploadSystemConfig) {
+    const config = systemConfig.superbed
+    if (!config.token) {
+      throw new InternalServerErrorException('Superbed 上传配置不完整')
+    }
+    if (!target.filePath) {
+      throw new InternalServerErrorException('Superbed 删除缺少文件地址')
+    }
+
+    try {
+      const { data } = await axios.post(
+        this.uploadUrl.replace('/upload', '/delete'),
+        {
+          token: config.token,
+          urls: [target.filePath],
+        },
+      )
+      if (data?.err !== 0) {
+        throw new InternalServerErrorException(data?.msg || 'Superbed 删除失败')
+      }
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) {
+        throw error
+      }
+      throw new InternalServerErrorException('Superbed 删除失败')
     }
   }
 

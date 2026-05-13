@@ -1,10 +1,12 @@
 import type {
   PreparedUploadFile,
+  UploadDeleteTarget,
   UploadExecutionResult,
   UploadSystemConfig,
 } from './upload.type'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import * as qiniu from 'qiniu'
+import { UploadProviderEnum } from './upload.type'
 
 const TRAILING_SLASH_REGEX = /\/+$/
 const HTTP_PREFIX_REGEX = /^https?:\/\//i
@@ -58,14 +60,70 @@ export class QiniuUploadProvider {
         )
       }
 
+      const filePath = this.joinDomain(
+        config.domain,
+        objectKey,
+        config.useHttps,
+      )
       return {
-        filePath: this.joinDomain(config.domain, objectKey, config.useHttps),
+        filePath,
+        deleteTarget: {
+          provider: UploadProviderEnum.QINIU,
+          filePath,
+          objectKey,
+        },
       }
     } catch (error) {
       if (error instanceof InternalServerErrorException) {
         throw error
       }
       throw new InternalServerErrorException('七牛上传失败')
+    }
+  }
+
+  async delete(target: UploadDeleteTarget, systemConfig: UploadSystemConfig) {
+    const config = systemConfig.qiniu
+    if (
+      !config.accessKey ||
+      !config.secretKey ||
+      !config.bucket ||
+      !config.domain
+    ) {
+      throw new InternalServerErrorException('七牛上传配置不完整')
+    }
+    if (!target.objectKey) {
+      throw new InternalServerErrorException('七牛删除缺少对象 key')
+    }
+
+    const mac = new qiniu.auth.digest.Mac(config.accessKey, config.secretKey)
+    const qiniuConfig = new qiniu.conf.Config()
+    if (config.region) {
+      qiniuConfig.regionsProvider = qiniu.httpc.Region.fromRegionId(
+        config.region,
+      )
+    }
+    qiniuConfig.useHttpsDomain = config.useHttps
+
+    const bucketManager = new qiniu.rs.BucketManager(mac, qiniuConfig)
+    try {
+      const { resp, data } = await bucketManager.delete(
+        config.bucket,
+        target.objectKey,
+      )
+      if (resp.statusCode === 200 || resp.statusCode === 612) {
+        return
+      }
+      throw new InternalServerErrorException(
+        `七牛删除失败: ${data?.error || resp.statusCode}`,
+      )
+    } catch (error) {
+      if (this.resolveDeleteStatusCode(error) === 612) {
+        return
+      }
+      if (error instanceof InternalServerErrorException) {
+        throw error
+      }
+      throw new InternalServerErrorException('七牛删除失败')
     }
   }
 
@@ -86,5 +144,19 @@ export class QiniuUploadProvider {
     }
 
     return `${useHttps ? 'https' : 'http'}://${normalizedDomain}/${objectKey}`
+  }
+
+  private resolveDeleteStatusCode(error: unknown) {
+    if (!error || typeof error !== 'object') {
+      return undefined
+    }
+
+    const qiniuError = error as {
+      code?: number
+      response?: {
+        statusCode?: number
+      }
+    }
+    return qiniuError.code ?? qiniuError.response?.statusCode
   }
 }

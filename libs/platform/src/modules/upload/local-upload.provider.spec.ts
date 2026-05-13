@@ -52,6 +52,11 @@ describe('LocalUploadProvider', () => {
 
     await expect(provider.upload(createFile())).resolves.toEqual({
       filePath: '/files/comic/image/001.jpg',
+      deleteTarget: {
+        provider: 'local',
+        filePath: '/files/comic/image/001.jpg',
+        objectKey: 'comic/image/001.jpg',
+      },
     })
 
     expect(mockedMkdir).toHaveBeenCalledTimes(1)
