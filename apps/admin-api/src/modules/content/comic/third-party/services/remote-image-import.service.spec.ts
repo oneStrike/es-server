@@ -1,5 +1,6 @@
 import type { UploadService } from '@libs/platform/modules/upload/upload.service'
 import type { ConfigReader } from '@libs/system-config/config-reader'
+import type { ConfigService } from '@nestjs/config'
 import axios from 'axios'
 import { lookup } from 'node:dns/promises'
 import { promises as fs } from 'node:fs'
@@ -27,6 +28,8 @@ jest.mock('uuid', () => ({
 describe('RemoteImageImportService', () => {
   const mockedAxiosGet = jest.mocked(axios.get)
   const mockedLookup = jest.mocked(lookup)
+  const uploadTmpDir = 'D:\\code\\es\\es-server\\uploads\\tmp'
+  const tempDir = `${uploadTmpDir}\\third-party-comic-test`
 
   function mockLookupAddresses(
     addresses: Array<{ address: string; family: 4 | 6 }>,
@@ -45,12 +48,23 @@ describe('RemoteImageImportService', () => {
         enableAddressGuard,
       })),
     }
+    const configService = {
+      get: jest.fn((key: string) =>
+        key === 'upload'
+          ? {
+              tmpDir: uploadTmpDir,
+            }
+          : undefined,
+      ),
+    }
 
     return {
       service: new RemoteImageImportService(
         uploadService as unknown as UploadService,
         configReader as unknown as ConfigReader,
+        configService as unknown as ConfigService,
       ),
+      configService,
       uploadService,
       configReader,
     }
@@ -58,7 +72,8 @@ describe('RemoteImageImportService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(fs, 'mkdtemp').mockResolvedValue('/tmp/third-party-comic-test')
+    jest.spyOn(fs, 'mkdir').mockResolvedValue(undefined)
+    jest.spyOn(fs, 'mkdtemp').mockResolvedValue(tempDir)
     jest.spyOn(fs, 'writeFile').mockResolvedValue(undefined)
     jest.spyOn(fs, 'rm').mockResolvedValue(undefined)
   })
@@ -68,7 +83,8 @@ describe('RemoteImageImportService', () => {
   })
 
   it('uses the validated DNS answer for the outbound image request by default', async () => {
-    const { service, uploadService, configReader } = createService()
+    const { service, uploadService, configReader, configService } =
+      createService()
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
     mockedAxiosGet.mockImplementationOnce(async (_url, config) => {
       const lookupFromAgent = config?.httpsAgent?.options?.lookup
@@ -106,15 +122,31 @@ describe('RemoteImageImportService', () => {
 
     expect(uploadService.uploadLocalFile).toHaveBeenCalledWith(
       expect.objectContaining({
+        localPath: expect.stringContaining('third-party-comic-test'),
         objectKeySegments: ['comic', 'image'],
         originalName: '001.jpg',
       }),
     )
+    const uploadArg = (
+      uploadService.uploadLocalFile.mock.calls as unknown as Array<
+        [Record<string, unknown>]
+      >
+    )[0][0]
+    expect(uploadArg).not.toHaveProperty('provider')
+    expect(uploadArg).not.toHaveProperty('resolveProvider')
+    expect(configService.get).toHaveBeenCalledWith('upload')
     expect(configReader.getRemoteImageImportSecurityConfig).toHaveBeenCalled()
-    expect(fs.rm).toHaveBeenCalledWith(
-      expect.stringContaining('third-party-comic-test'),
-      { force: true },
+    expect(fs.mkdir).toHaveBeenCalledWith(uploadTmpDir, { recursive: true })
+    expect(fs.mkdtemp).toHaveBeenCalledWith(
+      expect.stringContaining(uploadTmpDir),
     )
+    expect(fs.mkdtemp).toHaveBeenCalledWith(
+      expect.stringContaining('third-party-comic-'),
+    )
+    expect(fs.rm).toHaveBeenCalledWith(tempDir, {
+      force: true,
+      recursive: true,
+    })
   })
 
   it('skips DNS address guard when system security config disables it', async () => {
@@ -241,7 +273,7 @@ describe('RemoteImageImportService', () => {
     ).rejects.toThrow('远程图片大小超过限制')
   })
 
-  it('removes the temporary file when upload fails', async () => {
+  it('removes the temporary directory when upload fails', async () => {
     const { service, uploadService } = createService()
     uploadService.uploadLocalFile.mockRejectedValueOnce(
       new Error('upload failed'),
@@ -256,9 +288,29 @@ describe('RemoteImageImportService', () => {
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
     ).rejects.toThrow('upload failed')
 
-    expect(fs.rm).toHaveBeenCalledWith(
-      expect.stringContaining('third-party-comic-test'),
-      { force: true },
-    )
+    expect(fs.rm).toHaveBeenCalledWith(tempDir, {
+      force: true,
+      recursive: true,
+    })
+  })
+
+  it('removes the temporary directory when writing the downloaded file fails', async () => {
+    const { service, uploadService } = createService()
+    jest.spyOn(fs, 'writeFile').mockRejectedValueOnce(new Error('write failed'))
+    mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
+    mockedAxiosGet.mockResolvedValueOnce({
+      data: Buffer.from([1, 2, 3]),
+      headers: { 'content-type': 'image/jpeg' },
+    })
+
+    await expect(
+      service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
+    ).rejects.toThrow('write failed')
+
+    expect(uploadService.uploadLocalFile).not.toHaveBeenCalled()
+    expect(fs.rm).toHaveBeenCalledWith(tempDir, {
+      force: true,
+      recursive: true,
+    })
   })
 })

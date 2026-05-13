@@ -1,4 +1,5 @@
 import type { ThirdPartyComicImageDto } from '@libs/content/work/content/dto/content.dto'
+import type { UploadConfigInterface } from '@libs/platform/config'
 import type { LookupAddress } from 'node:dns'
 import type { LookupFunction } from 'node:net'
 import { Buffer } from 'node:buffer'
@@ -6,13 +7,13 @@ import { lookup } from 'node:dns/promises'
 import { promises as fs } from 'node:fs'
 import { Agent as HttpsAgent } from 'node:https'
 import { isIP } from 'node:net'
-import { tmpdir } from 'node:os'
 import { basename, extname, join } from 'node:path'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 import { ConfigReader } from '@libs/system-config/config-reader'
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -27,24 +28,31 @@ interface SafeRemoteImageUrl {
 
 @Injectable()
 export class RemoteImageImportService {
+  private readonly uploadConfig: UploadConfigInterface
+
   // 注入统一上传服务，远程图片落地后仍复用现有上传策略。
   constructor(
     private readonly uploadService: UploadService,
     private readonly configReader: ConfigReader,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
+  }
 
   // 下载并上传单张第三方图片，失败时保持业务异常语义。
   async importImage(url: string, objectKeySegments: string[]) {
-    const localPath = await this.downloadToTemp(url)
+    const downloadedFile = await this.downloadToTemp(url)
     try {
       const uploadResult = await this.uploadService.uploadLocalFile({
-        localPath,
+        localPath: downloadedFile.localPath,
         objectKeySegments,
         originalName: this.resolveOriginalName(url),
       })
       return uploadResult.filePath
     } finally {
-      await fs.rm(localPath, { force: true }).catch(() => undefined)
+      await fs
+        .rm(downloadedFile.tempDir, { force: true, recursive: true })
+        .catch(() => undefined)
     }
   }
 
@@ -96,11 +104,24 @@ export class RemoteImageImportService {
       throw this.remoteImageError('远程图片大小超过限制')
     }
 
-    const tempDir = await fs.mkdtemp(join(tmpdir(), 'third-party-comic-'))
-    const fileName = `${uuidv4()}${this.resolveExtension(safeRemote.url, contentType)}`
-    const localPath = join(tempDir, fileName)
-    await fs.writeFile(localPath, buffer)
-    return localPath
+    await fs.mkdir(this.uploadConfig.tmpDir, { recursive: true })
+    const tempDir = await fs.mkdtemp(
+      join(this.uploadConfig.tmpDir, 'third-party-comic-'),
+    )
+    try {
+      const fileName = `${uuidv4()}${this.resolveExtension(safeRemote.url, contentType)}`
+      const localPath = join(tempDir, fileName)
+      await fs.writeFile(localPath, buffer)
+      return {
+        tempDir,
+        localPath,
+      }
+    } catch (error) {
+      await fs
+        .rm(tempDir, { force: true, recursive: true })
+        .catch(() => undefined)
+      throw error
+    }
   }
 
   // 校验 URL、域名和 DNS 结果；系统安全配置关闭地址防护时只保留基础 URL 约束。
