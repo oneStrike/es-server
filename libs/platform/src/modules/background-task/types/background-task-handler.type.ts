@@ -7,6 +7,37 @@ export type BackgroundTaskObject = Record<string, unknown>
 export interface BackgroundTaskProgress extends BackgroundTaskObject {
   percent?: number
   message?: string
+  stage?: string
+  unit?: string
+  current?: number
+  total?: number
+  detail?: BackgroundTaskObject
+}
+
+/** 后台任务进度 reporter 的区间映射配置。 */
+export interface BackgroundTaskProgressReporterOptions {
+  startPercent?: number
+  endPercent?: number
+  total: number
+  stage?: string
+  unit?: string
+  message?: string
+  detail?: BackgroundTaskObject
+}
+
+/** 后台任务进度 reporter 单次推进参数。 */
+export interface BackgroundTaskProgressReporterAdvanceInput {
+  amount?: number
+  current?: number
+  message?: string
+  detail?: BackgroundTaskObject
+}
+
+/** 后台任务进度 reporter，负责生成单调进度快照。 */
+export interface BackgroundTaskProgressReporter {
+  advance: (
+    input?: BackgroundTaskProgressReporterAdvanceInput,
+  ) => Promise<BackgroundTaskProgress>
 }
 
 /** 后台任务执行上下文。 */
@@ -28,6 +59,10 @@ export interface BackgroundTaskExecutionContext<
   assertNotCancelled: () => Promise<void>
   /** 更新任务进度。 */
   updateProgress: (progress: BackgroundTaskProgress) => Promise<void>
+  /** 创建区间进度 reporter，用于业务按稳定单位推进任务进度。 */
+  createProgressReporter: (
+    options: BackgroundTaskProgressReporterOptions,
+  ) => BackgroundTaskProgressReporter
   /** 合并记录可回滚残留。 */
   recordResidue: (residue: Partial<TResidue>) => Promise<void>
   /** 读取已记录的可回滚残留。 */

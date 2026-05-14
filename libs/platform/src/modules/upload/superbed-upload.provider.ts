@@ -14,6 +14,7 @@ import { UploadProviderEnum } from './upload.type'
 @Injectable()
 export class SuperbedUploadProvider {
   private readonly uploadUrl = 'https://api.superbed.cn/upload'
+  private readonly uploadTimeoutMs = 300000
   private readonly maxDiagnosticStringLength = 500
   private readonly maxDiagnosticDepth = 2
   private readonly maxDiagnosticArrayLength = 5
@@ -26,6 +27,7 @@ export class SuperbedUploadProvider {
     'error',
   ])
 
+  // 上传文件到 Superbed，并在失败时保留安全 provider 诊断。
   async upload(
     file: PreparedUploadFile,
     systemConfig: UploadSystemConfig,
@@ -50,12 +52,13 @@ export class SuperbedUploadProvider {
     this.appendOptionalBoolean(form, 'compress', config.compress)
     this.appendOptionalBoolean(form, 'webp', config.webp)
 
+    const startedAt = Date.now()
     try {
       const { data } = await axios.post(this.uploadUrl, form, {
         headers: form.getHeaders(),
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
-        timeout: 300000,
+        timeout: this.uploadTimeoutMs,
       })
 
       if (data?.err !== 0 || !data?.url) {
@@ -68,6 +71,7 @@ export class SuperbedUploadProvider {
             'upload',
             data,
             sensitiveValues,
+            this.buildUploadFailureDiagnostics(file, startedAt),
           ),
         })
       }
@@ -84,11 +88,17 @@ export class SuperbedUploadProvider {
         throw error
       }
       throw new InternalServerErrorException('Superbed 上传失败', {
-        cause: this.buildFailureCause('upload', error, sensitiveValues),
+        cause: this.buildFailureCause(
+          'upload',
+          error,
+          sensitiveValues,
+          this.buildUploadFailureDiagnostics(file, startedAt),
+        ),
       })
     }
   }
 
+  // 删除 Superbed 文件，失败时只保留删除接口的脱敏诊断。
   async delete(target: UploadDeleteTarget, systemConfig: UploadSystemConfig) {
     const config = systemConfig.superbed
     if (!config.token) {
@@ -135,10 +145,12 @@ export class SuperbedUploadProvider {
     operation: 'upload' | 'delete',
     responseData: unknown,
     sensitiveValues: readonly string[],
+    extraDiagnostics: Record<string, unknown> = {},
   ) {
     return this.compactDiagnosticObject({
       provider: UploadProviderEnum.SUPERBED,
       operation,
+      ...this.buildSafeExtraDiagnostics(extraDiagnostics, sensitiveValues),
       responseData: this.pickSafeSuperbedResponseData(
         responseData,
         sensitiveValues,
@@ -151,10 +163,12 @@ export class SuperbedUploadProvider {
     operation: 'upload' | 'delete',
     error: unknown,
     sensitiveValues: readonly string[],
+    extraDiagnostics: Record<string, unknown> = {},
   ) {
     const cause: Record<string, unknown> = {
       provider: UploadProviderEnum.SUPERBED,
       operation,
+      ...this.buildSafeExtraDiagnostics(extraDiagnostics, sensitiveValues),
     }
 
     if (axios.isAxiosError(error)) {
@@ -182,6 +196,35 @@ export class SuperbedUploadProvider {
 
     cause.message = this.toSafeDiagnosticValue(error, sensitiveValues)
     return this.compactDiagnosticObject(cause)
+  }
+
+  // 生成上传失败时可安全落库的文件和耗时诊断。
+  private buildUploadFailureDiagnostics(
+    file: PreparedUploadFile,
+    startedAt: number,
+  ) {
+    return {
+      timeoutMs: this.uploadTimeoutMs,
+      elapsedMs: Math.max(0, Date.now() - startedAt),
+      fileSize: file.fileSize,
+      mimeType: file.mimeType,
+      finalName: file.finalName,
+      originalName: file.originalName,
+      fileCategory: file.fileCategory,
+      scene: file.scene,
+    }
+  }
+
+  // 将额外诊断字段纳入同一脱敏管道，避免文件名等元数据绕过过滤。
+  private buildSafeExtraDiagnostics(
+    extraDiagnostics: Record<string, unknown>,
+    sensitiveValues: readonly string[],
+  ) {
+    const safeDiagnostics = this.toSafeDiagnosticValue(
+      extraDiagnostics,
+      sensitiveValues,
+    )
+    return this.isPlainObject(safeDiagnostics) ? safeDiagnostics : {}
   }
 
   // 只保留 Superbed 响应中稳定且不会携带鉴权上下文的字段。

@@ -1,6 +1,9 @@
 import type { UploadService } from '@libs/platform/modules/upload/upload.service'
 import type { ConfigReader } from '@libs/system-config/config-reader'
 import type { ConfigService } from '@nestjs/config'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { HttpException } from '@nestjs/common'
 import axios from 'axios'
 import { lookup } from 'node:dns/promises'
 import { promises as fs } from 'node:fs'
@@ -38,10 +41,20 @@ describe('RemoteImageImportService', () => {
   }
 
   function createService(enableAddressGuard = true) {
-    const uploadService = {
-      uploadLocalFile: jest.fn(async () => ({
+    const uploadedFile = {
+      deleteTarget: {
         filePath: '/uploads/comic/remote.jpg',
-      })),
+        provider: 'local',
+      },
+      upload: {
+        filePath: '/uploads/comic/remote.jpg',
+        fileSize: 3,
+        mimeType: 'image/jpeg',
+      },
+    }
+    const uploadService = {
+      deleteUploadedFile: jest.fn(async () => undefined),
+      uploadLocalFileWithDeleteTarget: jest.fn(async () => uploadedFile),
     }
     const configReader = {
       getRemoteImageImportSecurityConfig: jest.fn(() => ({
@@ -65,6 +78,7 @@ describe('RemoteImageImportService', () => {
         configService as unknown as ConfigService,
       ),
       configService,
+      uploadedFile,
       uploadService,
       configReader,
     }
@@ -118,9 +132,13 @@ describe('RemoteImageImportService', () => {
         'comic',
         'image',
       ]),
-    ).resolves.toBe('/uploads/comic/remote.jpg')
+    ).resolves.toMatchObject({
+      upload: {
+        filePath: '/uploads/comic/remote.jpg',
+      },
+    })
 
-    expect(uploadService.uploadLocalFile).toHaveBeenCalledWith(
+    expect(uploadService.uploadLocalFileWithDeleteTarget).toHaveBeenCalledWith(
       expect.objectContaining({
         localPath: expect.stringContaining('third-party-comic-test'),
         objectKeySegments: ['comic', 'image'],
@@ -128,9 +146,8 @@ describe('RemoteImageImportService', () => {
       }),
     )
     const uploadArg = (
-      uploadService.uploadLocalFile.mock.calls as unknown as Array<
-        [Record<string, unknown>]
-      >
+      uploadService.uploadLocalFileWithDeleteTarget.mock
+        .calls as unknown as Array<[Record<string, unknown>]>
     )[0][0]
     expect(uploadArg).not.toHaveProperty('provider')
     expect(uploadArg).not.toHaveProperty('resolveProvider')
@@ -161,10 +178,233 @@ describe('RemoteImageImportService', () => {
 
     await expect(
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
-    ).resolves.toBe('/uploads/comic/remote.jpg')
+    ).resolves.toMatchObject({
+      upload: {
+        filePath: '/uploads/comic/remote.jpg',
+      },
+    })
 
     expect(mockedLookup).not.toHaveBeenCalled()
     expect(configReader.getRemoteImageImportSecurityConfig).toHaveBeenCalled()
+  })
+
+  it('passes image context to the success callback in import order', async () => {
+    const { service, uploadedFile } = createService()
+    jest
+      .spyOn(service, 'importImage')
+      .mockResolvedValueOnce(uploadedFile as never)
+      .mockResolvedValueOnce(uploadedFile as never)
+    const onImported = jest.fn(async () => undefined)
+
+    await expect(
+      service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/comic/001.jpg?token=secret',
+          },
+          {
+            providerImageId: 'image-002',
+            sortOrder: 2,
+            url: 'https://sw.mangafunb.fun/comic/002.jpg#secret',
+          },
+        ],
+        ['comic'],
+        onImported,
+      ),
+    ).resolves.toEqual([
+      '/uploads/comic/remote.jpg',
+      '/uploads/comic/remote.jpg',
+    ])
+
+    expect(onImported).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        filePath: '/uploads/comic/remote.jpg',
+        imageIndex: 1,
+        imageTotal: 2,
+        mimeType: 'image/jpeg',
+        safeSourceUrl: 'https://sw.mangafunb.fun/comic/001.jpg',
+      }),
+    )
+    expect(onImported).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        imageIndex: 2,
+        imageTotal: 2,
+        safeSourceUrl: 'https://sw.mangafunb.fun/comic/002.jpg',
+      }),
+    )
+  })
+
+  it('keeps BusinessException semantics when adding image failure context', async () => {
+    const { service } = createService()
+    jest
+      .spyOn(service, 'importImage')
+      .mockRejectedValueOnce(
+        new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '远程资源不是图片',
+        ) as never,
+      )
+
+    await expect(
+      service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/comic/001.jpg?token=secret',
+          },
+        ],
+        ['comic'],
+      ),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: '远程资源不是图片',
+      cause: expect.objectContaining({
+        imageIndex: 1,
+        imageTotal: 1,
+        originalCode: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        safeSourceUrl: 'https://sw.mangafunb.fun/comic/001.jpg',
+        stage: 'remote-image-import',
+      }),
+    })
+  })
+
+  it('does not leak credential-bearing original causes into image failure context', async () => {
+    const { service } = createService()
+    jest.spyOn(service, 'importImage').mockRejectedValueOnce(
+      new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '远程资源不是图片',
+        {
+          cause: {
+            signedUrl:
+              'https://sw.mangafunb.fun/comic/001.jpg?token=secret-token',
+            token: 'secret-token',
+          },
+        },
+      ) as never,
+    )
+
+    let thrownError: unknown
+    try {
+      await service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/comic/001.jpg?token=secret-token',
+          },
+        ],
+        ['comic'],
+      )
+    } catch (error) {
+      thrownError = error
+    }
+
+    expect(thrownError).toMatchObject({
+      cause: expect.objectContaining({
+        safeSourceUrl: 'https://sw.mangafunb.fun/comic/001.jpg',
+      }),
+    })
+    expect((thrownError as { cause?: unknown }).cause).not.toHaveProperty(
+      'originalCause',
+    )
+    expect(
+      JSON.stringify((thrownError as { cause?: unknown }).cause),
+    ).not.toContain('secret-token')
+  })
+
+  it('removes credentials from safe source URLs in image failure context', async () => {
+    const { service } = createService()
+    jest
+      .spyOn(service, 'importImage')
+      .mockRejectedValueOnce(new Error('remote upload failed') as never)
+
+    let thrownError: unknown
+    try {
+      await service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://user:secret-password@sw.mangafunb.fun/comic/001.jpg?token=secret-token#secret-fragment',
+          },
+        ],
+        ['comic'],
+      )
+    } catch (error) {
+      thrownError = error
+    }
+
+    const cause = (thrownError as { cause?: unknown }).cause
+    expect(cause).toMatchObject({
+      safeSourceUrl: 'https://sw.mangafunb.fun/comic/001.jpg',
+    })
+    const serializedCause = JSON.stringify(cause)
+    expect(serializedCause).not.toContain('secret-password')
+    expect(serializedCause).not.toContain('secret-token')
+    expect(serializedCause).not.toContain('secret-fragment')
+  })
+
+  it('redacts credential-bearing original error messages in image failure context', async () => {
+    const { service } = createService()
+    jest
+      .spyOn(service, 'importImage')
+      .mockRejectedValueOnce(
+        new Error('token = secret-token upload failed') as never,
+      )
+
+    let thrownError: unknown
+    try {
+      await service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/comic/001.jpg',
+          },
+        ],
+        ['comic'],
+      )
+    } catch (error) {
+      thrownError = error
+    }
+
+    const cause = (thrownError as { cause?: unknown }).cause
+    expect(cause).toMatchObject({
+      originalMessage: '[REDACTED] upload failed',
+    })
+    expect(JSON.stringify(cause)).not.toContain('secret-token')
+  })
+
+  it('keeps HttpException status when adding image failure context', async () => {
+    const { service } = createService()
+    jest
+      .spyOn(service, 'importImage')
+      .mockRejectedValueOnce(new HttpException('upload failed', 504) as never)
+
+    await expect(
+      service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/comic/001.jpg',
+          },
+        ],
+        ['comic'],
+      ),
+    ).rejects.toMatchObject({
+      cause: expect.objectContaining({
+        originalCode: 504,
+        safeSourceUrl: 'https://sw.mangafunb.fun/comic/001.jpg',
+      }),
+      status: 504,
+    })
   })
 
   it('rejects non-HTTPS URLs before DNS lookup or download', async () => {
@@ -275,7 +515,7 @@ describe('RemoteImageImportService', () => {
 
   it('removes the temporary directory when upload fails', async () => {
     const { service, uploadService } = createService()
-    uploadService.uploadLocalFile.mockRejectedValueOnce(
+    uploadService.uploadLocalFileWithDeleteTarget.mockRejectedValueOnce(
       new Error('upload failed'),
     )
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
@@ -307,7 +547,7 @@ describe('RemoteImageImportService', () => {
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
     ).rejects.toThrow('write failed')
 
-    expect(uploadService.uploadLocalFile).not.toHaveBeenCalled()
+    expect(uploadService.uploadLocalFileWithDeleteTarget).not.toHaveBeenCalled()
     expect(fs.rm).toHaveBeenCalledWith(tempDir, {
       force: true,
       recursive: true,

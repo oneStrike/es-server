@@ -1,5 +1,6 @@
 import { BusinessException } from '@libs/platform/exceptions'
 import { Logger } from '@nestjs/common'
+import type { BackgroundTaskExecutionContext } from './types'
 import {
   BackgroundTaskStatusEnum,
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
@@ -535,6 +536,120 @@ describe('BackgroundTaskService', () => {
         expect.objectContaining({ status: BackgroundTaskStatusEnum.CANCELLED }),
       ]),
     )
+  })
+
+  it('creates monotonic progress reporter snapshots and renews the claim', async () => {
+    const row = createBackgroundTaskRow()
+    const selectRows = [
+      createBackgroundTaskRow({ cancelRequestedAt: null }),
+      createBackgroundTaskRow({
+        cancelRequestedAt: null,
+        status: BackgroundTaskStatusEnum.FINALIZING,
+      }),
+    ]
+    const updateReturningRows = [
+      [
+        createBackgroundTaskRow({
+          status: BackgroundTaskStatusEnum.FINALIZING,
+        }),
+      ],
+      [
+        createBackgroundTaskRow({
+          status: BackgroundTaskStatusEnum.SUCCESS,
+        }),
+      ],
+    ]
+    const updateSets: Record<string, unknown>[] = []
+    const db = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn(async () => [selectRows.shift()]),
+          })),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn((value: Record<string, unknown>) => {
+          updateSets.push(value)
+          return {
+            where: jest.fn(() => ({
+              returning: jest.fn(async () => updateReturningRows.shift() ?? []),
+            })),
+          }
+        }),
+      })),
+    }
+    const handler = {
+      taskType: 'content.third-party-comic-import',
+      finalize: jest.fn(async (context: BackgroundTaskExecutionContext) => {
+        const reporter = context.createProgressReporter({
+          startPercent: 10,
+          endPercent: 95,
+          total: 4,
+          stage: 'image-import',
+          unit: 'image',
+        })
+        await reporter.advance({ message: '导入第 1 张图片' })
+        await reporter.advance({ amount: 0, message: '刷新当前图片提示' })
+        await reporter.advance({
+          current: 4,
+          detail: { providerImageId: 'image-004' },
+          message: '图片导入完成',
+        })
+        await reporter.advance({
+          current: 1,
+          message: '迟到的旧进度不应回退当前图片',
+        })
+        return { ok: true }
+      }),
+      rollback: jest.fn(async () => undefined),
+    }
+    const service = new BackgroundTaskService(
+      {
+        db,
+        schema: { backgroundTask: {} },
+      } as never,
+      { resolve: jest.fn(() => handler) } as never,
+    )
+
+    await service.executeClaimedTask(row as never)
+
+    const progressUpdates = updateSets.filter((set) => 'progress' in set)
+    expect(progressUpdates).toEqual([
+      expect.objectContaining({
+        claimExpiresAt: expect.any(Date),
+        progress: expect.objectContaining({
+          current: 1,
+          percent: 31,
+          stage: 'image-import',
+          total: 4,
+          unit: 'image',
+        }),
+      }),
+      expect.objectContaining({
+        progress: expect.objectContaining({
+          current: 1,
+          percent: 31,
+          message: '刷新当前图片提示',
+        }),
+      }),
+      expect.objectContaining({
+        progress: expect.objectContaining({
+          current: 4,
+          detail: { providerImageId: 'image-004' },
+          percent: 95,
+          total: 4,
+        }),
+      }),
+      expect.objectContaining({
+        progress: expect.objectContaining({
+          current: 4,
+          message: '迟到的旧进度不应回退当前图片',
+          percent: 95,
+          total: 4,
+        }),
+      }),
+    ])
   })
 
   it('persists sanitized failure cause when rollback succeeds', async () => {

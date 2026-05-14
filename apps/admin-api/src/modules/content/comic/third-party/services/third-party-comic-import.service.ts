@@ -7,10 +7,16 @@ import type {
   ThirdPartyComicImportResultDto,
   ThirdPartyComicImportWorkDraftDto,
 } from '@libs/content/work/content/dto/content.dto'
-import type { BackgroundTaskObject } from '@libs/platform/modules/background-task/types'
+import type {
+  BackgroundTaskObject,
+  BackgroundTaskProgressReporter,
+} from '@libs/platform/modules/background-task/types'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { ComicThirdPartyProvider } from '../providers/comic-third-party-provider.type'
 import type {
+  RemoteImageImportSuccessPayload,
+  ThirdPartyComicChapterImportPlan,
+  ThirdPartyComicImageImportProgressDetail,
   ThirdPartyComicImportResidue,
   ThirdPartyComicImportTaskContext,
   ThirdPartyComicUpdatedChapterSnapshot,
@@ -160,24 +166,28 @@ export class ThirdPartyComicImportService {
     }
 
     const chapterResults: ThirdPartyComicImportChapterResultDto[] = []
-    for (const [index, chapter] of dto.chapters.entries()) {
+    const chapterPlans = await this.buildChapterImportPlans(
+      dto,
+      provider,
+      context,
+    )
+    const imageProgressReporter = context.createProgressReporter({
+      startPercent: 10,
+      endPercent: 95,
+      total: this.countPlannedImages(chapterPlans),
+      stage: 'image-import',
+      unit: 'image',
+    })
+    for (const chapterPlan of chapterPlans) {
       await context.assertNotCancelled()
       chapterResults.push(
         await this.importChapter(
-          dto,
-          chapter,
+          chapterPlan,
           workResult.id,
-          provider,
           context,
+          imageProgressReporter,
         ),
       )
-      await context.updateProgress({
-        percent: Math.min(
-          95,
-          10 + Math.floor(((index + 1) / dto.chapters.length) * 85),
-        ),
-        message: `已导入 ${index + 1}/${dto.chapters.length} 个章节`,
-      })
     }
 
     await context.updateProgress({
@@ -323,12 +333,12 @@ export class ThirdPartyComicImportService {
 
   // 导入单个章节，章节失败会中断任务并交由后台任务回滚。
   private async importChapter(
-    dto: ThirdPartyComicImportRequestDto,
-    chapter: ThirdPartyComicImportChapterItemDto,
+    chapterPlan: ThirdPartyComicChapterImportPlan,
     workId: number,
-    provider: ComicThirdPartyProvider,
     context: ThirdPartyComicImportTaskContext,
+    imageProgressReporter: BackgroundTaskProgressReporter,
   ) {
+    const { chapter } = chapterPlan
     const localChapterId = await this.prepareChapter(chapter, workId, context)
     const cover = await this.importChapterCover(chapter)
 
@@ -345,28 +355,17 @@ export class ThirdPartyComicImportService {
       }
     }
 
-    if (
-      chapter.action === ThirdPartyComicImportChapterActionEnum.UPDATE &&
-      !chapter.overwriteContent
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '更新章节内容必须确认覆盖',
-      )
-    }
-
     await context.assertNotCancelled()
-    const content = await provider.getChapterContent({
-      chapterId: chapter.providerChapterId,
-      chapterApiVersion: chapter.chapterApiVersion,
-      comicId: dto.comicId,
-      platform: dto.platform,
-    })
     const filePaths = await this.remoteImageImportService.importImages(
-      this.sortImages(content.images),
+      chapterPlan.images,
       ['work', 'comic', String(workId), 'chapter', String(localChapterId)],
-      async (importedFile) =>
-        this.recordUploadedFile(context, importedFile.deleteTarget),
+      async (importedFile) => {
+        await this.recordUploadedFile(context, importedFile.deleteTarget)
+        await imageProgressReporter.advance({
+          message: `已导入第 ${chapterPlan.chapterIndex}/${chapterPlan.chapterTotal} 个章节的第 ${importedFile.imageIndex}/${importedFile.imageTotal} 张图片`,
+          detail: this.toImageProgressDetail(chapterPlan, importedFile),
+        })
+      },
     )
     await context.assertNotCancelled()
     await this.comicContentService.replaceChapterContents(
@@ -380,9 +379,89 @@ export class ThirdPartyComicImportService {
       action: chapter.action,
       status: ThirdPartyComicImportChapterStatusEnum.CONTENT_IMPORTED,
       cover,
-      imageTotal: content.images.length,
+      imageTotal: chapterPlan.imageTotal,
       imageSucceeded: filePaths.length,
       message: '章节图片导入成功',
+    }
+  }
+
+  // 先校验并拉取章节图片计划，避免内容读取失败后才发现已写入本地章节。
+  private async buildChapterImportPlans(
+    dto: ThirdPartyComicImportRequestDto,
+    provider: ComicThirdPartyProvider,
+    context: ThirdPartyComicImportTaskContext,
+  ): Promise<ThirdPartyComicChapterImportPlan[]> {
+    const chapterTotal = dto.chapters.length
+    const plans: ThirdPartyComicChapterImportPlan[] = []
+    for (const [index, chapter] of dto.chapters.entries()) {
+      await context.assertNotCancelled()
+      if (!chapter.importImages) {
+        plans.push({
+          chapter,
+          chapterIndex: index + 1,
+          chapterTotal,
+          images: [],
+          imageTotal: 0,
+        })
+        continue
+      }
+
+      this.assertChapterContentOverwriteAllowed(chapter)
+      await context.assertNotCancelled()
+      const content = await provider.getChapterContent({
+        chapterId: chapter.providerChapterId,
+        chapterApiVersion: chapter.chapterApiVersion,
+        comicId: dto.comicId,
+        platform: dto.platform,
+      })
+      const images = this.sortImages(content.images)
+      plans.push({
+        chapter,
+        chapterIndex: index + 1,
+        chapterTotal,
+        images,
+        imageTotal: images.length,
+      })
+    }
+    return plans
+  }
+
+  // 更新章节内容前必须显式确认覆盖，且校验早于远端内容读取。
+  private assertChapterContentOverwriteAllowed(
+    chapter: ThirdPartyComicImportChapterItemDto,
+  ) {
+    if (
+      chapter.action === ThirdPartyComicImportChapterActionEnum.UPDATE &&
+      !chapter.overwriteContent
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '更新章节内容必须确认覆盖',
+      )
+    }
+  }
+
+  // 统计计划中的全局图片总量，作为后台任务整任务进度分母。
+  private countPlannedImages(plans: ThirdPartyComicChapterImportPlan[]) {
+    return plans.reduce((total, plan) => total + plan.imageTotal, 0)
+  }
+
+  // 将单张图片导入结果转换为可展示且不含敏感 query 的进度详情。
+  private toImageProgressDetail(
+    chapterPlan: ThirdPartyComicChapterImportPlan,
+    importedFile: RemoteImageImportSuccessPayload,
+  ): ThirdPartyComicImageImportProgressDetail {
+    return {
+      providerChapterId: chapterPlan.chapter.providerChapterId,
+      chapterIndex: chapterPlan.chapterIndex,
+      chapterTotal: chapterPlan.chapterTotal,
+      providerImageId: importedFile.image.providerImageId,
+      imageIndex: importedFile.imageIndex,
+      imageTotal: importedFile.imageTotal,
+      safeSourceUrl: importedFile.safeSourceUrl,
+      filePath: importedFile.filePath,
+      fileSize: importedFile.fileSize,
+      mimeType: importedFile.mimeType,
     }
   }
 

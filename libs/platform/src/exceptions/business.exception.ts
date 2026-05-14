@@ -13,6 +13,7 @@ export type BusinessExceptionCause =
   | number
   | boolean
   | null
+  | Record<string, unknown>
   | BusinessExceptionCauseObject
 
 export interface BusinessExceptionOptions {

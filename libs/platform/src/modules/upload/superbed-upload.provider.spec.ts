@@ -73,6 +73,13 @@ describe('SuperbedUploadProvider', () => {
         filePath: 'https://pic.superbed.cn/item/001.jpg',
       },
     })
+    expect(mockedAxiosPost).toHaveBeenCalledWith(
+      'https://api.superbed.cn/upload',
+      expect.anything(),
+      expect.objectContaining({
+        timeout: 300000,
+      }),
+    )
   })
 
   it('preserves sanitized Superbed upload response diagnostics on provider failure', async () => {
@@ -90,12 +97,20 @@ describe('SuperbedUploadProvider', () => {
     ).rejects.toMatchObject({
       message: 'api quota exceeded',
       cause: {
+        elapsedMs: expect.any(Number),
+        fileCategory: 'image',
+        fileSize: 3,
+        finalName: '001.jpg',
+        mimeType: 'image/jpeg',
         provider: 'superbed',
         operation: 'upload',
+        originalName: '001.jpg',
         responseData: {
           err: 1,
           msg: 'api quota exceeded',
         },
+        scene: 'comic',
+        timeoutMs: 300000,
       },
     })
   })
@@ -125,15 +140,23 @@ describe('SuperbedUploadProvider', () => {
     ).rejects.toMatchObject({
       message: 'Superbed 上传失败',
       cause: {
+        elapsedMs: expect.any(Number),
         provider: 'superbed',
         operation: 'upload',
         axiosCode: 'ECONNABORTED',
+        fileCategory: 'image',
+        fileSize: 3,
+        finalName: '001.jpg',
         httpStatus: 504,
+        mimeType: 'image/jpeg',
+        originalName: '001.jpg',
         statusText: 'Gateway Timeout',
         responseData: {
           err: 1,
           msg: 'timeout',
         },
+        scene: 'comic',
+        timeoutMs: 300000,
       },
     })
   })
@@ -233,6 +256,40 @@ describe('SuperbedUploadProvider', () => {
           message: '"[REDACTED]"',
           error: 'Bearer [REDACTED]',
         },
+      },
+    })
+    expect(JSON.stringify(thrownError)).not.toContain('secret-token')
+  })
+
+  it('redacts credential-bearing upload file names from failure diagnostics', async () => {
+    const provider = new SuperbedUploadProvider()
+    const systemConfig = createSystemConfig()
+    systemConfig.superbed.token = 'secret-token'
+    mockedAxiosPost.mockResolvedValueOnce({
+      data: {
+        err: 1,
+        msg: 'upload rejected',
+      },
+    })
+
+    let thrownError: unknown
+    try {
+      await provider.upload(
+        {
+          ...createFile(),
+          finalName: 'token = secret-token.jpg',
+          originalName: 'Bearer secret-token.jpg',
+        },
+        systemConfig,
+      )
+    } catch (error) {
+      thrownError = error
+    }
+
+    expect(thrownError).toMatchObject({
+      cause: {
+        finalName: '[REDACTED]',
+        originalName: 'Bearer [REDACTED]',
       },
     })
     expect(JSON.stringify(thrownError)).not.toContain('secret-token')

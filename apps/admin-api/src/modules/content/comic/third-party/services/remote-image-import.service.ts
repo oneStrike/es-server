@@ -3,6 +3,10 @@ import type { UploadConfigInterface } from '@libs/platform/config'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { LookupAddress } from 'node:dns'
 import type { LookupFunction } from 'node:net'
+import type {
+  RemoteImageImportFailureContext,
+  RemoteImageImportSuccessHandler,
+} from '../third-party-comic-import.type'
 import { Buffer } from 'node:buffer'
 import { lookup } from 'node:dns/promises'
 import { promises as fs } from 'node:fs'
@@ -13,7 +17,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 import { ConfigReader } from '@libs/system-config/config-reader'
-import { Injectable } from '@nestjs/common'
+import { HttpException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
@@ -60,23 +64,43 @@ export class RemoteImageImportService {
   async importImages(
     images: ThirdPartyComicImageDto[],
     objectKeySegments: string[],
-    onImported?: (importedFile: {
-      filePath: string
-      deleteTarget: UploadDeleteTarget
-    }) => Promise<void>,
+    onImported?: RemoteImageImportSuccessHandler,
   ) {
     if (images.length > MAX_REMOTE_IMAGE_COUNT) {
       throw this.remoteImageError('远程图片数量超过限制')
     }
 
     const filePaths: string[] = []
-    for (const image of images) {
-      const importedFile = await this.importImage(image.url, objectKeySegments)
-      filePaths.push(importedFile.upload.filePath)
-      await onImported?.({
-        filePath: importedFile.upload.filePath,
-        deleteTarget: importedFile.deleteTarget,
-      })
+    for (const [index, image] of images.entries()) {
+      const imageIndex = index + 1
+      const safeSourceUrl = this.toSafeSourceUrl(image.url)
+      try {
+        const importedFile = await this.importImage(
+          image.url,
+          objectKeySegments,
+        )
+        filePaths.push(importedFile.upload.filePath)
+        await onImported?.({
+          image,
+          imageIndex,
+          imageTotal: images.length,
+          safeSourceUrl,
+          filePath: importedFile.upload.filePath,
+          deleteTarget: importedFile.deleteTarget,
+          fileSize: importedFile.upload.fileSize,
+          mimeType: importedFile.upload.mimeType,
+        })
+      } catch (error) {
+        throw this.withImageFailureContext(
+          error,
+          this.buildRemoteImageFailureContext(
+            image,
+            imageIndex,
+            images.length,
+            safeSourceUrl,
+          ),
+        )
+      }
     }
     return filePaths
   }
@@ -297,5 +321,127 @@ export class RemoteImageImportService {
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       message,
     )
+  }
+
+  // 构建单张远程图片失败上下文，避免把 query token 写入任务错误。
+  private buildRemoteImageFailureContext(
+    image: ThirdPartyComicImageDto,
+    imageIndex: number,
+    imageTotal: number,
+    safeSourceUrl: string,
+  ): RemoteImageImportFailureContext {
+    return {
+      stage: 'remote-image-import',
+      safeSourceUrl,
+      providerImageId: image.providerImageId,
+      imageIndex,
+      imageTotal,
+    }
+  }
+
+  // 包装单张图片失败，保留原始业务码或 HTTP status。
+  private withImageFailureContext(
+    error: unknown,
+    context: RemoteImageImportFailureContext,
+  ) {
+    const failureContext = this.attachOriginalErrorContext(error, context)
+    if (error instanceof BusinessException) {
+      return new BusinessException(error.code, error.message, {
+        cause: failureContext,
+      })
+    }
+    if (error instanceof HttpException) {
+      return new HttpException(error.getResponse(), error.getStatus(), {
+        cause: failureContext,
+      })
+    }
+    if (error instanceof Error) {
+      const wrappedError = new Error(error.message, { cause: failureContext })
+      wrappedError.name = error.name
+      return wrappedError
+    }
+    return new Error(this.stringifyUnknownError(error), {
+      cause: failureContext,
+    })
+  }
+
+  // 把原始错误的安全摘要挂到图片上下文中，供后台任务错误序列化。
+  private attachOriginalErrorContext(
+    error: unknown,
+    context: RemoteImageImportFailureContext,
+  ): RemoteImageImportFailureContext {
+    if (error instanceof BusinessException) {
+      return {
+        ...context,
+        originalName: error.name,
+        originalMessage: this.toSafeDiagnosticString(error.message),
+        originalCode: error.code,
+      }
+    }
+    if (error instanceof HttpException) {
+      return {
+        ...context,
+        originalName: error.name,
+        originalMessage: this.toSafeDiagnosticString(error.message),
+        originalCode: error.getStatus(),
+      }
+    }
+    if (error instanceof Error) {
+      return {
+        ...context,
+        originalName: error.name,
+        originalMessage: this.toSafeDiagnosticString(error.message),
+      }
+    }
+    return {
+      ...context,
+      originalMessage: this.toSafeDiagnosticString(
+        this.stringifyUnknownError(error),
+      ),
+    }
+  }
+
+  // 输出不带 query/hash 的图片 URL，保留定位所需的来源路径。
+  private toSafeSourceUrl(url: string) {
+    try {
+      const parsedUrl = new URL(url)
+      parsedUrl.username = ''
+      parsedUrl.password = ''
+      parsedUrl.search = ''
+      parsedUrl.hash = ''
+      return parsedUrl.toString()
+    } catch {
+      return '[invalid-url]'
+    }
+  }
+
+  // 将非 Error 异常收敛为短文本，避免丢失诊断入口。
+  private stringifyUnknownError(error: unknown) {
+    if (typeof error === 'string') {
+      return error
+    }
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return 'unknown error'
+    }
+  }
+
+  // 遮蔽错误摘要中的常见凭据片段，避免 progress/detail 或任务错误泄露。
+  private toSafeDiagnosticString(value: string) {
+    return value
+      .replace(
+        /"(?:token|authorization|cookie|password|secret)"[ \t]{0,20}:[ \t]{0,20}"[^"]*"/gi,
+        '"[REDACTED]"',
+      )
+      .replace(
+        /(?:token|authorization|cookie|password|secret)[ \t]{0,20}=[ \t]{0,20}[^"',\s;}]+/gi,
+        '[REDACTED]',
+      )
+      .replace(
+        /(?:token|authorization|cookie|password|secret)[ \t]{0,20}:[ \t]{0,20}[^"',\s;}]+/gi,
+        '[REDACTED]',
+      )
+      .replace(/\bBearer\s+[^,\s;}]+/gi, 'Bearer [REDACTED]')
   }
 }

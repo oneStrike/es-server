@@ -5,6 +5,8 @@ import type {
   BackgroundTaskHandler,
   BackgroundTaskObject,
   BackgroundTaskProgress,
+  BackgroundTaskProgressReporter,
+  BackgroundTaskProgressReporterOptions,
 } from './types'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService } from '@db/core'
@@ -609,11 +611,128 @@ export class BackgroundTaskService {
       },
       updateProgress: async (progress) =>
         this.updateProgress(row.taskId, progress),
+      createProgressReporter: (options) =>
+        this.createProgressReporter(row.taskId, options),
       recordResidue: async (residue) =>
         this.recordResidue(row.taskId, residue as BackgroundTaskObject),
       getResidue: async () =>
         this.asObject((await this.readTask(row.taskId)).residue),
     }
+  }
+
+  // 创建按区间映射的进度 reporter，统一处理 clamp 和单调递增。
+  private createProgressReporter(
+    taskId: string,
+    options: BackgroundTaskProgressReporterOptions,
+  ): BackgroundTaskProgressReporter {
+    const total = this.normalizeProgressTotal(options.total)
+    const startPercent = this.normalizeProgressPercent(
+      options.startPercent ?? 0,
+    )
+    const endPercent = Math.max(
+      startPercent,
+      this.normalizeProgressPercent(options.endPercent ?? 100),
+    )
+    let current = 0
+    let lastPercent = startPercent
+
+    return {
+      advance: async (input = {}) => {
+        const nextCurrent =
+          input.current === undefined
+            ? current + this.normalizeProgressAmount(input.amount ?? 1)
+            : input.current
+        current = Math.max(
+          current,
+          this.normalizeProgressCurrent(nextCurrent, total),
+        )
+        const percent = this.resolveReporterPercent(
+          startPercent,
+          endPercent,
+          current,
+          total,
+          lastPercent,
+        )
+        lastPercent = percent
+        const progress = this.compactProgress({
+          percent,
+          message: input.message ?? options.message,
+          stage: options.stage,
+          unit: options.unit,
+          current,
+          total,
+          detail: input.detail ?? options.detail,
+        })
+        await this.updateProgress(taskId, progress)
+        return progress
+      },
+    }
+  }
+
+  // 将 reporter 总量收敛为非负整数，避免 NaN/Infinity 进入 progress。
+  private normalizeProgressTotal(total: number) {
+    return Number.isFinite(total) && total > 0 ? Math.floor(total) : 0
+  }
+
+  // 将单次推进量收敛为非负整数。
+  private normalizeProgressAmount(amount: number) {
+    return Number.isFinite(amount) && amount > 0 ? Math.floor(amount) : 0
+  }
+
+  // 将 current 限制在 0-total 区间。
+  private normalizeProgressCurrent(current: number, total: number) {
+    if (!Number.isFinite(current) || current <= 0) {
+      return 0
+    }
+    const normalized = Math.floor(current)
+    return total > 0 ? Math.min(normalized, total) : normalized
+  }
+
+  // 将 percent 限制在 0-100 区间。
+  private normalizeProgressPercent(percent: number) {
+    if (!Number.isFinite(percent)) {
+      return 0
+    }
+    return Math.min(100, Math.max(0, Math.floor(percent)))
+  }
+
+  // 根据 current/total 映射 reporter 区间，并保证同一 reporter 内不倒退。
+  private resolveReporterPercent(
+    startPercent: number,
+    endPercent: number,
+    current: number,
+    total: number,
+    lastPercent: number,
+  ) {
+    if (total <= 0) {
+      return Math.max(lastPercent, startPercent)
+    }
+    const mapped =
+      current >= total
+        ? endPercent
+        : Math.floor(
+            startPercent + ((endPercent - startPercent) * current) / total,
+          )
+    return Math.max(lastPercent, this.normalizeProgressPercent(mapped))
+  }
+
+  // 删除进度快照中的 undefined 和空 detail，保持覆盖写入时结构清晰。
+  private compactProgress(progress: BackgroundTaskProgress) {
+    const compacted: BackgroundTaskProgress = {}
+    for (const [key, value] of Object.entries(progress)) {
+      if (value === undefined) {
+        continue
+      }
+      if (
+        key === 'detail' &&
+        this.isPlainObject(value) &&
+        Object.keys(value).length === 0
+      ) {
+        continue
+      }
+      compacted[key] = value
+    }
+    return compacted
   }
 
   // 构建 claim 过期时间。

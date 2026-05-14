@@ -89,6 +89,8 @@ describe('ThirdPartyComicImportService', () => {
     },
     upload: {
       filePath: '/uploads/1.jpg',
+      fileSize: 3,
+      mimeType: 'image/jpeg',
     },
   }
 
@@ -194,8 +196,59 @@ describe('ThirdPartyComicImportService', () => {
     onRecordResidue?: (patch: Record<string, unknown>) => Promise<void> | void,
   ) {
     const residue = { ...initialResidue }
-    return {
+    const context = {
       assertNotCancelled: jest.fn(async () => undefined),
+      createProgressReporter: jest.fn(
+        (options: {
+          endPercent?: number
+          stage?: string
+          startPercent?: number
+          total: number
+          unit?: string
+        }) => {
+          let current = 0
+          let lastPercent = options.startPercent ?? 0
+          return {
+            advance: jest.fn(
+              async (
+                input: {
+                  amount?: number
+                  current?: number
+                  detail?: Record<string, unknown>
+                  message?: string
+                } = {},
+              ) => {
+                const total = options.total
+                current =
+                  input.current ??
+                  Math.min(total, current + (input.amount ?? 1))
+                const mappedPercent =
+                  total > 0
+                    ? Math.floor(
+                        (options.startPercent ?? 0) +
+                          (((options.endPercent ?? 100) -
+                            (options.startPercent ?? 0)) *
+                            current) /
+                            total,
+                      )
+                    : (options.startPercent ?? 0)
+                lastPercent = Math.max(lastPercent, mappedPercent)
+                const progress = {
+                  current,
+                  detail: input.detail,
+                  message: input.message,
+                  percent: lastPercent,
+                  stage: options.stage,
+                  total,
+                  unit: options.unit,
+                }
+                await context.updateProgress(progress)
+                return progress
+              },
+            ),
+          }
+        },
+      ),
       getResidue: jest.fn(async () => residue),
       recordResidue: jest.fn(async (patch) => {
         await onRecordResidue?.(patch)
@@ -204,8 +257,11 @@ describe('ThirdPartyComicImportService', () => {
       residue,
       taskId: 'task-001',
       taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
-      updateProgress: jest.fn(async () => undefined),
+      updateProgress: jest.fn(
+        async (_progress: Record<string, unknown>) => undefined,
+      ),
     }
+    return context
   }
 
   beforeEach(() => {
@@ -290,7 +346,18 @@ describe('ThirdPartyComicImportService', () => {
     } = createService()
     ;(remoteImageImportService.importImages as jest.Mock).mockImplementation(
       async (_images, _segments, onImported) => {
-        await onImported(uploadedImage)
+        await onImported({
+          ...uploadedImage,
+          filePath: uploadedImage.upload.filePath,
+          image: {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
+          },
+          imageIndex: 1,
+          imageTotal: 1,
+          safeSourceUrl: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
+        })
         return ['/uploads/1.jpg']
       },
     )
@@ -327,6 +394,28 @@ describe('ThirdPartyComicImportService', () => {
       createdWorkIds: [100],
       uploadedFiles: [uploadedCover.deleteTarget, uploadedImage.deleteTarget],
     })
+    expect(context.createProgressReporter).toHaveBeenCalledWith({
+      endPercent: 95,
+      stage: 'image-import',
+      startPercent: 10,
+      total: 1,
+      unit: 'image',
+    })
+    expect(context.updateProgress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        current: 1,
+        detail: expect.objectContaining({
+          imageIndex: 1,
+          imageTotal: 1,
+          providerChapterId: 'chapter-001',
+          providerImageId: 'image-001',
+          safeSourceUrl: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
+        }),
+        percent: 95,
+        stage: 'image-import',
+        total: 1,
+      }),
+    )
   })
 
   it('preserves the original cause when provider cover import fails', async () => {
@@ -342,6 +431,74 @@ describe('ThirdPartyComicImportService', () => {
     ).rejects.toMatchObject({
       cause: coverError,
       message: 'remote cover download failed',
+    })
+  })
+
+  it('validates update overwrite before fetching chapter content', async () => {
+    const request = {
+      ...createImportRequest(),
+      cover: undefined,
+      mode: ThirdPartyComicImportModeEnum.ATTACH_TO_EXISTING,
+      targetWorkId: 100,
+      workDraft: undefined,
+    }
+    Object.assign(request.chapters[0], {
+      action: ThirdPartyComicImportChapterActionEnum.UPDATE,
+      overwriteContent: false,
+      targetChapterId: 300,
+    })
+    const { provider, service, workChapterService } = createService()
+    const context = createExecutionContext()
+
+    await expect(
+      service.executeImportTask(request, context as never),
+    ).rejects.toThrow('更新章节内容必须确认覆盖')
+
+    expect(provider.getChapterContent).not.toHaveBeenCalled()
+    expect(workChapterService.updateChapter).not.toHaveBeenCalled()
+  })
+
+  it('does not create chapter residue when chapter content planning fails', async () => {
+    const request = createImportRequest()
+    request.chapters.push({
+      ...request.chapters[0],
+      providerChapterId: 'chapter-002',
+      sortOrder: 2,
+      title: '第2话',
+    })
+    const {
+      comicContentService,
+      provider,
+      remoteImageImportService,
+      service,
+      workChapterService,
+    } = createService()
+    ;(provider.getChapterContent as jest.Mock)
+      .mockResolvedValueOnce({
+        providerChapterId: 'chapter-001',
+        title: '第1话',
+        images: [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
+          },
+        ],
+      })
+      .mockRejectedValueOnce(new Error('chapter content failed'))
+    const context = createExecutionContext()
+
+    await expect(
+      service.executeImportTask(request, context as never),
+    ).rejects.toThrow('chapter content failed')
+
+    expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
+    expect(workChapterService.updateChapter).not.toHaveBeenCalled()
+    expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
+    expect(remoteImageImportService.importImages).not.toHaveBeenCalled()
+    expect(context.residue).toEqual({
+      createdWorkIds: [100],
+      uploadedFiles: [uploadedCover.deleteTarget],
     })
   })
 
