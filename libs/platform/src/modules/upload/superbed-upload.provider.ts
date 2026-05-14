@@ -55,7 +55,7 @@ export class SuperbedUploadProvider {
         headers: form.getHeaders(),
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
-        timeout: 30000,
+        timeout: 300000,
       })
 
       if (data?.err !== 0 || !data?.url) {
