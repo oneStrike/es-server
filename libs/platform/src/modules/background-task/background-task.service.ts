@@ -50,6 +50,10 @@ class BackgroundTaskFinalizingExpiredError extends Error {
 @Injectable()
 export class BackgroundTaskService {
   private readonly logger = new Logger(BackgroundTaskService.name)
+  private readonly maxErrorCauseDepth = 3
+  private readonly maxErrorCauseArrayLength = 10
+  private readonly maxErrorCauseObjectKeys = 20
+  private readonly maxErrorCauseStringLength = 500
 
   // 初始化后台任务服务依赖。
   constructor(
@@ -502,16 +506,42 @@ export class BackgroundTaskService {
       error instanceof BackgroundTaskCancellationError ||
       (await this.isTaskCancelRequested(row.taskId))
 
+    const errorObject = this.toErrorObject(error)
     try {
       await handler.rollback(context, error)
-      await this.markTaskUnsuccessful(row.taskId, error, shouldCancel)
-    } catch (rollbackError) {
-      await this.markTaskRollbackFailed(row.taskId, error, rollbackError)
-      this.logger.error(
-        `background_task_rollback_failed taskId=${row.taskId} error=${this.stringifyError(
-          rollbackError,
-        )}`,
+      await this.markTaskUnsuccessful(
+        row.taskId,
+        error,
+        shouldCancel,
+        errorObject,
       )
+    } catch (rollbackError) {
+      const rollbackErrorObject = this.toErrorObject(rollbackError)
+      await this.markTaskRollbackFailed(
+        row.taskId,
+        error,
+        rollbackError,
+        errorObject,
+        rollbackErrorObject,
+      )
+      this.logger.error({
+        message: 'background_task_rollback_failed',
+        taskId: row.taskId,
+        taskType: row.taskType,
+        error: errorObject,
+        rollbackError: rollbackErrorObject,
+      })
+      return
+    }
+
+    if (!shouldCancel) {
+      this.logger.error({
+        message: 'background_task_failed',
+        taskId: row.taskId,
+        taskType: row.taskType,
+        status: BackgroundTaskStatusEnum.FAILED,
+        error: errorObject,
+      })
     }
   }
 
@@ -520,6 +550,7 @@ export class BackgroundTaskService {
     taskId: string,
     error: unknown,
     cancelled: boolean,
+    errorObject = this.toErrorObject(error),
   ) {
     const now = new Date()
     await this.db
@@ -528,7 +559,7 @@ export class BackgroundTaskService {
         status: cancelled
           ? BackgroundTaskStatusEnum.CANCELLED
           : BackgroundTaskStatusEnum.FAILED,
-        error: this.toErrorObject(error),
+        error: errorObject,
         rollbackError: null,
         claimedBy: null,
         claimExpiresAt: null,
@@ -543,14 +574,16 @@ export class BackgroundTaskService {
     taskId: string,
     error: unknown,
     rollbackError: unknown,
+    errorObject = this.toErrorObject(error),
+    rollbackErrorObject = this.toErrorObject(rollbackError),
   ) {
     const now = new Date()
     await this.db
       .update(this.backgroundTask)
       .set({
         status: BackgroundTaskStatusEnum.ROLLBACK_FAILED,
-        error: this.toErrorObject(error),
-        rollbackError: this.toErrorObject(rollbackError),
+        error: errorObject,
+        rollbackError: rollbackErrorObject,
         claimedBy: null,
         claimExpiresAt: null,
         finishedAt: now,
@@ -707,21 +740,146 @@ export class BackgroundTaskService {
   // 转换错误为结构化对象。
   private toErrorObject(error: unknown) {
     if (error instanceof Error) {
-      return {
+      return this.compactErrorObject({
         name: error.name,
-        message: error.message,
-      }
+        message: this.toSafeErrorString(error.message),
+        cause: this.toSafeCause(error.cause),
+      })
     }
 
     if (typeof error === 'string') {
       return {
-        message: error,
+        message: this.toSafeErrorString(error),
       }
     }
 
     return {
-      message: this.stringifyError(error),
+      message: this.toSafeErrorString(this.stringifyError(error)),
     }
+  }
+
+  // 转换 Error.cause 为可落库和可打日志的安全 JSON 摘要。
+  private toSafeCause(value: unknown, depth = 0): unknown {
+    if (value === undefined) {
+      return undefined
+    }
+    if (value === null) {
+      return null
+    }
+    if (typeof value === 'string') {
+      return this.toSafeErrorString(value)
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return value
+    }
+    if (typeof value === 'bigint') {
+      return value.toString()
+    }
+    if (Array.isArray(value)) {
+      if (depth >= this.maxErrorCauseDepth) {
+        return '[Array]'
+      }
+      return value
+        .slice(0, this.maxErrorCauseArrayLength)
+        .map((item) => this.toSafeCause(item, depth + 1))
+    }
+    if (value instanceof Date) {
+      return value.toISOString()
+    }
+    if (value instanceof Error) {
+      const nestedCause =
+        depth >= this.maxErrorCauseDepth
+          ? undefined
+          : this.toSafeCause(value.cause, depth + 1)
+      return this.compactErrorObject({
+        name: value.name,
+        message: this.toSafeErrorString(value.message),
+        cause: nestedCause,
+      })
+    }
+    if (this.isPlainObject(value)) {
+      if (depth >= this.maxErrorCauseDepth) {
+        return '[Object]'
+      }
+
+      const safeObject: Record<string, unknown> = {}
+      for (const [key, nestedValue] of Object.entries(value).slice(
+        0,
+        this.maxErrorCauseObjectKeys,
+      )) {
+        if (this.isSensitiveErrorCauseKey(key)) {
+          continue
+        }
+        const safeValue = this.toSafeCause(nestedValue, depth + 1)
+        if (safeValue !== undefined) {
+          safeObject[key] = safeValue
+        }
+      }
+      return safeObject
+    }
+
+    return this.toSafeErrorString(String(value))
+  }
+
+  // 删除错误对象中的空 cause，保持旧错误结构尽量稳定。
+  private compactErrorObject(value: Record<string, unknown>) {
+    const compacted: Record<string, unknown> = {}
+    for (const [key, nestedValue] of Object.entries(value)) {
+      if (nestedValue === undefined) {
+        continue
+      }
+      if (
+        this.isPlainObject(nestedValue) &&
+        Object.keys(nestedValue).length === 0
+      ) {
+        continue
+      }
+      compacted[key] = nestedValue
+    }
+    return compacted
+  }
+
+  // 判断是否是普通对象，避免把请求实例、流或 ORM 对象完整写入错误 JSON。
+  private isPlainObject(value: unknown): value is Record<string, unknown> {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      return false
+    }
+    const prototype = Object.getPrototypeOf(value)
+    return prototype === Object.prototype || prototype === null
+  }
+
+  // 删除会携带凭据、请求体或底层请求配置的错误 cause 字段。
+  private isSensitiveErrorCauseKey(key: string) {
+    return /authorization|cookie|headers|body|form|config|request|password|secret|token/i.test(
+      key,
+    )
+  }
+
+  // 遮蔽错误文本中的常见凭据片段，避免 key 脱敏后仍通过 value 泄露。
+  private toSafeErrorString(value: string) {
+    return this.truncateErrorCauseString(
+      value
+        .replace(
+          /"(?:token|authorization|cookie|password|secret)"[ \t]{0,20}:[ \t]{0,20}"[^"]*"/gi,
+          '"[REDACTED]"',
+        )
+        .replace(
+          /(?:token|authorization|cookie|password|secret)[ \t]{0,20}=[ \t]{0,20}[^"',\s;}]+/gi,
+          '[REDACTED]',
+        )
+        .replace(
+          /(?:token|authorization|cookie|password|secret)[ \t]{0,20}:[ \t]{0,20}[^"',\s;}]+/gi,
+          '[REDACTED]',
+        )
+        .replace(/\bBearer\s+[^,\s;}]+/gi, 'Bearer [REDACTED]'),
+    )
+  }
+
+  // 限制 cause 字符串长度，避免第三方错误响应过大。
+  private truncateErrorCauseString(value: string) {
+    return value.length > this.maxErrorCauseStringLength
+      ? `${value.slice(0, this.maxErrorCauseStringLength)}...`
+      : value
   }
 
   // 转换错误文本。

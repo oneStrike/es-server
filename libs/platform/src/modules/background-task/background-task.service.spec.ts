@@ -1,4 +1,5 @@
 import { BusinessException } from '@libs/platform/exceptions'
+import { Logger } from '@nestjs/common'
 import {
   BackgroundTaskStatusEnum,
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
@@ -121,6 +122,84 @@ describe('BackgroundTaskService', () => {
     const lastCall = findPagination.mock.calls.at(-1)
     return lastCall?.[1]?.where
   }
+
+  function createFailingExecutionHarness(error: Error, rollbackError?: Error) {
+    const row = createBackgroundTaskRow()
+    const selectRows = [
+      createBackgroundTaskRow({ cancelRequestedAt: null }),
+      createBackgroundTaskRow({
+        cancelRequestedAt: null,
+        status: BackgroundTaskStatusEnum.FINALIZING,
+      }),
+      createBackgroundTaskRow({
+        cancelRequestedAt: null,
+        status: BackgroundTaskStatusEnum.FINALIZING,
+      }),
+    ]
+    const updateReturningRows = [
+      [
+        createBackgroundTaskRow({
+          status: BackgroundTaskStatusEnum.FINALIZING,
+        }),
+      ],
+      [],
+    ]
+    const updateSets: Record<string, unknown>[] = []
+    const db = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn(async () => [selectRows.shift()]),
+          })),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn((value: Record<string, unknown>) => {
+          updateSets.push(value)
+          return {
+            where: jest.fn(() => ({
+              returning: jest.fn(async () => updateReturningRows.shift() ?? []),
+            })),
+          }
+        }),
+      })),
+    }
+    const drizzle = {
+      db,
+      schema: {
+        backgroundTask: {},
+      },
+    }
+    const handler = {
+      taskType: 'content.third-party-comic-import',
+      prepare: jest.fn(async () => undefined),
+      finalize: jest.fn(async () => {
+        throw error
+      }),
+      rollback: jest.fn(async () => {
+        if (rollbackError) {
+          throw rollbackError
+        }
+      }),
+    }
+    const registry = {
+      resolve: jest.fn(() => handler),
+    }
+    const service = new BackgroundTaskService(
+      drizzle as never,
+      registry as never,
+    )
+
+    return { handler, row, service, updateSets }
+  }
+
+  beforeEach(() => {
+    jest.spyOn(Logger.prototype, 'error').mockImplementation()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
 
   it('creates pending task records without executing handler work', async () => {
     const createdAt = new Date('2026-05-13T03:00:00.000Z')
@@ -297,6 +376,7 @@ describe('BackgroundTaskService', () => {
   })
 
   it('rolls back instead of marking success when cancellation wins during finalizing', async () => {
+    const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error')
     const cancelRequestedAt = new Date('2026-05-13T03:01:00.000Z')
     const row = createBackgroundTaskRow()
     const selectRows = [
@@ -373,6 +453,7 @@ describe('BackgroundTaskService', () => {
         expect.objectContaining({ status: BackgroundTaskStatusEnum.CANCELLED }),
       ]),
     )
+    expect(loggerErrorSpy).not.toHaveBeenCalled()
   })
 
   it('does not report a non-cancel success conflict as cancelled', async () => {
@@ -453,6 +534,218 @@ describe('BackgroundTaskService', () => {
       expect.arrayContaining([
         expect.objectContaining({ status: BackgroundTaskStatusEnum.CANCELLED }),
       ]),
+    )
+  })
+
+  it('persists sanitized failure cause when rollback succeeds', async () => {
+    const error = new Error('Superbed 上传失败', {
+      cause: {
+        provider: 'superbed',
+        operation: 'upload',
+        axiosCode: 'ECONNABORTED',
+        token: 'secret-token',
+        responseData: {
+          err: 1,
+          msg: 'timeout',
+          token: 'secret-token',
+        },
+      },
+    })
+    const { row, service, updateSets } = createFailingExecutionHarness(error)
+
+    await service.executeClaimedTask(row as never)
+
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          status: BackgroundTaskStatusEnum.FAILED,
+          error: {
+            name: 'Error',
+            message: 'Superbed 上传失败',
+            cause: {
+              provider: 'superbed',
+              operation: 'upload',
+              axiosCode: 'ECONNABORTED',
+              responseData: {
+                err: 1,
+                msg: 'timeout',
+              },
+            },
+          },
+        }),
+      ]),
+    )
+
+    const failedUpdate = updateSets.find(
+      (set) => set.status === BackgroundTaskStatusEnum.FAILED,
+    )
+    const serializedPersistedError = JSON.stringify(failedUpdate?.error)
+    expect(serializedPersistedError).not.toContain('secret-token')
+    expect(serializedPersistedError).not.toMatch(
+      /authorization|cookie|headers|body|form|config|request|password|secret|token/i,
+    )
+  })
+
+  it('logs sanitized diagnostics for ordinary task failures', async () => {
+    const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error')
+    const error = new Error('Superbed 上传失败', {
+      cause: {
+        provider: 'superbed',
+        operation: 'upload',
+        axiosCode: 'ECONNABORTED',
+        token: 'secret-token',
+        responseData: {
+          err: 1,
+          msg: 'timeout',
+          token: 'secret-token',
+        },
+      },
+    })
+    const { row, service } = createFailingExecutionHarness(error)
+
+    await service.executeClaimedTask(row as never)
+
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1)
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'background_task_failed',
+        taskId: 'task-1',
+        taskType: 'content.third-party-comic-import',
+        error: expect.objectContaining({
+          message: 'Superbed 上传失败',
+          cause: expect.objectContaining({
+            provider: 'superbed',
+            operation: 'upload',
+            axiosCode: 'ECONNABORTED',
+          }),
+        }),
+      }),
+    )
+
+    const serializedLogPayload = JSON.stringify(
+      loggerErrorSpy.mock.calls.flat(),
+    )
+    expect(serializedLogPayload).not.toContain('secret-token')
+    expect(serializedLogPayload).not.toMatch(
+      /authorization|cookie|headers|body|form|config|request|password|secret|token/i,
+    )
+  })
+
+  it('redacts sensitive values embedded in persisted errors and failure logs', async () => {
+    const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error')
+    const error = new Error('token = secret-token upload failed', {
+      cause: {
+        provider: 'superbed',
+        operation: 'upload',
+        message: 'authorization: secret-token',
+        responseData: {
+          err: 1,
+          msg: 'token = secret-token',
+          message: '"token": "secret-token"',
+          error: 'Bearer secret-token',
+        },
+        nestedError: new Error('token = secret-token nested'),
+      },
+    })
+    const { row, service, updateSets } = createFailingExecutionHarness(error)
+
+    await service.executeClaimedTask(row as never)
+
+    const failedUpdate = updateSets.find(
+      (set) => set.status === BackgroundTaskStatusEnum.FAILED,
+    )
+    expect(failedUpdate?.error).toEqual({
+      name: 'Error',
+      message: '[REDACTED] upload failed',
+      cause: {
+        provider: 'superbed',
+        operation: 'upload',
+        message: '[REDACTED]',
+        responseData: {
+          err: 1,
+          msg: '[REDACTED]',
+          message: '"[REDACTED]"',
+          error: 'Bearer [REDACTED]',
+        },
+        nestedError: {
+          name: 'Error',
+          message: '[REDACTED] nested',
+        },
+      },
+    })
+
+    const serializedPersistedError = JSON.stringify(failedUpdate?.error)
+    const serializedLogPayload = JSON.stringify(
+      loggerErrorSpy.mock.calls.flat(),
+    )
+    expect(serializedPersistedError).not.toContain('secret-token')
+    expect(serializedLogPayload).not.toContain('secret-token')
+  })
+
+  it('logs sanitized rollback failure diagnostics', async () => {
+    const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error')
+    const error = new Error('Superbed 上传失败', {
+      cause: {
+        provider: 'superbed',
+        operation: 'upload',
+      },
+    })
+    const rollbackError = new Error('token = secret-token rollback failed', {
+      cause: {
+        message: 'authorization: secret-token',
+        responseData: {
+          msg: 'Bearer secret-token',
+          error: '"token": "secret-token"',
+        },
+      },
+    })
+    const { row, service, updateSets } = createFailingExecutionHarness(
+      error,
+      rollbackError,
+    )
+
+    await service.executeClaimedTask(row as never)
+
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          status: BackgroundTaskStatusEnum.ROLLBACK_FAILED,
+          error: expect.objectContaining({
+            message: 'Superbed 上传失败',
+          }),
+          rollbackError: {
+            name: 'Error',
+            message: '[REDACTED] rollback failed',
+            cause: {
+              message: '[REDACTED]',
+              responseData: {
+                msg: 'Bearer [REDACTED]',
+                error: '"[REDACTED]"',
+              },
+            },
+          },
+        }),
+      ]),
+    )
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'background_task_rollback_failed',
+        taskId: 'task-1',
+        taskType: 'content.third-party-comic-import',
+        error: expect.objectContaining({
+          message: 'Superbed 上传失败',
+        }),
+        rollbackError: expect.objectContaining({
+          message: '[REDACTED] rollback failed',
+        }),
+      }),
+    )
+    const serializedLogPayload = JSON.stringify(
+      loggerErrorSpy.mock.calls.flat(),
+    )
+    expect(serializedLogPayload).not.toContain('secret-token')
+    expect(serializedLogPayload).not.toMatch(
+      /authorization|cookie|headers|body|form|config|request|password|secret|token/i,
     )
   })
 
