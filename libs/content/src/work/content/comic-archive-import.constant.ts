@@ -22,6 +22,17 @@ export enum ComicArchiveTaskStatusEnum {
 }
 
 /**
+ * 漫画压缩包预解析会话状态。
+ * 用于在真正创建草稿任务前协调预解析、确认和丢弃。
+ */
+export enum ComicArchivePreviewSessionStatusEnum {
+  /** 会话开放，允许预解析或确认。 */
+  OPEN = 1,
+  /** 会话正在丢弃，禁止后续创建草稿或确认后台任务。 */
+  DISCARDING = 2,
+}
+
+/**
  * 漫画压缩包预解析模式。
  * 根目录直接是图片时按单章节处理，根目录存在章节目录时按多章节处理。
  */

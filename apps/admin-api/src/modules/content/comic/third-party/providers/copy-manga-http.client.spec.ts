@@ -162,7 +162,7 @@ describe('CopyMangaHttpClient', () => {
     )
   })
 
-  it('caps content retries to three attempts across discovered hosts', async () => {
+  it('tries all discovered hosts once before failing content API requests', async () => {
     getMock
       .mockResolvedValueOnce({
         data: {
@@ -177,14 +177,18 @@ describe('CopyMangaHttpClient', () => {
           },
         },
       })
-      .mockRejectedValue(new Error('upstream unavailable'))
+      .mockRejectedValueOnce(new Error('host a timeout'))
+      .mockRejectedValueOnce(new Error('host b timeout'))
+      .mockRejectedValueOnce(new Error('host c timeout'))
+      .mockResolvedValueOnce({ data: { code: 200, results: { ok: true } } })
     const client = createClient()
 
-    await expect(client.getJson('/api/v3/search/comic')).rejects.toThrow(
-      BusinessException,
-    )
+    await expect(client.getJson('/api/v3/search/comic')).resolves.toEqual({
+      code: 200,
+      results: { ok: true },
+    })
 
-    expect(getMock).toHaveBeenCalledTimes(4)
+    expect(getMock).toHaveBeenCalledTimes(5)
     expect(getMock).toHaveBeenNthCalledWith(
       2,
       'https://api-a.copy.test/api/v3/search/comic',
@@ -198,6 +202,11 @@ describe('CopyMangaHttpClient', () => {
     expect(getMock).toHaveBeenNthCalledWith(
       4,
       'https://api-c.copy.test/api/v3/search/comic',
+      expect.any(Object),
+    )
+    expect(getMock).toHaveBeenNthCalledWith(
+      5,
+      'https://api-d.copy.test/api/v3/search/comic',
       expect.any(Object),
     )
   })

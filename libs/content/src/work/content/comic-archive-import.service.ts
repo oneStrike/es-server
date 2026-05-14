@@ -1,4 +1,7 @@
-import type { WorkComicArchiveImportTaskSelect } from '@db/schema'
+import type {
+  WorkComicArchiveImportPreviewSessionSelect,
+  WorkComicArchiveImportTaskSelect,
+} from '@db/schema'
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { FastifyRequest } from 'fastify'
 import type { Dirent } from 'node:fs'
@@ -7,6 +10,7 @@ import type {
   ComicArchiveMatchedItemRecord,
   ComicArchivePreviewChapter,
   ComicArchivePreviewChapterMap,
+  ComicArchivePreviewSessionRecord,
   ComicArchiveTaskRecord,
 } from './comic-archive-import.type'
 import { createWriteStream, promises as fs } from 'node:fs'
@@ -32,6 +36,7 @@ import {
   ComicArchiveIgnoreReasonEnum,
   ComicArchiveImportItemStatusEnum,
   ComicArchivePreviewModeEnum,
+  ComicArchivePreviewSessionStatusEnum,
   ComicArchiveTaskStatusEnum,
 } from './comic-archive-import.constant'
 import {
@@ -41,6 +46,8 @@ import {
   ComicArchiveTaskIdDto,
   ComicArchiveTaskResponseDto,
   ConfirmComicArchiveDto,
+  CreateComicArchiveSessionDto,
+  DiscardComicArchiveDto,
   PreviewComicArchiveDto,
 } from './dto/content.dto'
 
@@ -96,12 +103,37 @@ export class ComicArchiveImportService {
     return this.drizzle.schema.workComicArchiveImportTask
   }
 
+  // 读取 workComicArchiveImportPreviewSession。
+  private get workComicArchiveImportPreviewSession() {
+    return this.drizzle.schema.workComicArchiveImportPreviewSession
+  }
+
+  // 创建预解析会话，前端拿到 taskId 后再发起 multipart 预解析上传。
+  async createPreviewSession(input: CreateComicArchiveSessionDto) {
+    await this.assertWorkExists(input.workId)
+
+    const now = new Date()
+    const record: ComicArchivePreviewSessionRecord = {
+      taskId: uuidv4(),
+      workId: input.workId,
+      chapterId: input.chapterId ?? null,
+      status: ComicArchivePreviewSessionStatusEnum.OPEN,
+      expiresAt: new Date(now.getTime() + ARCHIVE_TASK_TTL_MS),
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    await this.createPreviewSessionRecord(record)
+    return { taskId: record.taskId }
+  }
+
   // 预解析漫画压缩包并返回前端确认结果，预解析阶段只产出草稿任务，不会写章节内容，也不会上传页面图片到最终 provider。
   async previewArchive(
     req: FastifyRequest,
     input: PreviewComicArchiveDto,
   ): Promise<ComicArchiveTaskResponseDto> {
     await this.assertWorkExists(input.workId)
+    await this.assertOpenPreviewSessionMatches(input)
 
     const archiveFile = await req.file()
     if (!archiveFile) {
@@ -113,7 +145,7 @@ export class ComicArchiveImportService {
       throw new BadRequestException('仅支持 zip 压缩包')
     }
 
-    const taskId = uuidv4()
+    const taskId = input.taskId
     const taskDir = this.getTaskDir(taskId)
     const extractDir = this.getTaskExtractDir(taskId)
     const archivePath = join(taskDir, 'source.zip')
@@ -165,7 +197,7 @@ export class ComicArchiveImportService {
         updatedAt: now,
       }
 
-      await this.createTaskRecord(record)
+      await this.createTaskRecordIfSessionOpen(record)
       return this.toTaskView(record)
     } catch (error) {
       await fs
@@ -208,10 +240,42 @@ export class ComicArchiveImportService {
       )
     }
 
-    record.confirmedChapterIds = confirmedChapterIds
-    record.status = ComicArchiveTaskStatusEnum.PENDING
-    record.updatedAt = new Date()
-    await this.updateTaskRecord(record)
+    const pendingRecord: ComicArchiveTaskRecord = {
+      ...record,
+      confirmedChapterIds,
+      status: ComicArchiveTaskStatusEnum.PENDING,
+      updatedAt: new Date(),
+    }
+    const confirmed = await this.claimPreviewSessionForConfirm(pendingRecord)
+    if (!confirmed) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '预解析会话已取消，请重新上传压缩包',
+      )
+    }
+    return true
+  }
+
+  // 丢弃预确认漫画压缩包导入会话，成功前必须先移除本地临时目录，再硬删除草稿和会话标记。
+  async discardArchivePreview(input: DiscardComicArchiveDto) {
+    const claimedSession = await this.claimPreviewSessionForDiscard(
+      input.taskId,
+    )
+    const record = await this.tryReadTaskRecord(input.taskId)
+
+    if (!claimedSession && !record) {
+      return true
+    }
+
+    if (record && !this.canDiscardTaskRecord(record)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '已确认的导入任务不允许丢弃',
+      )
+    }
+
+    await this.removeTaskDir(input.taskId)
+    await this.deletePreConfirmResidue(input.taskId)
     return true
   }
 
@@ -708,6 +772,26 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 校验预解析会话仍然开放，并且与当前上传上下文一致。
+  private async assertOpenPreviewSessionMatches(input: PreviewComicArchiveDto) {
+    const session = await this.readPreviewSessionRecord(input.taskId)
+    const requestedChapterId = input.chapterId ?? null
+
+    if (
+      session.status !== ComicArchivePreviewSessionStatusEnum.OPEN ||
+      session.workId !== input.workId ||
+      session.chapterId !== requestedChapterId ||
+      session.expiresAt.getTime() <= Date.now()
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '预解析会话已失效，请重新选择压缩包',
+      )
+    }
+
+    return session
+  }
+
   // 执行 assertDraftTaskAvailable。
   private async assertDraftTaskAvailable(record: ComicArchiveTaskRecord) {
     const latestRecord = await this.refreshExpiredDraftTask(record)
@@ -753,6 +837,7 @@ export class ComicArchiveImportService {
       mode: record.mode,
       status: record.status,
       requireConfirm: record.requireConfirm,
+      backgroundOwned: this.isBackgroundOwned(record),
       summary: record.summary,
       matchedItems: record.matchedItems.map(
         ({ imagePaths: _imagePaths, ...item }) => item,
@@ -766,6 +851,24 @@ export class ComicArchiveImportService {
     }
   }
 
+  // 判断任务是否已经越过用户确认边界，允许在弹窗外展示后台任务摘要。
+  private isBackgroundOwned(record: ComicArchiveTaskRecord) {
+    return record.confirmedChapterIds.length > 0
+  }
+
+  // 判断任务是否仍属于可硬删除的预确认残留。
+  private canDiscardTaskRecord(record: ComicArchiveTaskRecord) {
+    if (this.isBackgroundOwned(record)) {
+      return false
+    }
+
+    return (
+      record.status === ComicArchiveTaskStatusEnum.DRAFT ||
+      record.status === ComicArchiveTaskStatusEnum.EXPIRED ||
+      record.status === ComicArchiveTaskStatusEnum.CANCELLED
+    )
+  }
+
   // 执行 cleanupTasks。
   private async cleanupTasks() {
     const now = new Date()
@@ -773,23 +876,7 @@ export class ComicArchiveImportService {
       now.getTime() - ARCHIVE_TASK_CLEANUP_RETENTION_MS,
     )
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workComicArchiveImportTask)
-        .set({
-          status: ComicArchiveTaskStatusEnum.EXPIRED,
-          updatedAt: now,
-        })
-        .where(
-          and(
-            eq(
-              this.workComicArchiveImportTask.status,
-              ComicArchiveTaskStatusEnum.DRAFT,
-            ),
-            lte(this.workComicArchiveImportTask.expiresAt, now),
-          ),
-        ),
-    )
+    await this.cleanupExpiredPreviewResidues(now)
 
     const rows = await this.db
       .select({
@@ -812,6 +899,52 @@ export class ComicArchiveImportService {
           force: true,
         })
         .catch(() => undefined)
+    }
+  }
+
+  // 清理过期预确认会话和草稿，作为弹窗关闭强取消之外的崩溃恢复兜底。
+  private async cleanupExpiredPreviewResidues(now: Date) {
+    const sessionRows = await this.db
+      .select({
+        taskId: this.workComicArchiveImportPreviewSession.taskId,
+      })
+      .from(this.workComicArchiveImportPreviewSession)
+      .where(lte(this.workComicArchiveImportPreviewSession.expiresAt, now))
+
+    const draftRows = await this.db
+      .select({
+        taskId: this.workComicArchiveImportTask.taskId,
+      })
+      .from(this.workComicArchiveImportTask)
+      .where(
+        and(
+          inArray(this.workComicArchiveImportTask.status, [
+            ComicArchiveTaskStatusEnum.DRAFT,
+            ComicArchiveTaskStatusEnum.EXPIRED,
+            ComicArchiveTaskStatusEnum.CANCELLED,
+          ]),
+          lte(this.workComicArchiveImportTask.expiresAt, now),
+        ),
+      )
+
+    const taskIds = new Set([
+      ...sessionRows.map((row) => row.taskId),
+      ...draftRows.map((row) => row.taskId),
+    ])
+
+    for (const taskId of taskIds) {
+      const record = await this.tryReadTaskRecord(taskId)
+      if (record && !this.canDiscardTaskRecord(record)) {
+        continue
+      }
+      try {
+        await this.removeTaskDir(taskId)
+        await this.deletePreConfirmResidue(taskId)
+      } catch (error) {
+        this.logger.warn(
+          `comic_archive_preview_cleanup_failed taskId=${taskId} error=${this.stringifyError(error)}`,
+        )
+      }
     }
   }
 
@@ -881,15 +1014,162 @@ export class ComicArchiveImportService {
     return this.toTaskRecord(rows[0])
   }
 
-  // 创建 task Record。
-  private async createTaskRecord(record: ComicArchiveTaskRecord) {
+  // 创建 preview session Record。
+  private async createPreviewSessionRecord(
+    record: ComicArchivePreviewSessionRecord,
+  ) {
     await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.workComicArchiveImportTask).values({
+      this.db.insert(this.workComicArchiveImportPreviewSession).values({
+        taskId: record.taskId,
+        workId: record.workId,
+        chapterId: record.chapterId,
+        status: record.status,
+        expiresAt: record.expiresAt,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      }),
+    )
+  }
+
+  // 在同一事务中锁定开放会话并创建草稿，避免 discard 已成功后又产生 late DRAFT。
+  private async createTaskRecordIfSessionOpen(record: ComicArchiveTaskRecord) {
+    const now = new Date()
+    const inserted = await this.drizzle.withTransaction(async (tx) => {
+      const sessions = await tx
+        .update(this.workComicArchiveImportPreviewSession)
+        .set({ updatedAt: now })
+        .where(
+          and(
+            eq(this.workComicArchiveImportPreviewSession.taskId, record.taskId),
+            eq(
+              this.workComicArchiveImportPreviewSession.status,
+              ComicArchivePreviewSessionStatusEnum.OPEN,
+            ),
+          ),
+        )
+        .returning({
+          taskId: this.workComicArchiveImportPreviewSession.taskId,
+        })
+
+      if (sessions.length === 0) {
+        return false
+      }
+
+      await tx.insert(this.workComicArchiveImportTask).values({
         taskId: record.taskId,
         ...this.buildTaskPersistValues(record),
         createdAt: record.createdAt,
-      }),
+      })
+      return true
+    })
+
+    if (!inserted) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '预解析会话已取消，请重新上传压缩包',
+      )
+    }
+  }
+
+  // 为 discard 原子认领开放会话；已处于 DISCARDING 的会话允许重试清理。
+  private async claimPreviewSessionForDiscard(taskId: string) {
+    const now = new Date()
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.workComicArchiveImportPreviewSession)
+        .set({
+          status: ComicArchivePreviewSessionStatusEnum.DISCARDING,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(this.workComicArchiveImportPreviewSession.taskId, taskId),
+            eq(
+              this.workComicArchiveImportPreviewSession.status,
+              ComicArchivePreviewSessionStatusEnum.OPEN,
+            ),
+          ),
+        )
+        .returning(),
     )
+
+    if (rows.length > 0) {
+      return this.toPreviewSessionRecord(rows[0])
+    }
+
+    const session = await this.tryReadPreviewSessionRecord(taskId)
+    return session?.status === ComicArchivePreviewSessionStatusEnum.DISCARDING
+      ? session
+      : null
+  }
+
+  // 确认导入时原子删除开放会话并把草稿推进到 PENDING。
+  private async claimPreviewSessionForConfirm(record: ComicArchiveTaskRecord) {
+    return this.drizzle.withTransaction(async (tx) => {
+      const sessions = await tx
+        .delete(this.workComicArchiveImportPreviewSession)
+        .where(
+          and(
+            eq(this.workComicArchiveImportPreviewSession.taskId, record.taskId),
+            eq(
+              this.workComicArchiveImportPreviewSession.status,
+              ComicArchivePreviewSessionStatusEnum.OPEN,
+            ),
+          ),
+        )
+        .returning({
+          taskId: this.workComicArchiveImportPreviewSession.taskId,
+        })
+
+      if (sessions.length === 0) {
+        return false
+      }
+
+      const tasks = await tx
+        .update(this.workComicArchiveImportTask)
+        .set(this.buildTaskPersistValues(record))
+        .where(
+          and(
+            eq(this.workComicArchiveImportTask.taskId, record.taskId),
+            eq(
+              this.workComicArchiveImportTask.status,
+              ComicArchiveTaskStatusEnum.DRAFT,
+            ),
+          ),
+        )
+        .returning({
+          taskId: this.workComicArchiveImportTask.taskId,
+        })
+
+      if (tasks.length === 0) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '当前任务状态不允许确认导入',
+        )
+      }
+
+      return true
+    })
+  }
+
+  // 删除预确认草稿和会话标记。调用前必须已经成功删除本地临时目录。
+  private async deletePreConfirmResidue(taskId: string) {
+    await this.drizzle.withTransaction(async (tx) => {
+      await tx
+        .delete(this.workComicArchiveImportTask)
+        .where(eq(this.workComicArchiveImportTask.taskId, taskId))
+      await tx
+        .delete(this.workComicArchiveImportPreviewSession)
+        .where(eq(this.workComicArchiveImportPreviewSession.taskId, taskId))
+    })
+  }
+
+  // 删除任务临时目录。
+  private async removeTaskDir(taskId: string) {
+    await fs.rm(this.getTaskDir(taskId), {
+      recursive: true,
+      force: true,
+    })
   }
 
   // 执行 readTaskRecord。
@@ -904,6 +1184,18 @@ export class ComicArchiveImportService {
     return record
   }
 
+  // 读取 preview session Record。
+  private async readPreviewSessionRecord(taskId: string) {
+    const record = await this.tryReadPreviewSessionRecord(taskId)
+    if (!record) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '预解析会话不存在',
+      )
+    }
+    return record
+  }
+
   // 执行 tryReadTaskRecord。
   private async tryReadTaskRecord(taskId: string) {
     const [row] = await this.db
@@ -913,6 +1205,17 @@ export class ComicArchiveImportService {
       .limit(1)
 
     return row ? this.toTaskRecord(row) : null
+  }
+
+  // 尝试读取 preview session Record。
+  private async tryReadPreviewSessionRecord(taskId: string) {
+    const [row] = await this.db
+      .select()
+      .from(this.workComicArchiveImportPreviewSession)
+      .where(eq(this.workComicArchiveImportPreviewSession.taskId, taskId))
+      .limit(1)
+
+    return row ? this.toPreviewSessionRecord(row) : null
   }
 
   // 更新 task Record。
@@ -985,6 +1288,21 @@ export class ComicArchiveImportService {
       finishedAt: row.finishedAt,
       expiresAt: row.expiresAt,
       lastError: row.lastError,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }
+  }
+
+  // 把数据库行收敛成稳定的预解析会话记录。
+  private toPreviewSessionRecord(
+    row: WorkComicArchiveImportPreviewSessionSelect,
+  ): ComicArchivePreviewSessionRecord {
+    return {
+      taskId: row.taskId,
+      workId: row.workId,
+      chapterId: row.chapterId,
+      status: this.normalizePreviewSessionStatus(row.status),
+      expiresAt: row.expiresAt,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }
@@ -1083,6 +1401,19 @@ export class ComicArchiveImportService {
       return value as ComicArchiveTaskStatusEnum
     }
     throw new InternalServerErrorException('漫画压缩包导入任务状态非法')
+  }
+
+  // 归一化 preview Session Status。
+  private normalizePreviewSessionStatus<T>(
+    value: T,
+  ): ComicArchivePreviewSessionStatusEnum {
+    if (
+      value === ComicArchivePreviewSessionStatusEnum.OPEN ||
+      value === ComicArchivePreviewSessionStatusEnum.DISCARDING
+    ) {
+      return value as ComicArchivePreviewSessionStatusEnum
+    }
+    throw new InternalServerErrorException('漫画压缩包预解析会话状态非法')
   }
 
   // 归一化 preview Mode。

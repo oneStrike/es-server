@@ -80,6 +80,25 @@ export class PreviewComicArchiveDto {
     required: false,
   })
   chapterId?: number
+
+  @StringProperty({
+    description: '预解析会话任务ID',
+    example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
+    required: true,
+  })
+  taskId!: string
+}
+
+export class CreateComicArchiveSessionDto {
+  @NumberProperty({ description: '作品ID', example: 1, required: true })
+  workId!: number
+
+  @NumberProperty({
+    description: '单章节压缩包对应的章节ID',
+    example: 101,
+    required: false,
+  })
+  chapterId?: number
 }
 
 export class ComicArchiveTaskIdDto {
@@ -100,6 +119,8 @@ export class ConfirmComicArchiveDto extends ComicArchiveTaskIdDto {
   })
   confirmedChapterIds!: number[]
 }
+
+export class DiscardComicArchiveDto extends ComicArchiveTaskIdDto {}
 
 export class ComicArchiveSummaryDto {
   @NumberProperty({
@@ -310,6 +331,14 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
   })
   requireConfirm!: boolean
 
+  @BooleanProperty({
+    description: '是否已确认并进入后台任务归属',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  backgroundOwned!: boolean
+
   @ArrayProperty({
     description: '匹配成功的章节列表',
     itemClass: ComicArchiveMatchedItemDto,
@@ -428,7 +457,8 @@ export class ChapterContentComicRequestDto extends DetailComicRequestDto {
 
   @NumberProperty({
     required: false,
-    description: '三方章节内容接口版本；CopyManga type=1 使用 chapter，type>=2 使用 chapterN',
+    description:
+      '三方章节内容接口版本；CopyManga type=1 使用 chapter，type>=2 使用 chapterN',
     example: 1,
   })
   chapterApiVersion?: number

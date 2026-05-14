@@ -76,8 +76,8 @@ export class ComicChapterController {
       actionType: AuditActionTypeEnum.DELETE,
     },
   })
-  async delete(@Body() body: IdsDto) {
-    return this.workChapterService.deleteChapters(body.ids)
+  async delete(@Body() body: IdDto) {
+    return this.workChapterService.deleteChapter(body.id)
   }
 
   @Post('batch-delete')

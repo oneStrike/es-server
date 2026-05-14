@@ -1,6 +1,7 @@
 import type {
   ComicArchiveIgnoreReasonEnum,
   ComicArchiveImportItemStatusEnum,
+  ComicArchivePreviewSessionStatusEnum,
   ComicArchivePreviewModeEnum,
   ComicArchiveTaskStatusEnum,
 } from './comic-archive-import.constant'
@@ -83,6 +84,20 @@ export interface ComicArchiveTaskRecord {
   finishedAt: Date | null
   expiresAt: Date
   lastError: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * 漫画压缩包预解析会话持久化记录。
+ * 会话先于 multipart 上传创建，用于在预确认阶段提供强一致取消边界。
+ */
+export interface ComicArchivePreviewSessionRecord {
+  taskId: string
+  workId: number
+  chapterId: number | null
+  status: ComicArchivePreviewSessionStatusEnum
+  expiresAt: Date
   createdAt: Date
   updatedAt: Date
 }

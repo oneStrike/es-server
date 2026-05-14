@@ -529,24 +529,43 @@ export class WorkChapterService {
 
   // 删除章节。
   async deleteChapter(id: number) {
-    return this.deleteChapters([id])
+    return this.deleteChapterRecords([id])
   }
 
   // 批量删除章节。
   async deleteChapters(ids: number[]) {
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.workChapter)
-          .set({ deletedAt: new Date() })
-          .where(
-            and(
-              inArray(this.workChapter.id, ids),
-              isNull(this.workChapter.deletedAt),
-            ),
+    return this.deleteChapterRecords(ids)
+  }
+
+  // 统一处理单删与批量软删除，避免批量删除只命中部分章节时静默成功。
+  private async deleteChapterRecords(ids: number[]) {
+    const uniqueIds = [...new Set(ids)]
+    if (uniqueIds.length === 0) {
+      return true
+    }
+
+    await this.drizzle.withTransaction(async (tx) => {
+      const deletedRows = await tx
+        .update(this.workChapter)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            inArray(this.workChapter.id, uniqueIds),
+            isNull(this.workChapter.deletedAt),
           ),
-      { notFound: '章节不存在' },
-    )
+        )
+        .returning({
+          id: this.workChapter.id,
+        })
+
+      if (deletedRows.length !== uniqueIds.length) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '章节不存在',
+        )
+      }
+    })
+
     return true
   }
 
