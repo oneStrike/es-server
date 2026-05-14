@@ -34,6 +34,9 @@ interface SafeRemoteImageUrl {
 @Injectable()
 export class RemoteImageImportService {
   private readonly uploadConfig: UploadConfigInterface
+  private readonly maxDiagnosticDepth = 3
+  private readonly maxDiagnosticArrayLength = 10
+  private readonly maxDiagnosticObjectKeys = 20
 
   // 注入统一上传服务，远程图片落地后仍复用现有上传策略。
   constructor(
@@ -379,12 +382,13 @@ export class RemoteImageImportService {
       }
     }
     if (error instanceof HttpException) {
-      return {
+      return this.compactDiagnosticObject({
         ...context,
         originalName: error.name,
         originalMessage: this.toSafeDiagnosticString(error.message),
         originalCode: error.getStatus(),
-      }
+        originalCause: this.toSafeDiagnosticValue(error.cause),
+      }) as RemoteImageImportFailureContext
     }
     if (error instanceof Error) {
       return {
@@ -425,6 +429,103 @@ export class RemoteImageImportService {
     } catch {
       return 'unknown error'
     }
+  }
+
+  // 递归收敛第三方异常 cause，只保留可落库的脱敏诊断。
+  private toSafeDiagnosticValue(value: unknown, depth = 0): unknown {
+    if (value === undefined) {
+      return undefined
+    }
+    if (value === null) {
+      return null
+    }
+    if (typeof value === 'string') {
+      return this.toSafeDiagnosticString(value)
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return value
+    }
+    if (typeof value === 'bigint') {
+      return value.toString()
+    }
+    if (Array.isArray(value)) {
+      if (depth >= this.maxDiagnosticDepth) {
+        return '[Array]'
+      }
+      return value
+        .slice(0, this.maxDiagnosticArrayLength)
+        .map((item) => this.toSafeDiagnosticValue(item, depth + 1))
+    }
+    if (value instanceof Date) {
+      return value.toISOString()
+    }
+    if (value instanceof Error) {
+      const nestedCause =
+        depth >= this.maxDiagnosticDepth
+          ? undefined
+          : this.toSafeDiagnosticValue(value.cause, depth + 1)
+      return this.compactDiagnosticObject({
+        name: value.name,
+        message: this.toSafeDiagnosticString(value.message),
+        cause: nestedCause,
+      })
+    }
+    if (this.isPlainObject(value)) {
+      if (depth >= this.maxDiagnosticDepth) {
+        return '[Object]'
+      }
+
+      const safeObject: Record<string, unknown> = {}
+      for (const [key, nestedValue] of Object.entries(value).slice(
+        0,
+        this.maxDiagnosticObjectKeys,
+      )) {
+        if (this.isSensitiveDiagnosticKey(key)) {
+          continue
+        }
+        const safeValue = this.toSafeDiagnosticValue(nestedValue, depth + 1)
+        if (safeValue !== undefined) {
+          safeObject[key] = safeValue
+        }
+      }
+      return this.compactDiagnosticObject(safeObject)
+    }
+
+    return this.toSafeDiagnosticString(String(value))
+  }
+
+  // 删除 undefined 和空对象，避免失败上下文出现无效诊断字段。
+  private compactDiagnosticObject(value: Record<string, unknown>) {
+    const compacted: Record<string, unknown> = {}
+    for (const [key, nestedValue] of Object.entries(value)) {
+      if (nestedValue === undefined) {
+        continue
+      }
+      if (
+        this.isPlainObject(nestedValue) &&
+        Object.keys(nestedValue).length === 0
+      ) {
+        continue
+      }
+      compacted[key] = nestedValue
+    }
+    return compacted
+  }
+
+  // 判断对象是否是普通 JSON 对象，避免把请求流或复杂实例写入任务错误。
+  private isPlainObject(value: unknown): value is Record<string, unknown> {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      return false
+    }
+    const prototype = Object.getPrototypeOf(value)
+    return prototype === Object.prototype || prototype === null
+  }
+
+  // 跳过可能携带凭据、请求体或底层请求配置的诊断字段。
+  private isSensitiveDiagnosticKey(key: string) {
+    return /authorization|cookie|headers|body|form|config|request|password|secret|token/i.test(
+      key,
+    )
   }
 
   // 遮蔽错误摘要中的常见凭据片段，避免 progress/detail 或任务错误泄露。

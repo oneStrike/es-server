@@ -96,4 +96,5 @@ export type RemoteImageImportFailureContext = BackgroundTaskObject & {
   originalName?: string
   originalMessage?: string
   originalCode?: number | string
+  originalCause?: unknown
 }

@@ -407,6 +407,70 @@ describe('RemoteImageImportService', () => {
     })
   })
 
+  it('preserves sanitized provider diagnostics when Superbed upload fails', async () => {
+    const { service } = createService()
+    jest.spyOn(service, 'importImage').mockRejectedValueOnce(
+      new HttpException('Superbed 上传失败', 500, {
+        cause: {
+          provider: 'superbed',
+          operation: 'upload',
+          axiosCode: 'ECONNABORTED',
+          httpStatus: 504,
+          responseData: {
+            err: 1,
+            msg: 'quota exceeded',
+            token: 'secret-token',
+          },
+          config: {
+            headers: {
+              Authorization: 'Bearer secret-token',
+            },
+          },
+        },
+      }) as never,
+    )
+
+    let thrownError: unknown
+    try {
+      await service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/comic/001.jpg',
+          },
+        ],
+        ['comic'],
+      )
+    } catch (error) {
+      thrownError = error
+    }
+
+    const cause = (thrownError as { cause?: unknown }).cause
+    expect(cause).toMatchObject({
+      originalCause: {
+        axiosCode: 'ECONNABORTED',
+        httpStatus: 504,
+        operation: 'upload',
+        provider: 'superbed',
+        responseData: {
+          err: 1,
+          msg: 'quota exceeded',
+        },
+      },
+      originalCode: 500,
+      originalMessage: 'Superbed 上传失败',
+      providerImageId: 'image-001',
+      safeSourceUrl: 'https://sw.mangafunb.fun/comic/001.jpg',
+      stage: 'remote-image-import',
+    })
+    const serializedCause = JSON.stringify(cause)
+    expect(serializedCause).not.toContain('secret-token')
+    expect(serializedCause).not.toMatch(
+      /authorization|cookie|headers|body|form|config|request|password|secret|token/i,
+    )
+  })
+
   it('rejects non-HTTPS URLs before DNS lookup or download', async () => {
     const { service } = createService()
 
