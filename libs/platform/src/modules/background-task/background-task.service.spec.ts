@@ -2,6 +2,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { Logger } from '@nestjs/common'
 import type { BackgroundTaskExecutionContext } from './types'
 import {
+  BackgroundTaskOperatorTypeEnum,
   BackgroundTaskStatusEnum,
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
 } from './background-task.constant'
@@ -16,6 +17,8 @@ describe('BackgroundTaskService', () => {
       taskType: 'content.third-party-comic-import',
       status: BackgroundTaskStatusEnum.PROCESSING,
       payload: { comicId: 'comic-1' },
+      operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
+      operatorUserId: 7,
       progress: { percent: 0, message: '处理中' },
       result: null,
       error: null,
@@ -82,9 +85,12 @@ describe('BackgroundTaskService', () => {
         backgroundTask: {
           createdAt: 'createdAt',
           id: 'id',
+          operatorType: 'operatorType',
+          operatorUserId: 'operatorUserId',
           status: 'status',
           taskId: 'taskId',
           taskType: 'taskType',
+          updatedAt: 'updatedAt',
         },
       },
     }
@@ -122,6 +128,10 @@ describe('BackgroundTaskService', () => {
   function getLastPaginationWhere(findPagination: jest.Mock) {
     const lastCall = findPagination.mock.calls.at(-1)
     return lastCall?.[1]?.where
+  }
+
+  function getLastPaginationOptions(findPagination: jest.Mock) {
+    return findPagination.mock.calls.at(-1)?.[1]
   }
 
   function createFailingExecutionHarness(error: Error, rollbackError?: Error) {
@@ -210,6 +220,8 @@ describe('BackgroundTaskService', () => {
       taskType: 'content.third-party-comic-import',
       status: BackgroundTaskStatusEnum.PENDING,
       payload: { comicId: 'comic-1' },
+      operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
+      operatorUserId: 7,
       progress: { percent: 0, message: '等待执行' },
       result: null,
       error: null,
@@ -230,7 +242,11 @@ describe('BackgroundTaskService', () => {
     const task = await service.createTask({
       taskType: 'content.third-party-comic-import',
       payload: { comicId: 'comic-1' },
-    })
+      operator: {
+        type: BackgroundTaskOperatorTypeEnum.ADMIN,
+        userId: 7,
+      },
+    } as never)
 
     expect(registry.has).toHaveBeenCalledWith(
       'content.third-party-comic-import',
@@ -241,6 +257,8 @@ describe('BackgroundTaskService', () => {
         taskType: 'content.third-party-comic-import',
         status: BackgroundTaskStatusEnum.PENDING,
         payload: { comicId: 'comic-1' },
+        operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
+        operatorUserId: 7,
       }),
     )
     expect(task).toEqual(
@@ -248,8 +266,46 @@ describe('BackgroundTaskService', () => {
         taskId: 'task-1',
         taskType: 'content.third-party-comic-import',
         status: BackgroundTaskStatusEnum.PENDING,
+        operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
+        operatorUserId: 7,
       }),
     )
+  })
+
+  it('creates system tasks without an operator user id', async () => {
+    const { insertChain, service } = createService(
+      createBackgroundTaskRow({
+        operatorType: BackgroundTaskOperatorTypeEnum.SYSTEM,
+        operatorUserId: null,
+        status: BackgroundTaskStatusEnum.PENDING,
+      }),
+    )
+
+    await service.createTask({
+      taskType: 'content.third-party-comic-import',
+      payload: { comicId: 'comic-1' },
+      operator: {
+        type: BackgroundTaskOperatorTypeEnum.SYSTEM,
+      },
+    } as never)
+
+    expect(insertChain.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operatorType: BackgroundTaskOperatorTypeEnum.SYSTEM,
+        operatorUserId: null,
+      }),
+    )
+  })
+
+  it('rejects creating tasks without an explicit operator', async () => {
+    const { service } = createService(createBackgroundTaskRow())
+
+    await expect(
+      service.createTask({
+        taskType: 'content.third-party-comic-import',
+        payload: { comicId: 'comic-1' },
+      } as never),
+    ).rejects.toThrow(BusinessException)
   })
 
   it('rejects creating tasks without a registered handler', async () => {
@@ -260,7 +316,10 @@ describe('BackgroundTaskService', () => {
       service.createTask({
         taskType: 'missing.handler',
         payload: {},
-      }),
+        operator: {
+          type: BackgroundTaskOperatorTypeEnum.SYSTEM,
+        },
+      } as never),
     ).rejects.toThrow(BusinessException)
   })
 
@@ -374,6 +433,48 @@ describe('BackgroundTaskService', () => {
         where: expect.anything(),
       }),
     )
+  })
+
+  it('pages only current admin tasks by latest update for notification polling', async () => {
+    const { findPagination, service } = createPagingService()
+    const getMyTaskPage = (
+      service as unknown as {
+        getMyTaskPage?: (
+          input: { pageIndex: number; pageSize: number },
+          userId: number,
+        ) => Promise<{ list: unknown[] }>
+      }
+    ).getMyTaskPage
+
+    expect(typeof getMyTaskPage).toBe('function')
+    if (typeof getMyTaskPage !== 'function') {
+      return
+    }
+
+    const page = await getMyTaskPage.call(
+      service,
+      {
+        pageIndex: 1,
+        pageSize: 10,
+      },
+      7,
+    )
+    const options = getLastPaginationOptions(findPagination)
+
+    expect(options).toEqual(
+      expect.objectContaining({
+        orderBy: { updatedAt: 'desc', id: 'desc' },
+        pageIndex: 1,
+        pageSize: 10,
+        where: expect.anything(),
+      }),
+    )
+    expect(page.list).toEqual([
+      expect.objectContaining({
+        operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
+        operatorUserId: 7,
+      }),
+    ])
   })
 
   it('rolls back instead of marking success when cancellation wins during finalizing', async () => {

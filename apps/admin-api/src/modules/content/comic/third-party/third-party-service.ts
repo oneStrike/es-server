@@ -50,7 +50,7 @@ export class ComicThirdPartyService {
   }
 
   // 确认第三方漫画导入，创建后台任务并立即返回。
-  async confirmImport(dto: ThirdPartyComicImportRequestDto) {
-    return this.importService.confirmImport(dto)
+  async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
+    return this.importService.confirmImport(dto, userId)
   }
 }

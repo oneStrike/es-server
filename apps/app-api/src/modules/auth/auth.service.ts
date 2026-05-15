@@ -252,6 +252,10 @@ export class AuthService {
         .set({
           lastLoginAt: new Date(),
           lastLoginIp: clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
+          lastLoginGeoCountry: clientContext.geoCountry ?? null,
+          lastLoginGeoProvince: clientContext.geoProvince ?? null,
+          lastLoginGeoCity: clientContext.geoCity ?? null,
+          lastLoginGeoIsp: clientContext.geoIsp ?? null,
         })
         .where(eq(this.appUserTable.id, userId)),
     )
@@ -321,7 +325,7 @@ export class AuthService {
    */
   private sanitizeUser(
     user: AppUserSelect,
-    growth: { points: number, experience: number },
+    growth: { points: number; experience: number },
   ) {
     return {
       id: user.id,

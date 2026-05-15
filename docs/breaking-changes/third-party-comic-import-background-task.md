@@ -19,13 +19,21 @@ The endpoint now creates a generic background task and returns `BackgroundTaskDt
 {
   taskId: string
   taskType: 'content.third-party-comic-import'
+  operatorType: 1
+  operatorUserId: number
   status: 1
   payload: Record<string, unknown>
   progress: Record<string, unknown>
 }
 ```
 
-Clients must persist `taskId`, poll `GET admin/background-task/detail` for progress, success result, cancellation, failure, and rollback error information, and stop expecting `ThirdPartyComicImportResultDto` from confirm.
+Clients must persist `taskId`, poll `GET admin/background-task/detail` for task detail when they already hold a concrete task id, and stop expecting `ThirdPartyComicImportResultDto` from confirm. Header/global notification polling must use `GET admin/background-task/my/page`; `GET admin/background-task/page` remains the full management view and is not user-scoped.
+
+`background_task` now records explicit operator metadata:
+
+- `operatorType = 1` means an admin user created the task and `operatorUserId` is required.
+- `operatorType = 2` means a system or historical task and `operatorUserId` must be null.
+- Existing rows are migrated to `operatorType = 2` and `operatorUserId = null`; no sentinel admin user is fabricated.
 
 Delivery notes, PR notes, Swagger/API docs, and client-facing migration notes must all name the same admin client integration lane owner/path above so rollout status remains auditable.
 
@@ -39,6 +47,7 @@ Delivery notes, PR notes, Swagger/API docs, and client-facing migration notes mu
 ## Background Task Operations
 
 - `GET admin/background-task/page`
+- `GET admin/background-task/my/page`
 - `GET admin/background-task/detail`
 - `POST admin/background-task/cancel`
 - `POST admin/background-task/retry`

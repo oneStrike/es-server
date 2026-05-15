@@ -41,6 +41,7 @@ import {
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { BackgroundTaskOperatorTypeEnum } from '@libs/platform/modules/background-task/background-task.constant'
 import { BackgroundTaskService } from '@libs/platform/modules/background-task/background-task.service'
 import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
@@ -137,10 +138,14 @@ export class ThirdPartyComicImportService {
   }
 
   // 确认第三方漫画导入，只创建后台任务，不在 HTTP 请求内执行重型导入。
-  async confirmImport(dto: ThirdPartyComicImportRequestDto) {
+  async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
     return this.backgroundTaskService.createTask({
       taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
       payload: dto as unknown as BackgroundTaskObject,
+      operator: {
+        type: BackgroundTaskOperatorTypeEnum.ADMIN,
+        userId,
+      },
     })
   }
 

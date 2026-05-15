@@ -100,6 +100,22 @@ export const appUser = snakeCase.table(
      */
     lastLoginIp: varchar({ length: 45 }),
     /**
+     * 最后登录IP归属国家/地区
+     */
+    lastLoginGeoCountry: varchar({ length: 100 }),
+    /**
+     * 最后登录IP归属省份
+     */
+    lastLoginGeoProvince: varchar({ length: 100 }),
+    /**
+     * 最后登录IP归属城市
+     */
+    lastLoginGeoCity: varchar({ length: 100 }),
+    /**
+     * 最后登录IP归属运营商
+     */
+    lastLoginGeoIsp: varchar({ length: 100 }),
+    /**
      * 创建时间
      */
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

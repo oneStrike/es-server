@@ -9,6 +9,7 @@ import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
+  BackgroundTaskOperatorTypeEnum,
   BackgroundTaskStatusEnum,
 } from '../background-task.constant'
 
@@ -44,16 +45,6 @@ class BackgroundTaskStatusFieldsDto {
   status!: BackgroundTaskStatusEnum
 }
 
-/** 后台任务负载字段。 */
-class BackgroundTaskPayloadFieldsDto {
-  @ObjectProperty({
-    description: '任务负载',
-    example: { comicId: 'woduzishenji' },
-    required: true,
-  })
-  payload!: Record<string, unknown>
-}
-
 /** 后台任务详情 DTO。 */
 export class BackgroundTaskDto {
   @NumberProperty({
@@ -79,6 +70,23 @@ export class BackgroundTaskDto {
     validation: false,
   })
   taskType!: string
+
+  @EnumProperty({
+    description: '操作者类型（1=后台管理员；2=系统）',
+    enum: BackgroundTaskOperatorTypeEnum,
+    example: BackgroundTaskOperatorTypeEnum.ADMIN,
+    required: true,
+    validation: false,
+  })
+  operatorType!: BackgroundTaskOperatorTypeEnum
+
+  @NumberProperty({
+    description: '后台管理员操作者ID；系统任务为空',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  operatorUserId!: number | null
 
   @EnumProperty({
     description:
@@ -242,17 +250,3 @@ export class BackgroundTaskPageRequestDto extends IntersectionType(
     ),
   ),
 ) {}
-
-/** 创建后台任务 DTO。 */
-export class CreateBackgroundTaskDto extends IntersectionType(
-  BackgroundTaskTypeFieldsDto,
-  BackgroundTaskPayloadFieldsDto,
-) {
-  @NumberProperty({
-    description: '最大允许重试次数',
-    example: BACKGROUND_TASK_DEFAULT_MAX_RETRY,
-    required: false,
-    default: BACKGROUND_TASK_DEFAULT_MAX_RETRY,
-  })
-  maxRetries?: number
-}

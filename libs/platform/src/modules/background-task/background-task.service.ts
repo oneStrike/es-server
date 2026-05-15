@@ -7,6 +7,7 @@ import type {
   BackgroundTaskProgress,
   BackgroundTaskProgressReporter,
   BackgroundTaskProgressReporterOptions,
+  CreateBackgroundTaskInput,
 } from './types'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService } from '@db/core'
@@ -22,14 +23,11 @@ import {
   BACKGROUND_TASK_INITIAL_PROGRESS,
   BACKGROUND_TASK_RETRYABLE_STATUSES,
   BACKGROUND_TASK_WORKER_BATCH_SIZE,
+  BackgroundTaskOperatorTypeEnum,
   BackgroundTaskStatusEnum,
 } from './background-task.constant'
 import { BackgroundTaskRegistry } from './background-task.registry'
-import {
-  BackgroundTaskIdDto,
-  BackgroundTaskPageRequestDto,
-  CreateBackgroundTaskDto,
-} from './dto'
+import { BackgroundTaskIdDto, BackgroundTaskPageRequestDto } from './dto'
 
 class BackgroundTaskCancellationError extends Error {
   constructor() {
@@ -74,7 +72,8 @@ export class BackgroundTaskService {
   }
 
   // 创建待处理后台任务，只入队不执行任何业务处理器。
-  async createTask(input: CreateBackgroundTaskDto) {
+  async createTask(input: CreateBackgroundTaskInput) {
+    const operator = this.normalizeTaskOperator(input.operator)
     if (!this.registry.has(input.taskType)) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -90,6 +89,8 @@ export class BackgroundTaskService {
           .values({
             taskId: randomUUID(),
             taskType: input.taskType,
+            operatorType: operator.operatorType,
+            operatorUserId: operator.operatorUserId,
             status: BackgroundTaskStatusEnum.PENDING,
             payload: input.payload,
             progress: BACKGROUND_TASK_INITIAL_PROGRESS,
@@ -115,8 +116,89 @@ export class BackgroundTaskService {
     return this.toTaskDto(row)
   }
 
+  // 归一化后台任务操作者，确保写库前满足 schema scope 约束。
+  private normalizeTaskOperator(
+    operator: CreateBackgroundTaskInput['operator'],
+  ) {
+    if (!operator) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '后台任务创建必须声明操作者',
+      )
+    }
+
+    if (operator.type === BackgroundTaskOperatorTypeEnum.ADMIN) {
+      if (!Number.isInteger(operator.userId) || operator.userId <= 0) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '后台任务管理员操作者ID非法',
+        )
+      }
+      return {
+        operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
+        operatorUserId: operator.userId,
+      }
+    }
+
+    if (operator.type === BackgroundTaskOperatorTypeEnum.SYSTEM) {
+      return {
+        operatorType: BackgroundTaskOperatorTypeEnum.SYSTEM,
+        operatorUserId: null,
+      }
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '后台任务操作者类型非法',
+    )
+  }
+
   // 分页查询后台任务。
   async getTaskPage(input: BackgroundTaskPageRequestDto) {
+    const conditions = this.buildTaskPageConditions(input)
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = await this.drizzle.ext.findPagination(this.backgroundTask, {
+      where,
+      pageIndex: input.pageIndex,
+      pageSize: input.pageSize,
+      orderBy: input.orderBy?.trim()
+        ? input.orderBy
+        : { createdAt: 'desc', id: 'desc' },
+    })
+
+    return {
+      ...page,
+      list: page.list.map((row) => this.toTaskDto(row)),
+    }
+  }
+
+  // 分页查询当前后台管理员创建的后台任务。
+  async getMyTaskPage(input: BackgroundTaskPageRequestDto, userId: number) {
+    const conditions = this.buildTaskPageConditions(input)
+    conditions.push(
+      eq(
+        this.backgroundTask.operatorType,
+        BackgroundTaskOperatorTypeEnum.ADMIN,
+      ),
+      eq(this.backgroundTask.operatorUserId, userId),
+    )
+    const page = await this.drizzle.ext.findPagination(this.backgroundTask, {
+      where: and(...conditions),
+      pageIndex: input.pageIndex,
+      pageSize: input.pageSize,
+      orderBy: input.orderBy?.trim()
+        ? input.orderBy
+        : { updatedAt: 'desc', id: 'desc' },
+    })
+
+    return {
+      ...page,
+      list: page.list.map((row) => this.toTaskDto(row)),
+    }
+  }
+
+  // 构建后台任务分页通用筛选条件。
+  private buildTaskPageConditions(input: BackgroundTaskPageRequestDto) {
     const conditions: SQL[] = []
     if (input.taskId) {
       conditions.push(eq(this.backgroundTask.taskId, input.taskId))
@@ -136,20 +218,7 @@ export class BackgroundTaskService {
       conditions.push(lte(this.backgroundTask.createdAt, endDate))
     }
 
-    const where = conditions.length > 0 ? and(...conditions) : undefined
-    const page = await this.drizzle.ext.findPagination(this.backgroundTask, {
-      where,
-      pageIndex: input.pageIndex,
-      pageSize: input.pageSize,
-      orderBy: input.orderBy?.trim()
-        ? input.orderBy
-        : { createdAt: 'desc', id: 'desc' },
-    })
-
-    return {
-      ...page,
-      list: page.list.map((row) => this.toTaskDto(row)),
-    }
+    return conditions
   }
 
   // 查询后台任务详情。
@@ -809,6 +878,8 @@ export class BackgroundTaskService {
       id: Number(row.id),
       taskId: row.taskId,
       taskType: row.taskType,
+      operatorType: row.operatorType,
+      operatorUserId: row.operatorUserId,
       status: this.normalizeStatus(row.status),
       payload: this.asObject(row.payload),
       progress: this.asObject(row.progress),

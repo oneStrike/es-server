@@ -13,6 +13,14 @@ export const BACKGROUND_TASK_INITIAL_PROGRESS = {
   message: '等待执行',
 } as const
 
+/** 后台任务操作者类型。 */
+export enum BackgroundTaskOperatorTypeEnum {
+  /** 后台管理员。 */
+  ADMIN = 1,
+  /** 系统任务。 */
+  SYSTEM = 2,
+}
+
 /** 通用后台任务状态。 */
 export enum BackgroundTaskStatusEnum {
   /** 待处理。 */

@@ -1,4 +1,4 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { BackgroundTaskService } from '@libs/platform/modules/background-task/background-task.service'
 import {
@@ -24,6 +24,19 @@ export class AdminBackgroundTaskController {
   // 分页查询后台任务。
   async getTaskPage(@Query() query: BackgroundTaskPageRequestDto) {
     return this.backgroundTaskService.getTaskPage(query)
+  }
+
+  @Get('my/page')
+  @ApiPageDoc({
+    summary: '分页查询我的后台任务',
+    model: BackgroundTaskDto,
+  })
+  // 分页查询当前后台管理员创建的后台任务。
+  async getMyTaskPage(
+    @Query() query: BackgroundTaskPageRequestDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.backgroundTaskService.getMyTaskPage(query, userId)
   }
 
   @Get('detail')

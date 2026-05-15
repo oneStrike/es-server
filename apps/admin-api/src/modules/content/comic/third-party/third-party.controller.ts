@@ -11,7 +11,7 @@ import {
   ThirdPartyComicImportPreviewRequestDto,
   ThirdPartyComicImportRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { BackgroundTaskDto } from '@libs/platform/modules/background-task/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -98,7 +98,10 @@ export class ComicThirdPartyController {
     },
   })
   // 确认第三方漫画导入并创建后台任务。
-  async confirmImport(@Body() body: ThirdPartyComicImportRequestDto) {
-    return this.thirdPartyService.confirmImport(body)
+  async confirmImport(
+    @Body() body: ThirdPartyComicImportRequestDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.thirdPartyService.confirmImport(body, userId)
   }
 }

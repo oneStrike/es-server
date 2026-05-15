@@ -311,6 +311,12 @@ export class UserService {
         banUntil: user.banUntil ?? undefined,
         counts: this.mapUserCenterCounts(counts),
       },
+      lastLoginGeo: {
+        geoCountry: user.lastLoginGeoCountry ?? undefined,
+        geoProvince: user.lastLoginGeoProvince ?? undefined,
+        geoCity: user.lastLoginGeoCity ?? undefined,
+        geoIsp: user.lastLoginGeoIsp ?? undefined,
+      },
       assets: this.mapUserCenterAssets(assets),
       message: {
         notificationUnread: messageSummary.notificationUnread,

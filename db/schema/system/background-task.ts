@@ -25,6 +25,10 @@ export const backgroundTask = snakeCase.table(
     taskId: varchar({ length: 36 }).notNull(),
     /** 任务类型，由业务处理器注册。 */
     taskType: varchar({ length: 120 }).notNull(),
+    /** 操作者类型（1=后台管理员，2=系统）。 */
+    operatorType: smallint().notNull(),
+    /** 后台管理员操作者 ID；系统任务为空。 */
+    operatorUserId: integer(),
     /** 当前任务状态（1=待处理，2=处理中，3=最终写入中，4=成功，5=失败，6=已取消，7=回滚失败）。 */
     status: smallint().notNull(),
     /** 原始任务负载。 */
@@ -84,6 +88,20 @@ export const backgroundTask = snakeCase.table(
     index('background_task_updated_at_id_idx').on(
       table.updatedAt.desc(),
       table.id.desc(),
+    ),
+    index('background_task_operator_updated_at_id_idx').on(
+      table.operatorType,
+      table.operatorUserId,
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
+    check(
+      'background_task_operator_type_valid_chk',
+      sql`${table.operatorType} in (1, 2)`,
+    ),
+    check(
+      'background_task_operator_user_id_scope_chk',
+      sql`(${table.operatorType} = 1 and ${table.operatorUserId} is not null) or (${table.operatorType} = 2 and ${table.operatorUserId} is null)`,
     ),
     check(
       'background_task_status_valid_chk',

@@ -3,7 +3,10 @@ import {
   ThirdPartyComicImportCoverModeEnum,
   ThirdPartyComicImportModeEnum,
 } from '@libs/content/work/content/dto/content.dto'
-import { BackgroundTaskStatusEnum } from '@libs/platform/modules/background-task/background-task.constant'
+import {
+  BackgroundTaskOperatorTypeEnum,
+  BackgroundTaskStatusEnum,
+} from '@libs/platform/modules/background-task/background-task.constant'
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
 import { THIRD_PARTY_COMIC_IMPORT_TASK_TYPE } from '../third-party-comic-import.constant'
 
@@ -118,6 +121,8 @@ describe('ThirdPartyComicImportService', () => {
     }
     const backgroundTaskService = {
       createTask: jest.fn(async (input) => ({
+        operatorType: input.operator?.type,
+        operatorUserId: input.operator?.userId ?? null,
         taskId: 'task-001',
         taskType: input.taskType,
         status: BackgroundTaskStatusEnum.PENDING,
@@ -312,10 +317,17 @@ describe('ThirdPartyComicImportService', () => {
       workService,
     } = createService()
 
-    const result = await service.confirmImport(createImportRequest())
+    const confirmImport = service.confirmImport as unknown as (
+      dto: ReturnType<typeof createImportRequest>,
+      userId: number,
+    ) => Promise<unknown>
+
+    const result = await confirmImport.call(service, createImportRequest(), 7)
 
     expect(result).toEqual(
       expect.objectContaining({
+        operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
+        operatorUserId: 7,
         status: BackgroundTaskStatusEnum.PENDING,
         taskId: 'task-001',
         taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
@@ -327,6 +339,10 @@ describe('ThirdPartyComicImportService', () => {
         comicId: 'woduzishenji',
         mode: ThirdPartyComicImportModeEnum.CREATE_NEW,
       }),
+      operator: {
+        type: BackgroundTaskOperatorTypeEnum.ADMIN,
+        userId: 7,
+      },
     })
     expect(provider.getDetail).not.toHaveBeenCalled()
     expect(workService.createWorkReturningId).not.toHaveBeenCalled()

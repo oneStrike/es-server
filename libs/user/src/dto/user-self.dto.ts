@@ -407,6 +407,47 @@ export class UserCenterProfileDto extends PickType(BaseAppUserDto, [
 }
 
 /**
+ * 用户中心最近一次登录IP属地 DTO。
+ */
+export class UserCenterLastLoginGeoDto {
+  @StringProperty({
+    description: '最近一次登录IP归属国家/地区',
+    example: '中国',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoCountry?: string
+
+  @StringProperty({
+    description: '最近一次登录IP归属省份',
+    example: '广东省',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoProvince?: string
+
+  @StringProperty({
+    description: '最近一次登录IP归属城市',
+    example: '深圳市',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoCity?: string
+
+  @StringProperty({
+    description: '最近一次登录IP归属运营商',
+    example: '电信',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoIsp?: string
+}
+
+/**
  * 用户中心通知未读摘要 DTO。
  */
 export class UserCenterNotificationUnreadDto extends BaseNotificationUnreadDto {}
@@ -458,6 +499,14 @@ export class UserCenterDto {
     nullable: false,
   })
   profile!: UserCenterProfileDto
+
+  @NestedProperty({
+    description: '最近一次登录IP属地',
+    type: UserCenterLastLoginGeoDto,
+    validation: false,
+    nullable: false,
+  })
+  lastLoginGeo!: UserCenterLastLoginGeoDto
 
   @NestedProperty({
     description: '资产统计',

@@ -1,10 +1,6 @@
 import { plainToInstance } from 'class-transformer'
 import { validate } from 'class-validator'
-import {
-  BackgroundTaskDto,
-  BackgroundTaskIdDto,
-  CreateBackgroundTaskDto,
-} from './background-task.dto'
+import { BackgroundTaskDto, BackgroundTaskIdDto } from './background-task.dto'
 
 describe('BackgroundTask DTO validation ownership', () => {
   it('keeps request taskId validation enabled while output taskId is documentation only', async () => {
@@ -22,17 +18,15 @@ describe('BackgroundTask DTO validation ownership', () => {
     expect(outputErrors).toHaveLength(0)
   })
 
-  it('keeps create task payload validation enabled', async () => {
+  it('keeps operator fields as output documentation without request validation', async () => {
     const errors = await validate(
-      plainToInstance(CreateBackgroundTaskDto, {
-        payload: 'not-object',
-        taskType: 123,
+      plainToInstance(BackgroundTaskDto, {
+        operatorType: 'admin',
+        operatorUserId: '7',
       }),
+      { forbidUnknownValues: false },
     )
 
-    expect(errors.map((error) => error.property).sort()).toEqual([
-      'payload',
-      'taskType',
-    ])
+    expect(errors).toHaveLength(0)
   })
 })
