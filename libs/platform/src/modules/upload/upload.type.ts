@@ -88,6 +88,43 @@ export interface UploadResponseCarrier {
 }
 
 /**
+ * Superbed 原生传输失败的最小诊断结构。
+ * 用于替代 AxiosError 后保留 HTTP 状态、状态文案和安全响应摘要。
+ */
+export interface SuperbedNativeTransportError extends Error {
+  /** 原生传输或本地 helper 生成的错误码。 */
+  code?: string
+  /** 第三方 HTTP 响应状态码。 */
+  httpStatus?: number
+  /** 已脱敏前的第三方响应原始摘要，消费方必须再次走脱敏管道。 */
+  responseData?: unknown
+  /** 第三方 HTTP 响应状态文案。 */
+  statusText?: string
+}
+
+/**
+ * Superbed 原生 POST 请求体。
+ * multipart 上传与 JSON 删除共用同一个 fetch helper。
+ */
+export type SuperbedPostBody = FormData | Record<string, unknown>
+
+/**
+ * Superbed 原生 POST 请求选项。
+ */
+export interface SuperbedPostOptions {
+  /** 请求超时时间；不传时不主动创建 AbortSignal。 */
+  timeoutMs?: number
+}
+
+/**
+ * Superbed 响应 JSON 读取选项。
+ */
+export interface SuperbedReadResponseOptions {
+  /** 非 2xx 响应允许不是 JSON，以便优先保留 HTTP 诊断。 */
+  allowInvalidJson?: boolean
+}
+
+/**
  * 上传文件大类。
  * 用于场景校验、对象 key 规划和 provider 兼容处理。
  */

@@ -14,6 +14,14 @@ export interface CopyMangaNetworkResponse {
   }
 }
 
+/** CopyManga 原生 fetch 传输错误的最小诊断结构。 */
+export interface CopyMangaTransportError extends Error {
+  /** 非 2xx 响应对应的 HTTP 状态码。 */
+  response?: {
+    status?: number
+  }
+}
+
 /** CopyManga 分类、作者、地区等命名项的原始形状。 */
 export interface CopyMangaNamedItem {
   name?: string

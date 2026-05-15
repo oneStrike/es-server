@@ -1,20 +1,21 @@
-import type FormData from 'form-data'
 import type {
   PreparedUploadFile,
+  SuperbedNativeTransportError,
+  SuperbedPostBody,
+  SuperbedPostOptions,
+  SuperbedReadResponseOptions,
   UploadDeleteTarget,
   UploadExecutionResult,
   UploadSystemConfig,
 } from './upload.type'
-import { createReadStream } from 'node:fs'
+import { openAsBlob } from 'node:fs'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
-import axios from 'axios'
-import NodeFormData from 'form-data'
 import { UploadProviderEnum } from './upload.type'
 
 @Injectable()
 export class SuperbedUploadProvider {
   private readonly uploadUrl = 'https://api.superbed.cn/upload'
-  private readonly uploadTimeoutMs = 300000
+  private readonly requestTimeoutMs = 300000
   private readonly maxDiagnosticStringLength = 500
   private readonly maxDiagnosticDepth = 2
   private readonly maxDiagnosticArrayLength = 5
@@ -38,12 +39,13 @@ export class SuperbedUploadProvider {
     }
     const sensitiveValues = this.buildSensitiveDiagnosticValues(config.token)
 
-    const form = new NodeFormData()
+    const form = new FormData()
     form.append('token', config.token)
-    form.append('file', createReadStream(file.tempPath), {
-      contentType: file.mimeType,
-      filename: file.finalName,
-    })
+    form.append(
+      'file',
+      await openAsBlob(file.tempPath, { type: file.mimeType }),
+      file.finalName,
+    )
 
     if (config.categories) {
       form.append('categories', config.categories)
@@ -54,11 +56,8 @@ export class SuperbedUploadProvider {
 
     const startedAt = Date.now()
     try {
-      const { data } = await axios.post(this.uploadUrl, form, {
-        headers: form.getHeaders(),
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-        timeout: this.uploadTimeoutMs,
+      const data = await this.postJson(this.uploadUrl, form, {
+        timeoutMs: this.requestTimeoutMs,
       })
 
       if (data?.err !== 0 || !data?.url) {
@@ -110,11 +109,14 @@ export class SuperbedUploadProvider {
     }
 
     try {
-      const { data } = await axios.post(
+      const data = await this.postJson(
         this.uploadUrl.replace('/upload', '/delete'),
         {
           token: config.token,
           urls: [target.filePath],
+        },
+        {
+          timeoutMs: this.requestTimeoutMs,
         },
       )
       if (data?.err !== 0) {
@@ -158,7 +160,7 @@ export class SuperbedUploadProvider {
     })
   }
 
-  // 为请求异常生成脱敏诊断摘要，不保留 axios config/request/body。
+  // 为请求异常生成脱敏诊断摘要，不保留底层请求配置或请求体。
   private buildFailureCause(
     operation: 'upload' | 'delete',
     error: unknown,
@@ -171,19 +173,22 @@ export class SuperbedUploadProvider {
       ...this.buildSafeExtraDiagnostics(extraDiagnostics, sensitiveValues),
     }
 
-    if (axios.isAxiosError(error)) {
-      cause.axiosCode = this.toSafeDiagnosticValue(error.code, sensitiveValues)
+    if (this.isNativeTransportError(error)) {
+      cause.transportCode = this.toSafeDiagnosticValue(
+        error.code,
+        sensitiveValues,
+      )
       cause.message = this.toSafeDiagnosticValue(error.message, sensitiveValues)
       cause.httpStatus = this.toSafeDiagnosticValue(
-        error.response?.status,
+        error.httpStatus,
         sensitiveValues,
       )
       cause.statusText = this.toSafeDiagnosticValue(
-        error.response?.statusText,
+        error.statusText,
         sensitiveValues,
       )
       cause.responseData = this.pickSafeSuperbedResponseData(
-        error.response?.data,
+        error.responseData,
         sensitiveValues,
       )
       return this.compactDiagnosticObject(cause)
@@ -204,7 +209,7 @@ export class SuperbedUploadProvider {
     startedAt: number,
   ) {
     return {
-      timeoutMs: this.uploadTimeoutMs,
+      timeoutMs: this.requestTimeoutMs,
       elapsedMs: Math.max(0, Date.now() - startedAt),
       fileSize: file.fileSize,
       mimeType: file.mimeType,
@@ -388,5 +393,76 @@ export class SuperbedUploadProvider {
     if (typeof value === 'boolean') {
       form.append(name, String(value))
     }
+  }
+
+  // 使用原生 fetch 发送 JSON 或 multipart POST，并统一 HTTP 失败诊断形状。
+  private async postJson(
+    url: string,
+    body: SuperbedPostBody,
+    options: SuperbedPostOptions = {},
+  ) {
+    const isMultipartBody = body instanceof FormData
+    const requestBody = isMultipartBody ? body : JSON.stringify(body)
+    const headers = isMultipartBody
+      ? undefined
+      : {
+          'content-type': 'application/json',
+        }
+    const signal =
+      options.timeoutMs === undefined
+        ? undefined
+        : AbortSignal.timeout(options.timeoutMs)
+
+    const response = await fetch(url, {
+      body: requestBody,
+      headers,
+      method: 'POST',
+      signal,
+    })
+    const responseData = await this.readResponseJson(response, {
+      allowInvalidJson: !response.ok,
+    })
+    if (!response.ok) {
+      throw Object.assign(new Error(`HTTP ${response.status}`), {
+        code: `HTTP_${response.status}`,
+        httpStatus: response.status,
+        responseData,
+        statusText: response.statusText,
+      } satisfies Partial<SuperbedNativeTransportError>)
+    }
+    return responseData
+  }
+
+  // 读取第三方 JSON 响应；畸形 JSON 按请求异常进入统一诊断。
+  private async readResponseJson(
+    response: Response,
+    options: SuperbedReadResponseOptions = {},
+  ) {
+    try {
+      return await response.json()
+    } catch (error) {
+      if (options.allowInvalidJson) {
+        return undefined
+      }
+      throw Object.assign(new Error('Superbed 响应不是合法 JSON'), {
+        code: 'INVALID_JSON',
+        cause: error,
+        httpStatus: response.status,
+        statusText: response.statusText,
+      } satisfies Partial<SuperbedNativeTransportError>)
+    }
+  }
+
+  // 识别本 provider 生成的原生传输错误。
+  private isNativeTransportError(
+    error: unknown,
+  ): error is SuperbedNativeTransportError {
+    return (
+      error instanceof Error &&
+      ('code' in error ||
+        'httpStatus' in error ||
+        'responseData' in error ||
+        'statusText' in error)
+    )
   }
 }

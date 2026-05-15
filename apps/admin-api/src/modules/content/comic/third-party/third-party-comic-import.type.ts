@@ -8,6 +8,8 @@ import type {
   BackgroundTaskObject,
 } from '@libs/platform/modules/background-task/types'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
+import type { Buffer } from 'node:buffer'
+import type { LookupAddress } from 'node:dns'
 
 /** 第三方漫画更新章节的回滚快照。 */
 export type ThirdPartyComicUpdatedChapterSnapshot = BackgroundTaskObject & {
@@ -85,6 +87,18 @@ export type RemoteImageImportSuccessPayload = BackgroundTaskObject & {
 export type RemoteImageImportSuccessHandler = (
   payload: RemoteImageImportSuccessPayload,
 ) => Promise<void>
+
+/** 完成基础 URL 与 DNS 校验后的远程图片请求目标。 */
+export interface SafeRemoteImageUrl {
+  url: URL
+  address?: LookupAddress
+}
+
+/** 原生下载完成后的远程图片响应摘要。 */
+export interface DownloadedRemoteImage {
+  buffer: Buffer
+  contentType: string
+}
 
 /** 远程图片导入失败上下文，只包含可安全落库的定位信息。 */
 export type RemoteImageImportFailureContext = BackgroundTaskObject & {

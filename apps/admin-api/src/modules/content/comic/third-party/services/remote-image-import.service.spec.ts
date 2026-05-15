@@ -1,12 +1,16 @@
 import type { UploadService } from '@libs/platform/modules/upload/upload.service'
 import type { ConfigReader } from '@libs/system-config/config-reader'
 import type { ConfigService } from '@nestjs/config'
+import type { ClientRequest, IncomingMessage, RequestOptions } from 'node:http'
+import type { LookupFunction } from 'node:net'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { HttpException } from '@nestjs/common'
-import axios from 'axios'
 import { lookup } from 'node:dns/promises'
+import { EventEmitter } from 'node:events'
 import { promises as fs } from 'node:fs'
+import { request as httpsRequest } from 'node:https'
+import { PassThrough } from 'node:stream'
 import { RemoteImageImportService } from './remote-image-import.service'
 
 jest.mock('@libs/platform/modules/upload/upload.service', () => ({
@@ -17,11 +21,9 @@ jest.mock('node:dns/promises', () => ({
   lookup: jest.fn(),
 }))
 
-jest.mock('axios', () => ({
-  __esModule: true,
-  default: {
-    get: jest.fn(),
-  },
+jest.mock('node:https', () => ({
+  ...jest.requireActual('node:https'),
+  request: jest.fn(),
 }))
 
 jest.mock('uuid', () => ({
@@ -29,7 +31,7 @@ jest.mock('uuid', () => ({
 }))
 
 describe('RemoteImageImportService', () => {
-  const mockedAxiosGet = jest.mocked(axios.get)
+  const mockedHttpsRequest = jest.mocked(httpsRequest) as unknown as jest.Mock
   const mockedLookup = jest.mocked(lookup)
   const uploadTmpDir = 'D:\\code\\es\\es-server\\uploads\\tmp'
   const tempDir = `${uploadTmpDir}\\third-party-comic-test`
@@ -38,6 +40,71 @@ describe('RemoteImageImportService', () => {
     addresses: Array<{ address: string; family: 4 | 6 }>,
   ) {
     mockedLookup.mockResolvedValueOnce(addresses as never)
+  }
+
+  // 模拟原生 https 响应流，锁定下载行为而不依赖真实网络。
+  function mockImageDownload({
+    body = Buffer.from([1, 2, 3]),
+    headers = { 'content-type': 'image/jpeg' },
+    inspect,
+    statusCode = 200,
+    statusMessage = 'OK',
+  }: {
+    body?: Buffer
+    headers?: Record<string, string>
+    inspect?: (url: URL, options: RequestOptions) => void
+    statusCode?: number
+    statusMessage?: string
+  } = {}) {
+    mockedHttpsRequest.mockImplementationOnce(
+      (
+        url: URL,
+        options: RequestOptions,
+        callback: (response: IncomingMessage) => void,
+      ) => {
+        inspect?.(url, options)
+        const clientRequest = new EventEmitter() as EventEmitter &
+          Pick<ClientRequest, 'destroy' | 'end' | 'setTimeout'>
+        clientRequest.destroy = jest.fn((error?: Error) => {
+          if (error) {
+            clientRequest.emit('error', error)
+          }
+          return clientRequest as ClientRequest
+        }) as never
+        clientRequest.end = jest.fn(() => {
+          const response = new PassThrough() as unknown as IncomingMessage &
+            PassThrough
+          Object.assign(response, {
+            headers,
+            statusCode,
+            statusMessage,
+          })
+          callback(response)
+          response.end(body)
+        }) as never
+        clientRequest.setTimeout = jest.fn(() => clientRequest) as never
+        return clientRequest
+      },
+    )
+  }
+
+  // 模拟原生请求层失败，验证下载错误按业务异常收口。
+  function mockImageRequestError(error: Error) {
+    mockedHttpsRequest.mockImplementationOnce(() => {
+      const clientRequest = new EventEmitter() as EventEmitter &
+        Pick<ClientRequest, 'destroy' | 'end' | 'setTimeout'>
+      clientRequest.destroy = jest.fn((destroyError?: Error) => {
+        if (destroyError) {
+          clientRequest.emit('error', destroyError)
+        }
+        return clientRequest as ClientRequest
+      }) as never
+      clientRequest.end = jest.fn(() => {
+        clientRequest.emit('error', error)
+      }) as never
+      clientRequest.setTimeout = jest.fn(() => clientRequest) as never
+      return clientRequest
+    })
   }
 
   function createService(enableAddressGuard = true) {
@@ -86,6 +153,7 @@ describe('RemoteImageImportService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    mockedHttpsRequest.mockReset()
     jest.spyOn(fs, 'mkdir').mockResolvedValue(undefined)
     jest.spyOn(fs, 'mkdtemp').mockResolvedValue(tempDir)
     jest.spyOn(fs, 'writeFile').mockResolvedValue(undefined)
@@ -99,32 +167,12 @@ describe('RemoteImageImportService', () => {
   it('uses the validated DNS answer for the outbound image request by default', async () => {
     const { service, uploadService, configReader, configService } =
       createService()
+    let lookupFromRequest: LookupFunction | undefined
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
-    mockedAxiosGet.mockImplementationOnce(async (_url, config) => {
-      const lookupFromAgent = config?.httpsAgent?.options?.lookup
-      expect(lookupFromAgent).toBeDefined()
-
-      await expect(
-        new Promise((resolve, reject) => {
-          lookupFromAgent?.(
-            'sw.mangafunb.fun',
-            {},
-            (error, address, family) => {
-              if (error) {
-                reject(error)
-                return
-              }
-              resolve({ address, family })
-            },
-          )
-        }),
-      ).resolves.toEqual({ address: '93.184.216.34', family: 4 })
-
-      expect(mockedLookup).toHaveBeenCalledTimes(1)
-      return {
-        data: Buffer.from([1, 2, 3]),
-        headers: { 'content-type': 'image/jpeg' },
-      }
+    mockImageDownload({
+      inspect: (_url, options) => {
+        lookupFromRequest = options.lookup as LookupFunction
+      },
     })
 
     await expect(
@@ -138,6 +186,23 @@ describe('RemoteImageImportService', () => {
       },
     })
 
+    expect(lookupFromRequest).toBeDefined()
+    await expect(
+      new Promise((resolve, reject) => {
+        lookupFromRequest?.(
+          'sw.mangafunb.fun',
+          {},
+          (error, address, family) => {
+            if (error) {
+              reject(error)
+              return
+            }
+            resolve({ address, family })
+          },
+        )
+      }),
+    ).resolves.toEqual({ address: '93.184.216.34', family: 4 })
+    expect(mockedLookup).toHaveBeenCalledTimes(1)
     expect(uploadService.uploadLocalFileWithDeleteTarget).toHaveBeenCalledWith(
       expect.objectContaining({
         localPath: expect.stringContaining('third-party-comic-test'),
@@ -154,6 +219,14 @@ describe('RemoteImageImportService', () => {
     expect(configService.get).toHaveBeenCalledWith('upload')
     expect(configReader.getRemoteImageImportSecurityConfig).toHaveBeenCalled()
     expect(fs.mkdir).toHaveBeenCalledWith(uploadTmpDir, { recursive: true })
+    const request = mockedHttpsRequest.mock.results[0]?.value as Pick<
+      ClientRequest,
+      'setTimeout'
+    >
+    expect(request.setTimeout).toHaveBeenCalledWith(
+      300000,
+      expect.any(Function),
+    )
     expect(fs.mkdtemp).toHaveBeenCalledWith(
       expect.stringContaining(uploadTmpDir),
     )
@@ -168,12 +241,11 @@ describe('RemoteImageImportService', () => {
 
   it('skips DNS address guard when system security config disables it', async () => {
     const { service, configReader } = createService(false)
-    mockedAxiosGet.mockImplementationOnce(async (_url, config) => {
-      expect(config?.httpsAgent).toBeUndefined()
-      return {
-        data: Buffer.from([1, 2, 3]),
-        headers: { 'content-type': 'image/jpeg' },
-      }
+    let lookupFromRequest: unknown
+    mockImageDownload({
+      inspect: (_url, options) => {
+        lookupFromRequest = options.lookup
+      },
     })
 
     await expect(
@@ -184,6 +256,7 @@ describe('RemoteImageImportService', () => {
       },
     })
 
+    expect(lookupFromRequest).toBeUndefined()
     expect(mockedLookup).not.toHaveBeenCalled()
     expect(configReader.getRemoteImageImportSecurityConfig).toHaveBeenCalled()
   })
@@ -414,7 +487,7 @@ describe('RemoteImageImportService', () => {
         cause: {
           provider: 'superbed',
           operation: 'upload',
-          axiosCode: 'ECONNABORTED',
+          transportCode: 'ETIMEDOUT',
           httpStatus: 504,
           responseData: {
             err: 1,
@@ -449,7 +522,6 @@ describe('RemoteImageImportService', () => {
     const cause = (thrownError as { cause?: unknown }).cause
     expect(cause).toMatchObject({
       originalCause: {
-        axiosCode: 'ECONNABORTED',
         httpStatus: 504,
         operation: 'upload',
         provider: 'superbed',
@@ -457,6 +529,7 @@ describe('RemoteImageImportService', () => {
           err: 1,
           msg: 'quota exceeded',
         },
+        transportCode: 'ETIMEDOUT',
       },
       originalCode: 500,
       originalMessage: 'Superbed 上传失败',
@@ -479,7 +552,7 @@ describe('RemoteImageImportService', () => {
     ).rejects.toThrow('远程图片必须使用 HTTPS')
 
     expect(mockedLookup).not.toHaveBeenCalled()
-    expect(mockedAxiosGet).not.toHaveBeenCalled()
+    expect(mockedHttpsRequest).not.toHaveBeenCalled()
   })
 
   it('rejects non-allowlisted hosts before DNS lookup or download', async () => {
@@ -490,7 +563,7 @@ describe('RemoteImageImportService', () => {
     ).rejects.toThrow('远程图片域名不在允许范围内')
 
     expect(mockedLookup).not.toHaveBeenCalled()
-    expect(mockedAxiosGet).not.toHaveBeenCalled()
+    expect(mockedHttpsRequest).not.toHaveBeenCalled()
   })
 
   it('rejects empty DNS answers before download', async () => {
@@ -501,7 +574,7 @@ describe('RemoteImageImportService', () => {
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
     ).rejects.toThrow('远程图片解析到不安全地址')
 
-    expect(mockedAxiosGet).not.toHaveBeenCalled()
+    expect(mockedHttpsRequest).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -521,7 +594,7 @@ describe('RemoteImageImportService', () => {
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
     ).rejects.toThrow('远程图片解析到不安全地址')
 
-    expect(mockedAxiosGet).not.toHaveBeenCalled()
+    expect(mockedHttpsRequest).not.toHaveBeenCalled()
   })
 
   it.each(['::', '::1', 'fe80::1', 'fc00::1', 'fd00::1', 'ff00::1'])(
@@ -536,7 +609,7 @@ describe('RemoteImageImportService', () => {
         ]),
       ).rejects.toThrow('远程图片解析到不安全地址')
 
-      expect(mockedAxiosGet).not.toHaveBeenCalled()
+      expect(mockedHttpsRequest).not.toHaveBeenCalled()
     },
   )
 
@@ -548,14 +621,47 @@ describe('RemoteImageImportService', () => {
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
     ).rejects.toThrow('远程图片解析到不安全地址')
 
-    expect(mockedAxiosGet).not.toHaveBeenCalled()
+    expect(mockedHttpsRequest).not.toHaveBeenCalled()
+  })
+
+  it('rejects HTTP redirects instead of following them', async () => {
+    const { service } = createService()
+    mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
+    mockImageDownload({
+      headers: { location: 'https://sw.mangafunb.fun/other.jpg' },
+      statusCode: 302,
+      statusMessage: 'Found',
+    })
+
+    await expect(
+      service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
+    ).rejects.toThrow('远程图片下载失败')
+  })
+
+  it('wraps native request errors as remote image business failures', async () => {
+    const { service } = createService()
+    mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
+    mockImageRequestError(new Error('socket hang up'))
+
+    await expect(
+      service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: '远程图片下载失败',
+      cause: {
+        transportError: {
+          message: 'socket hang up',
+          name: 'Error',
+        },
+      },
+    })
   })
 
   it('rejects non-image content types', async () => {
     const { service } = createService()
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
-    mockedAxiosGet.mockResolvedValueOnce({
-      data: Buffer.from('not image'),
+    mockImageDownload({
+      body: Buffer.from('not image'),
       headers: { 'content-type': 'text/html' },
     })
 
@@ -567,8 +673,8 @@ describe('RemoteImageImportService', () => {
   it('rejects oversized image payloads', async () => {
     const { service } = createService()
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
-    mockedAxiosGet.mockResolvedValueOnce({
-      data: Buffer.alloc(10 * 1024 * 1024 + 1),
+    mockImageDownload({
+      body: Buffer.alloc(10 * 1024 * 1024 + 1),
       headers: { 'content-type': 'image/jpeg' },
     })
 
@@ -583,10 +689,7 @@ describe('RemoteImageImportService', () => {
       new Error('upload failed'),
     )
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
-    mockedAxiosGet.mockResolvedValueOnce({
-      data: Buffer.from([1, 2, 3]),
-      headers: { 'content-type': 'image/jpeg' },
-    })
+    mockImageDownload()
 
     await expect(
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
@@ -602,10 +705,7 @@ describe('RemoteImageImportService', () => {
     const { service, uploadService } = createService()
     jest.spyOn(fs, 'writeFile').mockRejectedValueOnce(new Error('write failed'))
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
-    mockedAxiosGet.mockResolvedValueOnce({
-      data: Buffer.from([1, 2, 3]),
-      headers: { 'content-type': 'image/jpeg' },
-    })
+    mockImageDownload()
 
     await expect(
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),

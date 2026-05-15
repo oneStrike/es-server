@@ -2,15 +2,18 @@ import type { ThirdPartyComicImageDto } from '@libs/content/work/content/dto/con
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { LookupAddress } from 'node:dns'
+import type { IncomingMessage, RequestOptions } from 'node:http'
 import type { LookupFunction } from 'node:net'
 import type {
+  DownloadedRemoteImage,
   RemoteImageImportFailureContext,
   RemoteImageImportSuccessHandler,
+  SafeRemoteImageUrl,
 } from '../third-party-comic-import.type'
 import { Buffer } from 'node:buffer'
 import { lookup } from 'node:dns/promises'
 import { promises as fs } from 'node:fs'
-import { Agent as HttpsAgent } from 'node:https'
+import { request as httpsRequest } from 'node:https'
 import { isIP } from 'node:net'
 import { basename, extname, join } from 'node:path'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -19,17 +22,12 @@ import { UploadService } from '@libs/platform/modules/upload/upload.service'
 import { ConfigReader } from '@libs/system-config/config-reader'
 import { HttpException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 
 const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
 const MAX_REMOTE_IMAGE_COUNT = 200
+const REMOTE_IMAGE_DOWNLOAD_TIMEOUT_MS = 300000
 const COPY_MANGA_IMAGE_HOST_PATTERN = /^[a-z0-9-]+\.mangafunb\.fun$/i
-
-interface SafeRemoteImageUrl {
-  url: URL
-  address?: LookupAddress
-}
 
 @Injectable()
 export class RemoteImageImportService {
@@ -116,31 +114,14 @@ export class RemoteImageImportService {
   // 将远程图片下载到临时文件，默认固定已校验 DNS 结果。
   private async downloadToTemp(url: string) {
     const safeRemote = await this.assertSafeUrl(url)
-    const response = await axios.get<ArrayBuffer>(safeRemote.url.toString(), {
-      responseType: 'arraybuffer',
-      timeout: 15000,
-      maxRedirects: 0,
-      maxContentLength: MAX_REMOTE_IMAGE_BYTES,
-      maxBodyLength: MAX_REMOTE_IMAGE_BYTES,
-      ...(safeRemote.address
-        ? {
-            httpsAgent: new HttpsAgent({
-              lookup: this.createPinnedLookup(
-                safeRemote.url.hostname,
-                safeRemote.address,
-              ),
-            }),
-          }
-        : {}),
-      validateStatus: (status) => status >= 200 && status < 300,
-    })
+    const response = await this.downloadRemoteImage(safeRemote)
 
-    const contentType = String(response.headers['content-type'] || '')
+    const contentType = response.contentType
     if (!contentType.toLowerCase().startsWith('image/')) {
       throw this.remoteImageError('远程资源不是图片')
     }
 
-    const buffer = Buffer.from(response.data)
+    const buffer = response.buffer
     if (buffer.length > MAX_REMOTE_IMAGE_BYTES) {
       throw this.remoteImageError('远程图片大小超过限制')
     }
@@ -207,7 +188,87 @@ export class RemoteImageImportService {
       .enableAddressGuard
   }
 
-  // 为 axios 连接固定已验证地址，避免校验后再次进行不受控 DNS 解析。
+  // 下载远程图片并在原生请求层保持无重定向、超时、大小限制和 DNS pinning。
+  private async downloadRemoteImage(
+    safeRemote: SafeRemoteImageUrl,
+  ): Promise<DownloadedRemoteImage> {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = []
+      let totalBytes = 0
+      const requestOptions: RequestOptions = {
+        headers: {
+          accept: 'image/*',
+        },
+        method: 'GET',
+      }
+      if (safeRemote.address) {
+        requestOptions.lookup = this.createPinnedLookup(
+          safeRemote.url.hostname,
+          safeRemote.address,
+        )
+      }
+      const request = httpsRequest(
+        safeRemote.url,
+        requestOptions,
+        (response) => {
+          if (!this.isSuccessfulImageResponse(response)) {
+            response.resume()
+            reject(this.remoteImageError('远程图片下载失败'))
+            return
+          }
+
+          response.on('data', (chunk: Buffer) => {
+            totalBytes += chunk.length
+            if (totalBytes > MAX_REMOTE_IMAGE_BYTES) {
+              request.destroy(this.remoteImageError('远程图片大小超过限制'))
+              return
+            }
+            chunks.push(chunk)
+          })
+          response.on('end', () => {
+            resolve({
+              buffer: Buffer.concat(chunks),
+              contentType: String(response.headers['content-type'] || ''),
+            })
+          })
+          response.on('error', (error) => {
+            reject(this.wrapRemoteImageDownloadError(error))
+          })
+        },
+      )
+
+      request.setTimeout(REMOTE_IMAGE_DOWNLOAD_TIMEOUT_MS, () => {
+        request.destroy(
+          new Error(
+            `timeout of ${REMOTE_IMAGE_DOWNLOAD_TIMEOUT_MS}ms exceeded`,
+          ),
+        )
+      })
+      request.on('error', (error) => {
+        reject(this.wrapRemoteImageDownloadError(error))
+      })
+      request.end()
+    })
+  }
+
+  // 将底层下载错误收敛为业务异常，避免原生 Error 绕过业务错误语义。
+  private wrapRemoteImageDownloadError(error: unknown) {
+    if (error instanceof BusinessException) {
+      return error
+    }
+
+    return this.remoteImageError('远程图片下载失败', {
+      transportError: this.toSafeDiagnosticValue(error),
+    })
+  }
+
+  // 只接受 2xx 响应，原生请求不会自动跟随重定向。
+  private isSuccessfulImageResponse(response: IncomingMessage) {
+    const statusCode = response.statusCode ?? 0
+    return statusCode >= 200 && statusCode < 300
+  }
+
+  // 为原生请求固定已验证地址，避免校验后再次进行不受控 DNS 解析。
   private createPinnedLookup(
     expectedHostname: string,
     address: LookupAddress,
@@ -235,15 +296,14 @@ export class RemoteImageImportService {
 
   // 判断 DNS 地址是否落入内网、环回、链路本地、多播或保留地址段。
   private isUnsafeAddress(address: string) {
-    const family = isIP(address)
-    if (family === 4) {
-      return this.isUnsafeIpv4Address(address)
+    switch (isIP(address)) {
+      case 4:
+        return this.isUnsafeIpv4Address(address)
+      case 6:
+        return this.isUnsafeIpv6Address(address)
+      default:
+        return true
     }
-    if (family === 6) {
-      return this.isUnsafeIpv6Address(address)
-    }
-
-    return true
   }
 
   // 判断 IPv4 地址是否属于不允许服务端访问的地址段。
@@ -319,10 +379,20 @@ export class RemoteImageImportService {
   }
 
   // 统一远程图片导入失败的业务异常码。
-  private remoteImageError(message: string) {
+  private remoteImageError(message: string, cause?: Record<string, unknown>) {
+    if (cause === undefined) {
+      return new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        message,
+      )
+    }
+
     return new BusinessException(
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       message,
+      {
+        cause,
+      },
     )
   }
 

@@ -4,20 +4,20 @@ import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.serv
 import { ComicChapterController } from './comic-chapter.controller'
 
 describe('ComicChapterController', () => {
-  it('preserves the existing batch delete ids contract', async () => {
+  it('deletes one comic chapter with the single id contract', async () => {
     const workChapterService = {
       deleteChapter: jest.fn(() => Promise.resolve(true)),
       deleteChapters: jest.fn(() => Promise.resolve(true)),
     } as unknown as WorkChapterService
     const controller = new ComicChapterController(workChapterService)
 
-    await expect(controller.delete({ ids: [1, 2, 3] })).resolves.toBe(true)
+    await expect(controller.delete({ id: 1 })).resolves.toBe(true)
 
-    expect(workChapterService.deleteChapter).not.toHaveBeenCalled()
-    expect(workChapterService.deleteChapters).toHaveBeenCalledWith([1, 2, 3])
+    expect(workChapterService.deleteChapter).toHaveBeenCalledWith(1)
+    expect(workChapterService.deleteChapters).not.toHaveBeenCalled()
   })
 
-  it('keeps the explicit batch-delete alias on the ids contract', async () => {
+  it('batch deletes comic chapters with the ids contract', async () => {
     const workChapterService = {
       deleteChapter: jest.fn(() => Promise.resolve(true)),
       deleteChapters: jest.fn(() => Promise.resolve(true)),

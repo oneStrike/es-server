@@ -657,7 +657,7 @@ describe('BackgroundTaskService', () => {
       cause: {
         provider: 'superbed',
         operation: 'upload',
-        axiosCode: 'ECONNABORTED',
+        transportCode: 'ECONNABORTED',
         token: 'secret-token',
         responseData: {
           err: 1,
@@ -680,7 +680,7 @@ describe('BackgroundTaskService', () => {
             cause: {
               provider: 'superbed',
               operation: 'upload',
-              axiosCode: 'ECONNABORTED',
+              transportCode: 'ECONNABORTED',
               responseData: {
                 err: 1,
                 msg: 'timeout',
@@ -707,7 +707,7 @@ describe('BackgroundTaskService', () => {
       cause: {
         provider: 'superbed',
         operation: 'upload',
-        axiosCode: 'ECONNABORTED',
+        transportCode: 'ECONNABORTED',
         token: 'secret-token',
         responseData: {
           err: 1,
@@ -731,7 +731,7 @@ describe('BackgroundTaskService', () => {
           cause: expect.objectContaining({
             provider: 'superbed',
             operation: 'upload',
-            axiosCode: 'ECONNABORTED',
+            transportCode: 'ECONNABORTED',
           }),
         }),
       }),
