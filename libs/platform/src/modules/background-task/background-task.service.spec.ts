@@ -466,15 +466,26 @@ describe('BackgroundTaskService', () => {
         orderBy: { updatedAt: 'desc', id: 'desc' },
         pageIndex: 1,
         pageSize: 10,
+        pick: ['taskId', 'taskType', 'status', 'progress', 'updatedAt'],
         where: expect.anything(),
       }),
     )
     expect(page.list).toEqual([
       expect.objectContaining({
-        operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
-        operatorUserId: 7,
+        progress: {
+          message: '处理中',
+          percent: 0,
+        },
+        status: BackgroundTaskStatusEnum.PROCESSING,
+        taskId: 'task-1',
+        taskType: 'content.third-party-comic-import',
       }),
     ])
+    expect(page.list[0]).not.toHaveProperty('payload')
+    expect(page.list[0]).not.toHaveProperty('result')
+    expect(page.list[0]).not.toHaveProperty('error')
+    expect(page.list[0]).not.toHaveProperty('residue')
+    expect(page.list[0]).not.toHaveProperty('rollbackError')
   })
 
   it('rolls back instead of marking success when cancellation wins during finalizing', async () => {

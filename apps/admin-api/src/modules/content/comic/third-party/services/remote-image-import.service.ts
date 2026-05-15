@@ -23,6 +23,7 @@ import { ConfigReader } from '@libs/system-config/config-reader'
 import { HttpException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
+import { ThirdPartyResourceThrottleService } from './third-party-resource-throttle.service'
 
 const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
 const MAX_REMOTE_IMAGE_COUNT = 200
@@ -41,6 +42,7 @@ export class RemoteImageImportService {
     private readonly uploadService: UploadService,
     private readonly configReader: ConfigReader,
     private readonly configService: ConfigService,
+    private readonly throttle: ThirdPartyResourceThrottleService,
   ) {
     this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
   }
@@ -114,6 +116,7 @@ export class RemoteImageImportService {
   // 将远程图片下载到临时文件，默认固定已校验 DNS 结果。
   private async downloadToTemp(url: string) {
     const safeRemote = await this.assertSafeUrl(url)
+    await this.throttle.waitForImageSlot()
     const response = await this.downloadRemoteImage(safeRemote)
 
     const contentType = response.contentType

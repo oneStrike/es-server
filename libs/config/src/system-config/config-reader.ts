@@ -1,10 +1,18 @@
 import type { Cache } from 'cache-manager'
+import type {
+  SystemConfig,
+  ThirdPartyResourceParseConfig,
+} from './system-config.type'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
 import { CACHE_KEY, DEFAULT_CONFIG } from './system-config.constant'
 
-/** 系统配置类型（从 DEFAULT_CONFIG 推断） */
-export type SystemConfig = typeof DEFAULT_CONFIG
+const THIRD_PARTY_RESOURCE_PARSE_CONFIG_BOUNDS = {
+  apiIntervalMs: { min: 1, max: 60000 },
+  imageIntervalMs: { min: 1, max: 60000 },
+  hostCacheTtlSeconds: { min: 1, max: 3600 },
+  maxQueueSize: { min: 1, max: 10000 },
+} as const
 
 /**
  * 配置读取器
@@ -124,10 +132,58 @@ export class ConfigReader implements OnModuleInit {
     return this.config.securityConfig.remoteImageImport
   }
 
+  // 获取三方资源解析配置，并把旧快照、非法数字或缺失字段归一化为安全值。
+  getThirdPartyResourceParseConfig(): ThirdPartyResourceParseConfig {
+    const defaults = DEFAULT_CONFIG.thirdPartyResourceParseConfig
+    const source = this.config.thirdPartyResourceParseConfig ?? defaults
+
+    return {
+      enabled:
+        typeof source.enabled === 'boolean' ? source.enabled : defaults.enabled,
+      apiIntervalMs: this.normalizePositiveInteger(
+        source.apiIntervalMs,
+        defaults.apiIntervalMs,
+        THIRD_PARTY_RESOURCE_PARSE_CONFIG_BOUNDS.apiIntervalMs,
+      ),
+      imageIntervalMs: this.normalizePositiveInteger(
+        source.imageIntervalMs,
+        defaults.imageIntervalMs,
+        THIRD_PARTY_RESOURCE_PARSE_CONFIG_BOUNDS.imageIntervalMs,
+      ),
+      hostCacheTtlSeconds: this.normalizePositiveInteger(
+        source.hostCacheTtlSeconds,
+        defaults.hostCacheTtlSeconds,
+        THIRD_PARTY_RESOURCE_PARSE_CONFIG_BOUNDS.hostCacheTtlSeconds,
+      ),
+      maxQueueSize: this.normalizePositiveInteger(
+        source.maxQueueSize,
+        defaults.maxQueueSize,
+        THIRD_PARTY_RESOURCE_PARSE_CONFIG_BOUNDS.maxQueueSize,
+      ),
+    }
+  }
+
   /**
    * 获取上传配置
    */
   getUploadConfig() {
     return this.config.uploadConfig
+  }
+
+  // 把配置中的正整数限制在声明边界内，非法值回落到默认值。
+  private normalizePositiveInteger(
+    value: unknown,
+    defaultValue: number,
+    bounds: { max: number; min: number },
+  ) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+
+    const integerValue = Math.floor(value)
+    if (integerValue < bounds.min) {
+      return defaultValue
+    }
+    return Math.min(integerValue, bounds.max)
   }
 }

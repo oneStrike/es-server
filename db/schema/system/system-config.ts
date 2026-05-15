@@ -41,6 +41,10 @@ export const systemConfig = snakeCase.table(
      */
     securityConfig: jsonb(),
     /**
+     * 三方资源解析配置（JSON格式，包含 API/图片节流、host 缓存 TTL 与队列上限）
+     */
+    thirdPartyResourceParseConfig: jsonb(),
+    /**
      * 维护模式配置（JSON格式，开关与提示文案）
      */
     maintenanceConfig: jsonb(),

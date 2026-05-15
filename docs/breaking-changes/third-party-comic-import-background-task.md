@@ -29,6 +29,23 @@ The endpoint now creates a generic background task and returns `BackgroundTaskDt
 
 Clients must persist `taskId`, poll `GET admin/background-task/detail` for task detail when they already hold a concrete task id, and stop expecting `ThirdPartyComicImportResultDto` from confirm. Header/global notification polling must use `GET admin/background-task/my/page`; `GET admin/background-task/page` remains the full management view and is not user-scoped.
 
+`GET admin/background-task/my/page` is intentionally a lightweight polling contract and returns `BackgroundTaskNotificationDto[]` instead of full `BackgroundTaskDto[]`:
+
+```ts
+{
+  taskId: string
+  taskType: string
+  status: 1 | 2 | 3 | 4 | 5 | 6 | 7
+  progress: {
+    percent?: number
+    message?: string
+  }
+  updatedAt: string
+}
+```
+
+The polling response does not include heavy diagnostic fields such as `payload`, `result`, `error`, `residue`, or `rollbackError`. Clients must navigate with `taskId` and read `GET admin/background-task/detail` when they need full task diagnostics.
+
 `background_task` now records explicit operator metadata:
 
 - `operatorType = 1` means an admin user created the task and `operatorUserId` is required.

@@ -307,6 +307,31 @@ describe('ThirdPartyComicImportService', () => {
     expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
   })
 
+  it('loads preview detail before chapter list to avoid an uncontrolled request burst', async () => {
+    let resolveDetail: (value: typeof detail) => void = () => undefined
+    ;(provider.getDetail as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveDetail = resolve
+        }),
+    )
+    const { service } = createService()
+
+    const previewPromise = service.previewImport({
+      comicId: 'woduzishenji',
+      platform: 'copy',
+    })
+    await Promise.resolve()
+
+    expect(provider.getChapters).not.toHaveBeenCalled()
+    resolveDetail(detail)
+    await expect(previewPromise).resolves.toMatchObject({
+      comicId: 'woduzishenji',
+      chapters,
+    })
+    expect(provider.getChapters).toHaveBeenCalledTimes(1)
+  })
+
   it('creates a background task and does not execute import synchronously', async () => {
     const {
       backgroundTaskService,

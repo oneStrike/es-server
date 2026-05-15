@@ -5,6 +5,7 @@ import type {
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
+import { ThirdPartyResourceThrottleService } from '../services/third-party-resource-throttle.service'
 
 const COPY_MANGA_DEFAULT_API_HOST = 'api.2024manga.com'
 const COPY_MANGA_PLATFORM = 3
@@ -14,27 +15,53 @@ const COPY_MANGA_REQUEST_TIMEOUT_MS = 300000
 
 @Injectable()
 export class CopyMangaHttpClient {
-  // 每次业务请求前强制刷新 host，发现失败时不继续请求内容 API。
+  private apiHostCache: { expiresAt: number; hosts: string[] } | null = null
+
+  // 注入三方资源解析节流器，统一控制 discovery 和业务 API 节奏。
+  constructor(private readonly throttle: ThirdPartyResourceThrottleService) {}
+
+  // 读取 host 缓存或在缓存失效后重新发现，发现失败时不继续请求内容 API。
   async getJson<TPayload = unknown>(
     path: string,
     params: Record<string, unknown> = {},
   ): Promise<TPayload> {
-    const apiHosts = await this.refreshApiHosts()
+    const apiHosts = await this.getApiHosts()
 
     let lastError: unknown
     for (let attempt = 0; attempt < COPY_MANGA_REQUEST_ATTEMPTS; attempt++) {
       const host = apiHosts[attempt % apiHosts.length]
       try {
+        await this.throttle.waitForApiSlot()
         return await this.fetchJson<TPayload>(`https://${host}${path}`, {
           ...params,
           platform: COPY_MANGA_PLATFORM,
         })
       } catch (error) {
+        if (error instanceof BusinessException) {
+          throw error
+        }
         lastError = error
       }
     }
 
+    this.apiHostCache = null
     throw this.apiRequestError(path, lastError)
+  }
+
+  // 复用有效 host 缓存；过期后清空旧缓存再发现，避免失败时回退到过期 host。
+  private async getApiHosts() {
+    const cached = this.apiHostCache
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.hosts
+    }
+
+    this.apiHostCache = null
+    const hosts = await this.refreshApiHosts()
+    this.apiHostCache = {
+      expiresAt: Date.now() + this.throttle.getHostCacheTtlMs(),
+      hosts,
+    }
+    return hosts
   }
 
   // 调用 CopyManga host discovery，并对所有异常/畸形结果执行 fail closed。
@@ -42,6 +69,7 @@ export class CopyMangaHttpClient {
     let lastError: unknown
     for (let attempt = 0; attempt < COPY_MANGA_REQUEST_ATTEMPTS; attempt++) {
       try {
+        await this.throttle.waitForApiSlot()
         const data = await this.fetchJson<CopyMangaNetworkResponse>(
           `https://${COPY_MANGA_DEFAULT_API_HOST}/api/v3/system/network2`,
           {

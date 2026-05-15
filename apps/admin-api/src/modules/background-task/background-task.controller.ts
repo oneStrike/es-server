@@ -4,6 +4,7 @@ import { BackgroundTaskService } from '@libs/platform/modules/background-task/ba
 import {
   BackgroundTaskDto,
   BackgroundTaskIdDto,
+  BackgroundTaskNotificationDto,
   BackgroundTaskPageRequestDto,
 } from '@libs/platform/modules/background-task/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -28,10 +29,10 @@ export class AdminBackgroundTaskController {
 
   @Get('my/page')
   @ApiPageDoc({
-    summary: '分页查询我的后台任务',
-    model: BackgroundTaskDto,
+    summary: '分页查询我的后台任务通知',
+    model: BackgroundTaskNotificationDto,
   })
-  // 分页查询当前后台管理员创建的后台任务。
+  // 分页查询当前后台管理员的轻量后台任务通知。
   async getMyTaskPage(
     @Query() query: BackgroundTaskPageRequestDto,
     @CurrentUser('sub') userId: number,

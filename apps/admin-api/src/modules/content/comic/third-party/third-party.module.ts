@@ -10,6 +10,7 @@ import {
 import { CopyMangaHttpClient } from './providers/copy-manga-http.client'
 import { CopyMangaProvider } from './providers/copy-manga.provider'
 import { RemoteImageImportService } from './services/remote-image-import.service'
+import { ThirdPartyResourceThrottleService } from './services/third-party-resource-throttle.service'
 import { ThirdPartyComicImportBackgroundHandler } from './services/third-party-comic-import-background.handler'
 import { ThirdPartyComicImportService } from './services/third-party-comic-import.service'
 import { ComicThirdPartyService } from './third-party-service'
@@ -31,6 +32,7 @@ import { ComicThirdPartyController } from './third-party.controller'
     CopyMangaHttpClient,
     CopyMangaProvider,
     RemoteImageImportService,
+    ThirdPartyResourceThrottleService,
     ThirdPartyComicImportService,
     ThirdPartyComicImportBackgroundHandler,
     {

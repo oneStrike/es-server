@@ -1,4 +1,6 @@
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import type { ThirdPartyResourceThrottleService } from '../services/third-party-resource-throttle.service'
 import { CopyMangaHttpClient } from './copy-manga-http.client'
 
 describe('CopyMangaHttpClient', () => {
@@ -32,8 +34,14 @@ describe('CopyMangaHttpClient', () => {
     } as unknown as Response
   }
 
-  function createClient() {
-    return new CopyMangaHttpClient()
+  function createClient(
+    throttle: Partial<ThirdPartyResourceThrottleService> = {},
+  ) {
+    return new CopyMangaHttpClient({
+      getHostCacheTtlMs: jest.fn(() => 60_000),
+      waitForApiSlot: jest.fn(async () => undefined),
+      ...throttle,
+    } as ThirdPartyResourceThrottleService)
   }
 
   beforeEach(() => {
@@ -170,6 +178,168 @@ describe('CopyMangaHttpClient', () => {
     )
   })
 
+  it('reuses discovered hosts while the TTL cache is valid', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { first: true } }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { second: true } }),
+      )
+    const client = createClient()
+
+    await expect(client.getJson('/api/v3/search/comic')).resolves.toEqual({
+      code: 200,
+      results: { first: true },
+    })
+    await expect(client.getJson('/api/v3/comic/demo')).resolves.toEqual({
+      code: 200,
+      results: { second: true },
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      'https://api-a.copy.test/api/v3/comic/demo?platform=3',
+      expect.any(Object),
+    )
+  })
+
+  it('refreshes host discovery after the TTL cache expires', async () => {
+    let now = 1_000
+    const dateSpy = jest.spyOn(Date, 'now').mockImplementation(() => now)
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { first: true } }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-b.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { second: true } }),
+      )
+    const client = createClient({
+      getHostCacheTtlMs: jest.fn(() => 60_000),
+    })
+
+    try {
+      await client.getJson('/api/v3/search/comic')
+      now += 60_001
+      await client.getJson('/api/v3/comic/demo')
+    } finally {
+      dateSpy.mockRestore()
+    }
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      'https://api-b.copy.test/api/v3/comic/demo?platform=3',
+      expect.any(Object),
+    )
+  })
+
+  it('paces both discovery and business JSON requests through the API limiter', async () => {
+    const throttle = {
+      getHostCacheTtlMs: jest.fn(() => 60_000),
+      waitForApiSlot: jest.fn(async () => undefined),
+    }
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { ok: true } }),
+      )
+    const client = createClient(throttle)
+
+    await client.getJson('/api/v3/search/comic')
+
+    expect(throttle.waitForApiSlot).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not retry when the API limiter rejects a queued request', async () => {
+    const throttleError = new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '排队过多',
+    )
+    let waitCallCount = 0
+    const throttle = {
+      getHostCacheTtlMs: jest.fn(() => 60_000),
+      waitForApiSlot: jest.fn(async () => {
+        waitCallCount += 1
+        if (waitCallCount > 1) {
+          throw throttleError
+        }
+      }),
+    }
+    fetchMock.mockResolvedValueOnce(
+      createJsonResponse({
+        code: 200,
+        results: { api: [['api-a.copy.test']] },
+      }),
+    )
+    const client = createClient(throttle)
+
+    await expect(client.getJson('/api/v3/search/comic')).rejects.toBe(
+      throttleError,
+    )
+
+    expect(throttle.waitForApiSlot).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not reuse stale hosts when expired-cache discovery fails', async () => {
+    let now = 1_000
+    const dateSpy = jest.spyOn(Date, 'now').mockImplementation(() => now)
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { first: true } }),
+      )
+      .mockRejectedValue(new Error('discovery down'))
+    const client = createClient({
+      getHostCacheTtlMs: jest.fn(() => 60_000),
+    })
+
+    try {
+      await client.getJson('/api/v3/search/comic')
+      now += 60_001
+      await expect(client.getJson('/api/v3/comic/demo')).rejects.toThrow(
+        BusinessException,
+      )
+    } finally {
+      dateSpy.mockRestore()
+    }
+
+    expect(fetchMock).toHaveBeenCalledTimes(5)
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      'https://api-a.copy.test/api/v3/comic/demo?platform=3',
+      expect.any(Object),
+    )
+  })
+
   it('preserves provided params and appends the platform query param', async () => {
     fetchMock
       .mockResolvedValueOnce(
@@ -256,6 +426,44 @@ describe('CopyMangaHttpClient', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(
       4,
       'https://api-a.copy.test/api/v3/comic/demo/chapter/demo?platform=3',
+      expect.any(Object),
+    )
+  })
+
+  it('invalidates cached hosts after content retries are exhausted', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockRejectedValueOnce(new Error('host a failed'))
+      .mockRejectedValueOnce(new Error('host a failed'))
+      .mockRejectedValueOnce(new Error('host a failed'))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-b.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { ok: true } }),
+      )
+    const client = createClient()
+
+    await expect(client.getJson('/api/v3/search/comic')).rejects.toThrow(
+      BusinessException,
+    )
+    await expect(client.getJson('/api/v3/comic/demo')).resolves.toEqual({
+      code: 200,
+      results: { ok: true },
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(6)
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
+      'https://api.2024manga.com/api/v3/system/network2?platform=3',
       expect.any(Object),
     )
   })

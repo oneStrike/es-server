@@ -32,6 +32,10 @@ export const CONFIG_SECURITY_META: Record<
   securityConfig: {
     sensitivePaths: [],
   },
+  // 三方资源解析配置：无敏感字段
+  thirdPartyResourceParseConfig: {
+    sensitivePaths: [],
+  },
   // 上传配置：包含七牛和 Superbed 密钥等敏感字段
   uploadConfig: {
     sensitivePaths: ['qiniu.accessKey', 'qiniu.secretKey', 'superbed.token'],
@@ -149,6 +153,20 @@ export const DEFAULT_CONFIG = {
       /** 是否启用 DNS 不安全地址防护（默认开启） */
       enableAddressGuard: true,
     },
+  },
+
+  // 三方资源解析配置
+  thirdPartyResourceParseConfig: {
+    /** 是否启用三方资源解析节流（默认开启） */
+    enabled: true,
+    /** CopyManga API 请求最小间隔（毫秒） */
+    apiIntervalMs: 3000,
+    /** 三方远程图片下载最小间隔（毫秒） */
+    imageIntervalMs: 3000,
+    /** CopyManga host discovery 缓存 TTL（秒） */
+    hostCacheTtlSeconds: 60,
+    /** 每个资源解析通道允许排队的最大请求数 */
+    maxQueueSize: 1000,
   },
 
   // 上传配置

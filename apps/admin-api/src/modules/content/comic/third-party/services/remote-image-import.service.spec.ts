@@ -3,6 +3,7 @@ import type { ConfigReader } from '@libs/system-config/config-reader'
 import type { ConfigService } from '@nestjs/config'
 import type { ClientRequest, IncomingMessage, RequestOptions } from 'node:http'
 import type { LookupFunction } from 'node:net'
+import type { ThirdPartyResourceThrottleService } from './third-party-resource-throttle.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { HttpException } from '@nestjs/common'
@@ -137,17 +138,22 @@ describe('RemoteImageImportService', () => {
           : undefined,
       ),
     }
+    const throttleService = {
+      waitForImageSlot: jest.fn(async () => undefined),
+    }
 
     return {
       service: new RemoteImageImportService(
         uploadService as unknown as UploadService,
         configReader as unknown as ConfigReader,
         configService as unknown as ConfigService,
+        throttleService as unknown as ThirdPartyResourceThrottleService,
       ),
       configService,
       uploadedFile,
       uploadService,
       configReader,
+      throttleService,
     }
   }
 
@@ -165,8 +171,13 @@ describe('RemoteImageImportService', () => {
   })
 
   it('uses the validated DNS answer for the outbound image request by default', async () => {
-    const { service, uploadService, configReader, configService } =
-      createService()
+    const {
+      service,
+      uploadService,
+      configReader,
+      configService,
+      throttleService,
+    } = createService()
     let lookupFromRequest: LookupFunction | undefined
     mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
     mockImageDownload({
@@ -218,6 +229,7 @@ describe('RemoteImageImportService', () => {
     expect(uploadArg).not.toHaveProperty('resolveProvider')
     expect(configService.get).toHaveBeenCalledWith('upload')
     expect(configReader.getRemoteImageImportSecurityConfig).toHaveBeenCalled()
+    expect(throttleService.waitForImageSlot).toHaveBeenCalledTimes(1)
     expect(fs.mkdir).toHaveBeenCalledWith(uploadTmpDir, { recursive: true })
     const request = mockedHttpsRequest.mock.results[0]?.value as Pick<
       ClientRequest,
@@ -237,6 +249,28 @@ describe('RemoteImageImportService', () => {
       force: true,
       recursive: true,
     })
+  })
+
+  it('waits for the image limiter immediately before outbound HTTPS download', async () => {
+    const { service, throttleService } = createService()
+    const order: string[] = []
+    ;(throttleService.waitForImageSlot as jest.Mock).mockImplementation(
+      async () => {
+        order.push('throttle')
+      },
+    )
+    mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
+    mockImageDownload({
+      inspect: () => {
+        order.push('download')
+      },
+    })
+
+    await service.importImage('https://sw.mangafunb.fun/comic/001.jpg', [
+      'comic',
+    ])
+
+    expect(order).toEqual(['throttle', 'download'])
   })
 
   it('skips DNS address guard when system security config disables it', async () => {

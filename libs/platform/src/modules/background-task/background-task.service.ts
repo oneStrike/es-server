@@ -9,6 +9,7 @@ import type {
   BackgroundTaskProgressReporterOptions,
   CreateBackgroundTaskInput,
 } from './types'
+import type { BackgroundTaskNotificationSelect } from './types/background-task-notification.type'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -172,7 +173,7 @@ export class BackgroundTaskService {
     }
   }
 
-  // 分页查询当前后台管理员创建的后台任务。
+  // 分页查询当前后台管理员的轻量后台任务通知。
   async getMyTaskPage(input: BackgroundTaskPageRequestDto, userId: number) {
     const conditions = this.buildTaskPageConditions(input)
     conditions.push(
@@ -189,11 +190,12 @@ export class BackgroundTaskService {
       orderBy: input.orderBy?.trim()
         ? input.orderBy
         : { updatedAt: 'desc', id: 'desc' },
+      pick: ['taskId', 'taskType', 'status', 'progress', 'updatedAt'] as const,
     })
 
     return {
       ...page,
-      list: page.list.map((row) => this.toTaskDto(row)),
+      list: page.list.map((row) => this.toTaskNotificationDto(row)),
     }
   }
 
@@ -898,6 +900,30 @@ export class BackgroundTaskService {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }
+  }
+
+  // 转换数据库行为轻量通知轮询 DTO。
+  private toTaskNotificationDto(row: BackgroundTaskNotificationSelect) {
+    return {
+      taskId: row.taskId,
+      taskType: row.taskType,
+      status: this.normalizeStatus(row.status),
+      progress: this.compactNotificationProgress(row.progress),
+      updatedAt: row.updatedAt,
+    }
+  }
+
+  // 通知轮询只保留 header 展示需要的进度字段，避免 detail 大对象进入高频响应。
+  private compactNotificationProgress(value: unknown) {
+    const progress = this.asObject(value)
+    const notificationProgress: BackgroundTaskObject = {}
+    if (typeof progress.percent === 'number') {
+      notificationProgress.percent = progress.percent
+    }
+    if (typeof progress.message === 'string') {
+      notificationProgress.message = progress.message
+    }
+    return notificationProgress
   }
 
   // 归一化状态值。

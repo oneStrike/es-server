@@ -76,10 +76,8 @@ export class ThirdPartyComicImportService {
   // 预览第三方漫画导入方案，只读取 provider 数据不写入本地。
   async previewImport(dto: ThirdPartyComicImportPreviewRequestDto) {
     const provider = this.registry.resolve(dto.platform)
-    const [detail, chapters] = await Promise.all([
-      provider.getDetail(dto),
-      provider.getChapters(dto),
-    ])
+    const detail = await provider.getDetail(dto)
+    const chapters = await provider.getChapters(dto)
 
     return {
       platform: dto.platform,

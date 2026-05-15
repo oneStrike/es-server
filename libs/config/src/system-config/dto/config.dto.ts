@@ -279,6 +279,63 @@ export class SecurityConfigDto {
 }
 
 // ============================================================================
+// 三方资源解析配置
+// ============================================================================
+
+/**
+ * 三方资源解析配置
+ */
+export class ThirdPartyResourceParseConfigDto {
+  @BooleanProperty({
+    description: '是否启用三方资源解析节流',
+    example: true,
+    default: true,
+    required: false,
+  })
+  enabled?: boolean
+
+  @NumberProperty({
+    description: 'CopyManga API 请求最小间隔（毫秒）',
+    example: 3000,
+    default: 3000,
+    required: false,
+    min: 1,
+    max: 60000,
+  })
+  apiIntervalMs?: number
+
+  @NumberProperty({
+    description: '三方远程图片下载最小间隔（毫秒）',
+    example: 3000,
+    default: 3000,
+    required: false,
+    min: 1,
+    max: 60000,
+  })
+  imageIntervalMs?: number
+
+  @NumberProperty({
+    description: 'CopyManga host discovery 缓存 TTL（秒）',
+    example: 60,
+    default: 60,
+    required: false,
+    min: 1,
+    max: 3600,
+  })
+  hostCacheTtlSeconds?: number
+
+  @NumberProperty({
+    description: '每个资源解析通道允许排队的最大请求数',
+    example: 1000,
+    default: 1000,
+    required: false,
+    min: 1,
+    max: 10000,
+  })
+  maxQueueSize?: number
+}
+
+// ============================================================================
 // 上传配置
 // ============================================================================
 
@@ -492,6 +549,21 @@ export class BaseSystemConfigDto extends BaseDto {
   securityConfig?: SecurityConfigDto | null
 
   @NestedProperty({
+    description: '三方资源解析配置',
+    type: ThirdPartyResourceParseConfigDto,
+    example: {
+      enabled: true,
+      apiIntervalMs: 3000,
+      imageIntervalMs: 3000,
+      hostCacheTtlSeconds: 60,
+      maxQueueSize: 1000,
+    },
+    required: false,
+    nullable: false,
+  })
+  thirdPartyResourceParseConfig?: ThirdPartyResourceParseConfigDto | null
+
+  @NestedProperty({
     description: '维护配置',
     type: MaintenanceConfigDto,
     example: {
@@ -564,6 +636,7 @@ export class UpdateSystemConfigDto extends IntersectionType(
       'siteConfig',
       'operationConfig',
       'securityConfig',
+      'thirdPartyResourceParseConfig',
       'maintenanceConfig',
       'contentReviewPolicy',
       'uploadConfig',

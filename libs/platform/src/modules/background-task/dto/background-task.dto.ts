@@ -1,12 +1,18 @@
 import {
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  ApiProperty,
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import {
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
   BackgroundTaskOperatorTypeEnum,
@@ -229,6 +235,44 @@ export class BackgroundTaskDto {
     validation: false,
   })
   updatedAt!: Date
+}
+
+/** 后台任务通知进度 DTO。 */
+export class BackgroundTaskNotificationProgressDto {
+  @ApiProperty({
+    description: '任务进度百分比',
+    example: 40,
+    maximum: 100,
+    minimum: 0,
+    required: false,
+    type: Number,
+  })
+  percent?: number
+
+  @ApiProperty({
+    description: '任务进度文案',
+    example: '导入中',
+    required: false,
+    type: String,
+  })
+  message?: string
+}
+
+/** 后台任务通知轮询 DTO。 */
+export class BackgroundTaskNotificationDto extends PickType(BackgroundTaskDto, [
+  'taskId',
+  'taskType',
+  'status',
+  'updatedAt',
+] as const) {
+  @NestedProperty({
+    description: '任务进度',
+    example: { percent: 40, message: '导入中' },
+    required: true,
+    type: BackgroundTaskNotificationProgressDto,
+    validation: false,
+  })
+  progress!: BackgroundTaskNotificationProgressDto
 }
 
 /** 后台任务 ID DTO。 */
