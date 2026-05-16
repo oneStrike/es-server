@@ -10,6 +10,7 @@ import {
   ThirdPartyComicImportPreviewDto,
   ThirdPartyComicImportPreviewRequestDto,
   ThirdPartyComicImportRequestDto,
+  ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
@@ -103,5 +104,22 @@ export class ComicThirdPartyController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.thirdPartyService.confirmImport(body, userId)
+  }
+
+  @Post('sync/latest')
+  @ApiAuditDoc({
+    summary: '同步第三方漫画最新章节',
+    model: BackgroundTaskDto,
+    audit: {
+      actionType: AuditActionTypeEnum.IMPORT,
+      content: '同步第三方漫画最新章节，只导入未绑定的新章节',
+    },
+  })
+  // 手动触发最新章节同步后台任务。
+  async syncLatest(
+    @Body() body: ThirdPartyComicSyncLatestRequestDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.thirdPartyService.syncLatest(body, userId)
   }
 }

@@ -129,6 +129,11 @@ export class WorkService {
     return this.drizzle.schema.workTagRelation
   }
 
+  // work_third_party_source_binding 表访问入口。
+  get workThirdPartySourceBinding() {
+    return this.drizzle.schema.workThirdPartySourceBinding
+  }
+
   // 构建作品列表页的最小字段投影，列表查询统一复用这一组 select 字段，避免不同分页接口出现字段面不一致。
   private getPageWorkSelectFields() {
     return {
@@ -802,7 +807,7 @@ export class WorkService {
     }
 
     const workIds = page.list.map((item) => item.id)
-    const [authors, categories, tags] = await Promise.all([
+    const [authors, categories, tags, sourceBindings] = await Promise.all([
       this.db.query.workAuthorRelation.findMany({
         where: { workId: { in: workIds } },
         orderBy: (relation, { asc }) => [
@@ -828,6 +833,15 @@ export class WorkService {
         orderBy: (relation, { asc }) => [asc(relation.tagId)],
         with: { tag: { columns: { id: true, name: true, icon: true } } },
       }),
+      this.db
+        .select({ workId: this.workThirdPartySourceBinding.workId })
+        .from(this.workThirdPartySourceBinding)
+        .where(
+          and(
+            inArray(this.workThirdPartySourceBinding.workId, workIds),
+            isNull(this.workThirdPartySourceBinding.deletedAt),
+          ),
+        ),
     ])
     const authorIds = [...new Set(authors.map((item) => item.authorId))]
     const authorFollowStatusMap =
@@ -842,6 +856,9 @@ export class WorkService {
     const authorMap = new Map<number, typeof authors>()
     const categoryMap = new Map<number, typeof categories>()
     const tagMap = new Map<number, typeof tags>()
+    const sourceBindingWorkIds = new Set(
+      sourceBindings.map((binding) => binding.workId),
+    )
     for (const item of authors) {
       const list = authorMap.get(item.workId) ?? []
       list.push(item)
@@ -876,6 +893,7 @@ export class WorkService {
         categories: (categoryMap.get(item.id) ?? [])
           .map((relation) => relation.category)
           .filter(Boolean),
+        hasThirdPartySourceBinding: sourceBindingWorkIds.has(item.id),
         tags: (tagMap.get(item.id) ?? [])
           .map((relation) => relation.tag)
           .filter(Boolean),

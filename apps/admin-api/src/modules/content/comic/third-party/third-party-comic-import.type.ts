@@ -34,6 +34,8 @@ export type ThirdPartyComicUpdatedChapterSnapshot = BackgroundTaskObject & {
 export type ThirdPartyComicImportResidue = BackgroundTaskObject & {
   createdWorkIds?: number[]
   createdChapterIds?: number[]
+  createdSourceBindingIds?: number[]
+  createdChapterBindingIds?: number[]
   updatedChapters?: ThirdPartyComicUpdatedChapterSnapshot[]
   uploadedFiles?: UploadDeleteTarget[]
 }

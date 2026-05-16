@@ -5,7 +5,6 @@ import {
   EnumProperty,
   NestedProperty,
   NumberProperty,
-  ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
@@ -878,12 +877,23 @@ export class ThirdPartyComicSourceSnapshotDto {
   @StringProperty({
     description: '三方漫画ID',
     example: 'woduzishenji',
-    validation: false,
   })
   providerComicId!: string
 
   @StringProperty({
     description: '三方路径标识',
+    example: 'woduzishenji',
+  })
+  providerPathWord!: string
+
+  @StringProperty({
+    description: '三方章节分组路径标识',
+    example: 'default',
+  })
+  providerGroupPathWord!: string
+
+  @StringProperty({
+    description: '兼容旧三方路径标识',
     example: 'woduzishenji',
     required: false,
     validation: false,
@@ -901,7 +911,6 @@ export class ThirdPartyComicSourceSnapshotDto {
   @StringProperty({
     description: '抓取时间',
     example: '2026-05-11T00:00:00.000Z',
-    validation: false,
   })
   fetchedAt!: string
 }
@@ -1310,6 +1319,13 @@ export class ThirdPartyComicImportChapterItemDto {
   @NumberProperty({ description: '目标章节ID', example: 1, required: false })
   targetChapterId?: number
 
+  @StringProperty({
+    description: '三方章节分组',
+    example: 'default',
+    required: false,
+  })
+  group?: string
+
   @StringProperty({ description: '章节标题', example: '第1话', required: true })
   title!: string
 
@@ -1322,6 +1338,13 @@ export class ThirdPartyComicImportChapterItemDto {
 
   @NumberProperty({ description: '排序值', example: 1, required: true })
   sortOrder!: number
+
+  @StringProperty({
+    description: '三方章节创建时间',
+    example: '2026-05-11T00:00:00.000Z',
+    required: false,
+  })
+  datetimeCreated?: string
 
   @NumberProperty({ description: '查看规则', example: -1, required: false })
   viewRule?: number
@@ -1418,13 +1441,17 @@ export class ThirdPartyComicImportRequestDto {
   })
   chapters!: ThirdPartyComicImportChapterItemDto[]
 
-  @ObjectProperty({
+  @NestedProperty({
     description: '三方来源快照',
-    example: { providerComicId: 'woduzishenji' },
+    type: ThirdPartyComicSourceSnapshotDto,
     required: true,
-    additionalProperties: true,
   })
-  sourceSnapshot!: Record<string, unknown>
+  sourceSnapshot!: ThirdPartyComicSourceSnapshotDto
+}
+
+export class ThirdPartyComicSyncLatestRequestDto {
+  @NumberProperty({ description: '作品ID', example: 1, required: true })
+  workId!: number
 }
 
 export class ThirdPartyComicImportWorkResultDto {

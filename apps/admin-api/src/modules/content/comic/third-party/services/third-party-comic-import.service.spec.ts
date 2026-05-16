@@ -22,6 +22,9 @@ jest.mock('@libs/content/work/chapter/work-chapter.service', () => ({
 jest.mock('./remote-image-import.service', () => ({
   RemoteImageImportService: class RemoteImageImportService {},
 }))
+jest.mock('./third-party-comic-binding.service', () => ({
+  ThirdPartyComicBindingService: class ThirdPartyComicBindingService {},
+}))
 
 const {
   ThirdPartyComicImportService,
@@ -119,6 +122,18 @@ describe('ThirdPartyComicImportService', () => {
       importImage: jest.fn(async () => uploadedCover),
       importImages: jest.fn(async () => ['/uploads/1.jpg']),
     }
+    const bindingService = {
+      createOrGetSourceBinding: jest.fn(async () => ({
+        created: true,
+        id: 10,
+      })),
+      createOrGetChapterBinding: jest.fn(async () => ({
+        created: true,
+        id: 20,
+      })),
+      softDeleteChapterBindings: jest.fn(async () => undefined),
+      softDeleteSourceBindings: jest.fn(async () => undefined),
+    }
     const backgroundTaskService = {
       createTask: jest.fn(async (input) => ({
         operatorType: input.operator?.type,
@@ -146,9 +161,11 @@ describe('ThirdPartyComicImportService', () => {
         workChapterService as never,
         comicContentService as never,
         remoteImageImportService as never,
+        bindingService as never,
         backgroundTaskService as never,
         drizzle as never,
       ),
+      bindingService,
       workChapterService,
       workService,
       ...overrides,
@@ -174,7 +191,12 @@ describe('ThirdPartyComicImportService', () => {
       },
       mode: ThirdPartyComicImportModeEnum.CREATE_NEW,
       platform: 'copy',
-      sourceSnapshot: { providerComicId: 'woduzishenji' },
+      sourceSnapshot: {
+        fetchedAt: '2026-05-11T00:00:00.000Z',
+        providerComicId: 'woduzishenji',
+        providerGroupPathWord: 'default',
+        providerPathWord: 'woduzishenji',
+      },
       workDraft: {
         authorIds: [1],
         canComment: true,
@@ -285,6 +307,8 @@ describe('ThirdPartyComicImportService', () => {
     expect(preview.sourceSnapshot).toEqual(
       expect.objectContaining({
         providerComicId: 'woduzishenji',
+        providerGroupPathWord: 'default',
+        providerPathWord: 'woduzishenji',
         pathWord: 'woduzishenji',
         uuid: 'comic-uuid',
       }),
@@ -379,6 +403,7 @@ describe('ThirdPartyComicImportService', () => {
   it('executes the background import and records rollback residue', async () => {
     const {
       comicContentService,
+      bindingService,
       provider,
       remoteImageImportService,
       service,
@@ -420,6 +445,15 @@ describe('ThirdPartyComicImportService', () => {
       platform: 'copy',
     })
     expect(workService.createWorkReturningId).toHaveBeenCalled()
+    expect(bindingService.createOrGetSourceBinding).toHaveBeenCalledWith(
+      expect.objectContaining({
+        platform: 'copy',
+        providerComicId: 'woduzishenji',
+        providerGroupPathWord: 'default',
+        providerPathWord: 'woduzishenji',
+        workId: 100,
+      }),
+    )
     expect(workChapterService.createChapterReturningId).toHaveBeenCalledWith(
       expect.objectContaining({
         title: '第1话',
@@ -430,8 +464,18 @@ describe('ThirdPartyComicImportService', () => {
       300,
       ['/uploads/1.jpg'],
     )
+    expect(bindingService.createOrGetChapterBinding).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chapterId: 300,
+        providerChapterId: 'chapter-001',
+        remoteSortOrder: 1,
+        workThirdPartySourceBindingId: 10,
+      }),
+    )
     expect(context.residue).toEqual({
+      createdChapterBindingIds: [20],
       createdChapterIds: [300],
+      createdSourceBindingIds: [10],
       createdWorkIds: [100],
       uploadedFiles: [uploadedCover.deleteTarget, uploadedImage.deleteTarget],
     })
@@ -457,6 +501,29 @@ describe('ThirdPartyComicImportService', () => {
         total: 1,
       }),
     )
+  })
+
+  it('rejects missing source group before local import side effects', async () => {
+    const request = createImportRequest()
+    delete (request.sourceSnapshot as Record<string, unknown>)
+      .providerGroupPathWord
+    const {
+      bindingService,
+      remoteImageImportService,
+      service,
+      workChapterService,
+      workService,
+    } = createService()
+    const context = createExecutionContext()
+
+    await expect(
+      service.executeImportTask(request, context as never),
+    ).rejects.toThrow('三方来源分组缺失')
+
+    expect(remoteImageImportService.importImage).not.toHaveBeenCalled()
+    expect(workService.createWorkReturningId).not.toHaveBeenCalled()
+    expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
+    expect(bindingService.createOrGetSourceBinding).not.toHaveBeenCalled()
   })
 
   it('preserves the original cause when provider cover import fails', async () => {
@@ -538,6 +605,7 @@ describe('ThirdPartyComicImportService', () => {
     expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
     expect(remoteImageImportService.importImages).not.toHaveBeenCalled()
     expect(context.residue).toEqual({
+      createdSourceBindingIds: [10],
       createdWorkIds: [100],
       uploadedFiles: [uploadedCover.deleteTarget],
     })
@@ -547,11 +615,14 @@ describe('ThirdPartyComicImportService', () => {
     const {
       remoteImageImportService,
       service,
+      bindingService,
       workChapterService,
       workService,
     } = createService()
     const context = createExecutionContext({
       createdChapterIds: [300, 301],
+      createdChapterBindingIds: [20, 21],
+      createdSourceBindingIds: [10],
       createdWorkIds: [100],
       uploadedFiles: [
         {
@@ -569,7 +640,11 @@ describe('ThirdPartyComicImportService', () => {
 
     await service.rollbackImportTask(context as never, new Error('boom'))
 
+    expect(bindingService.softDeleteChapterBindings).toHaveBeenCalledWith([
+      21, 20,
+    ])
     expect(workChapterService.deleteChapters).toHaveBeenCalledWith([301, 300])
+    expect(bindingService.softDeleteSourceBindings).toHaveBeenCalledWith([10])
     expect(workService.deleteWork).toHaveBeenCalledWith(100)
     expect(remoteImageImportService.deleteImportedFile).toHaveBeenNthCalledWith(
       1,

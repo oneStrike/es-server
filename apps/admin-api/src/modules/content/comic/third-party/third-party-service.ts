@@ -4,10 +4,12 @@ import type {
   SearchComicRequestDto,
   ThirdPartyComicImportPreviewRequestDto,
   ThirdPartyComicImportRequestDto,
+  ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
 import { Injectable } from '@nestjs/common'
 import { ComicThirdPartyRegistry } from './providers/comic-third-party.registry'
 import { ThirdPartyComicImportService } from './services/third-party-comic-import.service'
+import { ThirdPartyComicSyncService } from './services/third-party-comic-sync.service'
 
 @Injectable()
 export class ComicThirdPartyService {
@@ -15,6 +17,7 @@ export class ComicThirdPartyService {
   constructor(
     private readonly registry: ComicThirdPartyRegistry,
     private readonly importService: ThirdPartyComicImportService,
+    private readonly syncService: ThirdPartyComicSyncService,
   ) {}
 
   // 获取当前可用的第三方漫画平台列表。
@@ -52,5 +55,10 @@ export class ComicThirdPartyService {
   // 确认第三方漫画导入，创建后台任务并立即返回。
   async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
     return this.importService.confirmImport(dto, userId)
+  }
+
+  // 手动同步三方漫画最新章节，只创建未绑定的新章节。
+  async syncLatest(dto: ThirdPartyComicSyncLatestRequestDto, userId: number) {
+    return this.syncService.syncLatest(dto, userId)
   }
 }

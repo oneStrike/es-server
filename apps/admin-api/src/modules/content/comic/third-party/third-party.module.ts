@@ -11,8 +11,11 @@ import { CopyMangaHttpClient } from './providers/copy-manga-http.client'
 import { CopyMangaProvider } from './providers/copy-manga.provider'
 import { RemoteImageImportService } from './services/remote-image-import.service'
 import { ThirdPartyResourceThrottleService } from './services/third-party-resource-throttle.service'
+import { ThirdPartyComicBindingService } from './services/third-party-comic-binding.service'
 import { ThirdPartyComicImportBackgroundHandler } from './services/third-party-comic-import-background.handler'
 import { ThirdPartyComicImportService } from './services/third-party-comic-import.service'
+import { ThirdPartyComicSyncBackgroundHandler } from './services/third-party-comic-sync-background.handler'
+import { ThirdPartyComicSyncService } from './services/third-party-comic-sync.service'
 import { ComicThirdPartyService } from './third-party-service'
 import { ComicThirdPartyController } from './third-party.controller'
 
@@ -33,8 +36,11 @@ import { ComicThirdPartyController } from './third-party.controller'
     CopyMangaProvider,
     RemoteImageImportService,
     ThirdPartyResourceThrottleService,
+    ThirdPartyComicBindingService,
     ThirdPartyComicImportService,
     ThirdPartyComicImportBackgroundHandler,
+    ThirdPartyComicSyncService,
+    ThirdPartyComicSyncBackgroundHandler,
     {
       provide: COMIC_THIRD_PARTY_PROVIDERS,
       useFactory: (copyMangaProvider: CopyMangaProvider) => [copyMangaProvider],

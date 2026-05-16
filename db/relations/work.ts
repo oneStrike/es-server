@@ -31,6 +31,10 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       from: r.work.id,
       to: r.workComicArchiveImportTask.workId,
     }),
+    thirdPartySourceBinding: r.one.workThirdPartySourceBinding({
+      from: r.work.id,
+      to: r.workThirdPartySourceBinding.workId,
+    }),
     userReadingStates: r.many.userWorkReadingState({
       from: r.work.id,
       to: r.userWorkReadingState.workId,
@@ -90,6 +94,26 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
     work: r.one.work({
       from: r.workComicArchiveImportTask.workId,
       to: r.work.id,
+    }),
+  },
+  workThirdPartySourceBinding: {
+    work: r.one.work({
+      from: r.workThirdPartySourceBinding.workId,
+      to: r.work.id,
+    }),
+    chapterBindings: r.many.workThirdPartyChapterBinding({
+      from: r.workThirdPartySourceBinding.id,
+      to: r.workThirdPartyChapterBinding.workThirdPartySourceBindingId,
+    }),
+  },
+  workThirdPartyChapterBinding: {
+    sourceBinding: r.one.workThirdPartySourceBinding({
+      from: r.workThirdPartyChapterBinding.workThirdPartySourceBindingId,
+      to: r.workThirdPartySourceBinding.id,
+    }),
+    chapter: r.one.workChapter({
+      from: r.workThirdPartyChapterBinding.chapterId,
+      to: r.workChapter.id,
     }),
   },
   workComic: {

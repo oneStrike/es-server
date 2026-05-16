@@ -1,4 +1,5 @@
 import type { BackgroundTaskSelect } from '@db/schema'
+import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   BackgroundTaskExecutionContext,
@@ -74,6 +75,16 @@ export class BackgroundTaskService {
 
   // 创建待处理后台任务，只入队不执行任何业务处理器。
   async createTask(input: CreateBackgroundTaskInput) {
+    return this.createTaskWithDb(input, this.db)
+  }
+
+  // 在调用方事务内创建后台任务，供业务先拿事务锁再入队。
+  async createTaskInTransaction(input: CreateBackgroundTaskInput, tx: Db) {
+    return this.createTaskWithDb(input, tx)
+  }
+
+  // 使用指定 db/tx 写入任务，确保普通入队和事务内入队复用同一校验与落库语义。
+  private async createTaskWithDb(input: CreateBackgroundTaskInput, db: Db) {
     const operator = this.normalizeTaskOperator(input.operator)
     if (!this.registry.has(input.taskType)) {
       throw new BusinessException(
@@ -85,7 +96,7 @@ export class BackgroundTaskService {
     const now = new Date()
     const [row] = await this.drizzle.withErrorHandling(
       () =>
-        this.db
+        db
           .insert(this.backgroundTask)
           .values({
             taskId: randomUUID(),

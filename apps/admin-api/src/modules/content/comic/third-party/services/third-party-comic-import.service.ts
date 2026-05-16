@@ -6,6 +6,7 @@ import type {
   ThirdPartyComicImportRequestDto,
   ThirdPartyComicImportResultDto,
   ThirdPartyComicImportWorkDraftDto,
+  ThirdPartyComicSourceSnapshotDto,
 } from '@libs/content/work/content/dto/content.dto'
 import type {
   BackgroundTaskObject,
@@ -47,8 +48,10 @@ import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { ComicThirdPartyRegistry } from '../providers/comic-third-party.registry'
+import type { ThirdPartyComicChapterBindingInput } from '../third-party-comic-binding.type'
 import { THIRD_PARTY_COMIC_IMPORT_TASK_TYPE } from '../third-party-comic-import.constant'
 import { RemoteImageImportService } from './remote-image-import.service'
+import { ThirdPartyComicBindingService } from './third-party-comic-binding.service'
 
 @Injectable()
 export class ThirdPartyComicImportService {
@@ -59,6 +62,7 @@ export class ThirdPartyComicImportService {
     private readonly workChapterService: WorkChapterService,
     private readonly comicContentService: ComicContentService,
     private readonly remoteImageImportService: RemoteImageImportService,
+    private readonly bindingService: ThirdPartyComicBindingService,
     private readonly backgroundTaskService: BackgroundTaskService,
     private readonly drizzle: DrizzleService,
   ) {}
@@ -84,6 +88,8 @@ export class ThirdPartyComicImportService {
       comicId: dto.comicId,
       sourceSnapshot: {
         providerComicId: detail.id,
+        providerPathWord: detail.pathWord,
+        providerGroupPathWord: this.resolvePreviewGroup(dto.group),
         pathWord: detail.pathWord,
         uuid: detail.uuid,
         fetchedAt: new Date().toISOString(),
@@ -158,6 +164,9 @@ export class ThirdPartyComicImportService {
       platform: dto.platform,
     })
     await context.assertNotCancelled()
+    const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
+      dto.sourceSnapshot,
+    )
     const preparedWork = await this.prepareWork(dto, detail, context)
     const workResult = preparedWork.work
 
@@ -169,6 +178,13 @@ export class ThirdPartyComicImportService {
     }
 
     const chapterResults: ThirdPartyComicImportChapterResultDto[] = []
+    const sourceBinding = await this.bindWorkSource(
+      dto,
+      detail,
+      workResult.id,
+      providerGroupPathWord,
+      context,
+    )
     const chapterPlans = await this.buildChapterImportPlans(
       dto,
       provider,
@@ -187,6 +203,8 @@ export class ThirdPartyComicImportService {
         await this.importChapter(
           chapterPlan,
           workResult.id,
+          sourceBinding.id,
+          sourceBinding.providerGroupPathWord,
           context,
           imageProgressReporter,
         ),
@@ -213,6 +231,13 @@ export class ThirdPartyComicImportService {
     _error?: unknown,
   ) {
     const residue = await context.getResidue()
+    const createdChapterBindingIds = [
+      ...(residue.createdChapterBindingIds ?? []),
+    ].reverse()
+    await this.bindingService.softDeleteChapterBindings(
+      createdChapterBindingIds,
+    )
+
     const createdChapterIds = [...(residue.createdChapterIds ?? [])].reverse()
     if (createdChapterIds.length > 0) {
       await this.workChapterService.deleteChapters(createdChapterIds)
@@ -221,6 +246,11 @@ export class ThirdPartyComicImportService {
     for (const snapshot of [...(residue.updatedChapters ?? [])].reverse()) {
       await this.restoreChapterSnapshot(snapshot)
     }
+
+    const createdSourceBindingIds = [
+      ...(residue.createdSourceBindingIds ?? []),
+    ].reverse()
+    await this.bindingService.softDeleteSourceBindings(createdSourceBindingIds)
 
     const createdWorkIds = [...(residue.createdWorkIds ?? [])].reverse()
     for (const workId of createdWorkIds) {
@@ -334,15 +364,62 @@ export class ThirdPartyComicImportService {
     }
   }
 
+  // 为本次导入确认本地作品的三方来源绑定。
+  private async bindWorkSource(
+    dto: ThirdPartyComicImportRequestDto,
+    detail: ThirdPartyComicDetailDto,
+    workId: number,
+    providerGroupPathWord: string,
+    context: ThirdPartyComicImportTaskContext,
+  ) {
+    const sourceSnapshot = {
+      ...dto.sourceSnapshot,
+      providerComicId: detail.id,
+      providerPathWord: detail.pathWord,
+      providerGroupPathWord,
+      uuid: detail.uuid,
+      fetchedAt:
+        typeof dto.sourceSnapshot.fetchedAt === 'string'
+          ? dto.sourceSnapshot.fetchedAt
+          : new Date().toISOString(),
+    }
+    const sourceBinding = await this.bindingService.createOrGetSourceBinding({
+      workId,
+      platform: dto.platform,
+      providerComicId: detail.id,
+      providerPathWord: detail.pathWord,
+      providerGroupPathWord,
+      providerUuid: detail.uuid,
+      sourceSnapshot,
+    })
+
+    if (sourceBinding.created) {
+      await this.recordCreatedSourceBinding(context, sourceBinding.id)
+    }
+
+    return {
+      id: sourceBinding.id,
+      providerGroupPathWord,
+    }
+  }
+
   // 导入单个章节，章节失败会中断任务并交由后台任务回滚。
   private async importChapter(
     chapterPlan: ThirdPartyComicChapterImportPlan,
     workId: number,
+    sourceBindingId: number,
+    sourceGroup: string,
     context: ThirdPartyComicImportTaskContext,
     imageProgressReporter: BackgroundTaskProgressReporter,
   ) {
     const { chapter } = chapterPlan
-    const localChapterId = await this.prepareChapter(chapter, workId, context)
+    const localChapterId = await this.prepareChapter(
+      chapter,
+      workId,
+      sourceBindingId,
+      sourceGroup,
+      context,
+    )
     const cover = await this.importChapterCover(chapter)
 
     if (!chapter.importImages) {
@@ -472,8 +549,11 @@ export class ThirdPartyComicImportService {
   private async prepareChapter(
     chapter: ThirdPartyComicImportChapterItemDto,
     workId: number,
+    sourceBindingId: number,
+    sourceGroup: string,
     context: ThirdPartyComicImportTaskContext,
   ) {
+    let localChapterId: number
     if (chapter.action === ThirdPartyComicImportChapterActionEnum.UPDATE) {
       if (!chapter.targetChapterId) {
         throw new Error('更新章节必须选择目标章节')
@@ -487,17 +567,27 @@ export class ThirdPartyComicImportService {
         id: chapter.targetChapterId,
         ...this.toChapterUpdate(chapter),
       })
-      return chapter.targetChapterId
+      localChapterId = chapter.targetChapterId
+    } else {
+      const createdChapterId =
+        await this.workChapterService.createChapterReturningId({
+          ...this.toChapterUpdate(chapter),
+          workId,
+          workType: WorkTypeEnum.COMIC,
+        })
+      await this.recordCreatedChapter(context, createdChapterId)
+      localChapterId = createdChapterId
     }
 
-    const createdChapterId =
-      await this.workChapterService.createChapterReturningId({
-        ...this.toChapterUpdate(chapter),
-        workId,
-        workType: WorkTypeEnum.COMIC,
-      })
-    await this.recordCreatedChapter(context, createdChapterId)
-    return createdChapterId
+    await this.recordChapterBinding(context, {
+      chapterId: localChapterId,
+      providerChapterId: chapter.providerChapterId,
+      remoteSortOrder: chapter.sortOrder,
+      snapshot: this.toChapterBindingSnapshot(chapter, sourceGroup),
+      workThirdPartySourceBindingId: sourceBindingId,
+    })
+
+    return localChapterId
   }
 
   // 解析章节封面导入结果，CopyManga 当前不提供章节封面远程下载。
@@ -557,6 +647,29 @@ export class ThirdPartyComicImportService {
     }
   }
 
+  // 解析预览和绑定使用的三方分组标识。
+  private resolvePreviewGroup(group?: string) {
+    return group?.trim() || 'default'
+  }
+
+  // 确认导入必须携带预览时生成的三方分组标识。
+  private resolveSourceGroupFromSnapshot(
+    sourceSnapshot: ThirdPartyComicSourceSnapshotDto,
+  ) {
+    const providerGroupPathWord = sourceSnapshot.providerGroupPathWord
+    if (typeof providerGroupPathWord === 'string') {
+      const normalizedGroup = providerGroupPathWord.trim()
+      if (normalizedGroup) {
+        return normalizedGroup
+      }
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '三方来源分组缺失，请重新预览后再导入',
+    )
+  }
+
   // 将导入草稿转换为本地作品创建 DTO。
   private toCreateWorkDto(
     workDraft: ThirdPartyComicImportWorkDraftDto,
@@ -592,6 +705,20 @@ export class ThirdPartyComicImportService {
       title: chapter.title,
       subtitle: chapter.subtitle,
       viewRule: chapter.viewRule ?? WorkViewPermissionEnum.INHERIT,
+    }
+  }
+
+  // 将三方章节信息落入 binding 快照，后续同步不依赖章节标题猜测。
+  private toChapterBindingSnapshot(
+    chapter: ThirdPartyComicImportChapterItemDto,
+    sourceGroup: string,
+  ) {
+    return {
+      title: chapter.title,
+      group: chapter.group?.trim() || sourceGroup,
+      sortOrder: chapter.sortOrder,
+      chapterApiVersion: chapter.chapterApiVersion ?? null,
+      datetimeCreated: chapter.datetimeCreated ?? null,
     }
   }
 
@@ -713,6 +840,45 @@ export class ThirdPartyComicImportService {
       await this.appendResidueList(context, 'createdChapterIds', chapterId)
     } catch (error) {
       await this.workChapterService.deleteChapters([chapterId])
+      throw error
+    }
+  }
+
+  // 记录新建来源绑定；若记录失败则立即软删除刚创建的绑定。
+  private async recordCreatedSourceBinding(
+    context: ThirdPartyComicImportTaskContext,
+    sourceBindingId: number,
+  ) {
+    try {
+      await this.appendResidueList(
+        context,
+        'createdSourceBindingIds',
+        sourceBindingId,
+      )
+    } catch (error) {
+      await this.bindingService.softDeleteSourceBindings([sourceBindingId])
+      throw error
+    }
+  }
+
+  // 创建并记录章节绑定；若残留记录失败则立即软删除刚创建的绑定。
+  private async recordChapterBinding(
+    context: ThirdPartyComicImportTaskContext,
+    input: ThirdPartyComicChapterBindingInput,
+  ) {
+    const binding = await this.bindingService.createOrGetChapterBinding(input)
+    if (!binding.created) {
+      return
+    }
+
+    try {
+      await this.appendResidueList(
+        context,
+        'createdChapterBindingIds',
+        binding.id,
+      )
+    } catch (error) {
+      await this.bindingService.softDeleteChapterBindings([binding.id])
       throw error
     }
   }

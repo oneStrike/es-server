@@ -442,6 +442,14 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
   })
   categories!: CategoryInfoDto[]
 
+  @BooleanProperty({
+    description: '是否存在三方来源绑定',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  hasThirdPartySourceBinding!: boolean
+
   @ArrayProperty({
     description: '标签列表',
     itemClass: TagInfoDto,
