@@ -9,6 +9,34 @@ import {
 import { BackgroundTaskService } from './background-task.service'
 
 describe('BackgroundTaskService', () => {
+  function createBackgroundTaskSchema() {
+    return {
+      backgroundTask: {
+        cancelRequestedAt: 'cancelRequestedAt',
+        claimExpiresAt: 'claimExpiresAt',
+        createdAt: 'createdAt',
+        dedupeKey: 'dedupeKey',
+        id: 'id',
+        operatorType: 'operatorType',
+        operatorUserId: 'operatorUserId',
+        rollbackError: 'rollbackError',
+        serialKey: 'serialKey',
+        status: 'status',
+        taskId: 'taskId',
+        taskType: 'taskType',
+        updatedAt: 'updatedAt',
+      },
+      backgroundTaskConflictKey: {
+        conflictKey: 'conflictKey',
+        createdAt: 'conflictCreatedAt',
+        id: 'conflictId',
+        releasedAt: 'releasedAt',
+        taskId: 'conflictTaskId',
+        taskType: 'conflictTaskType',
+      },
+    }
+  }
+
   function createBackgroundTaskRow(overrides: Record<string, unknown> = {}) {
     const now = new Date('2026-05-13T03:00:00.000Z')
     return {
@@ -24,6 +52,8 @@ describe('BackgroundTaskService', () => {
       error: null,
       residue: null,
       rollbackError: null,
+      dedupeKey: null,
+      serialKey: null,
       retryCount: 0,
       maxRetries: BACKGROUND_TASK_DEFAULT_MAX_RETRY,
       cancelRequestedAt: null,
@@ -52,9 +82,7 @@ describe('BackgroundTaskService', () => {
       db: {
         insert: insertChain.insert,
       },
-      schema: {
-        backgroundTask: {},
-      },
+      schema: createBackgroundTaskSchema(),
       withErrorHandling: jest.fn((fn) => fn()),
     }
     const registry = {
@@ -81,18 +109,7 @@ describe('BackgroundTaskService', () => {
       ext: {
         findPagination,
       },
-      schema: {
-        backgroundTask: {
-          createdAt: 'createdAt',
-          id: 'id',
-          operatorType: 'operatorType',
-          operatorUserId: 'operatorUserId',
-          status: 'status',
-          taskId: 'taskId',
-          taskType: 'taskType',
-          updatedAt: 'updatedAt',
-        },
-      },
+      schema: createBackgroundTaskSchema(),
     }
 
     return {
@@ -177,9 +194,7 @@ describe('BackgroundTaskService', () => {
     }
     const drizzle = {
       db,
-      schema: {
-        backgroundTask: {},
-      },
+      schema: createBackgroundTaskSchema(),
     }
     const handler = {
       taskType: 'content.third-party-comic-import',
@@ -295,6 +310,52 @@ describe('BackgroundTaskService', () => {
         operatorUserId: null,
       }),
     )
+  })
+
+  it('persists reservation keys and conflict rows when creating tasks', async () => {
+    const { insertChain, service } = createService(
+      createBackgroundTaskRow({
+        dedupeKey: 'source-comic:copy:woduzishenji',
+        serialKey: 'platform:copy',
+        status: BackgroundTaskStatusEnum.PENDING,
+      }),
+    )
+
+    await service.createTask({
+      conflictKeys: [
+        'source-comic:copy:woduzishenji',
+        'source-comic:copy:woduzishenji',
+        'work-name:comic:我独自升级',
+      ],
+      operator: {
+        type: BackgroundTaskOperatorTypeEnum.ADMIN,
+        userId: 7,
+      },
+      payload: { comicId: 'woduzishenji' },
+      serialKey: 'platform:copy',
+      taskType: 'content.third-party-comic-import',
+      dedupeKey: 'source-comic:copy:woduzishenji',
+    } as never)
+
+    expect(insertChain.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dedupeKey: 'source-comic:copy:woduzishenji',
+        serialKey: 'platform:copy',
+      }),
+    )
+    expect(insertChain.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conflictKey: 'source-comic:copy:woduzishenji',
+        taskType: 'content.third-party-comic-import',
+      }),
+    )
+    expect(insertChain.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conflictKey: 'work-name:comic:我独自升级',
+        taskType: 'content.third-party-comic-import',
+      }),
+    )
+    expect(insertChain.values).toHaveBeenCalledTimes(3)
   })
 
   it('rejects creating tasks without an explicit operator', async () => {
@@ -488,6 +549,199 @@ describe('BackgroundTaskService', () => {
     expect(page.list[0]).not.toHaveProperty('rollbackError')
   })
 
+  it('runs handler retry validation before retry writes', async () => {
+    const row = createBackgroundTaskRow({
+      dedupeKey: null,
+      serialKey: null,
+      status: BackgroundTaskStatusEnum.FAILED,
+    })
+    const handler = {
+      taskType: 'content.third-party-comic-import',
+      validateRetry: jest.fn(async () => {
+        throw new BusinessException(10000, 'missing reservation')
+      }),
+    }
+    const db = {
+      select: jest.fn((projection?: Record<string, unknown>) => {
+        const rows = projection?.conflictKey ? [] : [row]
+        return {
+          from: jest.fn(() => ({
+            where: jest.fn(() => ({
+              limit: jest.fn(async () => rows),
+              orderBy: jest.fn(async () => rows),
+            })),
+          })),
+        }
+      }),
+      update: jest.fn(),
+    }
+    const service = new BackgroundTaskService(
+      {
+        db,
+        schema: createBackgroundTaskSchema(),
+      } as never,
+      { resolve: jest.fn(() => handler) } as never,
+    )
+
+    await expect(service.retryTask({ taskId: 'task-1' })).rejects.toThrow(
+      'missing reservation',
+    )
+
+    expect(handler.validateRetry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conflictKeys: [],
+        dedupeKey: null,
+        serialKey: null,
+        taskId: 'task-1',
+      }),
+    )
+    expect(db.update).not.toHaveBeenCalled()
+  })
+
+  it('reports a stable conflict when retry reservation is already occupied', async () => {
+    const row = createBackgroundTaskRow({
+      conflictKeys: undefined,
+      dedupeKey: 'source-comic:copy:woduzishenji',
+      serialKey: 'platform:copy',
+      status: BackgroundTaskStatusEnum.FAILED,
+    })
+    const uniqueConflictError = {
+      code: '23505',
+      constraint: 'background_task_conflict_key_task_type_active_key_uidx',
+    }
+    const handler = {
+      taskType: 'content.third-party-comic-import',
+      validateRetry: jest.fn(async () => undefined),
+    }
+    const db = {
+      select: jest.fn((projection?: Record<string, unknown>) => {
+        const rows = projection?.conflictKey
+          ? [{ conflictKey: 'source-comic:copy:woduzishenji' }]
+          : [row]
+        return {
+          from: jest.fn(() => ({
+            where: jest.fn(() => ({
+              limit: jest.fn(async () => rows),
+              orderBy: jest.fn(async () => rows),
+            })),
+          })),
+        }
+      }),
+      transaction: jest.fn(async (callback) => callback(db)),
+      update: jest.fn(() => ({
+        set: jest.fn((value: Record<string, unknown>) => ({
+          where: jest.fn(() => {
+            if (value.releasedAt === null) {
+              throw uniqueConflictError
+            }
+            return {
+              returning: jest.fn(async () => [
+                {
+                  ...row,
+                  retryCount: row.retryCount + 1,
+                  status: BackgroundTaskStatusEnum.PENDING,
+                },
+              ]),
+            }
+          }),
+        })),
+      })),
+    }
+    const service = new BackgroundTaskService(
+      {
+        db,
+        extractError: jest.fn((error) => error),
+        handleError: jest.fn((error) => {
+          throw error
+        }),
+        schema: createBackgroundTaskSchema(),
+      } as never,
+      { resolve: jest.fn(() => handler) } as never,
+    )
+
+    await expect(service.retryTask({ taskId: 'task-1' })).rejects.toThrow(
+      '任务 reservation 已被其他任务占用，请重新提交任务',
+    )
+  })
+
+  it('skips a busy same-serial pending task and claims a later candidate', async () => {
+    const now = new Date('2026-05-13T03:00:00.000Z')
+    const sameSerial = createBackgroundTaskRow({
+      id: 1,
+      serialKey: 'platform:copy',
+      status: BackgroundTaskStatusEnum.PENDING,
+      taskId: 'task-1',
+    })
+    const differentSerial = createBackgroundTaskRow({
+      id: 2,
+      serialKey: 'platform:other',
+      status: BackgroundTaskStatusEnum.PENDING,
+      taskId: 'task-2',
+    })
+    const selectRows = [
+      [sameSerial, differentSerial],
+      [{ id: 9 }],
+      [],
+    ]
+    const updateSets: Record<string, unknown>[] = []
+    const db = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => {
+            const limit = jest.fn(async () => selectRows.shift() ?? [])
+            return {
+              limit,
+              orderBy: jest.fn(() => ({
+                limit,
+              })),
+            }
+          }),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn((value: Record<string, unknown>) => {
+          updateSets.push(value)
+          return {
+            where: jest.fn(() => ({
+              returning: jest.fn(async () => [
+                createBackgroundTaskRow({
+                  ...differentSerial,
+                  claimedBy: 'worker-2',
+                  status: BackgroundTaskStatusEnum.PROCESSING,
+                }),
+              ]),
+            })),
+          }
+        }),
+      })),
+    }
+    const service = new BackgroundTaskService(
+      {
+        db,
+        schema: createBackgroundTaskSchema(),
+      } as never,
+      {} as never,
+    )
+
+    jest.useFakeTimers().setSystemTime(now)
+    try {
+      await expect(service.claimNextTask('worker-2')).resolves.toEqual(
+        expect.objectContaining({
+          taskId: 'task-2',
+        }),
+      )
+    } finally {
+      jest.useRealTimers()
+    }
+
+    expect(updateSets).toEqual([
+      expect.objectContaining({
+        claimedBy: 'worker-2',
+        status: BackgroundTaskStatusEnum.PROCESSING,
+      }),
+    ])
+  })
+
   it('rolls back instead of marking success when cancellation wins during finalizing', async () => {
     const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error')
     const cancelRequestedAt = new Date('2026-05-13T03:01:00.000Z')
@@ -539,9 +793,7 @@ describe('BackgroundTaskService', () => {
     }
     const drizzle = {
       db,
-      schema: {
-        backgroundTask: {},
-      },
+      schema: createBackgroundTaskSchema(),
     }
     const handler = {
       taskType: 'content.third-party-comic-import',
@@ -617,9 +869,7 @@ describe('BackgroundTaskService', () => {
     }
     const drizzle = {
       db,
-      schema: {
-        backgroundTask: {},
-      },
+      schema: createBackgroundTaskSchema(),
     }
     const handler = {
       taskType: 'content.third-party-comic-import',
@@ -719,7 +969,7 @@ describe('BackgroundTaskService', () => {
     const service = new BackgroundTaskService(
       {
         db,
-        schema: { backgroundTask: {} },
+        schema: createBackgroundTaskSchema(),
       } as never,
       { resolve: jest.fn(() => handler) } as never,
     )
@@ -1031,9 +1281,7 @@ describe('BackgroundTaskService', () => {
     }
     const drizzle = {
       db,
-      schema: {
-        backgroundTask: {},
-      },
+      schema: createBackgroundTaskSchema(),
     }
     const handler = {
       taskType: 'content.third-party-comic-import',

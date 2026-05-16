@@ -131,6 +131,7 @@ describe('ThirdPartyComicImportService', () => {
         created: true,
         id: 20,
       })),
+      getActiveSourceBindingByScope: jest.fn(async () => null),
       softDeleteChapterBindings: jest.fn(async () => undefined),
       softDeleteSourceBindings: jest.fn(async () => undefined),
     }
@@ -144,14 +145,40 @@ describe('ThirdPartyComicImportService', () => {
         payload: input.payload,
       })),
     }
+    const selectLimit = jest.fn(
+      async (): Promise<Record<string, unknown>[]> => [],
+    )
+    const db = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: selectLimit,
+          })),
+        })),
+      })),
+    }
     const drizzle = {
-      db: {},
-      schema: {},
+      db,
+      schema: {
+        work: {
+          deletedAt: 'work.deletedAt',
+          id: 'work.id',
+          name: 'work.name',
+          type: 'work.type',
+        },
+        workChapter: {
+          deletedAt: 'workChapter.deletedAt',
+          id: 'workChapter.id',
+          title: 'workChapter.title',
+          workId: 'workChapter.workId',
+        },
+      },
     }
 
     return {
       backgroundTaskService,
       comicContentService,
+      db,
       provider,
       registry,
       remoteImageImportService,
@@ -165,6 +192,7 @@ describe('ThirdPartyComicImportService', () => {
         backgroundTaskService as never,
         drizzle as never,
       ),
+      selectLimit,
       bindingService,
       workChapterService,
       workService,
@@ -382,22 +410,61 @@ describe('ThirdPartyComicImportService', () => {
         taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
       }),
     )
-    expect(backgroundTaskService.createTask).toHaveBeenCalledWith({
-      taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
-      payload: expect.objectContaining({
-        comicId: 'woduzishenji',
-        mode: ThirdPartyComicImportModeEnum.CREATE_NEW,
+    expect(backgroundTaskService.createTask).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conflictKeys: expect.arrayContaining([
+          'source-comic:copy:woduzishenji',
+          'source-scope:copy:woduzishenji:default',
+          'work-name:comic:我獨自升級',
+          'chapter-title:comic:work-name:我獨自升級:第1话',
+        ]),
+        dedupeConflictMessage: '同源三方作品已有导入任务，请等待任务完成后重试',
+        dedupeKey: 'source-comic:copy:woduzishenji',
+        operator: {
+          type: BackgroundTaskOperatorTypeEnum.ADMIN,
+          userId: 7,
+        },
+        payload: expect.objectContaining({
+          comicId: 'woduzishenji',
+          mode: ThirdPartyComicImportModeEnum.CREATE_NEW,
+        }),
+        serialKey: 'platform:copy',
+        taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
       }),
-      operator: {
-        type: BackgroundTaskOperatorTypeEnum.ADMIN,
-        userId: 7,
-      },
-    })
+    )
     expect(provider.getDetail).not.toHaveBeenCalled()
     expect(workService.createWorkReturningId).not.toHaveBeenCalled()
     expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
     expect(workChapterService.updateChapter).not.toHaveBeenCalled()
     expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
+  })
+
+  it('accepts retry only when persisted reservation snapshot matches payload', async () => {
+    const { service } = createService()
+    const request = createImportRequest()
+    const reservation = await service.buildImportReservationSnapshot(request)
+
+    await expect(
+      service.validateRetryReservationSnapshot(request, {
+        conflictKeys: reservation.conflictKeys,
+        dedupeKey: reservation.dedupeKey,
+        serialKey: reservation.serialKey,
+      }),
+    ).resolves.toBeUndefined()
+
+    await expect(
+      service.validateRetryReservationSnapshot(request, {
+        conflictKeys: ['source-comic:copy:woduzishenji'],
+        dedupeKey: reservation.dedupeKey,
+        serialKey: reservation.serialKey,
+      }),
+    ).rejects.toMatchObject({
+      cause: {
+        code: 'third_party_import_retry_invalid_reservation_snapshot',
+      },
+      message:
+        '破坏性更新前的三方导入任务缺少或不匹配 reservation snapshot，请重新提交导入任务',
+    })
   })
 
   it('executes the background import and records rollback residue', async () => {
@@ -503,6 +570,31 @@ describe('ThirdPartyComicImportService', () => {
     )
   })
 
+  it('rejects source binding drift before local import side effects', async () => {
+    const {
+      bindingService,
+      remoteImageImportService,
+      service,
+      workChapterService,
+      workService,
+    } = createService()
+    ;(bindingService.getActiveSourceBindingByScope as jest.Mock).mockResolvedValueOnce(
+      {
+        workId: 999,
+      },
+    )
+    const context = createExecutionContext()
+
+    await expect(
+      service.executeImportTask(createImportRequest(), context as never),
+    ).rejects.toThrow('三方来源已绑定其他作品，不能重复绑定')
+
+    expect(remoteImageImportService.importImage).not.toHaveBeenCalled()
+    expect(remoteImageImportService.importImages).not.toHaveBeenCalled()
+    expect(workService.createWorkReturningId).not.toHaveBeenCalled()
+    expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
+  })
+
   it('rejects missing source group before local import side effects', async () => {
     const request = createImportRequest()
     delete (request.sourceSnapshot as Record<string, unknown>)
@@ -555,7 +647,15 @@ describe('ThirdPartyComicImportService', () => {
       overwriteContent: false,
       targetChapterId: 300,
     })
-    const { provider, service, workChapterService } = createService()
+    const { provider, selectLimit, service, workChapterService } =
+      createService()
+    selectLimit.mockResolvedValueOnce([
+      {
+        id: 100,
+        name: '目标作品',
+        type: 1,
+      },
+    ])
     const context = createExecutionContext()
 
     await expect(

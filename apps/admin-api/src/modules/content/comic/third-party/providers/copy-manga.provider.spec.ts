@@ -1,3 +1,4 @@
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import chapterContentEmpty from '../__fixtures__/copy-manga/chapter-content-empty.json'
 import chapterContentSuccess from '../__fixtures__/copy-manga/chapter-content-success.json'
@@ -10,13 +11,33 @@ import { CopyMangaProvider } from './copy-manga.provider'
 describe('CopyMangaProvider', () => {
   function createProvider(responseByPath: Record<string, unknown>) {
     const httpClient = {
-      getJson: jest.fn(async (path: string) => responseByPath[path]),
+      getJson: jest.fn(async (path: string) => {
+        const response = responseByPath[path]
+        if (response instanceof Error) {
+          throw response
+        }
+        return response
+      }),
     }
 
     return {
       httpClient,
       provider: new CopyMangaProvider(httpClient as never),
     }
+  }
+
+  function createCopyMangaHttpError(status: number, path: string) {
+    return new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      `CopyManga API 请求失败：HTTP ${status} (${path})`,
+      {
+        cause: {
+          path,
+          reason: `HTTP ${status}`,
+          status,
+        },
+      },
+    )
   }
 
   it('normalizes search results into stable third-party rows', async () => {
@@ -166,8 +187,7 @@ describe('CopyMangaProvider', () => {
 
   it('keeps chapter2 for chapter content version 2', async () => {
     const { httpClient, provider } = createProvider({
-      '/api/v3/comic/woduzishenji/chapter2/chapter-001':
-        chapterContentSuccess,
+      '/api/v3/comic/woduzishenji/chapter2/chapter-001': chapterContentSuccess,
     })
 
     await provider.getChapterContent({
@@ -180,6 +200,46 @@ describe('CopyMangaProvider', () => {
     expect(httpClient.getJson).toHaveBeenCalledWith(
       '/api/v3/comic/woduzishenji/chapter2/chapter-001',
     )
+  })
+
+  it('falls back to unversioned chapter content when the preferred route is not found', async () => {
+    const preferredPath = '/api/v3/comic/woduzishenji/chapter3/chapter-001'
+    const fallbackPath = '/api/v3/comic/woduzishenji/chapter/chapter-001'
+    const { httpClient, provider } = createProvider({
+      [preferredPath]: createCopyMangaHttpError(404, preferredPath),
+      [fallbackPath]: chapterContentSuccess,
+    })
+
+    const content = await provider.getChapterContent({
+      chapterId: 'chapter-001',
+      chapterApiVersion: 3,
+      comicId: 'woduzishenji',
+      platform: 'copy',
+    })
+
+    expect(httpClient.getJson).toHaveBeenNthCalledWith(1, preferredPath)
+    expect(httpClient.getJson).toHaveBeenNthCalledWith(2, fallbackPath)
+    expect(content.providerChapterId).toBe('chapter-001')
+  })
+
+  it('does not fall back when the preferred chapter content route fails for a non-404 reason', async () => {
+    const preferredPath = '/api/v3/comic/woduzishenji/chapter3/chapter-001'
+    const upstreamError = createCopyMangaHttpError(500, preferredPath)
+    const { httpClient, provider } = createProvider({
+      [preferredPath]: upstreamError,
+      '/api/v3/comic/woduzishenji/chapter/chapter-001': chapterContentSuccess,
+    })
+
+    await expect(
+      provider.getChapterContent({
+        chapterId: 'chapter-001',
+        chapterApiVersion: 3,
+        comicId: 'woduzishenji',
+        platform: 'copy',
+      }),
+    ).rejects.toBe(upstreamError)
+
+    expect(httpClient.getJson).toHaveBeenCalledTimes(1)
   })
 
   it('throws when chapter content items do not have usable urls', async () => {
@@ -218,8 +278,7 @@ describe('CopyMangaProvider', () => {
 
   it('throws when chapter content has no images', async () => {
     const { provider } = createProvider({
-      '/api/v3/comic/woduzishenji/chapter2/chapter-empty':
-        chapterContentEmpty,
+      '/api/v3/comic/woduzishenji/chapter2/chapter-empty': chapterContentEmpty,
     })
 
     await expect(

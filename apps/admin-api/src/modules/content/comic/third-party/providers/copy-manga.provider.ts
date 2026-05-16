@@ -191,11 +191,18 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
 
   private async fetchChapterContent(dto: ChapterContentComicRequestDto) {
     let lastError: unknown
-    for (const path of this.buildChapterContentPaths(dto)) {
+    const paths = this.buildChapterContentPaths(dto)
+    for (const [index, path] of paths.entries()) {
       try {
         return await this.httpClient.getJson(path)
       } catch (error) {
         lastError = error
+        if (
+          !this.isCopyMangaHttpNotFound(error) ||
+          index === paths.length - 1
+        ) {
+          throw error
+        }
       }
     }
 
@@ -204,14 +211,10 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
 
   private buildChapterContentPaths(dto: ChapterContentComicRequestDto) {
     const suffix = this.resolveChapterApiSuffix(dto.chapterApiVersion)
-    if (suffix !== undefined) {
-      return [this.buildChapterContentPath(dto, suffix)]
-    }
-
-    return [
-      this.buildChapterContentPath(dto, ''),
-      this.buildChapterContentPath(dto, '2'),
-    ]
+    const suffixes = this.uniqueSuffixes(
+      suffix === undefined ? ['', '2'] : [suffix, '', '2'],
+    )
+    return suffixes.map((item) => this.buildChapterContentPath(dto, item))
   }
 
   private buildChapterContentPath(
@@ -234,6 +237,25 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
       return undefined
     }
     return version >= 2 ? String(version) : ''
+  }
+
+  private uniqueSuffixes(suffixes: string[]) {
+    return suffixes.filter(
+      (suffix, index) => suffixes.indexOf(suffix) === index,
+    )
+  }
+
+  private isCopyMangaHttpNotFound(error: unknown) {
+    if (!(error instanceof BusinessException)) {
+      return false
+    }
+
+    const cause = error.cause
+    if (!cause || typeof cause !== 'object') {
+      return false
+    }
+
+    return (cause as { status?: unknown }).status === 404
   }
 
   // 将 CopyManga 命名对象列表收敛为可展示名称数组。

@@ -77,6 +77,24 @@ export class BackgroundTaskDto {
   })
   taskType!: string
 
+  @StringProperty({
+    description: '后台任务去重键',
+    example: 'source-comic:dmzj:12345',
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  dedupeKey!: string | null
+
+  @StringProperty({
+    description: '后台任务执行串行键',
+    example: 'platform:dmzj',
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  serialKey!: string | null
+
   @EnumProperty({
     description: '操作者类型（1=后台管理员；2=系统）',
     enum: BackgroundTaskOperatorTypeEnum,

@@ -1,6 +1,8 @@
 import type { BackgroundTaskSelect } from '@db/schema'
 import type { Db } from '@db/core'
+import type { PostgresErrorSource } from '@db/core'
 import type { SQL } from 'drizzle-orm'
+import type { BusinessExceptionCause } from '@libs/platform/exceptions'
 import type {
   BackgroundTaskExecutionContext,
   BackgroundTaskHandler,
@@ -12,13 +14,13 @@ import type {
 } from './types'
 import type { BackgroundTaskNotificationSelect } from './types/background-task-notification.type'
 import { randomUUID } from 'node:crypto'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, PostgresErrorCode } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { getAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { and, asc, eq, gte, isNull, lte, or } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm'
 import {
   BACKGROUND_TASK_CLAIM_TIMEOUT_SECONDS,
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
@@ -45,6 +47,29 @@ class BackgroundTaskFinalizingExpiredError extends Error {
   }
 }
 
+const BACKGROUND_TASK_CONSTRAINT = {
+  taskId: 'background_task_task_id_key',
+  dedupeKey: 'background_task_task_type_active_dedupe_key_uidx',
+  serialKey: 'background_task_task_type_executing_serial_key_uidx',
+  conflictKey: 'background_task_conflict_key_task_type_active_key_uidx',
+} as const
+
+const BACKGROUND_TASK_EXECUTING_SERIAL_STATUSES = [
+  BackgroundTaskStatusEnum.PROCESSING,
+  BackgroundTaskStatusEnum.FINALIZING,
+] as const
+
+const BACKGROUND_TASK_RESERVATION_KEY_MAX_LENGTH = 240
+const BACKGROUND_TASK_CONFLICT_KEY_MAX_LENGTH = 300
+
+interface NormalizedTaskReservation {
+  dedupeKey: string | null
+  dedupeConflictMessage?: string
+  serialKey: string | null
+  conflictKeys: string[]
+  conflictMessageByKey: Map<string, string>
+}
+
 /**
  * 通用后台任务服务。
  * 负责持久化状态机、claim、取消、重试、执行和失败补偿，不持有具体业务逻辑。
@@ -56,6 +81,10 @@ export class BackgroundTaskService {
   private readonly maxErrorCauseArrayLength = 10
   private readonly maxErrorCauseObjectKeys = 20
   private readonly maxErrorCauseStringLength = 500
+  private readonly claimScanLimit = Math.max(
+    BACKGROUND_TASK_WORKER_BATCH_SIZE * 4,
+    20,
+  )
 
   // 初始化后台任务服务依赖。
   constructor(
@@ -73,9 +102,31 @@ export class BackgroundTaskService {
     return this.drizzle.schema.backgroundTask
   }
 
+  // 读取 backgroundTaskConflictKey 表。
+  private get backgroundTaskConflictKey() {
+    return this.drizzle.schema.backgroundTaskConflictKey
+  }
+
+  // 使用底层事务包住多表写入；测试替身没有 transaction 时退化为直接执行。
+  private async runInDbTransaction<T>(callback: (tx: Db) => Promise<T>) {
+    const transaction = (
+      this.db as Db & {
+        transaction?: <TResult>(
+          transactionCallback: (tx: Db) => Promise<TResult>,
+        ) => Promise<TResult>
+      }
+    ).transaction
+
+    if (typeof transaction === 'function') {
+      return transaction.call(this.db, callback)
+    }
+
+    return callback(this.db)
+  }
+
   // 创建待处理后台任务，只入队不执行任何业务处理器。
   async createTask(input: CreateBackgroundTaskInput) {
-    return this.createTaskWithDb(input, this.db)
+    return this.runInDbTransaction((tx) => this.createTaskWithDb(input, tx))
   }
 
   // 在调用方事务内创建后台任务，供业务先拿事务锁再入队。
@@ -86,6 +137,7 @@ export class BackgroundTaskService {
   // 使用指定 db/tx 写入任务，确保普通入队和事务内入队复用同一校验与落库语义。
   private async createTaskWithDb(input: CreateBackgroundTaskInput, db: Db) {
     const operator = this.normalizeTaskOperator(input.operator)
+    const reservation = this.normalizeTaskReservation(input)
     if (!this.registry.has(input.taskType)) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -94,38 +146,51 @@ export class BackgroundTaskService {
     }
 
     const now = new Date()
-    const [row] = await this.drizzle.withErrorHandling(
-      () =>
-        db
-          .insert(this.backgroundTask)
-          .values({
-            taskId: randomUUID(),
-            taskType: input.taskType,
-            operatorType: operator.operatorType,
-            operatorUserId: operator.operatorUserId,
-            status: BackgroundTaskStatusEnum.PENDING,
-            payload: input.payload,
-            progress: BACKGROUND_TASK_INITIAL_PROGRESS,
-            result: null,
-            error: null,
-            residue: null,
-            rollbackError: null,
-            retryCount: 0,
-            maxRetries: input.maxRetries ?? BACKGROUND_TASK_DEFAULT_MAX_RETRY,
-            cancelRequestedAt: null,
-            claimedBy: null,
-            claimExpiresAt: null,
-            startedAt: null,
-            finalizingAt: null,
-            finishedAt: null,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .returning(),
-      { duplicate: '后台任务ID已存在' },
-    )
+    try {
+      const [row] = await db
+        .insert(this.backgroundTask)
+        .values({
+          taskId: randomUUID(),
+          taskType: input.taskType,
+          operatorType: operator.operatorType,
+          operatorUserId: operator.operatorUserId,
+          status: BackgroundTaskStatusEnum.PENDING,
+          payload: input.payload,
+          progress: BACKGROUND_TASK_INITIAL_PROGRESS,
+          result: null,
+          error: null,
+          residue: null,
+          rollbackError: null,
+          dedupeKey: reservation.dedupeKey,
+          serialKey: reservation.serialKey,
+          retryCount: 0,
+          maxRetries: input.maxRetries ?? BACKGROUND_TASK_DEFAULT_MAX_RETRY,
+          cancelRequestedAt: null,
+          claimedBy: null,
+          claimExpiresAt: null,
+          startedAt: null,
+          finalizingAt: null,
+          finishedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning()
 
-    return this.toTaskDto(row)
+      for (const conflictKey of reservation.conflictKeys) {
+        await db.insert(this.backgroundTaskConflictKey).values({
+          taskId: row.taskId,
+          taskType: row.taskType,
+          conflictKey,
+          releasedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        })
+      }
+
+      return this.toTaskDto(row)
+    } catch (error) {
+      this.handleCreateTaskReservationError(error, reservation)
+    }
   }
 
   // 归一化后台任务操作者，确保写库前满足 schema scope 约束。
@@ -163,6 +228,233 @@ export class BackgroundTaskService {
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       '后台任务操作者类型非法',
     )
+  }
+
+  // 归一化 reservation 入参，保持平台层只处理通用 key，不写入业务文案。
+  private normalizeTaskReservation(
+    input: CreateBackgroundTaskInput,
+  ): NormalizedTaskReservation {
+    const conflictMessageByKey = new Map<string, string>()
+    for (const [key, message] of Object.entries(
+      input.conflictMessageByKey ?? {},
+    )) {
+      const normalizedKey = this.normalizeRequiredReservationKey(
+        key,
+        BACKGROUND_TASK_CONFLICT_KEY_MAX_LENGTH,
+        '后台任务冲突键',
+      )
+      if (message.trim()) {
+        conflictMessageByKey.set(normalizedKey, message)
+      }
+    }
+
+    return {
+      dedupeKey: this.normalizeOptionalReservationKey(
+        input.dedupeKey,
+        BACKGROUND_TASK_RESERVATION_KEY_MAX_LENGTH,
+        '后台任务去重键',
+      ),
+      dedupeConflictMessage: input.dedupeConflictMessage?.trim() || undefined,
+      serialKey: this.normalizeOptionalReservationKey(
+        input.serialKey,
+        BACKGROUND_TASK_RESERVATION_KEY_MAX_LENGTH,
+        '后台任务串行键',
+      ),
+      conflictKeys: this.normalizeConflictKeys(input.conflictKeys),
+      conflictMessageByKey,
+    }
+  }
+
+  // 归一化可选 reservation key；缺省保持为空，显式空白视为调用方错误。
+  private normalizeOptionalReservationKey(
+    value: string | undefined,
+    maxLength: number,
+    label: string,
+  ) {
+    if (value === undefined) {
+      return null
+    }
+    return this.normalizeRequiredReservationKey(value, maxLength, label)
+  }
+
+  // 归一化必填 reservation key。
+  private normalizeRequiredReservationKey(
+    value: string,
+    maxLength: number,
+    label: string,
+  ) {
+    const normalizedValue = value.trim()
+    if (!normalizedValue) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `${label}不能为空`,
+      )
+    }
+    if (normalizedValue.length > maxLength) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `${label}长度不能超过 ${maxLength}`,
+      )
+    }
+    return normalizedValue
+  }
+
+  // 去重并校验业务冲突键，保证同一任务不会重复占用相同 key。
+  private normalizeConflictKeys(keys: string[] | undefined) {
+    const normalizedKeys: string[] = []
+    const seenKeys = new Set<string>()
+    for (const key of keys ?? []) {
+      const normalizedKey = this.normalizeRequiredReservationKey(
+        key,
+        BACKGROUND_TASK_CONFLICT_KEY_MAX_LENGTH,
+        '后台任务冲突键',
+      )
+      if (seenKeys.has(normalizedKey)) {
+        continue
+      }
+      seenKeys.add(normalizedKey)
+      normalizedKeys.push(normalizedKey)
+    }
+    return normalizedKeys
+  }
+
+  // 将创建任务期间的 reservation 唯一冲突翻译为调用方声明的业务文案。
+  private handleCreateTaskReservationError(
+    error: unknown,
+    reservation: NormalizedTaskReservation,
+  ): never {
+    const postgresError = this.extractPostgresError(error)
+    if (
+      postgresError?.code === PostgresErrorCode.UNIQUE_VIOLATION &&
+      postgresError.constraint === BACKGROUND_TASK_CONSTRAINT.taskId
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '后台任务ID已存在',
+        { cause: this.toBusinessExceptionCause(error) },
+      )
+    }
+
+    if (
+      postgresError?.code === PostgresErrorCode.UNIQUE_VIOLATION &&
+      postgresError.constraint === BACKGROUND_TASK_CONSTRAINT.dedupeKey
+    ) {
+      if (reservation.dedupeConflictMessage) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          reservation.dedupeConflictMessage,
+          { cause: this.toBusinessExceptionCause(error) },
+        )
+      }
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '后台任务去重键已被占用，请刷新后重试',
+        { cause: this.toBusinessExceptionCause(error) },
+      )
+    }
+
+    if (
+      postgresError?.code === PostgresErrorCode.UNIQUE_VIOLATION &&
+      postgresError.constraint === BACKGROUND_TASK_CONSTRAINT.conflictKey
+    ) {
+      const conflictKey = this.extractConflictKeyFromPostgresDetail(
+        postgresError.detail,
+      )
+      const message = conflictKey
+        ? reservation.conflictMessageByKey.get(conflictKey)
+        : undefined
+      if (message) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          message,
+          { cause: this.toBusinessExceptionCause(error) },
+        )
+      }
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '后台任务冲突键已被占用，请刷新后重试',
+        { cause: this.toBusinessExceptionCause(error) },
+      )
+    }
+
+    this.handleDatabaseError(error, { duplicate: '后台任务ID已存在' })
+  }
+
+  // 将重试时重新占用 reservation 的唯一冲突翻译为稳定状态冲突。
+  private handleRetryReservationError(error: unknown): never {
+    if (
+      this.isConstraintViolation(error, BACKGROUND_TASK_CONSTRAINT.dedupeKey) ||
+      this.isConstraintViolation(error, BACKGROUND_TASK_CONSTRAINT.conflictKey)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '任务 reservation 已被其他任务占用，请重新提交任务',
+        { cause: this.toBusinessExceptionCause(error) },
+      )
+    }
+
+    this.handleDatabaseError(error, { conflict: '任务状态已变化，请刷新后重试' })
+  }
+
+  // 判断异常是否来自指定 PostgreSQL 唯一约束。
+  private isConstraintViolation(error: unknown, constraint: string) {
+    const postgresError = this.extractPostgresError(error)
+    return (
+      postgresError?.code === PostgresErrorCode.UNIQUE_VIOLATION &&
+      postgresError.constraint === constraint
+    )
+  }
+
+  // 从 PostgreSQL 唯一冲突 detail 中提取 conflict_key，供逐 key 文案映射使用。
+  private extractConflictKeyFromPostgresDetail(detail: string | undefined) {
+    if (!detail) {
+      return undefined
+    }
+    const match =
+      /Key \((?:[^)]*,\s*)?conflict_key\)=\((?:[^,]*,\s*)?(.+)\) already exists/.exec(
+        detail,
+      )
+    return match?.[1]
+  }
+
+  // 从未知异常中提取 PostgreSQL 元信息。
+  private extractPostgresError(error: unknown) {
+    const source =
+      error instanceof Error || (typeof error === 'object' && error !== null)
+        ? error
+        : undefined
+    return this.drizzle.extractError(source as PostgresErrorSource)
+  }
+
+  // 统一透传数据库异常翻译，同时允许调用点提供局部文案。
+  private handleDatabaseError(
+    error: unknown,
+    messages: Parameters<DrizzleService['handleError']>[1],
+  ): never {
+    const source =
+      error instanceof Error || (typeof error === 'object' && error !== null)
+        ? error
+        : undefined
+    this.drizzle.handleError(source as PostgresErrorSource, messages)
+  }
+
+  // 将 unknown 收敛为 BusinessException 支持的 cause 类型。
+  private toBusinessExceptionCause(
+    error: unknown,
+  ): BusinessExceptionCause | undefined {
+    if (
+      error instanceof Error ||
+      typeof error === 'string' ||
+      typeof error === 'number' ||
+      typeof error === 'boolean' ||
+      error === null
+    ) {
+      return error
+    }
+    if (typeof error === 'object') {
+      return error as Record<string, unknown>
+    }
+    return undefined
   }
 
   // 分页查询后台任务。
@@ -245,24 +537,32 @@ export class BackgroundTaskService {
     const now = new Date()
 
     if (row.status === BackgroundTaskStatusEnum.PENDING) {
-      const [cancelled] = await this.db
-        .update(this.backgroundTask)
-        .set({
-          status: BackgroundTaskStatusEnum.CANCELLED,
-          cancelRequestedAt: now,
-          error: this.toErrorObject(new BackgroundTaskCancellationError()),
-          finishedAt: now,
-          claimedBy: null,
-          claimExpiresAt: null,
-          updatedAt: now,
-        })
-        .where(
-          and(
-            eq(this.backgroundTask.taskId, input.taskId),
-            eq(this.backgroundTask.status, BackgroundTaskStatusEnum.PENDING),
-          ),
-        )
-        .returning()
+      const cancelled = await this.runInDbTransaction(async (tx) => {
+        const [cancelledRow] = await tx
+          .update(this.backgroundTask)
+          .set({
+            status: BackgroundTaskStatusEnum.CANCELLED,
+            cancelRequestedAt: now,
+            error: this.toErrorObject(new BackgroundTaskCancellationError()),
+            finishedAt: now,
+            claimedBy: null,
+            claimExpiresAt: null,
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(this.backgroundTask.taskId, input.taskId),
+              eq(this.backgroundTask.status, BackgroundTaskStatusEnum.PENDING),
+            ),
+          )
+          .returning()
+
+        if (cancelledRow) {
+          await this.releaseConflictKeys(cancelledRow.taskId, tx, now)
+        }
+
+        return cancelledRow
+      })
       return this.toTaskDto(cancelled ?? (await this.readTask(input.taskId)))
     }
 
@@ -309,36 +609,66 @@ export class BackgroundTaskService {
       )
     }
 
+    const conflictKeys = await this.readConflictKeys(row.taskId)
+    const handler = this.registry.resolve(row.taskType)
+    await handler.validateRetry?.({
+      taskId: row.taskId,
+      taskType: row.taskType,
+      payload: this.asObject(row.payload),
+      residue: this.asObject(row.residue),
+      status: this.normalizeStatus(row.status),
+      retryCount: row.retryCount,
+      dedupeKey: row.dedupeKey,
+      serialKey: row.serialKey,
+      conflictKeys,
+    })
+
     const now = new Date()
-    const [retried] = await this.db
-      .update(this.backgroundTask)
-      .set({
-        status: BackgroundTaskStatusEnum.PENDING,
-        progress: BACKGROUND_TASK_INITIAL_PROGRESS,
-        result: null,
-        error: null,
-        residue: null,
-        rollbackError: null,
-        retryCount: row.retryCount + 1,
-        cancelRequestedAt: null,
-        claimedBy: null,
-        claimExpiresAt: null,
-        startedAt: null,
-        finalizingAt: null,
-        finishedAt: null,
-        updatedAt: now,
+    let retried: BackgroundTaskSelect | undefined
+    try {
+      retried = await this.runInDbTransaction(async (tx) => {
+        const [retriedRow] = await tx
+          .update(this.backgroundTask)
+          .set({
+            status: BackgroundTaskStatusEnum.PENDING,
+            progress: BACKGROUND_TASK_INITIAL_PROGRESS,
+            result: null,
+            error: null,
+            residue: null,
+            rollbackError: null,
+            retryCount: row.retryCount + 1,
+            cancelRequestedAt: null,
+            claimedBy: null,
+            claimExpiresAt: null,
+            startedAt: null,
+            finalizingAt: null,
+            finishedAt: null,
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(this.backgroundTask.taskId, input.taskId),
+              or(
+                eq(this.backgroundTask.status, BackgroundTaskStatusEnum.FAILED),
+                eq(
+                  this.backgroundTask.status,
+                  BackgroundTaskStatusEnum.CANCELLED,
+                ),
+              ),
+              isNull(this.backgroundTask.rollbackError),
+            ),
+          )
+          .returning()
+
+        if (retriedRow) {
+          await this.reactivateConflictKeys(retriedRow.taskId, tx, now)
+        }
+
+        return retriedRow
       })
-      .where(
-        and(
-          eq(this.backgroundTask.taskId, input.taskId),
-          or(
-            eq(this.backgroundTask.status, BackgroundTaskStatusEnum.FAILED),
-            eq(this.backgroundTask.status, BackgroundTaskStatusEnum.CANCELLED),
-          ),
-          isNull(this.backgroundTask.rollbackError),
-        ),
-      )
-      .returning()
+    } catch (error) {
+      this.handleRetryReservationError(error)
+    }
 
     if (!retried) {
       throw new BusinessException(
@@ -363,7 +693,7 @@ export class BackgroundTaskService {
   // 原子 claim 一个可执行任务；过期 FINALIZING 会被回收并进入恢复回滚。
   async claimNextTask(workerId: string) {
     const now = new Date()
-    const [candidate] = await this.db
+    const candidates = await this.db
       .select()
       .from(this.backgroundTask)
       .where(
@@ -380,12 +710,69 @@ export class BackgroundTaskService {
         ),
       )
       .orderBy(asc(this.backgroundTask.createdAt), asc(this.backgroundTask.id))
-      .limit(1)
+      .limit(this.claimScanLimit)
 
-    if (!candidate) {
-      return null
+    for (const candidate of candidates) {
+      if (
+        candidate.status === BackgroundTaskStatusEnum.PENDING &&
+        candidate.serialKey &&
+        (await this.hasBusySerialTask(candidate))
+      ) {
+        continue
+      }
+
+      try {
+        const claimed = await this.claimTaskCandidate(candidate, workerId, now)
+        if (claimed) {
+          return claimed
+        }
+      } catch (error) {
+        if (
+          this.isConstraintViolation(
+            error,
+            BACKGROUND_TASK_CONSTRAINT.serialKey,
+          )
+        ) {
+          continue
+        }
+        throw error
+      }
     }
 
+    return null
+  }
+
+  // 检查同任务类型的串行键是否已有执行中任务。
+  private async hasBusySerialTask(candidate: BackgroundTaskSelect) {
+    if (!candidate.serialKey) {
+      return false
+    }
+
+    const [busyTask] = await this.db
+      .select({ id: this.backgroundTask.id })
+      .from(this.backgroundTask)
+      .where(
+        and(
+          eq(this.backgroundTask.taskType, candidate.taskType),
+          eq(this.backgroundTask.serialKey, candidate.serialKey),
+          inArray(
+            this.backgroundTask.status,
+            BACKGROUND_TASK_EXECUTING_SERIAL_STATUSES,
+          ),
+          ne(this.backgroundTask.id, candidate.id),
+        ),
+      )
+      .limit(1)
+
+    return busyTask !== undefined
+  }
+
+  // 尝试 claim 指定候选任务。
+  private async claimTaskCandidate(
+    candidate: BackgroundTaskSelect,
+    workerId: string,
+    now: Date,
+  ) {
     const deadline = this.buildClaimDeadline(now)
     const [claimed] = await this.db
       .update(this.backgroundTask)
@@ -513,6 +900,47 @@ export class BackgroundTaskService {
     return row
   }
 
+  // 读取任务创建时持久化的冲突键快照。
+  private async readConflictKeys(taskId: string) {
+    const rows = await this.db
+      .select({ conflictKey: this.backgroundTaskConflictKey.conflictKey })
+      .from(this.backgroundTaskConflictKey)
+      .where(eq(this.backgroundTaskConflictKey.taskId, taskId))
+      .orderBy(
+        asc(this.backgroundTaskConflictKey.createdAt),
+        asc(this.backgroundTaskConflictKey.id),
+      )
+
+    return rows.map((row) => row.conflictKey)
+  }
+
+  // 释放任务持有的活动冲突键；dedupe/serial 由任务状态 partial index 自动释放。
+  private async releaseConflictKeys(taskId: string, db: Db, now: Date) {
+    await db
+      .update(this.backgroundTaskConflictKey)
+      .set({
+        releasedAt: now,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(this.backgroundTaskConflictKey.taskId, taskId),
+          isNull(this.backgroundTaskConflictKey.releasedAt),
+        ),
+      )
+  }
+
+  // 重试时重新激活同一任务的冲突键快照。
+  private async reactivateConflictKeys(taskId: string, db: Db, now: Date) {
+    await db
+      .update(this.backgroundTaskConflictKey)
+      .set({
+        releasedAt: null,
+        updatedAt: now,
+      })
+      .where(eq(this.backgroundTaskConflictKey.taskId, taskId))
+  }
+
   // 任务进入最终写入阶段。
   private async markTaskFinalizing(taskId: string) {
     const now = new Date()
@@ -546,26 +974,34 @@ export class BackgroundTaskService {
     result: BackgroundTaskObject,
   ) {
     const now = new Date()
-    const [row] = await this.db
-      .update(this.backgroundTask)
-      .set({
-        status: BackgroundTaskStatusEnum.SUCCESS,
-        result,
-        error: null,
-        rollbackError: null,
-        claimedBy: null,
-        claimExpiresAt: null,
-        finishedAt: now,
-        updatedAt: now,
-      })
-      .where(
-        and(
-          eq(this.backgroundTask.taskId, taskId),
-          eq(this.backgroundTask.status, BackgroundTaskStatusEnum.FINALIZING),
-          isNull(this.backgroundTask.cancelRequestedAt),
-        ),
-      )
-      .returning()
+    const row = await this.runInDbTransaction(async (tx) => {
+      const [succeeded] = await tx
+        .update(this.backgroundTask)
+        .set({
+          status: BackgroundTaskStatusEnum.SUCCESS,
+          result,
+          error: null,
+          rollbackError: null,
+          claimedBy: null,
+          claimExpiresAt: null,
+          finishedAt: now,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(this.backgroundTask.taskId, taskId),
+            eq(this.backgroundTask.status, BackgroundTaskStatusEnum.FINALIZING),
+            isNull(this.backgroundTask.cancelRequestedAt),
+          ),
+        )
+        .returning()
+
+      if (succeeded) {
+        await this.releaseConflictKeys(succeeded.taskId, tx, now)
+      }
+
+      return succeeded
+    })
 
     if (!row) {
       const latest = await this.readTask(taskId)
@@ -637,20 +1073,24 @@ export class BackgroundTaskService {
     errorObject = this.toErrorObject(error),
   ) {
     const now = new Date()
-    await this.db
-      .update(this.backgroundTask)
-      .set({
-        status: cancelled
-          ? BackgroundTaskStatusEnum.CANCELLED
-          : BackgroundTaskStatusEnum.FAILED,
-        error: errorObject,
-        rollbackError: null,
-        claimedBy: null,
-        claimExpiresAt: null,
-        finishedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(this.backgroundTask.taskId, taskId))
+    await this.runInDbTransaction(async (tx) => {
+      await tx
+        .update(this.backgroundTask)
+        .set({
+          status: cancelled
+            ? BackgroundTaskStatusEnum.CANCELLED
+            : BackgroundTaskStatusEnum.FAILED,
+          error: errorObject,
+          rollbackError: null,
+          claimedBy: null,
+          claimExpiresAt: null,
+          finishedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(this.backgroundTask.taskId, taskId))
+
+      await this.releaseConflictKeys(taskId, tx, now)
+    })
   }
 
   // 标记回滚失败，避免把残留任务报告成 clean failure/cancel。
@@ -891,6 +1331,8 @@ export class BackgroundTaskService {
       id: Number(row.id),
       taskId: row.taskId,
       taskType: row.taskType,
+      dedupeKey: row.dedupeKey,
+      serialKey: row.serialKey,
       operatorType: row.operatorType,
       operatorUserId: row.operatorUserId,
       status: this.normalizeStatus(row.status),

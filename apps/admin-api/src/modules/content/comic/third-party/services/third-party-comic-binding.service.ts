@@ -40,6 +40,13 @@ export class ThirdPartyComicBindingService {
     return `${input.platform}:${input.providerComicId}:${input.providerGroupPathWord}`
   }
 
+  // 按平台、三方漫画和章节分组读取 active 来源绑定。
+  async getActiveSourceBindingByScope(input: ThirdPartyComicSourceScopeInput) {
+    return this.findActiveSourceBindingByScope(
+      this.normalizeSourceScopeInput(input),
+    )
+  }
+
   // 读取作品当前 active 三方来源绑定。
   async getActiveSourceBindingByWorkId(workId: number) {
     const [row] = await this.db
@@ -261,6 +268,30 @@ export class ThirdPartyComicBindingService {
     return row ?? null
   }
 
+  // 归一化来源作用域输入，供只读查询和写入校验共享。
+  private normalizeSourceScopeInput(input: ThirdPartyComicSourceScopeInput) {
+    const normalized = {
+      platform: input.platform.trim(),
+      providerComicId: input.providerComicId.trim(),
+      providerGroupPathWord: input.providerGroupPathWord.trim(),
+    }
+
+    for (const [field, value] of [
+      ['platform', normalized.platform],
+      ['providerComicId', normalized.providerComicId],
+      ['providerGroupPathWord', normalized.providerGroupPathWord],
+    ] as const) {
+      if (!value) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `三方来源绑定字段 ${field} 不能为空`,
+        )
+      }
+    }
+
+    return normalized
+  }
+
   // 按来源绑定和 provider 章节 ID 读取 active 章节绑定。
   private async findActiveChapterBindingByProvider(
     sourceBindingId: number,
@@ -302,12 +333,13 @@ export class ThirdPartyComicBindingService {
 
   // 归一化来源绑定输入，并提前阻断空白 source-scope 字段。
   private normalizeSourceInput(input: ThirdPartyComicSourceBindingInput) {
+    const sourceScope = this.normalizeSourceScopeInput(input)
     const normalized = {
       ...input,
-      platform: input.platform.trim(),
-      providerComicId: input.providerComicId.trim(),
+      platform: sourceScope.platform,
+      providerComicId: sourceScope.providerComicId,
       providerPathWord: input.providerPathWord.trim(),
-      providerGroupPathWord: input.providerGroupPathWord.trim(),
+      providerGroupPathWord: sourceScope.providerGroupPathWord,
       providerUuid: input.providerUuid?.trim() || null,
     }
 

@@ -69,6 +69,31 @@ export interface BackgroundTaskExecutionContext<
   getResidue: () => Promise<TResidue>
 }
 
+/** 后台任务重试前校验上下文。 */
+export interface BackgroundTaskRetryValidationContext<
+  TPayload extends BackgroundTaskObject = BackgroundTaskObject,
+  TResidue extends BackgroundTaskObject = BackgroundTaskObject,
+> {
+  /** 对外任务 ID。 */
+  taskId: string
+  /** 任务类型。 */
+  taskType: string
+  /** 当前任务负载。 */
+  payload: TPayload
+  /** 处理器记录的待回滚残留。 */
+  residue: TResidue
+  /** 当前任务状态。 */
+  status: BackgroundTaskStatusEnum
+  /** 已重试次数。 */
+  retryCount: number
+  /** 创建任务时持久化的去重键。 */
+  dedupeKey: string | null
+  /** 创建任务时持久化的串行键。 */
+  serialKey: string | null
+  /** 创建任务时持久化的业务冲突键。 */
+  conflictKeys: string[]
+}
+
 /** 后台任务处理器。 */
 export interface BackgroundTaskHandler<
   TPayload extends BackgroundTaskObject = BackgroundTaskObject,
@@ -78,6 +103,10 @@ export interface BackgroundTaskHandler<
 > {
   /** 处理器唯一任务类型。 */
   taskType: string
+  /** 重试前校验，用于拒绝缺少新版 reservation snapshot 的历史任务。 */
+  validateRetry?: (
+    context: BackgroundTaskRetryValidationContext<TPayload, TResidue>,
+  ) => Promise<void>
   /** 准备阶段，严禁产生不可清理的最终业务副作用。 */
   prepare?: (
     context: BackgroundTaskExecutionContext<TPayload, TResidue>,

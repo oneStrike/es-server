@@ -9,6 +9,7 @@ import {
   snakeCase,
   timestamp,
   unique,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -43,6 +44,10 @@ export const backgroundTask = snakeCase.table(
     residue: jsonb(),
     /** 回滚失败诊断信息。 */
     rollbackError: jsonb(),
+    /** 活跃任务去重键；同一任务类型下 PENDING/PROCESSING/FINALIZING 期间唯一。 */
+    dedupeKey: varchar({ length: 240 }),
+    /** 执行期串行键；同一任务类型下 PROCESSING/FINALIZING 期间唯一。 */
+    serialKey: varchar({ length: 240 }),
     /** 已重试次数。 */
     retryCount: integer().default(0).notNull(),
     /** 最大允许重试次数。 */
@@ -70,6 +75,25 @@ export const backgroundTask = snakeCase.table(
   },
   (table) => [
     unique('background_task_task_id_key').on(table.taskId),
+    index('background_task_task_type_dedupe_key_idx').on(
+      table.taskType,
+      table.dedupeKey,
+    ),
+    index('background_task_task_type_serial_key_status_idx').on(
+      table.taskType,
+      table.serialKey,
+      table.status,
+    ),
+    uniqueIndex('background_task_task_type_active_dedupe_key_uidx')
+      .on(table.taskType, table.dedupeKey)
+      .where(
+        sql`${table.dedupeKey} is not null and ${table.status} in (1, 2, 3)`,
+      ),
+    uniqueIndex('background_task_task_type_executing_serial_key_uidx')
+      .on(table.taskType, table.serialKey)
+      .where(
+        sql`${table.serialKey} is not null and ${table.status} in (2, 3)`,
+      ),
     index('background_task_task_type_status_created_at_id_idx').on(
       table.taskType,
       table.status,
@@ -108,6 +132,14 @@ export const backgroundTask = snakeCase.table(
       sql`${table.status} in (1, 2, 3, 4, 5, 6, 7)`,
     ),
     check(
+      'background_task_dedupe_key_nonblank_chk',
+      sql`${table.dedupeKey} is null or length(trim(${table.dedupeKey})) > 0`,
+    ),
+    check(
+      'background_task_serial_key_nonblank_chk',
+      sql`${table.serialKey} is null or length(trim(${table.serialKey})) > 0`,
+    ),
+    check(
       'background_task_retry_count_non_negative_chk',
       sql`${table.retryCount} >= 0`,
     ),
@@ -118,5 +150,55 @@ export const backgroundTask = snakeCase.table(
   ],
 )
 
+/**
+ * 后台任务业务冲突键表。
+ * 记录业务层声明的活动 reservation，用于跨任务的同源、同名和同章节互斥。
+ */
+export const backgroundTaskConflictKey = snakeCase.table(
+  'background_task_conflict_key',
+  {
+    /** 主键 ID。 */
+    id: bigint({ mode: 'bigint' }).primaryKey().generatedAlwaysAsIdentity(),
+    /** 对外后台任务 ID。 */
+    taskId: varchar({ length: 36 }).notNull(),
+    /** 任务类型。 */
+    taskType: varchar({ length: 120 }).notNull(),
+    /** 业务冲突键。 */
+    conflictKey: varchar({ length: 300 }).notNull(),
+    /** 释放时间；为空表示仍然占用。 */
+    releasedAt: timestamp({ withTimezone: true, precision: 6 }),
+    /** 创建时间。 */
+    createdAt: timestamp({ withTimezone: true, precision: 6 })
+      .defaultNow()
+      .notNull(),
+    /** 更新时间。 */
+    updatedAt: timestamp({ withTimezone: true, precision: 6 })
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex('background_task_conflict_key_task_type_active_key_uidx')
+      .on(table.taskType, table.conflictKey)
+      .where(sql`${table.releasedAt} is null`),
+    index('background_task_conflict_key_task_id_idx').on(table.taskId),
+    index('background_task_conflict_key_task_type_key_idx').on(
+      table.taskType,
+      table.conflictKey,
+    ),
+    index('background_task_conflict_key_released_created_at_idx').on(
+      table.releasedAt,
+      table.createdAt,
+    ),
+    check(
+      'background_task_conflict_key_nonblank_chk',
+      sql`length(trim(${table.conflictKey})) > 0`,
+    ),
+  ],
+)
+
 export type BackgroundTaskSelect = typeof backgroundTask.$inferSelect
 export type BackgroundTaskInsert = typeof backgroundTask.$inferInsert
+export type BackgroundTaskConflictKeySelect =
+  typeof backgroundTaskConflictKey.$inferSelect
+export type BackgroundTaskConflictKeyInsert =
+  typeof backgroundTaskConflictKey.$inferInsert

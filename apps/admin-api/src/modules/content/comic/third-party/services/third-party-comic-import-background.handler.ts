@@ -1,6 +1,7 @@
 import type {
   BackgroundTaskHandler,
   BackgroundTaskObject,
+  BackgroundTaskRetryValidationContext,
 } from '@libs/platform/modules/background-task/types'
 import type {
   ThirdPartyComicImportTaskContext,
@@ -37,6 +38,20 @@ export class ThirdPartyComicImportBackgroundHandler
   // 注册后台任务处理器。
   onModuleInit() {
     this.registry.register(this)
+  }
+
+  // 重试前拒绝缺少或不匹配新版 reservation snapshot 的历史导入任务。
+  async validateRetry(
+    context: BackgroundTaskRetryValidationContext<
+      ThirdPartyComicImportTaskPayload,
+      BackgroundTaskObject
+    >,
+  ) {
+    await this.importService.validateRetryReservationSnapshot(context.payload, {
+      conflictKeys: context.conflictKeys,
+      dedupeKey: context.dedupeKey,
+      serialKey: context.serialKey,
+    })
   }
 
   // 准备第三方漫画导入任务。

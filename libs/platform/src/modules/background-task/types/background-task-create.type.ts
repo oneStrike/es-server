@@ -24,4 +24,9 @@ export interface CreateBackgroundTaskInput {
   payload: BackgroundTaskObject
   operator: BackgroundTaskOperator
   maxRetries?: number
+  dedupeKey?: string
+  dedupeConflictMessage?: string
+  serialKey?: string
+  conflictKeys?: string[]
+  conflictMessageByKey?: Record<string, string>
 }

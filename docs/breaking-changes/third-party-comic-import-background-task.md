@@ -52,6 +52,12 @@ The polling response does not include heavy diagnostic fields such as `payload`,
 - `operatorType = 2` means a system or historical task and `operatorUserId` must be null.
 - Existing rows are migrated to `operatorType = 2` and `operatorUserId = null`; no sentinel admin user is fabricated.
 
+`background_task` also records import reservation metadata:
+
+- `dedupeKey` blocks duplicate active source-comic import tasks.
+- `serialKey` lets workers execute same-platform imports serially while different platforms continue.
+- `background_task_conflict_key` stores active source-scope, work-name, and chapter-title reservations until the task reaches clean `SUCCESS`, clean `FAILED`, or clean `CANCELLED`.
+
 Delivery notes, PR notes, Swagger/API docs, and client-facing migration notes must all name the same admin client integration lane owner/path above so rollout status remains auditable.
 
 ## Removed Semantics
@@ -70,3 +76,47 @@ Delivery notes, PR notes, Swagger/API docs, and client-facing migration notes mu
 - `POST admin/background-task/retry`
 
 Only `SUCCESS` tasks may retain business side effects. `FAILED` and `CANCELLED` tasks must complete rollback first. If rollback cannot clean all residue, the task is reported as `ROLLBACK_FAILED`.
+
+## Cutover Migration
+
+Before applying the reservation migration, verify no `content.third-party-comic-import` task is in `PROCESSING` or `FINALIZING`. The migration refuses to proceed when such rows exist.
+
+Old `PENDING` third-party import tasks are cancelled during cutover:
+
+- `status = CANCELLED`
+- `error.name = BackgroundTaskCutoverCancelledError`
+- `error.message = 破坏性更新取消旧待执行导入任务，请重新提交`
+- `error.cause.code = third_party_import_cutover_cancelled`
+- `cancelRequestedAt`, `finishedAt`, and `updatedAt` are set to the migration timestamp
+- `claimedBy`, `claimExpiresAt`, and `rollbackError` are cleared
+
+Run the verifier against a local/test database only. The script creates disposable schemas, loads a minimal pre-cutover fixture, executes the migration SQL, proves active-task blocking, verifies the old `PENDING` terminal row shape, checks reservation DDL/indexes, and confirms both source/chapter binding table OIDs stay unchanged:
+
+```bash
+MIGRATION_VERIFY_DATABASE_URL=postgres://localhost/akaiito_migration_verify_test pnpm exec tsx scripts/verify-third-party-import-reservation-migration.ts
+```
+
+## ROLLBACK_FAILED Cleanup
+
+`ROLLBACK_FAILED` intentionally keeps reservation rows unreleased until an operator confirms cleanup. After manual cleanup is complete, release only that task's active conflict keys and keep the task status plus `rollbackError` intact:
+
+```sql
+update background_task_conflict_key
+set released_at = now(), updated_at = now()
+where task_id = '<task-id>'
+  and released_at is null;
+```
+
+Retain example: if uploaded files could not be deleted, keep the task in `ROLLBACK_FAILED`, preserve `rollbackError`, delete or move the files manually, then run the release SQL above.
+
+Recheck after release:
+
+```sql
+select task_id, conflict_key, released_at
+from background_task_conflict_key
+where task_id = '<task-id>';
+
+select task_id, status, rollback_error
+from background_task
+where task_id = '<task-id>';
+```

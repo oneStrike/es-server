@@ -147,11 +147,28 @@ export class CopyMangaHttpClient {
     }
 
     const reason = this.failureReason(error)
+    const status = this.readHttpStatus(error)
 
     return new BusinessException(
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       `CopyManga API 请求失败：${reason} (${path})`,
+      {
+        cause: this.buildApiRequestErrorCause(path, reason, status),
+      },
     )
+  }
+
+  // 保留上游 HTTP 诊断给 provider 判断，避免依赖错误消息文本分支。
+  private buildApiRequestErrorCause(
+    path: string,
+    reason: string,
+    status?: number,
+  ) {
+    return {
+      path,
+      reason,
+      ...(status === undefined ? {} : { status }),
+    }
   }
 
   // 从传输错误中提取 HTTP 状态码。

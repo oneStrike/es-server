@@ -430,6 +430,31 @@ describe('CopyMangaHttpClient', () => {
     )
   })
 
+  it('preserves structured HTTP status and path on exhausted content API failures', async () => {
+    const path = '/api/v3/comic/demo/chapter/demo'
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValue(
+        createJsonResponse({ message: 'missing' }, { status: 404 }),
+      )
+    const client = createClient()
+
+    await expect(client.getJson(path)).rejects.toMatchObject({
+      cause: {
+        path,
+        reason: 'HTTP 404',
+        status: 404,
+      },
+      message: `CopyManga API 请求失败：HTTP 404 (${path})`,
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
   it('invalidates cached hosts after content retries are exhausted', async () => {
     fetchMock
       .mockResolvedValueOnce(
