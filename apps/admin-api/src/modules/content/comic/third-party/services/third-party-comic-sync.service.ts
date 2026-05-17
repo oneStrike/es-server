@@ -1,15 +1,14 @@
+import type { Db } from '@db/core'
 import type {
   ThirdPartyComicImageDto,
   ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
-import type {
-  BackgroundTaskObject,
-  BackgroundTaskProgressReporter,
-} from '@libs/platform/modules/background-task/types'
+import type { BackgroundTaskObject } from '@libs/platform/modules/background-task/types'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
+import type { ThirdPartyComicChapterBindingInput } from '../third-party-comic-binding.type'
 import type {
-  ThirdPartyComicSyncChapterPlanBuildInput,
   ThirdPartyComicSyncChapterPlan,
+  ThirdPartyComicSyncChapterPlanBuildInput,
   ThirdPartyComicSyncImageImportProgressFile,
   ThirdPartyComicSyncImportNewChapterInput,
   ThirdPartyComicSyncResidue,
@@ -37,10 +36,9 @@ import {
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { ComicThirdPartyRegistry } from '../providers/comic-third-party.registry'
-import type { ThirdPartyComicChapterBindingInput } from '../third-party-comic-binding.type'
 import { THIRD_PARTY_COMIC_SYNC_TASK_TYPE } from '../third-party-comic-sync.constant'
-import { ThirdPartyComicBindingService } from './third-party-comic-binding.service'
 import { RemoteImageImportService } from './remote-image-import.service'
+import { ThirdPartyComicBindingService } from './third-party-comic-binding.service'
 
 const ACTIVE_SYNC_TASK_STATUSES = [
   BackgroundTaskStatusEnum.PENDING,
@@ -93,6 +91,7 @@ export class ThirdPartyComicSyncService {
         NO_SOURCE_BINDING_MESSAGE,
       )
     }
+    const work = await this.readSyncWork(sourceBinding.workId)
 
     const sourceScopeKey =
       this.bindingService.buildSourceScopeKey(sourceBinding)
@@ -132,6 +131,7 @@ export class ThirdPartyComicSyncService {
         task: await this.backgroundTaskService.createTaskInTransaction(
           {
             taskType: THIRD_PARTY_COMIC_SYNC_TASK_TYPE,
+            displayName: work.name,
             payload,
             operator: {
               type: BackgroundTaskOperatorTypeEnum.ADMIN,
@@ -382,10 +382,11 @@ export class ThirdPartyComicSyncService {
   }
 
   // 读取同步目标作品的最小创建字段，并阻断非漫画或已删除作品。
-  private async readSyncWork(workId: number) {
-    const [work] = await this.db
+  private async readSyncWork(workId: number, db: Db = this.db) {
+    const [work] = await db
       .select({
         id: this.work.id,
+        name: this.work.name,
         type: this.work.type,
         chapterPrice: this.work.chapterPrice,
         canComment: this.work.canComment,

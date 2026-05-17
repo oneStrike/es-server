@@ -97,6 +97,15 @@ describe('ThirdPartyComicSyncService', () => {
   function createService(
     options: { dbSelects?: unknown[]; txRows?: unknown[] } = {},
   ) {
+    const defaultWorkSelect = createLimitSelect([
+      {
+        id: 100,
+        name: '我独自升级',
+        type: WorkTypeEnum.COMIC,
+        chapterPrice: 5,
+        canComment: false,
+      },
+    ])
     const provider = {
       getChapterContent: jest.fn(async () => ({
         images: [uploadedImage.image],
@@ -166,7 +175,7 @@ describe('ThirdPartyComicSyncService', () => {
         taskType: THIRD_PARTY_COMIC_SYNC_TASK_TYPE,
       })),
     }
-    const dbSelects = [...(options.dbSelects ?? [])]
+    const dbSelects = [...(options.dbSelects ?? [defaultWorkSelect])]
     const tx = {
       execute: jest.fn(async () => undefined),
       select: jest.fn(() => createLimitSelect(options.txRows ?? [])),
@@ -187,6 +196,7 @@ describe('ThirdPartyComicSyncService', () => {
           chapterPrice: 'chapterPrice',
           deletedAt: 'workDeletedAt',
           id: 'workId',
+          name: 'workName',
           type: 'type',
         },
         workChapter: {
@@ -269,6 +279,7 @@ describe('ThirdPartyComicSyncService', () => {
           sourceScopeKey: 'copy:woduzishenji:default',
           workId: 100,
         }),
+        displayName: '我独自升级',
         taskType: THIRD_PARTY_COMIC_SYNC_TASK_TYPE,
       }),
       expect.any(Object),
@@ -282,6 +293,7 @@ describe('ThirdPartyComicSyncService', () => {
           createLimitSelect([
             {
               id: 100,
+              name: '我独自升级',
               type: WorkTypeEnum.COMIC,
               chapterPrice: 5,
               canComment: false,
@@ -352,6 +364,7 @@ describe('ThirdPartyComicSyncService', () => {
         createLimitSelect([
           {
             id: 100,
+            name: '我独自升级',
             type: WorkTypeEnum.COMIC,
             chapterPrice: 5,
             canComment: false,
@@ -487,6 +500,7 @@ describe('ThirdPartyComicSyncService', () => {
           createLimitSelect([
             {
               id: 100,
+              name: '我独自升级',
               type: WorkTypeEnum.COMIC,
               chapterPrice: 5,
               canComment: false,

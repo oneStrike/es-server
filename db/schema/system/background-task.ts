@@ -26,6 +26,8 @@ export const backgroundTask = snakeCase.table(
     taskId: varchar({ length: 36 }).notNull(),
     /** 任务类型，由业务处理器注册。 */
     taskType: varchar({ length: 120 }).notNull(),
+    /** 面向运营展示的任务主体名称，如作品名；为空表示使用任务类型展示。 */
+    displayName: varchar({ length: 180 }),
     /** 操作者类型（1=后台管理员，2=系统）。 */
     operatorType: smallint().notNull(),
     /** 后台管理员操作者 ID；系统任务为空。 */
@@ -91,9 +93,7 @@ export const backgroundTask = snakeCase.table(
       ),
     uniqueIndex('background_task_task_type_executing_serial_key_uidx')
       .on(table.taskType, table.serialKey)
-      .where(
-        sql`${table.serialKey} is not null and ${table.status} in (2, 3)`,
-      ),
+      .where(sql`${table.serialKey} is not null and ${table.status} in (2, 3)`),
     index('background_task_task_type_status_created_at_id_idx').on(
       table.taskType,
       table.status,
@@ -138,6 +138,10 @@ export const backgroundTask = snakeCase.table(
     check(
       'background_task_serial_key_nonblank_chk',
       sql`${table.serialKey} is null or length(trim(${table.serialKey})) > 0`,
+    ),
+    check(
+      'background_task_display_name_nonblank_chk',
+      sql`${table.displayName} is null or length(trim(${table.displayName})) > 0`,
     ),
     check(
       'background_task_retry_count_non_negative_chk',

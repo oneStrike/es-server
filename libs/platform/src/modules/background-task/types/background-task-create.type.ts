@@ -21,6 +21,7 @@ export type BackgroundTaskOperator =
 /** 创建后台任务内部入参。 */
 export interface CreateBackgroundTaskInput {
   taskType: string
+  displayName?: string | null
   payload: BackgroundTaskObject
   operator: BackgroundTaskOperator
   maxRetries?: number

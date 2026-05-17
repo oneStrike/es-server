@@ -422,6 +422,7 @@ describe('ThirdPartyComicImportService', () => {
         ]),
         dedupeConflictMessage: '同源三方作品已有导入任务，请等待任务完成后重试',
         dedupeKey: 'source-comic:copy:woduzishenji',
+        displayName: '我獨自升級',
         operator: {
           type: BackgroundTaskOperatorTypeEnum.ADMIN,
           userId: 7,
@@ -439,6 +440,36 @@ describe('ThirdPartyComicImportService', () => {
     expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
     expect(workChapterService.updateChapter).not.toHaveBeenCalled()
     expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
+  })
+
+  it('uses the existing work name as the task display name when attaching import', async () => {
+    const { backgroundTaskService, selectLimit, service } = createService()
+    const request = {
+      ...createImportRequest(),
+      mode: ThirdPartyComicImportModeEnum.ATTACH_TO_EXISTING,
+      targetWorkId: 100,
+      workDraft: undefined,
+    }
+    selectLimit.mockResolvedValueOnce([
+      {
+        id: 100,
+        name: '目标作品',
+        type: 1,
+      },
+    ])
+
+    const confirmImport = service.confirmImport as unknown as (
+      dto: typeof request,
+      userId: number,
+    ) => Promise<unknown>
+
+    await confirmImport.call(service, request, 7)
+
+    expect(backgroundTaskService.createTask).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayName: '目标作品',
+      }),
+    )
   })
 
   it('accepts retry only when persisted reservation snapshot matches payload', async () => {

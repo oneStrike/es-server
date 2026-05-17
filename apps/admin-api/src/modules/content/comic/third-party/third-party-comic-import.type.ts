@@ -50,6 +50,21 @@ export type ThirdPartyComicImportTaskContext = BackgroundTaskExecutionContext<
   ThirdPartyComicImportResidue
 >
 
+/** 第三方漫画导入任务 reservation 字段，供入队与重试校验共用。 */
+export interface ThirdPartyComicImportReservation {
+  dedupeKey: string
+  dedupeConflictMessage: string
+  serialKey: string
+  conflictKeys: string[]
+  conflictMessageByKey: Record<string, string>
+}
+
+/** 第三方漫画导入后台任务草稿，包含展示名与 reservation 快照。 */
+export interface ThirdPartyComicImportTaskDraft {
+  displayName: string
+  reservation: ThirdPartyComicImportReservation
+}
+
 /** 第三方漫画章节导入计划，确保读取远端内容早于本地章节副作用。 */
 export type ThirdPartyComicChapterImportPlan = BackgroundTaskObject & {
   chapter: ThirdPartyComicImportChapterItemDto

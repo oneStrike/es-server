@@ -20,6 +20,7 @@ describe('BackgroundTaskService', () => {
         claimExpiresAt: 'claimExpiresAt',
         createdAt: 'createdAt',
         dedupeKey: 'dedupeKey',
+        displayName: 'displayName',
         id: 'id',
         operatorType: 'operatorType',
         operatorUserId: 'operatorUserId',
@@ -63,6 +64,7 @@ describe('BackgroundTaskService', () => {
       residue: null,
       rollbackError: null,
       dedupeKey: null,
+      displayName: null,
       serialKey: null,
       retryCount: 0,
       maxRetries: BACKGROUND_TASK_DEFAULT_MAX_RETRY,
@@ -258,6 +260,7 @@ describe('BackgroundTaskService', () => {
       error: null,
       residue: null,
       rollbackError: null,
+      displayName: '我獨自升級',
       retryCount: 0,
       maxRetries: BACKGROUND_TASK_DEFAULT_MAX_RETRY,
       cancelRequestedAt: null,
@@ -273,6 +276,7 @@ describe('BackgroundTaskService', () => {
     const task = await service.createTask({
       taskType: 'content.third-party-comic-import',
       payload: { comicId: 'comic-1' },
+      displayName: ' 我獨自升級 ',
       operator: {
         type: BackgroundTaskOperatorTypeEnum.ADMIN,
         userId: 7,
@@ -288,6 +292,7 @@ describe('BackgroundTaskService', () => {
         taskType: 'content.third-party-comic-import',
         status: BackgroundTaskStatusEnum.PENDING,
         payload: { comicId: 'comic-1' },
+        displayName: '我獨自升級',
         operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
         operatorUserId: 7,
       }),
@@ -296,11 +301,28 @@ describe('BackgroundTaskService', () => {
       expect.objectContaining({
         taskId: 'task-1',
         taskType: 'content.third-party-comic-import',
+        displayName: '我獨自升級',
         status: BackgroundTaskStatusEnum.PENDING,
         operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
         operatorUserId: 7,
       }),
     )
+  })
+
+  it('rejects creating tasks with a blank display name', async () => {
+    const { service } = createService(createBackgroundTaskRow())
+
+    await expect(
+      service.createTask({
+        taskType: 'content.third-party-comic-import',
+        payload: { comicId: 'comic-1' },
+        displayName: '   ',
+        operator: {
+          type: BackgroundTaskOperatorTypeEnum.ADMIN,
+          userId: 7,
+        },
+      } as never),
+    ).rejects.toThrow('后台任务展示名称不能为空')
   })
 
   it('creates system tasks without an operator user id', async () => {
@@ -543,7 +565,14 @@ describe('BackgroundTaskService', () => {
         orderBy: { updatedAt: 'desc', id: 'desc' },
         pageIndex: 1,
         pageSize: 10,
-        pick: ['taskId', 'taskType', 'status', 'progress', 'updatedAt'],
+        pick: [
+          'taskId',
+          'taskType',
+          'displayName',
+          'status',
+          'progress',
+          'updatedAt',
+        ],
         where: expect.anything(),
       }),
     )
@@ -553,6 +582,7 @@ describe('BackgroundTaskService', () => {
           message: '处理中',
           percent: 0,
         },
+        displayName: null,
         status: BackgroundTaskStatusEnum.PROCESSING,
         taskId: 'task-1',
         taskType: 'content.third-party-comic-import',

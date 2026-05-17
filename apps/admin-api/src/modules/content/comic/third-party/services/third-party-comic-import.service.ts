@@ -14,11 +14,14 @@ import type {
 } from '@libs/platform/modules/background-task/types'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { ComicThirdPartyProvider } from '../providers/comic-third-party-provider.type'
+import type { ThirdPartyComicChapterBindingInput } from '../third-party-comic-binding.type'
 import type {
   RemoteImageImportSuccessPayload,
   ThirdPartyComicChapterImportPlan,
   ThirdPartyComicImageImportProgressDetail,
+  ThirdPartyComicImportReservation,
   ThirdPartyComicImportResidue,
+  ThirdPartyComicImportTaskDraft,
   ThirdPartyComicImportTaskContext,
   ThirdPartyComicUpdatedChapterSnapshot,
 } from '../third-party-comic-import.type'
@@ -51,7 +54,6 @@ import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, isNull, ne, sql } from 'drizzle-orm'
 import { ComicThirdPartyRegistry } from '../providers/comic-third-party.registry'
-import type { ThirdPartyComicChapterBindingInput } from '../third-party-comic-binding.type'
 import { THIRD_PARTY_COMIC_IMPORT_TASK_TYPE } from '../third-party-comic-import.constant'
 import { RemoteImageImportService } from './remote-image-import.service'
 import { ThirdPartyComicBindingService } from './third-party-comic-binding.service'
@@ -68,14 +70,6 @@ const INVALID_RETRY_RESERVATION_SNAPSHOT_MESSAGE =
   '破坏性更新前的三方导入任务缺少或不匹配 reservation snapshot，请重新提交导入任务'
 const INVALID_RETRY_RESERVATION_SNAPSHOT_CAUSE_CODE =
   'third_party_import_retry_invalid_reservation_snapshot'
-
-interface ThirdPartyComicImportReservation {
-  dedupeKey: string
-  dedupeConflictMessage: string
-  serialKey: string
-  conflictKeys: string[]
-  conflictMessageByKey: Record<string, string>
-}
 
 interface ThirdPartyComicImportPlannedWork {
   id: number | null
@@ -192,15 +186,16 @@ export class ThirdPartyComicImportService {
 
   // 确认第三方漫画导入，只创建后台任务，不在 HTTP 请求内执行重型导入。
   async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
-    const reservation = await this.buildImportReservation(dto)
+    const draft = await this.buildImportTaskDraft(dto)
     return this.backgroundTaskService.createTask({
       taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
+      displayName: draft.displayName,
       payload: dto as unknown as BackgroundTaskObject,
       operator: {
         type: BackgroundTaskOperatorTypeEnum.ADMIN,
         userId,
       },
-      ...reservation,
+      ...draft.reservation,
     })
   }
 
@@ -818,9 +813,10 @@ export class ThirdPartyComicImportService {
     return this.buildImportReservationFromContext(context)
   }
 
-  private async buildImportReservation(
+  // 构建导入后台任务草稿，复用预检结果生成展示名与 reservation。
+  private async buildImportTaskDraft(
     dto: ThirdPartyComicImportRequestDto,
-  ): Promise<ThirdPartyComicImportReservation> {
+  ): Promise<ThirdPartyComicImportTaskDraft> {
     const context = await this.resolveImportReservationContext(dto)
     await this.assertImportPreflight({
       dto,
@@ -828,7 +824,10 @@ export class ThirdPartyComicImportService {
       providerComicId: context.providerComicId,
       providerGroupPathWord: context.providerGroupPathWord,
     })
-    return this.buildImportReservationFromContext(context)
+    return {
+      displayName: context.plannedWork.name,
+      reservation: this.buildImportReservationFromContext(context),
+    }
   }
 
   private async resolveImportReservationContext(

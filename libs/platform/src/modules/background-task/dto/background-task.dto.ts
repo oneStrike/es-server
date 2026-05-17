@@ -78,6 +78,15 @@ export class BackgroundTaskDto {
   taskType!: string
 
   @StringProperty({
+    description: '后台任务展示名称',
+    example: '我独自升级',
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  displayName!: string | null
+
+  @StringProperty({
     description: '后台任务去重键',
     example: 'source-comic:dmzj:12345',
     required: false,
@@ -280,6 +289,7 @@ export class BackgroundTaskNotificationProgressDto {
 export class BackgroundTaskNotificationDto extends PickType(BackgroundTaskDto, [
   'taskId',
   'taskType',
+  'displayName',
   'status',
   'updatedAt',
 ] as const) {

@@ -1,8 +1,7 @@
+import type { Db, PostgresErrorSource } from '@db/core'
 import type { BackgroundTaskSelect } from '@db/schema'
-import type { Db } from '@db/core'
-import type { PostgresErrorSource } from '@db/core'
-import type { SQL } from 'drizzle-orm'
 import type { BusinessExceptionCause } from '@libs/platform/exceptions'
+import type { SQL } from 'drizzle-orm'
 import type {
   BackgroundTaskExecutionContext,
   BackgroundTaskHandler,
@@ -135,7 +134,9 @@ export class BackgroundTaskService {
 
   // 创建待处理后台任务，只入队不执行任何业务处理器。
   async createTask(input: CreateBackgroundTaskInput) {
-    return this.runInDbTransaction((tx) => this.createTaskWithDb(input, tx))
+    return this.runInDbTransaction(async (tx) =>
+      this.createTaskWithDb(input, tx),
+    )
   }
 
   // 在调用方事务内创建后台任务，供业务先拿事务锁再入队。
@@ -147,6 +148,7 @@ export class BackgroundTaskService {
   private async createTaskWithDb(input: CreateBackgroundTaskInput, db: Db) {
     const operator = this.normalizeTaskOperator(input.operator)
     const reservation = this.normalizeTaskReservation(input)
+    const displayName = this.normalizeTaskDisplayName(input.displayName)
     if (!this.registry.has(input.taskType)) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -161,6 +163,7 @@ export class BackgroundTaskService {
         .values({
           taskId: randomUUID(),
           taskType: input.taskType,
+          displayName,
           operatorType: operator.operatorType,
           operatorUserId: operator.operatorUserId,
           status: BackgroundTaskStatusEnum.PENDING,
@@ -200,6 +203,21 @@ export class BackgroundTaskService {
     } catch (error) {
       this.handleCreateTaskReservationError(error, reservation)
     }
+  }
+
+  // 归一化后台任务展示名称；业务未声明时保持为空，不从 payload 推导。
+  private normalizeTaskDisplayName(displayName: null | string | undefined) {
+    if (displayName === undefined || displayName === null) {
+      return null
+    }
+    const normalized = displayName.trim()
+    if (!normalized) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '后台任务展示名称不能为空',
+      )
+    }
+    return normalized
   }
 
   // 归一化后台任务操作者，确保写库前满足 schema scope 约束。
@@ -421,11 +439,20 @@ export class BackgroundTaskService {
     if (!detail) {
       return undefined
     }
-    const match =
-      /Key \((?:[^)]*,\s*)?conflict_key\)=\((?:[^,]*,\s*)?(.+)\) already exists/.exec(
-        detail,
-      )
-    return match?.[1]
+    const valueStartMarker = 'conflict_key)=('
+    const valueStart = detail.indexOf(valueStartMarker)
+    if (valueStart === -1) {
+      return undefined
+    }
+    const valueEnd = detail.indexOf(') already exists', valueStart)
+    if (valueEnd === -1) {
+      return undefined
+    }
+    return detail
+      .slice(valueStart + valueStartMarker.length, valueEnd)
+      .split(',')
+      .at(-1)
+      ?.trim()
   }
 
   // 从未知异常中提取 PostgreSQL 元信息。
@@ -504,7 +531,14 @@ export class BackgroundTaskService {
       orderBy: input.orderBy?.trim()
         ? input.orderBy
         : { updatedAt: 'desc', id: 'desc' },
-      pick: ['taskId', 'taskType', 'status', 'progress', 'updatedAt'] as const,
+      pick: [
+        'taskId',
+        'taskType',
+        'displayName',
+        'status',
+        'progress',
+        'updatedAt',
+      ] as const,
     })
 
     return {
@@ -1388,9 +1422,9 @@ export class BackgroundTaskService {
     lease: BackgroundTaskExecutionLease,
     options: BackgroundTaskProgressReporterOptions,
   ): BackgroundTaskProgressReporter {
-    return this.createProgressReporter(options, (progress) =>
-      this.updateProgressForOwner(lease, progress),
-    )
+    return this.createProgressReporter(options, async (progress) => {
+      await this.updateProgressForOwner(lease, progress)
+    })
   }
 
   // 创建按区间映射的进度 reporter，统一处理 clamp 和单调递增。
@@ -1582,6 +1616,7 @@ export class BackgroundTaskService {
       id: Number(row.id),
       taskId: row.taskId,
       taskType: row.taskType,
+      displayName: row.displayName,
       dedupeKey: row.dedupeKey,
       serialKey: row.serialKey,
       operatorType: row.operatorType,
@@ -1611,6 +1646,7 @@ export class BackgroundTaskService {
     return {
       taskId: row.taskId,
       taskType: row.taskType,
+      displayName: row.displayName,
       status: this.normalizeStatus(row.status),
       progress: this.compactNotificationProgress(row.progress),
       updatedAt: row.updatedAt,
