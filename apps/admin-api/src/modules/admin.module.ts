@@ -26,6 +26,7 @@ import { Ip2regionModule } from './system/ip2region/ip2region.module'
 import { UploadModule } from './system/upload/upload.module'
 import { TaskModule } from './task/task.module'
 import { AdminWalletModule } from './wallet/wallet.module'
+import { AdminWorkflowModule } from './workflow/workflow.module'
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { AdminWalletModule } from './wallet/wallet.module'
     AdminAdRewardModule,
     TaskModule,
     GrowthModule,
+    AdminWorkflowModule,
   ],
   controllers: [],
   providers: [],

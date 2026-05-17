@@ -8,25 +8,29 @@ import type {
   ThirdPartyComicImportWorkDraftDto,
   ThirdPartyComicSourceSnapshotDto,
 } from '@libs/content/work/content/dto/content.dto'
-import type {
-  BackgroundTaskObject,
-  BackgroundTaskProgressReporter,
-} from '@libs/platform/modules/background-task/types'
-import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import type { ComicThirdPartyProvider } from '../providers/comic-third-party-provider.type'
-import type { ThirdPartyComicChapterBindingInput } from '../third-party-comic-binding.type'
+import type { ComicThirdPartyProvider } from '@libs/content/work/third-party/providers/comic-third-party-provider.type'
+import type { ThirdPartyComicChapterBindingInput } from '@libs/content/work/third-party/third-party-comic-binding.type'
 import type {
   RemoteImageImportSuccessPayload,
   ThirdPartyComicChapterImportPlan,
   ThirdPartyComicImageImportProgressDetail,
+  ThirdPartyComicImportPlannedWork,
+  ThirdPartyComicImportPreflightInput,
+  ThirdPartyComicImportProgressReporter,
   ThirdPartyComicImportReservation,
+  ThirdPartyComicImportReservationContext,
   ThirdPartyComicImportResidue,
-  ThirdPartyComicImportTaskDraft,
   ThirdPartyComicImportTaskContext,
+  ThirdPartyComicImportTaskDraft,
+  ThirdPartyComicPreparedWorkflowImport,
+  ThirdPartyComicRetryReservationSnapshot,
   ThirdPartyComicUpdatedChapterSnapshot,
-} from '../third-party-comic-import.type'
+} from '@libs/content/work/third-party/third-party-comic-import.type'
+import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import { DrizzleService } from '@db/core'
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
+import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
+import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
 import { ComicContentService } from '@libs/content/work/content/comic-content.service'
 import {
   ThirdPartyComicImportChapterActionEnum,
@@ -39,24 +43,20 @@ import {
   ThirdPartyComicImportWorkStatusEnum,
 } from '@libs/content/work/content/dto/content.dto'
 import { WorkService } from '@libs/content/work/core/work.service'
+import { ComicThirdPartyRegistry } from '@libs/content/work/third-party/providers/comic-third-party.registry'
+import { RemoteImageImportService } from '@libs/content/work/third-party/services/remote-image-import.service'
+import { ThirdPartyComicBindingService } from '@libs/content/work/third-party/services/third-party-comic-binding.service'
 import {
   BusinessErrorCode,
   WorkTypeEnum,
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BackgroundTaskOperatorTypeEnum } from '@libs/platform/modules/background-task/background-task.constant'
-import {
-  BackgroundTaskClaimLostError,
-  BackgroundTaskService,
-} from '@libs/platform/modules/background-task/background-task.service'
+import { WorkflowOperatorTypeEnum } from '@libs/platform/modules/workflow/workflow.constant'
+import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, isNull, ne, sql } from 'drizzle-orm'
-import { ComicThirdPartyRegistry } from '../providers/comic-third-party.registry'
-import { THIRD_PARTY_COMIC_IMPORT_TASK_TYPE } from '../third-party-comic-import.constant'
-import { RemoteImageImportService } from './remote-image-import.service'
-import { ThirdPartyComicBindingService } from './third-party-comic-binding.service'
 
 const SOURCE_COMIC_CONFLICT_MESSAGE =
   '同源三方作品已有导入任务，请等待任务完成后重试'
@@ -71,26 +71,6 @@ const INVALID_RETRY_RESERVATION_SNAPSHOT_MESSAGE =
 const INVALID_RETRY_RESERVATION_SNAPSHOT_CAUSE_CODE =
   'third_party_import_retry_invalid_reservation_snapshot'
 
-interface ThirdPartyComicImportPlannedWork {
-  id: number | null
-  name: string
-}
-
-interface ThirdPartyComicImportReservationContext {
-  dto: ThirdPartyComicImportRequestDto
-  platform: string
-  providerComicId: string
-  providerGroupPathWord: string
-  plannedWork: ThirdPartyComicImportPlannedWork
-  chapterTitles: string[]
-}
-
-interface ThirdPartyComicRetryReservationSnapshot {
-  dedupeKey: null | string
-  serialKey: null | string
-  conflictKeys: string[]
-}
-
 @Injectable()
 export class ThirdPartyComicImportService {
   // 注入导入所需的 provider、作品、章节、内容和远程图片服务。
@@ -101,7 +81,8 @@ export class ThirdPartyComicImportService {
     private readonly comicContentService: ComicContentService,
     private readonly remoteImageImportService: RemoteImageImportService,
     private readonly bindingService: ThirdPartyComicBindingService,
-    private readonly backgroundTaskService: BackgroundTaskService,
+    private readonly workflowService: WorkflowService,
+    private readonly contentImportService: ContentImportService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -184,19 +165,27 @@ export class ThirdPartyComicImportService {
     }
   }
 
-  // 确认第三方漫画导入，只创建后台任务，不在 HTTP 请求内执行重型导入。
+  // 确认第三方漫画导入，只创建工作流任务，不在 HTTP 请求内执行重型导入。
   async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
     const draft = await this.buildImportTaskDraft(dto)
-    return this.backgroundTaskService.createTask({
-      taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
+    const job = await this.workflowService.createDraft({
+      workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
       displayName: draft.displayName,
-      payload: dto as unknown as BackgroundTaskObject,
       operator: {
-        type: BackgroundTaskOperatorTypeEnum.ADMIN,
+        type: WorkflowOperatorTypeEnum.ADMIN,
         userId,
       },
-      ...draft.reservation,
+      selectedItemCount: dto.chapters.length,
+      summary: {
+        sourceType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+      },
+      conflictKeys: draft.reservation.conflictKeys,
     })
+    await this.contentImportService.createThirdPartyImportJob({
+      jobId: job.jobId,
+      dto,
+    })
+    return this.workflowService.confirmDraft({ jobId: job.jobId })
   }
 
   // 校验重试任务持久化的 reservation snapshot 与 payload 当前规则完全一致。
@@ -230,11 +219,48 @@ export class ThirdPartyComicImportService {
     }
   }
 
-  // 执行第三方漫画导入后台任务，任一失败都会抛出并交由任务框架回滚。
+  // 执行第三方漫画导入 workflow，任一失败都会抛出并交由 workflow 处理回滚。
   async executeImportTask(
     dto: ThirdPartyComicImportRequestDto,
     context: ThirdPartyComicImportTaskContext,
-  ): Promise<ThirdPartyComicImportResultDto & BackgroundTaskObject> {
+  ): Promise<ThirdPartyComicImportResultDto> {
+    const prepared = await this.prepareWorkflowImport(dto, context)
+    const chapterResults: ThirdPartyComicImportChapterResultDto[] = []
+    const imageProgressReporter = this.createImportImageProgressReporter(
+      context,
+      prepared.chapterPlans,
+    )
+    for (const chapterPlan of prepared.chapterPlans) {
+      await context.assertNotCancelled()
+      chapterResults.push(
+        await this.importWorkflowChapter(
+          prepared,
+          chapterPlan,
+          context,
+          imageProgressReporter,
+        ),
+      )
+    }
+
+    await context.updateProgress({
+      percent: 100,
+      message: '第三方漫画导入完成',
+    })
+
+    return {
+      mode: dto.mode,
+      status: ThirdPartyComicImportStatusEnum.SUCCESS,
+      work: prepared.work,
+      cover: prepared.cover,
+      chapters: chapterResults,
+    }
+  }
+
+  // 准备 workflow 导入的共享作品、来源绑定和章节图片计划。
+  async prepareWorkflowImport(
+    dto: ThirdPartyComicImportRequestDto,
+    context: ThirdPartyComicImportTaskContext,
+  ): Promise<ThirdPartyComicPreparedWorkflowImport> {
     const provider = this.registry.resolve(dto.platform)
     const detail = await provider.getDetail({
       comicId: dto.comicId,
@@ -255,7 +281,6 @@ export class ThirdPartyComicImportService {
       )
     }
 
-    const chapterResults: ThirdPartyComicImportChapterResultDto[] = []
     const sourceBinding = await this.bindWorkSource(
       dto,
       detail,
@@ -268,39 +293,50 @@ export class ThirdPartyComicImportService {
       provider,
       context,
     )
-    const imageProgressReporter = context.createProgressReporter({
+    return {
+      cover: preparedWork.cover,
+      mode: dto.mode,
+      work: workResult,
+      sourceBinding,
+      chapterPlans,
+    }
+  }
+
+  // 为 workflow 导入创建图片进度 reporter。
+  createImportImageProgressReporter(
+    context: ThirdPartyComicImportTaskContext,
+    chapterPlans: ThirdPartyComicChapterImportPlan[],
+  ) {
+    return context.createProgressReporter({
       startPercent: 10,
       endPercent: 95,
       total: this.countPlannedImages(chapterPlans),
       stage: 'image-import',
       unit: 'image',
     })
-    for (const chapterPlan of chapterPlans) {
-      await context.assertNotCancelled()
-      chapterResults.push(
-        await this.importChapter(
-          chapterPlan,
-          workResult.id,
-          sourceBinding.id,
-          sourceBinding.providerGroupPathWord,
-          context,
-          imageProgressReporter,
-        ),
+  }
+
+  // 执行 workflow 中的单章节导入，调用方负责按章节回滚和标记条目状态。
+  async importWorkflowChapter(
+    prepared: ThirdPartyComicPreparedWorkflowImport,
+    chapterPlan: ThirdPartyComicChapterImportPlan,
+    context: ThirdPartyComicImportTaskContext,
+    imageProgressReporter: ThirdPartyComicImportProgressReporter,
+  ) {
+    if (!prepared.work.id) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '作品导入准备失败',
       )
     }
-
-    await context.updateProgress({
-      percent: 100,
-      message: '第三方漫画导入完成',
-    })
-
-    return {
-      mode: dto.mode,
-      status: ThirdPartyComicImportStatusEnum.SUCCESS,
-      work: workResult,
-      cover: preparedWork.cover,
-      chapters: chapterResults,
-    } as ThirdPartyComicImportResultDto & BackgroundTaskObject
+    return this.importChapter(
+      chapterPlan,
+      prepared.work.id,
+      prepared.sourceBinding.id,
+      prepared.sourceBinding.providerGroupPathWord,
+      context,
+      imageProgressReporter,
+    )
   }
 
   // 回滚失败或取消的第三方漫画导入任务。
@@ -351,10 +387,14 @@ export class ThirdPartyComicImportService {
       try {
         await context.assertStillOwned()
         await this.remoteImageImportService.deleteImportedFile(uploadedFile)
+        await context.markUploadedFileResidueCleaned(uploadedFile)
       } catch (error) {
-        if (error instanceof BackgroundTaskClaimLostError) {
-          throw error
-        }
+        await context
+          .markUploadedFileResidueCleanupFailed(
+            uploadedFile,
+            this.stringifyUnknownError(error),
+          )
+          .catch(() => undefined)
         cleanupFailures.push(
           `${uploadedFile.provider}:${uploadedFile.filePath} (${this.stringifyUnknownError(
             error,
@@ -371,7 +411,7 @@ export class ThirdPartyComicImportService {
     }
   }
 
-  // 准备本地作品和封面，失败时抛出并交由后台任务回滚。
+  // 准备本地作品和封面，失败时抛出并交由 workflow 回滚。
   private async prepareWork(
     dto: ThirdPartyComicImportRequestDto,
     detail: ThirdPartyComicDetailDto,
@@ -418,9 +458,6 @@ export class ThirdPartyComicImportService {
         await this.recordUploadedFile(context, coverImport.deleteTarget)
       }
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       coverPath = undefined
       if (error instanceof Error) {
         coverFailureMessage = error.message
@@ -508,14 +545,14 @@ export class ThirdPartyComicImportService {
     }
   }
 
-  // 导入单个章节，章节失败会中断任务并交由后台任务回滚。
+  // 导入单个章节，章节失败会中断当前 item 并交由 workflow 回滚。
   private async importChapter(
     chapterPlan: ThirdPartyComicChapterImportPlan,
     workId: number,
     sourceBindingId: number,
     sourceGroup: string,
     context: ThirdPartyComicImportTaskContext,
-    imageProgressReporter: BackgroundTaskProgressReporter,
+    imageProgressReporter: ThirdPartyComicImportProgressReporter,
   ) {
     const { chapter } = chapterPlan
     const localChapterId = await this.prepareChapter(
@@ -650,7 +687,7 @@ export class ThirdPartyComicImportService {
     }
   }
 
-  // 统计计划中的全局图片总量，作为后台任务整任务进度分母。
+  // 统计计划中的全局图片总量，作为 workflow 整体进度分母。
   private countPlannedImages(plans: ThirdPartyComicChapterImportPlan[]) {
     return plans.reduce((total, plan) => total + plan.imageTotal, 0)
   }
@@ -707,6 +744,7 @@ export class ThirdPartyComicImportService {
       const createdChapterId =
         await this.workChapterService.createChapterReturningId({
           ...this.toChapterUpdate(chapter),
+          isPublished: false,
           workId,
           workType: WorkTypeEnum.COMIC,
         })
@@ -813,7 +851,7 @@ export class ThirdPartyComicImportService {
     return this.buildImportReservationFromContext(context)
   }
 
-  // 构建导入后台任务草稿，复用预检结果生成展示名与 reservation。
+  // 构建导入 workflow 草稿，复用预检结果生成展示名与 reservation。
   private async buildImportTaskDraft(
     dto: ThirdPartyComicImportRequestDto,
   ): Promise<ThirdPartyComicImportTaskDraft> {
@@ -936,12 +974,7 @@ export class ThirdPartyComicImportService {
   }
 
   // 入队前按导入模式执行本地事实预检。
-  private async assertImportPreflight(input: {
-    dto: ThirdPartyComicImportRequestDto
-    plannedWork: ThirdPartyComicImportPlannedWork
-    providerComicId: string
-    providerGroupPathWord: string
-  }) {
+  private async assertImportPreflight(input: ThirdPartyComicImportPreflightInput) {
     const { dto, plannedWork, providerComicId, providerGroupPathWord } = input
     if (dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW) {
       await this.assertWorkNameAvailable(plannedWork.name)
@@ -1269,7 +1302,7 @@ export class ThirdPartyComicImportService {
       cover,
       isHot: workDraft.isHot ?? false,
       isNew: workDraft.isNew ?? false,
-      isPublished: workDraft.isPublished ?? false,
+      isPublished: false,
       isRecommended: workDraft.isRecommended ?? false,
       recommendWeight: workDraft.recommendWeight ?? 0,
       type: WorkTypeEnum.COMIC,
@@ -1286,7 +1319,6 @@ export class ThirdPartyComicImportService {
           ? chapter.cover.localPath
           : undefined,
       isPreview: chapter.isPreview ?? false,
-      isPublished: chapter.isPublished ?? false,
       price: chapter.price ?? 0,
       sortOrder: chapter.sortOrder,
       title: chapter.title,
@@ -1400,9 +1432,6 @@ export class ThirdPartyComicImportService {
     try {
       await this.appendResidueList(context, 'uploadedFiles', uploadedFile)
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       await this.tryCleanupUploadedFile(uploadedFile, error)
       throw error
     }
@@ -1416,9 +1445,6 @@ export class ThirdPartyComicImportService {
     try {
       await this.appendResidueList(context, 'createdWorkIds', workId)
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       await this.workService.deleteWork(workId)
       throw error
     }
@@ -1432,9 +1458,6 @@ export class ThirdPartyComicImportService {
     try {
       await this.appendResidueList(context, 'createdChapterIds', chapterId)
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       await this.workChapterService.deleteChapters([chapterId])
       throw error
     }
@@ -1452,9 +1475,6 @@ export class ThirdPartyComicImportService {
         sourceBindingId,
       )
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       await this.bindingService.softDeleteSourceBindings([sourceBindingId])
       throw error
     }
@@ -1477,9 +1497,6 @@ export class ThirdPartyComicImportService {
         binding.id,
       )
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       await this.bindingService.softDeleteChapterBindings([binding.id])
       throw error
     }

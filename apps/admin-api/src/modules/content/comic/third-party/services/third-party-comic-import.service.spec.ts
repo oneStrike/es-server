@@ -1,15 +1,4 @@
-import {
-  ThirdPartyComicImportChapterActionEnum,
-  ThirdPartyComicImportCoverModeEnum,
-  ThirdPartyComicImportModeEnum,
-} from '@libs/content/work/content/dto/content.dto'
-import {
-  BackgroundTaskOperatorTypeEnum,
-  BackgroundTaskStatusEnum,
-} from '@libs/platform/modules/background-task/background-task.constant'
-import { BackgroundTaskClaimLostError } from '@libs/platform/modules/background-task/background-task.service'
-import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
-import { THIRD_PARTY_COMIC_IMPORT_TASK_TYPE } from '../third-party-comic-import.constant'
+/// <reference types="jest" />
 
 jest.mock('@libs/content/work/content/comic-content.service', () => ({
   ComicContentService: class ComicContentService {},
@@ -20,143 +9,83 @@ jest.mock('@libs/content/work/core/work.service', () => ({
 jest.mock('@libs/content/work/chapter/work-chapter.service', () => ({
   WorkChapterService: class WorkChapterService {},
 }))
-jest.mock('./remote-image-import.service', () => ({
+jest.mock('@libs/content/work/third-party/services/remote-image-import.service', () => ({
   RemoteImageImportService: class RemoteImageImportService {},
 }))
-jest.mock('./third-party-comic-binding.service', () => ({
+jest.mock('@libs/content/work/third-party/services/third-party-comic-binding.service', () => ({
   ThirdPartyComicBindingService: class ThirdPartyComicBindingService {},
 }))
 
-const {
-  ThirdPartyComicImportService,
-} = require('./third-party-comic-import.service')
+import {
+  ThirdPartyComicImportChapterActionEnum,
+  ThirdPartyComicImportCoverModeEnum,
+  ThirdPartyComicImportModeEnum,
+} from '@libs/content/work/content/dto/content.dto'
+import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
+import { WorkTypeEnum } from '@libs/platform/constant'
+import { WorkflowOperatorTypeEnum } from '@libs/platform/modules/workflow/workflow.constant'
+import { ThirdPartyComicImportService } from './third-party-comic-import.service'
 
-describe('ThirdPartyComicImportService', () => {
-  const detail = {
-    id: 'woduzishenji',
-    uuid: 'comic-uuid',
-    name: '我獨自升級',
-    alias: 'Solo Leveling',
-    pathWord: 'woduzishenji',
-    cover: 'https://sw.mangafunb.fun/w/woduzishenji/cover.jpg',
-    brief: '作品简介',
-    region: '韩国',
-    status: '已完结',
-    authors: ['DUBU'],
-    taxonomies: ['冒险'],
-    popular: 1,
-    groups: [{ pathWord: 'default', name: '默认', count: 1 }],
-    sourceFlags: {
-      isLock: false,
-      isLogin: false,
-      isMobileBind: false,
-      isVip: false,
-    },
-  }
-  const chapters = [
-    {
-      providerChapterId: 'chapter-001',
-      chapterApiVersion: 1,
-      title: '第1话',
-      group: 'default',
-      sortOrder: 1,
-      imageCount: 2,
-    },
-  ]
-  const provider = {
-    getDetail: jest.fn(async () => detail),
-    getChapters: jest.fn(async () => chapters),
-    getChapterContent: jest.fn(async () => ({
-      providerChapterId: 'chapter-001',
-      title: '第1话',
-      images: [
-        {
-          providerImageId: 'image-001',
-          url: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
-          sortOrder: 1,
-        },
-      ],
-    })),
-  }
-  const uploadedCover = {
-    deleteTarget: {
-      provider: UploadProviderEnum.LOCAL,
-      filePath: '/uploads/imported.jpg',
-      objectKey: 'comic/image/imported.jpg',
-    },
-    upload: {
-      filePath: '/uploads/imported.jpg',
-    },
-  }
-  const uploadedImage = {
-    deleteTarget: {
-      provider: UploadProviderEnum.LOCAL,
-      filePath: '/uploads/1.jpg',
-      objectKey: 'work/comic/100/chapter/300/001.jpg',
-    },
-    upload: {
-      filePath: '/uploads/1.jpg',
-      fileSize: 3,
-      mimeType: 'image/jpeg',
-    },
-  }
-
-  function createService(overrides: Record<string, unknown> = {}) {
-    const registry = {
-      resolve: jest.fn(() => provider),
-    }
-    const workService = {
-      createWorkReturningId: jest.fn(async () => 100),
-      deleteWork: jest.fn(async () => true),
-      getWorkDetail: jest.fn(async () => ({ id: 200 })),
-    }
-    const workChapterService = {
-      createChapterReturningId: jest.fn(async () => 300),
-      deleteChapters: jest.fn(async () => true),
-      updateChapter: jest.fn(async () => true),
-    }
-    const comicContentService = {
-      replaceChapterContents: jest.fn(async () => true),
-    }
-    const remoteImageImportService = {
-      deleteImportedFile: jest.fn(async () => undefined),
-      importImage: jest.fn(async () => uploadedCover),
-      importImages: jest.fn(async () => ['/uploads/1.jpg']),
-    }
-    const bindingService = {
-      createOrGetSourceBinding: jest.fn(async () => ({
-        created: true,
-        id: 10,
-      })),
-      createOrGetChapterBinding: jest.fn(async () => ({
-        created: true,
-        id: 20,
-      })),
-      getActiveSourceBindingByScope: jest.fn(async () => null),
-      softDeleteChapterBindings: jest.fn(async () => undefined),
-      softDeleteSourceBindings: jest.fn(async () => undefined),
-    }
-    const backgroundTaskService = {
-      createTask: jest.fn(async (input) => ({
-        operatorType: input.operator?.type,
-        operatorUserId: input.operator?.userId ?? null,
-        taskId: 'task-001',
-        taskType: input.taskType,
-        status: BackgroundTaskStatusEnum.PENDING,
-        payload: input.payload,
-      })),
-    }
-    const selectLimit = jest.fn(
-      async (): Promise<Record<string, unknown>[]> => [],
-    )
-    const db = {
-      select: jest.fn(() => ({
-        from: jest.fn(() => ({
-          where: jest.fn(() => ({
-            limit: selectLimit,
-          })),
+describe('ThirdPartyComicImportService workflow reservation', () => {
+  function createLimitSelect(rows: unknown[]) {
+    return {
+      from: jest.fn(() => ({
+        where: jest.fn(() => ({
+          limit: jest.fn(async () => rows),
         })),
       })),
+    }
+  }
+
+  function createImportRequest() {
+    return {
+      chapters: [
+        {
+          action: ThirdPartyComicImportChapterActionEnum.CREATE,
+          chapterApiVersion: 1,
+          importImages: true,
+          providerChapterId: 'chapter-001',
+          sortOrder: 1,
+          title: '第 1 话',
+        },
+      ],
+      comicId: 'woduzishenji',
+      cover: {
+        mode: ThirdPartyComicImportCoverModeEnum.PROVIDER,
+        providerImageId: 'cover:woduzishenji',
+      },
+      mode: ThirdPartyComicImportModeEnum.CREATE_NEW,
+      platform: 'copy',
+      sourceSnapshot: {
+        fetchedAt: '2026-05-17T00:00:00.000Z',
+        providerComicId: 'woduzishenji',
+        providerGroupPathWord: 'default',
+        providerPathWord: 'woduzishenji',
+      },
+      workDraft: {
+        authorIds: [1],
+        canComment: true,
+        categoryIds: [1],
+        chapterPrice: 0,
+        description: '作品简介',
+        isHot: false,
+        isNew: false,
+        isRecommended: false,
+        language: 'zh-CN',
+        name: '我独自升级',
+        recommendWeight: 0,
+        region: 'KR',
+        serialStatus: 2,
+        tagIds: [1],
+        viewRule: 0,
+      },
+    }
+  }
+
+  function createService(selectRows: unknown[][] = [[]]) {
+    const selectQueue = [...selectRows]
+    const db = {
+      select: jest.fn(() => createLimitSelect(selectQueue.shift() ?? [])),
     }
     const drizzle = {
       db,
@@ -175,14 +104,39 @@ describe('ThirdPartyComicImportService', () => {
         },
       },
     }
+    const workflowJob = {
+      jobId: 'job-1',
+      workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+    }
+    const workflowService = {
+      confirmDraft: jest.fn(async () => workflowJob),
+      createDraft: jest.fn(async () => workflowJob),
+    }
+    const contentImportService = {
+      createThirdPartyImportJob: jest.fn(async () => ({ id: 1n })),
+    }
+    const bindingService = {
+      getActiveSourceBindingByScope: jest.fn(async () => null),
+    }
+    const workService = {
+      createWorkReturningId: jest.fn(),
+    }
+    const workChapterService = {
+      createChapterReturningId: jest.fn(),
+    }
+    const comicContentService = {
+      replaceChapterContents: jest.fn(),
+    }
+    const registry = {
+      resolve: jest.fn(),
+    }
+    const remoteImageImportService = {
+      importImage: jest.fn(),
+    }
 
     return {
-      backgroundTaskService,
-      comicContentService,
-      db,
-      provider,
-      registry,
-      remoteImageImportService,
+      bindingService,
+      contentImportService,
       service: new ThirdPartyComicImportService(
         registry as never,
         workService as never,
@@ -190,304 +144,67 @@ describe('ThirdPartyComicImportService', () => {
         comicContentService as never,
         remoteImageImportService as never,
         bindingService as never,
-        backgroundTaskService as never,
+        workflowService as never,
+        contentImportService as never,
         drizzle as never,
       ),
-      selectLimit,
-      bindingService,
+      workflowService,
       workChapterService,
       workService,
-      ...overrides,
     }
   }
 
-  function createImportRequest() {
-    return {
-      chapters: [
-        {
-          action: ThirdPartyComicImportChapterActionEnum.CREATE,
-          chapterApiVersion: 1,
-          importImages: true,
-          providerChapterId: 'chapter-001',
-          sortOrder: 1,
-          title: '第1话',
-        },
-      ],
-      comicId: 'woduzishenji',
-      cover: {
-        mode: ThirdPartyComicImportCoverModeEnum.PROVIDER,
-        providerImageId: 'cover:woduzishenji',
-      },
-      mode: ThirdPartyComicImportModeEnum.CREATE_NEW,
-      platform: 'copy',
-      sourceSnapshot: {
-        fetchedAt: '2026-05-11T00:00:00.000Z',
-        providerComicId: 'woduzishenji',
-        providerGroupPathWord: 'default',
-        providerPathWord: 'woduzishenji',
-      },
-      workDraft: {
-        authorIds: [1],
-        canComment: true,
-        categoryIds: [1],
-        chapterPrice: 0,
-        description: '作品简介',
-        isHot: false,
-        isNew: false,
-        isPublished: false,
-        isRecommended: false,
-        language: 'zh-CN',
-        name: '我獨自升級',
-        recommendWeight: 0,
-        region: 'KR',
-        serialStatus: 2,
-        tagIds: [1],
-        viewRule: 0,
-      },
-    }
-  }
-
-  function createExecutionContext(
-    initialResidue: Record<string, unknown> = {},
-    onRecordResidue?: (patch: Record<string, unknown>) => Promise<void> | void,
-  ) {
-    const residue = { ...initialResidue }
-    const context = {
-      assertStillOwned: jest.fn(async () => undefined),
-      assertNotCancelled: jest.fn(async () => undefined),
-      createProgressReporter: jest.fn(
-        (options: {
-          endPercent?: number
-          stage?: string
-          startPercent?: number
-          total: number
-          unit?: string
-        }) => {
-          let current = 0
-          let lastPercent = options.startPercent ?? 0
-          return {
-            advance: jest.fn(
-              async (
-                input: {
-                  amount?: number
-                  current?: number
-                  detail?: Record<string, unknown>
-                  message?: string
-                } = {},
-              ) => {
-                const total = options.total
-                current =
-                  input.current ??
-                  Math.min(total, current + (input.amount ?? 1))
-                const mappedPercent =
-                  total > 0
-                    ? Math.floor(
-                        (options.startPercent ?? 0) +
-                          (((options.endPercent ?? 100) -
-                            (options.startPercent ?? 0)) *
-                            current) /
-                            total,
-                      )
-                    : (options.startPercent ?? 0)
-                lastPercent = Math.max(lastPercent, mappedPercent)
-                const progress = {
-                  current,
-                  detail: input.detail,
-                  message: input.message,
-                  percent: lastPercent,
-                  stage: options.stage,
-                  total,
-                  unit: options.unit,
-                }
-                await context.updateProgress(progress)
-                return progress
-              },
-            ),
-          }
-        },
-      ),
-      getResidue: jest.fn(async () => residue),
-      recordResidue: jest.fn(async (patch) => {
-        await onRecordResidue?.(patch)
-        Object.assign(residue, patch)
-      }),
-      residue,
-      taskId: 'task-001',
-      taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
-      updateProgress: jest.fn(
-        async (_progress: Record<string, unknown>) => undefined,
-      ),
-    }
-    return context
-  }
-
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('builds an import preview without local persistence side effects', async () => {
-    const { service, workService, workChapterService, comicContentService } =
-      createService()
-
-    const preview = await service.previewImport({
-      comicId: 'woduzishenji',
-      platform: 'copy',
-    })
-
-    expect(preview.sourceSnapshot).toEqual(
-      expect.objectContaining({
-        providerComicId: 'woduzishenji',
-        providerGroupPathWord: 'default',
-        providerPathWord: 'woduzishenji',
-        pathWord: 'woduzishenji',
-        uuid: 'comic-uuid',
-      }),
-    )
-    expect(preview.workDraft).toEqual(
-      expect.objectContaining({
-        name: '我獨自升級',
-        alias: 'Solo Leveling',
-        description: '作品简介',
-        suggestedRegion: '韩国',
-      }),
-    )
-    expect(preview.coverOptions.provider).toEqual({
-      providerImageId: 'cover:woduzishenji',
-      url: 'https://sw.mangafunb.fun/w/woduzishenji/cover.jpg',
-    })
-    expect(preview.chapters).toHaveLength(1)
-    expect(workService.createWorkReturningId).not.toHaveBeenCalled()
-    expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
-    expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
-  })
-
-  it('loads preview detail before chapter list to avoid an uncontrolled request burst', async () => {
-    let resolveDetail: (value: typeof detail) => void = () => undefined
-    ;(provider.getDetail as jest.Mock).mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveDetail = resolve
-        }),
-    )
-    const { service } = createService()
-
-    const previewPromise = service.previewImport({
-      comicId: 'woduzishenji',
-      platform: 'copy',
-    })
-    await Promise.resolve()
-
-    expect(provider.getChapters).not.toHaveBeenCalled()
-    resolveDetail(detail)
-    await expect(previewPromise).resolves.toMatchObject({
-      comicId: 'woduzishenji',
-      chapters,
-    })
-    expect(provider.getChapters).toHaveBeenCalledTimes(1)
-  })
-
-  it('creates a background task and does not execute import synchronously', async () => {
+  it('creates and confirms a workflow job without importing content synchronously', async () => {
     const {
-      backgroundTaskService,
-      comicContentService,
-      provider,
+      contentImportService,
       service,
+      workflowService,
       workChapterService,
       workService,
-    } = createService()
+    } = createService([[]])
+    const dto = createImportRequest()
 
-    const confirmImport = service.confirmImport as unknown as (
-      dto: ReturnType<typeof createImportRequest>,
-      userId: number,
-    ) => Promise<unknown>
+    await expect(service.confirmImport(dto as never, 7)).resolves.toEqual({
+      jobId: 'job-1',
+      workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+    })
 
-    const result = await confirmImport.call(service, createImportRequest(), 7)
-
-    expect(result).toEqual(
-      expect.objectContaining({
-        operatorType: BackgroundTaskOperatorTypeEnum.ADMIN,
-        operatorUserId: 7,
-        status: BackgroundTaskStatusEnum.PENDING,
-        taskId: 'task-001',
-        taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
-      }),
-    )
-    expect(backgroundTaskService.createTask).toHaveBeenCalledWith(
+    expect(workflowService.createDraft).toHaveBeenCalledWith(
       expect.objectContaining({
         conflictKeys: expect.arrayContaining([
           'source-comic:copy:woduzishenji',
           'source-scope:copy:woduzishenji:default',
-          'work-name:comic:我獨自升級',
-          'chapter-title:comic:work-name:我獨自升級:第1话',
+          'work-name:comic:我独自升级',
+          'chapter-title:comic:work-name:我独自升级:第 1 话',
         ]),
-        dedupeConflictMessage: '同源三方作品已有导入任务，请等待任务完成后重试',
-        dedupeKey: 'source-comic:copy:woduzishenji',
-        displayName: '我獨自升級',
+        displayName: '我独自升级',
         operator: {
-          type: BackgroundTaskOperatorTypeEnum.ADMIN,
+          type: WorkflowOperatorTypeEnum.ADMIN,
           userId: 7,
         },
-        payload: expect.objectContaining({
-          comicId: 'woduzishenji',
-          mode: ThirdPartyComicImportModeEnum.CREATE_NEW,
-        }),
-        serialKey: 'platform:copy',
-        taskType: THIRD_PARTY_COMIC_IMPORT_TASK_TYPE,
+        selectedItemCount: 1,
+        workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
       }),
     )
-    expect(provider.getDetail).not.toHaveBeenCalled()
+    expect(contentImportService.createThirdPartyImportJob).toHaveBeenCalledWith({
+      dto,
+      jobId: 'job-1',
+    })
+    expect(workflowService.confirmDraft).toHaveBeenCalledWith({
+      jobId: 'job-1',
+    })
     expect(workService.createWorkReturningId).not.toHaveBeenCalled()
     expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
-    expect(workChapterService.updateChapter).not.toHaveBeenCalled()
-    expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
   })
 
-  it('uses the existing work name as the task display name when attaching import', async () => {
-    const { backgroundTaskService, selectLimit, service } = createService()
-    const request = {
-      ...createImportRequest(),
-      mode: ThirdPartyComicImportModeEnum.ATTACH_TO_EXISTING,
-      targetWorkId: 100,
-      workDraft: undefined,
-    }
-    selectLimit.mockResolvedValueOnce([
-      {
-        id: 100,
-        name: '目标作品',
-        type: 1,
-      },
-    ])
-
-    const confirmImport = service.confirmImport as unknown as (
-      dto: typeof request,
-      userId: number,
-    ) => Promise<unknown>
-
-    await confirmImport.call(service, request, 7)
-
-    expect(backgroundTaskService.createTask).toHaveBeenCalledWith(
-      expect.objectContaining({
-        displayName: '目标作品',
-      }),
-    )
-  })
-
-  it('accepts retry only when persisted reservation snapshot matches payload', async () => {
-    const { service } = createService()
-    const request = createImportRequest()
-    const reservation = await service.buildImportReservationSnapshot(request)
+  it('rejects retry when the persisted reservation snapshot no longer matches', async () => {
+    const { service } = createService([[]])
+    const dto = createImportRequest()
+    const reservation = await service.buildImportReservationSnapshot(dto as never)
 
     await expect(
-      service.validateRetryReservationSnapshot(request, {
-        conflictKeys: reservation.conflictKeys,
-        dedupeKey: reservation.dedupeKey,
-        serialKey: reservation.serialKey,
-      }),
-    ).resolves.toBeUndefined()
-
-    await expect(
-      service.validateRetryReservationSnapshot(request, {
-        conflictKeys: ['source-comic:copy:woduzishenji'],
+      service.validateRetryReservationSnapshot(dto as never, {
+        conflictKeys: reservation.conflictKeys.slice(0, 1),
         dedupeKey: reservation.dedupeKey,
         serialKey: reservation.serialKey,
       }),
@@ -500,434 +217,47 @@ describe('ThirdPartyComicImportService', () => {
     })
   })
 
-  it('executes the background import and records rollback residue', async () => {
-    const {
-      comicContentService,
-      bindingService,
-      provider,
-      remoteImageImportService,
-      service,
-      workChapterService,
-      workService,
-    } = createService()
-    ;(remoteImageImportService.importImages as jest.Mock).mockImplementation(
-      async (_images, _segments, onImported) => {
-        await onImported({
-          ...uploadedImage,
-          filePath: uploadedImage.upload.filePath,
-          image: {
-            providerImageId: 'image-001',
-            sortOrder: 1,
-            url: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
-          },
-          imageIndex: 1,
-          imageTotal: 1,
-          safeSourceUrl: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
-        })
-        return ['/uploads/1.jpg']
-      },
-    )
-    const context = createExecutionContext()
+  it('blocks same-title work conflicts before creating workflow draft', async () => {
+    const { service, workflowService } = createService([[{ id: 100 }]])
 
-    const result = await service.executeImportTask(
-      createImportRequest(),
-      context as never,
-    )
+    await expect(
+      service.confirmImport(createImportRequest() as never, 7),
+    ).rejects.toThrow('同名漫画作品已存在，不能重复导入')
 
-    expect(result).toEqual(
-      expect.objectContaining({
-        status: 'success',
-        work: expect.objectContaining({ id: 100 }),
-      }),
-    )
-    expect(provider.getDetail).toHaveBeenCalledWith({
-      comicId: 'woduzishenji',
-      platform: 'copy',
-    })
-    expect(workService.createWorkReturningId).toHaveBeenCalled()
-    expect(bindingService.createOrGetSourceBinding).toHaveBeenCalledWith(
-      expect.objectContaining({
-        platform: 'copy',
-        providerComicId: 'woduzishenji',
-        providerGroupPathWord: 'default',
-        providerPathWord: 'woduzishenji',
-        workId: 100,
-      }),
-    )
-    expect(workChapterService.createChapterReturningId).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: '第1话',
-        workId: 100,
-      }),
-    )
-    expect(comicContentService.replaceChapterContents).toHaveBeenCalledWith(
-      300,
-      ['/uploads/1.jpg'],
-    )
-    expect(bindingService.createOrGetChapterBinding).toHaveBeenCalledWith(
-      expect.objectContaining({
-        chapterId: 300,
-        providerChapterId: 'chapter-001',
-        remoteSortOrder: 1,
-        workThirdPartySourceBindingId: 10,
-      }),
-    )
-    expect(context.residue).toEqual({
-      createdChapterBindingIds: [20],
-      createdChapterIds: [300],
-      createdSourceBindingIds: [10],
-      createdWorkIds: [100],
-      uploadedFiles: [uploadedCover.deleteTarget, uploadedImage.deleteTarget],
-    })
-    expect(context.createProgressReporter).toHaveBeenCalledWith({
-      endPercent: 10,
-      stage: 'chapter-content',
-      startPercent: 2,
-      total: 1,
-      unit: 'chapter',
-    })
-    expect(context.createProgressReporter).toHaveBeenCalledWith({
-      endPercent: 95,
-      stage: 'image-import',
-      startPercent: 10,
-      total: 1,
-      unit: 'image',
-    })
-    expect(context.updateProgress).toHaveBeenCalledWith(
-      expect.objectContaining({
-        current: 1,
-        detail: expect.objectContaining({
-          imageIndex: 1,
-          imageTotal: 1,
-          providerChapterId: 'chapter-001',
-          providerImageId: 'image-001',
-          safeSourceUrl: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
-        }),
-        percent: 95,
-        stage: 'image-import',
-        total: 1,
-      }),
-    )
+    expect(workflowService.createDraft).not.toHaveBeenCalled()
   })
 
-  it('does not create chapter-content progress for metadata-only imports', async () => {
-    const { service } = createService()
-    const request = createImportRequest()
-    request.chapters[0].importImages = false
-    const context = createExecutionContext()
-
-    const result = await service.executeImportTask(request, context as never)
-
-    expect(result.status).toBe('success')
-    expect(provider.getChapterContent).not.toHaveBeenCalled()
-    expect(context.createProgressReporter).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        stage: 'chapter-content',
-      }),
-    )
-  })
-
-  it('rejects source binding drift before local import side effects', async () => {
-    const {
-      bindingService,
-      remoteImageImportService,
-      service,
-      workChapterService,
-      workService,
-    } = createService()
+  it('blocks source-scope conflicts before creating workflow draft', async () => {
+    const { bindingService, service, workflowService } = createService([[]])
     ;(
       bindingService.getActiveSourceBindingByScope as jest.Mock
     ).mockResolvedValueOnce({
       workId: 999,
     })
-    const context = createExecutionContext()
 
     await expect(
-      service.executeImportTask(createImportRequest(), context as never),
+      service.confirmImport(createImportRequest() as never, 7),
     ).rejects.toThrow('三方来源已绑定其他作品，不能重复绑定')
 
-    expect(remoteImageImportService.importImage).not.toHaveBeenCalled()
-    expect(remoteImageImportService.importImages).not.toHaveBeenCalled()
-    expect(workService.createWorkReturningId).not.toHaveBeenCalled()
-    expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
+    expect(workflowService.createDraft).not.toHaveBeenCalled()
   })
 
-  it('rejects missing source group before local import side effects', async () => {
-    const request = createImportRequest()
-    delete (request.sourceSnapshot as Record<string, unknown>)
-      .providerGroupPathWord
-    const {
-      bindingService,
-      remoteImageImportService,
-      service,
-      workChapterService,
-      workService,
-    } = createService()
-    const context = createExecutionContext()
-
-    await expect(
-      service.executeImportTask(request, context as never),
-    ).rejects.toThrow('三方来源分组缺失')
-
-    expect(remoteImageImportService.importImage).not.toHaveBeenCalled()
-    expect(workService.createWorkReturningId).not.toHaveBeenCalled()
-    expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
-    expect(bindingService.createOrGetSourceBinding).not.toHaveBeenCalled()
-  })
-
-  it('preserves the original cause when provider cover import fails', async () => {
-    const coverError = new Error('remote cover download failed')
-    const { remoteImageImportService, service } = createService()
-    ;(remoteImageImportService.importImage as jest.Mock).mockRejectedValue(
-      coverError,
-    )
-    const context = createExecutionContext()
-
-    await expect(
-      service.executeImportTask(createImportRequest(), context as never),
-    ).rejects.toMatchObject({
-      cause: coverError,
-      message: 'remote cover download failed',
-    })
-  })
-
-  it('validates update overwrite before fetching chapter content', async () => {
-    const request = {
+  it('blocks same-title chapter conflicts for existing-work imports', async () => {
+    const { service, workflowService } = createService([
+      [{ id: 100, name: '目标作品', type: WorkTypeEnum.COMIC }],
+      [{ id: 300 }],
+    ])
+    const dto = {
       ...createImportRequest(),
-      cover: undefined,
       mode: ThirdPartyComicImportModeEnum.ATTACH_TO_EXISTING,
       targetWorkId: 100,
       workDraft: undefined,
     }
-    Object.assign(request.chapters[0], {
-      action: ThirdPartyComicImportChapterActionEnum.UPDATE,
-      overwriteContent: false,
-      targetChapterId: 300,
-    })
-    const { provider, selectLimit, service, workChapterService } =
-      createService()
-    selectLimit.mockResolvedValueOnce([
-      {
-        id: 100,
-        name: '目标作品',
-        type: 1,
-      },
-    ])
-    const context = createExecutionContext()
 
-    await expect(
-      service.executeImportTask(request, context as never),
-    ).rejects.toThrow('更新章节内容必须确认覆盖')
-
-    expect(provider.getChapterContent).not.toHaveBeenCalled()
-    expect(workChapterService.updateChapter).not.toHaveBeenCalled()
-  })
-
-  it('does not create chapter residue when chapter content planning fails', async () => {
-    const request = createImportRequest()
-    request.chapters.push({
-      ...request.chapters[0],
-      providerChapterId: 'chapter-002',
-      sortOrder: 2,
-      title: '第2话',
-    })
-    const {
-      comicContentService,
-      provider,
-      remoteImageImportService,
-      service,
-      workChapterService,
-    } = createService()
-    ;(provider.getChapterContent as jest.Mock)
-      .mockResolvedValueOnce({
-        providerChapterId: 'chapter-001',
-        title: '第1话',
-        images: [
-          {
-            providerImageId: 'image-001',
-            sortOrder: 1,
-            url: 'https://sw.mangafunb.fun/w/woduzishenji/1.jpg',
-          },
-        ],
-      })
-      .mockRejectedValueOnce(new Error('chapter content failed'))
-    const context = createExecutionContext()
-
-    await expect(
-      service.executeImportTask(request, context as never),
-    ).rejects.toThrow('chapter content failed')
-
-    expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
-    expect(workChapterService.updateChapter).not.toHaveBeenCalled()
-    expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
-    expect(remoteImageImportService.importImages).not.toHaveBeenCalled()
-    expect(context.residue).toEqual({
-      createdSourceBindingIds: [10],
-      createdWorkIds: [100],
-      uploadedFiles: [uploadedCover.deleteTarget],
-    })
-  })
-
-  it('rolls back recorded creates and uploaded files in reverse order', async () => {
-    const {
-      remoteImageImportService,
-      service,
-      bindingService,
-      workChapterService,
-      workService,
-    } = createService()
-    const context = createExecutionContext({
-      createdChapterIds: [300, 301],
-      createdChapterBindingIds: [20, 21],
-      createdSourceBindingIds: [10],
-      createdWorkIds: [100],
-      uploadedFiles: [
-        {
-          provider: UploadProviderEnum.LOCAL,
-          filePath: '/uploads/cover.jpg',
-          objectKey: 'comic/image/cover.jpg',
-        },
-        {
-          provider: UploadProviderEnum.LOCAL,
-          filePath: '/uploads/1.jpg',
-          objectKey: 'work/comic/100/chapter/300/001.jpg',
-        },
-      ],
-    })
-
-    await service.rollbackImportTask(context as never, new Error('boom'))
-
-    expect(bindingService.softDeleteChapterBindings).toHaveBeenCalledWith([
-      21, 20,
-    ])
-    expect(workChapterService.deleteChapters).toHaveBeenCalledWith([301, 300])
-    expect(bindingService.softDeleteSourceBindings).toHaveBeenCalledWith([10])
-    expect(workService.deleteWork).toHaveBeenCalledWith(100)
-    expect(remoteImageImportService.deleteImportedFile).toHaveBeenNthCalledWith(
-      1,
-      {
-        provider: UploadProviderEnum.LOCAL,
-        filePath: '/uploads/1.jpg',
-        objectKey: 'work/comic/100/chapter/300/001.jpg',
-      },
+    await expect(service.confirmImport(dto as never, 7)).rejects.toThrow(
+      '目标作品下已存在同名章节，不能重复导入',
     )
-    expect(remoteImageImportService.deleteImportedFile).toHaveBeenNthCalledWith(
-      2,
-      {
-        provider: UploadProviderEnum.LOCAL,
-        filePath: '/uploads/cover.jpg',
-        objectKey: 'comic/image/cover.jpg',
-      },
-    )
+
+    expect(workflowService.createDraft).not.toHaveBeenCalled()
   })
-
-  it('propagates claim loss during rollback uploaded-file cleanup', async () => {
-    const { remoteImageImportService, service } = createService()
-    const claimLost = new BackgroundTaskClaimLostError()
-    const context = createExecutionContext({
-      uploadedFiles: [uploadedCover.deleteTarget],
-    })
-    ;(context.assertStillOwned as jest.Mock).mockRejectedValueOnce(claimLost)
-
-    await expect(
-      service.rollbackImportTask(context as never, new Error('boom')),
-    ).rejects.toBe(claimLost)
-
-    expect(remoteImageImportService.deleteImportedFile).not.toHaveBeenCalled()
-  })
-
-  it('deletes uploaded cover immediately when residue persistence fails', async () => {
-    const { remoteImageImportService, service } = createService()
-    const context = createExecutionContext({}, async (patch) => {
-      if ('uploadedFiles' in patch) {
-        throw new Error('record residue failed')
-      }
-    })
-
-    await expect(
-      service.executeImportTask(createImportRequest(), context as never),
-    ).rejects.toThrow('record residue failed')
-
-    expect(remoteImageImportService.deleteImportedFile).toHaveBeenCalledWith(
-      uploadedCover.deleteTarget,
-    )
-  })
-
-  it('deletes created work immediately when work residue persistence fails', async () => {
-    const { service, workService } = createService()
-    const context = createExecutionContext({}, async (patch) => {
-      if ('createdWorkIds' in patch) {
-        throw new Error('record created work failed')
-      }
-    })
-
-    await expect(
-      service.executeImportTask(createImportRequest(), context as never),
-    ).rejects.toThrow('record created work failed')
-
-    expect(workService.deleteWork).toHaveBeenCalledWith(100)
-  })
-
-  it.each([
-    {
-      key: 'uploadedFiles',
-      assertNoCleanup: ({
-        remoteImageImportService,
-      }: ReturnType<typeof createService>) => {
-        expect(
-          remoteImageImportService.deleteImportedFile,
-        ).not.toHaveBeenCalled()
-      },
-    },
-    {
-      key: 'createdWorkIds',
-      assertNoCleanup: ({ workService }: ReturnType<typeof createService>) => {
-        expect(workService.deleteWork).not.toHaveBeenCalled()
-      },
-    },
-    {
-      key: 'createdSourceBindingIds',
-      assertNoCleanup: ({
-        bindingService,
-      }: ReturnType<typeof createService>) => {
-        expect(bindingService.softDeleteSourceBindings).not.toHaveBeenCalled()
-      },
-    },
-    {
-      key: 'createdChapterIds',
-      assertNoCleanup: ({
-        workChapterService,
-      }: ReturnType<typeof createService>) => {
-        expect(workChapterService.deleteChapters).not.toHaveBeenCalled()
-      },
-    },
-    {
-      key: 'createdChapterBindingIds',
-      assertNoCleanup: ({
-        bindingService,
-      }: ReturnType<typeof createService>) => {
-        expect(bindingService.softDeleteChapterBindings).not.toHaveBeenCalled()
-      },
-    },
-  ])(
-    'does not run immediate cleanup when $key residue persistence fails because claim is lost',
-    async ({ key, assertNoCleanup }) => {
-      const harness = createService()
-      const claimLost = new BackgroundTaskClaimLostError()
-      const context = createExecutionContext({}, async (patch) => {
-        if (key in patch) {
-          throw claimLost
-        }
-      })
-
-      await expect(
-        harness.service.executeImportTask(
-          createImportRequest(),
-          context as never,
-        ),
-      ).rejects.toBe(claimLost)
-
-      assertNoCleanup(harness)
-    },
-  )
 })

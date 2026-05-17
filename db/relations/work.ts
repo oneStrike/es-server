@@ -27,9 +27,9 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       to: r.workTag.id.through(r.workTagRelation.tagId),
     }),
     chapters: r.many.workChapter(),
-    comicArchiveImportTasks: r.many.workComicArchiveImportTask({
+    contentImportJobs: r.many.contentImportJob({
       from: r.work.id,
-      to: r.workComicArchiveImportTask.workId,
+      to: r.contentImportJob.workId,
     }),
     thirdPartySourceBinding: r.one.workThirdPartySourceBinding({
       from: r.work.id,
@@ -90,10 +90,78 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       alias: 'UserWorkReadingStateLastReadChapter',
     }),
   },
-  workComicArchiveImportTask: {
+  contentImportJob: {
+    workflowJob: r.one.workflowJob({
+      from: r.contentImportJob.workflowJobId,
+      to: r.workflowJob.id,
+    }),
     work: r.one.work({
-      from: r.workComicArchiveImportTask.workId,
+      from: r.contentImportJob.workId,
       to: r.work.id,
+    }),
+    previewItems: r.many.contentImportPreviewItem({
+      from: r.contentImportJob.id,
+      to: r.contentImportPreviewItem.contentImportJobId,
+    }),
+    items: r.many.contentImportItem({
+      from: r.contentImportJob.id,
+      to: r.contentImportItem.contentImportJobId,
+    }),
+    eventLinks: r.many.contentImportEventLink({
+      from: r.contentImportJob.id,
+      to: r.contentImportEventLink.contentImportJobId,
+    }),
+  },
+  contentImportPreviewItem: {
+    job: r.one.contentImportJob({
+      from: r.contentImportPreviewItem.contentImportJobId,
+      to: r.contentImportJob.id,
+    }),
+  },
+  contentImportItem: {
+    job: r.one.contentImportJob({
+      from: r.contentImportItem.contentImportJobId,
+      to: r.contentImportJob.id,
+    }),
+    attempts: r.many.contentImportItemAttempt({
+      from: r.contentImportItem.id,
+      to: r.contentImportItemAttempt.contentImportItemId,
+    }),
+    eventLinks: r.many.contentImportEventLink({
+      from: r.contentImportItem.id,
+      to: r.contentImportEventLink.contentImportItemId,
+    }),
+  },
+  contentImportItemAttempt: {
+    workflowAttempt: r.one.workflowAttempt({
+      from: r.contentImportItemAttempt.workflowAttemptId,
+      to: r.workflowAttempt.id,
+    }),
+    item: r.one.contentImportItem({
+      from: r.contentImportItemAttempt.contentImportItemId,
+      to: r.contentImportItem.id,
+    }),
+    eventLinks: r.many.contentImportEventLink({
+      from: r.contentImportItemAttempt.id,
+      to: r.contentImportEventLink.contentImportItemAttemptId,
+    }),
+  },
+  contentImportEventLink: {
+    workflowEvent: r.one.workflowEvent({
+      from: r.contentImportEventLink.workflowEventId,
+      to: r.workflowEvent.id,
+    }),
+    job: r.one.contentImportJob({
+      from: r.contentImportEventLink.contentImportJobId,
+      to: r.contentImportJob.id,
+    }),
+    item: r.one.contentImportItem({
+      from: r.contentImportEventLink.contentImportItemId,
+      to: r.contentImportItem.id,
+    }),
+    itemAttempt: r.one.contentImportItemAttempt({
+      from: r.contentImportEventLink.contentImportItemAttemptId,
+      to: r.contentImportItemAttempt.id,
     }),
   },
   workThirdPartySourceBinding: {

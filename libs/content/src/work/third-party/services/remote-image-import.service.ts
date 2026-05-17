@@ -441,7 +441,7 @@ export class RemoteImageImportService {
     })
   }
 
-  // 把原始错误的安全摘要挂到图片上下文中，供后台任务错误序列化。
+  // 把原始错误的安全摘要挂到图片上下文中，供 workflow 错误序列化。
   private attachOriginalErrorContext(
     error: unknown,
     context: RemoteImageImportFailureContext,

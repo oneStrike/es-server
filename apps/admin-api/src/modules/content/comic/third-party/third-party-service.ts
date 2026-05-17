@@ -6,8 +6,8 @@ import type {
   ThirdPartyComicImportRequestDto,
   ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
+import { ComicThirdPartyRegistry } from '@libs/content/work/third-party/providers/comic-third-party.registry'
 import { Injectable } from '@nestjs/common'
-import { ComicThirdPartyRegistry } from './providers/comic-third-party.registry'
 import { ThirdPartyComicImportService } from './services/third-party-comic-import.service'
 import { ThirdPartyComicSyncService } from './services/third-party-comic-sync.service'
 
@@ -52,7 +52,7 @@ export class ComicThirdPartyService {
     return this.importService.previewImport(dto)
   }
 
-  // 确认第三方漫画导入，创建后台任务并立即返回。
+  // 确认第三方漫画导入，创建 workflow 并立即返回。
   async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
     return this.importService.confirmImport(dto, userId)
   }

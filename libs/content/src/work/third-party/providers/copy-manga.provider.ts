@@ -5,8 +5,8 @@ import type {
 } from '@libs/content/work/content/dto/content.dto'
 import type { ComicThirdPartyProvider } from './comic-third-party-provider.type'
 import type {
-  CopyMangaChapterContentResults,
   CopyMangaApiFailureCause,
+  CopyMangaChapterContentResults,
   CopyMangaChapterResults,
   CopyMangaDetailResults,
   CopyMangaNamedItem,

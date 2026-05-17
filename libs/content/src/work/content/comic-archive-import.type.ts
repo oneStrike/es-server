@@ -1,9 +1,6 @@
 import type {
   ComicArchiveIgnoreReasonEnum,
   ComicArchiveImportItemStatusEnum,
-  ComicArchivePreviewModeEnum,
-  ComicArchivePreviewSessionStatusEnum,
-  ComicArchiveTaskStatusEnum,
 } from './comic-archive-import.constant'
 
 /**
@@ -63,46 +60,6 @@ export interface ComicArchiveMatchedItemRecord extends ComicArchiveMatchedItemSn
 }
 
 /**
- * 漫画压缩包任务持久化记录。
- * 使用数据库行承载预解析草稿与导入执行状态，临时文件仍保留在本地目录。
- */
-export interface ComicArchiveTaskRecord {
-  taskId: string
-  workId: number
-  mode: ComicArchivePreviewModeEnum
-  status: ComicArchiveTaskStatusEnum
-  archiveName: string
-  archivePath: string
-  extractPath: string
-  requireConfirm: boolean
-  summary: ComicArchiveSummarySnapshot
-  matchedItems: ComicArchiveMatchedItemRecord[]
-  ignoredItems: ComicArchiveIgnoredItemSnapshot[]
-  resultItems: ComicArchiveResultItemSnapshot[]
-  confirmedChapterIds: number[]
-  startedAt: Date | null
-  finishedAt: Date | null
-  expiresAt: Date
-  lastError: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
-/**
- * 漫画压缩包预解析会话持久化记录。
- * 会话先于 multipart 上传创建，用于在预确认阶段提供强一致取消边界。
- */
-export interface ComicArchivePreviewSessionRecord {
-  taskId: string
-  workId: number
-  chapterId: number | null
-  status: ComicArchivePreviewSessionStatusEnum
-  expiresAt: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-/**
  * 漫画压缩包预解析阶段可匹配的章节快照。
  * 只保留匹配目录、展示标题和现有内容统计需要的字段。
  */
@@ -120,3 +77,17 @@ export type ComicArchivePreviewChapterMap = Map<
   number,
   ComicArchivePreviewChapter
 >
+
+/** 漫画压缩包 workflow 执行单条导入所需的上下文记录。 */
+export interface ArchiveWorkflowImportRecord {
+  assertStillOwned: () => Promise<void>
+  attemptId: string
+  itemId: string
+  jobId: string
+  workId: number
+}
+
+/** 漫画压缩包导入详情查询入参。 */
+export interface ComicArchiveDetailInput {
+  jobId: string
+}

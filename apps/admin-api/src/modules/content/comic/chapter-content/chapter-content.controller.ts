@@ -2,7 +2,6 @@ import type { FastifyRequest } from 'fastify'
 import { ComicArchiveImportService } from '@libs/content/work/content/comic-archive-import.service'
 import { ComicContentService } from '@libs/content/work/content/comic-content.service'
 import {
-  ComicArchiveTaskIdDto,
   ComicArchiveTaskResponseDto,
   ConfirmComicArchiveDto,
   CreateComicArchiveSessionDto,
@@ -13,10 +12,11 @@ import {
   UpdateComicContentDto,
   UploadContentDto,
 } from '@libs/content/work/content/dto/content.dto'
-import { ApiDoc } from '@libs/platform/decorators'
+import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
+import { WorkflowJobDto, WorkflowJobIdDto } from '@libs/platform/modules/workflow/dto'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
@@ -117,19 +117,22 @@ export class ChapterContentController {
   @Post('archive/session')
   @ApiAuditDoc({
     summary: '创建漫画压缩包预解析会话',
-    model: ComicArchiveTaskIdDto,
+    model: WorkflowJobIdDto,
     audit: {
       actionType: AuditActionTypeEnum.IMPORT,
     },
   })
-  async archiveSession(@Body() body: CreateComicArchiveSessionDto) {
-    return this.comicArchiveImportService.createPreviewSession(body)
+  async archiveSession(
+    @Body() body: CreateComicArchiveSessionDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.comicArchiveImportService.createPreviewSession(body, userId)
   }
 
   @Post('archive/discard')
   @ApiAuditDoc({
     summary: '丢弃漫画压缩包预解析会话',
-    model: Boolean,
+    model: WorkflowJobDto,
     audit: {
       actionType: AuditActionTypeEnum.DELETE,
     },
@@ -141,7 +144,7 @@ export class ChapterContentController {
   @Post('archive/confirm')
   @ApiAuditDoc({
     summary: '确认漫画压缩包导入',
-    model: Boolean,
+    model: WorkflowJobDto,
     audit: {
       actionType: AuditActionTypeEnum.IMPORT,
     },
@@ -155,7 +158,7 @@ export class ChapterContentController {
     summary: '查询漫画压缩包导入任务详情',
     model: ComicArchiveTaskResponseDto,
   })
-  async archiveDetail(@Query() query: ComicArchiveTaskIdDto) {
+  async archiveDetail(@Query() query: WorkflowJobIdDto) {
     return this.comicArchiveImportService.getArchiveDetail(query)
   }
 }

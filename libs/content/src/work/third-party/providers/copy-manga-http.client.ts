@@ -16,7 +16,7 @@ const COPY_MANGA_REQUEST_TIMEOUT_MS = 300000
 
 @Injectable()
 export class CopyMangaHttpClient {
-  private apiHostCache: { expiresAt: number; hosts: string[] } | null = null
+  private apiHostCache: { expiresAt: number, hosts: string[] } | null = null
 
   // 注入三方资源解析节流器，统一控制 discovery 和业务 API 节奏。
   constructor(private readonly throttle: ThirdPartyResourceThrottleService) {}

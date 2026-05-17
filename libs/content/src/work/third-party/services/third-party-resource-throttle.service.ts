@@ -83,7 +83,7 @@ export class ThirdPartyResourceThrottleService {
   }
 
   // 使用原生定时器延迟当前排队项，方便 Jest fake timers 精确验证。
-  private delay(delayMs: number) {
+  private async delay(delayMs: number) {
     return new Promise<void>((resolve) => {
       setTimeout(resolve, delayMs)
     })

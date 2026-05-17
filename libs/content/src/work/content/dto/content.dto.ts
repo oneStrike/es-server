@@ -81,11 +81,11 @@ export class PreviewComicArchiveDto {
   chapterId?: number
 
   @StringProperty({
-    description: '预解析会话任务ID',
+    description: '预解析会话工作流任务ID',
     example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
     required: true,
   })
-  taskId!: string
+  jobId!: string
 }
 
 export class CreateComicArchiveSessionDto {
@@ -100,16 +100,16 @@ export class CreateComicArchiveSessionDto {
   chapterId?: number
 }
 
-export class ComicArchiveTaskIdDto {
+export class ComicArchiveWorkflowJobIdDto {
   @StringProperty({
-    description: '导入任务ID',
+    description: '导入工作流任务ID',
     example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
     required: true,
   })
-  taskId!: string
+  jobId!: string
 }
 
-export class ConfirmComicArchiveDto extends ComicArchiveTaskIdDto {
+export class ConfirmComicArchiveDto extends ComicArchiveWorkflowJobIdDto {
   @ArrayProperty({
     description: '用户确认要导入的章节ID列表',
     itemType: 'number',
@@ -119,7 +119,7 @@ export class ConfirmComicArchiveDto extends ComicArchiveTaskIdDto {
   confirmedChapterIds!: number[]
 }
 
-export class DiscardComicArchiveDto extends ComicArchiveTaskIdDto {}
+export class DiscardComicArchiveDto extends ComicArchiveWorkflowJobIdDto {}
 
 export class ComicArchiveSummaryDto {
   @NumberProperty({
@@ -294,7 +294,7 @@ export class ComicArchiveResultItemDto {
   message!: string
 }
 
-export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
+export class ComicArchiveTaskResponseDto extends ComicArchiveWorkflowJobIdDto {
   @NumberProperty({
     description: '作品ID',
     example: 1,
@@ -329,14 +329,6 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
     validation: false,
   })
   requireConfirm!: boolean
-
-  @BooleanProperty({
-    description: '是否已确认并进入后台任务归属',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  backgroundOwned!: boolean
 
   @ArrayProperty({
     description: '匹配成功的章节列表',
@@ -1000,14 +992,6 @@ export class ThirdPartyComicImportWorkDraftDto {
   canComment?: boolean
 
   @BooleanProperty({
-    description: '是否发布',
-    example: false,
-    required: false,
-    default: false,
-  })
-  isPublished?: boolean
-
-  @BooleanProperty({
     description: '是否推荐',
     example: false,
     required: false,
@@ -1368,9 +1352,6 @@ export class ThirdPartyComicImportChapterItemDto {
     required: false,
   })
   canDownload?: boolean
-
-  @BooleanProperty({ description: '是否发布', example: false, required: false })
-  isPublished?: boolean
 
   @BooleanProperty({
     description: '是否导入章节图片',

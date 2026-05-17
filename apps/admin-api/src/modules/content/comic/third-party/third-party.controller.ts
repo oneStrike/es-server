@@ -14,7 +14,7 @@ import {
 } from '@libs/content/work/content/dto/content.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { BackgroundTaskDto } from '@libs/platform/modules/background-task/dto'
+import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
@@ -90,15 +90,15 @@ export class ComicThirdPartyController {
 
   @Post('import/confirm')
   @ApiAuditDoc({
-    summary: '确认第三方漫画导入并创建后台任务（破坏性移除同步结果）',
-    model: BackgroundTaskDto,
+    summary: '确认第三方漫画导入并创建工作流任务',
+    model: WorkflowJobDto,
     audit: {
       actionType: AuditActionTypeEnum.IMPORT,
       content:
-        '确认第三方漫画导入并创建后台任务，旧同步导入结果已按迁移说明破坏性移除',
+        '确认第三方漫画导入并创建工作流任务，导入成功后仍需管理员手动发布',
     },
   })
-  // 确认第三方漫画导入并创建后台任务。
+  // 确认第三方漫画导入并创建工作流任务。
   async confirmImport(
     @Body() body: ThirdPartyComicImportRequestDto,
     @CurrentUser('sub') userId: number,
@@ -109,13 +109,13 @@ export class ComicThirdPartyController {
   @Post('sync/latest')
   @ApiAuditDoc({
     summary: '同步第三方漫画最新章节',
-    model: BackgroundTaskDto,
+    model: WorkflowJobDto,
     audit: {
       actionType: AuditActionTypeEnum.IMPORT,
       content: '同步第三方漫画最新章节，只导入未绑定的新章节',
     },
   })
-  // 手动触发最新章节同步后台任务。
+  // 手动触发最新章节同步工作流任务。
   async syncLatest(
     @Body() body: ThirdPartyComicSyncLatestRequestDto,
     @CurrentUser('sub') userId: number,

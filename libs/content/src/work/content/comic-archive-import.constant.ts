@@ -1,13 +1,13 @@
 /**
  * 漫画压缩包导入任务状态。
- * 用于预解析草稿、确认导入和后台执行阶段的状态流转。
+ * 用于预解析草稿、确认导入和 workflow 执行阶段的状态流转。
  */
 export enum ComicArchiveTaskStatusEnum {
   /** 预解析草稿，等待用户确认。 */
   DRAFT = 0,
-  /** 已确认，等待后台 worker 消费。 */
+  /** 已确认，等待 workflow worker 消费。 */
   PENDING = 1,
-  /** 后台 worker 正在导入。 */
+  /** workflow worker 正在导入。 */
   PROCESSING = 2,
   /** 全部确认章节导入成功。 */
   SUCCESS = 3,
@@ -19,17 +19,6 @@ export enum ComicArchiveTaskStatusEnum {
   EXPIRED = 6,
   /** 任务已被主动取消。 */
   CANCELLED = 7,
-}
-
-/**
- * 漫画压缩包预解析会话状态。
- * 用于在真正创建草稿任务前协调预解析、确认和丢弃。
- */
-export enum ComicArchivePreviewSessionStatusEnum {
-  /** 会话开放，允许预解析或确认。 */
-  OPEN = 1,
-  /** 会话正在丢弃，禁止后续创建草稿或确认后台任务。 */
-  DISCARDING = 2,
 }
 
 /**

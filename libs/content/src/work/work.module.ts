@@ -3,6 +3,7 @@ import { UserPointModule } from '@libs/growth/point/point.module'
 import { InteractionModule } from '@libs/interaction/interaction.module'
 import { ReportModule } from '@libs/interaction/report/report.module'
 import { UploadModule } from '@libs/platform/modules/upload/upload.module'
+import { WorkflowModule } from '@libs/platform/modules/workflow/workflow.module'
 import { SystemConfigModule } from '@libs/system-config/system-config.module'
 import { Module } from '@nestjs/common'
 import { WorkAuthorModule } from '../author/author.module'
@@ -19,8 +20,9 @@ import { WorkNovelChapterDownloadResolver } from './chapter/resolver/work-novel-
 import { WorkNovelChapterLikeResolver } from './chapter/resolver/work-novel-chapter-like.resolver'
 import { WorkNovelChapterReportResolver } from './chapter/resolver/work-novel-chapter-report.resolver'
 import { WorkChapterService } from './chapter/work-chapter.service'
+import { ContentImportModule } from './content-import/content-import.module'
+import { ComicArchiveImportWorkflowHandler } from './content/comic-archive-import-workflow.handler'
 import { ComicArchiveImportService } from './content/comic-archive-import.service'
-import { ComicArchiveImportWorker } from './content/comic-archive-import.worker'
 import { ComicContentService } from './content/comic-content.service'
 import { NovelContentService } from './content/novel-content.service'
 import { WorkComicBrowseLogResolver } from './core/resolver/work-comic-browse-log.resolver'
@@ -49,6 +51,8 @@ import { WorkService } from './core/work.service'
     UserPermissionModule,
     ContentPermissionModule,
     UserPointModule,
+    ContentImportModule,
+    WorkflowModule,
     UploadModule.register({
       imports: [SystemConfigModule],
     }),
@@ -59,7 +63,7 @@ import { WorkService } from './core/work.service'
     NovelContentService,
     ComicContentService,
     ComicArchiveImportService,
-    ComicArchiveImportWorker,
+    ComicArchiveImportWorkflowHandler,
     WorkComicFavoriteResolver,
     WorkNovelFavoriteResolver,
     WorkComicLikeResolver,
@@ -89,6 +93,7 @@ import { WorkService } from './core/work.service'
     NovelContentService,
     ComicContentService,
     ComicArchiveImportService,
+    ContentImportModule,
   ],
 })
 export class WorkModule {}

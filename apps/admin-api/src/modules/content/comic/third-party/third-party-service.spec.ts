@@ -8,12 +8,20 @@ jest.mock('./services/third-party-comic-sync.service', () => ({
 const { ComicThirdPartyService } = require('./third-party-service')
 
 describe('ComicThirdPartyService', () => {
+  const workflowJob = {
+    jobId: 'job-001',
+    workflowType: 'content-import.third-party-import',
+  }
+
   it('forwards confirm import requests with the current admin user id', async () => {
     const importService = {
-      confirmImport: jest.fn(async () => ({ taskId: 'task-001' })),
+      confirmImport: jest.fn(async () => workflowJob),
     }
     const syncService = {
-      syncLatest: jest.fn(async () => ({ taskId: 'task-sync' })),
+      syncLatest: jest.fn(async () => ({
+        jobId: 'job-sync',
+        workflowType: 'content-import.third-party-sync',
+      })),
     }
     const service = new ComicThirdPartyService(
       {} as never,
@@ -29,7 +37,10 @@ describe('ComicThirdPartyService', () => {
 
     const result = await confirmImport.call(service, dto, 7)
 
-    expect(result).toEqual({ taskId: 'task-001' })
+    expect(result).toEqual({
+      jobId: 'job-001',
+      workflowType: 'content-import.third-party-import',
+    })
     expect(importService.confirmImport).toHaveBeenCalledWith(dto, 7)
   })
 
@@ -38,7 +49,10 @@ describe('ComicThirdPartyService', () => {
       confirmImport: jest.fn(),
     }
     const syncService = {
-      syncLatest: jest.fn(async () => ({ taskId: 'task-sync' })),
+      syncLatest: jest.fn(async () => ({
+        jobId: 'job-sync',
+        workflowType: 'content-import.third-party-sync',
+      })),
     }
     const service = new ComicThirdPartyService(
       {} as never,
@@ -54,7 +68,10 @@ describe('ComicThirdPartyService', () => {
 
     const result = await syncLatest.call(service, dto, 7)
 
-    expect(result).toEqual({ taskId: 'task-sync' })
+    expect(result).toEqual({
+      jobId: 'job-sync',
+      workflowType: 'content-import.third-party-sync',
+    })
     expect(syncService.syncLatest).toHaveBeenCalledWith(dto, 7)
   })
 })

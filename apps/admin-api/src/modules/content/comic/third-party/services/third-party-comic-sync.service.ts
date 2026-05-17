@@ -3,10 +3,9 @@ import type {
   ThirdPartyComicImageDto,
   ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
-import type { BackgroundTaskObject } from '@libs/platform/modules/background-task/types'
-import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import type { ThirdPartyComicChapterBindingInput } from '../third-party-comic-binding.type'
+import type { ThirdPartyComicChapterBindingInput } from '@libs/content/work/third-party/third-party-comic-binding.type'
 import type {
+  ThirdPartyComicPreparedWorkflowSync,
   ThirdPartyComicSyncChapterPlan,
   ThirdPartyComicSyncChapterPlanBuildInput,
   ThirdPartyComicSyncImageImportProgressFile,
@@ -15,49 +14,43 @@ import type {
   ThirdPartyComicSyncTaskContext,
   ThirdPartyComicSyncTaskPayload,
   ThirdPartyComicSyncTaskResult,
-} from '../third-party-comic-sync.type'
+  ThirdPartyComicWorkflowSyncTarget,
+} from '@libs/content/work/third-party/third-party-comic-sync.type'
+import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
+import type { WorkflowObject } from '@libs/platform/modules/workflow/workflow.type'
 import { DrizzleService } from '@db/core'
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
+import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
+import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
 import { ComicContentService } from '@libs/content/work/content/comic-content.service'
+import { ComicThirdPartyRegistry } from '@libs/content/work/third-party/providers/comic-third-party.registry'
+import { RemoteImageImportService } from '@libs/content/work/third-party/services/remote-image-import.service'
+import { ThirdPartyComicBindingService } from '@libs/content/work/third-party/services/third-party-comic-binding.service'
 import {
   BusinessErrorCode,
   WorkTypeEnum,
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import {
-  BackgroundTaskOperatorTypeEnum,
-  BackgroundTaskStatusEnum,
-} from '@libs/platform/modules/background-task/background-task.constant'
-import {
-  BackgroundTaskClaimLostError,
-  BackgroundTaskService,
-} from '@libs/platform/modules/background-task/background-task.service'
+import { WorkflowOperatorTypeEnum } from '@libs/platform/modules/workflow/workflow.constant'
+import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { ComicThirdPartyRegistry } from '../providers/comic-third-party.registry'
-import { THIRD_PARTY_COMIC_SYNC_TASK_TYPE } from '../third-party-comic-sync.constant'
-import { RemoteImageImportService } from './remote-image-import.service'
-import { ThirdPartyComicBindingService } from './third-party-comic-binding.service'
+import { and, eq, isNull } from 'drizzle-orm'
 
-const ACTIVE_SYNC_TASK_STATUSES = [
-  BackgroundTaskStatusEnum.PENDING,
-  BackgroundTaskStatusEnum.PROCESSING,
-  BackgroundTaskStatusEnum.FINALIZING,
-]
 const NO_SOURCE_BINDING_MESSAGE =
   '作品未绑定三方来源，当前破坏性版本不支持旧导入作品同步'
 
 @Injectable()
 export class ThirdPartyComicSyncService {
-  // 注入同步所需的 provider、章节、内容、图片、binding 和后台任务服务。
+  // 注入同步所需的 provider、章节、内容、图片、binding 和 workflow 服务。
   constructor(
     private readonly registry: ComicThirdPartyRegistry,
     private readonly workChapterService: WorkChapterService,
     private readonly comicContentService: ComicContentService,
     private readonly remoteImageImportService: RemoteImageImportService,
     private readonly bindingService: ThirdPartyComicBindingService,
-    private readonly backgroundTaskService: BackgroundTaskService,
+    private readonly workflowService: WorkflowService,
+    private readonly contentImportService: ContentImportService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -76,12 +69,7 @@ export class ThirdPartyComicSyncService {
     return this.drizzle.schema.workChapter
   }
 
-  // 读取 backgroundTask。
-  private get backgroundTask() {
-    return this.drizzle.schema.backgroundTask
-  }
-
-  // 管理员手动触发最新章节同步，只入队或返回已存在的同 scope active 任务。
+  // 管理员手动触发最新章节同步，只创建一个同 scope 互斥的 workflow 任务。
   async syncLatest(dto: ThirdPartyComicSyncLatestRequestDto, userId: number) {
     const sourceBinding =
       await this.bindingService.getActiveSourceBindingByWorkId(dto.workId)
@@ -105,58 +93,73 @@ export class ThirdPartyComicSyncService {
       sourceScopeKey,
     }
 
-    const enqueueResult = await this.drizzle.withTransaction(async (tx) => {
-      // 用事务级 advisory lock 串行化同一 source-scope 的入队检查，避免并发请求同时创建同步任务。
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtext(${sourceScopeKey}))`,
-      )
-      const [existingTask] = await tx
-        .select({ taskId: this.backgroundTask.taskId })
-        .from(this.backgroundTask)
-        .where(
-          and(
-            eq(this.backgroundTask.taskType, THIRD_PARTY_COMIC_SYNC_TASK_TYPE),
-            inArray(this.backgroundTask.status, ACTIVE_SYNC_TASK_STATUSES),
-            // 现有后台任务 payload 未结构化成查询列，只在同事务锁保护下用 JSON 字段定位同 scope active 任务。
-            sql`${this.backgroundTask.payload}->>'sourceScopeKey' = ${sourceScopeKey}`,
-          ),
-        )
-        .limit(1)
-
-      if (existingTask) {
-        return { existingTaskId: existingTask.taskId }
-      }
-
-      return {
-        task: await this.backgroundTaskService.createTaskInTransaction(
-          {
-            taskType: THIRD_PARTY_COMIC_SYNC_TASK_TYPE,
-            displayName: work.name,
-            payload,
-            operator: {
-              type: BackgroundTaskOperatorTypeEnum.ADMIN,
-              userId,
-            },
-          },
-          tx,
-        ),
-      }
+    const job = await this.workflowService.createDraft({
+      workflowType: ContentImportWorkflowType.THIRD_PARTY_SYNC,
+      displayName: work.name,
+      operator: {
+        type: WorkflowOperatorTypeEnum.ADMIN,
+        userId,
+      },
+      selectedItemCount: 0,
+      summary: {
+        sourceType: ContentImportWorkflowType.THIRD_PARTY_SYNC,
+      },
+      conflictKeys: [`source-scope:${sourceScopeKey}`],
     })
-
-    if (enqueueResult.existingTaskId) {
-      return this.backgroundTaskService.getTaskDetail({
-        taskId: enqueueResult.existingTaskId,
-      })
-    }
-
-    return enqueueResult.task
+    await this.contentImportService.createThirdPartySyncJob({
+      jobId: job.jobId,
+      dto,
+      source: payload,
+    })
+    return this.workflowService.confirmDraft({ jobId: job.jobId })
   }
 
-  // 执行最新章节同步后台任务，严格只创建未绑定章节。
+  // 执行最新章节同步 workflow，严格只创建未绑定章节。
   async executeSyncTask(
     payload: ThirdPartyComicSyncTaskPayload,
     context: ThirdPartyComicSyncTaskContext,
   ): Promise<ThirdPartyComicSyncTaskResult> {
+    const prepared = await this.prepareWorkflowSync(payload, context)
+    const imageProgressReporter = this.createSyncImageProgressReporter(
+      context,
+      prepared.plans,
+    )
+
+    const createdChapterIds: number[] = []
+    for (const plan of prepared.plans) {
+      await context.assertNotCancelled()
+      createdChapterIds.push(
+        await this.importWorkflowSyncChapter({
+          context,
+          imageProgressReporter,
+          plan,
+          sourceBindingId: prepared.sourceBindingId,
+          work: prepared.work,
+        }),
+      )
+    }
+
+    await context.updateProgress({
+      percent: 100,
+      message: '第三方漫画最新章节同步完成',
+    })
+
+    return {
+      workId: payload.workId,
+      sourceBindingId: prepared.sourceBindingId,
+      scannedChapterCount: prepared.scannedChapterCount,
+      skippedChapterCount: prepared.skippedChapterCount,
+      createdChapterCount: createdChapterIds.length,
+      createdChapterIds,
+    }
+  }
+
+  // 准备 workflow 同步目标和待创建章节计划。
+  async prepareWorkflowSync(
+    payload: ThirdPartyComicSyncTaskPayload,
+    context: ThirdPartyComicSyncTaskContext,
+  ): Promise<ThirdPartyComicPreparedWorkflowSync> {
+    const target = await this.prepareWorkflowSyncTarget(payload)
     const sourceBinding = await this.bindingService.getActiveSourceBindingById(
       payload.sourceBindingId,
     )
@@ -167,7 +170,6 @@ export class ThirdPartyComicSyncService {
       )
     }
 
-    const work = await this.readSyncWork(payload.workId)
     const provider = this.registry.resolve(sourceBinding.platform)
     const remoteChapters = await provider.getChapters({
       comicId: sourceBinding.providerPathWord,
@@ -192,41 +194,54 @@ export class ThirdPartyComicSyncService {
       usedSortOrders: localSortOrders,
       context,
     })
-    const imageProgressReporter = context.createProgressReporter({
+
+    return {
+      ...target,
+      createdChapterCount: plans.length,
+      plans,
+      scannedChapterCount: remoteChapters.length,
+      skippedChapterCount: remoteChapters.length - plans.length,
+    }
+  }
+
+  // 准备 workflow 同步的本地目标，不扫描上游章节。
+  async prepareWorkflowSyncTarget(
+    payload: ThirdPartyComicSyncTaskPayload,
+  ): Promise<ThirdPartyComicWorkflowSyncTarget> {
+    const sourceBinding = await this.bindingService.getActiveSourceBindingById(
+      payload.sourceBindingId,
+    )
+    if (!sourceBinding || sourceBinding.workId !== payload.workId) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        NO_SOURCE_BINDING_MESSAGE,
+      )
+    }
+
+    const work = await this.readSyncWork(payload.workId)
+    return {
+      sourceBindingId: sourceBinding.id,
+      work,
+    }
+  }
+
+  // 为 workflow 同步创建图片导入进度 reporter。
+  createSyncImageProgressReporter(
+    context: ThirdPartyComicSyncTaskContext,
+    plans: ThirdPartyComicSyncChapterPlan[],
+  ) {
+    return context.createProgressReporter({
       startPercent: 10,
       endPercent: 95,
       total: this.countPlannedImages(plans),
       stage: 'image-import',
       unit: 'image',
     })
+  }
 
-    const createdChapterIds: number[] = []
-    for (const plan of plans) {
-      await context.assertNotCancelled()
-      createdChapterIds.push(
-        await this.importNewChapter({
-          context,
-          imageProgressReporter,
-          plan,
-          sourceBindingId: sourceBinding.id,
-          work,
-        }),
-      )
-    }
-
-    await context.updateProgress({
-      percent: 100,
-      message: '第三方漫画最新章节同步完成',
-    })
-
-    return {
-      workId: payload.workId,
-      sourceBindingId: sourceBinding.id,
-      scannedChapterCount: remoteChapters.length,
-      skippedChapterCount: remoteChapters.length - plans.length,
-      createdChapterCount: createdChapterIds.length,
-      createdChapterIds,
-    }
+  // 执行 workflow 中的单章节同步导入。
+  async importWorkflowSyncChapter(input: ThirdPartyComicSyncImportNewChapterInput) {
+    return this.importNewChapter(input)
   }
 
   // 回滚失败或取消的最新章节同步任务。
@@ -253,10 +268,14 @@ export class ThirdPartyComicSyncService {
       try {
         await context.assertStillOwned()
         await this.remoteImageImportService.deleteImportedFile(uploadedFile)
+        await context.markUploadedFileResidueCleaned(uploadedFile)
       } catch (error) {
-        if (error instanceof BackgroundTaskClaimLostError) {
-          throw error
-        }
+        await context
+          .markUploadedFileResidueCleanupFailed(
+            uploadedFile,
+            this.stringifyUnknownError(error),
+          )
+          .catch(() => undefined)
         cleanupFailures.push(
           `${uploadedFile.provider}:${uploadedFile.filePath} (${this.stringifyUnknownError(
             error,
@@ -346,7 +365,7 @@ export class ThirdPartyComicSyncService {
       canComment: work.canComment,
       canDownload: false,
       isPreview: false,
-      isPublished: true,
+      isPublished: false,
       price: work.chapterPrice,
       sortOrder: plan.localSortOrder,
       title: plan.title,
@@ -443,11 +462,11 @@ export class ThirdPartyComicSyncService {
     }
   }
 
-  // 将单张图片导入结果转换为可安全写入后台任务进度的详情。
+  // 将单张图片导入结果转换为可安全写入 workflow 进度的详情。
   private toImageProgressDetail(
     plan: ThirdPartyComicSyncChapterPlan,
     importedFile: ThirdPartyComicSyncImageImportProgressFile,
-  ): BackgroundTaskObject {
+  ): WorkflowObject {
     return {
       providerChapterId: plan.providerChapterId,
       chapterIndex: plan.chapterIndex,
@@ -490,9 +509,6 @@ export class ThirdPartyComicSyncService {
     try {
       await this.appendResidueList(context, 'uploadedFiles', uploadedFile)
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       await this.tryCleanupUploadedFile(uploadedFile, error)
       throw error
     }
@@ -506,9 +522,6 @@ export class ThirdPartyComicSyncService {
     try {
       await this.appendResidueList(context, 'createdChapterIds', chapterId)
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       await this.workChapterService.deleteChapters([chapterId])
       throw error
     }
@@ -531,9 +544,6 @@ export class ThirdPartyComicSyncService {
         binding.id,
       )
     } catch (error) {
-      if (error instanceof BackgroundTaskClaimLostError) {
-        throw error
-      }
       await this.bindingService.softDeleteChapterBindings([binding.id])
       throw error
     }

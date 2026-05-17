@@ -35,7 +35,7 @@ export class ThirdPartyComicBindingService {
     return this.drizzle.schema.workThirdPartyChapterBinding
   }
 
-  // 生成三方来源作用域键，供后台任务去重和诊断使用。
+  // 生成三方来源作用域键，供 workflow 去重和诊断使用。
   buildSourceScopeKey(input: ThirdPartyComicSourceScopeInput) {
     return `${input.platform}:${input.providerComicId}:${input.providerGroupPathWord}`
   }

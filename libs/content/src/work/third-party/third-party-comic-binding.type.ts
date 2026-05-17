@@ -1,7 +1,7 @@
-import type { BackgroundTaskObject } from '@libs/platform/modules/background-task/types'
+import type { WorkflowObject } from '@libs/platform/modules/workflow/workflow.type'
 
 /** 三方漫画来源作用域字段，供绑定幂等和同步任务去重复用。 */
-export type ThirdPartyComicSourceScopeInput = {
+export interface ThirdPartyComicSourceScopeInput {
   platform: string
   providerComicId: string
   providerGroupPathWord: string
@@ -13,20 +13,20 @@ export type ThirdPartyComicSourceBindingInput =
     workId: number
     providerPathWord: string
     providerUuid?: string | null
-    sourceSnapshot: BackgroundTaskObject
+    sourceSnapshot: WorkflowObject
   }
 
 /** 创建或复用作品章节三方绑定的内部输入。 */
-export type ThirdPartyComicChapterBindingInput = {
+export interface ThirdPartyComicChapterBindingInput {
   workThirdPartySourceBindingId: number
   chapterId: number
   providerChapterId: string
   remoteSortOrder?: number | null
-  snapshot: BackgroundTaskObject
+  snapshot: WorkflowObject
 }
 
 /** 三方漫画绑定写入结果，标记本次是否真实创建。 */
-export type ThirdPartyComicBindingMutationResult = {
+export interface ThirdPartyComicBindingMutationResult {
   id: number
   created: boolean
 }
