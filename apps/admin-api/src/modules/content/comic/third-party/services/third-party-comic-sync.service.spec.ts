@@ -3,6 +3,7 @@ import {
   BackgroundTaskOperatorTypeEnum,
   BackgroundTaskStatusEnum,
 } from '@libs/platform/modules/background-task/background-task.constant'
+import { BackgroundTaskClaimLostError } from '@libs/platform/modules/background-task/background-task.service'
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
 import { THIRD_PARTY_COMIC_SYNC_TASK_TYPE } from '../third-party-comic-sync.constant'
 
@@ -71,15 +72,18 @@ describe('ThirdPartyComicSyncService', () => {
 
   function createExecutionContext(
     initialResidue: Record<string, unknown> = {},
+    onRecordResidue?: (patch: Record<string, unknown>) => Promise<void> | void,
   ) {
     const residue = { ...initialResidue }
     const context = {
+      assertStillOwned: jest.fn(async () => undefined),
       assertNotCancelled: jest.fn(async () => undefined),
       createProgressReporter: jest.fn(() => ({
         advance: jest.fn(async () => undefined),
       })),
       getResidue: jest.fn(async () => residue),
       recordResidue: jest.fn(async (patch) => {
+        await onRecordResidue?.(patch)
         Object.assign(residue, patch)
       }),
       residue,
@@ -333,6 +337,50 @@ describe('ThirdPartyComicSyncService', () => {
       createdChapterIds: [300],
       uploadedFiles: [uploadedImage.deleteTarget],
     })
+    expect(context.createProgressReporter).toHaveBeenCalledWith({
+      endPercent: 10,
+      stage: 'chapter-content',
+      startPercent: 2,
+      total: 1,
+      unit: 'chapter',
+    })
+  })
+
+  it('does not create chapter-content progress when no new remote chapters exist', async () => {
+    const { bindingService, service } = createService({
+      dbSelects: [
+        createLimitSelect([
+          {
+            id: 100,
+            type: WorkTypeEnum.COMIC,
+            chapterPrice: 5,
+            canComment: false,
+          },
+        ]),
+        createWhereSelect([{ sortOrder: 1 }]),
+      ],
+    })
+    ;(bindingService.listActiveChapterBindings as jest.Mock).mockResolvedValue([
+      { providerChapterId: 'chapter-old' },
+      { providerChapterId: 'chapter-new' },
+    ])
+    const context = createExecutionContext()
+
+    const result = await service.executeSyncTask(
+      {
+        ...sourceBinding,
+        sourceBindingId: sourceBinding.id,
+        sourceScopeKey: 'copy:woduzishenji:default',
+      },
+      context as never,
+    )
+
+    expect(result.createdChapterCount).toBe(0)
+    expect(context.createProgressReporter).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: 'chapter-content',
+      }),
+    )
   })
 
   it('rolls back created bindings, chapters and uploads in reverse order', async () => {
@@ -388,4 +436,84 @@ describe('ThirdPartyComicSyncService', () => {
       '存在无法自动清理的上传文件',
     )
   })
+
+  it('propagates claim loss during rollback uploaded-file cleanup', async () => {
+    const { remoteImageImportService, service } = createService()
+    const claimLost = new BackgroundTaskClaimLostError()
+    const context = createExecutionContext({
+      uploadedFiles: [uploadedImage.deleteTarget],
+    })
+    ;(context.assertStillOwned as jest.Mock).mockRejectedValueOnce(claimLost)
+
+    await expect(service.rollbackSyncTask(context as never)).rejects.toBe(
+      claimLost,
+    )
+
+    expect(remoteImageImportService.deleteImportedFile).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {
+      key: 'uploadedFiles',
+      assertNoCleanup: ({
+        remoteImageImportService,
+      }: ReturnType<typeof createService>) => {
+        expect(
+          remoteImageImportService.deleteImportedFile,
+        ).not.toHaveBeenCalled()
+      },
+    },
+    {
+      key: 'createdChapterIds',
+      assertNoCleanup: ({
+        workChapterService,
+      }: ReturnType<typeof createService>) => {
+        expect(workChapterService.deleteChapters).not.toHaveBeenCalled()
+      },
+    },
+    {
+      key: 'createdChapterBindingIds',
+      assertNoCleanup: ({
+        bindingService,
+      }: ReturnType<typeof createService>) => {
+        expect(bindingService.softDeleteChapterBindings).not.toHaveBeenCalled()
+      },
+    },
+  ])(
+    'does not run immediate cleanup when $key residue persistence fails because claim is lost',
+    async ({ key, assertNoCleanup }) => {
+      const harness = createService({
+        dbSelects: [
+          createLimitSelect([
+            {
+              id: 100,
+              type: WorkTypeEnum.COMIC,
+              chapterPrice: 5,
+              canComment: false,
+            },
+          ]),
+          createWhereSelect([{ sortOrder: 1 }, { sortOrder: 2 }]),
+        ],
+      })
+      const claimLost = new BackgroundTaskClaimLostError()
+      const context = createExecutionContext({}, async (patch) => {
+        if (key in patch) {
+          throw claimLost
+        }
+      })
+
+      await expect(
+        harness.service.executeSyncTask(
+          {
+            ...sourceBinding,
+            sourceBindingId: sourceBinding.id,
+            sourceScopeKey: 'copy:woduzishenji:default',
+          },
+          context as never,
+        ),
+      ).rejects.toBe(claimLost)
+
+      assertNoCleanup(harness)
+    },
+  )
 })

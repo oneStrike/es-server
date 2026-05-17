@@ -446,13 +446,44 @@ describe('CopyMangaHttpClient', () => {
 
     await expect(client.getJson(path)).rejects.toMatchObject({
       cause: {
+        kind: 'http',
         path,
         reason: 'HTTP 404',
+        routeCandidateRecoverable: true,
         status: 404,
       },
       message: `CopyManga API 请求失败：HTTP 404 (${path})`,
     })
     expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('marks statusless socket failures on chapter content routes as recoverable route-candidate failures', async () => {
+    const path = '/api/v3/comic/demo/chapter3/demo'
+    const socketError = Object.assign(
+      new TypeError('The socket connection was closed unexpectedly'),
+      {
+        cause: { code: 'UND_ERR_SOCKET' },
+      },
+    )
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockRejectedValue(socketError)
+    const client = createClient()
+
+    await expect(client.getJson(path)).rejects.toMatchObject({
+      cause: {
+        code: 'UND_ERR_SOCKET',
+        kind: 'transport',
+        path,
+        reason: 'The socket connection was closed unexpectedly',
+        routeCandidateRecoverable: true,
+      },
+    })
   })
 
   it('invalidates cached hosts after content retries are exhausted', async () => {

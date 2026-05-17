@@ -7,6 +7,7 @@ import {
   BackgroundTaskOperatorTypeEnum,
   BackgroundTaskStatusEnum,
 } from '@libs/platform/modules/background-task/background-task.constant'
+import { BackgroundTaskClaimLostError } from '@libs/platform/modules/background-task/background-task.service'
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
 import { THIRD_PARTY_COMIC_IMPORT_TASK_TYPE } from '../third-party-comic-import.constant'
 
@@ -252,6 +253,7 @@ describe('ThirdPartyComicImportService', () => {
   ) {
     const residue = { ...initialResidue }
     const context = {
+      assertStillOwned: jest.fn(async () => undefined),
       assertNotCancelled: jest.fn(async () => undefined),
       createProgressReporter: jest.fn(
         (options: {
@@ -547,6 +549,13 @@ describe('ThirdPartyComicImportService', () => {
       uploadedFiles: [uploadedCover.deleteTarget, uploadedImage.deleteTarget],
     })
     expect(context.createProgressReporter).toHaveBeenCalledWith({
+      endPercent: 10,
+      stage: 'chapter-content',
+      startPercent: 2,
+      total: 1,
+      unit: 'chapter',
+    })
+    expect(context.createProgressReporter).toHaveBeenCalledWith({
       endPercent: 95,
       stage: 'image-import',
       startPercent: 10,
@@ -570,6 +579,23 @@ describe('ThirdPartyComicImportService', () => {
     )
   })
 
+  it('does not create chapter-content progress for metadata-only imports', async () => {
+    const { service } = createService()
+    const request = createImportRequest()
+    request.chapters[0].importImages = false
+    const context = createExecutionContext()
+
+    const result = await service.executeImportTask(request, context as never)
+
+    expect(result.status).toBe('success')
+    expect(provider.getChapterContent).not.toHaveBeenCalled()
+    expect(context.createProgressReporter).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: 'chapter-content',
+      }),
+    )
+  })
+
   it('rejects source binding drift before local import side effects', async () => {
     const {
       bindingService,
@@ -578,11 +604,11 @@ describe('ThirdPartyComicImportService', () => {
       workChapterService,
       workService,
     } = createService()
-    ;(bindingService.getActiveSourceBindingByScope as jest.Mock).mockResolvedValueOnce(
-      {
-        workId: 999,
-      },
-    )
+    ;(
+      bindingService.getActiveSourceBindingByScope as jest.Mock
+    ).mockResolvedValueOnce({
+      workId: 999,
+    })
     const context = createExecutionContext()
 
     await expect(
@@ -764,6 +790,21 @@ describe('ThirdPartyComicImportService', () => {
     )
   })
 
+  it('propagates claim loss during rollback uploaded-file cleanup', async () => {
+    const { remoteImageImportService, service } = createService()
+    const claimLost = new BackgroundTaskClaimLostError()
+    const context = createExecutionContext({
+      uploadedFiles: [uploadedCover.deleteTarget],
+    })
+    ;(context.assertStillOwned as jest.Mock).mockRejectedValueOnce(claimLost)
+
+    await expect(
+      service.rollbackImportTask(context as never, new Error('boom')),
+    ).rejects.toBe(claimLost)
+
+    expect(remoteImageImportService.deleteImportedFile).not.toHaveBeenCalled()
+  })
+
   it('deletes uploaded cover immediately when residue persistence fails', async () => {
     const { remoteImageImportService, service } = createService()
     const context = createExecutionContext({}, async (patch) => {
@@ -795,4 +836,67 @@ describe('ThirdPartyComicImportService', () => {
 
     expect(workService.deleteWork).toHaveBeenCalledWith(100)
   })
+
+  it.each([
+    {
+      key: 'uploadedFiles',
+      assertNoCleanup: ({
+        remoteImageImportService,
+      }: ReturnType<typeof createService>) => {
+        expect(
+          remoteImageImportService.deleteImportedFile,
+        ).not.toHaveBeenCalled()
+      },
+    },
+    {
+      key: 'createdWorkIds',
+      assertNoCleanup: ({ workService }: ReturnType<typeof createService>) => {
+        expect(workService.deleteWork).not.toHaveBeenCalled()
+      },
+    },
+    {
+      key: 'createdSourceBindingIds',
+      assertNoCleanup: ({
+        bindingService,
+      }: ReturnType<typeof createService>) => {
+        expect(bindingService.softDeleteSourceBindings).not.toHaveBeenCalled()
+      },
+    },
+    {
+      key: 'createdChapterIds',
+      assertNoCleanup: ({
+        workChapterService,
+      }: ReturnType<typeof createService>) => {
+        expect(workChapterService.deleteChapters).not.toHaveBeenCalled()
+      },
+    },
+    {
+      key: 'createdChapterBindingIds',
+      assertNoCleanup: ({
+        bindingService,
+      }: ReturnType<typeof createService>) => {
+        expect(bindingService.softDeleteChapterBindings).not.toHaveBeenCalled()
+      },
+    },
+  ])(
+    'does not run immediate cleanup when $key residue persistence fails because claim is lost',
+    async ({ key, assertNoCleanup }) => {
+      const harness = createService()
+      const claimLost = new BackgroundTaskClaimLostError()
+      const context = createExecutionContext({}, async (patch) => {
+        if (key in patch) {
+          throw claimLost
+        }
+      })
+
+      await expect(
+        harness.service.executeImportTask(
+          createImportRequest(),
+          context as never,
+        ),
+      ).rejects.toBe(claimLost)
+
+      assertNoCleanup(harness)
+    },
+  )
 })

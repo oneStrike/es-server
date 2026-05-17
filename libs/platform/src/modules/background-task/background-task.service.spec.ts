@@ -6,24 +6,34 @@ import {
   BackgroundTaskStatusEnum,
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
 } from './background-task.constant'
-import { BackgroundTaskService } from './background-task.service'
+import {
+  BackgroundTaskClaimLostError,
+  BackgroundTaskService,
+} from './background-task.service'
 
 describe('BackgroundTaskService', () => {
   function createBackgroundTaskSchema() {
     return {
       backgroundTask: {
         cancelRequestedAt: 'cancelRequestedAt',
+        claimedBy: 'claimedBy',
         claimExpiresAt: 'claimExpiresAt',
         createdAt: 'createdAt',
         dedupeKey: 'dedupeKey',
         id: 'id',
         operatorType: 'operatorType',
         operatorUserId: 'operatorUserId',
+        progress: 'progress',
+        residue: 'residue',
+        result: 'result',
         rollbackError: 'rollbackError',
         serialKey: 'serialKey',
         status: 'status',
         taskId: 'taskId',
         taskType: 'taskType',
+        finalizingAt: 'finalizingAt',
+        finishedAt: 'finishedAt',
+        startedAt: 'startedAt',
         updatedAt: 'updatedAt',
       },
       backgroundTaskConflictKey: {
@@ -170,7 +180,13 @@ describe('BackgroundTaskService', () => {
           status: BackgroundTaskStatusEnum.FINALIZING,
         }),
       ],
-      [],
+      [
+        createBackgroundTaskRow({
+          status: rollbackError
+            ? BackgroundTaskStatusEnum.ROLLBACK_FAILED
+            : BackgroundTaskStatusEnum.FAILED,
+        }),
+      ],
     ]
     const updateSets: Record<string, unknown>[] = []
     const db = {
@@ -678,11 +694,7 @@ describe('BackgroundTaskService', () => {
       status: BackgroundTaskStatusEnum.PENDING,
       taskId: 'task-2',
     })
-    const selectRows = [
-      [sameSerial, differentSerial],
-      [{ id: 9 }],
-      [],
-    ]
+    const selectRows = [[sameSerial, differentSerial], [{ id: 9 }], []]
     const updateSets: Record<string, unknown>[] = []
     const db = {
       select: jest.fn(() => ({
@@ -917,6 +929,26 @@ describe('BackgroundTaskService', () => {
       ],
       [
         createBackgroundTaskRow({
+          status: BackgroundTaskStatusEnum.FINALIZING,
+        }),
+      ],
+      [
+        createBackgroundTaskRow({
+          status: BackgroundTaskStatusEnum.FINALIZING,
+        }),
+      ],
+      [
+        createBackgroundTaskRow({
+          status: BackgroundTaskStatusEnum.FINALIZING,
+        }),
+      ],
+      [
+        createBackgroundTaskRow({
+          status: BackgroundTaskStatusEnum.FINALIZING,
+        }),
+      ],
+      [
+        createBackgroundTaskRow({
           status: BackgroundTaskStatusEnum.SUCCESS,
         }),
       ],
@@ -1012,6 +1044,142 @@ describe('BackgroundTaskService', () => {
         }),
       }),
     ])
+  })
+
+  it('treats owner-aware reporter claim loss as a stale worker short-circuit', async () => {
+    const row = createBackgroundTaskRow({ claimedBy: 'worker-1' })
+    const selectRows = [
+      createBackgroundTaskRow({
+        cancelRequestedAt: null,
+        claimedBy: 'worker-1',
+      }),
+      createBackgroundTaskRow({
+        cancelRequestedAt: null,
+        claimedBy: 'worker-1',
+        status: BackgroundTaskStatusEnum.FINALIZING,
+      }),
+    ]
+    const updateReturningRows = [
+      [
+        createBackgroundTaskRow({
+          claimedBy: 'worker-1',
+          status: BackgroundTaskStatusEnum.FINALIZING,
+        }),
+      ],
+      [],
+    ]
+    const updateSets: Record<string, unknown>[] = []
+    const db = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn(async () => [selectRows.shift()]),
+          })),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn((value: Record<string, unknown>) => {
+          updateSets.push(value)
+          return {
+            where: jest.fn(() => ({
+              returning: jest.fn(async () => updateReturningRows.shift() ?? []),
+            })),
+          }
+        }),
+      })),
+    }
+    const handler = {
+      taskType: 'content.third-party-comic-import',
+      finalize: jest.fn(async (context: BackgroundTaskExecutionContext) => {
+        const reporter = context.createProgressReporter({
+          startPercent: 10,
+          endPercent: 95,
+          total: 1,
+          stage: 'image-import',
+          unit: 'image',
+        })
+        await reporter.advance({ message: '旧 worker 写进度' })
+        return { ok: true }
+      }),
+      rollback: jest.fn(async () => undefined),
+    }
+    const service = new BackgroundTaskService(
+      {
+        db,
+        schema: createBackgroundTaskSchema(),
+      } as never,
+      { resolve: jest.fn(() => handler) } as never,
+    )
+
+    await service.executeClaimedTask(row as never)
+
+    expect(handler.rollback).not.toHaveBeenCalled()
+    expect(updateSets).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ status: BackgroundTaskStatusEnum.FAILED }),
+        expect.objectContaining({ status: BackgroundTaskStatusEnum.CANCELLED }),
+        expect.objectContaining({ status: BackgroundTaskStatusEnum.SUCCESS }),
+        expect.objectContaining({
+          status: BackgroundTaskStatusEnum.ROLLBACK_FAILED,
+        }),
+      ]),
+    )
+  })
+
+  it('prioritizes known claim loss over a later cancellation check', async () => {
+    const claimLost = new BackgroundTaskClaimLostError()
+    const row = createBackgroundTaskRow({ claimedBy: 'worker-1' })
+    const updateSets: Record<string, unknown>[] = []
+    const db = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn(async () => [
+              createBackgroundTaskRow({
+                cancelRequestedAt: new Date('2026-05-13T03:01:00.000Z'),
+                claimedBy: 'worker-2',
+              }),
+            ]),
+          })),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn((value: Record<string, unknown>) => {
+          updateSets.push(value)
+          return {
+            where: jest.fn(() => ({
+              returning: jest.fn(async () => []),
+            })),
+          }
+        }),
+      })),
+    }
+    const handler = {
+      taskType: 'content.third-party-comic-import',
+      finalize: jest.fn(),
+      prepare: jest.fn(async (context: BackgroundTaskExecutionContext) => {
+        await context.updateProgress({ percent: 1 })
+        await context.assertNotCancelled()
+      }),
+      rollback: jest.fn(async () => undefined),
+    }
+    const service = new BackgroundTaskService(
+      {
+        db,
+        schema: createBackgroundTaskSchema(),
+      } as never,
+      { resolve: jest.fn(() => handler) } as never,
+    )
+
+    await service.executeClaimedTask(row as never)
+
+    expect(handler.rollback).not.toHaveBeenCalled()
+    expect(updateSets).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ status: BackgroundTaskStatusEnum.CANCELLED }),
+      ]),
+    )
+    expect(claimLost.name).toBe('BackgroundTaskClaimLostError')
   })
 
   it('persists sanitized failure cause when rollback succeeds', async () => {

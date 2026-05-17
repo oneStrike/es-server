@@ -43,7 +43,10 @@ import {
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BackgroundTaskOperatorTypeEnum } from '@libs/platform/modules/background-task/background-task.constant'
-import { BackgroundTaskService } from '@libs/platform/modules/background-task/background-task.service'
+import {
+  BackgroundTaskClaimLostError,
+  BackgroundTaskService,
+} from '@libs/platform/modules/background-task/background-task.service'
 import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, isNull, ne, sql } from 'drizzle-orm'
@@ -314,34 +317,49 @@ export class ThirdPartyComicImportService {
     const createdChapterBindingIds = [
       ...(residue.createdChapterBindingIds ?? []),
     ].reverse()
-    await this.bindingService.softDeleteChapterBindings(
-      createdChapterBindingIds,
-    )
+    if (createdChapterBindingIds.length > 0) {
+      await context.assertStillOwned()
+      await this.bindingService.softDeleteChapterBindings(
+        createdChapterBindingIds,
+      )
+    }
 
     const createdChapterIds = [...(residue.createdChapterIds ?? [])].reverse()
     if (createdChapterIds.length > 0) {
+      await context.assertStillOwned()
       await this.workChapterService.deleteChapters(createdChapterIds)
     }
 
     for (const snapshot of [...(residue.updatedChapters ?? [])].reverse()) {
+      await context.assertStillOwned()
       await this.restoreChapterSnapshot(snapshot)
     }
 
     const createdSourceBindingIds = [
       ...(residue.createdSourceBindingIds ?? []),
     ].reverse()
-    await this.bindingService.softDeleteSourceBindings(createdSourceBindingIds)
+    if (createdSourceBindingIds.length > 0) {
+      await context.assertStillOwned()
+      await this.bindingService.softDeleteSourceBindings(
+        createdSourceBindingIds,
+      )
+    }
 
     const createdWorkIds = [...(residue.createdWorkIds ?? [])].reverse()
     for (const workId of createdWorkIds) {
+      await context.assertStillOwned()
       await this.workService.deleteWork(workId)
     }
 
     const cleanupFailures: string[] = []
     for (const uploadedFile of [...(residue.uploadedFiles ?? [])].reverse()) {
       try {
+        await context.assertStillOwned()
         await this.remoteImageImportService.deleteImportedFile(uploadedFile)
       } catch (error) {
+        if (error instanceof BackgroundTaskClaimLostError) {
+          throw error
+        }
         cleanupFailures.push(
           `${uploadedFile.provider}:${uploadedFile.filePath} (${this.stringifyUnknownError(
             error,
@@ -405,6 +423,9 @@ export class ThirdPartyComicImportService {
         await this.recordUploadedFile(context, coverImport.deleteTarget)
       }
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       coverPath = undefined
       if (error instanceof Error) {
         coverFailureMessage = error.message
@@ -462,7 +483,7 @@ export class ThirdPartyComicImportService {
       fetchedAt:
         typeof dto.sourceSnapshot.fetchedAt === 'string'
           ? dto.sourceSnapshot.fetchedAt
-        : new Date().toISOString(),
+          : new Date().toISOString(),
     }
     await this.assertSourceScopeAvailable(
       {
@@ -561,6 +582,20 @@ export class ThirdPartyComicImportService {
     context: ThirdPartyComicImportTaskContext,
   ): Promise<ThirdPartyComicChapterImportPlan[]> {
     const chapterTotal = dto.chapters.length
+    const planningTotal = dto.chapters.filter(
+      (chapter) => chapter.importImages,
+    ).length
+    const planningReporter =
+      planningTotal > 0
+        ? context.createProgressReporter({
+            startPercent: 2,
+            endPercent: 10,
+            total: planningTotal,
+            stage: 'chapter-content',
+            unit: 'chapter',
+          })
+        : undefined
+    let plannedContentCount = 0
     const plans: ThirdPartyComicChapterImportPlan[] = []
     for (const [index, chapter] of dto.chapters.entries()) {
       await context.assertNotCancelled()
@@ -584,6 +619,16 @@ export class ThirdPartyComicImportService {
         platform: dto.platform,
       })
       const images = this.sortImages(content.images)
+      plannedContentCount += 1
+      await planningReporter?.advance({
+        current: plannedContentCount,
+        message: `已读取第 ${index + 1}/${chapterTotal} 个章节内容`,
+        detail: {
+          providerChapterId: chapter.providerChapterId,
+          chapterIndex: index + 1,
+          chapterTotal,
+        },
+      })
       plans.push({
         chapter,
         chapterIndex: index + 1,
@@ -850,8 +895,7 @@ export class ThirdPartyComicImportService {
           chapterTitle,
         )
         conflictKeys.push(workIdChapterKey)
-        conflictMessageByKey[workIdChapterKey] =
-          CHAPTER_TITLE_CONFLICT_MESSAGE
+        conflictMessageByKey[workIdChapterKey] = CHAPTER_TITLE_CONFLICT_MESSAGE
       }
     }
 
@@ -1056,9 +1100,8 @@ export class ThirdPartyComicImportService {
     },
     allowedWorkId: number | null,
   ) {
-    const binding = await this.bindingService.getActiveSourceBindingByScope(
-      source,
-    )
+    const binding =
+      await this.bindingService.getActiveSourceBindingByScope(source)
     if (!binding) {
       return
     }
@@ -1178,7 +1221,10 @@ export class ThirdPartyComicImportService {
   }
 
   // 构建同源三方作品冲突键。
-  private buildSourceComicConflictKey(platform: string, providerComicId: string) {
+  private buildSourceComicConflictKey(
+    platform: string,
+    providerComicId: string,
+  ) {
     return `source-comic:${platform}:${providerComicId}`
   }
 
@@ -1355,6 +1401,9 @@ export class ThirdPartyComicImportService {
     try {
       await this.appendResidueList(context, 'uploadedFiles', uploadedFile)
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       await this.tryCleanupUploadedFile(uploadedFile, error)
       throw error
     }
@@ -1368,6 +1417,9 @@ export class ThirdPartyComicImportService {
     try {
       await this.appendResidueList(context, 'createdWorkIds', workId)
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       await this.workService.deleteWork(workId)
       throw error
     }
@@ -1381,6 +1433,9 @@ export class ThirdPartyComicImportService {
     try {
       await this.appendResidueList(context, 'createdChapterIds', chapterId)
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       await this.workChapterService.deleteChapters([chapterId])
       throw error
     }
@@ -1398,6 +1453,9 @@ export class ThirdPartyComicImportService {
         sourceBindingId,
       )
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       await this.bindingService.softDeleteSourceBindings([sourceBindingId])
       throw error
     }
@@ -1420,6 +1478,9 @@ export class ThirdPartyComicImportService {
         binding.id,
       )
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       await this.bindingService.softDeleteChapterBindings([binding.id])
       throw error
     }

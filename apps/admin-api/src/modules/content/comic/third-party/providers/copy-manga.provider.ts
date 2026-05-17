@@ -6,6 +6,7 @@ import type {
 import type { ComicThirdPartyProvider } from './comic-third-party-provider.type'
 import type {
   CopyMangaChapterContentResults,
+  CopyMangaApiFailureCause,
   CopyMangaChapterResults,
   CopyMangaDetailResults,
   CopyMangaNamedItem,
@@ -197,10 +198,10 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
         return await this.httpClient.getJson(path)
       } catch (error) {
         lastError = error
-        if (
-          !this.isCopyMangaHttpNotFound(error) ||
-          index === paths.length - 1
-        ) {
+        if (!this.isRecoverableRouteCandidateError(error, path)) {
+          throw error
+        }
+        if (index === paths.length - 1) {
           throw error
         }
       }
@@ -233,10 +234,10 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
   }
 
   private resolveChapterApiSuffix(version?: number) {
-    if (typeof version !== 'number') {
-      return undefined
+    if (version === 2 || version === 3) {
+      return String(version)
     }
-    return version >= 2 ? String(version) : ''
+    return undefined
   }
 
   private uniqueSuffixes(suffixes: string[]) {
@@ -245,17 +246,36 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     )
   }
 
-  private isCopyMangaHttpNotFound(error: unknown) {
+  // 判断当前章节内容候选路由失败是否允许继续尝试下一个候选。
+  private isRecoverableRouteCandidateError(error: unknown, path: string) {
     if (!(error instanceof BusinessException)) {
       return false
     }
 
-    const cause = error.cause
-    if (!cause || typeof cause !== 'object') {
+    const cause = this.readCopyMangaApiFailureCause(error)
+    if (!cause) {
       return false
     }
 
-    return (cause as { status?: unknown }).status === 404
+    return cause.path === path && cause.routeCandidateRecoverable === true
+  }
+
+  // 收窄 CopyManga HTTP client 提供的安全失败原因。
+  private readCopyMangaApiFailureCause(
+    error: BusinessException,
+  ): CopyMangaApiFailureCause | undefined {
+    const cause = error.cause
+    if (!cause || typeof cause !== 'object') {
+      return undefined
+    }
+    const candidate = cause as Partial<CopyMangaApiFailureCause>
+    if (
+      typeof candidate.path !== 'string' ||
+      typeof candidate.routeCandidateRecoverable !== 'boolean'
+    ) {
+      return undefined
+    }
+    return candidate as CopyMangaApiFailureCause
   }
 
   // 将 CopyManga 命名对象列表收敛为可展示名称数组。

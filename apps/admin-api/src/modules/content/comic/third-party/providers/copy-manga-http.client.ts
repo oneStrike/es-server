@@ -1,4 +1,5 @@
 import type {
+  CopyMangaApiFailureCause,
   CopyMangaNetworkResponse,
   CopyMangaTransportError,
 } from './copy-manga.type'
@@ -153,7 +154,7 @@ export class CopyMangaHttpClient {
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       `CopyManga API 请求失败：${reason} (${path})`,
       {
-        cause: this.buildApiRequestErrorCause(path, reason, status),
+        cause: this.buildApiRequestErrorCause(path, error, reason, status),
       },
     )
   }
@@ -161,12 +162,21 @@ export class CopyMangaHttpClient {
   // 保留上游 HTTP 诊断给 provider 判断，避免依赖错误消息文本分支。
   private buildApiRequestErrorCause(
     path: string,
+    error: unknown,
     reason: string,
     status?: number,
-  ) {
+  ): CopyMangaApiFailureCause {
+    const code = this.readTransportCode(error)
     return {
+      kind: status === undefined ? 'transport' : 'http',
       path,
       reason,
+      routeCandidateRecoverable: this.isRouteCandidateRecoverable(
+        path,
+        error,
+        status,
+      ),
+      ...(code === undefined ? {} : { code }),
       ...(status === undefined ? {} : { status }),
     }
   }
@@ -181,23 +191,103 @@ export class CopyMangaHttpClient {
     return typeof status === 'number' ? status : undefined
   }
 
+  // 读取 fetch/undici 暴露的传输错误码。
+  private readTransportCode(error: unknown) {
+    if (!(error instanceof Error)) {
+      return undefined
+    }
+    const transportError = error as CopyMangaTransportError
+    const causeCode = transportError.cause?.code
+    if (typeof causeCode === 'string') {
+      return causeCode
+    }
+    return typeof transportError.code === 'string'
+      ? transportError.code
+      : undefined
+  }
+
+  // 判断失败是否允许 provider 继续尝试下一个章节内容候选路由。
+  private isRouteCandidateRecoverable(
+    path: string,
+    error: unknown,
+    status?: number,
+  ) {
+    if (!this.isChapterContentPath(path)) {
+      return false
+    }
+    if (status === 404) {
+      return true
+    }
+    if (status !== undefined || !this.isFetchStageError(error)) {
+      return false
+    }
+    return this.isRecoverableStatuslessTransportError(error)
+  }
+
+  // 只允许章节内容接口进入候选路由 fallback。
+  private isChapterContentPath(path: string) {
+    return /^\/api\/v3\/comic\/[^/]+\/chapter(?:2|3)?\/[^/]+$/.test(path)
+  }
+
+  // 识别无 HTTP 状态的 socket/连接类 fetch 错误，排除 timeout/abort/JSON 解析错误。
+  private isRecoverableStatuslessTransportError(error: unknown) {
+    if (!(error instanceof Error) || error instanceof SyntaxError) {
+      return false
+    }
+    if (this.isAbortOrTimeoutError(error)) {
+      return false
+    }
+
+    const code = this.readTransportCode(error)
+    return (
+      error instanceof TypeError ||
+      code === 'UND_ERR_SOCKET' ||
+      code === 'ECONNRESET' ||
+      code === 'ECONNREFUSED' ||
+      code === 'EPIPE'
+    )
+  }
+
+  // 识别 AbortSignal 或 undici timeout，避免把限时失败误当成路由候选失败。
+  private isAbortOrTimeoutError(error: Error) {
+    const code = this.readTransportCode(error)
+    return (
+      error.name === 'AbortError' ||
+      error.name === 'TimeoutError' ||
+      code === 'ABORT_ERR' ||
+      code === 'UND_ERR_CONNECT_TIMEOUT' ||
+      code === 'UND_ERR_HEADERS_TIMEOUT' ||
+      code === 'UND_ERR_BODY_TIMEOUT'
+    )
+  }
+
   // 发送 CopyManga JSON 请求，统一保留请求头、超时和 HTTP 失败形状。
   private async fetchJson<TPayload>(
     url: string,
     params: Record<string, unknown>,
   ): Promise<TPayload> {
-    const response = await fetch(this.withParams(url, params), {
-      headers: this.buildHeaders(),
-      signal: AbortSignal.timeout(COPY_MANGA_REQUEST_TIMEOUT_MS),
-    })
-    if (!response.ok) {
-      throw Object.assign(new Error(`HTTP ${response.status}`), {
-        response: {
-          status: response.status,
-        },
-      } satisfies Pick<CopyMangaTransportError, 'response'>)
+    try {
+      const response = await fetch(this.withParams(url, params), {
+        headers: this.buildHeaders(),
+        signal: AbortSignal.timeout(COPY_MANGA_REQUEST_TIMEOUT_MS),
+      })
+      if (!response.ok) {
+        throw Object.assign(new Error(`HTTP ${response.status}`), {
+          response: {
+            status: response.status,
+          },
+        } satisfies Pick<CopyMangaTransportError, 'response'>)
+      }
+      return (await response.json()) as TPayload
+    } catch (error) {
+      if (error instanceof Error) {
+        Object.defineProperty(error, 'copyMangaFetchStage', {
+          configurable: true,
+          value: true,
+        })
+      }
+      throw error
     }
-    return (await response.json()) as TPayload
   }
 
   // 构建 CopyManga 固定请求头，避免对象字面量混合 quoted/unquoted key。
@@ -229,5 +319,13 @@ export class CopyMangaHttpClient {
     error: unknown,
   ): error is CopyMangaTransportError {
     return error instanceof Error && 'response' in error
+  }
+
+  // 判断错误是否来自 fetchJson 内部，而不是 throttle/discovery 前置流程。
+  private isFetchStageError(error: unknown) {
+    return (
+      error instanceof Error &&
+      (error as { copyMangaFetchStage?: boolean }).copyMangaFetchStage === true
+    )
   }
 }

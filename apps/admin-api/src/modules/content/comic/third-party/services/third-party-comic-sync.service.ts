@@ -30,7 +30,10 @@ import {
   BackgroundTaskOperatorTypeEnum,
   BackgroundTaskStatusEnum,
 } from '@libs/platform/modules/background-task/background-task.constant'
-import { BackgroundTaskService } from '@libs/platform/modules/background-task/background-task.service'
+import {
+  BackgroundTaskClaimLostError,
+  BackgroundTaskService,
+} from '@libs/platform/modules/background-task/background-task.service'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { ComicThirdPartyRegistry } from '../providers/comic-third-party.registry'
@@ -229,20 +232,31 @@ export class ThirdPartyComicSyncService {
   // 回滚失败或取消的最新章节同步任务。
   async rollbackSyncTask(context: ThirdPartyComicSyncTaskContext) {
     const residue = await context.getResidue()
-    await this.bindingService.softDeleteChapterBindings(
-      [...(residue.createdChapterBindingIds ?? [])].reverse(),
-    )
+    const createdChapterBindingIds = [
+      ...(residue.createdChapterBindingIds ?? []),
+    ].reverse()
+    if (createdChapterBindingIds.length > 0) {
+      await context.assertStillOwned()
+      await this.bindingService.softDeleteChapterBindings(
+        createdChapterBindingIds,
+      )
+    }
 
     const createdChapterIds = [...(residue.createdChapterIds ?? [])].reverse()
     if (createdChapterIds.length > 0) {
+      await context.assertStillOwned()
       await this.workChapterService.deleteChapters(createdChapterIds)
     }
 
     const cleanupFailures: string[] = []
     for (const uploadedFile of [...(residue.uploadedFiles ?? [])].reverse()) {
       try {
+        await context.assertStillOwned()
         await this.remoteImageImportService.deleteImportedFile(uploadedFile)
       } catch (error) {
+        if (error instanceof BackgroundTaskClaimLostError) {
+          throw error
+        }
         cleanupFailures.push(
           `${uploadedFile.provider}:${uploadedFile.filePath} (${this.stringifyUnknownError(
             error,
@@ -266,6 +280,16 @@ export class ThirdPartyComicSyncService {
     const plans: ThirdPartyComicSyncChapterPlan[] = []
     let maxSortOrder = Math.max(0, ...input.usedSortOrders)
     const chapterTotal = input.chapters.length
+    const planningReporter =
+      chapterTotal > 0
+        ? input.context.createProgressReporter({
+            startPercent: 2,
+            endPercent: 10,
+            total: chapterTotal,
+            stage: 'chapter-content',
+            unit: 'chapter',
+          })
+        : undefined
     for (const [index, chapter] of input.chapters.entries()) {
       await input.context.assertNotCancelled()
       this.assertProviderChapterId(chapter.providerChapterId)
@@ -286,6 +310,15 @@ export class ThirdPartyComicSyncService {
           platform: input.platform,
         })
       const images = this.sortImages(content.images)
+      await planningReporter?.advance({
+        current: index + 1,
+        message: `已读取同步章节 ${index + 1}/${chapterTotal} 的内容`,
+        detail: {
+          providerChapterId: chapter.providerChapterId,
+          chapterIndex: index + 1,
+          chapterTotal,
+        },
+      })
       plans.push({
         providerChapterId: chapter.providerChapterId,
         title: chapter.title,
@@ -456,6 +489,9 @@ export class ThirdPartyComicSyncService {
     try {
       await this.appendResidueList(context, 'uploadedFiles', uploadedFile)
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       await this.tryCleanupUploadedFile(uploadedFile, error)
       throw error
     }
@@ -469,6 +505,9 @@ export class ThirdPartyComicSyncService {
     try {
       await this.appendResidueList(context, 'createdChapterIds', chapterId)
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       await this.workChapterService.deleteChapters([chapterId])
       throw error
     }
@@ -491,6 +530,9 @@ export class ThirdPartyComicSyncService {
         binding.id,
       )
     } catch (error) {
+      if (error instanceof BackgroundTaskClaimLostError) {
+        throw error
+      }
       await this.bindingService.softDeleteChapterBindings([binding.id])
       throw error
     }

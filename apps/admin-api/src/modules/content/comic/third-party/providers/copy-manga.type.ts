@@ -20,6 +20,22 @@ export interface CopyMangaTransportError extends Error {
   response?: {
     status?: number
   }
+  /** fetch/undici 层可能暴露的传输错误码。 */
+  code?: string
+  /** fetch/undici 层可能嵌套的底层错误。 */
+  cause?: {
+    code?: string
+  }
+}
+
+/** CopyManga API 请求失败后可安全落库/分支判断的诊断原因。 */
+export interface CopyMangaApiFailureCause {
+  kind: 'http' | 'transport'
+  path: string
+  reason: string
+  status?: number
+  code?: string
+  routeCandidateRecoverable: boolean
 }
 
 /** CopyManga 分类、作者、地区等命名项的原始形状。 */

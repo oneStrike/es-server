@@ -57,6 +57,8 @@ export interface BackgroundTaskExecutionContext<
   isCancelRequested: () => Promise<boolean>
   /** 已被请求取消时抛出协作取消异常。 */
   assertNotCancelled: () => Promise<void>
+  /** 校验当前 worker 仍拥有任务 claim，不读取取消状态。 */
+  assertStillOwned: () => Promise<void>
   /** 更新任务进度。 */
   updateProgress: (progress: BackgroundTaskProgress) => Promise<void>
   /** 创建区间进度 reporter，用于业务按稳定单位推进任务进度。 */

@@ -32,9 +32,26 @@ describe('CopyMangaProvider', () => {
       `CopyManga API 请求失败：HTTP ${status} (${path})`,
       {
         cause: {
+          kind: 'http',
           path,
           reason: `HTTP ${status}`,
+          routeCandidateRecoverable: status === 404,
           status,
+        },
+      },
+    )
+  }
+
+  function createCopyMangaRecoverableTransportError(path: string) {
+    return new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      `CopyManga API 请求失败：The socket connection was closed unexpectedly (${path})`,
+      {
+        cause: {
+          kind: 'transport',
+          path,
+          reason: 'The socket connection was closed unexpectedly',
+          routeCandidateRecoverable: true,
         },
       },
     )
@@ -222,9 +239,51 @@ describe('CopyMangaProvider', () => {
     expect(content.providerChapterId).toBe('chapter-001')
   })
 
+  it('falls back to unversioned chapter content when the preferred route has a recoverable statusless transport failure', async () => {
+    const preferredPath = '/api/v3/comic/woduzishenji/chapter3/chapter-001'
+    const fallbackPath = '/api/v3/comic/woduzishenji/chapter/chapter-001'
+    const { httpClient, provider } = createProvider({
+      [preferredPath]: createCopyMangaRecoverableTransportError(preferredPath),
+      [fallbackPath]: chapterContentSuccess,
+    })
+
+    const content = await provider.getChapterContent({
+      chapterId: 'chapter-001',
+      chapterApiVersion: 3,
+      comicId: 'woduzishenji',
+      platform: 'copy',
+    })
+
+    expect(httpClient.getJson).toHaveBeenNthCalledWith(1, preferredPath)
+    expect(httpClient.getJson).toHaveBeenNthCalledWith(2, fallbackPath)
+    expect(content.providerChapterId).toBe('chapter-001')
+  })
+
   it('does not fall back when the preferred chapter content route fails for a non-404 reason', async () => {
     const preferredPath = '/api/v3/comic/woduzishenji/chapter3/chapter-001'
     const upstreamError = createCopyMangaHttpError(500, preferredPath)
+    const { httpClient, provider } = createProvider({
+      [preferredPath]: upstreamError,
+      '/api/v3/comic/woduzishenji/chapter/chapter-001': chapterContentSuccess,
+    })
+
+    await expect(
+      provider.getChapterContent({
+        chapterId: 'chapter-001',
+        chapterApiVersion: 3,
+        comicId: 'woduzishenji',
+        platform: 'copy',
+      }),
+    ).rejects.toBe(upstreamError)
+
+    expect(httpClient.getJson).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not fall back when a non-preferred route reports a recoverable failure', async () => {
+    const preferredPath = '/api/v3/comic/woduzishenji/chapter3/chapter-001'
+    const mismatchedPath = '/api/v3/comic/other/chapter3/chapter-001'
+    const upstreamError =
+      createCopyMangaRecoverableTransportError(mismatchedPath)
     const { httpClient, provider } = createProvider({
       [preferredPath]: upstreamError,
       '/api/v3/comic/woduzishenji/chapter/chapter-001': chapterContentSuccess,

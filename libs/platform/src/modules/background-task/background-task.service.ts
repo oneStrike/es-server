@@ -12,6 +12,7 @@ import type {
   BackgroundTaskProgressReporterOptions,
   CreateBackgroundTaskInput,
 } from './types'
+import type { BackgroundTaskExecutionLease } from './types/background-task-execution-lease.type'
 import type { BackgroundTaskNotificationSelect } from './types/background-task-notification.type'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService, PostgresErrorCode } from '@db/core'
@@ -22,6 +23,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import dayjs from 'dayjs'
 import { and, asc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm'
 import {
+  BACKGROUND_TASK_CLAIM_RENEW_INTERVAL_SECONDS,
   BACKGROUND_TASK_CLAIM_TIMEOUT_SECONDS,
   BACKGROUND_TASK_DEFAULT_MAX_RETRY,
   BACKGROUND_TASK_INITIAL_PROGRESS,
@@ -44,6 +46,13 @@ class BackgroundTaskFinalizingExpiredError extends Error {
   constructor() {
     super('后台任务在最终写入阶段超时，已进入恢复回滚')
     this.name = 'BackgroundTaskFinalizingExpiredError'
+  }
+}
+
+export class BackgroundTaskClaimLostError extends Error {
+  constructor() {
+    super('后台任务 claim 已丢失')
+    this.name = 'BackgroundTaskClaimLostError'
   }
 }
 
@@ -393,7 +402,9 @@ export class BackgroundTaskService {
       )
     }
 
-    this.handleDatabaseError(error, { conflict: '任务状态已变化，请刷新后重试' })
+    this.handleDatabaseError(error, {
+      conflict: '任务状态已变化，请刷新后重试',
+    })
   }
 
   // 判断异常是否来自指定 PostgreSQL 唯一约束。
@@ -818,10 +829,20 @@ export class BackgroundTaskService {
     return claimed ?? null
   }
 
-  // 执行已 claim 任务，失败或取消都必须进入补偿清理。
+  // 执行已 claim 任务，并在执行期间持续续租当前 worker 的 claim。
   async executeClaimedTask(row: BackgroundTaskSelect) {
     const handler = this.registry.resolve(row.taskType)
-    const context = this.buildExecutionContext(row)
+    const ownerWorkerId = row.claimedBy
+    if (!ownerWorkerId) {
+      throw new BackgroundTaskClaimLostError()
+    }
+    const lease: BackgroundTaskExecutionLease = {
+      taskId: row.taskId,
+      ownerWorkerId,
+      claimLost: false,
+    }
+    const stopHeartbeat = this.startClaimHeartbeat(lease)
+    const context = this.buildExecutionContext(row, lease)
     let prepared: unknown
 
     try {
@@ -830,12 +851,14 @@ export class BackgroundTaskService {
       }
       prepared = await handler.prepare?.(context)
       await context.assertNotCancelled()
-      await this.markTaskFinalizing(row.taskId)
+      await this.markTaskFinalizing(row.taskId, ownerWorkerId)
       await context.assertNotCancelled()
       const result = await handler.finalize(context, prepared)
-      await this.markTaskSucceeded(row.taskId, result)
+      await this.markTaskSucceeded(row.taskId, ownerWorkerId, result)
     } catch (error) {
       await this.rollbackUnsuccessfulTask(row, handler, context, error)
+    } finally {
+      stopHeartbeat()
     }
   }
 
@@ -850,6 +873,25 @@ export class BackgroundTaskService {
         updatedAt: now,
       })
       .where(eq(this.backgroundTask.taskId, taskId))
+  }
+
+  // 以当前 owner 身份更新任务进度；失去 claim 时中断旧 worker。
+  private async updateProgressForOwner(
+    lease: BackgroundTaskExecutionLease,
+    progress: BackgroundTaskProgress,
+  ) {
+    this.assertLeaseNotLost(lease)
+    const now = new Date()
+    const [row] = await this.db
+      .update(this.backgroundTask)
+      .set({
+        claimExpiresAt: this.buildClaimDeadline(now),
+        progress,
+        updatedAt: now,
+      })
+      .where(this.buildOwnerRunningWhere(lease))
+      .returning()
+    this.assertOwnerWriteMatched(row, lease)
   }
 
   // 合并记录任务残留，供处理器补偿时定位业务副作用。
@@ -872,6 +914,31 @@ export class BackgroundTaskService {
       .where(eq(this.backgroundTask.taskId, taskId))
   }
 
+  // 以当前 owner 身份合并记录残留，避免 stale worker 覆盖新 owner 的恢复数据。
+  private async recordResidueForOwner(
+    lease: BackgroundTaskExecutionLease,
+    residue: BackgroundTaskObject,
+  ) {
+    this.assertLeaseNotLost(lease)
+    const row = await this.readTask(lease.taskId)
+    this.assertRowStillOwned(row, lease)
+    const mergedResidue = {
+      ...this.asObject(row.residue),
+      ...residue,
+    }
+    const now = new Date()
+    const [updated] = await this.db
+      .update(this.backgroundTask)
+      .set({
+        claimExpiresAt: this.buildClaimDeadline(now),
+        residue: mergedResidue,
+        updatedAt: now,
+      })
+      .where(this.buildOwnerRunningWhere(lease))
+      .returning()
+    this.assertOwnerWriteMatched(updated, lease)
+  }
+
   // 获取任务当前状态。
   async getTaskStatus(taskId: string) {
     return (await this.readTask(taskId)).status as BackgroundTaskStatusEnum
@@ -881,6 +948,121 @@ export class BackgroundTaskService {
   async isTaskCancelRequested(taskId: string) {
     const row = await this.readTask(taskId)
     return row.cancelRequestedAt !== null
+  }
+
+  // 启动 claim heartbeat，长时间无业务写入时也能持续续租。
+  private startClaimHeartbeat(lease: BackgroundTaskExecutionLease) {
+    const timer = setInterval(() => {
+      void this.renewClaimForOwner(lease).catch((error) => {
+        if (error instanceof BackgroundTaskClaimLostError) {
+          clearInterval(timer)
+          return
+        }
+        this.logger.error({
+          message: 'background_task_claim_heartbeat_failed',
+          taskId: lease.taskId,
+          error: this.toErrorObject(error),
+        })
+      })
+    }, BACKGROUND_TASK_CLAIM_RENEW_INTERVAL_SECONDS * 1000)
+
+    return () => clearInterval(timer)
+  }
+
+  // 以当前 owner 身份续租 claim；0 行更新代表旧 worker 已失去所有权。
+  private async renewClaimForOwner(lease: BackgroundTaskExecutionLease) {
+    this.assertLeaseNotLost(lease)
+    const now = new Date()
+    const [row] = await this.db
+      .update(this.backgroundTask)
+      .set({
+        claimExpiresAt: this.buildClaimDeadline(now),
+        updatedAt: now,
+      })
+      .where(this.buildOwnerRunningWhere(lease))
+      .returning()
+    this.assertOwnerWriteMatched(row, lease)
+  }
+
+  // 校验当前 worker 仍拥有任务 claim。
+  private async assertStillOwnedForOwner(lease: BackgroundTaskExecutionLease) {
+    this.assertLeaseNotLost(lease)
+    const row = await this.readTask(lease.taskId)
+    this.assertRowStillOwned(row, lease)
+  }
+
+  // 在同一次读取中同时确认 owner 与取消状态，避免 stale owner 被误判为取消。
+  private async isCancelRequestedForOwner(lease: BackgroundTaskExecutionLease) {
+    this.assertLeaseNotLost(lease)
+    const row = await this.readTask(lease.taskId)
+    this.assertRowStillOwned(row, lease)
+    return row.cancelRequestedAt !== null
+  }
+
+  // 已知 claim 丢失时直接抛出，防止 stale owner 进入取消或回滚分支。
+  private assertLeaseNotLost(lease: BackgroundTaskExecutionLease) {
+    if (lease.claimLost) {
+      throw new BackgroundTaskClaimLostError()
+    }
+  }
+
+  // 校验读到的任务行仍属于当前 owner 且处于运行中。
+  private assertRowStillOwned(
+    row: BackgroundTaskSelect,
+    lease: BackgroundTaskExecutionLease,
+  ) {
+    if (!this.isRowOwnedAndRunning(row, lease.ownerWorkerId)) {
+      lease.claimLost = true
+      throw new BackgroundTaskClaimLostError()
+    }
+  }
+
+  // 校验 owner-aware 写入命中了当前 worker 持有的任务行。
+  private assertOwnerWriteMatched(
+    row: BackgroundTaskSelect | undefined,
+    lease: BackgroundTaskExecutionLease,
+  ) {
+    if (!row) {
+      lease.claimLost = true
+      throw new BackgroundTaskClaimLostError()
+    }
+  }
+
+  // 构造当前 owner 在运行态下才允许写入的 where 条件。
+  private buildOwnerRunningWhere(lease: BackgroundTaskExecutionLease) {
+    return and(
+      eq(this.backgroundTask.taskId, lease.taskId),
+      eq(this.backgroundTask.claimedBy, lease.ownerWorkerId),
+      inArray(
+        this.backgroundTask.status,
+        BACKGROUND_TASK_EXECUTING_SERIAL_STATUSES,
+      ),
+    )
+  }
+
+  // 判断任务行是否仍由指定 worker 持有且处于可执行状态。
+  private isRowOwnedAndRunning(
+    row: BackgroundTaskSelect,
+    ownerWorkerId: string,
+  ) {
+    return (
+      row.claimedBy === ownerWorkerId &&
+      (row.status === BackgroundTaskStatusEnum.PROCESSING ||
+        row.status === BackgroundTaskStatusEnum.FINALIZING)
+    )
+  }
+
+  // 终态写入 0 行时，优先区分 claim 丢失，再保留原有状态冲突语义。
+  private async throwClaimLostOrStateConflict(
+    taskId: string,
+    ownerWorkerId: string,
+    message: string,
+  ): Promise<never> {
+    const latest = await this.readTask(taskId)
+    if (!this.isRowOwnedAndRunning(latest, ownerWorkerId)) {
+      throw new BackgroundTaskClaimLostError()
+    }
+    throw new BusinessException(BusinessErrorCode.STATE_CONFLICT, message)
   }
 
   // 读取后台任务行。
@@ -942,7 +1124,7 @@ export class BackgroundTaskService {
   }
 
   // 任务进入最终写入阶段。
-  private async markTaskFinalizing(taskId: string) {
+  private async markTaskFinalizing(taskId: string, ownerWorkerId: string) {
     const now = new Date()
     const deadline = this.buildClaimDeadline(now)
     const [row] = await this.db
@@ -957,10 +1139,16 @@ export class BackgroundTaskService {
         and(
           eq(this.backgroundTask.taskId, taskId),
           eq(this.backgroundTask.status, BackgroundTaskStatusEnum.PROCESSING),
+          eq(this.backgroundTask.claimedBy, ownerWorkerId),
         ),
       )
       .returning()
     if (!row) {
+      await this.throwClaimLostOrStateConflict(
+        taskId,
+        ownerWorkerId,
+        '后台任务无法进入最终写入阶段',
+      )
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
         '后台任务无法进入最终写入阶段',
@@ -971,6 +1159,7 @@ export class BackgroundTaskService {
   // 标记任务成功，只有该状态允许业务副作用保留。
   private async markTaskSucceeded(
     taskId: string,
+    ownerWorkerId: string,
     result: BackgroundTaskObject,
   ) {
     const now = new Date()
@@ -991,6 +1180,7 @@ export class BackgroundTaskService {
           and(
             eq(this.backgroundTask.taskId, taskId),
             eq(this.backgroundTask.status, BackgroundTaskStatusEnum.FINALIZING),
+            eq(this.backgroundTask.claimedBy, ownerWorkerId),
             isNull(this.backgroundTask.cancelRequestedAt),
           ),
         )
@@ -1005,6 +1195,9 @@ export class BackgroundTaskService {
 
     if (!row) {
       const latest = await this.readTask(taskId)
+      if (!this.isRowOwnedAndRunning(latest, ownerWorkerId)) {
+        throw new BackgroundTaskClaimLostError()
+      }
       if (latest.cancelRequestedAt) {
         throw new BackgroundTaskCancellationError()
       }
@@ -1022,23 +1215,40 @@ export class BackgroundTaskService {
     context: BackgroundTaskExecutionContext,
     error: unknown,
   ) {
-    const shouldCancel =
-      error instanceof BackgroundTaskCancellationError ||
-      (await this.isTaskCancelRequested(row.taskId))
+    if (error instanceof BackgroundTaskClaimLostError) {
+      return
+    }
+
+    let shouldCancel: boolean
+    try {
+      shouldCancel =
+        error instanceof BackgroundTaskCancellationError ||
+        (await context.isCancelRequested())
+    } catch (cancelCheckError) {
+      if (cancelCheckError instanceof BackgroundTaskClaimLostError) {
+        return
+      }
+      throw cancelCheckError
+    }
 
     const errorObject = this.toErrorObject(error)
     try {
       await handler.rollback(context, error)
       await this.markTaskUnsuccessful(
         row.taskId,
+        row.claimedBy ?? '',
         error,
         shouldCancel,
         errorObject,
       )
     } catch (rollbackError) {
+      if (rollbackError instanceof BackgroundTaskClaimLostError) {
+        return
+      }
       const rollbackErrorObject = this.toErrorObject(rollbackError)
       await this.markTaskRollbackFailed(
         row.taskId,
+        row.claimedBy ?? '',
         error,
         rollbackError,
         errorObject,
@@ -1068,13 +1278,14 @@ export class BackgroundTaskService {
   // 标记任务已清洁失败或已清洁取消。
   private async markTaskUnsuccessful(
     taskId: string,
+    ownerWorkerId: string,
     error: unknown,
     cancelled: boolean,
     errorObject = this.toErrorObject(error),
   ) {
     const now = new Date()
     await this.runInDbTransaction(async (tx) => {
-      await tx
+      const [updated] = await tx
         .update(this.backgroundTask)
         .set({
           status: cancelled
@@ -1087,22 +1298,37 @@ export class BackgroundTaskService {
           finishedAt: now,
           updatedAt: now,
         })
-        .where(eq(this.backgroundTask.taskId, taskId))
+        .where(
+          and(
+            eq(this.backgroundTask.taskId, taskId),
+            eq(this.backgroundTask.claimedBy, ownerWorkerId),
+            inArray(
+              this.backgroundTask.status,
+              BACKGROUND_TASK_EXECUTING_SERIAL_STATUSES,
+            ),
+          ),
+        )
+        .returning()
 
-      await this.releaseConflictKeys(taskId, tx, now)
+      if (!updated) {
+        throw new BackgroundTaskClaimLostError()
+      }
+
+      await this.releaseConflictKeys(updated.taskId, tx, now)
     })
   }
 
   // 标记回滚失败，避免把残留任务报告成 clean failure/cancel。
   private async markTaskRollbackFailed(
     taskId: string,
+    ownerWorkerId: string,
     error: unknown,
     rollbackError: unknown,
     errorObject = this.toErrorObject(error),
     rollbackErrorObject = this.toErrorObject(rollbackError),
   ) {
     const now = new Date()
-    await this.db
+    const [updated] = await this.db
       .update(this.backgroundTask)
       .set({
         status: BackgroundTaskStatusEnum.ROLLBACK_FAILED,
@@ -1113,39 +1339,64 @@ export class BackgroundTaskService {
         finishedAt: now,
         updatedAt: now,
       })
-      .where(eq(this.backgroundTask.taskId, taskId))
+      .where(
+        and(
+          eq(this.backgroundTask.taskId, taskId),
+          eq(this.backgroundTask.claimedBy, ownerWorkerId),
+          inArray(
+            this.backgroundTask.status,
+            BACKGROUND_TASK_EXECUTING_SERIAL_STATUSES,
+          ),
+        ),
+      )
+      .returning()
+    if (!updated) {
+      throw new BackgroundTaskClaimLostError()
+    }
   }
 
   // 构建处理器执行上下文。
   private buildExecutionContext(
     row: BackgroundTaskSelect,
+    lease: BackgroundTaskExecutionLease,
   ): BackgroundTaskExecutionContext {
     return {
       taskId: row.taskId,
       taskType: row.taskType,
       payload: this.asObject(row.payload),
       getStatus: async () => this.getTaskStatus(row.taskId),
-      isCancelRequested: async () => this.isTaskCancelRequested(row.taskId),
+      isCancelRequested: async () => this.isCancelRequestedForOwner(lease),
       assertNotCancelled: async () => {
-        if (await this.isTaskCancelRequested(row.taskId)) {
+        if (await this.isCancelRequestedForOwner(lease)) {
           throw new BackgroundTaskCancellationError()
         }
       },
+      assertStillOwned: async () => this.assertStillOwnedForOwner(lease),
       updateProgress: async (progress) =>
-        this.updateProgress(row.taskId, progress),
+        this.updateProgressForOwner(lease, progress),
       createProgressReporter: (options) =>
-        this.createProgressReporter(row.taskId, options),
+        this.createProgressReporterForOwner(lease, options),
       recordResidue: async (residue) =>
-        this.recordResidue(row.taskId, residue as BackgroundTaskObject),
+        this.recordResidueForOwner(lease, residue as BackgroundTaskObject),
       getResidue: async () =>
         this.asObject((await this.readTask(row.taskId)).residue),
     }
   }
 
+  // 创建 owner-aware 进度 reporter，确保每次 advance 都校验 claim。
+  private createProgressReporterForOwner(
+    lease: BackgroundTaskExecutionLease,
+    options: BackgroundTaskProgressReporterOptions,
+  ): BackgroundTaskProgressReporter {
+    return this.createProgressReporter(options, (progress) =>
+      this.updateProgressForOwner(lease, progress),
+    )
+  }
+
   // 创建按区间映射的进度 reporter，统一处理 clamp 和单调递增。
   private createProgressReporter(
-    taskId: string,
     options: BackgroundTaskProgressReporterOptions,
+    updateProgress: (progress: BackgroundTaskProgress) => Promise<void>,
   ): BackgroundTaskProgressReporter {
     const total = this.normalizeProgressTotal(options.total)
     const startPercent = this.normalizeProgressPercent(
@@ -1185,7 +1436,7 @@ export class BackgroundTaskService {
           total,
           detail: input.detail ?? options.detail,
         })
-        await this.updateProgress(taskId, progress)
+        await updateProgress(progress)
         return progress
       },
     }

@@ -4,6 +4,9 @@ export const BACKGROUND_TASK_DEFAULT_MAX_RETRY = 3
 /** 后台任务 claim 默认有效秒数。 */
 export const BACKGROUND_TASK_CLAIM_TIMEOUT_SECONDS = 300
 
+/** 后台任务 claim 续租间隔秒数。 */
+export const BACKGROUND_TASK_CLAIM_RENEW_INTERVAL_SECONDS = 60
+
 /** 单轮 worker 最多消费任务数。 */
 export const BACKGROUND_TASK_WORKER_BATCH_SIZE = 20
 
