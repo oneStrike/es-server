@@ -89,7 +89,6 @@ export type ThirdPartyComicImportTaskContext = Pick<
   WorkflowExecutionContext,
   | 'assertNotCancelled'
   | 'isCancelRequested'
-  | 'renewLease'
   | 'updateProgress'
 > & {
   jobId: string
@@ -229,10 +228,16 @@ export type RemoteImageImportSuccessHandler = (
   payload: RemoteImageImportSuccessPayload,
 ) => Promise<void>
 
-/** 远程图片导入期间的长 I/O heartbeat 选项。 */
-export interface RemoteImageImportHeartbeatOptions {
-  heartbeat?: () => Promise<void>
-  heartbeatIntervalMs?: number
+/** 远程图片导入期间的长 I/O 取消检查选项。 */
+export interface RemoteImageImportCancellationOptions {
+  assertNotCancelled?: () => Promise<void>
+  cancellationCheckIntervalMs?: number
+}
+
+/** 单次远程图片导入操作选项，允许批量导入复用外层取消检查。 */
+export interface RemoteImageImportOperationOptions
+  extends RemoteImageImportCancellationOptions {
+  skipDownloadInitialCancellationCheck?: boolean
 }
 
 /** 完成基础 URL 与 DNS 校验后的远程图片请求目标。 */

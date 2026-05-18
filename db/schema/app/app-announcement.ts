@@ -54,6 +54,10 @@ export const appAnnouncement = snakeCase.table(
      */
     isPublished: boolean().default(false).notNull(),
     /**
+     * 是否实时公告，开启后在发布窗口内同步到消息中心
+     */
+    isRealtime: boolean().default(false).notNull(),
+    /**
      * 是否置顶
      */
     isPinned: boolean().default(false).notNull(),
@@ -116,6 +120,13 @@ export const appAnnouncement = snakeCase.table(
      */
     index('app_announcement_announcement_type_is_published_idx').on(
       table.announcementType,
+      table.isPublished,
+    ),
+    /**
+     * 实时公告与发布状态索引
+     */
+    index('app_announcement_is_realtime_is_published_idx').on(
+      table.isRealtime,
       table.isPublished,
     ),
     /**

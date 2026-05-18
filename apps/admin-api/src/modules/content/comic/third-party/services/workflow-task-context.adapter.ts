@@ -4,7 +4,10 @@ import type {
   ThirdPartyComicImportProgressReporterOptions,
 } from '@libs/content/work/third-party/third-party-comic-import.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import type { WorkflowExecutionContext } from '@libs/platform/modules/workflow/workflow.type'
+import type {
+  WorkflowExecutionContext,
+  WorkflowObject,
+} from '@libs/platform/modules/workflow/workflow.type'
 import type {
   WorkflowTaskContextAdapterOptions,
   WorkflowTaskContextResidue,
@@ -30,10 +33,9 @@ export function createWorkflowTaskContext<
     isCancelRequested: workflowContext.isCancelRequested,
     assertNotCancelled: workflowContext.assertNotCancelled,
     assertStillOwned: workflowContext.assertStillOwned,
-    renewLease: workflowContext.renewLease,
     updateProgress: workflowContext.updateProgress,
-    createProgressReporter: (options: ThirdPartyComicImportProgressReporterOptions) =>
-      createWorkflowProgressReporter(workflowContext, options),
+    createProgressReporter: (progressOptions: ThirdPartyComicImportProgressReporterOptions) =>
+      createWorkflowProgressReporter(workflowContext, progressOptions, options),
     recordResidue: async (patch: WorkflowTaskContextResiduePatch<TResidue>) => {
       await recordUploadedFileResidues(
         workflowContext,
@@ -114,11 +116,12 @@ function toUploadedFileResidueKey(uploadedFile: UploadDeleteTarget) {
 // 创建区间进度 reporter，供章节内容读取和图片导入复用。
 function createWorkflowProgressReporter(
   context: WorkflowExecutionContext,
-  options: ThirdPartyComicImportProgressReporterOptions,
+  progressOptions: ThirdPartyComicImportProgressReporterOptions,
+  adapterOptions: WorkflowTaskContextAdapterOptions,
 ) {
-  const total = Math.max(1, options.total)
-  const startPercent = options.startPercent ?? 0
-  const endPercent = options.endPercent ?? 100
+  const total = Math.max(1, progressOptions.total)
+  const startPercent = progressOptions.startPercent ?? 0
+  const endPercent = progressOptions.endPercent ?? 100
   let current = 0
 
   return {
@@ -131,19 +134,42 @@ function createWorkflowProgressReporter(
           : Math.min(total, current + (input.amount ?? 1))
       const progress: ThirdPartyComicImportProgress = {
         current,
-        detail: input.detail ?? options.detail,
-        message: input.message ?? options.message,
+        detail: input.detail ?? progressOptions.detail,
+        message: input.message ?? progressOptions.message,
         percent: Math.round(
           startPercent + ((endPercent - startPercent) * current) / total,
         ),
-        stage: options.stage,
+        stage: progressOptions.stage,
         total,
-        unit: options.unit,
+        unit: progressOptions.unit,
       }
       await context.updateProgress({
+        detail: normalizeImageProgressDetail(
+          context,
+          progress.detail,
+          adapterOptions,
+        ),
         message: progress.message,
       })
       return progress
     },
+  }
+}
+
+// 规范化内容导入图片进度详情，保证前端不解析进度文案也能定位当前行。
+function normalizeImageProgressDetail(
+  context: WorkflowExecutionContext,
+  detail: WorkflowObject | undefined,
+  options: WorkflowTaskContextAdapterOptions,
+): WorkflowObject | null {
+  if (!detail) {
+    return null
+  }
+
+  return {
+    kind: 'content-import.image',
+    workflowType: context.workflowType,
+    ...(options.itemId ? { itemId: options.itemId } : {}),
+    ...detail,
   }
 }

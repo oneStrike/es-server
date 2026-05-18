@@ -408,6 +408,7 @@ export class ComicArchiveImportService {
               : ComicArchiveImportItemStatusEnum.PENDING,
         message: item.lastErrorMessage ?? '',
       })),
+      progressDetail: this.toNullableWorkflowObject(workflowJob.progressDetail),
       confirmedChapterIds: items
         .map((item) => item.localChapterId ?? item.targetChapterId)
         .filter((chapterId): chapterId is number => typeof chapterId === 'number'),
@@ -445,12 +446,15 @@ export class ComicArchiveImportService {
     const record = {
       assertStillOwned: context.assertStillOwned,
       attemptId: context.attemptId,
+      chapterIndex: 0,
+      chapterTotal: items.length,
       itemId: '',
       jobId: context.jobId,
+      updateProgress: context.updateProgress,
       workId: importJob.workId ?? 0,
     }
 
-    for (const item of items) {
+    for (const [index, item] of items.entries()) {
       await context.assertNotCancelled()
       await this.contentImportService.startItemAttempt(
         context.jobId,
@@ -461,10 +465,14 @@ export class ComicArchiveImportService {
       try {
         await this.cleanupPendingUploadedFileResidues(context.jobId, item.itemId)
         const contents = await this.importChapter(
-          { ...record, itemId: item.itemId },
+          { ...record, chapterIndex: index + 1, itemId: item.itemId },
           matchedItem,
         )
         await context.assertStillOwned()
+        await context.updateProgress({
+          detail: null,
+          message: '章节导入进度已更新',
+        })
         await this.contentImportService.markItemSuccess({
           itemId: item.itemId,
           attemptNo: context.attemptNo,
@@ -474,6 +482,10 @@ export class ComicArchiveImportService {
         })
       } catch (error) {
         await context.assertStillOwned()
+        await context.updateProgress({
+          detail: null,
+          message: '章节导入进度已更新',
+        })
         await this.contentImportService.markItemFailed({
           itemId: item.itemId,
           attemptNo: context.attemptNo,
@@ -487,8 +499,7 @@ export class ComicArchiveImportService {
 
     const counters = await this.contentImportService.aggregateJob(context.jobId)
     await context.assertStillOwned()
-    await this.workflowService.completeAttemptByAttemptId({
-      attemptId: context.attemptId,
+    await context.completeAttempt({
       status:
         counters.failedItemCount === 0
           ? WorkflowAttemptStatusEnum.SUCCESS
@@ -515,6 +526,13 @@ export class ComicArchiveImportService {
       )
     }
     return row
+  }
+
+  // 将 Drizzle JSONB 推断的未知对象规整为对外 DTO 可用的普通对象。
+  private toNullableWorkflowObject(value: unknown) {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null
   }
 
   // 校验压缩包预解析 workflow 仍处于草稿态。
@@ -641,6 +659,22 @@ export class ComicArchiveImportService {
             jobId: record.jobId,
           })
         contents.push(uploadedFile.upload.filePath)
+        const imageIndex = index + 1
+        const imageTotal = matchedItem.imagePaths.length
+        await record.updateProgress?.({
+          detail: {
+            kind: 'content-import.image',
+            workflowType: ContentImportWorkflowType.ARCHIVE_IMPORT,
+            itemId: record.itemId,
+            localChapterId: matchedItem.chapterId,
+            chapterIndex: record.chapterIndex,
+            chapterTotal: record.chapterTotal,
+            imageIndex,
+            imageTotal,
+            title: matchedItem.chapterTitle,
+          },
+          message: `已导入压缩包章节 ${record.chapterIndex}/${record.chapterTotal} 的第 ${imageIndex}/${imageTotal} 张图片`,
+        })
       }
 
       await record.assertStillOwned()

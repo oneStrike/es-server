@@ -6,6 +6,7 @@ import { AdminWorkflowController } from './workflow.controller'
 
 describe('AdminWorkflowController', () => {
   const workflowJob = {
+    archivedAt: null,
     cancelRequestedAt: null,
     createdAt: new Date('2026-05-17T00:00:00.000Z'),
     displayName: '我独自升级',
@@ -85,6 +86,7 @@ describe('AdminWorkflowController', () => {
 
   function createController() {
     const workflowService = {
+      archiveJob: jest.fn(async () => workflowJob),
       cancelJob: jest.fn(async () => workflowJob),
       expireJob: jest.fn(async () => workflowJob),
       getJobDetail: jest.fn(async () => workflowDetail),
@@ -195,12 +197,15 @@ describe('AdminWorkflowController', () => {
     expect(contentImportService.getItemPage).toHaveBeenCalledWith(query)
   })
 
-  it('keeps cancel, retry and expire actions on the workflow service contract', async () => {
+  it('keeps cancel, archive, retry and expire actions on the workflow service contract', async () => {
     const { controller, workflowService } = createController()
 
     await expect(controller.cancelJob({ jobId: 'job-1' })).resolves.toEqual(
       workflowJob,
     )
+    await expect(
+      controller.archiveJob({ jobId: 'job-1' }),
+    ).resolves.toEqual(workflowJob)
     await expect(
       controller.retryItems({ jobId: 'job-1', itemIds: ['item-1'] }),
     ).resolves.toEqual(workflowJob)
@@ -209,6 +214,7 @@ describe('AdminWorkflowController', () => {
     )
 
     expect(workflowService.cancelJob).toHaveBeenCalledWith({ jobId: 'job-1' })
+    expect(workflowService.archiveJob).toHaveBeenCalledWith({ jobId: 'job-1' })
     expect(workflowService.retryItems).toHaveBeenCalledWith({
       itemIds: ['item-1'],
       jobId: 'job-1',

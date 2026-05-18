@@ -603,7 +603,7 @@ export class ThirdPartyComicImportService {
           detail: this.toImageProgressDetail(chapterPlan, importedFile),
         })
       },
-      { heartbeat: context.renewLease },
+      { assertNotCancelled: () => context.assertNotCancelled() },
     )
     await context.assertNotCancelled()
     await this.comicContentService.replaceChapterContents(
@@ -812,7 +812,7 @@ export class ThirdPartyComicImportService {
     const importedCover = await this.remoteImageImportService.importImage(
       detail.cover,
       ['comic', 'image', formatDateOnlyInAppTimeZone(new Date())],
-      { heartbeat: context.renewLease },
+      { assertNotCancelled: () => context.assertNotCancelled() },
     )
     return {
       filePath: importedCover.upload.filePath,

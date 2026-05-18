@@ -613,7 +613,9 @@ data = null
 - `announcement.published`
 - `announcement.unpublished`
 
-对外通知只在“发布态”存在，下线事件会删除对应通知。
+对外通知只在公告写操作触发 fanout，且公告同时满足
+`isRealtime=true`、`isPublished=true`、当前时间位于发布时间窗口内时存在。
+其他情况会入队 `announcement.unpublished`，用于删除对应通知。
 
 ```ts
 data = {
@@ -640,6 +642,8 @@ data = {
   - 下线：`delete`
 - 当前公告通知是 `mandatory=true`，即使用户关闭偏好也不会跳过。
 - 当前公告通知通常没有 `actor`，因为 producer 使用的是 `subjectType: 'system'`。
+- 公告是否进入消息中心只由 `isRealtime` 控制；优先级、置顶、首页弹窗只影响公告展示，不再隐式触发系统通知。
+- 当前没有时间边界调度；未来开始时间到点、结束时间到点不会自动发布或删除通知，仍依赖公告新建、更新、发布状态切换、逻辑下线等写操作触发 fanout。
 
 ### 6.10 `task_reminder`
 

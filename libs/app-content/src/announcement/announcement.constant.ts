@@ -54,19 +54,13 @@ export enum PopupBackgroundPositionEnum {
 /**
  * 判断公告是否应进入通知中心
  *
- * 第一阶段按“高优先级/置顶/弹窗”任一命中视为重要公告，
- * 物化为消息域通知；普通公告仍留在内容域自行展示。
+ * 是否进入消息中心只由显式实时公告开关控制；
+ * 优先级、置顶、弹窗只影响内容域展示，不再隐式触发通知。
  */
 export function shouldAnnouncementEnterNotificationCenter(input: {
-  priorityLevel: number
-  isPinned: boolean
-  showAsPopup: boolean
+  isRealtime: boolean
 }) {
-  return (
-    input.priorityLevel >= AnnouncementPriorityEnum.HIGH ||
-    input.isPinned ||
-    input.showAsPopup
-  )
+  return input.isRealtime
 }
 
 /**

@@ -1,6 +1,9 @@
 /** 工作流默认 claim 有效秒数。 */
 export const WORKFLOW_CLAIM_TIMEOUT_SECONDS = 300
 
+/** 工作流运行时自动续租间隔秒数。 */
+export const WORKFLOW_LEASE_RENEW_INTERVAL_SECONDS = 60
+
 /** 工作流 worker 单轮最多消费 attempt 数。 */
 export const WORKFLOW_WORKER_BATCH_SIZE = 20
 
@@ -30,6 +33,16 @@ export enum WorkflowJobStatusEnum {
   CANCELLED = 7,
   /** 已过期。 */
   EXPIRED = 8,
+}
+
+/** 工作流任务归档筛选范围。 */
+export enum WorkflowJobArchiveScopeEnum {
+  /** 未归档任务。 */
+  ACTIVE = 'active',
+  /** 已归档任务。 */
+  ARCHIVED = 'archived',
+  /** 全部任务。 */
+  ALL = 'all',
 }
 
 /** 工作流 attempt 状态。 */

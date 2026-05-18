@@ -27,8 +27,11 @@ import {
   WorkflowAttemptStatusEnum,
   WorkflowEventTypeEnum,
 } from '@libs/platform/modules/workflow/workflow.constant'
+import {
+  isWorkflowCancellationError,
+  WorkflowCancellationError,
+} from '@libs/platform/modules/workflow/workflow-cancellation'
 import { WorkflowRegistry } from '@libs/platform/modules/workflow/workflow.registry'
-import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ThirdPartyComicSyncService } from './third-party-comic-sync.service'
 import { createWorkflowTaskContext } from './workflow-task-context.adapter'
@@ -44,7 +47,6 @@ export class ThirdPartyComicSyncWorkflowHandler
   // 初始化 workflow handler 依赖。
   constructor(
     private readonly registry: WorkflowRegistry,
-    private readonly workflowService: WorkflowService,
     private readonly contentImportService: ContentImportService,
     private readonly syncService: ThirdPartyComicSyncService,
     private readonly remoteImageImportService: RemoteImageImportService,
@@ -134,6 +136,9 @@ export class ThirdPartyComicSyncWorkflowHandler
       }
     } catch (error) {
       await this.syncService.rollbackSyncTask(taskContext).catch(() => undefined)
+      if (isWorkflowCancellationError(error)) {
+        await this.throwCancelledAttempt(context, '章节同步已取消', error)
+      }
       await context.assertStillOwned()
       const message = this.stringifyError(error)
       for (const item of items) {
@@ -156,8 +161,7 @@ export class ThirdPartyComicSyncWorkflowHandler
       )
       await this.updateTaskProgress(context, counters, '章节同步准备失败')
       await context.assertStillOwned()
-      await this.workflowService.completeAttemptByAttemptId({
-        attemptId: context.attemptId,
+      await context.completeAttempt({
         status: WorkflowAttemptStatusEnum.FAILED,
         successItemCount: counters.successItemCount,
         failedItemCount: counters.failedItemCount,
@@ -169,7 +173,14 @@ export class ThirdPartyComicSyncWorkflowHandler
     }
 
     for (const item of items) {
-      await context.assertNotCancelled()
+      try {
+        await context.assertNotCancelled()
+      } catch (error) {
+        if (isWorkflowCancellationError(error)) {
+          await this.throwCancelledAttempt(context, '章节同步已取消', error)
+        }
+        throw error
+      }
       await this.contentImportService.startItemAttempt(
         context.jobId,
         context.attemptId,
@@ -215,6 +226,9 @@ export class ThirdPartyComicSyncWorkflowHandler
           errorMessage = `${errorMessage}; cleanup=${this.stringifyError(
             rollbackError,
           )}`
+        }
+        if (isWorkflowCancellationError(error)) {
+          await this.throwCancelledAttempt(context, '章节同步已取消', error)
         }
         await context.assertStillOwned()
         const rateLimit = readThirdPartyRateLimit(error)
@@ -342,8 +356,7 @@ export class ThirdPartyComicSyncWorkflowHandler
   ) {
     const status = this.resolveAttemptStatus(counters)
     if (counters.futureRetryItemCount > 0 && counters.nextRetryAt) {
-      await this.workflowService.completeAttemptWithDelayedRetryByAttemptId({
-        attemptId: context.attemptId,
+      await context.completeAttemptWithDelayedRetry({
         status,
         successItemCount: counters.successItemCount,
         failedItemCount: counters.failedItemCount,
@@ -353,8 +366,7 @@ export class ThirdPartyComicSyncWorkflowHandler
       })
       return
     }
-    await this.workflowService.completeAttemptByAttemptId({
-      attemptId: context.attemptId,
+    await context.completeAttempt({
       status,
       successItemCount: counters.successItemCount,
       failedItemCount: counters.failedItemCount,
@@ -373,6 +385,7 @@ export class ThirdPartyComicSyncWorkflowHandler
     await this.updateTaskProgress(context, counters, progressPrefix)
   }
 
+  // 刷新任务级进度，保持图片子进度和任务终态计数分离。
   private async updateTaskProgress(
     context: WorkflowExecuteContext,
     counters: ContentImportAttemptCounters,
@@ -382,6 +395,19 @@ export class ThirdPartyComicSyncWorkflowHandler
       percent: this.resolveTaskProgressPercent(counters),
       message: this.resolveTaskProgressMessage(counters, progressPrefix),
     })
+  }
+
+  // 取消中断时刷新任务进度，并携带真实计数交给 workflow 聚合终态。
+  private async throwCancelledAttempt(
+    context: WorkflowExecuteContext,
+    progressPrefix: string,
+    cause: unknown,
+  ): Promise<never> {
+    await context.assertStillOwned()
+    const counters = await this.contentImportService.aggregateJob(context.jobId)
+    await this.updateTaskProgress(context, counters, progressPrefix)
+    await context.assertStillOwned()
+    throw new WorkflowCancellationError({ counters, cause })
   }
 
   private resolveTaskProgressPercent(counters: ContentImportAttemptCounters) {

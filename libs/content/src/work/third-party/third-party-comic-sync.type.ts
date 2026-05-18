@@ -40,7 +40,6 @@ export type ThirdPartyComicSyncTaskContext = Pick<
   WorkflowExecutionContext,
   | 'assertNotCancelled'
   | 'isCancelRequested'
-  | 'renewLease'
   | 'updateProgress'
 > & {
   jobId: string

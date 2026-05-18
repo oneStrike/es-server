@@ -2,6 +2,7 @@ import type {
   ComicArchiveIgnoreReasonEnum,
   ComicArchiveImportItemStatusEnum,
 } from './comic-archive-import.constant'
+import type { WorkflowExecutionContext } from '@libs/platform/modules/workflow/workflow.type'
 
 /**
  * 漫画压缩包预解析汇总快照。
@@ -82,8 +83,11 @@ export type ComicArchivePreviewChapterMap = Map<
 export interface ArchiveWorkflowImportRecord {
   assertStillOwned: () => Promise<void>
   attemptId: string
+  chapterIndex: number
+  chapterTotal: number
   itemId: string
   jobId: string
+  updateProgress?: WorkflowExecutionContext['updateProgress']
   workId: number
 }
 

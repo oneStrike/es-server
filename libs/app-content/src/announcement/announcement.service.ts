@@ -22,7 +22,7 @@ const ENABLE_PLATFORM_VALUES = new Set<number>(
 
 /**
  * 系统公告服务
- * 负责公告写入、分页查询和重要公告通知 fanout
+ * 负责公告写入、分页查询和系统公告通知 fanout
  */
 @Injectable()
 export class AppAnnouncementService {
@@ -159,6 +159,11 @@ export class AppAnnouncementService {
     }
     if (isPublished !== undefined) {
       conditions.push(eq(this.appAnnouncement.isPublished, isPublished))
+    }
+    if (queryAnnouncementDto.isRealtime !== undefined) {
+      conditions.push(
+        eq(this.appAnnouncement.isRealtime, queryAnnouncementDto.isRealtime),
+      )
     }
     if (options?.publishedOnly) {
       const now = new Date()

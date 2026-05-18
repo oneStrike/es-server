@@ -109,6 +109,14 @@ export class BaseAnnouncementDto extends BaseDto {
   })
   isPublished!: boolean
 
+  @BooleanProperty({
+    description: '是否实时公告',
+    example: false,
+    required: true,
+    default: false,
+  })
+  isRealtime!: boolean
+
   @ArrayProperty({
     description: '启用的平台（1=H5；2=App；3=小程序）',
     example: [EnablePlatformEnum.APP],
@@ -161,6 +169,7 @@ export class QueryAnnouncementDto extends IntersectionType(
       'title',
       'announcementType',
       'priorityLevel',
+      'isRealtime',
       'isPinned',
       'showAsPopup',
       'pageId',

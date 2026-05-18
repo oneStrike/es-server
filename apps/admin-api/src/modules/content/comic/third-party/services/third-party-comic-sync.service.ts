@@ -355,7 +355,7 @@ export class ThirdPartyComicSyncService {
           detail: this.toImageProgressDetail(plan, importedFile),
         })
       },
-      { heartbeat: context.renewLease },
+      { assertNotCancelled: () => context.assertNotCancelled() },
     )
     await context.assertNotCancelled()
 

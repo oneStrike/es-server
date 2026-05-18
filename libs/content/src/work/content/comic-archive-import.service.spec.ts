@@ -23,6 +23,7 @@ function createService() {
   }
   const drizzle = {
     db,
+    assertAffectedRows: jest.fn(),
     schema: {
       contentImportJob: { id: 'contentImportJob.id' },
       work: {},
@@ -33,6 +34,7 @@ function createService() {
       },
       workflowJob: {},
     },
+    withTransaction: jest.fn(async (callback) => callback(db)),
   }
   const uploadService = {
     deleteUploadedFile: jest.fn(),
@@ -131,6 +133,81 @@ describe('ComicArchiveImportService workflow cleanup', () => {
 })
 
 describe('ComicArchiveImportService chapter atomicity', () => {
+  it('emits structured progress for each uploaded archive image', async () => {
+    const { contentImportService, service, uploadService } = createService()
+    const updateProgress = jest.fn(async () => undefined)
+    contentImportService.recordUploadedFileResidue
+      .mockResolvedValueOnce('residue-1')
+      .mockResolvedValueOnce('residue-2')
+    uploadService.uploadLocalFileWithDeleteTarget
+      .mockResolvedValueOnce({
+        deleteTarget: {
+          filePath: 'uploaded/001.jpg',
+          objectKey: 'comic/1/chapter/101/job-1/001.jpg',
+          provider: 'local',
+        },
+        upload: { filePath: 'uploaded/001.jpg' },
+      })
+      .mockResolvedValueOnce({
+        deleteTarget: {
+          filePath: 'uploaded/002.jpg',
+          objectKey: 'comic/1/chapter/101/job-1/002.jpg',
+          provider: 'local',
+        },
+        upload: { filePath: 'uploaded/002.jpg' },
+      })
+
+    await expect(
+      (service as any).importChapter(
+        {
+          assertStillOwned: jest.fn(),
+          attemptId: 'attempt-1',
+          chapterIndex: 2,
+          chapterTotal: 5,
+          itemId: 'item-1',
+          jobId: 'job-1',
+          updateProgress,
+          workId: 1,
+        },
+        {
+          chapterId: 101,
+          chapterTitle: '第 101 话',
+          existingImageCount: 0,
+          hasExistingContent: false,
+          imageCount: 2,
+          imagePaths: ['/tmp/001.jpg', '/tmp/002.jpg'],
+          importMode: 'replace',
+          message: '可导入',
+          path: '101',
+          warningMessage: '',
+        },
+      ),
+    ).resolves.toEqual(['uploaded/001.jpg', 'uploaded/002.jpg'])
+
+    expect(updateProgress).toHaveBeenNthCalledWith(1, {
+      detail: {
+        kind: 'content-import.image',
+        workflowType: 'content-import.archive-import',
+        itemId: 'item-1',
+        localChapterId: 101,
+        chapterIndex: 2,
+        chapterTotal: 5,
+        imageIndex: 1,
+        imageTotal: 2,
+        title: '第 101 话',
+      },
+      message: '已导入压缩包章节 2/5 的第 1/2 张图片',
+    })
+    expect(updateProgress).toHaveBeenNthCalledWith(2, {
+      detail: expect.objectContaining({
+        imageIndex: 2,
+        imageTotal: 2,
+        localChapterId: 101,
+      }),
+      message: '已导入压缩包章节 2/5 的第 2/2 张图片',
+    })
+  })
+
   it('does not overwrite chapter content when any image upload fails', async () => {
     const { contentImportService, db, service, uploadService } = createService()
     const deleteTarget = {

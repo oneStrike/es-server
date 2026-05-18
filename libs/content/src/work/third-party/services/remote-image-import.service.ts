@@ -7,7 +7,8 @@ import type { LookupFunction } from 'node:net'
 import type {
   DownloadedRemoteImage,
   RemoteImageImportFailureContext,
-  RemoteImageImportHeartbeatOptions,
+  RemoteImageImportCancellationOptions,
+  RemoteImageImportOperationOptions,
   RemoteImageImportSuccessHandler,
   SafeRemoteImageUrl,
 } from '../third-party-comic-import.type'
@@ -19,6 +20,7 @@ import { isIP } from 'node:net'
 import { basename, extname, join } from 'node:path'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { isWorkflowCancellationError } from '@libs/platform/modules/workflow/workflow-cancellation'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 import { ConfigReader } from '@libs/system-config/config-reader'
 import { HttpException, Injectable } from '@nestjs/common'
@@ -33,7 +35,7 @@ import { ThirdPartyResourceThrottleService } from './third-party-resource-thrott
 const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
 const MAX_REMOTE_IMAGE_COUNT = 200
 const REMOTE_IMAGE_DOWNLOAD_TIMEOUT_MS = 300000
-const REMOTE_IMAGE_HEARTBEAT_INTERVAL_MS = 60000
+const REMOTE_IMAGE_CANCELLATION_CHECK_INTERVAL_MS = 60000
 const COPY_MANGA_IMAGE_HOST_PATTERN = /^[a-z0-9-]+\.mangafunb\.fun$/i
 
 @Injectable()
@@ -57,18 +59,22 @@ export class RemoteImageImportService {
   async importImage(
     url: string,
     objectKeySegments: string[],
-    options: RemoteImageImportHeartbeatOptions = {},
+    options: RemoteImageImportOperationOptions = {},
   ) {
-    const downloadResult = await this.withHeartbeat(
+    const downloadResult = await this.withCancellationCheck(
       () => this.downloadToTemp(url),
       options,
+      {
+        skipInitialCancellationCheck:
+          options.skipDownloadInitialCancellationCheck,
+      },
     )
     const downloadedFile = downloadResult.result
     try {
-      if (downloadResult.heartbeatError) {
-        throw downloadResult.heartbeatError
+      if (downloadResult.cancellationError) {
+        throw downloadResult.cancellationError
       }
-      const uploadResult = await this.withHeartbeat(
+      const uploadResult = await this.withCancellationCheck(
         () =>
           this.uploadService.uploadLocalFileWithDeleteTarget({
             localPath: downloadedFile.localPath,
@@ -77,11 +83,11 @@ export class RemoteImageImportService {
           }),
         options,
       )
-      if (uploadResult.heartbeatError) {
+      if (uploadResult.cancellationError) {
         await this.uploadService
           .deleteUploadedFile(uploadResult.result.deleteTarget)
           .catch(() => undefined)
-        throw uploadResult.heartbeatError
+        throw uploadResult.cancellationError
       }
       return uploadResult.result
     } finally {
@@ -96,7 +102,7 @@ export class RemoteImageImportService {
     images: ThirdPartyComicImageDto[],
     objectKeySegments: string[],
     onImported?: RemoteImageImportSuccessHandler,
-    options: RemoteImageImportHeartbeatOptions = {},
+    options: RemoteImageImportCancellationOptions = {},
   ) {
     if (images.length > MAX_REMOTE_IMAGE_COUNT) {
       throw this.remoteImageError('远程图片数量超过限制')
@@ -104,13 +110,17 @@ export class RemoteImageImportService {
 
     const filePaths: string[] = []
     for (const [index, image] of images.entries()) {
+      await options.assertNotCancelled?.()
       const imageIndex = index + 1
       const safeSourceUrl = this.toSafeSourceUrl(image.url)
       try {
         const importedFile = await this.importImage(
           image.url,
           objectKeySegments,
-          options,
+          {
+            ...options,
+            skipDownloadInitialCancellationCheck: true,
+          },
         )
         filePaths.push(importedFile.upload.filePath)
         await onImported?.({
@@ -123,7 +133,11 @@ export class RemoteImageImportService {
           fileSize: importedFile.upload.fileSize,
           mimeType: importedFile.upload.mimeType,
         })
+        await options.assertNotCancelled?.()
       } catch (error) {
+        if (isWorkflowCancellationError(error)) {
+          throw error
+        }
         throw this.withImageFailureContext(
           error,
           this.buildRemoteImageFailureContext(
@@ -143,39 +157,43 @@ export class RemoteImageImportService {
     return this.uploadService.deleteUploadedFile(target)
   }
 
-  // 在长耗时下载/上传期间周期性续租，避免单张图片卡住时 workflow claim 过期。
-  private async withHeartbeat<T>(
+  // 在长耗时下载/上传期间周期性检查取消状态；workflow lease 由 runtime 统一维护。
+  private async withCancellationCheck<T>(
     operation: () => Promise<T>,
-    options: RemoteImageImportHeartbeatOptions,
+    options: RemoteImageImportCancellationOptions,
+    cancellationOptions: { skipInitialCancellationCheck?: boolean } = {},
   ) {
-    if (!options.heartbeat) {
+    if (!options.assertNotCancelled) {
       return {
         result: await operation(),
-        heartbeatError: null,
+        cancellationError: null,
       }
     }
 
     const intervalMs = Math.max(
       1000,
-      options.heartbeatIntervalMs ?? REMOTE_IMAGE_HEARTBEAT_INTERVAL_MS,
+      options.cancellationCheckIntervalMs ??
+        REMOTE_IMAGE_CANCELLATION_CHECK_INTERVAL_MS,
     )
-    await options.heartbeat()
-    let heartbeatError: unknown = null
-    let heartbeatInFlight: Promise<void> | null = null
-    const runHeartbeat = () => {
-      heartbeatInFlight = options.heartbeat!().catch((error) => {
-        heartbeatError ??= error
+    if (!cancellationOptions.skipInitialCancellationCheck) {
+      await options.assertNotCancelled()
+    }
+    let cancellationError: unknown = null
+    let cancellationCheckInFlight: Promise<void> | null = null
+    const runCancellationCheck = () => {
+      cancellationCheckInFlight = options.assertNotCancelled!().catch((error) => {
+        cancellationError ??= error
       })
     }
     const timer = setInterval(() => {
-      runHeartbeat()
+      runCancellationCheck()
     }, intervalMs)
     try {
       const result = await operation()
-      await heartbeatInFlight
+      await cancellationCheckInFlight
       return {
         result,
-        heartbeatError,
+        cancellationError,
       }
     } finally {
       clearInterval(timer)

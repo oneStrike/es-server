@@ -1,8 +1,10 @@
 import { BusinessException } from '@libs/platform/exceptions'
+import { WorkflowCancellationError } from './workflow-cancellation'
 import {
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
   WorkflowEventTypeEnum,
+  WorkflowJobArchiveScopeEnum,
   WorkflowJobStatusEnum,
   WorkflowOperatorTypeEnum,
 } from './workflow.constant'
@@ -54,6 +56,7 @@ describe('WorkflowService state machine', () => {
         workflowJobId: 'eventWorkflowJobId',
       },
       workflowJob: {
+        archivedAt: 'archivedAt',
         cancelRequestedAt: 'cancelRequestedAt',
         createdAt: 'createdAt',
         currentAttemptFk: 'currentAttemptFk',
@@ -65,6 +68,7 @@ describe('WorkflowService state machine', () => {
         jobId: 'jobId',
         operatorType: 'operatorType',
         operatorUserId: 'operatorUserId',
+        progressDetail: 'progressDetail',
         progressMessage: 'progressMessage',
         progressPercent: 'progressPercent',
         selectedItemCount: 'selectedItemCount',
@@ -82,6 +86,7 @@ describe('WorkflowService state machine', () => {
   function createWorkflowJob(overrides: Record<string, unknown> = {}) {
     return {
       cancelRequestedAt: null,
+      archivedAt: null,
       createdAt: baseDate,
       currentAttemptFk: null,
       displayName: '内容导入',
@@ -92,6 +97,7 @@ describe('WorkflowService state machine', () => {
       jobId: 'job-1',
       operatorType: WorkflowOperatorTypeEnum.ADMIN,
       operatorUserId: 7,
+      progressDetail: null,
       progressMessage: null,
       progressPercent: 0,
       selectedItemCount: 2,
@@ -134,8 +140,10 @@ describe('WorkflowService state machine', () => {
 
   function createUpdateTx(returningRows: unknown[][] = []) {
     const updateSets: Record<string, unknown>[] = []
-    const update = jest.fn(() => ({
+    const updateTargets: unknown[] = []
+    const update = jest.fn((target?: unknown) => ({
       set: jest.fn((value: Record<string, unknown>) => {
+        updateTargets.push(target)
         updateSets.push(value)
         return {
           where: jest.fn(() => ({
@@ -154,6 +162,7 @@ describe('WorkflowService state machine', () => {
         })),
         update,
       },
+      updateTargets,
       updateSets,
     }
   }
@@ -258,7 +267,14 @@ describe('WorkflowService state machine', () => {
   }
 
   it('returns workflow detail without loading unbounded events', async () => {
-    const job = createWorkflowJob()
+    const progressDetail = {
+      kind: 'content-import.image',
+      workflowType: 'content-import.third-party-import',
+      itemId: 'item-1',
+      imageIndex: 19,
+      imageTotal: 21,
+    }
+    const job = createWorkflowJob({ progressDetail })
     const attempt = createWorkflowAttempt()
     const db = createDetailDb([[attempt]])
     const { service } = createService({ db })
@@ -275,10 +291,102 @@ describe('WorkflowService state machine', () => {
           }),
         ],
         jobId: 'job-1',
+        progressDetail,
       }),
     )
     expect(result).not.toHaveProperty('events')
     expect(db.select).toHaveBeenCalledTimes(1)
+  })
+
+  it('excludes archived workflow jobs from the default page', async () => {
+    const activeJob = createWorkflowJob({ failedItemCount: 0 })
+    const findPagination = jest.fn(async () => ({
+      list: [activeJob],
+      pageIndex: 1,
+      pageSize: 10,
+      total: 1,
+    }))
+    const { service } = createService()
+    Object.defineProperty(service, 'drizzle', {
+      configurable: true,
+      value: {
+        ext: { findPagination },
+        schema: createWorkflowSchema(),
+      },
+    })
+
+    const result = await service.getJobPage({ pageIndex: 1, pageSize: 10 })
+
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        archivedAt: null,
+        jobId: 'job-1',
+      }),
+    )
+    expect(findPagination).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 10,
+        where: expect.anything(),
+      }),
+    )
+  })
+
+  it('supports archived-only and all workflow page scopes', async () => {
+    const archivedAt = new Date('2026-05-18T03:00:00.000Z')
+    const archivedJob = createWorkflowJob({ archivedAt })
+    const findPagination = jest
+      .fn()
+      .mockResolvedValueOnce({
+        list: [archivedJob],
+        pageIndex: 1,
+        pageSize: 10,
+        total: 1,
+      })
+      .mockResolvedValueOnce({
+        list: [archivedJob, createWorkflowJob()],
+        pageIndex: 1,
+        pageSize: 10,
+        total: 2,
+      })
+    const { service } = createService()
+    Object.defineProperty(service, 'drizzle', {
+      configurable: true,
+      value: {
+        ext: { findPagination },
+        schema: createWorkflowSchema(),
+      },
+    })
+
+    const archivedResult = await service.getJobPage({
+      archiveScope: WorkflowJobArchiveScopeEnum.ARCHIVED,
+      pageIndex: 1,
+      pageSize: 10,
+    })
+    const allResult = await service.getJobPage({
+      archiveScope: WorkflowJobArchiveScopeEnum.ALL,
+      pageIndex: 1,
+      pageSize: 10,
+    })
+
+    expect(archivedResult.list[0]).toEqual(
+      expect.objectContaining({
+        archivedAt,
+        jobId: 'job-1',
+      }),
+    )
+    expect(allResult.total).toBe(2)
+    expect(findPagination).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      expect.objectContaining({ where: expect.anything() }),
+    )
+    expect(findPagination).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.objectContaining({ where: undefined }),
+    )
   })
 
   it('returns bounded workflow records with attempt correlation', async () => {
@@ -369,7 +477,7 @@ describe('WorkflowService state machine', () => {
     expect('createDraftInTransaction' in service).toBe(false)
   })
 
-  it('builds execution contexts with explicit lease renewal separate from progress', async () => {
+  it('builds execution contexts without exposing manual lease renewal', () => {
     const job = createWorkflowJob({
       currentAttemptFk: 10n,
       status: WorkflowJobStatusEnum.RUNNING,
@@ -378,24 +486,22 @@ describe('WorkflowService state machine', () => {
       claimExpiresAt: new Date(Date.now() + 60_000),
     })
     const { service } = createService()
-    const renewLeaseForAttempt = jest.fn(async () => undefined)
-    setServiceMethod(service, 'renewLeaseForAttempt', renewLeaseForAttempt)
 
     const context = (
       service as unknown as {
         buildExecutionContext: (
           job: ReturnType<typeof createWorkflowJob>,
           attempt: ReturnType<typeof createWorkflowAttempt>,
-        ) => { renewLease: () => Promise<void> }
+        ) => Record<string, unknown>
       }
     ).buildExecutionContext(job, attempt)
 
-    expect(context.renewLease).toEqual(expect.any(Function))
-    await context.renewLease()
-    expect(renewLeaseForAttempt).toHaveBeenCalledWith(job, attempt)
+    expect(context).not.toHaveProperty('renewLease')
+    expect(context.updateProgress).toEqual(expect.any(Function))
+    expect(context.assertStillOwned).toEqual(expect.any(Function))
   })
 
-  it('updates progress and renews the lease without appending progress events', async () => {
+  it('updates progress without renewing the attempt lease or appending progress events', async () => {
     const job = createWorkflowJob({
       currentAttemptFk: 10n,
       status: WorkflowJobStatusEnum.RUNNING,
@@ -406,7 +512,10 @@ describe('WorkflowService state machine', () => {
     const { updateSets, tx } = createUpdateTx([[attempt]])
     const { service } = createService({ tx })
     const appendEvent = jest.fn(async () => 1n)
+    const renewLeaseForAttempt = jest.fn(async () => undefined)
     setServiceMethod(service, 'appendEvent', appendEvent)
+    setServiceMethod(service, 'renewLeaseForAttempt', renewLeaseForAttempt)
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
 
     await (
       service as unknown as {
@@ -424,16 +533,98 @@ describe('WorkflowService state machine', () => {
     expect(updateSets).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          claimExpiresAt: expect.any(Date),
-          heartbeatAt: expect.any(Date),
-        }),
-        expect.objectContaining({
           progressMessage: '下载第 43 话图片 1/100',
           progressPercent: 10,
         }),
       ]),
     )
+    expect(updateSets).toHaveLength(1)
+    expect(renewLeaseForAttempt).not.toHaveBeenCalled()
     expect(appendEvent).not.toHaveBeenCalled()
+  })
+
+  it('updates structured progress detail without changing task progress percent', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      progressPercent: 50,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const attempt = createWorkflowAttempt({
+      claimExpiresAt: new Date(Date.now() + 60_000),
+    })
+    const progressDetail = {
+      kind: 'content-import.image',
+      workflowType: 'content-import.third-party-import',
+      itemId: 'item-1',
+      providerChapterId: 'chapter-1',
+      chapterIndex: 10,
+      chapterTotal: 61,
+      imageIndex: 19,
+      imageTotal: 21,
+    }
+    const { updateSets, tx } = createUpdateTx([[attempt]])
+    const { service } = createService({ tx })
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
+
+    await (
+      service as unknown as {
+        updateProgressForAttempt: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+          progress: { detail: Record<string, unknown>; message: string },
+        ) => Promise<void>
+      }
+    ).updateProgressForAttempt(job, attempt, {
+      detail: progressDetail,
+      message: '正在导入图片 19/21',
+    })
+
+    const jobUpdate = updateSets.find(
+      (item) => item.progressMessage === '正在导入图片 19/21',
+    )
+    expect(jobUpdate).toEqual(
+      expect.objectContaining({
+        progressDetail,
+        progressMessage: '正在导入图片 19/21',
+      }),
+    )
+    expect(jobUpdate).not.toHaveProperty('progressPercent')
+  })
+
+  it('clears structured progress detail when detail is explicitly null', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      progressDetail: {
+        kind: 'content-import.image',
+        imageIndex: 1,
+        imageTotal: 2,
+      },
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const attempt = createWorkflowAttempt({
+      claimExpiresAt: new Date(Date.now() + 60_000),
+    })
+    const { updateSets, tx } = createUpdateTx([[attempt]])
+    const { service } = createService({ tx })
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
+
+    await (
+      service as unknown as {
+        updateProgressForAttempt: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+          progress: { detail: null },
+        ) => Promise<void>
+      }
+    ).updateProgressForAttempt(job, attempt, { detail: null })
+
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          progressDetail: null,
+        }),
+      ]),
+    )
   })
 
   it('keeps the task progress percent when only the current item message changes', async () => {
@@ -447,6 +638,7 @@ describe('WorkflowService state machine', () => {
     })
     const { updateSets, tx } = createUpdateTx([[attempt]])
     const { service } = createService({ tx })
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
 
     await (
       service as unknown as {
@@ -482,6 +674,7 @@ describe('WorkflowService state machine', () => {
     })
     const { updateSets, tx } = createUpdateTx([[attempt]])
     const { service } = createService({ tx })
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
 
     await (
       service as unknown as {
@@ -502,6 +695,71 @@ describe('WorkflowService state machine', () => {
       }),
     )
     expect(jobUpdate).not.toHaveProperty('progressMessage')
+  })
+
+  it('ignores progress updates after the attempt loses ownership', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const attempt = createWorkflowAttempt({
+      claimExpiresAt: new Date(Date.now() + 60_000),
+    })
+    const { tx, updateSets } = createUpdateTx([[attempt]])
+    const { service } = createService({ tx })
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => false))
+
+    await (
+      service as unknown as {
+        updateProgressForAttempt: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+          progress: { detail: Record<string, unknown>; message: string },
+        ) => Promise<void>
+      }
+    ).updateProgressForAttempt(job, attempt, {
+      detail: {
+        kind: 'content-import.image',
+        imageIndex: 1,
+        imageTotal: 2,
+      },
+      message: '迟到的图片进度',
+    })
+
+    expect(updateSets).toHaveLength(0)
+  })
+
+  it('does not write progress after a cancel request is observed', async () => {
+    const job = createWorkflowJob({
+      cancelRequestedAt: baseDate,
+      currentAttemptFk: 10n,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const attempt = createWorkflowAttempt({
+      claimExpiresAt: new Date(Date.now() + 60_000),
+    })
+    const { tx, updateSets } = createUpdateTx([[attempt]])
+    const { service } = createService({ tx })
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => false))
+
+    await (
+      service as unknown as {
+        updateProgressForAttempt: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+          progress: { detail: Record<string, unknown>; message: string },
+        ) => Promise<void>
+      }
+    ).updateProgressForAttempt(job, attempt, {
+      detail: {
+        kind: 'content-import.image',
+        imageIndex: 2,
+        imageTotal: 3,
+      },
+      message: '取消后的图片进度',
+    })
+
+    expect(updateSets).toHaveLength(0)
   })
 
   it('rejects cancellation for terminal jobs before mutating state', async () => {
@@ -530,7 +788,7 @@ describe('WorkflowService state machine', () => {
       finishedAt: baseDate,
       status: WorkflowJobStatusEnum.CANCELLED,
     }
-    const { tx } = createUpdateTx([[updatedJob]])
+    const { tx, updateSets } = createUpdateTx([[updatedJob]])
     const { service } = createService({ tx })
     const cancelPendingAttempts = jest.fn(async () => undefined)
     const releaseConflictKeys = jest.fn(async () => undefined)
@@ -566,10 +824,66 @@ describe('WorkflowService state machine', () => {
       }),
       tx,
     )
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          progressDetail: null,
+          status: WorkflowJobStatusEnum.CANCELLED,
+        }),
+      ]),
+    )
   })
 
-  it('retries failed jobs by reusing conflict keys and creating a retry attempt', async () => {
-    const job = createWorkflowJob({ status: WorkflowJobStatusEnum.FAILED })
+  it('clears structured progress detail immediately when a running job is cancelling', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      progressDetail: {
+        kind: 'content-import.image',
+        imageIndex: 1,
+        imageTotal: 2,
+      },
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const updatedJob = {
+      ...job,
+      cancelRequestedAt: baseDate,
+      progressDetail: null,
+      status: WorkflowJobStatusEnum.RUNNING,
+    }
+    const { tx, updateSets } = createUpdateTx([[updatedJob]])
+    const { service } = createService({ tx })
+    const cancelPendingAttempts = jest.fn(async () => undefined)
+    const releaseConflictKeys = jest.fn(async () => undefined)
+    setServiceMethod(service, 'readJobWithDb', jest.fn(async () => job))
+    setServiceMethod(service, 'cancelPendingAttempts', cancelPendingAttempts)
+    setServiceMethod(service, 'releaseConflictKeys', releaseConflictKeys)
+    setServiceMethod(service, 'appendEventWithDb', jest.fn(async () => 1n))
+
+    const result = await service.cancelJob({ jobId: 'job-1' })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        progressDetail: null,
+        status: WorkflowJobStatusEnum.RUNNING,
+      }),
+    )
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          progressDetail: null,
+          status: WorkflowJobStatusEnum.RUNNING,
+        }),
+      ]),
+    )
+    expect(cancelPendingAttempts).not.toHaveBeenCalled()
+    expect(releaseConflictKeys).not.toHaveBeenCalled()
+  })
+
+  it('retries failed jobs by reusing conflict keys and restoring active list visibility', async () => {
+    const job = createWorkflowJob({
+      archivedAt: new Date('2026-05-18T03:00:00.000Z'),
+      status: WorkflowJobStatusEnum.FAILED,
+    })
     const retryAttempt = createWorkflowAttempt({
       attemptId: 'attempt-2',
       attemptNo: 2,
@@ -582,7 +896,7 @@ describe('WorkflowService state machine', () => {
       finishedAt: null,
       status: WorkflowJobStatusEnum.PENDING,
     }
-    const { tx } = createUpdateTx([[updatedJob]])
+    const { tx, updateSets } = createUpdateTx([[updatedJob]])
     const { handler, service } = createService({ tx })
     const reserveConflictKeys = jest.fn(async () => undefined)
     const appendEventWithDb = jest.fn(async () => 1n)
@@ -635,6 +949,16 @@ describe('WorkflowService state machine', () => {
         workflowAttemptId: retryAttempt.id,
       }),
       tx,
+    )
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          archivedAt: null,
+          currentAttemptFk: retryAttempt.id,
+          progressDetail: null,
+          status: WorkflowJobStatusEnum.PENDING,
+        }),
+      ]),
     )
   })
 
@@ -706,6 +1030,7 @@ describe('WorkflowService state machine', () => {
         expect.objectContaining({
           currentAttemptFk: delayedAttempt.id,
           finishedAt: null,
+          progressDetail: null,
           status: WorkflowJobStatusEnum.PENDING,
         }),
       ]),
@@ -729,7 +1054,7 @@ describe('WorkflowService state machine', () => {
       finishedAt: baseDate,
       status: WorkflowJobStatusEnum.EXPIRED,
     }
-    const { tx } = createUpdateTx([[updatedJob]])
+    const { tx, updateSets } = createUpdateTx([[updatedJob]])
     const { handler, service } = createService({ tx })
     const releaseConflictKeys = jest.fn(async () => undefined)
     const appendEventWithDb = jest.fn(async () => 1n)
@@ -758,6 +1083,410 @@ describe('WorkflowService state machine', () => {
       }),
       tx,
     )
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          progressDetail: null,
+          status: WorkflowJobStatusEnum.EXPIRED,
+        }),
+      ]),
+    )
+  })
+
+  it('clears structured progress detail when completing an attempt', async () => {
+    const attempt = createWorkflowAttempt()
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      progressDetail: {
+        kind: 'content-import.image',
+        imageIndex: 1,
+        imageTotal: 2,
+      },
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const { tx, updateSets } = createUpdateTx([
+      [{ ...attempt, status: WorkflowAttemptStatusEnum.SUCCESS }],
+      [{ ...job, status: WorkflowJobStatusEnum.SUCCESS }],
+    ])
+    const { service } = createService({ tx })
+    setServiceMethod(service, 'readAttemptWithDb', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readJobByIdWithDb', jest.fn(async () => job))
+    setServiceMethod(service, 'releaseConflictKeys', jest.fn(async () => undefined))
+    setServiceMethod(service, 'appendEventWithDb', jest.fn(async () => 1n))
+
+    await service.completeAttempt({
+      failedItemCount: 0,
+      skippedItemCount: 0,
+      status: WorkflowAttemptStatusEnum.SUCCESS,
+      successItemCount: 2,
+      workflowAttemptId: attempt.id,
+    })
+
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          progressDetail: null,
+          status: WorkflowJobStatusEnum.SUCCESS,
+        }),
+      ]),
+    )
+  })
+
+  it('archives terminal jobs without changing lifecycle status or cleanup state', async () => {
+    const archivedAt = new Date('2026-05-18T03:00:00.000Z')
+    const job = createWorkflowJob({
+      status: WorkflowJobStatusEnum.EXPIRED,
+    })
+    const updatedJob = {
+      ...job,
+      archivedAt,
+    }
+    const { tx, updateSets } = createUpdateTx([[updatedJob]])
+    const { handler, service } = createService({ tx })
+    setServiceMethod(service, 'readJobWithDb', jest.fn(async () => job))
+
+    const result = await service.archiveJob({ jobId: 'job-1' })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        archivedAt,
+        jobId: 'job-1',
+        status: WorkflowJobStatusEnum.EXPIRED,
+      }),
+    )
+    expect(handler.cleanupRetainedResources).not.toHaveBeenCalled()
+  })
+
+  it('archives terminal jobs idempotently', async () => {
+    const archivedAt = new Date('2026-05-18T03:00:00.000Z')
+    const job = createWorkflowJob({
+      archivedAt,
+      status: WorkflowJobStatusEnum.SUCCESS,
+    })
+    const { service, tx } = createService()
+    setServiceMethod(service, 'readJobWithDb', jest.fn(async () => job))
+
+    const result = await service.archiveJob({ jobId: 'job-1' })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        archivedAt,
+        jobId: 'job-1',
+        status: WorkflowJobStatusEnum.SUCCESS,
+      }),
+    )
+    expect(tx.update).not.toHaveBeenCalled()
+  })
+
+  it('rejects archiving non-terminal jobs before mutating state', async () => {
+    const { service, tx } = createService()
+    setServiceMethod(
+      service,
+      'readJobWithDb',
+      jest.fn(async () =>
+        createWorkflowJob({ status: WorkflowJobStatusEnum.RUNNING }),
+      ),
+    )
+
+    await expect(service.archiveJob({ jobId: 'job-1' })).rejects.toBeInstanceOf(
+      BusinessException,
+    )
+    expect(tx.update).not.toHaveBeenCalled()
+  })
+
+  it('uses carried counters when a consumed attempt is cancelled', async () => {
+    const attempt = createWorkflowAttempt({
+      selectedItemCount: 3,
+      status: WorkflowAttemptStatusEnum.PENDING,
+    })
+    const job = createWorkflowJob({ status: WorkflowJobStatusEnum.PENDING })
+    const { handler, service } = createService()
+    const completeAttempt = jest.fn(async () => undefined)
+    handler.execute.mockRejectedValueOnce(
+      new WorkflowCancellationError({
+        counters: {
+          failedItemCount: 0,
+          skippedItemCount: 1,
+          successItemCount: 2,
+        },
+      }),
+    )
+    setServiceMethod(
+      service,
+      'claimAttempt',
+      jest.fn(async () => ({ attempt, job })),
+    )
+    setServiceMethod(service, 'completeAttempt', completeAttempt)
+
+    await (
+      service as unknown as {
+        consumeAttempt: (attemptId: bigint) => Promise<void>
+      }
+    ).consumeAttempt(attempt.id)
+
+    expect(completeAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        failedItemCount: 0,
+        skippedItemCount: 1,
+        status: WorkflowAttemptStatusEnum.CANCELLED,
+        successItemCount: 2,
+        workflowAttemptId: attempt.id,
+      }),
+    )
+  })
+
+  it('starts a runtime lease keeper while consuming a claimed attempt', async () => {
+    const attempt = createWorkflowAttempt({
+      selectedItemCount: 3,
+      status: WorkflowAttemptStatusEnum.RUNNING,
+    })
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      selectedItemCount: 3,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const { handler, service } = createService()
+    const leaseKeeper = {
+      assertHealthy: jest.fn(),
+      stop: jest.fn(async () => undefined),
+    }
+    const startAttemptLeaseKeeper = jest.fn(() => leaseKeeper)
+    const completeAttempt = jest.fn(async () => undefined)
+    setServiceMethod(
+      service,
+      'claimAttempt',
+      jest.fn(async () => ({ attempt, job })),
+    )
+    setServiceMethod(service, 'startAttemptLeaseKeeper', startAttemptLeaseKeeper)
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
+    setServiceMethod(service, 'readAttempt', jest.fn(async () => attempt))
+    setServiceMethod(service, 'completeAttempt', completeAttempt)
+
+    await (
+      service as unknown as {
+        consumeAttempt: (attemptId: bigint) => Promise<void>
+      }
+    ).consumeAttempt(attempt.id)
+
+    expect(startAttemptLeaseKeeper).toHaveBeenCalledWith(job, attempt)
+    expect(handler.execute).toHaveBeenCalled()
+    expect(leaseKeeper.assertHealthy).toHaveBeenCalled()
+    expect(leaseKeeper.stop).toHaveBeenCalled()
+    expect(completeAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: WorkflowAttemptStatusEnum.SUCCESS,
+        workflowAttemptId: attempt.id,
+      }),
+    )
+  })
+
+  it('skips implicit success completion when runtime lease ownership is lost', async () => {
+    const attempt = createWorkflowAttempt({
+      selectedItemCount: 3,
+      status: WorkflowAttemptStatusEnum.RUNNING,
+    })
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      selectedItemCount: 3,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const { handler, service } = createService()
+    const claimLost = new Error('工作流 attempt claim 已丢失')
+    claimLost.name = 'WorkflowClaimLostError'
+    const leaseKeeper = {
+      assertHealthy: jest.fn(() => {
+        throw claimLost
+      }),
+      stop: jest.fn(async () => undefined),
+    }
+    const completeAttempt = jest.fn(async () => undefined)
+    setServiceMethod(
+      service,
+      'claimAttempt',
+      jest.fn(async () => ({ attempt, job })),
+    )
+    setServiceMethod(service, 'startAttemptLeaseKeeper', jest.fn(() => leaseKeeper))
+    setServiceMethod(service, 'readAttempt', jest.fn(async () => attempt))
+    setServiceMethod(service, 'completeAttempt', completeAttempt)
+
+    await (
+      service as unknown as {
+        consumeAttempt: (attemptId: bigint) => Promise<void>
+      }
+    ).consumeAttempt(attempt.id)
+
+    expect(handler.execute).toHaveBeenCalled()
+    expect(completeAttempt).not.toHaveBeenCalled()
+    expect(leaseKeeper.stop).toHaveBeenCalled()
+  })
+
+  it('skips failure completion when runtime lease ownership is lost before a handler error', async () => {
+    const attempt = createWorkflowAttempt({
+      selectedItemCount: 3,
+      status: WorkflowAttemptStatusEnum.RUNNING,
+    })
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      selectedItemCount: 3,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const { handler, service } = createService()
+    const claimLost = new Error('工作流 attempt claim 已丢失')
+    claimLost.name = 'WorkflowClaimLostError'
+    const leaseKeeper = {
+      assertHealthy: jest.fn(() => {
+        throw claimLost
+      }),
+      stop: jest.fn(async () => undefined),
+    }
+    const completeAttempt = jest.fn(async () => undefined)
+    handler.execute.mockRejectedValueOnce(new Error('provider exploded'))
+    setServiceMethod(
+      service,
+      'claimAttempt',
+      jest.fn(async () => ({ attempt, job })),
+    )
+    setServiceMethod(service, 'startAttemptLeaseKeeper', jest.fn(() => leaseKeeper))
+    setServiceMethod(service, 'completeAttempt', completeAttempt)
+
+    await (
+      service as unknown as {
+        consumeAttempt: (attemptId: bigint) => Promise<void>
+      }
+    ).consumeAttempt(attempt.id)
+
+    expect(completeAttempt).not.toHaveBeenCalled()
+    expect(leaseKeeper.stop).toHaveBeenCalled()
+  })
+
+  it('rejects explicit completion when the caller no longer owns the attempt', async () => {
+    const attempt = createWorkflowAttempt()
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const { service, tx } = createService()
+    const completeAttempt = jest.fn(async () => undefined)
+    setServiceMethod(service, 'readAttemptByAttemptId', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readJobByIdWithDb', jest.fn(async () => job))
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => false))
+    setServiceMethod(service, 'completeAttempt', completeAttempt)
+
+    await expect(
+      service.completeAttemptByAttemptId({
+        attemptId: attempt.attemptId,
+        completionOwnerClaimedBy: 'stale-worker',
+        failedItemCount: 0,
+        skippedItemCount: 0,
+        status: WorkflowAttemptStatusEnum.SUCCESS,
+        successItemCount: 2,
+      } as never),
+    ).resolves.toBeUndefined()
+
+    expect(completeAttempt).not.toHaveBeenCalled()
+    expect(tx.update).not.toHaveBeenCalled()
+  })
+
+  it('rejects explicit delayed retry completion when the caller no longer owns the attempt', async () => {
+    const attempt = createWorkflowAttempt()
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const { service, tx } = createService()
+    const completeAttemptWithDelayedRetry = jest.fn(async () => undefined)
+    setServiceMethod(service, 'readAttemptByAttemptId', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readJobByIdWithDb', jest.fn(async () => job))
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => false))
+    setServiceMethod(
+      service,
+      'completeAttemptWithDelayedRetry',
+      completeAttemptWithDelayedRetry,
+    )
+
+    await expect(
+      service.completeAttemptWithDelayedRetryByAttemptId({
+        attemptId: attempt.attemptId,
+        completionOwnerClaimedBy: 'stale-worker',
+        delayedSelectedItemCount: 1,
+        failedItemCount: 1,
+        nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
+        skippedItemCount: 0,
+        status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
+        successItemCount: 1,
+      } as never),
+    ).resolves.toBeUndefined()
+
+    expect(completeAttemptWithDelayedRetry).not.toHaveBeenCalled()
+    expect(tx.update).not.toHaveBeenCalled()
+  })
+
+  it('skips terminal writes when explicit completion loses ownership at the final update gate', async () => {
+    const attempt = createWorkflowAttempt()
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const { tx, updateTargets } = createUpdateTx([[]])
+    const { service } = createService({ tx })
+    const appendEventWithDb = jest.fn(async () => 1n)
+    const releaseConflictKeys = jest.fn(async () => undefined)
+    setServiceMethod(service, 'readAttemptByAttemptId', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readAttemptWithDb', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readJobByIdWithDb', jest.fn(async () => job))
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
+    setServiceMethod(service, 'appendEventWithDb', appendEventWithDb)
+    setServiceMethod(service, 'releaseConflictKeys', releaseConflictKeys)
+
+    await expect(
+      service.completeAttemptByAttemptId({
+        attemptId: attempt.attemptId,
+        completionOwnerClaimedBy: 'worker-1',
+        failedItemCount: 0,
+        skippedItemCount: 0,
+        status: WorkflowAttemptStatusEnum.SUCCESS,
+        successItemCount: 2,
+      } as never),
+    ).resolves.toBeUndefined()
+
+    expect(updateTargets).toEqual([createWorkflowSchema().workflowAttempt])
+    expect(appendEventWithDb).not.toHaveBeenCalled()
+    expect(releaseConflictKeys).not.toHaveBeenCalled()
+  })
+
+  it('skips delayed retry creation when explicit delayed completion loses ownership at the final update gate', async () => {
+    const attempt = createWorkflowAttempt()
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const { tx, updateTargets } = createUpdateTx([[]])
+    const { service } = createService({ tx })
+    const appendEventWithDb = jest.fn(async () => 1n)
+    const createAttemptWithDb = jest.fn()
+    setServiceMethod(service, 'readAttemptByAttemptId', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readAttemptWithDb', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readJobByIdWithDb', jest.fn(async () => job))
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
+    setServiceMethod(service, 'appendEventWithDb', appendEventWithDb)
+    setServiceMethod(service, 'createAttemptWithDb', createAttemptWithDb)
+
+    await expect(
+      service.completeAttemptWithDelayedRetryByAttemptId({
+        attemptId: attempt.attemptId,
+        completionOwnerClaimedBy: 'worker-1',
+        delayedSelectedItemCount: 1,
+        failedItemCount: 1,
+        nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
+        skippedItemCount: 0,
+        status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
+        successItemCount: 1,
+      } as never),
+    ).resolves.toBeUndefined()
+
+    expect(updateTargets).toEqual([createWorkflowSchema().workflowAttempt])
+    expect(createAttemptWithDb).not.toHaveBeenCalled()
+    expect(appendEventWithDb).not.toHaveBeenCalled()
   })
 
   it('worker pass expires drafts, recovers expired attempts, and consumes pending attempts', async () => {
@@ -888,6 +1617,7 @@ describe('WorkflowService state machine', () => {
         }),
         expect.objectContaining({
           currentAttemptFk: recoveryAttempt.id,
+          progressDetail: null,
           status: WorkflowJobStatusEnum.PENDING,
         }),
       ]),

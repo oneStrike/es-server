@@ -7,6 +7,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   WorkflowExpireDto,
+  WorkflowArchiveDto,
   WorkflowJobDetailDto,
   WorkflowJobDto,
   WorkflowJobIdDto,
@@ -80,6 +81,19 @@ export class AdminWorkflowController {
   // 取消工作流任务。
   async cancelJob(@Body() body: WorkflowJobIdDto) {
     return this.workflowService.cancelJob(body)
+  }
+
+  @Post('archive')
+  @ApiAuditDoc({
+    summary: '归档工作流任务',
+    model: WorkflowJobDto,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  // 归档终态工作流任务；仅隐藏默认列表，不清理 retained resource。
+  async archiveJob(@Body() body: WorkflowArchiveDto) {
+    return this.workflowService.archiveJob(body)
   }
 
   @Post('retry-items')

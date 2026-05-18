@@ -6,6 +6,8 @@ import type {
 import type { SQL } from 'drizzle-orm'
 import type {
   AppendWorkflowEventInput,
+  CompleteCurrentWorkflowAttemptInput,
+  CompleteCurrentWorkflowAttemptWithDelayedRetryInput,
   CompleteWorkflowAttemptByAttemptIdInput,
   CompleteWorkflowAttemptInput,
   CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput,
@@ -20,23 +22,30 @@ import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, desc, eq, gt, inArray, isNull, lte, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm'
 import {
   WorkflowExpireDto,
+  WorkflowArchiveDto,
   WorkflowJobIdDto,
   WorkflowJobPageRequestDto,
   WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
 } from './dto'
 import {
+  WORKFLOW_LEASE_RENEW_INTERVAL_SECONDS,
   WORKFLOW_RETRYABLE_JOB_STATUSES,
   WORKFLOW_WORKER_BATCH_SIZE,
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
   WorkflowEventTypeEnum,
+  WorkflowJobArchiveScopeEnum,
   WorkflowJobStatusEnum,
 } from './workflow.constant'
 import { normalizeWorkflowConflictKeys } from './workflow-conflict-key'
+import {
+  isWorkflowCancellationError,
+  WorkflowCancellationError,
+} from './workflow-cancellation'
 import {
   toWorkflowAttemptDto,
   toWorkflowErrorObject,
@@ -58,18 +67,23 @@ import {
 } from './workflow-runtime-policy'
 import { WorkflowRegistry } from './workflow.registry'
 
-class WorkflowCancellationError extends Error {
-  constructor() {
-    super('工作流任务已请求取消')
-    this.name = 'WorkflowCancellationError'
-  }
-}
-
 class WorkflowClaimLostError extends Error {
   constructor() {
     super('工作流 attempt claim 已丢失')
     this.name = 'WorkflowClaimLostError'
   }
+}
+
+interface WorkflowAttemptLeaseKeeper {
+  assertHealthy: () => void
+  stop: () => Promise<void>
+}
+
+function isWorkflowClaimLostError(error: unknown) {
+  return (
+    error instanceof WorkflowClaimLostError ||
+    (error instanceof Error && error.name === 'WorkflowClaimLostError')
+  )
 }
 
 /**
@@ -181,6 +195,11 @@ export class WorkflowService {
     if (input.status !== undefined) {
       conditions.push(eq(this.workflowJob.status, input.status))
     }
+    if (input.archiveScope === WorkflowJobArchiveScopeEnum.ARCHIVED) {
+      conditions.push(isNotNull(this.workflowJob.archivedAt))
+    } else if (input.archiveScope !== WorkflowJobArchiveScopeEnum.ALL) {
+      conditions.push(isNull(this.workflowJob.archivedAt))
+    }
 
     const page = await this.drizzle.ext.findPagination(this.workflowJob, {
       where: conditions.length ? and(...conditions) : undefined,
@@ -210,6 +229,35 @@ export class WorkflowService {
       ...toWorkflowJobDto(job),
       attempts: attempts.map((attempt) => toWorkflowAttemptDto(attempt)),
     }
+  }
+
+  // 归档终态工作流任务，仅从默认列表隐藏，不触发清理或生命周期变更。
+  async archiveJob(input: WorkflowArchiveDto) {
+    return this.drizzle.withTransaction(async (tx) => {
+      const job = await this.readJobWithDb(input.jobId, tx)
+      if (!isTerminalWorkflowJobStatus(job.status)) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '只有终态工作流任务可以归档',
+        )
+      }
+
+      if (job.archivedAt) {
+        return toWorkflowJobDto(job)
+      }
+
+      const now = new Date()
+      const [updatedJob] = await tx
+        .update(this.workflowJob)
+        .set({
+          archivedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(this.workflowJob.id, job.id))
+        .returning()
+
+      return toWorkflowJobDto(updatedJob)
+    })
   }
 
   // 分页查询工作流处理记录。
@@ -283,6 +331,7 @@ export class WorkflowService {
           cancelRequestedAt: now,
           finishedAt:
             nextStatus === WorkflowJobStatusEnum.CANCELLED ? now : job.finishedAt,
+          progressDetail: null,
           updatedAt: now,
         })
         .where(eq(this.workflowJob.id, job.id))
@@ -351,7 +400,9 @@ export class WorkflowService {
         .set({
           status: WorkflowJobStatusEnum.PENDING,
           currentAttemptFk: attempt.id,
+          archivedAt: null,
           cancelRequestedAt: null,
+          progressDetail: null,
           finishedAt: null,
           failedItemCount: Math.max(0, job.failedItemCount),
           updatedAt: new Date(),
@@ -394,6 +445,7 @@ export class WorkflowService {
         .update(this.workflowJob)
         .set({
           status: WorkflowJobStatusEnum.EXPIRED,
+          progressDetail: null,
           finishedAt: now,
           updatedAt: now,
         })
@@ -448,14 +500,26 @@ export class WorkflowService {
           finishedAt: now,
           updatedAt: now,
         })
-        .where(eq(this.workflowAttempt.id, attempt.id))
+        .where(this.buildAttemptCompletionWhere(attempt, input, now))
         .returning()
+      if (!updatedAttempt) {
+        this.logWorkflowLeaseLost(
+          job,
+          {
+            ...attempt,
+            claimedBy: input.completionOwnerClaimedBy ?? attempt.claimedBy,
+          },
+          new WorkflowClaimLostError(),
+        )
+        return
+      }
 
       const jobStatus = resolveJobStatusFromAttempt(updatedAttempt)
       const [updatedJob] = await tx
         .update(this.workflowJob)
         .set({
           status: jobStatus,
+          progressDetail: null,
           progressPercent:
             jobStatus === WorkflowJobStatusEnum.SUCCESS ? 100 : job.progressPercent,
           successItemCount: input.successItemCount,
@@ -488,12 +552,22 @@ export class WorkflowService {
   // 使用公开 attemptId 完成 attempt 并聚合 job 状态。
   async completeAttemptByAttemptId(input: CompleteWorkflowAttemptByAttemptIdInput) {
     const attempt = await this.readAttemptByAttemptId(input.attemptId)
+    const job = await this.readJobByIdWithDb(attempt.workflowJobId, this.db)
+    if (
+      !(await this.tryAssertAttemptStillOwned(job, {
+        ...attempt,
+        claimedBy: input.completionOwnerClaimedBy,
+      }))
+    ) {
+      return
+    }
     return this.completeAttempt({
       workflowAttemptId: attempt.id,
       status: input.status,
       successItemCount: input.successItemCount,
       failedItemCount: input.failedItemCount,
       skippedItemCount: input.skippedItemCount,
+      completionOwnerClaimedBy: input.completionOwnerClaimedBy,
       errorCode: input.errorCode,
       errorMessage: input.errorMessage,
     })
@@ -522,8 +596,19 @@ export class WorkflowService {
           finishedAt: now,
           updatedAt: now,
         })
-        .where(eq(this.workflowAttempt.id, attempt.id))
+        .where(this.buildAttemptCompletionWhere(attempt, input, now))
         .returning()
+      if (!updatedAttempt) {
+        this.logWorkflowLeaseLost(
+          job,
+          {
+            ...attempt,
+            claimedBy: input.completionOwnerClaimedBy ?? attempt.claimedBy,
+          },
+          new WorkflowClaimLostError(),
+        )
+        return
+      }
       const delayedAttempt = await this.createAttemptWithDb(
         job,
         WorkflowAttemptTriggerTypeEnum.SYSTEM_RECOVERY,
@@ -537,6 +622,7 @@ export class WorkflowService {
         .set({
           status: WorkflowJobStatusEnum.PENDING,
           currentAttemptFk: delayedAttempt.id,
+          progressDetail: null,
           successItemCount: input.successItemCount,
           failedItemCount: input.failedItemCount,
           skippedItemCount: input.skippedItemCount,
@@ -583,12 +669,22 @@ export class WorkflowService {
     input: CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput,
   ) {
     const attempt = await this.readAttemptByAttemptId(input.attemptId)
+    const job = await this.readJobByIdWithDb(attempt.workflowJobId, this.db)
+    if (
+      !(await this.tryAssertAttemptStillOwned(job, {
+        ...attempt,
+        claimedBy: input.completionOwnerClaimedBy,
+      }))
+    ) {
+      return
+    }
     return this.completeAttemptWithDelayedRetry({
       workflowAttemptId: attempt.id,
       status: input.status,
       successItemCount: input.successItemCount,
       failedItemCount: input.failedItemCount,
       skippedItemCount: input.skippedItemCount,
+      completionOwnerClaimedBy: input.completionOwnerClaimedBy,
       errorCode: input.errorCode,
       errorMessage: input.errorMessage,
       nextRetryAt: input.nextRetryAt,
@@ -756,6 +852,7 @@ export class WorkflowService {
           .set({
             status: WorkflowJobStatusEnum.PENDING,
             currentAttemptFk: recoveryAttempt.id,
+            progressDetail: null,
             successItemCount: recovery.successItemCount,
             failedItemCount: recovery.failedItemCount,
             skippedItemCount: recovery.skippedItemCount,
@@ -796,6 +893,7 @@ export class WorkflowService {
         .update(this.workflowJob)
         .set({
           status: terminalStatus,
+          progressDetail: null,
           progressPercent:
             terminalStatus === WorkflowJobStatusEnum.SUCCESS
               ? 100
@@ -848,11 +946,13 @@ export class WorkflowService {
         status: input.status ?? WorkflowJobStatusEnum.DRAFT,
         progressPercent: normalizeWorkflowProgressPercent(input.progress?.percent),
         progressMessage: input.progress?.message ?? null,
+        progressDetail: input.progress?.detail ?? null,
         currentAttemptFk: null,
         selectedItemCount: input.selectedItemCount ?? 0,
         successItemCount: 0,
         failedItemCount: 0,
         skippedItemCount: 0,
+        archivedAt: null,
         cancelRequestedAt: null,
         startedAt: null,
         finishedAt: null,
@@ -875,8 +975,13 @@ export class WorkflowService {
     }
     const { attempt, job } = claimed
     const handler = this.registry.resolve(job.workflowType)
+    const leaseKeeper = this.startAttemptLeaseKeeper(job, attempt)
     try {
       await handler.execute(this.buildExecutionContext(job, attempt))
+      leaseKeeper.assertHealthy()
+      if (!(await this.tryAssertAttemptStillOwned(job, attempt))) {
+        return
+      }
       const latestAttempt = await this.readAttempt(attempt.id)
       if (latestAttempt.status === WorkflowAttemptStatusEnum.RUNNING) {
         await this.completeAttempt({
@@ -885,22 +990,29 @@ export class WorkflowService {
           successItemCount: latestAttempt.selectedItemCount,
           failedItemCount: 0,
           skippedItemCount: 0,
+          completionOwnerClaimedBy: attempt.claimedBy ?? '',
         })
       }
     } catch (error) {
-      if (error instanceof WorkflowClaimLostError) {
+      if (isWorkflowClaimLostError(error)) {
         return
       }
+      if (!this.isLeaseKeeperHealthy(leaseKeeper)) {
+        return
+      }
+      const isCancellation = isWorkflowCancellationError(error)
+      const cancellationCounters = isCancellation ? error.counters : undefined
       const errorObject = toWorkflowErrorObject(error)
       await this.completeAttempt({
         workflowAttemptId: attempt.id,
-        status:
-          error instanceof WorkflowCancellationError
-            ? WorkflowAttemptStatusEnum.CANCELLED
-            : WorkflowAttemptStatusEnum.FAILED,
-        successItemCount: 0,
-        failedItemCount: attempt.selectedItemCount,
-        skippedItemCount: 0,
+        status: isCancellation
+          ? WorkflowAttemptStatusEnum.CANCELLED
+          : WorkflowAttemptStatusEnum.FAILED,
+        successItemCount: cancellationCounters?.successItemCount ?? 0,
+        failedItemCount:
+          cancellationCounters?.failedItemCount ?? attempt.selectedItemCount,
+        skippedItemCount: cancellationCounters?.skippedItemCount ?? 0,
+        completionOwnerClaimedBy: attempt.claimedBy ?? '',
         errorCode: errorObject.name,
         errorMessage: errorObject.message,
       })
@@ -911,6 +1023,8 @@ export class WorkflowService {
         workflowType: job.workflowType,
         error: errorObject,
       })
+    } finally {
+      await leaseKeeper.stop()
     }
   }
 
@@ -1011,6 +1125,7 @@ export class WorkflowService {
         .update(this.workflowJob)
         .set({
           status: WorkflowJobStatusEnum.EXPIRED,
+          progressDetail: null,
           finishedAt: now,
           updatedAt: now,
         })
@@ -1072,6 +1187,56 @@ export class WorkflowService {
       })
       .returning()
     return attempt
+  }
+
+  // 启动当前 attempt 的运行时自动续租器。
+  private startAttemptLeaseKeeper(
+    job: WorkflowJobSelect,
+    attempt: WorkflowAttemptSelect,
+  ) {
+    let stopped = false
+    let failure: unknown = null
+    let inFlight: Promise<void> | null = null
+    const intervalMs = Math.max(1000, WORKFLOW_LEASE_RENEW_INTERVAL_SECONDS * 1000)
+
+    const runRenewal = () => {
+      if (stopped || inFlight) {
+        return
+      }
+      inFlight = this.renewLeaseForAttempt(job, attempt)
+        .catch((error) => {
+          failure ??= error
+          if (isWorkflowClaimLostError(error)) {
+            this.logWorkflowLeaseLost(job, attempt, error)
+            return
+          }
+          this.logger.warn({
+            message: 'workflow_attempt_lease_renew_failed',
+            jobId: job.jobId,
+            attemptId: attempt.attemptId,
+            workflowType: job.workflowType,
+            error: toWorkflowErrorObject(error),
+          })
+        })
+        .finally(() => {
+          inFlight = null
+        })
+    }
+
+    const timer = setInterval(runRenewal, intervalMs)
+
+    return {
+      assertHealthy: () => {
+        if (failure) {
+          throw failure
+        }
+      },
+      stop: async () => {
+        stopped = true
+        clearInterval(timer)
+        await inFlight
+      },
+    }
   }
 
   // 解析下一个 attempt 序号。
@@ -1263,7 +1428,22 @@ export class WorkflowService {
         }
       },
       assertStillOwned: async () => this.assertAttemptStillOwned(job, attempt),
-      renewLease: async () => this.renewLeaseForAttempt(job, attempt),
+      completeAttempt: async (input: CompleteCurrentWorkflowAttemptInput) => {
+        await this.completeAttemptByAttemptId({
+          ...input,
+          attemptId: attempt.attemptId,
+          completionOwnerClaimedBy: attempt.claimedBy ?? '',
+        })
+      },
+      completeAttemptWithDelayedRetry: async (
+        input: CompleteCurrentWorkflowAttemptWithDelayedRetryInput,
+      ) => {
+        await this.completeAttemptWithDelayedRetryByAttemptId({
+          ...input,
+          attemptId: attempt.attemptId,
+          completionOwnerClaimedBy: attempt.claimedBy ?? '',
+        })
+      },
       updateProgress: async (progress: WorkflowProgress) =>
         this.updateProgressForAttempt(job, attempt, progress),
       appendEvent: async (
@@ -1308,20 +1488,25 @@ export class WorkflowService {
     }
   }
 
-  // 更新进度并续租。
+  // 更新进度，不承担 attempt claim 续租职责。
   private async updateProgressForAttempt(
     job: WorkflowJobSelect,
     attempt: WorkflowAttemptSelect,
     progress: WorkflowProgress,
   ) {
-    const now = new Date()
-    await this.renewLeaseForAttempt(job, attempt)
+    if (!(await this.tryAssertAttemptStillOwned(job, attempt))) {
+      return
+    }
 
+    const now = new Date()
     const update = {
       updatedAt: now,
       ...(progress.message === undefined
         ? {}
         : { progressMessage: progress.message }),
+      ...(progress.detail === undefined
+        ? {}
+        : { progressDetail: progress.detail }),
       ...(progress.percent === undefined
         ? {}
         : { progressPercent: normalizeWorkflowProgressPercent(progress.percent) }),
@@ -1329,7 +1514,14 @@ export class WorkflowService {
     await this.db
       .update(this.workflowJob)
       .set(update)
-      .where(eq(this.workflowJob.id, job.id))
+      .where(
+        and(
+          eq(this.workflowJob.id, job.id),
+          eq(this.workflowJob.status, WorkflowJobStatusEnum.RUNNING),
+          eq(this.workflowJob.currentAttemptFk, attempt.id),
+          isNull(this.workflowJob.cancelRequestedAt),
+        ),
+      )
   }
 
   // 确认当前执行者仍持有 attempt 租约，供回滚和最终写入前阻断陈旧 worker。
@@ -1350,6 +1542,66 @@ export class WorkflowService {
     ) {
       throw new WorkflowClaimLostError()
     }
+  }
+
+  // ownership gate 的 no-op 包装，用于显式 completion 路径阻断陈旧 worker。
+  private async tryAssertAttemptStillOwned(
+    job: WorkflowJobSelect,
+    attempt: WorkflowAttemptSelect,
+  ) {
+    try {
+      await this.assertAttemptStillOwned(job, attempt)
+      return true
+    } catch (error) {
+      if (isWorkflowClaimLostError(error)) {
+        this.logWorkflowLeaseLost(job, attempt, error)
+        return false
+      }
+      throw error
+    }
+  }
+
+  // 构建最终 completion 写入条件；context-bound completion 必须在 UPDATE 内再次证明 ownership。
+  private buildAttemptCompletionWhere(
+    attempt: WorkflowAttemptSelect,
+    input: Pick<CompleteWorkflowAttemptInput, 'completionOwnerClaimedBy'>,
+    now: Date,
+  ) {
+    const conditions = [eq(this.workflowAttempt.id, attempt.id)]
+    if (input.completionOwnerClaimedBy !== undefined) {
+      conditions.push(
+        eq(this.workflowAttempt.status, WorkflowAttemptStatusEnum.RUNNING),
+        eq(this.workflowAttempt.claimedBy, input.completionOwnerClaimedBy),
+        gt(this.workflowAttempt.claimExpiresAt, now),
+      )
+    }
+    return and(...conditions)
+  }
+
+  private isLeaseKeeperHealthy(leaseKeeper: { assertHealthy: () => void }) {
+    try {
+      leaseKeeper.assertHealthy()
+      return true
+    } catch (error) {
+      if (isWorkflowClaimLostError(error)) {
+        return false
+      }
+      throw error
+    }
+  }
+
+  private logWorkflowLeaseLost(
+    job: WorkflowJobSelect,
+    attempt: WorkflowAttemptSelect,
+    error: unknown,
+  ) {
+    this.logger.warn({
+      message: 'workflow_attempt_lease_lost',
+      jobId: job.jobId,
+      attemptId: attempt.attemptId,
+      workflowType: job.workflowType,
+      error: toWorkflowErrorObject(error),
+    })
   }
 
   // 构建 worker 标识。

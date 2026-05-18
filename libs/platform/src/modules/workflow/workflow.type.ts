@@ -29,6 +29,7 @@ export type WorkflowOperator = WorkflowAdminOperator | WorkflowSystemOperator
 export interface WorkflowProgress {
   percent?: number
   message?: string | null
+  detail?: WorkflowObject | null
 }
 
 /** 创建工作流任务入参。 */
@@ -60,6 +61,7 @@ export interface CompleteWorkflowAttemptInput {
   successItemCount: number
   failedItemCount: number
   skippedItemCount: number
+  completionOwnerClaimedBy?: string
   errorCode?: string | null
   errorMessage?: string | null
 }
@@ -77,6 +79,7 @@ export type CompleteWorkflowAttemptByAttemptIdInput = Omit<
   'workflowAttemptId'
 > & {
   attemptId: string
+  completionOwnerClaimedBy: string
 }
 
 /** 使用公开 attemptId 完成当前 attempt 并创建延后 retry attempt 的入参。 */
@@ -85,7 +88,20 @@ export type CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput = Omit<
   'workflowAttemptId'
 > & {
   attemptId: string
+  completionOwnerClaimedBy: string
 }
+
+/** 执行上下文完成当前 attempt 的入参。 */
+export type CompleteCurrentWorkflowAttemptInput = Omit<
+  CompleteWorkflowAttemptByAttemptIdInput,
+  'attemptId' | 'completionOwnerClaimedBy'
+>
+
+/** 执行上下文完成当前 attempt 并创建延后 retry attempt 的入参。 */
+export type CompleteCurrentWorkflowAttemptWithDelayedRetryInput = Omit<
+  CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput,
+  'attemptId' | 'completionOwnerClaimedBy'
+>
 
 /** 工作流执行上下文。 */
 export interface WorkflowExecutionContext {
@@ -97,7 +113,10 @@ export interface WorkflowExecutionContext {
   isCancelRequested: () => Promise<boolean>
   assertNotCancelled: () => Promise<void>
   assertStillOwned: () => Promise<void>
-  renewLease: () => Promise<void>
+  completeAttempt: (input: CompleteCurrentWorkflowAttemptInput) => Promise<void>
+  completeAttemptWithDelayedRetry: (
+    input: CompleteCurrentWorkflowAttemptWithDelayedRetryInput,
+  ) => Promise<void>
   updateProgress: (progress: WorkflowProgress) => Promise<void>
   appendEvent: (
     eventType: WorkflowEventTypeEnum,
@@ -139,6 +158,20 @@ export type WorkflowStatusCounters = Pick<
   WorkflowExpiredAttemptRecoveryResult,
   'failedItemCount' | 'successItemCount'
 >
+
+/** 工作流取消完成时可保留的条目计数。 */
+export interface WorkflowCancellationCounters {
+  successItemCount: number
+  failedItemCount: number
+  skippedItemCount: number
+}
+
+/** 工作流取消错误入参。 */
+export interface WorkflowCancellationErrorInput {
+  counters?: WorkflowCancellationCounters
+  cause?: unknown
+  message?: string
+}
 
 /** 工作流处理器。 */
 export interface WorkflowHandler {

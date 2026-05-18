@@ -14,6 +14,7 @@ import {
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
   WorkflowEventTypeEnum,
+  WorkflowJobArchiveScopeEnum,
   WorkflowJobStatusEnum,
   WorkflowOperatorTypeEnum,
 } from '../workflow.constant'
@@ -350,6 +351,15 @@ export class WorkflowJobDto {
   })
   progressMessage!: string | null
 
+  @ObjectProperty({
+    description: '结构化进度详情快照；用于展示当前运行中的子进度',
+    example: { kind: 'content-import.image', imageIndex: 1, imageTotal: 20 },
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  progressDetail!: Record<string, unknown> | null
+
   @NumberProperty({
     description: '选中条目数',
     example: 3,
@@ -414,6 +424,14 @@ export class WorkflowJobDto {
   })
   expiresAt!: Date | null
 
+  @DateProperty({
+    description: '归档时间；为空表示未归档',
+    example: '2026-05-17T03:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  archivedAt!: Date | null
+
   @ObjectProperty({
     description: '运行时非查询诊断摘要',
     example: { reason: 'partial failed' },
@@ -465,7 +483,16 @@ export class WorkflowJobPageRequestDto extends IntersectionType(
       IntersectionType(WorkflowTypeFieldsDto, WorkflowJobStatusFieldsDto),
     ),
   ),
-) {}
+) {
+  @EnumProperty({
+    description: '归档筛选范围（active=未归档；archived=已归档；all=全部）',
+    enum: WorkflowJobArchiveScopeEnum,
+    example: WorkflowJobArchiveScopeEnum.ACTIVE,
+    required: false,
+    default: WorkflowJobArchiveScopeEnum.ACTIVE,
+  })
+  archiveScope?: WorkflowJobArchiveScopeEnum
+}
 
 /** 工作流处理记录分页查询 DTO。 */
 export class WorkflowRecordPageRequestDto extends IntersectionType(
@@ -506,6 +533,9 @@ export class WorkflowRetryItemsDto extends WorkflowJobIdDto {
 
 /** 工作流清理 retained resource DTO。 */
 export class WorkflowExpireDto extends WorkflowJobIdDto {}
+
+/** 工作流归档 DTO。 */
+export class WorkflowArchiveDto extends WorkflowJobIdDto {}
 
 /** 工作流 attempt 状态更新 DTO。 */
 export class WorkflowAttemptCompleteDto {

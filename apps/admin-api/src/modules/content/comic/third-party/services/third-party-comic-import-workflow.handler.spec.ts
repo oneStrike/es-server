@@ -8,12 +8,12 @@ jest.mock('@libs/content/work/third-party/services/remote-image-import.service',
 }))
 
 import { WorkflowAttemptStatusEnum } from '@libs/platform/modules/workflow/workflow.constant'
+import { WorkflowCancellationError } from '@libs/platform/modules/workflow/workflow-cancellation'
 import { ThirdPartyComicImportWorkflowHandler } from './third-party-comic-import-workflow.handler'
 
 describe('ThirdPartyComicImportWorkflowHandler', () => {
   it('keeps successful chapters and fails only the broken chapter item', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = { completeAttemptByAttemptId: jest.fn() }
     const items = [
       {
         itemId: 'item-1',
@@ -93,26 +93,28 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     }
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       importService as never,
       remoteImageImportService as never,
     )
     const updateProgress = jest.fn()
 
-    await handler.execute({
+    const context = {
       appendEvent: jest.fn(),
       assertNotCancelled: jest.fn(),
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-1',
       attemptNo: 1,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
-      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress,
       workflowType: 'content-import.third-party-import',
-    })
+    }
+
+    await handler.execute(context)
 
     expect(contentImportService.markItemSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -128,7 +130,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         itemId: 'item-2',
       }),
     )
-    expect(workflowService.completeAttemptByAttemptId).toHaveBeenCalledWith(
+    expect(context.completeAttempt).toHaveBeenCalledWith(
       expect.objectContaining({
         failedItemCount: 1,
         status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
@@ -147,10 +149,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
 
   it('schedules rate-limited chapters for automatic retry and continues later items', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = {
-      completeAttemptByAttemptId: jest.fn(),
-      completeAttemptWithDelayedRetryByAttemptId: jest.fn(),
-    }
     const rateLimitError = new Error('rate limited', {
       cause: {
         rateLimited: true,
@@ -242,25 +240,27 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     const updateProgress = jest.fn()
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       importService as never,
       { deleteImportedFile: jest.fn() } as never,
     )
 
-    await handler.execute({
+    const context = {
       appendEvent,
       assertNotCancelled: jest.fn(),
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-1',
       attemptNo: 1,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
-      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress,
       workflowType: 'content-import.third-party-import',
-    })
+    }
+
+    await handler.execute(context)
 
     expect(importService.importWorkflowChapter).toHaveBeenCalledTimes(3)
     expect(contentImportService.markItemRateLimitRetrying).toHaveBeenCalledWith(
@@ -272,14 +272,13 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     )
     expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
     expect(contentImportService.markItemSuccess).toHaveBeenCalledTimes(2)
-    expect(workflowService.completeAttemptWithDelayedRetryByAttemptId).toHaveBeenCalledWith(
+    expect(context.completeAttemptWithDelayedRetry).toHaveBeenCalledWith(
       expect.objectContaining({
-        attemptId: 'attempt-1',
         delayedSelectedItemCount: 1,
         nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
       }),
     )
-    expect(workflowService.completeAttemptByAttemptId).not.toHaveBeenCalled()
+    expect(context.completeAttempt).not.toHaveBeenCalled()
     expect(updateProgress).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ percent: 33 }),
@@ -301,10 +300,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
 
   it('schedules automatic retry when image import wraps a rate-limit cause', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = {
-      completeAttemptByAttemptId: jest.fn(),
-      completeAttemptWithDelayedRetryByAttemptId: jest.fn(),
-    }
     const imageRateLimitError = new Error('远程图片下载被限流', {
       cause: {
         imageIndex: 1,
@@ -363,25 +358,27 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     }
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       importService as never,
       { deleteImportedFile: jest.fn() } as never,
     )
 
-    await handler.execute({
+    const context = {
       appendEvent: jest.fn(),
       assertNotCancelled: jest.fn(),
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-1',
       attemptNo: 1,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
-      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
-    })
+    }
+
+    await handler.execute(context)
 
     expect(contentImportService.markItemRateLimitRetrying).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -391,12 +388,11 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       }),
     )
     expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
-    expect(workflowService.completeAttemptWithDelayedRetryByAttemptId).toHaveBeenCalled()
+    expect(context.completeAttemptWithDelayedRetry).toHaveBeenCalled()
   })
 
   it('restores the prepared target on follow-up attempts instead of preparing a new work', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = { completeAttemptByAttemptId: jest.fn() }
     const items = [
       {
         autoRetryCount: 0,
@@ -451,25 +447,27 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     }
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       importService as never,
       { deleteImportedFile: jest.fn() } as never,
     )
 
-    await handler.execute({
+    const context = {
       appendEvent: jest.fn(),
       assertNotCancelled: jest.fn(),
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-2',
       attemptNo: 2,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
-      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
-    })
+    }
+
+    await handler.execute(context)
 
     expect(importService.prepareWorkflowImport).not.toHaveBeenCalled()
     expect(importService.readPreparedImportTarget).toHaveBeenCalledWith(
@@ -488,7 +486,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
 
   it('cleans the persisted new-work target when automatic retries exhaust with zero successes', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = { completeAttemptByAttemptId: jest.fn() }
     const items = [
       {
         autoRetryCount: 3,
@@ -547,7 +544,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     }
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       importService as never,
       { deleteImportedFile: jest.fn() } as never,
@@ -558,9 +554,10 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-4',
       attemptNo: 4,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
-      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
@@ -582,7 +579,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
 
   it('does not create another work when a create-new follow-up attempt cannot restore its target', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = { completeAttemptByAttemptId: jest.fn() }
     const contentImportService = {
       aggregateJob: jest.fn(async () => ({
         failedItemCount: 1,
@@ -615,25 +611,27 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     }
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       importService as never,
       { deleteImportedFile: jest.fn() } as never,
     )
 
-    await handler.execute({
+    const context = {
       appendEvent: jest.fn(),
       assertNotCancelled: jest.fn(),
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-2',
       attemptNo: 2,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
-      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
-    })
+    }
+
+    await handler.execute(context)
 
     expect(importService.prepareWorkflowImport).not.toHaveBeenCalled()
     expect(contentImportService.markItemFailed).toHaveBeenCalledWith(
@@ -642,7 +640,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         itemId: 'item-1',
       }),
     )
-    expect(workflowService.completeAttemptByAttemptId).toHaveBeenCalledWith(
+    expect(context.completeAttempt).toHaveBeenCalledWith(
       expect.objectContaining({
         errorCode: 'THIRD_PARTY_IMPORT_PREPARE_FAILED',
       }),
@@ -651,7 +649,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
 
   it('stops before marking item failure when workflow ownership is lost during rollback', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = { completeAttemptByAttemptId: jest.fn() }
     const items = [
       {
         itemId: 'item-1',
@@ -689,35 +686,230 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     const ownershipLost = new Error('claim lost')
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       importService as never,
       { deleteImportedFile: jest.fn() } as never,
     )
 
-    await expect(
-      handler.execute({
-        appendEvent: jest.fn(),
-        assertNotCancelled: jest.fn(),
-        assertStillOwned: jest.fn().mockRejectedValue(ownershipLost),
-        attemptId: 'attempt-1',
-        attemptNo: 1,
-        getStatus: jest.fn(),
-        isCancelRequested: jest.fn(),
-        renewLease: jest.fn(),
-        jobId: 'job-1',
-        updateProgress: jest.fn(),
-        workflowType: 'content-import.third-party-import',
-      }),
-    ).rejects.toThrow('claim lost')
+    const context = {
+      appendEvent: jest.fn(),
+      assertNotCancelled: jest.fn(),
+      assertStillOwned: jest.fn().mockRejectedValue(ownershipLost),
+      attemptId: 'attempt-1',
+      attemptNo: 1,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
+      getStatus: jest.fn(),
+      isCancelRequested: jest.fn(),
+      jobId: 'job-1',
+      updateProgress: jest.fn(),
+      workflowType: 'content-import.third-party-import',
+    }
+
+    await expect(handler.execute(context)).rejects.toThrow('claim lost')
 
     expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
-    expect(workflowService.completeAttemptByAttemptId).not.toHaveBeenCalled()
+    expect(context.completeAttempt).not.toHaveBeenCalled()
+  })
+
+  it('carries real counters when cancellation interrupts an item', async () => {
+    const registry = { register: jest.fn() }
+    const items = [
+      {
+        itemId: 'item-1',
+        metadata: {
+          chapter: { providerChapterId: 'p1', title: '第 1 话' },
+        },
+      },
+      {
+        itemId: 'item-2',
+        metadata: {
+          chapter: { providerChapterId: 'p2', title: '第 2 话' },
+        },
+      },
+    ]
+    const contentImportService = {
+      aggregateJob: jest.fn(async () => ({
+        failedItemCount: 0,
+        selectedItemCount: 2,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      })),
+      aggregateJobWithRetryState: jest.fn(async () => ({
+        failedItemCount: 0,
+        futureRetryItemCount: 0,
+        nextRetryAt: null,
+        selectedItemCount: 2,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      })),
+      listExecutableItems: jest.fn(async () => items),
+      listPendingUploadedFileResidues: jest.fn(async () => []),
+      markItemFailed: jest.fn(),
+      markItemSuccess: jest.fn(),
+      markResiduesCleaned: jest.fn(),
+      markThirdPartyImportTargetPrepared: jest.fn(),
+      readContentImportJobByWorkflowJobId: jest.fn(async () => ({
+        sourceSnapshot: { chapters: [], mode: 'createNew' },
+      })),
+      startItemAttempt: jest.fn(),
+    }
+    const importService = {
+      importWorkflowChapter: jest
+        .fn()
+        .mockResolvedValueOnce({
+          imageSucceeded: 1,
+          imageTotal: 1,
+          localChapterId: 101,
+        })
+        .mockRejectedValueOnce(new WorkflowCancellationError()),
+      prepareWorkflowImport: jest.fn(async () => ({
+        chapterPlans: [
+          { chapter: { providerChapterId: 'p1' }, imageTotal: 1 },
+          { chapter: { providerChapterId: 'p2' }, imageTotal: 1 },
+        ],
+        sourceBinding: { id: 1, providerGroupPathWord: 'default' },
+        work: { id: 100 },
+      })),
+      rollbackImportTask: jest.fn(),
+    }
+    const handler = new ThirdPartyComicImportWorkflowHandler(
+      registry as never,
+      contentImportService as never,
+      importService as never,
+      { deleteImportedFile: jest.fn() } as never,
+    )
+
+    const context = {
+      appendEvent: jest.fn(),
+      assertNotCancelled: jest.fn(),
+      assertStillOwned: jest.fn(),
+      attemptId: 'attempt-1',
+      attemptNo: 1,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
+      getStatus: jest.fn(),
+      isCancelRequested: jest.fn(),
+      jobId: 'job-1',
+      updateProgress: jest.fn(),
+      workflowType: 'content-import.third-party-import',
+    }
+
+    await expect(handler.execute(context)).rejects.toMatchObject({
+      counters: {
+        failedItemCount: 0,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      },
+      name: 'WorkflowCancellationError',
+    })
+
+    expect(importService.rollbackImportTask).toHaveBeenCalled()
+    expect(contentImportService.aggregateJob).toHaveBeenCalledWith('job-1')
+    expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
+    expect(context.completeAttempt).not.toHaveBeenCalled()
+  })
+
+  it('carries real counters when cancellation is requested before the next item starts', async () => {
+    const registry = { register: jest.fn() }
+    const items = [
+      {
+        itemId: 'item-1',
+        metadata: {
+          chapter: { providerChapterId: 'p1', title: '第 1 话' },
+        },
+      },
+      {
+        itemId: 'item-2',
+        metadata: {
+          chapter: { providerChapterId: 'p2', title: '第 2 话' },
+        },
+      },
+    ]
+    const contentImportService = {
+      aggregateJob: jest.fn(async () => ({
+        failedItemCount: 0,
+        selectedItemCount: 2,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      })),
+      aggregateJobWithRetryState: jest.fn(async () => ({
+        failedItemCount: 0,
+        futureRetryItemCount: 0,
+        nextRetryAt: null,
+        selectedItemCount: 2,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      })),
+      listExecutableItems: jest.fn(async () => items),
+      listPendingUploadedFileResidues: jest.fn(async () => []),
+      markItemFailed: jest.fn(),
+      markItemSuccess: jest.fn(),
+      markResiduesCleaned: jest.fn(),
+      markThirdPartyImportTargetPrepared: jest.fn(),
+      readContentImportJobByWorkflowJobId: jest.fn(async () => ({
+        sourceSnapshot: { chapters: [], mode: 'createNew' },
+      })),
+      startItemAttempt: jest.fn(),
+    }
+    const importService = {
+      importWorkflowChapter: jest.fn(async () => ({
+        imageSucceeded: 1,
+        imageTotal: 1,
+        localChapterId: 101,
+      })),
+      prepareWorkflowImport: jest.fn(async () => ({
+        chapterPlans: [
+          { chapter: { providerChapterId: 'p1' }, imageTotal: 1 },
+          { chapter: { providerChapterId: 'p2' }, imageTotal: 1 },
+        ],
+        sourceBinding: { id: 1, providerGroupPathWord: 'default' },
+        work: { id: 100 },
+      })),
+      rollbackImportTask: jest.fn(),
+    }
+    const handler = new ThirdPartyComicImportWorkflowHandler(
+      registry as never,
+      contentImportService as never,
+      importService as never,
+      { deleteImportedFile: jest.fn() } as never,
+    )
+    const context = {
+      appendEvent: jest.fn(),
+      assertNotCancelled: jest
+        .fn()
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new WorkflowCancellationError()),
+      assertStillOwned: jest.fn(),
+      attemptId: 'attempt-1',
+      attemptNo: 1,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
+      getStatus: jest.fn(),
+      isCancelRequested: jest.fn(),
+      jobId: 'job-1',
+      updateProgress: jest.fn(),
+      workflowType: 'content-import.third-party-import',
+    }
+
+    await expect(handler.execute(context)).rejects.toMatchObject({
+      counters: {
+        failedItemCount: 0,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      },
+      name: 'WorkflowCancellationError',
+    })
+
+    expect(importService.importWorkflowChapter).toHaveBeenCalledTimes(1)
+    expect(contentImportService.startItemAttempt).toHaveBeenCalledTimes(1)
+    expect(contentImportService.aggregateJob).toHaveBeenCalledWith('job-1')
+    expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
+    expect(context.completeAttempt).not.toHaveBeenCalled()
   })
 
   it('cleans old pending upload residues for an item before retrying it', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = { completeAttemptByAttemptId: jest.fn() }
     const deleteTarget = {
       filePath: 'old/partial.jpg',
       objectKey: 'old/partial.jpg',
@@ -772,7 +964,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     }
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       importService as never,
       remoteImageImportService as never,
@@ -784,9 +975,10 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-2',
       attemptNo: 2,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
-      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
@@ -805,7 +997,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
 
   it('delegates expired attempt recovery to the content import domain', async () => {
     const registry = { register: jest.fn() }
-    const workflowService = { completeAttemptByAttemptId: jest.fn() }
     const contentImportService = {
       recoverExpiredAttempt: jest.fn(async () => ({
         failedItemCount: 1,
@@ -817,7 +1008,6 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     }
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
-      workflowService as never,
       contentImportService as never,
       {} as never,
       {} as never,

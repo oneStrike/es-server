@@ -352,9 +352,7 @@ export class AnnouncementNotificationFanoutService {
       where: { id: announcementId },
       columns: {
         id: true,
-        priorityLevel: true,
-        isPinned: true,
-        showAsPopup: true,
+        isRealtime: true,
         isPublished: true,
         publishStartTime: true,
         publishEndTime: true,
@@ -377,9 +375,7 @@ export class AnnouncementNotificationFanoutService {
   }
 
   private resolveAnnouncementEventKey(input: {
-    priorityLevel: number
-    isPinned: boolean
-    showAsPopup: boolean
+    isRealtime: boolean
     isPublished: boolean
     publishStartTime?: Date | null
     publishEndTime?: Date | null
@@ -395,7 +391,7 @@ export class AnnouncementNotificationFanoutService {
     content?: string | null,
   ) {
     const value =
-      summary?.trim() || content?.trim() || '你收到一条新的重要公告。'
+      summary?.trim() || content?.trim() || '你收到一条新的系统公告。'
     return value.slice(0, 180)
   }
 

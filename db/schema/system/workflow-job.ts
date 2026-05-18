@@ -37,6 +37,8 @@ export const workflowJob = snakeCase.table(
     progressPercent: integer().default(0).notNull(),
     /** 进度文案。 */
     progressMessage: varchar({ length: 300 }),
+    /** 结构化进度详情快照；用于展示当前运行中的子进度。 */
+    progressDetail: jsonb(),
     /** 当前 attempt 内部 ID。 */
     currentAttemptFk: bigint({ mode: 'bigint' }),
     /** 选中条目数。 */
@@ -55,6 +57,8 @@ export const workflowJob = snakeCase.table(
     finishedAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 草稿过期时间。 */
     expiresAt: timestamp({ withTimezone: true, precision: 6 }),
+    /** 归档时间；仅用于后台列表隐藏，不改变任务生命周期。 */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 运行时非查询诊断摘要。 */
     summary: jsonb(),
     /** 创建时间。 */
@@ -89,6 +93,11 @@ export const workflowJob = snakeCase.table(
       table.status,
       table.createdAt,
       table.id,
+    ),
+    index('workflow_job_archived_updated_at_id_idx').on(
+      table.archivedAt,
+      table.updatedAt.desc(),
+      table.id.desc(),
     ),
     check('workflow_job_workflow_type_nonblank_chk', sql`length(trim(${table.workflowType})) > 0`),
     check('workflow_job_display_name_nonblank_chk', sql`length(trim(${table.displayName})) > 0`),

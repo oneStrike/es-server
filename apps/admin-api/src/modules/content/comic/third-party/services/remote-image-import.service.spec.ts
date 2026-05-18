@@ -6,6 +6,7 @@ import type { LookupFunction } from 'node:net'
 import type { ThirdPartyResourceThrottleService } from '@libs/content/work/third-party/services/third-party-resource-throttle.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { WorkflowCancellationError } from '@libs/platform/modules/workflow/workflow-cancellation'
 import { HttpException } from '@nestjs/common'
 import { lookup } from 'node:dns/promises'
 import { EventEmitter } from 'node:events'
@@ -347,10 +348,10 @@ describe('RemoteImageImportService', () => {
     )
   })
 
-  it('renews heartbeat during a slow image import before the success callback', async () => {
+  it('checks cancellation during a slow image import before the success callback', async () => {
     jest.useFakeTimers()
     const { service } = createService()
-    const heartbeat = jest.fn(async () => undefined)
+    const assertNotCancelled = jest.fn(async () => undefined)
     const onImported = jest.fn(async () => undefined)
     let resolveDownload: (value: { localPath: string; tempDir: string }) => void =
       () => undefined
@@ -371,16 +372,16 @@ describe('RemoteImageImportService', () => {
       ],
       ['comic'],
       onImported,
-      { heartbeat, heartbeatIntervalMs: 1000 },
+      { assertNotCancelled, cancellationCheckIntervalMs: 1000 },
     )
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(heartbeat).toHaveBeenCalledTimes(1)
+    expect(assertNotCancelled).toHaveBeenCalledTimes(1)
     expect(onImported).not.toHaveBeenCalled()
 
     await jest.advanceTimersByTimeAsync(2500)
-    expect(heartbeat).toHaveBeenCalledTimes(3)
+    expect(assertNotCancelled).toHaveBeenCalledTimes(3)
     expect(onImported).not.toHaveBeenCalled()
 
     resolveDownload({
@@ -392,15 +393,15 @@ describe('RemoteImageImportService', () => {
     expect(onImported).toHaveBeenCalledTimes(1)
   })
 
-  it('deletes an uploaded image when heartbeat fails during upload', async () => {
+  it('deletes an uploaded image when cancellation check fails during upload', async () => {
     jest.useFakeTimers()
     const { service, uploadedFile, uploadService } = createService()
-    let heartbeatCall = 0
-    const heartbeatError = new Error('claim lost')
-    const heartbeat = jest.fn(async () => {
-      heartbeatCall += 1
-      if (heartbeatCall > 2) {
-        throw heartbeatError
+    let cancellationCheckCall = 0
+    const cancellationError = new Error('cancelled')
+    const assertNotCancelled = jest.fn(async () => {
+      cancellationCheckCall += 1
+      if (cancellationCheckCall > 2) {
+        throw cancellationError
       }
     })
     jest.spyOn(service as never, 'downloadToTemp').mockResolvedValueOnce({
@@ -424,9 +425,9 @@ describe('RemoteImageImportService', () => {
       ],
       ['comic'],
       undefined,
-      { heartbeat, heartbeatIntervalMs: 1000 },
+      { assertNotCancelled, cancellationCheckIntervalMs: 1000 },
     )
-    const rejection = expect(importPromise).rejects.toThrow('claim lost')
+    const rejection = expect(importPromise).rejects.toThrow('cancelled')
 
     await jest.advanceTimersByTimeAsync(2500)
 
@@ -438,17 +439,17 @@ describe('RemoteImageImportService', () => {
     )
   })
 
-  it('observes an in-flight heartbeat failure that settles after upload completes', async () => {
+  it('observes an in-flight cancellation check failure that settles after upload completes', async () => {
     jest.useFakeTimers()
     const { service, uploadedFile, uploadService } = createService()
-    let heartbeatCall = 0
-    let rejectHeartbeat: (error: Error) => void = () => undefined
-    const heartbeatError = new Error('late claim lost')
-    const heartbeat = jest.fn(() => {
-      heartbeatCall += 1
-      if (heartbeatCall === 3) {
+    let cancellationCheckCall = 0
+    let rejectCancellationCheck: (error: Error) => void = () => undefined
+    const cancellationError = new Error('late cancelled')
+    const assertNotCancelled = jest.fn(() => {
+      cancellationCheckCall += 1
+      if (cancellationCheckCall === 3) {
         return new Promise<void>((_resolve, reject) => {
-          rejectHeartbeat = reject
+          rejectCancellationCheck = reject
         })
       }
       return Promise.resolve()
@@ -475,19 +476,55 @@ describe('RemoteImageImportService', () => {
       ],
       ['comic'],
       undefined,
-      { heartbeat, heartbeatIntervalMs: 1000 },
+      { assertNotCancelled, cancellationCheckIntervalMs: 1000 },
     )
     await jest.advanceTimersByTimeAsync(1000)
     resolveUpload(uploadedFile)
     await Promise.resolve()
-    rejectHeartbeat(heartbeatError)
+    rejectCancellationCheck(cancellationError)
 
-    await expect(importPromise).rejects.toThrow('late claim lost')
+    await expect(importPromise).rejects.toThrow('late cancelled')
     expect(uploadService.deleteUploadedFile).toHaveBeenCalledWith(
       expect.objectContaining({
         filePath: '/uploads/comic/remote.jpg',
       }),
     )
+  })
+
+  it('checks cancellation before each image and stops before the next import when cancelled', async () => {
+    const { service, uploadedFile } = createService()
+    const cancellationError = new WorkflowCancellationError()
+    const assertNotCancelled = jest
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(cancellationError)
+    jest.spyOn(service, 'importImage').mockResolvedValue(uploadedFile as never)
+    const onImported = jest.fn(async () => undefined)
+
+    await expect(
+      service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/comic/001.jpg',
+          },
+          {
+            providerImageId: 'image-002',
+            sortOrder: 2,
+            url: 'https://sw.mangafunb.fun/comic/002.jpg',
+          },
+        ],
+        ['comic'],
+        onImported,
+        { assertNotCancelled },
+      ),
+    ).rejects.toBe(cancellationError)
+
+    expect(assertNotCancelled).toHaveBeenCalledTimes(3)
+    expect(service.importImage).toHaveBeenCalledTimes(1)
+    expect(onImported).toHaveBeenCalledTimes(1)
   })
 
   it('keeps BusinessException semantics when adding image failure context', async () => {

@@ -5,6 +5,7 @@ import {
   EnumProperty,
   NestedProperty,
   NumberProperty,
+  ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
@@ -356,6 +357,15 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveWorkflowJobIdDto {
     validation: false,
   })
   resultItems!: ComicArchiveResultItemDto[]
+
+  @ObjectProperty({
+    description: '结构化进度详情快照；用于展示当前运行中的子进度',
+    example: { kind: 'content-import.image', imageIndex: 1, imageTotal: 20 },
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  progressDetail!: Record<string, unknown> | null
 
   @StringProperty({
     description: '最后一次错误信息',

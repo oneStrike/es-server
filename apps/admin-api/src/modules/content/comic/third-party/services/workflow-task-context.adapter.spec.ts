@@ -4,21 +4,24 @@ import { ContentImportWorkflowType } from '@libs/content/work/content-import/con
 import { createWorkflowTaskContext } from './workflow-task-context.adapter'
 
 describe('createWorkflowTaskContext', () => {
-  it('uses image progress reporters to update the current message without changing task progress percent', async () => {
+  it('uses image progress reporters to update the current message and structured detail without changing task progress percent', async () => {
     const workflowContext = {
       appendEvent: jest.fn(),
       assertNotCancelled: jest.fn(),
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-1',
       attemptNo: 1,
+      completeAttempt: jest.fn(async () => undefined),
+      completeAttemptWithDelayedRetry: jest.fn(async () => undefined),
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
       jobId: 'job-1',
-      renewLease: jest.fn(async () => undefined),
       updateProgress: jest.fn(async () => undefined),
       workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
     }
-    const taskContext = createWorkflowTaskContext(workflowContext, {})
+    const taskContext = createWorkflowTaskContext(workflowContext, {}, {
+      itemId: 'item-1',
+    })
     const reporter = taskContext.createProgressReporter({
       endPercent: 95,
       message: '导入图片',
@@ -27,7 +30,16 @@ describe('createWorkflowTaskContext', () => {
       unit: 'image',
     })
 
-    const progress = await reporter.advance({ current: 1 })
+    const progress = await reporter.advance({
+      current: 1,
+      detail: {
+        providerChapterId: 'chapter-1',
+        chapterIndex: 10,
+        chapterTotal: 61,
+        imageIndex: 19,
+        imageTotal: 21,
+      },
+    })
 
     expect(progress).toEqual(
       expect.objectContaining({
@@ -39,7 +51,70 @@ describe('createWorkflowTaskContext', () => {
       }),
     )
     expect(workflowContext.updateProgress).toHaveBeenCalledWith({
+      detail: {
+        kind: 'content-import.image',
+        workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+        itemId: 'item-1',
+        providerChapterId: 'chapter-1',
+        chapterIndex: 10,
+        chapterTotal: 61,
+        imageIndex: 19,
+        imageTotal: 21,
+      },
       message: '导入图片',
     })
+  })
+
+  it('clears structured progress detail when reporter advances without detail', async () => {
+    const workflowContext = {
+      appendEvent: jest.fn(),
+      assertNotCancelled: jest.fn(),
+      assertStillOwned: jest.fn(),
+      attemptId: 'attempt-1',
+      attemptNo: 1,
+      completeAttempt: jest.fn(async () => undefined),
+      completeAttemptWithDelayedRetry: jest.fn(async () => undefined),
+      getStatus: jest.fn(),
+      isCancelRequested: jest.fn(),
+      jobId: 'job-1',
+      updateProgress: jest.fn(async () => undefined),
+      workflowType: ContentImportWorkflowType.THIRD_PARTY_SYNC,
+    }
+    const taskContext = createWorkflowTaskContext(workflowContext, {})
+    const reporter = taskContext.createProgressReporter({
+      message: '读取章节列表',
+      total: 1,
+    })
+
+    await reporter.advance({ current: 1 })
+
+    expect(workflowContext.updateProgress).toHaveBeenCalledWith({
+      detail: null,
+      message: '读取章节列表',
+    })
+  })
+
+  it('does not expose workflow lease renewal to third-party task code', () => {
+    const workflowContext = {
+      appendEvent: jest.fn(),
+      assertNotCancelled: jest.fn(),
+      assertStillOwned: jest.fn(),
+      attemptId: 'attempt-1',
+      attemptNo: 1,
+      completeAttempt: jest.fn(async () => undefined),
+      completeAttemptWithDelayedRetry: jest.fn(async () => undefined),
+      getStatus: jest.fn(),
+      isCancelRequested: jest.fn(),
+      jobId: 'job-1',
+      updateProgress: jest.fn(async () => undefined),
+      workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+    }
+
+    const taskContext = createWorkflowTaskContext(workflowContext, {})
+
+    expect(taskContext).not.toHaveProperty('renewLease')
+    expect(taskContext.assertNotCancelled).toBe(workflowContext.assertNotCancelled)
+    expect(taskContext.assertStillOwned).toBe(workflowContext.assertStillOwned)
+    expect(taskContext.updateProgress).toBe(workflowContext.updateProgress)
   })
 })
