@@ -1,4 +1,11 @@
+import { AppForumModeratorProfileDto } from '@libs/forum/moderator/dto/moderator.dto'
+import {
+  AppForumModeratorActionLogDto,
+  QueryAppForumModeratorActionLogDto,
+} from '@libs/forum/moderator/dto/moderator-action-log.dto'
+import { ForumModeratorActionLogService } from '@libs/forum/moderator/moderator-action-log.service'
 import { ForumModeratorGovernanceService } from '@libs/forum/moderator/moderator-governance.service'
+import { ForumModeratorService } from '@libs/forum/moderator/moderator.service'
 import {
   MoveForumTopicDto,
   UpdateForumTopicAuditStatusDto,
@@ -11,17 +18,55 @@ import {
   UpdateCommentAuditStatusDto,
   UpdateCommentHiddenDto,
 } from '@libs/interaction/comment/dto/comment.dto'
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Post } from '@nestjs/common'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('论坛/版主治理')
 @Controller('app/forum/moderator')
 export class ForumModeratorController {
   constructor(
+    private readonly forumModeratorService: ForumModeratorService,
     private readonly forumModeratorGovernanceService: ForumModeratorGovernanceService,
+    private readonly forumModeratorActionLogService: ForumModeratorActionLogService,
   ) {}
+
+  @Get('me')
+  @ApiDoc({
+    summary: '查询当前用户版主身份与可治理范围',
+    model: AppForumModeratorProfileDto,
+  })
+  async getMe(@CurrentUser('sub') userId: number) {
+    return this.forumModeratorService.getAppModeratorProfileByUserId(userId)
+  }
+
+  @Get('action-log/my/page')
+  @ApiPageDoc({
+    summary: '分页查询我的版主操作日志',
+    model: AppForumModeratorActionLogDto,
+  })
+  async getMyActionLogPage(
+    @Query() query: QueryAppForumModeratorActionLogDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    const profile =
+      await this.forumModeratorService.getAppModeratorProfileByUserId(userId)
+
+    if (!profile.isUsable || !profile.moderatorId) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '当前用户不是可用版主',
+      )
+    }
+
+    return this.forumModeratorActionLogService.getAppActionLogPage(
+      profile.moderatorId,
+      query,
+    )
+  }
 
   @Post('topic/update-pinned')
   @ApiDoc({
@@ -73,10 +118,7 @@ export class ForumModeratorController {
     summary: '版主删除主题',
     model: Boolean,
   })
-  async deleteTopic(
-    @Body() body: IdDto,
-    @CurrentUser('sub') userId: number,
-  ) {
+  async deleteTopic(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
     return this.forumModeratorGovernanceService.deleteTopic(body, {
       actorType: 'moderator',
       actorUserId: userId,
@@ -148,10 +190,7 @@ export class ForumModeratorController {
     summary: '版主删除评论',
     model: Boolean,
   })
-  async deleteComment(
-    @Body() body: IdDto,
-    @CurrentUser('sub') userId: number,
-  ) {
+  async deleteComment(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
     return this.forumModeratorGovernanceService.deleteComment(body, {
       actorType: 'moderator',
       actorUserId: userId,

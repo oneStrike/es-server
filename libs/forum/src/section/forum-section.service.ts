@@ -12,6 +12,10 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
+import {
+  FORUM_MODERATOR_PERMISSION_LABELS,
+  ForumModeratorRoleTypeEnum,
+} from '../moderator/moderator.constant'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import { FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE } from '../section-group/forum-section-group.constant'
@@ -55,6 +59,18 @@ export class ForumSectionService {
 
   get forumLevelRule() {
     return this.drizzle.schema.userLevelRule
+  }
+
+  get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
+  get forumModerator() {
+    return this.drizzle.schema.forumModerator
+  }
+
+  get forumModeratorSection() {
+    return this.drizzle.schema.forumModeratorSection
   }
 
   // 对会写 forum_section.group_id 的路径加事务级 advisory lock，和删分组共用同一命名空间。
@@ -341,6 +357,105 @@ export class ForumSectionService {
         : accessState.accessDeniedReason,
       isFollowed: followStatus?.isFollowing ?? false,
     }
+  }
+
+  /**
+   * 查询公开可见板块的版主摘要。
+   * 默认仅展示直接绑定该板块的板块版主，以及作用于该分组的分组版主。
+   */
+  async getVisibleSectionModerators(sectionId: number) {
+    const section = await this.db.query.forumSection.findFirst({
+      where: {
+        id: sectionId,
+        isEnabled: true,
+        deletedAt: {
+          isNull: true,
+        },
+      },
+      columns: {
+        id: true,
+        groupId: true,
+        isEnabled: true,
+        deletedAt: true,
+      },
+      with: {
+        group: {
+          columns: {
+            id: true,
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
+    })
+
+    if (
+      !section ||
+      !this.forumPermissionService.isSectionPubliclyAvailable(section)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块不存在',
+      )
+    }
+
+    const rows = await this.db
+      .select({
+        moderatorId: this.forumModerator.id,
+        userId: this.forumModerator.userId,
+        roleType: this.forumModerator.roleType,
+        groupId: this.forumModerator.groupId,
+        permissions: this.forumModerator.permissions,
+        nickname: this.appUser.nickname,
+        avatar: this.appUser.avatarUrl,
+      })
+      .from(this.forumModerator)
+      .innerJoin(this.appUser, eq(this.appUser.id, this.forumModerator.userId))
+      .leftJoin(
+        this.forumModeratorSection,
+        eq(this.forumModeratorSection.moderatorId, this.forumModerator.id),
+      )
+      .where(
+        and(
+          isNull(this.forumModerator.deletedAt),
+          eq(this.forumModerator.isEnabled, true),
+          sql`(
+            (
+              ${this.forumModerator.roleType} = ${ForumModeratorRoleTypeEnum.SECTION}
+              and ${this.forumModeratorSection.sectionId} = ${sectionId}
+            )
+            or (
+              ${this.forumModerator.roleType} = ${ForumModeratorRoleTypeEnum.GROUP}
+              and ${this.forumModerator.groupId} = ${section.groupId}
+            )
+          )`,
+        ),
+      )
+
+    const dedupedRows = new Map<number, (typeof rows)[number]>()
+    for (const row of rows) {
+      dedupedRows.set(row.moderatorId, row)
+    }
+
+    return [...dedupedRows.values()].map((row) => {
+      const permissions = (row.permissions ?? []).filter(
+        (
+          permission,
+        ): permission is keyof typeof FORUM_MODERATOR_PERMISSION_LABELS =>
+          permission in FORUM_MODERATOR_PERMISSION_LABELS,
+      )
+
+      return {
+        moderatorId: row.moderatorId,
+        userId: row.userId,
+        nickname: row.nickname,
+        avatar: row.avatar,
+        roleType: row.roleType,
+        permissionNames: permissions.map(
+          (permission) => FORUM_MODERATOR_PERMISSION_LABELS[permission],
+        ),
+      }
+    })
   }
 
   /**

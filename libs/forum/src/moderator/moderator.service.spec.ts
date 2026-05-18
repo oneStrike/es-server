@@ -1,7 +1,10 @@
 /// <reference types="jest" />
 
 import { BusinessException } from '@libs/platform/exceptions'
-import { ForumModeratorPermissionEnum, ForumModeratorRoleTypeEnum } from './moderator.constant'
+import {
+  ForumModeratorPermissionEnum,
+  ForumModeratorRoleTypeEnum,
+} from './moderator.constant'
 import { ForumModeratorService } from './moderator.service'
 
 function createThenableBuilder<TResult>(
@@ -53,6 +56,9 @@ function createModeratorService() {
   }
   const db = {
     query: tx.query,
+    select: jest.fn((...args: unknown[]) =>
+      (tx.select as (...params: unknown[]) => unknown)(...args),
+    ),
     transaction: jest.fn(async (callback: (runner: typeof tx) => unknown) =>
       callback(tx),
     ),
@@ -195,5 +201,86 @@ describe('ForumModeratorService permissions', () => {
         ],
       }),
     )
+  })
+})
+
+describe('ForumModeratorService app profile', () => {
+  it('returns an unusable profile for a user without moderator identity', async () => {
+    const { service, tx } = createModeratorService()
+    tx.query.forumModerator.findFirst = jest.fn(async () => undefined)
+
+    await expect(service.getAppModeratorProfileByUserId(100)).resolves.toEqual({
+      isModerator: false,
+      isUsable: false,
+      disabledReason: '当前用户不是版主',
+      permissions: [],
+      permissionNames: [],
+      sections: [],
+    })
+  })
+
+  it('returns grants and scopes for an active section moderator without admin-only fields', async () => {
+    const { service, tx } = createModeratorService()
+    tx.query.forumModerator.findFirst = jest.fn(async () => ({
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      deletedAt: null,
+      groupId: null,
+      id: 9,
+      isEnabled: true,
+      permissions: [
+        ForumModeratorPermissionEnum.PIN,
+        ForumModeratorPermissionEnum.AUDIT,
+      ],
+      remark: 'internal note',
+      roleType: ForumModeratorRoleTypeEnum.SECTION,
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      userId: 100,
+    }))
+    tx.select = jest
+      .fn()
+      .mockReturnValueOnce(
+        createThenableBuilder([
+          { id: 100, nickname: 'Alice', avatar: 'avatar.png' },
+        ]),
+      )
+      .mockReturnValueOnce(
+        createThenableBuilder([{ id: 10, name: 'News', groupId: null }]),
+      )
+      .mockReturnValueOnce(
+        createThenableBuilder([
+          {
+            moderatorId: 9,
+            permissions: [ForumModeratorPermissionEnum.AUDIT],
+            sectionId: 10,
+          },
+        ]),
+      )
+
+    const profile = await service.getAppModeratorProfileByUserId(100)
+
+    expect(profile).toEqual(
+      expect.objectContaining({
+        isModerator: true,
+        isUsable: true,
+        moderatorId: 9,
+        roleType: ForumModeratorRoleTypeEnum.SECTION,
+        permissions: [
+          ForumModeratorPermissionEnum.PIN,
+          ForumModeratorPermissionEnum.AUDIT,
+        ],
+        permissionNames: ['置顶', '审核'],
+      }),
+    )
+    expect(profile.sections).toEqual([
+      expect.objectContaining({
+        id: 10,
+        finalPermissions: [
+          ForumModeratorPermissionEnum.PIN,
+          ForumModeratorPermissionEnum.AUDIT,
+        ],
+      }),
+    ])
+    expect(profile).not.toHaveProperty('remark')
+    expect(profile).not.toHaveProperty('deletedAt')
   })
 })

@@ -1,5 +1,6 @@
 import { ForumSectionGroupSummaryDto } from '@libs/forum/section-group/dto/forum-section-group-summary.dto'
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
@@ -23,6 +24,7 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import { ForumReviewPolicyEnum } from '../../forum.constant'
+import { ForumModeratorRoleTypeEnum } from '../../moderator/moderator.constant'
 
 /**
  * 论坛板块基础 DTO。
@@ -256,6 +258,76 @@ export class AdminForumSectionTreeSectionDto extends OmitType(
  * 查询公开板块详情 DTO。
  */
 export class QueryPublicForumSectionDetailDto extends IdDto {}
+
+/**
+ * 查询公开板块版主 DTO。
+ */
+export class QueryPublicForumSectionModeratorsDto {
+  @NumberProperty({
+    description: '板块ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  sectionId!: number
+}
+
+/**
+ * 公开板块版主摘要 DTO。
+ */
+export class PublicForumSectionModeratorDto {
+  @NumberProperty({
+    description: '版主ID',
+    example: 1,
+    required: true,
+    min: 1,
+    validation: false,
+  })
+  moderatorId!: number
+
+  @NumberProperty({
+    description: '用户ID',
+    example: 1,
+    required: true,
+    min: 1,
+    validation: false,
+  })
+  userId!: number
+
+  @StringProperty({
+    description: '用户昵称',
+    example: '张三',
+    required: true,
+    validation: false,
+  })
+  nickname!: string
+
+  @StringProperty({
+    description: '用户头像',
+    example: 'https://example.com/avatar.jpg',
+    required: false,
+    validation: false,
+  })
+  avatar?: string | null
+
+  @EnumProperty({
+    description: '版主角色类型（2=分组版主；3=板块版主）',
+    example: ForumModeratorRoleTypeEnum.SECTION,
+    required: true,
+    enum: ForumModeratorRoleTypeEnum,
+    validation: false,
+  })
+  roleType!: ForumModeratorRoleTypeEnum
+
+  @ArrayProperty({
+    description: '权限中文名称列表',
+    itemType: 'string',
+    example: ['审核'],
+    required: true,
+    validation: false,
+  })
+  permissionNames!: string[]
+}
 
 /**
  * 公开板块分组摘要 DTO。

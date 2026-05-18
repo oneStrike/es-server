@@ -327,8 +327,7 @@ export class ForumModeratorService {
     const permissions = this.normalizePermissions(
       input.permissions ?? options.current?.permissions ?? [],
     )
-    const nextIsEnabled =
-      input.isEnabled ?? options.current?.isEnabled ?? true
+    const nextIsEnabled = input.isEnabled ?? options.current?.isEnabled ?? true
 
     this.ensureActiveModeratorHasPermissions({
       isEnabled: nextIsEnabled,
@@ -542,7 +541,7 @@ export class ForumModeratorService {
                 isNull(this.forumSectionGroup.deletedAt),
               ),
             )
-        : Promise.resolve([] as Array<{ id: number, name: string }>),
+        : Promise.resolve([] as Array<{ id: number; name: string }>),
       this.db
         .select({
           id: this.forumSection.id,
@@ -563,9 +562,9 @@ export class ForumModeratorService {
 
     const userMap = new Map<
       number,
-      { id: number, nickname: string, avatar: string | null }
+      { id: number; nickname: string; avatar: string | null }
     >(users.map((user) => [user.id, user]))
-    const groupMap = new Map<number, { id: number, name: string }>(
+    const groupMap = new Map<number, { id: number; name: string }>(
       groups.map((group) => [group.id, group]),
     )
     const scopeMap = new Map<number, Array<(typeof scopes)[number]>>()
@@ -652,6 +651,44 @@ export class ForumModeratorService {
 
     const [detail] = await this.buildModeratorViews([moderator])
     return detail
+  }
+
+  /**
+   * 查询当前应用用户的版主能力摘要。
+   * 该结果只用于 App 展示身份、权限与作用域，治理写入仍必须走 governance 强校验。
+   */
+  async getAppModeratorProfileByUserId(userId: number) {
+    const moderator = await this.db.query.forumModerator.findFirst({
+      where: {
+        userId,
+      },
+    })
+
+    if (!moderator || moderator.deletedAt) {
+      return {
+        isModerator: false,
+        isUsable: false,
+        disabledReason: '当前用户不是版主',
+        permissions: [],
+        permissionNames: [],
+        sections: [],
+      }
+    }
+
+    const [view] = await this.buildModeratorViews([moderator])
+
+    return {
+      isModerator: true,
+      isUsable: moderator.isEnabled,
+      disabledReason: moderator.isEnabled ? undefined : '当前版主已禁用',
+      moderatorId: view.id,
+      userId: view.userId,
+      roleType: view.roleType,
+      group: view.group,
+      permissions: view.permissions,
+      permissionNames: view.permissionNames,
+      sections: view.sections,
+    }
   }
 
   /**

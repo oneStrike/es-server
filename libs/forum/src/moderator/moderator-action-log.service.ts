@@ -1,7 +1,14 @@
 import type { ForumModeratorActionLogInput } from './moderator.type'
 import type { Db } from '@db/core'
+import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
+import { and, eq, gte, lt } from 'drizzle-orm'
+import {
+  QueryAdminForumModeratorActionLogDto,
+  QueryAppForumModeratorActionLogDto,
+} from './dto/moderator-action-log.dto'
 
 /**
  * 版主操作日志服务。
@@ -33,6 +40,45 @@ export class ForumModeratorActionLogService {
     return JSON.stringify(snapshot)
   }
 
+  private buildQueryWhere(
+    query: QueryAdminForumModeratorActionLogDto & { moderatorId?: number },
+  ) {
+    const conditions: SQL[] = []
+    const dateRange = buildDateOnlyRangeInAppTimeZone(
+      query.startDate,
+      query.endDate,
+    )
+
+    if (query.moderatorId !== undefined) {
+      conditions.push(
+        eq(this.forumModeratorActionLog.moderatorId, query.moderatorId),
+      )
+    }
+    if (query.targetId !== undefined) {
+      conditions.push(eq(this.forumModeratorActionLog.targetId, query.targetId))
+    }
+    if (query.targetType !== undefined) {
+      conditions.push(
+        eq(this.forumModeratorActionLog.targetType, query.targetType),
+      )
+    }
+    if (query.actionType !== undefined) {
+      conditions.push(
+        eq(this.forumModeratorActionLog.actionType, query.actionType),
+      )
+    }
+    if (dateRange?.gte) {
+      conditions.push(
+        gte(this.forumModeratorActionLog.createdAt, dateRange.gte),
+      )
+    }
+    if (dateRange?.lt) {
+      conditions.push(lt(this.forumModeratorActionLog.createdAt, dateRange.lt))
+    }
+
+    return conditions.length > 0 ? and(...conditions) : undefined
+  }
+
   private async insertActionLog(db: Db, input: ForumModeratorActionLogInput) {
     await this.drizzle.withErrorHandling(() =>
       db.insert(this.forumModeratorActionLog).values({
@@ -62,5 +108,48 @@ export class ForumModeratorActionLogService {
    */
   async createActionLogInTx(tx: Db, input: ForumModeratorActionLogInput) {
     return this.insertActionLog(tx, input)
+  }
+
+  /**
+   * 查询当前版主自己的操作日志。
+   * moderatorId 由服务端身份解析后强制传入，禁止信任客户端传入的 moderatorId。
+   */
+  async getAppActionLogPage(
+    moderatorId: number,
+    query: QueryAppForumModeratorActionLogDto,
+  ) {
+    const { orderBy: _clientOrderBy, ...pageDto } = query
+    const page = await this.drizzle.ext.findPagination(
+      this.forumModeratorActionLog,
+      {
+        where: this.buildQueryWhere({
+          ...pageDto,
+          moderatorId,
+        }),
+        orderBy: { createdAt: 'desc' },
+        ...pageDto,
+      },
+    )
+
+    return {
+      ...page,
+      list: page.list.map(
+        ({ beforeData: _beforeData, afterData: _afterData, ...item }) => item,
+      ),
+    }
+  }
+
+  /**
+   * 管理端分页查询版主操作日志。
+   * 保留 beforeData/afterData 快照，供具备后台权限的运维审计场景使用。
+   */
+  async getAdminActionLogPage(query: QueryAdminForumModeratorActionLogDto) {
+    const { orderBy: _clientOrderBy, ...pageDto } = query
+
+    return this.drizzle.ext.findPagination(this.forumModeratorActionLog, {
+      where: this.buildQueryWhere(pageDto),
+      orderBy: { createdAt: 'desc' },
+      ...pageDto,
+    })
   }
 }

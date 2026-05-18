@@ -1,8 +1,10 @@
 import {
   PublicForumSectionDetailDto,
   PublicForumSectionListItemDto,
+  PublicForumSectionModeratorDto,
   QueryPublicForumSectionDetailDto,
   QueryPublicForumSectionDto,
+  QueryPublicForumSectionModeratorsDto,
 } from '@libs/forum/section/dto/forum-section.dto'
 import { ForumSectionService } from '@libs/forum/section/forum-section.service'
 import { ApiDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
@@ -43,5 +45,15 @@ export class ForumSectionController {
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumSectionService.getVisibleSectionDetail(query.id, userId)
+  }
+
+  @Get('moderators')
+  @ApiDoc({
+    summary: '查询板块公开版主列表',
+    model: PublicForumSectionModeratorDto,
+    isArray: true,
+  })
+  async getModerators(@Query() query: QueryPublicForumSectionModeratorsDto) {
+    return this.forumSectionService.getVisibleSectionModerators(query.sectionId)
   }
 }

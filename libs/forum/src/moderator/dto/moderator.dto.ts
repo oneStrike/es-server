@@ -1,11 +1,19 @@
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import {
   BaseDto,
   IdDto,
   OMIT_BASE_FIELDS,
   PageDto,
-UserIdDto
+  UserIdDto,
 } from '@libs/platform/dto'
 
 import {
@@ -244,6 +252,97 @@ export class ForumModeratorDto extends BaseForumModeratorDto {
 
   @ArrayProperty({
     description: '管理的板块列表',
+    itemClass: ForumModeratorSectionItemDto,
+    required: true,
+    validation: false,
+  })
+  sections!: ForumModeratorSectionItemDto[]
+}
+
+/**
+ * App 侧当前用户版主能力摘要。
+ * 仅用于驱动用户体验展示，治理写入仍以服务端强校验为准。
+ */
+export class AppForumModeratorProfileDto {
+  @BooleanProperty({
+    description: '当前用户是否拥有版主身份',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  isModerator!: boolean
+
+  @BooleanProperty({
+    description: '当前版主身份是否可用于治理操作',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  isUsable!: boolean
+
+  @StringProperty({
+    description: '身份不可用原因',
+    example: '当前版主已禁用',
+    required: false,
+    validation: false,
+  })
+  disabledReason?: string
+
+  @NumberProperty({
+    description: '版主ID',
+    example: 1,
+    required: false,
+    min: 1,
+    validation: false,
+  })
+  moderatorId?: number
+
+  @NumberProperty({
+    description: '用户ID',
+    example: 1,
+    required: false,
+    min: 1,
+    validation: false,
+  })
+  userId?: number
+
+  @EnumProperty({
+    description: '版主角色类型（1=超级版主；2=分组版主；3=板块版主）',
+    example: ForumModeratorRoleTypeEnum.SECTION,
+    required: false,
+    enum: ForumModeratorRoleTypeEnum,
+    validation: false,
+  })
+  roleType?: ForumModeratorRoleTypeEnum
+
+  @NestedProperty({
+    description: '所属分组',
+    required: false,
+    type: ForumModeratorGroupDto,
+    validation: false,
+  })
+  group?: ForumModeratorGroupDto
+
+  @ArrayProperty({
+    description: '权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
+    itemEnum: ForumModeratorPermissionEnum,
+    example: [1, 5],
+    required: true,
+    validation: false,
+  })
+  permissions!: ForumModeratorPermissionEnum[]
+
+  @ArrayProperty({
+    description: '权限中文名称列表',
+    itemType: 'string',
+    example: ['置顶', '审核'],
+    required: true,
+    validation: false,
+  })
+  permissionNames!: string[]
+
+  @ArrayProperty({
+    description: '当前版主可治理的板块范围',
     itemClass: ForumModeratorSectionItemDto,
     required: true,
     validation: false,
