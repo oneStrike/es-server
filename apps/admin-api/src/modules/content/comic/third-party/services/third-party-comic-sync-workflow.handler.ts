@@ -1,5 +1,6 @@
 import type { Db } from '@db/core'
 import type {
+  ContentImportAttemptCounters,
   ContentImportAttemptCountersWithRetry,
   ContentImportExecutableItem,
 } from '@libs/content/work/content-import/content-import.type'
@@ -153,6 +154,7 @@ export class ThirdPartyComicSyncWorkflowHandler
       const counters = await this.contentImportService.aggregateJob(
         context.jobId,
       )
+      await this.updateTaskProgress(context, counters, '章节同步准备失败')
       await context.assertStillOwned()
       await this.workflowService.completeAttemptByAttemptId({
         attemptId: context.attemptId,
@@ -204,6 +206,7 @@ export class ThirdPartyComicSyncWorkflowHandler
           `章节「${plan.title}」同步成功`,
           { itemId: item.itemId, providerChapterId: plan.providerChapterId },
         )
+        await this.refreshTaskProgress(context, '章节同步进度已更新')
       } catch (error) {
         let errorMessage = this.stringifyError(error)
         try {
@@ -237,6 +240,7 @@ export class ThirdPartyComicSyncWorkflowHandler
               errorMessage,
             },
           )
+          await this.refreshTaskProgress(context, '章节同步进度已更新')
           continue
         }
         if (rateLimit) {
@@ -256,6 +260,7 @@ export class ThirdPartyComicSyncWorkflowHandler
               errorMessage,
             },
           )
+          await this.refreshTaskProgress(context, '章节同步进度已更新')
           continue
         }
         await this.contentImportService.markItemFailed({
@@ -275,6 +280,7 @@ export class ThirdPartyComicSyncWorkflowHandler
             errorMessage,
           },
         )
+        await this.refreshTaskProgress(context, '章节同步进度已更新')
       }
     }
 
@@ -354,6 +360,55 @@ export class ThirdPartyComicSyncWorkflowHandler
       failedItemCount: counters.failedItemCount,
       skippedItemCount: counters.skippedItemCount,
     })
+  }
+
+  // 用 item 终态数刷新 workflow 任务级进度，避免图片级子进度污染全局百分比。
+  private async refreshTaskProgress(
+    context: WorkflowExecuteContext,
+    progressPrefix: string,
+  ) {
+    const counters = await this.contentImportService.aggregateJobWithRetryState(
+      context.jobId,
+    )
+    await this.updateTaskProgress(context, counters, progressPrefix)
+  }
+
+  private async updateTaskProgress(
+    context: WorkflowExecuteContext,
+    counters: ContentImportAttemptCounters,
+    progressPrefix: string,
+  ) {
+    await context.updateProgress({
+      percent: this.resolveTaskProgressPercent(counters),
+      message: this.resolveTaskProgressMessage(counters, progressPrefix),
+    })
+  }
+
+  private resolveTaskProgressPercent(counters: ContentImportAttemptCounters) {
+    const selectedItemCount = Math.max(0, counters.selectedItemCount ?? 0)
+    if (selectedItemCount === 0) {
+      return 0
+    }
+    const completedItemCount =
+      counters.successItemCount +
+      counters.failedItemCount +
+      counters.skippedItemCount
+    return Math.floor((Math.max(0, completedItemCount) * 100) / selectedItemCount)
+  }
+
+  private resolveTaskProgressMessage(
+    counters: ContentImportAttemptCounters,
+    progressPrefix: string,
+  ) {
+    const selectedItemCount = Math.max(0, counters.selectedItemCount ?? 0)
+    const completedItemCount =
+      counters.successItemCount +
+      counters.failedItemCount +
+      counters.skippedItemCount
+    return `${progressPrefix}: ${Math.min(
+      selectedItemCount,
+      completedItemCount,
+    )}/${selectedItemCount}`
   }
 
   // 将未知异常转换为可持久化的错误文本。

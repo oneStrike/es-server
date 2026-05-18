@@ -12,6 +12,11 @@ import {
   ThirdPartyComicImportRequestDto,
   ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
+import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
+import {
+  ContentImportItemDto,
+  ContentImportItemPageRequestDto,
+} from '@libs/content/work/content-import/dto/content-import.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
@@ -24,7 +29,10 @@ import { ComicThirdPartyService } from './third-party-service'
 @Controller('admin/content/comic/third-party')
 export class ComicThirdPartyController {
   // 注入第三方漫画聚合服务，controller 仅负责路由协议装配。
-  constructor(private readonly thirdPartyService: ComicThirdPartyService) {}
+  constructor(
+    private readonly thirdPartyService: ComicThirdPartyService,
+    private readonly contentImportService: ContentImportService,
+  ) {}
 
   @Get('platform/list')
   @ApiDoc({
@@ -121,5 +129,15 @@ export class ComicThirdPartyController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.thirdPartyService.syncLatest(body, userId)
+  }
+
+  @Get('import/item/page')
+  @ApiPageDoc({
+    summary: '分页查询三方解析内容导入条目',
+    model: ContentImportItemDto,
+  })
+  // 三方解析导入条目的业务 owner 入口。
+  async getImportItemPage(@Query() query: ContentImportItemPageRequestDto) {
+    return this.contentImportService.getItemPage(query)
   }
 }

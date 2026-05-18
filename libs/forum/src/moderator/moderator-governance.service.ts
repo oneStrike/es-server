@@ -3,6 +3,7 @@ import type {
   ForumModeratorGovernanceActor,
   ForumModeratorPermissionGrant,
 } from './moderator.type'
+import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { CommentService } from '@libs/interaction/comment/comment.service'
@@ -235,6 +236,7 @@ export class ForumModeratorGovernanceService {
    * 仅 moderator actor 落日志，admin 走共享事实写入主链但不写版主日志。
    */
   private async createTopicActionLog(params: {
+    tx?: Db
     grant: ForumModeratorPermissionGrant | null
     topicId: number
     actionType: ForumModeratorActionTypeEnum
@@ -246,7 +248,7 @@ export class ForumModeratorGovernanceService {
       return true
     }
 
-    await this.forumModeratorActionLogService.createActionLog({
+    const logInput = {
       moderatorId: params.grant.moderatorId,
       targetId: params.topicId,
       actionType: params.actionType,
@@ -254,7 +256,16 @@ export class ForumModeratorGovernanceService {
       actionDescription: params.actionDescription,
       beforeData: params.beforeData,
       afterData: params.afterData,
-    })
+    }
+
+    if (params.tx) {
+      await this.forumModeratorActionLogService.createActionLogInTx(
+        params.tx,
+        logInput,
+      )
+    } else {
+      await this.forumModeratorActionLogService.createActionLog(logInput)
+    }
 
     return true
   }
@@ -264,6 +275,7 @@ export class ForumModeratorGovernanceService {
    * 统一记录 moderator 对 forum comment 的审核/隐藏动作。
    */
   private async createCommentActionLog(params: {
+    tx?: Db
     grant: ForumModeratorPermissionGrant | null
     commentId: number
     actionType: ForumModeratorActionTypeEnum
@@ -275,7 +287,7 @@ export class ForumModeratorGovernanceService {
       return true
     }
 
-    await this.forumModeratorActionLogService.createActionLog({
+    const logInput = {
       moderatorId: params.grant.moderatorId,
       targetId: params.commentId,
       actionType: params.actionType,
@@ -283,7 +295,16 @@ export class ForumModeratorGovernanceService {
       actionDescription: params.actionDescription,
       beforeData: params.beforeData,
       afterData: params.afterData,
-    })
+    }
+
+    if (params.tx) {
+      await this.forumModeratorActionLogService.createActionLogInTx(
+        params.tx,
+        logInput,
+      )
+    } else {
+      await this.forumModeratorActionLogService.createActionLog(logInput)
+    }
 
     return true
   }
@@ -303,16 +324,23 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.PIN,
     )
 
-    await this.forumTopicService.updateTopicPinned(input)
-    await this.createTopicActionLog({
-      grant,
-      topicId: current.id,
-      actionType: input.isPinned
-        ? ForumModeratorActionTypeEnum.PIN_TOPIC
-        : ForumModeratorActionTypeEnum.UNPIN_TOPIC,
-      actionDescription: input.isPinned ? '置顶主题' : '取消置顶主题',
-      beforeData: { isPinned: current.isPinned },
-      afterData: { isPinned: input.isPinned },
+    if (current.isPinned === input.isPinned) {
+      return true
+    }
+
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.forumTopicService.updateTopicPinnedInTx(tx, input)
+      await this.createTopicActionLog({
+        tx,
+        grant,
+        topicId: current.id,
+        actionType: input.isPinned
+          ? ForumModeratorActionTypeEnum.PIN_TOPIC
+          : ForumModeratorActionTypeEnum.UNPIN_TOPIC,
+        actionDescription: input.isPinned ? '置顶主题' : '取消置顶主题',
+        beforeData: { isPinned: current.isPinned },
+        afterData: { isPinned: input.isPinned },
+      })
     })
 
     return true
@@ -333,16 +361,23 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.FEATURE,
     )
 
-    await this.forumTopicService.updateTopicFeatured(input)
-    await this.createTopicActionLog({
-      grant,
-      topicId: current.id,
-      actionType: input.isFeatured
-        ? ForumModeratorActionTypeEnum.FEATURE_TOPIC
-        : ForumModeratorActionTypeEnum.UNFEATURE_TOPIC,
-      actionDescription: input.isFeatured ? '加精主题' : '取消加精主题',
-      beforeData: { isFeatured: current.isFeatured },
-      afterData: { isFeatured: input.isFeatured },
+    if (current.isFeatured === input.isFeatured) {
+      return true
+    }
+
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.forumTopicService.updateTopicFeaturedInTx(tx, input)
+      await this.createTopicActionLog({
+        tx,
+        grant,
+        topicId: current.id,
+        actionType: input.isFeatured
+          ? ForumModeratorActionTypeEnum.FEATURE_TOPIC
+          : ForumModeratorActionTypeEnum.UNFEATURE_TOPIC,
+        actionDescription: input.isFeatured ? '加精主题' : '取消加精主题',
+        beforeData: { isFeatured: current.isFeatured },
+        afterData: { isFeatured: input.isFeatured },
+      })
     })
 
     return true
@@ -363,16 +398,23 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.LOCK,
     )
 
-    await this.forumTopicService.updateTopicLocked(input)
-    await this.createTopicActionLog({
-      grant,
-      topicId: current.id,
-      actionType: input.isLocked
-        ? ForumModeratorActionTypeEnum.LOCK_TOPIC
-        : ForumModeratorActionTypeEnum.UNLOCK_TOPIC,
-      actionDescription: input.isLocked ? '锁定主题' : '取消锁定主题',
-      beforeData: { isLocked: current.isLocked },
-      afterData: { isLocked: input.isLocked },
+    if (current.isLocked === input.isLocked) {
+      return true
+    }
+
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.forumTopicService.updateTopicLockedInTx(tx, input)
+      await this.createTopicActionLog({
+        tx,
+        grant,
+        topicId: current.id,
+        actionType: input.isLocked
+          ? ForumModeratorActionTypeEnum.LOCK_TOPIC
+          : ForumModeratorActionTypeEnum.UNLOCK_TOPIC,
+        actionDescription: input.isLocked ? '锁定主题' : '取消锁定主题',
+        beforeData: { isLocked: current.isLocked },
+        afterData: { isLocked: input.isLocked },
+      })
     })
 
     return true
@@ -394,22 +436,30 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.DELETE,
     )
 
-    await this.forumTopicService.deleteTopic(
-      current.id,
-      context,
-      actor.actorUserId,
-    )
-    await this.createTopicActionLog({
-      grant,
-      topicId: current.id,
-      actionType: ForumModeratorActionTypeEnum.DELETE_TOPIC,
-      actionDescription: '删除主题',
-      beforeData: {
-        sectionId: current.sectionId,
-        userId: current.userId,
-        title: current.title,
-      },
-      afterData: { deleted: true },
+    await this.drizzle.withTransaction(async (tx) => {
+      const topic = await this.forumTopicService.getActiveTopicByIdInTx(
+        tx,
+        current.id,
+      )
+      await this.forumTopicService.deleteTopicWithCurrentInTx(
+        tx,
+        topic,
+        context,
+        actor.actorUserId,
+      )
+      await this.createTopicActionLog({
+        tx,
+        grant,
+        topicId: current.id,
+        actionType: ForumModeratorActionTypeEnum.DELETE_TOPIC,
+        actionDescription: '删除主题',
+        beforeData: {
+          sectionId: current.sectionId,
+          userId: current.userId,
+          title: current.title,
+        },
+        afterData: { deleted: true },
+      })
     })
 
     return true
@@ -430,14 +480,21 @@ export class ForumModeratorGovernanceService {
       input.sectionId,
     )
 
-    await this.forumTopicService.moveTopic(input)
-    await this.createTopicActionLog({
-      grant,
-      topicId: current.id,
-      actionType: ForumModeratorActionTypeEnum.MOVE_TOPIC,
-      actionDescription: '移动主题',
-      beforeData: { sectionId: current.sectionId },
-      afterData: { sectionId: input.sectionId },
+    if (current.sectionId === input.sectionId) {
+      return true
+    }
+
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.forumTopicService.moveTopicInTx(tx, input, current.sectionId)
+      await this.createTopicActionLog({
+        tx,
+        grant,
+        topicId: current.id,
+        actionType: ForumModeratorActionTypeEnum.MOVE_TOPIC,
+        actionDescription: '移动主题',
+        beforeData: { sectionId: current.sectionId },
+        afterData: { sectionId: input.sectionId },
+      })
     })
 
     return true
@@ -458,16 +515,23 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.DELETE,
     )
 
-    await this.forumTopicService.updateTopicHidden(input)
-    await this.createTopicActionLog({
-      grant,
-      topicId: current.id,
-      actionType: input.isHidden
-        ? ForumModeratorActionTypeEnum.HIDE_TOPIC
-        : ForumModeratorActionTypeEnum.UNHIDE_TOPIC,
-      actionDescription: input.isHidden ? '隐藏主题' : '取消隐藏主题',
-      beforeData: { isHidden: current.isHidden },
-      afterData: { isHidden: input.isHidden },
+    if (current.isHidden === input.isHidden) {
+      return true
+    }
+
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.forumTopicService.updateTopicHiddenInTx(tx, input, current)
+      await this.createTopicActionLog({
+        tx,
+        grant,
+        topicId: current.id,
+        actionType: input.isHidden
+          ? ForumModeratorActionTypeEnum.HIDE_TOPIC
+          : ForumModeratorActionTypeEnum.UNHIDE_TOPIC,
+        actionDescription: input.isHidden ? '隐藏主题' : '取消隐藏主题',
+        beforeData: { isHidden: current.isHidden },
+        afterData: { isHidden: input.isHidden },
+      })
     })
 
     return true
@@ -488,23 +552,45 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.AUDIT,
     )
 
-    await this.forumTopicService.updateTopicAuditStatus(input, {
-      auditById: actor.actorUserId,
-      auditRole: this.resolveAuditRole(actor),
+    if (
+      current.auditStatus === input.auditStatus &&
+      (current.auditReason ?? null) === (input.auditReason ?? null)
+    ) {
+      return true
+    }
+
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.forumTopicService.updateTopicAuditStatusInTx(
+        tx,
+        input,
+        {
+          auditById: actor.actorUserId,
+          auditRole: this.resolveAuditRole(actor),
+        },
+        current,
+      )
+      await this.createTopicActionLog({
+        tx,
+        grant,
+        topicId: current.id,
+        actionType: ForumModeratorActionTypeEnum.AUDIT_TOPIC,
+        actionDescription: `审核主题（${input.auditStatus}）`,
+        beforeData: {
+          auditStatus: current.auditStatus,
+          auditReason: current.auditReason ?? null,
+        },
+        afterData: {
+          auditStatus: input.auditStatus,
+          auditReason: input.auditReason ?? null,
+        },
+      })
     })
-    await this.createTopicActionLog({
-      grant,
+
+    await this.forumTopicService.rewardApprovedTopicIfNeeded({
       topicId: current.id,
-      actionType: ForumModeratorActionTypeEnum.AUDIT_TOPIC,
-      actionDescription: `审核主题（${input.auditStatus}）`,
-      beforeData: {
-        auditStatus: current.auditStatus,
-        auditReason: current.auditReason ?? null,
-      },
-      afterData: {
-        auditStatus: input.auditStatus,
-        auditReason: input.auditReason ?? null,
-      },
+      userId: current.userId,
+      previousAuditStatus: current.auditStatus,
+      nextAuditStatus: input.auditStatus,
     })
 
     return true
@@ -525,17 +611,33 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.DELETE,
     )
 
-    await this.commentService.updateCommentHidden(input)
-    await this.createCommentActionLog({
-      grant,
-      commentId: current.id,
-      actionType: input.isHidden
-        ? ForumModeratorActionTypeEnum.HIDE_COMMENT
-        : ForumModeratorActionTypeEnum.UNHIDE_COMMENT,
-      actionDescription: input.isHidden ? '隐藏评论' : '取消隐藏评论',
-      beforeData: { isHidden: current.isHidden },
-      afterData: { isHidden: input.isHidden },
+    if (current.isHidden === input.isHidden) {
+      return true
+    }
+
+    const handled = await this.drizzle.withTransaction(async (tx) => {
+      const result = await this.commentService.updateCommentHiddenInTx(
+        tx,
+        input,
+      )
+      if (!result.changed) {
+        return result
+      }
+      await this.createCommentActionLog({
+        tx,
+        grant,
+        commentId: current.id,
+        actionType: input.isHidden
+          ? ForumModeratorActionTypeEnum.HIDE_COMMENT
+          : ForumModeratorActionTypeEnum.UNHIDE_COMMENT,
+        actionDescription: input.isHidden ? '隐藏评论' : '取消隐藏评论',
+        beforeData: { isHidden: current.isHidden },
+        afterData: { isHidden: input.isHidden },
+      })
+      return result
     })
+
+    await this.commentService.rewardCommentModerationIfNeeded(handled)
 
     return true
   }
@@ -552,18 +654,21 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.DELETE,
     )
 
-    await this.commentService.deleteComment(current.id)
-    await this.createCommentActionLog({
-      grant,
-      commentId: current.id,
-      actionType: ForumModeratorActionTypeEnum.DELETE_COMMENT,
-      actionDescription: '删除评论',
-      beforeData: {
-        targetType: current.targetType,
-        targetId: current.targetId,
-        replyToId: current.replyToId,
-      },
-      afterData: { deleted: true },
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.commentService.deleteCommentInTx(tx, current.id)
+      await this.createCommentActionLog({
+        tx,
+        grant,
+        commentId: current.id,
+        actionType: ForumModeratorActionTypeEnum.DELETE_COMMENT,
+        actionDescription: '删除评论',
+        beforeData: {
+          targetType: current.targetType,
+          targetId: current.targetId,
+          replyToId: current.replyToId,
+        },
+        afterData: { deleted: true },
+      })
     })
 
     return true
@@ -584,25 +689,44 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.AUDIT,
     )
 
-    await this.commentService.updateCommentAuditStatus({
-      ...input,
-      auditById: actor.actorUserId,
-      auditRole: this.resolveAuditRole(actor),
+    if (
+      current.auditStatus === input.auditStatus &&
+      (current.auditReason ?? null) === (input.auditReason ?? null)
+    ) {
+      return true
+    }
+
+    const handled = await this.drizzle.withTransaction(async (tx) => {
+      const result = await this.commentService.updateCommentAuditStatusInTx(
+        tx,
+        {
+          ...input,
+          auditById: actor.actorUserId,
+          auditRole: this.resolveAuditRole(actor),
+        },
+      )
+      if (!result.changed) {
+        return result
+      }
+      await this.createCommentActionLog({
+        tx,
+        grant,
+        commentId: current.id,
+        actionType: ForumModeratorActionTypeEnum.AUDIT_COMMENT,
+        actionDescription: `审核评论（${input.auditStatus}）`,
+        beforeData: {
+          auditStatus: current.auditStatus,
+          auditReason: current.auditReason ?? null,
+        },
+        afterData: {
+          auditStatus: input.auditStatus,
+          auditReason: input.auditReason ?? null,
+        },
+      })
+      return result
     })
-    await this.createCommentActionLog({
-      grant,
-      commentId: current.id,
-      actionType: ForumModeratorActionTypeEnum.AUDIT_COMMENT,
-      actionDescription: `审核评论（${input.auditStatus}）`,
-      beforeData: {
-        auditStatus: current.auditStatus,
-        auditReason: current.auditReason ?? null,
-      },
-      afterData: {
-        auditStatus: input.auditStatus,
-        auditReason: input.auditReason ?? null,
-      },
-    })
+
+    await this.commentService.rewardCommentModerationIfNeeded(handled)
 
     return true
   }

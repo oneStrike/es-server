@@ -1,9 +1,8 @@
-import type { Db } from '@db/core'
+import type { Db, SQL } from '@db/core'
 import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
 
 import type { InteractionAuditorSummaryKey } from '@libs/interaction/summary/interaction-summary.type'
 import type { JsonValue } from '@libs/platform/utils'
-import type { SQL } from 'drizzle-orm'
 import type {
   AdminTopicPageRow,
   ForumTopicClientContext,
@@ -897,6 +896,21 @@ export class ForumTopicService {
     return topic
   }
 
+  async getActiveTopicByIdInTx(tx: Db, id: number) {
+    const topic = await tx.query.forumTopic.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+    })
+
+    if (!topic) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
+
+    return topic
+  }
+
   /**
    * 获取板块的主题审核策略。
    * 用于创建/编辑主题时决定是否需要进入审核队列。
@@ -906,9 +920,11 @@ export class ForumTopicService {
     options?: {
       requireEnabled?: boolean
       notFoundMessage?: string
+      client?: Db
     },
   ) {
-    const section = await this.db.query.forumSection.findFirst({
+    const client = options?.client ?? this.db
+    const section = await client.query.forumSection.findFirst({
       where: {
         id: sectionId,
         deletedAt: { isNull: true },
@@ -2093,137 +2109,134 @@ export class ForumTopicService {
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
   ) {
-    const { id } = topic
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const commentRows = await tx.query.userComment.findMany({
-          where: {
-            targetType: CommentTargetTypeEnum.FORUM_TOPIC,
-            targetId: id,
-            deletedAt: { isNull: true },
-          },
-          columns: { id: true, userId: true, likeCount: true },
-        })
-
-        await tx
-          .update(this.userCommentTable)
-          .set({ deletedAt: new Date() })
-          .where(
-            and(
-              eq(
-                this.userCommentTable.targetType,
-                CommentTargetTypeEnum.FORUM_TOPIC,
-              ),
-              eq(this.userCommentTable.targetId, id),
-              isNull(this.userCommentTable.deletedAt),
-            ),
-          )
-
-        const result = await tx
-          .update(this.forumTopicTable)
-          .set({ deletedAt: new Date() })
-          .where(
-            and(
-              eq(this.forumTopicTable.id, id),
-              isNull(this.forumTopicTable.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '主题不存在')
-
-        await this.mentionService.deleteMentionsInTx({
-          tx,
-          sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
-          sourceIds: [id],
-        })
-        await this.forumHashtagReferenceService.deleteReferencesInTx({
-          tx,
-          sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
-          sourceIds: [id],
-        })
-        await this.mentionService.deleteMentionsInTx({
-          tx,
-          sourceType: MentionSourceTypeEnum.COMMENT,
-          sourceIds: commentRows.map((item) => item.id),
-        })
-        await this.forumHashtagReferenceService.deleteReferencesInTx({
-          tx,
-          sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
-          sourceIds: commentRows.map((item) => item.id),
-        })
-
-        await this.forumCounterService.updateUserForumTopicCount(
-          tx,
-          topic.userId,
-          -1,
-        )
-
-        if (topic.likeCount > 0) {
-          await this.forumCounterService.updateUserForumTopicReceivedLikeCount(
-            tx,
-            topic.userId,
-            -topic.likeCount,
-          )
-        }
-        if (topic.favoriteCount > 0) {
-          await this.forumCounterService.updateUserForumTopicReceivedFavoriteCount(
-            tx,
-            topic.userId,
-            -topic.favoriteCount,
-          )
-        }
-
-        const commentCountByUser = new Map<number, number>()
-        const commentReceivedLikeCountByUser = new Map<number, number>()
-        for (const comment of commentRows) {
-          commentCountByUser.set(
-            comment.userId,
-            (commentCountByUser.get(comment.userId) ?? 0) + 1,
-          )
-          if (comment.likeCount > 0) {
-            const nextReceivedLikeCount =
-              (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-              comment.likeCount
-            commentReceivedLikeCountByUser.set(
-              comment.userId,
-              nextReceivedLikeCount,
-            )
-          }
-        }
-
-        const commentCountTasks: Promise<void>[] = []
-        for (const [userId, count] of commentCountByUser.entries()) {
-          commentCountTasks.push(
-            this.appUserCountService.updateCommentCount(tx, userId, -count),
-          )
-        }
-
-        for (const [
-          userId,
-          likeCount,
-        ] of commentReceivedLikeCountByUser.entries()) {
-          commentCountTasks.push(
-            this.appUserCountService.updateCommentReceivedLikeCount(
-              tx,
-              userId,
-              -likeCount,
-            ),
-          )
-        }
-
-        await Promise.all(commentCountTasks)
-
-        await this.forumCounterService.syncSectionVisibleState(
-          tx,
-          topic.sectionId,
-        )
+        await this.deleteTopicWithCurrentInTx(tx, topic, context, actorUserId)
       }),
     )
 
-    await this.actionLogService.createActionLog({
+    return true
+  }
+
+  async deleteTopicWithCurrentInTx(
+    tx: Db,
+    topic: ForumTopicSelect,
+    context: ForumTopicClientContext = {},
+    actorUserId = topic.userId,
+  ) {
+    const { id } = topic
+    const commentRows = await tx.query.userComment.findMany({
+      where: {
+        targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+        targetId: id,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true, userId: true, likeCount: true },
+    })
+
+    await tx
+      .update(this.userCommentTable)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(this.userCommentTable.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+          eq(this.userCommentTable.targetId, id),
+          isNull(this.userCommentTable.deletedAt),
+        ),
+      )
+
+    const result = await tx
+      .update(this.forumTopicTable)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+    this.drizzle.assertAffectedRows(result, '主题不存在')
+
+    await this.mentionService.deleteMentionsInTx({
+      tx,
+      sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
+      sourceIds: [id],
+    })
+    await this.forumHashtagReferenceService.deleteReferencesInTx({
+      tx,
+      sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+      sourceIds: [id],
+    })
+    await this.mentionService.deleteMentionsInTx({
+      tx,
+      sourceType: MentionSourceTypeEnum.COMMENT,
+      sourceIds: commentRows.map((item) => item.id),
+    })
+    await this.forumHashtagReferenceService.deleteReferencesInTx({
+      tx,
+      sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+      sourceIds: commentRows.map((item) => item.id),
+    })
+
+    await this.forumCounterService.updateUserForumTopicCount(
+      tx,
+      topic.userId,
+      -1,
+    )
+
+    if (topic.likeCount > 0) {
+      await this.forumCounterService.updateUserForumTopicReceivedLikeCount(
+        tx,
+        topic.userId,
+        -topic.likeCount,
+      )
+    }
+    if (topic.favoriteCount > 0) {
+      await this.forumCounterService.updateUserForumTopicReceivedFavoriteCount(
+        tx,
+        topic.userId,
+        -topic.favoriteCount,
+      )
+    }
+
+    const commentCountByUser = new Map<number, number>()
+    const commentReceivedLikeCountByUser = new Map<number, number>()
+    for (const comment of commentRows) {
+      commentCountByUser.set(
+        comment.userId,
+        (commentCountByUser.get(comment.userId) ?? 0) + 1,
+      )
+      if (comment.likeCount > 0) {
+        const nextReceivedLikeCount =
+          (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
+          comment.likeCount
+        commentReceivedLikeCountByUser.set(comment.userId, nextReceivedLikeCount)
+      }
+    }
+
+    const commentCountTasks: Promise<void>[] = []
+    for (const [userId, count] of commentCountByUser.entries()) {
+      commentCountTasks.push(
+        this.appUserCountService.updateCommentCount(tx, userId, -count),
+      )
+    }
+
+    for (const [userId, likeCount] of commentReceivedLikeCountByUser.entries()) {
+      commentCountTasks.push(
+        this.appUserCountService.updateCommentReceivedLikeCount(
+          tx,
+          userId,
+          -likeCount,
+        ),
+      )
+    }
+
+    await Promise.all(commentCountTasks)
+    await this.forumCounterService.syncSectionVisibleState(tx, topic.sectionId)
+    await this.actionLogService.createActionLogInTx(tx, {
       userId: actorUserId,
       actionType: ForumUserActionTypeEnum.DELETE_TOPIC,
       targetType: ForumUserActionTargetTypeEnum.TOPIC,
-      targetId: id,
+      targetId: topic.id,
       beforeData: JSON.stringify(topic),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
@@ -2284,35 +2297,73 @@ export class ForumTopicService {
 
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const result = await tx
-          .update(this.forumTopicTable)
-          .set({
-            sectionId: input.sectionId,
-          })
-          .where(
-            and(
-              eq(this.forumTopicTable.id, input.id),
-              eq(this.forumTopicTable.sectionId, currentTopic.sectionId),
-              isNull(this.forumTopicTable.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '主题不存在')
-
-        await this.forumHashtagReferenceService.syncSectionIdsByTopicInTx(
-          tx,
-          input.id,
-          input.sectionId,
-        )
-
-        await Promise.all([
-          this.forumCounterService.syncSectionVisibleState(
-            tx,
-            currentTopic.sectionId,
-          ),
-          this.forumCounterService.syncSectionVisibleState(tx, input.sectionId),
-        ])
+        await this.moveTopicInTx(tx, input, currentTopic.sectionId)
       }),
     )
+
+    return true
+  }
+
+  async moveTopicInTx(
+    tx: Db,
+    input: MoveForumTopicDto,
+    currentSectionId?: number,
+  ) {
+    const sourceSectionId =
+      currentSectionId ??
+      (
+        await tx.query.forumTopic.findFirst({
+          where: {
+            id: input.id,
+            deletedAt: { isNull: true },
+          },
+          columns: {
+            sectionId: true,
+          },
+        })
+      )?.sectionId
+
+    if (!sourceSectionId) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
+
+    if (sourceSectionId === input.sectionId) {
+      return true
+    }
+
+    await this.getSectionTopicReviewPolicy(input.sectionId, {
+      client: tx,
+      requireEnabled: true,
+      notFoundMessage: '目标板块不存在或已禁用',
+    })
+
+    const result = await tx
+      .update(this.forumTopicTable)
+      .set({
+        sectionId: input.sectionId,
+      })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, input.id),
+          eq(this.forumTopicTable.sectionId, sourceSectionId),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+    this.drizzle.assertAffectedRows(result, '主题不存在')
+
+    await this.forumHashtagReferenceService.syncSectionIdsByTopicInTx(
+      tx,
+      input.id,
+      input.sectionId,
+    )
+
+    await Promise.all([
+      this.forumCounterService.syncSectionVisibleState(tx, sourceSectionId),
+      this.forumCounterService.syncSectionVisibleState(tx, input.sectionId),
+    ])
 
     return true
   }
@@ -2341,32 +2392,75 @@ export class ForumTopicService {
     }
 
     return this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const result = await tx
-          .update(this.forumTopicTable)
-          .set(updateData)
-          .where(
-            and(
-              eq(this.forumTopicTable.id, id),
-              isNull(this.forumTopicTable.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '主题不存在')
-
-        if (options?.syncSectionVisibility) {
-          await this.forumCounterService.syncSectionVisibleState(
-            tx,
-            currentTopic.sectionId,
-          )
-        }
-
-        return true
-      }),
+      this.db.transaction(async (tx) =>
+        this.updateTopicStatusInTx(
+          tx,
+          id,
+          updateData,
+          options,
+          currentTopic.sectionId,
+        ),
+      ),
     )
+  }
+
+  async updateTopicStatusInTx(
+    tx: Db,
+    id: number,
+    updateData: Record<string, unknown>,
+    options?: {
+      syncSectionVisibility?: boolean
+    },
+    sectionId?: number,
+  ) {
+    const currentSectionId =
+      sectionId ??
+      (
+        await tx.query.forumTopic.findFirst({
+          where: { id, deletedAt: { isNull: true } },
+          columns: { sectionId: true },
+        })
+      )?.sectionId
+
+    if (!currentSectionId) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
+
+    const result = await tx
+      .update(this.forumTopicTable)
+      .set(updateData)
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+    this.drizzle.assertAffectedRows(result, '主题不存在')
+
+    if (options?.syncSectionVisibility) {
+      await this.forumCounterService.syncSectionVisibleState(
+        tx,
+        currentSectionId,
+      )
+    }
+
+    return true
   }
 
   async updateTopicPinned(updateTopicPinnedDto: UpdateForumTopicPinnedDto) {
     return this.updateTopicStatus(updateTopicPinnedDto.id, {
+      isPinned: updateTopicPinnedDto.isPinned,
+    })
+  }
+
+  async updateTopicPinnedInTx(
+    tx: Db,
+    updateTopicPinnedDto: UpdateForumTopicPinnedDto,
+  ) {
+    return this.updateTopicStatusInTx(tx, updateTopicPinnedDto.id, {
       isPinned: updateTopicPinnedDto.isPinned,
     })
   }
@@ -2379,8 +2473,26 @@ export class ForumTopicService {
     })
   }
 
+  async updateTopicFeaturedInTx(
+    tx: Db,
+    updateTopicFeaturedDto: UpdateForumTopicFeaturedDto,
+  ) {
+    return this.updateTopicStatusInTx(tx, updateTopicFeaturedDto.id, {
+      isFeatured: updateTopicFeaturedDto.isFeatured,
+    })
+  }
+
   async updateTopicLocked(updateTopicLockedDto: UpdateForumTopicLockedDto) {
     return this.updateTopicStatus(updateTopicLockedDto.id, {
+      isLocked: updateTopicLockedDto.isLocked,
+    })
+  }
+
+  async updateTopicLockedInTx(
+    tx: Db,
+    updateTopicLockedDto: UpdateForumTopicLockedDto,
+  ) {
+    return this.updateTopicStatusInTx(tx, updateTopicLockedDto.id, {
       isLocked: updateTopicLockedDto.isLocked,
     })
   }
@@ -2413,56 +2525,90 @@ export class ForumTopicService {
     }
 
     await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const result = await tx
-          .update(this.forumTopicTable)
-          .set({
-            isHidden: updateTopicHiddenDto.isHidden,
-          })
-          .where(
-            and(
-              eq(this.forumTopicTable.id, updateTopicHiddenDto.id),
-              isNull(this.forumTopicTable.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '主题不存在')
+      this.db.transaction(async (tx) =>
+        this.updateTopicHiddenInTx(tx, updateTopicHiddenDto, currentTopic),
+      ),
+    )
 
-        await this.forumCounterService.syncSectionVisibleState(
-          tx,
-          currentTopic.sectionId,
-        )
-        await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
-          tx,
-          sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
-          sourceId: currentTopic.id,
-          sourceAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
-          sourceIsHidden: updateTopicHiddenDto.isHidden,
-          isSourceVisible: this.isTopicVisible({
-            auditStatus: currentTopic.auditStatus as AuditStatusEnum,
-            isHidden: updateTopicHiddenDto.isHidden,
-            deletedAt: null,
-          }),
-        })
-        await this.forumHashtagReferenceService.syncCommentVisibilityByTopicInTx(
-          tx,
-          currentTopic.id,
-          this.isTopicVisible({
-            auditStatus: currentTopic.auditStatus as AuditStatusEnum,
-            isHidden: updateTopicHiddenDto.isHidden,
-            deletedAt: null,
-          }),
-        )
-        await this.syncTopicMentionVisibilityTransitionInTx(tx, {
-          topicId: currentTopic.id,
-          actorUserId: currentTopic.userId,
-          topicTitle: currentTopic.title,
-          currentAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
-          currentIsHidden: currentTopic.isHidden,
-          nextAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
-          nextIsHidden: updateTopicHiddenDto.isHidden,
-        })
+    return true
+  }
+
+  async updateTopicHiddenInTx(
+    tx: Db,
+    updateTopicHiddenDto: UpdateForumTopicHiddenDto,
+    currentTopic?: Pick<
+      ForumTopicSelect,
+      'auditStatus' | 'id' | 'isHidden' | 'sectionId' | 'title' | 'userId'
+    >,
+  ) {
+    const topic =
+      currentTopic ??
+      (await tx.query.forumTopic.findFirst({
+        where: {
+          id: updateTopicHiddenDto.id,
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          id: true,
+          sectionId: true,
+          userId: true,
+          title: true,
+          auditStatus: true,
+          isHidden: true,
+        },
+      }))
+
+    if (!topic) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
+
+    const result = await tx
+      .update(this.forumTopicTable)
+      .set({
+        isHidden: updateTopicHiddenDto.isHidden,
+      })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, updateTopicHiddenDto.id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+    this.drizzle.assertAffectedRows(result, '主题不存在')
+
+    await this.forumCounterService.syncSectionVisibleState(tx, topic.sectionId)
+    await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
+      tx,
+      sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+      sourceId: topic.id,
+      sourceAuditStatus: topic.auditStatus as AuditStatusEnum,
+      sourceIsHidden: updateTopicHiddenDto.isHidden,
+      isSourceVisible: this.isTopicVisible({
+        auditStatus: topic.auditStatus as AuditStatusEnum,
+        isHidden: updateTopicHiddenDto.isHidden,
+        deletedAt: null,
+      }),
+    })
+    await this.forumHashtagReferenceService.syncCommentVisibilityByTopicInTx(
+      tx,
+      topic.id,
+      this.isTopicVisible({
+        auditStatus: topic.auditStatus as AuditStatusEnum,
+        isHidden: updateTopicHiddenDto.isHidden,
+        deletedAt: null,
       }),
     )
+    await this.syncTopicMentionVisibilityTransitionInTx(tx, {
+      topicId: topic.id,
+      actorUserId: topic.userId,
+      topicTitle: topic.title,
+      currentAuditStatus: topic.auditStatus as AuditStatusEnum,
+      currentIsHidden: topic.isHidden,
+      nextAuditStatus: topic.auditStatus as AuditStatusEnum,
+      nextIsHidden: updateTopicHiddenDto.isHidden,
+    })
 
     return true
   }
@@ -2471,7 +2617,7 @@ export class ForumTopicService {
    * 在主题首次审核通过后补发创建主题奖励。
    * 继续复用创建时的 bizKey，避免“即时发奖”和“审核补发”双发。
    */
-  private async rewardApprovedTopicIfNeeded(params: {
+  private async dispatchApprovedTopicRewardIfNeeded(params: {
     topicId: number
     userId: number
     previousAuditStatus: AuditStatusEnum
@@ -2545,62 +2691,17 @@ export class ForumTopicService {
     }
 
     await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const result = await tx
-          .update(this.forumTopicTable)
-          .set({
-            auditStatus,
-            auditReason,
-            auditById: options?.auditById ?? null,
-            auditRole: options?.auditRole ?? null,
-            auditAt: new Date(),
-          })
-          .where(
-            and(
-              eq(this.forumTopicTable.id, id),
-              isNull(this.forumTopicTable.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '主题不存在')
-
-        await this.forumCounterService.syncSectionVisibleState(
+      this.db.transaction(async (tx) =>
+        this.updateTopicAuditStatusInTx(
           tx,
-          currentTopic.sectionId,
-        )
-        await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
-          tx,
-          sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
-          sourceId: currentTopic.id,
-          sourceAuditStatus: auditStatus,
-          sourceIsHidden: currentTopic.isHidden,
-          isSourceVisible: this.isTopicVisible({
-            auditStatus,
-            isHidden: currentTopic.isHidden,
-            deletedAt: null,
-          }),
-        })
-        await this.forumHashtagReferenceService.syncCommentVisibilityByTopicInTx(
-          tx,
-          currentTopic.id,
-          this.isTopicVisible({
-            auditStatus,
-            isHidden: currentTopic.isHidden,
-            deletedAt: null,
-          }),
-        )
-        await this.syncTopicMentionVisibilityTransitionInTx(tx, {
-          topicId: currentTopic.id,
-          actorUserId: currentTopic.userId,
-          topicTitle: currentTopic.title,
-          currentAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
-          currentIsHidden: currentTopic.isHidden,
-          nextAuditStatus: auditStatus,
-          nextIsHidden: currentTopic.isHidden,
-        })
-      }),
+          updateTopicAuditStatusDto,
+          options,
+          currentTopic,
+        ),
+      ),
     )
 
-    await this.rewardApprovedTopicIfNeeded({
+    await this.dispatchApprovedTopicRewardIfNeeded({
       topicId: currentTopic.id,
       userId: currentTopic.userId,
       previousAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
@@ -2608,6 +2709,104 @@ export class ForumTopicService {
     })
 
     return true
+  }
+
+  async updateTopicAuditStatusInTx(
+    tx: Db,
+    updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
+    options?: {
+      auditById?: number
+      auditRole?: AuditRoleEnum
+    },
+    currentTopic?: Pick<
+      ForumTopicSelect,
+      'auditStatus' | 'id' | 'isHidden' | 'sectionId' | 'title' | 'userId'
+    >,
+  ) {
+    const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
+    const topic =
+      currentTopic ??
+      (await tx.query.forumTopic.findFirst({
+        where: {
+          id,
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          id: true,
+          sectionId: true,
+          userId: true,
+          title: true,
+          auditStatus: true,
+          isHidden: true,
+        },
+      }))
+
+    if (!topic) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
+
+    const result = await tx
+      .update(this.forumTopicTable)
+      .set({
+        auditStatus,
+        auditReason,
+        auditById: options?.auditById ?? null,
+        auditRole: options?.auditRole ?? null,
+        auditAt: new Date(),
+      })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+    this.drizzle.assertAffectedRows(result, '主题不存在')
+
+    await this.forumCounterService.syncSectionVisibleState(tx, topic.sectionId)
+    await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
+      tx,
+      sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+      sourceId: topic.id,
+      sourceAuditStatus: auditStatus,
+      sourceIsHidden: topic.isHidden,
+      isSourceVisible: this.isTopicVisible({
+        auditStatus,
+        isHidden: topic.isHidden,
+        deletedAt: null,
+      }),
+    })
+    await this.forumHashtagReferenceService.syncCommentVisibilityByTopicInTx(
+      tx,
+      topic.id,
+      this.isTopicVisible({
+        auditStatus,
+        isHidden: topic.isHidden,
+        deletedAt: null,
+      }),
+    )
+    await this.syncTopicMentionVisibilityTransitionInTx(tx, {
+      topicId: topic.id,
+      actorUserId: topic.userId,
+      topicTitle: topic.title,
+      currentAuditStatus: topic.auditStatus as AuditStatusEnum,
+      currentIsHidden: topic.isHidden,
+      nextAuditStatus: auditStatus,
+      nextIsHidden: topic.isHidden,
+    })
+
+    return true
+  }
+
+  async rewardApprovedTopicIfNeeded(params: {
+    topicId: number
+    userId: number
+    previousAuditStatus: AuditStatusEnum
+    nextAuditStatus: AuditStatusEnum
+  }) {
+    await this.dispatchApprovedTopicRewardIfNeeded(params)
   }
 
   /**

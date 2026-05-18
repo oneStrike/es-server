@@ -27,13 +27,51 @@ describe('ComicThirdPartyController', () => {
     updatedAt: new Date('2026-05-17T00:00:00.000Z'),
     workflowType: 'content-import.third-party-import',
   }
+  const contentImportItem = {
+    currentAttemptNo: 1,
+    failureCount: 0,
+    imageSuccessCount: 2,
+    imageTotal: 2,
+    itemId: 'item-1',
+    localChapterId: 100,
+    providerChapterId: 'chapter-1',
+    sortOrder: 1,
+    stage: 7,
+    status: 3,
+    title: '第 1 话',
+    updatedAt: new Date('2026-05-17T00:00:00.000Z'),
+  }
 
-  it('passes the current admin user id to confirm import', async () => {
+  function createController() {
     const thirdPartyService = {
       confirmImport: jest.fn(async () => workflowJob),
-      syncLatest: jest.fn(),
+      syncLatest: jest.fn(async () => ({
+        ...workflowJob,
+        jobId: 'job-sync',
+        summary: { sourceType: 'content-import.third-party-sync' },
+        workflowType: 'content-import.third-party-sync',
+      })),
     }
-    const controller = new ComicThirdPartyController(thirdPartyService as never)
+    const contentImportService = {
+      getItemPage: jest.fn(async () => ({
+        list: [contentImportItem],
+        pageIndex: 1,
+        pageSize: 10,
+        total: 1,
+      })),
+    }
+    return {
+      contentImportService,
+      controller: new ComicThirdPartyController(
+        thirdPartyService as never,
+        contentImportService as never,
+      ),
+      thirdPartyService,
+    }
+  }
+
+  it('passes the current admin user id to confirm import', async () => {
+    const { controller, thirdPartyService } = createController()
     const body = { comicId: 'woduzishenji' } as never
     const confirmImport = controller.confirmImport as unknown as (
       body: never,
@@ -54,16 +92,7 @@ describe('ComicThirdPartyController', () => {
   })
 
   it('passes the current admin user id to latest sync', async () => {
-    const thirdPartyService = {
-      confirmImport: jest.fn(),
-      syncLatest: jest.fn(async () => ({
-        ...workflowJob,
-        jobId: 'job-sync',
-        summary: { sourceType: 'content-import.third-party-sync' },
-        workflowType: 'content-import.third-party-sync',
-      })),
-    }
-    const controller = new ComicThirdPartyController(thirdPartyService as never)
+    const { controller, thirdPartyService } = createController()
     const body = { workId: 100 } as never
     const syncLatest = controller.syncLatest as unknown as (
       body: never,
@@ -79,5 +108,23 @@ describe('ComicThirdPartyController', () => {
       }),
     )
     expect(thirdPartyService.syncLatest).toHaveBeenCalledWith(body, 7)
+  })
+
+  it('owns content import item pagination under the third-party import route', async () => {
+    const { contentImportService, controller } = createController()
+    const query = { jobId: 'job-1', pageIndex: 1, pageSize: 10 } as never
+
+    const result = await controller.getImportItemPage(query)
+
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        imageSuccessCount: 2,
+        imageTotal: 2,
+        itemId: 'item-1',
+        status: 3,
+        title: '第 1 话',
+      }),
+    )
+    expect(contentImportService.getItemPage).toHaveBeenCalledWith(query)
   })
 })

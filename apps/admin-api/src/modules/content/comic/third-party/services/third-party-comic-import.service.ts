@@ -467,7 +467,7 @@ export class ThirdPartyComicImportService {
     let coverFailureCause: Error | string | undefined
     let coverPath: string | undefined
     try {
-      const coverImport = await this.resolveWorkCover(dto, detail)
+      const coverImport = await this.resolveWorkCover(dto, detail, context)
       coverPath = coverImport?.filePath
       if (coverImport?.deleteTarget) {
         await this.recordUploadedFile(context, coverImport.deleteTarget)
@@ -603,6 +603,7 @@ export class ThirdPartyComicImportService {
           detail: this.toImageProgressDetail(chapterPlan, importedFile),
         })
       },
+      { heartbeat: context.renewLease },
     )
     await context.assertNotCancelled()
     await this.comicContentService.replaceChapterContents(
@@ -792,6 +793,7 @@ export class ThirdPartyComicImportService {
   private async resolveWorkCover(
     dto: ThirdPartyComicImportRequestDto,
     detail: ThirdPartyComicDetailDto,
+    context: ThirdPartyComicImportTaskContext,
   ) {
     if (dto.cover?.mode === ThirdPartyComicImportCoverModeEnum.LOCAL) {
       return {
@@ -810,6 +812,7 @@ export class ThirdPartyComicImportService {
     const importedCover = await this.remoteImageImportService.importImage(
       detail.cover,
       ['comic', 'image', formatDateOnlyInAppTimeZone(new Date())],
+      { heartbeat: context.renewLease },
     )
     return {
       filePath: importedCover.upload.filePath,

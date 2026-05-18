@@ -73,6 +73,7 @@ export type CommentModerationState = Pick<
   | 'content'
   | 'createdAt'
   | 'auditStatus'
+  | 'auditReason'
   | 'isHidden'
   | 'deletedAt'
 > & {

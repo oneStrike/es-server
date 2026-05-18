@@ -107,6 +107,18 @@ export class ForumModeratorService {
     )
   }
 
+  private ensureActiveModeratorHasPermissions(params: {
+    isEnabled: boolean
+    permissions: ForumModeratorPermissionEnum[]
+  }) {
+    if (params.isEnabled && params.permissions.length === 0) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '启用的非超级版主必须至少配置一个权限',
+      )
+    }
+  }
+
   /**
    * 将权限值映射为后台展示文案。
    * 该映射仅用于返回管理端视图，不参与任何鉴权判断。
@@ -315,14 +327,19 @@ export class ForumModeratorService {
     const permissions = this.normalizePermissions(
       input.permissions ?? options.current?.permissions ?? [],
     )
+    const nextIsEnabled =
+      input.isEnabled ?? options.current?.isEnabled ?? true
+
+    this.ensureActiveModeratorHasPermissions({
+      isEnabled: nextIsEnabled,
+      permissions,
+    })
 
     if (roleType === ForumModeratorRoleTypeEnum.GROUP) {
       const groupId =
         input.groupId === undefined
           ? (options.current?.groupId ?? null)
           : input.groupId
-      const nextIsEnabled =
-        input.isEnabled ?? options.current?.isEnabled ?? true
 
       if (!groupId) {
         throw new BusinessException(

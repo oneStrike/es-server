@@ -1,6 +1,5 @@
-import type { Db, PostgresErrorSourceObject } from '@db/core'
+import type { Db, PostgresErrorSourceObject, SQL } from '@db/core'
 import type { JsonValue } from '@libs/platform/utils'
-import type { SQL } from 'drizzle-orm'
 import type {
   CommentModerationState,
   CommentVisibleState,
@@ -19,6 +18,7 @@ import {
 } from '@libs/forum/hashtag/forum-hashtag.constant'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
+  type EventEnvelope,
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
   EventEnvelopeGovernanceStatusEnum,
@@ -999,7 +999,7 @@ export class CommentService {
           userId: number
           content: string
         }
-        | undefined
+      | undefined
 
     if (comment.replyToId) {
       replyTarget = await tx.query.userComment.findFirst({
@@ -1129,7 +1129,7 @@ export class CommentService {
   ) {
     const authorDeltas = new Map<
       number,
-      { commentCount: number, receivedLikeCount: number }
+      { commentCount: number; receivedLikeCount: number }
     >()
 
     for (const comment of comments) {
@@ -1581,103 +1581,105 @@ export class CommentService {
    */
   async deleteComment(commentId: number, userId?: number) {
     return this.drizzle.withTransaction(async (tx) => {
-      const found = await tx.query.userComment.findFirst({
-        where: userId
-          ? {
-              id: commentId,
-              userId,
-              deletedAt: { isNull: true },
-            }
-          : {
-              id: commentId,
-              deletedAt: { isNull: true },
-            },
-        columns: {
-          id: true,
-          userId: true,
-          targetType: true,
-          targetId: true,
-          replyToId: true,
-          content: true,
-          createdAt: true,
-          auditStatus: true,
-          isHidden: true,
-          likeCount: true,
-          deletedAt: true,
-        },
-      })
-      if (!found) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '删除失败：数据不存在',
-        )
-      }
-
-      const deleteScopeComments = await this.getDeleteScopeComments(tx, found)
-      const deleteScopeIds = deleteScopeComments.map((item) => item.id)
-      const deletedAt = new Date()
-
-      await tx
-        .update(this.userComment)
-        .set({
-          deletedAt,
-        })
-        .where(
-          deleteScopeIds.length === 1
-            ? eq(this.userComment.id, found.id)
-            : inArray(this.userComment.id, deleteScopeIds),
-        )
-
-      await this.mentionService.deleteMentionsInTx({
-        tx,
-        sourceType: MentionSourceTypeEnum.COMMENT,
-        sourceIds: deleteScopeIds,
-      })
-      await this.forumHashtagReferenceService.deleteReferencesInTx({
-        tx,
-        sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
-        sourceIds: deleteScopeIds,
-      })
-
-      await this.rollbackDeletedCommentAuthorCounts(tx, deleteScopeComments)
-
-      const visibleDeletedCount = deleteScopeComments.filter((comment) =>
-        this.isVisible(comment),
-      ).length
-      if (visibleDeletedCount === 0) {
-        return true
-      }
-
-      const resolver = this.getResolver(
-        found.targetType as CommentTargetTypeEnum,
-      )
-
-      await this.applyCommentCountDelta(
-        tx,
-        found.targetType as CommentTargetTypeEnum,
-        found.targetId,
-        -visibleDeletedCount,
-      )
-
-      const meta = await resolver.resolveMeta(tx, found.targetId)
-      if (resolver.postDeleteCommentHook) {
-        await resolver.postDeleteCommentHook(
-          tx,
-          {
-            id: found.id,
-            userId: found.userId,
-            targetType: found.targetType as CommentTargetTypeEnum,
-            targetId: found.targetId,
-            replyToId: found.replyToId,
-            content: found.content,
-            createdAt: found.createdAt,
-          },
-          meta,
-        )
-      }
-
-      return true
+      return this.deleteCommentInTx(tx, commentId, userId)
     })
+  }
+
+  async deleteCommentInTx(tx: Db, commentId: number, userId?: number) {
+    const found = await tx.query.userComment.findFirst({
+      where: userId
+        ? {
+            id: commentId,
+            userId,
+            deletedAt: { isNull: true },
+          }
+        : {
+            id: commentId,
+            deletedAt: { isNull: true },
+          },
+      columns: {
+        id: true,
+        userId: true,
+        targetType: true,
+        targetId: true,
+        replyToId: true,
+        content: true,
+        createdAt: true,
+        auditStatus: true,
+        isHidden: true,
+        likeCount: true,
+        deletedAt: true,
+      },
+    })
+    if (!found) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '删除失败：数据不存在',
+      )
+    }
+
+    const deleteScopeComments = await this.getDeleteScopeComments(tx, found)
+    const deleteScopeIds = deleteScopeComments.map((item) => item.id)
+    const deletedAt = new Date()
+
+    await tx
+      .update(this.userComment)
+      .set({
+        deletedAt,
+      })
+      .where(
+        deleteScopeIds.length === 1
+          ? eq(this.userComment.id, found.id)
+          : inArray(this.userComment.id, deleteScopeIds),
+      )
+
+    await this.mentionService.deleteMentionsInTx({
+      tx,
+      sourceType: MentionSourceTypeEnum.COMMENT,
+      sourceIds: deleteScopeIds,
+    })
+    await this.forumHashtagReferenceService.deleteReferencesInTx({
+      tx,
+      sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+      sourceIds: deleteScopeIds,
+    })
+
+    await this.rollbackDeletedCommentAuthorCounts(tx, deleteScopeComments)
+
+    const visibleDeletedCount = deleteScopeComments.filter((comment) =>
+      this.isVisible(comment),
+    ).length
+    if (visibleDeletedCount === 0) {
+      return true
+    }
+
+    const resolver = this.getResolver(found.targetType as CommentTargetTypeEnum)
+
+    await this.applyCommentCountDelta(
+      tx,
+      found.targetType as CommentTargetTypeEnum,
+      found.targetId,
+      -visibleDeletedCount,
+    )
+
+    const meta = await resolver.resolveMeta(tx, found.targetId)
+    if (resolver.postDeleteCommentHook) {
+      await resolver.postDeleteCommentHook(
+        tx,
+        {
+          id: found.id,
+          userId: found.userId,
+          targetType: found.targetType as CommentTargetTypeEnum,
+          targetId: found.targetId,
+          replyToId: found.replyToId,
+          content: found.content,
+          createdAt: found.createdAt,
+        },
+        meta,
+      )
+    }
+
+    return true
   }
 
   /**
@@ -2354,89 +2356,13 @@ export class CommentService {
     )
 
     const handled = await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const auditAt = new Date()
-        const [updated] = await tx
-          .update(this.userComment)
-          .set({
-            auditStatus: input.auditStatus,
-            auditReason: input.auditReason ?? null,
-            auditById: input.auditById,
-            auditRole: input.auditRole ?? AuditRoleEnum.ADMIN,
-            auditAt,
-          })
-          .where(
-            and(
-              eq(this.userComment.id, input.id),
-              isNull(this.userComment.deletedAt),
-              eq(this.userComment.auditStatus, current.auditStatus),
-              eq(this.userComment.isHidden, current.isHidden),
-            ),
-          )
-          .returning({
-            id: this.userComment.id,
-          })
-
-        if (!updated) {
-          const latest = await tx.query.userComment.findFirst({
-            where: {
-              id: input.id,
-              deletedAt: { isNull: true },
-            },
-            columns: {
-              auditStatus: true,
-              isHidden: true,
-            },
-          })
-          if (!latest) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_NOT_FOUND,
-              '评论不存在',
-            )
-          }
-          if ((latest.auditStatus as AuditStatusEnum) === input.auditStatus) {
-            return {
-              rewardComment: null,
-              eventEnvelope: null,
-            }
-          }
-          this.ensureCanUpdateCommentAuditStatus(
-            latest.auditStatus as AuditStatusEnum,
-            input.auditStatus,
-          )
-          throw new BusinessException(
-            BusinessErrorCode.STATE_CONFLICT,
-            '评论状态已变化，请刷新后重试',
-          )
-        }
-
-        if (current.targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
-          const topicVisible = await this.isForumTopicVisibleInTx(
-            tx,
-            current.targetId,
-          )
-          await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
-            tx,
-            sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
-            sourceId: current.id,
-            sourceAuditStatus: input.auditStatus,
-            sourceIsHidden: current.isHidden,
-            isSourceVisible:
-              topicVisible &&
-              this.isVisible({
-                auditStatus: input.auditStatus,
-                isHidden: current.isHidden,
-                deletedAt: null,
-              }),
-          })
-        }
-
-        return this.syncCommentVisibilityTransition(tx, {
-          current: current as CommentModerationState,
-          nextAuditStatus: input.auditStatus,
-          nextIsHidden: current.isHidden,
-        })
-      }),
+      this.db.transaction(async (tx) =>
+        this.updateCommentAuditStatusInTx(
+          tx,
+          input,
+          current as CommentModerationState,
+        ),
+      ),
     )
 
     if (
@@ -2458,6 +2384,152 @@ export class CommentService {
     }
 
     return true
+  }
+
+  async updateCommentAuditStatusInTx(
+    tx: Db,
+    input: UpdateCommentAuditStatusDto & {
+      auditById: number
+      auditRole?: AuditRoleEnum
+    },
+    current?: CommentModerationState,
+  ) {
+    const comment =
+      current ??
+      (await tx.query.userComment.findFirst({
+        where: {
+          id: input.id,
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          id: true,
+          userId: true,
+          targetType: true,
+          targetId: true,
+          replyToId: true,
+          content: true,
+          createdAt: true,
+          auditStatus: true,
+          auditReason: true,
+          isHidden: true,
+          deletedAt: true,
+        },
+      }))
+
+    if (!comment) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '评论不存在',
+      )
+    }
+
+    if (
+      (comment.auditStatus as AuditStatusEnum) === input.auditStatus &&
+      (comment.auditReason ?? null) === (input.auditReason ?? null)
+    ) {
+      return {
+        changed: false,
+        rewardComment: null,
+        eventEnvelope: null,
+      }
+    }
+
+    this.ensureCanUpdateCommentAuditStatus(
+      comment.auditStatus as AuditStatusEnum,
+      input.auditStatus,
+    )
+
+    const auditAt = new Date()
+    const [updated] = await tx
+      .update(this.userComment)
+      .set({
+        auditStatus: input.auditStatus,
+        auditReason: input.auditReason ?? null,
+        auditById: input.auditById,
+        auditRole: input.auditRole ?? AuditRoleEnum.ADMIN,
+        auditAt,
+      })
+      .where(
+        and(
+          eq(this.userComment.id, input.id),
+          isNull(this.userComment.deletedAt),
+          eq(this.userComment.auditStatus, comment.auditStatus),
+          eq(this.userComment.isHidden, comment.isHidden),
+        ),
+      )
+      .returning({
+        id: this.userComment.id,
+      })
+
+    if (!updated) {
+      const latest = await tx.query.userComment.findFirst({
+        where: {
+          id: input.id,
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          auditStatus: true,
+          auditReason: true,
+          isHidden: true,
+        },
+      })
+      if (!latest) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '评论不存在',
+        )
+      }
+      if (
+        (latest.auditStatus as AuditStatusEnum) === input.auditStatus &&
+        (latest.auditReason ?? null) === (input.auditReason ?? null)
+      ) {
+        return {
+          changed: false,
+          rewardComment: null,
+          eventEnvelope: null,
+        }
+      }
+      this.ensureCanUpdateCommentAuditStatus(
+        latest.auditStatus as AuditStatusEnum,
+        input.auditStatus,
+      )
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '评论状态已变化，请刷新后重试',
+      )
+    }
+
+    if (comment.targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
+      const topicVisible = await this.isForumTopicVisibleInTx(
+        tx,
+        comment.targetId,
+      )
+      await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
+        tx,
+        sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+        sourceId: comment.id,
+        sourceAuditStatus: input.auditStatus,
+        sourceIsHidden: comment.isHidden,
+        isSourceVisible:
+          topicVisible &&
+          this.isVisible({
+            auditStatus: input.auditStatus,
+            isHidden: comment.isHidden,
+            deletedAt: null,
+          }),
+      })
+    }
+
+    const handled = await this.syncCommentVisibilityTransition(tx, {
+      current: comment as CommentModerationState,
+      nextAuditStatus: input.auditStatus,
+      nextIsHidden: comment.isHidden,
+    })
+
+    return {
+      ...handled,
+      changed: true,
+    }
   }
 
   /**
@@ -2496,80 +2568,13 @@ export class CommentService {
     }
 
     const handled = await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const [updated] = await tx
-          .update(this.userComment)
-          .set({
-            isHidden: input.isHidden,
-          })
-          .where(
-            and(
-              eq(this.userComment.id, input.id),
-              isNull(this.userComment.deletedAt),
-              eq(this.userComment.auditStatus, current.auditStatus),
-              eq(this.userComment.isHidden, current.isHidden),
-            ),
-          )
-          .returning({
-            id: this.userComment.id,
-          })
-
-        if (!updated) {
-          const latest = await tx.query.userComment.findFirst({
-            where: {
-              id: input.id,
-              deletedAt: { isNull: true },
-            },
-            columns: {
-              auditStatus: true,
-              isHidden: true,
-            },
-          })
-          if (!latest) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_NOT_FOUND,
-              '评论不存在',
-            )
-          }
-          if (latest.isHidden === input.isHidden) {
-            return {
-              rewardComment: null,
-              eventEnvelope: null,
-            }
-          }
-          throw new BusinessException(
-            BusinessErrorCode.STATE_CONFLICT,
-            '评论状态已变化，请刷新后重试',
-          )
-        }
-
-        if (current.targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
-          const topicVisible = await this.isForumTopicVisibleInTx(
-            tx,
-            current.targetId,
-          )
-          await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
-            tx,
-            sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
-            sourceId: current.id,
-            sourceAuditStatus: current.auditStatus as AuditStatusEnum,
-            sourceIsHidden: input.isHidden,
-            isSourceVisible:
-              topicVisible &&
-              this.isVisible({
-                auditStatus: current.auditStatus as AuditStatusEnum,
-                isHidden: input.isHidden,
-                deletedAt: null,
-              }),
-          })
-        }
-
-        return this.syncCommentVisibilityTransition(tx, {
-          current: current as CommentModerationState,
-          nextAuditStatus: current.auditStatus as AuditStatusEnum,
-          nextIsHidden: input.isHidden,
-        })
-      }),
+      this.db.transaction(async (tx) =>
+        this.updateCommentHiddenInTx(
+          tx,
+          input,
+          current as CommentModerationState,
+        ),
+      ),
     )
 
     if (
@@ -2591,5 +2596,149 @@ export class CommentService {
     }
 
     return true
+  }
+
+  async updateCommentHiddenInTx(
+    tx: Db,
+    input: UpdateCommentHiddenDto,
+    current?: CommentModerationState,
+  ) {
+    const comment =
+      current ??
+      (await tx.query.userComment.findFirst({
+        where: {
+          id: input.id,
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          id: true,
+          userId: true,
+          targetType: true,
+          targetId: true,
+          replyToId: true,
+          content: true,
+          createdAt: true,
+          auditStatus: true,
+          isHidden: true,
+          deletedAt: true,
+        },
+      }))
+
+    if (!comment) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '评论不存在',
+      )
+    }
+
+    if (comment.isHidden === input.isHidden) {
+      return {
+        changed: false,
+        rewardComment: null,
+        eventEnvelope: null,
+      }
+    }
+
+    const [updated] = await tx
+      .update(this.userComment)
+      .set({
+        isHidden: input.isHidden,
+      })
+      .where(
+        and(
+          eq(this.userComment.id, input.id),
+          isNull(this.userComment.deletedAt),
+          eq(this.userComment.auditStatus, comment.auditStatus),
+          eq(this.userComment.isHidden, comment.isHidden),
+        ),
+      )
+      .returning({
+        id: this.userComment.id,
+      })
+
+    if (!updated) {
+      const latest = await tx.query.userComment.findFirst({
+        where: {
+          id: input.id,
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          auditStatus: true,
+          isHidden: true,
+        },
+      })
+      if (!latest) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '评论不存在',
+        )
+      }
+      if (latest.isHidden === input.isHidden) {
+        return {
+          changed: false,
+          rewardComment: null,
+          eventEnvelope: null,
+        }
+      }
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '评论状态已变化，请刷新后重试',
+      )
+    }
+
+    if (comment.targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
+      const topicVisible = await this.isForumTopicVisibleInTx(
+        tx,
+        comment.targetId,
+      )
+      await this.forumHashtagReferenceService.syncSourceVisibilityInTx({
+        tx,
+        sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+        sourceId: comment.id,
+        sourceAuditStatus: comment.auditStatus as AuditStatusEnum,
+        sourceIsHidden: input.isHidden,
+        isSourceVisible:
+          topicVisible &&
+          this.isVisible({
+            auditStatus: comment.auditStatus as AuditStatusEnum,
+            isHidden: input.isHidden,
+            deletedAt: null,
+          }),
+      })
+    }
+
+    const handled = await this.syncCommentVisibilityTransition(tx, {
+      current: comment as CommentModerationState,
+      nextAuditStatus: comment.auditStatus as AuditStatusEnum,
+      nextIsHidden: input.isHidden,
+    })
+
+    return {
+      ...handled,
+      changed: true,
+    }
+  }
+
+  async rewardCommentModerationIfNeeded(params: {
+    eventEnvelope: EventEnvelope<GrowthRuleTypeEnum> | null
+    rewardComment: VisibleCommentEffectPayload | null
+  }) {
+    if (
+      params.eventEnvelope &&
+      params.rewardComment &&
+      canConsumeEventEnvelopeByConsumer(
+        params.eventEnvelope,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
+      await this.commentGrowthService.rewardCommentCreated({
+        userId: params.rewardComment.userId,
+        id: params.rewardComment.id,
+        targetType: params.rewardComment.targetType,
+        targetId: params.rewardComment.targetId,
+        occurredAt: params.rewardComment.createdAt,
+        eventEnvelope: params.eventEnvelope,
+      })
+    }
   }
 }

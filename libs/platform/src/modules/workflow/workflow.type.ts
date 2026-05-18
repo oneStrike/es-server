@@ -1,4 +1,4 @@
-import type { Db, DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
 import type {
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
@@ -97,6 +97,7 @@ export interface WorkflowExecutionContext {
   isCancelRequested: () => Promise<boolean>
   assertNotCancelled: () => Promise<void>
   assertStillOwned: () => Promise<void>
+  renewLease: () => Promise<void>
   updateProgress: (progress: WorkflowProgress) => Promise<void>
   appendEvent: (
     eventType: WorkflowEventTypeEnum,
@@ -138,11 +139,6 @@ export type WorkflowStatusCounters = Pick<
   WorkflowExpiredAttemptRecoveryResult,
   'failedItemCount' | 'successItemCount'
 >
-
-/** 数据库错误处理文案映射类型。 */
-export type WorkflowDatabaseErrorMessages = Parameters<
-  DrizzleService['handleError']
->[1]
 
 /** 工作流处理器。 */
 export interface WorkflowHandler {

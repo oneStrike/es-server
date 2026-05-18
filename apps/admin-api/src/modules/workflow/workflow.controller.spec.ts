@@ -51,8 +51,12 @@ describe('AdminWorkflowController', () => {
         updatedAt: new Date('2026-05-17T00:00:00.000Z'),
       },
     ],
-    events: [
+  }
+  const workflowRecordPage = {
+    list: [
       {
+        attemptId: 'attempt-1',
+        attemptNo: 1,
         createdAt: new Date('2026-05-17T00:00:00.000Z'),
         detail: { itemId: 'item-1' },
         eventType: 6,
@@ -60,6 +64,9 @@ describe('AdminWorkflowController', () => {
         message: '章节导入成功',
       },
     ],
+    pageIndex: 1,
+    pageSize: 20,
+    total: 1,
   }
   const contentImportItem = {
     currentAttemptNo: 1,
@@ -87,6 +94,7 @@ describe('AdminWorkflowController', () => {
         pageSize: 10,
         total: 1,
       })),
+      getJobRecordPage: jest.fn(async () => workflowRecordPage),
       retryItems: jest.fn(async () => workflowJob),
     }
     const contentImportService = {
@@ -128,7 +136,7 @@ describe('AdminWorkflowController', () => {
     expect(workflowService.getJobPage).toHaveBeenCalledWith(query)
   })
 
-  it('returns workflow detail with attempts and events contract fields', async () => {
+  it('returns workflow detail with attempts and without unbounded events', async () => {
     const { controller, workflowService } = createController()
 
     const result = await controller.getJobDetail({ jobId: 'job-1' })
@@ -143,22 +151,33 @@ describe('AdminWorkflowController', () => {
             successItemCount: 1,
           }),
         ],
-        events: [
-          expect.objectContaining({
-            detail: { itemId: 'item-1' },
-            eventType: 6,
-            message: '章节导入成功',
-          }),
-        ],
         jobId: 'job-1',
       }),
     )
+    expect(result).not.toHaveProperty('events')
     expect(workflowService.getJobDetail).toHaveBeenCalledWith({
       jobId: 'job-1',
     })
   })
 
-  it('returns content import item pages through the item page endpoint', async () => {
+  it('returns bounded workflow records through the record page endpoint', async () => {
+    const { controller, workflowService } = createController()
+    const query = { jobId: 'job-1', pageIndex: 1, pageSize: 20 } as never
+
+    const result = await controller.getRecordPage(query)
+
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        attemptId: 'attempt-1',
+        attemptNo: 1,
+        eventType: 6,
+        message: '章节导入成功',
+      }),
+    )
+    expect(workflowService.getJobRecordPage).toHaveBeenCalledWith(query)
+  })
+
+  it('keeps the workflow item page endpoint as a transitional compatibility facade', async () => {
     const { contentImportService, controller } = createController()
     const query = { jobId: 'job-1', pageIndex: 1, pageSize: 10 } as never
 

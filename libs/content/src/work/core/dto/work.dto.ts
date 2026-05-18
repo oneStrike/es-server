@@ -280,6 +280,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
     itemType: 'number',
     example: [1],
     required: true,
+    minLength: 1,
   })
   authorIds!: number[]
 
@@ -288,6 +289,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
     itemType: 'number',
     example: [1],
     required: true,
+    minLength: 1,
   })
   categoryIds!: number[]
 
@@ -296,6 +298,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
     itemType: 'number',
     example: [1],
     required: true,
+    minLength: 1,
   })
   tagIds!: number[]
 }

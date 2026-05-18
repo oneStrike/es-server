@@ -29,13 +29,32 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       },
     ]
     const contentImportService = {
-      aggregateJobWithRetryState: jest.fn(async () => ({
-        failedItemCount: 1,
-        futureRetryItemCount: 0,
-        nextRetryAt: null,
-        skippedItemCount: 0,
-        successItemCount: 1,
-      })),
+      aggregateJobWithRetryState: jest
+        .fn()
+        .mockResolvedValueOnce({
+          failedItemCount: 0,
+          futureRetryItemCount: 0,
+          nextRetryAt: null,
+          selectedItemCount: 2,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        })
+        .mockResolvedValueOnce({
+          failedItemCount: 1,
+          futureRetryItemCount: 0,
+          nextRetryAt: null,
+          selectedItemCount: 2,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        })
+        .mockResolvedValueOnce({
+          failedItemCount: 1,
+          futureRetryItemCount: 0,
+          nextRetryAt: null,
+          selectedItemCount: 2,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        }),
       listExecutableItems: jest.fn(async () => items),
       listPendingUploadedFileResidues: jest.fn(async () => []),
       markResiduesCleaned: jest.fn(),
@@ -79,6 +98,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       importService as never,
       remoteImageImportService as never,
     )
+    const updateProgress = jest.fn()
 
     await handler.execute({
       appendEvent: jest.fn(),
@@ -88,8 +108,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       attemptNo: 1,
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
+      renewLease: jest.fn(),
       jobId: 'job-1',
-      updateProgress: jest.fn(),
+      updateProgress,
       workflowType: 'content-import.third-party-import',
     })
 
@@ -114,6 +135,14 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         successItemCount: 1,
       }),
     )
+    expect(updateProgress).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ percent: 50 }),
+    )
+    expect(updateProgress).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ percent: 100 }),
+    )
   })
 
   it('schedules rate-limited chapters for automatic retry and continues later items', async () => {
@@ -136,13 +165,40 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       { itemId: 'item-3', metadata: { chapter: { providerChapterId: 'p3', title: '第 3 话' } } },
     ]
     const contentImportService = {
-      aggregateJobWithRetryState: jest.fn(async () => ({
-        failedItemCount: 0,
-        futureRetryItemCount: 1,
-        nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
-        skippedItemCount: 0,
-        successItemCount: 2,
-      })),
+      aggregateJobWithRetryState: jest
+        .fn()
+        .mockResolvedValueOnce({
+          failedItemCount: 0,
+          futureRetryItemCount: 0,
+          nextRetryAt: null,
+          selectedItemCount: 3,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        })
+        .mockResolvedValueOnce({
+          failedItemCount: 0,
+          futureRetryItemCount: 1,
+          nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
+          selectedItemCount: 3,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        })
+        .mockResolvedValueOnce({
+          failedItemCount: 0,
+          futureRetryItemCount: 1,
+          nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
+          selectedItemCount: 3,
+          skippedItemCount: 0,
+          successItemCount: 2,
+        })
+        .mockResolvedValueOnce({
+          failedItemCount: 0,
+          futureRetryItemCount: 1,
+          nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
+          selectedItemCount: 3,
+          skippedItemCount: 0,
+          successItemCount: 2,
+        }),
       listExecutableItems: jest.fn(async () => items),
       listPendingUploadedFileResidues: jest.fn(async () => []),
       markItemFailed: jest.fn(),
@@ -183,6 +239,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       rollbackImportTask: jest.fn(),
     }
     const appendEvent = jest.fn()
+    const updateProgress = jest.fn()
     const handler = new ThirdPartyComicImportWorkflowHandler(
       registry as never,
       workflowService as never,
@@ -199,8 +256,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       attemptNo: 1,
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
+      renewLease: jest.fn(),
       jobId: 'job-1',
-      updateProgress: jest.fn(),
+      updateProgress,
       workflowType: 'content-import.third-party-import',
     })
 
@@ -222,6 +280,18 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       }),
     )
     expect(workflowService.completeAttemptByAttemptId).not.toHaveBeenCalled()
+    expect(updateProgress).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ percent: 33 }),
+    )
+    expect(updateProgress).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ percent: 33 }),
+    )
+    expect(updateProgress).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({ percent: 66 }),
+    )
     expect(appendEvent).toHaveBeenCalledWith(
       expect.any(Number),
       expect.stringContaining('自动重试'),
@@ -307,6 +377,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       attemptNo: 1,
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
+      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
@@ -394,6 +465,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       attemptNo: 2,
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
+      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
@@ -488,6 +560,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       attemptNo: 4,
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
+      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
@@ -556,6 +629,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       attemptNo: 2,
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
+      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',
@@ -630,6 +704,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         attemptNo: 1,
         getStatus: jest.fn(),
         isCancelRequested: jest.fn(),
+        renewLease: jest.fn(),
         jobId: 'job-1',
         updateProgress: jest.fn(),
         workflowType: 'content-import.third-party-import',
@@ -711,6 +786,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       attemptNo: 2,
       getStatus: jest.fn(),
       isCancelRequested: jest.fn(),
+      renewLease: jest.fn(),
       jobId: 'job-1',
       updateProgress: jest.fn(),
       workflowType: 'content-import.third-party-import',

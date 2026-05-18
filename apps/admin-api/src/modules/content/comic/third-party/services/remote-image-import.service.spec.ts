@@ -168,6 +168,7 @@ describe('RemoteImageImportService', () => {
   })
 
   afterEach(() => {
+    jest.useRealTimers()
     jest.restoreAllMocks()
   })
 
@@ -342,6 +343,149 @@ describe('RemoteImageImportService', () => {
         imageIndex: 2,
         imageTotal: 2,
         safeSourceUrl: 'https://sw.mangafunb.fun/comic/002.jpg',
+      }),
+    )
+  })
+
+  it('renews heartbeat during a slow image import before the success callback', async () => {
+    jest.useFakeTimers()
+    const { service } = createService()
+    const heartbeat = jest.fn(async () => undefined)
+    const onImported = jest.fn(async () => undefined)
+    let resolveDownload: (value: { localPath: string; tempDir: string }) => void =
+      () => undefined
+    jest.spyOn(service as never, 'downloadToTemp').mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveDownload = resolve
+        }) as never,
+    )
+
+    const importPromise = service.importImages(
+      [
+        {
+          providerImageId: 'image-001',
+          sortOrder: 1,
+          url: 'https://sw.mangafunb.fun/comic/001.jpg',
+        },
+      ],
+      ['comic'],
+      onImported,
+      { heartbeat, heartbeatIntervalMs: 1000 },
+    )
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(heartbeat).toHaveBeenCalledTimes(1)
+    expect(onImported).not.toHaveBeenCalled()
+
+    await jest.advanceTimersByTimeAsync(2500)
+    expect(heartbeat).toHaveBeenCalledTimes(3)
+    expect(onImported).not.toHaveBeenCalled()
+
+    resolveDownload({
+      localPath: `${tempDir}\\remote-image-id.jpg`,
+      tempDir,
+    })
+    await expect(importPromise).resolves.toEqual(['/uploads/comic/remote.jpg'])
+
+    expect(onImported).toHaveBeenCalledTimes(1)
+  })
+
+  it('deletes an uploaded image when heartbeat fails during upload', async () => {
+    jest.useFakeTimers()
+    const { service, uploadedFile, uploadService } = createService()
+    let heartbeatCall = 0
+    const heartbeatError = new Error('claim lost')
+    const heartbeat = jest.fn(async () => {
+      heartbeatCall += 1
+      if (heartbeatCall > 2) {
+        throw heartbeatError
+      }
+    })
+    jest.spyOn(service as never, 'downloadToTemp').mockResolvedValueOnce({
+      localPath: `${tempDir}\\remote-image-id.jpg`,
+      tempDir,
+    } as never)
+    uploadService.uploadLocalFileWithDeleteTarget.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => resolve(uploadedFile), 2000)
+        }),
+    )
+
+    const importPromise = service.importImages(
+      [
+        {
+          providerImageId: 'image-001',
+          sortOrder: 1,
+          url: 'https://sw.mangafunb.fun/comic/001.jpg',
+        },
+      ],
+      ['comic'],
+      undefined,
+      { heartbeat, heartbeatIntervalMs: 1000 },
+    )
+    const rejection = expect(importPromise).rejects.toThrow('claim lost')
+
+    await jest.advanceTimersByTimeAsync(2500)
+
+    await rejection
+    expect(uploadService.deleteUploadedFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filePath: '/uploads/comic/remote.jpg',
+      }),
+    )
+  })
+
+  it('observes an in-flight heartbeat failure that settles after upload completes', async () => {
+    jest.useFakeTimers()
+    const { service, uploadedFile, uploadService } = createService()
+    let heartbeatCall = 0
+    let rejectHeartbeat: (error: Error) => void = () => undefined
+    const heartbeatError = new Error('late claim lost')
+    const heartbeat = jest.fn(() => {
+      heartbeatCall += 1
+      if (heartbeatCall === 3) {
+        return new Promise<void>((_resolve, reject) => {
+          rejectHeartbeat = reject
+        })
+      }
+      return Promise.resolve()
+    })
+    jest.spyOn(service as never, 'downloadToTemp').mockResolvedValueOnce({
+      localPath: `${tempDir}\\remote-image-id.jpg`,
+      tempDir,
+    } as never)
+    let resolveUpload: (value: typeof uploadedFile) => void = () => undefined
+    uploadService.uploadLocalFileWithDeleteTarget.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveUpload = resolve
+        }),
+    )
+
+    const importPromise = service.importImages(
+      [
+        {
+          providerImageId: 'image-001',
+          sortOrder: 1,
+          url: 'https://sw.mangafunb.fun/comic/001.jpg',
+        },
+      ],
+      ['comic'],
+      undefined,
+      { heartbeat, heartbeatIntervalMs: 1000 },
+    )
+    await jest.advanceTimersByTimeAsync(1000)
+    resolveUpload(uploadedFile)
+    await Promise.resolve()
+    rejectHeartbeat(heartbeatError)
+
+    await expect(importPromise).rejects.toThrow('late claim lost')
+    expect(uploadService.deleteUploadedFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filePath: '/uploads/comic/remote.jpg',
       }),
     )
   })

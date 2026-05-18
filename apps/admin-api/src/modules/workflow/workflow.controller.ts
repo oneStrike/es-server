@@ -11,6 +11,8 @@ import {
   WorkflowJobDto,
   WorkflowJobIdDto,
   WorkflowJobPageRequestDto,
+  WorkflowRecordDto,
+  WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
 } from '@libs/platform/modules/workflow/dto'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
@@ -47,12 +49,22 @@ export class AdminWorkflowController {
     return this.workflowService.getJobDetail(query)
   }
 
+  @Get('record/page')
+  @ApiPageDoc({
+    summary: '分页查询工作流处理记录',
+    model: WorkflowRecordDto,
+  })
+  // 分页查询工作流处理记录。
+  async getRecordPage(@Query() query: WorkflowRecordPageRequestDto) {
+    return this.workflowService.getJobRecordPage(query)
+  }
+
   @Get('item/page')
   @ApiPageDoc({
-    summary: '分页查询工作流内容导入条目',
+    summary: '兼容分页查询工作流内容导入条目',
     model: ContentImportItemDto,
   })
-  // 分页查询内容导入条目。
+  // 兼容旧 admin 构建；新入口由三方解析导入 owner 接管，一版后可移除。
   async getItemPage(@Query() query: ContentImportItemPageRequestDto) {
     return this.contentImportService.getItemPage(query)
   }

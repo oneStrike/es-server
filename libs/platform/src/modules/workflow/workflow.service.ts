@@ -1,7 +1,6 @@
-import type { Db, PostgresErrorSource } from '@db/core'
+import type { Db } from '@db/core'
 import type {
   WorkflowAttemptSelect,
-  WorkflowEventSelect,
   WorkflowJobSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
@@ -12,11 +11,8 @@ import type {
   CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput,
   CompleteWorkflowAttemptWithDelayedRetryInput,
   CreateWorkflowJobInput,
-  WorkflowDatabaseErrorMessages,
-  WorkflowExpiredAttemptRecoveryResult,
   WorkflowObject,
   WorkflowProgress,
-  WorkflowStatusCounters,
 } from './workflow.type'
 import { randomUUID } from 'node:crypto'
 import process from 'node:process'
@@ -24,24 +20,42 @@ import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, desc, eq, gt, isNull, lte, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNull, lte, or } from 'drizzle-orm'
 import {
   WorkflowExpireDto,
   WorkflowJobIdDto,
   WorkflowJobPageRequestDto,
+  WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
 } from './dto'
 import {
-  WORKFLOW_CLAIM_TIMEOUT_SECONDS,
   WORKFLOW_RETRYABLE_JOB_STATUSES,
-  WORKFLOW_TERMINAL_JOB_STATUSES,
   WORKFLOW_WORKER_BATCH_SIZE,
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
   WorkflowEventTypeEnum,
   WorkflowJobStatusEnum,
-  WorkflowOperatorTypeEnum,
 } from './workflow.constant'
+import { normalizeWorkflowConflictKeys } from './workflow-conflict-key'
+import {
+  toWorkflowAttemptDto,
+  toWorkflowErrorObject,
+  toWorkflowJobDto,
+  toWorkflowRecordDto,
+} from './workflow.mapper'
+import { DEFAULT_WORKFLOW_RECORD_EVENT_TYPES } from './workflow-record-policy'
+import {
+  buildDefaultExpiredAttemptRecovery,
+  buildWorkflowClaimDeadline,
+  isTerminalWorkflowJobStatus,
+  isWorkflowAttemptDue,
+  normalizeWorkflowOperator,
+  normalizeWorkflowProgressPercent,
+  normalizeWorkflowRequiredText,
+  resolveAttemptStatusFromCounters,
+  resolveJobStatusFromAttempt,
+  resolveJobStatusFromCounters,
+} from './workflow-runtime-policy'
 import { WorkflowRegistry } from './workflow.registry'
 
 class WorkflowCancellationError extends Error {
@@ -110,13 +124,8 @@ export class WorkflowService {
         },
         tx,
       )
-      return this.toJobDto(row)
+      return toWorkflowJobDto(row)
     })
-  }
-
-  // 在调用方事务内创建工作流草稿。
-  async createDraftInTransaction(input: CreateWorkflowJobInput, tx: Db) {
-    return this.toJobDto(await this.createDraftWithDb(input, tx))
   }
 
   // 确认草稿并创建首次 attempt。
@@ -156,7 +165,7 @@ export class WorkflowService {
         tx,
       )
 
-      return this.toJobDto(updatedJob)
+      return toWorkflowJobDto(updatedJob)
     })
   }
 
@@ -184,7 +193,7 @@ export class WorkflowService {
 
     return {
       ...page,
-      list: page.list.map((row) => this.toJobDto(row)),
+      list: page.list.map((row) => toWorkflowJobDto(row)),
     }
   }
 
@@ -196,16 +205,58 @@ export class WorkflowService {
       .from(this.workflowAttempt)
       .where(eq(this.workflowAttempt.workflowJobId, job.id))
       .orderBy(asc(this.workflowAttempt.attemptNo))
-    const events = await this.db
-      .select()
-      .from(this.workflowEvent)
-      .where(eq(this.workflowEvent.workflowJobId, job.id))
-      .orderBy(asc(this.workflowEvent.createdAt), asc(this.workflowEvent.id))
 
     return {
-      ...this.toJobDto(job),
-      attempts: attempts.map((attempt) => this.toAttemptDto(attempt)),
-      events: events.map((event) => this.toEventDto(event)),
+      ...toWorkflowJobDto(job),
+      attempts: attempts.map((attempt) => toWorkflowAttemptDto(attempt)),
+    }
+  }
+
+  // 分页查询工作流处理记录。
+  async getJobRecordPage(input: WorkflowRecordPageRequestDto) {
+    const job = await this.readJob(input.jobId)
+    const attempt = input.attemptId
+      ? await this.readAttemptByAttemptId(input.attemptId)
+      : null
+    const eventTypes = input.eventTypes?.length
+      ? input.eventTypes
+      : [...DEFAULT_WORKFLOW_RECORD_EVENT_TYPES]
+    const conditions: SQL[] = [
+      eq(this.workflowEvent.workflowJobId, job.id),
+      inArray(this.workflowEvent.eventType, eventTypes),
+    ]
+
+    if (attempt) {
+      conditions.push(eq(this.workflowEvent.workflowAttemptId, attempt.id))
+    }
+
+    const page = await this.drizzle.ext.findPagination(this.workflowEvent, {
+      where: and(...conditions),
+      pageIndex: input.pageIndex,
+      pageSize: input.pageSize,
+      orderBy: input.orderBy?.trim()
+        ? input.orderBy
+        : { createdAt: 'desc', id: 'desc' },
+    })
+    const attemptIds = [
+      ...new Set(
+        page.list
+          .map((event) => event.workflowAttemptId)
+          .filter((id): id is bigint => id !== null),
+      ),
+    ]
+    const attempts = await this.readAttemptsByInternalIds(attemptIds)
+
+    return {
+      ...page,
+      list: page.list.map((event) =>
+        toWorkflowRecordDto(
+          event,
+          event.workflowAttemptId
+            ? attempts.get(event.workflowAttemptId)
+            : undefined,
+        ),
+      ),
     }
   }
 
@@ -213,7 +264,7 @@ export class WorkflowService {
   async cancelJob(input: WorkflowJobIdDto) {
     return this.drizzle.withTransaction(async (tx) => {
       const job = await this.readJobWithDb(input.jobId, tx)
-      if (this.isTerminalJobStatus(job.status)) {
+      if (isTerminalWorkflowJobStatus(job.status)) {
         throw new BusinessException(
           BusinessErrorCode.STATE_CONFLICT,
           '终态工作流任务不能取消',
@@ -252,7 +303,7 @@ export class WorkflowService {
         },
         tx,
       )
-      return this.toJobDto(updatedJob)
+      return toWorkflowJobDto(updatedJob)
     })
   }
 
@@ -322,7 +373,7 @@ export class WorkflowService {
         },
         tx,
       )
-      return this.toJobDto(updatedJob)
+      return toWorkflowJobDto(updatedJob)
     })
   }
 
@@ -359,7 +410,7 @@ export class WorkflowService {
         },
         tx,
       )
-      return this.toJobDto(updatedJob)
+      return toWorkflowJobDto(updatedJob)
     })
   }
 
@@ -400,7 +451,7 @@ export class WorkflowService {
         .where(eq(this.workflowAttempt.id, attempt.id))
         .returning()
 
-      const jobStatus = this.resolveJobStatusFromAttempt(updatedAttempt)
+      const jobStatus = resolveJobStatusFromAttempt(updatedAttempt)
       const [updatedJob] = await tx
         .update(this.workflowJob)
         .set({
@@ -430,7 +481,7 @@ export class WorkflowService {
         },
         tx,
       )
-      return this.toJobDto(updatedJob)
+      return toWorkflowJobDto(updatedJob)
     })
   }
 
@@ -523,7 +574,7 @@ export class WorkflowService {
         },
         tx,
       )
-      return this.toJobDto(updatedJob)
+      return toWorkflowJobDto(updatedJob)
     })
   }
 
@@ -566,7 +617,7 @@ export class WorkflowService {
       .limit(WORKFLOW_WORKER_BATCH_SIZE)
 
     for (const attempt of pendingAttempts.filter((attempt) =>
-      this.isAttemptDue(attempt, now),
+      isWorkflowAttemptDue(attempt, now),
     )) {
       await this.consumeAttempt(attempt.id)
     }
@@ -651,12 +702,12 @@ export class WorkflowService {
           nextAttemptNo,
           tx,
         )) ??
-        this.buildDefaultExpiredAttemptRecovery(job, attempt)
+        buildDefaultExpiredAttemptRecovery(job, attempt)
 
       const expiredStatus =
         recovery.recoverableItemCount > 0
           ? WorkflowAttemptStatusEnum.FAILED
-          : this.resolveAttemptStatusFromCounters(recovery)
+          : resolveAttemptStatusFromCounters(recovery)
       await tx
         .update(this.workflowAttempt)
         .set({
@@ -740,7 +791,7 @@ export class WorkflowService {
         return
       }
 
-      const terminalStatus = this.resolveJobStatusFromCounters(recovery)
+      const terminalStatus = resolveJobStatusFromCounters(recovery)
       const [updatedJob] = await tx
         .update(this.workflowJob)
         .set({
@@ -772,9 +823,9 @@ export class WorkflowService {
 
   // 创建工作流草稿行。
   private async createDraftWithDb(input: CreateWorkflowJobInput, tx: Db) {
-    const operator = this.normalizeOperator(input.operator)
-    const displayName = this.normalizeRequiredText(input.displayName, '展示名称')
-    const workflowType = this.normalizeRequiredText(
+    const operator = normalizeWorkflowOperator(input.operator)
+    const displayName = normalizeWorkflowRequiredText(input.displayName, '展示名称')
+    const workflowType = normalizeWorkflowRequiredText(
       input.workflowType,
       '工作流类型',
     )
@@ -795,7 +846,7 @@ export class WorkflowService {
         operatorType: operator.operatorType,
         operatorUserId: operator.operatorUserId,
         status: input.status ?? WorkflowJobStatusEnum.DRAFT,
-        progressPercent: this.normalizeProgressPercent(input.progress?.percent),
+        progressPercent: normalizeWorkflowProgressPercent(input.progress?.percent),
         progressMessage: input.progress?.message ?? null,
         currentAttemptFk: null,
         selectedItemCount: input.selectedItemCount ?? 0,
@@ -840,7 +891,7 @@ export class WorkflowService {
       if (error instanceof WorkflowClaimLostError) {
         return
       }
-      const errorObject = this.toErrorObject(error)
+      const errorObject = toWorkflowErrorObject(error)
       await this.completeAttempt({
         workflowAttemptId: attempt.id,
         status:
@@ -880,7 +931,7 @@ export class WorkflowService {
         .set({
           status: WorkflowAttemptStatusEnum.RUNNING,
           claimedBy: this.buildWorkerId(),
-          claimExpiresAt: this.buildClaimDeadline(now),
+          claimExpiresAt: buildWorkflowClaimDeadline(now),
           heartbeatAt: now,
           startedAt: now,
           updatedAt: now,
@@ -1108,6 +1159,18 @@ export class WorkflowService {
     return row
   }
 
+  // 批量读取 attempt，用于记录分页补齐 attempt 关联。
+  private async readAttemptsByInternalIds(ids: bigint[]) {
+    if (ids.length === 0) {
+      return new Map<bigint, WorkflowAttemptSelect>()
+    }
+    const rows = await this.db
+      .select()
+      .from(this.workflowAttempt)
+      .where(inArray(this.workflowAttempt.id, ids))
+    return new Map(rows.map((row) => [row.id, row]))
+  }
+
   // 读取任务历史冲突键。
   private async readJobConflictKeys(workflowJobId: bigint, db: Db) {
     const rows = await db
@@ -1124,7 +1187,7 @@ export class WorkflowService {
     tx: Db,
   ) {
     const now = new Date()
-    for (const conflictKey of this.normalizeConflictKeys(conflictKeys)) {
+    for (const conflictKey of normalizeWorkflowConflictKeys(conflictKeys)) {
       await tx.insert(this.workflowConflictKey).values({
         workflowJobId: job.id,
         workflowType: job.workflowType,
@@ -1200,6 +1263,7 @@ export class WorkflowService {
         }
       },
       assertStillOwned: async () => this.assertAttemptStillOwned(job, attempt),
+      renewLease: async () => this.renewLeaseForAttempt(job, attempt),
       updateProgress: async (progress: WorkflowProgress) =>
         this.updateProgressForAttempt(job, attempt, progress),
       appendEvent: async (
@@ -1217,18 +1281,17 @@ export class WorkflowService {
     }
   }
 
-  // 更新进度并续租。
-  private async updateProgressForAttempt(
+  // 为当前 attempt 续租。
+  private async renewLeaseForAttempt(
     job: WorkflowJobSelect,
     attempt: WorkflowAttemptSelect,
-    progress: WorkflowProgress,
   ) {
     const now = new Date()
     const [updatedAttempt] = await this.db
       .update(this.workflowAttempt)
       .set({
         heartbeatAt: now,
-        claimExpiresAt: this.buildClaimDeadline(now),
+        claimExpiresAt: buildWorkflowClaimDeadline(now),
         updatedAt: now,
       })
       .where(
@@ -1243,23 +1306,30 @@ export class WorkflowService {
     if (!updatedAttempt) {
       throw new WorkflowClaimLostError()
     }
+  }
 
-    const percent = this.normalizeProgressPercent(progress.percent)
+  // 更新进度并续租。
+  private async updateProgressForAttempt(
+    job: WorkflowJobSelect,
+    attempt: WorkflowAttemptSelect,
+    progress: WorkflowProgress,
+  ) {
+    const now = new Date()
+    await this.renewLeaseForAttempt(job, attempt)
+
+    const update = {
+      updatedAt: now,
+      ...(progress.message === undefined
+        ? {}
+        : { progressMessage: progress.message }),
+      ...(progress.percent === undefined
+        ? {}
+        : { progressPercent: normalizeWorkflowProgressPercent(progress.percent) }),
+    }
     await this.db
       .update(this.workflowJob)
-      .set({
-        progressPercent: percent,
-        progressMessage: progress.message ?? null,
-        updatedAt: now,
-      })
+      .set(update)
       .where(eq(this.workflowJob.id, job.id))
-    await this.appendEvent({
-      workflowJobId: job.id,
-      workflowAttemptId: attempt.id,
-      eventType: WorkflowEventTypeEnum.PROGRESS_UPDATED,
-      message: progress.message ?? '工作流进度已更新',
-      detail: { percent },
-    })
   }
 
   // 确认当前执行者仍持有 attempt 租约，供回滚和最终写入前阻断陈旧 worker。
@@ -1282,275 +1352,8 @@ export class WorkflowService {
     }
   }
 
-  // 根据 attempt 终态聚合 job 终态。
-  private resolveJobStatusFromAttempt(attempt: WorkflowAttemptSelect) {
-    if (attempt.status === WorkflowAttemptStatusEnum.SUCCESS) {
-      return WorkflowJobStatusEnum.SUCCESS
-    }
-    if (attempt.status === WorkflowAttemptStatusEnum.PARTIAL_FAILED) {
-      return WorkflowJobStatusEnum.PARTIAL_FAILED
-    }
-    if (attempt.status === WorkflowAttemptStatusEnum.CANCELLED) {
-      return WorkflowJobStatusEnum.CANCELLED
-    }
-    return attempt.successItemCount > 0
-      ? WorkflowJobStatusEnum.PARTIAL_FAILED
-      : WorkflowJobStatusEnum.FAILED
-  }
-
-  // 根据内容导入聚合计数解析 attempt 终态。
-  private resolveAttemptStatusFromCounters(counters: WorkflowStatusCounters) {
-    if (counters.failedItemCount === 0) {
-      return WorkflowAttemptStatusEnum.SUCCESS
-    }
-    return counters.successItemCount > 0
-      ? WorkflowAttemptStatusEnum.PARTIAL_FAILED
-      : WorkflowAttemptStatusEnum.FAILED
-  }
-
-  // 根据内容导入聚合计数解析 job 终态。
-  private resolveJobStatusFromCounters(counters: WorkflowStatusCounters) {
-    if (counters.failedItemCount === 0) {
-      return WorkflowJobStatusEnum.SUCCESS
-    }
-    return counters.successItemCount > 0
-      ? WorkflowJobStatusEnum.PARTIAL_FAILED
-      : WorkflowJobStatusEnum.FAILED
-  }
-
-  // 无业务恢复钩子时的保守恢复结果。
-  private buildDefaultExpiredAttemptRecovery(
-    job: WorkflowJobSelect,
-    attempt: WorkflowAttemptSelect,
-  ): WorkflowExpiredAttemptRecoveryResult {
-    return {
-      selectedItemCount: job.selectedItemCount,
-      successItemCount: 0,
-      failedItemCount: attempt.selectedItemCount,
-      skippedItemCount: 0,
-      recoverableItemCount: 0,
-    }
-  }
-
-  // 判断 attempt 是否已到可消费时间。
-  private isAttemptDue(attempt: WorkflowAttemptSelect, now = new Date()) {
-    return !attempt.notBeforeAt || attempt.notBeforeAt <= now
-  }
-
-  // 判断任务状态是否终态。
-  private isTerminalJobStatus(status: number) {
-    return (WORKFLOW_TERMINAL_JOB_STATUSES as readonly WorkflowJobStatusEnum[])
-      .includes(status as WorkflowJobStatusEnum)
-  }
-
-  // 归一化操作者。
-  private normalizeOperator(operator: CreateWorkflowJobInput['operator']) {
-    if (operator.type === WorkflowOperatorTypeEnum.ADMIN) {
-      if (!Number.isInteger(operator.userId) || operator.userId <= 0) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '工作流管理员操作者ID非法',
-        )
-      }
-      return {
-        operatorType: WorkflowOperatorTypeEnum.ADMIN,
-        operatorUserId: operator.userId,
-      }
-    }
-    return {
-      operatorType: WorkflowOperatorTypeEnum.SYSTEM,
-      operatorUserId: null,
-    }
-  }
-
-  // 归一化必填文本。
-  private normalizeRequiredText(value: string, label: string) {
-    const normalized = value.trim()
-    if (!normalized) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        `${label}不能为空`,
-      )
-    }
-    return normalized
-  }
-
-  // 归一化业务冲突键。
-  private normalizeConflictKeys(keys: string[]) {
-    const normalizedKeys: string[] = []
-    const seenKeys = new Set<string>()
-    for (const key of keys) {
-      const normalizedKey = this.normalizeRequiredText(key, '工作流冲突键')
-      if (seenKeys.has(normalizedKey)) {
-        continue
-      }
-      seenKeys.add(normalizedKey)
-      normalizedKeys.push(normalizedKey)
-    }
-    return normalizedKeys
-  }
-
-  // 归一化进度百分比。
-  private normalizeProgressPercent(value: number | undefined) {
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      return 0
-    }
-    return Math.min(100, Math.max(0, Math.floor(value)))
-  }
-
-  // 构建 claim 过期时间。
-  private buildClaimDeadline(now = new Date()) {
-    const deadline = new Date(now)
-    deadline.setSeconds(
-      deadline.getSeconds() + WORKFLOW_CLAIM_TIMEOUT_SECONDS,
-    )
-    return deadline
-  }
-
   // 构建 worker 标识。
   private buildWorkerId() {
     return `workflow-worker-${process.pid}`
-  }
-
-  // 转换数据库行为接口 DTO。
-  private toJobDto(row: WorkflowJobSelect) {
-    return {
-      id: Number(row.id),
-      jobId: row.jobId,
-      workflowType: row.workflowType,
-      displayName: row.displayName,
-      operatorType: row.operatorType,
-      operatorUserId: row.operatorUserId,
-      status: this.normalizeJobStatus(row.status),
-      progressPercent: row.progressPercent,
-      progressMessage: row.progressMessage,
-      selectedItemCount: row.selectedItemCount,
-      successItemCount: row.successItemCount,
-      failedItemCount: row.failedItemCount,
-      skippedItemCount: row.skippedItemCount,
-      cancelRequestedAt: row.cancelRequestedAt,
-      startedAt: row.startedAt,
-      finishedAt: row.finishedAt,
-      expiresAt: row.expiresAt,
-      summary: this.asNullableObject(row.summary),
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }
-  }
-
-  // 转换 attempt DTO。
-  private toAttemptDto(row: WorkflowAttemptSelect) {
-    return {
-      id: Number(row.id),
-      attemptId: row.attemptId,
-      attemptNo: row.attemptNo,
-      triggerType: row.triggerType,
-      status: this.normalizeAttemptStatus(row.status),
-      notBeforeAt: row.notBeforeAt,
-      selectedItemCount: row.selectedItemCount,
-      successItemCount: row.successItemCount,
-      failedItemCount: row.failedItemCount,
-      skippedItemCount: row.skippedItemCount,
-      claimedBy: row.claimedBy,
-      claimExpiresAt: row.claimExpiresAt,
-      heartbeatAt: row.heartbeatAt,
-      errorCode: row.errorCode,
-      errorMessage: row.errorMessage,
-      startedAt: row.startedAt,
-      finishedAt: row.finishedAt,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }
-  }
-
-  // 转换事件 DTO。
-  private toEventDto(row: WorkflowEventSelect) {
-    return {
-      id: Number(row.id),
-      eventType: row.eventType,
-      message: row.message,
-      detail: this.asNullableObject(row.detail),
-      createdAt: row.createdAt,
-    }
-  }
-
-  // 归一化 job 状态。
-  private normalizeJobStatus(status: number) {
-    if (
-      Object.values(WorkflowJobStatusEnum).includes(
-        status as WorkflowJobStatusEnum,
-      )
-    ) {
-      return status as WorkflowJobStatusEnum
-    }
-    throw new BusinessException(
-      BusinessErrorCode.STATE_CONFLICT,
-      '工作流任务状态非法',
-    )
-  }
-
-  // 归一化 attempt 状态。
-  private normalizeAttemptStatus(status: number) {
-    if (
-      Object.values(WorkflowAttemptStatusEnum).includes(
-        status as WorkflowAttemptStatusEnum,
-      )
-    ) {
-      return status as WorkflowAttemptStatusEnum
-    }
-    throw new BusinessException(
-      BusinessErrorCode.STATE_CONFLICT,
-      '工作流 attempt 状态非法',
-    )
-  }
-
-  // 转换未知值为可空对象。
-  private asNullableObject(value: unknown) {
-    return value === null || value === undefined ? null : this.asObject(value)
-  }
-
-  // 转换未知值为对象。
-  private asObject(value: unknown): WorkflowObject {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
-      ? (value as WorkflowObject)
-      : {}
-  }
-
-  // 转换错误为结构化对象。
-  private toErrorObject(error: unknown) {
-    if (error instanceof Error) {
-      return {
-        name: error.name,
-        message: error.message,
-      }
-    }
-    return {
-      name: 'UnknownError',
-      message: this.stringifyError(error),
-    }
-  }
-
-  // 转换错误文本。
-  private stringifyError(error: unknown) {
-    if (typeof error === 'string') {
-      return error
-    }
-    try {
-      return JSON.stringify(error)
-    } catch {
-      return 'unknown error'
-    }
-  }
-
-  // 转换数据库异常。
-  private handleDatabaseError(
-    error: unknown,
-    messages: WorkflowDatabaseErrorMessages,
-  ): never {
-    const source =
-      error instanceof Error || (typeof error === 'object' && error !== null)
-        ? error
-        : undefined
-    this.drizzle.handleError(source as PostgresErrorSource, messages)
   }
 }

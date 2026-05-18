@@ -99,7 +99,6 @@ export * from './system/workflow-conflict-key'
 export * from './system/workflow-event'
 export * from './system/workflow-job'
 
-export * from './work/content-import-event-link'
 export * from './work/content-import-item'
 export * from './work/content-import-item-attempt'
 export * from './work/content-import-job'

@@ -1,4 +1,5 @@
 import type { ForumModeratorActionLogInput } from './moderator.type'
+import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 
@@ -32,13 +33,9 @@ export class ForumModeratorActionLogService {
     return JSON.stringify(snapshot)
   }
 
-  /**
-   * 写入一条正式版主操作日志。
-   * 当前 topic/comment moderator governance 统一通过本服务落日志。
-   */
-  async createActionLog(input: ForumModeratorActionLogInput) {
+  private async insertActionLog(db: Db, input: ForumModeratorActionLogInput) {
     await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.forumModeratorActionLog).values({
+      db.insert(this.forumModeratorActionLog).values({
         moderatorId: input.moderatorId,
         targetId: input.targetId,
         actionType: input.actionType,
@@ -50,5 +47,20 @@ export class ForumModeratorActionLogService {
     )
 
     return true
+  }
+
+  /**
+   * 写入一条正式版主操作日志。
+   * 当前 topic/comment moderator governance 统一通过本服务落日志。
+   */
+  async createActionLog(input: ForumModeratorActionLogInput) {
+    return this.insertActionLog(this.db, input)
+  }
+
+  /**
+   * 在现有事务中写入版主操作日志，保证治理写入和审计事实同生共死。
+   */
+  async createActionLogInTx(tx: Db, input: ForumModeratorActionLogInput) {
+    return this.insertActionLog(tx, input)
   }
 }

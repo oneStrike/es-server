@@ -7,6 +7,7 @@ import type { LookupFunction } from 'node:net'
 import type {
   DownloadedRemoteImage,
   RemoteImageImportFailureContext,
+  RemoteImageImportHeartbeatOptions,
   RemoteImageImportSuccessHandler,
   SafeRemoteImageUrl,
 } from '../third-party-comic-import.type'
@@ -32,6 +33,7 @@ import { ThirdPartyResourceThrottleService } from './third-party-resource-thrott
 const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
 const MAX_REMOTE_IMAGE_COUNT = 200
 const REMOTE_IMAGE_DOWNLOAD_TIMEOUT_MS = 300000
+const REMOTE_IMAGE_HEARTBEAT_INTERVAL_MS = 60000
 const COPY_MANGA_IMAGE_HOST_PATTERN = /^[a-z0-9-]+\.mangafunb\.fun$/i
 
 @Injectable()
@@ -52,14 +54,36 @@ export class RemoteImageImportService {
   }
 
   // 下载并上传单张第三方图片，失败时保持业务异常语义。
-  async importImage(url: string, objectKeySegments: string[]) {
-    const downloadedFile = await this.downloadToTemp(url)
+  async importImage(
+    url: string,
+    objectKeySegments: string[],
+    options: RemoteImageImportHeartbeatOptions = {},
+  ) {
+    const downloadResult = await this.withHeartbeat(
+      () => this.downloadToTemp(url),
+      options,
+    )
+    const downloadedFile = downloadResult.result
     try {
-      return await this.uploadService.uploadLocalFileWithDeleteTarget({
-        localPath: downloadedFile.localPath,
-        objectKeySegments,
-        originalName: this.resolveOriginalName(url),
-      })
+      if (downloadResult.heartbeatError) {
+        throw downloadResult.heartbeatError
+      }
+      const uploadResult = await this.withHeartbeat(
+        () =>
+          this.uploadService.uploadLocalFileWithDeleteTarget({
+            localPath: downloadedFile.localPath,
+            objectKeySegments,
+            originalName: this.resolveOriginalName(url),
+          }),
+        options,
+      )
+      if (uploadResult.heartbeatError) {
+        await this.uploadService
+          .deleteUploadedFile(uploadResult.result.deleteTarget)
+          .catch(() => undefined)
+        throw uploadResult.heartbeatError
+      }
+      return uploadResult.result
     } finally {
       await fs
         .rm(downloadedFile.tempDir, { force: true, recursive: true })
@@ -72,6 +96,7 @@ export class RemoteImageImportService {
     images: ThirdPartyComicImageDto[],
     objectKeySegments: string[],
     onImported?: RemoteImageImportSuccessHandler,
+    options: RemoteImageImportHeartbeatOptions = {},
   ) {
     if (images.length > MAX_REMOTE_IMAGE_COUNT) {
       throw this.remoteImageError('远程图片数量超过限制')
@@ -85,6 +110,7 @@ export class RemoteImageImportService {
         const importedFile = await this.importImage(
           image.url,
           objectKeySegments,
+          options,
         )
         filePaths.push(importedFile.upload.filePath)
         await onImported?.({
@@ -115,6 +141,45 @@ export class RemoteImageImportService {
   // 删除导入时上传的图片。
   async deleteImportedFile(target: UploadDeleteTarget) {
     return this.uploadService.deleteUploadedFile(target)
+  }
+
+  // 在长耗时下载/上传期间周期性续租，避免单张图片卡住时 workflow claim 过期。
+  private async withHeartbeat<T>(
+    operation: () => Promise<T>,
+    options: RemoteImageImportHeartbeatOptions,
+  ) {
+    if (!options.heartbeat) {
+      return {
+        result: await operation(),
+        heartbeatError: null,
+      }
+    }
+
+    const intervalMs = Math.max(
+      1000,
+      options.heartbeatIntervalMs ?? REMOTE_IMAGE_HEARTBEAT_INTERVAL_MS,
+    )
+    await options.heartbeat()
+    let heartbeatError: unknown = null
+    let heartbeatInFlight: Promise<void> | null = null
+    const runHeartbeat = () => {
+      heartbeatInFlight = options.heartbeat!().catch((error) => {
+        heartbeatError ??= error
+      })
+    }
+    const timer = setInterval(() => {
+      runHeartbeat()
+    }, intervalMs)
+    try {
+      const result = await operation()
+      await heartbeatInFlight
+      return {
+        result,
+        heartbeatError,
+      }
+    } finally {
+      clearInterval(timer)
+    }
   }
 
   // 将远程图片下载到临时文件，默认固定已校验 DNS 结果。

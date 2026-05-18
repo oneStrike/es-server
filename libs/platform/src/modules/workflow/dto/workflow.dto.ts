@@ -1,6 +1,7 @@
 import {
   ArrayProperty,
   DateProperty,
+  EnumArrayProperty,
   EnumProperty,
   NestedProperty,
   NumberProperty,
@@ -253,6 +254,25 @@ export class WorkflowEventDto {
   createdAt!: Date
 }
 
+/** 工作流处理记录 DTO。 */
+export class WorkflowRecordDto extends WorkflowEventDto {
+  @StringProperty({
+    description: '工作流 attempt ID',
+    example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
+    required: false,
+    validation: false,
+  })
+  attemptId!: string | null
+
+  @NumberProperty({
+    description: 'attempt 序号',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  attemptNo!: number | null
+}
+
 /** 工作流任务 DTO。 */
 export class WorkflowJobDto {
   @NumberProperty({
@@ -429,14 +449,6 @@ export class WorkflowJobDetailDto extends WorkflowJobDto {
     validation: false,
   })
   attempts!: WorkflowAttemptDto[]
-
-  @ArrayProperty({
-    description: '事件列表',
-    itemClass: WorkflowEventDto,
-    required: true,
-    validation: false,
-  })
-  events!: WorkflowEventDto[]
 }
 
 /** 工作流任务 ID DTO。 */
@@ -454,6 +466,31 @@ export class WorkflowJobPageRequestDto extends IntersectionType(
     ),
   ),
 ) {}
+
+/** 工作流处理记录分页查询 DTO。 */
+export class WorkflowRecordPageRequestDto extends IntersectionType(
+  PageDto,
+  WorkflowJobIdDto,
+) {
+  @StringProperty({
+    description: '工作流 attempt ID',
+    example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
+    required: false,
+  })
+  attemptId?: string
+
+  @EnumArrayProperty({
+    description: '事件类型过滤；不传时默认返回关键生命周期/诊断记录',
+    enum: WorkflowEventTypeEnum,
+    example: [
+      WorkflowEventTypeEnum.JOB_CREATED,
+      WorkflowEventTypeEnum.JOB_CONFIRMED,
+      WorkflowEventTypeEnum.ITEM_FAILED,
+    ],
+    required: false,
+  })
+  eventTypes?: WorkflowEventTypeEnum[]
+}
 
 /** 工作流重试条目 DTO。 */
 export class WorkflowRetryItemsDto extends WorkflowJobIdDto {

@@ -107,10 +107,6 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       from: r.contentImportJob.id,
       to: r.contentImportItem.contentImportJobId,
     }),
-    eventLinks: r.many.contentImportEventLink({
-      from: r.contentImportJob.id,
-      to: r.contentImportEventLink.contentImportJobId,
-    }),
   },
   contentImportPreviewItem: {
     job: r.one.contentImportJob({
@@ -127,10 +123,6 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       from: r.contentImportItem.id,
       to: r.contentImportItemAttempt.contentImportItemId,
     }),
-    eventLinks: r.many.contentImportEventLink({
-      from: r.contentImportItem.id,
-      to: r.contentImportEventLink.contentImportItemId,
-    }),
   },
   contentImportItemAttempt: {
     workflowAttempt: r.one.workflowAttempt({
@@ -140,28 +132,6 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
     item: r.one.contentImportItem({
       from: r.contentImportItemAttempt.contentImportItemId,
       to: r.contentImportItem.id,
-    }),
-    eventLinks: r.many.contentImportEventLink({
-      from: r.contentImportItemAttempt.id,
-      to: r.contentImportEventLink.contentImportItemAttemptId,
-    }),
-  },
-  contentImportEventLink: {
-    workflowEvent: r.one.workflowEvent({
-      from: r.contentImportEventLink.workflowEventId,
-      to: r.workflowEvent.id,
-    }),
-    job: r.one.contentImportJob({
-      from: r.contentImportEventLink.contentImportJobId,
-      to: r.contentImportJob.id,
-    }),
-    item: r.one.contentImportItem({
-      from: r.contentImportEventLink.contentImportItemId,
-      to: r.contentImportItem.id,
-    }),
-    itemAttempt: r.one.contentImportItemAttempt({
-      from: r.contentImportEventLink.contentImportItemAttemptId,
-      to: r.contentImportItemAttempt.id,
     }),
   },
   workThirdPartySourceBinding: {

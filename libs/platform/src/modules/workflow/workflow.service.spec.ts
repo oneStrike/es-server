@@ -184,6 +184,31 @@ describe('WorkflowService state machine', () => {
     }
   }
 
+  function createDetailDb(selectRows: unknown[][]) {
+    return {
+      insert: jest.fn(() => ({
+        values: jest.fn(() => ({
+          returning: jest.fn(async () => [{ id: 99n }]),
+        })),
+      })),
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn(async () => selectRows.shift() ?? []),
+            orderBy: jest.fn(async () => selectRows.shift() ?? []),
+          })),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn(() => ({
+          where: jest.fn(() => ({
+            returning: jest.fn(async () => []),
+          })),
+        })),
+      })),
+    }
+  }
+
   function createService(options: { db?: unknown; tx?: ReturnType<typeof createUpdateTx>['tx'] } = {}) {
     const tx = options.tx ?? createUpdateTx().tx
     const drizzle = {
@@ -231,6 +256,253 @@ describe('WorkflowService state machine', () => {
       value: implementation,
     })
   }
+
+  it('returns workflow detail without loading unbounded events', async () => {
+    const job = createWorkflowJob()
+    const attempt = createWorkflowAttempt()
+    const db = createDetailDb([[attempt]])
+    const { service } = createService({ db })
+    setServiceMethod(service, 'readJob', jest.fn(async () => job))
+
+    const result = await service.getJobDetail({ jobId: 'job-1' })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        attempts: [
+          expect.objectContaining({
+            attemptId: 'attempt-1',
+            attemptNo: 1,
+          }),
+        ],
+        jobId: 'job-1',
+      }),
+    )
+    expect(result).not.toHaveProperty('events')
+    expect(db.select).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns bounded workflow records with attempt correlation', async () => {
+    const job = createWorkflowJob()
+    const attempt = createWorkflowAttempt()
+    const event = {
+      createdAt: baseDate,
+      detail: { itemId: 'item-1' },
+      eventType: WorkflowEventTypeEnum.ITEM_SUCCEEDED,
+      id: 20n,
+      message: '章节导入成功',
+      workflowAttemptId: attempt.id,
+      workflowJobId: job.id,
+    }
+    const { service } = createService()
+    const findPagination = jest.fn(async () => ({
+      list: [event],
+      pageIndex: 1,
+      pageSize: 20,
+      total: 1,
+    }))
+    setServiceMethod(service, 'readJob', jest.fn(async () => job))
+    setServiceMethod(
+      service,
+      'readAttemptsByInternalIds',
+      jest.fn(async () => new Map([[attempt.id, attempt]])),
+    )
+    Object.defineProperty(service, 'drizzle', {
+      configurable: true,
+      value: {
+        db: {},
+        ext: { findPagination },
+        schema: createWorkflowSchema(),
+      },
+    })
+
+    const result = await (
+      service as unknown as {
+        getJobRecordPage: (input: {
+          jobId: string
+          pageIndex: number
+          pageSize: number
+        }) => Promise<{
+          list: Array<{
+            attemptId: string | null
+            attemptNo: number | null
+            eventType: WorkflowEventTypeEnum
+            message: string
+          }>
+          pageIndex: number
+          pageSize: number
+          total: number
+        }>
+      }
+    ).getJobRecordPage({
+      jobId: 'job-1',
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 20,
+        total: 1,
+      }),
+    )
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        attemptId: 'attempt-1',
+        attemptNo: 1,
+        eventType: WorkflowEventTypeEnum.ITEM_SUCCEEDED,
+        message: '章节导入成功',
+      }),
+    )
+    expect(findPagination).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 20,
+      }),
+    )
+  })
+
+  it('does not expose a transaction-only draft path that skips creation events', () => {
+    const { service } = createService()
+
+    expect('createDraftInTransaction' in service).toBe(false)
+  })
+
+  it('builds execution contexts with explicit lease renewal separate from progress', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const attempt = createWorkflowAttempt({
+      claimExpiresAt: new Date(Date.now() + 60_000),
+    })
+    const { service } = createService()
+    const renewLeaseForAttempt = jest.fn(async () => undefined)
+    setServiceMethod(service, 'renewLeaseForAttempt', renewLeaseForAttempt)
+
+    const context = (
+      service as unknown as {
+        buildExecutionContext: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+        ) => { renewLease: () => Promise<void> }
+      }
+    ).buildExecutionContext(job, attempt)
+
+    expect(context.renewLease).toEqual(expect.any(Function))
+    await context.renewLease()
+    expect(renewLeaseForAttempt).toHaveBeenCalledWith(job, attempt)
+  })
+
+  it('updates progress and renews the lease without appending progress events', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const attempt = createWorkflowAttempt({
+      claimExpiresAt: new Date(Date.now() + 60_000),
+    })
+    const { updateSets, tx } = createUpdateTx([[attempt]])
+    const { service } = createService({ tx })
+    const appendEvent = jest.fn(async () => 1n)
+    setServiceMethod(service, 'appendEvent', appendEvent)
+
+    await (
+      service as unknown as {
+        updateProgressForAttempt: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+          progress: { message: string; percent: number },
+        ) => Promise<void>
+      }
+    ).updateProgressForAttempt(job, attempt, {
+      message: '下载第 43 话图片 1/100',
+      percent: 10,
+    })
+
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          claimExpiresAt: expect.any(Date),
+          heartbeatAt: expect.any(Date),
+        }),
+        expect.objectContaining({
+          progressMessage: '下载第 43 话图片 1/100',
+          progressPercent: 10,
+        }),
+      ]),
+    )
+    expect(appendEvent).not.toHaveBeenCalled()
+  })
+
+  it('keeps the task progress percent when only the current item message changes', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      progressPercent: 50,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const attempt = createWorkflowAttempt({
+      claimExpiresAt: new Date(Date.now() + 60_000),
+    })
+    const { updateSets, tx } = createUpdateTx([[attempt]])
+    const { service } = createService({ tx })
+
+    await (
+      service as unknown as {
+        updateProgressForAttempt: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+          progress: { message: string },
+        ) => Promise<void>
+      }
+    ).updateProgressForAttempt(job, attempt, {
+      message: '正在导入第 2/4 个章节的图片',
+    })
+
+    const jobUpdate = updateSets.find(
+      (item) => item.progressMessage === '正在导入第 2/4 个章节的图片',
+    )
+    expect(jobUpdate).toEqual(
+      expect.objectContaining({
+        progressMessage: '正在导入第 2/4 个章节的图片',
+      }),
+    )
+    expect(jobUpdate).not.toHaveProperty('progressPercent')
+  })
+
+  it('keeps the current item message when only the task progress percent changes', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      progressMessage: '正在导入图片 1/10',
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const attempt = createWorkflowAttempt({
+      claimExpiresAt: new Date(Date.now() + 60_000),
+    })
+    const { updateSets, tx } = createUpdateTx([[attempt]])
+    const { service } = createService({ tx })
+
+    await (
+      service as unknown as {
+        updateProgressForAttempt: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+          progress: { percent: number },
+        ) => Promise<void>
+      }
+    ).updateProgressForAttempt(job, attempt, {
+      percent: 50,
+    })
+
+    const jobUpdate = updateSets.find((item) => item.progressPercent === 50)
+    expect(jobUpdate).toEqual(
+      expect.objectContaining({
+        progressPercent: 50,
+      }),
+    )
+    expect(jobUpdate).not.toHaveProperty('progressMessage')
+  })
 
   it('rejects cancellation for terminal jobs before mutating state', async () => {
     const { service, tx } = createService()

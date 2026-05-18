@@ -30,6 +30,7 @@ export function createWorkflowTaskContext<
     isCancelRequested: workflowContext.isCancelRequested,
     assertNotCancelled: workflowContext.assertNotCancelled,
     assertStillOwned: workflowContext.assertStillOwned,
+    renewLease: workflowContext.renewLease,
     updateProgress: workflowContext.updateProgress,
     createProgressReporter: (options: ThirdPartyComicImportProgressReporterOptions) =>
       createWorkflowProgressReporter(workflowContext, options),
@@ -140,7 +141,6 @@ function createWorkflowProgressReporter(
         unit: options.unit,
       }
       await context.updateProgress({
-        percent: progress.percent,
         message: progress.message,
       })
       return progress

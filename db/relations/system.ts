@@ -68,10 +68,6 @@ export const systemRelations = defineRelationsPart(schema, r => ({
       from: r.workflowEvent.workflowAttemptId,
       to: r.workflowAttempt.id,
     }),
-    contentImportLink: r.one.contentImportEventLink({
-      from: r.workflowEvent.id,
-      to: r.contentImportEventLink.workflowEventId,
-    }),
   },
   workflowConflictKey: {
     job: r.one.workflowJob({

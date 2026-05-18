@@ -89,6 +89,7 @@ export type ThirdPartyComicImportTaskContext = Pick<
   WorkflowExecutionContext,
   | 'assertNotCancelled'
   | 'isCancelRequested'
+  | 'renewLease'
   | 'updateProgress'
 > & {
   jobId: string
@@ -227,6 +228,12 @@ export interface ThirdPartyComicImportCoverProviderContext {
 export type RemoteImageImportSuccessHandler = (
   payload: RemoteImageImportSuccessPayload,
 ) => Promise<void>
+
+/** 远程图片导入期间的长 I/O heartbeat 选项。 */
+export interface RemoteImageImportHeartbeatOptions {
+  heartbeat?: () => Promise<void>
+  heartbeatIntervalMs?: number
+}
 
 /** 完成基础 URL 与 DNS 校验后的远程图片请求目标。 */
 export interface SafeRemoteImageUrl {

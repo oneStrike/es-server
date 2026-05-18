@@ -228,15 +228,33 @@ export class WorkService {
     return { work, user }
   }
 
+  private assertNonEmptyRelationIds(
+    ids: number[] | undefined,
+    relationName: string,
+    required = false,
+  ) {
+    if ((required && !ids?.length) || (ids !== undefined && ids.length === 0)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `作品必须至少关联一个${relationName}`,
+      )
+    }
+  }
+
   // 验证作品关联的作者、分类、标签是否存在且已启用，业务规则：作品必须关联有效的作者、分类和标签，且这些关联项必须处于启用状态。
   private async validateWorkRelations(
-    authorIds: number[],
-    categoryIds: number[],
-    tagIds: number[],
+    authorIds?: number[],
+    categoryIds?: number[],
+    tagIds?: number[],
+    options: { requireAll?: boolean } = {},
   ) {
+    this.assertNonEmptyRelationIds(authorIds, '作者', options.requireAll)
+    this.assertNonEmptyRelationIds(categoryIds, '分类', options.requireAll)
+    this.assertNonEmptyRelationIds(tagIds, '标签', options.requireAll)
+
     const [existingAuthors, existingCategories, existingTags] =
       await Promise.all([
-        authorIds.length
+        authorIds !== undefined
           ? this.db.query.workAuthor.findMany({
               where: {
                 id: { in: authorIds },
@@ -246,7 +264,7 @@ export class WorkService {
               columns: { id: true },
             })
           : [],
-        categoryIds.length
+        categoryIds !== undefined
           ? this.db.query.workCategory.findMany({
               where: {
                 id: { in: categoryIds },
@@ -255,7 +273,7 @@ export class WorkService {
               columns: { id: true },
             })
           : [],
-        tagIds.length
+        tagIds !== undefined
           ? this.db.query.workTag.findMany({
               where: {
                 id: { in: tagIds },
@@ -266,19 +284,22 @@ export class WorkService {
           : [],
       ])
 
-    if (existingAuthors.length !== authorIds.length) {
+    if (authorIds !== undefined && existingAuthors.length !== authorIds.length) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '部分作者不存在或已禁用',
       )
     }
-    if (existingCategories.length !== categoryIds.length) {
+    if (
+      categoryIds !== undefined &&
+      existingCategories.length !== categoryIds.length
+    ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '部分分类不存在或已禁用',
       )
     }
-    if (existingTags.length !== tagIds.length) {
+    if (tagIds !== undefined && existingTags.length !== tagIds.length) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '部分标签不存在或已禁用',
@@ -319,7 +340,9 @@ export class WorkService {
     }
 
     // 作品只允许关联当前有效的作者、分类和标签。
-    await this.validateWorkRelations(authorIds, categoryIds, tagIds)
+    await this.validateWorkRelations(authorIds, categoryIds, tagIds, {
+      requireAll: true,
+    })
 
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
@@ -422,12 +445,12 @@ export class WorkService {
     }
 
     // 仅在调用方显式传入关系 ID 时校验关系有效性。
-    if (authorIds?.length || categoryIds?.length || tagIds?.length) {
-      await this.validateWorkRelations(
-        authorIds ?? [],
-        categoryIds ?? [],
-        tagIds ?? [],
-      )
+    if (
+      authorIds !== undefined ||
+      categoryIds !== undefined ||
+      tagIds !== undefined
+    ) {
+      await this.validateWorkRelations(authorIds, categoryIds, tagIds)
     }
 
     const originalAuthorIds = existingWork.authorRelations.map(
