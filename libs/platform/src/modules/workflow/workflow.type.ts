@@ -64,9 +64,24 @@ export interface CompleteWorkflowAttemptInput {
   errorMessage?: string | null
 }
 
+/** 完成当前 attempt 后延后再次执行的入参。 */
+export interface CompleteWorkflowAttemptWithDelayedRetryInput
+  extends CompleteWorkflowAttemptInput {
+  nextRetryAt: Date
+  delayedSelectedItemCount: number
+}
+
 /** 使用公开 attemptId 完成 attempt 的入参。 */
 export type CompleteWorkflowAttemptByAttemptIdInput = Omit<
   CompleteWorkflowAttemptInput,
+  'workflowAttemptId'
+> & {
+  attemptId: string
+}
+
+/** 使用公开 attemptId 完成当前 attempt 并创建延后 retry attempt 的入参。 */
+export type CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput = Omit<
+  CompleteWorkflowAttemptWithDelayedRetryInput,
   'workflowAttemptId'
 > & {
   attemptId: string

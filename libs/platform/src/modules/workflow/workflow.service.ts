@@ -9,6 +9,8 @@ import type {
   AppendWorkflowEventInput,
   CompleteWorkflowAttemptByAttemptIdInput,
   CompleteWorkflowAttemptInput,
+  CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput,
+  CompleteWorkflowAttemptWithDelayedRetryInput,
   CreateWorkflowJobInput,
   WorkflowDatabaseErrorMessages,
   WorkflowExpiredAttemptRecoveryResult,
@@ -22,7 +24,7 @@ import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, desc, eq, gt, isNull, lte } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, isNull, lte, or } from 'drizzle-orm'
 import {
   WorkflowExpireDto,
   WorkflowJobIdDto,
@@ -446,18 +448,126 @@ export class WorkflowService {
     })
   }
 
+  // 完成当前 attempt，并创建到点后继续执行的系统 attempt。
+  async completeAttemptWithDelayedRetry(
+    input: CompleteWorkflowAttemptWithDelayedRetryInput,
+  ) {
+    return this.drizzle.withTransaction(async (tx) => {
+      const attempt = await this.readAttemptWithDb(input.workflowAttemptId, tx)
+      const job = await this.readJobByIdWithDb(attempt.workflowJobId, tx)
+      const now = new Date()
+      const [updatedAttempt] = await tx
+        .update(this.workflowAttempt)
+        .set({
+          status: input.status,
+          successItemCount: input.successItemCount,
+          failedItemCount: input.failedItemCount,
+          skippedItemCount: input.skippedItemCount,
+          errorCode: input.errorCode ?? null,
+          errorMessage: input.errorMessage ?? null,
+          claimedBy: null,
+          claimExpiresAt: null,
+          heartbeatAt: now,
+          finishedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(this.workflowAttempt.id, attempt.id))
+        .returning()
+      const delayedAttempt = await this.createAttemptWithDb(
+        job,
+        WorkflowAttemptTriggerTypeEnum.SYSTEM_RECOVERY,
+        tx,
+        await this.resolveNextAttemptNo(job.id, tx),
+        input.delayedSelectedItemCount,
+        input.nextRetryAt,
+      )
+      const [updatedJob] = await tx
+        .update(this.workflowJob)
+        .set({
+          status: WorkflowJobStatusEnum.PENDING,
+          currentAttemptFk: delayedAttempt.id,
+          successItemCount: input.successItemCount,
+          failedItemCount: input.failedItemCount,
+          skippedItemCount: input.skippedItemCount,
+          finishedAt: null,
+          updatedAt: now,
+        })
+        .where(eq(this.workflowJob.id, job.id))
+        .returning()
+      await this.appendEventWithDb(
+        {
+          workflowJobId: job.id,
+          workflowAttemptId: updatedAttempt.id,
+          eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
+          message: '工作流 attempt 已完成，等待自动重试章节到期',
+          detail: {
+            jobId: job.jobId,
+            attemptId: attempt.attemptId,
+            status: input.status,
+            nextRetryAt: input.nextRetryAt.toISOString(),
+          },
+        },
+        tx,
+      )
+      await this.appendEventWithDb(
+        {
+          workflowJobId: job.id,
+          workflowAttemptId: delayedAttempt.id,
+          eventType: WorkflowEventTypeEnum.RETRY_REQUESTED,
+          message: '工作流已创建限流自动重试 attempt',
+          detail: {
+            jobId: job.jobId,
+            attemptId: delayedAttempt.attemptId,
+            notBeforeAt: input.nextRetryAt.toISOString(),
+          },
+        },
+        tx,
+      )
+      return this.toJobDto(updatedJob)
+    })
+  }
+
+  // 使用公开 attemptId 完成当前 attempt，并创建延后 retry attempt。
+  async completeAttemptWithDelayedRetryByAttemptId(
+    input: CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput,
+  ) {
+    const attempt = await this.readAttemptByAttemptId(input.attemptId)
+    return this.completeAttemptWithDelayedRetry({
+      workflowAttemptId: attempt.id,
+      status: input.status,
+      successItemCount: input.successItemCount,
+      failedItemCount: input.failedItemCount,
+      skippedItemCount: input.skippedItemCount,
+      errorCode: input.errorCode,
+      errorMessage: input.errorMessage,
+      nextRetryAt: input.nextRetryAt,
+      delayedSelectedItemCount: input.delayedSelectedItemCount,
+    })
+  }
+
   // 消费待处理工作流 attempt。
   async consumePendingAttempts() {
     await this.expireDraftJobs()
     await this.recoverExpiredRunningAttempts()
+    const now = new Date()
     const pendingAttempts = await this.db
       .select()
       .from(this.workflowAttempt)
-      .where(eq(this.workflowAttempt.status, WorkflowAttemptStatusEnum.PENDING))
+      .where(
+        and(
+          eq(this.workflowAttempt.status, WorkflowAttemptStatusEnum.PENDING),
+          or(
+            isNull(this.workflowAttempt.notBeforeAt),
+            lte(this.workflowAttempt.notBeforeAt, now),
+          ),
+        ),
+      )
       .orderBy(asc(this.workflowAttempt.createdAt), asc(this.workflowAttempt.id))
       .limit(WORKFLOW_WORKER_BATCH_SIZE)
 
-    for (const attempt of pendingAttempts) {
+    for (const attempt of pendingAttempts.filter((attempt) =>
+      this.isAttemptDue(attempt, now),
+    )) {
       await this.consumeAttempt(attempt.id)
     }
   }
@@ -779,6 +889,10 @@ export class WorkflowService {
           and(
             eq(this.workflowAttempt.id, attempt.id),
             eq(this.workflowAttempt.status, WorkflowAttemptStatusEnum.PENDING),
+            or(
+              isNull(this.workflowAttempt.notBeforeAt),
+              lte(this.workflowAttempt.notBeforeAt, now),
+            ),
           ),
         )
         .returning()
@@ -879,6 +993,7 @@ export class WorkflowService {
     tx: Db,
     attemptNo?: number,
     selectedItemCount = job.selectedItemCount,
+    notBeforeAt: Date | null = null,
   ) {
     const now = new Date()
     const [attempt] = await tx
@@ -889,6 +1004,7 @@ export class WorkflowService {
         attemptNo: attemptNo ?? (await this.resolveNextAttemptNo(job.id, tx)),
         triggerType,
         status: WorkflowAttemptStatusEnum.PENDING,
+        notBeforeAt,
         selectedItemCount,
         successItemCount: 0,
         failedItemCount: 0,
@@ -1216,6 +1332,11 @@ export class WorkflowService {
     }
   }
 
+  // 判断 attempt 是否已到可消费时间。
+  private isAttemptDue(attempt: WorkflowAttemptSelect, now = new Date()) {
+    return !attempt.notBeforeAt || attempt.notBeforeAt <= now
+  }
+
   // 判断任务状态是否终态。
   private isTerminalJobStatus(status: number) {
     return (WORKFLOW_TERMINAL_JOB_STATUSES as readonly WorkflowJobStatusEnum[])
@@ -1325,6 +1446,7 @@ export class WorkflowService {
       attemptNo: row.attemptNo,
       triggerType: row.triggerType,
       status: this.normalizeAttemptStatus(row.status),
+      notBeforeAt: row.notBeforeAt,
       selectedItemCount: row.selectedItemCount,
       successItemCount: row.successItemCount,
       failedItemCount: row.failedItemCount,

@@ -1,11 +1,16 @@
 import type { Db } from '@db/core'
 import type {
+  ContentImportAttemptCountersWithRetry,
+  ContentImportExecutableItem,
+} from '@libs/content/work/content-import/content-import.type'
+import type {
   ThirdPartyComicSyncChapterPlan,
   ThirdPartyComicSyncExpiredAttemptContext,
   ThirdPartyComicSyncResidue,
   ThirdPartyComicSyncTaskPayload,
   ThirdPartyComicWorkflowSyncTarget,
 } from '@libs/content/work/third-party/third-party-comic-sync.type'
+import type { ThirdPartyRateLimitCause } from '@libs/content/work/third-party/third-party-rate-limit.type'
 import type {
   WorkflowExecuteContext,
   WorkflowHandler,
@@ -14,6 +19,7 @@ import type {
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
 import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
 import { RemoteImageImportService } from '@libs/content/work/third-party/services/remote-image-import.service'
+import { readThirdPartyRateLimit } from '@libs/content/work/third-party/third-party-rate-limit'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -160,12 +166,6 @@ export class ThirdPartyComicSyncWorkflowHandler
       return
     }
 
-    const plans = items.map((item) => this.readPlanSnapshot(item.metadata))
-    const imageProgressReporter = this.syncService.createSyncImageProgressReporter(
-      taskContext,
-      plans,
-    )
-
     for (const item of items) {
       await context.assertNotCancelled()
       await this.contentImportService.startItemAttempt(
@@ -183,9 +183,8 @@ export class ThirdPartyComicSyncWorkflowHandler
       })
       try {
         await this.cleanupPendingUploadedFileResidues(context.jobId, item.itemId)
-        const localChapterId = await this.syncService.importWorkflowSyncChapter({
+        const result = await this.syncService.importWorkflowSyncChapter({
           context: itemContext,
-          imageProgressReporter,
           plan,
           sourceBindingId: target.sourceBindingId,
           work: target.work,
@@ -194,9 +193,9 @@ export class ThirdPartyComicSyncWorkflowHandler
         await this.contentImportService.markItemSuccess({
           itemId: item.itemId,
           attemptNo: context.attemptNo,
-          localChapterId,
-          imageTotal: plan.imageTotal,
-          imageSuccessCount: plan.imageTotal,
+          localChapterId: result.localChapterId,
+          imageTotal: result.imageTotal,
+          imageSuccessCount: result.imageSuccessCount,
         })
         await itemContext.markUploadedResiduesCleaned()
         await context.assertStillOwned()
@@ -215,6 +214,50 @@ export class ThirdPartyComicSyncWorkflowHandler
           )}`
         }
         await context.assertStillOwned()
+        const rateLimit = readThirdPartyRateLimit(error)
+        if (rateLimit && this.canScheduleAutoRetry(item)) {
+          const nextRetryAt = this.resolveNextRetryAt(rateLimit)
+          await this.contentImportService.markItemRateLimitRetrying({
+            itemId: item.itemId,
+            attemptNo: context.attemptNo,
+            nextRetryAt,
+            errorCode: this.resolveRateLimitCode(rateLimit),
+            errorMessage,
+            retryReason: rateLimit.reason,
+            imageTotal: plan.imageTotal,
+            imageSuccessCount: 0,
+          })
+          await context.appendEvent(
+            WorkflowEventTypeEnum.ITEM_FAILED,
+            `章节「${plan.title}」遇到限流，已安排自动重试`,
+            {
+              itemId: item.itemId,
+              providerChapterId: plan.providerChapterId,
+              nextRetryAt: nextRetryAt.toISOString(),
+              errorMessage,
+            },
+          )
+          continue
+        }
+        if (rateLimit) {
+          await this.contentImportService.markItemRetryExhausted({
+            itemId: item.itemId,
+            attemptNo: context.attemptNo,
+            errorMessage,
+            imageTotal: plan.imageTotal,
+            imageSuccessCount: 0,
+          })
+          await context.appendEvent(
+            WorkflowEventTypeEnum.ITEM_FAILED,
+            `章节「${plan.title}」限流自动重试已耗尽，已跳过自动重试`,
+            {
+              itemId: item.itemId,
+              providerChapterId: plan.providerChapterId,
+              errorMessage,
+            },
+          )
+          continue
+        }
         await this.contentImportService.markItemFailed({
           itemId: item.itemId,
           attemptNo: context.attemptNo,
@@ -235,20 +278,11 @@ export class ThirdPartyComicSyncWorkflowHandler
       }
     }
 
-    const counters = await this.contentImportService.aggregateJob(context.jobId)
+    const counters = await this.contentImportService.aggregateJobWithRetryState(
+      context.jobId,
+    )
     await context.assertStillOwned()
-    await this.workflowService.completeAttemptByAttemptId({
-      attemptId: context.attemptId,
-      status:
-        counters.failedItemCount === 0
-          ? WorkflowAttemptStatusEnum.SUCCESS
-          : counters.successItemCount > 0
-            ? WorkflowAttemptStatusEnum.PARTIAL_FAILED
-            : WorkflowAttemptStatusEnum.FAILED,
-      successItemCount: counters.successItemCount,
-      failedItemCount: counters.failedItemCount,
-      skippedItemCount: counters.skippedItemCount,
-    })
+    await this.completeAttempt(context, counters)
   }
 
   // 从条目 metadata 中读取执行期冻结的同步章节计划。
@@ -259,6 +293,67 @@ export class ThirdPartyComicSyncWorkflowHandler
       throw new Error('同步条目缺少章节计划快照')
     }
     return plan
+  }
+
+  // 判断条目是否仍允许由限流分支预约自动重试。
+  private canScheduleAutoRetry(item: ContentImportExecutableItem) {
+    return (item.autoRetryCount ?? 0) < (item.maxAutoRetries ?? 3)
+  }
+
+  // 解析限流建议的下一次执行时间，缺失或非法时使用最小等待窗口。
+  private resolveNextRetryAt(rateLimit: ThirdPartyRateLimitCause) {
+    if (rateLimit.retryAt) {
+      const retryAt = new Date(rateLimit.retryAt)
+      if (!Number.isNaN(retryAt.getTime())) {
+        return retryAt
+      }
+    }
+    return new Date(Date.now() + Math.max(60_000, rateLimit.retryAfterMs ?? 0))
+  }
+
+  // 将限流来源转换为 workflow item 可持久化的错误码。
+  private resolveRateLimitCode(rateLimit: ThirdPartyRateLimitCause) {
+    return rateLimit.status ? `HTTP_${rateLimit.status}` : 'THIRD_PARTY_RATE_LIMIT'
+  }
+
+  // 汇总 item 执行结果，决定本次 workflow attempt 的终态。
+  private resolveAttemptStatus(counters: {
+    failedItemCount: number
+    successItemCount: number
+  }) {
+    if (counters.failedItemCount === 0) {
+      return WorkflowAttemptStatusEnum.SUCCESS
+    }
+    return counters.successItemCount > 0
+      ? WorkflowAttemptStatusEnum.PARTIAL_FAILED
+      : WorkflowAttemptStatusEnum.FAILED
+  }
+
+  // 根据是否存在延迟重试条目选择立即完成或预约下一轮 attempt。
+  private async completeAttempt(
+    context: WorkflowExecuteContext,
+    counters: ContentImportAttemptCountersWithRetry,
+  ) {
+    const status = this.resolveAttemptStatus(counters)
+    if (counters.futureRetryItemCount > 0 && counters.nextRetryAt) {
+      await this.workflowService.completeAttemptWithDelayedRetryByAttemptId({
+        attemptId: context.attemptId,
+        status,
+        successItemCount: counters.successItemCount,
+        failedItemCount: counters.failedItemCount,
+        skippedItemCount: counters.skippedItemCount,
+        nextRetryAt: counters.nextRetryAt,
+        delayedSelectedItemCount: counters.futureRetryItemCount,
+      })
+      return
+    }
+    await this.workflowService.completeAttemptByAttemptId({
+      attemptId: context.attemptId,
+      status,
+      successItemCount: counters.successItemCount,
+      failedItemCount: counters.failedItemCount,
+      skippedItemCount: counters.skippedItemCount,
+    })
   }
 
   // 将未知异常转换为可持久化的错误文本。

@@ -137,6 +137,46 @@ export class ContentImportItemDto {
   })
   lastErrorMessage!: string | null
 
+  @DateProperty({
+    description: '自动重试下次可执行时间',
+    example: '2026-05-17T03:10:00.000Z',
+    required: false,
+    validation: false,
+  })
+  nextRetryAt!: Date | null
+
+  @NumberProperty({
+    description: '已安排自动重试次数',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  autoRetryCount!: number
+
+  @NumberProperty({
+    description: '最大自动重试次数',
+    example: 3,
+    required: true,
+    validation: false,
+  })
+  maxAutoRetries!: number
+
+  @StringProperty({
+    description: '最近自动重试原因',
+    example: '三方平台限流',
+    required: false,
+    validation: false,
+  })
+  lastRetryReason!: string | null
+
+  @StringProperty({
+    description: '最近自动重试错误码',
+    example: 'HTTP_429',
+    required: false,
+    validation: false,
+  })
+  lastRetryCode!: string | null
+
   @NumberProperty({
     description: '图片总数',
     example: 20,

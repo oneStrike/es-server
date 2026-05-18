@@ -94,6 +94,14 @@ export class WorkflowAttemptDto {
   })
   status!: WorkflowAttemptStatusEnum
 
+  @DateProperty({
+    description: '最早可被 worker 消费的时间',
+    example: '2026-05-17T03:10:00.000Z',
+    required: false,
+    validation: false,
+  })
+  notBeforeAt!: Date | null
+
   @NumberProperty({
     description: '选中条目数',
     example: 3,

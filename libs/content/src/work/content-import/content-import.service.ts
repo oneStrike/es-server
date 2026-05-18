@@ -1,11 +1,16 @@
 import type { Db } from '@db/core'
+import type { ContentImportItemSelect } from '@db/schema'
 import type { ThirdPartyComicSyncChapterPlan } from '@libs/content/work/third-party/third-party-comic-sync.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { SQL } from 'drizzle-orm'
 import type {
+  ContentImportAttemptCountersWithRetry,
   ContentImportExecutableItem,
   ContentImportMarkItemFailedInput,
+  ContentImportMarkItemRateLimitRetryingInput,
+  ContentImportMarkItemRetryExhaustedInput,
   ContentImportMarkItemSuccessInput,
+  ContentImportPreparedThirdPartyImportTargetInput,
   ContentImportRecordUploadedFileResidueInput,
   CreateThirdPartyImportContentJobInput,
   CreateThirdPartySyncContentJobInput,
@@ -17,7 +22,7 @@ import {
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
   ContentImportContentTypeEnum,
   ContentImportItemAttemptStatusEnum,
@@ -121,6 +126,11 @@ export class ContentImportService {
           lastErrorCode: null,
           lastErrorMessage: null,
           lastFailedAt: null,
+          nextRetryAt: null,
+          autoRetryCount: 0,
+          maxAutoRetries: 3,
+          lastRetryReason: null,
+          lastRetryCode: null,
           imageTotal: 0,
           imageSuccessCount: 0,
           currentAttemptNo: null,
@@ -192,6 +202,11 @@ export class ContentImportService {
           lastErrorCode: null,
           lastErrorMessage: null,
           lastFailedAt: null,
+          nextRetryAt: null,
+          autoRetryCount: 0,
+          maxAutoRetries: 3,
+          lastRetryReason: null,
+          lastRetryCode: null,
           imageTotal: plan.imageTotal,
           imageSuccessCount: 0,
           currentAttemptNo: null,
@@ -228,6 +243,20 @@ export class ContentImportService {
           eq(this.workflowAttempt.attemptNo, attemptNo),
         ),
       )
+  }
+
+  // 记录三方导入首次 prepare 生成的本地作品，供后续自动重试 attempt 复用。
+  async markThirdPartyImportTargetPrepared(
+    input: ContentImportPreparedThirdPartyImportTargetInput,
+  ) {
+    const importJob = await this.readContentImportJobByWorkflowJobId(input.jobId)
+    await this.db
+      .update(this.contentImportJob)
+      .set({
+        workId: input.workId,
+        updatedAt: new Date(),
+      })
+      .where(eq(this.contentImportJob.id, importJob.id))
   }
 
   // 校验并准备人工重试条目。
@@ -270,6 +299,10 @@ export class ContentImportService {
         status: ContentImportItemStatusEnum.RETRYING,
         stage: ContentImportItemStageEnum.READING_SOURCE,
         currentAttemptNo: nextAttemptNo,
+        nextRetryAt: null,
+        autoRetryCount: 0,
+        lastRetryReason: null,
+        lastRetryCode: null,
         updatedAt: new Date(),
       })
       .where(
@@ -283,6 +316,7 @@ export class ContentImportService {
   // 读取当前 attempt 应处理的内容导入条目。
   async listExecutableItems(jobId: string, attemptNo: number) {
     const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
+    const now = new Date()
     const statusFilter =
       attemptNo === 1
         ? [
@@ -298,9 +332,16 @@ export class ContentImportService {
         and(
           eq(this.contentImportItem.contentImportJobId, importJob.id),
           inArray(this.contentImportItem.status, statusFilter),
+          or(
+            isNull(this.contentImportItem.nextRetryAt),
+            lte(this.contentImportItem.nextRetryAt, now),
+          ),
           attemptNo === 1
             ? isNull(this.contentImportItem.currentAttemptNo)
-            : eq(this.contentImportItem.currentAttemptNo, attemptNo),
+            : or(
+                eq(this.contentImportItem.currentAttemptNo, attemptNo),
+                lte(this.contentImportItem.nextRetryAt, now),
+              ),
         ),
       )
       .orderBy(asc(this.contentImportItem.sortOrder), asc(this.contentImportItem.id))
@@ -407,6 +448,7 @@ export class ContentImportService {
         lastErrorCode: input.errorCode,
         lastErrorMessage: input.errorMessage,
         lastFailedAt: now,
+        nextRetryAt: null,
         imageTotal: input.imageTotal ?? 0,
         imageSuccessCount: input.imageSuccessCount ?? 0,
         updatedAt: now,
@@ -424,6 +466,97 @@ export class ContentImportService {
         imageTotal: input.imageTotal ?? 0,
         imageSuccessCount: input.imageSuccessCount ?? 0,
         errorCode: input.errorCode,
+        errorMessage: input.errorMessage,
+        finishedAt: now,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(this.contentImportItemAttempt.contentImportItemId, item.id),
+          eq(this.contentImportItemAttempt.attemptNo, input.attemptNo),
+        ),
+      )
+  }
+
+  // 标记条目进入限流自动重试等待。
+  async markItemRateLimitRetrying(
+    input: ContentImportMarkItemRateLimitRetryingInput,
+  ) {
+    const now = new Date()
+    const [item] = await this.db
+      .update(this.contentImportItem)
+      .set({
+        status: ContentImportItemStatusEnum.RETRYING,
+        stage: ContentImportItemStageEnum.READING_SOURCE,
+        autoRetryCount: sql`${this.contentImportItem.autoRetryCount} + 1`,
+        lastErrorCode: input.errorCode,
+        lastErrorMessage: input.errorMessage,
+        lastFailedAt: now,
+        nextRetryAt: input.nextRetryAt,
+        lastRetryReason: input.retryReason,
+        lastRetryCode: input.errorCode,
+        imageTotal: input.imageTotal ?? 0,
+        imageSuccessCount: input.imageSuccessCount ?? 0,
+        updatedAt: now,
+      })
+      .where(eq(this.contentImportItem.itemId, input.itemId))
+      .returning()
+    if (!item) {
+      return
+    }
+    await this.db
+      .update(this.contentImportItemAttempt)
+      .set({
+        status: ContentImportItemAttemptStatusEnum.SCHEDULED_RETRY,
+        stage: ContentImportItemStageEnum.READING_SOURCE,
+        imageTotal: input.imageTotal ?? 0,
+        imageSuccessCount: input.imageSuccessCount ?? 0,
+        errorCode: input.errorCode,
+        errorMessage: input.errorMessage,
+        finishedAt: now,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(this.contentImportItemAttempt.contentImportItemId, item.id),
+          eq(this.contentImportItemAttempt.attemptNo, input.attemptNo),
+        ),
+      )
+  }
+
+  // 标记限流自动重试耗尽。
+  async markItemRetryExhausted(input: ContentImportMarkItemRetryExhaustedInput) {
+    const now = new Date()
+    const errorCode = 'RATE_LIMIT_RETRY_EXHAUSTED'
+    const [item] = await this.db
+      .update(this.contentImportItem)
+      .set({
+        status: ContentImportItemStatusEnum.FAILED,
+        stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
+        failureCount: sql`${this.contentImportItem.failureCount} + 1`,
+        lastErrorCode: errorCode,
+        lastErrorMessage: input.errorMessage,
+        lastFailedAt: now,
+        nextRetryAt: null,
+        lastRetryCode: errorCode,
+        lastRetryReason: input.errorMessage,
+        imageTotal: input.imageTotal ?? 0,
+        imageSuccessCount: input.imageSuccessCount ?? 0,
+        updatedAt: now,
+      })
+      .where(eq(this.contentImportItem.itemId, input.itemId))
+      .returning()
+    if (!item) {
+      return
+    }
+    await this.db
+      .update(this.contentImportItemAttempt)
+      .set({
+        status: ContentImportItemAttemptStatusEnum.FAILED,
+        stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
+        imageTotal: input.imageTotal ?? 0,
+        imageSuccessCount: input.imageSuccessCount ?? 0,
+        errorCode,
         errorMessage: input.errorMessage,
         finishedAt: now,
         updatedAt: now,
@@ -471,6 +604,18 @@ export class ContentImportService {
       })
       .where(eq(this.contentImportJob.id, importJob.id))
     return counters
+  }
+
+  // 聚合内容导入任务计数，并返回未来自动重试状态。
+  async aggregateJobWithRetryState(
+    jobId: string,
+  ): Promise<ContentImportAttemptCountersWithRetry> {
+    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
+    const rows = await this.db
+      .select()
+      .from(this.contentImportItem)
+      .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
+    return this.aggregateRowsWithRetryState(importJob.id, rows, this.db)
   }
 
   // 记录已上传文件残留，供失败补偿和崩溃后清理使用。
@@ -577,6 +722,28 @@ export class ContentImportService {
       }))
   }
 
+  // 列出 workflow job 级别上传残留，例如新建作品封面。
+  async listJobUploadedFileResidues(jobId: string) {
+    const workflowJob = await this.readWorkflowJob(jobId)
+    const rows = await this.db
+      .select({ residue: this.contentImportResidue })
+      .from(this.contentImportResidue)
+      .where(
+        and(
+          eq(this.contentImportResidue.workflowJobId, workflowJob.id),
+          eq(
+            this.contentImportResidue.residueType,
+            ContentImportResidueTypeEnum.UPLOADED_FILE,
+          ),
+          isNull(this.contentImportResidue.contentImportItemId),
+        ),
+      )
+    return rows.map((row) => ({
+      deleteTarget: row.residue.metadata as UploadDeleteTarget,
+      residueId: row.residue.residueId,
+    }))
+  }
+
   // 处理过期 RUNNING attempt：已开始条目标失败，未开始条目交给 SYSTEM_RECOVERY attempt。
   async recoverExpiredAttempt(
     jobId: string,
@@ -668,6 +835,12 @@ export class ContentImportService {
     }
   }
 
+  // 汇总 job 是否仍有未来自动重试 item。
+  async readRetryState(jobId: string) {
+    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
+    return this.aggregateJobWithRetryStateWithDb(importJob.id, this.db)
+  }
+
   // 分页查询内容导入条目。
   async getItemPage(input: ContentImportItemPageRequestDto) {
     if (!input.jobId) {
@@ -706,6 +879,11 @@ export class ContentImportService {
         failureCount: item.failureCount,
         lastErrorCode: item.lastErrorCode,
         lastErrorMessage: item.lastErrorMessage,
+        nextRetryAt: item.nextRetryAt,
+        autoRetryCount: item.autoRetryCount,
+        maxAutoRetries: item.maxAutoRetries,
+        lastRetryReason: item.lastRetryReason,
+        lastRetryCode: item.lastRetryCode,
         imageTotal: item.imageTotal,
         imageSuccessCount: item.imageSuccessCount,
         metadata: this.asObjectOrNull(item.metadata),
@@ -806,6 +984,26 @@ export class ContentImportService {
       .select()
       .from(this.contentImportItem)
       .where(eq(this.contentImportItem.contentImportJobId, contentImportJobId))
+    return this.aggregateRows(contentImportJobId, rows, db)
+  }
+
+  // 在指定 db 中聚合内容导入任务计数并返回未来重试状态。
+  private async aggregateJobWithRetryStateWithDb(
+    contentImportJobId: bigint,
+    db: Db,
+  ) {
+    const rows = await db
+      .select()
+      .from(this.contentImportItem)
+      .where(eq(this.contentImportItem.contentImportJobId, contentImportJobId))
+    return this.aggregateRowsWithRetryState(contentImportJobId, rows, db)
+  }
+
+  private async aggregateRows(
+    contentImportJobId: bigint,
+    rows: ContentImportItemSelect[],
+    db: Db,
+  ) {
     const counters = {
       selectedItemCount: rows.length,
       successItemCount: rows.filter(
@@ -834,6 +1032,34 @@ export class ContentImportService {
       })
       .where(eq(this.contentImportJob.id, contentImportJobId))
     return counters
+  }
+
+  private async aggregateRowsWithRetryState(
+    contentImportJobId: bigint,
+    rows: ContentImportItemSelect[],
+    db: Db,
+  ): Promise<ContentImportAttemptCountersWithRetry> {
+    const counters = await this.aggregateRows(contentImportJobId, rows, db)
+    const now = new Date()
+    const futureRetryTimes = rows
+      .filter(
+        (row) =>
+          row.status === ContentImportItemStatusEnum.RETRYING &&
+          row.nextRetryAt &&
+          row.nextRetryAt > now,
+      )
+      .map((row) => row.nextRetryAt as Date)
+    const nextRetryAt =
+      futureRetryTimes.length > 0
+        ? futureRetryTimes.reduce((earliest, item) =>
+            item < earliest ? item : earliest,
+          )
+        : null
+    return {
+      ...counters,
+      futureRetryItemCount: futureRetryTimes.length,
+      nextRetryAt,
+    }
   }
 
   // 归一化 JSON 对象。

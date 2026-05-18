@@ -190,7 +190,7 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
     })
   })
 
-  it('scans only unbound remote chapters and builds retryable workflow plans', async () => {
+  it('scans only unbound remote chapters and builds metadata-only workflow plans', async () => {
     const { provider, service } = createService([
       createLimitSelect([
         {
@@ -224,19 +224,13 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
     )
     expect(prepared.plans[0]).toEqual(
       expect.objectContaining({
-        imageTotal: 1,
+        imageTotal: 0,
+        images: [],
         localSortOrder: 2,
         providerChapterId: 'chapter-new',
         title: '第 2 话',
       }),
     )
-    expect(provider.getChapterContent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        chapterId: 'chapter-new',
-        comicId: 'woduzishenji',
-        group: 'default',
-        platform: 'copy',
-      }),
-    )
+    expect(provider.getChapterContent).not.toHaveBeenCalled()
   })
 })

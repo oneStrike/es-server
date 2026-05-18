@@ -25,6 +25,7 @@ describe('WorkflowService state machine', () => {
         finishedAt: 'attemptFinishedAt',
         heartbeatAt: 'heartbeatAt',
         id: 'attemptIdPk',
+        notBeforeAt: 'notBeforeAt',
         selectedItemCount: 'attemptSelectedItemCount',
         skippedItemCount: 'attemptSkippedItemCount',
         startedAt: 'attemptStartedAt',
@@ -118,6 +119,7 @@ describe('WorkflowService state machine', () => {
       finishedAt: null,
       heartbeatAt: baseDate,
       id: 10n,
+      notBeforeAt: null,
       selectedItemCount: 2,
       skippedItemCount: 0,
       startedAt: baseDate,
@@ -364,6 +366,87 @@ describe('WorkflowService state machine', () => {
     )
   })
 
+  it('completes an attempt and keeps the job pending when delayed retry remains', async () => {
+    const attempt = createWorkflowAttempt()
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      status: WorkflowJobStatusEnum.RUNNING,
+    })
+    const nextRetryAt = new Date('2026-05-17T03:10:00.000Z')
+    const delayedAttempt = createWorkflowAttempt({
+      attemptId: 'attempt-2',
+      attemptNo: 2,
+      id: 11n,
+      notBeforeAt: nextRetryAt,
+      selectedItemCount: 1,
+      status: WorkflowAttemptStatusEnum.PENDING,
+      triggerType: WorkflowAttemptTriggerTypeEnum.SYSTEM_RECOVERY,
+    })
+    const { updateSets, tx } = createUpdateTx([
+      [{ ...attempt, status: WorkflowAttemptStatusEnum.PARTIAL_FAILED }],
+      [{ ...job, currentAttemptFk: delayedAttempt.id, status: WorkflowJobStatusEnum.PENDING }],
+    ])
+    const { service } = createService({ tx })
+    const appendEventWithDb = jest.fn(async () => 1n)
+    const releaseConflictKeys = jest.fn(async () => undefined)
+    setServiceMethod(service, 'readAttemptWithDb', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readJobByIdWithDb', jest.fn(async () => job))
+    setServiceMethod(service, 'resolveNextAttemptNo', jest.fn(async () => 2))
+    setServiceMethod(
+      service,
+      'createAttemptWithDb',
+      jest.fn(async () => delayedAttempt),
+    )
+    setServiceMethod(service, 'appendEventWithDb', appendEventWithDb)
+    setServiceMethod(service, 'releaseConflictKeys', releaseConflictKeys)
+
+    const result = await service.completeAttemptWithDelayedRetry({
+      delayedSelectedItemCount: 1,
+      failedItemCount: 1,
+      nextRetryAt,
+      skippedItemCount: 0,
+      status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
+      successItemCount: 1,
+      workflowAttemptId: attempt.id,
+    })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: WorkflowJobStatusEnum.PENDING,
+      }),
+    )
+    expect(releaseConflictKeys).not.toHaveBeenCalled()
+    expect(
+      (service as unknown as { createAttemptWithDb: jest.Mock }).createAttemptWithDb,
+    ).toHaveBeenCalledWith(
+      job,
+      WorkflowAttemptTriggerTypeEnum.SYSTEM_RECOVERY,
+      tx,
+      2,
+      1,
+      nextRetryAt,
+    )
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
+        }),
+        expect.objectContaining({
+          currentAttemptFk: delayedAttempt.id,
+          finishedAt: null,
+          status: WorkflowJobStatusEnum.PENDING,
+        }),
+      ]),
+    )
+    expect(appendEventWithDb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: WorkflowEventTypeEnum.RETRY_REQUESTED,
+        workflowAttemptId: delayedAttempt.id,
+      }),
+      tx,
+    )
+  })
+
   it('expires retained resources and releases conflict keys for failed jobs', async () => {
     const job = createWorkflowJob({
       currentAttemptFk: 10n,
@@ -436,6 +519,38 @@ describe('WorkflowService state machine', () => {
     expect(expireDraftJob).toHaveBeenCalledWith(draftJob)
     expect(recoverExpiredRunningAttempt).toHaveBeenCalledWith(expiredAttempt.id)
     expect(consumeAttempt).toHaveBeenCalledWith(pendingAttempt.id)
+  })
+
+  it('worker pass does not consume attempts before notBeforeAt is due', async () => {
+    const draftJob = createWorkflowJob({
+      expiresAt: new Date('2026-05-17T02:00:00.000Z'),
+      status: WorkflowJobStatusEnum.DRAFT,
+    })
+    const expiredAttempt = createWorkflowAttempt({
+      claimExpiresAt: new Date('2026-05-17T02:00:00.000Z'),
+      status: WorkflowAttemptStatusEnum.RUNNING,
+    })
+    const futureAttempt = createWorkflowAttempt({
+      id: 12n,
+      notBeforeAt: new Date(Date.now() + 60_000),
+      status: WorkflowAttemptStatusEnum.PENDING,
+    })
+    const db = createSelectDb([[draftJob], [expiredAttempt], [futureAttempt]])
+    const { service } = createService({ db })
+    const expireDraftJob = jest.fn(async () => undefined)
+    const recoverExpiredRunningAttempt = jest.fn(async () => undefined)
+    const consumeAttempt = jest.fn(async () => undefined)
+    setServiceMethod(service, 'expireDraftJob', expireDraftJob)
+    setServiceMethod(
+      service,
+      'recoverExpiredRunningAttempt',
+      recoverExpiredRunningAttempt,
+    )
+    setServiceMethod(service, 'consumeAttempt', consumeAttempt)
+
+    await service.consumePendingAttempts()
+
+    expect(consumeAttempt).not.toHaveBeenCalled()
   })
 
   it('creates a system recovery attempt when a running claim expires with recoverable items', async () => {

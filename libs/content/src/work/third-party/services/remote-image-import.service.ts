@@ -23,6 +23,10 @@ import { ConfigReader } from '@libs/system-config/config-reader'
 import { HttpException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
+import {
+  parseRetryAfterHeader,
+  readThirdPartyRateLimit,
+} from '../third-party-rate-limit'
 import { ThirdPartyResourceThrottleService } from './third-party-resource-throttle.service'
 
 const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
@@ -216,7 +220,7 @@ export class RemoteImageImportService {
         (response) => {
           if (!this.isSuccessfulImageResponse(response)) {
             response.resume()
-            reject(this.remoteImageError('远程图片下载失败'))
+            reject(this.buildRemoteImageHttpError(response))
             return
           }
 
@@ -269,6 +273,27 @@ export class RemoteImageImportService {
   private isSuccessfulImageResponse(response: IncomingMessage) {
     const statusCode = response.statusCode ?? 0
     return statusCode >= 200 && statusCode < 300
+  }
+
+  // 将远程图片 HTTP 限流响应转换为统一三方限流 cause。
+  private buildRemoteImageHttpError(response: IncomingMessage) {
+    const status = response.statusCode ?? 0
+    if (status === 429) {
+      const retryAfterHeader = this.readRetryAfterHeader(response)
+      return this.remoteImageError('远程图片下载被限流', {
+        rateLimited: true,
+        reason: 'HTTP 429',
+        status,
+        ...(retryAfterHeader ? { retryAfterHeader } : {}),
+        ...parseRetryAfterHeader(retryAfterHeader),
+      })
+    }
+    return this.remoteImageError('远程图片下载失败')
+  }
+
+  private readRetryAfterHeader(response: IncomingMessage) {
+    const header = response.headers['retry-after']
+    return Array.isArray(header) ? header[0] : header
   }
 
   // 为原生请求固定已验证地址，避免校验后再次进行不受控 DNS 解析。
@@ -421,24 +446,39 @@ export class RemoteImageImportService {
     context: RemoteImageImportFailureContext,
   ) {
     const failureContext = this.attachOriginalErrorContext(error, context)
+    const cause = this.attachRateLimitContext(error, failureContext)
     if (error instanceof BusinessException) {
       return new BusinessException(error.code, error.message, {
-        cause: failureContext,
+        cause,
       })
     }
     if (error instanceof HttpException) {
       return new HttpException(error.getResponse(), error.getStatus(), {
-        cause: failureContext,
+        cause,
       })
     }
     if (error instanceof Error) {
-      const wrappedError = new Error(error.message, { cause: failureContext })
+      const wrappedError = new Error(error.message, { cause })
       wrappedError.name = error.name
       return wrappedError
     }
     return new Error(this.stringifyUnknownError(error), {
-      cause: failureContext,
+      cause,
     })
+  }
+
+  // 图片上下文包装不能吞掉限流标记，否则 workflow 无法自动重试。
+  private attachRateLimitContext(
+    error: unknown,
+    context: RemoteImageImportFailureContext,
+  ): RemoteImageImportFailureContext {
+    const rateLimit = readThirdPartyRateLimit(error)
+    return rateLimit
+      ? {
+          ...context,
+          ...rateLimit,
+        }
+      : context
   }
 
   // 把原始错误的安全摘要挂到图片上下文中，供 workflow 错误序列化。

@@ -49,6 +49,16 @@ export const contentImportItem = snakeCase.table(
     lastErrorMessage: varchar({ length: 500 }),
     /** 最近失败时间。 */
     lastFailedAt: timestamp({ withTimezone: true, precision: 6 }),
+    /** 自动重试下次可执行时间。 */
+    nextRetryAt: timestamp({ withTimezone: true, precision: 6 }),
+    /** 已安排自动重试次数。 */
+    autoRetryCount: integer().default(0).notNull(),
+    /** 最大自动重试次数。 */
+    maxAutoRetries: integer().default(3).notNull(),
+    /** 最近自动重试原因。 */
+    lastRetryReason: varchar({ length: 500 }),
+    /** 最近自动重试错误码。 */
+    lastRetryCode: varchar({ length: 120 }),
     /** 图片总数。 */
     imageTotal: integer().default(0).notNull(),
     /** 图片成功数。 */
@@ -74,6 +84,12 @@ export const contentImportItem = snakeCase.table(
       table.sortOrder,
       table.id,
     ),
+    index('content_import_item_job_status_next_retry_idx').on(
+      table.contentImportJobId,
+      table.status,
+      table.nextRetryAt,
+      table.id,
+    ),
     index('content_import_item_job_provider_chapter_idx').on(
       table.contentImportJobId,
       table.providerChapterId,
@@ -87,6 +103,8 @@ export const contentImportItem = snakeCase.table(
     check('content_import_item_stage_valid_chk', sql`${table.stage} in (1, 2, 3, 4, 5, 6, 7, 8)`),
     check('content_import_item_title_nonblank_chk', sql`length(trim(${table.title})) > 0`),
     check('content_import_item_failure_count_non_negative_chk', sql`${table.failureCount} >= 0`),
+    check('content_import_item_auto_retry_count_non_negative_chk', sql`${table.autoRetryCount} >= 0`),
+    check('content_import_item_max_auto_retries_non_negative_chk', sql`${table.maxAutoRetries} >= 0`),
     check('content_import_item_image_total_non_negative_chk', sql`${table.imageTotal} >= 0`),
     check('content_import_item_image_success_count_non_negative_chk', sql`${table.imageSuccessCount} >= 0`),
     check('content_import_item_current_attempt_no_positive_chk', sql`${table.currentAttemptNo} is null or ${table.currentAttemptNo} > 0`),

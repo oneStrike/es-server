@@ -86,6 +86,8 @@ export enum ContentImportItemAttemptStatusEnum {
   FAILED = 4,
   /** 已跳过。 */
   SKIPPED = 5,
+  /** 已安排自动重试。 */
+  SCHEDULED_RETRY = 6,
 }
 
 /** 内容导入残留类型。 */

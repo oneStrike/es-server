@@ -3,7 +3,7 @@ import type { ConfigReader } from '@libs/system-config/config-reader'
 import type { ConfigService } from '@nestjs/config'
 import type { ClientRequest, IncomingMessage, RequestOptions } from 'node:http'
 import type { LookupFunction } from 'node:net'
-import type { ThirdPartyResourceThrottleService } from './third-party-resource-throttle.service'
+import type { ThirdPartyResourceThrottleService } from '@libs/content/work/third-party/services/third-party-resource-throttle.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { HttpException } from '@nestjs/common'
@@ -12,7 +12,8 @@ import { EventEmitter } from 'node:events'
 import { promises as fs } from 'node:fs'
 import { request as httpsRequest } from 'node:https'
 import { PassThrough } from 'node:stream'
-import { RemoteImageImportService } from './remote-image-import.service'
+import { readThirdPartyRateLimit } from '@libs/content/work/third-party/third-party-rate-limit'
+import { RemoteImageImportService } from '@libs/content/work/third-party/services/remote-image-import.service'
 
 jest.mock('@libs/platform/modules/upload/upload.service', () => ({
   UploadService: class UploadService {},
@@ -380,6 +381,63 @@ describe('RemoteImageImportService', () => {
     })
   })
 
+  it('preserves rate-limit cause when adding image failure context', async () => {
+    const { service } = createService()
+    jest
+      .spyOn(service, 'importImage')
+      .mockRejectedValueOnce(
+        new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '远程图片下载被限流',
+          {
+            cause: {
+              rateLimited: true,
+              reason: 'HTTP 429',
+              retryAfterHeader: '120',
+              retryAfterMs: 120000,
+              retryAt: '2026-05-17T03:02:00.000Z',
+              status: 429,
+            },
+          },
+        ) as never,
+      )
+
+    let thrownError: unknown
+    try {
+      await service.importImages(
+        [
+          {
+            providerImageId: 'image-001',
+            sortOrder: 1,
+            url: 'https://sw.mangafunb.fun/comic/001.jpg?token=secret',
+          },
+        ],
+        ['comic'],
+      )
+    } catch (error) {
+      thrownError = error
+    }
+
+    expect(readThirdPartyRateLimit(thrownError)).toEqual(
+      expect.objectContaining({
+        rateLimited: true,
+        reason: 'HTTP 429',
+        retryAfterHeader: '120',
+        retryAfterMs: 120000,
+        retryAt: '2026-05-17T03:02:00.000Z',
+        status: 429,
+      }),
+    )
+    expect(thrownError).toMatchObject({
+      cause: expect.objectContaining({
+        imageIndex: 1,
+        providerImageId: 'image-001',
+        safeSourceUrl: 'https://sw.mangafunb.fun/comic/001.jpg',
+        stage: 'remote-image-import',
+      }),
+    })
+  })
+
   it('does not leak credential-bearing original causes into image failure context', async () => {
     const { service } = createService()
     jest.spyOn(service, 'importImage').mockRejectedValueOnce(
@@ -670,6 +728,47 @@ describe('RemoteImageImportService', () => {
     await expect(
       service.importImage('https://sw.mangafunb.fun/comic/001.jpg', ['comic']),
     ).rejects.toThrow('远程图片下载失败')
+  })
+
+  it('classifies HTTP 429 image responses as third-party rate limits', async () => {
+    const { service } = createService()
+    mockLookupAddresses([{ address: '93.184.216.34', family: 4 }])
+    mockImageDownload({
+      headers: {
+        'content-type': 'text/plain',
+        'retry-after': '120',
+      },
+      statusCode: 429,
+      statusMessage: 'Too Many Requests',
+    })
+
+    let thrownError: unknown
+    try {
+      await service.importImage('https://sw.mangafunb.fun/comic/001.jpg', [
+        'comic',
+      ])
+    } catch (error) {
+      thrownError = error
+    }
+
+    expect(thrownError).toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: '远程图片下载被限流',
+      cause: expect.objectContaining({
+        rateLimited: true,
+        reason: 'HTTP 429',
+        retryAfterHeader: '120',
+        retryAfterMs: 120000,
+        status: 429,
+      }),
+    })
+    expect(readThirdPartyRateLimit(thrownError)).toEqual(
+      expect.objectContaining({
+        reason: 'HTTP 429',
+        retryAfterMs: 120000,
+        status: 429,
+      }),
+    )
   })
 
   it('wraps native request errors as remote image business failures', async () => {

@@ -1,7 +1,8 @@
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import type { ThirdPartyResourceThrottleService } from '../services/third-party-resource-throttle.service'
-import { CopyMangaHttpClient } from './copy-manga-http.client'
+import { readThirdPartyRateLimit } from '@libs/content/work/third-party/third-party-rate-limit'
+import type { ThirdPartyResourceThrottleService } from '@libs/content/work/third-party/services/third-party-resource-throttle.service'
+import { CopyMangaHttpClient } from '@libs/content/work/third-party/providers/copy-manga-http.client'
 
 describe('CopyMangaHttpClient', () => {
   const fetchMock = jest.fn()
@@ -9,13 +10,29 @@ describe('CopyMangaHttpClient', () => {
   // 构造 CopyManga JSON 响应，测试关注业务 payload 与 HTTP 状态语义。
   function createJsonResponse(
     data: unknown,
-    init: { status?: number; statusText?: string } = {},
+    init: {
+      status?: number
+      statusText?: string
+      headers?: Record<string, string>
+    } = {},
   ): Response {
     const status = init.status ?? 200
+    const normalizedHeaders = Object.fromEntries(
+      Object.entries(init.headers ?? {}).map(([name, value]) => [
+        name.toLowerCase(),
+        value,
+      ]),
+    )
+    const headers = {
+      get(name: string) {
+        return normalizedHeaders[name.toLowerCase()] ?? null
+      },
+    } as Headers
     return {
       ok: status >= 200 && status < 300,
       status,
       statusText: init.statusText ?? 'OK',
+      headers,
       json: jest.fn(async () => data),
       text: jest.fn(async () => JSON.stringify(data)),
     } as unknown as Response
@@ -455,6 +472,170 @@ describe('CopyMangaHttpClient', () => {
       message: `CopyManga API 请求失败：HTTP 404 (${path})`,
     })
     expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('preserves Retry-After seconds on HTTP 429 rate-limit failures', async () => {
+    const path = '/api/v3/comic/demo/chapter/demo'
+    const now = Date.parse('2026-05-18T00:00:00.000Z')
+    const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now)
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValue(
+        createJsonResponse(
+          { message: 'too many requests' },
+          { status: 429, headers: { 'retry-after': '120' } },
+        ),
+      )
+    const client = createClient()
+
+    try {
+      await expect(client.getJson(path)).rejects.toMatchObject({
+        cause: {
+          kind: 'http',
+          path,
+          rateLimited: true,
+          reason: 'HTTP 429',
+          retryAfterHeader: '120',
+          retryAfterMs: 120_000,
+          retryAt: '2026-05-18T00:02:00.000Z',
+          routeCandidateRecoverable: false,
+          status: 429,
+        },
+      })
+    } finally {
+      dateSpy.mockRestore()
+    }
+  })
+
+  it('parses Retry-After HTTP dates on HTTP 429 rate-limit failures', async () => {
+    const path = '/api/v3/search/comic'
+    const retryAt = 'Mon, 18 May 2026 00:05:00 GMT'
+    const now = Date.parse('2026-05-18T00:00:00.000Z')
+    const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now)
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValue(
+        createJsonResponse(
+          { message: 'too many requests' },
+          { status: 429, headers: { 'retry-after': retryAt } },
+        ),
+      )
+    const client = createClient()
+
+    try {
+      await expect(client.getJson(path)).rejects.toMatchObject({
+        cause: {
+          path,
+          rateLimited: true,
+          retryAfterHeader: retryAt,
+          retryAfterMs: 300_000,
+          retryAt: '2026-05-18T00:05:00.000Z',
+          routeCandidateRecoverable: false,
+          status: 429,
+        },
+      })
+    } finally {
+      dateSpy.mockRestore()
+    }
+  })
+
+  it('classifies provider body rate-limit payloads without retrying other hosts', async () => {
+    const path = '/api/v3/search/comic'
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test'], ['api-b.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 429,
+          message: 'provider rate limit',
+          retry_after: 30,
+        }),
+      )
+    const client = createClient()
+
+    await expect(client.getJson(path)).rejects.toMatchObject({
+      cause: {
+        kind: 'provider',
+        path,
+        rateLimited: true,
+        reason: 'provider rate limit',
+        retryAfterHeader: '30',
+        routeCandidateRecoverable: false,
+      },
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('classifies discovery provider body rate-limit payloads', async () => {
+    const path = '/api/v3/system/network2'
+    fetchMock.mockResolvedValueOnce(
+      createJsonResponse({
+        code: 429,
+        message: '请求过多',
+        retryAfter: '60',
+      }),
+    )
+    const client = createClient()
+
+    await expect(client.getJson('/api/v3/search/comic')).rejects.toMatchObject(
+      {
+        cause: {
+          kind: 'provider',
+          path,
+          rateLimited: true,
+          reason: '请求过多',
+          retryAfterHeader: '60',
+          routeCandidateRecoverable: false,
+        },
+      },
+    )
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('exports a provider-agnostic rate-limit classifier for handlers', async () => {
+    const path = '/api/v3/search/comic'
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValue(
+        createJsonResponse(
+          { message: 'too many requests' },
+          { status: 429, headers: { 'retry-after': '1' } },
+        ),
+      )
+    const client = createClient()
+
+    try {
+      await client.getJson(path)
+      throw new Error('expected client.getJson to fail')
+    } catch (error) {
+      expect(readThirdPartyRateLimit(error)).toMatchObject({
+        path,
+        rateLimited: true,
+        reason: 'HTTP 429',
+        retryAfterHeader: '1',
+        retryAfterMs: 1000,
+        status: 429,
+      })
+    }
   })
 
   it('marks statusless socket failures on chapter content routes as recoverable route-candidate failures', async () => {

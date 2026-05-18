@@ -7,8 +7,10 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { ThirdPartyResourceThrottleService } from '../services/third-party-resource-throttle.service'
+import { parseRetryAfterHeader } from '../third-party-rate-limit'
 
 const COPY_MANGA_DEFAULT_API_HOST = 'api.2024manga.com'
+const COPY_MANGA_DISCOVERY_PATH = '/api/v3/system/network2'
 const COPY_MANGA_PLATFORM = 3
 const COPY_MANGA_REQUEST_ATTEMPTS = 3
 const COPY_MANGA_VERSION = '2024.4.28'
@@ -33,10 +35,12 @@ export class CopyMangaHttpClient {
       const host = apiHosts[attempt % apiHosts.length]
       try {
         await this.throttle.waitForApiSlot()
-        return await this.fetchJson<TPayload>(`https://${host}${path}`, {
+        const payload = await this.fetchJson<TPayload>(`https://${host}${path}`, {
           ...params,
           platform: COPY_MANGA_PLATFORM,
         })
+        this.throwIfProviderRateLimited(path, payload)
+        return payload
       } catch (error) {
         if (error instanceof BusinessException) {
           throw error
@@ -72,11 +76,12 @@ export class CopyMangaHttpClient {
       try {
         await this.throttle.waitForApiSlot()
         const data = await this.fetchJson<CopyMangaNetworkResponse>(
-          `https://${COPY_MANGA_DEFAULT_API_HOST}/api/v3/system/network2`,
+          `https://${COPY_MANGA_DEFAULT_API_HOST}${COPY_MANGA_DISCOVERY_PATH}`,
           {
             platform: COPY_MANGA_PLATFORM,
           },
         )
+        this.throwIfProviderRateLimited(COPY_MANGA_DISCOVERY_PATH, data)
         if (data.code !== 200) {
           lastError = new Error(
             data.message || 'CopyManga host discovery failed',
@@ -167,17 +172,21 @@ export class CopyMangaHttpClient {
     status?: number,
   ): CopyMangaApiFailureCause {
     const code = this.readTransportCode(error)
+    const retryAfterHeader = this.readRetryAfterHeader(error)
+    const rateLimited = this.isRateLimitedFailure(status, code)
+    const retryAfter = parseRetryAfterHeader(retryAfterHeader)
     return {
       kind: status === undefined ? 'transport' : 'http',
       path,
       reason,
-      routeCandidateRecoverable: this.isRouteCandidateRecoverable(
-        path,
-        error,
-        status,
-      ),
+      routeCandidateRecoverable: rateLimited
+        ? false
+        : this.isRouteCandidateRecoverable(path, error, status),
       ...(code === undefined ? {} : { code }),
       ...(status === undefined ? {} : { status }),
+      ...(rateLimited ? { rateLimited: true as const } : {}),
+      ...(retryAfterHeader === undefined ? {} : { retryAfterHeader }),
+      ...(retryAfter === undefined ? {} : retryAfter),
     }
   }
 
@@ -204,6 +213,25 @@ export class CopyMangaHttpClient {
     return typeof transportError.code === 'string'
       ? transportError.code
       : undefined
+  }
+
+  // 从 HTTP 失败响应中提取 Retry-After，保留上游限流重试建议。
+  private readRetryAfterHeader(error: unknown) {
+    if (!this.isCopyMangaTransportError(error)) {
+      return undefined
+    }
+
+    const retryAfterHeader = error.response?.retryAfterHeader
+    return typeof retryAfterHeader === 'string' && retryAfterHeader.length > 0
+      ? retryAfterHeader
+      : undefined
+  }
+
+  // 识别 HTTP 与传输层表达的限流失败，阻止继续轮询候选 host。
+  private isRateLimitedFailure(status?: number, code?: string) {
+    return (
+      status === 429 || code === 'RATE_LIMITED' || code === 'TOO_MANY_REQUESTS'
+    )
   }
 
   // 判断失败是否允许 provider 继续尝试下一个章节内容候选路由。
@@ -272,9 +300,12 @@ export class CopyMangaHttpClient {
         signal: AbortSignal.timeout(COPY_MANGA_REQUEST_TIMEOUT_MS),
       })
       if (!response.ok) {
+        const retryAfterHeader =
+          response.headers?.get('retry-after') ?? undefined
         throw Object.assign(new Error(`HTTP ${response.status}`), {
           response: {
             status: response.status,
+            ...(retryAfterHeader ? { retryAfterHeader } : {}),
           },
         } satisfies Pick<CopyMangaTransportError, 'response'>)
       }
@@ -290,16 +321,16 @@ export class CopyMangaHttpClient {
     }
   }
 
-  // 构建 CopyManga 固定请求头，避免对象字面量混合 quoted/unquoted key。
-  private buildHeaders() {
-    const headers = new Headers()
-    headers.set('accept', 'application/json')
-    headers.set('authorization', 'Token ')
-    headers.set('platform', String(COPY_MANGA_PLATFORM))
-    headers.set('version', COPY_MANGA_VERSION)
-    headers.set('webp', '1')
-    headers.set('x-requested-with', 'com.manga2020.app')
-    return headers
+  // 构建 CopyManga 固定请求头，使用普通对象避免 Node/Jest 环境缺失 Headers。
+  private buildHeaders(): Record<string, string> {
+    return {
+      'accept': 'application/json',
+      'authorization': 'Token ',
+      'platform': String(COPY_MANGA_PLATFORM),
+      'version': COPY_MANGA_VERSION,
+      'webp': '1',
+      'x-requested-with': 'com.manga2020.app',
+    }
   }
 
   // 按原有 params 序列化语义拼接查询参数，跳过 null/undefined。
@@ -327,5 +358,87 @@ export class CopyMangaHttpClient {
       error instanceof Error &&
       (error as { copyMangaFetchStage?: boolean }).copyMangaFetchStage === true
     )
+  }
+
+  // 将 provider 业务响应中的限流语义提升为可被 workflow 识别的异常。
+  private throwIfProviderRateLimited(path: string, payload: unknown) {
+    if (!payload || typeof payload !== 'object') {
+      return
+    }
+
+    const response = payload as {
+      code?: unknown
+      message?: unknown
+      retry_after?: unknown
+      retryAfter?: unknown
+    }
+    if (!this.isProviderRateLimitPayload(response)) {
+      return
+    }
+
+    const reason =
+      typeof response.message === 'string' && response.message.length > 0
+        ? response.message
+        : 'CopyManga provider rate limited'
+    const code =
+      typeof response.code === 'string' || typeof response.code === 'number'
+        ? String(response.code)
+        : undefined
+    const retryAfterHeader = this.readProviderRetryAfterHeader(response)
+    const retryAfter = parseRetryAfterHeader(retryAfterHeader)
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      `CopyManga API 请求失败：${reason} (${path})`,
+      {
+        cause: {
+          kind: 'provider',
+          path,
+          reason,
+          routeCandidateRecoverable: false,
+          rateLimited: true,
+          ...(code === undefined ? {} : { code }),
+          ...(retryAfterHeader === undefined ? {} : { retryAfterHeader }),
+          ...(retryAfter === undefined ? {} : retryAfter),
+        } satisfies CopyMangaApiFailureCause,
+      },
+    )
+  }
+
+  // 判断 provider 响应体是否表达限流，而不是普通业务失败。
+  private isProviderRateLimitPayload(response: {
+    code?: unknown
+    message?: unknown
+  }) {
+    if (
+      response.code === 429 ||
+      response.code === '429' ||
+      response.code === 'RATE_LIMITED' ||
+      response.code === 'TOO_MANY_REQUESTS'
+    ) {
+      return true
+    }
+
+    if (typeof response.message !== 'string') {
+      return false
+    }
+
+    return /rate[-_\s]?limit|too many requests|限流|请求过多|频率/i.test(
+      response.message,
+    )
+  }
+
+  // 读取 provider 响应体中的 retryAfter 字段并统一为 Retry-After 字符串。
+  private readProviderRetryAfterHeader(response: {
+    retry_after?: unknown
+    retryAfter?: unknown
+  }) {
+    const retryAfter = response.retry_after ?? response.retryAfter
+    if (typeof retryAfter === 'number' && Number.isFinite(retryAfter)) {
+      return String(retryAfter)
+    }
+    return typeof retryAfter === 'string' && retryAfter.length > 0
+      ? retryAfter
+      : undefined
   }
 }

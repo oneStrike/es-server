@@ -30,6 +30,8 @@ export const workflowAttempt = snakeCase.table(
     triggerType: smallint().notNull(),
     /** 当前 attempt 状态（1=待处理，2=处理中，3=成功，4=部分失败，5=失败，6=已取消）。 */
     status: smallint().notNull(),
+    /** 最早可被 worker 消费的时间，空表示立即可消费。 */
+    notBeforeAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 选中条目数。 */
     selectedItemCount: integer().default(0).notNull(),
     /** 成功条目数。 */
@@ -73,6 +75,12 @@ export const workflowAttempt = snakeCase.table(
     ),
     index('workflow_attempt_status_created_at_id_idx').on(
       table.status,
+      table.createdAt,
+      table.id,
+    ),
+    index('workflow_attempt_status_not_before_created_at_id_idx').on(
+      table.status,
+      table.notBeforeAt,
       table.createdAt,
       table.id,
     ),

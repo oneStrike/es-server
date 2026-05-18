@@ -8,7 +8,6 @@ import type {
   ThirdPartyComicImportWorkDraftDto,
   ThirdPartyComicSourceSnapshotDto,
 } from '@libs/content/work/content/dto/content.dto'
-import type { ComicThirdPartyProvider } from '@libs/content/work/third-party/providers/comic-third-party-provider.type'
 import type { ThirdPartyComicChapterBindingInput } from '@libs/content/work/third-party/third-party-comic-binding.type'
 import type {
   RemoteImageImportSuccessPayload,
@@ -22,6 +21,7 @@ import type {
   ThirdPartyComicImportResidue,
   ThirdPartyComicImportTaskContext,
   ThirdPartyComicImportTaskDraft,
+  ThirdPartyComicPreparedImportTarget,
   ThirdPartyComicPreparedWorkflowImport,
   ThirdPartyComicRetryReservationSnapshot,
   ThirdPartyComicUpdatedChapterSnapshot,
@@ -226,10 +226,6 @@ export class ThirdPartyComicImportService {
   ): Promise<ThirdPartyComicImportResultDto> {
     const prepared = await this.prepareWorkflowImport(dto, context)
     const chapterResults: ThirdPartyComicImportChapterResultDto[] = []
-    const imageProgressReporter = this.createImportImageProgressReporter(
-      context,
-      prepared.chapterPlans,
-    )
     for (const chapterPlan of prepared.chapterPlans) {
       await context.assertNotCancelled()
       chapterResults.push(
@@ -237,7 +233,6 @@ export class ThirdPartyComicImportService {
           prepared,
           chapterPlan,
           context,
-          imageProgressReporter,
         ),
       )
     }
@@ -288,16 +283,28 @@ export class ThirdPartyComicImportService {
       providerGroupPathWord,
       context,
     )
-    const chapterPlans = await this.buildChapterImportPlans(
-      dto,
-      provider,
-      context,
-    )
+    const chapterPlans = await this.buildChapterImportPlans(dto, context)
     return {
       cover: preparedWork.cover,
       mode: dto.mode,
       work: workResult,
       sourceBinding,
+      chapterPlans,
+    }
+  }
+
+  // 从已持久化的导入目标恢复 workflow prepare 结果，供自动重试 attempt 复用。
+  async restorePreparedWorkflowImport(
+    dto: ThirdPartyComicImportRequestDto,
+    target: ThirdPartyComicPreparedImportTarget,
+    context: ThirdPartyComicImportTaskContext,
+  ): Promise<ThirdPartyComicPreparedWorkflowImport> {
+    const chapterPlans = await this.buildChapterImportPlans(dto, context)
+    return {
+      cover: target.cover,
+      mode: dto.mode,
+      work: target.work,
+      sourceBinding: target.sourceBinding,
       chapterPlans,
     }
   }
@@ -321,7 +328,7 @@ export class ThirdPartyComicImportService {
     prepared: ThirdPartyComicPreparedWorkflowImport,
     chapterPlan: ThirdPartyComicChapterImportPlan,
     context: ThirdPartyComicImportTaskContext,
-    imageProgressReporter: ThirdPartyComicImportProgressReporter,
+    _imageProgressReporter?: ThirdPartyComicImportProgressReporter,
   ) {
     if (!prepared.work.id) {
       throw new BusinessException(
@@ -329,8 +336,16 @@ export class ThirdPartyComicImportService {
         '作品导入准备失败',
       )
     }
-    return this.importChapter(
+    const chapterPlanWithContent = await this.readChapterImportContent(
       chapterPlan,
+      context,
+    )
+    const imageProgressReporter = this.createImportImageProgressReporter(
+      context,
+      [chapterPlanWithContent],
+    )
+    return this.importChapter(
+      chapterPlanWithContent,
       prepared.work.id,
       prepared.sourceBinding.id,
       prepared.sourceBinding.providerGroupPathWord,
@@ -607,69 +622,51 @@ export class ThirdPartyComicImportService {
     }
   }
 
-  // 先校验并拉取章节图片计划，避免内容读取失败后才发现已写入本地章节。
+  // 只生成章节元数据计划；章节内容在 item 执行期逐章读取。
   private async buildChapterImportPlans(
     dto: ThirdPartyComicImportRequestDto,
-    provider: ComicThirdPartyProvider,
     context: ThirdPartyComicImportTaskContext,
   ): Promise<ThirdPartyComicChapterImportPlan[]> {
     const chapterTotal = dto.chapters.length
-    const planningTotal = dto.chapters.filter(
-      (chapter) => chapter.importImages,
-    ).length
-    const planningReporter =
-      planningTotal > 0
-        ? context.createProgressReporter({
-            startPercent: 2,
-            endPercent: 10,
-            total: planningTotal,
-            stage: 'chapter-content',
-            unit: 'chapter',
-          })
-        : undefined
-    let plannedContentCount = 0
     const plans: ThirdPartyComicChapterImportPlan[] = []
     for (const [index, chapter] of dto.chapters.entries()) {
       await context.assertNotCancelled()
-      if (!chapter.importImages) {
-        plans.push({
-          chapter,
-          chapterIndex: index + 1,
-          chapterTotal,
-          images: [],
-          imageTotal: 0,
-        })
-        continue
-      }
-
       this.assertChapterContentOverwriteAllowed(chapter)
-      await context.assertNotCancelled()
-      const content = await provider.getChapterContent({
-        chapterId: chapter.providerChapterId,
-        chapterApiVersion: chapter.chapterApiVersion,
-        comicId: dto.comicId,
-        platform: dto.platform,
-      })
-      const images = this.sortImages(content.images)
-      plannedContentCount += 1
-      await planningReporter?.advance({
-        current: plannedContentCount,
-        message: `已读取第 ${index + 1}/${chapterTotal} 个章节内容`,
-        detail: {
-          providerChapterId: chapter.providerChapterId,
-          chapterIndex: index + 1,
-          chapterTotal,
-        },
-      })
       plans.push({
         chapter,
         chapterIndex: index + 1,
         chapterTotal,
-        images,
-        imageTotal: images.length,
+        images: [],
+        imageTotal: 0,
       })
     }
     return plans
+  }
+
+  // 在 item 执行期读取章节图片，保持预览阶段只冻结章节元数据。
+  private async readChapterImportContent(
+    chapterPlan: ThirdPartyComicChapterImportPlan,
+    context: ThirdPartyComicImportTaskContext,
+  ) {
+    const { chapter } = chapterPlan
+    if (!chapter.importImages) {
+      return chapterPlan
+    }
+    await context.assertNotCancelled()
+    const content = await this.registry
+      .resolve(context.payload.platform)
+      .getChapterContent({
+        chapterId: chapter.providerChapterId,
+        chapterApiVersion: chapter.chapterApiVersion,
+        comicId: context.payload.comicId,
+        platform: context.payload.platform,
+      })
+    const images = this.sortImages(content.images)
+    return {
+      ...chapterPlan,
+      images,
+      imageTotal: images.length,
+    }
   }
 
   // 更新章节内容前必须显式确认覆盖，且校验早于远端内容读取。
@@ -1144,6 +1141,77 @@ export class ThirdPartyComicImportService {
       BusinessErrorCode.STATE_CONFLICT,
       '三方来源已绑定其他作品，不能重复绑定',
     )
+  }
+
+  // 读取已持久化导入目标的 active 来源绑定。
+  async readPreparedImportTarget(
+    dto: ThirdPartyComicImportRequestDto,
+    workId: number,
+  ): Promise<ThirdPartyComicPreparedImportTarget> {
+    const work = await this.readLiveComicWork(workId)
+    const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
+      dto.sourceSnapshot,
+    )
+    const sourceBinding =
+      await this.bindingService.getActiveSourceBindingByScope({
+        platform: dto.platform,
+        providerComicId: this.resolveProviderComicId(dto),
+        providerGroupPathWord,
+      })
+    if (!sourceBinding || sourceBinding.workId !== work.id) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '三方导入自动重试缺少已准备的来源绑定',
+      )
+    }
+    return {
+      cover: {
+        status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+        message: '自动重试复用已准备作品封面',
+      },
+      work: {
+        id: work.id,
+        status:
+          dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW
+            ? ThirdPartyComicImportWorkStatusEnum.CREATED
+            : ThirdPartyComicImportWorkStatusEnum.ATTACHED,
+        message: '自动重试复用已准备本地作品',
+      },
+      sourceBinding: {
+        id: sourceBinding.id,
+        providerGroupPathWord,
+      },
+    }
+  }
+
+  // 清理已持久化的新建导入目标，用于跨自动重试 attempt 的零成功补偿。
+  async cleanupPreparedNewWorkImportTarget(
+    dto: ThirdPartyComicImportRequestDto,
+    workId: number,
+    context: ThirdPartyComicImportTaskContext,
+  ) {
+    if (dto.mode !== ThirdPartyComicImportModeEnum.CREATE_NEW) {
+      return
+    }
+    const uploadResidues =
+      await this.contentImportService.listJobUploadedFileResidues(context.jobId)
+    const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
+      dto.sourceSnapshot,
+    )
+    const sourceBinding =
+      await this.bindingService.getActiveSourceBindingByScope({
+        platform: dto.platform,
+        providerComicId: this.resolveProviderComicId(dto),
+        providerGroupPathWord,
+      })
+    if (sourceBinding?.workId === workId) {
+      await this.bindingService.softDeleteSourceBindings([sourceBinding.id])
+    }
+    await this.workService.deleteWork(workId)
+    for (const residue of uploadResidues.reverse()) {
+      await this.remoteImageImportService.deleteImportedFile(residue.deleteTarget)
+      await this.contentImportService.markResiduesCleaned([residue.residueId])
+    }
   }
 
   // 确认目标作品下没有同名 live 章节，更新时允许目标章节自身。

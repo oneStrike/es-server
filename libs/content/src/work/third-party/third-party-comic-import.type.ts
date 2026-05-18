@@ -160,6 +160,16 @@ export interface ThirdPartyComicPreparedWorkflowImport {
   chapterPlans: ThirdPartyComicChapterImportPlan[]
 }
 
+/** 已持久化的三方导入目标，供自动重试 attempt 跳过共享 prepare 副作用。 */
+export interface ThirdPartyComicPreparedImportTarget {
+  cover: ThirdPartyComicImportResultDto['cover']
+  work: NonNullable<ThirdPartyComicImportResultDto['work']>
+  sourceBinding: {
+    id: number
+    providerGroupPathWord: string
+  }
+}
+
 /** 第三方漫画导入 workflow 准备结果 Promise 解包类型。 */
 export type ThirdPartyComicPreparedWorkflowImportResult =
   ThirdPartyComicPreparedWorkflowImport

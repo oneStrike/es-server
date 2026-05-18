@@ -65,6 +65,40 @@ export interface ContentImportMarkItemFailedInput {
   imageSuccessCount?: number
 }
 
+/** 三方导入执行期已准备好的本地目标。 */
+export interface ContentImportPreparedThirdPartyImportTargetInput {
+  jobId: string
+  workId: number
+}
+
+/** 标记内容导入条目等待限流自动重试的内部入参。 */
+export interface ContentImportMarkItemRateLimitRetryingInput {
+  itemId: string
+  attemptNo: number
+  nextRetryAt: Date
+  errorCode: string
+  errorMessage: string
+  retryReason: string
+  imageTotal?: number
+  imageSuccessCount?: number
+}
+
+/** 标记内容导入条目自动重试耗尽的内部入参。 */
+export interface ContentImportMarkItemRetryExhaustedInput {
+  itemId: string
+  attemptNo: number
+  errorMessage: string
+  imageTotal?: number
+  imageSuccessCount?: number
+}
+
+/** 内容导入执行统计，包含未来自动重试状态。 */
+export interface ContentImportAttemptCountersWithRetry
+  extends ContentImportAttemptCounters {
+  futureRetryItemCount: number
+  nextRetryAt: Date | null
+}
+
 /** 记录已上传文件残留的内部入参。 */
 export interface ContentImportRecordUploadedFileResidueInput {
   attemptId?: string

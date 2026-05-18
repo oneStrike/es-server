@@ -82,6 +82,26 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     }
   }
 
+  function createContext() {
+    return {
+      assertNotCancelled: jest.fn(async () => undefined),
+      assertStillOwned: jest.fn(async () => undefined),
+      createProgressReporter: jest.fn(() => ({
+        advance: jest.fn(async () => undefined),
+      })),
+      getResidue: jest.fn(async () => ({})),
+      isCancelRequested: jest.fn(async () => false),
+      jobId: 'job-1',
+      markUploadedFileResidueCleaned: jest.fn(),
+      markUploadedFileResidueCleanupFailed: jest.fn(),
+      markUploadedResiduesCleaned: jest.fn(),
+      payload: {},
+      recordResidue: jest.fn(),
+      updateProgress: jest.fn(),
+      workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+    }
+  }
+
   function createService(selectRows: unknown[][] = [[]]) {
     const selectQueue = [...selectRows]
     const db = {
@@ -127,16 +147,43 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     const comicContentService = {
       replaceChapterContents: jest.fn(),
     }
+    const provider = {
+      getChapterContent: jest.fn(async () => ({
+        images: [
+          {
+            providerImageId: 'image-1',
+            sortOrder: 1,
+            url: 'https://example.com/1.jpg',
+          },
+        ],
+      })),
+      getDetail: jest.fn(async () => ({
+        authors: [],
+        brief: '作品简介',
+        cover: 'https://example.com/cover.jpg',
+        groups: [],
+        id: 'woduzishenji',
+        name: '我独自升级',
+        pathWord: 'woduzishenji',
+        region: 'KR',
+        status: '完结',
+        taxonomies: [],
+        uuid: 'uuid-1',
+      })),
+    }
     const registry = {
-      resolve: jest.fn(),
+      resolve: jest.fn(() => provider),
     }
     const remoteImageImportService = {
+      importImages: jest.fn(async () => ['/images/1.jpg']),
       importImage: jest.fn(),
     }
 
     return {
       bindingService,
       contentImportService,
+      provider,
+      remoteImageImportService,
       service: new ThirdPartyComicImportService(
         registry as never,
         workService as never,
@@ -259,5 +306,46 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     )
 
     expect(workflowService.createDraft).not.toHaveBeenCalled()
+  })
+
+  it('prepares workflow import without reading selected chapter content', async () => {
+    const {
+      bindingService,
+      provider,
+      remoteImageImportService,
+      service,
+      workService,
+    } = createService([[], []])
+    const dto = createImportRequest()
+    const context = createContext()
+    ;(remoteImageImportService.importImage as jest.Mock).mockResolvedValueOnce({
+      deleteTarget: {
+        filePath: 'cover.jpg',
+        objectKey: 'cover.jpg',
+        provider: 'local',
+      },
+      upload: { filePath: 'cover.jpg' },
+    })
+    ;(workService.createWorkReturningId as jest.Mock).mockResolvedValueOnce(100)
+    ;(
+      bindingService as unknown as { createOrGetSourceBinding: jest.Mock }
+    ).createOrGetSourceBinding = jest.fn(async () => ({
+      created: true,
+      id: 10,
+    }))
+
+    const prepared = await service.prepareWorkflowImport(
+      dto as never,
+      context as never,
+    )
+
+    expect(prepared.chapterPlans).toEqual([
+      expect.objectContaining({
+        chapter: dto.chapters[0],
+        imageTotal: 0,
+        images: [],
+      }),
+    ])
+    expect(provider.getChapterContent).not.toHaveBeenCalled()
   })
 })

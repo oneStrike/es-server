@@ -6,7 +6,7 @@ import chaptersSuccess from '../__fixtures__/copy-manga/chapters-success.json'
 import detailResultsNull from '../__fixtures__/copy-manga/detail-results-null.json'
 import detailSuccess from '../__fixtures__/copy-manga/detail-success.json'
 import searchSuccess from '../__fixtures__/copy-manga/search-success.json'
-import { CopyMangaProvider } from './copy-manga.provider'
+import { CopyMangaProvider } from '@libs/content/work/third-party/providers/copy-manga.provider'
 
 describe('CopyMangaProvider', () => {
   function createProvider(responseByPath: Record<string, unknown>) {
@@ -37,6 +37,26 @@ describe('CopyMangaProvider', () => {
           reason: `HTTP ${status}`,
           routeCandidateRecoverable: status === 404,
           status,
+        },
+      },
+    )
+  }
+
+  function createCopyMangaRateLimitError(path: string) {
+    return new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      `CopyManga API 请求失败：HTTP 429 (${path})`,
+      {
+        cause: {
+          kind: 'http',
+          path,
+          rateLimited: true,
+          reason: 'HTTP 429',
+          retryAfterHeader: '120',
+          retryAfterMs: 120000,
+          retryAt: '2026-05-18T00:02:00.000Z',
+          routeCandidateRecoverable: false,
+          status: 429,
         },
       },
     )
@@ -262,6 +282,26 @@ describe('CopyMangaProvider', () => {
   it('does not fall back when the preferred chapter content route fails for a non-404 reason', async () => {
     const preferredPath = '/api/v3/comic/woduzishenji/chapter3/chapter-001'
     const upstreamError = createCopyMangaHttpError(500, preferredPath)
+    const { httpClient, provider } = createProvider({
+      [preferredPath]: upstreamError,
+      '/api/v3/comic/woduzishenji/chapter/chapter-001': chapterContentSuccess,
+    })
+
+    await expect(
+      provider.getChapterContent({
+        chapterId: 'chapter-001',
+        chapterApiVersion: 3,
+        comicId: 'woduzishenji',
+        platform: 'copy',
+      }),
+    ).rejects.toBe(upstreamError)
+
+    expect(httpClient.getJson).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not fall back when the preferred chapter content route is rate limited', async () => {
+    const preferredPath = '/api/v3/comic/woduzishenji/chapter3/chapter-001'
+    const upstreamError = createCopyMangaRateLimitError(preferredPath)
     const { httpClient, provider } = createProvider({
       [preferredPath]: upstreamError,
       '/api/v3/comic/woduzishenji/chapter/chapter-001': chapterContentSuccess,

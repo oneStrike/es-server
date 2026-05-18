@@ -125,7 +125,14 @@ export interface ThirdPartyComicSyncImportNewChapterInput {
   work: ThirdPartyComicSyncWorkSnapshot
   sourceBindingId: number
   context: ThirdPartyComicSyncTaskContext
-  imageProgressReporter: ThirdPartyComicImportProgressReporter
+  imageProgressReporter?: ThirdPartyComicImportProgressReporter
+}
+
+/** 最新章节同步单章节导入结果。 */
+export interface ThirdPartyComicSyncImportNewChapterResult {
+  localChapterId: number
+  imageTotal: number
+  imageSuccessCount: number
 }
 
 /** 最新章节同步图片导入进度所需的安全载荷。 */

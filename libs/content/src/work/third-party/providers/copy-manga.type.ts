@@ -19,6 +19,7 @@ export interface CopyMangaTransportError extends Error {
   /** 非 2xx 响应对应的 HTTP 状态码。 */
   response?: {
     status?: number
+    retryAfterHeader?: string
   }
   /** fetch/undici 层可能暴露的传输错误码。 */
   code?: string
@@ -30,12 +31,16 @@ export interface CopyMangaTransportError extends Error {
 
 /** CopyManga API 请求失败后可安全落库/分支判断的诊断原因。 */
 export interface CopyMangaApiFailureCause {
-  kind: 'http' | 'transport'
+  kind: 'http' | 'transport' | 'provider'
   path: string
   reason: string
   status?: number
   code?: string
   routeCandidateRecoverable: boolean
+  rateLimited?: true
+  retryAfterHeader?: string
+  retryAfterMs?: number
+  retryAt?: string
 }
 
 /** CopyManga 分类、作者、地区等命名项的原始形状。 */

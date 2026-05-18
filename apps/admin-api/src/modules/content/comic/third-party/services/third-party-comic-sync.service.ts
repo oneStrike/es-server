@@ -10,6 +10,7 @@ import type {
   ThirdPartyComicSyncChapterPlanBuildInput,
   ThirdPartyComicSyncImageImportProgressFile,
   ThirdPartyComicSyncImportNewChapterInput,
+  ThirdPartyComicSyncImportNewChapterResult,
   ThirdPartyComicSyncResidue,
   ThirdPartyComicSyncTaskContext,
   ThirdPartyComicSyncTaskPayload,
@@ -120,23 +121,17 @@ export class ThirdPartyComicSyncService {
     context: ThirdPartyComicSyncTaskContext,
   ): Promise<ThirdPartyComicSyncTaskResult> {
     const prepared = await this.prepareWorkflowSync(payload, context)
-    const imageProgressReporter = this.createSyncImageProgressReporter(
-      context,
-      prepared.plans,
-    )
 
     const createdChapterIds: number[] = []
     for (const plan of prepared.plans) {
       await context.assertNotCancelled()
-      createdChapterIds.push(
-        await this.importWorkflowSyncChapter({
-          context,
-          imageProgressReporter,
-          plan,
-          sourceBindingId: prepared.sourceBindingId,
-          work: prepared.work,
-        }),
-      )
+      const result = await this.importWorkflowSyncChapter({
+        context,
+        plan,
+        sourceBindingId: prepared.sourceBindingId,
+        work: prepared.work,
+      })
+      createdChapterIds.push(result.localChapterId)
     }
 
     await context.updateProgress({
@@ -240,7 +235,9 @@ export class ThirdPartyComicSyncService {
   }
 
   // 执行 workflow 中的单章节同步导入。
-  async importWorkflowSyncChapter(input: ThirdPartyComicSyncImportNewChapterInput) {
+  async importWorkflowSyncChapter(
+    input: ThirdPartyComicSyncImportNewChapterInput,
+  ): Promise<ThirdPartyComicSyncImportNewChapterResult> {
     return this.importNewChapter(input)
   }
 
@@ -292,23 +289,13 @@ export class ThirdPartyComicSyncService {
     }
   }
 
-  // 读取新章节内容并生成本地导入计划，确保远端读取失败早于本地写入副作用。
+  // 只生成同步章节元数据计划；章节内容在 item 执行期逐章读取。
   private async buildChapterPlans(
     input: ThirdPartyComicSyncChapterPlanBuildInput,
   ) {
     const plans: ThirdPartyComicSyncChapterPlan[] = []
     let maxSortOrder = Math.max(0, ...input.usedSortOrders)
     const chapterTotal = input.chapters.length
-    const planningReporter =
-      chapterTotal > 0
-        ? input.context.createProgressReporter({
-            startPercent: 2,
-            endPercent: 10,
-            total: chapterTotal,
-            stage: 'chapter-content',
-            unit: 'chapter',
-          })
-        : undefined
     for (const [index, chapter] of input.chapters.entries()) {
       await input.context.assertNotCancelled()
       this.assertProviderChapterId(chapter.providerChapterId)
@@ -319,25 +306,6 @@ export class ThirdPartyComicSyncService {
       )
       maxSortOrder = Math.max(maxSortOrder, localSortOrder)
       input.usedSortOrders.add(localSortOrder)
-      const content = await this.registry
-        .resolve(input.platform)
-        .getChapterContent({
-          chapterApiVersion: chapter.chapterApiVersion,
-          chapterId: chapter.providerChapterId,
-          comicId: input.comicId,
-          group: input.group,
-          platform: input.platform,
-        })
-      const images = this.sortImages(content.images)
-      await planningReporter?.advance({
-        current: index + 1,
-        message: `已读取同步章节 ${index + 1}/${chapterTotal} 的内容`,
-        detail: {
-          providerChapterId: chapter.providerChapterId,
-          chapterIndex: index + 1,
-          chapterTotal,
-        },
-      })
       plans.push({
         providerChapterId: chapter.providerChapterId,
         title: chapter.title,
@@ -346,8 +314,8 @@ export class ThirdPartyComicSyncService {
         chapterApiVersion: chapter.chapterApiVersion,
         datetimeCreated: chapter.datetimeCreated,
         localSortOrder,
-        images,
-        imageTotal: images.length,
+        images: [],
+        imageTotal: 0,
         chapterIndex: index + 1,
         chapterTotal,
       })
@@ -359,8 +327,10 @@ export class ThirdPartyComicSyncService {
   private async importNewChapter(
     input: ThirdPartyComicSyncImportNewChapterInput,
   ) {
-    const { context, imageProgressReporter, plan, sourceBindingId, work } =
-      input
+    const { context, imageProgressReporter, sourceBindingId, work } = input
+    const plan = await this.readSyncChapterContent(input)
+    const progressReporter =
+      imageProgressReporter ?? this.createSyncImageProgressReporter(context, [plan])
     const chapterId = await this.workChapterService.createChapterReturningId({
       canComment: work.canComment,
       canDownload: false,
@@ -380,7 +350,7 @@ export class ThirdPartyComicSyncService {
       ['work', 'comic', String(work.id), 'chapter', String(chapterId)],
       async (importedFile) => {
         await this.recordUploadedFile(context, importedFile.deleteTarget)
-        await imageProgressReporter.advance({
+        await progressReporter.advance({
           message: `已导入同步章节 ${plan.chapterIndex}/${plan.chapterTotal} 的第 ${importedFile.imageIndex}/${importedFile.imageTotal} 张图片`,
           detail: this.toImageProgressDetail(plan, importedFile),
         })
@@ -397,7 +367,34 @@ export class ThirdPartyComicSyncService {
       workThirdPartySourceBindingId: sourceBindingId,
     })
 
-    return chapterId
+    return {
+      localChapterId: chapterId,
+      imageTotal: plan.imageTotal,
+      imageSuccessCount: filePaths.length,
+    }
+  }
+
+  // 在 item 执行期读取新增章节图片，避免计划阶段持有大体量内容。
+  private async readSyncChapterContent(
+    input: ThirdPartyComicSyncImportNewChapterInput,
+  ) {
+    const { context, plan } = input
+    await context.assertNotCancelled()
+    const content = await this.registry
+      .resolve(context.payload.platform)
+      .getChapterContent({
+        chapterApiVersion: plan.chapterApiVersion,
+        chapterId: plan.providerChapterId,
+        comicId: context.payload.providerPathWord,
+        group: context.payload.providerGroupPathWord,
+        platform: context.payload.platform,
+      })
+    const images = this.sortImages(content.images)
+    return {
+      ...plan,
+      images,
+      imageTotal: images.length,
+    }
   }
 
   // 读取同步目标作品的最小创建字段，并阻断非漫画或已删除作品。

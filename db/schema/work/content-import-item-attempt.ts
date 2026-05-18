@@ -28,7 +28,7 @@ export const contentImportItemAttempt = snakeCase.table(
     contentImportItemId: bigint({ mode: 'bigint' }).notNull(),
     /** 工作流 attempt 序号。 */
     attemptNo: integer().notNull(),
-    /** 条目 attempt 状态（1=待处理，2=处理中，3=成功，4=失败，5=已跳过）。 */
+    /** 条目 attempt 状态（1=待处理，2=处理中，3=成功，4=失败，5=已跳过，6=已安排自动重试）。 */
     status: smallint().notNull(),
     /** 当前阶段（1=预览中，2=读取来源，3=准备元数据，4=读取内容，5=导入图片，6=写入内容，7=清理残留，8=已完成）。 */
     stage: smallint().notNull(),
@@ -69,7 +69,7 @@ export const contentImportItemAttempt = snakeCase.table(
       table.contentImportItemId,
     ),
     check('content_import_item_attempt_attempt_no_positive_chk', sql`${table.attemptNo} > 0`),
-    check('content_import_item_attempt_status_valid_chk', sql`${table.status} in (1, 2, 3, 4, 5)`),
+    check('content_import_item_attempt_status_valid_chk', sql`${table.status} in (1, 2, 3, 4, 5, 6)`),
     check('content_import_item_attempt_stage_valid_chk', sql`${table.stage} in (1, 2, 3, 4, 5, 6, 7, 8)`),
     check('content_import_item_attempt_image_total_non_negative_chk', sql`${table.imageTotal} >= 0`),
     check('content_import_item_attempt_image_success_count_non_negative_chk', sql`${table.imageSuccessCount} >= 0`),

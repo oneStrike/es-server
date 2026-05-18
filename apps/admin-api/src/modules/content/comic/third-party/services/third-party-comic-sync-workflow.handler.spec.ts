@@ -23,8 +23,10 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       metadata: { plan },
     }))
     const contentImportService = {
-      aggregateJob: jest.fn(async () => ({
+      aggregateJobWithRetryState: jest.fn(async () => ({
         failedItemCount: 1,
+        futureRetryItemCount: 0,
+        nextRetryAt: null,
         skippedItemCount: 0,
         successItemCount: 1,
       })),
@@ -49,7 +51,11 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       createSyncImageProgressReporter: jest.fn(() => ({ advance: jest.fn() })),
       importWorkflowSyncChapter: jest
         .fn()
-        .mockResolvedValueOnce(201)
+        .mockResolvedValueOnce({
+          imageSuccessCount: 2,
+          imageTotal: 2,
+          localChapterId: 201,
+        })
         .mockRejectedValueOnce(new Error('image failed')),
       prepareWorkflowSync: jest.fn(async () => ({
         plans,
@@ -120,7 +126,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       title: '第 1 话',
     }
     const contentImportService = {
-      aggregateJob: jest.fn(),
+      aggregateJobWithRetryState: jest.fn(),
       listExecutableItems: jest.fn(async () => [
         { itemId: 'item-1', metadata: { plan } },
       ]),
@@ -169,6 +175,116 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
 
     expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
     expect(workflowService.completeAttemptByAttemptId).not.toHaveBeenCalled()
+  })
+
+  it('schedules rate-limited sync chapters for automatic retry and continues later items', async () => {
+    const registry = { register: jest.fn() }
+    const workflowService = {
+      completeAttemptByAttemptId: jest.fn(),
+      completeAttemptWithDelayedRetryByAttemptId: jest.fn(),
+    }
+    const rateLimitError = new Error('rate limited', {
+      cause: {
+        rateLimited: true,
+        reason: 'HTTP 429',
+        retryAt: '2026-05-17T03:10:00.000Z',
+        status: 429,
+      },
+    })
+    const plans = [
+      { imageTotal: 0, localSortOrder: 1, providerChapterId: 'p1', title: '第 1 话' },
+      { imageTotal: 0, localSortOrder: 2, providerChapterId: 'p2', title: '第 2 话' },
+      { imageTotal: 0, localSortOrder: 3, providerChapterId: 'p3', title: '第 3 话' },
+    ]
+    const items = plans.map((plan, index) => ({
+      itemId: `item-${index + 1}`,
+      metadata: { plan },
+    }))
+    const contentImportService = {
+      aggregateJobWithRetryState: jest.fn(async () => ({
+        failedItemCount: 0,
+        futureRetryItemCount: 1,
+        nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
+        skippedItemCount: 0,
+        successItemCount: 2,
+      })),
+      listExecutableItems: jest.fn(async () => items),
+      listPendingUploadedFileResidues: jest.fn(async () => []),
+      markItemFailed: jest.fn(),
+      markItemRateLimitRetrying: jest.fn(),
+      markItemRetryExhausted: jest.fn(),
+      markItemSuccess: jest.fn(),
+      markResiduesCleaned: jest.fn(),
+      readContentImportJobByWorkflowJobId: jest.fn(async () => ({
+        sourceSnapshot: { source: { workId: 1 } },
+      })),
+      startItemAttempt: jest.fn(),
+    }
+    const syncService = {
+      createSyncImageProgressReporter: jest.fn(() => ({ advance: jest.fn() })),
+      importWorkflowSyncChapter: jest
+        .fn()
+        .mockResolvedValueOnce({
+          imageSuccessCount: 1,
+          imageTotal: 1,
+          localChapterId: 201,
+        })
+        .mockRejectedValueOnce(rateLimitError)
+        .mockResolvedValueOnce({
+          imageSuccessCount: 1,
+          imageTotal: 1,
+          localChapterId: 203,
+        }),
+      prepareWorkflowSyncTarget: jest.fn(async () => ({
+        sourceBindingId: 1,
+        work: { canComment: true, chapterPrice: 0, id: 1 },
+      })),
+      rollbackSyncTask: jest.fn(),
+    }
+    const appendEvent = jest.fn()
+    const handler = new ThirdPartyComicSyncWorkflowHandler(
+      registry as never,
+      workflowService as never,
+      contentImportService as never,
+      syncService as never,
+      { deleteImportedFile: jest.fn() } as never,
+    )
+
+    await handler.execute({
+      appendEvent,
+      assertNotCancelled: jest.fn(),
+      assertStillOwned: jest.fn(),
+      attemptId: 'attempt-2',
+      attemptNo: 2,
+      getStatus: jest.fn(),
+      isCancelRequested: jest.fn(),
+      jobId: 'job-1',
+      updateProgress: jest.fn(),
+      workflowType: 'content-import.third-party-sync',
+    })
+
+    expect(syncService.importWorkflowSyncChapter).toHaveBeenCalledTimes(3)
+    expect(contentImportService.markItemRateLimitRetrying).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errorCode: 'HTTP_429',
+        itemId: 'item-2',
+        nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
+      }),
+    )
+    expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
+    expect(workflowService.completeAttemptWithDelayedRetryByAttemptId).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attemptId: 'attempt-2',
+        delayedSelectedItemCount: 1,
+        nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
+      }),
+    )
+    expect(workflowService.completeAttemptByAttemptId).not.toHaveBeenCalled()
+    expect(appendEvent).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.stringContaining('自动重试'),
+      expect.objectContaining({ itemId: 'item-2' }),
+    )
   })
 
   it('delegates expired attempt recovery to the content import domain', async () => {
