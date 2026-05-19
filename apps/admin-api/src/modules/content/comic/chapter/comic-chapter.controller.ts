@@ -6,7 +6,12 @@ import {
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto, IdsDto } from '@libs/platform/dto'
+import {
+  BatchUpdatePublishedStatusDto,
+  DragReorderDto,
+  IdDto,
+  IdsDto,
+} from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -90,6 +95,21 @@ export class ComicChapterController {
   })
   async batchDelete(@Body() body: IdsDto) {
     return this.workChapterService.deleteChapters(body.ids)
+  }
+
+  @Post('batch-update-status')
+  @ApiAuditDoc({
+    summary: '批量更新漫画章节发布状态',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async batchUpdateStatus(@Body() body: BatchUpdatePublishedStatusDto) {
+    return this.workChapterService.batchUpdateChapterPublishStatus(
+      body,
+      WorkTypeEnum.COMIC,
+    )
   }
 
   @Post('swap-sort-order')

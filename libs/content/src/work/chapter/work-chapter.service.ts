@@ -10,9 +10,14 @@ import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
-import { BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  ContentTypeEnum,
+  WorkTypeEnum,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
+import { BatchUpdatePublishedStatusDto } from '@libs/platform/dto'
 import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
@@ -535,6 +540,42 @@ export class WorkChapterService {
   // 批量删除章节。
   async deleteChapters(ids: number[]) {
     return this.deleteChapterRecords(ids)
+  }
+
+  // 批量更新章节发布状态，并通过作品类型约束避免跨内容域误更新。
+  async batchUpdateChapterPublishStatus(
+    dto: BatchUpdatePublishedStatusDto,
+    workType: WorkTypeEnum,
+  ) {
+    const uniqueIds = [...new Set(dto.ids)]
+    if (uniqueIds.length === 0) {
+      return true
+    }
+
+    await this.drizzle.withTransaction(async (tx) => {
+      const updatedRows = await tx
+        .update(this.workChapter)
+        .set({ isPublished: dto.isPublished })
+        .where(
+          and(
+            inArray(this.workChapter.id, uniqueIds),
+            eq(this.workChapter.workType, workType),
+            isNull(this.workChapter.deletedAt),
+          ),
+        )
+        .returning({
+          id: this.workChapter.id,
+        })
+
+      if (updatedRows.length !== uniqueIds.length) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '章节不存在',
+        )
+      }
+    })
+
+    return true
   }
 
   // 统一处理单删与批量软删除，避免批量删除只命中部分章节时静默成功。

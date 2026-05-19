@@ -51,6 +51,7 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
         {
           action: ThirdPartyComicImportChapterActionEnum.CREATE,
           chapterApiVersion: 1,
+          imageCount: 20,
           importImages: true,
           providerChapterId: 'chapter-001',
           sortOrder: 1,
@@ -359,11 +360,23 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     expect(prepared.chapterPlans).toEqual([
       expect.objectContaining({
         chapter: dto.chapters[0],
-        imageTotal: 0,
+        imageTotal: 20,
         images: [],
       }),
     ])
     expect(provider.getChapterContent).not.toHaveBeenCalled()
+  })
+
+  it('rejects missing chapter imageCount before creating a workflow draft', async () => {
+    const { service, workflowService } = createService([[]])
+    const dto = createImportRequest()
+    delete (dto.chapters[0] as Record<string, unknown>).imageCount
+
+    await expect(service.confirmImport(dto as never, 7)).rejects.toThrow(
+      '三方章节图片数必须是非负整数',
+    )
+
+    expect(workflowService.createDraft).not.toHaveBeenCalled()
   })
 
   it('calls provider detail without workflow execution options', async () => {
@@ -414,6 +427,14 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
       ['/images/1.jpg'],
     )
 
+    const chapterPlan = {
+      chapter: dto.chapters[0],
+      chapterIndex: 1,
+      chapterTotal: 1,
+      images: [],
+      imageTotal: 20,
+    }
+
     await service.importWorkflowChapter(
       {
         cover: {
@@ -430,13 +451,7 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
         },
         chapterPlans: [],
       } as never,
-      {
-        chapter: dto.chapters[0],
-        chapterIndex: 1,
-        chapterTotal: 1,
-        images: [],
-        imageTotal: 0,
-      },
+      chapterPlan,
       context as never,
     )
 
@@ -446,6 +461,7 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
       comicId: dto.comicId,
       platform: dto.platform,
     })
+    expect(chapterPlan.imageTotal).toBe(1)
   })
 
   it('records provider cover residue before ownership gate can abort work creation', async () => {

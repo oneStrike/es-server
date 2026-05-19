@@ -828,10 +828,9 @@ export class ThirdPartyComicChapterDto {
   @NumberProperty({
     description: '三方章节图片数',
     example: 20,
-    required: false,
     validation: false,
   })
-  imageCount?: number
+  imageCount!: number
 
   @NumberProperty({
     description: '三方章节内容接口版本',
@@ -1301,6 +1300,14 @@ export class ThirdPartyComicImportChapterItemDto {
     required: false,
   })
   chapterApiVersion?: number
+
+  @NumberProperty({
+    description: '三方章节预期图片数',
+    example: 20,
+    required: true,
+    min: 0,
+  })
+  imageCount!: number
 
   @EnumProperty({
     description: '章节导入动作（create=新建章节；update=更新已有章节）',

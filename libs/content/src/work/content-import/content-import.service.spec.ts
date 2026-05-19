@@ -6,6 +6,7 @@ import {
   ContentImportItemStatusEnum,
 } from './content-import.constant'
 import { ContentImportService } from './content-import.service'
+import { ThirdPartyComicImportChapterActionEnum } from '../content/dto/content.dto'
 
 describe('ContentImportService retry scheduling', () => {
   const now = new Date('2026-05-17T03:00:00.000Z')
@@ -183,9 +184,7 @@ describe('ContentImportService retry scheduling', () => {
         from: jest.fn(() => ({
           innerJoin: jest.fn(() => ({
             where: jest.fn(() => ({
-              limit: jest.fn(async () => [
-                { contentImportJob: { id: 1n } },
-              ]),
+              limit: jest.fn(async () => [{ contentImportJob: { id: 1n } }]),
             })),
           })),
         })),
@@ -240,5 +239,164 @@ describe('ContentImportService retry scheduling', () => {
         nextRetryAt: now,
       }),
     )
+  })
+})
+
+describe('ContentImportService third-party import job creation', () => {
+  function createSchema() {
+    return {
+      contentImportItem: {
+        contentImportJobId: 'contentImportJobId',
+      },
+      contentImportJob: {
+        id: 'contentImportJobPk',
+        workflowJobId: 'workflowJobId',
+      },
+      workflowJob: {
+        id: 'workflowJobPk',
+        jobId: 'jobId',
+      },
+    }
+  }
+
+  function createInsertDb(schema: ReturnType<typeof createSchema>) {
+    const insertedJobs: Record<string, unknown>[] = []
+    const insertedItems: Record<string, unknown>[] = []
+    const db = {
+      insert: jest.fn((table: unknown) => ({
+        values: jest.fn(
+          (value: Record<string, unknown> | Record<string, unknown>[]) => {
+            if (table === schema.contentImportJob) {
+              insertedJobs.push(value as Record<string, unknown>)
+              return {
+                returning: jest.fn(async () => [
+                  {
+                    ...(value as Record<string, unknown>),
+                    id: 100n,
+                  },
+                ]),
+              }
+            }
+
+            insertedItems.push(...(value as Record<string, unknown>[]))
+            return {
+              returning: jest.fn(async () => []),
+            }
+          },
+        ),
+      })),
+    }
+    return {
+      db,
+      insertedItems,
+      insertedJobs,
+    }
+  }
+
+  function createService(db: unknown, schema: ReturnType<typeof createSchema>) {
+    return new ContentImportService({
+      db,
+      schema,
+    } as never)
+  }
+
+  function setServiceMethod(
+    service: ContentImportService,
+    name: string,
+    implementation: unknown,
+  ) {
+    Object.defineProperty(service, name, {
+      configurable: true,
+      value: implementation,
+    })
+  }
+
+  function createImportInput() {
+    return {
+      jobId: 'job-1',
+      dto: {
+        chapters: [
+          {
+            action: ThirdPartyComicImportChapterActionEnum.CREATE,
+            imageCount: 53,
+            importImages: true,
+            providerChapterId: 'chapter-001',
+            sortOrder: 1,
+            title: '第 1 话',
+          },
+          {
+            action: ThirdPartyComicImportChapterActionEnum.CREATE,
+            imageCount: 26,
+            importImages: false,
+            providerChapterId: 'chapter-002',
+            sortOrder: 2,
+            title: '第 2 话',
+          },
+        ],
+        platform: 'copy',
+        sourceSnapshot: {
+          providerComicId: 'comic-001',
+          providerGroupPathWord: 'default',
+          providerPathWord: 'comic-001',
+        },
+        targetWorkId: null,
+      },
+    }
+  }
+
+  it('initializes job and item image totals from chapter imageCount', async () => {
+    const schema = createSchema()
+    const { db, insertedItems, insertedJobs } = createInsertDb(schema)
+    const service = createService(db, schema)
+    setServiceMethod(
+      service,
+      'readWorkflowJob',
+      jest.fn(async () => ({ id: 9n })),
+    )
+
+    await service.createThirdPartyImportJob(createImportInput() as never)
+
+    expect(insertedJobs[0]).toEqual(
+      expect.objectContaining({
+        imageTotal: 53,
+        selectedItemCount: 2,
+      }),
+    )
+    expect(insertedItems).toEqual([
+      expect.objectContaining({
+        imageTotal: 53,
+        metadata: {
+          chapter: expect.objectContaining({
+            imageCount: 53,
+            providerChapterId: 'chapter-001',
+          }),
+        },
+        providerChapterId: 'chapter-001',
+      }),
+      expect.objectContaining({
+        imageTotal: 0,
+        metadata: {
+          chapter: expect.objectContaining({
+            imageCount: 26,
+            importImages: false,
+            providerChapterId: 'chapter-002',
+          }),
+        },
+        providerChapterId: 'chapter-002',
+      }),
+    ])
+  })
+
+  it('rejects invalid chapter imageCount before inserting workflow rows', async () => {
+    const schema = createSchema()
+    const { db } = createInsertDb(schema)
+    const service = createService(db, schema)
+    const input = createImportInput()
+    ;(input.dto.chapters[0] as Record<string, unknown>).imageCount = 1.5
+
+    await expect(
+      service.createThirdPartyImportJob(input as never),
+    ).rejects.toThrow('三方章节图片数必须是非负整数')
+    expect(db.insert).not.toHaveBeenCalled()
   })
 })

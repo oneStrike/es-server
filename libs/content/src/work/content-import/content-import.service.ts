@@ -17,9 +17,8 @@ import type {
 } from './content-import.type'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService } from '@db/core'
-import {
-  BusinessErrorCode,
-} from '@libs/platform/constant'
+import { resolveThirdPartyComicImportImageTotals } from '@libs/content/work/third-party/third-party-comic-import-image-total'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, asc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
@@ -81,7 +80,13 @@ export class ContentImportService {
   }
 
   // 创建三方导入领域任务和章节条目。
-  async createThirdPartyImportJob(input: CreateThirdPartyImportContentJobInput) {
+  async createThirdPartyImportJob(
+    input: CreateThirdPartyImportContentJobInput,
+  ) {
+    const chapterImageTotals = resolveThirdPartyComicImportImageTotals(
+      input.dto.chapters,
+    )
+    const imageTotal = chapterImageTotals.reduce((sum, total) => sum + total, 0)
     const workflowJob = await this.readWorkflowJob(input.jobId)
     const now = new Date()
     const providerGroupPathWord =
@@ -103,7 +108,7 @@ export class ContentImportService {
         publishBoundaryStatus:
           ContentImportPublishBoundaryStatusEnum.NEEDS_MANUAL_REVIEW,
         selectedItemCount: input.dto.chapters.length,
-        imageTotal: 0,
+        imageTotal,
         createdAt: now,
         updatedAt: now,
       })
@@ -111,7 +116,7 @@ export class ContentImportService {
 
     if (input.dto.chapters.length > 0) {
       await this.db.insert(this.contentImportItem).values(
-        input.dto.chapters.map((chapter) => ({
+        input.dto.chapters.map((chapter, index) => ({
           itemId: randomUUID(),
           contentImportJobId: job.id,
           itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
@@ -131,7 +136,7 @@ export class ContentImportService {
           maxAutoRetries: 3,
           lastRetryReason: null,
           lastRetryCode: null,
-          imageTotal: 0,
+          imageTotal: chapterImageTotals[index] ?? 0,
           imageSuccessCount: 0,
           currentAttemptNo: null,
           metadata: { chapter },
@@ -249,7 +254,9 @@ export class ContentImportService {
   async markThirdPartyImportTargetPrepared(
     input: ContentImportPreparedThirdPartyImportTargetInput,
   ) {
-    const importJob = await this.readContentImportJobByWorkflowJobId(input.jobId)
+    const importJob = await this.readContentImportJobByWorkflowJobId(
+      input.jobId,
+    )
     await this.db
       .update(this.contentImportJob)
       .set({
@@ -344,7 +351,25 @@ export class ContentImportService {
               ),
         ),
       )
-      .orderBy(asc(this.contentImportItem.sortOrder), asc(this.contentImportItem.id))
+      .orderBy(
+        asc(this.contentImportItem.sortOrder),
+        asc(this.contentImportItem.id),
+      )
+
+    return rows as ContentImportExecutableItem[]
+  }
+
+  // 读取内容导入任务的全部条目，供执行期恢复历史任务快照使用。
+  async listJobItems(jobId: string) {
+    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
+    const rows = await this.db
+      .select()
+      .from(this.contentImportItem)
+      .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
+      .orderBy(
+        asc(this.contentImportItem.sortOrder),
+        asc(this.contentImportItem.id),
+      )
 
     return rows as ContentImportExecutableItem[]
   }
@@ -525,7 +550,9 @@ export class ContentImportService {
   }
 
   // 标记限流自动重试耗尽。
-  async markItemRetryExhausted(input: ContentImportMarkItemRetryExhaustedInput) {
+  async markItemRetryExhausted(
+    input: ContentImportMarkItemRetryExhaustedInput,
+  ) {
     const now = new Date()
     const errorCode = 'RATE_LIMIT_RETRY_EXHAUSTED'
     const [item] = await this.db
@@ -619,7 +646,9 @@ export class ContentImportService {
   }
 
   // 记录已上传文件残留，供失败补偿和崩溃后清理使用。
-  async recordUploadedFileResidue(input: ContentImportRecordUploadedFileResidueInput) {
+  async recordUploadedFileResidue(
+    input: ContentImportRecordUploadedFileResidueInput,
+  ) {
     const workflowJob = await this.readWorkflowJob(input.jobId)
     const workflowAttempt = input.attemptId
       ? await this.readWorkflowAttempt(input.attemptId)
@@ -629,7 +658,10 @@ export class ContentImportService {
       : null
     const itemAttempt =
       item && workflowAttempt
-        ? await this.readContentImportItemAttempt(item.id, workflowAttempt.attemptNo)
+        ? await this.readContentImportItemAttempt(
+            item.id,
+            workflowAttempt.attemptNo,
+          )
         : null
     const [residue] = await this.db
       .insert(this.contentImportResidue)
@@ -705,13 +737,10 @@ export class ContentImportService {
             this.contentImportResidue.residueType,
             ContentImportResidueTypeEnum.UPLOADED_FILE,
           ),
-          inArray(
-            this.contentImportResidue.cleanupStatus,
-            [
-              ContentImportResidueCleanupStatusEnum.PENDING,
-              ContentImportResidueCleanupStatusEnum.FAILED,
-            ],
-          ),
+          inArray(this.contentImportResidue.cleanupStatus, [
+            ContentImportResidueCleanupStatusEnum.PENDING,
+            ContentImportResidueCleanupStatusEnum.FAILED,
+          ]),
         ),
       )
     return rows
@@ -759,7 +788,10 @@ export class ContentImportService {
       .where(
         and(
           eq(this.contentImportItem.contentImportJobId, importJob.id),
-          eq(this.contentImportItem.status, ContentImportItemStatusEnum.RUNNING),
+          eq(
+            this.contentImportItem.status,
+            ContentImportItemStatusEnum.RUNNING,
+          ),
           eq(this.contentImportItem.currentAttemptNo, expiredAttemptNo),
         ),
       )
@@ -849,7 +881,9 @@ export class ContentImportService {
         '工作流任务ID不能为空',
       )
     }
-    const importJob = await this.readContentImportJobByWorkflowJobId(input.jobId)
+    const importJob = await this.readContentImportJobByWorkflowJobId(
+      input.jobId,
+    )
     const conditions: SQL[] = [
       eq(this.contentImportItem.contentImportJobId, importJob.id),
     ]
@@ -970,7 +1004,10 @@ export class ContentImportService {
       .from(this.contentImportItemAttempt)
       .where(
         and(
-          eq(this.contentImportItemAttempt.contentImportItemId, contentImportItemId),
+          eq(
+            this.contentImportItemAttempt.contentImportItemId,
+            contentImportItemId,
+          ),
           eq(this.contentImportItemAttempt.attemptNo, attemptNo),
         ),
       )

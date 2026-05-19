@@ -47,6 +47,10 @@ import { ComicThirdPartyRegistry } from '@libs/content/work/third-party/provider
 import { RemoteImageImportService } from '@libs/content/work/third-party/services/remote-image-import.service'
 import { ThirdPartyComicBindingService } from '@libs/content/work/third-party/services/third-party-comic-binding.service'
 import {
+  resolveThirdPartyComicImportImageTotal,
+  resolveThirdPartyComicImportImageTotals,
+} from '@libs/content/work/third-party/third-party-comic-import-image-total'
+import {
   BusinessErrorCode,
   WorkTypeEnum,
   WorkViewPermissionEnum,
@@ -167,6 +171,7 @@ export class ThirdPartyComicImportService {
 
   // 确认第三方漫画导入，只创建工作流任务，不在 HTTP 请求内执行重型导入。
   async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
+    resolveThirdPartyComicImportImageTotals(dto.chapters)
     const draft = await this.buildImportTaskDraft(dto)
     const job = await this.workflowService.createDraft({
       workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
@@ -639,7 +644,7 @@ export class ThirdPartyComicImportService {
         chapterIndex: index + 1,
         chapterTotal,
         images: [],
-        imageTotal: 0,
+        imageTotal: resolveThirdPartyComicImportImageTotal(chapter),
       })
     }
     return plans
@@ -664,11 +669,9 @@ export class ThirdPartyComicImportService {
         platform: context.payload.platform,
       })
     const images = this.sortImages(content.images)
-    return {
-      ...chapterPlan,
-      images,
-      imageTotal: images.length,
-    }
+    chapterPlan.images = images
+    chapterPlan.imageTotal = images.length
+    return chapterPlan
   }
 
   // 更新章节内容前必须显式确认覆盖，且校验早于远端内容读取。

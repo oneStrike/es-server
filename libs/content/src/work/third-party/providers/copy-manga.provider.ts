@@ -127,7 +127,7 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
       title: chapter.name ?? `章节 ${index + 1}`,
       group: chapter.group_path_word ?? group,
       sortOrder: (chapter.index ?? index) + 1,
-      imageCount: chapter.size ?? chapter.count,
+      imageCount: this.resolveChapterImageCount(chapter, index),
       chapterApiVersion: chapter.type,
       datetimeCreated: chapter.datetime_created,
     }))
@@ -187,6 +187,25 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     return new BusinessException(
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       message,
+    )
+  }
+
+  private resolveChapterImageCount(
+    chapter: NonNullable<CopyMangaChapterResults['list']>[number],
+    index: number,
+  ) {
+    const imageCount = chapter.size ?? chapter.count
+    if (
+      typeof imageCount === 'number' &&
+      Number.isFinite(imageCount) &&
+      Number.isInteger(imageCount) &&
+      imageCount >= 0
+    ) {
+      return imageCount
+    }
+
+    throw this.providerError(
+      `第三方章节图片数缺失或非法: ${chapter.uuid ?? `index-${index + 1}`}`,
     )
   }
 
