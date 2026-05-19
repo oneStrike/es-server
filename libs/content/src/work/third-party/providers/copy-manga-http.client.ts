@@ -1,5 +1,7 @@
+import type { ComicThirdPartyProviderRequestOptions } from './comic-third-party-provider.type'
 import type {
   CopyMangaApiFailureCause,
+  CopyMangaApiHostCache,
   CopyMangaNetworkResponse,
   CopyMangaTransportError,
 } from './copy-manga.type'
@@ -12,13 +14,13 @@ import { parseRetryAfterHeader } from '../third-party-rate-limit'
 const COPY_MANGA_DEFAULT_API_HOST = 'api.2024manga.com'
 const COPY_MANGA_DISCOVERY_PATH = '/api/v3/system/network2'
 const COPY_MANGA_PLATFORM = 3
-const COPY_MANGA_REQUEST_ATTEMPTS = 3
+const COPY_MANGA_REQUEST_ATTEMPTS = 5
 const COPY_MANGA_VERSION = '2024.4.28'
-const COPY_MANGA_REQUEST_TIMEOUT_MS = 300000
+const COPY_MANGA_REQUEST_TIMEOUT_MS = 20000
 
 @Injectable()
 export class CopyMangaHttpClient {
-  private apiHostCache: { expiresAt: number, hosts: string[] } | null = null
+  private apiHostCache: CopyMangaApiHostCache | null = null
 
   // 注入三方资源解析节流器，统一控制 discovery 和业务 API 节奏。
   constructor(private readonly throttle: ThirdPartyResourceThrottleService) {}
@@ -27,18 +29,31 @@ export class CopyMangaHttpClient {
   async getJson<TPayload = unknown>(
     path: string,
     params: Record<string, unknown> = {},
+    options: ComicThirdPartyProviderRequestOptions = {},
   ): Promise<TPayload> {
-    const apiHosts = await this.getApiHosts()
+    const apiHosts = await this.getApiHosts(options)
 
     let lastError: unknown
     for (let attempt = 0; attempt < COPY_MANGA_REQUEST_ATTEMPTS; attempt++) {
       const host = apiHosts[attempt % apiHosts.length]
       try {
         await this.throttle.waitForApiSlot()
-        const payload = await this.fetchJson<TPayload>(`https://${host}${path}`, {
-          ...params,
-          platform: COPY_MANGA_PLATFORM,
-        })
+      } catch (error) {
+        if (error instanceof BusinessException) {
+          throw error
+        }
+        lastError = error
+        continue
+      }
+      await options.heartbeat?.()
+      try {
+        const payload = await this.fetchJson<TPayload>(
+          `https://${host}${path}`,
+          {
+            ...params,
+            platform: COPY_MANGA_PLATFORM,
+          },
+        )
         this.throwIfProviderRateLimited(path, payload)
         return payload
       } catch (error) {
@@ -54,14 +69,14 @@ export class CopyMangaHttpClient {
   }
 
   // 复用有效 host 缓存；过期后清空旧缓存再发现，避免失败时回退到过期 host。
-  private async getApiHosts() {
+  private async getApiHosts(options: ComicThirdPartyProviderRequestOptions) {
     const cached = this.apiHostCache
     if (cached && cached.expiresAt > Date.now()) {
       return cached.hosts
     }
 
     this.apiHostCache = null
-    const hosts = await this.refreshApiHosts()
+    const hosts = await this.refreshApiHosts(options)
     this.apiHostCache = {
       expiresAt: Date.now() + this.throttle.getHostCacheTtlMs(),
       hosts,
@@ -70,11 +85,22 @@ export class CopyMangaHttpClient {
   }
 
   // 调用 CopyManga host discovery，并对所有异常/畸形结果执行 fail closed。
-  private async refreshApiHosts() {
+  private async refreshApiHosts(
+    options: ComicThirdPartyProviderRequestOptions,
+  ) {
     let lastError: unknown
     for (let attempt = 0; attempt < COPY_MANGA_REQUEST_ATTEMPTS; attempt++) {
       try {
         await this.throttle.waitForApiSlot()
+      } catch (error) {
+        if (error instanceof BusinessException) {
+          throw error
+        }
+        lastError = error
+        continue
+      }
+      await options.heartbeat?.()
+      try {
         const data = await this.fetchJson<CopyMangaNetworkResponse>(
           `https://${COPY_MANGA_DEFAULT_API_HOST}${COPY_MANGA_DISCOVERY_PATH}`,
           {
@@ -323,14 +349,14 @@ export class CopyMangaHttpClient {
 
   // 构建 CopyManga 固定请求头，使用普通对象避免 Node/Jest 环境缺失 Headers。
   private buildHeaders(): Record<string, string> {
-    return {
-      'accept': 'application/json',
-      'authorization': 'Token ',
-      'platform': String(COPY_MANGA_PLATFORM),
-      'version': COPY_MANGA_VERSION,
-      'webp': '1',
-      'x-requested-with': 'com.manga2020.app',
-    }
+    const headers: Record<string, string> = {}
+    headers.accept = 'application/json'
+    headers.authorization = 'Token '
+    headers.platform = String(COPY_MANGA_PLATFORM)
+    headers.version = COPY_MANGA_VERSION
+    headers.webp = '1'
+    headers['x-requested-with'] = 'com.manga2020.app'
+    return headers
   }
 
   // 按原有 params 序列化语义拼接查询参数，跳过 null/undefined。

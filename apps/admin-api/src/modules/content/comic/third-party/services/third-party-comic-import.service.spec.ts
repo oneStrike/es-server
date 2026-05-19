@@ -9,17 +9,25 @@ jest.mock('@libs/content/work/core/work.service', () => ({
 jest.mock('@libs/content/work/chapter/work-chapter.service', () => ({
   WorkChapterService: class WorkChapterService {},
 }))
-jest.mock('@libs/content/work/third-party/services/remote-image-import.service', () => ({
-  RemoteImageImportService: class RemoteImageImportService {},
-}))
-jest.mock('@libs/content/work/third-party/services/third-party-comic-binding.service', () => ({
-  ThirdPartyComicBindingService: class ThirdPartyComicBindingService {},
-}))
+jest.mock(
+  '@libs/content/work/third-party/services/remote-image-import.service',
+  () => ({
+    RemoteImageImportService: class RemoteImageImportService {},
+  }),
+)
+jest.mock(
+  '@libs/content/work/third-party/services/third-party-comic-binding.service',
+  () => ({
+    ThirdPartyComicBindingService: class ThirdPartyComicBindingService {},
+  }),
+)
 
 import {
   ThirdPartyComicImportChapterActionEnum,
   ThirdPartyComicImportCoverModeEnum,
   ThirdPartyComicImportModeEnum,
+  ThirdPartyComicImportCoverStatusEnum,
+  ThirdPartyComicImportWorkStatusEnum,
 } from '@libs/content/work/content/dto/content.dto'
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
 import { WorkTypeEnum } from '@libs/platform/constant'
@@ -99,6 +107,7 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
       recordResidue: jest.fn(),
       updateProgress: jest.fn(),
       workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+      renewLease: jest.fn(async () => undefined),
     }
   }
 
@@ -136,13 +145,17 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
       createThirdPartyImportJob: jest.fn(async () => ({ id: 1n })),
     }
     const bindingService = {
+      createOrGetChapterBinding: jest.fn(async () => ({
+        created: true,
+        id: 20,
+      })),
       getActiveSourceBindingByScope: jest.fn(async () => null),
     }
     const workService = {
       createWorkReturningId: jest.fn(),
     }
     const workChapterService = {
-      createChapterReturningId: jest.fn(),
+      createChapterReturningId: jest.fn(async () => 200),
     }
     const comicContentService = {
       replaceChapterContents: jest.fn(),
@@ -233,10 +246,12 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
         workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
       }),
     )
-    expect(contentImportService.createThirdPartyImportJob).toHaveBeenCalledWith({
-      dto,
-      jobId: 'job-1',
-    })
+    expect(contentImportService.createThirdPartyImportJob).toHaveBeenCalledWith(
+      {
+        dto,
+        jobId: 'job-1',
+      },
+    )
     expect(workflowService.confirmDraft).toHaveBeenCalledWith({
       jobId: 'job-1',
     })
@@ -247,7 +262,9 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
   it('rejects retry when the persisted reservation snapshot no longer matches', async () => {
     const { service } = createService([[]])
     const dto = createImportRequest()
-    const reservation = await service.buildImportReservationSnapshot(dto as never)
+    const reservation = await service.buildImportReservationSnapshot(
+      dto as never,
+    )
 
     await expect(
       service.validateRetryReservationSnapshot(dto as never, {
@@ -347,5 +364,100 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
       }),
     ])
     expect(provider.getChapterContent).not.toHaveBeenCalled()
+  })
+
+  it('passes workflow heartbeat to provider detail calls', async () => {
+    const {
+      bindingService,
+      provider,
+      remoteImageImportService,
+      service,
+      workService,
+    } = createService([[], []])
+    const dto = createImportRequest()
+    const context = createContext()
+    ;(remoteImageImportService.importImage as jest.Mock).mockResolvedValueOnce({
+      deleteTarget: {
+        filePath: 'cover.jpg',
+        objectKey: 'cover.jpg',
+        provider: 'local',
+      },
+      upload: { filePath: 'cover.jpg' },
+    })
+    ;(workService.createWorkReturningId as jest.Mock).mockResolvedValueOnce(100)
+    ;(
+      bindingService as unknown as { createOrGetSourceBinding: jest.Mock }
+    ).createOrGetSourceBinding = jest.fn(async () => ({
+      created: true,
+      id: 10,
+    }))
+
+    await service.prepareWorkflowImport(dto as never, context as never)
+
+    expect(provider.getDetail).toHaveBeenCalledWith(
+      {
+        comicId: dto.comicId,
+        platform: dto.platform,
+      },
+      { heartbeat: expect.any(Function) },
+    )
+    const heartbeatArg = (provider.getDetail as jest.Mock).mock.calls[0][1]
+    await heartbeatArg.heartbeat()
+    expect(context.updateProgress).toHaveBeenCalledWith({})
+  })
+
+  it('passes workflow heartbeat to provider chapter content calls', async () => {
+    const { provider, remoteImageImportService, service } = createService()
+    const dto = createImportRequest()
+    const context = {
+      ...createContext(),
+      payload: {
+        comicId: dto.comicId,
+        platform: dto.platform,
+      },
+    }
+    ;(remoteImageImportService.importImages as jest.Mock).mockResolvedValueOnce(
+      ['/images/1.jpg'],
+    )
+
+    await service.importWorkflowChapter(
+      {
+        cover: {
+          status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+        },
+        mode: dto.mode,
+        sourceBinding: {
+          id: 10,
+          providerGroupPathWord: 'default',
+        },
+        work: {
+          id: 100,
+          status: ThirdPartyComicImportWorkStatusEnum.CREATED,
+        },
+        chapterPlans: [],
+      } as never,
+      {
+        chapter: dto.chapters[0],
+        chapterIndex: 1,
+        chapterTotal: 1,
+        images: [],
+        imageTotal: 0,
+      },
+      context as never,
+    )
+
+    expect(provider.getChapterContent).toHaveBeenCalledWith(
+      {
+        chapterId: dto.chapters[0].providerChapterId,
+        chapterApiVersion: dto.chapters[0].chapterApiVersion,
+        comicId: dto.comicId,
+        platform: dto.platform,
+      },
+      { heartbeat: expect.any(Function) },
+    )
+    const heartbeatArg = (provider.getChapterContent as jest.Mock).mock
+      .calls[0][1]
+    await heartbeatArg.heartbeat()
+    expect(context.updateProgress).toHaveBeenCalledWith({})
   })
 })

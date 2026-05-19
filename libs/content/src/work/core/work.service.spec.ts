@@ -53,6 +53,10 @@ function createWorkDto(overrides: Partial<Record<string, unknown>> = {}) {
 }
 
 function createSubject() {
+  const updateBuilders: Array<{
+    table: unknown
+    builder: ReturnType<typeof createUpdateBuilder>
+  }> = []
   const tx = {
     insert: jest.fn((table: unknown) => {
       if (table === schema.forumSection) {
@@ -63,11 +67,21 @@ function createSubject() {
       }
       return createInsertBuilder()
     }),
-    update: jest.fn(() => createUpdateBuilder()),
+    select: jest.fn((): any => ({
+      from: jest.fn(() => ({
+        where: jest.fn(async () => []),
+      })),
+    })),
+    update: jest.fn((table: unknown) => {
+      const builder = createUpdateBuilder()
+      updateBuilders.push({ table, builder })
+      return builder
+    }),
     delete: jest.fn(() => createDeleteBuilder()),
   }
 
   const db = {
+    $count: jest.fn(async () => 0),
     query: {
       work: {
         findFirst: jest.fn(),
@@ -115,7 +129,7 @@ function createSubject() {
     {} as any,
   )
 
-  return { db, drizzle, service, tx, workAuthorService }
+  return { db, drizzle, service, tx, updateBuilders, workAuthorService }
 }
 
 async function expectOperationNotAllowed(promise: Promise<unknown>) {
@@ -277,5 +291,34 @@ describe('WorkService relation integrity', () => {
     )
 
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workTagRelation)
+  })
+
+  it('soft-deletes active third-party bindings when deleting a work', async () => {
+    const { db, service, tx, updateBuilders } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce({
+      id: 20,
+      forumSectionId: null,
+      authorRelations: [{ authorId: 1 }],
+    })
+    tx.select.mockReturnValueOnce({
+      from: jest.fn(() => ({
+        where: jest.fn(async () => [{ id: 30 }]),
+      })),
+    } as any)
+
+    await expect(service.deleteWork(20)).resolves.toBe(true)
+
+    const chapterBindingUpdate = updateBuilders.find(
+      (item) => item.table === schema.workThirdPartyChapterBinding,
+    )
+    const sourceBindingUpdate = updateBuilders.find(
+      (item) => item.table === schema.workThirdPartySourceBinding,
+    )
+    expect(chapterBindingUpdate?.builder.set).toHaveBeenCalledWith({
+      deletedAt: expect.any(Date),
+    })
+    expect(sourceBindingUpdate?.builder.set).toHaveBeenCalledWith({
+      deletedAt: expect.any(Date),
+    })
   })
 })

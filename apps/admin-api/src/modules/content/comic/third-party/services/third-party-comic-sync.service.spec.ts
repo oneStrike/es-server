@@ -6,12 +6,18 @@ jest.mock('@libs/content/work/content/comic-content.service', () => ({
 jest.mock('@libs/content/work/chapter/work-chapter.service', () => ({
   WorkChapterService: class WorkChapterService {},
 }))
-jest.mock('@libs/content/work/third-party/services/remote-image-import.service', () => ({
-  RemoteImageImportService: class RemoteImageImportService {},
-}))
-jest.mock('@libs/content/work/third-party/services/third-party-comic-binding.service', () => ({
-  ThirdPartyComicBindingService: class ThirdPartyComicBindingService {},
-}))
+jest.mock(
+  '@libs/content/work/third-party/services/remote-image-import.service',
+  () => ({
+    RemoteImageImportService: class RemoteImageImportService {},
+  }),
+)
+jest.mock(
+  '@libs/content/work/third-party/services/third-party-comic-binding.service',
+  () => ({
+    ThirdPartyComicBindingService: class ThirdPartyComicBindingService {},
+  }),
+)
 
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
 import { WorkTypeEnum } from '@libs/platform/constant'
@@ -52,6 +58,14 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
       createProgressReporter: jest.fn(() => ({
         advance: jest.fn(async () => undefined),
       })),
+      getResidue: jest.fn(async () => ({})),
+      payload: {
+        platform: sourceBinding.platform,
+        providerGroupPathWord: sourceBinding.providerGroupPathWord,
+        providerPathWord: sourceBinding.providerPathWord,
+      },
+      recordResidue: jest.fn(async () => undefined),
+      renewLease: jest.fn(async () => undefined),
       updateProgress: jest.fn(async () => undefined),
     }
   }
@@ -94,6 +108,10 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
         (binding) =>
           `${binding.platform}:${binding.providerComicId}:${binding.providerGroupPathWord}`,
       ),
+      createOrGetChapterBinding: jest.fn(async () => ({
+        created: true,
+        id: 20,
+      })),
       getActiveSourceBindingById: jest.fn(async () => sourceBinding),
       getActiveSourceBindingByWorkId: jest.fn(async () => sourceBinding),
       listActiveChapterBindings: jest.fn(async () => [
@@ -102,7 +120,13 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
     }
     const provider = {
       getChapterContent: jest.fn(async () => ({
-        images: [{ providerImageId: 'image-1', sortOrder: 1, url: 'https://example.com/1.jpg' }],
+        images: [
+          {
+            providerImageId: 'image-1',
+            sortOrder: 1,
+            url: 'https://example.com/1.jpg',
+          },
+        ],
       })),
       getChapters: jest.fn(async () => [
         { providerChapterId: 'chapter-old', sortOrder: 1, title: '第 1 话' },
@@ -120,9 +144,12 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
       registry,
       service: new ThirdPartyComicSyncService(
         registry as never,
-        { createChapterReturningId: jest.fn() } as never,
-        { replaceChapterContents: jest.fn() } as never,
-        { importImages: jest.fn(), deleteImportedFile: jest.fn() } as never,
+        { createChapterReturningId: jest.fn(async () => 200) } as never,
+        { replaceChapterContents: jest.fn(async () => undefined) } as never,
+        {
+          deleteImportedFile: jest.fn(),
+          importImages: jest.fn(async () => ['/images/1.jpg']),
+        } as never,
         bindingService as never,
         workflowService as never,
         contentImportService as never,
@@ -232,5 +259,85 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
       }),
     )
     expect(provider.getChapterContent).not.toHaveBeenCalled()
+  })
+
+  it('passes workflow heartbeat to provider chapter list calls', async () => {
+    const { provider, service } = createService([
+      createLimitSelect([
+        {
+          canComment: false,
+          chapterPrice: 5,
+          id: 100,
+          name: '我独自升级',
+          type: WorkTypeEnum.COMIC,
+        },
+      ]),
+      createWhereSelect([{ sortOrder: 1 }]),
+    ])
+    const context = createContext()
+
+    await service.prepareWorkflowSync(
+      {
+        ...sourceBinding,
+        sourceBindingId: sourceBinding.id,
+        sourceScopeKey: 'copy:woduzishenji:default',
+      },
+      context as never,
+    )
+
+    expect(provider.getChapters).toHaveBeenCalledWith(
+      {
+        comicId: sourceBinding.providerPathWord,
+        group: sourceBinding.providerGroupPathWord,
+        platform: sourceBinding.platform,
+      },
+      { heartbeat: expect.any(Function) },
+    )
+    const heartbeatArg = (provider.getChapters as jest.Mock).mock.calls[0][1]
+    await heartbeatArg.heartbeat()
+    expect(context.updateProgress).toHaveBeenCalledWith({})
+  })
+
+  it('passes workflow heartbeat to provider chapter content calls', async () => {
+    const { provider, service } = createService()
+    const context = createContext()
+
+    await service.importWorkflowSyncChapter({
+      context,
+      plan: {
+        chapterApiVersion: 2,
+        chapterIndex: 1,
+        chapterTotal: 1,
+        datetimeCreated: undefined,
+        group: sourceBinding.providerGroupPathWord,
+        imageTotal: 0,
+        images: [],
+        localSortOrder: 2,
+        providerChapterId: 'chapter-new',
+        sortOrder: 2,
+        title: '第 2 话',
+      },
+      sourceBindingId: sourceBinding.id,
+      work: {
+        canComment: false,
+        chapterPrice: 5,
+        id: 100,
+      },
+    } as never)
+
+    expect(provider.getChapterContent).toHaveBeenCalledWith(
+      {
+        chapterApiVersion: 2,
+        chapterId: 'chapter-new',
+        comicId: sourceBinding.providerPathWord,
+        group: sourceBinding.providerGroupPathWord,
+        platform: sourceBinding.platform,
+      },
+      { heartbeat: expect.any(Function) },
+    )
+    const heartbeatArg = (provider.getChapterContent as jest.Mock).mock
+      .calls[0][1]
+    await heartbeatArg.heartbeat()
+    expect(context.updateProgress).toHaveBeenCalledWith({})
   })
 })

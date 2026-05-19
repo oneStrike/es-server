@@ -17,17 +17,28 @@ export interface ThirdPartyComicPageResult<TItem> {
   list: TItem[]
 }
 
+/** 第三方漫画 provider 请求选项，用于长耗时请求前续租等执行期信号。 */
+export interface ComicThirdPartyProviderRequestOptions {
+  heartbeat?: () => Promise<void>
+}
+
 /** 第三方漫画 provider 内部协议，供 registry 和导入服务统一调用。 */
 export interface ComicThirdPartyProvider {
   platform: PlatformResponseDto
   searchComics: (
     dto: SearchComicRequestDto,
+    options?: ComicThirdPartyProviderRequestOptions,
   ) => Promise<ThirdPartyComicPageResult<SearchComicItemDto>>
-  getDetail: (dto: DetailComicRequestDto) => Promise<ThirdPartyComicDetailDto>
+  getDetail: (
+    dto: DetailComicRequestDto,
+    options?: ComicThirdPartyProviderRequestOptions,
+  ) => Promise<ThirdPartyComicDetailDto>
   getChapters: (
     dto: DetailComicRequestDto,
+    options?: ComicThirdPartyProviderRequestOptions,
   ) => Promise<ThirdPartyComicChapterDto[]>
   getChapterContent: (
     dto: ChapterContentComicRequestDto,
+    options?: ComicThirdPartyProviderRequestOptions,
   ) => Promise<ThirdPartyComicChapterContentDto>
 }

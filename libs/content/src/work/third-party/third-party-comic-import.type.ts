@@ -228,10 +228,12 @@ export type RemoteImageImportSuccessHandler = (
   payload: RemoteImageImportSuccessPayload,
 ) => Promise<void>
 
-/** 远程图片导入期间的长 I/O 取消检查选项。 */
+/** 远程图片导入期间的长 I/O 取消检查与续租选项。 */
 export interface RemoteImageImportCancellationOptions {
   assertNotCancelled?: () => Promise<void>
   cancellationCheckIntervalMs?: number
+  heartbeat?: () => Promise<void>
+  heartbeatIntervalMs?: number
 }
 
 /** 单次远程图片导入操作选项，允许批量导入复用外层取消检查。 */

@@ -353,8 +353,10 @@ describe('RemoteImageImportService', () => {
     const { service } = createService()
     const assertNotCancelled = jest.fn(async () => undefined)
     const onImported = jest.fn(async () => undefined)
-    let resolveDownload: (value: { localPath: string; tempDir: string }) => void =
-      () => undefined
+    let resolveDownload: (value: {
+      localPath: string
+      tempDir: string
+    }) => void = () => undefined
     jest.spyOn(service as never, 'downloadToTemp').mockImplementationOnce(
       () =>
         new Promise((resolve) => {
@@ -382,6 +384,69 @@ describe('RemoteImageImportService', () => {
 
     await jest.advanceTimersByTimeAsync(2500)
     expect(assertNotCancelled).toHaveBeenCalledTimes(3)
+    expect(onImported).not.toHaveBeenCalled()
+
+    resolveDownload({
+      localPath: `${tempDir}\\remote-image-id.jpg`,
+      tempDir,
+    })
+    await expect(importPromise).resolves.toEqual(['/uploads/comic/remote.jpg'])
+
+    expect(onImported).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not reject large image lists solely by count', async () => {
+    const { service, uploadedFile } = createService()
+    const images = Array.from({ length: 201 }, (_, index) => ({
+      providerImageId: `image-${index + 1}`,
+      sortOrder: index + 1,
+      url: `https://sw.mangafunb.fun/comic/${index + 1}.jpg`,
+    }))
+    jest.spyOn(service, 'importImage').mockResolvedValue(uploadedFile as never)
+
+    await expect(service.importImages(images, ['comic'])).resolves.toHaveLength(
+      201,
+    )
+
+    expect(service.importImage).toHaveBeenCalledTimes(201)
+  })
+
+  it('renews heartbeat during a slow image import before the success callback', async () => {
+    jest.useFakeTimers()
+    const { service } = createService()
+    const heartbeat = jest.fn(async () => undefined)
+    const onImported = jest.fn(async () => undefined)
+    let resolveDownload: (value: {
+      localPath: string
+      tempDir: string
+    }) => void = () => undefined
+    jest.spyOn(service as never, 'downloadToTemp').mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveDownload = resolve
+        }) as never,
+    )
+
+    const importPromise = service.importImages(
+      [
+        {
+          providerImageId: 'image-001',
+          sortOrder: 1,
+          url: 'https://sw.mangafunb.fun/comic/001.jpg',
+        },
+      ],
+      ['comic'],
+      onImported,
+      { heartbeat, heartbeatIntervalMs: 1000 },
+    )
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(heartbeat).toHaveBeenCalledTimes(1)
+    expect(onImported).not.toHaveBeenCalled()
+
+    await jest.advanceTimersByTimeAsync(2500)
+    expect(heartbeat).toHaveBeenCalledTimes(3)
     expect(onImported).not.toHaveBeenCalled()
 
     resolveDownload({
@@ -564,24 +629,22 @@ describe('RemoteImageImportService', () => {
 
   it('preserves rate-limit cause when adding image failure context', async () => {
     const { service } = createService()
-    jest
-      .spyOn(service, 'importImage')
-      .mockRejectedValueOnce(
-        new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '远程图片下载被限流',
-          {
-            cause: {
-              rateLimited: true,
-              reason: 'HTTP 429',
-              retryAfterHeader: '120',
-              retryAfterMs: 120000,
-              retryAt: '2026-05-17T03:02:00.000Z',
-              status: 429,
-            },
+    jest.spyOn(service, 'importImage').mockRejectedValueOnce(
+      new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '远程图片下载被限流',
+        {
+          cause: {
+            rateLimited: true,
+            reason: 'HTTP 429',
+            retryAfterHeader: '120',
+            retryAfterMs: 120000,
+            retryAt: '2026-05-17T03:02:00.000Z',
+            status: 429,
           },
-        ) as never,
-      )
+        },
+      ) as never,
+    )
 
     let thrownError: unknown
     try {

@@ -33,9 +33,9 @@ import {
 import { ThirdPartyResourceThrottleService } from './third-party-resource-throttle.service'
 
 const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
-const MAX_REMOTE_IMAGE_COUNT = 200
 const REMOTE_IMAGE_DOWNLOAD_TIMEOUT_MS = 300000
 const REMOTE_IMAGE_CANCELLATION_CHECK_INTERVAL_MS = 60000
+const REMOTE_IMAGE_HEARTBEAT_INTERVAL_MS = 60000
 const COPY_MANGA_IMAGE_HOST_PATTERN = /^[a-z0-9-]+\.mangafunb\.fun$/i
 
 @Injectable()
@@ -62,7 +62,7 @@ export class RemoteImageImportService {
     options: RemoteImageImportOperationOptions = {},
   ) {
     const downloadResult = await this.withCancellationCheck(
-      () => this.downloadToTemp(url),
+      async () => this.downloadToTemp(url),
       options,
       {
         skipInitialCancellationCheck:
@@ -74,8 +74,11 @@ export class RemoteImageImportService {
       if (downloadResult.cancellationError) {
         throw downloadResult.cancellationError
       }
+      if (downloadResult.heartbeatError) {
+        throw downloadResult.heartbeatError
+      }
       const uploadResult = await this.withCancellationCheck(
-        () =>
+        async () =>
           this.uploadService.uploadLocalFileWithDeleteTarget({
             localPath: downloadedFile.localPath,
             objectKeySegments,
@@ -89,6 +92,12 @@ export class RemoteImageImportService {
           .catch(() => undefined)
         throw uploadResult.cancellationError
       }
+      if (uploadResult.heartbeatError) {
+        await this.uploadService
+          .deleteUploadedFile(uploadResult.result.deleteTarget)
+          .catch(() => undefined)
+        throw uploadResult.heartbeatError
+      }
       return uploadResult.result
     } finally {
       await fs
@@ -97,17 +106,13 @@ export class RemoteImageImportService {
     }
   }
 
-  // 按三方顺序批量导入图片，并限制单次导入规模。
+  // 按三方顺序串行导入图片，单张图片仍保留下载安全限制。
   async importImages(
     images: ThirdPartyComicImageDto[],
     objectKeySegments: string[],
     onImported?: RemoteImageImportSuccessHandler,
     options: RemoteImageImportCancellationOptions = {},
   ) {
-    if (images.length > MAX_REMOTE_IMAGE_COUNT) {
-      throw this.remoteImageError('远程图片数量超过限制')
-    }
-
     const filePaths: string[] = []
     for (const [index, image] of images.entries()) {
       await options.assertNotCancelled?.()
@@ -157,26 +162,30 @@ export class RemoteImageImportService {
     return this.uploadService.deleteUploadedFile(target)
   }
 
-  // 在长耗时下载/上传期间周期性检查取消状态；workflow lease 由 runtime 统一维护。
+  // 在长耗时下载/上传期间周期性检查取消状态并续租，避免 claim 在长 I/O 中过期。
   private async withCancellationCheck<T>(
     operation: () => Promise<T>,
     options: RemoteImageImportCancellationOptions,
     cancellationOptions: { skipInitialCancellationCheck?: boolean } = {},
   ) {
-    if (!options.assertNotCancelled) {
+    if (!options.assertNotCancelled && !options.heartbeat) {
       return {
         result: await operation(),
         cancellationError: null,
+        heartbeatError: null,
       }
     }
 
-    const intervalMs = Math.max(
+    const cancellationIntervalMs = Math.max(
       1000,
       options.cancellationCheckIntervalMs ??
         REMOTE_IMAGE_CANCELLATION_CHECK_INTERVAL_MS,
     )
     if (!cancellationOptions.skipInitialCancellationCheck) {
-      await options.assertNotCancelled()
+      await options.assertNotCancelled?.()
+    }
+    if (options.heartbeat) {
+      await options.heartbeat()
     }
     let cancellationError: unknown = null
     let cancellationCheckInFlight: Promise<void> | null = null
@@ -185,18 +194,48 @@ export class RemoteImageImportService {
         cancellationError ??= error
       })
     }
-    const timer = setInterval(() => {
-      runCancellationCheck()
-    }, intervalMs)
+    const cancellationTimer = options.assertNotCancelled
+      ? setInterval(() => {
+          runCancellationCheck()
+        }, cancellationIntervalMs)
+      : undefined
+
+    const heartbeatIntervalMs = Math.max(
+      1000,
+      options.heartbeatIntervalMs ?? REMOTE_IMAGE_HEARTBEAT_INTERVAL_MS,
+    )
+    let heartbeatError: unknown = null
+    let heartbeatInFlight: Promise<void> | undefined
+    const runHeartbeat = () => {
+      heartbeatInFlight = options.heartbeat!().catch((error) => {
+        heartbeatError ??= error
+      })
+    }
+    const heartbeatTimer = options.heartbeat
+      ? setInterval(() => {
+          runHeartbeat()
+        }, heartbeatIntervalMs)
+      : undefined
     try {
       const result = await operation()
-      await cancellationCheckInFlight
+      if (cancellationCheckInFlight !== null) {
+        await cancellationCheckInFlight
+      }
+      if (heartbeatInFlight !== undefined) {
+        await heartbeatInFlight
+      }
       return {
         result,
         cancellationError,
+        heartbeatError,
       }
     } finally {
-      clearInterval(timer)
+      if (cancellationTimer !== undefined) {
+        clearInterval(cancellationTimer)
+      }
+      if (heartbeatTimer !== undefined) {
+        clearInterval(heartbeatTimer)
+      }
     }
   }
 

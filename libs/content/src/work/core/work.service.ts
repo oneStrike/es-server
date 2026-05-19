@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type { WorkSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
@@ -132,6 +133,11 @@ export class WorkService {
   // work_third_party_source_binding 表访问入口。
   get workThirdPartySourceBinding() {
     return this.drizzle.schema.workThirdPartySourceBinding
+  }
+
+  // work_third_party_chapter_binding 表访问入口。
+  get workThirdPartyChapterBinding() {
+    return this.drizzle.schema.workThirdPartyChapterBinding
   }
 
   // 构建作品列表页的最小字段投影，列表查询统一复用这一组 select 字段，避免不同分页接口出现字段面不一致。
@@ -1206,9 +1212,12 @@ export class WorkService {
 
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        const now = new Date()
+        await this.softDeleteThirdPartyBindingsForWork(id, tx, now)
+
         const result = await tx
           .update(this.work)
-          .set({ deletedAt: new Date() })
+          .set({ deletedAt: now })
           .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
         this.drizzle.assertAffectedRows(result, '作品不存在')
 
@@ -1217,7 +1226,7 @@ export class WorkService {
             .update(this.forumSection)
             .set({
               isEnabled: false,
-              deletedAt: new Date(),
+              deletedAt: now,
             })
             .where(eq(this.forumSection.id, work.forumSectionId))
         }
@@ -1230,5 +1239,49 @@ export class WorkService {
         return true
       }),
     )
+  }
+
+  // 软删除作品时同步释放 active 三方来源和章节绑定，避免已删除作品继续占用三方来源。
+  private async softDeleteThirdPartyBindingsForWork(
+    workId: number,
+    tx: Db,
+    now: Date,
+  ) {
+    const sourceBindings = await tx
+      .select({ id: this.workThirdPartySourceBinding.id })
+      .from(this.workThirdPartySourceBinding)
+      .where(
+        and(
+          eq(this.workThirdPartySourceBinding.workId, workId),
+          isNull(this.workThirdPartySourceBinding.deletedAt),
+        ),
+      )
+    const sourceBindingIds = sourceBindings.map((binding) => binding.id)
+    if (sourceBindingIds.length === 0) {
+      return
+    }
+
+    await tx
+      .update(this.workThirdPartyChapterBinding)
+      .set({ deletedAt: now })
+      .where(
+        and(
+          inArray(
+            this.workThirdPartyChapterBinding.workThirdPartySourceBindingId,
+            sourceBindingIds,
+          ),
+          isNull(this.workThirdPartyChapterBinding.deletedAt),
+        ),
+      )
+
+    await tx
+      .update(this.workThirdPartySourceBinding)
+      .set({ deletedAt: now })
+      .where(
+        and(
+          inArray(this.workThirdPartySourceBinding.id, sourceBindingIds),
+          isNull(this.workThirdPartySourceBinding.deletedAt),
+        ),
+      )
   }
 }

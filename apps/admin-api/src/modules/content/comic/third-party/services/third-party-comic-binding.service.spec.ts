@@ -1,6 +1,6 @@
 const {
   ThirdPartyComicBindingService,
-} = require('./third-party-comic-binding.service')
+} = require('@libs/content/work/third-party/services/third-party-comic-binding.service')
 
 describe('ThirdPartyComicBindingService', () => {
   const sourceBindingTable = {

@@ -166,11 +166,14 @@ export class ThirdPartyComicSyncService {
     }
 
     const provider = this.registry.resolve(sourceBinding.platform)
-    const remoteChapters = await provider.getChapters({
-      comicId: sourceBinding.providerPathWord,
-      group: sourceBinding.providerGroupPathWord,
-      platform: sourceBinding.platform,
-    })
+    const remoteChapters = await provider.getChapters(
+      {
+        comicId: sourceBinding.providerPathWord,
+        group: sourceBinding.providerGroupPathWord,
+        platform: sourceBinding.platform,
+      },
+      { heartbeat: () => context.updateProgress({}) },
+    )
     const existingBindings =
       await this.bindingService.listActiveChapterBindings(sourceBinding.id)
     const boundProviderChapterIds = new Set(
@@ -330,7 +333,8 @@ export class ThirdPartyComicSyncService {
     const { context, imageProgressReporter, sourceBindingId, work } = input
     const plan = await this.readSyncChapterContent(input)
     const progressReporter =
-      imageProgressReporter ?? this.createSyncImageProgressReporter(context, [plan])
+      imageProgressReporter ??
+      this.createSyncImageProgressReporter(context, [plan])
     const chapterId = await this.workChapterService.createChapterReturningId({
       canComment: work.canComment,
       canDownload: false,
@@ -355,7 +359,10 @@ export class ThirdPartyComicSyncService {
           detail: this.toImageProgressDetail(plan, importedFile),
         })
       },
-      { assertNotCancelled: () => context.assertNotCancelled() },
+      {
+        assertNotCancelled: () => context.assertNotCancelled(),
+        heartbeat: () => context.updateProgress({}),
+      },
     )
     await context.assertNotCancelled()
 
@@ -383,13 +390,16 @@ export class ThirdPartyComicSyncService {
     await context.assertNotCancelled()
     const content = await this.registry
       .resolve(context.payload.platform)
-      .getChapterContent({
-        chapterApiVersion: plan.chapterApiVersion,
-        chapterId: plan.providerChapterId,
-        comicId: context.payload.providerPathWord,
-        group: context.payload.providerGroupPathWord,
-        platform: context.payload.platform,
-      })
+      .getChapterContent(
+        {
+          chapterApiVersion: plan.chapterApiVersion,
+          chapterId: plan.providerChapterId,
+          comicId: context.payload.providerPathWord,
+          group: context.payload.providerGroupPathWord,
+          platform: context.payload.platform,
+        },
+        { heartbeat: () => context.updateProgress({}) },
+      )
     const images = this.sortImages(content.images)
     return {
       ...plan,

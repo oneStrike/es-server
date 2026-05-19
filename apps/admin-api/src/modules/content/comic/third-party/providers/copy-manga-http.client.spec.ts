@@ -67,7 +67,7 @@ describe('CopyMangaHttpClient', () => {
     globalThis.fetch = fetchMock as never
   })
 
-  it('uses a five minute timeout for CopyManga requests', async () => {
+  it('uses a 20 second timeout for CopyManga requests', async () => {
     const timeoutSpy = jest.spyOn(AbortSignal, 'timeout')
     fetchMock
       .mockResolvedValueOnce(
@@ -86,13 +86,13 @@ describe('CopyMangaHttpClient', () => {
         code: 200,
         results: { ok: true },
       })
-      expect(timeoutSpy).toHaveBeenCalledWith(300000)
+      expect(timeoutSpy).toHaveBeenCalledWith(20000)
     } finally {
       timeoutSpy.mockRestore()
     }
   })
 
-  it('classifies discovery request failures after three attempts', async () => {
+  it('classifies discovery request failures after five attempts', async () => {
     const discoveryError = new Error('network down')
     fetchMock.mockRejectedValue(discoveryError)
     const client = createClient()
@@ -101,10 +101,10 @@ describe('CopyMangaHttpClient', () => {
       BusinessException,
     )
 
-    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenCalledTimes(5)
   })
 
-  it('classifies discovery timeout failures after three attempts', async () => {
+  it('classifies discovery timeout failures after five attempts', async () => {
     const timeoutError = Object.assign(new Error('signal timed out'), {
       name: 'TimeoutError',
     })
@@ -115,10 +115,10 @@ describe('CopyMangaHttpClient', () => {
       BusinessException,
     )
 
-    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenCalledTimes(5)
   })
 
-  it('classifies malformed discovery JSON after three attempts', async () => {
+  it('classifies malformed discovery JSON after five attempts', async () => {
     fetchMock.mockResolvedValue(createInvalidJsonResponse())
     const client = createClient()
 
@@ -126,7 +126,7 @@ describe('CopyMangaHttpClient', () => {
       BusinessException,
     )
 
-    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenCalledTimes(5)
   })
 
   it('retries non-success discovery code before failing closed', async () => {
@@ -139,7 +139,7 @@ describe('CopyMangaHttpClient', () => {
       BusinessException,
     )
 
-    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenCalledTimes(5)
   })
 
   it('fails closed on malformed discovery api results before content API request', async () => {
@@ -350,7 +350,7 @@ describe('CopyMangaHttpClient', () => {
       dateSpy.mockRestore()
     }
 
-    expect(fetchMock).toHaveBeenCalledTimes(5)
+    expect(fetchMock).toHaveBeenCalledTimes(7)
     expect(fetchMock).not.toHaveBeenCalledWith(
       'https://api-a.copy.test/api/v3/comic/demo?platform=3',
       expect.any(Object),
@@ -415,7 +415,7 @@ describe('CopyMangaHttpClient', () => {
     )
   })
 
-  it('classifies exhausted content API failures after three attempts', async () => {
+  it('classifies exhausted content API failures after five attempts', async () => {
     fetchMock
       .mockResolvedValueOnce(
         createJsonResponse({
@@ -429,7 +429,7 @@ describe('CopyMangaHttpClient', () => {
     await expect(
       client.getJson('/api/v3/comic/demo/chapter/demo'),
     ).rejects.toThrow(BusinessException)
-    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock).toHaveBeenCalledTimes(6)
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       'https://api-a.copy.test/api/v3/comic/demo/chapter/demo?platform=3',
@@ -442,6 +442,16 @@ describe('CopyMangaHttpClient', () => {
     )
     expect(fetchMock).toHaveBeenNthCalledWith(
       4,
+      'https://api-a.copy.test/api/v3/comic/demo/chapter/demo?platform=3',
+      expect.any(Object),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
+      'https://api-a.copy.test/api/v3/comic/demo/chapter/demo?platform=3',
+      expect.any(Object),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      6,
       'https://api-a.copy.test/api/v3/comic/demo/chapter/demo?platform=3',
       expect.any(Object),
     )
@@ -471,7 +481,7 @@ describe('CopyMangaHttpClient', () => {
       },
       message: `CopyManga API 请求失败：HTTP 404 (${path})`,
     })
-    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock).toHaveBeenCalledTimes(6)
   })
 
   it('preserves Retry-After seconds on HTTP 429 rate-limit failures', async () => {
@@ -591,18 +601,16 @@ describe('CopyMangaHttpClient', () => {
     )
     const client = createClient()
 
-    await expect(client.getJson('/api/v3/search/comic')).rejects.toMatchObject(
-      {
-        cause: {
-          kind: 'provider',
-          path,
-          rateLimited: true,
-          reason: '请求过多',
-          retryAfterHeader: '60',
-          routeCandidateRecoverable: false,
-        },
+    await expect(client.getJson('/api/v3/search/comic')).rejects.toMatchObject({
+      cause: {
+        kind: 'provider',
+        path,
+        rateLimited: true,
+        reason: '请求过多',
+        retryAfterHeader: '60',
+        routeCandidateRecoverable: false,
       },
-    )
+    })
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
@@ -678,6 +686,8 @@ describe('CopyMangaHttpClient', () => {
       .mockRejectedValueOnce(new Error('host a failed'))
       .mockRejectedValueOnce(new Error('host a failed'))
       .mockRejectedValueOnce(new Error('host a failed'))
+      .mockRejectedValueOnce(new Error('host a failed'))
+      .mockRejectedValueOnce(new Error('host a failed'))
       .mockResolvedValueOnce(
         createJsonResponse({
           code: 200,
@@ -697,9 +707,9 @@ describe('CopyMangaHttpClient', () => {
       results: { ok: true },
     })
 
-    expect(fetchMock).toHaveBeenCalledTimes(6)
+    expect(fetchMock).toHaveBeenCalledTimes(8)
     expect(fetchMock).toHaveBeenNthCalledWith(
-      5,
+      7,
       'https://api.2024manga.com/api/v3/system/network2?platform=3',
       expect.any(Object),
     )
@@ -720,7 +730,7 @@ describe('CopyMangaHttpClient', () => {
       client.getJson('/api/v3/comic/demo/chapter/demo'),
     ).rejects.toThrow(BusinessException)
 
-    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock).toHaveBeenCalledTimes(6)
   })
 
   it('keeps the fixed content retry budget when discovery returns extra hosts', async () => {
@@ -734,6 +744,8 @@ describe('CopyMangaHttpClient', () => {
               ['api-b.copy.test'],
               ['api-c.copy.test'],
               ['api-d.copy.test'],
+              ['api-e.copy.test'],
+              ['api-f.copy.test'],
             ],
           },
         }),
@@ -741,13 +753,15 @@ describe('CopyMangaHttpClient', () => {
       .mockRejectedValueOnce(new Error('host a timeout'))
       .mockRejectedValueOnce(new Error('host b timeout'))
       .mockRejectedValueOnce(new Error('host c timeout'))
+      .mockRejectedValueOnce(new Error('host d timeout'))
+      .mockRejectedValueOnce(new Error('host e timeout'))
     const client = createClient()
 
     await expect(client.getJson('/api/v3/search/comic')).rejects.toThrow(
       BusinessException,
     )
 
-    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock).toHaveBeenCalledTimes(6)
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       'https://api-a.copy.test/api/v3/search/comic?platform=3',
@@ -763,8 +777,111 @@ describe('CopyMangaHttpClient', () => {
       'https://api-c.copy.test/api/v3/search/comic?platform=3',
       expect.any(Object),
     )
-    expect(fetchMock).not.toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
       'https://api-d.copy.test/api/v3/search/comic?platform=3',
+      expect.any(Object),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      6,
+      'https://api-e.copy.test/api/v3/search/comic?platform=3',
+      expect.any(Object),
+    )
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      'https://api-f.copy.test/api/v3/search/comic?platform=3',
+      expect.any(Object),
+    )
+  })
+
+  it('renews heartbeat before each content fetch attempt', async () => {
+    const order: string[] = []
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { warmed: true } }),
+      )
+    const client = createClient()
+    await client.getJson('/api/v3/search/comic')
+
+    fetchMock.mockReset()
+    fetchMock
+      .mockImplementationOnce(async () => {
+        order.push('fetch')
+        throw new Error('host failed')
+      })
+      .mockImplementationOnce(async () => {
+        order.push('fetch')
+        return createJsonResponse({ code: 200, results: { ok: true } })
+      })
+    const heartbeat = jest.fn(async () => {
+      order.push('heartbeat')
+    })
+
+    await expect(
+      client.getJson('/api/v3/comic/demo', {}, { heartbeat }),
+    ).resolves.toEqual({
+      code: 200,
+      results: { ok: true },
+    })
+
+    expect(heartbeat).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(order).toEqual(['heartbeat', 'fetch', 'heartbeat', 'fetch'])
+  })
+
+  it('renews heartbeat before discovery fetch attempts', async () => {
+    fetchMock.mockRejectedValue(new Error('discovery down'))
+    const heartbeat = jest.fn(async () => undefined)
+    const client = createClient()
+
+    await expect(
+      client.getJson('/api/v3/search/comic', {}, { heartbeat }),
+    ).rejects.toThrow(BusinessException)
+
+    expect(heartbeat).toHaveBeenCalledTimes(5)
+    expect(fetchMock).toHaveBeenCalledTimes(5)
+  })
+
+  it('does not retry heartbeat failures as CopyManga failures', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 200,
+          results: { api: [['api-a.copy.test']] },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 200, results: { warmed: true } }),
+      )
+    const client = createClient()
+    await client.getJson('/api/v3/search/comic')
+
+    fetchMock.mockReset()
+    const heartbeatError = new Error('claim lost')
+    const heartbeat = jest.fn(async () => {
+      throw heartbeatError
+    })
+
+    await expect(
+      client.getJson('/api/v3/comic/demo', {}, { heartbeat }),
+    ).rejects.toBe(heartbeatError)
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    fetchMock.mockResolvedValueOnce(
+      createJsonResponse({ code: 200, results: { stillCached: true } }),
+    )
+    await expect(client.getJson('/api/v3/comic/demo')).resolves.toEqual({
+      code: 200,
+      results: { stillCached: true },
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api-a.copy.test/api/v3/comic/demo?platform=3',
       expect.any(Object),
     )
   })

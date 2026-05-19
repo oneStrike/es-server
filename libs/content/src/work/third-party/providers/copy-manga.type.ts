@@ -29,6 +29,12 @@ export interface CopyMangaTransportError extends Error {
   }
 }
 
+/** CopyManga API host 缓存条目。 */
+export interface CopyMangaApiHostCache {
+  expiresAt: number
+  hosts: string[]
+}
+
 /** CopyManga API 请求失败后可安全落库/分支判断的诊断原因。 */
 export interface CopyMangaApiFailureCause {
   kind: 'http' | 'transport' | 'provider'

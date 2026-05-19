@@ -229,11 +229,7 @@ export class ThirdPartyComicImportService {
     for (const chapterPlan of prepared.chapterPlans) {
       await context.assertNotCancelled()
       chapterResults.push(
-        await this.importWorkflowChapter(
-          prepared,
-          chapterPlan,
-          context,
-        ),
+        await this.importWorkflowChapter(prepared, chapterPlan, context),
       )
     }
 
@@ -257,10 +253,13 @@ export class ThirdPartyComicImportService {
     context: ThirdPartyComicImportTaskContext,
   ): Promise<ThirdPartyComicPreparedWorkflowImport> {
     const provider = this.registry.resolve(dto.platform)
-    const detail = await provider.getDetail({
-      comicId: dto.comicId,
-      platform: dto.platform,
-    })
+    const detail = await provider.getDetail(
+      {
+        comicId: dto.comicId,
+        platform: dto.platform,
+      },
+      { heartbeat: () => context.updateProgress({}) },
+    )
     await context.assertNotCancelled()
     const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
       dto.sourceSnapshot,
@@ -603,7 +602,10 @@ export class ThirdPartyComicImportService {
           detail: this.toImageProgressDetail(chapterPlan, importedFile),
         })
       },
-      { assertNotCancelled: () => context.assertNotCancelled() },
+      {
+        assertNotCancelled: () => context.assertNotCancelled(),
+        heartbeat: () => context.updateProgress({}),
+      },
     )
     await context.assertNotCancelled()
     await this.comicContentService.replaceChapterContents(
@@ -656,12 +658,15 @@ export class ThirdPartyComicImportService {
     await context.assertNotCancelled()
     const content = await this.registry
       .resolve(context.payload.platform)
-      .getChapterContent({
-        chapterId: chapter.providerChapterId,
-        chapterApiVersion: chapter.chapterApiVersion,
-        comicId: context.payload.comicId,
-        platform: context.payload.platform,
-      })
+      .getChapterContent(
+        {
+          chapterId: chapter.providerChapterId,
+          chapterApiVersion: chapter.chapterApiVersion,
+          comicId: context.payload.comicId,
+          platform: context.payload.platform,
+        },
+        { heartbeat: () => context.updateProgress({}) },
+      )
     const images = this.sortImages(content.images)
     return {
       ...chapterPlan,
@@ -812,7 +817,10 @@ export class ThirdPartyComicImportService {
     const importedCover = await this.remoteImageImportService.importImage(
       detail.cover,
       ['comic', 'image', formatDateOnlyInAppTimeZone(new Date())],
-      { assertNotCancelled: () => context.assertNotCancelled() },
+      {
+        assertNotCancelled: () => context.assertNotCancelled(),
+        heartbeat: () => context.updateProgress({}),
+      },
     )
     return {
       filePath: importedCover.upload.filePath,
@@ -974,7 +982,9 @@ export class ThirdPartyComicImportService {
   }
 
   // 入队前按导入模式执行本地事实预检。
-  private async assertImportPreflight(input: ThirdPartyComicImportPreflightInput) {
+  private async assertImportPreflight(
+    input: ThirdPartyComicImportPreflightInput,
+  ) {
     const { dto, plannedWork, providerComicId, providerGroupPathWord } = input
     if (dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW) {
       await this.assertWorkNameAvailable(plannedWork.name)
@@ -1212,7 +1222,9 @@ export class ThirdPartyComicImportService {
     }
     await this.workService.deleteWork(workId)
     for (const residue of uploadResidues.reverse()) {
-      await this.remoteImageImportService.deleteImportedFile(residue.deleteTarget)
+      await this.remoteImageImportService.deleteImportedFile(
+        residue.deleteTarget,
+      )
       await this.contentImportService.markResiduesCleaned([residue.residueId])
     }
   }
