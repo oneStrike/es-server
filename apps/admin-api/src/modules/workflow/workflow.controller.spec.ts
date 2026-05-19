@@ -1,7 +1,10 @@
 /// <reference types="jest" />
 
 import { ContentImportItemStatusEnum } from '@libs/content/work/content-import/content-import.constant'
-import { WorkflowJobStatusEnum } from '@libs/platform/modules/workflow/workflow.constant'
+import {
+  WorkflowJobStatusEnum,
+  WorkflowNotificationKindEnum,
+} from '@libs/platform/modules/workflow/workflow.constant'
 import { AdminWorkflowController } from './workflow.controller'
 
 describe('AdminWorkflowController', () => {
@@ -69,6 +72,28 @@ describe('AdminWorkflowController', () => {
     pageSize: 20,
     total: 1,
   }
+  const workflowNotificationList = {
+    list: [
+      {
+        createdAt: new Date('2026-05-17T00:10:00.000Z'),
+        displayName: '我独自升级',
+        failedItemCount: 0,
+        id: 21,
+        jobId: 'job-1',
+        kind: WorkflowNotificationKindEnum.SUCCESS,
+        nextRetryAt: null,
+        selectedItemCount: 2,
+        skippedItemCount: 0,
+        status: WorkflowJobStatusEnum.SUCCESS,
+        successItemCount: 2,
+        updatedAt: new Date('2026-05-17T00:10:00.000Z'),
+        workflowType: 'content-import.third-party-import',
+      },
+    ],
+    nextAfterId: 21,
+    nextCreatedAfter: new Date('2026-05-17T00:10:00.000Z'),
+    serverTime: new Date('2026-05-17T00:10:01.000Z'),
+  }
   const contentImportItem = {
     currentAttemptNo: 1,
     failureCount: 0,
@@ -96,6 +121,7 @@ describe('AdminWorkflowController', () => {
         pageSize: 10,
         total: 1,
       })),
+      getNotificationList: jest.fn(async () => workflowNotificationList),
       getJobRecordPage: jest.fn(async () => workflowRecordPage),
       retryItems: jest.fn(async () => workflowJob),
     }
@@ -177,6 +203,28 @@ describe('AdminWorkflowController', () => {
       }),
     )
     expect(workflowService.getJobRecordPage).toHaveBeenCalledWith(query)
+  })
+
+  it('returns lightweight workflow notification facts without UI copy', async () => {
+    const { controller, workflowService } = createController()
+    const query = {
+      afterId: 20,
+      createdAfter: new Date('2026-05-17T00:00:00.000Z'),
+      limit: 20,
+    } as never
+
+    const result = await controller.getNotificationList(query)
+
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        displayName: '我独自升级',
+        jobId: 'job-1',
+        kind: WorkflowNotificationKindEnum.SUCCESS,
+      }),
+    )
+    expect(result.list[0]).not.toHaveProperty('message')
+    expect(result.list[0]).not.toHaveProperty('title')
+    expect(workflowService.getNotificationList).toHaveBeenCalledWith(query)
   })
 
   it('keeps the workflow item page endpoint as a transitional compatibility facade', async () => {

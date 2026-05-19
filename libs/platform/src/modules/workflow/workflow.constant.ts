@@ -45,6 +45,16 @@ export enum WorkflowJobArchiveScopeEnum {
   ALL = 'all',
 }
 
+/** 工作流通知事实类型。 */
+export enum WorkflowNotificationKindEnum {
+  /** 执行完成。 */
+  SUCCESS = 'success',
+  /** 异常后正在系统重试。 */
+  RETRYING = 'retrying',
+  /** 最终失败。 */
+  FAILED = 'failed',
+}
+
 /** 工作流 attempt 状态。 */
 export enum WorkflowAttemptStatusEnum {
   /** 待处理。 */

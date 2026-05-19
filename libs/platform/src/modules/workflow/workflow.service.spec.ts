@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { BusinessException } from '@libs/platform/exceptions'
 import { WorkflowCancellationError } from './workflow-cancellation'
 import {
@@ -6,6 +8,7 @@ import {
   WorkflowEventTypeEnum,
   WorkflowJobArchiveScopeEnum,
   WorkflowJobStatusEnum,
+  WorkflowNotificationKindEnum,
   WorkflowOperatorTypeEnum,
 } from './workflow.constant'
 import { WorkflowService } from './workflow.service'
@@ -138,6 +141,19 @@ describe('WorkflowService state machine', () => {
     }
   }
 
+  function createWorkflowEvent(overrides: Record<string, unknown> = {}) {
+    return {
+      createdAt: baseDate,
+      detail: null,
+      eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
+      id: 20n,
+      message: '工作流 attempt 已完成',
+      workflowAttemptId: 10n,
+      workflowJobId: 1n,
+      ...overrides,
+    }
+  }
+
   function createUpdateTx(returningRows: unknown[][] = []) {
     const updateSets: Record<string, unknown>[] = []
     const updateTargets: unknown[] = []
@@ -208,6 +224,32 @@ describe('WorkflowService state machine', () => {
           })),
         })),
       })),
+      update: jest.fn(() => ({
+        set: jest.fn(() => ({
+          where: jest.fn(() => ({
+            returning: jest.fn(async () => []),
+          })),
+        })),
+      })),
+    }
+  }
+
+  function createNotificationDb(selectRows: unknown[][]) {
+    const query = {
+      from: jest.fn(() => query),
+      innerJoin: jest.fn(() => query),
+      limit: jest.fn(async () => selectRows.shift() ?? []),
+      orderBy: jest.fn(() => query),
+      where: jest.fn(() => query),
+    }
+
+    return {
+      insert: jest.fn(() => ({
+        values: jest.fn(() => ({
+          returning: jest.fn(async () => [{ id: 99n }]),
+        })),
+      })),
+      select: jest.fn(() => query),
       update: jest.fn(() => ({
         set: jest.fn(() => ({
           where: jest.fn(() => ({
@@ -469,6 +511,195 @@ describe('WorkflowService state machine', () => {
         pageSize: 20,
       }),
     )
+  })
+
+  it('projects workflow notification facts from eligible audit events only', async () => {
+    const successCreatedAt = new Date('2026-05-17T03:01:00.000Z')
+    const retryCreatedAt = new Date('2026-05-17T03:02:00.000Z')
+    const failedCreatedAt = new Date('2026-05-17T03:03:00.000Z')
+    const successAttempt = createWorkflowAttempt({
+      id: 10n,
+      status: WorkflowAttemptStatusEnum.SUCCESS,
+    })
+    const retryAttempt = createWorkflowAttempt({
+      id: 11n,
+      notBeforeAt: new Date('2026-05-17T03:10:00.000Z'),
+      triggerType: WorkflowAttemptTriggerTypeEnum.SYSTEM_RECOVERY,
+    })
+    const manualRetryAttempt = createWorkflowAttempt({
+      id: 12n,
+      triggerType: WorkflowAttemptTriggerTypeEnum.MANUAL_RETRY,
+    })
+    const previousAttempt = createWorkflowAttempt({
+      id: 13n,
+      status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
+    })
+    const failedAttempt = createWorkflowAttempt({
+      id: 14n,
+      status: WorkflowAttemptStatusEnum.FAILED,
+    })
+    const db = createNotificationDb([
+      [
+        {
+          attempt: successAttempt,
+          event: createWorkflowEvent({
+            createdAt: successCreatedAt,
+            id: 21n,
+            workflowAttemptId: successAttempt.id,
+          }),
+          job: createWorkflowJob({
+            currentAttemptFk: successAttempt.id,
+            failedItemCount: 0,
+            finishedAt: successCreatedAt,
+            status: WorkflowJobStatusEnum.SUCCESS,
+            successItemCount: 2,
+          }),
+        },
+        {
+          attempt: retryAttempt,
+          event: createWorkflowEvent({
+            createdAt: retryCreatedAt,
+            eventType: WorkflowEventTypeEnum.RETRY_REQUESTED,
+            id: 22n,
+            workflowAttemptId: retryAttempt.id,
+          }),
+          job: createWorkflowJob({
+            currentAttemptFk: retryAttempt.id,
+            status: WorkflowJobStatusEnum.PENDING,
+          }),
+        },
+        {
+          attempt: manualRetryAttempt,
+          event: createWorkflowEvent({
+            eventType: WorkflowEventTypeEnum.RETRY_REQUESTED,
+            id: 23n,
+            workflowAttemptId: manualRetryAttempt.id,
+          }),
+          job: createWorkflowJob({
+            currentAttemptFk: manualRetryAttempt.id,
+            status: WorkflowJobStatusEnum.PENDING,
+          }),
+        },
+        {
+          attempt: previousAttempt,
+          event: createWorkflowEvent({
+            eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
+            id: 24n,
+            workflowAttemptId: previousAttempt.id,
+          }),
+          job: createWorkflowJob({
+            currentAttemptFk: retryAttempt.id,
+            status: WorkflowJobStatusEnum.PENDING,
+          }),
+        },
+        {
+          attempt: failedAttempt,
+          event: createWorkflowEvent({
+            createdAt: failedCreatedAt,
+            eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
+            id: 25n,
+            workflowAttemptId: failedAttempt.id,
+          }),
+          job: createWorkflowJob({
+            currentAttemptFk: failedAttempt.id,
+            status: WorkflowJobStatusEnum.FAILED,
+          }),
+        },
+        {
+          attempt: createWorkflowAttempt({ id: 15n }),
+          event: createWorkflowEvent({
+            eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
+            id: 26n,
+            workflowAttemptId: 15n,
+          }),
+          job: createWorkflowJob({
+            archivedAt: new Date('2026-05-18T00:00:00.000Z'),
+            currentAttemptFk: 15n,
+            status: WorkflowJobStatusEnum.SUCCESS,
+          }),
+        },
+      ],
+    ])
+    const { service } = createService({ db })
+
+    const result = await service.getNotificationList({
+      afterId: 0,
+      createdAfter: baseDate,
+      limit: 20,
+    })
+
+    expect(result.list.map((item) => item.kind)).toEqual([
+      WorkflowNotificationKindEnum.SUCCESS,
+      WorkflowNotificationKindEnum.RETRYING,
+      WorkflowNotificationKindEnum.FAILED,
+    ])
+    expect(result.list[1]).toEqual(
+      expect.objectContaining({
+        jobId: 'job-1',
+        nextRetryAt: retryAttempt.notBeforeAt,
+      }),
+    )
+    expect(result.list[0]).not.toHaveProperty('message')
+    expect(result.list[0]).not.toHaveProperty('title')
+    expect(result.nextAfterId).toBe(25)
+    expect(result.nextCreatedAfter).toEqual(failedCreatedAt)
+    expect(result.serverTime).toBeInstanceOf(Date)
+    expect(db.select).toHaveBeenCalledTimes(1)
+  })
+
+  it('filters workflow notifications by kind after projection', async () => {
+    const db = createNotificationDb([
+      [
+        {
+          attempt: createWorkflowAttempt({
+            id: 10n,
+            status: WorkflowAttemptStatusEnum.SUCCESS,
+          }),
+          event: createWorkflowEvent({ id: 21n }),
+          job: createWorkflowJob({
+            currentAttemptFk: 10n,
+            status: WorkflowJobStatusEnum.SUCCESS,
+          }),
+        },
+        {
+          attempt: createWorkflowAttempt({
+            id: 11n,
+            triggerType: WorkflowAttemptTriggerTypeEnum.SYSTEM_RECOVERY,
+          }),
+          event: createWorkflowEvent({
+            eventType: WorkflowEventTypeEnum.RETRY_REQUESTED,
+            id: 22n,
+            workflowAttemptId: 11n,
+          }),
+          job: createWorkflowJob({
+            currentAttemptFk: 11n,
+            status: WorkflowJobStatusEnum.PENDING,
+          }),
+        },
+      ],
+    ])
+    const { service } = createService({ db })
+
+    const result = await service.getNotificationList({
+      kinds: [WorkflowNotificationKindEnum.RETRYING],
+    })
+
+    expect(result.list).toHaveLength(1)
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        kind: WorkflowNotificationKindEnum.RETRYING,
+      }),
+    )
+  })
+
+  it('declares the global workflow notification cursor index', () => {
+    const schemaSource = readFileSync(
+      resolve(process.cwd(), 'db/schema/system/workflow-event.ts'),
+      'utf8',
+    )
+
+    expect(schemaSource).toContain('workflow_event_notification_created_at_id_idx')
+    expect(schemaSource).toContain('eventType} in (8, 10)')
   })
 
   it('does not expose a transaction-only draft path that skips creation events', () => {

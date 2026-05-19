@@ -6,12 +6,14 @@ import {
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
-  WorkflowExpireDto,
   WorkflowArchiveDto,
+  WorkflowExpireDto,
   WorkflowJobDetailDto,
   WorkflowJobDto,
   WorkflowJobIdDto,
   WorkflowJobPageRequestDto,
+  WorkflowNotificationListRequestDto,
+  WorkflowNotificationListResponseDto,
   WorkflowRecordDto,
   WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
@@ -58,6 +60,16 @@ export class AdminWorkflowController {
   // 分页查询工作流处理记录。
   async getRecordPage(@Query() query: WorkflowRecordPageRequestDto) {
     return this.workflowService.getJobRecordPage(query)
+  }
+
+  @Get('notification/list')
+  @ApiDoc({
+    summary: '查询工作流通知列表',
+    model: WorkflowNotificationListResponseDto,
+  })
+  // 查询后台全局工作流通知事实。
+  async getNotificationList(@Query() query: WorkflowNotificationListRequestDto) {
+    return this.workflowService.getNotificationList(query)
   }
 
   @Get('item/page')

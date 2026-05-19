@@ -16,6 +16,7 @@ import {
   WorkflowEventTypeEnum,
   WorkflowJobArchiveScopeEnum,
   WorkflowJobStatusEnum,
+  WorkflowNotificationKindEnum,
   WorkflowOperatorTypeEnum,
 } from '../workflow.constant'
 
@@ -469,6 +470,52 @@ export class WorkflowJobDetailDto extends WorkflowJobDto {
   attempts!: WorkflowAttemptDto[]
 }
 
+/** 工作流通知列表项 DTO。 */
+export class WorkflowNotificationItemDto extends PickType(WorkflowJobDto, [
+  'jobId',
+  'workflowType',
+  'displayName',
+  'status',
+  'selectedItemCount',
+  'successItemCount',
+  'failedItemCount',
+  'skippedItemCount',
+  'updatedAt',
+] as const) {
+  @NumberProperty({
+    description: '通知事件ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
+  @EnumProperty({
+    description: '通知事实类型（success=执行完成；retrying=异常后正在系统重试；failed=最终失败）',
+    enum: WorkflowNotificationKindEnum,
+    example: WorkflowNotificationKindEnum.SUCCESS,
+    required: true,
+    validation: false,
+  })
+  kind!: WorkflowNotificationKindEnum
+
+  @DateProperty({
+    description: '通知事件创建时间',
+    example: '2026-05-17T03:00:00.000Z',
+    required: true,
+    validation: false,
+  })
+  createdAt!: Date
+
+  @DateProperty({
+    description: '下次系统重试时间；仅重试中通知可能存在',
+    example: '2026-05-17T03:10:00.000Z',
+    required: false,
+    validation: false,
+  })
+  nextRetryAt!: Date | null
+}
+
 /** 工作流任务 ID DTO。 */
 export class WorkflowJobIdDto extends PickType(WorkflowJobIdentityFieldsDto, [
   'jobId',
@@ -517,6 +564,80 @@ export class WorkflowRecordPageRequestDto extends IntersectionType(
     required: false,
   })
   eventTypes?: WorkflowEventTypeEnum[]
+}
+
+/** 工作流通知列表查询 DTO。 */
+export class WorkflowNotificationListRequestDto {
+  @DateProperty({
+    description: '游标时间；只返回该时间之后的通知事件',
+    example: '2026-05-17T03:00:00.000Z',
+    required: false,
+  })
+  createdAfter?: Date
+
+  @NumberProperty({
+    description: '同一游标时间下已读取的最后通知事件ID',
+    example: 20,
+    min: 0,
+    required: false,
+  })
+  afterId?: number
+
+  @NumberProperty({
+    description: '返回条数；默认20，最大50',
+    default: 20,
+    example: 20,
+    max: 50,
+    min: 1,
+    required: false,
+  })
+  limit?: number
+
+  @EnumArrayProperty({
+    description: '通知事实类型过滤；不传时返回执行完成、异常重试、最终失败',
+    enum: WorkflowNotificationKindEnum,
+    example: [
+      WorkflowNotificationKindEnum.SUCCESS,
+      WorkflowNotificationKindEnum.RETRYING,
+    ],
+    required: false,
+  })
+  kinds?: WorkflowNotificationKindEnum[]
+}
+
+/** 工作流通知列表响应 DTO。 */
+export class WorkflowNotificationListResponseDto {
+  @ArrayProperty({
+    description: '工作流通知事实列表',
+    itemClass: WorkflowNotificationItemDto,
+    required: true,
+    validation: false,
+  })
+  list!: WorkflowNotificationItemDto[]
+
+  @DateProperty({
+    description: '下一次轮询游标时间',
+    example: '2026-05-17T03:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  nextCreatedAfter!: Date | null
+
+  @NumberProperty({
+    description: '同一游标时间下下一次轮询游标ID',
+    example: 20,
+    required: false,
+    validation: false,
+  })
+  nextAfterId!: number | null
+
+  @DateProperty({
+    description: '服务端当前时间；用于首次进入时静默建立游标',
+    example: '2026-05-17T03:00:00.000Z',
+    required: true,
+    validation: false,
+  })
+  serverTime!: Date
 }
 
 /** 工作流重试条目 DTO。 */

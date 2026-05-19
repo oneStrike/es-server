@@ -45,6 +45,9 @@ export const workflowEvent = snakeCase.table(
       table.createdAt,
       table.id,
     ),
+    index('workflow_event_notification_created_at_id_idx')
+      .on(table.createdAt, table.id)
+      .where(sql`${table.eventType} in (8, 10)`),
     check('workflow_event_type_valid_chk', sql`${table.eventType} in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)`),
     check('workflow_event_message_nonblank_chk', sql`length(trim(${table.message})) > 0`),
   ],

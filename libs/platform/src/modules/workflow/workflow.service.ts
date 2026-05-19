@@ -1,6 +1,7 @@
 import type { Db } from '@db/core'
 import type {
   WorkflowAttemptSelect,
+  WorkflowEventSelect,
   WorkflowJobSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
@@ -24,34 +25,20 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm'
 import {
-  WorkflowExpireDto,
   WorkflowArchiveDto,
+  WorkflowExpireDto,
   WorkflowJobIdDto,
   WorkflowJobPageRequestDto,
+  WorkflowNotificationItemDto,
+  WorkflowNotificationListRequestDto,
   WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
 } from './dto'
 import {
-  WORKFLOW_LEASE_RENEW_INTERVAL_SECONDS,
-  WORKFLOW_RETRYABLE_JOB_STATUSES,
-  WORKFLOW_WORKER_BATCH_SIZE,
-  WorkflowAttemptStatusEnum,
-  WorkflowAttemptTriggerTypeEnum,
-  WorkflowEventTypeEnum,
-  WorkflowJobArchiveScopeEnum,
-  WorkflowJobStatusEnum,
-} from './workflow.constant'
-import { normalizeWorkflowConflictKeys } from './workflow-conflict-key'
-import {
   isWorkflowCancellationError,
   WorkflowCancellationError,
 } from './workflow-cancellation'
-import {
-  toWorkflowAttemptDto,
-  toWorkflowErrorObject,
-  toWorkflowJobDto,
-  toWorkflowRecordDto,
-} from './workflow.mapper'
+import { normalizeWorkflowConflictKeys } from './workflow-conflict-key'
 import { DEFAULT_WORKFLOW_RECORD_EVENT_TYPES } from './workflow-record-policy'
 import {
   buildDefaultExpiredAttemptRecovery,
@@ -65,6 +52,23 @@ import {
   resolveJobStatusFromAttempt,
   resolveJobStatusFromCounters,
 } from './workflow-runtime-policy'
+import {
+  WORKFLOW_LEASE_RENEW_INTERVAL_SECONDS,
+  WORKFLOW_RETRYABLE_JOB_STATUSES,
+  WORKFLOW_WORKER_BATCH_SIZE,
+  WorkflowAttemptStatusEnum,
+  WorkflowAttemptTriggerTypeEnum,
+  WorkflowEventTypeEnum,
+  WorkflowJobArchiveScopeEnum,
+  WorkflowJobStatusEnum,
+  WorkflowNotificationKindEnum,
+} from './workflow.constant'
+import {
+  toWorkflowAttemptDto,
+  toWorkflowErrorObject,
+  toWorkflowJobDto,
+  toWorkflowRecordDto,
+} from './workflow.mapper'
 import { WorkflowRegistry } from './workflow.registry'
 
 class WorkflowClaimLostError extends Error {
@@ -74,16 +78,86 @@ class WorkflowClaimLostError extends Error {
   }
 }
 
-interface WorkflowAttemptLeaseKeeper {
-  assertHealthy: () => void
-  stop: () => Promise<void>
+interface WorkflowNotificationRow {
+  attempt: WorkflowAttemptSelect
+  event: WorkflowEventSelect
+  job: WorkflowJobSelect
 }
+
+const DEFAULT_WORKFLOW_NOTIFICATION_LIMIT = 20
+const MAX_WORKFLOW_NOTIFICATION_LIMIT = 50
 
 function isWorkflowClaimLostError(error: unknown) {
   return (
     error instanceof WorkflowClaimLostError ||
     (error instanceof Error && error.name === 'WorkflowClaimLostError')
   )
+}
+
+function normalizeWorkflowNotificationLimit(limit?: number) {
+  return Math.min(
+    Math.max(limit ?? DEFAULT_WORKFLOW_NOTIFICATION_LIMIT, 1),
+    MAX_WORKFLOW_NOTIFICATION_LIMIT,
+  )
+}
+
+function normalizeWorkflowNotificationKinds(kinds?: WorkflowNotificationKindEnum[]) {
+  const normalized = kinds?.length
+    ? kinds
+    : [
+        WorkflowNotificationKindEnum.SUCCESS,
+        WorkflowNotificationKindEnum.RETRYING,
+        WorkflowNotificationKindEnum.FAILED,
+      ]
+  return new Set(normalized)
+}
+
+function resolveNotificationEventTypes(kinds: Set<WorkflowNotificationKindEnum>) {
+  const eventTypes = new Set<WorkflowEventTypeEnum>()
+  if (
+    kinds.has(WorkflowNotificationKindEnum.SUCCESS) ||
+    kinds.has(WorkflowNotificationKindEnum.FAILED)
+  ) {
+    eventTypes.add(WorkflowEventTypeEnum.ATTEMPT_COMPLETED)
+  }
+  if (kinds.has(WorkflowNotificationKindEnum.RETRYING)) {
+    eventTypes.add(WorkflowEventTypeEnum.RETRY_REQUESTED)
+  }
+  return [...eventTypes]
+}
+
+function resolveWorkflowNotificationKind(row: WorkflowNotificationRow) {
+  if (
+    row.event.eventType === WorkflowEventTypeEnum.RETRY_REQUESTED &&
+    row.attempt.triggerType === WorkflowAttemptTriggerTypeEnum.SYSTEM_RECOVERY
+  ) {
+    return WorkflowNotificationKindEnum.RETRYING
+  }
+
+  if (
+    row.event.eventType !== WorkflowEventTypeEnum.ATTEMPT_COMPLETED ||
+    row.event.workflowAttemptId !== row.job.currentAttemptFk
+  ) {
+    return null
+  }
+
+  if (row.job.status === WorkflowJobStatusEnum.SUCCESS) {
+    return WorkflowNotificationKindEnum.SUCCESS
+  }
+  if (
+    row.job.status === WorkflowJobStatusEnum.PARTIAL_FAILED ||
+    row.job.status === WorkflowJobStatusEnum.FAILED
+  ) {
+    return WorkflowNotificationKindEnum.FAILED
+  }
+  return null
+}
+
+function isWorkflowNotificationItem(
+  item: WorkflowNotificationItemDto | null,
+  kinds: Set<WorkflowNotificationKindEnum>,
+): item is WorkflowNotificationItemDto {
+  return item !== null && kinds.has(item.kind)
 }
 
 /**
@@ -305,6 +379,63 @@ export class WorkflowService {
             : undefined,
         ),
       ),
+    }
+  }
+
+  // 查询后台全局工作流通知事实。
+  async getNotificationList(input: WorkflowNotificationListRequestDto) {
+    const limit = normalizeWorkflowNotificationLimit(input.limit)
+    const kinds = normalizeWorkflowNotificationKinds(input.kinds)
+    const conditions: SQL[] = [
+      isNull(this.workflowJob.archivedAt),
+      inArray(this.workflowEvent.eventType, resolveNotificationEventTypes(kinds)),
+    ]
+    const projectionCondition = this.buildNotificationProjectionCondition(kinds)
+    if (projectionCondition) {
+      conditions.push(projectionCondition)
+    }
+    if (input.createdAfter) {
+      const cursorConditions: SQL[] = [gt(this.workflowEvent.createdAt, input.createdAfter)]
+      if (input.afterId !== undefined) {
+        cursorConditions.push(
+          and(
+            eq(this.workflowEvent.createdAt, input.createdAfter),
+            gt(this.workflowEvent.id, BigInt(input.afterId)),
+          )!,
+        )
+      }
+      conditions.push(or(...cursorConditions)!)
+    }
+
+    const rows = await this.db
+      .select({
+        attempt: this.workflowAttempt,
+        event: this.workflowEvent,
+        job: this.workflowJob,
+      })
+      .from(this.workflowEvent)
+      .innerJoin(
+        this.workflowJob,
+        eq(this.workflowEvent.workflowJobId, this.workflowJob.id),
+      )
+      .innerJoin(
+        this.workflowAttempt,
+        eq(this.workflowEvent.workflowAttemptId, this.workflowAttempt.id),
+      )
+      .where(and(...conditions))
+      .orderBy(asc(this.workflowEvent.createdAt), asc(this.workflowEvent.id))
+      .limit(limit)
+
+    const list = rows
+      .map((row) => this.toWorkflowNotificationItem(row))
+      .filter((item) => isWorkflowNotificationItem(item, kinds))
+    const last = list.at(-1)
+
+    return {
+      list,
+      nextAfterId: last?.id ?? null,
+      nextCreatedAfter: last?.createdAt ?? null,
+      serverTime: new Date(),
     }
   }
 
@@ -1187,6 +1318,77 @@ export class WorkflowService {
       })
       .returning()
     return attempt
+  }
+
+  private buildNotificationProjectionCondition(
+    kinds: Set<WorkflowNotificationKindEnum>,
+  ) {
+    const conditions: SQL[] = []
+    if (kinds.has(WorkflowNotificationKindEnum.SUCCESS)) {
+      conditions.push(
+        and(
+          eq(this.workflowEvent.eventType, WorkflowEventTypeEnum.ATTEMPT_COMPLETED),
+          eq(this.workflowEvent.workflowAttemptId, this.workflowJob.currentAttemptFk),
+          eq(this.workflowJob.status, WorkflowJobStatusEnum.SUCCESS),
+        )!,
+      )
+    }
+    if (kinds.has(WorkflowNotificationKindEnum.FAILED)) {
+      conditions.push(
+        and(
+          eq(this.workflowEvent.eventType, WorkflowEventTypeEnum.ATTEMPT_COMPLETED),
+          eq(this.workflowEvent.workflowAttemptId, this.workflowJob.currentAttemptFk),
+          inArray(this.workflowJob.status, [
+            WorkflowJobStatusEnum.PARTIAL_FAILED,
+            WorkflowJobStatusEnum.FAILED,
+          ]),
+        )!,
+      )
+    }
+    if (kinds.has(WorkflowNotificationKindEnum.RETRYING)) {
+      conditions.push(
+        and(
+          eq(this.workflowEvent.eventType, WorkflowEventTypeEnum.RETRY_REQUESTED),
+          eq(
+            this.workflowAttempt.triggerType,
+            WorkflowAttemptTriggerTypeEnum.SYSTEM_RECOVERY,
+          ),
+        )!,
+      )
+    }
+    return conditions.length > 0 ? or(...conditions) : undefined
+  }
+
+  private toWorkflowNotificationItem(
+    row: WorkflowNotificationRow,
+  ): WorkflowNotificationItemDto | null {
+    if (row.job.archivedAt) {
+      return null
+    }
+    const kind = resolveWorkflowNotificationKind(row)
+    if (!kind) {
+      return null
+    }
+    const job = toWorkflowJobDto(row.job)
+
+    return {
+      id: Number(row.event.id),
+      kind,
+      jobId: job.jobId,
+      workflowType: job.workflowType,
+      displayName: job.displayName,
+      status: job.status,
+      selectedItemCount: job.selectedItemCount,
+      successItemCount: job.successItemCount,
+      failedItemCount: job.failedItemCount,
+      skippedItemCount: job.skippedItemCount,
+      createdAt: row.event.createdAt,
+      updatedAt: job.updatedAt,
+      nextRetryAt:
+        kind === WorkflowNotificationKindEnum.RETRYING
+          ? row.attempt.notBeforeAt
+          : null,
+    }
   }
 
   // 启动当前 attempt 的运行时自动续租器。
