@@ -126,27 +126,6 @@ describe('CopyMangaProvider', () => {
     expect(detail.sourceFlags.isVip).toBe(false)
   })
 
-  it('passes request heartbeat options to detail calls', async () => {
-    const { httpClient, provider } = createProvider({
-      '/api/v3/comic2/woduzishenji': detailSuccess,
-    })
-    const heartbeat = jest.fn(async () => undefined)
-
-    await provider.getDetail(
-      {
-        comicId: 'woduzishenji',
-        platform: 'copy',
-      },
-      { heartbeat },
-    )
-
-    expect(httpClient.getJson).toHaveBeenCalledWith(
-      '/api/v3/comic2/woduzishenji',
-      undefined,
-      { heartbeat },
-    )
-  })
-
   it('normalizes chapter rows with stable ids and sort order', async () => {
     const { provider } = createProvider({
       '/api/v3/comic/woduzishenji/group/default/chapters': chaptersSuccess,
@@ -176,31 +155,6 @@ describe('CopyMangaProvider', () => {
         chapterApiVersion: 1,
       }),
     ])
-  })
-
-  it('passes request heartbeat options to chapters calls', async () => {
-    const { httpClient, provider } = createProvider({
-      '/api/v3/comic/woduzishenji/group/default/chapters': chaptersSuccess,
-    })
-    const heartbeat = jest.fn(async () => undefined)
-
-    await provider.getChapters(
-      {
-        comicId: 'woduzishenji',
-        platform: 'copy',
-        group: 'default',
-      },
-      { heartbeat },
-    )
-
-    expect(httpClient.getJson).toHaveBeenCalledWith(
-      '/api/v3/comic/woduzishenji/group/default/chapters',
-      {
-        limit: 500,
-        offset: 0,
-      },
-      { heartbeat },
-    )
   })
 
   it('uses the versioned chapter content endpoint from the chapter row', async () => {
@@ -343,39 +297,6 @@ describe('CopyMangaProvider', () => {
     ).rejects.toBe(upstreamError)
 
     expect(httpClient.getJson).toHaveBeenCalledTimes(1)
-  })
-
-  it('passes request heartbeat options to chapter content fallback calls', async () => {
-    const preferredPath = '/api/v3/comic/woduzishenji/chapter3/chapter-001'
-    const fallbackPath = '/api/v3/comic/woduzishenji/chapter/chapter-001'
-    const { httpClient, provider } = createProvider({
-      [preferredPath]: createCopyMangaHttpError(404, preferredPath),
-      [fallbackPath]: chapterContentSuccess,
-    })
-    const heartbeat = jest.fn(async () => undefined)
-
-    await provider.getChapterContent(
-      {
-        chapterId: 'chapter-001',
-        chapterApiVersion: 3,
-        comicId: 'woduzishenji',
-        platform: 'copy',
-      },
-      { heartbeat },
-    )
-
-    expect(httpClient.getJson).toHaveBeenNthCalledWith(
-      1,
-      preferredPath,
-      undefined,
-      { heartbeat },
-    )
-    expect(httpClient.getJson).toHaveBeenNthCalledWith(
-      2,
-      fallbackPath,
-      undefined,
-      { heartbeat },
-    )
   })
 
   it('does not fall back when the preferred chapter content route is rate limited', async () => {

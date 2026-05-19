@@ -55,6 +55,7 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
   function createContext() {
     return {
       assertNotCancelled: jest.fn(async () => undefined),
+      assertStillOwned: jest.fn(async () => undefined),
       createProgressReporter: jest.fn(() => ({
         advance: jest.fn(async () => undefined),
       })),
@@ -65,7 +66,6 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
         providerPathWord: sourceBinding.providerPathWord,
       },
       recordResidue: jest.fn(async () => undefined),
-      renewLease: jest.fn(async () => undefined),
       updateProgress: jest.fn(async () => undefined),
     }
   }
@@ -136,26 +136,36 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
     const registry = {
       resolve: jest.fn(() => provider),
     }
+    const workChapterService = {
+      createChapterReturningId: jest.fn(async () => 200),
+    }
+    const comicContentService = {
+      replaceChapterContents: jest.fn(async () => undefined),
+    }
+    const remoteImageImportService = {
+      deleteImportedFile: jest.fn(),
+      importImages: jest.fn(async () => ['/images/1.jpg']),
+    }
 
     return {
       bindingService,
+      comicContentService,
       contentImportService,
       provider,
       registry,
+      remoteImageImportService,
       service: new ThirdPartyComicSyncService(
         registry as never,
-        { createChapterReturningId: jest.fn(async () => 200) } as never,
-        { replaceChapterContents: jest.fn(async () => undefined) } as never,
-        {
-          deleteImportedFile: jest.fn(),
-          importImages: jest.fn(async () => ['/images/1.jpg']),
-        } as never,
+        workChapterService as never,
+        comicContentService as never,
+        remoteImageImportService as never,
         bindingService as never,
         workflowService as never,
         contentImportService as never,
         drizzle as never,
       ),
       workflowService,
+      workChapterService,
     }
   }
 
@@ -261,7 +271,7 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
     expect(provider.getChapterContent).not.toHaveBeenCalled()
   })
 
-  it('passes workflow heartbeat to provider chapter list calls', async () => {
+  it('calls provider chapter list without workflow execution options', async () => {
     const { provider, service } = createService([
       createLimitSelect([
         {
@@ -285,20 +295,14 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
       context as never,
     )
 
-    expect(provider.getChapters).toHaveBeenCalledWith(
-      {
-        comicId: sourceBinding.providerPathWord,
-        group: sourceBinding.providerGroupPathWord,
-        platform: sourceBinding.platform,
-      },
-      { heartbeat: expect.any(Function) },
-    )
-    const heartbeatArg = (provider.getChapters as jest.Mock).mock.calls[0][1]
-    await heartbeatArg.heartbeat()
-    expect(context.updateProgress).toHaveBeenCalledWith({})
+    expect(provider.getChapters).toHaveBeenCalledWith({
+      comicId: sourceBinding.providerPathWord,
+      group: sourceBinding.providerGroupPathWord,
+      platform: sourceBinding.platform,
+    })
   })
 
-  it('passes workflow heartbeat to provider chapter content calls', async () => {
+  it('calls provider chapter content without workflow execution options', async () => {
     const { provider, service } = createService()
     const context = createContext()
 
@@ -325,19 +329,93 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
       },
     } as never)
 
-    expect(provider.getChapterContent).toHaveBeenCalledWith(
-      {
-        chapterApiVersion: 2,
-        chapterId: 'chapter-new',
-        comicId: sourceBinding.providerPathWord,
-        group: sourceBinding.providerGroupPathWord,
-        platform: sourceBinding.platform,
-      },
-      { heartbeat: expect.any(Function) },
-    )
-    const heartbeatArg = (provider.getChapterContent as jest.Mock).mock
-      .calls[0][1]
-    await heartbeatArg.heartbeat()
-    expect(context.updateProgress).toHaveBeenCalledWith({})
+    expect(provider.getChapterContent).toHaveBeenCalledWith({
+      chapterApiVersion: 2,
+      chapterId: 'chapter-new',
+      comicId: sourceBinding.providerPathWord,
+      group: sourceBinding.providerGroupPathWord,
+      platform: sourceBinding.platform,
+    })
+  })
+
+  it('does not create a chapter when ownership is lost before local write', async () => {
+    const { service, workChapterService } = createService()
+    const ownershipLost = new Error('claim lost')
+    const context = {
+      ...createContext(),
+      assertStillOwned: jest.fn(async () => {
+        throw ownershipLost
+      }),
+    }
+
+    await expect(
+      service.importWorkflowSyncChapter({
+        context,
+        plan: {
+          chapterApiVersion: 2,
+          chapterIndex: 1,
+          chapterTotal: 1,
+          datetimeCreated: undefined,
+          group: sourceBinding.providerGroupPathWord,
+          imageTotal: 0,
+          images: [],
+          localSortOrder: 2,
+          providerChapterId: 'chapter-new',
+          sortOrder: 2,
+          title: '第 2 话',
+        },
+        sourceBindingId: sourceBinding.id,
+        work: {
+          canComment: false,
+          chapterPrice: 5,
+          id: 100,
+        },
+      } as never),
+    ).rejects.toBe(ownershipLost)
+
+    expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
+  })
+
+  it('does not replace chapter contents when ownership is lost after image import', async () => {
+    const { comicContentService, service, workChapterService } = createService()
+    const ownershipLost = new Error('claim lost')
+    let ownershipCheckCount = 0
+    const context = {
+      ...createContext(),
+      assertStillOwned: jest.fn(async () => {
+        ownershipCheckCount += 1
+        if (ownershipCheckCount > 1) {
+          throw ownershipLost
+        }
+      }),
+    }
+
+    await expect(
+      service.importWorkflowSyncChapter({
+        context,
+        plan: {
+          chapterApiVersion: 2,
+          chapterIndex: 1,
+          chapterTotal: 1,
+          datetimeCreated: undefined,
+          group: sourceBinding.providerGroupPathWord,
+          imageTotal: 0,
+          images: [],
+          localSortOrder: 2,
+          providerChapterId: 'chapter-new',
+          sortOrder: 2,
+          title: '第 2 话',
+        },
+        sourceBindingId: sourceBinding.id,
+        work: {
+          canComment: false,
+          chapterPrice: 5,
+          id: 100,
+        },
+      } as never),
+    ).rejects.toBe(ownershipLost)
+
+    expect(workChapterService.createChapterReturningId).toHaveBeenCalledTimes(1)
+    expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
   })
 })

@@ -411,53 +411,6 @@ describe('RemoteImageImportService', () => {
     expect(service.importImage).toHaveBeenCalledTimes(201)
   })
 
-  it('renews heartbeat during a slow image import before the success callback', async () => {
-    jest.useFakeTimers()
-    const { service } = createService()
-    const heartbeat = jest.fn(async () => undefined)
-    const onImported = jest.fn(async () => undefined)
-    let resolveDownload: (value: {
-      localPath: string
-      tempDir: string
-    }) => void = () => undefined
-    jest.spyOn(service as never, 'downloadToTemp').mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveDownload = resolve
-        }) as never,
-    )
-
-    const importPromise = service.importImages(
-      [
-        {
-          providerImageId: 'image-001',
-          sortOrder: 1,
-          url: 'https://sw.mangafunb.fun/comic/001.jpg',
-        },
-      ],
-      ['comic'],
-      onImported,
-      { heartbeat, heartbeatIntervalMs: 1000 },
-    )
-    await Promise.resolve()
-    await Promise.resolve()
-
-    expect(heartbeat).toHaveBeenCalledTimes(1)
-    expect(onImported).not.toHaveBeenCalled()
-
-    await jest.advanceTimersByTimeAsync(2500)
-    expect(heartbeat).toHaveBeenCalledTimes(3)
-    expect(onImported).not.toHaveBeenCalled()
-
-    resolveDownload({
-      localPath: `${tempDir}\\remote-image-id.jpg`,
-      tempDir,
-    })
-    await expect(importPromise).resolves.toEqual(['/uploads/comic/remote.jpg'])
-
-    expect(onImported).toHaveBeenCalledTimes(1)
-  })
-
   it('deletes an uploaded image when cancellation check fails during upload', async () => {
     jest.useFakeTimers()
     const { service, uploadedFile, uploadService } = createService()

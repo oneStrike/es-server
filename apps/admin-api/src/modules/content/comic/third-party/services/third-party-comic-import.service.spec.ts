@@ -107,7 +107,6 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
       recordResidue: jest.fn(),
       updateProgress: jest.fn(),
       workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
-      renewLease: jest.fn(async () => undefined),
     }
   }
 
@@ -209,6 +208,7 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
         drizzle as never,
       ),
       workflowService,
+      comicContentService,
       workChapterService,
       workService,
     }
@@ -366,7 +366,7 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     expect(provider.getChapterContent).not.toHaveBeenCalled()
   })
 
-  it('passes workflow heartbeat to provider detail calls', async () => {
+  it('calls provider detail without workflow execution options', async () => {
     const {
       bindingService,
       provider,
@@ -394,19 +394,13 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
 
     await service.prepareWorkflowImport(dto as never, context as never)
 
-    expect(provider.getDetail).toHaveBeenCalledWith(
-      {
-        comicId: dto.comicId,
-        platform: dto.platform,
-      },
-      { heartbeat: expect.any(Function) },
-    )
-    const heartbeatArg = (provider.getDetail as jest.Mock).mock.calls[0][1]
-    await heartbeatArg.heartbeat()
-    expect(context.updateProgress).toHaveBeenCalledWith({})
+    expect(provider.getDetail).toHaveBeenCalledWith({
+      comicId: dto.comicId,
+      platform: dto.platform,
+    })
   })
 
-  it('passes workflow heartbeat to provider chapter content calls', async () => {
+  it('calls provider chapter content without workflow execution options', async () => {
     const { provider, remoteImageImportService, service } = createService()
     const dto = createImportRequest()
     const context = {
@@ -446,18 +440,99 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
       context as never,
     )
 
-    expect(provider.getChapterContent).toHaveBeenCalledWith(
-      {
-        chapterId: dto.chapters[0].providerChapterId,
-        chapterApiVersion: dto.chapters[0].chapterApiVersion,
+    expect(provider.getChapterContent).toHaveBeenCalledWith({
+      chapterId: dto.chapters[0].providerChapterId,
+      chapterApiVersion: dto.chapters[0].chapterApiVersion,
+      comicId: dto.comicId,
+      platform: dto.platform,
+    })
+  })
+
+  it('records provider cover residue before ownership gate can abort work creation', async () => {
+    const { remoteImageImportService, service, workService } = createService([
+      [],
+      [],
+    ])
+    const dto = createImportRequest()
+    const ownershipLost = new Error('claim lost')
+    const context = {
+      ...createContext(),
+      assertStillOwned: jest.fn(async () => {
+        throw ownershipLost
+      }),
+    }
+    ;(remoteImageImportService.importImage as jest.Mock).mockResolvedValueOnce({
+      deleteTarget: {
+        filePath: 'cover.jpg',
+        objectKey: 'cover.jpg',
+        provider: 'local',
+      },
+      upload: { filePath: 'cover.jpg' },
+    })
+
+    await expect(
+      service.prepareWorkflowImport(dto as never, context as never),
+    ).rejects.toBe(ownershipLost)
+
+    expect(context.recordResidue).toHaveBeenCalledWith({
+      uploadedFiles: [
+        {
+          filePath: 'cover.jpg',
+          objectKey: 'cover.jpg',
+          provider: 'local',
+        },
+      ],
+    })
+    expect(workService.createWorkReturningId).not.toHaveBeenCalled()
+  })
+
+  it('does not replace chapter contents after image import when ownership is lost', async () => {
+    const { comicContentService, remoteImageImportService, service } =
+      createService()
+    const dto = createImportRequest()
+    const ownershipLost = new Error('claim lost')
+    const context = {
+      ...createContext(),
+      payload: {
         comicId: dto.comicId,
         platform: dto.platform,
       },
-      { heartbeat: expect.any(Function) },
+    }
+    ;(context.assertStillOwned as jest.Mock).mockImplementation(async () => {
+      throw ownershipLost
+    })
+    ;(remoteImageImportService.importImages as jest.Mock).mockResolvedValueOnce(
+      ['/images/1.jpg'],
     )
-    const heartbeatArg = (provider.getChapterContent as jest.Mock).mock
-      .calls[0][1]
-    await heartbeatArg.heartbeat()
-    expect(context.updateProgress).toHaveBeenCalledWith({})
+
+    await expect(
+      service.importWorkflowChapter(
+        {
+          cover: {
+            status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+          },
+          mode: dto.mode,
+          sourceBinding: {
+            id: 10,
+            providerGroupPathWord: 'default',
+          },
+          work: {
+            id: 100,
+            status: ThirdPartyComicImportWorkStatusEnum.CREATED,
+          },
+          chapterPlans: [],
+        } as never,
+        {
+          chapter: dto.chapters[0],
+          chapterIndex: 1,
+          chapterTotal: 1,
+          images: [],
+          imageTotal: 0,
+        },
+        context as never,
+      ),
+    ).rejects.toBe(ownershipLost)
+
+    expect(comicContentService.replaceChapterContents).not.toHaveBeenCalled()
   })
 })

@@ -3,10 +3,7 @@ import type {
   DetailComicRequestDto,
   SearchComicRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
-import type {
-  ComicThirdPartyProvider,
-  ComicThirdPartyProviderRequestOptions,
-} from './comic-third-party-provider.type'
+import type { ComicThirdPartyProvider } from './comic-third-party-provider.type'
 import type {
   CopyMangaApiFailureCause,
   CopyMangaChapterContentResults,
@@ -32,23 +29,16 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
   constructor(private readonly httpClient: CopyMangaHttpClient) {}
 
   // 搜索 CopyManga 漫画并转换为本地统一分页结果。
-  async searchComics(
-    dto: SearchComicRequestDto,
-    options?: ComicThirdPartyProviderRequestOptions,
-  ) {
+  async searchComics(dto: SearchComicRequestDto) {
     const pageSize = dto.pageSize ?? 15
     const pageIndex = dto.pageIndex ?? 1
     const offset = (pageIndex - 1) * pageSize
     const results = this.unwrapResults<CopyMangaSearchResults>(
-      await this.getJsonWithOptions(
-        '/api/v3/search/comic',
-        {
-          limit: pageSize,
-          offset,
-          q: dto.keyword,
-        },
-        options,
-      ),
+      await this.httpClient.getJson('/api/v3/search/comic', {
+        limit: pageSize,
+        offset,
+        q: dto.keyword,
+      }),
       '搜索第三方漫画失败',
     )
 
@@ -70,16 +60,9 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
   }
 
   // 获取 CopyManga 漫画详情并转换为本地详情 DTO。
-  async getDetail(
-    dto: DetailComicRequestDto,
-    options?: ComicThirdPartyProviderRequestOptions,
-  ) {
+  async getDetail(dto: DetailComicRequestDto) {
     const results = this.unwrapResults<CopyMangaDetailResults>(
-      await this.getJsonWithOptions(
-        `/api/v3/comic2/${dto.comicId}`,
-        undefined,
-        options,
-      ),
+      await this.httpClient.getJson(`/api/v3/comic2/${dto.comicId}`),
       '获取第三方漫画详情失败',
     )
     const comic = results.comic
@@ -126,19 +109,15 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
   }
 
   // 获取 CopyManga 章节列表并转换为本地章节条目。
-  async getChapters(
-    dto: DetailComicRequestDto,
-    options?: ComicThirdPartyProviderRequestOptions,
-  ) {
+  async getChapters(dto: DetailComicRequestDto) {
     const group = dto.group || 'default'
     const results = this.unwrapResults<CopyMangaChapterResults>(
-      await this.getJsonWithOptions(
+      await this.httpClient.getJson(
         `/api/v3/comic/${dto.comicId}/group/${group}/chapters`,
         {
           limit: 500,
           offset: 0,
         },
-        options,
       ),
       '获取第三方章节列表失败',
     )
@@ -155,12 +134,9 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
   }
 
   // 获取 CopyManga 章节图片列表并保持三方图片顺序。
-  async getChapterContent(
-    dto: ChapterContentComicRequestDto,
-    options?: ComicThirdPartyProviderRequestOptions,
-  ) {
+  async getChapterContent(dto: ChapterContentComicRequestDto) {
     const results = this.unwrapResults<CopyMangaChapterContentResults>(
-      await this.fetchChapterContent(dto, options),
+      await this.fetchChapterContent(dto),
       '获取第三方章节内容失败',
     )
     const chapter = results.chapter
@@ -214,15 +190,12 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     )
   }
 
-  private async fetchChapterContent(
-    dto: ChapterContentComicRequestDto,
-    options?: ComicThirdPartyProviderRequestOptions,
-  ) {
+  private async fetchChapterContent(dto: ChapterContentComicRequestDto) {
     let lastError: unknown
     const paths = this.buildChapterContentPaths(dto)
     for (const [index, path] of paths.entries()) {
       try {
-        return await this.getJsonWithOptions(path, undefined, options)
+        return await this.httpClient.getJson(path)
       } catch (error) {
         lastError = error
         if (!this.isRecoverableRouteCandidateError(error, path)) {
@@ -235,18 +208,6 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     }
 
     throw lastError
-  }
-
-  private async getJsonWithOptions<TPayload>(
-    path: string,
-    params?: Record<string, unknown>,
-    options?: ComicThirdPartyProviderRequestOptions,
-  ) {
-    return options
-      ? this.httpClient.getJson<TPayload>(path, params, options)
-      : params === undefined
-        ? this.httpClient.getJson<TPayload>(path)
-        : this.httpClient.getJson<TPayload>(path, params)
   }
 
   private buildChapterContentPaths(dto: ChapterContentComicRequestDto) {

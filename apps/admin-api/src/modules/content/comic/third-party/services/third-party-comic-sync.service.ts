@@ -166,14 +166,11 @@ export class ThirdPartyComicSyncService {
     }
 
     const provider = this.registry.resolve(sourceBinding.platform)
-    const remoteChapters = await provider.getChapters(
-      {
-        comicId: sourceBinding.providerPathWord,
-        group: sourceBinding.providerGroupPathWord,
-        platform: sourceBinding.platform,
-      },
-      { heartbeat: () => context.updateProgress({}) },
-    )
+    const remoteChapters = await provider.getChapters({
+      comicId: sourceBinding.providerPathWord,
+      group: sourceBinding.providerGroupPathWord,
+      platform: sourceBinding.platform,
+    })
     const existingBindings =
       await this.bindingService.listActiveChapterBindings(sourceBinding.id)
     const boundProviderChapterIds = new Set(
@@ -335,6 +332,7 @@ export class ThirdPartyComicSyncService {
     const progressReporter =
       imageProgressReporter ??
       this.createSyncImageProgressReporter(context, [plan])
+    await context.assertStillOwned()
     const chapterId = await this.workChapterService.createChapterReturningId({
       canComment: work.canComment,
       canDownload: false,
@@ -360,12 +358,12 @@ export class ThirdPartyComicSyncService {
         })
       },
       {
-        assertNotCancelled: () => context.assertNotCancelled(),
-        heartbeat: () => context.updateProgress({}),
+        assertNotCancelled: async () => context.assertNotCancelled(),
       },
     )
     await context.assertNotCancelled()
 
+    await context.assertStillOwned()
     await this.comicContentService.replaceChapterContents(chapterId, filePaths)
     await this.recordChapterBinding(context, {
       chapterId,
@@ -390,16 +388,13 @@ export class ThirdPartyComicSyncService {
     await context.assertNotCancelled()
     const content = await this.registry
       .resolve(context.payload.platform)
-      .getChapterContent(
-        {
-          chapterApiVersion: plan.chapterApiVersion,
-          chapterId: plan.providerChapterId,
-          comicId: context.payload.providerPathWord,
-          group: context.payload.providerGroupPathWord,
-          platform: context.payload.platform,
-        },
-        { heartbeat: () => context.updateProgress({}) },
-      )
+      .getChapterContent({
+        chapterApiVersion: plan.chapterApiVersion,
+        chapterId: plan.providerChapterId,
+        comicId: context.payload.providerPathWord,
+        group: context.payload.providerGroupPathWord,
+        platform: context.payload.platform,
+      })
     const images = this.sortImages(content.images)
     return {
       ...plan,
@@ -540,6 +535,7 @@ export class ThirdPartyComicSyncService {
     context: ThirdPartyComicSyncTaskContext,
     input: ThirdPartyComicChapterBindingInput,
   ) {
+    await context.assertStillOwned()
     const binding = await this.bindingService.createOrGetChapterBinding(input)
     if (!binding.created) {
       return

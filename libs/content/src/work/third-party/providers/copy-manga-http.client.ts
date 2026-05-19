@@ -1,4 +1,3 @@
-import type { ComicThirdPartyProviderRequestOptions } from './comic-third-party-provider.type'
 import type {
   CopyMangaApiFailureCause,
   CopyMangaApiHostCache,
@@ -29,9 +28,8 @@ export class CopyMangaHttpClient {
   async getJson<TPayload = unknown>(
     path: string,
     params: Record<string, unknown> = {},
-    options: ComicThirdPartyProviderRequestOptions = {},
   ): Promise<TPayload> {
-    const apiHosts = await this.getApiHosts(options)
+    const apiHosts = await this.getApiHosts()
 
     let lastError: unknown
     for (let attempt = 0; attempt < COPY_MANGA_REQUEST_ATTEMPTS; attempt++) {
@@ -45,7 +43,6 @@ export class CopyMangaHttpClient {
         lastError = error
         continue
       }
-      await options.heartbeat?.()
       try {
         const payload = await this.fetchJson<TPayload>(
           `https://${host}${path}`,
@@ -69,14 +66,14 @@ export class CopyMangaHttpClient {
   }
 
   // 复用有效 host 缓存；过期后清空旧缓存再发现，避免失败时回退到过期 host。
-  private async getApiHosts(options: ComicThirdPartyProviderRequestOptions) {
+  private async getApiHosts() {
     const cached = this.apiHostCache
     if (cached && cached.expiresAt > Date.now()) {
       return cached.hosts
     }
 
     this.apiHostCache = null
-    const hosts = await this.refreshApiHosts(options)
+    const hosts = await this.refreshApiHosts()
     this.apiHostCache = {
       expiresAt: Date.now() + this.throttle.getHostCacheTtlMs(),
       hosts,
@@ -85,9 +82,7 @@ export class CopyMangaHttpClient {
   }
 
   // 调用 CopyManga host discovery，并对所有异常/畸形结果执行 fail closed。
-  private async refreshApiHosts(
-    options: ComicThirdPartyProviderRequestOptions,
-  ) {
+  private async refreshApiHosts() {
     let lastError: unknown
     for (let attempt = 0; attempt < COPY_MANGA_REQUEST_ATTEMPTS; attempt++) {
       try {
@@ -99,7 +94,6 @@ export class CopyMangaHttpClient {
         lastError = error
         continue
       }
-      await options.heartbeat?.()
       try {
         const data = await this.fetchJson<CopyMangaNetworkResponse>(
           `https://${COPY_MANGA_DEFAULT_API_HOST}${COPY_MANGA_DISCOVERY_PATH}`,

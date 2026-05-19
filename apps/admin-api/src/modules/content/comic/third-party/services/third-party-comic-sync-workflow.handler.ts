@@ -24,13 +24,13 @@ import { readThirdPartyRateLimit } from '@libs/content/work/third-party/third-pa
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
-  WorkflowAttemptStatusEnum,
-  WorkflowEventTypeEnum,
-} from '@libs/platform/modules/workflow/workflow.constant'
-import {
   isWorkflowCancellationError,
   WorkflowCancellationError,
 } from '@libs/platform/modules/workflow/workflow-cancellation'
+import {
+  WorkflowAttemptStatusEnum,
+  WorkflowEventTypeEnum,
+} from '@libs/platform/modules/workflow/workflow.constant'
 import { WorkflowRegistry } from '@libs/platform/modules/workflow/workflow.registry'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ThirdPartyComicSyncService } from './third-party-comic-sync.service'
@@ -132,10 +132,14 @@ export class ThirdPartyComicSyncWorkflowHandler
           context.attemptNo,
         )
       } else {
-        target = await this.syncService.prepareWorkflowSyncTarget(snapshot.source)
+        target = await this.syncService.prepareWorkflowSyncTarget(
+          snapshot.source,
+        )
       }
     } catch (error) {
-      await this.syncService.rollbackSyncTask(taskContext).catch(() => undefined)
+      await this.syncService
+        .rollbackSyncTask(taskContext)
+        .catch(() => undefined)
       if (isWorkflowCancellationError(error)) {
         await this.throwCancelledAttempt(context, '章节同步已取消', error)
       }
@@ -181,6 +185,7 @@ export class ThirdPartyComicSyncWorkflowHandler
         }
         throw error
       }
+      await context.assertStillOwned()
       await this.contentImportService.startItemAttempt(
         context.jobId,
         context.attemptId,
@@ -195,7 +200,10 @@ export class ThirdPartyComicSyncWorkflowHandler
         itemId: item.itemId,
       })
       try {
-        await this.cleanupPendingUploadedFileResidues(context.jobId, item.itemId)
+        await this.cleanupPendingUploadedFileResidues(
+          context.jobId,
+          item.itemId,
+        )
         const result = await this.syncService.importWorkflowSyncChapter({
           context: itemContext,
           plan,
@@ -333,7 +341,9 @@ export class ThirdPartyComicSyncWorkflowHandler
 
   // 将限流来源转换为 workflow item 可持久化的错误码。
   private resolveRateLimitCode(rateLimit: ThirdPartyRateLimitCause) {
-    return rateLimit.status ? `HTTP_${rateLimit.status}` : 'THIRD_PARTY_RATE_LIMIT'
+    return rateLimit.status
+      ? `HTTP_${rateLimit.status}`
+      : 'THIRD_PARTY_RATE_LIMIT'
   }
 
   // 汇总 item 执行结果，决定本次 workflow attempt 的终态。
@@ -419,7 +429,9 @@ export class ThirdPartyComicSyncWorkflowHandler
       counters.successItemCount +
       counters.failedItemCount +
       counters.skippedItemCount
-    return Math.floor((Math.max(0, completedItemCount) * 100) / selectedItemCount)
+    return Math.floor(
+      (Math.max(0, completedItemCount) * 100) / selectedItemCount,
+    )
   }
 
   private resolveTaskProgressMessage(
@@ -453,7 +465,10 @@ export class ThirdPartyComicSyncWorkflowHandler
   }
 
   // 清理仍处于 pending/failed 的上传残留，避免重试前覆盖正式文件。
-  private async cleanupPendingUploadedFileResidues(jobId: string, itemId?: string) {
+  private async cleanupPendingUploadedFileResidues(
+    jobId: string,
+    itemId?: string,
+  ) {
     const residues =
       await this.contentImportService.listPendingUploadedFileResidues(jobId, {
         itemId,
@@ -467,7 +482,10 @@ export class ThirdPartyComicSyncWorkflowHandler
         await this.contentImportService.markResiduesCleaned([residue.residueId])
       } catch (error) {
         await this.contentImportService
-          .markResidueCleanupFailed(residue.residueId, this.stringifyError(error))
+          .markResidueCleanupFailed(
+            residue.residueId,
+            this.stringifyError(error),
+          )
           .catch(() => undefined)
         cleanupFailures.push(
           `${residue.deleteTarget.provider}:${residue.deleteTarget.filePath} (${this.stringifyError(

@@ -253,13 +253,10 @@ export class ThirdPartyComicImportService {
     context: ThirdPartyComicImportTaskContext,
   ): Promise<ThirdPartyComicPreparedWorkflowImport> {
     const provider = this.registry.resolve(dto.platform)
-    const detail = await provider.getDetail(
-      {
-        comicId: dto.comicId,
-        platform: dto.platform,
-      },
-      { heartbeat: () => context.updateProgress({}) },
-    )
+    const detail = await provider.getDetail({
+      comicId: dto.comicId,
+      platform: dto.platform,
+    })
     await context.assertNotCancelled()
     const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
       dto.sourceSnapshot,
@@ -490,6 +487,7 @@ export class ThirdPartyComicImportService {
     }
 
     await this.assertWorkNameAvailable(dto.workDraft.name)
+    await context.assertStillOwned()
     const workId = await this.workService.createWorkReturningId(
       this.toCreateWorkDto(dto.workDraft, coverPath),
     )
@@ -539,6 +537,7 @@ export class ThirdPartyComicImportService {
       },
       workId,
     )
+    await context.assertStillOwned()
     const sourceBinding = await this.bindingService.createOrGetSourceBinding({
       workId,
       platform: dto.platform,
@@ -603,11 +602,11 @@ export class ThirdPartyComicImportService {
         })
       },
       {
-        assertNotCancelled: () => context.assertNotCancelled(),
-        heartbeat: () => context.updateProgress({}),
+        assertNotCancelled: async () => context.assertNotCancelled(),
       },
     )
     await context.assertNotCancelled()
+    await context.assertStillOwned()
     await this.comicContentService.replaceChapterContents(
       localChapterId,
       filePaths,
@@ -658,15 +657,12 @@ export class ThirdPartyComicImportService {
     await context.assertNotCancelled()
     const content = await this.registry
       .resolve(context.payload.platform)
-      .getChapterContent(
-        {
-          chapterId: chapter.providerChapterId,
-          chapterApiVersion: chapter.chapterApiVersion,
-          comicId: context.payload.comicId,
-          platform: context.payload.platform,
-        },
-        { heartbeat: () => context.updateProgress({}) },
-      )
+      .getChapterContent({
+        chapterId: chapter.providerChapterId,
+        chapterApiVersion: chapter.chapterApiVersion,
+        comicId: context.payload.comicId,
+        platform: context.payload.platform,
+      })
     const images = this.sortImages(content.images)
     return {
       ...chapterPlan,
@@ -737,6 +733,7 @@ export class ThirdPartyComicImportService {
         'updatedChapters',
         await this.readChapterSnapshot(chapter.targetChapterId),
       )
+      await context.assertStillOwned()
       await this.workChapterService.updateChapter({
         id: chapter.targetChapterId,
         ...this.toChapterUpdate(chapter),
@@ -744,6 +741,7 @@ export class ThirdPartyComicImportService {
       localChapterId = chapter.targetChapterId
     } else {
       await this.assertChapterTitleAvailable(workId, chapter.title)
+      await context.assertStillOwned()
       const createdChapterId =
         await this.workChapterService.createChapterReturningId({
           ...this.toChapterUpdate(chapter),
@@ -818,8 +816,7 @@ export class ThirdPartyComicImportService {
       detail.cover,
       ['comic', 'image', formatDateOnlyInAppTimeZone(new Date())],
       {
-        assertNotCancelled: () => context.assertNotCancelled(),
-        heartbeat: () => context.updateProgress({}),
+        assertNotCancelled: async () => context.assertNotCancelled(),
       },
     )
     return {
@@ -1568,6 +1565,7 @@ export class ThirdPartyComicImportService {
     context: ThirdPartyComicImportTaskContext,
     input: ThirdPartyComicChapterBindingInput,
   ) {
+    await context.assertStillOwned()
     const binding = await this.bindingService.createOrGetChapterBinding(input)
     if (!binding.created) {
       return

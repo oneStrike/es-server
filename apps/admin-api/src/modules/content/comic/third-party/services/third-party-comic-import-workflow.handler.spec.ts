@@ -3,9 +3,12 @@
 jest.mock('@libs/content/work/content/comic-content.service', () => ({
   ComicContentService: class ComicContentService {},
 }))
-jest.mock('@libs/content/work/third-party/services/remote-image-import.service', () => ({
-  RemoteImageImportService: class RemoteImageImportService {},
-}))
+jest.mock(
+  '@libs/content/work/third-party/services/remote-image-import.service',
+  () => ({
+    RemoteImageImportService: class RemoteImageImportService {},
+  }),
+)
 
 import { WorkflowAttemptStatusEnum } from '@libs/platform/modules/workflow/workflow.constant'
 import { WorkflowCancellationError } from '@libs/platform/modules/workflow/workflow-cancellation'
@@ -70,7 +73,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       deleteImportedFile: jest.fn(),
     }
     const importService = {
-      createImportImageProgressReporter: jest.fn(() => ({ advance: jest.fn() })),
+      createImportImageProgressReporter: jest.fn(() => ({
+        advance: jest.fn(),
+      })),
       importWorkflowChapter: jest
         .fn()
         .mockResolvedValueOnce({
@@ -158,9 +163,18 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       },
     })
     const items = [
-      { itemId: 'item-1', metadata: { chapter: { providerChapterId: 'p1', title: '第 1 话' } } },
-      { itemId: 'item-2', metadata: { chapter: { providerChapterId: 'p2', title: '第 2 话' } } },
-      { itemId: 'item-3', metadata: { chapter: { providerChapterId: 'p3', title: '第 3 话' } } },
+      {
+        itemId: 'item-1',
+        metadata: { chapter: { providerChapterId: 'p1', title: '第 1 话' } },
+      },
+      {
+        itemId: 'item-2',
+        metadata: { chapter: { providerChapterId: 'p2', title: '第 2 话' } },
+      },
+      {
+        itemId: 'item-3',
+        metadata: { chapter: { providerChapterId: 'p3', title: '第 3 话' } },
+      },
     ]
     const contentImportService = {
       aggregateJobWithRetryState: jest
@@ -211,7 +225,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       startItemAttempt: jest.fn(),
     }
     const importService = {
-      createImportImageProgressReporter: jest.fn(() => ({ advance: jest.fn() })),
+      createImportImageProgressReporter: jest.fn(() => ({
+        advance: jest.fn(),
+      })),
       importWorkflowChapter: jest
         .fn()
         .mockResolvedValueOnce({
@@ -348,9 +364,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         throw imageRateLimitError
       }),
       prepareWorkflowImport: jest.fn(async () => ({
-        chapterPlans: [
-          { chapter: { providerChapterId: 'p1' }, imageTotal: 1 },
-        ],
+        chapterPlans: [{ chapter: { providerChapterId: 'p1' }, imageTotal: 1 }],
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 100 },
       })),
@@ -437,9 +451,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         work: { id: 100 },
       })),
       restorePreparedWorkflowImport: jest.fn(async () => ({
-        chapterPlans: [
-          { chapter: { providerChapterId: 'p2' }, imageTotal: 1 },
-        ],
+        chapterPlans: [{ chapter: { providerChapterId: 'p2' }, imageTotal: 1 }],
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 100 },
       })),
@@ -475,7 +487,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       100,
     )
     expect(importService.restorePreparedWorkflowImport).toHaveBeenCalled()
-    expect(contentImportService.markThirdPartyImportTargetPrepared).not.toHaveBeenCalled()
+    expect(
+      contentImportService.markThirdPartyImportTargetPrepared,
+    ).not.toHaveBeenCalled()
     expect(contentImportService.markItemSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         itemId: 'item-2',
@@ -534,9 +548,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         work: { id: 100 },
       })),
       restorePreparedWorkflowImport: jest.fn(async () => ({
-        chapterPlans: [
-          { chapter: { providerChapterId: 'p2' }, imageTotal: 0 },
-        ],
+        chapterPlans: [{ chapter: { providerChapterId: 'p2' }, imageTotal: 0 }],
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 100 },
       })),
@@ -570,7 +582,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         itemId: 'item-2',
       }),
     )
-    expect(importService.cleanupPreparedNewWorkImportTarget).toHaveBeenCalledWith(
+    expect(
+      importService.cleanupPreparedNewWorkImportTarget,
+    ).toHaveBeenCalledWith(
       { chapters: [], mode: 'createNew' },
       100,
       expect.objectContaining({ jobId: 'job-1' }),
@@ -670,14 +684,14 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       startItemAttempt: jest.fn(),
     }
     const importService = {
-      createImportImageProgressReporter: jest.fn(() => ({ advance: jest.fn() })),
+      createImportImageProgressReporter: jest.fn(() => ({
+        advance: jest.fn(),
+      })),
       importWorkflowChapter: jest.fn(async () => {
         throw new Error('image failed')
       }),
       prepareWorkflowImport: jest.fn(async () => ({
-        chapterPlans: [
-          { chapter: { providerChapterId: 'p1' }, imageTotal: 2 },
-        ],
+        chapterPlans: [{ chapter: { providerChapterId: 'p1' }, imageTotal: 2 }],
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 1 },
       })),
@@ -908,6 +922,66 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     expect(context.completeAttempt).not.toHaveBeenCalled()
   })
 
+  it('stops before starting a normal item attempt when workflow ownership is lost', async () => {
+    const registry = { register: jest.fn() }
+    const items = [
+      {
+        itemId: 'item-1',
+        metadata: {
+          chapter: { providerChapterId: 'p1', title: '第 1 话' },
+        },
+      },
+    ]
+    const contentImportService = {
+      aggregateJobWithRetryState: jest.fn(),
+      listExecutableItems: jest.fn(async () => items),
+      listPendingUploadedFileResidues: jest.fn(async () => []),
+      markItemFailed: jest.fn(),
+      markItemSuccess: jest.fn(),
+      markResiduesCleaned: jest.fn(),
+      markThirdPartyImportTargetPrepared: jest.fn(),
+      readContentImportJobByWorkflowJobId: jest.fn(async () => ({
+        sourceSnapshot: { chapters: [], mode: 'createNew' },
+      })),
+      startItemAttempt: jest.fn(),
+    }
+    const importService = {
+      prepareWorkflowImport: jest.fn(async () => ({
+        chapterPlans: [{ chapter: { providerChapterId: 'p1' }, imageTotal: 1 }],
+        sourceBinding: { id: 1, providerGroupPathWord: 'default' },
+        work: { id: 100 },
+      })),
+      rollbackImportTask: jest.fn(),
+    }
+    const ownershipLost = new Error('claim lost')
+    const handler = new ThirdPartyComicImportWorkflowHandler(
+      registry as never,
+      contentImportService as never,
+      importService as never,
+      { deleteImportedFile: jest.fn() } as never,
+    )
+    const context = {
+      appendEvent: jest.fn(),
+      assertNotCancelled: jest.fn(),
+      assertStillOwned: jest.fn().mockRejectedValue(ownershipLost),
+      attemptId: 'attempt-1',
+      attemptNo: 1,
+      completeAttempt: jest.fn(),
+      completeAttemptWithDelayedRetry: jest.fn(),
+      getStatus: jest.fn(),
+      isCancelRequested: jest.fn(),
+      jobId: 'job-1',
+      updateProgress: jest.fn(),
+      workflowType: 'content-import.third-party-import',
+    }
+
+    await expect(handler.execute(context)).rejects.toBe(ownershipLost)
+
+    expect(contentImportService.startItemAttempt).not.toHaveBeenCalled()
+    expect(importService.rollbackImportTask).not.toHaveBeenCalled()
+    expect(context.completeAttempt).not.toHaveBeenCalled()
+  })
+
   it('cleans old pending upload residues for an item before retrying it', async () => {
     const registry = { register: jest.fn() }
     const deleteTarget = {
@@ -944,16 +1018,16 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       startItemAttempt: jest.fn(),
     }
     const importService = {
-      createImportImageProgressReporter: jest.fn(() => ({ advance: jest.fn() })),
+      createImportImageProgressReporter: jest.fn(() => ({
+        advance: jest.fn(),
+      })),
       importWorkflowChapter: jest.fn(async () => ({
         imageSucceeded: 1,
         imageTotal: 1,
         localChapterId: 101,
       })),
       prepareWorkflowImport: jest.fn(async () => ({
-        chapterPlans: [
-          { chapter: { providerChapterId: 'p1' }, imageTotal: 1 },
-        ],
+        chapterPlans: [{ chapter: { providerChapterId: 'p1' }, imageTotal: 1 }],
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 1 },
       })),

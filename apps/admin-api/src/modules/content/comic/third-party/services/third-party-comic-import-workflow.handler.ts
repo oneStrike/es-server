@@ -24,13 +24,13 @@ import { readThirdPartyRateLimit } from '@libs/content/work/third-party/third-pa
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
-  WorkflowAttemptStatusEnum,
-  WorkflowEventTypeEnum,
-} from '@libs/platform/modules/workflow/workflow.constant'
-import {
   isWorkflowCancellationError,
   WorkflowCancellationError,
 } from '@libs/platform/modules/workflow/workflow-cancellation'
+import {
+  WorkflowAttemptStatusEnum,
+  WorkflowEventTypeEnum,
+} from '@libs/platform/modules/workflow/workflow.constant'
 import { WorkflowRegistry } from '@libs/platform/modules/workflow/workflow.registry'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ThirdPartyComicImportService } from './third-party-comic-import.service'
@@ -193,6 +193,7 @@ export class ThirdPartyComicImportWorkflowHandler
         }
         throw error
       }
+      await context.assertStillOwned()
       await this.contentImportService.startItemAttempt(
         context.jobId,
         context.attemptId,
@@ -209,7 +210,10 @@ export class ThirdPartyComicImportWorkflowHandler
       })
 
       try {
-        await this.cleanupPendingUploadedFileResidues(context.jobId, item.itemId)
+        await this.cleanupPendingUploadedFileResidues(
+          context.jobId,
+          item.itemId,
+        )
         if (!plan) {
           throw new Error(`导入计划缺少章节 ${chapter.providerChapterId}`)
         }
@@ -368,7 +372,9 @@ export class ThirdPartyComicImportWorkflowHandler
 
   // 将限流来源转换为 workflow item 可持久化的错误码。
   private resolveRateLimitCode(rateLimit: ThirdPartyRateLimitCause) {
-    return rateLimit.status ? `HTTP_${rateLimit.status}` : 'THIRD_PARTY_RATE_LIMIT'
+    return rateLimit.status
+      ? `HTTP_${rateLimit.status}`
+      : 'THIRD_PARTY_RATE_LIMIT'
   }
 
   // 汇总 item 执行结果，决定本次 workflow attempt 的终态。
@@ -454,7 +460,9 @@ export class ThirdPartyComicImportWorkflowHandler
       counters.successItemCount +
       counters.failedItemCount +
       counters.skippedItemCount
-    return Math.floor((Math.max(0, completedItemCount) * 100) / selectedItemCount)
+    return Math.floor(
+      (Math.max(0, completedItemCount) * 100) / selectedItemCount,
+    )
   }
 
   private resolveTaskProgressMessage(
@@ -488,7 +496,10 @@ export class ThirdPartyComicImportWorkflowHandler
   }
 
   // 清理仍处于 pending/failed 的上传残留，避免重试前覆盖正式文件。
-  private async cleanupPendingUploadedFileResidues(jobId: string, itemId?: string) {
+  private async cleanupPendingUploadedFileResidues(
+    jobId: string,
+    itemId?: string,
+  ) {
     const residues =
       await this.contentImportService.listPendingUploadedFileResidues(jobId, {
         itemId,
@@ -502,7 +513,10 @@ export class ThirdPartyComicImportWorkflowHandler
         await this.contentImportService.markResiduesCleaned([residue.residueId])
       } catch (error) {
         await this.contentImportService
-          .markResidueCleanupFailed(residue.residueId, this.stringifyError(error))
+          .markResidueCleanupFailed(
+            residue.residueId,
+            this.stringifyError(error),
+          )
           .catch(() => undefined)
         cleanupFailures.push(
           `${residue.deleteTarget.provider}:${residue.deleteTarget.filePath} (${this.stringifyError(
