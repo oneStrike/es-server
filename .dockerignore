@@ -8,6 +8,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
+secrets/
 
 # 覆盖率目录
 coverage

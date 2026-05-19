@@ -50,9 +50,10 @@ services:
       # 控制台日志级别
       - LOG_CONSOLE_LEVEL=${LOG_CONSOLE_LEVEL}
     volumes:
-      # 挂载上传和日志目录
+      # 挂载运行时持久目录
       - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
+      - ${HOST_ADMIN_SECRETS_DIR:-es-admin-server-secrets}:/app/secrets
       - /tmp # 使用匿名卷挂载临时目录，避免写入容器层
     networks:
       - 1panel-network # 使用外部网络，确保 DNS 解析稳定
@@ -128,6 +129,7 @@ services:
     volumes:
       - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
+      - ${HOST_APP_SECRETS_DIR:-es-app-server-secrets}:/app/secrets
       - /tmp
     networks:
       - 1panel-network # 使用外部网络，确保 DNS 解析稳定
@@ -192,4 +194,8 @@ volumes:
   es-server-logs:
     driver: local
   es-server-uploads:
+    driver: local
+  es-admin-server-secrets:
+    driver: local
+  es-app-server-secrets:
     driver: local

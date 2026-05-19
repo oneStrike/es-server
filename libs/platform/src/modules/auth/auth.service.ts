@@ -2,7 +2,7 @@ import type { AuthConfigInterface } from '@libs/platform/types'
 import { Buffer } from 'node:buffer'
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { JwtService } from '@nestjs/jwt'
+import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
 import { AuthErrorMessages } from './auth.constant'
 import { JwtBlacklistService } from './jwt-blacklist.service'
@@ -74,7 +74,7 @@ export class AuthService {
       nbf: _nbf,
       jti,
       ...payload
-    } = await this.jwtService.verifyAsync(refreshToken)
+    } = await this.verifyRefreshToken(refreshToken)
     if (!jti || typeof jti !== 'string') {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
@@ -94,6 +94,21 @@ export class AuthService {
 
     await this.addToBlacklist(refreshToken)
     return this.generateTokens(payload)
+  }
+
+  private async verifyRefreshToken(refreshToken: string) {
+    try {
+      return await this.jwtService.verifyAsync(refreshToken)
+    } catch (error) {
+      if (
+        error instanceof JsonWebTokenError ||
+        error instanceof TokenExpiredError
+      ) {
+        throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
+      }
+
+      throw error
+    }
   }
 
   /**
