@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import {
   bigint,
+  boolean,
   check,
   index,
   integer,
@@ -45,8 +46,18 @@ export const contentImportItem = snakeCase.table(
     failureCount: integer().default(0).notNull(),
     /** 最近错误码。 */
     lastErrorCode: varchar({ length: 120 }),
-    /** 最近错误信息。 */
-    lastErrorMessage: varchar({ length: 500 }),
+    /** 最近错误领域。 */
+    lastErrorDomain: varchar({ length: 80 }),
+    /** 最近错误阶段。 */
+    lastErrorStage: varchar({ length: 80 }),
+    /** 最近错误严重级别。 */
+    lastErrorSeverity: varchar({ length: 40 }),
+    /** 最近错误是否可重试。 */
+    lastErrorRetryable: boolean(),
+    /** 最近错误事实。 */
+    lastErrorContext: jsonb(),
+    /** 最近错误内部诊断。 */
+    lastErrorDiagnostic: jsonb(),
     /** 最近失败时间。 */
     lastFailedAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 自动重试下次可执行时间。 */
@@ -55,10 +66,12 @@ export const contentImportItem = snakeCase.table(
     autoRetryCount: integer().default(0).notNull(),
     /** 最大自动重试次数。 */
     maxAutoRetries: integer().default(3).notNull(),
-    /** 最近自动重试原因。 */
-    lastRetryReason: varchar({ length: 500 }),
     /** 最近自动重试错误码。 */
     lastRetryCode: varchar({ length: 120 }),
+    /** 最近自动重试事实。 */
+    lastRetryContext: jsonb(),
+    /** 最近自动重试内部诊断。 */
+    lastRetryDiagnostic: jsonb(),
     /** 图片总数。 */
     imageTotal: integer().default(0).notNull(),
     /** 图片成功数。 */

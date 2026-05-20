@@ -1,9 +1,11 @@
 import { sql } from 'drizzle-orm'
 import {
   bigint,
+  boolean,
   check,
   index,
   integer,
+  jsonb,
   smallint,
   snakeCase,
   timestamp,
@@ -48,8 +50,18 @@ export const workflowAttempt = snakeCase.table(
     heartbeatAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 错误码。 */
     errorCode: varchar({ length: 120 }),
-    /** 错误信息。 */
-    errorMessage: varchar({ length: 500 }),
+    /** 错误领域。 */
+    errorDomain: varchar({ length: 80 }),
+    /** 错误阶段。 */
+    errorStage: varchar({ length: 80 }),
+    /** 错误严重级别。 */
+    errorSeverity: varchar({ length: 40 }),
+    /** 错误是否可重试。 */
+    errorRetryable: boolean(),
+    /** 可公开给前端表达层使用的错误事实。 */
+    errorContext: jsonb(),
+    /** 内部诊断信息，不作为前端表达来源。 */
+    errorDiagnostic: jsonb(),
     /** 开始处理时间。 */
     startedAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 完成时间。 */

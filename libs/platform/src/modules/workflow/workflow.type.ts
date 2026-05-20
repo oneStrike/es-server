@@ -1,5 +1,12 @@
 import type { Db } from '@db/core'
 import type {
+  WorkflowErrorCodeEnum,
+  WorkflowErrorContext,
+  WorkflowErrorDiagnosticInput,
+  WorkflowErrorFacts,
+  WorkflowErrorFactsInput,
+} from './workflow-error-facts'
+import type {
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
   WorkflowEventTypeEnum,
@@ -27,8 +34,9 @@ export type WorkflowOperator = WorkflowAdminOperator | WorkflowSystemOperator
 
 /** 工作流进度快照。 */
 export interface WorkflowProgress {
+  code?: WorkflowErrorCodeEnum | string | null
+  context?: WorkflowObject | null
   percent?: number
-  message?: string | null
   detail?: WorkflowObject | null
   counters?: WorkflowJobCounterPatch
 }
@@ -61,7 +69,7 @@ export interface AppendWorkflowEventInput {
   workflowJobId: bigint
   workflowAttemptId?: bigint | null
   eventType: WorkflowEventTypeEnum
-  message: string
+  eventCode: string
   detail?: WorkflowObject | null
 }
 
@@ -72,8 +80,8 @@ export interface CompleteWorkflowAttemptInput {
   jobCounters: WorkflowJobCounterPatch
   attemptCounters: WorkflowAttemptCounterPatch
   completionOwnerClaimedBy?: string
-  errorCode?: string | null
-  errorMessage?: string | null
+  error?: WorkflowErrorFacts | WorkflowErrorFactsInput | null
+  errorDiagnostic?: WorkflowErrorDiagnosticInput | null
 }
 
 /** 完成当前 attempt 后延后再次执行的入参。 */
@@ -130,8 +138,8 @@ export interface WorkflowExecutionContext {
   updateProgress: (progress: WorkflowProgress) => Promise<void>
   appendEvent: (
     eventType: WorkflowEventTypeEnum,
-    message: string,
-    detail?: WorkflowObject,
+    eventCode: string,
+    detail?: WorkflowErrorContext,
   ) => Promise<bigint>
 }
 

@@ -1,8 +1,9 @@
+import type { WorkflowErrorFacts } from '@libs/platform/modules/workflow/workflow-error-facts'
+import type { WorkflowExecutionContext } from '@libs/platform/modules/workflow/workflow.type'
 import type {
   ComicArchiveIgnoreReasonEnum,
   ComicArchiveImportItemStatusEnum,
 } from './comic-archive-import.constant'
-import type { WorkflowExecutionContext } from '@libs/platform/modules/workflow/workflow.type'
 
 /**
  * 漫画压缩包预解析汇总快照。
@@ -16,12 +17,13 @@ export interface ComicArchiveSummarySnapshot {
 
 /**
  * 漫画压缩包预解析忽略项快照。
- * 每条忽略项都包含稳定原因码和可直接展示给前端用户的提示。
+ * 每条忽略项都包含稳定原因码和表达事实，由 admin 负责渲染提示。
  */
 export interface ComicArchiveIgnoredItemSnapshot {
+  code: string
+  context: Record<string, unknown>
   path: string
   reason: ComicArchiveIgnoreReasonEnum
-  message: string
 }
 
 /**
@@ -36,8 +38,9 @@ export interface ComicArchiveMatchedItemSnapshot {
   hasExistingContent: boolean
   existingImageCount: number
   importMode: 'replace'
-  message: string
-  warningMessage: string
+  statusCode: string
+  statusContext: Record<string, unknown>
+  warning: WorkflowErrorFacts | null
 }
 
 /**
@@ -47,9 +50,9 @@ export interface ComicArchiveMatchedItemSnapshot {
 export interface ComicArchiveResultItemSnapshot {
   chapterId: number
   chapterTitle: string
+  error: WorkflowErrorFacts | null
   importedImageCount: number
   status: ComicArchiveImportItemStatusEnum
-  message: string
 }
 
 /**

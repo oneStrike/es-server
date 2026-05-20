@@ -1,11 +1,13 @@
 import {
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
+import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ContentImportItemStageEnum,
@@ -121,21 +123,22 @@ export class ContentImportItemDto {
   })
   failureCount!: number
 
-  @StringProperty({
-    description: '最近错误码',
-    example: 'IMAGE_UPLOAD_FAILED',
+  @NestedProperty({
+    description: '最近错误事实；admin 负责根据 code/context 表达',
+    example: {
+      code: 'THIRD_PARTY_CHAPTER_IMPORT_FAILED',
+      context: { chapterTitle: '第1话' },
+      domain: 'third-party-source',
+      retryable: false,
+      severity: 'error',
+      stage: 'import-chapter',
+    },
+    nullable: true,
     required: false,
+    type: WorkflowErrorFactsDto,
     validation: false,
   })
-  lastErrorCode!: string | null
-
-  @StringProperty({
-    description: '最近错误信息',
-    example: '上游图片下载失败',
-    required: false,
-    validation: false,
-  })
-  lastErrorMessage!: string | null
+  lastError!: WorkflowErrorFactsDto | null
 
   @DateProperty({
     description: '自动重试下次可执行时间',
@@ -161,21 +164,22 @@ export class ContentImportItemDto {
   })
   maxAutoRetries!: number
 
-  @StringProperty({
-    description: '最近自动重试原因',
-    example: '三方平台限流',
+  @NestedProperty({
+    description: '最近自动重试事实；admin 负责根据 code/context 表达',
+    example: {
+      code: 'CONTENT_IMPORT_RATE_LIMITED',
+      context: { nextRetryAt: '2026-05-17T03:10:00.000Z' },
+      domain: 'content-import',
+      retryable: true,
+      severity: 'warning',
+      stage: 'rate-limit',
+    },
+    nullable: true,
     required: false,
+    type: WorkflowErrorFactsDto,
     validation: false,
   })
-  lastRetryReason!: string | null
-
-  @StringProperty({
-    description: '最近自动重试错误码',
-    example: 'HTTP_429',
-    required: false,
-    validation: false,
-  })
-  lastRetryCode!: string | null
+  lastRetry!: WorkflowErrorFactsDto | null
 
   @NumberProperty({
     description: '图片总数',

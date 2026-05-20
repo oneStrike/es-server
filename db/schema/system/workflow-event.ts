@@ -25,8 +25,8 @@ export const workflowEvent = snakeCase.table(
     workflowAttemptId: bigint({ mode: 'bigint' }),
     /** 事件类型（1=创建草稿，2=确认任务，3=claim attempt，4=心跳，5=进度更新，6=条目成功，7=条目失败，8=attempt 完成，9=请求取消，10=人工重试，11=草稿过期，12=资源清理）。 */
     eventType: smallint().notNull(),
-    /** 事件文案。 */
-    message: varchar({ length: 500 }).notNull(),
+    /** 事件码。 */
+    eventCode: varchar({ length: 120 }).notNull(),
     /** 事件诊断详情。 */
     detail: jsonb(),
     /** 创建时间。 */
@@ -49,7 +49,7 @@ export const workflowEvent = snakeCase.table(
       .on(table.createdAt, table.id)
       .where(sql`${table.eventType} in (8, 10)`),
     check('workflow_event_type_valid_chk', sql`${table.eventType} in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)`),
-    check('workflow_event_message_nonblank_chk', sql`length(trim(${table.message})) > 0`),
+    check('workflow_event_code_nonblank_chk', sql`length(trim(${table.eventCode})) > 0`),
   ],
 )
 

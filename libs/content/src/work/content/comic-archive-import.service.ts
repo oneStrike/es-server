@@ -30,6 +30,13 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 import {
+  createWorkflowErrorFactsByCode,
+  toWorkflowLastErrorColumns,
+  toWorkflowLastErrorView,
+  toWorkflowRetryColumns,
+  WorkflowErrorCodeEnum,
+} from '@libs/platform/modules/workflow/workflow-error-facts'
+import {
   WorkflowAttemptStatusEnum,
   WorkflowJobStatusEnum,
   WorkflowOperatorTypeEnum,
@@ -252,7 +259,7 @@ export class ComicArchiveImportService {
             imageTotal: 0,
             status: 2,
             ignoreReason: String(item.reason),
-            warningMessage: item.message ?? null,
+            warningMessage: null,
             metadata: item as unknown as Record<string, unknown>,
             createdAt: now,
             updatedAt: now,
@@ -327,9 +334,9 @@ export class ComicArchiveImportService {
         status: ContentImportItemStatusEnum.PENDING,
         stage: ContentImportItemStageEnum.READING_SOURCE,
         failureCount: 0,
-        lastErrorCode: null,
-        lastErrorMessage: null,
+        ...toWorkflowLastErrorColumns(null),
         lastFailedAt: null,
+        ...toWorkflowRetryColumns(null),
         imageTotal: item.imageTotal,
         imageSuccessCount: 0,
         currentAttemptNo: null,
@@ -399,6 +406,7 @@ export class ComicArchiveImportService {
       resultItems: items.map((item) => ({
         chapterId: item.localChapterId ?? item.targetChapterId ?? 0,
         chapterTitle: item.title,
+        error: toWorkflowLastErrorView(item),
         importedImageCount: item.imageSuccessCount,
         status:
           item.status === ContentImportItemStatusEnum.SUCCESS
@@ -406,8 +414,9 @@ export class ComicArchiveImportService {
             : item.status === ContentImportItemStatusEnum.FAILED
               ? ComicArchiveImportItemStatusEnum.FAILED
               : ComicArchiveImportItemStatusEnum.PENDING,
-        message: item.lastErrorMessage ?? '',
       })),
+      progressCode: workflowJob.progressCode,
+      progressContext: this.toNullableWorkflowObject(workflowJob.progressContext),
       progressDetail: this.toNullableWorkflowObject(workflowJob.progressDetail),
       confirmedChapterIds: items
         .map((item) => item.localChapterId ?? item.targetChapterId)
@@ -417,10 +426,7 @@ export class ComicArchiveImportService {
       expiresAt:
         workflowJob.expiresAt ??
         new Date(workflowJob.createdAt.getTime() + ARCHIVE_TASK_TTL_MS),
-      lastError:
-        typeof (workflowJob.summary as Record<string, unknown> | null)?.errorMessage === 'string'
-          ? ((workflowJob.summary as Record<string, unknown>).errorMessage as string)
-          : null,
+      lastError: items.map(item => toWorkflowLastErrorView(item)).find(Boolean) ?? null,
       summary: {
         matchedChapterCount: previewItems.filter((item) => item.status === 1).length,
         ignoredItemCount: previewItems.filter((item) => item.status === 2).length,
@@ -470,8 +476,17 @@ export class ComicArchiveImportService {
         )
         await context.assertStillOwned()
         await context.updateProgress({
+          code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_PROGRESS_UPDATED,
+          context: {
+            chapterIndex: index + 1,
+            chapterTotal: items.length,
+            imageIndex: contents.length,
+            imageTotal: matchedItem.imageCount,
+            itemId: item.itemId,
+            localChapterId: matchedItem.chapterId,
+            title: matchedItem.chapterTitle,
+          },
           detail: null,
-          message: '章节导入进度已更新',
         })
         await this.contentImportService.markItemSuccess({
           itemId: item.itemId,
@@ -483,14 +498,30 @@ export class ComicArchiveImportService {
       } catch (error) {
         await context.assertStillOwned()
         await context.updateProgress({
+          code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_PROGRESS_UPDATED,
+          context: {
+            chapterIndex: index + 1,
+            chapterTotal: items.length,
+            imageIndex: 0,
+            imageTotal: matchedItem.imageCount,
+            itemId: item.itemId,
+            localChapterId: matchedItem.chapterId,
+            title: matchedItem.chapterTitle,
+          },
           detail: null,
-          message: '章节导入进度已更新',
         })
         await this.contentImportService.markItemFailed({
           itemId: item.itemId,
           attemptNo: context.attemptNo,
-          errorCode: 'ARCHIVE_CHAPTER_IMPORT_FAILED',
-          errorMessage: this.stringifyError(error),
+          error: createWorkflowErrorFactsByCode(
+            WorkflowErrorCodeEnum.ARCHIVE_CHAPTER_IMPORT_FAILED,
+            {
+              chapterId: matchedItem.chapterId,
+              chapterTitle: matchedItem.chapterTitle,
+              itemId: item.itemId,
+            },
+          ),
+          errorDiagnostic: { error, source: 'archive-import-chapter' },
           imageTotal: matchedItem.imageCount,
           imageSuccessCount: 0,
         })
@@ -676,19 +707,21 @@ export class ComicArchiveImportService {
         contents.push(uploadedFile.upload.filePath)
         const imageIndex = index + 1
         const imageTotal = matchedItem.imagePaths.length
+        const progressContext = {
+          kind: 'content-import.image',
+          workflowType: ContentImportWorkflowType.ARCHIVE_IMPORT,
+          itemId: record.itemId,
+          localChapterId: matchedItem.chapterId,
+          chapterIndex: record.chapterIndex,
+          chapterTotal: record.chapterTotal,
+          imageIndex,
+          imageTotal,
+          title: matchedItem.chapterTitle,
+        }
         await record.updateProgress?.({
-          detail: {
-            kind: 'content-import.image',
-            workflowType: ContentImportWorkflowType.ARCHIVE_IMPORT,
-            itemId: record.itemId,
-            localChapterId: matchedItem.chapterId,
-            chapterIndex: record.chapterIndex,
-            chapterTotal: record.chapterTotal,
-            imageIndex,
-            imageTotal,
-            title: matchedItem.chapterTitle,
-          },
-          message: `已导入压缩包章节 ${record.chapterIndex}/${record.chapterTotal} 的第 ${imageIndex}/${imageTotal} 张图片`,
+          code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_PROGRESS_UPDATED,
+          context: progressContext,
+          detail: progressContext,
         })
       }
 
@@ -804,9 +837,10 @@ export class ComicArchiveImportService {
     for (const entry of rootEntries) {
       if (entry.isFile()) {
         ignoredItems.push({
+          code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_ITEM_IGNORED,
+          context: { path: entry.name, reason: ComicArchiveIgnoreReasonEnum.NESTED_DIRECTORY_IGNORED },
           path: entry.name,
           reason: ComicArchiveIgnoreReasonEnum.NESTED_DIRECTORY_IGNORED,
-          message: `多章节压缩包只识别一级章节目录，根目录文件 ${entry.name} 已忽略。`,
         })
         continue
       }
@@ -817,9 +851,10 @@ export class ComicArchiveImportService {
 
       if (!CHAPTER_ID_DIRECTORY_RE.test(entry.name)) {
         ignoredItems.push({
+          code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_INVALID_CHAPTER_ID_DIR,
+          context: { path: entry.name },
           path: entry.name,
           reason: ComicArchiveIgnoreReasonEnum.INVALID_CHAPTER_ID_DIR,
-          message: `目录 ${entry.name} 不是有效的章节 ID，已忽略。多章节压缩包只支持使用章节 ID 作为一级目录名。`,
         })
         continue
       }
@@ -828,9 +863,10 @@ export class ComicArchiveImportService {
       const chapter = chapterMap.get(chapterId)
       if (!chapter) {
         ignoredItems.push({
+          code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_CHAPTER_NOT_FOUND,
+          context: { path: entry.name },
           path: entry.name,
           reason: ComicArchiveIgnoreReasonEnum.CHAPTER_NOT_FOUND,
-          message: `目录 ${entry.name} 对应的章节不存在，或不属于当前作品，已忽略。`,
         })
         continue
       }
@@ -846,9 +882,10 @@ export class ComicArchiveImportService {
 
       if (imagePaths.length === 0) {
         ignoredItems.push({
+          code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_NO_IMAGES,
+          context: { path: entry.name },
           path: entry.name,
           reason: ComicArchiveIgnoreReasonEnum.INVALID_IMAGE_FILE,
-          message: `目录 ${entry.name} 下没有可导入的图片文件，已忽略。`,
         })
         continue
       }
@@ -877,9 +914,10 @@ export class ComicArchiveImportService {
     for (const entry of rootEntries) {
       if (entry.isDirectory()) {
         ignoredItems.push({
+          code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_DEPTH_EXCEEDED,
+          context: { path: entry.name },
           path: entry.name,
           reason: ComicArchiveIgnoreReasonEnum.NESTED_DIRECTORY_IGNORED,
-          message: `单章节压缩包只扫描根目录图片，目录 ${entry.name} 已忽略。`,
         })
       }
     }
@@ -891,9 +929,10 @@ export class ComicArchiveImportService {
 
     if (!input.chapterId) {
       ignoredItems.push({
+        code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_MISSING_CHAPTER_ID,
+        context: { path: archiveName },
         path: archiveName,
         reason: ComicArchiveIgnoreReasonEnum.MISSING_CHAPTER_ID,
-        message: '缺少章节 ID，无法导入单章节压缩包。',
       })
       return {
         mode: ComicArchivePreviewModeEnum.SINGLE_CHAPTER,
@@ -905,9 +944,10 @@ export class ComicArchiveImportService {
     const chapter = chapterMap.get(input.chapterId)
     if (!chapter) {
       ignoredItems.push({
+        code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_CHAPTER_NOT_FOUND,
+        context: { chapterId: input.chapterId, path: archiveName },
         path: archiveName,
         reason: ComicArchiveIgnoreReasonEnum.CHAPTER_NOT_FOUND,
-        message: `章节 ${input.chapterId} 不存在，或不属于当前作品，已忽略。`,
       })
       return {
         mode: ComicArchivePreviewModeEnum.SINGLE_CHAPTER,
@@ -918,9 +958,10 @@ export class ComicArchiveImportService {
 
     if (imagePaths.length === 0) {
       ignoredItems.push({
+        code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_NO_IMAGES,
+        context: { path: archiveName },
         path: archiveName,
         reason: ComicArchiveIgnoreReasonEnum.INVALID_IMAGE_FILE,
-        message: '压缩包内没有可导入的图片文件，已忽略。',
       })
       return {
         mode: ComicArchivePreviewModeEnum.SINGLE_CHAPTER,
@@ -950,9 +991,10 @@ export class ComicArchiveImportService {
       .flatMap((entry) => {
         if (entry.isDirectory()) {
           ignoredItems.push({
+            code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_DEPTH_EXCEEDED,
+            context: { path: `${dirName}/${entry.name}` },
             path: `${dirName}/${entry.name}`,
             reason: ComicArchiveIgnoreReasonEnum.NESTED_DIRECTORY_IGNORED,
-            message: `检测到超过允许层级的目录 ${dirName}/${entry.name}，系统不会继续扫描更深层目录，已忽略。`,
           })
           return []
         }
@@ -995,10 +1037,23 @@ export class ComicArchiveImportService {
       hasExistingContent,
       existingImageCount,
       importMode: 'replace',
-      message: `目录 ${path} 已匹配到章节 ${chapter.id}，可在确认后导入。`,
-      warningMessage: hasExistingContent
-        ? `章节 ${chapter.id} 当前已有 ${existingImageCount} 张图片。确认导入后会用压缩包内容整体覆盖，旧资源首版不会自动删除。`
-        : '',
+      statusCode: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_MATCHED,
+      statusContext: {
+        chapterId: chapter.id,
+        chapterTitle: chapter.title,
+        imageCount: imagePaths.length,
+        path,
+      },
+      warning: hasExistingContent
+        ? createWorkflowErrorFactsByCode(
+            WorkflowErrorCodeEnum.ARCHIVE_IMPORT_OVERWRITE_WARNING,
+            {
+              chapterId: chapter.id,
+              chapterTitle: chapter.title,
+              existingImageCount,
+            },
+          )
+        : null,
       imagePaths,
     }
   }

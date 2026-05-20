@@ -1,5 +1,6 @@
 import {
   ArrayProperty,
+  BooleanProperty,
   DateProperty,
   EnumArrayProperty,
   EnumProperty,
@@ -10,6 +11,7 @@ import {
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { WorkflowErrorCodeEnum } from '../workflow-error-facts'
 import {
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
@@ -50,6 +52,58 @@ class WorkflowJobStatusFieldsDto {
     required: true,
   })
   status!: WorkflowJobStatusEnum
+}
+
+/** 工作流错误事实 DTO。 */
+export class WorkflowErrorFactsDto {
+  @EnumProperty({
+    description: '错误或状态码',
+    enum: WorkflowErrorCodeEnum,
+    example: WorkflowErrorCodeEnum.ATTEMPT_LEASE_EXPIRED,
+    required: true,
+    validation: false,
+  })
+  code!: WorkflowErrorCodeEnum | string
+
+  @StringProperty({
+    description: '错误领域',
+    example: 'workflow',
+    required: true,
+    validation: false,
+  })
+  domain!: string
+
+  @StringProperty({
+    description: '错误阶段',
+    example: 'lease-recovery',
+    required: true,
+    validation: false,
+  })
+  stage!: string
+
+  @StringProperty({
+    description: '严重级别',
+    example: 'error',
+    required: true,
+    validation: false,
+  })
+  severity!: string
+
+  @BooleanProperty({
+    description: '是否可重试',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  retryable!: boolean
+
+  @ObjectProperty({
+    description: '可公开给 admin 表达层使用的事实',
+    example: { attemptId: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650' },
+    required: true,
+    validation: false,
+  })
+  context!: Record<string, unknown>
 }
 
 /** 工作流 attempt DTO。 */
@@ -161,21 +215,22 @@ export class WorkflowAttemptDto {
   })
   heartbeatAt!: Date | null
 
-  @StringProperty({
-    description: '错误码',
-    example: 'ATTEMPT_LEASE_EXPIRED',
+  @NestedProperty({
+    description: '错误事实；admin 负责根据 code/context 表达',
+    example: {
+      code: WorkflowErrorCodeEnum.ATTEMPT_LEASE_EXPIRED,
+      context: { attemptId: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650' },
+      domain: 'workflow',
+      retryable: false,
+      severity: 'error',
+      stage: 'lease-recovery',
+    },
+    nullable: true,
     required: false,
+    type: WorkflowErrorFactsDto,
     validation: false,
   })
-  errorCode!: string | null
-
-  @StringProperty({
-    description: '错误信息',
-    example: 'attempt 租约过期',
-    required: false,
-    validation: false,
-  })
-  errorMessage!: string | null
+  error!: WorkflowErrorFactsDto | null
 
   @DateProperty({
     description: '开始处理时间',
@@ -231,12 +286,12 @@ export class WorkflowEventDto {
   eventType!: WorkflowEventTypeEnum
 
   @StringProperty({
-    description: '事件文案',
-    example: '任务已创建',
+    description: '事件码',
+    example: 'WORKFLOW_JOB_CREATED',
     required: true,
     validation: false,
   })
-  message!: string
+  eventCode!: string
 
   @ObjectProperty({
     description: '事件诊断详情',
@@ -345,12 +400,21 @@ export class WorkflowJobDto {
   progressPercent!: number
 
   @StringProperty({
-    description: '进度文案',
-    example: '导入中',
+    description: '当前进度展示代码；后台根据代码和上下文生成文案',
+    example: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
     required: false,
     validation: false,
   })
-  progressMessage!: string | null
+  progressCode!: string | null
+
+  @ObjectProperty({
+    description: '当前进度展示上下文',
+    example: { completedItemCount: 3, selectedItemCount: 5 },
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  progressContext!: Record<string, unknown> | null
 
   @ObjectProperty({
     description: '结构化进度详情快照；用于展示当前运行中的子进度',
@@ -696,19 +760,31 @@ export class WorkflowAttemptCompleteDto {
   })
   skippedItemCount!: number
 
-  @StringProperty({
-    description: '错误码',
-    example: 'UPSTREAM_FAILED',
+  @NestedProperty({
+    description: '错误事实；admin 负责根据 code/context 表达',
+    example: {
+      code: WorkflowErrorCodeEnum.UNKNOWN_WORKFLOW_ERROR,
+      context: {},
+      domain: 'unknown',
+      retryable: false,
+      severity: 'error',
+      stage: 'unknown',
+    },
+    nullable: true,
     required: false,
+    type: WorkflowErrorFactsDto,
+    validation: false,
   })
-  errorCode?: string
+  error?: WorkflowErrorFactsDto | null
 
-  @StringProperty({
-    description: '错误信息',
-    example: '上游章节接口失败',
+  @ObjectProperty({
+    description: '内部诊断对象；不作为 admin 展示文案来源',
+    example: { source: 'manual-complete' },
+    nullable: true,
     required: false,
+    validation: false,
   })
-  errorMessage?: string
+  errorDiagnostic?: Record<string, unknown> | null
 }
 
 /** 工作流详情响应内容扩展 DTO。 */

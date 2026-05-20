@@ -6,6 +6,7 @@ import type {
 import type { WorkflowObject } from './workflow.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { toWorkflowErrorView } from './workflow-error-facts'
 import {
   WorkflowAttemptStatusEnum,
   WorkflowJobStatusEnum,
@@ -21,7 +22,8 @@ export function toWorkflowJobDto(row: WorkflowJobSelect) {
     operatorUserId: row.operatorUserId,
     status: normalizeWorkflowJobStatus(row.status),
     progressPercent: row.progressPercent,
-    progressMessage: row.progressMessage,
+    progressCode: row.progressCode,
+    progressContext: asNullableWorkflowObject(row.progressContext),
     progressDetail: asNullableWorkflowObject(row.progressDetail),
     selectedItemCount: row.selectedItemCount,
     successItemCount: row.successItemCount,
@@ -53,8 +55,7 @@ export function toWorkflowAttemptDto(row: WorkflowAttemptSelect) {
     claimedBy: row.claimedBy,
     claimExpiresAt: row.claimExpiresAt,
     heartbeatAt: row.heartbeatAt,
-    errorCode: row.errorCode,
-    errorMessage: row.errorMessage,
+    error: toWorkflowErrorView(row),
     startedAt: row.startedAt,
     finishedAt: row.finishedAt,
     createdAt: row.createdAt,
@@ -66,7 +67,7 @@ export function toWorkflowEventDto(row: WorkflowEventSelect) {
   return {
     id: Number(row.id),
     eventType: row.eventType,
-    message: row.message,
+    eventCode: row.eventCode,
     detail: asNullableWorkflowObject(row.detail),
     createdAt: row.createdAt,
   }

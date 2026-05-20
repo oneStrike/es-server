@@ -33,6 +33,7 @@ import {
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
 import { WorkflowOperatorTypeEnum } from '@libs/platform/modules/workflow/workflow.constant'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { Injectable } from '@nestjs/common'
@@ -136,7 +137,9 @@ export class ThirdPartyComicSyncService {
 
     await context.updateProgress({
       percent: 100,
-      message: '第三方漫画最新章节同步完成',
+      code: WorkflowErrorCodeEnum.THIRD_PARTY_SYNC_COMPLETED,
+      context: { workflowType: context.workflowType },
+      detail: null,
     })
 
     return {
@@ -226,6 +229,7 @@ export class ThirdPartyComicSyncService {
     plans: ThirdPartyComicSyncChapterPlan[],
   ) {
     return context.createProgressReporter({
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
       startPercent: 10,
       endPercent: 95,
       total: this.countPlannedImages(plans),
@@ -354,7 +358,6 @@ export class ThirdPartyComicSyncService {
       async (importedFile) => {
         await this.recordUploadedFile(context, importedFile.deleteTarget)
         await progressReporter.advance({
-          message: `已导入同步章节 ${plan.chapterIndex}/${plan.chapterTotal} 的第 ${importedFile.imageIndex}/${importedFile.imageTotal} 张图片`,
           detail: this.toImageProgressDetail(plan, importedFile),
         })
       },

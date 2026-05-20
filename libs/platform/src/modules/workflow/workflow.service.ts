@@ -39,6 +39,13 @@ import {
   WorkflowCancellationSignal,
 } from './workflow-cancellation'
 import { normalizeWorkflowConflictKeys } from './workflow-conflict-key'
+import {
+  createWorkflowErrorFacts,
+  createWorkflowErrorFactsByCode,
+  normalizeUnknownWorkflowError,
+  toWorkflowErrorColumns,
+  WorkflowErrorCodeEnum,
+} from './workflow-error-facts'
 import { DEFAULT_WORKFLOW_RECORD_EVENT_TYPES } from './workflow-record-policy'
 import {
   buildDefaultExpiredAttemptRecovery,
@@ -206,7 +213,7 @@ export class WorkflowService {
         {
           workflowJobId: row.id,
           eventType: WorkflowEventTypeEnum.JOB_CREATED,
-          message: '工作流任务已创建',
+          eventCode: 'WORKFLOW_JOB_CREATED',
           detail: { jobId: row.jobId, workflowType: row.workflowType },
         },
         tx,
@@ -246,7 +253,7 @@ export class WorkflowService {
           workflowJobId: job.id,
           workflowAttemptId: attempt.id,
           eventType: WorkflowEventTypeEnum.JOB_CONFIRMED,
-          message: '工作流任务已确认',
+          eventCode: 'WORKFLOW_JOB_CONFIRMED',
           detail: { jobId: job.jobId, attemptId: attempt.attemptId },
         },
         tx,
@@ -477,7 +484,7 @@ export class WorkflowService {
           workflowJobId: job.id,
           workflowAttemptId: job.currentAttemptFk,
           eventType: WorkflowEventTypeEnum.CANCEL_REQUESTED,
-          message: '工作流任务已请求取消',
+          eventCode: 'WORKFLOW_CANCEL_REQUESTED',
           detail: { jobId: job.jobId },
         },
         tx,
@@ -553,7 +560,7 @@ export class WorkflowService {
           workflowJobId: job.id,
           workflowAttemptId: attempt.id,
           eventType: WorkflowEventTypeEnum.RETRY_REQUESTED,
-          message: '工作流任务已创建人工重试 attempt',
+          eventCode: 'WORKFLOW_MANUAL_RETRY_ATTEMPT_CREATED',
           detail: {
             jobId: job.jobId,
             attemptId: attempt.attemptId,
@@ -595,7 +602,7 @@ export class WorkflowService {
           workflowJobId: job.id,
           workflowAttemptId: job.currentAttemptFk,
           eventType: WorkflowEventTypeEnum.CLEANUP_RECORDED,
-          message: '工作流任务 retained resource 已过期清理',
+          eventCode: 'WORKFLOW_RETAINED_RESOURCE_CLEANED',
           detail: { jobId: job.jobId },
         },
         tx,
@@ -623,6 +630,7 @@ export class WorkflowService {
       const attempt = await this.readAttemptWithDb(input.workflowAttemptId, tx)
       const job = await this.readJobByIdWithDb(attempt.workflowJobId, tx)
       const now = new Date()
+      const errorColumns = toWorkflowErrorColumns(input.error, input.errorDiagnostic)
       const [updatedAttempt] = await tx
         .update(this.workflowAttempt)
         .set({
@@ -630,8 +638,7 @@ export class WorkflowService {
           successItemCount: input.attemptCounters.successItemCount,
           failedItemCount: input.attemptCounters.failedItemCount,
           skippedItemCount: input.attemptCounters.skippedItemCount,
-          errorCode: input.errorCode ?? null,
-          errorMessage: input.errorMessage ?? null,
+          ...errorColumns,
           claimedBy: null,
           claimExpiresAt: null,
           heartbeatAt: now,
@@ -674,7 +681,7 @@ export class WorkflowService {
           workflowJobId: job.id,
           workflowAttemptId: attempt.id,
           eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
-          message: '工作流 attempt 已完成',
+          eventCode: 'WORKFLOW_ATTEMPT_COMPLETED',
           detail: {
             jobId: job.jobId,
             attemptId: attempt.attemptId,
@@ -705,8 +712,8 @@ export class WorkflowService {
       jobCounters: input.jobCounters,
       attemptCounters: input.attemptCounters,
       completionOwnerClaimedBy: input.completionOwnerClaimedBy,
-      errorCode: input.errorCode,
-      errorMessage: input.errorMessage,
+      error: input.error,
+      errorDiagnostic: input.errorDiagnostic,
     })
   }
 
@@ -718,6 +725,7 @@ export class WorkflowService {
       const attempt = await this.readAttemptWithDb(input.workflowAttemptId, tx)
       const job = await this.readJobByIdWithDb(attempt.workflowJobId, tx)
       const now = new Date()
+      const errorColumns = toWorkflowErrorColumns(input.error, input.errorDiagnostic)
       const [updatedAttempt] = await tx
         .update(this.workflowAttempt)
         .set({
@@ -725,8 +733,7 @@ export class WorkflowService {
           successItemCount: input.attemptCounters.successItemCount,
           failedItemCount: input.attemptCounters.failedItemCount,
           skippedItemCount: input.attemptCounters.skippedItemCount,
-          errorCode: input.errorCode ?? null,
-          errorMessage: input.errorMessage ?? null,
+          ...errorColumns,
           claimedBy: null,
           claimExpiresAt: null,
           heartbeatAt: now,
@@ -773,7 +780,7 @@ export class WorkflowService {
           workflowJobId: job.id,
           workflowAttemptId: updatedAttempt.id,
           eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
-          message: '工作流 attempt 已完成，等待自动重试章节到期',
+          eventCode: 'WORKFLOW_ATTEMPT_DELAYED_RETRY_SCHEDULED',
           detail: {
             jobId: job.jobId,
             attemptId: attempt.attemptId,
@@ -788,7 +795,7 @@ export class WorkflowService {
           workflowJobId: job.id,
           workflowAttemptId: delayedAttempt.id,
           eventType: WorkflowEventTypeEnum.RETRY_REQUESTED,
-          message: '工作流已创建限流自动重试 attempt',
+          eventCode: 'WORKFLOW_DELAYED_RETRY_ATTEMPT_CREATED',
           detail: {
             jobId: job.jobId,
             attemptId: delayedAttempt.attemptId,
@@ -821,8 +828,8 @@ export class WorkflowService {
       jobCounters: input.jobCounters,
       attemptCounters: input.attemptCounters,
       completionOwnerClaimedBy: input.completionOwnerClaimedBy,
-      errorCode: input.errorCode,
-      errorMessage: input.errorMessage,
+      error: input.error,
+      errorDiagnostic: input.errorDiagnostic,
       nextRetryAt: input.nextRetryAt,
       delayedSelectedItemCount: input.delayedSelectedItemCount,
     })
@@ -896,6 +903,15 @@ export class WorkflowService {
         return
       }
 
+      const expiredError = createWorkflowErrorFactsByCode(
+        WorkflowErrorCodeEnum.ATTEMPT_LEASE_EXPIRED,
+        {
+          attemptId: attempt.attemptId,
+          claimExpiresAt: attempt.claimExpiresAt?.toISOString(),
+          jobId: job.jobId,
+          recoveredAt: now.toISOString(),
+        },
+      )
       const [expiredAttempt] = await tx
         .update(this.workflowAttempt)
         .set({
@@ -903,8 +919,7 @@ export class WorkflowService {
           claimedBy: null,
           claimExpiresAt: null,
           heartbeatAt: now,
-          errorCode: 'ATTEMPT_LEASE_EXPIRED',
-          errorMessage: 'workflow attempt claim 已过期',
+          ...toWorkflowErrorColumns(expiredError),
           finishedAt: now,
           updatedAt: now,
         })
@@ -947,14 +962,18 @@ export class WorkflowService {
           successItemCount: recovery.attemptCounters.successItemCount,
           failedItemCount: recovery.attemptCounters.failedItemCount,
           skippedItemCount: recovery.attemptCounters.skippedItemCount,
-          errorCode:
+          ...toWorkflowErrorColumns(
             expiredStatus === WorkflowAttemptStatusEnum.SUCCESS
               ? null
-              : 'ATTEMPT_LEASE_EXPIRED',
-          errorMessage:
-            expiredStatus === WorkflowAttemptStatusEnum.SUCCESS
-              ? null
-              : 'workflow attempt claim 已过期',
+              : createWorkflowErrorFacts({
+                  ...expiredError,
+                  context: {
+                    ...expiredError.context,
+                    recoverableItemCount: recovery.recoverableItemCount,
+                    status: expiredStatus,
+                  },
+                }),
+          ),
           updatedAt: now,
         })
         .where(eq(this.workflowAttempt.id, expiredAttempt.id))
@@ -964,7 +983,7 @@ export class WorkflowService {
           workflowJobId: job.id,
           workflowAttemptId: expiredAttempt.id,
           eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
-          message: '工作流 attempt claim 过期，已完成恢复判定',
+          eventCode: 'WORKFLOW_ATTEMPT_LEASE_RECOVERED',
           detail: {
             jobId: job.jobId,
             attemptId: expiredAttempt.attemptId,
@@ -1011,7 +1030,7 @@ export class WorkflowService {
             workflowJobId: job.id,
             workflowAttemptId: recoveryAttempt.id,
             eventType: WorkflowEventTypeEnum.RETRY_REQUESTED,
-            message: '工作流已创建系统恢复 attempt',
+            eventCode: 'WORKFLOW_SYSTEM_RECOVERY_ATTEMPT_CREATED',
             detail: {
               jobId: job.jobId,
               attemptId: recoveryAttempt.attemptId,
@@ -1081,7 +1100,8 @@ export class WorkflowService {
         operatorUserId: operator.operatorUserId,
         status: input.status ?? WorkflowJobStatusEnum.DRAFT,
         progressPercent: normalizeWorkflowProgressPercent(input.progress?.percent),
-        progressMessage: input.progress?.message ?? null,
+        progressCode: input.progress?.code ?? null,
+        progressContext: input.progress?.context ?? null,
         progressDetail: input.progress?.detail ?? null,
         currentAttemptFk: null,
         selectedItemCount: input.selectedItemCount ?? 0,
@@ -1164,6 +1184,11 @@ export class WorkflowService {
         ? error.attemptCounters
         : fallbackAttemptCounters
       const errorObject = toWorkflowErrorObject(error)
+      const errorFacts = normalizeUnknownWorkflowError(error, {
+        attemptId: attempt.attemptId,
+        jobId: job.jobId,
+        workflowType: job.workflowType,
+      })
       await this.completeAttempt({
         workflowAttemptId: attempt.id,
         status: isCountedCancellation
@@ -1172,8 +1197,8 @@ export class WorkflowService {
         jobCounters,
         attemptCounters,
         completionOwnerClaimedBy: attempt.claimedBy ?? '',
-        errorCode: errorObject.name,
-        errorMessage: errorObject.message,
+        error: errorFacts,
+        errorDiagnostic: { error, source: 'workflow-execute-catch' },
       })
       this.logger.error({
         message: 'workflow_attempt_failed',
@@ -1240,7 +1265,7 @@ export class WorkflowService {
           workflowJobId: updatedJob.id,
           workflowAttemptId: claimedAttempt.id,
           eventType: WorkflowEventTypeEnum.ATTEMPT_CLAIMED,
-          message: '工作流 attempt 已 claim',
+          eventCode: 'WORKFLOW_ATTEMPT_CLAIMED',
           detail: {
             jobId: updatedJob.jobId,
             attemptId: claimedAttempt.attemptId,
@@ -1303,7 +1328,7 @@ export class WorkflowService {
         {
           workflowJobId: row.id,
           eventType: WorkflowEventTypeEnum.DRAFT_EXPIRED,
-          message: '工作流草稿已过期',
+          eventCode: 'WORKFLOW_DRAFT_EXPIRED',
           detail: { jobId: row.jobId },
         },
         tx,
@@ -1337,8 +1362,7 @@ export class WorkflowService {
         claimedBy: null,
         claimExpiresAt: null,
         heartbeatAt: null,
-        errorCode: null,
-        errorMessage: null,
+        ...toWorkflowErrorColumns(null),
         startedAt: null,
         finishedAt: null,
         createdAt: now,
@@ -1632,7 +1656,7 @@ export class WorkflowService {
         workflowJobId: input.workflowJobId,
         workflowAttemptId: input.workflowAttemptId ?? null,
         eventType: input.eventType,
-        message: input.message,
+        eventCode: input.eventCode,
         detail: input.detail ?? null,
       })
       .returning()
@@ -1678,14 +1702,14 @@ export class WorkflowService {
         this.updateProgressForAttempt(job, attempt, progress),
       appendEvent: async (
         eventType: WorkflowEventTypeEnum,
-        message: string,
+        eventCode: string,
         detail?: WorkflowObject,
       ) =>
         this.appendEvent({
           workflowJobId: job.id,
           workflowAttemptId: attempt.id,
           eventType,
-          message,
+          eventCode,
           detail: detail ?? null,
         }),
     }
@@ -1731,9 +1755,12 @@ export class WorkflowService {
     const now = new Date()
     const update = {
       updatedAt: now,
-      ...(progress.message === undefined
+      ...(progress.code === undefined
         ? {}
-        : { progressMessage: progress.message }),
+        : { progressCode: progress.code }),
+      ...(progress.context === undefined
+        ? {}
+        : { progressContext: progress.context }),
       ...(progress.detail === undefined
         ? {}
         : { progressDetail: progress.detail }),

@@ -7,6 +7,7 @@ import type {
   ThirdPartyComicSourceSnapshotDto,
 } from '@libs/content/work/content/dto/content.dto'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
+import type { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
 import type {
   WorkflowExecutionContext,
   WorkflowExpiredAttemptRecoveryContext,
@@ -17,19 +18,21 @@ import type { Buffer } from 'node:buffer'
 import type { LookupAddress } from 'node:dns'
 
 export interface ThirdPartyComicImportProgressReporterOptions {
+  code?: WorkflowErrorCodeEnum | string | null
+  context?: WorkflowObject | null
   startPercent?: number
   endPercent?: number
   total: number
   stage?: string
   unit?: string
-  message?: string | null
   detail?: WorkflowObject
 }
 
 export interface ThirdPartyComicImportProgressReporterAdvanceInput {
   amount?: number
+  code?: WorkflowErrorCodeEnum | string | null
+  context?: WorkflowObject | null
   current?: number
-  message?: string | null
   detail?: WorkflowObject
 }
 
@@ -117,7 +120,7 @@ export type ThirdPartyComicImportTaskContext = Pick<
   ) => Promise<void>
   markUploadedFileResidueCleanupFailed: (
     uploadedFile: UploadDeleteTarget,
-    errorMessage: string,
+    cleanupErrorText: string,
   ) => Promise<void>
   markUploadedResiduesCleaned: () => Promise<void>
   initializeItemImageProgress?: (imageTotal: number) => Promise<void>

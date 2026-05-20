@@ -64,7 +64,7 @@ export function createWorkflowTaskContext<
     },
     markUploadedFileResidueCleanupFailed: async (
       uploadedFile: UploadDeleteTarget,
-      errorMessage: string,
+      cleanupErrorText: string,
     ) => {
       const residueId = uploadedResidueIds.get(
         toUploadedFileResidueKey(uploadedFile),
@@ -72,7 +72,7 @@ export function createWorkflowTaskContext<
       if (residueId) {
         await options.contentImportService?.markResidueCleanupFailed(
           residueId,
-          errorMessage,
+          cleanupErrorText,
         )
       }
     },
@@ -154,9 +154,13 @@ function createWorkflowProgressReporter(
           ? input.current
           : Math.min(total, current + (input.amount ?? 1))
       const progress: ThirdPartyComicImportProgress = {
+        code: input.code === undefined ? progressOptions.code : input.code,
+        context:
+          input.context === undefined
+            ? progressOptions.context
+            : input.context,
         current,
         detail: input.detail ?? progressOptions.detail,
-        message: input.message ?? progressOptions.message,
         percent: Math.round(
           startPercent + ((endPercent - startPercent) * current) / total,
         ),
@@ -174,13 +178,16 @@ function createWorkflowProgressReporter(
               imageSuccessCount: current,
             })
           : null
+      const progressDetail = normalizeImageProgressDetail(
+        context,
+        progress.detail,
+        adapterOptions,
+      )
       await context.updateProgress({
-        detail: normalizeImageProgressDetail(
-          context,
-          progress.detail,
-          adapterOptions,
-        ),
-        message: progress.message,
+        code: progress.code,
+        context:
+          progress.context === undefined ? progressDetail : progress.context,
+        detail: progressDetail,
         ...(counters
           ? {
               counters: toWorkflowCounters(counters),

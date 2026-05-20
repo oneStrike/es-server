@@ -9,6 +9,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
+import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto'
+import { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
 import { PickType } from '@nestjs/swagger'
 import {
   ComicArchiveIgnoreReasonEnum,
@@ -150,6 +152,22 @@ export class ComicArchiveSummaryDto {
 
 export class ComicArchiveIgnoredItemDto {
   @StringProperty({
+    description: '忽略项表达码',
+    example: 'ARCHIVE_IMPORT_CHAPTER_NOT_FOUND',
+    required: true,
+    validation: false,
+  })
+  code!: string
+
+  @ObjectProperty({
+    description: '忽略项表达事实',
+    example: { path: 'chapter-12' },
+    required: true,
+    validation: false,
+  })
+  context!: Record<string, unknown>
+
+  @StringProperty({
     description: '被忽略的路径',
     example: 'chapter-12',
     required: true,
@@ -166,15 +184,6 @@ export class ComicArchiveIgnoredItemDto {
     validation: false,
   })
   reason!: ComicArchiveIgnoreReasonEnum
-
-  @StringProperty({
-    description: '友好提示信息',
-    example:
-      '目录 chapter-12 不是有效的章节 ID，已忽略。多章节压缩包只支持使用章节 ID 作为一级目录名。',
-    required: true,
-    validation: false,
-  })
-  message!: string
 }
 
 export class ComicArchiveMatchedItemDto {
@@ -235,21 +244,29 @@ export class ComicArchiveMatchedItemDto {
   importMode!: string
 
   @StringProperty({
-    description: '匹配结果说明',
-    example: '目录 101 已匹配到章节 101，可在确认后导入。',
+    description: '匹配结果表达码',
+    example: 'ARCHIVE_IMPORT_MATCHED',
     required: true,
     validation: false,
   })
-  message!: string
+  statusCode!: string
 
-  @StringProperty({
-    description: '覆盖提示信息',
-    example:
-      '章节 101 当前已有 18 张图片。确认导入后会用压缩包内容整体覆盖，旧资源首版不会自动删除。',
+  @ObjectProperty({
+    description: '匹配结果表达事实',
+    example: { chapterId: 101, imageCount: 18, path: '101' },
     required: true,
     validation: false,
   })
-  warningMessage!: string
+  statusContext!: Record<string, unknown>
+
+  @NestedProperty({
+    description: '覆盖风险事实；admin 负责表达',
+    nullable: true,
+    required: false,
+    type: WorkflowErrorFactsDto,
+    validation: false,
+  })
+  warning!: WorkflowErrorFactsDto | null
 }
 
 export class ComicArchiveResultItemDto {
@@ -286,13 +303,14 @@ export class ComicArchiveResultItemDto {
   })
   status!: ComicArchiveImportItemStatusEnum
 
-  @StringProperty({
-    description: '执行结果说明',
-    example: '章节 101 导入成功',
-    required: true,
+  @NestedProperty({
+    description: '失败事实；admin 负责表达',
+    nullable: true,
+    required: false,
+    type: WorkflowErrorFactsDto,
     validation: false,
   })
-  message!: string
+  error!: WorkflowErrorFactsDto | null
 }
 
 export class ComicArchiveTaskResponseDto extends ComicArchiveWorkflowJobIdDto {
@@ -358,6 +376,23 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveWorkflowJobIdDto {
   })
   resultItems!: ComicArchiveResultItemDto[]
 
+  @StringProperty({
+    description: '当前进度展示代码；后台根据代码和上下文生成文案',
+    example: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_PROGRESS_UPDATED,
+    required: false,
+    validation: false,
+  })
+  progressCode!: string | null
+
+  @ObjectProperty({
+    description: '当前进度展示上下文',
+    example: { chapterIndex: 1, chapterTotal: 3 },
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  progressContext!: Record<string, unknown> | null
+
   @ObjectProperty({
     description: '结构化进度详情快照；用于展示当前运行中的子进度',
     example: { kind: 'content-import.image', imageIndex: 1, imageTotal: 20 },
@@ -367,13 +402,14 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveWorkflowJobIdDto {
   })
   progressDetail!: Record<string, unknown> | null
 
-  @StringProperty({
-    description: '最后一次错误信息',
-    example: '',
+  @NestedProperty({
+    description: '最后一次错误事实；admin 负责表达',
+    nullable: true,
     required: false,
+    type: WorkflowErrorFactsDto,
     validation: false,
   })
-  lastError?: string | null
+  lastError?: WorkflowErrorFactsDto | null
 
   @DateProperty({
     description: '开始处理时间',

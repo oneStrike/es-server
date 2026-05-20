@@ -35,8 +35,10 @@ export const workflowJob = snakeCase.table(
     status: smallint().notNull(),
     /** 进度百分比。 */
     progressPercent: integer().default(0).notNull(),
-    /** 进度文案。 */
-    progressMessage: varchar({ length: 300 }),
+    /** 当前进度展示代码；后台根据代码和上下文生成文案。 */
+    progressCode: varchar({ length: 120 }),
+    /** 当前进度展示上下文。 */
+    progressContext: jsonb(),
     /** 结构化进度详情快照；用于展示当前运行中的子进度。 */
     progressDetail: jsonb(),
     /** 当前 attempt 内部 ID。 */

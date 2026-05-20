@@ -22,6 +22,15 @@ import { DrizzleService } from '@db/core'
 import { resolveThirdPartyComicImportImageTotals } from '@libs/content/work/third-party/third-party-comic-import-image-total'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import {
+  createWorkflowErrorFactsByCode,
+  toWorkflowErrorColumns,
+  toWorkflowLastErrorColumns,
+  toWorkflowLastErrorView,
+  toWorkflowRetryColumns,
+  toWorkflowRetryView,
+  WorkflowErrorCodeEnum,
+} from '@libs/platform/modules/workflow/workflow-error-facts'
 import { Injectable } from '@nestjs/common'
 import { and, asc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
@@ -130,14 +139,12 @@ export class ContentImportService {
           status: ContentImportItemStatusEnum.PENDING,
           stage: ContentImportItemStageEnum.READING_SOURCE,
           failureCount: 0,
-          lastErrorCode: null,
-          lastErrorMessage: null,
+          ...toWorkflowLastErrorColumns(null),
           lastFailedAt: null,
           nextRetryAt: null,
           autoRetryCount: 0,
           maxAutoRetries: 3,
-          lastRetryReason: null,
-          lastRetryCode: null,
+          ...toWorkflowRetryColumns(null),
           imageTotal: chapterImageTotals[index] ?? 0,
           imageSuccessCount: 0,
           currentAttemptNo: null,
@@ -206,14 +213,12 @@ export class ContentImportService {
           status: ContentImportItemStatusEnum.PENDING,
           stage: ContentImportItemStageEnum.READING_SOURCE,
           failureCount: 0,
-          lastErrorCode: null,
-          lastErrorMessage: null,
+          ...toWorkflowLastErrorColumns(null),
           lastFailedAt: null,
           nextRetryAt: null,
           autoRetryCount: 0,
           maxAutoRetries: 3,
-          lastRetryReason: null,
-          lastRetryCode: null,
+          ...toWorkflowRetryColumns(null),
           imageTotal: plan.imageTotal,
           imageSuccessCount: 0,
           currentAttemptNo: null,
@@ -310,8 +315,7 @@ export class ContentImportService {
         currentAttemptNo: nextAttemptNo,
         nextRetryAt: null,
         autoRetryCount: 0,
-        lastRetryReason: null,
-        lastRetryCode: null,
+        ...toWorkflowRetryColumns(null),
         updatedAt: new Date(),
       })
       .where(
@@ -417,8 +421,7 @@ export class ContentImportService {
         stage: item.stage,
         imageTotal: item.imageTotal,
         imageSuccessCount: 0,
-        errorCode: null,
-        errorMessage: null,
+        ...toWorkflowErrorColumns(null),
         startedAt: new Date(),
         finishedAt: null,
         createdAt: new Date(),
@@ -440,8 +443,7 @@ export class ContentImportService {
         stage: ContentImportItemStageEnum.DONE,
         localChapterId: input.localChapterId ?? undefined,
         ...imageCounters,
-        lastErrorCode: null,
-        lastErrorMessage: null,
+        ...toWorkflowLastErrorColumns(null),
         lastFailedAt: null,
         updatedAt: now,
       })
@@ -471,14 +473,21 @@ export class ContentImportService {
   async markItemFailed(input: ContentImportMarkItemFailedInput) {
     const now = new Date()
     const imageCounters = this.buildImageCounterPatch(input)
+    const lastErrorColumns = toWorkflowLastErrorColumns(
+      input.error,
+      input.errorDiagnostic,
+    )
+    const attemptErrorColumns = toWorkflowErrorColumns(
+      input.error,
+      input.errorDiagnostic,
+    )
     const [item] = await this.db
       .update(this.contentImportItem)
       .set({
         status: ContentImportItemStatusEnum.FAILED,
         stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
         failureCount: sql`${this.contentImportItem.failureCount} + 1`,
-        lastErrorCode: input.errorCode,
-        lastErrorMessage: input.errorMessage,
+        ...lastErrorColumns,
         lastFailedAt: now,
         nextRetryAt: null,
         ...imageCounters,
@@ -495,8 +504,7 @@ export class ContentImportService {
         status: ContentImportItemAttemptStatusEnum.FAILED,
         stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
         ...imageCounters,
-        errorCode: input.errorCode,
-        errorMessage: input.errorMessage,
+        ...attemptErrorColumns,
         finishedAt: now,
         updatedAt: now,
       })
@@ -514,18 +522,25 @@ export class ContentImportService {
   ) {
     const now = new Date()
     const imageCounters = this.buildImageCounterPatch(input)
+    const lastErrorColumns = toWorkflowLastErrorColumns(
+      input.error,
+      input.errorDiagnostic,
+    )
+    const retryColumns = toWorkflowRetryColumns(input.error, input.errorDiagnostic)
+    const attemptErrorColumns = toWorkflowErrorColumns(
+      input.error,
+      input.errorDiagnostic,
+    )
     const [item] = await this.db
       .update(this.contentImportItem)
       .set({
         status: ContentImportItemStatusEnum.RETRYING,
         stage: ContentImportItemStageEnum.READING_SOURCE,
         autoRetryCount: sql`${this.contentImportItem.autoRetryCount} + 1`,
-        lastErrorCode: input.errorCode,
-        lastErrorMessage: input.errorMessage,
+        ...lastErrorColumns,
         lastFailedAt: now,
         nextRetryAt: input.nextRetryAt,
-        lastRetryReason: input.retryReason,
-        lastRetryCode: input.errorCode,
+        ...retryColumns,
         ...imageCounters,
         updatedAt: now,
       })
@@ -540,8 +555,7 @@ export class ContentImportService {
         status: ContentImportItemAttemptStatusEnum.SCHEDULED_RETRY,
         stage: ContentImportItemStageEnum.READING_SOURCE,
         ...imageCounters,
-        errorCode: input.errorCode,
-        errorMessage: input.errorMessage,
+        ...attemptErrorColumns,
         finishedAt: now,
         updatedAt: now,
       })
@@ -558,7 +572,16 @@ export class ContentImportService {
     input: ContentImportMarkItemRetryExhaustedInput,
   ) {
     const now = new Date()
-    const errorCode = 'RATE_LIMIT_RETRY_EXHAUSTED'
+    const error = input.error ?? createWorkflowErrorFactsByCode(
+      WorkflowErrorCodeEnum.CONTENT_IMPORT_RETRY_EXHAUSTED,
+      { itemId: input.itemId },
+    )
+    const lastErrorColumns = toWorkflowLastErrorColumns(
+      error,
+      input.errorDiagnostic,
+    )
+    const retryColumns = toWorkflowRetryColumns(error, input.errorDiagnostic)
+    const attemptErrorColumns = toWorkflowErrorColumns(error, input.errorDiagnostic)
     const imageCounters = this.buildImageCounterPatch(input)
     const [item] = await this.db
       .update(this.contentImportItem)
@@ -566,12 +589,10 @@ export class ContentImportService {
         status: ContentImportItemStatusEnum.FAILED,
         stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
         failureCount: sql`${this.contentImportItem.failureCount} + 1`,
-        lastErrorCode: errorCode,
-        lastErrorMessage: input.errorMessage,
+        ...lastErrorColumns,
         lastFailedAt: now,
         nextRetryAt: null,
-        lastRetryCode: errorCode,
-        lastRetryReason: input.errorMessage,
+        ...retryColumns,
         ...imageCounters,
         updatedAt: now,
       })
@@ -586,8 +607,7 @@ export class ContentImportService {
         status: ContentImportItemAttemptStatusEnum.FAILED,
         stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
         ...imageCounters,
-        errorCode,
-        errorMessage: input.errorMessage,
+        ...attemptErrorColumns,
         finishedAt: now,
         updatedAt: now,
       })
@@ -748,12 +768,12 @@ export class ContentImportService {
   }
 
   // 将残留标记为清理失败。
-  async markResidueCleanupFailed(residueId: string, errorMessage: string) {
+  async markResidueCleanupFailed(residueId: string, cleanupErrorText: string) {
     await this.db
       .update(this.contentImportResidue)
       .set({
         cleanupStatus: ContentImportResidueCleanupStatusEnum.FAILED,
-        cleanupError: errorMessage.slice(0, 500),
+        cleanupError: cleanupErrorText.slice(0, 500),
       })
       .where(eq(this.contentImportResidue.residueId, residueId))
   }
@@ -844,14 +864,21 @@ export class ContentImportService {
       )
     const runningItemIds = runningItems.map((item) => item.id)
     if (runningItemIds.length > 0) {
+      const leaseExpiredError = createWorkflowErrorFactsByCode(
+        WorkflowErrorCodeEnum.ATTEMPT_LEASE_EXPIRED,
+        {
+          expiredAttemptNo,
+          jobId,
+          recoveredAt: now.toISOString(),
+        },
+      )
       await tx
         .update(this.contentImportItem)
         .set({
           status: ContentImportItemStatusEnum.FAILED,
           stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
           failureCount: sql`${this.contentImportItem.failureCount} + 1`,
-          lastErrorCode: 'ATTEMPT_LEASE_EXPIRED',
-          lastErrorMessage: 'workflow attempt claim 已过期',
+          ...toWorkflowLastErrorColumns(leaseExpiredError),
           lastFailedAt: now,
           updatedAt: now,
         })
@@ -861,8 +888,7 @@ export class ContentImportService {
         .set({
           status: ContentImportItemAttemptStatusEnum.FAILED,
           stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
-          errorCode: 'ATTEMPT_LEASE_EXPIRED',
-          errorMessage: 'workflow attempt claim 已过期',
+          ...toWorkflowErrorColumns(leaseExpiredError),
           finishedAt: now,
           updatedAt: now,
         })
@@ -965,13 +991,11 @@ export class ContentImportService {
         status: item.status,
         stage: item.stage,
         failureCount: item.failureCount,
-        lastErrorCode: item.lastErrorCode,
-        lastErrorMessage: item.lastErrorMessage,
+        lastError: toWorkflowLastErrorView(item),
         nextRetryAt: item.nextRetryAt,
         autoRetryCount: item.autoRetryCount,
         maxAutoRetries: item.maxAutoRetries,
-        lastRetryReason: item.lastRetryReason,
-        lastRetryCode: item.lastRetryCode,
+        lastRetry: toWorkflowRetryView(item),
         imageTotal: item.imageTotal,
         imageSuccessCount: item.imageSuccessCount,
         metadata: this.asObjectOrNull(item.metadata),

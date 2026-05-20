@@ -185,6 +185,18 @@ describe('ComicArchiveImportService chapter atomicity', () => {
     ).resolves.toEqual(['uploaded/001.jpg', 'uploaded/002.jpg'])
 
     expect(updateProgress).toHaveBeenNthCalledWith(1, {
+      code: 'ARCHIVE_IMPORT_PROGRESS_UPDATED',
+      context: {
+        kind: 'content-import.image',
+        workflowType: 'content-import.archive-import',
+        itemId: 'item-1',
+        localChapterId: 101,
+        chapterIndex: 2,
+        chapterTotal: 5,
+        imageIndex: 1,
+        imageTotal: 2,
+        title: '第 101 话',
+      },
       detail: {
         kind: 'content-import.image',
         workflowType: 'content-import.archive-import',
@@ -196,15 +208,19 @@ describe('ComicArchiveImportService chapter atomicity', () => {
         imageTotal: 2,
         title: '第 101 话',
       },
-      message: '已导入压缩包章节 2/5 的第 1/2 张图片',
     })
     expect(updateProgress).toHaveBeenNthCalledWith(2, {
+      code: 'ARCHIVE_IMPORT_PROGRESS_UPDATED',
+      context: expect.objectContaining({
+        imageIndex: 2,
+        imageTotal: 2,
+        localChapterId: 101,
+      }),
       detail: expect.objectContaining({
         imageIndex: 2,
         imageTotal: 2,
         localChapterId: 101,
       }),
-      message: '已导入压缩包章节 2/5 的第 2/2 张图片',
     })
   })
 

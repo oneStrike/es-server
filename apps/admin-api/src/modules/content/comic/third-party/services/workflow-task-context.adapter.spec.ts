@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
+import { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
 import { createWorkflowTaskContext } from './workflow-task-context.adapter'
 
 describe('createWorkflowTaskContext', () => {
@@ -39,8 +40,8 @@ describe('createWorkflowTaskContext', () => {
       },
     )
     const reporter = taskContext.createProgressReporter({
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
       endPercent: 95,
-      message: '导入图片',
       startPercent: 10,
       total: 2,
       unit: 'image',
@@ -59,8 +60,8 @@ describe('createWorkflowTaskContext', () => {
 
     expect(progress).toEqual(
       expect.objectContaining({
+        code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
         current: 1,
-        message: '导入图片',
         percent: 53,
         total: 2,
         unit: 'image',
@@ -72,10 +73,21 @@ describe('createWorkflowTaskContext', () => {
       itemId: 'item-1',
     })
     expect(workflowContext.updateProgress).toHaveBeenCalledWith({
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
       counters: {
         failedItemCount: 0,
         skippedItemCount: 0,
         successItemCount: 0,
+      },
+      context: {
+        kind: 'content-import.image',
+        workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+        itemId: 'item-1',
+        providerChapterId: 'chapter-1',
+        chapterIndex: 10,
+        chapterTotal: 61,
+        imageIndex: 19,
+        imageTotal: 21,
       },
       detail: {
         kind: 'content-import.image',
@@ -87,7 +99,6 @@ describe('createWorkflowTaskContext', () => {
         imageIndex: 19,
         imageTotal: 21,
       },
-      message: '导入图片',
       percent: 20,
     })
   })
@@ -109,15 +120,16 @@ describe('createWorkflowTaskContext', () => {
     }
     const taskContext = createWorkflowTaskContext(workflowContext, {})
     const reporter = taskContext.createProgressReporter({
-      message: '读取章节列表',
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
       total: 1,
     })
 
     await reporter.advance({ current: 1 })
 
     expect(workflowContext.updateProgress).toHaveBeenCalledWith({
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
+      context: null,
       detail: null,
-      message: '读取章节列表',
     })
   })
 

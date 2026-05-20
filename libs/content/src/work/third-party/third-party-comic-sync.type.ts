@@ -56,7 +56,7 @@ export type ThirdPartyComicSyncTaskContext = Pick<
   ) => Promise<void>
   markUploadedFileResidueCleanupFailed: (
     uploadedFile: UploadDeleteTarget,
-    errorMessage: string,
+    cleanupErrorText: string,
   ) => Promise<void>
   markUploadedResiduesCleaned: () => Promise<void>
   initializeItemImageProgress?: (imageTotal: number) => Promise<void>

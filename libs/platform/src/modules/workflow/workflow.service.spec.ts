@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { BusinessException } from '@libs/platform/exceptions'
 import { WorkflowCancellationError } from './workflow-cancellation'
+import { WorkflowErrorCodeEnum } from './workflow-error-facts'
 import {
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
@@ -25,7 +26,12 @@ describe('WorkflowService state machine', () => {
         claimedBy: 'claimedBy',
         createdAt: 'attemptCreatedAt',
         errorCode: 'errorCode',
-        errorMessage: 'errorMessage',
+        errorContext: 'errorContext',
+        errorDiagnostic: 'errorDiagnostic',
+        errorDomain: 'errorDomain',
+        errorRetryable: 'errorRetryable',
+        errorSeverity: 'errorSeverity',
+        errorStage: 'errorStage',
         failedItemCount: 'attemptFailedItemCount',
         finishedAt: 'attemptFinishedAt',
         heartbeatAt: 'heartbeatAt',
@@ -52,9 +58,9 @@ describe('WorkflowService state machine', () => {
       workflowEvent: {
         createdAt: 'eventCreatedAt',
         detail: 'detail',
+        eventCode: 'eventCode',
         eventType: 'eventType',
         id: 'eventId',
-        message: 'message',
         workflowAttemptId: 'eventWorkflowAttemptId',
         workflowJobId: 'eventWorkflowJobId',
       },
@@ -71,8 +77,9 @@ describe('WorkflowService state machine', () => {
         jobId: 'jobId',
         operatorType: 'operatorType',
         operatorUserId: 'operatorUserId',
+        progressCode: 'progressCode',
+        progressContext: 'progressContext',
         progressDetail: 'progressDetail',
-        progressMessage: 'progressMessage',
         progressPercent: 'progressPercent',
         selectedItemCount: 'selectedItemCount',
         skippedItemCount: 'skippedItemCount',
@@ -100,8 +107,9 @@ describe('WorkflowService state machine', () => {
       jobId: 'job-1',
       operatorType: WorkflowOperatorTypeEnum.ADMIN,
       operatorUserId: 7,
+      progressCode: null,
+      progressContext: null,
       progressDetail: null,
-      progressMessage: null,
       progressPercent: 0,
       selectedItemCount: 2,
       skippedItemCount: 0,
@@ -123,7 +131,12 @@ describe('WorkflowService state machine', () => {
       claimedBy: 'worker-1',
       createdAt: baseDate,
       errorCode: null,
-      errorMessage: null,
+      errorContext: null,
+      errorDiagnostic: null,
+      errorDomain: null,
+      errorRetryable: null,
+      errorSeverity: null,
+      errorStage: null,
       failedItemCount: 0,
       finishedAt: null,
       heartbeatAt: baseDate,
@@ -145,9 +158,9 @@ describe('WorkflowService state machine', () => {
     return {
       createdAt: baseDate,
       detail: null,
+      eventCode: 'WORKFLOW_ATTEMPT_COMPLETED',
       eventType: WorkflowEventTypeEnum.ATTEMPT_COMPLETED,
       id: 20n,
-      message: '工作流 attempt 已完成',
       workflowAttemptId: 10n,
       workflowJobId: 1n,
       ...overrides,
@@ -445,8 +458,8 @@ describe('WorkflowService state machine', () => {
       createdAt: baseDate,
       detail: { itemId: 'item-1' },
       eventType: WorkflowEventTypeEnum.ITEM_SUCCEEDED,
+      eventCode: 'WORKFLOW_ITEM_SUCCEEDED',
       id: 20n,
-      message: '章节导入成功',
       workflowAttemptId: attempt.id,
       workflowJobId: job.id,
     }
@@ -483,7 +496,7 @@ describe('WorkflowService state machine', () => {
             attemptId: string | null
             attemptNo: number | null
             eventType: WorkflowEventTypeEnum
-            message: string
+            eventCode: string
           }>
           pageIndex: number
           pageSize: number
@@ -507,8 +520,8 @@ describe('WorkflowService state machine', () => {
       expect.objectContaining({
         attemptId: 'attempt-1',
         attemptNo: 1,
+        eventCode: 'WORKFLOW_ITEM_SUCCEEDED',
         eventType: WorkflowEventTypeEnum.ITEM_SUCCEEDED,
-        message: '章节导入成功',
       }),
     )
     expect(findPagination).toHaveBeenCalledWith(
@@ -760,18 +773,24 @@ describe('WorkflowService state machine', () => {
         updateProgressForAttempt: (
           job: ReturnType<typeof createWorkflowJob>,
           attempt: ReturnType<typeof createWorkflowAttempt>,
-          progress: { message: string; percent: number },
+          progress: {
+            code: WorkflowErrorCodeEnum
+            context: Record<string, unknown>
+            percent: number
+          },
         ) => Promise<void>
       }
     ).updateProgressForAttempt(job, attempt, {
-      message: '下载第 43 话图片 1/100',
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
+      context: { imageIndex: 43, imageTotal: 100 },
       percent: 10,
     })
 
     expect(updateSets).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          progressMessage: '下载第 43 话图片 1/100',
+          progressCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
+          progressContext: { imageIndex: 43, imageTotal: 100 },
           progressPercent: 10,
         }),
       ]),
@@ -807,7 +826,8 @@ describe('WorkflowService state machine', () => {
               skippedItemCount: number
               successItemCount: number
             }
-            message: string
+            code: WorkflowErrorCodeEnum
+            context: Record<string, unknown>
             percent: number
           },
         ) => Promise<void>
@@ -818,7 +838,8 @@ describe('WorkflowService state machine', () => {
         skippedItemCount: 0,
         successItemCount: 1,
       },
-      message: '章节导入进度已更新',
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
+      context: { completedItemCount: 1, selectedItemCount: 2 },
       percent: 50,
     })
 
@@ -826,7 +847,8 @@ describe('WorkflowService state machine', () => {
     expect(updateSets[0]).toEqual(
       expect.objectContaining({
         failedItemCount: 0,
-        progressMessage: '章节导入进度已更新',
+        progressCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
+        progressContext: { completedItemCount: 1, selectedItemCount: 2 },
         progressPercent: 50,
         skippedItemCount: 0,
         successItemCount: 1,
@@ -862,21 +884,29 @@ describe('WorkflowService state machine', () => {
         updateProgressForAttempt: (
           job: ReturnType<typeof createWorkflowJob>,
           attempt: ReturnType<typeof createWorkflowAttempt>,
-          progress: { detail: Record<string, unknown>; message: string },
+          progress: {
+            code: WorkflowErrorCodeEnum
+            context: Record<string, unknown>
+            detail: Record<string, unknown>
+          },
         ) => Promise<void>
       }
     ).updateProgressForAttempt(job, attempt, {
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
+      context: progressDetail,
       detail: progressDetail,
-      message: '正在导入图片 19/21',
     })
 
     const jobUpdate = updateSets.find(
-      (item) => item.progressMessage === '正在导入图片 19/21',
+      (item) =>
+        item.progressCode ===
+        WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
     )
     expect(jobUpdate).toEqual(
       expect.objectContaining({
+        progressCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
+        progressContext: progressDetail,
         progressDetail,
-        progressMessage: '正在导入图片 19/21',
       }),
     )
     expect(jobUpdate).not.toHaveProperty('progressPercent')
@@ -918,7 +948,7 @@ describe('WorkflowService state machine', () => {
     )
   })
 
-  it('keeps the task progress percent when only the current item message changes', async () => {
+  it('keeps the task progress percent when only the current item code changes', async () => {
     const job = createWorkflowJob({
       currentAttemptFk: 10n,
       progressPercent: 50,
@@ -936,28 +966,34 @@ describe('WorkflowService state machine', () => {
         updateProgressForAttempt: (
           job: ReturnType<typeof createWorkflowJob>,
           attempt: ReturnType<typeof createWorkflowAttempt>,
-          progress: { message: string },
+          progress: {
+            code: WorkflowErrorCodeEnum
+            context: Record<string, unknown>
+          },
         ) => Promise<void>
       }
     ).updateProgressForAttempt(job, attempt, {
-      message: '正在导入第 2/4 个章节的图片',
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
+      context: { completedItemCount: 2, selectedItemCount: 4 },
     })
 
     const jobUpdate = updateSets.find(
-      (item) => item.progressMessage === '正在导入第 2/4 个章节的图片',
+      (item) =>
+        item.progressCode === WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
     )
     expect(jobUpdate).toEqual(
       expect.objectContaining({
-        progressMessage: '正在导入第 2/4 个章节的图片',
+        progressCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
+        progressContext: { completedItemCount: 2, selectedItemCount: 4 },
       }),
     )
     expect(jobUpdate).not.toHaveProperty('progressPercent')
   })
 
-  it('keeps the current item message when only the task progress percent changes', async () => {
+  it('keeps the current item code when only the task progress percent changes', async () => {
     const job = createWorkflowJob({
       currentAttemptFk: 10n,
-      progressMessage: '正在导入图片 1/10',
+      progressCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
       status: WorkflowJobStatusEnum.RUNNING,
     })
     const attempt = createWorkflowAttempt({
@@ -985,7 +1021,7 @@ describe('WorkflowService state machine', () => {
         progressPercent: 50,
       }),
     )
-    expect(jobUpdate).not.toHaveProperty('progressMessage')
+    expect(jobUpdate).not.toHaveProperty('progressCode')
   })
 
   it('ignores progress updates after the attempt loses ownership', async () => {
@@ -1005,16 +1041,19 @@ describe('WorkflowService state machine', () => {
         updateProgressForAttempt: (
           job: ReturnType<typeof createWorkflowJob>,
           attempt: ReturnType<typeof createWorkflowAttempt>,
-          progress: { detail: Record<string, unknown>; message: string },
+          progress: {
+            code: WorkflowErrorCodeEnum
+            detail: Record<string, unknown>
+          },
         ) => Promise<void>
       }
     ).updateProgressForAttempt(job, attempt, {
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
       detail: {
         kind: 'content-import.image',
         imageIndex: 1,
         imageTotal: 2,
       },
-      message: '迟到的图片进度',
     })
 
     expect(updateSets).toHaveLength(0)
@@ -1038,16 +1077,19 @@ describe('WorkflowService state machine', () => {
         updateProgressForAttempt: (
           job: ReturnType<typeof createWorkflowJob>,
           attempt: ReturnType<typeof createWorkflowAttempt>,
-          progress: { detail: Record<string, unknown>; message: string },
+          progress: {
+            code: WorkflowErrorCodeEnum
+            detail: Record<string, unknown>
+          },
         ) => Promise<void>
       }
     ).updateProgressForAttempt(job, attempt, {
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
       detail: {
         kind: 'content-import.image',
         imageIndex: 2,
         imageTotal: 3,
       },
-      message: '取消后的图片进度',
     })
 
     expect(updateSets).toHaveLength(0)
@@ -2042,6 +2084,14 @@ describe('WorkflowService state machine', () => {
       expect.arrayContaining([
         expect.objectContaining({
           errorCode: 'ATTEMPT_LEASE_EXPIRED',
+          errorContext: expect.objectContaining({
+            attemptId: 'attempt-1',
+            jobId: 'job-1',
+          }),
+          errorDomain: 'workflow',
+          errorRetryable: false,
+          errorSeverity: 'error',
+          errorStage: 'lease-recovery',
           status: WorkflowAttemptStatusEnum.FAILED,
         }),
         expect.objectContaining({

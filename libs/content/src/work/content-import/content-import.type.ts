@@ -6,6 +6,11 @@ import type {
   HydratedThirdPartyComicImportRequest,
 } from '@libs/content/work/third-party/third-party-comic-import.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
+import type {
+  WorkflowErrorDiagnosticInput,
+  WorkflowErrorFacts,
+  WorkflowErrorFactsInput,
+} from '@libs/platform/modules/workflow/workflow-error-facts'
 
 /** 创建三方导入领域任务入参。 */
 export interface CreateThirdPartyImportContentJobInput {
@@ -69,8 +74,8 @@ export interface ContentImportMarkItemSuccessInput {
 export interface ContentImportMarkItemFailedInput {
   itemId: string
   attemptNo: number
-  errorCode: string
-  errorMessage: string
+  error: WorkflowErrorFacts | WorkflowErrorFactsInput
+  errorDiagnostic?: WorkflowErrorDiagnosticInput | null
   imageTotal?: number
   imageSuccessCount?: number
 }
@@ -86,9 +91,8 @@ export interface ContentImportMarkItemRateLimitRetryingInput {
   itemId: string
   attemptNo: number
   nextRetryAt: Date
-  errorCode: string
-  errorMessage: string
-  retryReason: string
+  error: WorkflowErrorFacts | WorkflowErrorFactsInput
+  errorDiagnostic?: WorkflowErrorDiagnosticInput | null
   imageTotal?: number
   imageSuccessCount?: number
 }
@@ -97,7 +101,8 @@ export interface ContentImportMarkItemRateLimitRetryingInput {
 export interface ContentImportMarkItemRetryExhaustedInput {
   itemId: string
   attemptNo: number
-  errorMessage: string
+  error?: WorkflowErrorFacts | WorkflowErrorFactsInput
+  errorDiagnostic?: WorkflowErrorDiagnosticInput | null
   imageTotal?: number
   imageSuccessCount?: number
 }

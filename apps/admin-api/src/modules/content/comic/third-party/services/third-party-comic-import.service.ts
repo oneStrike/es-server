@@ -59,6 +59,7 @@ import {
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
 import { WorkflowOperatorTypeEnum } from '@libs/platform/modules/workflow/workflow.constant'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
@@ -290,7 +291,9 @@ export class ThirdPartyComicImportService {
 
     await context.updateProgress({
       percent: 100,
-      message: '第三方漫画导入完成',
+      code: WorkflowErrorCodeEnum.THIRD_PARTY_IMPORT_COMPLETED,
+      context: { workflowType: context.workflowType },
+      detail: null,
     })
 
     return {
@@ -366,6 +369,7 @@ export class ThirdPartyComicImportService {
     chapterPlans: ThirdPartyComicChapterImportPlan[],
   ) {
     return context.createProgressReporter({
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
       startPercent: 10,
       endPercent: 95,
       total: this.countPlannedImages(chapterPlans),
@@ -652,7 +656,6 @@ export class ThirdPartyComicImportService {
       async (importedFile) => {
         await this.recordUploadedFile(context, importedFile.deleteTarget)
         await imageProgressReporter.advance({
-          message: `已导入第 ${chapterPlan.chapterIndex}/${chapterPlan.chapterTotal} 个章节的第 ${importedFile.imageIndex}/${importedFile.imageTotal} 张图片`,
           detail: this.toImageProgressDetail(chapterPlan, importedFile),
         })
       },

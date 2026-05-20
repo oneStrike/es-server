@@ -28,6 +28,10 @@ import {
   WorkflowCancellationError,
 } from '@libs/platform/modules/workflow/workflow-cancellation'
 import {
+  createWorkflowErrorFactsByCode,
+  WorkflowErrorCodeEnum,
+} from '@libs/platform/modules/workflow/workflow-error-facts'
+import {
   WorkflowAttemptStatusEnum,
   WorkflowEventTypeEnum,
 } from '@libs/platform/modules/workflow/workflow.constant'
@@ -35,6 +39,8 @@ import { WorkflowRegistry } from '@libs/platform/modules/workflow/workflow.regis
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ThirdPartyComicImportService } from './third-party-comic-import.service'
 import { createWorkflowTaskContext } from './workflow-task-context.adapter'
+
+type ContentImportTaskProgressState = 'cancelled' | 'prepare-failed' | 'updated'
 
 /** 第三方漫画导入 workflow 处理器。 */
 @Injectable()
@@ -144,7 +150,7 @@ export class ThirdPartyComicImportWorkflowHandler
         .rollbackImportTask(preparationContext, error)
         .catch(() => undefined)
       if (isWorkflowCancellationError(error)) {
-        await this.throwCancelledAttempt(context, '章节导入已取消', error)
+        await this.throwCancelledAttempt(context, 'cancelled', error)
       }
       await context.assertStillOwned()
       for (const item of items) {
@@ -156,8 +162,15 @@ export class ThirdPartyComicImportWorkflowHandler
         await this.contentImportService.markItemFailed({
           itemId: item.itemId,
           attemptNo: context.attemptNo,
-          errorCode: 'THIRD_PARTY_IMPORT_PREPARE_FAILED',
-          errorMessage: this.stringifyError(error),
+          error: createWorkflowErrorFactsByCode(
+            WorkflowErrorCodeEnum.THIRD_PARTY_RESOURCE_PARSE_FAILED,
+            {
+              itemId: item.itemId,
+              providerChapterId: item.providerChapterId,
+              source: 'third-party-import-prepare',
+            },
+          ),
+          errorDiagnostic: { error, source: 'third-party-import-prepare' },
         })
       }
       const counters = await this.contentImportService.aggregateJob(
@@ -167,14 +180,17 @@ export class ThirdPartyComicImportWorkflowHandler
         context.jobId,
         context.attemptNo,
       )
-      await this.updateTaskProgress(context, counters, '章节导入准备失败')
+      await this.updateTaskProgress(context, counters, 'prepare-failed')
       await context.assertStillOwned()
       await context.completeAttempt({
         status: WorkflowAttemptStatusEnum.FAILED,
         jobCounters: this.toWorkflowCounters(counters),
         attemptCounters: this.toWorkflowCounters(attemptCounters),
-        errorCode: 'THIRD_PARTY_IMPORT_PREPARE_FAILED',
-        errorMessage: this.stringifyError(error),
+        error: createWorkflowErrorFactsByCode(
+          WorkflowErrorCodeEnum.THIRD_PARTY_RESOURCE_PARSE_FAILED,
+          { jobId: context.jobId, source: 'third-party-import-prepare' },
+        ),
+        errorDiagnostic: { error, source: 'third-party-import-prepare' },
       })
       return
     }
@@ -190,7 +206,7 @@ export class ThirdPartyComicImportWorkflowHandler
         await context.assertNotCancelled()
       } catch (error) {
         if (isWorkflowCancellationError(error)) {
-          await this.throwCancelledAttempt(context, '章节导入已取消', error)
+          await this.throwCancelledAttempt(context, 'cancelled', error)
         }
         throw error
       }
@@ -235,21 +251,23 @@ export class ThirdPartyComicImportWorkflowHandler
         await context.assertStillOwned()
         await context.appendEvent(
           WorkflowEventTypeEnum.ITEM_SUCCEEDED,
-          `章节「${chapter.title}」导入成功`,
-          { itemId: item.itemId, providerChapterId: chapter.providerChapterId },
+          'CONTENT_IMPORT_ITEM_SUCCEEDED',
+          {
+            itemId: item.itemId,
+            providerChapterId: chapter.providerChapterId,
+            title: chapter.title,
+          },
         )
-        await this.refreshTaskProgress(context, '章节导入进度已更新')
+        await this.refreshTaskProgress(context, 'updated')
       } catch (error) {
-        let errorMessage = this.stringifyError(error)
+        let rollbackError: unknown
         try {
           await this.importService.rollbackImportTask(itemContext, error)
-        } catch (rollbackError) {
-          errorMessage = `${errorMessage}; cleanup=${this.stringifyError(
-            rollbackError,
-          )}`
+        } catch (caughtRollbackError) {
+          rollbackError = caughtRollbackError
         }
         if (isWorkflowCancellationError(error)) {
-          await this.throwCancelledAttempt(context, '章节导入已取消', error)
+          await this.throwCancelledAttempt(context, 'cancelled', error)
         }
         await context.assertStillOwned()
         const rateLimit = readThirdPartyRateLimit(error)
@@ -259,57 +277,93 @@ export class ThirdPartyComicImportWorkflowHandler
             itemId: item.itemId,
             attemptNo: context.attemptNo,
             nextRetryAt,
-            errorCode: this.resolveRateLimitCode(rateLimit),
-            errorMessage,
-            retryReason: rateLimit.reason,
+            error: createWorkflowErrorFactsByCode(
+              WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+              {
+                itemId: item.itemId,
+                nextRetryAt: nextRetryAt.toISOString(),
+                providerChapterId: chapter.providerChapterId,
+                providerCode: this.resolveRateLimitCode(rateLimit),
+                reason: rateLimit.reason,
+                title: chapter.title,
+              },
+            ),
+            errorDiagnostic: {
+              diagnostic: { rollbackError },
+              error,
+              source: 'third-party-import-rate-limit',
+            },
           })
           await context.appendEvent(
             WorkflowEventTypeEnum.ITEM_FAILED,
-            `章节「${chapter.title}」遇到限流，已安排自动重试`,
+            'CONTENT_IMPORT_RATE_LIMITED_RETRY_SCHEDULED',
             {
               itemId: item.itemId,
               providerChapterId: chapter.providerChapterId,
               nextRetryAt: nextRetryAt.toISOString(),
-              errorMessage,
+              reason: rateLimit.reason,
             },
           )
-          await this.refreshTaskProgress(context, '章节导入进度已更新')
+          await this.refreshTaskProgress(context, 'updated')
           continue
         }
         if (rateLimit) {
           await this.contentImportService.markItemRetryExhausted({
             itemId: item.itemId,
             attemptNo: context.attemptNo,
-            errorMessage,
+            error: createWorkflowErrorFactsByCode(
+              WorkflowErrorCodeEnum.CONTENT_IMPORT_RETRY_EXHAUSTED,
+              {
+                itemId: item.itemId,
+                providerChapterId: chapter.providerChapterId,
+                title: chapter.title,
+              },
+            ),
+            errorDiagnostic: {
+              diagnostic: { rollbackError },
+              error,
+              source: 'third-party-import-retry-exhausted',
+            },
           })
           await context.appendEvent(
             WorkflowEventTypeEnum.ITEM_FAILED,
-            `章节「${chapter.title}」限流自动重试已耗尽，已跳过自动重试`,
+            'CONTENT_IMPORT_RETRY_EXHAUSTED',
             {
               itemId: item.itemId,
               providerChapterId: chapter.providerChapterId,
-              errorMessage,
+              title: chapter.title,
             },
           )
-          await this.refreshTaskProgress(context, '章节导入进度已更新')
+          await this.refreshTaskProgress(context, 'updated')
           continue
         }
         await this.contentImportService.markItemFailed({
           itemId: item.itemId,
           attemptNo: context.attemptNo,
-          errorCode: 'THIRD_PARTY_IMPORT_CHAPTER_FAILED',
-          errorMessage,
+          error: createWorkflowErrorFactsByCode(
+            WorkflowErrorCodeEnum.THIRD_PARTY_CHAPTER_IMPORT_FAILED,
+            {
+              chapterTitle: chapter.title,
+              itemId: item.itemId,
+              providerChapterId: chapter.providerChapterId,
+            },
+          ),
+          errorDiagnostic: {
+            diagnostic: { rollbackError },
+            error,
+            source: 'third-party-import-chapter',
+          },
         })
         await context.appendEvent(
           WorkflowEventTypeEnum.ITEM_FAILED,
-          `章节「${chapter.title}」导入失败`,
+          'THIRD_PARTY_CHAPTER_IMPORT_FAILED',
           {
             itemId: item.itemId,
             providerChapterId: chapter.providerChapterId,
-            errorMessage,
+            title: chapter.title,
           },
         )
-        await this.refreshTaskProgress(context, '章节导入进度已更新')
+        await this.refreshTaskProgress(context, 'updated')
       }
     }
 
@@ -415,23 +469,28 @@ export class ThirdPartyComicImportWorkflowHandler
   // 用服务端持久化的图片计数刷新 workflow 任务级进度。
   private async refreshTaskProgress(
     context: WorkflowExecuteContext,
-    progressPrefix: string,
+    progressState: ContentImportTaskProgressState,
   ) {
     const counters = await this.contentImportService.aggregateJobWithRetryState(
       context.jobId,
     )
-    await this.updateTaskProgress(context, counters, progressPrefix)
+    await this.updateTaskProgress(context, counters, progressState)
   }
 
   // 刷新任务级进度；有图片分母时进度只由成功图片数推进。
   private async updateTaskProgress(
     context: WorkflowExecuteContext,
     counters: ContentImportAttemptCounters,
-    progressPrefix: string,
+    progressState: ContentImportTaskProgressState,
   ) {
     await context.updateProgress({
       percent: this.resolveTaskProgressPercent(counters),
-      message: this.resolveTaskProgressMessage(counters, progressPrefix),
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
+      context: this.resolveTaskProgressContext(
+        counters,
+        context.workflowType,
+        progressState,
+      ),
       counters: this.toWorkflowCounters(counters),
     })
   }
@@ -439,7 +498,7 @@ export class ThirdPartyComicImportWorkflowHandler
   // 取消中断时刷新任务进度，并携带真实计数交给 workflow 聚合终态。
   private async throwCancelledAttempt(
     context: WorkflowExecuteContext,
-    progressPrefix: string,
+    progressState: ContentImportTaskProgressState,
     cause: unknown,
   ): Promise<never> {
     await context.assertStillOwned()
@@ -448,7 +507,7 @@ export class ThirdPartyComicImportWorkflowHandler
       context.jobId,
       context.attemptNo,
     )
-    await this.updateTaskProgress(context, counters, progressPrefix)
+    await this.updateTaskProgress(context, counters, progressState)
     await context.assertStillOwned()
     throw new WorkflowCancellationError({
       jobCounters: this.toWorkflowCounters(counters),
@@ -485,27 +544,31 @@ export class ThirdPartyComicImportWorkflowHandler
     )
   }
 
-  private resolveTaskProgressMessage(
+  private resolveTaskProgressContext(
     counters: ContentImportAttemptCounters,
-    progressPrefix: string,
+    workflowType: string,
+    progressState: ContentImportTaskProgressState,
   ) {
     const selectedItemCount = Math.max(0, counters.selectedItemCount ?? 0)
     const completedItemCount =
       counters.successItemCount +
       counters.failedItemCount +
       counters.skippedItemCount
-    const chapterProgress = `${Math.min(
-      selectedItemCount,
-      completedItemCount,
-    )}/${selectedItemCount}`
     const imageTotal = Math.max(0, counters.imageTotal ?? 0)
-    if (imageTotal > 0) {
-      return `${progressPrefix}: 图片 ${Math.min(
+    return {
+      completedItemCount: Math.min(selectedItemCount, completedItemCount),
+      failedItemCount: counters.failedItemCount,
+      imageSuccessCount: Math.min(
         imageTotal,
         Math.max(0, counters.imageSuccessCount ?? 0),
-      )}/${imageTotal}，章节 ${chapterProgress}`
+      ),
+      imageTotal,
+      progressState,
+      selectedItemCount,
+      skippedItemCount: counters.skippedItemCount,
+      successItemCount: counters.successItemCount,
+      workflowType,
     }
-    return `${progressPrefix}: ${chapterProgress}`
   }
 
   // 将未知异常转换为可持久化的错误文本。

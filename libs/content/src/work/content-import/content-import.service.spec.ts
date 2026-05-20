@@ -1,6 +1,9 @@
 /// <reference types="jest" />
 
 import {
+  WorkflowErrorCodeEnum,
+} from '@libs/platform/modules/workflow/workflow-error-facts'
+import {
   ContentImportItemAttemptStatusEnum,
   ContentImportItemStageEnum,
   ContentImportItemStatusEnum,
@@ -23,10 +26,16 @@ describe('ContentImportService retry scheduling', () => {
         imageTotal: 'imageTotal',
         itemId: 'itemId',
         lastErrorCode: 'lastErrorCode',
-        lastErrorMessage: 'lastErrorMessage',
+        lastErrorContext: 'lastErrorContext',
+        lastErrorDiagnostic: 'lastErrorDiagnostic',
+        lastErrorDomain: 'lastErrorDomain',
+        lastErrorRetryable: 'lastErrorRetryable',
+        lastErrorSeverity: 'lastErrorSeverity',
+        lastErrorStage: 'lastErrorStage',
         lastFailedAt: 'lastFailedAt',
         lastRetryCode: 'lastRetryCode',
-        lastRetryReason: 'lastRetryReason',
+        lastRetryContext: 'lastRetryContext',
+        lastRetryDiagnostic: 'lastRetryDiagnostic',
         maxAutoRetries: 'maxAutoRetries',
         nextRetryAt: 'nextRetryAt',
         sortOrder: 'sortOrder',
@@ -38,7 +47,12 @@ describe('ContentImportService retry scheduling', () => {
         attemptNo: 'attemptNo',
         contentImportItemId: 'contentImportItemId',
         errorCode: 'errorCode',
-        errorMessage: 'errorMessage',
+        errorContext: 'errorContext',
+        errorDiagnostic: 'errorDiagnostic',
+        errorDomain: 'errorDomain',
+        errorRetryable: 'errorRetryable',
+        errorSeverity: 'errorSeverity',
+        errorStage: 'errorStage',
         finishedAt: 'finishedAt',
         imageSuccessCount: 'attemptImageSuccessCount',
         imageTotal: 'attemptImageTotal',
@@ -115,25 +129,33 @@ describe('ContentImportService retry scheduling', () => {
 
     await service.markItemRateLimitRetrying({
       attemptNo: 1,
-      errorCode: 'HTTP_429',
-      errorMessage: 'rate limited',
+      error: {
+        code: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+        context: { itemId: 'item-1', nextRetryAt: now.toISOString() },
+      },
+      errorDiagnostic: { error: new Error('rate limited'), source: 'unit-test' },
       itemId: 'item-1',
       nextRetryAt: now,
-      retryReason: '限流，请稍后重试',
     })
 
     expect(updateSets).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           autoRetryCount: expect.anything(),
-          lastRetryCode: 'HTTP_429',
-          lastRetryReason: '限流，请稍后重试',
+          lastRetryCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+          lastRetryContext: {
+            itemId: 'item-1',
+            nextRetryAt: now.toISOString(),
+          },
           nextRetryAt: now,
           status: ContentImportItemStatusEnum.RETRYING,
         }),
         expect.objectContaining({
-          errorCode: 'HTTP_429',
-          errorMessage: 'rate limited',
+          errorCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+          errorDiagnostic: expect.objectContaining({
+            error: expect.objectContaining({ message: 'rate limited' }),
+            source: 'unit-test',
+          }),
           status: ContentImportItemAttemptStatusEnum.SCHEDULED_RETRY,
         }),
       ]),
@@ -159,11 +181,13 @@ describe('ContentImportService retry scheduling', () => {
 
     await service.markItemRateLimitRetrying({
       attemptNo: 1,
-      errorCode: 'HTTP_429',
-      errorMessage: 'rate limited',
+      error: {
+        code: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+        context: { itemId: 'item-1', nextRetryAt: now.toISOString() },
+      },
+      errorDiagnostic: { error: new Error('rate limited'), source: 'unit-test' },
       itemId: 'item-1',
       nextRetryAt: now,
-      retryReason: '限流，请稍后重试',
     })
 
     expect(updateSets[0]).not.toHaveProperty('imageTotal')
@@ -189,7 +213,10 @@ describe('ContentImportService retry scheduling', () => {
 
     await service.markItemRetryExhausted({
       attemptNo: 4,
-      errorMessage: 'rate limited again',
+      errorDiagnostic: {
+        error: new Error('rate limited again'),
+        source: 'unit-test',
+      },
       itemId: 'item-1',
       imageSuccessCount: 0,
       imageTotal: 0,
@@ -198,12 +225,12 @@ describe('ContentImportService retry scheduling', () => {
     expect(updateSets).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          lastErrorCode: 'RATE_LIMIT_RETRY_EXHAUSTED',
+          lastErrorCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_RETRY_EXHAUSTED,
           nextRetryAt: null,
           status: ContentImportItemStatusEnum.FAILED,
         }),
         expect.objectContaining({
-          errorCode: 'RATE_LIMIT_RETRY_EXHAUSTED',
+          errorCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_RETRY_EXHAUSTED,
           status: ContentImportItemAttemptStatusEnum.FAILED,
         }),
       ]),
@@ -229,7 +256,10 @@ describe('ContentImportService retry scheduling', () => {
 
     await service.markItemRetryExhausted({
       attemptNo: 4,
-      errorMessage: 'rate limited again',
+      errorDiagnostic: {
+        error: new Error('rate limited again'),
+        source: 'unit-test',
+      },
       itemId: 'item-1',
     })
 
@@ -256,8 +286,11 @@ describe('ContentImportService retry scheduling', () => {
 
     await service.markItemFailed({
       attemptNo: 1,
-      errorCode: 'IMPORT_FAILED',
-      errorMessage: 'failed',
+      error: {
+        code: WorkflowErrorCodeEnum.CONTENT_IMPORT_ITEM_FAILED,
+        context: { itemId: 'item-1' },
+      },
+      errorDiagnostic: { error: new Error('failed'), source: 'unit-test' },
       itemId: 'item-1',
     })
 
@@ -292,9 +325,16 @@ describe('ContentImportService retry scheduling', () => {
             itemId: 'item-1',
             itemType: 1,
             lastErrorCode: null,
-            lastErrorMessage: null,
-            lastRetryCode: 'HTTP_429',
-            lastRetryReason: '限流',
+            lastErrorContext: null,
+            lastErrorDomain: null,
+            lastErrorRetryable: null,
+            lastErrorSeverity: null,
+            lastErrorStage: null,
+            lastRetryCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+            lastRetryContext: {
+              itemId: 'item-1',
+              nextRetryAt: now.toISOString(),
+            },
             localChapterId: null,
             maxAutoRetries: 3,
             metadata: null,
@@ -322,8 +362,13 @@ describe('ContentImportService retry scheduling', () => {
     expect(page.list[0]).toEqual(
       expect.objectContaining({
         autoRetryCount: 2,
-        lastRetryCode: 'HTTP_429',
-        lastRetryReason: '限流',
+        lastRetry: expect.objectContaining({
+          code: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+          context: {
+            itemId: 'item-1',
+            nextRetryAt: now.toISOString(),
+          },
+        }),
         maxAutoRetries: 3,
         nextRetryAt: now,
       }),
