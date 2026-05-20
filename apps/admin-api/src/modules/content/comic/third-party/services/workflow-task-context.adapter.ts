@@ -34,7 +34,9 @@ export function createWorkflowTaskContext<
     assertNotCancelled: workflowContext.assertNotCancelled,
     assertStillOwned: workflowContext.assertStillOwned,
     updateProgress: workflowContext.updateProgress,
-    createProgressReporter: (progressOptions: ThirdPartyComicImportProgressReporterOptions) =>
+    createProgressReporter: (
+      progressOptions: ThirdPartyComicImportProgressReporterOptions,
+    ) =>
       createWorkflowProgressReporter(workflowContext, progressOptions, options),
     recordResidue: async (patch: WorkflowTaskContextResiduePatch<TResidue>) => {
       await recordUploadedFileResidues(
@@ -50,8 +52,12 @@ export function createWorkflowTaskContext<
       }
     },
     getResidue: async () => residue,
-    markUploadedFileResidueCleaned: async (uploadedFile: UploadDeleteTarget) => {
-      const residueId = uploadedResidueIds.get(toUploadedFileResidueKey(uploadedFile))
+    markUploadedFileResidueCleaned: async (
+      uploadedFile: UploadDeleteTarget,
+    ) => {
+      const residueId = uploadedResidueIds.get(
+        toUploadedFileResidueKey(uploadedFile),
+      )
       if (residueId) {
         await options.contentImportService?.markResiduesCleaned([residueId])
       }
@@ -60,7 +66,9 @@ export function createWorkflowTaskContext<
       uploadedFile: UploadDeleteTarget,
       errorMessage: string,
     ) => {
-      const residueId = uploadedResidueIds.get(toUploadedFileResidueKey(uploadedFile))
+      const residueId = uploadedResidueIds.get(
+        toUploadedFileResidueKey(uploadedFile),
+      )
       if (residueId) {
         await options.contentImportService?.markResidueCleanupFailed(
           residueId,
@@ -77,7 +85,9 @@ export function createWorkflowTaskContext<
 }
 
 // 将新追加的上传残留持久化，避免 worker 崩溃后只剩内存记录。
-async function recordUploadedFileResidues<TResidue extends WorkflowTaskContextResidue>(
+async function recordUploadedFileResidues<
+  TResidue extends WorkflowTaskContextResidue,
+>(
   workflowContext: WorkflowExecutionContext,
   currentResidue: TResidue,
   patch: WorkflowTaskContextResiduePatch<TResidue>,
@@ -98,12 +108,13 @@ async function recordUploadedFileResidues<TResidue extends WorkflowTaskContextRe
     if (currentKeys.has(key) || uploadedResidueIds.has(key)) {
       continue
     }
-    const residueId = await options.contentImportService.recordUploadedFileResidue({
-      attemptId: workflowContext.attemptId,
-      deleteTarget: uploadedFile,
-      itemId: options.itemId,
-      jobId: workflowContext.jobId,
-    })
+    const residueId =
+      await options.contentImportService.recordUploadedFileResidue({
+        attemptId: workflowContext.attemptId,
+        deleteTarget: uploadedFile,
+        itemId: options.itemId,
+        jobId: workflowContext.jobId,
+      })
     uploadedResidueIds.set(key, residueId)
   }
 }
@@ -143,6 +154,16 @@ function createWorkflowProgressReporter(
         total,
         unit: progressOptions.unit,
       }
+      const counters =
+        progress.unit === 'image' &&
+        adapterOptions.contentImportService &&
+        adapterOptions.itemId
+          ? await adapterOptions.contentImportService.markItemImageProgress({
+              itemId: adapterOptions.itemId,
+              imageTotal: total,
+              imageSuccessCount: current,
+            })
+          : null
       await context.updateProgress({
         detail: normalizeImageProgressDetail(
           context,
@@ -150,10 +171,26 @@ function createWorkflowProgressReporter(
           adapterOptions,
         ),
         message: progress.message,
+        ...(counters
+          ? { percent: resolveImageBasedTaskProgressPercent(counters) }
+          : {}),
       })
       return progress
     },
   }
+}
+
+function resolveImageBasedTaskProgressPercent(counters: {
+  imageTotal?: number
+  imageSuccessCount?: number
+}) {
+  const imageTotal = Math.max(0, counters.imageTotal ?? 0)
+  if (imageTotal === 0) {
+    return 0
+  }
+  return Math.floor(
+    (Math.max(0, counters.imageSuccessCount ?? 0) * 100) / imageTotal,
+  )
 }
 
 // 规范化内容导入图片进度详情，保证前端不解析进度文案也能定位当前行。

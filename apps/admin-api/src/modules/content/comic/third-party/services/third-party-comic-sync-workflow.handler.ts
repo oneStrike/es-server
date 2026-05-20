@@ -384,7 +384,7 @@ export class ThirdPartyComicSyncWorkflowHandler
     })
   }
 
-  // 用 item 终态数刷新 workflow 任务级进度，避免图片级子进度污染全局百分比。
+  // 用服务端持久化的图片计数刷新 workflow 任务级进度。
   private async refreshTaskProgress(
     context: WorkflowExecuteContext,
     progressPrefix: string,
@@ -395,7 +395,7 @@ export class ThirdPartyComicSyncWorkflowHandler
     await this.updateTaskProgress(context, counters, progressPrefix)
   }
 
-  // 刷新任务级进度，保持图片子进度和任务终态计数分离。
+  // 刷新任务级进度；有图片分母时进度只由成功图片数推进。
   private async updateTaskProgress(
     context: WorkflowExecuteContext,
     counters: ContentImportAttemptCounters,
@@ -421,6 +421,12 @@ export class ThirdPartyComicSyncWorkflowHandler
   }
 
   private resolveTaskProgressPercent(counters: ContentImportAttemptCounters) {
+    const imageTotal = Math.max(0, counters.imageTotal ?? 0)
+    if (imageTotal > 0) {
+      return Math.floor(
+        (Math.max(0, counters.imageSuccessCount ?? 0) * 100) / imageTotal,
+      )
+    }
     const selectedItemCount = Math.max(0, counters.selectedItemCount ?? 0)
     if (selectedItemCount === 0) {
       return 0
@@ -443,10 +449,18 @@ export class ThirdPartyComicSyncWorkflowHandler
       counters.successItemCount +
       counters.failedItemCount +
       counters.skippedItemCount
-    return `${progressPrefix}: ${Math.min(
+    const chapterProgress = `${Math.min(
       selectedItemCount,
       completedItemCount,
     )}/${selectedItemCount}`
+    const imageTotal = Math.max(0, counters.imageTotal ?? 0)
+    if (imageTotal > 0) {
+      return `${progressPrefix}: 图片 ${Math.min(
+        imageTotal,
+        Math.max(0, counters.imageSuccessCount ?? 0),
+      )}/${imageTotal}，章节 ${chapterProgress}`
+    }
+    return `${progressPrefix}: ${chapterProgress}`
   }
 
   // 将未知异常转换为可持久化的错误文本。

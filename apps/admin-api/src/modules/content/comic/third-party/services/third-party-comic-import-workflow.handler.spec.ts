@@ -282,6 +282,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         .mockResolvedValueOnce({
           failedItemCount: 0,
           futureRetryItemCount: 0,
+          imageFailedCount: 3,
+          imageSuccessCount: 2,
+          imageTotal: 5,
           nextRetryAt: null,
           selectedItemCount: 2,
           skippedItemCount: 0,
@@ -290,6 +293,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         .mockResolvedValueOnce({
           failedItemCount: 1,
           futureRetryItemCount: 0,
+          imageFailedCount: 3,
+          imageSuccessCount: 2,
+          imageTotal: 5,
           nextRetryAt: null,
           selectedItemCount: 2,
           skippedItemCount: 0,
@@ -298,6 +304,9 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         .mockResolvedValueOnce({
           failedItemCount: 1,
           futureRetryItemCount: 0,
+          imageFailedCount: 3,
+          imageSuccessCount: 2,
+          imageTotal: 5,
           nextRetryAt: null,
           selectedItemCount: 2,
           skippedItemCount: 0,
@@ -389,11 +398,11 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
     )
     expect(updateProgress).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ percent: 50 }),
+      expect.objectContaining({ percent: 40 }),
     )
     expect(updateProgress).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ percent: 100 }),
+      expect.objectContaining({ percent: 40 }),
     )
   })
 

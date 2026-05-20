@@ -161,6 +161,17 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
       replaceChapterContents: jest.fn(),
     }
     const provider = {
+      getChapters: jest.fn(async () => [
+        {
+          chapterApiVersion: 2,
+          datetimeCreated: '2026-05-11T00:00:00.000Z',
+          group: 'default',
+          imageCount: 53,
+          providerChapterId: 'chapter-001',
+          sortOrder: 99,
+          title: '远端第 1 话',
+        },
+      ]),
       getChapterContent: jest.fn(async () => ({
         images: [
           {
@@ -249,7 +260,14 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     )
     expect(contentImportService.createThirdPartyImportJob).toHaveBeenCalledWith(
       {
-        dto,
+        dto: expect.objectContaining({
+          chapters: [
+            expect.objectContaining({
+              imageCount: 53,
+              providerChapterId: 'chapter-001',
+            }),
+          ],
+        }),
         jobId: 'job-1',
       },
     )
@@ -258,6 +276,108 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     })
     expect(workService.createWorkReturningId).not.toHaveBeenCalled()
     expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
+  })
+
+  it('confirmImport hydrates selected chapter image counts from provider chapters', async () => {
+    const { contentImportService, provider, service } = createService([[]])
+    const dto = createImportRequest()
+    delete (dto.chapters[0] as Record<string, unknown>).imageCount
+
+    await service.confirmImport(dto as never, 7)
+
+    expect(provider.getChapters).toHaveBeenCalledWith({
+      comicId: dto.comicId,
+      group: 'default',
+      platform: dto.platform,
+    })
+    expect(contentImportService.createThirdPartyImportJob).toHaveBeenCalledWith(
+      {
+        jobId: 'job-1',
+        dto: expect.objectContaining({
+          chapters: [
+            expect.objectContaining({
+              imageCount: 53,
+              providerChapterId: 'chapter-001',
+            }),
+          ],
+        }),
+      },
+    )
+  })
+
+  it('confirmImport ignores tampered client imageCount when present in unknown payload', async () => {
+    const { contentImportService, service } = createService([[]])
+    const dto = createImportRequest()
+    ;(dto.chapters[0] as Record<string, unknown>).imageCount = 9999
+
+    await service.confirmImport(dto as never, 7)
+
+    expect(contentImportService.createThirdPartyImportJob).toHaveBeenCalledWith(
+      {
+        jobId: 'job-1',
+        dto: expect.objectContaining({
+          chapters: [
+            expect.objectContaining({
+              imageCount: 53,
+              providerChapterId: 'chapter-001',
+            }),
+          ],
+        }),
+      },
+    )
+  })
+
+  it('confirmImport rejects missing provider chapter before creating draft', async () => {
+    const { provider, service, workflowService, contentImportService } =
+      createService([[]])
+    ;(provider.getChapters as jest.Mock).mockResolvedValueOnce([])
+
+    await expect(
+      service.confirmImport(createImportRequest() as never, 7),
+    ).rejects.toThrow('三方章节不存在或已变化，请重新预览后再导入')
+
+    expect(workflowService.createDraft).not.toHaveBeenCalled()
+    expect(
+      contentImportService.createThirdPartyImportJob,
+    ).not.toHaveBeenCalled()
+  })
+
+  it('confirmImport preserves admin editable chapter fields while hydrating remote fields', async () => {
+    const { contentImportService, service } = createService([[]])
+    const dto = createImportRequest()
+    dto.chapters[0] = {
+      ...dto.chapters[0],
+      imageCount: 9999,
+      importImages: false,
+      sortOrder: 7,
+      subtitle: '本地副标题',
+      targetChapterId: 321,
+      title: '本地标题',
+    } as never
+
+    await service.confirmImport(dto as never, 7)
+
+    expect(contentImportService.createThirdPartyImportJob).toHaveBeenCalledWith(
+      {
+        jobId: 'job-1',
+        dto: expect.objectContaining({
+          chapters: [
+            expect.objectContaining({
+              chapterApiVersion: 2,
+              datetimeCreated: '2026-05-11T00:00:00.000Z',
+              group: 'default',
+              imageCount: 53,
+              importImages: false,
+              providerChapterId: 'chapter-001',
+              sortOrder: 7,
+              subtitle: '本地副标题',
+              targetChapterId: 321,
+              title: '本地标题',
+            }),
+          ],
+        }),
+      },
+    )
   })
 
   it('rejects retry when the persisted reservation snapshot no longer matches', async () => {
@@ -367,10 +487,17 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     expect(provider.getChapterContent).not.toHaveBeenCalled()
   })
 
-  it('rejects missing chapter imageCount before creating a workflow draft', async () => {
-    const { service, workflowService } = createService([[]])
+  it('rejects invalid provider chapter imageCount before creating a workflow draft', async () => {
+    const { provider, service, workflowService } = createService([[]])
     const dto = createImportRequest()
-    delete (dto.chapters[0] as Record<string, unknown>).imageCount
+    ;(provider.getChapters as jest.Mock).mockResolvedValueOnce([
+      {
+        providerChapterId: 'chapter-001',
+        imageCount: undefined,
+        title: '第 1 话',
+        sortOrder: 1,
+      },
+    ])
 
     await expect(service.confirmImport(dto as never, 7)).rejects.toThrow(
       '三方章节图片数必须是非负整数',

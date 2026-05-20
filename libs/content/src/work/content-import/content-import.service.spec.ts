@@ -240,6 +240,166 @@ describe('ContentImportService retry scheduling', () => {
       }),
     )
   })
+
+  it('aggregateJob returns image counters in addition to item counters', async () => {
+    const schema = createSchema()
+    const rows = [
+      {
+        imageSuccessCount: 10,
+        imageTotal: 20,
+        status: ContentImportItemStatusEnum.SUCCESS,
+      },
+      {
+        imageSuccessCount: 0,
+        imageTotal: 30,
+        status: ContentImportItemStatusEnum.FAILED,
+      },
+    ]
+    const db = {
+      select: jest.fn(() => ({
+        from: jest.fn((table: unknown) => ({
+          where: jest.fn(async () =>
+            table === schema.contentImportJob ? [{ id: 100n }] : rows,
+          ),
+          innerJoin: jest.fn(() => ({
+            where: jest.fn(() => ({
+              limit: jest.fn(async () => [{ contentImportJob: { id: 100n } }]),
+            })),
+          })),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn(() => ({
+          where: jest.fn(async () => []),
+        })),
+      })),
+    }
+    const service = createService(db)
+    setServiceMethod(
+      service,
+      'readContentImportJobByWorkflowJobId',
+      jest.fn(async () => ({ id: 100n })),
+    )
+
+    await expect(service.aggregateJob('job-1')).resolves.toEqual(
+      expect.objectContaining({
+        failedItemCount: 1,
+        imageFailedCount: 40,
+        imageSuccessCount: 10,
+        imageTotal: 50,
+        selectedItemCount: 2,
+        successItemCount: 1,
+      }),
+    )
+  })
+
+  it('aggregateJobWithRetryState preserves image counters', async () => {
+    const rows = [
+      {
+        imageSuccessCount: 5,
+        imageTotal: 10,
+        nextRetryAt: new Date('2030-05-17T03:10:00.000Z'),
+        status: ContentImportItemStatusEnum.RETRYING,
+      },
+    ]
+    const db = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(async () => rows),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn(() => ({
+          where: jest.fn(async () => []),
+        })),
+      })),
+    }
+    const service = createService(db)
+    setServiceMethod(
+      service,
+      'readContentImportJobByWorkflowJobId',
+      jest.fn(async () => ({ id: 100n })),
+    )
+
+    await expect(service.aggregateJobWithRetryState('job-1')).resolves.toEqual(
+      expect.objectContaining({
+        futureRetryItemCount: 1,
+        imageFailedCount: 5,
+        imageSuccessCount: 5,
+        imageTotal: 10,
+      }),
+    )
+  })
+
+  it('markItemImageProgress clamps image success and returns aggregate counters', async () => {
+    const schema = createSchema()
+    const updateSets: Record<string, unknown>[] = []
+    const tx = {
+      update: jest.fn(() => ({
+        set: jest.fn((value: Record<string, unknown>) => {
+          updateSets.push(value)
+          return {
+            where: jest.fn(() => ({
+              returning: jest.fn(async () => [
+                { id: 10n, contentImportJobId: 100n },
+              ]),
+            })),
+          }
+        }),
+      })),
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(async () => [
+            {
+              imageSuccessCount: 5,
+              imageTotal: 5,
+              status: ContentImportItemStatusEnum.RUNNING,
+            },
+          ]),
+        })),
+      })),
+    }
+    const db = {
+      transaction: jest.fn(async (callback: (innerTx: unknown) => unknown) =>
+        callback(tx),
+      ),
+    }
+    const service = new ContentImportService({
+      db,
+      schema,
+    } as never)
+
+    await expect(
+      (
+        service as unknown as {
+          markItemImageProgress(input: {
+            imageSuccessCount: number
+            imageTotal: number
+            itemId: string
+          }): Promise<unknown>
+        }
+      ).markItemImageProgress({
+        imageSuccessCount: 99,
+        imageTotal: 5,
+        itemId: 'item-1',
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        imageFailedCount: 0,
+        imageSuccessCount: 5,
+        imageTotal: 5,
+      }),
+    )
+    expect(db.transaction).toHaveBeenCalled()
+    expect(updateSets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          imageSuccessCount: 5,
+          imageTotal: 5,
+        }),
+      ]),
+    )
+  })
 })
 
 describe('ContentImportService third-party import job creation', () => {

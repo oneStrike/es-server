@@ -4,7 +4,7 @@ import { ContentImportWorkflowType } from '@libs/content/work/content-import/con
 import { createWorkflowTaskContext } from './workflow-task-context.adapter'
 
 describe('createWorkflowTaskContext', () => {
-  it('uses image progress reporters to update the current message and structured detail without changing task progress percent', async () => {
+  it('uses image progress reporters to persist durable image progress and update image-based percent', async () => {
     const workflowContext = {
       appendEvent: jest.fn(),
       assertNotCancelled: jest.fn(),
@@ -19,9 +19,25 @@ describe('createWorkflowTaskContext', () => {
       updateProgress: jest.fn(async () => undefined),
       workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
     }
-    const taskContext = createWorkflowTaskContext(workflowContext, {}, {
-      itemId: 'item-1',
-    })
+    const contentImportService = {
+      markItemImageProgress: jest.fn(async () => ({
+        failedItemCount: 0,
+        imageFailedCount: 80,
+        imageSuccessCount: 20,
+        imageTotal: 100,
+        selectedItemCount: 2,
+        skippedItemCount: 0,
+        successItemCount: 0,
+      })),
+    }
+    const taskContext = createWorkflowTaskContext(
+      workflowContext,
+      {},
+      {
+        contentImportService: contentImportService as never,
+        itemId: 'item-1',
+      },
+    )
     const reporter = taskContext.createProgressReporter({
       endPercent: 95,
       message: '导入图片',
@@ -50,6 +66,11 @@ describe('createWorkflowTaskContext', () => {
         unit: 'image',
       }),
     )
+    expect(contentImportService.markItemImageProgress).toHaveBeenCalledWith({
+      imageSuccessCount: 1,
+      imageTotal: 2,
+      itemId: 'item-1',
+    })
     expect(workflowContext.updateProgress).toHaveBeenCalledWith({
       detail: {
         kind: 'content-import.image',
@@ -62,6 +83,7 @@ describe('createWorkflowTaskContext', () => {
         imageTotal: 21,
       },
       message: '导入图片',
+      percent: 20,
     })
   })
 
@@ -113,7 +135,9 @@ describe('createWorkflowTaskContext', () => {
     const taskContext = createWorkflowTaskContext(workflowContext, {})
 
     expect(taskContext).not.toHaveProperty('renewLease')
-    expect(taskContext.assertNotCancelled).toBe(workflowContext.assertNotCancelled)
+    expect(taskContext.assertNotCancelled).toBe(
+      workflowContext.assertNotCancelled,
+    )
     expect(taskContext.assertStillOwned).toBe(workflowContext.assertStillOwned)
     expect(taskContext.updateProgress).toBe(workflowContext.updateProgress)
   })

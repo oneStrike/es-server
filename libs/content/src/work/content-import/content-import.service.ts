@@ -7,6 +7,7 @@ import type {
   ContentImportAttemptCountersWithRetry,
   ContentImportExecutableItem,
   ContentImportMarkItemFailedInput,
+  ContentImportMarkItemImageProgressInput,
   ContentImportMarkItemRateLimitRetryingInput,
   ContentImportMarkItemRetryExhaustedInput,
   ContentImportMarkItemSuccessInput,
@@ -596,6 +597,52 @@ export class ContentImportService {
       )
   }
 
+  // 持久化单个条目的图片级进度，并返回任务级聚合计数。
+  async markItemImageProgress(input: ContentImportMarkItemImageProgressInput) {
+    const imageTotal = this.normalizeImageCount(input.imageTotal)
+    const imageSuccessCount = Math.min(
+      imageTotal,
+      this.normalizeImageCount(input.imageSuccessCount),
+    )
+    return this.db.transaction(async (tx) => {
+      const now = new Date()
+      const [item] = await tx
+        .update(this.contentImportItem)
+        .set({
+          imageTotal,
+          imageSuccessCount,
+          updatedAt: now,
+        })
+        .where(eq(this.contentImportItem.itemId, input.itemId))
+        .returning()
+      if (!item) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '内容导入条目不存在',
+        )
+      }
+      if (item.currentAttemptNo !== null) {
+        await tx
+          .update(this.contentImportItemAttempt)
+          .set({
+            imageTotal,
+            imageSuccessCount,
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(this.contentImportItemAttempt.contentImportItemId, item.id),
+              eq(
+                this.contentImportItemAttempt.attemptNo,
+                item.currentAttemptNo,
+              ),
+            ),
+          )
+      }
+      return this.aggregateJobWithDb(item.contentImportJobId, tx)
+    })
+  }
+
   // 聚合内容导入任务计数。
   async aggregateJob(jobId: string) {
     const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
@@ -603,34 +650,7 @@ export class ContentImportService {
       .select()
       .from(this.contentImportItem)
       .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
-    const counters = {
-      selectedItemCount: rows.length,
-      successItemCount: rows.filter(
-        (row) => row.status === ContentImportItemStatusEnum.SUCCESS,
-      ).length,
-      failedItemCount: rows.filter(
-        (row) => row.status === ContentImportItemStatusEnum.FAILED,
-      ).length,
-      skippedItemCount: rows.filter(
-        (row) => row.status === ContentImportItemStatusEnum.SKIPPED,
-      ).length,
-    }
-    const imageTotal = rows.reduce((sum, row) => sum + row.imageTotal, 0)
-    const imageSuccessCount = rows.reduce(
-      (sum, row) => sum + row.imageSuccessCount,
-      0,
-    )
-    await this.db
-      .update(this.contentImportJob)
-      .set({
-        ...counters,
-        imageTotal,
-        imageSuccessCount,
-        imageFailedCount: Math.max(0, imageTotal - imageSuccessCount),
-        updatedAt: new Date(),
-      })
-      .where(eq(this.contentImportJob.id, importJob.id))
-    return counters
+    return this.aggregateRows(importJob.id, rows, this.db)
   }
 
   // 聚合内容导入任务计数，并返回未来自动重试状态。
@@ -1041,6 +1061,19 @@ export class ContentImportService {
     rows: ContentImportItemSelect[],
     db: Db,
   ) {
+    const imageTotal = rows.reduce(
+      (sum, row) => sum + this.normalizeImageCount(row.imageTotal),
+      0,
+    )
+    const imageSuccessCount = rows.reduce(
+      (sum, row) =>
+        sum +
+        Math.min(
+          this.normalizeImageCount(row.imageTotal),
+          this.normalizeImageCount(row.imageSuccessCount),
+        ),
+      0,
+    )
     const counters = {
       selectedItemCount: rows.length,
       successItemCount: rows.filter(
@@ -1052,19 +1085,14 @@ export class ContentImportService {
       skippedItemCount: rows.filter(
         (row) => row.status === ContentImportItemStatusEnum.SKIPPED,
       ).length,
+      imageTotal,
+      imageSuccessCount,
+      imageFailedCount: Math.max(0, imageTotal - imageSuccessCount),
     }
-    const imageTotal = rows.reduce((sum, row) => sum + row.imageTotal, 0)
-    const imageSuccessCount = rows.reduce(
-      (sum, row) => sum + row.imageSuccessCount,
-      0,
-    )
     await db
       .update(this.contentImportJob)
       .set({
         ...counters,
-        imageTotal,
-        imageSuccessCount,
-        imageFailedCount: Math.max(0, imageTotal - imageSuccessCount),
         updatedAt: new Date(),
       })
       .where(eq(this.contentImportJob.id, contentImportJobId))
@@ -1097,6 +1125,18 @@ export class ContentImportService {
       futureRetryItemCount: futureRetryTimes.length,
       nextRetryAt,
     }
+  }
+
+  private normalizeImageCount(value: unknown) {
+    if (
+      typeof value === 'number' &&
+      Number.isFinite(value) &&
+      Number.isInteger(value) &&
+      value > 0
+    ) {
+      return value
+    }
+    return 0
   }
 
   // 归一化 JSON 对象。

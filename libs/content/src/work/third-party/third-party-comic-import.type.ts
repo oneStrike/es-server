@@ -47,6 +47,20 @@ export interface ThirdPartyComicImportProgressReporter {
   ) => Promise<ThirdPartyComicImportProgress>
 }
 
+/** 服务端从 provider 重新水合后的三方导入章节，包含远端事实字段。 */
+export type HydratedThirdPartyComicImportChapterItem =
+  ThirdPartyComicImportChapterItemDto & {
+    imageCount: number
+  }
+
+/** 服务端确认工作流创建后使用的三方导入请求，禁止直接使用公开 confirm DTO。 */
+export type HydratedThirdPartyComicImportRequest = Omit<
+  ThirdPartyComicImportRequestDto,
+  'chapters'
+> & {
+  chapters: HydratedThirdPartyComicImportChapterItem[]
+}
+
 /** 第三方漫画更新章节的回滚快照。 */
 export type ThirdPartyComicUpdatedChapterSnapshot = WorkflowObject & {
   id: number
@@ -77,8 +91,8 @@ export type ThirdPartyComicImportResidue = WorkflowObject & {
 }
 
 /** 第三方漫画导入 workflow 负载。 */
-export type ThirdPartyComicImportTaskPayload = ThirdPartyComicImportRequestDto &
-  WorkflowObject
+export type ThirdPartyComicImportTaskPayload =
+  HydratedThirdPartyComicImportRequest & WorkflowObject
 
 /** 第三方漫画导入 workflow 过期 attempt 恢复上下文。 */
 export type ThirdPartyComicImportExpiredAttemptContext =
@@ -125,7 +139,7 @@ export interface ThirdPartyComicImportPlannedWork {
 
 /** 第三方漫画导入 reservation 构建上下文。 */
 export interface ThirdPartyComicImportReservationContext {
-  dto: ThirdPartyComicImportRequestDto
+  dto: HydratedThirdPartyComicImportRequest
   platform: string
   providerComicId: string
   providerGroupPathWord: string
@@ -149,7 +163,7 @@ export interface ThirdPartyComicImportTaskDraft {
 /** 第三方漫画导入 workflow 执行前准备出的稳定目标。 */
 export interface ThirdPartyComicPreparedWorkflowImport {
   cover: ThirdPartyComicImportResultDto['cover']
-  mode: ThirdPartyComicImportRequestDto['mode']
+  mode: HydratedThirdPartyComicImportRequest['mode']
   work: NonNullable<ThirdPartyComicImportResultDto['work']>
   sourceBinding: {
     id: number
@@ -174,7 +188,7 @@ export type ThirdPartyComicPreparedWorkflowImportResult =
 
 /** 第三方漫画章节导入计划，确保读取远端内容早于本地章节副作用。 */
 export type ThirdPartyComicChapterImportPlan = WorkflowObject & {
-  chapter: ThirdPartyComicImportChapterItemDto
+  chapter: HydratedThirdPartyComicImportChapterItem
   chapterIndex: number
   chapterTotal: number
   images: ThirdPartyComicImageDto[]
@@ -209,7 +223,7 @@ export type RemoteImageImportSuccessPayload = WorkflowObject & {
 
 /** 第三方漫画导入本地事实预检入参。 */
 export interface ThirdPartyComicImportPreflightInput {
-  dto: ThirdPartyComicImportRequestDto
+  dto: HydratedThirdPartyComicImportRequest
   plannedWork: ThirdPartyComicImportPlannedWork
   providerComicId: string
   providerGroupPathWord: string

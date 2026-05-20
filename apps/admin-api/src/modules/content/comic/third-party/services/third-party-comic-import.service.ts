@@ -1,4 +1,5 @@
 import type {
+  ThirdPartyComicChapterDto,
   ThirdPartyComicDetailDto,
   ThirdPartyComicImageDto,
   ThirdPartyComicImportChapterItemDto,
@@ -10,6 +11,8 @@ import type {
 } from '@libs/content/work/content/dto/content.dto'
 import type { ThirdPartyComicChapterBindingInput } from '@libs/content/work/third-party/third-party-comic-binding.type'
 import type {
+  HydratedThirdPartyComicImportChapterItem,
+  HydratedThirdPartyComicImportRequest,
   RemoteImageImportSuccessPayload,
   ThirdPartyComicChapterImportPlan,
   ThirdPartyComicImageImportProgressDetail,
@@ -171,8 +174,9 @@ export class ThirdPartyComicImportService {
 
   // 确认第三方漫画导入，只创建工作流任务，不在 HTTP 请求内执行重型导入。
   async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
-    resolveThirdPartyComicImportImageTotals(dto.chapters)
-    const draft = await this.buildImportTaskDraft(dto)
+    const hydratedDto = await this.hydrateImportRequestFromProvider(dto)
+    resolveThirdPartyComicImportImageTotals(hydratedDto.chapters)
+    const draft = await this.buildImportTaskDraft(hydratedDto)
     const job = await this.workflowService.createDraft({
       workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
       displayName: draft.displayName,
@@ -180,7 +184,7 @@ export class ThirdPartyComicImportService {
         type: WorkflowOperatorTypeEnum.ADMIN,
         userId,
       },
-      selectedItemCount: dto.chapters.length,
+      selectedItemCount: hydratedDto.chapters.length,
       summary: {
         sourceType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
       },
@@ -188,14 +192,60 @@ export class ThirdPartyComicImportService {
     })
     await this.contentImportService.createThirdPartyImportJob({
       jobId: job.jobId,
-      dto,
+      dto: hydratedDto,
     })
     return this.workflowService.confirmDraft({ jobId: job.jobId })
   }
 
+  // 确认创建 workflow 时重新读取 provider 章节列表，前端只提交用户选择。
+  private async hydrateImportRequestFromProvider(
+    dto: ThirdPartyComicImportRequestDto,
+  ): Promise<HydratedThirdPartyComicImportRequest> {
+    const provider = this.registry.resolve(dto.platform)
+    const group = this.resolveSourceGroupFromSnapshot(dto.sourceSnapshot)
+    const providerChapters = await provider.getChapters({
+      comicId: dto.comicId,
+      group,
+      platform: dto.platform,
+    })
+    const providerChapterById = new Map(
+      providerChapters.map((chapter) => [chapter.providerChapterId, chapter]),
+    )
+    const chapters = dto.chapters.map((chapter) => {
+      const providerChapter = providerChapterById.get(chapter.providerChapterId)
+      if (!providerChapter) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '三方章节不存在或已变化，请重新预览后再导入',
+        )
+      }
+      return this.hydrateImportChapter(chapter, providerChapter)
+    })
+
+    return {
+      ...dto,
+      chapters,
+    }
+  }
+
+  private hydrateImportChapter(
+    chapter: ThirdPartyComicImportChapterItemDto,
+    providerChapter: ThirdPartyComicChapterDto,
+  ): HydratedThirdPartyComicImportChapterItem {
+    const hydratedChapter = {
+      ...chapter,
+      imageCount: providerChapter.imageCount,
+      group: providerChapter.group,
+      chapterApiVersion: providerChapter.chapterApiVersion,
+      datetimeCreated: providerChapter.datetimeCreated,
+    }
+    resolveThirdPartyComicImportImageTotal(hydratedChapter)
+    return hydratedChapter
+  }
+
   // 校验重试任务持久化的 reservation snapshot 与 payload 当前规则完全一致。
   async validateRetryReservationSnapshot(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     snapshot: ThirdPartyComicRetryReservationSnapshot,
   ) {
     let expectedReservation: ThirdPartyComicImportReservation
@@ -226,7 +276,7 @@ export class ThirdPartyComicImportService {
 
   // 执行第三方漫画导入 workflow，任一失败都会抛出并交由 workflow 处理回滚。
   async executeImportTask(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     context: ThirdPartyComicImportTaskContext,
   ): Promise<ThirdPartyComicImportResultDto> {
     const prepared = await this.prepareWorkflowImport(dto, context)
@@ -254,7 +304,7 @@ export class ThirdPartyComicImportService {
 
   // 准备 workflow 导入的共享作品、来源绑定和章节图片计划。
   async prepareWorkflowImport(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     context: ThirdPartyComicImportTaskContext,
   ): Promise<ThirdPartyComicPreparedWorkflowImport> {
     const provider = this.registry.resolve(dto.platform)
@@ -296,7 +346,7 @@ export class ThirdPartyComicImportService {
 
   // 从已持久化的导入目标恢复 workflow prepare 结果，供自动重试 attempt 复用。
   async restorePreparedWorkflowImport(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     target: ThirdPartyComicPreparedImportTarget,
     context: ThirdPartyComicImportTaskContext,
   ): Promise<ThirdPartyComicPreparedWorkflowImport> {
@@ -429,7 +479,7 @@ export class ThirdPartyComicImportService {
 
   // 准备本地作品和封面，失败时抛出并交由 workflow 回滚。
   private async prepareWork(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     detail: ThirdPartyComicDetailDto,
     context: ThirdPartyComicImportTaskContext,
   ) {
@@ -517,7 +567,7 @@ export class ThirdPartyComicImportService {
 
   // 为本次导入确认本地作品的三方来源绑定。
   private async bindWorkSource(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     detail: ThirdPartyComicDetailDto,
     workId: number,
     providerGroupPathWord: string,
@@ -631,7 +681,7 @@ export class ThirdPartyComicImportService {
 
   // 只生成章节元数据计划；章节内容在 item 执行期逐章读取。
   private async buildChapterImportPlans(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     context: ThirdPartyComicImportTaskContext,
   ): Promise<ThirdPartyComicChapterImportPlan[]> {
     const chapterTotal = dto.chapters.length
@@ -797,7 +847,7 @@ export class ThirdPartyComicImportService {
 
   // 根据用户选择解析作品封面路径，provider 封面会先下载到本地上传并返回删除句柄。
   private async resolveWorkCover(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     detail: ThirdPartyComicDetailDto,
     context: ThirdPartyComicImportTaskContext,
   ) {
@@ -853,7 +903,7 @@ export class ThirdPartyComicImportService {
 
   // 构建导入任务 reservation，并在入队前完成本地冲突预检。
   async buildImportReservationSnapshot(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
   ): Promise<ThirdPartyComicImportReservation> {
     const context = await this.resolveImportReservationContext(dto)
     return this.buildImportReservationFromContext(context)
@@ -861,7 +911,7 @@ export class ThirdPartyComicImportService {
 
   // 构建导入 workflow 草稿，复用预检结果生成展示名与 reservation。
   private async buildImportTaskDraft(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
   ): Promise<ThirdPartyComicImportTaskDraft> {
     const context = await this.resolveImportReservationContext(dto)
     await this.assertImportPreflight({
@@ -877,7 +927,7 @@ export class ThirdPartyComicImportService {
   }
 
   private async resolveImportReservationContext(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
   ): Promise<ThirdPartyComicImportReservationContext> {
     const platform = this.normalizeReservationText(dto.platform, '平台代码')
     const providerComicId = this.resolveProviderComicId(dto)
@@ -1027,7 +1077,7 @@ export class ThirdPartyComicImportService {
 
   // 执行期在真实写入前重新检查本地冲突，避免排队期间状态漂移。
   private async assertImportStillAllowed(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     providerGroupPathWord: string,
   ) {
     const plannedWork = await this.resolvePlannedWork(dto)
@@ -1074,7 +1124,7 @@ export class ThirdPartyComicImportService {
 
   // 解析本次导入计划要影响的本地作品。
   private async resolvePlannedWork(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest | ThirdPartyComicImportRequestDto,
   ): Promise<ThirdPartyComicImportPlannedWork> {
     if (dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW) {
       if (!dto.workDraft?.name) {
@@ -1158,7 +1208,7 @@ export class ThirdPartyComicImportService {
 
   // 读取已持久化导入目标的 active 来源绑定。
   async readPreparedImportTarget(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     workId: number,
   ): Promise<ThirdPartyComicPreparedImportTarget> {
     const work = await this.readLiveComicWork(workId)
@@ -1199,7 +1249,7 @@ export class ThirdPartyComicImportService {
 
   // 清理已持久化的新建导入目标，用于跨自动重试 attempt 的零成功补偿。
   async cleanupPreparedNewWorkImportTarget(
-    dto: ThirdPartyComicImportRequestDto,
+    dto: HydratedThirdPartyComicImportRequest,
     workId: number,
     context: ThirdPartyComicImportTaskContext,
   ) {
@@ -1316,7 +1366,9 @@ export class ThirdPartyComicImportService {
   }
 
   // 解析三方漫画 ID，优先使用预览快照里的 providerComicId。
-  private resolveProviderComicId(dto: ThirdPartyComicImportRequestDto) {
+  private resolveProviderComicId(
+    dto: HydratedThirdPartyComicImportRequest | ThirdPartyComicImportRequestDto,
+  ) {
     return this.normalizeReservationText(
       dto.sourceSnapshot.providerComicId || dto.comicId,
       '三方漫画ID',

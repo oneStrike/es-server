@@ -1,16 +1,16 @@
 import type { Db } from '@db/core'
 import type { ContentImportItemSelect } from '@db/schema'
+import type { ThirdPartyComicSyncLatestRequestDto } from '@libs/content/work/content/dto/content.dto'
 import type {
-  ThirdPartyComicImportChapterItemDto,
-  ThirdPartyComicImportRequestDto,
-  ThirdPartyComicSyncLatestRequestDto,
-} from '@libs/content/work/content/dto/content.dto'
+  HydratedThirdPartyComicImportChapterItem,
+  HydratedThirdPartyComicImportRequest,
+} from '@libs/content/work/third-party/third-party-comic-import.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 
 /** 创建三方导入领域任务入参。 */
 export interface CreateThirdPartyImportContentJobInput {
   jobId: string
-  dto: ThirdPartyComicImportRequestDto
+  dto: HydratedThirdPartyComicImportRequest
 }
 
 /** 创建三方同步领域任务入参。 */
@@ -35,7 +35,7 @@ export interface ContentImportExecutableItem extends ContentImportItemSelect {
 
 /** 三方导入章节元数据。 */
 export interface ThirdPartyImportChapterItemMetadata {
-  chapter: ThirdPartyComicImportChapterItemDto
+  chapter: HydratedThirdPartyComicImportChapterItem
 }
 
 /** 内容导入执行统计。 */
@@ -44,6 +44,16 @@ export interface ContentImportAttemptCounters {
   successItemCount: number
   failedItemCount: number
   skippedItemCount: number
+  imageTotal: number
+  imageSuccessCount: number
+  imageFailedCount: number
+}
+
+/** 标记内容导入条目图片进度的内部入参。 */
+export interface ContentImportMarkItemImageProgressInput {
+  itemId: string
+  imageTotal: number
+  imageSuccessCount: number
 }
 
 /** 标记内容导入条目成功的内部入参。 */
@@ -93,8 +103,7 @@ export interface ContentImportMarkItemRetryExhaustedInput {
 }
 
 /** 内容导入执行统计，包含未来自动重试状态。 */
-export interface ContentImportAttemptCountersWithRetry
-  extends ContentImportAttemptCounters {
+export interface ContentImportAttemptCountersWithRetry extends ContentImportAttemptCounters {
   futureRetryItemCount: number
   nextRetryAt: Date | null
 }

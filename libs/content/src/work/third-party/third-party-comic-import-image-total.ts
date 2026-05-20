@@ -1,9 +1,9 @@
-import type { ThirdPartyComicImportChapterItemDto } from '@libs/content/work/content/dto/content.dto'
+import type { HydratedThirdPartyComicImportChapterItem } from '@libs/content/work/third-party/third-party-comic-import.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 
 export type ThirdPartyComicImportImageTotalSource = Pick<
-  ThirdPartyComicImportChapterItemDto,
+  HydratedThirdPartyComicImportChapterItem,
   'imageCount' | 'importImages' | 'providerChapterId'
 >
 
