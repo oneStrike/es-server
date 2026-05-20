@@ -156,6 +156,8 @@ services:
           memory: 128M
     expose:
       - '8080'
+    ports:
+      - '127.0.0.1:8082:8080'
     networks:
       - 1panel-network # 使用外部网络，确保能稳定解析 admin-server 服务名
 
