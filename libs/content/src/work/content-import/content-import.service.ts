@@ -4,6 +4,7 @@ import type { ThirdPartyComicSyncChapterPlan } from '@libs/content/work/third-pa
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { SQL } from 'drizzle-orm'
 import type {
+  ContentImportAttemptCounters,
   ContentImportAttemptCountersWithRetry,
   ContentImportExecutableItem,
   ContentImportMarkItemFailedInput,
@@ -319,6 +320,11 @@ export class ContentImportService {
           inArray(this.contentImportItem.itemId, selectedItemIds),
         ),
       )
+
+    const counters = await this.aggregateJobWithDb(importJob.id, tx)
+    return {
+      jobCounters: this.toWorkflowCounterPatch(counters),
+    }
   }
 
   // 读取当前 attempt 应处理的内容导入条目。
@@ -426,14 +432,14 @@ export class ContentImportService {
   // 标记条目成功。
   async markItemSuccess(input: ContentImportMarkItemSuccessInput) {
     const now = new Date()
+    const imageCounters = this.buildImageCounterPatch(input)
     const [item] = await this.db
       .update(this.contentImportItem)
       .set({
         status: ContentImportItemStatusEnum.SUCCESS,
         stage: ContentImportItemStageEnum.DONE,
         localChapterId: input.localChapterId ?? undefined,
-        imageTotal: input.imageTotal ?? 0,
-        imageSuccessCount: input.imageSuccessCount ?? 0,
+        ...imageCounters,
         lastErrorCode: null,
         lastErrorMessage: null,
         lastFailedAt: null,
@@ -449,8 +455,7 @@ export class ContentImportService {
       .set({
         status: ContentImportItemAttemptStatusEnum.SUCCESS,
         stage: ContentImportItemStageEnum.DONE,
-        imageTotal: input.imageTotal ?? 0,
-        imageSuccessCount: input.imageSuccessCount ?? 0,
+        ...imageCounters,
         finishedAt: now,
         updatedAt: now,
       })
@@ -465,6 +470,7 @@ export class ContentImportService {
   // 标记条目失败。
   async markItemFailed(input: ContentImportMarkItemFailedInput) {
     const now = new Date()
+    const imageCounters = this.buildImageCounterPatch(input)
     const [item] = await this.db
       .update(this.contentImportItem)
       .set({
@@ -475,8 +481,7 @@ export class ContentImportService {
         lastErrorMessage: input.errorMessage,
         lastFailedAt: now,
         nextRetryAt: null,
-        imageTotal: input.imageTotal ?? 0,
-        imageSuccessCount: input.imageSuccessCount ?? 0,
+        ...imageCounters,
         updatedAt: now,
       })
       .where(eq(this.contentImportItem.itemId, input.itemId))
@@ -489,8 +494,7 @@ export class ContentImportService {
       .set({
         status: ContentImportItemAttemptStatusEnum.FAILED,
         stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
-        imageTotal: input.imageTotal ?? 0,
-        imageSuccessCount: input.imageSuccessCount ?? 0,
+        ...imageCounters,
         errorCode: input.errorCode,
         errorMessage: input.errorMessage,
         finishedAt: now,
@@ -509,6 +513,7 @@ export class ContentImportService {
     input: ContentImportMarkItemRateLimitRetryingInput,
   ) {
     const now = new Date()
+    const imageCounters = this.buildImageCounterPatch(input)
     const [item] = await this.db
       .update(this.contentImportItem)
       .set({
@@ -521,8 +526,7 @@ export class ContentImportService {
         nextRetryAt: input.nextRetryAt,
         lastRetryReason: input.retryReason,
         lastRetryCode: input.errorCode,
-        imageTotal: input.imageTotal ?? 0,
-        imageSuccessCount: input.imageSuccessCount ?? 0,
+        ...imageCounters,
         updatedAt: now,
       })
       .where(eq(this.contentImportItem.itemId, input.itemId))
@@ -535,8 +539,7 @@ export class ContentImportService {
       .set({
         status: ContentImportItemAttemptStatusEnum.SCHEDULED_RETRY,
         stage: ContentImportItemStageEnum.READING_SOURCE,
-        imageTotal: input.imageTotal ?? 0,
-        imageSuccessCount: input.imageSuccessCount ?? 0,
+        ...imageCounters,
         errorCode: input.errorCode,
         errorMessage: input.errorMessage,
         finishedAt: now,
@@ -556,6 +559,7 @@ export class ContentImportService {
   ) {
     const now = new Date()
     const errorCode = 'RATE_LIMIT_RETRY_EXHAUSTED'
+    const imageCounters = this.buildImageCounterPatch(input)
     const [item] = await this.db
       .update(this.contentImportItem)
       .set({
@@ -568,8 +572,7 @@ export class ContentImportService {
         nextRetryAt: null,
         lastRetryCode: errorCode,
         lastRetryReason: input.errorMessage,
-        imageTotal: input.imageTotal ?? 0,
-        imageSuccessCount: input.imageSuccessCount ?? 0,
+        ...imageCounters,
         updatedAt: now,
       })
       .where(eq(this.contentImportItem.itemId, input.itemId))
@@ -582,8 +585,7 @@ export class ContentImportService {
       .set({
         status: ContentImportItemAttemptStatusEnum.FAILED,
         stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
-        imageTotal: input.imageTotal ?? 0,
-        imageSuccessCount: input.imageSuccessCount ?? 0,
+        ...imageCounters,
         errorCode,
         errorMessage: input.errorMessage,
         finishedAt: now,
@@ -651,6 +653,31 @@ export class ContentImportService {
       .from(this.contentImportItem)
       .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
     return this.aggregateRows(importJob.id, rows, this.db)
+  }
+
+  // 聚合指定 workflow attempt 内实际处理过的条目计数。
+  async aggregateAttempt(jobId: string, attemptNo: number) {
+    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
+    const rows = await this.db
+      .select({
+        attempt: this.contentImportItemAttempt,
+        item: this.contentImportItem,
+      })
+      .from(this.contentImportItemAttempt)
+      .innerJoin(
+        this.contentImportItem,
+        eq(
+          this.contentImportItemAttempt.contentImportItemId,
+          this.contentImportItem.id,
+        ),
+      )
+      .where(
+        and(
+          eq(this.contentImportItem.contentImportJobId, importJob.id),
+          eq(this.contentImportItemAttempt.attemptNo, attemptNo),
+        ),
+      )
+    return this.aggregateAttemptRows(rows.map((row) => row.attempt))
   }
 
   // 聚合内容导入任务计数，并返回未来自动重试状态。
@@ -881,8 +908,15 @@ export class ContentImportService {
     }
 
     const counters = await this.aggregateJobWithDb(importJob.id, tx)
+    const attemptCounters = {
+      successItemCount: 0,
+      failedItemCount: runningItemIds.length,
+      skippedItemCount: 0,
+    }
     return {
-      ...counters,
+      selectedItemCount: counters.selectedItemCount,
+      jobCounters: this.toWorkflowCounterPatch(counters),
+      attemptCounters,
       recoverableItemCount: recoverableIds.length,
     }
   }
@@ -1099,6 +1133,41 @@ export class ContentImportService {
     return counters
   }
 
+  private aggregateAttemptRows(
+    rows: Array<{
+      imageSuccessCount: number
+      imageTotal: number
+      status: number
+    }>,
+  ): ContentImportAttemptCounters {
+    const imageTotal = rows.reduce(
+      (sum, row) => sum + this.normalizeImageCount(row.imageTotal),
+      0,
+    )
+    const imageSuccessCount = rows.reduce(
+      (sum, row) =>
+        sum +
+        Math.min(
+          this.normalizeImageCount(row.imageTotal),
+          this.normalizeImageCount(row.imageSuccessCount),
+        ),
+      0,
+    )
+    return {
+      selectedItemCount: rows.length,
+      successItemCount: rows.filter(
+        (row) => row.status === ContentImportItemAttemptStatusEnum.SUCCESS,
+      ).length,
+      failedItemCount: rows.filter(
+        (row) => row.status === ContentImportItemAttemptStatusEnum.FAILED,
+      ).length,
+      skippedItemCount: 0,
+      imageTotal,
+      imageSuccessCount,
+      imageFailedCount: Math.max(0, imageTotal - imageSuccessCount),
+    }
+  }
+
   private async aggregateRowsWithRetryState(
     contentImportJobId: bigint,
     rows: ContentImportItemSelect[],
@@ -1124,6 +1193,31 @@ export class ContentImportService {
       ...counters,
       futureRetryItemCount: futureRetryTimes.length,
       nextRetryAt,
+    }
+  }
+
+  private toWorkflowCounterPatch(counters: ContentImportAttemptCounters) {
+    return {
+      successItemCount: counters.successItemCount,
+      failedItemCount: counters.failedItemCount,
+      skippedItemCount: counters.skippedItemCount,
+    }
+  }
+
+  private buildImageCounterPatch(input: {
+    imageTotal?: number
+    imageSuccessCount?: number
+  }) {
+    if (input.imageTotal === undefined && input.imageSuccessCount === undefined) {
+      return {}
+    }
+    const imageTotal = this.normalizeImageCount(input.imageTotal)
+    return {
+      imageTotal,
+      imageSuccessCount: Math.min(
+        imageTotal,
+        this.normalizeImageCount(input.imageSuccessCount),
+      ),
     }
   }
 

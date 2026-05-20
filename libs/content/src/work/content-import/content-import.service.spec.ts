@@ -140,6 +140,38 @@ describe('ContentImportService retry scheduling', () => {
     )
   })
 
+  it('does not reset image counters when scheduling retry without image input', async () => {
+    const item = {
+      autoRetryCount: 0,
+      id: 10n,
+      imageSuccessCount: 12,
+      imageTotal: 53,
+      itemId: 'item-1',
+      maxAutoRetries: 3,
+    }
+    const { db, updateSets } = createUpdateDb([[item], []])
+    const service = createService(db)
+    setServiceMethod(
+      service,
+      'readContentImportItemByItemId',
+      jest.fn(async () => item),
+    )
+
+    await service.markItemRateLimitRetrying({
+      attemptNo: 1,
+      errorCode: 'HTTP_429',
+      errorMessage: 'rate limited',
+      itemId: 'item-1',
+      nextRetryAt: now,
+      retryReason: '限流，请稍后重试',
+    })
+
+    expect(updateSets[0]).not.toHaveProperty('imageTotal')
+    expect(updateSets[0]).not.toHaveProperty('imageSuccessCount')
+    expect(updateSets[1]).not.toHaveProperty('imageTotal')
+    expect(updateSets[1]).not.toHaveProperty('imageSuccessCount')
+  })
+
   it('marks retry exhaustion as terminal failed and clears schedule', async () => {
     const item = {
       autoRetryCount: 3,
@@ -176,6 +208,63 @@ describe('ContentImportService retry scheduling', () => {
         }),
       ]),
     )
+  })
+
+  it('does not reset image counters when retry exhaustion omits image input', async () => {
+    const item = {
+      autoRetryCount: 3,
+      id: 10n,
+      imageSuccessCount: 12,
+      imageTotal: 53,
+      itemId: 'item-1',
+      maxAutoRetries: 3,
+    }
+    const { db, updateSets } = createUpdateDb([[item], []])
+    const service = createService(db)
+    setServiceMethod(
+      service,
+      'readContentImportItemByItemId',
+      jest.fn(async () => item),
+    )
+
+    await service.markItemRetryExhausted({
+      attemptNo: 4,
+      errorMessage: 'rate limited again',
+      itemId: 'item-1',
+    })
+
+    expect(updateSets[0]).not.toHaveProperty('imageTotal')
+    expect(updateSets[0]).not.toHaveProperty('imageSuccessCount')
+    expect(updateSets[1]).not.toHaveProperty('imageTotal')
+    expect(updateSets[1]).not.toHaveProperty('imageSuccessCount')
+  })
+
+  it('does not reset image counters when marking failure without image input', async () => {
+    const item = {
+      id: 10n,
+      imageSuccessCount: 12,
+      imageTotal: 53,
+      itemId: 'item-1',
+    }
+    const { db, updateSets } = createUpdateDb([[item], []])
+    const service = createService(db)
+    setServiceMethod(
+      service,
+      'readContentImportItemByItemId',
+      jest.fn(async () => item),
+    )
+
+    await service.markItemFailed({
+      attemptNo: 1,
+      errorCode: 'IMPORT_FAILED',
+      errorMessage: 'failed',
+      itemId: 'item-1',
+    })
+
+    expect(updateSets[0]).not.toHaveProperty('imageTotal')
+    expect(updateSets[0]).not.toHaveProperty('imageSuccessCount')
+    expect(updateSets[1]).not.toHaveProperty('imageTotal')
+    expect(updateSets[1]).not.toHaveProperty('imageSuccessCount')
   })
 
   it('includes retry fields in item DTO pages', async () => {

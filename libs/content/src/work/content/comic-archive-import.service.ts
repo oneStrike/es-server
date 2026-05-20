@@ -498,6 +498,10 @@ export class ComicArchiveImportService {
     }
 
     const counters = await this.contentImportService.aggregateJob(context.jobId)
+    const attemptCounters = await this.contentImportService.aggregateAttempt(
+      context.jobId,
+      context.attemptNo,
+    )
     await context.assertStillOwned()
     await context.completeAttempt({
       status:
@@ -506,10 +510,21 @@ export class ComicArchiveImportService {
           : counters.successItemCount > 0
             ? WorkflowAttemptStatusEnum.PARTIAL_FAILED
             : WorkflowAttemptStatusEnum.FAILED,
+      jobCounters: this.toWorkflowCounters(counters),
+      attemptCounters: this.toWorkflowCounters(attemptCounters),
+    })
+  }
+
+  private toWorkflowCounters(counters: {
+    failedItemCount: number
+    skippedItemCount: number
+    successItemCount: number
+  }) {
+    return {
       successItemCount: counters.successItemCount,
       failedItemCount: counters.failedItemCount,
       skippedItemCount: counters.skippedItemCount,
-    })
+    }
   }
 
   // 使用公开 workflow jobId 读取 workflow job。

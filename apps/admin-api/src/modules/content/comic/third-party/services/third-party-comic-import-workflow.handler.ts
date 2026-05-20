@@ -63,7 +63,7 @@ export class ThirdPartyComicImportWorkflowHandler
     nextAttemptNo: number,
     tx: Db,
   ) {
-    await this.contentImportService.prepareRetryItems(
+    return this.contentImportService.prepareRetryItems(
       context.jobId,
       context.selectedItemIds,
       nextAttemptNo,
@@ -100,14 +100,7 @@ export class ThirdPartyComicImportWorkflowHandler
       context.jobId,
       context.attemptNo,
     )
-    const hydrationItems = await this.listItemsForSnapshotHydration(
-      context.jobId,
-      items,
-    )
-    const dto = this.hydratePersistedChapterImageCounts(
-      importJob.sourceSnapshot as ThirdPartyComicImportTaskPayload,
-      hydrationItems,
-    )
+    const dto = importJob.sourceSnapshot as ThirdPartyComicImportTaskPayload
     const preparationContext = createWorkflowTaskContext<
       ThirdPartyComicImportTaskPayload,
       ThirdPartyComicImportResidue
@@ -165,20 +158,21 @@ export class ThirdPartyComicImportWorkflowHandler
           attemptNo: context.attemptNo,
           errorCode: 'THIRD_PARTY_IMPORT_PREPARE_FAILED',
           errorMessage: this.stringifyError(error),
-          imageTotal: item.imageTotal ?? 0,
-          imageSuccessCount: 0,
         })
       }
       const counters = await this.contentImportService.aggregateJob(
         context.jobId,
       )
+      const attemptCounters = await this.contentImportService.aggregateAttempt(
+        context.jobId,
+        context.attemptNo,
+      )
       await this.updateTaskProgress(context, counters, '章节导入准备失败')
       await context.assertStillOwned()
       await context.completeAttempt({
         status: WorkflowAttemptStatusEnum.FAILED,
-        successItemCount: counters.successItemCount,
-        failedItemCount: counters.failedItemCount,
-        skippedItemCount: counters.skippedItemCount,
+        jobCounters: this.toWorkflowCounters(counters),
+        attemptCounters: this.toWorkflowCounters(attemptCounters),
         errorCode: 'THIRD_PARTY_IMPORT_PREPARE_FAILED',
         errorMessage: this.stringifyError(error),
       })
@@ -268,8 +262,6 @@ export class ThirdPartyComicImportWorkflowHandler
             errorCode: this.resolveRateLimitCode(rateLimit),
             errorMessage,
             retryReason: rateLimit.reason,
-            imageTotal: plan?.imageTotal ?? item.imageTotal ?? 0,
-            imageSuccessCount: 0,
           })
           await context.appendEvent(
             WorkflowEventTypeEnum.ITEM_FAILED,
@@ -289,8 +281,6 @@ export class ThirdPartyComicImportWorkflowHandler
             itemId: item.itemId,
             attemptNo: context.attemptNo,
             errorMessage,
-            imageTotal: plan?.imageTotal ?? item.imageTotal ?? 0,
-            imageSuccessCount: 0,
           })
           await context.appendEvent(
             WorkflowEventTypeEnum.ITEM_FAILED,
@@ -309,8 +299,6 @@ export class ThirdPartyComicImportWorkflowHandler
           attemptNo: context.attemptNo,
           errorCode: 'THIRD_PARTY_IMPORT_CHAPTER_FAILED',
           errorMessage,
-          imageTotal: plan?.imageTotal ?? item.imageTotal ?? 0,
-          imageSuccessCount: 0,
         })
         await context.appendEvent(
           WorkflowEventTypeEnum.ITEM_FAILED,
@@ -346,85 +334,6 @@ export class ThirdPartyComicImportWorkflowHandler
       }
     }
     await this.completeAttempt(context, counters)
-  }
-
-  // 旧 workflow 的 sourceSnapshot 可能没有 imageCount；执行期只从已持久化 item 分母补齐，不放宽新请求 contract。
-  private hydratePersistedChapterImageCounts(
-    dto: ThirdPartyComicImportTaskPayload,
-    items: ContentImportExecutableItem[],
-  ): ThirdPartyComicImportTaskPayload {
-    const imageTotalByProviderChapterId = new Map<string, number>()
-    for (const item of items) {
-      const providerChapterId = this.readItemProviderChapterId(item)
-      if (
-        providerChapterId &&
-        Number.isInteger(item.imageTotal) &&
-        item.imageTotal >= 0
-      ) {
-        imageTotalByProviderChapterId.set(providerChapterId, item.imageTotal)
-      }
-    }
-
-    let changed = false
-    const chapters = dto.chapters.map((chapter) => {
-      if (this.isValidImageCount(chapter.imageCount)) {
-        return chapter
-      }
-
-      const imageTotal = imageTotalByProviderChapterId.get(
-        chapter.providerChapterId,
-      )
-      if (imageTotal === undefined) {
-        return chapter
-      }
-
-      changed = true
-      return {
-        ...chapter,
-        imageCount: imageTotal,
-      }
-    })
-
-    return changed
-      ? {
-          ...dto,
-          chapters,
-        }
-      : dto
-  }
-
-  private async listItemsForSnapshotHydration(
-    jobId: string,
-    fallbackItems: ContentImportExecutableItem[],
-  ) {
-    const service = this.contentImportService as ContentImportService & {
-      listJobItems?: (jobId: string) => Promise<ContentImportExecutableItem[]>
-    }
-    if (typeof service.listJobItems === 'function') {
-      return service.listJobItems(jobId)
-    }
-    return fallbackItems
-  }
-
-  private readItemProviderChapterId(item: ContentImportExecutableItem) {
-    const chapter = (
-      item.metadata as {
-        chapter?: { providerChapterId?: unknown }
-      } | null
-    )?.chapter
-    if (typeof chapter?.providerChapterId === 'string') {
-      return chapter.providerChapterId
-    }
-    return item.providerChapterId ?? undefined
-  }
-
-  private isValidImageCount(value: unknown) {
-    return (
-      typeof value === 'number' &&
-      Number.isFinite(value) &&
-      Number.isInteger(value) &&
-      value >= 0
-    )
   }
 
   // 从条目 metadata 中读取预览阶段冻结的三方章节快照。
@@ -481,13 +390,16 @@ export class ThirdPartyComicImportWorkflowHandler
     context: WorkflowExecuteContext,
     counters: ContentImportAttemptCountersWithRetry,
   ) {
+    const attemptCounters = await this.contentImportService.aggregateAttempt(
+      context.jobId,
+      context.attemptNo,
+    )
     const status = this.resolveAttemptStatus(counters)
     if (counters.futureRetryItemCount > 0 && counters.nextRetryAt) {
       await context.completeAttemptWithDelayedRetry({
         status,
-        successItemCount: counters.successItemCount,
-        failedItemCount: counters.failedItemCount,
-        skippedItemCount: counters.skippedItemCount,
+        jobCounters: this.toWorkflowCounters(counters),
+        attemptCounters: this.toWorkflowCounters(attemptCounters),
         nextRetryAt: counters.nextRetryAt,
         delayedSelectedItemCount: counters.futureRetryItemCount,
       })
@@ -495,9 +407,8 @@ export class ThirdPartyComicImportWorkflowHandler
     }
     await context.completeAttempt({
       status,
-      successItemCount: counters.successItemCount,
-      failedItemCount: counters.failedItemCount,
-      skippedItemCount: counters.skippedItemCount,
+      jobCounters: this.toWorkflowCounters(counters),
+      attemptCounters: this.toWorkflowCounters(attemptCounters),
     })
   }
 
@@ -521,6 +432,7 @@ export class ThirdPartyComicImportWorkflowHandler
     await context.updateProgress({
       percent: this.resolveTaskProgressPercent(counters),
       message: this.resolveTaskProgressMessage(counters, progressPrefix),
+      counters: this.toWorkflowCounters(counters),
     })
   }
 
@@ -532,9 +444,25 @@ export class ThirdPartyComicImportWorkflowHandler
   ): Promise<never> {
     await context.assertStillOwned()
     const counters = await this.contentImportService.aggregateJob(context.jobId)
+    const attemptCounters = await this.contentImportService.aggregateAttempt(
+      context.jobId,
+      context.attemptNo,
+    )
     await this.updateTaskProgress(context, counters, progressPrefix)
     await context.assertStillOwned()
-    throw new WorkflowCancellationError({ counters, cause })
+    throw new WorkflowCancellationError({
+      jobCounters: this.toWorkflowCounters(counters),
+      attemptCounters: this.toWorkflowCounters(attemptCounters),
+      cause,
+    })
+  }
+
+  private toWorkflowCounters(counters: ContentImportAttemptCounters) {
+    return {
+      successItemCount: counters.successItemCount,
+      failedItemCount: counters.failedItemCount,
+      skippedItemCount: counters.skippedItemCount,
+    }
   }
 
   private resolveTaskProgressPercent(counters: ContentImportAttemptCounters) {

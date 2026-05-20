@@ -11,10 +11,22 @@ jest.mock(
 )
 
 import { WorkflowAttemptStatusEnum } from '@libs/platform/modules/workflow/workflow.constant'
-import { WorkflowCancellationError } from '@libs/platform/modules/workflow/workflow-cancellation'
+import { WorkflowCancellationSignal } from '@libs/platform/modules/workflow/workflow-cancellation'
 import { ThirdPartyComicSyncWorkflowHandler } from './third-party-comic-sync-workflow.handler'
 
 describe('ThirdPartyComicSyncWorkflowHandler', () => {
+  function createAttemptCounters() {
+    return {
+      failedItemCount: 1,
+      imageFailedCount: 0,
+      imageSuccessCount: 0,
+      imageTotal: 0,
+      selectedItemCount: 1,
+      skippedItemCount: 0,
+      successItemCount: 0,
+    }
+  }
+
   it('creates workflow items from the scan and retries failures per chapter', async () => {
     const registry = { register: jest.fn() }
     const plans = [
@@ -36,6 +48,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       metadata: { plan },
     }))
     const contentImportService = {
+      aggregateAttempt: jest.fn(async () => createAttemptCounters()),
       aggregateJobWithRetryState: jest
         .fn()
         .mockResolvedValueOnce({
@@ -146,15 +159,22 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
     expect(contentImportService.markItemFailed).toHaveBeenCalledWith(
       expect.objectContaining({
         errorCode: 'THIRD_PARTY_SYNC_CHAPTER_FAILED',
-        imageTotal: 3,
         itemId: 'item-2',
       }),
     )
+    expect(contentImportService.markItemFailed.mock.calls[0][0]).not.toHaveProperty(
+      'imageTotal',
+    )
+    expect(contentImportService.markItemFailed.mock.calls[0][0]).not.toHaveProperty(
+      'imageSuccessCount',
+    )
     expect(context.completeAttempt).toHaveBeenCalledWith(
       expect.objectContaining({
-        failedItemCount: 1,
+        jobCounters: expect.objectContaining({
+          failedItemCount: 1,
+          successItemCount: 1,
+        }),
         status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
-        successItemCount: 1,
       }),
     )
     expect(updateProgress).toHaveBeenNthCalledWith(
@@ -176,6 +196,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       title: '第 1 话',
     }
     const contentImportService = {
+      aggregateAttempt: jest.fn(async () => createAttemptCounters()),
       aggregateJobWithRetryState: jest.fn(),
       listExecutableItems: jest.fn(async () => [
         { itemId: 'item-1', metadata: { plan } },
@@ -249,6 +270,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       metadata: { plan },
     }))
     const contentImportService = {
+      aggregateAttempt: jest.fn(async () => createAttemptCounters()),
       aggregateJob: jest.fn(async () => ({
         failedItemCount: 0,
         selectedItemCount: 2,
@@ -281,7 +303,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
           imageTotal: 1,
           localChapterId: 201,
         })
-        .mockRejectedValueOnce(new WorkflowCancellationError()),
+        .mockRejectedValueOnce(new WorkflowCancellationSignal()),
       prepareWorkflowSyncTarget: jest.fn(async () => ({
         sourceBindingId: 1,
         work: { canComment: true, chapterPrice: 0, id: 1 },
@@ -311,7 +333,12 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
     }
 
     await expect(handler.execute(context)).rejects.toMatchObject({
-      counters: {
+      attemptCounters: {
+        failedItemCount: 1,
+        skippedItemCount: 0,
+        successItemCount: 0,
+      },
+      jobCounters: {
         failedItemCount: 0,
         skippedItemCount: 0,
         successItemCount: 1,
@@ -321,6 +348,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
 
     expect(syncService.rollbackSyncTask).toHaveBeenCalled()
     expect(contentImportService.aggregateJob).toHaveBeenCalledWith('job-1')
+    expect(contentImportService.aggregateAttempt).toHaveBeenCalledWith('job-1', 2)
     expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
     expect(context.completeAttempt).not.toHaveBeenCalled()
   })
@@ -346,6 +374,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       metadata: { plan },
     }))
     const contentImportService = {
+      aggregateAttempt: jest.fn(async () => createAttemptCounters()),
       aggregateJob: jest.fn(async () => ({
         failedItemCount: 0,
         selectedItemCount: 2,
@@ -393,7 +422,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       assertNotCancelled: jest
         .fn()
         .mockResolvedValueOnce(undefined)
-        .mockRejectedValueOnce(new WorkflowCancellationError()),
+        .mockRejectedValueOnce(new WorkflowCancellationSignal()),
       assertStillOwned: jest.fn(),
       attemptId: 'attempt-2',
       attemptNo: 2,
@@ -407,7 +436,12 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
     }
 
     await expect(handler.execute(context)).rejects.toMatchObject({
-      counters: {
+      attemptCounters: {
+        failedItemCount: 1,
+        skippedItemCount: 0,
+        successItemCount: 0,
+      },
+      jobCounters: {
         failedItemCount: 0,
         skippedItemCount: 0,
         successItemCount: 1,
@@ -416,6 +450,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
     })
 
     expect(syncService.importWorkflowSyncChapter).toHaveBeenCalledTimes(1)
+    expect(contentImportService.aggregateAttempt).toHaveBeenCalledWith('job-1', 2)
     expect(contentImportService.startItemAttempt).toHaveBeenCalledTimes(1)
     expect(contentImportService.aggregateJob).toHaveBeenCalledWith('job-1')
     expect(contentImportService.markItemFailed).not.toHaveBeenCalled()
@@ -431,6 +466,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       title: '第 1 话',
     }
     const contentImportService = {
+      aggregateAttempt: jest.fn(async () => createAttemptCounters()),
       aggregateJobWithRetryState: jest.fn(),
       listExecutableItems: jest.fn(async () => [
         { itemId: 'item-1', metadata: { plan } },
@@ -514,6 +550,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
       metadata: { plan },
     }))
     const contentImportService = {
+      aggregateAttempt: jest.fn(async () => createAttemptCounters()),
       aggregateJobWithRetryState: jest
         .fn()
         .mockResolvedValueOnce({
@@ -645,6 +682,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
   it('delegates expired attempt recovery to the content import domain', async () => {
     const registry = { register: jest.fn() }
     const contentImportService = {
+      aggregateAttempt: jest.fn(async () => createAttemptCounters()),
       recoverExpiredAttempt: jest.fn(async () => ({
         failedItemCount: 1,
         recoverableItemCount: 1,

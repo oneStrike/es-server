@@ -6,7 +6,7 @@ import type { LookupFunction } from 'node:net'
 import type { ThirdPartyResourceThrottleService } from '@libs/content/work/third-party/services/third-party-resource-throttle.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { WorkflowCancellationError } from '@libs/platform/modules/workflow/workflow-cancellation'
+import { WorkflowCancellationSignal } from '@libs/platform/modules/workflow/workflow-cancellation'
 import { HttpException } from '@nestjs/common'
 import { lookup } from 'node:dns/promises'
 import { EventEmitter } from 'node:events'
@@ -511,7 +511,7 @@ describe('RemoteImageImportService', () => {
 
   it('checks cancellation before each image and stops before the next import when cancelled', async () => {
     const { service, uploadedFile } = createService()
-    const cancellationError = new WorkflowCancellationError()
+    const cancellationError = new WorkflowCancellationSignal()
     const assertNotCancelled = jest
       .fn()
       .mockResolvedValueOnce(undefined)

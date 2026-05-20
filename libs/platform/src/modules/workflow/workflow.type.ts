@@ -30,7 +30,18 @@ export interface WorkflowProgress {
   percent?: number
   message?: string | null
   detail?: WorkflowObject | null
+  counters?: WorkflowJobCounterPatch
 }
+
+/** 工作流 job 当前读模型计数。 */
+export interface WorkflowJobCounterPatch {
+  successItemCount: number
+  failedItemCount: number
+  skippedItemCount: number
+}
+
+/** 工作流 attempt 局部计数。 */
+export type WorkflowAttemptCounterPatch = WorkflowJobCounterPatch
 
 /** 创建工作流任务入参。 */
 export interface CreateWorkflowJobInput {
@@ -58,9 +69,8 @@ export interface AppendWorkflowEventInput {
 export interface CompleteWorkflowAttemptInput {
   workflowAttemptId: bigint
   status: WorkflowAttemptStatusEnum
-  successItemCount: number
-  failedItemCount: number
-  skippedItemCount: number
+  jobCounters: WorkflowJobCounterPatch
+  attemptCounters: WorkflowAttemptCounterPatch
   completionOwnerClaimedBy?: string
   errorCode?: string | null
   errorMessage?: string | null
@@ -147,28 +157,26 @@ export interface WorkflowExpiredAttemptRecoveryContext {
 /** 过期 RUNNING attempt 恢复结果。 */
 export interface WorkflowExpiredAttemptRecoveryResult {
   selectedItemCount: number
-  successItemCount: number
-  failedItemCount: number
-  skippedItemCount: number
+  jobCounters: WorkflowJobCounterPatch
+  attemptCounters: WorkflowAttemptCounterPatch
   recoverableItemCount: number
 }
 
 /** 由恢复计数解析终态时需要的最小计数字段。 */
 export type WorkflowStatusCounters = Pick<
-  WorkflowExpiredAttemptRecoveryResult,
+  WorkflowJobCounterPatch,
   'failedItemCount' | 'successItemCount'
 >
 
-/** 工作流取消完成时可保留的条目计数。 */
-export interface WorkflowCancellationCounters {
-  successItemCount: number
-  failedItemCount: number
-  skippedItemCount: number
+/** 人工重试准备结果。 */
+export interface WorkflowRetryPreparationResult {
+  jobCounters: WorkflowJobCounterPatch
 }
 
 /** 工作流取消错误入参。 */
 export interface WorkflowCancellationErrorInput {
-  counters?: WorkflowCancellationCounters
+  jobCounters: WorkflowJobCounterPatch
+  attemptCounters: WorkflowAttemptCounterPatch
   cause?: unknown
   message?: string
 }
@@ -182,7 +190,7 @@ export interface WorkflowHandler {
     context: WorkflowRetryContext,
     nextAttemptNo: number,
     tx: Db,
-  ) => Promise<void>
+  ) => Promise<WorkflowRetryPreparationResult>
   recoverExpiredAttempt?: (
     context: WorkflowExpiredAttemptRecoveryContext,
     nextAttemptNo: number,

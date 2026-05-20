@@ -120,6 +120,7 @@ export type ThirdPartyComicImportTaskContext = Pick<
     errorMessage: string,
   ) => Promise<void>
   markUploadedResiduesCleaned: () => Promise<void>
+  initializeItemImageProgress?: (imageTotal: number) => Promise<void>
 }
 
 /** 第三方漫画导入任务 reservation 字段，供入队与重试校验共用。 */

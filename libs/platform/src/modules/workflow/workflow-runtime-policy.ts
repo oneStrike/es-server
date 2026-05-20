@@ -56,11 +56,21 @@ export function buildDefaultExpiredAttemptRecovery(
   job: WorkflowJobSelect,
   attempt: WorkflowAttemptSelect,
 ): WorkflowExpiredAttemptRecoveryResult {
-  return {
+  const jobCounters = {
     selectedItemCount: job.selectedItemCount,
     successItemCount: 0,
     failedItemCount: attempt.selectedItemCount,
     skippedItemCount: 0,
+  }
+  const attemptCounters = {
+    successItemCount: 0,
+    failedItemCount: attempt.selectedItemCount,
+    skippedItemCount: 0,
+  }
+  return {
+    selectedItemCount: jobCounters.selectedItemCount,
+    jobCounters,
+    attemptCounters,
     recoverableItemCount: 0,
   }
 }

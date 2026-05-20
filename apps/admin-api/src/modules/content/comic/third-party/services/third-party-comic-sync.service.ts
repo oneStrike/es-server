@@ -329,6 +329,7 @@ export class ThirdPartyComicSyncService {
   ) {
     const { context, imageProgressReporter, sourceBindingId, work } = input
     const plan = await this.readSyncChapterContent(input)
+    await context.initializeItemImageProgress?.(plan.imageTotal)
     const progressReporter =
       imageProgressReporter ??
       this.createSyncImageProgressReporter(context, [plan])

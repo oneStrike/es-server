@@ -273,11 +273,18 @@ describe('WorkflowService state machine', () => {
       execute: jest.fn(async () => undefined),
       prepareRetry: jest.fn(async () => undefined),
       recoverExpiredAttempt: jest.fn(async () => ({
-        failedItemCount: 1,
+        attemptCounters: {
+          failedItemCount: 1,
+          skippedItemCount: 0,
+          successItemCount: 0,
+        },
+        jobCounters: {
+          failedItemCount: 1,
+          skippedItemCount: 0,
+          successItemCount: 0,
+        },
         recoverableItemCount: 1,
         selectedItemCount: 2,
-        skippedItemCount: 0,
-        successItemCount: 0,
       })),
       validateRetry: jest.fn(async () => undefined),
       workflowType: 'content-import.third-party-import',
@@ -774,6 +781,59 @@ describe('WorkflowService state machine', () => {
     expect(appendEvent).not.toHaveBeenCalled()
   })
 
+  it('updates job counters carried by progress without touching attempt counters', async () => {
+    const job = createWorkflowJob({
+      currentAttemptFk: 10n,
+      failedItemCount: 1,
+      status: WorkflowJobStatusEnum.RUNNING,
+      successItemCount: 0,
+    })
+    const attempt = createWorkflowAttempt({
+      failedItemCount: 0,
+      successItemCount: 0,
+    })
+    const { updateSets, tx } = createUpdateTx([[attempt]])
+    const { service } = createService({ tx })
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
+
+    await (
+      service as unknown as {
+        updateProgressForAttempt: (
+          job: ReturnType<typeof createWorkflowJob>,
+          attempt: ReturnType<typeof createWorkflowAttempt>,
+          progress: {
+            counters: {
+              failedItemCount: number
+              skippedItemCount: number
+              successItemCount: number
+            }
+            message: string
+            percent: number
+          },
+        ) => Promise<void>
+      }
+    ).updateProgressForAttempt(job, attempt, {
+      counters: {
+        failedItemCount: 0,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      },
+      message: '章节导入进度已更新',
+      percent: 50,
+    })
+
+    expect(updateSets).toHaveLength(1)
+    expect(updateSets[0]).toEqual(
+      expect.objectContaining({
+        failedItemCount: 0,
+        progressMessage: '章节导入进度已更新',
+        progressPercent: 50,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      }),
+    )
+  })
+
   it('updates structured progress detail without changing task progress percent', async () => {
     const job = createWorkflowJob({
       currentAttemptFk: 10n,
@@ -1129,6 +1189,13 @@ describe('WorkflowService state machine', () => {
     }
     const { tx, updateSets } = createUpdateTx([[updatedJob]])
     const { handler, service } = createService({ tx })
+    ;(handler.prepareRetry as jest.Mock).mockResolvedValueOnce({
+      jobCounters: {
+        failedItemCount: 0,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      },
+    })
     const reserveConflictKeys = jest.fn(async () => undefined)
     const appendEventWithDb = jest.fn(async () => 1n)
     setServiceMethod(service, 'readJobWithDb', jest.fn(async () => job))
@@ -1186,8 +1253,11 @@ describe('WorkflowService state machine', () => {
         expect.objectContaining({
           archivedAt: null,
           currentAttemptFk: retryAttempt.id,
+          failedItemCount: 0,
           progressDetail: null,
+          skippedItemCount: 0,
           status: WorkflowJobStatusEnum.PENDING,
+          successItemCount: 1,
         }),
       ]),
     )
@@ -1229,13 +1299,20 @@ describe('WorkflowService state machine', () => {
 
     const result = await service.completeAttemptWithDelayedRetry({
       delayedSelectedItemCount: 1,
-      failedItemCount: 1,
+      attemptCounters: {
+        failedItemCount: 1,
+        skippedItemCount: 0,
+        successItemCount: 0,
+      },
+      jobCounters: {
+        failedItemCount: 1,
+        skippedItemCount: 0,
+        successItemCount: 1,
+      },
       nextRetryAt,
-      skippedItemCount: 0,
       status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
-      successItemCount: 1,
       workflowAttemptId: attempt.id,
-    })
+    } as never)
 
     expect(result).toEqual(
       expect.objectContaining({
@@ -1256,13 +1333,18 @@ describe('WorkflowService state machine', () => {
     expect(updateSets).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          failedItemCount: 1,
           status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
+          successItemCount: 0,
         }),
         expect.objectContaining({
           currentAttemptFk: delayedAttempt.id,
+          failedItemCount: 1,
           finishedAt: null,
           progressDetail: null,
+          skippedItemCount: 0,
           status: WorkflowJobStatusEnum.PENDING,
+          successItemCount: 1,
         }),
       ]),
     )
@@ -1346,18 +1428,31 @@ describe('WorkflowService state machine', () => {
     setServiceMethod(service, 'appendEventWithDb', jest.fn(async () => 1n))
 
     await service.completeAttempt({
-      failedItemCount: 0,
-      skippedItemCount: 0,
+      attemptCounters: {
+        failedItemCount: 1,
+        skippedItemCount: 0,
+        successItemCount: 0,
+      },
+      jobCounters: {
+        failedItemCount: 0,
+        skippedItemCount: 0,
+        successItemCount: 2,
+      },
       status: WorkflowAttemptStatusEnum.SUCCESS,
-      successItemCount: 2,
       workflowAttemptId: attempt.id,
-    })
+    } as never)
 
     expect(updateSets).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          failedItemCount: 1,
+          successItemCount: 0,
+        }),
+        expect.objectContaining({
+          failedItemCount: 0,
           progressDetail: null,
           status: WorkflowJobStatusEnum.SUCCESS,
+          successItemCount: 2,
         }),
       ]),
     )
@@ -1425,7 +1520,7 @@ describe('WorkflowService state machine', () => {
     expect(tx.update).not.toHaveBeenCalled()
   })
 
-  it('uses carried counters when a consumed attempt is cancelled', async () => {
+  it('uses carried job and attempt counters when a consumed attempt is cancelled', async () => {
     const attempt = createWorkflowAttempt({
       selectedItemCount: 3,
       status: WorkflowAttemptStatusEnum.PENDING,
@@ -1435,7 +1530,12 @@ describe('WorkflowService state machine', () => {
     const completeAttempt = jest.fn(async () => undefined)
     handler.execute.mockRejectedValueOnce(
       new WorkflowCancellationError({
-        counters: {
+        attemptCounters: {
+          failedItemCount: 1,
+          skippedItemCount: 0,
+          successItemCount: 0,
+        },
+        jobCounters: {
           failedItemCount: 0,
           skippedItemCount: 1,
           successItemCount: 2,
@@ -1447,6 +1547,7 @@ describe('WorkflowService state machine', () => {
       'claimAttempt',
       jest.fn(async () => ({ attempt, job })),
     )
+    setServiceMethod(service, 'readJobByIdWithDb', jest.fn(async () => job))
     setServiceMethod(service, 'completeAttempt', completeAttempt)
 
     await (
@@ -1457,11 +1558,79 @@ describe('WorkflowService state machine', () => {
 
     expect(completeAttempt).toHaveBeenCalledWith(
       expect.objectContaining({
-        failedItemCount: 0,
-        skippedItemCount: 1,
+        attemptCounters: {
+          failedItemCount: 1,
+          skippedItemCount: 0,
+          successItemCount: 0,
+        },
+        jobCounters: {
+          failedItemCount: 0,
+          skippedItemCount: 1,
+          successItemCount: 2,
+        },
         status: WorkflowAttemptStatusEnum.CANCELLED,
-        successItemCount: 2,
         workflowAttemptId: attempt.id,
+      }),
+    )
+  })
+
+  it('uses job projection plus attempt-local counters for implicit success', async () => {
+    const attempt = createWorkflowAttempt({
+      attemptNo: 2,
+      selectedItemCount: 1,
+      status: WorkflowAttemptStatusEnum.RUNNING,
+    })
+    const job = createWorkflowJob({
+      currentAttemptFk: attempt.id,
+      failedItemCount: 1,
+      selectedItemCount: 2,
+      status: WorkflowJobStatusEnum.RUNNING,
+      successItemCount: 1,
+    })
+    const { service } = createService()
+    const leaseKeeper = {
+      assertHealthy: jest.fn(),
+      stop: jest.fn(async () => undefined),
+    }
+    const completeAttempt = jest.fn(async () => undefined)
+    setServiceMethod(
+      service,
+      'claimAttempt',
+      jest.fn(async () => ({ attempt, job })),
+    )
+    setServiceMethod(service, 'startAttemptLeaseKeeper', jest.fn(() => leaseKeeper))
+    setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
+    setServiceMethod(service, 'readAttempt', jest.fn(async () => attempt))
+    setServiceMethod(
+      service,
+      'readJobByIdWithDb',
+      jest.fn(async () => ({
+        ...job,
+        failedItemCount: 0,
+        successItemCount: 1,
+      })),
+    )
+    setServiceMethod(service, 'completeAttempt', completeAttempt)
+
+    await (
+      service as unknown as {
+        consumeAttempt: (attemptId: bigint) => Promise<void>
+      }
+    ).consumeAttempt(attempt.id)
+
+    expect(completeAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attemptCounters: {
+          failedItemCount: 0,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        },
+        jobCounters: {
+          failedItemCount: 0,
+          skippedItemCount: 0,
+          successItemCount: 2,
+        },
+        status: WorkflowAttemptStatusEnum.SUCCESS,
       }),
     )
   })
@@ -1491,6 +1660,7 @@ describe('WorkflowService state machine', () => {
     setServiceMethod(service, 'startAttemptLeaseKeeper', startAttemptLeaseKeeper)
     setServiceMethod(service, 'tryAssertAttemptStillOwned', jest.fn(async () => true))
     setServiceMethod(service, 'readAttempt', jest.fn(async () => attempt))
+    setServiceMethod(service, 'readJobByIdWithDb', jest.fn(async () => job))
     setServiceMethod(service, 'completeAttempt', completeAttempt)
 
     await (
@@ -1607,10 +1777,17 @@ describe('WorkflowService state machine', () => {
       service.completeAttemptByAttemptId({
         attemptId: attempt.attemptId,
         completionOwnerClaimedBy: 'stale-worker',
-        failedItemCount: 0,
-        skippedItemCount: 0,
+        attemptCounters: {
+          failedItemCount: 0,
+          skippedItemCount: 0,
+          successItemCount: 2,
+        },
+        jobCounters: {
+          failedItemCount: 0,
+          skippedItemCount: 0,
+          successItemCount: 2,
+        },
         status: WorkflowAttemptStatusEnum.SUCCESS,
-        successItemCount: 2,
       } as never),
     ).resolves.toBeUndefined()
 
@@ -1640,11 +1817,18 @@ describe('WorkflowService state machine', () => {
         attemptId: attempt.attemptId,
         completionOwnerClaimedBy: 'stale-worker',
         delayedSelectedItemCount: 1,
-        failedItemCount: 1,
+        attemptCounters: {
+          failedItemCount: 1,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        },
+        jobCounters: {
+          failedItemCount: 1,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        },
         nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
-        skippedItemCount: 0,
         status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
-        successItemCount: 1,
       } as never),
     ).resolves.toBeUndefined()
 
@@ -1673,10 +1857,17 @@ describe('WorkflowService state machine', () => {
       service.completeAttemptByAttemptId({
         attemptId: attempt.attemptId,
         completionOwnerClaimedBy: 'worker-1',
-        failedItemCount: 0,
-        skippedItemCount: 0,
+        attemptCounters: {
+          failedItemCount: 0,
+          skippedItemCount: 0,
+          successItemCount: 2,
+        },
+        jobCounters: {
+          failedItemCount: 0,
+          skippedItemCount: 0,
+          successItemCount: 2,
+        },
         status: WorkflowAttemptStatusEnum.SUCCESS,
-        successItemCount: 2,
       } as never),
     ).resolves.toBeUndefined()
 
@@ -1707,11 +1898,18 @@ describe('WorkflowService state machine', () => {
         attemptId: attempt.attemptId,
         completionOwnerClaimedBy: 'worker-1',
         delayedSelectedItemCount: 1,
-        failedItemCount: 1,
+        attemptCounters: {
+          failedItemCount: 1,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        },
+        jobCounters: {
+          failedItemCount: 1,
+          skippedItemCount: 0,
+          successItemCount: 1,
+        },
         nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
-        skippedItemCount: 0,
         status: WorkflowAttemptStatusEnum.PARTIAL_FAILED,
-        successItemCount: 1,
       } as never),
     ).resolves.toBeUndefined()
 

@@ -59,6 +59,7 @@ export type ThirdPartyComicSyncTaskContext = Pick<
     errorMessage: string,
   ) => Promise<void>
   markUploadedResiduesCleaned: () => Promise<void>
+  initializeItemImageProgress?: (imageTotal: number) => Promise<void>
 }
 
 /** 第三方漫画最新章节同步结果。 */

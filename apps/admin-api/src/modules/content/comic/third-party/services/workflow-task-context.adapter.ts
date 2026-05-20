@@ -81,6 +81,16 @@ export function createWorkflowTaskContext<
         ...uploadedResidueIds.values(),
       ])
     },
+    initializeItemImageProgress: async (imageTotal: number) => {
+      if (!options.contentImportService || !options.itemId) {
+        return
+      }
+      await options.contentImportService.markItemImageProgress({
+        itemId: options.itemId,
+        imageTotal,
+        imageSuccessCount: 0,
+      })
+    },
   }
 }
 
@@ -172,11 +182,26 @@ function createWorkflowProgressReporter(
         ),
         message: progress.message,
         ...(counters
-          ? { percent: resolveImageBasedTaskProgressPercent(counters) }
+          ? {
+              counters: toWorkflowCounters(counters),
+              percent: resolveImageBasedTaskProgressPercent(counters),
+            }
           : {}),
       })
       return progress
     },
+  }
+}
+
+function toWorkflowCounters(counters: {
+  failedItemCount: number
+  skippedItemCount: number
+  successItemCount: number
+}) {
+  return {
+    successItemCount: counters.successItemCount,
+    failedItemCount: counters.failedItemCount,
+    skippedItemCount: counters.skippedItemCount,
   }
 }
 

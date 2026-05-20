@@ -63,7 +63,7 @@ export class ThirdPartyComicSyncWorkflowHandler
     nextAttemptNo: number,
     tx: Db,
   ) {
-    await this.contentImportService.prepareRetryItems(
+    return this.contentImportService.prepareRetryItems(
       context.jobId,
       context.selectedItemIds,
       nextAttemptNo,
@@ -156,20 +156,21 @@ export class ThirdPartyComicSyncWorkflowHandler
           attemptNo: context.attemptNo,
           errorCode: 'THIRD_PARTY_SYNC_PREPARE_FAILED',
           errorMessage: message,
-          imageTotal: 0,
-          imageSuccessCount: 0,
         })
       }
       const counters = await this.contentImportService.aggregateJob(
         context.jobId,
       )
+      const attemptCounters = await this.contentImportService.aggregateAttempt(
+        context.jobId,
+        context.attemptNo,
+      )
       await this.updateTaskProgress(context, counters, '章节同步准备失败')
       await context.assertStillOwned()
       await context.completeAttempt({
         status: WorkflowAttemptStatusEnum.FAILED,
-        successItemCount: counters.successItemCount,
-        failedItemCount: counters.failedItemCount,
-        skippedItemCount: 0,
+        jobCounters: this.toWorkflowCounters(counters),
+        attemptCounters: this.toWorkflowCounters(attemptCounters),
         errorCode: 'THIRD_PARTY_SYNC_PREPARE_FAILED',
         errorMessage: this.stringifyError(error),
       })
@@ -249,8 +250,6 @@ export class ThirdPartyComicSyncWorkflowHandler
             errorCode: this.resolveRateLimitCode(rateLimit),
             errorMessage,
             retryReason: rateLimit.reason,
-            imageTotal: plan.imageTotal,
-            imageSuccessCount: 0,
           })
           await context.appendEvent(
             WorkflowEventTypeEnum.ITEM_FAILED,
@@ -270,8 +269,6 @@ export class ThirdPartyComicSyncWorkflowHandler
             itemId: item.itemId,
             attemptNo: context.attemptNo,
             errorMessage,
-            imageTotal: plan.imageTotal,
-            imageSuccessCount: 0,
           })
           await context.appendEvent(
             WorkflowEventTypeEnum.ITEM_FAILED,
@@ -290,8 +287,6 @@ export class ThirdPartyComicSyncWorkflowHandler
           attemptNo: context.attemptNo,
           errorCode: 'THIRD_PARTY_SYNC_CHAPTER_FAILED',
           errorMessage,
-          imageTotal: plan.imageTotal,
-          imageSuccessCount: 0,
         })
         await context.appendEvent(
           WorkflowEventTypeEnum.ITEM_FAILED,
@@ -364,13 +359,16 @@ export class ThirdPartyComicSyncWorkflowHandler
     context: WorkflowExecuteContext,
     counters: ContentImportAttemptCountersWithRetry,
   ) {
+    const attemptCounters = await this.contentImportService.aggregateAttempt(
+      context.jobId,
+      context.attemptNo,
+    )
     const status = this.resolveAttemptStatus(counters)
     if (counters.futureRetryItemCount > 0 && counters.nextRetryAt) {
       await context.completeAttemptWithDelayedRetry({
         status,
-        successItemCount: counters.successItemCount,
-        failedItemCount: counters.failedItemCount,
-        skippedItemCount: counters.skippedItemCount,
+        jobCounters: this.toWorkflowCounters(counters),
+        attemptCounters: this.toWorkflowCounters(attemptCounters),
         nextRetryAt: counters.nextRetryAt,
         delayedSelectedItemCount: counters.futureRetryItemCount,
       })
@@ -378,9 +376,8 @@ export class ThirdPartyComicSyncWorkflowHandler
     }
     await context.completeAttempt({
       status,
-      successItemCount: counters.successItemCount,
-      failedItemCount: counters.failedItemCount,
-      skippedItemCount: counters.skippedItemCount,
+      jobCounters: this.toWorkflowCounters(counters),
+      attemptCounters: this.toWorkflowCounters(attemptCounters),
     })
   }
 
@@ -404,6 +401,7 @@ export class ThirdPartyComicSyncWorkflowHandler
     await context.updateProgress({
       percent: this.resolveTaskProgressPercent(counters),
       message: this.resolveTaskProgressMessage(counters, progressPrefix),
+      counters: this.toWorkflowCounters(counters),
     })
   }
 
@@ -415,9 +413,25 @@ export class ThirdPartyComicSyncWorkflowHandler
   ): Promise<never> {
     await context.assertStillOwned()
     const counters = await this.contentImportService.aggregateJob(context.jobId)
+    const attemptCounters = await this.contentImportService.aggregateAttempt(
+      context.jobId,
+      context.attemptNo,
+    )
     await this.updateTaskProgress(context, counters, progressPrefix)
     await context.assertStillOwned()
-    throw new WorkflowCancellationError({ counters, cause })
+    throw new WorkflowCancellationError({
+      jobCounters: this.toWorkflowCounters(counters),
+      attemptCounters: this.toWorkflowCounters(attemptCounters),
+      cause,
+    })
+  }
+
+  private toWorkflowCounters(counters: ContentImportAttemptCounters) {
+    return {
+      successItemCount: counters.successItemCount,
+      failedItemCount: counters.failedItemCount,
+      skippedItemCount: counters.skippedItemCount,
+    }
   }
 
   private resolveTaskProgressPercent(counters: ContentImportAttemptCounters) {

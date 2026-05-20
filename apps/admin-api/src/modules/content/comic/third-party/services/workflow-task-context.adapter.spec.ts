@@ -72,6 +72,11 @@ describe('createWorkflowTaskContext', () => {
       itemId: 'item-1',
     })
     expect(workflowContext.updateProgress).toHaveBeenCalledWith({
+      counters: {
+        failedItemCount: 0,
+        skippedItemCount: 0,
+        successItemCount: 0,
+      },
       detail: {
         kind: 'content-import.image',
         workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,

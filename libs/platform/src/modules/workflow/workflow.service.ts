@@ -35,8 +35,8 @@ import {
   WorkflowRetryItemsDto,
 } from './dto'
 import {
-  isWorkflowCancellationError,
   WorkflowCancellationError,
+  WorkflowCancellationSignal,
 } from './workflow-cancellation'
 import { normalizeWorkflowConflictKeys } from './workflow-conflict-key'
 import { DEFAULT_WORKFLOW_RECORD_EVENT_TYPES } from './workflow-record-policy'
@@ -49,7 +49,6 @@ import {
   normalizeWorkflowProgressPercent,
   normalizeWorkflowRequiredText,
   resolveAttemptStatusFromCounters,
-  resolveJobStatusFromAttempt,
   resolveJobStatusFromCounters,
 } from './workflow-runtime-policy'
 import {
@@ -508,7 +507,7 @@ export class WorkflowService {
         conflictKeys,
       })
       await this.reserveConflictKeys(job, conflictKeys, tx)
-      await handler.prepareRetry?.(
+      const retryPreparation = await handler.prepareRetry?.(
         {
           jobId: job.jobId,
           workflowType: job.workflowType,
@@ -518,6 +517,12 @@ export class WorkflowService {
         nextAttemptNo,
         tx,
       )
+      if (!retryPreparation) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '工作流处理器未返回重试后的任务计数',
+        )
+      }
 
       const attempt = await this.createAttemptWithDb(
         job,
@@ -535,7 +540,9 @@ export class WorkflowService {
           cancelRequestedAt: null,
           progressDetail: null,
           finishedAt: null,
-          failedItemCount: Math.max(0, job.failedItemCount),
+          successItemCount: retryPreparation.jobCounters.successItemCount,
+          failedItemCount: retryPreparation.jobCounters.failedItemCount,
+          skippedItemCount: retryPreparation.jobCounters.skippedItemCount,
           updatedAt: new Date(),
         })
         .where(eq(this.workflowJob.id, job.id))
@@ -620,9 +627,9 @@ export class WorkflowService {
         .update(this.workflowAttempt)
         .set({
           status: input.status,
-          successItemCount: input.successItemCount,
-          failedItemCount: input.failedItemCount,
-          skippedItemCount: input.skippedItemCount,
+          successItemCount: input.attemptCounters.successItemCount,
+          failedItemCount: input.attemptCounters.failedItemCount,
+          skippedItemCount: input.attemptCounters.skippedItemCount,
           errorCode: input.errorCode ?? null,
           errorMessage: input.errorMessage ?? null,
           claimedBy: null,
@@ -645,7 +652,7 @@ export class WorkflowService {
         return
       }
 
-      const jobStatus = resolveJobStatusFromAttempt(updatedAttempt)
+      const jobStatus = resolveJobStatusFromCounters(input.jobCounters)
       const [updatedJob] = await tx
         .update(this.workflowJob)
         .set({
@@ -653,9 +660,9 @@ export class WorkflowService {
           progressDetail: null,
           progressPercent:
             jobStatus === WorkflowJobStatusEnum.SUCCESS ? 100 : job.progressPercent,
-          successItemCount: input.successItemCount,
-          failedItemCount: input.failedItemCount,
-          skippedItemCount: input.skippedItemCount,
+          successItemCount: input.jobCounters.successItemCount,
+          failedItemCount: input.jobCounters.failedItemCount,
+          skippedItemCount: input.jobCounters.skippedItemCount,
           finishedAt: now,
           updatedAt: now,
         })
@@ -695,9 +702,8 @@ export class WorkflowService {
     return this.completeAttempt({
       workflowAttemptId: attempt.id,
       status: input.status,
-      successItemCount: input.successItemCount,
-      failedItemCount: input.failedItemCount,
-      skippedItemCount: input.skippedItemCount,
+      jobCounters: input.jobCounters,
+      attemptCounters: input.attemptCounters,
       completionOwnerClaimedBy: input.completionOwnerClaimedBy,
       errorCode: input.errorCode,
       errorMessage: input.errorMessage,
@@ -716,9 +722,9 @@ export class WorkflowService {
         .update(this.workflowAttempt)
         .set({
           status: input.status,
-          successItemCount: input.successItemCount,
-          failedItemCount: input.failedItemCount,
-          skippedItemCount: input.skippedItemCount,
+          successItemCount: input.attemptCounters.successItemCount,
+          failedItemCount: input.attemptCounters.failedItemCount,
+          skippedItemCount: input.attemptCounters.skippedItemCount,
           errorCode: input.errorCode ?? null,
           errorMessage: input.errorMessage ?? null,
           claimedBy: null,
@@ -754,9 +760,9 @@ export class WorkflowService {
           status: WorkflowJobStatusEnum.PENDING,
           currentAttemptFk: delayedAttempt.id,
           progressDetail: null,
-          successItemCount: input.successItemCount,
-          failedItemCount: input.failedItemCount,
-          skippedItemCount: input.skippedItemCount,
+          successItemCount: input.jobCounters.successItemCount,
+          failedItemCount: input.jobCounters.failedItemCount,
+          skippedItemCount: input.jobCounters.skippedItemCount,
           finishedAt: null,
           updatedAt: now,
         })
@@ -812,9 +818,8 @@ export class WorkflowService {
     return this.completeAttemptWithDelayedRetry({
       workflowAttemptId: attempt.id,
       status: input.status,
-      successItemCount: input.successItemCount,
-      failedItemCount: input.failedItemCount,
-      skippedItemCount: input.skippedItemCount,
+      jobCounters: input.jobCounters,
+      attemptCounters: input.attemptCounters,
       completionOwnerClaimedBy: input.completionOwnerClaimedBy,
       errorCode: input.errorCode,
       errorMessage: input.errorMessage,
@@ -934,14 +939,14 @@ export class WorkflowService {
       const expiredStatus =
         recovery.recoverableItemCount > 0
           ? WorkflowAttemptStatusEnum.FAILED
-          : resolveAttemptStatusFromCounters(recovery)
+          : resolveAttemptStatusFromCounters(recovery.attemptCounters)
       await tx
         .update(this.workflowAttempt)
         .set({
           status: expiredStatus,
-          successItemCount: recovery.successItemCount,
-          failedItemCount: recovery.failedItemCount,
-          skippedItemCount: recovery.skippedItemCount,
+          successItemCount: recovery.attemptCounters.successItemCount,
+          failedItemCount: recovery.attemptCounters.failedItemCount,
+          skippedItemCount: recovery.attemptCounters.skippedItemCount,
           errorCode:
             expiredStatus === WorkflowAttemptStatusEnum.SUCCESS
               ? null
@@ -984,9 +989,9 @@ export class WorkflowService {
             status: WorkflowJobStatusEnum.PENDING,
             currentAttemptFk: recoveryAttempt.id,
             progressDetail: null,
-            successItemCount: recovery.successItemCount,
-            failedItemCount: recovery.failedItemCount,
-            skippedItemCount: recovery.skippedItemCount,
+            successItemCount: recovery.jobCounters.successItemCount,
+            failedItemCount: recovery.jobCounters.failedItemCount,
+            skippedItemCount: recovery.jobCounters.skippedItemCount,
             cancelRequestedAt: null,
             updatedAt: now,
           })
@@ -1019,7 +1024,7 @@ export class WorkflowService {
         return
       }
 
-      const terminalStatus = resolveJobStatusFromCounters(recovery)
+      const terminalStatus = resolveJobStatusFromCounters(recovery.jobCounters)
       const [updatedJob] = await tx
         .update(this.workflowJob)
         .set({
@@ -1029,9 +1034,9 @@ export class WorkflowService {
             terminalStatus === WorkflowJobStatusEnum.SUCCESS
               ? 100
               : job.progressPercent,
-          successItemCount: recovery.successItemCount,
-          failedItemCount: recovery.failedItemCount,
-          skippedItemCount: recovery.skippedItemCount,
+          successItemCount: recovery.jobCounters.successItemCount,
+          failedItemCount: recovery.jobCounters.failedItemCount,
+          skippedItemCount: recovery.jobCounters.skippedItemCount,
           finishedAt: now,
           updatedAt: now,
         })
@@ -1115,12 +1120,23 @@ export class WorkflowService {
       }
       const latestAttempt = await this.readAttempt(attempt.id)
       if (latestAttempt.status === WorkflowAttemptStatusEnum.RUNNING) {
-        await this.completeAttempt({
-          workflowAttemptId: attempt.id,
-          status: WorkflowAttemptStatusEnum.SUCCESS,
+        const latestJob = await this.readJobByIdWithDb(job.id, this.db)
+        const attemptCounters = {
           successItemCount: latestAttempt.selectedItemCount,
           failedItemCount: 0,
           skippedItemCount: 0,
+        }
+        const jobCounters = {
+          successItemCount:
+            latestJob.successItemCount + attemptCounters.successItemCount,
+          failedItemCount: latestJob.failedItemCount,
+          skippedItemCount: latestJob.skippedItemCount,
+        }
+        await this.completeAttempt({
+          workflowAttemptId: attempt.id,
+          status: WorkflowAttemptStatusEnum.SUCCESS,
+          jobCounters,
+          attemptCounters,
           completionOwnerClaimedBy: attempt.claimedBy ?? '',
         })
       }
@@ -1131,18 +1147,30 @@ export class WorkflowService {
       if (!this.isLeaseKeeperHealthy(leaseKeeper)) {
         return
       }
-      const isCancellation = isWorkflowCancellationError(error)
-      const cancellationCounters = isCancellation ? error.counters : undefined
+      const fallbackAttemptCounters = {
+        successItemCount: 0,
+        failedItemCount: attempt.selectedItemCount,
+        skippedItemCount: 0,
+      }
+      const latestJob = await this.readJobByIdWithDb(job.id, this.db)
+      const fallbackJobCounters = {
+        successItemCount: latestJob.successItemCount,
+        failedItemCount: latestJob.failedItemCount + fallbackAttemptCounters.failedItemCount,
+        skippedItemCount: latestJob.skippedItemCount,
+      }
+      const isCountedCancellation = error instanceof WorkflowCancellationError
+      const jobCounters = isCountedCancellation ? error.jobCounters : fallbackJobCounters
+      const attemptCounters = isCountedCancellation
+        ? error.attemptCounters
+        : fallbackAttemptCounters
       const errorObject = toWorkflowErrorObject(error)
       await this.completeAttempt({
         workflowAttemptId: attempt.id,
-        status: isCancellation
+        status: isCountedCancellation
           ? WorkflowAttemptStatusEnum.CANCELLED
           : WorkflowAttemptStatusEnum.FAILED,
-        successItemCount: cancellationCounters?.successItemCount ?? 0,
-        failedItemCount:
-          cancellationCounters?.failedItemCount ?? attempt.selectedItemCount,
-        skippedItemCount: cancellationCounters?.skippedItemCount ?? 0,
+        jobCounters,
+        attemptCounters,
         completionOwnerClaimedBy: attempt.claimedBy ?? '',
         errorCode: errorObject.name,
         errorMessage: errorObject.message,
@@ -1626,7 +1654,7 @@ export class WorkflowService {
         (await this.readJob(job.jobId)).cancelRequestedAt !== null,
       assertNotCancelled: async () => {
         if ((await this.readJob(job.jobId)).cancelRequestedAt !== null) {
-          throw new WorkflowCancellationError()
+          throw new WorkflowCancellationSignal()
         }
       },
       assertStillOwned: async () => this.assertAttemptStillOwned(job, attempt),
@@ -1712,6 +1740,13 @@ export class WorkflowService {
       ...(progress.percent === undefined
         ? {}
         : { progressPercent: normalizeWorkflowProgressPercent(progress.percent) }),
+      ...(progress.counters === undefined
+        ? {}
+        : {
+            successItemCount: progress.counters.successItemCount,
+            failedItemCount: progress.counters.failedItemCount,
+            skippedItemCount: progress.counters.skippedItemCount,
+          }),
     }
     await this.db
       .update(this.workflowJob)

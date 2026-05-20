@@ -60,6 +60,7 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
         advance: jest.fn(async () => undefined),
       })),
       getResidue: jest.fn(async () => ({})),
+      initializeItemImageProgress: jest.fn(async () => undefined),
       payload: {
         platform: sourceBinding.platform,
         providerGroupPathWord: sourceBinding.providerGroupPathWord,
@@ -336,6 +337,7 @@ describe('ThirdPartyComicSyncService workflow reservation', () => {
       group: sourceBinding.providerGroupPathWord,
       platform: sourceBinding.platform,
     })
+    expect(context.initializeItemImageProgress).toHaveBeenCalledWith(1)
   })
 
   it('does not create a chapter when ownership is lost before local write', async () => {
