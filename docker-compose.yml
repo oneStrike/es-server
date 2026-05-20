@@ -182,6 +182,8 @@ services:
           memory: 128M
     expose:
       - '8080'
+    ports:
+      - '127.0.0.1:8083:8080'
     networks:
       - 1panel-network # 使用外部网络，保持网络配置一致
 
