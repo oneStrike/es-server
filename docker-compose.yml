@@ -26,9 +26,8 @@ services:
     # 安全选项
     security_opt:
       - no-new-privileges:true
-    ports:
-      # 使用环境变量控制端口映射，默认 8080
-      - '${ADMIN_API_PORT}:8080'
+    expose:
+      - '8080'
     env_file:
       - ./.env
     environment:
@@ -43,7 +42,9 @@ services:
       - JWT_JWT_AUD=${ADMIN_JWT_JWT_AUD}
       - JWT_JWT_ISSUER=${ADMIN_JWT_ISSUER}
       - REDIS_NAMESPACE=${ADMIN_REDIS_NAMESPACE}
-      - UPLOAD_DIR=${ADMIN_UPLOAD_DIR:-/app/uploads/admin}
+      - UPLOAD_LOCAL_DIR=${UPLOAD_LOCAL_DIR:-/app/uploads/public}
+      - UPLOAD_TMP_DIR=${UPLOAD_TMP_DIR:-/app/uploads/tmp}
+      - UPLOAD_LOCAL_URL_PREFIX=${UPLOAD_LOCAL_URL_PREFIX:-/files}
       - UPLOAD_MAX_FILE_SIZE=${ADMIN_UPLOAD_MAX_FILE_SIZE}
       # 日志路径 (区分项目)
       - LOG_PATH=/app/logs/app
@@ -102,9 +103,8 @@ services:
     # 安全选项
     security_opt:
       - no-new-privileges:true
-    ports:
-      # 使用环境变量控制端口映射，默认 8081
-      - '${APP_API_PORT}:8081'
+    expose:
+      - '8081'
     env_file:
       - ./.env
     environment:
@@ -117,11 +117,12 @@ services:
       - JWT_REFRESH_EXPIRATION_IN=${APP_JWT_REFRESH_EXPIRATION_IN}
       - JWT_JWT_AUD=${APP_JWT_JWT_AUD}
       - JWT_JWT_ISSUER=${APP_JWT_ISSUER}
-      - UPLOAD_DIR=${APP_UPLOAD_DIR:-/app/uploads/app}
+      - UPLOAD_LOCAL_DIR=${UPLOAD_LOCAL_DIR:-/app/uploads/public}
+      - UPLOAD_TMP_DIR=${UPLOAD_TMP_DIR:-/app/uploads/tmp}
+      - UPLOAD_LOCAL_URL_PREFIX=${UPLOAD_LOCAL_URL_PREFIX:-/files}
       - UPLOAD_MAX_FILE_SIZE=${APP_UPLOAD_MAX_FILE_SIZE}
       - REDIS_NAMESPACE=${APP_REDIS_NAMESPACE}
       - APP_VERSION=${APP_APP_VERSION}
-      - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX}
       # 日志路径 (区分项目)
       - LOG_PATH=/app/logs/app
       # 控制台日志级别
@@ -153,9 +154,8 @@ services:
         limits:
           cpus: '0.5'
           memory: 128M
-    ports:
-      # 使用环境变量控制端口映射，默认 8082
-      - '${ADMIN_PORT}:8080'
+    expose:
+      - '8080'
     networks:
       - 1panel-network # 使用外部网络，确保能稳定解析 admin-server 服务名
 
@@ -178,11 +178,33 @@ services:
         limits:
           cpus: '0.5'
           memory: 128M
-    ports:
-      # 使用环境变量控制端口映射，默认 8082
-      - '${APP_WEB_PORT}:8080'
+    expose:
+      - '8080'
     networks:
       - 1panel-network # 使用外部网络，保持网络配置一致
+
+  # 统一文件静态服务
+  files:
+    image: nginx:stable-alpine
+    container_name: es-files
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M
+    expose:
+      - '8080'
+    volumes:
+      - ${HOST_UPLOADS_DIR:-es-server-uploads}:/srv/uploads:ro
+      - ./deploy/files-nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - 1panel-network
 
 networks:
   # 使用 1Panel 外部网络，所有服务在同一网络中，DNS 解析更稳定
