@@ -1,4 +1,5 @@
 import {
+  AdminWorkChapterPageItemDto,
   CreateWorkChapterDto,
   QueryWorkChapterDto,
   UpdateWorkChapterDto,
@@ -42,12 +43,10 @@ export class ComicChapterController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询漫画章节列表',
-    model: IdDto,
+    model: AdminWorkChapterPageItemDto,
   })
   async getPage(@Query() query: QueryWorkChapterDto) {
-    return this.workChapterService.getChapterPage(query, {
-      bypassVisibilityCheck: true,
-    })
+    return this.workChapterService.getAdminChapterPage(query)
   }
 
   @Get('detail')

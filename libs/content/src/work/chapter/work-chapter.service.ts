@@ -16,23 +16,62 @@ import {
   WorkTypeEnum,
 } from '@libs/platform/constant'
 
-import { BusinessException } from '@libs/platform/exceptions'
 import { BatchUpdatePublishedStatusDto } from '@libs/platform/dto'
+import { BusinessException } from '@libs/platform/exceptions'
 import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   CreateWorkChapterDto,
+  QueryAppWorkChapterPageDto,
   QueryWorkChapterDto,
   UpdateWorkChapterDto,
 } from './dto/work-chapter.dto'
 import {
   SwapWorkChapterNumbersInput,
   WorkChapterDetailContext,
-  WorkChapterPageContext,
   WorkChapterPublicDetailRow,
 } from './work-chapter.type'
+
+const APP_CHAPTER_PAGE_PICK_FIELDS = [
+  'id',
+  'workId',
+  'workType',
+  'title',
+  'subtitle',
+  'cover',
+  'sortOrder',
+  'isPublished',
+  'isPreview',
+  'publishAt',
+  'viewRule',
+  'price',
+  'canDownload',
+  'canComment',
+  'createdAt',
+  'updatedAt',
+] as const
+
+const ADMIN_CHAPTER_PAGE_PICK_FIELDS = [
+  'id',
+  'workId',
+  'workType',
+  'cover',
+  'title',
+  'subtitle',
+  'sortOrder',
+  'viewRule',
+  'price',
+  'requiredViewLevelId',
+  'isPreview',
+  'canDownload',
+  'canComment',
+  'isPublished',
+  'publishAt',
+  'createdAt',
+  'updatedAt',
+] as const
 
 /**
  * 作品章节服务
@@ -145,12 +184,7 @@ export class WorkChapterService {
     )
   }
 
-  // 分页查询章节列表。
-  async getChapterPage(
-    dto: QueryWorkChapterDto,
-    context: WorkChapterPageContext = {},
-  ) {
-    const { userId, bypassVisibilityCheck = false } = context
+  private buildAdminChapterPageConditions(dto: QueryWorkChapterDto) {
     const conditions: SQL[] = [isNull(this.workChapter.deletedAt)]
 
     if (dto.workId !== undefined) {
@@ -175,53 +209,40 @@ export class WorkChapterService {
       conditions.push(buildILikeCondition(this.workChapter.title, dto.title)!)
     }
 
-    const where = and(...conditions)
-    const orderBy = dto.orderBy?.trim()
-      ? dto.orderBy
-      : { sortOrder: 'asc' as const }
+    return conditions
+  }
 
-    const page = await this.drizzle.ext.findPagination(this.workChapter, {
-      where,
-      ...dto,
-      orderBy,
-    })
-
-    if (bypassVisibilityCheck) {
-      return {
-        ...page,
-        list: page.list.map((chapter) => ({
-          id: chapter.id,
-          isPreview: chapter.isPreview,
-          cover: chapter.cover,
-          title: chapter.title,
-          subtitle: chapter.subtitle,
-          price: chapter.price,
-          canComment: chapter.canComment,
-          sortOrder: chapter.sortOrder,
-          viewRule: chapter.viewRule,
-          canDownload: chapter.canDownload,
-          requiredViewLevelId: chapter.requiredViewLevelId,
-          publishAt: chapter.publishAt,
-          createdAt: chapter.createdAt,
-          updatedAt: chapter.updatedAt,
-          isPublished: chapter.isPublished,
-        })),
-      }
-    }
-
-    const permissionEntries = await Promise.all(
-      page.list.map(
-        async (chapter) =>
-          [
-            chapter.id,
-            await this.contentPermissionService.resolveChapterPermission(
-              chapter.id,
-              userId,
-            ),
-          ] as const,
+  // 分页查询 app 公开章节列表。
+  async getAppChapterPage(
+    dto: QueryAppWorkChapterPageDto,
+    _context: { userId?: number } = {},
+  ) {
+    const now = new Date()
+    const where = and(
+      isNull(this.workChapter.deletedAt),
+      eq(this.workChapter.workId, dto.workId),
+      eq(this.workChapter.isPublished, true),
+      or(
+        isNull(this.workChapter.publishAt),
+        lte(this.workChapter.publishAt, now),
       ),
     )
-    const permissionMap = new Map(permissionEntries)
+    const page = await this.drizzle.ext.findPagination(this.workChapter, {
+      where,
+      pageIndex: dto.pageIndex,
+      pageSize: dto.pageSize,
+      orderBy: [{ sortOrder: 'asc' as const }, { id: 'asc' as const }],
+      pick: APP_CHAPTER_PAGE_PICK_FIELDS,
+    })
+
+    if (page.list.length === 0) {
+      return { ...page, list: [] }
+    }
+
+    const permissionMap =
+      await this.contentPermissionService.resolveChapterPermissionsFromData(
+        page.list,
+      )
 
     return {
       ...page,
@@ -237,9 +258,7 @@ export class WorkChapterService {
           canComment: chapter.canComment,
           sortOrder: chapter.sortOrder,
           viewRule: permission?.viewRule ?? chapter.viewRule,
-          canDownload: permission?.canDownload ?? chapter.canDownload,
-          requiredViewLevelId:
-            permission?.requiredViewLevelId ?? chapter.requiredViewLevelId,
+          canDownload: chapter.canDownload,
           purchasePricing: permission?.purchasePricing ?? null,
           publishAt: chapter.publishAt,
           createdAt: chapter.createdAt,
@@ -247,6 +266,45 @@ export class WorkChapterService {
           isPublished: chapter.isPublished,
         }
       }),
+    }
+  }
+
+  // 分页查询 admin 管理章节列表。
+  async getAdminChapterPage(dto: QueryWorkChapterDto) {
+    const where = and(...this.buildAdminChapterPageConditions(dto))
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { sortOrder: 'asc' as const }
+
+    const page = await this.drizzle.ext.findPagination(this.workChapter, {
+      where,
+      pageIndex: dto.pageIndex,
+      pageSize: dto.pageSize,
+      orderBy,
+      pick: ADMIN_CHAPTER_PAGE_PICK_FIELDS,
+    })
+
+    return {
+      ...page,
+      list: page.list.map((chapter) => ({
+        id: chapter.id,
+        workId: chapter.workId,
+        workType: chapter.workType,
+        isPreview: chapter.isPreview,
+        cover: chapter.cover,
+        title: chapter.title,
+        subtitle: chapter.subtitle,
+        price: chapter.price,
+        canComment: chapter.canComment,
+        sortOrder: chapter.sortOrder,
+        viewRule: chapter.viewRule,
+        canDownload: chapter.canDownload,
+        requiredViewLevelId: chapter.requiredViewLevelId,
+        publishAt: chapter.publishAt,
+        createdAt: chapter.createdAt,
+        updatedAt: chapter.updatedAt,
+        isPublished: chapter.isPublished,
+      })),
     }
   }
 

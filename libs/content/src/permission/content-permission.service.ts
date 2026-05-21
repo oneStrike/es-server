@@ -10,12 +10,14 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common'
+import { and, inArray, isNull } from 'drizzle-orm'
 import { ContentEntitlementTargetTypeEnum } from './content-entitlement.constant'
 import { ContentEntitlementService } from './content-entitlement.service'
 import { PERMISSION_ERROR_MESSAGE } from './content-permission.constant'
 import {
   AccessRuleContext,
   ChapterAccessResult,
+  InheritedChapterWorkPermissionData,
   PermissionChapterData,
   PurchasePricingSnapshot,
   ResolvedChapterPermission,
@@ -293,18 +295,18 @@ export class ContentPermissionService {
     }
   }
 
-  // 从已查询的章节数据解析权限配置，避免重复查询（继承模式除外）。
-  async resolveChapterPermissionFromData(
+  private buildResolvedChapterPermission(
     chapter: PermissionChapterData,
-  ): Promise<ResolvedChapterPermission> {
-    let viewRule = chapter.viewRule as WorkViewPermissionEnum
-    let purchasePrice = chapter.price
-
-    if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
-      const workPermission = await this.resolveWorkPermission(chapter.workId)
-      viewRule = workPermission.viewRule as WorkViewPermissionEnum
-      purchasePrice = workPermission.chapterPrice
-    }
+    inheritedWork?: InheritedChapterWorkPermissionData,
+  ): ResolvedChapterPermission {
+    const viewRule =
+      chapter.viewRule === WorkViewPermissionEnum.INHERIT && inheritedWork
+        ? (inheritedWork.viewRule as WorkViewPermissionEnum)
+        : (chapter.viewRule as WorkViewPermissionEnum)
+    const purchasePrice =
+      chapter.viewRule === WorkViewPermissionEnum.INHERIT && inheritedWork
+        ? inheritedWork.chapterPrice
+        : chapter.price
 
     return {
       workType: chapter.workType,
@@ -318,6 +320,103 @@ export class ContentPermissionService {
           ? this.buildPurchasePricing(purchasePrice)
           : null,
     }
+  }
+
+  private async resolveInheritedChapterWorkPermission(workId: number) {
+    const [work] = await this.db
+      .select({
+        id: this.work.id,
+        viewRule: this.work.viewRule,
+        chapterPrice: this.work.chapterPrice,
+      })
+      .from(this.work)
+      .where(and(inArray(this.work.id, [workId]), isNull(this.work.deletedAt)))
+
+    if (!work) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        PERMISSION_ERROR_MESSAGE.WORK_NOT_FOUND,
+      )
+    }
+
+    return work
+  }
+
+  // 从已查询的章节数据解析权限配置，避免重复查询（继承模式除外）。
+  async resolveChapterPermissionFromData(
+    chapter: PermissionChapterData,
+  ): Promise<ResolvedChapterPermission> {
+    if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
+      const workPermission = await this.resolveInheritedChapterWorkPermission(
+        chapter.workId,
+      )
+      return this.buildResolvedChapterPermission(chapter, workPermission)
+    }
+
+    return this.buildResolvedChapterPermission(chapter)
+  }
+
+  async resolveChapterPermissionsFromData(
+    chapters: Array<PermissionChapterData & { id: number }>,
+  ) {
+    const inheritedWorkIds = [
+      ...new Set(
+        chapters
+          .filter(
+            (chapter) => chapter.viewRule === WorkViewPermissionEnum.INHERIT,
+          )
+          .map((chapter) => chapter.workId),
+      ),
+    ]
+    const inheritedWorkMap = new Map<
+      number,
+      InheritedChapterWorkPermissionData
+    >()
+
+    if (inheritedWorkIds.length > 0) {
+      const works = await this.db
+        .select({
+          id: this.work.id,
+          viewRule: this.work.viewRule,
+          chapterPrice: this.work.chapterPrice,
+        })
+        .from(this.work)
+        .where(
+          and(
+            inArray(this.work.id, inheritedWorkIds),
+            isNull(this.work.deletedAt),
+          ),
+        )
+
+      for (const work of works) {
+        inheritedWorkMap.set(work.id, work)
+      }
+    }
+
+    const permissions = new Map<number, ResolvedChapterPermission>()
+    for (const chapter of chapters) {
+      const inheritedWork =
+        chapter.viewRule === WorkViewPermissionEnum.INHERIT
+          ? inheritedWorkMap.get(chapter.workId)
+          : undefined
+
+      if (
+        chapter.viewRule === WorkViewPermissionEnum.INHERIT &&
+        !inheritedWork
+      ) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          PERMISSION_ERROR_MESSAGE.WORK_NOT_FOUND,
+        )
+      }
+
+      permissions.set(
+        chapter.id,
+        this.buildResolvedChapterPermission(chapter, inheritedWork),
+      )
+    }
+
+    return permissions
   }
 
   // 按章节 ID 解析内容权益目标类型，购买和临时授权都复用同一目标 owner。

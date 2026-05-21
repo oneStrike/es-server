@@ -1,10 +1,10 @@
 import type { FastifyRequest } from 'fastify'
 import {
+  AppWorkChapterPageItemDto,
   ComicChapterContentDto,
   NovelChapterContentDto,
-  PageWorkChapterDto,
+  QueryAppWorkChapterPageDto,
   QueryWorkChapterCommentPageDto,
-  QueryWorkChapterDto,
   WorkChapterDetailWithUserStatusDto,
 } from '@libs/content/work/chapter/dto/work-chapter.dto'
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
@@ -12,7 +12,12 @@ import { ComicContentService } from '@libs/content/work/content/comic-content.se
 import { NovelContentService } from '@libs/content/work/content/novel-content.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
-import { ApiDoc, ApiPageDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
+import {
+  ApiDoc,
+  ApiPageDoc,
+  CurrentUser,
+  OptionalAuth,
+} from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import {
@@ -36,13 +41,13 @@ export class WorkChapterController {
   @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询作品章节',
-    model: PageWorkChapterDto,
+    model: AppWorkChapterPageItemDto,
   })
   async getWorkChapterPage(
-    @Query() query: QueryWorkChapterDto,
+    @Query() query: QueryAppWorkChapterPageDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    return this.workChapterService.getChapterPage(query, { userId })
+    return this.workChapterService.getAppChapterPage(query, { userId })
   }
 
   @Get('detail')

@@ -23,15 +23,6 @@ export interface WorkChapterDetailContext {
 }
 
 /**
- * 章节分页请求上下文。
- * 控制是否按 app 可见性规则展开权限信息。
- */
-export interface WorkChapterPageContext {
-  userId?: number
-  bypassVisibilityCheck?: boolean
-}
-
-/**
  * 公开章节详情使用的章节字段快照。
  * 额外携带解析后的权限与购买价格，避免 service 方法使用宽泛类型。
  */

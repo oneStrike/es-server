@@ -38,6 +38,15 @@ export type WorkPermissionData = Pick<
 >
 
 /**
+ * 章节继承作品权限时所需的父级快照。
+ * 不包含作品评论开关，避免章节列表把父级 canComment 误当作章节事实。
+ */
+export type InheritedChapterWorkPermissionData = Pick<
+  typeof work.$inferSelect,
+  'id' | 'viewRule' | 'chapterPrice'
+>
+
+/**
  * 统一的访问规则上下文。
  * 作品阅读、章节阅读和章节下载都会先整理成这个结构，再进入同一套权限判断流程。
  */

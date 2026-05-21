@@ -222,6 +222,29 @@ export class QueryWorkChapterDto extends IntersectionType(
   ] as const),
 ) {}
 
+export class QueryAppWorkChapterPageDto extends PickType(BaseWorkChapterDto, [
+  'workId',
+] as const) {
+  @NumberProperty({
+    description: '单页大小，最大100，默认15',
+    example: 15,
+    max: 100,
+    min: 1,
+    required: false,
+    default: 15,
+  })
+  pageSize?: number
+
+  @NumberProperty({
+    description: '当前页码（从1开始）',
+    example: 1,
+    min: 1,
+    required: false,
+    default: 1,
+  })
+  pageIndex?: number
+}
+
 export class UpdateWorkChapterDto extends IntersectionType(
   PartialType(CreateWorkChapterDto),
   IdDto,
@@ -233,10 +256,7 @@ export class QueryWorkChapterCommentPageDto extends IntersectionType(
   PartialType(CommentSortDto),
 ) {}
 
-/**
- * 作品章节分页项 DTO。
- */
-export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
+export class AppWorkChapterPageItemDto extends PickType(BaseWorkChapterDto, [
   'id',
   'isPreview',
   'cover',
@@ -246,7 +266,6 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'sortOrder',
   'viewRule',
   'canDownload',
-  'requiredViewLevelId',
   'publishAt',
   'createdAt',
   'updatedAt',
@@ -261,6 +280,26 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   })
   purchasePricing!: ContentPurchasePricingDto | null
 }
+
+export class AdminWorkChapterPageItemDto extends PickType(BaseWorkChapterDto, [
+  'id',
+  'workId',
+  'workType',
+  'isPreview',
+  'cover',
+  'title',
+  'subtitle',
+  'price',
+  'canComment',
+  'sortOrder',
+  'viewRule',
+  'canDownload',
+  'requiredViewLevelId',
+  'publishAt',
+  'createdAt',
+  'updatedAt',
+  'isPublished',
+] as const) {}
 
 class ChapterUserStatusFieldsDto {
   @BooleanProperty({

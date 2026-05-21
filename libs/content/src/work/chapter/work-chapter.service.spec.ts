@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
 import { DrizzleService } from '@db/core'
-import { WorkTypeEnum } from '@libs/platform/constant'
+import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
 import { WorkChapterService } from './work-chapter.service'
 
 function createUpdateDb(returningRows: Array<{ id: number }>) {
@@ -36,13 +36,20 @@ function createUpdateDb(returningRows: Array<{ id: number }>) {
 }
 
 function createService(drizzle: unknown) {
+  return createServiceWithPermission(drizzle, {})
+}
+
+function createServiceWithPermission(
+  drizzle: unknown,
+  contentPermissionService: unknown,
+) {
   return new WorkChapterService(
     drizzle as DrizzleService,
     {} as never,
     {} as never,
     {} as never,
     {} as never,
-    {} as never,
+    contentPermissionService as never,
     {} as never,
   )
 }
@@ -68,7 +75,10 @@ function flattenSqlChunks(chunk: unknown, output: unknown[] = []) {
     return output
   }
 
-  if ('value' in chunk && Array.isArray((chunk as { value: unknown[] }).value)) {
+  if (
+    'value' in chunk &&
+    Array.isArray((chunk as { value: unknown[] }).value)
+  ) {
     output.push((chunk as { value: unknown[] }).value.join(''))
     return output
   }
@@ -81,6 +91,207 @@ function getWhereSqlChunks(where: jest.Mock) {
   const predicate = where.mock.calls[0]?.[0]
   return flattenSqlChunks(predicate)
 }
+
+function createPaginationDb(list: unknown[] = []) {
+  const findPagination = jest.fn(async (_table, options) => ({
+    list,
+    pageIndex: options.pageIndex ?? 1,
+    pageSize: options.pageSize ?? 15,
+    total: list.length,
+  }))
+
+  return {
+    ext: { findPagination },
+    schema: {
+      workChapter: {
+        canComment: 'work_chapter.can_comment',
+        canDownload: 'work_chapter.can_download',
+        cover: 'work_chapter.cover',
+        createdAt: 'work_chapter.created_at',
+        deletedAt: 'work_chapter.deleted_at',
+        id: 'work_chapter.id',
+        isPreview: 'work_chapter.is_preview',
+        isPublished: 'work_chapter.is_published',
+        price: 'work_chapter.price',
+        publishAt: 'work_chapter.publish_at',
+        requiredViewLevelId: 'work_chapter.required_view_level_id',
+        sortOrder: 'work_chapter.sort_order',
+        subtitle: 'work_chapter.subtitle',
+        title: 'work_chapter.title',
+        updatedAt: 'work_chapter.updated_at',
+        viewRule: 'work_chapter.view_rule',
+        workId: 'work_chapter.work_id',
+        workType: 'work_chapter.work_type',
+      },
+    },
+  }
+}
+
+const chapterPageRow = {
+  id: 1,
+  workId: 10,
+  workType: WorkTypeEnum.COMIC,
+  title: '第1话',
+  subtitle: '序章',
+  cover: 'cover.jpg',
+  sortOrder: 1,
+  isPublished: true,
+  isPreview: false,
+  publishAt: null,
+  viewRule: WorkViewPermissionEnum.INHERIT,
+  price: 5,
+  canDownload: true,
+  canComment: false,
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+}
+
+describe('WorkChapterService chapter page projection', () => {
+  it('queries the app page with a public pick, fixed ordering, and one batch permission call', async () => {
+    const drizzle = createPaginationDb([chapterPageRow])
+    const contentPermissionService = {
+      resolveChapterPermissionsFromData: jest.fn(
+        async () =>
+          new Map([
+            [
+              chapterPageRow.id,
+              {
+                canDownload: true,
+                isPreview: false,
+                purchasePricing: {
+                  discountAmount: 0,
+                  originalPrice: 10,
+                  payablePrice: 10,
+                  payableRate: 1,
+                },
+                requiredExperience: null,
+                requiredViewLevelId: null,
+                viewRule: WorkViewPermissionEnum.PURCHASE,
+                workType: WorkTypeEnum.COMIC,
+              },
+            ],
+          ]),
+      ),
+    }
+    const service = createServiceWithPermission(
+      drizzle,
+      contentPermissionService,
+    )
+
+    const page = await service.getAppChapterPage(
+      { pageIndex: 1, pageSize: 100, workId: 10 },
+      { userId: 99 },
+    )
+    const options = drizzle.ext.findPagination.mock.calls[0][1]
+
+    expect(options.pick).toEqual(
+      expect.arrayContaining([
+        'id',
+        'workId',
+        'workType',
+        'title',
+        'viewRule',
+        'price',
+        'canDownload',
+        'canComment',
+      ]),
+    )
+    expect(options.pick).not.toEqual(
+      expect.arrayContaining([
+        'content',
+        'description',
+        'remark',
+        'requiredViewLevelId',
+      ]),
+    )
+    expect(options.orderBy).toEqual([{ sortOrder: 'asc' }, { id: 'asc' }])
+    expect(
+      contentPermissionService.resolveChapterPermissionsFromData,
+    ).toHaveBeenCalledTimes(1)
+    expect(
+      contentPermissionService.resolveChapterPermissionsFromData,
+    ).toHaveBeenCalledWith([chapterPageRow])
+    expect(page.list).toEqual([
+      {
+        id: 1,
+        canComment: false,
+        canDownload: true,
+        cover: 'cover.jpg',
+        createdAt: chapterPageRow.createdAt,
+        isPreview: false,
+        isPublished: true,
+        publishAt: null,
+        purchasePricing: {
+          discountAmount: 0,
+          originalPrice: 10,
+          payablePrice: 10,
+          payableRate: 1,
+        },
+        sortOrder: 1,
+        subtitle: '序章',
+        title: '第1话',
+        updatedAt: chapterPageRow.updatedAt,
+        viewRule: WorkViewPermissionEnum.PURCHASE,
+      },
+    ])
+    expect(page.list[0]).not.toHaveProperty('price')
+    expect(page.list[0]).not.toHaveProperty('requiredViewLevelId')
+    expect(page.list[0]).not.toHaveProperty('workId')
+    expect(page.list[0]).not.toHaveProperty('workType')
+  })
+
+  it('does not resolve app permissions for an empty page', async () => {
+    const drizzle = createPaginationDb([])
+    const contentPermissionService = {
+      resolveChapterPermissionsFromData: jest.fn(),
+    }
+    const service = createServiceWithPermission(
+      drizzle,
+      contentPermissionService,
+    )
+
+    const page = await service.getAppChapterPage({ workId: 10 })
+
+    expect(page.list).toEqual([])
+    expect(
+      contentPermissionService.resolveChapterPermissionsFromData,
+    ).not.toHaveBeenCalled()
+  })
+
+  it('queries the admin page with an explicit management pick and no app permission resolver', async () => {
+    const adminRow = {
+      ...chapterPageRow,
+      requiredViewLevelId: 3,
+    }
+    const drizzle = createPaginationDb([adminRow])
+    const contentPermissionService = {
+      resolveChapterPermissionsFromData: jest.fn(),
+    }
+    const service = createServiceWithPermission(
+      drizzle,
+      contentPermissionService,
+    )
+
+    const page = await service.getAdminChapterPage({ workId: 10 })
+    const options = drizzle.ext.findPagination.mock.calls[0][1]
+
+    expect(options.pick).toEqual(
+      expect.arrayContaining(['price', 'requiredViewLevelId', 'viewRule']),
+    )
+    expect(options.pick).not.toEqual(
+      expect.arrayContaining(['content', 'description', 'remark']),
+    )
+    expect(
+      contentPermissionService.resolveChapterPermissionsFromData,
+    ).not.toHaveBeenCalled()
+    expect(page.list[0]).toMatchObject({
+      id: 1,
+      price: 5,
+      requiredViewLevelId: 3,
+      viewRule: WorkViewPermissionEnum.INHERIT,
+    })
+  })
+})
 
 describe('WorkChapterService batch publish status', () => {
   it('updates comic chapter publish status with id, work type, and deletion filters', async () => {
