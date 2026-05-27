@@ -1,12 +1,12 @@
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
-import { and, arrayOverlaps, eq, isNull } from 'drizzle-orm'
+import { and, arrayOverlaps, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   CreateCategoryDto,
   QueryCategoryDto,
@@ -50,9 +50,7 @@ export class WorkCategoryService {
   async createCategory(createCategoryInput: CreateCategoryDto) {
     if (!createCategoryInput.sortOrder) {
       createCategoryInput.sortOrder =
-        (await this.drizzle.ext.maxOrder({
-          column: this.workCategory.sortOrder,
-        })) + 1
+        (await this.resolveNextCategorySortOrder()) + 1
     }
 
     await this.drizzle.withErrorHandling(
@@ -86,11 +84,22 @@ export class WorkCategoryService {
       ? pageParams.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.workCategory, {
-      where,
-      ...pageParams,
-      orderBy,
+    const page = this.drizzle.buildPage(pageParams)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.workCategory,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.workCategory)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workCategory, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 获取分类详情，未命中时抛出业务异常，避免上层误把空结果当成可编辑分类。
@@ -157,10 +166,54 @@ export class WorkCategoryService {
     return true
   }
 
-  // 交换两个分类的排序值，使用 ext.swapField 保证原子性，避免并发问题。
+  // 交换两个分类的排序值，在事务中使用临时排序值避免唯一约束或并发中间态。
   async updateCategorySort(updateSortDto: UpdateCategorySortDto) {
-    await this.drizzle.ext.swapField(this.workCategory, {
-      where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
+    await this.drizzle.withTransaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: this.workCategory.id,
+          sortOrder: this.workCategory.sortOrder,
+        })
+        .from(this.workCategory)
+        .where(
+          inArray(this.workCategory.id, [
+            updateSortDto.dragId,
+            updateSortDto.targetId,
+          ]),
+        )
+
+      const dragCategory = rows.find((row) => row.id === updateSortDto.dragId)
+      const targetCategory = rows.find(
+        (row) => row.id === updateSortDto.targetId,
+      )
+
+      if (!dragCategory || !targetCategory) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '分类不存在',
+        )
+      }
+      if (dragCategory.sortOrder === targetCategory.sortOrder) {
+        return true
+      }
+
+      const temporarySortOrder =
+        (await this.resolveMinimumCategorySortOrder(tx)) - 1
+
+      await tx
+        .update(this.workCategory)
+        .set({ sortOrder: temporarySortOrder })
+        .where(eq(this.workCategory.id, dragCategory.id))
+      await tx
+        .update(this.workCategory)
+        .set({ sortOrder: dragCategory.sortOrder })
+        .where(eq(this.workCategory.id, targetCategory.id))
+      await tx
+        .update(this.workCategory)
+        .set({ sortOrder: targetCategory.sortOrder })
+        .where(eq(this.workCategory.id, dragCategory.id))
+
+      return true
     })
     return true
   }
@@ -198,5 +251,21 @@ export class WorkCategoryService {
       .limit(1)
 
     return rows.length > 0
+  }
+
+  private async resolveNextCategorySortOrder() {
+    const [row] = await this.db
+      .select({ value: sql<number>`max(${this.workCategory.sortOrder})` })
+      .from(this.workCategory)
+
+    return row?.value ?? 0
+  }
+
+  private async resolveMinimumCategorySortOrder(db = this.db) {
+    const [row] = await db
+      .select({ value: sql<number>`min(${this.workCategory.sortOrder})` })
+      .from(this.workCategory)
+
+    return row?.value ?? 0
   }
 }

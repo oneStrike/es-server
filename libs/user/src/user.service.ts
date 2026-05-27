@@ -8,7 +8,7 @@ import type {
   UserMentionCandidatePageResult,
   UserStatusSource,
 } from './user.type'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -229,13 +229,27 @@ export class UserService {
       buildILikeCondition(this.appUser.nickname, keyword),
     )
 
-    const pageResult = await this.drizzle.ext.findPagination(this.appUser, {
-      where: condition,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-      orderBy: query.orderBy?.trim() ? query.orderBy : { id: 'desc' as const },
-      pick: ['id', 'nickname', 'avatarUrl'] as const,
+    const orderBy = query.orderBy?.trim()
+      ? query.orderBy
+      : { id: 'desc' as const }
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.appUser,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.appUser.id,
+          nickname: this.appUser.nickname,
+          avatarUrl: this.appUser.avatarUrl,
+        })
+        .from(this.appUser)
+        .where(condition)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.appUser, condition),
+    ])
+    const pageResult = toPageResult(list, total, page)
 
     return {
       ...pageResult,

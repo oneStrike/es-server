@@ -1159,12 +1159,12 @@ export class ComicArchiveImportService {
 
   // 执行 assertWorkExists。
   private async assertWorkExists(workId: number) {
-    if (
-      !(await this.drizzle.ext.exists(
-        this.work,
-        and(eq(this.work.id, workId), isNull(this.work.deletedAt)),
-      ))
-    ) {
+    const [work] = await this.db
+      .select({ id: this.work.id })
+      .from(this.work)
+      .where(and(eq(this.work.id, workId), isNull(this.work.deletedAt)))
+      .limit(1)
+    if (!work) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '作品不存在',

@@ -1,6 +1,6 @@
 import type { Db, DrizzleMutationResult } from '@db/core'
 import type { ForumModeratorApplicationSelect } from '@db/schema'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -390,14 +390,22 @@ export class ForumModeratorApplicationService {
       )
     }
 
-    const page = await this.drizzle.ext.findPagination(
-      this.forumModeratorApplication,
-      {
-        where: conditions.length > 0 ? and(...conditions) : undefined,
-        ...pagination,
-        orderBy: [{ createdAt: 'desc' }],
-      },
-    )
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const pageQuery = this.drizzle.buildPage(pagination)
+    const orderQuery = this.drizzle.buildOrderBy([{ createdAt: 'desc' }], {
+      table: this.forumModeratorApplication,
+    })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.forumModeratorApplication)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.forumModeratorApplication, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     return {
       ...page,

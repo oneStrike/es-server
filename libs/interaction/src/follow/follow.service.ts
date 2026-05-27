@@ -1,7 +1,7 @@
 import type { PostgresErrorSourceObject } from '@db/core'
 import type { UserFollowSelect } from '@db/schema'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
   BadRequestException,
@@ -209,14 +209,18 @@ export class FollowService {
     isMutualFollow: boolean
   }> {
     const { targetType, targetId, userId } = input
-    const isFollowing = await this.drizzle.ext.exists(
-      this.userFollow,
-      and(
-        eq(this.userFollow.targetType, targetType),
-        eq(this.userFollow.targetId, targetId),
-        eq(this.userFollow.userId, userId),
-      ),
-    )
+    const [following] = await this.db
+      .select({ id: this.userFollow.id })
+      .from(this.userFollow)
+      .where(
+        and(
+          eq(this.userFollow.targetType, targetType),
+          eq(this.userFollow.targetId, targetId),
+          eq(this.userFollow.userId, userId),
+        ),
+      )
+      .limit(1)
+    const isFollowing = !!following
 
     if (targetType !== FollowTargetTypeEnum.USER) {
       return {
@@ -226,14 +230,18 @@ export class FollowService {
       }
     }
 
-    const isFollowedByTarget = await this.drizzle.ext.exists(
-      this.userFollow,
-      and(
-        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
-        eq(this.userFollow.targetId, userId),
-        eq(this.userFollow.userId, targetId),
-      ),
-    )
+    const [followedByTarget] = await this.db
+      .select({ id: this.userFollow.id })
+      .from(this.userFollow)
+      .where(
+        and(
+          eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+          eq(this.userFollow.targetId, userId),
+          eq(this.userFollow.userId, targetId),
+        ),
+      )
+      .limit(1)
+    const isFollowedByTarget = !!followedByTarget
 
     return {
       isFollowing,
@@ -250,17 +258,26 @@ export class FollowService {
     query: FollowPageCommandDto,
     targetType: FollowTargetTypeEnum,
   ) {
-    const page = await this.drizzle.ext.findPagination(this.userFollow, {
-      where: and(
-        eq(this.userFollow.userId, query.userId),
-        eq(this.userFollow.targetType, targetType),
-      ),
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const where = and(
+      eq(this.userFollow.userId, query.userId),
+      eq(this.userFollow.targetType, targetType),
+    )
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.userFollow },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userFollow)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userFollow, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return {
@@ -396,17 +413,26 @@ export class FollowService {
    * 分页查询指定用户关注的用户。
    */
   async getFollowingUserPage(query: FollowPageCommandDto) {
-    const page = await this.drizzle.ext.findPagination(this.userFollow, {
-      where: and(
-        eq(this.userFollow.userId, query.userId),
-        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
-      ),
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const where = and(
+      eq(this.userFollow.userId, query.userId),
+      eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+    )
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.userFollow },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userFollow)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userFollow, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page
@@ -442,17 +468,26 @@ export class FollowService {
    * 分页查询关注指定用户的用户。
    */
   async getFollowerUserPage(query: FollowPageCommandDto) {
-    const page = await this.drizzle.ext.findPagination(this.userFollow, {
-      where: and(
-        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
-        eq(this.userFollow.targetId, query.userId),
-      ),
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const where = and(
+      eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+      eq(this.userFollow.targetId, query.userId),
+    )
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.userFollow },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userFollow)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userFollow, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page

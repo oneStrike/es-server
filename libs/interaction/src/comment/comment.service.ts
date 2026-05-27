@@ -1,4 +1,5 @@
 import type { Db, PostgresErrorSourceObject, SQL } from '@db/core'
+import type {EventEnvelope} from '@libs/growth/event-definition/event-envelope.type';
 import type { JsonValue } from '@libs/platform/utils'
 import type {
   CommentModerationState,
@@ -8,8 +9,8 @@ import type {
   TransactionRetryOptions,
   VisibleCommentEffectPayload,
 } from './comment.type'
-import { buildILikeCondition, DrizzleService } from '@db/core'
 
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { ForumHashtagBodyService } from '@libs/forum/hashtag/forum-hashtag-body.service'
 import { ForumHashtagReferenceService } from '@libs/forum/hashtag/forum-hashtag-reference.service'
 import {
@@ -18,10 +19,10 @@ import {
 } from '@libs/forum/hashtag/forum-hashtag.constant'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
-  type EventEnvelope,
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
-  EventEnvelopeGovernanceStatusEnum,
+
+  EventEnvelopeGovernanceStatusEnum
 } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
@@ -999,7 +1000,7 @@ export class CommentService {
           userId: number
           content: string
         }
-      | undefined
+        | undefined
 
     if (comment.replyToId) {
       replyTarget = await tx.query.userComment.findFirst({
@@ -1129,7 +1130,7 @@ export class CommentService {
   ) {
     const authorDeltas = new Map<
       number,
-      { commentCount: number; receivedLikeCount: number }
+      { commentCount: number, receivedLikeCount: number }
     >()
 
     for (const comment of comments) {
@@ -1699,33 +1700,43 @@ export class CommentService {
       onlyAuthor && topicAuthorUserId !== undefined
         ? topicAuthorUserId
         : undefined
-    const page = await this.drizzle.ext.findPagination(this.userComment, {
-      where: and(
-        ...this.buildVisibleReplyConditions({
-          rootCommentId: commentId,
-          authorUserId: replyAuthorUserId,
-        }),
-      ),
-      pageIndex,
-      pageSize,
-      orderBy: this.buildCommentOrderBy(sort),
-      pick: [
-        'id',
-        'targetType',
-        'targetId',
-        'userId',
-        'html',
-        'floor',
-        'replyToId',
-        'actualReplyToId',
-        'likeCount',
-        'geoCountry',
-        'geoProvince',
-        'geoCity',
-        'geoIsp',
-        'createdAt',
-      ],
-    })
+    const where = and(
+      ...this.buildVisibleReplyConditions({
+        rootCommentId: commentId,
+        authorUserId: replyAuthorUserId,
+      }),
+    )
+    const pageQuery = this.drizzle.buildPage({ pageIndex, pageSize })
+    const orderQuery = this.drizzle.buildOrderBy(
+      this.buildCommentOrderBy(sort),
+      { table: this.userComment },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.userComment.id,
+          targetType: this.userComment.targetType,
+          targetId: this.userComment.targetId,
+          userId: this.userComment.userId,
+          html: this.userComment.html,
+          floor: this.userComment.floor,
+          replyToId: this.userComment.replyToId,
+          actualReplyToId: this.userComment.actualReplyToId,
+          likeCount: this.userComment.likeCount,
+          geoCountry: this.userComment.geoCountry,
+          geoProvince: this.userComment.geoProvince,
+          geoCity: this.userComment.geoCity,
+          geoIsp: this.userComment.geoIsp,
+          createdAt: this.userComment.createdAt,
+        })
+        .from(this.userComment)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userComment, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page
@@ -1882,26 +1893,38 @@ export class CommentService {
               pageSize: pageQuery.pageSize,
             }
           })()
-        : await this.drizzle.ext.findPagination(this.userComment, {
-            where: and(...rootConditions),
-            pageIndex,
-            pageSize,
-            orderBy: this.buildCommentOrderBy(sort),
-            pick: [
-              'id',
-              'userId',
-              'targetType',
-              'targetId',
-              'html',
-              'floor',
-              'likeCount',
-              'geoCountry',
-              'geoProvince',
-              'geoCity',
-              'geoIsp',
-              'createdAt',
-            ],
-          })
+        : await (async () => {
+            const where = and(...rootConditions)
+            const pageQuery = this.drizzle.buildPage({ pageIndex, pageSize })
+            const orderQuery = this.drizzle.buildOrderBy(
+              this.buildCommentOrderBy(sort),
+              { table: this.userComment },
+            )
+            const [list, total] = await Promise.all([
+              this.db
+                .select({
+                  id: this.userComment.id,
+                  userId: this.userComment.userId,
+                  targetType: this.userComment.targetType,
+                  targetId: this.userComment.targetId,
+                  html: this.userComment.html,
+                  floor: this.userComment.floor,
+                  likeCount: this.userComment.likeCount,
+                  geoCountry: this.userComment.geoCountry,
+                  geoProvince: this.userComment.geoProvince,
+                  geoCity: this.userComment.geoCity,
+                  geoIsp: this.userComment.geoIsp,
+                  createdAt: this.userComment.createdAt,
+                })
+                .from(this.userComment)
+                .where(where)
+                .orderBy(...orderQuery.orderBySql)
+                .limit(pageQuery.limit)
+                .offset(pageQuery.offset),
+              this.db.$count(this.userComment, where),
+            ])
+            return toPageResult(list, total, pageQuery)
+          })()
 
     if (page.list.length === 0) {
       return page
@@ -2019,37 +2042,47 @@ export class CommentService {
       conditions.push(eq(this.userComment.auditStatus, query.auditStatus))
     }
 
-    const page = await this.drizzle.ext.findPagination(this.userComment, {
-      where: and(...conditions),
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: this.buildCommentOrderBy(query.sort),
-      pick: [
-        'id',
-        'targetType',
-        'targetId',
-        'userId',
-        'html',
-        'floor',
-        'replyToId',
-        'actualReplyToId',
-        'isHidden',
-        'auditStatus',
-        'auditById',
-        'auditRole',
-        'auditReason',
-        'auditAt',
-        'likeCount',
-        'sensitiveWordHits',
-        'geoCountry',
-        'geoProvince',
-        'geoCity',
-        'geoIsp',
-        'deletedAt',
-        'createdAt',
-        'updatedAt',
-      ],
-    })
+    const where = and(...conditions)
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      this.buildCommentOrderBy(query.sort),
+      { table: this.userComment },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.userComment.id,
+          targetType: this.userComment.targetType,
+          targetId: this.userComment.targetId,
+          userId: this.userComment.userId,
+          html: this.userComment.html,
+          floor: this.userComment.floor,
+          replyToId: this.userComment.replyToId,
+          actualReplyToId: this.userComment.actualReplyToId,
+          isHidden: this.userComment.isHidden,
+          auditStatus: this.userComment.auditStatus,
+          auditById: this.userComment.auditById,
+          auditRole: this.userComment.auditRole,
+          auditReason: this.userComment.auditReason,
+          auditAt: this.userComment.auditAt,
+          likeCount: this.userComment.likeCount,
+          sensitiveWordHits: this.userComment.sensitiveWordHits,
+          geoCountry: this.userComment.geoCountry,
+          geoProvince: this.userComment.geoProvince,
+          geoCity: this.userComment.geoCity,
+          geoIsp: this.userComment.geoIsp,
+          deletedAt: this.userComment.deletedAt,
+          createdAt: this.userComment.createdAt,
+          updatedAt: this.userComment.updatedAt,
+        })
+        .from(this.userComment)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userComment, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     const [replyTargetMap, targetSummaryMap] = await Promise.all([
       this.getReplyTargetMap(
@@ -2135,32 +2168,42 @@ export class CommentService {
       )
     }
 
-    const page = await this.drizzle.ext.findPagination(this.userComment, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
-      pick: [
-        'id',
-        'targetType',
-        'targetId',
-        'userId',
-        'html',
-        'floor',
-        'replyToId',
-        'actualReplyToId',
-        'isHidden',
-        'auditStatus',
-        'auditById',
-        'auditRole',
-        'auditReason',
-        'auditAt',
-        'likeCount',
-        'sensitiveWordHits',
-        'createdAt',
-        'updatedAt',
-      ],
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+      { table: this.userComment },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.userComment.id,
+          targetType: this.userComment.targetType,
+          targetId: this.userComment.targetId,
+          userId: this.userComment.userId,
+          html: this.userComment.html,
+          floor: this.userComment.floor,
+          replyToId: this.userComment.replyToId,
+          actualReplyToId: this.userComment.actualReplyToId,
+          isHidden: this.userComment.isHidden,
+          auditStatus: this.userComment.auditStatus,
+          auditById: this.userComment.auditById,
+          auditRole: this.userComment.auditRole,
+          auditReason: this.userComment.auditReason,
+          auditAt: this.userComment.auditAt,
+          likeCount: this.userComment.likeCount,
+          sensitiveWordHits: this.userComment.sensitiveWordHits,
+          createdAt: this.userComment.createdAt,
+          updatedAt: this.userComment.updatedAt,
+        })
+        .from(this.userComment)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userComment, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, SQL } from '@db/core'
 import type {
   RebuiltWorkChapterCounts,
   RebuiltWorkCounts,
@@ -6,16 +6,16 @@ import type {
   WorkCountField,
 } from './work-counter.type'
 import { DrizzleService } from '@db/core'
-import { applyCountDelta, CountDeltaFailureCauseCode } from '@db/extensions'
-
 import {
   AuditStatusEnum,
   BusinessErrorCode,
   ContentTypeEnum,
 } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, gte, isNull, sql } from 'drizzle-orm'
+import { WorkCountDeltaFailureCauseCode } from './work-counter.constant'
 
 /**
  * 内容域作品计数服务
@@ -97,39 +97,6 @@ export class WorkCounterService {
     }
 
     await this.drizzle.withErrorHandling(async () => operation(this.db))
-  }
-
-  // 将计数更新底层的目标不存在错误转换为调用方提供的业务文案。
-  private rethrowNotFound(error: unknown, message: string): never {
-    if (
-      !(error instanceof BusinessException) ||
-      error.code !== BusinessErrorCode.RESOURCE_NOT_FOUND
-    ) {
-      throw error
-    }
-
-    const causeCode =
-      typeof error.cause === 'object' &&
-      error.cause !== null &&
-      'code' in error.cause
-        ? (error.cause as { code?: unknown }).code
-        : undefined
-
-    if (causeCode === CountDeltaFailureCauseCode.INSUFFICIENT_COUNT) {
-      throw error
-    }
-
-    if (causeCode === CountDeltaFailureCauseCode.TARGET_NOT_FOUND) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        message,
-        {
-          cause: error.cause ?? error,
-        },
-      )
-    }
-
-    throw error
   }
 
   // 拒绝内容域当前不支持的作品类型，避免错误目标类型继续写入计数。
@@ -241,25 +208,14 @@ export class WorkCounterService {
       return
     }
 
-    const execute = async (client: Db) =>
-      applyCountDelta(
-        client,
-        this.work,
-        and(
-          eq(this.work.id, workId),
-          eq(this.work.type, workType),
-          eq(this.work.isPublished, true),
-          isNull(this.work.deletedAt),
-        )!,
-        field,
-        delta,
-      )
-
-    try {
-      await this.runCountUpdate(tx, execute)
-    } catch (error) {
-      this.rethrowNotFound(error, message)
-    }
+    const where = and(
+      eq(this.work.id, workId),
+      eq(this.work.type, workType),
+      eq(this.work.isPublished, true),
+      isNull(this.work.deletedAt),
+    )!
+    await this.runCountUpdate(tx, async (client) =>
+      this.applyWorkCountDelta(client, where, field, delta, message),)
   }
 
   // 更新 work Chapter Count Field。
@@ -275,24 +231,225 @@ export class WorkCounterService {
       return
     }
 
-    const execute = async (client: Db) =>
-      applyCountDelta(
-        client,
-        this.workChapter,
-        and(
-          eq(this.workChapter.id, chapterId),
-          eq(this.workChapter.workType, workType),
-          isNull(this.workChapter.deletedAt),
-        )!,
-        field,
-        delta,
-      )
+    const where = and(
+      eq(this.workChapter.id, chapterId),
+      eq(this.workChapter.workType, workType),
+      isNull(this.workChapter.deletedAt),
+    )!
+    await this.runCountUpdate(tx, async (client) =>
+      this.applyWorkChapterCountDelta(client, where, field, delta, message),)
+  }
 
-    try {
-      await this.runCountUpdate(tx, execute)
-    } catch (error) {
-      this.rethrowNotFound(error, message)
+  // 为 work 表构造类型约束下的计数字段增减表达式。
+  private buildWorkCountDelta(field: WorkCountField, delta: number) {
+    const amount = Math.abs(delta)
+    switch (field) {
+      case 'viewCount':
+        return {
+          column: this.work.viewCount,
+          set: {
+            viewCount:
+              delta > 0
+                ? sql`${this.work.viewCount} + ${amount}`
+                : sql`${this.work.viewCount} - ${amount}`,
+          },
+        }
+      case 'favoriteCount':
+        return {
+          column: this.work.favoriteCount,
+          set: {
+            favoriteCount:
+              delta > 0
+                ? sql`${this.work.favoriteCount} + ${amount}`
+                : sql`${this.work.favoriteCount} - ${amount}`,
+          },
+        }
+      case 'likeCount':
+        return {
+          column: this.work.likeCount,
+          set: {
+            likeCount:
+              delta > 0
+                ? sql`${this.work.likeCount} + ${amount}`
+                : sql`${this.work.likeCount} - ${amount}`,
+          },
+        }
+      case 'commentCount':
+        return {
+          column: this.work.commentCount,
+          set: {
+            commentCount:
+              delta > 0
+                ? sql`${this.work.commentCount} + ${amount}`
+                : sql`${this.work.commentCount} - ${amount}`,
+          },
+        }
+      case 'downloadCount':
+        return {
+          column: this.work.downloadCount,
+          set: {
+            downloadCount:
+              delta > 0
+                ? sql`${this.work.downloadCount} + ${amount}`
+                : sql`${this.work.downloadCount} - ${amount}`,
+          },
+        }
     }
+  }
+
+  // 为 work_chapter 表构造类型约束下的计数字段增减表达式。
+  private buildWorkChapterCountDelta(
+    field: WorkChapterCountField,
+    delta: number,
+  ) {
+    const amount = Math.abs(delta)
+    switch (field) {
+      case 'viewCount':
+        return {
+          column: this.workChapter.viewCount,
+          set: {
+            viewCount:
+              delta > 0
+                ? sql`${this.workChapter.viewCount} + ${amount}`
+                : sql`${this.workChapter.viewCount} - ${amount}`,
+          },
+        }
+      case 'likeCount':
+        return {
+          column: this.workChapter.likeCount,
+          set: {
+            likeCount:
+              delta > 0
+                ? sql`${this.workChapter.likeCount} + ${amount}`
+                : sql`${this.workChapter.likeCount} - ${amount}`,
+          },
+        }
+      case 'commentCount':
+        return {
+          column: this.workChapter.commentCount,
+          set: {
+            commentCount:
+              delta > 0
+                ? sql`${this.workChapter.commentCount} + ${amount}`
+                : sql`${this.workChapter.commentCount} - ${amount}`,
+          },
+        }
+      case 'purchaseCount':
+        return {
+          column: this.workChapter.purchaseCount,
+          set: {
+            purchaseCount:
+              delta > 0
+                ? sql`${this.workChapter.purchaseCount} + ${amount}`
+                : sql`${this.workChapter.purchaseCount} - ${amount}`,
+          },
+        }
+      case 'downloadCount':
+        return {
+          column: this.workChapter.downloadCount,
+          set: {
+            downloadCount:
+              delta > 0
+                ? sql`${this.workChapter.downloadCount} + ${amount}`
+                : sql`${this.workChapter.downloadCount} - ${amount}`,
+          },
+        }
+    }
+  }
+
+  // 原子更新作品计数；负数增量不允许把计数扣成负数。
+  private async applyWorkCountDelta(
+    client: Db,
+    where: SQL,
+    field: WorkCountField,
+    delta: number,
+    message: string,
+  ) {
+    const amount = Math.abs(delta)
+    const deltaQuery = this.buildWorkCountDelta(field, delta)
+    const updateWhere =
+      delta > 0 ? where : and(where, gte(deltaQuery.column, amount))!
+    const updated = await client
+      .update(this.work)
+      .set(deltaQuery.set)
+      .where(updateWhere)
+      .returning({ id: this.work.id })
+    await this.assertWorkCountUpdated(client, where, updated.length, message)
+  }
+
+  // 原子更新章节计数；负数增量不允许把计数扣成负数。
+  private async applyWorkChapterCountDelta(
+    client: Db,
+    where: SQL,
+    field: WorkChapterCountField,
+    delta: number,
+    message: string,
+  ) {
+    const amount = Math.abs(delta)
+    const deltaQuery = this.buildWorkChapterCountDelta(field, delta)
+    const updateWhere =
+      delta > 0 ? where : and(where, gte(deltaQuery.column, amount))!
+    const updated = await client
+      .update(this.workChapter)
+      .set(deltaQuery.set)
+      .where(updateWhere)
+      .returning({ id: this.workChapter.id })
+    await this.assertWorkChapterCountUpdated(
+      client,
+      where,
+      updated.length,
+      message,
+    )
+  }
+
+  // 保持作品计数旧语义：目标不存在使用调用方文案，扣减不足保留稳定错误。
+  private async assertWorkCountUpdated(
+    client: Db,
+    where: SQL,
+    updatedCount: number,
+    message: string,
+  ) {
+    if (updatedCount > 0) {
+      return
+    }
+    const [existing] = await client
+      .select({ id: this.work.id })
+      .from(this.work)
+      .where(where)
+      .limit(1)
+    const causeCode = existing
+      ? WorkCountDeltaFailureCauseCode.INSUFFICIENT_COUNT
+      : WorkCountDeltaFailureCauseCode.TARGET_NOT_FOUND
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      existing ? '目标不存在或计数不足' : message,
+      { cause: { code: causeCode } },
+    )
+  }
+
+  // 保持章节计数旧语义：目标不存在使用调用方文案，扣减不足保留稳定错误。
+  private async assertWorkChapterCountUpdated(
+    client: Db,
+    where: SQL,
+    updatedCount: number,
+    message: string,
+  ) {
+    if (updatedCount > 0) {
+      return
+    }
+    const [existing] = await client
+      .select({ id: this.workChapter.id })
+      .from(this.workChapter)
+      .where(where)
+      .limit(1)
+    const causeCode = existing
+      ? WorkCountDeltaFailureCauseCode.INSUFFICIENT_COUNT
+      : WorkCountDeltaFailureCauseCode.TARGET_NOT_FOUND
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      existing ? '目标不存在或计数不足' : message,
+      { cause: { code: causeCode } },
+    )
   }
 
   // 更新 work Like Count。
@@ -507,38 +664,30 @@ export class WorkCounterService {
         )
       }
 
-      try {
-        await applyCountDelta(
-          client,
-          this.workChapter,
-          and(
-            eq(this.workChapter.id, chapterId),
-            eq(this.workChapter.workType, workType),
-            isNull(this.workChapter.deletedAt),
-          )!,
-          'downloadCount',
-          delta,
-        )
-      } catch (error) {
-        this.rethrowNotFound(error, chapterMessage)
-      }
+      await this.applyWorkChapterCountDelta(
+        client,
+        and(
+          eq(this.workChapter.id, chapterId),
+          eq(this.workChapter.workType, workType),
+          isNull(this.workChapter.deletedAt),
+        )!,
+        'downloadCount',
+        delta,
+        chapterMessage,
+      )
 
-      try {
-        await applyCountDelta(
-          client,
-          this.work,
-          and(
-            eq(this.work.id, chapter.workId),
-            eq(this.work.type, workType),
-            eq(this.work.isPublished, true),
-            isNull(this.work.deletedAt),
-          )!,
-          'downloadCount',
-          delta,
-        )
-      } catch (error) {
-        this.rethrowNotFound(error, workMessage)
-      }
+      await this.applyWorkCountDelta(
+        client,
+        and(
+          eq(this.work.id, chapter.workId),
+          eq(this.work.type, workType),
+          eq(this.work.isPublished, true),
+          isNull(this.work.deletedAt),
+        )!,
+        'downloadCount',
+        delta,
+        workMessage,
+      )
     }
 
     if (tx) {

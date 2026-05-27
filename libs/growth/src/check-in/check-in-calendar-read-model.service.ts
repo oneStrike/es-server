@@ -11,7 +11,7 @@ import type {
   CheckInRewardSettlementSummaryRecord,
 } from './check-in.type'
 import type { QueryAdminCheckInSignedUserPageDto } from './dto/check-in-calendar-query.dto'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { addDaysToDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
@@ -121,12 +121,23 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     query: QueryAdminCheckInSignedUserPageDto,
   ) {
     const signDate = this.parseDateOnly(query.targetDate, '目标日期')
-    const page = await this.drizzle.ext.findPagination(this.checkInRecordTable, {
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      where: eq(this.checkInRecordTable.signDate, signDate),
-      orderBy: JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
-    })
+    const where = eq(this.checkInRecordTable.signDate, signDate)
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+      { table: this.checkInRecordTable },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.checkInRecordTable)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.checkInRecordTable, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
       page.list

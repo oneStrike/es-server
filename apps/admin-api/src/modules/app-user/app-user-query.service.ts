@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
 
 import {
@@ -116,12 +116,22 @@ export class AppUserQueryService extends AppUserServiceSupport {
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
-    const page = await this.drizzle.ext.findPagination(this.appUserTable, {
-      where,
-      pageIndex,
-      pageSize,
-      orderBy: orderBy ?? { id: 'desc' as const },
-    })
+    const pageQuery = this.drizzle.buildPage({ pageIndex, pageSize })
+    const orderQuery = this.drizzle.buildOrderBy(
+      orderBy ?? { id: 'desc' as const },
+      { table: this.appUserTable },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.appUserTable)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.appUserTable, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     const levelIds = [
       ...new Set(page.list.map((item) => item.levelId).filter(Boolean)),

@@ -1,5 +1,6 @@
+import type { WorkChapterSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
@@ -20,7 +21,7 @@ import { BatchUpdatePublishedStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   CreateWorkChapterDto,
@@ -34,44 +35,45 @@ import {
   WorkChapterPublicDetailRow,
 } from './work-chapter.type'
 
-const APP_CHAPTER_PAGE_PICK_FIELDS = [
-  'id',
-  'workId',
-  'workType',
-  'title',
-  'subtitle',
-  'cover',
-  'sortOrder',
-  'isPublished',
-  'isPreview',
-  'publishAt',
-  'viewRule',
-  'price',
-  'canDownload',
-  'canComment',
-  'createdAt',
-  'updatedAt',
-] as const
-
-const ADMIN_CHAPTER_PAGE_PICK_FIELDS = [
-  'id',
-  'workId',
-  'workType',
-  'cover',
-  'title',
-  'subtitle',
-  'sortOrder',
-  'viewRule',
-  'price',
-  'requiredViewLevelId',
-  'isPreview',
-  'canDownload',
-  'canComment',
-  'isPublished',
-  'publishAt',
-  'createdAt',
-  'updatedAt',
-] as const
+type AppChapterPageRow = Pick<
+  WorkChapterSelect,
+  | 'id'
+  | 'workId'
+  | 'workType'
+  | 'title'
+  | 'subtitle'
+  | 'cover'
+  | 'sortOrder'
+  | 'isPublished'
+  | 'isPreview'
+  | 'publishAt'
+  | 'viewRule'
+  | 'price'
+  | 'canDownload'
+  | 'canComment'
+  | 'createdAt'
+  | 'updatedAt'
+>
+type AdminChapterPageRow = Pick<
+  WorkChapterSelect,
+  | 'id'
+  | 'workId'
+  | 'workType'
+  | 'cover'
+  | 'title'
+  | 'subtitle'
+  | 'sortOrder'
+  | 'viewRule'
+  | 'price'
+  | 'requiredViewLevelId'
+  | 'isPreview'
+  | 'canDownload'
+  | 'canComment'
+  | 'isPublished'
+  | 'publishAt'
+  | 'createdAt'
+  | 'updatedAt'
+>
 
 /**
  * 作品章节服务
@@ -152,12 +154,7 @@ export class WorkChapterService {
   async createChapterReturningId(createDto: CreateWorkChapterDto) {
     const { workId } = createDto
 
-    if (
-      !(await this.drizzle.ext.exists(
-        this.work,
-        and(eq(this.work.id, workId), isNull(this.work.deletedAt)),
-      ))
-    ) {
+    if (!(await this.workExists(workId))) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '关联的作品不存在',
@@ -227,12 +224,10 @@ export class WorkChapterService {
         lte(this.workChapter.publishAt, now),
       ),
     )
-    const page = await this.drizzle.ext.findPagination(this.workChapter, {
-      where,
+    const page = await this.findAppChapterPage({
+      where: where!,
       pageIndex: dto.pageIndex,
       pageSize: dto.pageSize,
-      orderBy: [{ sortOrder: 'asc' as const }, { id: 'asc' as const }],
-      pick: APP_CHAPTER_PAGE_PICK_FIELDS,
     })
 
     if (page.list.length === 0) {
@@ -276,12 +271,11 @@ export class WorkChapterService {
       ? dto.orderBy
       : { sortOrder: 'asc' as const }
 
-    const page = await this.drizzle.ext.findPagination(this.workChapter, {
-      where,
+    const page = await this.findAdminChapterPage({
+      where: where!,
       pageIndex: dto.pageIndex,
       pageSize: dto.pageSize,
       orderBy,
-      pick: ADMIN_CHAPTER_PAGE_PICK_FIELDS,
     })
 
     return {
@@ -670,9 +664,183 @@ export class WorkChapterService {
 
   // 交换章节排序（拖拽重排）。
   async swapChapterNumbers(dto: SwapWorkChapterNumbersInput) {
-    return this.drizzle.ext.swapField(this.workChapter, {
-      where: [{ id: dto.dragId }, { id: dto.targetId }],
-      sourceField: 'workId',
+    return this.drizzle.withTransaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: this.workChapter.id,
+          workId: this.workChapter.workId,
+          sortOrder: this.workChapter.sortOrder,
+        })
+        .from(this.workChapter)
+        .where(
+          and(
+            inArray(this.workChapter.id, [dto.dragId, dto.targetId]),
+            isNull(this.workChapter.deletedAt),
+          ),
+        )
+
+      const dragChapter = rows.find((row) => row.id === dto.dragId)
+      const targetChapter = rows.find((row) => row.id === dto.targetId)
+
+      if (!dragChapter || !targetChapter) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '章节不存在',
+        )
+      }
+      if (dragChapter.workId !== targetChapter.workId) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '章节不是同一作品',
+        )
+      }
+      if (dragChapter.sortOrder === targetChapter.sortOrder) {
+        return true
+      }
+
+      const [minimumSortOrder] = await tx
+        .select({
+          value: sql<number>`min(${this.workChapter.sortOrder})`,
+        })
+        .from(this.workChapter)
+        .where(
+          and(
+            eq(this.workChapter.workId, dragChapter.workId),
+            isNull(this.workChapter.deletedAt),
+          ),
+        )
+      const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
+
+      await tx
+        .update(this.workChapter)
+        .set({ sortOrder: temporarySortOrder })
+        .where(
+          and(
+            eq(this.workChapter.id, dragChapter.id),
+            isNull(this.workChapter.deletedAt),
+          ),
+        )
+      await tx
+        .update(this.workChapter)
+        .set({ sortOrder: dragChapter.sortOrder })
+        .where(
+          and(
+            eq(this.workChapter.id, targetChapter.id),
+            isNull(this.workChapter.deletedAt),
+          ),
+        )
+      await tx
+        .update(this.workChapter)
+        .set({ sortOrder: targetChapter.sortOrder })
+        .where(
+          and(
+            eq(this.workChapter.id, dragChapter.id),
+            isNull(this.workChapter.deletedAt),
+          ),
+        )
+
+      return true
     })
+  }
+
+  private appChapterPageColumns() {
+    return {
+      id: this.workChapter.id,
+      workId: this.workChapter.workId,
+      workType: this.workChapter.workType,
+      title: this.workChapter.title,
+      subtitle: this.workChapter.subtitle,
+      cover: this.workChapter.cover,
+      sortOrder: this.workChapter.sortOrder,
+      isPublished: this.workChapter.isPublished,
+      isPreview: this.workChapter.isPreview,
+      publishAt: this.workChapter.publishAt,
+      viewRule: this.workChapter.viewRule,
+      price: this.workChapter.price,
+      canDownload: this.workChapter.canDownload,
+      canComment: this.workChapter.canComment,
+      createdAt: this.workChapter.createdAt,
+      updatedAt: this.workChapter.updatedAt,
+    }
+  }
+
+  private adminChapterPageColumns() {
+    return {
+      id: this.workChapter.id,
+      workId: this.workChapter.workId,
+      workType: this.workChapter.workType,
+      cover: this.workChapter.cover,
+      title: this.workChapter.title,
+      subtitle: this.workChapter.subtitle,
+      sortOrder: this.workChapter.sortOrder,
+      viewRule: this.workChapter.viewRule,
+      price: this.workChapter.price,
+      requiredViewLevelId: this.workChapter.requiredViewLevelId,
+      isPreview: this.workChapter.isPreview,
+      canDownload: this.workChapter.canDownload,
+      canComment: this.workChapter.canComment,
+      isPublished: this.workChapter.isPublished,
+      publishAt: this.workChapter.publishAt,
+      createdAt: this.workChapter.createdAt,
+      updatedAt: this.workChapter.updatedAt,
+    }
+  }
+
+  private async findAppChapterPage(input: {
+    where: SQL
+    pageIndex?: number | string
+    pageSize?: number | string
+  }) {
+    const page = this.drizzle.buildPage(input)
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ sortOrder: 'asc' as const }, { id: 'asc' as const }],
+      { table: this.workChapter },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select(this.appChapterPageColumns())
+        .from(this.workChapter)
+        .where(input.where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workChapter, input.where),
+    ])
+
+    return toPageResult<AppChapterPageRow>(list, total, page)
+  }
+
+  private async findAdminChapterPage(input: {
+    where: SQL
+    pageIndex?: number | string
+    pageSize?: number | string
+    orderBy: Parameters<DrizzleService['buildOrderBy']>[0]
+  }) {
+    const page = this.drizzle.buildPage(input)
+    const orderQuery = this.drizzle.buildOrderBy(input.orderBy, {
+      table: this.workChapter,
+    })
+    const [list, total] = await Promise.all([
+      this.db
+        .select(this.adminChapterPageColumns())
+        .from(this.workChapter)
+        .where(input.where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workChapter, input.where),
+    ])
+
+    return toPageResult<AdminChapterPageRow>(list, total, page)
+  }
+
+  private async workExists(workId: number) {
+    const [row] = await this.db
+      .select({ id: this.work.id })
+      .from(this.work)
+      .where(and(eq(this.work.id, workId), isNull(this.work.deletedAt)))
+      .limit(1)
+
+    return Boolean(row)
   }
 }

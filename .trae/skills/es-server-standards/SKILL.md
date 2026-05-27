@@ -51,7 +51,7 @@ Treat `.trae/rules/PROJECT_RULES.md` as the single source of truth and align imp
 
 - Inject `DrizzleService` instead of raw database clients or Prisma leftovers.
 - Wrap writes in `withErrorHandling`; use `assertAffectedRows` when existence matters.
-- Use `drizzle.ext.findPagination` for paging and `SQL[] + and(...)` for dynamic conditions.
+- Write pagination queries explicitly with Drizzle `select` / `where` / `orderBy` / `limit` / `offset` / `$count`, then use `toPageResult(...)` only for the return shape; use `SQL[] + and(...)` for dynamic conditions.
 - Pass `tx` through the entire call chain if a transaction starts.
 - Keep raw SQL parameterized and localized to helper methods.
 - Keep error semantics aligned with `PROJECT_RULES.md` (layered responsibility, clear business exceptions, degradable side effects).
@@ -73,7 +73,7 @@ Treat `.trae/rules/PROJECT_RULES.md` as the single source of truth and align imp
 ## Repo Notes
 
 - Global HTTP prefix is `/api`; controller decorators do not include it.
-- `findPagination` and `PageDto` now use a shared 1-based `pageIndex` contract. Reuse that behavior instead of translating page numbers locally.
+- `buildPage(...)`, `toPageResult(...)`, and `PageDto` now use a shared 1-based `pageIndex` contract. Reuse that behavior instead of translating page numbers locally.
 - `apps/*` are entry layers; reusable domain logic usually belongs in `libs/*`.
 - Define and export Drizzle inferred types close to the corresponding `db/schema` files.
 - For repo libs, import concrete owner files instead of root barrels or directory-level shortcuts. Cross-domain imports use alias + file path, same-domain imports prefer relative paths, and only `libs/platform` keeps constrained directory-level public APIs such as `@libs/platform/dto` or `@libs/platform/modules/auth`.

@@ -18,7 +18,7 @@ import type {
   UpdateSettlementStatePayload,
   UpsertGrowthEventSettlementPayload,
 } from './types/growth-reward-settlement.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
@@ -149,11 +149,23 @@ export class GrowthRewardSettlementService {
       ? query.orderBy
       : JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }])
 
-    return this.drizzle.ext.findPagination(this.growthRewardSettlement, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...query,
-      orderBy,
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.growthRewardSettlement,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.growthRewardSettlement)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.growthRewardSettlement, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 按主键读取单条补偿记录。

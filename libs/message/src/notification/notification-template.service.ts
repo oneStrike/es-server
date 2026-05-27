@@ -13,7 +13,7 @@ import type {
   NotificationTemplateRenderResult,
   RenderNotificationTemplateInput,
 } from './notification-template.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -65,12 +65,24 @@ export class MessageNotificationTemplateService {
       conditions.push(eq(this.notificationTemplate.isEnabled, query.isEnabled))
     }
 
-    return this.drizzle.ext.findPagination(this.notificationTemplate, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: [{ updatedAt: 'desc' as const }, { id: 'asc' as const }],
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ updatedAt: 'desc' as const }, { id: 'asc' as const }],
+      { table: this.notificationTemplate },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.notificationTemplate)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.notificationTemplate, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   async getNotificationTemplateDetail(id: number) {

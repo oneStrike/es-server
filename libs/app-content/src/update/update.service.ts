@@ -8,7 +8,7 @@ import type {
   AppUpdateReleaseDetailDto,
   AppUpdateReleaseListItemDto,
 } from './dto/update.dto'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
@@ -82,16 +82,25 @@ export class AppUpdateService {
       )
     }
 
-    const result = await this.drizzle.ext.findPagination(
-      this.appUpdateRelease,
-      {
-        where: conditions.length > 0 ? and(...conditions) : undefined,
-        ...queryDto,
-        orderBy: queryDto.orderBy?.trim()
-          ? queryDto.orderBy
-          : { buildCode: 'desc' as const },
-      },
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(queryDto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      queryDto.orderBy?.trim()
+        ? queryDto.orderBy
+        : { buildCode: 'desc' as const },
+      { table: this.appUpdateRelease },
     )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.appUpdateRelease)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.appUpdateRelease, where),
+    ])
+    const result = toPageResult(list, total, page)
 
     return {
       ...result,

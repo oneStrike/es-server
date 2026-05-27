@@ -10,7 +10,7 @@ import type {
   UpdateForumHashtagHiddenInput,
   UpdateForumHashtagInput,
 } from './forum-hashtag.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
@@ -263,12 +263,24 @@ export class ForumHashtagService {
       conditions.push(eq(this.forumHashtag.isHidden, query.isHidden))
     }
 
-    return this.drizzle.ext.findPagination(this.forumHashtag, {
-      where: and(...conditions),
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: [{ createdAt: 'desc' as const }],
-    })
+    const where = and(...conditions)
+    const page = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ createdAt: 'desc' as const }],
+      { table: this.forumHashtag },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.forumHashtag)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.forumHashtag, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 查询管理端话题详情。

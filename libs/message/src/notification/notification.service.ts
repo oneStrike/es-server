@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import type { QueryUserNotificationListDto } from './dto/notification.dto'
 import type { NotificationActorSource } from './notification-public.mapper'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, inArray, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
@@ -52,11 +52,22 @@ export class MessageNotificationService {
       )
     }
 
-    const page = await this.drizzle.ext.findPagination(this.notification, {
-      where: and(...conditions),
-      ...pagination,
-      orderBy,
+    const where = and(...conditions)
+    const pageQuery = this.drizzle.buildPage(pagination)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.notification,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.notification)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.notification, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
     const actorUserIds = [
       ...new Set(
         page.list

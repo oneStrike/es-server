@@ -1,5 +1,5 @@
 import type { PostgresErrorSourceObject } from '@db/core'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
@@ -133,15 +133,26 @@ export class LikeService {
     pageIndex: number = 1,
     pageSize: number = 20,
   ) {
-    const page = await this.drizzle.ext.findPagination(this.userLike, {
-      where: and(
-        eq(this.userLike.targetType, targetType),
-        eq(this.userLike.targetId, targetId),
-      ),
-      pageIndex,
-      pageSize,
-      orderBy: { createdAt: 'desc' },
-    })
+    const where = and(
+      eq(this.userLike.targetType, targetType),
+      eq(this.userLike.targetId, targetId),
+    )
+    const pageQuery = this.drizzle.buildPage({ pageIndex, pageSize })
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.userLike },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userLike)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userLike, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
     return {
       ...page,
       list: page.list.map((item) => ({
@@ -242,14 +253,18 @@ export class LikeService {
    */
   async checkLikeStatus(input: LikeRecordDto): Promise<boolean> {
     const { targetType, targetId, userId } = input
-    return this.drizzle.ext.exists(
-      this.userLike,
-      and(
-        eq(this.userLike.targetType, targetType),
-        eq(this.userLike.targetId, targetId),
-        eq(this.userLike.userId, userId),
-      ),
-    )
+    const [like] = await this.db
+      .select({ id: this.userLike.id })
+      .from(this.userLike)
+      .where(
+        and(
+          eq(this.userLike.targetType, targetType),
+          eq(this.userLike.targetId, targetId),
+          eq(this.userLike.userId, userId),
+        ),
+      )
+      .limit(1)
+    return !!like
   }
 
   /**
@@ -262,15 +277,26 @@ export class LikeService {
    * @returns 分页点赞记录列表，包含目标详情
    */
   async getUserLikes(query: LikePageQueryDto & Pick<LikeRecordDto, 'userId'>) {
-    const page = await this.drizzle.ext.findPagination(this.userLike, {
-      where: and(
-        eq(this.userLike.targetType, query.targetType),
-        eq(this.userLike.userId, query.userId),
-      ),
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: { createdAt: 'desc' },
-    })
+    const where = and(
+      eq(this.userLike.targetType, query.targetType),
+      eq(this.userLike.userId, query.userId),
+    )
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.userLike },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userLike)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userLike, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page

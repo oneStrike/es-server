@@ -273,6 +273,54 @@ describe('WorkflowService state machine', () => {
     }
   }
 
+  function createPageDb(selectRows: unknown[][], countRows: number[]) {
+    const query = {
+      from: jest.fn(() => query),
+      limit: jest.fn(() => query),
+      offset: jest.fn(async () => selectRows.shift() ?? []),
+      orderBy: jest.fn(() => query),
+      where: jest.fn(() => query),
+    }
+
+    return {
+      $count: jest.fn(async () => countRows.shift() ?? 0),
+      insert: jest.fn(() => ({
+        values: jest.fn(() => ({
+          returning: jest.fn(async () => [{ id: 99n }]),
+        })),
+      })),
+      query,
+      select: jest.fn(() => query),
+      update: jest.fn(() => ({
+        set: jest.fn(() => ({
+          where: jest.fn(() => ({
+            returning: jest.fn(async () => []),
+          })),
+        })),
+      })),
+    }
+  }
+
+  function setPageDrizzle(
+    service: WorkflowService,
+    db: ReturnType<typeof createPageDb>,
+  ) {
+    Object.defineProperty(service, 'drizzle', {
+      configurable: true,
+      value: {
+        buildOrderBy: jest.fn(() => ({ orderBySql: ['order-sql'] })),
+        buildPage: jest.fn((input: { pageIndex?: number; pageSize?: number }) => ({
+          limit: input.pageSize ?? 10,
+          offset: ((input.pageIndex ?? 1) - 1) * (input.pageSize ?? 10),
+          pageIndex: input.pageIndex ?? 1,
+          pageSize: input.pageSize ?? 10,
+        })),
+        db,
+        schema: createWorkflowSchema(),
+      },
+    })
+  }
+
   function createService(options: { db?: unknown; tx?: ReturnType<typeof createUpdateTx>['tx'] } = {}) {
     const tx = options.tx ?? createUpdateTx().tx
     const drizzle = {
@@ -362,64 +410,39 @@ describe('WorkflowService state machine', () => {
 
   it('excludes archived workflow jobs from the default page', async () => {
     const activeJob = createWorkflowJob({ failedItemCount: 0 })
-    const findPagination = jest.fn(async () => ({
-      list: [activeJob],
-      pageIndex: 1,
-      pageSize: 10,
-      total: 1,
-    }))
     const { service } = createService()
-    Object.defineProperty(service, 'drizzle', {
-      configurable: true,
-      value: {
-        ext: { findPagination },
-        schema: createWorkflowSchema(),
-      },
-    })
+    const db = createPageDb([[activeJob]], [1])
+    setPageDrizzle(service, db)
 
     const result = await service.getJobPage({ pageIndex: 1, pageSize: 10 })
 
+    expect(result).toEqual(
+      expect.objectContaining({
+        pageIndex: 1,
+        pageSize: 10,
+        total: 1,
+      }),
+    )
     expect(result.list[0]).toEqual(
       expect.objectContaining({
         archivedAt: null,
         jobId: 'job-1',
       }),
     )
-    expect(findPagination).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        pageIndex: 1,
-        pageSize: 10,
-        where: expect.anything(),
-      }),
-    )
+    expect(db.select).toHaveBeenCalledTimes(1)
+    expect(db.$count).toHaveBeenCalledWith(expect.anything(), expect.anything())
+    expect(db.query.where).toHaveBeenCalledWith(expect.anything())
+    expect(db.query.orderBy).toHaveBeenCalledWith('order-sql')
+    expect(db.query.limit).toHaveBeenCalledWith(10)
+    expect(db.query.offset).toHaveBeenCalledWith(0)
   })
 
   it('supports archived-only and all workflow page scopes', async () => {
     const archivedAt = new Date('2026-05-18T03:00:00.000Z')
     const archivedJob = createWorkflowJob({ archivedAt })
-    const findPagination = jest
-      .fn()
-      .mockResolvedValueOnce({
-        list: [archivedJob],
-        pageIndex: 1,
-        pageSize: 10,
-        total: 1,
-      })
-      .mockResolvedValueOnce({
-        list: [archivedJob, createWorkflowJob()],
-        pageIndex: 1,
-        pageSize: 10,
-        total: 2,
-      })
     const { service } = createService()
-    Object.defineProperty(service, 'drizzle', {
-      configurable: true,
-      value: {
-        ext: { findPagination },
-        schema: createWorkflowSchema(),
-      },
-    })
+    const db = createPageDb([[archivedJob], [archivedJob, createWorkflowJob()]], [1, 2])
+    setPageDrizzle(service, db)
 
     const archivedResult = await service.getJobPage({
       archiveScope: WorkflowJobArchiveScopeEnum.ARCHIVED,
@@ -439,16 +462,10 @@ describe('WorkflowService state machine', () => {
       }),
     )
     expect(allResult.total).toBe(2)
-    expect(findPagination).toHaveBeenNthCalledWith(
-      1,
-      expect.anything(),
-      expect.objectContaining({ where: expect.anything() }),
-    )
-    expect(findPagination).toHaveBeenNthCalledWith(
-      2,
-      expect.anything(),
-      expect.objectContaining({ where: undefined }),
-    )
+    expect(db.$count).toHaveBeenNthCalledWith(1, expect.anything(), expect.anything())
+    expect(db.$count).toHaveBeenNthCalledWith(2, expect.anything(), undefined)
+    expect(db.query.where).toHaveBeenNthCalledWith(1, expect.anything())
+    expect(db.query.where).toHaveBeenNthCalledWith(2, undefined)
   })
 
   it('returns bounded workflow records with attempt correlation', async () => {
@@ -464,26 +481,14 @@ describe('WorkflowService state machine', () => {
       workflowJobId: job.id,
     }
     const { service } = createService()
-    const findPagination = jest.fn(async () => ({
-      list: [event],
-      pageIndex: 1,
-      pageSize: 20,
-      total: 1,
-    }))
+    const db = createPageDb([[event]], [1])
     setServiceMethod(service, 'readJob', jest.fn(async () => job))
     setServiceMethod(
       service,
       'readAttemptsByInternalIds',
       jest.fn(async () => new Map([[attempt.id, attempt]])),
     )
-    Object.defineProperty(service, 'drizzle', {
-      configurable: true,
-      value: {
-        db: {},
-        ext: { findPagination },
-        schema: createWorkflowSchema(),
-      },
-    })
+    setPageDrizzle(service, db)
 
     const result = await (
       service as unknown as {
@@ -524,13 +529,11 @@ describe('WorkflowService state machine', () => {
         eventType: WorkflowEventTypeEnum.ITEM_SUCCEEDED,
       }),
     )
-    expect(findPagination).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        pageIndex: 1,
-        pageSize: 20,
-      }),
-    )
+    expect(db.select).toHaveBeenCalledTimes(1)
+    expect(db.$count).toHaveBeenCalledWith(expect.anything(), expect.anything())
+    expect(db.query.orderBy).toHaveBeenCalledWith('order-sql')
+    expect(db.query.limit).toHaveBeenCalledWith(20)
+    expect(db.query.offset).toHaveBeenCalledWith(0)
   })
 
   it('projects workflow notification facts from eligible audit events only', async () => {

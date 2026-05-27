@@ -10,7 +10,7 @@ import type {
   QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, exists, gte, inArray, lte } from 'drizzle-orm'
@@ -163,16 +163,24 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       )
     }
 
-    const page = await this.drizzle.ext.findPagination(
-      this.checkInRecordTable,
-      {
-        where: and(...conditions),
-        ...query,
-        orderBy:
-          query.orderBy?.trim() ||
-          JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
-      },
+    const where = and(...conditions)
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      query.orderBy?.trim() ||
+      JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
+      { table: this.checkInRecordTable },
     )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.checkInRecordTable)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.checkInRecordTable, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     return {
       ...page,
@@ -185,18 +193,27 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   // 查询当前连续签到排行榜，并补齐用户信息与名次。
   async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
     const today = this.formatDateOnly(new Date())
-    const page = await this.drizzle.ext.findPagination(
-      this.checkInStreakProgressTable,
-      {
-        where: this.checkInStreakService.buildActiveStreakProgressWhere(today),
-        ...query,
-        orderBy: JSON.stringify([
-          { currentStreak: 'desc' },
-          { lastSignedDate: 'desc' },
-          { id: 'asc' },
-        ]),
-      },
+    const where = this.checkInStreakService.buildActiveStreakProgressWhere(today)
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      JSON.stringify([
+        { currentStreak: 'desc' },
+        { lastSignedDate: 'desc' },
+        { id: 'asc' },
+      ]),
+      { table: this.checkInStreakProgressTable },
     )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.checkInStreakProgressTable)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.checkInStreakProgressTable, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     const userIds = page.list.map((item) => item.userId)
     const users =
@@ -277,16 +294,24 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       conditions.push(grantCondition)
     }
 
-    const page = await this.drizzle.ext.findPagination(
-      this.checkInRecordTable,
-      {
-        where: conditions.length > 0 ? and(...conditions) : undefined,
-        ...query,
-        orderBy:
-          query.orderBy?.trim() ||
-          JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
-      },
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      query.orderBy?.trim() ||
+      JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
+      { table: this.checkInRecordTable },
     )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.checkInRecordTable)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.checkInRecordTable, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
       page.list

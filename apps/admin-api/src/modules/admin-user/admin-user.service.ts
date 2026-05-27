@@ -5,7 +5,7 @@ import type {
   UserRegisterDto,
 } from '@libs/identity/dto/admin-user.dto'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -232,10 +232,21 @@ export class AdminUserService {
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
-    const page = await this.drizzle.ext.findPagination(this.adminUser, {
-      where,
-      ...pageDto,
+    const pageQuery = this.drizzle.buildPage(pageDto)
+    const orderQuery = this.drizzle.buildOrderBy(pageDto.orderBy, {
+      table: this.adminUser,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.adminUser)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.adminUser, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
     return {
       ...page,
       list: page.list.map(({ password: _password, ...item }) => item),

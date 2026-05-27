@@ -85,19 +85,32 @@ describe('PaymentService domain split contract', () => {
 
   it('maps admin payment order page rows to an exact public admin view', async () => {
     const rawOrder = buildPaidOrder()
-    const rawPage = {
-      list: [rawOrder],
-      pageIndex: 1,
-      pageSize: 15,
-      total: 1,
+    const paymentOrder = {
+      id: 'payment_order.id',
+      createdAt: 'payment_order.created_at',
+    }
+    const query = {
+      from: jest.fn(() => query),
+      where: jest.fn(() => query),
+      orderBy: jest.fn(() => query),
+      limit: jest.fn(() => query),
+      offset: jest.fn(() => Promise.resolve([rawOrder])),
     }
     const drizzle = {
-      ext: {
-        findPagination: jest.fn(() => Promise.resolve(rawPage)),
+      db: {
+        select: jest.fn(() => query),
+        $count: jest.fn(() => Promise.resolve(1)),
       },
       schema: {
-        paymentOrder: {},
+        paymentOrder,
       },
+      buildPage: jest.fn(() => ({
+        limit: 15,
+        offset: 0,
+        pageIndex: 1,
+        pageSize: 15,
+      })),
+      buildOrderBy: jest.fn(() => ({ orderBySql: ['order-sql'] })),
     }
     const service = new PaymentService(drizzle as any, {} as any, {} as any)
 
@@ -120,6 +133,16 @@ describe('PaymentService domain split contract', () => {
     expect(item).not.toHaveProperty('clientPayPayload')
     expect(item).not.toHaveProperty('notifyPayload')
     expect(item).not.toBe(rawOrder)
+    expect(drizzle.buildPage).toHaveBeenCalledWith({
+      pageIndex: 1,
+      pageSize: 15,
+    })
+    expect(drizzle.buildOrderBy).toHaveBeenCalledWith(
+      JSON.stringify({ createdAt: 'desc', id: 'desc' }),
+      { table: paymentOrder },
+    )
+    expect(query.orderBy).toHaveBeenCalledWith('order-sql')
+    expect(drizzle.db.$count).toHaveBeenCalledWith(paymentOrder, undefined)
   })
 
   it('treats a matching paid order notification as an idempotent result without re-settlement', async () => {

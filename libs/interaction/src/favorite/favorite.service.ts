@@ -1,6 +1,6 @@
 import type { PostgresErrorSourceObject } from '@db/core'
 import type { UserFavoriteSelect } from '@db/schema'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
@@ -201,14 +201,18 @@ export class FavoriteService {
    */
   async checkFavoriteStatus(input: FavoriteRecordDto): Promise<boolean> {
     const { targetType, targetId, userId } = input
-    return this.drizzle.ext.exists(
-      this.userFavorite,
-      and(
-        eq(this.userFavorite.targetType, targetType),
-        eq(this.userFavorite.targetId, targetId),
-        eq(this.userFavorite.userId, userId),
-      ),
-    )
+    const [favorite] = await this.db
+      .select({ id: this.userFavorite.id })
+      .from(this.userFavorite)
+      .where(
+        and(
+          eq(this.userFavorite.targetType, targetType),
+          eq(this.userFavorite.targetId, targetId),
+          eq(this.userFavorite.userId, userId),
+        ),
+      )
+      .limit(1)
+    return !!favorite
   }
 
   /**
@@ -219,17 +223,26 @@ export class FavoriteService {
     query: FavoritePageCommandDto,
     targetTypes: FavoriteTargetTypeEnum[],
   ) {
-    const page = await this.drizzle.ext.findPagination(this.userFavorite, {
-      where: and(
-        eq(this.userFavorite.userId, query.userId),
-        inArray(this.userFavorite.targetType, targetTypes),
-      ),
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const where = and(
+      eq(this.userFavorite.userId, query.userId),
+      inArray(this.userFavorite.targetType, targetTypes),
+    )
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.userFavorite },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userFavorite)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userFavorite, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return {

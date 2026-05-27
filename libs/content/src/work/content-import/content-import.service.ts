@@ -18,7 +18,7 @@ import type {
   CreateThirdPartySyncContentJobInput,
 } from './content-import.type'
 import { randomUUID } from 'node:crypto'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { resolveThirdPartyComicImportImageTotals } from '@libs/content/work/third-party/third-party-comic-import-image-total'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -970,14 +970,26 @@ export class ContentImportService {
     if (input.status !== undefined) {
       conditions.push(eq(this.contentImportItem.status, input.status))
     }
-    const page = await this.drizzle.ext.findPagination(this.contentImportItem, {
-      where: and(...conditions),
+    const where = and(...conditions)
+    const pageQuery = this.drizzle.buildPage({
       pageIndex: input.pageIndex,
       pageSize: input.pageSize,
-      orderBy: input.orderBy?.trim()
-        ? input.orderBy
-        : { sortOrder: 'asc', id: 'asc' },
     })
+    const orderQuery = this.drizzle.buildOrderBy(
+      input.orderBy?.trim() ? input.orderBy : { sortOrder: 'asc', id: 'asc' },
+      { table: this.contentImportItem },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.contentImportItem)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.contentImportItem, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
     return {
       ...page,
       list: page.list.map((item) => ({

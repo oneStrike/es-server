@@ -14,7 +14,7 @@ import type {
   MembershipPageConfigIdentity as PageConfigIdentity,
 } from '../membership/types/membership.type'
 import { randomUUID } from 'node:crypto'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import {
   MembershipSubscriptionSourceTypeEnum,
   MembershipSubscriptionStatusEnum,
@@ -168,11 +168,23 @@ export class MembershipService {
     if (dto.status !== undefined) {
       conditions.push(eq(this.membershipAutoRenewAgreement.status, dto.status))
     }
-    return this.drizzle.ext.findPagination(this.membershipAutoRenewAgreement, {
-      ...dto,
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: dto.orderBy ?? JSON.stringify({ createdAt: 'desc', id: 'desc' }),
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? { createdAt: 'desc' as const, id: 'desc' as const },
+      { table: this.membershipAutoRenewAgreement },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.membershipAutoRenewAgreement)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.membershipAutoRenewAgreement, where),
+    ])
+    return toPageResult(list, total, page)
   }
 
   // 启用或停用会员订阅页配置。
@@ -660,14 +672,23 @@ export class MembershipService {
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.membershipPageConfig.isEnabled, dto.isEnabled))
     }
-    const page = await this.drizzle.ext.findPagination(
-      this.membershipPageConfig,
-      {
-        ...dto,
-        where: conditions.length > 0 ? and(...conditions) : undefined,
-        orderBy: dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
-      },
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const pageQuery = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? { sortOrder: 'asc' as const, id: 'asc' as const },
+      { table: this.membershipPageConfig },
     )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.membershipPageConfig)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.membershipPageConfig, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
     const listWithAgreements = await this.withPageAgreements(page.list)
     return {
       ...page,
@@ -787,11 +808,23 @@ export class MembershipService {
         eq(this.membershipBenefitDefinition.isEnabled, dto.isEnabled),
       )
     }
-    return this.drizzle.ext.findPagination(this.membershipBenefitDefinition, {
-      ...dto,
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? { sortOrder: 'asc' as const, id: 'asc' as const },
+      { table: this.membershipBenefitDefinition },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.membershipBenefitDefinition)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.membershipBenefitDefinition, where),
+    ])
+    return toPageResult(list, total, page)
   }
 
   // 启用或停用会员套餐。
@@ -1199,11 +1232,23 @@ export class MembershipService {
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.membershipPlan.isEnabled, dto.isEnabled))
     }
-    const page = await this.drizzle.ext.findPagination(this.membershipPlan, {
-      ...dto,
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const pageQuery = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? { sortOrder: 'asc' as const, id: 'asc' as const },
+      { table: this.membershipPlan },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.membershipPlan)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.membershipPlan, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
     return {
       ...page,
       list: await this.withMembershipPlanBenefits(page.list),

@@ -1,5 +1,5 @@
 import type { Db, SQL } from '@db/core'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
@@ -106,11 +106,22 @@ export class ForumSectionGroupService {
       ? dto.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.forumSectionGroup, {
-      where,
-      ...dto,
-      orderBy,
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.forumSectionGroup,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.forumSectionGroup)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.forumSectionGroup, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   /**
@@ -299,9 +310,70 @@ export class ForumSectionGroupService {
    * 仅交换拖拽目标的排序值，不改动其它字段。
    */
   async swapSectionGroupSortOrder(dto: SwapForumSectionGroupSortDto) {
-    return this.drizzle.ext.swapField(this.forumSectionGroup, {
-      where: [{ id: dto.dragId }, { id: dto.targetId }],
-      recordWhere: sql`${this.forumSectionGroup.deletedAt} is null`,
+    return this.drizzle.withTransaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: this.forumSectionGroup.id,
+          sortOrder: this.forumSectionGroup.sortOrder,
+        })
+        .from(this.forumSectionGroup)
+        .where(
+          and(
+            inArray(this.forumSectionGroup.id, [dto.dragId, dto.targetId]),
+            isNull(this.forumSectionGroup.deletedAt),
+          ),
+        )
+
+      const dragGroup = rows.find((row) => row.id === dto.dragId)
+      const targetGroup = rows.find((row) => row.id === dto.targetId)
+
+      if (!dragGroup || !targetGroup) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '板块分组不存在',
+        )
+      }
+      if (dragGroup.sortOrder === targetGroup.sortOrder) {
+        return true
+      }
+
+      const [minimumSortOrder] = await tx
+        .select({
+          value: sql<number>`min(${this.forumSectionGroup.sortOrder})`,
+        })
+        .from(this.forumSectionGroup)
+        .where(isNull(this.forumSectionGroup.deletedAt))
+      const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
+
+      await tx
+        .update(this.forumSectionGroup)
+        .set({ sortOrder: temporarySortOrder })
+        .where(
+          and(
+            eq(this.forumSectionGroup.id, dragGroup.id),
+            isNull(this.forumSectionGroup.deletedAt),
+          ),
+        )
+      await tx
+        .update(this.forumSectionGroup)
+        .set({ sortOrder: dragGroup.sortOrder })
+        .where(
+          and(
+            eq(this.forumSectionGroup.id, targetGroup.id),
+            isNull(this.forumSectionGroup.deletedAt),
+          ),
+        )
+      await tx
+        .update(this.forumSectionGroup)
+        .set({ sortOrder: targetGroup.sortOrder })
+        .where(
+          and(
+            eq(this.forumSectionGroup.id, dragGroup.id),
+            isNull(this.forumSectionGroup.deletedAt),
+          ),
+        )
+
+      return true
     })
   }
 

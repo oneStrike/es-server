@@ -301,57 +301,91 @@ describe('ContentImportService retry scheduling', () => {
   })
 
   it('includes retry fields in item DTO pages', async () => {
+    const itemUpdatedAt = new Date('2026-05-17T03:01:00.000Z')
+    const pageRows = [
+      {
+        autoRetryCount: 2,
+        failureCount: 0,
+        id: 10n,
+        imageSuccessCount: 0,
+        imageTotal: 0,
+        itemId: 'item-1',
+        itemType: 1,
+        lastErrorCode: null,
+        lastErrorContext: null,
+        lastErrorDomain: null,
+        lastErrorRetryable: null,
+        lastErrorSeverity: null,
+        lastErrorStage: null,
+        lastRetryCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+        lastRetryContext: {
+          itemId: 'item-1',
+          nextRetryAt: now.toISOString(),
+        },
+        localChapterId: null,
+        maxAutoRetries: 3,
+        metadata: null,
+        nextRetryAt: now,
+        providerChapterId: 'chapter-1',
+        sortOrder: 1,
+        stage: ContentImportItemStageEnum.READING_CONTENT,
+        status: ContentImportItemStatusEnum.RETRYING,
+        title: '第 1 话',
+        updatedAt: itemUpdatedAt,
+      },
+    ]
+    const selectCalls: unknown[] = []
     const service = createService({
-      select: jest.fn(() => ({
-        from: jest.fn(() => ({
-          innerJoin: jest.fn(() => ({
+      select: jest.fn((selection?: unknown) => {
+        selectCalls.push(selection)
+        if (selectCalls.length === 1) {
+          return {
+            from: jest.fn(() => ({
+              innerJoin: jest.fn(() => ({
+                where: jest.fn(() => ({
+                  limit: jest.fn(async () => [
+                    { contentImportJob: { id: 1n } },
+                  ]),
+                })),
+              })),
+            })),
+          }
+        }
+        return {
+          from: jest.fn(() => ({
             where: jest.fn(() => ({
-              limit: jest.fn(async () => [{ contentImportJob: { id: 1n } }]),
+              orderBy: jest.fn(() => ({
+                limit: jest.fn(() => ({
+                  offset: jest.fn(async () => pageRows),
+                })),
+              })),
             })),
           })),
-        })),
-      })),
+        }
+      }),
+      $count: jest.fn(async () => 1),
     })
-    const itemUpdatedAt = new Date('2026-05-17T03:01:00.000Z')
-    ;(service as unknown as { drizzle: { ext: unknown } }).drizzle.ext = {
-      findPagination: jest.fn(async () => ({
-        list: [
-          {
-            autoRetryCount: 2,
-            failureCount: 0,
-            id: 10n,
-            imageSuccessCount: 0,
-            imageTotal: 0,
-            itemId: 'item-1',
-            itemType: 1,
-            lastErrorCode: null,
-            lastErrorContext: null,
-            lastErrorDomain: null,
-            lastErrorRetryable: null,
-            lastErrorSeverity: null,
-            lastErrorStage: null,
-            lastRetryCode: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
-            lastRetryContext: {
-              itemId: 'item-1',
-              nextRetryAt: now.toISOString(),
-            },
-            localChapterId: null,
-            maxAutoRetries: 3,
-            metadata: null,
-            nextRetryAt: now,
-            providerChapterId: 'chapter-1',
-            sortOrder: 1,
-            stage: ContentImportItemStageEnum.READING_CONTENT,
-            status: ContentImportItemStatusEnum.RETRYING,
-            title: '第 1 话',
-            updatedAt: itemUpdatedAt,
-          },
-        ],
-        pageIndex: 1,
-        pageSize: 10,
-        total: 1,
-      })),
-    }
+    ;(
+      service as unknown as {
+        drizzle: {
+          buildOrderBy: unknown
+          buildPage: unknown
+        }
+      }
+    ).drizzle.buildPage = jest.fn(() => ({
+      limit: 10,
+      offset: 0,
+      pageIndex: 1,
+      pageSize: 10,
+    }))
+    ;(
+      service as unknown as {
+        drizzle: {
+          buildOrderBy: unknown
+          buildPage: unknown
+        }
+      }
+    ).drizzle.buildOrderBy = jest.fn(() => ({ orderBySql: ['sortOrderAsc'] }))
 
     const page = await service.getItemPage({
       jobId: 'job-1',

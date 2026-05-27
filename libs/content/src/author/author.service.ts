@@ -1,13 +1,12 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
-import { applyCountDelta } from '@db/extensions'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
 import {
   AuthorFollowCountRepairResultDto,
   AuthorWorkCountRepairResultDto,
@@ -101,7 +100,7 @@ export class WorkAuthorService {
     const where = this.activeAuthorWhere(authorId)
 
     const execute = async (client: Db) =>
-      applyCountDelta(client, this.workAuthor, where, 'followersCount', delta)
+      this.applyAuthorFollowersCountDelta(client, where, delta)
 
     await (tx
       ? execute(tx)
@@ -120,17 +119,79 @@ export class WorkAuthorService {
 
     const uniqueAuthorIds = [...new Set(authorIds)]
     const execute = async (client: Db) =>
-      applyCountDelta(
+      this.applyAuthorWorkCountDelta(
         client,
-        this.workAuthor,
         inArray(this.workAuthor.id, uniqueAuthorIds),
-        'workCount',
         delta,
       )
 
     await (tx
       ? execute(tx)
       : this.drizzle.withErrorHandling(async () => execute(this.db)))
+  }
+
+  // 原子更新作者粉丝数，并禁止负数增量把计数扣到 0 以下。
+  private async applyAuthorFollowersCountDelta(
+    client: Db,
+    where: SQL,
+    delta: number,
+  ) {
+    const amount = Math.abs(delta)
+    const updateWhere =
+      delta > 0 ? where : and(where, gte(this.workAuthor.followersCount, amount))!
+    const updated = await client
+      .update(this.workAuthor)
+      .set({
+        followersCount:
+          delta > 0
+            ? sql`${this.workAuthor.followersCount} + ${amount}`
+            : sql`${this.workAuthor.followersCount} - ${amount}`,
+      })
+      .where(updateWhere)
+      .returning({ id: this.workAuthor.id })
+    await this.assertCountDeltaUpdated(client, where, updated.length)
+  }
+
+  // 原子更新作者作品数，并禁止负数增量把计数扣到 0 以下。
+  private async applyAuthorWorkCountDelta(
+    client: Db,
+    where: SQL,
+    delta: number,
+  ) {
+    const amount = Math.abs(delta)
+    const updateWhere =
+      delta > 0 ? where : and(where, gte(this.workAuthor.workCount, amount))!
+    const updated = await client
+      .update(this.workAuthor)
+      .set({
+        workCount:
+          delta > 0
+            ? sql`${this.workAuthor.workCount} + ${amount}`
+            : sql`${this.workAuthor.workCount} - ${amount}`,
+      })
+      .where(updateWhere)
+      .returning({ id: this.workAuthor.id })
+    await this.assertCountDeltaUpdated(client, where, updated.length)
+  }
+
+  // 保持旧计数增量语义：未命中目标和扣减不足都以 RESOURCE_NOT_FOUND 暴露给调用方。
+  private async assertCountDeltaUpdated(
+    client: Db,
+    where: SQL,
+    updatedCount: number,
+  ) {
+    if (updatedCount > 0) {
+      return
+    }
+    const [existing] = await client
+      .select({ id: this.workAuthor.id })
+      .from(this.workAuthor)
+      .where(where)
+      .limit(1)
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      existing ? '目标不存在或计数不足' : '目标不存在',
+    )
   }
 
   // 根据 follow 事实表重建作者粉丝数，重建时只统计当前存在的关注关系，并要求作者记录未被软删除。
@@ -305,11 +366,35 @@ export class WorkAuthorService {
       }
     }
 
-    return this.drizzle.ext.findPagination(this.workAuthor, {
-      where,
-      ...pageDto,
-      omit: ['remark', 'description', 'deletedAt'],
+    const page = this.drizzle.buildPage(pageDto)
+    const orderQuery = this.drizzle.buildOrderBy(pageDto.orderBy, {
+      table: this.workAuthor,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.workAuthor.id,
+          name: this.workAuthor.name,
+          avatar: this.workAuthor.avatar,
+          nationality: this.workAuthor.nationality,
+          gender: this.workAuthor.gender,
+          type: this.workAuthor.type,
+          isEnabled: this.workAuthor.isEnabled,
+          isRecommended: this.workAuthor.isRecommended,
+          workCount: this.workAuthor.workCount,
+          followersCount: this.workAuthor.followersCount,
+          createdAt: this.workAuthor.createdAt,
+          updatedAt: this.workAuthor.updatedAt,
+        })
+        .from(this.workAuthor)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workAuthor, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 获取作者详情，仅返回未软删除的作者记录，未命中时按业务异常处理。

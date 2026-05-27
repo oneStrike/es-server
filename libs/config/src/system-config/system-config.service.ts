@@ -2,7 +2,7 @@ import type { Db } from '@db/core'
 import type { StructuredValue } from '@libs/platform/utils'
 import type { Cache } from 'cache-manager'
 import type { ConfigAllowedTemplate } from './system-config.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AesService } from '@libs/platform/modules/crypto/aes.service'
@@ -305,13 +305,21 @@ export class SystemConfigService implements OnModuleInit {
    * 历史页保留原始快照，供后台追溯每次配置变更的落库结果。
    */
   async findConfigHistory(page = 1, pageSize = 10) {
-    const result = await this.drizzle.ext.findPagination(this.systemConfig, {
-      pageIndex: page,
-      pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const pageQuery = this.drizzle.buildPage({ pageIndex: page, pageSize })
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.systemConfig },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.systemConfig)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.systemConfig),
+    ])
+    const result = toPageResult(list, total, pageQuery)
 
     return {
       list: result.list,
@@ -491,12 +499,12 @@ export class SystemConfigService implements OnModuleInit {
         return undefined
       }
       current = current[segment] as
-        | Record<string, unknown>
-        | string
-        | number
-        | boolean
-        | null
-        | undefined
+      | Record<string, unknown>
+      | string
+      | number
+      | boolean
+      | null
+      | undefined
     }
     return current
   }

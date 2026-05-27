@@ -9,7 +9,7 @@ import type {
   WorkPaginationOptions,
 } from './work.type'
 
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -35,26 +35,6 @@ import {
   UpdateWorkDto,
   UpdateWorkStatusDto,
 } from './dto/work.dto'
-
-const PAGE_WORK_PICK_FIELDS = [
-  'id',
-  'type',
-  'name',
-  'cover',
-  'popularity',
-  'isRecommended',
-  'isHot',
-  'isNew',
-  'serialStatus',
-  'publisher',
-  'language',
-  'region',
-  'ageRating',
-  'createdAt',
-  'updatedAt',
-  'publishAt',
-  'isPublished',
-] as const
 
 /**
  * 作品服务类
@@ -799,24 +779,58 @@ export class WorkService {
     options?: WorkPaginationOptions,
   ) {
     const where = and(...this.buildWorkPageConditions(dto, options))
+    const pageQuery = this.drizzle.buildPage({
+      pageIndex: dto.pageIndex,
+      pageSize: dto.pageSize,
+    })
+    const orderQuery = this.drizzle.buildOrderBy(dto.orderBy, {
+      table: this.work,
+    })
     if (options?.selectPageFields) {
-      const page = await this.drizzle.ext.findPagination(this.work, {
-        where,
-        pageIndex: dto.pageIndex,
-        pageSize: dto.pageSize,
-        orderBy: dto.orderBy,
-        pick: PAGE_WORK_PICK_FIELDS,
-      })
+      const [list, total] = await Promise.all([
+        this.db
+          .select({
+            id: this.work.id,
+            type: this.work.type,
+            name: this.work.name,
+            cover: this.work.cover,
+            popularity: this.work.popularity,
+            isRecommended: this.work.isRecommended,
+            isHot: this.work.isHot,
+            isNew: this.work.isNew,
+            serialStatus: this.work.serialStatus,
+            publisher: this.work.publisher,
+            language: this.work.language,
+            region: this.work.region,
+            ageRating: this.work.ageRating,
+            createdAt: this.work.createdAt,
+            updatedAt: this.work.updatedAt,
+            publishAt: this.work.publishAt,
+            isPublished: this.work.isPublished,
+          })
+          .from(this.work)
+          .where(where)
+          .orderBy(...orderQuery.orderBySql)
+          .limit(pageQuery.limit)
+          .offset(pageQuery.offset),
+        this.db.$count(this.work, where),
+      ])
+      const page = toPageResult(list, total, pageQuery)
 
       return this.attachWorkRelations(page, userId)
     }
 
-    const page = await this.drizzle.ext.findPagination(this.work, {
-      where,
-      pageIndex: dto.pageIndex,
-      pageSize: dto.pageSize,
-      orderBy: dto.orderBy,
-    })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.work)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.work, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     return this.attachWorkRelations(page, userId)
   }

@@ -1,5 +1,5 @@
 import type { Db, SQL } from '@db/core'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
@@ -113,10 +113,23 @@ export class ForumUserActionLogService {
       conditions.push(eq(this.forumUserActionLog.targetId, targetId))
     }
 
-    return this.drizzle.ext.findPagination(this.forumUserActionLog, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: { createdAt: 'desc' },
-      ...pageDto,
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(pageDto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.forumUserActionLog },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.forumUserActionLog)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.forumUserActionLog, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 }

@@ -1,6 +1,6 @@
 import type { JsonValue } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
 import { IdDto, IdsDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -87,10 +87,24 @@ export class AppPageService {
       conditions.push(arrayOverlaps(this.appPage.enablePlatform, platforms))
     }
 
-    return this.drizzle.ext.findPagination(this.appPage, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...other,
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(other)
+    const orderQuery = this.drizzle.buildOrderBy(
+      other.orderBy?.trim() ? other.orderBy : { id: 'desc' as const },
+      { table: this.appPage },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.appPage)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.appPage, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   /**

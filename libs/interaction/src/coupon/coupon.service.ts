@@ -6,7 +6,7 @@ import type {
   CouponTx,
   ReserveDiscountCouponInput,
 } from '../coupon/types/coupon.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import {
   ContentEntitlementGrantSourceEnum,
   ContentEntitlementTargetTypeEnum,
@@ -157,11 +157,24 @@ export class CouponService {
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.couponDefinition.isEnabled, dto.isEnabled))
     }
-    return this.drizzle.ext.findPagination(this.couponDefinition, {
-      ...dto,
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: dto.orderBy ?? JSON.stringify({ id: 'desc' }),
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? JSON.stringify({ id: 'desc' }),
+      { table: this.couponDefinition },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.couponDefinition)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.couponDefinition, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 购买章节前预留折扣券并返回优惠后的应付价格。

@@ -5,7 +5,7 @@ import type {
   ForumSearchConditionTuple,
 } from './search.type'
 
-import { buildLikePattern, DrizzleService } from '@db/core'
+import { buildLikePattern, DrizzleService, toPageResult } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
@@ -555,11 +555,22 @@ export class ForumSearchService {
         : undefined,
     ])!
 
-    const page = await this.drizzle.ext.findPagination(this.forumTopic, {
-      where: and(...conditionTuple),
-      ...dto,
-      orderBy: this.getTopicOrderBy(dto.sort),
+    const where = and(...conditionTuple)
+    const pageQuery = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(this.getTopicOrderBy(dto.sort), {
+      table: this.forumTopic,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.forumTopic)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.forumTopic, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     return {
       ...page,

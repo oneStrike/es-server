@@ -2,7 +2,7 @@ import type {
   ReadingHistoryIndexedRow,
   ReadingHistoryItem,
 } from './reading-state.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { ContentTypeEnum } from '@libs/platform/constant';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray, SQL } from 'drizzle-orm'
@@ -221,15 +221,23 @@ export class ReadingStateService {
       conditions.push(eq(this.userWorkReadingState.workType, workType))
     }
 
-    const page = await this.drizzle.ext.findPagination(
-      this.userWorkReadingState,
-      {
-        where: and(...conditions),
-        orderBy: [{ lastReadAt: 'desc' }, { workId: 'asc' }],
-        pageIndex,
-        pageSize,
-      },
+    const where = and(...conditions)
+    const pageQuery = this.drizzle.buildPage({ pageIndex, pageSize })
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ lastReadAt: 'desc' as const }, { workId: 'asc' as const }],
+      { table: this.userWorkReadingState },
     )
+    const [rawList, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userWorkReadingState)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userWorkReadingState, where),
+    ])
+    const page = toPageResult(rawList, total, pageQuery)
 
     const orderedList: Array<ReadingHistoryItem | undefined> = Array.from({
       length: page.list.length,

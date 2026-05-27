@@ -1,5 +1,5 @@
 import type { Db, SQL } from '@db/core'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
@@ -304,14 +304,22 @@ export class UserPointService {
     // 历史上这里走 JSON 字符串默认排序，现统一收口为字面量对象，减少调用层分支。
     const orderBy = dto.orderBy?.trim() ? dto.orderBy : { id: 'desc' as const }
 
-    const page = await this.drizzle.ext.findPagination(
-      this.growthLedgerRecord,
-      {
-        where: and(...conditions),
-        ...dto,
-        orderBy,
-      },
-    )
+    const where = and(...conditions)
+    const pageQuery = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.growthLedgerRecord,
+    })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.growthLedgerRecord)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.growthLedgerRecord, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     return {
       ...page,

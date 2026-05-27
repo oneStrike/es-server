@@ -1,7 +1,7 @@
 import type { requestLog } from '@db/schema'
 import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto'
 import type { FastifyRequest } from 'fastify'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -139,10 +139,22 @@ export class AuditService {
         : undefined,
     ].filter(Boolean)
 
-    const page = await this.drizzle.ext.findPagination(this.requestLog, {
-      where: whereParts.length > 0 ? and(...whereParts) : undefined,
-      ...pageOptions,
+    const where = whereParts.length > 0 ? and(...whereParts) : undefined
+    const pageQuery = this.drizzle.buildPage(pageOptions)
+    const orderQuery = this.drizzle.buildOrderBy(pageOptions.orderBy, {
+      table: this.requestLog,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.requestLog)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.requestLog, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     return {
       ...page,

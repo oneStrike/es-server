@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { buildLikePattern, DrizzleService } from '@db/core'
+import { buildLikePattern, DrizzleService, toPageResult } from '@db/core'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
 import { and, eq, like } from 'drizzle-orm'
@@ -51,11 +51,24 @@ export class SensitiveWordService {
       }
     })
 
-    return this.drizzle.ext.findPagination(this.sensitiveWord, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...dto,
-      orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+      { table: this.sensitiveWord },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.sensitiveWord)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.sensitiveWord, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 创建敏感词。

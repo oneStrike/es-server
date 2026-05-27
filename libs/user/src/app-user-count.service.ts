@@ -1,18 +1,18 @@
-import type { Db } from '@db/core'
+import type { Db, SQL } from '@db/core'
 import type {
   AppUserCountField,
   AppUserCountSnapshot,
   AppUserFollowingCountAggregation,
 } from './app-user-count.type'
 import { DrizzleService } from '@db/core'
-import { applyCountDelta } from '@db/extensions'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, gte, isNull, sql } from 'drizzle-orm'
+import { AppUserCountDeltaFailureCauseCode } from './app-user-count.constant'
 
 /**
  * 应用用户计数服务
@@ -185,33 +185,184 @@ export class AppUserCountService {
       return
     }
     const execute = async (client: Db) =>
-      applyCountDelta(
+      this.applyUserCountDelta(
         client,
-        this.appUserCount,
         eq(this.appUserCount.userId, userId),
         field,
         delta,
+        message,
       )
 
-    try {
-      if (tx) {
-        await execute(tx)
-        return
-      }
-      await this.drizzle.withErrorHandling(async () => execute(this.db))
-    } catch (error) {
-      if (
-        error instanceof BusinessException &&
-        error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
-      ) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          message,
-          { cause: error },
-        )
-      }
-      throw error
+    if (tx) {
+      await execute(tx)
+      return
     }
+    await this.drizzle.withErrorHandling(async () => execute(this.db))
+  }
+
+  // 构建 app_user_count 单字段原子增减表达式，字段集合由 AppUserCountField 静态约束。
+  private buildUserCountDelta(field: AppUserCountField, delta: number) {
+    const amount = Math.abs(delta)
+    switch (field) {
+      case 'commentCount':
+        return {
+          column: this.appUserCount.commentCount,
+          set: {
+            commentCount:
+              delta > 0
+                ? sql`${this.appUserCount.commentCount} + ${amount}`
+                : sql`${this.appUserCount.commentCount} - ${amount}`,
+          },
+        }
+      case 'likeCount':
+        return {
+          column: this.appUserCount.likeCount,
+          set: {
+            likeCount:
+              delta > 0
+                ? sql`${this.appUserCount.likeCount} + ${amount}`
+                : sql`${this.appUserCount.likeCount} - ${amount}`,
+          },
+        }
+      case 'favoriteCount':
+        return {
+          column: this.appUserCount.favoriteCount,
+          set: {
+            favoriteCount:
+              delta > 0
+                ? sql`${this.appUserCount.favoriteCount} + ${amount}`
+                : sql`${this.appUserCount.favoriteCount} - ${amount}`,
+          },
+        }
+      case 'followingUserCount':
+        return {
+          column: this.appUserCount.followingUserCount,
+          set: {
+            followingUserCount:
+              delta > 0
+                ? sql`${this.appUserCount.followingUserCount} + ${amount}`
+                : sql`${this.appUserCount.followingUserCount} - ${amount}`,
+          },
+        }
+      case 'followingAuthorCount':
+        return {
+          column: this.appUserCount.followingAuthorCount,
+          set: {
+            followingAuthorCount:
+              delta > 0
+                ? sql`${this.appUserCount.followingAuthorCount} + ${amount}`
+                : sql`${this.appUserCount.followingAuthorCount} - ${amount}`,
+          },
+        }
+      case 'followingSectionCount':
+        return {
+          column: this.appUserCount.followingSectionCount,
+          set: {
+            followingSectionCount:
+              delta > 0
+                ? sql`${this.appUserCount.followingSectionCount} + ${amount}`
+                : sql`${this.appUserCount.followingSectionCount} - ${amount}`,
+          },
+        }
+      case 'followingHashtagCount':
+        return {
+          column: this.appUserCount.followingHashtagCount,
+          set: {
+            followingHashtagCount:
+              delta > 0
+                ? sql`${this.appUserCount.followingHashtagCount} + ${amount}`
+                : sql`${this.appUserCount.followingHashtagCount} - ${amount}`,
+          },
+        }
+      case 'followersCount':
+        return {
+          column: this.appUserCount.followersCount,
+          set: {
+            followersCount:
+              delta > 0
+                ? sql`${this.appUserCount.followersCount} + ${amount}`
+                : sql`${this.appUserCount.followersCount} - ${amount}`,
+          },
+        }
+      case 'forumTopicCount':
+        return {
+          column: this.appUserCount.forumTopicCount,
+          set: {
+            forumTopicCount:
+              delta > 0
+                ? sql`${this.appUserCount.forumTopicCount} + ${amount}`
+                : sql`${this.appUserCount.forumTopicCount} - ${amount}`,
+          },
+        }
+      case 'commentReceivedLikeCount':
+        return {
+          column: this.appUserCount.commentReceivedLikeCount,
+          set: {
+            commentReceivedLikeCount:
+              delta > 0
+                ? sql`${this.appUserCount.commentReceivedLikeCount} + ${amount}`
+                : sql`${this.appUserCount.commentReceivedLikeCount} - ${amount}`,
+          },
+        }
+      case 'forumTopicReceivedLikeCount':
+        return {
+          column: this.appUserCount.forumTopicReceivedLikeCount,
+          set: {
+            forumTopicReceivedLikeCount:
+              delta > 0
+                ? sql`${this.appUserCount.forumTopicReceivedLikeCount} + ${amount}`
+                : sql`${this.appUserCount.forumTopicReceivedLikeCount} - ${amount}`,
+          },
+        }
+      case 'forumTopicReceivedFavoriteCount':
+        return {
+          column: this.appUserCount.forumTopicReceivedFavoriteCount,
+          set: {
+            forumTopicReceivedFavoriteCount:
+              delta > 0
+                ? sql`${this.appUserCount.forumTopicReceivedFavoriteCount} + ${amount}`
+                : sql`${this.appUserCount.forumTopicReceivedFavoriteCount} - ${amount}`,
+          },
+        }
+    }
+  }
+
+  // 对用户计数执行原子增减；负数更新额外保护不允许扣成负数。
+  private async applyUserCountDelta(
+    client: Db,
+    where: SQL,
+    field: AppUserCountField,
+    delta: number,
+    message: string,
+  ) {
+    const amount = Math.abs(delta)
+    const deltaQuery = this.buildUserCountDelta(field, delta)
+    const updateWhere =
+      delta > 0 ? where : and(where, gte(deltaQuery.column, amount))!
+    const updated = await client
+      .update(this.appUserCount)
+      .set(deltaQuery.set)
+      .where(updateWhere)
+      .returning({ userId: this.appUserCount.userId })
+
+    if (updated.length > 0) {
+      return
+    }
+
+    const [existing] = await client
+      .select({ userId: this.appUserCount.userId })
+      .from(this.appUserCount)
+      .where(where)
+      .limit(1)
+    const causeCode = existing
+      ? AppUserCountDeltaFailureCauseCode.INSUFFICIENT_COUNT
+      : AppUserCountDeltaFailureCauseCode.TARGET_NOT_FOUND
+
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      message,
+      { cause: { code: causeCode } },
+    )
   }
 
   // 更新用户评论数。

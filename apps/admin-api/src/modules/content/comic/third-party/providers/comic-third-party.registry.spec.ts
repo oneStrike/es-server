@@ -1,5 +1,5 @@
 import { BusinessException } from '@libs/platform/exceptions'
-import { ComicThirdPartyRegistry } from './comic-third-party.registry'
+import { ComicThirdPartyRegistry } from '@libs/content/work/third-party/providers/comic-third-party.registry'
 
 describe('ComicThirdPartyRegistry', () => {
   const copyProvider = {

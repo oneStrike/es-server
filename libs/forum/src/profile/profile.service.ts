@@ -2,7 +2,7 @@ import type { Db } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -230,10 +230,21 @@ export class UserProfileService {
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
 
-    const page = await this.drizzle.ext.findPagination(this.appUser, {
-      where,
-      ...rest,
+    const pageQuery = this.drizzle.buildPage(rest)
+    const orderQuery = this.drizzle.buildOrderBy(rest.orderBy, {
+      table: this.appUser,
     })
+    const [profileRows, profileTotal] = await Promise.all([
+      this.db
+        .select()
+        .from(this.appUser)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.appUser, where),
+    ])
+    const page = toPageResult(profileRows, profileTotal, pageQuery)
     const userIds = page.list.map((item) => item.id)
     const counts = await this.getUserCountRowsByUserIds(userIds)
     const countMap = new Map(counts.map((item) => [item.userId, item]))
@@ -657,16 +668,26 @@ export class UserProfileService {
   // 查看积分记录。
   // 仅返回 points 资产对应的成长流水。
   async getPointRecords(userId: number) {
-    const page = await this.drizzle.ext.findPagination(
-      this.growthLedgerRecord,
-      {
-        where: and(
-          eq(this.growthLedgerRecord.userId, userId),
-          eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
-        ),
-        orderBy: { id: 'desc' },
-      },
+    const where = and(
+      eq(this.growthLedgerRecord.userId, userId),
+      eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
     )
+    const pageQuery = this.drizzle.buildPage()
+    const orderQuery = this.drizzle.buildOrderBy(
+      { id: 'desc' },
+      { table: this.growthLedgerRecord },
+    )
+    const [pointRows, pointTotal] = await Promise.all([
+      this.db
+        .select()
+        .from(this.growthLedgerRecord)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.growthLedgerRecord, where),
+    ])
+    const page = toPageResult(pointRows, pointTotal, pageQuery)
     return {
       ...page,
       list: page.list.map((item) => ({

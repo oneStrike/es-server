@@ -1,6 +1,6 @@
 import type { JsonValue } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -197,11 +197,23 @@ export class AppAnnouncementService {
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(pageParams)
+    const orderQuery = this.drizzle.buildOrderBy(
+      pageParams.orderBy?.trim() ? pageParams.orderBy : { id: 'desc' as const },
+      { table: this.appAnnouncement },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.appAnnouncement)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.appAnnouncement, where),
+    ])
 
-    return this.drizzle.ext.findPagination(this.appAnnouncement, {
-      where,
-      ...pageParams,
-    })
+    return toPageResult(list, total, page)
   }
 
   /**

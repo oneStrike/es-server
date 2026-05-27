@@ -5,18 +5,18 @@ import type {
   ForumVisibleSectionRow,
 } from './forum-section.type'
 
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { ForumCounterService } from '../counter/forum-counter.service'
 import {
   FORUM_MODERATOR_PERMISSION_LABELS,
   ForumModeratorRoleTypeEnum,
 } from '../moderator/moderator.constant'
-import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import { FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE } from '../section-group/forum-section-group.constant'
 import { ForumSectionGroupService } from '../section-group/forum-section-group.service'
@@ -573,11 +573,22 @@ export class ForumSectionService {
       ? otherDto.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.forumSection, {
-      where,
-      ...otherDto,
-      orderBy,
+    const page = this.drizzle.buildPage(otherDto)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.forumSection,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.forumSection)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.forumSection, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   /**
@@ -811,10 +822,86 @@ export class ForumSectionService {
    * 仅允许同一分组内交换；未分组板块之间允许互换。
    */
   async updateSectionSort(updateSortDto: SwapForumSectionSortDto) {
-    return this.drizzle.ext.swapField(this.forumSection, {
-      where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
-      sourceField: 'groupId',
-      recordWhere: sql`${this.forumSection.deletedAt} is null`,
+    return this.drizzle.withTransaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: this.forumSection.id,
+          groupId: this.forumSection.groupId,
+          sortOrder: this.forumSection.sortOrder,
+        })
+        .from(this.forumSection)
+        .where(
+          and(
+            inArray(this.forumSection.id, [
+              updateSortDto.dragId,
+              updateSortDto.targetId,
+            ]),
+            isNull(this.forumSection.deletedAt),
+          ),
+        )
+
+      const dragSection = rows.find((row) => row.id === updateSortDto.dragId)
+      const targetSection = rows.find(
+        (row) => row.id === updateSortDto.targetId,
+      )
+
+      if (!dragSection || !targetSection) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '论坛板块不存在',
+        )
+      }
+      if (dragSection.groupId !== targetSection.groupId) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '板块不是同一分组',
+        )
+      }
+      if (dragSection.sortOrder === targetSection.sortOrder) {
+        return true
+      }
+
+      const groupWhere =
+        dragSection.groupId === null
+          ? isNull(this.forumSection.groupId)
+          : eq(this.forumSection.groupId, dragSection.groupId)
+      const [minimumSortOrder] = await tx
+        .select({
+          value: sql<number>`min(${this.forumSection.sortOrder})`,
+        })
+        .from(this.forumSection)
+        .where(and(groupWhere, isNull(this.forumSection.deletedAt)))
+      const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
+
+      await tx
+        .update(this.forumSection)
+        .set({ sortOrder: temporarySortOrder })
+        .where(
+          and(
+            eq(this.forumSection.id, dragSection.id),
+            isNull(this.forumSection.deletedAt),
+          ),
+        )
+      await tx
+        .update(this.forumSection)
+        .set({ sortOrder: dragSection.sortOrder })
+        .where(
+          and(
+            eq(this.forumSection.id, targetSection.id),
+            isNull(this.forumSection.deletedAt),
+          ),
+        )
+      await tx
+        .update(this.forumSection)
+        .set({ sortOrder: targetSection.sortOrder })
+        .where(
+          and(
+            eq(this.forumSection.id, dragSection.id),
+            isNull(this.forumSection.deletedAt),
+          ),
+        )
+
+      return true
     })
   }
 }

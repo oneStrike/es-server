@@ -8,7 +8,7 @@ import type {
   NormalizedModeratorScope,
   NormalizeModeratorScopeOptions,
 } from './moderator.type'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -541,7 +541,7 @@ export class ForumModeratorService {
                 isNull(this.forumSectionGroup.deletedAt),
               ),
             )
-        : Promise.resolve([] as Array<{ id: number; name: string }>),
+        : Promise.resolve([] as Array<{ id: number, name: string }>),
       this.db
         .select({
           id: this.forumSection.id,
@@ -562,9 +562,9 @@ export class ForumModeratorService {
 
     const userMap = new Map<
       number,
-      { id: number; nickname: string; avatar: string | null }
+      { id: number, nickname: string, avatar: string | null }
     >(users.map((user) => [user.id, user]))
-    const groupMap = new Map<number, { id: number; name: string }>(
+    const groupMap = new Map<number, { id: number, name: string }>(
       groups.map((group) => [group.id, group]),
     )
     const scopeMap = new Map<number, Array<(typeof scopes)[number]>>()
@@ -950,10 +950,22 @@ export class ForumModeratorService {
       }
     }
 
-    const page = await this.drizzle.ext.findPagination(this.forumModerator, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...otherDto,
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const pageQuery = this.drizzle.buildPage(otherDto)
+    const orderQuery = this.drizzle.buildOrderBy(otherDto.orderBy, {
+      table: this.forumModerator,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.forumModerator)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.forumModerator, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     return {
       ...page,

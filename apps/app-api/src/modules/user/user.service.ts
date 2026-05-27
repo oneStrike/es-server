@@ -11,7 +11,7 @@ import type { SQL } from 'drizzle-orm'
  * - 用户资产统计（购买、下载、收藏、点赞等）
  * - 用户成长信息（积分、经验、等级、徽章）
  */
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience/experience.service'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { UserPointService } from '@libs/growth/point/point.service'
@@ -527,20 +527,29 @@ export class UserService {
       }
     }
 
-    const page = await this.drizzle.ext.findPagination(
-      this.userBadgeAssignment,
-      {
-        where: and(
-          eq(this.userBadgeAssignment.userId, userId),
-          inArray(this.userBadgeAssignment.badgeId, badgeIds),
-        ),
-        ...pageQuery,
-        orderBy: pageQuery.orderBy ?? [
-          { createdAt: 'desc' as const },
-          { badgeId: 'asc' as const },
-        ],
-      },
+    const where = and(
+      eq(this.userBadgeAssignment.userId, userId),
+      inArray(this.userBadgeAssignment.badgeId, badgeIds),
     )
+    const pageParams = this.drizzle.buildPage(pageQuery)
+    const orderQuery = this.drizzle.buildOrderBy(
+      pageQuery.orderBy ?? [
+        { createdAt: 'desc' as const },
+        { badgeId: 'asc' as const },
+      ],
+      { table: this.userBadgeAssignment },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userBadgeAssignment)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageParams.limit)
+        .offset(pageParams.offset),
+      this.db.$count(this.userBadgeAssignment, where),
+    ])
+    const page = toPageResult(list, total, pageParams)
     const pageBadgeIds = page.list.map((item) => item.badgeId)
     const pageBadges = pageBadgeIds.length
       ? await this.db

@@ -5,13 +5,13 @@ import type {
   ForumTopicCountField,
 } from './forum-counter.type'
 import { DrizzleService } from '@db/core'
-import { applyCountDelta, CountDeltaFailureCauseCode } from '@db/extensions'
-
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
+
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { Injectable } from '@nestjs/common'
-import { and, desc, eq, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm'
+import { ForumCountDeltaFailureCauseCode } from './forum-counter.constant'
 
 /**
  * 论坛领域计数服务
@@ -90,37 +90,6 @@ export class ForumCounterService {
     this.drizzle.assertAffectedRows(result, message)
   }
 
-  private rethrowCountDeltaNotFound(
-    error: unknown,
-    message: string,
-  ): never {
-    if (
-      !(error instanceof BusinessException) ||
-      error.code !== BusinessErrorCode.RESOURCE_NOT_FOUND
-    ) {
-      throw error
-    }
-
-    const causeCode =
-      typeof error.cause === 'object' &&
-      error.cause !== null &&
-      'code' in error.cause
-        ? (error.cause as { code?: unknown }).code
-        : undefined
-
-    if (causeCode === CountDeltaFailureCauseCode.INSUFFICIENT_COUNT) {
-      throw error
-    }
-
-    if (causeCode === CountDeltaFailureCauseCode.TARGET_NOT_FOUND) {
-      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message, {
-        cause: error.cause ?? error,
-      })
-    }
-
-    throw error
-  }
-
   /**
    * 更新板块级冗余计数字段。
    * 当 delta 为 0 时直接跳过，避免写入无意义更新；板块不存在时会转换成调用方可识别的业务异常。
@@ -136,27 +105,17 @@ export class ForumCounterService {
       return
     }
 
-    const execute = async (client: Db) =>
-      applyCountDelta(
-        client,
-        this.forumSection,
-        and(
-          eq(this.forumSection.id, sectionId),
-          isNull(this.forumSection.deletedAt),
-        )!,
-        field,
-        delta,
-      )
-
-    try {
-      if (tx) {
-        await execute(tx)
-        return
-      }
-      await this.drizzle.withErrorHandling(async () => execute(this.db))
-    } catch (error) {
-      this.rethrowCountDeltaNotFound(error, message)
+    const where = and(
+      eq(this.forumSection.id, sectionId),
+      isNull(this.forumSection.deletedAt),
+    )!
+    if (tx) {
+      await this.applySectionCountDelta(tx, where, field, delta, message)
+      return
     }
+    await this.drizzle.withErrorHandling(async () =>
+      this.applySectionCountDelta(this.db, where, field, delta, message),
+    )
   }
 
   /**
@@ -174,27 +133,181 @@ export class ForumCounterService {
       return
     }
 
-    const execute = async (client: Db) =>
-      applyCountDelta(
-        client,
-        this.forumTopic,
-        and(
-          eq(this.forumTopic.id, topicId),
-          isNull(this.forumTopic.deletedAt),
-        )!,
-        field,
-        delta,
-      )
-
-    try {
-      if (tx) {
-        await execute(tx)
-        return
-      }
-      await this.drizzle.withErrorHandling(async () => execute(this.db))
-    } catch (error) {
-      this.rethrowCountDeltaNotFound(error, message)
+    const where = and(
+      eq(this.forumTopic.id, topicId),
+      isNull(this.forumTopic.deletedAt),
+    )!
+    if (tx) {
+      await this.applyTopicCountDelta(tx, where, field, delta, message)
+      return
     }
+    await this.drizzle.withErrorHandling(async () =>
+      this.applyTopicCountDelta(this.db, where, field, delta, message),
+    )
+  }
+
+  // 为 forum_section 表构造类型约束下的计数字段增减表达式。
+  private buildSectionCountDelta(field: ForumSectionCountField, delta: number) {
+    const amount = Math.abs(delta)
+    switch (field) {
+      case 'topicCount':
+        return {
+          column: this.forumSection.topicCount,
+          set: {
+            topicCount:
+              delta > 0
+                ? sql`${this.forumSection.topicCount} + ${amount}`
+                : sql`${this.forumSection.topicCount} - ${amount}`,
+          },
+        }
+      case 'commentCount':
+        return {
+          column: this.forumSection.commentCount,
+          set: {
+            commentCount:
+              delta > 0
+                ? sql`${this.forumSection.commentCount} + ${amount}`
+                : sql`${this.forumSection.commentCount} - ${amount}`,
+          },
+        }
+      case 'followersCount':
+        return {
+          column: this.forumSection.followersCount,
+          set: {
+            followersCount:
+              delta > 0
+                ? sql`${this.forumSection.followersCount} + ${amount}`
+                : sql`${this.forumSection.followersCount} - ${amount}`,
+          },
+        }
+    }
+  }
+
+  // 为 forum_topic 表构造类型约束下的计数字段增减表达式。
+  private buildTopicCountDelta(field: ForumTopicCountField, delta: number) {
+    const amount = Math.abs(delta)
+    switch (field) {
+      case 'viewCount':
+        return {
+          column: this.forumTopic.viewCount,
+          set: {
+            viewCount:
+              delta > 0
+                ? sql`${this.forumTopic.viewCount} + ${amount}`
+                : sql`${this.forumTopic.viewCount} - ${amount}`,
+          },
+        }
+      case 'likeCount':
+        return {
+          column: this.forumTopic.likeCount,
+          set: {
+            likeCount:
+              delta > 0
+                ? sql`${this.forumTopic.likeCount} + ${amount}`
+                : sql`${this.forumTopic.likeCount} - ${amount}`,
+          },
+        }
+      case 'favoriteCount':
+        return {
+          column: this.forumTopic.favoriteCount,
+          set: {
+            favoriteCount:
+              delta > 0
+                ? sql`${this.forumTopic.favoriteCount} + ${amount}`
+                : sql`${this.forumTopic.favoriteCount} - ${amount}`,
+          },
+        }
+    }
+  }
+
+  // 原子更新板块计数；负数增量不允许把计数扣成负数。
+  private async applySectionCountDelta(
+    client: Db,
+    where: ReturnType<typeof and>,
+    field: ForumSectionCountField,
+    delta: number,
+    message: string,
+  ) {
+    const amount = Math.abs(delta)
+    const deltaQuery = this.buildSectionCountDelta(field, delta)
+    const updateWhere =
+      delta > 0 ? where : and(where, gte(deltaQuery.column, amount))!
+    const updated = await client
+      .update(this.forumSection)
+      .set(deltaQuery.set)
+      .where(updateWhere)
+      .returning({ id: this.forumSection.id })
+    await this.assertSectionCountUpdated(client, where, updated.length, message)
+  }
+
+  // 原子更新主题计数；负数增量不允许把计数扣成负数。
+  private async applyTopicCountDelta(
+    client: Db,
+    where: ReturnType<typeof and>,
+    field: ForumTopicCountField,
+    delta: number,
+    message: string,
+  ) {
+    const amount = Math.abs(delta)
+    const deltaQuery = this.buildTopicCountDelta(field, delta)
+    const updateWhere =
+      delta > 0 ? where : and(where, gte(deltaQuery.column, amount))!
+    const updated = await client
+      .update(this.forumTopic)
+      .set(deltaQuery.set)
+      .where(updateWhere)
+      .returning({ id: this.forumTopic.id })
+    await this.assertTopicCountUpdated(client, where, updated.length, message)
+  }
+
+  // 保持板块计数旧语义：目标不存在使用调用方文案，扣减不足保留稳定错误。
+  private async assertSectionCountUpdated(
+    client: Db,
+    where: ReturnType<typeof and>,
+    updatedCount: number,
+    message: string,
+  ) {
+    if (updatedCount > 0) {
+      return
+    }
+    const [existing] = await client
+      .select({ id: this.forumSection.id })
+      .from(this.forumSection)
+      .where(where)
+      .limit(1)
+    const causeCode = existing
+      ? ForumCountDeltaFailureCauseCode.INSUFFICIENT_COUNT
+      : ForumCountDeltaFailureCauseCode.TARGET_NOT_FOUND
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      existing ? '目标不存在或计数不足' : message,
+      { cause: { code: causeCode } },
+    )
+  }
+
+  // 保持主题计数旧语义：目标不存在使用调用方文案，扣减不足保留稳定错误。
+  private async assertTopicCountUpdated(
+    client: Db,
+    where: ReturnType<typeof and>,
+    updatedCount: number,
+    message: string,
+  ) {
+    if (updatedCount > 0) {
+      return
+    }
+    const [existing] = await client
+      .select({ id: this.forumTopic.id })
+      .from(this.forumTopic)
+      .where(where)
+      .limit(1)
+    const causeCode = existing
+      ? ForumCountDeltaFailureCauseCode.INSUFFICIENT_COUNT
+      : ForumCountDeltaFailureCauseCode.TARGET_NOT_FOUND
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      existing ? '目标不存在或计数不足' : message,
+      { cause: { code: causeCode } },
+    )
   }
 
   /**

@@ -1,7 +1,7 @@
 import { BusinessErrorCode } from '@libs/platform/constant'
+import { ThirdPartyResourceThrottleService } from '@libs/content/work/third-party/services/third-party-resource-throttle.service'
 import { BusinessException } from '@libs/platform/exceptions'
 import type { ConfigReader } from '@libs/system-config/config-reader'
-import { ThirdPartyResourceThrottleService } from './third-party-resource-throttle.service'
 
 describe('ThirdPartyResourceThrottleService', () => {
   function createService(

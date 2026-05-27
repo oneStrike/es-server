@@ -1,11 +1,12 @@
+import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type { ValidateEmojiAssetPayload } from './emoji.type'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   CreateEmojiAssetDto,
   CreateEmojiPackDto,
@@ -65,11 +66,22 @@ export class EmojiAssetService {
       ? dto.orderBy
       : { sortOrder: 'asc' as const, id: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.emojiPack, {
-      where: and(...conditions),
-      ...dto,
-      orderBy,
+    const where = and(...conditions)
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.emojiPack,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.emojiPack)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.emojiPack, where),
+    ])
+    return toPageResult(list, total, page)
   }
 
   /**
@@ -103,10 +115,7 @@ export class EmojiAssetService {
   async createPack(dto: CreateEmojiPackDto, adminUserId: number) {
     const sortOrder =
       dto.sortOrder ??
-      (await this.drizzle.ext.maxOrder({
-        column: this.emojiPack.sortOrder,
-        where: isNull(this.emojiPack.deletedAt),
-      })) + 1
+      (await this.getMaxPackSortOrder()) + 1
 
     await this.drizzle.withErrorHandling(
       () =>
@@ -214,8 +223,48 @@ export class EmojiAssetService {
    * - 用于管理端的拖拽排序。
    */
   async swapPackSortOrder(dragId: number, targetId: number) {
-    return this.drizzle.ext.swapField(this.emojiPack, {
-      where: [{ id: dragId }, { id: targetId }],
+    return this.drizzle.withTransaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: this.emojiPack.id,
+          sortOrder: this.emojiPack.sortOrder,
+        })
+        .from(this.emojiPack)
+        .where(
+          and(
+            inArray(this.emojiPack.id, [dragId, targetId]),
+            isNull(this.emojiPack.deletedAt),
+          ),
+        )
+
+      const dragPack = rows.find((row) => row.id === dragId)
+      const targetPack = rows.find((row) => row.id === targetId)
+      if (!dragPack || !targetPack) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '表情包不存在',
+        )
+      }
+      if (dragPack.sortOrder === targetPack.sortOrder) {
+        return true
+      }
+
+      const temporarySortOrder = await this.getTemporaryPackSortOrder(tx)
+      await tx
+        .update(this.emojiPack)
+        .set({ sortOrder: temporarySortOrder })
+        .where(and(eq(this.emojiPack.id, dragId), isNull(this.emojiPack.deletedAt)))
+      await tx
+        .update(this.emojiPack)
+        .set({ sortOrder: dragPack.sortOrder })
+        .where(
+          and(eq(this.emojiPack.id, targetId), isNull(this.emojiPack.deletedAt)),
+        )
+      await tx
+        .update(this.emojiPack)
+        .set({ sortOrder: targetPack.sortOrder })
+        .where(and(eq(this.emojiPack.id, dragId), isNull(this.emojiPack.deletedAt)))
+      return true
     })
   }
 
@@ -304,11 +353,22 @@ export class EmojiAssetService {
       ? dto.orderBy
       : { sortOrder: 'asc' as const, id: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.emojiAsset, {
-      where: and(...conditions),
-      ...dto,
-      orderBy,
+    const where = and(...conditions)
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.emojiAsset,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.emojiAsset)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.emojiAsset, where),
+    ])
+    return toPageResult(list, total, page)
   }
 
   /**
@@ -344,13 +404,7 @@ export class EmojiAssetService {
 
     const sortOrder =
       dto.sortOrder ??
-      (await this.drizzle.ext.maxOrder({
-        column: this.emojiAsset.sortOrder,
-        where: and(
-          eq(this.emojiAsset.packId, dto.packId),
-          isNull(this.emojiAsset.deletedAt),
-        ),
-      })) + 1
+      (await this.getMaxAssetSortOrder(dto.packId)) + 1
 
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.emojiAsset).values({
@@ -441,10 +495,62 @@ export class EmojiAssetService {
    * - 仅允许同一表情包（packId 相同）内的资源交换顺序。
    */
   async swapAssetSortOrder(dragId: number, targetId: number) {
-    // sourceField=packId：仅允许同一表情包内交换顺序。
-    return this.drizzle.ext.swapField(this.emojiAsset, {
-      where: [{ id: dragId }, { id: targetId }],
-      sourceField: 'packId',
+    return this.drizzle.withTransaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: this.emojiAsset.id,
+          packId: this.emojiAsset.packId,
+          sortOrder: this.emojiAsset.sortOrder,
+        })
+        .from(this.emojiAsset)
+        .where(
+          and(
+            inArray(this.emojiAsset.id, [dragId, targetId]),
+            isNull(this.emojiAsset.deletedAt),
+          ),
+        )
+
+      const dragAsset = rows.find((row) => row.id === dragId)
+      const targetAsset = rows.find((row) => row.id === targetId)
+      if (!dragAsset || !targetAsset) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '表情资源不存在',
+        )
+      }
+      if (dragAsset.packId !== targetAsset.packId) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '表情资源不属于同一表情包',
+        )
+      }
+      if (dragAsset.sortOrder === targetAsset.sortOrder) {
+        return true
+      }
+
+      const samePackWhere = and(
+        eq(this.emojiAsset.packId, dragAsset.packId),
+        isNull(this.emojiAsset.deletedAt),
+      )!
+      const temporarySortOrder = await this.getTemporaryAssetSortOrder(
+        tx,
+        samePackWhere,
+      )
+      await tx
+        .update(this.emojiAsset)
+        .set({ sortOrder: temporarySortOrder })
+        .where(and(eq(this.emojiAsset.id, dragId), isNull(this.emojiAsset.deletedAt)))
+      await tx
+        .update(this.emojiAsset)
+        .set({ sortOrder: dragAsset.sortOrder })
+        .where(
+          and(eq(this.emojiAsset.id, targetId), isNull(this.emojiAsset.deletedAt)),
+        )
+      await tx
+        .update(this.emojiAsset)
+        .set({ sortOrder: targetAsset.sortOrder })
+        .where(and(eq(this.emojiAsset.id, dragId), isNull(this.emojiAsset.deletedAt)))
+      return true
     })
   }
 
@@ -517,5 +623,41 @@ export class EmojiAssetService {
         '表情包不存在',
       )
     }
+  }
+
+  // 获取未删除表情包的最大排序值，供新增表情包追加到末尾。
+  private async getMaxPackSortOrder() {
+    const [row] = await this.db
+      .select({ value: sql<number>`max(${this.emojiPack.sortOrder})` })
+      .from(this.emojiPack)
+      .where(isNull(this.emojiPack.deletedAt))
+    return Number(row?.value ?? 0)
+  }
+
+  // 获取目标表情包内未删除资源的最大排序值，供新增资源追加到包内末尾。
+  private async getMaxAssetSortOrder(packId: number) {
+    const [row] = await this.db
+      .select({ value: sql<number>`max(${this.emojiAsset.sortOrder})` })
+      .from(this.emojiAsset)
+      .where(and(eq(this.emojiAsset.packId, packId), isNull(this.emojiAsset.deletedAt)))
+    return Number(row?.value ?? 0)
+  }
+
+  // 取小于当前最小值的临时排序值，避免交换过程触发潜在唯一约束。
+  private async getTemporaryPackSortOrder(tx: Db) {
+    const [row] = await tx
+      .select({ value: sql<number>`min(${this.emojiPack.sortOrder})` })
+      .from(this.emojiPack)
+      .where(isNull(this.emojiPack.deletedAt))
+    return Number(row?.value ?? 0) - 1
+  }
+
+  // 取包内小于当前最小值的临时排序值，保证交换只影响同包资源。
+  private async getTemporaryAssetSortOrder(tx: Db, where: SQL) {
+    const [row] = await tx
+      .select({ value: sql<number>`min(${this.emojiAsset.sortOrder})` })
+      .from(this.emojiAsset)
+      .where(where)
+    return Number(row?.value ?? 0) - 1
   }
 }

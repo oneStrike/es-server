@@ -2,7 +2,7 @@ import type { PaymentOrderSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { PaymentTx } from '../payment/types/payment.type'
 import type { ConsumeForPurchaseInput } from './types/wallet.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -84,11 +84,24 @@ export class WalletService {
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.currencyPackage.isEnabled, dto.isEnabled))
     }
-    return this.drizzle.ext.findPagination(this.currencyPackage, {
-      ...dto,
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
+      { table: this.currencyPackage },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.currencyPackage)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.currencyPackage, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 创建虚拟币充值支付订单。

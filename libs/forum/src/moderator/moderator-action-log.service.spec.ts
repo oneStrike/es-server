@@ -30,51 +30,88 @@ function createThenableBuilder<TResult>(
   return builder
 }
 
+function createSelectBuilder<TResult>(
+  result: TResult,
+  recorder: Record<string, ReturnType<typeof jest.fn>> = {},
+) {
+  const builder: Record<string, ReturnType<typeof jest.fn>> = {
+    from: jest.fn(() => builder),
+    limit: jest.fn(() => builder),
+    offset: jest.fn(async () => result),
+    orderBy: jest.fn(() => builder),
+    where: jest.fn(() => builder),
+  }
+
+  Object.assign(recorder, builder)
+  return builder
+}
+
 function createActionLogService() {
-  const pagination = jest.fn(async () => ({
-    list: [
-      {
-        actionDescription: '隐藏评论',
-        actionType: ForumModeratorActionTypeEnum.HIDE_COMMENT,
-        afterData: '{"isHidden":true}',
-        beforeData: '{"isHidden":false}',
-        createdAt: new Date('2026-01-01T00:00:00.000Z'),
-        id: 1,
-        moderatorId: 5,
-        targetId: 21,
-        targetType: ForumModeratorActionTargetTypeEnum.COMMENT,
-      },
-    ],
-    pageIndex: 1,
-    pageSize: 15,
-    total: 1,
-  }))
+  const rows = [
+    {
+      actionDescription: '隐藏评论',
+      actionType: ForumModeratorActionTypeEnum.HIDE_COMMENT,
+      afterData: '{"isHidden":true}',
+      beforeData: '{"isHidden":false}',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      id: 1,
+      moderatorId: 5,
+      targetId: 21,
+      targetType: ForumModeratorActionTargetTypeEnum.COMMENT,
+    },
+  ]
+  const selectRecorder: Record<string, ReturnType<typeof jest.fn>> = {}
+  const projectRows = (selection?: Record<string, unknown>) => {
+    if (!selection) {
+      return rows
+    }
+    return rows.map((row) =>
+      Object.fromEntries(
+        Object.keys(selection).map((key) => [
+          key,
+          row[key as keyof (typeof rows)[number]],
+        ]),
+      ),
+    )
+  }
   const drizzle = {
     db: {
       insert: jest.fn(() => createThenableBuilder([{ id: 1 }])),
-    },
-    ext: {
-      findPagination: pagination,
+      select: jest.fn((selection?: Record<string, unknown>) =>
+        createSelectBuilder(projectRows(selection), selectRecorder),
+      ),
+      $count: jest.fn(async () => 1),
     },
     schema: {
       forumModeratorActionLog: {
+        actionDescription: 'actionDescription',
         actionType: 'actionType',
         createdAt: 'createdAt',
+        id: 'id',
         moderatorId: 'moderatorId',
         targetId: 'targetId',
         targetType: 'targetType',
+        beforeData: 'beforeData',
+        afterData: 'afterData',
       },
     },
+    buildOrderBy: jest.fn(() => ({ orderBySql: ['createdAtDesc'] })),
+    buildPage: jest.fn(() => ({
+      limit: 15,
+      offset: 0,
+      pageIndex: 1,
+      pageSize: 15,
+    })),
     withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
   }
   const service = new ForumModeratorActionLogService(drizzle as any)
 
-  return { drizzle, pagination, service }
+  return { drizzle, selectRecorder, service }
 }
 
 describe('ForumModeratorActionLogService query', () => {
   it('forces app self-audit queries to the current moderator and strips snapshots', async () => {
-    const { pagination, service } = createActionLogService()
+    const { drizzle, service } = createActionLogService()
     const buildQueryWhereSpy = jest.spyOn(
       service as unknown as {
         buildQueryWhere: (query: { moderatorId?: number }) => unknown
@@ -93,10 +130,10 @@ describe('ForumModeratorActionLogService query', () => {
         moderatorId: 5,
       }),
     )
-    expect(pagination).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(drizzle.buildOrderBy).toHaveBeenCalledWith(
+      { createdAt: 'desc' },
       expect.objectContaining({
-        orderBy: { createdAt: 'desc' },
+        table: drizzle.schema.forumModeratorActionLog,
       }),
     )
     expect(page.list[0]).toEqual(

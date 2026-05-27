@@ -1,7 +1,7 @@
-import type { ForumModeratorActionLogInput } from './moderator.type'
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/core'
+import type { ForumModeratorActionLogInput } from './moderator.type'
+import { DrizzleService, toPageResult } from '@db/core'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gte, lt } from 'drizzle-orm'
@@ -119,23 +119,37 @@ export class ForumModeratorActionLogService {
     query: QueryAppForumModeratorActionLogDto,
   ) {
     const { orderBy: _clientOrderBy, ...pageDto } = query
-    const page = await this.drizzle.ext.findPagination(
-      this.forumModeratorActionLog,
-      {
-        where: this.buildQueryWhere({
-          ...pageDto,
-          moderatorId,
-        }),
-        orderBy: { createdAt: 'desc' },
-        ...pageDto,
-      },
-    )
+    const where = this.buildQueryWhere({
+      ...pageDto,
+      moderatorId,
+    })
+    const pageQuery = this.drizzle.buildPage(pageDto)
+    const orderQuery = this.drizzle.buildOrderBy({ createdAt: 'desc' }, {
+      table: this.forumModeratorActionLog,
+    })
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.forumModeratorActionLog.id,
+          moderatorId: this.forumModeratorActionLog.moderatorId,
+          targetId: this.forumModeratorActionLog.targetId,
+          actionType: this.forumModeratorActionLog.actionType,
+          targetType: this.forumModeratorActionLog.targetType,
+          actionDescription: this.forumModeratorActionLog.actionDescription,
+          createdAt: this.forumModeratorActionLog.createdAt,
+        })
+        .from(this.forumModeratorActionLog)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.forumModeratorActionLog, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     return {
       ...page,
-      list: page.list.map(
-        ({ beforeData: _beforeData, afterData: _afterData, ...item }) => item,
-      ),
+      list: page.list,
     }
   }
 
@@ -146,10 +160,21 @@ export class ForumModeratorActionLogService {
   async getAdminActionLogPage(query: QueryAdminForumModeratorActionLogDto) {
     const { orderBy: _clientOrderBy, ...pageDto } = query
 
-    return this.drizzle.ext.findPagination(this.forumModeratorActionLog, {
-      where: this.buildQueryWhere(pageDto),
-      orderBy: { createdAt: 'desc' },
-      ...pageDto,
+    const where = this.buildQueryWhere(pageDto)
+    const page = this.drizzle.buildPage(pageDto)
+    const orderQuery = this.drizzle.buildOrderBy({ createdAt: 'desc' }, {
+      table: this.forumModeratorActionLog,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.forumModeratorActionLog)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.forumModeratorActionLog, where),
+    ])
+    return toPageResult(list, total, page)
   }
 }

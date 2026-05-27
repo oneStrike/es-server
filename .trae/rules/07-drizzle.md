@@ -4,7 +4,7 @@
 
 ## 仓库约定
 
-- 本仓库统一通过注入的 `DrizzleService` 使用 `drizzle.db`、`drizzle.schema`、`drizzle.ext`；不在业务层自行创建新的 Drizzle 实例。
+- 本仓库统一通过注入的 `DrizzleService` 使用 `drizzle.db`、`drizzle.schema`、`buildPage(...)`、`buildOrderBy(...)`、`withTransaction(...)`、`withErrorHandling(...)` 等基础能力；不在业务层自行创建新的 Drizzle 实例。
 - 闭集状态 / 类型 / 模式 / 角色字段默认使用 `smallint` / `smallint[]`，并同步补 `check(...)` 约束。
 - 开放业务键继续保持字符串，不为了“统一 smallint”而强行数字化；典型例外包括 `eventKey`、`categoryKey`、`projectionKey`、`domain`、`packageMimeType`、模板键、路由键等。
 - DTO、常量 / 枚举、`db/schema` 中同一闭集值域必须同轮对齐；不能一层改成数字枚举，另一层仍保留旧字符串或不一致的数值范围。
@@ -12,9 +12,9 @@
 
 ## 默认动作
 
-- 查询表、关系表、扩展能力时，默认从 `this.drizzle.schema`、`this.drizzle.ext` 取用。
+- 查询表和关系表时，默认从 `this.drizzle.schema` 取用；查询语句在业务 owner 中显式使用 Drizzle query builder 表达。
 - 事务默认通过 `db.transaction(async (tx) => ...)` 或 `drizzle.withTransaction(async (tx) => ...)` 启动，并沿调用链显式透传 `tx`。
-- 常规分页默认使用 `drizzle.ext.findPagination(...)`。
+- 常规分页默认在业务 service 中显式写出 `select`、`where`、`orderBy`、`limit`、`offset` 和 `$count`，再用 `toPageResult(...)` 组装返回形状。
 - 分页统一采用 1-based `pageIndex`。
 - 动态查询条件默认使用 `SQL[]` 收集，再通过 `and(...)` / `or(...)` 组合。
 - Drizzle relational query 的对象式 `where` 存在多分支时，必须先用命名的基础条件和作用域条件配合 `if / else if` 线性构造；不要把多套条件对象塞进嵌套三元表达式。
@@ -24,7 +24,7 @@
 
 - `count`、余额、库存、计数器、乐观锁版本号等增减，必须使用原子更新并与事实写入位于同一事务。
 - 0 行 update / delete 若业务语义是“目标不存在”，应通过 `assertAffectedRows(...)` 或 `withErrorHandling(..., { notFound: ... })` 收口。
-- 需要复用的分页、排序、存在性判断、最大序号、交换字段等公共模式，优先复用 `drizzle.ext` 中已有能力，不要在业务层重复造轮子。
+- 分页结果组装只允许复用薄的 `toPageResult(...)`；分页查询、存在性判断、最大序号、交换字段、计数器增减等业务语义必须在 owner service 或领域方法中显式表达，不再通过通用 table/field helper 隐藏。
 - 读路径需要补记浏览、日志、统计时，优先与主业务分离，并确保附带写入可降级。
 
 ## 原生 SQL
@@ -56,6 +56,7 @@
 - 禁止在业务层直接 new Drizzle 或绕开 `DrizzleService` 访问数据库。
 - 禁止隐式事务；事务上下文必须显式透传。
 - 禁止分页不写排序字段。
+- 禁止新增或继续使用 `drizzle.ext`、`@db/extensions`、通用 table/field 字符串 helper、兼容 shim 或 deprecated ext 入口。
 - 禁止在 Drizzle 查询参数中用嵌套三元表达式构造 `where`、`orderBy` 或字段投影；多分支条件必须改成命名变量、`if / else if`、`SQL[]` 条件数组或已有扩展能力。
 - 禁止把闭集业务值域留在 `varchar` / `integer[]` 中继续漂移。
 - 禁止用原生 SQL 字符串拼接代替 `sql` 模板。
@@ -64,7 +65,7 @@
 
 ## 正反例
 
-- 允许：`return this.drizzle.ext.findPagination(this.workTable, { pageIndex, pageSize, orderBy })`
+- 允许：`const page = this.drizzle.buildPage(query); const [list, total] = await Promise.all([this.drizzle.db.select().from(this.workTable).where(where).orderBy(desc(this.workTable.updatedAt), desc(this.workTable.id)).limit(page.limit).offset(page.offset), this.drizzle.db.$count(this.workTable, where)]); return toPageResult(list, total, page)`
 - 允许：`await this.drizzle.withTransaction(async (tx) => { ... })`
 - 允许：`viewCount: sql\`${this.table.viewCount} + 1\``
 - 允许：闭集状态字段使用 `smallint().default(1).notNull()` 并补 `check(...)`

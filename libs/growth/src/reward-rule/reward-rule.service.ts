@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -49,10 +49,23 @@ export class GrowthRewardRuleService {
       conditions.push(eq(this.growthRewardRule.isEnabled, dto.isEnabled))
     }
 
-    return this.drizzle.ext.findPagination(this.growthRewardRule, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...dto,
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(dto.orderBy, {
+      table: this.growthRewardRule,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.growthRewardRule)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.growthRewardRule, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   async getRewardRuleDetail(id: number) {

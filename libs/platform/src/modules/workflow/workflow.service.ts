@@ -19,7 +19,7 @@ import type {
 } from './workflow.type'
 import { randomUUID } from 'node:crypto'
 import process from 'node:process'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
@@ -281,18 +281,29 @@ export class WorkflowService {
       conditions.push(isNull(this.workflowJob.archivedAt))
     }
 
-    const page = await this.drizzle.ext.findPagination(this.workflowJob, {
-      where: conditions.length ? and(...conditions) : undefined,
-      pageIndex: input.pageIndex,
-      pageSize: input.pageSize,
-      orderBy: input.orderBy?.trim()
+    const where = conditions.length ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(input)
+    const orderQuery = this.drizzle.buildOrderBy(
+      input.orderBy?.trim()
         ? input.orderBy
         : { updatedAt: 'desc', id: 'desc' },
-    })
+      { table: this.workflowJob },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.workflowJob)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workflowJob, where),
+    ])
+    const pageResult = toPageResult(list, total, page)
 
     return {
-      ...page,
-      list: page.list.map((row) => toWorkflowJobDto(row)),
+      ...pageResult,
+      list: pageResult.list.map((row) => toWorkflowJobDto(row)),
     }
   }
 
@@ -358,17 +369,28 @@ export class WorkflowService {
       conditions.push(eq(this.workflowEvent.workflowAttemptId, attempt.id))
     }
 
-    const page = await this.drizzle.ext.findPagination(this.workflowEvent, {
-      where: and(...conditions),
-      pageIndex: input.pageIndex,
-      pageSize: input.pageSize,
-      orderBy: input.orderBy?.trim()
+    const where = and(...conditions)
+    const page = this.drizzle.buildPage(input)
+    const orderQuery = this.drizzle.buildOrderBy(
+      input.orderBy?.trim()
         ? input.orderBy
         : { createdAt: 'desc', id: 'desc' },
-    })
+      { table: this.workflowEvent },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.workflowEvent)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workflowEvent, where),
+    ])
+    const pageResult = toPageResult(list, total, page)
     const attemptIds = [
       ...new Set(
-        page.list
+        pageResult.list
           .map((event) => event.workflowAttemptId)
           .filter((id): id is bigint => id !== null),
       ),
@@ -376,8 +398,8 @@ export class WorkflowService {
     const attempts = await this.readAttemptsByInternalIds(attemptIds)
 
     return {
-      ...page,
-      list: page.list.map((event) =>
+      ...pageResult,
+      list: pageResult.list.map((event) =>
         toWorkflowRecordDto(
           event,
           event.workflowAttemptId

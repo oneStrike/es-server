@@ -1,5 +1,5 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -110,11 +110,23 @@ export class UserLevelRuleService {
       ? dto.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.userLevelRule, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...dto,
-      orderBy,
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.userLevelRule,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userLevelRule)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.userLevelRule, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   /**

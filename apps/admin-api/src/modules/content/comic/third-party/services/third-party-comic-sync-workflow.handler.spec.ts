@@ -12,6 +12,7 @@ jest.mock(
 
 import { WorkflowAttemptStatusEnum } from '@libs/platform/modules/workflow/workflow.constant'
 import { WorkflowCancellationSignal } from '@libs/platform/modules/workflow/workflow-cancellation'
+import { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
 import { ThirdPartyComicSyncWorkflowHandler } from './third-party-comic-sync-workflow.handler'
 
 describe('ThirdPartyComicSyncWorkflowHandler', () => {
@@ -158,7 +159,13 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
     )
     expect(contentImportService.markItemFailed).toHaveBeenCalledWith(
       expect.objectContaining({
-        errorCode: 'THIRD_PARTY_SYNC_CHAPTER_FAILED',
+        error: expect.objectContaining({
+          code: WorkflowErrorCodeEnum.THIRD_PARTY_CHAPTER_IMPORT_FAILED,
+          context: expect.objectContaining({
+            itemId: 'item-2',
+            providerChapterId: 'p2',
+          }),
+        }),
         itemId: 'item-2',
       }),
     )
@@ -647,7 +654,13 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
     expect(syncService.importWorkflowSyncChapter).toHaveBeenCalledTimes(3)
     expect(contentImportService.markItemRateLimitRetrying).toHaveBeenCalledWith(
       expect.objectContaining({
-        errorCode: 'HTTP_429',
+        error: expect.objectContaining({
+          code: WorkflowErrorCodeEnum.CONTENT_IMPORT_RATE_LIMITED,
+          context: expect.objectContaining({
+            itemId: 'item-2',
+            providerCode: 'HTTP_429',
+          }),
+        }),
         itemId: 'item-2',
         nextRetryAt: new Date('2026-05-17T03:10:00.000Z'),
       }),
@@ -674,7 +687,7 @@ describe('ThirdPartyComicSyncWorkflowHandler', () => {
     )
     expect(appendEvent).toHaveBeenCalledWith(
       expect.any(Number),
-      expect.stringContaining('自动重试'),
+      'CONTENT_IMPORT_RATE_LIMITED_RETRY_SCHEDULED',
       expect.objectContaining({ itemId: 'item-2' }),
     )
   })

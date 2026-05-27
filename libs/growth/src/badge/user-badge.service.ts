@@ -8,7 +8,7 @@ import type {
   UpdateUserBadgeDto,
   UpdateUserBadgeStatusDto,
 } from './dto/user-badge-management.dto'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -207,11 +207,23 @@ export class UserBadgeService {
       ? dto.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.userBadge, {
-      where: this.buildBadgeWhere(dto),
-      ...dto,
-      orderBy,
+    const where = this.buildBadgeWhere(dto)
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.userBadge,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userBadge)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.userBadge, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   /**

@@ -101,16 +101,18 @@ export class ComicContentService {
   async addChapterContent(req: FastifyRequest, query: UploadContentDto) {
     const chapterId = query.chapterId
 
-    if (
-      !(await this.drizzle.ext.exists(
-        this.workChapter,
+    const [chapter] = await this.db
+      .select({ id: this.workChapter.id })
+      .from(this.workChapter)
+      .where(
         and(
           eq(this.workChapter.id, chapterId),
           eq(this.workChapter.workId, query.workId),
           isNull(this.workChapter.deletedAt),
         ),
-      ))
-    ) {
+      )
+      .limit(1)
+    if (!chapter) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '章节不存在',

@@ -5,7 +5,7 @@ import type {
   PaymentOrderPublicResult,
   PaymentTx,
 } from '../payment/types/payment.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
@@ -61,11 +61,23 @@ export class PaymentService {
     if (dto.status !== undefined) {
       conditions.push(eq(this.paymentOrder.status, dto.status))
     }
-    const page = await this.drizzle.ext.findPagination(this.paymentOrder, {
-      ...dto,
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: dto.orderBy ?? JSON.stringify({ createdAt: 'desc', id: 'desc' }),
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const pageQuery = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? JSON.stringify({ createdAt: 'desc', id: 'desc' }),
+      { table: this.paymentOrder },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.paymentOrder)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.paymentOrder, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
     return {
       ...page,
       list: page.list.map((order) => this.toAdminPaymentOrderPageItem(order)),
@@ -174,11 +186,24 @@ export class PaymentService {
   // 分页查询支付 provider 配置。
   async getPaymentProviderConfigPage(dto: QueryPaymentProviderConfigDto) {
     const conditions = this.buildPaymentProviderConfigConditions(dto)
-    return this.drizzle.ext.findPagination(this.paymentProviderConfig, {
-      ...dto,
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
+      { table: this.paymentProviderConfig },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.paymentProviderConfig)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.paymentProviderConfig, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 构建支付 provider 配置分页查询条件。

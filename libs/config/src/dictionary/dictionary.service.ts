@@ -1,12 +1,12 @@
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, eq, inArray } from 'drizzle-orm'
+import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import {
   CreateDictionaryDto,
   CreateDictionaryItemDto,
@@ -102,10 +102,23 @@ export class LibDictionaryService {
   async findDictionaries(queryDto: QueryDictionaryDto) {
     const conditions = this.buildSearchConditions(this.dictionary, queryDto)
 
-    return this.drizzle.ext.findPagination(this.dictionary, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...queryDto,
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(queryDto)
+    const orderQuery = this.drizzle.buildOrderBy(queryDto.orderBy, {
+      table: this.dictionary,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.dictionary)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.dictionary, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   /**
@@ -237,11 +250,23 @@ export class LibDictionaryService {
       ? queryDto.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.dictionaryItem, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...queryDto,
-      orderBy,
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(queryDto)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.dictionaryItem,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.dictionaryItem)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.dictionaryItem, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   /**
@@ -314,12 +339,75 @@ export class LibDictionaryService {
 
   /**
    * 交换两条字典项的排序位置。
-   * 排序操作要求两条记录属于同一 `dictionaryCode`，由 `swapField` 在底层完成约束校验。
+   * 排序操作要求两条记录属于同一 `dictionaryCode`，并在同一事务内完成三步交换。
    */
   async updateDictionaryItemSort(dto: DragReorderDto) {
-    return this.drizzle.ext.swapField(this.dictionaryItem, {
-      where: [{ id: dto.dragId }, { id: dto.targetId }],
-      sourceField: 'dictionaryCode',
+    return this.drizzle.withTransaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: this.dictionaryItem.id,
+          dictionaryCode: this.dictionaryItem.dictionaryCode,
+          sortOrder: this.dictionaryItem.sortOrder,
+        })
+        .from(this.dictionaryItem)
+        .where(inArray(this.dictionaryItem.id, [dto.dragId, dto.targetId]))
+
+      const dragItem = rows.find((row) => row.id === dto.dragId)
+      const targetItem = rows.find((row) => row.id === dto.targetId)
+
+      if (!dragItem || !targetItem) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '字典项不存在',
+        )
+      }
+      if (dragItem.dictionaryCode !== targetItem.dictionaryCode) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '字典项不是同一字典',
+        )
+      }
+      if (dragItem.sortOrder === targetItem.sortOrder) {
+        return true
+      }
+
+      const [minimumSortOrder] = await tx
+        .select({
+          value: sql<number>`min(${this.dictionaryItem.sortOrder})`,
+        })
+        .from(this.dictionaryItem)
+        .where(eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode))
+      const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
+
+      await tx
+        .update(this.dictionaryItem)
+        .set({ sortOrder: temporarySortOrder })
+        .where(
+          and(
+            eq(this.dictionaryItem.id, dragItem.id),
+            eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
+          ),
+        )
+      await tx
+        .update(this.dictionaryItem)
+        .set({ sortOrder: dragItem.sortOrder })
+        .where(
+          and(
+            eq(this.dictionaryItem.id, targetItem.id),
+            eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
+          ),
+        )
+      await tx
+        .update(this.dictionaryItem)
+        .set({ sortOrder: targetItem.sortOrder })
+        .where(
+          and(
+            eq(this.dictionaryItem.id, dragItem.id),
+            eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
+          ),
+        )
+
+      return true
     })
   }
 

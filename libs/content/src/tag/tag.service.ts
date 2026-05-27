@@ -1,11 +1,11 @@
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   CreateTagDto,
   QueryTagDto,
@@ -45,10 +45,7 @@ export class WorkTagService {
   // 创建标签，未指定排序值时自动追加到末尾；人气值沿用数据库默认值，由后续互动数据驱动更新。
   async createTag(createTagDto: CreateTagDto) {
     if (!createTagDto.sortOrder) {
-      createTagDto.sortOrder =
-        (await this.drizzle.ext.maxOrder({
-          column: this.workTag.sortOrder,
-        })) + 1
+      createTagDto.sortOrder = (await this.resolveNextTagSortOrder()) + 1
     }
 
     await this.drizzle.withErrorHandling(
@@ -76,11 +73,22 @@ export class WorkTagService {
       ? pageParams.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.workTag, {
-      where,
-      ...pageParams,
-      orderBy,
+    const page = this.drizzle.buildPage(pageParams)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.workTag,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.workTag)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workTag, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 获取标签详情，未命中时按业务异常处理，避免上层把空结果误当成可编辑标签。
@@ -115,10 +123,51 @@ export class WorkTagService {
     return true
   }
 
-  // 交换两个标签的排序值，使用 `swapField` 保证单次请求内的排序更新原子性。
+  // 交换两个标签的排序值，在事务中使用临时排序值保持单次请求内的原子性。
   async updateTagSort(updateSortDto: UpdateTagSortDto) {
-    await this.drizzle.ext.swapField(this.workTag, {
-      where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
+    await this.drizzle.withTransaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: this.workTag.id,
+          sortOrder: this.workTag.sortOrder,
+        })
+        .from(this.workTag)
+        .where(
+          inArray(this.workTag.id, [
+            updateSortDto.dragId,
+            updateSortDto.targetId,
+          ]),
+        )
+
+      const dragTag = rows.find((row) => row.id === updateSortDto.dragId)
+      const targetTag = rows.find((row) => row.id === updateSortDto.targetId)
+
+      if (!dragTag || !targetTag) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '标签不存在',
+        )
+      }
+      if (dragTag.sortOrder === targetTag.sortOrder) {
+        return true
+      }
+
+      const temporarySortOrder = (await this.resolveMinimumTagSortOrder(tx)) - 1
+
+      await tx
+        .update(this.workTag)
+        .set({ sortOrder: temporarySortOrder })
+        .where(eq(this.workTag.id, dragTag.id))
+      await tx
+        .update(this.workTag)
+        .set({ sortOrder: dragTag.sortOrder })
+        .where(eq(this.workTag.id, targetTag.id))
+      await tx
+        .update(this.workTag)
+        .set({ sortOrder: targetTag.sortOrder })
+        .where(eq(this.workTag.id, dragTag.id))
+
+      return true
     })
     return true
   }
@@ -145,12 +194,7 @@ export class WorkTagService {
 
   // 删除单个标签，删除前会校验标签存在且未关联任何未软删作品，避免线上作品标签语义失真。
   async deleteTagBatch(dto: IdDto) {
-    if (
-      !(await this.drizzle.ext.exists(
-        this.workTag,
-        eq(this.workTag.id, dto.id),
-      ))
-    ) {
+    if (!(await this.tagExists(dto.id))) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '标签不存在',
@@ -183,5 +227,31 @@ export class WorkTagService {
       .limit(1)
 
     return rows.length > 0
+  }
+
+  private async tagExists(tagId: number) {
+    const rows = await this.db
+      .select({ id: this.workTag.id })
+      .from(this.workTag)
+      .where(eq(this.workTag.id, tagId))
+      .limit(1)
+
+    return rows.length > 0
+  }
+
+  private async resolveNextTagSortOrder() {
+    const [row] = await this.db
+      .select({ value: sql<number>`max(${this.workTag.sortOrder})` })
+      .from(this.workTag)
+
+    return row?.value ?? 0
+  }
+
+  private async resolveMinimumTagSortOrder(db = this.db) {
+    const [row] = await db
+      .select({ value: sql<number>`min(${this.workTag.sortOrder})` })
+      .from(this.workTag)
+
+    return row?.value ?? 0
   }
 }

@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import {
   ContentEntitlementGrantSourceEnum,
   ContentEntitlementTargetTypeEnum,
@@ -137,11 +137,24 @@ export class AdRewardService {
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.adProviderConfig.isEnabled, dto.isEnabled))
     }
-    return this.drizzle.ext.findPagination(this.adProviderConfig, {
-      ...dto,
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+    const orderQuery = this.drizzle.buildOrderBy(
+      dto.orderBy ?? JSON.stringify({ sortOrder: 'asc', id: 'asc' }),
+      { table: this.adProviderConfig },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.adProviderConfig)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.adProviderConfig, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   // 验证广告奖励回调并写入奖励权益事实。

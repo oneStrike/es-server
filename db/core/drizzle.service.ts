@@ -18,7 +18,6 @@ import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Pool } from 'pg'
 import * as schema from '../schema'
-import { createDrizzleExtensions } from './drizzle.extensions'
 import { DRIZZLE_DB, DRIZZLE_POOL } from './drizzle.provider'
 import {
   executeWithErrorHandling,
@@ -40,7 +39,6 @@ type DrizzleErrorInput = PostgresErrorSource
  */
 @Injectable()
 export class DrizzleService implements OnApplicationShutdown {
-  public readonly ext: ReturnType<typeof createDrizzleExtensions>
   private readonly queryConfig: DbQueryConfig
 
   constructor(
@@ -49,7 +47,6 @@ export class DrizzleService implements OnApplicationShutdown {
     private readonly configService: ConfigService,
   ) {
     this.queryConfig = this.resolveQueryConfig()
-    this.ext = createDrizzleExtensions(this.db, this.queryConfig)
   }
 
   /**

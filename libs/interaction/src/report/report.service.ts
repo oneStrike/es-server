@@ -4,7 +4,7 @@ import type {
   CreateUserReportOptions,
   CreateUserReportPayload,
 } from './report.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import {
   createDefinedEventEnvelope,
   EventEnvelopeGovernanceStatusEnum,
@@ -193,14 +193,23 @@ export class ReportService {
       conditions.push(eq(this.userReport.status, query.status))
     }
 
-    const page = await this.drizzle.ext.findPagination(this.userReport, {
-      where: and(...conditions),
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const where = and(...conditions)
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      { createdAt: 'desc' as const },
+      { table: this.userReport },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userReport)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userReport, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page
@@ -325,12 +334,22 @@ export class ReportService {
       ? query.orderBy
       : { createdAt: 'desc' as const, id: 'desc' as const }
 
-    const page = await this.drizzle.ext.findPagination(this.userReport, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy,
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const pageQuery = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+      table: this.userReport,
     })
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userReport)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.userReport, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page
@@ -577,11 +596,17 @@ export class ReportService {
    * @throws BadRequestException 当举报人不存在时抛出异常
    */
   private async ensureReporterExists(reporterId: number) {
-    const existed = await this.drizzle.ext.existsActive(
-      this.drizzle.schema.appUser,
-      eq(this.drizzle.schema.appUser.id, reporterId),
-    )
-    if (!existed) {
+    const [reporter] = await this.db
+      .select({ id: this.drizzle.schema.appUser.id })
+      .from(this.drizzle.schema.appUser)
+      .where(
+        and(
+          eq(this.drizzle.schema.appUser.id, reporterId),
+          isNull(this.drizzle.schema.appUser.deletedAt),
+        ),
+      )
+      .limit(1)
+    if (!reporter) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '举报人不存在',

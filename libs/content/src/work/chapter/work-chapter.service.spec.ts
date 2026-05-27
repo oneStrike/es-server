@@ -93,15 +93,32 @@ function getWhereSqlChunks(where: jest.Mock) {
 }
 
 function createPaginationDb(list: unknown[] = []) {
-  const findPagination = jest.fn(async (_table, options) => ({
-    list,
-    pageIndex: options.pageIndex ?? 1,
-    pageSize: options.pageSize ?? 15,
-    total: list.length,
-  }))
+  const pageQuery = {
+    from: jest.fn(() => pageQuery),
+    limit: jest.fn(() => pageQuery),
+    offset: jest.fn(async () => list),
+    orderBy: jest.fn(() => pageQuery),
+    where: jest.fn(() => pageQuery),
+  }
+  const selectedFields: Array<Record<string, unknown>> = []
+  const select = jest.fn((fields: Record<string, unknown>) => {
+    selectedFields.push(fields)
+    return pageQuery
+  })
 
   return {
-    ext: { findPagination },
+    buildOrderBy: jest.fn(() => ({ orderBySql: ['order-sql'] })),
+    buildPage: jest.fn((input: { pageIndex?: number; pageSize?: number }) => ({
+      limit: input.pageSize ?? 15,
+      offset: ((input.pageIndex ?? 1) - 1) * (input.pageSize ?? 15),
+      pageIndex: input.pageIndex ?? 1,
+      pageSize: input.pageSize ?? 15,
+    })),
+    db: {
+      $count: jest.fn(async () => list.length),
+      select,
+    },
+    pageQuery,
     schema: {
       workChapter: {
         canComment: 'work_chapter.can_comment',
@@ -124,6 +141,7 @@ function createPaginationDb(list: unknown[] = []) {
         workType: 'work_chapter.work_type',
       },
     },
+    selectedFields,
   }
 }
 
@@ -182,9 +200,9 @@ describe('WorkChapterService chapter page projection', () => {
       { pageIndex: 1, pageSize: 100, workId: 10 },
       { userId: 99 },
     )
-    const options = drizzle.ext.findPagination.mock.calls[0][1]
+    const selectedKeys = Object.keys(drizzle.selectedFields[0])
 
-    expect(options.pick).toEqual(
+    expect(selectedKeys).toEqual(
       expect.arrayContaining([
         'id',
         'workId',
@@ -196,7 +214,7 @@ describe('WorkChapterService chapter page projection', () => {
         'canComment',
       ]),
     )
-    expect(options.pick).not.toEqual(
+    expect(selectedKeys).not.toEqual(
       expect.arrayContaining([
         'content',
         'description',
@@ -204,7 +222,11 @@ describe('WorkChapterService chapter page projection', () => {
         'requiredViewLevelId',
       ]),
     )
-    expect(options.orderBy).toEqual([{ sortOrder: 'asc' }, { id: 'asc' }])
+    expect(drizzle.buildOrderBy).toHaveBeenCalledWith(
+      [{ sortOrder: 'asc' }, { id: 'asc' }],
+      expect.anything(),
+    )
+    expect(drizzle.pageQuery.orderBy).toHaveBeenCalledWith('order-sql')
     expect(
       contentPermissionService.resolveChapterPermissionsFromData,
     ).toHaveBeenCalledTimes(1)
@@ -273,12 +295,12 @@ describe('WorkChapterService chapter page projection', () => {
     )
 
     const page = await service.getAdminChapterPage({ workId: 10 })
-    const options = drizzle.ext.findPagination.mock.calls[0][1]
+    const selectedKeys = Object.keys(drizzle.selectedFields[0])
 
-    expect(options.pick).toEqual(
+    expect(selectedKeys).toEqual(
       expect.arrayContaining(['price', 'requiredViewLevelId', 'viewRule']),
     )
-    expect(options.pick).not.toEqual(
+    expect(selectedKeys).not.toEqual(
       expect.arrayContaining(['content', 'description', 'remark']),
     )
     expect(

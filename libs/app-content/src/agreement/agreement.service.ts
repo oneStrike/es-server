@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
@@ -208,11 +208,34 @@ export class AgreementService {
       conditions.push(eq(this.agreement.showInAuth, query.showInAuth))
     }
 
-    return this.drizzle.ext.findPagination(this.agreement, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      omit: ['content'],
-      ...query,
-    })
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(query)
+    const orderQuery = this.drizzle.buildOrderBy(
+      query.orderBy?.trim() ? query.orderBy : { id: 'desc' as const },
+      { table: this.agreement },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.agreement.id,
+          title: this.agreement.title,
+          version: this.agreement.version,
+          isForce: this.agreement.isForce,
+          showInAuth: this.agreement.showInAuth,
+          isPublished: this.agreement.isPublished,
+          publishedAt: this.agreement.publishedAt,
+          createdAt: this.agreement.createdAt,
+          updatedAt: this.agreement.updatedAt,
+        })
+        .from(this.agreement)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.agreement, where),
+    ])
+
+    return toPageResult(list, total, page)
   }
 
   /**
