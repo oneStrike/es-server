@@ -1,4 +1,3 @@
-import type { PostgresErrorSourceObject } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateNotificationTemplateDto,
@@ -401,14 +400,14 @@ export class MessageNotificationTemplateService {
   }
 
   private throwIfTemplateCategoryAlreadyExists(error: unknown): void {
-    const postgresErrorSource = this.getPostgresErrorSource(error)
-    if (!this.drizzle.isUniqueViolation(postgresErrorSource)) {
+    if (!this.drizzle.isUniqueViolation(error)) {
       return
     }
 
     throw new BusinessException(
       BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
       '该通知分类的模板已存在',
+      { cause: error },
     )
   }
 
@@ -441,18 +440,6 @@ export class MessageNotificationTemplateService {
     }
     const normalized = value?.trim()
     return normalized || null
-  }
-
-  private getPostgresErrorSource(
-    error: unknown,
-  ): Error | PostgresErrorSourceObject | undefined {
-    if (error instanceof Error) {
-      return error
-    }
-    if (typeof error === 'object' && error !== null) {
-      return error as PostgresErrorSourceObject
-    }
-    return undefined
   }
 
   private ensureSupportedCategoryKey(

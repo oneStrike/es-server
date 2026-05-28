@@ -1,11 +1,10 @@
 import { BusinessErrorCode, PlatformErrorCode } from '@libs/platform/constant'
 
 /**
- * PostgreSQL 错误码常量
+ * PostgreSQL 错误码常量。
+ *
  * @see https://www.postgresql.org/docs/current/errcodes-appendix.html
  */
-
-/** PostgreSQL 约束类错误码 */
 export const PostgresErrorCode = {
   /** 唯一约束冲突 */
   UNIQUE_VIOLATION: '23505',
@@ -17,15 +16,18 @@ export const PostgresErrorCode = {
   SERIALIZATION_FAILURE: '40001',
 } as const
 
-/** 默认错误消息 */
-export const PostgresDefaultMessages: Record<string, string> = {
-  [PostgresErrorCode.UNIQUE_VIOLATION]: '数据已存在',
-  [PostgresErrorCode.NOT_NULL_VIOLATION]: '必填字段不能为空',
-  [PostgresErrorCode.CHECK_VIOLATION]: '数据不符合要求',
-  [PostgresErrorCode.SERIALIZATION_FAILURE]: '操作冲突，请重试',
-}
+export type PostgresErrorCodeValue =
+  (typeof PostgresErrorCode)[keyof typeof PostgresErrorCode]
 
-/** PostgreSQL 错误信息接口 */
+export type PostgresExceptionKind = 'business' | 'http'
+
+export type PostgresErrorMessageKey =
+  | 'duplicate'
+  | 'notNull'
+  | 'check'
+  | 'conflict'
+
+/** 规范化后的 PostgreSQL 错误元信息。 */
 export interface PostgresError {
   code: string
   constraint?: string
@@ -35,119 +37,137 @@ export interface PostgresError {
   message: string
 }
 
-export interface PostgresErrorCauseObject {
-  code?: string
-  constraint?: string
-  table?: string
-  column?: string
-  detail?: string
-  message?: string
-}
-
-export interface PostgresErrorSourceObject extends PostgresErrorCauseObject {
-  cause?: PostgresErrorCauseObject | null
-}
-
-export interface PostgresErrorDescriptor {
+export interface PostgresErrorResponseDescriptor {
   message: string
   status: number
-}
-
-export interface PostgresErrorResponseDescriptor extends PostgresErrorDescriptor {
   responseCode: number
+  exceptionKind: PostgresExceptionKind
+  messageKey: PostgresErrorMessageKey
 }
 
-export type PostgresErrorSource =
-  | Error
-  | PostgresErrorSourceObject
-  | null
-  | undefined
+interface PostgresErrorCarrier {
+  code?: unknown
+  constraint?: unknown
+  table?: unknown
+  column?: unknown
+  detail?: unknown
+  message?: unknown
+  cause?: unknown
+}
+
+const DATABASE_OPERATION_FAILED_MESSAGE = '数据库操作失败'
+
+const POSTGRES_ERROR_DESCRIPTORS: Record<
+  PostgresErrorCodeValue,
+  PostgresErrorResponseDescriptor
+> = {
+  [PostgresErrorCode.UNIQUE_VIOLATION]: {
+    message: '数据已存在',
+    status: 200,
+    responseCode: BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+    exceptionKind: 'business',
+    messageKey: 'duplicate',
+  },
+  [PostgresErrorCode.NOT_NULL_VIOLATION]: {
+    message: '必填字段不能为空',
+    status: 400,
+    responseCode: PlatformErrorCode.BAD_REQUEST,
+    exceptionKind: 'http',
+    messageKey: 'notNull',
+  },
+  [PostgresErrorCode.CHECK_VIOLATION]: {
+    message: '数据不符合要求',
+    status: 400,
+    responseCode: PlatformErrorCode.BAD_REQUEST,
+    exceptionKind: 'http',
+    messageKey: 'check',
+  },
+  [PostgresErrorCode.SERIALIZATION_FAILURE]: {
+    message: '操作冲突，请重试',
+    status: 200,
+    responseCode: BusinessErrorCode.STATE_CONFLICT,
+    exceptionKind: 'business',
+    messageKey: 'conflict',
+  },
+}
 
 /**
- * 从错误对象中提取 PostgreSQL 错误信息
- * 支持两种情况:
- * 1. code 直接在 error 上
- * 2. code 在 error.cause 上 (Drizzle ORM 包装的错误)
+ * 从未知异常中提取 PostgreSQL 错误信息。
+ *
+ * 支持 driver 错误直接抛出，以及 Drizzle/Nest 包装后通过 `cause` 保留原始错误。
  */
-export function getPostgresError(error: PostgresErrorSource): PostgresError | null {
-  if (!error || typeof error !== 'object') {
-    return null
-  }
-
-  const err = error as PostgresErrorSourceObject
-
-  if (typeof err.code === 'string') {
-    return {
-      code: err.code,
-      constraint: err.constraint,
-      table: err.table,
-      column: err.column,
-      detail: err.detail,
-      message: err.message ?? '数据库操作失败',
-    }
-  }
-
-  if (err.cause && typeof err.cause.code === 'string') {
-    const cause = err.cause
-    if (cause.code) {
-      return {
-        code: cause.code,
-        constraint: cause.constraint,
-        table: cause.table,
-        column: cause.column,
-        detail: cause.detail,
-        message: cause.message || err.message || '数据库操作失败',
-      }
-    }
-  }
-
-  return null
-}
-
-export function isPostgresError(error: PostgresErrorSource): error is PostgresError {
-  return getPostgresError(error) !== null
-}
-
-export function getPostgresErrorDescriptor(
-  code: string,
-): PostgresErrorDescriptor | null {
-  const message = PostgresDefaultMessages[code]
-  const descriptor = getPostgresErrorResponseDescriptor(code)
-
-  if (!message || !descriptor) {
-    return null
-  }
-
-  return {
-    message,
-    status: descriptor.status,
-  }
+export function getPostgresError(error: unknown): PostgresError | null {
+  return getPostgresErrorFromValue(error, undefined, new Set<object>())
 }
 
 export function getPostgresErrorResponseDescriptor(
   code: string,
 ): PostgresErrorResponseDescriptor | null {
-  switch (code) {
-    case PostgresErrorCode.UNIQUE_VIOLATION:
-      return {
-        message: PostgresDefaultMessages[code],
-        status: 200,
-        responseCode: BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-      }
-    case PostgresErrorCode.NOT_NULL_VIOLATION:
-    case PostgresErrorCode.CHECK_VIOLATION:
-      return {
-        message: PostgresDefaultMessages[code],
-        status: 400,
-        responseCode: PlatformErrorCode.BAD_REQUEST,
-      }
-    case PostgresErrorCode.SERIALIZATION_FAILURE:
-      return {
-        message: PostgresDefaultMessages[code],
-        status: 200,
-        responseCode: BusinessErrorCode.STATE_CONFLICT,
-      }
-    default:
-      return null
+  return isKnownPostgresErrorCode(code)
+    ? POSTGRES_ERROR_DESCRIPTORS[code]
+    : null
+}
+
+function normalizeCarrier(
+  value: unknown,
+  fallbackMessage?: string,
+): PostgresError | null {
+  const carrier = asCarrier(value)
+  if (!carrier || typeof carrier.code !== 'string') {
+    return null
   }
+
+  return {
+    code: carrier.code,
+    constraint: getString(carrier.constraint),
+    table: getString(carrier.table),
+    column: getString(carrier.column),
+    detail: getString(carrier.detail),
+    message:
+      getString(carrier.message) ??
+      fallbackMessage ??
+      getPostgresErrorResponseDescriptor(carrier.code)?.message ??
+      DATABASE_OPERATION_FAILED_MESSAGE,
+  }
+}
+
+function getPostgresErrorFromValue(
+  value: unknown,
+  fallbackMessage: string | undefined,
+  visited: Set<object>,
+): PostgresError | null {
+  const directError = normalizeCarrier(value, fallbackMessage)
+  if (directError) {
+    return directError
+  }
+
+  const source = asCarrier(value)
+  if (!source || visited.has(source)) {
+    return null
+  }
+  visited.add(source)
+
+  return getPostgresErrorFromValue(
+    source.cause,
+    getString(source.message) ?? fallbackMessage,
+    visited,
+  )
+}
+
+function asCarrier(value: unknown): PostgresErrorCarrier | null {
+  return typeof value === 'object' && value !== null
+    ? (value as PostgresErrorCarrier)
+    : null
+}
+
+function getString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
+function isKnownPostgresErrorCode(
+  code: string,
+): code is PostgresErrorCodeValue {
+  return Object.values(PostgresErrorCode).includes(
+    code as PostgresErrorCodeValue,
+  )
 }

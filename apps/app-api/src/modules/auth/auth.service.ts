@@ -1,6 +1,7 @@
-import type { Db, PostgresErrorSourceObject } from '@db/core'
+import type { Db } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 import type { SessionClientContext } from '@libs/identity/session.type'
+import type { UserGrowthSnapshot } from '@libs/user/user.type'
 import { randomInt } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
@@ -323,10 +324,7 @@ export class AuthService {
   /**
    * 脱敏返回用户信息
    */
-  private sanitizeUser(
-    user: AppUserSelect,
-    growth: { points: number; experience: number },
-  ) {
+  private sanitizeUser(user: AppUserSelect, growth: UserGrowthSnapshot) {
     return {
       id: user.id,
       account: user.account,
@@ -381,15 +379,9 @@ export class AuthService {
         })
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
-        const drizzleError =
-          error instanceof Error
-            ? error
-            : typeof error === 'object' && error !== null
-              ? (error as PostgresErrorSourceObject)
-              : undefined
 
-        if (!this.isAccountUniqueViolation(drizzleError)) {
-          this.drizzle.handleError(drizzleError)
+        if (!this.isAccountUniqueViolation(error)) {
+          this.drizzle.handleError(error)
         }
 
         if (attempt >= APP_USER_ACCOUNT_MAX_RETRIES - 1) {
@@ -397,7 +389,7 @@ export class AuthService {
             BusinessErrorCode.STATE_CONFLICT,
             AppAuthErrorMessages.REGISTER_RETRY_FAILED,
             {
-              cause: drizzleError ?? lastError,
+              cause: error ?? lastError,
             },
           )
         }
@@ -407,9 +399,7 @@ export class AuthService {
     throw lastError
   }
 
-  private isAccountUniqueViolation(
-    error: Error | PostgresErrorSourceObject | null | undefined,
-  ) {
+  private isAccountUniqueViolation(error: unknown) {
     if (!this.drizzle.isUniqueViolation(error)) {
       return false
     }

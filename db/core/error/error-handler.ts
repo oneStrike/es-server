@@ -1,6 +1,4 @@
 import type { DrizzleErrorMessages } from '../drizzle.type'
-import type {PostgresErrorSource} from './postgres-error';
-import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
   BadRequestException,
@@ -9,40 +7,37 @@ import {
 } from '@nestjs/common'
 import {
   getPostgresError,
-  PostgresDefaultMessages,
-  PostgresErrorCode
-
+  getPostgresErrorResponseDescriptor,
+  PostgresErrorCode,
 } from './postgres-error'
 
-type PostgresErrorInput = PostgresErrorSource
-
-export function isErrorCode(error: PostgresErrorInput, code: string) {
+export function isErrorCode(error: unknown, code: string) {
   const pgError = getPostgresError(error)
   return pgError !== null && pgError.code === code
 }
 
-export function isUniqueViolation(error: PostgresErrorInput) {
+export function isUniqueViolation(error: unknown) {
   return isErrorCode(error, PostgresErrorCode.UNIQUE_VIOLATION)
 }
 
-export function isNotNullViolation(error: PostgresErrorInput) {
+export function isNotNullViolation(error: unknown) {
   return isErrorCode(error, PostgresErrorCode.NOT_NULL_VIOLATION)
 }
 
-export function isCheckViolation(error: PostgresErrorInput) {
+export function isCheckViolation(error: unknown) {
   return isErrorCode(error, PostgresErrorCode.CHECK_VIOLATION)
 }
 
-export function isSerializationFailure(error: PostgresErrorInput) {
+export function isSerializationFailure(error: unknown) {
   return isErrorCode(error, PostgresErrorCode.SERIALIZATION_FAILURE)
 }
 
-export function extractError(error: PostgresErrorInput) {
+export function extractError(error: unknown) {
   return getPostgresError(error)
 }
 
 export function handleError(
-  error: PostgresErrorInput,
+  error: unknown,
   messages?: DrizzleErrorMessages,
 ): never {
   if (error instanceof BusinessException || error instanceof HttpException) {
@@ -51,49 +46,31 @@ export function handleError(
 
   const pgError = getPostgresError(error)
   if (!pgError) {
-    throw error
-  }
+    if (error instanceof Error) {
+      throw error
+    }
 
-  const { code } = pgError
-
-  const messageMap: Record<string, string | undefined> = {
-    [PostgresErrorCode.UNIQUE_VIOLATION]: messages?.duplicate,
-    [PostgresErrorCode.NOT_NULL_VIOLATION]: messages?.notNull,
-    [PostgresErrorCode.CHECK_VIOLATION]: messages?.check,
-    [PostgresErrorCode.SERIALIZATION_FAILURE]: messages?.conflict,
-  }
-
-  let message = messageMap[code]
-  if (!message) {
-    message = PostgresDefaultMessages[code]
-  }
-
-  if (code === PostgresErrorCode.UNIQUE_VIOLATION) {
-    throw new BusinessException(
-      BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-      message,
-      {
-        cause: error,
-      },
-    )
-  }
-
-  if (code === PostgresErrorCode.SERIALIZATION_FAILURE) {
-    throw new BusinessException(BusinessErrorCode.STATE_CONFLICT, message, {
+    throw new InternalServerErrorException('数据库操作失败', {
       cause: error,
     })
   }
 
-  if (
-    code === PostgresErrorCode.NOT_NULL_VIOLATION ||
-    code === PostgresErrorCode.CHECK_VIOLATION
-  ) {
-    throw new BadRequestException(message, { cause: error })
+  const descriptor = getPostgresErrorResponseDescriptor(pgError.code)
+  if (!descriptor) {
+    throw new InternalServerErrorException('数据库操作失败', {
+      cause: error,
+    })
   }
 
-  throw new InternalServerErrorException('数据库操作失败', {
-    cause: error,
-  })
+  const message = messages?.[descriptor.messageKey] ?? descriptor.message
+
+  if (descriptor.exceptionKind === 'business') {
+    throw new BusinessException(descriptor.responseCode, message, {
+      cause: error,
+    })
+  }
+
+  throw new BadRequestException(message, { cause: error })
 }
 
 export async function executeWithErrorHandling<T>(
@@ -103,12 +80,6 @@ export async function executeWithErrorHandling<T>(
   try {
     return await fn()
   } catch (error) {
-    const postgresError =
-      error instanceof Error
-        ? error
-        : typeof error === 'object' && error !== null
-          ? error
-          : undefined
-    handleError(postgresError, messages)
+    handleError(error, messages)
   }
 }

@@ -1,11 +1,13 @@
-import type { Db, PostgresErrorSourceObject, SQL } from '@db/core'
-import type {EventEnvelope} from '@libs/growth/event-definition/event-envelope.type';
+import type { Db, SQL } from '@db/core'
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { JsonValue } from '@libs/platform/utils'
 import type {
+  AuthorCommentDelta,
   CommentModerationState,
   CommentVisibleState,
   CommentWriteContext,
   MaterializedCommentBodyWriteResult,
+  ReplyTargetSnapshot,
   TransactionRetryOptions,
   VisibleCommentEffectPayload,
 } from './comment.type'
@@ -21,8 +23,7 @@ import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event
 import {
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
-
-  EventEnvelopeGovernanceStatusEnum
+  EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
@@ -149,14 +150,8 @@ export class CommentService {
         return await operation()
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
-        const drizzleError =
-          error instanceof Error
-            ? error
-            : typeof error === 'object' && error !== null
-              ? (error as PostgresErrorSourceObject)
-              : undefined
         if (
-          !this.drizzle.isSerializationFailure(drizzleError) ||
+          !this.drizzle.isSerializationFailure(error) ||
           attempt >= maxRetries - 1
         ) {
           throw error
@@ -994,13 +989,7 @@ export class CommentService {
       return
     }
 
-    let replyTarget:
-      | {
-          id: number
-          userId: number
-          content: string
-        }
-        | undefined
+    let replyTarget: ReplyTargetSnapshot | undefined
 
     if (comment.replyToId) {
       replyTarget = await tx.query.userComment.findFirst({
@@ -1128,10 +1117,7 @@ export class CommentService {
       likeCount: number
     }>,
   ) {
-    const authorDeltas = new Map<
-      number,
-      { commentCount: number, receivedLikeCount: number }
-    >()
+    const authorDeltas = new Map<number, AuthorCommentDelta>()
 
     for (const comment of comments) {
       const current = authorDeltas.get(comment.userId) ?? {

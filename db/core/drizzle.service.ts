@@ -5,8 +5,11 @@ import type {
   DrizzleErrorMessages,
   DrizzleMutationResult,
 } from './drizzle.type'
-import type { PostgresError, PostgresErrorSource } from './error/postgres-error'
-import type { DrizzleOrderByInput, DrizzleOrderByOptions } from './query/order-by'
+import type { PostgresError } from './error/postgres-error'
+import type {
+  DrizzleOrderByInput,
+  DrizzleOrderByOptions,
+} from './query/order-by'
 import type {
   DrizzlePageQueryInput,
   DrizzlePageQueryOptions,
@@ -31,8 +34,6 @@ import {
 } from './error/error-handler'
 import { buildDrizzleOrderBy } from './query/order-by'
 import { buildDrizzlePageQuery } from './query/page-query'
-
-type DrizzleErrorInput = PostgresErrorSource
 
 /**
  * 统一封装仓库级 Drizzle 入口、查询默认值和错误处理能力。
@@ -90,49 +91,49 @@ export class DrizzleService implements OnApplicationShutdown {
   /**
    * 暴露错误码判断，供需要保留 PostgreSQL 原始错误语义的业务路径复用。
    */
-  isErrorCode(error: DrizzleErrorInput, code: string): boolean {
+  isErrorCode(error: unknown, code: string): boolean {
     return isErrorCode(error, code)
   }
 
   /**
    * 判断错误是否来自唯一约束冲突，避免业务层直接解析数据库驱动错误。
    */
-  isUniqueViolation(error: DrizzleErrorInput): boolean {
+  isUniqueViolation(error: unknown): boolean {
     return isUniqueViolation(error)
   }
 
   /**
    * 判断错误是否来自非空约束冲突。
    */
-  isNotNullViolation(error: DrizzleErrorInput): boolean {
+  isNotNullViolation(error: unknown): boolean {
     return isNotNullViolation(error)
   }
 
   /**
    * 判断错误是否来自 check constraint 失败。
    */
-  isCheckViolation(error: DrizzleErrorInput): boolean {
+  isCheckViolation(error: unknown): boolean {
     return isCheckViolation(error)
   }
 
   /**
    * 判断错误是否为可重试的序列化失败。
    */
-  isSerializationFailure(error: DrizzleErrorInput): boolean {
+  isSerializationFailure(error: unknown): boolean {
     return isSerializationFailure(error)
   }
 
   /**
    * 从未知异常中提取 PostgreSQL 错误元信息，供上层做业务分支或日志输出。
    */
-  extractError(error: DrizzleErrorInput): PostgresError | null {
+  extractError(error: unknown): PostgresError | null {
     return extractError(error)
   }
 
   /**
    * 统一将底层数据库异常翻译为业务可消费的 Nest 异常。
    */
-  handleError(error: DrizzleErrorInput, messages?: DrizzleErrorMessages): never {
+  handleError(error: unknown, messages?: DrizzleErrorMessages): never {
     return handleError(error, messages)
   }
 

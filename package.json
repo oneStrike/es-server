@@ -27,6 +27,7 @@
     "db:repair:author-counts": "tsx scripts/rebuild-author-counts.ts",
     "db:repair:app-user-counts": "tsx scripts/rebuild-app-user-counts.ts",
     "db:repair:content-forum-counts": "tsx scripts/rebuild-content-forum-counts.ts",
+    "db:core:check": "tsx scripts/check-db-core-boundary.ts",
     "db:generate": "drizzle-kit generate",
     "db:comments:generate": "tsx scripts/db-comments.ts",
     "db:comments:check": "tsx scripts/db-comments.ts --check",
@@ -155,7 +156,8 @@
     "testEnvironment": "node",
     "roots": [
       "<rootDir>/apps/",
-      "<rootDir>/libs/"
+      "<rootDir>/libs/",
+      "<rootDir>/db/"
     ],
     "moduleNameMapper": {
       "^@db(|/.*)$": "<rootDir>/db/$1",

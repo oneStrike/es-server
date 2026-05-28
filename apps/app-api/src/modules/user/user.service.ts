@@ -1,4 +1,3 @@
-import type { PostgresErrorSourceObject } from '@db/core'
 import type { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets/dto/user-assets.dto'
 import type { SQL } from 'drizzle-orm'
 /**
@@ -170,16 +169,11 @@ export class UserService {
       )
       return true
     } catch (error) {
-      const drizzleError =
-        error instanceof Error
-          ? error
-          : typeof error === 'object' && error !== null
-            ? (error as PostgresErrorSourceObject)
-            : undefined
-      if (this.drizzle.isUniqueViolation(drizzleError)) {
+      if (this.drizzle.isUniqueViolation(error)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           '邮箱已被使用',
+          { cause: error },
         )
       }
       throw error
@@ -240,16 +234,11 @@ export class UserService {
       )
       return true
     } catch (error) {
-      const drizzleError =
-        error instanceof Error
-          ? error
-          : typeof error === 'object' && error !== null
-            ? (error as PostgresErrorSourceObject)
-            : undefined
-      if (this.drizzle.isUniqueViolation(drizzleError)) {
+      if (this.drizzle.isUniqueViolation(error)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           AppAuthErrorMessages.PHONE_EXISTS,
+          { cause: error },
         )
       }
       throw error

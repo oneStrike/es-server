@@ -94,3 +94,21 @@ export interface MaterializedCommentBodyWriteResult extends CommentBodyWriteResu
   html: string
   hashtagFacts: MaterializedForumHashtagFact[]
 }
+
+/**
+ * 回复通知所需的父评论快照。
+ * 仅承载通知文案和接收人判断需要的最小字段。
+ */
+export type ReplyTargetSnapshot = Pick<
+  UserCommentSelect,
+  'id' | 'userId' | 'content'
+>
+
+/**
+ * 评论作者计数聚合增量。
+ * 用于批量回写评论数与收到点赞数。
+ */
+export interface AuthorCommentDelta {
+  commentCount: number
+  receivedLikeCount: number
+}

@@ -1,13 +1,9 @@
-import type { PostgresErrorSourceObject } from '@db/core'
 import type { UserFavoriteSelect } from '@db/schema'
 import { DrizzleService, toPageResult } from '@db/core'
-import { AppUserCountService } from '@libs/user/app-user-count.service';
+import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
-import {
-  FavoritePageCommandDto,
-  FavoriteRecordDto,
-} from './dto/favorite.dto'
+import { FavoritePageCommandDto, FavoriteRecordDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
 import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.interface'
@@ -42,9 +38,7 @@ export class FavoriteService {
     return [...new Set(targetIds)]
   }
 
-  private resolveErrorCode(
-    error: Error | PostgresErrorSourceObject | null | undefined,
-  ) {
+  private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
@@ -279,14 +273,8 @@ export class FavoriteService {
             }
           }
         } catch (error) {
-          const drizzleError =
-            error instanceof Error
-              ? error
-              : typeof error === 'object' && error !== null
-                ? (error as PostgresErrorSourceObject)
-                : undefined
           this.logger.warn(
-            `favorite_detail_resolve_failed targetType=${type} batchSize=${uniqueIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(drizzleError)} error=${
+            `favorite_detail_resolve_failed targetType=${type} batchSize=${uniqueIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
               error instanceof Error ? error.message : String(error)
             }`,
           )

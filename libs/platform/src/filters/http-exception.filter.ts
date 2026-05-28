@@ -24,19 +24,6 @@ interface ErrorDescriptor {
 }
 
 const ROUTE_NOT_FOUND_MESSAGE_REGEX = /^Cannot\b/i
-type FilterErrorInput =
-  | Error
-  | {
-      code?: string
-      constraint?: string
-      table?: string
-      column?: string
-      detail?: string
-      message?: string
-      cause?: object | null
-    }
-    | null
-    | undefined
 
 /**
  * 全局异常过滤器
@@ -78,7 +65,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    *
    * 提取错误信息、记录结构化日志，并返回统一的响应格式。
    */
-  catch(exception: FilterErrorInput, host: ArgumentsHost): void {
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<FastifyReply>()
     const request = ctx.getRequest<FastifyRequest>()
@@ -128,7 +115,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * 按优先级处理：HttpException > Postgres 错误 > 未知错误。
    * 对于数据库错误，尽可能提取约束、表名、字段等上下文信息。
    */
-  private extractErrorInfo(exception: FilterErrorInput) {
+  private extractErrorInfo(exception: unknown) {
     const postgresError = this.extractPostgresError(exception)
 
     if (exception instanceof BusinessException) {
@@ -215,20 +202,27 @@ export class HttpExceptionFilter implements ExceptionFilter {
    *
    * 支持直接抛出的数据库错误，以及 HttpException 包装的数据库错误（通过 cause 传递）。
    */
-  private extractPostgresError(exception: FilterErrorInput) {
+  private extractPostgresError(exception: unknown) {
     const directError = extractError(exception)
     if (directError) {
       return directError
     }
 
     if (exception instanceof HttpException) {
-      return extractError(exception.cause as FilterErrorInput)
+      return extractError(this.getErrorCause(exception))
     }
 
     return null
   }
 
-  private normalizeMessage(payload: string | string[] | { message?: string } | null | undefined): string {
+  /** 从包装异常中读取原始 cause，供数据库错误元信息提取复用。 */
+  private getErrorCause(error: unknown): unknown {
+    return error instanceof Error ? error.cause : undefined
+  }
+
+  private normalizeMessage(
+    payload: string | string[] | { message?: string } | null | undefined,
+  ): string {
     if (Array.isArray(payload)) {
       const messages = payload
         .filter((item): item is string => typeof item === 'string')

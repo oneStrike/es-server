@@ -79,20 +79,25 @@ export function buildSchemaCommentsArtifact(
   let columnCommentCount = 0
 
   const runtimeTables = Object.entries(runtimeSchema)
-    .filter((entry): entry is [string, unknown] => isTable(entry[1]))
-    .map(([exportName, table]) => {
+    .flatMap(([exportName, table]) => {
+      if (!isTable(table)) {
+        return []
+      }
+
       const tableName = getTableName(table)
       const uniqueName = getTableUniqueName(table)
       const schemaName = uniqueName.endsWith(`.${tableName}`)
         ? uniqueName.slice(0, -tableName.length - 1)
         : 'public'
 
-      return {
-        exportName,
-        table,
-        tableName,
-        schemaName,
-      }
+      return [
+        {
+          exportName,
+          table,
+          tableName,
+          schemaName,
+        },
+      ]
     })
     .sort((left, right) => {
       const leftName = `${left.schemaName}.${left.tableName}`
@@ -202,7 +207,6 @@ export async function applySchemaComments(
   options: ApplySchemaCommentsOptions,
 ): Promise<ApplySchemaCommentsResult> {
   const artifact = buildSchemaCommentsArtifact(options)
-  writeSchemaCommentsFile(artifact)
 
   const pool = new Pool({
     connectionString: options.databaseUrl,
@@ -317,9 +321,10 @@ function listSchemaSourceFiles(directoryPath: string) {
 
 function hasExportModifier(node: ts.Node) {
   return Boolean(
-    node.modifiers?.some(
-      (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword,
-    ),
+    ts.canHaveModifiers(node) &&
+    ts
+      .getModifiers(node)
+      ?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword),
   )
 }
 
@@ -395,7 +400,11 @@ function getNodeJsDoc(node: ts.Node) {
     return null
   }
 
-  const lastDoc = jsDocNodes.at(-1)
+  const lastDoc = jsDocNodes[jsDocNodes.length - 1]
+  if (!lastDoc) {
+    return null
+  }
+
   return normalizeJsDocComment(renderJsDocComment(lastDoc.comment))
 }
 

@@ -8,8 +8,6 @@ import { relations } from '../relations'
 
 export const DRIZZLE_POOL = 'DRIZZLE_POOL'
 export const DRIZZLE_DB = 'DRIZZLE_DB'
-export const DRIZZLE_DB_LEGACY = 'DrizzleDb'
-export const PG_CONNECTION = DRIZZLE_DB
 
 export const DrizzlePoolProvider: Provider = {
   provide: DRIZZLE_POOL,
@@ -40,9 +38,4 @@ export const DrizzleDbProvider: Provider = {
       logger: false,
     }),
   inject: [DRIZZLE_POOL],
-}
-
-export const DrizzleDbLegacyProvider: Provider = {
-  provide: DRIZZLE_DB_LEGACY,
-  useExisting: DRIZZLE_DB,
 }

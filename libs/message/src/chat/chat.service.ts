@@ -1,4 +1,3 @@
-import type { PostgresErrorSourceObject } from '@db/core'
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { PageDto } from '@libs/platform/dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
@@ -899,14 +898,8 @@ export class MessageChatService {
         })
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
-        const drizzleError =
-          error instanceof Error
-            ? error
-            : typeof error === 'object' && error !== null
-              ? (error as PostgresErrorSourceObject)
-              : undefined
 
-        if (!this.drizzle.isUniqueViolation(drizzleError)) {
+        if (!this.drizzle.isUniqueViolation(error)) {
           throw error
         }
 
