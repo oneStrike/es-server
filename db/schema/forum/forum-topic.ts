@@ -101,11 +101,11 @@ export const forumTopic = snakeCase.table(
      */
     isHidden: boolean().default(false).notNull(),
     /**
-     * 审核状态（0=待审核，1=已通过，2=已拒绝）
+     * 审核状态（0=待审核；1=已通过；2=已拒绝）
      */
     auditStatus: smallint().default(1).notNull(),
     /**
-     * 审核角色（0=版主，1=管理员）
+     * 审核角色（0=版主；1=管理员）
      */
     auditRole: smallint(),
     /**
@@ -274,6 +274,20 @@ export const forumTopic = snakeCase.table(
     check(
       'forum_topic_body_version_valid_chk',
       sql`${table.bodyVersion} in (1)`,
+    ),
+    /**
+     * 审核状态闭集约束
+     */
+    check(
+      'forum_topic_audit_status_valid_chk',
+      sql`${table.auditStatus} in (0, 1, 2)`,
+    ),
+    /**
+     * 审核角色闭集约束
+     */
+    check(
+      'forum_topic_audit_role_valid_chk',
+      sql`${table.auditRole} is null or ${table.auditRole} in (0, 1)`,
     ),
     /**
      * 索引: lastCommentAt

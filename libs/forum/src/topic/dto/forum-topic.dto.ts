@@ -8,6 +8,10 @@ import {
   CommentSortDto,
 } from '@libs/interaction/comment/dto/comment.dto'
 import { EmojiAssetKindEnum } from '@libs/interaction/emoji/emoji.constant'
+import {
+  ForumTopicContentPreviewSegmentTypeEnum,
+  type ForumTopicContentPreviewSegmentType,
+} from '../forum-topic.constant'
 import { InteractionActorSummaryDto } from '@libs/interaction/summary/dto/interaction-summary.dto'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
@@ -36,14 +40,15 @@ import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
  * mention、hashtag 与 emoji 片段由前端按目标字段生成跳转或渲染。
  */
 export class ForumTopicContentPreviewSegmentDto {
-  @StringProperty({
+  @EnumProperty({
     description:
       '片段类型：text=普通文本；mention=@用户；hashtag=#话题；emoji=表情',
-    example: 'mention',
+    example: ForumTopicContentPreviewSegmentTypeEnum.MENTION,
+    enum: ForumTopicContentPreviewSegmentTypeEnum,
     required: true,
     validation: false,
   })
-  type!: string
+  type!: ForumTopicContentPreviewSegmentType
 
   @StringProperty({
     description: '片段展示文本',

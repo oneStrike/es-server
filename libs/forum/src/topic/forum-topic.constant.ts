@@ -21,3 +21,21 @@ export const FORUM_TOPIC_CONTENT_PREVIEW_MAX_LENGTH = 60
  * 控制 JSON 负载上限，避免富文本正文在列表接口放大。
  */
 export const FORUM_TOPIC_CONTENT_PREVIEW_MAX_SEGMENTS = 30
+
+/**
+ * 论坛主题列表预览片段类型枚举。
+ * 与前端按类型字段生成可交互或可渲染片段。
+ */
+export const ForumTopicContentPreviewSegmentTypeEnum = {
+  /** 普通文本片段 */
+  TEXT: 'text',
+  /** @用户提及片段 */
+  MENTION: 'mention',
+  /** #话题标签片段 */
+  HASHTAG: 'hashtag',
+  /** 表情片段 */
+  EMOJI: 'emoji',
+} as const
+
+export type ForumTopicContentPreviewSegmentType =
+  (typeof ForumTopicContentPreviewSegmentTypeEnum)[keyof typeof ForumTopicContentPreviewSegmentTypeEnum]

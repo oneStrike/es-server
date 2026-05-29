@@ -54,11 +54,7 @@ import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-cons
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
@@ -76,6 +72,7 @@ import {
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import { FORUM_SECTION_MUTATION_LOCK_NAMESPACE } from '../section/forum-section.constant'
 import {
+  AdminForumTopicDetailDto,
   CreateForumTopicDto,
   MoveForumTopicDto,
   PublicForumTopicDetailDto,
@@ -104,10 +101,8 @@ const HOT_PUBLIC_TOPIC_FEED_ORDER: Array<Record<string, 'asc' | 'desc'>> = [
   { createdAt: 'desc' as const },
 ]
 
-/**
- * 论坛主题服务，负责主题的增删改查、审核、置顶、精华、锁定等核心业务。
- * 写操作统一记录操作日志，计数变更与主题状态同步在同一事务中完成。
- */
+// 论坛主题服务，负责主题的增删改查、审核、置顶、精华、锁定等核心业务。
+// 写操作统一记录操作日志，计数变更与主题状态同步在同一事务中完成。
 @Injectable()
 export class ForumTopicService {
   constructor(
@@ -153,6 +148,8 @@ export class ForumTopicService {
     return this.drizzle.schema.forumHashtagReference
   }
 
+  // ─── 工具方法 ───────────────────────────────────────────────
+
   // 去重并过滤正数 ID，避免批量摘要查询带入无效条件。
   private uniquePositiveIds(ids: ForumTopicRelationIdCandidates) {
     return [...new Set(ids)].filter(
@@ -167,10 +164,9 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 批量获取主题列表使用的发帖用户简要信息。
-   * 仅查询列表展示所需字段，避免在公开分页中暴露额外资料。
-   */
+  // ─── 查询-公开 ──────────────────────────────────────────────
+
+  // 批量获取主题列表使用的发帖用户简要信息；仅查询列表展示所需字段，避免在公开分页中暴露额外资料。
   private async getTopicUserBriefMap(userIds: number[]) {
     const uniqueUserIds = [...new Set(userIds)]
     if (uniqueUserIds.length === 0) {
@@ -194,10 +190,7 @@ export class ForumTopicService {
     return new Map(users.map((user) => [user.id, user]))
   }
 
-  /**
-   * 获取主题列表使用的板块简要信息。
-   * 仅返回列表展示所需字段，供公开分页等场景复用。
-   */
+  // 获取主题列表使用的板块简要信息；仅返回列表展示所需字段，供公开分页等场景复用。
   private async getTopicSectionBrief(sectionId: number) {
     const section = await this.db.query.forumSection.findFirst({
       where: {
@@ -238,10 +231,7 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 批量获取主题列表使用的板块简要信息。
-   * 可按需限制为当前仍可见的板块，供收藏列表等需要剔除失效板块的场景复用。
-   */
+  // 批量获取主题列表使用的板块简要信息；可按需限制为当前仍可见的板块，供收藏列表等需要剔除失效板块的场景复用。
   private async getTopicSectionBriefMap(
     sectionIds: number[],
     options?: {
@@ -261,12 +251,15 @@ export class ForumTopicService {
       >()
     }
 
+    const baseWhere = {
+      id: { in: uniqueSectionIds },
+      deletedAt: { isNull: true } as const,
+    }
+
     const sections = await this.db.query.forumSection.findMany({
-      where: {
-        id: { in: uniqueSectionIds },
-        deletedAt: { isNull: true },
-        ...(options?.requireEnabled ? { isEnabled: true } : {}),
-      },
+      where: options?.requireEnabled
+        ? { ...baseWhere, isEnabled: true }
+        : baseWhere,
       columns: {
         id: true,
         groupId: true,
@@ -449,10 +442,7 @@ export class ForumTopicService {
     return auditorSummaryMap.get(key) ?? null
   }
 
-  /**
-   * 加载主题关联的话题列表。
-   * 统一按 sourceType=topic 的引用事实表读取，替代已删除的旧 tag 关系表。
-   */
+  // 加载主题关联的话题列表；统一按 sourceType=topic 的引用事实表读取，替代已删除的旧 tag 关系表。
   private async getTopicHashtags(topicId: number) {
     return this.db
       .select({
@@ -489,6 +479,7 @@ export class ForumTopicService {
       )
   }
 
+  // 构建公开主题分页的 select 投影，复用统一字段列表。
   private buildPublicTopicPageSelect() {
     return {
       id: this.forumTopicTable.id,
@@ -514,6 +505,7 @@ export class ForumTopicService {
     }
   }
 
+  // 解析公开主题分页的可用板块 ID 列表；传入 sectionId 时校验单板块权限，否则取全部可访问板块。
   private async resolvePublicTopicSectionIds(
     sectionId: number | undefined,
     userId?: number,
@@ -533,6 +525,7 @@ export class ForumTopicService {
     return this.forumPermissionService.getAccessibleSectionIds(userId)
   }
 
+  // 获取关注来源的目标 ID 集合（关注用户、关注板块、关注话题），供关注 feed 聚合使用。
   private async getFollowingFeedTargetIds(userId: number) {
     const follows = await this.db
       .select({
@@ -568,10 +561,7 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 解析已关注话题对应的公开主题集合。
-   * 仅消费 sourceType=topic 且当前公开可见的引用事实。
-   */
+  // 解析已关注话题对应的公开主题集合；仅消费 sourceType=topic 且当前公开可见的引用事实。
   private async getVisibleTopicIdsByHashtagIds(
     hashtagIds: number[],
     visibleSectionIds: number[],
@@ -605,6 +595,7 @@ export class ForumTopicService {
     return [...new Set(rows.map((row) => row.topicId))]
   }
 
+  // 为公开主题分页条目补齐用户简要信息、板块简要信息与当前用户的点赞/收藏状态。
   private async hydratePublicTopicPageItems(
     rows: PublicTopicPageRow[],
     options: {
@@ -672,6 +663,7 @@ export class ForumTopicService {
       .filter((item): item is NonNullable<typeof item> => item !== null)
   }
 
+  // 按条件查询公开主题分页；统一封装筛选、排序、计数与条目组装逻辑。
   private async getPublicTopicPageByConditions(
     query: QueryPublicForumTopicDto & {
       userId?: number
@@ -737,12 +729,7 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 规范化论坛主题图片列表。
-   * - 去除空白字符串
-   * - 保留首个出现顺序并去重
-   * - 统一校验单项长度与数量上限
-   */
+  // 规范化论坛主题图片列表；去除空白、保留首现顺序去重、校验数量上限。
   private normalizeImageList(
     value: string[] | null | undefined,
     options: {
@@ -783,10 +770,7 @@ export class ForumTopicService {
     return normalizedList
   }
 
-  /**
-   * 规范化论坛主题视频 JSON 值。
-   * 创建时默认空数组，更新时未传字段保留当前值；一旦显式传入则整字段覆盖旧值。
-   */
+  // 规范化论坛主题视频 JSON 值；创建时默认空数组，更新时未传字段保留当前值。
   private normalizeVideoValue(
     value: ForumTopicSelect['videos'] | null | undefined,
     options: {
@@ -814,10 +798,7 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 统一规范化论坛主题媒体输入。
-   * 创建时补空数组，更新时对未传字段保留当前值。
-   */
+  // 统一规范化论坛主题媒体输入；创建时补空数组，更新时对未传字段保留当前值。
   private normalizeTopicMedia(
     media: ForumTopicMediaInput,
     fallback: Pick<ForumTopicSelect, 'images' | 'videos'> = {
@@ -845,7 +826,10 @@ export class ForumTopicService {
   ): Promise<MaterializedTopicBodyWriteResult> {
     const normalizedHtml = input.html?.trim()
     if (!normalizedHtml) {
-      throw new BadRequestException('html 不能为空')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'html 不能为空',
+      )
     }
     const bodyDoc = this.bodyHtmlCodecService.parseHtmlOrThrow(
       normalizedHtml,
@@ -877,10 +861,9 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 获取未删除的主题快照。
-   * 供编辑、删除等需要复用主题当前状态的写路径共享使用。
-   */
+  // ─── 查询-通用 ──────────────────────────────────────────────
+
+  // 获取未删除的主题快照；供编辑、删除等需要复用主题当前状态的写路径共享使用。
   private async getActiveTopicOrThrow(id: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -896,6 +879,7 @@ export class ForumTopicService {
     return topic
   }
 
+  // 在事务内获取未删除的主题快照；供跨模块事务链路复用。
   async getActiveTopicByIdInTx(tx: Db, id: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -911,10 +895,7 @@ export class ForumTopicService {
     return topic
   }
 
-  /**
-   * 获取板块的主题审核策略。
-   * 用于创建/编辑主题时决定是否需要进入审核队列。
-   */
+  // 获取板块的主题审核策略；用于创建/编辑主题时决定是否需要进入审核队列。
   private async getSectionTopicReviewPolicy(
     sectionId: number,
     options?: {
@@ -965,11 +946,7 @@ export class ForumTopicService {
     return section.topicReviewPolicy as ForumReviewPolicyEnum
   }
 
-  /**
-   * 根据板块审核策略与敏感词等级计算主题的审核状态与隐藏状态。
-   * - 严重敏感词一律隐藏
-   * - 审核策略决定哪些敏感词等级需要进入审核队列
-   */
+  // 根据板块审核策略与敏感词等级计算主题的审核状态与隐藏状态；严重敏感词一律隐藏。
   private calculateAuditStatus(
     reviewPolicy: ForumReviewPolicyEnum,
     highestLevel?: SensitiveWordLevelEnum,
@@ -1038,10 +1015,7 @@ export class ForumTopicService {
     return currentTitle
   }
 
-  /**
-   * 将主题审核状态映射为统一事件治理状态。
-   * 当前 CREATE_TOPIC 事件是否可进入主链路，统一以该状态判断。
-   */
+  // 将主题审核状态映射为统一事件治理状态；CREATE_TOPIC 事件是否可进入主链路统一以该状态判断。
   private resolveTopicGovernanceStatus(auditStatus: AuditStatusEnum) {
     switch (auditStatus) {
       case AuditStatusEnum.APPROVED:
@@ -1055,10 +1029,7 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 构建主题创建事件 envelope。
-   * 统一沉淀 CREATE_TOPIC 的目标、治理态与最小上下文，供奖励补发等链路复用。
-   */
+  // 构建主题创建事件 envelope；统一沉淀 CREATE_TOPIC 的目标、治理态与最小上下文，供奖励补发等链路复用。
   private buildCreateTopicEventEnvelope(params: {
     topicId: number
     userId: number
@@ -1076,10 +1047,7 @@ export class ForumTopicService {
     })
   }
 
-  /**
-   * 判断主题当前是否对外可见。
-   * 主题 mention 仅在真正可见时发送，避免待审核/隐藏内容提前触达接收人。
-   */
+  // 判断主题当前是否对外可见；mention 仅在真正可见时发送，避免待审核/隐藏内容提前触达接收人。
   private isTopicVisible(topic: {
     auditStatus: AuditStatusEnum
     isHidden: boolean
@@ -1092,10 +1060,7 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 同步主题从不可见到可见时的 mention 补偿。
-   * 仅在首次转可见时补发尚未通知的 receiver。
-   */
+  // 同步主题从不可见到可见时的 mention 补偿；仅在首次转可见时补发尚未通知的 receiver。
   private async syncTopicMentionVisibilityTransitionInTx(
     tx: Db,
     params: {
@@ -1130,13 +1095,9 @@ export class ForumTopicService {
     })
   }
 
-  /**
-   * 创建论坛主题。
-   * - 敏感词检测与审核策略计算在写入前完成
-   * - 计数更新与板块状态同步在同一事务中执行
-   * - 审核通过时触发成长奖励事件
-   * - 写入后记录操作日志
-   */
+  // ─── 写入-创建 ──────────────────────────────────────────────
+
+  // 创建论坛主题；敏感词检测与审核策略计算在写入前完成，计数更新与板块状态同步在同一事务中执行。
   async createForumTopic(
     createTopicDto: CreateForumTopicDto,
     context: ForumTopicClientContext = {},
@@ -1335,7 +1296,10 @@ export class ForumTopicService {
     return { id: topic.id }
   }
 
-  async getTopicById(id: number) {
+  // ─── 查询-后台 ──────────────────────────────────────────────
+
+  // 获取后台主题详情，包含发帖用户、板块、审核人与成长信息。
+  async getTopicById(id: number): Promise<AdminForumTopicDetailDto> {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
         id,
@@ -1367,33 +1331,95 @@ export class ForumTopicService {
       }),
     ])
 
-    if (!topic.user) {
-      return {
-        ...topic,
-        hashtags,
-        auditorSummary,
-      }
+    let points = 0
+    if (topic.user) {
+      const growth = await this.growthBalanceQueryService.getUserGrowthSnapshot(
+        topic.userId,
+      )
+      points = growth.points
     }
-
-    const growth = await this.growthBalanceQueryService.getUserGrowthSnapshot(
-      topic.userId,
-    )
 
     return {
-      ...topic,
+      id: topic.id,
+      sectionId: topic.sectionId,
+      userId: topic.userId,
+      title: topic.title,
+      html: topic.html,
+      images: topic.images ?? [],
+      videos: (topic.videos ??
+        []) as unknown as AdminForumTopicDetailDto['videos'],
+      isPinned: topic.isPinned,
+      isFeatured: topic.isFeatured,
+      isLocked: topic.isLocked,
+      isHidden: topic.isHidden,
+      auditStatus: topic.auditStatus,
+      auditReason: topic.auditReason ?? undefined,
+      auditAt: topic.auditAt ?? undefined,
+      viewCount: topic.viewCount,
+      likeCount: topic.likeCount,
+      commentCount: topic.commentCount,
+      favoriteCount: topic.favoriteCount,
+      version: topic.version,
+      sensitiveWordHits: (topic.sensitiveWordHits ??
+        undefined) as AdminForumTopicDetailDto['sensitiveWordHits'],
+      lastCommentAt: topic.lastCommentAt ?? undefined,
+      lastCommentUserId: topic.lastCommentUserId ?? undefined,
+      createdAt: topic.createdAt,
+      updatedAt: topic.updatedAt,
       hashtags,
-      auditorSummary,
-      user: {
-        ...topic.user,
-        points: growth.points,
-      },
-    }
+      section: topic.section
+        ? {
+            id: topic.section.id,
+            name: topic.section.name,
+            description: topic.section.description ?? undefined,
+            icon: topic.section.icon,
+            cover: topic.section.cover,
+            isEnabled: topic.section.isEnabled,
+            topicReviewPolicy: topic.section.topicReviewPolicy,
+          }
+        : undefined,
+      user: topic.user
+        ? {
+            id: topic.user.id,
+            nickname: topic.user.nickname,
+            avatarUrl: topic.user.avatarUrl ?? undefined,
+            signature: topic.user.signature ?? undefined,
+            bio: topic.user.bio ?? undefined,
+            isEnabled: topic.user.isEnabled,
+            points,
+            levelId: topic.user.levelId ?? undefined,
+            status: topic.user.status,
+            banReason: topic.user.banReason ?? undefined,
+            banUntil: topic.user.banUntil ?? undefined,
+            counts: topic.user.counts
+              ? {
+                  commentCount: topic.user.counts.commentCount,
+                  likeCount: topic.user.counts.likeCount,
+                  favoriteCount: topic.user.counts.favoriteCount,
+                  forumTopicCount: topic.user.counts.forumTopicCount,
+                  commentReceivedLikeCount:
+                    topic.user.counts.commentReceivedLikeCount,
+                  forumTopicReceivedLikeCount:
+                    topic.user.counts.forumTopicReceivedLikeCount,
+                  forumTopicReceivedFavoriteCount:
+                    topic.user.counts.forumTopicReceivedFavoriteCount,
+                }
+              : undefined,
+            level: topic.user.level
+              ? {
+                  id: topic.user.level.id,
+                  name: topic.user.level.name,
+                  icon: topic.user.level.icon,
+                  sortOrder: topic.user.level.sortOrder,
+                }
+              : undefined,
+          }
+        : undefined,
+      auditorSummary: auditorSummary ?? undefined,
+    } as AdminForumTopicDetailDto
   }
 
-  /**
-   * 获取对公开访问可见的主题详情。
-   * 只返回已审核通过且未隐藏的主题，同时校验板块访问权限。
-   */
+  // 获取对公开访问可见的主题详情；只返回已审核通过且未隐藏的主题，同时校验板块访问权限。
   private async getVisiblePublicTopic(id: number, userId?: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
@@ -1465,10 +1491,7 @@ export class ForumTopicService {
     return topic
   }
 
-  /**
-   * 构建公开主题详情响应。
-   * 显式裁剪 app/public 可见字段，避免把审核、治理等后台字段直接透传到外部契约。
-   */
+  // 构建公开主题详情响应；显式裁剪 app/public 可见字段，避免把审核、治理等后台字段直接透传到外部契约。
   private async buildPublicTopicDetail(
     topic: Awaited<ReturnType<ForumTopicService['getVisiblePublicTopic']>>,
     interaction: {
@@ -1532,10 +1555,7 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 获取公开主题详情，包含当前用户的点赞、收藏与关注发帖用户状态。
-   * 匿名用户返回固定状态（liked/favorited/isFollowed 为 false），保持响应结构稳定。
-   */
+  // 获取公开主题详情，包含当前用户的点赞、收藏与关注发帖用户状态；匿名用户返回固定状态保持响应结构稳定。
   async getPublicTopicById(
     id: number,
     context: PublicForumTopicDetailContext = {},
@@ -1591,14 +1611,11 @@ export class ForumTopicService {
       liked,
       favorited,
       isFollowed,
-      viewCount: topic.viewCount + 1,
+      viewCount: topic.viewCount,
     })
   }
 
-  /**
-   * 获取主题的评论目标信息，用于评论服务定位评论对象。
-   * 会先校验主题是否对当前用户可见。
-   */
+  // 获取主题的评论目标信息，用于评论服务定位评论对象；会先校验主题是否对当前用户可见。
   async getTopicCommentTarget(id: number, userId?: number) {
     await this.getVisiblePublicTopic(id, userId)
     return {
@@ -1607,10 +1624,7 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 获取后台主题分页列表。
-   * 后台列表仅返回展示所需字段和正文摘要，避免分页接口直接传输完整正文。
-   */
+  // 获取后台主题分页列表；后台列表仅返回展示所需字段和正文摘要，避免分页接口直接传输完整正文。
   async getTopics(queryForumTopicDto: QueryForumTopicDto) {
     const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
     const conditions: SQL[] = [isNull(this.forumTopicTable.deletedAt)]
@@ -1706,14 +1720,7 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 获取公开主题分页列表。
-   * - 只返回已审核通过且未隐藏的主题
-   * - sectionId 为空时返回综合 feed；传入时保持单板块主题页语义
-   * - 排序规则：置顶优先，其次按最后评论时间倒序，再按创建时间倒序
-   * - 会补充每条主题的发帖用户简要信息与所属板块简要信息
-   * - 登录用户会返回每条主题的点赞与收藏状态
-   */
+  // 获取公开主题分页列表；只返回已审核通过且未隐藏的主题，登录用户返回点赞与收藏状态。
   async getPublicTopics(query: QueryPublicForumTopicDto & { userId?: number }) {
     const sectionIds = await this.resolvePublicTopicSectionIds(
       query.sectionId,
@@ -1727,11 +1734,7 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 获取公开主题热门分页列表。
-   * - 基于可访问板块聚合公开主题
-   * - 排序规则：评论数、点赞数、浏览数、发布时间倒序
-   */
+  // 获取公开主题热门分页列表；基于可访问板块聚合，排序规则为评论数、点赞数、浏览数、发布时间倒序。
   async getHotPublicTopics(
     query: QueryPublicForumTopicDto & { userId?: number },
   ) {
@@ -1747,11 +1750,7 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 获取关注主题分页列表。
-   * - 聚合“关注用户发帖”与“关注板块下主题”两类来源
-   * - 仅返回当前用户仍可访问板块下的公开主题
-   */
+  // 获取关注主题分页列表；聚合“关注用户发帖”与“关注板块下主题”两类来源，仅返回当前用户仍可访问板块下的公开主题。
   async getFollowingPublicTopics(
     query: QueryPublicForumTopicDto & {
       userId: number
@@ -1815,10 +1814,7 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 批量获取收藏列表所需的公开主题分页项详情。
-   * 复用主题分页的字段语义，并补充当前用户的点赞/收藏状态与发帖用户简要信息。
-   */
+  // 批量获取收藏列表所需的公开主题分页项详情；复用主题分页的字段语义，并补充当前用户的点赞/收藏状态与发帖用户简要信息。
   async batchGetFavoriteTopicDetails(targetIds: number[], userId?: number) {
     if (targetIds.length === 0) {
       return new Map<number, unknown>()
@@ -1903,13 +1899,9 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 更新论坛主题内容。
-   * - 锁定主题不允许编辑
-   * - 编辑时会重新检测敏感词并重新计算审核状态
-   * - 板块可见状态在事务中同步更新
-   * - 记录编辑前后的差异日志
-   */
+  // ─── 写入-编辑 ──────────────────────────────────────────────
+
+  // 更新论坛主题内容；锁定主题不允许编辑，编辑时会重新检测敏感词并重新计算审核状态，板块可见状态在事务中同步更新。
   private async updateTopicWithCurrent(
     topic: ForumTopicSelect,
     updateForumTopicDto: UpdateForumTopicDto,
@@ -2083,6 +2075,7 @@ export class ForumTopicService {
     return true
   }
 
+  // 更新论坛主题内容；获取当前主题快照后委托 updateTopicWithCurrent 执行。
   async updateTopic(
     updateForumTopicDto: UpdateForumTopicDto,
     context: ForumTopicClientContext = {},
@@ -2097,13 +2090,9 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 删除论坛主题（软删除）。
-   * - 同时软删除该主题下的所有评论
-   * - 在同一事务中回退相关计数：用户发帖数、评论数、点赞数、收藏数
-   * - 同步更新板块可见状态
-   * - 记录删除操作日志
-   */
+  // ─── 写入-删除 ──────────────────────────────────────────────
+
+  // 删除论坛主题（软删除）；同时软删除该主题下的所有评论，在同一事务中回退相关计数，同步更新板块可见状态。
   private async deleteTopicWithCurrent(
     topic: ForumTopicSelect,
     context: ForumTopicClientContext = {},
@@ -2118,6 +2107,7 @@ export class ForumTopicService {
     return true
   }
 
+  // 在事务内执行主题软删除及关联清理；回退计数、同步板块状态并记录操作日志。
   async deleteTopicWithCurrentInTx(
     tx: Db,
     topic: ForumTopicSelect,
@@ -2139,7 +2129,10 @@ export class ForumTopicService {
       .set({ deletedAt: new Date() })
       .where(
         and(
-          eq(this.userCommentTable.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+          eq(
+            this.userCommentTable.targetType,
+            CommentTargetTypeEnum.FORUM_TOPIC,
+          ),
           eq(this.userCommentTable.targetId, id),
           isNull(this.userCommentTable.deletedAt),
         ),
@@ -2209,7 +2202,10 @@ export class ForumTopicService {
         const nextReceivedLikeCount =
           (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
           comment.likeCount
-        commentReceivedLikeCountByUser.set(comment.userId, nextReceivedLikeCount)
+        commentReceivedLikeCountByUser.set(
+          comment.userId,
+          nextReceivedLikeCount,
+        )
       }
     }
 
@@ -2220,7 +2216,10 @@ export class ForumTopicService {
       )
     }
 
-    for (const [userId, likeCount] of commentReceivedLikeCountByUser.entries()) {
+    for (const [
+      userId,
+      likeCount,
+    ] of commentReceivedLikeCountByUser.entries()) {
       commentCountTasks.push(
         this.appUserCountService.updateCommentReceivedLikeCount(
           tx,
@@ -2250,6 +2249,7 @@ export class ForumTopicService {
     return true
   }
 
+  // 删除论坛主题；获取当前主题快照后委托 deleteTopicWithCurrent 执行。
   async deleteTopic(
     id: number,
     context: ForumTopicClientContext = {},
@@ -2263,10 +2263,9 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 移动主题到新的板块。
-   * 会同时重建来源板块与目标板块的可见主题统计，避免聚合口径漂移。
-   */
+  // ─── 写入-状态变更 ───────────────────────────────────────────
+
+  // 移动主题到新的板块；会同时重建来源板块与目标板块的可见主题统计，避免聚合口径漂移。
   async moveTopic(input: MoveForumTopicDto) {
     const currentTopic = await this.db.query.forumTopic.findFirst({
       where: {
@@ -2304,6 +2303,7 @@ export class ForumTopicService {
     return true
   }
 
+  // 在事务内移动主题到新板块并同步板块统计。
   async moveTopicInTx(
     tx: Db,
     input: MoveForumTopicDto,
@@ -2368,10 +2368,7 @@ export class ForumTopicService {
     return true
   }
 
-  /**
-   * 主题状态更新通用方法。
-   * 统一处理存在性校验、事务包装与板块可见状态同步。
-   */
+  // 主题状态更新通用方法；统一处理存在性校验、事务包装与板块可见状态同步。
   private async updateTopicStatus(
     id: number,
     updateData: Record<string, unknown>,
@@ -2404,6 +2401,7 @@ export class ForumTopicService {
     )
   }
 
+  // 在事务内执行主题状态更新；支持可选的板块可见状态同步。
   async updateTopicStatusInTx(
     tx: Db,
     id: number,
@@ -2450,12 +2448,14 @@ export class ForumTopicService {
     return true
   }
 
+  // 更新主题置顶状态。
   async updateTopicPinned(updateTopicPinnedDto: UpdateForumTopicPinnedDto) {
     return this.updateTopicStatus(updateTopicPinnedDto.id, {
       isPinned: updateTopicPinnedDto.isPinned,
     })
   }
 
+  // 在事务内更新主题置顶状态。
   async updateTopicPinnedInTx(
     tx: Db,
     updateTopicPinnedDto: UpdateForumTopicPinnedDto,
@@ -2465,6 +2465,7 @@ export class ForumTopicService {
     })
   }
 
+  // 更新主题精华状态。
   async updateTopicFeatured(
     updateTopicFeaturedDto: UpdateForumTopicFeaturedDto,
   ) {
@@ -2473,6 +2474,7 @@ export class ForumTopicService {
     })
   }
 
+  // 在事务内更新主题精华状态。
   async updateTopicFeaturedInTx(
     tx: Db,
     updateTopicFeaturedDto: UpdateForumTopicFeaturedDto,
@@ -2482,12 +2484,14 @@ export class ForumTopicService {
     })
   }
 
+  // 更新主题锁定状态。
   async updateTopicLocked(updateTopicLockedDto: UpdateForumTopicLockedDto) {
     return this.updateTopicStatus(updateTopicLockedDto.id, {
       isLocked: updateTopicLockedDto.isLocked,
     })
   }
 
+  // 在事务内更新主题锁定状态。
   async updateTopicLockedInTx(
     tx: Db,
     updateTopicLockedDto: UpdateForumTopicLockedDto,
@@ -2497,10 +2501,7 @@ export class ForumTopicService {
     })
   }
 
-  /**
-   * 更新主题隐藏状态。
-   * 隐藏状态变更会影响板块可见主题统计，需同步更新板块状态。
-   */
+  // 更新主题隐藏状态；隐藏状态变更会影响板块可见主题统计，需同步更新板块状态。
   async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenDto) {
     const currentTopic = await this.db.query.forumTopic.findFirst({
       where: {
@@ -2533,6 +2534,7 @@ export class ForumTopicService {
     return true
   }
 
+  // 在事务内更新主题隐藏状态；同步更新 hashtag 引用可见性与 mention 补偿。
   async updateTopicHiddenInTx(
     tx: Db,
     updateTopicHiddenDto: UpdateForumTopicHiddenDto,
@@ -2613,10 +2615,7 @@ export class ForumTopicService {
     return true
   }
 
-  /**
-   * 在主题首次审核通过后补发创建主题奖励。
-   * 继续复用创建时的 bizKey，避免“即时发奖”和“审核补发”双发。
-   */
+  // 在主题首次审核通过后补发创建主题奖励；复用创建时的 bizKey 避免“即时发奖”和“审核补发”双发。
   private async dispatchApprovedTopicRewardIfNeeded(params: {
     topicId: number
     userId: number
@@ -2656,10 +2655,7 @@ export class ForumTopicService {
     })
   }
 
-  /**
-   * 更新主题审核状态。
-   * 审核状态变更会影响板块可见主题统计，需同步更新板块状态。
-   */
+  // 更新主题审核状态；审核状态变更会影响板块可见主题统计，需同步更新板块状态。
   async updateTopicAuditStatus(
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
     options?: {
@@ -2667,7 +2663,7 @@ export class ForumTopicService {
       auditRole?: AuditRoleEnum
     },
   ) {
-    const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
+    const { id, auditStatus } = updateTopicAuditStatusDto
     const currentTopic = await this.db.query.forumTopic.findFirst({
       where: {
         id,
@@ -2711,6 +2707,7 @@ export class ForumTopicService {
     return true
   }
 
+  // 在事务内更新主题审核状态；同步更新 hashtag 引用可见性与 mention 补偿。
   async updateTopicAuditStatusInTx(
     tx: Db,
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
@@ -2800,6 +2797,7 @@ export class ForumTopicService {
     return true
   }
 
+  // 补发审核通过主题的奖励；委托 dispatchApprovedTopicRewardIfNeeded 执行。
   async rewardApprovedTopicIfNeeded(params: {
     topicId: number
     userId: number
@@ -2809,10 +2807,7 @@ export class ForumTopicService {
     await this.dispatchApprovedTopicRewardIfNeeded(params)
   }
 
-  /**
-   * 用户编辑自己的主题。
-   * 校验主题所有权后调用通用更新方法。
-   */
+  // 用户编辑自己的主题；校验主题所有权后调用通用更新方法。
   async updateUserTopic(
     userId: number,
     input: UpdateForumTopicDto,
@@ -2821,16 +2816,16 @@ export class ForumTopicService {
     const topic = await this.getActiveTopicOrThrow(input.id)
 
     if (topic.userId !== userId) {
-      throw new ForbiddenException('无权修改该主题')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '无权修改该主题',
+      )
     }
 
     return this.updateTopicWithCurrent(topic, input, context, userId)
   }
 
-  /**
-   * 用户删除自己的主题。
-   * 校验主题所有权后调用通用删除方法。
-   */
+  // 用户删除自己的主题；校验主题所有权后调用通用删除方法。
   async deleteUserTopic(
     userId: number,
     id: number,
@@ -2839,7 +2834,10 @@ export class ForumTopicService {
     const topic = await this.getActiveTopicOrThrow(id)
 
     if (topic.userId !== userId) {
-      throw new ForbiddenException('无权删除该主题')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '无权删除该主题',
+      )
     }
 
     return this.deleteTopicWithCurrent(topic, context, userId)

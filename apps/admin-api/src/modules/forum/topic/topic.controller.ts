@@ -49,94 +49,6 @@ export class ForumTopicController {
     }
   }
 
-  private mapTopicDetail(topic: Record<string, any>) {
-    return {
-      id: topic.id,
-      sectionId: topic.sectionId,
-      userId: topic.userId,
-      title: topic.title,
-      html: topic.html,
-      images: topic.images ?? [],
-      videos: topic.videos ?? [],
-      isPinned: topic.isPinned,
-      isFeatured: topic.isFeatured,
-      isLocked: topic.isLocked,
-      isHidden: topic.isHidden,
-      auditStatus: topic.auditStatus,
-      auditReason: topic.auditReason,
-      auditAt: topic.auditAt,
-      viewCount: topic.viewCount,
-      likeCount: topic.likeCount,
-      commentCount: topic.commentCount,
-      favoriteCount: topic.favoriteCount,
-      version: topic.version,
-      sensitiveWordHits: topic.sensitiveWordHits,
-      lastCommentAt: topic.lastCommentAt,
-      lastCommentUserId: topic.lastCommentUserId,
-      createdAt: topic.createdAt,
-      updatedAt: topic.updatedAt,
-      hashtags: (topic.hashtags ?? []).map((item: Record<string, unknown>) => ({
-        id: item.id,
-        slug: item.slug,
-        displayName: item.displayName,
-        description: item.description,
-        topicRefCount: item.topicRefCount,
-        commentRefCount: item.commentRefCount,
-        followerCount: item.followerCount,
-        lastReferencedAt: item.lastReferencedAt,
-      })),
-      section: topic.section
-        ? {
-            id: topic.section.id,
-            name: topic.section.name,
-            description: topic.section.description,
-            icon: topic.section.icon,
-            cover: topic.section.cover,
-            isEnabled: topic.section.isEnabled,
-            topicReviewPolicy: topic.section.topicReviewPolicy,
-          }
-        : null,
-      user: topic.user
-        ? {
-            id: topic.user.id,
-            nickname: topic.user.nickname,
-            avatarUrl: topic.user.avatarUrl,
-            signature: topic.user.signature,
-            bio: topic.user.bio,
-            isEnabled: topic.user.isEnabled,
-            points: topic.user.points,
-            levelId: topic.user.levelId,
-            status: topic.user.status,
-            banReason: topic.user.banReason,
-            banUntil: topic.user.banUntil,
-            counts: topic.user.counts
-              ? {
-                  commentCount: topic.user.counts.commentCount,
-                  likeCount: topic.user.counts.likeCount,
-                  favoriteCount: topic.user.counts.favoriteCount,
-                  forumTopicCount: topic.user.counts.forumTopicCount,
-                  commentReceivedLikeCount:
-                    topic.user.counts.commentReceivedLikeCount,
-                  forumTopicReceivedLikeCount:
-                    topic.user.counts.forumTopicReceivedLikeCount,
-                  forumTopicReceivedFavoriteCount:
-                    topic.user.counts.forumTopicReceivedFavoriteCount,
-                }
-              : null,
-            level: topic.user.level
-              ? {
-                  id: topic.user.level.id,
-                  name: topic.user.level.name,
-                  icon: topic.user.level.icon,
-                  sortOrder: topic.user.level.sortOrder,
-                }
-              : null,
-          }
-        : null,
-      auditorSummary: topic.auditorSummary ?? null,
-    }
-  }
-
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询论坛主题列表',
@@ -152,12 +64,7 @@ export class ForumTopicController {
     model: AdminForumTopicDetailDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.mapTopicDetail(
-      (await this.forumTopicService.getTopicById(query.id)) as Record<
-        string,
-        any
-      >,
-    )
+    return this.forumTopicService.getTopicById(query.id)
   }
 
   @Post('create')
