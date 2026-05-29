@@ -100,10 +100,10 @@ describe('UserService user center latest login geo', () => {
     const result = await service.getUserCenter(7)
 
     expect(result.lastLoginGeo).toEqual({
-      geoCountry: undefined,
-      geoProvince: undefined,
-      geoCity: undefined,
-      geoIsp: undefined,
+      geoCountry: null,
+      geoProvince: null,
+      geoCity: null,
+      geoIsp: null,
     })
   })
 })

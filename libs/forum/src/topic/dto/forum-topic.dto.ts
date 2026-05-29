@@ -299,7 +299,7 @@ export class BaseForumTopicDto extends BaseDto {
     enum: AuditRoleEnum,
     default: AuditRoleEnum.MODERATOR,
   })
-  auditRole?: AuditRoleEnum
+  auditRole?: AuditRoleEnum | null
 
   @NumberProperty({
     description: '关联的审核用户ID',
@@ -307,7 +307,7 @@ export class BaseForumTopicDto extends BaseDto {
     required: false,
     min: 1,
   })
-  auditById?: number
+  auditById?: number | null
 
   @EnumProperty({
     description: '审核状态（0=待审核；1=已通过；2=已拒绝）',
@@ -324,7 +324,7 @@ export class BaseForumTopicDto extends BaseDto {
     required: false,
     maxLength: 500,
   })
-  auditReason?: string
+  auditReason?: string | null
 
   @DateProperty({
     description: '审核时间',
@@ -332,7 +332,7 @@ export class BaseForumTopicDto extends BaseDto {
     required: false,
     validation: false,
   })
-  auditAt?: Date
+  auditAt?: Date | null
 
   @NumberProperty({
     description: '浏览次数',
@@ -394,7 +394,7 @@ export class BaseForumTopicDto extends BaseDto {
     required: false,
     validation: false,
   })
-  sensitiveWordHits?: BaseSensitiveWordHitDto[]
+  sensitiveWordHits?: BaseSensitiveWordHitDto[] | null
 
   @StringProperty({
     description: '发帖时解析到的国家/地区',
@@ -403,7 +403,7 @@ export class BaseForumTopicDto extends BaseDto {
     maxLength: 100,
     validation: false,
   })
-  geoCountry?: string
+  geoCountry?: string | null
 
   @StringProperty({
     description: '发帖时解析到的省份/州',
@@ -412,7 +412,7 @@ export class BaseForumTopicDto extends BaseDto {
     maxLength: 100,
     validation: false,
   })
-  geoProvince?: string
+  geoProvince?: string | null
 
   @StringProperty({
     description: '发帖时解析到的城市',
@@ -421,7 +421,7 @@ export class BaseForumTopicDto extends BaseDto {
     maxLength: 100,
     validation: false,
   })
-  geoCity?: string
+  geoCity?: string | null
 
   @StringProperty({
     description: '发帖时解析到的网络运营商',
@@ -430,7 +430,7 @@ export class BaseForumTopicDto extends BaseDto {
     maxLength: 100,
     validation: false,
   })
-  geoIsp?: string
+  geoIsp?: string | null
 
   @StringProperty({
     description: '属地解析来源',
@@ -440,7 +440,7 @@ export class BaseForumTopicDto extends BaseDto {
     validation: false,
     contract: false,
   })
-  geoSource?: string
+  geoSource?: string | null
 
   @DateProperty({
     description: '最后评论时间',
@@ -448,14 +448,14 @@ export class BaseForumTopicDto extends BaseDto {
     required: false,
     validation: false,
   })
-  lastCommentAt?: Date
+  lastCommentAt?: Date | null
 
   @NumberProperty({
     description: '最后评论用户ID',
     example: 2,
     required: false,
   })
-  lastCommentUserId?: number
+  lastCommentUserId?: number | null
 
   @DateProperty({
     description: '删除时间',

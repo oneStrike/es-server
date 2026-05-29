@@ -90,7 +90,7 @@ export class BaseForumActionLogDto extends IdDto {
     maxLength: 100,
     validation: false,
   })
-  geoCountry?: string
+  geoCountry?: string | null
 
   @StringProperty({
     description: '操作发生时解析到的省份/州',
@@ -99,7 +99,7 @@ export class BaseForumActionLogDto extends IdDto {
     maxLength: 100,
     validation: false,
   })
-  geoProvince?: string
+  geoProvince?: string | null
 
   @StringProperty({
     description: '操作发生时解析到的城市',
@@ -108,7 +108,7 @@ export class BaseForumActionLogDto extends IdDto {
     maxLength: 100,
     validation: false,
   })
-  geoCity?: string
+  geoCity?: string | null
 
   @StringProperty({
     description: '操作发生时解析到的网络运营商',
@@ -117,7 +117,7 @@ export class BaseForumActionLogDto extends IdDto {
     maxLength: 100,
     validation: false,
   })
-  geoIsp?: string
+  geoIsp?: string | null
 
   @StringProperty({
     description: '属地解析来源',
@@ -126,7 +126,7 @@ export class BaseForumActionLogDto extends IdDto {
     maxLength: 50,
     validation: false,
   })
-  geoSource?: string
+  geoSource?: string | null
 
   @DateProperty({
     description: '创建时间',

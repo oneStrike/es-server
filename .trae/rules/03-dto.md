@@ -9,6 +9,7 @@
 - DTO 中的定义必须直接服务 Swagger 文档、字段校验或对外 contract；如果一个结构既不服务文档，也不服务校验，就不要为了“统一都叫 DTO”硬造 DTO。
 - 若跨模块复用现有字段，默认导入目标 DTO 并组合；不要在当前模块手写复制别的模块字段。
 - 实体字段与物理约束以 Drizzle Table 为准；`BaseXxxDto` 及其衍生字段默认向对应 Drizzle table / schema 看齐，不手写脱锚字段。
+- 输出 DTO 中数据库 nullable 字段必须声明为 `: T | null`（必填字段、值可为 `null`），禁止使用 `?: T | null`（可选字段）。前端依赖稳定的数据结构，字段必须始终存在，即使值为 `null` 也不允许字段缺失。Service 层赋值时，对可能为 `undefined` 的来源（如可选链 `?.`、`|| undefined`）必须使用 `?? null` 确保显式返回 `null`，不得让字段在 JSON 序列化时被省略。
 
 ## 分层与职责
 
@@ -66,6 +67,8 @@
 - 禁止为平台通用 DTO 新增空心别名或改名包装；需要单个 `id`、分页参数、`userId`、`ids` 时，直接在 controller / service 签名中使用 `IdDto`、`PageDto`、`UserIdDto`、`IdsDto`。
 - 禁止在 DTO 文件中为了复用局部装饰器文案，新增 `*_DESCRIPTION`、`*_EXAMPLE`、`*_MESSAGE` 这类只服务当前文件的短文本常量。
 - 禁止通过 `*.public.dto.ts`、`response.dto.ts`、`detail.dto.ts` 拆出仅做转发的文件；若属于同一 owner 域，优先收口在同一个 owner DTO 文件中。
+- 禁止在输出 DTO 中对数据库 nullable 字段使用 `?: T | null`（可选字段），必须使用 `: T | null`（必填字段），确保 JSON 序列化时字段始终存在。
+- 禁止在 Service 层对输出 DTO 的 nullable 字段赋值 `undefined`（如 `level?.name`、`value ?? undefined`、`value || undefined`），导致字段被 JSON 序列化省略；必须使用 `?? null` 确保值始终为 `null` 或实际值。
 
 ## 枚举字段描述规范
 

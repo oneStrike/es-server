@@ -322,24 +322,24 @@ export class UserService {
     return {
       id: user.id,
       account: user.account,
-      phoneNumber: user.phoneNumber ?? undefined,
-      emailAddress: user.emailAddress ?? undefined,
-      levelId: user.levelId ?? undefined,
+      phoneNumber: user.phoneNumber,
+      emailAddress: user.emailAddress,
+      levelId: user.levelId,
       nickname: user.nickname,
-      avatarUrl: user.avatarUrl ?? undefined,
-      profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? undefined,
-      signature: user.signature ?? undefined,
-      bio: user.bio ?? undefined,
+      avatarUrl: user.avatarUrl,
+      profileBackgroundImageUrl: user.profileBackgroundImageUrl,
+      signature: user.signature,
+      bio: user.bio,
       isEnabled: user.isEnabled,
       genderType: user.genderType,
-      birthDate: user.birthDate ?? undefined,
+      birthDate: user.birthDate,
       points: growth?.points ?? 0,
       experience: growth?.experience ?? 0,
       status: user.status,
-      banReason: user.banReason ?? undefined,
-      banUntil: user.banUntil ?? undefined,
-      lastLoginAt: user.lastLoginAt ?? undefined,
-      lastLoginIp: user.lastLoginIp ?? undefined,
+      banReason: user.banReason,
+      banUntil: user.banUntil,
+      lastLoginAt: user.lastLoginAt,
+      lastLoginIp: user.lastLoginIp,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }
@@ -370,7 +370,7 @@ export class UserService {
       canFavorite,
       canFollow,
       reason,
-      until: user.banUntil ?? undefined,
+      until: user.banUntil,
     }
   }
 
@@ -408,8 +408,8 @@ export class UserService {
       ? {
           id: level.id,
           name: level.name,
-          icon: level.icon ?? undefined,
-          color: level.color ?? undefined,
+          icon: level.icon,
+          color: level.color,
           requiredExperience: level.requiredExperience,
         }
       : undefined

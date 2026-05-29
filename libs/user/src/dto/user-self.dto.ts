@@ -228,7 +228,7 @@ export class UserStatusSummaryDto extends PickType(BaseAppUserDto, [
     required: false,
     validation: false,
   })
-  reason?: string
+  reason?: string | null
 
   @DateProperty({
     description: '限制到期时间',
@@ -236,7 +236,7 @@ export class UserStatusSummaryDto extends PickType(BaseAppUserDto, [
     required: false,
     validation: false,
   })
-  until?: Date
+  until?: Date | null
 }
 
 /**
@@ -320,7 +320,7 @@ export class UserCenterGrowthDto extends UserGrowthSnapshotFieldsDto {
     required: false,
     validation: false,
   })
-  levelId?: number
+  levelId?: number | null
 
   @StringProperty({
     description: '当前等级名称',
@@ -328,7 +328,7 @@ export class UserCenterGrowthDto extends UserGrowthSnapshotFieldsDto {
     required: false,
     validation: false,
   })
-  levelName?: string
+  levelName?: string | null
 
   @StringProperty({
     description: '当前等级图标 URL',
@@ -336,7 +336,7 @@ export class UserCenterGrowthDto extends UserGrowthSnapshotFieldsDto {
     required: false,
     validation: false,
   })
-  levelIcon?: string
+  levelIcon?: string | null
 
   @StringProperty({
     description: '当前等级颜色',
@@ -344,7 +344,7 @@ export class UserCenterGrowthDto extends UserGrowthSnapshotFieldsDto {
     required: false,
     validation: false,
   })
-  levelColor?: string
+  levelColor?: string | null
 
   @NumberProperty({
     description: '徽章数量',
@@ -417,7 +417,7 @@ export class UserCenterLastLoginGeoDto {
     maxLength: 100,
     validation: false,
   })
-  geoCountry?: string
+  geoCountry?: string | null
 
   @StringProperty({
     description: '最近一次登录IP归属省份',
@@ -426,7 +426,7 @@ export class UserCenterLastLoginGeoDto {
     maxLength: 100,
     validation: false,
   })
-  geoProvince?: string
+  geoProvince?: string | null
 
   @StringProperty({
     description: '最近一次登录IP归属城市',
@@ -435,7 +435,7 @@ export class UserCenterLastLoginGeoDto {
     maxLength: 100,
     validation: false,
   })
-  geoCity?: string
+  geoCity?: string | null
 
   @StringProperty({
     description: '最近一次登录IP归属运营商',
@@ -444,7 +444,7 @@ export class UserCenterLastLoginGeoDto {
     maxLength: 100,
     validation: false,
   })
-  geoIsp?: string
+  geoIsp?: string | null
 }
 
 /**

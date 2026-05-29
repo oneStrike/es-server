@@ -426,8 +426,8 @@ export class ForumTopicService {
   // 获取主题审核人展示摘要。
   private async getTopicAuditorSummary(topic: InteractionAuditorSummaryKey) {
     const auditor = {
-      auditById: topic.auditById ?? undefined,
-      auditRole: topic.auditRole ?? undefined,
+      auditById: topic.auditById,
+      auditRole: topic.auditRole,
     }
     const key =
       this.interactionSummaryReadService.buildAuditorSummaryKey(auditor)
@@ -650,10 +650,10 @@ export class ForumTopicService {
 
         return {
           ...item,
-          geoCountry: item.geoCountry ?? undefined,
-          geoProvince: item.geoProvince ?? undefined,
-          geoCity: item.geoCity ?? undefined,
-          geoIsp: item.geoIsp ?? undefined,
+          geoCountry: item.geoCountry,
+          geoProvince: item.geoProvince,
+          geoCity: item.geoCity,
+          geoIsp: item.geoIsp,
           liked: likedMap.get(item.id) ?? false,
           favorited: favoritedMap.get(item.id) ?? false,
           user: userMap.get(item.userId),
@@ -1180,11 +1180,11 @@ export class ForumTopicService {
           bodyVersion: BODY_VERSION_V1,
           sectionId,
           userId,
-          geoCountry: context.geoCountry ?? undefined,
-          geoProvince: context.geoProvince ?? undefined,
-          geoCity: context.geoCity ?? undefined,
-          geoIsp: context.geoIsp ?? undefined,
-          geoSource: context.geoSource ?? undefined,
+          geoCountry: context.geoCountry,
+          geoProvince: context.geoProvince,
+          geoCity: context.geoCity,
+          geoIsp: context.geoIsp,
+          geoSource: context.geoSource,
           ...media,
           auditStatus,
           sensitiveWordHits: publicHits.length ? publicHits : undefined,
@@ -1262,11 +1262,11 @@ export class ForumTopicService {
       afterData: JSON.stringify(topic),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
-      geoCountry: context.geoCountry ?? undefined,
-      geoProvince: context.geoProvince ?? undefined,
-      geoCity: context.geoCity ?? undefined,
-      geoIsp: context.geoIsp ?? undefined,
-      geoSource: context.geoSource ?? undefined,
+      geoCountry: context.geoCountry,
+      geoProvince: context.geoProvince,
+      geoCity: context.geoCity,
+      geoIsp: context.geoIsp,
+      geoSource: context.geoSource,
     })
 
     const topicCreatedEvent = this.buildCreateTopicEventEnvelope({
@@ -1353,17 +1353,16 @@ export class ForumTopicService {
       isLocked: topic.isLocked,
       isHidden: topic.isHidden,
       auditStatus: topic.auditStatus,
-      auditReason: topic.auditReason ?? undefined,
-      auditAt: topic.auditAt ?? undefined,
+      auditReason: topic.auditReason,
+      auditAt: topic.auditAt,
       viewCount: topic.viewCount,
       likeCount: topic.likeCount,
       commentCount: topic.commentCount,
       favoriteCount: topic.favoriteCount,
       version: topic.version,
-      sensitiveWordHits: (topic.sensitiveWordHits ??
-        undefined) as AdminForumTopicDetailDto['sensitiveWordHits'],
-      lastCommentAt: topic.lastCommentAt ?? undefined,
-      lastCommentUserId: topic.lastCommentUserId ?? undefined,
+      sensitiveWordHits: topic.sensitiveWordHits as AdminForumTopicDetailDto['sensitiveWordHits'],
+      lastCommentAt: topic.lastCommentAt,
+      lastCommentUserId: topic.lastCommentUserId,
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
       hashtags,
@@ -1371,7 +1370,7 @@ export class ForumTopicService {
         ? {
             id: topic.section.id,
             name: topic.section.name,
-            description: topic.section.description ?? undefined,
+            description: topic.section.description,
             icon: topic.section.icon,
             cover: topic.section.cover,
             isEnabled: topic.section.isEnabled,
@@ -1382,15 +1381,15 @@ export class ForumTopicService {
         ? {
             id: topic.user.id,
             nickname: topic.user.nickname,
-            avatarUrl: topic.user.avatarUrl ?? undefined,
-            signature: topic.user.signature ?? undefined,
-            bio: topic.user.bio ?? undefined,
+            avatarUrl: topic.user.avatarUrl,
+            signature: topic.user.signature,
+            bio: topic.user.bio,
             isEnabled: topic.user.isEnabled,
             points,
-            levelId: topic.user.levelId ?? undefined,
+            levelId: topic.user.levelId,
             status: topic.user.status,
-            banReason: topic.user.banReason ?? undefined,
-            banUntil: topic.user.banUntil ?? undefined,
+            banReason: topic.user.banReason,
+            banUntil: topic.user.banUntil,
             counts: topic.user.counts
               ? {
                   commentCount: topic.user.counts.commentCount,
@@ -1415,7 +1414,7 @@ export class ForumTopicService {
               : undefined,
           }
         : undefined,
-      auditorSummary: auditorSummary ?? undefined,
+      auditorSummary,
     } as AdminForumTopicDetailDto
   }
 
@@ -1520,10 +1519,10 @@ export class ForumTopicService {
       userId: topic.userId,
       title: topic.title,
       html: topic.html,
-      geoCountry: topic.geoCountry ?? undefined,
-      geoProvince: topic.geoProvince ?? undefined,
-      geoCity: topic.geoCity ?? undefined,
-      geoIsp: topic.geoIsp ?? undefined,
+      geoCountry: topic.geoCountry,
+      geoProvince: topic.geoProvince,
+      geoCity: topic.geoCity,
+      geoIsp: topic.geoIsp,
       images: topic.images,
       videos: topic.videos as JsonValue,
       isPinned: topic.isPinned,
@@ -1533,7 +1532,7 @@ export class ForumTopicService {
       commentCount: topic.commentCount,
       likeCount: topic.likeCount,
       favoriteCount: topic.favoriteCount,
-      lastCommentAt: topic.lastCommentAt ?? undefined,
+      lastCommentAt: topic.lastCommentAt,
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
       liked: interaction.liked,
@@ -1541,7 +1540,7 @@ export class ForumTopicService {
       user: {
         id: topic.user.id,
         nickname: topic.user.nickname,
-        avatarUrl: topic.user.avatarUrl ?? undefined,
+        avatarUrl: topic.user.avatarUrl,
         isFollowed: interaction.isFollowed,
       },
       section: {
@@ -1875,10 +1874,10 @@ export class ForumTopicService {
           userId: topic.userId,
           title: topic.title,
           contentPreview: topic.contentPreview,
-          geoCountry: topic.geoCountry ?? undefined,
-          geoProvince: topic.geoProvince ?? undefined,
-          geoCity: topic.geoCity ?? undefined,
-          geoIsp: topic.geoIsp ?? undefined,
+          geoCountry: topic.geoCountry,
+          geoProvince: topic.geoProvince,
+          geoCity: topic.geoCity,
+          geoIsp: topic.geoIsp,
           images: topic.images,
           videos: topic.videos,
           isPinned: topic.isPinned,
@@ -2065,11 +2064,11 @@ export class ForumTopicService {
       afterData: JSON.stringify(updatedTopic),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
-      geoCountry: context.geoCountry ?? undefined,
-      geoProvince: context.geoProvince ?? undefined,
-      geoCity: context.geoCity ?? undefined,
-      geoIsp: context.geoIsp ?? undefined,
-      geoSource: context.geoSource ?? undefined,
+      geoCountry: context.geoCountry,
+      geoProvince: context.geoProvince,
+      geoCity: context.geoCity,
+      geoIsp: context.geoIsp,
+      geoSource: context.geoSource,
     })
 
     return true
@@ -2239,11 +2238,11 @@ export class ForumTopicService {
       beforeData: JSON.stringify(topic),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
-      geoCountry: context.geoCountry ?? undefined,
-      geoProvince: context.geoProvince ?? undefined,
-      geoCity: context.geoCity ?? undefined,
-      geoIsp: context.geoIsp ?? undefined,
-      geoSource: context.geoSource ?? undefined,
+      geoCountry: context.geoCountry,
+      geoProvince: context.geoProvince,
+      geoCity: context.geoCity,
+      geoIsp: context.geoIsp,
+      geoSource: context.geoSource,
     })
 
     return true

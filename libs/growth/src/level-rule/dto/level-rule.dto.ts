@@ -36,7 +36,7 @@ export class BaseUserLevelRuleDto extends BaseDto {
     required: false,
     maxLength: 255,
   })
-  icon?: string
+  icon?: string | null
 
   @NumberProperty({
     description: '所需经验值',
@@ -137,7 +137,7 @@ export class BaseUserLevelRuleDto extends BaseDto {
     required: false,
     maxLength: 20,
   })
-  color?: string
+  color?: string | null
 }
 
 export class CreateUserLevelRuleDto extends OmitType(
