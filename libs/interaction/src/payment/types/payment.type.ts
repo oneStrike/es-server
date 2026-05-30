@@ -73,7 +73,6 @@ export interface PaymentProviderNotifyInput {
 export interface PaymentProviderParsedNotify {
   providerTradeNo?: string
   paidAmount?: number
-  agreementNo?: string
 }
 
 /**

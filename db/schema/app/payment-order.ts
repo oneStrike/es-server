@@ -36,10 +36,8 @@ export const paymentOrder = snakeCase.table(
     environment: smallint().notNull(),
     /** 客户端应用键，同一部署内区分多应用。 */
     clientAppKey: varchar({ length: 80 }).default('').notNull(),
-    /** 订阅模式（1=一次性；2=自动续费签约首单；3=自动续费代扣订单）。 */
+    /** 订阅模式（1=一次性）。 */
     subscriptionMode: smallint().default(1).notNull(),
-    /** 自动续费协议 ID，非自动续费订单为空。 */
-    autoRenewAgreementId: integer(),
     /** 订单状态（1=待支付；2=已支付；3=已关闭；4=退款中；5=已退款）。 */
     status: smallint().default(1).notNull(),
     /** 应付金额，单位为分。 */
@@ -107,7 +105,7 @@ export const paymentOrder = snakeCase.table(
     ),
     check(
       'payment_order_subscription_mode_valid_chk',
-      sql`${table.subscriptionMode} in (1, 2, 3)`,
+      sql`${table.subscriptionMode} in (1)`,
     ),
     check(
       'payment_order_status_valid_chk',

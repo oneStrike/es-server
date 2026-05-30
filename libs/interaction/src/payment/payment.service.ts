@@ -23,7 +23,6 @@ import { PAYMENT_PROVIDER_ADAPTERS } from '../payment/payment-provider.adapter'
 import {
   PaymentOrderStatusEnum,
   PaymentOrderTypeEnum,
-  PaymentSubscriptionModeEnum,
 } from '../payment/payment.constant'
 import { WalletService } from '../wallet/wallet.service'
 
@@ -101,7 +100,6 @@ export class PaymentService {
       environment: order.environment,
       clientAppKey: order.clientAppKey,
       subscriptionMode: order.subscriptionMode,
-      autoRenewAgreementId: order.autoRenewAgreementId,
       status: order.status,
       payableAmount: order.payableAmount,
       paidAmount: order.paidAmount,
@@ -280,17 +278,12 @@ export class PaymentService {
     const parsed = adapter.parseNotify(notifyInput)
     const providerTradeNo = parsed.providerTradeNo
     const paidAmount = parsed.paidAmount
-    const agreementNo = parsed.agreementNo
     if (!providerTradeNo || paidAmount === undefined) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '支付回调缺少已验签交易字段',
       )
     }
-    const autoRenewAgreementNo =
-      order.subscriptionMode === PaymentSubscriptionModeEnum.AUTO_RENEW_SIGNING
-        ? this.requireAutoRenewAgreementNo(agreementNo)
-        : undefined
     if (
       paidAmount !== order.payableAmount ||
       (dto.paidAmount != null && dto.paidAmount !== paidAmount) ||
@@ -356,7 +349,7 @@ export class PaymentService {
         )
       }
 
-      await this.settlePaidOrder(tx, paidOrder, autoRenewAgreementNo)
+      await this.settlePaidOrder(tx, paidOrder)
 
       this.logger.log(
         `payment_order_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerConfigId=${paidOrder.providerConfigId} providerConfigVersion=${paidOrder.providerConfigVersion}`,
@@ -378,14 +371,6 @@ export class PaymentService {
       )
     }
 
-    if (
-      order.subscriptionMode === PaymentSubscriptionModeEnum.AUTO_RENEW_SIGNING
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '自动续费签约订单不能手工确认',
-      )
-    }
     const paidAmount = dto.paidAmount
     const providerTradeNo = dto.providerTradeNo
     if (paidAmount === undefined || paidAmount === null || !providerTradeNo) {
@@ -498,17 +483,6 @@ export class PaymentService {
     }
   }
 
-  // 自动续费签约订单必须携带 provider 已验签协议号，禁止本地合成协议身份。
-  private requireAutoRenewAgreementNo(agreementNo?: string) {
-    if (!agreementNo) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '自动续费回调缺少已验签协议号',
-      )
-    }
-    return agreementNo
-  }
-
   // 获取指定支付渠道的 provider 适配器。
   private getPaymentAdapter(channel: number) {
     const adapter = PAYMENT_PROVIDER_ADAPTERS.find(
@@ -538,17 +512,13 @@ export class PaymentService {
   }
 
   // 已支付订单的资产/会员结算统一从这里分派，避免 admin 和 app 出现两套发放路径。
-  private async settlePaidOrder(
-    tx: PaymentTx,
-    order: PaymentOrderSelect,
-    agreementNo?: string,
-  ) {
+  private async settlePaidOrder(tx: PaymentTx, order: PaymentOrderSelect) {
     if (order.orderType === PaymentOrderTypeEnum.CURRENCY_RECHARGE) {
       await this.walletService.applyRechargeSettlement(tx, order)
       return
     }
     if (order.orderType === PaymentOrderTypeEnum.VIP_SUBSCRIPTION) {
-      await this.membershipService.activatePaidOrder(tx, order, agreementNo)
+      await this.membershipService.activatePaidOrder(tx, order)
       return
     }
     throw new BusinessException(

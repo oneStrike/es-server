@@ -78,8 +78,4 @@ export enum PaymentOrderStatusEnum {
 export enum PaymentSubscriptionModeEnum {
   /** 一次性支付。 */
   ONE_TIME = 1,
-  /** 自动续费签约首单。 */
-  AUTO_RENEW_SIGNING = 2,
-  /** 自动续费代扣订单。 */
-  AUTO_RENEW_WITHHOLD = 3,
 }

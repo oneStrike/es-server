@@ -1,11 +1,7 @@
 /// <reference types="jest" />
 
 import { createHmac } from 'node:crypto'
-import {
-  PaymentChannelEnum,
-  PaymentSceneEnum,
-  PaymentSubscriptionModeEnum,
-} from './payment.constant'
+import { PaymentChannelEnum, PaymentSceneEnum } from './payment.constant'
 import {
   AlipayPaymentProviderAdapter,
   WechatPaymentProviderAdapter,
@@ -25,7 +21,6 @@ const baseOrder = {
   environment: 1,
   clientAppKey: 'default-app',
   subscriptionMode: 1,
-  autoRenewAgreementId: null,
   status: 1,
   payableAmount: 1000,
   paidAmount: 0,
@@ -57,7 +52,6 @@ const baseConfig = {
   mchId: 'mch-id',
   notifyUrl: 'https://example.com/notify',
   returnUrl: 'https://example.com/return',
-  agreementNotifyUrl: 'https://example.com/agreement/notify',
   allowedReturnDomains: ['example.com'],
   certMode: 1,
   publicKeyRef: null,
@@ -69,7 +63,6 @@ const baseConfig = {
   configVersion: 1,
   credentialVersionRef: 'seed://payment/alipay/v1',
   configMetadata: null,
-  supportsAutoRenew: true,
   sortOrder: 0,
   isEnabled: true,
   createdAt: new Date('2026-05-06T00:00:00.000Z'),
@@ -180,25 +173,21 @@ describe('Payment provider adapters', () => {
     })
   })
 
-  it('verifies signed payment notify payloads against order, amount, channel, and agreement number', () => {
+  it('verifies signed payment notify payloads against order, amount, and channel only', () => {
     const adapter = new AlipayPaymentProviderAdapter()
-    const order = {
-      ...baseOrder,
-      subscriptionMode: PaymentSubscriptionModeEnum.AUTO_RENEW_SIGNING,
-    }
+    const order = baseOrder
     const config = {
       ...baseConfig,
       configMetadata: {
         verifySecretEnvKey: PAYMENT_VERIFY_SECRET_ENV,
       },
     }
-    const payload = buildSignedPaymentPayload({
-      agreementNo: 'provider-agreement-no',
-    })
+    const payload = buildSignedPaymentPayload()
 
     expect(adapter.verifyNotify({ order, config, payload })).toBe(true)
-    expect(adapter.parseNotify({ order, config, payload })).toMatchObject({
-      agreementNo: 'provider-agreement-no',
+    expect(adapter.parseNotify({ order, config, payload })).toEqual({
+      paidAmount: 1000,
+      providerTradeNo: 'provider-trade-no',
     })
     expect(
       adapter.verifyNotify({
@@ -213,9 +202,9 @@ describe('Payment provider adapters', () => {
         config,
         payload: {
           ...payload,
-          agreementNo: 'tampered-agreement-no',
+          extraUnsignedField: 'ignored',
         },
       }),
-    ).toBe(false)
+    ).toBe(true)
   })
 })

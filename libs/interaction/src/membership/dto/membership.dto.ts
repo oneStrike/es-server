@@ -12,15 +12,8 @@ import {
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { CreatePaymentOrderBaseDto } from '../../payment/dto/payment.dto'
+import { PaymentSubscriptionModeEnum } from '../../payment/payment.constant'
 import {
-  ClientPlatformEnum,
-  PaymentChannelEnum,
-  PaymentSceneEnum,
-  PaymentSubscriptionModeEnum,
-  ProviderEnvironmentEnum,
-} from '../../payment/payment.constant'
-import {
-  MembershipAutoRenewAgreementStatusEnum,
   MembershipBenefitGrantPolicyEnum,
   MembershipBenefitTypeEnum,
   MembershipPlanTierEnum,
@@ -129,14 +122,6 @@ export class BaseMembershipPlanDto extends BaseDto {
   })
   bonusPointAmount?: number
 
-  @BooleanProperty({
-    description: '是否支持自动续费签约',
-    example: true,
-    required: false,
-    default: false,
-  })
-  autoRenewEnabled?: boolean
-
   @NumberProperty({
     description: '排序值',
     example: 0,
@@ -163,7 +148,6 @@ export class CreateMembershipPlanDto extends PickType(BaseMembershipPlanDto, [
   'durationDays',
   'displayTag',
   'bonusPointAmount',
-  'autoRenewEnabled',
   'sortOrder',
   'isEnabled',
 ] as const) {
@@ -369,14 +353,6 @@ export class BaseMembershipPageConfigDto extends BaseDto {
   memberNoticeItems?: string[] | null
 
   @StringProperty({
-    description: '自动续费提示',
-    example: '自动续费可随时取消',
-    required: false,
-    default: '',
-  })
-  autoRenewNotice?: string
-
-  @StringProperty({
     description: '确认开通协议提示文案',
     example: '开通即同意《会员服务协议》和《隐私政策》',
     required: false,
@@ -467,7 +443,6 @@ export class CreateMembershipPageConfigDto extends IntersectionType(
   PickType(BaseMembershipPageConfigDto, [
     'title',
     'memberNoticeItems',
-    'autoRenewNotice',
     'checkoutAgreementText',
     'submitButtonTemplate',
     'sortOrder',
@@ -511,7 +486,7 @@ export class CreateVipSubscriptionOrderDto extends CreatePaymentOrderBaseDto {
   pageKey?: string
 
   @EnumProperty({
-    description: '订阅模式（1=一次性订阅；2=自动续费签约首单）',
+    description: '订阅模式（1=一次性订阅，不传默认一次性）',
     enum: PaymentSubscriptionModeEnum,
     example: PaymentSubscriptionModeEnum.ONE_TIME,
     required: false,
@@ -519,116 +494,6 @@ export class CreateVipSubscriptionOrderDto extends CreatePaymentOrderBaseDto {
   })
   subscriptionMode?: PaymentSubscriptionModeEnum
 }
-
-export class BaseMembershipAutoRenewAgreementDto extends BaseDto {
-  @NumberProperty({
-    description: '用户 ID',
-    example: 1,
-  })
-  userId!: number
-
-  @NumberProperty({
-    description: 'VIP 套餐 ID',
-    example: 1,
-  })
-  planId!: number
-
-  @EnumProperty({
-    description: '支付渠道（1=支付宝；2=微信）',
-    enum: PaymentChannelEnum,
-    example: PaymentChannelEnum.ALIPAY,
-  })
-  channel!: PaymentChannelEnum
-
-  @EnumProperty({
-    description: '支付场景（1=App；2=H5；3=小程序）',
-    enum: PaymentSceneEnum,
-    example: PaymentSceneEnum.APP,
-  })
-  paymentScene!: PaymentSceneEnum
-
-  @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
-    enum: ClientPlatformEnum,
-    example: ClientPlatformEnum.ANDROID,
-  })
-  platform!: ClientPlatformEnum
-
-  @EnumProperty({
-    description: '运行环境（1=沙箱；2=正式）',
-    enum: ProviderEnvironmentEnum,
-    example: ProviderEnvironmentEnum.PRODUCTION,
-  })
-  environment!: ProviderEnvironmentEnum
-
-  @StringProperty({
-    description: '客户端应用键',
-    example: 'default-app',
-  })
-  clientAppKey!: string
-
-  @NumberProperty({
-    description: '支付 provider 配置 ID',
-    example: 1,
-  })
-  providerConfigId!: number
-
-  @NumberProperty({
-    description: 'provider 配置版本快照',
-    example: 1,
-  })
-  providerConfigVersion!: number
-
-  @StringProperty({
-    description: '密钥版本引用快照',
-    example: 'kms://payment/wechat/default/v1',
-  })
-  credentialVersionRef!: string
-
-  @StringProperty({
-    description: '第三方签约协议号',
-    example: 'provider-agreement-no',
-  })
-  agreementNo!: string
-
-  @EnumProperty({
-    description: '协议状态（1=有效；2=已取消；3=已过期；4=签约失败）',
-    enum: MembershipAutoRenewAgreementStatusEnum,
-    example: MembershipAutoRenewAgreementStatusEnum.ACTIVE,
-  })
-  status!: MembershipAutoRenewAgreementStatusEnum
-
-  @DateProperty({
-    description: '签约成功时间',
-    required: false,
-  })
-  signedAt?: Date | null
-
-  @DateProperty({
-    description: '下次预计续扣时间',
-    required: false,
-  })
-  nextRenewAt?: Date | null
-
-  @DateProperty({
-    description: '取消时间',
-    required: false,
-  })
-  cancelledAt?: Date | null
-}
-
-export class QueryMembershipAutoRenewAgreementDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseMembershipAutoRenewAgreementDto, [
-      'userId',
-      'planId',
-      'channel',
-      'paymentScene',
-      'status',
-    ] as const),
-  ),
-) {}
 
 export class MembershipSubscriptionSummaryDto {
   @BooleanProperty({
@@ -650,12 +515,6 @@ export class MembershipSubscriptionSummaryDto {
     required: false,
   })
   expiresAt?: Date | null
-
-  @BooleanProperty({
-    description: '是否存在有效自动续费协议',
-    example: false,
-  })
-  autoRenewActive!: boolean
 }
 
 export class VipSubscriptionPageDto {

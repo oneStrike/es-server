@@ -96,14 +96,6 @@ export class BasePaymentProviderConfigDto extends BaseDto {
   })
   returnUrl?: string | null
 
-  @StringProperty({
-    description: '自动续费签约通知地址',
-    example: 'https://example.com/payment/agreement/notify',
-    required: false,
-    type: 'url',
-  })
-  agreementNotifyUrl?: string | null
-
   @ArrayProperty({
     description: 'H5 允许返回域名列表',
     itemType: 'string',
@@ -191,14 +183,6 @@ export class BasePaymentProviderConfigDto extends BaseDto {
   })
   configMetadata?: Record<string, unknown> | null
 
-  @BooleanProperty({
-    description: '是否支持自动续费签约',
-    example: false,
-    required: false,
-    default: false,
-  })
-  supportsAutoRenew?: boolean
-
   @NumberProperty({
     description: '排序值',
     example: 0,
@@ -230,7 +214,6 @@ export class CreatePaymentProviderConfigDto extends PickType(
     'mchId',
     'notifyUrl',
     'returnUrl',
-    'agreementNotifyUrl',
     'allowedReturnDomains',
     'certMode',
     'publicKeyRef',
@@ -242,7 +225,6 @@ export class CreatePaymentProviderConfigDto extends PickType(
     'configVersion',
     'credentialVersionRef',
     'configMetadata',
-    'supportsAutoRenew',
     'sortOrder',
     'isEnabled',
   ] as const,
@@ -365,7 +347,7 @@ export class PaymentOrderResultDto {
   status!: PaymentOrderStatusEnum
 
   @EnumProperty({
-    description: '订阅模式（1=一次性；2=自动续费签约首单；3=自动续费代扣订单）',
+    description: '订阅模式（1=一次性）',
     enum: PaymentSubscriptionModeEnum,
     example: PaymentSubscriptionModeEnum.ONE_TIME,
     required: false,
@@ -442,18 +424,11 @@ export class AdminPaymentOrderPageItemDto extends BaseDto {
   clientAppKey!: string
 
   @EnumProperty({
-    description: '订阅模式（1=一次性；2=自动续费签约首单；3=自动续费代扣订单）',
+    description: '订阅模式（1=一次性）',
     enum: PaymentSubscriptionModeEnum,
     example: PaymentSubscriptionModeEnum.ONE_TIME,
   })
   subscriptionMode!: PaymentSubscriptionModeEnum
-
-  @NumberProperty({
-    description: '自动续费协议 ID，非自动续费订单为空',
-    example: 1,
-    required: false,
-  })
-  autoRenewAgreementId?: number | null
 
   @EnumProperty({
     description: '订单状态（1=待支付；2=已支付；3=已关闭；4=退款中；5=已退款）',

@@ -1,12 +1,10 @@
 import {
-  BaseMembershipAutoRenewAgreementDto,
   BaseMembershipBenefitDefinitionDto,
   CreateMembershipBenefitDefinitionDto,
   CreateMembershipPageConfigDto,
   CreateMembershipPlanDto,
   MembershipPageConfigItemDto,
   MembershipPlanItemDto,
-  QueryMembershipAutoRenewAgreementDto,
   QueryMembershipBenefitDefinitionDto,
   QueryMembershipPageConfigDto,
   QueryMembershipPlanDto,
@@ -16,7 +14,7 @@ import {
 } from '@libs/interaction/membership/dto/membership.dto'
 import { MembershipService } from '@libs/interaction/membership/membership.service'
 import { ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -177,28 +175,5 @@ export class MembershipController {
       body.id,
       body.isEnabled,
     )
-  }
-
-  // 分页查询 VIP 自动续费协议。
-  @Get('auto-renew-agreement/page')
-  @ApiPageDoc({
-    summary: '分页查询 VIP 自动续费协议',
-    model: BaseMembershipAutoRenewAgreementDto,
-  })
-  async getMembershipAutoRenewAgreementPage(
-    @Query() query: QueryMembershipAutoRenewAgreementDto,
-  ) {
-    return this.membershipService.getMembershipAutoRenewAgreementPage(query)
-  }
-
-  // 取消 VIP 自动续费协议。
-  @Post('auto-renew-agreement/cancellation/create')
-  @ApiAuditDoc({
-    summary: '取消 VIP 自动续费协议',
-    model: Boolean,
-    audit: { actionType: AuditActionTypeEnum.UPDATE },
-  })
-  async cancelMembershipAutoRenewAgreement(@Body() body: IdDto) {
-    return this.membershipService.cancelMembershipAutoRenewAgreement(body.id)
   }
 }

@@ -15,7 +15,7 @@ import {
 
 /**
  * 会员订阅页配置表。
- * 会员说明、自动续费提示和协议引用由服务端配置输出，避免客户端硬编码法务文案。
+ * 会员说明和协议引用由服务端配置输出，避免客户端硬编码法务文案。
  */
 export const membershipPageConfig = snakeCase.table(
   'membership_page_config',
@@ -28,8 +28,6 @@ export const membershipPageConfig = snakeCase.table(
     title: varchar({ length: 80 }).notNull(),
     /** 会员说明条目。 */
     memberNoticeItems: jsonb(),
-    /** 自动续费提示。 */
-    autoRenewNotice: text().default('').notNull(),
     /** 确认开通协议提示文案。 */
     checkoutAgreementText: text().default('').notNull(),
     /** 支付按钮文案模板。 */

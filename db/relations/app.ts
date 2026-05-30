@@ -182,7 +182,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     userPurchaseRecords: r.many.userPurchaseRecord(),
     contentEntitlements: r.many.userContentEntitlement(),
     membershipSubscriptions: r.many.userMembershipSubscription(),
-    membershipAutoRenewAgreements: r.many.membershipAutoRenewAgreement(),
     membershipBenefitClaimRecords: r.many.membershipBenefitClaimRecord(),
     paymentOrders: r.many.paymentOrder(),
     userCouponInstances: r.many.userCouponInstance(),
@@ -508,7 +507,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   },
   membershipPlan: {
     subscriptions: r.many.userMembershipSubscription(),
-    autoRenewAgreements: r.many.membershipAutoRenewAgreement(),
     benefits: r.many.membershipPlanBenefit(),
     claimRecords: r.many.membershipBenefitClaimRecord(),
     pageConfigs: r.many.membershipPageConfig({
@@ -597,23 +595,8 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     }),
     benefitClaimRecords: r.many.membershipBenefitClaimRecord(),
   },
-  membershipAutoRenewAgreement: {
-    user: r.one.appUser({
-      from: r.membershipAutoRenewAgreement.userId,
-      to: r.appUser.id,
-    }),
-    plan: r.one.membershipPlan({
-      from: r.membershipAutoRenewAgreement.planId,
-      to: r.membershipPlan.id,
-    }),
-    providerConfig: r.one.paymentProviderConfig({
-      from: r.membershipAutoRenewAgreement.providerConfigId,
-      to: r.paymentProviderConfig.id,
-    }),
-  },
   paymentProviderConfig: {
     orders: r.many.paymentOrder(),
-    autoRenewAgreements: r.many.membershipAutoRenewAgreement(),
   },
   paymentOrder: {
     user: r.one.appUser({
@@ -623,10 +606,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     providerConfig: r.one.paymentProviderConfig({
       from: r.paymentOrder.providerConfigId,
       to: r.paymentProviderConfig.id,
-    }),
-    autoRenewAgreement: r.one.membershipAutoRenewAgreement({
-      from: r.paymentOrder.autoRenewAgreementId,
-      to: r.membershipAutoRenewAgreement.id,
     }),
   },
   adProviderConfig: {

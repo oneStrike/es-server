@@ -53,17 +53,3 @@ export enum MembershipBenefitClaimStatusEnum {
   /** 已撤销。 */
   REVOKED = 3,
 }
-
-/**
- * 会员自动续费协议状态。
- */
-export enum MembershipAutoRenewAgreementStatusEnum {
-  /** 协议有效。 */
-  ACTIVE = 1,
-  /** 已取消。 */
-  CANCELLED = 2,
-  /** 已过期。 */
-  EXPIRED = 3,
-  /** 签约失败。 */
-  FAILED = 4,
-}

@@ -15,7 +15,6 @@ import { CreatePaymentOrderBaseDto } from '../payment/dto/payment.dto'
 import { PAYMENT_PROVIDER_ADAPTERS } from '../payment/payment-provider.adapter'
 import {
   PaymentOrderStatusEnum,
-  PaymentOrderTypeEnum,
   PaymentSceneEnum,
   PaymentSubscriptionModeEnum,
 } from '../payment/payment.constant'
@@ -44,27 +43,15 @@ export class PaymentOrderService {
   // 创建支付订单并在同一事务中写入客户端支付参数，避免半成品 pending 订单。
   async createPaymentOrder(userId: number, input: CreatePaymentOrderInput) {
     this.assertPaymentSceneContext(input)
-    const config = await this.resolvePaymentProviderConfig(input)
     const subscriptionMode =
       input.subscriptionMode ?? PaymentSubscriptionModeEnum.ONE_TIME
-    if (
-      input.orderType !== PaymentOrderTypeEnum.VIP_SUBSCRIPTION &&
-      subscriptionMode !== PaymentSubscriptionModeEnum.ONE_TIME
-    ) {
+    if (subscriptionMode !== PaymentSubscriptionModeEnum.ONE_TIME) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '非 VIP 订单不支持订阅模式',
+        '支付订单仅支持一次性支付',
       )
     }
-    if (
-      subscriptionMode !== PaymentSubscriptionModeEnum.ONE_TIME &&
-      !config.supportsAutoRenew
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '当前支付配置不支持自动续费',
-      )
-    }
+    const config = await this.resolvePaymentProviderConfig(input)
     const orderNo = this.generateOrderNo()
     const clientAppKey = this.normalizeKey(input.clientAppKey)
     const clientContext = {
@@ -166,7 +153,6 @@ export class PaymentOrderService {
       mchId: config.mchId,
       notifyUrl: config.notifyUrl,
       returnUrl: config.returnUrl,
-      agreementNotifyUrl: config.agreementNotifyUrl,
       allowedReturnDomains: config.allowedReturnDomains,
       certMode: config.certMode,
       publicKeyRef: config.publicKeyRef,
@@ -178,7 +164,6 @@ export class PaymentOrderService {
       configVersion: config.configVersion,
       credentialVersionRef: config.credentialVersionRef,
       configMetadata: config.configMetadata,
-      supportsAutoRenew: config.supportsAutoRenew,
     }
   }
 

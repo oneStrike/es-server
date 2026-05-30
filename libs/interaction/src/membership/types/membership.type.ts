@@ -6,7 +6,7 @@ import type { CreateMembershipPlanDto } from '../dto/membership.dto'
 export type MembershipTx = Db
 
 /**
- * VIP 协议快照字段，写入订单和自动续费事实时冻结用户下单时看到的协议版本。
+ * VIP 协议快照字段，写入订单时冻结用户下单时看到的协议版本。
  */
 export type MembershipAgreementSnapshot = Pick<
   AppAgreementSelect,

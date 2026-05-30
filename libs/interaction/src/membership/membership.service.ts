@@ -2,7 +2,6 @@ import type {
   MembershipPageConfigSelect,
   MembershipPlanSelect,
   PaymentOrderSelect,
-  UserMembershipSubscriptionSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
@@ -34,7 +33,6 @@ import {
   CreateMembershipPlanDto,
   CreateVipSubscriptionOrderDto,
   MembershipPlanBenefitInputDto,
-  QueryMembershipAutoRenewAgreementDto,
   QueryMembershipBenefitDefinitionDto,
   QueryMembershipPageConfigDto,
   QueryMembershipPlanDto,
@@ -44,7 +42,6 @@ import {
   UpdateMembershipPlanDto,
 } from '../membership/dto/membership.dto'
 import {
-  MembershipAutoRenewAgreementStatusEnum,
   MembershipBenefitGrantPolicyEnum,
   MembershipBenefitTypeEnum,
   MembershipPlanTierEnum,
@@ -68,11 +65,6 @@ export class MembershipService {
   // 获取当前请求使用的 Drizzle 查询实例。
   private get db() {
     return this.drizzle.db
-  }
-
-  // 获取会员自动续费协议表定义。
-  private get membershipAutoRenewAgreement() {
-    return this.drizzle.schema.membershipAutoRenewAgreement
   }
 
   // 获取会员订阅页配置表定义。
@@ -113,78 +105,6 @@ export class MembershipService {
   // 获取用户会员订阅事实表定义。
   private get userMembershipSubscription() {
     return this.drizzle.schema.userMembershipSubscription
-  }
-
-  // 取消生效中的会员自动续费协议。
-  async cancelMembershipAutoRenewAgreement(id: number) {
-    const agreement =
-      await this.db.query.membershipAutoRenewAgreement.findFirst({
-        where: { id },
-      })
-    if (!agreement) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        'VIP 自动续费协议不存在',
-      )
-    }
-    if (agreement.status !== MembershipAutoRenewAgreementStatusEnum.ACTIVE) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '只有生效中的自动续费协议可以取消',
-      )
-    }
-
-    await this.db
-      .update(this.membershipAutoRenewAgreement)
-      .set({
-        status: MembershipAutoRenewAgreementStatusEnum.CANCELLED,
-        cancelledAt: new Date(),
-      })
-      .where(eq(this.membershipAutoRenewAgreement.id, id))
-    return true
-  }
-
-  // 分页查询会员自动续费协议事实。
-  async getMembershipAutoRenewAgreementPage(
-    dto: QueryMembershipAutoRenewAgreementDto,
-  ) {
-    const conditions: SQL[] = []
-    if (dto.userId !== undefined) {
-      conditions.push(eq(this.membershipAutoRenewAgreement.userId, dto.userId))
-    }
-    if (dto.planId !== undefined) {
-      conditions.push(eq(this.membershipAutoRenewAgreement.planId, dto.planId))
-    }
-    if (dto.channel !== undefined) {
-      conditions.push(
-        eq(this.membershipAutoRenewAgreement.channel, dto.channel),
-      )
-    }
-    if (dto.paymentScene !== undefined) {
-      conditions.push(
-        eq(this.membershipAutoRenewAgreement.paymentScene, dto.paymentScene),
-      )
-    }
-    if (dto.status !== undefined) {
-      conditions.push(eq(this.membershipAutoRenewAgreement.status, dto.status))
-    }
-    const where = conditions.length > 0 ? and(...conditions) : undefined
-    const page = this.drizzle.buildPage(dto)
-    const orderQuery = this.drizzle.buildOrderBy(
-      dto.orderBy ?? { createdAt: 'desc' as const, id: 'desc' as const },
-      { table: this.membershipAutoRenewAgreement },
-    )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.membershipAutoRenewAgreement)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db.$count(this.membershipAutoRenewAgreement, where),
-    ])
-    return toPageResult(list, total, page)
   }
 
   // 启用或停用会员订阅页配置。
@@ -257,7 +177,6 @@ export class MembershipService {
         durationDays: this.membershipPlan.durationDays,
         displayTag: this.membershipPlan.displayTag,
         bonusPointAmount: this.membershipPlan.bonusPointAmount,
-        autoRenewEnabled: this.membershipPlan.autoRenewEnabled,
         sortOrder: this.membershipPageConfigPlan.sortOrder,
         isEnabled: this.membershipPlan.isEnabled,
         createdAt: this.membershipPlan.createdAt,
@@ -1206,7 +1125,7 @@ export class MembershipService {
     return true
   }
 
-  // 创建套餐时补齐默认层级、划线价、积分和自动续费字段，避免数据库 check 约束由默认值误触发。
+  // 创建套餐时补齐默认层级、划线价和积分，避免数据库 check 约束由默认值误触发。
   private normalizeMembershipPlanCreate(dto: CreateMembershipPlanDto) {
     const { benefits: _benefits, ...data } = dto
     return {
@@ -1219,7 +1138,6 @@ export class MembershipService {
       ),
       bonusPointAmount: dto.bonusPointAmount ?? 0,
       displayTag: this.normalizeKey(dto.displayTag),
-      autoRenewEnabled: dto.autoRenewEnabled ?? false,
     }
   }
 
@@ -1328,22 +1246,17 @@ export class MembershipService {
       )
   }
 
-  // 创建 VIP 订阅支付订单，并冻结下单时的协议快照。
+  // 创建 VIP 订阅支付订单，并冻结下单时的购买上下文。
   async createVipSubscriptionOrder(
     userId: number,
     dto: CreateVipSubscriptionOrderDto,
   ) {
     const subscriptionMode =
       dto.subscriptionMode ?? PaymentSubscriptionModeEnum.ONE_TIME
-    if (
-      ![
-        PaymentSubscriptionModeEnum.ONE_TIME,
-        PaymentSubscriptionModeEnum.AUTO_RENEW_SIGNING,
-      ].includes(subscriptionMode)
-    ) {
+    if (subscriptionMode !== PaymentSubscriptionModeEnum.ONE_TIME) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        'VIP 下单只支持一次性订阅或自动续费签约首单',
+        'VIP 下单只支持一次性订阅',
       )
     }
     const plan = await this.db.query.membershipPlan.findFirst({
@@ -1356,15 +1269,6 @@ export class MembershipService {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         'VIP 套餐不存在或未启用',
-      )
-    }
-    if (
-      subscriptionMode === PaymentSubscriptionModeEnum.AUTO_RENEW_SIGNING &&
-      !plan.autoRenewEnabled
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '当前 VIP 套餐不支持自动续费',
       )
     }
     const pageConfig = await this.getEnabledMembershipPageConfig(dto.pageKey)
@@ -1389,7 +1293,7 @@ export class MembershipService {
     })
   }
 
-  // 读取当前启用会员订阅页的已发布协议快照，供下单和自动续费事实冻结版本。
+  // 读取当前启用会员订阅页的已发布协议快照，供下单冻结版本。
   private async resolveEnabledMembershipAgreementSnapshots(
     pageConfig: MembershipPageConfigSelect,
   ) {
@@ -1408,7 +1312,7 @@ export class MembershipService {
     )
   }
 
-  // 从协议读取结果中提取订单和签约事实需要冻结的最小快照字段。
+  // 从协议读取结果中提取订单需要冻结的最小快照字段。
   private toMembershipAgreementSnapshot(
     agreement: MembershipAgreementSnapshot,
   ): MembershipAgreementSnapshot {
@@ -1506,7 +1410,7 @@ export class MembershipService {
     }
   }
 
-  // 汇总当前用户的有效订阅和自动续费状态，订阅页只消费这一份摘要。
+  // 汇总当前用户的有效订阅状态，订阅页只消费这一份摘要。
   private async resolveMembershipSubscriptionSummary(userId: number) {
     const now = new Date()
     const [subscription] = await this.db
@@ -1535,25 +1439,10 @@ export class MembershipService {
       )
       .limit(1)
 
-    const [agreement] = await this.db
-      .select({ id: this.membershipAutoRenewAgreement.id })
-      .from(this.membershipAutoRenewAgreement)
-      .where(
-        and(
-          eq(this.membershipAutoRenewAgreement.userId, userId),
-          eq(
-            this.membershipAutoRenewAgreement.status,
-            MembershipAutoRenewAgreementStatusEnum.ACTIVE,
-          ),
-        ),
-      )
-      .limit(1)
-
     return {
       isActive: !!subscription,
       tier: subscription?.tier ?? null,
       expiresAt: subscription?.expiresAt ?? null,
-      autoRenewActive: !!agreement,
     }
   }
 
@@ -1587,12 +1476,8 @@ export class MembershipService {
       )
   }
 
-  // 支付成功后开通会员订阅和可选自动续费协议。
-  async activatePaidOrder(
-    tx: MembershipTx,
-    order: PaymentOrderSelect,
-    agreementNo?: string,
-  ) {
+  // 支付成功后开通会员订阅。
+  async activatePaidOrder(tx: MembershipTx, order: PaymentOrderSelect) {
     const plan = await tx.query.membershipPlan.findFirst({
       where: { id: order.targetId },
     })
@@ -1603,10 +1488,6 @@ export class MembershipService {
       )
     }
 
-    const autoRenewAgreementNo =
-      order.subscriptionMode === PaymentSubscriptionModeEnum.AUTO_RENEW_SIGNING
-        ? this.requireAutoRenewAgreementNo(agreementNo)
-        : undefined
     const now = new Date()
     const active = await tx.query.userMembershipSubscription.findFirst({
       where: {
@@ -1616,7 +1497,7 @@ export class MembershipService {
       orderBy: { endsAt: 'desc' },
     })
     const startsAt = active && active.endsAt > now ? active.endsAt : now
-    const [subscription] = await tx
+    await tx
       .insert(this.userMembershipSubscription)
       .values({
         userId: order.userId,
@@ -1661,81 +1542,6 @@ export class MembershipService {
         )
       }
     }
-
-    if (autoRenewAgreementNo) {
-      await this.writeAutoRenewAgreement(
-        tx,
-        order,
-        plan,
-        subscription,
-        autoRenewAgreementNo,
-      )
-    }
-  }
-
-  // 自动续费签约首单支付成功后写入独立协议事实，后续取消只更新协议，不撤销当前订阅。
-  private async writeAutoRenewAgreement(
-    tx: MembershipTx,
-    order: PaymentOrderSelect,
-    plan: MembershipPlanSelect,
-    subscription: UserMembershipSubscriptionSelect,
-    agreementNo: string,
-  ) {
-    await tx.insert(this.membershipAutoRenewAgreement).values({
-      userId: order.userId,
-      planId: plan.id,
-      channel: order.channel,
-      paymentScene: order.paymentScene,
-      platform: order.platform,
-      environment: order.environment,
-      clientAppKey: order.clientAppKey,
-      providerConfigId: order.providerConfigId,
-      providerConfigVersion: order.providerConfigVersion,
-      credentialVersionRef: order.credentialVersionRef,
-      agreementNo,
-      status: MembershipAutoRenewAgreementStatusEnum.ACTIVE,
-      signedAt: order.paidAt ?? new Date(),
-      nextRenewAt: subscription.endsAt,
-      rawPayload: order.notifyPayload,
-      agreementSnapshot: {
-        orderNo: order.orderNo,
-        subscriptionId: subscription.id,
-        planKey: plan.planKey,
-        tier: plan.tier,
-        durationDays: plan.durationDays,
-        agreements: this.getOrderMembershipAgreementSnapshots(order),
-        configSnapshot: order.configSnapshot,
-      },
-    })
-  }
-
-  // 从支付订单客户端上下文中取出下单时冻结的协议快照。
-  private getOrderMembershipAgreementSnapshots(order: PaymentOrderSelect) {
-    const clientContext = order.clientContext
-    if (!clientContext || typeof clientContext !== 'object') {
-      return []
-    }
-    const targetSnapshot = (clientContext as BenefitValueRecord).targetSnapshot
-    if (
-      !targetSnapshot ||
-      typeof targetSnapshot !== 'object' ||
-      Array.isArray(targetSnapshot)
-    ) {
-      return []
-    }
-    const agreements = (targetSnapshot as BenefitValueRecord).agreements
-    return Array.isArray(agreements) ? agreements : []
-  }
-
-  // 自动续费签约订单必须携带 provider 已验签协议号，禁止本地合成协议身份。
-  private requireAutoRenewAgreementNo(agreementNo?: string) {
-    if (!agreementNo) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '自动续费回调缺少已验签协议号',
-      )
-    }
-    return agreementNo
   }
 
   // 基于输入时间增加指定天数。

@@ -41,8 +41,6 @@ export const paymentProviderConfig = snakeCase.table(
     notifyUrl: varchar({ length: 500 }),
     /** H5 返回地址。 */
     returnUrl: varchar({ length: 500 }),
-    /** 自动续费签约通知地址。 */
-    agreementNotifyUrl: varchar({ length: 500 }),
     /** H5 允许返回域名列表。 */
     allowedReturnDomains: jsonb(),
     /** 证书模式（1=普通密钥；2=证书模式）。 */
@@ -65,8 +63,6 @@ export const paymentProviderConfig = snakeCase.table(
     credentialVersionRef: varchar({ length: 160 }).notNull(),
     /** 配置摘要快照，存放证书指纹、域名约束等非明文信息。 */
     configMetadata: jsonb(),
-    /** 是否支持自动续费签约。 */
-    supportsAutoRenew: boolean().default(false).notNull(),
     /** 排序值，0=默认排序。 */
     sortOrder: smallint().default(0).notNull(),
     /** 是否启用。 */

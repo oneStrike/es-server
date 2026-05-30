@@ -8,7 +8,6 @@ import type {
 import {
   PaymentChannelEnum,
   PaymentSceneEnum,
-  PaymentSubscriptionModeEnum,
 } from './payment.constant'
 import {
   readNumberField,
@@ -34,8 +33,6 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
       providerConfigVersion: config.configVersion,
       credentialVersionRef: config.credentialVersionRef,
       subscriptionMode: order.subscriptionMode,
-      supportsAutoRenew: config.supportsAutoRenew,
-      agreementNotifyUrl: config.agreementNotifyUrl,
     }
 
     if (order.paymentScene === PaymentSceneEnum.APP) {
@@ -68,7 +65,7 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
     }
   }
 
-  // 校验 provider 支付回调签名，并在自动续费首单中强制协议号参与签名。
+  // 校验 provider 支付回调签名。
   verifyNotify(input: PaymentProviderNotifyInput) {
     const payload = readRecord(input.payload)
     if (
@@ -86,7 +83,6 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
     const tradeStatus = readStringField(payload, 'tradeStatus')
     const signType = readStringField(payload, 'signType')
     const signature = readStringField(payload, 'signature')
-    const agreementNo = readStringField(payload, 'agreementNo')
     const channel = readNumberField(payload, 'channel')
     const paidAmount = readNumberField(payload, 'paidAmount')
     const providerConfigId = readNumberField(payload, 'providerConfigId')
@@ -112,13 +108,6 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
     ) {
       return false
     }
-    const requiresAgreementNo =
-      input.order.subscriptionMode ===
-      PaymentSubscriptionModeEnum.AUTO_RENEW_SIGNING
-    if (requiresAgreementNo && !agreementNo) {
-      return false
-    }
-
     const secret = readVerificationSecret(input.config.configMetadata)
     if (!secret) {
       return false
@@ -133,7 +122,6 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
       providerConfigVersion: input.order.providerConfigVersion,
       providerTradeNo,
       tradeStatus,
-      ...(agreementNo ? { agreementNo } : {}),
     }
 
     return verifyHmacSha256Signature({
@@ -149,7 +137,6 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
     return {
       providerTradeNo: readStringField(payload, 'providerTradeNo') ?? undefined,
       paidAmount: readNumberField(payload, 'paidAmount') ?? undefined,
-      agreementNo: readStringField(payload, 'agreementNo') ?? undefined,
     }
   }
 

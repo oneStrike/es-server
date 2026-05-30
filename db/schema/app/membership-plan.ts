@@ -36,8 +36,6 @@ export const membershipPlan = snakeCase.table(
     displayTag: varchar({ length: 32 }).default('').notNull(),
     /** 开通后赠送积分数量，0=不赠送。 */
     bonusPointAmount: integer().default(0).notNull(),
-    /** 是否支持自动续费签约。 */
-    autoRenewEnabled: boolean().default(false).notNull(),
     /** 排序值，0=默认排序。 */
     sortOrder: smallint().default(0).notNull(),
     /** 是否启用。 */

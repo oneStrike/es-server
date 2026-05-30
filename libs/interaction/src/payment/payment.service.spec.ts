@@ -19,7 +19,6 @@ const APP_PAYMENT_RESULT_KEYS = [
 ].sort()
 
 const ADMIN_PAYMENT_ORDER_PAGE_ITEM_KEYS = [
-  'autoRenewAgreementId',
   'channel',
   'clientAppKey',
   'closedAt',
@@ -47,7 +46,6 @@ const ADMIN_PAYMENT_ORDER_PAGE_ITEM_KEYS = [
 
 function buildPaidOrder() {
   return {
-    autoRenewAgreementId: null,
     channel: 1,
     clientAppKey: 'default-app',
     clientPayPayload: null,
@@ -132,6 +130,7 @@ describe('PaymentService domain split contract', () => {
     expect(item).not.toHaveProperty('clientContext')
     expect(item).not.toHaveProperty('clientPayPayload')
     expect(item).not.toHaveProperty('notifyPayload')
+    expect(item).not.toHaveProperty('autoRenewAgreementId')
     expect(item).not.toBe(rawOrder)
     expect(drizzle.buildPage).toHaveBeenCalledWith({
       pageIndex: 1,
