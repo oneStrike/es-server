@@ -107,6 +107,47 @@ export class ForumHashtagReferenceService {
     )
   }
 
+  // 按主题删除其所有评论 hashtag 引用事实；利用引用表已有 topicId，避免把评论 ID 全量拉回应用层。
+  async deleteCommentReferencesByTopicInTx(
+    tx: DeleteForumHashtagReferencesInTxInput['tx'],
+    topicId: number,
+  ) {
+    const rows = await tx
+      .select({
+        hashtagId: this.forumHashtagReference.hashtagId,
+      })
+      .from(this.forumHashtagReference)
+      .where(
+        and(
+          eq(
+            this.forumHashtagReference.sourceType,
+            ForumHashtagReferenceSourceTypeEnum.COMMENT,
+          ),
+          eq(this.forumHashtagReference.topicId, topicId),
+        ),
+      )
+
+    if (rows.length === 0) {
+      return
+    }
+
+    await tx
+      .delete(this.forumHashtagReference)
+      .where(
+        and(
+          eq(
+            this.forumHashtagReference.sourceType,
+            ForumHashtagReferenceSourceTypeEnum.COMMENT,
+          ),
+          eq(this.forumHashtagReference.topicId, topicId),
+        ),
+      )
+
+    await this.forumHashtagCounterService.rebuildHashtagStatsInTx(tx, [
+      ...new Set(rows.map((row) => row.hashtagId)),
+    ])
+  }
+
   // 同步来源审核/隐藏状态变化后的公开可见性。
   async syncSourceVisibilityInTx(
     input: SyncForumHashtagReferenceVisibilityInTxInput,

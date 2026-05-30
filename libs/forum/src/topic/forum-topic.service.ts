@@ -2,16 +2,35 @@ import type { Db, SQL } from '@db/core'
 import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
 
 import type { InteractionAuditorSummaryKey } from '@libs/interaction/summary/interaction-summary.type'
+import type { DbQueryOrderByRecord } from '@libs/platform/config'
 import type { JsonValue } from '@libs/platform/utils'
 import type {
   AdminTopicPageRow,
+  ApprovedTopicRewardParams,
+  CreateTopicEventParams,
+  FollowingPublicForumTopicQuery,
   ForumTopicClientContext,
+  ForumTopicMediaFallback,
   ForumTopicMediaInput,
   ForumTopicRelationIdCandidates,
+  ForumTopicReviewPolicyOptions,
+  ForumTopicSectionBriefMapOptions,
+  ForumTopicVisibleState,
+  HydratePublicTopicPageOptions,
   MaterializedTopicBodyWriteResult,
+  NormalizeImageListOptions,
+  NormalizeVideoValueOptions,
   PublicForumTopicDetailContext,
+  PublicForumTopicQueryWithUser,
+  PublicTopicInteractionSnapshot,
   PublicTopicPageRow,
+  TopicAuditActorOptions,
   TopicBodyWriteFields,
+  TopicGovernanceSnapshot,
+  TopicMentionVisibilityTransitionParams,
+  UpdateTopicStatusData,
+  UpdateTopicStatusOptions,
+  VisiblePublicTopicDetailRow,
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
 
@@ -55,7 +74,18 @@ import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { Injectable } from '@nestjs/common'
-import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import {
+  and,
+  desc,
+  eq,
+  exists,
+  getColumns,
+  ilike,
+  inArray,
+  isNull,
+  or,
+  sql,
+} from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -88,13 +118,13 @@ import {
 import { buildForumTopicContentPreview } from './forum-topic-preview.helper'
 import { FORUM_TOPIC_IMAGE_MAX_COUNT } from './forum-topic.constant'
 
-const DEFAULT_PUBLIC_TOPIC_FEED_ORDER: Array<Record<string, 'asc' | 'desc'>> = [
+const DEFAULT_PUBLIC_TOPIC_FEED_ORDER: DbQueryOrderByRecord[] = [
   { isPinned: 'desc' as const },
   { lastCommentAt: 'desc' as const },
   { createdAt: 'desc' as const },
 ]
 
-const HOT_PUBLIC_TOPIC_FEED_ORDER: Array<Record<string, 'asc' | 'desc'>> = [
+const HOT_PUBLIC_TOPIC_FEED_ORDER: DbQueryOrderByRecord[] = [
   { commentCount: 'desc' as const },
   { likeCount: 'desc' as const },
   { viewCount: 'desc' as const },
@@ -234,9 +264,7 @@ export class ForumTopicService {
   // 批量获取主题列表使用的板块简要信息；可按需限制为当前仍可见的板块，供收藏列表等需要剔除失效板块的场景复用。
   private async getTopicSectionBriefMap(
     sectionIds: number[],
-    options?: {
-      requireEnabled?: boolean
-    },
+    options?: ForumTopicSectionBriefMapOptions,
   ) {
     const uniqueSectionIds = [...new Set(sectionIds)]
     if (uniqueSectionIds.length === 0) {
@@ -286,15 +314,10 @@ export class ForumTopicService {
       : sections
 
     return new Map(
-      visibleSections.map((section) => [
-        section.id,
-        {
-          id: section.id,
-          name: section.name,
-          icon: section.icon,
-          cover: section.cover,
-        },
-      ]),
+      visibleSections.map((section) => {
+        const { groupId, deletedAt, isEnabled, group, ...brief } = section
+        return [section.id, brief]
+      }),
     )
   }
 
@@ -337,17 +360,10 @@ export class ForumTopicService {
     })
 
     return new Map(
-      users.map((user) => [
-        user.id,
-        {
-          id: user.id,
-          nickname: user.nickname,
-          avatarUrl: user.avatarUrl,
-          status: user.status,
-          isEnabled: user.isEnabled,
-          levelName: user.level?.name ?? null,
-        },
-      ]),
+      users.map((user) => {
+        const { level, ...rest } = user
+        return [user.id, { ...rest, levelName: level?.name ?? null }]
+      }),
     )
   }
 
@@ -389,19 +405,16 @@ export class ForumTopicService {
     })
 
     return new Map(
-      sections.map((section) => [
-        section.id,
-        {
-          id: section.id,
-          name: section.name,
-          isEnabled: section.isEnabled,
-          topicReviewPolicy: section.topicReviewPolicy,
-          groupName:
-            section.group && !section.group.deletedAt
-              ? section.group.name
-              : null,
-        },
-      ]),
+      sections.map((section) => {
+        const { group, ...rest } = section
+        return [
+          section.id,
+          {
+            ...rest,
+            groupName: group && !group.deletedAt ? group.name : null,
+          },
+        ]
+      }),
     )
   }
 
@@ -480,29 +493,29 @@ export class ForumTopicService {
   }
 
   // 构建公开主题分页的 select 投影，复用统一字段列表。
+  // 排除：正文大字段(html/content/body/bodyVersion)、审核管理字段(auditById/auditStatus/auditRole/auditReason/auditAt/isHidden)、
+  // 内部控制字段(version/sensitiveWordHits/geoSource/lastCommentUserId/updatedAt/deletedAt)
   private buildPublicTopicPageSelect() {
-    return {
-      id: this.forumTopicTable.id,
-      sectionId: this.forumTopicTable.sectionId,
-      userId: this.forumTopicTable.userId,
-      title: this.forumTopicTable.title,
-      contentPreview: this.forumTopicTable.contentPreview,
-      geoCountry: this.forumTopicTable.geoCountry,
-      geoProvince: this.forumTopicTable.geoProvince,
-      geoCity: this.forumTopicTable.geoCity,
-      geoIsp: this.forumTopicTable.geoIsp,
-      images: this.forumTopicTable.images,
-      videos: this.forumTopicTable.videos,
-      isPinned: this.forumTopicTable.isPinned,
-      isFeatured: this.forumTopicTable.isFeatured,
-      isLocked: this.forumTopicTable.isLocked,
-      viewCount: this.forumTopicTable.viewCount,
-      commentCount: this.forumTopicTable.commentCount,
-      likeCount: this.forumTopicTable.likeCount,
-      favoriteCount: this.forumTopicTable.favoriteCount,
-      lastCommentAt: this.forumTopicTable.lastCommentAt,
-      createdAt: this.forumTopicTable.createdAt,
-    }
+    const {
+      html,
+      content,
+      body,
+      bodyVersion,
+      auditById,
+      auditStatus,
+      auditRole,
+      auditReason,
+      auditAt,
+      isHidden,
+      version,
+      sensitiveWordHits,
+      geoSource,
+      lastCommentUserId,
+      updatedAt,
+      deletedAt,
+      ...rest
+    } = getColumns(this.forumTopicTable)
+    return rest
   }
 
   // 解析公开主题分页的可用板块 ID 列表；传入 sectionId 时校验单板块权限，否则取全部可访问板块。
@@ -561,47 +574,47 @@ export class ForumTopicService {
     }
   }
 
-  // 解析已关注话题对应的公开主题集合；仅消费 sourceType=topic 且当前公开可见的引用事实。
-  private async getVisibleTopicIdsByHashtagIds(
+  // 构建关注 hashtag feed 的存在性条件；把 hashtag 过滤留在分页查询内，避免先物化未分页 topicId 大数组。
+  private buildFollowedHashtagTopicExistsCondition(
     hashtagIds: number[],
     visibleSectionIds: number[],
   ) {
     if (hashtagIds.length === 0) {
-      return []
+      return undefined
     }
 
-    const rows = await this.db
-      .select({
-        topicId: this.forumHashtagReferenceTable.topicId,
-      })
-      .from(this.forumHashtagReferenceTable)
-      .where(
-        and(
-          inArray(this.forumHashtagReferenceTable.hashtagId, hashtagIds),
-          eq(
-            this.forumHashtagReferenceTable.sourceType,
-            ForumHashtagReferenceSourceTypeEnum.TOPIC,
+    return exists(
+      this.db
+        .select({ id: this.forumHashtagReferenceTable.id })
+        .from(this.forumHashtagReferenceTable)
+        .where(
+          and(
+            eq(
+              this.forumHashtagReferenceTable.topicId,
+              this.forumTopicTable.id,
+            ),
+            inArray(this.forumHashtagReferenceTable.hashtagId, [
+              ...new Set(hashtagIds),
+            ]),
+            eq(
+              this.forumHashtagReferenceTable.sourceType,
+              ForumHashtagReferenceSourceTypeEnum.TOPIC,
+            ),
+            eq(this.forumHashtagReferenceTable.isSourceVisible, true),
+            visibleSectionIds.length > 0
+              ? inArray(this.forumHashtagReferenceTable.sectionId, [
+                  ...new Set(visibleSectionIds),
+                ])
+              : undefined,
           ),
-          eq(this.forumHashtagReferenceTable.isSourceVisible, true),
-          visibleSectionIds.length > 0
-            ? inArray(
-                this.forumHashtagReferenceTable.sectionId,
-                visibleSectionIds,
-              )
-            : undefined,
         ),
-      )
-
-    return [...new Set(rows.map((row) => row.topicId))]
+    )
   }
 
   // 为公开主题分页条目补齐用户简要信息、板块简要信息与当前用户的点赞/收藏状态。
   private async hydratePublicTopicPageItems(
     rows: PublicTopicPageRow[],
-    options: {
-      userId?: number
-      sectionId?: number
-    },
+    options: HydratePublicTopicPageOptions,
   ) {
     if (rows.length === 0) {
       return []
@@ -650,10 +663,6 @@ export class ForumTopicService {
 
         return {
           ...item,
-          geoCountry: item.geoCountry,
-          geoProvince: item.geoProvince,
-          geoCity: item.geoCity,
-          geoIsp: item.geoIsp,
           liked: likedMap.get(item.id) ?? false,
           favorited: favoritedMap.get(item.id) ?? false,
           user: userMap.get(item.userId),
@@ -665,11 +674,9 @@ export class ForumTopicService {
 
   // 按条件查询公开主题分页；统一封装筛选、排序、计数与条目组装逻辑。
   private async getPublicTopicPageByConditions(
-    query: QueryPublicForumTopicDto & {
-      userId?: number
-    },
+    query: PublicForumTopicQueryWithUser,
     sectionIds: number[],
-    fallbackOrderBy: Array<Record<string, 'asc' | 'desc'>>,
+    fallbackOrderBy: DbQueryOrderByRecord[],
     extraCondition?: SQL,
   ) {
     const pageQuery = this.drizzle.buildPage({
@@ -732,11 +739,7 @@ export class ForumTopicService {
   // 规范化论坛主题图片列表；去除空白、保留首现顺序去重、校验数量上限。
   private normalizeImageList(
     value: string[] | null | undefined,
-    options: {
-      label: string
-      maxCount: number
-      fallback: string[]
-    },
+    options: NormalizeImageListOptions,
   ) {
     if (value === undefined) {
       return options.fallback
@@ -773,9 +776,7 @@ export class ForumTopicService {
   // 规范化论坛主题视频 JSON 值；创建时默认空数组，更新时未传字段保留当前值。
   private normalizeVideoValue(
     value: ForumTopicSelect['videos'] | null | undefined,
-    options: {
-      fallback: ForumTopicSelect['videos']
-    },
+    options: NormalizeVideoValueOptions,
   ) {
     if (value === undefined) {
       return options.fallback
@@ -801,7 +802,7 @@ export class ForumTopicService {
   // 统一规范化论坛主题媒体输入；创建时补空数组，更新时对未传字段保留当前值。
   private normalizeTopicMedia(
     media: ForumTopicMediaInput,
-    fallback: Pick<ForumTopicSelect, 'images' | 'videos'> = {
+    fallback: ForumTopicMediaFallback = {
       images: [],
       videos: [],
     },
@@ -898,11 +899,7 @@ export class ForumTopicService {
   // 获取板块的主题审核策略；用于创建/编辑主题时决定是否需要进入审核队列。
   private async getSectionTopicReviewPolicy(
     sectionId: number,
-    options?: {
-      requireEnabled?: boolean
-      notFoundMessage?: string
-      client?: Db
-    },
+    options?: ForumTopicReviewPolicyOptions,
   ) {
     const client = options?.client ?? this.db
     const section = await client.query.forumSection.findFirst({
@@ -1030,13 +1027,7 @@ export class ForumTopicService {
   }
 
   // 构建主题创建事件 envelope；统一沉淀 CREATE_TOPIC 的目标、治理态与最小上下文，供奖励补发等链路复用。
-  private buildCreateTopicEventEnvelope(params: {
-    topicId: number
-    userId: number
-    auditStatus: AuditStatusEnum
-    occurredAt?: Date
-    context?: Record<string, unknown>
-  }) {
+  private buildCreateTopicEventEnvelope(params: CreateTopicEventParams) {
     return createDefinedEventEnvelope({
       code: GrowthRuleTypeEnum.CREATE_TOPIC,
       subjectId: params.userId,
@@ -1048,11 +1039,7 @@ export class ForumTopicService {
   }
 
   // 判断主题当前是否对外可见；mention 仅在真正可见时发送，避免待审核/隐藏内容提前触达接收人。
-  private isTopicVisible(topic: {
-    auditStatus: AuditStatusEnum
-    isHidden: boolean
-    deletedAt?: Date | null
-  }) {
+  private isTopicVisible(topic: ForumTopicVisibleState) {
     return (
       topic.auditStatus === AuditStatusEnum.APPROVED &&
       !topic.isHidden &&
@@ -1063,15 +1050,7 @@ export class ForumTopicService {
   // 同步主题从不可见到可见时的 mention 补偿；仅在首次转可见时补发尚未通知的 receiver。
   private async syncTopicMentionVisibilityTransitionInTx(
     tx: Db,
-    params: {
-      topicId: number
-      actorUserId: number
-      topicTitle: string
-      currentAuditStatus: AuditStatusEnum
-      currentIsHidden: boolean
-      nextAuditStatus: AuditStatusEnum
-      nextIsHidden: boolean
-    },
+    params: TopicMentionVisibilityTransitionParams,
   ) {
     const wasVisible = this.isTopicVisible({
       auditStatus: params.currentAuditStatus,
@@ -1322,6 +1301,12 @@ export class ForumTopicService {
         '主题不存在',
       )
     }
+    if (!topic.section) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
 
     const [hashtags, auditorSummary] = await Promise.all([
       this.getTopicHashtags(topic.id),
@@ -1339,44 +1324,46 @@ export class ForumTopicService {
       points = growth.points
     }
 
+    // 排除不应透传到 DTO 的字段：正文派生列(content/contentPreview/body/bodyVersion)、审核人内部字段(auditById/auditRole)、
+    // 属地快照字段(geoCountry/geoProvince/geoCity/geoIsp/geoSource)、软删除字段(deletedAt)
+    const {
+      content,
+      contentPreview,
+      body,
+      bodyVersion,
+      auditById,
+      auditRole,
+      geoCountry,
+      geoProvince,
+      geoCity,
+      geoIsp,
+      geoSource,
+      images,
+      videos,
+      sensitiveWordHits,
+      deletedAt,
+      // 关系查询带出的关联对象需要在返回时重新构造，避免直接透传
+      section: _section,
+      user: _user,
+      ...topicFields
+    } = topic
+
     return {
-      id: topic.id,
-      sectionId: topic.sectionId,
-      userId: topic.userId,
-      title: topic.title,
-      html: topic.html,
-      images: topic.images ?? [],
-      videos: (topic.videos ??
-        []) as unknown as AdminForumTopicDetailDto['videos'],
-      isPinned: topic.isPinned,
-      isFeatured: topic.isFeatured,
-      isLocked: topic.isLocked,
-      isHidden: topic.isHidden,
-      auditStatus: topic.auditStatus,
-      auditReason: topic.auditReason,
-      auditAt: topic.auditAt,
-      viewCount: topic.viewCount,
-      likeCount: topic.likeCount,
-      commentCount: topic.commentCount,
-      favoriteCount: topic.favoriteCount,
-      version: topic.version,
-      sensitiveWordHits: topic.sensitiveWordHits as AdminForumTopicDetailDto['sensitiveWordHits'],
-      lastCommentAt: topic.lastCommentAt,
-      lastCommentUserId: topic.lastCommentUserId,
-      createdAt: topic.createdAt,
-      updatedAt: topic.updatedAt,
+      ...topicFields,
+      images: images ?? [],
+      videos: (videos ?? []) as unknown as AdminForumTopicDetailDto['videos'],
+      sensitiveWordHits:
+        sensitiveWordHits as AdminForumTopicDetailDto['sensitiveWordHits'],
       hashtags,
-      section: topic.section
-        ? {
-            id: topic.section.id,
-            name: topic.section.name,
-            description: topic.section.description,
-            icon: topic.section.icon,
-            cover: topic.section.cover,
-            isEnabled: topic.section.isEnabled,
-            topicReviewPolicy: topic.section.topicReviewPolicy,
-          }
-        : undefined,
+      section: {
+        id: topic.section.id,
+        name: topic.section.name,
+        description: topic.section.description,
+        icon: topic.section.icon,
+        cover: topic.section.cover,
+        isEnabled: topic.section.isEnabled,
+        topicReviewPolicy: topic.section.topicReviewPolicy,
+      },
       user: topic.user
         ? {
             id: topic.user.id,
@@ -1403,7 +1390,7 @@ export class ForumTopicService {
                   forumTopicReceivedFavoriteCount:
                     topic.user.counts.forumTopicReceivedFavoriteCount,
                 }
-              : undefined,
+              : null,
             level: topic.user.level
               ? {
                   id: topic.user.level.id,
@@ -1411,9 +1398,9 @@ export class ForumTopicService {
                   icon: topic.user.level.icon,
                   sortOrder: topic.user.level.sortOrder,
                 }
-              : undefined,
+              : null,
           }
-        : undefined,
+        : null,
       auditorSummary,
     } as AdminForumTopicDetailDto
   }
@@ -1492,13 +1479,8 @@ export class ForumTopicService {
 
   // 构建公开主题详情响应；显式裁剪 app/public 可见字段，避免把审核、治理等后台字段直接透传到外部契约。
   private async buildPublicTopicDetail(
-    topic: Awaited<ReturnType<ForumTopicService['getVisiblePublicTopic']>>,
-    interaction: {
-      liked: boolean
-      favorited: boolean
-      isFollowed: boolean
-      viewCount: number
-    },
+    topic: VisiblePublicTopicDetailRow,
+    interaction: PublicTopicInteractionSnapshot,
   ): Promise<PublicForumTopicDetailDto> {
     if (!topic.user) {
       throw new BusinessException(
@@ -1513,28 +1495,35 @@ export class ForumTopicService {
       )
     }
 
+    // 排除不应透传到公开 DTO 的字段：正文派生列(content/contentPreview/body/bodyVersion)、审核管理字段、
+    // 内部控制字段(version/sensitiveWordHits/geoSource/lastCommentUserId/deletedAt)、关系查询的关联对象需重新构造
+    const {
+      content,
+      contentPreview,
+      body,
+      bodyVersion,
+      auditById,
+      auditStatus,
+      auditRole,
+      auditReason,
+      auditAt,
+      isHidden,
+      version,
+      sensitiveWordHits,
+      geoSource,
+      lastCommentUserId,
+      viewCount,
+      videos,
+      deletedAt,
+      section: _section,
+      user: _user,
+      ...topicFields
+    } = topic
+
     return {
-      id: topic.id,
-      sectionId: topic.sectionId,
-      userId: topic.userId,
-      title: topic.title,
-      html: topic.html,
-      geoCountry: topic.geoCountry,
-      geoProvince: topic.geoProvince,
-      geoCity: topic.geoCity,
-      geoIsp: topic.geoIsp,
-      images: topic.images,
-      videos: topic.videos as JsonValue,
-      isPinned: topic.isPinned,
-      isFeatured: topic.isFeatured,
-      isLocked: topic.isLocked,
+      ...topicFields,
+      videos: videos as JsonValue,
       viewCount: interaction.viewCount,
-      commentCount: topic.commentCount,
-      likeCount: topic.likeCount,
-      favoriteCount: topic.favoriteCount,
-      lastCommentAt: topic.lastCommentAt,
-      createdAt: topic.createdAt,
-      updatedAt: topic.updatedAt,
       liked: interaction.liked,
       favorited: interaction.favorited,
       user: {
@@ -1670,35 +1659,24 @@ export class ForumTopicService {
       table: this.forumTopicTable,
     })
 
+    // 排除：正文大字段(html/content/body/bodyVersion)、审核人字段(auditById/auditRole)、
+    // 内部控制字段(version/sensitiveWordHits/geoSource/deletedAt)
+    const {
+      html,
+      content,
+      body,
+      bodyVersion,
+      auditById,
+      auditRole,
+      version,
+      sensitiveWordHits,
+      geoSource,
+      deletedAt,
+      ...adminTopicColumns
+    } = getColumns(this.forumTopicTable)
+
     const listQuery = this.db
-      .select({
-        id: this.forumTopicTable.id,
-        sectionId: this.forumTopicTable.sectionId,
-        userId: this.forumTopicTable.userId,
-        title: this.forumTopicTable.title,
-        contentPreview: this.forumTopicTable.contentPreview,
-        geoCountry: this.forumTopicTable.geoCountry,
-        geoProvince: this.forumTopicTable.geoProvince,
-        geoCity: this.forumTopicTable.geoCity,
-        geoIsp: this.forumTopicTable.geoIsp,
-        images: this.forumTopicTable.images,
-        videos: this.forumTopicTable.videos,
-        isPinned: this.forumTopicTable.isPinned,
-        isFeatured: this.forumTopicTable.isFeatured,
-        isLocked: this.forumTopicTable.isLocked,
-        isHidden: this.forumTopicTable.isHidden,
-        auditStatus: this.forumTopicTable.auditStatus,
-        auditReason: this.forumTopicTable.auditReason,
-        auditAt: this.forumTopicTable.auditAt,
-        viewCount: this.forumTopicTable.viewCount,
-        likeCount: this.forumTopicTable.likeCount,
-        commentCount: this.forumTopicTable.commentCount,
-        favoriteCount: this.forumTopicTable.favoriteCount,
-        lastCommentAt: this.forumTopicTable.lastCommentAt,
-        lastCommentUserId: this.forumTopicTable.lastCommentUserId,
-        createdAt: this.forumTopicTable.createdAt,
-        updatedAt: this.forumTopicTable.updatedAt,
-      })
+      .select({ ...adminTopicColumns })
       .from(this.forumTopicTable)
       .where(where)
       .limit(page.limit)
@@ -1720,7 +1698,7 @@ export class ForumTopicService {
   }
 
   // 获取公开主题分页列表；只返回已审核通过且未隐藏的主题，登录用户返回点赞与收藏状态。
-  async getPublicTopics(query: QueryPublicForumTopicDto & { userId?: number }) {
+  async getPublicTopics(query: PublicForumTopicQueryWithUser) {
     const sectionIds = await this.resolvePublicTopicSectionIds(
       query.sectionId,
       query.userId,
@@ -1734,9 +1712,7 @@ export class ForumTopicService {
   }
 
   // 获取公开主题热门分页列表；基于可访问板块聚合，排序规则为评论数、点赞数、浏览数、发布时间倒序。
-  async getHotPublicTopics(
-    query: QueryPublicForumTopicDto & { userId?: number },
-  ) {
+  async getHotPublicTopics(query: PublicForumTopicQueryWithUser) {
     const sectionIds = await this.resolvePublicTopicSectionIds(
       query.sectionId,
       query.userId,
@@ -1750,11 +1726,7 @@ export class ForumTopicService {
   }
 
   // 获取关注主题分页列表；聚合“关注用户发帖”与“关注板块下主题”两类来源，仅返回当前用户仍可访问板块下的公开主题。
-  async getFollowingPublicTopics(
-    query: QueryPublicForumTopicDto & {
-      userId: number
-    },
-  ) {
+  async getFollowingPublicTopics(query: FollowingPublicForumTopicQuery) {
     const sectionIds = await this.resolvePublicTopicSectionIds(
       query.sectionId,
       query.userId,
@@ -1773,10 +1745,10 @@ export class ForumTopicService {
     const followedVisibleSectionIds = followingSectionIds.filter((id) =>
       visibleSectionIds.has(id),
     )
-    const followedHashtagTopicIds = await this.getVisibleTopicIdsByHashtagIds(
-      followingHashtagIds,
-      [...visibleSectionIds],
-    )
+    const followedHashtagCondition =
+      this.buildFollowedHashtagTopicExistsCondition(followingHashtagIds, [
+        ...visibleSectionIds,
+      ])
     const followConditions: SQL[] = []
 
     if (followingUserIds.length > 0) {
@@ -1789,10 +1761,8 @@ export class ForumTopicService {
         inArray(this.forumTopicTable.sectionId, followedVisibleSectionIds),
       )
     }
-    if (followedHashtagTopicIds.length > 0) {
-      followConditions.push(
-        inArray(this.forumTopicTable.id, followedHashtagTopicIds),
-      )
+    if (followedHashtagCondition) {
+      followConditions.push(followedHashtagCondition)
     }
 
     if (followConditions.length === 0) {
@@ -1869,26 +1839,7 @@ export class ForumTopicService {
       visibleTopics.map((topic) => [
         topic.id,
         {
-          id: topic.id,
-          sectionId: topic.sectionId,
-          userId: topic.userId,
-          title: topic.title,
-          contentPreview: topic.contentPreview,
-          geoCountry: topic.geoCountry,
-          geoProvince: topic.geoProvince,
-          geoCity: topic.geoCity,
-          geoIsp: topic.geoIsp,
-          images: topic.images,
-          videos: topic.videos,
-          isPinned: topic.isPinned,
-          isFeatured: topic.isFeatured,
-          isLocked: topic.isLocked,
-          viewCount: topic.viewCount,
-          commentCount: topic.commentCount,
-          likeCount: topic.likeCount,
-          favoriteCount: topic.favoriteCount,
-          lastCommentAt: topic.lastCommentAt,
-          createdAt: topic.createdAt,
+          ...topic,
           liked: likedMap.get(topic.id) ?? false,
           favorited: favoritedMap.get(topic.id) ?? false,
           section: sectionMap.get(topic.sectionId),
@@ -2114,14 +2065,24 @@ export class ForumTopicService {
     actorUserId = topic.userId,
   ) {
     const { id } = topic
-    const commentRows = await tx.query.userComment.findMany({
-      where: {
-        targetType: CommentTargetTypeEnum.FORUM_TOPIC,
-        targetId: id,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true, userId: true, likeCount: true },
-    })
+    const commentUserSummaries = await tx
+      .select({
+        userId: this.userCommentTable.userId,
+        commentCount: sql<number>`count(*)::int`,
+        receivedLikeCount: sql<number>`coalesce(sum(${this.userCommentTable.likeCount}), 0)::int`,
+      })
+      .from(this.userCommentTable)
+      .where(
+        and(
+          eq(
+            this.userCommentTable.targetType,
+            CommentTargetTypeEnum.FORUM_TOPIC,
+          ),
+          eq(this.userCommentTable.targetId, id),
+          isNull(this.userCommentTable.deletedAt),
+        ),
+      )
+      .groupBy(this.userCommentTable.userId)
 
     await tx
       .update(this.userCommentTable)
@@ -2158,16 +2119,11 @@ export class ForumTopicService {
       sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
       sourceIds: [id],
     })
-    await this.mentionService.deleteMentionsInTx({
+    await this.mentionService.deleteCommentMentionsByForumTopicInTx(tx, id)
+    await this.forumHashtagReferenceService.deleteCommentReferencesByTopicInTx(
       tx,
-      sourceType: MentionSourceTypeEnum.COMMENT,
-      sourceIds: commentRows.map((item) => item.id),
-    })
-    await this.forumHashtagReferenceService.deleteReferencesInTx({
-      tx,
-      sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
-      sourceIds: commentRows.map((item) => item.id),
-    })
+      id,
+    )
 
     await this.forumCounterService.updateUserForumTopicCount(
       tx,
@@ -2190,42 +2146,24 @@ export class ForumTopicService {
       )
     }
 
-    const commentCountByUser = new Map<number, number>()
-    const commentReceivedLikeCountByUser = new Map<number, number>()
-    for (const comment of commentRows) {
-      commentCountByUser.set(
-        comment.userId,
-        (commentCountByUser.get(comment.userId) ?? 0) + 1,
-      )
-      if (comment.likeCount > 0) {
-        const nextReceivedLikeCount =
-          (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-          comment.likeCount
-        commentReceivedLikeCountByUser.set(
-          comment.userId,
-          nextReceivedLikeCount,
-        )
-      }
-    }
-
     const commentCountTasks: Promise<void>[] = []
-    for (const [userId, count] of commentCountByUser.entries()) {
+    for (const summary of commentUserSummaries) {
       commentCountTasks.push(
-        this.appUserCountService.updateCommentCount(tx, userId, -count),
-      )
-    }
-
-    for (const [
-      userId,
-      likeCount,
-    ] of commentReceivedLikeCountByUser.entries()) {
-      commentCountTasks.push(
-        this.appUserCountService.updateCommentReceivedLikeCount(
+        this.appUserCountService.updateCommentCount(
           tx,
-          userId,
-          -likeCount,
+          summary.userId,
+          -summary.commentCount,
         ),
       )
+      if (summary.receivedLikeCount > 0) {
+        commentCountTasks.push(
+          this.appUserCountService.updateCommentReceivedLikeCount(
+            tx,
+            summary.userId,
+            -summary.receivedLikeCount,
+          ),
+        )
+      }
     }
 
     await Promise.all(commentCountTasks)
@@ -2370,10 +2308,8 @@ export class ForumTopicService {
   // 主题状态更新通用方法；统一处理存在性校验、事务包装与板块可见状态同步。
   private async updateTopicStatus(
     id: number,
-    updateData: Record<string, unknown>,
-    options?: {
-      syncSectionVisibility?: boolean
-    },
+    updateData: UpdateTopicStatusData,
+    options?: UpdateTopicStatusOptions,
   ) {
     const currentTopic = await this.db.query.forumTopic.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -2404,10 +2340,8 @@ export class ForumTopicService {
   async updateTopicStatusInTx(
     tx: Db,
     id: number,
-    updateData: Record<string, unknown>,
-    options?: {
-      syncSectionVisibility?: boolean
-    },
+    updateData: UpdateTopicStatusData,
+    options?: UpdateTopicStatusOptions,
     sectionId?: number,
   ) {
     const currentSectionId =
@@ -2537,10 +2471,7 @@ export class ForumTopicService {
   async updateTopicHiddenInTx(
     tx: Db,
     updateTopicHiddenDto: UpdateForumTopicHiddenDto,
-    currentTopic?: Pick<
-      ForumTopicSelect,
-      'auditStatus' | 'id' | 'isHidden' | 'sectionId' | 'title' | 'userId'
-    >,
+    currentTopic?: TopicGovernanceSnapshot,
   ) {
     const topic =
       currentTopic ??
@@ -2615,12 +2546,9 @@ export class ForumTopicService {
   }
 
   // 在主题首次审核通过后补发创建主题奖励；复用创建时的 bizKey 避免“即时发奖”和“审核补发”双发。
-  private async dispatchApprovedTopicRewardIfNeeded(params: {
-    topicId: number
-    userId: number
-    previousAuditStatus: AuditStatusEnum
-    nextAuditStatus: AuditStatusEnum
-  }) {
+  private async dispatchApprovedTopicRewardIfNeeded(
+    params: ApprovedTopicRewardParams,
+  ) {
     if (
       params.previousAuditStatus !== AuditStatusEnum.PENDING ||
       params.nextAuditStatus !== AuditStatusEnum.APPROVED
@@ -2657,10 +2585,7 @@ export class ForumTopicService {
   // 更新主题审核状态；审核状态变更会影响板块可见主题统计，需同步更新板块状态。
   async updateTopicAuditStatus(
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
-    options?: {
-      auditById?: number
-      auditRole?: AuditRoleEnum
-    },
+    options?: TopicAuditActorOptions,
   ) {
     const { id, auditStatus } = updateTopicAuditStatusDto
     const currentTopic = await this.db.query.forumTopic.findFirst({
@@ -2710,14 +2635,8 @@ export class ForumTopicService {
   async updateTopicAuditStatusInTx(
     tx: Db,
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
-    options?: {
-      auditById?: number
-      auditRole?: AuditRoleEnum
-    },
-    currentTopic?: Pick<
-      ForumTopicSelect,
-      'auditStatus' | 'id' | 'isHidden' | 'sectionId' | 'title' | 'userId'
-    >,
+    options?: TopicAuditActorOptions,
+    currentTopic?: TopicGovernanceSnapshot,
   ) {
     const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
     const topic =
@@ -2797,12 +2716,7 @@ export class ForumTopicService {
   }
 
   // 补发审核通过主题的奖励；委托 dispatchApprovedTopicRewardIfNeeded 执行。
-  async rewardApprovedTopicIfNeeded(params: {
-    topicId: number
-    userId: number
-    previousAuditStatus: AuditStatusEnum
-    nextAuditStatus: AuditStatusEnum
-  }) {
+  async rewardApprovedTopicIfNeeded(params: ApprovedTopicRewardParams) {
     await this.dispatchApprovedTopicRewardIfNeeded(params)
   }
 

@@ -765,18 +765,18 @@ class AdminForumTopicUserDto extends PickType(AppUserResponseDto, [
     required: false,
     type: AdminForumTopicUserCountDto,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  counts!: AdminForumTopicUserCountDto
+  counts!: AdminForumTopicUserCountDto | null
 
   @NestedProperty({
     description: '论坛等级',
     required: false,
     type: AdminForumTopicUserLevelDto,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  level!: AdminForumTopicUserLevelDto
+  level!: AdminForumTopicUserLevelDto | null
 }
 
 export class AdminForumTopicUserSummaryDto extends PickType(BaseAppUserDto, [

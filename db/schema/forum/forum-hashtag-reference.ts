@@ -101,6 +101,18 @@ export const forumHashtagReference = snakeCase.table(
       table.sectionId,
       table.createdAt,
     ),
+    /**
+     * 关注 hashtag feed exists 子查询索引：仅覆盖公开可见的 topic 引用事实。
+     */
+    index('forum_hashtag_ref_visible_topic_feed_idx')
+      .on(table.hashtagId, table.sectionId, table.topicId)
+      .where(sql`${table.sourceType} = 1 and ${table.isSourceVisible} = true`),
+    /**
+     * 主题下评论 hashtag 清理索引：按 topicId 批量删除 comment 引用事实。
+     */
+    index('forum_hashtag_ref_comment_topic_cleanup_idx')
+      .on(table.topicId, table.sourceId)
+      .where(sql`${table.sourceType} = 2`),
     check(
       'forum_hashtag_reference_source_type_valid_chk',
       sql`${table.sourceType} in (1, 2)`,

@@ -1,5 +1,10 @@
 import type { Db } from '@db/core'
 import type {
+  WorkflowAttemptSelect,
+  WorkflowEventSelect,
+  WorkflowJobSelect,
+} from '@db/schema'
+import type {
   WorkflowErrorCodeEnum,
   WorkflowErrorContext,
   WorkflowErrorDiagnosticInput,
@@ -179,6 +184,41 @@ export type WorkflowStatusCounters = Pick<
 /** 人工重试准备结果。 */
 export interface WorkflowRetryPreparationResult {
   jobCounters: WorkflowJobCounterPatch
+}
+
+/** 工作流通知轮询查询只需要的事件投影字段。 */
+export type WorkflowNotificationEventProjection = Pick<
+  WorkflowEventSelect,
+  'id' | 'eventType' | 'workflowAttemptId' | 'createdAt'
+>
+
+/** 工作流通知轮询查询只需要的任务投影字段。 */
+export type WorkflowNotificationJobProjection = Pick<
+  WorkflowJobSelect,
+  | 'jobId'
+  | 'workflowType'
+  | 'displayName'
+  | 'status'
+  | 'currentAttemptFk'
+  | 'selectedItemCount'
+  | 'successItemCount'
+  | 'failedItemCount'
+  | 'skippedItemCount'
+  | 'archivedAt'
+  | 'updatedAt'
+>
+
+/** 工作流通知轮询查询只需要的 attempt 投影字段。 */
+export type WorkflowNotificationAttemptProjection = Pick<
+  WorkflowAttemptSelect,
+  'triggerType' | 'notBeforeAt'
+>
+
+/** 工作流通知轮询 join 后的窄行结构，避免读取大 JSON 与诊断字段。 */
+export interface WorkflowNotificationRow {
+  attempt: WorkflowNotificationAttemptProjection
+  event: WorkflowNotificationEventProjection
+  job: WorkflowNotificationJobProjection
 }
 
 /** 工作流取消错误入参。 */

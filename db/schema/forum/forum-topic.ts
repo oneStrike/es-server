@@ -328,6 +328,59 @@ export const forumTopic = snakeCase.table(
       table.sectionId,
       table.lastCommentAt,
     ),
+    /**
+     * 公开默认 feed 索引：匹配可见主题过滤与置顶/最后评论/创建时间排序。
+     */
+    index('forum_topic_visible_default_feed_idx')
+      .on(
+        table.sectionId,
+        table.isPinned.desc(),
+        table.lastCommentAt.desc(),
+        table.createdAt.desc(),
+        table.id.desc(),
+      )
+      .where(
+        sql`${table.deletedAt} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false`,
+      ),
+    /**
+     * 公开热门 feed 索引：匹配可见主题过滤与评论/点赞/浏览热度排序。
+     */
+    index('forum_topic_visible_hot_feed_idx')
+      .on(
+        table.sectionId,
+        table.commentCount.desc(),
+        table.likeCount.desc(),
+        table.viewCount.desc(),
+        table.createdAt.desc(),
+        table.id.desc(),
+      )
+      .where(
+        sql`${table.deletedAt} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false`,
+      ),
+    /**
+     * 板块可见活动索引：支持按 coalesce(lastCommentAt, createdAt) 重建板块最后活跃主题。
+     */
+    index('forum_topic_section_visible_activity_idx')
+      .on(
+        table.sectionId,
+        sql`coalesce(${table.lastCommentAt}, ${table.createdAt}) desc`,
+        table.id.desc(),
+      )
+      .where(
+        sql`${table.deletedAt} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false`,
+      ),
+    /**
+     * 后台 keyword 搜索索引：保留既有 ILIKE 语义，依赖 pg_trgm。
+     */
+    index('forum_topic_title_trgm_idx')
+      .using('gin', table.title.op('gin_trgm_ops'))
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 后台 keyword 搜索索引：content 为大字段，需在上线时评估 GIN 体积与写入成本。
+     */
+    index('forum_topic_content_trgm_idx')
+      .using('gin', table.content.op('gin_trgm_ops'))
+      .where(sql`${table.deletedAt} is null`),
   ],
 )
 

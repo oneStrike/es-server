@@ -1,7 +1,10 @@
+import type { Db } from '@db/core'
 import type { ForumTopicSelect } from '@db/schema'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
+import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { MaterializedForumHashtagFact } from '../hashtag/forum-hashtag.type'
+import type { QueryPublicForumTopicDto } from './dto/forum-topic.dto'
 
 interface TextPreviewSegment {
   type: 'text'
@@ -86,6 +89,20 @@ export interface PublicForumTopicDetailContext extends ForumTopicClientContext {
 }
 
 /**
+ * 公开主题分页查询在 service 内补充当前用户上下文后的输入。
+ */
+export type PublicForumTopicQueryWithUser = QueryPublicForumTopicDto & {
+  userId?: number
+}
+
+/**
+ * 关注主题 feed 查询需要登录用户 ID。
+ */
+export type FollowingPublicForumTopicQuery = QueryPublicForumTopicDto & {
+  userId: number
+}
+
+/**
  * 公开主题分页查询结果行。
  * 供公开分页查询与 hydrate 阶段共享同一行结构。
  */
@@ -149,9 +166,166 @@ export type AdminTopicPageRow = Pick<
 >
 
 /**
+ * 公开主题分页 hydrate 阶段使用的用户与板块上下文。
+ */
+export interface HydratePublicTopicPageOptions {
+  userId?: number
+  sectionId?: number
+}
+
+/**
+ * 公开主题详情当前访问者的交互快照。
+ */
+export interface PublicTopicInteractionSnapshot {
+  liked: boolean
+  favorited: boolean
+  isFollowed: boolean
+  viewCount: number
+}
+
+/**
+ * 公开主题详情关系查询返回的内部行结构。
+ */
+export type VisiblePublicTopicDetailRow = ForumTopicSelect & {
+  section: {
+    id: number
+    groupId: number | null
+    deletedAt: Date | null
+    isEnabled: boolean
+    name: string
+    cover: string
+    topicCount: number
+    followersCount: number
+    group: {
+      isEnabled: boolean
+      deletedAt: Date | null
+    } | null
+  } | null
+  user: {
+    id: number
+    nickname: string
+    avatarUrl: string | null
+  } | null
+}
+
+/**
  * 批量关联查询前收集到的可选 ID 候选列表。
  */
 export type ForumTopicRelationIdCandidates = Array<number | null | undefined>
+
+/**
+ * 获取板块审核策略时的可见性与事务选项。
+ */
+export interface ForumTopicReviewPolicyOptions {
+  requireEnabled?: boolean
+  notFoundMessage?: string
+  client?: Db
+}
+
+/**
+ * 批量获取主题板块简要信息时的可见性过滤选项。
+ */
+export type ForumTopicSectionBriefMapOptions = Pick<
+  ForumTopicReviewPolicyOptions,
+  'requireEnabled'
+>
+
+/**
+ * 主题可见性判断需要的最小状态快照。
+ */
+export interface ForumTopicVisibleState {
+  auditStatus: AuditStatusEnum
+  isHidden: boolean
+  deletedAt?: Date | null
+}
+
+/**
+ * 创建主题事件 envelope 所需的最小上下文。
+ */
+export interface CreateTopicEventParams {
+  topicId: number
+  userId: number
+  auditStatus: AuditStatusEnum
+  occurredAt?: Date
+  context?: Record<string, unknown>
+}
+
+/**
+ * 主题 mention 可见性跃迁同步所需的前后状态。
+ */
+export interface TopicMentionVisibilityTransitionParams {
+  topicId: number
+  actorUserId: number
+  topicTitle: string
+  currentAuditStatus: AuditStatusEnum
+  currentIsHidden: boolean
+  nextAuditStatus: AuditStatusEnum
+  nextIsHidden: boolean
+}
+
+/**
+ * 主题图片列表归一化的限制与回退值。
+ */
+export interface NormalizeImageListOptions {
+  label: string
+  maxCount: number
+  fallback: string[]
+}
+
+/**
+ * 主题视频 JSON 值归一化的回退值。
+ */
+export interface NormalizeVideoValueOptions {
+  fallback: ForumTopicSelect['videos']
+}
+
+/**
+ * 主题媒体字段更新时使用的当前持久化回退值。
+ */
+export type ForumTopicMediaFallback = Pick<
+  ForumTopicSelect,
+  'images' | 'videos'
+>
+
+/**
+ * 主题状态更新时用于事务内同步附属状态的选项。
+ */
+export interface UpdateTopicStatusOptions {
+  syncSectionVisibility?: boolean
+}
+
+/**
+ * 主题普通布尔状态更新载荷；隐藏与审核状态有额外副作用，必须走专用方法。
+ */
+export type UpdateTopicStatusData = Partial<
+  Pick<ForumTopicSelect, 'isPinned' | 'isFeatured' | 'isLocked'>
+>
+
+/**
+ * 主题审核操作者信息。
+ */
+export interface TopicAuditActorOptions {
+  auditById?: number
+  auditRole?: AuditRoleEnum
+}
+
+/**
+ * 主题治理操作复用的当前主题最小快照。
+ */
+export type TopicGovernanceSnapshot = Pick<
+  ForumTopicSelect,
+  'auditStatus' | 'id' | 'isHidden' | 'sectionId' | 'title' | 'userId'
+>
+
+/**
+ * 审核通过后补发主题奖励所需的状态跃迁。
+ */
+export interface ApprovedTopicRewardParams {
+  topicId: number
+  userId: number
+  previousAuditStatus: AuditStatusEnum
+  nextAuditStatus: AuditStatusEnum
+}
 
 /**
  * topic 正文写入字段。

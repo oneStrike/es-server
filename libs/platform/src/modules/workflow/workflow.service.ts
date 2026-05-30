@@ -1,7 +1,6 @@
 import type { Db } from '@db/core'
 import type {
   WorkflowAttemptSelect,
-  WorkflowEventSelect,
   WorkflowJobSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
@@ -14,6 +13,7 @@ import type {
   CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput,
   CompleteWorkflowAttemptWithDelayedRetryInput,
   CreateWorkflowJobInput,
+  WorkflowNotificationRow,
   WorkflowObject,
   WorkflowProgress,
 } from './workflow.type'
@@ -23,7 +23,7 @@ import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm'
 import {
   WorkflowArchiveDto,
   WorkflowExpireDto,
@@ -70,6 +70,7 @@ import {
   WorkflowNotificationKindEnum,
 } from './workflow.constant'
 import {
+  normalizeWorkflowJobStatus,
   toWorkflowAttemptDto,
   toWorkflowErrorObject,
   toWorkflowJobDto,
@@ -82,12 +83,6 @@ class WorkflowClaimLostError extends Error {
     super('工作流 attempt claim 已丢失')
     this.name = 'WorkflowClaimLostError'
   }
-}
-
-interface WorkflowNotificationRow {
-  attempt: WorkflowAttemptSelect
-  event: WorkflowEventSelect
-  job: WorkflowJobSelect
 }
 
 const DEFAULT_WORKFLOW_NOTIFICATION_LIMIT = 20
@@ -423,23 +418,34 @@ export class WorkflowService {
       conditions.push(projectionCondition)
     }
     if (input.createdAfter) {
-      const cursorConditions: SQL[] = [gt(this.workflowEvent.createdAt, input.createdAfter)]
-      if (input.afterId !== undefined) {
-        cursorConditions.push(
-          and(
-            eq(this.workflowEvent.createdAt, input.createdAfter),
-            gt(this.workflowEvent.id, BigInt(input.afterId)),
-          )!,
-        )
-      }
-      conditions.push(or(...cursorConditions)!)
+      conditions.push(this.buildNotificationCursorCondition(input))
     }
 
     const rows = await this.db
       .select({
-        attempt: this.workflowAttempt,
-        event: this.workflowEvent,
-        job: this.workflowJob,
+        attempt: {
+          triggerType: this.workflowAttempt.triggerType,
+          notBeforeAt: this.workflowAttempt.notBeforeAt,
+        },
+        event: {
+          id: this.workflowEvent.id,
+          eventType: this.workflowEvent.eventType,
+          workflowAttemptId: this.workflowEvent.workflowAttemptId,
+          createdAt: this.workflowEvent.createdAt,
+        },
+        job: {
+          jobId: this.workflowJob.jobId,
+          workflowType: this.workflowJob.workflowType,
+          displayName: this.workflowJob.displayName,
+          status: this.workflowJob.status,
+          currentAttemptFk: this.workflowJob.currentAttemptFk,
+          selectedItemCount: this.workflowJob.selectedItemCount,
+          successItemCount: this.workflowJob.successItemCount,
+          failedItemCount: this.workflowJob.failedItemCount,
+          skippedItemCount: this.workflowJob.skippedItemCount,
+          archivedAt: this.workflowJob.archivedAt,
+          updatedAt: this.workflowJob.updatedAt,
+        },
       })
       .from(this.workflowEvent)
       .innerJoin(
@@ -1394,6 +1400,16 @@ export class WorkflowService {
     return attempt
   }
 
+  // 构造通知轮询游标条件；有同秒 ID 游标时使用行值比较贴合 createdAt/id 复合索引。
+  private buildNotificationCursorCondition(
+    input: WorkflowNotificationListRequestDto,
+  ) {
+    if (input.afterId === undefined) {
+      return gt(this.workflowEvent.createdAt, input.createdAfter!)
+    }
+    return sql`(${this.workflowEvent.createdAt}, ${this.workflowEvent.id}) > (${input.createdAfter!}, ${BigInt(input.afterId)})`
+  }
+
   private buildNotificationProjectionCondition(
     kinds: Set<WorkflowNotificationKindEnum>,
   ) {
@@ -1443,21 +1459,20 @@ export class WorkflowService {
     if (!kind) {
       return null
     }
-    const job = toWorkflowJobDto(row.job)
 
     return {
       id: Number(row.event.id),
       kind,
-      jobId: job.jobId,
-      workflowType: job.workflowType,
-      displayName: job.displayName,
-      status: job.status,
-      selectedItemCount: job.selectedItemCount,
-      successItemCount: job.successItemCount,
-      failedItemCount: job.failedItemCount,
-      skippedItemCount: job.skippedItemCount,
+      jobId: row.job.jobId,
+      workflowType: row.job.workflowType,
+      displayName: row.job.displayName,
+      status: normalizeWorkflowJobStatus(row.job.status),
+      selectedItemCount: row.job.selectedItemCount,
+      successItemCount: row.job.successItemCount,
+      failedItemCount: row.job.failedItemCount,
+      skippedItemCount: row.job.skippedItemCount,
       createdAt: row.event.createdAt,
-      updatedAt: job.updatedAt,
+      updatedAt: row.job.updatedAt,
       nextRetryAt:
         kind === WorkflowNotificationKindEnum.RETRYING
           ? row.attempt.notBeforeAt

@@ -243,6 +243,20 @@ export const userComment = snakeCase.table(
      */
     index('user_comment_body_version_idx').on(table.bodyVersion),
     /**
+     * 论坛主题可见评论重算索引：支持 commentCount 与最后评论查询。
+     */
+    index('user_comment_forum_topic_visible_latest_idx')
+      .on(table.targetId, table.createdAt.desc(), table.id.desc())
+      .where(
+        sql`${table.targetType} = 5 and ${table.auditStatus} = 1 and ${table.isHidden} = false and ${table.deletedAt} is null`,
+      ),
+    /**
+     * 删除论坛主题时的评论用户聚合索引：按 topicId/userId 统计未删除评论。
+     */
+    index('user_comment_forum_topic_live_user_agg_idx')
+      .on(table.targetId, table.userId)
+      .where(sql`${table.targetType} = 5 and ${table.deletedAt} is null`),
+    /**
      * 正文版本闭集约束
      */
     check(

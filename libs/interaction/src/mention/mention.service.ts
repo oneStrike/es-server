@@ -16,7 +16,8 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UserService } from '@libs/user/user.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { CommentTargetTypeEnum } from '../comment/comment.constant'
 import { MentionSourceTypeEnum } from './mention.constant'
 
 /**
@@ -35,6 +36,10 @@ export class MentionService {
 
   private get userMention() {
     return this.drizzle.schema.userMention
+  }
+
+  private get userComment() {
+    return this.drizzle.schema.userComment
   }
 
   /**
@@ -293,6 +298,24 @@ export class MentionService {
             : inArray(this.userMention.sourceId, input.sourceIds),
         ),
       )
+  }
+
+  /**
+   * 按论坛主题删除其所有评论 mention 事实。
+   * user_mention 没有 topic 维度，只能通过 user_comment 关联定位；Drizzle delete builder 不支持 DELETE USING，因此使用参数化原生 SQL。
+   */
+  async deleteCommentMentionsByForumTopicInTx(
+    tx: DeleteMentionsInTxInput['tx'],
+    topicId: number,
+  ) {
+    await tx.execute(sql`
+      DELETE FROM ${this.userMention}
+      USING ${this.userComment}
+      WHERE ${this.userMention.sourceType} = ${MentionSourceTypeEnum.COMMENT}
+        AND ${this.userMention.sourceId} = ${this.userComment.id}
+        AND ${this.userComment.targetType} = ${CommentTargetTypeEnum.FORUM_TOPIC}
+        AND ${this.userComment.targetId} = ${topicId}
+    `)
   }
 
   /**

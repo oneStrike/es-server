@@ -97,7 +97,7 @@ export function toWorkflowErrorObject(error: unknown) {
   }
 }
 
-function normalizeWorkflowJobStatus(status: number) {
+export function normalizeWorkflowJobStatus(status: number) {
   if (
     Object.values(WorkflowJobStatusEnum).includes(
       status as WorkflowJobStatusEnum,

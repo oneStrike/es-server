@@ -20,6 +20,15 @@
 - Drizzle relational query 的对象式 `where` 存在多分支时，必须先用命名的基础条件和作用域条件配合 `if / else if` 线性构造；不要把多套条件对象塞进嵌套三元表达式。
 - 排序字段必须显式声明；禁止依赖数据库返回“自然顺序”。
 
+## select 字段投影
+
+- 当查询需要表的**全部字段**时，使用 `db.select().from(table)` 简写；Drizzle 会自动展开为显式列名，类型安全不受影响。
+- 当查询需要表的**大部分字段**（保留字段数 > 排除字段数）时，使用 `getColumns(table)` + 解构排除 + spread 透传，而非逐字段列举。
+- 当查询只需要表的**少部分字段**（保留字段数 ≤ 排除字段数），或涉及跨表 join 需要精细选择不同表字段时，保持显式 `select({ ... })` 列举。
+- 解构排除时，必须用注释说明排除原因分组（如“正文大字段”“审核管理字段”“内部控制字段”），方便后续维护者判断排除意图。
+- 组装返回对象时，若源对象的字段与目标字段 1:1 同名透传，使用 spread（`...obj`）而非逐字段复制；仅对需要变换/覆盖/新增的字段显式写出。
+- 同一表在同一 service 中被多处查询且字段投影相同时，将投影抽为 `buildXxxSelect()` 方法复用，避免重复列举。
+
 ## 查询与写路径
 
 - `count`、余额、库存、计数器、乐观锁版本号等增减，必须使用原子更新并与事实写入位于同一事务。
@@ -62,6 +71,8 @@
 - 禁止用原生 SQL 字符串拼接代替 `sql` 模板。
 - 禁止 schema、DTO、常量 / 枚举、migration 四层脱节。
 - 禁止在 `db/schema` 中为 `inferSelect` / `inferInsert` 再套一层仅做改名的别名链，例如 `Foo = typeof foo.$inferSelect` 后再导出 `FooSelect = Foo`。
+- 禁止在 select 或返回对象组装中逐字段列举全部同名字段（即 `id: obj.id, name: obj.name, ...` 全部 1:1 透传），应使用 spread 或 `getColumns` + 解构排除。
+- 禁止在 spread 之后重复写出已在 spread 中包含的同名字段（如 `...item, geoCountry: item.geoCountry`）。
 
 ## 正反例
 
@@ -69,6 +80,9 @@
 - 允许：`await this.drizzle.withTransaction(async (tx) => { ... })`
 - 允许：`viewCount: sql\`${this.table.viewCount} + 1\``
 - 允许：闭集状态字段使用 `smallint().default(1).notNull()` 并补 `check(...)`
+- 允许：`db.select().from(table)` — 查询全表字段时使用简写
+- 允许：`const { html, content, body, ...rest } = getColumns(table); db.select({ ...rest }).from(table)` — 排除少量字段时用 getColumns 解构
+- 允许：`return { ...topic, liked: map.get(topic.id) ?? false }` — 同名字段 spread 透传 + 仅写出变换字段
 - 禁止：在 service 内自行创建新的数据库连接或 Drizzle 实例。
 - 禁止：`db.execute('UPDATE ... ' + userInput)`
 - 禁止：`where: flag ? { ...base, a } : other ? { ...base, b } : { ...base }`

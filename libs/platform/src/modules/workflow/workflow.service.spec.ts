@@ -667,7 +667,31 @@ describe('WorkflowService state machine', () => {
     expect(result.nextAfterId).toBe(25)
     expect(result.nextCreatedAfter).toEqual(failedCreatedAt)
     expect(result.serverTime).toBeInstanceOf(Date)
-    expect(db.select).toHaveBeenCalledTimes(1)
+    expect(db.select).toHaveBeenCalledWith({
+      attempt: {
+        notBeforeAt: 'notBeforeAt',
+        triggerType: 'triggerType',
+      },
+      event: {
+        createdAt: 'eventCreatedAt',
+        eventType: 'eventType',
+        id: 'eventId',
+        workflowAttemptId: 'eventWorkflowAttemptId',
+      },
+      job: {
+        archivedAt: 'archivedAt',
+        currentAttemptFk: 'currentAttemptFk',
+        displayName: 'displayName',
+        failedItemCount: 'failedItemCount',
+        jobId: 'jobId',
+        selectedItemCount: 'selectedItemCount',
+        skippedItemCount: 'skippedItemCount',
+        status: 'status',
+        successItemCount: 'successItemCount',
+        updatedAt: 'updatedAt',
+        workflowType: 'workflowType',
+      },
+    })
   })
 
   it('filters workflow notifications by kind after projection', async () => {

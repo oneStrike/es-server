@@ -11,12 +11,32 @@ function createSchema() {
     forumSection: {
       deletedAt: 'forum_section.deleted_at',
       id: 'forum_section.id',
+      commentCount: 'forum_section.comment_count',
+      lastPostAt: 'forum_section.last_post_at',
+      lastTopicId: 'forum_section.last_topic_id',
       topicCount: 'forum_section.topic_count',
     },
     forumTopic: {
+      auditStatus: 'forum_topic.audit_status',
+      commentCount: 'forum_topic.comment_count',
+      createdAt: 'forum_topic.created_at',
       deletedAt: 'forum_topic.deleted_at',
       id: 'forum_topic.id',
+      isHidden: 'forum_topic.is_hidden',
+      lastCommentAt: 'forum_topic.last_comment_at',
+      lastCommentUserId: 'forum_topic.last_comment_user_id',
       likeCount: 'forum_topic.like_count',
+      sectionId: 'forum_topic.section_id',
+    },
+    userComment: {
+      auditStatus: 'user_comment.audit_status',
+      createdAt: 'user_comment.created_at',
+      deletedAt: 'user_comment.deleted_at',
+      id: 'user_comment.id',
+      isHidden: 'user_comment.is_hidden',
+      targetId: 'user_comment.target_id',
+      targetType: 'user_comment.target_type',
+      userId: 'user_comment.user_id',
     },
   }
 }
@@ -44,10 +64,47 @@ function createCounterTx(updateRows: unknown[], existingRows: unknown[]) {
   }
 }
 
+function createChainQuery<T = unknown>(result: T) {
+  const chain = {
+    catch: jest.fn((onRejected?: (reason: unknown) => unknown) =>
+      Promise.resolve(result).catch(onRejected),
+    ),
+    finally: jest.fn((onFinally?: () => void) =>
+      Promise.resolve(result).finally(onFinally),
+    ),
+    from: jest.fn(() => chain),
+    limit: jest.fn(() => chain),
+    orderBy: jest.fn(() => chain),
+    then: jest.fn(
+      (
+        onFulfilled?: (value: T) => unknown,
+        onRejected?: (reason: unknown) => unknown,
+      ) => Promise.resolve(result).then(onFulfilled, onRejected),
+    ),
+    where: jest.fn(() => chain),
+  }
+
+  return chain
+}
+
+function createUpdateQuery(result: unknown = [{ id: 1 }]) {
+  const chain = {
+    set: jest.fn(() => chain),
+    where: jest.fn(() => ({
+      returning: jest.fn(async () => result),
+    })),
+  }
+
+  return chain
+}
+
 // 构造只服务计数更新分支的论坛计数服务。
-function createService() {
+function createService(db?: Record<string, unknown>) {
   const drizzle = {
+    db,
     schema: createSchema(),
+    assertAffectedRows: jest.fn(),
+    withErrorHandling: jest.fn((fn) => fn()),
   }
   return new ForumCounterService(
     drizzle as unknown as DrizzleService,
@@ -116,5 +173,55 @@ describe('ForumCounterService counter updates', () => {
       '主题不存在',
       ForumCountDeltaFailureCauseCode.TARGET_NOT_FOUND,
     )
+  })
+})
+
+describe('ForumCounterService rebuild query shape', () => {
+  it('syncTopicCommentState 使用可见评论条件并按 createdAt/id 倒序取最后评论', async () => {
+    const summaryQuery = createChainQuery([{ commentCount: 2 }])
+    const latestQuery = createChainQuery([
+      { userId: 100, createdAt: new Date('2026-05-30T00:00:00.000Z') },
+    ])
+    const updateQuery = createUpdateQuery()
+    const db = {
+      select: jest
+        .fn()
+        .mockReturnValueOnce(summaryQuery)
+        .mockReturnValueOnce(latestQuery),
+      update: jest.fn(() => updateQuery),
+    }
+    const service = createService(db)
+
+    await service.syncTopicCommentState(undefined, 1)
+
+    expect(summaryQuery.where).toHaveBeenCalledTimes(1)
+    expect(latestQuery.where).toHaveBeenCalledTimes(1)
+    expect(latestQuery.orderBy).toHaveBeenCalledTimes(1)
+    expect(latestQuery.limit).toHaveBeenCalledWith(1)
+    expect(db.update).toHaveBeenCalledTimes(1)
+  })
+
+  it('syncSectionVisibleState 使用可见主题条件并按活动时间/id 倒序取最后主题', async () => {
+    const summaryQuery = createChainQuery([{ topicCount: 2, commentCount: 5 }])
+    const latestQuery = createChainQuery([
+      { id: 9, lastPostAt: new Date('2026-05-30T00:00:00.000Z') },
+    ])
+    const updateQuery = createUpdateQuery()
+    const db = {
+      select: jest
+        .fn()
+        .mockReturnValueOnce(summaryQuery)
+        .mockReturnValueOnce(latestQuery),
+      update: jest.fn(() => updateQuery),
+    }
+    const service = createService(db)
+
+    await service.syncSectionVisibleState(undefined, 10)
+
+    expect(summaryQuery.where).toHaveBeenCalledTimes(1)
+    expect(latestQuery.where).toHaveBeenCalledTimes(1)
+    expect(latestQuery.orderBy).toHaveBeenCalledTimes(1)
+    expect(latestQuery.limit).toHaveBeenCalledWith(1)
+    expect(db.update).toHaveBeenCalledTimes(1)
   })
 })
