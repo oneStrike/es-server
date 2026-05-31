@@ -13,7 +13,7 @@ import {
 
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { Injectable } from '@nestjs/common'
-import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
 import { CouponInstanceStatusEnum } from '../coupon/coupon.constant'
 import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from '../download/download.constant'
 import { READING_COIN_ASSET_KEY } from '../wallet/wallet.constant'
@@ -213,6 +213,10 @@ export class UserAssetsService {
               CouponInstanceStatusEnum.AVAILABLE,
             ),
             gt(this.userCouponInstance.remainingUses, 0),
+            or(
+              isNull(this.userCouponInstance.expiresAt),
+              gt(this.userCouponInstance.expiresAt, new Date()),
+            ),
           ),
         ),
     ])

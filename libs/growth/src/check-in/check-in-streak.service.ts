@@ -23,7 +23,7 @@ import {
   diffDateOnlyInAppTimeZone,
 } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gt, inArray, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, inArray, lte, or, sql } from 'drizzle-orm'
 import { CheckInStreakConfigStatusEnum } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
@@ -305,6 +305,177 @@ export class CheckInStreakService extends CheckInServiceSupport {
     }
   }
 
+  // 按本次正常签到增量计算连续签到进度，避免高频写入读取全量历史记录。
+  buildIncrementalNormalSignAggregation(
+    progress: CheckInStreakProgressSnapshot,
+    signDate: string,
+  ): CheckInStreakAggregation {
+    const lastSignedDate = this.toDateOnlyValue(progress.lastSignedDate)
+    const yesterday = addDaysToDateOnlyInAppTimeZone(signDate, -1)
+    if (!yesterday) {
+      throw new BadRequestException('日期非法')
+    }
+
+    const continued = lastSignedDate === yesterday
+    const currentStreak = continued ? progress.currentStreak + 1 : 1
+    const streakStartedAt =
+      continued && progress.streakStartedAt
+        ? this.toDateOnlyValue(progress.streakStartedAt)
+        : signDate
+
+    return {
+      currentStreak,
+      streakStartedAt,
+      lastSignedDate: signDate,
+      streakByDate: {
+        [signDate]: currentStreak,
+      },
+    }
+  }
+
+  // 基于有界记录窗口和窗口前置连续天数，计算补签影响范围内的连续值。
+  buildBoundedStreakAggregation(
+    records: CheckInRecordDateOnlyView[],
+    seedStreakBeforeStart = 0,
+  ): CheckInStreakAggregation {
+    const sortedRecords = [...records].sort((left, right) =>
+      this.toDateOnlyValue(left.signDate).localeCompare(
+        this.toDateOnlyValue(right.signDate),
+      ),
+    )
+    if (sortedRecords.length === 0) {
+      return {
+        currentStreak: 0,
+        streakByDate: {},
+      }
+    }
+
+    const streakByDate: Record<string, number> = {}
+    let previousDate: string | undefined
+    let latestDate: string | undefined
+    let streak = Math.max(seedStreakBeforeStart, 0)
+
+    for (const record of sortedRecords) {
+      const signDate = this.toDateOnlyValue(record.signDate)
+      if (
+        previousDate &&
+        diffDateOnlyInAppTimeZone(signDate, previousDate) === 1
+      ) {
+        streak += 1
+      } else if (!previousDate && seedStreakBeforeStart > 0) {
+        streak = seedStreakBeforeStart + 1
+      } else {
+        streak = 1
+      }
+      streakByDate[signDate] = streak
+      previousDate = signDate
+      latestDate = signDate
+    }
+
+    return {
+      currentStreak: latestDate ? streakByDate[latestDate] : 0,
+      streakStartedAt:
+        latestDate && streakByDate[latestDate] > 0
+          ? addDaysToDateOnlyInAppTimeZone(
+              latestDate,
+              -(streakByDate[latestDate] - 1),
+            )
+          : undefined,
+      lastSignedDate: latestDate,
+      streakByDate,
+    }
+  }
+
+  // 只读取补签日所在的连续链窗口和必要的前置 seed，不扫描用户全部历史记录。
+  async buildMakeupBoundedStreakAggregation(
+    input: {
+      userId: number
+      makeupDate: string
+      periodStartDate: string
+      today: string
+      currentProgress: CheckInStreakProgressSnapshot
+    },
+    tx: Db,
+  ) {
+    const maxPeriodSpan =
+      diffDateOnlyInAppTimeZone(input.today, input.periodStartDate) ?? 0
+    const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
+      input.currentProgress.currentStreak,
+      input.currentProgress.lastSignedDate,
+      input.today,
+    )
+    const maxAffectedRecordCount = maxPeriodSpan + effectiveCurrentStreak + 1
+    const seedLowerBoundDate =
+      addDaysToDateOnlyInAppTimeZone(
+        input.periodStartDate,
+        -maxAffectedRecordCount,
+      ) ?? input.periodStartDate
+    const records = await this.listUserRecordsBetween(
+      input.userId,
+      seedLowerBoundDate,
+      input.today,
+      tx,
+    )
+    const recordDateSet = new Set(
+      records.map((record) => this.toDateOnlyValue(record.signDate)),
+    )
+    const affectedStart = this.findContiguousStartFromSet(
+      input.makeupDate,
+      input.periodStartDate,
+      recordDateSet,
+    )
+    const affectedEnd = this.findContiguousEndFromSet(
+      input.makeupDate,
+      input.today,
+      recordDateSet,
+    )
+    const seedDate = addDaysToDateOnlyInAppTimeZone(affectedStart, -1)
+    const seedStreakBeforeStart = seedDate
+      ? this.countContiguousRecordsEndingAtFromSet(
+          seedDate,
+          seedLowerBoundDate,
+          recordDateSet,
+        )
+      : 0
+    const seedChainStartDate =
+      seedDate && seedStreakBeforeStart > 0
+        ? addDaysToDateOnlyInAppTimeZone(seedDate, -(seedStreakBeforeStart - 1))
+        : undefined
+    if (
+      seedChainStartDate === seedLowerBoundDate &&
+      seedLowerBoundDate < input.periodStartDate
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '补签影响范围过大，请通过后台修复任务重算连续签到',
+      )
+    }
+    const affectedRecords = records.filter((record) => {
+      const signDate = this.toDateOnlyValue(record.signDate)
+      return signDate >= affectedStart && signDate <= affectedEnd
+    })
+    if (
+      seedStreakBeforeStart + affectedRecords.length >
+      maxAffectedRecordCount
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '补签影响范围过大，请通过后台修复任务重算连续签到',
+      )
+    }
+
+    return {
+      affectedStart,
+      affectedEnd,
+      aggregation: this.buildBoundedStreakAggregation(
+        affectedRecords,
+        seedStreakBeforeStart,
+      ),
+      records: affectedRecords,
+      seedStreakBeforeStart,
+    }
+  }
+
   // 根据最后签到日期判断当前连续天数是否仍然有效。
   resolveEffectiveCurrentStreak(
     currentStreak: number,
@@ -456,6 +627,31 @@ export class CheckInStreakService extends CheckInServiceSupport {
       )
   }
 
+  // 按日期范围读取用户签到记录，供补签有界重算使用。
+  async listUserRecordsBetween(
+    userId: number,
+    startDate: string,
+    endDate: string,
+    tx: Db,
+  ) {
+    return tx
+      .select({
+        signDate: this.checkInRecordTable.signDate,
+      })
+      .from(this.checkInRecordTable)
+      .where(
+        and(
+          eq(this.checkInRecordTable.userId, userId),
+          gte(this.checkInRecordTable.signDate, startDate),
+          lte(this.checkInRecordTable.signDate, endDate),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInRecordTable.signDate),
+        asc(this.checkInRecordTable.id),
+      )
+  }
+
   // 判断最近签到日期是否仍属于当前连续区间。
   private isEffectiveStreakDate(
     lastSignedDate: CheckInNullableDateLike,
@@ -475,5 +671,63 @@ export class CheckInStreakService extends CheckInServiceSupport {
       normalizedLastSignedDate === today ||
       normalizedLastSignedDate === yesterday
     )
+  }
+
+  // 从补签日向前寻找连续链起点，最多退到当前补签周期起点。
+  private findContiguousStartFromSet(
+    makeupDate: string,
+    lowerBoundDate: string,
+    recordDateSet: Set<string>,
+  ) {
+    let cursor = makeupDate
+    while (cursor > lowerBoundDate) {
+      const previousDate = addDaysToDateOnlyInAppTimeZone(cursor, -1)
+      if (!previousDate || previousDate < lowerBoundDate) {
+        break
+      }
+      if (!recordDateSet.has(previousDate)) {
+        break
+      }
+      cursor = previousDate
+    }
+    return cursor
+  }
+
+  // 从补签日向后寻找连续链终点，最多推进到今天。
+  private findContiguousEndFromSet(
+    makeupDate: string,
+    upperBoundDate: string,
+    recordDateSet: Set<string>,
+  ) {
+    let cursor = makeupDate
+    while (cursor < upperBoundDate) {
+      const nextDate = addDaysToDateOnlyInAppTimeZone(cursor, 1)
+      if (!nextDate || nextDate > upperBoundDate) {
+        break
+      }
+      if (!recordDateSet.has(nextDate)) {
+        break
+      }
+      cursor = nextDate
+    }
+    return cursor
+  }
+
+  // 计算范围起点之前的连续链长度，用作有界重算 seed。
+  private countContiguousRecordsEndingAtFromSet(
+    endDate: string,
+    lowerBoundDate: string,
+    recordDateSet: Set<string>,
+  ) {
+    let cursor: string | undefined = endDate
+    let count = 0
+    while (cursor && cursor >= lowerBoundDate) {
+      if (!recordDateSet.has(cursor)) {
+        break
+      }
+      count += 1
+      cursor = addDaysToDateOnlyInAppTimeZone(cursor, -1)
+    }
+    return count
   }
 }

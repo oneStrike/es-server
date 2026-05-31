@@ -2,8 +2,11 @@ import type { SQL } from 'drizzle-orm'
 import type {
   ConsumeCouponRedemptionInput,
   ConsumeCouponRedemptionResult,
+  CouponGrantSnapshot,
   CouponInstanceLookupInput,
   CouponTx,
+  GrantCouponsForSourceInput,
+  GrantCouponsForSourceResult,
   ReserveDiscountCouponInput,
 } from '../coupon/types/coupon.type'
 import { DrizzleService, toPageResult } from '@db/core'
@@ -14,14 +17,17 @@ import {
   MembershipSubscriptionStatusEnum,
 } from '@libs/content/permission/content-entitlement.constant'
 import { ContentEntitlementService } from '@libs/content/permission/content-entitlement.service'
+import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, desc, eq, gt, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, isNull, or, sql } from 'drizzle-orm'
 import {
   CouponInstanceStatusEnum,
   CouponRedemptionStatusEnum,
   CouponRedemptionTargetTypeEnum,
+  CouponTargetScopeEnum,
   CouponTypeEnum,
 } from '../coupon/coupon.constant'
 import {
@@ -40,6 +46,7 @@ export class CouponService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly contentEntitlementService: ContentEntitlementService,
+    private readonly checkInService: CheckInService,
   ) {}
 
   // 获取当前请求使用的 Drizzle 查询实例。
@@ -69,8 +76,53 @@ export class CouponService {
 
   // 向用户发放指定券定义的券实例。
   async grantCoupon(dto: GrantCouponDto) {
-    const definition = await this.db.query.couponDefinition.findFirst({
-      where: { id: dto.couponDefinitionId, isEnabled: true },
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.grantCouponsForSource(tx, dto)
+    })
+    return true
+  }
+
+  // 通用发券入口，支持数量、有效期覆盖和 grantKey 幂等。
+  async grantCouponsForSource(
+    tx: CouponTx,
+    input: GrantCouponsForSourceInput,
+  ): Promise<GrantCouponsForSourceResult> {
+    const quantity = input.quantity ?? 1
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '发券数量必须为正整数',
+      )
+    }
+    if (
+      input.validDays !== undefined &&
+      input.validDays !== null &&
+      (!Number.isInteger(input.validDays) || input.validDays < 1)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '发券有效天数必须为正整数',
+      )
+    }
+    if (
+      input.grantKeys !== undefined &&
+      input.grantKeys.length !== quantity
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '发券幂等键数量必须和发券数量一致',
+      )
+    }
+    const grantKeys = input.grantKeys?.map((item) => item.trim()) ?? []
+    if (grantKeys.includes('')) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '发券幂等键不能为空',
+      )
+    }
+
+    const definition = await tx.query.couponDefinition.findFirst({
+      where: { id: input.couponDefinitionId, isEnabled: true },
     })
     if (!definition) {
       throw new BusinessException(
@@ -78,29 +130,63 @@ export class CouponService {
         '券定义不存在或未启用',
       )
     }
+    const [user] = await tx
+      .select({ id: this.drizzle.schema.appUser.id })
+      .from(this.drizzle.schema.appUser)
+      .where(eq(this.drizzle.schema.appUser.id, input.userId))
+      .limit(1)
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
+    }
+    this.assertCouponAbility(definition)
+    const validDays = input.validDays ?? definition.validDays
+    const grantSnapshot = this.buildGrantSnapshot({
+      ...definition,
+      validDays,
+    })
     const expiresAt =
-      definition.validDays > 0
-        ? this.addDays(new Date(), definition.validDays)
+      validDays > 0
+        ? this.addDays(new Date(), validDays)
         : null
+    const items: GrantCouponsForSourceResult['items'] = []
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.userCouponInstance).values({
-        userId: dto.userId,
-        couponDefinitionId: definition.id,
-        couponType: definition.couponType,
-        status: CouponInstanceStatusEnum.AVAILABLE,
-        remainingUses: definition.usageLimit,
-        sourceType: dto.sourceType,
-        sourceId: dto.sourceId,
-        expiresAt,
-        grantSnapshot: {
-          couponName: definition.name,
+    for (let index = 0; index < quantity; index += 1) {
+      const grantKey = grantKeys[index] ?? null
+      const insertRows = await tx
+        .insert(this.userCouponInstance)
+        .values({
+          userId: input.userId,
+          couponDefinitionId: definition.id,
           couponType: definition.couponType,
-          targetScope: definition.targetScope,
-        },
-      }),
-    )
-    return true
+          status: CouponInstanceStatusEnum.AVAILABLE,
+          remainingUses: definition.usageLimit,
+          sourceType: input.sourceType,
+          sourceId: input.sourceId,
+          grantKey,
+          expiresAt,
+          grantSnapshot,
+        })
+        .onConflictDoNothing()
+        .returning()
+      const couponInstance =
+        insertRows[0] ??
+        (grantKey
+          ? await this.findCouponInstanceByGrantKey(tx, input.userId, grantKey)
+          : null)
+      items.push({
+        grantKey,
+        couponInstance,
+        created: insertRows.length > 0,
+      })
+    }
+
+    return {
+      items,
+      createdCount: items.filter((item) => item.created).length,
+    }
   }
 
   // 基于输入时间增加指定天数。
@@ -108,6 +194,24 @@ export class CouponService {
     const output = new Date(input)
     output.setDate(output.getDate() + days)
     return output
+  }
+
+  private async findCouponInstanceByGrantKey(
+    tx: CouponTx,
+    userId: number,
+    grantKey: string,
+  ) {
+    const [row] = await tx
+      .select()
+      .from(this.userCouponInstance)
+      .where(
+        and(
+          eq(this.userCouponInstance.userId, userId),
+          eq(this.userCouponInstance.grantKey, grantKey),
+        ),
+      )
+      .limit(1)
+    return row ?? null
   }
 
   // 启用或停用券定义。
@@ -126,11 +230,21 @@ export class CouponService {
   // 更新券定义。
   async updateCouponDefinition(dto: UpdateCouponDefinitionDto) {
     const { id, ...data } = dto
+    const existing = await this.db.query.couponDefinition.findFirst({
+      where: { id },
+    })
+    if (!existing) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '券定义不存在',
+      )
+    }
+    const normalizedData = this.normalizeCouponDefinitionUpdate(data, existing)
     await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.couponDefinition)
-          .set(data)
+          .set(normalizedData)
           .where(eq(this.couponDefinition.id, id)),
       { notFound: '券定义不存在' },
     )
@@ -140,9 +254,263 @@ export class CouponService {
   // 创建券定义。
   async createCouponDefinition(dto: CreateCouponDefinitionDto) {
     await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.couponDefinition).values(dto),
+      this.db
+        .insert(this.couponDefinition)
+        .values(this.normalizeCouponDefinitionWrite(dto)),
     )
     return true
+  }
+
+  // 更新券类型时不继承旧能力字段，避免保存出新类型下不完整的券能力。
+  private normalizeCouponDefinitionUpdate(
+    data: Omit<UpdateCouponDefinitionDto, 'id'>,
+    existing: CreateCouponDefinitionDto,
+  ) {
+    const nextCouponType = data.couponType ?? existing.couponType
+    const base = {
+      name: data.name ?? existing.name,
+      couponType: nextCouponType,
+      validDays: data.validDays ?? existing.validDays,
+      isEnabled: data.isEnabled ?? existing.isEnabled,
+    }
+    const typeChanged = nextCouponType !== existing.couponType
+    if (typeChanged) {
+      return this.normalizeCouponDefinitionWrite({
+        ...base,
+        ...(data.discountAmount !== undefined
+          ? { discountAmount: data.discountAmount }
+          : {}),
+        ...(data.discountRateBps !== undefined
+          ? { discountRateBps: data.discountRateBps }
+          : {}),
+        ...(data.usageLimit !== undefined ? { usageLimit: data.usageLimit } : {}),
+        ...(data.benefitDays !== undefined
+          ? { benefitDays: data.benefitDays }
+          : {}),
+        ...(data.benefitCount !== undefined
+          ? { benefitCount: data.benefitCount }
+          : {}),
+      })
+    }
+
+    return this.normalizeCouponDefinitionWrite({
+      ...base,
+      discountAmount: data.discountAmount ?? existing.discountAmount,
+      discountRateBps: data.discountRateBps ?? existing.discountRateBps,
+      usageLimit: data.usageLimit ?? existing.usageLimit,
+      benefitDays: data.benefitDays ?? existing.benefitDays,
+      benefitCount: data.benefitCount ?? existing.benefitCount,
+    })
+  }
+
+  // 按券能力派生目标范围并清理无关能力字段。
+  private normalizeCouponDefinitionWrite(dto: CreateCouponDefinitionDto) {
+    const base = {
+      ...dto,
+      discountAmount: 0,
+      discountRateBps: 10000,
+      usageLimit: 1,
+      validDays: dto.validDays ?? 0,
+      benefitDays: 0,
+      benefitCount: 0,
+    }
+
+    if (dto.couponType === CouponTypeEnum.READING) {
+      return this.ensureCouponDefinitionWritable({
+        ...base,
+        targetScope: CouponTargetScopeEnum.CHAPTER,
+        usageLimit: dto.usageLimit ?? 1,
+      })
+    }
+
+    if (dto.couponType === CouponTypeEnum.DISCOUNT) {
+      if ((dto.discountAmount ?? 0) <= 0 && (dto.discountRateBps ?? 10000) >= 10000) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '折扣券必须配置折扣金额或折扣率',
+        )
+      }
+      return this.ensureCouponDefinitionWritable({
+        ...base,
+        targetScope: CouponTargetScopeEnum.CHAPTER,
+        discountAmount: dto.discountAmount ?? 0,
+        discountRateBps: dto.discountRateBps ?? 10000,
+      })
+    }
+
+    if (dto.couponType === CouponTypeEnum.VIP_TRIAL) {
+      return this.ensureCouponDefinitionWritable({
+        ...base,
+        targetScope: CouponTargetScopeEnum.VIP,
+        benefitDays: dto.benefitDays ?? 1,
+      })
+    }
+
+    if (dto.couponType === CouponTypeEnum.CHECK_IN_MAKEUP) {
+      return this.ensureCouponDefinitionWritable({
+        ...base,
+        targetScope: CouponTargetScopeEnum.CHECK_IN,
+        benefitCount: dto.benefitCount ?? 1,
+      })
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '不支持的券类型',
+    )
+  }
+
+  private ensureCouponDefinitionWritable<T extends {
+    couponType: CouponTypeEnum
+    targetScope: CouponTargetScopeEnum
+    usageLimit: number
+    discountAmount: number
+    discountRateBps: number
+    benefitDays: number
+    benefitCount: number
+  }>(definition: T
+) {
+    this.assertCouponAbility(definition)
+    return definition
+  }
+
+  private assertCouponAbility(definition: {
+    couponType: CouponTypeEnum
+    targetScope: CouponTargetScopeEnum
+    usageLimit: number
+    discountAmount: number
+    discountRateBps: number
+    benefitDays: number
+    benefitCount: number
+  }) {
+    if (
+      definition.couponType === CouponTypeEnum.READING &&
+      (definition.targetScope !== CouponTargetScopeEnum.CHAPTER ||
+        definition.usageLimit < 1)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '阅读券能力配置不完整',
+      )
+    }
+
+    if (
+      definition.couponType === CouponTypeEnum.DISCOUNT &&
+      (definition.targetScope !== CouponTargetScopeEnum.CHAPTER ||
+        (definition.discountAmount <= 0 &&
+          definition.discountRateBps >= 10000))
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '折扣券必须配置折扣金额或折扣率',
+      )
+    }
+
+    if (
+      definition.couponType === CouponTypeEnum.VIP_TRIAL &&
+      (definition.targetScope !== CouponTargetScopeEnum.VIP ||
+        definition.benefitDays < 1)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'VIP 试用卡必须配置试用天数',
+      )
+    }
+
+    if (
+      definition.couponType === CouponTypeEnum.CHECK_IN_MAKEUP &&
+      (definition.targetScope !== CouponTargetScopeEnum.CHECK_IN ||
+        definition.benefitCount < 1)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '补签卡必须配置补签次数',
+      )
+    }
+  }
+
+  private buildGrantSnapshot(definition: {
+    name: string
+    couponType: CouponTypeEnum
+    targetScope: CouponTargetScopeEnum
+    usageLimit: number
+    discountRateBps: number
+    discountAmount: number
+    benefitDays: number
+    benefitCount: number
+    validDays: number
+  }): CouponGrantSnapshot {
+    return {
+      name: definition.name,
+      couponType: definition.couponType,
+      targetScope: definition.targetScope,
+      usageLimit: definition.usageLimit,
+      discountRateBps: definition.discountRateBps,
+      discountAmount: definition.discountAmount,
+      benefitDays: definition.benefitDays,
+      benefitCount: definition.benefitCount,
+      validDays: definition.validDays,
+      issuedAt: new Date().toISOString(),
+    }
+  }
+
+  private parseGrantSnapshot(snapshot: unknown): CouponGrantSnapshot {
+    if (!snapshot || typeof snapshot !== 'object') {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '券发放快照缺失',
+      )
+    }
+    const value = snapshot as Record<string, unknown>
+    const couponType = this.readSnapshotNumber(value.couponType, 'couponType')
+    const targetScope = this.readSnapshotNumber(
+      value.targetScope,
+      'targetScope',
+    )
+    return {
+      name:
+        this.readSnapshotString(value.name) ??
+        this.throwInvalidGrantSnapshot('券发放快照名称缺失'),
+      couponType: couponType as CouponTypeEnum,
+      targetScope: targetScope as CouponTargetScopeEnum,
+      usageLimit: this.readSnapshotNumber(value.usageLimit, 'usageLimit'),
+      discountRateBps: this.readSnapshotNumber(
+        value.discountRateBps,
+        'discountRateBps',
+      ),
+      discountAmount: this.readSnapshotNumber(
+        value.discountAmount,
+        'discountAmount',
+      ),
+      benefitDays: this.readSnapshotNumber(value.benefitDays, 'benefitDays'),
+      benefitCount: this.readSnapshotNumber(
+        value.benefitCount,
+        'benefitCount',
+      ),
+      validDays: this.readSnapshotNumber(value.validDays, 'validDays'),
+      issuedAt:
+        this.readSnapshotString(value.issuedAt) ??
+        this.throwInvalidGrantSnapshot('券发放快照发放时间缺失'),
+    }
+  }
+
+  private readSnapshotString(value: unknown) {
+    return typeof value === 'string' && value.trim() ? value : undefined
+  }
+
+  private readSnapshotNumber(value: unknown, fieldName: string) {
+    if (value === null || value === undefined || value === '') {
+      this.throwInvalidGrantSnapshot(`券发放快照 ${fieldName} 缺失`)
+    }
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed)) {
+      this.throwInvalidGrantSnapshot(`券发放快照 ${fieldName} 缺失`)
+    }
+    return parsed
+  }
+
+  private throwInvalidGrantSnapshot(message: string): never {
+    throw new BusinessException(BusinessErrorCode.STATE_CONFLICT, message)
   }
 
   // 分页查询券定义。
@@ -151,11 +519,18 @@ export class CouponService {
     if (dto.couponType !== undefined) {
       conditions.push(eq(this.couponDefinition.couponType, dto.couponType))
     }
-    if (dto.targetScope !== undefined) {
-      conditions.push(eq(this.couponDefinition.targetScope, dto.targetScope))
-    }
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.couponDefinition.isEnabled, dto.isEnabled))
+    }
+    const dateRange = buildDateOnlyRangeInAppTimeZone(
+      dto.startDate,
+      dto.endDate,
+    )
+    if (dateRange?.gte) {
+      conditions.push(sql`${this.couponDefinition.createdAt} >= ${dateRange.gte}`)
+    }
+    if (dateRange?.lt) {
+      conditions.push(sql`${this.couponDefinition.createdAt} < ${dateRange.lt}`)
     }
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const page = this.drizzle.buildPage(dto)
@@ -183,6 +558,7 @@ export class CouponService {
       userId: input.userId,
       couponInstanceId: input.couponInstanceId,
     })
+    this.assertSnapshotCouponType(coupon)
     if (coupon.couponType !== CouponTypeEnum.DISCOUNT) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -223,47 +599,7 @@ export class CouponService {
     tx: CouponTx,
     input: ConsumeCouponRedemptionInput,
   ): Promise<ConsumeCouponRedemptionResult> {
-    const existing = await tx.query.couponRedemptionRecord.findFirst({
-      where: {
-        userId: input.userId,
-        bizKey: input.bizKey,
-      },
-    })
-    if (existing) {
-      return { redemption: existing, created: false }
-    }
-
-    const nextRemainingUses = input.coupon.remainingUses - 1
-    const [updated] = await tx
-      .update(this.userCouponInstance)
-      .set({
-        remainingUses: nextRemainingUses,
-        status:
-          nextRemainingUses > 0
-            ? CouponInstanceStatusEnum.AVAILABLE
-            : CouponInstanceStatusEnum.USED_UP,
-      })
-      .where(
-        and(
-          eq(this.userCouponInstance.id, input.couponInstanceId),
-          eq(this.userCouponInstance.userId, input.userId),
-          eq(
-            this.userCouponInstance.status,
-            CouponInstanceStatusEnum.AVAILABLE,
-          ),
-          gt(this.userCouponInstance.remainingUses, 0),
-        ),
-      )
-      .returning({ id: this.userCouponInstance.id })
-
-    if (!updated) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '券已被使用或状态已变化',
-      )
-    }
-
-    const [redemption] = await tx
+    const [insertedRedemption] = await tx
       .insert(this.couponRedemptionRecord)
       .values({
         userId: input.userId,
@@ -275,9 +611,61 @@ export class CouponService {
         bizKey: input.bizKey,
         redemptionSnapshot: input.redemptionSnapshot,
       })
+      .onConflictDoNothing({
+        target: [
+          this.couponRedemptionRecord.userId,
+          this.couponRedemptionRecord.bizKey,
+        ],
+      })
       .returning()
 
-    return { redemption, created: true }
+    if (!insertedRedemption) {
+      const existing = await tx.query.couponRedemptionRecord.findFirst({
+        where: {
+          userId: input.userId,
+          bizKey: input.bizKey,
+        },
+      })
+      if (!existing) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '券核销幂等记录状态异常',
+        )
+      }
+      return { redemption: existing, created: false }
+    }
+
+    const [updated] = await tx
+      .update(this.userCouponInstance)
+      .set({
+        remainingUses: sql`${this.userCouponInstance.remainingUses} - 1`,
+        status: sql`case when ${this.userCouponInstance.remainingUses} - 1 > 0 then ${CouponInstanceStatusEnum.AVAILABLE} else ${CouponInstanceStatusEnum.USED_UP} end`,
+      })
+      .where(
+        and(
+          eq(this.userCouponInstance.id, input.couponInstanceId),
+          eq(this.userCouponInstance.userId, input.userId),
+          eq(
+            this.userCouponInstance.status,
+            CouponInstanceStatusEnum.AVAILABLE,
+          ),
+          gt(this.userCouponInstance.remainingUses, 0),
+          or(
+            isNull(this.userCouponInstance.expiresAt),
+            gt(this.userCouponInstance.expiresAt, new Date()),
+          ),
+        ),
+      )
+      .returning({ remainingUses: this.userCouponInstance.remainingUses })
+
+    if (!updated) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '券已被使用或状态已变化',
+      )
+    }
+
+    return { redemption: insertedRedemption, created: true }
   }
 
   // 查询可核销的用户券实例及其定义快照。
@@ -294,20 +682,16 @@ export class CouponService {
         status: this.userCouponInstance.status,
         remainingUses: this.userCouponInstance.remainingUses,
         expiresAt: this.userCouponInstance.expiresAt,
-        name: this.couponDefinition.name,
-        targetScope: this.couponDefinition.targetScope,
-        discountAmount: this.couponDefinition.discountAmount,
-        discountRateBps: this.couponDefinition.discountRateBps,
-        validDays: this.couponDefinition.validDays,
+        grantSnapshot: this.userCouponInstance.grantSnapshot,
+        name: sql<string>`${this.userCouponInstance.grantSnapshot}->>'name'`,
+        targetScope: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'targetScope')::int`,
+        discountAmount: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'discountAmount')::int`,
+        discountRateBps: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'discountRateBps')::int`,
+        validDays: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'validDays')::int`,
+        benefitDays: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'benefitDays')::int`,
+        benefitCount: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'benefitCount')::int`,
       })
       .from(this.userCouponInstance)
-      .innerJoin(
-        this.couponDefinition,
-        eq(
-          this.couponDefinition.id,
-          this.userCouponInstance.couponDefinitionId,
-        ),
-      )
       .where(
         and(
           eq(this.userCouponInstance.id, input.couponInstanceId),
@@ -317,25 +701,34 @@ export class CouponService {
             CouponInstanceStatusEnum.AVAILABLE,
           ),
           gt(this.userCouponInstance.remainingUses, 0),
-          eq(this.couponDefinition.isEnabled, true),
         ),
       )
       .limit(1)
 
-    const coupon = rows[0]
-    if (!coupon) {
+    const row = rows[0]
+    if (!row) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '可用券不存在',
       )
     }
-    if (coupon.expiresAt && coupon.expiresAt <= new Date()) {
+    if (row.expiresAt && row.expiresAt <= new Date()) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '券已过期',
       )
     }
-    return coupon
+    const snapshot = this.parseGrantSnapshot(row.grantSnapshot)
+    return {
+      ...row,
+      name: snapshot.name,
+      targetScope: snapshot.targetScope,
+      discountAmount: snapshot.discountAmount,
+      discountRateBps: snapshot.discountRateBps,
+      validDays: snapshot.validDays,
+      benefitDays: snapshot.benefitDays,
+      benefitCount: snapshot.benefitCount,
+    }
   }
 
   // 核销用户券并在同一事务中执行对应权益发放。
@@ -349,6 +742,7 @@ export class CouponService {
   // 在外部事务中核销券，并仅在首次核销时执行权益发放副作用。
   private async redeemCouponInTx(tx: CouponTx, dto: RedeemCouponCommandDto) {
     const coupon = await this.getCouponInstanceWithDefinition(tx, dto)
+    this.assertSnapshotCouponType(coupon)
     if (coupon.couponType === CouponTypeEnum.DISCOUNT) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -368,19 +762,31 @@ export class CouponService {
         'VIP 试用卡只能核销到 VIP',
       )
     }
+    if (
+      coupon.couponType === CouponTypeEnum.CHECK_IN_MAKEUP &&
+      dto.targetType !== CouponRedemptionTargetTypeEnum.CHECK_IN
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '补签卡只能核销到签到',
+      )
+    }
     const bizKey =
       dto.bizKey ??
-      `coupon:${dto.userId}:${dto.targetType}:${dto.targetId}:${dto.couponInstanceId}`
+      `coupon:${dto.userId}:${dto.targetType}:${dto.targetId ?? 0}:${dto.couponInstanceId}`
     const { redemption, created } = await this.consumeCouponAndWriteRedemption(
       tx,
       {
         ...dto,
+        targetId: dto.targetId ?? null,
         coupon,
         bizKey,
         redemptionSnapshot: {
-          couponName: coupon.name,
+          name: coupon.name,
           couponType: coupon.couponType,
           targetScope: coupon.targetScope,
+          benefitDays: coupon.benefitDays,
+          benefitCount: coupon.benefitCount,
         },
       },
     )
@@ -396,7 +802,7 @@ export class CouponService {
       await this.contentEntitlementService.grantEntitlement(tx, {
         userId: dto.userId,
         targetType: readingTargetType,
-        targetId: dto.targetId,
+        targetId: this.requireTargetId(dto.targetId, '阅读券核销目标不能为空'),
         grantSource: ContentEntitlementGrantSourceEnum.COUPON,
         sourceId: redemption.id,
         sourceKey: bizKey,
@@ -417,8 +823,23 @@ export class CouponService {
         sourceId: redemption.id,
         status: MembershipSubscriptionStatusEnum.ACTIVE,
         startsAt: now,
-        endsAt: this.addDays(now, Math.max(1, coupon.validDays)),
+        endsAt: this.addDays(now, Math.max(1, coupon.benefitDays)),
         sourceSnapshot: {
+          couponInstanceId: dto.couponInstanceId,
+          couponDefinitionId: coupon.couponDefinitionId,
+          redemptionRecordId: redemption.id,
+        },
+      })
+    }
+
+    if (coupon.couponType === CouponTypeEnum.CHECK_IN_MAKEUP) {
+      await this.checkInService.grantEventMakeupAllowance(tx, {
+        userId: dto.userId,
+        amount: Math.max(1, coupon.benefitCount),
+        sourceRef: `coupon_redemption:${redemption.id}`,
+        bizKey,
+        context: {
+          source: 'coupon_check_in_makeup',
           couponInstanceId: dto.couponInstanceId,
           couponDefinitionId: coupon.couponDefinitionId,
           redemptionRecordId: redemption.id,
@@ -452,6 +873,10 @@ export class CouponService {
       eq(this.userCouponInstance.userId, userId),
       eq(this.userCouponInstance.status, CouponInstanceStatusEnum.AVAILABLE),
       gt(this.userCouponInstance.remainingUses, 0),
+      or(
+        isNull(this.userCouponInstance.expiresAt),
+        gt(this.userCouponInstance.expiresAt, new Date()),
+      ),
     ]
     if (dto.couponType !== undefined) {
       conditions.push(eq(this.userCouponInstance.couponType, dto.couponType))
@@ -469,16 +894,9 @@ export class CouponService {
           expiresAt: this.userCouponInstance.expiresAt,
           createdAt: this.userCouponInstance.createdAt,
           updatedAt: this.userCouponInstance.updatedAt,
-          name: this.couponDefinition.name,
+          name: sql<string>`${this.userCouponInstance.grantSnapshot}->>'name'`,
         })
         .from(this.userCouponInstance)
-        .innerJoin(
-          this.couponDefinition,
-          eq(
-            this.couponDefinition.id,
-            this.userCouponInstance.couponDefinitionId,
-          ),
-        )
         .where(and(...conditions))
         .orderBy(desc(this.userCouponInstance.createdAt))
         .limit(page.limit)
@@ -494,6 +912,29 @@ export class CouponService {
       total: Number(totalRows[0]?.total ?? 0),
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
+    }
+  }
+
+  private requireTargetId(targetId: number | null | undefined, message: string) {
+    if (targetId === undefined || targetId === null) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        message,
+      )
+    }
+    return targetId
+  }
+
+  private assertSnapshotCouponType(coupon: {
+    couponType: number
+    grantSnapshot: unknown
+  }) {
+    const snapshot = this.parseGrantSnapshot(coupon.grantSnapshot)
+    if (snapshot.couponType !== coupon.couponType) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '券实例类型与发放快照不一致',
+      )
     }
   }
 }

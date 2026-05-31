@@ -1,19 +1,25 @@
 import type { Db } from '@db/core'
 import type {
+  CheckInGrantTriggerView,
   CheckInMakeupWindowView,
   CheckInPerformSignInput,
   CheckInSignAction,
+  CheckInStreakAggregation,
+  CheckInStreakProgressSnapshot,
+  CheckInStreakRepairResult,
 } from './check-in.type'
 import type {
   MakeupCheckInDto,
   RepairCheckInRewardDto,
+  RepairCheckInStreakDto,
 } from './dto/check-in-execution.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
+import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { asc, eq } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, isNull, lte, or } from 'drizzle-orm'
 import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
@@ -104,6 +110,77 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
+  // 后台闭环修复连续签到进度和缺失的连续奖励发放事实。
+  async repairStreak(
+    dto: RepairCheckInStreakDto,
+    adminUserId: number,
+  ): Promise<CheckInStreakRepairResult> {
+    const repairResult = await this.drizzle.withTransaction(async (tx) => {
+      await this.ensureUserExists(dto.userId, tx)
+      const progress =
+        await this.checkInStreakService.getOrCreateStreakProgress(
+          dto.userId,
+          tx,
+        )
+      const records = await this.checkInStreakService.listUserRecords(
+        dto.userId,
+        tx,
+      )
+      const aggregation =
+        this.checkInStreakService.recomputeStreakAggregation(records)
+      const retryableGrantIds = await this.listRetryableStreakGrantIds(
+        dto.userId,
+        aggregation,
+        tx,
+      )
+      const createdGrantIds = await this.upsertStreakGrantsForAggregation(
+        dto.userId,
+        aggregation,
+        tx,
+        new Date(),
+        'repair',
+      )
+
+      await this.checkInStreakService.updateStreakProgress(
+        progress,
+        aggregation,
+        tx,
+      )
+
+      return {
+        userId: dto.userId,
+        currentStreak: aggregation.currentStreak,
+        streakStartedAt: aggregation.streakStartedAt ?? null,
+        lastSignedDate: aggregation.lastSignedDate ?? null,
+        createdGrantIds,
+        retryableGrantIds,
+      }
+    })
+
+    const settledGrantIds: number[] = []
+    const grantIdsToSettle = [
+      ...new Set([
+        ...repairResult.retryableGrantIds,
+        ...repairResult.createdGrantIds,
+      ]),
+    ]
+    for (const grantId of grantIdsToSettle) {
+      const success = await this.settleRepairGrantReward(grantId, adminUserId)
+      if (success) {
+        settledGrantIds.push(grantId)
+      }
+    }
+
+    return {
+      userId: repairResult.userId,
+      currentStreak: repairResult.currentStreak,
+      streakStartedAt: repairResult.streakStartedAt,
+      lastSignedDate: repairResult.lastSignedDate,
+      createdGrantIds: repairResult.createdGrantIds,
+      settledGrantIds,
+    }
+  }
+
   // 统一执行签到/补签主流程，并在事务内完成事实写入和奖励补偿。
   private async performSign(input: CheckInPerformSignInput) {
     const now = new Date()
@@ -151,12 +228,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             )
           }
 
-          let account = await this.checkInMakeupService.ensureCurrentMakeupAccount(
-            input.userId,
-            config,
-            today,
-            tx,
-          )
+          let account =
+            await this.checkInMakeupService.ensureCurrentMakeupAccount(
+              input.userId,
+              config,
+              today,
+              tx,
+            )
           const window = this.checkInMakeupService.buildMakeupWindow(
             today,
             config.makeupPeriodType as CheckInMakeupPeriodTypeEnum,
@@ -193,9 +271,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
                 ? (rewardResolution.resolvedRewardRuleKey ?? null)
                 : null,
               resolvedRewardItems: rewardResolution.resolvedRewardItems ?? null,
-              resolvedRewardOverviewIconUrl: rewardResolution.resolvedRewardItems
-                ? rewardResolution.resolvedRewardOverviewIconUrl
-                : null,
+              resolvedRewardOverviewIconUrl:
+                rewardResolution.resolvedRewardItems
+                  ? rewardResolution.resolvedRewardOverviewIconUrl
+                  : null,
               resolvedMakeupIconUrl:
                 input.recordType === CheckInRecordTypeEnum.MAKEUP
                   ? rewardDefinition.makeupIconUrl
@@ -236,6 +315,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
           const triggeredGrantIds = await this.processStreakGrants(
             input.userId,
+            input.signDate,
+            input.recordType,
+            window,
             tx,
             now,
           )
@@ -270,35 +352,78 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       await this.checkInSettlementService.settleGrantReward(grantId, {})
     }
 
-    return this.buildActionResponse(action.recordId, action.triggeredGrantIds)
+    return this.buildActionResponse(action.recordId)
   }
 
   // 根据最新连续签到状态计算并发放本次命中的连续奖励。
-  private async processStreakGrants(userId: number, tx: Db, now: Date) {
+  private async processStreakGrants(
+    userId: number,
+    signDate: string,
+    recordType: CheckInRecordTypeEnum,
+    makeupWindow: CheckInMakeupWindowView,
+    tx: Db,
+    now: Date,
+  ) {
     const progress = await this.checkInStreakService.getOrCreateStreakProgress(
       userId,
       tx,
     )
-    const records = await this.checkInStreakService.listUserRecords(userId, tx)
-    const aggregation = this.checkInStreakService.recomputeStreakAggregation(
-      records,
-    )
     const today = this.formatDateOnly(now)
+    const aggregation =
+      recordType === CheckInRecordTypeEnum.NORMAL
+        ? this.checkInStreakService.buildIncrementalNormalSignAggregation(
+            progress,
+            signDate,
+          )
+        : (
+            await this.checkInStreakService.buildMakeupBoundedStreakAggregation(
+              {
+                userId,
+                makeupDate: signDate,
+                periodStartDate: makeupWindow.periodStartDate,
+                today,
+                currentProgress: progress,
+              },
+              tx,
+            )
+          ).aggregation
+    const progressAggregation = this.resolveProgressAggregation(
+      progress,
+      aggregation,
+      recordType,
+    )
 
-    const existingGrants = await tx
-      .select({
-        id: this.checkInStreakGrantTable.id,
-        ruleCode: this.checkInStreakGrantTable.ruleCode,
-        triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
-      })
-      .from(this.checkInStreakGrantTable)
-      .where(eq(this.checkInStreakGrantTable.userId, userId))
-      .orderBy(
-        asc(this.checkInStreakGrantTable.triggerSignDate),
-        asc(this.checkInStreakGrantTable.id),
-      )
+    const triggeredGrantIds = await this.upsertStreakGrantsForAggregation(
+      userId,
+      aggregation,
+      tx,
+      now,
+      'sign',
+    )
 
-    const triggeredGrantIds: number[] = []
+    await this.checkInStreakService.updateStreakProgress(
+      progress,
+      progressAggregation,
+      tx,
+    )
+    return triggeredGrantIds
+  }
+
+  // 根据聚合结果补齐缺失的连续奖励 grant，复用正常签到和后台修复的同一幂等写入逻辑。
+  private async upsertStreakGrantsForAggregation(
+    userId: number,
+    aggregation: CheckInStreakAggregation,
+    tx: Db,
+    now: Date,
+    source: 'sign' | 'repair',
+  ) {
+    const today = this.formatDateOnly(now)
+    const createdGrantIds: number[] = []
+    const ruleRowsByLookupDate = new Map<
+      string,
+      Awaited<ReturnType<CheckInStreakService['listActiveStreakRulesAt']>>
+    >()
+    const grantEvidenceByRuleSet = new Map<string, CheckInGrantTriggerView[]>()
 
     for (const [triggerSignDate, streak] of Object.entries(
       aggregation.streakByDate,
@@ -311,18 +436,27 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       }
 
       const ruleLookupAt = triggerSignDate === today ? now : triggerSignDate
-      const activeRuleRows = await this.checkInStreakService.listActiveStreakRulesAt(
-        ruleLookupAt,
-        tx,
-      )
+      const ruleLookupDate = triggerSignDate === today ? today : triggerSignDate
+      let activeRuleRows = ruleRowsByLookupDate.get(ruleLookupDate)
+      if (!activeRuleRows) {
+        activeRuleRows =
+          await this.checkInStreakService.listActiveStreakRulesAt(
+            ruleLookupAt,
+            tx,
+          )
+        ruleRowsByLookupDate.set(ruleLookupDate, activeRuleRows)
+      }
       const grantCandidates =
         this.checkInStreakService.resolveEligibleGrantRules(
           activeRuleRows,
           { [triggerSignDate]: streak },
-          existingGrants.map((grant) => ({
-            ruleCode: grant.ruleCode,
-            triggerSignDate: grant.triggerSignDate,
-          })),
+          await this.loadRelevantExistingStreakGrants(
+            userId,
+            activeRuleRows.map((rule) => rule.ruleCode),
+            aggregation.streakStartedAt,
+            tx,
+            grantEvidenceByRuleSet,
+          ),
           aggregation.streakStartedAt,
         )
 
@@ -340,25 +474,27 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         }
         const [grant] = await tx
           .insert(this.checkInStreakGrantTable)
-            .values({
-              userId,
-              ruleId,
-              triggerSignDate: candidate.triggerSignDate,
-              rewardSettlementId: null,
+          .values({
+            userId,
+            ruleId,
+            triggerSignDate: candidate.triggerSignDate,
+            rewardSettlementId: null,
             bizKey: this.buildGrantBizKey(
               userId,
               candidate.rule.ruleCode,
               candidate.triggerSignDate,
-              ),
-              ruleCode: candidate.rule.ruleCode,
-              streakDays: candidate.rule.streakDays,
-              repeatable: candidate.rule.repeatable,
-              rewardOverviewIconUrl: candidate.rule.rewardOverviewIconUrl ?? null,
-              context: {
-                source:
-                  candidate.triggerSignDate === this.formatDateOnly(now)
-                  ? 'sign'
-                  : 'recompute',
+            ),
+            ruleCode: candidate.rule.ruleCode,
+            streakDays: candidate.rule.streakDays,
+            repeatable: candidate.rule.repeatable,
+            rewardOverviewIconUrl: candidate.rule.rewardOverviewIconUrl ?? null,
+            context: {
+              source:
+                source === 'repair'
+                  ? 'repair'
+                  : candidate.triggerSignDate === today
+                    ? 'sign'
+                    : 'recompute',
             },
           })
           .onConflictDoNothing({
@@ -376,16 +512,149 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           candidate.rule.rewardItems,
           tx,
         )
-        triggeredGrantIds.push(grant.id)
+        createdGrantIds.push(grant.id)
       }
     }
 
-    await this.checkInStreakService.updateStreakProgress(
-      progress,
-      aggregation,
-      tx,
-    )
-    return triggeredGrantIds
+    return createdGrantIds
+  }
+
+  // 后台重算时把当前连续链上已有但尚未成功的连续奖励也纳入补偿重试。
+  private async listRetryableStreakGrantIds(
+    userId: number,
+    aggregation: CheckInStreakAggregation,
+    tx: Db,
+  ) {
+    if (!aggregation.lastSignedDate) {
+      return []
+    }
+
+    const rows = await tx
+      .select({ id: this.checkInStreakGrantTable.id })
+      .from(this.checkInStreakGrantTable)
+      .leftJoin(
+        this.growthRewardSettlementTable,
+        eq(
+          this.checkInStreakGrantTable.rewardSettlementId,
+          this.growthRewardSettlementTable.id,
+        ),
+      )
+      .where(
+        and(
+          eq(this.checkInStreakGrantTable.userId, userId),
+          aggregation.streakStartedAt
+            ? gte(
+                this.checkInStreakGrantTable.triggerSignDate,
+                aggregation.streakStartedAt,
+              )
+            : undefined,
+          lte(
+            this.checkInStreakGrantTable.triggerSignDate,
+            aggregation.lastSignedDate,
+          ),
+          or(
+            isNull(this.checkInStreakGrantTable.rewardSettlementId),
+            isNull(this.growthRewardSettlementTable.id),
+            eq(
+              this.growthRewardSettlementTable.settlementStatus,
+              GrowthRewardSettlementStatusEnum.PENDING,
+            ),
+          ),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInStreakGrantTable.triggerSignDate),
+        asc(this.checkInStreakGrantTable.id),
+      )
+
+    return rows.map((row) => row.id)
+  }
+
+  private async settleRepairGrantReward(grantId: number, adminUserId: number) {
+    try {
+      return await this.checkInSettlementService.settleGrantReward(grantId, {
+        actorUserId: adminUserId,
+        isRetry: true,
+      })
+    } catch (error) {
+      if (
+        error instanceof BusinessException &&
+        error.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
+      ) {
+        return false
+      }
+      throw error
+    }
+  }
+
+  // 只读取本次候选规则和当前连续链相关的发放事实，避免高频签到拉取用户全部历史 grant。
+  private async loadRelevantExistingStreakGrants(
+    userId: number,
+    ruleCodes: string[],
+    streakStartedAt: string | undefined,
+    tx: Db,
+    cache: Map<string, CheckInGrantTriggerView[]>,
+  ) {
+    const uniqueRuleCodes = [...new Set(ruleCodes)].sort()
+    if (uniqueRuleCodes.length === 0) {
+      return []
+    }
+
+    const cacheKey = `${streakStartedAt ?? ''}:${uniqueRuleCodes.join('|')}`
+    const cached = cache.get(cacheKey)
+    if (cached) {
+      return cached
+    }
+
+    const rows = await tx
+      .select({
+        ruleCode: this.checkInStreakGrantTable.ruleCode,
+        triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
+      })
+      .from(this.checkInStreakGrantTable)
+      .where(
+        and(
+          eq(this.checkInStreakGrantTable.userId, userId),
+          inArray(this.checkInStreakGrantTable.ruleCode, uniqueRuleCodes),
+          streakStartedAt
+            ? gte(this.checkInStreakGrantTable.triggerSignDate, streakStartedAt)
+            : undefined,
+        ),
+      )
+      .orderBy(
+        asc(this.checkInStreakGrantTable.triggerSignDate),
+        asc(this.checkInStreakGrantTable.id),
+      )
+    cache.set(cacheKey, rows)
+    return rows
+  }
+
+  // 补签历史窗口只在影响最新有效连续状态时更新进度，避免把当前进度回退到历史日期。
+  private resolveProgressAggregation(
+    progress: CheckInStreakProgressSnapshot,
+    aggregation: CheckInStreakAggregation,
+    recordType: CheckInRecordTypeEnum,
+  ): CheckInStreakAggregation {
+    if (recordType === CheckInRecordTypeEnum.NORMAL) {
+      return aggregation
+    }
+
+    const currentLastSignedDate = this.toDateOnlyValue(progress.lastSignedDate)
+    if (
+      aggregation.lastSignedDate &&
+      (!currentLastSignedDate ||
+        aggregation.lastSignedDate >= currentLastSignedDate)
+    ) {
+      return aggregation
+    }
+
+    return {
+      currentStreak: progress.currentStreak,
+      streakStartedAt:
+        this.toDateOnlyValue(progress.streakStartedAt) || undefined,
+      lastSignedDate: currentLastSignedDate || undefined,
+      streakByDate: {},
+    }
   }
 
   // 校验补签日期是否仍位于当前可补签窗口内。
@@ -409,10 +678,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   }
 
   // 组装签到动作响应，补齐账户、奖励和连续签到摘要。
-  private async buildActionResponse(
-    recordId: number,
-    triggeredGrantIds: number[],
-  ) {
+  private async buildActionResponse(recordId: number) {
     const record = await this.db.query.checkInRecord.findFirst({
       where: { id: recordId },
     })
@@ -424,19 +690,15 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
 
     const config = await this.getRequiredConfig()
-    const makeup = await this.checkInMakeupService.buildCurrentMakeupAccountView(
-      record.userId,
-      config,
-      this.formatDateOnly(new Date()),
-    )
+    const makeup =
+      await this.checkInMakeupService.buildCurrentMakeupAccountView(
+        record.userId,
+        config,
+        this.formatDateOnly(new Date()),
+      )
     const progress = await this.db.query.checkInStreakProgress.findFirst({
       where: { userId: record.userId },
     })
-    const settlement = record.rewardSettlementId
-      ? await this.db.query.growthRewardSettlement.findFirst({
-          where: { id: record.rewardSettlementId },
-        })
-      : null
 
     return {
       id: record.id,
@@ -444,25 +706,22 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       updatedAt: record.updatedAt,
       signDate: this.toDateOnlyValue(record.signDate),
       recordType: record.recordType,
-      rewardSettlementId: record.rewardSettlementId,
       resolvedRewardSourceType: record.resolvedRewardSourceType,
       resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-      resolvedRewardItems: this.checkInRewardPolicyService.parseStoredRewardItems(
-        record.resolvedRewardItems,
-        {
-          allowEmpty: true,
-        },
-      ),
+      resolvedRewardItems:
+        this.checkInRewardPolicyService.parseStoredRewardItems(
+          record.resolvedRewardItems,
+          {
+            allowEmpty: true,
+          },
+        ),
       resolvedRewardOverviewIconUrl: record.resolvedRewardOverviewIconUrl,
       resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
-      rewardSettlement:
-        this.checkInSettlementService.toRewardSettlementSummary(settlement),
       currentMakeupPeriodType: makeup.periodType,
       currentMakeupPeriodKey: makeup.periodKey,
       periodicRemaining: makeup.periodicRemaining,
       eventAvailable: makeup.eventAvailable,
       currentStreak: progress?.currentStreak ?? 0,
-      triggeredGrantIds,
     }
   }
 

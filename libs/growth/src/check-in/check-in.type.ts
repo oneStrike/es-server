@@ -1,6 +1,7 @@
 import type {
   CheckInConfigSelect,
   CheckInMakeupAccountSelect,
+  CheckInMakeupFactSelect,
   CheckInRecordSelect,
   CheckInStreakGrantSelect,
   CheckInStreakProgressSelect,
@@ -26,6 +27,7 @@ import type {
 } from './dto/check-in-definition.dto'
 import type { BaseCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
 import type {
+  AppCheckInCalendarDayDto,
   CheckInCalendarDayDto,
   CheckInMakeupSummaryDto,
   CheckInReconciliationPageItemDto,
@@ -108,7 +110,11 @@ export interface CheckInGrantRewardSettlementSource {
 /** 连续签到进度乐观锁更新只依赖的最小字段集。 */
 export type CheckInStreakProgressSnapshot = Pick<
   CheckInStreakProgressSelect,
-  'id' | 'version'
+  | 'id'
+  | 'version'
+  | 'currentStreak'
+  | 'streakStartedAt'
+  | 'lastSignedDate'
 >
 
 /** 门面和定义服务共用的规则 ID 查询结构。 */
@@ -279,9 +285,23 @@ export interface CheckInEligibleGrantCandidate {
   triggerSignDate: string
 }
 
+/** 连续奖励重算并补发后的业务结果。 */
+export interface CheckInStreakRepairResult {
+  userId: number
+  currentStreak: number
+  streakStartedAt: string | null
+  lastSignedDate: string | null
+  createdGrantIds: number[]
+  settledGrantIds: number[]
+}
+
 /** 基于日历 DTO 收敛出的内部日历日视图。 */
 export type CheckInCalendarDayView =
   CheckInNullableRewardItemsView<CheckInCalendarDayDto>
+
+/** 基于 app 日历 DTO 收敛出的内部日历日视图。 */
+export type AppCheckInCalendarDayView =
+  CheckInNullableRewardItemsView<AppCheckInCalendarDayDto>
 
 /** 基于对账 DTO 收敛出的内部对账分页项视图。 */
 export type CheckInReconciliationPageItemView = CheckInReplaceFields<
@@ -317,6 +337,22 @@ export interface CheckInStreakAggregationOptions {
 export interface CheckInMakeupConsumePlanItem {
   sourceType: CheckInMakeupSourceTypeEnum
   amount: number
+}
+
+/** 外部业务在事务内发放活动补签卡额度的输入。 */
+export interface GrantEventMakeupAllowanceInput {
+  userId: number
+  amount: number
+  sourceRef?: string | null
+  bizKey: string
+  context?: Record<string, unknown> | null
+}
+
+/** 活动补签卡额度发放结果。 */
+export interface GrantEventMakeupAllowanceResult {
+  created: boolean
+  factId: CheckInMakeupFactSelect['id'] | null
+  account: CheckInMakeupAccountSelect
 }
 
 /** 对外补偿摘要复用的最小结算字段集。 */

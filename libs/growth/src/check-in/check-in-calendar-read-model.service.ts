@@ -2,9 +2,13 @@ import type { CheckInRecordSelect } from '@db/schema'
 import type {
   CheckInAdminCalendarDayAggregate,
   CheckInCalendarGrantCountSource,
+  CheckInCalendarOverviewCounter,
+  CheckInCalendarOverviewGrantAggregateRow,
+  CheckInCalendarOverviewRecordAggregateRow,
   CheckInCalendarRecordAggregateSource,
 } from './check-in-calendar.type'
 import type {
+  AppCheckInCalendarDayView,
   CheckInCalendarDayView,
   CheckInGrantItemView,
   CheckInRewardItems,
@@ -15,7 +19,7 @@ import { DrizzleService, toPageResult } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { addDaysToDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
-import { and, asc, eq, gte, inArray, lte } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
@@ -42,7 +46,9 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
 
   // 为当前用户按目标日期构建所在周期的签到日历。
   async getCurrentUserCalendarByTargetDate(userId: number, targetDate: string) {
-    return this.buildUserCalendarByTargetDate(userId, targetDate)
+    return this.buildUserCalendarByTargetDate(userId, targetDate, {
+      includeSettlement: false,
+    })
   }
 
   // 为指定用户按目标日期构建所在周期的签到日历。
@@ -51,7 +57,9 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     targetDate: string,
   ) {
     await this.ensureUserExists(userId)
-    return this.buildUserCalendarByTargetDate(userId, targetDate)
+    return this.buildUserCalendarByTargetDate(userId, targetDate, {
+      includeSettlement: true,
+    })
   }
 
   // 为后台构建目标日期所属周期的全局签到日历。
@@ -116,6 +124,39 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     }
   }
 
+  // 为后台配置面板构建目标周期轻量概览，不读取奖励 JSON、图标或补偿诊断字段。
+  async getAdminCalendarOverviewByTargetDate(targetDate: string) {
+    const today = this.formatDateOnly(new Date())
+    const { window, targetDateValue } =
+      await this.resolveCalendarContext(targetDate)
+    const cutoffDate = window.periodEndDate < today ? window.periodEndDate : today
+    const [recordRows, grantRows] = await Promise.all([
+      this.listCalendarOverviewRecordAggregateRows(
+        window.periodStartDate,
+        cutoffDate,
+      ),
+      this.listCalendarOverviewGrantAggregateRows(
+        window.periodStartDate,
+        cutoffDate,
+      ),
+    ])
+    const counterMap = this.buildOverviewCounterMap(recordRows, grantRows)
+    const emptyCounter = this.emptyOverviewCounter()
+
+    return {
+      periodType: window.periodType,
+      periodKey: window.periodKey,
+      periodStartDate: window.periodStartDate,
+      periodEndDate: window.periodEndDate,
+      targetDay: {
+        signDate: targetDateValue,
+        ...(counterMap.get(targetDateValue) ?? emptyCounter),
+      },
+      periodToDate: this.sumOverviewCounters(counterMap),
+      cutoffDate,
+    }
+  }
+
   // 为后台分页查询某日已签用户列表。
   async getAdminSignedUserPageByTargetDate(
     query: QueryAdminCheckInSignedUserPageDto,
@@ -162,6 +203,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
   private async buildUserCalendarByTargetDate(
     userId: number,
     targetDate: string,
+    options: { includeSettlement: boolean },
   ) {
     const today = this.formatDateOnly(new Date())
     const { rewardDefinition, window } =
@@ -171,11 +213,13 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
       window.periodStartDate,
       window.periodEndDate,
     )
-    const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
-      records
-        .map((record) => record.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
-    )
+    const settlementMap = options.includeSettlement
+      ? await this.checkInSettlementService.buildSettlementMapById(
+          records
+            .map((record) => record.rewardSettlementId)
+            .filter((id): id is number => typeof id === 'number'),
+        )
+      : new Map<number, CheckInRewardSettlementSummaryRecord>()
     const grantCountMap = await this.buildUserGrantCountMap(
       userId,
       window.periodStartDate,
@@ -185,7 +229,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
       records.map((record) => [this.toDateOnlyValue(record.signDate), record]),
     )
 
-    const days: CheckInCalendarDayView[] = []
+    const days: Array<AppCheckInCalendarDayView | CheckInCalendarDayView> = []
     let cursor = window.periodStartDate
     let dayIndex = 1
     while (cursor <= window.periodEndDate) {
@@ -218,11 +262,15 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
           record?.recordType === CheckInRecordTypeEnum.MAKEUP
             ? record.resolvedMakeupIconUrl
             : null,
-        rewardSettlement: record?.rewardSettlementId
-          ? this.checkInSettlementService.toRewardSettlementSummary(
-              settlementMap.get(record.rewardSettlementId) ?? null,
-            )
-          : null,
+        ...(options.includeSettlement
+          ? {
+              rewardSettlement: record?.rewardSettlementId
+                ? this.checkInSettlementService.toRewardSettlementSummary(
+                    settlementMap.get(record.rewardSettlementId) ?? null,
+                  )
+                : null,
+            }
+          : {}),
       })
       cursor = addDaysToDateOnlyInAppTimeZone(cursor, 1)!
       dayIndex += 1
@@ -323,6 +371,101 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         asc(this.checkInStreakGrantTable.triggerSignDate),
         asc(this.checkInStreakGrantTable.id),
       )
+  }
+
+  private async listCalendarOverviewRecordAggregateRows(
+    startDate: string,
+    endDate: string,
+  ) {
+    if (endDate < startDate) {
+      return [] satisfies CheckInCalendarOverviewRecordAggregateRow[]
+    }
+
+    return this.db
+      .select({
+        signDate: this.checkInRecordTable.signDate,
+        signedCount: sql<number>`count(distinct ${this.checkInRecordTable.userId})::int`,
+        normalSignCount: sql<number>`count(distinct case when ${this.checkInRecordTable.recordType} = ${CheckInRecordTypeEnum.NORMAL} then ${this.checkInRecordTable.userId} end)::int`,
+        makeupSignCount: sql<number>`count(distinct case when ${this.checkInRecordTable.recordType} = ${CheckInRecordTypeEnum.MAKEUP} then ${this.checkInRecordTable.userId} end)::int`,
+      })
+      .from(this.checkInRecordTable)
+      .where(
+        and(
+          gte(this.checkInRecordTable.signDate, startDate),
+          lte(this.checkInRecordTable.signDate, endDate),
+        ),
+      )
+      .groupBy(this.checkInRecordTable.signDate)
+      .orderBy(asc(this.checkInRecordTable.signDate))
+  }
+
+  private async listCalendarOverviewGrantAggregateRows(
+    startDate: string,
+    endDate: string,
+  ) {
+    if (endDate < startDate) {
+      return [] satisfies CheckInCalendarOverviewGrantAggregateRow[]
+    }
+
+    return this.db
+      .select({
+        signDate: this.checkInStreakGrantTable.triggerSignDate,
+        streakRewardTriggerCount: sql<number>`count(${this.checkInStreakGrantTable.id})::int`,
+      })
+      .from(this.checkInStreakGrantTable)
+      .where(
+        and(
+          gte(this.checkInStreakGrantTable.triggerSignDate, startDate),
+          lte(this.checkInStreakGrantTable.triggerSignDate, endDate),
+        ),
+      )
+      .groupBy(this.checkInStreakGrantTable.triggerSignDate)
+      .orderBy(asc(this.checkInStreakGrantTable.triggerSignDate))
+  }
+
+  private buildOverviewCounterMap(
+    recordRows: CheckInCalendarOverviewRecordAggregateRow[],
+    grantRows: CheckInCalendarOverviewGrantAggregateRow[],
+  ) {
+    const counterMap = new Map<string, CheckInCalendarOverviewCounter>()
+    for (const row of recordRows) {
+      counterMap.set(this.toDateOnlyValue(row.signDate), {
+        signedCount: Number(row.signedCount) || 0,
+        normalSignCount: Number(row.normalSignCount) || 0,
+        makeupSignCount: Number(row.makeupSignCount) || 0,
+        streakRewardTriggerCount: 0,
+      })
+    }
+    for (const row of grantRows) {
+      const signDate = this.toDateOnlyValue(row.signDate)
+      counterMap.set(signDate, {
+        ...(counterMap.get(signDate) ?? this.emptyOverviewCounter()),
+        streakRewardTriggerCount: Number(row.streakRewardTriggerCount) || 0,
+      })
+    }
+    return counterMap
+  }
+
+  private sumOverviewCounters(
+    counterMap: Map<string, CheckInCalendarOverviewCounter>,
+  ) {
+    const total = this.emptyOverviewCounter()
+    for (const counter of counterMap.values()) {
+      total.signedCount += counter.signedCount
+      total.normalSignCount += counter.normalSignCount
+      total.makeupSignCount += counter.makeupSignCount
+      total.streakRewardTriggerCount += counter.streakRewardTriggerCount
+    }
+    return total
+  }
+
+  private emptyOverviewCounter(): CheckInCalendarOverviewCounter {
+    return {
+      signedCount: 0,
+      normalSignCount: 0,
+      makeupSignCount: 0,
+      streakRewardTriggerCount: 0,
+    }
   }
 
   // 查询单用户目标周期内的连续奖励触发行。
@@ -561,6 +704,8 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
           allowEmpty: true,
         },
       ),
+      resolvedRewardOverviewIconUrl: record.resolvedRewardOverviewIconUrl,
+      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
       rewardSettlement: record.rewardSettlementId
         ? this.checkInSettlementService.toRewardSettlementSummary(
             settlementMap.get(record.rewardSettlementId) ?? null,

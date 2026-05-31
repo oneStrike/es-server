@@ -1,5 +1,7 @@
+import type { Db } from '@db/core'
 import type { PageDto } from '@libs/platform/dto'
-import type { CheckInRuleIdQuery } from './check-in.type'
+import type { CheckInRuleIdQuery, GrantEventMakeupAllowanceInput } from './check-in.type'
+
 import type {
   QueryAdminCheckInSignedUserPageDto,
   QueryAdminUserCheckInCalendarDetailDto,
@@ -15,6 +17,7 @@ import type {
 import type {
   MakeupCheckInDto,
   RepairCheckInRewardDto,
+  RepairCheckInStreakDto,
 } from './dto/check-in-execution.dto'
 import type {
   QueryCheckInLeaderboardDto,
@@ -24,6 +27,7 @@ import { Injectable } from '@nestjs/common'
 import { CheckInCalendarReadModelService } from './check-in-calendar-read-model.service'
 import { CheckInDefinitionService } from './check-in-definition.service'
 import { CheckInExecutionService } from './check-in-execution.service'
+import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRuntimeService } from './check-in-runtime.service'
 
 /**
@@ -39,6 +43,7 @@ export class CheckInService {
     private readonly checkInExecutionService: CheckInExecutionService,
     private readonly checkInRuntimeService: CheckInRuntimeService,
     private readonly checkInCalendarReadModelService: CheckInCalendarReadModelService,
+    private readonly checkInMakeupService: CheckInMakeupService,
   ) {}
 
   // 查询当前全局签到配置详情。
@@ -144,6 +149,13 @@ export class CheckInService {
     )
   }
 
+  // 查询 admin 侧目标日期所属周期的轻量概览。
+  async getAdminCalendarOverview(query: QueryCheckInCalendarDetailDto) {
+    return this.checkInCalendarReadModelService.getAdminCalendarOverviewByTargetDate(
+      query.targetDate,
+    )
+  }
+
   // 查询 admin 侧指定用户目标日期所属周期的签到日历。
   async getAdminUserCalendarDetail(query: QueryAdminUserCheckInCalendarDetailDto) {
     return this.checkInCalendarReadModelService.getSpecifiedUserCalendarByTargetDate(
@@ -162,5 +174,18 @@ export class CheckInService {
   // 触发签到奖励补偿重试。
   async repairReward(dto: RepairCheckInRewardDto, adminUserId: number) {
     return this.checkInExecutionService.repairReward(dto, adminUserId)
+  }
+
+  // 后台重算指定用户连续签到进度并补齐缺失连续奖励。
+  async repairStreak(dto: RepairCheckInStreakDto, adminUserId: number) {
+    return this.checkInExecutionService.repairStreak(dto, adminUserId)
+  }
+
+  // 在外部事务内发放活动补签卡额度。
+  async grantEventMakeupAllowance(
+    tx: Db,
+    input: GrantEventMakeupAllowanceInput,
+  ) {
+    return this.checkInMakeupService.grantEventMakeupAllowance(tx, input)
   }
 }

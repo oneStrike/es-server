@@ -64,9 +64,6 @@ export const checkInStreakRule = snakeCase.table(
     index('check_in_streak_rule_status_idx').on(table.status),
     index('check_in_streak_rule_effective_from_idx').on(table.effectiveFrom),
     index('check_in_streak_rule_effective_to_idx').on(table.effectiveTo),
-    index('check_in_streak_rule_reward_overview_icon_url_idx').on(
-      table.rewardOverviewIconUrl,
-    ),
     check(
       'check_in_streak_rule_streak_days_positive_chk',
       sql`${table.streakDays} > 0`,

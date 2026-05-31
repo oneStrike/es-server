@@ -6,9 +6,12 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
-import { PickType } from '@nestjs/swagger'
+import { ApiExtraModels, ApiProperty, PickType } from '@nestjs/swagger'
 import { CheckInRewardItemDto } from './check-in-reward-item.dto'
-import { CheckInCalendarResponseDto, CheckInRecordItemDto } from './check-in-runtime.dto'
+import {
+  CheckInCalendarResponseDto,
+  CheckInRecordItemDto,
+} from './check-in-runtime.dto'
 
 class CheckInCalendarWindowDto extends PickType(CheckInCalendarResponseDto, [
   'periodType',
@@ -117,6 +120,68 @@ export class AdminCheckInCalendarDetailResponseDto extends CheckInCalendarWindow
   days!: AdminCheckInCalendarDayDto[]
 }
 
+export class AdminCheckInCalendarOverviewCounterDto {
+  @NumberProperty({
+    description: '已签到用户数（按 distinct userId 统计）。',
+    example: 16,
+    validation: false,
+  })
+  signedCount!: number
+
+  @NumberProperty({
+    description: '正常签到用户数（按 distinct userId 统计）。',
+    example: 12,
+    validation: false,
+  })
+  normalSignCount!: number
+
+  @NumberProperty({
+    description: '补签用户数（按 distinct userId 统计）。',
+    example: 4,
+    validation: false,
+  })
+  makeupSignCount!: number
+
+  @NumberProperty({
+    description: '连续奖励触发次数（按 grant 行数统计，不做用户去重）。',
+    example: 3,
+    validation: false,
+  })
+  streakRewardTriggerCount!: number
+}
+
+export class AdminCheckInCalendarOverviewTargetDto extends AdminCheckInCalendarOverviewCounterDto {
+  @StringProperty({
+    description: '目标自然日。',
+    example: '2026-04-23',
+    validation: false,
+  })
+  signDate!: string
+}
+
+export class AdminCheckInCalendarOverviewResponseDto extends CheckInCalendarWindowDto {
+  @NestedProperty({
+    description: '目标日期当天概览。',
+    type: AdminCheckInCalendarOverviewTargetDto,
+    validation: false,
+  })
+  targetDay!: AdminCheckInCalendarOverviewTargetDto
+
+  @NestedProperty({
+    description: '目标周期截至统计截止日期的概览。',
+    type: AdminCheckInCalendarOverviewCounterDto,
+    validation: false,
+  })
+  periodToDate!: AdminCheckInCalendarOverviewCounterDto
+
+  @StringProperty({
+    description: '周期统计截止日期，未来目标周期最多统计到今天。',
+    example: '2026-04-23',
+    validation: false,
+  })
+  cutoffDate!: string
+}
+
 export class AdminUserCheckInCalendarDetailResponseDto extends CheckInCalendarResponseDto {}
 
 export class AdminCheckInSignedUserDto extends PickType(BaseAppUserDto, [
@@ -125,13 +190,13 @@ export class AdminCheckInSignedUserDto extends PickType(BaseAppUserDto, [
   'avatarUrl',
 ] as const) {}
 
+@ApiExtraModels(AdminCheckInSignedUserDto)
 export class AdminCheckInSignedUserPageItemDto extends CheckInRecordItemDto {
-  @NestedProperty({
+  @ApiProperty({
     description: '已签用户信息。',
-    type: AdminCheckInSignedUserDto,
     required: false,
-    nullable: false,
-    validation: false,
+    nullable: true,
+    type: AdminCheckInSignedUserDto,
   })
   user?: AdminCheckInSignedUserDto | null
 }

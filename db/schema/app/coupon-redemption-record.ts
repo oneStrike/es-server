@@ -24,12 +24,12 @@ export const couponRedemptionRecord = snakeCase.table(
     userId: integer().notNull(),
     /** 券实例 ID。 */
     couponInstanceId: integer().notNull(),
-    /** 券类型快照（1=阅读券；2=折扣券；3=VIP 试用卡；4=免广告卡；5=补签卡）。 */
+    /** 券类型快照（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）。 */
     couponType: smallint().notNull(),
     /** 目标类型（1=漫画章节；2=小说章节；3=VIP；4=签到）。 */
     targetType: smallint().notNull(),
-    /** 目标 ID。 */
-    targetId: integer().notNull(),
+    /** 目标 ID，VIP 和补签等无目标核销场景为空。 */
+    targetId: integer(),
     /** 核销状态（1=成功；2=失败；3=已撤销）。 */
     status: smallint().default(1).notNull(),
     /** 幂等业务键。 */
@@ -60,7 +60,7 @@ export const couponRedemptionRecord = snakeCase.table(
     ),
     check(
       'coupon_redemption_record_coupon_type_valid_chk',
-      sql`${table.couponType} in (1, 2, 3, 4, 5)`,
+      sql`${table.couponType} in (1, 2, 3, 4)`,
     ),
     check(
       'coupon_redemption_record_target_type_valid_chk',

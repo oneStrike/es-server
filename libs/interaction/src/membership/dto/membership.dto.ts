@@ -36,8 +36,8 @@ export class MembershipPlanBenefitInputDto {
 
   @ObjectProperty({
     description:
-      '权益配置值，按权益类型使用闭集结构：券发放 couponDefinitionId/grantCount/validDays，道具 assetType/assetKey/grantCount/validDays，无广告 adScope/durationPolicy，优先看 contentScope/advanceHours',
-    example: { couponDefinitionId: 1, grantCount: 1, validDays: 30 },
+      '权益配置值，按权益类型使用闭集结构：券发放 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期；道具 assetType/assetKey/grantCount/validDays，无广告 adScope/durationPolicy，优先看 contentScope/advanceHours',
+    example: { couponDefinitionId: 1, grantCount: 1 },
     required: false,
   })
   benefitValue?: Record<string, unknown> | null
@@ -287,8 +287,8 @@ export class BaseMembershipPlanBenefitDto extends BaseDto {
 
   @ObjectProperty({
     description:
-      '权益配置值，按权益类型使用闭集结构：券发放 couponDefinitionId/grantCount/validDays，道具 assetType/assetKey/grantCount/validDays，无广告 adScope/durationPolicy，优先看 contentScope/advanceHours',
-    example: { couponDefinitionId: 1, grantCount: 1, validDays: 30 },
+      '权益配置值，按权益类型使用闭集结构：券发放 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期；道具 assetType/assetKey/grantCount/validDays，无广告 adScope/durationPolicy，优先看 contentScope/advanceHours',
+    example: { couponDefinitionId: 1, grantCount: 1 },
     required: false,
   })
   benefitValue?: Record<string, unknown> | null

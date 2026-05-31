@@ -61,8 +61,8 @@ export const checkInStreakGrant = snakeCase.table(
       table.userId,
       table.triggerSignDate,
     ),
-    index('check_in_streak_grant_reward_overview_icon_url_idx').on(
-      table.rewardOverviewIconUrl,
+    index('check_in_streak_grant_trigger_sign_date_idx').on(
+      table.triggerSignDate,
     ),
     index('check_in_streak_grant_reward_settlement_id_idx').on(
       table.rewardSettlementId,

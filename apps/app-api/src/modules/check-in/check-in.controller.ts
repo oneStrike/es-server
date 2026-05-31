@@ -2,15 +2,15 @@ import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import { CheckInCalendarDetailResponseDto } from '@libs/growth/check-in/dto/check-in-calendar-app.dto'
 import { QueryCheckInCalendarDetailDto } from '@libs/growth/check-in/dto/check-in-calendar-query.dto'
 import {
-  CheckInActionResponseDto,
+  AppCheckInActionResponseDto,
   MakeupCheckInDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
 import {
-  CheckInCalendarResponseDto,
+  AppCheckInCalendarResponseDto,
+  AppCheckInRecordItemDto,
+  AppCheckInSummaryResponseDto,
   CheckInLeaderboardItemDto,
-  CheckInRecordItemDto,
   CheckInStreakDetailResponseDto,
-  CheckInSummaryResponseDto,
   QueryCheckInLeaderboardDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
@@ -27,7 +27,7 @@ export class CheckInController {
   @Get('summary')
   @ApiDoc({
     summary: '获取当前签到摘要',
-    model: CheckInSummaryResponseDto,
+    model: AppCheckInSummaryResponseDto,
   })
   // 返回当前用户的签到摘要、补签摘要和连续签到摘要。
   async getSummary(@CurrentUser('sub') userId: number) {
@@ -47,7 +47,7 @@ export class CheckInController {
   @Get('calendar')
   @ApiDoc({
     summary: '获取当前周期签到日历',
-    model: CheckInCalendarResponseDto,
+    model: AppCheckInCalendarResponseDto,
   })
   // 返回当前补签周期内的签到日历视图。
   async getCalendar(@CurrentUser('sub') userId: number) {
@@ -70,7 +70,7 @@ export class CheckInController {
   @Get('my/page')
   @ApiPageDoc({
     summary: '分页获取我的签到记录',
-    model: CheckInRecordItemDto,
+    model: AppCheckInRecordItemDto,
   })
   // 分页返回当前用户的签到记录。
   async getMyRecords(
@@ -93,7 +93,7 @@ export class CheckInController {
   @Post('sign')
   @ApiDoc({
     summary: '今日签到',
-    model: CheckInActionResponseDto,
+    model: AppCheckInActionResponseDto,
   })
   // 为当前用户执行今天的签到动作。
   async sign(@CurrentUser('sub') userId: number) {
@@ -103,7 +103,7 @@ export class CheckInController {
   @Post('makeup')
   @ApiDoc({
     summary: '补签',
-    model: CheckInActionResponseDto,
+    model: AppCheckInActionResponseDto,
   })
   // 为当前用户执行指定自然日的补签。
   async makeup(

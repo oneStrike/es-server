@@ -75,9 +75,6 @@ export const checkInRecord = snakeCase.table(
     index('check_in_record_reward_settlement_id_idx').on(
       table.rewardSettlementId,
     ),
-    index('check_in_record_reward_overview_icon_url_idx').on(
-      table.resolvedRewardOverviewIconUrl,
-    ),
     index('check_in_record_sign_date_idx').on(table.signDate),
     check(
       'check_in_record_record_type_valid_chk',

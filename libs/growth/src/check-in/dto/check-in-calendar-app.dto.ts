@@ -1,3 +1,3 @@
-import { CheckInCalendarResponseDto } from './check-in-runtime.dto'
+import { AppCheckInCalendarResponseDto } from './check-in-runtime.dto'
 
-export class CheckInCalendarDetailResponseDto extends CheckInCalendarResponseDto {}
+export class CheckInCalendarDetailResponseDto extends AppCheckInCalendarResponseDto {}

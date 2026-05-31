@@ -1,10 +1,15 @@
-import type { CheckInConfigSelect, CheckInRecordSelect } from '@db/schema'
+import type {
+  CheckInConfigSelect,
+  CheckInRecordSelect,
+  CheckInStreakGrantSelect,
+} from '@db/schema'
 import type { PageDto } from '@libs/platform/dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInGrantItemView,
   CheckInReconciliationPageItemView,
   CheckInRecordGrantLookup,
+  CheckInRewardItems,
 } from './check-in.type'
 import type {
   QueryCheckInLeaderboardDto,
@@ -75,7 +80,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const latestRecord = await this.getLatestRecord(userId)
 
     return {
-      config: this.toConfigDetailView(config),
+      config: this.toAppConfigSummaryView(config),
       makeup,
       streak: {
         currentStreak: effectiveCurrentStreak,
@@ -92,7 +97,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       },
       todaySigned: await this.hasRecordForDate(userId, today),
       latestRecord: latestRecord
-        ? await this.buildRecordItemView(latestRecord)
+        ? await this.buildAppRecordItemView(latestRecord)
         : null,
     }
   }
@@ -181,11 +186,17 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       this.db.$count(this.checkInRecordTable, where),
     ])
     const page = toPageResult(list, total, pageQuery)
+    const grantMap = await this.buildAppGrantMapForRecords(page.list)
 
     return {
       ...page,
-      list: await Promise.all(
-        page.list.map(async (record) => this.buildRecordItemView(record)),
+      list: page.list.map((record) =>
+        this.toAppRecordItemView(
+          record,
+          grantMap.get(
+            `${record.userId}:${this.toDateOnlyValue(record.signDate)}`,
+          ) ?? [],
+        ),
       ),
     }
   }
@@ -384,25 +395,26 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     return record
   }
 
-  // 构建单条签到记录的对外展示视图。
-  private async buildRecordItemView(record: CheckInRecordSelect) {
-    const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
-      typeof record.rewardSettlementId === 'number'
-        ? [record.rewardSettlementId]
-        : [],
-    )
-    const grants = await this.listGrantsForRecord(
+  // 构建 app 侧签到记录展示视图，不加载补偿结算诊断字段。
+  private async buildAppRecordItemView(record: CheckInRecordSelect) {
+    const grants = await this.listAppGrantsForRecord(
       record.userId,
       this.toDateOnlyValue(record.signDate),
     )
 
+    return this.toAppRecordItemView(record, grants)
+  }
+
+  private toAppRecordItemView(
+    record: CheckInRecordSelect,
+    grants: Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>,
+  ) {
     return {
       id: record.id,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
       signDate: this.toDateOnlyValue(record.signDate),
       recordType: record.recordType,
-      rewardSettlementId: record.rewardSettlementId,
       resolvedRewardSourceType: record.resolvedRewardSourceType,
       resolvedRewardRuleKey: record.resolvedRewardRuleKey,
       resolvedRewardItems: this.checkInRewardPolicyService.parseStoredRewardItems(
@@ -413,20 +425,15 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       ),
       resolvedRewardOverviewIconUrl: record.resolvedRewardOverviewIconUrl,
       resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
-      rewardSettlement: record.rewardSettlementId
-        ? this.checkInSettlementService.toRewardSettlementSummary(
-            settlementMap.get(record.rewardSettlementId) ?? null,
-          )
-        : null,
       grants,
     }
   }
 
-  // 查询某个签到自然日触发的连续奖励列表。
-  private async listGrantsForRecord(
+  // 查询某个签到自然日触发的 app 安全连续奖励列表。
+  private async listAppGrantsForRecord(
     userId: number,
     signDate: string,
-  ): Promise<CheckInGrantItemView[]> {
+  ): Promise<Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>> {
     const grants = await this.db
       .select()
       .from(this.checkInStreakGrantTable)
@@ -441,33 +448,61 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const rewardItemMap = await this.checkInSettlementService.buildGrantRewardItemMap(
       grants.map((grant) => grant.id),
     )
-    const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
-      grants
-        .map((grant) => grant.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
+    return grants.map((grant) =>
+      this.toAppGrantItemView(grant, rewardItemMap.get(grant.id) ?? []),
     )
-    return grants.map(
-      (grant) =>
-        ({
-          id: grant.id,
-          createdAt: grant.createdAt,
-          updatedAt: grant.updatedAt,
-          userId: grant.userId,
-          ruleId: grant.ruleId,
-          ruleCode: grant.ruleCode,
-          streakDays: grant.streakDays,
-          rewardItems: rewardItemMap.get(grant.id) ?? [],
-          rewardOverviewIconUrl: grant.rewardOverviewIconUrl ?? null,
-          repeatable: grant.repeatable,
-          triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
-          rewardSettlementId: grant.rewardSettlementId,
-          rewardSettlement: grant.rewardSettlementId
-            ? this.checkInSettlementService.toRewardSettlementSummary(
-                settlementMap.get(grant.rewardSettlementId) ?? null,
-              )
-            : null,
-        }) satisfies CheckInGrantItemView,
-    )
+  }
+
+  // 批量查询 app 记录列表所需连续奖励，不读取补偿结算诊断字段。
+  private async buildAppGrantMapForRecords(
+    records: CheckInRecordGrantLookup[],
+  ): Promise<
+    Map<
+      string,
+      Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>
+    >
+  > {
+    if (records.length === 0) {
+      return new Map()
+    }
+    const userIds = [...new Set(records.map((record) => record.userId))]
+    const signDates = [
+      ...new Set(
+        records.map((record) => this.toDateOnlyValue(record.signDate)),
+      ),
+    ]
+    const grants = await this.db
+      .select()
+      .from(this.checkInStreakGrantTable)
+      .where(
+        and(
+          inArray(this.checkInStreakGrantTable.userId, userIds),
+          inArray(this.checkInStreakGrantTable.triggerSignDate, signDates),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInStreakGrantTable.triggerSignDate),
+        asc(this.checkInStreakGrantTable.id),
+      )
+
+    const rewardItemMap =
+      await this.checkInSettlementService.buildGrantRewardItemMap(
+        grants.map((grant) => grant.id),
+      )
+
+    const grantMap = new Map<
+      string,
+      Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>
+    >()
+    for (const grant of grants) {
+      const key = `${grant.userId}:${this.toDateOnlyValue(grant.triggerSignDate)}`
+      const items = grantMap.get(key) ?? []
+      items.push(
+        this.toAppGrantItemView(grant, rewardItemMap.get(grant.id) ?? []),
+      )
+      grantMap.set(key, items)
+    }
+    return grantMap
   }
 
   // 批量构建签到记录到连续奖励列表的映射。
@@ -534,6 +569,25 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     return grantMap
   }
 
+  private toAppGrantItemView(
+    grant: CheckInStreakGrantSelect,
+    rewardItems: CheckInRewardItems,
+  ) {
+    return {
+      id: grant.id,
+      createdAt: grant.createdAt,
+      updatedAt: grant.updatedAt,
+      userId: grant.userId,
+      ruleId: grant.ruleId,
+      ruleCode: grant.ruleCode,
+      streakDays: grant.streakDays,
+      rewardItems,
+      rewardOverviewIconUrl: grant.rewardOverviewIconUrl ?? null,
+      repeatable: grant.repeatable,
+      triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
+    }
+  }
+
   // 构建连续奖励对账筛选条件，复用记录筛选的同一语义。
   private buildGrantReconciliationCondition(
     query: QueryCheckInReconciliationDto,
@@ -594,25 +648,17 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     )
   }
 
-  // 把配置表记录映射成对外的配置详情 DTO 结构。
-  private toConfigDetailView(config: CheckInConfigSelect) {
+  // 把配置表记录映射成 app 摘要所需的最小配置结构。
+  private toAppConfigSummaryView(config: CheckInConfigSelect) {
     const rewardDefinition =
       this.checkInRewardPolicyService.parseRewardDefinition(config)
     return {
-      id: config.id,
       isEnabled: config.isEnabled === 1,
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
       makeupIconUrl: rewardDefinition.makeupIconUrl,
       rewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl,
       baseRewardItems: rewardDefinition.baseRewardItems,
-      dateRewardRules:
-        this.checkInRewardPolicyService.toEditableDateRewardRules(
-          rewardDefinition.dateRewardRules,
-        ),
-      patternRewardRules: rewardDefinition.patternRewardRules,
-      createdAt: config.createdAt,
-      updatedAt: config.updatedAt,
     }
   }
 }

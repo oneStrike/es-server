@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   check,
   date,
+  index,
   integer,
   snakeCase,
   timestamp,
@@ -39,6 +40,9 @@ export const checkInStreakProgress = snakeCase.table(
   },
   (table) => [
     unique('check_in_streak_progress_user_id_key').on(table.userId),
+    index('check_in_streak_progress_active_leaderboard_idx')
+      .on(table.currentStreak.desc(), table.lastSignedDate.desc(), table.id)
+      .where(sql`${table.currentStreak} > 0`),
     check(
       'check_in_streak_progress_current_streak_non_negative_chk',
       sql`${table.currentStreak} >= 0`,

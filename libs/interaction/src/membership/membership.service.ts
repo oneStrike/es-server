@@ -27,6 +27,8 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
 import { and, asc, desc, eq, gt, inArray, ne } from 'drizzle-orm'
+import { CouponSourceTypeEnum } from '../coupon/coupon.constant'
+import { CouponService } from '../coupon/coupon.service'
 import {
   CreateMembershipBenefitDefinitionDto,
   CreateMembershipPageConfigDto,
@@ -60,6 +62,7 @@ export class MembershipService {
     private readonly drizzle: DrizzleService,
     private readonly growthLedgerService: GrowthLedgerService,
     private readonly paymentOrderService: PaymentOrderService,
+    private readonly couponService: CouponService,
   ) {}
 
   // 获取当前请求使用的 Drizzle 查询实例。
@@ -944,6 +947,20 @@ export class MembershipService {
     }
 
     this.assertBenefitValueMatchesType(benefit.benefitType, value)
+    if (benefit.benefitType === MembershipBenefitTypeEnum.COUPON_GRANT) {
+      const couponDefinition = await runner.query.couponDefinition.findFirst({
+        where: {
+          id: Number(value?.couponDefinitionId),
+          isEnabled: true,
+        },
+      })
+      if (!couponDefinition) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '券发放权益关联的券定义不存在或未启用',
+        )
+      }
+    }
   }
 
   // 按权益类型校验最小必要字段，具体发放链路再基于这些字段写入券、道具或权益事实。
@@ -965,11 +982,11 @@ export class MembershipService {
       benefitType === MembershipBenefitTypeEnum.COUPON_GRANT &&
       (!this.isPositiveInteger(value.couponDefinitionId) ||
         !this.isPositiveInteger(value.grantCount) ||
-        !this.isNonNegativeInteger(value.validDays))
+        !this.isPositiveIntegerOrEmpty(value.validDays))
     ) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '券发放权益必须配置 couponDefinitionId、grantCount、validDays',
+        '券发放权益必须配置 couponDefinitionId、grantCount；validDays 留空或配置正整数',
       )
     }
     if (
@@ -1023,6 +1040,30 @@ export class MembershipService {
   // 判断值是否为非负整数。
   private isNonNegativeInteger(value: unknown) {
     return Number.isInteger(value) && Number(value) >= 0
+  }
+
+  // 判断值为正整数或未填写，供可选有效期覆盖使用。
+  private isPositiveIntegerOrEmpty(value: unknown) {
+    return value === undefined || value === null || this.isPositiveInteger(value)
+  }
+
+  // 将开放权益配置字段收窄为正整数，便于发放链路只处理已校验事实。
+  private readPositiveInteger(value: unknown, label: string) {
+    if (!this.isPositiveInteger(value)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `${label}必须是正整数`,
+      )
+    }
+    return Number(value)
+  }
+
+  // 读取可选有效期覆盖；未填写时保留券定义默认有效期。
+  private readOptionalPositiveInteger(value: unknown, label: string) {
+    if (value === undefined || value === null) {
+      return undefined
+    }
+    return this.readPositiveInteger(value, label)
   }
 
   // 展示型权益不能混入真实发放字段。
@@ -1197,7 +1238,11 @@ export class MembershipService {
   }
 
   // 批量读取套餐权益展示项。
-  private async getPlanBenefitItems(planIds: number[], enabledOnly: boolean) {
+  private async getPlanBenefitItems(
+    planIds: number[],
+    enabledOnly: boolean,
+    runner: MembershipTx = this.db,
+  ) {
     const conditions: SQL[] = [
       inArray(this.membershipPlanBenefit.planId, planIds),
     ]
@@ -1206,7 +1251,7 @@ export class MembershipService {
       conditions.push(eq(this.membershipBenefitDefinition.isEnabled, true))
     }
 
-    return this.db
+    return runner
       .select({
         id: this.membershipPlanBenefit.id,
         planId: this.membershipPlanBenefit.planId,
@@ -1447,8 +1492,11 @@ export class MembershipService {
   }
 
   // 读取启用套餐的权益项并携带权益定义，供 app 订阅页复用。
-  private async getEnabledPlanBenefitItems(planIds: number[]) {
-    return this.getPlanBenefitItems(planIds, true)
+  private async getEnabledPlanBenefitItems(
+    planIds: number[],
+    runner: MembershipTx = this.db,
+  ) {
+    return this.getPlanBenefitItems(planIds, true, runner)
   }
 
   // 读取当前订阅页绑定且启用的套餐列表，供 app 订阅页展示。
@@ -1541,6 +1589,58 @@ export class MembershipService {
           'VIP 赠送积分发放失败',
         )
       }
+    }
+    await this.grantAutoCouponBenefits(tx, order, plan.id)
+  }
+
+  // 会员支付开通后自动发放套餐配置的券权益，grantKey 保证支付回调重试不重复发券。
+  private async grantAutoCouponBenefits(
+    tx: MembershipTx,
+    order: PaymentOrderSelect,
+    planId: number,
+  ) {
+    const benefits = await this.getEnabledPlanBenefitItems([planId], tx)
+    for (const benefit of benefits) {
+      if (
+        benefit.grantPolicy !==
+        MembershipBenefitGrantPolicyEnum.AUTO_GRANT_ON_SUBSCRIBE ||
+        benefit.benefit.benefitType !==
+        MembershipBenefitTypeEnum.COUPON_GRANT
+      ) {
+        continue
+      }
+
+      const value = this.asBenefitValueRecord(
+        benefit.benefitValue as BenefitValueRecord | null | undefined,
+      )
+      this.assertBenefitValueMatchesType(
+        MembershipBenefitTypeEnum.COUPON_GRANT,
+        value,
+      )
+      const couponDefinitionId = this.readPositiveInteger(
+        value?.couponDefinitionId,
+        '券定义 ID',
+      )
+      const quantity = this.readPositiveInteger(value?.grantCount, '发券数量')
+      const validDays = this.readOptionalPositiveInteger(
+        value?.validDays,
+        '发券有效天数',
+      )
+      const grantKeys = Array.from(
+        { length: quantity },
+        (_item, index) =>
+          `membership:order:${order.id}:benefit:${benefit.id}:coupon:${couponDefinitionId}:index:${index}`,
+      )
+
+      await this.couponService.grantCouponsForSource(tx, {
+        userId: order.userId,
+        couponDefinitionId,
+        sourceType: CouponSourceTypeEnum.MEMBERSHIP_BENEFIT,
+        sourceId: order.id,
+        quantity,
+        ...(validDays === undefined ? {} : { validDays }),
+        grantKeys,
+      })
     }
   }
 

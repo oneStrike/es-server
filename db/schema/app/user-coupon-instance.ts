@@ -7,6 +7,8 @@ import {
   smallint,
   snakeCase,
   timestamp,
+  uniqueIndex,
+  varchar,
 } from 'drizzle-orm/pg-core'
 
 /**
@@ -22,16 +24,18 @@ export const userCouponInstance = snakeCase.table(
     userId: integer().notNull(),
     /** 券定义 ID。 */
     couponDefinitionId: integer().notNull(),
-    /** 券类型快照（1=阅读券；2=折扣券；3=VIP 试用卡；4=免广告卡；5=补签卡）。 */
+    /** 券类型快照（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）。 */
     couponType: smallint().notNull(),
     /** 状态（1=可用；2=已用完；3=已过期；4=已撤销）。 */
     status: smallint().default(1).notNull(),
     /** 剩余可用次数。 */
     remainingUses: integer().notNull(),
-    /** 来源类型（1=任务；2=积分兑换；3=后台发放；4=购买补偿）。 */
+    /** 来源类型（1=任务；2=积分兑换；3=后台发放；4=购买补偿；5=会员权益）。 */
     sourceType: smallint().notNull(),
     /** 来源 ID。 */
     sourceId: integer(),
+    /** 发放幂等键。 */
+    grantKey: varchar({ length: 180 }),
     /** 过期时间。 */
     expiresAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 发放快照。 */
@@ -55,9 +59,12 @@ export const userCouponInstance = snakeCase.table(
       table.sourceType,
       table.sourceId,
     ),
+    uniqueIndex('user_coupon_instance_user_grant_key_unique_idx')
+      .on(table.userId, table.grantKey)
+      .where(sql`${table.grantKey} is not null`),
     check(
       'user_coupon_instance_coupon_type_valid_chk',
-      sql`${table.couponType} in (1, 2, 3, 4, 5)`,
+      sql`${table.couponType} in (1, 2, 3, 4)`,
     ),
     check(
       'user_coupon_instance_status_valid_chk',
@@ -65,7 +72,7 @@ export const userCouponInstance = snakeCase.table(
     ),
     check(
       'user_coupon_instance_source_type_valid_chk',
-      sql`${table.sourceType} in (1, 2, 3, 4)`,
+      sql`${table.sourceType} in (1, 2, 3, 4, 5)`,
     ),
     check(
       'user_coupon_instance_remaining_uses_non_negative_chk',

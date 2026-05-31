@@ -8,6 +8,8 @@ import type {
   CheckInMakeupAccountView,
   CheckInMakeupConsumePlanItem,
   CheckInMakeupWindowView,
+  GrantEventMakeupAllowanceInput,
+  GrantEventMakeupAllowanceResult,
 } from './check-in.type'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
@@ -337,6 +339,98 @@ export class CheckInMakeupService extends CheckInServiceSupport {
       )
     }
     return nextAccount
+  }
+
+  // 在外部事务内发放活动补签卡额度，并同步当前周期补签账户。
+  async grantEventMakeupAllowance(
+    tx: Db,
+    input: GrantEventMakeupAllowanceInput,
+  ): Promise<GrantEventMakeupAllowanceResult> {
+    if (!Number.isInteger(input.amount) || input.amount < 1) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '补签次数必须为正整数',
+      )
+    }
+    const bizKey = input.bizKey.trim()
+    if (!bizKey) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '补签卡发放幂等键不能为空',
+      )
+    }
+
+    await this.ensureUserExists(input.userId, tx)
+    const config = await this.getEnabledConfig(tx)
+    const today = this.formatDateOnly(new Date())
+    const account = await this.ensureCurrentMakeupAccount(
+      input.userId,
+      config,
+      today,
+      tx,
+    )
+    const window = this.buildMakeupWindow(
+      today,
+      config.makeupPeriodType as CheckInMakeupPeriodTypeEnum,
+    )
+
+    const [fact] = await tx
+      .insert(this.checkInMakeupFactTable)
+      .values({
+        userId: input.userId,
+        factType: CheckInMakeupFactTypeEnum.GRANT,
+        sourceType: CheckInMakeupSourceTypeEnum.EVENT_CARD,
+        amount: input.amount,
+        consumedAmount: 0,
+        effectiveAt: new Date(),
+        expiresAt: null,
+        periodType: window.periodType,
+        periodKey: window.periodKey,
+        sourceRef: input.sourceRef ?? null,
+        bizKey,
+        context: input.context ?? null,
+      })
+      .onConflictDoNothing({
+        target: [
+          this.checkInMakeupFactTable.userId,
+          this.checkInMakeupFactTable.bizKey,
+        ],
+      })
+      .returning({ id: this.checkInMakeupFactTable.id })
+
+    if (!fact) {
+      return {
+        account,
+        created: false,
+        factId: null,
+      }
+    }
+
+    const [nextAccount] = await tx
+      .update(this.checkInMakeupAccountTable)
+      .set({
+        eventAvailable: account.eventAvailable + input.amount,
+        version: account.version + 1,
+        lastSyncedFactId: fact.id,
+      })
+      .where(
+        and(
+          eq(this.checkInMakeupAccountTable.id, account.id),
+          eq(this.checkInMakeupAccountTable.version, account.version),
+        ),
+      )
+      .returning()
+    if (!nextAccount) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '补签额度账户并发冲突，请稍后重试',
+      )
+    }
+    return {
+      account: nextAccount,
+      created: true,
+      factId: fact.id,
+    }
   }
 
   // 查询用户最近一次补签账户快照。

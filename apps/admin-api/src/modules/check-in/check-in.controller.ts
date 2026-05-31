@@ -1,6 +1,7 @@
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import {
   AdminCheckInCalendarDetailResponseDto,
+  AdminCheckInCalendarOverviewResponseDto,
   AdminCheckInSignedUserPageItemDto,
   AdminUserCheckInCalendarDetailResponseDto,
 } from '@libs/growth/check-in/dto/check-in-calendar-admin.dto'
@@ -21,6 +22,8 @@ import {
 import {
   RepairCheckInRewardDto,
   RepairCheckInRewardResponseDto,
+  RepairCheckInStreakDto,
+  RepairCheckInStreakResponseDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
 import {
   CheckInReconciliationPageItemDto,
@@ -58,6 +61,16 @@ export class CheckInController {
   // 查询后台目标日期所属周期的全局签到日历汇总。
   async getCalendarDetail(@Query() query: QueryCheckInCalendarDetailDto) {
     return this.checkInService.getAdminCalendarDetail(query)
+  }
+
+  @Get('calendar/overview')
+  @ApiDoc({
+    summary: '查询目标周期签到轻量概览',
+    model: AdminCheckInCalendarOverviewResponseDto,
+  })
+  // 查询后台目标日期所属周期的轻量计数概览，不返回奖励快照和补偿诊断。
+  async getCalendarOverview(@Query() query: QueryCheckInCalendarDetailDto) {
+    return this.checkInService.getAdminCalendarOverview(query)
   }
 
   @Get('calendar/user/detail')
@@ -212,5 +225,21 @@ export class CheckInController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.checkInService.repairReward(body, userId)
+  }
+
+  @Post('streak/repair')
+  @ApiAuditDoc({
+    summary: '重算连续签到进度',
+    model: RepairCheckInStreakResponseDto,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  // 手动重算指定用户连续签到进度，并补齐缺失的连续奖励发放。
+  async repairStreak(
+    @Body() body: RepairCheckInStreakDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.checkInService.repairStreak(body, userId)
   }
 }

@@ -45,7 +45,6 @@ export const checkInStreakGrantRewardItem = snakeCase.table(
       'check_in_streak_grant_reward_item_amount_positive_chk',
       sql`${table.amount} > 0`,
     ),
-    index('check_in_streak_grant_reward_item_icon_url_idx').on(table.iconUrl),
     check(
       'check_in_streak_grant_reward_item_sort_order_non_negative_chk',
       sql`${table.sortOrder} >= 0`,

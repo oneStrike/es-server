@@ -8,10 +8,8 @@ export enum CouponTypeEnum {
   DISCOUNT = 2,
   /** VIP 试用卡。 */
   VIP_TRIAL = 3,
-  /** 免广告卡。 */
-  NO_AD = 4,
   /** 补签卡。 */
-  CHECK_IN_MAKEUP = 5,
+  CHECK_IN_MAKEUP = 4,
 }
 
 /**
@@ -22,10 +20,8 @@ export enum CouponTargetScopeEnum {
   CHAPTER = 1,
   /** VIP 目标。 */
   VIP = 2,
-  /** 广告目标。 */
-  AD = 3,
   /** 签到目标。 */
-  CHECK_IN = 4,
+  CHECK_IN = 3,
 }
 
 /**
@@ -54,6 +50,8 @@ export enum CouponSourceTypeEnum {
   ADMIN_GRANT = 3,
   /** 购买补偿。 */
   PURCHASE_COMPENSATION = 4,
+  /** 会员权益发放。 */
+  MEMBERSHIP_BENEFIT = 5,
 }
 
 /**

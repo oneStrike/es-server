@@ -4,7 +4,12 @@ import type {
   CouponRedemptionRecordSelect,
   UserCouponInstanceSelect,
 } from '@db/schema'
-import type { CouponRedemptionTargetTypeEnum } from '../coupon.constant'
+import type {
+  CouponRedemptionTargetTypeEnum,
+  CouponSourceTypeEnum,
+  CouponTargetScopeEnum,
+  CouponTypeEnum,
+} from '../coupon.constant'
 
 /** 券域事务上下文，供购买和核销链路显式透传。 */
 export type CouponTx = Db
@@ -20,11 +25,14 @@ export interface CouponInstanceWithDefinition {
   status: UserCouponInstanceSelect['status']
   remainingUses: UserCouponInstanceSelect['remainingUses']
   expiresAt: UserCouponInstanceSelect['expiresAt']
-  name: CouponDefinitionSelect['name']
+  name: string
   targetScope: CouponDefinitionSelect['targetScope']
   discountAmount: CouponDefinitionSelect['discountAmount']
   discountRateBps: CouponDefinitionSelect['discountRateBps']
   validDays: CouponDefinitionSelect['validDays']
+  benefitDays: CouponDefinitionSelect['benefitDays']
+  benefitCount: CouponDefinitionSelect['benefitCount']
+  grantSnapshot: UserCouponInstanceSelect['grantSnapshot']
 }
 
 /**
@@ -42,7 +50,7 @@ export interface ConsumeCouponRedemptionInput {
   userId: number
   couponInstanceId: number
   targetType: CouponRedemptionTargetTypeEnum
-  targetId: number
+  targetId: number | null
   coupon: CouponInstanceWithDefinition
   bizKey: string
   redemptionSnapshot: Record<string, unknown>
@@ -54,6 +62,43 @@ export interface ConsumeCouponRedemptionInput {
 export interface ConsumeCouponRedemptionResult {
   redemption: CouponRedemptionRecordSelect
   created: boolean
+}
+
+/** 已发券实例持有的闭合发放快照。 */
+export interface CouponGrantSnapshot {
+  name: string
+  couponType: CouponTypeEnum
+  targetScope: CouponTargetScopeEnum
+  usageLimit: number
+  discountRateBps: number
+  discountAmount: number
+  benefitDays: number
+  benefitCount: number
+  validDays: number
+  issuedAt: string
+}
+
+/** 通用发券输入，会员、任务和后台发放都通过它进入券域。 */
+export interface GrantCouponsForSourceInput {
+  userId: number
+  couponDefinitionId: number
+  sourceType: CouponSourceTypeEnum
+  sourceId?: number | null
+  quantity?: number
+  validDays?: number | null
+  grantKeys?: string[]
+}
+
+/** 通用发券结果，created=false 表示命中幂等键。 */
+export interface GrantCouponsForSourceItem {
+  grantKey: string | null
+  couponInstance: UserCouponInstanceSelect | null
+  created: boolean
+}
+
+export interface GrantCouponsForSourceResult {
+  items: GrantCouponsForSourceItem[]
+  createdCount: number
 }
 
 /**

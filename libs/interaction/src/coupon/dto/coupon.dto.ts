@@ -3,7 +3,6 @@ import {
   DateProperty,
   EnumProperty,
   NumberProperty,
-  ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
@@ -12,7 +11,6 @@ import {
   CouponInstanceStatusEnum,
   CouponRedemptionTargetTypeEnum,
   CouponSourceTypeEnum,
-  CouponTargetScopeEnum,
   CouponTypeEnum,
 } from '../coupon.constant'
 
@@ -24,19 +22,11 @@ export class BaseCouponDefinitionDto extends BaseDto {
   name!: string
 
   @EnumProperty({
-    description:
-      '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=免广告卡；5=补签卡）',
+    description: '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）',
     enum: CouponTypeEnum,
     example: CouponTypeEnum.READING,
   })
   couponType!: CouponTypeEnum
-
-  @EnumProperty({
-    description: '适用目标范围（1=章节；2=VIP；3=广告；4=签到）',
-    enum: CouponTargetScopeEnum,
-    example: CouponTargetScopeEnum.CHAPTER,
-  })
-  targetScope!: CouponTargetScopeEnum
 
   @NumberProperty({
     description: '折扣金额',
@@ -76,20 +66,20 @@ export class BaseCouponDefinitionDto extends BaseDto {
   validDays?: number
 
   @NumberProperty({
-    description: '预算上限，0=不限制',
-    example: 0,
-    min: 0,
+    description: 'VIP 试用天数',
+    example: 7,
+    min: 1,
     required: false,
-    default: 0,
   })
-  budgetLimit?: number
+  benefitDays?: number
 
-  @ObjectProperty({
-    description: '额外配置快照',
-    example: { maxPrice: 100 },
+  @NumberProperty({
+    description: '补签次数',
+    example: 1,
+    min: 1,
     required: false,
   })
-  configPayload?: Record<string, unknown> | null
+  benefitCount?: number
 
   @BooleanProperty({
     description: '是否启用',
@@ -105,13 +95,12 @@ export class CreateCouponDefinitionDto extends PickType(
   [
     'name',
     'couponType',
-    'targetScope',
     'discountAmount',
     'discountRateBps',
     'usageLimit',
     'validDays',
-    'budgetLimit',
-    'configPayload',
+    'benefitDays',
+    'benefitCount',
     'isEnabled',
   ] as const,
 ) {}
@@ -126,7 +115,6 @@ export class QueryCouponDefinitionDto extends IntersectionType(
   PartialType(
     PickType(BaseCouponDefinitionDto, [
       'couponType',
-      'targetScope',
       'isEnabled',
     ] as const),
   ),
@@ -146,7 +134,8 @@ export class GrantCouponDto {
   couponDefinitionId!: number
 
   @EnumProperty({
-    description: '券来源（1=任务发放；2=积分兑换；3=后台发放；4=购买补偿）',
+    description:
+      '券来源（1=任务发放；2=积分兑换；3=后台发放；4=购买补偿；5=会员权益发放）',
     enum: CouponSourceTypeEnum,
     example: CouponSourceTypeEnum.ADMIN_GRANT,
   })
@@ -158,6 +147,15 @@ export class GrantCouponDto {
     required: false,
   })
   sourceId?: number
+
+  @NumberProperty({
+    description: '发放数量',
+    example: 1,
+    min: 1,
+    required: false,
+    default: 1,
+  })
+  quantity?: number
 }
 
 export class UserCouponItemDto extends BaseDto {
@@ -174,8 +172,7 @@ export class UserCouponItemDto extends BaseDto {
   couponDefinitionId!: number
 
   @EnumProperty({
-    description:
-      '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=免广告卡；5=补签卡）',
+    description: '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）',
     enum: CouponTypeEnum,
     example: CouponTypeEnum.READING,
   })
@@ -212,8 +209,7 @@ export class UserCouponItemDto extends BaseDto {
 
 export class QueryUserCouponDto extends PageDto {
   @EnumProperty({
-    description:
-      '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=免广告卡；5=补签卡）',
+    description: '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）',
     enum: CouponTypeEnum,
     example: CouponTypeEnum.READING,
     required: false,
@@ -238,8 +234,9 @@ export class RedeemCouponBodyDto {
   @NumberProperty({
     description: '核销目标 ID',
     example: 1,
+    required: false,
   })
-  targetId!: number
+  targetId?: number
 
   @StringProperty({
     description: '幂等业务键',
@@ -262,8 +259,7 @@ export class CouponRedemptionResultDto extends BaseDto {
   couponInstanceId!: number
 
   @EnumProperty({
-    description:
-      '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=免广告卡；5=补签卡）',
+    description: '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）',
     enum: CouponTypeEnum,
     example: CouponTypeEnum.READING,
   })
@@ -279,6 +275,8 @@ export class CouponRedemptionResultDto extends BaseDto {
   @NumberProperty({
     description: '目标 ID',
     example: 1,
+    required: false,
+    validation: false,
   })
-  targetId!: number
+  targetId!: number | null
 }

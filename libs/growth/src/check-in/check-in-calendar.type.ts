@@ -32,3 +32,25 @@ export interface CheckInAdminCalendarDayAggregate {
   baseRewardActualOverview: CheckInRewardItems | null
   baseRewardActualOverviewIconUrl: string | null
 }
+
+/** 后台轻量日历概览 SQL 聚合行。 */
+export interface CheckInCalendarOverviewRecordAggregateRow {
+  signDate: string
+  signedCount: number
+  normalSignCount: number
+  makeupSignCount: number
+}
+
+/** 后台轻量日历概览连续奖励 SQL 聚合行。 */
+export interface CheckInCalendarOverviewGrantAggregateRow {
+  signDate: string
+  streakRewardTriggerCount: number
+}
+
+/** 后台轻量日历概览计数器。 */
+export interface CheckInCalendarOverviewCounter {
+  signedCount: number
+  normalSignCount: number
+  makeupSignCount: number
+  streakRewardTriggerCount: number
+}
