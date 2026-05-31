@@ -302,7 +302,7 @@ export function ArrayProperty<T = string | number | boolean>(
         example: options.example,
         required,
         default: options.default,
-        nullable: false,
+        nullable: options.nullable ?? false,
         type:
           options.itemClass ??
           (enumArtifacts

@@ -52,6 +52,7 @@ export class BaseCheckInRecordDto extends BaseDto {
     description: '冻结的基础奖励快照。',
     itemClass: CheckInRewardItemDto,
     required: false,
+    nullable: true,
     validation: false,
   })
   resolvedRewardItems?: CheckInRewardItemDto[] | null
@@ -119,6 +120,7 @@ export class AppCheckInRecordFieldsDto extends BaseDto {
     description: '冻结的基础奖励快照。',
     itemClass: CheckInRewardItemDto,
     required: false,
+    nullable: true,
     validation: false,
   })
   resolvedRewardItems?: CheckInRewardItemDto[] | null

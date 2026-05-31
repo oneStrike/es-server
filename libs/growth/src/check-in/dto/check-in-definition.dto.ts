@@ -43,6 +43,7 @@ export class UpdateCheckInConfigDto {
     description: '默认基础奖励项。',
     itemClass: CheckInRewardItemDto,
     required: false,
+    nullable: true,
   })
   baseRewardItems?: CheckInRewardItemDto[] | null
 

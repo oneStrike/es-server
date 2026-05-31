@@ -122,6 +122,8 @@ export type ArrayPropertyOptions<T = string | number | boolean> =
     itemValidator?: (value: T) => boolean
     /** 数组元素验证失败时的错误消息 */
     itemErrorMessage?: string
+    /** 是否允许为 null（仅影响文档表现） */
+    nullable?: boolean
     /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
     validation?: boolean
   } & ArrayPropertyShape<T>
@@ -140,6 +142,8 @@ export interface EnumArrayPropertyOptions extends BaseValidateOptions {
   default?: Array<string | number>
   /** 枚举对象，支持字符串和数字枚举 */
   enum: EnumLike
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }

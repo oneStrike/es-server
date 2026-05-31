@@ -102,7 +102,7 @@ export function EnumArrayProperty(options: EnumArrayPropertyOptions) {
         example: options.example,
         required,
         default: options.default,
-        nullable: false,
+        nullable: options.nullable ?? false,
         enum: options.enum,
         isArray: true,
         type: enumArtifacts.isNumericEnum ? Number : String,

@@ -362,6 +362,7 @@ export class AppCheckInConfigSummaryDto {
     description: '默认基础奖励项。',
     itemClass: CheckInRewardItemDto,
     required: false,
+    nullable: true,
     validation: false,
   })
   baseRewardItems?: CheckInRewardItemDto[] | null
@@ -435,6 +436,7 @@ export class CheckInCalendarDayDto {
     description: '该日基础奖励快照。',
     itemClass: CheckInRewardItemDto,
     required: false,
+    nullable: true,
     validation: false,
   })
   rewardItems?: CheckInRewardItemDto[] | null
@@ -511,6 +513,7 @@ export class AppCheckInCalendarDayDto {
     description: '该日基础奖励快照。',
     itemClass: CheckInRewardItemDto,
     required: false,
+    nullable: true,
     validation: false,
   })
   rewardItems?: CheckInRewardItemDto[] | null

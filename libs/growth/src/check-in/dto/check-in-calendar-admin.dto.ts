@@ -82,6 +82,7 @@ export class AdminCheckInCalendarDayDto {
       '当前生效配置对该日期的奖励规则投影视图；这是 current-config projection，不是历史冻结配置快照。',
     itemClass: CheckInRewardItemDto,
     required: false,
+    nullable: true,
     validation: false,
   })
   baseRewardConfigProjectionOverview?: CheckInRewardItemDto[] | null
@@ -98,6 +99,7 @@ export class AdminCheckInCalendarDayDto {
     description: '按签到事实冻结奖励快照聚合出的当日基础奖励实际概览。',
     itemClass: CheckInRewardItemDto,
     required: false,
+    nullable: true,
     validation: false,
   })
   baseRewardActualOverview?: CheckInRewardItemDto[] | null
