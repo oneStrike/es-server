@@ -55,6 +55,9 @@ export const userCouponInstance = snakeCase.table(
       table.status,
       table.expiresAt,
     ),
+    index('user_coupon_instance_user_available_type_created_idx')
+      .on(table.userId, table.status, table.couponType, table.createdAt.desc())
+      .where(sql`${table.remainingUses} > 0`),
     index('user_coupon_instance_source_idx').on(
       table.sourceType,
       table.sourceId,

@@ -9,6 +9,7 @@ import type {
   GrantCouponsForSourceResult,
   ReserveDiscountCouponInput,
 } from '../coupon/types/coupon.type'
+import { createHash } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
 import {
   ContentEntitlementGrantSourceEnum,
@@ -27,6 +28,7 @@ import {
   CouponInstanceStatusEnum,
   CouponRedemptionStatusEnum,
   CouponRedemptionTargetTypeEnum,
+  CouponSourceTypeEnum,
   CouponTargetScopeEnum,
   CouponTypeEnum,
 } from '../coupon/coupon.constant'
@@ -77,7 +79,44 @@ export class CouponService {
   // 向用户发放指定券定义的券实例。
   async grantCoupon(dto: GrantCouponDto) {
     await this.drizzle.withTransaction(async (tx) => {
-      await this.grantCouponsForSource(tx, dto)
+      const operationId = dto.operationId?.trim() ?? ''
+      if (!operationId) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '后台发券操作幂等 ID 不能为空',
+        )
+      }
+      const quantity = dto.quantity ?? 1
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '发券数量必须为正整数',
+        )
+      }
+      const grantKeyPrefix = this.buildAdminGrantKeyPrefix(operationId)
+      const grantKeys = Array.from(
+        { length: quantity },
+        (_, index) => `${grantKeyPrefix}${index}`,
+      )
+      const grantInput: GrantCouponsForSourceInput = {
+        couponDefinitionId: dto.couponDefinitionId,
+        grantKeys,
+        quantity,
+        sourceId: dto.sourceId,
+        sourceType: CouponSourceTypeEnum.ADMIN_GRANT,
+        userId: dto.userId,
+      }
+      await this.ensureAdminGrantOperationLock(tx, {
+        operationId,
+        userId: dto.userId,
+      })
+      await this.ensureAdminGrantOperationReplayCompatible(
+        tx,
+        grantInput,
+        grantKeys,
+        grantKeyPrefix,
+      )
+      await this.grantCouponsForSource(tx, grantInput)
     })
     return true
   }
@@ -176,6 +215,15 @@ export class CouponService {
         (grantKey
           ? await this.findCouponInstanceByGrantKey(tx, input.userId, grantKey)
           : null)
+      if (!couponInstance) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '发券幂等记录状态异常',
+        )
+      }
+      if (!insertRows[0] && grantKey) {
+        this.assertGrantKeyReplayShape(couponInstance, input, grantKey)
+      }
       items.push({
         grantKey,
         couponInstance,
@@ -196,6 +244,74 @@ export class CouponService {
     return output
   }
 
+  private buildAdminGrantKeyPrefix(operationId: string) {
+    const operationHash = createHash('sha256')
+      .update(operationId)
+      .digest('base64url')
+    return `admin-grant:${operationHash}:`
+  }
+
+  private async ensureAdminGrantOperationLock(
+    tx: CouponTx,
+    input: { operationId: string, userId: number },
+  ) {
+    await this.drizzle.withErrorHandling(() =>
+      tx.execute(
+        sql`SELECT pg_advisory_xact_lock(${input.userId}, hashtext(${input.operationId}))`,
+      ),
+    )
+  }
+
+  private async ensureAdminGrantOperationReplayCompatible(
+    tx: CouponTx,
+    input: GrantCouponsForSourceInput,
+    grantKeys: string[],
+    grantKeyPrefix: string,
+  ) {
+    const existingRows = await this.findCouponInstancesByGrantKeyPrefix(
+      tx,
+      input.userId,
+      grantKeyPrefix,
+    )
+    if (existingRows.length === 0) {
+      return
+    }
+
+    const expectedKeys = new Set(grantKeys)
+    if (existingRows.length !== grantKeys.length) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '后台发券操作幂等 ID 已被不同数量的发券请求使用',
+      )
+    }
+
+    for (const row of existingRows) {
+      if (!row.grantKey || !expectedKeys.has(row.grantKey)) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '后台发券操作幂等 ID 已被不同数量的发券请求使用',
+        )
+      }
+      this.assertGrantKeyReplayShape(row, input, row.grantKey)
+    }
+  }
+
+  private async findCouponInstancesByGrantKeyPrefix(
+    tx: CouponTx,
+    userId: number,
+    grantKeyPrefix: string,
+  ) {
+    return tx
+      .select()
+      .from(this.userCouponInstance)
+      .where(
+        and(
+          eq(this.userCouponInstance.userId, userId),
+          sql`starts_with(${this.userCouponInstance.grantKey}, ${grantKeyPrefix})`,
+        ),
+      )
+  }
+
   private async findCouponInstanceByGrantKey(
     tx: CouponTx,
     userId: number,
@@ -212,6 +328,38 @@ export class CouponService {
       )
       .limit(1)
     return row ?? null
+  }
+
+  private assertGrantKeyReplayShape(
+    existing: {
+      couponDefinitionId: number
+      sourceType: number
+      sourceId?: number | null
+      grantKey?: string | null
+    },
+    input: GrantCouponsForSourceInput,
+    grantKey: string,
+  ) {
+    if (
+      existing.grantKey !== undefined &&
+      existing.grantKey !== null &&
+      existing.grantKey !== grantKey
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '发券幂等键已被不同发券请求使用',
+      )
+    }
+    if (
+      existing.couponDefinitionId !== input.couponDefinitionId ||
+      existing.sourceType !== input.sourceType ||
+      (existing.sourceId ?? null) !== (input.sourceId ?? null)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '发券幂等键已被不同发券请求使用',
+      )
+    }
   }
 
   // 启用或停用券定义。
@@ -305,12 +453,19 @@ export class CouponService {
 
   // 按券能力派生目标范围并清理无关能力字段。
   private normalizeCouponDefinitionWrite(dto: CreateCouponDefinitionDto) {
+    const validDays = dto.validDays ?? 7
+    if (!Number.isInteger(validDays) || validDays < 1) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '券定义有效天数必须为正整数',
+      )
+    }
     const base = {
       ...dto,
       discountAmount: 0,
       discountRateBps: 10000,
       usageLimit: 1,
-      validDays: dto.validDays ?? 0,
+      validDays,
       benefitDays: 0,
       benefitCount: 0,
     }
@@ -632,6 +787,7 @@ export class CouponService {
           '券核销幂等记录状态异常',
         )
       }
+      this.assertRedemptionReplayShape(existing, input)
       return { redemption: existing, created: false }
     }
 
@@ -806,7 +962,7 @@ export class CouponService {
         grantSource: ContentEntitlementGrantSourceEnum.COUPON,
         sourceId: redemption.id,
         sourceKey: bizKey,
-        expiresAt: coupon.expiresAt ?? this.addDays(new Date(), 30),
+        expiresAt: this.resolveReadingEntitlementExpiresAt(coupon),
         grantSnapshot: {
           couponInstanceId: dto.couponInstanceId,
           couponDefinitionId: coupon.couponDefinitionId,
@@ -848,6 +1004,43 @@ export class CouponService {
     }
 
     return redemption
+  }
+
+  private assertRedemptionReplayShape(
+    existing: {
+      couponInstanceId: number
+      couponType: number
+      targetType: number
+      targetId?: number | null
+      status: number
+    },
+    input: ConsumeCouponRedemptionInput,
+  ) {
+    if (
+      existing.status !== CouponRedemptionStatusEnum.SUCCESS ||
+      existing.couponInstanceId !== input.couponInstanceId ||
+      existing.couponType !== input.coupon.couponType ||
+      existing.targetType !== input.targetType ||
+      (existing.targetId ?? null) !== (input.targetId ?? null)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '券核销幂等键已被不同核销请求使用',
+      )
+    }
+  }
+
+  private resolveReadingEntitlementExpiresAt(coupon: {
+    expiresAt?: Date | null
+    validDays: number
+  }) {
+    if (coupon.expiresAt) {
+      return coupon.expiresAt
+    }
+    if (coupon.validDays > 0) {
+      return this.addDays(new Date(), coupon.validDays)
+    }
+    return null
   }
 
   // 将券和广告目标类型映射为内容权益目标类型。

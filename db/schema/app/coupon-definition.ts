@@ -31,8 +31,8 @@ export const couponDefinition = snakeCase.table(
     discountRateBps: integer().default(10000).notNull(),
     /** 单张券可用次数。 */
     usageLimit: integer().default(1).notNull(),
-    /** 有效天数，0=按实例过期时间控制。 */
-    validDays: integer().default(0).notNull(),
+    /** 有效天数；历史值 0 表示按实例过期时间控制。 */
+    validDays: integer().default(7).notNull(),
     /** VIP 试用天数。 */
     benefitDays: integer().default(0).notNull(),
     /** 补签次数。 */
@@ -53,6 +53,7 @@ export const couponDefinition = snakeCase.table(
       table.couponType,
       table.isEnabled,
     ),
+    index('coupon_definition_created_at_idx').on(table.createdAt.desc()),
     check(
       'coupon_definition_coupon_type_valid_chk',
       sql`${table.couponType} in (1, 2, 3, 4)`,
@@ -84,6 +85,22 @@ export const couponDefinition = snakeCase.table(
     check(
       'coupon_definition_benefit_count_non_negative_chk',
       sql`${table.benefitCount} >= 0`,
+    ),
+    check(
+      'coupon_definition_reading_ability_chk',
+      sql`${table.couponType} != 1 or (${table.targetScope} = 1 and ${table.usageLimit} >= 1)`,
+    ),
+    check(
+      'coupon_definition_discount_ability_chk',
+      sql`${table.couponType} != 2 or (${table.targetScope} = 1 and (${table.discountAmount} > 0 or ${table.discountRateBps} < 10000))`,
+    ),
+    check(
+      'coupon_definition_vip_trial_ability_chk',
+      sql`${table.couponType} != 3 or (${table.targetScope} = 2 and ${table.benefitDays} >= 1)`,
+    ),
+    check(
+      'coupon_definition_check_in_makeup_ability_chk',
+      sql`${table.couponType} != 4 or (${table.targetScope} = 3 and ${table.benefitCount} >= 1)`,
     ),
   ],
 )

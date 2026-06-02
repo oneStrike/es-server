@@ -57,11 +57,11 @@ export class BaseCouponDefinitionDto extends BaseDto {
   usageLimit?: number
 
   @NumberProperty({
-    description: '有效天数，0=按实例过期时间控制',
+    description: '有效天数，后台创建的券定义必须为正整数',
     example: 7,
-    min: 0,
+    min: 1,
     required: false,
-    default: 0,
+    default: 7,
   })
   validDays?: number
 
@@ -135,11 +135,12 @@ export class GrantCouponDto {
 
   @EnumProperty({
     description:
-      '券来源（1=任务发放；2=积分兑换；3=后台发放；4=购买补偿；5=会员权益发放）',
+      '兼容旧客户端字段；后台发券服务端固定按后台发放记录',
     enum: CouponSourceTypeEnum,
     example: CouponSourceTypeEnum.ADMIN_GRANT,
+    required: false,
   })
-  sourceType!: CouponSourceTypeEnum
+  sourceType?: CouponSourceTypeEnum
 
   @NumberProperty({
     description: '来源 ID',
@@ -147,6 +148,14 @@ export class GrantCouponDto {
     required: false,
   })
   sourceId?: number
+
+  @StringProperty({
+    description: '后台发券操作幂等 ID，同一用户内相同操作 ID 重试不会重复发券',
+    example: '6f3afcf4-607d-4c7b-b040-996d47fbbfdd',
+    minLength: 1,
+    maxLength: 120,
+  })
+  operationId!: string
 
   @NumberProperty({
     description: '发放数量',

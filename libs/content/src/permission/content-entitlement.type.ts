@@ -24,7 +24,7 @@ export interface GrantContentEntitlementInput extends ContentEntitlementTarget {
   sourceId?: number
   sourceKey?: string
   startsAt?: Date
-  expiresAt?: Date
+  expiresAt?: Date | null
   grantSnapshot?: UserContentEntitlementInsert['grantSnapshot']
 }
 
