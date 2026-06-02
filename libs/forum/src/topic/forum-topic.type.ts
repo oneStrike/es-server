@@ -1,25 +1,27 @@
 import type { Db } from '@db/core'
 import type { ForumTopicSelect } from '@db/schema'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
+import type { CommentTargetHookPayload } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
 import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { MaterializedForumHashtagFact } from '../hashtag/forum-hashtag.type'
 import type { QueryPublicForumTopicDto } from './dto/forum-topic.dto'
+import type { ForumTopicContentPreviewSegmentTypeEnum } from './forum-topic.constant'
 
 interface TextPreviewSegment {
-  type: 'text'
+  type: ForumTopicContentPreviewSegmentTypeEnum.TEXT
   text: string
 }
 
 interface MentionPreviewSegment {
-  type: 'mention'
+  type: ForumTopicContentPreviewSegmentTypeEnum.MENTION
   text: string
   userId: number
   nickname: string
 }
 
 interface HashtagPreviewSegment {
-  type: 'hashtag'
+  type: ForumTopicContentPreviewSegmentTypeEnum.HASHTAG
   text: string
   hashtagId: number
   slug: string
@@ -27,7 +29,7 @@ interface HashtagPreviewSegment {
 }
 
 interface EmojiPreviewSegment {
-  type: 'emoji'
+  type: ForumTopicContentPreviewSegmentTypeEnum.EMOJI
   text: string
   kind: 1 | 2
   emojiAssetId?: number
@@ -87,6 +89,19 @@ export interface ForumTopicClientContext extends GeoSnapshot {
 export interface PublicForumTopicDetailContext extends ForumTopicClientContext {
   userId?: number
 }
+
+/**
+ * 评论 resolver 获取主题快照时使用的可见性约束。
+ */
+export interface ForumTopicCommentTargetSnapshotOptions {
+  requirePublicVisible: boolean
+}
+
+/**
+ * 评论创建 hook 中需要带正文快照的主题评论载荷。
+ */
+export type ForumTopicCommentHookPayload = CommentTargetHookPayload &
+  Required<Pick<CommentTargetHookPayload, 'content'>>
 
 /**
  * 公开主题分页查询在 service 内补充当前用户上下文后的输入。

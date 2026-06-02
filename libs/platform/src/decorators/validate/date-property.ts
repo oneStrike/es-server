@@ -84,7 +84,7 @@ export function DateProperty(options: DatePropertyOptions) {
       example: options.example,
       required: options.required ?? true,
       default: options.default,
-      nullable: !(options.required ?? true),
+      nullable: options.nullable ?? !(options.required ?? true),
       type: Date,
       format: 'date-time',
     })),

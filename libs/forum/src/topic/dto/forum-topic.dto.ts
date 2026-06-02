@@ -8,10 +8,6 @@ import {
   CommentSortDto,
 } from '@libs/interaction/comment/dto/comment.dto'
 import { EmojiAssetKindEnum } from '@libs/interaction/emoji/emoji.constant'
-import {
-  ForumTopicContentPreviewSegmentTypeEnum,
-  type ForumTopicContentPreviewSegmentType,
-} from '../forum-topic.constant'
 import { InteractionActorSummaryDto } from '@libs/interaction/summary/dto/interaction-summary.dto'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
@@ -24,16 +20,17 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
 import { BaseDto, IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
+
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
 import {
   AppUserResponseDto,
   BaseAppUserDto,
 } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { ForumTopicContentPreviewSegmentTypeEnum } from '../forum-topic.constant'
 
 /**
  * 论坛主题列表预览片段 DTO。
@@ -48,7 +45,7 @@ export class ForumTopicContentPreviewSegmentDto {
     required: true,
     validation: false,
   })
-  type!: ForumTopicContentPreviewSegmentType
+  type!: ForumTopicContentPreviewSegmentTypeEnum
 
   @StringProperty({
     description: '片段展示文本',
@@ -295,19 +292,23 @@ export class BaseForumTopicDto extends BaseDto {
   @EnumProperty({
     description: '审核角色（0=版主；1=管理员）',
     example: AuditRoleEnum.MODERATOR,
-    required: false,
+    required: true,
     enum: AuditRoleEnum,
+    nullable: true,
     default: AuditRoleEnum.MODERATOR,
+    validation: false,
   })
-  auditRole?: AuditRoleEnum | null
+  auditRole!: AuditRoleEnum | null
 
   @NumberProperty({
     description: '关联的审核用户ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     min: 1,
+    validation: false,
   })
-  auditById?: number | null
+  auditById!: number | null
 
   @EnumProperty({
     description: '审核状态（0=待审核；1=已通过；2=已拒绝）',
@@ -321,18 +322,20 @@ export class BaseForumTopicDto extends BaseDto {
   @StringProperty({
     description: '审核拒绝原因',
     example: '内容包含敏感信息',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  auditReason?: string | null
+  auditReason!: string | null
 
   @DateProperty({
     description: '审核时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  auditAt?: Date | null
+  auditAt!: Date | null
 
   @NumberProperty({
     description: '浏览次数',
@@ -391,80 +394,90 @@ export class BaseForumTopicDto extends BaseDto {
   @ArrayProperty({
     description: '敏感词命中记录',
     itemClass: BaseSensitiveWordHitDto,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  sensitiveWordHits?: BaseSensitiveWordHitDto[] | null
+  sensitiveWordHits!: BaseSensitiveWordHitDto[] | null
 
   @StringProperty({
     description: '发帖时解析到的国家/地区',
     example: '中国',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoCountry?: string | null
+  geoCountry!: string | null
 
   @StringProperty({
     description: '发帖时解析到的省份/州',
     example: '广东省',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoProvince?: string | null
+  geoProvince!: string | null
 
   @StringProperty({
     description: '发帖时解析到的城市',
     example: '深圳市',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoCity?: string | null
+  geoCity!: string | null
 
   @StringProperty({
     description: '发帖时解析到的网络运营商',
     example: '电信',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoIsp?: string | null
+  geoIsp!: string | null
 
   @StringProperty({
     description: '属地解析来源',
     example: 'ip2region',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 50,
     validation: false,
     contract: false,
   })
-  geoSource?: string | null
+  geoSource!: string | null
 
   @DateProperty({
     description: '最后评论时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  lastCommentAt?: Date | null
+  lastCommentAt!: Date | null
 
   @NumberProperty({
     description: '最后评论用户ID',
     example: 2,
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
   })
-  lastCommentUserId?: number | null
+  lastCommentUserId!: number | null
 
   @DateProperty({
     description: '删除时间',
     example: '2026-03-27T00:00:00.000Z',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
     contract: false,
   })
-  deletedAt?: Date | null
+  deletedAt!: Date | null
 }
 
 /**
@@ -789,10 +802,11 @@ export class AdminForumTopicUserSummaryDto extends PickType(BaseAppUserDto, [
   @StringProperty({
     description: '论坛等级名称',
     example: 'Lv2',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  levelName?: string | null
+  levelName!: string | null
 }
 
 export class AdminForumTopicSectionSummaryDto extends PickType(
@@ -802,10 +816,11 @@ export class AdminForumTopicSectionSummaryDto extends PickType(
   @StringProperty({
     description: '所属分组名称',
     example: '综合讨论',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  groupName?: string | null
+  groupName!: string | null
 }
 
 export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
@@ -853,21 +868,21 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
 
   @NestedProperty({
     description: '发帖用户',
-    required: false,
+    required: true,
     type: AdminForumTopicUserDto,
     validation: false,
     nullable: true,
   })
-  user?: AdminForumTopicUserDto | null
+  user!: AdminForumTopicUserDto | null
 
   @NestedProperty({
     description: '审核人摘要',
-    required: false,
+    required: true,
     type: InteractionActorSummaryDto,
     validation: false,
     nullable: true,
   })
-  auditorSummary?: InteractionActorSummaryDto | null
+  auditorSummary!: InteractionActorSummaryDto | null
 }
 
 export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
@@ -896,19 +911,19 @@ export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
 ] as const) {
   @NestedProperty({
     description: '发帖用户摘要',
-    required: false,
+    required: true,
     type: AdminForumTopicUserSummaryDto,
     validation: false,
     nullable: true,
   })
-  userSummary?: AdminForumTopicUserSummaryDto | null
+  userSummary!: AdminForumTopicUserSummaryDto | null
 
   @NestedProperty({
     description: '所属板块摘要',
-    required: false,
+    required: true,
     type: AdminForumTopicSectionSummaryDto,
     validation: false,
     nullable: true,
   })
-  sectionSummary?: AdminForumTopicSectionSummaryDto | null
+  sectionSummary!: AdminForumTopicSectionSummaryDto | null
 }

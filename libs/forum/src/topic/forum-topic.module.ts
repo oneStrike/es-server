@@ -18,6 +18,8 @@ import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
 import { ForumHashtagModule } from '../hashtag/forum-hashtag.module'
 import { ForumPermissionModule } from '../permission/forum-permission.module'
+import { ForumTopicCommandService } from './forum-topic-command.service'
+import { ForumTopicQueryService } from './forum-topic-query.service'
 import { ForumTopicService } from './forum-topic.service'
 import { ForumTopicBrowseLogResolver } from './resolver/forum-topic-browse-log.resolver'
 import { ForumTopicCommentResolver } from './resolver/forum-topic-comment.resolver'
@@ -53,6 +55,8 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
   ],
   controllers: [],
   providers: [
+    ForumTopicQueryService,
+    ForumTopicCommandService,
     ForumTopicService,
     ForumTopicFavoriteResolver,
     ForumTopicLikeResolver,

@@ -99,7 +99,7 @@ export function EnumProperty(options: EnumPropertyOptions) {
       example: options.example,
       required,
       default: options.default,
-      nullable: !required,
+      nullable: options.nullable ?? !required,
       enum: options.enum,
     })),
   )

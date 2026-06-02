@@ -9,6 +9,10 @@ import {
 } from './moderator.constant'
 import { ForumModeratorGovernanceService } from './moderator-governance.service'
 
+type GovernanceServiceDependencies = ConstructorParameters<
+  typeof ForumModeratorGovernanceService
+>
+
 function createGovernanceService() {
   const tx = { tag: 'tx' }
   const db = {
@@ -92,11 +96,11 @@ function createGovernanceService() {
     createActionLogInTx: jest.fn(async () => true),
   }
   const service = new ForumModeratorGovernanceService(
-    drizzle as any,
-    moderatorService as any,
-    topicService as any,
-    commentService as any,
-    actionLogService as any,
+    drizzle as unknown as GovernanceServiceDependencies[0],
+    moderatorService as unknown as GovernanceServiceDependencies[1],
+    topicService as unknown as GovernanceServiceDependencies[2],
+    commentService as unknown as GovernanceServiceDependencies[3],
+    actionLogService as unknown as GovernanceServiceDependencies[4],
   )
 
   return {

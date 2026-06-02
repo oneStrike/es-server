@@ -1,14 +1,12 @@
 import type { Db } from '@db/core'
-import { DrizzleService } from '@db/core'
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
-import {
+import type {
   FavoriteTargetContext,
   IFavoriteTargetResolver,
 } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
-import {
-  MessageDomainEventFactoryService,
-} from '@libs/message/eventing/message-domain-event.factory'
+import { DrizzleService } from '@db/core'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
+import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 
@@ -31,7 +29,7 @@ import { ForumTopicService } from '../forum-topic.service'
 export class ForumTopicFavoriteResolver
   implements IFavoriteTargetResolver, OnModuleInit
 {
-  /** 目标类型：论坛主题 */
+  // 标识本 resolver 处理论坛主题收藏目标。
   readonly targetType = FavoriteTargetTypeEnum.FORUM_TOPIC
 
   constructor(
@@ -45,21 +43,12 @@ export class ForumTopicFavoriteResolver
     private readonly actionLogService: ForumUserActionLogService,
   ) {}
 
-  /**
-   * 模块初始化时注册解析器到收藏服务
-   * 使收藏服务能够识别并处理论坛主题类型的收藏请求
-   */
+  // 模块初始化时向收藏服务注册 forum topic resolver。
   onModuleInit() {
     this.favoriteService.registerResolver(this)
   }
 
-  /**
-   * 验证目标主题是否存在并返回主题所有者信息
-   * @param tx - 事务客户端
-   * @param targetId - 主题ID
-   * @returns 包含主题所有者用户ID的对象
-   * @throws BadRequestException 当主题不存在时抛出异常
-   */
+  // 校验主题公开可见，并返回收藏通知需要的所有者和标题。
   async ensureExists(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
@@ -105,13 +94,7 @@ export class ForumTopicFavoriteResolver
     }
   }
 
-  /**
-   * 应用收藏计数增量
-   * 当用户收藏或取消收藏时，更新主题的收藏计数
-   * @param tx - 事务客户端
-   * @param targetId - 主题ID
-   * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
-   */
+  // 收藏或取消收藏后同步主题与作者收到收藏计数。
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     if (delta === 0) {
       return
@@ -140,14 +123,7 @@ export class ForumTopicFavoriteResolver
     )
   }
 
-  /**
-   * 收藏后钩子函数
-   * 当用户成功收藏主题后，基于 ensureExists 已返回的属主与标题构造主题专属动态通知
-   * @param tx - 事务客户端
-   * @param targetId - 被收藏的主题ID
-   * @param actorUserId - 执行收藏操作的用户ID
-   * @param options - 收藏目标上下文，包含主题所有者与展示标题
-   */
+  // 收藏后记录用户动作，并向主题作者发送收藏通知。
   async postFavoriteHook(
     tx: Db,
     targetId: number,
@@ -185,14 +161,8 @@ export class ForumTopicFavoriteResolver
     )
   }
 
-  /**
-   * 取消收藏后写入论坛用户操作日志。
-   */
-  async postUnfavoriteHook(
-    tx: Db,
-    targetId: number,
-    actorUserId: number,
-  ) {
+  // 取消收藏后写入论坛用户操作日志。
+  async postUnfavoriteHook(tx: Db, targetId: number, actorUserId: number) {
     await this.actionLogService.createActionLogInTx(tx, {
       userId: actorUserId,
       actionType: ForumUserActionTypeEnum.UNFAVORITE_TOPIC,
@@ -201,13 +171,7 @@ export class ForumTopicFavoriteResolver
     })
   }
 
-  /**
-   * 批量获取主题详情
-   * 用于在收藏列表中展示与主题分页项一致的详情字段
-   * @param targetIds - 主题ID数组
-   * @param userId - 当前用户ID，用于补充点赞/收藏状态
-   * @returns 主题ID到主题详情的映射Map
-   */
+  // 批量获取收藏列表展示用的主题详情。
   async batchGetDetails(targetIds: number[], userId?: number) {
     return this.forumTopicService.batchGetFavoriteTopicDetails(
       targetIds,

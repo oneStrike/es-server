@@ -7,6 +7,7 @@ import type {
 import {
   FORUM_TOPIC_CONTENT_PREVIEW_MAX_LENGTH,
   FORUM_TOPIC_CONTENT_PREVIEW_MAX_SEGMENTS,
+  ForumTopicContentPreviewSegmentTypeEnum,
 } from './forum-topic.constant'
 
 /**
@@ -63,12 +64,12 @@ function buildSegmentFromBodyToken(
 ): ForumTopicContentPreviewSegment | undefined {
   switch (token.type) {
     case 'text':
-      return token.text ? { type: 'text', text: token.text } : undefined
+      return token.text ? buildTextPreviewSegment(token.text) : undefined
     case 'mentionUser': {
       const nickname = token.nickname.trim()
       return nickname
         ? {
-            type: 'mention',
+            type: ForumTopicContentPreviewSegmentTypeEnum.MENTION,
             text: token.text || `@${nickname}`,
             userId: token.userId,
             nickname,
@@ -78,7 +79,7 @@ function buildSegmentFromBodyToken(
     case 'emojiUnicode':
       return token.unicodeSequence
         ? {
-            type: 'emoji',
+            type: ForumTopicContentPreviewSegmentTypeEnum.EMOJI,
             text: token.unicodeSequence,
             kind: 1,
             unicodeSequence: token.unicodeSequence,
@@ -88,7 +89,7 @@ function buildSegmentFromBodyToken(
     case 'emojiCustom':
       return token.shortcode
         ? {
-            type: 'emoji',
+            type: ForumTopicContentPreviewSegmentTypeEnum.EMOJI,
             text: `:${token.shortcode}:`,
             kind: 2,
             shortcode: token.shortcode,
@@ -99,7 +100,7 @@ function buildSegmentFromBodyToken(
       const displayName = token.displayName.trim()
       return displayName
         ? {
-            type: 'hashtag',
+            type: ForumTopicContentPreviewSegmentTypeEnum.HASHTAG,
             text: token.text || `#${displayName}`,
             hashtagId: token.hashtagId,
             slug: token.slug,
@@ -130,10 +131,7 @@ function appendPreviewSegment(
   const nextSegment =
     countCharacters(nextText) === countCharacters(segment.text)
       ? segment
-      : {
-          type: 'text' as const,
-          text: nextText,
-        }
+      : buildTextPreviewSegment(nextText)
 
   preview.plainText += nextText
   appendBoundedSegment(nextSegment, preview, maxSegments)
@@ -145,9 +143,9 @@ function appendBoundedSegment(
   preview: ForumTopicContentPreview,
   maxSegments: number,
 ) {
-  if (segment.type === 'text') {
+  if (segment.type === ForumTopicContentPreviewSegmentTypeEnum.TEXT) {
     const lastSegment = preview.segments.at(-1)
-    if (lastSegment?.type === 'text') {
+    if (lastSegment?.type === ForumTopicContentPreviewSegmentTypeEnum.TEXT) {
       lastSegment.text += segment.text
       return
     }
@@ -158,6 +156,16 @@ function appendBoundedSegment(
   }
 
   preview.segments.push(segment)
+}
+
+// 构造普通文本片段，避免字符串字面量在 union 推断中被拓宽。
+function buildTextPreviewSegment(
+  text: string,
+): ForumTopicContentPreviewSegment {
+  return {
+    type: ForumTopicContentPreviewSegmentTypeEnum.TEXT,
+    text,
+  }
 }
 
 // 判断当前预览是否已经达到长度或片段数上限。

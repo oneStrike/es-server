@@ -26,16 +26,13 @@ export const FORUM_TOPIC_CONTENT_PREVIEW_MAX_SEGMENTS = 30
  * 论坛主题列表预览片段类型枚举。
  * 与前端按类型字段生成可交互或可渲染片段。
  */
-export const ForumTopicContentPreviewSegmentTypeEnum = {
+export enum ForumTopicContentPreviewSegmentTypeEnum {
   /** 普通文本片段 */
-  TEXT: 'text',
+  TEXT = 'text',
   /** @用户提及片段 */
-  MENTION: 'mention',
+  MENTION = 'mention',
   /** #话题标签片段 */
-  HASHTAG: 'hashtag',
+  HASHTAG = 'hashtag',
   /** 表情片段 */
-  EMOJI: 'emoji',
-} as const
-
-export type ForumTopicContentPreviewSegmentType =
-  (typeof ForumTopicContentPreviewSegmentTypeEnum)[keyof typeof ForumTopicContentPreviewSegmentTypeEnum]
+  EMOJI = 'emoji',
+}

@@ -10,6 +10,7 @@ import {
   IsUrl,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'
 
@@ -51,6 +52,10 @@ export function StringProperty(options: StringPropertyOptions) {
   const decorators: PropertyDecorator[] = []
 
   if (validation) {
+    if (options.nullable) {
+      decorators.push(ValidateIf((_object, value) => value !== null))
+    }
+
     decorators.push(IsString({ message: '必须是字符串类型' }))
 
     if (options.password) {

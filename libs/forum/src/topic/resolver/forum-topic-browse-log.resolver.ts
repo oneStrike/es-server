@@ -1,8 +1,8 @@
 import type { Db } from '@db/core'
+import type { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.interface'
 import { DrizzleService } from '@db/core'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
-import { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.interface'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
@@ -18,7 +18,7 @@ import { ForumPermissionService } from '../../permission/forum-permission.servic
 export class ForumTopicBrowseLogResolver
   implements IBrowseLogTargetResolver, OnModuleInit
 {
-  /** 目标类型：论坛帖子 */
+  // 标识本 resolver 处理论坛主题浏览日志。
   readonly targetType = BrowseLogTargetTypeEnum.FORUM_TOPIC
 
   constructor(
@@ -28,37 +28,18 @@ export class ForumTopicBrowseLogResolver
     private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
-  private get forumTopic() {
-    return this.drizzle.schema.forumTopic
-  }
-
-  /**
-   * 模块初始化时注册解析器
-   */
+  // 模块初始化时向浏览日志服务注册 forum topic resolver。
   onModuleInit() {
     this.browseLogService.registerResolver(this)
   }
 
-  /**
-   * 应用浏览计数增量
-   * 更新帖子的浏览数
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标帖子ID
-   * @param delta - 变更量
-   */
+  // 在浏览日志事务中同步主题浏览计数增量。
   applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
     async (tx, targetId, delta) => {
       await this.forumCounterService.updateTopicViewCount(tx, targetId, delta)
     }
 
-  /**
-   * 校验帖子是否有效
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标帖子ID
-   * @throws 当帖子不存在时抛出 BadRequestException
-   */
+  // 校验主题仍公开可见，否则按资源不存在处理。
   ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
     tx,
     targetId,

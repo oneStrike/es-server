@@ -1,16 +1,18 @@
 import type { Db } from '@db/core'
-import { DrizzleService } from '@db/core'
-import {
+import type {
   ILikeTargetResolver,
   LikeTargetMeta,
 } from '@libs/interaction/like/interfaces/like-target-resolver.interface'
+import { DrizzleService } from '@db/core'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
-import {
-  MessageDomainEventFactoryService,
-} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
-import { AuditStatusEnum, BusinessErrorCode, SceneTypeEnum } from '@libs/platform/constant'
+import {
+  AuditStatusEnum,
+  BusinessErrorCode,
+  SceneTypeEnum,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
@@ -30,7 +32,7 @@ import { ForumPermissionService } from '../../permission/forum-permission.servic
 export class ForumTopicLikeResolver
   implements ILikeTargetResolver, OnModuleInit
 {
-  /** 目标类型：论坛主题 */
+  // 标识本 resolver 处理论坛主题点赞目标。
   readonly targetType = LikeTargetTypeEnum.FORUM_TOPIC
 
   constructor(
@@ -43,22 +45,12 @@ export class ForumTopicLikeResolver
     private readonly actionLogService: ForumUserActionLogService,
   ) {}
 
-  /**
-   * 模块初始化时注册解析器到点赞服务
-   * 使点赞服务能够识别并处理论坛主题类型的点赞请求
-   */
+  // 模块初始化时向点赞服务注册 forum topic resolver。
   onModuleInit() {
     this.likeService.registerResolver(this)
   }
 
-  /**
-   * 解析目标主题的场景元数据
-   * 验证主题存在性并返回场景类型和场景ID，用于统一交互记录的场景标识
-   * @param tx - 事务客户端
-   * @param targetId - 主题ID
-   * @returns 包含场景类型和场景ID的元数据对象
-   * @throws BusinessException 当主题不存在时抛出异常
-   */
+  // 校验主题公开可见，并返回点赞场景、所有者和标题元数据。
   async resolveMeta(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
@@ -106,13 +98,7 @@ export class ForumTopicLikeResolver
     }
   }
 
-  /**
-   * 应用点赞计数增量
-   * 当用户点赞或取消点赞时，更新主题的点赞计数
-   * @param tx - 事务客户端
-   * @param targetId - 主题ID
-   * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
-   */
+  // 点赞或取消点赞后同步主题与作者收到点赞计数。
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     if (delta === 0) {
       return
@@ -141,14 +127,7 @@ export class ForumTopicLikeResolver
     )
   }
 
-  /**
-   * 点赞后钩子函数
-   * 当用户成功点赞主题后，基于 resolveMeta 已透传的属主与标题构造主题专属动态通知
-   * @param tx - 事务客户端
-   * @param targetId - 被点赞的主题ID
-   * @param actorUserId - 执行点赞操作的用户ID
-   * @param meta - 点赞目标元数据，包含主题属主与展示标题
-   */
+  // 点赞后记录用户动作，并向主题作者发送点赞通知。
   async postLikeHook(
     tx: Db,
     targetId: number,
@@ -185,14 +164,8 @@ export class ForumTopicLikeResolver
     )
   }
 
-  /**
-   * 取消点赞后写入论坛用户操作日志。
-   */
-  async postUnlikeHook(
-    tx: Db,
-    targetId: number,
-    actorUserId: number,
-  ) {
+  // 取消点赞后写入论坛用户操作日志。
+  async postUnlikeHook(tx: Db, targetId: number, actorUserId: number) {
     await this.actionLogService.createActionLogInTx(tx, {
       userId: actorUserId,
       actionType: ForumUserActionTypeEnum.UNLIKE_TOPIC,
@@ -201,6 +174,7 @@ export class ForumTopicLikeResolver
     })
   }
 
+  // 批量获取点赞列表展示用的主题摘要。
   async batchGetDetails(targetIds: number[]) {
     if (targetIds.length === 0) {
       return new Map()

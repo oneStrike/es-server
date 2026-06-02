@@ -1,6 +1,7 @@
 import type { DbQueryOrderByRecord } from '@libs/platform/config'
 
 import type { JsonValue } from '@libs/platform/utils'
+import type { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   FollowingPublicForumTopicQuery,
@@ -67,6 +68,11 @@ const HOT_PUBLIC_TOPIC_FEED_ORDER: DbQueryOrderByRecord[] = [
   { likeCount: 'desc' as const },
   { viewCount: 'desc' as const },
   { createdAt: 'desc' as const },
+]
+
+const DEFAULT_ADMIN_TOPIC_PAGE_ORDER: DbQueryOrderByRecord[] = [
+  { updatedAt: 'desc' as const },
+  { id: 'desc' as const },
 ]
 
 // 论坛主题查询服务。
@@ -154,51 +160,43 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     return this.forumPermissionService.getAccessibleSectionIds(userId)
   }
 
-  // 获取关注来源的目标 ID 集合（关注用户、关注板块、关注话题），供关注 feed 聚合使用。
-  private async getFollowingFeedTargetIds(userId: number) {
-    const follows = await this.db
-      .select({
-        targetType: this.userFollowTable.targetType,
-        targetId: this.userFollowTable.targetId,
-      })
-      .from(this.userFollowTable)
-      .where(eq(this.userFollowTable.userId, userId))
-
-    const followingUserIds: number[] = []
-    const followingSectionIds: number[] = []
-    const followingHashtagIds: number[] = []
-    for (const follow of follows) {
-      if (follow.targetType === FollowTargetTypeEnum.USER) {
-        followingUserIds.push(follow.targetId)
-        continue
-      }
-
-      if (follow.targetType === FollowTargetTypeEnum.FORUM_SECTION) {
-        followingSectionIds.push(follow.targetId)
-        continue
-      }
-
-      if (follow.targetType === FollowTargetTypeEnum.FORUM_HASHTAG) {
-        followingHashtagIds.push(follow.targetId)
-      }
-    }
-
-    return {
-      followingUserIds: [...new Set(followingUserIds)],
-      followingSectionIds: [...new Set(followingSectionIds)],
-      followingHashtagIds: [...new Set(followingHashtagIds)],
-    }
+  // 构建关注用户发帖的存在性条件，避免先物化关注用户 ID。
+  private buildFollowedUserTopicExistsCondition(userId: number) {
+    return exists(
+      this.db
+        .select({ id: this.userFollowTable.id })
+        .from(this.userFollowTable)
+        .where(
+          and(
+            eq(this.userFollowTable.userId, userId),
+            eq(this.userFollowTable.targetType, FollowTargetTypeEnum.USER),
+            eq(this.userFollowTable.targetId, this.forumTopicTable.userId),
+          ),
+        ),
+    )
   }
 
-  // 构建关注 hashtag feed 的存在性条件；把 hashtag 过滤留在分页查询内，避免先物化未分页 topicId 大数组。
-  private buildFollowedHashtagTopicExistsCondition(
-    hashtagIds: number[],
-    visibleSectionIds: number[],
-  ) {
-    if (hashtagIds.length === 0) {
-      return undefined
-    }
+  // 构建关注板块主题的存在性条件，section 可见性仍由主查询的 sectionIds 约束保证。
+  private buildFollowedSectionTopicExistsCondition(userId: number) {
+    return exists(
+      this.db
+        .select({ id: this.userFollowTable.id })
+        .from(this.userFollowTable)
+        .where(
+          and(
+            eq(this.userFollowTable.userId, userId),
+            eq(
+              this.userFollowTable.targetType,
+              FollowTargetTypeEnum.FORUM_SECTION,
+            ),
+            eq(this.userFollowTable.targetId, this.forumTopicTable.sectionId),
+          ),
+        ),
+    )
+  }
 
+  // 构建关注 hashtag feed 的存在性条件；把 hashtag 过滤留在分页查询内，避免先物化关注 hashtag 或未分页 topicId 大数组。
+  private buildFollowedHashtagTopicExistsCondition(userId: number) {
     return exists(
       this.db
         .select({ id: this.forumHashtagReferenceTable.id })
@@ -209,19 +207,29 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
               this.forumHashtagReferenceTable.topicId,
               this.forumTopicTable.id,
             ),
-            inArray(this.forumHashtagReferenceTable.hashtagId, [
-              ...new Set(hashtagIds),
-            ]),
             eq(
               this.forumHashtagReferenceTable.sourceType,
               ForumHashtagReferenceSourceTypeEnum.TOPIC,
             ),
             eq(this.forumHashtagReferenceTable.isSourceVisible, true),
-            visibleSectionIds.length > 0
-              ? inArray(this.forumHashtagReferenceTable.sectionId, [
-                  ...new Set(visibleSectionIds),
-                ])
-              : undefined,
+            exists(
+              this.db
+                .select({ id: this.userFollowTable.id })
+                .from(this.userFollowTable)
+                .where(
+                  and(
+                    eq(this.userFollowTable.userId, userId),
+                    eq(
+                      this.userFollowTable.targetType,
+                      FollowTargetTypeEnum.FORUM_HASHTAG,
+                    ),
+                    eq(
+                      this.userFollowTable.targetId,
+                      this.forumHashtagReferenceTable.hashtagId,
+                    ),
+                  ),
+                ),
+            ),
           ),
         ),
     )
@@ -332,9 +340,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       .offset(pageQuery.offset)
 
     const [list, total] = await Promise.all([
-      order.orderBySql.length > 0
-        ? listQuery.orderBy(...order.orderBySql)
-        : listQuery,
+      listQuery.orderBy(...order.orderBySql),
       this.db.$count(this.forumTopicTable, where),
     ])
 
@@ -536,47 +542,17 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       )
     }
 
-    const { followingUserIds, followingSectionIds, followingHashtagIds } =
-      await this.getFollowingFeedTargetIds(query.userId)
-    const visibleSectionIds = new Set(sectionIds)
-    const followedVisibleSectionIds = followingSectionIds.filter((id) =>
-      visibleSectionIds.has(id),
-    )
-    const followedHashtagCondition =
-      this.buildFollowedHashtagTopicExistsCondition(followingHashtagIds, [
-        ...visibleSectionIds,
-      ])
-    const followConditions: SQL[] = []
-
-    if (followingUserIds.length > 0) {
-      followConditions.push(
-        inArray(this.forumTopicTable.userId, followingUserIds),
-      )
-    }
-    if (followedVisibleSectionIds.length > 0) {
-      followConditions.push(
-        inArray(this.forumTopicTable.sectionId, followedVisibleSectionIds),
-      )
-    }
-    if (followedHashtagCondition) {
-      followConditions.push(followedHashtagCondition)
-    }
-
-    if (followConditions.length === 0) {
-      return this.getPublicTopicPageByConditions(
-        query,
-        [],
-        DEFAULT_PUBLIC_TOPIC_FEED_ORDER,
-      )
-    }
+    const followConditions: SQL[] = [
+      this.buildFollowedUserTopicExistsCondition(query.userId),
+      this.buildFollowedSectionTopicExistsCondition(query.userId),
+      this.buildFollowedHashtagTopicExistsCondition(query.userId),
+    ]
 
     return this.getPublicTopicPageByConditions(
       query,
       sectionIds,
       DEFAULT_PUBLIC_TOPIC_FEED_ORDER,
-      followConditions.length === 1
-        ? followConditions[0]
-        : or(...followConditions),
+      or(...followConditions),
     )
   }
 
@@ -715,6 +691,81 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     )
   }
 
+  // 将主题视频 JSON 归一为 DTO 所需的稳定 JSON 值。
+  private normalizeTopicVideoOutput(value: unknown): JsonValue {
+    return this.isJsonValue(value) ? value : []
+  }
+
+  // 将敏感词命中 JSON 归一为后台 DTO 的 nullable 输出字段。
+  private normalizeSensitiveWordHitOutput(
+    value: unknown,
+  ): BaseSensitiveWordHitDto[] | null {
+    if (!Array.isArray(value)) {
+      return null
+    }
+
+    return value
+      .map((item) => this.normalizeSensitiveWordHitItem(item))
+      .filter((item): item is BaseSensitiveWordHitDto => item !== null)
+  }
+
+  // 校验并复制单条敏感词命中，避免将未知 JSON 原样透传到输出 DTO。
+  private normalizeSensitiveWordHitItem(
+    value: unknown,
+  ): BaseSensitiveWordHitDto | null {
+    if (!this.isJsonObject(value)) {
+      return null
+    }
+
+    const { word, level, type, replaceWord, start, end, field } = value
+    if (
+      typeof word !== 'string' ||
+      typeof level !== 'number' ||
+      typeof type !== 'number' ||
+      typeof start !== 'number' ||
+      typeof end !== 'number'
+    ) {
+      return null
+    }
+
+    return {
+      word,
+      level,
+      type,
+      start,
+      end,
+      ...(typeof replaceWord === 'string' || replaceWord === null
+        ? { replaceWord }
+        : {}),
+      ...(typeof field === 'string' ? { field } : {}),
+    }
+  }
+
+  // 判断值是否可作为 JSON 输出字段安全返回。
+  private isJsonValue(value: unknown): value is JsonValue {
+    if (
+      value === null ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return true
+    }
+    if (Array.isArray(value)) {
+      return value.every((item) => this.isJsonValue(item))
+    }
+
+    return (
+      this.isJsonObject(value) &&
+      Object.values(value).every((item) => this.isJsonValue(item))
+    )
+  }
+
+  // 判断值是否为普通 JSON object，排除数组和 null。
+  private isJsonObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+  }
+
   // ─── 后台查询 ──────────────────────────────────────────────
 
   // 获取后台主题详情，包含发帖用户、板块、审核人与成长信息。
@@ -788,12 +839,16 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       ...topicFields
     } = topic
 
-    return {
+    const detail: AdminForumTopicDetailDto = {
       ...topicFields,
       images: images ?? [],
-      videos: (videos ?? []) as unknown as AdminForumTopicDetailDto['videos'],
+      videos: this.normalizeTopicVideoOutput(videos),
+      auditReason: topic.auditReason ?? null,
+      auditAt: topic.auditAt ?? null,
       sensitiveWordHits:
-        sensitiveWordHits as AdminForumTopicDetailDto['sensitiveWordHits'],
+        this.normalizeSensitiveWordHitOutput(sensitiveWordHits),
+      lastCommentAt: topic.lastCommentAt ?? null,
+      lastCommentUserId: topic.lastCommentUserId ?? null,
       hashtags,
       section: {
         id: topic.section.id,
@@ -842,7 +897,9 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
           }
         : null,
       auditorSummary,
-    } as AdminForumTopicDetailDto
+    }
+
+    return detail
   }
 
   // 获取后台主题分页列表；后台列表仅返回展示所需字段和正文摘要，避免分页接口直接传输完整正文。
@@ -890,6 +947,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     })
     const order = this.drizzle.buildOrderBy(otherDto.orderBy, {
       table: this.forumTopicTable,
+      fallbackOrderBy: DEFAULT_ADMIN_TOPIC_PAGE_ORDER,
     })
 
     // 排除：正文大字段(html/content/body/bodyVersion)、审核人字段(auditById/auditRole)、
@@ -916,9 +974,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       .offset(page.offset)
 
     const [list, total] = await Promise.all([
-      order.orderBySql.length > 0
-        ? listQuery.orderBy(...order.orderBySql)
-        : listQuery,
+      listQuery.orderBy(...order.orderBySql),
       this.db.$count(this.forumTopicTable, where),
     ])
 

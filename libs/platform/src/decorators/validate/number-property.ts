@@ -108,7 +108,7 @@ export function NumberProperty(options: NumberPropertyOptions) {
         example: options.example,
         required: options.required ?? true,
         default: options.default,
-        nullable: !(options.required ?? true),
+        nullable: options.nullable ?? !(options.required ?? true),
         type: Number,
       }
 

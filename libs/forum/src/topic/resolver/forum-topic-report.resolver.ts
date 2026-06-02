@@ -1,8 +1,12 @@
 import type { Db } from '@db/core'
-import { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.interface'
+import type { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.interface'
 import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
 import { ReportService } from '@libs/interaction/report/report.service'
-import { AuditStatusEnum, BusinessErrorCode, SceneTypeEnum } from '@libs/platform/constant'
+import {
+  AuditStatusEnum,
+  BusinessErrorCode,
+  SceneTypeEnum,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
@@ -16,7 +20,7 @@ import { ForumPermissionService } from '../../permission/forum-permission.servic
 export class ForumTopicReportResolver
   implements IReportTargetResolver, OnModuleInit
 {
-  /** 目标类型：论坛主题 */
+  // 标识本 resolver 处理论坛主题举报目标。
   readonly targetType = ReportTargetTypeEnum.FORUM_TOPIC
 
   constructor(
@@ -24,22 +28,12 @@ export class ForumTopicReportResolver
     private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
-  /**
-   * 模块初始化时注册解析器到举报服务
-   * 使举报服务能够识别并处理论坛主题类型的举报请求
-   */
+  // 模块初始化时向举报服务注册 forum topic resolver。
   onModuleInit() {
     this.reportService.registerResolver(this)
   }
 
-  /**
-   * 解析目标主题的场景元数据
-   * 验证主题存在性并返回场景类型、场景ID和主题作者ID
-   * @param tx - 事务客户端
-   * @param targetId - 主题ID
-   * @returns 包含场景类型、场景ID和主题作者的元数据对象
-   * @throws BusinessException 当主题不存在时抛出异常
-   */
+  // 校验主题公开可见，并返回举报场景和主题作者。
   async resolveMeta(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {

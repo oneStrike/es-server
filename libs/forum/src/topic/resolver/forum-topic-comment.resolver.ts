@@ -1,14 +1,19 @@
 import type { Db } from '@db/core'
-import type { CommentTargetHookPayload, CommentTargetMeta } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
+import type {
+  CommentTargetHookPayload,
+  CommentTargetMeta,
+  ICommentTargetResolver,
+} from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
+import type {
+  ForumTopicCommentHookPayload,
+  ForumTopicCommentTargetSnapshotOptions,
+} from '../forum-topic.type'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { CommentService } from '@libs/interaction/comment/comment.service'
-import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
-import {
-  MessageDomainEventFactoryService,
-} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
-import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 
+import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import {
@@ -27,7 +32,7 @@ import { ForumPermissionService } from '../../permission/forum-permission.servic
 export class ForumTopicCommentResolver
   implements ICommentTargetResolver, OnModuleInit
 {
-  /** 目标类型：论坛帖子 */
+  // 标识本 resolver 处理论坛主题评论目标。
   readonly targetType = CommentTargetTypeEnum.FORUM_TOPIC
 
   constructor(
@@ -39,16 +44,11 @@ export class ForumTopicCommentResolver
     private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
-  /**
-   * 读取评论目标主题快照。
-   * 用户侧写入链要求主题当前可公开评论；内部治理链只要求主题与板块仍存在。
-   */
+  // 读取评论目标主题快照；用户写入链要求公开可见，治理链只要求主题与板块存在。
   private async getTopicCommentTargetSnapshot(
     tx: Db,
     targetId: number,
-    options: {
-      requirePublicVisible: boolean
-    },
+    options: ForumTopicCommentTargetSnapshotOptions,
   ) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
@@ -103,31 +103,15 @@ export class ForumTopicCommentResolver
     return topic
   }
 
-  /**
-   * 模块初始化时注册解析器
-   */
+  // 模块初始化时向评论服务注册 forum topic resolver。
   onModuleInit() {
     this.commentService.registerResolver(this)
   }
 
-  /**
-   * 应用评论计数增量
-   * 论坛主题的用户评论计数由 CommentService 统一维护
-   *
-   * @param _tx - 事务客户端
-   * @param _targetId - 目标帖子ID
-   * @param _delta - 变更量（+1 增加，-1 减少）
-   */
+  // 评论计数由 CommentService 统一维护，这里只满足 resolver 协议。
   async applyCountDelta(_tx: Db, _targetId: number, _delta: number) {}
 
-  /**
-   * 校验是否允许对该帖子发表评论
-   * 检查帖子是否存在、是否被锁定
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标帖子ID
-   * @throws 当帖子不存在或被锁定时抛出 BadRequestException
-   */
+  // 校验主题存在、公开可见且未锁定，失败时抛业务异常。
   async ensureCanComment(tx: Db, targetId: number) {
     const topic = await this.getTopicCommentTargetSnapshot(tx, targetId, {
       requirePublicVisible: true,
@@ -141,14 +125,7 @@ export class ForumTopicCommentResolver
     }
   }
 
-  /**
-   * 解析帖子的元信息
-   * 获取帖子作者ID，用于发送被评论通知
-   *
-   * @param tx - 事务客户端
-   * @param targetId - 目标帖子ID
-   * @returns 目标元信息，包含所有者用户ID
-   */
+  // 解析主题作者、板块和标题，供评论通知与计数同步复用。
   async resolveMeta(tx: Db, targetId: number) {
     const topic = await this.getTopicCommentTargetSnapshot(tx, targetId, {
       requirePublicVisible: false,
@@ -161,9 +138,10 @@ export class ForumTopicCommentResolver
     }
   }
 
+  // 评论创建后同步主题/板块计数、记录操作日志并发送主题被评论通知。
   async postCommentHook(
     tx: Db,
-    comment: CommentTargetHookPayload & { content: string },
+    comment: ForumTopicCommentHookPayload,
     meta: CommentTargetMeta,
   ) {
     if (!meta.sectionId) {
@@ -218,6 +196,7 @@ export class ForumTopicCommentResolver
     )
   }
 
+  // 评论删除后同步主题/板块计数并记录操作日志。
   async postDeleteCommentHook(
     tx: Db,
     comment: CommentTargetHookPayload,

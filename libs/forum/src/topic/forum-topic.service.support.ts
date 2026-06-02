@@ -425,6 +425,10 @@ export abstract class ForumTopicServiceSupport {
 
     return items.map((item) => ({
       ...item,
+      auditReason: item.auditReason ?? null,
+      auditAt: item.auditAt ?? null,
+      lastCommentAt: item.lastCommentAt ?? null,
+      lastCommentUserId: item.lastCommentUserId ?? null,
       userSummary: userSummaryMap.get(item.userId) ?? null,
       sectionSummary: sectionSummaryMap.get(item.sectionId) ?? null,
     }))

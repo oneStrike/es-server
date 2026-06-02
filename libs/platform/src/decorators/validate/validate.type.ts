@@ -24,7 +24,7 @@ export interface StringPropertyOptions extends BaseValidateOptions {
   example?: string | null
   /** 默认值 */
   default?: string | null
-  /** 是否允许为 null（仅影响文档表现） */
+  /** 是否允许为 null；影响文档 nullable，启用校验时允许 null 跳过字符串与长度校验，undefined 仍按 required 处理 */
   nullable?: boolean
   /** 字符串类型，支持ISO8601日期格式 */
   type?: 'ISO8601' | 'url'
@@ -50,6 +50,8 @@ export interface NumberPropertyOptions extends BaseValidateOptions {
   min?: number
   /** 默认值 */
   default?: number | null
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }
@@ -156,6 +158,8 @@ export interface DatePropertyOptions extends BaseValidateOptions {
   example?: string | Date | null
   /** 默认值 */
   default?: Date | null
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }
@@ -248,6 +252,8 @@ export interface EnumPropertyOptions extends BaseValidateOptions {
   enum: EnumLike
   /** 默认值 */
   default?: string | number | null
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }
