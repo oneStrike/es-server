@@ -12,6 +12,7 @@ import type {
   CompleteWorkflowAttemptInput,
   CompleteWorkflowAttemptWithDelayedRetryByAttemptIdInput,
   CompleteWorkflowAttemptWithDelayedRetryInput,
+  CreateWorkflowDraftResourceInitializer,
   CreateWorkflowJobInput,
   WorkflowNotificationRow,
   WorkflowObject,
@@ -27,6 +28,7 @@ import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte, or, sql } from
 import {
   WorkflowArchiveDto,
   WorkflowExpireDto,
+  WorkflowItemPageRequestDto,
   WorkflowJobIdDto,
   WorkflowJobPageRequestDto,
   WorkflowNotificationItemDto,
@@ -217,6 +219,27 @@ export class WorkflowService {
     })
   }
 
+  // 创建草稿工作流任务，并在同一事务内初始化领域资源。
+  async createDraftWithResources(
+    input: CreateWorkflowJobInput,
+    initializeResources: CreateWorkflowDraftResourceInitializer,
+  ) {
+    return this.drizzle.withTransaction(async (tx) => {
+      const row = await this.createDraftWithDb(input, tx)
+      await initializeResources({ tx, workflowJob: row })
+      await this.appendEventWithDb(
+        {
+          workflowJobId: row.id,
+          eventType: WorkflowEventTypeEnum.JOB_CREATED,
+          eventCode: 'WORKFLOW_JOB_CREATED',
+          detail: { jobId: row.jobId, workflowType: row.workflowType },
+        },
+        tx,
+      )
+      return toWorkflowJobDto(row)
+    })
+  }
+
   // 确认草稿并创建首次 attempt。
   async confirmDraft(input: WorkflowJobIdDto) {
     return this.drizzle.withTransaction(async (tx) => {
@@ -255,6 +278,29 @@ export class WorkflowService {
       )
 
       return toWorkflowJobDto(updatedJob)
+    })
+  }
+
+  // 分页查询工作流通用条目。
+  async getItemPage(input: WorkflowItemPageRequestDto) {
+    if (!input.jobId) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '工作流任务ID不能为空',
+      )
+    }
+    const job = await this.readJob(input.jobId)
+    const handler = this.registry.resolve(job.workflowType)
+    if (!handler.getItemPage) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `工作流条目读取器不存在: ${job.workflowType}`,
+      )
+    }
+    return handler.getItemPage({
+      jobId: job.jobId,
+      workflowType: job.workflowType,
+      query: input,
     })
   }
 

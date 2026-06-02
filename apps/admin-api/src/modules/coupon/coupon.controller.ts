@@ -1,14 +1,16 @@
+import { CouponAdminGrantWorkflowService } from '@libs/interaction/coupon/coupon-admin-grant-workflow.service'
 import { CouponService } from '@libs/interaction/coupon/coupon.service'
 import {
   BaseCouponDefinitionDto,
   CreateCouponDefinitionDto,
-  GrantCouponDto,
+  CreateCouponGrantWorkflowDto,
   QueryCouponDefinitionDto,
   UpdateCouponDefinitionDto,
 } from '@libs/interaction/coupon/dto/coupon.dto'
-import { ApiPageDoc } from '@libs/platform/decorators'
+import { ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
+import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
@@ -16,7 +18,10 @@ import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 @ApiTags('券管理')
 @Controller('admin/coupon')
 export class CouponController {
-  constructor(private readonly couponService: CouponService) {}
+  constructor(
+    private readonly couponService: CouponService,
+    private readonly couponGrantWorkflowService: CouponAdminGrantWorkflowService,
+  ) {}
 
   // 分页查询券定义。
   @Get('definition/page')
@@ -64,14 +69,17 @@ export class CouponController {
     )
   }
 
-  // 发放用户券实例。
-  @Post('grant/create')
+  // 创建批量发券工作流。
+  @Post('grant-workflow/create')
   @ApiAuditDoc({
-    summary: '发放券',
-    model: Boolean,
+    summary: '创建批量发券任务',
+    model: WorkflowJobDto,
     audit: { actionType: AuditActionTypeEnum.CREATE },
   })
-  async grantCoupon(@Body() body: GrantCouponDto) {
-    return this.couponService.grantCoupon(body)
+  async createGrantWorkflow(
+    @Body() body: CreateCouponGrantWorkflowDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.couponGrantWorkflowService.createWorkflow(body, userId)
   }
 }

@@ -55,6 +55,22 @@ export enum WorkflowNotificationKindEnum {
   FAILED = 'failed',
 }
 
+/** 工作流通用条目状态。 */
+export enum WorkflowItemStatusEnum {
+  /** 待处理。 */
+  PENDING = 1,
+  /** 处理中。 */
+  RUNNING = 2,
+  /** 成功。 */
+  SUCCESS = 3,
+  /** 失败。 */
+  FAILED = 4,
+  /** 重试中。 */
+  RETRYING = 5,
+  /** 已跳过。 */
+  SKIPPED = 6,
+}
+
 /** 工作流 attempt 状态。 */
 export enum WorkflowAttemptStatusEnum {
   /** 待处理。 */

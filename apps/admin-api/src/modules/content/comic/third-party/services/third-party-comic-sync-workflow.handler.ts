@@ -15,6 +15,7 @@ import type { ThirdPartyRateLimitCause } from '@libs/content/work/third-party/th
 import type {
   WorkflowExecuteContext,
   WorkflowHandler,
+  WorkflowItemPageContext,
   WorkflowRetryContext,
 } from '@libs/platform/modules/workflow/workflow.type'
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
@@ -89,6 +90,11 @@ export class ThirdPartyComicSyncWorkflowHandler
       nextAttemptNo,
       tx,
     )
+  }
+
+  // 读取 workflow 通用条目分页。
+  async getItemPage(context: WorkflowItemPageContext) {
+    return this.contentImportService.getWorkflowItemPage(context.query)
   }
 
   // 清理管理员确认过期后仍需补偿的上传文件残留。

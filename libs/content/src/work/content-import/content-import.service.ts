@@ -2,6 +2,7 @@ import type { Db } from '@db/core'
 import type { ContentImportItemSelect } from '@db/schema'
 import type { ThirdPartyComicSyncChapterPlan } from '@libs/content/work/third-party/third-party-comic-sync.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
+import type { WorkflowItemPageRequestDto } from '@libs/platform/modules/workflow/dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   ContentImportAttemptCounters,
@@ -31,6 +32,7 @@ import {
   toWorkflowRetryView,
   WorkflowErrorCodeEnum,
 } from '@libs/platform/modules/workflow/workflow-error-facts'
+import { WorkflowItemStatusEnum } from '@libs/platform/modules/workflow/workflow.constant'
 import { Injectable } from '@nestjs/common'
 import { and, asc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
@@ -1016,6 +1018,78 @@ export class ContentImportService {
     }
   }
 
+  // 分页查询内容导入条目并映射为工作流通用条目。
+  async getWorkflowItemPage(input: WorkflowItemPageRequestDto) {
+    if (!input.jobId) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '工作流任务ID不能为空',
+      )
+    }
+    const importJob = await this.readContentImportJobByWorkflowJobId(
+      input.jobId,
+    )
+    const conditions: SQL[] = [
+      eq(this.contentImportItem.contentImportJobId, importJob.id),
+    ]
+    if (input.status !== undefined) {
+      conditions.push(eq(this.contentImportItem.status, input.status))
+    }
+    const where = and(...conditions)
+    const pageQuery = this.drizzle.buildPage({
+      pageIndex: input.pageIndex,
+      pageSize: input.pageSize,
+    })
+    const orderQuery = this.drizzle.buildOrderBy(
+      input.orderBy?.trim() ? input.orderBy : { sortOrder: 'asc', id: 'asc' },
+      { table: this.contentImportItem },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.contentImportItem)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
+      this.db.$count(this.contentImportItem, where),
+    ])
+    const page = toPageResult(list, total, pageQuery)
+    return {
+      ...page,
+      list: page.list.map((item) => {
+        const metadata = {
+          autoRetryCount: item.autoRetryCount,
+          imageSuccessCount: item.imageSuccessCount,
+          imageTotal: item.imageTotal,
+          itemType: item.itemType,
+          localChapterId: item.localChapterId,
+          maxAutoRetries: item.maxAutoRetries,
+          providerChapterId: item.providerChapterId,
+          sortOrder: item.sortOrder,
+          stage: item.stage,
+          ...(this.asObjectOrNull(item.metadata) ?? {}),
+        }
+        return {
+          id: Number(item.id),
+          itemId: item.itemId,
+          title: item.title,
+          status: this.toWorkflowItemStatus(item.status),
+          subjectType: 'work-chapter',
+          subjectId: item.localChapterId,
+          subjectLabel: item.title,
+          successCount: item.imageSuccessCount,
+          totalCount: item.imageTotal,
+          failureCount: item.failureCount,
+          lastError: toWorkflowLastErrorView(item),
+          nextRetryAt: item.nextRetryAt,
+          metadata,
+          updatedAt: item.updatedAt,
+        }
+      }),
+    }
+  }
+
   // 使用公开 workflow jobId 读取内容导入任务。
   async readContentImportJobByWorkflowJobId(jobId: string, db: Db = this.db) {
     const [row] = await db
@@ -1238,6 +1312,10 @@ export class ContentImportService {
       failedItemCount: counters.failedItemCount,
       skippedItemCount: counters.skippedItemCount,
     }
+  }
+
+  private toWorkflowItemStatus(status: ContentImportItemStatusEnum) {
+    return status as unknown as WorkflowItemStatusEnum
   }
 
   private buildImageCounterPatch(input: {

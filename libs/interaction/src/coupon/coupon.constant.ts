@@ -54,6 +54,27 @@ export enum CouponSourceTypeEnum {
   MEMBERSHIP_BENEFIT = 5,
 }
 
+/** 后台批量发券工作流类型。 */
+export const CouponWorkflowType = {
+  ADMIN_GRANT_BATCH: 'coupon.admin-grant-batch',
+} as const
+
+/** 后台批量发券条目状态。 */
+export enum CouponAdminGrantItemStatusEnum {
+  /** 待处理。 */
+  PENDING = 1,
+  /** 处理中。 */
+  RUNNING = 2,
+  /** 成功。 */
+  SUCCESS = 3,
+  /** 失败。 */
+  FAILED = 4,
+  /** 重试中。 */
+  RETRYING = 5,
+  /** 已跳过。 */
+  SKIPPED = 6,
+}
+
 /**
  * 券核销目标类型。
  */

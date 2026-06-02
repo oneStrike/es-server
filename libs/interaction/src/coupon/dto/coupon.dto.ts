@@ -1,4 +1,5 @@
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
@@ -12,6 +13,7 @@ import {
   CouponRedemptionTargetTypeEnum,
   CouponSourceTypeEnum,
   CouponTypeEnum,
+  CouponWorkflowType,
 } from '../coupon.constant'
 
 export class BaseCouponDefinitionDto extends BaseDto {
@@ -165,6 +167,56 @@ export class GrantCouponDto {
     default: 1,
   })
   quantity?: number
+}
+
+export class CreateCouponGrantWorkflowDto {
+  @NumberProperty({
+    description: '券定义 ID',
+    example: 1,
+  })
+  couponDefinitionId!: number
+
+  @ArrayProperty({
+    description: 'APP 用户 ID 列表',
+    example: [1, 2, 3],
+    itemType: 'number',
+    minLength: 1,
+  })
+  userIds!: number[]
+
+  @NumberProperty({
+    description: '每个用户发放数量',
+    example: 1,
+    min: 1,
+    required: false,
+    default: 1,
+  })
+  quantity?: number
+
+  @StringProperty({
+    description: '后台批量发券操作幂等 ID',
+    example: '6f3afcf4-607d-4c7b-b040-996d47fbbfdd',
+    minLength: 1,
+    maxLength: 120,
+  })
+  operationId!: string
+
+  @StringProperty({
+    description: '后台备注',
+    example: '运营活动补发',
+    maxLength: 500,
+    required: false,
+  })
+  remark?: string
+}
+
+export class CouponGrantWorkflowTypeDto {
+  @StringProperty({
+    description: '后台批量发券工作流类型',
+    example: CouponWorkflowType.ADMIN_GRANT_BATCH,
+    validation: false,
+  })
+  workflowType!: typeof CouponWorkflowType.ADMIN_GRANT_BATCH
 }
 
 export class UserCouponItemDto extends BaseDto {

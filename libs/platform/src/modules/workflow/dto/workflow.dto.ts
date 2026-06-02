@@ -16,6 +16,7 @@ import {
   WorkflowAttemptStatusEnum,
   WorkflowAttemptTriggerTypeEnum,
   WorkflowEventTypeEnum,
+  WorkflowItemStatusEnum,
   WorkflowJobArchiveScopeEnum,
   WorkflowJobStatusEnum,
   WorkflowNotificationKindEnum,
@@ -52,6 +53,17 @@ class WorkflowJobStatusFieldsDto {
     required: true,
   })
   status!: WorkflowJobStatusEnum
+}
+
+/** 工作流通用条目状态字段。 */
+class WorkflowItemStatusFieldsDto {
+  @EnumProperty({
+    description: '条目状态（1=待处理；2=处理中；3=成功；4=失败；5=重试中；6=已跳过）',
+    enum: WorkflowItemStatusEnum,
+    example: WorkflowItemStatusEnum.FAILED,
+    required: true,
+  })
+  status!: WorkflowItemStatusEnum
 }
 
 /** 工作流错误事实 DTO。 */
@@ -579,6 +591,143 @@ export class WorkflowNotificationItemDto extends PickType(WorkflowJobDto, [
   })
   nextRetryAt!: Date | null
 }
+
+/** 工作流通用条目 DTO。 */
+export class WorkflowItemDto {
+  @NumberProperty({
+    description: '主键ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '工作流条目ID',
+    example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
+    required: true,
+    validation: false,
+  })
+  itemId!: string
+
+  @StringProperty({
+    description: '条目标题',
+    example: '用户 #1001',
+    required: true,
+    validation: false,
+  })
+  title!: string
+
+  @EnumProperty({
+    description: '条目状态（1=待处理；2=处理中；3=成功；4=失败；5=重试中；6=已跳过）',
+    enum: WorkflowItemStatusEnum,
+    example: WorkflowItemStatusEnum.FAILED,
+    required: true,
+    validation: false,
+  })
+  status!: WorkflowItemStatusEnum
+
+  @StringProperty({
+    description: '业务对象类型',
+    example: 'app-user',
+    required: false,
+    validation: false,
+  })
+  subjectType!: string | null
+
+  @NumberProperty({
+    description: '业务对象 ID',
+    example: 1001,
+    required: false,
+    validation: false,
+  })
+  subjectId!: number | null
+
+  @StringProperty({
+    description: '业务对象展示名',
+    example: '用户昵称',
+    required: false,
+    validation: false,
+  })
+  subjectLabel!: string | null
+
+  @NumberProperty({
+    description: '成功数量',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  successCount!: number
+
+  @NumberProperty({
+    description: '总数量',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  totalCount!: number
+
+  @NumberProperty({
+    description: '失败次数',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  failureCount!: number
+
+  @NestedProperty({
+    description: '最近错误事实；admin 负责根据 code/context 表达',
+    example: {
+      code: 'COUPON_ADMIN_GRANT_ITEM_FAILED',
+      context: { userId: 1001 },
+      domain: 'coupon',
+      retryable: true,
+      severity: 'error',
+      stage: 'grant-user',
+    },
+    nullable: true,
+    required: false,
+    type: WorkflowErrorFactsDto,
+    validation: false,
+  })
+  lastError!: WorkflowErrorFactsDto | null
+
+  @DateProperty({
+    description: '下次可重试时间',
+    example: '2026-05-17T03:10:00.000Z',
+    required: false,
+    validation: false,
+  })
+  nextRetryAt!: Date | null
+
+  @ObjectProperty({
+    description: '条目元数据',
+    example: { phoneNumber: '13800000000' },
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  metadata!: Record<string, unknown> | null
+
+  @DateProperty({
+    description: '更新时间',
+    example: '2026-05-17T03:00:00.000Z',
+    required: true,
+    validation: false,
+  })
+  updatedAt!: Date
+}
+
+/** 工作流通用条目分页查询 DTO。 */
+export class WorkflowItemPageRequestDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    IntersectionType(
+      PickType(WorkflowJobIdentityFieldsDto, ['jobId'] as const),
+      WorkflowItemStatusFieldsDto,
+    ),
+  ),
+) {}
 
 /** 工作流任务 ID DTO。 */
 export class WorkflowJobIdDto extends PickType(WorkflowJobIdentityFieldsDto, [

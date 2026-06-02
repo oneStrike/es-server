@@ -1,13 +1,13 @@
-import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
 import {
-  ContentImportItemDto,
-  ContentImportItemPageRequestDto,
-} from '@libs/content/work/content-import/dto/content-import.dto'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+  ApiDoc,
+  ApiPageDoc,
+} from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   WorkflowArchiveDto,
   WorkflowExpireDto,
+  WorkflowItemDto,
+  WorkflowItemPageRequestDto,
   WorkflowJobDetailDto,
   WorkflowJobDto,
   WorkflowJobIdDto,
@@ -27,10 +27,7 @@ import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 @Controller('admin/workflow')
 export class AdminWorkflowController {
   // 初始化工作流 controller 依赖。
-  constructor(
-    private readonly workflowService: WorkflowService,
-    private readonly contentImportService: ContentImportService,
-  ) {}
+  constructor(private readonly workflowService: WorkflowService) {}
 
   @Get('page')
   @ApiPageDoc({
@@ -74,12 +71,12 @@ export class AdminWorkflowController {
 
   @Get('item/page')
   @ApiPageDoc({
-    summary: '兼容分页查询工作流内容导入条目',
-    model: ContentImportItemDto,
+    summary: '分页查询工作流条目',
+    model: WorkflowItemDto,
   })
-  // 兼容旧 admin 构建；新入口由三方解析导入 owner 接管，一版后可移除。
-  async getItemPage(@Query() query: ContentImportItemPageRequestDto) {
-    return this.contentImportService.getItemPage(query)
+  // 分页查询工作流通用条目。
+  async getItemPage(@Query() query: WorkflowItemPageRequestDto) {
+    return this.workflowService.getItemPage(query)
   }
 
   @Post('cancel')

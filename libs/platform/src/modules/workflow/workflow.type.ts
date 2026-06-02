@@ -5,6 +5,10 @@ import type {
   WorkflowJobSelect,
 } from '@db/schema'
 import type {
+  WorkflowItemDto,
+  WorkflowItemPageRequestDto,
+} from './dto/workflow.dto'
+import type {
   WorkflowErrorCodeEnum,
   WorkflowErrorContext,
   WorkflowErrorDiagnosticInput,
@@ -68,6 +72,17 @@ export interface CreateWorkflowJobInput {
   expiresAt?: Date | null
   conflictKeys?: string[]
 }
+
+/** 领域资源初始化入参。 */
+export interface CreateWorkflowDraftResourceInitializerInput {
+  tx: Db
+  workflowJob: WorkflowJobSelect
+}
+
+/** 领域资源初始化函数。 */
+export type CreateWorkflowDraftResourceInitializer = (
+  input: CreateWorkflowDraftResourceInitializerInput,
+) => Promise<void>
 
 /** 工作流事件入参。 */
 export interface AppendWorkflowEventInput {
@@ -167,6 +182,13 @@ export interface WorkflowExpiredAttemptRecoveryContext {
   conflictKeys: string[]
 }
 
+/** 工作流通用条目分页上下文。 */
+export interface WorkflowItemPageContext {
+  jobId: string
+  workflowType: string
+  query: WorkflowItemPageRequestDto
+}
+
 /** 过期 RUNNING attempt 恢复结果。 */
 export interface WorkflowExpiredAttemptRecoveryResult {
   selectedItemCount: number
@@ -244,6 +266,14 @@ export interface WorkflowHandler {
     nextAttemptNo: number,
     tx: Db,
   ) => Promise<WorkflowExpiredAttemptRecoveryResult>
+  getItemPage?: (
+    context: WorkflowItemPageContext,
+  ) => Promise<{
+    list: WorkflowItemDto[]
+    pageIndex: number
+    pageSize: number
+    total: number
+  }>
   cleanupExpiredDrafts?: (jobId: string) => Promise<void>
   cleanupRetainedResources?: (jobId: string) => Promise<void>
 }

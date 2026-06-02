@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
-import { ContentImportItemStatusEnum } from '@libs/content/work/content-import/content-import.constant'
 import {
+  WorkflowItemStatusEnum,
   WorkflowJobStatusEnum,
   WorkflowNotificationKindEnum,
 } from '@libs/platform/modules/workflow/workflow.constant'
@@ -96,18 +96,21 @@ describe('AdminWorkflowController', () => {
     nextCreatedAfter: new Date('2026-05-17T00:10:00.000Z'),
     serverTime: new Date('2026-05-17T00:10:01.000Z'),
   }
-  const contentImportItem = {
+  const workflowItem = {
     currentAttemptNo: 1,
     failureCount: 0,
-    imageSuccessCount: 2,
-    imageTotal: 2,
+    id: 100,
     itemId: 'item-1',
-    localChapterId: 100,
-    providerChapterId: 'chapter-1',
-    sortOrder: 1,
-    stage: 7,
-    status: ContentImportItemStatusEnum.SUCCESS,
-    title: '第 1 话',
+    lastError: null,
+    metadata: { account: 'u100' },
+    nextRetryAt: null,
+    status: WorkflowItemStatusEnum.SUCCESS,
+    subjectId: 100,
+    subjectLabel: '用户 #100',
+    subjectType: 'app-user',
+    successCount: 1,
+    title: '用户 #100',
+    totalCount: 1,
     updatedAt: new Date('2026-05-17T00:00:00.000Z'),
   }
 
@@ -125,23 +128,17 @@ describe('AdminWorkflowController', () => {
       })),
       getNotificationList: jest.fn(async () => workflowNotificationList),
       getJobRecordPage: jest.fn(async () => workflowRecordPage),
-      retryItems: jest.fn(async () => workflowJob),
-    }
-    const contentImportService = {
       getItemPage: jest.fn(async () => ({
-        list: [contentImportItem],
+        list: [workflowItem],
         pageIndex: 1,
         pageSize: 10,
         total: 1,
       })),
+      retryItems: jest.fn(async () => workflowJob),
     }
 
     return {
-      contentImportService,
-      controller: new AdminWorkflowController(
-        workflowService as never,
-        contentImportService as never,
-      ),
+      controller: new AdminWorkflowController(workflowService as never),
       workflowService,
     }
   }
@@ -229,22 +226,21 @@ describe('AdminWorkflowController', () => {
     expect(workflowService.getNotificationList).toHaveBeenCalledWith(query)
   })
 
-  it('keeps the workflow item page endpoint as a transitional compatibility facade', async () => {
-    const { contentImportService, controller } = createController()
+  it('returns workflow items through the generic workflow item page contract', async () => {
+    const { controller, workflowService } = createController()
     const query = { jobId: 'job-1', pageIndex: 1, pageSize: 10 } as never
 
     const result = await controller.getItemPage(query)
 
     expect(result.list[0]).toEqual(
       expect.objectContaining({
-        imageSuccessCount: 2,
-        imageTotal: 2,
         itemId: 'item-1',
-        status: ContentImportItemStatusEnum.SUCCESS,
-        title: '第 1 话',
+        status: WorkflowItemStatusEnum.SUCCESS,
+        subjectType: 'app-user',
+        title: '用户 #100',
       }),
     )
-    expect(contentImportService.getItemPage).toHaveBeenCalledWith(query)
+    expect(workflowService.getItemPage).toHaveBeenCalledWith(query)
   })
 
   it('keeps cancel, archive, retry and expire actions on the workflow service contract', async () => {

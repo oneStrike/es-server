@@ -3,6 +3,7 @@ import type {
   WorkflowExecuteContext,
   WorkflowExpiredAttemptRecoveryContext,
   WorkflowHandler,
+  WorkflowItemPageContext,
 } from '@libs/platform/modules/workflow/workflow.type'
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
 import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
@@ -47,6 +48,11 @@ export class ComicArchiveImportWorkflowHandler
       nextAttemptNo,
       tx,
     )
+  }
+
+  // 读取 workflow 通用条目分页。
+  async getItemPage(context: WorkflowItemPageContext) {
+    return this.contentImportService.getWorkflowItemPage(context.query)
   }
 
   // 清理过期草稿残留。
