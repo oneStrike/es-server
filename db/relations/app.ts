@@ -182,7 +182,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     userPurchaseRecords: r.many.userPurchaseRecord(),
     contentEntitlements: r.many.userContentEntitlement(),
     membershipSubscriptions: r.many.userMembershipSubscription(),
-    membershipBenefitClaimRecords: r.many.membershipBenefitClaimRecord(),
     paymentOrders: r.many.paymentOrder(),
     userCouponInstances: r.many.userCouponInstance(),
     couponRedemptionRecords: r.many.couponRedemptionRecord(),
@@ -508,7 +507,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   membershipPlan: {
     subscriptions: r.many.userMembershipSubscription(),
     benefits: r.many.membershipPlanBenefit(),
-    claimRecords: r.many.membershipBenefitClaimRecord(),
     pageConfigs: r.many.membershipPageConfig({
       from: r.membershipPlan.id.through(r.membershipPageConfigPlan.planId),
       to: r.membershipPageConfig.id.through(
@@ -554,7 +552,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   },
   membershipBenefitDefinition: {
     planBenefits: r.many.membershipPlanBenefit(),
-    claimRecords: r.many.membershipBenefitClaimRecord(),
   },
   membershipPlanBenefit: {
     plan: r.one.membershipPlan({
@@ -566,24 +563,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.membershipBenefitDefinition.id,
     }),
   },
-  membershipBenefitClaimRecord: {
-    user: r.one.appUser({
-      from: r.membershipBenefitClaimRecord.userId,
-      to: r.appUser.id,
-    }),
-    plan: r.one.membershipPlan({
-      from: r.membershipBenefitClaimRecord.planId,
-      to: r.membershipPlan.id,
-    }),
-    benefit: r.one.membershipBenefitDefinition({
-      from: r.membershipBenefitClaimRecord.benefitId,
-      to: r.membershipBenefitDefinition.id,
-    }),
-    subscription: r.one.userMembershipSubscription({
-      from: r.membershipBenefitClaimRecord.subscriptionId,
-      to: r.userMembershipSubscription.id,
-    }),
-  },
   userMembershipSubscription: {
     user: r.one.appUser({
       from: r.userMembershipSubscription.userId,
@@ -593,7 +572,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.userMembershipSubscription.planId,
       to: r.membershipPlan.id,
     }),
-    benefitClaimRecords: r.many.membershipBenefitClaimRecord(),
   },
   paymentProviderConfig: {
     orders: r.many.paymentOrder(),

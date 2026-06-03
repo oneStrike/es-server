@@ -13,7 +13,7 @@ import {
 
 /**
  * 会员权益定义表。
- * 定义可展示和可发放的会员权益，实际发放仍由券、道具或权益事实承载。
+ * 定义 v1 可展示会员权益和开通自动发券权益。
  */
 export const membershipBenefitDefinition = snakeCase.table(
   'membership_benefit_definition',
@@ -26,7 +26,7 @@ export const membershipBenefitDefinition = snakeCase.table(
     name: varchar({ length: 80 }).notNull(),
     /** 权益图标资源键或 URL。 */
     icon: varchar({ length: 300 }).default('').notNull(),
-    /** 权益类型（1=纯展示；2=券发放；3=道具/装扮发放；4=订阅权益；5=无广告策略；6=内容优先看策略）。 */
+    /** 权益类型（1=纯展示；2=券发放）。 */
     benefitType: smallint().notNull(),
     /** 权益说明。 */
     description: varchar({ length: 500 }).default('').notNull(),
@@ -51,7 +51,7 @@ export const membershipBenefitDefinition = snakeCase.table(
     ),
     check(
       'membership_benefit_definition_type_valid_chk',
-      sql`${table.benefitType} in (1, 2, 3, 4, 5, 6)`,
+      sql`${table.benefitType} in (1, 2)`,
     ),
     check(
       'membership_benefit_definition_sort_order_non_negative_chk',

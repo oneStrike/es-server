@@ -27,8 +27,7 @@ export class MembershipPlanBenefitInputDto {
   benefitId!: number
 
   @EnumProperty({
-    description:
-      '发放策略（1=仅展示；2=开通时自动发放；3=每日可领取；4=订阅期内持续生效；5=手动领取一次）',
+    description: '发放策略（1=仅展示；2=开通时自动发放）',
     enum: MembershipBenefitGrantPolicyEnum,
     example: MembershipBenefitGrantPolicyEnum.DISPLAY_ONLY,
   })
@@ -36,7 +35,7 @@ export class MembershipPlanBenefitInputDto {
 
   @ObjectProperty({
     description:
-      '权益配置值，按权益类型使用闭集结构：券发放 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期；道具 assetType/assetKey/grantCount/validDays，无广告 adScope/durationPolicy，优先看 contentScope/advanceHours',
+      '权益配置值：纯展示权益为空或展示元数据；券发放权益必须配置 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期',
     example: { couponDefinitionId: 1, grantCount: 1 },
     required: false,
   })
@@ -203,8 +202,7 @@ export class BaseMembershipBenefitDefinitionDto extends BaseDto {
   icon?: string
 
   @EnumProperty({
-    description:
-      '权益类型（1=纯展示；2=券发放；3=道具/装扮发放；4=订阅权益；5=无广告策略；6=内容优先看策略）',
+    description: '权益类型（1=纯展示；2=券发放）',
     enum: MembershipBenefitTypeEnum,
     example: MembershipBenefitTypeEnum.DISPLAY,
   })
@@ -212,7 +210,7 @@ export class BaseMembershipBenefitDefinitionDto extends BaseDto {
 
   @StringProperty({
     description: '权益说明',
-    example: '每日可领取会员礼包',
+    example: '订阅期展示会员身份标识',
     required: false,
     default: '',
   })
@@ -278,8 +276,7 @@ export class BaseMembershipPlanBenefitDto extends BaseDto {
   benefitId!: number
 
   @EnumProperty({
-    description:
-      '发放策略（1=仅展示；2=开通时自动发放；3=每日可领取；4=订阅期内持续生效；5=手动领取一次）',
+    description: '发放策略（1=仅展示；2=开通时自动发放）',
     enum: MembershipBenefitGrantPolicyEnum,
     example: MembershipBenefitGrantPolicyEnum.DISPLAY_ONLY,
   })
@@ -287,7 +284,7 @@ export class BaseMembershipPlanBenefitDto extends BaseDto {
 
   @ObjectProperty({
     description:
-      '权益配置值，按权益类型使用闭集结构：券发放 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期；道具 assetType/assetKey/grantCount/validDays，无广告 adScope/durationPolicy，优先看 contentScope/advanceHours',
+      '权益配置值：纯展示权益为空或展示元数据；券发放权益必须配置 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期',
     example: { couponDefinitionId: 1, grantCount: 1 },
     required: false,
   })
@@ -506,15 +503,17 @@ export class MembershipSubscriptionSummaryDto {
     description: '当前最高套餐层级（1=VIP；2=超级 VIP）',
     enum: MembershipPlanTierEnum,
     example: MembershipPlanTierEnum.VIP,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  tier?: MembershipPlanTierEnum | null
+  tier!: MembershipPlanTierEnum | null
 
   @DateProperty({
     description: 'VIP 到期时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  expiresAt?: Date | null
+  expiresAt!: Date | null
 }
 
 export class VipSubscriptionPageDto {

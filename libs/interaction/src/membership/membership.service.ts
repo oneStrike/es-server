@@ -689,12 +689,47 @@ export class MembershipService {
     dto: UpdateMembershipBenefitDefinitionDto,
   ) {
     const { id, ...data } = dto
+    if (data.benefitType === undefined) {
+      await this.drizzle.withErrorHandling(
+        () =>
+          this.db
+            .update(this.membershipBenefitDefinition)
+            .set(data)
+            .where(eq(this.membershipBenefitDefinition.id, id)),
+        { notFound: '会员权益不存在' },
+      )
+      return true
+    }
+    this.assertSupportedBenefitType(data.benefitType)
     await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.membershipBenefitDefinition)
-          .set(data)
-          .where(eq(this.membershipBenefitDefinition.id, id)),
+      async () =>
+        this.drizzle.withTransaction(async (tx) => {
+          const existing = await tx.query.membershipBenefitDefinition.findFirst({
+            where: { id },
+          })
+          if (!existing) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '会员权益不存在',
+            )
+          }
+
+          if (
+            data.benefitType !== undefined &&
+            data.benefitType !== existing.benefitType
+          ) {
+            await this.assertBenefitTypeChangeKeepsPlanBenefitsValid(
+              tx,
+              id,
+              data.benefitType,
+            )
+          }
+
+          await tx
+            .update(this.membershipBenefitDefinition)
+            .set(data)
+            .where(eq(this.membershipBenefitDefinition.id, id))
+        }),
       { notFound: '会员权益不存在' },
     )
     return true
@@ -704,6 +739,7 @@ export class MembershipService {
   async createMembershipBenefitDefinition(
     dto: CreateMembershipBenefitDefinitionDto,
   ) {
+    this.assertSupportedBenefitType(dto.benefitType)
     await this.drizzle.withErrorHandling(
       () =>
         this.db.insert(this.membershipBenefitDefinition).values({
@@ -848,8 +884,9 @@ export class MembershipService {
   // 更新会员套餐基础信息和可选权益关联。
   async updateMembershipPlan(dto: UpdateMembershipPlanDto) {
     const { id, benefits, ...data } = dto
-    const normalizedBenefits = benefits ?? []
-    this.assertMembershipPlanBenefitIdsDistinct(normalizedBenefits)
+    if (benefits !== undefined) {
+      this.assertMembershipPlanBenefitIdsDistinct(benefits)
+    }
     const existing = await this.db.query.membershipPlan.findFirst({
       where: { id },
     })
@@ -867,7 +904,9 @@ export class MembershipService {
             .set(this.normalizeMembershipPlanUpdate(data, existing))
             .where(eq(this.membershipPlan.id, id))
 
-          await this.replaceMembershipPlanBenefits(tx, id, normalizedBenefits)
+          if (benefits !== undefined) {
+            await this.replaceMembershipPlanBenefits(tx, id, benefits)
+          }
         }),
       { notFound: 'VIP 套餐不存在' },
     )
@@ -911,7 +950,7 @@ export class MembershipService {
     await tx.insert(this.membershipPlanBenefit).values(values)
   }
 
-  // 校验套餐权益配置的目标存在性和 benefitValue 闭集结构，防止 admin 用展示文案替代实际发放事实。
+  // 校验套餐权益配置的目标存在性和 v1 权益矩阵，防止 admin 配置服务端无法兑现的付费承诺。
   private async assertMembershipPlanBenefitWritable(
     dto: MembershipPlanBenefitInputDto & { planId: number },
     runner: MembershipTx = this.db,
@@ -936,17 +975,12 @@ export class MembershipService {
     }
 
     const value = this.asBenefitValueRecord(dto.benefitValue)
-    if (
-      dto.grantPolicy !== MembershipBenefitGrantPolicyEnum.DISPLAY_ONLY &&
-      !value
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '非展示权益必须配置 benefitValue',
-      )
-    }
-
-    this.assertBenefitValueMatchesType(benefit.benefitType, value)
+    this.assertMembershipBenefitContract(
+      benefit.benefitType,
+      dto.grantPolicy,
+      value,
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+    )
     if (benefit.benefitType === MembershipBenefitTypeEnum.COUPON_GRANT) {
       const couponDefinition = await runner.query.couponDefinition.findFirst({
         where: {
@@ -963,83 +997,32 @@ export class MembershipService {
     }
   }
 
-  // 按权益类型校验最小必要字段，具体发放链路再基于这些字段写入券、道具或权益事实。
-  private assertBenefitValueMatchesType(
+  // v1 会员权益只支持展示信息和开通自动发券，其他付费承诺必须等独立权益引擎再引入。
+  private assertMembershipBenefitContract(
     benefitType: number,
+    grantPolicy: number,
     value: BenefitValueRecord | null,
+    errorCode: number = BusinessErrorCode.OPERATION_NOT_ALLOWED,
   ) {
-    if (benefitType === MembershipBenefitTypeEnum.DISPLAY) {
+    if (
+      benefitType === MembershipBenefitTypeEnum.DISPLAY &&
+      grantPolicy === MembershipBenefitGrantPolicyEnum.DISPLAY_ONLY
+    ) {
       this.assertDisplayBenefitValue(value)
       return
     }
-    if (!value) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '权益配置值不能为空',
-      )
-    }
     if (
       benefitType === MembershipBenefitTypeEnum.COUPON_GRANT &&
-      (!this.isPositiveInteger(value.couponDefinitionId) ||
-        !this.isPositiveInteger(value.grantCount) ||
-        !this.isPositiveIntegerOrEmpty(value.validDays))
+      grantPolicy === MembershipBenefitGrantPolicyEnum.AUTO_GRANT_ON_SUBSCRIBE
     ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '券发放权益必须配置 couponDefinitionId、grantCount；validDays 留空或配置正整数',
-      )
+      this.assertCouponGrantBenefitValue(value, errorCode)
+      return
     }
-    if (
-      benefitType === MembershipBenefitTypeEnum.ITEM_GRANT &&
-      (!this.isPositiveInteger(value.assetType) ||
-        !this.isNonEmptyString(value.assetKey) ||
-        !this.isPositiveInteger(value.grantCount) ||
-        !this.isNonNegativeInteger(value.validDays))
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '道具权益必须配置 assetType、assetKey、grantCount、validDays',
-      )
-    }
-    if (
-      benefitType === MembershipBenefitTypeEnum.SUBSCRIPTION_ENTITLEMENT &&
-      !this.isNonEmptyString(value.entitlementKey)
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '订阅权益必须配置 entitlementKey',
-      )
-    }
-    if (
-      benefitType === MembershipBenefitTypeEnum.NO_AD_POLICY &&
-      (!this.isNonEmptyString(value.adScope) ||
-        !this.isNonEmptyString(value.durationPolicy))
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '无广告权益必须配置 adScope、durationPolicy',
-      )
-    }
-    if (
-      benefitType === MembershipBenefitTypeEnum.EARLY_ACCESS_POLICY &&
-      (!this.isNonEmptyString(value.contentScope) ||
-        !this.isPositiveInteger(value.advanceHours))
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '优先看权益必须配置 contentScope、advanceHours',
-      )
-    }
-  }
 
-  // 判断值是否为去空格后仍非空的字符串。
-  private isNonEmptyString(value: unknown) {
-    return typeof value === 'string' && value.trim().length > 0
-  }
-
-  // 判断值是否为非负整数。
-  private isNonNegativeInteger(value: unknown) {
-    return Number.isInteger(value) && Number(value) >= 0
+    throw new BusinessException(
+      errorCode,
+      '会员权益仅支持纯展示+仅展示、券发放+开通时自动发放',
+    )
   }
 
   // 判断值为正整数或未填写，供可选有效期覆盖使用。
@@ -1064,6 +1047,77 @@ export class MembershipService {
       return undefined
     }
     return this.readPositiveInteger(value, label)
+  }
+
+  private assertSupportedBenefitType(benefitType: number) {
+    if (
+      benefitType === MembershipBenefitTypeEnum.DISPLAY ||
+      benefitType === MembershipBenefitTypeEnum.COUPON_GRANT
+    ) {
+      return
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '会员权益类型仅支持纯展示和券发放',
+    )
+  }
+
+  private async assertBenefitTypeChangeKeepsPlanBenefitsValid(
+    tx: MembershipTx,
+    benefitId: number,
+    nextBenefitType: number,
+  ) {
+    const linkedPlanBenefits = await tx
+      .select({
+        grantPolicy: this.membershipPlanBenefit.grantPolicy,
+        benefitValue: this.membershipPlanBenefit.benefitValue,
+      })
+      .from(this.membershipPlanBenefit)
+      .where(eq(this.membershipPlanBenefit.benefitId, benefitId))
+
+    for (const linkedPlanBenefit of linkedPlanBenefits) {
+      const value = this.asBenefitValueRecord(
+        linkedPlanBenefit.benefitValue as BenefitValueRecord | null,
+      )
+      this.assertMembershipBenefitContract(
+        nextBenefitType,
+        linkedPlanBenefit.grantPolicy,
+        value,
+      )
+      if (nextBenefitType === MembershipBenefitTypeEnum.COUPON_GRANT) {
+        const couponDefinition = await tx.query.couponDefinition.findFirst({
+          where: {
+            id: Number(value?.couponDefinitionId),
+            isEnabled: true,
+          },
+        })
+        if (!couponDefinition) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '券发放权益关联的券定义不存在或未启用',
+          )
+        }
+      }
+    }
+  }
+
+  // 校验开通自动发券需要的最小事实，validDays 留空时使用券定义默认有效期。
+  private assertCouponGrantBenefitValue(
+    value: BenefitValueRecord | null,
+    errorCode: number,
+  ) {
+    if (
+      !value ||
+      !this.isPositiveInteger(value.couponDefinitionId) ||
+      !this.isPositiveInteger(value.grantCount) ||
+      !this.isPositiveIntegerOrEmpty(value.validDays)
+    ) {
+      throw new BusinessException(
+        errorCode,
+        '券发放权益必须配置 couponDefinitionId、grantCount；validDays 留空或配置正整数',
+      )
+    }
   }
 
   // 展示型权益不能混入真实发放字段。
@@ -1601,22 +1655,19 @@ export class MembershipService {
   ) {
     const benefits = await this.getEnabledPlanBenefitItems([planId], tx)
     for (const benefit of benefits) {
-      if (
-        benefit.grantPolicy !==
-        MembershipBenefitGrantPolicyEnum.AUTO_GRANT_ON_SUBSCRIBE ||
-        benefit.benefit.benefitType !==
-        MembershipBenefitTypeEnum.COUPON_GRANT
-      ) {
-        continue
-      }
-
       const value = this.asBenefitValueRecord(
         benefit.benefitValue as BenefitValueRecord | null | undefined,
       )
-      this.assertBenefitValueMatchesType(
-        MembershipBenefitTypeEnum.COUPON_GRANT,
+      this.assertMembershipBenefitContract(
+        benefit.benefit.benefitType,
+        benefit.grantPolicy,
         value,
+        BusinessErrorCode.STATE_CONFLICT,
       )
+      if (benefit.benefit.benefitType === MembershipBenefitTypeEnum.DISPLAY) {
+        continue
+      }
+
       const couponDefinitionId = this.readPositiveInteger(
         value?.couponDefinitionId,
         '券定义 ID',

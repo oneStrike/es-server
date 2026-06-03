@@ -13,7 +13,7 @@ import {
 
 /**
  * 会员套餐权益关联表。
- * 约束套餐内权益展示、开通发放、每日领取和订阅期持续生效规则。
+ * 约束套餐内权益展示和开通自动发券规则。
  */
 export const membershipPlanBenefit = snakeCase.table(
   'membership_plan_benefit',
@@ -24,7 +24,7 @@ export const membershipPlanBenefit = snakeCase.table(
     planId: integer().notNull(),
     /** 会员权益定义 ID。 */
     benefitId: integer().notNull(),
-    /** 发放策略（1=仅展示；2=开通时自动发放；3=每日可领取；4=订阅期内持续生效；5=手动领取一次）。 */
+    /** 发放策略（1=仅展示；2=开通时自动发放）。 */
     grantPolicy: smallint().notNull(),
     /** 权益配置值，结构由 benefitType 与 grantPolicy 共同约束。 */
     benefitValue: jsonb(),
@@ -53,7 +53,7 @@ export const membershipPlanBenefit = snakeCase.table(
     ),
     check(
       'membership_plan_benefit_grant_policy_valid_chk',
-      sql`${table.grantPolicy} in (1, 2, 3, 4, 5)`,
+      sql`${table.grantPolicy} in (1, 2)`,
     ),
     check(
       'membership_plan_benefit_sort_order_non_negative_chk',

@@ -224,30 +224,21 @@ const MEMBERSHIP_PLAN_FIXTURES = [
 
 const MEMBERSHIP_BENEFIT_FIXTURES = [
   {
-    code: 'daily_gift',
-    name: '每日礼包',
-    icon: 'calendar',
+    code: 'vip_badge',
+    name: '会员身份标识',
+    icon: 'vip',
     benefitType: MembershipBenefitTypeEnum.DISPLAY,
-    description: '订阅期每日可领取礼包',
+    description: '订阅期展示会员身份标识',
     sortOrder: 1,
     isEnabled: true,
   },
   {
-    code: 'no_ad_reading',
-    name: '无广告阅读',
-    icon: 'no-ad',
-    benefitType: MembershipBenefitTypeEnum.NO_AD_POLICY,
-    description: '订阅期内免除阅读广告',
+    code: 'vip_monthly_coupon',
+    name: '会员开通优惠券',
+    icon: 'coupon',
+    benefitType: MembershipBenefitTypeEnum.COUPON_GRANT,
+    description: '开通会员后自动发放阅读券',
     sortOrder: 2,
-    isEnabled: true,
-  },
-  {
-    code: 'early_access',
-    name: '漫画抢先看',
-    icon: 'early-access',
-    benefitType: MembershipBenefitTypeEnum.EARLY_ACCESS_POLICY,
-    description: '订阅期内获得优先看权益',
-    sortOrder: 3,
     isEnabled: true,
   },
 ] as const
@@ -779,40 +770,26 @@ export async function seedAppCoreDomain(db: Db) {
   }
   console.log('  ✓ 会员订阅页套餐关联完成')
 
-  const planBenefitFixtures = [
+  const displayPlanBenefitFixtures = [
     {
       planKey: 'vip_monthly',
-      benefitCode: 'daily_gift',
+      benefitCode: 'vip_badge',
       grantPolicy: MembershipBenefitGrantPolicyEnum.DISPLAY_ONLY,
-      benefitValue: { displayText: '每日礼包' },
+      benefitValue: { displayText: '会员身份标识' },
       sortOrder: 1,
       isEnabled: true,
     },
     {
       planKey: 'super_vip_monthly',
-      benefitCode: 'no_ad_reading',
-      grantPolicy: MembershipBenefitGrantPolicyEnum.ACTIVE_DURING_SUBSCRIPTION,
-      benefitValue: {
-        adScope: 'reading',
-        durationPolicy: 'subscription_period',
-      },
+      benefitCode: 'vip_badge',
+      grantPolicy: MembershipBenefitGrantPolicyEnum.DISPLAY_ONLY,
+      benefitValue: { displayText: '超级会员身份标识' },
       sortOrder: 1,
-      isEnabled: true,
-    },
-    {
-      planKey: 'super_vip_monthly',
-      benefitCode: 'early_access',
-      grantPolicy: MembershipBenefitGrantPolicyEnum.ACTIVE_DURING_SUBSCRIPTION,
-      benefitValue: {
-        contentScope: 'comic_chapter',
-        advanceHours: 24,
-      },
-      sortOrder: 2,
       isEnabled: true,
     },
   ] as const
 
-  for (const fixture of planBenefitFixtures) {
+  for (const fixture of displayPlanBenefitFixtures) {
     const plan = planByKey.get(fixture.planKey)
     const benefit = benefitByCode.get(fixture.benefitCode)
     if (!plan || !benefit) {
@@ -935,6 +912,63 @@ export async function seedAppCoreDomain(db: Db) {
         .update(couponDefinition)
         .set(couponFixture)
         .where(eq(couponDefinition.id, existing.id))
+    }
+  }
+
+  const [readingCoupon] = await db
+    .select()
+    .from(couponDefinition)
+    .where(eq(couponDefinition.name, '章节阅读券'))
+    .limit(1)
+
+  const couponPlanBenefitFixtures = readingCoupon
+    ? [
+        {
+          planKey: 'super_vip_monthly',
+          benefitCode: 'vip_monthly_coupon',
+          grantPolicy:
+            MembershipBenefitGrantPolicyEnum.AUTO_GRANT_ON_SUBSCRIBE,
+          benefitValue: {
+            couponDefinitionId: readingCoupon.id,
+            grantCount: 1,
+          },
+          sortOrder: 2,
+          isEnabled: true,
+        },
+      ]
+    : []
+
+  for (const fixture of couponPlanBenefitFixtures) {
+    const plan = planByKey.get(fixture.planKey)
+    const benefit = benefitByCode.get(fixture.benefitCode)
+    if (!plan || !benefit) {
+      continue
+    }
+    const [existing] = await db
+      .select()
+      .from(membershipPlanBenefit)
+      .where(
+        and(
+          eq(membershipPlanBenefit.planId, plan.id),
+          eq(membershipPlanBenefit.benefitId, benefit.id),
+        ),
+      )
+      .limit(1)
+    const payload = {
+      planId: plan.id,
+      benefitId: benefit.id,
+      grantPolicy: fixture.grantPolicy,
+      benefitValue: fixture.benefitValue,
+      sortOrder: fixture.sortOrder,
+      isEnabled: fixture.isEnabled,
+    }
+    if (!existing) {
+      await db.insert(membershipPlanBenefit).values(payload)
+    } else {
+      await db
+        .update(membershipPlanBenefit)
+        .set(payload)
+        .where(eq(membershipPlanBenefit.id, existing.id))
     }
   }
   console.log('  ✓ 变现基础配置完成')

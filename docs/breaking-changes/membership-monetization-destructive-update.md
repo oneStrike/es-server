@@ -128,6 +128,15 @@ VIP 不再复用成长等级。
 - 广告激励只写广告奖励记录和临时权益，不写购买记录。
 - 阅读券核销按 `grantSource=阅读券 + sourceId=redemptionId` 保证权益事实唯一；VIP 试用卡按 `sourceType=VIP 试用卡 + sourceId=redemptionId` 保证订阅事实唯一，重复 `bizKey` 只返回既有核销记录，不重复发放权益。
 
+会员权益配置在本轮继续破坏性收敛为 v1 闭包：
+
+- `DISPLAY + DISPLAY_ONLY` 只用于订阅页展示信息，不产生发放事实。
+- `COUPON_GRANT + AUTO_GRANT_ON_SUBSCRIBE` 只在付费 VIP 订阅订单激活时自动发券。
+- `membership_plan.bonus_point_amount` 仍是套餐字段，不作为会员权益类型配置。
+- 道具/装扮发放、订阅期持续权益、无广告策略、内容优先看、每日领取和手动领取不再属于 active contract。
+- `membership_benefit_claim_record` 下线；没有 claim API、claim 状态或未兑现的领取流。
+- 未来如需 no-ad、early-access、item grant 或 claimable benefit，必须通过独立权益引擎 PRD 重新引入 app API、消费侧集成、撤销/退款行为和测试。
+
 VIP 协议配置改为直接关联 `app_agreement`。
 
 下线旧字段：
@@ -163,6 +172,13 @@ VIP 协议配置改为直接关联 `app_agreement`。
 - 删除 `membership_plan.benefit_snapshot`，避免套餐权益展示与真实权益配置双写。
 - 提供只读 `reconcile.sql` 对账历史购买、权益、重复、孤儿目标、支付方式转换数量、协议 code 回填缺失和重复 source；任一 stop 状态必须先修数据再发布。
 
+会员权益 v1 闭包迁移 `20260603081500_membership_benefit_closure_breaking` 负责：
+
+- 删除不支持的会员权益定义和无效套餐权益关联。
+- 删除 `membership_benefit_claim_record`。
+- 将权益类型和发放策略 check 约束收窄到 `(1, 2)`。
+- 通过 `migration_audit` 记录删除计数，并由同目录 `reconcile.sql` 输出删除计数和最终零无效计数。
+
 ## Compatibility
 
 不提供旧等级阅读、积分购买或购买记录直读权限的兼容层。
@@ -173,6 +189,7 @@ VIP 协议配置改为直接关联 `app_agreement`。
 - VIP 订阅页展示套餐由 admin 在订阅页配置里绑定；绑定 VIP、超级 VIP 或同时绑定两者决定客户端展示范围。
 - VIP 协议由 admin 选择 `app_agreement` 后随订阅页返回，不再使用固定协议 code 字段。
 - VIP 套餐不再返回 `benefitSnapshot`；admin 必须通过结构化套餐权益配置维护真实权益事实。
+- Admin 会员权益配置只暴露纯展示和开通自动发券；不再暴露未兑现的 no-ad、early-access、item grant 或 claimable 配置。
 - App 支付接口消费者必须改用新的支付结果白名单字段；旧的 provider 配置快照、凭据引用、通知 payload 和客户端上下文字段没有兼容期。
 - 章节详情、已购列表和购买计数以权益事实为准。
 - 新支付和广告链路依赖 provider 配置，不再依赖代码内硬编码。
@@ -190,3 +207,4 @@ VIP 协议配置改为直接关联 `app_agreement`。
 - `db/migration/20260506193000_membership_monetization_destructive_update/reconcile.sql` 对账输出核验
 - `db/migration/20260508020000_vip_agreement_app_agreement_breaking/reconcile.sql` 对账输出为 `ok`
 - `db/migration/20260510130000_membership_page_config_plan_binding/` 当前仅包含 `migration.sql`；发布前必须记录不补 `reconcile.sql` 的原因，或先补齐只读对账脚本再发布
+- `db/migration/20260603081500_membership_benefit_closure_breaking/reconcile.sql` 输出删除计数，并确认 `unsupported_benefit_definition_count`、`invalid_plan_benefit_pair_count`、`orphan_plan_benefit_count`、`claim_table_present_count` 均为 `0`
