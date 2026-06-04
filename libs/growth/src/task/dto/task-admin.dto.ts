@@ -1,21 +1,56 @@
 import { EnumProperty, NestedProperty } from '@libs/platform/decorators'
 
-import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto'
-import { IntersectionType, OmitType, PartialType } from '@nestjs/swagger'
+import { IdDto } from '@libs/platform/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { TaskDefinitionStatusEnum } from '../task.constant'
 import { BaseTaskDefinitionDto, TaskStepSummaryDto } from './task-view.dto'
 
-export class CreateTaskStepDto extends OmitType(TaskStepSummaryDto, [
-  ...OMIT_BASE_FIELDS,
-  'stepKey',
-  'stepNo',
-  'title',
+class TaskStepRequiredWritableFieldsDto extends PickType(TaskStepSummaryDto, [
+  'triggerMode',
+  'targetValue',
 ] as const) {}
 
-export class CreateTaskDefinitionDto extends OmitType(BaseTaskDefinitionDto, [
-  ...OMIT_BASE_FIELDS,
-  'code',
-] as const) {
+class TaskStepNullableWritableFieldsDto extends PartialType(
+  PickType(TaskStepSummaryDto, [
+    'description',
+    'templateKey',
+    'filters',
+    'dedupeScope',
+  ] as const),
+) {}
+
+export class CreateTaskStepDto extends IntersectionType(
+  TaskStepRequiredWritableFieldsDto,
+  TaskStepNullableWritableFieldsDto,
+) {}
+
+class TaskDefinitionRequiredWritableFieldsDto extends PickType(
+  BaseTaskDefinitionDto,
+  [
+    'title',
+    'sceneType',
+    'status',
+    'sortOrder',
+    'claimMode',
+    'completionPolicy',
+    'repeatType',
+  ] as const,
+) {}
+
+class TaskDefinitionNullableWritableFieldsDto extends PartialType(
+  PickType(BaseTaskDefinitionDto, [
+    'description',
+    'cover',
+    'startAt',
+    'endAt',
+    'rewardItems',
+  ] as const),
+) {}
+
+export class CreateTaskDefinitionDto extends IntersectionType(
+  TaskDefinitionRequiredWritableFieldsDto,
+  TaskDefinitionNullableWritableFieldsDto,
+) {
   @NestedProperty({
     description: '唯一步骤定义',
     type: CreateTaskStepDto,

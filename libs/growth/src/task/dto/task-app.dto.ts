@@ -1,4 +1,8 @@
-import { ArrayProperty, EnumProperty, NestedProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  EnumProperty,
+  NestedProperty,
+} from '@libs/platform/decorators'
 
 import { PickType } from '@nestjs/swagger'
 import { TaskVisibleStatusEnum } from '../task.constant'
@@ -58,9 +62,8 @@ export class AppMyTaskPageItemDto extends PickType(TaskInstanceViewDto, [
   @NestedProperty({
     description: '任务头详情',
     type: AppAvailableTaskPageItemDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  task?: AppAvailableTaskPageItemDto | null
+  task!: AppAvailableTaskPageItemDto | null
 }

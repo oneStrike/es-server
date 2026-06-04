@@ -8,6 +8,11 @@ import {
   QueryTaskInstancePageDto,
   QueryTaskReconciliationPageDto,
 } from '@libs/growth/task/dto/task-query.dto'
+import {
+  RetryTaskRewardBatchDto,
+  TaskRewardRetryBatchResultDto,
+  TaskRewardRetryResultDto,
+} from '@libs/growth/task/dto/task-reward-retry.dto'
 import { TaskTemplateOptionsResponseDto } from '@libs/growth/task/dto/task-template.dto'
 import {
   AdminTaskDefinitionDetailDto,
@@ -15,6 +20,7 @@ import {
   AdminTaskReconciliationItemDto,
   TaskInstanceViewDto,
 } from '@libs/growth/task/dto/task-view.dto'
+import { TaskRewardRetryService } from '@libs/growth/task/task-reward-retry.service'
 import { TaskService } from '@libs/growth/task/task.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
@@ -28,14 +34,17 @@ import {
   Post,
   Query,
 } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
+import { ApiBody, ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('任务管理/任务配置')
 @Controller('admin/task')
 export class TaskController {
   // 注入任务域门面服务。
-  constructor(private readonly taskService: TaskService) {}
+  constructor(
+    private readonly taskService: TaskService,
+    private readonly taskRewardRetryService: TaskRewardRetryService,
+  ) {}
 
   // 创建一条任务定义。
   @Post('create')
@@ -145,5 +154,34 @@ export class TaskController {
     @Query() query: QueryTaskReconciliationPageDto,
   ) {
     return this.taskService.getTaskInstanceReconciliationPage(query)
+  }
+
+  // 按任务实例维度重试奖励补偿。
+  @Post('instance/reward/retry')
+  @ApiAuditDoc({
+    summary: '重试单条任务实例奖励补偿',
+    model: TaskRewardRetryResultDto,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async retryTaskInstanceReward(@Body() body: IdDto) {
+    return this.taskRewardRetryService.retryTaskInstanceReward(body.id)
+  }
+
+  // 批量重试待补偿的任务奖励，首版仅支持 limit 维度。
+  @Post('instance/reward/retry-pending/batch')
+  @ApiAuditDoc({
+    summary: '批量重试待补偿的任务实例奖励',
+    model: TaskRewardRetryBatchResultDto,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  @ApiBody({ type: RetryTaskRewardBatchDto, required: false })
+  async retryPendingTaskRewardsBatch(@Body() body?: RetryTaskRewardBatchDto) {
+    return this.taskRewardRetryService.retryCompletedTaskRewardsBatch(
+      body?.limit ?? 100,
+    )
   }
 }

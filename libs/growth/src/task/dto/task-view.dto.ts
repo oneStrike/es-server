@@ -4,7 +4,15 @@ import {
   GrowthRewardSettlementStatusEnum,
 } from '@libs/growth/growth-reward/growth-reward.constant'
 import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseDto } from '@libs/platform/dto'
 import { PickType } from '@nestjs/swagger'
@@ -40,18 +48,18 @@ export class BaseTaskDefinitionDto extends BaseDto {
   @StringProperty({
     description: '任务描述',
     example: '浏览不同作品达到指定数量后完成。',
-    required: false,
+    nullable: true,
     maxLength: 1000,
   })
-  description?: string
+  description!: string | null
 
   @StringProperty({
     description: '任务封面',
     example: 'https://example.com/task-cover.png',
-    required: false,
+    nullable: true,
     maxLength: 255,
   })
-  cover?: string
+  cover!: string | null
 
   @EnumProperty({
     description: '任务场景类型（1=新手引导；2=日常；4=活动）',
@@ -97,24 +105,24 @@ export class BaseTaskDefinitionDto extends BaseDto {
   @DateProperty({
     description: '生效开始时间',
     example: '2026-04-22T00:00:00.000Z',
-    required: false,
+    nullable: true,
   })
-  startAt?: Date | null
+  startAt!: Date | null
 
   @DateProperty({
     description: '生效结束时间',
     example: '2026-05-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
   })
-  endAt?: Date | null
+  endAt!: Date | null
 
   @ArrayProperty({
     description: '任务完成后统一发放的奖励项列表',
     itemClass: GrowthRewardItemDto,
-    required: false,
+    nullable: true,
     example: [{ assetType: 1, assetKey: '', amount: 10 }],
   })
-  rewardItems?: GrowthRewardItemDto[] | null
+  rewardItems!: GrowthRewardItemDto[] | null
 }
 
 export class TaskStepSummaryDto extends BaseDto {
@@ -135,10 +143,10 @@ export class TaskStepSummaryDto extends BaseDto {
   @StringProperty({
     description: '步骤描述',
     example: '浏览不同作品达到指定数量后完成。',
-    required: false,
+    nullable: true,
     maxLength: 1000,
   })
-  description?: string
+  description!: string | null
 
   @NumberProperty({
     description: '步骤顺序',
@@ -162,26 +170,26 @@ export class TaskStepSummaryDto extends BaseDto {
   @StringProperty({
     description: '事件模板键',
     example: 'COMIC_WORK_VIEW',
-    required: false,
+    nullable: true,
     maxLength: 80,
   })
-  templateKey?: string
+  templateKey!: string | null
 
   @ArrayProperty({
     description: '步骤过滤条件列表',
     itemClass: TaskTemplateFilterValueDto,
     example: [{ key: 'targetType', label: '目标类型', value: 'comic_work' }],
-    required: false,
+    nullable: true,
   })
-  filters?: TaskTemplateFilterValueDto[] | null
+  filters!: TaskTemplateFilterValueDto[] | null
 
   @EnumProperty({
     description: '去重范围（1=按周期唯一；2=终身唯一）',
     example: TaskStepDedupeScopeEnum.LIFETIME,
     enum: TaskStepDedupeScopeEnum,
-    required: false,
+    nullable: true,
   })
-  dedupeScope?: TaskStepDedupeScopeEnum | null
+  dedupeScope!: TaskStepDedupeScopeEnum | null
 }
 
 export class TaskRewardSettlementSummaryDto extends PickType(
@@ -209,10 +217,35 @@ export class TaskRewardSettlementSummaryDto extends PickType(
     description: '补偿结果类型（1=真实落账；2=命中幂等；3=本次处理失败）',
     example: GrowthRewardSettlementResultTypeEnum.APPLIED,
     enum: GrowthRewardSettlementResultTypeEnum,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  settlementResultType?: GrowthRewardSettlementResultTypeEnum | null
+  settlementResultType!: GrowthRewardSettlementResultTypeEnum | null
+
+  @DateProperty({
+    description: '最近一次重试时间',
+    example: '2026-04-17T08:10:00.000Z',
+    nullable: true,
+    validation: false,
+  })
+  lastRetryAt!: Date | null
+
+  @DateProperty({
+    description: '最近一次补偿状态落定时间',
+    example: '2026-04-17T08:12:00.000Z',
+    nullable: true,
+    validation: false,
+  })
+  settledAt!: Date | null
+
+  @StringProperty({
+    description: '最近一次失败原因',
+    example: '数据库事务失败',
+    nullable: true,
+    maxLength: 500,
+    validation: false,
+  })
+  lastError!: string | null
 }
 
 export class TaskInstanceStepViewDto extends BaseDto {
@@ -244,9 +277,10 @@ export class TaskInstanceStepViewDto extends BaseDto {
   @DateProperty({
     description: '步骤完成时间',
     example: '2026-04-22T10:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  completedAt?: Date | null
+  completedAt!: Date | null
 }
 
 export class AdminTaskDefinitionListItemDto extends PickType(
@@ -345,30 +379,33 @@ export class TaskInstanceViewDto extends BaseDto {
   @NumberProperty({
     description: '奖励结算事实 ID',
     example: 501,
-    required: false,
+    nullable: true,
   })
-  rewardSettlementId?: number | null
+  rewardSettlementId!: number | null
 
   @DateProperty({
     description: '领取时间',
     example: '2026-04-22T09:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  claimedAt?: Date | null
+  claimedAt!: Date | null
 
   @DateProperty({
     description: '完成时间',
     example: '2026-04-22T10:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  completedAt?: Date | null
+  completedAt!: Date | null
 
   @DateProperty({
     description: '过期时间',
     example: '2026-04-23T00:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  expiredAt?: Date | null
+  expiredAt!: Date | null
 
   @ArrayProperty({
     description: '步骤进度列表',
@@ -379,28 +416,29 @@ export class TaskInstanceViewDto extends BaseDto {
   @NestedProperty({
     description: '奖励结算摘要',
     type: TaskRewardSettlementSummaryDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  rewardSettlement?: TaskRewardSettlementSummaryDto | null
+  rewardSettlement!: TaskRewardSettlementSummaryDto | null
 }
 
 export class TaskLatestEventSummaryDto {
   @StringProperty({
     description: '最近事件业务键',
     example: 'view:comic:123:user:10001',
-    required: false,
+    nullable: true,
     maxLength: 180,
+    validation: false,
   })
-  eventBizKey?: string | null
+  eventBizKey!: string | null
 
   @DateProperty({
     description: '最近事件发生时间',
     example: '2026-04-22T09:30:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  occurredAt?: Date | null
+  occurredAt!: Date | null
 
   @BooleanProperty({
     description: '最近事件是否被接受计入进度',
@@ -412,25 +450,28 @@ export class TaskLatestEventSummaryDto {
   @StringProperty({
     description: '最近事件拒绝原因',
     example: 'duplicate_unique_dimension',
-    required: false,
+    nullable: true,
     maxLength: 120,
+    validation: false,
   })
-  rejectReason?: string | null
+  rejectReason!: string | null
 
   @StringProperty({
     description: '最近事件目标类型',
     example: 'comic_work',
-    required: false,
+    nullable: true,
     maxLength: 80,
+    validation: false,
   })
-  targetType?: string | null
+  targetType!: string | null
 
   @NumberProperty({
     description: '最近事件目标 ID',
     example: 123,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  targetId?: number | null
+  targetId!: number | null
 }
 
 export class TaskUniqueFactSummaryDto {
@@ -459,45 +500,42 @@ export class TaskUniqueFactSummaryDto {
   @StringProperty({
     description: '最近一次命中的唯一维度值',
     example: '123',
-    required: false,
+    nullable: true,
     maxLength: 255,
     validation: false,
   })
-  latestDimensionValue?: string | null
+  latestDimensionValue!: string | null
 
   @DateProperty({
     description: '最近一次命中的发生时间',
     example: '2026-04-22T09:30:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  latestOccurredAt?: Date | null
+  latestOccurredAt!: Date | null
 }
 
 export class AdminTaskReconciliationItemDto extends TaskInstanceViewDto {
   @NestedProperty({
     description: '任务头详情',
     type: AdminTaskDefinitionDetailDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  task?: AdminTaskDefinitionDetailDto | null
+  task!: AdminTaskDefinitionDetailDto | null
 
   @NestedProperty({
     description: '最近事件摘要',
     type: TaskLatestEventSummaryDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  latestEvent?: TaskLatestEventSummaryDto | null
+  latestEvent!: TaskLatestEventSummaryDto | null
 
   @ArrayProperty({
     description: '唯一事实摘要列表',
     itemClass: TaskUniqueFactSummaryDto,
-    required: false,
     validation: false,
   })
-  uniqueFacts?: TaskUniqueFactSummaryDto[]
+  uniqueFacts!: TaskUniqueFactSummaryDto[]
 }

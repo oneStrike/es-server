@@ -98,6 +98,7 @@ export class TaskNotificationService {
         kind: 'task',
         id: params.task.id,
         code: params.task.code ?? `task-${params.task.id}`,
+        cover: params.task.cover ?? null,
         title: params.task.title,
         type: normalizedTaskType,
       },

@@ -17,6 +17,7 @@ import {
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import {
   TaskCompletionPolicyEnum,
+  TaskDefinitionStatusEnum,
   TaskRepeatCycleEnum,
   TaskStepTriggerModeEnum,
 } from './task.constant'
@@ -293,11 +294,50 @@ export class TaskDefinitionService extends TaskServiceSupport {
   // 更新新任务头状态。
   async updateTaskDefinitionStatus(id: number, status: number) {
     this.ensureTaskDefinitionStatus(status)
+    const existing = await this.getTaskDefinitionRecordOrThrow(id)
 
     await this.drizzle.withErrorHandling(
       async () =>
         this.drizzle.withTransaction(async (tx) => {
-          await this.ensureNoActiveTaskInstances(tx, id)
+          if (status === TaskDefinitionStatusEnum.ACTIVE) {
+            const currentStep = await tx.query.taskStep.findFirst({
+              where: {
+                taskId: id,
+                stepNo: 1,
+              },
+            })
+            if (!currentStep) {
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                '任务步骤不存在',
+              )
+            }
+            const template = currentStep.templateKey
+              ? this.taskEventTemplateRegistry.getTemplateByKey(
+                  currentStep.templateKey,
+                )
+              : null
+            this.ensureTaskDefinitionWindow(existing.startAt, existing.endAt)
+            this.ensureTaskRewardItemsContract(existing.rewardItems)
+            this.ensureTaskStepWriteInput(
+              {
+                title: currentStep.title,
+                description: currentStep.description ?? undefined,
+                triggerMode: currentStep.triggerMode,
+                eventCode: currentStep.eventCode ?? undefined,
+                targetValue: currentStep.targetValue,
+                templateKey: currentStep.templateKey ?? undefined,
+                filterPayload: currentStep.filterPayload,
+                dedupeScope: currentStep.dedupeScope ?? undefined,
+              },
+              template?.isSelectable ?? false,
+              template?.eventCode,
+              template?.supportsUniqueCounting,
+            )
+          }
+          if (status === TaskDefinitionStatusEnum.ARCHIVED) {
+            await this.ensureNoActiveTaskInstances(tx, id)
+          }
 
           return tx
             .update(this.taskDefinitionTable)

@@ -832,6 +832,8 @@ COMMENT ON COLUMN "public"."growth_reward_settlement"."settlement_result_type" I
 COMMENT ON COLUMN "public"."growth_reward_settlement"."ledger_record_ids" IS E'本次补偿关联到账本记录 ID 列表。';
 COMMENT ON COLUMN "public"."growth_reward_settlement"."retry_count" IS E'已执行的补偿重试次数。';
 COMMENT ON COLUMN "public"."growth_reward_settlement"."last_retry_at" IS E'最近一次重试时间。';
+COMMENT ON COLUMN "public"."growth_reward_settlement"."processing_token" IS E'当前补偿执行租约 token，用于阻止并发重复执行。';
+COMMENT ON COLUMN "public"."growth_reward_settlement"."processing_started_at" IS E'当前补偿执行租约开始时间。';
 COMMENT ON COLUMN "public"."growth_reward_settlement"."settled_at" IS E'最近一次补偿状态落定时间。';
 COMMENT ON COLUMN "public"."growth_reward_settlement"."last_error" IS E'最近一次失败原因。';
 COMMENT ON COLUMN "public"."growth_reward_settlement"."request_payload" IS E'重试所需的原始派发载荷快照。';

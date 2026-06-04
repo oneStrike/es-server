@@ -6,6 +6,7 @@ import type {
 } from '@db/schema'
 import type { TaskRewardSettlementResult } from '@libs/growth/growth-reward/types/growth-reward-result.type'
 import type { GrowthRewardItem } from '../reward-rule/reward-item.type'
+import type { TaskRewardSettlementSummaryDto } from './dto/task-view.dto'
 import type {
   TaskCycleDateParts,
   TaskEventLogWriteInput,
@@ -31,6 +32,7 @@ import type {
   TaskUniqueFactInsertInput,
   TaskUniqueFactSummaryRecord,
 } from './types/task.type'
+import { randomUUID } from 'node:crypto'
 import { DrizzleService, extractRows } from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
@@ -47,12 +49,15 @@ import { MessageDomainEventPublisher } from '@libs/message/eventing/message-doma
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
-import { getAppTimeZone } from '@libs/platform/utils'
+import {
+  buildDateOnlyRangeInAppTimeZone,
+  getAppTimeZone,
+} from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import {
   QueryAvailableTaskPageDto,
   QueryMyTaskPageDto,
@@ -60,6 +65,11 @@ import {
   QueryTaskReconciliationPageDto,
   TaskProgressDto,
 } from './dto/task-query.dto'
+import {
+  TaskRewardRetryBatchResultDto,
+  TaskRewardRetryFailureDto,
+  TaskRewardRetryResultDto,
+} from './dto/task-reward-retry.dto'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import { TaskNotificationService } from './task-notification.service'
 import {
@@ -78,6 +88,8 @@ import { TaskServiceSupport } from './task.service.support'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
+
+const TASK_REWARD_SETTLEMENT_CLAIM_LEASE_MS = 10 * 60 * 1000
 
 /**
  * 新任务模型中的执行服务。
@@ -101,38 +113,28 @@ export class TaskExecutionService extends TaskServiceSupport {
   async getAvailableTasks(queryDto: QueryAvailableTaskPageDto, userId: number) {
     const now = new Date()
     const page = this.drizzle.buildPage(queryDto)
-    const rows = await this.db
-      .select()
-      .from(this.taskDefinitionTable)
-      .where(
-        and(
-          isNull(this.taskDefinitionTable.deletedAt),
-          eq(this.taskDefinitionTable.status, TaskDefinitionStatusEnum.ACTIVE),
-          eq(this.taskDefinitionTable.claimMode, TaskClaimModeEnum.MANUAL),
-          sql`${this.taskDefinitionTable.startAt} is null or ${this.taskDefinitionTable.startAt} <= ${now}`,
-          sql`${this.taskDefinitionTable.endAt} is null or ${this.taskDefinitionTable.endAt} >= ${now}`,
-          queryDto.sceneType !== undefined
-            ? eq(this.taskDefinitionTable.sceneType, queryDto.sceneType)
-            : undefined,
-        ),
-      )
-      .orderBy(this.taskDefinitionTable.sortOrder, this.taskDefinitionTable.id)
-
-    const filtered = await this.filterClaimableTaskDefinitionsForUser(
-      rows,
+    const availableTaskIds = await this.getAvailableTaskDefinitionIds(
+      queryDto,
+      userId,
+      now,
+      page.limit,
+      page.offset,
+    )
+    const rows = await this.getTaskDefinitionsByOrderedIds(availableTaskIds)
+    const total = await this.countAvailableTaskDefinitions(
+      queryDto,
       userId,
       now,
     )
-    const paged = filtered.slice(page.offset, page.offset + page.limit)
     const stepSummaryMap = await this.getTaskStepSummaryMap(
-      paged.map((item) => item.id),
+      rows.map((item) => item.id),
     )
 
     return {
-      list: paged.map((task) =>
+      list: rows.map((task) =>
         this.toAppAvailableTaskItem(task, stepSummaryMap.get(task.id) ?? []),
       ),
-      total: filtered.length,
+      total,
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
     }
@@ -226,18 +228,9 @@ export class TaskExecutionService extends TaskServiceSupport {
               stepSummaryMap.get(item.task.id) ?? [],
             )
           : null,
-        rewardSettlement: item.rewardSettlement?.id
-          ? {
-              id: item.rewardSettlement.id,
-              settlementStatus: item.rewardSettlement.settlementStatus,
-              settlementResultType: item.rewardSettlement.settlementResultType,
-              retryCount: item.rewardSettlement.retryCount,
-              lastRetryAt: item.rewardSettlement.lastRetryAt,
-              settledAt: item.rewardSettlement.settledAt,
-              lastError: item.rewardSettlement.lastError,
-              ledgerRecordIds: item.rewardSettlement.ledgerRecordIds,
-            }
-          : null,
+        rewardSettlement: this.toTaskRewardSettlementSummary(
+          item.rewardSettlement,
+        ),
       })),
       total: Number(totalRows[0]?.count ?? 0),
       pageIndex: page.pageIndex,
@@ -247,38 +240,53 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 获取用户中心任务摘要。
   async getUserTaskSummary(userId: number) {
-    const available = await this.getAvailableTasks({}, userId)
-    const rows = await this.db
-      .select({
-        status: this.taskInstanceTable.status,
-        rewardApplicable: this.taskInstanceTable.rewardApplicable,
-        settlementStatus: this.growthRewardSettlementTable.settlementStatus,
-      })
-      .from(this.taskInstanceTable)
-      .leftJoin(
-        this.growthRewardSettlementTable,
-        eq(
-          this.taskInstanceTable.rewardSettlementId,
-          this.growthRewardSettlementTable.id,
+    const [claimableCount, rows] = await Promise.all([
+      this.countAvailableTaskDefinitions({}, userId, new Date()),
+      this.db
+        .select({
+          status: this.taskInstanceTable.status,
+          rewardApplicable: this.taskInstanceTable.rewardApplicable,
+          settlementStatus: this.growthRewardSettlementTable.settlementStatus,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(this.taskInstanceTable)
+        .leftJoin(
+          this.growthRewardSettlementTable,
+          eq(
+            this.taskInstanceTable.rewardSettlementId,
+            this.growthRewardSettlementTable.id,
+          ),
+        )
+        .where(
+          and(
+            eq(this.taskInstanceTable.userId, userId),
+            isNull(this.taskInstanceTable.deletedAt),
+          ),
+        )
+        .groupBy(
+          this.taskInstanceTable.status,
+          this.taskInstanceTable.rewardApplicable,
+          this.growthRewardSettlementTable.settlementStatus,
         ),
-      )
-      .where(
-        and(
-          eq(this.taskInstanceTable.userId, userId),
-          isNull(this.taskInstanceTable.deletedAt),
-        ),
-      )
+    ])
 
     return {
-      claimableCount: available.total,
-      claimedCount: rows.filter((item) => item.status === 0).length,
-      inProgressCount: rows.filter((item) => item.status === 1).length,
-      rewardPendingCount: rows.filter(
+      claimableCount,
+      claimedCount: this.sumTaskInstanceSummaryCount(
+        rows,
+        (item) => item.status === TaskInstanceStatusEnum.PENDING,
+      ),
+      inProgressCount: this.sumTaskInstanceSummaryCount(
+        rows,
+        (item) => item.status === TaskInstanceStatusEnum.IN_PROGRESS,
+      ),
+      rewardPendingCount: this.sumTaskInstanceSummaryCount(
+        rows,
         (item) =>
-          item.status === 2 &&
+          item.status === TaskInstanceStatusEnum.COMPLETED &&
           item.rewardApplicable === 1 &&
           item.settlementStatus !== GrowthRewardSettlementStatusEnum.SUCCESS,
-      ).length,
+      ),
     }
   }
 
@@ -507,6 +515,10 @@ export class TaskExecutionService extends TaskServiceSupport {
   // 分页查询实例列表。
   async getTaskInstancePage(queryDto: QueryTaskInstancePageDto) {
     const page = this.drizzle.buildPage(queryDto)
+    const createdRange = buildDateOnlyRangeInAppTimeZone(
+      queryDto.startDate,
+      queryDto.endDate,
+    )
     const where = and(
       isNull(this.taskInstanceTable.deletedAt),
       queryDto.taskId !== undefined
@@ -520,6 +532,12 @@ export class TaskExecutionService extends TaskServiceSupport {
         : undefined,
       queryDto.sceneType !== undefined
         ? eq(this.taskDefinitionTable.sceneType, queryDto.sceneType)
+        : undefined,
+      createdRange?.gte
+        ? gte(this.taskInstanceTable.createdAt, createdRange.gte)
+        : undefined,
+      createdRange?.lt
+        ? lt(this.taskInstanceTable.createdAt, createdRange.lt)
         : undefined,
     )
 
@@ -584,18 +602,9 @@ export class TaskExecutionService extends TaskServiceSupport {
         completedAt: item.instance.completedAt,
         expiredAt: item.instance.expiredAt,
         steps: instanceStepMap.get(item.instance.id) ?? [],
-        rewardSettlement: item.rewardSettlement?.id
-          ? {
-              id: item.rewardSettlement.id,
-              settlementStatus: item.rewardSettlement.settlementStatus,
-              settlementResultType: item.rewardSettlement.settlementResultType,
-              retryCount: item.rewardSettlement.retryCount,
-              lastRetryAt: item.rewardSettlement.lastRetryAt,
-              settledAt: item.rewardSettlement.settledAt,
-              lastError: item.rewardSettlement.lastError,
-              ledgerRecordIds: item.rewardSettlement.ledgerRecordIds,
-            }
-          : null,
+        rewardSettlement: this.toTaskRewardSettlementSummary(
+          item.rewardSettlement,
+        ),
         task: item.task
           ? this.toAdminTaskDefinitionDetail(
               item.task,
@@ -612,6 +621,10 @@ export class TaskExecutionService extends TaskServiceSupport {
   // 分页查询对账页。
   async getTaskReconciliationPage(queryDto: QueryTaskReconciliationPageDto) {
     const page = this.drizzle.buildPage(queryDto)
+    const createdRange = buildDateOnlyRangeInAppTimeZone(
+      queryDto.startDate,
+      queryDto.endDate,
+    )
     const where = and(
       isNull(this.taskInstanceTable.deletedAt),
       queryDto.instanceId !== undefined
@@ -627,10 +640,15 @@ export class TaskExecutionService extends TaskServiceSupport {
         ? sql`${this.taskInstanceTable.rewardSettlementId} = ${queryDto.rewardSettlementId}`
         : undefined,
       queryDto.settlementStatus !== undefined
-        ? eq(
-            this.growthRewardSettlementTable.settlementStatus,
+        ? this.buildTaskReconciliationSettlementStatusCondition(
             queryDto.settlementStatus,
           )
+        : undefined,
+      createdRange?.gte
+        ? gte(this.taskInstanceTable.createdAt, createdRange.gte)
+        : undefined,
+      createdRange?.lt
+        ? lt(this.taskInstanceTable.createdAt, createdRange.lt)
         : undefined,
     )
 
@@ -708,18 +726,9 @@ export class TaskExecutionService extends TaskServiceSupport {
         completedAt: item.instance.completedAt,
         expiredAt: item.instance.expiredAt,
         steps: instanceStepMap.get(item.instance.id) ?? [],
-        rewardSettlement: item.rewardSettlement?.id
-          ? {
-              id: item.rewardSettlement.id,
-              settlementStatus: item.rewardSettlement.settlementStatus,
-              settlementResultType: item.rewardSettlement.settlementResultType,
-              retryCount: item.rewardSettlement.retryCount,
-              lastRetryAt: item.rewardSettlement.lastRetryAt,
-              settledAt: item.rewardSettlement.settledAt,
-              lastError: item.rewardSettlement.lastError,
-              ledgerRecordIds: item.rewardSettlement.ledgerRecordIds,
-            }
-          : null,
+        rewardSettlement: this.toTaskRewardSettlementSummary(
+          item.rewardSettlement,
+        ),
         task: item.task
           ? this.toAdminTaskDefinitionDetail(
               item.task,
@@ -735,8 +744,35 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
   }
 
+  // 对账页的“待补偿”需与批量补偿扫描保持同一口径，包含缺失结算事实的坏链路。
+  private buildTaskReconciliationSettlementStatusCondition(
+    settlementStatus: GrowthRewardSettlementStatusEnum,
+  ) {
+    if (settlementStatus !== GrowthRewardSettlementStatusEnum.PENDING) {
+      return eq(
+        this.growthRewardSettlementTable.settlementStatus,
+        settlementStatus,
+      )
+    }
+
+    return and(
+      eq(this.taskInstanceTable.status, TaskInstanceStatusEnum.COMPLETED),
+      eq(this.taskInstanceTable.rewardApplicable, 1),
+      or(
+        isNull(this.taskInstanceTable.rewardSettlementId),
+        isNull(this.growthRewardSettlementTable.id),
+        eq(
+          this.growthRewardSettlementTable.settlementStatus,
+          GrowthRewardSettlementStatusEnum.PENDING,
+        ),
+      ),
+    )
+  }
+
   // 重试单条实例的奖励结算。
-  async retryTaskInstanceReward(instanceId: number) {
+  async retryTaskInstanceReward(
+    instanceId: number,
+  ): Promise<TaskRewardRetryResultDto> {
     const instance = await this.db.query.taskInstance.findFirst({
       where: {
         id: instanceId,
@@ -759,6 +795,12 @@ export class TaskExecutionService extends TaskServiceSupport {
         '仅已完成任务允许重试奖励结算',
       )
     }
+    if (instance.rewardApplicable !== 1) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务实例未配置奖励，无需重试',
+      )
+    }
     if (
       instance.rewardSettlement?.settlementStatus ===
       GrowthRewardSettlementStatusEnum.SUCCESS
@@ -768,30 +810,46 @@ export class TaskExecutionService extends TaskServiceSupport {
         '任务奖励已结算成功，无需重试',
       )
     }
+    if (
+      instance.rewardSettlement?.settlementStatus ===
+      GrowthRewardSettlementStatusEnum.TERMINAL
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务奖励已进入终态失败，无需重试',
+      )
+    }
 
     const task = await this.getTaskDefinitionForRewardOrThrow(instance.taskId)
+    const rewardItems = this.resolveTaskRewardItems(
+      instance.snapshotPayload,
+      task.rewardItems,
+    )
+    if (!this.hasRewardItems(rewardItems)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务实例没有可发放奖励，无需重试',
+      )
+    }
     await this.settleTaskInstanceReward({
       taskId: instance.taskId,
       instanceId: instance.id,
       userId: instance.userId,
-      rewardItems: this.resolveTaskRewardItems(
-        instance.snapshotPayload,
-        task.rewardItems,
-      ),
+      rewardItems,
       occurredAt: instance.completedAt ?? new Date(),
+      isRetry: true,
     })
-    return true
+    return this.getTaskRewardRetryResult(instance.id)
   }
 
   // 批量扫描并重试已完成实例奖励。
-  async retryCompletedTaskRewardsBatch(limit = 100) {
+  async retryCompletedTaskRewardsBatch(
+    limit = 100,
+  ): Promise<TaskRewardRetryBatchResultDto> {
     const rows = await this.db
       .select({
         instanceId: this.taskInstanceTable.id,
-        taskId: this.taskInstanceTable.taskId,
-        userId: this.taskInstanceTable.userId,
-        snapshotPayload: this.taskInstanceTable.snapshotPayload,
-        completedAt: this.taskInstanceTable.completedAt,
+        rewardSettlementId: this.taskInstanceTable.rewardSettlementId,
       })
       .from(this.taskInstanceTable)
       .leftJoin(
@@ -808,33 +866,52 @@ export class TaskExecutionService extends TaskServiceSupport {
           eq(this.taskInstanceTable.rewardApplicable, 1),
           or(
             isNull(this.taskInstanceTable.rewardSettlementId),
-            eq(
-              this.growthRewardSettlementTable.settlementStatus,
-              GrowthRewardSettlementStatusEnum.PENDING,
-            ),
+            isNull(this.growthRewardSettlementTable.id),
+            sql`${this.growthRewardSettlementTable.settlementStatus} not in (${GrowthRewardSettlementStatusEnum.SUCCESS}, ${GrowthRewardSettlementStatusEnum.TERMINAL})`,
           ),
         ),
       )
       .orderBy(desc(this.taskInstanceTable.id))
       .limit(Math.max(1, Math.min(limit, 500)))
 
+    let succeededCount = 0
+    let failedCount = 0
+    let skippedCount = 0
+    const failures: TaskRewardRetryFailureDto[] = []
+
     for (const row of rows) {
-      const task = await this.getTaskDefinitionForRewardOrThrow(row.taskId)
-      await this.settleTaskInstanceReward({
-        taskId: row.taskId,
-        instanceId: row.instanceId,
-        userId: row.userId,
-        rewardItems: this.resolveTaskRewardItems(
-          row.snapshotPayload,
-          task.rewardItems,
-        ),
-        occurredAt: row.completedAt ?? new Date(),
-      })
+      try {
+        const result = await this.retryTaskInstanceReward(row.instanceId)
+        if (result.succeeded) {
+          succeededCount += 1
+        } else {
+          failedCount += 1
+          this.pushTaskRewardRetryFailure(failures, {
+            instanceId: row.instanceId,
+            rewardSettlementId: result.rewardSettlementId,
+            message: result.message,
+          })
+        }
+      } catch (error) {
+        if (this.isTaskRewardRetrySkippedError(error)) {
+          skippedCount += 1
+          continue
+        }
+        failedCount += 1
+        this.pushTaskRewardRetryFailure(failures, {
+          instanceId: row.instanceId,
+          rewardSettlementId: row.rewardSettlementId,
+          message: error instanceof Error ? error.message : String(error),
+        })
+      }
     }
 
     return {
       scannedCount: rows.length,
-      triggeredCount: rows.length,
+      succeededCount,
+      failedCount,
+      skippedCount,
+      failures,
     }
   }
 
@@ -1782,44 +1859,219 @@ export class TaskExecutionService extends TaskServiceSupport {
     return step
   }
 
-  // 过滤当前周期仍可领取的任务头。
-  private async filterClaimableTaskDefinitionsForUser(
-    tasks: TaskDefinitionSelect[],
+  // 数据库侧查询当前用户仍可领取的任务 ID。
+  private async getAvailableTaskDefinitionIds(
+    queryDto: QueryAvailableTaskPageDto,
+    userId: number,
+    now: Date,
+    limit: number,
+    offset: number,
+  ) {
+    const cycleKeys = this.buildCurrentTaskCycleKeys(now)
+    const sceneFilter =
+      queryDto.sceneType !== undefined
+        ? sql`AND d.scene_type = ${queryDto.sceneType}`
+        : sql.empty()
+    const result = await this.db.execute(sql`
+      WITH claimable_candidates AS (
+        SELECT
+          d.id,
+          d.sort_order,
+          CASE d.repeat_type
+            WHEN ${TaskRepeatCycleEnum.DAILY} THEN ${cycleKeys.daily}
+            WHEN ${TaskRepeatCycleEnum.WEEKLY} THEN ${cycleKeys.weekly}
+            WHEN ${TaskRepeatCycleEnum.MONTHLY} THEN ${cycleKeys.monthly}
+            ELSE 'once'
+          END AS cycle_key
+        FROM task_definition d
+        WHERE d.deleted_at IS NULL
+          AND d.status = ${TaskDefinitionStatusEnum.ACTIVE}
+          AND d.claim_mode = ${TaskClaimModeEnum.MANUAL}
+          AND (d.start_at IS NULL OR d.start_at <= ${now})
+          AND (d.end_at IS NULL OR d.end_at >= ${now})
+          ${sceneFilter}
+      )
+      SELECT c.id
+      FROM claimable_candidates c
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM task_instance i
+        WHERE i.deleted_at IS NULL
+          AND i.user_id = ${userId}
+          AND i.task_id = c.id
+          AND i.cycle_key = c.cycle_key
+      )
+      ORDER BY c.sort_order ASC, c.id ASC
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `)
+
+    return extractRows<{ id: number }>(result).map((row) => Number(row.id))
+  }
+
+  // 数据库侧统计当前用户仍可领取的任务数量。
+  private async countAvailableTaskDefinitions(
+    queryDto: QueryAvailableTaskPageDto,
     userId: number,
     now: Date,
   ) {
-    if (tasks.length === 0) {
-      return tasks
-    }
+    const cycleKeys = this.buildCurrentTaskCycleKeys(now)
+    const sceneFilter =
+      queryDto.sceneType !== undefined
+        ? sql`AND d.scene_type = ${queryDto.sceneType}`
+        : sql.empty()
+    const result = await this.db.execute(sql`
+      WITH claimable_candidates AS (
+        SELECT
+          d.id,
+          CASE d.repeat_type
+            WHEN ${TaskRepeatCycleEnum.DAILY} THEN ${cycleKeys.daily}
+            WHEN ${TaskRepeatCycleEnum.WEEKLY} THEN ${cycleKeys.weekly}
+            WHEN ${TaskRepeatCycleEnum.MONTHLY} THEN ${cycleKeys.monthly}
+            ELSE 'once'
+          END AS cycle_key
+        FROM task_definition d
+        WHERE d.deleted_at IS NULL
+          AND d.status = ${TaskDefinitionStatusEnum.ACTIVE}
+          AND d.claim_mode = ${TaskClaimModeEnum.MANUAL}
+          AND (d.start_at IS NULL OR d.start_at <= ${now})
+          AND (d.end_at IS NULL OR d.end_at >= ${now})
+          ${sceneFilter}
+      )
+      SELECT count(*)::int AS count
+      FROM claimable_candidates c
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM task_instance i
+        WHERE i.deleted_at IS NULL
+          AND i.user_id = ${userId}
+          AND i.task_id = c.id
+          AND i.cycle_key = c.cycle_key
+      )
+    `)
 
-    const cycleKeyByTaskId = new Map<number, string>()
-    for (const task of tasks) {
-      cycleKeyByTaskId.set(task.id, this.buildTaskCycleKey(task, now))
+    return Number(extractRows<{ count: number }>(result)[0]?.count ?? 0)
+  }
+
+  // 按 SQL 查询结果顺序读取任务头实体。
+  private async getTaskDefinitionsByOrderedIds(ids: number[]) {
+    if (ids.length === 0) {
+      return []
     }
 
     const rows = await this.db
+      .select()
+      .from(this.taskDefinitionTable)
+      .where(inArray(this.taskDefinitionTable.id, ids))
+    const rowMap = new Map(rows.map((row) => [row.id, row]))
+
+    return ids
+      .map((id) => rowMap.get(id))
+      .filter((row): row is TaskDefinitionSelect => Boolean(row))
+  }
+
+  // 构建与 buildTaskCycleKey 同源的当前周期键。
+  private buildCurrentTaskCycleKeys(now: Date) {
+    const dateParts = this.getTaskCycleDateParts(now)
+
+    return {
+      daily: `${dateParts.year}-${dateParts.month}-${dateParts.date}`,
+      weekly: this.buildWeeklyCycleKey(
+        dateParts.year,
+        dateParts.month,
+        dateParts.date,
+      ),
+      monthly: `${dateParts.year}-${dateParts.month}`,
+    }
+  }
+
+  // 汇总用户任务摘要聚合行。
+  private sumTaskInstanceSummaryCount<T extends { count: number }>(
+    rows: T[],
+    predicate: (row: T) => boolean,
+  ) {
+    return rows
+      .filter(predicate)
+      .reduce((sum, row) => sum + Number(row.count ?? 0), 0)
+  }
+
+  // 读取任务奖励重试后的稳定返回视图。
+  private async getTaskRewardRetryResult(
+    instanceId: number,
+  ): Promise<TaskRewardRetryResultDto> {
+    const [row] = await this.db
       .select({
-        taskId: this.taskInstanceTable.taskId,
-        cycleKey: this.taskInstanceTable.cycleKey,
+        instanceId: this.taskInstanceTable.id,
+        rewardSettlementId: this.taskInstanceTable.rewardSettlementId,
+        settlementStatus: this.growthRewardSettlementTable.settlementStatus,
       })
       .from(this.taskInstanceTable)
-      .where(
-        and(
-          eq(this.taskInstanceTable.userId, userId),
-          isNull(this.taskInstanceTable.deletedAt),
-          inArray(
-            this.taskInstanceTable.taskId,
-            tasks.map((task) => task.id),
-          ),
+      .leftJoin(
+        this.growthRewardSettlementTable,
+        eq(
+          this.taskInstanceTable.rewardSettlementId,
+          this.growthRewardSettlementTable.id,
         ),
       )
+      .where(eq(this.taskInstanceTable.id, instanceId))
 
-    const taken = new Set(rows.map((item) => `${item.taskId}:${item.cycleKey}`))
+    if (!row) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务实例不存在',
+      )
+    }
 
-    return tasks.filter((task) => {
-      const cycleKey = cycleKeyByTaskId.get(task.id)
-      return !taken.has(`${task.id}:${cycleKey}`)
-    })
+    const succeeded =
+      row.settlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
+
+    return {
+      instanceId: row.instanceId,
+      rewardSettlementId: row.rewardSettlementId ?? null,
+      settlementStatus: row.settlementStatus ?? null,
+      succeeded,
+      message: succeeded
+        ? '任务奖励已补偿成功'
+        : '任务奖励补偿重试已执行，当前仍未成功',
+    }
+  }
+
+  // 将左连接得到的奖励结算事实收敛为稳定输出 DTO。
+  private toTaskRewardSettlementSummary(
+    settlement: typeof this.growthRewardSettlementTable.$inferSelect | null,
+  ): TaskRewardSettlementSummaryDto | null {
+    if (!settlement?.id) {
+      return null
+    }
+
+    return {
+      id: settlement.id,
+      settlementStatus: settlement.settlementStatus,
+      settlementResultType: settlement.settlementResultType ?? null,
+      retryCount: settlement.retryCount,
+      lastRetryAt: settlement.lastRetryAt ?? null,
+      settledAt: settlement.settledAt ?? null,
+      lastError: settlement.lastError ?? null,
+      ledgerRecordIds: settlement.ledgerRecordIds,
+    }
+  }
+
+  // 批量返回最多保留前 20 条失败摘要。
+  private pushTaskRewardRetryFailure(
+    failures: TaskRewardRetryFailureDto[],
+    failure: TaskRewardRetryFailureDto,
+  ) {
+    if (failures.length < 20) {
+      failures.push(failure)
+    }
+  }
+
+  // 批量扫描中不可重试的业务拒绝计入 skipped，而不是系统失败。
+  private isTaskRewardRetrySkippedError(error: unknown) {
+    return (
+      error instanceof BusinessException &&
+      error.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
+    )
   }
 
   // 查询一组实例的步骤进度摘要。
@@ -1863,17 +2115,38 @@ export class TaskExecutionService extends TaskServiceSupport {
       return result
     }
 
-    const rows = await this.db
-      .select()
-      .from(this.taskEventLogTable)
-      .where(inArray(this.taskEventLogTable.instanceId, uniqueInstanceIds))
-      .orderBy(
-        desc(this.taskEventLogTable.occurredAt),
-        desc(this.taskEventLogTable.createdAt),
-      )
+    const instanceIdList = sql.join(
+      uniqueInstanceIds.map((id) => sql`${id}`),
+      sql`, `,
+    )
+    const rows = extractRows<
+      TaskLatestEventSummaryRecord & { instanceId: number }
+    >(
+      await this.db.execute(sql`
+        SELECT
+          instance_id AS "instanceId",
+          event_biz_key AS "eventBizKey",
+          occurred_at AS "occurredAt",
+          accepted,
+          reject_reason AS "rejectReason",
+          target_type AS "targetType",
+          target_id AS "targetId"
+        FROM (
+          SELECT
+            l.*,
+            row_number() OVER (
+              PARTITION BY l.instance_id
+              ORDER BY l.occurred_at DESC NULLS LAST, l.created_at DESC
+            ) AS rn
+          FROM task_event_log l
+          WHERE l.instance_id IN (${instanceIdList})
+        ) latest
+        WHERE latest.rn = 1
+      `),
+    )
 
     for (const row of rows) {
-      if (!row.instanceId || result.has(row.instanceId)) {
+      if (!row.instanceId) {
         continue
       }
       result.set(row.instanceId, {
@@ -1900,6 +2173,12 @@ export class TaskExecutionService extends TaskServiceSupport {
 
     const uniqueTaskIds = [...new Set(instances.map((item) => item.taskId))]
     const uniqueUserIds = [...new Set(instances.map((item) => item.userId))]
+    const uniqueScopeKeys = [
+      ...new Set([
+        'lifetime',
+        ...instances.map((item) => item.cycleKey).filter(Boolean),
+      ]),
+    ]
     const stepRows = await this.db
       .select({
         id: this.taskStepTable.id,
@@ -1923,6 +2202,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         and(
           inArray(this.taskStepUniqueFactTable.taskId, uniqueTaskIds),
           inArray(this.taskStepUniqueFactTable.userId, uniqueUserIds),
+          inArray(this.taskStepUniqueFactTable.scopeKey, uniqueScopeKeys),
         ),
       )
       .orderBy(desc(this.taskStepUniqueFactTable.firstOccurredAt))
@@ -1940,6 +2220,19 @@ export class TaskExecutionService extends TaskServiceSupport {
       stepMap.set(step.taskId, current)
     }
 
+    const factMap = new Map<string, typeof factRows>()
+    for (const fact of factRows) {
+      const key = this.buildTaskUniqueFactSummaryKey(
+        fact.taskId,
+        fact.stepId,
+        fact.userId,
+        fact.scopeKey,
+      )
+      const current = factMap.get(key) ?? []
+      current.push(fact)
+      factMap.set(key, current)
+    }
+
     for (const instance of instances) {
       const summaries: TaskUniqueFactSummaryRecord[] = []
       for (const step of stepMap.get(instance.taskId) ?? []) {
@@ -1947,13 +2240,15 @@ export class TaskExecutionService extends TaskServiceSupport {
           step.dedupeScope === TaskStepDedupeScopeEnum.LIFETIME
             ? 'lifetime'
             : instance.cycleKey
-        const matchedFacts = factRows.filter(
-          (row) =>
-            row.taskId === instance.taskId &&
-            row.stepId === step.id &&
-            row.userId === instance.userId &&
-            row.scopeKey === scopeKey,
-        )
+        const matchedFacts =
+          factMap.get(
+            this.buildTaskUniqueFactSummaryKey(
+              instance.taskId,
+              step.id,
+              instance.userId,
+              scopeKey,
+            ),
+          ) ?? []
 
         if (matchedFacts.length === 0) {
           continue
@@ -1971,6 +2266,16 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     return result
+  }
+
+  // 对账唯一事实摘要的稳定聚合 key。
+  private buildTaskUniqueFactSummaryKey(
+    taskId: number,
+    stepId: number,
+    userId: number,
+    scopeKey: string,
+  ) {
+    return `${taskId}:${stepId}:${userId}:${scopeKey}`
   }
 
   // 判断任务头是否配置了真实奖励。
@@ -2086,6 +2391,10 @@ export class TaskExecutionService extends TaskServiceSupport {
       rewardItems: params.rewardItems,
       occurredAt: params.occurredAt,
     })
+    const executionClaim = await this.claimTaskRewardSettlementExecution(
+      settlement.id,
+      Boolean(params.isRetry),
+    )
 
     const rewardResult =
       await this.userGrowthRewardService.tryRewardTaskComplete({
@@ -2113,6 +2422,7 @@ export class TaskExecutionService extends TaskServiceSupport {
       const updateResult = await this.updateRewardSettlementResultInTx(
         tx,
         settlement.id,
+        executionClaim.token,
         rewardResult,
       )
 
@@ -2130,10 +2440,62 @@ export class TaskExecutionService extends TaskServiceSupport {
     })
   }
 
-  // 只允许非成功结算事实被本次结果改写，避免补偿重试重复发布奖励到账提醒。
+  // 奖励副作用执行前先取得短租约，避免并发重试同时进入奖励发放。
+  private async claimTaskRewardSettlementExecution(
+    settlementId: number,
+    isRetry: boolean,
+  ) {
+    const claimToken = randomUUID()
+    const claimStartedAt = new Date()
+    const expiredBefore = new Date(
+      claimStartedAt.getTime() - TASK_REWARD_SETTLEMENT_CLAIM_LEASE_MS,
+    )
+    const [claimed] = await this.db
+      .update(this.growthRewardSettlementTable)
+      .set({
+        settlementStatus: GrowthRewardSettlementStatusEnum.PENDING,
+        processingToken: claimToken,
+        processingStartedAt: claimStartedAt,
+        ...(isRetry
+          ? {
+              retryCount: sql`${this.growthRewardSettlementTable.retryCount} + 1`,
+              lastRetryAt: claimStartedAt,
+            }
+          : {}),
+      })
+      .where(
+        and(
+          eq(this.growthRewardSettlementTable.id, settlementId),
+          sql`${this.growthRewardSettlementTable.settlementStatus} not in (${GrowthRewardSettlementStatusEnum.SUCCESS}, ${GrowthRewardSettlementStatusEnum.TERMINAL})`,
+          or(
+            isNull(this.growthRewardSettlementTable.processingToken),
+            lt(
+              this.growthRewardSettlementTable.processingStartedAt,
+              expiredBefore,
+            ),
+          ),
+        ),
+      )
+      .returning({
+        id: this.growthRewardSettlementTable.id,
+        token: this.growthRewardSettlementTable.processingToken,
+      })
+
+    if (!claimed || claimed.token !== claimToken) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务奖励结算事实已成功、终态或正在执行，不能重复执行',
+      )
+    }
+
+    return { token: claimToken }
+  }
+
+  // 只允许非成功且非终态结算事实被本次结果改写，避免补偿重试重复发布奖励到账提醒。
   private async updateRewardSettlementResultInTx(
     runner: Db,
     settlementId: number,
+    claimToken: string,
     rewardResult: TaskRewardSettlementResult,
   ): Promise<TaskRewardSettlementUpdateResult> {
     const [updated] = await runner
@@ -2148,11 +2510,14 @@ export class TaskExecutionService extends TaskServiceSupport {
         lastError: rewardResult.success
           ? null
           : (rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试'),
+        processingToken: null,
+        processingStartedAt: null,
       })
       .where(
         and(
           eq(this.growthRewardSettlementTable.id, settlementId),
-          sql`${this.growthRewardSettlementTable.settlementStatus} <> ${GrowthRewardSettlementStatusEnum.SUCCESS}`,
+          eq(this.growthRewardSettlementTable.processingToken, claimToken),
+          sql`${this.growthRewardSettlementTable.settlementStatus} not in (${GrowthRewardSettlementStatusEnum.SUCCESS}, ${GrowthRewardSettlementStatusEnum.TERMINAL})`,
         ),
       )
       .returning({ id: this.growthRewardSettlementTable.id })

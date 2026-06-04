@@ -58,6 +58,10 @@ export const growthRewardSettlement = snakeCase.table(
     retryCount: integer().default(0).notNull(),
     /** 最近一次重试时间。 */
     lastRetryAt: timestamp({ withTimezone: true, precision: 6 }),
+    /** 当前补偿执行租约 token，用于阻止并发重复执行。 */
+    processingToken: varchar({ length: 64 }),
+    /** 当前补偿执行租约开始时间。 */
+    processingStartedAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 最近一次补偿状态落定时间。 */
     settledAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 最近一次失败原因。 */
@@ -138,6 +142,14 @@ export const growthRewardSettlement = snakeCase.table(
     check(
       'growth_reward_settlement_retry_count_non_negative_chk',
       sql`${table.retryCount} >= 0`,
+    ),
+    check(
+      'growth_reward_settlement_processing_token_not_blank_chk',
+      sql`${table.processingToken} is null or btrim(${table.processingToken}) <> ''`,
+    ),
+    check(
+      'growth_reward_settlement_processing_lease_pair_chk',
+      sql`(${table.processingToken} is null and ${table.processingStartedAt} is null) or (${table.processingToken} is not null and ${table.processingStartedAt} is not null)`,
     ),
   ],
 )

@@ -11,7 +11,7 @@ import type {
 } from './types/growth-reward-settlement.type'
 import { CheckInRepairTargetTypeEnum } from '@libs/growth/check-in/check-in.constant'
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
-import { TaskService } from '@libs/growth/task/task.service'
+import { TaskRewardRetryService } from '@libs/growth/task/task-reward-retry.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
@@ -43,7 +43,7 @@ export class GrowthRewardSettlementRetryService {
   constructor(
     private readonly growthRewardSettlementStore: GrowthRewardSettlementService,
     private readonly growthEventDispatchService: GrowthEventDispatchService,
-    private readonly taskService: TaskService,
+    private readonly taskRewardRetryService: TaskRewardRetryService,
     private readonly checkInService: CheckInService,
   ) {}
 
@@ -79,7 +79,9 @@ export class GrowthRewardSettlementRetryService {
         record.settlementType === GrowthRewardSettlementTypeEnum.TASK_REWARD
       ) {
         const taskPayload = this.parseStoredTaskPayload(record.requestPayload)
-        await this.taskService.retryTaskInstanceReward(taskPayload.instanceId)
+        await this.taskRewardRetryService.retryTaskInstanceReward(
+          taskPayload.instanceId,
+        )
         const latest = await this.growthRewardSettlementStore.getSettlementById(
           record.id,
         )

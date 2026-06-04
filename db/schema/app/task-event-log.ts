@@ -74,6 +74,10 @@ export const taskEventLog = snakeCase.table(
     ),
     /** 实例索引。 */
     index('task_event_log_instance_id_idx').on(table.instanceId),
+    /** 对账页按实例取最近事件索引。 */
+    index('task_event_log_instance_latest_idx')
+      .on(table.instanceId, table.occurredAt.desc(), table.createdAt.desc())
+      .where(sql`${table.instanceId} is not null`),
     /** 实例步骤索引。 */
     index('task_event_log_instance_step_id_idx').on(table.instanceStepId),
     /** 用户与创建时间索引。 */

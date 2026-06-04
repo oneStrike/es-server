@@ -68,6 +68,14 @@ export const taskStepUniqueFact = snakeCase.table(
     ),
     /** 任务索引。 */
     index('task_step_unique_fact_task_id_idx').on(table.taskId),
+    /** 对账页唯一事实摘要索引。 */
+    index('task_step_unique_fact_reconcile_summary_idx').on(
+      table.taskId,
+      table.userId,
+      table.scopeKey,
+      table.stepId,
+      table.firstOccurredAt.desc(),
+    ),
     /** 事件业务键索引。 */
     index('task_step_unique_fact_first_event_biz_key_idx').on(
       table.firstEventBizKey,

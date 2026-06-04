@@ -71,6 +71,14 @@ export const taskDefinition = snakeCase.table(
     index('task_definition_scene_type_idx').on(table.sceneType),
     /** 排序值索引。 */
     index('task_definition_sort_order_idx').on(table.sortOrder),
+    /** 管理端创建时间倒序索引。 */
+    index('task_definition_created_at_idx').on(table.createdAt.desc()),
+    /** App 可领取任务查询索引。 */
+    index('task_definition_active_manual_lookup_idx')
+      .on(table.sceneType, table.sortOrder, table.id)
+      .where(
+        sql`${table.deletedAt} is null and ${table.status} = 1 and ${table.claimMode} = 2`,
+      ),
     /** 生效开始时间索引。 */
     index('task_definition_start_at_idx').on(table.startAt),
     /** 生效结束时间索引。 */

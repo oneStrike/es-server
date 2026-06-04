@@ -20,10 +20,12 @@ import type {
 } from './types/task.type'
 import { buildILikeCondition } from '@db/core'
 import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
+import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
+import { and, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import {
   TaskClaimModeEnum,
   TaskCompletionPolicyEnum,
@@ -98,6 +100,16 @@ export abstract class TaskServiceSupport {
         buildILikeCondition(this.taskDefinitionTable.title, params.title)!,
       )
     }
+    const createdRange = buildDateOnlyRangeInAppTimeZone(
+      params.startDate,
+      params.endDate,
+    )
+    if (createdRange?.gte) {
+      conditions.push(gte(this.taskDefinitionTable.createdAt, createdRange.gte))
+    }
+    if (createdRange?.lt) {
+      conditions.push(lt(this.taskDefinitionTable.createdAt, createdRange.lt))
+    }
 
     return and(...conditions)
   }
@@ -125,13 +137,13 @@ export abstract class TaskServiceSupport {
         updatedAt: row.updatedAt,
         stepKey: row.stepKey,
         title: row.title,
-        description: row.description ?? undefined,
+        description: row.description ?? null,
         stepNo: row.stepNo,
         triggerMode: row.triggerMode,
         targetValue: row.targetValue,
-        templateKey: row.templateKey ?? undefined,
+        templateKey: row.templateKey ?? null,
         filters: this.normalizeTaskFilterValues(row.filterPayload),
-        dedupeScope: row.dedupeScope ?? undefined,
+        dedupeScope: row.dedupeScope ?? null,
       })
       result.set(row.taskId, current)
     }
@@ -184,6 +196,7 @@ export abstract class TaskServiceSupport {
             eq(this.taskInstanceTable.rewardApplicable, 1),
             or(
               isNull(this.taskInstanceTable.rewardSettlementId),
+              isNull(this.growthRewardSettlementTable.id),
               eq(
                 this.growthRewardSettlementTable.settlementStatus,
                 GrowthRewardSettlementStatusEnum.PENDING,
@@ -253,8 +266,8 @@ export abstract class TaskServiceSupport {
       id: taskRecord.id,
       code: taskRecord.code,
       title: taskRecord.title,
-      description: taskRecord.description ?? undefined,
-      cover: taskRecord.cover ?? undefined,
+      description: taskRecord.description ?? null,
+      cover: taskRecord.cover ?? null,
       sceneType: taskRecord.sceneType,
       status: taskRecord.status,
       sortOrder: taskRecord.sortOrder,
@@ -486,6 +499,52 @@ export abstract class TaskServiceSupport {
     this.ensureTaskDefinitionWindow(input.startAt, input.endAt)
     this.ensureTaskCompletionPolicy(input.completionPolicy)
     this.ensureTaskRepeatType(input.repeatType)
+    this.ensureTaskRewardItemsContract(input.rewardItems)
+  }
+
+  // 任务奖励当前仅支持积分和经验，避免运营配置无法落账的通用资产。
+  protected ensureTaskRewardItemsContract(rewardItems?: unknown) {
+    if (rewardItems === undefined || rewardItems === null) {
+      return
+    }
+    if (!Array.isArray(rewardItems)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'rewardItems 必须是奖励项数组',
+      )
+    }
+
+    for (const [index, item] of rewardItems.entries()) {
+      const record =
+        item && typeof item === 'object' && !Array.isArray(item)
+          ? (item as Record<string, unknown>)
+          : null
+      const assetType = Number(record?.assetType)
+      const amount = Number(record?.amount)
+      const assetKey = String(record?.assetKey ?? '')
+
+      if (
+        assetType !== GrowthRewardRuleAssetTypeEnum.POINTS &&
+        assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
+      ) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `任务奖励第 ${index + 1} 项仅支持积分或经验`,
+        )
+      }
+      if (assetKey.trim() !== '') {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `任务奖励第 ${index + 1} 项积分/经验 assetKey 必须为空`,
+        )
+      }
+      if (!Number.isInteger(amount) || amount <= 0) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `任务奖励第 ${index + 1} 项 amount 必须是大于 0 的整数`,
+        )
+      }
+    }
   }
 
   // 统一映射用户可见状态。
@@ -519,8 +578,8 @@ export abstract class TaskServiceSupport {
       id: taskRecord.id,
       code: taskRecord.code,
       title: taskRecord.title,
-      description: taskRecord.description ?? undefined,
-      cover: taskRecord.cover ?? undefined,
+      description: taskRecord.description ?? null,
+      cover: taskRecord.cover ?? null,
       sceneType: taskRecord.sceneType,
       sortOrder: taskRecord.sortOrder,
       claimMode: taskRecord.claimMode,

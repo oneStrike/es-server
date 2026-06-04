@@ -6,6 +6,7 @@ import { TaskDefinitionService } from './task-definition.service'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import { TaskExecutionService } from './task-execution.service'
 import { TaskNotificationService } from './task-notification.service'
+import { TaskRewardRetryService } from './task-reward-retry.service'
 import { TaskRuntimeService } from './task-runtime.service'
 import { TaskService } from './task.service'
 
@@ -20,9 +21,15 @@ import { TaskService } from './task.service'
     TaskEventTemplateRegistry,
     TaskExecutionService,
     TaskNotificationService,
+    TaskRewardRetryService,
     TaskRuntimeService,
     TaskService,
   ],
-  exports: [TaskEventTemplateRegistry, TaskService, TaskRuntimeService],
+  exports: [
+    TaskEventTemplateRegistry,
+    TaskRewardRetryService,
+    TaskRuntimeService,
+    TaskService,
+  ],
 })
 export class TaskModule {}

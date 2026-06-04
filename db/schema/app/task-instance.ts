@@ -65,8 +65,24 @@ export const taskInstance = snakeCase.table(
     ),
     /** 用户与状态索引。 */
     index('task_instance_user_id_status_idx').on(table.userId, table.status),
+    /** 用户当前周期领取排除索引。 */
+    index('task_instance_user_task_cycle_live_idx')
+      .on(table.userId, table.taskId, table.cycleKey)
+      .where(sql`${table.deletedAt} is null`),
     /** 任务索引。 */
     index('task_instance_task_id_idx').on(table.taskId),
+    /** 管理端实例创建时间倒序索引。 */
+    index('task_instance_live_created_at_idx')
+      .on(table.createdAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /** 管理端实例常用筛选索引。 */
+    index('task_instance_live_user_status_created_idx')
+      .on(table.userId, table.status, table.createdAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /** 任务奖励补偿扫描索引。 */
+    index('task_instance_reward_retry_scan_idx')
+      .on(table.status, table.rewardApplicable, table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
     /** 完成时间索引。 */
     index('task_instance_completed_at_idx').on(table.completedAt),
     /** 过期时间索引。 */

@@ -16,6 +16,7 @@ import {
 import { TaskDefinitionService } from './task-definition.service'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import { TaskExecutionService } from './task-execution.service'
+import { TaskRewardRetryService } from './task-reward-retry.service'
 import { TaskRuntimeService } from './task-runtime.service'
 
 /**
@@ -31,6 +32,7 @@ export class TaskService {
     private readonly taskDefinitionService: TaskDefinitionService,
     private readonly taskEventTemplateRegistry: TaskEventTemplateRegistry,
     private readonly taskExecutionService: TaskExecutionService,
+    private readonly taskRewardRetryService: TaskRewardRetryService,
     private readonly taskRuntimeService: TaskRuntimeService,
   ) {}
 
@@ -98,12 +100,12 @@ export class TaskService {
 
   // 按实例维度重放任务奖励结算。
   async retryTaskInstanceReward(instanceId: number) {
-    return this.taskExecutionService.retryTaskInstanceReward(instanceId)
+    return this.taskRewardRetryService.retryTaskInstanceReward(instanceId)
   }
 
   // 批量补偿已完成任务奖励。
   async retryCompletedTaskRewardsBatch(limit = 100) {
-    return this.taskExecutionService.retryCompletedTaskRewardsBatch(limit)
+    return this.taskRewardRetryService.retryCompletedTaskRewardsBatch(limit)
   }
 
   // 获取可领取任务列表。

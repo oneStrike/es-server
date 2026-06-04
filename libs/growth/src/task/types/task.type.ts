@@ -55,13 +55,13 @@ export type TaskStepWriteSourceInput = Partial<CreateTaskStepDto>
 /** 任务步骤写入合同的内部归一化视图。 */
 export interface TaskStepWriteInput {
   title: string
-  description?: string
+  description?: string | null
   triggerMode: TaskStepSelect['triggerMode']
-  eventCode?: TaskStepSelect['eventCode']
+  eventCode?: TaskStepSelect['eventCode'] | null
   targetValue: TaskStepSelect['targetValue']
-  templateKey?: TaskStepSelect['templateKey']
+  templateKey?: TaskStepSelect['templateKey'] | null
   filterPayload?: TaskStepSelect['filterPayload']
-  dedupeScope?: TaskStepSelect['dedupeScope']
+  dedupeScope?: TaskStepSelect['dedupeScope'] | null
 }
 
 /** 统一计算用户可见状态时使用的最小输入。 */
@@ -88,13 +88,13 @@ export interface TaskStepSummaryView {
   updatedAt: TaskStepSelect['updatedAt']
   stepKey: TaskStepSelect['stepKey']
   title: TaskStepSelect['title']
-  description?: string
+  description: string | null
   stepNo: TaskStepSelect['stepNo']
   triggerMode: TaskStepSelect['triggerMode']
   targetValue: TaskStepSelect['targetValue']
-  templateKey?: string
-  filters?: TaskStepFilterValueView[]
-  dedupeScope?: number
+  templateKey: string | null
+  filters: TaskStepFilterValueView[] | null
+  dedupeScope: number | null
 }
 
 /** 单条实例步骤进度视图。 */
@@ -213,6 +213,7 @@ export interface TaskRewardSettlementLinkInput extends TaskRewardSettlementBizKe
 export interface TaskRewardSettlementInput extends TaskRewardSettlementBizKeyInput {
   rewardItems: unknown
   occurredAt: Date
+  isRetry?: boolean
 }
 
 /** 创建或复用任务实例的结果。 */
@@ -300,6 +301,7 @@ export interface TaskReconciliationInstanceRecord {
 export interface TaskReminderNotificationTaskInfo {
   id: number
   code?: string | null
+  cover?: string | null
   title: string
   type: number | null | undefined
 }
