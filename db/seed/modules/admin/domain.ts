@@ -1,7 +1,7 @@
 import type { Db } from '../../db-client'
+import { adminUser, adminUserToken } from '@db/schema'
 import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
 import { eq } from 'drizzle-orm'
-import { adminUser, adminUserToken } from '../../../schema'
 import {
   createAvatar,
   createSeedPasswordHash,

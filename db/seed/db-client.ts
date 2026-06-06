@@ -1,9 +1,9 @@
 import type { Db, SeedQueryConfig } from './db-client.type'
 import process from 'node:process'
+import * as schema from '@db/schema'
 import * as operators from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import * as schema from '../schema'
 
 export type { Db } from './db-client.type'
 

@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 
 export const SEED_ADMIN_USERNAME =
@@ -5,11 +6,53 @@ export const SEED_ADMIN_USERNAME =
 
 export const SEED_ACCOUNT_PASSWORD = 'Seed@123456'
 
+const SEED_READER_ACCOUNT_BASE_PREFIXES = [
+  'tsuki',
+  'ache',
+  'dango',
+  'minto',
+  'nori',
+  'yuzu',
+  'sango',
+  'ruri',
+  'momo',
+  'aoba',
+  'kiri',
+  'hina',
+  'sora',
+  'natsu',
+  'shiro',
+  'kuro',
+] as const
+
+const SEED_READER_ACCOUNT_BASE_SUFFIXES = [
+  'note',
+  'talk',
+  'shelf',
+  'loop',
+  'cos',
+  'zine',
+] as const
+
+export const SEED_READER_LEGACY_ACCOUNT_PREFIX = 'seed_reader_'
+
+export const SEED_READER_ACCOUNT_SLUGS = [
+  'tsukimi-komin',
+  'ache-noknife',
+  'dango-archive',
+  ...SEED_READER_ACCOUNT_BASE_PREFIXES.flatMap((prefix) =>
+    SEED_READER_ACCOUNT_BASE_SUFFIXES.map((suffix) => `${prefix}-${suffix}`),
+  ).filter(
+    (account) =>
+      !['tsukimi-komin', 'ache-noknife', 'dango-archive'].includes(account),
+  ),
+].slice(0, 96)
+
 const SEED_PASSWORD_SALT = 'seed-password-salt-v1'
 const scryptService = new ScryptService()
 
 // 生成 seed 账号入库密码哈希，明文只作为本地联调登录口令保留在 seed 层。
-export function createSeedPasswordHash() {
+export async function createSeedPasswordHash() {
   return scryptService.encryptPassword(
     SEED_ACCOUNT_PASSWORD,
     SEED_PASSWORD_SALT,
@@ -18,10 +61,19 @@ export function createSeedPasswordHash() {
 
 export const SEED_PLATFORM_ALL = [1, 2, 3]
 
+export function createSeedReaderAccount(index: number) {
+  const account = SEED_READER_ACCOUNT_SLUGS[index - 1]
+  if (!account) {
+    throw new Error(`seed reader account index out of range: ${index}`)
+  }
+
+  return account
+}
+
 export const SEED_ACCOUNTS = {
-  readerA: 'seed_reader_001',
-  readerB: 'seed_reader_002',
-  readerC: 'seed_reader_003',
+  readerA: createSeedReaderAccount(1),
+  readerB: createSeedReaderAccount(2),
+  readerC: createSeedReaderAccount(3),
 } as const
 
 export const SEED_TIMELINE = {

@@ -1,6 +1,4 @@
 import type { Db } from '../../db-client'
-import { ApiTypeEnum } from '@libs/platform/constant'
-import { and, desc, eq } from 'drizzle-orm'
 import {
   adminUser,
   appUser,
@@ -9,7 +7,9 @@ import {
   requestLog,
   sensitiveWord,
   systemConfig,
-} from '../../../schema'
+} from '@db/schema'
+import { ApiTypeEnum } from '@libs/platform/constant'
+import { and, desc, eq } from 'drizzle-orm'
 import {
   DICTIONARY_CODES,
   DICTIONARY_ITEMS,

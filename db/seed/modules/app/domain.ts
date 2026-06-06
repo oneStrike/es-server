@@ -1,18 +1,5 @@
 import type { Db } from '../../db-client'
 import {
-  GrowthAssetTypeEnum,
-  GrowthAuditDecisionEnum,
-  GrowthLedgerActionEnum,
-  GrowthRuleUsageSlotTypeEnum,
-} from '@libs/growth/growth-ledger/growth-ledger.constant'
-import {
-  MembershipBenefitGrantPolicyEnum,
-  MembershipBenefitTypeEnum,
-  MembershipPlanTierEnum,
-} from '@libs/interaction/membership/membership.constant'
-import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
-import {
   adminUser,
   adProviderConfig,
   appAgreement,
@@ -62,12 +49,26 @@ import {
   userWorkReadingState,
   work,
   workChapter,
-} from '../../../schema'
+} from '@db/schema'
+import {
+  GrowthAssetTypeEnum,
+  GrowthAuditDecisionEnum,
+  GrowthLedgerActionEnum,
+  GrowthRuleUsageSlotTypeEnum,
+} from '@libs/growth/growth-ledger/growth-ledger.constant'
+import {
+  MembershipBenefitGrantPolicyEnum,
+  MembershipBenefitTypeEnum,
+  MembershipPlanTierEnum,
+} from '@libs/interaction/membership/membership.constant'
+import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
   addHours,
   addMinutes,
   createAvatar,
   createSeedPasswordHash,
+  createSeedReaderAccount,
   SEED_ACCOUNTS,
   SEED_ADMIN_USERNAME,
   SEED_PLATFORM_ALL,
@@ -280,8 +281,7 @@ const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
     clientAppKey: 'default-app',
     appId: 'seed-alipay-app',
     mchId: 'seed-alipay-mch',
-    notifyUrl:
-      'https://example.com/app/payment/notification/create',
+    notifyUrl: 'https://example.com/app/payment/notification/create',
     returnUrl: null,
     configVersion: 1,
     credentialVersionRef: 'seed://payment/alipay/v1',
@@ -300,8 +300,7 @@ const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
     clientAppKey: 'default-app',
     appId: 'seed-wechat-app',
     mchId: 'seed-wechat-mch',
-    notifyUrl:
-      'https://example.com/app/payment/notification/create',
+    notifyUrl: 'https://example.com/app/payment/notification/create',
     returnUrl: null,
     configVersion: 1,
     credentialVersionRef: 'seed://payment/wechat/v1',
@@ -326,8 +325,7 @@ const AD_PROVIDER_CONFIG_FIXTURES = [
     dailyLimit: 3,
     configVersion: 1,
     credentialVersionRef: 'seed://ad/pangle/v1',
-    callbackUrl:
-      'https://example.com/app/ad-reward/verification/create',
+    callbackUrl: 'https://example.com/app/ad-reward/verification/create',
     configMetadata: {
       keyFingerprint: 'seed-pangle',
       verifySecretEnvKey: 'ES_AD_PANGLE_SSV_SECRET',
@@ -388,59 +386,450 @@ const COUPON_DEFINITION_FIXTURES = [
   },
 ] as const
 
-const USER_FIXTURES = [
+const USER_PROFILE_FIXTURES = [
   {
-    account: SEED_ACCOUNTS.readerA,
-    levelName: '活跃读者',
-    nickname: '小光',
-    phoneNumber: '13800138001',
-    emailAddress: 'seed.reader.001@example.com',
-    avatarUrl: createAvatar('seed-reader-001'),
-    signature: '把追更变成日常习惯。',
-    bio: '偏爱长线叙事和世界观铺陈。',
-    genderType: 1,
-    birthDate: '1998-05-12',
-    points: 90,
-    experience: 280,
-    status: 1,
-    lastLoginAt: addHours(SEED_TIMELINE.seedAt, -2),
-    lastLoginIp: '127.0.0.11',
-  },
-  {
-    account: SEED_ACCOUNTS.readerB,
-    levelName: '活跃读者',
-    nickname: '阿澈',
-    phoneNumber: '13800138002',
-    emailAddress: 'seed.reader.002@example.com',
-    avatarUrl: createAvatar('seed-reader-002'),
-    signature: '喜欢推理，也喜欢讨论角色动机。',
-    bio: '小说和漫画都会看，偏爱悬疑题材。',
+    nickname: '月见里小眠',
+    signature: '补番很慢，但会认真写长评。',
+    bio: '偏爱日常系、群像剧和慢热角色弧光。',
     genderType: 2,
-    birthDate: '1996-11-04',
-    points: 180,
-    experience: 520,
-    status: 1,
-    lastLoginAt: addHours(SEED_TIMELINE.seedAt, -4),
-    lastLoginIp: '127.0.0.12',
+    birthDate: '1998-05-12',
+    geoProvince: '上海',
+    geoCity: '上海',
   },
   {
-    account: SEED_ACCOUNTS.readerC,
-    levelName: '资深读者',
-    nickname: '团子',
-    phoneNumber: '13800138003',
-    emailAddress: 'seed.reader.003@example.com',
-    avatarUrl: createAvatar('seed-reader-003'),
-    signature: '更喜欢帮大家整理资料和目录。',
-    bio: '社区维护型用户，擅长整理时间线和设定。',
+    nickname: '阿澈不吃刀',
+    signature: '嘴上说不吃刀，收藏夹全是虐文。',
+    bio: '会把伏笔、分镜和台词反复拉片的剧情党。',
+    genderType: 1,
+    birthDate: '1996-11-04',
+    geoProvince: '广东',
+    geoCity: '广州',
+  },
+  {
+    nickname: '团子整理中',
+    signature: '设定厨，时间线洁癖。',
+    bio: '喜欢整理角色关系、世界观词条和追更目录。',
     genderType: 0,
     birthDate: '1994-08-21',
-    points: 360,
-    experience: 860,
-    status: 1,
-    lastLoginAt: addHours(SEED_TIMELINE.seedAt, -1),
-    lastLoginIp: '127.0.0.13',
+    geoProvince: '浙江',
+    geoCity: '杭州',
+  },
+  {
+    nickname: '深夜补番中',
+    signature: '再看一集就睡。',
+    bio: '常驻新番区，喜欢记录每周观感和作画小细节。',
+    genderType: 4,
+    birthDate: '2000-02-17',
+    geoProvince: '北京',
+    geoCity: '北京',
+  },
+  {
+    nickname: '痛包还差徽章',
+    signature: '谷子可以少买，推不能不推。',
+    bio: '收吧唧、立牌和小卡，也会写避坑记录。',
+    genderType: 2,
+    birthDate: '1999-09-03',
+    geoProvince: '四川',
+    geoCity: '成都',
+  },
+  {
+    nickname: '分镜显微镜',
+    signature: '截图不是暂停，是考古。',
+    bio: '喜欢研究漫画分镜、镜头调度和演出节奏。',
+    genderType: 1,
+    birthDate: '1997-03-28',
+    geoProvince: '江苏',
+    geoCity: '南京',
+  },
+  {
+    nickname: '轻小说咖啡因',
+    signature: '电子书和咖啡都不能断。',
+    bio: '轻小说阅读量大，偏爱校园、奇幻和推理混合题材。',
+    genderType: 1,
+    birthDate: '1995-12-09',
+    geoProvince: '湖北',
+    geoCity: '武汉',
+  },
+  {
+    nickname: '耳机线打结了',
+    signature: 'OP 好听就先加一分。',
+    bio: '声优、配乐、OP/ED 爱好者，喜欢做歌单。',
+    genderType: 4,
+    birthDate: '2001-06-30',
+    geoProvince: '陕西',
+    geoCity: '西安',
+  },
+  {
+    nickname: '本命今天营业了吗',
+    signature: '角色厨的快乐很简单。',
+    bio: '角色分析和同人二创都会看，雷点是不尊重原作。',
+    genderType: 2,
+    birthDate: '2002-01-23',
+    geoProvince: '重庆',
+    geoCity: '重庆',
+  },
+  {
+    nickname: '胶片色巡礼',
+    signature: '圣地巡礼计划缓慢推进。',
+    bio: '喜欢记录动画里的取景、街景和生活感。',
+    genderType: 1,
+    birthDate: '1993-10-18',
+    geoProvince: '福建',
+    geoCity: '厦门',
+  },
+  {
+    nickname: '猫耳耳机',
+    signature: '今天也在等更新。',
+    bio: '新番、漫画、同人图都会刷，回复比较勤快。',
+    genderType: 2,
+    birthDate: '1998-07-19',
+    geoProvince: '山东',
+    geoCity: '青岛',
+  },
+  {
+    nickname: '夹页书签',
+    signature: '喜欢在评论区捡细节。',
+    bio: '偏文字向，常看轻小说、漫画单行本和设定集。',
+    genderType: 4,
+    birthDate: '1996-04-07',
+    geoProvince: '河南',
+    geoCity: '郑州',
+  },
+  {
+    nickname: '无料交换中',
+    signature: '画无料比睡觉积极。',
+    bio: '同人摊位新人，正在学习排版和印刷。',
+    genderType: 2,
+    birthDate: '2000-08-14',
+    geoProvince: '湖南',
+    geoCity: '长沙',
+  },
+  {
+    nickname: '假毛刚到',
+    signature: '妆造翻车也要出片。',
+    bio: 'cos 新手，常问假毛、道具和摄影棚问题。',
+    genderType: 2,
+    birthDate: '1999-01-06',
+    geoProvince: '辽宁',
+    geoCity: '大连',
+  },
+  {
+    nickname: '热血笨蛋主角厨',
+    signature: '成长线永远能骗到我。',
+    bio: '喜欢少年漫、训练回和伙伴羁绊。',
+    genderType: 1,
+    birthDate: '1997-08-25',
+    geoProvince: '天津',
+    geoCity: '天津',
+  },
+  {
+    nickname: '冷门番守门员',
+    signature: '冷门不是不好看，只是大家还没看到。',
+    bio: '会安利播放量不高但完成度稳定的作品。',
+    genderType: 4,
+    birthDate: '1995-05-11',
+    geoProvince: '云南',
+    geoCity: '昆明',
+  },
+  {
+    nickname: '立牌摆不下',
+    signature: '桌面空间告急。',
+    bio: '周边收藏党，擅长比较材质、价格和预售周期。',
+    genderType: 2,
+    birthDate: '1998-12-02',
+    geoProvince: '广西',
+    geoCity: '南宁',
+  },
+  {
+    nickname: '作画厨阿北',
+    signature: '一卡一卡看原画。',
+    bio: '关注作画监督、原画卡和打戏演出。',
+    genderType: 1,
+    birthDate: '1994-02-24',
+    geoProvince: '黑龙江',
+    geoCity: '哈尔滨',
+  },
+  {
+    nickname: '糖分不足',
+    signature: '求一点轻松日常回血。',
+    bio: '被刀怕了，最近只想看治愈、恋爱和搞笑。',
+    genderType: 2,
+    birthDate: '2001-09-16',
+    geoProvince: '江西',
+    geoCity: '南昌',
+  },
+  {
+    nickname: '设定集搬运工',
+    signature: '出处会补，欢迎纠错。',
+    bio: '习惯整理访谈、设定集和官方补充资料。',
+    genderType: 1,
+    birthDate: '1992-06-05',
+    geoProvince: '河北',
+    geoCity: '石家庄',
+  },
+  {
+    nickname: '漫展排队人',
+    signature: '排队两小时，快乐一整天。',
+    bio: '常去本地漫展，分享交通、寄存和摊位经验。',
+    genderType: 4,
+    birthDate: '1999-11-22',
+    geoProvince: '吉林',
+    geoCity: '长春',
+  },
+  {
+    nickname: '字幕组余温',
+    signature: '会盯着翻译措辞纠结半天。',
+    bio: '喜欢讨论台词翻译、梗文化和字幕表达。',
+    genderType: 1,
+    birthDate: '1993-04-29',
+    geoProvince: '安徽',
+    geoCity: '合肥',
+  },
+  {
+    nickname: 'OC脑洞堆放处',
+    signature: '原创角色也需要售后。',
+    bio: '原创设定爱好者，常写世界观和角色小传。',
+    genderType: 2,
+    birthDate: '2000-12-27',
+    geoProvince: '贵州',
+    geoCity: '贵阳',
+  },
+  {
+    nickname: '追更日历坏了',
+    signature: '每周都在忘记更新日。',
+    bio: '多开连载，常求追更管理方法。',
+    genderType: 4,
+    birthDate: '1998-03-15',
+    geoProvince: '山西',
+    geoCity: '太原',
+  },
+  {
+    nickname: '灰蓝滤镜',
+    signature: '喜欢安静的镜头和留白。',
+    bio: '偏爱文艺向动画、慢节奏漫画和氛围感作品。',
+    genderType: 2,
+    birthDate: '1996-10-01',
+    geoProvince: '内蒙古',
+    geoCity: '呼和浩特',
+  },
+  {
+    nickname: '打戏暂停党',
+    signature: '看打戏先看调度。',
+    bio: '动作戏爱好者，喜欢比较分镜、节奏和音效。',
+    genderType: 1,
+    birthDate: '1997-07-07',
+    geoProvince: '甘肃',
+    geoCity: '兰州',
+  },
+  {
+    nickname: '同人本攒钱中',
+    signature: '预算表永远不够用。',
+    bio: '同人本收藏和场贩经验分享者。',
+    genderType: 2,
+    birthDate: '2002-05-20',
+    geoProvince: '海南',
+    geoCity: '海口',
+  },
+  {
+    nickname: '长评写到天亮',
+    signature: '短评写着写着就两千字。',
+    bio: '喜欢写完整观后感，也喜欢认真回帖。',
+    genderType: 4,
+    birthDate: '1995-01-31',
+    geoProvince: '宁夏',
+    geoCity: '银川',
+  },
+  {
+    nickname: '人设稿收藏夹',
+    signature: '先看人设，再看剧情。',
+    bio: '人设、服装、配色和视觉风格爱好者。',
+    genderType: 2,
+    birthDate: '1999-06-13',
+    geoProvince: '新疆',
+    geoCity: '乌鲁木齐',
+  },
+  {
+    nickname: '漫画格子间',
+    signature: '一页分镜够我看半天。',
+    bio: '偏爱纸质漫画和单行本装帧。',
+    genderType: 1,
+    birthDate: '1994-09-09',
+    geoProvince: '青海',
+    geoCity: '西宁',
+  },
+  {
+    nickname: '番茄酱不吃刀',
+    signature: '看到便当先暂停。',
+    bio: '剧情党，但心理承受能力一般。',
+    genderType: 2,
+    birthDate: '2001-03-03',
+    geoProvince: '西藏',
+    geoCity: '拉萨',
+  },
+  {
+    nickname: 'ED循环整晚',
+    signature: '片尾曲经常比正片更上头。',
+    bio: '音乐和声优线索党，喜欢做角色歌整理。',
+    genderType: 4,
+    birthDate: '1997-12-12',
+    geoProvince: '广东',
+    geoCity: '深圳',
   },
 ] as const
+
+const SEED_USER_COUNT = 96
+
+const GENERATED_PROFILE_PREFIXES = [
+  '夜雨',
+  '青柠',
+  '蓝莓',
+  '薄荷',
+  '星野',
+  '雾岛',
+  '栗子',
+  '白桃',
+  '海盐',
+  '雪见',
+  '橘子',
+  '浅葱',
+] as const
+
+const GENERATED_PROFILE_CORES = [
+  '追番',
+  '补漫画',
+  '写长评',
+  '修假毛',
+  '收吧唧',
+  '排同人本',
+  '听角色歌',
+  '等更新',
+  '看分镜',
+  '做手书',
+  '逛场贩',
+  '整理设定',
+] as const
+
+const GENERATED_PROFILE_SUFFIXES = [
+  '中',
+  '记录',
+  '手账',
+  '备忘录',
+  '不熬夜',
+  '慢半拍',
+  '观察员',
+  '仓库',
+] as const
+
+const GENERATED_SIGNATURES = [
+  '追更会迟到，但不会缺席。',
+  '看到喜欢的分镜会反复暂停。',
+  '冷门作品也值得认真写两句。',
+  '本命上新时预算表自动失效。',
+  '同人稿修到凌晨也算回血。',
+  '先收藏，等周末慢慢补。',
+  '角色分析可以聊一整晚。',
+  '场照、返图、repo 都在慢慢整理。',
+] as const
+
+const GENERATED_BIOS = [
+  '偏爱新番追更、OP/ED 和每周观感记录。',
+  '漫画读者，喜欢讨论分镜、翻页点和单行本装帧。',
+  '轻小说和设定集爱好者，会认真比较翻译版本。',
+  '同人创作者，常写短篇、修排版和做无料。',
+  '谷子收藏党，关注预售、品相、收纳和痛包配色。',
+  'cos 和漫展新手，正在记录妆造、交通和摄影经验。',
+  '角色厨，喜欢从台词和细节里拆成长线。',
+  '日常潜水，偶尔会写很长的补番心得。',
+] as const
+
+const GENERATED_PROFILE_LOCATIONS = [
+  { geoProvince: '上海', geoCity: '上海' },
+  { geoProvince: '广东', geoCity: '广州' },
+  { geoProvince: '浙江', geoCity: '杭州' },
+  { geoProvince: '北京', geoCity: '北京' },
+  { geoProvince: '四川', geoCity: '成都' },
+  { geoProvince: '江苏', geoCity: '苏州' },
+  { geoProvince: '湖北', geoCity: '武汉' },
+  { geoProvince: '陕西', geoCity: '西安' },
+  { geoProvince: '重庆', geoCity: '重庆' },
+  { geoProvince: '福建', geoCity: '厦门' },
+  { geoProvince: '山东', geoCity: '济南' },
+  { geoProvince: '河南', geoCity: '郑州' },
+  { geoProvince: '湖南', geoCity: '长沙' },
+  { geoProvince: '辽宁', geoCity: '沈阳' },
+  { geoProvince: '天津', geoCity: '天津' },
+  { geoProvince: '云南', geoCity: '昆明' },
+] as const
+
+function pickGeneratedProfileItem<T>(items: readonly T[], index: number) {
+  return items[index % items.length]
+}
+
+function buildGeneratedUserProfile(index: number) {
+  const generatedIndex = index - USER_PROFILE_FIXTURES.length
+  const prefix = pickGeneratedProfileItem(GENERATED_PROFILE_PREFIXES, index)
+  const core = pickGeneratedProfileItem(
+    GENERATED_PROFILE_CORES,
+    Math.floor(index / GENERATED_PROFILE_PREFIXES.length),
+  )
+  const suffix = pickGeneratedProfileItem(
+    GENERATED_PROFILE_SUFFIXES,
+    Math.floor(index / 3),
+  )
+  const location = pickGeneratedProfileItem(
+    GENERATED_PROFILE_LOCATIONS,
+    generatedIndex,
+  )
+  const birthYear = 1993 + (index % 11)
+  const birthMonth = String((index % 12) + 1).padStart(2, '0')
+  const birthDay = String((index % 27) + 1).padStart(2, '0')
+
+  return {
+    nickname: `${prefix}${core}${suffix}`,
+    signature: pickGeneratedProfileItem(GENERATED_SIGNATURES, index),
+    bio: pickGeneratedProfileItem(GENERATED_BIOS, index),
+    genderType: [0, 1, 2, 4][index % 4],
+    birthDate: `${birthYear}-${birthMonth}-${birthDay}`,
+    ...location,
+  }
+}
+
+const USER_FIXTURES = Array.from({ length: SEED_USER_COUNT }, (_, index) => {
+  const profile =
+    USER_PROFILE_FIXTURES[index] ?? buildGeneratedUserProfile(index)
+  const account = createSeedReaderAccount(index + 1)
+  const levelName =
+    index < 18 ? '资深读者' : index < 70 ? '活跃读者' : '新手读者'
+  const lastLoginAt = addHours(SEED_TIMELINE.seedAt, -(index % 72) - 1)
+  const isTemporarilyMuted = index > 0 && index % 47 === 0
+
+  return {
+    account,
+    levelName,
+    nickname: profile.nickname,
+    phoneNumber: `139${String(10000001 + index).padStart(8, '0')}`,
+    emailAddress: `${account}@seed.local`,
+    avatarUrl: createAvatar(account),
+    profileBackgroundImageUrl: `https://api.dicebear.com/9.x/shapes/svg?seed=${account}-bg`,
+    signature: profile.signature,
+    bio: profile.bio,
+    genderType: profile.genderType,
+    birthDate: profile.birthDate,
+    points: 60 + ((index * 37) % 520),
+    experience: 90 + ((index * 83) % 1200),
+    status: isTemporarilyMuted ? 2 : 1,
+    banReason: isTemporarilyMuted ? 'seed: 短期冷静期' : null,
+    banUntil: isTemporarilyMuted ? addHours(SEED_TIMELINE.seedAt, 48) : null,
+    lastLoginAt,
+    lastLoginIp: `10.${20 + (index % 40)}.${30 + (index % 120)}.${10 + (index % 180)}`,
+    lastLoginGeoCountry: '中国',
+    lastLoginGeoProvince: profile.geoProvince,
+    lastLoginGeoCity: profile.geoCity,
+    lastLoginGeoIsp:
+      index % 3 === 0 ? '移动' : index % 3 === 1 ? '联通' : '电信',
+    createdAt: addHours(SEED_TIMELINE.releaseDay, index * 6),
+  }
+})
 
 const PAGE_FIXTURES = [
   {
@@ -926,8 +1315,7 @@ export async function seedAppCoreDomain(db: Db) {
         {
           planKey: 'super_vip_monthly',
           benefitCode: 'vip_monthly_coupon',
-          grantPolicy:
-            MembershipBenefitGrantPolicyEnum.AUTO_GRANT_ON_SUBSCRIBE,
+          grantPolicy: MembershipBenefitGrantPolicyEnum.AUTO_GRANT_ON_SUBSCRIBE,
           benefitValue: {
             couponDefinitionId: readingCoupon.id,
             grantCount: 1,
@@ -1038,16 +1426,22 @@ export async function seedAppCoreDomain(db: Db) {
       nickname: userFixture.nickname,
       password: seedPasswordHash,
       avatarUrl: userFixture.avatarUrl,
+      profileBackgroundImageUrl: userFixture.profileBackgroundImageUrl,
       signature: userFixture.signature,
       bio: userFixture.bio,
       isEnabled: true,
       genderType: userFixture.genderType,
       birthDate: userFixture.birthDate,
       status: userFixture.status,
-      banReason: null,
-      banUntil: null,
+      banReason: userFixture.banReason,
+      banUntil: userFixture.banUntil,
       lastLoginAt: userFixture.lastLoginAt,
       lastLoginIp: userFixture.lastLoginIp,
+      lastLoginGeoCountry: userFixture.lastLoginGeoCountry,
+      lastLoginGeoProvince: userFixture.lastLoginGeoProvince,
+      lastLoginGeoCity: userFixture.lastLoginGeoCity,
+      lastLoginGeoIsp: userFixture.lastLoginGeoIsp,
+      createdAt: userFixture.createdAt,
     }
 
     if (!existing) {
