@@ -17,7 +17,6 @@ import {
   userBrowseLog,
   userComment,
   userFavorite,
-  userLevelRule,
   userLike,
   userMention,
 } from '@db/schema'
@@ -54,7 +53,6 @@ import {
   SEED_TIMELINE,
 } from '../../shared'
 
-const BASIC_LEVEL_NAME = '新手读者'
 const FORUM_SEED_USER_AGENT = 'seed-script/forum-simulation'
 const FORUM_TOPIC_COMMENT_TARGET_TYPE = CommentTargetTypeEnum.FORUM_TOPIC
 const FORUM_TOPIC_LIKE_TARGET_TYPE = LikeTargetTypeEnum.FORUM_TOPIC
@@ -1098,10 +1096,6 @@ export async function seedForumReferenceDomain(db: Db) {
   }
   console.log('  ✓ 板块分组完成')
 
-  const basicLevel = await db.query.userLevelRule.findFirst({
-    where: eq(userLevelRule.name, BASIC_LEVEL_NAME),
-  })
-
   for (const sectionFixture of SECTION_FIXTURES) {
     const group = await db.query.forumSectionGroup.findFirst({
       where: and(
@@ -1119,7 +1113,7 @@ export async function seedForumReferenceDomain(db: Db) {
 
     const payload = {
       groupId: group?.id ?? null,
-      userLevelRuleId: basicLevel?.id ?? null,
+      userLevelRuleId: null,
       name: sectionFixture.name,
       description: sectionFixture.description,
       icon: sectionFixture.icon,
