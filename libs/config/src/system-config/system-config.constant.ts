@@ -36,6 +36,10 @@ export const CONFIG_SECURITY_META: Record<
   thirdPartyResourceParseConfig: {
     sensitivePaths: [],
   },
+  // 钱包虚拟币展示配置：无敏感字段
+  walletCurrencyDisplayConfig: {
+    sensitivePaths: [],
+  },
   // 上传配置：包含七牛和 Superbed 密钥等敏感字段
   uploadConfig: {
     sensitivePaths: ['qiniu.accessKey', 'qiniu.secretKey', 'superbed.token'],
@@ -167,6 +171,18 @@ export const DEFAULT_CONFIG = {
     hostCacheTtlSeconds: 60,
     /** 每个资源解析通道允许排队的最大请求数 */
     maxQueueSize: 1000,
+  },
+
+  // 钱包虚拟币展示配置
+  walletCurrencyDisplayConfig: {
+    /** 稳定资产键，仅用于展示关联；账务键仍由钱包域常量控制 */
+    assetKey: 'reading_coin',
+    /** 虚拟币展示名称 */
+    currencyName: '阅读币',
+    /** 虚拟币单位名称 */
+    currencyUnitName: '币',
+    /** 虚拟币图标 URL */
+    currencyIconUrl: '',
   },
 
   // 上传配置

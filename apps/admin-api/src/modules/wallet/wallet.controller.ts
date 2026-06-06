@@ -1,8 +1,10 @@
 import {
   BaseCurrencyPackageDto,
   CreateCurrencyPackageDto,
+  QueryAdminWalletLedgerDto,
   QueryCurrencyPackageDto,
   UpdateCurrencyPackageDto,
+  WalletLedgerRecordDto,
 } from '@libs/interaction/wallet/dto/wallet.dto'
 import { WalletService } from '@libs/interaction/wallet/wallet.service'
 import { ApiPageDoc } from '@libs/platform/decorators'
@@ -25,6 +27,16 @@ export class WalletController {
   })
   async getCurrencyPackagePage(@Query() query: QueryCurrencyPackageDto) {
     return this.walletService.getCurrencyPackagePage(query)
+  }
+
+  // 分页查询指定用户虚拟币流水。
+  @Get('ledger/page')
+  @ApiPageDoc({
+    summary: '分页查询虚拟币流水',
+    model: WalletLedgerRecordDto,
+  })
+  async getWalletLedgerPage(@Query() query: QueryAdminWalletLedgerDto) {
+    return this.walletService.getAdminWalletLedgerPage(query)
   }
 
   // 创建虚拟币充值包。

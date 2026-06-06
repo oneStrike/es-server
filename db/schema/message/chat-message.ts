@@ -100,6 +100,12 @@ export const chatMessage = snakeCase.table(
       table.createdAt.desc(),
     ),
     /**
+     * 会话可读消息游标索引：匹配 messageSeq initial/before/after 分页。
+     */
+    index('chat_message_conversation_live_seq_idx')
+      .on(table.conversationId, table.messageSeq)
+      .where(sql`${table.status} in (1, 2)`),
+    /**
      * 发送者审计索引
      */
     index('chat_message_sender_id_created_at_idx').on(

@@ -3,6 +3,7 @@ import { AgreementModule } from '@libs/app-content/agreement/agreement.module';
 import { AppAnnouncementModule } from '@libs/app-content/announcement/announcement.module';
 import { AppPageModule } from '@libs/app-content/page/page.module';
 import { AppUpdateModule } from '@libs/app-content/update/update.module';
+import { SystemConfigModule as LibSystemConfigModule } from '@libs/system-config/system-config.module'
 import { Module } from '@nestjs/common'
 import { SystemController } from './system.controller'
 import { UploadModule } from './upload/upload.module'
@@ -19,6 +20,7 @@ import { UploadModule } from './upload/upload.module'
     AppConfigModule,
     AppUpdateModule,
     AppPageModule,
+    LibSystemConfigModule,
     UploadModule,
   ],
   controllers: [SystemController],

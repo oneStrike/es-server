@@ -343,6 +343,27 @@ export const forumTopic = snakeCase.table(
         sql`${table.deletedAt} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false`,
       ),
     /**
+     * 公开综合 feed 索引：不带板块筛选时匹配全局置顶/最后评论/创建时间排序。
+     */
+    index('forum_topic_visible_global_default_feed_idx')
+      .on(
+        table.isPinned.desc(),
+        table.lastCommentAt.desc(),
+        table.createdAt.desc(),
+        table.id.desc(),
+      )
+      .where(
+        sql`${table.deletedAt} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false`,
+      ),
+    /**
+     * 公开主题精确 total 索引：为 sectionId IN (...) 的可见主题计数提供更窄的索引扫描面。
+     */
+    index('forum_topic_visible_section_count_idx')
+      .on(table.sectionId)
+      .where(
+        sql`${table.deletedAt} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false`,
+      ),
+    /**
      * 公开热门 feed 索引：匹配可见主题过滤与评论/点赞/浏览热度排序。
      */
     index('forum_topic_visible_hot_feed_idx')

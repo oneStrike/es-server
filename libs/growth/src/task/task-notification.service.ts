@@ -151,10 +151,7 @@ export class TaskNotificationService {
   ): assetType is TaskReminderRewardAssetType {
     return (
       assetType === GrowthRewardRuleAssetTypeEnum.POINTS ||
-      assetType === GrowthRewardRuleAssetTypeEnum.EXPERIENCE ||
-      assetType === GrowthRewardRuleAssetTypeEnum.ITEM ||
-      assetType === GrowthRewardRuleAssetTypeEnum.CURRENCY ||
-      assetType === GrowthRewardRuleAssetTypeEnum.LEVEL
+      assetType === GrowthRewardRuleAssetTypeEnum.EXPERIENCE
     )
   }
 

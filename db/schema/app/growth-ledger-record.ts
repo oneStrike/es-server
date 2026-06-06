@@ -115,6 +115,16 @@ export const growthLedgerRecord = snakeCase.table(
       table.createdAt,
     ),
     /**
+     * 钱包流水查询索引：匹配 user + currency asset + stable timeline order。
+     */
+    index('growth_ledger_record_wallet_user_asset_created_id_idx').on(
+      table.userId,
+      table.assetType,
+      table.assetKey,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    /**
      * 目标检索索引
      */
     index('growth_ledger_record_target_type_target_id_idx').on(

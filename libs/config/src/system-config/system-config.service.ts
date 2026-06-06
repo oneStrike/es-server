@@ -416,6 +416,7 @@ export class SystemConfigService implements OnModuleInit {
       operationConfig: config.operationConfig,
       securityConfig: config.securityConfig,
       thirdPartyResourceParseConfig: config.thirdPartyResourceParseConfig,
+      walletCurrencyDisplayConfig: config.walletCurrencyDisplayConfig,
       uploadConfig: config.uploadConfig,
       updatedById: userId,
     }

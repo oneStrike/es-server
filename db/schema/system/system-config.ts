@@ -45,6 +45,10 @@ export const systemConfig = snakeCase.table(
      */
     thirdPartyResourceParseConfig: jsonb(),
     /**
+     * 钱包虚拟币展示配置（JSON格式，包含展示名称、单位与图标）
+     */
+    walletCurrencyDisplayConfig: jsonb(),
+    /**
      * 维护模式配置（JSON格式，开关与提示文案）
      */
     maintenanceConfig: jsonb(),

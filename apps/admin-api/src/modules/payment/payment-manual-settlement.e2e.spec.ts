@@ -13,6 +13,14 @@ import { PaymentController } from './payment.controller'
 
 function createCurrencyPaidOrder(status: PaymentOrderStatusEnum) {
   return {
+    clientContext: {
+      targetSnapshot: {
+        bonusAmount: 20,
+        currencyAmount: 80,
+        packageKey: 'coin-80',
+        price: 100,
+      },
+    },
     id: 10,
     orderNo: 'PAY202605100002',
     orderType: PaymentOrderTypeEnum.CURRENCY_RECHARGE,
@@ -39,21 +47,6 @@ describe('Admin payment manual settlement e2e substitute', () => {
           findFirst: jest.fn(),
         },
       },
-      select: jest.fn(() => ({
-        from: jest.fn(() => ({
-          where: jest.fn(() => ({
-            limit: jest.fn(() =>
-              Promise.resolve([
-                {
-                  bonusAmount: 20,
-                  currencyAmount: 80,
-                  id: paidOrder.targetId,
-                },
-              ]),
-            ),
-          })),
-        })),
-      })),
       update: jest.fn(() => ({
         set: jest.fn(() => ({
           where: jest.fn(() => ({
@@ -73,9 +66,6 @@ describe('Admin payment manual settlement e2e substitute', () => {
         },
       },
       schema: {
-        currencyPackage: {
-          id: 'currency_package.id',
-        },
         paymentOrder: {
           id: 'payment_order.id',
           status: 'payment_order.status',

@@ -16,7 +16,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto, UserIdDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,
@@ -36,8 +36,6 @@ export {
   QueryUserBadgePublicDto as QueryMyBadgeDto,
   UserBadgePublicItemDto as UserBadgeItemDto,
 } from '@libs/growth/badge/dto/user-badge-management.dto'
-
-export class QueryUserCenterDto extends PartialType(UserIdDto) {}
 
 /**
  * app 端提及候选分页查询 DTO。
@@ -325,26 +323,26 @@ export class UserCenterGrowthDto extends UserGrowthSnapshotFieldsDto {
   @StringProperty({
     description: '当前等级名称',
     example: '新手',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  levelName?: string | null
+  levelName!: string | null
 
   @StringProperty({
     description: '当前等级图标 URL',
     example: 'https://cdn.example.com/level/rookie.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  levelIcon?: string | null
+  levelIcon!: string | null
 
   @StringProperty({
     description: '当前等级颜色',
     example: '#FF5733',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  levelColor?: string | null
+  levelColor!: string | null
 
   @NumberProperty({
     description: '徽章数量',

@@ -6,7 +6,6 @@ import {
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
   QueryMyPointRecordDto,
-  QueryUserCenterDto,
   QueryUserMentionPageDto,
   UpdateMyProfileDto,
   UserBadgeItemDto,
@@ -76,11 +75,8 @@ export class UserController {
     summary: '获取用户中心汇总信息',
     model: UserCenterDto,
   })
-  async getCenter(
-    @CurrentUser('sub') userId: number,
-    @Query() query: QueryUserCenterDto,
-  ) {
-    return this.userService.getUserCenter(query.userId || userId)
+  async getCenter(@CurrentUser('sub') userId: number) {
+    return this.userService.getUserCenter(userId)
   }
 
   /**

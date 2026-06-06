@@ -14,11 +14,10 @@ import {
   gt,
   isNull,
   lt,
-  ne,
   placeholder,
   sql,
 } from 'drizzle-orm'
-import { ChatMessageStatusEnum } from './chat.constant'
+import { CHAT_READABLE_MESSAGE_STATUSES } from './chat.constant'
 
 @Injectable()
 export class MessageChatReadQueryService {
@@ -94,10 +93,9 @@ export class MessageChatReadQueryService {
             this.drizzle.schema.chatMessage.conversationId,
             placeholder('conversationId'),
           ),
-          ne(
-            this.drizzle.schema.chatMessage.status,
-            ChatMessageStatusEnum.DELETED,
-          ),
+          sql`${this.drizzle.schema.chatMessage.status} in (${sql.raw(
+            CHAT_READABLE_MESSAGE_STATUSES.join(', '),
+          )})`,
         ),
       )
       .orderBy(desc(this.drizzle.schema.chatMessage.messageSeq))
@@ -116,10 +114,9 @@ export class MessageChatReadQueryService {
             this.drizzle.schema.chatMessage.conversationId,
             placeholder('conversationId'),
           ),
-          ne(
-            this.drizzle.schema.chatMessage.status,
-            ChatMessageStatusEnum.DELETED,
-          ),
+          sql`${this.drizzle.schema.chatMessage.status} in (${sql.raw(
+            CHAT_READABLE_MESSAGE_STATUSES.join(', '),
+          )})`,
           lt(this.drizzle.schema.chatMessage.messageSeq, placeholder('cursor')),
         ),
       )
@@ -139,10 +136,9 @@ export class MessageChatReadQueryService {
             this.drizzle.schema.chatMessage.conversationId,
             placeholder('conversationId'),
           ),
-          ne(
-            this.drizzle.schema.chatMessage.status,
-            ChatMessageStatusEnum.DELETED,
-          ),
+          sql`${this.drizzle.schema.chatMessage.status} in (${sql.raw(
+            CHAT_READABLE_MESSAGE_STATUSES.join(', '),
+          )})`,
           gt(
             this.drizzle.schema.chatMessage.messageSeq,
             placeholder('afterSeq'),

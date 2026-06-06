@@ -7,6 +7,10 @@ export type SystemConfig = typeof DEFAULT_CONFIG
 export type ThirdPartyResourceParseConfig =
   SystemConfig['thirdPartyResourceParseConfig']
 
+/** 钱包虚拟币展示配置类型，运行时读取侧始终返回完整安全值。 */
+export type WalletCurrencyDisplayConfig =
+  SystemConfig['walletCurrencyDisplayConfig']
+
 /**
  * 系统配置白名单模板。
  * - 与 DEFAULT_CONFIG 结构保持一致

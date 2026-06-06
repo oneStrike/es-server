@@ -262,8 +262,8 @@ export class UserService {
       this.userCoreService.getUserGrowthSnapshot(userId),
       this.userCoreService.getUserCounts(userId),
       this.userCoreService.getBadgeCount(userId),
-      this.getUserAssetsSummary(userId),
-      this.messageInboxService.getSummary(userId),
+      this.userAssetsService.getUserAssetsSummary(userId),
+      this.messageInboxService.getUnreadSummary(userId),
       this.taskService.getUserTaskSummary(userId),
     ])
 
@@ -287,9 +287,9 @@ export class UserService {
         points: growth.points,
         experience: growth.experience,
         levelId: user.levelId,
-        levelName: level?.name,
-        levelIcon: level?.icon,
-        levelColor: level?.color,
+        levelName: level?.name ?? null,
+        levelIcon: level?.icon ?? null,
+        levelColor: level?.color ?? null,
         badgeCount,
       },
       profile: {

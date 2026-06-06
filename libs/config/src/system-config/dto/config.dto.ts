@@ -336,6 +336,41 @@ export class ThirdPartyResourceParseConfigDto {
 }
 
 // ============================================================================
+// 钱包虚拟币展示配置
+// ============================================================================
+
+export class WalletCurrencyDisplayConfigDto {
+  @StringProperty({
+    description: '虚拟币稳定资产键',
+    example: 'reading_coin',
+    required: false,
+  })
+  assetKey?: string
+
+  @StringProperty({
+    description: '虚拟币展示名称',
+    example: '阅读币',
+    required: false,
+  })
+  currencyName?: string
+
+  @StringProperty({
+    description: '虚拟币单位名称',
+    example: '币',
+    required: false,
+  })
+  currencyUnitName?: string
+
+  @StringProperty({
+    description: '虚拟币图标 URL',
+    example: 'https://example.com/reading-coin.png',
+    required: false,
+    type: 'url',
+  })
+  currencyIconUrl?: string
+}
+
+// ============================================================================
 // 上传配置
 // ============================================================================
 
@@ -564,6 +599,20 @@ export class BaseSystemConfigDto extends BaseDto {
   thirdPartyResourceParseConfig?: ThirdPartyResourceParseConfigDto | null
 
   @NestedProperty({
+    description: '钱包虚拟币展示配置',
+    type: WalletCurrencyDisplayConfigDto,
+    example: {
+      assetKey: 'reading_coin',
+      currencyName: '阅读币',
+      currencyUnitName: '币',
+      currencyIconUrl: '',
+    },
+    required: false,
+    nullable: false,
+  })
+  walletCurrencyDisplayConfig?: WalletCurrencyDisplayConfigDto | null
+
+  @NestedProperty({
     description: '维护配置',
     type: MaintenanceConfigDto,
     example: {
@@ -637,6 +686,7 @@ export class UpdateSystemConfigDto extends IntersectionType(
       'operationConfig',
       'securityConfig',
       'thirdPartyResourceParseConfig',
+      'walletCurrencyDisplayConfig',
       'maintenanceConfig',
       'contentReviewPolicy',
       'uploadConfig',

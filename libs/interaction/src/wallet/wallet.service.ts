@@ -11,13 +11,15 @@ import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.se
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike } from 'drizzle-orm'
 import { PaymentOrderService } from '../payment/payment-order.service'
 import { PaymentOrderTypeEnum } from '../payment/payment.constant'
 import {
   CreateCurrencyPackageDto,
   CreateCurrencyRechargeOrderDto,
+  QueryAdminWalletLedgerDto,
   QueryCurrencyPackageDto,
+  QueryWalletLedgerDto,
   UpdateCurrencyPackageDto,
 } from '../wallet/dto/wallet.dto'
 import { READING_COIN_ASSET_KEY } from '../wallet/wallet.constant'
@@ -81,6 +83,10 @@ export class WalletService {
   // 分页查询后台虚拟币充值包配置。
   async getCurrencyPackagePage(dto: QueryCurrencyPackageDto) {
     const conditions: SQL[] = []
+    const name = dto.name?.trim()
+    if (name) {
+      conditions.push(ilike(this.currencyPackage.name, `%${name}%`))
+    }
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.currencyPackage.isEnabled, dto.isEnabled))
     }
@@ -142,7 +148,13 @@ export class WalletService {
   // 获取 App 可购买的虚拟币充值包列表。
   async getCurrencyPackageList() {
     return this.db
-      .select()
+      .select({
+        id: this.currencyPackage.id,
+        name: this.currencyPackage.name,
+        price: this.currencyPackage.price,
+        currencyAmount: this.currencyPackage.currencyAmount,
+        bonusAmount: this.currencyPackage.bonusAmount,
+      })
       .from(this.currencyPackage)
       .where(eq(this.currencyPackage.isEnabled, true))
       .orderBy(
@@ -153,18 +165,17 @@ export class WalletService {
 
   // 结算虚拟币充值订单，实际余额写入统一收口在钱包域。
   async applyRechargeSettlement(tx: PaymentTx, order: PaymentOrderSelect) {
-    const [pack] = await tx
-      .select()
-      .from(this.currencyPackage)
-      .where(eq(this.currencyPackage.id, order.targetId))
-      .limit(1)
-    if (!pack) {
+    const snapshot = this.getRechargeTargetSnapshot(order)
+    if (!snapshot) {
+      this.logger.error(
+        `currency_recharge_settlement_missing_snapshot orderId=${order.id} orderNo=${order.orderNo} userId=${order.userId}`,
+      )
       throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '充值包不存在',
+        BusinessErrorCode.STATE_CONFLICT,
+        '充值订单快照缺失或非法',
       )
     }
-    const grantAmount = pack.currencyAmount + pack.bonusAmount
+    const grantAmount = snapshot.currencyAmount + snapshot.bonusAmount
     const result = await this.growthLedgerService.applyDelta(tx, {
       userId: order.userId,
       assetType: GrowthAssetTypeEnum.CURRENCY,
@@ -178,8 +189,9 @@ export class WalletService {
       context: {
         orderNo: order.orderNo,
         providerTradeNo: order.providerTradeNo,
-        currencyAmount: pack.currencyAmount,
-        bonusAmount: pack.bonusAmount,
+        packageKey: snapshot.packageKey,
+        currencyAmount: snapshot.currencyAmount,
+        bonusAmount: snapshot.bonusAmount,
       },
     })
     if (!result.success && !result.duplicated) {
@@ -188,6 +200,14 @@ export class WalletService {
         '虚拟币发放失败',
       )
     }
+  }
+
+  async getWalletLedgerPage(userId: number, dto: QueryWalletLedgerDto) {
+    return this.getWalletLedgerPageByUser(userId, dto)
+  }
+
+  async getAdminWalletLedgerPage(dto: QueryAdminWalletLedgerDto) {
+    return this.getWalletLedgerPageByUser(dto.userId, dto)
   }
 
   // 章节购买扣减虚拟币余额，供 PurchaseService 在同一事务内调用。
@@ -227,5 +247,84 @@ export class WalletService {
       )
     }
     return result
+  }
+
+  private async getWalletLedgerPageByUser(
+    userId: number,
+    dto: QueryWalletLedgerDto,
+  ) {
+    const table = this.drizzle.schema.growthLedgerRecord
+    const where = and(
+      eq(table.userId, userId),
+      eq(table.assetType, GrowthAssetTypeEnum.CURRENCY),
+      eq(table.assetKey, READING_COIN_ASSET_KEY),
+    )
+    const page = this.drizzle.buildPage(dto)
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: table.id,
+          delta: table.delta,
+          beforeValue: table.beforeValue,
+          afterValue: table.afterValue,
+          source: table.source,
+          remark: table.remark,
+          createdAt: table.createdAt,
+        })
+        .from(table)
+        .where(where)
+        .orderBy(desc(table.createdAt), desc(table.id))
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(table, where),
+    ])
+
+    return toPageResult(
+      list.map((item) => ({
+        id: item.id,
+        action:
+          item.delta >= 0
+            ? GrowthLedgerActionEnum.GRANT
+            : GrowthLedgerActionEnum.CONSUME,
+        amount: Math.abs(item.delta),
+        beforeValue: item.beforeValue,
+        afterValue: item.afterValue,
+        source: item.source,
+        remark: item.remark ?? undefined,
+        createdAt: item.createdAt,
+      })),
+      total,
+      page,
+    )
+  }
+
+  private getRechargeTargetSnapshot(order: PaymentOrderSelect) {
+    const context = order.clientContext
+    if (!context || typeof context !== 'object' || Array.isArray(context)) {
+      return undefined
+    }
+    const targetSnapshot = (context as Record<string, unknown>).targetSnapshot
+    if (
+      !targetSnapshot ||
+      typeof targetSnapshot !== 'object' ||
+      Array.isArray(targetSnapshot)
+    ) {
+      return undefined
+    }
+    const snapshot = targetSnapshot as Record<string, unknown>
+    if (
+      typeof snapshot.packageKey !== 'string' ||
+      typeof snapshot.currencyAmount !== 'number' ||
+      typeof snapshot.bonusAmount !== 'number' ||
+      snapshot.currencyAmount <= 0 ||
+      snapshot.bonusAmount < 0
+    ) {
+      return undefined
+    }
+    return {
+      packageKey: snapshot.packageKey,
+      currencyAmount: snapshot.currencyAmount,
+      bonusAmount: snapshot.bonusAmount,
+    }
   }
 }

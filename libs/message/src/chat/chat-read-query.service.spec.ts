@@ -126,7 +126,7 @@ describe('MessageChatReadQueryService', () => {
 
     expect(initialQuery.name).toBe('message_chat_messages_initial')
     expect(compileSql(initialQuery.where)).toContain(
-      '"chat_message"."status" <> $2',
+      '"chat_message"."status" in (1, 2)',
     )
     expect(compileSql(initialQuery.orderBy[0])).toContain(
       '"chat_message"."message_seq" desc',
@@ -137,7 +137,7 @@ describe('MessageChatReadQueryService', () => {
     })
     expect(beforeQuery.name).toBe('message_chat_messages_before')
     expect(compileSql(beforeQuery.where)).toContain(
-      '"chat_message"."message_seq" < $3',
+      '"chat_message"."message_seq" < $2',
     )
     expect(beforeQuery.execute).toHaveBeenCalledWith({
       conversationId: 10,
@@ -146,7 +146,7 @@ describe('MessageChatReadQueryService', () => {
     })
     expect(afterQuery.name).toBe('message_chat_messages_after')
     expect(compileSql(afterQuery.where)).toContain(
-      '"chat_message"."message_seq" > $3',
+      '"chat_message"."message_seq" > $2',
     )
     expect(afterQuery.execute).toHaveBeenCalledWith({
       conversationId: 10,

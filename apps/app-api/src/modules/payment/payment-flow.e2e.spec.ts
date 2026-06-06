@@ -20,6 +20,14 @@ const APP_PAYMENT_RESULT_KEYS = [
 
 function createPaidOrder() {
   return {
+    clientContext: {
+      targetSnapshot: {
+        bonusAmount: 20,
+        currencyAmount: 80,
+        packageKey: 'coin-80',
+        price: 100,
+      },
+    },
     id: 1,
     orderNo: 'PAY202605100001',
     orderType: PaymentOrderTypeEnum.CURRENCY_RECHARGE,
@@ -52,21 +60,6 @@ describe('App payment flow e2e substitute', () => {
           })),
         })),
       })),
-      select: jest.fn(() => ({
-        from: jest.fn(() => ({
-          where: jest.fn(() => ({
-            limit: jest.fn(() =>
-              Promise.resolve([
-                {
-                  bonusAmount: 20,
-                  currencyAmount: 80,
-                  id: paidOrder.targetId,
-                },
-              ]),
-            ),
-          })),
-        })),
-      })),
     }
     const drizzle = {
       db: {
@@ -77,9 +70,6 @@ describe('App payment flow e2e substitute', () => {
         },
       },
       schema: {
-        currencyPackage: {
-          id: 'currency_package.id',
-        },
         paymentOrder: {
           id: 'payment_order.id',
           status: 'payment_order.status',

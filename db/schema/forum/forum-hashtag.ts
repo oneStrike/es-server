@@ -127,6 +127,18 @@ export const forumHashtag = snakeCase.table(
     ),
     index('forum_hashtag_created_at_idx').on(table.createdAt),
     index('forum_hashtag_deleted_at_idx').on(table.deletedAt),
+    /**
+     * slug 包含搜索索引：匹配管理端与公开联想的 lower(slug) ILIKE。
+     */
+    index('forum_hashtag_slug_lower_trgm_idx')
+      .using('gin', sql`lower(${table.slug}) gin_trgm_ops`)
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 展示名包含搜索索引：匹配管理端与公开联想的 lower(displayName) ILIKE。
+     */
+    index('forum_hashtag_display_name_lower_trgm_idx')
+      .using('gin', sql`lower(${table.displayName}) gin_trgm_ops`)
+      .where(sql`${table.deletedAt} is null`),
     check(
       'forum_hashtag_audit_status_valid_chk',
       sql`${table.auditStatus} in (0, 1, 2)`,

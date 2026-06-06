@@ -115,6 +115,23 @@ export class MessageInboxService {
     }
   }
 
+  // 查询用户中心所需的未读摘要，不读取最新通知或最新会话。
+  async getUnreadSummary(userId: number) {
+    const now = new Date()
+    const [notificationUnread, chatUnreadAgg] = await Promise.all([
+      this.getNotificationUnreadSummary(userId, now),
+      this.summaryQueryService.getChatUnreadAggregate({ userId }),
+    ])
+
+    const chatUnreadCount = Number(chatUnreadAgg[0]?.unreadCount ?? 0)
+
+    return {
+      notificationUnread,
+      chatUnreadCount,
+      totalUnreadCount: notificationUnread.total + chatUnreadCount,
+    }
+  }
+
   // 查询消息中心聚合摘要，包含通知和最新聊天。
   async getSummary(userId: number) {
     const now = new Date()

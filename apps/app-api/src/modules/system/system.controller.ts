@@ -26,8 +26,10 @@ import {
   ApiPageDoc,
   Public,
 } from '@libs/platform/decorators'
-
 import { IdDto } from '@libs/platform/dto'
+import { ConfigReader } from '@libs/system-config/config-reader'
+
+import { WalletCurrencyDisplayConfigDto } from '@libs/system-config/dto/config.dto'
 import { Controller, Get, Query, Res } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -46,6 +48,7 @@ export class SystemController {
     private readonly appConfigService: AppConfigService,
     private readonly appPageService: AppPageService,
     private readonly appUpdateService: AppUpdateService,
+    private readonly configReader: ConfigReader,
   ) {}
 
   @Get('config')
@@ -57,6 +60,16 @@ export class SystemController {
   // 查询当前生效的 APP 系统配置。
   async findActive() {
     return this.appConfigService.findActiveConfig()
+  }
+
+  @Get('wallet-currency-display-config')
+  @ApiDoc({
+    summary: '钱包虚拟币展示配置',
+    model: WalletCurrencyDisplayConfigDto,
+  })
+  @Public()
+  async getWalletCurrencyDisplayConfig() {
+    return this.configReader.getWalletCurrencyDisplayConfig()
   }
 
   @Get('update/check')

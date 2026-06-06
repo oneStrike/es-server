@@ -2,6 +2,7 @@ import type { Cache } from 'cache-manager'
 import type {
   SystemConfig,
   ThirdPartyResourceParseConfig,
+  WalletCurrencyDisplayConfig,
 } from './system-config.type'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
@@ -163,6 +164,28 @@ export class ConfigReader implements OnModuleInit {
     }
   }
 
+  // 获取钱包虚拟币展示配置，并把旧快照或缺失字段归一化为安全值。
+  getWalletCurrencyDisplayConfig(): WalletCurrencyDisplayConfig {
+    const defaults = DEFAULT_CONFIG.walletCurrencyDisplayConfig
+    const source = this.config.walletCurrencyDisplayConfig ?? defaults
+
+    return {
+      assetKey: defaults.assetKey,
+      currencyName: this.normalizeString(
+        source.currencyName,
+        defaults.currencyName,
+      ),
+      currencyUnitName: this.normalizeString(
+        source.currencyUnitName,
+        defaults.currencyUnitName,
+      ),
+      currencyIconUrl: this.normalizeString(
+        source.currencyIconUrl,
+        defaults.currencyIconUrl,
+      ),
+    }
+  }
+
   /**
    * 获取上传配置
    */
@@ -174,7 +197,7 @@ export class ConfigReader implements OnModuleInit {
   private normalizePositiveInteger(
     value: unknown,
     defaultValue: number,
-    bounds: { max: number; min: number },
+    bounds: { max: number, min: number },
   ) {
     if (typeof value !== 'number' || !Number.isFinite(value)) {
       return defaultValue
@@ -185,5 +208,13 @@ export class ConfigReader implements OnModuleInit {
       return defaultValue
     }
     return Math.min(integerValue, bounds.max)
+  }
+
+  private normalizeString(value: unknown, defaultValue: string) {
+    if (typeof value !== 'string') {
+      return defaultValue
+    }
+    const trimmed = value.trim()
+    return trimmed || defaultValue
   }
 }

@@ -1,13 +1,15 @@
 import { PaymentOrderResultDto } from '@libs/interaction/payment/dto/payment.dto'
 import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.service'
 import {
-  BaseCurrencyPackageDto,
+  AppCurrencyPackageDto,
   CreateCurrencyRechargeOrderDto,
+  QueryWalletLedgerDto,
   WalletDetailDto,
+  WalletLedgerRecordDto,
 } from '@libs/interaction/wallet/dto/wallet.dto'
 import { WalletService } from '@libs/interaction/wallet/wallet.service'
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('钱包')
@@ -32,11 +34,24 @@ export class WalletController {
   @Get('currency-package/list')
   @ApiDoc({
     summary: '获取虚拟币充值包列表',
-    model: BaseCurrencyPackageDto,
+    model: AppCurrencyPackageDto,
     isArray: true,
   })
   async getCurrencyPackageList() {
     return this.walletService.getCurrencyPackageList()
+  }
+
+  // 分页查询当前用户虚拟币流水。
+  @Get('ledger/page')
+  @ApiPageDoc({
+    summary: '分页查询虚拟币流水',
+    model: WalletLedgerRecordDto,
+  })
+  async getWalletLedgerPage(
+    @CurrentUser('sub') userId: number,
+    @Query() query: QueryWalletLedgerDto,
+  ) {
+    return this.walletService.getWalletLedgerPage(userId, query)
   }
 
   // 创建虚拟币充值订单。

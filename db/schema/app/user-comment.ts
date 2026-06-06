@@ -257,6 +257,12 @@ export const userComment = snakeCase.table(
       .on(table.targetId, table.userId)
       .where(sql`${table.targetType} = 5 and ${table.deletedAt} is null`),
     /**
+     * 论坛评论正文搜索索引：保留现有 ILIKE 包含匹配语义，依赖 pg_trgm。
+     */
+    index('user_comment_forum_topic_content_trgm_idx')
+      .using('gin', table.content.op('gin_trgm_ops'))
+      .where(sql`${table.targetType} = 5 and ${table.deletedAt} is null`),
+    /**
      * 正文版本闭集约束
      */
     check(

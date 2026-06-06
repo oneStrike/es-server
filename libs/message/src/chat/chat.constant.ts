@@ -45,6 +45,12 @@ export enum ChatMessageStatusEnum {
   DELETED = 3,
 }
 
+/** 聊天消息回放可读状态集合；新增状态时需同步 chat_message live seq partial index。 */
+export const CHAT_READABLE_MESSAGE_STATUSES = [
+  ChatMessageStatusEnum.NORMAL,
+  ChatMessageStatusEnum.REVOKED,
+] as const
+
 /** 聊天消息分页默认条数 */
 export const CHAT_MESSAGE_PAGE_LIMIT_DEFAULT = 20
 /** 聊天消息分页最大条数 */

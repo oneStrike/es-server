@@ -1,6 +1,8 @@
+import { GrowthLedgerActionEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import {
   BooleanProperty,
   DateProperty,
+  EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -82,6 +84,43 @@ export class QueryCurrencyPackageDto extends IntersectionType(
   PartialType(PickType(BaseCurrencyPackageDto, ['name', 'isEnabled'] as const)),
 ) {}
 
+export class AppCurrencyPackageDto {
+  @NumberProperty({
+    description: '充值包 ID',
+    example: 1,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '充值包名称',
+    example: '1000 阅读币',
+    validation: false,
+  })
+  name!: string
+
+  @NumberProperty({
+    description: '支付价格，单位为分',
+    example: 1000,
+    validation: false,
+  })
+  price!: number
+
+  @NumberProperty({
+    description: '发放虚拟币数量',
+    example: 1000,
+    validation: false,
+  })
+  currencyAmount!: number
+
+  @NumberProperty({
+    description: '赠送虚拟币数量',
+    example: 100,
+    validation: false,
+  })
+  bonusAmount!: number
+}
+
 export class CreateCurrencyRechargeOrderDto extends CreatePaymentOrderBaseDto {
   @NumberProperty({
     description: '充值包 ID',
@@ -126,4 +165,74 @@ export class WalletDetailDto {
     validation: false,
   })
   purchasedChapterCount!: number
+}
+
+export class QueryWalletLedgerDto extends PageDto {}
+
+export class QueryAdminWalletLedgerDto extends PageDto {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 1,
+  })
+  userId!: number
+}
+
+export class WalletLedgerRecordDto {
+  @NumberProperty({
+    description: '流水 ID',
+    example: 1,
+    validation: false,
+  })
+  id!: number
+
+  @EnumProperty({
+    description: '流水动作',
+    enum: GrowthLedgerActionEnum,
+    example: GrowthLedgerActionEnum.GRANT,
+    validation: false,
+  })
+  action!: GrowthLedgerActionEnum
+
+  @NumberProperty({
+    description: '变更值',
+    example: 100,
+    validation: false,
+  })
+  amount!: number
+
+  @NumberProperty({
+    description: '变更前余额',
+    example: 900,
+    validation: false,
+  })
+  beforeValue!: number
+
+  @NumberProperty({
+    description: '变更后余额',
+    example: 1000,
+    validation: false,
+  })
+  afterValue!: number
+
+  @StringProperty({
+    description: '流水来源',
+    example: 'payment_order',
+    validation: false,
+  })
+  source!: string
+
+  @StringProperty({
+    description: '展示备注',
+    example: '虚拟币充值',
+    required: false,
+    validation: false,
+  })
+  remark?: string
+
+  @DateProperty({
+    description: '创建时间',
+    example: '2026-06-01T00:00:00.000Z',
+    validation: false,
+  })
+  createdAt!: Date
 }

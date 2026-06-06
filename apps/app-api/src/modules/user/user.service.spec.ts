@@ -1,3 +1,6 @@
+import 'reflect-metadata'
+
+import { DECORATORS } from '@nestjs/swagger/dist/constants'
 import { UserService } from './user.service'
 
 describe('UserService user center latest login geo', () => {
@@ -42,9 +45,17 @@ describe('UserService user center latest login geo', () => {
     }
     const userAssetsService = {
       getUserAssetsSummary: jest.fn(async () => ({
-        coinBalance: 10,
-        shellBalance: 20,
-        couponCount: 1,
+        availableCouponCount: 1,
+        commentCount: 11,
+        currencyBalance: 10,
+        downloadedChapterCount: 4,
+        downloadedWorkCount: 3,
+        favoriteCount: 7,
+        likeCount: 8,
+        purchasedChapterCount: 5,
+        purchasedWorkCount: 2,
+        viewCount: 9,
+        vipExpiresAt: null,
       })),
     }
     const taskService = {
@@ -54,9 +65,25 @@ describe('UserService user center latest login geo', () => {
       })),
     }
     const messageInboxService = {
-      getSummary: jest.fn(async () => ({
-        unreadCount: 6,
+      getUnreadSummary: jest.fn(async () => ({
+        notificationUnread: {
+          total: 3,
+          byCategory: {
+            comment_reply: 1,
+            comment_mention: 0,
+            comment_like: 0,
+            topic_like: 0,
+            topic_favorited: 0,
+            topic_commented: 0,
+            topic_mentioned: 0,
+            user_followed: 0,
+            system_announcement: 2,
+            task_reminder: 0,
+          },
+        },
+        totalUnreadCount: 6,
       })),
+      getSummary: jest.fn(),
     }
 
     const service = new UserService(
@@ -70,7 +97,7 @@ describe('UserService user center latest login geo', () => {
       messageInboxService as never,
     )
 
-    return { service }
+    return { service, userCoreService, userAssetsService, messageInboxService }
   }
 
   it('returns a stable latest login geo object without leaking raw login fields', async () => {
@@ -105,5 +132,96 @@ describe('UserService user center latest login geo', () => {
       geoCity: null,
       geoIsp: null,
     })
+  })
+
+  it('does not repeat user existence checks when building the center assets summary', async () => {
+    const { service, userCoreService, userAssetsService } = createService()
+
+    const result = await service.getUserCenter(7)
+
+    expect(userCoreService.ensureUserExists).toHaveBeenCalledTimes(1)
+    expect(userAssetsService.getUserAssetsSummary).toHaveBeenCalledWith(7)
+    expect(result.assets).toMatchObject({
+      currencyBalance: 10,
+      availableCouponCount: 1,
+      vipExpiresAt: null,
+    })
+  })
+
+  it('uses the lightweight unread summary for the center message block', async () => {
+    const { service, messageInboxService } = createService()
+
+    const result = await service.getUserCenter(7)
+
+    expect(messageInboxService.getUnreadSummary).toHaveBeenCalledWith(7)
+    expect(messageInboxService.getSummary).not.toHaveBeenCalled()
+    expect(result.message).toEqual({
+      notificationUnread: {
+        total: 3,
+        byCategory: {
+          comment_reply: 1,
+          comment_mention: 0,
+          comment_like: 0,
+          topic_like: 0,
+          topic_favorited: 0,
+          topic_commented: 0,
+          topic_mentioned: 0,
+          user_followed: 0,
+          system_announcement: 2,
+          task_reminder: 0,
+        },
+      },
+      totalUnreadCount: 6,
+    })
+  })
+
+  it('keeps growth level presentation fields present as null without a level', async () => {
+    const { service } = createService()
+
+    const result = await service.getUserCenter(7)
+
+    expect(result.growth).toMatchObject({
+      levelId: undefined,
+      levelName: null,
+      levelIcon: null,
+      levelColor: null,
+    })
+    expect(
+      Object.prototype.hasOwnProperty.call(result.growth, 'levelName'),
+    ).toBe(true)
+    expect(
+      Object.prototype.hasOwnProperty.call(result.growth, 'levelIcon'),
+    ).toBe(true)
+    expect(
+      Object.prototype.hasOwnProperty.call(result.growth, 'levelColor'),
+    ).toBe(true)
+  })
+
+  it('documents growth level presentation fields as required nullable output', () => {
+    const originalNodeEnv = process.env.NODE_ENV
+
+    jest.isolateModules(() => {
+      process.env.NODE_ENV = 'development'
+      const { UserCenterGrowthDto } = require('@libs/user/dto/user-self.dto')
+
+      for (const propertyKey of ['levelName', 'levelIcon', 'levelColor']) {
+        expect(
+          Reflect.getMetadata(
+            DECORATORS.API_MODEL_PROPERTIES,
+            UserCenterGrowthDto.prototype,
+            propertyKey,
+          ),
+        ).toMatchObject({
+          nullable: true,
+          required: true,
+        })
+      }
+    })
+
+    if (originalNodeEnv === undefined) {
+      delete process.env.NODE_ENV
+    } else {
+      process.env.NODE_ENV = originalNodeEnv
+    }
   })
 })
