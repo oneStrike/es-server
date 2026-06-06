@@ -113,6 +113,7 @@ async function cleanupLegacyForumResidue(db: Db) {
       WHERE name LIKE 'codex_perf_%'
         OR name LIKE 'cp260524%'
         OR name LIKE 'cpri24%'
+        OR name IN ('斗破苍穹', '仙逆', '日语')
         OR id IN (
           SELECT forum_section_id
           FROM work
@@ -214,10 +215,21 @@ async function cleanupLegacyForumResidue(db: Db) {
       DELETE FROM forum_section
       WHERE id IN (SELECT id FROM target_forum_sections)
       RETURNING id
+    ),
+    deleted_empty_groups AS (
+      DELETE FROM forum_section_group g
+      WHERE g.name IN ('美图图集', '音乐音声')
+        AND NOT EXISTS (
+          SELECT 1
+          FROM forum_section s
+          WHERE s.group_id = g.id
+        )
+      RETURNING id
     )
     SELECT
       (SELECT COUNT(*) FROM deleted_topics) AS topic_count,
       (SELECT COUNT(*) FROM deleted_sections) AS section_count,
+      (SELECT COUNT(*) FROM deleted_empty_groups) AS group_count,
       (SELECT COUNT(*) FROM deleted_hashtag_refs) AS hashtag_ref_count
   `)
 }
