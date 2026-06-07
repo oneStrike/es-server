@@ -12,6 +12,8 @@ import {
   QueryForumModeratorApplicationDto,
 } from './dto/moderator-application.dto'
 import { ForumModeratorApplicationStatusEnum } from './moderator-application.constant'
+import { ForumModeratorLifecycleEventTypeEnum } from './moderator-lifecycle-log.constant'
+import { ForumModeratorLifecycleLogService } from './moderator-lifecycle-log.service'
 import {
   ALL_FORUM_MODERATOR_PERMISSIONS,
   FORUM_MODERATOR_PERMISSION_LABELS,
@@ -28,6 +30,7 @@ export class ForumModeratorApplicationService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly forumModeratorService: ForumModeratorService,
+    private readonly lifecycleLogService: ForumModeratorLifecycleLogService,
   ) {}
 
   /** 统一复用当前模块的 Drizzle 数据库实例。 */
@@ -151,6 +154,35 @@ export class ForumModeratorApplicationService {
    */
   private assertAffectedRows(result: DrizzleMutationResult, message: string) {
     this.drizzle.assertAffectedRows(result, message)
+  }
+
+  private buildApplicationSnapshot(
+    application: Pick<
+      ForumModeratorApplicationSelect,
+      | 'id'
+      | 'applicantId'
+      | 'sectionId'
+      | 'status'
+      | 'permissions'
+      | 'reason'
+      | 'auditReason'
+      | 'remark'
+      | 'auditById'
+      | 'auditAt'
+    >,
+  ) {
+    return {
+      id: application.id,
+      applicantId: application.applicantId,
+      sectionId: application.sectionId,
+      status: application.status,
+      permissions: this.normalizePermissions(application.permissions),
+      reason: application.reason,
+      auditReason: application.auditReason ?? null,
+      remark: application.remark ?? null,
+      auditById: application.auditById ?? null,
+      auditAt: application.auditAt?.toISOString?.() ?? null,
+    }
   }
 
   /**
@@ -467,19 +499,25 @@ export class ForumModeratorApplicationService {
 
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        let moderatorId: number | null = null
         if (input.status === ForumModeratorApplicationStatusEnum.APPROVED) {
           await this.ensureSectionExists(application.sectionId, tx)
           await this.ensureUserNotModerator(application.applicantId, tx)
-          await this.forumModeratorService.createSectionModeratorFromApplication(
+          const created =
+            await this.forumModeratorService.createSectionModeratorFromApplication(
             {
               userId: application.applicantId,
               sectionId: application.sectionId,
               permissions: this.normalizePermissions(application.permissions),
             },
+            auditorId,
+            application.id,
             tx,
           )
+          moderatorId = created.moderatorId
         }
 
+        const auditAt = new Date()
         const result = await tx
           .update(this.forumModeratorApplication)
           .set({
@@ -487,7 +525,7 @@ export class ForumModeratorApplicationService {
             auditById: auditorId,
             auditReason: input.auditReason,
             remark: input.remark ?? application.remark,
-            auditAt: new Date(),
+            auditAt,
           })
           .where(
             and(
@@ -501,6 +539,25 @@ export class ForumModeratorApplicationService {
           )
 
         this.assertAffectedRows(result, '版主申请不存在或已处理')
+        await this.lifecycleLogService.createLifecycleLogInTx(tx, {
+          eventType:
+            input.status === ForumModeratorApplicationStatusEnum.APPROVED
+              ? ForumModeratorLifecycleEventTypeEnum.APPLICATION_APPROVE
+              : ForumModeratorLifecycleEventTypeEnum.APPLICATION_REJECT,
+          moderatorId,
+          applicationId: application.id,
+          actorAdminUserId: auditorId,
+          reason: input.auditReason ?? null,
+          beforeData: this.buildApplicationSnapshot(application),
+          afterData: this.buildApplicationSnapshot({
+            ...application,
+            status: input.status,
+            auditById: auditorId,
+            auditReason: input.auditReason ?? null,
+            remark: input.remark ?? application.remark,
+            auditAt,
+          }),
+        })
       }),
     )
 

@@ -64,6 +64,7 @@ function createGovernanceService() {
     })),
   }
   const topicService = {
+    buildApprovedTopicGrowthEventPayload: jest.fn(() => null),
     deleteTopicWithCurrentInTx: jest.fn(async () => true),
     getActiveTopicByIdInTx: jest.fn(async () => ({
       favoriteCount: 0,
@@ -78,6 +79,8 @@ function createGovernanceService() {
     updateTopicPinnedInTx: jest.fn(async () => true),
   }
   const commentService = {
+    buildCommentCreatedGrowthEventPayload: jest.fn(() => null),
+    buildVisibleCommentGrowthEventPayload: jest.fn(() => null),
     rewardCommentModerationIfNeeded: jest.fn(async () => undefined),
     updateCommentHidden: jest.fn(async () => true),
     updateCommentAuditStatusInTx: jest.fn(async () => ({
@@ -95,12 +98,16 @@ function createGovernanceService() {
     createActionLog: jest.fn(async () => true),
     createActionLogInTx: jest.fn(async () => true),
   }
+  const growthRewardSettlementService = {
+    ensureGrowthEventSettlement: jest.fn(async () => ({ id: 1 })),
+  }
   const service = new ForumModeratorGovernanceService(
     drizzle as unknown as GovernanceServiceDependencies[0],
     moderatorService as unknown as GovernanceServiceDependencies[1],
     topicService as unknown as GovernanceServiceDependencies[2],
     commentService as unknown as GovernanceServiceDependencies[3],
     actionLogService as unknown as GovernanceServiceDependencies[4],
+    growthRewardSettlementService as unknown as GovernanceServiceDependencies[5],
   )
 
   return {
@@ -110,6 +117,7 @@ function createGovernanceService() {
     drizzle,
     moderatorService,
     service,
+    growthRewardSettlementService,
     topicService,
     tx,
   }

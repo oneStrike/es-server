@@ -9,6 +9,7 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumSectionGroup.id,
     }),
     actionLogs: r.many.forumModeratorActionLog(),
+    lifecycleLogs: r.many.forumModeratorLifecycleLog(),
     moderatorSections: r.many.forumModeratorSection(),
     moderatedSections: r.many.forumSection({
       from: r.forumModerator.id.through(r.forumModeratorSection.moderatorId),
@@ -19,6 +20,21 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
     moderator: r.one.forumModerator({
       from: r.forumModeratorActionLog.moderatorId,
       to: r.forumModerator.id,
+    }),
+  },
+  forumModeratorLifecycleLog: {
+    moderator: r.one.forumModerator({
+      from: r.forumModeratorLifecycleLog.moderatorId,
+      to: r.forumModerator.id,
+    }),
+    application: r.one.forumModeratorApplication({
+      from: r.forumModeratorLifecycleLog.applicationId,
+      to: r.forumModeratorApplication.id,
+    }),
+    actorAdminUser: r.one.adminUser({
+      from: r.forumModeratorLifecycleLog.actorAdminUserId,
+      to: r.adminUser.id,
+      alias: 'ModeratorLifecycleActorAdminUser',
     }),
   },
   forumModeratorApplication: {
@@ -36,6 +52,7 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       from: r.forumModeratorApplication.sectionId,
       to: r.forumSection.id,
     }),
+    lifecycleLogs: r.many.forumModeratorLifecycleLog(),
   },
   forumHashtag: {
     references: r.many.forumHashtagReference(),

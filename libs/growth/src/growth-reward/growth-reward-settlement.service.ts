@@ -119,6 +119,70 @@ export class GrowthRewardSettlementService {
     })
   }
 
+  // 以 userId + bizKey 为唯一键补建通用成长事件补偿事实，不覆盖已有成功记录。
+  async ensureGrowthEventSettlement(
+    input: DispatchDefinedGrowthEventPayload,
+    tx?: Db,
+  ) {
+    const runner = tx ?? this.db
+    const requestPayload = this.serializePayload(input)
+    const rows = await this.drizzle.withErrorHandling(() =>
+      runner
+        .insert(this.growthRewardSettlement)
+        .values({
+          userId: input.eventEnvelope.subjectId,
+          bizKey: input.bizKey,
+          settlementType: GrowthRewardSettlementTypeEnum.GROWTH_EVENT,
+          sourceRecordId: null,
+          eventCode: input.eventEnvelope.code,
+          eventKey: input.eventEnvelope.key,
+          source: input.source,
+          targetType: input.targetType,
+          targetId: input.targetId ?? input.eventEnvelope.targetId,
+          eventOccurredAt: input.eventEnvelope.occurredAt,
+          settlementStatus: GrowthRewardSettlementStatusEnum.PENDING,
+          settlementResultType: null,
+          ledgerRecordIds: [],
+          lastError: null,
+          requestPayload,
+        })
+        .onConflictDoNothing({
+          target: [
+            this.growthRewardSettlement.userId,
+            this.growthRewardSettlement.bizKey,
+          ],
+        })
+        .returning({
+          id: this.growthRewardSettlement.id,
+          bizKey: this.growthRewardSettlement.bizKey,
+        }),
+    )
+
+    if (rows[0]) {
+      return rows[0]
+    }
+
+    const existing = await runner.query.growthRewardSettlement.findFirst({
+      where: {
+        userId: input.eventEnvelope.subjectId,
+        bizKey: input.bizKey,
+      },
+      columns: {
+        id: true,
+        bizKey: true,
+      },
+    })
+
+    if (!existing) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '奖励补偿记录创建失败',
+      )
+    }
+
+    return existing
+  }
+
   // 按查询条件分页读取通用成长奖励补偿记录。
   async getSettlementPage(query: QueryGrowthRewardSettlementPageDto) {
     const conditions: SQL[] = []

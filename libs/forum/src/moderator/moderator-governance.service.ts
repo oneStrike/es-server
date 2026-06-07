@@ -1,17 +1,23 @@
+import type { Db } from '@db/core'
+import type { DispatchDefinedGrowthEventPayload } from '@libs/growth/growth-reward/types/growth-event-dispatch.type'
 import type { ForumTopicClientContext } from '../topic/forum-topic.type'
 import type {
   ForumModeratorGovernanceActor,
   ForumModeratorPermissionGrant,
 } from './moderator.type'
-import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
+import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import {
   UpdateCommentAuditStatusDto,
   UpdateCommentHiddenDto,
 } from '@libs/interaction/comment/dto/comment.dto'
-import { AuditRoleEnum, BusinessErrorCode } from '@libs/platform/constant'
+import {
+  AuditRoleEnum,
+  AuditStatusEnum,
+  BusinessErrorCode,
+} from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
@@ -47,6 +53,7 @@ export class ForumModeratorGovernanceService {
     private readonly forumTopicService: ForumTopicService,
     private readonly commentService: CommentService,
     private readonly forumModeratorActionLogService: ForumModeratorActionLogService,
+    private readonly growthRewardSettlementService: GrowthRewardSettlementService,
   ) {}
 
   /** 统一复用当前模块的 Drizzle 数据库实例。 */
@@ -140,12 +147,16 @@ export class ForumModeratorGovernanceService {
       },
       columns: {
         id: true,
+        userId: true,
         targetType: true,
         targetId: true,
         replyToId: true,
+        content: true,
+        createdAt: true,
         isHidden: true,
         auditStatus: true,
         auditReason: true,
+        deletedAt: true,
       },
     })
 
@@ -267,6 +278,61 @@ export class ForumModeratorGovernanceService {
       await this.forumModeratorActionLogService.createActionLog(logInput)
     }
 
+    return true
+  }
+
+  private async ensureApprovedTopicGrowthSettlement(
+    tx: Db,
+    params: {
+      topicId: number
+      userId: number
+      previousAuditStatus: AuditStatusEnum
+      nextAuditStatus: AuditStatusEnum
+    },
+  ) {
+    const payload = this.forumTopicService.buildApprovedTopicGrowthEventPayload(
+      params,
+    )
+    if (!payload) {
+      return true
+    }
+
+    await this.growthRewardSettlementService.ensureGrowthEventSettlement(
+      payload,
+      tx,
+    )
+    return true
+  }
+
+  private async ensureApprovedCommentGrowthSettlement(
+    tx: Db,
+    params: {
+      eventEnvelope: Parameters<
+        CommentService['buildCommentCreatedGrowthEventPayload']
+      >[0]['eventEnvelope']
+      rewardComment: Parameters<
+        CommentService['buildCommentCreatedGrowthEventPayload']
+      >[0]['rewardComment']
+    },
+  ) {
+    const payload = this.commentService.buildCommentCreatedGrowthEventPayload(
+      params,
+    )
+    return this.ensureCommentGrowthSettlementPayload(tx, payload)
+  }
+
+  private async ensureCommentGrowthSettlementPayload(
+    tx: Db,
+    payload: DispatchDefinedGrowthEventPayload | null,
+  ) {
+    if (!payload) {
+      return true
+    }
+
+    await this.growthRewardSettlementService.ensureGrowthEventSettlement(
+      payload,
+      tx,
+    )
     return true
   }
 
@@ -556,6 +622,16 @@ export class ForumModeratorGovernanceService {
       current.auditStatus === input.auditStatus &&
       (current.auditReason ?? null) === (input.auditReason ?? null)
     ) {
+      if (input.auditStatus === AuditStatusEnum.APPROVED) {
+        await this.drizzle.withTransaction(async (tx) =>
+          this.ensureApprovedTopicGrowthSettlement(tx, {
+            topicId: current.id,
+            userId: current.userId,
+            previousAuditStatus: AuditStatusEnum.PENDING,
+            nextAuditStatus: input.auditStatus,
+          }),
+        )
+      }
       return true
     }
 
@@ -583,6 +659,12 @@ export class ForumModeratorGovernanceService {
           auditStatus: input.auditStatus,
           auditReason: input.auditReason ?? null,
         },
+      })
+      await this.ensureApprovedTopicGrowthSettlement(tx, {
+        topicId: current.id,
+        userId: current.userId,
+        previousAuditStatus: current.auditStatus as AuditStatusEnum,
+        nextAuditStatus: input.auditStatus,
       })
     })
 
@@ -634,6 +716,7 @@ export class ForumModeratorGovernanceService {
         beforeData: { isHidden: current.isHidden },
         afterData: { isHidden: input.isHidden },
       })
+      await this.ensureApprovedCommentGrowthSettlement(tx, result)
       return result
     })
 
@@ -693,6 +776,20 @@ export class ForumModeratorGovernanceService {
       current.auditStatus === input.auditStatus &&
       (current.auditReason ?? null) === (input.auditReason ?? null)
     ) {
+      if (
+        input.auditStatus === AuditStatusEnum.APPROVED &&
+        !current.isHidden &&
+        current.deletedAt === null
+      ) {
+        const payload =
+          this.commentService.buildVisibleCommentGrowthEventPayload({
+            ...current,
+            auditStatus: input.auditStatus,
+          })
+        await this.drizzle.withTransaction(async (tx) =>
+          this.ensureCommentGrowthSettlementPayload(tx, payload),
+        )
+      }
       return true
     }
 
@@ -723,6 +820,7 @@ export class ForumModeratorGovernanceService {
           auditReason: input.auditReason ?? null,
         },
       })
+      await this.ensureApprovedCommentGrowthSettlement(tx, handled)
       return result
     })
 

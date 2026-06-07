@@ -1,5 +1,6 @@
 import type { Db, SQL } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
+import type { DispatchDefinedGrowthEventPayload } from '@libs/growth/growth-reward/types/growth-event-dispatch.type'
 import type { JsonValue } from '@libs/platform/utils'
 import type {
   AuthorCommentDelta,
@@ -2740,22 +2741,58 @@ export class CommentService {
     eventEnvelope: EventEnvelope<GrowthRuleTypeEnum> | null
     rewardComment: VisibleCommentEffectPayload | null
   }) {
-    if (
-      params.eventEnvelope &&
-      params.rewardComment &&
-      canConsumeEventEnvelopeByConsumer(
-        params.eventEnvelope,
-        EventDefinitionConsumerEnum.GROWTH,
-      )
-    ) {
+    const payload = this.buildCommentCreatedGrowthEventPayload(params)
+    if (payload && params.rewardComment) {
       await this.commentGrowthService.rewardCommentCreated({
         userId: params.rewardComment.userId,
         id: params.rewardComment.id,
         targetType: params.rewardComment.targetType,
         targetId: params.rewardComment.targetId,
         occurredAt: params.rewardComment.createdAt,
-        eventEnvelope: params.eventEnvelope,
+        eventEnvelope: payload.eventEnvelope,
       })
     }
+  }
+
+  buildCommentCreatedGrowthEventPayload(params: {
+    eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum> | null
+    rewardComment: VisibleCommentEffectPayload | null
+  }): DispatchDefinedGrowthEventPayload | null {
+    const { eventEnvelope, rewardComment } = params
+
+    if (
+      !eventEnvelope ||
+      !rewardComment ||
+      !canConsumeEventEnvelopeByConsumer(
+        eventEnvelope,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
+      return null
+    }
+
+    return {
+      eventEnvelope,
+      bizKey: `comment:create:${rewardComment.id}:user:${rewardComment.userId}`,
+      source: 'comment',
+      targetType: rewardComment.targetType,
+      targetId: rewardComment.targetId,
+    }
+  }
+
+  buildVisibleCommentGrowthEventPayload(comment: CommentModerationState) {
+    return this.buildCommentCreatedGrowthEventPayload({
+      rewardComment: this.toVisibleCommentEffectPayload(comment),
+      eventEnvelope: this.buildCommentCreatedEventEnvelope({
+        commentId: comment.id,
+        userId: comment.userId,
+        targetType: comment.targetType as CommentTargetTypeEnum,
+        targetId: comment.targetId,
+        replyToId: comment.replyToId,
+        occurredAt: comment.createdAt,
+        auditStatus: comment.auditStatus as AuditStatusEnum,
+        isHidden: comment.isHidden,
+      }),
+    })
   }
 }

@@ -1,6 +1,6 @@
 import { AssignForumModeratorSectionDto, CreateForumModeratorDto, ForumModeratorDto, QueryForumModeratorDto, UpdateForumModeratorDto } from '@libs/forum/moderator/dto/moderator.dto';
 import { ForumModeratorService } from '@libs/forum/moderator/moderator.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
 import { IdDto } from '@libs/platform/dto';
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -38,8 +38,11 @@ export class ModeratorController {
       actionType: AuditActionTypeEnum.CREATE,
     },
   })
-  async createModerator(@Body() dto: CreateForumModeratorDto) {
-    return this.forumModeratorService.createModerator(dto)
+  async createModerator(
+    @Body() dto: CreateForumModeratorDto,
+    @CurrentUser('sub') adminUserId: number,
+  ) {
+    return this.forumModeratorService.createModerator(dto, adminUserId)
   }
 
   @Post('update')
@@ -50,8 +53,11 @@ export class ModeratorController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updateModerator(@Body() dto: UpdateForumModeratorDto) {
-    return this.forumModeratorService.updateModerator(dto)
+  async updateModerator(
+    @Body() dto: UpdateForumModeratorDto,
+    @CurrentUser('sub') adminUserId: number,
+  ) {
+    return this.forumModeratorService.updateModerator(dto, adminUserId)
   }
 
   @Post('delete')
@@ -62,8 +68,11 @@ export class ModeratorController {
       actionType: AuditActionTypeEnum.DELETE,
     },
   })
-  async deleteModerator(@Body() dto: IdDto) {
-    return this.forumModeratorService.removeModerator(dto.id)
+  async deleteModerator(
+    @Body() dto: IdDto,
+    @CurrentUser('sub') adminUserId: number,
+  ) {
+    return this.forumModeratorService.removeModerator(dto.id, adminUserId)
   }
 
   @Post('assign-section')
@@ -74,7 +83,10 @@ export class ModeratorController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async assignModeratorSection(@Body() dto: AssignForumModeratorSectionDto) {
-    return this.forumModeratorService.assignModeratorSection(dto)
+  async assignModeratorSection(
+    @Body() dto: AssignForumModeratorSectionDto,
+    @CurrentUser('sub') adminUserId: number,
+  ) {
+    return this.forumModeratorService.assignModeratorSection(dto, adminUserId)
   }
 }

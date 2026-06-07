@@ -64,10 +64,18 @@ export const forumModeratorActionLog = snakeCase.table(
      * 版主索引
      */
     index('forum_moderator_action_log_moderator_id_idx').on(table.moderatorId),
+    index('forum_moderator_action_log_moderator_created_at_idx').on(
+      table.moderatorId,
+      table.createdAt.desc(),
+    ),
     /**
      * 操作类型索引
      */
     index('forum_moderator_action_log_action_type_idx').on(table.actionType),
+    index('forum_moderator_action_log_action_type_created_at_idx').on(
+      table.actionType,
+      table.createdAt.desc(),
+    ),
     /**
      * 操作类型闭集约束
      */
@@ -82,6 +90,11 @@ export const forumModeratorActionLog = snakeCase.table(
       table.targetType,
       table.targetId,
     ),
+    index('forum_moderator_action_log_target_created_at_idx').on(
+      table.targetType,
+      table.targetId,
+      table.createdAt.desc(),
+    ),
     /**
      * 目标类型闭集约束
      */
@@ -92,6 +105,8 @@ export const forumModeratorActionLog = snakeCase.table(
     /**
      * 创建时间索引
      */
-    index('forum_moderator_action_log_created_at_idx').on(table.createdAt),
+    index('forum_moderator_action_log_created_at_idx').on(
+      table.createdAt.desc(),
+    ),
   ],
 )

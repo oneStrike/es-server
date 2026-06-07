@@ -93,9 +93,15 @@ function createModeratorService() {
     withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
   }
 
-  const service = new ForumModeratorService(drizzle as any)
+  const lifecycleLogService = {
+    createLifecycleLogInTx: jest.fn(async () => true),
+  }
+  const service = new ForumModeratorService(
+    drizzle as any,
+    lifecycleLogService as any,
+  )
 
-  return { service, drizzle, tx, insertRecorder }
+  return { service, drizzle, lifecycleLogService, tx, insertRecorder }
 }
 
 describe('ForumModeratorService permissions', () => {
@@ -143,6 +149,7 @@ describe('ForumModeratorService permissions', () => {
     }))
     tx.select = jest
       .fn()
+      .mockReturnValueOnce(createThenableBuilder([]))
       .mockReturnValueOnce(createThenableBuilder([{ id: 10 }]))
       .mockReturnValueOnce(createThenableBuilder([]))
 
@@ -156,6 +163,70 @@ describe('ForumModeratorService permissions', () => {
         moderatorId: 9,
         permissions: [],
         sectionId: 10,
+      }),
+    )
+  })
+
+  it('preserves existing section custom permissions during moderator updates', async () => {
+    const { service, tx } = createModeratorService()
+    const sectionInsertValues: unknown[] = []
+    tx.insert = jest.fn(() => {
+      const builder = createThenableBuilder([{ id: 99 }])
+      builder.values = jest.fn((value: unknown) => {
+        sectionInsertValues.push(value)
+        return builder
+      })
+      return builder
+    })
+    tx.query.forumModerator.findFirst = jest.fn(async () => ({
+      deletedAt: null,
+      groupId: null,
+      id: 9,
+      isEnabled: true,
+      permissions: [ForumModeratorPermissionEnum.PIN],
+      remark: 'old note',
+      roleType: ForumModeratorRoleTypeEnum.SECTION,
+      userId: 1,
+    }))
+    tx.select = jest
+      .fn()
+      .mockReturnValueOnce(
+        createThenableBuilder([
+          {
+            permissions: [ForumModeratorPermissionEnum.DELETE],
+            sectionId: 10,
+          },
+        ]),
+      )
+      .mockReturnValueOnce(createThenableBuilder([{ id: 10 }, { id: 11 }]))
+      .mockReturnValueOnce(createThenableBuilder([{ id: 10 }, { id: 11 }]))
+      .mockReturnValueOnce(
+        createThenableBuilder([
+          {
+            permissions: [ForumModeratorPermissionEnum.DELETE],
+            sectionId: 10,
+          },
+        ]),
+      )
+
+    await service.updateModerator({
+      id: 9,
+      remark: 'new note',
+      sectionIds: [10, 11],
+    })
+
+    expect(sectionInsertValues).toContainEqual(
+      expect.objectContaining({
+        moderatorId: 9,
+        permissions: [ForumModeratorPermissionEnum.DELETE],
+        sectionId: 10,
+      }),
+    )
+    expect(sectionInsertValues).toContainEqual(
+      expect.objectContaining({
+        moderatorId: 9,
+        permissions: [],
+        sectionId: 11,
       }),
     )
   })

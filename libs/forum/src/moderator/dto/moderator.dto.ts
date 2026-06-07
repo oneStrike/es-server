@@ -257,6 +257,15 @@ export class ForumModeratorDto extends BaseForumModeratorDto {
     validation: false,
   })
   sections!: ForumModeratorSectionItemDto[]
+
+  @NumberProperty({
+    description: '可治理板块总数',
+    example: 12,
+    required: true,
+    min: 0,
+    validation: false,
+  })
+  sectionCount!: number
 }
 
 /**

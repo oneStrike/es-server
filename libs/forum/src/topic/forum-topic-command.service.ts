@@ -1,6 +1,7 @@
 import type { Db } from '@db/core'
 import type { ForumTopicSelect } from '@db/schema'
 
+import type { DispatchDefinedGrowthEventPayload } from '@libs/growth/growth-reward/types/growth-event-dispatch.type'
 import type { JsonValue } from '@libs/platform/utils'
 import type {
   ApprovedTopicRewardParams,
@@ -893,11 +894,22 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
   private async dispatchApprovedTopicRewardIfNeeded(
     params: ApprovedTopicRewardParams,
   ) {
+    const payload = this.buildApprovedTopicGrowthEventPayload(params)
+    if (!payload) {
+      return
+    }
+    await this.growthEventBridgeService.dispatchDefinedEvent(payload)
+  }
+
+  // 构建审核通过主题的成长奖励 payload，供治理链路在事务内补建 settlement 事实。
+  buildApprovedTopicGrowthEventPayload(
+    params: ApprovedTopicRewardParams,
+  ): DispatchDefinedGrowthEventPayload | null {
     if (
       params.previousAuditStatus !== AuditStatusEnum.PENDING ||
       params.nextAuditStatus !== AuditStatusEnum.APPROVED
     ) {
-      return
+      return null
     }
     const topicApprovedEvent = this.buildCreateTopicEventEnvelope({
       topicId: params.topicId,
@@ -914,13 +926,14 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         EventDefinitionConsumerEnum.GROWTH,
       )
     ) {
-      return
+      return null
     }
-    await this.growthEventBridgeService.dispatchDefinedEvent({
+
+    return {
       eventEnvelope: topicApprovedEvent,
       bizKey: `forum:topic:create:${params.topicId}:user:${params.userId}`,
       source: 'forum_topic',
-    })
+    }
   }
 
   // 更新主题审核状态，并在审核通过时补发成长奖励。

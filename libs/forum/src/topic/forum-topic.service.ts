@@ -254,6 +254,11 @@ export class ForumTopicService {
     return this.commandService.rewardApprovedTopicIfNeeded(params)
   }
 
+  // 构建审核通过主题的成长奖励 payload，供治理链路补建 settlement 事实。
+  buildApprovedTopicGrowthEventPayload(params: ApprovedTopicRewardParams) {
+    return this.commandService.buildApprovedTopicGrowthEventPayload(params)
+  }
+
   // 用户编辑自己的主题。
   async updateUserTopic(
     userId: number,

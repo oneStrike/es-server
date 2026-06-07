@@ -21,6 +21,8 @@ import {
   QueryForumModeratorDto,
   UpdateForumModeratorDto,
 } from './dto/moderator.dto'
+import { ForumModeratorLifecycleEventTypeEnum } from './moderator-lifecycle-log.constant'
+import { ForumModeratorLifecycleLogService } from './moderator-lifecycle-log.service'
 import {
   ALL_FORUM_MODERATOR_PERMISSIONS,
   FORUM_MODERATOR_PERMISSION_LABELS,
@@ -34,7 +36,10 @@ import {
  */
 @Injectable()
 export class ForumModeratorService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly lifecycleLogService: ForumModeratorLifecycleLogService,
+  ) {}
 
   /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
@@ -282,6 +287,33 @@ export class ForumModeratorService {
       .where(eq(this.forumModeratorSection.moderatorId, moderatorId))
   }
 
+  private buildLifecycleSnapshot(
+    moderator: Pick<
+      ForumModeratorSelect,
+      | 'id'
+      | 'userId'
+      | 'groupId'
+      | 'roleType'
+      | 'permissions'
+      | 'isEnabled'
+      | 'remark'
+      | 'deletedAt'
+    >,
+    sectionIds: number[] = [],
+  ) {
+    return {
+      id: moderator.id,
+      userId: moderator.userId,
+      roleType: moderator.roleType,
+      groupId: moderator.groupId,
+      permissions: this.normalizePermissions(moderator.permissions ?? []),
+      sectionIds,
+      isEnabled: moderator.isEnabled,
+      remark: moderator.remark ?? null,
+      deletedAt: moderator.deletedAt?.toISOString?.() ?? null,
+    }
+  }
+
   /**
    * 将不同入口传入的角色、分组、权限和板块范围归一化为统一落库结构。
    * 这里集中处理角色切换约束，避免 create/update/审核通过等写路径出现分叉规则。
@@ -412,16 +444,26 @@ export class ForumModeratorService {
     moderatorId: number,
     sectionIds: number[],
     customPermissions?: ForumModeratorPermissionEnum[] | null,
+    options: { preserveExistingPermissions?: boolean } = {},
   ) {
     const uniqueSectionIds = await this.ensureSectionIdsExist(sectionIds, tx)
     const normalizedCustomPermissions =
       this.normalizePermissions(customPermissions)
     const existingScopes = await tx
-      .select({ sectionId: this.forumModeratorSection.sectionId })
+      .select({
+        sectionId: this.forumModeratorSection.sectionId,
+        permissions: this.forumModeratorSection.permissions,
+      })
       .from(this.forumModeratorSection)
       .where(eq(this.forumModeratorSection.moderatorId, moderatorId))
 
     const existingSectionIds = existingScopes.map((item) => item.sectionId)
+    const existingPermissionsBySectionId = new Map(
+      existingScopes.map((item) => [
+        item.sectionId,
+        this.normalizePermissions(item.permissions ?? []),
+      ]),
+    )
     const removedSectionIds = existingSectionIds.filter(
       (sectionId) => !uniqueSectionIds.includes(sectionId),
     )
@@ -443,13 +485,17 @@ export class ForumModeratorService {
     }
 
     await Promise.all(
-      uniqueSectionIds.map((sectionId) =>
-        tx
+      uniqueSectionIds.map((sectionId) => {
+        const permissions = options.preserveExistingPermissions
+          ? (existingPermissionsBySectionId.get(sectionId) ?? [])
+          : normalizedCustomPermissions
+
+        return tx
           .insert(this.forumModeratorSection)
           .values({
             moderatorId,
             sectionId,
-            permissions: normalizedCustomPermissions,
+            permissions,
           })
           .onConflictDoUpdate({
             target: [
@@ -457,10 +503,10 @@ export class ForumModeratorService {
               this.forumModeratorSection.sectionId,
             ],
             set: {
-              permissions: normalizedCustomPermissions,
+              permissions,
             },
-          }),
-      ),
+          })
+      }),
     )
   }
 
@@ -502,7 +548,10 @@ export class ForumModeratorService {
    * 批量装配版主管理端视图。
    * 查询用户、分组与板块作用域后一次性拼装，避免 controller 层再做二次聚合。
    */
-  private async buildModeratorViews(moderators: ForumModeratorSelect[]) {
+  private async buildModeratorViews(
+    moderators: ForumModeratorSelect[],
+    options: { mode: 'full' | 'list' } = { mode: 'full' },
+  ) {
     if (moderators.length === 0) {
       return []
     }
@@ -567,6 +616,10 @@ export class ForumModeratorService {
     const groupMap = new Map<number, { id: number, name: string }>(
       groups.map((group) => [group.id, group]),
     )
+    const sectionMap = new Map<
+      number,
+      Pick<ForumSectionSelect, 'id' | 'name' | 'groupId'>
+    >(allSections.map((section) => [section.id, section]))
     const scopeMap = new Map<number, Array<(typeof scopes)[number]>>()
 
     for (const scope of scopes) {
@@ -587,23 +640,31 @@ export class ForumModeratorService {
 
       let sections = sectionScopes
         .map((scope) => {
-          const section = allSections.find(
-            (item) => item.id === scope.sectionId,
-          )
+          const section = sectionMap.get(scope.sectionId)
           return section
             ? this.buildSectionView(section, basePermissions, scope.permissions)
             : null
         })
         .filter((item): item is NonNullable<typeof item> => item !== null)
+      let sectionCount = sections.length
 
       if (moderator.roleType === ForumModeratorRoleTypeEnum.SUPER) {
-        sections = allSections.map((section) =>
+        sectionCount = allSections.length
+        const visibleSections =
+          options.mode === 'list' ? allSections.slice(0, 3) : allSections
+        sections = visibleSections.map((section) =>
           this.buildSectionView(section, basePermissions),
         )
       } else if (moderator.roleType === ForumModeratorRoleTypeEnum.GROUP) {
-        sections = allSections
-          .filter((section) => section.groupId === moderator.groupId)
-          .map((section) => this.buildSectionView(section, basePermissions))
+        const groupSections = allSections.filter(
+          (section) => section.groupId === moderator.groupId,
+        )
+        sectionCount = groupSections.length
+        const visibleSections =
+          options.mode === 'list' ? groupSections.slice(0, 3) : groupSections
+        sections = visibleSections.map((section) =>
+          this.buildSectionView(section, basePermissions),
+        )
       }
 
       return {
@@ -626,6 +687,7 @@ export class ForumModeratorService {
           : undefined,
         permissionNames: this.getPermissionNames(basePermissions),
         sections,
+        sectionCount,
       }
     })
   }
@@ -649,7 +711,9 @@ export class ForumModeratorService {
       )
     }
 
-    const [detail] = await this.buildModeratorViews([moderator])
+    const [detail] = await this.buildModeratorViews([moderator], {
+      mode: 'full',
+    })
     return detail
   }
 
@@ -675,7 +739,9 @@ export class ForumModeratorService {
       }
     }
 
-    const [view] = await this.buildModeratorViews([moderator])
+    const [view] = await this.buildModeratorViews([moderator], {
+      mode: 'full',
+    })
 
     return {
       isModerator: true,
@@ -695,14 +761,18 @@ export class ForumModeratorService {
    * 创建版主。
    * 同一用户只允许存在一条有效版主记录；若命中已软删除旧记录，则在事务内复活并重建作用域。
    */
-  private async createModeratorInTx(tx: Db, input: CreateForumModeratorDto) {
+  private async createModeratorInTx(
+    tx: Db,
+    input: CreateForumModeratorDto,
+    actorAdminUserId?: number,
+    options: { applicationId?: number | null, reason?: string | null } = {},
+  ) {
     await this.ensureUserExists(input.userId, tx)
 
     const existing = await tx.query.forumModerator.findFirst({
       where: {
         userId: input.userId,
       },
-      columns: { id: true, deletedAt: true },
     })
 
     if (existing && existing.deletedAt === null) {
@@ -724,6 +794,15 @@ export class ForumModeratorService {
       isEnabled: input.isEnabled ?? true,
       remark: input.remark ?? null,
     }
+
+    const beforeSectionIds = existing?.id
+      ? (await this.getModeratorSectionScopes(existing.id, tx)).map(
+          (item) => item.sectionId,
+        )
+      : []
+    const beforeData = existing
+      ? this.buildLifecycleSnapshot(existing, beforeSectionIds)
+      : null
 
     const moderatorId = existing?.id
       ? existing.id
@@ -753,21 +832,55 @@ export class ForumModeratorService {
     } else {
       await this.clearModeratorSections(tx, moderatorId)
     }
+
+    if (actorAdminUserId !== undefined) {
+      const afterData = this.buildLifecycleSnapshot(
+        {
+          id: moderatorId,
+          userId: input.userId,
+          ...moderatorData,
+          deletedAt: null,
+        },
+        scope.sectionIds,
+      )
+      await this.lifecycleLogService.createLifecycleLogInTx(tx, {
+        eventType: existing?.id
+          ? ForumModeratorLifecycleEventTypeEnum.RESTORE
+          : ForumModeratorLifecycleEventTypeEnum.CREATE,
+        moderatorId,
+        applicationId: options.applicationId ?? null,
+        actorAdminUserId,
+        reason: options.reason ?? input.remark ?? null,
+        beforeData,
+        afterData,
+      })
+    }
+
+    return { moderatorId, restored: Boolean(existing?.id) }
   }
 
   /**
    * 创建版主。
    * 同一用户只允许存在一条有效版主记录；若命中已软删除旧记录，则在事务内复活并重建作用域。
    */
-  async createModerator(input: CreateForumModeratorDto, tx?: Db) {
-    if (tx) {
-      await this.createModeratorInTx(tx, input)
+  async createModerator(
+    input: CreateForumModeratorDto,
+    actorAdminUserIdOrTx?: number | Db,
+    tx?: Db,
+  ) {
+    const actorAdminUserId =
+      typeof actorAdminUserIdOrTx === 'number' ? actorAdminUserIdOrTx : undefined
+    const runnerTx =
+      typeof actorAdminUserIdOrTx === 'number' ? tx : actorAdminUserIdOrTx
+
+    if (runnerTx) {
+      await this.createModeratorInTx(runnerTx, input, actorAdminUserId)
       return true
     }
 
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (innerTx) => {
-        await this.createModeratorInTx(innerTx, input)
+        await this.createModeratorInTx(innerTx, input, actorAdminUserId)
       }),
     )
 
@@ -784,17 +897,30 @@ export class ForumModeratorService {
       sectionId: number
       permissions?: ForumModeratorPermissionEnum[]
     },
+    actorAdminUserId: number,
+    applicationId: number,
     tx?: Db,
   ) {
-    return this.createModerator(
-      {
-        userId: input.userId,
-        roleType: ForumModeratorRoleTypeEnum.SECTION,
-        permissions: input.permissions,
-        sectionIds: [input.sectionId],
-        isEnabled: true,
-      },
-      tx,
+    const createInput = {
+      userId: input.userId,
+      roleType: ForumModeratorRoleTypeEnum.SECTION,
+      permissions: input.permissions,
+      sectionIds: [input.sectionId],
+      isEnabled: true,
+    }
+
+    if (tx) {
+      return this.createModeratorInTx(tx, createInput, actorAdminUserId, {
+        applicationId,
+      })
+    }
+
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (innerTx) =>
+        this.createModeratorInTx(innerTx, createInput, actorAdminUserId, {
+          applicationId,
+        }),
+      ),
     )
   }
 
@@ -802,10 +928,9 @@ export class ForumModeratorService {
    * 软删除版主。
    * 删除时会同步清空板块作用域，避免残留 forum_moderator_section 记录继续生效。
    */
-  async removeModerator(id: number) {
+  async removeModerator(id: number, actorAdminUserId?: number) {
     const moderator = await this.db.query.forumModerator.findFirst({
       where: { id, deletedAt: { isNull: true } },
-      columns: { id: true },
     })
 
     if (!moderator) {
@@ -817,10 +942,18 @@ export class ForumModeratorService {
 
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        const beforeSectionIds = (
+          await this.getModeratorSectionScopes(id, tx)
+        ).map((item) => item.sectionId)
+        const beforeData = this.buildLifecycleSnapshot(
+          moderator,
+          beforeSectionIds,
+        )
+        const deletedAt = new Date()
         await this.clearModeratorSections(tx, id)
         const rows = await tx
           .update(this.forumModerator)
-          .set({ deletedAt: new Date() })
+          .set({ deletedAt })
           .where(
             and(
               eq(this.forumModerator.id, id),
@@ -829,6 +962,20 @@ export class ForumModeratorService {
           )
 
         this.drizzle.assertAffectedRows(rows, '版主不存在')
+        if (actorAdminUserId !== undefined) {
+          await this.lifecycleLogService.createLifecycleLogInTx(tx, {
+            eventType: ForumModeratorLifecycleEventTypeEnum.REMOVE,
+            moderatorId: id,
+            actorAdminUserId,
+            reason: moderator.remark ?? null,
+            beforeData,
+            afterData: {
+              ...beforeData,
+              sectionIds: [],
+              deletedAt: deletedAt.toISOString(),
+            },
+          })
+        }
       }),
     )
 
@@ -839,7 +986,10 @@ export class ForumModeratorService {
    * 调整板块版主管理的板块范围。
    * 仅 section 版主允许调用该路径，分组/超级版主的范围由角色本身隐式决定。
    */
-  async assignModeratorSection(input: AssignForumModeratorSectionDto) {
+  async assignModeratorSection(
+    input: AssignForumModeratorSectionDto,
+    actorAdminUserId?: number,
+  ) {
     const moderator = await this.db.query.forumModerator.findFirst({
       where: { id: input.moderatorId, deletedAt: { isNull: true } },
     })
@@ -860,12 +1010,38 @@ export class ForumModeratorService {
 
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        const beforeScopes = await this.getModeratorSectionScopes(
+          input.moderatorId,
+          tx,
+        )
+        const beforeData = this.buildLifecycleSnapshot(
+          moderator,
+          beforeScopes.map((item) => item.sectionId),
+        )
         await this.syncModeratorSections(
           tx,
           input.moderatorId,
           input.sectionIds,
           input.permissions,
         )
+        const afterData = this.buildLifecycleSnapshot(
+          {
+            ...moderator,
+            permissions: this.normalizePermissions(
+              input.permissions ?? moderator.permissions ?? [],
+            ),
+          },
+          input.sectionIds,
+        )
+        if (actorAdminUserId !== undefined) {
+          await this.lifecycleLogService.createLifecycleLogInTx(tx, {
+            eventType: ForumModeratorLifecycleEventTypeEnum.ASSIGN_SECTION,
+            moderatorId: input.moderatorId,
+            actorAdminUserId,
+            beforeData,
+            afterData,
+          })
+        }
       }),
     )
 
@@ -969,7 +1145,7 @@ export class ForumModeratorService {
 
     return {
       ...page,
-      list: await this.buildModeratorViews(page.list),
+      list: await this.buildModeratorViews(page.list, { mode: 'list' }),
     }
   }
 
@@ -1065,7 +1241,7 @@ export class ForumModeratorService {
    * 更新版主信息。
    * 角色切换会触发作用域重算，并在同一事务内同步清理或重建板块绑定。
    */
-  async updateModerator(input: UpdateForumModeratorDto) {
+  async updateModerator(input: UpdateForumModeratorDto, actorAdminUserId?: number) {
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const moderator = await tx.query.forumModerator.findFirst({
@@ -1100,6 +1276,10 @@ export class ForumModeratorService {
           input.id,
           tx,
         )
+        const beforeData = this.buildLifecycleSnapshot(
+          moderator,
+          currentSectionScopes.map((item) => item.sectionId),
+        )
         const scope = await this.normalizeScope(input, {
           client: tx,
           current: moderator,
@@ -1124,9 +1304,50 @@ export class ForumModeratorService {
         this.drizzle.assertAffectedRows(result, '版主不存在')
 
         if (scope.roleType === ForumModeratorRoleTypeEnum.SECTION) {
-          await this.syncModeratorSections(tx, input.id, scope.sectionIds)
+          await this.syncModeratorSections(tx, input.id, scope.sectionIds, null, {
+            preserveExistingPermissions: true,
+          })
         } else {
           await this.clearModeratorSections(tx, input.id)
+        }
+
+        const nextIsEnabled = input.isEnabled ?? moderator.isEnabled
+        const afterData = this.buildLifecycleSnapshot(
+          {
+            ...moderator,
+            groupId: scope.groupId,
+            roleType: scope.roleType,
+            permissions: scope.permissions,
+            isEnabled: nextIsEnabled,
+            remark: input.remark ?? moderator.remark,
+          },
+          scope.sectionIds,
+        )
+        const sectionIdsChanged =
+          JSON.stringify(beforeData.sectionIds) !==
+          JSON.stringify(afterData.sectionIds)
+        const scopeChanged =
+          beforeData.roleType !== afterData.roleType ||
+          beforeData.groupId !== afterData.groupId ||
+          JSON.stringify(beforeData.permissions) !==
+          JSON.stringify(afterData.permissions) ||
+          beforeData.remark !== afterData.remark ||
+          sectionIdsChanged
+        const eventType =
+          !scopeChanged && moderator.isEnabled !== nextIsEnabled
+            ? nextIsEnabled
+              ? ForumModeratorLifecycleEventTypeEnum.ENABLE
+              : ForumModeratorLifecycleEventTypeEnum.DISABLE
+            : ForumModeratorLifecycleEventTypeEnum.UPDATE_SCOPE
+        if (actorAdminUserId !== undefined) {
+          await this.lifecycleLogService.createLifecycleLogInTx(tx, {
+            eventType,
+            moderatorId: input.id,
+            actorAdminUserId,
+            reason: input.remark ?? null,
+            beforeData,
+            afterData,
+          })
         }
       }),
     )
