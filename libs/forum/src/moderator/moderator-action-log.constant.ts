@@ -45,6 +45,8 @@ export enum ForumModeratorActionTypeEnum {
   UNHIDE_COMMENT = 15,
   /** 恢复主题 */
   RESTORE_TOPIC = 16,
+  /** 更新主题内容 */
+  UPDATE_TOPIC = 17,
 }
 
 export enum ForumGovernanceActorTypeEnum {

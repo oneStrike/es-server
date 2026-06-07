@@ -25,6 +25,7 @@ import {
   MoveForumTopicDto,
   RestoreForumTopicDto,
   UpdateForumTopicAuditStatusDto,
+  UpdateForumTopicDto,
   UpdateForumTopicFeaturedDto,
   UpdateForumTopicHiddenDto,
   UpdateForumTopicLockedDto,
@@ -531,6 +532,7 @@ export class ForumModeratorGovernanceService {
         topic,
         context,
         actor.actorUserId,
+        { recordUserActionLog: false },
       )
       await this.createTopicActionLog({
         tx,
@@ -574,6 +576,7 @@ export class ForumModeratorGovernanceService {
         input,
         context,
         actor.actorUserId,
+        { recordUserActionLog: false },
       )
       await this.createTopicActionLog({
         tx,
@@ -593,6 +596,51 @@ export class ForumModeratorGovernanceService {
           sectionId: input.sectionId ?? current.sectionId,
         },
       })
+    })
+
+    return true
+  }
+
+  /**
+   * 更新主题内容。
+   * admin/moderator 内容治理写入 canonical governance log，不写 user action log。
+   */
+  async updateTopicContent(
+    input: UpdateForumTopicDto,
+    actor: ForumModeratorGovernanceActor,
+    context: ForumTopicClientContext = {},
+  ) {
+    const current = await this.getTopicGovernanceSnapshot(input.id)
+    const grant = await this.resolveModeratorGrant(
+      actor,
+      current.sectionId,
+      ForumModeratorPermissionEnum.AUDIT,
+    )
+
+    await this.forumTopicService.updateTopic(input, context, actor.actorUserId, {
+      recordUserActionLog: false,
+      afterUpdateInTx: async (tx, nextTopic) => {
+        await this.createTopicActionLog({
+          tx,
+          actor,
+          grant,
+          topicId: current.id,
+          actionType: ForumModeratorActionTypeEnum.UPDATE_TOPIC,
+          actionDescription: '更新主题内容',
+          beforeData: {
+            sectionId: current.sectionId,
+            title: current.title,
+            userId: current.userId,
+          },
+          afterData: {
+            auditStatus: nextTopic.auditStatus,
+            isHidden: nextTopic.isHidden,
+            sectionId: nextTopic.sectionId,
+            title: nextTopic.title,
+            userId: nextTopic.userId,
+          },
+        })
+      },
     })
 
     return true
@@ -893,7 +941,7 @@ export class ForumModeratorGovernanceService {
           auditReason: input.auditReason ?? null,
         },
       })
-      await this.ensureApprovedCommentGrowthSettlement(tx, handled)
+      await this.ensureApprovedCommentGrowthSettlement(tx, result)
       return result
     })
 

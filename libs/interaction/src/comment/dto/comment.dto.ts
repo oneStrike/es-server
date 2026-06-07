@@ -391,6 +391,20 @@ export class QueryAdminCommentPageDto extends IntersectionType(
     maxLength: 200,
   })
   keyword?: string
+
+  @StringProperty({
+    description: '创建日期开始（应用时区自然日，YYYY-MM-DD）',
+    example: '2026-06-01',
+    required: false,
+  })
+  declare startDate?: string
+
+  @StringProperty({
+    description: '创建日期结束（应用时区自然日，YYYY-MM-DD）',
+    example: '2026-06-08',
+    required: false,
+  })
+  declare endDate?: string
 }
 
 export class UpdateCommentAuditStatusDto extends IntersectionType(

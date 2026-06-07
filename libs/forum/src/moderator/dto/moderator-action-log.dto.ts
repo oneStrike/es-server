@@ -57,7 +57,7 @@ export class BaseForumModeratorActionLogDto extends IdDto {
 
   @EnumProperty({
     description:
-      '操作类型（1=置顶主题；2=取消置顶主题；3=加精主题；4=取消加精主题；5=锁定主题；6=取消锁定主题；7=删除主题；8=移动主题；9=审核主题；10=删除评论；11=隐藏主题；12=取消隐藏主题；13=审核评论；14=隐藏评论；15=取消隐藏评论；16=恢复主题）',
+      '操作类型（1=置顶主题；2=取消置顶主题；3=加精主题；4=取消加精主题；5=锁定主题；6=取消锁定主题；7=删除主题；8=移动主题；9=审核主题；10=删除评论；11=隐藏主题；12=取消隐藏主题；13=审核评论；14=隐藏评论；15=取消隐藏评论；16=恢复主题；17=更新主题内容）',
     example: ForumModeratorActionTypeEnum.HIDE_COMMENT,
     required: true,
     enum: ForumModeratorActionTypeEnum,

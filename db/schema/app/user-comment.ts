@@ -224,6 +224,25 @@ export const userComment = snakeCase.table(
      */
     index('user_comment_created_at_idx').on(table.createdAt),
     /**
+     * 管理端评论列表默认分页索引。
+     * 支持 deleted_at 过滤后的创建时间倒序与 id 稳定分页。
+     */
+    index('user_comment_admin_live_created_id_idx')
+      .on(table.createdAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 管理端评论列表按用户筛选索引。
+     */
+    index('user_comment_admin_live_user_created_id_idx')
+      .on(table.userId, table.createdAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 管理端评论列表按审核状态筛选索引。
+     */
+    index('user_comment_admin_live_audit_created_id_idx')
+      .on(table.auditStatus, table.createdAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
      * 审核状态索引
      */
     index('user_comment_audit_status_idx').on(table.auditStatus),

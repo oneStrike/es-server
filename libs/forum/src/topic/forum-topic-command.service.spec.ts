@@ -597,6 +597,27 @@ describe('ForumTopicCommandService delete transaction side effects', () => {
     expect(appUserCountService.updateCommentCount).not.toHaveBeenCalled()
     expect(actionLogService.createActionLogInTx).not.toHaveBeenCalled()
   })
+
+  it('can suppress user action logs for governance topic deletion', async () => {
+    const tx = createCommandTx({
+      commentSummaries: [],
+      topicUpdateResult: [{ id: 1 }],
+    })
+    const { actionLogService, service } = createCommandService()
+    const topic = createTopic()
+
+    await expect(
+      service.deleteTopicWithCurrentInTx(
+        tx as unknown as Db,
+        topic,
+        {},
+        9001,
+        { recordUserActionLog: false },
+      ),
+    ).resolves.toBe(true)
+
+    expect(actionLogService.createActionLogInTx).not.toHaveBeenCalled()
+  })
 })
 
 describe('ForumTopicCommandService restore transaction side effects', () => {
@@ -736,6 +757,40 @@ describe('ForumTopicCommandService restore transaction side effects', () => {
       topicId: topic.id,
       topicTitle: topic.title,
     })
+  })
+
+  it('can suppress user action logs for governance topic restore', async () => {
+    const tx = createCommandTx({
+      cascadeRows: [],
+      commentSummaries: [],
+      restoredComments: [],
+      topicUpdateFirst: true,
+      topicUpdateResult: [{ id: 1 }],
+    })
+    tx.query.forumSection.findFirst.mockResolvedValueOnce({
+      deletedAt: null,
+      group: null,
+      groupId: null,
+      isEnabled: true,
+      topicReviewPolicy: 1,
+    })
+    const { actionLogService, service } = createCommandService()
+    const topic = createTopic({
+      deletedAt: new Date('2026-06-01T02:00:00.000Z'),
+    })
+
+    await expect(
+      service.restoreTopicWithCurrentInTx(
+        tx as unknown as Db,
+        topic,
+        { id: topic.id, sectionId: topic.sectionId },
+        {},
+        9001,
+        { recordUserActionLog: false },
+      ),
+    ).resolves.toBe(true)
+
+    expect(actionLogService.createActionLogInTx).not.toHaveBeenCalled()
   })
 })
 

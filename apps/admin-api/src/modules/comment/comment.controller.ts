@@ -76,4 +76,22 @@ export class CommentController {
       actorUserId: userId,
     })
   }
+
+  @Post('delete')
+  @ApiAuditDoc({
+    summary: '删除评论',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
+  })
+  async delete(
+    @Body() body: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.deleteComment(body, {
+      actorType: 'admin',
+      actorUserId: userId,
+    })
+  }
 }

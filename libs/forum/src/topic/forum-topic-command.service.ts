@@ -280,6 +280,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     updateForumTopicDto: UpdateForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
+    options: {
+      recordUserActionLog?: boolean
+      afterUpdateInTx?: (tx: Db, nextTopic: ForumTopicSelect) => Promise<void>
+    } = {},
   ) {
     const {
       id,
@@ -412,24 +416,27 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
             topicTitle: nextTopic.title,
           })
         }
+        await options.afterUpdateInTx?.(tx, nextTopic)
         return nextTopic
       }),
     )
-    await this.actionLogService.createActionLog({
-      userId: topic.userId,
-      actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
-      targetType: ForumUserActionTargetTypeEnum.TOPIC,
-      targetId: id,
-      beforeData: JSON.stringify(topic),
-      afterData: JSON.stringify(updatedTopic),
-      ipAddress: context.ipAddress,
-      userAgent: context.userAgent,
-      geoCountry: context.geoCountry,
-      geoProvince: context.geoProvince,
-      geoCity: context.geoCity,
-      geoIsp: context.geoIsp,
-      geoSource: context.geoSource,
-    })
+    if (options.recordUserActionLog !== false) {
+      await this.actionLogService.createActionLog({
+        userId: topic.userId,
+        actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
+        targetType: ForumUserActionTargetTypeEnum.TOPIC,
+        targetId: id,
+        beforeData: JSON.stringify(topic),
+        afterData: JSON.stringify(updatedTopic),
+        ipAddress: context.ipAddress,
+        userAgent: context.userAgent,
+        geoCountry: context.geoCountry,
+        geoProvince: context.geoProvince,
+        geoCity: context.geoCity,
+        geoIsp: context.geoIsp,
+        geoSource: context.geoSource,
+      })
+    }
     return true
   }
 
@@ -438,6 +445,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     updateForumTopicDto: UpdateForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId?: number,
+    options: {
+      recordUserActionLog?: boolean
+      afterUpdateInTx?: (tx: Db, nextTopic: ForumTopicSelect) => Promise<void>
+    } = {},
   ) {
     const topic = await this.getActiveTopicOrThrow(updateForumTopicDto.id)
     return this.updateTopicWithCurrent(
@@ -445,6 +456,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       updateForumTopicDto,
       context,
       actorUserId ?? topic.userId,
+      options,
     )
   }
 
@@ -468,6 +480,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     topic: ForumTopicSelect,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
+    options: { recordUserActionLog?: boolean } = {},
   ) {
     const { id } = topic
     const deletedAt = new Date()
@@ -570,21 +583,23 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     }
     await Promise.all(commentCountTasks)
     await this.forumCounterService.syncSectionVisibleState(tx, topic.sectionId)
-    await this.actionLogService.createActionLogInTx(tx, {
-      userId: actorUserId,
-      actionType: ForumUserActionTypeEnum.DELETE_TOPIC,
-      targetType: ForumUserActionTargetTypeEnum.TOPIC,
-      targetId: topic.id,
-      beforeData: JSON.stringify(topic),
-      afterData: JSON.stringify({ topicDeleteCascadeId }),
-      ipAddress: context.ipAddress,
-      userAgent: context.userAgent,
-      geoCountry: context.geoCountry,
-      geoProvince: context.geoProvince,
-      geoCity: context.geoCity,
-      geoIsp: context.geoIsp,
-      geoSource: context.geoSource,
-    })
+    if (options.recordUserActionLog !== false) {
+      await this.actionLogService.createActionLogInTx(tx, {
+        userId: actorUserId,
+        actionType: ForumUserActionTypeEnum.DELETE_TOPIC,
+        targetType: ForumUserActionTargetTypeEnum.TOPIC,
+        targetId: topic.id,
+        beforeData: JSON.stringify(topic),
+        afterData: JSON.stringify({ topicDeleteCascadeId }),
+        ipAddress: context.ipAddress,
+        userAgent: context.userAgent,
+        geoCountry: context.geoCountry,
+        geoProvince: context.geoProvince,
+        geoCity: context.geoCity,
+        geoIsp: context.geoIsp,
+        geoSource: context.geoSource,
+      })
+    }
     return true
   }
 
@@ -645,6 +660,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     input: RestoreForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
+    options: { recordUserActionLog?: boolean } = {},
   ) {
     const nextSectionId = input.sectionId ?? topic.sectionId
     await this.getSectionTopicReviewPolicy(nextSectionId, {
@@ -845,28 +861,30 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         topicTitle: topic.title,
       })
     }
-    await this.actionLogService.createActionLogInTx(tx, {
-      userId: actorUserId,
-      actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
-      targetType: ForumUserActionTargetTypeEnum.TOPIC,
-      targetId: topic.id,
-      beforeData: JSON.stringify({
-        deletedAt: topic.deletedAt,
-        sectionId: topic.sectionId,
-      }),
-      afterData: JSON.stringify({
-        deletedAt: null,
-        restoredCommentCascadeId: topicDeleteCascadeId,
-        sectionId: nextSectionId,
-      }),
-      ipAddress: context.ipAddress,
-      userAgent: context.userAgent,
-      geoCountry: context.geoCountry,
-      geoProvince: context.geoProvince,
-      geoCity: context.geoCity,
-      geoIsp: context.geoIsp,
-      geoSource: context.geoSource,
-    })
+    if (options.recordUserActionLog !== false) {
+      await this.actionLogService.createActionLogInTx(tx, {
+        userId: actorUserId,
+        actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
+        targetType: ForumUserActionTargetTypeEnum.TOPIC,
+        targetId: topic.id,
+        beforeData: JSON.stringify({
+          deletedAt: topic.deletedAt,
+          sectionId: topic.sectionId,
+        }),
+        afterData: JSON.stringify({
+          deletedAt: null,
+          restoredCommentCascadeId: topicDeleteCascadeId,
+          sectionId: nextSectionId,
+        }),
+        ipAddress: context.ipAddress,
+        userAgent: context.userAgent,
+        geoCountry: context.geoCountry,
+        geoProvince: context.geoProvince,
+        geoCity: context.geoCity,
+        geoIsp: context.geoIsp,
+        geoSource: context.geoSource,
+      })
+    }
     return true
   }
 

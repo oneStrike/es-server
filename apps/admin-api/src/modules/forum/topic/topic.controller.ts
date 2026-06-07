@@ -96,10 +96,13 @@ export class ForumTopicController {
     @Req() req: FastifyRequest,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.forumTopicService.updateTopic(
+    return this.forumModeratorGovernanceService.updateTopicContent(
       body,
+      {
+        actorType: 'admin',
+        actorUserId: userId,
+      },
       await this.buildTopicClientContext(req),
-      userId,
     )
   }
 

@@ -99,11 +99,16 @@ export class ForumTopicService {
     updateForumTopicDto: UpdateForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId?: number,
+    options: {
+      recordUserActionLog?: boolean
+      afterUpdateInTx?: (tx: Db, nextTopic: ForumTopicSelect) => Promise<void>
+    } = {},
   ) {
     return this.commandService.updateTopic(
       updateForumTopicDto,
       context,
       actorUserId,
+      options,
     )
   }
 
@@ -113,12 +118,14 @@ export class ForumTopicService {
     topic: ForumTopicSelect,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
+    options: { recordUserActionLog?: boolean } = {},
   ) {
     return this.commandService.deleteTopicWithCurrentInTx(
       tx,
       topic,
       context,
       actorUserId,
+      options,
     )
   }
 
@@ -129,6 +136,7 @@ export class ForumTopicService {
     input: RestoreForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
+    options: { recordUserActionLog?: boolean } = {},
   ) {
     return this.commandService.restoreTopicWithCurrentInTx(
       tx,
@@ -136,6 +144,7 @@ export class ForumTopicService {
       input,
       context,
       actorUserId,
+      options,
     )
   }
 

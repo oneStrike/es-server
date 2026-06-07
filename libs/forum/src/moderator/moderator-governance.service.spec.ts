@@ -75,12 +75,24 @@ function createGovernanceService() {
     })),
     moveTopicInTx: jest.fn(async () => true),
     rewardApprovedTopicIfNeeded: jest.fn(async () => undefined),
+    updateTopic: jest.fn(async (_input, _context, _actorUserId, options) => {
+      await options?.afterUpdateInTx?.(tx, {
+        auditStatus: AuditStatusEnum.APPROVED,
+        id: 11,
+        isHidden: false,
+        sectionId: 3,
+        title: 'topic next',
+        userId: 7,
+      })
+      return true
+    }),
     updateTopicPinned: jest.fn(async () => true),
     updateTopicPinnedInTx: jest.fn(async () => true),
   }
   const commentService = {
     buildCommentCreatedGrowthEventPayload: jest.fn(() => null),
     buildVisibleCommentGrowthEventPayload: jest.fn(() => null),
+    deleteCommentInTx: jest.fn(async () => true),
     rewardCommentModerationIfNeeded: jest.fn(async () => undefined),
     updateCommentHidden: jest.fn(async () => true),
     updateCommentAuditStatusInTx: jest.fn(async () => ({
@@ -167,6 +179,35 @@ describe('ForumModeratorGovernanceService transaction boundary', () => {
     )
   })
 
+  it('updates admin topic content through governance without writing user action logs', async () => {
+    const { actionLogService, service, topicService, tx } =
+      createGovernanceService()
+
+    await service.updateTopicContent(
+      { html: '<p>next</p>', id: 11, title: 'topic next' },
+      { actorType: 'admin', actorUserId: 9001 },
+    )
+
+    expect(topicService.updateTopic).toHaveBeenCalledWith(
+      { html: '<p>next</p>', id: 11, title: 'topic next' },
+      {},
+      9001,
+      expect.objectContaining({
+        recordUserActionLog: false,
+      }),
+    )
+    expect(actionLogService.createActionLogInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        actionType: ForumModeratorActionTypeEnum.UPDATE_TOPIC,
+        actorType: 'admin',
+        actorUserId: 9001,
+        moderatorId: null,
+        targetId: 11,
+      }),
+    )
+  })
+
   it('propagates moderator action log failures instead of treating mutation as successful', async () => {
     const { actionLogService, service } = createGovernanceService()
     actionLogService.createActionLogInTx.mockRejectedValueOnce(
@@ -213,6 +254,28 @@ describe('ForumModeratorGovernanceService transaction boundary', () => {
       expect.objectContaining({
         actionType: ForumModeratorActionTypeEnum.HIDE_COMMENT,
         moderatorId: 5,
+        targetId: 21,
+      }),
+    )
+  })
+
+  it('deletes admin comments through the governance action log', async () => {
+    const { actionLogService, commentService, service, tx } =
+      createGovernanceService()
+
+    await service.deleteComment(
+      { id: 21 },
+      { actorType: 'admin', actorUserId: 9001 },
+    )
+
+    expect(commentService.deleteCommentInTx).toHaveBeenCalledWith(tx, 21)
+    expect(actionLogService.createActionLogInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        actionType: ForumModeratorActionTypeEnum.DELETE_COMMENT,
+        actorType: 'admin',
+        actorUserId: 9001,
+        moderatorId: null,
         targetId: 21,
       }),
     )

@@ -42,11 +42,24 @@ import {
 } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { SensitiveWordReviewPolicyService } from '@libs/sensitive-word/sensitive-word-review-policy.service'
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, desc, eq, inArray, isNull, lte, max, or, sql } from 'drizzle-orm'
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  max,
+  or,
+  sql,
+} from 'drizzle-orm'
 import { EmojiCatalogService } from '../emoji/emoji-catalog.service'
 import { EmojiSceneEnum } from '../emoji/emoji.constant'
 import { LikeTargetTypeEnum } from '../like/like.constant'
@@ -2102,6 +2115,10 @@ export class CommentService {
    */
   async getAdminCommentPage(query: QueryAdminCommentPageDto) {
     const conditions: SQL[] = [isNull(this.userComment.deletedAt)]
+    const createdRange = buildDateOnlyRangeInAppTimeZone(
+      query.startDate,
+      query.endDate,
+    )
 
     if (query.id !== undefined) {
       conditions.push(eq(this.userComment.id, query.id))
@@ -2141,6 +2158,12 @@ export class CommentService {
       conditions.push(
         buildILikeCondition(this.userComment.content, query.keyword)!,
       )
+    }
+    if (createdRange?.gte) {
+      conditions.push(gte(this.userComment.createdAt, createdRange.gte))
+    }
+    if (createdRange?.lt) {
+      conditions.push(lt(this.userComment.createdAt, createdRange.lt))
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
