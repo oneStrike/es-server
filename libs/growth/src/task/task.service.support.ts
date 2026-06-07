@@ -80,6 +80,11 @@ export abstract class TaskServiceSupport {
     return this.drizzle.schema.taskEventLog
   }
 
+  // 新任务事件消费失败事实表。
+  protected get taskEventFailureTable() {
+    return this.drizzle.schema.taskEventFailure
+  }
+
   // 奖励结算事实表。
   protected get growthRewardSettlementTable() {
     return this.drizzle.schema.growthRewardSettlement
@@ -378,6 +383,26 @@ export abstract class TaskServiceSupport {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         'claimMode 仅支持 AUTO、MANUAL',
+      )
+    }
+  }
+
+  // 校验任务领取方式与步骤触发方式的唯一合法矩阵。
+  protected ensureTaskExecutionModeMatrix(
+    claimMode: number,
+    triggerMode: number,
+  ) {
+    const legalAutoEvent =
+      claimMode === TaskClaimModeEnum.AUTO &&
+      triggerMode === TaskStepTriggerModeEnum.EVENT
+    const legalManualManual =
+      claimMode === TaskClaimModeEnum.MANUAL &&
+      triggerMode === TaskStepTriggerModeEnum.MANUAL
+
+    if (!legalAutoEvent && !legalManualManual) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发',
       )
     }
   }

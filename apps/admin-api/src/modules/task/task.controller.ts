@@ -4,6 +4,13 @@ import {
   UpdateTaskDefinitionStatusDto,
 } from '@libs/growth/task/dto/task-admin.dto'
 import {
+  QueryTaskEventFailurePageDto,
+  RetryTaskEventFailureBatchDto,
+  TaskEventFailurePageItemDto,
+  TaskEventFailureRetryBatchResultDto,
+  TaskEventFailureRetryResultDto,
+} from '@libs/growth/task/dto/task-event-failure.dto'
+import {
   QueryTaskDefinitionPageDto,
   QueryTaskInstancePageDto,
   QueryTaskReconciliationPageDto,
@@ -30,7 +37,6 @@ import {
   Body,
   Controller,
   Get,
-  ParseIntPipe,
   Post,
   Query,
 } from '@nestjs/common'
@@ -130,8 +136,8 @@ export class TaskController {
     summary: '查询任务详情',
     model: AdminTaskDefinitionDetailDto,
   })
-  async findDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.taskService.getTaskDefinitionDetail(id)
+  async findDetail(@Query() query: IdDto) {
+    return this.taskService.getTaskDefinitionDetail(query.id)
   }
 
   // 分页查询任务实例列表。
@@ -183,5 +189,44 @@ export class TaskController {
     return this.taskRewardRetryService.retryCompletedTaskRewardsBatch(
       body?.limit ?? 100,
     )
+  }
+
+  // 分页查询任务事件消费失败事实。
+  @Get('event-failure/page')
+  @ApiPageDoc({
+    summary: '分页查询任务事件消费失败事实',
+    model: TaskEventFailurePageItemDto,
+  })
+  async findEventFailurePage(@Query() query: QueryTaskEventFailurePageDto) {
+    return this.taskService.getTaskEventFailurePage(query)
+  }
+
+  // 重试单条任务事件消费失败事实。
+  @Post('event-failure/retry')
+  @ApiAuditDoc({
+    summary: '重试单条任务事件消费失败事实',
+    model: TaskEventFailureRetryResultDto,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async retryTaskEventFailure(@Body() body: IdDto) {
+    return this.taskService.retryTaskEventFailure(body.id)
+  }
+
+  // 批量重试待处理的任务事件消费失败事实。
+  @Post('event-failure/retry-pending/batch')
+  @ApiAuditDoc({
+    summary: '批量重试待处理的任务事件消费失败事实',
+    model: TaskEventFailureRetryBatchResultDto,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  @ApiBody({ type: RetryTaskEventFailureBatchDto, required: false })
+  async retryPendingTaskEventFailuresBatch(
+    @Body() body?: RetryTaskEventFailureBatchDto,
+  ) {
+    return this.taskService.retryPendingTaskEventFailuresBatch(body ?? {})
   }
 }

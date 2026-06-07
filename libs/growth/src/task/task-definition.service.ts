@@ -59,6 +59,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
       template?.eventCode,
       template?.supportsUniqueCounting,
     )
+    this.ensureTaskExecutionModeMatrix(input.claimMode, normalizedStep.triggerMode)
 
     await this.drizzle.withErrorHandling(
       async () =>
@@ -207,6 +208,10 @@ export class TaskDefinitionService extends TaskServiceSupport {
         template?.supportsUniqueCounting,
       )
     }
+    this.ensureTaskExecutionModeMatrix(
+      input.claimMode ?? existing.claimMode,
+      nextStep?.triggerMode ?? currentStep.triggerMode,
+    )
     const shouldGuardExecutionContract = this.hasExecutionContractChange(
       existing,
       currentStep,
@@ -333,6 +338,10 @@ export class TaskDefinitionService extends TaskServiceSupport {
               template?.isSelectable ?? false,
               template?.eventCode,
               template?.supportsUniqueCounting,
+            )
+            this.ensureTaskExecutionModeMatrix(
+              existing.claimMode,
+              currentStep.triggerMode,
             )
           }
           if (status === TaskDefinitionStatusEnum.ARCHIVED) {

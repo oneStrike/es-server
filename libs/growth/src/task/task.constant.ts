@@ -52,6 +52,23 @@ export enum TaskClaimModeEnum {
 }
 
 /**
+ * 任务事件消费失败事实状态枚举。
+ */
+export enum TaskEventFailureStatusEnum {
+  /** 已记录，等待重试。 */
+  PENDING = 1,
+  /** 已取得处理租约。 */
+  RETRYING = 2,
+  /** 重试成功或后续消费已解决。 */
+  RESOLVED = 3,
+  /** 超过重试上限或不可恢复。 */
+  TERMINAL = 4,
+}
+
+/** 任务事件消费失败默认最大重试次数。 */
+export const TASK_EVENT_FAILURE_MAX_RETRY_COUNT = 5
+
+/**
  * 任务提醒类型枚举。
  */
 export enum TaskReminderKindEnum {

@@ -71,6 +71,18 @@ export class GrowthEventDispatchService {
       } catch (error) {
         taskErrorMessage =
           error instanceof Error ? error.message : String(error)
+        try {
+          await this.taskService.recordTaskEventFailure({
+            payload: input,
+            errorMessage: taskErrorMessage,
+          })
+        } catch (recordError) {
+          const recordErrorMessage =
+            recordError instanceof Error ? recordError.message : String(recordError)
+          this.logger.error(
+            `growth_task_failure_record_failed bizKey=${input.bizKey} eventKey=${input.eventEnvelope.key} error=${recordErrorMessage}`,
+          )
+        }
         this.logger.warn(
           `growth_task_consumer_failed bizKey=${input.bizKey} eventKey=${input.eventEnvelope.key} error=${taskErrorMessage}`,
         )
@@ -116,7 +128,6 @@ export class GrowthEventDispatchService {
     }
   }
 
-  // 规整事件奖励上下文，补齐账本落账和补偿排障需要的稳定字段。
   // 规整事件奖励上下文，补齐账本落账和补偿排障需要的稳定字段。
   private buildEventRewardContext(input: DispatchDefinedGrowthEventPayload) {
     const occurredAt = input.eventEnvelope.occurredAt

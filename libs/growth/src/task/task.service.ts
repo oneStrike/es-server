@@ -1,3 +1,4 @@
+import type { TaskEventFailureRecordInput } from './types/task-event-failure.type'
 import type { TaskEventProgressInput } from './types/task.type'
 import { IdDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
@@ -5,6 +6,10 @@ import {
   CreateTaskDefinitionDto,
   UpdateTaskDefinitionDto,
 } from './dto/task-admin.dto'
+import {
+  QueryTaskEventFailurePageDto,
+  RetryTaskEventFailureBatchDto,
+} from './dto/task-event-failure.dto'
 import {
   QueryAvailableTaskPageDto,
   QueryMyTaskPageDto,
@@ -14,6 +19,7 @@ import {
   TaskProgressDto,
 } from './dto/task-query.dto'
 import { TaskDefinitionService } from './task-definition.service'
+import { TaskEventFailureService } from './task-event-failure.service'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import { TaskExecutionService } from './task-execution.service'
 import { TaskRewardRetryService } from './task-reward-retry.service'
@@ -30,6 +36,7 @@ export class TaskService {
   // 注入任务域门面对外暴露所需的各子服务。
   constructor(
     private readonly taskDefinitionService: TaskDefinitionService,
+    private readonly taskEventFailureService: TaskEventFailureService,
     private readonly taskEventTemplateRegistry: TaskEventTemplateRegistry,
     private readonly taskExecutionService: TaskExecutionService,
     private readonly taskRewardRetryService: TaskRewardRetryService,
@@ -106,6 +113,30 @@ export class TaskService {
   // 批量补偿已完成任务奖励。
   async retryCompletedTaskRewardsBatch(limit = 100) {
     return this.taskRewardRetryService.retryCompletedTaskRewardsBatch(limit)
+  }
+
+  // 分页查询任务事件消费失败事实。
+  async getTaskEventFailurePage(params: QueryTaskEventFailurePageDto) {
+    return this.taskEventFailureService.getTaskEventFailurePage(params)
+  }
+
+  // 记录任务事件消费失败事实。
+  async recordTaskEventFailure(input: TaskEventFailureRecordInput) {
+    return this.taskEventFailureService.recordTaskEventFailure(input)
+  }
+
+  // 重试单条任务事件消费失败事实。
+  async retryTaskEventFailure(id: number) {
+    return this.taskEventFailureService.retryTaskEventFailure(id)
+  }
+
+  // 批量重试待处理的任务事件消费失败事实。
+  async retryPendingTaskEventFailuresBatch(
+    input: RetryTaskEventFailureBatchDto = {},
+  ) {
+    return this.taskEventFailureService.retryPendingTaskEventFailuresBatch(
+      input.limit ?? 100,
+    )
   }
 
   // 获取可领取任务列表。

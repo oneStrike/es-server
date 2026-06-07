@@ -1024,6 +1024,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         and(
           isNull(this.taskDefinitionTable.deletedAt),
           eq(this.taskDefinitionTable.status, TaskDefinitionStatusEnum.ACTIVE),
+          eq(this.taskDefinitionTable.claimMode, TaskClaimModeEnum.AUTO),
           eq(this.taskStepTable.triggerMode, TaskStepTriggerModeEnum.EVENT),
           eq(this.taskStepTable.eventCode, eventCode),
           sql`${this.taskDefinitionTable.startAt} is null or ${this.taskDefinitionTable.startAt} <= ${occurredAt}`,

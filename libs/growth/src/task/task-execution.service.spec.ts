@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 jest.mock('node:crypto', () => ({
+  randomBytes: jest.fn(() => Buffer.from('abcdef', 'hex')),
   randomUUID: jest.fn(() => 'task-reward-claim-token'),
 }))
 
@@ -188,6 +189,27 @@ function createInstance(overrides: Record<string, unknown> = {}) {
 }
 
 describe('TaskExecutionService review regressions', () => {
+  it('event candidate scan only includes AUTO + EVENT task definitions', async () => {
+    const { service, db } = createExecutionService()
+    const selectRecorder: Record<string, ReturnType<typeof jest.fn>> = {}
+    ;(db as any).select = jest.fn(() =>
+      createThenableBuilder([], selectRecorder),
+    )
+
+    await (service as any).listCandidateEventSteps(
+      100,
+      new Date('2026-06-08T00:00:00.000Z'),
+    )
+
+    const whereCondition = selectRecorder.where.mock.calls[0]?.[0]
+    expect(
+      objectContainsReference(whereCondition, schema.taskDefinition.claimMode),
+    ).toBe(true)
+    expect(objectContainsReference(whereCondition, TaskClaimModeEnum.AUTO)).toBe(
+      true,
+    )
+  })
+
   it('claimTask creates instance step immediately in the claim transaction', async () => {
     const { service, tx } = createExecutionService()
     const task = createManualTask()
@@ -894,6 +916,113 @@ describe('TaskExecutionService review regressions', () => {
 })
 
 describe('TaskDefinitionService review regressions', () => {
+  it('rejects creating MANUAL + EVENT task definitions', async () => {
+    const drizzle = {
+      schema,
+      db: { query: {} },
+      withErrorHandling: jest.fn(),
+      withTransaction: jest.fn(),
+    }
+    const registry = {
+      getTemplateByKey: jest.fn(() => ({
+        templateKey: 'COMIC_WORK_VIEW',
+        eventCode: 100,
+        isSelectable: true,
+        supportsUniqueCounting: true,
+      })),
+      buildFilterValues: jest.fn(() => []),
+      normalizeFilterPayload: jest.fn(() => null),
+    }
+    const service = new TaskDefinitionService(drizzle as any, registry as any)
+
+    await expect(
+      service.createTaskDefinition(
+        {
+          title: 'Manual event task',
+          sceneType: TaskTypeEnum.DAILY,
+          status: TaskDefinitionStatusEnum.DRAFT,
+          sortOrder: 0,
+          claimMode: TaskClaimModeEnum.MANUAL,
+          step: {
+            triggerMode: TaskStepTriggerModeEnum.EVENT,
+            targetValue: 1,
+            templateKey: 'COMIC_WORK_VIEW',
+            filters: [],
+          },
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发')
+    expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
+  })
+
+  it('rejects creating AUTO + MANUAL task definitions', async () => {
+    const drizzle = {
+      schema,
+      db: { query: {} },
+      withErrorHandling: jest.fn(),
+      withTransaction: jest.fn(),
+    }
+    const registry = {
+      getTemplateByKey: jest.fn(),
+      buildFilterValues: jest.fn(() => []),
+    }
+    const service = new TaskDefinitionService(drizzle as any, registry as any)
+
+    await expect(
+      service.createTaskDefinition(
+        {
+          title: 'Auto manual task',
+          sceneType: TaskTypeEnum.DAILY,
+          status: TaskDefinitionStatusEnum.DRAFT,
+          sortOrder: 0,
+          claimMode: TaskClaimModeEnum.AUTO,
+          step: {
+            triggerMode: TaskStepTriggerModeEnum.MANUAL,
+            targetValue: 1,
+          },
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发')
+    expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
+  })
+
+  it('rejects updates that would create an illegal execution matrix', async () => {
+    const db = {
+      query: {
+        taskStep: {
+          findFirst: jest.fn().mockResolvedValue(createStep()),
+        },
+      },
+    }
+    const drizzle = {
+      schema,
+      db,
+      withErrorHandling: jest.fn(),
+      withTransaction: jest.fn(),
+    }
+    const registry = {
+      getTemplateByKey: jest.fn(),
+      buildFilterValues: jest.fn(() => []),
+    }
+    const service = new TaskDefinitionService(drizzle as any, registry as any)
+    jest
+      .spyOn(service as any, 'getTaskDefinitionRecordOrThrow')
+      .mockResolvedValue(createManualTask())
+
+    await expect(
+      service.updateTaskDefinition(
+        {
+          id: 1,
+          claimMode: TaskClaimModeEnum.AUTO,
+        },
+        9,
+      ),
+    ).rejects.toThrow('任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发')
+    expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
+  })
+
   it('blocks execution-contract updates while a task has active instances', async () => {
     const tx = {
       update: jest.fn(() => createThenableBuilder([])),

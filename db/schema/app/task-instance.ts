@@ -71,6 +71,10 @@ export const taskInstance = snakeCase.table(
       .where(sql`${table.deletedAt} is null`),
     /** 任务索引。 */
     index('task_instance_task_id_idx').on(table.taskId),
+    /** 管理端按任务筛选实例创建时间倒序索引。 */
+    index('task_instance_live_task_created_idx')
+      .on(table.taskId, table.createdAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
     /** 管理端实例创建时间倒序索引。 */
     index('task_instance_live_created_at_idx')
       .on(table.createdAt.desc(), table.id.desc())

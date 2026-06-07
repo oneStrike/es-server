@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common'
 import { EventDefinitionModule } from '../event-definition/event-definition.module'
 import { UserGrowthRewardModule } from '../growth-reward/growth-reward.module'
 import { TaskDefinitionService } from './task-definition.service'
+import { TaskEventFailureService } from './task-event-failure.service'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
 import { TaskExecutionService } from './task-execution.service'
 import { TaskNotificationService } from './task-notification.service'
@@ -18,6 +19,7 @@ import { TaskService } from './task.service'
   ],
   providers: [
     TaskDefinitionService,
+    TaskEventFailureService,
     TaskEventTemplateRegistry,
     TaskExecutionService,
     TaskNotificationService,
@@ -27,6 +29,7 @@ import { TaskService } from './task.service'
   ],
   exports: [
     TaskEventTemplateRegistry,
+    TaskEventFailureService,
     TaskRewardRetryService,
     TaskRuntimeService,
     TaskService,
