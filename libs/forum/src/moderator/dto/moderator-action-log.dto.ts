@@ -12,6 +12,7 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
+  ForumGovernanceActorTypeEnum,
   ForumModeratorActionTargetTypeEnum,
   ForumModeratorActionTypeEnum,
 } from '../moderator-action-log.constant'
@@ -22,12 +23,29 @@ import {
  */
 export class BaseForumModeratorActionLogDto extends IdDto {
   @NumberProperty({
-    description: '版主ID',
+    description: '版主ID；后台管理员发起的治理日志为空',
     example: 1,
+    required: false,
+    nullable: true,
+    min: 1,
+  })
+  moderatorId!: number | null
+
+  @EnumProperty({
+    description: '治理发起方类型（1=版主；2=后台管理员）',
+    example: ForumGovernanceActorTypeEnum.MODERATOR,
+    required: true,
+    enum: ForumGovernanceActorTypeEnum,
+  })
+  actorType!: ForumGovernanceActorTypeEnum
+
+  @NumberProperty({
+    description: '治理发起用户ID；版主为 app 用户ID，后台管理员为后台用户ID',
+    example: 100,
     required: true,
     min: 1,
   })
-  moderatorId!: number
+  actorUserId!: number
 
   @NumberProperty({
     description: '操作目标ID',
@@ -39,7 +57,7 @@ export class BaseForumModeratorActionLogDto extends IdDto {
 
   @EnumProperty({
     description:
-      '操作类型（1=置顶主题；2=取消置顶主题；3=加精主题；4=取消加精主题；5=锁定主题；6=取消锁定主题；7=删除主题；8=移动主题；9=审核主题；10=删除评论；11=隐藏主题；12=取消隐藏主题；13=审核评论；14=隐藏评论；15=取消隐藏评论）',
+      '操作类型（1=置顶主题；2=取消置顶主题；3=加精主题；4=取消加精主题；5=锁定主题；6=取消锁定主题；7=删除主题；8=移动主题；9=审核主题；10=删除评论；11=隐藏主题；12=取消隐藏主题；13=审核评论；14=隐藏评论；15=取消隐藏评论；16=恢复主题）',
     example: ForumModeratorActionTypeEnum.HIDE_COMMENT,
     required: true,
     enum: ForumModeratorActionTypeEnum,
@@ -112,6 +130,8 @@ export class QueryAdminForumModeratorActionLogDto extends IntersectionType(
   PartialType(
     PickType(BaseForumModeratorActionLogDto, [
       'moderatorId',
+      'actorType',
+      'actorUserId',
       'targetId',
       'targetType',
       'actionType',

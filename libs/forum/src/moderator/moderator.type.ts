@@ -81,7 +81,9 @@ export interface ForumModeratorPermissionGrant {
  * 统一约束 topic/comment 治理动作的日志字段来源。
  */
 export interface ForumModeratorActionLogInput {
-  moderatorId: number
+  moderatorId: number | null
+  actorType?: ForumModeratorGovernanceActorType
+  actorUserId?: number
   targetId: number
   actionType: number
   targetType: number

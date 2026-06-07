@@ -23,6 +23,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import {
   MoveForumTopicDto,
+  RestoreForumTopicDto,
   UpdateForumTopicAuditStatusDto,
   UpdateForumTopicFeaturedDto,
   UpdateForumTopicHiddenDto,
@@ -129,6 +130,23 @@ export class ForumModeratorGovernanceService {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '主题不存在',
+      )
+    }
+
+    return topic
+  }
+
+  private async getDeletedTopicGovernanceSnapshot(topicId: number) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id: topicId,
+      },
+    })
+
+    if (!topic || topic.deletedAt === null) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '已删除主题不存在',
       )
     }
 
@@ -248,6 +266,7 @@ export class ForumModeratorGovernanceService {
    */
   private async createTopicActionLog(params: {
     tx?: Db
+    actor: ForumModeratorGovernanceActor
     grant: ForumModeratorPermissionGrant | null
     topicId: number
     actionType: ForumModeratorActionTypeEnum
@@ -255,12 +274,10 @@ export class ForumModeratorGovernanceService {
     beforeData: Record<string, unknown>
     afterData: Record<string, unknown>
   }) {
-    if (!params.grant) {
-      return true
-    }
-
     const logInput = {
-      moderatorId: params.grant.moderatorId,
+      moderatorId: params.grant?.moderatorId ?? null,
+      actorType: params.actor.actorType,
+      actorUserId: params.actor.actorUserId,
       targetId: params.topicId,
       actionType: params.actionType,
       targetType: ForumModeratorActionTargetTypeEnum.TOPIC,
@@ -342,6 +359,7 @@ export class ForumModeratorGovernanceService {
    */
   private async createCommentActionLog(params: {
     tx?: Db
+    actor: ForumModeratorGovernanceActor
     grant: ForumModeratorPermissionGrant | null
     commentId: number
     actionType: ForumModeratorActionTypeEnum
@@ -349,12 +367,10 @@ export class ForumModeratorGovernanceService {
     beforeData: Record<string, unknown>
     afterData: Record<string, unknown>
   }) {
-    if (!params.grant) {
-      return true
-    }
-
     const logInput = {
-      moderatorId: params.grant.moderatorId,
+      moderatorId: params.grant?.moderatorId ?? null,
+      actorType: params.actor.actorType,
+      actorUserId: params.actor.actorUserId,
       targetId: params.commentId,
       actionType: params.actionType,
       targetType: ForumModeratorActionTargetTypeEnum.COMMENT,
@@ -398,6 +414,7 @@ export class ForumModeratorGovernanceService {
       await this.forumTopicService.updateTopicPinnedInTx(tx, input)
       await this.createTopicActionLog({
         tx,
+        actor,
         grant,
         topicId: current.id,
         actionType: input.isPinned
@@ -435,6 +452,7 @@ export class ForumModeratorGovernanceService {
       await this.forumTopicService.updateTopicFeaturedInTx(tx, input)
       await this.createTopicActionLog({
         tx,
+        actor,
         grant,
         topicId: current.id,
         actionType: input.isFeatured
@@ -472,6 +490,7 @@ export class ForumModeratorGovernanceService {
       await this.forumTopicService.updateTopicLockedInTx(tx, input)
       await this.createTopicActionLog({
         tx,
+        actor,
         grant,
         topicId: current.id,
         actionType: input.isLocked
@@ -515,6 +534,7 @@ export class ForumModeratorGovernanceService {
       )
       await this.createTopicActionLog({
         tx,
+        actor,
         grant,
         topicId: current.id,
         actionType: ForumModeratorActionTypeEnum.DELETE_TOPIC,
@@ -525,6 +545,53 @@ export class ForumModeratorGovernanceService {
           title: current.title,
         },
         afterData: { deleted: true },
+      })
+    })
+
+    return true
+  }
+
+  /**
+   * 恢复已删除主题。
+   * moderator 需具备 DELETE 权限；admin 跳过 moderator 权限但写入统一治理日志。
+   */
+  async restoreTopic(
+    input: RestoreForumTopicDto,
+    actor: ForumModeratorGovernanceActor,
+    context: ForumTopicClientContext = {},
+  ) {
+    const current = await this.getDeletedTopicGovernanceSnapshot(input.id)
+    const grant = await this.resolveModeratorGrant(
+      actor,
+      current.sectionId,
+      ForumModeratorPermissionEnum.DELETE,
+    )
+
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.forumTopicService.restoreTopicWithCurrentInTx(
+        tx,
+        current,
+        input,
+        context,
+        actor.actorUserId,
+      )
+      await this.createTopicActionLog({
+        tx,
+        actor,
+        grant,
+        topicId: current.id,
+        actionType: ForumModeratorActionTypeEnum.RESTORE_TOPIC,
+        actionDescription: '恢复主题',
+        beforeData: {
+          deletedAt: current.deletedAt,
+          sectionId: current.sectionId,
+          title: current.title,
+          userId: current.userId,
+        },
+        afterData: {
+          deletedAt: null,
+          sectionId: input.sectionId ?? current.sectionId,
+        },
       })
     })
 
@@ -554,6 +621,7 @@ export class ForumModeratorGovernanceService {
       await this.forumTopicService.moveTopicInTx(tx, input, current.sectionId)
       await this.createTopicActionLog({
         tx,
+        actor,
         grant,
         topicId: current.id,
         actionType: ForumModeratorActionTypeEnum.MOVE_TOPIC,
@@ -589,6 +657,7 @@ export class ForumModeratorGovernanceService {
       await this.forumTopicService.updateTopicHiddenInTx(tx, input, current)
       await this.createTopicActionLog({
         tx,
+        actor,
         grant,
         topicId: current.id,
         actionType: input.isHidden
@@ -647,6 +716,7 @@ export class ForumModeratorGovernanceService {
       )
       await this.createTopicActionLog({
         tx,
+        actor,
         grant,
         topicId: current.id,
         actionType: ForumModeratorActionTypeEnum.AUDIT_TOPIC,
@@ -707,6 +777,7 @@ export class ForumModeratorGovernanceService {
       }
       await this.createCommentActionLog({
         tx,
+        actor,
         grant,
         commentId: current.id,
         actionType: input.isHidden
@@ -741,6 +812,7 @@ export class ForumModeratorGovernanceService {
       await this.commentService.deleteCommentInTx(tx, current.id)
       await this.createCommentActionLog({
         tx,
+        actor,
         grant,
         commentId: current.id,
         actionType: ForumModeratorActionTypeEnum.DELETE_COMMENT,
@@ -807,6 +879,7 @@ export class ForumModeratorGovernanceService {
       }
       await this.createCommentActionLog({
         tx,
+        actor,
         grant,
         commentId: current.id,
         actionType: ForumModeratorActionTypeEnum.AUDIT_COMMENT,

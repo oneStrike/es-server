@@ -148,6 +148,25 @@ describe('ForumModeratorGovernanceService transaction boundary', () => {
     )
   })
 
+  it('writes admin topic governance into the shared action log with nullable moderator id', async () => {
+    const { actionLogService, service, tx } = createGovernanceService()
+
+    await service.updateTopicPinned(
+      { id: 11, isPinned: true },
+      { actorType: 'admin', actorUserId: 9001 },
+    )
+
+    expect(actionLogService.createActionLogInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        actorType: 'admin',
+        actorUserId: 9001,
+        moderatorId: null,
+        targetId: 11,
+      }),
+    )
+  })
+
   it('propagates moderator action log failures instead of treating mutation as successful', async () => {
     const { actionLogService, service } = createGovernanceService()
     actionLogService.createActionLogInTx.mockRejectedValueOnce(

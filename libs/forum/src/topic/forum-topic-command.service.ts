@@ -2,6 +2,7 @@ import type { Db } from '@db/core'
 import type { ForumTopicSelect } from '@db/schema'
 
 import type { DispatchDefinedGrowthEventPayload } from '@libs/growth/growth-reward/types/growth-event-dispatch.type'
+import type { BodyDoc } from '@libs/interaction/body/body.type'
 import type { JsonValue } from '@libs/platform/utils'
 import type {
   ApprovedTopicRewardParams,
@@ -11,6 +12,7 @@ import type {
   UpdateTopicStatusData,
   UpdateTopicStatusOptions,
 } from './forum-topic.type'
+import { randomUUID } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
@@ -18,7 +20,7 @@ import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-bal
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
 import { BodyHtmlCodecService } from '@libs/interaction/body/body-html-codec.service'
-import { BODY_VERSION_V1 } from '@libs/interaction/body/body.constant'
+import { BODY_VERSION_V1, BodySceneEnum } from '@libs/interaction/body/body.constant'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
@@ -32,7 +34,7 @@ import { SensitiveWordReviewPolicyService } from '@libs/sensitive-word/sensitive
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -41,11 +43,15 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumHashtagBodyService } from '../hashtag/forum-hashtag-body.service'
 import { ForumHashtagReferenceService } from '../hashtag/forum-hashtag-reference.service'
-import { ForumHashtagReferenceSourceTypeEnum } from '../hashtag/forum-hashtag.constant'
+import {
+  ForumHashtagCreateSourceTypeEnum,
+  ForumHashtagReferenceSourceTypeEnum,
+} from '../hashtag/forum-hashtag.constant'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   CreateForumTopicDto,
   MoveForumTopicDto,
+  RestoreForumTopicDto,
   UpdateForumTopicAuditStatusDto,
   UpdateForumTopicDto,
   UpdateForumTopicFeaturedDto,
@@ -464,6 +470,8 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     actorUserId = topic.userId,
   ) {
     const { id } = topic
+    const deletedAt = new Date()
+    const topicDeleteCascadeId = `topic-delete:${id}:${randomUUID()}`
     const commentUserSummaries = await tx
       .select({
         userId: this.userCommentTable.userId,
@@ -485,7 +493,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
     await tx
       .update(this.userCommentTable)
-      .set({ deletedAt: new Date() })
+      .set({ deletedAt, topicDeleteCascadeId })
       .where(
         and(
           eq(
@@ -498,7 +506,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       )
     const result = await tx
       .update(this.forumTopicTable)
-      .set({ deletedAt: new Date() })
+      .set({ deletedAt })
       .where(
         and(
           eq(this.forumTopicTable.id, id),
@@ -568,6 +576,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       targetType: ForumUserActionTargetTypeEnum.TOPIC,
       targetId: topic.id,
       beforeData: JSON.stringify(topic),
+      afterData: JSON.stringify({ topicDeleteCascadeId }),
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
       geoCountry: context.geoCountry,
@@ -591,6 +600,328 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       context,
       actorUserId ?? topic.userId,
     )
+  }
+
+  private async getDeletedTopicOrThrow(id: number) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id,
+      },
+    })
+
+    if (!topic || topic.deletedAt === null) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '已删除主题不存在',
+      )
+    }
+
+    return topic
+  }
+
+  async restoreTopic(
+    input: RestoreForumTopicDto,
+    context: ForumTopicClientContext = {},
+    actorUserId?: number,
+  ) {
+    const topic = await this.getDeletedTopicOrThrow(input.id)
+    await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) =>
+        this.restoreTopicWithCurrentInTx(
+          tx,
+          topic,
+          input,
+          context,
+          actorUserId ?? topic.userId,
+        ),
+      ),
+    )
+    return true
+  }
+
+  async restoreTopicWithCurrentInTx(
+    tx: Db,
+    topic: ForumTopicSelect,
+    input: RestoreForumTopicDto,
+    context: ForumTopicClientContext = {},
+    actorUserId = topic.userId,
+  ) {
+    const nextSectionId = input.sectionId ?? topic.sectionId
+    await this.getSectionTopicReviewPolicy(nextSectionId, {
+      client: tx,
+      requireEnabled: true,
+      notFoundMessage: '目标板块不存在或已禁用',
+    })
+
+    const cascadeRows = await tx
+      .select({
+        topicDeleteCascadeId: this.userCommentTable.topicDeleteCascadeId,
+      })
+      .from(this.userCommentTable)
+      .where(
+        and(
+          eq(
+            this.userCommentTable.targetType,
+            CommentTargetTypeEnum.FORUM_TOPIC,
+          ),
+          eq(this.userCommentTable.targetId, topic.id),
+          isNotNull(this.userCommentTable.deletedAt),
+          isNotNull(this.userCommentTable.topicDeleteCascadeId),
+        ),
+      )
+      .limit(1)
+
+    const topicDeleteCascadeId = cascadeRows[0]?.topicDeleteCascadeId ?? null
+    const restoredComments = topicDeleteCascadeId
+      ? await tx
+          .select({
+            auditStatus: this.userCommentTable.auditStatus,
+            body: this.userCommentTable.body,
+            id: this.userCommentTable.id,
+            isHidden: this.userCommentTable.isHidden,
+            userId: this.userCommentTable.userId,
+          })
+          .from(this.userCommentTable)
+          .where(
+            and(
+              eq(
+                this.userCommentTable.targetType,
+                CommentTargetTypeEnum.FORUM_TOPIC,
+              ),
+              eq(this.userCommentTable.targetId, topic.id),
+              eq(
+                this.userCommentTable.topicDeleteCascadeId,
+                topicDeleteCascadeId,
+              ),
+              isNotNull(this.userCommentTable.deletedAt),
+            ),
+          )
+      : []
+    const restoredCommentSummaries = topicDeleteCascadeId
+      ? await tx
+          .select({
+            userId: this.userCommentTable.userId,
+            commentCount: sql<number>`count(*)::int`,
+            receivedLikeCount: sql<number>`coalesce(sum(${this.userCommentTable.likeCount}), 0)::int`,
+          })
+          .from(this.userCommentTable)
+          .where(
+            and(
+              eq(
+                this.userCommentTable.targetType,
+                CommentTargetTypeEnum.FORUM_TOPIC,
+              ),
+              eq(this.userCommentTable.targetId, topic.id),
+              eq(
+                this.userCommentTable.topicDeleteCascadeId,
+                topicDeleteCascadeId,
+              ),
+              isNotNull(this.userCommentTable.deletedAt),
+            ),
+          )
+          .groupBy(this.userCommentTable.userId)
+      : []
+
+    const result = await tx
+      .update(this.forumTopicTable)
+      .set({ deletedAt: null, sectionId: nextSectionId })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, topic.id),
+          isNotNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+    this.drizzle.assertAffectedRows(result, '已删除主题不存在')
+
+    if (topicDeleteCascadeId) {
+      await tx
+        .update(this.userCommentTable)
+        .set({ deletedAt: null, topicDeleteCascadeId: null })
+        .where(
+          and(
+            eq(
+              this.userCommentTable.targetType,
+              CommentTargetTypeEnum.FORUM_TOPIC,
+            ),
+            eq(this.userCommentTable.targetId, topic.id),
+            eq(this.userCommentTable.topicDeleteCascadeId, topicDeleteCascadeId),
+            isNotNull(this.userCommentTable.deletedAt),
+          ),
+        )
+    }
+
+    const materialized = await this.forumHashtagBodyService.materializeBodyInTx(
+      {
+        tx,
+        body: topic.body as BodyDoc,
+        actorUserId,
+        createSourceType: ForumHashtagCreateSourceTypeEnum.TOPIC_BODY,
+      },
+    )
+    const compiledBody = await this.bodyCompilerService.compile(
+      materialized.body,
+      BodySceneEnum.TOPIC,
+    )
+    const isVisible = this.isTopicVisible({
+      auditStatus: topic.auditStatus as AuditStatusEnum,
+      isHidden: topic.isHidden,
+      deletedAt: null,
+    })
+    await this.mentionService.replaceMentionsInTx({
+      tx,
+      sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
+      sourceId: topic.id,
+      content: compiledBody.plainText,
+      mentions: compiledBody.mentionFacts,
+    })
+    await this.forumHashtagReferenceService.replaceReferencesInTx({
+      tx,
+      sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
+      sourceId: topic.id,
+      topicId: topic.id,
+      sectionId: nextSectionId,
+      userId: topic.userId,
+      sourceAuditStatus: topic.auditStatus as AuditStatusEnum,
+      sourceIsHidden: topic.isHidden,
+      isSourceVisible: isVisible,
+      hashtagFacts: materialized.hashtagFacts,
+    })
+    await this.rebuildRestoredCommentReferencesInTx({
+      tx,
+      comments: restoredComments,
+      topicId: topic.id,
+      sectionId: nextSectionId,
+      parentTopicVisible: isVisible,
+      actorUserId,
+    })
+
+    await this.forumCounterService.updateUserForumTopicCount(
+      tx,
+      topic.userId,
+      1,
+    )
+    if (topic.likeCount > 0) {
+      await this.forumCounterService.updateUserForumTopicReceivedLikeCount(
+        tx,
+        topic.userId,
+        topic.likeCount,
+      )
+    }
+    if (topic.favoriteCount > 0) {
+      await this.forumCounterService.updateUserForumTopicReceivedFavoriteCount(
+        tx,
+        topic.userId,
+        topic.favoriteCount,
+      )
+    }
+    const commentCountTasks: Promise<void>[] = []
+    for (const summary of restoredCommentSummaries) {
+      commentCountTasks.push(
+        this.appUserCountService.updateCommentCount(
+          tx,
+          summary.userId,
+          summary.commentCount,
+        ),
+      )
+      if (summary.receivedLikeCount > 0) {
+        commentCountTasks.push(
+          this.appUserCountService.updateCommentReceivedLikeCount(
+            tx,
+            summary.userId,
+            summary.receivedLikeCount,
+          ),
+        )
+      }
+    }
+    await Promise.all(commentCountTasks)
+    await this.forumCounterService.syncSectionVisibleState(tx, topic.sectionId)
+    if (nextSectionId !== topic.sectionId) {
+      await this.forumCounterService.syncSectionVisibleState(tx, nextSectionId)
+    }
+    if (isVisible) {
+      await this.mentionService.dispatchTopicMentionsInTx(tx, {
+        topicId: topic.id,
+        actorUserId,
+        topicTitle: topic.title,
+      })
+    }
+    await this.actionLogService.createActionLogInTx(tx, {
+      userId: actorUserId,
+      actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
+      targetType: ForumUserActionTargetTypeEnum.TOPIC,
+      targetId: topic.id,
+      beforeData: JSON.stringify({
+        deletedAt: topic.deletedAt,
+        sectionId: topic.sectionId,
+      }),
+      afterData: JSON.stringify({
+        deletedAt: null,
+        restoredCommentCascadeId: topicDeleteCascadeId,
+        sectionId: nextSectionId,
+      }),
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      geoCountry: context.geoCountry,
+      geoProvince: context.geoProvince,
+      geoCity: context.geoCity,
+      geoIsp: context.geoIsp,
+      geoSource: context.geoSource,
+    })
+    return true
+  }
+
+  private async rebuildRestoredCommentReferencesInTx(input: {
+    tx: Db
+    comments: Array<{
+      auditStatus: number
+      body: unknown
+      id: number
+      isHidden: boolean
+      userId: number
+    }>
+    topicId: number
+    sectionId: number
+    parentTopicVisible: boolean
+    actorUserId: number
+  }) {
+    for (const comment of input.comments) {
+      const materialized =
+        await this.forumHashtagBodyService.materializeBodyInTx({
+          tx: input.tx,
+          body: comment.body as BodyDoc,
+          actorUserId: input.actorUserId,
+          createSourceType: ForumHashtagCreateSourceTypeEnum.COMMENT_BODY,
+        })
+      const compiledBody = await this.bodyCompilerService.compile(
+        materialized.body,
+        BodySceneEnum.COMMENT,
+      )
+      await this.mentionService.replaceMentionsInTx({
+        tx: input.tx,
+        sourceType: MentionSourceTypeEnum.COMMENT,
+        sourceId: comment.id,
+        content: compiledBody.plainText,
+        mentions: compiledBody.mentionFacts,
+      })
+      await this.forumHashtagReferenceService.replaceReferencesInTx({
+        tx: input.tx,
+        sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+        sourceId: comment.id,
+        topicId: input.topicId,
+        sectionId: input.sectionId,
+        userId: comment.userId,
+        sourceAuditStatus: comment.auditStatus as AuditStatusEnum,
+        sourceIsHidden: comment.isHidden,
+        isSourceVisible:
+          input.parentTopicVisible &&
+          this.isTopicVisible({
+            auditStatus: comment.auditStatus as AuditStatusEnum,
+            isHidden: comment.isHidden,
+            deletedAt: null,
+          }),
+        hashtagFacts: materialized.hashtagFacts,
+      })
+    }
   }
 
   // 移动主题到目标板块，并同步源板块与目标板块的可见计数。

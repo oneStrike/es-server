@@ -56,8 +56,23 @@ function createActionLogService() {
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       id: 1,
       moderatorId: 5,
+      actorType: 1,
+      actorUserId: 100,
       targetId: 21,
       targetType: ForumModeratorActionTargetTypeEnum.COMMENT,
+    },
+    {
+      actionDescription: '恢复主题',
+      actionType: ForumModeratorActionTypeEnum.RESTORE_TOPIC,
+      afterData: '{"deletedAt":null}',
+      beforeData: '{"deletedAt":"2026-01-01T00:00:00.000Z"}',
+      createdAt: new Date('2026-01-02T00:00:00.000Z'),
+      id: 2,
+      moderatorId: null,
+      actorType: 2,
+      actorUserId: 9001,
+      targetId: 22,
+      targetType: ForumModeratorActionTargetTypeEnum.TOPIC,
     },
   ]
   const selectRecorder: Record<string, ReturnType<typeof jest.fn>> = {}
@@ -86,6 +101,8 @@ function createActionLogService() {
       forumModeratorActionLog: {
         actionDescription: 'actionDescription',
         actionType: 'actionType',
+        actorType: 'actorType',
+        actorUserId: 'actorUserId',
         createdAt: 'createdAt',
         id: 'id',
         moderatorId: 'moderatorId',
@@ -144,18 +161,37 @@ describe('ForumModeratorActionLogService query', () => {
     )
   })
 
-  it('allows admin queries to filter by moderator and keep snapshots', async () => {
+  it('allows admin queries to filter by actor and keep admin governance rows', async () => {
     const { service } = createActionLogService()
+    const buildQueryWhereSpy = jest.spyOn(
+      service as unknown as {
+        buildQueryWhere: (query: {
+          actorType?: number
+          actorUserId?: number
+          moderatorId?: number
+        }) => unknown
+      },
+      'buildQueryWhere',
+    )
 
     const page = await service.getAdminActionLogPage({
-      actionType: ForumModeratorActionTypeEnum.HIDE_COMMENT,
-      moderatorId: 5,
-      targetId: 21,
-      targetType: ForumModeratorActionTargetTypeEnum.COMMENT,
+      actionType: ForumModeratorActionTypeEnum.RESTORE_TOPIC,
+      actorType: 2,
+      actorUserId: 9001,
+      targetId: 22,
+      targetType: ForumModeratorActionTargetTypeEnum.TOPIC,
     })
 
+    expect(buildQueryWhereSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 2,
+        actorUserId: 9001,
+      }),
+    )
     expect(page.list[0]).toEqual(
       expect.objectContaining({
+        actorType: 1,
+        actorUserId: 100,
         beforeData: '{"isHidden":false}',
         afterData: '{"isHidden":true}',
       }),

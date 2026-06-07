@@ -33,6 +33,7 @@ import {
   BusinessErrorCode,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { Injectable } from '@nestjs/common'
 import {
@@ -40,9 +41,12 @@ import {
   eq,
   exists,
   getColumns,
+  gte,
   ilike,
   inArray,
+  isNotNull,
   isNull,
+  lt,
   or,
 } from 'drizzle-orm'
 import { ForumCounterService } from '../counter/forum-counter.service'
@@ -52,6 +56,7 @@ import { ForumHashtagReferenceSourceTypeEnum } from '../hashtag/forum-hashtag.co
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   AdminForumTopicDetailDto,
+  ForumTopicDeletedStateEnum,
   PublicForumTopicDetailDto,
   QueryForumTopicDto,
 } from './dto/forum-topic.dto'
@@ -74,6 +79,17 @@ const DEFAULT_ADMIN_TOPIC_PAGE_ORDER: DbQueryOrderByRecord[] = [
   { updatedAt: 'desc' as const },
   { id: 'desc' as const },
 ]
+
+const ADMIN_TOPIC_ORDER_FIELDS = new Set([
+  'id',
+  'createdAt',
+  'updatedAt',
+  'lastCommentAt',
+  'viewCount',
+  'likeCount',
+  'commentCount',
+  'favoriteCount',
+])
 
 // 论坛主题查询服务。
 // 负责公开分页、后台分页、详情聚合等读模型，
@@ -709,6 +725,47 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       .filter((item): item is BaseSensitiveWordHitDto => item !== null)
   }
 
+  private normalizeAdminTopicOrderBy(orderBy: QueryForumTopicDto['orderBy']) {
+    if (!orderBy) {
+      return undefined
+    }
+
+    let parsedOrderBy: unknown
+    try {
+      parsedOrderBy = typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy
+    } catch {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'orderBy 参数格式不合法',
+      )
+    }
+
+    const records = Array.isArray(parsedOrderBy)
+      ? parsedOrderBy
+      : [parsedOrderBy]
+    for (const record of records) {
+      if (!record || typeof record !== 'object' || Array.isArray(record)) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          'orderBy 参数格式不合法',
+        )
+      }
+      for (const [field, direction] of Object.entries(record)) {
+        if (
+          !ADMIN_TOPIC_ORDER_FIELDS.has(field) ||
+          (direction !== 'asc' && direction !== 'desc')
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            `不支持的主题排序字段或方向：${field}`,
+          )
+        }
+      }
+    }
+
+    return orderBy
+  }
+
   // 校验并复制单条敏感词命中，避免将未知 JSON 原样透传到输出 DTO。
   private normalizeSensitiveWordHitItem(
     value: unknown,
@@ -773,7 +830,6 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
         id,
-        deletedAt: { isNull: true },
       },
       with: {
         section: true,
@@ -816,7 +872,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     }
 
     // 排除不应透传到 DTO 的字段：正文派生列(content/contentPreview/body/bodyVersion)、审核人内部字段(auditById/auditRole)、
-    // 属地快照字段(geoCountry/geoProvince/geoCity/geoIsp/geoSource)、软删除字段(deletedAt)
+    // 属地快照字段(geoCountry/geoProvince/geoCity/geoIsp/geoSource)
     const {
       content,
       contentPreview,
@@ -832,7 +888,6 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       images,
       videos,
       sensitiveWordHits,
-      deletedAt,
       // 关系查询带出的关联对象需要在返回时重新构造，避免直接透传
       section: _section,
       user: _user,
@@ -904,8 +959,27 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
 
   // 获取后台主题分页列表；后台列表仅返回展示所需字段和正文摘要，避免分页接口直接传输完整正文。
   async getTopics(queryForumTopicDto: QueryForumTopicDto) {
-    const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
-    const conditions: SQL[] = [isNull(this.forumTopicTable.deletedAt)]
+    const {
+      deletedState = ForumTopicDeletedStateEnum.ACTIVE,
+      endDate,
+      keyword,
+      sectionId,
+      startDate,
+      userId,
+      ...otherDto
+    } = queryForumTopicDto
+    const conditions: SQL[] = []
+
+    if (deletedState === ForumTopicDeletedStateEnum.ACTIVE) {
+      conditions.push(isNull(this.forumTopicTable.deletedAt))
+    } else if (deletedState === ForumTopicDeletedStateEnum.DELETED) {
+      conditions.push(isNotNull(this.forumTopicTable.deletedAt))
+    } else if (deletedState !== ForumTopicDeletedStateEnum.ALL) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '不支持的主题删除状态筛选',
+      )
+    }
 
     if (sectionId !== undefined) {
       conditions.push(eq(this.forumTopicTable.sectionId, sectionId))
@@ -939,16 +1013,26 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
         )!,
       )
     }
+    const createdRange = buildDateOnlyRangeInAppTimeZone(startDate, endDate)
+    if (createdRange?.gte) {
+      conditions.push(gte(this.forumTopicTable.createdAt, createdRange.gte))
+    }
+    if (createdRange?.lt) {
+      conditions.push(lt(this.forumTopicTable.createdAt, createdRange.lt))
+    }
 
-    const where = and(...conditions)
+    const where = conditions.length > 0 ? and(...conditions) : undefined
     const page = this.drizzle.buildPage({
       pageIndex: otherDto.pageIndex,
       pageSize: otherDto.pageSize,
     })
-    const order = this.drizzle.buildOrderBy(otherDto.orderBy, {
+    const order = this.drizzle.buildOrderBy(
+      this.normalizeAdminTopicOrderBy(otherDto.orderBy),
+      {
       table: this.forumTopicTable,
       fallbackOrderBy: DEFAULT_ADMIN_TOPIC_PAGE_ORDER,
-    })
+      },
+    )
 
     // 排除：正文大字段(html/content/body/bodyVersion)、审核人字段(auditById/auditRole)、
     // 内部控制字段(version/sensitiveWordHits/geoSource/deletedAt)
@@ -962,7 +1046,6 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       version,
       sensitiveWordHits,
       geoSource,
-      deletedAt,
       ...adminTopicColumns
     } = getColumns(this.forumTopicTable)
 

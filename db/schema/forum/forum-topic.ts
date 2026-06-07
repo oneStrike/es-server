@@ -391,6 +391,48 @@ export const forumTopic = snakeCase.table(
         sql`${table.deletedAt} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false`,
       ),
     /**
+     * 后台正常主题默认排序索引：匹配 deletedState=active 的 updatedAt/id 分页排序。
+     */
+    index('forum_topic_admin_active_updated_idx')
+      .on(table.updatedAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 后台正常主题审核状态筛选索引。
+     */
+    index('forum_topic_admin_active_audit_updated_idx')
+      .on(table.auditStatus, table.updatedAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 后台正常主题板块筛选索引。
+     */
+    index('forum_topic_admin_active_section_updated_idx')
+      .on(table.sectionId, table.updatedAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 后台正常主题发帖用户筛选索引。
+     */
+    index('forum_topic_admin_active_user_updated_idx')
+      .on(table.userId, table.updatedAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 后台正常主题创建时间筛选索引。
+     */
+    index('forum_topic_admin_active_created_updated_idx')
+      .on(table.createdAt, table.updatedAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 后台已删除主题恢复审查索引：优先按删除时间查看最近删除记录。
+     */
+    index('forum_topic_admin_deleted_review_idx')
+      .on(table.deletedAt.desc(), table.updatedAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is not null`),
+    /**
+     * 后台已删除主题默认排序索引：匹配 deletedState=deleted 的 updatedAt/id 分页排序。
+     */
+    index('forum_topic_admin_deleted_updated_idx')
+      .on(table.updatedAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is not null`),
+    /**
      * 后台 keyword 搜索索引：保留既有 ILIKE 语义，依赖 pg_trgm。
      */
     index('forum_topic_title_trgm_idx')

@@ -24,6 +24,7 @@ jest.mock('drizzle-orm', () => {
       condition('inArray', left, right),
     ),
     isNull: jest.fn((value: unknown) => condition('isNull', value)),
+    isNotNull: jest.fn((value: unknown) => condition('isNotNull', value)),
     or: jest.fn((...conditions: unknown[]) => ({ conditions, op: 'or' })),
   }
 })
@@ -31,6 +32,7 @@ jest.mock('drizzle-orm', () => {
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { exists, or } from 'drizzle-orm'
+import { ForumTopicDeletedStateEnum } from './dto/forum-topic.dto'
 import { ForumTopicQueryService } from './forum-topic-query.service'
 
 type BusinessErrorCodeValue =
@@ -355,6 +357,34 @@ describe('ForumTopicQueryService pagination order', () => {
       }),
     )
   })
+
+  it('rejects unsupported admin orderBy fields before querying', async () => {
+    const { db, service } = createQueryService()
+
+    await expectBusinessCode(
+      service.getTopics({
+        orderBy: '{"title":"desc"}',
+        pageIndex: 1,
+        pageSize: 20,
+      }),
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+    )
+    expect(db.select).not.toHaveBeenCalled()
+  })
+
+  it('accepts deleted-state query contract for deleted admin list', async () => {
+    const { service, selectBuilders } = createQueryService()
+
+    await service.getTopics({
+      deletedState: ForumTopicDeletedStateEnum.DELETED,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    expect(serializeShape(selectBuilders.at(-1)?.state.where)).toContain(
+      'isNotNull',
+    )
+  })
 })
 
 describe('ForumTopicQueryService following feed', () => {
@@ -475,7 +505,7 @@ describe('ForumTopicQueryService admin detail mapper', () => {
       },
     ])
     expect(result).not.toHaveProperty('content')
-    expect(result).not.toHaveProperty('deletedAt')
+    expect(result.deletedAt).toBeNull()
   })
 
   it('throws stable not-found business code when admin detail is missing', async () => {

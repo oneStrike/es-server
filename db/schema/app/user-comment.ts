@@ -143,6 +143,11 @@ export const userComment = snakeCase.table(
      * 删除时间（软删除）
      */
     deletedAt: timestamp({ withTimezone: true, precision: 6 }),
+    /**
+     * 主题删除级联批次。
+     * 仅论坛主题删除链路写入；恢复时只复活匹配批次的评论，避免误恢复独立删除的评论。
+     */
+    topicDeleteCascadeId: varchar({ length: 80 }),
   },
   (table) => [
     /**
@@ -238,6 +243,15 @@ export const userComment = snakeCase.table(
      * 删除时间索引
      */
     index('user_comment_deleted_at_idx').on(table.deletedAt),
+    /**
+     * 论坛主题删除恢复批次索引。
+     */
+    index('user_comment_topic_delete_cascade_id_idx').on(
+      table.topicDeleteCascadeId,
+    ),
+    index('user_comment_forum_topic_restore_batch_idx')
+      .on(table.targetId, table.topicDeleteCascadeId, table.deletedAt)
+      .where(sql`${table.targetType} = 5 and ${table.topicDeleteCascadeId} is not null`),
     /**
      * 正文版本索引
      */

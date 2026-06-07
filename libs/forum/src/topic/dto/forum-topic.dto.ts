@@ -32,6 +32,12 @@ import {
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { ForumTopicContentPreviewSegmentTypeEnum } from '../forum-topic.constant'
 
+export enum ForumTopicDeletedStateEnum {
+  ACTIVE = 'active',
+  DELETED = 'deleted',
+  ALL = 'all',
+}
+
 /**
  * 论坛主题列表预览片段 DTO。
  * mention、hashtag 与 emoji 片段由前端按目标字段生成跳转或渲染。
@@ -533,6 +539,28 @@ export class QueryForumTopicDto extends IntersectionType(
     required: false,
   })
   keyword?: string
+
+  @EnumProperty({
+    description: '删除状态筛选（active=正常；deleted=已删除；all=全部）',
+    example: ForumTopicDeletedStateEnum.ACTIVE,
+    enum: ForumTopicDeletedStateEnum,
+    required: false,
+  })
+  deletedState?: ForumTopicDeletedStateEnum
+
+  @StringProperty({
+    description: '创建日期开始（应用时区自然日，YYYY-MM-DD）',
+    example: '2026-06-01',
+    required: false,
+  })
+  declare startDate?: string
+
+  @StringProperty({
+    description: '创建日期结束（应用时区自然日，YYYY-MM-DD）',
+    example: '2026-06-08',
+    required: false,
+  })
+  declare endDate?: string
 }
 
 export class QueryPublicForumTopicDto extends IntersectionType(
@@ -733,6 +761,11 @@ export class MoveForumTopicDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['sectionId'] as const),
 ) {}
 
+export class RestoreForumTopicDto extends IntersectionType(
+  IdDto,
+  PartialType(PickType(BaseForumTopicDto, ['sectionId'] as const)),
+) {}
+
 class AdminForumTopicSectionDto extends PickType(BaseForumSectionDto, [
   'id',
   'name',
@@ -846,6 +879,7 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'sensitiveWordHits',
   'lastCommentAt',
   'lastCommentUserId',
+  'deletedAt',
   'createdAt',
   'updatedAt',
 ] as const) {
@@ -905,6 +939,7 @@ export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'favoriteCount',
   'lastCommentAt',
   'lastCommentUserId',
+  'deletedAt',
   'createdAt',
   'updatedAt',
   'contentPreview',

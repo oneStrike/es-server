@@ -13,6 +13,7 @@ jest.mock('drizzle-orm', () => {
     eq: jest.fn((left: unknown, right: unknown) =>
       condition('eq', left, right),
     ),
+    isNotNull: jest.fn((value: unknown) => condition('isNotNull', value)),
     isNull: jest.fn((value: unknown) => condition('isNull', value)),
     sql: jest.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
       op: 'sql',
@@ -39,9 +40,11 @@ type AsyncValueMock = jest.Mock<Promise<unknown>, []>
 interface SelectBuilder<TResult> extends PromiseLike<TResult> {
   from: ReturnType<typeof jest.fn>
   groupBy: ReturnType<typeof jest.fn>
+  limit: ReturnType<typeof jest.fn>
   state: {
     from?: unknown
     groupBy?: unknown[]
+    limit?: number
     selection?: unknown
     where?: unknown
   }
@@ -90,13 +93,20 @@ function createSchema() {
     forumTopic: createTable('forum_topic', {
       deletedAt: createColumn('forum_topic.deleted_at'),
       id: createColumn('forum_topic.id'),
+      sectionId: createColumn('forum_topic.section_id'),
     }),
     userComment: createTable('user_comment', {
+      auditStatus: createColumn('user_comment.audit_status'),
+      body: createColumn('user_comment.body'),
       deletedAt: createColumn('user_comment.deleted_at'),
       id: createColumn('user_comment.id'),
+      isHidden: createColumn('user_comment.is_hidden'),
       likeCount: createColumn('user_comment.like_count'),
       targetId: createColumn('user_comment.target_id'),
       targetType: createColumn('user_comment.target_type'),
+      topicDeleteCascadeId: createColumn(
+        'user_comment.topic_delete_cascade_id',
+      ),
       userId: createColumn('user_comment.user_id'),
     }),
   }
@@ -115,6 +125,10 @@ function createSelectBuilder<TResult>(
     }),
     groupBy: jest.fn((...columns: unknown[]) => {
       state.groupBy = columns
+      return promise
+    }),
+    limit: jest.fn((limit: number) => {
+      state.limit = limit
       return promise
     }),
     state,
@@ -231,10 +245,14 @@ function createCommandService(options?: {
   const mentionService = {
     deleteCommentMentionsByForumTopicInTx: jest.fn(async () => undefined),
     deleteMentionsInTx: jest.fn(async () => undefined),
+    dispatchTopicMentionsInTx: jest.fn(async () => undefined),
+    replaceMentionsInTx: jest.fn(async () => undefined),
   }
   const forumHashtagReferenceService = {
     deleteCommentReferencesByTopicInTx: jest.fn(async () => undefined),
     deleteReferencesInTx: jest.fn(async () => undefined),
+    replaceReferencesInTx: jest.fn(async () => undefined),
+    syncCommentVisibilityByTopicInTx: jest.fn(async () => undefined),
   }
   const appUserCountService = {
     updateCommentCount: jest.fn(async () => undefined),
@@ -256,6 +274,24 @@ function createCommandService(options?: {
       statisticsHits: [],
     })),
   }
+  const bodyCompilerService = {
+    compile: jest.fn(async () => ({
+      body: { type: 'doc' },
+      bodyTokens: [],
+      contentPreview: { plainText: '正文', segments: [] },
+      emojiRecentUsageItems: [],
+      hashtagFacts: [],
+      html: '<p>正文</p>',
+      mentionFacts: [],
+      plainText: '正文',
+    })),
+  }
+  const forumHashtagBodyService = {
+    materializeBodyInTx: jest.fn(async ({ body }: { body: unknown }) => ({
+      body,
+      hashtagFacts: [{ hashtagId: 7, occurrenceCount: 1 }],
+    })),
+  }
   const service = new ForumTopicCommandService(
     asDependency<CommandServiceConstructorArgs[0]>(drizzle),
     asDependency<CommandServiceConstructorArgs[1]>(forumPermissionService),
@@ -264,7 +300,7 @@ function createCommandService(options?: {
       forumHashtagReferenceService,
     ),
     asDependency<CommandServiceConstructorArgs[4]>(mentionService),
-    asDependency<CommandServiceConstructorArgs[5]>({ compile: jest.fn() }),
+    asDependency<CommandServiceConstructorArgs[5]>(bodyCompilerService),
     asDependency<CommandServiceConstructorArgs[6]>(bodyHtmlCodecService),
     asDependency<CommandServiceConstructorArgs[7]>({
       getMatchedWordsWithMetadataBySegments: jest.fn(() => ({
@@ -276,9 +312,7 @@ function createCommandService(options?: {
     asDependency<CommandServiceConstructorArgs[8]>(
       sensitiveWordReviewPolicyService,
     ),
-    asDependency<CommandServiceConstructorArgs[9]>({
-      materializeBodyInTx: jest.fn(),
-    }),
+    asDependency<CommandServiceConstructorArgs[9]>(forumHashtagBodyService),
     asDependency<CommandServiceConstructorArgs[10]>({}),
     asDependency<CommandServiceConstructorArgs[11]>({}),
     asDependency<CommandServiceConstructorArgs[12]>({
@@ -297,10 +331,12 @@ function createCommandService(options?: {
   return {
     actionLogService,
     appUserCountService,
+    bodyCompilerService,
     bodyHtmlCodecService,
     db,
     drizzle,
     forumCounterService,
+    forumHashtagBodyService,
     forumHashtagReferenceService,
     forumPermissionService,
     mentionService,
@@ -310,37 +346,60 @@ function createCommandService(options?: {
 }
 
 function createCommandTx(options?: {
+  cascadeRows?: Array<{ topicDeleteCascadeId: string | null }>
   commentSummaries?: Array<{
     commentCount: number
     receivedLikeCount: number
     userId: number
   }>
+  restoredComments?: Array<{
+    auditStatus: number
+    body: unknown
+    id: number
+    isHidden: boolean
+    userId: number
+  }>
+  topicUpdateFirst?: boolean
   topicUpdateResult?: unknown
 }) {
   const commentSummaryBuilder = createSelectBuilder(
     options?.commentSummaries ?? [],
   )
+  const cascadeBuilder = createSelectBuilder(options?.cascadeRows ?? [])
+  const restoredCommentBuilder = createSelectBuilder(
+    options?.restoredComments ?? [],
+  )
   const commentUpdateBuilder = createUpdateBuilder([{ id: 1 }])
   const topicUpdateBuilder = createUpdateBuilder(
     options && 'topicUpdateResult' in options ? options.topicUpdateResult : [],
   )
+  const selectBuilders =
+    options && 'cascadeRows' in options
+      ? [cascadeBuilder, restoredCommentBuilder, commentSummaryBuilder]
+      : [commentSummaryBuilder]
+  const updateBuilders = options?.topicUpdateFirst
+    ? [topicUpdateBuilder, commentUpdateBuilder]
+    : [commentUpdateBuilder, topicUpdateBuilder]
+  let selectIndex = 0
+  let updateIndex = 0
   const tx: CommandTx & {
+    cascadeBuilder: typeof cascadeBuilder
     commentSummaryBuilder: typeof commentSummaryBuilder
     commentUpdateBuilder: typeof commentUpdateBuilder
+    restoredCommentBuilder: typeof restoredCommentBuilder
     topicUpdateBuilder: typeof topicUpdateBuilder
   } = {
+    cascadeBuilder,
     commentSummaryBuilder,
     commentUpdateBuilder,
     query: {
       forumSection: { findFirst: jest.fn() },
       forumTopic: { findFirst: jest.fn() },
     },
-    select: jest.fn(() => commentSummaryBuilder),
+    restoredCommentBuilder,
+    select: jest.fn(() => selectBuilders[selectIndex++] ?? commentSummaryBuilder),
     topicUpdateBuilder,
-    update: jest
-      .fn()
-      .mockReturnValueOnce(commentUpdateBuilder)
-      .mockReturnValueOnce(topicUpdateBuilder),
+    update: jest.fn(() => updateBuilders[updateIndex++] ?? topicUpdateBuilder),
   }
 
   return tx
@@ -429,6 +488,12 @@ describe('ForumTopicCommandService delete transaction side effects', () => {
       expect.objectContaining({ name: 'user_comment.user_id' }),
     )
     expect(tx.update).toHaveBeenCalledTimes(2)
+    expect(tx.commentUpdateBuilder.state.set).toEqual(
+      expect.objectContaining({
+        deletedAt: expect.any(Date),
+        topicDeleteCascadeId: expect.stringMatching(/^topic-delete:1:/),
+      }),
+    )
     expect(drizzle.assertAffectedRows).toHaveBeenCalledWith(
       [{ id: 1 }],
       '主题不存在',
@@ -528,5 +593,145 @@ describe('ForumTopicCommandService delete transaction side effects', () => {
     expect(forumCounterService.updateUserForumTopicCount).not.toHaveBeenCalled()
     expect(appUserCountService.updateCommentCount).not.toHaveBeenCalled()
     expect(actionLogService.createActionLogInTx).not.toHaveBeenCalled()
+  })
+})
+
+describe('ForumTopicCommandService restore transaction side effects', () => {
+  it('restores only cascade-deleted comments and rebuilds their references', async () => {
+    const tx = createCommandTx({
+      cascadeRows: [{ topicDeleteCascadeId: 'topic-delete:1:abc' }],
+      commentSummaries: [
+        { commentCount: 2, receivedLikeCount: 3, userId: 200 },
+      ],
+      restoredComments: [
+        {
+          auditStatus: 1,
+          body: { type: 'doc', content: [] },
+          id: 501,
+          isHidden: false,
+          userId: 200,
+        },
+        {
+          auditStatus: 2,
+          body: { type: 'doc', content: [] },
+          id: 502,
+          isHidden: true,
+          userId: 201,
+        },
+      ],
+      topicUpdateFirst: true,
+      topicUpdateResult: [{ id: 1 }],
+    })
+    tx.query.forumSection.findFirst.mockResolvedValueOnce({
+      deletedAt: null,
+      group: null,
+      groupId: null,
+      isEnabled: true,
+      topicReviewPolicy: 1,
+    })
+    const {
+      appUserCountService,
+      bodyCompilerService,
+      drizzle,
+      forumCounterService,
+      forumHashtagBodyService,
+      forumHashtagReferenceService,
+      mentionService,
+      service,
+    } = createCommandService()
+    const topic = createTopic({
+      deletedAt: new Date('2026-06-01T02:00:00.000Z'),
+      favoriteCount: 4,
+      likeCount: 5,
+      sectionId: 10,
+      userId: 100,
+    })
+
+    await expect(
+      service.restoreTopicWithCurrentInTx(
+        tx as unknown as Db,
+        topic,
+        { id: topic.id, sectionId: 20 },
+        {},
+        99,
+      ),
+    ).resolves.toBe(true)
+
+    expect(tx.select).toHaveBeenCalledTimes(3)
+    expect(tx.update).toHaveBeenCalledTimes(2)
+    expect(tx.topicUpdateBuilder.state.set).toEqual({
+      deletedAt: null,
+      sectionId: 20,
+    })
+    expect(tx.commentUpdateBuilder.state.set).toEqual({
+      deletedAt: null,
+      topicDeleteCascadeId: null,
+    })
+    expect(drizzle.assertAffectedRows).toHaveBeenCalledWith(
+      [{ id: 1 }],
+      '已删除主题不存在',
+    )
+    expect(forumHashtagBodyService.materializeBodyInTx).toHaveBeenCalledTimes(3)
+    expect(bodyCompilerService.compile).toHaveBeenCalledTimes(3)
+    expect(mentionService.replaceMentionsInTx).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceId: 501,
+        sourceType: 1,
+        tx,
+      }),
+    )
+    expect(
+      forumHashtagReferenceService.replaceReferencesInTx,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isSourceVisible: true,
+        sectionId: 20,
+        sourceId: 501,
+        sourceType: 2,
+        topicId: topic.id,
+        userId: 200,
+      }),
+    )
+    expect(
+      forumHashtagReferenceService.replaceReferencesInTx,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isSourceVisible: false,
+        sectionId: 20,
+        sourceId: 502,
+        sourceType: 2,
+        topicId: topic.id,
+        userId: 201,
+      }),
+    )
+    expect(
+      forumHashtagReferenceService.syncCommentVisibilityByTopicInTx,
+    ).not.toHaveBeenCalled()
+    expect(forumCounterService.updateUserForumTopicCount).toHaveBeenCalledWith(
+      tx,
+      topic.userId,
+      1,
+    )
+    expect(appUserCountService.updateCommentCount).toHaveBeenCalledWith(
+      tx,
+      200,
+      2,
+    )
+    expect(
+      appUserCountService.updateCommentReceivedLikeCount,
+    ).toHaveBeenCalledWith(tx, 200, 3)
+    expect(forumCounterService.syncSectionVisibleState).toHaveBeenCalledWith(
+      tx,
+      10,
+    )
+    expect(forumCounterService.syncSectionVisibleState).toHaveBeenCalledWith(
+      tx,
+      20,
+    )
+    expect(mentionService.dispatchTopicMentionsInTx).toHaveBeenCalledWith(tx, {
+      actorUserId: 99,
+      topicId: topic.id,
+      topicTitle: topic.title,
+    })
   })
 })

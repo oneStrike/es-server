@@ -9,6 +9,7 @@ import {
   QueryAdminForumModeratorActionLogDto,
   QueryAppForumModeratorActionLogDto,
 } from './dto/moderator-action-log.dto'
+import { ForumGovernanceActorTypeEnum } from './moderator-action-log.constant'
 
 /**
  * 版主操作日志服务。
@@ -41,7 +42,9 @@ export class ForumModeratorActionLogService {
   }
 
   private buildQueryWhere(
-    query: QueryAdminForumModeratorActionLogDto & { moderatorId?: number },
+    query: QueryAdminForumModeratorActionLogDto & {
+      moderatorId?: number | null
+    },
   ) {
     const conditions: SQL[] = []
     const dateRange = buildDateOnlyRangeInAppTimeZone(
@@ -49,9 +52,17 @@ export class ForumModeratorActionLogService {
       query.endDate,
     )
 
-    if (query.moderatorId !== undefined) {
+    if (query.moderatorId != null) {
       conditions.push(
         eq(this.forumModeratorActionLog.moderatorId, query.moderatorId),
+      )
+    }
+    if (query.actorType !== undefined) {
+      conditions.push(eq(this.forumModeratorActionLog.actorType, query.actorType))
+    }
+    if (query.actorUserId !== undefined) {
+      conditions.push(
+        eq(this.forumModeratorActionLog.actorUserId, query.actorUserId),
       )
     }
     if (query.targetId !== undefined) {
@@ -80,9 +91,15 @@ export class ForumModeratorActionLogService {
   }
 
   private async insertActionLog(db: Db, input: ForumModeratorActionLogInput) {
+    const actorType =
+      input.actorType === 'admin'
+        ? ForumGovernanceActorTypeEnum.ADMIN
+        : ForumGovernanceActorTypeEnum.MODERATOR
     await this.drizzle.withErrorHandling(() =>
       db.insert(this.forumModeratorActionLog).values({
         moderatorId: input.moderatorId,
+        actorType,
+        actorUserId: input.actorUserId,
         targetId: input.targetId,
         actionType: input.actionType,
         targetType: input.targetType,
@@ -132,6 +149,8 @@ export class ForumModeratorActionLogService {
         .select({
           id: this.forumModeratorActionLog.id,
           moderatorId: this.forumModeratorActionLog.moderatorId,
+          actorType: this.forumModeratorActionLog.actorType,
+          actorUserId: this.forumModeratorActionLog.actorUserId,
           targetId: this.forumModeratorActionLog.targetId,
           actionType: this.forumModeratorActionLog.actionType,
           targetType: this.forumModeratorActionLog.targetType,

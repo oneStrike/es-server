@@ -18,6 +18,7 @@ import {
   MoveForumTopicDto,
   PublicForumTopicDetailDto,
   QueryForumTopicDto,
+  RestoreForumTopicDto,
   UpdateForumTopicAuditStatusDto,
   UpdateForumTopicDto,
   UpdateForumTopicFeaturedDto,
@@ -116,6 +117,23 @@ export class ForumTopicService {
     return this.commandService.deleteTopicWithCurrentInTx(
       tx,
       topic,
+      context,
+      actorUserId,
+    )
+  }
+
+  // 在既有事务中恢复当前已删除主题快照。
+  async restoreTopicWithCurrentInTx(
+    tx: Db,
+    topic: ForumTopicSelect,
+    input: RestoreForumTopicDto,
+    context: ForumTopicClientContext = {},
+    actorUserId = topic.userId,
+  ) {
+    return this.commandService.restoreTopicWithCurrentInTx(
+      tx,
+      topic,
+      input,
       context,
       actorUserId,
     )
@@ -252,6 +270,15 @@ export class ForumTopicService {
   // 补发审核通过主题的成长奖励。
   async rewardApprovedTopicIfNeeded(params: ApprovedTopicRewardParams) {
     return this.commandService.rewardApprovedTopicIfNeeded(params)
+  }
+
+  // 管理端恢复主题。
+  async restoreTopic(
+    input: RestoreForumTopicDto,
+    context: ForumTopicClientContext = {},
+    actorUserId?: number,
+  ) {
+    return this.commandService.restoreTopic(input, context, actorUserId)
   }
 
   // 构建审核通过主题的成长奖励 payload，供治理链路补建 settlement 事实。

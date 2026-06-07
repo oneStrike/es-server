@@ -27,7 +27,16 @@ export const forumModeratorActionLog = snakeCase.table(
     /**
      * 关联的版主ID
      */
-    moderatorId: integer().notNull(),
+    moderatorId: integer(),
+    /**
+     * 治理动作来源（1=版主；2=后台管理员）
+     */
+    actorType: smallint().default(1).notNull(),
+    /**
+     * 治理动作发起用户ID。
+     * moderator 来源写 moderatorUserId，admin 来源写后台管理员用户ID。
+     */
+    actorUserId: integer(),
     /**
      * 目标ID
      */
@@ -64,6 +73,11 @@ export const forumModeratorActionLog = snakeCase.table(
      * 版主索引
      */
     index('forum_moderator_action_log_moderator_id_idx').on(table.moderatorId),
+    index('forum_governance_action_log_actor_created_at_idx').on(
+      table.actorType,
+      table.actorUserId,
+      table.createdAt.desc(),
+    ),
     index('forum_moderator_action_log_moderator_created_at_idx').on(
       table.moderatorId,
       table.createdAt.desc(),
@@ -81,7 +95,19 @@ export const forumModeratorActionLog = snakeCase.table(
      */
     check(
       'forum_moderator_action_log_action_type_valid_chk',
-      sql`${table.actionType} in (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)`,
+      sql`${table.actionType} in (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)`,
+    ),
+    check(
+      'forum_governance_action_log_actor_type_valid_chk',
+      sql`${table.actorType} in (1, 2)`,
+    ),
+    check(
+      'forum_governance_action_log_actor_user_present_chk',
+      sql`${table.actorUserId} is not null`,
+    ),
+    check(
+      'forum_governance_action_log_moderator_presence_chk',
+      sql`(${table.actorType} = 1 and ${table.moderatorId} is not null) or (${table.actorType} = 2 and ${table.moderatorId} is null)`,
     ),
     /**
      * 目标类型与目标ID索引

@@ -7,6 +7,7 @@ import {
   CreateForumTopicDto,
   MoveForumTopicDto,
   QueryForumTopicDto,
+  RestoreForumTopicDto,
   UpdateForumTopicAuditStatusDto,
   UpdateForumTopicDto,
   UpdateForumTopicFeaturedDto,
@@ -116,6 +117,29 @@ export class ForumTopicController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.forumModeratorGovernanceService.deleteTopic(
+      body,
+      {
+        actorType: 'admin',
+        actorUserId: userId,
+      },
+      await this.buildTopicClientContext(req),
+    )
+  }
+
+  @Post('restore')
+  @ApiAuditDoc({
+    summary: '恢复已删除论坛主题',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async restore(
+    @Body() body: RestoreForumTopicDto,
+    @Req() req: FastifyRequest,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumModeratorGovernanceService.restoreTopic(
       body,
       {
         actorType: 'admin',

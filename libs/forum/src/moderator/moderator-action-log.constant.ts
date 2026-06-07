@@ -43,4 +43,11 @@ export enum ForumModeratorActionTypeEnum {
   HIDE_COMMENT = 14,
   /** 取消隐藏评论 */
   UNHIDE_COMMENT = 15,
+  /** 恢复主题 */
+  RESTORE_TOPIC = 16,
+}
+
+export enum ForumGovernanceActorTypeEnum {
+  MODERATOR = 1,
+  ADMIN = 2,
 }
