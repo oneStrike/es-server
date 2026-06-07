@@ -28,7 +28,10 @@ export class SendVerifyCodeDto {
 /**
  * 校验验证码DTO
  */
-export class CheckVerifyCodeDto extends PickType(SendVerifyCodeDto, ['phone']) {
+export class CheckVerifyCodeDto extends PickType(SendVerifyCodeDto, [
+  'phone',
+  'templateCode',
+] as const) {
   @StringProperty({
     description: '验证码',
     example: '123456',

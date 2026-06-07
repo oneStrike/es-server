@@ -81,12 +81,13 @@ export abstract class BaseTokenStorageService<
 
   /**
    * 判断 token 当前是否有效。
-   * 先读缓存，再回落数据库；无效结果会写入短期缓存，避免频繁命中数据库。
+   * 无效缓存可直接拒绝；有效状态必须回源数据库，避免用户级批量撤销后
+   * 旧的 valid 缓存标记继续放行。
    */
   async isTokenValid(jti: string): Promise<boolean> {
     const cached = await this.cacheManager.get(`token:${jti}`)
-    if (cached !== null && cached !== undefined) {
-      return cached === 'valid'
+    if (cached === 'invalid') {
+      return false
     }
 
     const token = await this.findByJti(jti)

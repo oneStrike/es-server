@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 
+import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import { DECORATORS } from '@nestjs/swagger/dist/constants'
 import { UserService } from './user.service'
 
@@ -223,5 +224,52 @@ describe('UserService user center latest login geo', () => {
     } else {
       process.env.NODE_ENV = originalNodeEnv
     }
+  })
+
+  it('validates phone-change codes with the binding templates', async () => {
+    const user = {
+      id: 7,
+      phoneNumber: '13800000000',
+    }
+    const drizzle = {
+      db: {},
+      schema: { appUser: {} },
+      withErrorHandling: jest.fn(async () => undefined),
+      isUniqueViolation: jest.fn(() => false),
+    }
+    const userCoreService = {
+      ensureUserExists: jest.fn(async () => user),
+    }
+    const smsService = {
+      validateVerifyCode: jest.fn(async () => true),
+    }
+    const service = new UserService(
+      drizzle as never,
+      userCoreService as never,
+      smsService as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+
+    await service.changeMyPhone(7, {
+      currentPhone: '13800000000',
+      currentCode: '111111',
+      newPhone: '13900000000',
+      newCode: '222222',
+    })
+
+    expect(smsService.validateVerifyCode).toHaveBeenNthCalledWith(1, {
+      phone: '13800000000',
+      code: '111111',
+      templateCode: SmsTemplateCodeEnum.VERIFY_BIND_PHONE,
+    })
+    expect(smsService.validateVerifyCode).toHaveBeenNthCalledWith(2, {
+      phone: '13900000000',
+      code: '222222',
+      templateCode: SmsTemplateCodeEnum.BIND_NEW_PHONE,
+    })
   })
 })

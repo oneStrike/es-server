@@ -5,6 +5,7 @@ import { ChangePasswordDto, ForgotPasswordDto, LoginDto, LoginResponseDto, Refre
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { SendVerifyCodeDto } from '@libs/platform/modules/sms/dto'
+import { extractIpAddress } from '@libs/platform/utils/requestParse'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
@@ -30,8 +31,11 @@ export class AuthController {
     },
   })
   @Public()
-  async sendVerifyCode(@Body() body: SendVerifyCodeDto) {
-    return this.smsService.sendVerifyCode(body)
+  async sendVerifyCode(
+    @Body() body: SendVerifyCodeDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.smsService.sendVerifyCode(body, extractIpAddress(req))
   }
 
   @Get('key/public')

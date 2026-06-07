@@ -12,6 +12,8 @@ import {
 import { ForbiddenException } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 
+const APP_USER_ACCOUNT_MAX_RETRIES = 10
+
 /**
  * APP 用户模块共享 support 基类。
  *
@@ -167,16 +169,26 @@ export abstract class AppUserServiceSupport {
    * 新建后台创建用户时仍沿用现有随机账号策略，避免与既有注册口径漂移。
    */
   protected async generateUniqueAccount() {
-    const randomAccount = randomInt(100000, 1000000)
-    const [existingUser] = await this.db
-      .select({ id: this.appUserTable.id })
-      .from(this.appUserTable)
-      .where(eq(this.appUserTable.account, String(randomAccount)))
-      .limit(1)
+    for (
+      let attempt = 0;
+      attempt < APP_USER_ACCOUNT_MAX_RETRIES;
+      attempt += 1
+    ) {
+      const randomAccount = randomInt(100000, 1000000)
+      const [existingUser] = await this.db
+        .select({ id: this.appUserTable.id })
+        .from(this.appUserTable)
+        .where(eq(this.appUserTable.account, String(randomAccount)))
+        .limit(1)
 
-    if (existingUser) {
-      return this.generateUniqueAccount()
+      if (!existingUser) {
+        return randomAccount
+      }
     }
-    return randomAccount
+
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '生成用户账号失败，请重试',
+    )
   }
 }

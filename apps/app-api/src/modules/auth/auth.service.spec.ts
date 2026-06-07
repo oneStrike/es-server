@@ -5,6 +5,8 @@ jest.mock('@libs/platform/modules/auth/auth.service', () => ({
 import { appUser } from '@db/schema'
 import type { SessionClientContext } from '@libs/identity/session.type'
 import type { LoginDto, RefreshTokenDto } from '@libs/platform/modules/auth/dto'
+import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
+import { BadRequestException } from '@nestjs/common'
 import { AuthService } from './auth.service'
 
 describe('AuthService latest login geo', () => {
@@ -54,8 +56,11 @@ describe('AuthService latest login geo', () => {
       withErrorHandling: jest.fn((callback) => callback()),
     }
     const rsaService = { decryptWith: jest.fn(async () => 'plain-password') }
-    const smsService = {}
-    const scryptService = { verifyPassword: jest.fn(async () => true) }
+    const smsService = { validateVerifyCode: jest.fn(async () => true) }
+    const scryptService = {
+      encryptPassword: jest.fn(async () => 'hashed-generated-password'),
+      verifyPassword: jest.fn(async () => true),
+    }
     const baseJwtService = {
       generateTokens: jest.fn(async () => ({
         accessToken: 'access-token',
@@ -75,7 +80,9 @@ describe('AuthService latest login geo', () => {
       })),
       logout: jest.fn(async () => undefined),
     }
-    const passwordService = {}
+    const passwordService = {
+      generateSecureRandomPassword: jest.fn(() => 'generated-password'),
+    }
     const profileService = {}
     const loginGuardService = {
       checkLock: jest.fn(async () => undefined),
@@ -107,7 +114,7 @@ describe('AuthService latest login geo', () => {
       userCoreService as never,
     )
 
-    return { service, updateSet }
+    return { service, smsService, updateSet }
   }
 
   it('persists latest login geo snapshot after successful login without exposing it in login response', async () => {
@@ -154,5 +161,61 @@ describe('AuthService latest login geo', () => {
     )
 
     expect(updateSet).not.toHaveBeenCalled()
+  })
+
+  it('rejects registration without an SMS code', async () => {
+    const { service } = createService()
+
+    await expect(
+      service.register(
+        { phone: activeUser.phoneNumber } as LoginDto,
+        { ip: '203.0.113.10' } as SessionClientContext,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException)
+  })
+
+  it('validates the login/register SMS code before creating a user', async () => {
+    const { service, smsService } = createService()
+    const serviceWithPrivate = service as unknown as {
+      createRegisteredUser: (
+        phone: string,
+        hashedPassword: string,
+      ) => Promise<typeof activeUser>
+    }
+    jest
+      .spyOn(serviceWithPrivate, 'createRegisteredUser')
+      .mockResolvedValue(activeUser)
+
+    await service.register(
+      {
+        phone: activeUser.phoneNumber,
+        code: '123456',
+      } as LoginDto,
+      { ip: '203.0.113.10' } as SessionClientContext,
+    )
+
+    expect(smsService.validateVerifyCode).toHaveBeenCalledWith({
+      phone: activeUser.phoneNumber,
+      code: '123456',
+      templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
+    })
+  })
+
+  it('validates the SMS code before code login succeeds', async () => {
+    const { service, smsService } = createService()
+
+    await service.login(
+      {
+        phone: activeUser.phoneNumber,
+        code: '654321',
+      } as LoginDto,
+      { ip: '203.0.113.10' } as SessionClientContext,
+    )
+
+    expect(smsService.validateVerifyCode).toHaveBeenCalledWith({
+      phone: activeUser.phoneNumber,
+      code: '654321',
+      templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
+    })
   })
 })

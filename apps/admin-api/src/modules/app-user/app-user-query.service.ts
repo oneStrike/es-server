@@ -58,6 +58,8 @@ export class AppUserQueryService extends AppUserServiceSupport {
       deletedScope,
       lastLoginStartDate,
       lastLoginEndDate,
+      startDate,
+      endDate,
       pageIndex,
       pageSize,
       orderBy,
@@ -67,6 +69,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
       lastLoginStartDate,
       lastLoginEndDate,
     )
+    const createdAt = this.buildDateRange(startDate, endDate)
     const conditions: SQL[] = []
 
     if (id !== undefined) {
@@ -113,6 +116,12 @@ export class AppUserQueryService extends AppUserServiceSupport {
     }
     if (lastLoginAt?.lt) {
       conditions.push(lt(this.appUserTable.lastLoginAt, lastLoginAt.lt))
+    }
+    if (createdAt?.gte) {
+      conditions.push(gte(this.appUserTable.createdAt, createdAt.gte))
+    }
+    if (createdAt?.lt) {
+      conditions.push(lt(this.appUserTable.createdAt, createdAt.lt))
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined

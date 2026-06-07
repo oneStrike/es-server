@@ -108,7 +108,11 @@ export class SmsService {
    * @returns 校验是否通过
    */
   async checkVerifyCode(dto: CheckVerifyCodeDto): Promise<boolean> {
-    const { phone, code } = dto
+    const {
+      phone,
+      code,
+      templateCode = SmsTemplateCodeEnum.LOGIN_REGISTER,
+    } = dto
     const maskedPhone = maskString(phone, 3, 4)
 
     const client = this.getClient()
@@ -116,6 +120,7 @@ export class SmsService {
     const checkSmsVerifyCodeRequest =
       new $Dypnsapi20170525.CheckSmsVerifyCodeRequest({
         phoneNumber: phone,
+        schemeName: templateCode,
         verifyCode: code,
       })
 
@@ -161,6 +166,7 @@ export class SmsService {
       const sendSmsVerifyCodeRequest =
         new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
           phoneNumber: phone,
+          schemeName: finalTemplateCode,
           signName: smsConfig.signName,
           templateCode: finalTemplateCode,
           templateParam: JSON.stringify({

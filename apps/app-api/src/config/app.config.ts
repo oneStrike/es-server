@@ -9,6 +9,10 @@ export const AppConfigRegister = registerAs('app', (): AppConfigInterface => {
     APP_API_PORT,
     APP_PORT,
     APP_VERSION = '1.0.0',
+    SMS_IP_TEMPLATE_MINUTE_LIMIT = '30',
+    SMS_PHONE_IP_HOUR_LIMIT = '5',
+    SMS_PHONE_TEMPLATE_COOLDOWN_SECONDS = '60',
+    SMS_PHONE_TEMPLATE_DAILY_LIMIT = '10',
   } = process.env
   return {
     name: APP_NAME,
@@ -21,6 +25,16 @@ export const AppConfigRegister = registerAs('app', (): AppConfigInterface => {
       description: '客户端API文档',
       version: APP_VERSION,
       path: 'api-doc',
+    },
+    auth: {
+      smsRateLimit: {
+        phoneTemplateCooldownSeconds: Number(
+          SMS_PHONE_TEMPLATE_COOLDOWN_SECONDS,
+        ),
+        phoneTemplateDailyLimit: Number(SMS_PHONE_TEMPLATE_DAILY_LIMIT),
+        ipTemplateMinuteLimit: Number(SMS_IP_TEMPLATE_MINUTE_LIMIT),
+        phoneIpHourLimit: Number(SMS_PHONE_IP_HOUR_LIMIT),
+      },
     },
   }
 })

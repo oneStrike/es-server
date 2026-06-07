@@ -228,6 +228,22 @@ export class QueryAdminAppUserPageDto extends IntersectionType(
     type: 'ISO8601',
   })
   lastLoginEndDate?: string
+
+  @StringProperty({
+    description: '注册开始时间',
+    example: '2026-03-01',
+    required: false,
+    type: 'ISO8601',
+  })
+  declare startDate?: string
+
+  @StringProperty({
+    description: '注册结束时间',
+    example: '2026-03-08',
+    required: false,
+    type: 'ISO8601',
+  })
+  declare endDate?: string
 }
 
 export class AdminAppUserFollowCountRepairResultDto extends IntersectionType(

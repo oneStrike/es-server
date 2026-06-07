@@ -197,6 +197,12 @@ export class AppUserCommandService extends AppUserServiceSupport {
           .where(eq(this.appUserTable.id, dto.id)),
       { notFound: '用户不存在' },
     )
+    if (!dto.isEnabled) {
+      await this.appUserTokenStorageService.revokeAllByUserId(
+        dto.id,
+        RevokeTokenReasonEnum.ADMIN_REVOKE,
+      )
+    }
     return true
   }
 
@@ -241,6 +247,15 @@ export class AppUserCommandService extends AppUserServiceSupport {
           .where(eq(this.appUserTable.id, dto.id)),
       { notFound: '用户不存在' },
     )
+    if (
+      dto.status === UserStatusEnum.BANNED ||
+      dto.status === UserStatusEnum.PERMANENT_BANNED
+    ) {
+      await this.appUserTokenStorageService.revokeAllByUserId(
+        dto.id,
+        RevokeTokenReasonEnum.ADMIN_REVOKE,
+      )
+    }
     return true
   }
 
@@ -259,6 +274,10 @@ export class AppUserCommandService extends AppUserServiceSupport {
             ),
           ),
       { notFound: '用户不存在' },
+    )
+    await this.appUserTokenStorageService.revokeAllByUserId(
+      userId,
+      RevokeTokenReasonEnum.ADMIN_REVOKE,
     )
     return true
   }

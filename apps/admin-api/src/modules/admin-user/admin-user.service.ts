@@ -5,6 +5,7 @@ import type {
   UserRegisterDto,
 } from '@libs/identity/dto/admin-user.dto'
 import type { SQL } from 'drizzle-orm'
+import { randomInt } from 'node:crypto'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
@@ -18,7 +19,6 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import { and, eq } from 'drizzle-orm'
 import { AdminAuthRedisKeys } from '../auth/auth.constant'
 import { AdminTokenStorageService } from '../auth/token-storage.service'
@@ -36,7 +36,6 @@ export class AdminUserService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly scryptService: ScryptService,
-    private readonly configService: ConfigService,
     private readonly loginGuardService: LoginGuardService,
     private readonly tokenStorageService: AdminTokenStorageService,
   ) {}
@@ -78,6 +77,8 @@ export class AdminUserService {
         id: this.adminUser.id,
         username: this.adminUser.username,
         mobile: this.adminUser.mobile,
+        role: this.adminUser.role,
+        isEnabled: this.adminUser.isEnabled,
       })
       .from(this.adminUser)
       .where(eq(this.adminUser.id, updateData.id))
@@ -120,6 +121,8 @@ export class AdminUserService {
       }
     }
 
+    await this.ensureSafeAdminAccountUpdate(userId, user, updateData)
+
     const { id: _id, ...data } = updateData
     await this.drizzle.withErrorHandling(
       () =>
@@ -129,6 +132,12 @@ export class AdminUserService {
           .where(eq(this.adminUser.id, updateData.id)),
       { notFound: '用户不存在' },
     )
+    if (updateData.isEnabled === false && user.isEnabled) {
+      await this.tokenStorageService.revokeAllByUserId(
+        updateData.id,
+        RevokeTokenReasonEnum.ADMIN_REVOKE,
+      )
+    }
     return true
   }
 
@@ -349,16 +358,13 @@ export class AdminUserService {
   }
 
   /**
-   * 重置用户密码为默认密码（Aa@123456）
+   * 重置用户密码为一次性临时密码。
    */
   async resetPassword(userId: number, id: number) {
     await this.isSuperAdmin(userId)
-    // 重置密码为默认密码（Aa@123456）
-    const defaultPassword = this.configService.get<string>(
-      'app.defaultPassword',
-    )!
+    const temporaryPassword = this.generateTemporaryPassword()
     const encryptedPassword =
-      await this.scryptService.encryptPassword(defaultPassword)
+      await this.scryptService.encryptPassword(temporaryPassword)
     await this.drizzle.withErrorHandling(
       async () =>
         this.db
@@ -375,6 +381,78 @@ export class AdminUserService {
       RevokeTokenReasonEnum.PASSWORD_CHANGE,
     )
 
-    return true
+    return { temporaryPassword }
+  }
+
+  private async ensureSafeAdminAccountUpdate(
+    operatorId: number,
+    target: {
+      id: number
+      role: AdminUserRoleEnum
+      isEnabled: boolean
+    },
+    updateData: UpdateUserDto,
+  ) {
+    const disablesTarget = updateData.isEnabled === false && target.isEnabled
+    const downgradesTarget =
+      updateData.role !== undefined &&
+      updateData.role !== AdminUserRoleEnum.SUPER_ADMIN &&
+      target.role === AdminUserRoleEnum.SUPER_ADMIN
+
+    if (target.id === operatorId && (disablesTarget || downgradesTarget)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '不能禁用或降级当前登录的超级管理员',
+      )
+    }
+
+    if (target.role !== AdminUserRoleEnum.SUPER_ADMIN) {
+      return
+    }
+    if (!disablesTarget && !downgradesTarget) {
+      return
+    }
+
+    const enabledSuperAdminCount = await this.db.$count(
+      this.adminUser,
+      and(
+        eq(this.adminUser.role, AdminUserRoleEnum.SUPER_ADMIN),
+        eq(this.adminUser.isEnabled, true),
+      ),
+    )
+
+    if (enabledSuperAdminCount <= 1) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '不能禁用或降级最后一个启用的超级管理员',
+      )
+    }
+  }
+
+  private generateTemporaryPassword() {
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+    const numbers = '0123456789'
+    const special = '!@#$%^&*'
+    const pick = (characters: string) =>
+      characters[randomInt(characters.length)]
+
+    let password = ''
+    for (let i = 0; i < 2; i += 1) {
+      password += pick(uppercase)
+      password += pick(lowercase)
+      password += pick(numbers)
+      password += pick(special)
+    }
+
+    const allCharacters = uppercase + lowercase + numbers + special
+    for (let i = password.length; i < 16; i += 1) {
+      password += pick(allCharacters)
+    }
+
+    return password
+      .split('')
+      .sort(() => randomInt(3) - 1)
+      .join('')
   }
 }

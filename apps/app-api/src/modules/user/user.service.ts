@@ -19,6 +19,7 @@ import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.ser
 import { MessageInboxService } from '@libs/message/inbox/inbox.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import {
   formatDateOnlyInAppTimeZone,
   startOfTodayInAppTimeZone,
@@ -215,10 +216,12 @@ export class UserService {
     await this.smsService.validateVerifyCode({
       phone: dto.currentPhone,
       code: dto.currentCode,
+      templateCode: SmsTemplateCodeEnum.VERIFY_BIND_PHONE,
     })
     await this.smsService.validateVerifyCode({
       phone: dto.newPhone,
       code: dto.newCode,
+      templateCode: SmsTemplateCodeEnum.BIND_NEW_PHONE,
     })
 
     try {

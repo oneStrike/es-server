@@ -125,7 +125,7 @@ export class UserService {
       }
     }
 
-    if (this.isBannedStatus(user.status)) {
+    if (this.isBannedStatus(user.status, user.banUntil)) {
       return {
         allowed: false,
         reason: 'banned',
@@ -262,7 +262,11 @@ export class UserService {
 
   // 判断状态码是否属于禁言态。
   // 禁言态会限制发帖和回复，但不阻断登录。
-  isMutedStatus(status: number) {
+  isMutedStatus(status: number, banUntil?: Date | null) {
+    if (!this.isRestrictionActive(status, banUntil)) {
+      return false
+    }
+
     return (
       status === UserStatusEnum.MUTED ||
       status === UserStatusEnum.PERMANENT_MUTED
@@ -271,7 +275,11 @@ export class UserService {
 
   // 判断状态码是否属于封禁态。
   // 封禁态会直接阻断登录，并驱动统一的封禁提示文案。
-  isBannedStatus(status: number) {
+  isBannedStatus(status: number, banUntil?: Date | null) {
+    if (!this.isRestrictionActive(status, banUntil)) {
+      return false
+    }
+
     return (
       status === UserStatusEnum.BANNED ||
       status === UserStatusEnum.PERMANENT_BANNED
@@ -282,6 +290,20 @@ export class UserService {
   // 统一由核心服务处理，避免不同入口拼出不一致的时间字符串。
   private formatRestrictionUntil(date: Date) {
     return formatDateTimeInAppTimeZone(date)
+  }
+
+  private isRestrictionActive(status: number, banUntil?: Date | null) {
+    if (
+      status === UserStatusEnum.PERMANENT_MUTED ||
+      status === UserStatusEnum.PERMANENT_BANNED
+    ) {
+      return true
+    }
+    if (status === UserStatusEnum.MUTED || status === UserStatusEnum.BANNED) {
+      return Boolean(banUntil && banUntil > new Date())
+    }
+
+    return true
   }
 
   // 生成封禁态访问提示文案。
@@ -305,7 +327,7 @@ export class UserService {
   // 校验当前用户是否处于封禁态。
   // 若命中封禁，统一抛出稳定 403 文案，避免上层入口各自实现封禁分支。
   ensureAppUserNotBanned(user: UserBanGuardSource): void {
-    if (this.isBannedStatus(user.status)) {
+    if (this.isBannedStatus(user.status, user.banUntil)) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         this.buildBanAccessMessage(user),
@@ -348,8 +370,8 @@ export class UserService {
   // 构建用户状态摘要。
   // 统一收敛登录、发帖、回复、点赞、收藏和关注能力的判定口径。
   buildUserStatus(user: UserStatusSource): UserStatusSummaryDto {
-    const isMuted = this.isMutedStatus(user.status)
-    const isBanned = this.isBannedStatus(user.status)
+    const isMuted = this.isMutedStatus(user.status, user.banUntil)
+    const isBanned = this.isBannedStatus(user.status, user.banUntil)
     const canLogin = user.isEnabled && !isBanned
     const canPost = user.isEnabled && !isMuted && !isBanned
     const canReply = canPost

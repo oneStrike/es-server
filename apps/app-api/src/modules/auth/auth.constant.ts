@@ -14,6 +14,7 @@ export const AppAuthErrorMessages = {
   PHONE_OR_ACCOUNT_REQUIRED: '手机号或账号不能为空',
   PASSWORD_OR_CODE_REQUIRED: '密码或验证码不能为空',
   VERIFY_CODE_INVALID: '验证码错误或已过期',
+  VERIFY_CODE_REQUIRED: '验证码不能为空',
   PHONE_REQUIRED_FOR_REGISTER: '注册必须提供手机号',
   PHONE_REQUIRED_FOR_CODE_LOGIN: '验证码登录必须提供手机号',
   ACCOUNT_NOT_BOUND_PHONE: '该账号未绑定手机号，无法使用验证码登录',

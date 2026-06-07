@@ -1,6 +1,7 @@
 import {
   AdminUserResponseDto,
   ChangePasswordDto,
+  ResetAdminUserPasswordResultDto,
   UpdateUserDto,
   UserPageDto,
   UserRegisterDto,
@@ -116,12 +117,12 @@ export class AdminUserController {
   }
 
   /**
-   * 重置用户密码为默认密码接口
+   * 重置用户密码接口
    */
   @Post('password/reset')
   @ApiAuditDoc({
-    summary: '重置用户密码为默认密码',
-    model: Boolean,
+    summary: '重置用户密码',
+    model: ResetAdminUserPasswordResultDto,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
     },

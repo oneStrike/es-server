@@ -20,4 +20,15 @@ export const appConfigValidationSchema = {
    * 应用版本
    */
   APP_VERSION: Joi.string().default('1.0.0'),
+
+  SMS_PHONE_TEMPLATE_COOLDOWN_SECONDS: Joi.number()
+    .integer()
+    .positive()
+    .default(60),
+
+  SMS_PHONE_TEMPLATE_DAILY_LIMIT: Joi.number().integer().positive().default(10),
+
+  SMS_IP_TEMPLATE_MINUTE_LIMIT: Joi.number().integer().positive().default(30),
+
+  SMS_PHONE_IP_HOUR_LIMIT: Joi.number().integer().positive().default(5),
 }

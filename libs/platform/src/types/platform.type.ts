@@ -50,6 +50,29 @@ export interface AppConfigInterface {
      */
     path: string
   }
+  /**
+   * 应用端认证配置
+   */
+  auth?: {
+    smsRateLimit?: {
+      /**
+       * 同一手机号 + 模板发送冷却秒数。
+       */
+      phoneTemplateCooldownSeconds?: number
+      /**
+       * 同一手机号 + 模板每日发送次数。
+       */
+      phoneTemplateDailyLimit?: number
+      /**
+       * 同一 IP + 模板每分钟发送次数。
+       */
+      ipTemplateMinuteLimit?: number
+      /**
+       * 同一手机号 + IP 每小时发送次数。
+       */
+      phoneIpHourLimit?: number
+    }
+  }
 }
 
 /**

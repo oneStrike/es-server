@@ -85,6 +85,19 @@ export class AdminUserResponseDto extends OmitType(BaseAdminUserDto, [
 ] as const) {}
 
 /**
+ * 管理员密码重置结果 DTO。
+ */
+export class ResetAdminUserPasswordResultDto {
+  @StringProperty({
+    description: '一次性临时密码，仅本次响应返回',
+    example: 'Aa1!TempGenerated',
+    required: true,
+    password: true,
+  })
+  temporaryPassword!: string
+}
+
+/**
  * 创建管理员账号 DTO。
  */
 export class UserRegisterDto extends PickType(BaseAdminUserDto, [

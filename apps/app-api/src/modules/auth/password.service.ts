@@ -10,6 +10,7 @@ import {
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/helpers'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
@@ -117,8 +118,15 @@ export class PasswordService {
 
     this.userCoreService.ensureAppUserNotBanned(user)
 
-    await this.smsService.validateVerifyCode({ phone, code })
-    const hashedPassword = await this.scryptService.encryptPassword(password)
+    await this.smsService.validateVerifyCode({
+      phone,
+      code,
+      templateCode: SmsTemplateCodeEnum.RESET_PASSWORD,
+    })
+    const plainPassword = this.rsaService.decryptWith(password)
+    const hashedPassword = await this.scryptService.encryptPassword(
+      plainPassword,
+    )
 
     await this.drizzle.withErrorHandling(
       () =>

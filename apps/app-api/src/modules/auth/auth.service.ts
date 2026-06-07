@@ -22,6 +22,7 @@ import {
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
@@ -114,13 +115,15 @@ export class AuthService {
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_REGISTER,
       )
     }
+    if (!body.code) {
+      throw new BadRequestException(AppAuthErrorMessages.VERIFY_CODE_REQUIRED)
+    }
 
-    // if (body.code) {
-    //   await this.smsService.validateVerifyCode({
-    //     phone: body.phone,
-    //     code: body.code,
-    //   })
-    // }
+    await this.smsService.validateVerifyCode({
+      phone: body.phone,
+      code: body.code,
+      templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
+    })
 
     const hashedPassword = await this.scryptService.encryptPassword(
       this.passwordService.generateSecureRandomPassword(),
@@ -205,10 +208,11 @@ export class AuthService {
         )
       }
 
-      // `await this.smsService.validateVerifyCode({
-      //   phone: user.phoneNumber,
-      //   code: body.code,
-      // })`
+      await this.smsService.validateVerifyCode({
+        phone: user.phoneNumber,
+        code: body.code,
+        templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
+      })
     } else {
       await this.loginGuardService.checkLock(
         AppAuthRedisKeys.LOGIN_LOCK(user.id),
