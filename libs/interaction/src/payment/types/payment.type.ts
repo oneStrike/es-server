@@ -37,6 +37,35 @@ export interface PaymentOrderPublicResult {
   clientPayPayload: Record<string, unknown>
 }
 
+/**
+ * App 只读支付状态字段集合，不能暴露 provider 内部配置、凭据或通知原文。
+ */
+export interface PaymentOrderStatusResult {
+  orderNo: string
+  status: PaymentOrderStatusEnum
+  orderType: PaymentOrderTypeEnum
+  channel: PaymentChannelEnum
+  scene: number
+  payableAmount: number
+  paidAmount: number | null
+  currency: string
+  expireAt: Date | null
+  paidAt: Date | null
+  closedAt: Date | null
+  clientPayPayload: Record<string, unknown> | null
+}
+
+/**
+ * Provider 原生通知入口原始请求数据。
+ */
+export interface ProviderPaymentNotifyRequest {
+  channel: PaymentChannelEnum
+  headers: Record<string, unknown>
+  query: Record<string, unknown>
+  body: Record<string, unknown>
+  rawBody?: string
+}
+
 /** Provider 签名串允许参与规范化的基础字段值。 */
 export type SignedFieldValue = string | number | boolean
 
@@ -56,6 +85,7 @@ export interface PaymentProviderCreateOrderInput {
   order: PaymentOrderSelect
   config: PaymentProviderConfigSelect
   sceneContext: CreatePaymentOrderBaseDto
+  credentialMaterial?: PaymentProviderCredentialMaterial
 }
 
 /**
@@ -65,6 +95,30 @@ export interface PaymentProviderNotifyInput {
   order: PaymentOrderSelect
   config: PaymentProviderConfigSelect
   payload?: Record<string, unknown>
+  credentialMaterial?: PaymentProviderCredentialMaterial
+}
+
+/**
+ * 从 provider 原生通知定位站内订单号所需的最小上下文。
+ * 微信通知的订单号在加密 resource 内，必须先用候选 APIv3 key 解密。
+ */
+export interface PaymentProviderNotifyOrderNoInput {
+  payload?: Record<string, unknown>
+  credentialMaterial?: PaymentProviderCredentialMaterial
+}
+
+/**
+ * 支付 provider 验签所需的外部凭据材料。
+ * 生产实现应由凭据/KMS 解析器按订单不可变版本注入，禁止从 admin 普通 JSON 直接读取明文密钥。
+ */
+export interface PaymentProviderCredentialMaterial {
+  appPrivateKeyPem?: string
+  alipayPublicKeyPem?: string
+  alipayKeyType?: 'PKCS1' | 'PKCS8'
+  wechatApiV3Key?: string
+  wechatMerchantSerialNo?: string
+  wechatPlatformPublicKeyPem?: string
+  wechatPlatformSerialNo?: string
 }
 
 /**
@@ -96,7 +150,10 @@ export interface PaymentProviderAdapter {
   readonly channel: PaymentChannelEnum
   createOrder: (
     input: PaymentProviderCreateOrderInput,
-  ) => Record<string, unknown>
+  ) => Promise<Record<string, unknown>>
+  extractNotifyOrderNo: (
+    input: PaymentProviderNotifyOrderNoInput,
+  ) => string | undefined
   verifyNotify: (input: PaymentProviderNotifyInput) => boolean
   parseNotify: (
     input: PaymentProviderNotifyInput,

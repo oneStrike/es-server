@@ -1,15 +1,22 @@
 import {
   AdminPaymentOrderPageItemDto,
-  BasePaymentProviderConfigDto,
-  ConfirmPaymentOrderDto,
+  AdminPaymentProviderConfigPageItemDto,
+  AdminPaymentReconciliationPageItemDto,
   CreatePaymentProviderConfigDto,
   PaymentOrderResultDto,
+  PaymentProviderAccountOptionDto,
+  PaymentProviderCertificateOptionDto,
+  PaymentProviderCertificateOptionQueryDto,
+  PaymentProviderCredentialOptionDto,
+  PaymentProviderCredentialOptionQueryDto,
   QueryPaymentOrderDto,
   QueryPaymentProviderConfigDto,
+  QueryPaymentReconciliationDto,
+  RepairPaidPaymentOrderDto,
   UpdatePaymentProviderConfigDto,
 } from '@libs/interaction/payment/dto/payment.dto'
 import { PaymentService } from '@libs/interaction/payment/payment.service'
-import { ApiPageDoc } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -25,12 +32,51 @@ export class PaymentController {
   @Get('provider/page')
   @ApiPageDoc({
     summary: '分页查询支付 provider 配置',
-    model: BasePaymentProviderConfigDto,
+    model: AdminPaymentProviderConfigPageItemDto,
   })
   async getPaymentProviderConfigPage(
     @Query() query: QueryPaymentProviderConfigDto,
   ) {
     return this.paymentService.getPaymentProviderConfigPage(query)
+  }
+
+  // 查询支付 provider 账号选项。
+  @Get('provider-account-option/list')
+  @ApiDoc({
+    summary: '查询支付 provider 账号选项',
+    model: PaymentProviderAccountOptionDto,
+    isArray: true,
+  })
+  async getPaymentProviderAccountOptions(
+    @Query() query: QueryPaymentProviderConfigDto,
+  ) {
+    return this.paymentService.getPaymentProviderAccountOptions(query)
+  }
+
+  // 查询支付凭据选项。
+  @Get('credential-option/list')
+  @ApiDoc({
+    summary: '查询支付凭据选项',
+    model: PaymentProviderCredentialOptionDto,
+    isArray: true,
+  })
+  async getPaymentCredentialOptions(
+    @Query() query: PaymentProviderCredentialOptionQueryDto,
+  ) {
+    return this.paymentService.getPaymentCredentialOptions(query)
+  }
+
+  // 查询支付证书选项。
+  @Get('certificate-option/list')
+  @ApiDoc({
+    summary: '查询支付证书选项',
+    model: PaymentProviderCertificateOptionDto,
+    isArray: true,
+  })
+  async getPaymentCertificateOptions(
+    @Query() query: PaymentProviderCertificateOptionQueryDto,
+  ) {
+    return this.paymentService.getPaymentCertificateOptions(query)
   }
 
   // 创建支付 provider 配置。
@@ -83,14 +129,29 @@ export class PaymentController {
     return this.paymentService.getPaymentOrderPage(query)
   }
 
-  // 手工确认支付订单状态，并复用支付结算幂等核心。
-  @Post('order/update-status')
+  // 分页查询支付对账记录。
+  @Get('reconcile/page')
+  @ApiPageDoc({
+    summary: '分页查询支付对账记录',
+    model: AdminPaymentReconciliationPageItemDto,
+  })
+  async getPaymentReconciliationPage(
+    @Query() query: QueryPaymentReconciliationDto,
+  ) {
+    return this.paymentService.getPaymentReconciliationPage(query)
+  }
+
+  // 异常修复支付订单为已支付，并复用支付结算幂等核心。
+  @Post('order/repair-paid')
   @ApiAuditDoc({
-    summary: '手工确认支付订单状态',
+    summary: '异常修复支付订单为已支付',
     model: PaymentOrderResultDto,
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
-  async confirmPaymentOrder(@Body() body: ConfirmPaymentOrderDto) {
-    return this.paymentService.confirmPaymentOrderManually(body)
+  async repairPaidOrder(
+    @Body() body: RepairPaidPaymentOrderDto,
+    @CurrentUser('sub') adminUserId: number,
+  ) {
+    return this.paymentService.repairPaidOrder(body, adminUserId)
   }
 }

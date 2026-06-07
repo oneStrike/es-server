@@ -27,6 +27,7 @@ import { InteractionSummaryReadService } from '@libs/interaction/summary/interac
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { SensitiveWordReviewPolicyService } from '@libs/sensitive-word/sensitive-word-review-policy.service'
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { Injectable } from '@nestjs/common'
@@ -64,6 +65,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     bodyCompilerService: BodyCompilerService,
     bodyHtmlCodecService: BodyHtmlCodecService,
     sensitiveWordDetectService: SensitiveWordDetectService,
+    private readonly sensitiveWordReviewPolicyService: SensitiveWordReviewPolicyService,
     forumHashtagBodyService: ForumHashtagBodyService,
     interactionSummaryReadService: InteractionSummaryReadService,
     growthBalanceQueryService: GrowthBalanceQueryService,
@@ -142,12 +144,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           inputTitle,
           compiledBody.plainText,
         )
-        const { hits, publicHits, highestLevel } =
-          this.detectTopicSensitiveWords(title, compiledBody.plainText)
-        const reviewPolicy = liveSection.topicReviewPolicy
-        const { auditStatus, isHidden } = this.calculateAuditStatus(
-          reviewPolicy,
-          highestLevel,
+        const decision = this.sensitiveWordReviewPolicyService.resolveTopicDecision(
+          title,
+          compiledBody.plainText,
+          liveSection.topicReviewPolicy,
         )
         const createPayload = {
           title,
@@ -164,21 +164,25 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           geoIsp: context.geoIsp,
           geoSource: context.geoSource,
           ...media,
-          auditStatus,
-          sensitiveWordHits: publicHits.length ? publicHits : undefined,
-          isHidden,
+          auditStatus: decision.auditStatus,
+          sensitiveWordHits: decision.publicHits.length
+            ? decision.publicHits
+            : undefined,
+          isHidden: decision.isHidden,
         }
         const [newTopic] = await tx
           .insert(this.forumTopicTable)
           .values(createPayload)
           .returning()
-        await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
-          entityType: 'topic',
-          entityId: newTopic.id,
-          operationType: 'create',
-          hits,
-          occurredAt: newTopic.createdAt,
-        })
+        if (decision.recordHits && decision.statisticsHits.length) {
+          await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
+            entityType: 'topic',
+            entityId: newTopic.id,
+            operationType: 'create',
+            hits: decision.statisticsHits,
+            occurredAt: newTopic.createdAt,
+          })
+        }
         await this.mentionService.replaceMentionsInTx({
           tx,
           sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
@@ -302,11 +306,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           nextTitleInput,
         )
         const nextContent = compiledBody.plainText
-        const { hits, publicHits, highestLevel } =
-          this.detectTopicSensitiveWords(nextTitle, nextContent)
-        const { auditStatus, isHidden } = this.calculateAuditStatus(
+        const decision = this.sensitiveWordReviewPolicyService.resolveTopicDecision(
+          nextTitle,
+          nextContent,
           reviewPolicy,
-          highestLevel,
         )
         const updatePayload = {
           title: nextTitle,
@@ -316,9 +319,11 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           contentPreview: compiledBody.contentPreview as unknown as JsonValue,
           ...media,
           bodyVersion: BODY_VERSION_V1,
-          auditStatus,
-          sensitiveWordHits: publicHits.length ? publicHits : null,
-          isHidden,
+          auditStatus: decision.auditStatus,
+          sensitiveWordHits: decision.publicHits.length
+            ? decision.publicHits
+            : null,
+          isHidden: decision.isHidden,
         }
         const [nextTopic] = await tx
           .update(this.forumTopicTable)
@@ -336,13 +341,15 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
             '主题不存在',
           )
         }
-        await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
-          entityType: 'topic',
-          entityId: nextTopic.id,
-          operationType: 'update',
-          hits,
-          occurredAt: nextTopic.updatedAt ?? new Date(),
-        })
+        if (decision.recordHits && decision.statisticsHits.length) {
+          await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
+            entityType: 'topic',
+            entityId: nextTopic.id,
+            operationType: 'update',
+            hits: decision.statisticsHits,
+            occurredAt: nextTopic.updatedAt ?? new Date(),
+          })
+        }
         await this.mentionService.replaceMentionsInTx({
           tx,
           sourceType: MentionSourceTypeEnum.FORUM_TOPIC,

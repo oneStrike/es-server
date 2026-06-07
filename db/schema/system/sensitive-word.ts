@@ -107,6 +107,20 @@ export const sensitiveWord = snakeCase.table(
      * 创建时间索引
      */
     index('sensitive_word_created_at_idx').on(table.createdAt),
+    /**
+     * 热门敏感词排序索引
+     */
+    index('sensitive_word_hit_count_desc_idx').on(
+      table.hitCount.desc(),
+      table.id.desc(),
+    ),
+    /**
+     * 最近命中敏感词排序索引
+     */
+    index('sensitive_word_last_hit_at_desc_idx').on(
+      table.lastHitAt.desc(),
+      table.id.desc(),
+    ),
     check('sensitive_word_level_valid_chk', sql`${table.level} in (1, 2, 3)`),
     check(
       'sensitive_word_type_valid_chk',

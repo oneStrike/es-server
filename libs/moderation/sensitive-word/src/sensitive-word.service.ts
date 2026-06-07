@@ -90,7 +90,8 @@ export class SensitiveWordService {
         this.db
           .update(this.sensitiveWord)
           .set(updateData)
-          .where(eq(this.sensitiveWord.id, id)),
+          .where(eq(this.sensitiveWord.id, id))
+          .returning({ id: this.sensitiveWord.id }),
       { notFound: `ID【${id}】数据不存在` },
     )
 
@@ -105,7 +106,8 @@ export class SensitiveWordService {
       () =>
         this.db
           .delete(this.sensitiveWord)
-          .where(eq(this.sensitiveWord.id, dto.id)),
+          .where(eq(this.sensitiveWord.id, dto.id))
+          .returning({ id: this.sensitiveWord.id }),
       { notFound: `ID【${dto.id}】数据不存在` },
     )
 
@@ -121,7 +123,8 @@ export class SensitiveWordService {
         this.db
           .update(this.sensitiveWord)
           .set({ isEnabled: dto.isEnabled })
-          .where(eq(this.sensitiveWord.id, dto.id)),
+          .where(eq(this.sensitiveWord.id, dto.id))
+          .returning({ id: this.sensitiveWord.id }),
       { notFound: `ID【${dto.id}】数据不存在` },
     )
 

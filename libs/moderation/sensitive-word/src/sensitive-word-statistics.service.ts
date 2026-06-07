@@ -1,16 +1,36 @@
 import type { Db } from '@db/core'
+import type { SQL } from 'drizzle-orm'
 
 import type { RecordSensitiveWordEntityHitsInput } from './sensitive-word.type'
-import { DrizzleService } from '@db/core'
+import { buildLikePattern, DrizzleService, toPageResult } from '@db/core'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import {
+  buildDateOnlyRangeInAppTimeZone,
   startOfTodayInAppTimeZone,
   subtractDaysInAppTimeZone,
   subtractMonthsInAppTimeZone,
 } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
-import { desc, eq, gt, isNotNull, sql } from 'drizzle-orm'
 import {
+  and,
+  desc,
+  eq,
+  gt,
+  gte,
+  ilike,
+  isNotNull,
+  lt,
+  or,
+  sql,
+} from 'drizzle-orm'
+import { QuerySensitiveWordHitLogDto } from './dto/sensitive-word.dto'
+import {
+  SensitiveWordHitEntityTypeEnum,
+  SensitiveWordHitLogEntityStatusEnum,
+  SensitiveWordHitOperationTypeEnum,
+  SensitiveWordLevelEnum,
   SensitiveWordLevelNames,
+  SensitiveWordTypeEnum,
   SensitiveWordTypeNames,
 } from './sensitive-word-constant'
 import {
@@ -39,6 +59,18 @@ export class SensitiveWordStatisticsService {
   /** 敏感词命中明细表 */
   private get sensitiveWordHitLog() {
     return this.drizzle.schema.sensitiveWordHitLog
+  }
+
+  private get forumTopic() {
+    return this.drizzle.schema.forumTopic
+  }
+
+  private get userComment() {
+    return this.drizzle.schema.userComment
+  }
+
+  private get appUser() {
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -281,6 +313,308 @@ export class SensitiveWordStatisticsService {
     }))
   }
 
+  async getHitLogPage(dto: QuerySensitiveWordHitLogDto) {
+    const conditions = this.buildHitLogConditions(dto)
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const page = this.drizzle.buildPage(dto)
+
+    const [rows, totalRows] = await Promise.all([
+      this.db
+        .select({
+          id: this.sensitiveWordHitLog.id,
+          sensitiveWordId: this.sensitiveWordHitLog.sensitiveWordId,
+          word: this.sensitiveWord.word,
+          matchedWord: this.sensitiveWordHitLog.matchedWord,
+          level: this.sensitiveWordHitLog.level,
+          type: this.sensitiveWordHitLog.type,
+          entityType: this.sensitiveWordHitLog.entityType,
+          entityId: this.sensitiveWordHitLog.entityId,
+          operationType: this.sensitiveWordHitLog.operationType,
+          createdAt: this.sensitiveWordHitLog.createdAt,
+          topicId: this.forumTopic.id,
+          topicTitle: this.forumTopic.title,
+          topicContent: this.forumTopic.content,
+          topicAuditStatus: this.forumTopic.auditStatus,
+          topicIsHidden: this.forumTopic.isHidden,
+          topicDeletedAt: this.forumTopic.deletedAt,
+          commentId: this.userComment.id,
+          commentContent: this.userComment.content,
+          commentAuditStatus: this.userComment.auditStatus,
+          commentIsHidden: this.userComment.isHidden,
+          commentDeletedAt: this.userComment.deletedAt,
+          commentTargetType: this.userComment.targetType,
+          commentTargetId: this.userComment.targetId,
+          authorId: this.appUser.id,
+          authorNickname: this.appUser.nickname,
+          authorAvatarUrl: this.appUser.avatarUrl,
+          authorStatus: this.appUser.status,
+          authorIsEnabled: this.appUser.isEnabled,
+          authorDeletedAt: this.appUser.deletedAt,
+        })
+        .from(this.sensitiveWordHitLog)
+        .leftJoin(
+          this.sensitiveWord,
+          eq(
+            this.sensitiveWord.id,
+            this.sensitiveWordHitLog.sensitiveWordId,
+          ),
+        )
+        .leftJoin(
+          this.forumTopic,
+          and(
+            eq(
+              this.sensitiveWordHitLog.entityType,
+              SensitiveWordHitEntityTypeEnum.TOPIC,
+            ),
+            eq(this.forumTopic.id, this.sensitiveWordHitLog.entityId),
+          ),
+        )
+        .leftJoin(
+          this.userComment,
+          and(
+            eq(
+              this.sensitiveWordHitLog.entityType,
+              SensitiveWordHitEntityTypeEnum.COMMENT,
+            ),
+            eq(this.userComment.id, this.sensitiveWordHitLog.entityId),
+          ),
+        )
+        .leftJoin(
+          this.appUser,
+          or(
+            and(
+              eq(
+                this.sensitiveWordHitLog.entityType,
+                SensitiveWordHitEntityTypeEnum.TOPIC,
+              ),
+              eq(this.appUser.id, this.forumTopic.userId),
+            ),
+            and(
+              eq(
+                this.sensitiveWordHitLog.entityType,
+                SensitiveWordHitEntityTypeEnum.COMMENT,
+              ),
+              eq(this.appUser.id, this.userComment.userId),
+            ),
+          ),
+        )
+        .where(where)
+        .orderBy(
+          desc(this.sensitiveWordHitLog.createdAt),
+          desc(this.sensitiveWordHitLog.id),
+        )
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(this.sensitiveWordHitLog)
+        .leftJoin(
+          this.sensitiveWord,
+          eq(
+            this.sensitiveWord.id,
+            this.sensitiveWordHitLog.sensitiveWordId,
+          ),
+        )
+        .where(where),
+    ])
+
+    const total = Number(totalRows[0]?.count ?? 0)
+    return toPageResult(
+      rows.map((row) => ({
+        id: row.id,
+        sensitiveWordId: row.sensitiveWordId,
+        word: row.word ?? undefined,
+        matchedWord: row.matchedWord,
+        level: row.level as SensitiveWordLevelEnum,
+        type: row.type as SensitiveWordTypeEnum,
+        entityType: row.entityType as SensitiveWordHitEntityTypeEnum,
+        entityId: row.entityId,
+        operationType: row.operationType as SensitiveWordHitOperationTypeEnum,
+        entitySummary: this.buildEntitySummary(row),
+        authorSummary: this.buildAuthorSummary(row),
+        createdAt: row.createdAt,
+      })),
+      total,
+      page,
+    )
+  }
+
+  private buildHitLogConditions(dto: QuerySensitiveWordHitLogDto): SQL[] {
+    const conditions: SQL[] = []
+    const wordPattern = buildLikePattern(dto.word)
+
+    if (wordPattern) {
+      const wordCondition = or(
+        ilike(this.sensitiveWord.word, wordPattern),
+        ilike(this.sensitiveWordHitLog.matchedWord, wordPattern),
+      )
+      if (wordCondition) {
+        conditions.push(wordCondition)
+      }
+    }
+
+    if (dto.sensitiveWordId !== undefined) {
+      conditions.push(
+        eq(this.sensitiveWordHitLog.sensitiveWordId, dto.sensitiveWordId),
+      )
+    }
+    if (dto.level !== undefined) {
+      conditions.push(eq(this.sensitiveWordHitLog.level, dto.level))
+    }
+    if (dto.type !== undefined) {
+      conditions.push(eq(this.sensitiveWordHitLog.type, dto.type))
+    }
+    if (dto.entityType !== undefined) {
+      conditions.push(eq(this.sensitiveWordHitLog.entityType, dto.entityType))
+    }
+    if (dto.entityId !== undefined) {
+      conditions.push(eq(this.sensitiveWordHitLog.entityId, dto.entityId))
+    }
+    if (dto.operationType !== undefined) {
+      conditions.push(
+        eq(this.sensitiveWordHitLog.operationType, dto.operationType),
+      )
+    }
+
+    const dateRange = buildDateOnlyRangeInAppTimeZone(
+      dto.startDate,
+      dto.endDate,
+    )
+    if (dateRange?.gte) {
+      conditions.push(gte(this.sensitiveWordHitLog.createdAt, dateRange.gte))
+    }
+    if (dateRange?.lt) {
+      conditions.push(lt(this.sensitiveWordHitLog.createdAt, dateRange.lt))
+    }
+    if (!dto.startDate && !dto.endDate) {
+      conditions.push(
+        gte(this.sensitiveWordHitLog.createdAt, subtractDaysInAppTimeZone(7)),
+      )
+    }
+
+    return conditions
+  }
+
+  private buildEntitySummary(row: {
+    entityType: number
+    topicId: number | null
+    topicTitle: string | null
+    topicContent: string | null
+    topicAuditStatus: number | null
+    topicIsHidden: boolean | null
+    topicDeletedAt: Date | null
+    commentId: number | null
+    commentContent: string | null
+    commentAuditStatus: number | null
+    commentIsHidden: boolean | null
+    commentDeletedAt: Date | null
+    commentTargetType: number | null
+    commentTargetId: number | null
+  }) {
+    if (row.entityType === SensitiveWordHitEntityTypeEnum.TOPIC) {
+      const status = this.resolveEntityStatus({
+        exists: row.topicId !== null,
+        deletedAt: row.topicDeletedAt,
+        auditStatus: row.topicAuditStatus,
+        isHidden: row.topicIsHidden,
+      })
+      const hideContent = this.shouldHideEntityContent(status)
+      return {
+        status,
+        canNavigate: this.canOpenAdminDisposition(status),
+        title: hideContent ? undefined : (row.topicTitle ?? undefined),
+        snippet: hideContent
+          ? undefined
+          : this.buildSnippet(row.topicContent),
+        auditStatus:
+          row.topicAuditStatus === null
+            ? undefined
+            : (row.topicAuditStatus as AuditStatusEnum),
+        isHidden: row.topicIsHidden ?? undefined,
+      }
+    }
+
+    const status = this.resolveEntityStatus({
+      exists: row.commentId !== null,
+      deletedAt: row.commentDeletedAt,
+      auditStatus: row.commentAuditStatus,
+      isHidden: row.commentIsHidden,
+    })
+    const hideContent = this.shouldHideEntityContent(status)
+    return {
+      status,
+      canNavigate: this.canOpenAdminDisposition(status),
+      snippet: hideContent ? undefined : this.buildSnippet(row.commentContent),
+      auditStatus:
+        row.commentAuditStatus === null
+          ? undefined
+          : (row.commentAuditStatus as AuditStatusEnum),
+      isHidden: row.commentIsHidden ?? undefined,
+      targetType: row.commentTargetType ?? undefined,
+      targetId: row.commentTargetId ?? undefined,
+    }
+  }
+
+  private buildAuthorSummary(row: {
+    authorAvatarUrl: string | null
+    authorDeletedAt: Date | null
+    authorId: number | null
+    authorIsEnabled: boolean | null
+    authorNickname: string | null
+    authorStatus: number | null
+  }) {
+    if (!row.authorId) {
+      return undefined
+    }
+
+    return {
+      id: row.authorId,
+      nickname: row.authorNickname ?? undefined,
+      avatarUrl: row.authorAvatarUrl,
+      status: row.authorDeletedAt ? undefined : row.authorStatus,
+      isEnabled: row.authorDeletedAt ? undefined : row.authorIsEnabled,
+    }
+  }
+
+  private resolveEntityStatus(input: {
+    auditStatus: number | null
+    deletedAt: Date | null
+    exists: boolean
+    isHidden: boolean | null
+  }) {
+    if (!input.exists) {
+      return SensitiveWordHitLogEntityStatusEnum.MISSING
+    }
+    if (input.deletedAt) {
+      return SensitiveWordHitLogEntityStatusEnum.DELETED
+    }
+    if (input.isHidden) {
+      return SensitiveWordHitLogEntityStatusEnum.HIDDEN
+    }
+    if (input.auditStatus === AuditStatusEnum.REJECTED) {
+      return SensitiveWordHitLogEntityStatusEnum.FORBIDDEN
+    }
+    return SensitiveWordHitLogEntityStatusEnum.AVAILABLE
+  }
+
+  private canOpenAdminDisposition(
+    status: SensitiveWordHitLogEntityStatusEnum,
+  ) {
+    return !this.shouldHideEntityContent(status)
+  }
+
+  private shouldHideEntityContent(status: SensitiveWordHitLogEntityStatusEnum) {
+    return (
+      status === SensitiveWordHitLogEntityStatusEnum.MISSING ||
+      status === SensitiveWordHitLogEntityStatusEnum.DELETED
+    )
+  }
+
+  private buildSnippet(content: string | null | undefined) {
+    const normalized = content?.replace(/\s+/g, ' ').trim()
+    return normalized ? normalized.slice(0, 200) : undefined
+  }
+
   /**
    * 在业务写事务中记录敏感词命中，并同步词表累计快照。
    * 管理端检测/替换接口不调用该方法，避免把调试流量混入业务统计。
@@ -317,16 +651,20 @@ export class SensitiveWordStatisticsService {
       )
     })
 
-    for (const [sensitiveWordId, hitCount] of aggregateMap.entries()) {
-      await this.drizzle.withErrorHandling(() =>
-        tx
-          .update(this.sensitiveWord)
-          .set({
-            hitCount: sql`${this.sensitiveWord.hitCount} + ${hitCount}`,
-            lastHitAt: occurredAt,
-          })
-          .where(eq(this.sensitiveWord.id, sensitiveWordId)),
-      )
-    }
+    const aggregateRows = [...aggregateMap.entries()].map(
+      ([sensitiveWordId, hitCount]) => sql`(${sensitiveWordId}, ${hitCount})`,
+    )
+    await this.drizzle.withErrorHandling(() =>
+      tx.execute(sql`
+        UPDATE "sensitive_word" AS sw
+        SET
+          "hit_count" = sw."hit_count" + delta."hit_count"::integer,
+          "last_hit_at" = ${occurredAt}
+        FROM (
+          VALUES ${sql.join(aggregateRows, sql`, `)}
+        ) AS delta("id", "hit_count")
+        WHERE sw."id" = delta."id"::integer
+      `),
+    )
   }
 }

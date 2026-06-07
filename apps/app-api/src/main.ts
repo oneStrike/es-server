@@ -27,6 +27,7 @@ async function bootstrap() {
     fastifyAdapter,
     {
       bufferLogs: true,
+      rawBody: true,
     },
   )
   app.enableShutdownHooks()

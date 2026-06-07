@@ -575,7 +575,17 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   },
   paymentProviderConfig: {
     orders: r.many.paymentOrder(),
+    versions: r.many.paymentProviderConfigVersion(),
   },
+  paymentProviderConfigVersion: {
+    providerConfig: r.one.paymentProviderConfig({
+      from: r.paymentProviderConfigVersion.providerConfigId,
+      to: r.paymentProviderConfig.id,
+    }),
+    orders: r.many.paymentOrder(),
+  },
+  paymentProviderCredential: {},
+  paymentProviderCertificate: {},
   paymentOrder: {
     user: r.one.appUser({
       from: r.paymentOrder.userId,
@@ -584,6 +594,24 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     providerConfig: r.one.paymentProviderConfig({
       from: r.paymentOrder.providerConfigId,
       to: r.paymentProviderConfig.id,
+    }),
+    providerConfigVersionRecord: r.one.paymentProviderConfigVersion({
+      from: r.paymentOrder.providerConfigVersionId,
+      to: r.paymentProviderConfigVersion.id,
+    }),
+    notifyEvents: r.many.paymentNotifyEvent(),
+    reconciliationRecords: r.many.paymentReconciliationRecord(),
+  },
+  paymentNotifyEvent: {
+    order: r.one.paymentOrder({
+      from: r.paymentNotifyEvent.paymentOrderId,
+      to: r.paymentOrder.id,
+    }),
+  },
+  paymentReconciliationRecord: {
+    order: r.one.paymentOrder({
+      from: r.paymentReconciliationRecord.paymentOrderId,
+      to: r.paymentOrder.id,
     }),
   },
   adProviderConfig: {

@@ -247,6 +247,15 @@ function createCommandService(options?: {
   const bodyHtmlCodecService = {
     parseHtmlOrThrow: jest.fn(() => ({ type: 'doc' })),
   }
+  const sensitiveWordReviewPolicyService = {
+    resolveTopicDecision: jest.fn(() => ({
+      auditStatus: 1,
+      isHidden: false,
+      publicHits: [],
+      recordHits: true,
+      statisticsHits: [],
+    })),
+  }
   const service = new ForumTopicCommandService(
     asDependency<CommandServiceConstructorArgs[0]>(drizzle),
     asDependency<CommandServiceConstructorArgs[1]>(forumPermissionService),
@@ -264,20 +273,23 @@ function createCommandService(options?: {
         publicHits: [],
       })),
     }),
-    asDependency<CommandServiceConstructorArgs[8]>({
+    asDependency<CommandServiceConstructorArgs[8]>(
+      sensitiveWordReviewPolicyService,
+    ),
+    asDependency<CommandServiceConstructorArgs[9]>({
       materializeBodyInTx: jest.fn(),
     }),
-    asDependency<CommandServiceConstructorArgs[9]>({}),
     asDependency<CommandServiceConstructorArgs[10]>({}),
-    asDependency<CommandServiceConstructorArgs[11]>({
+    asDependency<CommandServiceConstructorArgs[11]>({}),
+    asDependency<CommandServiceConstructorArgs[12]>({
       dispatchDefinedEvent: jest.fn(),
     }),
-    asDependency<CommandServiceConstructorArgs[12]>(appUserCountService),
-    asDependency<CommandServiceConstructorArgs[13]>(actionLogService),
-    asDependency<CommandServiceConstructorArgs[14]>({
+    asDependency<CommandServiceConstructorArgs[13]>(appUserCountService),
+    asDependency<CommandServiceConstructorArgs[14]>(actionLogService),
+    asDependency<CommandServiceConstructorArgs[15]>({
       recordRecentUsageInTx: jest.fn(),
     }),
-    asDependency<CommandServiceConstructorArgs[15]>({
+    asDependency<CommandServiceConstructorArgs[16]>({
       recordEntityHitsInTx: jest.fn(),
     }),
   )
@@ -292,6 +304,7 @@ function createCommandService(options?: {
     forumHashtagReferenceService,
     forumPermissionService,
     mentionService,
+    sensitiveWordReviewPolicyService,
     service,
   }
 }

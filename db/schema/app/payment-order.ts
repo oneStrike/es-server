@@ -48,8 +48,18 @@ export const paymentOrder = snakeCase.table(
     targetId: integer().notNull(),
     /** 支付 provider 配置 ID。 */
     providerConfigId: integer().notNull(),
+    /** 下单时 provider 配置版本 ID。 */
+    providerConfigVersionId: integer(),
     /** 下单时 provider 配置版本快照。 */
     providerConfigVersion: integer().notNull(),
+    /** 下单时应用私钥凭据 ID。 */
+    appPrivateCredentialId: integer(),
+    /** 下单时支付宝公钥凭据 ID。 */
+    alipayPublicCredentialId: integer(),
+    /** 下单时微信 APIv3 key 凭据 ID。 */
+    wechatApiV3CredentialId: integer('wechat_api_v3_credential_id'),
+    /** 下单时证书 ID 快照集合。 */
+    providerCertificateIds: jsonb(),
     /** 下单时密钥版本引用快照。 */
     credentialVersionRef: varchar({ length: 160 }).notNull(),
     /** 配置摘要快照，不包含明文密钥。 */
@@ -88,6 +98,25 @@ export const paymentOrder = snakeCase.table(
     index('payment_order_provider_config_status_idx').on(
       table.providerConfigId,
       table.status,
+    ),
+    index('payment_order_status_created_at_id_idx').on(
+      table.status,
+      table.createdAt,
+      table.id,
+    ),
+    index('payment_order_channel_status_created_at_idx').on(
+      table.channel,
+      table.status,
+      table.createdAt,
+    ),
+    index('payment_order_provider_config_status_created_at_idx').on(
+      table.providerConfigId,
+      table.status,
+      table.createdAt,
+    ),
+    index('payment_order_user_created_at_idx').on(
+      table.userId,
+      table.createdAt,
     ),
     check('payment_order_type_valid_chk', sql`${table.orderType} in (1, 2)`),
     check('payment_order_channel_valid_chk', sql`${table.channel} in (1, 2)`),

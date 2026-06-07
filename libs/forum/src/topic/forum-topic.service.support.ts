@@ -10,6 +10,7 @@ import type { InteractionSummaryReadService } from '@libs/interaction/summary/in
 import type { InteractionAuditorSummaryKey } from '@libs/interaction/summary/interaction-summary.type'
 import type { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import type { ForumCounterService } from '../counter/forum-counter.service'
+import type { ForumReviewPolicyEnum } from '../forum.constant'
 import type { ForumHashtagBodyService } from '../hashtag/forum-hashtag-body.service'
 import type { ForumHashtagReferenceService } from '../hashtag/forum-hashtag-reference.service'
 import type { ForumPermissionService } from '../permission/forum-permission.service'
@@ -37,9 +38,7 @@ import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BodySceneEnum } from '@libs/interaction/body/body.constant'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
-import { ForumReviewPolicyEnum } from '../forum.constant'
 import {
   ForumHashtagCreateSourceTypeEnum,
   ForumHashtagReferenceSourceTypeEnum,
@@ -491,52 +490,6 @@ export abstract class ForumTopicServiceSupport {
   }
 
   // ─── 纯计算 ────────────────────────────────────────────────
-
-  // 根据板块审核策略与敏感词等级计算主题的审核状态与隐藏状态；严重敏感词一律隐藏。
-  protected calculateAuditStatus(
-    reviewPolicy: ForumReviewPolicyEnum,
-    highestLevel?: SensitiveWordLevelEnum,
-  ) {
-    let needAudit = false
-    let isHidden = false
-
-    if (reviewPolicy === ForumReviewPolicyEnum.MANUAL) {
-      needAudit = true
-    } else if (highestLevel) {
-      if (highestLevel === SensitiveWordLevelEnum.SEVERE) {
-        isHidden = true
-      }
-
-      if (reviewPolicy === ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD) {
-        needAudit = highestLevel === SensitiveWordLevelEnum.SEVERE
-      } else if (
-        reviewPolicy === ForumReviewPolicyEnum.GENERAL_SENSITIVE_WORD
-      ) {
-        needAudit =
-          highestLevel === SensitiveWordLevelEnum.SEVERE ||
-          highestLevel === SensitiveWordLevelEnum.GENERAL
-      } else if (reviewPolicy === ForumReviewPolicyEnum.MILD_SENSITIVE_WORD) {
-        needAudit = true
-      }
-    }
-
-    return {
-      auditStatus: needAudit
-        ? AuditStatusEnum.PENDING
-        : AuditStatusEnum.APPROVED,
-      isHidden,
-    }
-  }
-
-  // 分别检测标题和正文，避免字段拼接制造跨边界假命中。
-  protected detectTopicSensitiveWords(title: string, content: string) {
-    return this.sensitiveWordDetectService.getMatchedWordsWithMetadataBySegments(
-      [
-        { field: 'title' as const, content: title },
-        { field: 'content' as const, content },
-      ].filter((segment) => segment.content.length > 0),
-    )
-  }
 
   // 为创建主题补齐标题；未传标题时优先从富文本正文提纯可读文本再截取前 30 个字符。
   protected resolveCreateTopicTitle(

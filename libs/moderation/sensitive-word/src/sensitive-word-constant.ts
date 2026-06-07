@@ -62,6 +62,20 @@ export enum SensitiveWordHitOperationTypeEnum {
   UPDATE = 2,
 }
 
+// 敏感词命中日志关联实体状态。
+export enum SensitiveWordHitLogEntityStatusEnum {
+  // 内容存在且可进入处置入口。
+  AVAILABLE = 'available',
+  // 内容已软删除。
+  DELETED = 'deleted',
+  // 内容被隐藏。
+  HIDDEN = 'hidden',
+  // 内容已拒绝或不可进入处置入口。
+  FORBIDDEN = 'forbidden',
+  // 日志存在但关联实体缺失。
+  MISSING = 'missing',
+}
+
 // 统计类型。
 export enum StatisticsTypeEnum {
   // 按级别统计。

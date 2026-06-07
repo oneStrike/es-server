@@ -13,8 +13,7 @@ import type {
 import { DrizzleService } from '@db/core'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
-import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { SensitiveWordReviewPolicyService } from '@libs/sensitive-word/sensitive-word-review-policy.service'
 import { ConfigReader } from '@libs/system-config/config-reader'
 import { Injectable } from '@nestjs/common'
 import { inArray } from 'drizzle-orm'
@@ -33,7 +32,7 @@ export class ForumHashtagBodyService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly configReader: ConfigReader,
-    private readonly sensitiveWordDetectService: SensitiveWordDetectService,
+    private readonly sensitiveWordReviewPolicyService: SensitiveWordReviewPolicyService,
   ) {}
 
   private get forumHashtag() {
@@ -52,34 +51,15 @@ export class ForumHashtagBodyService {
 
   // 基于共享内容审核策略计算 auto-create 话题的初始审核状态。
   private resolveAutoCreateAuditDecision(displayName: string) {
-    const result = this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
-      content: displayName,
-    })
-    const policy = this.configReader.getContentReviewPolicy()
-
-    let auditStatus: AuditStatusEnum = AuditStatusEnum.APPROVED
-    let isHidden = false
-
-    if (result.highestLevel) {
-      if (result.highestLevel === SensitiveWordLevelEnum.SEVERE) {
-        auditStatus = policy.severeAction.auditStatus as AuditStatusEnum
-        isHidden = policy.severeAction.isHidden
-      } else if (result.highestLevel === SensitiveWordLevelEnum.GENERAL) {
-        auditStatus = policy.generalAction.auditStatus as AuditStatusEnum
-        isHidden = policy.generalAction.isHidden
-      } else {
-        auditStatus = policy.lightAction.auditStatus as AuditStatusEnum
-        isHidden = policy.lightAction.isHidden
-      }
-    }
+    const decision =
+      this.sensitiveWordReviewPolicyService.resolveContentDecision(displayName)
 
     return {
-      auditStatus,
-      isHidden,
-      sensitiveWordHits:
-        policy.recordHits && result.publicHits.length > 0
-          ? result.publicHits
-          : null,
+      auditStatus: decision.auditStatus,
+      isHidden: decision.isHidden,
+      sensitiveWordHits: decision.publicHits.length
+        ? decision.publicHits
+        : null,
     }
   }
 

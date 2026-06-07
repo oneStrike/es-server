@@ -1,10 +1,27 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { BaseSensitiveWordDto, CreateSensitiveWordDto, QuerySensitiveWordDto, SensitiveWordCountResponseDto, SensitiveWordDetectDto, SensitiveWordDetectResponseDto, SensitiveWordDetectStatusResponseDto, SensitiveWordHighestLevelResponseDto, SensitiveWordReplaceDto, SensitiveWordReplaceResponseDto, SensitiveWordStatisticsDataDto, SensitiveWordStatisticsQueryDto, SensitiveWordStatisticsResponseDto, UpdateSensitiveWordDto } from '@libs/sensitive-word/dto/sensitive-word.dto';
-import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service';
-import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service';
-import { SensitiveWordService } from '@libs/sensitive-word/sensitive-word.service';
+import {
+  BaseSensitiveWordDto,
+  CreateSensitiveWordDto,
+  QuerySensitiveWordDto,
+  QuerySensitiveWordHitLogDto,
+  SensitiveWordCountResponseDto,
+  SensitiveWordDetectDto,
+  SensitiveWordDetectResponseDto,
+  SensitiveWordDetectStatusResponseDto,
+  SensitiveWordHighestLevelResponseDto,
+  SensitiveWordHitLogPageItemDto,
+  SensitiveWordReplaceDto,
+  SensitiveWordReplaceResponseDto,
+  SensitiveWordStatisticsDataDto,
+  SensitiveWordStatisticsQueryDto,
+  SensitiveWordStatisticsResponseDto,
+  UpdateSensitiveWordDto,
+} from '@libs/sensitive-word/dto/sensitive-word.dto'
+import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
+import { SensitiveWordService } from '@libs/sensitive-word/sensitive-word.service'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
@@ -111,6 +128,16 @@ export class SensitiveWordController {
     return this.statisticsService.getStatistics()
   }
 
+  // 获取敏感词命中日志分页列表。
+  @Get('hit-log/page')
+  @ApiPageDoc({
+    summary: '获取敏感词命中日志分页列表',
+    model: SensitiveWordHitLogPageItemDto,
+  })
+  async getHitLogPage(@Query() query: QuerySensitiveWordHitLogDto) {
+    return this.statisticsService.getHitLogPage(query)
+  }
+
   // 替换文本中的敏感词。
   @Post('replace')
   @ApiDoc({
@@ -129,9 +156,7 @@ export class SensitiveWordController {
     summary: '获取文本中敏感词的最高等级',
     model: SensitiveWordHighestLevelResponseDto,
   })
-  async getHighestSensitiveWordLevel(
-    @Body() body: SensitiveWordDetectDto,
-  ) {
+  async getHighestSensitiveWordLevel(@Body() body: SensitiveWordDetectDto) {
     return {
       highestLevel: this.detectService.getHighestSensitiveWordLevel(body),
     }

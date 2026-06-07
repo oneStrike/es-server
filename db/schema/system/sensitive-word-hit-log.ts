@@ -57,12 +57,28 @@ export const sensitiveWordHitLog = snakeCase.table(
   (table) => [
     index('sensitive_word_hit_log_sensitive_word_id_created_at_idx').on(
       table.sensitiveWordId,
-      table.createdAt,
+      table.createdAt.desc(),
+      table.id.desc(),
     ),
     index('sensitive_word_hit_log_entity_type_entity_id_created_at_idx').on(
       table.entityType,
       table.entityId,
-      table.createdAt,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('sensitive_word_hit_log_created_at_id_desc_idx').on(
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('sensitive_word_hit_log_level_created_at_id_idx').on(
+      table.level,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('sensitive_word_hit_log_type_created_at_id_idx').on(
+      table.type,
+      table.createdAt.desc(),
+      table.id.desc(),
     ),
     index('sensitive_word_hit_log_created_at_idx').on(table.createdAt),
     check(

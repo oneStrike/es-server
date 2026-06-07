@@ -41,10 +41,8 @@ import {
 } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
-import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
-import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { SensitiveWordReviewPolicyService } from '@libs/sensitive-word/sensitive-word-review-policy.service'
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
-import { ConfigReader } from '@libs/system-config/config-reader'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, inArray, isNull, lte, max, or, sql } from 'drizzle-orm'
@@ -82,10 +80,8 @@ import {
 @Injectable()
 export class CommentService {
   constructor(
-    /** 敏感词检测服务，用于内容审核 */
-    private readonly sensitiveWordDetectService: SensitiveWordDetectService,
-    /** 配置读取器，获取审核策略等配置 */
-    private readonly configReader: ConfigReader,
+    /** 敏感词审核决策服务，用于内容审核 */
+    private readonly sensitiveWordReviewPolicyService: SensitiveWordReviewPolicyService,
     /** 评论权限服务，校验用户评论权限 */
     private readonly commentPermissionService: CommentPermissionService,
     /** 评论成长服务，处理评论相关的积分/经验奖励 */
@@ -918,43 +914,17 @@ export class CommentService {
    * @returns 审核决策结果，包含审核状态、是否隐藏、敏感词命中记录
    */
   private resolveAuditDecision(content: string) {
-    // 检测内容中的敏感词
-    const result = this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
-      content,
-    })
-    // 获取内容审核策略配置
-    const policy = this.configReader.getContentReviewPolicy()
-
-    // 默认审核通过，不隐藏
-    let auditStatus: AuditStatusEnum = AuditStatusEnum.APPROVED
-    let isHidden = false
-
-    // 根据敏感词最高级别确定审核决策
-    if (result.highestLevel) {
-      if (result.highestLevel === SensitiveWordLevelEnum.SEVERE) {
-        // 严重敏感词：按策略处理（通常直接拒绝或隐藏）
-        auditStatus = policy.severeAction.auditStatus as AuditStatusEnum
-        isHidden = policy.severeAction.isHidden
-      } else if (result.highestLevel === SensitiveWordLevelEnum.GENERAL) {
-        // 一般敏感词：按策略处理（可能需要人工审核）
-        auditStatus = policy.generalAction.auditStatus as AuditStatusEnum
-        isHidden = policy.generalAction.isHidden
-      } else {
-        // 轻微敏感词：按策略处理（可能警告或标记）
-        auditStatus = policy.lightAction.auditStatus as AuditStatusEnum
-        isHidden = policy.lightAction.isHidden
-      }
-    }
+    const decision =
+      this.sensitiveWordReviewPolicyService.resolveContentDecision(content)
 
     return {
-      auditStatus,
-      isHidden,
-      // 根据配置决定是否记录命中详情
-      sensitiveWordHits:
-        policy.recordHits && result.publicHits.length
-          ? result.publicHits
-          : undefined,
-      statisticsHits: result.hits,
+      auditStatus: decision.auditStatus,
+      isHidden: decision.isHidden,
+      recordHits: decision.recordHits,
+      sensitiveWordHits: decision.publicHits.length
+        ? decision.publicHits
+        : undefined,
+      statisticsHits: decision.statisticsHits,
     }
   }
 
@@ -1186,7 +1156,11 @@ export class CommentService {
                 targetType,
               )
               const decision = this.resolveAuditDecision(compiledBody.plainText)
-              const { statisticsHits, ...persistedDecision } = decision
+              const {
+                recordHits,
+                statisticsHits,
+                ...persistedDecision
+              } = decision
 
               const [floorResult] = await tx
                 .select({
@@ -1231,16 +1205,18 @@ export class CommentService {
                   createdAt: this.userComment.createdAt,
                 })
 
-              await this.sensitiveWordStatisticsService.recordEntityHitsInTx(
-                tx,
-                {
-                  entityType: 'comment',
-                  entityId: newComment.id,
-                  operationType: 'create',
-                  hits: statisticsHits,
-                  occurredAt: newComment.createdAt,
-                },
-              )
+              if (recordHits && statisticsHits.length) {
+                await this.sensitiveWordStatisticsService.recordEntityHitsInTx(
+                  tx,
+                  {
+                    entityType: 'comment',
+                    entityId: newComment.id,
+                    operationType: 'create',
+                    hits: statisticsHits,
+                    occurredAt: newComment.createdAt,
+                  },
+                )
+              }
 
               await this.mentionService.replaceMentionsInTx({
                 tx,
@@ -1415,7 +1391,7 @@ export class CommentService {
         targetType as CommentTargetTypeEnum,
       )
       const decision = this.resolveAuditDecision(compiledBody.plainText)
-      const { statisticsHits, ...persistedDecision } = decision
+      const { recordHits, statisticsHits, ...persistedDecision } = decision
 
       const [newComment] = await tx
         .insert(this.userComment)
@@ -1447,13 +1423,15 @@ export class CommentService {
           createdAt: this.userComment.createdAt,
         })
 
-      await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
-        entityType: 'comment',
-        entityId: newComment.id,
-        operationType: 'create',
-        hits: statisticsHits,
-        occurredAt: newComment.createdAt,
-      })
+      if (recordHits && statisticsHits.length) {
+        await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
+          entityType: 'comment',
+          entityId: newComment.id,
+          operationType: 'create',
+          hits: statisticsHits,
+          occurredAt: newComment.createdAt,
+        })
+      }
 
       await this.mentionService.replaceMentionsInTx({
         tx,

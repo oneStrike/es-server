@@ -1,3 +1,5 @@
+import { AuditStatusEnum } from '@libs/platform/constant'
+
 import {
   ArrayProperty,
   BooleanProperty,
@@ -6,10 +8,10 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 
 import {
+  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -18,6 +20,9 @@ import {
 
 import {
   MatchModeEnum,
+  SensitiveWordHitEntityTypeEnum,
+  SensitiveWordHitLogEntityStatusEnum,
+  SensitiveWordHitOperationTypeEnum,
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
   StatisticsTypeEnum,
@@ -177,6 +182,57 @@ export class QuerySensitiveWordDto extends IntersectionType(
   ),
 ) {}
 
+export class QuerySensitiveWordHitLogDto extends PageDto {
+  @StringProperty({
+    description: '敏感词文本搜索',
+    maxLength: 100,
+    required: false,
+  })
+  word?: string
+
+  @NumberProperty({
+    description: '敏感词ID（高级精确筛选）',
+    min: 1,
+    required: false,
+  })
+  sensitiveWordId?: number
+
+  @EnumProperty({
+    description: '敏感词级别（1=严重；2=一般；3=轻微）',
+    enum: SensitiveWordLevelEnum,
+    required: false,
+  })
+  level?: SensitiveWordLevelEnum
+
+  @EnumProperty({
+    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
+    enum: SensitiveWordTypeEnum,
+    required: false,
+  })
+  type?: SensitiveWordTypeEnum
+
+  @EnumProperty({
+    description: '命中实体类型（1=主题；2=评论）',
+    enum: SensitiveWordHitEntityTypeEnum,
+    required: false,
+  })
+  entityType?: SensitiveWordHitEntityTypeEnum
+
+  @NumberProperty({
+    description: '命中实体ID（高级精确筛选）',
+    min: 1,
+    required: false,
+  })
+  entityId?: number
+
+  @EnumProperty({
+    description: '命中操作类型（1=创建；2=更新）',
+    enum: SensitiveWordHitOperationTypeEnum,
+    required: false,
+  })
+  operationType?: SensitiveWordHitOperationTypeEnum
+}
+
 export class SensitiveWordDetectDto {
   @StringProperty({
     description: '检测内容',
@@ -253,6 +309,182 @@ export class SensitiveWordCountResponseDto {
     validation: false,
   })
   count!: number
+}
+
+export class SensitiveWordHitLogEntitySummaryDto {
+  @EnumProperty({
+    description:
+      '实体状态（available=可查看；deleted=已删除；hidden=已隐藏；forbidden=不可处置；missing=缺失）',
+    enum: SensitiveWordHitLogEntityStatusEnum,
+    example: SensitiveWordHitLogEntityStatusEnum.AVAILABLE,
+    validation: false,
+  })
+  status!: SensitiveWordHitLogEntityStatusEnum
+
+  @BooleanProperty({
+    description: '是否可跳转到内容处置入口',
+    example: true,
+    validation: false,
+  })
+  canNavigate!: boolean
+
+  @StringProperty({
+    description: '主题标题',
+    maxLength: 200,
+    required: false,
+    validation: false,
+  })
+  title?: string
+
+  @StringProperty({
+    description: '内容摘要',
+    maxLength: 200,
+    required: false,
+    validation: false,
+  })
+  snippet?: string
+
+  @EnumProperty({
+    description: '审核状态（0=待审核；1=已通过；2=已拒绝）',
+    enum: AuditStatusEnum,
+    required: false,
+    validation: false,
+  })
+  auditStatus?: AuditStatusEnum
+
+  @BooleanProperty({
+    description: '是否隐藏',
+    required: false,
+    validation: false,
+  })
+  isHidden?: boolean
+
+  @NumberProperty({
+    description: '评论目标类型',
+    required: false,
+    validation: false,
+  })
+  targetType?: number
+
+  @NumberProperty({
+    description: '评论目标ID',
+    required: false,
+    validation: false,
+  })
+  targetId?: number
+}
+
+export class SensitiveWordHitLogAuthorSummaryDto {
+  @NumberProperty({
+    description: '作者ID',
+    required: false,
+    validation: false,
+  })
+  id?: number
+
+  @StringProperty({
+    description: '作者昵称',
+    maxLength: 100,
+    required: false,
+    validation: false,
+  })
+  nickname?: string
+
+  @StringProperty({
+    description: '作者头像URL',
+    maxLength: 500,
+    required: false,
+    validation: false,
+  })
+  avatarUrl?: string | null
+
+  @NumberProperty({
+    description: '作者状态',
+    required: false,
+    validation: false,
+  })
+  status?: number
+
+  @BooleanProperty({
+    description: '作者是否启用',
+    required: false,
+    validation: false,
+  })
+  isEnabled?: boolean
+}
+
+export class SensitiveWordHitLogPageItemDto {
+  @NumberProperty({ description: '命中日志ID', example: 1, validation: false })
+  id!: number
+
+  @NumberProperty({ description: '敏感词ID', example: 1, validation: false })
+  sensitiveWordId!: number
+
+  @StringProperty({
+    description: '敏感词库中的词',
+    maxLength: 100,
+    required: false,
+    validation: false,
+  })
+  word?: string
+
+  @StringProperty({
+    description: '实际命中的文本',
+    maxLength: 100,
+    validation: false,
+  })
+  matchedWord!: string
+
+  @EnumProperty({
+    description: '敏感词级别（1=严重；2=一般；3=轻微）',
+    enum: SensitiveWordLevelEnum,
+    validation: false,
+  })
+  level!: SensitiveWordLevelEnum
+
+  @EnumProperty({
+    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
+    enum: SensitiveWordTypeEnum,
+    validation: false,
+  })
+  type!: SensitiveWordTypeEnum
+
+  @EnumProperty({
+    description: '命中实体类型（1=主题；2=评论）',
+    enum: SensitiveWordHitEntityTypeEnum,
+    validation: false,
+  })
+  entityType!: SensitiveWordHitEntityTypeEnum
+
+  @NumberProperty({ description: '命中实体ID', example: 1, validation: false })
+  entityId!: number
+
+  @EnumProperty({
+    description: '命中操作类型（1=创建；2=更新）',
+    enum: SensitiveWordHitOperationTypeEnum,
+    validation: false,
+  })
+  operationType!: SensitiveWordHitOperationTypeEnum
+
+  @ApiProperty({
+    description: '实体摘要',
+    type: () => SensitiveWordHitLogEntitySummaryDto,
+  })
+  entitySummary!: SensitiveWordHitLogEntitySummaryDto
+
+  @ApiProperty({
+    description: '作者摘要',
+    required: false,
+    type: () => SensitiveWordHitLogAuthorSummaryDto,
+  })
+  authorSummary?: SensitiveWordHitLogAuthorSummaryDto
+
+  @DateProperty({
+    description: '命中时间',
+    example: '2026-03-19T12:00:00.000Z',
+    validation: false,
+  })
+  createdAt!: Date
 }
 
 // 敏感词级别字段 DTO，供统计类 DTO 复用。
