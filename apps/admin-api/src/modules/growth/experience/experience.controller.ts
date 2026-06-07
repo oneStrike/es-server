@@ -1,5 +1,6 @@
 import {
   QueryUserExperienceRecordDto,
+  QueryUserExperienceStatsDto,
   UserExperienceRecordDetailDto,
   UserExperienceRecordDto,
   UserExperienceStatsDto,
@@ -41,7 +42,7 @@ export class ExperienceController {
     summary: '获取用户经验统计信息',
     model: UserExperienceStatsDto,
   })
-  async getUserExperienceStats(@Query('userId') userId: number) {
-    return this.experienceService.getUserExperienceStats(userId)
+  async getUserExperienceStats(@Query() query: QueryUserExperienceStatsDto) {
+    return this.experienceService.getUserExperienceStats(query.userId)
   }
 }

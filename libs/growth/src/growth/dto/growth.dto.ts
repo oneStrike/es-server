@@ -8,7 +8,7 @@ import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { ArrayProperty, BooleanProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
 
 import { PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType } from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 
 export class QueryGrowthRuleEventFilterDto {
@@ -27,6 +27,13 @@ export class QueryGrowthRuleEventFilterDto {
     required: false,
   })
   isImplemented?: boolean
+
+  @BooleanProperty({
+    description: '是否只看允许配置基础奖励规则的事件',
+    example: true,
+    required: false,
+  })
+  isRuleConfigurable?: boolean
 
   @BooleanProperty({
     description: '是否只看存在关联任务的事件',
@@ -229,6 +236,28 @@ export class GrowthRuleEventPageItemDto {
   isImplemented!: boolean
 
   @BooleanProperty({
+    description: '是否允许配置基础奖励规则',
+    example: true,
+    validation: false,
+  })
+  isRuleConfigurable!: boolean
+
+  @BooleanProperty({
+    description: '是否支持配置经验奖励规则',
+    example: true,
+    validation: false,
+  })
+  supportsExperienceRule!: boolean
+
+  @StringProperty({
+    description: '不可配置原因；可配置时为 null',
+    example: null,
+    nullable: true,
+    validation: false,
+  })
+  disabledReason!: string | null
+
+  @BooleanProperty({
     description: '是否支持任务消费',
     example: true,
     validation: false,
@@ -271,3 +300,18 @@ export class GrowthRuleEventPageItemDto {
   })
   taskBinding!: GrowthRuleTaskBindingSummaryDto
 }
+
+export class GrowthConfigurableRewardEventOptionDto extends PickType(
+  GrowthRuleEventPageItemDto,
+  [
+    'ruleType',
+    'ruleKey',
+    'eventName',
+    'domain',
+    'governanceGate',
+    'implStatus',
+    'isImplemented',
+    'isRuleConfigurable',
+    'supportsExperienceRule',
+  ] as const,
+) {}

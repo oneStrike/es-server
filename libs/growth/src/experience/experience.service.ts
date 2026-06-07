@@ -3,10 +3,13 @@ import { randomUUID } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
+import {
+  buildDateOnlyRangeInAppTimeZone,
+  startOfTodayInAppTimeZone,
+} from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
-import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerFailReasonLabel,
@@ -16,8 +19,10 @@ import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import { UserGrowthRuleActionDto } from '../growth/dto/growth-shared.dto'
 import {
+  ExperienceDeltaDirectionEnum,
   QueryUserExperienceRecordDto,
   UserExperienceRecordDto,
+  UserExperienceRecordUserDto,
 } from './dto/experience-record.dto'
 
 const UUID_HYPHEN_REGEX = /-/g
@@ -138,10 +143,12 @@ export class UserExperienceService {
    */
   async getExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
     const conditions: SQL[] = [
-      eq(this.growthLedgerRecord.userId, dto.userId),
       eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
     ]
 
+    if (dto.userId !== undefined) {
+      conditions.push(eq(this.growthLedgerRecord.userId, dto.userId))
+    }
     if (dto.ruleId !== undefined) {
       conditions.push(
         dto.ruleId === null
@@ -149,11 +156,74 @@ export class UserExperienceService {
           : eq(this.growthLedgerRecord.ruleId, dto.ruleId),
       )
     }
-    // 历史上这里走 JSON 字符串默认排序，现统一收口为字面量对象，减少调用层分支。
-    const orderBy = dto.orderBy?.trim() ? dto.orderBy : { id: 'desc' as const }
+    if (dto.hasRule !== undefined) {
+      conditions.push(
+        dto.hasRule
+          ? isNotNull(this.growthLedgerRecord.ruleId)
+          : isNull(this.growthLedgerRecord.ruleId),
+      )
+    }
+    if (dto.ruleType !== undefined) {
+      conditions.push(
+        dto.ruleType === null
+          ? isNull(this.growthLedgerRecord.ruleType)
+          : eq(this.growthLedgerRecord.ruleType, dto.ruleType),
+      )
+    }
+    if (dto.source !== undefined) {
+      conditions.push(
+        dto.source === null
+          ? isNull(this.growthLedgerRecord.source)
+          : eq(this.growthLedgerRecord.source, dto.source),
+      )
+    }
+    if (dto.targetType !== undefined) {
+      conditions.push(
+        dto.targetType === null
+          ? isNull(this.growthLedgerRecord.targetType)
+          : eq(this.growthLedgerRecord.targetType, dto.targetType),
+      )
+    }
+    if (dto.targetId !== undefined) {
+      conditions.push(
+        dto.targetId === null
+          ? isNull(this.growthLedgerRecord.targetId)
+          : eq(this.growthLedgerRecord.targetId, dto.targetId),
+      )
+    }
+    if (dto.bizKey !== undefined) {
+      conditions.push(eq(this.growthLedgerRecord.bizKey, dto.bizKey))
+    }
+    if (dto.deltaDirection === ExperienceDeltaDirectionEnum.INCREASE) {
+      conditions.push(gt(this.growthLedgerRecord.delta, 0))
+    }
+    if (dto.deltaDirection === ExperienceDeltaDirectionEnum.DECREASE) {
+      conditions.push(lt(this.growthLedgerRecord.delta, 0))
+    }
+    if (dto.minDelta !== undefined) {
+      conditions.push(gte(this.growthLedgerRecord.delta, dto.minDelta))
+    }
+    if (dto.maxDelta !== undefined) {
+      conditions.push(lte(this.growthLedgerRecord.delta, dto.maxDelta))
+    }
+
+    const createdRange = buildDateOnlyRangeInAppTimeZone(
+      dto.startDate,
+      dto.endDate,
+    )
+    if (createdRange?.gte) {
+      conditions.push(gte(this.growthLedgerRecord.createdAt, createdRange.gte))
+    }
+    if (createdRange?.lt) {
+      conditions.push(lt(this.growthLedgerRecord.createdAt, createdRange.lt))
+    }
+
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { createdAt: 'desc' as const, id: 'desc' as const }
 
     const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage(dto)
+    const pageQuery = this.drizzle.buildPage(dto, { maxPageSize: 100 })
     const orderQuery = this.drizzle.buildOrderBy(orderBy, {
       table: this.growthLedgerRecord,
     })
@@ -168,12 +238,16 @@ export class UserExperienceService {
       this.db.$count(this.growthLedgerRecord, where),
     ])
     const page = toPageResult(list, total, pageQuery)
+    const userMap = await this.buildExperienceRecordUserMap(
+      page.list.map((item) => item.userId),
+    )
 
     return {
       ...page,
       list: page.list.map((item) =>
         this.toExperienceRecord(
           item as typeof item & { context?: Record<string, unknown> | null },
+          userMap.get(item.userId) ?? null,
         ),
       ),
     }
@@ -190,9 +264,6 @@ export class UserExperienceService {
         id,
         assetType: GrowthAssetTypeEnum.EXPERIENCE,
       },
-      with: {
-        user: true,
-      },
     })
 
     if (!record) {
@@ -202,11 +273,17 @@ export class UserExperienceService {
       )
     }
 
+    const userMap = await this.buildExperienceRecordUserMap([record.userId])
+
     return {
       ...this.toExperienceRecord(
         record as typeof record & { context?: Record<string, unknown> | null },
+        userMap.get(record.userId) ?? null,
       ),
-      user: record.user,
+      diagnosticContext:
+        typeof record.context === 'object' && !Array.isArray(record.context)
+          ? (record.context ?? null)
+          : null,
     }
   }
 
@@ -249,7 +326,7 @@ export class UserExperienceService {
     return {
       currentExperience: await this.getCurrentExperience(userId),
       todayEarned: Number(todayEarned?.total ?? 0),
-      level: user.level,
+      level: user.level ?? null,
     }
   }
 
@@ -268,40 +345,66 @@ export class UserExperienceService {
     return balance?.balance ?? 0
   }
 
-  private toExperienceRecord(record: {
-    id: number
-    userId: number
-    ruleId: number | null
-    ruleType?: number | null
-    source?: string | null
-    targetType?: number | null
-    targetId?: number | null
-    delta: number
-    beforeValue: number
-    afterValue: number
-    bizKey?: string
-    remark: string | null
-    context?: Record<string, unknown> | null
-    createdAt: Date
-    updatedAt?: Date
-  }): UserExperienceRecordDto {
+  private toExperienceRecord(
+    record: {
+      id: number
+      userId: number
+      ruleId: number | null
+      ruleType?: number | null
+      source?: string | null
+      targetType?: number | null
+      targetId?: number | null
+      delta: number
+      beforeValue: number
+      afterValue: number
+      bizKey?: string
+      remark: string | null
+      context?: Record<string, unknown> | null
+      createdAt: Date
+      updatedAt?: Date
+    },
+    user: UserExperienceRecordUserDto | null = null,
+  ): UserExperienceRecordDto {
+    const context =
+      this.growthLedgerService.sanitizePublicContext(record.context) ?? null
+
     return {
       id: record.id,
+      user,
       userId: record.userId,
-      ruleId: record.ruleId ?? undefined,
-      ruleType: record.ruleType ?? undefined,
-      source: record.source ?? undefined,
-      targetType: record.targetType ?? undefined,
-      targetId: record.targetId ?? undefined,
+      ruleId: record.ruleId ?? null,
+      ruleType: (record.ruleType as GrowthRuleTypeEnum | null | undefined) ?? null,
+      source: record.source ?? null,
+      targetType: record.targetType ?? null,
+      targetId: record.targetId ?? null,
       bizKey: record.bizKey ?? '',
-      context: this.growthLedgerService.sanitizePublicContext(record.context),
+      context,
       experience: record.delta,
       beforeExperience: record.beforeValue,
       afterExperience: record.afterValue,
-      remark: record.remark ?? undefined,
+      remark: record.remark ?? null,
       createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
+      updatedAt: record.updatedAt ?? null,
     }
+  }
+
+  private async buildExperienceRecordUserMap(userIds: number[]) {
+    const distinctUserIds = [...new Set(userIds)]
+    if (distinctUserIds.length === 0) {
+      return new Map<number, UserExperienceRecordUserDto>()
+    }
+
+    const users = await this.db
+      .select({
+        id: this.appUser.id,
+        account: this.appUser.account,
+        nickname: this.appUser.nickname,
+        avatarUrl: this.appUser.avatarUrl,
+      })
+      .from(this.appUser)
+      .where(inArray(this.appUser.id, distinctUserIds))
+
+    return new Map(users.map((user) => [user.id, user]))
   }
 
   private mapRuleFailReason(reason?: string) {

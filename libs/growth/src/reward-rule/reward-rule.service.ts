@@ -1,12 +1,15 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService, toPageResult } from '@db/core'
+import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, isNotNull, isNull } from 'drizzle-orm'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
+  ArchiveGrowthRewardRuleDto,
   CreateGrowthRewardRuleDto,
+  GrowthRewardRuleArchiveStatusEnum,
   QueryGrowthRewardRuleDto,
   UpdateGrowthRewardRuleDto,
 } from './dto/reward-rule.dto'
@@ -14,7 +17,10 @@ import { GrowthRewardRuleAssetTypeEnum } from './reward-rule.constant'
 
 @Injectable()
 export class GrowthRewardRuleService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly eventDefinitionService: EventDefinitionService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -47,6 +53,16 @@ export class GrowthRewardRuleService {
     }
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.growthRewardRule.isEnabled, dto.isEnabled))
+    }
+    const archiveStatus =
+      dto.status ??
+      (dto.includeArchived
+        ? GrowthRewardRuleArchiveStatusEnum.ALL
+        : GrowthRewardRuleArchiveStatusEnum.ACTIVE)
+    if (archiveStatus === GrowthRewardRuleArchiveStatusEnum.ACTIVE) {
+      conditions.push(isNull(this.growthRewardRule.archivedAt))
+    } else if (archiveStatus === GrowthRewardRuleArchiveStatusEnum.ARCHIVED) {
+      conditions.push(isNotNull(this.growthRewardRule.archivedAt))
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -87,6 +103,7 @@ export class GrowthRewardRuleService {
 
   async updateRewardRule(dto: UpdateGrowthRewardRuleDto) {
     const existingRule = await this.getRewardRuleDetail(dto.id)
+    this.assertRewardRuleActive(existingRule.archivedAt)
     const { id, ...rest } = dto
     const normalizedRest = this.normalizeWriteDto(rest)
     this.validateRewardRuleWrite({
@@ -112,11 +129,37 @@ export class GrowthRewardRuleService {
   }
 
   async deleteRewardRule(id: number) {
+    return this.archiveRewardRule({ id })
+  }
+
+  async archiveRewardRule(
+    dto: ArchiveGrowthRewardRuleDto,
+    adminUserId?: number,
+  ) {
+    const existingRule = await this.getRewardRuleDetail(dto.id)
+    if (existingRule.archivedAt) {
+      return true
+    }
+
+    const now = new Date()
     await this.drizzle.withErrorHandling(
       () =>
         this.db
-          .delete(this.growthRewardRule)
-          .where(eq(this.growthRewardRule.id, id)),
+          .update(this.growthRewardRule)
+          .set({
+            isEnabled: false,
+            archivedAt: now,
+            archivedBy: adminUserId ?? null,
+            archiveReasonCode: 'OPERATOR_ARCHIVE',
+            archiveReason: dto.archiveReason?.trim() || '运营归档成长奖励规则',
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(this.growthRewardRule.id, dto.id),
+              isNull(this.growthRewardRule.archivedAt),
+            ),
+          ),
       {
         notFound: '成长奖励规则不存在',
       },
@@ -198,5 +241,40 @@ export class GrowthRewardRuleService {
         '扩展成长奖励规则必须提供非空 assetKey',
       )
     }
+
+    this.assertExperienceRewardRuleEventConfigurable(dto)
+  }
+
+  private assertExperienceRewardRuleEventConfigurable(
+    dto: Partial<CreateGrowthRewardRuleDto>,
+  ) {
+    if (
+      dto.assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE ||
+      dto.type === undefined
+    ) {
+      return
+    }
+
+    const disabledReason =
+      this.eventDefinitionService.getRuleConfigDisabledReason(dto.type)
+    if (disabledReason === null) {
+      return
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      `该成长事件暂不支持经验奖励规则配置：${disabledReason}`,
+    )
+  }
+
+  private assertRewardRuleActive(archivedAt: Date | null) {
+    if (!archivedAt) {
+      return
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '已归档的成长奖励规则不可编辑',
+    )
   }
 }

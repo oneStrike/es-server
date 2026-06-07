@@ -5,10 +5,11 @@ import {
   RetryGrowthRewardSettlementBatchDto,
 } from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
 import {
+  GrowthConfigurableRewardEventOptionDto,
   GrowthRuleEventPageItemDto,
   QueryGrowthRuleEventPageDto,
 } from '@libs/growth/growth/dto/growth.dto'
-import { ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
@@ -30,6 +31,17 @@ export class GrowthController {
   })
   async getGrowthRuleEventPage(@Query() query: QueryGrowthRuleEventPageDto) {
     return this.growthService.getGrowthRuleEventPage(query)
+  }
+
+  // 查询允许配置基础奖励规则的成长事件选项。
+  @Get('reward-event-option/list')
+  @ApiDoc({
+    summary: '查询允许配置基础奖励规则的成长事件选项',
+    model: GrowthConfigurableRewardEventOptionDto,
+    isArray: true,
+  })
+  async getConfigurableRewardEventOptions() {
+    return this.growthService.getConfigurableRewardEventOptions()
   }
 
   // 分页查询成长奖励补偿记录。

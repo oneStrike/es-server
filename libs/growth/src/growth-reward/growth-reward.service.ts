@@ -24,7 +24,7 @@ import type {
 } from './types/growth-reward-service.type'
 import { DrizzleService } from '@db/core'
 import { Injectable, Logger } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -479,7 +479,12 @@ export class UserGrowthRewardService {
         isEnabled: this.growthRewardRule.isEnabled,
       })
       .from(this.growthRewardRule)
-      .where(eq(this.growthRewardRule.type, ruleType))
+      .where(
+        and(
+          eq(this.growthRewardRule.type, ruleType),
+          isNull(this.growthRewardRule.archivedAt),
+        ),
+      )
   }
 
   // 为同一业务事实下的不同资产生成稳定幂等键。

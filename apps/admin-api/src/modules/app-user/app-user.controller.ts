@@ -2,7 +2,7 @@ import {
   AssignUserBadgeDto,
   UserBadgeItemDto,
 } from '@libs/growth/badge/dto/user-badge-management.dto'
-import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
+import { QueryScopedUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
 import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto, UserIdDto } from '@libs/platform/dto'
@@ -284,7 +284,7 @@ export class AppUserController {
     model: AdminAppUserExperienceRecordDto,
   })
   async getAppUserExperienceRecords(
-    @Query() query: QueryUserExperienceRecordDto,
+    @Query() query: QueryScopedUserExperienceRecordDto,
   ) {
     return this.appUserService.getAppUserExperienceRecords(query)
   }

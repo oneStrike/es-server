@@ -7,7 +7,7 @@ import {
   smallint,
   snakeCase,
   timestamp,
-  unique,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -46,6 +46,14 @@ export const growthRewardRule = snakeCase.table(
     isEnabled: boolean().default(true).notNull(),
     /** 备注。 */
     remark: varchar({ length: 500 }),
+    /** 归档时间；为空表示当前 active 规则。 */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
+    /** 归档操作者；系统迁移自动归档为空。 */
+    archivedBy: integer(),
+    /** 归档原因码。 */
+    archiveReasonCode: varchar({ length: 80 }),
+    /** 归档原因说明。 */
+    archiveReason: varchar({ length: 500 }),
     /** 创建时间。 */
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
@@ -56,14 +64,13 @@ export const growthRewardRule = snakeCase.table(
       .notNull(),
   },
   (table) => [
-    unique('growth_reward_rule_type_asset_type_asset_key_key').on(
-      table.type,
-      table.assetType,
-      table.assetKey,
-    ),
+    uniqueIndex('growth_reward_rule_type_asset_type_asset_key_active_key')
+      .on(table.type, table.assetType, table.assetKey)
+      .where(sql`${table.archivedAt} is null`),
     index('growth_reward_rule_type_idx').on(table.type),
     index('growth_reward_rule_asset_type_idx').on(table.assetType),
     index('growth_reward_rule_is_enabled_idx').on(table.isEnabled),
+    index('growth_reward_rule_archived_at_idx').on(table.archivedAt),
     check(
       'growth_reward_rule_asset_type_valid_chk',
       sql`${table.assetType} in (1, 2, 3, 4, 5)`,

@@ -1,5 +1,8 @@
 import type { QueryGrowthRewardSettlementPageDto } from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
-import type { QueryGrowthRuleEventPageDto } from '@libs/growth/growth/dto/growth.dto'
+import type {
+  GrowthConfigurableRewardEventOptionDto,
+  QueryGrowthRuleEventPageDto,
+} from '@libs/growth/growth/dto/growth.dto'
 import { DrizzleService } from '@db/core'
 import {
   EventDefinitionConsumerEnum,
@@ -69,7 +72,7 @@ export class GrowthService {
    */
   async getGrowthRuleEventPage(query: QueryGrowthRuleEventPageDto) {
     const definitions = this.eventDefinitionService
-      .listRuleConfigurableEventDefinitions()
+      .listGrowthEventCoverageDefinitions()
       .filter((item) => {
         if (query.type !== undefined && item.code !== query.type) {
           return false
@@ -80,6 +83,12 @@ export class GrowthService {
           if (isImplemented !== query.isImplemented) {
             return false
           }
+        }
+        if (
+          query.isRuleConfigurable !== undefined &&
+          item.isRuleConfigurable !== query.isRuleConfigurable
+        ) {
+          return false
         }
         return true
       })
@@ -100,6 +109,10 @@ export class GrowthService {
 
     const rows = definitions
       .map((definition) => {
+        const disabledReason =
+          this.eventDefinitionService.getRuleConfigDisabledReason(
+            definition.code,
+          )
         const assetRules = (assetRuleMap.get(definition.code) ?? [])
           .sort((prev, next) => {
             if (prev.assetType !== next.assetType) {
@@ -136,6 +149,9 @@ export class GrowthService {
           implStatus: definition.implStatus,
           isImplemented:
             definition.implStatus === EventDefinitionImplStatusEnum.IMPLEMENTED,
+          isRuleConfigurable: definition.isRuleConfigurable,
+          supportsExperienceRule: disabledReason === null,
+          disabledReason,
           supportsTaskObjective: definition.consumers.includes(
             EventDefinitionConsumerEnum.TASK,
           ),
@@ -170,6 +186,23 @@ export class GrowthService {
     }
   }
 
+  getConfigurableRewardEventOptions(): GrowthConfigurableRewardEventOptionDto[] {
+    return this.eventDefinitionService
+      .listRuleConfigurableEventDefinitions()
+      .map((definition) => ({
+        ruleType: definition.code,
+        ruleKey: definition.key,
+        eventName: definition.label,
+        domain: definition.domain,
+        governanceGate: definition.governanceGate,
+        implStatus: definition.implStatus,
+        isImplemented: true,
+        isRuleConfigurable: true,
+        supportsExperienceRule: true,
+      }))
+      .sort((prev, next) => prev.ruleType - next.ruleType)
+  }
+
   private async queryRewardRules(ruleTypes: number[]) {
     if (ruleTypes.length === 0) {
       return []
@@ -177,7 +210,12 @@ export class GrowthService {
     return this.db
       .select()
       .from(this.growthRewardRule)
-      .where(inArray(this.growthRewardRule.type, ruleTypes))
+      .where(
+        and(
+          inArray(this.growthRewardRule.type, ruleTypes),
+          isNull(this.growthRewardRule.archivedAt),
+        ),
+      )
   }
 
   private async queryEventTasks(ruleTypes: number[]) {

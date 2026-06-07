@@ -4,7 +4,10 @@ import type {
   ListEventDefinitionFilters,
 } from './event-definition.type'
 import { Injectable } from '@nestjs/common'
-import { EventDefinitionImplStatusEnum } from './event-definition.constant'
+import {
+  EventDefinitionConsumerEnum,
+  EventDefinitionImplStatusEnum,
+} from './event-definition.constant'
 import { EVENT_DEFINITION_MAP, EVENT_DEFINITIONS } from './event-definition.map'
 
 /**
@@ -35,9 +38,47 @@ export class EventDefinitionService {
     return this.listEventDefinitions({ isImplemented: true })
   }
 
-  // 枚举允许继续用于规则配置的事件定义，并排除历史兼容编码。
+  // 枚举成长覆盖读模型需要展示的全部事件定义。
+  listGrowthEventCoverageDefinitions(): EventDefinition[] {
+    return this.listEventDefinitions({
+      consumer: EventDefinitionConsumerEnum.GROWTH,
+    })
+  }
+
+  // 枚举允许继续用于规则配置的事件定义，并排除未实现与历史兼容编码。
   listRuleConfigurableEventDefinitions(): EventDefinition[] {
-    return this.listEventDefinitions({ isRuleConfigurable: true })
+    return this.listEventDefinitions({
+      consumer: EventDefinitionConsumerEnum.GROWTH,
+      implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
+      isRuleConfigurable: true,
+    })
+  }
+
+  getRuleConfigDisabledReason(
+    code: GrowthRuleTypeEnum | number | undefined,
+  ): string | null {
+    if (code === undefined) {
+      return '缺少成长事件编码'
+    }
+
+    const definition = this.getEventDefinition(code)
+    if (!definition) {
+      return '事件定义不存在'
+    }
+
+    if (!definition.consumers.includes(EventDefinitionConsumerEnum.GROWTH)) {
+      return '事件未接入成长奖励链路'
+    }
+
+    if (definition.implStatus !== EventDefinitionImplStatusEnum.IMPLEMENTED) {
+      return '事件尚未正式接入 producer'
+    }
+
+    if (!definition.isRuleConfigurable) {
+      return '事件不支持配置基础奖励规则'
+    }
+
+    return null
   }
 
   // 判断单条事件定义是否满足当前过滤条件。

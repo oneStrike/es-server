@@ -1,11 +1,12 @@
 import {
+  ArchiveGrowthRewardRuleDto,
   BaseGrowthRewardRuleDto,
   CreateGrowthRewardRuleDto,
   QueryGrowthRewardRuleDto,
   UpdateGrowthRewardRuleDto,
 } from '@libs/growth/reward-rule/dto/reward-rule.dto'
 import { GrowthRewardRuleService } from '@libs/growth/reward-rule/reward-rule.service'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -61,13 +62,31 @@ export class RewardRuleController {
 
   @Post('delete')
   @ApiAuditDoc({
-    summary: '删除成长奖励规则',
+    summary: '归档成长奖励规则（兼容旧删除路由）',
     model: Boolean,
     audit: {
-      actionType: AuditActionTypeEnum.DELETE,
+      actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async deleteRewardRule(@Body() body: IdDto) {
-    return this.growthRewardRuleService.deleteRewardRule(body.id)
+  async deleteRewardRule(
+    @Body() body: IdDto,
+    @CurrentUser('sub') adminUserId: number,
+  ) {
+    return this.growthRewardRuleService.archiveRewardRule(body, adminUserId)
+  }
+
+  @Post('archive')
+  @ApiAuditDoc({
+    summary: '归档成长奖励规则',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async archiveRewardRule(
+    @Body() body: ArchiveGrowthRewardRuleDto,
+    @CurrentUser('sub') adminUserId: number,
+  ) {
+    return this.growthRewardRuleService.archiveRewardRule(body, adminUserId)
   }
 }

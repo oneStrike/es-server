@@ -805,6 +805,7 @@ export class GrowthLedgerService {
           eq(this.growthRewardRule.type, ruleType),
           eq(this.growthRewardRule.assetType, assetType),
           eq(this.growthRewardRule.assetKey, assetKey),
+          isNull(this.growthRewardRule.archivedAt),
         ),
       )
       .limit(1)

@@ -125,6 +125,14 @@ export const growthLedgerRecord = snakeCase.table(
       table.id.desc(),
     ),
     /**
+     * 管理端经验全局审计默认分页索引。
+     */
+    index('growth_ledger_record_asset_type_created_id_idx').on(
+      table.assetType,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    /**
      * 目标检索索引
      */
     index('growth_ledger_record_target_type_target_id_idx').on(

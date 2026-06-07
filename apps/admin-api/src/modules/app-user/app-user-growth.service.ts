@@ -3,7 +3,7 @@ import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { AssignUserBadgeDto } from '@libs/growth/badge/dto/user-badge-management.dto'
 import { UserBadgeService } from '@libs/growth/badge/user-badge.service'
-import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
+import { QueryScopedUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
 import { UserExperienceService } from '@libs/growth/experience/experience.service'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
@@ -174,7 +174,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
   }
 
   /** 获取 APP 用户经验记录分页。 */
-  async getAppUserExperienceRecords(query: QueryUserExperienceRecordDto) {
+  async getAppUserExperienceRecords(query: QueryScopedUserExperienceRecordDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.userExperienceService.getExperienceRecordPage(query)
   }

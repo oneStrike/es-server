@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common'
+import { EventDefinitionModule } from '../event-definition/event-definition.module'
 import { GrowthRewardRuleService } from './reward-rule.service'
 
 @Module({
+  imports: [EventDefinitionModule],
   providers: [GrowthRewardRuleService],
   exports: [GrowthRewardRuleService],
 })
