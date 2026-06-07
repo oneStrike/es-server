@@ -192,10 +192,11 @@ export class EmojiCatalogService {
         this.emojiAsset.id,
       )
 
+    const packById = new Map(packs.map((pack) => [pack.id, pack]))
     const assetsByPackId = new Map<number, EmojiAssetSnapshot[]>()
 
     for (const asset of assets) {
-      const pack = packs.find((item) => item.id === asset.packId)
+      const pack = packById.get(asset.packId)
       if (!pack) {
         continue
       }
@@ -425,28 +426,28 @@ export class EmojiCatalogService {
     }
 
     const now = new Date()
-    for (const item of validItems) {
-      await tx
-        .insert(this.emojiRecentUsage)
-        .values({
+    await tx
+      .insert(this.emojiRecentUsage)
+      .values(
+        validItems.map((item) => ({
           userId,
           scene,
           emojiAssetId: item.emojiAssetId,
           useCount: item.useCount,
           lastUsedAt: now,
-        })
-        .onConflictDoUpdate({
-          target: [
-            this.emojiRecentUsage.userId,
-            this.emojiRecentUsage.scene,
-            this.emojiRecentUsage.emojiAssetId,
-          ],
-          set: {
-            useCount: sql`${this.emojiRecentUsage.useCount} + ${item.useCount}`,
-            lastUsedAt: now,
-          },
-        })
-    }
+        })),
+      )
+      .onConflictDoUpdate({
+        target: [
+          this.emojiRecentUsage.userId,
+          this.emojiRecentUsage.scene,
+          this.emojiRecentUsage.emojiAssetId,
+        ],
+        set: {
+          useCount: sql`${this.emojiRecentUsage.useCount} + excluded.use_count`,
+          lastUsedAt: now,
+        },
+      })
   }
 
   /**

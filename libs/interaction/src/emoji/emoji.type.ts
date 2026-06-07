@@ -72,7 +72,7 @@ export interface RecordEmojiRecentUsageInput extends EmojiSceneQueryParams {
  */
 /** 稳定领域类型 `ValidateEmojiAssetPayload`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type ValidateEmojiAssetPayload = Partial<
-  Pick<EmojiAssetSelect, 'shortcode' | 'unicodeSequence' | 'imageUrl'>
+  Pick<EmojiAssetSelect, 'shortcode' | 'unicodeSequence' | 'imageUrl' | 'keywords'>
 >
 
 /**

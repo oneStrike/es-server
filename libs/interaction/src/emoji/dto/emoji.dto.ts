@@ -3,8 +3,8 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  JsonProperty,
   NumberProperty,
+  ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 
@@ -236,10 +236,11 @@ export class BaseEmojiAssetDto extends BaseDto {
   })
   category?: string | null
 
-  @JsonProperty({
+  @ObjectProperty({
     description: '关键词（多语言）',
     // prettier-ignore
     example: { "zh-CN": ["微笑"], "en-US": ["smile"] },
+    additionalProperties: { type: 'array', items: { type: 'string' } },
     required: false,
   })
   keywords?: Record<string, string[]> | null

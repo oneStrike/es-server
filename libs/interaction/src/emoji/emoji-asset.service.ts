@@ -17,6 +17,11 @@ import {
   UpdateEmojiPackSceneTypeDto,
 } from './dto/emoji.dto'
 import {
+  normalizeEmojiKeywords,
+  normalizeEmojiShortcode,
+  normalizeEmojiUnicodeSequence,
+} from './emoji-normalizer.helper'
+import {
   EmojiAssetKindEnum as AssetKind,
 } from './emoji.constant'
 
@@ -400,7 +405,7 @@ export class EmojiAssetService {
    */
   async createAsset(dto: CreateEmojiAssetDto, adminUserId: number) {
     await this.ensurePackExists(dto.packId)
-    this.validateAssetPayload(dto.kind, dto)
+    const normalizedAsset = this.prepareAssetPayload(dto.kind, dto)
 
     const sortOrder =
       dto.sortOrder ??
@@ -409,6 +414,7 @@ export class EmojiAssetService {
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.emojiAsset).values({
         ...dto,
+        ...normalizedAsset,
         sortOrder,
         isAnimated: dto.isAnimated ?? false,
         isEnabled: dto.isEnabled ?? true,
@@ -442,7 +448,7 @@ export class EmojiAssetService {
     }
 
     const nextKind = dto.kind ?? current.kind
-    this.validateAssetPayload(nextKind, {
+    const normalizedAsset = this.prepareAssetPayload(nextKind, {
       ...current,
       ...dto,
     })
@@ -454,6 +460,7 @@ export class EmojiAssetService {
           .update(this.emojiAsset)
           .set({
             ...updateData,
+            ...normalizedAsset,
             updatedById: adminUserId,
           })
           .where(
@@ -578,12 +585,16 @@ export class EmojiAssetService {
    * - UNICODE 类型：必须提供 unicodeSequence。
    * @throws BusinessException 字段不满足类型要求
    */
-  private validateAssetPayload(
+  private prepareAssetPayload(
     kind: CreateEmojiAssetDto['kind'],
     payload: ValidateEmojiAssetPayload,
   ) {
+    const shortcode = normalizeEmojiShortcode(payload.shortcode)
+    const unicodeSequence = normalizeEmojiUnicodeSequence(payload.unicodeSequence)
+    const keywords = normalizeEmojiKeywords(payload.keywords)
+
     if (kind === AssetKind.CUSTOM) {
-      if (!payload.shortcode) {
+      if (!shortcode) {
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
           'custom 表情必须填写 shortcode',
@@ -596,11 +607,17 @@ export class EmojiAssetService {
         )
       }
     }
-    if (kind === AssetKind.UNICODE && !payload.unicodeSequence) {
+    if (kind === AssetKind.UNICODE && !unicodeSequence) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         'unicode 表情必须填写 unicodeSequence',
       )
+    }
+
+    return {
+      shortcode: kind === AssetKind.CUSTOM ? shortcode : null,
+      unicodeSequence: kind === AssetKind.UNICODE ? unicodeSequence : null,
+      keywords,
     }
   }
 

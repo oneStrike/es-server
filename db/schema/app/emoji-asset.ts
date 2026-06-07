@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -11,6 +12,7 @@ import {
   uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
+import { emojiPack } from './emoji-pack'
 
 /**
  * 表情资源表。
@@ -136,6 +138,10 @@ export const emojiAsset = snakeCase.table(
      */
     index('emoji_asset_category_idx').on(table.category),
     /**
+     * Trigram 索引由 migration 创建；schema 保留查询字段索引用于常规过滤。
+     */
+    index('emoji_asset_unicode_sequence_idx').on(table.unicodeSequence),
+    /**
      * 普通索引：软删除过滤。
      */
     index('emoji_asset_deleted_at_idx').on(table.deletedAt),
@@ -174,6 +180,11 @@ export const emojiAsset = snakeCase.table(
       'emoji_asset_shortcode_format_chk',
       sql`${table.shortcode} is null or ${table.shortcode} ~ '^[a-z0-9_]{2,32}$'`,
     ),
+    foreignKey({
+      columns: [table.packId],
+      foreignColumns: [emojiPack.id],
+      name: 'emoji_asset_pack_id_fkey',
+    }).onDelete('restrict').onUpdate('restrict'),
   ],
 )
 
