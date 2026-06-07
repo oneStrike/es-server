@@ -22,11 +22,13 @@ import {
   BusinessErrorCode,
   ContentTypeEnum,
   WorkRootViewPermissionEnum,
+  WorkTypeEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { isNotNil } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { AuthorTypeEnum } from '../../author/author.constant'
 import { WorkAuthorService } from '../../author/author.service'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
@@ -227,12 +229,25 @@ export class WorkService {
     }
   }
 
+  private getRequiredAuthorType(workType: WorkTypeEnum): AuthorTypeEnum {
+    if (workType === WorkTypeEnum.COMIC) {
+      return AuthorTypeEnum.MANGA
+    }
+    if (workType === WorkTypeEnum.NOVEL) {
+      return AuthorTypeEnum.NOVEL
+    }
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '作品类型不支持作者角色校验',
+    )
+  }
+
   // 验证作品关联的作者、分类、标签是否存在且已启用，业务规则：作品必须关联有效的作者、分类和标签，且这些关联项必须处于启用状态。
   private async validateWorkRelations(
     authorIds?: number[],
     categoryIds?: number[],
     tagIds?: number[],
-    options: { requireAll?: boolean } = {},
+    options: { requireAll?: boolean, workType?: WorkTypeEnum } = {},
   ) {
     this.assertNonEmptyRelationIds(authorIds, '作者', options.requireAll)
     this.assertNonEmptyRelationIds(categoryIds, '分类', options.requireAll)
@@ -247,7 +262,7 @@ export class WorkService {
                 isEnabled: true,
                 deletedAt: { isNull: true },
               },
-              columns: { id: true },
+              columns: { id: true, type: true },
             })
           : [],
         categoryIds !== undefined
@@ -275,6 +290,20 @@ export class WorkService {
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '部分作者不存在或已禁用',
       )
+    }
+    if (authorIds !== undefined && options.workType !== undefined) {
+      const requiredAuthorType = this.getRequiredAuthorType(options.workType)
+      const invalidAuthor = existingAuthors.find(
+        (author) => !author.type?.includes(requiredAuthorType),
+      )
+      if (invalidAuthor) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          options.workType === WorkTypeEnum.COMIC
+            ? '漫画作品只能关联漫画家'
+            : '小说作品只能关联轻小说作者',
+        )
+      }
     }
     if (
       categoryIds !== undefined &&
@@ -328,6 +357,7 @@ export class WorkService {
     // 作品只允许关联当前有效的作者、分类和标签。
     await this.validateWorkRelations(authorIds, categoryIds, tagIds, {
       requireAll: true,
+      workType: normalizedWorkData.type,
     })
 
     return this.drizzle.withErrorHandling(async () =>
@@ -413,12 +443,26 @@ export class WorkService {
       )
     }
 
-    // 作品名称变更时才校验同类型重名，避免无关更新多查一次。
-    if (isNotNil(updateData.name) && updateData.name !== existingWork.name) {
+    const resultingWorkType = updateData.type ?? existingWork.type
+    const resultingWorkName = updateData.name ?? existingWork.name
+    const originalAuthorIds = existingWork.authorRelations.map(
+      (rel) => rel.authorId,
+    )
+    const authorIdsForValidation =
+      authorIds ??
+      (isNotNil(updateData.type) && updateData.type !== existingWork.type
+        ? originalAuthorIds
+        : undefined)
+
+    // 作品名称或类型变更时校验目标类型下重名，避免类型切换绕开唯一口径。
+    if (
+      (isNotNil(updateData.name) && updateData.name !== existingWork.name) ||
+      (isNotNil(updateData.type) && updateData.type !== existingWork.type)
+    ) {
       const duplicateWork = await this.db.query.work.findFirst({
         where: {
-          name: updateData.name,
-          type: existingWork.type,
+          name: resultingWorkName,
+          type: resultingWorkType,
           deletedAt: { isNull: true },
           id: { ne: id },
         },
@@ -435,14 +479,19 @@ export class WorkService {
     if (
       authorIds !== undefined ||
       categoryIds !== undefined ||
-      tagIds !== undefined
+      tagIds !== undefined ||
+      authorIdsForValidation !== undefined
     ) {
-      await this.validateWorkRelations(authorIds, categoryIds, tagIds)
+      await this.validateWorkRelations(
+        authorIdsForValidation,
+        categoryIds,
+        tagIds,
+        {
+          workType: resultingWorkType,
+        },
+      )
     }
 
-    const originalAuthorIds = existingWork.authorRelations.map(
-      (rel) => rel.authorId,
-    )
     const shouldSyncSectionName =
       isNotNil(updateData.name) && updateData.name !== existingWork.name
     const shouldSyncSectionDescription = isNotNil(updateData.description)

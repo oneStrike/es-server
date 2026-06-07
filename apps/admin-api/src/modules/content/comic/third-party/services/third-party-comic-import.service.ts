@@ -31,6 +31,7 @@ import type {
 } from '@libs/content/work/third-party/third-party-comic-import.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import { DrizzleService } from '@db/core'
+import { AuthorTypeEnum } from '@libs/content/author/author.constant'
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
 import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
@@ -109,11 +110,30 @@ export class ThirdPartyComicImportService {
     return this.drizzle.schema.work
   }
 
+  // 读取 workAuthor。
+  private get workAuthor() {
+    return this.drizzle.schema.workAuthor
+  }
+
+  // 读取 workCategory。
+  private get workCategory() {
+    return this.drizzle.schema.workCategory
+  }
+
+  // 读取 workTag。
+  private get workTag() {
+    return this.drizzle.schema.workTag
+  }
+
   // 预览第三方漫画导入方案，只读取 provider 数据不写入本地。
   async previewImport(dto: ThirdPartyComicImportPreviewRequestDto) {
     const provider = this.registry.resolve(dto.platform)
     const detail = await provider.getDetail(dto)
     const chapters = await provider.getChapters(dto)
+    const relationCandidates = await this.resolvePreviewRelationCandidates(
+      detail.authors,
+      detail.taxonomies,
+    )
 
     return {
       platform: dto.platform,
@@ -147,20 +167,7 @@ export class ThirdPartyComicImportService {
           : undefined,
         localRequired: !detail.cover,
       },
-      relationCandidates: {
-        authors: detail.authors.map((providerName) => ({
-          providerName,
-          localCandidates: [],
-        })),
-        categories: detail.taxonomies.map((providerName) => ({
-          providerName,
-          localCandidates: [],
-        })),
-        tags: detail.taxonomies.map((providerName) => ({
-          providerName,
-          localCandidates: [],
-        })),
-      },
+      relationCandidates,
       missingLocalFields: [
         'authorIds',
         'categoryIds',
@@ -171,6 +178,90 @@ export class ThirdPartyComicImportService {
         'viewRule',
       ],
     }
+  }
+
+  private async resolvePreviewRelationCandidates(
+    authorNames: string[],
+    taxonomyNames: string[],
+  ) {
+    const [authors, categories, tags] = await Promise.all([
+      Promise.all(
+        authorNames.map(async (providerName) => ({
+          providerName,
+          localCandidates: await this.findPreviewAuthorCandidates(providerName),
+        })),
+      ),
+      Promise.all(
+        taxonomyNames.map(async (providerName) => ({
+          providerName,
+          localCandidates:
+            await this.findPreviewCategoryCandidates(providerName),
+        })),
+      ),
+      Promise.all(
+        taxonomyNames.map(async (providerName) => ({
+          providerName,
+          localCandidates: await this.findPreviewTagCandidates(providerName),
+        })),
+      ),
+    ])
+
+    return {
+      authors,
+      categories,
+      tags,
+    }
+  }
+
+  private async findPreviewAuthorCandidates(providerName: string) {
+    return this.db
+      .select({
+        id: this.workAuthor.id,
+        name: this.workAuthor.name,
+      })
+      .from(this.workAuthor)
+      .where(
+        and(
+          eq(this.workAuthor.name, providerName),
+          eq(this.workAuthor.isEnabled, true),
+          isNull(this.workAuthor.deletedAt),
+          sql`${this.workAuthor.type} @> ARRAY[${AuthorTypeEnum.MANGA}]::smallint[]`,
+        ),
+      )
+      .orderBy(this.workAuthor.id)
+  }
+
+  private async findPreviewCategoryCandidates(providerName: string) {
+    return this.db
+      .select({
+        id: this.workCategory.id,
+        name: this.workCategory.name,
+      })
+      .from(this.workCategory)
+      .where(
+        and(
+          eq(this.workCategory.name, providerName),
+          eq(this.workCategory.isEnabled, true),
+          sql`${this.workCategory.contentType} @> ARRAY[${WorkTypeEnum.COMIC}]::smallint[]`,
+        ),
+      )
+      .orderBy(this.workCategory.id)
+  }
+
+  private async findPreviewTagCandidates(providerName: string) {
+    return this.db
+      .select({
+        id: this.workTag.id,
+        name: this.workTag.name,
+      })
+      .from(this.workTag)
+      .where(
+        and(
+          eq(this.workTag.name, providerName),
+          eq(this.workTag.isEnabled, true),
+        ),
+      )
+      .orderBy(this.workTag.id)
   }
 
   // 确认第三方漫画导入，只创建工作流任务，不在 HTTP 请求内执行重型导入。

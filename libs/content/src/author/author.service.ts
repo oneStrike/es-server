@@ -2,11 +2,16 @@ import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
-import { BusinessErrorCode } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  FollowTargetTypeContractEnum,
+  WorkTypeEnum,
+} from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, or, sql } from 'drizzle-orm'
+import { AuthorTypeEnum } from './author.constant'
 import {
   AuthorFollowCountRepairResultDto,
   AuthorWorkCountRepairResultDto,
@@ -23,12 +28,6 @@ import {
  */
 @Injectable()
 export class WorkAuthorService {
-  /**
-   * 关注作者目标类型值。
-   * 与 follow 模块解耦，避免内容域反向依赖 interaction follow 常量。
-   */
-  private readonly authorFollowTargetType = 2
-
   // 初始化 WorkAuthorService 依赖。
   constructor(private readonly drizzle: DrizzleService) {}
 
@@ -57,34 +56,65 @@ export class WorkAuthorService {
     return this.drizzle.schema.workAuthorRelation
   }
 
+  private async assertAuthorTypeUpdateAllowed(
+    authorId: number,
+    nextTypes: AuthorTypeEnum[] | null | undefined,
+  ) {
+    if (nextTypes === undefined) {
+      return
+    }
+
+    const normalizedTypes = nextTypes ?? []
+    const mismatchConditions: SQL[] = []
+    if (!normalizedTypes.includes(AuthorTypeEnum.MANGA)) {
+      mismatchConditions.push(eq(this.work.type, WorkTypeEnum.COMIC))
+    }
+    if (!normalizedTypes.includes(AuthorTypeEnum.NOVEL)) {
+      mismatchConditions.push(eq(this.work.type, WorkTypeEnum.NOVEL))
+    }
+    if (mismatchConditions.length === 0) {
+      return
+    }
+
+    const [linkedWork] = await this.db
+      .select({
+        id: this.work.id,
+        type: this.work.type,
+      })
+      .from(this.workAuthorRelation)
+      .innerJoin(
+        this.work,
+        and(
+          eq(this.work.id, this.workAuthorRelation.workId),
+          isNull(this.work.deletedAt),
+        ),
+      )
+      .where(
+        and(
+          eq(this.workAuthorRelation.authorId, authorId),
+          or(...mismatchConditions),
+        ),
+      )
+      .limit(1)
+
+    if (!linkedWork) {
+      return
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      linkedWork.type === WorkTypeEnum.COMIC
+        ? '该作者仍有关联漫画作品，不能移除漫画家角色'
+        : '该作者仍有关联小说作品，不能移除轻小说作者角色',
+    )
+  }
+
   // 构建未软删除作者的查询条件，统一约束作者写入和计数修复入口。
   private activeAuthorWhere(authorId: number): SQL {
     return and(
       eq(this.workAuthor.id, authorId),
       isNull(this.workAuthor.deletedAt),
     )!
-  }
-
-  // 按批次处理作者 ID，避免全量重建时单次并发过高。
-  private async processIdsInBatches(
-    ids: number[],
-    batchSize: number,
-    handler: (batchIds: number[]) => Promise<void>,
-  ) {
-    for (let index = 0; index < ids.length; index += batchSize) {
-      const batchIds = ids.slice(index, index + batchSize)
-      await handler(batchIds)
-    }
-  }
-
-  // 获取当前未软删除作者 ID 列表，供全量计数修复入口复用。
-  private async getActiveAuthorIds(): Promise<number[]> {
-    return this.db
-      .select({ id: this.workAuthor.id })
-      .from(this.workAuthor)
-      .where(isNull(this.workAuthor.deletedAt))
-      .orderBy(this.workAuthor.id)
-      .then((rows) => rows.map((row) => row.id))
   }
 
   // 按增量更新作者粉丝数，该方法供关注域写路径调用；若未传事务，则在独立错误处理上下文中执行。
@@ -202,7 +232,10 @@ export class WorkAuthorService {
       .from(this.userFollow)
       .where(
         and(
-          eq(this.userFollow.targetType, this.authorFollowTargetType),
+          eq(
+            this.userFollow.targetType,
+            FollowTargetTypeContractEnum.AUTHOR,
+          ),
           eq(this.userFollow.targetId, authorId),
         ),
       )
@@ -275,17 +308,29 @@ export class WorkAuthorService {
     }
   }
 
-  // 全量重建作者粉丝数，当前用于管理端运维入口，按批次串行推进以避免单次压力过大。
+  // 全量重建作者粉丝数：基于 follow 事实表一次性聚合更新所有未软删除作者。
   async rebuildAllAuthorFollowersCount(batchSize = 200) {
-    const authorIds = await this.getActiveAuthorIds()
+    void batchSize
 
-    await this.processIdsInBatches(authorIds, batchSize, async (ids) => {
-      await Promise.all(
-        ids.map(async (authorId) =>
-          this.rebuildAuthorFollowersCount(undefined, authorId),
-        ),
-      )
-    })
+    await this.drizzle.withErrorHandling(() =>
+      this.db.execute(sql`
+        update ${this.workAuthor} as author
+        set followers_count = coalesce(fact.followers_count, 0)
+        from (
+          select
+            live_author.id as author_id,
+            count(follow.target_id)::int as followers_count
+          from ${this.workAuthor} as live_author
+          left join ${this.userFollow} as follow
+            on follow.target_type = ${FollowTargetTypeContractEnum.AUTHOR}
+           and follow.target_id = live_author.id
+          where live_author.deleted_at is null
+          group by live_author.id
+        ) as fact
+        where author.id = fact.author_id
+          and author.deleted_at is null
+      `),
+    )
 
     return true
   }
@@ -301,17 +346,31 @@ export class WorkAuthorService {
     }
   }
 
-  // 全量重建作者作品数。
+  // 全量重建作者作品数：基于作者作品关系和未删除作品事实一次性聚合更新。
   async rebuildAllAuthorWorkCount(batchSize = 200) {
-    const authorIds = await this.getActiveAuthorIds()
+    void batchSize
 
-    await this.processIdsInBatches(authorIds, batchSize, async (ids) => {
-      await Promise.all(
-        ids.map(async (authorId) =>
-          this.rebuildAuthorWorkCount(undefined, authorId),
-        ),
-      )
-    })
+    await this.drizzle.withErrorHandling(() =>
+      this.db.execute(sql`
+        update ${this.workAuthor} as author
+        set work_count = coalesce(fact.work_count, 0)
+        from (
+          select
+            live_author.id as author_id,
+            count(work_fact.id)::int as work_count
+          from ${this.workAuthor} as live_author
+          left join ${this.workAuthorRelation} as relation
+            on relation.author_id = live_author.id
+          left join ${this.work} as work_fact
+            on work_fact.id = relation.work_id
+           and work_fact.deleted_at is null
+          where live_author.deleted_at is null
+          group by live_author.id
+        ) as fact
+        where author.id = fact.author_id
+          and author.deleted_at is null
+      `),
+    )
 
     return true
   }
@@ -355,15 +414,13 @@ export class WorkAuthorService {
     }
 
     let where: SQL | undefined = and(...conditions)
-    if (type && type !== '[]') {
-      const values = JSON.parse(type) as number[]
-      if (values.length > 0) {
-        const typeArray = sql`ARRAY[${sql.join(
-          values.map((v) => sql`${v}`),
-          sql`, `,
-        )}]::smallint[]`
-        where = and(where, sql`${this.workAuthor.type} @> ${typeArray}`)
-      }
+    const values = this.parseAuthorTypeFilter(type)
+    if (values.length > 0) {
+      const typeArray = sql`ARRAY[${sql.join(
+        values.map((v) => sql`${v}`),
+        sql`, `,
+      )}]::smallint[]`
+      where = and(where, sql`${this.workAuthor.type} @> ${typeArray}`)
     }
 
     const page = this.drizzle.buildPage(pageDto)
@@ -413,9 +470,52 @@ export class WorkAuthorService {
     return author
   }
 
+  private parseAuthorTypeFilter(type?: string): AuthorTypeEnum[] {
+    if (!type || type === '[]') {
+      return []
+    }
+
+    let values: unknown
+    try {
+      values = JSON.parse(type)
+    } catch {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '作者类型筛选参数必须是 JSON 数组',
+      )
+    }
+
+    if (!Array.isArray(values)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '作者类型筛选参数必须是 JSON 数组',
+      )
+    }
+
+    const allowedTypes = new Set<number>([
+      AuthorTypeEnum.MANGA,
+      AuthorTypeEnum.NOVEL,
+    ])
+    const normalizedValues = values.map((value) => Number(value))
+    if (
+      normalizedValues.some(
+        (value) => !Number.isInteger(value) || !allowedTypes.has(value),
+      )
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '作者类型筛选参数包含不支持的类型',
+      )
+    }
+
+    return [...new Set(normalizedValues)] as AuthorTypeEnum[]
+  }
+
   // 更新作者基础资料，该入口不处理粉丝数、作品数等冗余字段重建，只负责编辑侧可写字段。
   async updateAuthor(updateAuthorDto: UpdateAuthorDto) {
     const { id, ...updateData } = updateAuthorDto
+
+    await this.assertAuthorTypeUpdateAllowed(id, updateData.type)
 
     await this.drizzle.withErrorHandling(
       () =>

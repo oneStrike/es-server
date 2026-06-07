@@ -2,7 +2,15 @@
  * Auto-converted from legacy schema.
  */
 
-import { index, integer, primaryKey, snakeCase } from 'drizzle-orm/pg-core'
+import {
+  foreignKey,
+  index,
+  integer,
+  primaryKey,
+  snakeCase,
+} from 'drizzle-orm/pg-core'
+import { work } from './work'
+import { workAuthor } from './work-author'
 
 /**
  * 作品作者关联表（多对多关系中间表）
@@ -39,5 +47,15 @@ export const workAuthorRelation = snakeCase.table(
      * 作品与作者复合主键
      */
     primaryKey({ columns: [table.workId, table.authorId] }),
+    foreignKey({
+      columns: [table.workId],
+      foreignColumns: [work.id],
+      name: 'work_author_relation_work_id_fkey',
+    }).onDelete('restrict').onUpdate('restrict'),
+    foreignKey({
+      columns: [table.authorId],
+      foreignColumns: [workAuthor.id],
+      name: 'work_author_relation_author_id_fkey',
+    }).onDelete('restrict').onUpdate('restrict'),
   ],
 )

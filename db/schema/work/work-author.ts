@@ -10,7 +10,7 @@ import {
   smallint,
   snakeCase,
   timestamp,
-  unique,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -87,9 +87,11 @@ export const workAuthor = snakeCase.table(
   },
   (table) => [
     /**
-     * 唯一索引: name
+     * 条件唯一索引：仅约束未软删除作者姓名唯一。
      */
-    unique('work_author_name_key').on(table.name),
+    uniqueIndex('work_author_active_name_key')
+      .on(table.name)
+      .where(sql`${table.deletedAt} is null`),
     /**
      * 作者类型索引
      */

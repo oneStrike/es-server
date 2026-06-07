@@ -33,3 +33,19 @@ export enum CommentLevelEnum {
   /** 回复评论 */
   REPLY = 2,
 }
+
+/**
+ * 关注目标类型枚举。
+ *
+ * 该契约位于 platform 层，供内容域与互动域共享多态 follow.target_type 取值。
+ */
+export enum FollowTargetTypeContractEnum {
+  /** 用户 */
+  USER = 1,
+  /** 作者 */
+  AUTHOR = 2,
+  /** 论坛板块 */
+  FORUM_SECTION = 3,
+  /** 论坛话题（hashtag） */
+  FORUM_HASHTAG = 4,
+}

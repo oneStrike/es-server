@@ -36,11 +36,13 @@ import { ThirdPartyComicImportService } from './third-party-comic-import.service
 
 describe('ThirdPartyComicImportService workflow reservation', () => {
   function createLimitSelect(rows: unknown[]) {
+    const terminal = {
+      limit: jest.fn(async () => rows),
+      orderBy: jest.fn(async () => rows),
+    }
     return {
       from: jest.fn(() => ({
-        where: jest.fn(() => ({
-          limit: jest.fn(async () => rows),
-        })),
+        where: jest.fn(() => terminal),
       })),
     }
   }
@@ -125,11 +127,29 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
           name: 'work.name',
           type: 'work.type',
         },
+        workAuthor: {
+          deletedAt: 'workAuthor.deletedAt',
+          id: 'workAuthor.id',
+          isEnabled: 'workAuthor.isEnabled',
+          name: 'workAuthor.name',
+          type: 'workAuthor.type',
+        },
+        workCategory: {
+          contentType: 'workCategory.contentType',
+          id: 'workCategory.id',
+          isEnabled: 'workCategory.isEnabled',
+          name: 'workCategory.name',
+        },
         workChapter: {
           deletedAt: 'workChapter.deletedAt',
           id: 'workChapter.id',
           title: 'workChapter.title',
           workId: 'workChapter.workId',
+        },
+        workTag: {
+          id: 'workTag.id',
+          isEnabled: 'workTag.isEnabled',
+          name: 'workTag.name',
         },
       },
     }
@@ -276,6 +296,56 @@ describe('ThirdPartyComicImportService workflow reservation', () => {
     })
     expect(workService.createWorkReturningId).not.toHaveBeenCalled()
     expect(workChapterService.createChapterReturningId).not.toHaveBeenCalled()
+  })
+
+  it('previewImport returns backend-owned local relation candidates', async () => {
+    const { provider, service } = createService([
+      [{ id: 1, name: 'DUBU' }],
+      [{ id: 2, name: '动作' }],
+      [{ id: 3, name: '动作' }],
+    ])
+    ;(provider.getDetail as jest.Mock).mockResolvedValueOnce({
+      alias: 'Solo Leveling',
+      authors: ['DUBU'],
+      brief: '作品简介',
+      cover: 'https://example.com/cover.jpg',
+      groups: [],
+      id: 'woduzishenji',
+      name: '我独自升级',
+      pathWord: 'woduzishenji',
+      region: 'KR',
+      status: '完结',
+      taxonomies: ['动作'],
+      uuid: 'uuid-1',
+    })
+
+    await expect(
+      service.previewImport({
+        comicId: 'woduzishenji',
+        platform: 'copy',
+      } as never),
+    ).resolves.toMatchObject({
+      relationCandidates: {
+        authors: [
+          {
+            providerName: 'DUBU',
+            localCandidates: [{ id: 1, name: 'DUBU' }],
+          },
+        ],
+        categories: [
+          {
+            providerName: '动作',
+            localCandidates: [{ id: 2, name: '动作' }],
+          },
+        ],
+        tags: [
+          {
+            providerName: '动作',
+            localCandidates: [{ id: 3, name: '动作' }],
+          },
+        ],
+      },
+    })
   })
 
   it('confirmImport hydrates selected chapter image counts from provider chapters', async () => {

@@ -100,7 +100,7 @@ function createSubject() {
       },
       workAuthor: {
         findMany: jest.fn(async ({ where }: any) =>
-          where.id.in.map((id: number) => ({ id })),
+          where.id.in.map((id: number) => ({ id, type: [1, 2] })),
         ),
       },
       workCategory: {
@@ -252,6 +252,16 @@ describe('WorkService relation integrity', () => {
     expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
   })
 
+  it('rejects creating a comic work with a non-manga author', async () => {
+    const { db, drizzle, service } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce(null)
+    db.query.workAuthor.findMany.mockResolvedValueOnce([{ id: 1, type: [2] }])
+
+    await expectOperationNotAllowed(service.createWorkReturningId(createWorkDto()))
+
+    expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
+  })
+
   it('writes tag relation sortOrder from create tagIds order', async () => {
     const { db, insertBuilders, service } = createSubject()
     db.query.work.findFirst.mockResolvedValueOnce(null)
@@ -338,6 +348,62 @@ describe('WorkService relation integrity', () => {
     )
 
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workTagRelation)
+  })
+
+  it('validates existing authors when updating a work type without authorIds', async () => {
+    const { db, service, tx } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce({
+      id: 20,
+      name: '测试作品',
+      type: 1,
+      forumSectionId: null,
+      authorRelations: [{ authorId: 1 }],
+    })
+    db.query.work.findFirst.mockResolvedValueOnce(null)
+    db.query.workAuthor.findMany.mockResolvedValueOnce([{ id: 1, type: [1] }])
+
+    await expectOperationNotAllowed(
+      service.updateWork({ id: 20, type: 2 } as any),
+    )
+
+    expect(tx.update).not.toHaveBeenCalledWith(schema.work)
+  })
+
+  it('validates existing authors when updating a work type with non-author relations only', async () => {
+    const { db, service, tx } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce({
+      id: 20,
+      name: '测试作品',
+      type: 1,
+      forumSectionId: null,
+      authorRelations: [{ authorId: 1 }],
+    })
+    db.query.work.findFirst.mockResolvedValueOnce(null)
+    db.query.workAuthor.findMany.mockResolvedValueOnce([{ id: 1, type: [1] }])
+
+    await expectOperationNotAllowed(
+      service.updateWork({ id: 20, type: 2, categoryIds: [2] } as any),
+    )
+
+    expect(tx.update).not.toHaveBeenCalledWith(schema.work)
+  })
+
+  it('checks duplicate names against the resulting work type on update', async () => {
+    const { db, service, tx } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce({
+      id: 20,
+      name: '同名作品',
+      type: 1,
+      forumSectionId: null,
+      authorRelations: [{ authorId: 1 }],
+    })
+    db.query.work.findFirst.mockResolvedValueOnce({ id: 21 })
+
+    await expect(service.updateWork({ id: 20, type: 2 } as any)).rejects.toMatchObject({
+      code: BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+    })
+
+    expect(tx.update).not.toHaveBeenCalledWith(schema.work)
   })
 
   it('writes tag relation sortOrder from update tagIds order', async () => {
