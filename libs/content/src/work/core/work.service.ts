@@ -10,6 +10,7 @@ import type {
 } from './work.type'
 
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import { ForumSectionService } from '@libs/forum/section/forum-section.service'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -55,6 +56,7 @@ export class WorkService {
     private readonly browseLogService: BrowseLogService,
     private readonly readingStateService: ReadingStateService,
     private readonly contentPermissionService: ContentPermissionService,
+    private readonly forumSectionService: ForumSectionService,
   ) {}
 
   // 统一复用当前模块的 Drizzle 数据库实例。
@@ -75,11 +77,6 @@ export class WorkService {
   // app_user 表访问入口。
   get appUser() {
     return this.drizzle.schema.appUser
-  }
-
-  // forum_section 表访问入口。
-  get forumSection() {
-    return this.drizzle.schema.forumSection
   }
 
   // work_author 表访问入口。
@@ -242,6 +239,49 @@ export class WorkService {
     )
   }
 
+  private async findEnabledAuthors(authorIds?: number[]) {
+    if (authorIds === undefined) {
+      return [] as Array<{ id: number, type: null | number[] }>
+    }
+
+    return this.db.query.workAuthor.findMany({
+      where: {
+        id: { in: authorIds },
+        isEnabled: true,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true, type: true },
+    })
+  }
+
+  private async findEnabledCategories(categoryIds?: number[]) {
+    if (categoryIds === undefined) {
+      return [] as Array<{ id: number }>
+    }
+
+    return this.db.query.workCategory.findMany({
+      where: {
+        id: { in: categoryIds },
+        isEnabled: true,
+      },
+      columns: { id: true },
+    })
+  }
+
+  private async findEnabledTags(tagIds?: number[]) {
+    if (tagIds === undefined) {
+      return [] as Array<{ id: number }>
+    }
+
+    return this.db.query.workTag.findMany({
+      where: {
+        id: { in: tagIds },
+        isEnabled: true,
+      },
+      columns: { id: true },
+    })
+  }
+
   // 验证作品关联的作者、分类、标签是否存在且已启用，业务规则：作品必须关联有效的作者、分类和标签，且这些关联项必须处于启用状态。
   private async validateWorkRelations(
     authorIds?: number[],
@@ -255,34 +295,9 @@ export class WorkService {
 
     const [existingAuthors, existingCategories, existingTags] =
       await Promise.all([
-        authorIds !== undefined
-          ? this.db.query.workAuthor.findMany({
-              where: {
-                id: { in: authorIds },
-                isEnabled: true,
-                deletedAt: { isNull: true },
-              },
-              columns: { id: true, type: true },
-            })
-          : [],
-        categoryIds !== undefined
-          ? this.db.query.workCategory.findMany({
-              where: {
-                id: { in: categoryIds },
-                isEnabled: true,
-              },
-              columns: { id: true },
-            })
-          : [],
-        tagIds !== undefined
-          ? this.db.query.workTag.findMany({
-              where: {
-                id: { in: tagIds },
-                isEnabled: true,
-              },
-              columns: { id: true },
-            })
-          : [],
+        this.findEnabledAuthors(authorIds),
+        this.findEnabledCategories(categoryIds),
+        this.findEnabledTags(tagIds),
       ])
 
     if (authorIds !== undefined && existingAuthors.length !== authorIds.length) {
@@ -362,23 +377,20 @@ export class WorkService {
 
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const [createdSection] = await tx
-          .insert(this.forumSection)
-          .values({
+        const forumSectionId =
+          await this.forumSectionService.createManagedSectionForWork(tx, {
             name: workData.name,
-            description: workData.description.slice(0, 500),
+            description: workData.description,
             icon: workData.cover,
             cover: workData.cover,
-            userLevelRuleId: null,
             isEnabled: workData.isPublished ?? true,
           })
-          .returning({ id: this.forumSection.id })
 
         const [createdWork] = await tx
           .insert(this.work)
           .values({
             ...normalizedWorkData,
-            forumSectionId: createdSection.id,
+            forumSectionId,
           })
           .returning({ id: this.work.id })
 
@@ -523,10 +535,13 @@ export class WorkService {
           if (shouldSyncSectionEnabled) {
             sectionUpdateData.isEnabled = updateData.isPublished
           }
-          await tx
-            .update(this.forumSection)
-            .set(sectionUpdateData)
-            .where(eq(this.forumSection.id, existingWork.forumSectionId))
+          await this.forumSectionService.syncManagedSectionForWork(tx, {
+            workId: id,
+            sectionId: existingWork.forumSectionId,
+            name: sectionUpdateData.name as string | undefined,
+            description: sectionUpdateData.description as string | undefined,
+            isEnabled: sectionUpdateData.isEnabled as boolean | undefined,
+          })
         }
 
         // 更新作者关联（先删除后重建）
@@ -632,10 +647,11 @@ export class WorkService {
         this.drizzle.assertAffectedRows(result, '作品不存在')
 
         if (work.forumSectionId) {
-          await tx
-            .update(this.forumSection)
-            .set({ isEnabled: body.isPublished })
-            .where(eq(this.forumSection.id, work.forumSectionId))
+          await this.forumSectionService.syncManagedSectionForWork(tx, {
+            workId: body.id,
+            sectionId: work.forumSectionId,
+            isEnabled: body.isPublished,
+          })
         }
 
         return true
@@ -1290,13 +1306,11 @@ export class WorkService {
         this.drizzle.assertAffectedRows(result, '作品不存在')
 
         if (work.forumSectionId) {
-          await tx
-            .update(this.forumSection)
-            .set({
-              isEnabled: false,
-              deletedAt: now,
-            })
-            .where(eq(this.forumSection.id, work.forumSectionId))
+          await this.forumSectionService.releaseManagedSectionForWork(tx, {
+            workId: id,
+            sectionId: work.forumSectionId,
+            deletedAt: now,
+          })
         }
 
         const authorIds = work.authorRelations.map((rel) => rel.authorId)

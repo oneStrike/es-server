@@ -240,9 +240,15 @@ export class SwapForumSectionSortDto extends PickType(DragReorderDto, [
   'targetId',
 ] as const) {}
 
-export class ForumSectionFollowCountRepairResultDto extends IntersectionType(
+export class ForumSectionCountRepairResultDto extends IntersectionType(
   IdDto,
-  PickType(BaseForumSectionDto, ['followersCount'] as const),
+  PickType(BaseForumSectionDto, [
+    'topicCount',
+    'commentCount',
+    'lastTopicId',
+    'lastPostAt',
+    'followersCount',
+  ] as const),
 ) {}
 
 /**

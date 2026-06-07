@@ -10,7 +10,7 @@ import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import {
@@ -30,6 +30,8 @@ import {
 } from './dto/forum-section.dto'
 import { FORUM_SECTION_MUTATION_LOCK_NAMESPACE } from './forum-section.constant'
 
+const DEFAULT_REBUILD_ALL_SECTION_LIMIT = 5000
+
 /**
  * 论坛板块服务。
  * 负责板块的 CRUD、权限校验、关注状态聚合与计数重建。
@@ -37,6 +39,8 @@ import { FORUM_SECTION_MUTATION_LOCK_NAMESPACE } from './forum-section.constant'
  */
 @Injectable()
 export class ForumSectionService {
+  private readonly logger = new Logger(ForumSectionService.name)
+
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly forumPermissionService: ForumPermissionService,
@@ -71,6 +75,10 @@ export class ForumSectionService {
 
   get forumModeratorSection() {
     return this.drizzle.schema.forumModeratorSection
+  }
+
+  get work() {
+    return this.drizzle.schema.work
   }
 
   private async assertForumLevelRuleInTx(
@@ -113,11 +121,137 @@ export class ForumSectionService {
     }
   }
 
-  // 串行化单个板块的删改与发帖写操作，避免删除与新主题写入交错。
+  // 串行化板块删改、发帖和移动写路径，按 ID 升序加锁避免死锁。
+  async lockSectionsForMutation(
+    client: Db,
+    sectionIds: Array<number | null | undefined>,
+  ) {
+    const uniqueSectionIds = [
+      ...new Set(sectionIds.filter(Boolean) as number[]),
+    ].sort((left, right) => left - right)
+
+    for (const sectionId of uniqueSectionIds) {
+      await client.execute(
+        sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_MUTATION_LOCK_NAMESPACE}, ${sectionId})`,
+      )
+    }
+  }
+
   private async lockSectionForMutation(client: Db, sectionId: number) {
-    await client.execute(
-      sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_MUTATION_LOCK_NAMESPACE}, ${sectionId})`,
-    )
+    await this.lockSectionsForMutation(client, [sectionId])
+  }
+
+  async createManagedSectionForWork(
+    tx: Db,
+    input: {
+      cover?: string | null
+      description?: string | null
+      icon?: string | null
+      isEnabled?: boolean | null
+      name: string
+    },
+  ) {
+    const [createdSection] = await tx
+      .insert(this.forumSection)
+      .values({
+        name: input.name,
+        description: input.description?.slice(0, 500) ?? null,
+        icon: input.icon ?? '',
+        cover: input.cover ?? '',
+        userLevelRuleId: null,
+        isEnabled: input.isEnabled ?? true,
+      })
+      .returning({ id: this.forumSection.id })
+
+    return createdSection.id
+  }
+
+  async syncManagedSectionForWork(
+    tx: Db,
+    input: {
+      description?: string | null
+      isEnabled?: boolean | null
+      name?: string | null
+      sectionId: number
+      workId: number
+    },
+  ) {
+    await this.lockSectionForMutation(tx, input.sectionId)
+    await this.assertSectionManagedByWorkInTx(tx, input.workId, input.sectionId)
+
+    const updatePayload: Record<string, unknown> = {}
+    if (input.name !== undefined && input.name !== null) {
+      updatePayload.name = input.name
+    }
+    if (input.description !== undefined) {
+      updatePayload.description = input.description?.slice(0, 500)
+    }
+    if (input.isEnabled !== undefined && input.isEnabled !== null) {
+      updatePayload.isEnabled = input.isEnabled
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      return true
+    }
+
+    const result = await tx
+      .update(this.forumSection)
+      .set(updatePayload)
+      .where(
+        and(
+          eq(this.forumSection.id, input.sectionId),
+          isNull(this.forumSection.deletedAt),
+        ),
+      )
+    this.drizzle.assertAffectedRows(result, '托管板块不存在')
+    return true
+  }
+
+  async releaseManagedSectionForWork(
+    tx: Db,
+    input: {
+      deletedAt?: Date
+      sectionId: number
+      workId: number
+    },
+  ) {
+    await this.lockSectionForMutation(tx, input.sectionId)
+    await this.assertSectionManagedByWorkInTx(tx, input.workId, input.sectionId)
+
+    const result = await tx
+      .update(this.forumSection)
+      .set({
+        isEnabled: false,
+        deletedAt: input.deletedAt ?? new Date(),
+      })
+      .where(
+        and(
+          eq(this.forumSection.id, input.sectionId),
+          isNull(this.forumSection.deletedAt),
+        ),
+      )
+    this.drizzle.assertAffectedRows(result, '托管板块不存在')
+    return true
+  }
+
+  private async assertSectionManagedByWorkInTx(
+    tx: Db,
+    workId: number,
+    sectionId: number,
+  ) {
+    const work = await tx.query.work.findFirst({
+      where: {
+        id: workId,
+        forumSectionId: sectionId,
+      },
+      columns: { id: true },
+    })
+    if (!work) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '作品未绑定该托管板块',
+      )
+    }
   }
 
   /**
@@ -634,22 +768,48 @@ export class ForumSectionService {
    * 重建板块关注人数。
    * 用于管理端修复入口与离线运维场景。
    */
-  async rebuildSectionFollowersCount(id: number) {
-    const result = await this.forumCounterService.rebuildSectionFollowersCount(
-      undefined,
-      id,
-    )
+  async rebuildSectionCounts(id: number) {
+    const result = await this.drizzle.withTransaction(async (tx) => {
+      const section = await tx.query.forumSection.findFirst({
+        where: { id, deletedAt: { isNull: true } },
+        columns: { id: true },
+      })
+      if (!section) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '板块不存在',
+        )
+      }
+
+      const visibleState =
+        await this.forumCounterService.syncSectionVisibleState(tx, id)
+      const followers =
+        await this.forumCounterService.rebuildSectionFollowersCount(tx, id)
+
+      return {
+        ...visibleState,
+        followersCount: followers.followersCount,
+      }
+    })
+
     return {
       id: result.sectionId,
+      topicCount: result.topicCount,
+      commentCount: result.commentCount,
+      lastTopicId: result.lastTopicId,
+      lastPostAt: result.lastPostAt,
       followersCount: result.followersCount,
     }
   }
 
   /**
-   * 全量重建板块关注人数。
+   * 全量重建板块计数。
    * 当前用于管理端运维入口，按批次串行推进以避免单次压力过大。
    */
-  async rebuildAllSectionFollowersCount(batchSize = 200) {
+  async rebuildAllSectionCounts(
+    batchSize = 200,
+    maxSynchronousSections = DEFAULT_REBUILD_ALL_SECTION_LIMIT,
+  ) {
     const sectionIds = await this.db
       .select({ id: this.forumSection.id })
       .from(this.forumSection)
@@ -657,14 +817,34 @@ export class ForumSectionService {
       .orderBy(this.forumSection.id)
       .then((rows) => rows.map((row) => row.id))
 
+    if (sectionIds.length > maxSynchronousSections) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `板块数量超过同步重建上限 ${maxSynchronousSections}，请改用后台任务执行全量重建`,
+      )
+    }
+
+    let successCount = 0
+    let failureCount = 0
     await this.processIdsInBatches(sectionIds, batchSize, async (ids) => {
-      await Promise.all(
-        ids.map(async (sectionId) =>
-          this.forumCounterService.rebuildSectionFollowersCount(
-            undefined,
-            sectionId,
-          ),
-        ),
+      this.logger.log(
+        `rebuild-counts-all batch start: batchSize=${batchSize}, sectionIdRange=${ids[0]}-${ids.at(-1)}, successCount=${successCount}, failureCount=${failureCount}`,
+      )
+      for (const sectionId of ids) {
+        try {
+          await this.rebuildSectionCounts(sectionId)
+          successCount += 1
+        } catch (error) {
+          failureCount += 1
+          this.logger.error(
+            `rebuild-counts-all failed: sectionId=${sectionId}, successCount=${successCount}, failureCount=${failureCount}`,
+            error instanceof Error ? error.stack : undefined,
+          )
+          throw error
+        }
+      }
+      this.logger.log(
+        `rebuild-counts-all batch complete: batchSize=${batchSize}, sectionIdRange=${ids[0]}-${ids.at(-1)}, successCount=${successCount}, failureCount=${failureCount}`,
       )
     })
 
@@ -681,6 +861,8 @@ export class ForumSectionService {
     const { id, name, groupId, ...updateData } = updateSectionDto
     await this.drizzle.withTransaction(
       async (tx) => {
+        await this.lockSectionForMutation(tx, id)
+
         const existingSection = await tx.query.forumSection.findFirst({
           where: { id, deletedAt: { isNull: true } },
         })
@@ -791,6 +973,33 @@ export class ForumSectionService {
         )
       }
 
+      const activeWork = await tx.query.work.findFirst({
+        where: {
+          forumSectionId: id,
+          deletedAt: { isNull: true },
+        },
+        columns: { id: true },
+      })
+
+      if (activeWork) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '该板块仍被作品绑定，无法删除',
+        )
+      }
+
+      const moderatorSection = await tx.query.forumModeratorSection.findFirst({
+        where: { sectionId: id },
+        columns: { moderatorId: true, sectionId: true },
+      })
+
+      if (moderatorSection) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '该板块仍被版主作用域引用，无法删除',
+        )
+      }
+
       const result = await tx
         .update(this.forumSection)
         .set({ deletedAt: new Date() })
@@ -810,8 +1019,10 @@ export class ForumSectionService {
    * 写后校验受影响行数，确保板块存在。
    */
   async updateEnabledStatus(dto: UpdateForumSectionEnabledDto) {
-    const result = await this.drizzle.withErrorHandling(() =>
-      this.db
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.lockSectionForMutation(tx, dto.id)
+
+      const result = await tx
         .update(this.forumSection)
         .set({ isEnabled: dto.isEnabled })
         .where(
@@ -819,9 +1030,9 @@ export class ForumSectionService {
             eq(this.forumSection.id, dto.id),
             isNull(this.forumSection.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+        )
+      this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+    })
     return true
   }
 

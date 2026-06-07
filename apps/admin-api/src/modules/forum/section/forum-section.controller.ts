@@ -1,5 +1,13 @@
 import { ForumSectionTreeNodeDto } from '@libs/forum/section-group/dto/forum-section-group.dto'
-import { BaseForumSectionDto, CreateForumSectionDto, ForumSectionFollowCountRepairResultDto, QueryForumSectionDto, SwapForumSectionSortDto, UpdateForumSectionDto, UpdateForumSectionEnabledDto } from '@libs/forum/section/dto/forum-section.dto';
+import {
+  BaseForumSectionDto,
+  CreateForumSectionDto,
+  ForumSectionCountRepairResultDto,
+  QueryForumSectionDto,
+  SwapForumSectionSortDto,
+  UpdateForumSectionDto,
+  UpdateForumSectionEnabledDto,
+} from '@libs/forum/section/dto/forum-section.dto'
 import { ForumSectionService } from '@libs/forum/section/forum-section.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
 import { IdDto } from '@libs/platform/dto';
@@ -89,28 +97,28 @@ export class ForumSectionController {
     return this.forumSectionService.updateEnabledStatus(dto)
   }
 
-  @Post('rebuild-follow-count')
+  @Post('rebuild-counts')
   @ApiAuditDoc({
-    summary: '重建板块关注计数',
-    model: ForumSectionFollowCountRepairResultDto,
+    summary: '重建板块计数',
+    model: ForumSectionCountRepairResultDto,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async rebuildFollowCount(@Body() dto: IdDto) {
-    return this.forumSectionService.rebuildSectionFollowersCount(dto.id)
+  async rebuildCounts(@Body() dto: IdDto) {
+    return this.forumSectionService.rebuildSectionCounts(dto.id)
   }
 
-  @Post('rebuild-follow-count-all')
+  @Post('rebuild-counts-all')
   @ApiAuditDoc({
-    summary: '全量重建板块关注计数',
+    summary: '全量重建板块计数',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async rebuildFollowCountAll() {
-    return this.forumSectionService.rebuildAllSectionFollowersCount()
+  async rebuildCountsAll() {
+    return this.forumSectionService.rebuildAllSectionCounts()
   }
 
   @Post('swap-sort-order')

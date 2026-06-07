@@ -974,6 +974,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     if (sourceSectionId === input.sectionId) {
       return true
     }
+    await this.lockSectionsForMutation(tx, [sourceSectionId, input.sectionId])
     await this.getSectionTopicReviewPolicy(input.sectionId, {
       client: tx,
       requireEnabled: true,

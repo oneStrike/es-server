@@ -138,6 +138,11 @@ function createSubject() {
   const workAuthorService = {
     updateAuthorWorkCounts: jest.fn(),
   }
+  const forumSectionService = {
+    createManagedSectionForWork: jest.fn(async () => 10),
+    releaseManagedSectionForWork: jest.fn(async () => true),
+    syncManagedSectionForWork: jest.fn(async () => true),
+  }
 
   const service = new WorkService(
     drizzle as any,
@@ -148,6 +153,7 @@ function createSubject() {
     {} as any,
     {} as any,
     {} as any,
+    forumSectionService as any,
   )
 
   return {
@@ -158,6 +164,7 @@ function createSubject() {
     insertBuilders,
     updateBuilders,
     workAuthorService,
+    forumSectionService,
   }
 }
 
@@ -263,13 +270,24 @@ describe('WorkService relation integrity', () => {
   })
 
   it('writes tag relation sortOrder from create tagIds order', async () => {
-    const { db, insertBuilders, service } = createSubject()
+    const { db, forumSectionService, insertBuilders, service, tx } =
+      createSubject()
     db.query.work.findFirst.mockResolvedValueOnce(null)
 
     await expect(
       service.createWorkReturningId(createWorkDto({ tagIds: [9, 3, 7] })),
     ).resolves.toBe(20)
 
+    expect(forumSectionService.createManagedSectionForWork).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        cover: 'https://example.com/cover.jpg',
+        description: '测试简介',
+        icon: 'https://example.com/cover.jpg',
+        isEnabled: true,
+        name: '测试作品',
+      }),
+    )
     const tagInsert = insertBuilders.find(
       (item) => item.table === schema.workTagRelation,
     )
@@ -281,7 +299,7 @@ describe('WorkService relation integrity', () => {
   })
 
   it('preserves relations when update omits relation fields', async () => {
-    const { db, service, tx } = createSubject()
+    const { db, forumSectionService, service, tx } = createSubject()
     db.query.work.findFirst.mockResolvedValueOnce({
       id: 20,
       name: '测试作品',
@@ -296,6 +314,39 @@ describe('WorkService relation integrity', () => {
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workAuthorRelation)
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workCategoryRelation)
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workTagRelation)
+    expect(forumSectionService.syncManagedSectionForWork).not.toHaveBeenCalled()
+  })
+
+  it('syncs managed section through forum owner when work metadata changes', async () => {
+    const { db, forumSectionService, service, tx } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce({
+      id: 20,
+      name: '旧作品',
+      type: 1,
+      forumSectionId: 10,
+      authorRelations: [{ authorId: 1 }],
+    })
+    db.query.work.findFirst.mockResolvedValueOnce(null)
+
+    await expect(
+      service.updateWork({
+        id: 20,
+        name: '新作品',
+        description: '新简介',
+        isPublished: false,
+      } as any),
+    ).resolves.toBe(true)
+
+    expect(forumSectionService.syncManagedSectionForWork).toHaveBeenCalledWith(
+      tx,
+      {
+        workId: 20,
+        sectionId: 10,
+        name: '新作品',
+        description: '新简介',
+        isEnabled: false,
+      },
+    )
   })
 
   it('rejects explicitly clearing category relations before deleting them', async () => {
@@ -456,10 +507,11 @@ describe('WorkService relation integrity', () => {
   })
 
   it('soft-deletes active third-party bindings when deleting a work', async () => {
-    const { db, service, tx, updateBuilders } = createSubject()
+    const { db, forumSectionService, service, tx, updateBuilders } =
+      createSubject()
     db.query.work.findFirst.mockResolvedValueOnce({
       id: 20,
-      forumSectionId: null,
+      forumSectionId: 10,
       authorRelations: [{ authorId: 1 }],
     })
     tx.select.mockReturnValueOnce({
@@ -482,5 +534,13 @@ describe('WorkService relation integrity', () => {
     expect(sourceBindingUpdate?.builder.set).toHaveBeenCalledWith({
       deletedAt: expect.any(Date),
     })
+    expect(forumSectionService.releaseManagedSectionForWork).toHaveBeenCalledWith(
+      tx,
+      {
+        workId: 20,
+        sectionId: 10,
+        deletedAt: expect.any(Date),
+      },
+    )
   })
 })

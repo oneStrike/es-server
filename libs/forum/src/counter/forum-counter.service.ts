@@ -664,6 +664,14 @@ export class ForumCounterService {
           ),
       '板块不存在',
     )
+
+    return {
+      sectionId,
+      topicCount: summary?.topicCount ?? 0,
+      commentCount: summary?.commentCount ?? 0,
+      lastTopicId: latestTopic?.id ?? null,
+      lastPostAt: latestTopic?.lastPostAt ?? null,
+    }
   }
 
   /**

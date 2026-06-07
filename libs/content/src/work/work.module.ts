@@ -1,3 +1,4 @@
+import { ForumSectionModule } from '@libs/forum/section/forum-section.module'
 import { UserPermissionModule } from '@libs/growth/permission/permission.module'
 import { UserPointModule } from '@libs/growth/point/point.module'
 import { InteractionModule } from '@libs/interaction/interaction.module'
@@ -45,6 +46,7 @@ import { WorkService } from './core/work.service'
 @Module({
   imports: [
     WorkCounterModule,
+    ForumSectionModule,
     WorkAuthorModule,
     InteractionModule,
     ReportModule,

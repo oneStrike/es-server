@@ -62,6 +62,7 @@ interface UpdateBuilder<TResult> {
 }
 
 interface CommandTx {
+  execute: ReturnType<typeof jest.fn>
   query: {
     forumSection: { findFirst: AsyncValueMock }
     forumTopic: { findFirst: AsyncValueMock }
@@ -253,6 +254,7 @@ function createCommandService(options?: {
     deleteReferencesInTx: jest.fn(async () => undefined),
     replaceReferencesInTx: jest.fn(async () => undefined),
     syncCommentVisibilityByTopicInTx: jest.fn(async () => undefined),
+    syncSectionIdsByTopicInTx: jest.fn(async () => undefined),
   }
   const appUserCountService = {
     updateCommentCount: jest.fn(async () => undefined),
@@ -392,6 +394,7 @@ function createCommandTx(options?: {
     cascadeBuilder,
     commentSummaryBuilder,
     commentUpdateBuilder,
+    execute: jest.fn(async () => undefined),
     query: {
       forumSection: { findFirst: jest.fn() },
       forumTopic: { findFirst: jest.fn() },
@@ -733,5 +736,53 @@ describe('ForumTopicCommandService restore transaction side effects', () => {
       topicId: topic.id,
       topicTitle: topic.title,
     })
+  })
+})
+
+describe('ForumTopicCommandService move transaction locks', () => {
+  it('locks source and target sections in stable order before moving', async () => {
+    const tx = createCommandTx({ topicUpdateResult: [{ id: 1 }] })
+    tx.query.forumSection.findFirst.mockResolvedValueOnce({
+      deletedAt: null,
+      group: null,
+      groupId: null,
+      isEnabled: true,
+      topicReviewPolicy: 1,
+    })
+    const {
+      drizzle,
+      forumCounterService,
+      forumHashtagReferenceService,
+      service,
+    } = createCommandService()
+
+    await expect(
+      service.moveTopicInTx(tx as unknown as Db, { id: 1, sectionId: 20 }, 10),
+    ).resolves.toBe(true)
+
+    expect(tx.execute).toHaveBeenCalledTimes(2)
+    expect((tx.execute as jest.Mock).mock.calls[0]?.[0]).toMatchObject({
+      values: expect.arrayContaining([10]),
+    })
+    expect((tx.execute as jest.Mock).mock.calls[1]?.[0]).toMatchObject({
+      values: expect.arrayContaining([20]),
+    })
+    expect(tx.query.forumSection.findFirst).toHaveBeenCalledTimes(1)
+    expect(tx.update).toHaveBeenCalledTimes(1)
+    expect(drizzle.assertAffectedRows).toHaveBeenCalledWith(
+      [{ id: 1 }],
+      '主题不存在',
+    )
+    expect(
+      forumHashtagReferenceService.syncSectionIdsByTopicInTx,
+    ).toHaveBeenCalledWith(tx, 1, 20)
+    expect(forumCounterService.syncSectionVisibleState).toHaveBeenCalledWith(
+      tx,
+      10,
+    )
+    expect(forumCounterService.syncSectionVisibleState).toHaveBeenCalledWith(
+      tx,
+      20,
+    )
   })
 })

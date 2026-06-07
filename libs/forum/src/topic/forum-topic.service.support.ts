@@ -102,6 +102,19 @@ export abstract class ForumTopicServiceSupport {
     )
   }
 
+  protected async lockSectionsForMutation(
+    client: Db,
+    sectionIds: Array<number | null | undefined>,
+  ) {
+    const uniqueSectionIds = [
+      ...new Set(sectionIds.filter(Boolean) as number[]),
+    ].sort((left, right) => left - right)
+
+    for (const sectionId of uniqueSectionIds) {
+      await this.lockSectionForMutation(client, sectionId)
+    }
+  }
+
   // ─── 通用查询 ──────────────────────────────────────────────
 
   // 获取未删除的主题快照；供编辑、删除等需要复用主题当前状态的写路径共享使用。
