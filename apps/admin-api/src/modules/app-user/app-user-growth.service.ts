@@ -18,7 +18,7 @@ import {
 } from '@libs/user/dto/admin-app-user.dto'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
 import { AppUserServiceSupport } from './app-user.service.support'
 
 /**
@@ -212,7 +212,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
   /**
    * 获取 APP 用户徽章分页。
    *
-   * 先按徽章维度过滤候选集合，再回到分配表分页，保持管理端筛选语义稳定。
+   * 直接在分配表分页查询中关联徽章过滤，避免先拉取全部候选徽章 ID。
    */
   async getAppUserBadges(query: QueryAdminAppUserBadgeDto) {
     await this.userCoreService.ensureUserExists(query.userId)
@@ -246,26 +246,9 @@ export class AppUserGrowthService extends AppUserServiceSupport {
       )
     }
 
-    const badgeWhere =
-      badgeConditions.length > 0 ? and(...badgeConditions) : undefined
-    const badges = await this.db
-      .select({ id: this.userBadgeTable.id })
-      .from(this.userBadgeTable)
-      .where(badgeWhere)
-    const badgeIds = badges.map((item) => item.id)
-    if (badgeIds.length === 0) {
-      return {
-        list: [],
-        total: 0,
-        pageIndex: pageQuery.pageIndex,
-        pageSize: pageQuery.pageSize,
-        totalPages: 0,
-      }
-    }
-
     const where = and(
       eq(this.userBadgeAssignmentTable.userId, userId),
-      inArray(this.userBadgeAssignmentTable.badgeId, badgeIds),
+      ...badgeConditions,
     )
     const pageParams = this.drizzle.buildPage(pageQuery)
     const orderQuery = this.drizzle.buildOrderBy(
@@ -275,31 +258,44 @@ export class AppUserGrowthService extends AppUserServiceSupport {
       ],
       { table: this.userBadgeAssignmentTable },
     )
-    const [list, total] = await Promise.all([
+    const [list, totalRows] = await Promise.all([
       this.db
-        .select()
+        .select({
+          assignment: this.userBadgeAssignmentTable,
+          badge: this.userBadgeTable,
+        })
         .from(this.userBadgeAssignmentTable)
+        .innerJoin(
+          this.userBadgeTable,
+          eq(
+            this.userBadgeAssignmentTable.badgeId,
+            this.userBadgeTable.id,
+          ),
+        )
         .where(where)
         .orderBy(...orderQuery.orderBySql)
         .limit(pageParams.limit)
         .offset(pageParams.offset),
-      this.db.$count(this.userBadgeAssignmentTable, where),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userBadgeAssignmentTable)
+        .innerJoin(
+          this.userBadgeTable,
+          eq(
+            this.userBadgeAssignmentTable.badgeId,
+            this.userBadgeTable.id,
+          ),
+        )
+        .where(where),
     ])
+    const total = Number(totalRows[0]?.count ?? 0)
     const page = toPageResult(list, total, pageParams)
-    const pageBadgeIds = page.list.map((item) => item.badgeId)
-    const pageBadges = pageBadgeIds.length
-      ? await this.db
-          .select()
-          .from(this.userBadgeTable)
-          .where(inArray(this.userBadgeTable.id, pageBadgeIds))
-      : []
-    const badgeMap = new Map(pageBadges.map((item) => [item.id, item]))
 
     return {
       ...page,
       list: page.list.map((item) => ({
-        createdAt: item.createdAt,
-        badge: badgeMap.get(item.badgeId),
+        createdAt: item.assignment.createdAt,
+        badge: item.badge,
       })),
     }
   }

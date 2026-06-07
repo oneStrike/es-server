@@ -47,6 +47,14 @@ export const userBadgeAssignment = snakeCase.table(
       table.createdAt.desc(),
     ),
     /**
+     * 用户徽章分页排序索引
+     */
+    index('user_badge_assignment_user_created_badge_idx').on(
+      table.userId,
+      table.createdAt.desc(),
+      table.badgeId,
+    ),
+    /**
      * 用户与徽章复合主键
      */
     primaryKey({ columns: [table.userId, table.badgeId] }),
