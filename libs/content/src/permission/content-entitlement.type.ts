@@ -38,6 +38,15 @@ export interface GrantPurchaseEntitlementInput extends ContentEntitlementTarget 
 }
 
 /**
+ * 按来源事实撤销内容权益。
+ * 适用于广告、券、后台补偿等非购买来源的精确冲正。
+ */
+export interface RevokeContentEntitlementBySourceInput {
+  grantSource: ContentEntitlementGrantSourceEnum
+  sourceId: number
+}
+
+/**
  * 内容权益事务上下文。
  * 购买、券和广告链路需要把权益写入纳入同一个业务事务。
  */

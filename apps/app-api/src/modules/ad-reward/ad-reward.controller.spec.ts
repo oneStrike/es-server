@@ -24,10 +24,14 @@ describe('App AdRewardController route smoke', () => {
     ).toBe('verification/create')
 
     await expect(
-      controller.verifyAdReward({ providerRewardId: 'reward-id' } as any, 33),
+      controller.verifyAdReward(
+        { providerRewardId: 'reward-id', targetScope: 1 } as any,
+        33,
+      ),
     ).resolves.toEqual({ id: 7, providerRewardId: 'reward-id' })
     expect(adRewardService.verifyAdReward).toHaveBeenCalledWith(33, {
       providerRewardId: 'reward-id',
+      targetScope: 1,
     })
   })
 })

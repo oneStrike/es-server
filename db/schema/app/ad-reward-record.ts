@@ -32,6 +32,8 @@ export const adRewardRecord = snakeCase.table(
     providerRewardId: varchar({ length: 160 }).notNull(),
     /** 广告位 key。 */
     placementKey: varchar({ length: 120 }).notNull(),
+    /** 目标范围快照（1=低价章节；2=新用户冷启动；3=运营白名单）。 */
+    targetScope: smallint().notNull(),
     /** 目标类型（1=漫画章节；2=小说章节）。 */
     targetType: smallint().notNull(),
     /** 目标 ID。 */
@@ -60,9 +62,49 @@ export const adRewardRecord = snakeCase.table(
     ),
     index('ad_reward_record_user_target_status_idx').on(
       table.userId,
+      table.targetScope,
       table.targetType,
       table.targetId,
       table.status,
+    ),
+    index('ad_reward_record_config_scope_status_idx').on(
+      table.adProviderConfigId,
+      table.targetScope,
+      table.status,
+    ),
+    index('ad_reward_record_user_config_status_created_at_idx').on(
+      table.userId,
+      table.adProviderConfigId,
+      table.status,
+      table.createdAt,
+    ),
+    index('ad_reward_record_status_created_at_id_idx').on(
+      table.status,
+      table.createdAt,
+      table.id,
+    ),
+    index('ad_reward_record_target_scope_status_created_at_idx').on(
+      table.targetScope,
+      table.status,
+      table.createdAt,
+    ),
+    index('ad_reward_record_target_status_idx').on(
+      table.targetType,
+      table.targetId,
+      table.status,
+    ),
+    index('ad_reward_record_user_created_at_idx').on(
+      table.userId,
+      table.createdAt,
+    ),
+    index('ad_reward_record_config_created_at_idx').on(
+      table.adProviderConfigId,
+      table.createdAt,
+    ),
+    index('ad_reward_record_created_at_idx').on(table.createdAt),
+    check(
+      'ad_reward_record_target_scope_valid_chk',
+      sql`${table.targetScope} in (1, 2, 3)`,
     ),
     check(
       'ad_reward_record_target_type_valid_chk',

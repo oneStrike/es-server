@@ -94,6 +94,7 @@ describe('App ad-reward flow e2e substitute', () => {
           platform: 1,
           provider: 1,
           providerRewardId: 'reward-id',
+          targetScope: 1,
           targetId: 2,
           targetType: 1,
         } as any,

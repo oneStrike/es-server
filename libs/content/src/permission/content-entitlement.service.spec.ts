@@ -1,19 +1,23 @@
 /// <reference types="jest" />
 
 import * as schema from '@db/schema'
+import {
+  ContentEntitlementGrantSourceEnum,
+  ContentEntitlementStatusEnum,
+  ContentEntitlementTargetTypeEnum,
+} from './content-entitlement.constant'
 import { ContentEntitlementService } from './content-entitlement.service'
-import { ContentEntitlementTargetTypeEnum } from './content-entitlement.constant'
 
 function createSelectBuilder<TResult>(result: TResult[]) {
   const builder = {
     from: jest.fn(() => builder),
     where: jest.fn(() => builder),
-    limit: jest.fn(() => Promise.resolve(result)),
+    limit: jest.fn(async () => Promise.resolve(result)),
   }
   return builder
 }
 
-describe('ContentEntitlementService', () => {
+describe('contentEntitlementService', () => {
   it('checks purchase entitlement from user_content_entitlement only', async () => {
     const drizzle = {
       schema,
@@ -39,7 +43,7 @@ describe('ContentEntitlementService', () => {
   })
 
   it('writes purchase entitlement as a permanent active grant', async () => {
-    const returning = jest.fn(() =>
+    const returning = jest.fn(async () =>
       Promise.resolve([
         {
           id: 1,
@@ -76,5 +80,37 @@ describe('ContentEntitlementService', () => {
         status: 1,
       }),
     )
+  })
+
+  it('revokes active entitlements by exact grant source and source id', async () => {
+    const returning = jest.fn(async () => Promise.resolve([{ id: 1 }, { id: 2 }]))
+    const where = jest.fn(() => ({ returning }))
+    const set = jest.fn(() => ({ where }))
+    const tx = {
+      update: jest.fn(() => ({ set })),
+    }
+    const drizzle = {
+      schema,
+      db: {},
+    }
+    const service = new (ContentEntitlementService as any)(
+      drizzle,
+    ) as ContentEntitlementService
+
+    await expect(
+      service.revokeEntitlementBySource(tx as any, {
+        grantSource: ContentEntitlementGrantSourceEnum.AD,
+        sourceId: 7,
+      }),
+    ).resolves.toBe(2)
+
+    expect(tx.update).toHaveBeenCalledWith(schema.userContentEntitlement)
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        revokedAt: expect.any(Date),
+        status: ContentEntitlementStatusEnum.REVOKED,
+      }),
+    )
+    expect(where).toHaveBeenCalledTimes(1)
   })
 })

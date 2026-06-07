@@ -67,6 +67,7 @@ export const adProviderConfig = snakeCase.table(
         table.appId,
         table.placementKey,
         table.environment,
+        table.targetScope,
       )
       .where(sql`${table.isEnabled} = true`),
     index('ad_provider_config_selection_idx').on(
@@ -76,7 +77,10 @@ export const adProviderConfig = snakeCase.table(
       table.appId,
       table.placementKey,
       table.environment,
+      table.targetScope,
       table.isEnabled,
+      table.sortOrder,
+      table.id,
     ),
     check(
       'ad_provider_config_provider_valid_chk',

@@ -36,6 +36,7 @@ abstract class BaseAdRewardProviderAdapter implements AdRewardProviderAdapter {
       input.config.clientAppKey !== clientAppKey ||
       input.config.appId !== appId ||
       input.config.placementKey !== input.payload.placementKey ||
+      input.config.targetScope !== input.payload.targetScope ||
       !nonce ||
       signType !== 'HMAC_SHA256' ||
       !signature ||
@@ -65,6 +66,7 @@ abstract class BaseAdRewardProviderAdapter implements AdRewardProviderAdapter {
         provider: this.provider,
         providerRewardId: input.payload.providerRewardId,
         targetId: input.payload.targetId,
+        targetScope: input.payload.targetScope,
         targetType: input.payload.targetType,
         timestamp,
         userId: input.userId,

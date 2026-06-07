@@ -101,7 +101,7 @@ export class DownloadService {
 
     return this.drizzle.withTransaction(async (tx) => {
       // 校验下载权限并获取内容（由各个业务方 Resolver 实现）
-      const content = await resolver.ensureDownloadable(tx, targetId)
+      const content = await resolver.ensureDownloadable(tx, targetId, userId)
 
       // 通过唯一键保证下载记录幂等，避免重复计数
       const inserted = await tx

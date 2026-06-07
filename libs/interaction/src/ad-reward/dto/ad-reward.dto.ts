@@ -1,12 +1,18 @@
 import {
   BooleanProperty,
+  DateProperty,
   EnumProperty,
   NumberProperty,
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { CouponRedemptionTargetTypeEnum } from '../../coupon/coupon.constant'
 import {
   ClientPlatformEnum,
@@ -127,8 +133,20 @@ export class BaseAdProviderConfigDto extends BaseDto {
   isEnabled?: boolean
 }
 
-export class CreateAdProviderConfigDto extends PickType(
+export class AdProviderConfigWritableFieldsDto extends OmitType(
   BaseAdProviderConfigDto,
+  ['configVersion', 'configMetadata', 'credentialVersionRef'] as const,
+) {
+  @StringProperty({
+    description: 'SSV 密钥选项引用，由服务端映射为密钥版本和安全摘要',
+    example: 'env:ES_AD_PANGLE_SSV_SECRET',
+    maxLength: 160,
+  })
+  credentialOptionRef!: string
+}
+
+export class CreateAdProviderConfigDto extends PickType(
+  AdProviderConfigWritableFieldsDto,
   [
     'provider',
     'platform',
@@ -138,10 +156,8 @@ export class CreateAdProviderConfigDto extends PickType(
     'placementKey',
     'targetScope',
     'dailyLimit',
-    'configVersion',
-    'credentialVersionRef',
+    'credentialOptionRef',
     'callbackUrl',
-    'configMetadata',
     'sortOrder',
     'isEnabled',
   ] as const,
@@ -160,11 +176,74 @@ export class QueryAdProviderConfigDto extends IntersectionType(
       'platform',
       'environment',
       'clientAppKey',
+      'appId',
       'placementKey',
+      'targetScope',
       'isEnabled',
     ] as const),
   ),
 ) {}
+
+export class AdRewardCredentialOptionDto {
+  @StringProperty({
+    description: '选项展示名',
+    example: '穿山甲正式环境 SSV 密钥',
+    validation: false,
+  })
+  label!: string
+
+  @StringProperty({
+    description: '选项值',
+    example: 'env:ES_AD_PANGLE_SSV_SECRET',
+    validation: false,
+  })
+  value!: string
+
+  @EnumProperty({
+    description: '广告 provider（1=穿山甲；2=腾讯优量汇）',
+    enum: AdProviderEnum,
+    example: AdProviderEnum.PANGLE,
+    validation: false,
+  })
+  provider!: AdProviderEnum
+
+  @EnumProperty({
+    description: '运行环境（1=沙箱；2=正式）',
+    enum: ProviderEnvironmentEnum,
+    example: ProviderEnvironmentEnum.SANDBOX,
+    validation: false,
+  })
+  environment!: ProviderEnvironmentEnum
+
+  @StringProperty({
+    description: 'SSV 密钥版本引用',
+    example: 'env:ES_AD_PANGLE_SSV_SECRET',
+    validation: false,
+  })
+  credentialVersionRef!: string
+
+  @StringProperty({
+    description: '密钥指纹',
+    example: 'sha256:abcdef12',
+    validation: false,
+  })
+  fingerprint!: string
+
+  @StringProperty({
+    description: '选项状态',
+    example: 'available',
+    validation: false,
+  })
+  status!: string
+
+  @StringProperty({
+    description: '不可选原因',
+    example: '环境变量未配置',
+    required: false,
+    validation: false,
+  })
+  disabledReason!: string | null
+}
 
 export class AdRewardVerificationDto {
   @EnumProperty({
@@ -209,6 +288,13 @@ export class AdRewardVerificationDto {
     example: 'reward-video-low-price',
   })
   placementKey!: string
+
+  @EnumProperty({
+    description: '目标范围（1=低价章节；2=新用户冷启动；3=运营白名单）',
+    enum: AdTargetScopeEnum,
+    example: AdTargetScopeEnum.LOW_PRICE_CHAPTER,
+  })
+  targetScope!: AdTargetScopeEnum
 
   @EnumProperty({
     description: '目标类型（1=漫画章节；2=小说章节；3=VIP；4=签到）',
@@ -263,4 +349,180 @@ export class AdRewardResultDto extends BaseDto {
     example: 'reward-uuid',
   })
   providerRewardId!: string
+}
+
+export class BaseAdRewardRecordDto extends BaseDto {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 1,
+  })
+  userId!: number
+
+  @NumberProperty({
+    description: '广告 provider 配置 ID',
+    example: 1,
+  })
+  adProviderConfigId!: number
+
+  @NumberProperty({
+    description: '广告 provider 配置版本快照',
+    example: 1,
+  })
+  adProviderConfigVersion!: number
+
+  @StringProperty({
+    description: 'SSV 密钥版本引用快照',
+    example: 'ad:pangle:production:ssv',
+    validation: false,
+  })
+  credentialVersionRef!: string
+
+  @StringProperty({
+    description: 'provider 奖励唯一 ID',
+    example: 'reward-uuid',
+  })
+  providerRewardId!: string
+
+  @StringProperty({
+    description: '广告位 key',
+    example: 'reward-video-low-price',
+  })
+  placementKey!: string
+
+  @EnumProperty({
+    description: '目标范围（1=低价章节；2=新用户冷启动；3=运营白名单）',
+    enum: AdTargetScopeEnum,
+    example: AdTargetScopeEnum.LOW_PRICE_CHAPTER,
+  })
+  targetScope!: AdTargetScopeEnum
+
+  @EnumProperty({
+    description: '目标类型（1=漫画章节；2=小说章节）',
+    enum: CouponRedemptionTargetTypeEnum,
+    example: CouponRedemptionTargetTypeEnum.COMIC_CHAPTER,
+  })
+  targetType!: CouponRedemptionTargetTypeEnum
+
+  @NumberProperty({
+    description: '目标 ID',
+    example: 1,
+  })
+  targetId!: number
+
+  @EnumProperty({
+    description: '广告状态（1=奖励成功；2=奖励失败；3=已撤销）',
+    enum: AdRewardStatusEnum,
+    example: AdRewardStatusEnum.SUCCESS,
+  })
+  status!: AdRewardStatusEnum
+}
+
+export class AdminAdRewardRecordPageItemDto extends BaseAdRewardRecordDto {}
+
+export class AdminAdRewardRecordDetailDto extends PickType(
+  BaseAdRewardRecordDto,
+  [
+    'id',
+    'userId',
+    'adProviderConfigVersion',
+    'placementKey',
+    'targetScope',
+    'targetType',
+    'targetId',
+    'status',
+    'createdAt',
+    'updatedAt',
+  ] as const,
+) {
+  @ObjectProperty({
+    description: '客户端上下文摘要（敏感字段已过滤）',
+    example: { deviceModel: 'phone' },
+    required: false,
+    validation: false,
+  })
+  clientContext?: Record<string, unknown> | null
+
+  @ObjectProperty({
+    description: '服务端验证摘要 payload（不含 provider 原始回调）',
+    example: { provider: 1, targetScope: 1 },
+    required: false,
+    validation: false,
+  })
+  verifyPayload?: Record<string, unknown> | null
+}
+
+export class QueryAdRewardRecordDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseAdRewardRecordDto, [
+      'userId',
+      'adProviderConfigId',
+      'providerRewardId',
+      'placementKey',
+      'targetScope',
+      'targetType',
+      'targetId',
+      'status',
+    ] as const),
+  ),
+) {
+  @EnumProperty({
+    description: '广告 provider（1=穿山甲；2=腾讯优量汇）',
+    enum: AdProviderEnum,
+    example: AdProviderEnum.PANGLE,
+    required: false,
+  })
+  provider?: AdProviderEnum
+
+  @EnumProperty({
+    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    enum: ClientPlatformEnum,
+    example: ClientPlatformEnum.ANDROID,
+    required: false,
+  })
+  platform?: ClientPlatformEnum
+
+  @EnumProperty({
+    description: '运行环境（1=沙箱；2=正式）',
+    enum: ProviderEnvironmentEnum,
+    example: ProviderEnvironmentEnum.PRODUCTION,
+    required: false,
+  })
+  environment?: ProviderEnvironmentEnum
+}
+
+export class AdRewardRevokeDto extends IdDto {
+  @StringProperty({
+    description: '撤销原因',
+    example: '广告回调对账异常',
+    required: false,
+    maxLength: 200,
+  })
+  reason?: string
+}
+
+export class QueryAdRewardReconcileDto extends QueryAdRewardRecordDto {}
+
+export class AdminAdRewardReconcileItemDto extends AdminAdRewardRecordPageItemDto {
+  @StringProperty({
+    description: '对账状态',
+    example: 'entitlement_active',
+    validation: false,
+  })
+  reconcileStatus!: string
+
+  @StringProperty({
+    description: '对账说明',
+    example: '广告奖励和内容权益均有效',
+    validation: false,
+  })
+  reconcileMessage!: string
+
+  @DateProperty({
+    description: '权益过期时间',
+    example: '2026-03-04T09:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  entitlementExpiresAt!: Date | null
 }

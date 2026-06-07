@@ -1,5 +1,6 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
+import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant'
 import { DownloadService } from '@libs/interaction/download/download.service'
 import { IDownloadTargetResolver } from '@libs/interaction/download/interfaces/download-target-resolver.interface'
@@ -25,6 +26,7 @@ export class WorkNovelChapterDownloadResolver
     private readonly downloadService: DownloadService,
     private readonly drizzle: DrizzleService,
     private readonly workCounterService: WorkCounterService,
+    private readonly contentPermissionService: ContentPermissionService,
   ) {}
 
   // 读取 workChapter。
@@ -38,7 +40,7 @@ export class WorkNovelChapterDownloadResolver
   }
 
   // 检查下载权限并获取内容。
-  async ensureDownloadable(tx: Db, targetId: number) {
+  async ensureDownloadable(tx: Db, targetId: number, userId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
@@ -61,6 +63,8 @@ export class WorkNovelChapterDownloadResolver
         '下载内容不存在',
       )
     }
+
+    await this.contentPermissionService.checkChapterDownload(userId, targetId)
 
     return chapter.content
   }

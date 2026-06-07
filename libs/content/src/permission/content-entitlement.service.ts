@@ -3,6 +3,7 @@ import type {
   ContentEntitlementTx,
   GrantContentEntitlementInput,
   GrantPurchaseEntitlementInput,
+  RevokeContentEntitlementBySourceInput,
 } from './content-entitlement.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
@@ -148,5 +149,32 @@ export class ContentEntitlementService {
           ),
         ),
       )
+  }
+
+  // 按来源业务事实精确撤销权益，避免跨来源或跨记录误撤。
+  async revokeEntitlementBySource(
+    tx: ContentEntitlementTx,
+    input: RevokeContentEntitlementBySourceInput,
+  ) {
+    const revokedAt = new Date()
+    const rows = await tx
+      .update(this.userContentEntitlement)
+      .set({
+        status: ContentEntitlementStatusEnum.REVOKED,
+        revokedAt,
+      })
+      .where(
+        and(
+          eq(this.userContentEntitlement.grantSource, input.grantSource),
+          eq(this.userContentEntitlement.sourceId, input.sourceId),
+          eq(
+            this.userContentEntitlement.status,
+            ContentEntitlementStatusEnum.ACTIVE,
+          ),
+        ),
+      )
+      .returning({ id: this.userContentEntitlement.id })
+
+    return rows.length
   }
 }

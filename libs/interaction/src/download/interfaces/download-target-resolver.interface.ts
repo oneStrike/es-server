@@ -12,13 +12,14 @@ export interface IDownloadTargetResolver {
   readonly targetType: DownloadTargetTypeEnum
 
   /**
-   * 检查下载目标是否存在，并在必要时返回下载内容
+   * 检查下载目标是否存在、当前用户是否可下载，并在必要时返回下载内容
    * @param tx - 事务对象
    * @param targetId - 目标 ID
+   * @param userId - 用户 ID
    * @returns 下载内容 (如章节内容字符串)
    * @throws BadRequestException 如果目标不存在或不可下载
    */
-  ensureDownloadable: (tx: Db, targetId: number) => Promise<string>
+  ensureDownloadable: (tx: Db, targetId: number, userId: number) => Promise<string>
 
   /**
    * 更新目标的下载统计数

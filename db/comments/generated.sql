@@ -28,6 +28,7 @@ COMMENT ON COLUMN "public"."ad_reward_record"."ad_provider_config_version" IS E'
 COMMENT ON COLUMN "public"."ad_reward_record"."credential_version_ref" IS E'密钥版本引用快照。';
 COMMENT ON COLUMN "public"."ad_reward_record"."provider_reward_id" IS E'广告 provider 奖励唯一 ID。';
 COMMENT ON COLUMN "public"."ad_reward_record"."placement_key" IS E'广告位 key。';
+COMMENT ON COLUMN "public"."ad_reward_record"."target_scope" IS E'目标范围快照（1=低价章节；2=新用户冷启动；3=运营白名单）。';
 COMMENT ON COLUMN "public"."ad_reward_record"."target_type" IS E'目标类型（1=漫画章节；2=小说章节）。';
 COMMENT ON COLUMN "public"."ad_reward_record"."target_id" IS E'目标 ID。';
 COMMENT ON COLUMN "public"."ad_reward_record"."status" IS E'奖励状态（1=成功；2=失败；3=已撤销）。';
@@ -1045,6 +1046,7 @@ COMMENT ON COLUMN "public"."sys_config"."site_config" IS E'站点基础配置（
 COMMENT ON COLUMN "public"."sys_config"."operation_config" IS E'运营配置（JSON格式，包含话题创建模式等运营侧配置）';
 COMMENT ON COLUMN "public"."sys_config"."security_config" IS E'安全配置（JSON格式，包含远程图片导入安全开关）';
 COMMENT ON COLUMN "public"."sys_config"."third_party_resource_parse_config" IS E'三方资源解析配置（JSON格式，包含 API/图片节流、host 缓存 TTL 与队列上限）';
+COMMENT ON COLUMN "public"."sys_config"."wallet_currency_display_config" IS E'钱包虚拟币展示配置（JSON格式，包含展示名称、单位与图标）';
 COMMENT ON COLUMN "public"."sys_config"."maintenance_config" IS E'维护模式配置（JSON格式，开关与提示文案）';
 COMMENT ON COLUMN "public"."sys_config"."content_review_policy" IS E'内容审核策略（JSON格式，敏感词等级处理策略）';
 COMMENT ON COLUMN "public"."sys_config"."upload_config" IS E'上传配置（JSON格式，包含 provider/七牛/Superbed 配置）';

@@ -50,6 +50,7 @@ describe('Ad reward provider adapters', () => {
       clientAppKey: 'default-app',
       appId: 'pangle-app',
       placementKey: 'reward-low-price',
+      targetScope: 1,
       targetType: 1,
       targetId: 2,
       providerRewardId: 'reward-id',
@@ -81,6 +82,7 @@ describe('Ad reward provider adapters', () => {
       provider: baseInput.payload.provider,
       providerRewardId: baseInput.payload.providerRewardId,
       targetId: baseInput.payload.targetId,
+      targetScope: baseInput.payload.targetScope,
       targetType: baseInput.payload.targetType,
       timestamp,
       userId: baseInput.userId,
@@ -114,5 +116,20 @@ describe('Ad reward provider adapters', () => {
       placementKey: 'reward-low-price',
       providerRewardId: 'reward-id',
     })
+  })
+
+  it('rejects callbacks replayed across target scopes', () => {
+    const adapter = new PangleRewardProviderAdapter()
+    const input = buildSignedAdInput()
+
+    expect(
+      adapter.verifyRewardCallback({
+        ...input,
+        payload: {
+          ...input.payload,
+          targetScope: 2,
+        },
+      }),
+    ).toBe(false)
   })
 })

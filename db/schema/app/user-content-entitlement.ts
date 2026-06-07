@@ -60,6 +60,9 @@ export const userContentEntitlement = snakeCase.table(
     uniqueIndex('user_content_entitlement_coupon_source_unique_idx')
       .on(table.grantSource, table.sourceId)
       .where(sql`${table.grantSource} = 2 and ${table.sourceId} is not null`),
+    uniqueIndex('user_content_entitlement_ad_source_unique_idx')
+      .on(table.grantSource, table.sourceId)
+      .where(sql`${table.grantSource} = 3 and ${table.sourceId} is not null`),
     index('user_content_entitlement_user_target_status_idx').on(
       table.userId,
       table.targetType,
