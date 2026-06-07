@@ -73,6 +73,30 @@ export class ForumSectionService {
     return this.drizzle.schema.forumModeratorSection
   }
 
+  private async assertForumLevelRuleInTx(
+    tx: Db,
+    userLevelRuleId: number,
+  ) {
+    const [levelRule] = await tx
+      .select({ id: this.forumLevelRule.id })
+      .from(this.forumLevelRule)
+      .where(
+        and(
+          eq(this.forumLevelRule.id, userLevelRuleId),
+          eq(this.forumLevelRule.business, 'forum'),
+          eq(this.forumLevelRule.isEnabled, true),
+        ),
+      )
+      .limit(1)
+
+    if (!levelRule) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '论坛访问等级规则不存在或未启用',
+      )
+    }
+  }
+
   // 对会写 forum_section.group_id 的路径加事务级 advisory lock，和删分组共用同一命名空间。
   private async lockSectionGroupsForMutation(
     client: Db,
@@ -512,16 +536,7 @@ export class ForumSectionService {
           }
         }
         if (userLevelRuleId !== undefined && userLevelRuleId !== null) {
-          const levelRule = await tx.query.userLevelRule.findFirst({
-            where: { id: userLevelRuleId },
-            columns: { id: true },
-          })
-          if (!levelRule) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_NOT_FOUND,
-              '用户等级规则不存在',
-            )
-          }
+          await this.assertForumLevelRuleInTx(tx, userLevelRuleId)
         }
 
         await tx.insert(this.forumSection).values({
@@ -698,17 +713,10 @@ export class ForumSectionService {
           if (updateData.userLevelRuleId === null) {
             updatePayload.userLevelRuleId = null
           } else {
-            const levelRule = await tx.query.userLevelRule.findFirst({
-              where: { id: updateData.userLevelRuleId },
-              columns: { id: true },
-            })
-
-            if (!levelRule) {
-              throw new BusinessException(
-                BusinessErrorCode.RESOURCE_NOT_FOUND,
-                '用户等级规则不存在',
-              )
-            }
+            await this.assertForumLevelRuleInTx(
+              tx,
+              updateData.userLevelRuleId,
+            )
           }
         }
 

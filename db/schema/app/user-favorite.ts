@@ -65,6 +65,13 @@ export const userFavorite = snakeCase.table(
      */
     index('user_favorite_user_id_idx').on(table.userId),
     /**
+     * 等级每日收藏额度统计索引。
+     */
+    index('user_favorite_user_id_created_at_idx').on(
+      table.userId,
+      table.createdAt,
+    ),
+    /**
      * 创建时间索引
      */
     index('user_favorite_created_at_idx').on(table.createdAt),

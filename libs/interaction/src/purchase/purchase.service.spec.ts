@@ -98,6 +98,16 @@ describe('PurchaseService domain split contract', () => {
     const workCounterService = {
       updateWorkChapterPurchaseCount: jest.fn(),
     }
+    const userLevelRuleService = {
+      resolveLevelPurchasePricingInTx: jest.fn(() =>
+        Promise.resolve({
+          originalPrice: 30,
+          levelPayableRate: '1.00',
+          levelPayablePrice: 30,
+          levelDiscountAmount: 0,
+        }),
+      ),
+    }
     const couponService = {
       reserveDiscountCoupon: jest.fn(() =>
         Promise.resolve({
@@ -117,6 +127,7 @@ describe('PurchaseService domain split contract', () => {
       contentPermissionService,
       contentEntitlementService,
       workCounterService,
+      userLevelRuleService,
       couponService,
       walletService,
     ) as PurchaseService
@@ -182,6 +193,7 @@ describe('PurchaseService domain split contract', () => {
     }
     const service = new (PurchaseService as any)(
       drizzle,
+      {},
       {},
       {},
       {},

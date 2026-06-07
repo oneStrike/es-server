@@ -1,12 +1,13 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
+import type { AnyColumn } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
+import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm'
 import {
   CheckUserLevelPermissionDto,
   CreateUserLevelRuleDto,
@@ -17,6 +18,36 @@ import {
 } from './dto/level-rule.dto'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
+type LevelBusiness = string | null | undefined
+
+interface LevelResolveInput {
+  userId: number
+  business?: LevelBusiness
+}
+
+interface LevelRuleResolveInput {
+  experience: number
+  business?: LevelBusiness
+}
+
+interface DailyQuotaInput {
+  userId: number
+  business?: LevelBusiness
+}
+
+interface PurchasePricingInput {
+  userId: number
+  originalPrice: number
+  business?: LevelBusiness
+}
+
+interface LevelPurchasePricing {
+  originalPrice: number
+  levelPayableRate: string
+  levelPayablePrice: number
+  levelDiscountAmount: number
+}
+
 @Injectable()
 export class UserLevelRuleService {
   /**
@@ -26,6 +57,14 @@ export class UserLevelRuleService {
   private readonly forumTopicLikeTargetType = 3
   private readonly commentLikeTargetType = 6
   private readonly forumTopicFavoriteTargetType = 3
+  private readonly forumTopicCommentTargetType = 5
+  private readonly comicWorkSceneType = 1
+  private readonly novelWorkSceneType = 2
+  private readonly forumTopicSceneType = 3
+  private readonly comicChapterSceneType = 10
+  private readonly novelChapterSceneType = 11
+  private readonly levelStateRepairMessage = '用户等级状态需要修复'
+  private readonly quotaLockNamespace = 902081
 
   constructor(private readonly drizzle: DrizzleService) {}
 
@@ -59,6 +98,11 @@ export class UserLevelRuleService {
     return this.drizzle.schema.userComment
   }
 
+  /** 评论事实表。 */
+  get userComment() {
+    return this.drizzle.schema.userComment
+  }
+
   /** 点赞事实表。 */
   get userLike() {
     return this.drizzle.schema.userLike
@@ -75,13 +119,20 @@ export class UserLevelRuleService {
    * @returns 创建的等级规则
    */
   async createLevelRule(dto: CreateUserLevelRuleDto) {
-    await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.userLevelRule).values(dto),
-      {
-        duplicate: '经验规则已经存在',
-      },
-    )
-    return true
+    return this.drizzle.withTransaction(async (tx) => {
+      const payload = this.normalizeRulePayload(dto)
+      await this.drizzle.withErrorHandling(
+        () => tx.insert(this.userLevelRule).values(payload),
+        {
+          duplicate: '经验规则已经存在',
+        },
+      )
+      await this.assertEnabledBusinessHasOneBaseLevelInTx(
+        tx,
+        payload.business,
+      )
+      return true
+    })
   }
 
   /**
@@ -154,18 +205,40 @@ export class UserLevelRuleService {
    */
   async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.userLevelRule)
-          .set(updateData)
-          .where(eq(this.userLevelRule.id, id)),
-      {
-        duplicate: 'Level rule already exists',
-        notFound: '等级规则不存在',
-      },
-    )
-    return true
+    return this.drizzle.withTransaction(async (tx) => {
+      const existing = await tx.query.userLevelRule.findFirst({
+        where: { id },
+        columns: { business: true },
+      })
+      if (!existing) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '等级规则不存在',
+        )
+      }
+
+      const payload = this.normalizeRulePayload(updateData)
+      await this.drizzle.withErrorHandling(
+        () =>
+          tx
+            .update(this.userLevelRule)
+            .set(payload)
+            .where(eq(this.userLevelRule.id, id)),
+        {
+          duplicate: 'Level rule already exists',
+          notFound: '等级规则不存在',
+        },
+      )
+      await this.assertEnabledBusinessHasOneBaseLevelInTx(
+        tx,
+        existing.business,
+      )
+      await this.assertEnabledBusinessHasOneBaseLevelInTx(
+        tx,
+        'business' in payload ? payload.business : existing.business,
+      )
+      return true
+    })
   }
 
   /**
@@ -177,7 +250,7 @@ export class UserLevelRuleService {
     return this.drizzle.withTransaction(async (tx) => {
       const rule = await tx.query.userLevelRule.findFirst({
         where: { id },
-        columns: { id: true },
+        columns: { id: true, business: true },
       })
 
       if (!rule) {
@@ -220,6 +293,7 @@ export class UserLevelRuleService {
         () => tx.delete(this.userLevelRule).where(eq(this.userLevelRule.id, id)),
         { notFound: '等级规则不存在' },
       )
+      await this.assertEnabledBusinessHasOneBaseLevelInTx(tx, rule.business)
       return true
     })
   }
@@ -234,27 +308,8 @@ export class UserLevelRuleService {
    * 同时计算到下一等级的进度百分比，供前台和后台直接展示当前升级进度。
    */
   async getUserLevelInfo(userId: number): Promise<UserLevelInfoDto> {
-    const user = await this.db.query.appUser.findFirst({
-      where: { id: userId },
-      with: {
-        level: true,
-      },
-    })
-
-    if (!user) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '用户不存在',
-      )
-    }
-
-    if (!user.level) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '用户等级规则不存在',
-      )
-    }
-    const currentExperience = await this.getCurrentExperience(user.id)
+    const { level, experience: currentExperience } =
+      await this.resolveEffectiveUserLevel({ userId })
 
     const [nextLevelRule] = await this.db
       .select()
@@ -262,10 +317,11 @@ export class UserLevelRuleService {
       .where(
         and(
           eq(this.userLevelRule.isEnabled, true),
+          this.buildBusinessCondition(this.userLevelRule.business, level.business),
           gt(this.userLevelRule.requiredExperience, currentExperience),
         ),
       )
-      .orderBy(asc(this.userLevelRule.requiredExperience))
+      .orderBy(asc(this.userLevelRule.requiredExperience), asc(this.userLevelRule.id))
       .limit(1)
 
     let progressPercentage = 0
@@ -275,7 +331,7 @@ export class UserLevelRuleService {
     if (nextLevelRule) {
       const nextLevelExperienceValue = nextLevelRule.requiredExperience
       nextLevelExperience = nextLevelExperienceValue
-      const previousLevelExperience = user.level.requiredExperience
+      const previousLevelExperience = level.requiredExperience
       const totalRange = nextLevelExperienceValue - previousLevelExperience
       const currentProgress = currentExperience - previousLevelExperience
       progressPercentage =
@@ -285,26 +341,32 @@ export class UserLevelRuleService {
     }
 
     return {
-      levelId: user.level.id,
-      levelName: user.level.name,
-      levelDescription: user.level.description ?? '',
-      levelIcon: user.level.icon ?? '',
-      levelColor: user.level.color ?? '',
+      levelId: level.id,
+      levelName: level.name,
+      levelDescription: level.description ?? '',
+      levelIcon: level.icon ?? '',
+      levelColor: level.color ?? '',
       currentExperience,
       nextLevelExperience,
       progressPercentage,
       permissions: {
-        dailyTopicLimit: user.level.dailyTopicLimit,
-        dailyReplyCommentLimit: user.level.dailyReplyCommentLimit,
-        postInterval: user.level.postInterval,
-        dailyLikeLimit: user.level.dailyLikeLimit,
-        dailyFavoriteLimit: user.level.dailyFavoriteLimit,
+        dailyTopicLimit: level.dailyTopicLimit,
+        dailyReplyCommentLimit: level.dailyReplyCommentLimit,
+        postInterval: level.postInterval,
+        dailyLikeLimit: level.dailyLikeLimit,
+        dailyFavoriteLimit: level.dailyFavoriteLimit,
       },
     }
   }
 
-  async getHighestLevelRuleByExperience(experience: number) {
-    return this.getHighestLevelRuleByExperienceInTx(this.db, experience)
+  async getHighestLevelRuleByExperience(
+    experience: number,
+    business?: LevelBusiness,
+  ) {
+    return this.getHighestLevelRuleByExperienceInTx(this.db, {
+      experience,
+      business,
+    })
   }
 
   private async getCurrentExperience(userId: number) {
@@ -326,14 +388,216 @@ export class UserLevelRuleService {
    * 在指定事务中按经验值反查当前应命中的最高等级。
    * 供账本、升级和修复链路复用，避免不同上下文复制相同排序逻辑。
    */
-  async getHighestLevelRuleByExperienceInTx(tx: Db, experience: number) {
-    return tx.query.userLevelRule.findFirst({
+  async getHighestLevelRuleByExperienceInTx(
+    tx: Db,
+    input: number | LevelRuleResolveInput,
+  ) {
+    const resolveInput =
+      typeof input === 'number' ? { experience: input } : input
+    const business = this.normalizeBusiness(resolveInput.business)
+    const [levelRule] = await tx
+      .select()
+      .from(this.userLevelRule)
+      .where(
+        and(
+          eq(this.userLevelRule.isEnabled, true),
+          this.buildBusinessCondition(this.userLevelRule.business, business),
+          lte(this.userLevelRule.requiredExperience, resolveInput.experience),
+        ),
+      )
+      .orderBy(desc(this.userLevelRule.requiredExperience), desc(this.userLevelRule.id))
+      .limit(1)
+    return levelRule ?? null
+  }
+
+  async resolveEffectiveUserLevel(input: LevelResolveInput) {
+    return this.resolveEffectiveUserLevelInTx(this.db, input)
+  }
+
+  async resolveEffectiveUserLevelInTx(tx: Db, input: LevelResolveInput) {
+    const business = this.normalizeBusiness(input.business)
+    const user = await tx.query.appUser.findFirst({
       where: {
-        isEnabled: true,
-        requiredExperience: { lte: experience },
+        id: input.userId,
+        deletedAt: { isNull: true },
       },
-      orderBy: { requiredExperience: 'desc' },
+      columns: { id: true },
     })
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
+    }
+
+    const experience = await this.getCurrentExperienceInTx(tx, input.userId)
+    const level = await this.getHighestLevelRuleByExperienceInTx(tx, {
+      experience,
+      business,
+    })
+    if (!level) {
+      throw this.createLevelStateConflict()
+    }
+    return { level, experience }
+  }
+
+  async resolveLevelPurchasePricingInTx(
+    tx: Db,
+    input: PurchasePricingInput,
+  ): Promise<LevelPurchasePricing> {
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
+    const rate = Number(level.purchasePayableRate)
+    if (!Number.isFinite(rate) || rate < 0 || rate > 1) {
+      throw this.createLevelStateConflict()
+    }
+    const levelPayablePrice = Math.floor(input.originalPrice * rate)
+    return {
+      originalPrice: input.originalPrice,
+      levelPayableRate: rate.toFixed(2),
+      levelPayablePrice,
+      levelDiscountAmount: input.originalPrice - levelPayablePrice,
+    }
+  }
+
+  async ensureDailyLikeQuotaInTx(tx: Db, input: DailyQuotaInput) {
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
+    await this.acquireDailyQuotaLockInTx(tx, {
+      userId: input.userId,
+      permissionType: UserLevelRulePermissionEnum.DAILY_LIKE_LIMIT,
+      business: input.business,
+    })
+    await this.assertDailyQuotaInTx(tx, {
+      userId: input.userId,
+      limit: level.dailyLikeLimit,
+      used: await this.countTodayByConditionInTx(
+        tx,
+        this.userLike,
+        this.userLike.createdAt,
+        this.buildLikeQuotaWhere(input.userId, input.business),
+      ),
+      message: '已达到每日点赞上限',
+    })
+  }
+
+  async ensureDailyFavoriteQuotaInTx(tx: Db, input: DailyQuotaInput) {
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
+    await this.acquireDailyQuotaLockInTx(tx, {
+      userId: input.userId,
+      permissionType: UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
+      business: input.business,
+    })
+    await this.assertDailyQuotaInTx(tx, {
+      userId: input.userId,
+      limit: level.dailyFavoriteLimit,
+      used: await this.countTodayByConditionInTx(
+        tx,
+        this.userFavorite,
+        this.userFavorite.createdAt,
+        this.buildFavoriteQuotaWhere(input.userId, input.business),
+      ),
+      message: '已达到每日收藏上限',
+    })
+  }
+
+  async ensureCommentRateLimitInTx(tx: Db, input: DailyQuotaInput) {
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
+    await this.acquireDailyQuotaLockInTx(tx, {
+      userId: input.userId,
+      permissionType: UserLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT,
+      business: input.business,
+    })
+    await this.assertDailyQuotaInTx(tx, {
+      userId: input.userId,
+      limit: level.dailyReplyCommentLimit,
+      used: await this.countTodayByConditionInTx(
+        tx,
+        this.userComment,
+        this.userComment.createdAt,
+        this.buildCommentQuotaWhere(input.userId, input.business),
+      ),
+      message: `今日评论次数已达上限（${level.dailyReplyCommentLimit}）`,
+    })
+
+    if (level.postInterval <= 0) {
+      return
+    }
+
+    await this.acquirePermissionLockInTx(tx, {
+      userId: input.userId,
+      permissionType: UserLevelRulePermissionEnum.POST_INTERVAL,
+      business: input.business,
+      scopeKey: 'post-interval',
+    })
+    const lastPostAt = await this.getLatestPostAtInTx(tx, input)
+
+    if (!lastPostAt) {
+      return
+    }
+
+    const secondsSinceLastPost = Math.floor(
+      (Date.now() - lastPostAt.getTime()) / 1000,
+    )
+
+    if (secondsSinceLastPost < level.postInterval) {
+      throw new HttpException(
+        `操作过于频繁，请 ${level.postInterval - secondsSinceLastPost} 秒后再试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
+    }
+  }
+
+  async ensureForumTopicRateLimitInTx(tx: Db, input: { userId: number }) {
+    const business = 'forum'
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, {
+      userId: input.userId,
+      business,
+    })
+    await this.acquireDailyQuotaLockInTx(tx, {
+      userId: input.userId,
+      permissionType: UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT,
+      business,
+    })
+    await this.assertDailyQuotaInTx(tx, {
+      userId: input.userId,
+      limit: level.dailyTopicLimit,
+      used: await this.countTodayByConditionInTx(
+        tx,
+        this.forumTopic,
+        this.forumTopic.createdAt,
+        eq(this.forumTopic.userId, input.userId),
+      ),
+      message: `今日发帖次数已达上限（${level.dailyTopicLimit}）`,
+    })
+
+    if (level.postInterval <= 0) {
+      return
+    }
+
+    await this.acquirePermissionLockInTx(tx, {
+      userId: input.userId,
+      permissionType: UserLevelRulePermissionEnum.POST_INTERVAL,
+      business,
+      scopeKey: 'post-interval',
+    })
+    const lastPostAt = await this.getLatestPostAtInTx(tx, {
+      userId: input.userId,
+      business,
+    })
+
+    if (!lastPostAt) {
+      return
+    }
+
+    const secondsSinceLastPost = Math.floor(
+      (Date.now() - lastPostAt.getTime()) / 1000,
+    )
+
+    if (secondsSinceLastPost < level.postInterval) {
+      throw new HttpException(
+        `操作过于频繁，请 ${level.postInterval - secondsSinceLastPost} 秒后再试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
+    }
   }
 
   /**
@@ -343,29 +607,12 @@ export class UserLevelRuleService {
    */
   async checkLevelPermission(dto: CheckUserLevelPermissionDto) {
     const { userId, permissionType } = dto
+    const business = this.normalizeBusiness(dto.business)
 
-    const user = await this.db.query.appUser.findFirst({
-      where: { id: userId },
-      with: {
-        level: true,
-      },
+    const { level } = await this.resolveEffectiveUserLevel({
+      userId,
+      business,
     })
-
-    if (!user) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '用户不存在',
-      )
-    }
-
-    if (!user.level) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '用户等级规则不存在',
-      )
-    }
-
-    const level = user.level
     const today = startOfTodayInAppTimeZone()
 
     let limit = 0
@@ -376,7 +623,7 @@ export class UserLevelRuleService {
     switch (permissionType) {
       case UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT:
         limit = level.dailyTopicLimit
-        if (limit > 0) {
+        if (limit > 0 && business === 'forum') {
           used = await this.countByCondition(
             this.forumTopic,
             and(
@@ -392,10 +639,10 @@ export class UserLevelRuleService {
         limit = level.dailyReplyCommentLimit
         if (limit > 0) {
           used = await this.countByCondition(
-            this.forumReply,
+            this.userComment,
             and(
-              eq(this.forumReply.userId, userId),
-              gte(this.forumReply.createdAt, today),
+              this.buildCommentQuotaWhere(userId, business),
+              gte(this.userComment.createdAt, today),
             ),
           )
           hasPermission = used < limit
@@ -405,35 +652,15 @@ export class UserLevelRuleService {
       case UserLevelRulePermissionEnum.POST_INTERVAL:
         limit = level.postInterval
         if (limit > 0) {
-          const [lastTopic] = await this.db
-            .select({ createdAt: this.forumTopic.createdAt })
-            .from(this.forumTopic)
-            .where(eq(this.forumTopic.userId, userId))
-            .orderBy(desc(this.forumTopic.createdAt))
-            .limit(1)
-          const [lastReply] = await this.db
-            .select({ createdAt: this.forumReply.createdAt })
-            .from(this.forumReply)
-            .where(eq(this.forumReply.userId, userId))
-            .orderBy(desc(this.forumReply.createdAt))
-            .limit(1)
-
-          let lastPostTime: Date | null = null
-          if (lastTopic && lastReply) {
-            lastPostTime =
-              lastTopic.createdAt > lastReply.createdAt
-                ? lastTopic.createdAt
-                : lastReply.createdAt
-          } else if (lastTopic) {
-            lastPostTime = lastTopic.createdAt
-          } else if (lastReply) {
-            lastPostTime = lastReply.createdAt
-          }
-
+          const lastPostTime = await this.getLatestPostAtInTx(this.db, {
+            userId,
+            business,
+          })
           if (lastPostTime) {
             const secondsSinceLastPost = Math.floor(
               (Date.now() - lastPostTime.getTime()) / 1000,
             )
+            used = secondsSinceLastPost
             hasPermission = secondsSinceLastPost >= limit
           } else {
             hasPermission = true
@@ -447,11 +674,7 @@ export class UserLevelRuleService {
           used = await this.countByCondition(
             this.userLike,
             and(
-              eq(this.userLike.userId, userId),
-              inArray(this.userLike.targetType, [
-                this.forumTopicLikeTargetType,
-                this.commentLikeTargetType,
-              ]),
+              this.buildLikeQuotaWhere(userId, business),
               gte(this.userLike.createdAt, today),
             ),
           )
@@ -465,11 +688,7 @@ export class UserLevelRuleService {
           used = await this.countByCondition(
             this.userFavorite,
             and(
-              eq(this.userFavorite.userId, userId),
-              eq(
-                this.userFavorite.targetType,
-                this.forumTopicFavoriteTargetType,
-              ),
+              this.buildFavoriteQuotaWhere(userId, business),
               gte(this.userFavorite.createdAt, today),
             ),
           )
@@ -478,15 +697,33 @@ export class UserLevelRuleService {
         break
 
       default:
-        throw new BadRequestException('不支持的权限类型')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '不支持的权限类型',
+        )
     }
 
-    return {
+    const result = {
       hasPermission,
       currentLevel: level.name,
       limit: limit > 0 ? limit : null,
       used: limit > 0 ? used : null,
       remaining: limit > 0 ? limit - used : null,
+    }
+    if (permissionType !== UserLevelRulePermissionEnum.POST_INTERVAL) {
+      return result
+    }
+    const remainingSeconds =
+      limit > 0 && !hasPermission ? Math.max(0, limit - used) : null
+    return {
+      ...result,
+      limitSeconds: limit > 0 ? limit : null,
+      elapsedSeconds: limit > 0 ? used : null,
+      remainingSeconds,
+      nextAllowedAt:
+        remainingSeconds !== null
+          ? new Date(Date.now() + remainingSeconds * 1000).toISOString()
+          : null,
     }
   }
 
@@ -549,5 +786,214 @@ export class UserLevelRuleService {
       .from(table)
       .where(where)
     return Number(result?.total ?? 0)
+  }
+
+  private normalizeBusiness(business: LevelBusiness) {
+    if (typeof business !== 'string') {
+      return null
+    }
+    const normalized = business.trim()
+    return normalized.length > 0 ? normalized : null
+  }
+
+  private normalizeRulePayload<T extends { business?: LevelBusiness }>(
+    payload: T,
+  ): T {
+    if (!('business' in payload)) {
+      return payload
+    }
+    return {
+      ...payload,
+      business: this.normalizeBusiness(payload.business),
+    }
+  }
+
+  private buildBusinessCondition(
+    column: typeof this.userLevelRule.business,
+    business: string | null,
+  ) {
+    return business === null ? isNull(column) : eq(column, business)
+  }
+
+  private async getCurrentExperienceInTx(tx: Db, userId: number) {
+    const balance = await tx.query.userAssetBalance.findFirst({
+      where: {
+        userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+      },
+      columns: {
+        balance: true,
+      },
+    })
+
+    return balance?.balance ?? 0
+  }
+
+  private async assertEnabledBusinessHasOneBaseLevelInTx(
+    tx: Db,
+    inputBusiness: LevelBusiness,
+  ) {
+    const business = this.normalizeBusiness(inputBusiness)
+    const businessWhere = this.buildBusinessCondition(
+      this.userLevelRule.business,
+      business,
+    )
+    const [enabled] = await tx
+      .select({ total: sql<number>`count(*)` })
+      .from(this.userLevelRule)
+      .where(and(eq(this.userLevelRule.isEnabled, true), businessWhere))
+    if (Number(enabled?.total ?? 0) === 0) {
+      return
+    }
+    const [base] = await tx
+      .select({ total: sql<number>`count(*)` })
+      .from(this.userLevelRule)
+      .where(
+        and(
+          eq(this.userLevelRule.isEnabled, true),
+          businessWhere,
+          eq(this.userLevelRule.requiredExperience, 0),
+        ),
+      )
+    if (Number(base?.total ?? 0) !== 1) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '每个启用业务域必须且只能有一个0经验基础等级',
+      )
+    }
+  }
+
+  private async acquireDailyQuotaLockInTx(
+    tx: Db,
+    input: {
+      userId: number
+      permissionType: UserLevelRulePermissionEnum
+      business?: LevelBusiness
+    },
+  ) {
+    const dateKey = startOfTodayInAppTimeZone().toISOString().slice(0, 10)
+    await this.acquirePermissionLockInTx(tx, { ...input, scopeKey: dateKey })
+  }
+
+  private async acquirePermissionLockInTx(
+    tx: Db,
+    input: {
+      userId: number
+      permissionType: UserLevelRulePermissionEnum
+      business?: LevelBusiness
+      scopeKey: string
+    },
+  ) {
+    const business = this.normalizeBusiness(input.business) ?? 'default'
+    const lockKey = `${input.userId}:${input.permissionType}:${business}:${input.scopeKey}`
+    await tx.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, ${this.quotaLockNamespace}))`,
+    )
+  }
+
+  private async assertDailyQuotaInTx(
+    _tx: Db,
+    input: { userId: number, limit: number, used: number, message: string },
+  ) {
+    if (input.limit > 0 && input.used >= input.limit) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        input.message,
+      )
+    }
+  }
+
+  private async countTodayByConditionInTx(
+    tx: Db,
+    table: PgTable<TableConfig>,
+    createdAt: AnyColumn,
+    where: SQL | undefined,
+  ) {
+    const today = startOfTodayInAppTimeZone()
+    const [result] = await tx
+      .select({ total: sql<number>`count(*)` })
+      .from(table)
+      .where(and(where, gte(createdAt, today)))
+    return Number(result?.total ?? 0)
+  }
+
+  private buildLikeQuotaWhere(userId: number, business: LevelBusiness) {
+    const normalizedBusiness = this.normalizeBusiness(business)
+    const businessTargetCondition =
+      normalizedBusiness === 'forum'
+        ? or(
+            eq(this.userLike.targetType, this.forumTopicLikeTargetType),
+            and(
+              eq(this.userLike.targetType, this.commentLikeTargetType),
+              eq(this.userLike.sceneType, this.forumTopicSceneType),
+            ),
+          )
+        : or(
+            inArray(this.userLike.targetType, [1, 2, 4, 5]),
+            and(
+              eq(this.userLike.targetType, this.commentLikeTargetType),
+              inArray(this.userLike.sceneType, [
+                this.comicWorkSceneType,
+                this.novelWorkSceneType,
+                this.comicChapterSceneType,
+                this.novelChapterSceneType,
+              ]),
+            ),
+          )
+    return and(eq(this.userLike.userId, userId), businessTargetCondition)
+  }
+
+  private buildFavoriteQuotaWhere(userId: number, business: LevelBusiness) {
+    const normalizedBusiness = this.normalizeBusiness(business)
+    const businessTargetCondition =
+      normalizedBusiness === 'forum'
+        ? eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType)
+        : inArray(this.userFavorite.targetType, [1, 2])
+    return and(eq(this.userFavorite.userId, userId), businessTargetCondition)
+  }
+
+  private buildCommentQuotaWhere(userId: number, business: LevelBusiness) {
+    const normalizedBusiness = this.normalizeBusiness(business)
+    const businessTargetCondition =
+      normalizedBusiness === 'forum'
+        ? eq(this.userComment.targetType, this.forumTopicCommentTargetType)
+        : inArray(this.userComment.targetType, [1, 2, 3, 4])
+    return and(eq(this.userComment.userId, userId), businessTargetCondition)
+  }
+
+  private async getLatestPostAtInTx(tx: Db, input: DailyQuotaInput) {
+    const [lastComment] = await tx
+      .select({ createdAt: this.userComment.createdAt })
+      .from(this.userComment)
+      .where(this.buildCommentQuotaWhere(input.userId, input.business))
+      .orderBy(desc(this.userComment.createdAt))
+      .limit(1)
+
+    if (this.normalizeBusiness(input.business) !== 'forum') {
+      return lastComment?.createdAt ?? null
+    }
+
+    const [lastTopic] = await tx
+      .select({ createdAt: this.forumTopic.createdAt })
+      .from(this.forumTopic)
+      .where(eq(this.forumTopic.userId, input.userId))
+      .orderBy(desc(this.forumTopic.createdAt))
+      .limit(1)
+
+    if (lastTopic && lastComment) {
+      return lastTopic.createdAt > lastComment.createdAt
+        ? lastTopic.createdAt
+        : lastComment.createdAt
+    }
+
+    return lastTopic?.createdAt ?? lastComment?.createdAt ?? null
+  }
+
+  private createLevelStateConflict() {
+    return new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      this.levelStateRepairMessage,
+    )
   }
 }

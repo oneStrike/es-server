@@ -1411,7 +1411,6 @@ COMMENT ON TABLE "public"."user_level_rule" IS E'用户等级规则表 - 定义�
 COMMENT ON COLUMN "public"."user_level_rule"."id" IS E'主键ID';
 COMMENT ON COLUMN "public"."user_level_rule"."name" IS E'等级名称';
 COMMENT ON COLUMN "public"."user_level_rule"."required_experience" IS E'所需经验值';
-COMMENT ON COLUMN "public"."user_level_rule"."login_days" IS E'所需登录天数（0=无登录天数要求）';
 COMMENT ON COLUMN "public"."user_level_rule"."description" IS E'等级描述';
 COMMENT ON COLUMN "public"."user_level_rule"."icon" IS E'等级图标URL';
 COMMENT ON COLUMN "public"."user_level_rule"."color" IS E'等级专属颜色（十六进制）';
@@ -1423,8 +1422,6 @@ COMMENT ON COLUMN "public"."user_level_rule"."daily_reply_comment_limit" IS E'�
 COMMENT ON COLUMN "public"."user_level_rule"."post_interval" IS E'发帖间隔秒数（0=不限制）';
 COMMENT ON COLUMN "public"."user_level_rule"."daily_like_limit" IS E'每日点赞次数上限（0=不限制）';
 COMMENT ON COLUMN "public"."user_level_rule"."daily_favorite_limit" IS E'每日收藏次数上限（0=不限制）';
-COMMENT ON COLUMN "public"."user_level_rule"."blacklist_limit" IS E'黑名单上限（默认值 10）';
-COMMENT ON COLUMN "public"."user_level_rule"."work_collection_limit" IS E'作品收藏上限（默认值 100）';
 COMMENT ON COLUMN "public"."user_level_rule"."purchase_payable_rate" IS E'积分支付比例（0-1之间的小数，1表示原价支付）';
 COMMENT ON COLUMN "public"."user_level_rule"."created_at" IS E'创建时间';
 COMMENT ON COLUMN "public"."user_level_rule"."updated_at" IS E'更新时间';

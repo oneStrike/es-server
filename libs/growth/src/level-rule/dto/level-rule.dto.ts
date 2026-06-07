@@ -46,13 +46,6 @@ export class BaseUserLevelRuleDto extends BaseDto {
   requiredExperience!: number
 
   @NumberProperty({
-    description: '所需登录天数（0=无登录天数要求）',
-    example: 0,
-    required: true,
-  })
-  loginDays!: number
-
-  @NumberProperty({
     description: '排序值（0=默认排序，数值越小越靠前）',
     example: 1,
     required: true,
@@ -108,20 +101,6 @@ export class BaseUserLevelRuleDto extends BaseDto {
     required: true,
   })
   dailyFavoriteLimit!: number
-
-  @NumberProperty({
-    description: '黑名单上限（默认值 10）',
-    example: 10,
-    required: true,
-  })
-  blacklistLimit!: number
-
-  @NumberProperty({
-    description: '作品收藏上限（默认值 100）',
-    example: 100,
-    required: true,
-  })
-  workCollectionLimit!: number
 
   @StringProperty({
     description: '积分支付比例（0-1之间的小数，1表示原价支付）',
@@ -247,6 +226,14 @@ export class CheckUserLevelPermissionDto {
     enum: UserLevelRulePermissionEnum,
   })
   permissionType!: UserLevelRulePermissionEnum
+
+  @StringProperty({
+    description: '业务域标识；默认业务域传空或不传，论坛业务域传 forum',
+    example: 'forum',
+    required: false,
+    maxLength: 20,
+  })
+  business?: string | null
 }
 
 export class UserLevelPermissionResultDto {
@@ -287,6 +274,38 @@ export class UserLevelPermissionResultDto {
     validation: false,
   })
   remaining?: number | null
+
+  @NumberProperty({
+    description: '间隔限制秒数，仅 postInterval 返回',
+    example: 30,
+    required: false,
+    validation: false,
+  })
+  limitSeconds?: number | null
+
+  @NumberProperty({
+    description: '距上次发帖/回复已过秒数，仅 postInterval 返回',
+    example: 20,
+    required: false,
+    validation: false,
+  })
+  elapsedSeconds?: number | null
+
+  @NumberProperty({
+    description: '距离下次允许操作剩余秒数，仅 postInterval 返回',
+    example: 10,
+    required: false,
+    validation: false,
+  })
+  remainingSeconds?: number | null
+
+  @StringProperty({
+    description: '下次允许操作时间，仅 postInterval 且受限时返回',
+    example: '2026-06-08T12:00:30.000Z',
+    required: false,
+    validation: false,
+  })
+  nextAllowedAt?: string | null
 }
 
 export class UserLevelDistributionItemDto {

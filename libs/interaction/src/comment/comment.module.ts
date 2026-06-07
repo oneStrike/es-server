@@ -1,6 +1,7 @@
 import { ForumHashtagModule } from '@libs/forum/hashtag/forum-hashtag.module'
 import { ForumPermissionModule } from '@libs/forum/permission/forum-permission.module'
 import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module'
+import { UserLevelRuleModule } from '@libs/growth/level-rule/level-rule.module'
 import { BodyModule } from '@libs/interaction/body/body.module'
 import { EmojiModule } from '@libs/interaction/emoji/emoji.module'
 import { LikeModule } from '@libs/interaction/like/like.module'
@@ -22,6 +23,7 @@ import { CommentReportResolver } from './resolver/comment-report.resolver'
     SensitiveWordModule,
     SystemConfigModule,
     GrowthEventBridgeModule,
+    UserLevelRuleModule,
     ForumHashtagModule,
     ForumPermissionModule,
     BodyModule,

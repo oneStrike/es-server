@@ -89,6 +89,13 @@ export const userLike = snakeCase.table(
       table.createdAt,
     ),
     /**
+     * 等级每日点赞额度统计索引。
+     */
+    index('user_like_user_id_created_at_idx').on(
+      table.userId,
+      table.createdAt,
+    ),
+    /**
      * 创建时间索引
      */
     index('user_like_created_at_idx').on(table.createdAt),

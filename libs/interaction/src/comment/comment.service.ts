@@ -1149,6 +1149,11 @@ export class CommentService {
           async () =>
             this.db.transaction(async (tx) => {
               await resolver.ensureCanComment(tx, targetId)
+              await this.commentPermissionService.ensureCommentRateLimitInTx(
+                tx,
+                userId,
+                targetType,
+              )
               const compiledBody = await this.materializeCommentBodyInTx(
                 tx,
                 html,
@@ -1384,6 +1389,11 @@ export class CommentService {
 
     const created = await this.drizzle.withTransaction(async (tx) => {
       await resolver.ensureCanComment(tx, targetId)
+      await this.commentPermissionService.ensureCommentRateLimitInTx(
+        tx,
+        userId,
+        targetType as CommentTargetTypeEnum,
+      )
       const compiledBody = await this.materializeCommentBodyInTx(
         tx,
         html,

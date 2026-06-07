@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type {
   ForumAccessUserContext,
   ForumPostingUserContext,
@@ -6,17 +7,11 @@ import type {
 } from './forum-permission.type'
 import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common'
-import { and, desc, eq, gte } from 'drizzle-orm'
+import { Injectable, UnauthorizedException } from '@nestjs/common'
 
 /**
  * 论坛权限服务。
@@ -24,7 +19,12 @@ import { and, desc, eq, gte } from 'drizzle-orm'
  */
 @Injectable()
 export class ForumPermissionService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  private readonly forumBusiness = 'forum'
+
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly userLevelRuleService: UserLevelRuleService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -64,14 +64,6 @@ export class ForumPermissionService {
         isEnabled: true,
         status: true,
       },
-      with: {
-        level: {
-          columns: {
-            dailyTopicLimit: true,
-            postInterval: true,
-          },
-        },
-      },
     })
 
     if (!user) {
@@ -81,9 +73,14 @@ export class ForumPermissionService {
       )
     }
 
-    const experience = await this.getUserExperience(userId)
+    const { level, experience } =
+      await this.userLevelRuleService.resolveEffectiveUserLevel({
+        userId,
+        business: this.forumBusiness,
+      })
     return {
       ...user,
+      level,
       experience,
     }
   }
@@ -390,80 +387,6 @@ export class ForumPermissionService {
   }
 
   /**
-   * 校验发帖频率限制。
-   * - 每日发帖上限：统计当天已发主题数
-   * - 发帖间隔：取最近一次发帖/评论时间计算冷却时间
-   */
-  private async ensureTopicRateLimit(
-    userId: number,
-    level: ForumPostingUserContext['level'],
-  ) {
-    if (!level) {
-      return
-    }
-
-    if (level.dailyTopicLimit > 0) {
-      const today = startOfTodayInAppTimeZone()
-
-      const usedToday = await this.db.$count(
-        this.forumTopic,
-        and(
-          eq(this.forumTopic.userId, userId),
-          gte(this.forumTopic.createdAt, today),
-        ),
-      )
-
-      if (usedToday >= level.dailyTopicLimit) {
-        throw new BusinessException(
-          BusinessErrorCode.QUOTA_NOT_ENOUGH,
-          `今日发帖次数已达上限（${level.dailyTopicLimit}）`,
-        )
-      }
-    }
-
-    if (level.postInterval > 0) {
-      const [lastTopic, lastComment] = await Promise.all([
-        this.db
-          .select({ createdAt: this.forumTopic.createdAt })
-          .from(this.forumTopic)
-          .where(eq(this.forumTopic.userId, userId))
-          .orderBy(desc(this.forumTopic.createdAt))
-          .limit(1),
-        this.db
-          .select({ createdAt: this.userComment.createdAt })
-          .from(this.userComment)
-          .where(eq(this.userComment.userId, userId))
-          .orderBy(desc(this.userComment.createdAt))
-          .limit(1),
-      ])
-
-      const latestTopic = lastTopic[0]
-      const latestComment = lastComment[0]
-      const lastPostAt =
-        latestTopic && latestComment
-          ? latestTopic.createdAt > latestComment.createdAt
-            ? latestTopic.createdAt
-            : latestComment.createdAt
-          : (latestTopic?.createdAt ?? latestComment?.createdAt ?? null)
-
-      if (!lastPostAt) {
-        return
-      }
-
-      const secondsSinceLastPost = Math.floor(
-        (Date.now() - lastPostAt.getTime()) / 1000,
-      )
-
-      if (secondsSinceLastPost < level.postInterval) {
-        throw new HttpException(
-          `操作过于频繁，请 ${level.postInterval - secondsSinceLastPost} 秒后再试`,
-          HttpStatus.TOO_MANY_REQUESTS,
-        )
-      }
-    }
-  }
-
-  /**
    * 校验用户是否可在指定板块发帖。
    * 依次检查：用户状态 → 板块等级限制 → 发帖频率限制。
    * @returns 板块权限上下文，供上层读取审核策略等字段
@@ -476,9 +399,14 @@ export class ForumPermissionService {
 
     this.ensurePostingUserAvailable(user)
     this.ensureSectionLevelAccess(section, user)
-    await this.ensureTopicRateLimit(userId, user.level)
 
     return section
+  }
+
+  async ensureTopicRateLimitInTx(tx: Db, userId: number) {
+    await this.userLevelRuleService.ensureForumTopicRateLimitInTx(tx, {
+      userId,
+    })
   }
 
   /**

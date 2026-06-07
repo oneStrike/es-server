@@ -8,6 +8,7 @@ import {
 import { ContentEntitlementService } from '@libs/content/permission/content-entitlement.service'
 import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import { WorkCounterService } from '@libs/content/work/counter/work-counter.service'
+import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import {
   BusinessErrorCode,
   ContentTypeEnum,
@@ -47,6 +48,7 @@ export class PurchaseService {
     private readonly contentPermissionService: ContentPermissionService,
     private readonly contentEntitlementService: ContentEntitlementService,
     private readonly workCounterService: WorkCounterService,
+    private readonly userLevelRuleService: UserLevelRuleService,
     private readonly couponService: CouponService,
     private readonly walletService: WalletService,
   ) {}
@@ -229,6 +231,12 @@ export class PurchaseService {
 
     try {
       return await this.db.transaction(async (tx) => {
+        const levelPricing =
+          await this.userLevelRuleService.resolveLevelPurchasePricingInTx(tx, {
+            userId,
+            originalPrice,
+            business: null,
+          })
         const discount = couponInstanceId
           ? await this.couponService.reserveDiscountCoupon(tx, {
               userId,
@@ -238,17 +246,17 @@ export class PurchaseService {
                   ? CouponRedemptionTargetTypeEnum.COMIC_CHAPTER
                   : CouponRedemptionTargetTypeEnum.NOVEL_CHAPTER,
               targetId,
-              originalPrice,
+              originalPrice: levelPricing.levelPayablePrice,
             })
           : undefined
-        const purchasePricing = await this.contentPermissionService
-          .resolvePurchasePricing(originalPrice)
-          .then((pricing) => ({
-            ...pricing,
-            payablePrice: discount?.paidPrice ?? pricing.payablePrice,
-            discountAmount: discount?.discountAmount ?? pricing.discountAmount,
-          }))
-        const paidPrice = purchasePricing.payablePrice
+        const paidPrice = discount?.paidPrice ?? levelPricing.levelPayablePrice
+        const purchasePricing = {
+          originalPrice,
+          payableRate:
+            originalPrice > 0 ? Number((paidPrice / originalPrice).toFixed(2)) : 1,
+          payablePrice: paidPrice,
+          discountAmount: originalPrice - paidPrice,
+        }
         const payableRate =
           originalPrice > 0 ? (paidPrice / originalPrice).toFixed(2) : '1.00'
 
@@ -295,6 +303,9 @@ export class PurchaseService {
             outTradeNo,
             couponInstanceId,
             discountAmount: purchasePricing.discountAmount,
+            levelPayableRate: levelPricing.levelPayableRate,
+            levelDiscountAmount: levelPricing.levelDiscountAmount,
+            couponDiscountAmount: discount?.discountAmount ?? 0,
             discountSource: discount ? 1 : 0,
           },
         })

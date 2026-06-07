@@ -140,6 +140,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
             '板块不存在或已禁用',
           )
         }
+        await this.forumPermissionService.ensureTopicRateLimitInTx(tx, userId)
         const title = this.resolveCreateTopicTitle(
           inputTitle,
           compiledBody.plainText,

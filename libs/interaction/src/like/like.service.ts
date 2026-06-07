@@ -1,9 +1,14 @@
 import { DrizzleService, toPageResult } from '@db/core'
+import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
+import { SceneTypeEnum } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { LikePageQueryDto, LikeRecordDto } from './dto/like.dto'
-import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
+import {
+  ILikeTargetResolver,
+  LikeTargetMeta,
+} from './interfaces/like-target-resolver.interface'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeTargetTypeEnum } from './like.constant'
 
@@ -21,9 +26,12 @@ export class LikeService {
     ILikeTargetResolver
   >()
 
+  private readonly forumBusiness = 'forum'
+
   constructor(
     private readonly likeGrowthService: LikeGrowthService,
     private readonly appUserCountService: AppUserCountService,
+    private readonly userLevelRuleService: UserLevelRuleService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -41,6 +49,19 @@ export class LikeService {
 
   private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
+  }
+
+  private resolveLevelBusiness(
+    targetType: LikeTargetTypeEnum,
+    targetMeta: LikeTargetMeta,
+  ) {
+    if (
+      targetType === LikeTargetTypeEnum.FORUM_TOPIC ||
+      targetMeta.sceneType === SceneTypeEnum.FORUM_TOPIC
+    ) {
+      return this.forumBusiness
+    }
+    return null
   }
 
   /**
@@ -175,6 +196,10 @@ export class LikeService {
 
     await this.drizzle.withTransaction(async (tx) => {
       const targetMeta = await resolver.resolveMeta(tx, targetId)
+      await this.userLevelRuleService.ensureDailyLikeQuotaInTx(tx, {
+        userId,
+        business: this.resolveLevelBusiness(targetType, targetMeta),
+      })
 
       await this.drizzle.withErrorHandling(
         () =>

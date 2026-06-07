@@ -993,10 +993,14 @@ export class GrowthLedgerService {
       .where(
         and(
           eq(this.userLevelRule.isEnabled, true),
+          isNull(this.userLevelRule.business),
           lte(this.userLevelRule.requiredExperience, experience),
         ),
       )
-      .orderBy(sql`${this.userLevelRule.requiredExperience} desc`)
+      .orderBy(
+        sql`${this.userLevelRule.requiredExperience} desc`,
+        sql`${this.userLevelRule.id} desc`,
+      )
       .limit(1)
     return rows[0]
   }

@@ -1,5 +1,6 @@
 import type { UserFavoriteSelect } from '@db/schema'
 import { DrizzleService, toPageResult } from '@db/core'
+import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
@@ -20,9 +21,12 @@ export class FavoriteService {
     IFavoriteTargetResolver
   >()
 
+  private readonly forumBusiness = 'forum'
+
   constructor(
     private readonly favoriteGrowthService: FavoriteGrowthService,
     private readonly appUserCountService: AppUserCountService,
+    private readonly userLevelRuleService: UserLevelRuleService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -40,6 +44,12 @@ export class FavoriteService {
 
   private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
+  }
+
+  private resolveLevelBusiness(targetType: FavoriteTargetTypeEnum) {
+    return targetType === FavoriteTargetTypeEnum.FORUM_TOPIC
+      ? this.forumBusiness
+      : null
   }
 
   /**
@@ -120,6 +130,10 @@ export class FavoriteService {
         tx,
         targetId,
       )
+      await this.userLevelRuleService.ensureDailyFavoriteQuotaInTx(tx, {
+        userId,
+        business: this.resolveLevelBusiness(targetType),
+      })
       const rows = await this.drizzle.withErrorHandling(
         () =>
           tx
