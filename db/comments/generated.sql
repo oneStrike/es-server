@@ -1640,6 +1640,7 @@ COMMENT ON COLUMN "public"."work_tag"."updated_at" IS E'更新时间';
 COMMENT ON TABLE "public"."work_tag_relation" IS E'作品标签关联表';
 COMMENT ON COLUMN "public"."work_tag_relation"."work_id" IS E'作品ID';
 COMMENT ON COLUMN "public"."work_tag_relation"."tag_id" IS E'标签ID';
+COMMENT ON COLUMN "public"."work_tag_relation"."sort_order" IS E'排序顺序（用于展示顺序）';
 COMMENT ON TABLE "public"."work_third_party_chapter_binding" IS E'作品三方章节绑定表。\n用 provider 章节 ID 提供后续同步幂等依据。';
 COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."id" IS E'主键 ID。';
 COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."work_third_party_source_binding_id" IS E'三方来源绑定 ID。';

@@ -15,7 +15,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { BaseDto } from '@libs/platform/dto'
-import { PickType } from '@nestjs/swagger'
+import { ApiExtraModels, PickType } from '@nestjs/swagger'
 import {
   TaskClaimModeEnum,
   TaskCompletionPolicyEnum,
@@ -30,6 +30,7 @@ import {
 
 import { TaskTemplateFilterValueDto } from './task-template.dto'
 
+@ApiExtraModels(GrowthRewardItemDto)
 export class BaseTaskDefinitionDto extends BaseDto {
   @StringProperty({
     description: '任务编码',
@@ -125,6 +126,7 @@ export class BaseTaskDefinitionDto extends BaseDto {
   rewardItems!: GrowthRewardItemDto[] | null
 }
 
+@ApiExtraModels(TaskTemplateFilterValueDto)
 export class TaskStepSummaryDto extends BaseDto {
   @StringProperty({
     description: '步骤稳定键',

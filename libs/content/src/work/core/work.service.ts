@@ -375,9 +375,10 @@ export class WorkService {
 
         if (tagIds.length) {
           await tx.insert(this.workTagRelation).values(
-            tagIds.map((tagId) => ({
+            tagIds.map((tagId, index) => ({
               workId: createdWork.id,
               tagId,
+              sortOrder: index,
             })),
           )
         }
@@ -544,9 +545,10 @@ export class WorkService {
 
           if (tagIds.length > 0) {
             await tx.insert(this.workTagRelation).values(
-              tagIds.map((tagId) => ({
+              tagIds.map((tagId, index) => ({
                 workId: id,
                 tagId,
+                sortOrder: index,
               })),
             )
           }
@@ -873,7 +875,10 @@ export class WorkService {
       }),
       this.db.query.workTagRelation.findMany({
         where: { workId: { in: workIds } },
-        orderBy: (relation, { asc }) => [asc(relation.tagId)],
+        orderBy: (relation, { asc }) => [
+          asc(relation.sortOrder),
+          asc(relation.tagId),
+        ],
         with: { tag: { columns: { id: true, name: true, icon: true } } },
       }),
       this.db

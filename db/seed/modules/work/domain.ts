@@ -726,7 +726,7 @@ export async function seedWorkDomain(db: Db) {
       }
     }
 
-    for (const tagName of workFixture.tags) {
+    for (const [sortOrder, tagName] of workFixture.tags.entries()) {
       const tag = await db.query.workTag.findFirst({
         where: eq(workTag.name, tagName),
       })
@@ -745,7 +745,18 @@ export async function seedWorkDomain(db: Db) {
         await db.insert(workTagRelation).values({
           workId: currentWork.id,
           tagId: tag.id,
+          sortOrder,
         })
+      } else if (existingRelation.sortOrder !== sortOrder) {
+        await db
+          .update(workTagRelation)
+          .set({ sortOrder })
+          .where(
+            and(
+              eq(workTagRelation.workId, currentWork.id),
+              eq(workTagRelation.tagId, tag.id),
+            ),
+          )
       }
     }
   }

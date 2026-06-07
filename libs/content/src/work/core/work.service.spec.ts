@@ -53,19 +53,26 @@ function createWorkDto(overrides: Partial<Record<string, unknown>> = {}) {
 }
 
 function createSubject() {
+  const insertBuilders: Array<{
+    table: unknown
+    builder: ReturnType<typeof createInsertBuilder>
+  }> = []
   const updateBuilders: Array<{
     table: unknown
     builder: ReturnType<typeof createUpdateBuilder>
   }> = []
   const tx = {
     insert: jest.fn((table: unknown) => {
+      let builder: ReturnType<typeof createInsertBuilder>
       if (table === schema.forumSection) {
-        return createInsertBuilder(10)
+        builder = createInsertBuilder(10)
+      } else if (table === schema.work) {
+        builder = createInsertBuilder(20)
+      } else {
+        builder = createInsertBuilder()
       }
-      if (table === schema.work) {
-        return createInsertBuilder(20)
-      }
-      return createInsertBuilder()
+      insertBuilders.push({ table, builder })
+      return builder
     }),
     select: jest.fn((): any => ({
       from: jest.fn(() => ({
@@ -82,6 +89,11 @@ function createSubject() {
 
   const db = {
     $count: jest.fn(async () => 0),
+    select: jest.fn((): any => ({
+      from: jest.fn(() => ({
+        where: jest.fn(async () => []),
+      })),
+    })),
     query: {
       work: {
         findFirst: jest.fn(),
@@ -100,6 +112,15 @@ function createSubject() {
         findMany: jest.fn(async ({ where }: any) =>
           where.id.in.map((id: number) => ({ id })),
         ),
+      },
+      workAuthorRelation: {
+        findMany: jest.fn(async () => []),
+      },
+      workCategoryRelation: {
+        findMany: jest.fn(async () => []),
+      },
+      workTagRelation: {
+        findMany: jest.fn(async () => []),
       },
     },
     transaction: jest.fn(async (callback: (runner: typeof tx) => unknown) =>
@@ -129,7 +150,15 @@ function createSubject() {
     {} as any,
   )
 
-  return { db, drizzle, service, tx, updateBuilders, workAuthorService }
+  return {
+    db,
+    drizzle,
+    service,
+    tx,
+    insertBuilders,
+    updateBuilders,
+    workAuthorService,
+  }
 }
 
 async function expectOperationNotAllowed(promise: Promise<unknown>) {
@@ -223,6 +252,24 @@ describe('WorkService relation integrity', () => {
     expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
   })
 
+  it('writes tag relation sortOrder from create tagIds order', async () => {
+    const { db, insertBuilders, service } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce(null)
+
+    await expect(
+      service.createWorkReturningId(createWorkDto({ tagIds: [9, 3, 7] })),
+    ).resolves.toBe(20)
+
+    const tagInsert = insertBuilders.find(
+      (item) => item.table === schema.workTagRelation,
+    )
+    expect(tagInsert?.builder.values).toHaveBeenCalledWith([
+      { workId: 20, tagId: 9, sortOrder: 0 },
+      { workId: 20, tagId: 3, sortOrder: 1 },
+      { workId: 20, tagId: 7, sortOrder: 2 },
+    ])
+  })
+
   it('preserves relations when update omits relation fields', async () => {
     const { db, service, tx } = createSubject()
     db.query.work.findFirst.mockResolvedValueOnce({
@@ -291,6 +338,55 @@ describe('WorkService relation integrity', () => {
     )
 
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workTagRelation)
+  })
+
+  it('writes tag relation sortOrder from update tagIds order', async () => {
+    const { db, insertBuilders, service } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce({
+      id: 20,
+      name: '测试作品',
+      type: 1,
+      forumSectionId: null,
+      authorRelations: [{ authorId: 1 }],
+    })
+
+    await expect(
+      service.updateWork({ id: 20, tagIds: [8, 5] } as any),
+    ).resolves.toBe(true)
+
+    const tagInsert = insertBuilders.find(
+      (item) => item.table === schema.workTagRelation,
+    )
+    expect(tagInsert?.builder.values).toHaveBeenCalledWith([
+      { workId: 20, tagId: 8, sortOrder: 0 },
+      { workId: 20, tagId: 5, sortOrder: 1 },
+    ])
+  })
+
+  it('orders attached tags by relation sortOrder and tagId', async () => {
+    const { db, service } = createSubject()
+    db.query.workTagRelation.findMany.mockResolvedValueOnce([])
+
+    await (service as any).attachWorkRelations({
+      list: [{ id: 20, name: '测试作品' }],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 10,
+    })
+
+    expect(db.query.workTagRelation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: expect.any(Function),
+      }),
+    )
+    const [{ orderBy }] = (db.query.workTagRelation.findMany as jest.Mock).mock
+      .calls[0] as any
+    const asc = jest.fn((field: unknown) => ({ asc: field }))
+    const order = orderBy(
+      { sortOrder: 'sortOrder', tagId: 'tagId' },
+      { asc },
+    )
+    expect(order).toEqual([{ asc: 'sortOrder' }, { asc: 'tagId' }])
   })
 
   it('soft-deletes active third-party bindings when deleting a work', async () => {

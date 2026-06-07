@@ -1,7 +1,13 @@
-import { BaseTagDto, CreateTagDto, QueryTagDto, UpdateTagDto, UpdateTagSortDto } from '@libs/content/tag/dto/tag.dto';
-import { WorkTagService } from '@libs/content/tag/tag.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto';
+import {
+  AdminTagDto,
+  CreateTagDto,
+  QueryTagDto,
+  UpdateTagDto,
+  UpdateTagSortDto,
+} from '@libs/content/tag/dto/tag.dto'
+import { WorkTagService } from '@libs/content/tag/tag.service'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -37,10 +43,10 @@ export class ContentTagController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询标签列表',
-    model: BaseTagDto,
+    model: AdminTagDto,
   })
   async getPage(@Query() query: QueryTagDto) {
-    return this.tagService.getTagPage(query)
+    return this.tagService.getAdminTagPage(query)
   }
 
   /**
@@ -49,10 +55,10 @@ export class ContentTagController {
   @Get('detail')
   @ApiDoc({
     summary: '获取标签详情',
-    model: BaseTagDto,
+    model: AdminTagDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.tagService.getTagDetail(query)
+    return this.tagService.getAdminTagDetail(query)
   }
 
   /**

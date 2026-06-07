@@ -57,6 +57,50 @@ export class WorkTagService {
 
   // 分页查询标签，未显式传入排序时，默认遵循后台维护的 sortOrder 升序。
   async getTagPage(queryDto: QueryTagDto) {
+    const { where, orderBySql, page } = this.buildTagPageQuery(queryDto)
+
+    const [list, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.workTag)
+        .where(where)
+        .orderBy(...orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workTag, where),
+    ])
+
+    return toPageResult(list, total, page)
+  }
+
+  // 后台分页查询标签；后台运营不展示人气字段，避免把内部指标误当成可运营排序依据。
+  async getAdminTagPage(queryDto: QueryTagDto) {
+    const { where, orderBySql, page } = this.buildTagPageQuery(queryDto)
+
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.workTag.id,
+          name: this.workTag.name,
+          icon: this.workTag.icon,
+          sortOrder: this.workTag.sortOrder,
+          isEnabled: this.workTag.isEnabled,
+          description: this.workTag.description,
+          createdAt: this.workTag.createdAt,
+          updatedAt: this.workTag.updatedAt,
+        })
+        .from(this.workTag)
+        .where(where)
+        .orderBy(...orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.workTag, where),
+    ])
+
+    return toPageResult(list, total, page)
+  }
+
+  private buildTagPageQuery(queryDto: QueryTagDto) {
     const { name, isEnabled, ...pageParams } = queryDto
 
     const conditions: SQL[] = []
@@ -77,24 +121,29 @@ export class WorkTagService {
     const orderQuery = this.drizzle.buildOrderBy(orderBy, {
       table: this.workTag,
     })
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.workTag)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db.$count(this.workTag, where),
-    ])
 
-    return toPageResult(list, total, page)
+    return { orderBySql: orderQuery.orderBySql, page, where }
   }
 
   // 获取标签详情，未命中时按业务异常处理，避免上层把空结果误当成可编辑标签。
   async getTagDetail(input: IdDto) {
     const tag = await this.db.query.workTag.findFirst({
       where: { id: input.id },
+    })
+    if (!tag) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '标签不存在',
+      )
+    }
+    return tag
+  }
+
+  // 后台获取标签详情；隐藏人气字段，保持后台详情与后台列表合同一致。
+  async getAdminTagDetail(input: IdDto) {
+    const tag = await this.db.query.workTag.findFirst({
+      where: { id: input.id },
+      columns: { popularity: false },
     })
     if (!tag) {
       throw new BusinessException(

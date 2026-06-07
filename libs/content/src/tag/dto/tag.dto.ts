@@ -81,6 +81,10 @@ export class CreateTagDto extends OmitType(BaseTagDto, [
   'isEnabled',
 ] as const) {}
 
+export class AdminTagDto extends OmitType(BaseTagDto, [
+  'popularity',
+] as const) {}
+
 export class QueryTagDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseTagDto, ['name', 'isEnabled'] as const)),
