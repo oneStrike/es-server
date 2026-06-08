@@ -44,4 +44,14 @@ export class WorkflowRegistry {
   listWorkflowTypes() {
     return [...this.handlers.keys()]
   }
+
+  // 返回后台可用的工作流类型选项。
+  listWorkflowTypeOptions() {
+    return [...this.handlers.values()].map((handler) => ({
+      description: handler.workflowDescription ?? null,
+      enabled: handler.workflowEnabled ?? true,
+      label: handler.workflowLabel,
+      type: handler.workflowType,
+    }))
+  }
 }

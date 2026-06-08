@@ -167,6 +167,27 @@ describe('WorkflowService state machine', () => {
     }
   }
 
+  function objectContainsReference(
+    value: unknown,
+    target: unknown,
+    seen = new WeakSet<object>(),
+  ): boolean {
+    if (value === target) {
+      return true
+    }
+    if (!value || typeof value !== 'object') {
+      return false
+    }
+    if (seen.has(value)) {
+      return false
+    }
+
+    seen.add(value)
+    return Object.values(value as Record<string, unknown>).some((item) =>
+      objectContainsReference(item, target, seen),
+    )
+  }
+
   function createUpdateTx(returningRows: unknown[][] = []) {
     const updateSets: Record<string, unknown>[] = []
     const updateTargets: unknown[] = []
@@ -348,10 +369,20 @@ describe('WorkflowService state machine', () => {
         selectedItemCount: 2,
       })),
       validateRetry: jest.fn(async () => undefined),
+      workflowDescription: '从三方书源导入漫画内容',
+      workflowLabel: '三方导入',
       workflowType: 'content-import.third-party-import',
     }
     const registry = {
       has: jest.fn(() => true),
+      listWorkflowTypeOptions: jest.fn(() => [
+        {
+          description: '从三方书源导入漫画内容',
+          enabled: true,
+          label: '三方导入',
+          type: 'content-import.third-party-import',
+        },
+      ]),
       resolve: jest.fn(() => handler),
     }
     const service = new WorkflowService(drizzle as never, registry as never)
@@ -466,6 +497,37 @@ describe('WorkflowService state machine', () => {
     expect(db.$count).toHaveBeenNthCalledWith(2, expect.anything(), undefined)
     expect(db.query.where).toHaveBeenNthCalledWith(1, expect.anything())
     expect(db.query.where).toHaveBeenNthCalledWith(2, undefined)
+  })
+
+  it('applies date-only createdAt range to workflow job pages', async () => {
+    const { service } = createService()
+    const db = createPageDb([[createWorkflowJob()]], [1])
+    setPageDrizzle(service, db)
+
+    await service.getJobPage({
+      endDate: '2026-05-17',
+      pageIndex: 1,
+      pageSize: 10,
+      startDate: '2026-05-17',
+    })
+
+    const whereCondition = db.query.where.mock.calls[0]?.[0]
+    expect(objectContainsReference(whereCondition, 'createdAt')).toBe(true)
+  })
+
+  it('returns workflow type options from the registry', async () => {
+    const { service } = createService()
+
+    await expect(service.getWorkflowTypeOptions()).resolves.toEqual({
+      list: [
+        {
+          description: '从三方书源导入漫画内容',
+          enabled: true,
+          label: '三方导入',
+          type: 'content-import.third-party-import',
+        },
+      ],
+    })
   })
 
   it('returns bounded workflow records with attempt correlation', async () => {
@@ -1440,9 +1502,11 @@ describe('WorkflowService state machine', () => {
     const { handler, service } = createService({ tx })
     const releaseConflictKeys = jest.fn(async () => undefined)
     const appendEventWithDb = jest.fn(async () => 1n)
+    const appendEvent = jest.fn(async () => 2n)
     setServiceMethod(service, 'readJobWithDb', jest.fn(async () => job))
     setServiceMethod(service, 'releaseConflictKeys', releaseConflictKeys)
     setServiceMethod(service, 'appendEventWithDb', appendEventWithDb)
+    setServiceMethod(service, 'appendEvent', appendEvent)
 
     const result = await service.expireJob({ jobId: 'job-1' })
 
@@ -1458,12 +1522,12 @@ describe('WorkflowService state machine', () => {
       tx,
       expect.any(Date),
     )
-    expect(appendEventWithDb).toHaveBeenCalledWith(
+    expect(appendEvent).toHaveBeenCalledWith(
       expect.objectContaining({
+        eventCode: 'WORKFLOW_RETAINED_RESOURCE_CLEANED',
         eventType: WorkflowEventTypeEnum.CLEANUP_RECORDED,
         workflowAttemptId: 10n,
       }),
-      tx,
     )
     expect(updateSets).toEqual(
       expect.arrayContaining([

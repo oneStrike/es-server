@@ -175,7 +175,7 @@ export class TaskController {
     return this.taskRewardRetryService.retryTaskInstanceReward(body.id)
   }
 
-  // 批量重试待补偿的任务奖励，首版仅支持 limit 维度。
+  // 批量重试待补偿的任务奖励，必须由当前筛选或选中实例限定范围。
   @Post('instance/reward/retry-pending/batch')
   @ApiAuditDoc({
     summary: '批量重试待补偿的任务实例奖励',
@@ -187,7 +187,7 @@ export class TaskController {
   @ApiBody({ type: RetryTaskRewardBatchDto, required: false })
   async retryPendingTaskRewardsBatch(@Body() body?: RetryTaskRewardBatchDto) {
     return this.taskRewardRetryService.retryCompletedTaskRewardsBatch(
-      body?.limit ?? 100,
+      body ?? {},
     )
   }
 

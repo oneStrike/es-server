@@ -5,6 +5,7 @@ import type {
   TaskStepSelect,
 } from '@db/schema'
 import type { TaskRewardSettlementResult } from '@libs/growth/growth-reward/types/growth-reward-result.type'
+import type { SQL } from 'drizzle-orm'
 import type { GrowthRewardItem } from '../reward-rule/reward-item.type'
 import type { TaskRewardSettlementSummaryDto } from './dto/task-view.dto'
 import type {
@@ -66,6 +67,7 @@ import {
   TaskProgressDto,
 } from './dto/task-query.dto'
 import {
+  RetryTaskRewardBatchDto,
   TaskRewardRetryBatchResultDto,
   TaskRewardRetryFailureDto,
   TaskRewardRetryResultDto,
@@ -844,8 +846,74 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 批量扫描并重试已完成实例奖励。
   async retryCompletedTaskRewardsBatch(
-    limit = 100,
+    input: RetryTaskRewardBatchDto | number = {},
   ): Promise<TaskRewardRetryBatchResultDto> {
+    const allowUnscoped = typeof input === 'number'
+    const retryScope: RetryTaskRewardBatchDto =
+      typeof input === 'number'
+        ? { limit: input }
+        : {
+            ...input,
+            instanceIds: this.normalizeTaskInstanceIds(input.instanceIds),
+          }
+    const limit = Math.max(1, Math.min(retryScope.limit ?? 100, 500))
+    const createdRange =
+      typeof input === 'number'
+        ? undefined
+        : buildDateOnlyRangeInAppTimeZone(input.startDate, input.endDate)
+    const hasScopedFilter =
+      allowUnscoped ||
+      Boolean(retryScope.instanceIds?.length) ||
+      retryScope.taskId !== undefined ||
+      retryScope.userId !== undefined ||
+      retryScope.rewardSettlementId !== undefined ||
+      retryScope.settlementStatus !== undefined ||
+      Boolean(createdRange?.gte) ||
+      Boolean(createdRange?.lt)
+
+    if (!hasScopedFilter) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '批量重试任务奖励必须携带当前筛选条件或选中的任务实例',
+      )
+    }
+
+    const scopeConditions: SQL[] = []
+    if (retryScope.instanceIds?.length) {
+      scopeConditions.push(
+        inArray(this.taskInstanceTable.id, retryScope.instanceIds),
+      )
+    }
+    if (retryScope.taskId !== undefined) {
+      scopeConditions.push(eq(this.taskInstanceTable.taskId, retryScope.taskId))
+    }
+    if (retryScope.userId !== undefined) {
+      scopeConditions.push(eq(this.taskInstanceTable.userId, retryScope.userId))
+    }
+    if (retryScope.rewardSettlementId !== undefined) {
+      scopeConditions.push(
+        eq(
+          this.growthRewardSettlementTable.id,
+          retryScope.rewardSettlementId,
+        ),
+      )
+    }
+    if (retryScope.settlementStatus !== undefined) {
+      const settlementStatusCondition =
+        this.buildTaskReconciliationSettlementStatusCondition(
+          retryScope.settlementStatus,
+        )
+      if (settlementStatusCondition) {
+        scopeConditions.push(settlementStatusCondition)
+      }
+    }
+    if (createdRange?.gte) {
+      scopeConditions.push(gte(this.taskInstanceTable.createdAt, createdRange.gte))
+    }
+    if (createdRange?.lt) {
+      scopeConditions.push(lt(this.taskInstanceTable.createdAt, createdRange.lt))
+    }
+
     const rows = await this.db
       .select({
         instanceId: this.taskInstanceTable.id,
@@ -869,10 +937,11 @@ export class TaskExecutionService extends TaskServiceSupport {
             isNull(this.growthRewardSettlementTable.id),
             sql`${this.growthRewardSettlementTable.settlementStatus} not in (${GrowthRewardSettlementStatusEnum.SUCCESS}, ${GrowthRewardSettlementStatusEnum.TERMINAL})`,
           ),
+          ...scopeConditions,
         ),
       )
       .orderBy(desc(this.taskInstanceTable.id))
-      .limit(Math.max(1, Math.min(limit, 500)))
+      .limit(limit)
 
     let succeededCount = 0
     let failedCount = 0
@@ -913,6 +982,15 @@ export class TaskExecutionService extends TaskServiceSupport {
       skippedCount,
       failures,
     }
+  }
+
+  // 规整后台选中的任务实例 ID，避免重复扫描和无效输入污染 SQL。
+  private normalizeTaskInstanceIds(ids?: number[]) {
+    return [
+      ...new Set(
+        (ids ?? []).filter((id) => Number.isInteger(id) && id > 0),
+      ),
+    ]
   }
 
   // 消费业务事件并推进事件步骤。

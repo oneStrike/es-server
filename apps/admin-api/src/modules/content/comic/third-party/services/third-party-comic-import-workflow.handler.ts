@@ -50,6 +50,8 @@ export class ThirdPartyComicImportWorkflowHandler
 {
   /** 工作流类型。 */
   readonly workflowType = ContentImportWorkflowType.THIRD_PARTY_IMPORT
+  readonly workflowLabel = '三方导入'
+  readonly workflowDescription = '从三方书源导入漫画内容'
 
   // 初始化 workflow handler 依赖。
   constructor(

@@ -127,6 +127,16 @@ describe('AdminWorkflowController', () => {
         total: 1,
       })),
       getNotificationList: jest.fn(async () => workflowNotificationList),
+      getWorkflowTypeOptions: jest.fn(async () => ({
+        list: [
+          {
+            description: '从三方书源导入漫画内容',
+            enabled: true,
+            label: '三方导入',
+            type: 'content-import.third-party-import',
+          },
+        ],
+      })),
       getJobRecordPage: jest.fn(async () => workflowRecordPage),
       getItemPage: jest.fn(async () => ({
         list: [workflowItem],
@@ -185,6 +195,20 @@ describe('AdminWorkflowController', () => {
     expect(workflowService.getJobDetail).toHaveBeenCalledWith({
       jobId: 'job-1',
     })
+  })
+
+  it('returns workflow type options from service registry projection', async () => {
+    const { controller, workflowService } = createController()
+
+    const result = await controller.getWorkflowTypeOptions()
+
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        label: '三方导入',
+        type: 'content-import.third-party-import',
+      }),
+    )
+    expect(workflowService.getWorkflowTypeOptions).toHaveBeenCalled()
   })
 
   it('returns bounded workflow records through the record page endpoint', async () => {

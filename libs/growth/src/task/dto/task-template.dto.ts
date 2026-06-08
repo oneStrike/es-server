@@ -4,6 +4,24 @@ import {
 } from '@libs/growth/event-definition/event-definition.constant'
 import { ArrayProperty, BooleanProperty, EnumProperty, StringProperty } from '@libs/platform/decorators'
 
+export class TaskTemplateFilterFieldOptionDto {
+  @StringProperty({
+    description: '选项展示名',
+    example: '漫画作品',
+    maxLength: 80,
+    validation: false,
+  })
+  label!: string
+
+  @StringProperty({
+    description: '选项值',
+    example: 'comic_work',
+    maxLength: 80,
+    validation: false,
+  })
+  value!: string
+}
+
 export class TaskTemplateFilterFieldDto {
   @StringProperty({
     description: '过滤字段稳定键',
@@ -32,6 +50,30 @@ export class TaskTemplateFilterFieldDto {
     maxLength: 255,
   })
   description!: string
+
+  @ArrayProperty({
+    description: '可选择的受控选项；为空时按 valueType 使用普通输入',
+    itemClass: TaskTemplateFilterFieldOptionDto,
+    required: false,
+    validation: false,
+  })
+  options?: TaskTemplateFilterFieldOptionDto[]
+
+  @StringProperty({
+    description: '运营填写提示',
+    example: '请选择目标类型',
+    required: false,
+    validation: false,
+  })
+  placeholder?: string
+
+  @StringProperty({
+    description: '后端匹配操作符',
+    example: 'eq',
+    required: false,
+    validation: false,
+  })
+  operator?: string
 }
 
 export class TaskTemplateFilterValueDto {

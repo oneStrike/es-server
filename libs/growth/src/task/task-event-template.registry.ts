@@ -245,11 +245,42 @@ export class TaskEventTemplateRegistry {
           label: '目标类型',
           valueType: 'string',
           description: '用于限制同一模板下只统计特定目标类型。',
+          options: this.buildTargetTypeOptions(),
+          placeholder: '请选择目标类型',
+          operator: 'eq',
         },
       ]
     }
 
     return []
+  }
+
+  // 构造运营可见的目标类型选项。
+  private buildTargetTypeOptions() {
+    const labels: Record<EventDefinitionEntityTypeEnum, string> = {
+      [EventDefinitionEntityTypeEnum.ADMIN_OPERATION]: '管理端操作',
+      [EventDefinitionEntityTypeEnum.BADGE]: '徽章',
+      [EventDefinitionEntityTypeEnum.CHECK_IN]: '签到记录',
+      [EventDefinitionEntityTypeEnum.COMIC_CHAPTER]: '漫画章节',
+      [EventDefinitionEntityTypeEnum.COMIC_WORK]: '漫画作品',
+      [EventDefinitionEntityTypeEnum.COMMENT]: '评论',
+      [EventDefinitionEntityTypeEnum.CONTENT]: '通用内容',
+      [EventDefinitionEntityTypeEnum.FORUM_REPLY]: '论坛回复',
+      [EventDefinitionEntityTypeEnum.FORUM_TOPIC]: '论坛主题',
+      [EventDefinitionEntityTypeEnum.NOVEL_CHAPTER]: '小说章节',
+      [EventDefinitionEntityTypeEnum.NOVEL_WORK]: '小说作品',
+      [EventDefinitionEntityTypeEnum.REPORT]: '举报',
+      [EventDefinitionEntityTypeEnum.REPORTED_TARGET]: '被举报目标',
+      [EventDefinitionEntityTypeEnum.TASK]: '任务',
+      [EventDefinitionEntityTypeEnum.TASK_INSTANCE]: '任务实例',
+      [EventDefinitionEntityTypeEnum.USER]: '用户',
+      [EventDefinitionEntityTypeEnum.USER_PROFILE]: '用户资料',
+    }
+
+    return Object.values(EventDefinitionEntityTypeEnum).map((value) => ({
+      label: labels[value],
+      value,
+    }))
   }
 
   // 解析模板需要给运营展示的提醒文案。

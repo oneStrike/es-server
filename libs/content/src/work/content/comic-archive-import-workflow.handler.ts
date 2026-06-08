@@ -18,6 +18,8 @@ export class ComicArchiveImportWorkflowHandler
 {
   /** 工作流类型。 */
   readonly workflowType = ContentImportWorkflowType.ARCHIVE_IMPORT
+  readonly workflowLabel = '压缩包导入'
+  readonly workflowDescription = '导入漫画压缩包内容'
 
   // 初始化压缩包 workflow handler 依赖。
   constructor(

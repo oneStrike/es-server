@@ -946,3 +946,50 @@ export class WorkflowJobDetailPayloadDto {
   })
   job!: WorkflowJobDetailDto
 }
+
+/** 工作流类型选项 DTO。 */
+export class WorkflowTypeOptionDto {
+  @StringProperty({
+    description: '工作流类型',
+    example: 'content-import.third-party-import',
+    required: true,
+    validation: false,
+  })
+  type!: string
+
+  @StringProperty({
+    description: '运营侧展示名称',
+    example: '三方导入',
+    required: true,
+    validation: false,
+  })
+  label!: string
+
+  @StringProperty({
+    description: '工作流说明',
+    example: '从三方书源导入漫画内容',
+    nullable: true,
+    required: false,
+    validation: false,
+  })
+  description!: string | null
+
+  @BooleanProperty({
+    description: '是否可在后台筛选中展示为启用',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  enabled!: boolean
+}
+
+/** 工作流类型选项响应 DTO。 */
+export class WorkflowTypeOptionsResponseDto {
+  @ArrayProperty({
+    description: '工作流类型选项列表',
+    itemClass: WorkflowTypeOptionDto,
+    required: true,
+    validation: false,
+  })
+  list!: WorkflowTypeOptionDto[]
+}

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { RetryTaskRewardBatchDto } from './dto/task-reward-retry.dto'
 import { TaskExecutionService } from './task-execution.service'
 
 /**
@@ -16,7 +17,9 @@ export class TaskRewardRetryService {
   }
 
   // 批量补偿已完成但奖励未成功的任务实例。
-  async retryCompletedTaskRewardsBatch(limit = 100) {
-    return this.taskExecutionService.retryCompletedTaskRewardsBatch(limit)
+  async retryCompletedTaskRewardsBatch(
+    input: RetryTaskRewardBatchDto | number = {},
+  ) {
+    return this.taskExecutionService.retryCompletedTaskRewardsBatch(input)
   }
 }

@@ -822,6 +822,46 @@ describe('TaskExecutionService review regressions', () => {
     ).toBe(true)
   })
 
+  it('retryCompletedTaskRewardsBatch rejects empty admin scope', async () => {
+    const { service } = createExecutionService()
+
+    await expect(service.retryCompletedTaskRewardsBatch({})).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+    })
+  })
+
+  it('retryCompletedTaskRewardsBatch keeps retry predicate scoped by filters', async () => {
+    const { service, db } = createExecutionService()
+    const selectRecorder: Record<string, ReturnType<typeof jest.fn>> = {}
+    ;(db as any).select = jest.fn(() =>
+      createThenableBuilder([], selectRecorder),
+    )
+
+    await service.retryCompletedTaskRewardsBatch({
+      endDate: '2026-05-17',
+      rewardSettlementId: 901,
+      settlementStatus: GrowthRewardSettlementStatusEnum.PENDING,
+      startDate: '2026-05-17',
+      taskId: 1,
+      userId: 202,
+    })
+
+    const whereCondition = selectRecorder.where.mock.calls[0]?.[0]
+    expect(
+      objectContainsReference(whereCondition, schema.taskInstance.taskId),
+    ).toBe(true)
+    expect(
+      objectContainsReference(whereCondition, schema.taskInstance.userId),
+    ).toBe(true)
+    expect(
+      objectContainsReference(whereCondition, schema.taskInstance.createdAt),
+    ).toBe(true)
+    expect(
+      objectContainsReference(whereCondition, schema.growthRewardSettlement.id),
+    ).toBe(true)
+    expect(selectRecorder.limit).toHaveBeenCalledWith(100)
+  })
+
   it('task definition pending reward count includes orphaned reward settlement links', async () => {
     const { service, db } = createExecutionService()
     const activeRecorder: Record<string, ReturnType<typeof jest.fn>> = {}

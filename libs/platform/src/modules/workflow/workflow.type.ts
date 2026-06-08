@@ -254,6 +254,9 @@ export interface WorkflowCancellationErrorInput {
 /** 工作流处理器。 */
 export interface WorkflowHandler {
   workflowType: string
+  workflowLabel: string
+  workflowDescription?: string
+  workflowEnabled?: boolean
   execute: (context: WorkflowExecutionContext) => Promise<void>
   validateRetry?: (context: WorkflowRetryContext) => Promise<void>
   prepareRetry?: (

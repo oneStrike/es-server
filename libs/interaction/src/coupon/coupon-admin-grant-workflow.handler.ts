@@ -39,6 +39,8 @@ export class CouponAdminGrantWorkflowHandler
   implements OnModuleInit, WorkflowHandler
 {
   readonly workflowType = CouponWorkflowType.ADMIN_GRANT_BATCH
+  readonly workflowLabel = '批量发券'
+  readonly workflowDescription = '后台批量发放优惠券'
 
   // 初始化批量发券 workflow handler 依赖。
   constructor(

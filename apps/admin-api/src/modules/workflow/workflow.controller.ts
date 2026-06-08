@@ -17,6 +17,7 @@ import {
   WorkflowRecordDto,
   WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
+  WorkflowTypeOptionsResponseDto,
 } from '@libs/platform/modules/workflow/dto'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -77,6 +78,16 @@ export class AdminWorkflowController {
   // 分页查询工作流通用条目。
   async getItemPage(@Query() query: WorkflowItemPageRequestDto) {
     return this.workflowService.getItemPage(query)
+  }
+
+  @Get('type-options')
+  @ApiDoc({
+    summary: '查询工作流类型选项',
+    model: WorkflowTypeOptionsResponseDto,
+  })
+  // 查询后台可用的工作流类型选项。
+  async getWorkflowTypeOptions() {
+    return this.workflowService.getWorkflowTypeOptions()
   }
 
   @Post('cancel')

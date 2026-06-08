@@ -18,6 +18,7 @@ import {
   QueryTaskReconciliationPageDto,
   TaskProgressDto,
 } from './dto/task-query.dto'
+import { RetryTaskRewardBatchDto } from './dto/task-reward-retry.dto'
 import { TaskDefinitionService } from './task-definition.service'
 import { TaskEventFailureService } from './task-event-failure.service'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
@@ -111,8 +112,10 @@ export class TaskService {
   }
 
   // 批量补偿已完成任务奖励。
-  async retryCompletedTaskRewardsBatch(limit = 100) {
-    return this.taskRewardRetryService.retryCompletedTaskRewardsBatch(limit)
+  async retryCompletedTaskRewardsBatch(
+    input: RetryTaskRewardBatchDto | number = {},
+  ) {
+    return this.taskRewardRetryService.retryCompletedTaskRewardsBatch(input)
   }
 
   // 分页查询任务事件消费失败事实。

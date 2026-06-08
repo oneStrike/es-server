@@ -50,6 +50,8 @@ export class ThirdPartyComicSyncWorkflowHandler
 {
   /** 工作流类型。 */
   readonly workflowType = ContentImportWorkflowType.THIRD_PARTY_SYNC
+  readonly workflowLabel = '三方同步'
+  readonly workflowDescription = '同步三方漫画内容更新'
 
   // 初始化 workflow handler 依赖。
   constructor(

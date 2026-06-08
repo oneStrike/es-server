@@ -23,8 +23,9 @@ import process from 'node:process'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm'
 import {
   WorkflowArchiveDto,
   WorkflowExpireDto,
@@ -307,6 +308,10 @@ export class WorkflowService {
   // 分页查询工作流任务。
   async getJobPage(input: WorkflowJobPageRequestDto) {
     const conditions: SQL[] = []
+    const createdRange = buildDateOnlyRangeInAppTimeZone(
+      input.startDate,
+      input.endDate,
+    )
     if (input.jobId) {
       conditions.push(eq(this.workflowJob.jobId, input.jobId))
     }
@@ -320,6 +325,12 @@ export class WorkflowService {
       conditions.push(isNotNull(this.workflowJob.archivedAt))
     } else if (input.archiveScope !== WorkflowJobArchiveScopeEnum.ALL) {
       conditions.push(isNull(this.workflowJob.archivedAt))
+    }
+    if (createdRange?.gte) {
+      conditions.push(gte(this.workflowJob.createdAt, createdRange.gte))
+    }
+    if (createdRange?.lt) {
+      conditions.push(lt(this.workflowJob.createdAt, createdRange.lt))
     }
 
     const where = conditions.length ? and(...conditions) : undefined
@@ -345,6 +356,13 @@ export class WorkflowService {
     return {
       ...pageResult,
       list: pageResult.list.map((row) => toWorkflowJobDto(row)),
+    }
+  }
+
+  // 查询后台可用的工作流类型选项。
+  async getWorkflowTypeOptions() {
+    return {
+      list: this.registry.listWorkflowTypeOptions(),
     }
   }
 
@@ -649,7 +667,7 @@ export class WorkflowService {
 
   // 过期清理失败或部分失败工作流保留的 retained resource。
   async expireJob(input: WorkflowExpireDto) {
-    return this.drizzle.withTransaction(async (tx) => {
+    const expired = await this.drizzle.withTransaction(async (tx) => {
       const job = await this.readJobWithDb(input.jobId, tx)
       if (!WORKFLOW_RETRYABLE_JOB_STATUSES.includes(job.status)) {
         throw new BusinessException(
@@ -658,7 +676,6 @@ export class WorkflowService {
         )
       }
       const handler = this.registry.resolve(job.workflowType)
-      await handler.cleanupRetainedResources?.(job.jobId)
       const now = new Date()
       const [updatedJob] = await tx
         .update(this.workflowJob)
@@ -671,18 +688,38 @@ export class WorkflowService {
         .where(eq(this.workflowJob.id, job.id))
         .returning()
       await this.releaseConflictKeys(job.id, tx, now)
-      await this.appendEventWithDb(
-        {
-          workflowJobId: job.id,
-          workflowAttemptId: job.currentAttemptFk,
-          eventType: WorkflowEventTypeEnum.CLEANUP_RECORDED,
-          eventCode: 'WORKFLOW_RETAINED_RESOURCE_CLEANED',
-          detail: { jobId: job.jobId },
-        },
-        tx,
-      )
-      return toWorkflowJobDto(updatedJob)
+      return { handler, job, result: toWorkflowJobDto(updatedJob) }
     })
+
+    try {
+      await expired.handler.cleanupRetainedResources?.(expired.job.jobId)
+      await this.appendEvent({
+        workflowJobId: expired.job.id,
+        workflowAttemptId: expired.job.currentAttemptFk,
+        eventType: WorkflowEventTypeEnum.CLEANUP_RECORDED,
+        eventCode: 'WORKFLOW_RETAINED_RESOURCE_CLEANED',
+        detail: { jobId: expired.job.jobId },
+      })
+    } catch (error) {
+      this.logger.error({
+        message: 'workflow_retained_resource_cleanup_failed',
+        jobId: expired.job.jobId,
+        workflowType: expired.job.workflowType,
+        error: toWorkflowErrorObject(error),
+      })
+      await this.appendEvent({
+        workflowJobId: expired.job.id,
+        workflowAttemptId: expired.job.currentAttemptFk,
+        eventType: WorkflowEventTypeEnum.CLEANUP_RECORDED,
+        eventCode: 'WORKFLOW_RETAINED_RESOURCE_CLEANUP_FAILED',
+        detail: {
+          error: error instanceof Error ? error.message : String(error),
+          jobId: expired.job.jobId,
+        },
+      })
+    }
+
+    return expired.result
   }
 
   // 追加工作流事件。

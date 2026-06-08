@@ -21,6 +21,12 @@ export interface TaskEventTemplateFilterField {
   valueType: 'number' | 'string' | 'boolean'
   /** 字段业务说明。 */
   description: string
+  /** 受控选项；存在时后台应使用选择器而非自由输入。 */
+  options?: Array<{ label: string, value: string }>
+  /** 运营填写提示。 */
+  placeholder?: string
+  /** 后端匹配操作符。 */
+  operator?: string
 }
 
 /**
