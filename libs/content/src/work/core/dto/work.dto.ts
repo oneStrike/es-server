@@ -350,7 +350,7 @@ export class QueryWorkTypeDto extends IntersectionType(
 ) {}
 
 export class UpdateWorkDto extends IntersectionType(
-  PartialType(CreateWorkDto),
+  PartialType(OmitType(CreateWorkDto, ['type'] as const)),
   IdDto,
 ) {}
 

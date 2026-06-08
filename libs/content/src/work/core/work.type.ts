@@ -2,6 +2,7 @@ import type { WorkSelect } from '@db/schema'
 import type { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
 import type { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
 import type { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
+import type { WorkTypeEnum } from '@libs/platform/constant'
 import type { ContentPurchasePricingDto } from '../../permission/dto/content-purchase-pricing.dto'
 
 /**
@@ -14,6 +15,7 @@ export interface WorkDetailContext {
   device?: string
   userAgent?: string
   bypassVisibilityCheck?: boolean
+  expectedType?: WorkTypeEnum
 }
 
 /**

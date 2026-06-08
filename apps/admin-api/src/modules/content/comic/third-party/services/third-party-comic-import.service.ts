@@ -519,7 +519,10 @@ export class ThirdPartyComicImportService {
     const createdChapterIds = [...(residue.createdChapterIds ?? [])].reverse()
     if (createdChapterIds.length > 0) {
       await context.assertStillOwned()
-      await this.workChapterService.deleteChapters(createdChapterIds)
+      await this.workChapterService.deleteChapters(
+        createdChapterIds,
+        WorkTypeEnum.COMIC,
+      )
     }
 
     for (const snapshot of [...(residue.updatedChapters ?? [])].reverse()) {
@@ -540,7 +543,7 @@ export class ThirdPartyComicImportService {
     const createdWorkIds = [...(residue.createdWorkIds ?? [])].reverse()
     for (const workId of createdWorkIds) {
       await context.assertStillOwned()
-      await this.workService.deleteWork(workId)
+      await this.workService.deleteWork(workId, WorkTypeEnum.COMIC)
     }
 
     const cleanupFailures: string[] = []
@@ -588,6 +591,7 @@ export class ThirdPartyComicImportService {
 
       await this.workService.getWorkDetail(dto.targetWorkId, {
         bypassVisibilityCheck: true,
+        expectedType: WorkTypeEnum.COMIC,
       })
       return {
         cover: {
@@ -878,24 +882,30 @@ export class ThirdPartyComicImportService {
       await this.appendResidueList(
         context,
         'updatedChapters',
-        await this.readChapterSnapshot(chapter.targetChapterId),
+        await this.readChapterSnapshot(chapter.targetChapterId, workId),
       )
       await context.assertStillOwned()
-      await this.workChapterService.updateChapter({
-        id: chapter.targetChapterId,
-        ...this.toChapterUpdate(chapter),
-      })
+      await this.workChapterService.updateChapter(
+        {
+          id: chapter.targetChapterId,
+          ...this.toChapterUpdate(chapter),
+        },
+        WorkTypeEnum.COMIC,
+      )
       localChapterId = chapter.targetChapterId
     } else {
       await this.assertChapterTitleAvailable(workId, chapter.title)
       await context.assertStillOwned()
       const createdChapterId =
-        await this.workChapterService.createChapterReturningId({
-          ...this.toChapterUpdate(chapter),
-          isPublished: false,
-          workId,
-          workType: WorkTypeEnum.COMIC,
-        })
+        await this.workChapterService.createChapterReturningId(
+          {
+            ...this.toChapterUpdate(chapter),
+            isPublished: false,
+            workId,
+            workType: WorkTypeEnum.COMIC,
+          },
+          WorkTypeEnum.COMIC,
+        )
       await this.recordCreatedChapter(context, createdChapterId)
       localChapterId = createdChapterId
     }
@@ -1364,7 +1374,7 @@ export class ThirdPartyComicImportService {
     if (sourceBinding?.workId === workId) {
       await this.bindingService.softDeleteSourceBindings([sourceBinding.id])
     }
-    await this.workService.deleteWork(workId)
+    await this.workService.deleteWork(workId, WorkTypeEnum.COMIC)
     for (const residue of uploadResidues.reverse()) {
       await this.remoteImageImportService.deleteImportedFile(
         residue.deleteTarget,
@@ -1443,6 +1453,7 @@ export class ThirdPartyComicImportService {
     )
     const conditions = [
       eq(this.workChapter.workId, workId),
+      eq(this.workChapter.workType, WorkTypeEnum.COMIC),
       isNull(this.workChapter.deletedAt),
       sql`regexp_replace(trim(${this.workChapter.title}), '\s+', ' ', 'g') = ${normalizedTitle}`,
     ]
@@ -1573,9 +1584,15 @@ export class ThirdPartyComicImportService {
   // 读取章节回滚快照。
   private async readChapterSnapshot(
     chapterId: number,
+    workId: number,
   ): Promise<ThirdPartyComicUpdatedChapterSnapshot> {
     const row = await this.db.query.workChapter.findFirst({
-      where: { id: chapterId, deletedAt: { isNull: true } },
+      where: {
+        id: chapterId,
+        workId,
+        workType: WorkTypeEnum.COMIC,
+        deletedAt: { isNull: true },
+      },
       columns: {
         id: true,
         title: true,
@@ -1627,7 +1644,13 @@ export class ThirdPartyComicImportService {
             canComment: snapshot.canComment,
             content: snapshot.content,
           })
-          .where(eq(this.workChapter.id, snapshot.id)),
+          .where(
+            and(
+              eq(this.workChapter.id, snapshot.id),
+              eq(this.workChapter.workType, WorkTypeEnum.COMIC),
+              isNull(this.workChapter.deletedAt),
+            ),
+          ),
       { notFound: '章节不存在' },
     )
   }
@@ -1674,7 +1697,7 @@ export class ThirdPartyComicImportService {
     try {
       await this.appendResidueList(context, 'createdWorkIds', workId)
     } catch (error) {
-      await this.workService.deleteWork(workId)
+      await this.workService.deleteWork(workId, WorkTypeEnum.COMIC)
       throw error
     }
   }
@@ -1687,7 +1710,10 @@ export class ThirdPartyComicImportService {
     try {
       await this.appendResidueList(context, 'createdChapterIds', chapterId)
     } catch (error) {
-      await this.workChapterService.deleteChapters([chapterId])
+      await this.workChapterService.deleteChapters(
+        [chapterId],
+        WorkTypeEnum.COMIC,
+      )
       throw error
     }
   }

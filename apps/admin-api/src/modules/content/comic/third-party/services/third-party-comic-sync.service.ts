@@ -261,7 +261,10 @@ export class ThirdPartyComicSyncService {
     const createdChapterIds = [...(residue.createdChapterIds ?? [])].reverse()
     if (createdChapterIds.length > 0) {
       await context.assertStillOwned()
-      await this.workChapterService.deleteChapters(createdChapterIds)
+      await this.workChapterService.deleteChapters(
+        createdChapterIds,
+        WorkTypeEnum.COMIC,
+      )
     }
 
     const cleanupFailures: string[] = []
@@ -338,18 +341,21 @@ export class ThirdPartyComicSyncService {
       imageProgressReporter ??
       this.createSyncImageProgressReporter(context, [plan])
     await context.assertStillOwned()
-    const chapterId = await this.workChapterService.createChapterReturningId({
-      canComment: work.canComment,
-      canDownload: false,
-      isPreview: false,
-      isPublished: false,
-      price: work.chapterPrice,
-      sortOrder: plan.localSortOrder,
-      title: plan.title,
-      viewRule: WorkViewPermissionEnum.INHERIT,
-      workId: work.id,
-      workType: WorkTypeEnum.COMIC,
-    })
+    const chapterId = await this.workChapterService.createChapterReturningId(
+      {
+        canComment: work.canComment,
+        canDownload: false,
+        isPreview: false,
+        isPublished: false,
+        price: work.chapterPrice,
+        sortOrder: plan.localSortOrder,
+        title: plan.title,
+        viewRule: WorkViewPermissionEnum.INHERIT,
+        workId: work.id,
+        workType: WorkTypeEnum.COMIC,
+      },
+      WorkTypeEnum.COMIC,
+    )
     await this.recordCreatedChapter(context, chapterId)
 
     const filePaths = await this.remoteImageImportService.importImages(
@@ -529,7 +535,10 @@ export class ThirdPartyComicSyncService {
     try {
       await this.appendResidueList(context, 'createdChapterIds', chapterId)
     } catch (error) {
-      await this.workChapterService.deleteChapters([chapterId])
+      await this.workChapterService.deleteChapters(
+        [chapterId],
+        WorkTypeEnum.COMIC,
+      )
       throw error
     }
   }

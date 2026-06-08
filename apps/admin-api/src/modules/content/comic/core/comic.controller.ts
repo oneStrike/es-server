@@ -1,8 +1,18 @@
-import { BaseWorkDto, CreateWorkDto, PageWorkDto, QueryWorkDto, UpdateWorkDto, UpdateWorkHotDto, UpdateWorkNewDto, UpdateWorkRecommendedDto, UpdateWorkStatusDto } from '@libs/content/work/core/dto/work.dto';
-import { WorkService } from '@libs/content/work/core/work.service';
-import { WorkTypeEnum } from '@libs/platform/constant';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto';
+import {
+  BaseWorkDto,
+  CreateWorkDto,
+  PageWorkDto,
+  QueryWorkDto,
+  UpdateWorkDto,
+  UpdateWorkHotDto,
+  UpdateWorkNewDto,
+  UpdateWorkRecommendedDto,
+  UpdateWorkStatusDto,
+} from '@libs/content/work/core/dto/work.dto'
+import { WorkService } from '@libs/content/work/core/work.service'
+import { WorkTypeEnum } from '@libs/platform/constant'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -11,7 +21,7 @@ import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorat
 @ApiTags('内容管理/漫画管理/基础信息')
 @Controller('admin/content/comic')
 export class ComicController {
-  constructor(private readonly workService: WorkService) { }
+  constructor(private readonly workService: WorkService) {}
 
   @Post('create')
   @ApiAuditDoc({
@@ -42,6 +52,7 @@ export class ComicController {
   async getDetail(@Query() query: IdDto) {
     return this.workService.getWorkDetail(query.id, {
       bypassVisibilityCheck: true,
+      expectedType: WorkTypeEnum.COMIC,
     })
   }
 
@@ -54,7 +65,7 @@ export class ComicController {
     },
   })
   async update(@Body() body: UpdateWorkDto) {
-    return this.workService.updateWork(body)
+    return this.workService.updateWork(body, WorkTypeEnum.COMIC)
   }
 
   @Post('update-status')
@@ -66,7 +77,7 @@ export class ComicController {
     },
   })
   async updateStatus(@Body() body: UpdateWorkStatusDto) {
-    return this.workService.updateStatus(body)
+    return this.workService.updateStatus(body, WorkTypeEnum.COMIC)
   }
 
   @Post('update-recommended')
@@ -78,9 +89,13 @@ export class ComicController {
     },
   })
   async updateRecommended(@Body() body: UpdateWorkRecommendedDto) {
-    return this.workService.updateWorkFlags(body.id, {
-      isRecommended: body.isRecommended,
-    })
+    return this.workService.updateWorkFlags(
+      body.id,
+      {
+        isRecommended: body.isRecommended,
+      },
+      WorkTypeEnum.COMIC,
+    )
   }
 
   @Post('update-hot')
@@ -92,9 +107,13 @@ export class ComicController {
     },
   })
   async updateHot(@Body() body: UpdateWorkHotDto) {
-    return this.workService.updateWorkFlags(body.id, {
-      isHot: body.isHot,
-    })
+    return this.workService.updateWorkFlags(
+      body.id,
+      {
+        isHot: body.isHot,
+      },
+      WorkTypeEnum.COMIC,
+    )
   }
 
   @Post('update-new')
@@ -106,9 +125,13 @@ export class ComicController {
     },
   })
   async updateNew(@Body() body: UpdateWorkNewDto) {
-    return this.workService.updateWorkFlags(body.id, {
-      isNew: body.isNew,
-    })
+    return this.workService.updateWorkFlags(
+      body.id,
+      {
+        isNew: body.isNew,
+      },
+      WorkTypeEnum.COMIC,
+    )
   }
 
   @Post('delete')
@@ -120,6 +143,6 @@ export class ComicController {
     },
   })
   async delete(@Body() body: IdDto) {
-    return this.workService.deleteWork(body.id)
+    return this.workService.deleteWork(body.id, WorkTypeEnum.COMIC)
   }
 }

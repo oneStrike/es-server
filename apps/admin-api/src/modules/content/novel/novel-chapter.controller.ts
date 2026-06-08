@@ -7,7 +7,12 @@ import {
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto, IdsDto } from '@libs/platform/dto'
+import {
+  BatchUpdatePublishedStatusDto,
+  DragReorderDto,
+  IdDto,
+  IdsDto,
+} from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -29,10 +34,13 @@ export class NovelChapterController {
     },
   })
   async create(@Body() body: CreateWorkChapterDto) {
-    return this.workChapterService.createChapter({
-      ...body,
-      workType: WorkTypeEnum.NOVEL,
-    })
+    return this.workChapterService.createChapter(
+      {
+        ...body,
+        workType: WorkTypeEnum.NOVEL,
+      },
+      WorkTypeEnum.NOVEL,
+    )
   }
 
   @Get('page')
@@ -41,7 +49,10 @@ export class NovelChapterController {
     model: AdminWorkChapterPageItemDto,
   })
   async getPage(@Query() query: QueryWorkChapterDto) {
-    return this.workChapterService.getAdminChapterPage(query)
+    return this.workChapterService.getAdminChapterPage(
+      query,
+      WorkTypeEnum.NOVEL,
+    )
   }
 
   @Get('detail')
@@ -52,6 +63,7 @@ export class NovelChapterController {
   async getDetail(@Query() query: IdDto) {
     return this.workChapterService.getChapterDetail(query.id, {
       bypassVisibilityCheck: true,
+      expectedType: WorkTypeEnum.NOVEL,
     })
   }
 
@@ -64,7 +76,7 @@ export class NovelChapterController {
     },
   })
   async update(@Body() body: UpdateWorkChapterDto) {
-    return this.workChapterService.updateChapter(body)
+    return this.workChapterService.updateChapter(body, WorkTypeEnum.NOVEL)
   }
 
   @Post('delete')
@@ -76,7 +88,7 @@ export class NovelChapterController {
     },
   })
   async delete(@Body() query: IdDto) {
-    return this.workChapterService.deleteChapter(query.id)
+    return this.workChapterService.deleteChapter(query.id, WorkTypeEnum.NOVEL)
   }
 
   @Post('batch-delete')
@@ -88,7 +100,22 @@ export class NovelChapterController {
     },
   })
   async batchDelete(@Body() body: IdsDto) {
-    return this.workChapterService.deleteChapters(body.ids)
+    return this.workChapterService.deleteChapters(body.ids, WorkTypeEnum.NOVEL)
+  }
+
+  @Post('batch-update-status')
+  @ApiAuditDoc({
+    summary: '批量更新小说章节发布状态',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async batchUpdateStatus(@Body() body: BatchUpdatePublishedStatusDto) {
+    return this.workChapterService.batchUpdateChapterPublishStatus(
+      body,
+      WorkTypeEnum.NOVEL,
+    )
   }
 
   @Post('swap-sort-order')
@@ -101,6 +128,6 @@ export class NovelChapterController {
     content: '交换小说章节序号',
   })
   async swapSortOrder(@Body() body: DragReorderDto) {
-    return this.workChapterService.swapChapterNumbers(body)
+    return this.workChapterService.swapChapterNumbers(body, WorkTypeEnum.NOVEL)
   }
 }

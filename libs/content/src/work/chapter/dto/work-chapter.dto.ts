@@ -246,7 +246,9 @@ export class QueryAppWorkChapterPageDto extends PickType(BaseWorkChapterDto, [
 }
 
 export class UpdateWorkChapterDto extends IntersectionType(
-  PartialType(CreateWorkChapterDto),
+  PartialType(
+    OmitType(CreateWorkChapterDto, ['workId', 'workType'] as const),
+  ),
   IdDto,
 ) {}
 

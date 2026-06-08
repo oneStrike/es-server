@@ -1,7 +1,11 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
-import { BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  ContentTypeEnum,
+  WorkTypeEnum,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
@@ -46,6 +50,7 @@ export class ComicContentService {
           .where(
             and(
               eq(this.workChapter.id, chapterId),
+              eq(this.workChapter.workType, WorkTypeEnum.COMIC),
               isNull(this.workChapter.deletedAt),
             ),
           ),
@@ -108,6 +113,7 @@ export class ComicContentService {
         and(
           eq(this.workChapter.id, chapterId),
           eq(this.workChapter.workId, query.workId),
+          eq(this.workChapter.workType, WorkTypeEnum.COMIC),
           isNull(this.workChapter.deletedAt),
         ),
       )
@@ -225,7 +231,11 @@ export class ComicContentService {
   // 内部方法：获取章节内容（不进行权限校验），用于其他方法内部调用或管理端直接调用。
   private async getChapterContentsInternal(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
-      where: { id: chapterId, deletedAt: { isNull: true } },
+      where: {
+        id: chapterId,
+        workType: WorkTypeEnum.COMIC,
+        deletedAt: { isNull: true },
+      },
       columns: {
         content: true,
       },

@@ -145,16 +145,29 @@ export class WorkChapterService {
   }
 
   // 创建章节。
-  async createChapter(createDto: CreateWorkChapterDto) {
-    await this.createChapterReturningId(createDto)
+  async createChapter(
+    createDto: CreateWorkChapterDto,
+    expectedType: WorkTypeEnum,
+  ) {
+    await this.createChapterReturningId(createDto, expectedType)
     return true
   }
 
   // 创建章节并返回本地章节 ID，供导入链路继续写入图片内容。
-  async createChapterReturningId(createDto: CreateWorkChapterDto) {
-    const { workId } = createDto
+  async createChapterReturningId(
+    createDto: CreateWorkChapterDto,
+    expectedType: WorkTypeEnum,
+  ) {
+    const { workId, workType } = createDto
 
-    if (!(await this.workExists(workId))) {
+    if (workType !== expectedType) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '章节类型与当前内容域不一致',
+      )
+    }
+
+    if (!(await this.workExists(workId, expectedType))) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '关联的作品不存在',
@@ -181,8 +194,14 @@ export class WorkChapterService {
     )
   }
 
-  private buildAdminChapterPageConditions(dto: QueryWorkChapterDto) {
+  private buildAdminChapterPageConditions(
+    dto: QueryWorkChapterDto,
+    expectedType?: WorkTypeEnum,
+  ) {
     const conditions: SQL[] = [isNull(this.workChapter.deletedAt)]
+    if (expectedType) {
+      conditions.push(eq(this.workChapter.workType, expectedType))
+    }
 
     if (dto.workId !== undefined) {
       conditions.push(eq(this.workChapter.workId, dto.workId))
@@ -265,8 +284,13 @@ export class WorkChapterService {
   }
 
   // 分页查询 admin 管理章节列表。
-  async getAdminChapterPage(dto: QueryWorkChapterDto) {
-    const where = and(...this.buildAdminChapterPageConditions(dto))
+  async getAdminChapterPage(
+    dto: QueryWorkChapterDto,
+    expectedType: WorkTypeEnum,
+  ) {
+    const where = and(
+      ...this.buildAdminChapterPageConditions(dto, expectedType),
+    )
     const orderBy = dto.orderBy?.trim()
       ? dto.orderBy
       : { sortOrder: 'asc' as const }
@@ -362,9 +386,19 @@ export class WorkChapterService {
 
   // 获取章节详情，未登录用户返回基础信息，登录用户额外返回交互状态（点赞、收藏、下载、购买）。
   async getChapterDetail(id: number, context: WorkChapterDetailContext = {}) {
-    const { userId, ipAddress, device, bypassVisibilityCheck = false } = context
+    const {
+      userId,
+      ipAddress,
+      device,
+      bypassVisibilityCheck = false,
+      expectedType,
+    } = context
     const chapter = await this.db.query.workChapter.findFirst({
-      where: { id, deletedAt: { isNull: true } },
+      where: {
+        id,
+        ...(expectedType ? { workType: expectedType } : {}),
+        deletedAt: { isNull: true },
+      },
       with: {
         work: {
           columns: {
@@ -519,8 +553,13 @@ export class WorkChapterService {
     direction: 'previous' | 'next',
     context: WorkChapterDetailContext = {},
   ) {
+    const { expectedType } = context
     const currentChapter = await this.db.query.workChapter.findFirst({
-      where: { id, deletedAt: { isNull: true } },
+      where: {
+        id,
+        ...(expectedType ? { workType: expectedType } : {}),
+        deletedAt: { isNull: true },
+      },
       columns: {
         workId: true,
         sortOrder: true,
@@ -539,11 +578,13 @@ export class WorkChapterService {
         direction === 'previous'
           ? {
               workId: currentChapter.workId,
+              ...(expectedType ? { workType: expectedType } : {}),
               sortOrder: { lt: currentChapter.sortOrder },
               deletedAt: { isNull: true },
             }
           : {
               workId: currentChapter.workId,
+              ...(expectedType ? { workType: expectedType } : {}),
               sortOrder: { gt: currentChapter.sortOrder },
               deletedAt: { isNull: true },
             },
@@ -562,8 +603,16 @@ export class WorkChapterService {
   }
 
   // 更新章节。
-  async updateChapter(dto: UpdateWorkChapterDto) {
-    const { id, ...updateData } = dto
+  async updateChapter(dto: UpdateWorkChapterDto, expectedType: WorkTypeEnum) {
+    const {
+      id,
+      workId: _workId,
+      workType: _workType,
+      ...updateData
+    } = dto as UpdateWorkChapterDto & {
+      workId?: number
+      workType?: WorkTypeEnum
+    }
 
     await this.drizzle.withErrorHandling(
       () =>
@@ -573,6 +622,7 @@ export class WorkChapterService {
           .where(
             and(
               eq(this.workChapter.id, id),
+              eq(this.workChapter.workType, expectedType),
               isNull(this.workChapter.deletedAt),
             ),
           ),
@@ -585,13 +635,13 @@ export class WorkChapterService {
   }
 
   // 删除章节。
-  async deleteChapter(id: number) {
-    return this.deleteChapterRecords([id])
+  async deleteChapter(id: number, expectedType: WorkTypeEnum) {
+    return this.deleteChapterRecords([id], expectedType)
   }
 
   // 批量删除章节。
-  async deleteChapters(ids: number[]) {
-    return this.deleteChapterRecords(ids)
+  async deleteChapters(ids: number[], expectedType: WorkTypeEnum) {
+    return this.deleteChapterRecords(ids, expectedType)
   }
 
   // 批量更新章节发布状态，并通过作品类型约束避免跨内容域误更新。
@@ -631,7 +681,10 @@ export class WorkChapterService {
   }
 
   // 统一处理单删与批量软删除，避免批量删除只命中部分章节时静默成功。
-  private async deleteChapterRecords(ids: number[]) {
+  private async deleteChapterRecords(
+    ids: number[],
+    expectedType: WorkTypeEnum,
+  ) {
     const uniqueIds = [...new Set(ids)]
     if (uniqueIds.length === 0) {
       return true
@@ -644,6 +697,7 @@ export class WorkChapterService {
         .where(
           and(
             inArray(this.workChapter.id, uniqueIds),
+            eq(this.workChapter.workType, expectedType),
             isNull(this.workChapter.deletedAt),
           ),
         )
@@ -663,7 +717,10 @@ export class WorkChapterService {
   }
 
   // 交换章节排序（拖拽重排）。
-  async swapChapterNumbers(dto: SwapWorkChapterNumbersInput) {
+  async swapChapterNumbers(
+    dto: SwapWorkChapterNumbersInput,
+    expectedType: WorkTypeEnum,
+  ) {
     return this.drizzle.withTransaction(async (tx) => {
       const rows = await tx
         .select({
@@ -675,6 +732,7 @@ export class WorkChapterService {
         .where(
           and(
             inArray(this.workChapter.id, [dto.dragId, dto.targetId]),
+            eq(this.workChapter.workType, expectedType),
             isNull(this.workChapter.deletedAt),
           ),
         )
@@ -706,6 +764,7 @@ export class WorkChapterService {
         .where(
           and(
             eq(this.workChapter.workId, dragChapter.workId),
+            eq(this.workChapter.workType, expectedType),
             isNull(this.workChapter.deletedAt),
           ),
         )
@@ -717,6 +776,7 @@ export class WorkChapterService {
         .where(
           and(
             eq(this.workChapter.id, dragChapter.id),
+            eq(this.workChapter.workType, expectedType),
             isNull(this.workChapter.deletedAt),
           ),
         )
@@ -726,6 +786,7 @@ export class WorkChapterService {
         .where(
           and(
             eq(this.workChapter.id, targetChapter.id),
+            eq(this.workChapter.workType, expectedType),
             isNull(this.workChapter.deletedAt),
           ),
         )
@@ -735,6 +796,7 @@ export class WorkChapterService {
         .where(
           and(
             eq(this.workChapter.id, dragChapter.id),
+            eq(this.workChapter.workType, expectedType),
             isNull(this.workChapter.deletedAt),
           ),
         )
@@ -834,11 +896,17 @@ export class WorkChapterService {
     return toPageResult<AdminChapterPageRow>(list, total, page)
   }
 
-  private async workExists(workId: number) {
+  private async workExists(workId: number, expectedType?: WorkTypeEnum) {
     const [row] = await this.db
       .select({ id: this.work.id })
       .from(this.work)
-      .where(and(eq(this.work.id, workId), isNull(this.work.deletedAt)))
+      .where(
+        and(
+          eq(this.work.id, workId),
+          ...(expectedType ? [eq(this.work.type, expectedType)] : []),
+          isNull(this.work.deletedAt),
+        ),
+      )
       .limit(1)
 
     return Boolean(row)

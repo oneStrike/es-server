@@ -1,7 +1,11 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
-import { BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  ContentTypeEnum,
+  WorkTypeEnum,
+} from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
@@ -56,7 +60,11 @@ export class NovelContentService {
   // 获取章节内容（无权限校验），管理端使用。
   async getChapterContent(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
-      where: { id: chapterId, deletedAt: { isNull: true } },
+      where: {
+        id: chapterId,
+        workType: WorkTypeEnum.NOVEL,
+        deletedAt: { isNull: true },
+      },
       columns: {
         content: true,
       },
@@ -83,6 +91,7 @@ export class NovelContentService {
         and(
           eq(this.workChapter.id, chapterId),
           eq(this.workChapter.workId, query.workId),
+          eq(this.workChapter.workType, WorkTypeEnum.NOVEL),
           isNull(this.workChapter.deletedAt),
         ),
       )
@@ -109,6 +118,7 @@ export class NovelContentService {
           .where(
             and(
               eq(this.workChapter.id, chapterId),
+              eq(this.workChapter.workType, WorkTypeEnum.NOVEL),
               isNull(this.workChapter.deletedAt),
             ),
           ),
@@ -121,7 +131,11 @@ export class NovelContentService {
   // 删除 chapter Content。
   async deleteChapterContent(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
-      where: { id: chapterId, deletedAt: { isNull: true } },
+      where: {
+        id: chapterId,
+        workType: WorkTypeEnum.NOVEL,
+        deletedAt: { isNull: true },
+      },
       columns: { content: true },
     })
 
@@ -140,6 +154,7 @@ export class NovelContentService {
           .where(
             and(
               eq(this.workChapter.id, chapterId),
+              eq(this.workChapter.workType, WorkTypeEnum.NOVEL),
               isNull(this.workChapter.deletedAt),
             ),
           ),

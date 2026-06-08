@@ -1,8 +1,17 @@
-import { BaseWorkDto, CreateWorkDto, QueryWorkDto, UpdateWorkDto, UpdateWorkHotDto, UpdateWorkNewDto, UpdateWorkRecommendedDto, UpdateWorkStatusDto } from '@libs/content/work/core/dto/work.dto';
-import { WorkService } from '@libs/content/work/core/work.service';
-import { WorkTypeEnum } from '@libs/platform/constant';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto';
+import {
+  BaseWorkDto,
+  CreateWorkDto,
+  QueryWorkDto,
+  UpdateWorkDto,
+  UpdateWorkHotDto,
+  UpdateWorkNewDto,
+  UpdateWorkRecommendedDto,
+  UpdateWorkStatusDto,
+} from '@libs/content/work/core/dto/work.dto'
+import { WorkService } from '@libs/content/work/core/work.service'
+import { WorkTypeEnum } from '@libs/platform/constant'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -42,6 +51,7 @@ export class NovelController {
   async getDetail(@Query() query: IdDto) {
     return this.workService.getWorkDetail(query.id, {
       bypassVisibilityCheck: true,
+      expectedType: WorkTypeEnum.NOVEL,
     })
   }
 
@@ -54,7 +64,7 @@ export class NovelController {
     },
   })
   async update(@Body() body: UpdateWorkDto) {
-    return this.workService.updateWork(body)
+    return this.workService.updateWork(body, WorkTypeEnum.NOVEL)
   }
 
   @Post('update-status')
@@ -66,7 +76,7 @@ export class NovelController {
     },
   })
   async updateStatus(@Body() body: UpdateWorkStatusDto) {
-    return this.workService.updateStatus(body)
+    return this.workService.updateStatus(body, WorkTypeEnum.NOVEL)
   }
 
   @Post('update-recommended')
@@ -78,9 +88,13 @@ export class NovelController {
     },
   })
   async updateRecommended(@Body() body: UpdateWorkRecommendedDto) {
-    return this.workService.updateWorkFlags(body.id, {
-      isRecommended: body.isRecommended,
-    })
+    return this.workService.updateWorkFlags(
+      body.id,
+      {
+        isRecommended: body.isRecommended,
+      },
+      WorkTypeEnum.NOVEL,
+    )
   }
 
   @Post('update-hot')
@@ -92,9 +106,13 @@ export class NovelController {
     },
   })
   async updateHot(@Body() body: UpdateWorkHotDto) {
-    return this.workService.updateWorkFlags(body.id, {
-      isHot: body.isHot,
-    })
+    return this.workService.updateWorkFlags(
+      body.id,
+      {
+        isHot: body.isHot,
+      },
+      WorkTypeEnum.NOVEL,
+    )
   }
 
   @Post('update-new')
@@ -106,9 +124,13 @@ export class NovelController {
     },
   })
   async updateNew(@Body() body: UpdateWorkNewDto) {
-    return this.workService.updateWorkFlags(body.id, {
-      isNew: body.isNew,
-    })
+    return this.workService.updateWorkFlags(
+      body.id,
+      {
+        isNew: body.isNew,
+      },
+      WorkTypeEnum.NOVEL,
+    )
   }
 
   @Post('delete')
@@ -120,6 +142,6 @@ export class NovelController {
     },
   })
   async delete(@Body() body: IdDto) {
-    return this.workService.deleteWork(body.id)
+    return this.workService.deleteWork(body.id, WorkTypeEnum.NOVEL)
   }
 }

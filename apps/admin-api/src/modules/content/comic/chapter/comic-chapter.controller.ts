@@ -34,10 +34,13 @@ export class ComicChapterController {
     },
   })
   async create(@Body() body: CreateWorkChapterDto) {
-    return this.workChapterService.createChapter({
-      ...body,
-      workType: WorkTypeEnum.COMIC,
-    })
+    return this.workChapterService.createChapter(
+      {
+        ...body,
+        workType: WorkTypeEnum.COMIC,
+      },
+      WorkTypeEnum.COMIC,
+    )
   }
 
   @Get('page')
@@ -46,7 +49,10 @@ export class ComicChapterController {
     model: AdminWorkChapterPageItemDto,
   })
   async getPage(@Query() query: QueryWorkChapterDto) {
-    return this.workChapterService.getAdminChapterPage(query)
+    return this.workChapterService.getAdminChapterPage(
+      query,
+      WorkTypeEnum.COMIC,
+    )
   }
 
   @Get('detail')
@@ -57,6 +63,7 @@ export class ComicChapterController {
   async getDetail(@Query() query: IdDto) {
     return this.workChapterService.getChapterDetail(query.id, {
       bypassVisibilityCheck: true,
+      expectedType: WorkTypeEnum.COMIC,
     })
   }
 
@@ -69,7 +76,7 @@ export class ComicChapterController {
     },
   })
   async update(@Body() body: UpdateWorkChapterDto) {
-    return this.workChapterService.updateChapter(body)
+    return this.workChapterService.updateChapter(body, WorkTypeEnum.COMIC)
   }
 
   @Post('delete')
@@ -81,7 +88,7 @@ export class ComicChapterController {
     },
   })
   async delete(@Body() body: IdDto) {
-    return this.workChapterService.deleteChapter(body.id)
+    return this.workChapterService.deleteChapter(body.id, WorkTypeEnum.COMIC)
   }
 
   @Post('batch-delete')
@@ -93,7 +100,7 @@ export class ComicChapterController {
     },
   })
   async batchDelete(@Body() body: IdsDto) {
-    return this.workChapterService.deleteChapters(body.ids)
+    return this.workChapterService.deleteChapters(body.ids, WorkTypeEnum.COMIC)
   }
 
   @Post('batch-update-status')
@@ -121,6 +128,6 @@ export class ComicChapterController {
     content: '交换漫画章节序号',
   })
   async swapSortOrder(@Body() body: DragReorderDto) {
-    return this.workChapterService.swapChapterNumbers(body)
+    return this.workChapterService.swapChapterNumbers(body, WorkTypeEnum.COMIC)
   }
 }

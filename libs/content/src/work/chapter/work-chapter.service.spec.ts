@@ -35,6 +35,28 @@ function createUpdateDb(returningRows: Array<{ id: number }>) {
   }
 }
 
+function createDirectChapterUpdateDb() {
+  const where = jest.fn(async () => ({ rowCount: 1 }))
+  const set = jest.fn(() => ({ where }))
+  const update = jest.fn(() => ({ set }))
+
+  return {
+    db: { update },
+    schema: {
+      workChapter: {
+        deletedAt: 'work_chapter.deleted_at',
+        id: 'work_chapter.id',
+        title: 'work_chapter.title',
+        workType: 'work_chapter.work_type',
+      },
+    },
+    set,
+    update,
+    where,
+    withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
+  }
+}
+
 function createService(drizzle: unknown) {
   return createServiceWithPermission(drizzle, {})
 }
@@ -294,11 +316,18 @@ describe('WorkChapterService chapter page projection', () => {
       contentPermissionService,
     )
 
-    const page = await service.getAdminChapterPage({ workId: 10 })
+    const page = await service.getAdminChapterPage(
+      { workId: 10 },
+      WorkTypeEnum.COMIC,
+    )
     const selectedKeys = Object.keys(drizzle.selectedFields[0])
+    const whereChunks = getWhereSqlChunks(drizzle.pageQuery.where)
 
     expect(selectedKeys).toEqual(
       expect.arrayContaining(['price', 'requiredViewLevelId', 'viewRule']),
+    )
+    expect(whereChunks).toEqual(
+      expect.arrayContaining(['work_chapter.work_type', WorkTypeEnum.COMIC]),
     )
     expect(selectedKeys).not.toEqual(
       expect.arrayContaining(['content', 'description', 'remark']),
@@ -395,5 +424,36 @@ describe('WorkChapterService batch publish status', () => {
 
     expect(drizzle.dbUpdate).not.toHaveBeenCalled()
     expect(drizzle.withTransaction).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('WorkChapterService update boundary', () => {
+  it('strips immutable work identity fields from chapter updates', async () => {
+    const drizzle = createDirectChapterUpdateDb()
+    const service = createService(drizzle)
+
+    await expect(
+      service.updateChapter(
+        {
+          id: 1,
+          title: '只改标题',
+          workId: 999,
+          workType: WorkTypeEnum.NOVEL,
+        } as any,
+        WorkTypeEnum.COMIC,
+      ),
+    ).resolves.toBe(true)
+
+    expect(drizzle.set).toHaveBeenCalledWith({ title: '只改标题' })
+    const whereChunks = getWhereSqlChunks(drizzle.where)
+
+    expect(whereChunks).toEqual(
+      expect.arrayContaining([
+        'work_chapter.id',
+        'work_chapter.work_type',
+        'work_chapter.deleted_at',
+        WorkTypeEnum.COMIC,
+      ]),
+    )
   })
 })

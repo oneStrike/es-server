@@ -1,5 +1,8 @@
 import type { WorkChapterSelect } from '@db/schema'
-import type { WorkViewPermissionEnum } from '@libs/platform/constant'
+import type {
+  WorkTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant'
 import type { ContentPurchasePricingDto } from '../../permission/dto/content-purchase-pricing.dto'
 
 /**
@@ -20,6 +23,7 @@ export interface WorkChapterDetailContext {
   ipAddress?: string
   device?: string
   bypassVisibilityCheck?: boolean
+  expectedType?: WorkTypeEnum
 }
 
 /**

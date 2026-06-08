@@ -300,7 +300,10 @@ export class WorkService {
         this.findEnabledTags(tagIds),
       ])
 
-    if (authorIds !== undefined && existingAuthors.length !== authorIds.length) {
+    if (
+      authorIds !== undefined &&
+      existingAuthors.length !== authorIds.length
+    ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '部分作者不存在或已禁用',
@@ -431,8 +434,15 @@ export class WorkService {
   }
 
   // 更新作品基础资料，并在事务内同步论坛板块与可选关系。
-  async updateWork(updateWorkDto: UpdateWorkDto) {
-    const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
+  async updateWork(updateWorkDto: UpdateWorkDto, expectedType: WorkTypeEnum) {
+    const {
+      id,
+      authorIds,
+      categoryIds,
+      tagIds,
+      type: _type,
+      ...updateData
+    } = updateWorkDto as UpdateWorkDto & { type?: WorkTypeEnum }
     const normalizedUpdateData = {
       ...updateData,
       publishAt: updateData.publishAt
@@ -441,7 +451,11 @@ export class WorkService {
     }
 
     const existingWork = await this.db.query.work.findFirst({
-      where: { id, deletedAt: { isNull: true } },
+      where: {
+        id,
+        type: expectedType,
+        deletedAt: { isNull: true },
+      },
       with: {
         authorRelations: {
           columns: { authorId: true },
@@ -455,26 +469,17 @@ export class WorkService {
       )
     }
 
-    const resultingWorkType = updateData.type ?? existingWork.type
     const resultingWorkName = updateData.name ?? existingWork.name
     const originalAuthorIds = existingWork.authorRelations.map(
       (rel) => rel.authorId,
     )
-    const authorIdsForValidation =
-      authorIds ??
-      (isNotNil(updateData.type) && updateData.type !== existingWork.type
-        ? originalAuthorIds
-        : undefined)
 
-    // 作品名称或类型变更时校验目标类型下重名，避免类型切换绕开唯一口径。
-    if (
-      (isNotNil(updateData.name) && updateData.name !== existingWork.name) ||
-      (isNotNil(updateData.type) && updateData.type !== existingWork.type)
-    ) {
+    // 作品类型创建后不可变，仅作品名称变更时校验当前类型下重名。
+    if (isNotNil(updateData.name) && updateData.name !== existingWork.name) {
       const duplicateWork = await this.db.query.work.findFirst({
         where: {
           name: resultingWorkName,
-          type: resultingWorkType,
+          type: existingWork.type,
           deletedAt: { isNull: true },
           id: { ne: id },
         },
@@ -491,17 +496,11 @@ export class WorkService {
     if (
       authorIds !== undefined ||
       categoryIds !== undefined ||
-      tagIds !== undefined ||
-      authorIdsForValidation !== undefined
+      tagIds !== undefined
     ) {
-      await this.validateWorkRelations(
-        authorIdsForValidation,
-        categoryIds,
-        tagIds,
-        {
-          workType: resultingWorkType,
-        },
-      )
+      await this.validateWorkRelations(authorIds, categoryIds, tagIds, {
+        workType: existingWork.type,
+      })
     }
 
     const shouldSyncSectionName =
@@ -513,7 +512,13 @@ export class WorkService {
         const result = await tx
           .update(this.work)
           .set(normalizedUpdateData)
-          .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
+          .where(
+            and(
+              eq(this.work.id, id),
+              eq(this.work.type, expectedType),
+              isNull(this.work.deletedAt),
+            ),
+          )
         this.drizzle.assertAffectedRows(result, '作品不存在')
 
         if (
@@ -624,9 +629,13 @@ export class WorkService {
   }
 
   // 更新作品发布状态。
-  async updateStatus(body: UpdateWorkStatusDto) {
+  async updateStatus(body: UpdateWorkStatusDto, expectedType: WorkTypeEnum) {
     const work = await this.db.query.work.findFirst({
-      where: { id: body.id, deletedAt: { isNull: true } },
+      where: {
+        id: body.id,
+        type: expectedType,
+        deletedAt: { isNull: true },
+      },
       columns: {
         id: true,
         forumSectionId: true,
@@ -643,7 +652,13 @@ export class WorkService {
         const result = await tx
           .update(this.work)
           .set({ isPublished: body.isPublished })
-          .where(and(eq(this.work.id, body.id), isNull(this.work.deletedAt)))
+          .where(
+            and(
+              eq(this.work.id, body.id),
+              eq(this.work.type, expectedType),
+              isNull(this.work.deletedAt),
+            ),
+          )
         this.drizzle.assertAffectedRows(result, '作品不存在')
 
         if (work.forumSectionId) {
@@ -660,12 +675,22 @@ export class WorkService {
   }
 
   // 批量更新作品标志位（发布/推荐/热门/新作），用于管理端快速切换作品的展示状态。
-  async updateWorkFlags(id: number, data: WorkFlagUpdateInput) {
+  async updateWorkFlags(
+    id: number,
+    data: WorkFlagUpdateInput,
+    expectedType: WorkTypeEnum,
+  ) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.work)
         .set(data)
-        .where(and(eq(this.work.id, id), isNull(this.work.deletedAt))),
+        .where(
+          and(
+            eq(this.work.id, id),
+            eq(this.work.type, expectedType),
+            isNull(this.work.deletedAt),
+          ),
+        ),
     )
     this.drizzle.assertAffectedRows(result, '作品不存在')
     return true
@@ -1072,9 +1097,14 @@ export class WorkService {
       device,
       userAgent,
       bypassVisibilityCheck = false,
+      expectedType,
     } = context
     const work = await this.db.query.work.findFirst({
-      where: { id, deletedAt: { isNull: true } },
+      where: {
+        id,
+        ...(expectedType ? { type: expectedType } : {}),
+        deletedAt: { isNull: true },
+      },
       columns: {
         deletedAt: false,
       },
@@ -1264,22 +1294,13 @@ export class WorkService {
   }
 
   // 软删除作品，并在同一事务中停用关联论坛板块和扣减作者作品数。
-  async deleteWork(id: number) {
-    // 仍有未删除章节的作品不能软删除，避免产生悬空章节。
-    const chapterCount = await this.db.$count(
-      this.workChapter,
-      and(eq(this.workChapter.workId, id), isNull(this.workChapter.deletedAt)),
-    )
-
-    if (chapterCount > 0) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        `该作品还有 ${chapterCount} 个关联章节，无法删除`,
-      )
-    }
-
+  async deleteWork(id: number, expectedType: WorkTypeEnum) {
     const work = await this.db.query.work.findFirst({
-      where: { id, deletedAt: { isNull: true } },
+      where: {
+        id,
+        type: expectedType,
+        deletedAt: { isNull: true },
+      },
       with: {
         authorRelations: {
           columns: { authorId: true },
@@ -1294,6 +1315,22 @@ export class WorkService {
       )
     }
 
+    // 仍有未删除章节的作品不能软删除，避免产生悬空章节。
+    const chapterCount = await this.db.$count(
+      this.workChapter,
+      and(
+        eq(this.workChapter.workId, id),
+        isNull(this.workChapter.deletedAt),
+      ),
+    )
+
+    if (chapterCount > 0) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `该作品还有 ${chapterCount} 个关联章节，无法删除`,
+      )
+    }
+
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const now = new Date()
@@ -1302,7 +1339,13 @@ export class WorkService {
         const result = await tx
           .update(this.work)
           .set({ deletedAt: now })
-          .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
+          .where(
+            and(
+              eq(this.work.id, id),
+              eq(this.work.type, expectedType),
+              isNull(this.work.deletedAt),
+            ),
+          )
         this.drizzle.assertAffectedRows(result, '作品不存在')
 
         if (work.forumSectionId) {

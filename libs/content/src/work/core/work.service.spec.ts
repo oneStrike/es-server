@@ -196,6 +196,39 @@ async function expectResourceNotFound(promise: Promise<unknown>) {
   throw new Error('Expected operation to be rejected')
 }
 
+function flattenSqlChunks(chunk: unknown, output: unknown[] = []) {
+  if (Array.isArray(chunk)) {
+    output.push(chunk)
+    return output
+  }
+
+  if (!chunk || typeof chunk !== 'object') {
+    output.push(chunk)
+    return output
+  }
+
+  if (
+    'queryChunks' in chunk &&
+    Array.isArray((chunk as { queryChunks: unknown[] }).queryChunks)
+  ) {
+    for (const item of (chunk as { queryChunks: unknown[] }).queryChunks) {
+      flattenSqlChunks(item, output)
+    }
+    return output
+  }
+
+  if (
+    'value' in chunk &&
+    Array.isArray((chunk as { value: unknown[] }).value)
+  ) {
+    output.push((chunk as { value: unknown[] }).value.join(''))
+    return output
+  }
+
+  output.push(chunk)
+  return output
+}
+
 describe('WorkService relation integrity', () => {
   it('rejects creating a work without authors before opening the write transaction', async () => {
     const { db, drizzle, service } = createSubject()
@@ -264,7 +297,9 @@ describe('WorkService relation integrity', () => {
     db.query.work.findFirst.mockResolvedValueOnce(null)
     db.query.workAuthor.findMany.mockResolvedValueOnce([{ id: 1, type: [2] }])
 
-    await expectOperationNotAllowed(service.createWorkReturningId(createWorkDto()))
+    await expectOperationNotAllowed(
+      service.createWorkReturningId(createWorkDto()),
+    )
 
     expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
   })
@@ -278,7 +313,9 @@ describe('WorkService relation integrity', () => {
       service.createWorkReturningId(createWorkDto({ tagIds: [9, 3, 7] })),
     ).resolves.toBe(20)
 
-    expect(forumSectionService.createManagedSectionForWork).toHaveBeenCalledWith(
+    expect(
+      forumSectionService.createManagedSectionForWork,
+    ).toHaveBeenCalledWith(
       tx,
       expect.objectContaining({
         cover: 'https://example.com/cover.jpg',
@@ -308,8 +345,9 @@ describe('WorkService relation integrity', () => {
       authorRelations: [{ authorId: 1 }],
     })
 
-    await expect(service.updateWork({ id: 20, remark: '只改备注' } as any))
-      .resolves.toBe(true)
+    await expect(
+      service.updateWork({ id: 20, remark: '只改备注' } as any, 1),
+    ).resolves.toBe(true)
 
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workAuthorRelation)
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workCategoryRelation)
@@ -334,7 +372,7 @@ describe('WorkService relation integrity', () => {
         name: '新作品',
         description: '新简介',
         isPublished: false,
-      } as any),
+      } as any, 1),
     ).resolves.toBe(true)
 
     expect(forumSectionService.syncManagedSectionForWork).toHaveBeenCalledWith(
@@ -360,7 +398,7 @@ describe('WorkService relation integrity', () => {
     })
 
     await expectOperationNotAllowed(
-      service.updateWork({ id: 20, categoryIds: [] } as any),
+      service.updateWork({ id: 20, categoryIds: [] } as any, 1),
     )
 
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workCategoryRelation)
@@ -377,7 +415,7 @@ describe('WorkService relation integrity', () => {
     })
 
     await expectOperationNotAllowed(
-      service.updateWork({ id: 20, authorIds: [] } as any),
+      service.updateWork({ id: 20, authorIds: [] } as any, 1),
     )
 
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workAuthorRelation)
@@ -395,13 +433,13 @@ describe('WorkService relation integrity', () => {
     })
 
     await expectOperationNotAllowed(
-      service.updateWork({ id: 20, tagIds: [] } as any),
+      service.updateWork({ id: 20, tagIds: [] } as any, 1),
     )
 
     expect(tx.delete).not.toHaveBeenCalledWith(schema.workTagRelation)
   })
 
-  it('validates existing authors when updating a work type without authorIds', async () => {
+  it('ignores runtime type payloads when updating work metadata', async () => {
     const { db, service, tx } = createSubject()
     db.query.work.findFirst.mockResolvedValueOnce({
       id: 20,
@@ -410,36 +448,20 @@ describe('WorkService relation integrity', () => {
       forumSectionId: null,
       authorRelations: [{ authorId: 1 }],
     })
-    db.query.work.findFirst.mockResolvedValueOnce(null)
-    db.query.workAuthor.findMany.mockResolvedValueOnce([{ id: 1, type: [1] }])
 
-    await expectOperationNotAllowed(
-      service.updateWork({ id: 20, type: 2 } as any),
+    await expect(
+      service.updateWork({ id: 20, type: 2, remark: '只改备注' } as any, 1),
+    ).resolves.toBe(true)
+
+    const workUpdate = tx.update.mock.results.find(
+      (item: { value?: { set?: jest.Mock } }) => item.value?.set,
+    )?.value
+    expect(workUpdate?.set).toHaveBeenCalledWith(
+      expect.not.objectContaining({ type: 2 }),
     )
-
-    expect(tx.update).not.toHaveBeenCalledWith(schema.work)
   })
 
-  it('validates existing authors when updating a work type with non-author relations only', async () => {
-    const { db, service, tx } = createSubject()
-    db.query.work.findFirst.mockResolvedValueOnce({
-      id: 20,
-      name: '测试作品',
-      type: 1,
-      forumSectionId: null,
-      authorRelations: [{ authorId: 1 }],
-    })
-    db.query.work.findFirst.mockResolvedValueOnce(null)
-    db.query.workAuthor.findMany.mockResolvedValueOnce([{ id: 1, type: [1] }])
-
-    await expectOperationNotAllowed(
-      service.updateWork({ id: 20, type: 2, categoryIds: [2] } as any),
-    )
-
-    expect(tx.update).not.toHaveBeenCalledWith(schema.work)
-  })
-
-  it('checks duplicate names against the resulting work type on update', async () => {
+  it('checks duplicate names against the immutable current work type on update', async () => {
     const { db, service, tx } = createSubject()
     db.query.work.findFirst.mockResolvedValueOnce({
       id: 20,
@@ -450,7 +472,9 @@ describe('WorkService relation integrity', () => {
     })
     db.query.work.findFirst.mockResolvedValueOnce({ id: 21 })
 
-    await expect(service.updateWork({ id: 20, type: 2 } as any)).rejects.toMatchObject({
+    await expect(
+      service.updateWork({ id: 20, name: '新同名作品', type: 2 } as any, 1),
+    ).rejects.toMatchObject({
       code: BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
     })
 
@@ -468,7 +492,7 @@ describe('WorkService relation integrity', () => {
     })
 
     await expect(
-      service.updateWork({ id: 20, tagIds: [8, 5] } as any),
+      service.updateWork({ id: 20, tagIds: [8, 5] } as any, 1),
     ).resolves.toBe(true)
 
     const tagInsert = insertBuilders.find(
@@ -499,10 +523,7 @@ describe('WorkService relation integrity', () => {
     const [{ orderBy }] = (db.query.workTagRelation.findMany as jest.Mock).mock
       .calls[0] as any
     const asc = jest.fn((field: unknown) => ({ asc: field }))
-    const order = orderBy(
-      { sortOrder: 'sortOrder', tagId: 'tagId' },
-      { asc },
-    )
+    const order = orderBy({ sortOrder: 'sortOrder', tagId: 'tagId' }, { asc })
     expect(order).toEqual([{ asc: 'sortOrder' }, { asc: 'tagId' }])
   })
 
@@ -520,7 +541,7 @@ describe('WorkService relation integrity', () => {
       })),
     } as any)
 
-    await expect(service.deleteWork(20)).resolves.toBe(true)
+    await expect(service.deleteWork(20, 1)).resolves.toBe(true)
 
     const chapterBindingUpdate = updateBuilders.find(
       (item) => item.table === schema.workThirdPartyChapterBinding,
@@ -534,13 +555,46 @@ describe('WorkService relation integrity', () => {
     expect(sourceBindingUpdate?.builder.set).toHaveBeenCalledWith({
       deletedAt: expect.any(Date),
     })
-    expect(forumSectionService.releaseManagedSectionForWork).toHaveBeenCalledWith(
-      tx,
-      {
-        workId: 20,
-        sectionId: 10,
-        deletedAt: expect.any(Date),
-      },
+    expect(
+      forumSectionService.releaseManagedSectionForWork,
+    ).toHaveBeenCalledWith(tx, {
+      workId: 20,
+      sectionId: 10,
+      deletedAt: expect.any(Date),
+    })
+  })
+
+  it('blocks deleting a work when any live chapter remains regardless of chapter type', async () => {
+    const { db, service } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce({
+      id: 20,
+      forumSectionId: null,
+      authorRelations: [],
+    })
+    db.$count.mockResolvedValueOnce(1)
+
+    await expectOperationNotAllowed(service.deleteWork(20, 1))
+
+    const countCalls = db.$count.mock.calls as unknown as Array<
+      [unknown, unknown]
+    >
+    const whereChunks = flattenSqlChunks(countCalls[0][1])
+
+    expect(whereChunks).toEqual(
+      expect.arrayContaining([
+        schema.workChapter.workId,
+        schema.workChapter.deletedAt,
+      ]),
     )
+    expect(whereChunks).not.toContain(schema.workChapter.workType)
+  })
+
+  it('checks the requested work type before counting chapters on delete', async () => {
+    const { db, service } = createSubject()
+    db.query.work.findFirst.mockResolvedValueOnce(null)
+
+    await expectResourceNotFound(service.deleteWork(20, 1))
+
+    expect(db.$count).not.toHaveBeenCalled()
   })
 })
