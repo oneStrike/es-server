@@ -7,6 +7,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   smallint,
   snakeCase,
   timestamp,
@@ -76,6 +77,26 @@ export const userReport = snakeCase.table(
      */
     handlingNote: varchar({ length: 500 }),
     /**
+     * 目标处置动作（1=无需处置，2=隐藏评论，3=拒绝评论，4=隐藏论坛主题，5=拒绝论坛主题，6=禁用用户，7=禁言用户）
+     */
+    targetAction: smallint().default(1).notNull(),
+    /**
+     * 目标处置原因。
+     */
+    targetActionReason: varchar({ length: 500 }),
+    /**
+     * 最终目标处置状态（1=无需处置，2=已处置，3=历史已处理但无处置记录）。
+     */
+    targetActionStatus: smallint().default(1).notNull(),
+    /**
+     * owner service 返回的结构化处置结果。
+     */
+    targetActionResult: jsonb(),
+    /**
+     * 目标处置完成时间。
+     */
+    targetActionAppliedAt: timestamp({ withTimezone: true, precision: 6 }),
+    /**
      * 处理时间
      */
     handledAt: timestamp({ withTimezone: true, precision: 6 }),
@@ -107,6 +128,15 @@ export const userReport = snakeCase.table(
     index('user_report_target_type_target_id_idx').on(
       table.targetType,
       table.targetId,
+    ),
+    /**
+     * 管理端目标维度默认排序索引
+     */
+    index('user_report_target_created_at_id_idx').on(
+      table.targetType,
+      table.targetId,
+      table.createdAt.desc(),
+      table.id.desc(),
     ),
     /**
      * 场景状态查询索引
@@ -141,6 +171,39 @@ export const userReport = snakeCase.table(
       table.handledAt,
     ),
     /**
+     * 管理端状态列表索引
+     */
+    index('user_report_status_created_at_id_idx').on(
+      table.status,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    /**
+     * 管理端举报人筛选索引
+     */
+    index('user_report_reporter_created_at_id_idx').on(
+      table.reporterId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    /**
+     * 管理端处理人筛选索引
+     */
+    index('user_report_handler_status_created_at_id_idx').on(
+      table.handlerId,
+      table.status,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    /**
+     * 管理端最终处置状态筛选索引
+     */
+    index('user_report_disposition_status_created_at_id_idx').on(
+      table.targetActionStatus,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    /**
      * 创建时间索引
      */
     index('user_report_created_at_idx').on(table.createdAt),
@@ -161,6 +224,14 @@ export const userReport = snakeCase.table(
       sql`${table.reasonType} in (1, 2, 3, 4, 99)`,
     ),
     check('user_report_status_valid_chk', sql`${table.status} in (1, 2, 3, 4)`),
+    check(
+      'user_report_target_action_valid_chk',
+      sql`${table.targetAction} in (1, 2, 3, 4, 5, 6, 7)`,
+    ),
+    check(
+      'user_report_target_action_status_valid_chk',
+      sql`${table.targetActionStatus} in (1, 2, 3)`,
+    ),
   ],
 )
 

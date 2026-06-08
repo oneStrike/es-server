@@ -71,6 +71,7 @@ export * from './app/user-membership-subscription'
 export * from './app/user-mention'
 export * from './app/user-purchase-record'
 export * from './app/user-report'
+export * from './app/user-report-disposition-attempt'
 export * from './app/user-work-reading-state'
 
 export * from './forum/forum-hashtag'

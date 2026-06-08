@@ -178,6 +178,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.userReport.handlerId,
       alias: 'UserReportHandler',
     }),
+    reportDispositionAttempts: r.many.userReportDispositionAttempt({
+      from: r.appUser.id,
+      to: r.userReportDispositionAttempt.actorUserId,
+    }),
     userDownloadRecords: r.many.userDownloadRecord(),
     userPurchaseRecords: r.many.userPurchaseRecord(),
     contentEntitlements: r.many.userContentEntitlement(),
@@ -661,6 +665,17 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.userReport.handlerId,
       to: r.appUser.id,
       alias: 'UserReportHandler',
+    }),
+    dispositionAttempts: r.many.userReportDispositionAttempt(),
+  },
+  userReportDispositionAttempt: {
+    report: r.one.userReport({
+      from: r.userReportDispositionAttempt.reportId,
+      to: r.userReport.id,
+    }),
+    actor: r.one.appUser({
+      from: r.userReportDispositionAttempt.actorUserId,
+      to: r.appUser.id,
     }),
   },
   userWorkReadingState: {

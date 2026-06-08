@@ -1,6 +1,21 @@
 import type { Db } from '@db/core'
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
+import type { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant';
-import type { ReportTargetTypeEnum } from '../report.constant'
+import type { JsonObject } from '@libs/platform/utils'
+import type {
+  ReportDispositionActionEnum,
+  ReportTargetTypeEnum,
+} from '../report.constant'
+
+export interface ReportDispositionResult {
+  applied: boolean
+  statusBefore?: JsonObject
+  statusAfter?: JsonObject
+  message: string
+  eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum> | null
+  rewardComment?: unknown
+}
 
 /**
  * 举报目标元信息
@@ -52,4 +67,24 @@ export interface IReportTargetResolver {
     reporterId: number,
     meta: ReportTargetMeta,
   ) => Promise<void>
+
+  /**
+   * 在举报最终裁决事务内执行目标处置。
+   * 实现方必须调用自身 owner service 的 InTx 入口，不能在这里开启独立事务。
+   */
+  applyDisposition?: (
+    tx: Db,
+    input: {
+      reportId: number
+      targetId: number
+      action: ReportDispositionActionEnum
+      reason?: string | null
+      actorUserId: number
+    },
+  ) => Promise<ReportDispositionResult>
+
+  /**
+   * 举报最终事务提交后执行的 owner 副作用，例如评论成长奖励补发。
+   */
+  postDispositionCommit?: (result: ReportDispositionResult) => Promise<void>
 }

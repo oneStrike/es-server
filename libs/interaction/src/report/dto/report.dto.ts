@@ -2,6 +2,7 @@ import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,
   EnumProperty,
+  JsonProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
@@ -18,6 +19,9 @@ import {
   InteractionSceneSummaryDto,
 } from '../../summary/dto/interaction-summary.dto'
 import {
+  ReportDispositionActionEnum,
+  ReportDispositionStatusEnum,
+  ReportDispositionStatusFilterEnum,
   ReportReasonEnum,
   ReportStatusEnum,
   ReportTargetTypeEnum,
@@ -118,6 +122,52 @@ export class BaseReportDto extends BaseDto {
   })
   handlingNote?: string | null
 
+  @EnumProperty({
+    description:
+      '目标处置动作（1=无需处置；2=隐藏评论；3=拒绝评论；4=隐藏论坛主题；5=拒绝论坛主题；6=禁用用户；7=禁言用户）',
+    enum: ReportDispositionActionEnum,
+    example: ReportDispositionActionEnum.NO_ACTION_REQUIRED,
+    required: true,
+  })
+  targetAction!: ReportDispositionActionEnum
+
+  @StringProperty({
+    description: '目标处置原因',
+    example: '举报成立，评论违反社区规范',
+    required: false,
+    maxLength: 500,
+  })
+  targetActionReason?: string | null
+
+  @EnumProperty({
+    description:
+      '目标处置状态（1=无需处置；2=已处置；3=历史已处理但无处置记录）',
+    enum: ReportDispositionStatusEnum,
+    example: ReportDispositionStatusEnum.APPLIED,
+    required: true,
+  })
+  targetActionStatus!: ReportDispositionStatusEnum
+
+  @JsonProperty({
+    description: '目标处置结构化结果',
+    required: false,
+    validation: false,
+    example: {
+      applied: true,
+      statusBefore: false,
+      statusAfter: true,
+      message: '评论已隐藏',
+    },
+  })
+  targetActionResult?: Record<string, unknown> | null
+
+  @DateProperty({
+    description: '目标处置完成时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+  })
+  targetActionAppliedAt?: Date | null
+
   @DateProperty({
     description: '处理时间',
     example: '2024-01-01T00:00:00.000Z',
@@ -177,9 +227,33 @@ export class QueryAdminReportPageDto extends IntersectionType(
       'sceneId',
       'reasonType',
       'status',
+      'targetActionStatus',
     ] as const),
   ),
-) {}
+) {
+  @EnumProperty({
+    description:
+      '处置状态筛选（1=无需处置；2=处置成功；3=历史未处置；99=最新处置失败）',
+    enum: ReportDispositionStatusFilterEnum,
+    example: ReportDispositionStatusFilterEnum.APPLIED,
+    required: false,
+  })
+  dispositionStatus?: ReportDispositionStatusFilterEnum
+
+  @StringProperty({
+    description: '创建日期开始（应用时区自然日，YYYY-MM-DD）',
+    example: '2026-06-01',
+    required: false,
+  })
+  declare startDate?: string
+
+  @StringProperty({
+    description: '创建日期结束（应用时区自然日，YYYY-MM-DD）',
+    example: '2026-06-08',
+    required: false,
+  })
+  declare endDate?: string
+}
 
 const AdminHandleReportStatusEnum = {
   RESOLVED: ReportStatusEnum.RESOLVED,
@@ -201,6 +275,30 @@ export class HandleAdminReportDto extends IdDto {
     maxLength: 500,
   })
   handlingNote?: string
+
+  @EnumProperty({
+    description:
+      '目标处置动作（1=无需处置；2=隐藏评论；3=拒绝评论；4=隐藏论坛主题；5=拒绝论坛主题；6=禁用用户；7=禁言用户）',
+    enum: ReportDispositionActionEnum,
+    example: ReportDispositionActionEnum.HIDE_COMMENT,
+  })
+  targetAction!: ReportDispositionActionEnum
+
+  @StringProperty({
+    description: '目标处置原因；有效举报处置或显式无需处置时必填',
+    example: '举报成立，评论违反社区规范',
+    required: false,
+    maxLength: 500,
+  })
+  targetActionReason?: string
+
+  @NumberProperty({
+    description: '用户处罚时长（分钟）；仅用户处罚动作可用',
+    example: 1440,
+    required: false,
+    min: 1,
+  })
+  sanctionDurationMinutes?: number
 }
 
 export class HandleAdminReportCommandDto extends IntersectionType(
@@ -259,9 +357,61 @@ class AdminReportActorSummaryFieldsDto {
   handlerSummary?: InteractionActorSummaryDto | null
 }
 
+export class ReportDispositionAttemptDto extends BaseDto {
+  @NumberProperty({
+    description: '举报 ID',
+    example: 1,
+    required: true,
+  })
+  reportId!: number
+
+  @EnumProperty({
+    description: '目标处置动作',
+    enum: ReportDispositionActionEnum,
+    example: ReportDispositionActionEnum.HIDE_COMMENT,
+    required: true,
+  })
+  targetAction!: ReportDispositionActionEnum
+
+  @StringProperty({
+    description: '失败码',
+    example: 'OWNER_DISPOSITION_FAILED',
+    required: false,
+  })
+  failureCode?: string | null
+
+  @StringProperty({
+    description: '失败信息',
+    example: '评论状态已变化，请刷新后重试',
+    required: false,
+  })
+  failureMessage?: string | null
+
+  @DateProperty({
+    description: '尝试发生时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: true,
+  })
+  attemptedAt!: Date
+}
+
+class AdminReportDispositionAttemptFieldDto {
+  @NestedProperty({
+    description: '最新未解决处置失败记录',
+    required: false,
+    nullable: true,
+    type: ReportDispositionAttemptDto,
+    validation: false,
+  })
+  latestFailedDispositionAttempt?: ReportDispositionAttemptDto | null
+}
+
 class AdminReportPageSummaryFieldsDto extends IntersectionType(
   AdminReportActorSummaryFieldsDto,
-  ReportTargetSceneSummaryFieldsDto,
+  IntersectionType(
+    ReportTargetSceneSummaryFieldsDto,
+    AdminReportDispositionAttemptFieldDto,
+  ),
 ) {}
 
 class AdminReportDetailSummaryFieldsDto extends IntersectionType(

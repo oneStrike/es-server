@@ -1,5 +1,12 @@
 import type { Db } from '@db/core'
+import type {
+  UserReportDispositionAttemptSelect,
+  UserReportSelect,
+} from '@db/schema'
 import type { SQL } from 'drizzle-orm'
+import type {
+  ReportDispositionResult,
+} from './interfaces/report-target-resolver.interface'
 import type {
   CreateUserReportOptions,
   CreateUserReportPayload,
@@ -13,8 +20,9 @@ import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { InteractionSummaryReadService } from '@libs/interaction/summary/interaction-summary-read.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, exists, gte, inArray, isNull, lt } from 'drizzle-orm'
 import {
   CreateReportCommandDto,
   HandleAdminReportCommandDto,
@@ -23,7 +31,14 @@ import {
 } from './dto/report.dto'
 import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
 import { ReportGrowthService } from './report-growth.service'
-import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
+import {
+  ReportDispositionActionEnum,
+  ReportDispositionAttemptStatusEnum,
+  ReportDispositionStatusEnum,
+  ReportDispositionStatusFilterEnum,
+  ReportStatusEnum,
+  ReportTargetTypeEnum,
+} from './report.constant'
 
 /**
  * 举报服务
@@ -50,6 +65,10 @@ export class ReportService {
 
   private get userReport() {
     return this.drizzle.schema.userReport
+  }
+
+  private get userReportDispositionAttempt() {
+    return this.drizzle.schema.userReportDispositionAttempt
   }
 
   /**
@@ -297,6 +316,10 @@ export class ReportService {
    */
   async getAdminReportPage(query: QueryAdminReportPageDto) {
     const conditions: SQL[] = []
+    const createdRange = buildDateOnlyRangeInAppTimeZone(
+      query.startDate,
+      query.endDate,
+    )
 
     if (query.id !== undefined) {
       conditions.push(eq(this.userReport.id, query.id))
@@ -329,6 +352,45 @@ export class ReportService {
     if (query.status !== undefined) {
       conditions.push(eq(this.userReport.status, query.status))
     }
+    if (query.targetActionStatus !== undefined) {
+      conditions.push(
+        eq(this.userReport.targetActionStatus, query.targetActionStatus),
+      )
+    }
+    if (query.dispositionStatus !== undefined) {
+      if (query.dispositionStatus === ReportDispositionStatusFilterEnum.FAILED) {
+        conditions.push(
+          exists(
+            this.db
+              .select({ id: this.userReportDispositionAttempt.id })
+              .from(this.userReportDispositionAttempt)
+              .where(
+                and(
+                  eq(
+                    this.userReportDispositionAttempt.reportId,
+                    this.userReport.id,
+                  ),
+                  eq(
+                    this.userReportDispositionAttempt.attemptStatus,
+                    ReportDispositionAttemptStatusEnum.FAILED,
+                  ),
+                  isNull(this.userReportDispositionAttempt.resolvedAt),
+                ),
+              ),
+          ),
+        )
+      } else {
+        conditions.push(
+          eq(this.userReport.targetActionStatus, query.dispositionStatus),
+        )
+      }
+    }
+    if (createdRange?.gte) {
+      conditions.push(gte(this.userReport.createdAt, createdRange.gte))
+    }
+    if (createdRange?.lt) {
+      conditions.push(lt(this.userReport.createdAt, createdRange.lt))
+    }
 
     const orderBy = query.orderBy?.trim()
       ? query.orderBy
@@ -360,6 +422,7 @@ export class ReportService {
       handlerSummaryMap,
       targetSummaryMap,
       sceneSummaryMap,
+      latestFailedAttemptMap,
     ] = await Promise.all([
       this.interactionSummaryReadService.getAppUserSummaryMap(
         page.list.map((item) => item.reporterId),
@@ -369,6 +432,9 @@ export class ReportService {
       ),
       this.interactionSummaryReadService.getReportTargetSummaryMap(page.list),
       this.interactionSummaryReadService.getSceneSummaryMap(page.list),
+      this.getLatestFailedDispositionAttemptMap(
+        page.list.map((item) => item.id),
+      ),
     ])
 
     return {
@@ -391,6 +457,8 @@ export class ReportService {
           sceneSummaryMap.get(
             this.interactionSummaryReadService.buildSceneSummaryKey(item),
           ) ?? null,
+        latestFailedDispositionAttempt:
+          latestFailedAttemptMap.get(item.id) ?? null,
       })),
     }
   }
@@ -419,6 +487,7 @@ export class ReportService {
       targetSummaryMap,
       sceneSummaryMap,
       commentSummaryMap,
+      latestFailedAttemptMap,
     ] = await Promise.all([
       this.interactionSummaryReadService.getAppUserSummaryMap([
         report.reporterId,
@@ -435,6 +504,7 @@ export class ReportService {
           ? [report.targetId]
           : [],
       ),
+      this.getLatestFailedDispositionAttemptMap([report.id]),
     ])
 
     return {
@@ -459,6 +529,8 @@ export class ReportService {
         report.targetType === ReportTargetTypeEnum.COMMENT
           ? (commentSummaryMap.get(report.targetId) ?? null)
           : null,
+      latestFailedDispositionAttempt:
+        latestFailedAttemptMap.get(report.id) ?? null,
     }
   }
 
@@ -467,6 +539,8 @@ export class ReportService {
    * 只允许 PENDING / PROCESSING 进入 RESOLVED / REJECTED，并在裁决后触发奖励结算。
    */
   async handleReport(input: HandleAdminReportCommandDto) {
+    this.ensureHandleContract(input)
+
     const current = await this.db.query.userReport.findFirst({
       where: { id: input.id },
       columns: {
@@ -476,6 +550,11 @@ export class ReportService {
         targetId: true,
         status: true,
         handlingNote: true,
+        targetAction: true,
+        targetActionReason: true,
+        targetActionStatus: true,
+        targetActionResult: true,
+        targetActionAppliedAt: true,
       },
     })
 
@@ -486,57 +565,117 @@ export class ReportService {
       )
     }
 
-    if (current.status === input.status) {
+    if (this.isSameFinalDisposition(current, input)) {
       return true
     }
 
     this.ensureCanHandleReportStatus(current.status, input.status)
+    this.ensureTargetActionMatchesReport(current, input)
 
-    const handledReport = await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const [updated] = await tx
-          .update(this.userReport)
-          .set({
-            status: input.status,
-            handlerId: input.handlerId,
-            handledAt: new Date(),
-            handlingNote:
-              input.handlingNote?.trim() || current.handlingNote || null,
-          })
-          .where(
-            and(
-              eq(this.userReport.id, input.id),
-              eq(this.userReport.status, current.status),
-            ),
-          )
-          .returning()
+    let handledReport:
+      | (UserReportSelect & {
+          dispositionEvents?: ReportDispositionResult[]
+        })
+        | null = null
 
-        if (!updated) {
+    try {
+      handledReport = await this.drizzle.withErrorHandling(async () =>
+        this.db.transaction(async (tx) => {
           const latest = await tx.query.userReport.findFirst({
             where: { id: input.id },
             columns: {
+              id: true,
+              reporterId: true,
+              targetType: true,
+              targetId: true,
               status: true,
+              handlingNote: true,
+              targetAction: true,
+              targetActionReason: true,
+              targetActionStatus: true,
+              targetActionResult: true,
+              targetActionAppliedAt: true,
             },
           })
+
           if (!latest) {
             throw new BusinessException(
               BusinessErrorCode.RESOURCE_NOT_FOUND,
               '举报记录不存在',
             )
           }
-          if (latest.status === input.status) {
+
+          if (this.isSameFinalDisposition(latest, input)) {
             return null
           }
-          this.ensureCanHandleReportStatus(latest.status, input.status)
-          throw new BusinessException(
-            BusinessErrorCode.STATE_CONFLICT,
-            '举报状态已变化，请刷新后重试',
-          )
-        }
 
-        return updated
-      }),
-    )
+          this.ensureCanHandleReportStatus(latest.status, input.status)
+          this.ensureTargetActionMatchesReport(latest, input)
+
+          const disposition = await this.applyTargetDispositionInTx(
+            tx,
+            latest,
+            input,
+          )
+          const now = new Date()
+          const targetActionStatus = this.resolveTargetActionStatus(input)
+          const targetActionResult =
+            disposition?.result ??
+            ({
+              applied: false,
+              message:
+                targetActionStatus ===
+                ReportDispositionStatusEnum.NOT_REQUIRED
+                  ? '无需目标处置'
+                  : '目标处置已完成',
+            } satisfies Record<string, unknown>)
+
+          const [updated] = await tx
+            .update(this.userReport)
+            .set({
+              status: input.status,
+              handlerId: input.handlerId,
+              handledAt: now,
+              handlingNote:
+                input.handlingNote?.trim() || latest.handlingNote || null,
+              targetAction: input.targetAction,
+              targetActionReason: input.targetActionReason?.trim() || null,
+              targetActionStatus,
+              targetActionResult,
+              targetActionAppliedAt:
+                targetActionStatus === ReportDispositionStatusEnum.APPLIED
+                  ? now
+                  : null,
+            })
+            .where(
+              and(
+                eq(this.userReport.id, input.id),
+                eq(this.userReport.status, latest.status),
+              ),
+            )
+            .returning()
+
+          if (!updated) {
+            throw new BusinessException(
+              BusinessErrorCode.STATE_CONFLICT,
+              '举报状态已变化，请刷新后重试',
+            )
+          }
+
+          await this.markFailedAttemptsRetrySucceededInTx(tx, input.id, now)
+
+          return {
+            ...updated,
+            dispositionEvents: disposition?.events ?? [],
+          }
+        }),
+      )
+    } catch (error) {
+      if (this.shouldRecordDispositionAttempt(input, current)) {
+        await this.recordFailedDispositionAttempt(input, error)
+      }
+      throw error
+    }
 
     if (!handledReport) {
       return true
@@ -556,7 +695,242 @@ export class ReportService {
       eventEnvelope: handledReportEvent,
     })
 
+    const resolver = this.getResolver(
+      handledReport.targetType as ReportTargetTypeEnum,
+    )
+    if (resolver.postDispositionCommit) {
+      for (const event of handledReport.dispositionEvents ?? []) {
+        await resolver.postDispositionCommit(event)
+      }
+    }
+
     return true
+  }
+
+  private async getLatestFailedDispositionAttemptMap(reportIds: number[]) {
+    const uniqueReportIds = [...new Set(reportIds)]
+    if (uniqueReportIds.length === 0) {
+      return new Map<number, UserReportDispositionAttemptSelect>()
+    }
+
+    const attempts = await this.db
+      .select()
+      .from(this.userReportDispositionAttempt)
+      .where(
+        and(
+          inArray(this.userReportDispositionAttempt.reportId, uniqueReportIds),
+          eq(
+            this.userReportDispositionAttempt.attemptStatus,
+            ReportDispositionAttemptStatusEnum.FAILED,
+          ),
+          isNull(this.userReportDispositionAttempt.resolvedAt),
+        ),
+      )
+      .orderBy(
+        this.userReportDispositionAttempt.reportId,
+        desc(this.userReportDispositionAttempt.createdAt),
+        desc(this.userReportDispositionAttempt.id),
+      )
+
+    const map = new Map<number, UserReportDispositionAttemptSelect>()
+    for (const attempt of attempts) {
+      if (!map.has(attempt.reportId)) {
+        map.set(attempt.reportId, attempt)
+      }
+    }
+    return map
+  }
+
+  private ensureHandleContract(input: HandleAdminReportCommandDto) {
+    if (input.targetAction === undefined || input.targetAction === null) {
+      throw new BadRequestException('必须选择目标处置动作')
+    }
+    if (input.handlerId === undefined || input.handlerId === null) {
+      throw new BadRequestException('缺少处理人')
+    }
+
+    if (
+      input.status === ReportStatusEnum.REJECTED &&
+      input.targetAction !== ReportDispositionActionEnum.NO_ACTION_REQUIRED
+    ) {
+      throw new BadRequestException('驳回举报时不能处置目标')
+    }
+
+    const reason = input.targetActionReason?.trim()
+    if (
+      input.status === ReportStatusEnum.RESOLVED &&
+      input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED &&
+      !reason
+    ) {
+      throw new BadRequestException('有效举报无需处置时必须填写原因')
+    }
+
+    if (
+      input.targetAction !== ReportDispositionActionEnum.NO_ACTION_REQUIRED &&
+      !reason
+    ) {
+      throw new BadRequestException('目标处置原因不能为空')
+    }
+  }
+
+  private isSameFinalDisposition(
+    report: Pick<
+      UserReportSelect,
+      | 'status'
+      | 'targetAction'
+      | 'targetActionReason'
+      | 'targetActionStatus'
+    >,
+    input: HandleAdminReportCommandDto,
+  ) {
+    if (report.status !== input.status) {
+      return false
+    }
+
+    if (report.targetAction !== input.targetAction) {
+      return false
+    }
+
+    const expectedStatus = this.resolveTargetActionStatus(input)
+    if (report.targetActionStatus !== expectedStatus) {
+      return false
+    }
+
+    return (
+      (report.targetActionReason ?? null) ===
+      (input.targetActionReason?.trim() || null)
+    )
+  }
+
+  private ensureTargetActionMatchesReport(
+    report: Pick<UserReportSelect, 'targetType'>,
+    input: HandleAdminReportCommandDto,
+  ) {
+    if (input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED) {
+      return
+    }
+
+    if (report.targetType === ReportTargetTypeEnum.COMMENT) {
+      if (
+        input.targetAction === ReportDispositionActionEnum.HIDE_COMMENT ||
+        input.targetAction === ReportDispositionActionEnum.REJECT_COMMENT
+      ) {
+        return
+      }
+      throw new BadRequestException('评论举报不支持该目标处置动作')
+    }
+
+    throw new BadRequestException('该举报目标类型暂不支持目标写入处置')
+  }
+
+  private resolveTargetActionStatus(input: HandleAdminReportCommandDto) {
+    return input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED
+      ? ReportDispositionStatusEnum.NOT_REQUIRED
+      : ReportDispositionStatusEnum.APPLIED
+  }
+
+  private async applyTargetDispositionInTx(
+    tx: Db,
+    report: Pick<UserReportSelect, 'id' | 'targetId' | 'targetType'>,
+    input: HandleAdminReportCommandDto,
+  ): Promise<{
+    result: Record<string, unknown>
+    events: ReportDispositionResult[]
+  } | null> {
+    if (input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED) {
+      return null
+    }
+
+    const resolver = this.getResolver(report.targetType as ReportTargetTypeEnum)
+    if (!resolver.applyDisposition) {
+      throw new BadRequestException('该举报目标类型暂不支持目标写入处置')
+    }
+
+    const disposition = await resolver.applyDisposition(tx, {
+      reportId: report.id,
+      targetId: report.targetId,
+      action: input.targetAction,
+      reason: input.targetActionReason?.trim() || null,
+      actorUserId: input.handlerId!,
+    })
+
+    return {
+      result: {
+        applied: disposition.applied,
+        statusBefore: disposition.statusBefore ?? null,
+        statusAfter: disposition.statusAfter ?? null,
+        message: disposition.message,
+      },
+      events: [disposition],
+    }
+  }
+
+  private async markFailedAttemptsRetrySucceededInTx(
+    tx: Db,
+    reportId: number,
+    resolvedAt: Date,
+  ) {
+    await tx
+      .update(this.userReportDispositionAttempt)
+      .set({
+        attemptStatus: ReportDispositionAttemptStatusEnum.RETRY_SUCCEEDED,
+        resolvedAt,
+      })
+      .where(
+        and(
+          eq(this.userReportDispositionAttempt.reportId, reportId),
+          eq(
+            this.userReportDispositionAttempt.attemptStatus,
+            ReportDispositionAttemptStatusEnum.FAILED,
+          ),
+          isNull(this.userReportDispositionAttempt.resolvedAt),
+        ),
+      )
+  }
+
+  private shouldRecordDispositionAttempt(
+    input: HandleAdminReportCommandDto,
+    report: Pick<UserReportSelect, 'targetType'>,
+  ) {
+    if (input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED) {
+      return false
+    }
+    try {
+      this.ensureTargetActionMatchesReport(report, input)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  private async recordFailedDispositionAttempt(
+    input: HandleAdminReportCommandDto,
+    error: unknown,
+  ) {
+    const failureMessage =
+      error instanceof Error ? error.message : '目标处置执行失败'
+    const failureCode =
+      error instanceof BusinessException
+        ? String(error.code)
+        : error instanceof Error
+          ? error.name
+          : 'OWNER_DISPOSITION_FAILED'
+
+    await this.drizzle.withErrorHandling(() =>
+      this.db.insert(this.userReportDispositionAttempt).values({
+        reportId: input.id,
+        targetAction: input.targetAction,
+        attemptStatus: ReportDispositionAttemptStatusEnum.FAILED,
+        failureCode,
+        failureMessage: failureMessage.slice(0, 500),
+        retryable: true,
+        actorUserId: input.handlerId!,
+        attemptedAt: new Date(),
+        result: {
+          message: failureMessage,
+        },
+      }),
+    )
   }
 
   /**

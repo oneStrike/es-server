@@ -22,3 +22,31 @@ export enum ReportTargetTypeEnum {
   COMMENT = 6,
   USER = 7,
 }
+
+export enum ReportDispositionActionEnum {
+  NO_ACTION_REQUIRED = 1,
+  HIDE_COMMENT = 2,
+  REJECT_COMMENT = 3,
+  HIDE_FORUM_TOPIC = 4,
+  REJECT_FORUM_TOPIC = 5,
+  DISABLE_USER = 6,
+  MUTE_USER = 7,
+}
+
+export enum ReportDispositionStatusEnum {
+  NOT_REQUIRED = 1,
+  APPLIED = 2,
+  LEGACY_NO_DISPOSITION = 3,
+}
+
+export enum ReportDispositionAttemptStatusEnum {
+  FAILED = 1,
+  RETRY_SUCCEEDED = 2,
+}
+
+export enum ReportDispositionStatusFilterEnum {
+  NOT_REQUIRED = 1,
+  APPLIED = 2,
+  LEGACY_NO_DISPOSITION = 3,
+  FAILED = 99,
+}
