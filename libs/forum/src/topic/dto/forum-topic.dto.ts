@@ -879,10 +879,18 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'sensitiveWordHits',
   'lastCommentAt',
   'lastCommentUserId',
-  'deletedAt',
   'createdAt',
   'updatedAt',
 ] as const) {
+  @DateProperty({
+    description: '删除时间',
+    example: '2026-03-27T00:00:00.000Z',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  deletedAt!: Date | null
+
   @ArrayProperty({
     description: '主题关联话题',
     itemClass: ForumHashtagBriefDto,
@@ -939,11 +947,19 @@ export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'favoriteCount',
   'lastCommentAt',
   'lastCommentUserId',
-  'deletedAt',
   'createdAt',
   'updatedAt',
   'contentPreview',
 ] as const) {
+  @DateProperty({
+    description: '删除时间',
+    example: '2026-03-27T00:00:00.000Z',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  deletedAt!: Date | null
+
   @NestedProperty({
     description: '发帖用户摘要',
     required: true,

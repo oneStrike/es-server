@@ -570,3 +570,17 @@ export class WorkDetailDto extends IntersectionType(
   WorkWithUserStatusDto,
   WorkReadingStatusFieldsDto,
 ) {}
+
+class AdminWorkDetailExtraDto extends PickType(BaseWorkDto, [
+  'chapterPrice',
+  'recommendWeight',
+  'remark',
+] as const) {}
+
+/**
+ * 后台作品详情 DTO。
+ */
+export class AdminWorkDetailDto extends IntersectionType(
+  WorkDetailDto,
+  AdminWorkDetailExtraDto,
+) {}

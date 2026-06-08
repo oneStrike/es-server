@@ -59,6 +59,12 @@ export const domainEventDispatch = snakeCase.table(
       table.updatedAt.desc(),
       table.id.desc(),
     ),
+    index('domain_event_dispatch_consumer_status_updated_at_id_idx').on(
+      table.consumer,
+      table.status,
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
     check(
       'domain_event_dispatch_status_valid_chk',
       sql`${table.status} in (0, 1, 2, 3)`,

@@ -68,6 +68,15 @@ export const notificationDelivery = snakeCase.table(
       table.status,
       table.updatedAt.desc(),
     ),
+    index('notification_delivery_status_updated_at_id_idx').on(
+      table.status,
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
+    index('notification_delivery_updated_at_id_idx').on(
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
     index('notification_delivery_event_key_updated_at_idx').on(
       table.eventKey,
       table.updatedAt.desc(),
@@ -76,11 +85,22 @@ export const notificationDelivery = snakeCase.table(
       table.receiverUserId,
       table.updatedAt.desc(),
     ),
+    index('notification_delivery_receiver_updated_at_id_idx').on(
+      table.receiverUserId,
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
     index('notification_delivery_projection_key_idx').on(table.projectionKey),
     index('notification_delivery_category_key_status_updated_at_idx').on(
       table.categoryKey,
       table.status,
       table.updatedAt.desc(),
+    ),
+    index('notification_delivery_category_status_updated_at_id_idx').on(
+      table.categoryKey,
+      table.status,
+      table.updatedAt.desc(),
+      table.id.desc(),
     ),
     index('notification_delivery_task_lookup_idx').on(
       table.categoryKey,

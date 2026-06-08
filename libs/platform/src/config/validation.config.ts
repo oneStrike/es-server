@@ -11,6 +11,7 @@ export const environmentValidationSchema = Joi.object({
 
   // 数据库配置
   DATABASE_URL: Joi.string().required(),
+  DB_POOL_MAX: Joi.number().integer().min(2).default(20),
 
   // Redis配置
   REDIS_URL: Joi.string().required(),

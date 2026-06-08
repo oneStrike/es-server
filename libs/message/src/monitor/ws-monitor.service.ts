@@ -47,6 +47,16 @@ export class MessageWsMonitorService {
     await this.applyDelta({ resyncSuccessCount: 1 })
   }
 
+  // 记录一次跨实例 fanout 因载荷过大被跳过。
+  async recordFanoutSkipped() {
+    await this.applyDelta({ fanoutSkippedCount: 1 })
+  }
+
+  // 记录一次跨实例 fanout 发布失败。
+  async recordFanoutPublishFailed() {
+    await this.applyDelta({ fanoutPublishErrorCount: 1 })
+  }
+
   // 把监控增量写入当前分钟桶，未命中时插入并通过冲突更新兜底。
   private async applyDelta(delta: MessageWsMetricDelta) {
     const bucketAt = this.getCurrentBucketAt()
@@ -61,6 +71,8 @@ export class MessageWsMonitorService {
           reconnectCount: sql`${this.metric.reconnectCount} + ${delta.reconnectCount ?? 0}`,
           resyncTriggerCount: sql`${this.metric.resyncTriggerCount} + ${delta.resyncTriggerCount ?? 0}`,
           resyncSuccessCount: sql`${this.metric.resyncSuccessCount} + ${delta.resyncSuccessCount ?? 0}`,
+          fanoutSkippedCount: sql`${this.metric.fanoutSkippedCount} + ${delta.fanoutSkippedCount ?? 0}`,
+          fanoutPublishErrorCount: sql`${this.metric.fanoutPublishErrorCount} + ${delta.fanoutPublishErrorCount ?? 0}`,
         })
         .where(eq(this.metric.bucketAt, bucketAt))
         .returning({ id: this.metric.id })
@@ -80,6 +92,8 @@ export class MessageWsMonitorService {
           reconnectCount: delta.reconnectCount ?? 0,
           resyncTriggerCount: delta.resyncTriggerCount ?? 0,
           resyncSuccessCount: delta.resyncSuccessCount ?? 0,
+          fanoutSkippedCount: delta.fanoutSkippedCount ?? 0,
+          fanoutPublishErrorCount: delta.fanoutPublishErrorCount ?? 0,
         })
         .onConflictDoUpdate({
           target: this.metric.bucketAt,
@@ -91,6 +105,8 @@ export class MessageWsMonitorService {
             reconnectCount: sql`${this.metric.reconnectCount} + ${delta.reconnectCount ?? 0}`,
             resyncTriggerCount: sql`${this.metric.resyncTriggerCount} + ${delta.resyncTriggerCount ?? 0}`,
             resyncSuccessCount: sql`${this.metric.resyncSuccessCount} + ${delta.resyncSuccessCount ?? 0}`,
+            fanoutSkippedCount: sql`${this.metric.fanoutSkippedCount} + ${delta.fanoutSkippedCount ?? 0}`,
+            fanoutPublishErrorCount: sql`${this.metric.fanoutPublishErrorCount} + ${delta.fanoutPublishErrorCount ?? 0}`,
           },
         })
     })

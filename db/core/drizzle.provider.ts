@@ -6,6 +6,8 @@ import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { relations } from '../relations'
 
+// Internal raw pg Pool token. Keep it out of @db/core's public barrel; inject it
+// only for driver-level features such as LISTEN/NOTIFY or lifecycle management.
 export const DRIZZLE_POOL = 'DRIZZLE_POOL'
 export const DRIZZLE_DB = 'DRIZZLE_DB'
 
@@ -20,8 +22,11 @@ export const DrizzlePoolProvider: Provider = {
       throw new Error('Missing db.connection (DATABASE_URL) configuration')
     }
 
+    const max = configService.get<number>('db.pool.max') ?? 20
+
     return new Pool({
       connectionString,
+      max,
     })
   },
   inject: [ConfigService],

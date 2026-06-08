@@ -1,5 +1,6 @@
 import type {
   CreateNotificationTemplateDto,
+  PreviewNotificationTemplateDto,
   QueryNotificationTemplatePageDto,
   UpdateNotificationTemplateDto,
   UpdateNotificationTemplateEnabledDto,
@@ -82,13 +83,21 @@ export class MessageTemplateService {
   }
 
   /**
-   * 删除通知模板
-   * 删除后通知主链路会自动回退到业务 fallback 文案
+   * 预览通知模板
+   * 使用消息域真实模板渲染逻辑，避免管理端另写一套变量替换规则
    */
-  async deleteNotificationTemplate(id: number) {
-    return this.messageNotificationTemplateService.deleteNotificationTemplate(
-      id,
-    )
+  async previewNotificationTemplate(input: PreviewNotificationTemplateDto) {
+    const result =
+      await this.messageNotificationTemplateService.previewNotificationTemplate(
+        input,
+      )
+    return {
+      title: result.title,
+      content: result.content,
+      usedTemplate: result.usedTemplate,
+      fallbackReason: result.fallbackReason,
+      categoryLabel: this.getCategoryLabel(result.categoryKey),
+    }
   }
 
   /**
@@ -112,6 +121,8 @@ export class MessageTemplateService {
     if (!isMessageNotificationCategoryKey(categoryKey)) {
       return `未知分类(${categoryKey})`
     }
-    return getMessageNotificationCategoryLabel(categoryKey)
+    return getMessageNotificationCategoryLabel(
+      categoryKey,
+    )
   }
 }

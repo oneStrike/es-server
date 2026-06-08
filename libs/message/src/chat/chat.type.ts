@@ -40,6 +40,7 @@ export type ChatMessageOutput = Omit<
 export interface ChatConversationMemberOutputSource {
   userId: number
   unreadCount: number
+  isPinned: boolean
   lastReadAt: Date | null
   lastReadMessageId: bigint | null
   user: ChatConversationMemberUserSource

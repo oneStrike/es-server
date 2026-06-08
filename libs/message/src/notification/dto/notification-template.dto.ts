@@ -55,6 +55,11 @@ class MessageNotificationTemplateMutableDto extends PickType(
   ['categoryKey', 'titleTemplate', 'contentTemplate'] as const,
 ) {}
 
+class MessageNotificationTemplateContentDto extends PickType(
+  BaseMessageNotificationTemplateDto,
+  ['titleTemplate', 'contentTemplate'] as const,
+) {}
+
 class MessageNotificationTemplateOptionalConfigDto extends PartialType(
   PickType(BaseMessageNotificationTemplateDto, [
     'isEnabled',
@@ -77,14 +82,24 @@ export class CreateNotificationTemplateDto extends IntersectionType(
   MessageNotificationTemplateOptionalConfigDto,
 ) {}
 
+class UpdateNotificationTemplateFieldsDto extends IntersectionType(
+  MessageNotificationTemplateContentDto,
+  MessageNotificationTemplateOptionalConfigDto,
+) {}
+
 export class UpdateNotificationTemplateDto extends IntersectionType(
   IdDto,
-  PartialType(CreateNotificationTemplateDto),
+  PartialType(UpdateNotificationTemplateFieldsDto),
 ) {}
 
 export class UpdateNotificationTemplateEnabledDto extends IntersectionType(
   IdDto,
   PickType(BaseMessageNotificationTemplateDto, ['isEnabled'] as const),
+) {}
+
+export class PreviewNotificationTemplateDto extends IntersectionType(
+  MessageNotificationTemplateMutableDto,
+  PartialType(PickType(BaseMessageNotificationTemplateDto, ['isEnabled'] as const)),
 ) {}
 
 export class AdminMessageNotificationTemplateDto extends BaseMessageNotificationTemplateDto {
@@ -93,4 +108,42 @@ export class AdminMessageNotificationTemplateDto extends BaseMessageNotification
     example: getMessageNotificationCategoryLabel('comment_reply'),
   })
   categoryLabel!: string
+}
+
+export class PreviewNotificationTemplateResponseDto {
+  @StringProperty({
+    description: '通知分类中文标签',
+    example: getMessageNotificationCategoryLabel('comment_reply'),
+    validation: false,
+  })
+  categoryLabel!: string
+
+  @StringProperty({
+    description: '渲染后的标题',
+    example: '小明 回复了你的评论',
+    validation: false,
+  })
+  title!: string
+
+  @StringProperty({
+    description: '渲染后的正文',
+    example: '这段内容写得很好',
+    validation: false,
+  })
+  content!: string
+
+  @BooleanProperty({
+    description: '是否使用模板渲染成功',
+    example: true,
+    validation: false,
+  })
+  usedTemplate!: boolean
+
+  @StringProperty({
+    description: '回退原因',
+    example: 'render_failed',
+    required: false,
+    validation: false,
+  })
+  fallbackReason?: string
 }

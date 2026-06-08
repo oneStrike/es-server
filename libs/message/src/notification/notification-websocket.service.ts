@@ -1,6 +1,7 @@
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { AuthConfigInterface } from '@libs/platform/types'
+import type { Notification, Pool, PoolClient } from 'pg'
 import type { WebSocket } from 'ws'
 import type { MessageChatService } from '../chat/chat.service'
 import type {
@@ -13,6 +14,9 @@ import type {
   WsRequestEnvelope,
   WsSendPayload,
 } from './notification-websocket.type'
+import { Buffer } from 'node:buffer'
+import { randomUUID } from 'node:crypto'
+import { DRIZZLE_POOL } from '@db/core/drizzle.provider'
 import {
   BusinessErrorCode,
   getPlatformErrorCode,
@@ -27,6 +31,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  OnApplicationShutdown,
   Optional,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -39,16 +44,62 @@ import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 
 const DIGIT_STRING_REGEX = /^\d+$/
 const NATIVE_WS_OPEN = 1
+const MESSAGE_WS_FANOUT_CHANNEL = 'message_ws_fanout'
+const POSTGRES_NOTIFY_PAYLOAD_LIMIT_BYTES = 7_600
+
+interface MessageWsFanoutEnvelope {
+  sourceId: string
+  userId: number
+  event: string
+  payload?: unknown
+}
 
 @Injectable()
-export class MessageWebSocketService {
+export class MessageWebSocketService implements OnApplicationShutdown {
   private readonly logger = new Logger(MessageWebSocketService.name)
+  private readonly instanceId = randomUUID()
   private readonly uploadConfig: UploadConfigInterface
   private readonly nativeClientsByUserId = new Map<number, Set<WebSocket>>()
   private readonly nativeClientState = new WeakMap<
     WebSocket,
     NativeWsClientState
   >()
+
+  private crossInstanceListener?: PoolClient
+  private crossInstanceListenerPromise?: Promise<void>
+  private crossInstanceReconnectTimer?: NodeJS.Timeout
+  private isShuttingDown = false
+  private readonly handleCrossInstanceListenerError = (error: Error) => {
+    this.logger.warn(
+      `Message WS fanout listener disconnected: ${this.stringifyError(error)}`,
+    )
+    const listener = this.crossInstanceListener
+    this.crossInstanceListener = undefined
+    this.crossInstanceListenerPromise = undefined
+
+    if (listener) {
+      listener.removeListener('notification', this.handleCrossInstanceFanout)
+      listener.removeListener('error', this.handleCrossInstanceListenerError)
+      listener.release(error)
+    }
+
+    if (!this.isShuttingDown) {
+      this.scheduleCrossInstanceListenerReconnect()
+    }
+  }
+
+  private readonly handleCrossInstanceFanout = (message: Notification) => {
+    if (message.channel !== MESSAGE_WS_FANOUT_CHANNEL || !message.payload) {
+      return
+    }
+
+    const envelope = this.parseCrossInstanceFanout(message.payload)
+    if (!envelope || envelope.sourceId === this.instanceId) {
+      return
+    }
+
+    this.emitToLocalUser(envelope.userId, envelope.event, envelope.payload)
+  }
 
   private messageChatService?: MessageChatService
 
@@ -58,11 +109,43 @@ export class MessageWebSocketService {
     private readonly moduleRef: ModuleRef,
     private readonly messageWsMonitorService: MessageWsMonitorService,
     private readonly userCoreService: UserService,
+    @Inject(DRIZZLE_POOL)
+    private readonly pgPool: Pool,
     @Optional()
     @Inject(UPLOAD_CONFIG_PROVIDER)
     private readonly uploadConfigProvider?: UploadConfigProvider,
   ) {
     this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
+  }
+
+  async onApplicationShutdown(): Promise<void> {
+    this.isShuttingDown = true
+    if (this.crossInstanceReconnectTimer) {
+      clearTimeout(this.crossInstanceReconnectTimer)
+      this.crossInstanceReconnectTimer = undefined
+    }
+
+    if (this.crossInstanceListenerPromise) {
+      await this.crossInstanceListenerPromise
+    }
+
+    const listener = this.crossInstanceListener
+    this.crossInstanceListener = undefined
+    if (!listener) {
+      return
+    }
+
+    listener.removeListener('notification', this.handleCrossInstanceFanout)
+    listener.removeAllListeners('error')
+    try {
+      await listener.query(`UNLISTEN ${MESSAGE_WS_FANOUT_CHANNEL}`)
+    } catch (error) {
+      this.logger.warn(
+        `Failed to unlisten message WS fanout channel: ${this.stringifyError(error)}`,
+      )
+    } finally {
+      listener.release()
+    }
   }
 
   // 初始化 native ws 客户端状态，连接建立后等待 auth 事件绑定用户。
@@ -247,6 +330,7 @@ export class MessageWebSocketService {
 
     clients.add(client)
     this.recordReconnectMetric()
+    void this.ensureCrossInstanceListener()
   }
 
   // 注销 native ws 客户端连接，并同步回收用户连接索引。
@@ -257,6 +341,7 @@ export class MessageWebSocketService {
     }
 
     this.nativeClientState.delete(client)
+    void this.stopCrossInstanceListenerIfIdle()
   }
 
   // 从指定用户连接集合中移除一个 native ws 客户端。
@@ -281,6 +366,15 @@ export class MessageWebSocketService {
       return
     }
 
+    this.emitToLocalUser(userId, event, payload)
+    void this.publishCrossInstanceFanout(userId, event, payload)
+  }
+
+  private emitToLocalUser<TPayload>(
+    userId: number,
+    event: string,
+    payload: TPayload,
+  ) {
     const nativeClients = this.nativeClientsByUserId.get(userId)
     if (!nativeClients?.size) {
       return
@@ -301,6 +395,169 @@ export class MessageWebSocketService {
         )
         this.unregisterNativeClient(client)
       }
+    }
+  }
+
+  private async ensureCrossInstanceListener(): Promise<void> {
+    if (this.isShuttingDown) {
+      return
+    }
+
+    if (this.crossInstanceListener || this.crossInstanceListenerPromise) {
+      return this.crossInstanceListenerPromise
+    }
+
+    this.crossInstanceListenerPromise = this.createCrossInstanceListener()
+    return this.crossInstanceListenerPromise
+  }
+
+  private async createCrossInstanceListener() {
+    let listener: PoolClient | undefined
+    try {
+      listener = await this.pgPool.connect()
+      listener.on('notification', this.handleCrossInstanceFanout)
+      listener.on('error', this.handleCrossInstanceListenerError)
+      await listener.query(`LISTEN ${MESSAGE_WS_FANOUT_CHANNEL}`)
+      if (this.isShuttingDown) {
+        listener.removeListener('notification', this.handleCrossInstanceFanout)
+        listener.removeListener('error', this.handleCrossInstanceListenerError)
+        try {
+          await listener.query(`UNLISTEN ${MESSAGE_WS_FANOUT_CHANNEL}`)
+        } catch (error) {
+          this.logger.warn(
+            `Failed to unlisten message WS fanout channel during shutdown: ${this.stringifyError(error)}`,
+          )
+        } finally {
+          listener.release()
+          listener = undefined
+        }
+        return
+      }
+      this.crossInstanceListener = listener
+      listener = undefined
+      if (this.nativeClientsByUserId.size === 0) {
+        await this.stopCrossInstanceListenerIfIdle()
+      }
+    } catch (error) {
+      if (listener) {
+        listener.removeListener('notification', this.handleCrossInstanceFanout)
+        listener.removeListener('error', this.handleCrossInstanceListenerError)
+        listener.release(error instanceof Error ? error : undefined)
+      }
+      this.crossInstanceListener = undefined
+      this.logger.warn(
+        `Failed to start message WS fanout listener: ${this.stringifyError(error)}`,
+      )
+      if (!this.isShuttingDown) {
+        this.scheduleCrossInstanceListenerReconnect()
+      }
+    } finally {
+      this.crossInstanceListenerPromise = undefined
+    }
+  }
+
+  private scheduleCrossInstanceListenerReconnect() {
+    if (this.isShuttingDown) {
+      return
+    }
+
+    if (this.crossInstanceReconnectTimer) {
+      return
+    }
+
+    this.crossInstanceReconnectTimer = setTimeout(() => {
+      this.crossInstanceReconnectTimer = undefined
+      if (this.nativeClientsByUserId.size > 0) {
+        void this.ensureCrossInstanceListener()
+      }
+    }, 1_000)
+  }
+
+  private async stopCrossInstanceListenerIfIdle() {
+    if (this.nativeClientsByUserId.size > 0) {
+      return
+    }
+
+    if (this.crossInstanceReconnectTimer) {
+      clearTimeout(this.crossInstanceReconnectTimer)
+      this.crossInstanceReconnectTimer = undefined
+    }
+
+    const listener = this.crossInstanceListener
+    this.crossInstanceListener = undefined
+    if (!listener) {
+      return
+    }
+
+    listener.removeListener('notification', this.handleCrossInstanceFanout)
+    listener.removeListener('error', this.handleCrossInstanceListenerError)
+    try {
+      await listener.query(`UNLISTEN ${MESSAGE_WS_FANOUT_CHANNEL}`)
+    } catch (error) {
+      this.logger.warn(
+        `Failed to stop idle message WS fanout listener: ${this.stringifyError(error)}`,
+      )
+    } finally {
+      listener.release()
+    }
+  }
+
+  private async publishCrossInstanceFanout<TPayload>(
+    userId: number,
+    event: string,
+    payload: TPayload,
+  ) {
+    const envelope: MessageWsFanoutEnvelope = {
+      sourceId: this.instanceId,
+      userId,
+      event,
+      payload,
+    }
+    const serialized = JSON.stringify(envelope)
+    if (
+      Buffer.byteLength(serialized, 'utf8') >
+      POSTGRES_NOTIFY_PAYLOAD_LIMIT_BYTES
+    ) {
+      this.logger.warn(
+        `Skip oversized message WS fanout payload event=${event} userId=${userId}`,
+      )
+      this.recordFanoutSkippedMetric()
+      return
+    }
+
+    try {
+      await this.pgPool.query('SELECT pg_notify($1, $2)', [
+        MESSAGE_WS_FANOUT_CHANNEL,
+        serialized,
+      ])
+    } catch (error) {
+      this.logger.warn(
+        `Failed to publish message WS fanout: ${this.stringifyError(error)}`,
+      )
+      this.recordFanoutPublishFailedMetric()
+    }
+  }
+
+  private parseCrossInstanceFanout(
+    payload: string,
+  ): MessageWsFanoutEnvelope | null {
+    try {
+      const envelope = JSON.parse(payload) as Partial<MessageWsFanoutEnvelope>
+      if (
+        typeof envelope.sourceId !== 'string' ||
+        typeof envelope.event !== 'string' ||
+        typeof envelope.userId !== 'number' ||
+        !Number.isInteger(envelope.userId) ||
+        envelope.userId <= 0
+      ) {
+        return null
+      }
+      return envelope as MessageWsFanoutEnvelope
+    } catch (error) {
+      this.logger.warn(
+        `Failed to parse message WS fanout payload: ${this.stringifyError(error)}`,
+      )
+      return null
     }
   }
 
@@ -710,6 +967,30 @@ export class MessageWebSocketService {
         `Failed to record WS reconnect metric: ${this.stringifyError(error)}`,
       )
     })
+  }
+
+  /**
+   * 记录跨实例 fanout 因 PostgreSQL notify 载荷限制被跳过。
+   */
+  private recordFanoutSkippedMetric() {
+    void this.messageWsMonitorService.recordFanoutSkipped().catch((error) => {
+      this.logger.warn(
+        `Failed to record WS fanout skipped metric: ${this.stringifyError(error)}`,
+      )
+    })
+  }
+
+  /**
+   * 记录跨实例 fanout 发布失败。
+   */
+  private recordFanoutPublishFailedMetric() {
+    void this.messageWsMonitorService
+      .recordFanoutPublishFailed()
+      .catch((error) => {
+        this.logger.warn(
+          `Failed to record WS fanout publish metric: ${this.stringifyError(error)}`,
+        )
+      })
   }
 
   /**

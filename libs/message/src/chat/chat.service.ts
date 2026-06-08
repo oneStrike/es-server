@@ -59,8 +59,10 @@ import {
   ChatSendMessageTypeEnum,
 } from './chat.constant'
 import {
+  HideChatConversationDto,
   MarkConversationReadDto,
   OpenDirectConversationDto,
+  PinChatConversationDto,
   QueryChatConversationMessagesDto,
   SendChatMessageDto,
 } from './dto/chat.dto'
@@ -181,6 +183,7 @@ export class MessageChatService {
             userId,
             role: ChatConversationMemberRoleEnum.OWNER,
             leftAt: null,
+            hiddenAt: null,
           })
           .onConflictDoNothing({
             target: [
@@ -193,6 +196,7 @@ export class MessageChatService {
           .update(chatConversationMember)
           .set({
             leftAt: null,
+            hiddenAt: null,
             role: ChatConversationMemberRoleEnum.OWNER,
           })
           .where(
@@ -205,6 +209,7 @@ export class MessageChatService {
                   ChatConversationMemberRoleEnum.OWNER,
                 ),
                 sql`${chatConversationMember.leftAt} is not null`,
+                sql`${chatConversationMember.hiddenAt} is not null`,
               ),
             ),
           )
@@ -278,6 +283,7 @@ export class MessageChatService {
           and(
             eq(chatConversationMember.userId, userId),
             isNull(chatConversationMember.leftAt),
+            isNull(chatConversationMember.hiddenAt),
             eq(chatConversation.hasMessages, true),
           ),
         ),
@@ -304,6 +310,7 @@ export class MessageChatService {
           conversationId: chatConversationMember.conversationId,
           userId: chatConversationMember.userId,
           unreadCount: chatConversationMember.unreadCount,
+          isPinned: chatConversationMember.isPinned,
           lastReadAt: chatConversationMember.lastReadAt,
           lastReadMessageId: chatConversationMember.lastReadMessageId,
           userProfileId: appUser.id,
@@ -331,6 +338,7 @@ export class MessageChatService {
       list.push({
         userId: member.userId,
         unreadCount: member.unreadCount,
+        isPinned: member.isPinned,
         lastReadAt: member.lastReadAt,
         lastReadMessageId: member.lastReadMessageId,
         user: {
@@ -348,6 +356,7 @@ export class MessageChatService {
           {
             id: item.id,
             bizKey: item.bizKey,
+            isPinned: item.isPinned,
             lastMessageId: item.lastMessageId,
             lastMessageAt: item.lastMessageAt,
             lastSenderId: item.lastSenderId,
@@ -556,6 +565,12 @@ export class MessageChatService {
     if (message.status !== ChatMessageStatusEnum.NORMAL) {
       return
     }
+    if (memberStates.length !== 2) {
+      this.logger.warn(
+        `skip_chat_message_fanout_invalid_direct_member_count conversationId=${conversationId} memberCount=${memberStates.length}`,
+      )
+      return
+    }
 
     const messageOutput = this.toMessageOutput(
       message as typeof chatMessage.$inferSelect,
@@ -723,6 +738,57 @@ export class MessageChatService {
     }
   }
 
+  async hideConversation(userId: number, dto: HideChatConversationDto) {
+    const conversationId = this.parsePositiveInteger(
+      dto.conversationId,
+      'conversationId',
+    )
+    const now = new Date()
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(chatConversationMember)
+        .set({
+          hiddenAt: now,
+          isPinned: false,
+          unreadCount: 0,
+        })
+        .where(
+          and(
+            eq(chatConversationMember.conversationId, conversationId),
+            eq(chatConversationMember.userId, userId),
+            isNull(chatConversationMember.leftAt),
+          ),
+        ),
+    )
+    this.drizzle.assertAffectedRows(result, 'Conversation not found')
+    await this.emitInboxSummaryUpdated(userId)
+    return true
+  }
+
+  async pinConversation(userId: number, dto: PinChatConversationDto) {
+    const conversationId = this.parsePositiveInteger(
+      dto.conversationId,
+      'conversationId',
+    )
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(chatConversationMember)
+        .set({
+          isPinned: Boolean(dto.isPinned),
+        })
+        .where(
+          and(
+            eq(chatConversationMember.conversationId, conversationId),
+            eq(chatConversationMember.userId, userId),
+            isNull(chatConversationMember.leftAt),
+            isNull(chatConversationMember.hiddenAt),
+          ),
+        ),
+    )
+    this.drizzle.assertAffectedRows(result, 'Conversation not found')
+    return true
+  }
+
   /**
    * 创建消息（带重试机制）
    *
@@ -780,6 +846,19 @@ export class MessageChatService {
             throw new BusinessException(
               BusinessErrorCode.RESOURCE_NOT_FOUND,
               'Conversation not found',
+            )
+          }
+          const activeMemberCount = await tx.$count(
+            chatConversationMember,
+            and(
+              eq(chatConversationMember.conversationId, conversationId),
+              isNull(chatConversationMember.leftAt),
+            ),
+          )
+          if (activeMemberCount !== 2) {
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
+              'Direct conversation member count is invalid',
             )
           }
           const conversation = await tx.query.chatConversation.findFirst({
@@ -867,12 +946,12 @@ export class MessageChatService {
           await tx
             .update(chatConversationMember)
             .set({
-              unreadCount: sql`${chatConversationMember.unreadCount} + 1`,
+              hiddenAt: null,
+              unreadCount: sql`case when ${chatConversationMember.userId} <> ${userId} then ${chatConversationMember.unreadCount} + 1 else ${chatConversationMember.unreadCount} end`,
             })
             .where(
               and(
                 eq(chatConversationMember.conversationId, conversationId),
-                ne(chatConversationMember.userId, userId),
                 isNull(chatConversationMember.leftAt),
               ),
             )
@@ -1021,6 +1100,7 @@ export class MessageChatService {
       .select({
         userId: chatConversationMember.userId,
         unreadCount: chatConversationMember.unreadCount,
+        isPinned: chatConversationMember.isPinned,
         lastReadAt: chatConversationMember.lastReadAt,
         lastReadMessageId: chatConversationMember.lastReadMessageId,
         userProfileId: appUser.id,
@@ -1051,6 +1131,7 @@ export class MessageChatService {
         members: members.map((member) => ({
           userId: member.userId,
           unreadCount: member.unreadCount,
+          isPinned: member.isPinned,
           lastReadAt: member.lastReadAt,
           lastReadMessageId: member.lastReadMessageId,
           user: {
@@ -1070,15 +1151,14 @@ export class MessageChatService {
    *
    * 输出字段说明：
    * - id: 会话ID
-   * - bizKey: 会话业务标识
    * - unreadCount: 当前用户的未读消息数
+   * - isPinned: 当前用户是否置顶
    * - lastMessageId/lastMessageAt/lastSenderId: 最后消息信息
    * - lastReadAt/lastReadMessageId: 当前用户的已读位置
    * - peerUser: 对端用户信息（私聊场景）
    *
    * @param conversation - 会话数据
    * @param conversation.id - 会话ID
-   * @param conversation.bizKey - 会话业务标识
    * @param conversation.lastMessageId - 最后消息ID
    * @param conversation.lastMessageAt - 最后消息时间
    * @param conversation.lastSenderId - 最后发送者ID
@@ -1091,12 +1171,14 @@ export class MessageChatService {
     conversation: {
       id: number
       bizKey: string
+      isPinned?: boolean
       lastMessageId: bigint | null
       lastMessageAt: Date | null
       lastSenderId: number | null
       members: Array<{
         userId: number
         unreadCount: number
+        isPinned: boolean
         lastReadAt: Date | null
         lastReadMessageId: bigint | null
         user: {
@@ -1126,8 +1208,8 @@ export class MessageChatService {
 
     return {
       id: conversation.id,
-      bizKey: conversation.bizKey,
       unreadCount: selfMember.unreadCount,
+      isPinned: selfMember.isPinned || Boolean(conversation.isPinned),
       // bigint 转换为字符串，避免前端精度丢失
       lastMessageId:
         typeof conversation.lastMessageId === 'bigint'
@@ -1173,6 +1255,14 @@ export class MessageChatService {
       .where(inArray(chatMessage.id, ids))
 
     return new Map(rows.map((item) => [item.id.toString(), item]))
+  }
+
+  private async emitInboxSummaryUpdated(userId: number) {
+    const summary = await this.messageInboxService.getSummary(userId)
+    this.messageNotificationRealtimeService.emitInboxSummaryUpdated(
+      userId,
+      summary,
+    )
   }
 
   /**

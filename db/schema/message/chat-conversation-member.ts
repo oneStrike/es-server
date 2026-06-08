@@ -41,9 +41,17 @@ export const chatConversationMember = snakeCase.table(
      */
     leftAt: timestamp({ withTimezone: true, precision: 6 }),
     /**
+     * 隐藏时间（用户维度列表隐藏，不代表退出会话）
+     */
+    hiddenAt: timestamp({ withTimezone: true, precision: 6 }),
+    /**
      * 是否静音
      */
     isMuted: boolean().default(false).notNull(),
+    /**
+     * 是否置顶
+     */
+    isPinned: boolean().default(false).notNull(),
     /**
      * 最后已读消息ID
      */
@@ -69,6 +77,7 @@ export const chatConversationMember = snakeCase.table(
      */
     index('chat_conversation_member_user_id_joined_at_idx').on(
       table.userId,
+      table.isPinned.desc(),
       table.joinedAt,
       table.conversationId,
     ),
@@ -85,15 +94,22 @@ export const chatConversationMember = snakeCase.table(
      * 覆盖会话列表、消息中心摘要、timeline 等按 userId + leftAt is null 的高频查询。
      */
     index('chat_conversation_member_active_user_idx')
-      .on(table.userId, table.conversationId)
-      .where(sql`${table.leftAt} is null`),
+      .on(table.userId, table.isPinned.desc(), table.conversationId)
+      .where(sql`${table.leftAt} is null and ${table.hiddenAt} is null`),
     /**
      * 活跃未读聚合索引。
      * 覆盖按 userId 统计 unreadCount 且过滤活跃成员的聚合场景。
      */
     index('chat_conversation_member_active_unread_idx')
       .on(table.userId, table.unreadCount, table.conversationId)
-      .where(sql`${table.leftAt} is null`),
+      .where(sql`${table.leftAt} is null and ${table.hiddenAt} is null`),
+    /**
+     * 隐藏会话排查索引。
+     * 覆盖 admin 按用户查看已隐藏会话的低频但必须可控查询。
+     */
+    index('chat_conversation_member_hidden_user_idx')
+      .on(table.userId, table.hiddenAt.desc(), table.conversationId)
+      .where(sql`${table.leftAt} is null and ${table.hiddenAt} is not null`),
     /**
      * 会话与用户复合主键
      */

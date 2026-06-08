@@ -74,6 +74,23 @@ function createMessage(overrides: Partial<ChatMessageSelect> = {}) {
   } satisfies ChatMessageSelect
 }
 
+function createActiveDirectMembers() {
+  return [
+    {
+      userId: 7,
+      unreadCount: 2,
+      lastReadAt: null,
+      lastReadMessageId: null,
+    },
+    {
+      userId: 8,
+      unreadCount: 0,
+      lastReadAt: null,
+      lastReadMessageId: null,
+    },
+  ]
+}
+
 function createService() {
   const totalQueryCapture: { where?: unknown } = {}
   const totalQueryWhere = jest.fn().mockResolvedValue([{ total: 0 }])
@@ -127,7 +144,7 @@ function createService() {
   const update = jest.fn(() => ({
     set: updateSet,
   }))
-  const count = jest.fn().mockResolvedValue(0)
+  const count = jest.fn().mockResolvedValue(2)
   const tx = {
     query: {
       chatConversationMember: {
@@ -165,6 +182,7 @@ function createService() {
         },
       },
       transaction,
+      update,
     },
     buildPage: jest.fn((dto: { pageIndex?: number; pageSize?: number }) => {
       const pageIndex = dto.pageIndex ?? 1
@@ -287,6 +305,9 @@ describe('chat.service conversation list visibility', () => {
     expect(mocks.totalQueryWhereSql()).toContain(
       '"chat_conversation"."has_messages" = $',
     )
+    expect(mocks.totalQueryWhereSql()).toContain(
+      '"chat_conversation_member"."hidden_at" is null',
+    )
     expect(result).toMatchObject({
       list: [],
       total: 0,
@@ -302,6 +323,7 @@ describe('chat.service conversation list visibility', () => {
       {
         id: 10,
         bizKey: 'direct:7:8',
+        isPinned: false,
         lastMessageId: null,
         lastMessageAt: null,
         lastSenderId: null,
@@ -312,6 +334,7 @@ describe('chat.service conversation list visibility', () => {
         conversationId: 10,
         userId: 7,
         unreadCount: 0,
+        isPinned: false,
         lastReadAt: null,
         lastReadMessageId: null,
         userProfileId: 7,
@@ -322,6 +345,7 @@ describe('chat.service conversation list visibility', () => {
         conversationId: 10,
         userId: 8,
         unreadCount: 0,
+        isPinned: false,
         lastReadAt: null,
         lastReadMessageId: null,
         userProfileId: 8,
@@ -338,14 +362,15 @@ describe('chat.service conversation list visibility', () => {
     expect(result.total).toBe(1)
     expect(result.list[0]).toMatchObject({
       id: 10,
-      bizKey: 'direct:7:8',
       unreadCount: 0,
+      isPinned: false,
       peerUser: {
         id: 8,
         nickname: 'peer',
         avatar: 'https://example.test/avatar.png',
       },
     })
+    expect(result.list[0]).not.toHaveProperty('bizKey')
     expect(result.list[0].lastMessageId).toBeUndefined()
     expect(result.list[0].lastMessageAt).toBeUndefined()
     expect(result.list[0].lastSenderId).toBeUndefined()
@@ -580,6 +605,47 @@ describe('chat.service send boundary', () => {
 })
 
 describe('chat.service write path', () => {
+  it('hides a conversation without marking the member as left', async () => {
+    const { service, mocks } = createService()
+    const hiddenAt = new Date('2026-06-09T00:30:00.000Z')
+    jest.useFakeTimers().setSystemTime(hiddenAt)
+
+    try {
+      await expect(
+        service.hideConversation(7, { conversationId: 10 }),
+      ).resolves.toBe(true)
+
+      expect(mocks.updateSet).toHaveBeenCalledWith({
+        hiddenAt,
+        isPinned: false,
+        unreadCount: 0,
+      })
+      expect(mocks.updateSet).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          leftAt: expect.any(Date),
+        }),
+      )
+      expect(mocks.messageInboxService.getSummary).toHaveBeenCalledWith(7)
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('rejects sending when an active direct conversation does not have exactly two members', async () => {
+    const { service, mocks } = createService()
+    mocks.count.mockResolvedValueOnce(1)
+
+    await expect(
+      service.sendMessage(7, {
+        conversationId: 10,
+        messageType: ChatSendMessageTypeEnum.TEXT,
+        content: 'hello',
+      }),
+    ).rejects.toThrow('Direct conversation member count is invalid')
+    expect(mocks.insert).not.toHaveBeenCalled()
+    expect(mocks.messageDomainEventPublisher.publishInTx).not.toHaveBeenCalled()
+  })
+
   it('returns an existing clientMessageId message without inserting or dispatching', async () => {
     const { service, mocks } = createService()
     mocks.chatMessageFindFirst.mockResolvedValueOnce(
@@ -653,6 +719,11 @@ describe('chat.service write path', () => {
         hasMessages: true,
         lastMessageId: 202n,
         lastSenderId: 7,
+      }),
+    )
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hiddenAt: null,
       }),
     )
     expect(mocks.messageDomainEventPublisher.publishInTx).toHaveBeenCalledWith(
@@ -795,6 +866,38 @@ describe('chat.service write path', () => {
 })
 
 describe('chat.service realtime message fanout', () => {
+  it('skips realtime fanout when active direct members are not exactly two', async () => {
+    const { service, mocks } = createService()
+    const warnSpy = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined)
+    mocks.chatMessageFindFirst.mockResolvedValueOnce(createMessage({ id: 211n }))
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
+      {
+        userId: 7,
+        unreadCount: 2,
+        lastReadAt: null,
+        lastReadMessageId: null,
+      },
+    ])
+
+    await dispatchMessageCreatedPayload(service, {
+      conversationId: 10,
+      messageId: '211',
+    })
+
+    expect(
+      mocks.messageNotificationRealtimeService.emitChatMessageNew,
+    ).not.toHaveBeenCalled()
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'skip_chat_message_fanout_invalid_direct_member_count',
+      ),
+    )
+
+    warnSpy.mockRestore()
+  })
+
   it('passes stored bodyTokens through chat.message.new payloads', async () => {
     const { service, mocks } = createService()
     const bodyTokens = [
@@ -808,14 +911,9 @@ describe('chat.service realtime message fanout', () => {
         bodyTokens: bodyTokens as unknown as ChatMessageSelect['bodyTokens'],
       }),
     )
-    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
-      {
-        userId: 7,
-        unreadCount: 2,
-        lastReadAt: null,
-        lastReadMessageId: null,
-      },
-    ])
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce(
+      createActiveDirectMembers(),
+    )
 
     await dispatchMessageCreatedPayload(service, {
       conversationId: 10,
@@ -841,14 +939,9 @@ describe('chat.service realtime message fanout', () => {
         bodyTokens: null,
       }),
     )
-    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
-      {
-        userId: 7,
-        unreadCount: 2,
-        lastReadAt: null,
-        lastReadMessageId: null,
-      },
-    ])
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce(
+      createActiveDirectMembers(),
+    )
 
     await dispatchMessageCreatedPayload(service, {
       conversationId: 10,
@@ -878,14 +971,9 @@ describe('chat.service realtime message fanout', () => {
         clientMessageId: 'client-media',
       }),
     )
-    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
-      {
-        userId: 7,
-        unreadCount: 2,
-        lastReadAt: null,
-        lastReadMessageId: null,
-      },
-    ])
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce(
+      createActiveDirectMembers(),
+    )
 
     await dispatchMessageCreatedPayload(service, {
       conversationId: 10,
@@ -919,14 +1007,9 @@ describe('chat.service realtime message fanout', () => {
         payload: systemPayload,
       }),
     )
-    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
-      {
-        userId: 7,
-        unreadCount: 2,
-        lastReadAt: null,
-        lastReadMessageId: null,
-      },
-    ])
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce(
+      createActiveDirectMembers(),
+    )
 
     await dispatchMessageCreatedPayload(service, {
       conversationId: 10,
@@ -952,14 +1035,9 @@ describe('chat.service realtime message fanout', () => {
         payload: ['legacy'],
       }),
     )
-    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
-      {
-        userId: 7,
-        unreadCount: 2,
-        lastReadAt: null,
-        lastReadMessageId: null,
-      },
-    ])
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce(
+      createActiveDirectMembers(),
+    )
 
     await dispatchMessageCreatedPayload(service, {
       conversationId: 10,
@@ -985,14 +1063,9 @@ describe('chat.service realtime message fanout', () => {
         },
       }),
     )
-    mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
-      {
-        userId: 7,
-        unreadCount: 2,
-        lastReadAt: null,
-        lastReadMessageId: null,
-      },
-    ])
+    mocks.chatConversationMemberFindMany.mockResolvedValueOnce(
+      createActiveDirectMembers(),
+    )
 
     await dispatchMessageCreatedPayload(service, {
       conversationId: 10,

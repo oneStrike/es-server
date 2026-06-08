@@ -8,6 +8,6 @@ import { AdminUserService } from './admin-user.service'
   imports: [CryptoModule, AuthModule],
   controllers: [AdminUserController],
   providers: [AdminUserService],
-  exports: [],
+  exports: [AdminUserService],
 })
 export class AdminUserModule {}

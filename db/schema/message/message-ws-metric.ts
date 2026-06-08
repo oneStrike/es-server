@@ -54,6 +54,14 @@ export const messageWsMetric = snakeCase.table(
      */
     resyncSuccessCount: integer().default(0).notNull(),
     /**
+     * 跨实例实时推送因载荷过大被跳过次数
+     */
+    fanoutSkippedCount: integer().default(0).notNull(),
+    /**
+     * 跨实例实时推送发布失败次数
+     */
+    fanoutPublishErrorCount: integer().default(0).notNull(),
+    /**
      * 创建时间
      */
     createdAt: timestamp({ withTimezone: true, precision: 6 })

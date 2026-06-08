@@ -1,16 +1,33 @@
-import { MessageDispatchPageItemDto, MessageNotificationDeliveryItemDto, MessageWsMonitorSummaryDto, QueryMessageDispatchPageDto, QueryMessageWsMonitorDto, RetryMessageNotificationDeliveryDto } from '@libs/message/monitor/dto/message-monitor.dto';
-import { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
+import {
+  AdminChatConversationPageItemDto,
+  AdminChatMessagePageItemDto,
+  MessageDispatchPageItemDto,
+  MessageMonitorSummaryDto,
+  MessageNotificationDeliveryItemDto,
+  MessageWsMonitorSummaryDto,
+  QueryAdminChatConversationPageDto,
+  QueryAdminChatMessagePageDto,
+  QueryMessageDispatchPageDto,
+  QueryMessageWsMonitorDto,
+  RetryMessageNotificationDeliveryDto,
+} from '@libs/message/monitor/dto/message-monitor.dto'
+import { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
+import { Audit } from '../../common/decorators/audit.decorator'
+import { MessageChatInvestigationService } from './message-chat-investigation.service'
 import { MessageMonitorService } from './message-monitor.service'
 
 @ApiTags('消息中心/监控')
 @Controller('admin/message')
 export class MessageController {
-  constructor(private readonly messageMonitorService: MessageMonitorService) {}
+  constructor(
+    private readonly messageMonitorService: MessageMonitorService,
+    private readonly messageChatInvestigationService: MessageChatInvestigationService,
+  ) {}
 
   @Get('monitor/delivery/page')
   @ApiPageDoc({
@@ -25,7 +42,7 @@ export class MessageController {
 
   @Post('monitor/delivery/retry')
   @ApiAuditDoc({
-    summary: '按 dispatch ID 重试失败的通知投递',
+    summary: '按投递记录重试失败的通知投递',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
@@ -33,10 +50,21 @@ export class MessageController {
   })
   async retryNotificationDelivery(
     @Body() body: RetryMessageNotificationDeliveryDto,
+    @CurrentUser('sub') adminUserId: number,
   ) {
-    return this.messageMonitorService.retryNotificationDeliveryByDispatchId(
-      body.dispatchId,
+    return this.messageMonitorService.retryNotificationDelivery(
+      adminUserId,
+      body,
     )
+  }
+
+  @Get('monitor/summary')
+  @ApiDoc({
+    summary: '获取消息运行摘要',
+    model: MessageMonitorSummaryDto,
+  })
+  async getMonitorSummary() {
+    return this.messageMonitorService.getMonitorSummary()
   }
 
   @Get('monitor/dispatch/page')
@@ -57,5 +85,43 @@ export class MessageController {
   })
   async getWsMonitorSummary(@Query() query: QueryMessageWsMonitorDto) {
     return this.messageMonitorService.getWsMonitorSummary(query)
+  }
+
+  @Get('chat/conversation/page')
+  @ApiPageDoc({
+    summary: '分页查询聊天会话排查列表',
+    model: AdminChatConversationPageItemDto,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.EXPORT,
+    content: '分页查询聊天会话排查列表',
+  })
+  async getChatConversationPage(
+    @CurrentUser('sub') adminUserId: number,
+    @Query() query: QueryAdminChatConversationPageDto,
+  ) {
+    return this.messageChatInvestigationService.getConversationPage(
+      adminUserId,
+      query,
+    )
+  }
+
+  @Get('chat/message/page')
+  @ApiPageDoc({
+    summary: '分页查询聊天消息排查列表',
+    model: AdminChatMessagePageItemDto,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.EXPORT,
+    content: '分页查询聊天消息排查列表',
+  })
+  async getChatMessagePage(
+    @CurrentUser('sub') adminUserId: number,
+    @Query() query: QueryAdminChatMessagePageDto,
+  ) {
+    return this.messageChatInvestigationService.getMessagePage(
+      adminUserId,
+      query,
+    )
   }
 }

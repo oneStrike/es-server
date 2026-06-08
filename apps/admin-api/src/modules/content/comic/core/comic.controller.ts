@@ -1,5 +1,5 @@
 import {
-  BaseWorkDto,
+  AdminWorkDetailDto,
   CreateWorkDto,
   PageWorkDto,
   QueryWorkDto,
@@ -47,7 +47,7 @@ export class ComicController {
   @Get('detail')
   @ApiDoc({
     summary: '获取漫画详情',
-    model: BaseWorkDto,
+    model: AdminWorkDetailDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.workService.getWorkDetail(query.id, {

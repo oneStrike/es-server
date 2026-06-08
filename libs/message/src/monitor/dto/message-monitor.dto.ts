@@ -1,7 +1,6 @@
 import { NotificationDeliveryLookupFilterDto } from '@libs/message/notification/dto/notification-delivery-filter.dto'
 import {
   BaseNotificationDeliveryDto,
-  NotificationDeliveryDispatchIdFieldDto,
   NotificationDeliveryIdFieldsDto,
   NotificationDeliveryLookupFieldsDto,
 } from '@libs/message/notification/dto/notification-delivery.dto'
@@ -11,14 +10,25 @@ import {
   MessageNotificationDispatchStatusEnum,
 } from '@libs/message/notification/notification.constant'
 import {
+  BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
+  RegexProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  ChatMessageStatusEnum,
+  ChatMessageTypeEnum,
+} from '../../chat/chat.constant'
+import {
+  POSITIVE_BIGINT_QUERY_ID_MESSAGE_SUFFIX,
+  POSITIVE_BIGINT_QUERY_ID_REGEX,
+} from '../../notification/notification-query-id.constant'
 
 class MessageDispatchPageSharedFieldsDto {
   @EnumProperty({
@@ -145,19 +155,106 @@ export class MessageWsMonitorSummaryDto {
   resyncSuccessCount!: number
 
   @NumberProperty({
+    description: '跨实例实时推送因载荷过大被跳过次数',
+    example: 0,
+    validation: false,
+  })
+  fanoutSkippedCount!: number
+
+  @NumberProperty({
+    description: '跨实例实时推送发布失败次数',
+    example: 0,
+    validation: false,
+  })
+  fanoutPublishErrorCount!: number
+
+  @NumberProperty({
     description: '补偿成功率（0~1）',
     example: 0.9375,
     validation: false,
   })
   resyncSuccessRate!: number
+
+  @BooleanProperty({
+    description: '实时推送是否存在多实例部署约束风险',
+    example: false,
+    validation: false,
+  })
+  realtimeDeploymentRisk!: boolean
+
+  @StringProperty({
+    description: '实时推送部署约束说明',
+    example: null,
+    required: false,
+    validation: false,
+  })
+  realtimeDeploymentConstraint!: string | null
 }
 
-export class RetryMessageNotificationDeliveryDto extends PickType(
-  NotificationDeliveryDispatchIdFieldDto,
-  ['dispatchId'] as const,
-) {}
+export class RetryMessageNotificationDeliveryDto {
+  @RegexProperty({
+    description: '通知投递记录 ID（正整数字符串）',
+    example: '10088',
+    required: true,
+    regex: POSITIVE_BIGINT_QUERY_ID_REGEX,
+    message: `deliveryId ${POSITIVE_BIGINT_QUERY_ID_MESSAGE_SUFFIX}`,
+  })
+  deliveryId!: string
+
+  @StringProperty({
+    description: '重试原因',
+    example: '用户反馈未收到评论回复，确认后人工重试。',
+    minLength: 5,
+    maxLength: 200,
+  })
+  reason!: string
+}
+
+export class MessageMonitorSummaryDto {
+  @DateProperty({
+    description: '快照时间',
+    example: '2026-03-07T12:00:00.000Z',
+    validation: false,
+  })
+  snapshotAt!: Date
+
+  @NumberProperty({
+    description: '失败投递数量',
+    example: 12,
+    validation: false,
+  })
+  failedDeliveryCount!: number
+
+  @NumberProperty({
+    description: '重试中投递数量',
+    example: 3,
+    validation: false,
+  })
+  retryingDeliveryCount!: number
+
+  @NumberProperty({
+    description: '失败发送任务数量',
+    example: 8,
+    validation: false,
+  })
+  failedDispatchCount!: number
+
+  @NumberProperty({
+    description: '重试中发送任务数量',
+    example: 2,
+    validation: false,
+  })
+  retryingDispatchCount!: number
+}
 
 class MessageNotificationDeliveryLabelFieldsDto {
+  @StringProperty({
+    description: '业务场景中文标签',
+    example: '评论回复',
+    validation: false,
+  })
+  eventLabel!: string
+
   @StringProperty({
     description: '通知分类中文标签',
     example: getMessageNotificationCategoryLabel('comment_reply'),
@@ -191,6 +288,13 @@ class MessageDispatchPageNotificationFieldsDto extends IntersectionType(
 ) {}
 
 class MessageDispatchPageOutputOnlyFieldsDto {
+  @StringProperty({
+    description: '业务场景中文标签',
+    example: '评论回复',
+    validation: false,
+  })
+  eventLabel!: string
+
   @StringProperty({
     description: '领域事件消费者标识',
     example: 'notification',
@@ -237,3 +341,265 @@ export class MessageDispatchPageItemDto extends IntersectionType(
   ),
   MessageDispatchPageOutputOnlyFieldsDto,
 ) {}
+
+export class QueryAdminChatConversationPageDto extends PageDto {
+  @NumberProperty({
+    description: '用户 ID，聊天排查必须先按用户定位',
+    example: 10001,
+    min: 1,
+  })
+  userId!: number
+
+  @NumberProperty({
+    description: '对方用户 ID',
+    example: 10002,
+    required: false,
+    min: 1,
+  })
+  peerUserId?: number
+
+  @NumberProperty({
+    description: '会话 ID',
+    example: 12,
+    required: false,
+    min: 1,
+  })
+  conversationId?: number
+
+  @BooleanProperty({
+    description: '是否只看未读会话',
+    example: true,
+    required: false,
+  })
+  unreadOnly?: boolean
+
+  @BooleanProperty({
+    description: '列表状态筛选；true=只看已隐藏，false=只看可见',
+    example: false,
+    required: false,
+  })
+  hiddenOnly?: boolean
+}
+
+export class QueryAdminChatMessagePageDto extends PageDto {
+  @NumberProperty({
+    description: '会话 ID',
+    example: 12,
+    min: 1,
+  })
+  conversationId!: number
+
+  @NumberProperty({
+    description: '排查用户 ID，用于校验该用户仍在会话中',
+    example: 10001,
+    min: 1,
+  })
+  userId!: number
+
+  @NumberProperty({
+    description: '发送用户 ID',
+    example: 10001,
+    required: false,
+    min: 1,
+  })
+  senderUserId?: number
+}
+
+export class AdminChatUserSummaryDto {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 10001,
+    validation: false,
+  })
+  userId!: number
+
+  @StringProperty({
+    description: '用户昵称',
+    example: '运营排查用户',
+    required: false,
+    validation: false,
+  })
+  nickname!: string | null
+
+  @StringProperty({
+    description: '用户头像',
+    example: 'https://example.com/avatar.png',
+    required: false,
+    validation: false,
+  })
+  avatarUrl!: string | null
+}
+
+export class AdminChatConversationPageItemDto {
+  @NumberProperty({
+    description: '会话 ID',
+    example: 12,
+    validation: false,
+  })
+  conversationId!: number
+
+  @BooleanProperty({
+    description: '当前用户是否置顶',
+    example: false,
+    validation: false,
+  })
+  isPinned!: boolean
+
+  @BooleanProperty({
+    description: '当前用户是否已从列表隐藏该会话',
+    example: false,
+    validation: false,
+  })
+  isHiddenForUser!: boolean
+
+  @DateProperty({
+    description: '当前用户隐藏会话时间',
+    example: '2026-03-07T12:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  hiddenAt!: Date | null
+
+  @NumberProperty({
+    description: '当前用户未读数',
+    example: 2,
+    validation: false,
+  })
+  unreadCount!: number
+
+  @StringProperty({
+    description: '当前用户最后已读消息 ID',
+    example: '1024',
+    required: false,
+    validation: false,
+  })
+  lastReadMessageId!: string | null
+
+  @DateProperty({
+    description: '当前用户最后已读时间',
+    example: '2026-03-07T12:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  lastReadAt!: Date | null
+
+  @StringProperty({
+    description: '最后消息 ID',
+    example: '1025',
+    required: false,
+    validation: false,
+  })
+  lastMessageId!: string | null
+
+  @DateProperty({
+    description: '最后消息时间',
+    example: '2026-03-07T12:01:00.000Z',
+    required: false,
+    validation: false,
+  })
+  lastMessageAt!: Date | null
+
+  @NumberProperty({
+    description: '最后发送用户 ID',
+    example: 10002,
+    required: false,
+    validation: false,
+  })
+  lastSenderId!: number | null
+
+  @StringProperty({
+    description: '最后消息摘要（脱敏/限长）',
+    example: '你好，请问...',
+    required: false,
+    validation: false,
+  })
+  lastMessagePreview!: string | null
+
+  @NestedProperty({
+    description: '当前排查用户摘要',
+    type: AdminChatUserSummaryDto,
+    validation: false,
+  })
+  user!: AdminChatUserSummaryDto
+
+  @NestedProperty({
+    description: '对方用户摘要',
+    type: AdminChatUserSummaryDto,
+    validation: false,
+  })
+  peerUser!: AdminChatUserSummaryDto
+}
+
+export class AdminChatMessagePageItemDto {
+  @StringProperty({
+    description: '消息 ID',
+    example: '1025',
+    validation: false,
+  })
+  messageId!: string
+
+  @NumberProperty({
+    description: '会话 ID',
+    example: 12,
+    validation: false,
+  })
+  conversationId!: number
+
+  @StringProperty({
+    description: '会话内递增序号',
+    example: '88',
+    validation: false,
+  })
+  messageSeq!: string
+
+  @NumberProperty({
+    description: '发送用户 ID',
+    example: 10002,
+    validation: false,
+  })
+  senderId!: number
+
+  @EnumProperty({
+    description: '消息类型',
+    example: ChatMessageTypeEnum.TEXT,
+    enum: ChatMessageTypeEnum,
+    validation: false,
+  })
+  messageType!: ChatMessageTypeEnum
+
+  @EnumProperty({
+    description: '消息状态',
+    example: ChatMessageStatusEnum.NORMAL,
+    enum: ChatMessageStatusEnum,
+    validation: false,
+  })
+  status!: ChatMessageStatusEnum
+
+  @StringProperty({
+    description: '消息摘要（脱敏/限长）',
+    example: '你好，请问...',
+    validation: false,
+  })
+  contentPreview!: string
+
+  @BooleanProperty({
+    description: '是否有扩展载荷',
+    example: false,
+    validation: false,
+  })
+  hasPayload!: boolean
+
+  @BooleanProperty({
+    description: '是否有正文 token',
+    example: false,
+    validation: false,
+  })
+  hasBodyTokens!: boolean
+
+  @DateProperty({
+    description: '发送时间',
+    example: '2026-03-07T12:01:00.000Z',
+    validation: false,
+  })
+  createdAt!: Date
+}

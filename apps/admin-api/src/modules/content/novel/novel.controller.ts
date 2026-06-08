@@ -1,6 +1,7 @@
 import {
-  BaseWorkDto,
+  AdminWorkDetailDto,
   CreateWorkDto,
+  PageWorkDto,
   QueryWorkDto,
   UpdateWorkDto,
   UpdateWorkHotDto,
@@ -37,7 +38,7 @@ export class NovelController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询小说列表',
-    model: BaseWorkDto,
+    model: PageWorkDto,
   })
   async getPage(@Query() query: QueryWorkDto) {
     return this.workService.getWorkPage({ ...query, type: WorkTypeEnum.NOVEL })
@@ -46,7 +47,7 @@ export class NovelController {
   @Get('detail')
   @ApiDoc({
     summary: '获取小说详情',
-    model: BaseWorkDto,
+    model: AdminWorkDetailDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.workService.getWorkDetail(query.id, {

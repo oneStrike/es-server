@@ -314,6 +314,22 @@ export class MarkConversationReadDto {
   messageId!: string
 }
 
+export class HideChatConversationDto {
+  @NumberProperty({
+    description: '会话 ID',
+    example: 1,
+  })
+  conversationId!: number
+}
+
+export class PinChatConversationDto extends HideChatConversationDto {
+  @BooleanProperty({
+    description: '是否置顶',
+    example: true,
+  })
+  isPinned!: boolean
+}
+
 /** 聊天消息普通文本 token */
 export class ChatMessageBodyTextTokenDto {
   @StringProperty({
@@ -566,19 +582,17 @@ export class BaseChatConversationDto {
   })
   id!: number
 
-  @StringProperty({
-    description: '业务键',
-    example: 'direct:10001:10002',
-    maxLength: 100,
-    contract: false,
-  })
-  bizKey!: string
-
   @NumberProperty({
     description: '未读消息数',
     example: 2,
   })
   unreadCount!: number
+
+  @BooleanProperty({
+    description: '当前用户是否置顶',
+    example: false,
+  })
+  isPinned!: boolean
 
   @StringProperty({
     description: '最后消息ID（BigInt）',

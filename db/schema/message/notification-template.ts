@@ -40,6 +40,16 @@ export const notificationTemplate = snakeCase.table(
     unique('notification_template_category_key_key').on(table.categoryKey),
     index('notification_template_is_enabled_idx').on(table.isEnabled),
     index('notification_template_updated_at_idx').on(table.updatedAt),
+    index('notification_template_enabled_updated_at_id_idx').on(
+      table.isEnabled,
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
+    index('notification_template_category_updated_at_id_idx').on(
+      table.categoryKey,
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
   ],
 )
 

@@ -61,6 +61,7 @@ export class MessageInboxSummaryQueryService {
             this.drizzle.schema.userNotification.receiverUserId,
             placeholder('userId'),
           ),
+          eq(this.drizzle.schema.userNotification.isHidden, false),
           or(
             isNull(this.drizzle.schema.userNotification.expiresAt),
             gt(
@@ -89,6 +90,7 @@ export class MessageInboxSummaryQueryService {
             placeholder('userId'),
           ),
           isNull(this.drizzle.schema.chatConversationMember.leftAt),
+          isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
         ),
       )
       .prepare('message_inbox_chat_unread_aggregate')
@@ -112,6 +114,7 @@ export class MessageInboxSummaryQueryService {
             this.drizzle.schema.userNotification.receiverUserId,
             placeholder('userId'),
           ),
+          eq(this.drizzle.schema.userNotification.isHidden, false),
           or(
             isNull(this.drizzle.schema.userNotification.expiresAt),
             gt(
@@ -151,6 +154,7 @@ export class MessageInboxSummaryQueryService {
             placeholder('userId'),
           ),
           isNull(this.drizzle.schema.chatConversationMember.leftAt),
+          isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
         ),
       )
       .where(isNotNull(this.drizzle.schema.chatConversation.lastMessageAt))

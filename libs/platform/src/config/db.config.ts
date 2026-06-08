@@ -11,8 +11,13 @@ export interface DbQueryConfig {
   maxListItemLimit: number
 }
 
+export interface DbPoolConfig {
+  max: number
+}
+
 export interface DbConfigInterface {
   connection?: string
+  pool: DbPoolConfig
   query: DbQueryConfig
 }
 
@@ -26,11 +31,33 @@ export function resolveDbQueryConfig(
   }
 }
 
+export function resolveDbPoolConfig(
+  poolConfig?: Partial<DbPoolConfig>,
+): DbPoolConfig {
+  return {
+    max: resolvePositiveInteger(poolConfig?.max, 20),
+  }
+}
+
 export const DbConfigRegister = registerAs(
   'db',
   (): DbConfigInterface => ({
     // 数据库连接配置
     connection: process.env.DATABASE_URL,
+    pool: resolveDbPoolConfig({
+      max: Number(process.env.DB_POOL_MAX),
+    }),
     query: resolveDbQueryConfig(),
   }),
 )
+
+function resolvePositiveInteger(
+  value: number | undefined,
+  fallback: number,
+): number {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
+    return value
+  }
+
+  return fallback
+}

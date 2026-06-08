@@ -1,4 +1,11 @@
-import { DateProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { BaseNotificationUnreadDto } from '../../notification/dto/notification-unread.dto'
 /**
@@ -149,4 +156,61 @@ export class InboxTimelineItemDto {
     example: 'n:1',
   })
   bizId!: string
+}
+
+/**
+ * 收件箱时间线查询 DTO。
+ * 使用 keyset 游标翻页，避免深页跳页扫描。
+ */
+export class QueryInboxTimelineDto {
+  @NumberProperty({
+    description: '单页大小，最大100，默认15',
+    example: 15,
+    max: 100,
+    min: 1,
+    required: false,
+    default: 15,
+  })
+  pageSize?: number
+
+  @StringProperty({
+    description: '下一页游标',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJiaXpJZCI6Im46MSJ9',
+    required: false,
+  })
+  cursor?: string
+}
+
+/**
+ * 收件箱时间线游标分页响应 DTO。
+ */
+export class InboxTimelineResponseDto {
+  @ArrayProperty({
+    description: '时间线列表',
+    itemClass: InboxTimelineItemDto,
+    validation: false,
+  })
+  list!: InboxTimelineItemDto[]
+
+  @StringProperty({
+    description: '下一页游标',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJiaXpJZCI6Im46MSJ9',
+    required: false,
+    validation: false,
+  })
+  nextCursor?: string | null
+
+  @BooleanProperty({
+    description: '是否还有更多消息',
+    example: true,
+    validation: false,
+  })
+  hasMore!: boolean
+
+  @NumberProperty({
+    description: '本次请求单页大小',
+    example: 15,
+    validation: false,
+  })
+  pageSize!: number
 }

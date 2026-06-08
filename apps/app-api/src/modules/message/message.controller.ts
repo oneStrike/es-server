@@ -4,12 +4,16 @@ import { MessageChatService } from '@libs/message/chat/chat.service'
 import {
   ChatConversationDto,
   ChatConversationMessagesResponseDto,
+  HideChatConversationDto,
+  MarkConversationReadDto,
   OpenDirectConversationDto,
+  PinChatConversationDto,
   QueryChatConversationMessagesDto,
 } from '@libs/message/chat/dto/chat.dto'
 import {
   InboxSummaryDto,
-  InboxTimelineItemDto,
+  InboxTimelineResponseDto,
+  QueryInboxTimelineDto,
 } from '@libs/message/inbox/dto/inbox.dto'
 import { MessageInboxService } from '@libs/message/inbox/inbox.service'
 import {
@@ -112,6 +116,18 @@ export class MessageController {
     return this.messageNotificationService.markAllRead(userId)
   }
 
+  @Post('notification/hide')
+  @ApiDoc({
+    summary: '隐藏单条通知',
+    model: Boolean,
+  })
+  async hideNotification(
+    @Body() body: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.messageNotificationService.hideNotification(userId, body.id)
+  }
+
   @Post('chat/direct/open')
   @ApiDoc({
     summary: '打开私聊会话',
@@ -148,6 +164,42 @@ export class MessageController {
     return this.messageChatService.getConversationMessages(userId, query)
   }
 
+  @Post('chat/conversation/read')
+  @ApiDoc({
+    summary: '标记会话已读',
+    model: Boolean,
+  })
+  async markConversationRead(
+    @Body() body: MarkConversationReadDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.messageChatService.markConversationRead(userId, body)
+  }
+
+  @Post('chat/conversation/hide')
+  @ApiDoc({
+    summary: '隐藏会话',
+    model: Boolean,
+  })
+  async hideConversation(
+    @Body() body: HideChatConversationDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.messageChatService.hideConversation(userId, body)
+  }
+
+  @Post('chat/conversation/pin')
+  @ApiDoc({
+    summary: '设置会话置顶',
+    model: Boolean,
+  })
+  async pinConversation(
+    @Body() body: PinChatConversationDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.messageChatService.pinConversation(userId, body)
+  }
+
   // 上传聊天媒体文件，scene 与 provider 兼容策略由消息域服务收口。
   @Post('chat/media/upload')
   @ApiDoc({
@@ -168,12 +220,12 @@ export class MessageController {
   }
 
   @Get('inbox/timeline/page')
-  @ApiPageDoc({
-    summary: '分页查询消息中心时间线',
-    model: InboxTimelineItemDto,
+  @ApiDoc({
+    summary: '游标查询消息中心时间线',
+    model: InboxTimelineResponseDto,
   })
   async inboxTimeline(
-    @Query() query: PageDto,
+    @Query() query: QueryInboxTimelineDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageInboxService.getTimeline(userId, query)

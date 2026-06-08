@@ -7,4 +7,6 @@ export interface MessageWsMetricDelta {
   reconnectCount?: number
   resyncTriggerCount?: number
   resyncSuccessCount?: number
+  fanoutSkippedCount?: number
+  fanoutPublishErrorCount?: number
 }

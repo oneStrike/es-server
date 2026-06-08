@@ -28,6 +28,7 @@ function createDeliveryItemPayload(overrides: Record<string, unknown> = {}) {
     eventId: '10001',
     dispatchId: '10088',
     eventKey: 'comment.replied',
+    eventLabel: '评论回复',
     categoryKey: 'comment_reply',
     categoryLabel: '评论回复',
     receiverUserId: null,
@@ -62,6 +63,7 @@ function createDispatchPageItemPayload(
     nextRetryAt: null,
     processedAt: null,
     eventKey: 'comment.replied',
+    eventLabel: '评论回复',
     domain: 'message',
     receiverUserId: null,
     projectionKey: null,
@@ -84,20 +86,29 @@ describe('QueryMessageDispatchPageDto', () => {
 describe('RetryMessageNotificationDeliveryDto', () => {
   it.each([
     ['missing value', {}],
-    ['blank string', { dispatchId: '   ' }],
-    ['zero', { dispatchId: '0' }],
-    ['negative number', { dispatchId: '-1' }],
-    ['decimal number', { dispatchId: '1.5' }],
-    ['non-numeric string', { dispatchId: 'abc' }],
-  ])('rejects invalid dispatchId: %s', (_name, payload) => {
+    ['blank string', { deliveryId: '   ', reason: '人工确认需要重试' }],
+    ['zero', { deliveryId: '0', reason: '人工确认需要重试' }],
+    ['negative number', { deliveryId: '-1', reason: '人工确认需要重试' }],
+    ['decimal number', { deliveryId: '1.5', reason: '人工确认需要重试' }],
+    ['non-numeric string', { deliveryId: 'abc', reason: '人工确认需要重试' }],
+  ])('rejects invalid deliveryId: %s', (_name, payload) => {
     const errors = validateDto(RetryMessageNotificationDeliveryDto, payload)
 
-    expect(validationProperties(errors)).toContain('dispatchId')
+    expect(validationProperties(errors)).toContain('deliveryId')
   })
 
-  it('accepts positive bigint string dispatchId', () => {
+  it('rejects missing retry reason', () => {
     const errors = validateDto(RetryMessageNotificationDeliveryDto, {
-      dispatchId: '10088',
+      deliveryId: '10088',
+    })
+
+    expect(validationProperties(errors)).toContain('reason')
+  })
+
+  it('accepts positive bigint string deliveryId with reason', () => {
+    const errors = validateDto(RetryMessageNotificationDeliveryDto, {
+      deliveryId: '10088',
+      reason: '人工确认需要重试',
     })
 
     expect(errors).toHaveLength(0)

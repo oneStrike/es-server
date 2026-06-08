@@ -1,6 +1,14 @@
-import { AdminMessageNotificationTemplateDto, CreateNotificationTemplateDto, QueryNotificationTemplatePageDto, UpdateNotificationTemplateDto, UpdateNotificationTemplateEnabledDto } from '@libs/message/notification/dto/notification-template.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto';
+import {
+  AdminMessageNotificationTemplateDto,
+  CreateNotificationTemplateDto,
+  PreviewNotificationTemplateDto,
+  PreviewNotificationTemplateResponseDto,
+  QueryNotificationTemplatePageDto,
+  UpdateNotificationTemplateDto,
+  UpdateNotificationTemplateEnabledDto,
+} from '@libs/message/notification/dto/notification-template.dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -94,17 +102,19 @@ export class MessageTemplateController {
   }
 
   /**
-   * 删除通知模板
+   * 预览通知模板
    */
-  @Post('delete')
+  @Post('preview')
   @ApiAuditDoc({
-    summary: '删除通知模板',
-    model: Boolean,
+    summary: '预览通知模板渲染结果',
+    model: PreviewNotificationTemplateResponseDto,
     audit: {
-      actionType: AuditActionTypeEnum.DELETE,
+      actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async deleteNotificationTemplate(@Body() body: IdDto) {
-    return this.messageTemplateService.deleteNotificationTemplate(body.id)
+  async previewNotificationTemplate(
+    @Body() body: PreviewNotificationTemplateDto,
+  ) {
+    return this.messageTemplateService.previewNotificationTemplate(body)
   }
 }

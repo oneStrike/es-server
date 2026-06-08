@@ -4,10 +4,13 @@ import type { NotificationProjectionApplyResult } from '../eventing/message-even
 import type { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import { DrizzleService } from '@db/core'
 
-import { Injectable } from '@nestjs/common'
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { jsonParse } from '@libs/platform/utils'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import {
   getMessageDomainEventDefinition,
+  getMessageDomainEventLabel,
   MessageDomainEventKey,
 } from '../eventing/message-event.constant'
 import { parsePositiveBigintQueryId } from './notification-query-id.util'
@@ -180,6 +183,16 @@ export class MessageNotificationDeliveryService {
         ),
       )
     }
+    const dateRange = buildDateOnlyRangeInAppTimeZone(
+      query.startDate,
+      query.endDate,
+    )
+    if (dateRange?.gte) {
+      conditions.push(gte(this.notificationDelivery.updatedAt, dateRange.gte))
+    }
+    if (dateRange?.lt) {
+      conditions.push(lt(this.notificationDelivery.updatedAt, dateRange.lt))
+    }
 
     const pageIndex =
       Number.isInteger(query.pageIndex) && Number(query.pageIndex) > 0
@@ -196,14 +209,16 @@ export class MessageNotificationDeliveryService {
       .from(this.notificationDelivery)
       .where(whereClause)
 
+    const orderBySql = this.buildDeliveryOrderBy(
+      query.orderBy?.trim()
+        ? query.orderBy
+        : [{ updatedAt: 'desc' as const }, { id: 'desc' as const }],
+    )
     const rows = await this.db
       .select()
       .from(this.notificationDelivery)
       .where(whereClause)
-      .orderBy(
-        desc(this.notificationDelivery.updatedAt),
-        desc(this.notificationDelivery.id),
-      )
+      .orderBy(...orderBySql)
       .limit(pageSize)
       .offset((pageIndex - 1) * pageSize)
 
@@ -215,7 +230,10 @@ export class MessageNotificationDeliveryService {
           instanceId,
           eventId: item.eventId.toString(),
           dispatchId: item.dispatchId.toString(),
+          eventLabel: getMessageDomainEventLabel(item.eventKey),
           status: item.status as MessageNotificationDispatchStatusEnum,
+          failureReason: this.sanitizeDiagnosticText(item.failureReason),
+          fallbackReason: this.sanitizeDiagnosticText(item.fallbackReason),
           categoryLabel:
             item.categoryKey &&
             MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(
@@ -408,5 +426,51 @@ export class MessageNotificationDeliveryService {
   private normalizeFailureReason(value?: string | null) {
     const normalized = value?.trim()
     return normalized ? normalized.slice(0, 500) : null
+  }
+
+  private sanitizeDiagnosticText(value?: string | null) {
+    const normalized = value?.replace(/\s+/g, ' ').trim()
+    return normalized ? normalized.slice(0, 120) : null
+  }
+
+  private buildDeliveryOrderBy(input: unknown) {
+    const records = this.normalizeOrderByRecords(input)
+    const columns = {
+      updatedAt: this.notificationDelivery.updatedAt,
+      createdAt: this.notificationDelivery.createdAt,
+      lastAttemptAt: this.notificationDelivery.lastAttemptAt,
+      id: this.notificationDelivery.id,
+    } as const
+    const orderBySql = records.map((record) => {
+      const [field, direction] = Object.entries(record)[0] ?? []
+      const column = columns[field as keyof typeof columns]
+      if (!column) {
+        throw new BadRequestException(`排序字段 "${field}" 不支持`)
+      }
+      return direction === 'asc' ? asc(column) : desc(column)
+    })
+    return records.some((record) => Object.hasOwn(record, 'id'))
+      ? orderBySql
+      : [...orderBySql, desc(this.notificationDelivery.id)]
+  }
+
+  private normalizeOrderByRecords(input: unknown) {
+    const parsed =
+      typeof input === 'string' ? jsonParse<Record<string, string>[]>(input) : input
+    const records = Array.isArray(parsed) ? parsed : [parsed]
+    return records.map((record) => {
+      if (!record || typeof record !== 'object' || Array.isArray(record)) {
+        throw new BadRequestException('orderBy 参数格式不合法')
+      }
+      const entries = Object.entries(record as Record<string, unknown>)
+      if (entries.length !== 1) {
+        throw new BadRequestException('orderBy 每项只能包含一个排序字段')
+      }
+      const [field, direction] = entries[0]
+      if (direction !== 'asc' && direction !== 'desc') {
+        throw new BadRequestException(`排序字段 "${field}" 的排序方向无效`)
+      }
+      return { [field]: direction } as Record<string, 'asc' | 'desc'>
+    })
   }
 }

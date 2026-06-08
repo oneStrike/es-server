@@ -38,6 +38,8 @@ export const userNotification = snakeCase.table(
     announcementId: integer(),
     /** 是否已读。 */
     isRead: boolean().default(false).notNull(),
+    /** 当前接收用户是否已隐藏。 */
+    isHidden: boolean().default(false).notNull(),
     /** 已读时间。 */
     readAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 过期时间。 */
@@ -58,16 +60,19 @@ export const userNotification = snakeCase.table(
     ),
     index('user_notification_receiver_user_id_is_read_created_at_idx').on(
       table.receiverUserId,
+      table.isHidden,
       table.isRead,
       table.createdAt.desc(),
     ),
     index('user_notification_receiver_user_id_category_key_created_at_idx').on(
       table.receiverUserId,
+      table.isHidden,
       table.categoryKey,
       table.createdAt.desc(),
     ),
     index('user_notification_receiver_user_id_created_at_idx').on(
       table.receiverUserId,
+      table.isHidden,
       table.createdAt.desc(),
     ),
     index('user_notification_receiver_user_id_expires_at_idx').on(

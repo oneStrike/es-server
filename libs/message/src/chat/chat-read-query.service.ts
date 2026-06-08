@@ -53,6 +53,7 @@ export class MessageChatReadQueryService {
       .select({
         id: this.drizzle.schema.chatConversation.id,
         bizKey: this.drizzle.schema.chatConversation.bizKey,
+        isPinned: this.drizzle.schema.chatConversationMember.isPinned,
         lastMessageId: this.drizzle.schema.chatConversation.lastMessageId,
         lastMessageAt: this.drizzle.schema.chatConversation.lastMessageAt,
         lastSenderId: this.drizzle.schema.chatConversation.lastSenderId,
@@ -70,10 +71,12 @@ export class MessageChatReadQueryService {
             placeholder('userId'),
           ),
           isNull(this.drizzle.schema.chatConversationMember.leftAt),
+          isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
         ),
       )
       .where(eq(this.drizzle.schema.chatConversation.hasMessages, true))
       .orderBy(
+        desc(this.drizzle.schema.chatConversationMember.isPinned),
         sql`${this.drizzle.schema.chatConversation.lastMessageAt} desc nulls last`,
         desc(this.drizzle.schema.chatConversation.id),
       )

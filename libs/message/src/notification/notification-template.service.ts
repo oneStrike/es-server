@@ -1,6 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateNotificationTemplateDto,
+  PreviewNotificationTemplateDto,
   QueryNotificationTemplatePageDto,
   UpdateNotificationTemplateDto,
   UpdateNotificationTemplateEnabledDto,
@@ -15,8 +16,9 @@ import type {
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, gte, lt } from 'drizzle-orm'
 import {
   MESSAGE_NOTIFICATION_CATEGORY_KEYS,
   MessageNotificationCategoryKey,
@@ -63,11 +65,23 @@ export class MessageNotificationTemplateService {
     if (query.isEnabled !== undefined) {
       conditions.push(eq(this.notificationTemplate.isEnabled, query.isEnabled))
     }
+    const dateRange = buildDateOnlyRangeInAppTimeZone(
+      query.startDate,
+      query.endDate,
+    )
+    if (dateRange?.gte) {
+      conditions.push(gte(this.notificationTemplate.updatedAt, dateRange.gte))
+    }
+    if (dateRange?.lt) {
+      conditions.push(lt(this.notificationTemplate.updatedAt, dateRange.lt))
+    }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const page = this.drizzle.buildPage(query)
     const orderQuery = this.drizzle.buildOrderBy(
-      [{ updatedAt: 'desc' as const }, { id: 'asc' as const }],
+      query.orderBy?.trim()
+        ? query.orderBy
+        : [{ updatedAt: 'desc' as const }, { id: 'desc' as const }],
       { table: this.notificationTemplate },
     )
     const [list, total] = await Promise.all([
@@ -141,10 +155,6 @@ export class MessageNotificationTemplateService {
     const currentCategoryKey = this.ensureSupportedCategoryKey(
       current.categoryKey,
     )
-    const nextCategoryKey =
-      input.categoryKey !== undefined
-        ? this.ensureSupportedCategoryKey(input.categoryKey)
-        : currentCategoryKey
     const nextTitleTemplate =
       input.titleTemplate !== undefined
         ? this.normalizeTemplateText(
@@ -161,21 +171,18 @@ export class MessageNotificationTemplateService {
         : current.contentTemplate
 
     this.ensureTemplatePlaceholdersValid(
-      nextCategoryKey,
+      currentCategoryKey,
       nextTitleTemplate,
       'titleTemplate',
     )
     this.ensureTemplatePlaceholdersValid(
-      nextCategoryKey,
+      currentCategoryKey,
       nextContentTemplate,
       'contentTemplate',
     )
 
     const updateData: Partial<typeof this.notificationTemplate.$inferInsert> =
       {}
-    if (input.categoryKey !== undefined) {
-      updateData.categoryKey = nextCategoryKey
-    }
     if (input.titleTemplate !== undefined) {
       updateData.titleTemplate = nextTitleTemplate
     }
@@ -221,19 +228,6 @@ export class MessageNotificationTemplateService {
           .update(this.notificationTemplate)
           .set({ isEnabled: input.isEnabled })
           .where(eq(this.notificationTemplate.id, input.id)),
-      { notFound: '通知模板不存在' },
-    )
-    return true
-  }
-
-  async deleteNotificationTemplate(id: number) {
-    const current = await this.getNotificationTemplateDetail(id)
-    this.ensureSupportedCategoryKey(current.categoryKey)
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .delete(this.notificationTemplate)
-          .where(eq(this.notificationTemplate.id, id)),
       { notFound: '通知模板不存在' },
     )
     return true
@@ -291,6 +285,59 @@ export class MessageNotificationTemplateService {
     }
   }
 
+  async previewNotificationTemplate(input: PreviewNotificationTemplateDto) {
+    const categoryKey = this.ensureSupportedCategoryKey(input.categoryKey)
+    const titleTemplate = this.normalizeTemplateText(
+      input.titleTemplate,
+      '通知标题模板不能为空',
+    )
+    const contentTemplate = this.normalizeTemplateText(
+      input.contentTemplate,
+      '通知正文模板不能为空',
+    )
+    this.ensureTemplatePlaceholdersValid(
+      categoryKey,
+      titleTemplate,
+      'titleTemplate',
+    )
+    this.ensureTemplatePlaceholdersValid(
+      categoryKey,
+      contentTemplate,
+      'contentTemplate',
+    )
+
+    const context = this.buildPreviewContext(categoryKey)
+    try {
+      return {
+        title: this.renderTemplateText(
+          titleTemplate,
+          context,
+          'titleTemplate',
+          200,
+        ),
+        content: this.renderTemplateText(
+          contentTemplate,
+          context,
+          'contentTemplate',
+          1000,
+        ),
+        categoryKey,
+        usedTemplate: true,
+      } satisfies NotificationTemplateRenderResult
+    } catch (error) {
+      this.logger.warn(
+        `notification template preview failed: categoryKey=${categoryKey}, reason=${this.stringifyError(error)}`,
+      )
+      return {
+        title: context.title,
+        content: context.content,
+        categoryKey,
+        usedTemplate: false,
+        fallbackReason: 'render_failed',
+      } satisfies NotificationTemplateRenderResult
+    }
+  }
+
   private async buildRenderContext(
     input: RenderNotificationTemplateInput,
   ): Promise<NotificationTemplateRenderContext> {
@@ -324,6 +371,32 @@ export class MessageNotificationTemplateService {
       content: input.content,
       expiresAt: input.expiresAt,
       data: input.data ?? null,
+    }
+  }
+
+  private buildPreviewContext(
+    categoryKey: MessageNotificationCategoryKey,
+  ): NotificationTemplateRenderContext {
+    return {
+      categoryKey,
+      receiverUserId: 10001,
+      actorUserId: 10002,
+      actor: {
+        id: 10002,
+        nickname: '示例用户',
+        avatarUrl: null,
+      },
+      title: '示例通知标题',
+      content: '示例通知正文',
+      data: {
+        object: {
+          title: '示例作品标题',
+          snippet: '这是一段用于预览模板变量的示例内容',
+        },
+        reminder: {
+          kind: 'reward_granted',
+        },
+      },
     }
   }
 

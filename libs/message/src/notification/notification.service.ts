@@ -121,6 +121,7 @@ export class MessageNotificationService {
             and(
               eq(this.notification.id, id),
               eq(this.notification.receiverUserId, receiverUserId),
+              eq(this.notification.isHidden, false),
               eq(this.notification.isRead, false),
             ),
           ),
@@ -165,9 +166,34 @@ export class MessageNotificationService {
     return true
   }
 
+  async hideNotification(receiverUserId: number, id: number) {
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.notification)
+        .set({
+          isHidden: true,
+        })
+        .where(
+          and(
+            eq(this.notification.id, id),
+            eq(this.notification.receiverUserId, receiverUserId),
+            eq(this.notification.isHidden, false),
+          ),
+        ),
+    )
+    this.drizzle.assertAffectedRows(result, '通知不存在或已隐藏')
+    this.messageNotificationRealtimeService.emitNotificationDeleted(
+      receiverUserId,
+      { id },
+    )
+    await this.emitInboxSummaryUpdated(receiverUserId)
+    return true
+  }
+
   buildActiveNotificationWhere(receiverUserId: number, now = new Date()) {
     return and(
       eq(this.notification.receiverUserId, receiverUserId),
+      eq(this.notification.isHidden, false),
       or(
         isNull(this.notification.expiresAt),
         gt(this.notification.expiresAt, now),
