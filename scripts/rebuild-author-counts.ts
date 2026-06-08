@@ -20,6 +20,12 @@ async function rebuildAuthorCounts() {
   })
 
   try {
+    const startedAt = Date.now()
+    const [{ count: affectedAuthors }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.workAuthor)
+      .where(sql`${schema.workAuthor.deletedAt} is null`)
+
     await db.execute(sql`
       update ${schema.workAuthor} as author
       set followers_count = coalesce(fact.followers_count, 0)
@@ -58,7 +64,9 @@ async function rebuildAuthorCounts() {
         and author.deleted_at is null
     `)
 
-    console.log('作者粉丝数与作品数重建完成')
+    console.log(
+      `作者粉丝数与作品数重建完成：affectedAuthors=${Number(affectedAuthors ?? 0)}, elapsedMs=${Date.now() - startedAt}`,
+    )
   } finally {
     await pool.end()
   }
