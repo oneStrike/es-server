@@ -1,7 +1,7 @@
 import { AppAnnouncementService } from '@libs/app-content/announcement/announcement.service'
 import {
   AnnouncementDetailDto,
-  BaseAnnouncementDto,
+  AnnouncementPageItemDto,
   CreateAnnouncementDto,
   QueryAnnouncementDto,
   UpdateAnnouncementDto,
@@ -41,7 +41,7 @@ export class AppAnnouncementController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询公告列表',
-    model: BaseAnnouncementDto,
+    model: AnnouncementPageItemDto,
   })
   async getPage(@Query() query: QueryAnnouncementDto) {
     return this.libAppAnnouncementService.findAnnouncementPage(query)
@@ -90,5 +90,17 @@ export class AppAnnouncementController {
   })
   async remove(@Body() body: IdDto) {
     return this.libAppAnnouncementService.deleteAnnouncement(body)
+  }
+
+  @Post('retry-fanout')
+  @ApiAuditDoc({
+    summary: '重试公告消息中心通知',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async retryFanout(@Body() body: IdDto) {
+    return this.libAppAnnouncementService.retryAnnouncementFanout(body)
   }
 }

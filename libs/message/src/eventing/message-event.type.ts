@@ -38,6 +38,8 @@ export type NotificationProjectionCommand =
       expiresAt?: Date
     })
     | (NotificationProjectionCommandBase & {
+      announcementId?: number
+      categoryKey?: MessageNotificationCategoryKey
       mode: 'delete'
     })
     | {

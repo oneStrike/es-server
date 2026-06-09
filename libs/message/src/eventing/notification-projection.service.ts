@@ -8,6 +8,7 @@ import type {
   NotificationProjectionCommand,
 } from './message-event.type'
 import { DrizzleService } from '@db/core'
+import { EnablePlatformEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
@@ -71,6 +72,17 @@ export class NotificationProjectionService {
     }
 
     if (command.mode === 'delete') {
+      if (
+        command.categoryKey === 'system_announcement' &&
+        command.announcementId !== undefined &&
+        (await this.isCurrentSystemAnnouncementVisible(command.announcementId))
+      ) {
+        return {
+          action: 'skip',
+          reason: 'stale_system_announcement_delete',
+        }
+      }
+
       const deletedRows = await this.db
         .delete(this.notification)
         .where(
@@ -108,7 +120,7 @@ export class NotificationProjectionService {
       }
     }
 
-    const normalizedPayload = await this.normalizeNotificationPayload(
+    let normalizedPayload = await this.normalizeNotificationPayload(
       command.categoryKey,
       command.payload,
     )
@@ -117,13 +129,31 @@ export class NotificationProjectionService {
       normalizedPayload,
     )
     this.assertRequiredNotificationFacts(command.categoryKey, notificationFacts)
+    const systemAnnouncementProjection =
+      command.categoryKey === 'system_announcement'
+        ? await this.loadCurrentSystemAnnouncementProjection(
+            notificationFacts.announcementId!,
+          )
+        : undefined
+    if (
+      command.categoryKey === 'system_announcement' &&
+      !systemAnnouncementProjection
+    ) {
+      return {
+        action: 'skip',
+        reason: 'stale_system_announcement_publish',
+      }
+    }
+    if (systemAnnouncementProjection) {
+      normalizedPayload = systemAnnouncementProjection.payload
+    }
     const rendered =
       await this.messageNotificationTemplateService.renderNotificationTemplate({
         categoryKey: command.categoryKey,
         receiverUserId: command.receiverUserId,
         actorUserId: command.actorUserId,
-        title: command.title,
-        content: command.content,
+        title: systemAnnouncementProjection?.title ?? command.title,
+        content: systemAnnouncementProjection?.content ?? command.content,
         data: normalizedPayload,
         expiresAt: command.expiresAt,
       })
@@ -312,6 +342,87 @@ export class NotificationProjectionService {
         'system_announcement notification must provide payload.object.id for typed announcement lookup',
       )
     }
+  }
+
+  private async loadCurrentSystemAnnouncementProjection(announcementId: number) {
+    const announcement = await this.db.query.appAnnouncement.findFirst({
+      where: { id: announcementId },
+      columns: {
+        id: true,
+        announcementType: true,
+        content: true,
+        enablePlatform: true,
+        isPublished: true,
+        isRealtime: true,
+        priorityLevel: true,
+        publishEndTime: true,
+        publishStartTime: true,
+        summary: true,
+        title: true,
+      },
+    })
+
+    if (!announcement || !this.isSystemAnnouncementVisible(announcement)) {
+      return null
+    }
+
+    const content =
+      announcement.summary?.trim() ||
+      announcement.content?.trim() ||
+      '你收到一条新的系统公告。'
+
+    return {
+      content: content.slice(0, 180),
+      payload: {
+        object: {
+          announcementType: announcement.announcementType,
+          id: announcement.id,
+          kind: 'announcement',
+          priorityLevel: announcement.priorityLevel,
+          summary: announcement.summary ?? undefined,
+          title: announcement.title,
+        },
+      },
+      title: announcement.title,
+    }
+  }
+
+  private async isCurrentSystemAnnouncementVisible(announcementId: number) {
+    const announcement = await this.db.query.appAnnouncement.findFirst({
+      where: { id: announcementId },
+      columns: {
+        enablePlatform: true,
+        isPublished: true,
+        isRealtime: true,
+        publishEndTime: true,
+        publishStartTime: true,
+      },
+    })
+
+    return !!announcement && this.isSystemAnnouncementVisible(announcement)
+  }
+
+  private isSystemAnnouncementVisible(input: {
+    enablePlatform?: number[] | null
+    isPublished: boolean
+    isRealtime: boolean
+    publishEndTime?: Date | null
+    publishStartTime?: Date | null
+  }) {
+    const now = new Date()
+    if (!input.isRealtime || !input.isPublished) {
+      return false
+    }
+    if (!input.enablePlatform?.includes(EnablePlatformEnum.APP)) {
+      return false
+    }
+    if (input.publishStartTime && input.publishStartTime > now) {
+      return false
+    }
+    if (input.publishEndTime && input.publishEndTime <= now) {
+      return false
+    }
+    return true
   }
 
   private async normalizeCommentActionPayload(

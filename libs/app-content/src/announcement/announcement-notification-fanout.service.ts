@@ -2,27 +2,73 @@ import type { Db } from '@db/core'
 import type { AppAnnouncementNotificationFanoutTaskSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
-import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Injectable } from '@nestjs/common'
-import { and, asc, eq, gt, inArray, isNull } from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  and,
+  arrayOverlaps,
+  asc,
+  desc,
+  eq,
+  gt,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm'
 import {
   isAnnouncementPublishedNow,
   shouldAnnouncementEnterNotificationCenter,
 } from './announcement.constant'
 
 const ANNOUNCEMENT_FANOUT_BATCH_SIZE = 200
-const ANNOUNCEMENT_FANOUT_PENDING_STATUS = 0
-const ANNOUNCEMENT_FANOUT_PROCESSING_STATUS = 1
-const ANNOUNCEMENT_FANOUT_SUCCESS_STATUS = 2
-const ANNOUNCEMENT_FANOUT_FAILED_STATUS = 3
-const ANNOUNCEMENT_FANOUT_RUNNABLE_STATUSES = [
-  ANNOUNCEMENT_FANOUT_PENDING_STATUS,
-  ANNOUNCEMENT_FANOUT_FAILED_STATUS,
-] as const
+const ANNOUNCEMENT_FANOUT_CLAIM_LEASE_MS = 10 * 60 * 1000
+const ANNOUNCEMENT_FANOUT_CONSUME_MAX_TASKS = 10
+const ANNOUNCEMENT_FANOUT_CONSUME_MAX_MS = 4 * 1000
+const ANNOUNCEMENT_FANOUT_MAX_ATTEMPTS = 5
+const ANNOUNCEMENT_FANOUT_RETRY_BASE_MS = 60 * 1000
+const ANNOUNCEMENT_FANOUT_TASK_MAX_BATCHES = 10
+const ANNOUNCEMENT_LIFECYCLE_ENQUEUE_BATCH_SIZE = 200
+
+export const ANNOUNCEMENT_FANOUT_PENDING_STATUS = 0
+export const ANNOUNCEMENT_FANOUT_PROCESSING_STATUS = 1
+export const ANNOUNCEMENT_FANOUT_SUCCESS_STATUS = 2
+export const ANNOUNCEMENT_FANOUT_FAILED_STATUS = 3
+type AnnouncementFanoutEventKey =
+  | 'announcement.published'
+  | 'announcement.unpublished'
+
+interface AnnouncementDecisionSnapshot {
+  enablePlatform: number[]
+  id: number
+  isPublished: boolean
+  isRealtime: boolean
+  publishEndTime?: Date | null
+  publishStartTime?: Date | null
+  updatedAt?: Date | null
+}
+interface AnnouncementFanoutConsumeBudget {
+  maxBatchesPerTask: number
+  maxRuntimeMs: number
+  nowMs: () => number
+  startedAtMs: number
+}
+type AnnouncementFanoutConsumeOptions = Partial<
+  Pick<
+    AnnouncementFanoutConsumeBudget,
+    'maxBatchesPerTask' | 'maxRuntimeMs' | 'nowMs'
+  >
+> & {
+  maxTasks?: number
+}
 
 @Injectable()
 export class AnnouncementNotificationFanoutService {
+  private isConsumingPendingTasks = false
+
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
@@ -62,66 +108,250 @@ export class AnnouncementNotificationFanoutService {
     }
 
     const desiredEventKey = this.resolveAnnouncementEventKey(announcement)
-    const now = new Date()
-    await this.drizzle.withErrorHandling(() =>
-      tx
-        .insert(this.fanoutTask)
-        .values({
-          announcementId,
-          desiredEventKey,
-          status: ANNOUNCEMENT_FANOUT_PENDING_STATUS,
-          cursorUserId: null,
-          lastError: null,
-          startedAt: null,
-          finishedAt: null,
-          updatedAt: now,
-        })
-        .onConflictDoUpdate({
-          target: this.fanoutTask.announcementId,
-          set: {
-            desiredEventKey,
-            status: ANNOUNCEMENT_FANOUT_PENDING_STATUS,
-            cursorUserId: null,
-            lastError: null,
-            startedAt: null,
-            finishedAt: null,
-            updatedAt: now,
-          },
-        }),
+    const boundaryKey = this.buildManualBoundaryKey(announcement)
+    await this.insertFanoutTask(
+      {
+        announcementId,
+        desiredEventKey,
+        eventBoundaryKey: boundaryKey,
+      },
+      tx,
     )
     return true
   }
 
-  async consumePendingTasks() {
-    while (true) {
-      const task = await this.claimNextRunnableTask()
-      if (!task) {
-        return
+  async enqueueDueLifecycleFanoutTasks(now = new Date()) {
+    const [activeAnnouncements, expiredAnnouncements] = await Promise.all([
+      this.loadLifecycleActiveAnnouncements(now),
+      this.loadLifecycleExpiredAnnouncements(now),
+    ])
+
+    let enqueuedCount = 0
+    for (const announcement of activeAnnouncements) {
+      if (!announcement.publishStartTime) {
+        continue
+      }
+      await this.enqueueLifecycleStartFanoutTask({
+        id: announcement.id,
+        publishStartTime: announcement.publishStartTime,
+      })
+      enqueuedCount += 1
+    }
+
+    for (const announcement of expiredAnnouncements) {
+      if (!announcement.publishEndTime) {
+        continue
+      }
+      await this.enqueueLifecycleEndFanoutTask({
+        id: announcement.id,
+        publishEndTime: announcement.publishEndTime,
+      })
+      enqueuedCount += 1
+    }
+
+    return enqueuedCount
+  }
+
+  async retryFailedAnnouncementFanout(announcementId: number, tx: Db = this.db) {
+    const latestRows = await tx
+      .select({
+        id: this.fanoutTask.id,
+        status: this.fanoutTask.status,
+      })
+      .from(this.fanoutTask)
+      .where(eq(this.fanoutTask.announcementId, announcementId))
+      .orderBy(desc(this.fanoutTask.updatedAt), desc(this.fanoutTask.id))
+      .limit(1)
+
+    const latestTask = latestRows[0]
+    if (
+      !latestTask ||
+      latestTask.status !== ANNOUNCEMENT_FANOUT_FAILED_STATUS
+    ) {
+      throw new BadRequestException('当前公告没有失败的消息中心通知任务')
+    }
+
+    const result = await tx
+      .update(this.fanoutTask)
+      .set({
+        status: ANNOUNCEMENT_FANOUT_PENDING_STATUS,
+        attemptCount: 0,
+        cursorUserId: null,
+        lastError: null,
+        nextAttemptAt: null,
+        processingLeaseExpiresAt: null,
+        startedAt: null,
+        finishedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(this.fanoutTask.id, latestTask.id),
+          eq(this.fanoutTask.status, ANNOUNCEMENT_FANOUT_FAILED_STATUS),
+        ),
+      )
+      .returning()
+
+    this.drizzle.assertAffectedRows(result, '消息中心通知任务已变化，请刷新后重试')
+    if (result[0]) {
+      await this.syncCurrentAnnouncementFanoutRuntime(result[0], tx)
+    }
+    return true
+  }
+
+  async consumePendingTasks(options: AnnouncementFanoutConsumeOptions = {}) {
+    if (this.isConsumingPendingTasks) {
+      return 0
+    }
+
+    this.isConsumingPendingTasks = true
+    try {
+      const maxTasks =
+        options.maxTasks ?? ANNOUNCEMENT_FANOUT_CONSUME_MAX_TASKS
+      const budget = this.createConsumeBudget(options)
+      let consumedCount = 0
+
+      while (
+        consumedCount < maxTasks &&
+        this.hasConsumeTimeBudget(budget)
+      ) {
+        const task = await this.claimNextRunnableTask()
+        if (!task) {
+          return consumedCount
+        }
+
+        consumedCount += 1
+        await this.processTask(task, budget)
       }
 
-      await this.processTask(task)
+      return consumedCount
+    } finally {
+      this.isConsumingPendingTasks = false
     }
   }
 
-  private async processTask(task: AppAnnouncementNotificationFanoutTaskSelect) {
-    const announcement = await this.loadAnnouncementPayloadSnapshot(
-      task.announcementId,
+  private async insertFanoutTask(
+    input: {
+      announcementId: number
+      desiredEventKey: AnnouncementFanoutEventKey
+      eventBoundaryKey: string
+    },
+    tx: Db = this.db,
+  ) {
+    const now = new Date()
+    const fanoutKey = this.buildFanoutKey(input)
+    const insertedRows = await this.drizzle.withErrorHandling(() =>
+      tx
+        .insert(this.fanoutTask)
+        .values({
+          announcementId: input.announcementId,
+          desiredEventKey: input.desiredEventKey,
+          eventBoundaryKey: input.eventBoundaryKey,
+          fanoutKey,
+          status: ANNOUNCEMENT_FANOUT_PENDING_STATUS,
+          attemptCount: 0,
+          cursorUserId: null,
+          lastError: null,
+          startedAt: null,
+          processingLeaseExpiresAt: null,
+          nextAttemptAt: null,
+          finishedAt: null,
+          updatedAt: now,
+        })
+        .onConflictDoNothing({
+          target: this.fanoutTask.fanoutKey,
+        })
+        .returning(),
     )
-    if (task.desiredEventKey === 'announcement.published' && !announcement) {
+    if (insertedRows[0]) {
+      await this.promoteAnnouncementFanoutRuntime(insertedRows[0], tx)
+    }
+  }
+
+  private async enqueueLifecycleStartFanoutTask(announcement: {
+    id: number
+    publishStartTime: Date
+  }) {
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.insertFanoutTask(
+        {
+          announcementId: announcement.id,
+          desiredEventKey: 'announcement.published',
+          eventBoundaryKey: this.buildStartBoundaryKey(
+            announcement.publishStartTime,
+          ),
+        },
+        tx,
+      )
+      await this.markLifecycleStartBoundaryEnqueued(announcement, tx)
+    })
+  }
+
+  private async enqueueLifecycleEndFanoutTask(announcement: {
+    id: number
+    publishEndTime: Date
+  }) {
+    await this.drizzle.withTransaction(async (tx) => {
+      await this.insertFanoutTask(
+        {
+          announcementId: announcement.id,
+          desiredEventKey: 'announcement.unpublished',
+          eventBoundaryKey: this.buildEndBoundaryKey(announcement.publishEndTime),
+        },
+        tx,
+      )
+      await this.markLifecycleEndBoundaryEnqueued(announcement, tx)
+    })
+  }
+
+  private async processTask(
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+    budget = this.createConsumeBudget({
+      maxBatchesPerTask: Number.POSITIVE_INFINITY,
+      maxRuntimeMs: Number.POSITIVE_INFINITY,
+    }),
+  ) {
+    let leaseExpiresAt = task.processingLeaseExpiresAt
+    if (!leaseExpiresAt) {
       await this.markTaskFailed(
-        task.id,
-        task.desiredEventKey,
-        task.cursorUserId,
-        'announcement_not_found',
+        task,
+        null,
+        'fanout_task_missing_processing_lease',
       )
       return
     }
 
+    const eventKey = task.desiredEventKey as AnnouncementFanoutEventKey
+    const decision = await this.loadAnnouncementDecisionSnapshot(
+      task.announcementId,
+    )
+    if (!decision && eventKey === 'announcement.published') {
+      await this.markTaskFailed(task, task.cursorUserId, 'announcement_not_found')
+      return
+    }
+    if (decision && this.resolveAnnouncementEventKey(decision) !== eventKey) {
+      await this.markTaskSucceeded(task, leaseExpiresAt)
+      return
+    }
+    if (decision && this.isObsoleteFanoutBoundary(task, decision)) {
+      await this.markTaskSucceeded(task, leaseExpiresAt)
+      return
+    }
+
+    const announcement = await this.loadAnnouncementPayloadSnapshot(
+      task.announcementId,
+    )
+    if (eventKey === 'announcement.published' && !announcement) {
+      await this.markTaskFailed(task, task.cursorUserId, 'announcement_not_found')
+      return
+    }
+
     let cursorUserId = task.cursorUserId ?? undefined
+    let processedBatchCount = 0
 
     while (true) {
       const receiverUserIds =
-        task.desiredEventKey === 'announcement.published'
+        eventKey === 'announcement.published'
           ? await this.loadPublishedReceiverUserIds(cursorUserId)
           : await this.loadUnpublishedReceiverUserIds(
               task.announcementId,
@@ -129,19 +359,22 @@ export class AnnouncementNotificationFanoutService {
             )
 
       if (receiverUserIds.length === 0) {
-        await this.markTaskSucceeded(task.id, task.desiredEventKey)
+        await this.markTaskSucceeded(task, leaseExpiresAt)
         return
       }
 
       let lastProcessedUserId = cursorUserId ?? null
 
       try {
-        const eventKey = task.desiredEventKey as
-          | 'announcement.published'
-          | 'announcement.unpublished'
         await this.messageDomainEventPublisher.publishMany(
           receiverUserIds.map((receiverUserId) => ({
             eventKey,
+            idempotencyKey: this.buildDomainEventIdempotencyKey({
+              announcementId: task.announcementId,
+              receiverUserId,
+              eventKey,
+              eventBoundaryKey: task.eventBoundaryKey,
+            }),
             subjectType: 'system',
             subjectId: task.announcementId,
             targetType: 'announcement',
@@ -149,7 +382,7 @@ export class AnnouncementNotificationFanoutService {
             context: this.buildAnnouncementNotificationContext({
               announcementId: task.announcementId,
               receiverUserId,
-              eventKey: task.desiredEventKey,
+              eventKey,
               title: announcement?.title,
               content: announcement
                 ? this.buildAnnouncementNotificationContent(
@@ -163,39 +396,57 @@ export class AnnouncementNotificationFanoutService {
           })),
         )
         lastProcessedUserId = receiverUserIds.at(-1) ?? lastProcessedUserId
+        processedBatchCount += 1
       } catch (error) {
         await this.markTaskFailed(
-          task.id,
-          task.desiredEventKey,
+          task,
           lastProcessedUserId,
           this.stringifyError(error),
+          leaseExpiresAt,
         )
         return
       }
 
       const nextCursorUserId = receiverUserIds.at(-1) ?? lastProcessedUserId
-      const advanced = await this.advanceTaskCursor(
-        task.id,
-        task.desiredEventKey,
-        nextCursorUserId ?? null,
-      )
-      if (!advanced) {
+      if (
+        processedBatchCount >= budget.maxBatchesPerTask ||
+        !this.hasConsumeTimeBudget(budget)
+      ) {
+        await this.pauseTaskForNextTick(
+          task,
+          leaseExpiresAt,
+          nextCursorUserId ?? null,
+        )
         return
       }
+
+      const nextLeaseExpiresAt = await this.advanceTaskCursor(
+        task,
+        leaseExpiresAt,
+        nextCursorUserId ?? null,
+      )
+      if (!nextLeaseExpiresAt) {
+        return
+      }
+      leaseExpiresAt = nextLeaseExpiresAt
       cursorUserId = nextCursorUserId ?? undefined
     }
   }
 
   private async claimNextRunnableTask() {
+    const now = new Date()
+    const runnableWhere = this.buildRunnableTaskWhere(now)
     const rows = await this.db
       .select()
       .from(this.fanoutTask)
-      .where(
-        inArray(this.fanoutTask.status, [
-          ...ANNOUNCEMENT_FANOUT_RUNNABLE_STATUSES,
-        ]),
+      .where(runnableWhere)
+      .orderBy(
+        asc(this.fanoutTask.status),
+        asc(this.fanoutTask.processingLeaseExpiresAt),
+        asc(this.fanoutTask.attemptCount),
+        asc(this.fanoutTask.updatedAt),
+        asc(this.fanoutTask.id),
       )
-      .orderBy(asc(this.fanoutTask.updatedAt), asc(this.fanoutTask.id))
       .limit(1)
 
     const pendingTask = rows[0]
@@ -203,100 +454,227 @@ export class AnnouncementNotificationFanoutService {
       return null
     }
 
-    const now = new Date()
+    const leaseExpiresAt = this.buildLeaseExpiresAt(now)
     const claimedRows = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.fanoutTask)
         .set({
           status: ANNOUNCEMENT_FANOUT_PROCESSING_STATUS,
+          attemptCount: sql<number>`
+            case
+              when ${this.fanoutTask.status} = ${ANNOUNCEMENT_FANOUT_PENDING_STATUS}
+                and ${this.fanoutTask.cursorUserId} is not null
+                and ${this.fanoutTask.lastError} is null
+              then ${this.fanoutTask.attemptCount}
+              else ${this.fanoutTask.attemptCount} + 1
+            end
+          `,
           startedAt: pendingTask.startedAt ?? now,
           finishedAt: null,
           lastError: null,
+          nextAttemptAt: null,
+          processingLeaseExpiresAt: leaseExpiresAt,
           updatedAt: now,
         })
-        .where(
-          and(
-            eq(this.fanoutTask.id, pendingTask.id),
-            inArray(this.fanoutTask.status, [
-              ...ANNOUNCEMENT_FANOUT_RUNNABLE_STATUSES,
-            ]),
-          ),
-        )
+        .where(and(eq(this.fanoutTask.id, pendingTask.id), runnableWhere))
         .returning(),
     )
 
-    return claimedRows[0] ?? null
+    const claimedTask = claimedRows[0] ?? null
+    if (claimedTask) {
+      await this.syncCurrentAnnouncementFanoutRuntime(claimedTask)
+    }
+    return claimedTask
+  }
+
+  private buildRunnableTaskWhere(now: Date) {
+    return or(
+      eq(this.fanoutTask.status, ANNOUNCEMENT_FANOUT_PENDING_STATUS),
+      and(
+        eq(this.fanoutTask.status, ANNOUNCEMENT_FANOUT_FAILED_STATUS),
+        lt(this.fanoutTask.attemptCount, ANNOUNCEMENT_FANOUT_MAX_ATTEMPTS),
+        or(
+          isNull(this.fanoutTask.nextAttemptAt),
+          lte(this.fanoutTask.nextAttemptAt, now),
+        ),
+      ),
+      and(
+        eq(this.fanoutTask.status, ANNOUNCEMENT_FANOUT_PROCESSING_STATUS),
+        lte(this.fanoutTask.processingLeaseExpiresAt, now),
+      ),
+    )
   }
 
   private async advanceTaskCursor(
-    taskId: number,
-    desiredEventKey: string,
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+    leaseExpiresAt: Date,
     cursorUserId: number | null,
   ) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    const now = new Date()
+    const nextLeaseExpiresAt = this.buildLeaseExpiresAt(now)
+    const rows = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.fanoutTask)
         .set({
           cursorUserId,
-          updatedAt: new Date(),
+          processingLeaseExpiresAt: nextLeaseExpiresAt,
+          updatedAt: now,
         })
-        .where(
-          and(
-            eq(this.fanoutTask.id, taskId),
-            eq(this.fanoutTask.status, ANNOUNCEMENT_FANOUT_PROCESSING_STATUS),
-            eq(this.fanoutTask.desiredEventKey, desiredEventKey),
-          ),
-        ),
+        .where(this.buildClaimOwnerWhere(task, leaseExpiresAt))
+        .returning({
+          processingLeaseExpiresAt: this.fanoutTask.processingLeaseExpiresAt,
+        }),
     )
 
-    return (result.rowCount ?? 0) > 0
+    return rows[0]?.processingLeaseExpiresAt ?? null
   }
 
-  private async markTaskSucceeded(taskId: number, desiredEventKey: string) {
+  private async pauseTaskForNextTick(
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+    leaseExpiresAt: Date,
+    cursorUserId: number | null,
+  ) {
     const now = new Date()
-    await this.drizzle.withErrorHandling(() =>
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.fanoutTask)
+        .set({
+          status: ANNOUNCEMENT_FANOUT_PENDING_STATUS,
+          cursorUserId,
+          processingLeaseExpiresAt: null,
+          updatedAt: now,
+        })
+        .where(this.buildClaimOwnerWhere(task, leaseExpiresAt))
+        .returning(),
+    )
+
+    if (rows[0]) {
+      await this.syncCurrentAnnouncementFanoutRuntime(rows[0])
+    }
+  }
+
+  private async markTaskSucceeded(
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+    leaseExpiresAt: Date,
+  ) {
+    const now = new Date()
+    const rows = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.fanoutTask)
         .set({
           status: ANNOUNCEMENT_FANOUT_SUCCESS_STATUS,
           cursorUserId: null,
           lastError: null,
+          nextAttemptAt: null,
+          processingLeaseExpiresAt: null,
           finishedAt: now,
           updatedAt: now,
         })
-        .where(
-          and(
-            eq(this.fanoutTask.id, taskId),
-            eq(this.fanoutTask.status, ANNOUNCEMENT_FANOUT_PROCESSING_STATUS),
-            eq(this.fanoutTask.desiredEventKey, desiredEventKey),
-          ),
-        ),
+        .where(this.buildClaimOwnerWhere(task, leaseExpiresAt))
+        .returning(),
     )
+    if (rows[0]) {
+      await this.syncCurrentAnnouncementFanoutRuntime(rows[0])
+    }
   }
 
   private async markTaskFailed(
-    taskId: number,
-    desiredEventKey: string,
+    task: AppAnnouncementNotificationFanoutTaskSelect,
     cursorUserId: number | null,
     reason: string,
+    leaseExpiresAt = task.processingLeaseExpiresAt,
   ) {
-    await this.drizzle.withErrorHandling(() =>
+    const now = new Date()
+    const rows = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.fanoutTask)
         .set({
           status: ANNOUNCEMENT_FANOUT_FAILED_STATUS,
           cursorUserId,
           lastError: reason.slice(0, 500),
-          updatedAt: new Date(),
+          nextAttemptAt: this.buildNextAttemptAt(task.attemptCount, now),
+          processingLeaseExpiresAt: null,
+          updatedAt: now,
         })
         .where(
-          and(
-            eq(this.fanoutTask.id, taskId),
-            eq(this.fanoutTask.status, ANNOUNCEMENT_FANOUT_PROCESSING_STATUS),
-            eq(this.fanoutTask.desiredEventKey, desiredEventKey),
-          ),
-        ),
+          leaseExpiresAt
+            ? this.buildClaimOwnerWhere(task, leaseExpiresAt)
+            : eq(this.fanoutTask.id, task.id),
+        )
+        .returning(),
     )
+    if (rows[0]) {
+      await this.syncCurrentAnnouncementFanoutRuntime(rows[0])
+    }
+  }
+
+  private async promoteAnnouncementFanoutRuntime(
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+    tx: Db = this.db,
+  ) {
+    await tx
+      .update(this.appAnnouncement)
+      .set(this.buildAnnouncementFanoutRuntimeSet(task))
+      .where(eq(this.appAnnouncement.id, task.announcementId))
+  }
+
+  private async syncCurrentAnnouncementFanoutRuntime(
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+    tx: Db = this.db,
+  ) {
+    await tx
+      .update(this.appAnnouncement)
+      .set(this.buildAnnouncementFanoutRuntimeSet(task))
+      .where(
+        and(
+          eq(this.appAnnouncement.id, task.announcementId),
+          eq(this.appAnnouncement.notificationFanoutTaskId, task.id),
+        ),
+      )
+  }
+
+  private buildAnnouncementFanoutRuntimeSet(
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+  ) {
+    return {
+      notificationFanoutDesiredEventKey: task.desiredEventKey,
+      notificationFanoutLastError: task.lastError,
+      notificationFanoutStatus: task.status,
+      notificationFanoutTaskId: task.id,
+      notificationFanoutUpdatedAt: task.updatedAt,
+      updatedAt: sql`${this.appAnnouncement.updatedAt}`,
+    }
+  }
+
+  private buildClaimOwnerWhere(
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+    leaseExpiresAt: Date,
+  ) {
+    return and(
+      eq(this.fanoutTask.id, task.id),
+      eq(this.fanoutTask.status, ANNOUNCEMENT_FANOUT_PROCESSING_STATUS),
+      eq(this.fanoutTask.desiredEventKey, task.desiredEventKey),
+      eq(this.fanoutTask.eventBoundaryKey, task.eventBoundaryKey),
+      eq(this.fanoutTask.processingLeaseExpiresAt, leaseExpiresAt),
+    )
+  }
+
+  private createConsumeBudget(
+    options: AnnouncementFanoutConsumeOptions = {},
+  ): AnnouncementFanoutConsumeBudget {
+    const nowMs = options.nowMs ?? Date.now
+    return {
+      maxBatchesPerTask:
+        options.maxBatchesPerTask ?? ANNOUNCEMENT_FANOUT_TASK_MAX_BATCHES,
+      maxRuntimeMs:
+        options.maxRuntimeMs ?? ANNOUNCEMENT_FANOUT_CONSUME_MAX_MS,
+      nowMs,
+      startedAtMs: nowMs(),
+    }
+  }
+
+  private hasConsumeTimeBudget(budget: AnnouncementFanoutConsumeBudget) {
+    return budget.nowMs() - budget.startedAtMs < budget.maxRuntimeMs
   }
 
   private async loadPublishedReceiverUserIds(cursorUserId?: number) {
@@ -344,18 +722,110 @@ export class AnnouncementNotificationFanoutService {
     return [...new Set(rows.map((row) => row.receiverUserId))]
   }
 
+  private async loadLifecycleActiveAnnouncements(now: Date) {
+    return this.db
+      .select({
+        id: this.appAnnouncement.id,
+        publishStartTime: this.appAnnouncement.publishStartTime,
+      })
+      .from(this.appAnnouncement)
+      .where(
+        and(
+          eq(this.appAnnouncement.isRealtime, true),
+          eq(this.appAnnouncement.isPublished, true),
+          arrayOverlaps(this.appAnnouncement.enablePlatform, [
+            EnablePlatformEnum.APP,
+          ]),
+          isNotNull(this.appAnnouncement.publishStartTime),
+          lte(this.appAnnouncement.publishStartTime, now),
+          sql`${this.appAnnouncement.notificationStartBoundaryAt} is distinct from ${this.appAnnouncement.publishStartTime}`,
+          or(
+            isNull(this.appAnnouncement.publishEndTime),
+            gt(this.appAnnouncement.publishEndTime, now),
+          ),
+        ),
+      )
+      .orderBy(asc(this.appAnnouncement.publishStartTime), asc(this.appAnnouncement.id))
+      .limit(ANNOUNCEMENT_LIFECYCLE_ENQUEUE_BATCH_SIZE)
+  }
+
+  private async loadLifecycleExpiredAnnouncements(now: Date) {
+    return this.db
+      .select({
+        id: this.appAnnouncement.id,
+        publishEndTime: this.appAnnouncement.publishEndTime,
+      })
+      .from(this.appAnnouncement)
+      .where(
+        and(
+          eq(this.appAnnouncement.isRealtime, true),
+          eq(this.appAnnouncement.isPublished, true),
+          arrayOverlaps(this.appAnnouncement.enablePlatform, [
+            EnablePlatformEnum.APP,
+          ]),
+          isNotNull(this.appAnnouncement.publishEndTime),
+          lte(this.appAnnouncement.publishEndTime, now),
+          sql`${this.appAnnouncement.notificationEndBoundaryAt} is distinct from ${this.appAnnouncement.publishEndTime}`,
+        ),
+      )
+      .orderBy(asc(this.appAnnouncement.publishEndTime), asc(this.appAnnouncement.id))
+      .limit(ANNOUNCEMENT_LIFECYCLE_ENQUEUE_BATCH_SIZE)
+  }
+
+  private async markLifecycleStartBoundaryEnqueued(
+    announcement: {
+      id: number
+      publishStartTime: Date
+    },
+    tx: Db,
+  ) {
+    await tx
+      .update(this.appAnnouncement)
+      .set({
+        notificationStartBoundaryAt: announcement.publishStartTime,
+      })
+      .where(
+        and(
+          eq(this.appAnnouncement.id, announcement.id),
+          eq(this.appAnnouncement.publishStartTime, announcement.publishStartTime),
+        ),
+      )
+  }
+
+  private async markLifecycleEndBoundaryEnqueued(
+    announcement: {
+      id: number
+      publishEndTime: Date
+    },
+    tx: Db,
+  ) {
+    await tx
+      .update(this.appAnnouncement)
+      .set({
+        notificationEndBoundaryAt: announcement.publishEndTime,
+      })
+      .where(
+        and(
+          eq(this.appAnnouncement.id, announcement.id),
+          eq(this.appAnnouncement.publishEndTime, announcement.publishEndTime),
+        ),
+      )
+  }
+
   private async loadAnnouncementDecisionSnapshot(
     announcementId: number,
     db: Db = this.db,
-  ) {
+  ): Promise<AnnouncementDecisionSnapshot | undefined> {
     return db.query.appAnnouncement.findFirst({
       where: { id: announcementId },
       columns: {
         id: true,
+        enablePlatform: true,
         isRealtime: true,
         isPublished: true,
         publishStartTime: true,
         publishEndTime: true,
+        updatedAt: true,
       },
     })
   }
@@ -377,13 +847,99 @@ export class AnnouncementNotificationFanoutService {
   private resolveAnnouncementEventKey(input: {
     isRealtime: boolean
     isPublished: boolean
+    enablePlatform?: number[] | null
     publishStartTime?: Date | null
     publishEndTime?: Date | null
-  }) {
+  }): AnnouncementFanoutEventKey {
     return shouldAnnouncementEnterNotificationCenter(input) &&
       isAnnouncementPublishedNow(input)
       ? 'announcement.published'
       : 'announcement.unpublished'
+  }
+
+  private buildManualBoundaryKey(announcement: AnnouncementDecisionSnapshot) {
+    return `manual:${this.formatBoundaryDate(announcement.updatedAt)}`
+  }
+
+  private buildStartBoundaryKey(publishStartTime?: Date | null) {
+    return `start:${this.formatBoundaryDate(publishStartTime)}`
+  }
+
+  private buildEndBoundaryKey(publishEndTime?: Date | null) {
+    return `end:${this.formatBoundaryDate(publishEndTime)}`
+  }
+
+  private isObsoleteFanoutBoundary(
+    task: AppAnnouncementNotificationFanoutTaskSelect,
+    announcement: AnnouncementDecisionSnapshot,
+  ) {
+    if (task.eventBoundaryKey.startsWith('manual:legacy:')) {
+      return false
+    }
+    if (task.eventBoundaryKey.startsWith('manual:')) {
+      return task.eventBoundaryKey !== this.buildManualBoundaryKey(announcement)
+    }
+    if (task.eventBoundaryKey.startsWith('start:')) {
+      return (
+        task.desiredEventKey !== 'announcement.published' ||
+        task.eventBoundaryKey !==
+        this.buildStartBoundaryKey(announcement.publishStartTime)
+      )
+    }
+    if (task.eventBoundaryKey.startsWith('end:')) {
+      return (
+        task.desiredEventKey !== 'announcement.unpublished' ||
+        task.eventBoundaryKey !==
+        this.buildEndBoundaryKey(announcement.publishEndTime)
+      )
+    }
+    return false
+  }
+
+  private buildFanoutKey(input: {
+    announcementId: number
+    desiredEventKey: AnnouncementFanoutEventKey
+    eventBoundaryKey: string
+  }) {
+    return [
+      'announcement',
+      input.announcementId,
+      input.desiredEventKey,
+      input.eventBoundaryKey,
+    ].join(':')
+  }
+
+  private buildDomainEventIdempotencyKey(input: {
+    announcementId: number
+    receiverUserId: number
+    eventKey: AnnouncementFanoutEventKey
+    eventBoundaryKey: string
+  }) {
+    return [
+      'announcement',
+      input.announcementId,
+      'user',
+      input.receiverUserId,
+      input.eventKey,
+      input.eventBoundaryKey,
+    ].join(':')
+  }
+
+  private formatBoundaryDate(date?: Date | null) {
+    return date ? date.toISOString() : 'immediate'
+  }
+
+  private buildLeaseExpiresAt(now: Date) {
+    return new Date(now.getTime() + ANNOUNCEMENT_FANOUT_CLAIM_LEASE_MS)
+  }
+
+  private buildNextAttemptAt(attemptCount: number, now: Date) {
+    if (attemptCount >= ANNOUNCEMENT_FANOUT_MAX_ATTEMPTS) {
+      return null
+    }
+    const delayMs =
+      ANNOUNCEMENT_FANOUT_RETRY_BASE_MS * 2 ** Math.max(attemptCount - 1, 0)
+    return new Date(now.getTime() + delayMs)
   }
 
   private buildAnnouncementNotificationContent(
@@ -398,7 +954,7 @@ export class AnnouncementNotificationFanoutService {
   private buildAnnouncementNotificationContext(params: {
     announcementId: number
     receiverUserId: number
-    eventKey: string
+    eventKey: AnnouncementFanoutEventKey
     title?: string
     content?: string
     announcementType?: number

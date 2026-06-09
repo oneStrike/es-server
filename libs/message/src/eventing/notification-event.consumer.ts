@@ -132,6 +132,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
   'user.followed': appendNotificationEventHandler,
   'announcement.published': upsertNotificationEventHandler,
   'announcement.unpublished': ({ event }) => ({
+    announcementId: event.subjectId,
+    categoryKey: 'system_announcement' as const,
     mode: 'delete' as const,
     receiverUserId: requireNotificationContextPositiveInteger(
       event,

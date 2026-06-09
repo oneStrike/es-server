@@ -1,8 +1,15 @@
 import { EnablePlatformEnum } from '@libs/platform/constant'
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, JsonProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
-
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-
 import {
   IntersectionType,
   OmitType,
@@ -11,7 +18,9 @@ import {
 } from '@nestjs/swagger'
 import { BaseAppPageDto } from '../../page/dto/page.dto'
 import {
+  AnnouncementFanoutStatusEnum,
   AnnouncementPriorityEnum,
+  AnnouncementPublishStatusEnum,
   AnnouncementTypeEnum,
   PopupBackgroundPositionEnum,
 } from '../announcement.constant'
@@ -110,7 +119,7 @@ export class BaseAnnouncementDto extends BaseDto {
   isPublished!: boolean
 
   @BooleanProperty({
-    description: '是否实时公告',
+    description: '是否同步到消息中心',
     example: false,
     required: true,
     default: false,
@@ -122,8 +131,9 @@ export class BaseAnnouncementDto extends BaseDto {
     example: [EnablePlatformEnum.APP],
     required: false,
     itemEnum: EnablePlatformEnum,
+    minLength: 1,
   })
-  enablePlatform?: EnablePlatformEnum[] | null
+  enablePlatform?: EnablePlatformEnum[]
 
   @BooleanProperty({
     description: '是否置顶',
@@ -178,6 +188,23 @@ export class QueryAnnouncementDto extends IntersectionType(
     ] as const),
   ),
 ) {
+  @EnumProperty({
+    description:
+      '派生发布状态（unpublished=未发布；scheduled=待生效；active=生效中；expired=已过期）',
+    example: AnnouncementPublishStatusEnum.ACTIVE,
+    required: false,
+    enum: AnnouncementPublishStatusEnum,
+  })
+  publishStatus?: AnnouncementPublishStatusEnum
+
+  @EnumProperty({
+    description: '消息中心扇出状态（0=待处理；1=处理中；2=成功；3=失败）',
+    example: AnnouncementFanoutStatusEnum.SUCCESS,
+    required: false,
+    enum: AnnouncementFanoutStatusEnum,
+  })
+  fanoutStatus?: AnnouncementFanoutStatusEnum
+
   @BooleanProperty({
     description: '是否仅筛选已发布公告',
     example: false,
@@ -193,6 +220,66 @@ export class QueryAnnouncementDto extends IntersectionType(
   enablePlatform?: string
 }
 
+export class AnnouncementRuntimeFieldsDto {
+  @EnumProperty({
+    description:
+      '派生发布状态（unpublished=未发布；scheduled=待生效；active=生效中；expired=已过期）',
+    example: AnnouncementPublishStatusEnum.ACTIVE,
+    required: true,
+    enum: AnnouncementPublishStatusEnum,
+    validation: false,
+  })
+  publishStatus!: AnnouncementPublishStatusEnum
+
+  @EnumProperty({
+    description: '消息中心扇出状态（0=待处理；1=处理中；2=成功；3=失败）',
+    example: AnnouncementFanoutStatusEnum.SUCCESS,
+    required: true,
+    nullable: true,
+    enum: AnnouncementFanoutStatusEnum,
+    validation: false,
+  })
+  fanoutStatus!: AnnouncementFanoutStatusEnum | null
+
+  @StringProperty({
+    description: '最近一次消息中心扇出目标事件',
+    example: 'announcement.published',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  fanoutDesiredEventKey!: string | null
+
+  @StringProperty({
+    description: '最近一次消息中心扇出错误',
+    example: 'network timeout',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  fanoutLastError!: string | null
+
+  @DateProperty({
+    description: '最近一次消息中心扇出更新时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  fanoutUpdatedAt!: Date | null
+}
+
+export class AnnouncementPageItemDto extends IntersectionType(
+  BaseAnnouncementDto,
+  AnnouncementRuntimeFieldsDto,
+) {}
+
+export class AppAnnouncementListItemDto extends OmitType(BaseAnnouncementDto, [
+  'content',
+] as const) {}
+
+export class AppAnnouncementDetailDto extends BaseAnnouncementDto {}
+
 export class AnnouncementRelatedPageDto extends PickType(BaseAppPageDto, [
   'id',
   'name',
@@ -200,13 +287,13 @@ export class AnnouncementRelatedPageDto extends PickType(BaseAppPageDto, [
   'path',
 ] as const) {}
 
-export class AnnouncementDetailDto extends BaseAnnouncementDto {
+export class AnnouncementDetailDto extends AnnouncementPageItemDto {
   @NestedProperty({
     description: '公告关联页面',
-    required: false,
-    nullable: false,
+    required: true,
+    nullable: true,
     type: AnnouncementRelatedPageDto,
     validation: false,
   })
-  appPage?: AnnouncementRelatedPageDto | null
+  appPage!: AnnouncementRelatedPageDto | null
 }

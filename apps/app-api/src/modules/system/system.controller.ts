@@ -10,7 +10,8 @@ import {
 } from '@libs/app-content/agreement/dto/agreement.dto'
 import { AppAnnouncementService } from '@libs/app-content/announcement/announcement.service'
 import {
-  BaseAnnouncementDto,
+  AppAnnouncementDetailDto,
+  AppAnnouncementListItemDto,
   QueryAnnouncementDto,
 } from '@libs/app-content/announcement/dto/announcement.dto'
 import { BaseAppPageDto } from '@libs/app-content/page/dto/page.dto'
@@ -24,13 +25,14 @@ import {
   ApiDoc,
   ApiHtmlDoc,
   ApiPageDoc,
+  CurrentUser,
   Public,
 } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { ConfigReader } from '@libs/system-config/config-reader'
 
 import { WalletCurrencyDisplayConfigDto } from '@libs/system-config/dto/config.dto'
-import { Controller, Get, Query, Res } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 /**
@@ -98,14 +100,51 @@ export class SystemController {
   @Get('announcement/page')
   @ApiPageDoc({
     summary: '系统公告',
-    model: BaseAnnouncementDto,
+    model: AppAnnouncementListItemDto,
   })
   @Public()
   // 查询公开可见的已发布系统公告分页。
   async getAnnouncementPage(@Query() query: QueryAnnouncementDto) {
-    return this.appAnnouncementService.findAnnouncementPage(query, {
-      publishedOnly: true,
-    })
+    return this.appAnnouncementService.findPublicAnnouncementPage(query)
+  }
+
+  @Get('announcement/detail')
+  @ApiDoc({
+    summary: '系统公告详情',
+    model: AppAnnouncementDetailDto,
+  })
+  @Public()
+  // 查询公开可见的系统公告详情。
+  async getAnnouncementDetail(@Query() query: IdDto) {
+    return this.appAnnouncementService.findPublicAnnouncementDetail(query)
+  }
+
+  @Post('announcement/read')
+  @ApiDoc({
+    summary: '标记系统公告已读',
+    model: Boolean,
+  })
+  async markAnnouncementRead(
+    @Body() body: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.appAnnouncementService.markAnnouncementRead(body, userId)
+  }
+
+  @Post('announcement/view')
+  @ApiDoc({
+    summary: '记录系统公告浏览',
+    model: Boolean,
+  })
+  // 当前用户首次浏览公开可见公告时才累加浏览量。
+  async viewAnnouncement(
+    @Body() body: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.appAnnouncementService.incrementPublicAnnouncementViewCount(
+      body,
+      userId,
+    )
   }
 
   @Get('agreement/list')

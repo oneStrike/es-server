@@ -1,14 +1,35 @@
+import type { AppAnnouncementSelect } from '@db/schema'
 import type { JsonValue } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
+import type { AnnouncementFanoutPort } from './announcement-fanout.port'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { assertValidTimeRange } from '@libs/platform/utils'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, arrayOverlaps, eq, gte, isNull, lte, or, sql } from 'drizzle-orm'
-import { AnnouncementNotificationFanoutService } from './announcement-notification-fanout.service'
+import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/common'
 import {
+  and,
+  arrayOverlaps,
+  eq,
+  getColumns,
+  gt,
+  gte,
+  isNull,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm'
+import { ANNOUNCEMENT_FANOUT_PORT } from './announcement-fanout.port'
+import {
+  AnnouncementFanoutStatusEnum,
+  AnnouncementPublishStatusEnum,
+  PopupBackgroundPositionEnum,
+  resolveAnnouncementPublishStatus,
+} from './announcement.constant'
+import {
+  AppAnnouncementDetailDto,
+  AppAnnouncementListItemDto,
   CreateAnnouncementDto,
   QueryAnnouncementDto,
   UpdateAnnouncementDto,
@@ -20,6 +41,26 @@ const ENABLE_PLATFORM_VALUES = new Set<number>(
   ),
 )
 
+interface AnnouncementFanoutRuntimeFields {
+  fanoutDesiredEventKey: string | null
+  fanoutLastError: string | null
+  fanoutStatus: AnnouncementFanoutStatusEnum | null
+  fanoutUpdatedAt: Date | null
+}
+type AnnouncementInternalRuntimeColumn =
+  | 'notificationEndBoundaryAt'
+  | 'notificationFanoutDesiredEventKey'
+  | 'notificationFanoutLastError'
+  | 'notificationFanoutStatus'
+  | 'notificationFanoutTaskId'
+  | 'notificationFanoutUpdatedAt'
+  | 'notificationStartBoundaryAt'
+type AnnouncementResponseRow = Omit<
+  AppAnnouncementSelect,
+  AnnouncementInternalRuntimeColumn
+> &
+AnnouncementFanoutRuntimeFields
+
 /**
  * 系统公告服务
  * 负责公告写入、分页查询和系统公告通知 fanout
@@ -28,7 +69,9 @@ const ENABLE_PLATFORM_VALUES = new Set<number>(
 export class AppAnnouncementService {
   constructor(
     private readonly drizzle: DrizzleService,
-    private readonly announcementNotificationFanoutService: AnnouncementNotificationFanoutService,
+    @Optional()
+    @Inject(ANNOUNCEMENT_FANOUT_PORT)
+    private readonly announcementFanout?: AnnouncementFanoutPort,
   ) {}
 
   /** 数据库连接实例 */
@@ -39,6 +82,16 @@ export class AppAnnouncementService {
   /** 公告表 */
   private get appAnnouncement() {
     return this.drizzle.schema.appAnnouncement
+  }
+
+  /** 公告阅读表 */
+  private get appAnnouncementRead() {
+    return this.drizzle.schema.appAnnouncementRead
+  }
+
+  /** 公告浏览表 */
+  private get appAnnouncementView() {
+    return this.drizzle.schema.appAnnouncementView
   }
 
   /** 页面表 */
@@ -56,8 +109,11 @@ export class AppAnnouncementService {
       createAnnouncementDto.publishEndTime,
       '发布开始时间不能大于或等于结束时间',
     )
+    this.assertValidPopupConfig(createAnnouncementDto)
 
-    const { pageId, ...others } = createAnnouncementDto
+    const { enablePlatform, pageId, ...others } = createAnnouncementDto
+    const normalizedEnablePlatform =
+      this.normalizeAnnouncementEnablePlatform(enablePlatform)
 
     // 校验关联页面是否存在
     if (pageId != null) {
@@ -79,6 +135,7 @@ export class AppAnnouncementService {
           .insert(this.appAnnouncement)
           .values({
             ...others,
+            enablePlatform: normalizedEnablePlatform,
             pageId: pageId ?? null,
           })
           .returning({
@@ -90,7 +147,7 @@ export class AppAnnouncementService {
           '公告创建失败',
         )
 
-        await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
+        await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
           createdAnnouncement.id,
           tx,
         )
@@ -101,102 +158,11 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 根据查询 DTO 构造动态筛选条件并返回分页结果。
-   * `enablePlatform` 保持 JSON 字符串入参，兼容 query 参数只能传字符串的入口约束。
+   * 管理端公告分页。
    */
-  async findAnnouncementPage(
-    queryAnnouncementDto: QueryAnnouncementDto,
-    options?: {
-      publishedOnly?: boolean
-    },
-  ) {
-    const {
-      title,
-      publishStartTime,
-      publishEndTime,
-      enablePlatform,
-      ...pageParams
-    } = queryAnnouncementDto
-
-    const platforms = this.parseEnablePlatforms(enablePlatform)
-
-    const conditions: SQL[] = []
-    const isPublished = options?.publishedOnly
-      ? true
-      : queryAnnouncementDto.isPublished
-
-    if (title) {
-      conditions.push(buildILikeCondition(this.appAnnouncement.title, title)!)
-    }
-    if (publishStartTime != null) {
-      conditions.push(
-        lte(this.appAnnouncement.publishStartTime, publishStartTime),
-      )
-    }
-    if (publishEndTime != null) {
-      conditions.push(gte(this.appAnnouncement.publishEndTime, publishEndTime))
-    }
-    if (platforms && platforms.length > 0) {
-      conditions.push(
-        arrayOverlaps(this.appAnnouncement.enablePlatform, platforms),
-      )
-    }
-    if (queryAnnouncementDto.announcementType !== undefined) {
-      conditions.push(
-        eq(
-          this.appAnnouncement.announcementType,
-          queryAnnouncementDto.announcementType,
-        ),
-      )
-    }
-    if (queryAnnouncementDto.priorityLevel !== undefined) {
-      conditions.push(
-        eq(
-          this.appAnnouncement.priorityLevel,
-          queryAnnouncementDto.priorityLevel,
-        ),
-      )
-    }
-    if (isPublished !== undefined) {
-      conditions.push(eq(this.appAnnouncement.isPublished, isPublished))
-    }
-    if (queryAnnouncementDto.isRealtime !== undefined) {
-      conditions.push(
-        eq(this.appAnnouncement.isRealtime, queryAnnouncementDto.isRealtime),
-      )
-    }
-    if (options?.publishedOnly) {
-      const now = new Date()
-      conditions.push(
-        or(
-          isNull(this.appAnnouncement.publishStartTime),
-          lte(this.appAnnouncement.publishStartTime, now),
-        )!,
-      )
-      conditions.push(
-        or(
-          isNull(this.appAnnouncement.publishEndTime),
-          gte(this.appAnnouncement.publishEndTime, now),
-        )!,
-      )
-    }
-    if (queryAnnouncementDto.isPinned !== undefined) {
-      conditions.push(
-        eq(this.appAnnouncement.isPinned, queryAnnouncementDto.isPinned),
-      )
-    }
-    if (queryAnnouncementDto.showAsPopup !== undefined) {
-      conditions.push(
-        eq(this.appAnnouncement.showAsPopup, queryAnnouncementDto.showAsPopup),
-      )
-    }
-    if (queryAnnouncementDto.pageId != null) {
-      conditions.push(
-        eq(this.appAnnouncement.pageId, queryAnnouncementDto.pageId),
-      )
-    }
-
-    const where = conditions.length > 0 ? and(...conditions) : undefined
+  async findAnnouncementPage(queryAnnouncementDto: QueryAnnouncementDto) {
+    const { where, pageParams } =
+      this.buildAnnouncementPageQuery(queryAnnouncementDto)
     const page = this.drizzle.buildPage(pageParams)
     const orderQuery = this.drizzle.buildOrderBy(
       pageParams.orderBy?.trim() ? pageParams.orderBy : { id: 'desc' as const },
@@ -204,7 +170,7 @@ export class AppAnnouncementService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildAnnouncementResponseSelect())
         .from(this.appAnnouncement)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -213,7 +179,36 @@ export class AppAnnouncementService {
       this.db.$count(this.appAnnouncement, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(await this.hydrateAdminAnnouncementRows(list), total, page)
+  }
+
+  /**
+   * APP 公开公告分页。强制 APP 平台和当前生效窗口，并排除正文大字段。
+   */
+  async findPublicAnnouncementPage(queryAnnouncementDto: QueryAnnouncementDto) {
+    const { where, pageParams } = this.buildAnnouncementPageQuery(
+      queryAnnouncementDto,
+      {
+        appVisibleOnly: true,
+      },
+    )
+    const page = this.drizzle.buildPage(pageParams)
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ isPinned: 'desc' as const }, { id: 'desc' as const }],
+      { table: this.appAnnouncement },
+    )
+    const [list, total] = await Promise.all([
+      this.db
+        .select(this.buildPublicAnnouncementListSelect())
+        .from(this.appAnnouncement)
+        .where(where)
+        .orderBy(...orderQuery.orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db.$count(this.appAnnouncement, where),
+    ])
+
+    return toPageResult(list as AppAnnouncementListItemDto[], total, page)
   }
 
   /**
@@ -221,7 +216,7 @@ export class AppAnnouncementService {
    * 若请求显式变更 `pageId`，会先校验目标页面是否存在。
    */
   async updateAnnouncement(updateAnnouncementDto: UpdateAnnouncementDto) {
-    const { id, pageId, ...updateData } = updateAnnouncementDto
+    const { enablePlatform, id, pageId, ...updateData } = updateAnnouncementDto
 
     // 检查公告是否存在
     const announcement = await this.db.query.appAnnouncement.findFirst({
@@ -229,8 +224,11 @@ export class AppAnnouncementService {
       columns: {
         id: true,
         pageId: true,
+        popupBackgroundImage: true,
+        popupBackgroundPosition: true,
         publishStartTime: true,
         publishEndTime: true,
+        showAsPopup: true,
       },
     })
 
@@ -246,6 +244,19 @@ export class AppAnnouncementService {
       updateData.publishEndTime ?? announcement.publishEndTime,
       '发布开始时间不能大于或等于结束时间',
     )
+    this.assertValidPopupConfig({
+      popupBackgroundImage:
+        updateData.popupBackgroundImage === undefined
+          ? announcement.popupBackgroundImage
+          : updateData.popupBackgroundImage,
+      popupBackgroundPosition:
+        updateData.popupBackgroundPosition === undefined
+          ? (announcement.popupBackgroundPosition as
+          | PopupBackgroundPositionEnum
+          | null)
+          : updateData.popupBackgroundPosition,
+      showAsPopup: updateData.showAsPopup ?? announcement.showAsPopup,
+    })
 
     // 校验关联页面是否存在（仅在 pageId 变更时）
     if (pageId !== undefined && announcement.pageId !== pageId) {
@@ -266,6 +277,10 @@ export class AppAnnouncementService {
     const nextUpdateData: Partial<typeof this.appAnnouncement.$inferInsert> = {
       ...updateData,
     }
+    if (enablePlatform !== undefined) {
+      nextUpdateData.enablePlatform =
+        this.normalizeAnnouncementEnablePlatform(enablePlatform)
+    }
     if (pageId !== undefined) {
       nextUpdateData.pageId = pageId
     }
@@ -277,7 +292,7 @@ export class AppAnnouncementService {
         .where(eq(this.appAnnouncement.id, id))
 
       this.drizzle.assertAffectedRows(result, '公告不存在')
-      await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
+      await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
         id,
         tx,
       )
@@ -296,7 +311,7 @@ export class AppAnnouncementService {
         .where(eq(this.appAnnouncement.id, dto.id))
 
       this.drizzle.assertAffectedRows(result, '公告不存在')
-      await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
+      await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
         dto.id,
         tx,
       )
@@ -316,7 +331,7 @@ export class AppAnnouncementService {
         .where(eq(this.appAnnouncement.id, id))
 
       this.drizzle.assertAffectedRows(result, '公告不存在')
-      await this.announcementNotificationFanoutService.enqueueAnnouncementFanout(
+      await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
         id,
         tx,
       )
@@ -325,8 +340,27 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 查询公告详情并补齐关联页面快照。
-   * 未命中时统一抛出业务异常，保持详情接口错误语义一致。
+   * 重试当前公告最新失败的消息中心通知任务。
+   */
+  async retryAnnouncementFanout(dto: IdDto) {
+    const announcement = await this.db.query.appAnnouncement.findFirst({
+      where: { id: dto.id },
+      columns: { id: true },
+    })
+    if (!announcement) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '公告不存在',
+      )
+    }
+
+    return this.getAnnouncementNotificationFanoutService().retryFailedAnnouncementFanout(
+      dto.id,
+    )
+  }
+
+  /**
+   * 查询公告详情并补齐关联页面、发布状态和消息中心扇出状态。
    */
   async findAnnouncementDetail(dto: IdDto) {
     const announcement = await this.db.query.appAnnouncement.findFirst({
@@ -350,24 +384,335 @@ export class AppAnnouncementService {
       )
     }
 
-    return announcement
+    const {
+      appPage,
+      notificationEndBoundaryAt: _notificationEndBoundaryAt,
+      notificationFanoutDesiredEventKey,
+      notificationFanoutLastError,
+      notificationFanoutStatus,
+      notificationFanoutTaskId: _notificationFanoutTaskId,
+      notificationFanoutUpdatedAt,
+      notificationStartBoundaryAt: _notificationStartBoundaryAt,
+      ...announcementResponse
+    } = announcement
+    const [runtime] = await this.hydrateAdminAnnouncementRows([
+      {
+        ...announcementResponse,
+        fanoutDesiredEventKey: notificationFanoutDesiredEventKey,
+        fanoutLastError: notificationFanoutLastError,
+        fanoutStatus: notificationFanoutStatus,
+        fanoutUpdatedAt: notificationFanoutUpdatedAt,
+      },
+    ])
+    return {
+      ...runtime,
+      appPage: appPage ?? null,
+    }
+  }
+
+  /**
+   * 查询 APP 公开公告详情，只允许 APP 平台且当前生效的公告。
+   */
+  async findPublicAnnouncementDetail(dto: IdDto): Promise<AppAnnouncementDetailDto> {
+    const announcement = await this.findVisiblePublicAnnouncement(dto.id)
+    return announcement as AppAnnouncementDetailDto
+  }
+
+  /**
+   * 当前用户标记公告已读。
+   */
+  async markAnnouncementRead(dto: IdDto, userId: number) {
+    await this.findVisiblePublicAnnouncement(dto.id)
+    await this.db
+      .insert(this.appAnnouncementRead)
+      .values({
+        announcementId: dto.id,
+        userId,
+        readAt: new Date(),
+      })
+      .onConflictDoNothing()
+
+    return true
+  }
+
+  /**
+   * 以原子自增方式累加 APP 公开公告浏览量，避免并发读改写覆盖。
+   */
+  async incrementPublicAnnouncementViewCount(dto: IdDto, userId: number) {
+    await this.drizzle.withTransaction(async (tx) => {
+      const visibleRows = await tx
+        .select({ id: this.appAnnouncement.id })
+        .from(this.appAnnouncement)
+        .where(
+          and(
+            eq(this.appAnnouncement.id, dto.id),
+            ...this.buildAppVisibilityConditions(new Date()),
+          ),
+        )
+        .limit(1)
+
+      if (!visibleRows[0]) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '公告不存在',
+        )
+      }
+
+      const insertedRows = await tx
+        .insert(this.appAnnouncementView)
+        .values({
+          announcementId: dto.id,
+          userId,
+          viewedAt: new Date(),
+        })
+        .onConflictDoNothing()
+        .returning({
+          announcementId: this.appAnnouncementView.announcementId,
+        })
+
+      if (!insertedRows[0]) {
+        return
+      }
+
+      const result = await tx
+        .update(this.appAnnouncement)
+        .set({
+          viewCount: sql`${this.appAnnouncement.viewCount} + 1`,
+        })
+        .where(eq(this.appAnnouncement.id, dto.id))
+
+      this.drizzle.assertAffectedRows(result, '公告不存在')
+    })
+    return true
   }
 
   /**
    * 以原子自增方式累加浏览量，避免并发读改写覆盖。
    */
-  async incrementViewCount(dto: IdDto) {
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appAnnouncement)
-          .set({
-            viewCount: sql`${this.appAnnouncement.viewCount} + 1`,
-          })
-          .where(eq(this.appAnnouncement.id, dto.id)),
-      { notFound: '公告不存在' },
+  async incrementViewCount(dto: IdDto, userId: number) {
+    return this.incrementPublicAnnouncementViewCount(dto, userId)
+  }
+
+  private buildAnnouncementPageQuery(
+    queryAnnouncementDto: QueryAnnouncementDto,
+    options?: {
+      appVisibleOnly?: boolean
+    },
+  ) {
+    const {
+      announcementType,
+      isPinned,
+      isPublished,
+      isRealtime,
+      pageId,
+      priorityLevel,
+      showAsPopup,
+      title,
+      publishStartTime,
+      publishEndTime,
+      enablePlatform,
+      fanoutStatus,
+      publishStatus,
+      ...pageParams
+    } = queryAnnouncementDto
+
+    const platforms = options?.appVisibleOnly
+      ? [EnablePlatformEnum.APP]
+      : this.parseEnablePlatforms(enablePlatform)
+
+    const conditions: SQL[] = []
+    const now = new Date()
+
+    if (title) {
+      conditions.push(buildILikeCondition(this.appAnnouncement.title, title)!)
+    }
+    if (publishStartTime != null) {
+      conditions.push(
+        lte(this.appAnnouncement.publishStartTime, publishStartTime),
+      )
+    }
+    if (publishEndTime != null) {
+      conditions.push(gte(this.appAnnouncement.publishEndTime, publishEndTime))
+    }
+    if (platforms && platforms.length > 0) {
+      conditions.push(
+        arrayOverlaps(this.appAnnouncement.enablePlatform, platforms),
+      )
+    }
+    if (announcementType !== undefined) {
+      conditions.push(eq(this.appAnnouncement.announcementType, announcementType))
+    }
+    if (priorityLevel !== undefined) {
+      conditions.push(eq(this.appAnnouncement.priorityLevel, priorityLevel))
+    }
+    if (options?.appVisibleOnly) {
+      conditions.push(...this.buildAppVisibilityConditions(now, false))
+    } else if (publishStatus !== undefined) {
+      conditions.push(...this.buildPublishStatusConditions(publishStatus, now))
+    } else if (isPublished !== undefined) {
+      conditions.push(eq(this.appAnnouncement.isPublished, isPublished))
+    }
+    if (isRealtime !== undefined) {
+      conditions.push(eq(this.appAnnouncement.isRealtime, isRealtime))
+    }
+    if (isPinned !== undefined) {
+      conditions.push(eq(this.appAnnouncement.isPinned, isPinned))
+    }
+    if (showAsPopup !== undefined) {
+      conditions.push(eq(this.appAnnouncement.showAsPopup, showAsPopup))
+    }
+    if (!options?.appVisibleOnly && fanoutStatus !== undefined) {
+      conditions.push(this.buildLatestFanoutStatusCondition(fanoutStatus))
+    }
+    if (pageId != null) {
+      conditions.push(eq(this.appAnnouncement.pageId, pageId))
+    }
+
+    return {
+      pageParams,
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+    }
+  }
+
+  private buildPublishStatusConditions(
+    status: AnnouncementPublishStatusEnum,
+    now: Date,
+  ) {
+    if (status === AnnouncementPublishStatusEnum.UNPUBLISHED) {
+      return [eq(this.appAnnouncement.isPublished, false)]
+    }
+    if (status === AnnouncementPublishStatusEnum.SCHEDULED) {
+      return [
+        eq(this.appAnnouncement.isPublished, true),
+        gt(this.appAnnouncement.publishStartTime, now),
+      ]
+    }
+    if (status === AnnouncementPublishStatusEnum.EXPIRED) {
+      return [
+        eq(this.appAnnouncement.isPublished, true),
+        lte(this.appAnnouncement.publishEndTime, now),
+      ]
+    }
+    return [
+      eq(this.appAnnouncement.isPublished, true),
+      or(
+        isNull(this.appAnnouncement.publishStartTime),
+        lte(this.appAnnouncement.publishStartTime, now),
+      )!,
+      or(
+        isNull(this.appAnnouncement.publishEndTime),
+        gt(this.appAnnouncement.publishEndTime, now),
+      )!,
+    ]
+  }
+
+  private buildAppVisibilityConditions(
+    now: Date,
+    includePlatform = true,
+  ): SQL[] {
+    const conditions = this.buildPublishStatusConditions(
+      AnnouncementPublishStatusEnum.ACTIVE,
+      now,
     )
-    return true
+    if (includePlatform) {
+      conditions.push(
+        arrayOverlaps(this.appAnnouncement.enablePlatform, [
+          EnablePlatformEnum.APP,
+        ]),
+      )
+    }
+    return conditions
+  }
+
+  private buildLatestFanoutStatusCondition(status: AnnouncementFanoutStatusEnum) {
+    return eq(this.appAnnouncement.notificationFanoutStatus, status)
+  }
+
+  private buildPublicAnnouncementListSelect() {
+    const {
+      // 正文大字段只允许详情接口返回，避免公开列表拖垮分页和泄露完整内容。
+      content,
+      // 内部生命周期标记只用于服务端调度，不暴露给 APP。
+      notificationEndBoundaryAt,
+      notificationFanoutDesiredEventKey,
+      notificationFanoutLastError,
+      notificationFanoutStatus,
+      notificationFanoutTaskId,
+      notificationFanoutUpdatedAt,
+      notificationStartBoundaryAt,
+      ...rest
+    } = getColumns(this.appAnnouncement)
+    return rest
+  }
+
+  private buildAnnouncementResponseSelect() {
+    const {
+      notificationEndBoundaryAt,
+      notificationFanoutDesiredEventKey,
+      notificationFanoutLastError,
+      notificationFanoutStatus,
+      notificationFanoutTaskId,
+      notificationFanoutUpdatedAt,
+      notificationStartBoundaryAt,
+      ...rest
+    } = getColumns(this.appAnnouncement)
+    return {
+      ...rest,
+      fanoutDesiredEventKey: notificationFanoutDesiredEventKey,
+      fanoutLastError: notificationFanoutLastError,
+      fanoutStatus: notificationFanoutStatus,
+      fanoutUpdatedAt: notificationFanoutUpdatedAt,
+    }
+  }
+
+  private buildPublicAnnouncementDetailSelect() {
+    const {
+      notificationEndBoundaryAt,
+      notificationFanoutDesiredEventKey,
+      notificationFanoutLastError,
+      notificationFanoutStatus,
+      notificationFanoutTaskId,
+      notificationFanoutUpdatedAt,
+      notificationStartBoundaryAt,
+      ...rest
+    } = getColumns(this.appAnnouncement)
+    return rest
+  }
+
+  private async findVisiblePublicAnnouncement(id: number) {
+    const rows = await this.db
+      .select(this.buildPublicAnnouncementDetailSelect())
+      .from(this.appAnnouncement)
+      .where(
+        and(
+          eq(this.appAnnouncement.id, id),
+          ...this.buildAppVisibilityConditions(new Date()),
+        ),
+      )
+      .limit(1)
+
+    const announcement = rows[0]
+    if (!announcement) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '公告不存在',
+      )
+    }
+
+    return announcement
+  }
+
+  private async hydrateAdminAnnouncementRows<T extends AnnouncementResponseRow>(
+    rows: T[],
+  ) {
+    return rows.map((row) => ({
+      ...row,
+      publishStatus: resolveAnnouncementPublishStatus(row),
+      fanoutStatus:
+        row.fanoutStatus === null
+          ? null
+          : (row.fanoutStatus),
+    }))
   }
 
   /**
@@ -400,5 +745,51 @@ export class AppAnnouncementService {
     }
 
     return platforms.length > 0 ? [...new Set(platforms)] : undefined
+  }
+
+  private normalizeAnnouncementEnablePlatform(
+    enablePlatform?: EnablePlatformEnum[] | null,
+  ) {
+    if (enablePlatform === undefined) {
+      return undefined
+    }
+    if (!Array.isArray(enablePlatform) || enablePlatform.length === 0) {
+      throw new BadRequestException('发布平台不能为空')
+    }
+
+    const platforms = [...new Set(enablePlatform.map((item) => Number(item)))]
+    if (
+      platforms.some(
+        (item) => !Number.isInteger(item) || !ENABLE_PLATFORM_VALUES.has(item),
+      )
+    ) {
+      throw new BadRequestException('发布平台包含不支持的平台')
+    }
+
+    return platforms as EnablePlatformEnum[]
+  }
+
+  private assertValidPopupConfig(input: {
+    popupBackgroundImage?: string | null
+    popupBackgroundPosition?: PopupBackgroundPositionEnum | null
+    showAsPopup?: boolean
+  }) {
+    if (!input.showAsPopup) {
+      return
+    }
+
+    if (!input.popupBackgroundImage?.trim()) {
+      throw new BadRequestException('弹窗公告必须配置背景图片')
+    }
+    if (input.popupBackgroundPosition === null) {
+      throw new BadRequestException('弹窗背景位置不能为空')
+    }
+  }
+
+  private getAnnouncementNotificationFanoutService() {
+    if (!this.announcementFanout) {
+      throw new Error('公告消息中心运行时模块未注册')
+    }
+    return this.announcementFanout
   }
 }

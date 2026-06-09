@@ -143,6 +143,9 @@ export const appUser = snakeCase.table(
     index('app_user_status_idx').on(table.status),
     index('app_user_level_id_idx').on(table.levelId),
     index('app_user_deleted_at_idx').on(table.deletedAt),
+    index('app_user_active_fanout_scan_idx')
+      .on(table.id)
+      .where(sql`${table.isEnabled} = true and ${table.deletedAt} is null`),
     check(
       'app_user_gender_type_valid_chk',
       sql`${table.genderType} in (0, 1, 2, 3, 4)`,

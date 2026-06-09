@@ -12,4 +12,9 @@ export class AnnouncementNotificationFanoutWorker {
   async consumePendingTasks() {
     await this.announcementNotificationFanoutService.consumePendingTasks()
   }
+
+  @Cron('15 * * * * *')
+  async enqueueDueLifecycleTasks() {
+    await this.announcementNotificationFanoutService.enqueueDueLifecycleFanoutTasks()
+  }
 }
