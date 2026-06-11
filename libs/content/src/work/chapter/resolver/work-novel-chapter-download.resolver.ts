@@ -47,7 +47,7 @@ export class WorkNovelChapterDownloadResolver
         workType: this.workType,
         deletedAt: { isNull: true },
       },
-      columns: { content: true },
+      columns: { novelContentPath: true },
     })
 
     if (!chapter) {
@@ -57,7 +57,7 @@ export class WorkNovelChapterDownloadResolver
       )
     }
 
-    if (!chapter.content) {
+    if (!chapter.novelContentPath) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '下载内容不存在',
@@ -66,7 +66,7 @@ export class WorkNovelChapterDownloadResolver
 
     await this.contentPermissionService.checkChapterDownload(userId, targetId)
 
-    return chapter.content
+    return chapter.novelContentPath
   }
 
   // 更新下载计数。

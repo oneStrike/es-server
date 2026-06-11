@@ -16,10 +16,9 @@ export interface UserGrowthSnapshot {
  */
 export interface UserMentionCandidatePageResult {
   list: UserMentionCandidateDto[]
-  total: number
-  pageIndex: number
   pageSize: number
-  totalPages: number
+  hasMore: boolean
+  nextCursor: string | null
 }
 
 /**

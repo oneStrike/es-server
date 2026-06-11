@@ -9,7 +9,6 @@ import {
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
-import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
@@ -41,12 +40,15 @@ export class ComicContentService {
   }
 
   // 持久化漫画章节内容，统一处理章节不存在时的业务错误。
-  private async saveChapterContent(chapterId: number, content: string | null) {
+  private async saveChapterContent(
+    chapterId: number,
+    content: string[] | null,
+  ) {
     await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.workChapter)
-          .set({ content })
+          .set({ comicContentManifest: content })
           .where(
             and(
               eq(this.workChapter.id, chapterId),
@@ -64,7 +66,7 @@ export class ComicContentService {
       chapterId,
       userId,
       {
-        content: true,
+        comicContentManifest: true,
         id: true,
         title: true,
         subtitle: true,
@@ -76,7 +78,7 @@ export class ComicContentService {
       id: number
       workId: number
       workType: number
-      content: string | null
+      comicContentManifest: string[] | null
       title: string
       subtitle?: string | null
     }
@@ -90,7 +92,7 @@ export class ComicContentService {
     }
 
     return {
-      content: this.parseContent(chapter.content),
+      content: this.parseContent(chapter.comicContentManifest),
       id: chapter.id,
       title: chapter.title,
       subtitle: chapter.subtitle ?? null,
@@ -138,7 +140,7 @@ export class ComicContentService {
 
     contents.push(file.filePath)
 
-    await this.saveChapterContent(chapterId, JSON.stringify(contents))
+    await this.saveChapterContent(chapterId, contents)
 
     return file
   }
@@ -158,7 +160,7 @@ export class ComicContentService {
 
     contents[index] = content
 
-    await this.saveChapterContent(chapterId, JSON.stringify(contents))
+    await this.saveChapterContent(chapterId, contents)
 
     return true
   }
@@ -181,7 +183,7 @@ export class ComicContentService {
 
     await this.saveChapterContent(
       chapterId,
-      contents.length > 0 ? JSON.stringify(contents) : null,
+      contents.length > 0 ? contents : null,
     )
 
     return true
@@ -208,7 +210,7 @@ export class ComicContentService {
     const [movedContent] = contents.splice(fromIndex, 1)
     contents.splice(toIndex, 0, movedContent)
 
-    await this.saveChapterContent(chapterId, JSON.stringify(contents))
+    await this.saveChapterContent(chapterId, contents)
 
     return true
   }
@@ -224,7 +226,7 @@ export class ComicContentService {
   async replaceChapterContents(chapterId: number, contents: string[]) {
     await this.saveChapterContent(
       chapterId,
-      contents.length > 0 ? JSON.stringify(contents) : null,
+      contents.length > 0 ? contents : null,
     )
 
     return true
@@ -239,7 +241,7 @@ export class ComicContentService {
         deletedAt: { isNull: true },
       },
       columns: {
-        content: true,
+        comicContentManifest: true,
       },
     })
     if (!chapter) {
@@ -249,16 +251,15 @@ export class ComicContentService {
       )
     }
 
-    return this.parseContent(chapter?.content)
+    return this.parseContent(chapter?.comicContentManifest)
   }
 
   // 解析漫画章节内容。
-  parseContent(content: string | null | undefined): string[] {
-    if (!content) {
+  parseContent(content: unknown): string[] {
+    if (!Array.isArray(content)) {
       return []
     }
 
-    const parsed = jsonParse(content, [])
-    return Array.isArray(parsed) ? (parsed as string[]) : []
+    return content.filter((item): item is string => typeof item === 'string')
   }
 }

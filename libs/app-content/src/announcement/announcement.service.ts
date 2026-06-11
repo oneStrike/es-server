@@ -11,6 +11,7 @@ import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/commo
 import {
   and,
   arrayOverlaps,
+  desc,
   eq,
   getColumns,
   gt,
@@ -32,6 +33,7 @@ import {
   AnnouncementOutputBaseDto,
   CreateAnnouncementDto,
   QueryAnnouncementDto,
+  QueryPublicAnnouncementCursorDto,
   UpdateAnnouncementDto,
 } from './dto/announcement.dto'
 
@@ -200,36 +202,44 @@ export class AppAnnouncementService {
   /**
    * APP 公开公告分页。强制 APP 平台和当前生效窗口，并排除正文大字段。
    */
-  async findPublicAnnouncementPage(queryAnnouncementDto: QueryAnnouncementDto) {
-    const { where, pageParams } = this.buildAnnouncementPageQuery(
-      queryAnnouncementDto,
+  async findPublicAnnouncementPage(
+    queryAnnouncementDto: QueryPublicAnnouncementCursorDto,
+  ) {
+    this.assertCursorPageQuery(queryAnnouncementDto)
+    const { where } = this.buildAnnouncementPageQuery(
+      {} as QueryAnnouncementDto,
       {
         appVisibleOnly: true,
       },
     )
-    const page = this.drizzle.buildPage(pageParams)
-    const orderQuery = this.drizzle.buildOrderBy(
-      [{ isPinned: 'desc' as const }, { id: 'desc' as const }],
-      { table: this.appAnnouncement },
+    const pageSize = this.normalizeCursorPageSize(
+      queryAnnouncementDto.pageSize,
+      15,
+      100,
     )
-    const [list, total] = await Promise.all([
-      this.db
-        .select(this.buildPublicAnnouncementListSelect())
-        .from(this.appAnnouncement)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db.$count(this.appAnnouncement, where),
-    ])
+    const cursor = this.parseAnnouncementCursor(queryAnnouncementDto.cursor)
+    const cursorWhere = cursor
+      ? sql`(${this.appAnnouncement.createdAt} < ${cursor.createdAt} OR (${this.appAnnouncement.createdAt} = ${cursor.createdAt} AND ${this.appAnnouncement.id} < ${cursor.id}))`
+      : undefined
+    const rows = await this.db
+      .select(this.buildPublicAnnouncementListSelect())
+      .from(this.appAnnouncement)
+      .where(cursorWhere ? and(where, cursorWhere) : where)
+      .orderBy(desc(this.appAnnouncement.createdAt), desc(this.appAnnouncement.id))
+      .limit(pageSize + 1)
+    const hasMore = rows.length > pageSize
+    const pageRows = rows.slice(0, pageSize)
 
-    return toPageResult(
-      list.map((item) =>
+    return {
+      list: pageRows.map((item) =>
         this.toAnnouncementOutputDto(item),
       ) as AppAnnouncementListItemDto[],
-      total,
-      page,
-    )
+      pageSize,
+      hasMore,
+      nextCursor: hasMore
+        ? this.encodeAnnouncementCursor(pageRows[pageRows.length - 1])
+        : null,
+    }
   }
 
   /**
@@ -514,6 +524,63 @@ export class AppAnnouncementService {
    */
   async incrementViewCount(dto: IdDto, userId: number) {
     return this.incrementPublicAnnouncementViewCount(dto, userId)
+  }
+
+  private encodeAnnouncementCursor(item: { createdAt: Date; id: number }) {
+    return Buffer.from(
+      JSON.stringify({
+        createdAt: item.createdAt.toISOString(),
+        id: item.id,
+      }),
+    ).toString('base64url')
+  }
+
+  private parseAnnouncementCursor(cursor?: string | null) {
+    if (!cursor?.trim()) {
+      return undefined
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      ) as Partial<{ createdAt: unknown; id: unknown }>
+      if (
+        typeof payload.createdAt !== 'string' ||
+        !Number.isInteger(payload.id) ||
+        Number(payload.id) <= 0
+      ) {
+        throw new TypeError('invalid cursor payload')
+      }
+      const createdAt = new Date(payload.createdAt)
+      if (Number.isNaN(createdAt.getTime())) {
+        throw new TypeError('invalid cursor payload')
+      }
+      return { createdAt, id: Number(payload.id) }
+    } catch {
+      throw new BadRequestException('cursor 格式无效')
+    }
+  }
+
+  private assertCursorPageQuery(dto: object) {
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => Object.prototype.hasOwnProperty.call(dto, field))
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `公告列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private normalizeCursorPageSize(
+    pageSize: number | undefined,
+    defaultPageSize: number,
+    maxPageSize: number,
+  ) {
+    const value = Number.isFinite(Number(pageSize))
+      ? Math.floor(Number(pageSize))
+      : defaultPageSize
+    return Math.min(Math.max(1, value), maxPageSize)
   }
 
   private buildAnnouncementPageQuery(

@@ -22,7 +22,13 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, desc, eq, exists, gte, inArray, isNull, lt } from 'drizzle-orm'
+import { and, desc, eq, exists, gte, inArray, isNull, lt, or } from 'drizzle-orm'
+import {
+  assertCursorOnlyQuery,
+  encodeCreatedAtIdCursor,
+  parseCreatedAtIdCursor,
+  toCursorPageResult,
+} from '../favorite/cursor-pagination.helper'
 import {
   CreateReportCommandDto,
   HandleAdminReportCommandDto,
@@ -197,7 +203,9 @@ export class ReportService {
    * @returns 分页举报记录
    */
   async getUserReports(query: QueryMyReportPageCommandDto) {
+    assertCursorOnlyQuery(query, '我的举报列表')
     const conditions: SQL[] = [eq(this.userReport.reporterId, query.reporterId)]
+    const cursor = parseCreatedAtIdCursor(query.cursor, '我的举报列表')
 
     if (query.targetType !== undefined) {
       conditions.push(eq(this.userReport.targetType, query.targetType))
@@ -211,24 +219,29 @@ export class ReportService {
     if (query.status !== undefined) {
       conditions.push(eq(this.userReport.status, query.status))
     }
+    if (cursor) {
+      conditions.push(
+        or(
+          lt(this.userReport.createdAt, cursor.createdAt),
+          and(
+            eq(this.userReport.createdAt, cursor.createdAt),
+            lt(this.userReport.id, cursor.id),
+          ),
+        )!,
+      )
+    }
 
     const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage(query)
-    const orderQuery = this.drizzle.buildOrderBy(
-      { createdAt: 'desc' as const },
-      { table: this.userReport },
+    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.userReport)
+      .where(where)
+      .orderBy(desc(this.userReport.createdAt), desc(this.userReport.id))
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPageResult(rows, pageQuery.limit, (item) =>
+      encodeCreatedAtIdCursor(item),
     )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.userReport)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.userReport, where),
-    ])
-    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page

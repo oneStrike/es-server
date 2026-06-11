@@ -1,3 +1,5 @@
+import { sql } from 'drizzle-orm'
+
 /**
  * Auto-converted from legacy schema.
  */
@@ -88,6 +90,16 @@ export const growthLedgerRecord = snakeCase.table(
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),
+    /**
+     * 保留截止时间；流水不自动硬删，本字段用于冷数据标记和归档扫描。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '730 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     /**
@@ -123,6 +135,20 @@ export const growthLedgerRecord = snakeCase.table(
       table.assetKey,
       table.createdAt.desc(),
       table.id.desc(),
+    ),
+    index('growth_ledger_record_user_created_id_idx').on(
+      table.userId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('growth_ledger_record_user_asset_id_desc_idx').on(
+      table.userId,
+      table.assetType,
+      table.id.desc(),
+    ),
+    index('growth_ledger_record_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
     ),
     /**
      * 管理端经验全局审计默认分页索引。

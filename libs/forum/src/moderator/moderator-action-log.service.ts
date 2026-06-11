@@ -3,8 +3,8 @@ import type { SQL } from 'drizzle-orm'
 import type { ForumModeratorActionLogInput } from './moderator.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
-import { Injectable } from '@nestjs/common'
-import { and, eq, gte, lt } from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, desc, eq, gte, lt, or } from 'drizzle-orm'
 import {
   QueryAdminForumModeratorActionLogDto,
   QueryAppForumModeratorActionLogDto,
@@ -90,6 +90,57 @@ export class ForumModeratorActionLogService {
     return conditions.length > 0 ? and(...conditions) : undefined
   }
 
+  private assertAppCursorQuery(query: Record<string, unknown>) {
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => query[field] !== undefined)
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `我的版主操作日志仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private encodeCursor(row: { createdAt: Date, id: number }) {
+    return Buffer.from(
+      JSON.stringify({
+        createdAt: row.createdAt.toISOString(),
+        id: row.id,
+      }),
+    ).toString('base64url')
+  }
+
+  private parseCursor(cursor?: string | null) {
+    if (!cursor?.trim()) {
+      return null
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      )
+      const createdAt = new Date(String(payload.createdAt))
+      const id = Number(payload.id)
+      if (!Number.isInteger(id) || id < 1 || Number.isNaN(createdAt.getTime())) {
+        throw new TypeError('invalid action log cursor')
+      }
+      return { createdAt, id }
+    }
+    catch {
+      throw new BadRequestException('版主操作日志分页游标非法')
+    }
+  }
+
+  private buildCursorWhere(cursor: { createdAt: Date, id: number }) {
+    return or(
+      lt(this.forumModeratorActionLog.createdAt, cursor.createdAt),
+      and(
+        eq(this.forumModeratorActionLog.createdAt, cursor.createdAt),
+        lt(this.forumModeratorActionLog.id, cursor.id),
+      ),
+    )
+  }
+
   private async insertActionLog(db: Db, input: ForumModeratorActionLogInput) {
     const actorType =
       input.actorType === 'admin'
@@ -135,17 +186,22 @@ export class ForumModeratorActionLogService {
     moderatorId: number,
     query: QueryAppForumModeratorActionLogDto,
   ) {
-    const { orderBy: _clientOrderBy, ...pageDto } = query
+    this.assertAppCursorQuery(query as unknown as Record<string, unknown>)
+    const { cursor: cursorInput, ...pageDto } = query
+    const cursor = this.parseCursor(cursorInput)
     const where = this.buildQueryWhere({
       ...pageDto,
       moderatorId,
     })
-    const pageQuery = this.drizzle.buildPage(pageDto)
-    const orderQuery = this.drizzle.buildOrderBy({ createdAt: 'desc' }, {
-      table: this.forumModeratorActionLog,
+    const cursorWhere = cursor ? this.buildCursorWhere(cursor) : undefined
+    const pagedWhere = where && cursorWhere
+      ? and(where, cursorWhere)
+      : (cursorWhere ?? where)
+    const pageQuery = this.drizzle.buildPage({
+      pageIndex: 1,
+      pageSize: pageDto.pageSize,
     })
-    const [list, total] = await Promise.all([
-      this.db
+    const rows = await this.db
         .select({
           id: this.forumModeratorActionLog.id,
           moderatorId: this.forumModeratorActionLog.moderatorId,
@@ -158,17 +214,23 @@ export class ForumModeratorActionLogService {
           createdAt: this.forumModeratorActionLog.createdAt,
         })
         .from(this.forumModeratorActionLog)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.forumModeratorActionLog, where),
-    ])
-    const page = toPageResult(list, total, pageQuery)
+        .where(pagedWhere)
+        .orderBy(
+          desc(this.forumModeratorActionLog.createdAt),
+          desc(this.forumModeratorActionLog.id),
+        )
+        .limit(pageQuery.limit + 1)
+    const list = rows.slice(0, pageQuery.limit)
+    const hasMore = rows.length > pageQuery.limit
 
     return {
-      ...page,
-      list: page.list,
+      list,
+      pageSize: pageQuery.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && list.length > 0
+          ? this.encodeCursor(list[list.length - 1])
+          : null,
     }
   }
 

@@ -39,7 +39,14 @@ export class NovelContentService {
     const result = await this.contentPermissionService.checkChapterAccess(
       chapterId,
       userId,
-      { content: true, id: true, title: true, subtitle: true, workId: true, workType: true },
+      {
+        novelContentPath: true,
+        id: true,
+        title: true,
+        subtitle: true,
+        workId: true,
+        workType: true,
+      },
     )
     const chapter = result.chapter as {
       id: number
@@ -47,7 +54,7 @@ export class NovelContentService {
       workType: number
       title: string
       subtitle?: string | null
-      content: string | null
+      novelContentPath: string | null
     }
     if (userId) {
       await this.readingStateService.touchByWorkSafely({
@@ -61,7 +68,7 @@ export class NovelContentService {
       id: chapter.id,
       title: chapter.title,
       subtitle: chapter.subtitle ?? null,
-      content: chapter.content ?? null,
+      content: chapter.novelContentPath ?? null,
     }
   }
 
@@ -74,7 +81,7 @@ export class NovelContentService {
         deletedAt: { isNull: true },
       },
       columns: {
-        content: true,
+        novelContentPath: true,
       },
     })
 
@@ -85,7 +92,7 @@ export class NovelContentService {
       )
     }
 
-    return chapter.content
+    return chapter.novelContentPath
   }
 
   // 上传 chapter Content。
@@ -124,7 +131,7 @@ export class NovelContentService {
       () =>
         this.db
           .update(this.workChapter)
-          .set({ content: file.filePath })
+          .set({ novelContentPath: file.filePath })
           .where(
             and(
               eq(this.workChapter.id, chapterId),
@@ -146,7 +153,7 @@ export class NovelContentService {
         workType: WorkTypeEnum.NOVEL,
         deletedAt: { isNull: true },
       },
-      columns: { content: true },
+      columns: { novelContentPath: true },
     })
 
     if (!chapter) {
@@ -160,7 +167,7 @@ export class NovelContentService {
       () =>
         this.db
           .update(this.workChapter)
-          .set({ content: null })
+          .set({ novelContentPath: null })
           .where(
             and(
               eq(this.workChapter.id, chapterId),

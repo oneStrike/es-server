@@ -70,7 +70,7 @@ export interface ComicArchiveMatchedItemRecord extends ComicArchiveMatchedItemSn
 export interface ComicArchivePreviewChapter {
   id: number
   title: string
-  content: string | null
+  content: string[] | null
 }
 
 /**

@@ -284,9 +284,13 @@ describe('ForumModeratorService app profile', () => {
       isModerator: false,
       isUsable: false,
       disabledReason: '当前用户不是版主',
+      group: null,
+      moderatorId: null,
       permissions: [],
       permissionNames: [],
+      roleType: null,
       sections: [],
+      userId: null,
     })
   })
 

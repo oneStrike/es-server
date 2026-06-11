@@ -53,6 +53,9 @@ export const forumModeratorLifecycleLog = snakeCase.table(
       table.eventType,
       table.createdAt.desc(),
     ),
+    index('forum_moderator_lifecycle_log_actor_admin_user_id_idx').on(
+      table.actorAdminUserId,
+    ),
     index('forum_moderator_lifecycle_log_created_at_idx').on(
       table.createdAt.desc(),
     ),

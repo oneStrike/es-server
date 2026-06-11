@@ -53,6 +53,16 @@ export const sensitiveWordHitLog = snakeCase.table(
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),
+    /**
+     * 保留截止时间；用于审核命中日志的有界清理扫描。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '180 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     index('sensitive_word_hit_log_sensitive_word_id_created_at_idx').on(
@@ -81,6 +91,10 @@ export const sensitiveWordHitLog = snakeCase.table(
       table.id.desc(),
     ),
     index('sensitive_word_hit_log_created_at_idx').on(table.createdAt),
+    index('sensitive_word_hit_log_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
     check(
       'sensitive_word_hit_log_entity_type_valid_chk',
       sql`${table.entityType} in (1, 2)`,

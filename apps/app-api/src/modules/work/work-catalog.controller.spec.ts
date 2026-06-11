@@ -6,45 +6,49 @@ import { WorkTagController } from './work-tag.controller'
 describe('app work catalog controllers', () => {
   it('queries only enabled work categories for the public app catalog', async () => {
     const categoryService = {
-      getCategoryPage: jest.fn(async () => ({ list: [], total: 0 })),
+      getAppCategoryCursorPage: jest.fn(async () => ({
+        list: [],
+        pageSize: 20,
+        hasMore: false,
+        nextCursor: null,
+      })),
     }
     const controller = new WorkCategoryController(categoryService as any)
 
     await controller.getCategoryPage({
       contentType: '[1]',
-      pageIndex: 1,
+      cursor: 'cursor-1',
       pageSize: 20,
     } as any)
 
-    expect(categoryService.getCategoryPage).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(categoryService.getAppCategoryCursorPage).toHaveBeenCalledWith({
         contentType: '[1]',
-        isEnabled: true,
-        pageIndex: 1,
+        cursor: 'cursor-1',
         pageSize: 20,
-      }),
-    )
+    })
   })
 
   it('queries only enabled work tags for the public app catalog', async () => {
     const tagService = {
-      getTagPage: jest.fn(async () => ({ list: [], total: 0 })),
+      getAppTagCursorPage: jest.fn(async () => ({
+        list: [],
+        pageSize: 20,
+        hasMore: false,
+        nextCursor: null,
+      })),
     }
     const controller = new WorkTagController(tagService as any)
 
     await controller.getTagPage({
       name: '热血',
-      pageIndex: 1,
+      cursor: 'cursor-1',
       pageSize: 20,
     } as any)
 
-    expect(tagService.getTagPage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isEnabled: true,
+    expect(tagService.getAppTagCursorPage).toHaveBeenCalledWith({
         name: '热血',
-        pageIndex: 1,
+        cursor: 'cursor-1',
         pageSize: 20,
-      }),
-    )
+    })
   })
 })

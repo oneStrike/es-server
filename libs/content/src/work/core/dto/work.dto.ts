@@ -22,7 +22,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -343,23 +343,20 @@ export class CreateWorkDto extends IntersectionType(
   tagIds!: number[]
 }
 
-export class QueryWorkDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseWorkDto, [
-      'name',
-      'publisher',
-      'isPublished',
-      'serialStatus',
-      'language',
-      'region',
-      'ageRating',
-      'isRecommended',
-      'isHot',
-      'isNew',
-      'type',
-    ] as const),
-  ),
+class QueryWorkFilterDto extends PartialType(
+  PickType(BaseWorkDto, [
+    'name',
+    'publisher',
+    'isPublished',
+    'serialStatus',
+    'language',
+    'region',
+    'ageRating',
+    'isRecommended',
+    'isHot',
+    'isNew',
+    'type',
+  ] as const),
 ) {
   @StringProperty({ description: '作者名称', example: '村上', required: false })
   author?: string
@@ -384,10 +381,34 @@ export class QueryWorkDto extends IntersectionType(
   tagIds?: number[]
 }
 
-export class QueryWorkTypeDto extends IntersectionType(
+export class QueryWorkDto extends IntersectionType(
   PageDto,
-  PickType(BaseWorkDto, ['type'] as const),
+  QueryWorkFilterDto,
 ) {}
+
+export class QueryAppWorkDto extends IntersectionType(
+  CursorPageSizeDto,
+  QueryWorkFilterDto,
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按公开作品 feed 固定排序游标翻页',
+    example: 'eyJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
+
+export class QueryWorkTypeDto extends IntersectionType(
+  CursorPageSizeDto,
+  PickType(BaseWorkDto, ['type'] as const),
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按公开作品 feed 固定排序游标翻页',
+    example: 'eyJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
 
 export class UpdateWorkDto extends IntersectionType(
   PartialType(OmitType(CreateWorkDto, ['type'] as const)),
@@ -415,10 +436,18 @@ export class UpdateWorkNewDto extends IntersectionType(
 ) {}
 
 export class QueryWorkCommentPageDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   IdDto,
   PartialType(CommentSortDto),
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按评论列表固定排序游标翻页',
+    example:
+      'eyJraW5kIjoiZmxvb3JBc2MiLCJmbG9vciI6MSwiaWQiOjEwMH0',
+    required: false,
+  })
+  cursor?: string
+}
 
 class AuthorInfoDto extends IntersectionType(
   PickType(BaseAuthorDto, ['id', 'name'] as const),

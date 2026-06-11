@@ -4,9 +4,9 @@ import {
   check,
   index,
   integer,
+  jsonb,
   smallint,
   snakeCase,
-  text,
   timestamp,
   uniqueIndex,
   varchar,
@@ -87,9 +87,14 @@ export const workChapter = snakeCase.table(
      */
     canComment: boolean().default(true).notNull(),
     /**
-     * 章节内容
+     * 小说章节内容文件路径。
      */
-    content: text(),
+    novelContentPath: varchar({ length: 1000 }),
+    /**
+     * 漫画章节内容清单。
+     * - 固定为图片路径数组 JSON，不再与小说路径混用同一 text 字段。
+     */
+    comicContentManifest: jsonb(),
     /**
      * 字数
      */
@@ -158,6 +163,17 @@ export const workChapter = snakeCase.table(
       table.sortOrder,
     ),
     /**
+     * App 章节列表索引：匹配作品、发布态、发布时间和稳定排序。
+     */
+    index('work_chapter_work_published_publish_sort_idx').on(
+      table.workId,
+      table.isPublished,
+      table.publishAt,
+      table.deletedAt,
+      table.sortOrder,
+      table.id,
+    ),
+    /**
      * 索引: isPublished, publishAt
      */
     index('work_chapter_is_published_publish_at_idx').on(
@@ -208,6 +224,18 @@ export const workChapter = snakeCase.table(
     check(
       'work_chapter_view_rule_valid_chk',
       sql`${table.viewRule} in (-1, 0, 1, 2, 3)`,
+    ),
+    check(
+      'work_chapter_content_type_valid_chk',
+      sql`(${table.workType} = 1 and ${table.novelContentPath} is null) or (${table.workType} = 2 and ${table.comicContentManifest} is null)`,
+    ),
+    check(
+      'work_chapter_novel_content_path_non_blank_chk',
+      sql`${table.novelContentPath} is null or btrim(${table.novelContentPath}) <> ''`,
+    ),
+    check(
+      'work_chapter_comic_manifest_array_chk',
+      sql`${table.comicContentManifest} is null or jsonb_typeof(${table.comicContentManifest}) = 'array'`,
     ),
     /**
      * 计数字段非负约束

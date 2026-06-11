@@ -15,6 +15,7 @@ interface PreparedSelectCapture {
   joins: Array<{ condition: unknown }>
   where?: unknown
   orderBy: unknown[]
+  limit?: unknown
   execute: jest.Mock
 }
 
@@ -29,6 +30,7 @@ function createSelectMock(prepared: PreparedSelectCapture[]) {
       orderBy: [],
       execute: jest.fn(),
     }
+    prepared.push(capture)
     const builder: Record<string, jest.Mock> = {}
 
     builder.from = jest.fn(() => builder)
@@ -45,10 +47,12 @@ function createSelectMock(prepared: PreparedSelectCapture[]) {
       return builder
     })
     builder.offset = jest.fn(() => builder)
-    builder.limit = jest.fn(() => builder)
+    builder.limit = jest.fn((limit: unknown) => {
+      capture.limit = limit
+      return builder
+    })
     builder.prepare = jest.fn((name: string) => {
       capture.name = name
-      prepared.push(capture)
       return { execute: capture.execute }
     })
 
@@ -76,17 +80,20 @@ function createService() {
 }
 
 describe('MessageChatReadQueryService', () => {
-  it('builds and executes the conversation list prepared query', () => {
+  it('builds and executes the conversation list keyset query', async () => {
     const { service, prepared } = createService()
-    const conversationListQuery = prepared[0]
 
-    service.getConversationList({
+    await service.getConversationList({
       userId: 7,
-      offset: 20,
       limit: 10,
+      cursor: {
+        isPinned: false,
+        lastMessageAt: new Date('2026-03-07T12:00:00.000Z'),
+        id: 99,
+      },
     })
+    const conversationListQuery = prepared[3]
 
-    expect(conversationListQuery.name).toBe('message_chat_conversation_list')
     expect(compileSql(conversationListQuery.joins[0].condition)).toContain(
       '"chat_conversation_member"."user_id" = $1',
     )
@@ -96,24 +103,23 @@ describe('MessageChatReadQueryService', () => {
     expect(compileSql(conversationListQuery.where)).toContain(
       '"chat_conversation"."has_messages" = $',
     )
+    expect(compileSql(conversationListQuery.where)).toContain(
+      '"chat_conversation"."last_message_at" < $',
+    )
     expect(compileSql(conversationListQuery.orderBy[0])).toContain(
       '"chat_conversation_member"."is_pinned" desc',
     )
     expect(compileSql(conversationListQuery.orderBy[1])).toContain(
       '"chat_conversation"."last_message_at" desc nulls last',
     )
-    expect(conversationListQuery.execute).toHaveBeenCalledWith({
-      userId: 7,
-      offset: 20,
-      limit: 10,
-    })
+    expect(conversationListQuery.limit).toBe(10)
   })
 
   it('builds message page queries for initial, before-cursor, and after-seq reads', () => {
     const { service, prepared } = createService()
-    const initialQuery = prepared[1]
-    const beforeQuery = prepared[2]
-    const afterQuery = prepared[3]
+    const initialQuery = prepared[0]
+    const beforeQuery = prepared[1]
+    const afterQuery = prepared[2]
 
     service.getConversationMessages({ conversationId: 10, limit: 21 })
     service.getConversationMessagesBefore({

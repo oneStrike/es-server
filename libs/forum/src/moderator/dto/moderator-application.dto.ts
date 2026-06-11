@@ -9,7 +9,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
@@ -144,6 +144,21 @@ export class QueryForumModeratorApplicationDto extends IntersectionType(
     required: false,
   })
   nickname?: string
+}
+
+export class QueryMyForumModeratorApplicationDto extends IntersectionType(
+  CursorPageSizeDto,
+  PartialType(
+    PickType(BaseForumModeratorApplicationDto, ['sectionId', 'status'] as const),
+  ),
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按申请时间倒序游标翻页',
+    example:
+      'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
 }
 
 export class AuditForumModeratorApplicationDto extends IntersectionType(

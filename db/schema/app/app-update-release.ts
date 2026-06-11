@@ -8,6 +8,7 @@ import {
   snakeCase,
   timestamp,
   unique,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -114,6 +115,12 @@ export const appUpdateRelease = snakeCase.table(
       table.buildCode,
     ),
     /**
+     * 同平台只允许一条已发布版本。
+     */
+    uniqueIndex('app_update_release_platform_published_live_key')
+      .on(table.platform)
+      .where(sql`${table.isPublished} = true`),
+    /**
      * 平台发布状态与构建号索引。
      */
     index('app_update_release_platform_is_published_build_code_idx').on(
@@ -125,6 +132,8 @@ export const appUpdateRelease = snakeCase.table(
      * 发布时间索引。
      */
     index('app_update_release_published_at_idx').on(table.publishedAt),
+    index('app_update_release_created_by_id_idx').on(table.createdById),
+    index('app_update_release_updated_by_id_idx').on(table.updatedById),
     /**
      * 构建号必须为正整数。
      */

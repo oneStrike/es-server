@@ -2,6 +2,7 @@ import type { Db } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 
 import type { SQL } from 'drizzle-orm'
+import { Buffer } from 'node:buffer'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
@@ -12,8 +13,8 @@ import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
-import { Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, asc, desc, eq, inArray, isNull, lt, or } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import { QueryUserProfileListDto, UpdateUserStatusDto } from './dto/profile.dto'
 import {
@@ -361,6 +362,7 @@ export class UserProfileService {
     viewerUserId?: number,
     query?: PublicUserProfileTopicPageQuery,
   ) {
+    this.rejectUnsupportedProfileTopicPagination(query)
     const targetUser = await this.getTopicUserBriefById(targetUserId)
     if (!targetUser) {
       throw new BusinessException(
@@ -370,18 +372,18 @@ export class UserProfileService {
     }
 
     const pageQuery = this.drizzle.buildPage({
-      pageIndex: query?.pageIndex,
       pageSize: query?.pageSize,
     })
+    const cursor = this.parseProfileTopicCursor(query?.cursor)
     const visibleSectionIds =
       await this.resolvePublicUserTopicVisibleSectionIds(viewerUserId, query)
 
     if (visibleSectionIds.length === 0) {
       return {
         list: [],
-        total: 0,
-        pageIndex: pageQuery.pageIndex,
         pageSize: pageQuery.pageSize,
+        hasMore: false,
+        nextCursor: null,
       }
     }
 
@@ -397,11 +399,16 @@ export class UserProfileService {
       conditions.push(eq(this.forumTopic.sectionId, query.sectionId))
     }
 
-    const where = and(...conditions)
-    const order = this.drizzle.buildOrderBy(query?.orderBy, {
-      table: this.forumTopic,
-      fallbackOrderBy: { createdAt: 'desc' },
-    })
+    const where = and(
+      ...conditions,
+      ...(cursor ? [this.buildProfileTopicCursorWhere(cursor)] : []),
+    )
+    const order = this.drizzle.buildOrderBy(
+      [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+      {
+        table: this.forumTopic,
+      },
+    )
     const listQuery = this.db
       .select({
         id: this.forumTopic.id,
@@ -427,19 +434,18 @@ export class UserProfileService {
       })
       .from(this.forumTopic)
       .where(where)
-      .limit(pageQuery.limit)
-      .offset(pageQuery.offset)
-    const [pageList, total] = await Promise.all([
-      order.orderBySql.length > 0
-        ? listQuery.orderBy(...order.orderBySql)
-        : listQuery,
-      this.db.$count(this.forumTopic, where),
-    ])
+      .limit(pageQuery.limit + 1)
+    const rows = await listQuery.orderBy(...order.orderBySql)
+    const pageList = rows.slice(0, pageQuery.limit)
+    const hasMore = rows.length > pageQuery.limit
     const page = {
       list: pageList,
-      total,
-      pageIndex: pageQuery.pageIndex,
       pageSize: pageQuery.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && pageList.length > 0
+          ? this.encodeProfileTopicCursor(pageList[pageList.length - 1])
+          : null,
     }
 
     if (page.list.length === 0) {
@@ -513,10 +519,11 @@ export class UserProfileService {
   // 查看我的论坛主题。
   // 返回当前用户全部未删除主题，并保留治理状态供自助管理使用。
   async getMyTopics(userId: number, query?: MyProfileTopicPageQuery) {
+    this.rejectUnsupportedProfileTopicPagination(query)
     const pageQuery = this.drizzle.buildPage({
-      pageIndex: query?.pageIndex,
       pageSize: query?.pageSize,
     })
+    const cursor = this.parseProfileTopicCursor(query?.cursor)
     const conditions: SQL[] = [
       eq(this.forumTopic.userId, userId),
       isNull(this.forumTopic.deletedAt),
@@ -526,11 +533,16 @@ export class UserProfileService {
       conditions.push(eq(this.forumTopic.sectionId, query.sectionId))
     }
 
-    const where = and(...conditions)
-    const order = this.drizzle.buildOrderBy(query?.orderBy, {
-      table: this.forumTopic,
-      fallbackOrderBy: { createdAt: 'desc' },
-    })
+    const where = and(
+      ...conditions,
+      ...(cursor ? [this.buildProfileTopicCursorWhere(cursor)] : []),
+    )
+    const order = this.drizzle.buildOrderBy(
+      [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+      {
+        table: this.forumTopic,
+      },
+    )
     const listQuery = this.db
       .select({
         id: this.forumTopic.id,
@@ -557,19 +569,18 @@ export class UserProfileService {
       })
       .from(this.forumTopic)
       .where(where)
-      .limit(pageQuery.limit)
-      .offset(pageQuery.offset)
-    const [pageList, total] = await Promise.all([
-      order.orderBySql.length > 0
-        ? listQuery.orderBy(...order.orderBySql)
-        : listQuery,
-      this.db.$count(this.forumTopic, where),
-    ])
+      .limit(pageQuery.limit + 1)
+    const rows = await listQuery.orderBy(...order.orderBySql)
+    const pageList = rows.slice(0, pageQuery.limit)
+    const hasMore = rows.length > pageQuery.limit
     const page = {
       list: pageList,
-      total,
-      pageIndex: pageQuery.pageIndex,
       pageSize: pageQuery.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && pageList.length > 0
+          ? this.encodeProfileTopicCursor(pageList[pageList.length - 1])
+          : null,
     }
 
     if (page.list.length === 0) {
@@ -638,85 +649,58 @@ export class UserProfileService {
     return { ...page, list }
   }
 
-  // 获取我的收藏。
-  // 返回当前用户收藏的论坛主题及收藏时间。
-  async getMyFavorites(userId: number) {
-    const result = await this.favoriteService.getUserTopicFavorites({
-      userId,
-    })
+  private rejectUnsupportedProfileTopicPagination(
+    query?: PublicUserProfileTopicPageQuery | MyProfileTopicPageQuery,
+  ) {
+    const rawQuery = (query ?? {}) as unknown as Record<string, unknown>
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => rawQuery[field] !== undefined && rawQuery[field] !== null)
 
-    if (result.list.length === 0) {
-      return { list: [], total: result.total }
-    }
-
-    const topicIds = result.list.map((f) => f.targetId)
-    const topics = await this.db
-      .select()
-      .from(this.forumTopic)
-      .where(inArray(this.forumTopic.id, topicIds))
-    const sectionIds = topics.map((item) => item.sectionId).filter((id) => !!id)
-    const sections = sectionIds.length
-      ? await this.db
-          .select({ id: this.forumSection.id, name: this.forumSection.name })
-          .from(this.forumSection)
-          .where(inArray(this.forumSection.id, sectionIds))
-      : []
-    const sectionMap = new Map(sections.map((item) => [item.id, item]))
-    const topicsWithSection = topics.map((item) => ({
-      ...item,
-      section: item.sectionId ? (sectionMap.get(item.sectionId) ?? null) : null,
-    }))
-
-    const topicMap = new Map(topicsWithSection.map((t) => [t.id, t]))
-    const orderedTopics = topicIds
-      .map((id) => topicMap.get(id))
-      .filter((topic): topic is NonNullable<typeof topic> => Boolean(topic))
-
-    return {
-      list: orderedTopics.map((topic) => ({
-        topic,
-        createdAt: result.list.find((f) => f.targetId === topic.id)?.createdAt,
-      })),
-      total: result.total,
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `公开用户主题列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
     }
   }
 
-  // 查看积分记录。
-  // 仅返回 points 资产对应的成长流水。
-  async getPointRecords(userId: number) {
-    const where = and(
-      eq(this.growthLedgerRecord.userId, userId),
-      eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
-    )
-    const pageQuery = this.drizzle.buildPage()
-    const orderQuery = this.drizzle.buildOrderBy(
-      { id: 'desc' },
-      { table: this.growthLedgerRecord },
-    )
-    const [pointRows, pointTotal] = await Promise.all([
-      this.db
-        .select()
-        .from(this.growthLedgerRecord)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.growthLedgerRecord, where),
-    ])
-    const page = toPageResult(pointRows, pointTotal, pageQuery)
-    return {
-      ...page,
-      list: page.list.map((item) => ({
-        id: item.id,
-        userId: item.userId,
-        ruleId: item.ruleId ?? null,
-        points: item.delta,
-        beforePoints: item.beforeValue,
-        afterPoints: item.afterValue,
-        remark: item.remark ?? null,
-        createdAt: item.createdAt,
-      })),
+  private encodeProfileTopicCursor(topic: { createdAt: Date, id: number }) {
+    return Buffer.from(
+      JSON.stringify({
+        createdAt: topic.createdAt.toISOString(),
+        id: topic.id,
+      }),
+    ).toString('base64url')
+  }
+
+  private parseProfileTopicCursor(cursor?: string | null) {
+    if (!cursor?.trim()) {
+      return undefined
     }
+
+    try {
+      const parsed = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      ) as { createdAt?: unknown, id?: unknown }
+      const createdAt = new Date(String(parsed.createdAt))
+      const id = Number(parsed.id)
+      if (Number.isNaN(createdAt.getTime()) || !Number.isInteger(id) || id <= 0) {
+        throw new TypeError('invalid profile topic cursor payload')
+      }
+
+      return { createdAt, id }
+    } catch {
+      throw new BadRequestException('用户主题分页游标非法')
+    }
+  }
+
+  private buildProfileTopicCursorWhere(cursor: { createdAt: Date, id: number }) {
+    return or(
+      lt(this.forumTopic.createdAt, cursor.createdAt),
+      and(
+        eq(this.forumTopic.createdAt, cursor.createdAt),
+        lt(this.forumTopic.id, cursor.id),
+      ),
+    )!
   }
 
   // 初始化用户资料。

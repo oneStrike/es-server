@@ -206,7 +206,16 @@ describe('AppUserGrowthService badge query contract', () => {
       pageSize: 20,
     })
     expect(result).toEqual({
-      list: [{ createdAt, badge }],
+      list: [
+        {
+          createdAt,
+          badge: {
+            ...badge,
+            description: null,
+            icon: null,
+          },
+        },
+      ],
       total: 1,
       pageIndex: 1,
       pageSize: 20,

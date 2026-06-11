@@ -1,14 +1,21 @@
 import type { SQL } from 'drizzle-orm'
 import type { WorkTagSelect } from '@db/schema'
+import type { CursorContextFingerprint } from '@libs/platform/utils'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import {
+  assertSameCursorContextFingerprint,
+  normalizeCursorText,
+  parseCursorContextFingerprint,
+} from '@libs/platform/utils'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, asc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
 import {
   CreateTagDto,
+  QueryAppTagCursorDto,
   QueryTagDto,
   UpdateTagDto,
   UpdateTagSortDto,
@@ -76,6 +83,41 @@ export class WorkTagService {
       total,
       page,
     )
+  }
+
+  async getAppTagCursorPage(queryDto: QueryAppTagCursorDto) {
+    const conditions: SQL[] = [eq(this.workTag.isEnabled, true)]
+    const cursorContext = this.buildTagCursorContext(queryDto)
+
+    if (queryDto.name?.trim()) {
+      conditions.push(buildILikeCondition(this.workTag.name, queryDto.name)!)
+    }
+
+    const cursor = this.parseTagCursor(queryDto.cursor, cursorContext)
+    if (cursor) {
+      conditions.push(this.buildTagCursorWhere(cursor))
+    }
+
+    const where = and(...conditions)
+    const page = this.drizzle.buildPage({ pageSize: queryDto.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.workTag)
+      .where(where)
+      .orderBy(asc(this.workTag.sortOrder), asc(this.workTag.id))
+      .limit(page.limit + 1)
+    const list = rows.slice(0, page.limit)
+    const hasMore = rows.length > page.limit
+
+    return {
+      list: list.map((item) => this.toTagOutputDto(item)),
+      pageSize: page.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && list.length > 0
+          ? this.encodeTagCursor(list[list.length - 1], cursorContext)
+          : null,
+    }
   }
 
   // 后台分页查询标签；后台运营不展示人气字段，避免把内部指标误当成可运营排序依据。
@@ -311,6 +353,76 @@ export class WorkTagService {
       .from(this.workTag)
 
     return row?.value ?? 0
+  }
+
+  private encodeTagCursor(
+    tag: Pick<WorkTagSelect, 'sortOrder' | 'id'>,
+    context: CursorContextFingerprint,
+  ) {
+    return Buffer.from(
+      JSON.stringify({ sortOrder: tag.sortOrder, id: tag.id, context }),
+    ).toString('base64url')
+  }
+
+  private parseTagCursor(
+    cursor?: string | null,
+    expectedContext?: CursorContextFingerprint,
+  ) {
+    if (!cursor?.trim()) {
+      return undefined
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      ) as Record<string, unknown>
+      const sortOrder = Number(payload.sortOrder)
+      const id = Number(payload.id)
+      const context = parseCursorContextFingerprint(payload.context)
+
+      if (
+        !Number.isInteger(sortOrder) ||
+        sortOrder < 0 ||
+        !Number.isInteger(id) ||
+        id <= 0
+      ) {
+        throw new TypeError('invalid tag cursor')
+      }
+
+      if (expectedContext) {
+        assertSameCursorContextFingerprint(
+          context,
+          expectedContext,
+          () => new BadRequestException('标签分页游标与查询条件不匹配'),
+        )
+      }
+
+      return { sortOrder, id }
+    }
+    catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error
+      }
+      throw new BadRequestException('标签分页游标非法')
+    }
+  }
+
+  private buildTagCursorContext(
+    queryDto: Pick<QueryAppTagCursorDto, 'name'>,
+  ): CursorContextFingerprint {
+    return {
+      name: normalizeCursorText(queryDto.name),
+    }
+  }
+
+  private buildTagCursorWhere(cursor: { sortOrder: number; id: number }) {
+    return or(
+      gt(this.workTag.sortOrder, cursor.sortOrder),
+      and(
+        eq(this.workTag.sortOrder, cursor.sortOrder),
+        gt(this.workTag.id, cursor.id),
+      ),
+    )!
   }
 
   private toTagOutputDto(tag: WorkTagSelect) {

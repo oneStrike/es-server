@@ -196,6 +196,10 @@ export const forumTopic = snakeCase.table(
      */
     index('forum_topic_user_id_idx').on(table.userId),
     /**
+     * 最后评论用户关联索引。
+     */
+    index('forum_topic_last_comment_user_id_idx').on(table.lastCommentUserId),
+    /**
      * 索引: userId, createdAt（仅未删除主题）
      */
     index('forum_topic_user_id_created_at_live_idx')

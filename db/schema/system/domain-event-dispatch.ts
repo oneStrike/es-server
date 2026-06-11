@@ -42,6 +42,12 @@ export const domainEventDispatch = snakeCase.table(
     updatedAt: timestamp({ withTimezone: true, precision: 6 })
       .$onUpdate(() => new Date())
       .notNull(),
+    /** 保留截止时间；pending/processing 行必须由清理任务排除。 */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '90 days'`,
+    ),
+    /** 归档时间；为空表示仍处于热数据窗口。 */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     unique('domain_event_dispatch_event_id_consumer_key').on(
@@ -52,6 +58,15 @@ export const domainEventDispatch = snakeCase.table(
       table.consumer,
       table.status,
       table.nextRetryAt,
+      table.id,
+    ),
+    index('domain_event_dispatch_status_next_retry_id_idx').on(
+      table.status,
+      table.nextRetryAt,
+      table.id,
+    ),
+    index('domain_event_dispatch_retention_until_id_idx').on(
+      table.retentionUntil,
       table.id,
     ),
     index('domain_event_dispatch_event_id_idx').on(table.eventId),

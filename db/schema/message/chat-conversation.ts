@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
@@ -52,6 +53,16 @@ export const chatConversation = snakeCase.table(
     updatedAt: timestamp({ withTimezone: true, precision: 6 })
       .$onUpdate(() => new Date())
       .notNull(),
+    /**
+     * 保留截止时间；仅隐藏且无保留消息的会话可进入清理窗口。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '365 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     /**
@@ -64,9 +75,21 @@ export const chatConversation = snakeCase.table(
     index('chat_conversation_last_message_at_idx').on(
       table.lastMessageAt.desc(),
     ),
+    index('chat_conversation_last_message_at_id_idx').on(
+      table.lastMessageAt.desc(),
+      table.id.desc(),
+    ),
+    index('chat_conversation_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
     /**
      * 最后一条消息索引
      */
     index('chat_conversation_last_message_id_idx').on(table.lastMessageId),
+    /**
+     * 最后发言人关联索引。
+     */
+    index('chat_conversation_last_sender_id_idx').on(table.lastSenderId),
   ],
 )

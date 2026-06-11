@@ -34,12 +34,16 @@ function createSelectBuilder<TResult>(
   result: TResult,
   recorder: Record<string, ReturnType<typeof jest.fn>> = {},
 ) {
+  const promise = Promise.resolve(result)
   const builder: Record<string, ReturnType<typeof jest.fn>> = {
     from: jest.fn(() => builder),
     limit: jest.fn(() => builder),
     offset: jest.fn(async () => result),
     orderBy: jest.fn(() => builder),
     where: jest.fn(() => builder),
+    then: promise.then.bind(promise),
+    catch: promise.catch.bind(promise),
+    finally: promise.finally.bind(promise),
   }
 
   Object.assign(recorder, builder)
@@ -147,10 +151,12 @@ describe('ForumModeratorActionLogService query', () => {
         moderatorId: 5,
       }),
     )
-    expect(drizzle.buildOrderBy).toHaveBeenCalledWith(
-      { createdAt: 'desc' },
+    expect(drizzle.buildOrderBy).not.toHaveBeenCalled()
+    expect(page).toEqual(
       expect.objectContaining({
-        table: drizzle.schema.forumModeratorActionLog,
+        hasMore: false,
+        nextCursor: null,
+        pageSize: 15,
       }),
     )
     expect(page.list[0]).toEqual(

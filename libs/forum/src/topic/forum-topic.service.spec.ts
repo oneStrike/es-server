@@ -140,32 +140,28 @@ describe('ForumTopicService facade delegation', () => {
       })
 
       await expect(
-        service.getPublicTopics({ pageIndex: 1, pageSize: 20, userId: 9 }),
+        service.getPublicTopics({ pageSize: 20, userId: 9 }),
       ).resolves.toBe('getPublicTopics')
       expect(queryService.getPublicTopics).toHaveBeenCalledWith({
-        pageIndex: 1,
         pageSize: 20,
         userId: 9,
       })
 
       await expect(
-        service.getHotPublicTopics({ pageIndex: 1, pageSize: 20, userId: 9 }),
+        service.getHotPublicTopics({ pageSize: 20, userId: 9 }),
       ).resolves.toBe('getHotPublicTopics')
       expect(queryService.getHotPublicTopics).toHaveBeenCalledWith({
-        pageIndex: 1,
         pageSize: 20,
         userId: 9,
       })
 
       await expect(
         service.getFollowingPublicTopics({
-          pageIndex: 1,
           pageSize: 20,
           userId: 9,
         }),
       ).resolves.toBe('getFollowingPublicTopics')
       expect(queryService.getFollowingPublicTopics).toHaveBeenCalledWith({
-        pageIndex: 1,
         pageSize: 20,
         userId: 9,
       })

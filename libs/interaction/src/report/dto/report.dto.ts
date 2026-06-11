@@ -9,7 +9,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -201,7 +201,7 @@ export class CreateReportCommandDto extends IntersectionType(
 ) {}
 
 export class QueryMyReportPageDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   PartialType(
     PickType(BaseReportDto, [
       'targetType',
@@ -210,7 +210,14 @@ export class QueryMyReportPageDto extends IntersectionType(
       'status',
     ] as const),
   ),
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
 
 export class QueryMyReportPageCommandDto extends IntersectionType(
   QueryMyReportPageDto,

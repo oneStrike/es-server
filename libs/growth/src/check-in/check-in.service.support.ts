@@ -11,7 +11,9 @@ import {
   parseDateOnlyInAppTimeZone,
 } from '@libs/platform/utils'
 import { BadRequestException, Logger } from '@nestjs/common'
-import { desc } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
+
+const CHECK_IN_CONFIG_KEY = 'global'
 
 /**
  * 统一签到域 support 基类。
@@ -20,6 +22,7 @@ import { desc } from 'drizzle-orm'
  */
 export abstract class CheckInServiceSupport {
   protected readonly logger = new Logger(CheckInServiceSupport.name)
+  protected readonly checkInConfigKey = CHECK_IN_CONFIG_KEY
 
   // 注入签到域共享的数据库访问和账本依赖。
   constructor(
@@ -127,9 +130,8 @@ export abstract class CheckInServiceSupport {
     const [config] = await db
       .select()
       .from(this.checkInConfigTable)
-      .orderBy(
-        desc(this.checkInConfigTable.updatedAt),
-        desc(this.checkInConfigTable.id),
+      .where(
+        eq(this.checkInConfigTable.configKey, this.checkInConfigKey),
       )
       .limit(1)
     return config

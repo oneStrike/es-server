@@ -1,15 +1,23 @@
 import type { SQL } from 'drizzle-orm'
 import type { WorkCategorySelect } from '@db/schema'
+import type { CursorContextFingerprint } from '@libs/platform/utils'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
-import { jsonParse } from '@libs/platform/utils'
-import { Injectable } from '@nestjs/common'
-import { and, arrayOverlaps, eq, inArray, isNull, sql } from 'drizzle-orm'
+import {
+  assertSameCursorContextFingerprint,
+  jsonParse,
+  normalizeCursorNumberArray,
+  normalizeCursorText,
+  parseCursorContextFingerprint,
+} from '@libs/platform/utils'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, arrayOverlaps, asc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
 import {
   CreateCategoryDto,
+  QueryAppCategoryCursorDto,
   QueryCategoryDto,
   UpdateCategoryDto,
   UpdateCategorySortDto,
@@ -105,6 +113,47 @@ export class WorkCategoryService {
       total,
       page,
     )
+  }
+
+  async getAppCategoryCursorPage(queryDto: QueryAppCategoryCursorDto) {
+    const { name, contentType } = queryDto
+    const conditions: SQL[] = [eq(this.workCategory.isEnabled, true)]
+    const cursorContext = this.buildCategoryCursorContext(queryDto)
+
+    if (name) {
+      conditions.push(buildILikeCondition(this.workCategory.name, name)!)
+    }
+
+    const values = this.parseCategoryContentTypes(contentType)
+    if (values.length > 0) {
+      conditions.push(arrayOverlaps(this.workCategory.contentType, values))
+    }
+
+    const cursor = this.parseCategoryCursor(queryDto.cursor, cursorContext)
+    if (cursor) {
+      conditions.push(this.buildCategoryCursorWhere(cursor))
+    }
+
+    const where = and(...conditions)
+    const page = this.drizzle.buildPage({ pageSize: queryDto.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.workCategory)
+      .where(where)
+      .orderBy(asc(this.workCategory.sortOrder), asc(this.workCategory.id))
+      .limit(page.limit + 1)
+    const list = rows.slice(0, page.limit)
+    const hasMore = rows.length > page.limit
+
+    return {
+      list: list.map((item) => this.toCategoryOutputDto(item)),
+      pageSize: page.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && list.length > 0
+          ? this.encodeCategoryCursor(list[list.length - 1], cursorContext)
+          : null,
+    }
   }
 
   // 获取分类详情，未命中时抛出业务异常，避免上层误把空结果当成可编辑分类。
@@ -272,6 +321,83 @@ export class WorkCategoryService {
       .from(this.workCategory)
 
     return row?.value ?? 0
+  }
+
+  private encodeCategoryCursor(
+    category: Pick<WorkCategorySelect, 'sortOrder' | 'id'>,
+    context: CursorContextFingerprint,
+  ) {
+    return Buffer.from(
+      JSON.stringify({ sortOrder: category.sortOrder, id: category.id, context }),
+    ).toString('base64url')
+  }
+
+  private parseCategoryCursor(
+    cursor?: string | null,
+    expectedContext?: CursorContextFingerprint,
+  ) {
+    if (!cursor?.trim()) {
+      return undefined
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      ) as Record<string, unknown>
+      const sortOrder = Number(payload.sortOrder)
+      const id = Number(payload.id)
+      const context = parseCursorContextFingerprint(payload.context)
+
+      if (
+        !Number.isInteger(sortOrder) ||
+        sortOrder < 0 ||
+        !Number.isInteger(id) ||
+        id <= 0
+      ) {
+        throw new TypeError('invalid category cursor')
+      }
+
+      if (expectedContext) {
+        assertSameCursorContextFingerprint(
+          context,
+          expectedContext,
+          () => new BadRequestException('分类分页游标与查询条件不匹配'),
+        )
+      }
+
+      return { sortOrder, id }
+    }
+    catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error
+      }
+      throw new BadRequestException('分类分页游标非法')
+    }
+  }
+
+  private buildCategoryCursorContext(
+    queryDto: Pick<QueryAppCategoryCursorDto, 'name' | 'contentType'>,
+  ): CursorContextFingerprint {
+    return {
+      name: normalizeCursorText(queryDto.name),
+      contentType: normalizeCursorNumberArray(
+        this.parseCategoryContentTypes(queryDto.contentType),
+      ),
+    }
+  }
+
+  private parseCategoryContentTypes(contentType?: string): number[] {
+    return normalizeCursorNumberArray(jsonParse(contentType || [], []))
+  }
+
+  private buildCategoryCursorWhere(cursor: { sortOrder: number; id: number }) {
+    return or(
+      gt(this.workCategory.sortOrder, cursor.sortOrder),
+      and(
+        eq(this.workCategory.sortOrder, cursor.sortOrder),
+        gt(this.workCategory.id, cursor.id),
+      ),
+    )!
   }
 
   private toCategoryOutputDto(category: WorkCategorySelect) {

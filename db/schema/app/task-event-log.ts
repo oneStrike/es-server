@@ -65,6 +65,12 @@ export const taskEventLog = snakeCase.table(
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),
+    /** 保留截止时间；非终态任务关联日志必须由清理任务排除。 */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '180 days'`,
+    ),
+    /** 归档时间；为空表示仍处于热数据窗口。 */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     /** 任务与创建时间索引。 */
@@ -72,8 +78,19 @@ export const taskEventLog = snakeCase.table(
       table.taskId,
       table.createdAt,
     ),
+    /** 任务步骤关联索引。 */
+    index('task_event_log_step_id_idx').on(table.stepId),
     /** 实例索引。 */
     index('task_event_log_instance_id_idx').on(table.instanceId),
+    index('task_event_log_instance_created_at_id_idx').on(
+      table.instanceId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('task_event_log_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
     /** 对账页按实例取最近事件索引。 */
     index('task_event_log_instance_latest_idx')
       .on(table.instanceId, table.occurredAt.desc(), table.createdAt.desc())

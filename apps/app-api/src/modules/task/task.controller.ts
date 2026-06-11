@@ -8,7 +8,11 @@ import {
   TaskProgressDto,
 } from '@libs/growth/task/dto/task-query.dto'
 import { TaskService } from '@libs/growth/task/task.service'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import {
+  ApiCursorPageDoc,
+  ApiDoc,
+  CurrentUser,
+} from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto/base.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -22,7 +26,7 @@ export class TaskController {
 
   // 分页查询当前用户可领取的任务。
   @Get('page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询可领取任务',
     model: AppAvailableTaskPageItemDto,
   })
@@ -35,7 +39,7 @@ export class TaskController {
 
   // 分页查询当前用户的任务实例。
   @Get('my/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询我的任务',
     model: AppMyTaskPageItemDto,
   })

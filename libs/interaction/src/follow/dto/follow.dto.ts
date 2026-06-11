@@ -10,10 +10,11 @@ import {
   EnumProperty,
   NestedProperty,
   NumberProperty,
+  StringProperty,
 } from '@libs/platform/decorators'
 
 import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
@@ -58,9 +59,16 @@ export class FollowRecordDto extends IntersectionType(
 ) {}
 
 export class FollowPageCommandDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   PickType(BaseFollowDto, ['userId'] as const),
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
 
 /**
  * 用户关注分页查询 DTO。
@@ -68,8 +76,15 @@ export class FollowPageCommandDto extends IntersectionType(
  */
 export class QueryUserFollowPageDto extends IntersectionType(
   PartialType(UserIdDto),
-  PageDto,
-) {}
+  CursorPageSizeDto,
+) {
+  @StringProperty({
+    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
 
 /**
  * 关注状态 DTO。
@@ -96,7 +111,6 @@ export class FollowStatusResponseDto {
   })
   isMutualFollow!: boolean
 }
-
 /**
  * 关注用户摘要 DTO。
  */

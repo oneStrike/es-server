@@ -1,5 +1,6 @@
 import type { WorkChapterSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
+import { Buffer } from 'node:buffer'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
@@ -19,9 +20,8 @@ import {
 
 import { BatchUpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
-import { jsonParse } from '@libs/platform/utils'
-import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   AdminWorkChapterDetailDto,
@@ -149,7 +149,7 @@ export class WorkChapterService {
 
   private buildAdminChapterDetail(
     chapter: WorkChapterSelect & {
-      content: string | null
+      content: string | string[] | null
       work: {
         id: number
         name: string
@@ -300,6 +300,7 @@ export class WorkChapterService {
     dto: QueryAppWorkChapterPageDto,
     _context: { userId?: number } = {},
   ) {
+    this.rejectUnsupportedAppChapterPagination(dto)
     const now = new Date()
     const where = and(
       isNull(this.workChapter.deletedAt),
@@ -310,12 +311,42 @@ export class WorkChapterService {
         lte(this.workChapter.publishAt, now),
       ),
     )
-    const page = await this.findAppChapterPage({
-      where: where!,
-      pageIndex: dto.pageIndex,
+    const cursor = this.parseAppChapterCursor(dto.cursor)
+    const pageQuery = this.drizzle.buildPage({
       pageSize: dto.pageSize,
     })
+    const orderQuery = this.drizzle.buildOrderBy(
+      [{ sortOrder: 'asc' as const }, { id: 'asc' as const }],
+      { table: this.workChapter },
+    )
+    const rows = await this.db
+      .select(this.appChapterPageColumns())
+      .from(this.workChapter)
+      .where(cursor ? and(where!, this.buildAppChapterCursorWhere(cursor))! : where)
+      .orderBy(...orderQuery.orderBySql)
+      .limit(pageQuery.limit + 1)
+    const list = rows.slice(0, pageQuery.limit)
+    const hasMore = rows.length > pageQuery.limit
 
+    return this.buildAppChapterPageResponse({
+      list,
+      pageSize: pageQuery.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && list.length > 0
+          ? this.encodeAppChapterCursor(list[list.length - 1])
+          : null,
+    })
+  }
+
+  private async buildAppChapterPageResponse(page: {
+    list: AppChapterPageRow[]
+    total?: number
+    pageIndex?: number
+    pageSize: number
+    hasMore?: boolean
+    nextCursor?: string | null
+  }) {
     if (page.list.length === 0) {
       return { ...page, list: [] }
     }
@@ -348,6 +379,65 @@ export class WorkChapterService {
         }
       }),
     }
+  }
+
+  private rejectUnsupportedAppChapterPagination(dto: QueryAppWorkChapterPageDto) {
+    const query = dto as unknown as Record<string, unknown>
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => query[field] !== undefined && query[field] !== null)
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `公开章节列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private encodeAppChapterCursor(chapter: Pick<AppChapterPageRow, 'id' | 'sortOrder'>) {
+    return Buffer.from(
+      JSON.stringify({
+        sortOrder: chapter.sortOrder,
+        id: chapter.id,
+      }),
+    ).toString('base64url')
+  }
+
+  private parseAppChapterCursor(cursor?: string | null) {
+    if (!cursor?.trim()) {
+      return undefined
+    }
+
+    try {
+      const parsed = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      ) as { id?: unknown, sortOrder?: unknown }
+      const id = Number(parsed.id)
+      const sortOrder = Number(parsed.sortOrder)
+      if (
+        !Number.isInteger(id) ||
+        id <= 0 ||
+        !Number.isInteger(sortOrder)
+      ) {
+        throw new TypeError('invalid app chapter cursor payload')
+      }
+
+      return { id, sortOrder }
+    } catch {
+      throw new BadRequestException('章节分页游标非法')
+    }
+  }
+
+  private buildAppChapterCursorWhere(cursor: {
+    id: number
+    sortOrder: number
+  }) {
+    return or(
+      gt(this.workChapter.sortOrder, cursor.sortOrder),
+      and(
+        eq(this.workChapter.sortOrder, cursor.sortOrder),
+        gt(this.workChapter.id, cursor.id),
+      ),
+    )!
   }
 
   // 分页查询 admin 管理章节列表。
@@ -491,10 +581,7 @@ export class WorkChapterService {
       )
     }
 
-    const parsedContent =
-      chapter.workType === ContentTypeEnum.COMIC
-        ? (jsonParse<string>(chapter.content, '') ?? '')
-        : chapter.content
+    const parsedContent = this.resolveChapterContent(chapter)
     const resolvedPermission = bypassVisibilityCheck
       ? undefined
       : await this.contentPermissionService.resolveChapterPermission(id, userId)
@@ -602,6 +689,28 @@ export class WorkChapterService {
       downloaded,
       purchased,
     }
+  }
+
+  private resolveChapterContent(chapter: {
+    workType: number
+    comicContentManifest?: unknown
+    novelContentPath?: string | null
+  }) {
+    if (chapter.workType === ContentTypeEnum.COMIC) {
+      if (!Array.isArray(chapter.comicContentManifest)) {
+        return []
+      }
+
+      return chapter.comicContentManifest.filter(
+        (item): item is string => typeof item === 'string',
+      )
+    }
+
+    if (chapter.workType === ContentTypeEnum.NOVEL) {
+      return chapter.novelContentPath ?? null
+    }
+
+    return null
   }
 
   // 获取上一章详情。
@@ -919,30 +1028,6 @@ export class WorkChapterService {
       createdAt: this.workChapter.createdAt,
       updatedAt: this.workChapter.updatedAt,
     }
-  }
-
-  private async findAppChapterPage(input: {
-    where: SQL
-    pageIndex?: number | string
-    pageSize?: number | string
-  }) {
-    const page = this.drizzle.buildPage(input)
-    const orderQuery = this.drizzle.buildOrderBy(
-      [{ sortOrder: 'asc' as const }, { id: 'asc' as const }],
-      { table: this.workChapter },
-    )
-    const [list, total] = await Promise.all([
-      this.db
-        .select(this.appChapterPageColumns())
-        .from(this.workChapter)
-        .where(input.where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db.$count(this.workChapter, input.where),
-    ])
-
-    return toPageResult<AppChapterPageRow>(list, total, page)
   }
 
   private async findAdminChapterPage(input: {

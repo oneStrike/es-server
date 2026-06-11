@@ -54,6 +54,7 @@ export const userMembershipSubscription = snakeCase.table(
       table.status,
       table.endsAt,
     ),
+    index('user_membership_subscription_plan_id_idx').on(table.planId),
     index('user_membership_subscription_source_idx').on(
       table.sourceType,
       table.sourceId,

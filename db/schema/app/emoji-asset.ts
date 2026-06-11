@@ -2,7 +2,6 @@ import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
-  foreignKey,
   index,
   integer,
   jsonb,
@@ -12,7 +11,6 @@ import {
   uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { emojiPack } from './emoji-pack'
 
 /**
  * 表情资源表。
@@ -145,6 +143,8 @@ export const emojiAsset = snakeCase.table(
      * 普通索引：软删除过滤。
      */
     index('emoji_asset_deleted_at_idx').on(table.deletedAt),
+    index('emoji_asset_created_by_id_idx').on(table.createdById),
+    index('emoji_asset_updated_by_id_idx').on(table.updatedById),
     /**
      * 条件唯一索引：仅对未删除数据约束 shortcode 唯一。
      * - 允许历史软删除记录保留旧 shortcode。
@@ -180,11 +180,6 @@ export const emojiAsset = snakeCase.table(
       'emoji_asset_shortcode_format_chk',
       sql`${table.shortcode} is null or ${table.shortcode} ~ '^[a-z0-9_]{2,32}$'`,
     ),
-    foreignKey({
-      columns: [table.packId],
-      foreignColumns: [emojiPack.id],
-      name: 'emoji_asset_pack_id_fkey',
-    }).onDelete('restrict').onUpdate('restrict'),
   ],
 )
 

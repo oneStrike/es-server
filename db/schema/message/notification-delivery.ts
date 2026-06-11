@@ -61,6 +61,12 @@ export const notificationDelivery = snakeCase.table(
     updatedAt: timestamp({ withTimezone: true, precision: 6 })
       .$onUpdate(() => new Date())
       .notNull(),
+    /** 保留截止时间；pending/retrying 行必须由清理任务排除。 */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '180 days'`,
+    ),
+    /** 归档时间；为空表示仍处于热数据窗口。 */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     unique('notification_delivery_dispatch_id_key').on(table.dispatchId),
@@ -90,7 +96,17 @@ export const notificationDelivery = snakeCase.table(
       table.updatedAt.desc(),
       table.id.desc(),
     ),
+    index('notification_delivery_receiver_created_at_id_idx').on(
+      table.receiverUserId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('notification_delivery_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
     index('notification_delivery_projection_key_idx').on(table.projectionKey),
+    index('notification_delivery_notification_id_idx').on(table.notificationId),
     index('notification_delivery_category_key_status_updated_at_idx').on(
       table.categoryKey,
       table.status,

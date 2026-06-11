@@ -18,7 +18,7 @@ import {
 } from '@libs/platform/decorators'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   ApiExtraModels,
@@ -707,6 +707,59 @@ export class QueryUserNotificationListDto extends PageDto {
     },
   })
   categoryKeys?: string
+}
+
+/**
+ * APP 用户通知游标分页查询 DTO。
+ */
+export class QueryUserNotificationCursorDto extends IntersectionType(
+  CursorPageSizeDto,
+  PartialType(
+    PickType(QueryUserNotificationListDto, ['isRead', 'categoryKeys'] as const),
+  ),
+) {
+  @StringProperty({
+    description: '下一页游标',
+    example:
+      'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
+
+/**
+ * APP 用户通知游标分页响应 DTO。
+ */
+export class UserNotificationCursorResponseDto {
+  @ArrayProperty({
+    description: '通知列表',
+    itemClass: BaseUserNotificationDto,
+    validation: false,
+  })
+  list!: BaseUserNotificationDto[]
+
+  @NumberProperty({
+    description: '本次请求单页大小',
+    example: 15,
+    validation: false,
+  })
+  pageSize!: number
+
+  @BooleanProperty({
+    description: '是否还有更多通知',
+    example: true,
+    validation: false,
+  })
+  hasMore!: boolean
+
+  @StringProperty({
+    description: '下一页游标',
+    example:
+      'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    nullable: true,
+    validation: false,
+  })
+  nextCursor!: string | null
 }
 
 /**

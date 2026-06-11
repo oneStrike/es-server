@@ -23,7 +23,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, desc, eq, gt, isNull, or, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, isNull, lt, or, sql } from 'drizzle-orm'
 import {
   CouponInstanceStatusEnum,
   CouponRedemptionStatusEnum,
@@ -32,6 +32,12 @@ import {
   CouponTargetScopeEnum,
   CouponTypeEnum,
 } from '../coupon/coupon.constant'
+import {
+  assertCursorOnlyQuery,
+  encodeCreatedAtIdCursor,
+  parseCreatedAtIdCursor,
+  toCursorPageResult,
+} from '../favorite/cursor-pagination.helper'
 import {
   CouponDefinitionOutputDto,
   CouponRedemptionResultDto,
@@ -1082,7 +1088,9 @@ export class CouponService {
 
   // 分页查询用户当前可用券实例。
   async getUserCouponPage(userId: number, dto: QueryUserCouponDto) {
-    const page = this.drizzle.buildPage(dto)
+    assertCursorOnlyQuery(dto, '我的优惠券列表')
+    const page = this.drizzle.buildPage({ pageSize: dto.pageSize })
+    const cursor = parseCreatedAtIdCursor(dto.cursor, '我的优惠券列表')
     const conditions = [
       eq(this.userCouponInstance.userId, userId),
       eq(this.userCouponInstance.status, CouponInstanceStatusEnum.AVAILABLE),
@@ -1095,41 +1103,49 @@ export class CouponService {
     if (dto.couponType !== undefined) {
       conditions.push(eq(this.userCouponInstance.couponType, dto.couponType))
     }
+    if (cursor) {
+      conditions.push(
+        or(
+          lt(this.userCouponInstance.createdAt, cursor.createdAt),
+          and(
+            eq(this.userCouponInstance.createdAt, cursor.createdAt),
+            lt(this.userCouponInstance.id, cursor.id),
+          ),
+        )!,
+      )
+    }
 
-    const [rows, totalRows] = await Promise.all([
-      this.db
-        .select({
-          id: this.userCouponInstance.id,
-          userId: this.userCouponInstance.userId,
-          couponDefinitionId: this.userCouponInstance.couponDefinitionId,
-          couponType: this.userCouponInstance.couponType,
-          status: this.userCouponInstance.status,
-          remainingUses: this.userCouponInstance.remainingUses,
-          expiresAt: this.userCouponInstance.expiresAt,
-          createdAt: this.userCouponInstance.createdAt,
-          updatedAt: this.userCouponInstance.updatedAt,
-          grantSnapshot: this.userCouponInstance.grantSnapshot,
-        })
-        .from(this.userCouponInstance)
-        .where(and(...conditions))
-        .orderBy(desc(this.userCouponInstance.createdAt))
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db
-        .select({ total: sql<number>`count(*)::int` })
-        .from(this.userCouponInstance)
-        .where(and(...conditions)),
-    ])
+    const rows = await this.db
+      .select({
+        id: this.userCouponInstance.id,
+        userId: this.userCouponInstance.userId,
+        couponDefinitionId: this.userCouponInstance.couponDefinitionId,
+        couponType: this.userCouponInstance.couponType,
+        status: this.userCouponInstance.status,
+        remainingUses: this.userCouponInstance.remainingUses,
+        expiresAt: this.userCouponInstance.expiresAt,
+        createdAt: this.userCouponInstance.createdAt,
+        updatedAt: this.userCouponInstance.updatedAt,
+        grantSnapshot: this.userCouponInstance.grantSnapshot,
+      })
+      .from(this.userCouponInstance)
+      .where(and(...conditions))
+      .orderBy(
+        desc(this.userCouponInstance.createdAt),
+        desc(this.userCouponInstance.id),
+      )
+      .limit(page.limit + 1)
+    const pageResult = toCursorPageResult(rows, page.limit, (row) =>
+      encodeCreatedAtIdCursor(row),
+    )
 
     return {
-      list: rows.map(({ grantSnapshot, ...row }) => ({
+      ...pageResult,
+      list: pageResult.list.map(({ grantSnapshot, ...row }) => ({
         ...row,
         name: this.parseGrantSnapshot(grantSnapshot).name,
         expiresAt: row.expiresAt ?? null,
       })),
-      total: Number(totalRows[0]?.total ?? 0),
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
     }
   }
 

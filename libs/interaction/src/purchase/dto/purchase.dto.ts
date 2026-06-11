@@ -11,7 +11,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { BaseDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -124,7 +124,7 @@ export class PurchaseTargetCommandDto extends IntersectionType(
 ) {}
 
 export class QueryPurchasedWorkDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   PickType(PartialType(BasePurchaseRecordDto), ['status'] as const),
 ) {
   @EnumProperty({
@@ -134,6 +134,13 @@ export class QueryPurchasedWorkDto extends IntersectionType(
     required: false,
   })
   workType?: WorkTypeEnum
+
+  @StringProperty({
+    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
 }
 
 export class QueryPurchasedWorkCommandDto extends IntersectionType(

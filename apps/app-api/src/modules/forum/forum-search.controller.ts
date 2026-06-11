@@ -1,10 +1,10 @@
 import {
-  ForumSearchDto,
   ForumSearchResultDto,
+  PublicForumSearchDto,
 } from '@libs/forum/search/dto/search.dto'
 import { ForumSearchService } from '@libs/forum/search/search.service'
 import {
-  ApiPageDoc,
+  ApiCursorPageDoc,
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
@@ -19,12 +19,12 @@ export class ForumSearchController {
 
   @Get('page')
   @OptionalAuth()
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页搜索论坛主题与回复',
     model: ForumSearchResultDto,
   })
   async getPage(
-    @Query() query: ForumSearchDto,
+    @Query() query: PublicForumSearchDto,
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumSearchService.searchPublic(query, userId)

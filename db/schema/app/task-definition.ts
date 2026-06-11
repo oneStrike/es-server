@@ -73,6 +73,10 @@ export const taskDefinition = snakeCase.table(
     index('task_definition_sort_order_idx').on(table.sortOrder),
     /** 管理端创建时间倒序索引。 */
     index('task_definition_created_at_idx').on(table.createdAt.desc()),
+    /** 创建人关联索引。 */
+    index('task_definition_created_by_id_idx').on(table.createdById),
+    /** 更新人关联索引。 */
+    index('task_definition_updated_by_id_idx').on(table.updatedById),
     /** App 可领取任务查询索引。 */
     index('task_definition_active_manual_lookup_idx')
       .on(table.sceneType, table.sortOrder, table.id)

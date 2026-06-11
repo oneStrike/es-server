@@ -13,6 +13,7 @@ import {
   snakeCase,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -144,6 +145,16 @@ export const userComment = snakeCase.table(
      */
     deletedAt: timestamp({ withTimezone: true, precision: 6 }),
     /**
+     * 保留截止时间；可见评论不会被硬删除清理。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '365 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
+    /**
      * 主题删除级联批次。
      * 仅论坛主题删除链路写入；恢复时只复活匹配批次的评论，避免误恢复独立删除的评论。
      */
@@ -167,6 +178,38 @@ export const userComment = snakeCase.table(
       table.replyToId,
       table.floor,
     ),
+    index('user_comment_target_root_floor_id_idx')
+      .on(table.targetType, table.targetId, table.floor, table.id)
+      .where(
+        sql`${table.replyToId} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false and ${table.deletedAt} is null`,
+      ),
+    index('user_comment_target_visible_created_id_idx')
+      .on(table.targetType, table.targetId, table.createdAt.desc(), table.id.desc())
+      .where(
+        sql`${table.auditStatus} = 1 and ${table.isHidden} = false and ${table.deletedAt} is null`,
+      ),
+    index('user_comment_target_visible_like_id_idx')
+      .on(
+        table.targetType,
+        table.targetId,
+        table.likeCount.desc(),
+        table.createdAt.desc(),
+        table.id.desc(),
+      )
+      .where(
+        sql`${table.auditStatus} = 1 and ${table.isHidden} = false and ${table.deletedAt} is null`,
+      ),
+    index('user_comment_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
+    /**
+     * 根评论楼层唯一约束。
+     * 楼层号由 user_comment_floor_counter 事务性分配，不再通过 max(floor)+1 推导。
+     */
+    uniqueIndex('user_comment_root_floor_live_key')
+      .on(table.targetType, table.targetId, table.floor)
+      .where(sql`${table.replyToId} is null and ${table.deletedAt} is null`),
     /**
      * 可见评论索引
      * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
@@ -301,6 +344,10 @@ export const userComment = snakeCase.table(
     check(
       'user_comment_body_version_valid_chk',
       sql`${table.bodyVersion} in (1)`,
+    ),
+    check(
+      'user_comment_root_floor_required_chk',
+      sql`${table.replyToId} is not null or ${table.floor} is not null`,
     ),
   ],
 )

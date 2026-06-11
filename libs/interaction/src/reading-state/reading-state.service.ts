@@ -2,10 +2,16 @@ import type {
   ReadingHistoryIndexedRow,
   ReadingHistoryItem,
 } from './reading-state.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import { DrizzleService } from '@db/core'
 import { ContentTypeEnum } from '@libs/platform/constant';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, eq, inArray, SQL } from 'drizzle-orm'
+import { and, desc, eq, inArray, lt, or, SQL } from 'drizzle-orm'
+import {
+  assertCursorOnlyQuery,
+  encodeCreatedAtIdCursor,
+  parseCreatedAtIdCursor,
+  toCursorPageResult,
+} from '../favorite/cursor-pagination.helper'
 import {
   ClearReadingHistoryCommandDto,
   DeleteReadingHistoryCommandDto,
@@ -211,8 +217,10 @@ export class ReadingStateService {
    * 获取用户的阅读历史列表
    */
   async getUserReadingHistory(query: QueryReadingHistoryCommandDto) {
-    const { workType, userId, workId, pageIndex, pageSize } = query
+    assertCursorOnlyQuery(query, '阅读历史列表')
+    const { workType, userId, workId, pageSize } = query
     const conditions: SQL[] = [eq(this.userWorkReadingState.userId, userId)]
+    const cursor = parseCreatedAtIdCursor(query.cursor, '阅读历史列表')
 
     if (workId !== undefined) {
       conditions.push(eq(this.userWorkReadingState.workId, workId))
@@ -220,24 +228,35 @@ export class ReadingStateService {
     if (workType !== undefined) {
       conditions.push(eq(this.userWorkReadingState.workType, workType))
     }
+    if (cursor) {
+      conditions.push(
+        or(
+          lt(this.userWorkReadingState.lastReadAt, cursor.createdAt),
+          and(
+            eq(this.userWorkReadingState.lastReadAt, cursor.createdAt),
+            lt(this.userWorkReadingState.workId, cursor.id),
+          ),
+        )!,
+      )
+    }
 
     const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage({ pageIndex, pageSize })
-    const orderQuery = this.drizzle.buildOrderBy(
-      [{ lastReadAt: 'desc' as const }, { workId: 'asc' as const }],
-      { table: this.userWorkReadingState },
+    const pageQuery = this.drizzle.buildPage({ pageSize })
+    const rawRows = await this.db
+      .select()
+      .from(this.userWorkReadingState)
+      .where(where)
+      .orderBy(
+        desc(this.userWorkReadingState.lastReadAt),
+        desc(this.userWorkReadingState.workId),
+      )
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPageResult(rawRows, pageQuery.limit, (item) =>
+      encodeCreatedAtIdCursor({
+        createdAt: item.lastReadAt,
+        id: item.workId,
+      }),
     )
-    const [rawList, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.userWorkReadingState)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.userWorkReadingState, where),
-    ])
-    const page = toPageResult(rawList, total, pageQuery)
 
     const orderedList: Array<ReadingHistoryItem | undefined> = Array.from({
       length: page.list.length,

@@ -10,6 +10,7 @@ import {
 
 import { BaseDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageDto } from '../../growth/dto/cursor-page.dto'
 
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
@@ -101,13 +102,6 @@ class CheckInStreakRuntimeFieldsDto {
 }
 
 export class CheckInLeaderboardItemDto extends CheckInStreakRuntimeFieldsDto {
-  @NumberProperty({
-    description: '排行榜名次。',
-    example: 1,
-    validation: false,
-  })
-  rank!: number
-
   @NestedProperty({
     description: '上榜用户信息。',
     type: CheckInLeaderboardUserDto,
@@ -115,7 +109,18 @@ export class CheckInLeaderboardItemDto extends CheckInStreakRuntimeFieldsDto {
     validation: false,
   })
   user!: CheckInLeaderboardUserDto | null
+
+  @NumberProperty({
+    description: '累计签到次数。',
+    example: 12,
+    validation: false,
+  })
+  signCount!: number
 }
+
+export class QueryAppCheckInRecordPageDto extends CursorPageDto {}
+
+export class QueryAppCheckInLeaderboardPageDto extends CursorPageDto {}
 
 @ApiExtraModels(CheckInRewardSettlementSummaryDto)
 export class CheckInRecordItemDto extends BaseCheckInRecordDto {

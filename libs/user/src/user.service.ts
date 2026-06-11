@@ -8,7 +8,7 @@ import type {
   UserMentionCandidatePageResult,
   UserStatusSource,
 } from './user.type'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -17,8 +17,8 @@ import {
   AppUserAccessMessages,
   UserStatusEnum,
 } from '@libs/user/app-user.constant'
-import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
 import { AppUserResponseDto } from './dto/base-app-user.dto'
 import {
@@ -201,63 +201,118 @@ export class UserService {
   async queryMentionCandidates(
     query: QueryUserMentionPageDto,
   ): Promise<UserMentionCandidatePageResult> {
+    this.assertMentionCursorPageQuery(query)
     const keyword = query.q?.trim()
-    const page = this.drizzle.buildPage(
-      {
-        pageIndex: query.pageIndex,
-        pageSize: query.pageSize,
-      },
-      {
-        defaultPageSize: 10,
-        maxPageSize: 20,
-      },
-    )
+    const pageSize = this.normalizeCursorPageSize(query.pageSize, 10, 20)
 
     if (!keyword) {
       return {
         list: [],
-        total: 0,
-        pageIndex: page.pageIndex,
-        pageSize: page.pageSize,
-        totalPages: 0,
+        pageSize,
+        hasMore: false,
+        nextCursor: null,
       }
     }
 
+    const cursor = this.parseMentionCursor(query.cursor)
     const condition = and(
       eq(this.appUser.isEnabled, true),
       isNull(this.appUser.deletedAt),
       buildILikeCondition(this.appUser.nickname, keyword),
+      cursor
+        ? sql`(${this.appUser.nickname} > ${cursor.nickname} OR (${this.appUser.nickname} = ${cursor.nickname} AND ${this.appUser.account} > ${cursor.account}) OR (${this.appUser.nickname} = ${cursor.nickname} AND ${this.appUser.account} = ${cursor.account} AND ${this.appUser.id} > ${cursor.id}))`
+        : undefined,
     )
 
-    const orderBy = query.orderBy?.trim()
-      ? query.orderBy
-      : { id: 'desc' as const }
-    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
-      table: this.appUser,
-    })
-    const [list, total] = await Promise.all([
-      this.db
-        .select({
-          id: this.appUser.id,
-          nickname: this.appUser.nickname,
-          avatarUrl: this.appUser.avatarUrl,
-        })
-        .from(this.appUser)
-        .where(condition)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db.$count(this.appUser, condition),
-    ])
-    const pageResult = toPageResult(list, total, page)
+    const rows = await this.db
+      .select({
+        id: this.appUser.id,
+        account: this.appUser.account,
+        nickname: this.appUser.nickname,
+        avatarUrl: this.appUser.avatarUrl,
+      })
+      .from(this.appUser)
+      .where(condition)
+      .orderBy(
+        asc(this.appUser.nickname),
+        asc(this.appUser.account),
+        asc(this.appUser.id),
+      )
+      .limit(pageSize + 1)
+    const hasMore = rows.length > pageSize
+    const pageRows = rows.slice(0, pageSize)
 
     return {
-      ...pageResult,
-      totalPages:
-        pageResult.total === 0
-          ? 0
-          : Math.ceil(pageResult.total / pageResult.pageSize),
+      list: pageRows.map(({ account: _account, ...item }) => item),
+      pageSize,
+      hasMore,
+      nextCursor: hasMore
+        ? this.encodeMentionCursor(pageRows[pageRows.length - 1])
+        : null,
     }
+  }
+
+  private encodeMentionCursor(item: {
+    nickname: string
+    account: string
+    id: number
+  }) {
+    return Buffer.from(
+      JSON.stringify({
+        nickname: item.nickname,
+        account: item.account,
+        id: item.id,
+      }),
+    ).toString('base64url')
+  }
+
+  private parseMentionCursor(cursor?: string | null) {
+    if (!cursor?.trim()) {
+      return undefined
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      ) as Partial<{ nickname: unknown; account: unknown; id: unknown }>
+      if (
+        typeof payload.nickname !== 'string' ||
+        typeof payload.account !== 'string' ||
+        !Number.isInteger(payload.id) ||
+        Number(payload.id) <= 0
+      ) {
+        throw new TypeError('invalid cursor payload')
+      }
+      return {
+        nickname: payload.nickname,
+        account: payload.account,
+        id: Number(payload.id),
+      }
+    } catch {
+      throw new BadRequestException('cursor 格式无效')
+    }
+  }
+
+  private assertMentionCursorPageQuery(dto: object) {
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => Object.prototype.hasOwnProperty.call(dto, field))
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `提及候选用户仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private normalizeCursorPageSize(
+    pageSize: number | undefined,
+    defaultPageSize: number,
+    maxPageSize: number,
+  ) {
+    const value = Number.isFinite(Number(pageSize))
+      ? Math.floor(Number(pageSize))
+      : defaultPageSize
+    return Math.min(Math.max(1, value), maxPageSize)
   }
 
   // 判断状态码是否属于禁言态。

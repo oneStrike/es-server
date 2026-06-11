@@ -12,7 +12,7 @@ import {
 } from '@libs/platform/decorators';
 
 import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
 
 import {
@@ -86,9 +86,16 @@ export class LikeRecordDto extends IntersectionType(
 ) {}
 
 export class LikePageQueryDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   PickType(BaseLikeDto, ['targetType'] as const),
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
 
 /**
  * 点赞状态 DTO。

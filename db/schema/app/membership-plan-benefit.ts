@@ -51,6 +51,7 @@ export const membershipPlanBenefit = snakeCase.table(
       table.isEnabled,
       table.sortOrder,
     ),
+    index('membership_plan_benefit_benefit_id_idx').on(table.benefitId),
     check(
       'membership_plan_benefit_grant_policy_valid_chk',
       sql`${table.grantPolicy} in (1, 2)`,

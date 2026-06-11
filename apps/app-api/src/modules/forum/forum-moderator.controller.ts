@@ -19,7 +19,11 @@ import {
   UpdateCommentHiddenDto,
 } from '@libs/interaction/comment/dto/comment.dto'
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import {
+  ApiCursorPageDoc,
+  ApiDoc,
+  CurrentUser,
+} from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -44,7 +48,7 @@ export class ForumModeratorController {
   }
 
   @Get('action-log/my/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询我的版主操作日志',
     model: BaseForumModeratorActionLogDto,
   })

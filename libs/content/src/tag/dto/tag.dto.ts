@@ -6,7 +6,7 @@ import {
 
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
 import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -98,6 +98,18 @@ export class QueryTagDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseTagDto, ['name', 'isEnabled'] as const)),
 ) {}
+
+export class QueryAppTagCursorDto extends IntersectionType(
+  CursorPageSizeDto,
+  PartialType(PickType(BaseTagDto, ['name'] as const)),
+) {
+  @StringProperty({
+    description: '下一页游标；按 sortOrder/id 升序翻页',
+    example: 'eyJzb3J0T3JkZXIiOjEsImlkIjoxMDB9',
+    required: false,
+  })
+  cursor?: string
+}
 
 export class UpdateTagDto extends IntersectionType(
   IdDto,

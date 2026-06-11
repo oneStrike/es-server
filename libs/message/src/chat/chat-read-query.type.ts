@@ -5,7 +5,14 @@ export interface ChatConversationListQueryInput extends Record<
 > {
   userId: number
   limit: number
-  offset: number
+  cursor?: ChatConversationListCursor
+}
+
+/** 聊天会话列表 keyset 游标。 */
+export interface ChatConversationListCursor {
+  isPinned: boolean
+  lastMessageAt: Date | null
+  id: number
 }
 
 /** 聊天消息第一页或无游标历史查询参数。 */

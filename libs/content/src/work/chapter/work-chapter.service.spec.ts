@@ -120,6 +120,10 @@ function createPaginationDb(list: unknown[] = []) {
     limit: jest.fn(() => pageQuery),
     offset: jest.fn(async () => list),
     orderBy: jest.fn(() => pageQuery),
+    then: (
+      resolve: (value: unknown[]) => unknown,
+      reject?: (reason?: unknown) => unknown,
+    ) => Promise.resolve(list).then(resolve, reject),
     where: jest.fn(() => pageQuery),
   }
   const selectedFields: Array<Record<string, unknown>> = []
@@ -219,7 +223,7 @@ describe('WorkChapterService chapter page projection', () => {
     )
 
     const page = await service.getAppChapterPage(
-      { pageIndex: 1, pageSize: 100, workId: 10 },
+      { pageSize: 100, workId: 10 },
       { userId: 99 },
     )
     const selectedKeys = Object.keys(drizzle.selectedFields[0])

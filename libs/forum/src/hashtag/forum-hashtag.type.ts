@@ -79,14 +79,14 @@ export interface ForumHashtagAdminPageQuery {
 }
 
 export interface ForumHashtagHotPageQuery {
-  pageIndex: number
   pageSize: number
+  cursor?: string
   userId?: number
 }
 
 export interface ForumHashtagLinkedContentPageQuery {
-  pageIndex: number
   pageSize: number
+  cursor?: string
   userId?: number
 }
 

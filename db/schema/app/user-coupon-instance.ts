@@ -62,6 +62,9 @@ export const userCouponInstance = snakeCase.table(
       table.sourceType,
       table.sourceId,
     ),
+    index('user_coupon_instance_coupon_definition_id_idx').on(
+      table.couponDefinitionId,
+    ),
     uniqueIndex('user_coupon_instance_user_grant_key_unique_idx')
       .on(table.userId, table.grantKey)
       .where(sql`${table.grantKey} is not null`),

@@ -1,8 +1,12 @@
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
+import {
+  assertCursorOnlyQuery,
+  encodeCreatedAtIdCursor,
+  parseCreatedAtIdCursor,
+  toCursorPageResult,
+} from '../favorite/cursor-pagination.helper'
 import {
   DOWNLOAD_WORK_CHAPTER_TARGET_TYPES,
   DownloadTargetTypeEnum,
@@ -65,29 +69,6 @@ export class DownloadService {
     }
     const rows = (result as { rows?: T[] }).rows
     return Array.isArray(rows) ? (rows) : []
-  }
-
-  private buildDownloadCreatedAtFilter(
-    startDate?: string,
-    endDate?: string,
-  ): SQL {
-    const filters: SQL[] = []
-    const columnRef = sql`udr.created_at`
-    const dateRange = buildDateOnlyRangeInAppTimeZone(startDate, endDate)
-
-    if (dateRange?.gte) {
-      filters.push(sql`${columnRef} >= ${dateRange.gte}`)
-    }
-
-    if (dateRange?.lt) {
-      filters.push(sql`${columnRef} < ${dateRange.lt}`)
-    }
-
-    if (filters.length === 0) {
-      return sql.empty()
-    }
-
-    return sql` AND ${sql.join(filters, sql` AND `)}`
   }
 
   /**
@@ -185,17 +166,17 @@ export class DownloadService {
    * 获取已下载作品列表
    */
   async getDownloadedWorks(query: QueryDownloadedWorkCommandDto) {
-    const { userId, workType, pageIndex, pageSize, startDate, endDate } = query
-    const page = this.drizzle.buildPage({ pageIndex, pageSize })
-    const createdAtFilter = this.buildDownloadCreatedAtFilter(
-      startDate,
-      endDate,
-    )
+    assertCursorOnlyQuery(query, '已下载作品列表')
+    const { userId, workType, pageSize } = query
+    const page = this.drizzle.buildPage({ pageSize })
+    const cursor = parseCreatedAtIdCursor(query.cursor, '已下载作品列表')
     const workTypeFilter = workType
       ? sql` AND w.type = ${workType}`
       : sql.empty()
-    const [rowsResult, totalRowsResult] = await Promise.all([
-      this.db.execute(sql`
+    const cursorHaving = cursor
+      ? sql` HAVING MAX(udr.created_at) < ${cursor.createdAt} OR (MAX(udr.created_at) = ${cursor.createdAt} AND wc.work_id < ${cursor.id})`
+      : sql.empty()
+    const rowsResult = await this.db.execute(sql`
         SELECT
           wc.work_id AS "workId",
           w.type AS "workType",
@@ -209,22 +190,11 @@ export class DownloadService {
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL})
           ${workTypeFilter}
-          ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
-        ORDER BY MAX(udr.created_at) DESC
-        LIMIT ${page.limit} OFFSET ${page.offset}
-      `),
-      this.db.execute(sql`
-        SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
-        FROM user_download_record udr
-        INNER JOIN work_chapter wc ON wc.id = udr.target_id
-        INNER JOIN work w ON w.id = wc.work_id
-        WHERE udr.user_id = ${userId}
-          AND udr.target_type IN (${DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL})
-          ${workTypeFilter}
-          ${createdAtFilter}
-      `),
-    ])
+        ${cursorHaving}
+        ORDER BY MAX(udr.created_at) DESC, wc.work_id DESC
+        LIMIT ${page.limit + 1}
+      `)
     const rows = this.extractRows<{
       workId: number
       workType: number
@@ -233,11 +203,16 @@ export class DownloadService {
       downloadedChapterCount: bigint
       lastDownloadedAt: Date
     }>(rowsResult)
-    const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
-    const total = Number(totalRows[0]?.total ?? 0n)
+    const pageResult = toCursorPageResult(rows, page.limit, (row) =>
+      encodeCreatedAtIdCursor({
+        createdAt: row.lastDownloadedAt,
+        id: row.workId,
+      }),
+    )
 
     return {
-      list: rows.map((row) => ({
+      ...pageResult,
+      list: pageResult.list.map((row) => ({
         work: {
           id: row.workId,
           type: row.workType,
@@ -247,9 +222,6 @@ export class DownloadService {
         downloadedChapterCount: Number(row.downloadedChapterCount),
         lastDownloadedAt: row.lastDownloadedAt,
       })),
-      total,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
     }
   }
 
@@ -257,25 +229,17 @@ export class DownloadService {
    * 获取已下载章节列表
    */
   async getDownloadedWorkChapters(query: QueryDownloadedWorkChapterCommandDto) {
-    const {
-      userId,
-      workId,
-      workType,
-      pageIndex,
-      pageSize,
-      startDate,
-      endDate,
-    } = query
-    const page = this.drizzle.buildPage({ pageIndex, pageSize })
-    const createdAtFilter = this.buildDownloadCreatedAtFilter(
-      startDate,
-      endDate,
-    )
+    const { userId, workId, workType, pageSize } = query
+    assertCursorOnlyQuery(query, '已下载章节列表')
+    const page = this.drizzle.buildPage({ pageSize })
+    const cursor = parseCreatedAtIdCursor(query.cursor, '已下载章节列表')
     const workTypeFilter = workType
       ? sql` AND wc.work_type = ${workType}`
       : sql.empty()
-    const [rowsResult, totalRowsResult] = await Promise.all([
-      this.db.execute(sql`
+    const cursorFilter = cursor
+      ? sql` AND (udr.created_at < ${cursor.createdAt} OR (udr.created_at = ${cursor.createdAt} AND udr.id < ${cursor.id}))`
+      : sql.empty()
+    const rowsResult = await this.db.execute(sql`
         SELECT
           udr.id AS "id",
           udr.target_type AS "targetType",
@@ -298,22 +262,10 @@ export class DownloadService {
           AND udr.target_type IN (${DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.work_id = ${workId}
           ${workTypeFilter}
-          ${createdAtFilter}
-        ORDER BY udr.created_at DESC
-        LIMIT ${page.limit} OFFSET ${page.offset}
-      `),
-      this.db.execute(sql`
-        SELECT COUNT(*)::bigint AS "total"
-        FROM user_download_record udr
-        INNER JOIN work_chapter wc ON wc.id = udr.target_id
-        INNER JOIN work w ON w.id = wc.work_id
-        WHERE udr.user_id = ${userId}
-          AND udr.target_type IN (${DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL})
-          AND wc.work_id = ${workId}
-          ${workTypeFilter}
-          ${createdAtFilter}
-      `),
-    ])
+          ${cursorFilter}
+        ORDER BY udr.created_at DESC, udr.id DESC
+        LIMIT ${page.limit + 1}
+      `)
     const rows = this.extractRows<{
       id: number
       targetType: number
@@ -330,11 +282,13 @@ export class DownloadService {
       chapterIsPublished: boolean
       chapterPublishAt: Date | null
     }>(rowsResult)
-    const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
-    const total = Number(totalRows[0]?.total ?? 0n)
+    const pageResult = toCursorPageResult(rows, page.limit, (row) =>
+      encodeCreatedAtIdCursor(row),
+    )
 
     return {
-      list: rows.map((row) => ({
+      ...pageResult,
+      list: pageResult.list.map((row) => ({
         id: row.id,
         targetType: row.targetType,
         targetId: row.targetId,
@@ -352,9 +306,6 @@ export class DownloadService {
           publishAt: row.chapterPublishAt,
         },
       })),
-      total,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
     }
   }
 }

@@ -322,8 +322,8 @@ describe('ForumTopicQueryService pagination order', () => {
   it('uses stable fallback order for public, hot and admin pages', async () => {
     const { drizzle, service } = createQueryService()
 
-    await service.getPublicTopics({ pageIndex: 1, pageSize: 20 })
-    await service.getHotPublicTopics({ pageIndex: 1, pageSize: 20 })
+    await service.getPublicTopics({ pageSize: 20 })
+    await service.getHotPublicTopics({ pageSize: 20 })
     await service.getTopics({ pageIndex: 1, pageSize: 20 })
 
     expect(drizzle.buildOrderBy).toHaveBeenNthCalledWith(
@@ -334,6 +334,7 @@ describe('ForumTopicQueryService pagination order', () => {
           { isPinned: 'desc' },
           { lastCommentAt: 'desc' },
           { createdAt: 'desc' },
+          { id: 'desc' },
         ],
       }),
     )
@@ -346,6 +347,7 @@ describe('ForumTopicQueryService pagination order', () => {
           { likeCount: 'desc' },
           { viewCount: 'desc' },
           { createdAt: 'desc' },
+          { id: 'desc' },
         ],
       }),
     )
@@ -392,7 +394,6 @@ describe('ForumTopicQueryService following feed', () => {
     const { followService, selectBuilders, service } = createQueryService()
 
     await service.getFollowingPublicTopics({
-      pageIndex: 1,
       pageSize: 20,
       userId: 9,
     })

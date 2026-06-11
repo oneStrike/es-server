@@ -2,12 +2,15 @@
  * Auto-converted from legacy schema.
  */
 
+import { sql } from 'drizzle-orm'
 import {
   boolean,
+  check,
   index,
   integer,
   snakeCase,
   timestamp,
+  unique,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -21,6 +24,11 @@ export const appConfig = snakeCase.table(
      * 主键ID
      */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    /**
+     * 固定配置键。
+     * - 全局配置只允许 `global` 一行，避免靠“最新一条”约定维持单例。
+     */
+    configKey: varchar({ length: 32 }).default('global').notNull(),
     /**
      * 应用名称
      */
@@ -83,6 +91,14 @@ export const appConfig = snakeCase.table(
      * 按最后修改人查询配置
      */
     index('app_config_updated_by_id_idx').on(table.updatedById),
+    /**
+     * 单例配置唯一约束。
+     */
+    unique('app_config_config_key_key').on(table.configKey),
+    /**
+     * 单例配置键闭合约束。
+     */
+    check('app_config_config_key_valid_chk', sql`${table.configKey} = 'global'`),
   ],
 )
 

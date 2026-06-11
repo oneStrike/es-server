@@ -6,7 +6,11 @@ import {
   QueryDownloadedWorkChapterDto,
   QueryDownloadedWorkDto,
 } from '@libs/interaction/download/dto/download.dto'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import {
+  ApiCursorPageDoc,
+  ApiDoc,
+  CurrentUser,
+} from '@libs/platform/decorators'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -17,7 +21,7 @@ export class DownloadController {
   constructor(private readonly downloadService: DownloadService) {}
 
   @Get('work/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询已下载作品',
     model: DownloadedWorkItemDto,
   })
@@ -32,7 +36,7 @@ export class DownloadController {
   }
 
   @Get('chapter/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询指定作品已下载章节',
     model: DownloadedWorkChapterItemDto,
   })

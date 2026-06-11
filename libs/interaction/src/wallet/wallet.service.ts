@@ -11,7 +11,13 @@ import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.se
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, desc, eq, ilike } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, lt, or } from 'drizzle-orm'
+import {
+  assertCursorOnlyQuery,
+  encodeCreatedAtIdCursor,
+  parseCreatedAtIdCursor,
+  toCursorPageResult,
+} from '../favorite/cursor-pagination.helper'
 import { PaymentOrderService } from '../payment/payment-order.service'
 import { PaymentOrderTypeEnum } from '../payment/payment.constant'
 import {
@@ -19,6 +25,7 @@ import {
   CreateCurrencyPackageDto,
   CreateCurrencyRechargeOrderDto,
   QueryAdminWalletLedgerDto,
+  QueryWalletLedgerDto,
   QueryCurrencyPackageDto,
   UpdateCurrencyPackageDto,
 } from '../wallet/dto/wallet.dto'
@@ -216,8 +223,46 @@ export class WalletService {
     }
   }
 
-  async getWalletLedgerPage(userId: number, dto: PageDto) {
-    return this.getWalletLedgerPageByUser(userId, dto)
+  async getWalletLedgerPage(userId: number, dto: QueryWalletLedgerDto) {
+    assertCursorOnlyQuery(dto, '钱包流水列表')
+    const table = this.drizzle.schema.growthLedgerRecord
+    const cursor = parseCreatedAtIdCursor(dto.cursor, '钱包流水列表')
+    const conditions: SQL[] = [
+      eq(table.userId, userId),
+      eq(table.assetType, GrowthAssetTypeEnum.CURRENCY),
+      eq(table.assetKey, READING_COIN_ASSET_KEY),
+    ]
+    if (cursor) {
+      conditions.push(
+        or(
+          lt(table.createdAt, cursor.createdAt),
+          and(eq(table.createdAt, cursor.createdAt), lt(table.id, cursor.id)),
+        )!,
+      )
+    }
+    const page = this.drizzle.buildPage({ pageSize: dto.pageSize })
+    const rows = await this.db
+      .select({
+        id: table.id,
+        delta: table.delta,
+        beforeValue: table.beforeValue,
+        afterValue: table.afterValue,
+        source: table.source,
+        remark: table.remark,
+        createdAt: table.createdAt,
+      })
+      .from(table)
+      .where(and(...conditions))
+      .orderBy(desc(table.createdAt), desc(table.id))
+      .limit(page.limit + 1)
+    const pageResult = toCursorPageResult(rows, page.limit, (item) =>
+      encodeCreatedAtIdCursor(item),
+    )
+
+    return {
+      ...pageResult,
+      list: this.toWalletLedgerRecords(pageResult.list),
+    }
   }
 
   async getAdminWalletLedgerPage(dto: QueryAdminWalletLedgerDto) {
@@ -294,22 +339,36 @@ export class WalletService {
     ])
 
     return toPageResult(
-      list.map((item) => ({
-        id: item.id,
-        action:
-          item.delta >= 0
-            ? GrowthLedgerActionEnum.GRANT
-            : GrowthLedgerActionEnum.CONSUME,
-        amount: Math.abs(item.delta),
-        beforeValue: item.beforeValue,
-        afterValue: item.afterValue,
-        source: item.source,
-        remark: item.remark ?? null,
-        createdAt: item.createdAt,
-      })),
+      this.toWalletLedgerRecords(list),
       total,
       page,
     )
+  }
+
+  private toWalletLedgerRecords(
+    list: Array<{
+      id: number
+      delta: number
+      beforeValue: number
+      afterValue: number
+      source: string
+      remark: string | null
+      createdAt: Date
+    }>,
+  ) {
+    return list.map((item) => ({
+      id: item.id,
+      action:
+        item.delta >= 0
+          ? GrowthLedgerActionEnum.GRANT
+          : GrowthLedgerActionEnum.CONSUME,
+      amount: Math.abs(item.delta),
+      beforeValue: item.beforeValue,
+      afterValue: item.afterValue,
+      source: item.source,
+      remark: item.remark ?? null,
+      createdAt: item.createdAt,
+    }))
   }
 
   private getRechargeTargetSnapshot(order: PaymentOrderSelect) {

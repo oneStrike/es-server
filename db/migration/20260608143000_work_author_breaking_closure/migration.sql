@@ -50,17 +50,3 @@ ALTER TABLE work_author
 CREATE UNIQUE INDEX IF NOT EXISTS work_author_active_name_key
   ON work_author (name)
   WHERE deleted_at IS NULL;
-
-ALTER TABLE work_author_relation
-  ADD CONSTRAINT work_author_relation_work_id_fkey
-  FOREIGN KEY (work_id)
-  REFERENCES work(id)
-  ON UPDATE RESTRICT
-  ON DELETE RESTRICT;
-
-ALTER TABLE work_author_relation
-  ADD CONSTRAINT work_author_relation_author_id_fkey
-  FOREIGN KEY (author_id)
-  REFERENCES work_author(id)
-  ON UPDATE RESTRICT
-  ON DELETE RESTRICT;

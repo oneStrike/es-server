@@ -1,8 +1,8 @@
 import type { UploadConfigInterface } from '@libs/platform/config'
-import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { JsonObject } from '@libs/platform/utils'
+import type { ChatConversationListCursor } from './chat-read-query.type'
 import type {
   ChatMediaMessagePayload,
   ChatMessageOutputPayload,
@@ -63,6 +63,7 @@ import {
   MarkConversationReadDto,
   OpenDirectConversationDto,
   PinChatConversationDto,
+  QueryChatConversationListDto,
   QueryChatConversationMessagesDto,
   SendChatMessageDto,
 } from './dto/chat.dto'
@@ -267,43 +268,30 @@ export class MessageChatService {
    * @param dto - 分页查询参数
    * @returns 分页的会话列表
    */
-  async getConversationList(userId: number, dto: PageDto) {
-    const page = this.drizzle.buildPage(dto, {
-      maxPageSize: 100,
-    })
-    const [totalRows, conversationRows] = await Promise.all([
-      this.db
-        .select({ total: sql<number>`count(*)` })
-        .from(chatConversationMember)
-        .innerJoin(
-          chatConversation,
-          eq(chatConversation.id, chatConversationMember.conversationId),
-        )
-        .where(
-          and(
-            eq(chatConversationMember.userId, userId),
-            isNull(chatConversationMember.leftAt),
-            isNull(chatConversationMember.hiddenAt),
-            eq(chatConversation.hasMessages, true),
-          ),
-        ),
-      this.chatReadQueryService.getConversationList({
+  async getConversationList(userId: number, dto: QueryChatConversationListDto) {
+    this.assertCursorPageQuery(dto, '会话列表')
+    const pageSize = this.normalizeCursorPageSize(dto.pageSize, 20, 100)
+    const cursor = this.parseConversationListCursor(dto.cursor)
+    const conversationRows = await this.chatReadQueryService.getConversationList(
+      {
         userId,
-        limit: page.limit,
-        offset: page.offset,
-      }),
-    ])
+        limit: pageSize + 1,
+        cursor,
+      },
+    )
+    const hasMore = conversationRows.length > pageSize
+    const pageRows = conversationRows.slice(0, pageSize)
 
-    if (conversationRows.length === 0) {
+    if (pageRows.length === 0) {
       return {
         list: [],
-        total: Number(totalRows[0]?.total ?? 0),
-        pageIndex: page.pageIndex,
-        pageSize: page.pageSize,
+        pageSize,
+        hasMore: false,
+        nextCursor: null,
       }
     }
 
-    const conversationIds = conversationRows.map((item) => item.id)
+    const conversationIds = pageRows.map((item) => item.id)
     const [members, lastMessageMap] = await Promise.all([
       this.db
         .select({
@@ -326,7 +314,7 @@ export class MessageChatService {
           ),
         ),
       this.getMessageMapByIds(
-        conversationRows
+        pageRows
           .map((item) => item.lastMessageId)
           .filter((item): item is bigint => typeof item === 'bigint'),
       ),
@@ -350,27 +338,31 @@ export class MessageChatService {
       memberMap.set(member.conversationId, list)
     }
 
-    return {
-      list: conversationRows.map((item) =>
-        this.toConversationOutput(
-          {
-            id: item.id,
-            bizKey: item.bizKey,
-            isPinned: item.isPinned,
-            lastMessageId: item.lastMessageId,
-            lastMessageAt: item.lastMessageAt,
-            lastSenderId: item.lastSenderId,
-            members: memberMap.get(item.id) ?? [],
-          },
-          userId,
-          item.lastMessageId
-            ? lastMessageMap.get(item.lastMessageId.toString())?.content
-            : undefined,
-        ),
+    const list = pageRows.map((item) =>
+      this.toConversationOutput(
+        {
+          id: item.id,
+          bizKey: item.bizKey,
+          isPinned: item.isPinned,
+          lastMessageId: item.lastMessageId,
+          lastMessageAt: item.lastMessageAt,
+          lastSenderId: item.lastSenderId,
+          members: memberMap.get(item.id) ?? [],
+        },
+        userId,
+        item.lastMessageId
+          ? lastMessageMap.get(item.lastMessageId.toString())?.content
+          : undefined,
       ),
-      total: Number(totalRows[0]?.total ?? 0),
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
+    )
+
+    return {
+      list,
+      pageSize,
+      hasMore,
+      nextCursor: hasMore
+        ? this.encodeConversationListCursor(pageRows[pageRows.length - 1])
+        : null,
     }
   }
 
@@ -1574,6 +1566,87 @@ export class MessageChatService {
     const minUserId = Math.min(userId, targetUserId)
     const maxUserId = Math.max(userId, targetUserId)
     return `direct:${minUserId}:${maxUserId}`
+  }
+
+  private encodeConversationListCursor(item: {
+    isPinned: boolean
+    lastMessageAt: Date | null
+    id: number
+  }) {
+    return Buffer.from(
+      JSON.stringify({
+        isPinned: item.isPinned,
+        lastMessageAt: item.lastMessageAt?.toISOString() ?? null,
+        id: item.id,
+      }),
+    ).toString('base64url')
+  }
+
+  private parseConversationListCursor(cursor?: string | null) {
+    if (!cursor?.trim()) {
+      return undefined
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      ) as Partial<{
+        isPinned: unknown
+        lastMessageAt: unknown
+        id: unknown
+      }>
+      if (
+        typeof payload.isPinned !== 'boolean' ||
+        !Number.isInteger(payload.id) ||
+        Number(payload.id) <= 0
+      ) {
+        throw new TypeError('invalid cursor payload')
+      }
+      if (payload.lastMessageAt !== null) {
+        if (typeof payload.lastMessageAt !== 'string') {
+          throw new TypeError('invalid cursor payload')
+        }
+        const lastMessageAt = new Date(payload.lastMessageAt)
+        if (Number.isNaN(lastMessageAt.getTime())) {
+          throw new TypeError('invalid cursor payload')
+        }
+        return {
+          isPinned: payload.isPinned,
+          lastMessageAt,
+          id: Number(payload.id),
+        } satisfies ChatConversationListCursor
+      }
+
+      return {
+        isPinned: payload.isPinned,
+        lastMessageAt: null,
+        id: Number(payload.id),
+      } satisfies ChatConversationListCursor
+    } catch {
+      throw new BadRequestException('cursor 格式无效')
+    }
+  }
+
+  private assertCursorPageQuery(dto: object, label: string) {
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => Object.prototype.hasOwnProperty.call(dto, field))
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `${label}仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private normalizeCursorPageSize(
+    pageSize: number | undefined,
+    defaultPageSize: number,
+    maxPageSize: number,
+  ) {
+    const value = Number.isFinite(Number(pageSize))
+      ? Math.floor(Number(pageSize))
+      : defaultPageSize
+    return Math.min(Math.max(1, value), maxPageSize)
   }
 
   /**

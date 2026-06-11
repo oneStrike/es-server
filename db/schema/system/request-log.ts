@@ -111,12 +111,46 @@ export const requestLog = snakeCase.table(
     updatedAt: timestamp({ withTimezone: true, precision: 6 })
       .$onUpdate(() => new Date())
       .notNull(),
+    /**
+     * 保留截止时间；清理任务仅处理早于该时间且满足业务边界的日志。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '180 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     /**
      * 创建时间索引
      */
     index('sys_request_log_created_at_idx').on(table.createdAt),
+    index('sys_request_log_created_at_id_idx').on(
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('sys_request_log_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
+    index('sys_request_log_api_action_created_id_idx').on(
+      table.apiType,
+      table.actionType,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('sys_request_log_user_created_id_idx').on(
+      table.userId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('sys_request_log_success_created_id_idx').on(
+      table.isSuccess,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
     /**
      * 用户ID索引
      */

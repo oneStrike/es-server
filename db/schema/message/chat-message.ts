@@ -75,6 +75,16 @@ export const chatMessage = snakeCase.table(
      * 撤回时间
      */
     revokedAt: timestamp({ withTimezone: true, precision: 6 }),
+    /**
+     * 保留截止时间；未读、法务保留或仍需展示的消息必须由清理任务排除。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '365 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     /**
@@ -99,12 +109,25 @@ export const chatMessage = snakeCase.table(
       table.conversationId,
       table.createdAt.desc(),
     ),
+    index('chat_message_conversation_created_at_id_idx').on(
+      table.conversationId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
     /**
      * 会话可读消息游标索引：匹配 messageSeq initial/before/after 分页。
      */
     index('chat_message_conversation_live_seq_idx')
       .on(table.conversationId, table.messageSeq)
       .where(sql`${table.status} in (1, 2)`),
+    index('chat_message_conversation_seq_desc_idx').on(
+      table.conversationId,
+      table.messageSeq.desc(),
+    ),
+    index('chat_message_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
     /**
      * 发送者审计索引
      */

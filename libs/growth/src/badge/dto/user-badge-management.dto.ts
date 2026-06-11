@@ -8,6 +8,7 @@ import {
 
 import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageDto } from '../../growth/dto/cursor-page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 
 import {
@@ -75,7 +76,7 @@ class QueryUserBadgePublicFiltersDto extends PartialType(
 ) {}
 
 export class QueryUserBadgePublicDto extends IntersectionType(
-  PickType(PageDto, ['pageSize', 'pageIndex', 'orderBy'] as const),
+  CursorPageDto,
   QueryUserBadgePublicFiltersDto,
 ) {}
 

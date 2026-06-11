@@ -1,10 +1,14 @@
 import {
   CreateForumModeratorApplicationDto,
   ForumModeratorApplicationDto,
-  QueryForumModeratorApplicationDto,
+  QueryMyForumModeratorApplicationDto,
 } from '@libs/forum/moderator/dto/moderator-application.dto'
 import { ForumModeratorApplicationService } from '@libs/forum/moderator/moderator-application.service'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import {
+  ApiCursorPageDoc,
+  ApiDoc,
+  CurrentUser,
+} from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto/base.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -18,12 +22,12 @@ export class ForumModeratorApplicationController {
   ) {}
 
   @Get('my/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询我的版主申请',
     model: ForumModeratorApplicationDto,
   })
   async getPage(
-    @Query() query: QueryForumModeratorApplicationDto,
+    @Query() query: QueryMyForumModeratorApplicationDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.forumModeratorApplicationService.getMyApplicationPage(

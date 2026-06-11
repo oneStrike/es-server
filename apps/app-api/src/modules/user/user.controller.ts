@@ -1,4 +1,8 @@
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import {
+  ApiCursorPageDoc,
+  ApiDoc,
+  CurrentUser,
+} from '@libs/platform/decorators'
 import { UserPointStatsFieldsDto } from '@libs/user/dto/app-user-growth-shared.dto'
 import { AppUserResponseDto } from '@libs/user/dto/base-app-user.dto'
 import {
@@ -12,7 +16,7 @@ import {
   UserCenterDto,
   UserExperienceRecordDto,
   UserExperienceStatsDto,
-  UserMentionCandidateDto,
+  UserMentionCandidateCursorResponseDto,
   UserPointRecordDto,
   UserStatusSummaryDto,
 } from '@libs/user/dto/user-self.dto'
@@ -107,7 +111,7 @@ export class UserController {
    * 查询用户积分记录
    */
   @Get('points/record/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '查询用户积分记录',
     model: UserPointRecordDto,
   })
@@ -134,7 +138,7 @@ export class UserController {
    * 查询用户经验记录
    */
   @Get('experience/record/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '查询用户经验记录',
     model: UserExperienceRecordDto,
   })
@@ -149,7 +153,7 @@ export class UserController {
    * 查询用户徽章
    */
   @Get('badges/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '查询用户徽章',
     model: UserBadgeItemDto,
   })
@@ -164,9 +168,9 @@ export class UserController {
    * 查询 @ 提及候选用户。
    */
   @Get('mention/page')
-  @ApiPageDoc({
+  @ApiDoc({
     summary: '查询 @ 提及候选用户',
-    model: UserMentionCandidateDto,
+    model: UserMentionCandidateCursorResponseDto,
   })
   async getMentionCandidates(@Query() query: QueryUserMentionPageDto) {
     return this.userService.getMentionCandidates(query)

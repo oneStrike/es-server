@@ -137,30 +137,6 @@ SET
   updated_at = now()
 WHERE keywords IS NOT NULL;
 
-ALTER TABLE emoji_asset
-  ADD CONSTRAINT emoji_asset_pack_id_fkey
-  FOREIGN KEY (pack_id)
-  REFERENCES emoji_pack(id)
-  ON UPDATE RESTRICT
-  ON DELETE RESTRICT
-  NOT VALID;
-
-ALTER TABLE emoji_recent_usage
-  ADD CONSTRAINT emoji_recent_usage_user_id_fkey
-  FOREIGN KEY (user_id)
-  REFERENCES app_user(id)
-  ON UPDATE RESTRICT
-  ON DELETE RESTRICT
-  NOT VALID;
-
-ALTER TABLE emoji_recent_usage
-  ADD CONSTRAINT emoji_recent_usage_emoji_asset_id_fkey
-  FOREIGN KEY (emoji_asset_id)
-  REFERENCES emoji_asset(id)
-  ON UPDATE RESTRICT
-  ON DELETE RESTRICT
-  NOT VALID;
-
 CREATE INDEX IF NOT EXISTS emoji_asset_shortcode_trgm_idx
   ON emoji_asset USING gin (shortcode gin_trgm_ops)
   WHERE deleted_at IS NULL AND shortcode IS NOT NULL;

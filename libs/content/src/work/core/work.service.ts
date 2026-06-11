@@ -8,7 +8,9 @@ import type {
   WorkPageConditionOptions,
   WorkPaginationOptions,
 } from './work.type'
+import type { CursorContextFingerprint } from '@libs/platform/utils'
 
+import { Buffer } from 'node:buffer'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { ForumSectionService } from '@libs/forum/section/forum-section.service'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
@@ -26,18 +28,58 @@ import {
   WorkTypeEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { isNotNil } from '@libs/platform/utils'
-import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import {
+  assertSameCursorContextFingerprint,
+  isNotNil,
+  normalizeCursorBoolean,
+  normalizeCursorNumber,
+  normalizeCursorNumberArray,
+  normalizeCursorText,
+  parseCursorContextFingerprint,
+} from '@libs/platform/utils'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm'
 import { AuthorTypeEnum } from '../../author/author.constant'
 import { WorkAuthorService } from '../../author/author.service'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   CreateWorkDto,
+  QueryAppWorkDto,
   QueryWorkDto,
   UpdateWorkDto,
   UpdateWorkStatusDto,
 } from './dto/work.dto'
+
+type AppWorkFeedKind = 'default' | 'hot' | 'recommended'
+
+type AppWorkCursor =
+  | {
+      kind: 'default'
+      context: CursorContextFingerprint
+      publishAt: string | null
+      id: number
+    }
+  | {
+      kind: 'hot'
+      context: CursorContextFingerprint
+      popularity: number
+      publishAt: string | null
+      id: number
+    }
+  | {
+      kind: 'recommended'
+      context: CursorContextFingerprint
+      recommendWeight: number
+      publishAt: string | null
+      id: number
+    }
+
+type AppWorkCursorRow = {
+  id: number
+  popularity: number
+  recommendWeight: number
+  publishAt: Date | string | null
+}
 
 /**
  * 作品服务类
@@ -697,11 +739,8 @@ export class WorkService {
   }
 
   // 按类型分页查询作品的通用方法，支持热门、新作、推荐等标志位过滤，返回精简字段列表以优化列表页性能。
-  async getWorkTypePage(dto: QueryWorkDto, userId?: number) {
-    return this.paginateWorkList(dto, userId, {
-      forcePublished: true,
-      selectPageFields: true,
-    })
+  async getWorkTypePage(dto: QueryAppWorkDto, userId?: number) {
+    return this.paginateAppWorkList(dto, userId)
   }
 
   // 批量获取作品分页项详情，供收藏列表等聚合接口复用，保持与作品分页接口字段语义一致。
@@ -864,6 +903,239 @@ export class WorkService {
     return conditions
   }
 
+  // app/public 作品列表按 route 语义使用稳定 keyset 游标，不再为公开 feed 执行实时 COUNT。
+  private async paginateAppWorkList(dto: QueryAppWorkDto, userId?: number) {
+    this.rejectUnsupportedAppWorkPagination(dto)
+    const feedKind = this.getAppWorkFeedKind(dto)
+    const cursorContext = this.buildAppWorkCursorContext(dto, feedKind)
+    const where = and(
+      ...this.buildWorkPageConditions(dto as QueryWorkDto, {
+        forcePublished: true,
+      }),
+    )
+    const pageQuery = this.drizzle.buildPage({
+      pageSize: dto.pageSize,
+    })
+    const cursor = this.parseAppWorkCursor(dto.cursor, feedKind, cursorContext)
+    const rows = await this.db
+      .select({
+        ...this.getPageWorkSelectFields(),
+        recommendWeight: this.work.recommendWeight,
+      })
+      .from(this.work)
+      .where(
+        cursor ? and(where, this.buildAppWorkCursorWhere(cursor)) : where,
+      )
+      .orderBy(...this.getAppWorkOrderBy(feedKind))
+      .limit(pageQuery.limit + 1)
+    const list = rows.slice(0, pageQuery.limit)
+    const hasMore = rows.length > pageQuery.limit
+    const publicList = list.map(({ recommendWeight: _recommendWeight, ...item }) => item)
+
+    return this.attachWorkRelations(
+      {
+        list: publicList,
+        pageSize: pageQuery.pageSize,
+        hasMore,
+        nextCursor:
+          hasMore && list.length > 0
+            ? this.encodeAppWorkCursor(
+                list[list.length - 1],
+                feedKind,
+                cursorContext,
+              )
+            : null,
+      },
+      userId,
+    )
+  }
+
+  private rejectUnsupportedAppWorkPagination(dto: QueryAppWorkDto) {
+    const query = dto as unknown as Record<string, unknown>
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => query[field] !== undefined && query[field] !== null)
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `公开作品列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private getAppWorkFeedKind(dto: QueryAppWorkDto): AppWorkFeedKind {
+    if (dto.isHot === true) {
+      return 'hot'
+    }
+    if (dto.isRecommended === true) {
+      return 'recommended'
+    }
+    return 'default'
+  }
+
+  private getAppWorkOrderBy(kind: AppWorkFeedKind) {
+    const publishAtDescNullsLast = sql`${this.work.publishAt} desc nulls last`
+    if (kind === 'hot') {
+      return [
+        desc(this.work.popularity),
+        publishAtDescNullsLast,
+        desc(this.work.id),
+      ]
+    }
+    if (kind === 'recommended') {
+      return [
+        desc(this.work.recommendWeight),
+        publishAtDescNullsLast,
+        desc(this.work.id),
+      ]
+    }
+
+    return [publishAtDescNullsLast, desc(this.work.id)]
+  }
+
+  private encodeAppWorkCursor(
+    work: AppWorkCursorRow,
+    kind: AppWorkFeedKind,
+    context: CursorContextFingerprint,
+  ) {
+    const base = {
+      kind,
+      context,
+      publishAt:
+        work.publishAt instanceof Date
+          ? work.publishAt.toISOString()
+          : work.publishAt,
+      id: work.id,
+    }
+    const payload =
+      kind === 'hot'
+        ? { ...base, popularity: work.popularity }
+        : kind === 'recommended'
+          ? { ...base, recommendWeight: work.recommendWeight }
+          : base
+
+    return Buffer.from(JSON.stringify(payload)).toString('base64url')
+  }
+
+  private parseAppWorkCursor(
+    cursor: string | null | undefined,
+    expectedKind: AppWorkFeedKind,
+    expectedContext?: CursorContextFingerprint,
+  ): AppWorkCursor | undefined {
+    if (!cursor?.trim()) {
+      return undefined
+    }
+
+    try {
+      const parsed = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      ) as Record<string, unknown>
+      if (parsed.kind !== expectedKind) {
+        throw new TypeError('app work cursor kind mismatch')
+      }
+      const context = parseCursorContextFingerprint(parsed.context)
+      const id = Number(parsed.id)
+      const publishAt =
+        parsed.publishAt === null
+          ? null
+          : String(parsed.publishAt)
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new TypeError('invalid app work cursor payload')
+      }
+      if (publishAt !== null && Number.isNaN(new Date(publishAt).getTime())) {
+        throw new TypeError('invalid app work cursor publishAt')
+      }
+      if (expectedContext) {
+        assertSameCursorContextFingerprint(
+          context,
+          expectedContext,
+          () => new BadRequestException('作品分页游标与查询条件不匹配'),
+        )
+      }
+
+      if (expectedKind === 'hot') {
+        const popularity = Number(parsed.popularity)
+        if (!Number.isInteger(popularity) || popularity < 0) {
+          throw new TypeError('invalid app work hot cursor')
+        }
+        return { kind: 'hot', context, popularity, publishAt, id }
+      }
+      if (expectedKind === 'recommended') {
+        const recommendWeight = Number(parsed.recommendWeight)
+        if (!Number.isFinite(recommendWeight)) {
+          throw new TypeError('invalid app work recommended cursor')
+        }
+        return { kind: 'recommended', context, recommendWeight, publishAt, id }
+      }
+
+      return { kind: 'default', context, publishAt, id }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error
+      }
+      throw new BadRequestException('作品分页游标非法')
+    }
+  }
+
+  private buildAppWorkCursorContext(
+    dto: QueryAppWorkDto,
+    feedKind: AppWorkFeedKind,
+  ): CursorContextFingerprint {
+    return {
+      feedKind,
+      name: normalizeCursorText(dto.name),
+      publisher: normalizeCursorText(dto.publisher),
+      author: normalizeCursorText(dto.author),
+      authorId: normalizeCursorNumber(dto.authorId),
+      categoryIds: normalizeCursorNumberArray(dto.categoryIds),
+      tagIds: normalizeCursorNumberArray(dto.tagIds),
+      type: normalizeCursorNumber(dto.type, { allowZero: true }),
+      isPublished: normalizeCursorBoolean(dto.isPublished),
+      serialStatus: normalizeCursorNumber(dto.serialStatus, { allowZero: true }),
+      language: normalizeCursorText(dto.language, { lowerCase: false }),
+      region: normalizeCursorText(dto.region, { lowerCase: false }),
+      ageRating: normalizeCursorText(dto.ageRating, { lowerCase: false }),
+      isRecommended: normalizeCursorBoolean(dto.isRecommended),
+      isHot: normalizeCursorBoolean(dto.isHot),
+      isNew: normalizeCursorBoolean(dto.isNew),
+    }
+  }
+
+  private buildAppWorkCursorWhere(cursor: AppWorkCursor): SQL {
+    const publishTail = this.buildAppWorkPublishAtIdTailWhere(
+      cursor.publishAt,
+      cursor.id,
+    )
+    if (cursor.kind === 'hot') {
+      return or(
+        lt(this.work.popularity, cursor.popularity),
+        and(eq(this.work.popularity, cursor.popularity), publishTail),
+      )!
+    }
+    if (cursor.kind === 'recommended') {
+      return or(
+        lt(this.work.recommendWeight, cursor.recommendWeight),
+        and(eq(this.work.recommendWeight, cursor.recommendWeight), publishTail),
+      )!
+    }
+
+    return publishTail
+  }
+
+  private buildAppWorkPublishAtIdTailWhere(
+    publishAt: string | null,
+    id: number,
+  ): SQL {
+    if (publishAt === null) {
+      return and(isNull(this.work.publishAt), lt(this.work.id, id))!
+    }
+
+    return or(
+      and(isNotNull(this.work.publishAt), lt(this.work.publishAt, publishAt)),
+      and(eq(this.work.publishAt, publishAt), lt(this.work.id, id)),
+      isNull(this.work.publishAt),
+    )!
+  }
+
   // 作品列表分页，先复用共享分页查询 work 主表，再批量补充作者、分类与标签关系。
   private async paginateWorkList(
     dto: QueryWorkDto,
@@ -938,9 +1210,11 @@ export class WorkService {
   >(
     page: {
       list: TWork[]
-      total: number
-      pageIndex: number
+      total?: number
+      pageIndex?: number
       pageSize: number
+      hasMore?: boolean
+      nextCursor?: string | null
     },
     userId?: number,
   ) {

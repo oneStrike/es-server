@@ -1,10 +1,16 @@
 import type { Db, SQL } from '@db/core'
 import { DrizzleService, toPageResult } from '@db/core'
+import {
+  encodeGrowthCursor,
+  parseGrowthCursor,
+  rejectOffsetPaginationFields,
+  toCursorPage,
+} from '@libs/growth/growth/cursor-page.util'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
-import { and, eq, gte, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, isNull, lt, or, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -331,6 +337,75 @@ export class UserPointService {
     }
   }
 
+  async getAppPointRecordCursorPage(
+    dto: Omit<QueryUserPointRecordDto, 'pageIndex' | 'orderBy'> & {
+      cursor?: string
+    },
+  ) {
+    rejectOffsetPaginationFields(dto, '用户积分记录列表')
+    const cursor = this.parsePointRecordCursor(dto.cursor)
+    const conditions: SQL[] = [
+      eq(this.growthLedgerRecord.userId, dto.userId),
+      eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
+    ]
+
+    if (dto.ruleId !== undefined) {
+      conditions.push(
+        dto.ruleId === null
+          ? isNull(this.growthLedgerRecord.ruleId)
+          : eq(this.growthLedgerRecord.ruleId, dto.ruleId),
+      )
+    }
+    if (dto.targetType !== undefined) {
+      conditions.push(
+        dto.targetType === null
+          ? isNull(this.growthLedgerRecord.targetType)
+          : eq(this.growthLedgerRecord.targetType, dto.targetType),
+      )
+    }
+    if (dto.targetId !== undefined) {
+      conditions.push(
+        dto.targetId === null
+          ? isNull(this.growthLedgerRecord.targetId)
+          : eq(this.growthLedgerRecord.targetId, dto.targetId),
+      )
+    }
+    if (cursor) {
+      conditions.push(
+        or(
+          lt(this.growthLedgerRecord.createdAt, cursor.createdAt),
+          and(
+            eq(this.growthLedgerRecord.createdAt, cursor.createdAt),
+            lt(this.growthLedgerRecord.id, cursor.id),
+          ),
+        )!,
+      )
+    }
+
+    const pageQuery = this.drizzle.buildPage({ pageSize: dto.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.growthLedgerRecord)
+      .where(and(...conditions))
+      .orderBy(
+        desc(this.growthLedgerRecord.createdAt),
+        desc(this.growthLedgerRecord.id),
+      )
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPage(rows, pageQuery.limit, (item) =>
+      this.encodePointRecordCursor(item),
+    )
+
+    return {
+      ...page,
+      list: page.list.map((item) =>
+        this.toPointRecord(
+          item as typeof item & { context?: Record<string, unknown> | null },
+        ),
+      ),
+    }
+  }
+
   /**
    * 获取用户积分记录详情
    * @param id 记录ID
@@ -416,6 +491,28 @@ export class UserPointService {
     })
 
     return balance?.balance ?? 0
+  }
+
+  private encodePointRecordCursor(record: { createdAt: Date, id: number }) {
+    return encodeGrowthCursor({
+      createdAt: record.createdAt.toISOString(),
+      id: record.id,
+    })
+  }
+
+  private parsePointRecordCursor(cursor?: string | null) {
+    return parseGrowthCursor(cursor, '积分记录分页游标非法', (payload) => {
+      const createdAt = new Date(String(payload.createdAt))
+      const id = Number(payload.id)
+      if (
+        Number.isNaN(createdAt.getTime()) ||
+        !Number.isInteger(id) ||
+        id <= 0
+      ) {
+        return undefined
+      }
+      return { createdAt, id }
+    })
   }
 
   /**

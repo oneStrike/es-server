@@ -22,8 +22,8 @@ import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Injectable } from '@nestjs/common'
-import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, desc, eq, ilike, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   FORUM_HASHTAG_DEFAULT_SEARCH_LIMIT,
@@ -90,6 +90,117 @@ export class ForumHashtagService {
   // 生成热门分值 SQL。
   private buildHotScoreSql() {
     return sql<number>`(${this.forumHashtag.manualBoost} * 1000 + ${this.forumHashtag.topicRefCount} * 8 + ${this.forumHashtag.commentRefCount} * 3 + ${this.forumHashtag.followerCount} * 5)::int`
+  }
+
+  private assertPublicCursorPageQuery(query: Record<string, unknown>) {
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => query[field] !== undefined)
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `公开话题分页仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private buildCursorPage(query: { pageSize: number }) {
+    return this.drizzle.buildPage({ pageIndex: 1, pageSize: query.pageSize })
+  }
+
+  private encodeCursor(payload: Record<string, unknown>) {
+    return Buffer.from(JSON.stringify(payload)).toString('base64url')
+  }
+
+  private parseCursor<T extends Record<string, unknown>>(
+    cursor: string | null | undefined,
+    validator: (payload: Record<string, unknown>) => T,
+    message: string,
+  ) {
+    if (!cursor?.trim()) {
+      return null
+    }
+
+    try {
+      const parsed = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      )
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new TypeError('invalid cursor payload')
+      }
+      return validator(parsed as Record<string, unknown>)
+    }
+    catch {
+      throw new BadRequestException(message)
+    }
+  }
+
+  private parseDateIdCursor(cursor?: string | null) {
+    return this.parseCursor(
+      cursor,
+      (payload) => {
+        const createdAt = new Date(String(payload.createdAt))
+        const id = Number(payload.id)
+        if (!Number.isInteger(id) || id < 1 || Number.isNaN(createdAt.getTime())) {
+          throw new TypeError('invalid date id cursor')
+        }
+        return { createdAt, id }
+      },
+      '话题分页游标非法',
+    )
+  }
+
+  private buildDateIdDescCursorWhere(cursor: { createdAt: Date, id: number }) {
+    return or(
+      lt(this.forumHashtagReference.createdAt, cursor.createdAt),
+      and(
+        eq(this.forumHashtagReference.createdAt, cursor.createdAt),
+        lt(this.forumHashtagReference.id, cursor.id),
+      ),
+    )
+  }
+
+  private parseHotHashtagCursor(cursor?: string | null) {
+    return this.parseCursor(
+      cursor,
+      (payload) => {
+        const hotScore = Number(payload.hotScore)
+        const lastReferencedAt =
+          payload.lastReferencedAt === null
+            ? new Date(0)
+            : new Date(String(payload.lastReferencedAt))
+        const id = Number(payload.id)
+        if (
+          !Number.isFinite(hotScore) ||
+          !Number.isInteger(id) ||
+          id < 1 ||
+          Number.isNaN(lastReferencedAt.getTime())
+        ) {
+          throw new TypeError('invalid hot hashtag cursor')
+        }
+        return { hotScore, lastReferencedAt, id }
+      },
+      '热门话题分页游标非法',
+    )
+  }
+
+  private buildHotHashtagCursorWhere(
+    cursor: { hotScore: number, lastReferencedAt: Date, id: number },
+    hotScoreSql: SQL<number>,
+  ) {
+    const lastReferencedAtSql = sql<Date>`coalesce(${this.forumHashtag.lastReferencedAt}, '1970-01-01'::timestamptz)`
+
+    return or(
+      sql`${hotScoreSql} < ${cursor.hotScore}`,
+      and(
+        sql`${hotScoreSql} = ${cursor.hotScore}`,
+        sql`${lastReferencedAtSql} < ${cursor.lastReferencedAt}`,
+      ),
+      and(
+        sql`${hotScoreSql} = ${cursor.hotScore}`,
+        sql`${lastReferencedAtSql} = ${cursor.lastReferencedAt}`,
+        lt(this.forumHashtag.id, cursor.id),
+      ),
+    )
   }
 
   private toAdminForumHashtagDto(hashtag: ForumHashtagSelect) {
@@ -379,10 +490,17 @@ export class ForumHashtagService {
 
   // 查询 app 侧热门话题分页。
   async getHotHashtagPage(query: ForumHashtagHotPageQuery) {
+    this.assertPublicCursorPageQuery(query as unknown as Record<string, unknown>)
     const hotScoreSql = this.buildHotScoreSql()
-    const page = this.drizzle.buildPage(query)
-    const [list, total] = await Promise.all([
-      this.db
+    const page = this.buildCursorPage(query)
+    const cursor = this.parseHotHashtagCursor(query.cursor)
+    const where = and(
+      eq(this.forumHashtag.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.forumHashtag.isHidden, false),
+      isNull(this.forumHashtag.deletedAt),
+      cursor ? this.buildHotHashtagCursorWhere(cursor, hotScoreSql) : undefined,
+    )
+    const list = await this.db
         .select({
           id: this.forumHashtag.id,
           slug: this.forumHashtag.slug,
@@ -395,37 +513,23 @@ export class ForumHashtagService {
           hotScore: hotScoreSql.as('hotScore'),
         })
         .from(this.forumHashtag)
-        .where(
-          and(
-            eq(this.forumHashtag.auditStatus, AuditStatusEnum.APPROVED),
-            eq(this.forumHashtag.isHidden, false),
-            isNull(this.forumHashtag.deletedAt),
-          ),
-        )
+        .where(where)
         .orderBy(
           desc(hotScoreSql),
-          desc(this.forumHashtag.lastReferencedAt),
+          desc(sql`coalesce(${this.forumHashtag.lastReferencedAt}, '1970-01-01'::timestamptz)`),
           desc(this.forumHashtag.id),
         )
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db.$count(
-        this.forumHashtag,
-        and(
-          eq(this.forumHashtag.auditStatus, AuditStatusEnum.APPROVED),
-          eq(this.forumHashtag.isHidden, false),
-          isNull(this.forumHashtag.deletedAt),
-        ),
-      ),
-    ])
+        .limit(page.limit + 1)
+    const pageList = list.slice(0, page.limit)
+    const hasMore = list.length > page.limit
 
     const followedMap = await this.getFollowedMap(
-      list.map((item) => item.id),
+      pageList.map((item) => item.id),
       query.userId,
     )
 
     return {
-      list: list.map((item) => ({
+      list: pageList.map((item) => ({
         id: item.id,
         slug: item.slug,
         displayName: item.displayName,
@@ -437,9 +541,18 @@ export class ForumHashtagService {
         hotScore: item.hotScore,
         isFollowed: followedMap.get(item.id) ?? false,
       })),
-      total,
-      pageIndex: page.pageIndex,
       pageSize: page.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && pageList.length > 0
+          ? this.encodeCursor({
+              hotScore: pageList[pageList.length - 1].hotScore,
+              lastReferencedAt:
+                pageList[pageList.length - 1].lastReferencedAt?.toISOString()
+                ?? null,
+              id: pageList[pageList.length - 1].id,
+            })
+          : null,
     }
   }
 
@@ -502,19 +615,21 @@ export class ForumHashtagService {
     hashtagId: number,
     query: ForumHashtagLinkedContentPageQuery,
   ) {
+    this.assertPublicCursorPageQuery(query as unknown as Record<string, unknown>)
     await this.getPublicHashtagDetail(hashtagId, query.userId)
     const visibleSectionIds =
       await this.forumPermissionService.getAccessibleSectionIds(query.userId)
     if (visibleSectionIds.length === 0) {
       return {
         list: [],
-        total: 0,
-        pageIndex: query.pageIndex,
         pageSize: query.pageSize,
+        hasMore: false,
+        nextCursor: null,
       }
     }
 
-    const page = this.drizzle.buildPage(query)
+    const page = this.buildCursorPage(query)
+    const cursor = this.parseDateIdCursor(query.cursor)
     const where = and(
       eq(this.forumHashtagReference.hashtagId, hashtagId),
       eq(
@@ -523,11 +638,12 @@ export class ForumHashtagService {
       ),
       eq(this.forumHashtagReference.isSourceVisible, true),
       inArray(this.forumHashtagReference.sectionId, visibleSectionIds),
+      cursor ? this.buildDateIdDescCursorWhere(cursor) : undefined,
     )
 
-    const [referenceRows, total] = await Promise.all([
-      this.db
+    const referenceRows = await this.db
         .select({
+          id: this.forumHashtagReference.id,
           topicId: this.forumHashtagReference.topicId,
           referencedAt: this.forumHashtagReference.createdAt,
         })
@@ -537,18 +653,17 @@ export class ForumHashtagService {
           desc(this.forumHashtagReference.createdAt),
           desc(this.forumHashtagReference.id),
         )
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db.$count(this.forumHashtagReference, where),
-    ])
+        .limit(page.limit + 1)
+    const pageReferenceRows = referenceRows.slice(0, page.limit)
+    const hasMore = referenceRows.length > page.limit
 
-    const topicIds = [...new Set(referenceRows.map((item) => item.topicId))]
+    const topicIds = [...new Set(pageReferenceRows.map((item) => item.topicId))]
     if (topicIds.length === 0) {
       return {
         list: [],
-        total,
-        pageIndex: page.pageIndex,
         pageSize: page.pageSize,
+        hasMore,
+        nextCursor: null,
       }
     }
 
@@ -607,7 +722,7 @@ export class ForumHashtagService {
     const topicMap = new Map(topics.map((topic) => [topic.id, topic] as const))
 
     return {
-      list: referenceRows
+      list: pageReferenceRows
         .map((reference) => {
           const topic = topicMap.get(reference.topicId)
           if (!topic) {
@@ -634,9 +749,18 @@ export class ForumHashtagService {
           }
         })
         .filter((item): item is NonNullable<typeof item> => item !== null),
-      total,
-      pageIndex: page.pageIndex,
       pageSize: page.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && pageReferenceRows.length > 0
+          ? this.encodeCursor({
+              createdAt:
+                pageReferenceRows[
+                  pageReferenceRows.length - 1
+                ].referencedAt.toISOString(),
+              id: pageReferenceRows[pageReferenceRows.length - 1].id,
+            })
+          : null,
     }
   }
 
@@ -645,19 +769,21 @@ export class ForumHashtagService {
     hashtagId: number,
     query: ForumHashtagLinkedContentPageQuery,
   ) {
+    this.assertPublicCursorPageQuery(query as unknown as Record<string, unknown>)
     await this.getPublicHashtagDetail(hashtagId, query.userId)
     const visibleSectionIds =
       await this.forumPermissionService.getAccessibleSectionIds(query.userId)
     if (visibleSectionIds.length === 0) {
       return {
         list: [],
-        total: 0,
-        pageIndex: query.pageIndex,
         pageSize: query.pageSize,
+        hasMore: false,
+        nextCursor: null,
       }
     }
 
-    const page = this.drizzle.buildPage(query)
+    const page = this.buildCursorPage(query)
+    const cursor = this.parseDateIdCursor(query.cursor)
     const where = and(
       eq(this.forumHashtagReference.hashtagId, hashtagId),
       eq(
@@ -666,11 +792,12 @@ export class ForumHashtagService {
       ),
       eq(this.forumHashtagReference.isSourceVisible, true),
       inArray(this.forumHashtagReference.sectionId, visibleSectionIds),
+      cursor ? this.buildDateIdDescCursorWhere(cursor) : undefined,
     )
 
-    const [rows, total] = await Promise.all([
-      this.db
+    const rows = await this.db
         .select({
+          id: this.forumHashtagReference.id,
           commentId: this.userComment.id,
           topicId: this.forumTopic.id,
           topicTitle: this.forumTopic.title,
@@ -678,6 +805,7 @@ export class ForumHashtagService {
           html: this.userComment.html,
           likeCount: this.userComment.likeCount,
           createdAt: this.userComment.createdAt,
+          referencedAt: this.forumHashtagReference.createdAt,
         })
         .from(this.forumHashtagReference)
         .innerJoin(
@@ -693,17 +821,16 @@ export class ForumHashtagService {
           desc(this.forumHashtagReference.createdAt),
           desc(this.forumHashtagReference.id),
         )
-        .limit(page.limit)
-        .offset(page.offset),
-      this.db.$count(this.forumHashtagReference, where),
-    ])
+        .limit(page.limit + 1)
+    const pageRows = rows.slice(0, page.limit)
+    const hasMore = rows.length > page.limit
 
     const userMap = await this.getTopicUserBriefMap(
-      rows.map((item) => item.userId),
+      pageRows.map((item) => item.userId),
     )
 
     return {
-      list: rows.map((item) => {
+      list: pageRows.map((item) => {
         const user = userMap.get(item.userId)
         if (!user) {
           throw new BusinessException(
@@ -712,7 +839,13 @@ export class ForumHashtagService {
           )
         }
         return {
-          ...item,
+          commentId: item.commentId,
+          topicId: item.topicId,
+          topicTitle: item.topicTitle,
+          userId: item.userId,
+          html: item.html,
+          likeCount: item.likeCount,
+          createdAt: item.createdAt,
           user: {
             id: user.id,
             nickname: user.nickname,
@@ -720,9 +853,15 @@ export class ForumHashtagService {
           },
         }
       }),
-      total,
-      pageIndex: page.pageIndex,
       pageSize: page.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && pageRows.length > 0
+          ? this.encodeCursor({
+              createdAt: pageRows[pageRows.length - 1].referencedAt.toISOString(),
+              id: pageRows[pageRows.length - 1].id,
+            })
+          : null,
     }
   }
 }

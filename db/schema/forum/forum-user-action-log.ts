@@ -87,6 +87,16 @@ export const forumUserActionLog = snakeCase.table(
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),
+    /**
+     * 保留截止时间；清理任务按该字段做有界批处理。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '180 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     /**
@@ -126,6 +136,21 @@ export const forumUserActionLog = snakeCase.table(
      * 创建时间索引
      */
     index('forum_user_action_log_created_at_idx').on(table.createdAt),
+    index('forum_user_action_log_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
+    index('forum_user_action_log_user_created_id_idx').on(
+      table.userId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('forum_user_action_log_target_created_id_idx').on(
+      table.targetType,
+      table.targetId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
     /**
      * 用户与创建时间索引
      */

@@ -2,11 +2,12 @@ import type { Db } from '@db/core'
 import type { AppConfigSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
-import { desc, eq, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { DEFAULT_APP_CONFIG } from './config.constant'
 import { UpdateAppConfigDto } from './dto/config.dto'
 
 const APP_CONFIG_INIT_LOCK_KEY = 1_048_001
+const APP_CONFIG_KEY = 'global'
 
 /**
  * 应用配置服务
@@ -52,7 +53,7 @@ export class AppConfigService {
             ...updateConfigDto,
             updatedById: userId,
           })
-          .where(eq(this.appConfig.id, existingConfig.id)),
+          .where(eq(this.appConfig.configKey, APP_CONFIG_KEY)),
       {
         notFound: '应用配置不存在',
       },
@@ -69,7 +70,7 @@ export class AppConfigService {
     const configs = await db
       .select()
       .from(this.appConfig)
-      .orderBy(desc(this.appConfig.id))
+      .where(eq(this.appConfig.configKey, APP_CONFIG_KEY))
       .limit(1)
 
     return configs[0] ?? null
@@ -89,7 +90,10 @@ export class AppConfigService {
 
       const [newConfig] = await tx
         .insert(this.appConfig)
-        .values(DEFAULT_APP_CONFIG)
+        .values({
+          ...DEFAULT_APP_CONFIG,
+          configKey: APP_CONFIG_KEY,
+        })
         .returning()
 
       return newConfig

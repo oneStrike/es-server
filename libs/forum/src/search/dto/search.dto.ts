@@ -5,7 +5,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import {
   ForumSearchSortTypeEnum,
   ForumSearchTypeEnum,
@@ -56,6 +57,25 @@ export class ForumSearchDto extends PageDto {
     enum: ForumSearchSortTypeEnum,
   })
   sort?: ForumSearchSortTypeEnum
+}
+
+export class PublicForumSearchDto extends IntersectionType(
+  CursorPageSizeDto,
+  PickType(ForumSearchDto, [
+    'keyword',
+    'type',
+    'sectionId',
+    'hashtagId',
+    'sort',
+  ] as const),
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按搜索排序游标翻页',
+    example:
+      'eyJzb3J0IjoxLCJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJ0b3BpY0lkIjoxMDB9',
+    required: false,
+  })
+  cursor?: string
 }
 
 /**

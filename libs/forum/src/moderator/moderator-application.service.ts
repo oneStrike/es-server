@@ -4,12 +4,13 @@ import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, SQL } from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, desc, eq, inArray, isNull, lt, or, SQL } from 'drizzle-orm'
 import {
   AuditForumModeratorApplicationDto,
   CreateForumModeratorApplicationDto,
   QueryForumModeratorApplicationDto,
+  QueryMyForumModeratorApplicationDto,
 } from './dto/moderator-application.dto'
 import { ForumModeratorApplicationStatusEnum } from './moderator-application.constant'
 import { ForumModeratorLifecycleEventTypeEnum } from './moderator-lifecycle-log.constant'
@@ -183,6 +184,57 @@ export class ForumModeratorApplicationService {
       auditById: application.auditById ?? null,
       auditAt: application.auditAt?.toISOString?.() ?? null,
     }
+  }
+
+  private assertMyApplicationCursorQuery(query: Record<string, unknown>) {
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => query[field] !== undefined)
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `我的版主申请列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private encodeCursor(row: { createdAt: Date, id: number }) {
+    return Buffer.from(
+      JSON.stringify({
+        createdAt: row.createdAt.toISOString(),
+        id: row.id,
+      }),
+    ).toString('base64url')
+  }
+
+  private parseCursor(cursor?: string | null) {
+    if (!cursor?.trim()) {
+      return null
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      )
+      const createdAt = new Date(String(payload.createdAt))
+      const id = Number(payload.id)
+      if (!Number.isInteger(id) || id < 1 || Number.isNaN(createdAt.getTime())) {
+        throw new TypeError('invalid moderator application cursor')
+      }
+      return { createdAt, id }
+    }
+    catch {
+      throw new BadRequestException('版主申请分页游标非法')
+    }
+  }
+
+  private buildCursorWhere(cursor: { createdAt: Date, id: number }) {
+    return or(
+      lt(this.forumModeratorApplication.createdAt, cursor.createdAt),
+      and(
+        eq(this.forumModeratorApplication.createdAt, cursor.createdAt),
+        lt(this.forumModeratorApplication.id, cursor.id),
+      ),
+    )
   }
 
   /**
@@ -470,12 +522,52 @@ export class ForumModeratorApplicationService {
    */
   async getMyApplicationPage(
     applicantId: number,
-    query: QueryForumModeratorApplicationDto,
+    query: QueryMyForumModeratorApplicationDto,
   ) {
-    return this.getApplicationPage({
-      ...query,
-      applicantId,
+    this.assertMyApplicationCursorQuery(query as unknown as Record<string, unknown>)
+    const cursor = this.parseCursor(query.cursor)
+    const conditions: SQL[] = [
+      eq(this.forumModeratorApplication.applicantId, applicantId),
+      isNull(this.forumModeratorApplication.deletedAt),
+    ]
+
+    if (query.sectionId !== undefined) {
+      conditions.push(
+        eq(this.forumModeratorApplication.sectionId, query.sectionId),
+      )
+    }
+    if (query.status !== undefined) {
+      conditions.push(eq(this.forumModeratorApplication.status, query.status))
+    }
+    if (cursor) {
+      conditions.push(this.buildCursorWhere(cursor)!)
+    }
+
+    const page = this.drizzle.buildPage({
+      pageIndex: 1,
+      pageSize: query.pageSize,
     })
+    const rows = await this.db
+      .select()
+      .from(this.forumModeratorApplication)
+      .where(and(...conditions))
+      .orderBy(
+        desc(this.forumModeratorApplication.createdAt),
+        desc(this.forumModeratorApplication.id),
+      )
+      .limit(page.limit + 1)
+    const list = rows.slice(0, page.limit)
+    const hasMore = rows.length > page.limit
+
+    return {
+      list: await this.buildApplicationViews(list),
+      pageSize: page.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && list.length > 0
+          ? this.encodeCursor(list[list.length - 1])
+          : null,
+    }
   }
 
   /**

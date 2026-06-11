@@ -7,9 +7,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto/page.dto'
-import { PickType } from '@nestjs/swagger'
-
+import { CursorPageSizeDto } from '@libs/platform/dto/page.dto'
 import {
   MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   MessageNotificationCategoryKey,
@@ -179,9 +177,7 @@ export class InboxTimelineItemDto {
  * 收件箱时间线查询 DTO。
  * 使用 keyset 游标翻页，避免深页跳页扫描。
  */
-export class QueryInboxTimelineDto extends PickType(PageDto, [
-  'pageSize',
-] as const) {
+export class QueryInboxTimelineDto extends CursorPageSizeDto {
   @StringProperty({
     description: '下一页游标',
     example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJiaXpJZCI6Im46MSJ9',

@@ -60,6 +60,16 @@ export const paymentNotifyEvent = snakeCase.table(
     updatedAt: timestamp({ withTimezone: true, precision: 6 })
       .$onUpdate(() => new Date())
       .notNull(),
+    /**
+     * 保留截止时间；失败或未处理事件必须由清理任务排除。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '730 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     uniqueIndex('payment_notify_event_provider_event_key')
@@ -78,6 +88,19 @@ export const paymentNotifyEvent = snakeCase.table(
       table.verifyStatus,
       table.processStatus,
       table.createdAt,
+    ),
+    index('payment_notify_event_channel_process_created_id_idx').on(
+      table.channel,
+      table.processStatus,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('payment_notify_event_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
+    index('payment_notify_event_payment_order_id_idx').on(
+      table.paymentOrderId,
     ),
     check(
       'payment_notify_event_channel_valid_chk',

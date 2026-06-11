@@ -35,6 +35,12 @@ import type {
 } from './types/task.type'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService, extractRows } from '@db/core'
+import {
+  encodeGrowthCursor,
+  parseGrowthCursor,
+  rejectOffsetPaginationFields,
+  toCursorPage,
+} from '@libs/growth/growth/cursor-page.util'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
   canConsumeEventEnvelopeByConsumer,
@@ -113,38 +119,38 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 分页查询可领取任务。
   async getAvailableTasks(queryDto: QueryAvailableTaskPageDto, userId: number) {
+    rejectOffsetPaginationFields(queryDto, '可领取任务列表')
     const now = new Date()
-    const page = this.drizzle.buildPage(queryDto)
+    const page = this.drizzle.buildPage({ pageSize: queryDto.pageSize })
+    const cursor = this.parseAvailableTaskCursor(queryDto.cursor)
     const availableTaskIds = await this.getAvailableTaskDefinitionIds(
       queryDto,
       userId,
       now,
-      page.limit,
-      page.offset,
+      page.limit + 1,
+      cursor,
     )
     const rows = await this.getTaskDefinitionsByOrderedIds(availableTaskIds)
-    const total = await this.countAvailableTaskDefinitions(
-      queryDto,
-      userId,
-      now,
+    const cursorPage = toCursorPage(rows, page.limit, (task) =>
+      this.encodeAvailableTaskCursor(task),
     )
     const stepSummaryMap = await this.getTaskStepSummaryMap(
-      rows.map((item) => item.id),
+      cursorPage.list.map((item) => item.id),
     )
 
     return {
-      list: rows.map((task) =>
+      ...cursorPage,
+      list: cursorPage.list.map((task) =>
         this.toAppAvailableTaskItem(task, stepSummaryMap.get(task.id) ?? []),
       ),
-      total,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
     }
   }
 
   // 分页查询我的任务。
   async getMyTasks(queryDto: QueryMyTaskPageDto, userId: number) {
-    const page = this.drizzle.buildPage(queryDto)
+    rejectOffsetPaginationFields(queryDto, '我的任务列表')
+    const page = this.drizzle.buildPage({ pageSize: queryDto.pageSize })
+    const cursor = this.parseMyTaskCursor(queryDto.cursor)
     const where = and(
       eq(this.taskInstanceTable.userId, userId),
       isNull(this.taskInstanceTable.deletedAt),
@@ -177,39 +183,38 @@ export class TaskExecutionService extends TaskServiceSupport {
           queryDto.sceneType !== undefined
             ? eq(this.taskDefinitionTable.sceneType, queryDto.sceneType)
             : undefined,
-        ),
-      )
-      .orderBy(desc(this.taskInstanceTable.createdAt))
-      .limit(page.limit)
-      .offset(page.offset)
-
-    const totalRows = await this.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(this.taskInstanceTable)
-      .leftJoin(
-        this.taskDefinitionTable,
-        eq(this.taskInstanceTable.taskId, this.taskDefinitionTable.id),
-      )
-      .where(
-        and(
-          where,
-          queryDto.sceneType !== undefined
-            ? eq(this.taskDefinitionTable.sceneType, queryDto.sceneType)
+          cursor
+            ? or(
+                lt(this.taskInstanceTable.updatedAt, cursor.updatedAt),
+                and(
+                  eq(this.taskInstanceTable.updatedAt, cursor.updatedAt),
+                  lt(this.taskInstanceTable.id, cursor.id),
+                ),
+              )
             : undefined,
         ),
       )
+      .orderBy(
+        desc(this.taskInstanceTable.updatedAt),
+        desc(this.taskInstanceTable.id),
+      )
+      .limit(page.limit + 1)
+    const cursorPage = toCursorPage(rows, page.limit, (item) =>
+      this.encodeMyTaskCursor(item.instance),
+    )
 
-    const taskIds = rows
+    const taskIds = cursorPage.list
       .map((item) => item.task?.id)
       .filter((id): id is number => typeof id === 'number')
-    const instanceIds = rows.map((item) => item.instance.id)
+    const instanceIds = cursorPage.list.map((item) => item.instance.id)
     const [stepSummaryMap, instanceStepMap] = await Promise.all([
       this.getTaskStepSummaryMap(taskIds),
       this.getTaskInstanceStepViewMap(instanceIds),
     ])
 
     return {
-      list: rows.map((item) => ({
+      ...cursorPage,
+      list: cursorPage.list.map((item) => ({
         id: item.instance.id,
         taskId: item.instance.taskId,
         cycleKey: item.instance.cycleKey,
@@ -234,9 +239,6 @@ export class TaskExecutionService extends TaskServiceSupport {
           item.rewardSettlement,
         ),
       })),
-      total: Number(totalRows[0]?.count ?? 0),
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
     }
   }
 
@@ -1944,13 +1946,16 @@ export class TaskExecutionService extends TaskServiceSupport {
     userId: number,
     now: Date,
     limit: number,
-    offset: number,
+    cursor?: { sortOrder: number, id: number },
   ) {
     const cycleKeys = this.buildCurrentTaskCycleKeys(now)
     const sceneFilter =
       queryDto.sceneType !== undefined
         ? sql`AND d.scene_type = ${queryDto.sceneType}`
         : sql.empty()
+    const cursorFilter = cursor
+      ? sql`AND (c.sort_order > ${cursor.sortOrder} OR (c.sort_order = ${cursor.sortOrder} AND c.id > ${cursor.id}))`
+      : sql.empty()
     const result = await this.db.execute(sql`
       WITH claimable_candidates AS (
         SELECT
@@ -1980,12 +1985,58 @@ export class TaskExecutionService extends TaskServiceSupport {
           AND i.task_id = c.id
           AND i.cycle_key = c.cycle_key
       )
+      ${cursorFilter}
       ORDER BY c.sort_order ASC, c.id ASC
       LIMIT ${limit}
-      OFFSET ${offset}
     `)
 
     return extractRows<{ id: number }>(result).map((row) => Number(row.id))
+  }
+
+  private encodeAvailableTaskCursor(
+    task: Pick<TaskDefinitionSelect, 'sortOrder' | 'id'>,
+  ) {
+    return encodeGrowthCursor({ sortOrder: task.sortOrder, id: task.id })
+  }
+
+  private parseAvailableTaskCursor(cursor?: string | null) {
+    return parseGrowthCursor(cursor, '可领取任务分页游标非法', (payload) => {
+      const sortOrder = Number(payload.sortOrder)
+      const id = Number(payload.id)
+      if (
+        !Number.isInteger(sortOrder) ||
+        sortOrder < 0 ||
+        !Number.isInteger(id) ||
+        id <= 0
+      ) {
+        return undefined
+      }
+      return { sortOrder, id }
+    })
+  }
+
+  private encodeMyTaskCursor(
+    task: Pick<TaskInstanceSelect, 'updatedAt' | 'id'>,
+  ) {
+    return encodeGrowthCursor({
+      updatedAt: task.updatedAt.toISOString(),
+      id: task.id,
+    })
+  }
+
+  private parseMyTaskCursor(cursor?: string | null) {
+    return parseGrowthCursor(cursor, '我的任务分页游标非法', (payload) => {
+      const updatedAt = new Date(String(payload.updatedAt))
+      const id = Number(payload.id)
+      if (
+        Number.isNaN(updatedAt.getTime()) ||
+        !Number.isInteger(id) ||
+        id <= 0
+      ) {
+        return undefined
+      }
+      return { updatedAt, id }
+    })
   }
 
   // 数据库侧统计当前用户仍可领取的任务数量。

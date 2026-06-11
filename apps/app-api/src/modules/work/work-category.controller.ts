@@ -1,9 +1,9 @@
 import { WorkCategoryService } from '@libs/content/category/category.service'
 import {
   CategoryOutputDto,
-  QueryCategoryDto,
+  QueryAppCategoryCursorDto,
 } from '@libs/content/category/dto/category.dto'
-import { ApiPageDoc, OptionalAuth } from '@libs/platform/decorators'
+import { ApiCursorPageDoc, OptionalAuth } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -14,14 +14,11 @@ export class WorkCategoryController {
 
   @Get('page')
   @OptionalAuth()
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询作品分类列表',
     model: CategoryOutputDto,
   })
-  async getCategoryPage(@Query() query: QueryCategoryDto) {
-    return this.categoryService.getCategoryPage({
-      ...query,
-      isEnabled: true,
-    })
+  async getCategoryPage(@Query() query: QueryAppCategoryCursorDto) {
+    return this.categoryService.getAppCategoryCursorPage(query)
   }
 }

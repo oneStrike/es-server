@@ -1,4 +1,5 @@
 import type {
+  ChatConversationListCursor,
   ChatConversationListQueryInput,
   ChatMessageAfterSeqQueryInput,
   ChatMessageBeforeCursorQueryInput,
@@ -21,10 +22,6 @@ import { CHAT_READABLE_MESSAGE_STATUSES } from './chat.constant'
 
 @Injectable()
 export class MessageChatReadQueryService {
-  private readonly conversationListQuery: ReturnType<
-    MessageChatReadQueryService['buildConversationListQuery']
-  >
-
   private readonly conversationMessagesInitialQuery: ReturnType<
     MessageChatReadQueryService['buildConversationMessagesInitialQuery']
   >
@@ -38,51 +35,12 @@ export class MessageChatReadQueryService {
   >
 
   constructor(private readonly drizzle: DrizzleService) {
-    this.conversationListQuery = this.buildConversationListQuery()
     this.conversationMessagesInitialQuery =
       this.buildConversationMessagesInitialQuery()
     this.conversationMessagesBeforeQuery =
       this.buildConversationMessagesBeforeQuery()
     this.conversationMessagesAfterQuery =
       this.buildConversationMessagesAfterQuery()
-  }
-
-  // 构建当前用户会话列表 prepared query。
-  private buildConversationListQuery() {
-    return this.drizzle.db
-      .select({
-        id: this.drizzle.schema.chatConversation.id,
-        bizKey: this.drizzle.schema.chatConversation.bizKey,
-        isPinned: this.drizzle.schema.chatConversationMember.isPinned,
-        lastMessageId: this.drizzle.schema.chatConversation.lastMessageId,
-        lastMessageAt: this.drizzle.schema.chatConversation.lastMessageAt,
-        lastSenderId: this.drizzle.schema.chatConversation.lastSenderId,
-      })
-      .from(this.drizzle.schema.chatConversation)
-      .innerJoin(
-        this.drizzle.schema.chatConversationMember,
-        and(
-          eq(
-            this.drizzle.schema.chatConversationMember.conversationId,
-            this.drizzle.schema.chatConversation.id,
-          ),
-          eq(
-            this.drizzle.schema.chatConversationMember.userId,
-            placeholder('userId'),
-          ),
-          isNull(this.drizzle.schema.chatConversationMember.leftAt),
-          isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
-        ),
-      )
-      .where(eq(this.drizzle.schema.chatConversation.hasMessages, true))
-      .orderBy(
-        desc(this.drizzle.schema.chatConversationMember.isPinned),
-        sql`${this.drizzle.schema.chatConversation.lastMessageAt} desc nulls last`,
-        desc(this.drizzle.schema.chatConversation.id),
-      )
-      .offset(placeholder('offset'))
-      .limit(placeholder('limit'))
-      .prepare('message_chat_conversation_list')
   }
 
   // 构建会话最新消息页 prepared query。
@@ -155,7 +113,38 @@ export class MessageChatReadQueryService {
 
   // 查询当前用户的会话列表页。
   async getConversationList(params: ChatConversationListQueryInput) {
-    return this.conversationListQuery.execute(params)
+    const baseWhere = eq(this.drizzle.schema.chatConversation.hasMessages, true)
+    const cursorWhere = this.buildConversationListCursorWhere(params.cursor)
+
+    return this.drizzle.db
+      .select({
+        id: this.drizzle.schema.chatConversation.id,
+        bizKey: this.drizzle.schema.chatConversation.bizKey,
+        isPinned: this.drizzle.schema.chatConversationMember.isPinned,
+        lastMessageId: this.drizzle.schema.chatConversation.lastMessageId,
+        lastMessageAt: this.drizzle.schema.chatConversation.lastMessageAt,
+        lastSenderId: this.drizzle.schema.chatConversation.lastSenderId,
+      })
+      .from(this.drizzle.schema.chatConversation)
+      .innerJoin(
+        this.drizzle.schema.chatConversationMember,
+        and(
+          eq(
+            this.drizzle.schema.chatConversationMember.conversationId,
+            this.drizzle.schema.chatConversation.id,
+          ),
+          eq(this.drizzle.schema.chatConversationMember.userId, params.userId),
+          isNull(this.drizzle.schema.chatConversationMember.leftAt),
+          isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
+        ),
+      )
+      .where(cursorWhere ? and(baseWhere, cursorWhere) : baseWhere)
+      .orderBy(
+        desc(this.drizzle.schema.chatConversationMember.isPinned),
+        sql`${this.drizzle.schema.chatConversation.lastMessageAt} desc nulls last`,
+        desc(this.drizzle.schema.chatConversation.id),
+      )
+      .limit(params.limit)
   }
 
   // 查询会话最新一页消息。
@@ -173,5 +162,23 @@ export class MessageChatReadQueryService {
   // 查询会话指定序号之后的增量消息。
   async getConversationMessagesAfter(params: ChatMessageAfterSeqQueryInput) {
     return this.conversationMessagesAfterQuery.execute(params)
+  }
+
+  private buildConversationListCursorWhere(
+    cursor?: ChatConversationListCursor,
+  ) {
+    if (!cursor) {
+      return undefined
+    }
+
+    const isPinned = this.drizzle.schema.chatConversationMember.isPinned
+    const lastMessageAt = this.drizzle.schema.chatConversation.lastMessageAt
+    const id = this.drizzle.schema.chatConversation.id
+
+    if (cursor.lastMessageAt === null) {
+      return sql`(${isPinned} < ${cursor.isPinned} OR (${isPinned} = ${cursor.isPinned} AND ${lastMessageAt} is null AND ${id} < ${cursor.id}))`
+    }
+
+    return sql`(${isPinned} < ${cursor.isPinned} OR (${isPinned} = ${cursor.isPinned} AND (${lastMessageAt} < ${cursor.lastMessageAt} OR ${lastMessageAt} is null OR (${lastMessageAt} = ${cursor.lastMessageAt} AND ${id} < ${cursor.id}))))`
   }
 }

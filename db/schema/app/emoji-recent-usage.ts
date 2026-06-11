@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
   check,
-  foreignKey,
   index,
   integer,
   primaryKey,
@@ -9,8 +8,6 @@ import {
   snakeCase,
   timestamp,
 } from 'drizzle-orm/pg-core'
-import { appUser } from './app-user'
-import { emojiAsset } from './emoji-asset'
 
 /**
  * 最近使用表情表。
@@ -74,16 +71,6 @@ export const emojiRecentUsage = snakeCase.table(
      * 检查约束：useCount 不允许负数。
      */
     check('emoji_recent_usage_use_count_chk', sql`${table.useCount} >= 0`),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [appUser.id],
-      name: 'emoji_recent_usage_user_id_fkey',
-    }).onDelete('restrict').onUpdate('restrict'),
-    foreignKey({
-      columns: [table.emojiAssetId],
-      foreignColumns: [emojiAsset.id],
-      name: 'emoji_recent_usage_emoji_asset_id_fkey',
-    }).onDelete('restrict').onUpdate('restrict'),
   ],
 )
 

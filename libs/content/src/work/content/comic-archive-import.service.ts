@@ -42,7 +42,6 @@ import {
   WorkflowOperatorTypeEnum,
 } from '@libs/platform/modules/workflow/workflow.constant'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
-import { jsonParse } from '@libs/platform/utils'
 import {
   BadRequestException,
   Injectable,
@@ -739,7 +738,7 @@ export class ComicArchiveImportService {
         async (tx) => {
           const updateResult = await tx
             .update(this.workChapter)
-            .set({ content: JSON.stringify(contents) })
+            .set({ comicContentManifest: contents.length > 0 ? contents : null })
             .where(
               and(
                 eq(this.workChapter.id, matchedItem.chapterId),
@@ -1065,13 +1064,12 @@ export class ComicArchiveImportService {
   }
 
   // 解析章节已有漫画图片列表，脏数据按空列表处理。
-  private parseChapterContents(content: string | null) {
-    if (!content) {
+  private parseChapterContents(content: unknown) {
+    if (!Array.isArray(content)) {
       return []
     }
 
-    const parsed = jsonParse(content, [])
-    return Array.isArray(parsed) ? parsed : []
+    return content.filter((item): item is string => typeof item === 'string')
   }
 
   // 解压 zip 到任务临时目录，并拒绝绝对路径或目录穿越。
@@ -1147,7 +1145,7 @@ export class ComicArchiveImportService {
 
   // 加载 work Chapters。
   private async loadWorkChapters(workId: number) {
-    return this.db.query.workChapter.findMany({
+    const chapters = await this.db.query.workChapter.findMany({
       where: {
         workId,
         deletedAt: { isNull: true },
@@ -1155,12 +1153,17 @@ export class ComicArchiveImportService {
       columns: {
         id: true,
         title: true,
-        content: true,
+        comicContentManifest: true,
       },
       orderBy: {
         sortOrder: 'asc',
       },
     })
+    return chapters.map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      content: this.parseChapterContents(chapter.comicContentManifest),
+    }))
   }
 
   // 执行 assertWorkExists。

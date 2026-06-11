@@ -80,6 +80,16 @@ export const growthAuditLog = snakeCase.table(
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),
+    /**
+     * 保留截止时间；未解决结算关联审计必须由清理任务排除。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '365 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     /**
@@ -102,6 +112,20 @@ export const growthAuditLog = snakeCase.table(
      * 请求链路索引
      */
     index('growth_audit_log_request_id_idx').on(table.requestId),
+    index('growth_audit_log_user_created_id_idx').on(
+      table.userId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('growth_audit_log_asset_type_created_id_idx').on(
+      table.assetType,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('growth_audit_log_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
     check(
       'growth_audit_log_asset_type_valid_chk',
       sql`${table.assetType} in (1, 2, 3, 4, 5)`,

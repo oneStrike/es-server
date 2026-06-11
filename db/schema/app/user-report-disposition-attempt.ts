@@ -63,6 +63,9 @@ export const userReportDispositionAttempt = snakeCase.table(
       table.createdAt.desc(),
       table.id.desc(),
     ),
+    index('user_report_disposition_attempt_actor_user_id_idx').on(
+      table.actorUserId,
+    ),
     index('user_report_disposition_attempt_failed_latest_idx')
       .on(table.reportId, table.createdAt.desc(), table.id.desc())
       .where(sql`${table.attemptStatus} = 1 and ${table.resolvedAt} is null`),

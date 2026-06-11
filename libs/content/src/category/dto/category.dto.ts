@@ -9,7 +9,7 @@ import {
 
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
 import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -120,6 +120,25 @@ export class QueryCategoryDto extends IntersectionType(
     required: false,
   })
   contentType?: string
+}
+
+export class QueryAppCategoryCursorDto extends IntersectionType(
+  CursorPageSizeDto,
+  PartialType(PickType(BaseCategoryDto, ['name'] as const)),
+) {
+  @JsonProperty({
+    description: '分类关联的内容类型 JSON 字符串，例如 [1,2]',
+    example: '[1,2]',
+    required: false,
+  })
+  contentType?: string
+
+  @StringProperty({
+    description: '下一页游标；按 sortOrder/id 升序翻页',
+    example: 'eyJzb3J0T3JkZXIiOjEsImlkIjoxMDB9',
+    required: false,
+  })
+  cursor?: string
 }
 
 export class UpdateCategoryStatusDto extends IntersectionType(

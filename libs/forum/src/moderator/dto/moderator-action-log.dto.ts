@@ -4,7 +4,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   PartialType,
@@ -130,9 +130,17 @@ class QueryForumModeratorActionLogFilterDto extends PartialType(
 ) {}
 
 export class QueryAppForumModeratorActionLogDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   QueryForumModeratorActionLogFilterDto,
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按操作时间倒序游标翻页',
+    example:
+      'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
 
 export class QueryAdminForumModeratorActionLogDto extends IntersectionType(
   PageDto,

@@ -1,6 +1,15 @@
-import { ClearReadingHistoryDto, DeleteReadingHistoryDto, QueryReadingHistoryDto, ReadingHistoryWorkDto } from '@libs/interaction/reading-state/dto/reading-state.dto';
-import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
+import {
+  ClearReadingHistoryDto,
+  DeleteReadingHistoryDto,
+  QueryReadingHistoryDto,
+  ReadingHistoryWorkDto,
+} from '@libs/interaction/reading-state/dto/reading-state.dto'
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
+import {
+  ApiCursorPageDoc,
+  ApiDoc,
+  CurrentUser,
+} from '@libs/platform/decorators'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -11,7 +20,7 @@ export class ReadingHistoryController {
   constructor(private readonly readingStateService: ReadingStateService) {}
 
   @Get('my/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询我的阅读记录',
     model: ReadingHistoryWorkDto,
   })

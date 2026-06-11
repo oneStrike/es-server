@@ -13,6 +13,7 @@ describe('CheckInCalendarReadModelService admin overview', () => {
         db,
         schema: {
           checkInConfig: {
+            configKey: 'check_in_config.config_key',
             id: 'check_in_config.id',
             updatedAt: 'check_in_config.updated_at',
           },
@@ -135,6 +136,18 @@ function buildOverviewDb() {
 
     return {
       from: jest.fn(() => ({
+        where: jest.fn(() => ({
+          limit: jest.fn(() =>
+            Promise.resolve([
+              {
+                id: 1,
+                isEnabled: 1,
+                makeupPeriodType: CheckInMakeupPeriodTypeEnum.MONTHLY,
+                periodicAllowance: 2,
+              },
+            ]),
+          ),
+        })),
         orderBy: jest.fn(() => ({
           limit: jest.fn(() =>
             Promise.resolve([

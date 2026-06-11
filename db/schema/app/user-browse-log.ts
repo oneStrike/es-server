@@ -67,6 +67,16 @@ export const userBrowseLog = snakeCase.table(
     viewedAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),
+    /**
+     * 保留截止时间；浏览历史默认按 viewedAt 推导清理窗口。
+     */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '180 days'`,
+    ),
+    /**
+     * 归档时间；为空表示仍处于热数据窗口。
+     */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     /**
@@ -98,6 +108,21 @@ export const userBrowseLog = snakeCase.table(
     index('user_browse_log_user_id_viewed_at_idx').on(
       table.userId,
       table.viewedAt,
+    ),
+    index('user_browse_log_user_viewed_at_id_idx').on(
+      table.userId,
+      table.viewedAt.desc(),
+      table.id.desc(),
+    ),
+    index('user_browse_log_target_viewed_at_id_idx').on(
+      table.targetType,
+      table.targetId,
+      table.viewedAt.desc(),
+      table.id.desc(),
+    ),
+    index('user_browse_log_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
     ),
     check(
       'user_browse_log_target_type_valid_chk',

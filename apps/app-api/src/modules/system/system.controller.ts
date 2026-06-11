@@ -10,9 +10,9 @@ import {
 } from '@libs/app-content/agreement/dto/agreement.dto'
 import { AppAnnouncementService } from '@libs/app-content/announcement/announcement.service'
 import {
-  AppAnnouncementListItemDto,
   AnnouncementOutputBaseDto,
-  QueryAnnouncementDto,
+  PublicAnnouncementCursorResponseDto,
+  QueryPublicAnnouncementCursorDto,
 } from '@libs/app-content/announcement/dto/announcement.dto'
 import { AppPageOutputDto } from '@libs/app-content/page/dto/page.dto'
 import { AppPageService } from '@libs/app-content/page/page.service'
@@ -24,7 +24,6 @@ import { AppUpdateService } from '@libs/app-content/update/update.service'
 import {
   ApiDoc,
   ApiHtmlDoc,
-  ApiPageDoc,
   CurrentUser,
   Public,
 } from '@libs/platform/decorators'
@@ -98,13 +97,13 @@ export class SystemController {
   }
 
   @Get('announcement/page')
-  @ApiPageDoc({
+  @ApiDoc({
     summary: '系统公告',
-    model: AppAnnouncementListItemDto,
+    model: PublicAnnouncementCursorResponseDto,
   })
   @Public()
   // 查询公开可见的已发布系统公告分页。
-  async getAnnouncementPage(@Query() query: QueryAnnouncementDto) {
+  async getAnnouncementPage(@Query() query: QueryPublicAnnouncementCursorDto) {
     return this.appAnnouncementService.findPublicAnnouncementPage(query)
   }
 

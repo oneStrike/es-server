@@ -1,6 +1,6 @@
 import type { UserFollowSelect } from '@db/schema'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
-import { DrizzleService, toPageResult } from '@db/core'
+import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
   BadRequestException,
@@ -8,7 +8,13 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray, lt, or } from 'drizzle-orm'
+import {
+  assertCursorOnlyQuery,
+  encodeCreatedAtIdCursor,
+  parseCreatedAtIdCursor,
+  toCursorPageResult,
+} from '../favorite/cursor-pagination.helper'
 import { FollowPageCommandDto, FollowRecordDto } from './dto/follow.dto'
 import { FollowGrowthService } from './follow-growth.service'
 import { FollowTargetTypeEnum } from './follow.constant'
@@ -255,26 +261,32 @@ export class FollowService {
     query: FollowPageCommandDto,
     targetType: FollowTargetTypeEnum,
   ) {
+    assertCursorOnlyQuery(query, '用户关注列表')
+    const cursor = parseCreatedAtIdCursor(query.cursor, '用户关注列表')
+    const cursorWhere = cursor
+      ? or(
+          lt(this.userFollow.createdAt, cursor.createdAt),
+          and(
+            eq(this.userFollow.createdAt, cursor.createdAt),
+            lt(this.userFollow.id, cursor.id),
+          ),
+        )
+      : undefined
     const where = and(
       eq(this.userFollow.userId, query.userId),
       eq(this.userFollow.targetType, targetType),
+      cursorWhere,
     )
-    const pageQuery = this.drizzle.buildPage(query)
-    const orderQuery = this.drizzle.buildOrderBy(
-      { createdAt: 'desc' as const },
-      { table: this.userFollow },
+    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.userFollow)
+      .where(where)
+      .orderBy(desc(this.userFollow.createdAt), desc(this.userFollow.id))
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPageResult(rows, pageQuery.limit, (item) =>
+      encodeCreatedAtIdCursor(item),
     )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.userFollow)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.userFollow, where),
-    ])
-    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return {
@@ -413,26 +425,32 @@ export class FollowService {
    * 分页查询指定用户关注的用户。
    */
   async getFollowingUserPage(query: FollowPageCommandDto) {
+    assertCursorOnlyQuery(query, '用户关注列表')
+    const cursor = parseCreatedAtIdCursor(query.cursor, '用户关注列表')
+    const cursorWhere = cursor
+      ? or(
+          lt(this.userFollow.createdAt, cursor.createdAt),
+          and(
+            eq(this.userFollow.createdAt, cursor.createdAt),
+            lt(this.userFollow.id, cursor.id),
+          ),
+        )
+      : undefined
     const where = and(
       eq(this.userFollow.userId, query.userId),
       eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+      cursorWhere,
     )
-    const pageQuery = this.drizzle.buildPage(query)
-    const orderQuery = this.drizzle.buildOrderBy(
-      { createdAt: 'desc' as const },
-      { table: this.userFollow },
+    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.userFollow)
+      .where(where)
+      .orderBy(desc(this.userFollow.createdAt), desc(this.userFollow.id))
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPageResult(rows, pageQuery.limit, (item) =>
+      encodeCreatedAtIdCursor(item),
     )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.userFollow)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.userFollow, where),
-    ])
-    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page
@@ -468,26 +486,32 @@ export class FollowService {
    * 分页查询关注指定用户的用户。
    */
   async getFollowerUserPage(query: FollowPageCommandDto) {
+    assertCursorOnlyQuery(query, '用户粉丝列表')
+    const cursor = parseCreatedAtIdCursor(query.cursor, '用户粉丝列表')
+    const cursorWhere = cursor
+      ? or(
+          lt(this.userFollow.createdAt, cursor.createdAt),
+          and(
+            eq(this.userFollow.createdAt, cursor.createdAt),
+            lt(this.userFollow.id, cursor.id),
+          ),
+        )
+      : undefined
     const where = and(
       eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
       eq(this.userFollow.targetId, query.userId),
+      cursorWhere,
     )
-    const pageQuery = this.drizzle.buildPage(query)
-    const orderQuery = this.drizzle.buildOrderBy(
-      { createdAt: 'desc' as const },
-      { table: this.userFollow },
+    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.userFollow)
+      .where(where)
+      .orderBy(desc(this.userFollow.createdAt), desc(this.userFollow.id))
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPageResult(rows, pageQuery.limit, (item) =>
+      encodeCreatedAtIdCursor(item),
     )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.userFollow)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.userFollow, where),
-    ])
-    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return page

@@ -1622,7 +1622,7 @@ export class ThirdPartyComicImportService {
         price: true,
         canDownload: true,
         canComment: true,
-        content: true,
+        comicContentManifest: true,
       },
     })
     if (!row) {
@@ -1631,7 +1631,15 @@ export class ThirdPartyComicImportService {
         '章节不存在',
       )
     }
-    return row
+    const { comicContentManifest, ...snapshot } = row
+    return {
+      ...snapshot,
+      content: Array.isArray(comicContentManifest)
+        ? comicContentManifest.filter(
+            (item): item is string => typeof item === 'string',
+          )
+        : null,
+    }
   }
 
   // 还原章节元数据和内容快照。
@@ -1656,7 +1664,7 @@ export class ThirdPartyComicImportService {
             price: snapshot.price,
             canDownload: snapshot.canDownload,
             canComment: snapshot.canComment,
-            content: snapshot.content,
+            comicContentManifest: snapshot.content,
           })
           .where(
             and(

@@ -70,6 +70,8 @@ function createMessage(overrides: Partial<ChatMessageSelect> = {}) {
     createdAt: now,
     editedAt: null,
     revokedAt: null,
+    retentionUntil: null,
+    archivedAt: null,
     ...overrides,
   } satisfies ChatMessageSelect
 }
@@ -292,33 +294,32 @@ function createService() {
 }
 
 describe('chat.service conversation list visibility', () => {
-  it('excludes conversations without sent messages from conversation list total', async () => {
+  it('returns an empty cursor page without counting conversations', async () => {
     const { service, mocks } = createService()
-    mocks.totalQueryWhere.mockResolvedValueOnce([{ total: 0 }])
     mocks.chatReadQueryService.getConversationList.mockResolvedValueOnce([])
 
     const result = await service.getConversationList(7, {
-      pageIndex: 1,
       pageSize: 20,
     })
 
-    expect(mocks.totalQueryWhereSql()).toContain(
-      '"chat_conversation"."has_messages" = $',
-    )
-    expect(mocks.totalQueryWhereSql()).toContain(
-      '"chat_conversation_member"."hidden_at" is null',
+    expect(mocks.totalQueryWhere).not.toHaveBeenCalled()
+    expect(mocks.chatReadQueryService.getConversationList).toHaveBeenCalledWith(
+      {
+        userId: 7,
+        limit: 21,
+        cursor: undefined,
+      },
     )
     expect(result).toMatchObject({
       list: [],
-      total: 0,
-      pageIndex: 1,
       pageSize: 20,
+      hasMore: false,
+      nextCursor: null,
     })
   })
 
   it('maps conversations with sent messages even when last-message snapshot is cleared', async () => {
     const { service, mocks } = createService()
-    mocks.totalQueryWhere.mockResolvedValueOnce([{ total: 1 }])
     mocks.chatReadQueryService.getConversationList.mockResolvedValueOnce([
       {
         id: 10,
@@ -355,11 +356,13 @@ describe('chat.service conversation list visibility', () => {
     ])
 
     const result = await service.getConversationList(7, {
-      pageIndex: 1,
       pageSize: 20,
     })
 
-    expect(result.total).toBe(1)
+    expect(result).not.toHaveProperty('total')
+    expect(result).not.toHaveProperty('pageIndex')
+    expect(result.hasMore).toBe(false)
+    expect(result.nextCursor).toBeNull()
     expect(result.list[0]).toMatchObject({
       id: 10,
       unreadCount: 0,

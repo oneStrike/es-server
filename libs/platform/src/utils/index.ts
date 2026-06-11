@@ -1,6 +1,7 @@
 export * from './bitmask'
 export * from './bytes'
 export * from './bytes.type'
+export * from './cursorContext'
 export * from './env'
 export * from './is'
 export * from './jsonParse'

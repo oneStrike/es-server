@@ -171,10 +171,7 @@ describe('CheckIn app/admin contract boundaries', () => {
       {} as never,
     )
 
-    const page = await service.getMyRecords(
-      { pageIndex: 1, pageSize: 10 } as never,
-      33,
-    )
+    const page = await service.getMyRecords({ pageSize: 10 } as never, 33)
 
     expect(page.list).toHaveLength(2)
     expect(page.list[0].grants).toEqual([
@@ -188,6 +185,54 @@ describe('CheckIn app/admin contract boundaries', () => {
     expect(db.select).toHaveBeenCalledTimes(2)
     expect(settlementService.buildGrantRewardItemMap).toHaveBeenCalledTimes(1)
     expect(settlementService.buildSettlementMapById).not.toHaveBeenCalled()
+  })
+
+  it('app leaderboard uses cursor tuple without absolute rank output', async () => {
+    const db = {
+      ...buildRuntimeDb(),
+      execute: jest.fn(() =>
+        Promise.resolve({
+          rows: [
+            {
+              currentStreak: 7,
+              lastSignedDate: '2026-05-31',
+              signCount: 20,
+              userId: 33,
+            },
+            {
+              currentStreak: 6,
+              lastSignedDate: '2026-05-31',
+              signCount: 18,
+              userId: 34,
+            },
+          ],
+        }),
+      ),
+    }
+    const service = new CheckInRuntimeService(
+      buildDrizzle(db) as never,
+      {} as never,
+      buildRewardPolicyService() as never,
+      {} as never,
+      buildStreakService() as never,
+      {} as never,
+      {} as never,
+    )
+
+    const page = await service.getLeaderboardPage({ pageSize: 1 } as never)
+
+    expect(page.list).toHaveLength(1)
+    expect(page.list[0]).not.toHaveProperty('rank')
+    expect(page.nextCursor).toBeTruthy()
+    const cursor = JSON.parse(
+      Buffer.from(page.nextCursor!, 'base64url').toString('utf8'),
+    )
+    expect(cursor).toEqual({
+      currentStreak: 7,
+      signCount: 20,
+      userId: 33,
+    })
+    expect(cursor).not.toHaveProperty('rankAfter')
   })
 
   it('admin signed-user mapper keeps settlement diagnostics', async () => {
@@ -382,11 +427,11 @@ function buildActionDb() {
 function buildDrizzle(db: Record<string, unknown>) {
   return {
     buildOrderBy: jest.fn(() => ({ orderBySql: [] })),
-    buildPage: jest.fn(() => ({
-      limit: 1,
+    buildPage: jest.fn((query?: { pageSize?: number }) => ({
+      limit: query?.pageSize ?? 1,
       offset: 0,
       pageIndex: 1,
-      pageSize: 1,
+      pageSize: query?.pageSize ?? 1,
     })),
     db,
     schema: {

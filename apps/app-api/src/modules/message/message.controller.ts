@@ -3,11 +3,13 @@ import { MessageChatUploadService } from '@libs/message/chat/chat-upload.service
 import { MessageChatService } from '@libs/message/chat/chat.service'
 import {
   ChatConversationDto,
+  ChatConversationListResponseDto,
   ChatConversationMessagesResponseDto,
   HideChatConversationDto,
   MarkConversationReadDto,
   OpenDirectConversationDto,
   PinChatConversationDto,
+  QueryChatConversationListDto,
   QueryChatConversationMessagesDto,
 } from '@libs/message/chat/dto/chat.dto'
 import {
@@ -17,18 +19,17 @@ import {
 } from '@libs/message/inbox/dto/inbox.dto'
 import { MessageInboxService } from '@libs/message/inbox/inbox.service'
 import {
-  BaseUserNotificationDto,
-  QueryUserNotificationListDto,
+  QueryUserNotificationCursorDto,
   UpdateUserNotificationPreferencesDto,
+  UserNotificationCursorResponseDto,
   UserNotificationPreferenceListDto,
 } from '@libs/message/notification/dto/notification.dto'
 import { BaseNotificationUnreadDto } from '@libs/message/notification/dto/notification-unread.dto'
 import { MessageNotificationPreferenceService } from '@libs/message/notification/notification-preference.service'
 import { MessageNotificationService } from '@libs/message/notification/notification.service'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto'
 
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
@@ -46,12 +47,12 @@ export class MessageController {
   ) {}
 
   @Get('notification/page')
-  @ApiPageDoc({
-    summary: '分页查询站内通知',
-    model: BaseUserNotificationDto,
+  @ApiDoc({
+    summary: '游标查询站内通知',
+    model: UserNotificationCursorResponseDto,
   })
   async list(
-    @Query() query: QueryUserNotificationListDto,
+    @Query() query: QueryUserNotificationCursorDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageNotificationService.queryUserNotificationList(
@@ -142,12 +143,12 @@ export class MessageController {
   }
 
   @Get('chat/conversation/page')
-  @ApiPageDoc({
-    summary: '分页查询会话列表',
-    model: ChatConversationDto,
+  @ApiDoc({
+    summary: '游标查询会话列表',
+    model: ChatConversationListResponseDto,
   })
   async conversationList(
-    @Query() query: PageDto,
+    @Query() query: QueryChatConversationListDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageChatService.getConversationList(userId, query)

@@ -64,6 +64,9 @@ export const paymentReconciliationRecord = snakeCase.table(
       table.orderNo,
       table.createdAt,
     ),
+    index('payment_reconciliation_record_payment_order_id_idx').on(
+      table.paymentOrderId,
+    ),
     index('payment_reconciliation_record_channel_status_idx').on(
       table.channel,
       table.status,

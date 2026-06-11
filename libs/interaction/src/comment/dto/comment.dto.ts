@@ -12,7 +12,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 import { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
@@ -336,25 +336,47 @@ export class CommentOnlyAuthorDto {
 }
 
 export class QueryMyCommentPageDto extends IntersectionType(
-  PageDto,
-  PartialType(CommentSortDto),
+  CursorPageSizeDto,
   PartialType(CommentTargetDto),
   PickType(PartialType(BaseCommentDto), ['auditStatus'] as const),
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按评论时间游标翻页，避免深页 offset',
+    example:
+      'eyJraW5kIjoiY3JlYXRlZERlc2MiLCJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
 
 export class QueryCommentRepliesDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   CommentIdDto,
-  PartialType(CommentSortDto),
   PartialType(CommentOnlyAuthorDto),
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按回复时间游标翻页，避免深页 offset',
+    example:
+      'eyJraW5kIjoiY3JlYXRlQXNjIiwiY3JlYXRlZEF0IjoiMjAyNi0wNi0wMVQwMDowMDowMC4wMDBaIiwiaWQiOjEwMH0',
+    required: false,
+  })
+  cursor?: string
+}
 
 export class QueryTargetCommentsDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   CommentTargetDto,
   PartialType(CommentSortDto),
   PartialType(CommentOnlyAuthorDto),
 ) {
+  @StringProperty({
+    description: '下一页游标；提供后按评论列表固定排序游标翻页',
+    example:
+      'eyJraW5kIjoiZmxvb3JBc2MiLCJmbG9vciI6MSwiaWQiOjEwMH0',
+    required: false,
+  })
+  cursor?: string
+
   @NumberProperty({
     description: '预览回复数量上限',
     example: 3,

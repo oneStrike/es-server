@@ -8,7 +8,11 @@ import {
   QueryMyCommentPageDto,
   ReplyCommentBodyDto,
 } from '@libs/interaction/comment/dto/comment.dto'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import {
+  ApiCursorPageDoc,
+  ApiDoc,
+  CurrentUser,
+} from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto/base.dto'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
@@ -70,7 +74,7 @@ export class CommentController {
   }
 
   @Get('my/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询我的评论',
     model: MyCommentPageItemDto,
   })
@@ -82,7 +86,7 @@ export class CommentController {
   }
 
   @Get('reply/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询评论回复',
     model: CommentReplyItemDto,
   })

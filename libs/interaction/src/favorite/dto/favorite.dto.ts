@@ -1,9 +1,16 @@
 import { PageWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { PublicForumTopicPageItemDto } from '@libs/forum/topic/dto/forum-topic.dto'
-import { BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty } from '@libs/platform/decorators'
+import {
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
@@ -47,10 +54,16 @@ export class FavoriteRecordDto extends IntersectionType(
 ) {}
 
 export class FavoritePageCommandDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   PickType(BaseFavoriteDto, ['userId'] as const),
-) {}
-
+) {
+  @StringProperty({
+    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}
 /**
  * 收藏状态 DTO。
  */
@@ -94,5 +107,12 @@ export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
 
 export class QueryUserFavoriteDto extends IntersectionType(
   PartialType(UserIdDto),
-  PageDto,
-) {}
+  CursorPageSizeDto,
+) {
+  @StringProperty({
+    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
+    required: false,
+  })
+  cursor?: string
+}

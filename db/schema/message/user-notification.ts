@@ -52,6 +52,12 @@ export const userNotification = snakeCase.table(
     updatedAt: timestamp({ withTimezone: true, precision: 6 })
       .$onUpdate(() => new Date())
       .notNull(),
+    /** 保留截止时间；未读或仍可见通知必须由清理任务排除。 */
+    retentionUntil: timestamp({ withTimezone: true, precision: 6 }).default(
+      sql`now() + interval '180 days'`,
+    ),
+    /** 归档时间；为空表示仍处于热数据窗口。 */
+    archivedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
     unique('user_notification_receiver_user_id_projection_key_key').on(
@@ -75,6 +81,15 @@ export const userNotification = snakeCase.table(
       table.isHidden,
       table.createdAt.desc(),
     ),
+    index('user_notification_receiver_created_at_id_idx').on(
+      table.receiverUserId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    index('user_notification_retention_until_id_idx').on(
+      table.retentionUntil,
+      table.id,
+    ),
     index('user_notification_receiver_user_id_expires_at_idx').on(
       table.receiverUserId,
       table.expiresAt,
@@ -84,6 +99,7 @@ export const userNotification = snakeCase.table(
       table.announcementId,
       table.receiverUserId,
     ),
+    index('user_notification_actor_user_id_idx').on(table.actorUserId),
     check(
       'user_notification_system_announcement_requires_announcement_id_chk',
       sql`${table.categoryKey} <> 'system_announcement' OR ${table.announcementId} IS NOT NULL`,

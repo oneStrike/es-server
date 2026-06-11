@@ -1,9 +1,15 @@
 import type { UserFavoriteSelect } from '@db/schema'
-import { DrizzleService, toPageResult } from '@db/core'
+import { DrizzleService } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray, lt, or } from 'drizzle-orm'
+import {
+  assertCursorOnlyQuery,
+  encodeCreatedAtIdCursor,
+  parseCreatedAtIdCursor,
+  toCursorPageResult,
+} from './cursor-pagination.helper'
 import { FavoritePageCommandDto, FavoriteRecordDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
@@ -231,26 +237,32 @@ export class FavoriteService {
     query: FavoritePageCommandDto,
     targetTypes: FavoriteTargetTypeEnum[],
   ) {
+    assertCursorOnlyQuery(query, '用户收藏列表')
+    const cursor = parseCreatedAtIdCursor(query.cursor, '用户收藏列表')
+    const cursorWhere = cursor
+      ? or(
+          lt(this.userFavorite.createdAt, cursor.createdAt),
+          and(
+            eq(this.userFavorite.createdAt, cursor.createdAt),
+            lt(this.userFavorite.id, cursor.id),
+          ),
+        )
+      : undefined
     const where = and(
       eq(this.userFavorite.userId, query.userId),
       inArray(this.userFavorite.targetType, targetTypes),
+      cursorWhere,
     )
-    const pageQuery = this.drizzle.buildPage(query)
-    const orderQuery = this.drizzle.buildOrderBy(
-      { createdAt: 'desc' as const },
-      { table: this.userFavorite },
+    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.userFavorite)
+      .where(where)
+      .orderBy(desc(this.userFavorite.createdAt), desc(this.userFavorite.id))
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPageResult(rows, pageQuery.limit, (item) =>
+      encodeCreatedAtIdCursor(item),
     )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.userFavorite)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.userFavorite, where),
-    ])
-    const page = toPageResult(list, total, pageQuery)
 
     if (page.list.length === 0) {
       return {
@@ -325,7 +337,7 @@ export class FavoriteService {
    * 分页查询用户收藏的论坛主题。
    * 主题收藏只返回论坛主题字段，避免与作品结构混杂。
    */
-  async getUserTopicFavorites(query: FavoritePageCommandDto) {
+  async getUserTopicFavorites(query: FavoritePageCommandDto): Promise<any> {
     const { page, detailMaps } = await this.getFavoritePageByTargetTypes(
       query,
       [FavoriteTargetTypeEnum.FORUM_TOPIC],

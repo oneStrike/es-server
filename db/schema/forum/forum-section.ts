@@ -114,6 +114,14 @@ export const forumSection = snakeCase.table(
      */
     index('forum_section_group_id_idx').on(table.groupId),
     /**
+     * 用户等级规则关联索引。
+     */
+    index('forum_section_user_level_rule_id_idx').on(table.userLevelRuleId),
+    /**
+     * 最后主题快照关联索引。
+     */
+    index('forum_section_last_topic_id_idx').on(table.lastTopicId),
+    /**
      * 排序索引
      */
     index('forum_section_sort_order_idx').on(table.sortOrder),

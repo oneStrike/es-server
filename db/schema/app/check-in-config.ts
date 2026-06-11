@@ -7,6 +7,7 @@ import {
   smallint,
   snakeCase,
   timestamp,
+  unique,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -20,6 +21,8 @@ export const checkInConfig = snakeCase.table(
   {
     /** 全局签到配置主键。 */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    /** 固定配置键；全局签到配置只允许 `global` 一行。 */
+    configKey: varchar({ length: 32 }).default('global').notNull(),
     /** 是否启用签到功能（0=关闭，1=启用）。 */
     isEnabled: smallint().default(1).notNull(),
     /** 补签周期类型（1=按自然周，2=按自然月）。 */
@@ -52,7 +55,12 @@ export const checkInConfig = snakeCase.table(
       .notNull(),
   },
   (table) => [
-    index('check_in_config_is_enabled_idx').on(table.isEnabled),
+    index('check_in_config_updated_by_id_idx').on(table.updatedById),
+    unique('check_in_config_config_key_key').on(table.configKey),
+    check(
+      'check_in_config_config_key_valid_chk',
+      sql`${table.configKey} = 'global'`,
+    ),
     check(
       'check_in_config_is_enabled_valid_chk',
       sql`${table.isEnabled} in (0, 1)`,

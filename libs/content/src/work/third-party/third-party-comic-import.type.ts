@@ -80,7 +80,7 @@ export type ThirdPartyComicUpdatedChapterSnapshot = WorkflowObject & {
   price: number
   canDownload: boolean
   canComment: boolean
-  content: string | null
+  content: string[] | null
 }
 
 /** 第三方漫画导入失败或取消后的可回滚残留。 */

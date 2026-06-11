@@ -132,6 +132,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     if (!current) {
       await this.db.insert(this.checkInConfigTable).values({
         ...normalized,
+        configKey: this.checkInConfigKey,
         dateRewardRules: this.mergeDateRewardRulesForUpdate(
           [],
           normalizedDateRewardRules,

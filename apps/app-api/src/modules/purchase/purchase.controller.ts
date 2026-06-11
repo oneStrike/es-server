@@ -7,7 +7,11 @@ import {
   QueryPurchasedWorkDto,
 } from '@libs/interaction/purchase/dto/purchase.dto'
 import { PurchaseService } from '@libs/interaction/purchase/purchase.service'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import {
+  ApiCursorPageDoc,
+  ApiDoc,
+  CurrentUser,
+} from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -17,7 +21,7 @@ export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
 
   @Get('work/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询已购作品',
     model: PurchasedWorkItemDto,
   })
@@ -32,7 +36,7 @@ export class PurchaseController {
   }
 
   @Get('chapter/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询指定作品已购章节',
     model: PurchasedWorkChapterItemDto,
   })

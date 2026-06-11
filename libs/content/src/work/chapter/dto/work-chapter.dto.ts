@@ -10,7 +10,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -123,12 +123,12 @@ export class BaseWorkChapterDto extends BaseDto {
   canComment!: boolean
 
   @StringProperty({
-    description: '章节内容',
+    description: '章节内容（漫画为图片路径数组，小说为文件路径）',
     example: '内容路径或文本',
     required: true,
     nullable: true,
   })
-  content!: string | null
+  content!: string | string[] | null
 
   @NumberProperty({
     description: '字数',
@@ -223,7 +223,6 @@ class CreateWorkChapterNullableFieldsDto extends PartialType(
     'description',
     'publishAt',
     'requiredViewLevelId',
-    'content',
     'remark',
   ] as const),
 ) {}
@@ -260,9 +259,16 @@ export class QueryWorkChapterDto extends IntersectionType(
 ) {}
 
 export class QueryAppWorkChapterPageDto extends IntersectionType(
-  PickType(PageDto, ['pageIndex', 'pageSize'] as const),
+  CursorPageSizeDto,
   PickType(BaseWorkChapterDto, ['workId'] as const),
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按 sortOrder/id 游标翻页，避免深页 offset',
+    example: 'eyJzb3J0T3JkZXIiOjEsImlkIjoxMDB9',
+    required: false,
+  })
+  cursor?: string
+}
 
 export class UpdateWorkChapterDto extends IntersectionType(
   PartialType(
@@ -272,10 +278,18 @@ export class UpdateWorkChapterDto extends IntersectionType(
 ) {}
 
 export class QueryWorkChapterCommentPageDto extends IntersectionType(
-  PageDto,
+  CursorPageSizeDto,
   IdDto,
   PartialType(CommentSortDto),
-) {}
+) {
+  @StringProperty({
+    description: '下一页游标；提供后按评论列表固定排序游标翻页',
+    example:
+      'eyJraW5kIjoiZmxvb3JBc2MiLCJmbG9vciI6MSwiaWQiOjEwMH0',
+    required: false,
+  })
+  cursor?: string
+}
 
 export class AppWorkChapterPageItemDto extends PickType(BaseWorkChapterDto, [
   'id',

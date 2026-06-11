@@ -47,7 +47,7 @@ export class WorkComicChapterDownloadResolver
         workType: this.workType,
         deletedAt: { isNull: true },
       },
-      columns: { content: true },
+      columns: { comicContentManifest: true },
     })
 
     if (!chapter) {
@@ -57,7 +57,7 @@ export class WorkComicChapterDownloadResolver
       )
     }
 
-    if (!chapter.content) {
+    if (!Array.isArray(chapter.comicContentManifest) || chapter.comicContentManifest.length === 0) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '下载内容不存在',
@@ -66,7 +66,7 @@ export class WorkComicChapterDownloadResolver
 
     await this.contentPermissionService.checkChapterDownload(userId, targetId)
 
-    return chapter.content
+    return JSON.stringify(chapter.comicContentManifest)
   }
 
   // 更新下载计数。

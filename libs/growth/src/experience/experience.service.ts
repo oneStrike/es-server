@@ -1,6 +1,12 @@
 import type { SQL } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
+import {
+  encodeGrowthCursor,
+  parseGrowthCursor,
+  rejectOffsetPaginationFields,
+  toCursorPage,
+} from '@libs/growth/growth/cursor-page.util'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -9,7 +15,7 @@ import {
 } from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerFailReasonLabel,
@@ -253,6 +259,56 @@ export class UserExperienceService {
     }
   }
 
+  async getAppExperienceRecordCursorPage(
+    dto: Omit<QueryUserExperienceRecordDto, 'pageIndex' | 'orderBy'> & {
+      cursor?: string
+    },
+  ) {
+    rejectOffsetPaginationFields(dto, '用户经验记录列表')
+    const cursor = this.parseExperienceRecordCursor(dto.cursor)
+    const conditions = this.buildExperienceRecordConditions(dto)
+    if (cursor) {
+      conditions.push(
+        or(
+          lt(this.growthLedgerRecord.createdAt, cursor.createdAt),
+          and(
+            eq(this.growthLedgerRecord.createdAt, cursor.createdAt),
+            lt(this.growthLedgerRecord.id, cursor.id),
+          ),
+        )!,
+      )
+    }
+
+    const pageQuery = this.drizzle.buildPage({
+      pageSize: dto.pageSize,
+    }, { maxPageSize: 100 })
+    const rows = await this.db
+      .select()
+      .from(this.growthLedgerRecord)
+      .where(and(...conditions))
+      .orderBy(
+        desc(this.growthLedgerRecord.createdAt),
+        desc(this.growthLedgerRecord.id),
+      )
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPage(rows, pageQuery.limit, (item) =>
+      this.encodeExperienceRecordCursor(item),
+    )
+    const userMap = await this.buildExperienceRecordUserMap(
+      page.list.map((item) => item.userId),
+    )
+
+    return {
+      ...page,
+      list: page.list.map((item) =>
+        this.toExperienceRecord(
+          item as typeof item & { context?: Record<string, unknown> | null },
+          userMap.get(item.userId) ?? null,
+        ),
+      ),
+    }
+  }
+
   /**
    * 获取用户经验记录详情
    * @param id 记录ID
@@ -343,6 +399,110 @@ export class UserExperienceService {
     })
 
     return balance?.balance ?? 0
+  }
+
+  private buildExperienceRecordConditions(
+    dto: Omit<QueryUserExperienceRecordDto, 'pageIndex' | 'orderBy'>,
+  ) {
+    const conditions: SQL[] = [
+      eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
+    ]
+
+    if (dto.userId !== undefined) {
+      conditions.push(eq(this.growthLedgerRecord.userId, dto.userId))
+    }
+    if (dto.ruleId !== undefined) {
+      conditions.push(
+        dto.ruleId === null
+          ? isNull(this.growthLedgerRecord.ruleId)
+          : eq(this.growthLedgerRecord.ruleId, dto.ruleId),
+      )
+    }
+    if (dto.hasRule !== undefined) {
+      conditions.push(
+        dto.hasRule
+          ? isNotNull(this.growthLedgerRecord.ruleId)
+          : isNull(this.growthLedgerRecord.ruleId),
+      )
+    }
+    if (dto.ruleType !== undefined) {
+      conditions.push(
+        dto.ruleType === null
+          ? isNull(this.growthLedgerRecord.ruleType)
+          : eq(this.growthLedgerRecord.ruleType, dto.ruleType),
+      )
+    }
+    if (dto.source !== undefined) {
+      conditions.push(
+        dto.source === null
+          ? isNull(this.growthLedgerRecord.source)
+          : eq(this.growthLedgerRecord.source, dto.source),
+      )
+    }
+    if (dto.targetType !== undefined) {
+      conditions.push(
+        dto.targetType === null
+          ? isNull(this.growthLedgerRecord.targetType)
+          : eq(this.growthLedgerRecord.targetType, dto.targetType),
+      )
+    }
+    if (dto.targetId !== undefined) {
+      conditions.push(
+        dto.targetId === null
+          ? isNull(this.growthLedgerRecord.targetId)
+          : eq(this.growthLedgerRecord.targetId, dto.targetId),
+      )
+    }
+    if (dto.bizKey !== undefined) {
+      conditions.push(eq(this.growthLedgerRecord.bizKey, dto.bizKey))
+    }
+    if (dto.deltaDirection === ExperienceDeltaDirectionEnum.INCREASE) {
+      conditions.push(gt(this.growthLedgerRecord.delta, 0))
+    }
+    if (dto.deltaDirection === ExperienceDeltaDirectionEnum.DECREASE) {
+      conditions.push(lt(this.growthLedgerRecord.delta, 0))
+    }
+    if (dto.minDelta !== undefined) {
+      conditions.push(gte(this.growthLedgerRecord.delta, dto.minDelta))
+    }
+    if (dto.maxDelta !== undefined) {
+      conditions.push(lte(this.growthLedgerRecord.delta, dto.maxDelta))
+    }
+
+    const createdRange = buildDateOnlyRangeInAppTimeZone(
+      dto.startDate,
+      dto.endDate,
+    )
+    if (createdRange?.gte) {
+      conditions.push(gte(this.growthLedgerRecord.createdAt, createdRange.gte))
+    }
+    if (createdRange?.lt) {
+      conditions.push(lt(this.growthLedgerRecord.createdAt, createdRange.lt))
+    }
+
+    return conditions
+  }
+
+  private encodeExperienceRecordCursor(record: { createdAt: Date, id: number }) {
+    return encodeGrowthCursor({
+      createdAt: record.createdAt.toISOString(),
+      id: record.id,
+    })
+  }
+
+  private parseExperienceRecordCursor(cursor?: string | null) {
+    return parseGrowthCursor(cursor, '经验记录分页游标非法', (payload) => {
+      const createdAt = new Date(String(payload.createdAt))
+      const id = Number(payload.id)
+      if (
+        Number.isNaN(createdAt.getTime()) ||
+        !Number.isInteger(id) ||
+        id <= 0
+      ) {
+        return undefined
+      }
+      return { createdAt, id }
+    })
   }
 
   private toExperienceRecord(

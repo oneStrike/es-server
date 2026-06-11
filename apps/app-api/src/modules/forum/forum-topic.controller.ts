@@ -16,8 +16,8 @@ import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
 import {
+  ApiCursorPageDoc,
   ApiDoc,
-  ApiPageDoc,
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
@@ -59,7 +59,7 @@ export class ForumTopicController {
 
   @Get('page')
   @OptionalAuth()
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询论坛主题（综合/板块）',
     model: PublicForumTopicPageItemDto,
   })
@@ -75,7 +75,7 @@ export class ForumTopicController {
 
   @Get('hot/page')
   @OptionalAuth()
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询热门论坛主题',
     model: PublicForumTopicPageItemDto,
   })
@@ -90,7 +90,7 @@ export class ForumTopicController {
   }
 
   @Get('following/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询关注论坛主题',
     model: PublicForumTopicPageItemDto,
   })
@@ -126,7 +126,7 @@ export class ForumTopicController {
 
   @Get('comment/page')
   @OptionalAuth()
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询论坛主题评论',
     model: TargetCommentItemDto,
   })
@@ -140,8 +140,8 @@ export class ForumTopicController {
     )
     return this.commentService.getTargetComments({
       ...target,
-      pageIndex: query.pageIndex,
       pageSize: query.pageSize,
+      cursor: query.cursor,
       sort: query.sort,
       onlyAuthor: query.onlyAuthor,
       userId,
@@ -150,7 +150,7 @@ export class ForumTopicController {
 
   @Get('user/page')
   @OptionalAuth()
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询指定用户的公开主题',
     model: PublicForumTopicPageItemDto,
   })
@@ -166,7 +166,7 @@ export class ForumTopicController {
   }
 
   @Get('my/page')
-  @ApiPageDoc({
+  @ApiCursorPageDoc({
     summary: '分页查询我的论坛主题',
     model: MyForumTopicItemDto,
   })

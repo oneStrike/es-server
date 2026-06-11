@@ -8,12 +8,37 @@ import type {
 import { buildLikePattern, DrizzleService, toPageResult } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { AuditStatusEnum } from '@libs/platform/constant'
-import { Injectable } from '@nestjs/common'
-import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import type { CursorContextFingerprint } from '@libs/platform/utils'
+import {
+  assertSameCursorContextFingerprint,
+  normalizeCursorEnum,
+  normalizeCursorNumber,
+  normalizeCursorText,
+  normalizeCursorViewerScope,
+  parseCursorContextFingerprint,
+} from '@libs/platform/utils'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, desc, eq, ilike, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { ForumHashtagReferenceSourceTypeEnum } from '../hashtag/forum-hashtag.constant'
 import { ForumPermissionService } from '../permission/forum-permission.service'
-import { ForumSearchDto, ForumSearchResultDto } from './dto/search.dto'
+import {
+  ForumSearchDto,
+  ForumSearchResultDto,
+  PublicForumSearchDto,
+} from './dto/search.dto'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
+
+const FORUM_SEARCH_TOPIC_RANK = 0
+const FORUM_SEARCH_COMMENT_RANK = 1
+
+interface ForumSearchCursorQueryFingerprint extends CursorContextFingerprint {
+  keyword: string
+  type: ForumSearchTypeEnum
+  sectionId: number | null
+  hashtagId: number | null
+  sort: ForumSearchSortTypeEnum
+  viewerScope: string
+}
 
 /**
  * 论坛搜索服务。
@@ -74,7 +99,7 @@ export class ForumSearchService {
    * 会按当前用户权限收窄板块范围，并过滤未通过审核或已隐藏内容。
    */
   async searchPublic(searchInput: ForumSearchDto, userId?: number) {
-    return this.searchInternal(searchInput, { publicOnly: true, userId })
+    return this.searchPublicCursor(searchInput as PublicForumSearchDto, userId)
   }
 
   /**
@@ -126,10 +151,11 @@ export class ForumSearchService {
         { likeCount: 'desc' as const },
         { viewCount: 'desc' as const },
         { createdAt: 'desc' as const },
+        { id: 'desc' as const },
       ] as Array<Record<string, 'asc' | 'desc'>>
     }
 
-    return [{ createdAt: 'desc' as const }] as Array<
+    return [{ createdAt: 'desc' as const }, { id: 'desc' as const }] as Array<
       Record<string, 'asc' | 'desc'>
     >
   }
@@ -143,10 +169,292 @@ export class ForumSearchService {
       return [
         desc(this.userComment.likeCount),
         desc(this.userComment.createdAt),
+        desc(this.userComment.id),
       ]
     }
 
-    return [desc(this.userComment.createdAt)]
+    return [desc(this.userComment.createdAt), desc(this.userComment.id)]
+  }
+
+  private getTopicHotScoreSql() {
+    return sql<number>`(${this.forumTopic.commentCount} * 5 + ${this.forumTopic.likeCount} * 3 + ${this.forumTopic.favoriteCount} * 3 + ${this.forumTopic.viewCount})::int`
+  }
+
+  private getCommentHotScoreSql() {
+    return sql<number>`(${this.forumTopic.commentCount} * 5 + ${this.userComment.likeCount} * 3 + ${this.forumTopic.favoriteCount} * 3 + ${this.forumTopic.viewCount})::int`
+  }
+
+  private getPublicTopicCursorOrderBy(sort?: ForumSearchSortTypeEnum) {
+    if (sort === ForumSearchSortTypeEnum.HOT) {
+      return [
+        desc(this.getTopicHotScoreSql()),
+        desc(this.forumTopic.createdAt),
+        desc(this.forumTopic.id),
+      ]
+    }
+
+    return [desc(this.forumTopic.createdAt), desc(this.forumTopic.id)]
+  }
+
+  private getPublicCommentCursorOrderBy(sort?: ForumSearchSortTypeEnum) {
+    if (sort === ForumSearchSortTypeEnum.HOT) {
+      return [
+        desc(this.getCommentHotScoreSql()),
+        desc(this.userComment.createdAt),
+        desc(this.userComment.id),
+        desc(this.forumTopic.id),
+      ]
+    }
+
+    return [
+      desc(this.userComment.createdAt),
+      desc(this.userComment.id),
+      desc(this.forumTopic.id),
+    ]
+  }
+
+  private assertPublicCursorQuery(query: Record<string, unknown>) {
+    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
+      .filter((field) => query[field] !== undefined)
+
+    if (unsupportedFields.length > 0) {
+      throw new BadRequestException(
+        `论坛公开搜索仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
+      )
+    }
+  }
+
+  private encodeSearchCursor(
+    item: ForumSearchResultDto,
+    sort: ForumSearchSortTypeEnum,
+    queryFingerprint: ForumSearchCursorQueryFingerprint,
+  ) {
+    const hotScore =
+      item.commentCount * 5 +
+      item.likeCount * 3 +
+      item.favoriteCount * 3 +
+      item.viewCount
+
+    return Buffer.from(
+      JSON.stringify({
+        sort,
+        queryFingerprint,
+        hotScore,
+        createdAt: item.createdAt.toISOString(),
+        resultTypeRank: this.getSearchResultTypeRank(item),
+        commentIdForSort: item.commentId ?? 0,
+        topicId: item.topicId,
+        commentId: item.commentId,
+      }),
+    ).toString('base64url')
+  }
+
+  private parseSearchCursor(cursor?: string | null) {
+    if (!cursor?.trim()) {
+      return null
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
+      )
+      const sort = String(payload.sort)
+      const createdAt = new Date(String(payload.createdAt))
+      const hotScore = Number(payload.hotScore)
+      const queryFingerprint = this.parseSearchQueryFingerprint(
+        payload.queryFingerprint,
+      )
+      const resultTypeRank = Number(payload.resultTypeRank)
+      const commentIdForSort = Number(payload.commentIdForSort)
+      const topicId = Number(payload.topicId)
+      const commentId =
+        payload.commentId === null || payload.commentId === undefined
+          ? null
+          : Number(payload.commentId)
+
+      if (
+        !Object.values(ForumSearchSortTypeEnum).includes(
+          sort as ForumSearchSortTypeEnum,
+        ) ||
+        queryFingerprint.sort !== sort ||
+        Number.isNaN(createdAt.getTime()) ||
+        !Number.isFinite(hotScore) ||
+        ![FORUM_SEARCH_TOPIC_RANK, FORUM_SEARCH_COMMENT_RANK].includes(
+          resultTypeRank,
+        ) ||
+        !Number.isInteger(commentIdForSort) ||
+        !Number.isInteger(topicId) ||
+        topicId < 1 ||
+        (commentId !== null && (!Number.isInteger(commentId) || commentId < 1)) ||
+        (resultTypeRank === FORUM_SEARCH_TOPIC_RANK &&
+          (commentId !== null || commentIdForSort !== 0)) ||
+        (resultTypeRank === FORUM_SEARCH_COMMENT_RANK &&
+          (commentId === null || commentIdForSort !== commentId))
+      ) {
+        throw new TypeError('invalid forum search cursor')
+      }
+
+      return {
+        sort: sort as ForumSearchSortTypeEnum,
+        queryFingerprint,
+        createdAt,
+        hotScore,
+        resultTypeRank,
+        commentIdForSort,
+        topicId,
+        commentId,
+      }
+    }
+    catch {
+      throw new BadRequestException('论坛搜索分页游标非法')
+    }
+  }
+
+  private buildSearchQueryFingerprint(
+    dto: Pick<
+      PublicForumSearchDto,
+      'keyword' | 'type' | 'sectionId' | 'hashtagId' | 'sort'
+    >,
+    userId?: number,
+  ): ForumSearchCursorQueryFingerprint {
+    return {
+      keyword: normalizeCursorText(dto.keyword, { emptyValue: '' }) ?? '',
+      type: normalizeCursorEnum(dto.type, ForumSearchTypeEnum.ALL),
+      sectionId: normalizeCursorNumber(dto.sectionId),
+      hashtagId: normalizeCursorNumber(dto.hashtagId),
+      sort: normalizeCursorEnum(dto.sort, ForumSearchSortTypeEnum.RELEVANCE),
+      viewerScope: normalizeCursorViewerScope(userId),
+    }
+  }
+
+  private parseSearchQueryFingerprint(
+    input: unknown,
+  ): ForumSearchCursorQueryFingerprint {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      throw new TypeError('missing forum search query fingerprint')
+    }
+    const payload = parseCursorContextFingerprint(input)
+    const keyword = normalizeCursorText(payload.keyword, { emptyValue: '' }) ?? ''
+    const type = String(payload.type)
+    const sectionId = normalizeCursorNumber(payload.sectionId)
+    const hashtagId = normalizeCursorNumber(payload.hashtagId)
+    const sort = String(payload.sort)
+    const viewerScope = String(payload.viewerScope ?? '')
+
+    if (
+      !Object.values(ForumSearchTypeEnum).includes(type as ForumSearchTypeEnum) ||
+      !Object.values(ForumSearchSortTypeEnum).includes(
+        sort as ForumSearchSortTypeEnum,
+      ) ||
+      !/^guest$|^user:\d+$/.test(viewerScope)
+    ) {
+      throw new TypeError('invalid forum search query fingerprint')
+    }
+
+    return {
+      keyword,
+      type: type as ForumSearchTypeEnum,
+      sectionId,
+      hashtagId,
+      sort: sort as ForumSearchSortTypeEnum,
+      viewerScope,
+    }
+  }
+
+  private assertSameSearchQueryFingerprint(
+    left: ForumSearchCursorQueryFingerprint,
+    right: ForumSearchCursorQueryFingerprint,
+  ) {
+    assertSameCursorContextFingerprint(
+      left,
+      right,
+      () => new BadRequestException('论坛搜索分页游标与搜索条件不匹配'),
+    )
+  }
+
+  private buildTopicSearchCursorWhere(
+    cursor: ReturnType<ForumSearchService['parseSearchCursor']>,
+    sort?: ForumSearchSortTypeEnum,
+  ) {
+    if (!cursor) {
+      return undefined
+    }
+
+    if (sort === ForumSearchSortTypeEnum.HOT) {
+      const hotScoreSql = this.getTopicHotScoreSql()
+      return or(
+        sql`${hotScoreSql} < ${cursor.hotScore}`,
+        and(
+          sql`${hotScoreSql} = ${cursor.hotScore}`,
+          this.buildTopicSearchTupleTailWhere(cursor),
+        ),
+      )
+    }
+
+    return this.buildTopicSearchTupleTailWhere(cursor)
+  }
+
+  private buildCommentSearchCursorWhere(
+    cursor: ReturnType<ForumSearchService['parseSearchCursor']>,
+    sort?: ForumSearchSortTypeEnum,
+  ) {
+    if (!cursor) {
+      return undefined
+    }
+
+    if (sort === ForumSearchSortTypeEnum.HOT) {
+      const hotScoreSql = this.getCommentHotScoreSql()
+      return or(
+        sql`${hotScoreSql} < ${cursor.hotScore}`,
+        and(
+          sql`${hotScoreSql} = ${cursor.hotScore}`,
+          this.buildCommentSearchTupleTailWhere(cursor),
+        ),
+      )
+    }
+
+    return this.buildCommentSearchTupleTailWhere(cursor)
+  }
+
+  private buildTopicSearchTupleTailWhere(
+    cursor: NonNullable<ReturnType<ForumSearchService['parseSearchCursor']>>,
+  ) {
+    if (cursor.resultTypeRank === FORUM_SEARCH_COMMENT_RANK) {
+      return or(
+        lt(this.forumTopic.createdAt, cursor.createdAt),
+        eq(this.forumTopic.createdAt, cursor.createdAt),
+      )!
+    }
+
+    return or(
+      lt(this.forumTopic.createdAt, cursor.createdAt),
+      and(
+        eq(this.forumTopic.createdAt, cursor.createdAt),
+        lt(this.forumTopic.id, cursor.topicId),
+      ),
+    )!
+  }
+
+  private buildCommentSearchTupleTailWhere(
+    cursor: NonNullable<ReturnType<ForumSearchService['parseSearchCursor']>>,
+  ) {
+    if (cursor.resultTypeRank === FORUM_SEARCH_TOPIC_RANK) {
+      return lt(this.userComment.createdAt, cursor.createdAt)
+    }
+
+    return or(
+      lt(this.userComment.createdAt, cursor.createdAt),
+      and(
+        eq(this.userComment.createdAt, cursor.createdAt),
+        or(
+          lt(this.userComment.id, cursor.commentIdForSort),
+          and(
+            eq(this.userComment.id, cursor.commentIdForSort),
+            lt(this.forumTopic.id, cursor.topicId),
+          ),
+        ),
+      ),
+    )!
   }
 
   /**
@@ -180,11 +488,24 @@ export class ForumSearchService {
       return createdAtDiff
     }
 
-    if ((right.commentId ?? 0) !== (left.commentId ?? 0)) {
-      return (right.commentId ?? 0) - (left.commentId ?? 0)
+    const resultTypeRankDiff =
+      this.getSearchResultTypeRank(right) - this.getSearchResultTypeRank(left)
+    if (resultTypeRankDiff !== 0) {
+      return resultTypeRankDiff
+    }
+
+    const commentIdDiff = (right.commentId ?? 0) - (left.commentId ?? 0)
+    if (commentIdDiff !== 0) {
+      return commentIdDiff
     }
 
     return right.topicId - left.topicId
+  }
+
+  private getSearchResultTypeRank(item: ForumSearchResultDto) {
+    return item.resultType === ForumSearchTypeEnum.COMMENT
+      ? FORUM_SEARCH_COMMENT_RANK
+      : FORUM_SEARCH_TOPIC_RANK
   }
 
   /**
@@ -488,6 +809,202 @@ export class ForumSearchService {
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
     }
+  }
+
+  private async searchPublicCursor(
+    searchInput: PublicForumSearchDto,
+    userId?: number,
+  ) {
+    this.assertPublicCursorQuery(searchInput as unknown as Record<string, unknown>)
+    const type = searchInput.type ?? ForumSearchTypeEnum.ALL
+    const page = this.drizzle.buildPage({
+      pageIndex: 1,
+      pageSize: searchInput.pageSize,
+    })
+    const effectiveSort = searchInput.sort ?? ForumSearchSortTypeEnum.RELEVANCE
+    const cursor = this.parseSearchCursor(searchInput.cursor)
+    const queryFingerprint = this.buildSearchQueryFingerprint(searchInput, userId)
+    if (cursor) {
+      this.assertSameSearchQueryFingerprint(
+        cursor.queryFingerprint,
+        queryFingerprint,
+      )
+    }
+
+    const queryWindow = {
+      ...searchInput,
+      pageSize: page.pageSize + 1,
+    }
+
+    const [topicResults, commentResults] = await Promise.all([
+      type === ForumSearchTypeEnum.COMMENT
+        ? Promise.resolve([])
+        : this.searchPublicTopicsCursor(queryWindow, userId, cursor),
+      type === ForumSearchTypeEnum.TOPIC
+        ? Promise.resolve([])
+        : this.searchPublicCommentsCursor(queryWindow, userId, cursor),
+    ])
+
+    const merged = [...topicResults, ...commentResults]
+      .sort((left, right) => this.compareResults(left, right, effectiveSort))
+      .slice(0, page.limit + 1)
+    const list = merged.slice(0, page.limit)
+    const hasMore = merged.length > page.limit
+
+    return {
+      list,
+      pageSize: page.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && list.length > 0
+          ? this.encodeSearchCursor(
+              list[list.length - 1],
+              effectiveSort,
+              queryFingerprint,
+            )
+          : null,
+    }
+  }
+
+  private async searchPublicTopicsCursor(
+    dto: PublicForumSearchDto,
+    userId: number | undefined,
+    cursor: ReturnType<ForumSearchService['parseSearchCursor']>,
+  ) {
+    const sectionIds = await this.resolveSectionScope(dto.sectionId, {
+      publicOnly: true,
+      userId,
+    })
+    if (sectionIds && sectionIds.length === 0) {
+      return []
+    }
+
+    const topicIdsByHashtag = dto.hashtagId
+      ? await this.getSourceIdsByHashtag(
+          dto.hashtagId,
+          ForumHashtagReferenceSourceTypeEnum.TOPIC,
+          { publicOnly: true },
+        )
+      : undefined
+    if (topicIdsByHashtag && topicIdsByHashtag.length === 0) {
+      return []
+    }
+
+    const keywordLike = buildLikePattern(dto.keyword)!
+    const cursorWhere = this.buildTopicSearchCursorWhere(cursor, dto.sort)
+    const conditionTuple = this.compactConditions([
+      isNull(this.forumTopic.deletedAt),
+      or(
+        ilike(this.forumTopic.title, keywordLike),
+        ilike(this.forumTopic.content, keywordLike),
+      ),
+      eq(this.forumTopic.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.forumTopic.isHidden, false),
+      sectionIds
+        ? sectionIds.length === 1
+          ? eq(this.forumTopic.sectionId, sectionIds[0])
+          : inArray(this.forumTopic.sectionId, sectionIds)
+        : undefined,
+      topicIdsByHashtag
+        ? inArray(this.forumTopic.id, topicIdsByHashtag)
+        : undefined,
+      cursorWhere,
+    ])!
+
+    const rows = await this.db
+      .select()
+      .from(this.forumTopic)
+      .where(and(...conditionTuple))
+      .orderBy(...this.getPublicTopicCursorOrderBy(dto.sort))
+      .limit((dto.pageSize ?? 10) + 1)
+
+    return this.mapTopicResults(rows, dto.keyword)
+  }
+
+  private async searchPublicCommentsCursor(
+    dto: PublicForumSearchDto,
+    userId: number | undefined,
+    cursor: ReturnType<ForumSearchService['parseSearchCursor']>,
+  ) {
+    const sectionIds = await this.resolveSectionScope(dto.sectionId, {
+      publicOnly: true,
+      userId,
+    })
+    if (sectionIds && sectionIds.length === 0) {
+      return []
+    }
+
+    const [topicIdsByHashtag, commentIdsByHashtag] = dto.hashtagId
+      ? await Promise.all([
+          this.getSourceIdsByHashtag(
+            dto.hashtagId,
+            ForumHashtagReferenceSourceTypeEnum.TOPIC,
+            { publicOnly: true },
+          ),
+          this.getSourceIdsByHashtag(
+            dto.hashtagId,
+            ForumHashtagReferenceSourceTypeEnum.COMMENT,
+            { publicOnly: true },
+          ),
+        ])
+      : [undefined, undefined]
+    if (
+      dto.hashtagId &&
+      (topicIdsByHashtag?.length ?? 0) === 0 &&
+      (commentIdsByHashtag?.length ?? 0) === 0
+    ) {
+      return []
+    }
+
+    const keywordLike = buildLikePattern(dto.keyword)!
+    const cursorWhere = this.buildCommentSearchCursorWhere(cursor, dto.sort)
+    const commentHashtagFilter = this.buildCommentHashtagFilterCondition({
+      topicIdsByHashtag,
+      commentIdsByHashtag,
+    })
+    const conditionTuple = this.compactConditions([
+      eq(this.userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+      isNull(this.userComment.deletedAt),
+      ilike(this.userComment.content, keywordLike),
+      eq(this.userComment.targetId, this.forumTopic.id),
+      isNull(this.forumTopic.deletedAt),
+      eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.userComment.isHidden, false),
+      eq(this.forumTopic.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.forumTopic.isHidden, false),
+      sectionIds
+        ? sectionIds.length === 1
+          ? eq(this.forumTopic.sectionId, sectionIds[0])
+          : inArray(this.forumTopic.sectionId, sectionIds)
+        : undefined,
+      commentHashtagFilter,
+      cursorWhere,
+    ])!
+
+    const rows = await this.db
+      .select({
+        commentId: this.userComment.id,
+        topicId: this.forumTopic.id,
+        topicTitle: this.forumTopic.title,
+        sectionId: this.forumTopic.sectionId,
+        userId: this.userComment.userId,
+        commentContent: this.userComment.content,
+        createdAt: this.userComment.createdAt,
+        commentCount: this.forumTopic.commentCount,
+        viewCount: this.forumTopic.viewCount,
+        likeCount: this.userComment.likeCount,
+        favoriteCount: this.forumTopic.favoriteCount,
+      })
+      .from(this.userComment)
+      .innerJoin(
+        this.forumTopic,
+        eq(this.userComment.targetId, this.forumTopic.id),
+      )
+      .where(and(...conditionTuple))
+      .orderBy(...this.getPublicCommentCursorOrderBy(dto.sort))
+      .limit((dto.pageSize ?? 10) + 1)
+
+    return this.mapCommentResults(rows, dto.keyword)
   }
 
   /**

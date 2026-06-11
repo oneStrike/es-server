@@ -118,6 +118,8 @@ export const emojiPack = snakeCase.table(
      * 普通索引：支持软删除数据过滤。
      */
     index('emoji_pack_deleted_at_idx').on(table.deletedAt),
+    index('emoji_pack_created_by_id_idx').on(table.createdById),
+    index('emoji_pack_updated_by_id_idx').on(table.updatedById),
     /**
      * GIN 索引：支持 sceneType 数组包含查询（@>）。
      */

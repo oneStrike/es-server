@@ -3,7 +3,6 @@ import type {
   CheckInRecordSelect,
   CheckInStreakGrantSelect,
 } from '@db/schema'
-import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInGrantItemView,
@@ -12,12 +11,21 @@ import type {
   CheckInRewardItems,
 } from './check-in.type'
 import type {
+  QueryAppCheckInLeaderboardPageDto,
+  QueryAppCheckInRecordPageDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
-import { DrizzleService, toPageResult } from '@db/core'
+import { DrizzleService, extractRows, toPageResult } from '@db/core'
+import {
+  encodeGrowthCursor,
+  parseGrowthCursor,
+  rejectOffsetPaginationFields,
+  toCursorPage,
+} from '@libs/growth/growth/cursor-page.util'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, exists, gte, inArray, lte } from 'drizzle-orm'
+import { addDaysToDateOnlyInAppTimeZone } from '@libs/platform/utils'
+import { and, asc, desc, eq, exists, gte, inArray, lt, lte, or, sql } from 'drizzle-orm'
 import { CheckInCalendarReadModelService } from './check-in-calendar-read-model.service'
 import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
@@ -147,43 +155,33 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   // 分页查询当前用户的签到记录，并补齐奖励和连续奖励信息。
-  async getMyRecords(query: PageDto, userId: number) {
+  async getMyRecords(query: QueryAppCheckInRecordPageDto, userId: number) {
+    rejectOffsetPaginationFields(query, '我的签到记录列表')
     const conditions = [eq(this.checkInRecordTable.userId, userId)]
-    if (query.startDate) {
+    const cursor = this.parseCheckInRecordCursor(query.cursor)
+    if (cursor) {
       conditions.push(
-        gte(
-          this.checkInRecordTable.signDate,
-          this.parseDateOnly(query.startDate, '开始日期'),
-        ),
-      )
-    }
-    if (query.endDate) {
-      conditions.push(
-        lte(
-          this.checkInRecordTable.signDate,
-          this.parseDateOnly(query.endDate, '结束日期'),
-        ),
+        or(
+          lt(this.checkInRecordTable.signDate, cursor.signDate),
+          and(
+            eq(this.checkInRecordTable.signDate, cursor.signDate),
+            lt(this.checkInRecordTable.id, cursor.id),
+          ),
+        )!,
       )
     }
 
     const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage(query)
-    const orderQuery = this.drizzle.buildOrderBy(
-      query.orderBy?.trim() ||
-        JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
-      { table: this.checkInRecordTable },
+    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
+    const rows = await this.db
+      .select()
+      .from(this.checkInRecordTable)
+      .where(where)
+      .orderBy(desc(this.checkInRecordTable.signDate), desc(this.checkInRecordTable.id))
+      .limit(pageQuery.limit + 1)
+    const page = toCursorPage(rows, pageQuery.limit, (record) =>
+      this.encodeCheckInRecordCursor(record),
     )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.checkInRecordTable)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.checkInRecordTable, where),
-    ])
-    const page = toPageResult(list, total, pageQuery)
     const grantMap = await this.buildAppGrantMapForRecords(page.list)
 
     return {
@@ -200,30 +198,51 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   // 查询当前连续签到排行榜，并补齐用户信息与名次。
-  async getLeaderboardPage(query: PageDto) {
+  async getLeaderboardPage(query: QueryAppCheckInLeaderboardPageDto) {
+    rejectOffsetPaginationFields(query, '签到排行榜')
     const today = this.formatDateOnly(new Date())
-    const where =
-      this.checkInStreakService.buildActiveStreakProgressWhere(today)
-    const pageQuery = this.drizzle.buildPage(query)
-    const orderQuery = this.drizzle.buildOrderBy(
-      JSON.stringify([
-        { currentStreak: 'desc' },
-        { lastSignedDate: 'desc' },
-        { id: 'asc' },
-      ]),
-      { table: this.checkInStreakProgressTable },
-    )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.checkInStreakProgressTable)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.checkInStreakProgressTable, where),
-    ])
-    const page = toPageResult(list, total, pageQuery)
+    const yesterday = addDaysToDateOnlyInAppTimeZone(today, -1)
+    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
+    const cursor = this.parseLeaderboardCursor(query.cursor)
+    const cursorSql = cursor
+      ? sql`HAVING (
+          p.current_streak < ${cursor.currentStreak}
+          OR (p.current_streak = ${cursor.currentStreak} AND count(r.id)::int < ${cursor.signCount})
+          OR (p.current_streak = ${cursor.currentStreak} AND count(r.id)::int = ${cursor.signCount} AND p.user_id > ${cursor.userId})
+        )`
+      : sql.empty()
+    const result = await this.db.execute(sql`
+      SELECT
+        p.user_id AS "userId",
+        p.current_streak AS "currentStreak",
+        p.last_signed_date AS "lastSignedDate",
+        count(r.id)::int AS "signCount"
+      FROM check_in_streak_progress p
+      LEFT JOIN check_in_record r ON r.user_id = p.user_id
+      WHERE p.current_streak > 0
+        AND p.last_signed_date IN (${today}, ${yesterday})
+      GROUP BY p.user_id, p.current_streak, p.last_signed_date
+      ${cursorSql}
+      ORDER BY p.current_streak DESC, count(r.id)::int DESC, p.user_id ASC
+      LIMIT ${pageQuery.limit + 1}
+    `)
+    const rows = extractRows<{
+      userId: number
+      currentStreak: number
+      lastSignedDate: string | Date | null
+      signCount: number
+    }>(result)
+    const list = rows.slice(0, pageQuery.limit)
+    const hasMore = rows.length > pageQuery.limit
+    const page = {
+      list,
+      pageSize: pageQuery.pageSize,
+      hasMore,
+      nextCursor:
+        hasMore && list.length > 0
+          ? this.encodeLeaderboardCursor(list[list.length - 1])
+          : null,
+    }
 
     const userIds = page.list.map((item) => item.userId)
     const users =
@@ -241,15 +260,69 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
 
     return {
       ...page,
-      list: page.list.map((item, index) => ({
-        rank: (page.pageIndex - 1) * page.pageSize + index + 1,
+      list: page.list.map((item) => ({
         user: userMap.get(item.userId) ?? null,
         currentStreak: item.currentStreak,
         lastSignedDate: item.lastSignedDate
           ? this.toDateOnlyValue(item.lastSignedDate)
           : null,
+        signCount: Number(item.signCount ?? 0),
       })),
     }
+  }
+
+  private encodeCheckInRecordCursor(record: CheckInRecordSelect) {
+    return encodeGrowthCursor({
+      signDate: this.toDateOnlyValue(record.signDate),
+      id: record.id,
+    })
+  }
+
+  private parseCheckInRecordCursor(cursor?: string | null) {
+    return parseGrowthCursor(cursor, '签到记录分页游标非法', (payload) => {
+      const signDate =
+        typeof payload.signDate === 'string'
+          ? this.parseDateOnly(payload.signDate, '游标日期')
+          : undefined
+      const id = Number(payload.id)
+      if (!signDate || !Number.isInteger(id) || id <= 0) {
+        return undefined
+      }
+      return { signDate, id }
+    })
+  }
+
+  private encodeLeaderboardCursor(
+    item: {
+      userId: number
+      currentStreak: number
+      signCount: number
+    },
+  ) {
+    return encodeGrowthCursor({
+      currentStreak: item.currentStreak,
+      signCount: Number(item.signCount ?? 0),
+      userId: item.userId,
+    })
+  }
+
+  private parseLeaderboardCursor(cursor?: string | null) {
+    return parseGrowthCursor(cursor, '签到排行榜分页游标非法', (payload) => {
+      const currentStreak = Number(payload.currentStreak)
+      const signCount = Number(payload.signCount)
+      const userId = Number(payload.userId)
+      if (
+        !Number.isInteger(currentStreak) ||
+        currentStreak <= 0 ||
+        !Number.isInteger(signCount) ||
+        signCount < 0 ||
+        !Number.isInteger(userId) ||
+        userId <= 0
+      ) {
+        return undefined
+      }
+      return { currentStreak, signCount, userId }
+    })
   }
 
   // 查询 admin 侧签到奖励对账分页结果。
