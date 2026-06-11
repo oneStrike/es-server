@@ -23,7 +23,9 @@ admin repair pass.
 `db:migrate:prod` and `db:migrate` run this SQL through Drizzle migrators, so
 pending migration statements execute inside a transaction. The checked-in SQL
 therefore uses ordinary `ALTER TABLE`, `DROP INDEX IF EXISTS`, and
-`CREATE INDEX IF NOT EXISTS` statements.
+`CREATE INDEX IF NOT EXISTS` statements. Column additions use
+`ADD COLUMN IF NOT EXISTS` so a retried or manually pre-applied deployment does
+not fail before the idempotent index rebuild phase.
 
 Use this default path during a maintenance window for production data sets. The
 column adds are short metadata changes on modern PostgreSQL, but index rebuilds

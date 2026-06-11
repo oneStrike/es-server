@@ -1,17 +1,17 @@
 ALTER TABLE "chat_conversation_member"
-  ADD COLUMN "is_pinned" boolean DEFAULT false NOT NULL;
+  ADD COLUMN IF NOT EXISTS "is_pinned" boolean DEFAULT false NOT NULL;
 
 ALTER TABLE "chat_conversation_member"
-  ADD COLUMN "hidden_at" timestamp(6) with time zone;
+  ADD COLUMN IF NOT EXISTS "hidden_at" timestamp(6) with time zone;
 
 ALTER TABLE "user_notification"
-  ADD COLUMN "is_hidden" boolean DEFAULT false NOT NULL;
+  ADD COLUMN IF NOT EXISTS "is_hidden" boolean DEFAULT false NOT NULL;
 
 ALTER TABLE "message_ws_metric"
-  ADD COLUMN "fanout_skipped_count" integer DEFAULT 0 NOT NULL;
+  ADD COLUMN IF NOT EXISTS "fanout_skipped_count" integer DEFAULT 0 NOT NULL;
 
 ALTER TABLE "message_ws_metric"
-  ADD COLUMN "fanout_publish_error_count" integer DEFAULT 0 NOT NULL;
+  ADD COLUMN IF NOT EXISTS "fanout_publish_error_count" integer DEFAULT 0 NOT NULL;
 
 DROP INDEX IF EXISTS "chat_conversation_member_user_id_joined_at_idx";
 CREATE INDEX IF NOT EXISTS "chat_conversation_member_user_id_joined_at_idx"
