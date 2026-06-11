@@ -18,7 +18,7 @@ import {
   RegexProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -43,10 +43,10 @@ class MessageDispatchPageSharedFieldsDto {
     description:
       '通知投影业务状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.FAILED,
-    required: false,
+    nullable: true,
     enum: MessageNotificationDispatchStatusEnum,
   })
-  deliveryStatus?: MessageNotificationDispatchStatusEnum
+  deliveryStatus!: MessageNotificationDispatchStatusEnum | null
 
   @StringProperty({
     description: '事件域',
@@ -185,7 +185,7 @@ export class MessageWsMonitorSummaryDto {
   @StringProperty({
     description: '实时推送部署约束说明',
     example: null,
-    required: false,
+    nullable: true,
     validation: false,
   })
   realtimeDeploymentConstraint!: string | null
@@ -258,10 +258,10 @@ class MessageNotificationDeliveryLabelFieldsDto {
   @StringProperty({
     description: '通知分类中文标签',
     example: getMessageNotificationCategoryLabel('comment_reply'),
-    required: false,
+    nullable: true,
     validation: false,
   })
-  categoryLabel?: string
+  categoryLabel!: string | null
 
   @StringProperty({
     description: '业务投递结果中文标签',
@@ -312,7 +312,7 @@ class MessageDispatchPageOutputOnlyFieldsDto {
   @StringProperty({
     description: '最后一次技术失败原因',
     example: 'notification-consumer-boom',
-    required: false,
+    nullable: true,
     validation: false,
   })
   lastError!: string | null
@@ -320,7 +320,7 @@ class MessageDispatchPageOutputOnlyFieldsDto {
   @DateProperty({
     description: '下次重试时间',
     example: '2026-04-13T12:35:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
   nextRetryAt!: Date | null
@@ -328,7 +328,7 @@ class MessageDispatchPageOutputOnlyFieldsDto {
   @DateProperty({
     description: '处理完成时间',
     example: '2026-04-13T12:34:50.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
   processedAt!: Date | null
@@ -374,7 +374,7 @@ export class QueryAdminChatConversationPageDto extends PageDto {
   unreadOnly?: boolean
 
   @BooleanProperty({
-    description: '列表状态筛选；true=只看已隐藏，false=只看可见',
+    description: '列表状态筛选；开启时只看已隐藏，关闭时只看可见',
     example: false,
     required: false,
   })
@@ -416,7 +416,7 @@ export class AdminChatUserSummaryDto {
   @StringProperty({
     description: '用户昵称',
     example: '运营排查用户',
-    required: false,
+    nullable: true,
     validation: false,
   })
   nickname!: string | null
@@ -424,7 +424,7 @@ export class AdminChatUserSummaryDto {
   @StringProperty({
     description: '用户头像',
     example: 'https://example.com/avatar.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
   avatarUrl!: string | null
@@ -455,7 +455,7 @@ export class AdminChatConversationPageItemDto {
   @DateProperty({
     description: '当前用户隐藏会话时间',
     example: '2026-03-07T12:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
   hiddenAt!: Date | null
@@ -470,7 +470,7 @@ export class AdminChatConversationPageItemDto {
   @StringProperty({
     description: '当前用户最后已读消息 ID',
     example: '1024',
-    required: false,
+    nullable: true,
     validation: false,
   })
   lastReadMessageId!: string | null
@@ -478,7 +478,7 @@ export class AdminChatConversationPageItemDto {
   @DateProperty({
     description: '当前用户最后已读时间',
     example: '2026-03-07T12:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
   lastReadAt!: Date | null
@@ -486,7 +486,7 @@ export class AdminChatConversationPageItemDto {
   @StringProperty({
     description: '最后消息 ID',
     example: '1025',
-    required: false,
+    nullable: true,
     validation: false,
   })
   lastMessageId!: string | null
@@ -494,7 +494,7 @@ export class AdminChatConversationPageItemDto {
   @DateProperty({
     description: '最后消息时间',
     example: '2026-03-07T12:01:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
   lastMessageAt!: Date | null
@@ -502,7 +502,7 @@ export class AdminChatConversationPageItemDto {
   @NumberProperty({
     description: '最后发送用户 ID',
     example: 10002,
-    required: false,
+    nullable: true,
     validation: false,
   })
   lastSenderId!: number | null
@@ -510,7 +510,7 @@ export class AdminChatConversationPageItemDto {
   @StringProperty({
     description: '最后消息摘要（脱敏/限长）',
     example: '你好，请问...',
-    required: false,
+    nullable: true,
     validation: false,
   })
   lastMessagePreview!: string | null
@@ -560,7 +560,7 @@ export class AdminChatMessagePageItemDto {
   senderId!: number
 
   @EnumProperty({
-    description: '消息类型',
+    description: '消息类型（1=文本；2=图片；3=语音；4=视频；99=系统消息）',
     example: ChatMessageTypeEnum.TEXT,
     enum: ChatMessageTypeEnum,
     validation: false,
@@ -568,7 +568,7 @@ export class AdminChatMessagePageItemDto {
   messageType!: ChatMessageTypeEnum
 
   @EnumProperty({
-    description: '消息状态',
+    description: '消息状态（1=正常；2=已撤回；3=已删除）',
     example: ChatMessageStatusEnum.NORMAL,
     enum: ChatMessageStatusEnum,
     validation: false,

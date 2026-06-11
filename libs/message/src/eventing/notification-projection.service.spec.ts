@@ -5,15 +5,28 @@ function createSubject(announcement: Record<string, unknown> | null) {
   const deleteWhere = jest.fn(() => ({
     returning: deleteReturning,
   }))
+  const query = {
+    appAnnouncement: {
+      findFirst: jest.fn(async () => announcement),
+    },
+    forumTopic: {
+      findFirst: jest.fn(async () => null),
+    },
+    userComment: {
+      findFirst: jest.fn(async () => null),
+    },
+    work: {
+      findFirst: jest.fn(async () => null),
+    },
+    workChapter: {
+      findFirst: jest.fn(async () => null),
+    },
+  }
   const db = {
     delete: jest.fn(() => ({
       where: deleteWhere,
     })),
-    query: {
-      appAnnouncement: {
-        findFirst: jest.fn(async () => announcement),
-      },
-    },
+    query,
   }
   const templateService = {
     renderNotificationTemplate: jest.fn(async (input) => ({
@@ -36,9 +49,21 @@ function createSubject(announcement: Record<string, unknown> | null) {
     db,
     deleteReturning,
     deleteWhere,
+    query,
     service,
     templateService,
   }
+}
+
+function getPayloadNormalizer(service: NotificationProjectionService) {
+  return (
+    service as unknown as {
+      normalizeNotificationPayload: (
+        categoryKey: string,
+        payload?: Record<string, unknown> | null,
+      ) => Promise<Record<string, unknown> | null>
+    }
+  ).normalizeNotificationPayload.bind(service)
 }
 
 describe('NotificationProjectionService system announcement ordering guard', () => {
@@ -139,5 +164,99 @@ describe('NotificationProjectionService system announcement ordering guard', () 
     expect(db.delete).toHaveBeenCalledTimes(1)
     expect(deleteWhere).toHaveBeenCalledTimes(1)
     jest.useRealTimers()
+  })
+})
+
+describe('NotificationProjectionService payload contract normalization', () => {
+  it('keeps comment notification fields present with null values when snapshots are incomplete', async () => {
+    const { service } = createSubject(null)
+    const normalizeNotificationPayload = getPayloadNormalizer(service)
+
+    await expect(
+      normalizeNotificationPayload('comment_like', {
+        object: {
+          kind: 'comment',
+          id: 101,
+        },
+        container: {
+          kind: 'chapter',
+          id: 17,
+        },
+      }),
+    ).resolves.toEqual({
+      object: {
+        kind: 'comment',
+        id: 101,
+        snippet: null,
+      },
+      container: {
+        kind: 'chapter',
+        id: 17,
+        title: null,
+        subtitle: null,
+        cover: null,
+        workId: null,
+        workType: null,
+      },
+      parentContainer: null,
+      parentComment: null,
+    })
+  })
+
+  it('keeps topic snapshot nullable fields present instead of omitting them', async () => {
+    const { service } = createSubject(null)
+    const normalizeNotificationPayload = getPayloadNormalizer(service)
+
+    await expect(
+      normalizeNotificationPayload('topic_like', {
+        object: {
+          kind: 'topic',
+          id: 33,
+        },
+      }),
+    ).resolves.toEqual({
+      object: {
+        kind: 'topic',
+        id: 33,
+        title: null,
+        sectionId: null,
+      },
+    })
+  })
+
+  it('normalizes task reminders with absent optional data to explicit nulls', async () => {
+    const { service } = createSubject(null)
+    const normalizeNotificationPayload = getPayloadNormalizer(service)
+
+    await expect(
+      normalizeNotificationPayload('task_reminder', {
+        object: {
+          kind: 'task',
+          id: 3,
+          code: 'daily-read',
+          title: '每日阅读',
+          type: 2,
+        },
+        reminder: {
+          kind: 'reward_granted',
+        },
+      }),
+    ).resolves.toEqual({
+      object: {
+        kind: 'task',
+        id: 3,
+        code: 'daily-read',
+        cover: null,
+        title: '每日阅读',
+        type: 2,
+      },
+      reminder: {
+        kind: 'reward_granted',
+        cycleKey: null,
+        expiredAt: null,
+        instanceId: null,
+      },
+      reward: null,
+    })
   })
 })

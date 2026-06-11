@@ -278,36 +278,36 @@ export class UserService {
       user: {
         id: user.id,
         account: user.account,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: user.phoneNumber ?? null,
         nickname: user.nickname,
-        avatarUrl: user.avatarUrl,
-        profileBackgroundImageUrl: user.profileBackgroundImageUrl,
-        emailAddress: user.emailAddress,
+        avatarUrl: user.avatarUrl ?? null,
+        profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? null,
+        emailAddress: user.emailAddress ?? null,
         genderType: user.genderType,
-        birthDate: user.birthDate,
+        birthDate: user.birthDate ?? null,
       },
       growth: {
         points: growth.points,
         experience: growth.experience,
-        levelId: user.levelId,
+        levelId: user.levelId ?? null,
         levelName: level?.name ?? null,
         levelIcon: level?.icon ?? null,
         levelColor: level?.color ?? null,
         badgeCount,
       },
       profile: {
-        signature: user.signature,
-        bio: user.bio,
+        signature: user.signature ?? null,
+        bio: user.bio ?? null,
         status: user.status,
-        banReason: user.banReason,
-        banUntil: user.banUntil,
+        banReason: user.banReason ?? null,
+        banUntil: user.banUntil ?? null,
         counts: this.mapUserCenterCounts(counts),
       },
       lastLoginGeo: {
-        geoCountry: user.lastLoginGeoCountry,
-        geoProvince: user.lastLoginGeoProvince,
-        geoCity: user.lastLoginGeoCity,
-        geoIsp: user.lastLoginGeoIsp,
+        geoCountry: user.lastLoginGeoCountry ?? null,
+        geoProvince: user.lastLoginGeoProvince ?? null,
+        geoCity: user.lastLoginGeoCity ?? null,
+        geoIsp: user.lastLoginGeoIsp ?? null,
       },
       assets: this.mapUserCenterAssets(assets),
       message: {
@@ -433,7 +433,7 @@ export class UserService {
             color: level.color,
             requiredExperience: level.requiredExperience,
           }
-        : undefined,
+        : null,
       nextLevel: nextLevel
         ? {
             id: nextLevel.id,
@@ -442,10 +442,10 @@ export class UserService {
             color: nextLevel.color,
             requiredExperience: nextLevel.requiredExperience,
           }
-        : undefined,
+        : null,
       gapToNextLevel: nextLevel
         ? Math.max(nextLevel.requiredExperience - growth.experience, 0)
-        : undefined,
+        : null,
     }
   }
 
@@ -553,12 +553,11 @@ export class UserService {
       pageBadges.map((item) => [
         item.id,
         {
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          icon: item.icon,
-          type: item.type,
-          isEnabled: item.isEnabled,
+          ...item,
+          description: item.description ?? null,
+          icon: item.icon ?? null,
+          business: item.business ?? null,
+          eventKey: item.eventKey ?? null,
         },
       ]),
     )

@@ -1,8 +1,8 @@
 import {
-  BaseMembershipBenefitDefinitionDto,
   CreateMembershipBenefitDefinitionDto,
   CreateMembershipPageConfigDto,
   CreateMembershipPlanDto,
+  MembershipBenefitDefinitionOutputDto,
   MembershipPageConfigItemDto,
   MembershipPlanItemDto,
   QueryMembershipBenefitDefinitionDto,
@@ -14,7 +14,7 @@ import {
 } from '@libs/interaction/membership/dto/membership.dto'
 import { MembershipService } from '@libs/interaction/membership/membership.service'
 import { ApiPageDoc } from '@libs/platform/decorators'
-import { UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -75,7 +75,7 @@ export class MembershipController {
   @Get('benefit/page')
   @ApiPageDoc({
     summary: '分页查询会员权益定义',
-    model: BaseMembershipBenefitDefinitionDto,
+    model: MembershipBenefitDefinitionOutputDto,
   })
   async getMembershipBenefitDefinitionPage(
     @Query() query: QueryMembershipBenefitDefinitionDto,

@@ -1,5 +1,5 @@
 import { NestedProperty, StringProperty } from '@libs/platform/decorators'
-import { CheckVerifyCodeDto } from '@libs/platform/modules/sms/dto'
+import { CheckVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto'
 import {
   AppUserResponseDto,
   BaseAppUserDto,

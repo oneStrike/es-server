@@ -13,7 +13,7 @@ import {
   LoginDto,
   RefreshTokenDto,
   TokenDto,
-} from '@libs/platform/modules/auth/dto'
+} from '@libs/platform/modules/auth/dto/auth-scene.dto'
 import {
   AuthConstants,
   AuthDefaultValue,
@@ -332,15 +332,15 @@ export class AuthService {
     return {
       id: user.id,
       account: user.account,
-      phoneNumber: user.phoneNumber,
+      phoneNumber: user.phoneNumber ?? null,
       nickname: user.nickname,
-      avatarUrl: user.avatarUrl,
-      profileBackgroundImageUrl: user.profileBackgroundImageUrl,
-      emailAddress: user.emailAddress,
+      avatarUrl: user.avatarUrl ?? null,
+      profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? null,
+      emailAddress: user.emailAddress ?? null,
       genderType: user.genderType ?? GenderEnum.UNKNOWN,
-      birthDate: user.birthDate,
-      signature: user.signature,
-      bio: user.bio,
+      birthDate: user.birthDate ?? null,
+      signature: user.signature ?? null,
+      bio: user.bio ?? null,
       points: growth.points,
       experience: growth.experience,
       status: user.status ?? UserStatusEnum.NORMAL,

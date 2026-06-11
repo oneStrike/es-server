@@ -7,7 +7,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto } from '@libs/platform/dto/base.dto'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { IntersectionType } from '@nestjs/swagger'
 import { UserGrowthSnapshotFieldsDto } from './app-user-growth-shared.dto'
@@ -28,25 +28,25 @@ export class BaseAppUserDto extends BaseDto {
   @StringProperty({
     description: '手机号',
     example: '13800000000',
-    required: false,
+    nullable: true,
     maxLength: 20,
   })
-  phoneNumber?: string | null
+  phoneNumber!: string | null
 
   @StringProperty({
     description: '邮箱',
     example: 'user@example.com',
-    required: false,
+    nullable: true,
     maxLength: 255,
   })
-  emailAddress?: string | null
+  emailAddress!: string | null
 
   @NumberProperty({
     description: '等级ID',
     example: 1,
-    required: false,
+    nullable: true,
   })
-  levelId?: number | null
+  levelId!: number | null
 
   @StringProperty({
     description: '昵称',
@@ -59,34 +59,34 @@ export class BaseAppUserDto extends BaseDto {
   @StringProperty({
     description: '头像URL',
     example: 'https://example.com/avatar.png',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  avatarUrl?: string | null
+  avatarUrl!: string | null
 
   @StringProperty({
     description: '个人主页背景图片URL',
     example: 'https://example.com/profile-background.png',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  profileBackgroundImageUrl?: string | null
+  profileBackgroundImageUrl!: string | null
 
   @StringProperty({
     description: '个性签名',
     example: '持续输出，永不停歇。',
-    required: false,
+    nullable: true,
     maxLength: 200,
   })
-  signature?: string | null
+  signature!: string | null
 
   @StringProperty({
     description: '个人简介',
     example: '一段简短的自我介绍。',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  bio?: string | null
+  bio!: string | null
 
   @BooleanProperty({
     description: '是否启用',
@@ -108,9 +108,9 @@ export class BaseAppUserDto extends BaseDto {
   @DateProperty({
     description: '出生日期',
     example: '2000-01-01',
-    required: false,
+    nullable: true,
   })
-  birthDate?: string | Date | null
+  birthDate!: string | Date | null
 
   @EnumProperty({
     description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
@@ -124,32 +124,34 @@ export class BaseAppUserDto extends BaseDto {
   @StringProperty({
     description: '封禁原因',
     example: '违规操作',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  banReason?: string | null
+  banReason!: string | null
 
   @DateProperty({
     description: '封禁到期时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
   })
-  banUntil?: Date | null
+  banUntil!: Date | null
 
   @DateProperty({
     description: '最后登录时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  lastLoginAt?: Date | null
+  lastLoginAt!: Date | null
 
   @StringProperty({
     description: '最后登录IP',
     example: '192.168.1.1',
-    required: false,
+    nullable: true,
     maxLength: 45,
+    validation: false,
   })
-  lastLoginIp?: string | null
+  lastLoginIp!: string | null
 
   @DateProperty({
     description: '删除时间',

@@ -1,7 +1,7 @@
 import type { DbQueryOrderByRecord } from '@libs/platform/config'
 
 import type { JsonValue } from '@libs/platform/utils'
-import type { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
+import type { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   FollowingPublicForumTopicQuery,
@@ -300,12 +300,16 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
         if (!section) {
           return null
         }
+        const user = userMap.get(item.userId)
+        if (!user) {
+          return null
+        }
 
         return {
           ...item,
           liked: likedMap.get(item.id) ?? false,
           favorited: favoritedMap.get(item.id) ?? false,
-          user: userMap.get(item.userId),
+          user,
           section,
         }
       })
@@ -694,16 +698,26 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     }
 
     return new Map(
-      visibleTopics.map((topic) => [
-        topic.id,
-        {
-          ...topic,
-          liked: likedMap.get(topic.id) ?? false,
-          favorited: favoritedMap.get(topic.id) ?? false,
-          section: sectionMap.get(topic.sectionId),
-          user: userMap.get(topic.userId),
-        },
-      ]),
+      visibleTopics
+        .map((topic) => {
+          const section = sectionMap.get(topic.sectionId)
+          const user = userMap.get(topic.userId)
+          if (!section || !user) {
+            return null
+          }
+
+          return [
+            topic.id,
+            {
+              ...topic,
+              liked: likedMap.get(topic.id) ?? false,
+              favorited: favoritedMap.get(topic.id) ?? false,
+              section,
+              user,
+            },
+          ] as const
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null),
     )
   }
 
@@ -715,14 +729,14 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
   // 将敏感词命中 JSON 归一为后台 DTO 的 nullable 输出字段。
   private normalizeSensitiveWordHitOutput(
     value: unknown,
-  ): BaseSensitiveWordHitDto[] | null {
+  ): SensitiveWordHitDto[] | null {
     if (!Array.isArray(value)) {
       return null
     }
 
     return value
       .map((item) => this.normalizeSensitiveWordHitItem(item))
-      .filter((item): item is BaseSensitiveWordHitDto => item !== null)
+      .filter((item): item is SensitiveWordHitDto => item !== null)
   }
 
   private normalizeAdminTopicOrderBy(orderBy: QueryForumTopicDto['orderBy']) {
@@ -769,7 +783,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
   // 校验并复制单条敏感词命中，避免将未知 JSON 原样透传到输出 DTO。
   private normalizeSensitiveWordHitItem(
     value: unknown,
-  ): BaseSensitiveWordHitDto | null {
+  ): SensitiveWordHitDto | null {
     if (!this.isJsonObject(value)) {
       return null
     }
@@ -791,10 +805,11 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       type,
       start,
       end,
-      ...(typeof replaceWord === 'string' || replaceWord === null
-        ? { replaceWord }
-        : {}),
-      ...(typeof field === 'string' ? { field } : {}),
+      replaceWord:
+        typeof replaceWord === 'string' || replaceWord === null
+          ? replaceWord
+          : null,
+      field: typeof field === 'string' && field.length > 0 ? field : 'content',
     }
   }
 

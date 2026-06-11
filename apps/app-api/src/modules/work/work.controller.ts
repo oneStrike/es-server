@@ -5,7 +5,7 @@ import { CommentService } from '@libs/interaction/comment/comment.service';
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto';
 import { ApiDoc, ApiPageDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators';
 
-import { IdDto } from '@libs/platform/dto';
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils';
 import { Controller, Get, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

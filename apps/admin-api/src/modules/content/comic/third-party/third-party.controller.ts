@@ -8,7 +8,6 @@ import {
   ThirdPartyComicChapterDto,
   ThirdPartyComicDetailDto,
   ThirdPartyComicImportPreviewDto,
-  ThirdPartyComicImportPreviewRequestDto,
   ThirdPartyComicImportRequestDto,
   ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
@@ -19,7 +18,7 @@ import {
 } from '@libs/content/work/content-import/dto/content-import.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
+import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
@@ -92,7 +91,7 @@ export class ComicThirdPartyController {
     model: ThirdPartyComicImportPreviewDto,
   })
   // 预览第三方漫画导入计划。
-  async previewImport(@Body() body: ThirdPartyComicImportPreviewRequestDto) {
+  async previewImport(@Body() body: DetailComicRequestDto) {
     return this.thirdPartyService.previewImport(body)
   }
 

@@ -4,13 +4,9 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import {
-  BaseDto,
-  DragReorderDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -34,10 +30,10 @@ export class BaseTagDto extends BaseDto {
   @StringProperty({
     description: '标签图标 URL',
     example: 'https://example.com/icon.png',
-    required: false,
+    nullable: true,
     maxLength: 255,
   })
-  icon?: string | null
+  icon!: string | null
 
   @NumberProperty({
     description: '人气值',
@@ -69,19 +65,32 @@ export class BaseTagDto extends BaseDto {
   @StringProperty({
     description: '标签描述',
     example: '漫画类型',
-    required: false,
+    nullable: true,
     maxLength: 200,
   })
-  description?: string | null
+  description!: string | null
 }
 
-export class CreateTagDto extends OmitType(BaseTagDto, [
+class CreateTagRequiredFieldsDto extends OmitType(BaseTagDto, [
   ...OMIT_BASE_FIELDS,
   'popularity',
   'isEnabled',
+  'icon',
+  'description',
 ] as const) {}
 
-export class AdminTagDto extends OmitType(BaseTagDto, [
+class CreateTagOptionalFieldsDto extends PartialType(
+  PickType(BaseTagDto, ['icon', 'description'] as const),
+) {}
+
+export class CreateTagDto extends IntersectionType(
+  CreateTagRequiredFieldsDto,
+  CreateTagOptionalFieldsDto,
+) {}
+
+export class TagOutputDto extends BaseTagDto {}
+
+export class AdminTagDto extends OmitType(TagOutputDto, [
   'popularity',
 ] as const) {}
 

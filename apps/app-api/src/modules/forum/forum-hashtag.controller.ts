@@ -15,7 +15,8 @@ import {
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

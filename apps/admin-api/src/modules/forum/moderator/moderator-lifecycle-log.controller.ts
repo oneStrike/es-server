@@ -1,5 +1,5 @@
 import {
-  ForumModeratorLifecycleLogDto,
+  BaseForumModeratorLifecycleLogDto,
   QueryForumModeratorLifecycleLogDto,
 } from '@libs/forum/moderator/dto/moderator-lifecycle-log.dto'
 import { ForumModeratorLifecycleLogService } from '@libs/forum/moderator/moderator-lifecycle-log.service'
@@ -17,7 +17,7 @@ export class ModeratorLifecycleLogController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询版主生命周期日志',
-    model: ForumModeratorLifecycleLogDto,
+    model: BaseForumModeratorLifecycleLogDto,
   })
   async getPage(@Query() query: QueryForumModeratorLifecycleLogDto) {
     return this.lifecycleLogService.getAdminLifecycleLogPage(query)

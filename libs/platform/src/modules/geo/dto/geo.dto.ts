@@ -1,4 +1,4 @@
-import type { GeoRuntimeSource } from '../geo.type'
+import type { GeoRuntimeSource } from '../geo.constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -6,7 +6,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { GEO_RUNTIME_SOURCE } from '../geo.type'
+import { GEO_RUNTIME_SOURCE } from '../geo.constant'
 
 /**
  * ip2region 运行状态 DTO。
@@ -42,41 +42,41 @@ export class Ip2regionRuntimeStatusDto {
   @StringProperty({
     description: '当前生效文件名',
     example: '20260408-120000-ip2region_v4.xdb',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  fileName?: string
+  fileName!: string | null
 
   @StringProperty({
     description: '当前生效文件绝对路径',
     example:
       'D:/code/es/es-server/uploads/ip2region/active/20260408-120000-ip2region_v4.xdb',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  filePath?: string
+  filePath!: string | null
 
   @NumberProperty({
     description: '当前生效文件大小（字节）',
     example: 10485760,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  fileSize?: number
+  fileSize!: number | null
 
   @DateProperty({
     description: '当前生效时间',
     example: '2026-04-08T12:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  activatedAt?: Date
+  activatedAt!: Date | null
 
   @StringProperty({
     description: 'ip2region 专用存储根目录',
     example: 'D:/code/es/es-server/uploads/ip2region',
-    required: false,
+    required: true,
     validation: false,
   })
-  storageDir?: string
+  storageDir!: string
 }

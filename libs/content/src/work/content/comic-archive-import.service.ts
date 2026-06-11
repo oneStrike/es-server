@@ -61,9 +61,9 @@ import {
 } from './comic-archive-import.constant'
 import {
   ComicArchiveTaskResponseDto,
+  ComicArchiveWorkflowJobIdDto,
   ConfirmComicArchiveDto,
   CreateComicArchiveSessionDto,
-  DiscardComicArchiveDto,
   PreviewComicArchiveDto,
 } from './dto/content.dto'
 
@@ -357,7 +357,7 @@ export class ComicArchiveImportService {
   }
 
   // 丢弃预确认漫画压缩包导入会话，先关闭草稿状态再移除本地临时目录，避免迟到上传复活预览。
-  async discardArchivePreview(input: DiscardComicArchiveDto) {
+  async discardArchivePreview(input: ComicArchiveWorkflowJobIdDto) {
     const job = await this.workflowService.cancelJob({ jobId: input.jobId })
     await this.removeTaskDir(input.jobId)
     return job
@@ -392,10 +392,10 @@ export class ComicArchiveImportService {
 
     return {
       jobId,
-      workId: importJob.workId ?? 0,
+      workId: importJob.workId ?? null,
       mode: importJob.previewMode ?? ComicArchivePreviewModeEnum.SINGLE_CHAPTER,
       status: this.toArchiveStatus(workflowJob.status),
-      archiveName: importJob.archiveName,
+      archiveName: importJob.archiveName ?? null,
       requireConfirm: previewItems.some((item) => item.status === 1),
       matchedItems: previewItems
         .filter((item) => item.status === 1)
@@ -404,7 +404,7 @@ export class ComicArchiveImportService {
         .filter((item) => item.status === 2)
         .map((item) => item.metadata as ComicArchiveIgnoredItemSnapshot),
       resultItems: items.map((item) => ({
-        chapterId: item.localChapterId ?? item.targetChapterId ?? 0,
+        chapterId: item.localChapterId ?? item.targetChapterId ?? null,
         chapterTitle: item.title,
         error: toWorkflowLastErrorView(item),
         importedImageCount: item.imageSuccessCount,
@@ -415,14 +415,14 @@ export class ComicArchiveImportService {
               ? ComicArchiveImportItemStatusEnum.FAILED
               : ComicArchiveImportItemStatusEnum.PENDING,
       })),
-      progressCode: workflowJob.progressCode,
+      progressCode: workflowJob.progressCode ?? null,
       progressContext: this.toNullableWorkflowObject(workflowJob.progressContext),
       progressDetail: this.toNullableWorkflowObject(workflowJob.progressDetail),
       confirmedChapterIds: items
         .map((item) => item.localChapterId ?? item.targetChapterId)
         .filter((chapterId): chapterId is number => typeof chapterId === 'number'),
-      startedAt: workflowJob.startedAt,
-      finishedAt: workflowJob.finishedAt,
+      startedAt: workflowJob.startedAt ?? null,
+      finishedAt: workflowJob.finishedAt ?? null,
       expiresAt:
         workflowJob.expiresAt ??
         new Date(workflowJob.createdAt.getTime() + ARCHIVE_TASK_TTL_MS),
@@ -445,6 +445,12 @@ export class ComicArchiveImportService {
       await this.contentImportService.readContentImportJobByWorkflowJobId(
         context.jobId,
       )
+    if (importJob.workId == null) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '压缩包导入任务未绑定作品',
+      )
+    }
     const items = await this.contentImportService.listExecutableItems(
       context.jobId,
       context.attemptNo,
@@ -457,7 +463,7 @@ export class ComicArchiveImportService {
       itemId: '',
       jobId: context.jobId,
       updateProgress: context.updateProgress,
-      workId: importJob.workId ?? 0,
+      workId: importJob.workId,
     }
 
     for (const [index, item] of items.entries()) {

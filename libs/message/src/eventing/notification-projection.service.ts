@@ -8,7 +8,8 @@ import type {
   NotificationProjectionCommand,
 } from './message-event.type'
 import { DrizzleService } from '@db/core'
-import { EnablePlatformEnum } from '@libs/platform/constant'
+import { TaskTypeEnum } from '@libs/growth/task/task.constant'
+import { EnablePlatformEnum, WorkTypeEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
@@ -33,9 +34,34 @@ function toNonEmptyString(value: unknown): string | undefined {
   return value
 }
 
-function compactRecord<T extends Record<string, unknown>>(value: T): T {
-  const entries = Object.entries(value).filter(([, item]) => item !== undefined)
-  return Object.fromEntries(entries) as T
+function toNotificationKind<K extends string>(
+  value: unknown,
+  expected: K,
+): K | undefined {
+  return value === expected ? expected : undefined
+}
+
+function toWorkType(value: unknown): WorkTypeEnum | undefined {
+  const normalized = toPositiveInteger(value)
+  if (
+    normalized === WorkTypeEnum.COMIC ||
+    normalized === WorkTypeEnum.NOVEL
+  ) {
+    return normalized
+  }
+  return undefined
+}
+
+function toTaskType(value: unknown): TaskTypeEnum | undefined {
+  const normalized = toPositiveInteger(value)
+  if (
+    normalized === TaskTypeEnum.ONBOARDING ||
+    normalized === TaskTypeEnum.DAILY ||
+    normalized === TaskTypeEnum.CAMPAIGN
+  ) {
+    return normalized
+  }
+  return undefined
 }
 
 /**
@@ -296,17 +322,37 @@ export class NotificationProjectionService {
     ) {
       return this.normalizeCommentActionPayload(categoryKey, payload)
     }
+    if (
+      categoryKey === 'topic_like' ||
+      categoryKey === 'topic_favorited' ||
+      categoryKey === 'topic_mentioned'
+    ) {
+      return this.normalizeTopicObjectPayload(payload)
+    }
+    if (categoryKey === 'topic_commented') {
+      return this.normalizeTopicCommentedPayload(payload)
+    }
     return payload
   }
 
   private normalizeTaskReminderPayload(payload: Record<string, unknown>) {
-    const normalized = compactRecord({
-      object: isPlainRecord(payload.object) ? payload.object : undefined,
-      reminder: isPlainRecord(payload.reminder) ? payload.reminder : undefined,
-      reward: isPlainRecord(payload.reward) ? payload.reward : undefined,
-    })
+    const object = isPlainRecord(payload.object)
+      ? this.normalizeTaskObject(payload.object)
+      : undefined
+    const reminder = isPlainRecord(payload.reminder)
+      ? this.normalizeTaskReminderInfo(payload.reminder)
+      : undefined
+    if (!object || !reminder) {
+      return null
+    }
 
-    return Object.keys(normalized).length > 0 ? normalized : null
+    return {
+      object,
+      reminder,
+      reward: isPlainRecord(payload.reward)
+        ? this.normalizeTaskReward(payload.reward)
+        : null,
+    }
   }
 
   private extractNotificationFacts(
@@ -379,7 +425,7 @@ export class NotificationProjectionService {
           id: announcement.id,
           kind: 'announcement',
           priorityLevel: announcement.priorityLevel,
-          summary: announcement.summary ?? undefined,
+          summary: announcement.summary ?? null,
           title: announcement.title,
         },
       },
@@ -442,7 +488,7 @@ export class NotificationProjectionService {
       : undefined
 
     if (!object || !container) {
-      return payload
+      return null
     }
 
     const normalizedObject = await this.normalizeCommentObject(object)
@@ -453,24 +499,67 @@ export class NotificationProjectionService {
       container,
       currentParentContainer,
     )
+    if (!normalizedObject || !normalizedContainer.container) {
+      return null
+    }
 
-    return compactRecord({
+    return {
       object: normalizedObject,
-      parentComment: normalizedParentComment,
+      parentComment: normalizedParentComment ?? null,
       container: normalizedContainer.container,
-      parentContainer:
-        normalizedContainer.parentContainer ?? currentParentContainer,
-    })
+      parentContainer: normalizedContainer.parentContainer ?? null,
+    }
+  }
+
+  private async normalizeTopicObjectPayload(payload: Record<string, unknown>) {
+    const object = isPlainRecord(payload.object) ? payload.object : undefined
+    if (!object) {
+      return null
+    }
+    const normalizedObject = await this.normalizeTopicContainer(
+      toPositiveInteger(object.id) ?? 0,
+      object,
+    )
+    if (!normalizedObject) {
+      return null
+    }
+
+    return {
+      object: normalizedObject,
+    }
+  }
+
+  private async normalizeTopicCommentedPayload(payload: Record<string, unknown>) {
+    const object = isPlainRecord(payload.object) ? payload.object : undefined
+    const container = isPlainRecord(payload.container)
+      ? payload.container
+      : undefined
+    if (!object || !container) {
+      return null
+    }
+    const normalizedObject = await this.normalizeCommentObject(object)
+    const normalizedContainer = await this.normalizeTopicContainer(
+      toPositiveInteger(container.id) ?? 0,
+      container,
+    )
+    if (!normalizedObject || !normalizedContainer) {
+      return null
+    }
+
+    return {
+      object: normalizedObject,
+      container: normalizedContainer,
+    }
   }
 
   private async normalizeCommentObject(object: Record<string, unknown>) {
     if (object.kind !== 'comment') {
-      return object
+      return null
     }
 
     const commentId = toPositiveInteger(object.id)
     if (!commentId) {
-      return object
+      return null
     }
 
     const commentRecord =
@@ -486,28 +575,27 @@ export class NotificationProjectionService {
           })
         : undefined
 
-    return compactRecord({
+    return {
       kind: 'comment',
       id: commentId,
       snippet:
         toNonEmptyString(object.snippet) ??
         toNonEmptyString(commentRecord?.content) ??
-        undefined,
-    })
+        null,
+    }
   }
 
   private async normalizeCommentContainer(
     container: Record<string, unknown>,
     parentContainer?: Record<string, unknown>,
   ): Promise<{
-    container: Record<string, unknown>
+    container: Record<string, unknown> | null
     parentContainer?: Record<string, unknown>
   }> {
     const containerId = toPositiveInteger(container.id)
     if (!containerId || typeof container.kind !== 'string') {
       return {
-        container,
-        parentContainer,
+        container: null,
       }
     }
 
@@ -532,8 +620,7 @@ export class NotificationProjectionService {
     }
 
     return {
-      container,
-      parentContainer,
+      container: null,
     }
   }
 
@@ -554,20 +641,29 @@ export class NotificationProjectionService {
       },
     })
 
-    return compactRecord({
+    return {
       kind: 'work',
       id: workId,
-      title: toNonEmptyString(work?.name) ?? toNonEmptyString(current.title),
-      cover: toNonEmptyString(work?.cover) ?? toNonEmptyString(current.cover),
-      workType:
-        toPositiveInteger(work?.type) ?? toPositiveInteger(current.workType),
-    })
+      title:
+        toNonEmptyString(work?.name) ??
+        toNonEmptyString(current.title) ??
+        null,
+      cover:
+        toNonEmptyString(work?.cover) ??
+        toNonEmptyString(current.cover) ??
+        null,
+      workType: toWorkType(work?.type) ?? toWorkType(current.workType) ?? null,
+    }
   }
 
   private async normalizeTopicContainer(
     topicId: number,
     current: Record<string, unknown>,
   ) {
+    if (!topicId) {
+      return null
+    }
+
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
         id: topicId,
@@ -580,14 +676,18 @@ export class NotificationProjectionService {
       },
     })
 
-    return compactRecord({
+    return {
       kind: 'topic',
       id: topicId,
-      title: toNonEmptyString(topic?.title) ?? toNonEmptyString(current.title),
+      title:
+        toNonEmptyString(topic?.title) ??
+        toNonEmptyString(current.title) ??
+        null,
       sectionId:
         toPositiveInteger(topic?.sectionId) ??
-        toPositiveInteger(current.sectionId),
-    })
+        toPositiveInteger(current.sectionId) ??
+        null,
+    }
   }
 
   private async normalizeChapterContainer(
@@ -622,46 +722,116 @@ export class NotificationProjectionService {
 
     const resolvedParentContainer =
       chapter?.workId || toPositiveInteger(parentContainer?.id)
-        ? compactRecord({
+        ? {
             kind: 'work',
             id: chapter?.workId ?? toPositiveInteger(parentContainer?.id),
             title:
               toNonEmptyString(chapter?.work?.name) ??
-              toNonEmptyString(parentContainer?.title),
+              toNonEmptyString(parentContainer?.title) ??
+              null,
             cover:
               toNonEmptyString(chapter?.work?.cover) ??
-              toNonEmptyString(parentContainer?.cover),
+              toNonEmptyString(parentContainer?.cover) ??
+              null,
             workType:
-              toPositiveInteger(chapter?.work?.type) ??
-              toPositiveInteger(parentContainer?.workType),
-          })
+              toWorkType(chapter?.work?.type) ??
+              toWorkType(parentContainer?.workType) ??
+              null,
+          }
         : undefined
 
     return {
-      container: compactRecord({
+      container: {
         kind: 'chapter',
         id: chapterId,
         title:
-          toNonEmptyString(chapter?.title) ?? toNonEmptyString(current.title),
+          toNonEmptyString(chapter?.title) ??
+          toNonEmptyString(current.title) ??
+          null,
         subtitle:
           toNonEmptyString(chapter?.subtitle) ??
-          toNonEmptyString(current.subtitle),
+          toNonEmptyString(current.subtitle) ??
+          null,
         cover:
           toNonEmptyString(chapter?.cover) ??
           toNonEmptyString(chapter?.work?.cover) ??
-          toNonEmptyString(current.cover),
+          toNonEmptyString(current.cover) ??
+          null,
         workId:
           toPositiveInteger(chapter?.workId) ??
-          toPositiveInteger(current.workId),
+          toPositiveInteger(current.workId) ??
+          null,
         workType:
-          toPositiveInteger(chapter?.workType) ??
-          toPositiveInteger(current.workType),
-      }),
+          toWorkType(chapter?.workType) ??
+          toWorkType(current.workType) ??
+          null,
+      },
       parentContainer:
         resolvedParentContainer &&
         typeof resolvedParentContainer.id === 'number'
           ? resolvedParentContainer
           : parentContainer,
+    }
+  }
+
+  private normalizeTaskObject(object: Record<string, unknown>) {
+    if (object.kind !== 'task') {
+      return null
+    }
+    const taskId = toPositiveInteger(object.id)
+    const taskType = toTaskType(object.type)
+    if (!taskId || !taskType) {
+      return null
+    }
+
+    return {
+      kind: 'task',
+      id: taskId,
+      code: toNonEmptyString(object.code) ?? `task-${taskId}`,
+      cover: toNonEmptyString(object.cover) ?? null,
+      title: toNonEmptyString(object.title) ?? '',
+      type: taskType,
+    }
+  }
+
+  private normalizeTaskReminderInfo(reminder: Record<string, unknown>) {
+    const kind =
+      toNotificationKind(reminder.kind, 'auto_assigned') ??
+      toNotificationKind(reminder.kind, 'expiring_soon') ??
+      toNotificationKind(reminder.kind, 'reward_granted')
+    if (!kind) {
+      return null
+    }
+
+    return {
+      kind,
+      cycleKey: toNonEmptyString(reminder.cycleKey) ?? null,
+      expiredAt: reminder.expiredAt instanceof Date ? reminder.expiredAt : null,
+      instanceId: toPositiveInteger(reminder.instanceId) ?? null,
+    }
+  }
+
+  private normalizeTaskReward(reward: Record<string, unknown>) {
+    const rawItems = Array.isArray(reward.items) ? reward.items : []
+    const items = rawItems.flatMap((item) => {
+      if (!isPlainRecord(item)) {
+        return []
+      }
+      const assetType = toPositiveInteger(item.assetType)
+      const amount = toPositiveInteger(item.amount)
+      return assetType && amount ? [{ assetType, amount }] : []
+    })
+    const rawLedgerRecordIds = Array.isArray(reward.ledgerRecordIds)
+      ? reward.ledgerRecordIds
+      : []
+    const ledgerRecordIds = rawLedgerRecordIds.flatMap((item) => {
+      const id = toPositiveInteger(item)
+      return id ? [id] : []
+    })
+
+    return {
+      items,
+      ledgerRecordIds,
     }
   }
 }

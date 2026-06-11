@@ -72,19 +72,23 @@ export class MessageInboxService {
     latestNotification?: InboxLatestNotificationRow,
     now = new Date(),
   ) {
-    return latestNotification &&
-      (!latestNotification.expiresAt || latestNotification.expiresAt > now)
-      ? {
-          id: latestNotification.id,
-          categoryKey: latestNotification.categoryKey,
-          categoryLabel: getMessageNotificationCategoryLabel(
-            latestNotification.categoryKey as MessageNotificationCategoryKey,
-          ),
-          title: latestNotification.title,
-          content: latestNotification.content,
-          createdAt: latestNotification.createdAt,
-        }
-      : undefined
+    if (
+      !latestNotification ||
+      (latestNotification.expiresAt && latestNotification.expiresAt <= now)
+    ) {
+      return null
+    }
+
+    return {
+      id: latestNotification.id,
+      categoryKey: latestNotification.categoryKey,
+      categoryLabel: getMessageNotificationCategoryLabel(
+        latestNotification.categoryKey as MessageNotificationCategoryKey,
+      ),
+      title: latestNotification.title,
+      content: latestNotification.content ?? null,
+      createdAt: latestNotification.createdAt,
+    }
   }
 
   // 查询通知中心未读分类汇总。
@@ -156,7 +160,7 @@ export class MessageInboxService {
     const totalUnreadCount = notificationUnread.total + chatUnreadCount
     const latestNotification = latestNotificationRows[0]
 
-    let latestChat: InboxLatestChatSummary | undefined
+    let latestChat: InboxLatestChatSummary | null = null
 
     const latestConversation = latestConversationRows[0]
 
@@ -172,10 +176,10 @@ export class MessageInboxService {
         lastMessageId:
           typeof latestConversation.lastMessageId === 'bigint'
             ? latestConversation.lastMessageId.toString()
-            : undefined,
-        lastMessageAt: latestConversation.lastMessageAt ?? undefined,
-        lastMessageContent: lastMessage?.content,
-        lastSenderId: latestConversation.lastSenderId ?? undefined,
+            : null,
+        lastMessageAt: latestConversation.lastMessageAt ?? null,
+        lastMessageContent: lastMessage?.content ?? null,
+        lastSenderId: latestConversation.lastSenderId ?? null,
       }
     }
 

@@ -5,7 +5,7 @@ import type {
   ChatMediaOriginPolicyOptions,
 } from './chat-media-origin-policy.type'
 import { posix } from 'node:path'
-import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.constant'
 
 const TRAILING_SLASH_REGEX = /\/+$/
 const LEADING_SLASH_REGEX = /^\/+/

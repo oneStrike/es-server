@@ -1,8 +1,7 @@
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
-  BaseSensitiveWordDto,
   CreateSensitiveWordDto,
   QuerySensitiveWordDto,
   QuerySensitiveWordHitLogDto,
@@ -12,11 +11,12 @@ import {
   SensitiveWordDetectStatusResponseDto,
   SensitiveWordHighestLevelResponseDto,
   SensitiveWordHitLogPageItemDto,
+  SensitiveWordOutputDto,
   SensitiveWordReplaceDto,
   SensitiveWordReplaceResponseDto,
   SensitiveWordStatisticsDataDto,
-  SensitiveWordStatisticsQueryDto,
   SensitiveWordStatisticsResponseDto,
+  StatisticsTypeFieldDto,
   UpdateSensitiveWordDto,
 } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
@@ -40,7 +40,7 @@ export class SensitiveWordController {
   @Get('page')
   @ApiPageDoc({
     summary: '获取敏感词分页列表',
-    model: BaseSensitiveWordDto,
+    model: SensitiveWordOutputDto,
   })
   async getSensitiveWordPage(@Query() query: QuerySensitiveWordDto) {
     return this.sensitiveWordService.getSensitiveWordPage(query)
@@ -114,7 +114,7 @@ export class SensitiveWordController {
     summary: '获取统计查询结果',
     model: SensitiveWordStatisticsResponseDto,
   })
-  async getStatistics(@Query() query: SensitiveWordStatisticsQueryDto) {
+  async getStatistics(@Query() query: StatisticsTypeFieldDto) {
     return this.sensitiveWordService.getStatistics(query)
   }
 
@@ -158,7 +158,7 @@ export class SensitiveWordController {
   })
   async getHighestSensitiveWordLevel(@Body() body: SensitiveWordDetectDto) {
     return {
-      highestLevel: this.detectService.getHighestSensitiveWordLevel(body),
+      highestLevel: this.detectService.getHighestSensitiveWordLevel(body) ?? null,
     }
   }
 

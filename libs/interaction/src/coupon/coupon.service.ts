@@ -33,6 +33,8 @@ import {
   CouponTypeEnum,
 } from '../coupon/coupon.constant'
 import {
+  CouponDefinitionOutputDto,
+  CouponRedemptionResultDto,
   CreateCouponDefinitionDto,
   GrantCouponDto,
   QueryCouponDefinitionDto,
@@ -704,7 +706,26 @@ export class CouponService {
       this.db.$count(this.couponDefinition, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((coupon) => this.toCouponDefinitionOutputDto(coupon)),
+      total,
+      page,
+    )
+  }
+
+  private toCouponDefinitionOutputDto(
+    coupon: typeof this.couponDefinition.$inferSelect,
+  ): CouponDefinitionOutputDto {
+    return {
+      ...coupon,
+      discountAmount: coupon.discountAmount ?? 0,
+      discountRateBps: coupon.discountRateBps ?? 10000,
+      usageLimit: coupon.usageLimit ?? 1,
+      validDays: coupon.validDays ?? 0,
+      benefitDays: coupon.benefitDays ?? 0,
+      benefitCount: coupon.benefitCount ?? 0,
+      isEnabled: coupon.isEnabled ?? true,
+    }
   }
 
   // 购买章节前预留折扣券并返回优惠后的应付价格。
@@ -891,7 +912,7 @@ export class CouponService {
   async redeemCoupon(dto: RedeemCouponCommandDto) {
     return this.drizzle.withTransaction(async (tx) => {
       const redemption = await this.redeemCouponInTx(tx, dto)
-      return redemption
+      return this.toCouponRedemptionResultDto(redemption)
     })
   }
 
@@ -1087,7 +1108,7 @@ export class CouponService {
           expiresAt: this.userCouponInstance.expiresAt,
           createdAt: this.userCouponInstance.createdAt,
           updatedAt: this.userCouponInstance.updatedAt,
-          name: sql<string>`${this.userCouponInstance.grantSnapshot}->>'name'`,
+          grantSnapshot: this.userCouponInstance.grantSnapshot,
         })
         .from(this.userCouponInstance)
         .where(and(...conditions))
@@ -1101,7 +1122,11 @@ export class CouponService {
     ])
 
     return {
-      list: rows,
+      list: rows.map(({ grantSnapshot, ...row }) => ({
+        ...row,
+        name: this.parseGrantSnapshot(grantSnapshot).name,
+        expiresAt: row.expiresAt ?? null,
+      })),
       total: Number(totalRows[0]?.total ?? 0),
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
@@ -1128,6 +1153,26 @@ export class CouponService {
         BusinessErrorCode.STATE_CONFLICT,
         '券实例类型与发放快照不一致',
       )
+    }
+  }
+
+  private toCouponRedemptionResultDto(redemption: {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    couponInstanceId: number
+    couponType: CouponTypeEnum
+    targetType: CouponRedemptionTargetTypeEnum
+    targetId?: number | null
+  }): CouponRedemptionResultDto {
+    return {
+      id: redemption.id,
+      createdAt: redemption.createdAt,
+      updatedAt: redemption.updatedAt,
+      couponInstanceId: redemption.couponInstanceId,
+      couponType: redemption.couponType,
+      targetType: redemption.targetType,
+      targetId: redemption.targetId ?? null,
     }
   }
 }

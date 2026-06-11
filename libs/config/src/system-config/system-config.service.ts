@@ -7,7 +7,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AesService } from '@libs/platform/modules/crypto/aes.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
-import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.constant'
 import { isMasked, maskString } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import {
@@ -18,7 +18,10 @@ import {
 } from '@nestjs/common'
 import { desc, sql } from 'drizzle-orm'
 import { ConfigReader } from './config-reader'
-import { UpdateSystemConfigDto } from './dto/config.dto'
+import {
+  SystemConfigDetailDto,
+  UpdateSystemConfigDto,
+} from './dto/config.dto'
 import {
   CACHE_KEY,
   CACHE_TTL,
@@ -90,7 +93,9 @@ export class SystemConfigService implements OnModuleInit {
     }
 
     const readableSnapshot = await this.buildReadableSnapshot(latestConfig)
-    return this.maskSensitiveSnapshot(readableSnapshot)
+    return this.toSystemConfigDetailDto(
+      this.maskSensitiveSnapshot(readableSnapshot),
+    )
   }
 
   /**
@@ -361,6 +366,7 @@ export class SystemConfigService implements OnModuleInit {
    */
   private async buildReadableSnapshot(config: Record<string, unknown>) {
     const mergedConfig = this.mergeWithDefaults(config)
+    mergedConfig.updatedById = config.updatedById ?? null
     await this.decryptSensitiveFields(mergedConfig)
     return mergedConfig
   }
@@ -389,6 +395,100 @@ export class SystemConfigService implements OnModuleInit {
     }
 
     return maskedConfig
+  }
+
+  private toSystemConfigDetailDto(
+    config: Record<string, unknown>,
+  ): SystemConfigDetailDto {
+    const aliyunConfig = this.asRecord(config.aliyunConfig)
+    const siteConfig = this.asRecord(config.siteConfig)
+    const operationConfig = this.asRecord(config.operationConfig)
+    const securityConfig = this.asRecord(config.securityConfig)
+    const thirdPartyResourceParseConfig = this.asRecord(
+      config.thirdPartyResourceParseConfig,
+    )
+    const walletCurrencyDisplayConfig = this.asRecord(
+      config.walletCurrencyDisplayConfig,
+    )
+    const maintenanceConfig = this.asRecord(config.maintenanceConfig)
+    const contentReviewPolicy = this.asRecord(config.contentReviewPolicy)
+    const uploadConfig = this.asRecord(config.uploadConfig)
+
+    return {
+      ...config,
+      updatedById: config.updatedById ?? null,
+      aliyunConfig: {
+        ...DEFAULT_CONFIG.aliyunConfig,
+        ...aliyunConfig,
+        sms: {
+          ...DEFAULT_CONFIG.aliyunConfig.sms,
+          ...this.asRecord(aliyunConfig.sms),
+        },
+      },
+      siteConfig: {
+        ...DEFAULT_CONFIG.siteConfig,
+        ...siteConfig,
+      },
+      operationConfig: {
+        ...DEFAULT_CONFIG.operationConfig,
+        ...operationConfig,
+        forumHashtagConfig: {
+          ...DEFAULT_CONFIG.operationConfig.forumHashtagConfig,
+          ...this.asRecord(operationConfig.forumHashtagConfig),
+        },
+      },
+      securityConfig: {
+        ...DEFAULT_CONFIG.securityConfig,
+        ...securityConfig,
+        remoteImageImport: {
+          ...DEFAULT_CONFIG.securityConfig.remoteImageImport,
+          ...this.asRecord(securityConfig.remoteImageImport),
+        },
+      },
+      thirdPartyResourceParseConfig: {
+        ...DEFAULT_CONFIG.thirdPartyResourceParseConfig,
+        ...thirdPartyResourceParseConfig,
+      },
+      walletCurrencyDisplayConfig: {
+        ...DEFAULT_CONFIG.walletCurrencyDisplayConfig,
+        ...walletCurrencyDisplayConfig,
+      },
+      maintenanceConfig: {
+        ...DEFAULT_CONFIG.maintenanceConfig,
+        ...maintenanceConfig,
+      },
+      contentReviewPolicy: {
+        ...DEFAULT_CONFIG.contentReviewPolicy,
+        ...contentReviewPolicy,
+        severeAction: {
+          ...DEFAULT_CONFIG.contentReviewPolicy.severeAction,
+          ...this.asRecord(contentReviewPolicy.severeAction),
+        },
+        generalAction: {
+          ...DEFAULT_CONFIG.contentReviewPolicy.generalAction,
+          ...this.asRecord(contentReviewPolicy.generalAction),
+        },
+        lightAction: {
+          ...DEFAULT_CONFIG.contentReviewPolicy.lightAction,
+          ...this.asRecord(contentReviewPolicy.lightAction),
+        },
+      },
+      uploadConfig: {
+        ...DEFAULT_CONFIG.uploadConfig,
+        ...uploadConfig,
+        qiniu: {
+          ...DEFAULT_CONFIG.uploadConfig.qiniu,
+          ...this.asRecord(uploadConfig.qiniu),
+        },
+        superbed: {
+          ...DEFAULT_CONFIG.uploadConfig.superbed,
+          ...this.asRecord(uploadConfig.superbed),
+          watermark: this.asRecord(uploadConfig.superbed).watermark ?? null,
+          compress: this.asRecord(uploadConfig.superbed).compress ?? null,
+          webp: this.asRecord(uploadConfig.superbed).webp ?? null,
+        },
+      },
+    } as SystemConfigDetailDto
   }
 
   /**
@@ -447,6 +547,10 @@ export class SystemConfigService implements OnModuleInit {
     value: T,
   ): value is Extract<T, Record<string, unknown>> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return this.isPlainObject(value) ? value : {}
   }
 
   /**

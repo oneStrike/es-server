@@ -1,7 +1,6 @@
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { FastifyRequest } from 'fastify'
 import type {
-  MultipartFieldLike,
   PreparedUploadFile,
   StoredUploadNameResult,
   UploadConfigProvider,
@@ -37,7 +36,8 @@ import { LocalUploadProvider } from './local-upload.provider'
 import { QiniuUploadProvider } from './qiniu-upload.provider'
 import { SuperbedUploadProvider } from './superbed-upload.provider'
 import { resolveImageDimensionsFromFile } from './upload-image-dimension.util'
-import { UPLOAD_CONFIG_PROVIDER, UploadProviderEnum } from './upload.type'
+import { UploadProviderEnum } from './upload.constant'
+import { UPLOAD_CONFIG_PROVIDER } from './upload.type'
 
 const pump = promisify(pipeline)
 const DEFAULT_UPLOAD_SCENE = 'shared'
@@ -78,7 +78,7 @@ export class UploadService {
     if (!targetFile) {
       throw new BadRequestException('上传文件不能为空')
     }
-    const scene = this.resolveUploadScene(targetFile.fields.scene, options)
+    const scene = this.resolveUploadScene(options)
 
     if (!scene) {
       await this.consumeStream(targetFile.file)
@@ -390,8 +390,8 @@ export class UploadService {
         fileType: preparedFile.ext,
         fileCategory: preparedFile.fileCategory,
         scene: preparedFile.scene,
-        width: preparedFile.width,
-        height: preparedFile.height,
+        width: preparedFile.width ?? null,
+        height: preparedFile.height ?? null,
         uploadTime: new Date(),
       },
     }
@@ -597,51 +597,14 @@ export class UploadService {
     return null
   }
 
-  /**
-   * 从 multipart 字段中提取上传场景。
-   * 非法场景会返回 null，由上层统一转换为业务异常。
-   */
-  private extractScene<T>(sceneField: T) {
-    if (sceneField == null) {
-      return DEFAULT_UPLOAD_SCENE
-    }
-
-    let scene: string | undefined
-
-    if (typeof sceneField === 'string') {
-      scene = sceneField
-    } else if (
-      sceneField &&
-      typeof sceneField === 'object' &&
-      'type' in sceneField &&
-      'value' in sceneField
-    ) {
-      const field = sceneField as MultipartFieldLike
-      if (field.type === 'field') {
-        scene = String(field.value)
-      }
-    } else if (Array.isArray(sceneField)) {
-      const firstField = sceneField[0] as MultipartFieldLike | undefined
-      if (firstField?.type === 'field') {
-        scene = String(firstField.value)
-      }
-    }
-    return scene ? this.normalizeSceneName(scene) : null
+  // 解析单次上传场景；只接受 controller DTO/调用方传入的 scene 覆盖。
+  private resolveUploadScene(options: UploadFileOptions): string | null {
+    return this.normalizeSceneName(
+      options.sceneOverride ?? DEFAULT_UPLOAD_SCENE,
+    )
   }
 
-  // 解析单次上传场景；显式覆盖时忽略客户端 multipart scene。
-  private resolveUploadScene<T>(
-    sceneField: T,
-    options: UploadFileOptions,
-  ): string | null {
-    if (options.sceneOverride !== undefined) {
-      return this.normalizeSceneName(options.sceneOverride)
-    }
-
-    return this.extractScene(sceneField)
-  }
-
-  // 规范化场景名，复用 multipart scene 的同一值域。
+  // 规范化场景名，复用 DTO scene 的同一值域。
   private normalizeSceneName(scene: string) {
     const normalizedScene = scene.trim()
     if (

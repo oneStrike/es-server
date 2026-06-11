@@ -11,8 +11,8 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, isNull, lt, or, sql } from 'drizzle-orm'
 import {
+  BaseTaskEventFailureDto,
   QueryTaskEventFailurePageDto,
-  TaskEventFailurePageItemDto,
   TaskEventFailureRetryFailureDto,
 } from './dto/task-event-failure.dto'
 import { TaskEventTemplateRegistry } from './task-event-template.registry'
@@ -390,7 +390,7 @@ export class TaskEventFailureService extends TaskServiceSupport {
 
   private toTaskEventFailurePageItem(
     failure: typeof this.taskEventFailureTable.$inferSelect,
-  ): TaskEventFailurePageItemDto {
+  ): BaseTaskEventFailureDto {
     return {
       id: failure.id,
       createdAt: failure.createdAt,

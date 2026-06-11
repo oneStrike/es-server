@@ -7,7 +7,7 @@ import {
   FollowTargetTypeContractEnum,
   WorkTypeEnum,
 } from '@libs/platform/constant'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gte, inArray, isNull, or, sql } from 'drizzle-orm'
@@ -451,7 +451,16 @@ export class WorkAuthorService {
       this.db.$count(this.workAuthor, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => ({
+        ...item,
+        avatar: item.avatar ?? null,
+        nationality: item.nationality ?? null,
+        type: item.type ?? null,
+      })),
+      total,
+      page,
+    )
   }
 
   // 获取作者详情，仅返回未软删除的作者记录，未命中时按业务异常处理。
@@ -467,7 +476,22 @@ export class WorkAuthorService {
       )
     }
 
-    return author
+    return {
+      id: author.id,
+      name: author.name,
+      avatar: author.avatar ?? null,
+      description: author.description ?? null,
+      isEnabled: author.isEnabled,
+      type: author.type ?? null,
+      nationality: author.nationality ?? null,
+      gender: author.gender,
+      remark: author.remark ?? null,
+      workCount: author.workCount,
+      followersCount: author.followersCount,
+      isRecommended: author.isRecommended,
+      createdAt: author.createdAt,
+      updatedAt: author.updatedAt,
+    }
   }
 
   private parseAuthorTypeFilter(type?: string): AuthorTypeEnum[] {

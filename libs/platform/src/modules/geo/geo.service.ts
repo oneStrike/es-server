@@ -19,7 +19,8 @@ import {
 } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import * as ip2region from 'ip2region.js'
-import { GEO_RUNTIME_SOURCE, GEO_SOURCE } from './geo.type'
+import { GEO_RUNTIME_SOURCE } from './geo.constant'
+import { GEO_SOURCE } from './geo.type'
 
 const DEFAULT_IP2REGION_DB_PATH = resolve(
   process.cwd(),
@@ -254,6 +255,10 @@ export class GeoService implements OnModuleDestroy {
     return {
       ready: false,
       source: GEO_RUNTIME_SOURCE.UNAVAILABLE,
+      filePath: null,
+      fileName: null,
+      fileSize: null,
+      activatedAt: null,
       storageDir,
     }
   }
@@ -280,8 +285,8 @@ export class GeoService implements OnModuleDestroy {
       source: info.source ?? GEO_RUNTIME_SOURCE.CONFIGURED_PATH,
       filePath,
       fileName: info.fileName ?? basename(filePath),
-      fileSize: info.fileSize ?? fileStat?.size,
-      activatedAt: info.activatedAt ?? fileStat?.mtime,
+      fileSize: info.fileSize ?? fileStat?.size ?? null,
+      activatedAt: info.activatedAt ?? fileStat?.mtime ?? null,
       storageDir: this.getManagedStorageDir(),
     }
   }

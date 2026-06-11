@@ -9,13 +9,9 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import {
-  BaseDto,
-  DragReorderDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -42,26 +38,27 @@ export class BaseForumSectionDto extends BaseDto {
   @NumberProperty({
     description: '板块分组ID（为空表示未分组）',
     example: 1,
-    required: false,
+    nullable: true,
     min: 1,
   })
-  groupId?: number | null
+  groupId!: number | null
 
   @NumberProperty({
     description: '用户等级规则ID（为空表示所有用户）',
     example: 1,
-    required: false,
+    nullable: true,
     min: 1,
   })
-  userLevelRuleId?: number | null
+  userLevelRuleId!: number | null
 
   @NumberProperty({
     description: '最后发表主题ID',
     example: 100,
-    required: false,
+    nullable: true,
     min: 1,
+    validation: false,
   })
-  lastTopicId?: number | null
+  lastTopicId!: number | null
 
   @StringProperty({
     description: '板块图标',
@@ -109,18 +106,18 @@ export class BaseForumSectionDto extends BaseDto {
   @StringProperty({
     description: '板块描述',
     example: '讨论技术相关问题',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  description?: string | null
+  description!: string | null
 
   @StringProperty({
     description: '备注信息',
     example: '仅管理员可见',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  remark?: string | null
+  remark!: string | null
 
   @NumberProperty({
     description: '主题数',
@@ -152,30 +149,46 @@ export class BaseForumSectionDto extends BaseDto {
   @DateProperty({
     description: '最后发表时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  lastPostAt?: Date | null
+  lastPostAt!: Date | null
 
   @DateProperty({
     description: '删除时间',
     example: '2026-03-27T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
     contract: false,
   })
-  deletedAt?: Date | null
+  deletedAt!: Date | null
 }
 
-export class CreateForumSectionDto extends OmitType(BaseForumSectionDto, [
-  ...OMIT_BASE_FIELDS,
-  'lastTopicId',
-  'topicCount',
-  'commentCount',
-  'followersCount',
-  'lastPostAt',
-  'deletedAt',
-] as const) {}
+class CreateForumSectionRequiredFieldsDto extends PickType(
+  BaseForumSectionDto,
+  [
+    'name',
+    'icon',
+    'cover',
+    'sortOrder',
+    'isEnabled',
+    'topicReviewPolicy',
+  ] as const,
+) {}
+
+class CreateForumSectionOptionalFieldsDto extends PartialType(
+  PickType(BaseForumSectionDto, [
+    'groupId',
+    'userLevelRuleId',
+    'description',
+    'remark',
+  ] as const),
+) {}
+
+export class CreateForumSectionDto extends IntersectionType(
+  CreateForumSectionRequiredFieldsDto,
+  CreateForumSectionOptionalFieldsDto,
+) {}
 
 export class UpdateForumSectionDto extends IntersectionType(
   IdDto,
@@ -184,7 +197,7 @@ export class UpdateForumSectionDto extends IntersectionType(
 
 /**
  * 板块分组筛选 DTO。
- * `isUngrouped=true` 时表示仅筛选未分组板块，并忽略 `groupId`。
+ * 开启未分组筛选时表示仅筛选未分组板块，并忽略 `groupId`。
  */
 export class ForumSectionGroupQueryFilterDto {
   @NumberProperty({
@@ -251,19 +264,20 @@ export class ForumSectionCountRepairResultDto extends IntersectionType(
   ] as const),
 ) {}
 
-/**
- * 管理端板块树节点中的板块信息 DTO。
- * 供板块配置页复用完整板块快照，避免再二次查询详情。
- */
-export class AdminForumSectionTreeSectionDto extends OmitType(
+export class AdminForumSectionDto extends OmitType(
   BaseForumSectionDto,
   ['deletedAt'] as const,
 ) {}
 
-/**
- * 查询公开板块详情 DTO。
- */
-export class QueryPublicForumSectionDetailDto extends IdDto {}
+export class AdminForumSectionDetailDto extends AdminForumSectionDto {
+  @NestedProperty({
+    description: '所属分组；未分组板块为空',
+    nullable: true,
+    type: ForumSectionGroupSummaryDto,
+    validation: false,
+  })
+  group!: ForumSectionGroupSummaryDto | null
+}
 
 /**
  * 查询公开板块版主 DTO。
@@ -311,10 +325,10 @@ export class PublicForumSectionModeratorDto {
   @StringProperty({
     description: '用户头像',
     example: 'https://example.com/avatar.jpg',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  avatar?: string | null
+  avatar!: string | null
 
   @EnumProperty({
     description: '版主角色类型（2=分组版主；3=板块版主）',
@@ -382,18 +396,18 @@ export class PublicForumSectionListItemDto extends PickType(
   @NumberProperty({
     description: '访问该板块需要的经验值（为空表示无等级限制）',
     example: 1200,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  requiredExperience?: number | null
+  requiredExperience!: number | null
 
   @StringProperty({
     description: '无法访问时的提示信息',
     example: '请先登录后访问该板块',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  accessDeniedReason?: string
+  accessDeniedReason!: string | null
 }
 
 /**
@@ -403,17 +417,16 @@ export class PublicForumSectionDetailDto extends PublicForumSectionListItemDto {
   @NumberProperty({
     description: '关联作品ID（为空表示非作品专属板块）',
     example: 1,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  workId?: number | null
+  workId!: number | null
 
   @NestedProperty({
     description: '所属分组',
-    required: false,
     type: ForumSectionGroupBriefDto,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  group?: ForumSectionGroupBriefDto
+  group!: ForumSectionGroupBriefDto | null
 }

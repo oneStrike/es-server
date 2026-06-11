@@ -1,7 +1,7 @@
 import { WorkCategoryService } from '@libs/content/category/category.service';
-import { BaseCategoryDto, CreateCategoryDto, QueryCategoryDto, UpdateCategoryDto, UpdateCategorySortDto, UpdateCategoryStatusDto } from '@libs/content/category/dto/category.dto';
+import { CategoryOutputDto, CreateCategoryDto, QueryCategoryDto, UpdateCategoryDto, UpdateCategorySortDto, UpdateCategoryStatusDto } from '@libs/content/category/dto/category.dto';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto';
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -37,7 +37,7 @@ export class ContentCategoryController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询分类列表',
-    model: BaseCategoryDto,
+    model: CategoryOutputDto,
   })
   async getPage(@Query() query: QueryCategoryDto) {
     return this.categoryService.getCategoryPage(query)
@@ -49,7 +49,7 @@ export class ContentCategoryController {
   @Get('detail')
   @ApiDoc({
     summary: '获取分类详情',
-    model: BaseCategoryDto,
+    model: CategoryOutputDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.categoryService.getCategoryDetail(query)

@@ -1,6 +1,6 @@
 import { NestedProperty, StringProperty } from '@libs/platform/decorators';
-import { TokenDto } from '@libs/platform/modules/auth/dto'
-import { CaptchaDto } from '@libs/platform/modules/captcha/dto'
+import { TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto'
+import { CaptchaDto } from '@libs/platform/modules/captcha/dto/captcha.dto'
 import { AdminUserResponseDto } from './admin-user.dto'
 
 /**

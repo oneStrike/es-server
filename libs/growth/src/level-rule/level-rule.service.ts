@@ -1,4 +1,5 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
+import type { UserLevelRuleSelect } from '@db/schema'
 import type { AnyColumn } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
@@ -177,7 +178,11 @@ export class UserLevelRuleService {
       this.db.$count(this.userLevelRule, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toLevelRuleOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   /**
@@ -195,7 +200,7 @@ export class UserLevelRuleService {
         '等级规则不存在',
       )
     }
-    return rule
+    return this.toLevelRuleOutputDto(rule)
   }
 
   /**
@@ -325,7 +330,7 @@ export class UserLevelRuleService {
       .limit(1)
 
     let progressPercentage = 0
-    let nextLevelExperience: number | undefined
+    let nextLevelExperience: number | null = null
 
     // 计算当前等级到下一级的进度百分比
     if (nextLevelRule) {
@@ -343,9 +348,9 @@ export class UserLevelRuleService {
     return {
       levelId: level.id,
       levelName: level.name,
-      levelDescription: level.description ?? '',
-      levelIcon: level.icon ?? '',
-      levelColor: level.color ?? '',
+      levelDescription: level.description ?? null,
+      levelIcon: level.icon ?? null,
+      levelColor: level.color ?? null,
       currentExperience,
       nextLevelExperience,
       progressPercentage,
@@ -709,6 +714,10 @@ export class UserLevelRuleService {
       limit: limit > 0 ? limit : null,
       used: limit > 0 ? used : null,
       remaining: limit > 0 ? limit - used : null,
+      limitSeconds: null,
+      elapsedSeconds: null,
+      remainingSeconds: null,
+      nextAllowedAt: null,
     }
     if (permissionType !== UserLevelRulePermissionEnum.POST_INTERVAL) {
       return result
@@ -988,6 +997,16 @@ export class UserLevelRuleService {
     }
 
     return lastTopic?.createdAt ?? lastComment?.createdAt ?? null
+  }
+
+  private toLevelRuleOutputDto(rule: UserLevelRuleSelect) {
+    return {
+      ...rule,
+      description: rule.description ?? null,
+      icon: rule.icon ?? null,
+      business: rule.business ?? null,
+      color: rule.color ?? null,
+    }
   }
 
   private createLevelStateConflict() {

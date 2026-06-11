@@ -209,7 +209,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
         localChapterId: 102,
       })),
       readPreparedImportTarget: jest.fn(async () => ({
-        cover: undefined,
+        cover: null,
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 100 },
       })),
@@ -362,7 +362,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
           { chapter: { providerChapterId: 'p1' }, imageTotal: 2 },
           { chapter: { providerChapterId: 'p2' }, imageTotal: 3 },
         ],
-        cover: undefined,
+        cover: null,
         mode: 'createNew',
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 1 },
@@ -747,7 +747,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       })),
       prepareWorkflowImport: jest.fn(),
       readPreparedImportTarget: jest.fn(async () => ({
-        cover: undefined,
+        cover: null,
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 100 },
       })),
@@ -845,7 +845,7 @@ describe('ThirdPartyComicImportWorkflowHandler', () => {
       }),
       prepareWorkflowImport: jest.fn(),
       readPreparedImportTarget: jest.fn(async () => ({
-        cover: undefined,
+        cover: null,
         sourceBinding: { id: 1, providerGroupPathWord: 'default' },
         work: { id: 100 },
       })),

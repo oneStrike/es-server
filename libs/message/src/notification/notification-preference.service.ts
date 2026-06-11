@@ -122,7 +122,7 @@ export class MessageNotificationPreferenceService {
       isEnabled: preference?.isEnabled ?? defaultEnabled,
       defaultEnabled,
       source,
-      updatedAt: preference?.updatedAt,
+      updatedAt: preference?.updatedAt ?? null,
     }
   }
 

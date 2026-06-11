@@ -2,7 +2,7 @@ import type { Db } from '@db/core'
 import type { ContentImportItemSelect } from '@db/schema'
 import type { ThirdPartyComicSyncChapterPlan } from '@libs/content/work/third-party/third-party-comic-sync.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import type { WorkflowItemPageRequestDto } from '@libs/platform/modules/workflow/dto'
+import type { WorkflowItemPageRequestDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   ContentImportAttemptCounters,

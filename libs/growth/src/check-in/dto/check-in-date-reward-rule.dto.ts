@@ -17,8 +17,8 @@ export class CheckInDateRewardRuleFieldsDto {
   @StringProperty({
     description: '该日期奖励概览图标 URL。',
     example: 'https://cdn.example.com/check-in/date-overview.png',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  rewardOverviewIconUrl?: string | null
+  rewardOverviewIconUrl!: string | null
 }

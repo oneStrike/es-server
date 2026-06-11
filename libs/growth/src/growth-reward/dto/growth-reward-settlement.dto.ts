@@ -7,7 +7,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { BaseDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION } from '../../event-definition/event-definition.constant'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
@@ -66,10 +67,10 @@ export class GrowthRewardSettlementEventEnvelopeSnapshotDto {
   @NumberProperty({
     description: '事件操作人 ID',
     example: 7,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  operatorId?: number
+  operatorId!: number | null
 
   @StringProperty({
     description: '事件发生时间 ISO 8601 快照',
@@ -88,10 +89,10 @@ export class GrowthRewardSettlementEventEnvelopeSnapshotDto {
   @JsonProperty({
     description: '事件上下文快照 JSON',
     example: '{"topicId":99}',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  context?: Record<string, unknown>
+  context!: Record<string, unknown> | null
 }
 
 /** 通用成长事件补偿重放载荷 DTO。 */
@@ -120,26 +121,26 @@ export class GrowthRewardSettlementGrowthEventPayloadDto {
   @NumberProperty({
     description: '目标类型',
     example: 3,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  targetType?: number
+  targetType!: number | null
 
   @NumberProperty({
     description: '目标 ID',
     example: 99,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  targetId?: number
+  targetId!: number | null
 
   @JsonProperty({
     description: '补充上下文 JSON',
     example: '{"likeSource":"topic_detail"}',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  context?: Record<string, unknown>
+  context!: Record<string, unknown> | null
 }
 
 /** 任务奖励补偿重放载荷 DTO。 */
@@ -174,7 +175,7 @@ export class GrowthRewardSettlementTaskRewardPayloadDto {
 
   @ArrayProperty({
     description: '任务奖励项快照',
-    required: false,
+    nullable: true,
     itemClass: GrowthRewardItemDto,
     validation: false,
     example: [
@@ -182,7 +183,7 @@ export class GrowthRewardSettlementTaskRewardPayloadDto {
       { assetType: GrowthAssetTypeEnum.EXPERIENCE, amount: 5 },
     ],
   })
-  rewardItems?: GrowthRewardItemDto[] | null
+  rewardItems!: GrowthRewardItemDto[] | null
 
   @StringProperty({
     description: '任务完成事件发生时间 ISO 8601 快照',
@@ -231,12 +232,12 @@ export class GrowthRewardSettlementCheckInRecordRewardPayloadDto {
 
   @ArrayProperty({
     description: '签到基础奖励项快照',
-    required: false,
+    nullable: true,
     itemClass: GrowthRewardItemDto,
     validation: false,
     example: [{ assetType: GrowthAssetTypeEnum.POINTS, amount: 5 }],
   })
-  rewardItems?: GrowthRewardItemDto[] | null
+  rewardItems!: GrowthRewardItemDto[] | null
 }
 
 /** 连续签到奖励补偿重放载荷 DTO。 */
@@ -285,12 +286,12 @@ export class GrowthRewardSettlementCheckInStreakRewardPayloadDto {
 
   @ArrayProperty({
     description: '连续签到奖励项快照',
-    required: false,
+    nullable: true,
     itemClass: GrowthRewardItemDto,
     validation: false,
     example: [{ assetType: GrowthAssetTypeEnum.EXPERIENCE, amount: 7 }],
   })
-  rewardItems?: GrowthRewardItemDto[] | null
+  rewardItems!: GrowthRewardItemDto[] | null
 }
 
 /** 成长奖励补偿事实基础 DTO。 */
@@ -315,7 +316,6 @@ export class BaseGrowthRewardSettlementDto extends BaseDto {
       '补偿记录类型（1=通用成长事件；2=任务奖励；3=签到基础奖励；4=签到连续奖励）',
     example: GrowthRewardSettlementTypeEnum.GROWTH_EVENT,
     enum: GrowthRewardSettlementTypeEnum,
-    validation: false,
   })
   settlementType!: GrowthRewardSettlementTypeEnum
 
@@ -323,19 +323,18 @@ export class BaseGrowthRewardSettlementDto extends BaseDto {
     description: GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION,
     example: GrowthRuleTypeEnum.TOPIC_LIKED,
     enum: GrowthRuleTypeEnum,
-    required: false,
-    validation: false,
+    nullable: true,
   })
-  eventCode?: GrowthRuleTypeEnum | null
+  eventCode!: GrowthRuleTypeEnum | null
 
   @StringProperty({
     description: '成长事件 key',
     example: 'TOPIC_LIKED',
     maxLength: 80,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  eventKey?: string | null
+  eventKey!: string | null
 
   @StringProperty({
     description: '奖励来源',
@@ -348,26 +347,26 @@ export class BaseGrowthRewardSettlementDto extends BaseDto {
   @NumberProperty({
     description: '来源事实主键（任务奖励通常为 instanceId）',
     example: 88,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  sourceRecordId?: number | null
+  sourceRecordId!: number | null
 
   @NumberProperty({
     description: '目标类型',
     example: 3,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  targetType?: number | null
+  targetType!: number | null
 
   @NumberProperty({
     description: '目标 ID',
     example: 99,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  targetId?: number | null
+  targetId!: number | null
 
   @DateProperty({
     description: '原始事件发生时间',
@@ -380,7 +379,6 @@ export class BaseGrowthRewardSettlementDto extends BaseDto {
     description: '补偿状态（0=待补偿重试；1=已补偿成功；2=终态失败）',
     example: GrowthRewardSettlementStatusEnum.PENDING,
     enum: GrowthRewardSettlementStatusEnum,
-    validation: false,
   })
   settlementStatus!: GrowthRewardSettlementStatusEnum
 
@@ -389,10 +387,10 @@ export class BaseGrowthRewardSettlementDto extends BaseDto {
       '补偿结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次处理失败）',
     example: GrowthRewardSettlementResultTypeEnum.APPLIED,
     enum: GrowthRewardSettlementResultTypeEnum,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  settlementResultType?: GrowthRewardSettlementResultTypeEnum | null
+  settlementResultType!: GrowthRewardSettlementResultTypeEnum | null
 
   @ArrayProperty({
     description: '本次补偿关联到账本记录 ID 列表',
@@ -413,27 +411,27 @@ export class BaseGrowthRewardSettlementDto extends BaseDto {
   @DateProperty({
     description: '最近一次重试时间',
     example: '2026-04-17T08:10:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  lastRetryAt?: Date | null
+  lastRetryAt!: Date | null
 
   @DateProperty({
     description: '最近一次补偿状态落定时间',
     example: '2026-04-17T08:12:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  settledAt?: Date | null
+  settledAt!: Date | null
 
   @StringProperty({
     description: '最近一次失败原因',
     example: '数据库事务失败',
-    required: false,
+    nullable: true,
     maxLength: 500,
     validation: false,
   })
-  lastError?: string | null
+  lastError!: string | null
 
   @JsonProperty({
     description:
@@ -454,9 +452,6 @@ export class BaseGrowthRewardSettlementDto extends BaseDto {
     | GrowthRewardSettlementCheckInRecordRewardPayloadDto
     | GrowthRewardSettlementCheckInStreakRewardPayloadDto
 }
-
-/** 成长奖励补偿分页项 DTO。 */
-export class GrowthRewardSettlementPageItemDto extends BaseGrowthRewardSettlementDto {}
 
 /** 成长奖励补偿分页查询 DTO。 */
 export class QueryGrowthRewardSettlementPageDto extends IntersectionType(

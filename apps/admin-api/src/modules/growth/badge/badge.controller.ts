@@ -1,8 +1,17 @@
-import { AssignUserBadgeDto, BadgeUserPageItemDto, CreateUserBadgeDto, QueryBadgeUserPageDto, QueryUserBadgeDto, UpdateUserBadgeDto, UpdateUserBadgeStatusDto, UserBadgeStatisticsDto } from '@libs/growth/badge/dto/user-badge-management.dto';
-import { BaseUserBadgeDto } from '@libs/growth/badge/dto/user-badge.dto';
-import { UserBadgeService } from '@libs/growth/badge/user-badge.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto';
+import {
+  AssignUserBadgeDto,
+  BadgeUserPageItemDto,
+  CreateUserBadgeDto,
+  QueryBadgeUserPageDto,
+  QueryUserBadgeDto,
+  UpdateUserBadgeDto,
+  UpdateUserBadgeStatusDto,
+  UserBadgeStatisticsDto,
+} from '@libs/growth/badge/dto/user-badge-management.dto'
+import { UserBadgeOutputDto } from '@libs/growth/badge/dto/user-badge.dto'
+import { UserBadgeService } from '@libs/growth/badge/user-badge.service'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -22,7 +31,7 @@ export class UserBadgeController {
   @Get('page')
   @ApiPageDoc({
     summary: '获取用户徽章分页',
-    model: BaseUserBadgeDto,
+    model: UserBadgeOutputDto,
   })
   async getAllBadges(@Query() query: QueryUserBadgeDto) {
     return this.userBadgeService.getBadges(query)
@@ -31,7 +40,7 @@ export class UserBadgeController {
   @Get('detail')
   @ApiDoc({
     summary: '获取用户徽章详情',
-    model: BaseUserBadgeDto,
+    model: UserBadgeOutputDto,
   })
   async getBadge(@Query() dto: IdDto) {
     return this.userBadgeService.getBadgeDetail(dto)

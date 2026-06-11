@@ -1,7 +1,7 @@
 import type { BooleanPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
-import { IsBoolean, IsOptional } from 'class-validator'
+import { IsBoolean, IsOptional, ValidateIf } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'
 
 /**
@@ -41,6 +41,10 @@ export function BooleanProperty(options: BooleanPropertyOptions) {
   const decorators: PropertyDecorator[] = []
 
   if (validation) {
+    if (options.nullable) {
+      decorators.push(ValidateIf((_object, value) => value !== null))
+    }
+
     decorators.push(IsBoolean({ message: '必须是布尔类型' }))
 
     if (!required) {
@@ -94,7 +98,7 @@ export function BooleanProperty(options: BooleanPropertyOptions) {
       example: options.example,
       required,
       default: options.default,
-      nullable: !required,
+      nullable: options.nullable ?? !required,
       type: Boolean,
     })),
   )

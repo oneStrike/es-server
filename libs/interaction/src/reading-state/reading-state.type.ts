@@ -29,5 +29,5 @@ export type ReadingHistoryIndexedRow = ReadingHistoryRow & { index: number }
 /** 稳定领域类型 `ReadingHistoryItem`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type ReadingHistoryItem = ReadingHistoryRow & {
   work: ReadingStateWorkSnapshot
-  continueChapter: ReadingStateChapterSnapshot | undefined
+  continueChapter: ReadingStateChapterSnapshot | null
 }

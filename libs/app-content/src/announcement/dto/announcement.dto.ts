@@ -9,7 +9,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -47,10 +48,10 @@ export class BaseAnnouncementDto extends BaseDto {
   @StringProperty({
     description: '公告摘要',
     example: '系统维护通知，预计维护时间 2 小时',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  summary?: string | null
+  summary!: string | null
 
   @EnumProperty({
     description:
@@ -74,41 +75,39 @@ export class BaseAnnouncementDto extends BaseDto {
   @DateProperty({
     description: '发布开始时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
   })
-  publishStartTime?: Date | null
+  publishStartTime!: Date | null
 
   @DateProperty({
     description: '发布结束时间',
     example: '2024-12-31T23:59:59.999Z',
-    required: false,
+    nullable: true,
   })
-  publishEndTime?: Date | null
+  publishEndTime!: Date | null
 
   @NumberProperty({
     description: '关联页面 id',
     example: 12,
-    required: false,
+    nullable: true,
   })
-  pageId?: number | null
+  pageId!: number | null
 
   @StringProperty({
     description: '公告弹窗背景图片 URL',
     example: 'https://example.com/bg.jpg',
-    required: false,
+    nullable: true,
     maxLength: 200,
   })
-  popupBackgroundImage?: string | null
+  popupBackgroundImage!: string | null
 
   @EnumProperty({
-    description:
-      '弹窗背景图片位置（CSS background-position 值，默认 center=居中）',
+    description: '弹窗背景图片位置（CSS background-position 值，默认居中）',
     example: PopupBackgroundPositionEnum.CENTER,
-    required: false,
     enum: PopupBackgroundPositionEnum,
     default: PopupBackgroundPositionEnum.CENTER,
   })
-  popupBackgroundPosition?: PopupBackgroundPositionEnum
+  popupBackgroundPosition!: PopupBackgroundPositionEnum
 
   @BooleanProperty({
     description: '是否发布',
@@ -129,11 +128,10 @@ export class BaseAnnouncementDto extends BaseDto {
   @ArrayProperty({
     description: '启用的平台（1=H5；2=App；3=小程序）',
     example: [EnablePlatformEnum.APP],
-    required: false,
     itemEnum: EnablePlatformEnum,
     minLength: 1,
   })
-  enablePlatform?: EnablePlatformEnum[]
+  enablePlatform!: EnablePlatformEnum[]
 
   @BooleanProperty({
     description: '是否置顶',
@@ -161,11 +159,35 @@ export class BaseAnnouncementDto extends BaseDto {
   viewCount!: number
 }
 
-export class CreateAnnouncementDto extends OmitType(BaseAnnouncementDto, [
+class CreateAnnouncementRequiredFieldsDto extends OmitType(BaseAnnouncementDto, [
   ...OMIT_BASE_FIELDS,
   'isPublished',
   'viewCount',
+  'summary',
+  'publishStartTime',
+  'publishEndTime',
+  'pageId',
+  'popupBackgroundImage',
+  'popupBackgroundPosition',
+  'enablePlatform',
 ] as const) {}
+
+class CreateAnnouncementOptionalFieldsDto extends PartialType(
+  PickType(BaseAnnouncementDto, [
+    'summary',
+    'publishStartTime',
+    'publishEndTime',
+    'pageId',
+    'popupBackgroundImage',
+    'popupBackgroundPosition',
+    'enablePlatform',
+  ] as const),
+) {}
+
+export class CreateAnnouncementDto extends IntersectionType(
+  CreateAnnouncementRequiredFieldsDto,
+  CreateAnnouncementOptionalFieldsDto,
+) {}
 
 export class UpdateAnnouncementDto extends IntersectionType(
   IdDto,
@@ -189,8 +211,7 @@ export class QueryAnnouncementDto extends IntersectionType(
   ),
 ) {
   @EnumProperty({
-    description:
-      '派生发布状态（unpublished=未发布；scheduled=待生效；active=生效中；expired=已过期）',
+    description: '派生发布状态（未发布；待生效；生效中；已过期）',
     example: AnnouncementPublishStatusEnum.ACTIVE,
     required: false,
     enum: AnnouncementPublishStatusEnum,
@@ -222,8 +243,7 @@ export class QueryAnnouncementDto extends IntersectionType(
 
 export class AnnouncementRuntimeFieldsDto {
   @EnumProperty({
-    description:
-      '派生发布状态（unpublished=未发布；scheduled=待生效；active=生效中；expired=已过期）',
+    description: '派生发布状态（未发布；待生效；生效中；已过期）',
     example: AnnouncementPublishStatusEnum.ACTIVE,
     required: true,
     enum: AnnouncementPublishStatusEnum,
@@ -269,16 +289,16 @@ export class AnnouncementRuntimeFieldsDto {
   fanoutUpdatedAt!: Date | null
 }
 
+export class AnnouncementOutputBaseDto extends BaseAnnouncementDto {}
+
 export class AnnouncementPageItemDto extends IntersectionType(
-  BaseAnnouncementDto,
+  AnnouncementOutputBaseDto,
   AnnouncementRuntimeFieldsDto,
 ) {}
 
-export class AppAnnouncementListItemDto extends OmitType(BaseAnnouncementDto, [
+export class AppAnnouncementListItemDto extends OmitType(AnnouncementOutputBaseDto, [
   'content',
 ] as const) {}
-
-export class AppAnnouncementDetailDto extends BaseAnnouncementDto {}
 
 export class AnnouncementRelatedPageDto extends PickType(BaseAppPageDto, [
   'id',

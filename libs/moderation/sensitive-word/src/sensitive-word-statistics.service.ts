@@ -281,7 +281,7 @@ export class SensitiveWordStatisticsService {
       hitCount: result.hitCount,
       level: result.level,
       type: result.type,
-      lastHitAt: result.lastHitAt ?? undefined,
+      lastHitAt: result.lastHitAt ?? null,
     }))
   }
 
@@ -309,7 +309,7 @@ export class SensitiveWordStatisticsService {
       hitCount: result.hitCount,
       level: result.level,
       type: result.type,
-      lastHitAt: result.lastHitAt ?? undefined,
+      lastHitAt: result.lastHitAt ?? null,
     }))
   }
 
@@ -423,7 +423,7 @@ export class SensitiveWordStatisticsService {
       rows.map((row) => ({
         id: row.id,
         sensitiveWordId: row.sensitiveWordId,
-        word: row.word ?? undefined,
+        word: row.word ?? null,
         matchedWord: row.matchedWord,
         level: row.level as SensitiveWordLevelEnum,
         type: row.type as SensitiveWordTypeEnum,
@@ -522,15 +522,15 @@ export class SensitiveWordStatisticsService {
       return {
         status,
         canNavigate: this.canOpenAdminDisposition(status),
-        title: hideContent ? undefined : (row.topicTitle ?? undefined),
-        snippet: hideContent
-          ? undefined
-          : this.buildSnippet(row.topicContent),
+        title: hideContent ? null : (row.topicTitle ?? null),
+        snippet: hideContent ? null : this.buildSnippet(row.topicContent),
         auditStatus:
           row.topicAuditStatus === null
-            ? undefined
+            ? null
             : (row.topicAuditStatus as AuditStatusEnum),
-        isHidden: row.topicIsHidden ?? undefined,
+        isHidden: row.topicIsHidden ?? null,
+        targetType: null,
+        targetId: null,
       }
     }
 
@@ -544,14 +544,15 @@ export class SensitiveWordStatisticsService {
     return {
       status,
       canNavigate: this.canOpenAdminDisposition(status),
-      snippet: hideContent ? undefined : this.buildSnippet(row.commentContent),
+      title: null,
+      snippet: hideContent ? null : this.buildSnippet(row.commentContent),
       auditStatus:
         row.commentAuditStatus === null
-          ? undefined
+          ? null
           : (row.commentAuditStatus as AuditStatusEnum),
-      isHidden: row.commentIsHidden ?? undefined,
-      targetType: row.commentTargetType ?? undefined,
-      targetId: row.commentTargetId ?? undefined,
+      isHidden: row.commentIsHidden ?? null,
+      targetType: row.commentTargetType ?? null,
+      targetId: row.commentTargetId ?? null,
     }
   }
 
@@ -564,15 +565,15 @@ export class SensitiveWordStatisticsService {
     authorStatus: number | null
   }) {
     if (!row.authorId) {
-      return undefined
+      return null
     }
 
     return {
       id: row.authorId,
-      nickname: row.authorNickname ?? undefined,
-      avatarUrl: row.authorAvatarUrl,
-      status: row.authorDeletedAt ? undefined : row.authorStatus,
-      isEnabled: row.authorDeletedAt ? undefined : row.authorIsEnabled,
+      nickname: row.authorNickname ?? null,
+      avatarUrl: row.authorAvatarUrl ?? null,
+      status: row.authorDeletedAt ? null : (row.authorStatus ?? null),
+      isEnabled: row.authorDeletedAt ? null : (row.authorIsEnabled ?? null),
     }
   }
 
@@ -612,7 +613,7 @@ export class SensitiveWordStatisticsService {
 
   private buildSnippet(content: string | null | undefined) {
     const normalized = content?.replace(/\s+/g, ' ').trim()
-    return normalized ? normalized.slice(0, 200) : undefined
+    return normalized ? normalized.slice(0, 200) : null
   }
 
   /**

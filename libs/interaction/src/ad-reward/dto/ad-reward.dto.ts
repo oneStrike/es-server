@@ -6,7 +6,8 @@ import {
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -33,7 +34,7 @@ export class BaseAdProviderConfigDto extends BaseDto {
   provider!: AdProviderEnum
 
   @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
   })
@@ -103,17 +104,20 @@ export class BaseAdProviderConfigDto extends BaseDto {
   @StringProperty({
     description: '广告回调地址',
     example: 'https://example.com/ad/callback',
-    required: false,
+    required: true,
+    nullable: true,
     type: 'url',
   })
-  callbackUrl?: string | null
+  callbackUrl!: string | null
 
   @ObjectProperty({
     description: '配置摘要，不包含明文密钥',
     example: { keyFingerprint: 'sha256:xxx' },
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
   })
-  configMetadata?: Record<string, unknown> | null
+  configMetadata!: Record<string, unknown> | null
 
   @NumberProperty({
     description: '排序值',
@@ -133,6 +137,65 @@ export class BaseAdProviderConfigDto extends BaseDto {
   isEnabled?: boolean
 }
 
+class AdProviderConfigDefaultOutputFieldsDto {
+  @StringProperty({
+    description: '客户端应用键',
+    example: 'default-app',
+    validation: false,
+  })
+  clientAppKey!: string
+
+  @StringProperty({
+    description: 'provider 应用 ID',
+    example: 'pangle-app-id',
+    validation: false,
+  })
+  appId!: string
+
+  @NumberProperty({
+    description: '每日次数上限，0=不限制',
+    example: 5,
+    min: 0,
+    validation: false,
+  })
+  dailyLimit!: number
+
+  @NumberProperty({
+    description: '配置版本',
+    example: 1,
+    min: 1,
+    validation: false,
+  })
+  configVersion!: number
+
+  @NumberProperty({
+    description: '排序值',
+    example: 0,
+    min: 0,
+    validation: false,
+  })
+  sortOrder!: number
+
+  @BooleanProperty({
+    description: '是否启用',
+    example: true,
+    validation: false,
+  })
+  isEnabled!: boolean
+}
+
+export class AdProviderConfigOutputDto extends IntersectionType(
+  OmitType(BaseAdProviderConfigDto, [
+    'clientAppKey',
+    'appId',
+    'dailyLimit',
+    'configVersion',
+    'sortOrder',
+    'isEnabled',
+  ] as const),
+  AdProviderConfigDefaultOutputFieldsDto,
+) {}
+
 export class AdProviderConfigWritableFieldsDto extends OmitType(
   BaseAdProviderConfigDto,
   ['configVersion', 'configMetadata', 'credentialVersionRef'] as const,
@@ -145,22 +208,32 @@ export class AdProviderConfigWritableFieldsDto extends OmitType(
   credentialOptionRef!: string
 }
 
-export class CreateAdProviderConfigDto extends PickType(
+class CreateAdProviderConfigRequiredFieldsDto extends PickType(
   AdProviderConfigWritableFieldsDto,
   [
     'provider',
     'platform',
     'environment',
-    'clientAppKey',
-    'appId',
     'placementKey',
     'targetScope',
-    'dailyLimit',
     'credentialOptionRef',
+  ] as const,
+) {}
+
+class CreateAdProviderConfigOptionalFieldsDto extends PartialType(
+  PickType(AdProviderConfigWritableFieldsDto, [
+    'clientAppKey',
+    'appId',
+    'dailyLimit',
     'callbackUrl',
     'sortOrder',
     'isEnabled',
-  ] as const,
+  ] as const),
+) {}
+
+export class CreateAdProviderConfigDto extends IntersectionType(
+  CreateAdProviderConfigRequiredFieldsDto,
+  CreateAdProviderConfigOptionalFieldsDto,
 ) {}
 
 export class UpdateAdProviderConfigDto extends IntersectionType(
@@ -239,7 +312,7 @@ export class AdRewardCredentialOptionDto {
   @StringProperty({
     description: '不可选原因',
     example: '环境变量未配置',
-    required: false,
+    nullable: true,
     validation: false,
   })
   disabledReason!: string | null
@@ -254,7 +327,7 @@ export class AdRewardVerificationDto {
   provider!: AdProviderEnum
 
   @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
   })
@@ -334,6 +407,7 @@ export class AdRewardResultDto extends BaseDto {
   @NumberProperty({
     description: '用户 ID',
     example: 1,
+    validation: false,
   })
   userId!: number
 
@@ -341,12 +415,14 @@ export class AdRewardResultDto extends BaseDto {
     description: '广告状态（1=奖励成功；2=奖励失败；3=已撤销）',
     enum: AdRewardStatusEnum,
     example: AdRewardStatusEnum.SUCCESS,
+    validation: false,
   })
   status!: AdRewardStatusEnum
 
   @StringProperty({
     description: 'provider 奖励唯一 ID',
     example: 'reward-uuid',
+    validation: false,
   })
   providerRewardId!: string
 }
@@ -367,6 +443,7 @@ export class BaseAdRewardRecordDto extends BaseDto {
   @NumberProperty({
     description: '广告 provider 配置版本快照',
     example: 1,
+    validation: false,
   })
   adProviderConfigVersion!: number
 
@@ -417,8 +494,6 @@ export class BaseAdRewardRecordDto extends BaseDto {
   status!: AdRewardStatusEnum
 }
 
-export class AdminAdRewardRecordPageItemDto extends BaseAdRewardRecordDto {}
-
 export class AdminAdRewardRecordDetailDto extends PickType(
   BaseAdRewardRecordDto,
   [
@@ -437,18 +512,18 @@ export class AdminAdRewardRecordDetailDto extends PickType(
   @ObjectProperty({
     description: '客户端上下文摘要（敏感字段已过滤）',
     example: { deviceModel: 'phone' },
-    required: false,
+    nullable: true,
     validation: false,
   })
-  clientContext?: Record<string, unknown> | null
+  clientContext!: Record<string, unknown> | null
 
   @ObjectProperty({
     description: '服务端验证摘要 payload（不含 provider 原始回调）',
     example: { provider: 1, targetScope: 1 },
-    required: false,
+    nullable: true,
     validation: false,
   })
-  verifyPayload?: Record<string, unknown> | null
+  verifyPayload!: Record<string, unknown> | null
 }
 
 export class QueryAdRewardRecordDto extends IntersectionType(
@@ -475,7 +550,7 @@ export class QueryAdRewardRecordDto extends IntersectionType(
   provider?: AdProviderEnum
 
   @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
     required: false,
@@ -501,9 +576,7 @@ export class AdRewardRevokeDto extends IdDto {
   reason?: string
 }
 
-export class QueryAdRewardReconcileDto extends QueryAdRewardRecordDto {}
-
-export class AdminAdRewardReconcileItemDto extends AdminAdRewardRecordPageItemDto {
+export class AdminAdRewardReconcileItemDto extends BaseAdRewardRecordDto {
   @StringProperty({
     description: '对账状态',
     example: 'entitlement_active',
@@ -521,7 +594,7 @@ export class AdminAdRewardReconcileItemDto extends AdminAdRewardRecordPageItemDt
   @DateProperty({
     description: '权益过期时间',
     example: '2026-03-04T09:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
   entitlementExpiresAt!: Date | null

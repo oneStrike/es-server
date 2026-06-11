@@ -8,12 +8,12 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   ApiExtraModels,
-  ApiProperty,
   IntersectionType,
   PickType,
 } from '@nestjs/swagger'
@@ -31,17 +31,11 @@ import {
 } from './check-in-streak-reward-grant.dto'
 import { BaseCheckInStreakRewardRuleDto } from './check-in-streak-reward-rule.dto'
 
-export class QueryCheckInLeaderboardDto extends PickType(PageDto, [
-  'pageIndex',
-  'pageSize',
-] as const) {}
-
 export class QueryCheckInReconciliationDto extends PageDto {
   @NumberProperty({
     description: '签到记录 ID。',
     example: 1,
     required: false,
-    validation: false,
   })
   recordId?: number
 
@@ -49,7 +43,6 @@ export class QueryCheckInReconciliationDto extends PageDto {
     description: '连续奖励 grant ID。',
     example: 1,
     required: false,
-    validation: false,
   })
   grantId?: number
 
@@ -57,7 +50,6 @@ export class QueryCheckInReconciliationDto extends PageDto {
     description: '用户 ID。',
     example: 1,
     required: false,
-    validation: false,
   })
   userId?: number
 
@@ -65,7 +57,6 @@ export class QueryCheckInReconciliationDto extends PageDto {
     description: '连续签到规则 ID。',
     example: 1,
     required: false,
-    validation: false,
   })
   ruleId?: number
 
@@ -103,10 +94,10 @@ class CheckInStreakRuntimeFieldsDto {
   @StringProperty({
     description: '最近一次有效签到日期。',
     example: '2026-04-19',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  lastSignedDate?: string
+  lastSignedDate!: string | null
 }
 
 export class CheckInLeaderboardItemDto extends CheckInStreakRuntimeFieldsDto {
@@ -120,9 +111,10 @@ export class CheckInLeaderboardItemDto extends CheckInStreakRuntimeFieldsDto {
   @NestedProperty({
     description: '上榜用户信息。',
     type: CheckInLeaderboardUserDto,
+    nullable: true,
     validation: false,
   })
-  user!: CheckInLeaderboardUserDto
+  user!: CheckInLeaderboardUserDto | null
 }
 
 @ApiExtraModels(CheckInRewardSettlementSummaryDto)
@@ -134,13 +126,13 @@ export class CheckInRecordItemDto extends BaseCheckInRecordDto {
   })
   grants!: CheckInGrantItemDto[]
 
-  @ApiProperty({
+  @NestedProperty({
     description: '基础奖励补偿摘要。',
-    required: false,
     nullable: true,
     type: CheckInRewardSettlementSummaryDto,
+    validation: false,
   })
-  rewardSettlement?: CheckInRewardSettlementSummaryDto | null
+  rewardSettlement!: CheckInRewardSettlementSummaryDto | null
 }
 
 export class AppCheckInRecordItemDto extends AppCheckInRecordFieldsDto {
@@ -246,16 +238,16 @@ export class CheckInStreakSummaryDto extends CheckInStreakRuntimeFieldsDto {
   @StringProperty({
     description: '当前连续区间开始日期。',
     example: '2026-04-17',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  streakStartedAt?: string
+  streakStartedAt!: string | null
 
-  @ApiProperty({
+  @NestedProperty({
     description: '下一档连续奖励。',
-    required: true,
     nullable: true,
     type: BaseCheckInStreakRewardRuleDto,
+    validation: false,
   })
   nextReward!: BaseCheckInStreakRewardRuleDto | null
 }
@@ -310,11 +302,11 @@ export class CheckInSummaryResponseDto {
   })
   todaySigned!: boolean
 
-  @ApiProperty({
+  @NestedProperty({
     description: '最近一条签到记录。',
-    required: true,
     nullable: true,
     type: CheckInRecordItemDto,
+    validation: false,
   })
   latestRecord!: CheckInRecordItemDto | null
 }
@@ -345,27 +337,26 @@ export class AppCheckInConfigSummaryDto {
   @StringProperty({
     description: '补签图标 URL。',
     example: 'https://cdn.example.com/check-in/makeup.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  makeupIconUrl?: string | null
+  makeupIconUrl!: string | null
 
   @StringProperty({
     description: '基础奖励日历汇总图标 URL。',
     example: 'https://cdn.example.com/check-in/reward-overview.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  rewardOverviewIconUrl?: string | null
+  rewardOverviewIconUrl!: string | null
 
   @ArrayProperty({
     description: '默认基础奖励项。',
     itemClass: CheckInRewardItemDto,
-    required: false,
     nullable: true,
     validation: false,
   })
-  baseRewardItems?: CheckInRewardItemDto[] | null
+  baseRewardItems!: CheckInRewardItemDto[] | null
 }
 
 export class AppCheckInSummaryResponseDto extends PickType(
@@ -379,11 +370,11 @@ export class AppCheckInSummaryResponseDto extends PickType(
   })
   config!: AppCheckInConfigSummaryDto
 
-  @ApiProperty({
+  @NestedProperty({
     description: '最近一条签到记录。',
-    required: true,
     nullable: true,
     type: AppCheckInRecordItemDto,
+    validation: false,
   })
   latestRecord!: AppCheckInRecordItemDto | null
 }
@@ -435,35 +426,34 @@ export class CheckInCalendarDayDto {
   @ArrayProperty({
     description: '该日基础奖励快照。',
     itemClass: CheckInRewardItemDto,
-    required: false,
     nullable: true,
     validation: false,
   })
-  rewardItems?: CheckInRewardItemDto[] | null
+  rewardItems!: CheckInRewardItemDto[] | null
 
   @StringProperty({
     description: '该日基础奖励概览图标 URL。',
     example: 'https://cdn.example.com/check-in/reward-overview.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  rewardOverviewIconUrl?: string | null
+  rewardOverviewIconUrl!: string | null
 
   @StringProperty({
     description: '该日补签图标 URL；普通签到日或未签到日为空。',
     example: 'https://cdn.example.com/check-in/makeup.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  makeupIconUrl?: string | null
+  makeupIconUrl!: string | null
 
-  @ApiProperty({
+  @NestedProperty({
     description: '该日基础奖励补偿摘要。',
-    required: false,
     nullable: true,
     type: CheckInRewardSettlementSummaryDto,
+    validation: false,
   })
-  rewardSettlement?: CheckInRewardSettlementSummaryDto | null
+  rewardSettlement!: CheckInRewardSettlementSummaryDto | null
 }
 
 export class AppCheckInCalendarDayDto {
@@ -512,27 +502,26 @@ export class AppCheckInCalendarDayDto {
   @ArrayProperty({
     description: '该日基础奖励快照。',
     itemClass: CheckInRewardItemDto,
-    required: false,
     nullable: true,
     validation: false,
   })
-  rewardItems?: CheckInRewardItemDto[] | null
+  rewardItems!: CheckInRewardItemDto[] | null
 
   @StringProperty({
     description: '该日基础奖励概览图标 URL。',
     example: 'https://cdn.example.com/check-in/reward-overview.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  rewardOverviewIconUrl?: string | null
+  rewardOverviewIconUrl!: string | null
 
   @StringProperty({
     description: '该日补签图标 URL；普通签到日或未签到日为空。',
     example: 'https://cdn.example.com/check-in/makeup.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  makeupIconUrl?: string | null
+  makeupIconUrl!: string | null
 }
 
 export class CheckInCalendarResponseDto extends CheckInPeriodWindowDto {

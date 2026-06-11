@@ -20,16 +20,22 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
-import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
+import { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
 import {
   AppUserResponseDto,
   BaseAppUserDto,
 } from '@libs/user/dto/base-app-user.dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { ForumTopicContentPreviewSegmentTypeEnum } from '../forum-topic.constant'
 
 export enum ForumTopicDeletedStateEnum {
@@ -40,12 +46,11 @@ export enum ForumTopicDeletedStateEnum {
 
 /**
  * 论坛主题列表预览片段 DTO。
- * mention、hashtag 与 emoji 片段由前端按目标字段生成跳转或渲染。
+ * 提及用户、话题与表情片段由前端按目标字段生成跳转或渲染。
  */
 export class ForumTopicContentPreviewSegmentDto {
   @EnumProperty({
-    description:
-      '片段类型：text=普通文本；mention=@用户；hashtag=#话题；emoji=表情',
+    description: '片段类型（普通文本；提及用户；话题；表情）',
     example: ForumTopicContentPreviewSegmentTypeEnum.MENTION,
     enum: ForumTopicContentPreviewSegmentTypeEnum,
     required: true,
@@ -62,7 +67,7 @@ export class ForumTopicContentPreviewSegmentDto {
   text!: string
 
   @NumberProperty({
-    description: '被提及用户 ID；type=mention 时返回',
+    description: '被提及用户 ID；片段类型为提及用户时返回',
     example: 9,
     required: false,
     validation: false,
@@ -70,7 +75,7 @@ export class ForumTopicContentPreviewSegmentDto {
   userId?: number
 
   @StringProperty({
-    description: '被提及用户昵称；type=mention 时返回',
+    description: '被提及用户昵称；片段类型为提及用户时返回',
     example: '测试用户',
     required: false,
     validation: false,
@@ -78,7 +83,7 @@ export class ForumTopicContentPreviewSegmentDto {
   nickname?: string
 
   @NumberProperty({
-    description: '话题 ID；type=hashtag 时返回',
+    description: '话题 ID；片段类型为话题时返回',
     example: 77,
     required: false,
     validation: false,
@@ -86,7 +91,7 @@ export class ForumTopicContentPreviewSegmentDto {
   hashtagId?: number
 
   @StringProperty({
-    description: '话题 slug；type=hashtag 时返回',
+    description: '话题 slug；片段类型为话题时返回',
     example: 'typescript',
     required: false,
     validation: false,
@@ -94,7 +99,7 @@ export class ForumTopicContentPreviewSegmentDto {
   slug?: string
 
   @StringProperty({
-    description: '话题展示名；type=hashtag 时返回',
+    description: '话题展示名；片段类型为话题时返回',
     example: 'TypeScript',
     required: false,
     validation: false,
@@ -103,7 +108,7 @@ export class ForumTopicContentPreviewSegmentDto {
 
   @EnumProperty({
     description:
-      '表情资源类型（1=Unicode 表情；2=自定义表情）；type=emoji 时返回',
+      '表情资源类型（1=Unicode 表情；2=自定义表情）；片段类型为表情时返回',
     example: EmojiAssetKindEnum.CUSTOM,
     required: false,
     enum: EmojiAssetKindEnum,
@@ -112,7 +117,7 @@ export class ForumTopicContentPreviewSegmentDto {
   kind?: EmojiAssetKindEnum
 
   @StringProperty({
-    description: 'Unicode 表情序列；type=emoji 且 kind=1 时返回',
+    description: 'Unicode 表情序列；片段类型为表情且资源类型为 Unicode 表情时返回',
     example: '😀',
     required: false,
     validation: false,
@@ -120,7 +125,7 @@ export class ForumTopicContentPreviewSegmentDto {
   unicodeSequence?: string
 
   @StringProperty({
-    description: '自定义表情短码；type=emoji 且 kind=2 时返回',
+    description: '自定义表情短码；片段类型为表情且资源类型为自定义表情时返回',
     example: 'smile',
     required: false,
     validation: false,
@@ -128,7 +133,7 @@ export class ForumTopicContentPreviewSegmentDto {
   shortcode?: string
 
   @NumberProperty({
-    description: '表情资源 ID；type=emoji 且命中平台资源时返回',
+    description: '表情资源 ID；片段类型为表情且命中平台资源时返回',
     example: 1001,
     required: false,
     validation: false,
@@ -399,12 +404,12 @@ export class BaseForumTopicDto extends BaseDto {
 
   @ArrayProperty({
     description: '敏感词命中记录',
-    itemClass: BaseSensitiveWordHitDto,
+    itemClass: SensitiveWordHitDto,
     required: true,
     nullable: true,
     validation: false,
   })
-  sensitiveWordHits!: BaseSensitiveWordHitDto[] | null
+  sensitiveWordHits!: SensitiveWordHitDto[] | null
 
   @StringProperty({
     description: '发帖时解析到的国家/地区',
@@ -486,15 +491,9 @@ export class BaseForumTopicDto extends BaseDto {
   deletedAt!: Date | null
 }
 
-/**
- * 论坛主题可编辑字段 DTO。
- * 统一约束标题、正文和可选媒体列表，避免 app/admin 入口重复声明。
- */
-class TopicBodyWritableFieldsDto extends HtmlBodyInputDto {}
-
 export class CreateForumTopicWritableFieldsDto extends IntersectionType(
   PartialType(PickType(BaseForumTopicDto, ['title'] as const)),
-  TopicBodyWritableFieldsDto,
+  HtmlBodyInputDto,
   PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
 ) {}
 
@@ -513,7 +512,7 @@ export class UpdateForumTopicDto extends IntersectionType(
   IntersectionType(
     PartialType(PickType(BaseForumTopicDto, ['title'] as const)),
     IntersectionType(
-      TopicBodyWritableFieldsDto,
+      HtmlBodyInputDto,
       PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
     ),
   ),
@@ -541,7 +540,7 @@ export class QueryForumTopicDto extends IntersectionType(
   keyword?: string
 
   @EnumProperty({
-    description: '删除状态筛选（active=正常；deleted=已删除；all=全部）',
+    description: '删除状态筛选（正常；已删除；全部）',
     example: ForumTopicDeletedStateEnum.ACTIVE,
     enum: ForumTopicDeletedStateEnum,
     required: false,
@@ -659,7 +658,7 @@ export class PublicForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
 
   @NestedProperty({
     description: '所属板块',
-    required: false,
+    required: true,
     type: ForumTopicSectionBriefDto,
     validation: false,
     nullable: false,
@@ -720,9 +719,18 @@ export class PublicForumTopicDetailDto extends IntersectionType(
 }
 
 export class MyForumTopicItemDto extends IntersectionType(
-  PublicForumTopicPageItemDto,
+  OmitType(PublicForumTopicPageItemDto, ['section'] as const),
   PickType(BaseForumTopicDto, ['auditStatus'] as const),
-) {}
+) {
+  @NestedProperty({
+    description: '所属板块',
+    required: true,
+    type: ForumTopicSectionBriefDto,
+    validation: false,
+    nullable: true,
+  })
+  declare section: ForumTopicSectionBriefDto | null
+}
 
 export class QueryForumTopicCommentPageDto extends IntersectionType(
   PageDto,
@@ -808,7 +816,7 @@ class AdminForumTopicUserDto extends PickType(AppUserResponseDto, [
 ] as const) {
   @NestedProperty({
     description: '用户计数',
-    required: false,
+    required: true,
     type: AdminForumTopicUserCountDto,
     validation: false,
     nullable: true,
@@ -817,7 +825,7 @@ class AdminForumTopicUserDto extends PickType(AppUserResponseDto, [
 
   @NestedProperty({
     description: '论坛等级',
-    required: false,
+    required: true,
     type: AdminForumTopicUserLevelDto,
     validation: false,
     nullable: true,

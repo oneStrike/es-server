@@ -634,8 +634,8 @@ export class ForumModeratorService {
       )
       const user = userMap.get(moderator.userId)
       const group = moderator.groupId
-        ? groupMap.get(moderator.groupId)
-        : undefined
+        ? (groupMap.get(moderator.groupId) ?? null)
+        : null
       const sectionScopes = scopeMap.get(moderator.id) ?? []
 
       let sections = sectionScopes
@@ -672,19 +672,19 @@ export class ForumModeratorService {
         createdAt: moderator.createdAt,
         updatedAt: moderator.updatedAt,
         userId: moderator.userId,
-        groupId: moderator.groupId ?? undefined,
+        groupId: moderator.groupId ?? null,
         roleType: moderator.roleType,
         permissions: basePermissions,
         isEnabled: moderator.isEnabled,
-        remark: moderator.remark ?? undefined,
+        remark: moderator.remark ?? null,
         nickname: user?.nickname ?? '',
-        avatar: user?.avatar ?? undefined,
+        avatar: user?.avatar ?? null,
         group: group
           ? {
               id: group.id,
               name: group.name,
             }
-          : undefined,
+          : null,
         permissionNames: this.getPermissionNames(basePermissions),
         sections,
         sectionCount,
@@ -733,6 +733,10 @@ export class ForumModeratorService {
         isModerator: false,
         isUsable: false,
         disabledReason: '当前用户不是版主',
+        moderatorId: null,
+        userId: null,
+        roleType: null,
+        group: null,
         permissions: [],
         permissionNames: [],
         sections: [],
@@ -746,11 +750,11 @@ export class ForumModeratorService {
     return {
       isModerator: true,
       isUsable: moderator.isEnabled,
-      disabledReason: moderator.isEnabled ? undefined : '当前版主已禁用',
+      disabledReason: moderator.isEnabled ? null : '当前版主已禁用',
       moderatorId: view.id,
       userId: view.userId,
       roleType: view.roleType,
-      group: view.group,
+      group: view.group ?? null,
       permissions: view.permissions,
       permissionNames: view.permissionNames,
       sections: view.sections,

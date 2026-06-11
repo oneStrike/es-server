@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { EmojiAssetSelect, EmojiPackSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { ValidateEmojiAssetPayload } from './emoji.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
@@ -10,6 +11,8 @@ import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   CreateEmojiAssetDto,
   CreateEmojiPackDto,
+  EmojiAssetOutputDto,
+  EmojiPackOutputDto,
   QueryEmojiAssetDto,
   QueryEmojiPackDto,
   UpdateEmojiAssetDto,
@@ -86,7 +89,11 @@ export class EmojiAssetService {
         .offset(page.offset),
       this.db.$count(this.emojiPack, where),
     ])
-    return toPageResult(list, total, page)
+    const result = toPageResult(list, total, page)
+    return {
+      ...result,
+      list: result.list.map((item) => this.toEmojiPackOutputDto(item)),
+    }
   }
 
   /**
@@ -108,7 +115,7 @@ export class EmojiAssetService {
         '表情包不存在',
       )
     }
-    return pack
+    return this.toEmojiPackOutputDto(pack)
   }
 
   /**
@@ -373,7 +380,11 @@ export class EmojiAssetService {
         .offset(page.offset),
       this.db.$count(this.emojiAsset, where),
     ])
-    return toPageResult(list, total, page)
+    const result = toPageResult(list, total, page)
+    return {
+      ...result,
+      list: result.list.map((item) => this.toEmojiAssetOutputDto(item)),
+    }
   }
 
   /**
@@ -394,7 +405,7 @@ export class EmojiAssetService {
         '表情资源不存在',
       )
     }
-    return asset
+    return this.toEmojiAssetOutputDto(asset)
   }
 
   /**
@@ -676,5 +687,31 @@ export class EmojiAssetService {
       .from(this.emojiAsset)
       .where(where)
     return Number(row?.value ?? 0) - 1
+  }
+
+  private toEmojiPackOutputDto(pack: EmojiPackSelect): EmojiPackOutputDto {
+    const { deletedAt: _deletedAt, ...base } = pack
+    return {
+      ...base,
+      description: pack.description ?? null,
+      iconUrl: pack.iconUrl ?? null,
+      createdById: pack.createdById ?? null,
+      updatedById: pack.updatedById ?? null,
+    }
+  }
+
+  private toEmojiAssetOutputDto(asset: EmojiAssetSelect): EmojiAssetOutputDto {
+    const { deletedAt: _deletedAt, ...base } = asset
+    return {
+      ...base,
+      shortcode: asset.shortcode ?? null,
+      unicodeSequence: asset.unicodeSequence ?? null,
+      imageUrl: asset.imageUrl ?? null,
+      staticUrl: asset.staticUrl ?? null,
+      category: asset.category ?? null,
+      keywords: (asset.keywords as Record<string, string[]> | null) ?? null,
+      createdById: asset.createdById ?? null,
+      updatedById: asset.updatedById ?? null,
+    }
   }
 }

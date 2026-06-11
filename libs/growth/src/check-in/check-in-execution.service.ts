@@ -706,8 +706,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       updatedAt: record.updatedAt,
       signDate: this.toDateOnlyValue(record.signDate),
       recordType: record.recordType,
-      resolvedRewardSourceType: record.resolvedRewardSourceType,
-      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
+      resolvedRewardSourceType: record.resolvedRewardSourceType ?? null,
+      resolvedRewardRuleKey: record.resolvedRewardRuleKey ?? null,
       resolvedRewardItems:
         this.checkInRewardPolicyService.parseStoredRewardItems(
           record.resolvedRewardItems,
@@ -715,8 +715,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             allowEmpty: true,
           },
         ),
-      resolvedRewardOverviewIconUrl: record.resolvedRewardOverviewIconUrl,
-      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
+      resolvedRewardOverviewIconUrl:
+        record.resolvedRewardOverviewIconUrl ?? null,
+      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl ?? null,
       currentMakeupPeriodType: makeup.periodType,
       currentMakeupPeriodKey: makeup.periodKey,
       periodicRemaining: makeup.periodicRemaining,

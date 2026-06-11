@@ -1,6 +1,11 @@
-import { BooleanProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
+import {
+  BooleanProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto';
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -32,13 +37,13 @@ export class BaseDictionaryDto extends BaseDto {
   @StringProperty({
     description: '字典封面图片 URL',
     example: 'https://example.com/cover.png',
-    required: false,
+    nullable: true,
     maxLength: 200,
   })
-  cover?: string | null
+  cover!: string | null
 
   @BooleanProperty({
-    description: '字典状态（true=启用；false=禁用）',
+    description: '字典状态',
     example: true,
     required: true,
   })
@@ -47,10 +52,10 @@ export class BaseDictionaryDto extends BaseDto {
   @StringProperty({
     description: '字典描述信息',
     example: '用户状态字典',
-    required: false,
+    nullable: true,
     maxLength: 255,
   })
-  description?: string | null
+  description!: string | null
 }
 
 /**
@@ -83,20 +88,20 @@ export class BaseDictionaryItemDto extends BaseDto {
   @NumberProperty({
     description: '显示排序（数值越小越靠前）',
     example: 1,
-    required: false,
+    nullable: true,
   })
-  sortOrder?: number | null
+  sortOrder!: number | null
 
   @StringProperty({
     description: '字典项图标 URL',
     example: 'https://example.com/icon.png',
-    required: false,
+    nullable: true,
     maxLength: 200,
   })
-  cover?: string | null
+  cover!: string | null
 
   @BooleanProperty({
-    description: '字典项状态（true=启用；false=禁用）',
+    description: '字典项状态',
     example: true,
     required: true,
   })
@@ -105,20 +110,27 @@ export class BaseDictionaryItemDto extends BaseDto {
   @StringProperty({
     description: '字典项描述信息',
     example: '正常状态',
-    required: false,
+    nullable: true,
     maxLength: 255,
   })
-  description?: string | null
+  description!: string | null
 }
 
-export class CreateDictionaryDto extends OmitType(BaseDictionaryDto, [
-  ...OMIT_BASE_FIELDS,
-] as const) {}
+export class CreateDictionaryDto extends IntersectionType(
+  OmitType(BaseDictionaryDto, [
+    ...OMIT_BASE_FIELDS,
+    'cover',
+    'description',
+  ] as const),
+  PartialType(PickType(BaseDictionaryDto, ['cover', 'description'] as const)),
+) {}
 
 export class UpdateDictionaryDto extends IntersectionType(
   IdDto,
   PartialType(CreateDictionaryDto),
 ) {}
+
+export class DictionaryOutputDto extends BaseDictionaryDto {}
 
 export class QueryDictionaryDto extends IntersectionType(
   PageDto,
@@ -127,14 +139,28 @@ export class QueryDictionaryDto extends IntersectionType(
   ),
 ) {}
 
-export class CreateDictionaryItemDto extends OmitType(BaseDictionaryItemDto, [
-  ...OMIT_BASE_FIELDS,
-] as const) {}
+export class CreateDictionaryItemDto extends IntersectionType(
+  OmitType(BaseDictionaryItemDto, [
+    ...OMIT_BASE_FIELDS,
+    'sortOrder',
+    'cover',
+    'description',
+  ] as const),
+  PartialType(
+    PickType(BaseDictionaryItemDto, [
+      'sortOrder',
+      'cover',
+      'description',
+    ] as const),
+  ),
+) {}
 
 export class UpdateDictionaryItemDto extends IntersectionType(
   IdDto,
   PartialType(CreateDictionaryItemDto),
 ) {}
+
+export class DictionaryItemOutputDto extends BaseDictionaryItemDto {}
 
 export class QueryDictionaryItemDto extends IntersectionType(
   PickType(BaseDictionaryItemDto, ['dictionaryCode'] as const),

@@ -1,6 +1,12 @@
-import { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
-import { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
-import { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
+import {
+  AuthorNullableOutputFieldsDto,
+  BaseAuthorDto,
+} from '@libs/content/author/dto/author.dto'
+import {
+  BaseCategoryDto,
+  CategoryOutputDto,
+} from '@libs/content/category/dto/category.dto'
+import { BaseTagDto, TagOutputDto } from '@libs/content/tag/dto/tag.dto'
 import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
 import {
   WorkRootViewPermissionEnum,
@@ -15,7 +21,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -48,10 +55,10 @@ export class BaseWorkDto extends BaseDto {
   @StringProperty({
     description: '作品别名',
     example: 'Attack on Titan',
-    required: false,
+    nullable: true,
     maxLength: 200,
   })
-  alias?: string
+  alias!: string | null
 
   @StringProperty({
     description: '作品封面',
@@ -87,10 +94,10 @@ export class BaseWorkDto extends BaseDto {
   @StringProperty({
     description: '年龄分级',
     example: 'R14',
-    required: false,
+    nullable: true,
     maxLength: 10,
   })
-  ageRating?: string
+  ageRating!: string | null
 
   @EnumProperty({
     description:
@@ -104,41 +111,41 @@ export class BaseWorkDto extends BaseDto {
   @StringProperty({
     description: '出版社',
     example: '讲谈社',
-    required: false,
+    nullable: true,
     maxLength: 100,
   })
-  publisher?: string
+  publisher!: string | null
 
   @StringProperty({
     description: '原始来源',
     example: '官方授权',
-    required: false,
+    nullable: true,
     maxLength: 100,
   })
-  originalSource?: string
+  originalSource!: string | null
 
   @StringProperty({
     description: '版权信息',
     example: '© 2024',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  copyright?: string
+  copyright!: string | null
 
   @StringProperty({
     description: '免责声明',
     example: '仅供学习',
-    required: false,
+    nullable: true,
   })
-  disclaimer?: string
+  disclaimer!: string | null
 
   @StringProperty({
     description: '备注',
     example: '管理员备注',
-    required: false,
+    nullable: true,
     maxLength: 1000,
   })
-  remark?: string
+  remark!: string | null
 
   @BooleanProperty({ description: '是否发布', example: true, required: true })
   isPublished!: boolean
@@ -155,16 +162,16 @@ export class BaseWorkDto extends BaseDto {
   @DateProperty({
     description: '发布日期',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
   })
-  publishAt?: Date
+  publishAt!: Date | string | null
 
   @DateProperty({
     description: '最近更新时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
   })
-  lastUpdated?: Date
+  lastUpdated!: Date | null
 
   @EnumProperty({
     description:
@@ -178,12 +185,12 @@ export class BaseWorkDto extends BaseDto {
   @NumberProperty({
     description: '历史阅读等级ID（目标态不参与阅读权限）',
     example: 1,
-    required: false,
+    nullable: true,
   })
-  requiredViewLevelId?: number
+  requiredViewLevelId!: number | null
 
-  @NumberProperty({ description: '论坛板块ID', example: 1, required: false })
-  forumSectionId?: number
+  @NumberProperty({ description: '论坛板块ID', example: 1, nullable: true })
+  forumSectionId!: number | null
 
   @NumberProperty({ description: '章节默认价格', example: 0, required: true })
   chapterPrice!: number
@@ -241,10 +248,10 @@ export class BaseWorkDto extends BaseDto {
   @NumberProperty({
     description: '评分',
     example: 8.5,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  rating?: number
+  rating!: number | null
 
   @NumberProperty({
     description: '热度值',
@@ -264,8 +271,18 @@ export class BaseWorkDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateWorkDto extends OmitType(BaseWorkDto, [
+class CreateWorkRequiredFieldsDto extends OmitType(BaseWorkDto, [
   ...OMIT_BASE_FIELDS,
+  'alias',
+  'ageRating',
+  'publisher',
+  'originalSource',
+  'copyright',
+  'disclaimer',
+  'remark',
+  'publishAt',
+  'lastUpdated',
+  'requiredViewLevelId',
   'popularity',
   'viewCount',
   'favoriteCount',
@@ -273,8 +290,31 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   'commentCount',
   'downloadCount',
   'forumSectionId',
+  'rating',
   'deletedAt',
-] as const) {
+] as const) {}
+
+class CreateWorkOptionalFieldsDto extends PartialType(
+  PickType(BaseWorkDto, [
+    'alias',
+    'ageRating',
+    'publisher',
+    'originalSource',
+    'copyright',
+    'disclaimer',
+    'remark',
+    'publishAt',
+    'lastUpdated',
+    'requiredViewLevelId',
+    'rating',
+  ] as const),
+) {}
+
+export class CreateWorkDto extends IntersectionType(
+  CreateWorkRequiredFieldsDto,
+  CreateWorkOptionalFieldsDto,
+) {
+
   @ArrayProperty({
     description: '作者ID列表',
     itemType: 'number',
@@ -380,28 +420,25 @@ export class QueryWorkCommentPageDto extends IntersectionType(
   PartialType(CommentSortDto),
 ) {}
 
-class AuthorInfoDto extends PickType(BaseAuthorDto, [
-  'id',
-  'name',
-  'type',
-  'avatar',
-] as const) {
+class AuthorInfoDto extends IntersectionType(
+  PickType(BaseAuthorDto, ['id', 'name'] as const),
+  PickType(AuthorNullableOutputFieldsDto, ['type', 'avatar'] as const),
+) {
   @BooleanProperty({
     description: '当前用户是否已关注该作者',
     example: true,
-    required: false,
     validation: false,
   })
-  isFollowed?: boolean
+  isFollowed!: boolean
 }
 
-class CategoryInfoDto extends PickType(BaseCategoryDto, [
+class CategoryInfoDto extends PickType(CategoryOutputDto, [
   'id',
   'name',
   'icon',
 ] as const) {}
 
-class TagInfoDto extends PickType(BaseTagDto, [
+class TagInfoDto extends PickType(TagOutputDto, [
   'id',
   'name',
   'icon',
@@ -410,7 +447,7 @@ class TagInfoDto extends PickType(BaseTagDto, [
 /**
  * 作品分页项 DTO。
  */
-export class PageWorkDto extends PickType(BaseWorkDto, [
+class PageWorkBaseFieldsDto extends PickType(BaseWorkDto, [
   'id',
   'name',
   'type',
@@ -428,7 +465,9 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
   'updatedAt',
   'publishAt',
   'isPublished',
-] as const) {
+] as const) {}
+
+export class PageWorkDto extends PageWorkBaseFieldsDto {
   @ArrayProperty({
     description: '作者列表',
     itemClass: AuthorInfoDto,
@@ -494,12 +533,21 @@ export class WorkUserStatusFieldsDto {
 /**
  * 继续阅读章节 DTO。
  */
-export class ContinueReadingChapterDto extends PickType(BaseWorkChapterDto, [
-  'id',
-  'title',
-  'subtitle',
-  'sortOrder',
-] as const) {}
+class ContinueReadingChapterNullableFieldsDto {
+  @StringProperty({
+    description: '章节副标题',
+    example: '序章',
+    nullable: true,
+    maxLength: 200,
+    validation: false,
+  })
+  subtitle!: string | null
+}
+
+export class ContinueReadingChapterDto extends IntersectionType(
+  PickType(BaseWorkChapterDto, ['id', 'title', 'sortOrder'] as const),
+  ContinueReadingChapterNullableFieldsDto,
+) {}
 
 /**
  * 阅读状态 DTO。
@@ -508,21 +556,21 @@ export class WorkReadingStatusFieldsDto {
   @DateProperty({
     description: '最近阅读时间',
     example: '2026-03-09T10:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  lastReadAt?: Date
+  lastReadAt!: Date | null
 
   @NestedProperty({
     description: '继续阅读章节',
-    required: false,
+    nullable: true,
     type: ContinueReadingChapterDto,
     validation: false,
   })
-  continueChapter?: ContinueReadingChapterDto
+  continueChapter!: ContinueReadingChapterDto | null
 }
 
-class WorkDetailExtraDto extends PickType(BaseWorkDto, [
+class WorkDetailExtraBaseDto extends PickType(BaseWorkDto, [
   'alias',
   'description',
   'originalSource',
@@ -539,11 +587,13 @@ class WorkDetailExtraDto extends PickType(BaseWorkDto, [
   'commentCount',
   'downloadCount',
   'rating',
-] as const) {
+] as const) {}
+
+class WorkDetailExtraDto extends WorkDetailExtraBaseDto {
   @NestedProperty({
     description: '章节默认购买价格信息',
     type: ContentPurchasePricingDto,
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })

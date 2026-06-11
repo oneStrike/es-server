@@ -19,7 +19,7 @@ import {
   OptionalAuth,
 } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import {
   extractRequestContext,
   serializeDeviceInfo,
@@ -98,6 +98,7 @@ export class WorkChapterController {
   @ApiDoc({
     summary: '查询上一章节详情',
     model: WorkChapterDetailWithUserStatusDto,
+    nullable: true,
   })
   async getPreviousWorkChapterDetail(
     @Query() query: IdDto,
@@ -118,6 +119,7 @@ export class WorkChapterController {
   @ApiDoc({
     summary: '查询下一章节详情',
     model: WorkChapterDetailWithUserStatusDto,
+    nullable: true,
   })
   async getNextWorkChapterDetail(
     @Query() query: IdDto,

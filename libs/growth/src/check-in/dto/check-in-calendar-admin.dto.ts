@@ -6,7 +6,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
-import { ApiExtraModels, ApiProperty, PickType } from '@nestjs/swagger'
+import { ApiExtraModels, PickType } from '@nestjs/swagger'
 import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 import {
   CheckInCalendarResponseDto,
@@ -81,36 +81,34 @@ export class AdminCheckInCalendarDayDto {
     description:
       '当前生效配置对该日期的奖励规则投影视图；这是 current-config projection，不是历史冻结配置快照。',
     itemClass: CheckInRewardItemDto,
-    required: false,
     nullable: true,
     validation: false,
   })
-  baseRewardConfigProjectionOverview?: CheckInRewardItemDto[] | null
+  baseRewardConfigProjectionOverview!: CheckInRewardItemDto[] | null
 
   @StringProperty({
     description: '当前生效配置对该日期的奖励概览图标 URL。',
     example: 'https://cdn.example.com/check-in/reward-overview.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  baseRewardConfigProjectionOverviewIconUrl?: string | null
+  baseRewardConfigProjectionOverviewIconUrl!: string | null
 
   @ArrayProperty({
     description: '按签到事实冻结奖励快照聚合出的当日基础奖励实际概览。',
     itemClass: CheckInRewardItemDto,
-    required: false,
     nullable: true,
     validation: false,
   })
-  baseRewardActualOverview?: CheckInRewardItemDto[] | null
+  baseRewardActualOverview!: CheckInRewardItemDto[] | null
 
   @StringProperty({
     description: '按签到事实冻结奖励快照聚合出的当日基础奖励概览图标 URL。',
     example: 'https://cdn.example.com/check-in/reward-overview.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  baseRewardActualOverviewIconUrl?: string | null
+  baseRewardActualOverviewIconUrl!: string | null
 }
 
 export class AdminCheckInCalendarDetailResponseDto extends CheckInCalendarWindowDto {
@@ -184,8 +182,6 @@ export class AdminCheckInCalendarOverviewResponseDto extends CheckInCalendarWind
   cutoffDate!: string
 }
 
-export class AdminUserCheckInCalendarDetailResponseDto extends CheckInCalendarResponseDto {}
-
 export class AdminCheckInSignedUserDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',
@@ -194,11 +190,11 @@ export class AdminCheckInSignedUserDto extends PickType(BaseAppUserDto, [
 
 @ApiExtraModels(AdminCheckInSignedUserDto)
 export class AdminCheckInSignedUserPageItemDto extends CheckInRecordItemDto {
-  @ApiProperty({
+  @NestedProperty({
     description: '已签用户信息。',
-    required: false,
     nullable: true,
     type: AdminCheckInSignedUserDto,
+    validation: false,
   })
-  user?: AdminCheckInSignedUserDto | null
+  user!: AdminCheckInSignedUserDto | null
 }

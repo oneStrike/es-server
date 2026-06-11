@@ -2,14 +2,13 @@ import {
   ArrayProperty,
   BooleanProperty,
   DateProperty,
-  EnumArrayProperty,
   EnumProperty,
   NestedProperty,
   NumberProperty,
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { WorkflowErrorCodeEnum } from '../workflow-error-facts'
 import {
@@ -69,7 +68,8 @@ class WorkflowItemStatusFieldsDto {
 /** 工作流错误事实 DTO。 */
 export class WorkflowErrorFactsDto {
   @EnumProperty({
-    description: '错误或状态码',
+    description:
+      '错误或状态码，返回归档导入、内容导入、三方导入、数据库写入或工作流运行错误等稳定代码',
     enum: WorkflowErrorCodeEnum,
     example: WorkflowErrorCodeEnum.ATTEMPT_LEASE_EXPIRED,
     required: true,
@@ -118,7 +118,7 @@ export class WorkflowErrorFactsDto {
   context!: Record<string, unknown>
 }
 
-/** 工作流 attempt DTO。 */
+/** 工作流执行轮次 DTO。 */
 export class WorkflowAttemptDto {
   @NumberProperty({
     description: '主键ID',
@@ -129,7 +129,7 @@ export class WorkflowAttemptDto {
   id!: number
 
   @StringProperty({
-    description: '工作流 attempt ID',
+    description: '工作流执行轮次ID',
     example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
     required: true,
     validation: false,
@@ -137,7 +137,7 @@ export class WorkflowAttemptDto {
   attemptId!: string
 
   @NumberProperty({
-    description: 'attempt 序号',
+    description: '执行轮次序号',
     example: 1,
     required: true,
     validation: false,
@@ -155,7 +155,7 @@ export class WorkflowAttemptDto {
 
   @EnumProperty({
     description:
-      'attempt状态（1=待处理；2=处理中；3=成功；4=部分失败；5=失败；6=已取消）',
+      '执行轮次状态（1=待处理；2=处理中；3=成功；4=部分失败；5=失败；6=已取消）',
     enum: WorkflowAttemptStatusEnum,
     example: WorkflowAttemptStatusEnum.PENDING,
     required: true,
@@ -164,9 +164,10 @@ export class WorkflowAttemptDto {
   status!: WorkflowAttemptStatusEnum
 
   @DateProperty({
-    description: '最早可被 worker 消费的时间',
+    description: '最早可被处理节点领取的时间',
     example: '2026-05-17T03:10:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   notBeforeAt!: Date | null
@@ -204,9 +205,10 @@ export class WorkflowAttemptDto {
   skippedItemCount!: number
 
   @StringProperty({
-    description: '当前处理 worker',
-    example: 'admin-api-worker-1',
-    required: false,
+    description: '当前处理节点',
+    example: 'admin-api-node-1',
+    nullable: true,
+    required: true,
     validation: false,
   })
   claimedBy!: string | null
@@ -214,7 +216,8 @@ export class WorkflowAttemptDto {
   @DateProperty({
     description: 'claim 过期时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   claimExpiresAt!: Date | null
@@ -222,7 +225,8 @@ export class WorkflowAttemptDto {
   @DateProperty({
     description: '最近心跳时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   heartbeatAt!: Date | null
@@ -238,7 +242,7 @@ export class WorkflowAttemptDto {
       stage: 'lease-recovery',
     },
     nullable: true,
-    required: false,
+    required: true,
     type: WorkflowErrorFactsDto,
     validation: false,
   })
@@ -247,7 +251,8 @@ export class WorkflowAttemptDto {
   @DateProperty({
     description: '开始处理时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   startedAt!: Date | null
@@ -255,7 +260,8 @@ export class WorkflowAttemptDto {
   @DateProperty({
     description: '完成时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   finishedAt!: Date | null
@@ -289,7 +295,7 @@ export class WorkflowEventDto {
 
   @EnumProperty({
     description:
-      '事件类型（1=创建草稿；2=确认任务；3=claim attempt；4=心跳；5=进度更新；6=条目成功；7=条目失败；8=attempt完成；9=请求取消；10=人工重试；11=草稿过期；12=资源清理）',
+      '事件类型（1=创建草稿；2=确认任务；3=认领执行轮次；4=心跳；5=进度更新；6=条目成功；7=条目失败；8=执行轮次完成；9=请求取消；10=人工重试；11=草稿过期；12=资源清理）',
     enum: WorkflowEventTypeEnum,
     example: WorkflowEventTypeEnum.JOB_CREATED,
     required: true,
@@ -308,7 +314,7 @@ export class WorkflowEventDto {
   @ObjectProperty({
     description: '事件诊断详情',
     example: { itemId: 'chapter-1' },
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })
@@ -326,17 +332,17 @@ export class WorkflowEventDto {
 /** 工作流处理记录 DTO。 */
 export class WorkflowRecordDto extends WorkflowEventDto {
   @StringProperty({
-    description: '工作流 attempt ID',
+    description: '工作流执行轮次ID',
     example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
-    required: false,
+    nullable: true,
     validation: false,
   })
   attemptId!: string | null
 
   @NumberProperty({
-    description: 'attempt 序号',
+    description: '执行轮次序号',
     example: 1,
-    required: false,
+    nullable: true,
     validation: false,
   })
   attemptNo!: number | null
@@ -388,7 +394,7 @@ export class WorkflowJobDto {
   @NumberProperty({
     description: '后台管理员操作者ID；系统任务为空',
     example: 1,
-    required: false,
+    nullable: true,
     validation: false,
   })
   operatorUserId!: number | null
@@ -414,7 +420,8 @@ export class WorkflowJobDto {
   @StringProperty({
     description: '当前进度展示代码；后台根据代码和上下文生成文案',
     example: WorkflowErrorCodeEnum.CONTENT_IMPORT_PROGRESS_UPDATED,
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   progressCode!: string | null
@@ -422,7 +429,7 @@ export class WorkflowJobDto {
   @ObjectProperty({
     description: '当前进度展示上下文',
     example: { completedItemCount: 3, selectedItemCount: 5 },
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })
@@ -431,7 +438,7 @@ export class WorkflowJobDto {
   @ObjectProperty({
     description: '结构化进度详情快照；用于展示当前运行中的子进度',
     example: { kind: 'content-import.image', imageIndex: 1, imageTotal: 20 },
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })
@@ -472,7 +479,8 @@ export class WorkflowJobDto {
   @DateProperty({
     description: '取消请求时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   cancelRequestedAt!: Date | null
@@ -480,7 +488,8 @@ export class WorkflowJobDto {
   @DateProperty({
     description: '开始处理时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   startedAt!: Date | null
@@ -488,7 +497,8 @@ export class WorkflowJobDto {
   @DateProperty({
     description: '完成时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   finishedAt!: Date | null
@@ -496,7 +506,8 @@ export class WorkflowJobDto {
   @DateProperty({
     description: '草稿过期时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   expiresAt!: Date | null
@@ -504,7 +515,8 @@ export class WorkflowJobDto {
   @DateProperty({
     description: '归档时间；为空表示未归档',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   archivedAt!: Date | null
@@ -512,7 +524,7 @@ export class WorkflowJobDto {
   @ObjectProperty({
     description: '运行时非查询诊断摘要',
     example: { reason: 'partial failed' },
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })
@@ -538,7 +550,7 @@ export class WorkflowJobDto {
 /** 工作流详情 DTO。 */
 export class WorkflowJobDetailDto extends WorkflowJobDto {
   @ArrayProperty({
-    description: 'attempt 列表',
+    description: '执行轮次列表',
     itemClass: WorkflowAttemptDto,
     required: true,
     validation: false,
@@ -567,7 +579,7 @@ export class WorkflowNotificationItemDto extends PickType(WorkflowJobDto, [
   id!: number
 
   @EnumProperty({
-    description: '通知事实类型（success=执行完成；retrying=异常后正在系统重试；failed=最终失败）',
+    description: '通知事实类型（执行完成；异常后正在系统重试；最终失败）',
     enum: WorkflowNotificationKindEnum,
     example: WorkflowNotificationKindEnum.SUCCESS,
     required: true,
@@ -586,7 +598,7 @@ export class WorkflowNotificationItemDto extends PickType(WorkflowJobDto, [
   @DateProperty({
     description: '下次系统重试时间；仅重试中通知可能存在',
     example: '2026-05-17T03:10:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
   nextRetryAt!: Date | null
@@ -630,7 +642,7 @@ export class WorkflowItemDto {
   @StringProperty({
     description: '业务对象类型',
     example: 'app-user',
-    required: false,
+    nullable: true,
     validation: false,
   })
   subjectType!: string | null
@@ -638,7 +650,7 @@ export class WorkflowItemDto {
   @NumberProperty({
     description: '业务对象 ID',
     example: 1001,
-    required: false,
+    nullable: true,
     validation: false,
   })
   subjectId!: number | null
@@ -646,7 +658,7 @@ export class WorkflowItemDto {
   @StringProperty({
     description: '业务对象展示名',
     example: '用户昵称',
-    required: false,
+    nullable: true,
     validation: false,
   })
   subjectLabel!: string | null
@@ -686,7 +698,7 @@ export class WorkflowItemDto {
       stage: 'grant-user',
     },
     nullable: true,
-    required: false,
+    required: true,
     type: WorkflowErrorFactsDto,
     validation: false,
   })
@@ -695,7 +707,8 @@ export class WorkflowItemDto {
   @DateProperty({
     description: '下次可重试时间',
     example: '2026-05-17T03:10:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   nextRetryAt!: Date | null
@@ -703,7 +716,7 @@ export class WorkflowItemDto {
   @ObjectProperty({
     description: '条目元数据',
     example: { phoneNumber: '13800000000' },
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })
@@ -745,7 +758,7 @@ export class WorkflowJobPageRequestDto extends IntersectionType(
   ),
 ) {
   @EnumProperty({
-    description: '归档筛选范围（active=未归档；archived=已归档；all=全部）',
+    description: '归档筛选范围（未归档；已归档；全部）',
     enum: WorkflowJobArchiveScopeEnum,
     example: WorkflowJobArchiveScopeEnum.ACTIVE,
     required: false,
@@ -760,15 +773,16 @@ export class WorkflowRecordPageRequestDto extends IntersectionType(
   WorkflowJobIdDto,
 ) {
   @StringProperty({
-    description: '工作流 attempt ID',
+    description: '工作流执行轮次ID',
     example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
     required: false,
   })
   attemptId?: string
 
-  @EnumArrayProperty({
-    description: '事件类型过滤；不传时默认返回关键生命周期/诊断记录',
-    enum: WorkflowEventTypeEnum,
+  @ArrayProperty({
+    description:
+      '事件类型过滤；不传时默认返回关键生命周期/诊断记录（1=创建草稿；2=确认任务；3=认领执行轮次；4=心跳；5=进度更新；6=条目成功；7=条目失败；8=执行轮次完成；9=请求取消；10=人工重试；11=草稿过期；12=资源清理）',
+    itemEnum: WorkflowEventTypeEnum,
     example: [
       WorkflowEventTypeEnum.JOB_CREATED,
       WorkflowEventTypeEnum.JOB_CONFIRMED,
@@ -806,9 +820,10 @@ export class WorkflowNotificationListRequestDto {
   })
   limit?: number
 
-  @EnumArrayProperty({
-    description: '通知事实类型过滤；不传时返回执行完成、异常重试、最终失败',
-    enum: WorkflowNotificationKindEnum,
+  @ArrayProperty({
+    description:
+      '通知事实类型过滤；不传时返回执行完成、异常重试、最终失败',
+    itemEnum: WorkflowNotificationKindEnum,
     example: [
       WorkflowNotificationKindEnum.SUCCESS,
       WorkflowNotificationKindEnum.RETRYING,
@@ -831,7 +846,7 @@ export class WorkflowNotificationListResponseDto {
   @DateProperty({
     description: '下一次轮询游标时间',
     example: '2026-05-17T03:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
   nextCreatedAfter!: Date | null
@@ -839,7 +854,7 @@ export class WorkflowNotificationListResponseDto {
   @NumberProperty({
     description: '同一游标时间下下一次轮询游标ID',
     example: 20,
-    required: false,
+    nullable: true,
     validation: false,
   })
   nextAfterId!: number | null
@@ -865,23 +880,17 @@ export class WorkflowRetryItemsDto extends WorkflowJobIdDto {
   itemIds!: string[]
 }
 
-/** 工作流清理 retained resource DTO。 */
-export class WorkflowExpireDto extends WorkflowJobIdDto {}
-
-/** 工作流归档 DTO。 */
-export class WorkflowArchiveDto extends WorkflowJobIdDto {}
-
-/** 工作流 attempt 状态更新 DTO。 */
+/** 工作流执行轮次状态更新 DTO。 */
 export class WorkflowAttemptCompleteDto {
   @StringProperty({
-    description: '工作流 attempt ID',
+    description: '工作流执行轮次ID',
     example: '8f12f79c-7d89-4daa-a6ea-c2af4d56e650',
     required: true,
   })
   attemptId!: string
 
   @EnumProperty({
-    description: 'attempt终态（3=成功；4=部分失败；5=失败；6=已取消）',
+    description: '执行轮次终态（3=成功；4=部分失败；5=失败；6=已取消）',
     enum: WorkflowAttemptStatusEnum,
     example: WorkflowAttemptStatusEnum.SUCCESS,
     required: true,
@@ -920,20 +929,18 @@ export class WorkflowAttemptCompleteDto {
       stage: 'unknown',
     },
     nullable: true,
-    required: false,
     type: WorkflowErrorFactsDto,
     validation: false,
   })
-  error?: WorkflowErrorFactsDto | null
+  error!: WorkflowErrorFactsDto | null
 
   @ObjectProperty({
     description: '内部诊断对象；不作为 admin 展示文案来源',
     example: { source: 'manual-complete' },
     nullable: true,
-    required: false,
     validation: false,
   })
-  errorDiagnostic?: Record<string, unknown> | null
+  errorDiagnostic!: Record<string, unknown> | null
 }
 
 /** 工作流详情响应内容扩展 DTO。 */
@@ -969,7 +976,7 @@ export class WorkflowTypeOptionDto {
     description: '工作流说明',
     example: '从三方书源导入漫画内容',
     nullable: true,
-    required: false,
+    required: true,
     validation: false,
   })
   description!: string | null

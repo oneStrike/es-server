@@ -346,7 +346,7 @@ export class MessageMonitorService {
     if (query.dispatchStatus !== undefined) {
       conditions.push(eq(domainEventDispatch.status, query.dispatchStatus))
     }
-    if (query.deliveryStatus !== undefined) {
+    if (query.deliveryStatus != null) {
       conditions.push(eq(notificationDelivery.status, query.deliveryStatus))
     }
     if (categoryKey) {

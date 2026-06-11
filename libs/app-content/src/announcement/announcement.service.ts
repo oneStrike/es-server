@@ -4,7 +4,7 @@ import type { SQL } from 'drizzle-orm'
 import type { AnnouncementFanoutPort } from './announcement-fanout.port'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { assertValidTimeRange } from '@libs/platform/utils'
 import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/common'
@@ -28,8 +28,8 @@ import {
   resolveAnnouncementPublishStatus,
 } from './announcement.constant'
 import {
-  AppAnnouncementDetailDto,
   AppAnnouncementListItemDto,
+  AnnouncementOutputBaseDto,
   CreateAnnouncementDto,
   QueryAnnouncementDto,
   UpdateAnnouncementDto,
@@ -40,6 +40,11 @@ const ENABLE_PLATFORM_VALUES = new Set<number>(
     (value): value is number => typeof value === 'number',
   ),
 )
+const DEFAULT_ENABLE_PLATFORM = [
+  EnablePlatformEnum.H5,
+  EnablePlatformEnum.APP,
+  EnablePlatformEnum.MINI_PROGRAM,
+]
 
 interface AnnouncementFanoutRuntimeFields {
   fanoutDesiredEventKey: string | null
@@ -60,6 +65,16 @@ type AnnouncementResponseRow = Omit<
   AnnouncementInternalRuntimeColumn
 > &
 AnnouncementFanoutRuntimeFields
+type AnnouncementOutputFieldSource = Pick<
+  AppAnnouncementSelect,
+  | 'enablePlatform'
+  | 'pageId'
+  | 'popupBackgroundImage'
+  | 'popupBackgroundPosition'
+  | 'publishEndTime'
+  | 'publishStartTime'
+  | 'summary'
+>
 
 /**
  * 系统公告服务
@@ -208,7 +223,13 @@ export class AppAnnouncementService {
       this.db.$count(this.appAnnouncement, where),
     ])
 
-    return toPageResult(list as AppAnnouncementListItemDto[], total, page)
+    return toPageResult(
+      list.map((item) =>
+        this.toAnnouncementOutputDto(item),
+      ) as AppAnnouncementListItemDto[],
+      total,
+      page,
+    )
   }
 
   /**
@@ -413,9 +434,11 @@ export class AppAnnouncementService {
   /**
    * 查询 APP 公开公告详情，只允许 APP 平台且当前生效的公告。
    */
-  async findPublicAnnouncementDetail(dto: IdDto): Promise<AppAnnouncementDetailDto> {
+  async findPublicAnnouncementDetail(
+    dto: IdDto,
+  ): Promise<AnnouncementOutputBaseDto> {
     const announcement = await this.findVisiblePublicAnnouncement(dto.id)
-    return announcement as AppAnnouncementDetailDto
+    return this.toAnnouncementOutputDto(announcement)
   }
 
   /**
@@ -706,13 +729,42 @@ export class AppAnnouncementService {
     rows: T[],
   ) {
     return rows.map((row) => ({
-      ...row,
+      ...this.toAnnouncementOutputDto(row),
       publishStatus: resolveAnnouncementPublishStatus(row),
-      fanoutStatus:
-        row.fanoutStatus === null
-          ? null
-          : (row.fanoutStatus),
+      fanoutDesiredEventKey: row.fanoutDesiredEventKey ?? null,
+      fanoutLastError: row.fanoutLastError ?? null,
+      fanoutStatus: row.fanoutStatus ?? null,
+      fanoutUpdatedAt: row.fanoutUpdatedAt ?? null,
     }))
+  }
+
+  private toAnnouncementOutputDto<T extends Partial<AnnouncementOutputFieldSource>>(
+    row: T,
+  ) {
+    return {
+      ...row,
+      summary: row.summary ?? null,
+      publishStartTime: row.publishStartTime ?? null,
+      publishEndTime: row.publishEndTime ?? null,
+      pageId: row.pageId ?? null,
+      popupBackgroundImage: row.popupBackgroundImage ?? null,
+      popupBackgroundPosition:
+        (row.popupBackgroundPosition as PopupBackgroundPositionEnum | null) ??
+        PopupBackgroundPositionEnum.CENTER,
+      enablePlatform: this.toAnnouncementOutputEnablePlatform(
+        row.enablePlatform,
+      ),
+    }
+  }
+
+  private toAnnouncementOutputEnablePlatform(
+    enablePlatform?: EnablePlatformEnum[] | number[] | null,
+  ) {
+    if (!Array.isArray(enablePlatform) || enablePlatform.length === 0) {
+      return [...DEFAULT_ENABLE_PLATFORM]
+    }
+
+    return enablePlatform.map((item) => Number(item)) as EnablePlatformEnum[]
   }
 
   /**

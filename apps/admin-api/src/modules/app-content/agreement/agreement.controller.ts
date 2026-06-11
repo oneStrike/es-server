@@ -14,7 +14,7 @@ import {
   ApiPageDoc,
   Public,
 } from '@libs/platform/decorators'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'

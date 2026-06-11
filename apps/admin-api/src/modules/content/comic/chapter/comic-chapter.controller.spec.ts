@@ -25,7 +25,10 @@ describe('ComicChapterController', () => {
 
     await expect(controller.delete({ id: 1 })).resolves.toBe(true)
 
-    expect(workChapterService.deleteChapter).toHaveBeenCalledWith(1)
+    expect(workChapterService.deleteChapter).toHaveBeenCalledWith(
+      1,
+      WorkTypeEnum.COMIC,
+    )
     expect(workChapterService.deleteChapters).not.toHaveBeenCalled()
   })
 
@@ -34,7 +37,10 @@ describe('ComicChapterController', () => {
 
     await expect(controller.batchDelete({ ids: [1, 2, 3] })).resolves.toBe(true)
 
-    expect(workChapterService.deleteChapters).toHaveBeenCalledWith([1, 2, 3])
+    expect(workChapterService.deleteChapters).toHaveBeenCalledWith(
+      [1, 2, 3],
+      WorkTypeEnum.COMIC,
+    )
   })
 
   it('batch publishes comic chapters with the ids contract', async () => {

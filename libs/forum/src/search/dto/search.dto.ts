@@ -5,7 +5,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   ForumSearchSortTypeEnum,
   ForumSearchTypeEnum,
@@ -26,7 +26,7 @@ export class ForumSearchDto extends PageDto {
   keyword!: string
 
   @EnumProperty({
-    description: '搜索类型（all=全部；topic=主题；comment=评论）',
+    description: '搜索类型（全部；主题；评论）',
     example: ForumSearchTypeEnum.ALL,
     required: false,
     enum: ForumSearchTypeEnum,
@@ -49,16 +49,8 @@ export class ForumSearchDto extends PageDto {
   })
   hashtagId?: number
 
-  @NumberProperty({
-    description: '兼容旧标签ID筛选；与 hashtagId 等价，后续将移除',
-    example: 1,
-    required: false,
-    min: 1,
-  })
-  tagId?: number
-
   @EnumProperty({
-    description: '排序类型（relevance=相关度；latest=最新；hot=最热）',
+    description: '排序类型（相关度；最新；最热）',
     example: ForumSearchSortTypeEnum.RELEVANCE,
     required: false,
     enum: ForumSearchSortTypeEnum,
@@ -72,7 +64,7 @@ export class ForumSearchDto extends PageDto {
  */
 export class ForumSearchResultDto {
   @EnumProperty({
-    description: '结果类型（topic=主题；comment=评论）',
+    description: '结果类型（主题；评论）',
     example: ForumSearchTypeEnum.TOPIC,
     enum: ForumSearchTypeEnum,
     validation: false,
@@ -96,10 +88,11 @@ export class ForumSearchResultDto {
   @StringProperty({
     description: '主题内容摘要',
     example: '这是测试内容',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  topicContentSnippet?: string
+  topicContentSnippet!: string | null
 
   @NumberProperty({
     description: '板块ID',
@@ -132,26 +125,29 @@ export class ForumSearchResultDto {
   @StringProperty({
     description: '用户头像',
     example: 'https://example.com/avatar.png',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  userAvatarUrl?: string
+  userAvatarUrl!: string | null
 
   @NumberProperty({
     description: '评论ID；仅评论搜索结果返回。',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  commentId?: number
+  commentId!: number | null
 
   @StringProperty({
     description: '评论内容摘要；仅评论搜索结果返回。',
     example: '这是评论内容',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  commentContentSnippet?: string
+  commentContentSnippet!: string | null
 
   @DateProperty({
     description: '创建时间',

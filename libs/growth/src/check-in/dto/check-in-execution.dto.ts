@@ -2,11 +2,12 @@ import {
   ArrayProperty,
   BooleanProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { ApiExtraModels, ApiProperty } from '@nestjs/swagger'
+import { ApiExtraModels } from '@nestjs/swagger'
 import {
   CheckInMakeupPeriodTypeEnum,
   CheckInRepairTargetTypeEnum,
@@ -37,7 +38,6 @@ export class RepairCheckInRewardDto {
     description: '基础奖励对应的签到记录 ID。',
     example: 1,
     required: false,
-    validation: false,
   })
   recordId?: number
 
@@ -45,7 +45,6 @@ export class RepairCheckInRewardDto {
     description: '连续奖励对应的 grant ID。',
     example: 1,
     required: false,
-    validation: false,
   })
   grantId?: number
 }
@@ -115,13 +114,13 @@ export class RepairCheckInStreakResponseDto {
 
 @ApiExtraModels(CheckInRewardSettlementSummaryDto)
 export class CheckInActionResponseDto extends BaseCheckInRecordDto {
-  @ApiProperty({
+  @NestedProperty({
     description: '基础奖励结算摘要。',
-    required: false,
     nullable: true,
     type: CheckInRewardSettlementSummaryDto,
+    validation: false,
   })
-  rewardSettlement?: CheckInRewardSettlementSummaryDto | null
+  rewardSettlement!: CheckInRewardSettlementSummaryDto | null
 
   @EnumProperty({
     description: '当前补签周期类型（1=按自然周；2=按自然月）。',

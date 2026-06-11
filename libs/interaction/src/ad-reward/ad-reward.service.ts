@@ -29,12 +29,12 @@ import {
   AdTargetScopeEnum,
 } from '../ad-reward/ad-reward.constant'
 import {
+  AdProviderConfigOutputDto,
   AdRewardCredentialOptionDto,
   AdRewardRevokeDto,
   AdRewardVerificationDto,
   CreateAdProviderConfigDto,
   QueryAdProviderConfigDto,
-  QueryAdRewardReconcileDto,
   QueryAdRewardRecordDto,
   UpdateAdProviderConfigDto,
 } from '../ad-reward/dto/ad-reward.dto'
@@ -358,7 +358,7 @@ export class AdRewardService {
   }
 
   // 分页查询广告奖励与权益对账视图。
-  async getAdRewardReconcilePage(dto: QueryAdRewardReconcileDto) {
+  async getAdRewardReconcilePage(dto: QueryAdRewardRecordDto) {
     const conditions = this.buildAdRewardRecordConditions(dto)
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const page = this.drizzle.buildPage(dto)
@@ -660,9 +660,7 @@ export class AdRewardService {
     return candidates[0]
   }
 
-  private buildAdRewardRecordConditions(
-    dto: QueryAdRewardRecordDto | QueryAdRewardReconcileDto,
-  ) {
+  private buildAdRewardRecordConditions(dto: QueryAdRewardRecordDto) {
     const conditions: SQL[] = []
     if (dto.userId !== undefined) {
       conditions.push(eq(this.adRewardRecord.userId, dto.userId))
@@ -1009,18 +1007,27 @@ export class AdRewardService {
     }
   }
 
-  private sanitizeAdProviderConfigForAdmin<T extends { configMetadata: unknown }>(
-    row: T,
-  ) {
+  private sanitizeAdProviderConfigForAdmin(
+    row: typeof this.adProviderConfig.$inferSelect,
+  ): AdProviderConfigOutputDto {
     const metadata = this.asRecord(row.configMetadata)
-    if (!metadata) {
-      return row
-    }
-    const { verifySecretEnvKey, ...safeMetadata } = metadata
-    void verifySecretEnvKey
+    const safeMetadata = metadata
+      ? (() => {
+          const { verifySecretEnvKey, ...rest } = metadata
+          void verifySecretEnvKey
+          return rest
+        })()
+      : null
     return {
       ...row,
+      clientAppKey: row.clientAppKey ?? '',
+      appId: row.appId ?? '',
+      dailyLimit: row.dailyLimit ?? 0,
+      configVersion: row.configVersion ?? 1,
+      callbackUrl: row.callbackUrl ?? null,
       configMetadata: safeMetadata,
+      sortOrder: row.sortOrder ?? 0,
+      isEnabled: row.isEnabled ?? true,
     }
   }
 

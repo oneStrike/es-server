@@ -11,7 +11,7 @@ import type {
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { HTTP_URL_REGEXP } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
@@ -19,7 +19,6 @@ import { and, eq } from 'drizzle-orm'
 import {
   AppUpdateCheckDto,
   AppUpdateReleaseWriteDto,
-  CreateAppUpdateReleaseDto,
   QueryAppUpdateReleaseDto,
   UpdateAppUpdateReleaseDto,
 } from './dto/update.dto'
@@ -139,7 +138,7 @@ export class AppUpdateService {
    * 创建更新草稿。
    * 写入前会规范化地址，并校验同平台构建号唯一约束。
    */
-  async create(dto: CreateAppUpdateReleaseDto, userId: number) {
+  async create(dto: AppUpdateReleaseWriteDto, userId: number) {
     const normalized = await this.normalizeWriteDto(dto)
 
     await this.drizzle.withErrorHandling(
@@ -278,7 +277,16 @@ export class AppUpdateService {
   ): Promise<AppUpdateCheckResponseDto> {
     const latestRelease = await this.findLatestPublishedRelease(dto.platform)
     if (!latestRelease || dto.buildCode >= latestRelease.buildCode) {
-      return { hasUpdate: false }
+      return {
+        hasUpdate: false,
+        updateType: null,
+        latestVersionName: null,
+        latestBuildCode: null,
+        releaseNotes: null,
+        packageUrl: null,
+        popupBackgroundImage: null,
+        popupBackgroundPosition: null,
+      }
     }
 
     return {
@@ -288,12 +296,12 @@ export class AppUpdateService {
         : AppUpdateTypeEnum.OPTIONAL,
       latestVersionName: latestRelease.versionName,
       latestBuildCode: latestRelease.buildCode,
-      releaseNotes: latestRelease.releaseNotes,
-      packageUrl: latestRelease.packageUrl,
-      popupBackgroundImage: latestRelease.popupBackgroundImage,
+      releaseNotes: latestRelease.releaseNotes ?? null,
+      packageUrl: latestRelease.packageUrl ?? null,
+      popupBackgroundImage: latestRelease.popupBackgroundImage ?? null,
       popupBackgroundPosition:
-        (latestRelease.popupBackgroundPosition as AppUpdatePopupBackgroundPositionEnum) ??
-        AppUpdatePopupBackgroundPositionEnum.CENTER,
+        (latestRelease.popupBackgroundPosition as AppUpdatePopupBackgroundPositionEnum | null) ??
+        null,
     }
   }
 
@@ -465,9 +473,19 @@ export class AppUpdateService {
   private toReleaseDetailDto(release: AppUpdateReleaseRecord) {
     return {
       ...release,
+      releaseNotes: release.releaseNotes ?? null,
+      packageSourceType: release.packageSourceType ?? null,
+      packageUrl: release.packageUrl ?? null,
+      packageOriginalName: release.packageOriginalName ?? null,
+      packageFileSize: release.packageFileSize ?? null,
+      packageMimeType: release.packageMimeType ?? null,
+      popupBackgroundImage: release.popupBackgroundImage ?? null,
+      publishedAt: release.publishedAt ?? null,
+      createdById: release.createdById ?? null,
+      updatedById: release.updatedById ?? null,
       popupBackgroundPosition:
         (release.popupBackgroundPosition as AppUpdatePopupBackgroundPositionEnum | null) ??
-        AppUpdatePopupBackgroundPositionEnum.CENTER,
+        null,
     } as AppUpdateReleaseDetailDto
   }
 }

@@ -1,4 +1,4 @@
-import { BaseTagDto, QueryTagDto } from '@libs/content/tag/dto/tag.dto'
+import { QueryTagDto, TagOutputDto } from '@libs/content/tag/dto/tag.dto'
 import { WorkTagService } from '@libs/content/tag/tag.service'
 import { ApiPageDoc, OptionalAuth } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
@@ -13,7 +13,7 @@ export class WorkTagController {
   @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询作品标签列表',
-    model: BaseTagDto,
+    model: TagOutputDto,
   })
   async getTagPage(@Query() query: QueryTagDto) {
     return this.tagService.getTagPage({

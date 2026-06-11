@@ -4,9 +4,9 @@ import {
   UpdateTaskDefinitionStatusDto,
 } from '@libs/growth/task/dto/task-admin.dto'
 import {
+  BaseTaskEventFailureDto,
   QueryTaskEventFailurePageDto,
   RetryTaskEventFailureBatchDto,
-  TaskEventFailurePageItemDto,
   TaskEventFailureRetryBatchResultDto,
   TaskEventFailureRetryResultDto,
 } from '@libs/growth/task/dto/task-event-failure.dto'
@@ -24,14 +24,14 @@ import { TaskTemplateOptionsResponseDto } from '@libs/growth/task/dto/task-templ
 import {
   AdminTaskDefinitionDetailDto,
   AdminTaskDefinitionListItemDto,
+  AdminTaskInstancePageItemDto,
   AdminTaskReconciliationItemDto,
-  TaskInstanceViewDto,
 } from '@libs/growth/task/dto/task-view.dto'
 import { TaskRewardRetryService } from '@libs/growth/task/task-reward-retry.service'
 import { TaskService } from '@libs/growth/task/task.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   Body,
@@ -144,7 +144,7 @@ export class TaskController {
   @Get('instance/page')
   @ApiPageDoc({
     summary: '分页查询任务实例记录',
-    model: TaskInstanceViewDto,
+    model: AdminTaskInstancePageItemDto,
   })
   async findInstancePage(@Query() query: QueryTaskInstancePageDto) {
     return this.taskService.getTaskInstancePage(query)
@@ -195,7 +195,7 @@ export class TaskController {
   @Get('event-failure/page')
   @ApiPageDoc({
     summary: '分页查询任务事件消费失败事实',
-    model: TaskEventFailurePageItemDto,
+    model: BaseTaskEventFailureDto,
   })
   async findEventFailurePage(@Query() query: QueryTaskEventFailurePageDto) {
     return this.taskService.getTaskEventFailurePage(query)

@@ -1,8 +1,10 @@
 import type { SQL } from 'drizzle-orm'
+import type { DictionaryItemSelect, DictionarySelect } from '@db/schema'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -118,7 +120,11 @@ export class LibDictionaryService {
       this.db.$count(this.dictionary, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toDictionaryOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   /**
@@ -134,7 +140,7 @@ export class LibDictionaryService {
         '字典不存在',
       )
     }
-    return data
+    return this.toDictionaryOutputDto(data)
   }
 
   /**
@@ -266,7 +272,11 @@ export class LibDictionaryService {
       this.db.$count(this.dictionaryItem, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toDictionaryItemOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   /**
@@ -274,13 +284,14 @@ export class LibDictionaryService {
    * 该入口供 app/public 场景使用，只返回启用项并按排序字段升序排列。
    */
   async findAllDictionaryItems(dto: QueryAllDictionaryItemDto) {
-    return this.db.query.dictionaryItem.findMany({
+    const items = await this.db.query.dictionaryItem.findMany({
       where: {
         isEnabled: true,
         dictionaryCode: { in: this.parseDictionaryCodes(dto.dictionaryCode) },
       },
       orderBy: (item) => [asc(item.sortOrder), asc(item.id)],
     })
+    return items.map((item) => this.toDictionaryItemOutputDto(item))
   }
 
   /**
@@ -423,5 +434,22 @@ export class LibDictionaryService {
       { notFound: '字典项不存在' },
     )
     return true
+  }
+
+  private toDictionaryOutputDto(dictionary: DictionarySelect) {
+    return {
+      ...dictionary,
+      cover: dictionary.cover ?? null,
+      description: dictionary.description ?? null,
+    }
+  }
+
+  private toDictionaryItemOutputDto(item: DictionaryItemSelect) {
+    return {
+      ...item,
+      sortOrder: item.sortOrder ?? null,
+      cover: item.cover ?? null,
+      description: item.description ?? null,
+    }
   }
 }

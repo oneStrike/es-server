@@ -5,13 +5,14 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -41,11 +42,11 @@ export class BaseSensitiveWordDto extends BaseDto {
   @StringProperty({
     description: '替换词',
     maxLength: 100,
-    required: false,
+    nullable: true,
     example: '***',
     default: '***',
   })
-  replaceWord?: string | null
+  replaceWord!: string | null
 
   @BooleanProperty({
     description: '是否启用',
@@ -85,25 +86,25 @@ export class BaseSensitiveWordDto extends BaseDto {
   @StringProperty({
     description: '备注',
     maxLength: 500,
-    required: false,
+    nullable: true,
   })
-  remark?: string
+  remark!: string | null
 
   @NumberProperty({
     description: '创建人ID',
-    required: false,
+    nullable: true,
     example: 1,
     validation: false,
   })
-  createdBy?: number | null
+  createdBy!: number | null
 
   @NumberProperty({
     description: '更新人ID',
-    required: false,
+    nullable: true,
     example: 1,
     validation: false,
   })
-  updatedBy?: number | null
+  updatedBy!: number | null
 
   @NumberProperty({
     description: '命中次数',
@@ -116,20 +117,20 @@ export class BaseSensitiveWordDto extends BaseDto {
 
   @DateProperty({
     description: '最后命中时间',
-    required: false,
+    nullable: true,
     example: '2026-03-19T12:00:00.000Z',
     validation: false,
   })
-  lastHitAt?: Date | null
+  lastHitAt!: Date | null
 }
 
+export class SensitiveWordOutputDto extends BaseSensitiveWordDto {}
+
 // 敏感词命中结果 DTO
-export class SensitiveWordHitDto extends PickType(BaseSensitiveWordDto, [
-  'word',
-  'level',
-  'type',
-  'replaceWord',
-] as const) {
+export class SensitiveWordHitDto extends IntersectionType(
+  PickType(BaseSensitiveWordDto, ['word', 'level', 'type'] as const),
+  PickType(SensitiveWordOutputDto, ['replaceWord'] as const),
+) {
   @NumberProperty({
     description: '起始位置',
     example: 0,
@@ -145,24 +146,32 @@ export class SensitiveWordHitDto extends PickType(BaseSensitiveWordDto, [
   end!: number
 
   @StringProperty({
-    description: '命中字段（title=标题；content=正文）',
+    description: '命中字段（标题；正文）',
     example: 'content',
-    required: false,
+    required: true,
     validation: false,
   })
-  field?: string
+  field!: string
 }
 
-// 保持向后兼容的别名。
-export { SensitiveWordHitDto as BaseSensitiveWordHitDto }
-
-export class CreateSensitiveWordDto extends OmitType(BaseSensitiveWordDto, [
+class CreateSensitiveWordRequiredDto extends OmitType(BaseSensitiveWordDto, [
   ...OMIT_BASE_FIELDS,
+  'replaceWord',
+  'remark',
   'createdBy',
   'updatedBy',
   'hitCount',
   'lastHitAt',
 ] as const) {}
+
+class CreateSensitiveWordOptionalDto extends PartialType(
+  PickType(BaseSensitiveWordDto, ['replaceWord', 'remark'] as const),
+) {}
+
+export class CreateSensitiveWordDto extends IntersectionType(
+  CreateSensitiveWordRequiredDto,
+  CreateSensitiveWordOptionalDto,
+) {}
 
 export class UpdateSensitiveWordDto extends IntersectionType(
   CreateSensitiveWordDto,
@@ -265,10 +274,11 @@ export class SensitiveWordDetectResponseDto {
     description: '最高敏感等级（1=严重；2=一般；3=轻微）',
     example: SensitiveWordLevelEnum.SEVERE,
     enum: SensitiveWordLevelEnum,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  highestLevel?: SensitiveWordLevelEnum
+  highestLevel!: SensitiveWordLevelEnum | null
 }
 
 // 敏感词最高等级响应 DTO，复用 SensitiveWordDetectResponseDto 的 highestLevel 字段。
@@ -314,7 +324,7 @@ export class SensitiveWordCountResponseDto {
 export class SensitiveWordHitLogEntitySummaryDto {
   @EnumProperty({
     description:
-      '实体状态（available=可查看；deleted=已删除；hidden=已隐藏；forbidden=不可处置；missing=缺失）',
+      '实体状态返回值域（内容可查看；内容已删除；内容已隐藏；不可处置；关联实体缺失）',
     enum: SensitiveWordHitLogEntityStatusEnum,
     example: SensitiveWordHitLogEntityStatusEnum.AVAILABLE,
     validation: false,
@@ -331,86 +341,96 @@ export class SensitiveWordHitLogEntitySummaryDto {
   @StringProperty({
     description: '主题标题',
     maxLength: 200,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  title?: string
+  title!: string | null
 
   @StringProperty({
     description: '内容摘要',
     maxLength: 200,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  snippet?: string
+  snippet!: string | null
 
   @EnumProperty({
     description: '审核状态（0=待审核；1=已通过；2=已拒绝）',
     enum: AuditStatusEnum,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  auditStatus?: AuditStatusEnum
+  auditStatus!: AuditStatusEnum | null
 
   @BooleanProperty({
     description: '是否隐藏',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  isHidden?: boolean
+  isHidden!: boolean | null
 
   @NumberProperty({
     description: '评论目标类型',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  targetType?: number
+  targetType!: number | null
 
   @NumberProperty({
     description: '评论目标ID',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  targetId?: number
+  targetId!: number | null
 }
 
 export class SensitiveWordHitLogAuthorSummaryDto {
   @NumberProperty({
     description: '作者ID',
-    required: false,
+    required: true,
     validation: false,
   })
-  id?: number
+  id!: number
 
   @StringProperty({
     description: '作者昵称',
     maxLength: 100,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  nickname?: string
+  nickname!: string | null
 
   @StringProperty({
     description: '作者头像URL',
     maxLength: 500,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  avatarUrl?: string | null
+  avatarUrl!: string | null
 
   @NumberProperty({
     description: '作者状态',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  status?: number
+  status!: number | null
 
   @BooleanProperty({
     description: '作者是否启用',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  isEnabled?: boolean
+  isEnabled!: boolean | null
 }
 
 export class SensitiveWordHitLogPageItemDto {
@@ -423,10 +443,11 @@ export class SensitiveWordHitLogPageItemDto {
   @StringProperty({
     description: '敏感词库中的词',
     maxLength: 100,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  word?: string
+  word!: string | null
 
   @StringProperty({
     description: '实际命中的文本',
@@ -466,18 +487,21 @@ export class SensitiveWordHitLogPageItemDto {
   })
   operationType!: SensitiveWordHitOperationTypeEnum
 
-  @ApiProperty({
+  @NestedProperty({
     description: '实体摘要',
-    type: () => SensitiveWordHitLogEntitySummaryDto,
+    type: SensitiveWordHitLogEntitySummaryDto,
+    validation: false,
   })
   entitySummary!: SensitiveWordHitLogEntitySummaryDto
 
-  @ApiProperty({
+  @NestedProperty({
     description: '作者摘要',
-    required: false,
-    type: () => SensitiveWordHitLogAuthorSummaryDto,
+    required: true,
+    nullable: true,
+    type: SensitiveWordHitLogAuthorSummaryDto,
+    validation: false,
   })
-  authorSummary?: SensitiveWordHitLogAuthorSummaryDto
+  authorSummary!: SensitiveWordHitLogAuthorSummaryDto | null
 
   @DateProperty({
     description: '命中时间',
@@ -542,17 +566,18 @@ export class SensitiveWordTopHitStatisticsDto extends IntersectionType(
   PickType(BaseSensitiveWordDto, ['word', 'level', 'type'] as const),
   PickType(SensitiveWordStatisticsBaseDto, ['hitCount'] as const),
 ) {
-  @StringProperty({
+  @DateProperty({
     description: '最后命中时间',
     example: '2026-03-19T12:00:00.000Z',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  lastHitAt?: Date
+  lastHitAt!: Date | null
 }
 
 // 统计类型字段 DTO，供 Query 和 Response 复用。
-class StatisticsTypeFieldDto {
+export class StatisticsTypeFieldDto {
   @EnumProperty({
     description:
       '统计类型（按级别统计；按类型统计；热门敏感词统计；最近命中统计）',
@@ -563,9 +588,19 @@ class StatisticsTypeFieldDto {
   type?: StatisticsTypeEnum
 }
 
-export class SensitiveWordStatisticsQueryDto extends StatisticsTypeFieldDto {}
+class StatisticsTypeOutputFieldDto {
+  @EnumProperty({
+    description:
+      '统计类型（按级别统计；按类型统计；热门敏感词统计；最近命中统计）',
+    required: true,
+    enum: StatisticsTypeEnum,
+    example: StatisticsTypeEnum.LEVEL,
+    validation: false,
+  })
+  type!: StatisticsTypeEnum
+}
 
-export class SensitiveWordStatisticsResponseDto extends StatisticsTypeFieldDto {
+export class SensitiveWordStatisticsResponseDto extends StatisticsTypeOutputFieldDto {
   @ArrayProperty({
     description: '统计结果',
     itemClass: Object,

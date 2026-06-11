@@ -1,7 +1,7 @@
 import type { DatePropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
-import { IsDate, IsOptional } from 'class-validator'
+import { IsDate, IsOptional, ValidateIf } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'
 
 /**
@@ -40,6 +40,10 @@ export function DateProperty(options: DatePropertyOptions) {
   const decorators: PropertyDecorator[] = []
 
   if (validation) {
+    if (options.nullable) {
+      decorators.push(ValidateIf((_object, value) => value !== null))
+    }
+
     decorators.push(IsDate({ message: '必须是有效的日期格式' }))
 
     if (!(options.required ?? true)) {

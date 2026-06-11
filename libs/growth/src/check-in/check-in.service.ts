@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { PageDto } from '@libs/platform/dto'
+import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { CheckInRuleIdQuery, GrantEventMakeupAllowanceInput } from './check-in.type'
 
 import type {
@@ -20,7 +20,6 @@ import type {
   RepairCheckInStreakDto,
 } from './dto/check-in-execution.dto'
 import type {
-  QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
 import { Injectable } from '@nestjs/common'
@@ -123,7 +122,7 @@ export class CheckInService {
   }
 
   // 分页查询当前连续签到排行榜。
-  async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
+  async getLeaderboardPage(query: PageDto) {
     return this.checkInRuntimeService.getLeaderboardPage(query)
   }
 

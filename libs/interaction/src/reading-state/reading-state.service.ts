@@ -102,11 +102,11 @@ export class ReadingStateService {
           workId,
           state.lastReadChapterId,
         )
-      : undefined
+      : null
 
     return {
       lastReadAt: state.lastReadAt,
-      continueChapter,
+      continueChapter: continueChapter ?? null,
     }
   }
 
@@ -260,9 +260,9 @@ export class ReadingStateService {
             workId: item.workId,
             workType: item.workType,
             lastReadAt: item.lastReadAt,
-            lastReadChapterId: item.lastReadChapterId,
+            lastReadChapterId: item.lastReadChapterId ?? null,
             work: this.buildFallbackWorkSnapshot(item.workId, item.workType),
-            continueChapter: undefined,
+            continueChapter: null,
           }
         }
         continue
@@ -311,15 +311,15 @@ export class ReadingStateService {
 
         const continueChapter = item.lastReadChapterId
           ? chapterMap.get(item.lastReadChapterId)
-          : undefined
+          : null
 
         orderedList[item.index] = {
           workId: item.workId,
           workType: item.workType,
           lastReadAt: item.lastReadAt,
-          lastReadChapterId: item.lastReadChapterId,
+          lastReadChapterId: item.lastReadChapterId ?? null,
           work,
-          continueChapter,
+          continueChapter: continueChapter ?? null,
         }
       }
     }

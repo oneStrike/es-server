@@ -73,8 +73,17 @@ describe('CheckIn app/admin contract boundaries', () => {
     expect(summary.config).not.toHaveProperty('dateRewardRules')
     expect(summary.config).not.toHaveProperty('patternRewardRules')
     expect(summary.config).not.toHaveProperty('createdAt')
+    expect(summary.streak.streakStartedAt).toBe('2026-05-30')
+    expect(summary.streak.lastSignedDate).toBe('2026-05-31')
+    expect(summary.latestRecord).toMatchObject({
+      resolvedMakeupIconUrl: null,
+      resolvedRewardOverviewIconUrl: 'https://cdn.example.com/reward.png',
+    })
     expect(summary.latestRecord).not.toHaveProperty('rewardSettlement')
     expect(summary.latestRecord).not.toHaveProperty('rewardSettlementId')
+    expect(summary.latestRecord?.grants[0]).toMatchObject({
+      rewardOverviewIconUrl: null,
+    })
     expect(summary.latestRecord?.grants[0]).not.toHaveProperty(
       'rewardSettlement',
     )
@@ -87,11 +96,13 @@ describe('CheckIn app/admin contract boundaries', () => {
   it('app sign response keeps settlement side effects but omits settlement internals', async () => {
     const actionDb = buildActionDb()
     const settlementService = {
-      settleGrantReward: jest.fn((_grantId: number, _context: Record<string, unknown>) =>
-        Promise.resolve(true),
+      settleGrantReward: jest.fn(
+        (_grantId: number, _context: Record<string, unknown>) =>
+          Promise.resolve(true),
       ),
-      settleRecordReward: jest.fn((_recordId: number, _context: Record<string, unknown>) =>
-        Promise.resolve(true),
+      settleRecordReward: jest.fn(
+        (_recordId: number, _context: Record<string, unknown>) =>
+          Promise.resolve(true),
       ),
     }
     const service = new CheckInExecutionService(
@@ -134,6 +145,8 @@ describe('CheckIn app/admin contract boundaries', () => {
       currentStreak: 3,
       eventAvailable: 0,
       periodicRemaining: 1,
+      resolvedMakeupIconUrl: null,
+      resolvedRewardOverviewIconUrl: 'https://cdn.example.com/reward.png',
     })
   })
 
@@ -196,7 +209,11 @@ describe('CheckIn app/admin contract boundaries', () => {
         ),
       } as never,
     ) as never as {
-      toRecordItemView(record: Record<string, unknown>, settlementMap: Map<number, Record<string, unknown>>, grantMap: Map<string, unknown[]>): Record<string, unknown>
+      toRecordItemView(
+        record: Record<string, unknown>,
+        settlementMap: Map<number, Record<string, unknown>>,
+        grantMap: Map<string, unknown[]>,
+      ): Record<string, unknown>
     }
 
     const item = service.toRecordItemView(
@@ -227,6 +244,8 @@ describe('CheckIn app/admin contract boundaries', () => {
     )
 
     expect(item.rewardSettlementId).toBe(900)
+    expect(item.resolvedMakeupIconUrl).toBeNull()
+    expect(item.resolvedRewardOverviewIconUrl).toBeNull()
     expect(item.rewardSettlement).toEqual({
       id: 900,
       lastError: 'timeout',
@@ -242,9 +261,7 @@ function buildRuntimeDb() {
     id: 90,
     recordType: CheckInRecordTypeEnum.NORMAL,
     resolvedMakeupIconUrl: null,
-    resolvedRewardItems: [
-      { amount: 10, assetKey: 'points', assetType: 1 },
-    ],
+    resolvedRewardItems: [{ amount: 10, assetKey: 'points', assetType: 1 }],
     resolvedRewardOverviewIconUrl: 'https://cdn.example.com/reward.png',
     resolvedRewardRuleKey: 'BASE',
     resolvedRewardSourceType: 1,
@@ -342,7 +359,9 @@ function buildActionDb() {
             id: 90,
             recordType: CheckInRecordTypeEnum.NORMAL,
             resolvedMakeupIconUrl: null,
-            resolvedRewardItems: [{ amount: 10, assetKey: 'points', assetType: 1 }],
+            resolvedRewardItems: [
+              { amount: 10, assetKey: 'points', assetType: 1 },
+            ],
             resolvedRewardOverviewIconUrl: 'https://cdn.example.com/reward.png',
             resolvedRewardRuleKey: 'BASE',
             resolvedRewardSourceType: 1,
@@ -363,7 +382,12 @@ function buildActionDb() {
 function buildDrizzle(db: Record<string, unknown>) {
   return {
     buildOrderBy: jest.fn(() => ({ orderBySql: [] })),
-    buildPage: jest.fn(() => ({ limit: 1, offset: 0, pageIndex: 1, pageSize: 1 })),
+    buildPage: jest.fn(() => ({
+      limit: 1,
+      offset: 0,
+      pageIndex: 1,
+      pageSize: 1,
+    })),
     db,
     schema: {
       appUser: {

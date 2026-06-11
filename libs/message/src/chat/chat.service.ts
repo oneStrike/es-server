@@ -1,5 +1,5 @@
 import type { UploadConfigInterface } from '@libs/platform/config'
-import type { PageDto } from '@libs/platform/dto'
+import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { JsonObject } from '@libs/platform/utils'
@@ -582,11 +582,11 @@ export class MessageChatService {
           {
             conversationId,
             unreadCount: member.unreadCount,
-            lastReadAt: member.lastReadAt ?? undefined,
+            lastReadAt: member.lastReadAt ?? null,
             lastReadMessageId:
               typeof member.lastReadMessageId === 'bigint'
                 ? member.lastReadMessageId.toString()
-                : undefined,
+                : null,
             lastMessageId: messageOutput.id,
             lastMessageAt: messageOutput.createdAt,
             lastSenderId: messageOutput.senderId,
@@ -1214,23 +1214,23 @@ export class MessageChatService {
       lastMessageId:
         typeof conversation.lastMessageId === 'bigint'
           ? conversation.lastMessageId.toString()
-          : undefined,
-      lastMessageAt: conversation.lastMessageAt ?? undefined,
-      lastSenderId: conversation.lastSenderId ?? undefined,
-      lastMessageContent,
-      lastReadAt: selfMember.lastReadAt ?? undefined,
+          : null,
+      lastMessageAt: conversation.lastMessageAt ?? null,
+      lastSenderId: conversation.lastSenderId ?? null,
+      lastMessageContent: lastMessageContent ?? null,
+      lastReadAt: selfMember.lastReadAt ?? null,
       lastReadMessageId:
         typeof selfMember.lastReadMessageId === 'bigint'
           ? selfMember.lastReadMessageId.toString()
-          : undefined,
+          : null,
       // 对端用户信息
       peerUser: peerMember
         ? {
             id: peerMember.user.id,
-            nickname: peerMember.user.nickname ?? undefined,
-            avatar: peerMember.user.avatar ?? undefined,
+            nickname: peerMember.user.nickname ?? null,
+            avatar: peerMember.user.avatar ?? null,
           }
-        : undefined,
+        : null,
     }
   }
 
@@ -1281,10 +1281,10 @@ export class MessageChatService {
       conversationId: item.conversationId,
       messageSeq: item.messageSeq.toString(),
       senderId: item.senderId,
-      clientMessageId: item.clientMessageId ?? undefined,
+      clientMessageId: item.clientMessageId ?? null,
       messageType: item.messageType as ChatMessageTypeEnum,
       content: item.content,
-      bodyTokens: (item.bodyTokens as ChatBodyToken[] | null) ?? undefined,
+      bodyTokens: (item.bodyTokens as ChatBodyToken[] | null) ?? null,
       payload: this.normalizeMessageOutputPayload(
         item.messageType as ChatMessageTypeEnum,
         item.payload,
@@ -1297,9 +1297,9 @@ export class MessageChatService {
   private normalizeMessageOutputPayload(
     messageType: ChatMessageTypeEnum,
     payload: unknown,
-  ): ChatMessageOutputPayload | undefined {
+  ): ChatMessageOutputPayload | null {
     if (payload === null || payload === undefined) {
-      return undefined
+      return null
     }
 
     switch (messageType) {
@@ -1308,12 +1308,12 @@ export class MessageChatService {
       case ChatMessageTypeEnum.VIDEO:
         return this.isMediaOutputPayload(messageType, payload)
           ? payload
-          : undefined
+          : null
       case ChatMessageTypeEnum.TEXT:
       case ChatMessageTypeEnum.SYSTEM:
-        return this.isJsonObjectPayload(payload) ? payload : undefined
+        return this.isJsonObjectPayload(payload) ? payload : null
       default:
-        return undefined
+        return null
     }
   }
 

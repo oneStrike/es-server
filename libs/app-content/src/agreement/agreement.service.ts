@@ -2,11 +2,13 @@ import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
+  AgreementListItemDto,
+  AgreementOutputBaseDto,
   CreateAgreementDto,
   QueryAgreementDto,
   QueryPublishedAgreementDto,
@@ -189,7 +191,7 @@ export class AgreementService {
         '协议不存在',
       )
     }
-    return agreement
+    return this.toAgreementDetailDto(agreement)
   }
 
   /**
@@ -235,7 +237,11 @@ export class AgreementService {
       this.db.$count(this.agreement, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((agreement) => this.toAgreementListItemDto(agreement)),
+      total,
+      page,
+    )
   }
 
   /**
@@ -254,6 +260,26 @@ export class AgreementService {
       columns: { content: false },
     })
 
-    return this.pickLatestPublishedAgreements(agreements)
+    return this.pickLatestPublishedAgreements(agreements).map((agreement) =>
+      this.toAgreementListItemDto(agreement),
+    )
+  }
+
+  private toAgreementDetailDto<TAgreement extends { publishedAt?: Date | null }>(
+    agreement: TAgreement,
+  ) {
+    return {
+      ...agreement,
+      publishedAt: agreement.publishedAt ?? null,
+    } as TAgreement & AgreementOutputBaseDto
+  }
+
+  private toAgreementListItemDto<TAgreement extends { publishedAt?: Date | null }>(
+    agreement: TAgreement,
+  ) {
+    return {
+      ...agreement,
+      publishedAt: agreement.publishedAt ?? null,
+    } as TAgreement & AgreementListItemDto
   }
 }

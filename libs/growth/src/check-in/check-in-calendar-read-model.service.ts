@@ -23,7 +23,10 @@ import { and, asc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
-import { CheckInMakeupPeriodTypeEnum, CheckInRecordTypeEnum } from './check-in.constant'
+import {
+  CheckInMakeupPeriodTypeEnum,
+  CheckInRecordTypeEnum,
+} from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
 /**
@@ -104,12 +107,14 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
           CheckInRecordTypeEnum.MAKEUP,
         ),
         streakRewardTriggerCount: grantCountMap.get(cursor) ?? 0,
-        baseRewardConfigProjectionOverview: rewardProjection.resolvedRewardItems,
+        baseRewardConfigProjectionOverview:
+          rewardProjection.resolvedRewardItems ?? null,
         baseRewardConfigProjectionOverviewIconUrl:
-          rewardProjection.resolvedRewardOverviewIconUrl,
-        baseRewardActualOverview: this.aggregateRewardItemsFromRecords(records),
+          rewardProjection.resolvedRewardOverviewIconUrl ?? null,
+        baseRewardActualOverview:
+          this.aggregateRewardItemsFromRecords(records) ?? null,
         baseRewardActualOverviewIconUrl:
-          this.aggregateRewardOverviewIconFromRecords(records),
+          this.aggregateRewardOverviewIconFromRecords(records) ?? null,
       })
       cursor = addDaysToDateOnlyInAppTimeZone(cursor, 1)!
       dayIndex += 1
@@ -129,7 +134,8 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     const today = this.formatDateOnly(new Date())
     const { window, targetDateValue } =
       await this.resolveCalendarContext(targetDate)
-    const cutoffDate = window.periodEndDate < today ? window.periodEndDate : today
+    const cutoffDate =
+      window.periodEndDate < today ? window.periodEndDate : today
     const [recordRows, grantRows] = await Promise.all([
       this.listCalendarOverviewRecordAggregateRows(
         window.periodStartDate,
@@ -180,11 +186,12 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     ])
     const page = toPageResult(list, total, pageQuery)
 
-    const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
-      page.list
-        .map((record) => record.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
-    )
+    const settlementMap =
+      await this.checkInSettlementService.buildSettlementMapById(
+        page.list
+          .map((record) => record.rewardSettlementId)
+          .filter((id): id is number => typeof id === 'number'),
+      )
     const grantMap = await this.buildGrantMapForPageRecords(page.list)
     const userMap = await this.buildSignedUserMap(
       page.list.map((record) => record.userId),
@@ -234,11 +241,12 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     let dayIndex = 1
     while (cursor <= window.periodEndDate) {
       const record = recordMap.get(cursor)
-      const rewardProjection = this.checkInRewardPolicyService.resolveRewardForDate(
-        rewardDefinition,
-        cursor,
-        window.periodType,
-      )
+      const rewardProjection =
+        this.checkInRewardPolicyService.resolveRewardForDate(
+          rewardDefinition,
+          cursor,
+          window.periodType,
+        )
       const rewardItems = record
         ? this.checkInRewardPolicyService.parseStoredRewardItems(
             record.resolvedRewardItems,
@@ -256,8 +264,8 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         grantCount: grantCountMap.get(cursor) ?? 0,
         rewardItems,
         rewardOverviewIconUrl: record
-          ? record.resolvedRewardOverviewIconUrl
-          : rewardProjection.resolvedRewardOverviewIconUrl,
+          ? (record.resolvedRewardOverviewIconUrl ?? null)
+          : (rewardProjection.resolvedRewardOverviewIconUrl ?? null),
         makeupIconUrl:
           record?.recordType === CheckInRecordTypeEnum.MAKEUP
             ? record.resolvedMakeupIconUrl
@@ -330,7 +338,10 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
   }
 
   // 查询目标周期内用于后台全局聚合的最小签到事实。
-  private async listGlobalCalendarRecordRows(startDate: string, endDate: string) {
+  private async listGlobalCalendarRecordRows(
+    startDate: string,
+    endDate: string,
+  ) {
     return this.db
       .select({
         userId: this.checkInRecordTable.userId,
@@ -516,7 +527,10 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
 
   // 按自然日分桶后台聚合所需的签到事实。
   private buildRecordBucketMap(rows: CheckInCalendarRecordAggregateSource[]) {
-    const recordBucketMap = new Map<string, CheckInCalendarRecordAggregateSource[]>()
+    const recordBucketMap = new Map<
+      string,
+      CheckInCalendarRecordAggregateSource[]
+    >()
     for (const row of rows) {
       const signDate = this.toDateOnlyValue(row.signDate)
       const records = recordBucketMap.get(signDate) ?? []
@@ -549,12 +563,13 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
   ) {
     const rewardItemMap = new Map<string, CheckInRewardItems[number]>()
     for (const row of rows) {
-      const rewardItems = this.checkInRewardPolicyService.parseStoredRewardItems(
-        row.resolvedRewardItems,
-        {
-          allowEmpty: true,
-        },
-      )
+      const rewardItems =
+        this.checkInRewardPolicyService.parseStoredRewardItems(
+          row.resolvedRewardItems,
+          {
+            allowEmpty: true,
+          },
+        )
       if (!rewardItems) {
         continue
       }
@@ -599,7 +614,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     if (distinctUserIds.length === 0) {
       return new Map<
         number,
-        { id: number, nickname?: string | null, avatarUrl?: string | null }
+        { id: number; nickname?: string | null; avatarUrl?: string | null }
       >()
     }
 
@@ -626,18 +641,14 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
       .from(this.checkInStreakGrantTable)
       .where(
         and(
-          inArray(
-            this.checkInStreakGrantTable.userId,
-            [...new Set(records.map((record) => record.userId))],
-          ),
-          inArray(
-            this.checkInStreakGrantTable.triggerSignDate,
-            [
-              ...new Set(
-                records.map((record) => this.toDateOnlyValue(record.signDate)),
-              ),
-            ],
-          ),
+          inArray(this.checkInStreakGrantTable.userId, [
+            ...new Set(records.map((record) => record.userId)),
+          ]),
+          inArray(this.checkInStreakGrantTable.triggerSignDate, [
+            ...new Set(
+              records.map((record) => this.toDateOnlyValue(record.signDate)),
+            ),
+          ]),
         ),
       )
       .orderBy(
@@ -645,14 +656,16 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         asc(this.checkInStreakGrantTable.id),
       )
 
-    const rewardItemMap = await this.checkInSettlementService.buildGrantRewardItemMap(
-      grants.map((grant) => grant.id),
-    )
-    const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
-      grants
-        .map((grant) => grant.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
-    )
+    const rewardItemMap =
+      await this.checkInSettlementService.buildGrantRewardItemMap(
+        grants.map((grant) => grant.id),
+      )
+    const settlementMap =
+      await this.checkInSettlementService.buildSettlementMapById(
+        grants
+          .map((grant) => grant.rewardSettlementId)
+          .filter((id): id is number => typeof id === 'number'),
+      )
 
     const grantMap = new Map<string, CheckInGrantItemView[]>()
     for (const grant of grants) {
@@ -670,7 +683,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         rewardOverviewIconUrl: grant.rewardOverviewIconUrl ?? null,
         repeatable: grant.repeatable,
         triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
-        rewardSettlementId: grant.rewardSettlementId,
+        rewardSettlementId: grant.rewardSettlementId ?? null,
         rewardSettlement: grant.rewardSettlementId
           ? this.checkInSettlementService.toRewardSettlementSummary(
               settlementMap.get(grant.rewardSettlementId) ?? null,
@@ -695,17 +708,19 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
       updatedAt: record.updatedAt,
       signDate,
       recordType: record.recordType,
-      rewardSettlementId: record.rewardSettlementId,
-      resolvedRewardSourceType: record.resolvedRewardSourceType,
-      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-      resolvedRewardItems: this.checkInRewardPolicyService.parseStoredRewardItems(
-        record.resolvedRewardItems,
-        {
-          allowEmpty: true,
-        },
-      ),
-      resolvedRewardOverviewIconUrl: record.resolvedRewardOverviewIconUrl,
-      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
+      rewardSettlementId: record.rewardSettlementId ?? null,
+      resolvedRewardSourceType: record.resolvedRewardSourceType ?? null,
+      resolvedRewardRuleKey: record.resolvedRewardRuleKey ?? null,
+      resolvedRewardItems:
+        this.checkInRewardPolicyService.parseStoredRewardItems(
+          record.resolvedRewardItems,
+          {
+            allowEmpty: true,
+          },
+        ),
+      resolvedRewardOverviewIconUrl:
+        record.resolvedRewardOverviewIconUrl ?? null,
+      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl ?? null,
       rewardSettlement: record.rewardSettlementId
         ? this.checkInSettlementService.toRewardSettlementSummary(
             settlementMap.get(record.rewardSettlementId) ?? null,

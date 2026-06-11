@@ -7,7 +7,8 @@ import {
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ClientPlatformEnum,
@@ -35,7 +36,7 @@ export class BasePaymentProviderConfigDto extends BaseDto {
   paymentScene!: PaymentSceneEnum
 
   @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
   })
@@ -51,123 +52,117 @@ export class BasePaymentProviderConfigDto extends BaseDto {
   @StringProperty({
     description: '客户端应用键，同一部署内区分多应用',
     example: 'default-app',
-    required: false,
     default: '',
   })
-  clientAppKey?: string
+  clientAppKey!: string
 
   @StringProperty({
     description: '配置名称，供后台识别',
     example: '微信 App 正式配置',
-    required: false,
     default: '',
   })
-  configName?: string
+  configName!: string
 
   @StringProperty({
     description: 'provider 应用 ID',
     example: 'wx-app-id',
-    required: false,
     default: '',
   })
-  appId?: string
+  appId!: string
 
   @StringProperty({
     description: 'provider 商户 ID',
     example: 'mch-id',
-    required: false,
     default: '',
   })
-  mchId?: string
+  mchId!: string
 
   @StringProperty({
     description: '通知回调地址',
     example: 'https://example.com/payment/notify',
-    required: false,
+    nullable: true,
     type: 'url',
   })
-  notifyUrl?: string | null
+  notifyUrl!: string | null
 
   @StringProperty({
     description: 'H5 返回地址',
     example: 'https://example.com/pay/return',
-    required: false,
+    nullable: true,
     type: 'url',
   })
-  returnUrl?: string | null
+  returnUrl!: string | null
 
   @ArrayProperty({
     description: 'H5 允许返回域名列表',
     itemType: 'string',
-    required: false,
+    nullable: true,
   })
-  allowedReturnDomains?: string[] | null
+  allowedReturnDomains!: string[] | null
 
   @NumberProperty({
     description: '证书模式（1=普通密钥；2=证书模式）',
     example: 1,
     min: 1,
-    required: false,
     default: 1,
   })
-  certMode?: number
+  certMode!: number
 
   @StringProperty({
     description: '支付宝公钥引用',
     example: 'kms://payment/alipay/public-key/v1',
-    required: false,
+    nullable: true,
     maxLength: 160,
   })
-  publicKeyRef?: string | null
+  publicKeyRef!: string | null
 
   @StringProperty({
     description: '应用私钥引用',
     example: 'kms://payment/alipay/private-key/v1',
-    required: false,
+    nullable: true,
     maxLength: 160,
   })
-  privateKeyRef?: string | null
+  privateKeyRef!: string | null
 
   @StringProperty({
     description: '微信 APIv3 key 引用',
     example: 'kms://payment/wechat/api-v3-key/v1',
-    required: false,
+    nullable: true,
     maxLength: 160,
   })
-  apiV3KeyRef?: string | null
+  apiV3KeyRef!: string | null
 
   @StringProperty({
     description: '应用证书引用',
     example: 'kms://payment/app-cert/v1',
-    required: false,
+    nullable: true,
     maxLength: 160,
   })
-  appCertRef?: string | null
+  appCertRef!: string | null
 
   @StringProperty({
     description: '平台证书引用',
     example: 'kms://payment/platform-cert/v1',
-    required: false,
+    nullable: true,
     maxLength: 160,
   })
-  platformCertRef?: string | null
+  platformCertRef!: string | null
 
   @StringProperty({
     description: '根证书引用',
     example: 'kms://payment/root-cert/v1',
-    required: false,
+    nullable: true,
     maxLength: 160,
   })
-  rootCertRef?: string | null
+  rootCertRef!: string | null
 
   @NumberProperty({
     description: '配置版本',
     example: 1,
     min: 1,
-    required: false,
     default: 1,
   })
-  configVersion?: number
+  configVersion!: number
 
   @StringProperty({
     description: '密钥版本引用',
@@ -179,10 +174,28 @@ export class BasePaymentProviderConfigDto extends BaseDto {
   @ObjectProperty({
     description: '配置摘要，不包含明文密钥',
     example: { keyFingerprint: 'sha256:xxx' },
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  configMetadata?: Record<string, unknown> | null
+  configMetadata!: Record<string, unknown> | null
 
+  @NumberProperty({
+    description: '排序值',
+    example: 0,
+    min: 0,
+    default: 0,
+  })
+  sortOrder!: number
+
+  @BooleanProperty({
+    description: '是否启用',
+    example: true,
+    default: true,
+  })
+  isEnabled!: boolean
+}
+
+export class PaymentProviderConfigCredentialSelectorFieldsDto {
   @NumberProperty({
     description: '主凭据选项 ID，后台写入时解析为内部密钥版本引用',
     example: 1,
@@ -238,32 +251,15 @@ export class BasePaymentProviderConfigDto extends BaseDto {
     required: false,
   })
   rootCertificateId?: number | null
-
-  @NumberProperty({
-    description: '排序值',
-    example: 0,
-    min: 0,
-    required: false,
-    default: 0,
-  })
-  sortOrder?: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: false,
-    default: true,
-  })
-  isEnabled?: boolean
 }
 
-export class CreatePaymentProviderConfigDto extends PickType(
+export class PaymentProviderConfigRequiredWritableFieldsDto extends PickType(
   BasePaymentProviderConfigDto,
-  [
-    'channel',
-    'paymentScene',
-    'platform',
-    'environment',
+  ['channel', 'paymentScene', 'platform', 'environment'] as const,
+) {}
+
+export class PaymentProviderConfigOptionalWritableFieldsDto extends PartialType(
+  PickType(BasePaymentProviderConfigDto, [
     'clientAppKey',
     'configName',
     'appId',
@@ -272,16 +268,17 @@ export class CreatePaymentProviderConfigDto extends PickType(
     'returnUrl',
     'allowedReturnDomains',
     'certMode',
-    'credentialOptionId',
-    'privateKeyCredentialId',
-    'publicKeyCredentialId',
-    'apiV3KeyCredentialId',
-    'appCertificateId',
-    'platformCertificateId',
-    'rootCertificateId',
     'sortOrder',
     'isEnabled',
   ] as const,
+)) {}
+
+export class CreatePaymentProviderConfigDto extends IntersectionType(
+  PaymentProviderConfigRequiredWritableFieldsDto,
+  IntersectionType(
+    PaymentProviderConfigOptionalWritableFieldsDto,
+    PaymentProviderConfigCredentialSelectorFieldsDto,
+  ),
 ) {}
 
 export class UpdatePaymentProviderConfigDto extends IntersectionType(
@@ -359,7 +356,7 @@ export class PaymentProviderAccountOptionDto {
   paymentScene!: PaymentSceneEnum
 
   @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
     validation: false,
@@ -496,7 +493,7 @@ export class PaymentProviderCredentialOptionDto {
 
   @DateProperty({
     description: '过期时间',
-    required: false,
+    nullable: true,
     validation: false,
   })
   expiredAt!: Date | null
@@ -588,7 +585,7 @@ export class PaymentProviderCertificateOptionDto {
 
   @DateProperty({
     description: '过期时间',
-    required: false,
+    nullable: true,
     validation: false,
   })
   expiredAt!: Date | null
@@ -610,7 +607,7 @@ export class CreatePaymentOrderBaseDto {
   paymentScene!: PaymentSceneEnum
 
   @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
   })
@@ -670,13 +667,7 @@ export class CreatePaymentOrderBaseDto {
   terminalIp?: string
 }
 
-export class PaymentOrderResultDto {
-  @StringProperty({
-    description: '站内订单号',
-    example: 'PAY20260506000001',
-  })
-  orderNo!: string
-
+class PaymentOrderLifecycleQueryFieldsDto {
   @EnumProperty({
     description: '订单业务类型（1=虚拟币充值；2=VIP 订阅）',
     enum: PaymentOrderTypeEnum,
@@ -690,19 +681,46 @@ export class PaymentOrderResultDto {
     example: PaymentOrderStatusEnum.PENDING,
   })
   status!: PaymentOrderStatusEnum
+}
+
+class PaymentOrderLifecycleOutputFieldsDto {
+  @EnumProperty({
+    description: '订单业务类型（1=虚拟币充值；2=VIP 订阅）',
+    enum: PaymentOrderTypeEnum,
+    example: PaymentOrderTypeEnum.CURRENCY_RECHARGE,
+    validation: false,
+  })
+  orderType!: PaymentOrderTypeEnum
+
+  @EnumProperty({
+    description: '订单状态（1=待支付；2=已支付；3=已关闭；4=退款中；5=已退款）',
+    enum: PaymentOrderStatusEnum,
+    example: PaymentOrderStatusEnum.PENDING,
+    validation: false,
+  })
+  status!: PaymentOrderStatusEnum
+}
+
+export class PaymentOrderResultDto extends PaymentOrderLifecycleOutputFieldsDto {
+  @StringProperty({
+    description: '站内订单号',
+    example: 'PAY20260506000001',
+    validation: false,
+  })
+  orderNo!: string
 
   @EnumProperty({
     description: '订阅模式（1=一次性）',
     enum: PaymentSubscriptionModeEnum,
     example: PaymentSubscriptionModeEnum.ONE_TIME,
-    required: false,
-    default: PaymentSubscriptionModeEnum.ONE_TIME,
+    validation: false,
   })
-  subscriptionMode?: PaymentSubscriptionModeEnum
+  subscriptionMode!: PaymentSubscriptionModeEnum
 
   @NumberProperty({
     description: '应付金额，单位为分',
     example: 1000,
+    validation: false,
   })
   payableAmount!: number
 
@@ -726,6 +744,7 @@ export class PaymentOrderStatusDto {
   @StringProperty({
     description: '站内订单号',
     example: 'PAY20260506000001',
+    validation: false,
   })
   orderNo!: string
 
@@ -733,6 +752,7 @@ export class PaymentOrderStatusDto {
     description: '订单状态（1=待支付；2=已支付；3=已关闭；4=退款中；5=已退款）',
     enum: PaymentOrderStatusEnum,
     example: PaymentOrderStatusEnum.PENDING,
+    validation: false,
   })
   status!: PaymentOrderStatusEnum
 
@@ -740,6 +760,7 @@ export class PaymentOrderStatusDto {
     description: '订单业务类型（1=虚拟币充值；2=VIP 订阅）',
     enum: PaymentOrderTypeEnum,
     example: PaymentOrderTypeEnum.CURRENCY_RECHARGE,
+    validation: false,
   })
   orderType!: PaymentOrderTypeEnum
 
@@ -747,6 +768,7 @@ export class PaymentOrderStatusDto {
     description: '支付渠道（1=支付宝；2=微信）',
     enum: PaymentChannelEnum,
     example: PaymentChannelEnum.ALIPAY,
+    validation: false,
   })
   channel!: PaymentChannelEnum
 
@@ -754,65 +776,143 @@ export class PaymentOrderStatusDto {
     description: '支付场景（1=App；2=H5；3=小程序）',
     enum: PaymentSceneEnum,
     example: PaymentSceneEnum.APP,
+    validation: false,
   })
   scene!: PaymentSceneEnum
 
   @NumberProperty({
     description: '应付金额，单位为分',
     example: 1000,
+    validation: false,
   })
   payableAmount!: number
 
   @NumberProperty({
     description: '实付金额，单位为分',
     example: 1000,
-    required: false,
+    nullable: true,
+    validation: false,
   })
   paidAmount!: number | null
 
   @StringProperty({
     description: '币种',
     example: 'CNY',
+    validation: false,
   })
   currency!: string
 
   @DateProperty({
     description: '过期时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
   expireAt!: Date | null
 
   @DateProperty({
     description: '支付完成时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
   paidAt!: Date | null
 
   @DateProperty({
     description: '关闭时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
   closedAt!: Date | null
 
   @ObjectProperty({
     description: '客户端支付参数，不包含密钥、证书或内部配置引用',
     example: { channel: 'alipay', scene: 'app', orderString: 'provider-data' },
-    required: false,
+    nullable: true,
     validation: false,
   })
   clientPayPayload!: Record<string, unknown> | null
+}
+
+export class ProviderPaymentNotifyParamsDto {
+  @StringProperty({
+    description: '支付渠道路径值，支持支付宝或微信的数字值与文本值',
+    example: 'wechat',
+  })
+  channel!: string
+}
+
+/**
+ * Provider 回调头是签名协议边界的开放 map，普通业务字段不得藏在这里。
+ */
+export class ProviderPaymentNotifyHeadersDto {
+  @ObjectProperty({
+    description: 'Provider 原始请求头开放 map，仅用于第三方签名协议验签',
+    example: {
+      wechatpayTimestamp: '1780826500',
+      wechatpayNonce: 'nonce',
+      wechatpaySignature: 'base64-signature',
+    },
+    additionalProperties: true,
+  })
+  raw!: Record<string, unknown>
+}
+
+/**
+ * Provider 回调 query 是签名协议边界的开放 map，普通业务字段不得藏在这里。
+ */
+export class ProviderPaymentNotifyQueryDto {
+  @ObjectProperty({
+    description:
+      'Provider 原始 query 开放 map，仅用于第三方签名协议和通知字段解析',
+    example: { charset: 'utf-8', sign_type: 'RSA2' },
+    additionalProperties: true,
+  })
+  raw!: Record<string, unknown>
+}
+
+/**
+ * Provider 回调 body 是第三方协议开放 map，由支付适配器完成验签与字段解析。
+ */
+export class ProviderPaymentNotifyBodyDto {
+  @ObjectProperty({
+    description: 'Provider 原始 body 开放 map，由支付适配器完成验签与字段解析',
+    example: {
+      out_trade_no: 'PAY20260506000001',
+      trade_no: 'provider-trade-no',
+      total_amount: '10.00',
+    },
+    additionalProperties: true,
+  })
+  raw!: Record<string, unknown>
+}
+
+export class ProviderPaymentNotifyAckDto {
+  @StringProperty({
+    description: 'Provider 回调确认码',
+    example: 'SUCCESS',
+    validation: false,
+  })
+  code!: string
+
+  @StringProperty({
+    description: 'Provider 回调确认消息',
+    example: '成功',
+    validation: false,
+  })
+  message!: string
 }
 
 export class AdminPaymentOrderPageItemDto extends BaseDto {
   @StringProperty({
     description: '站内订单号',
     example: 'PAY20260506000001',
+    validation: false,
   })
   orderNo!: string
 
   @NumberProperty({
     description: '用户 ID',
     example: 10001,
+    validation: false,
   })
   userId!: number
 
@@ -820,6 +920,7 @@ export class AdminPaymentOrderPageItemDto extends BaseDto {
     description: '订单业务类型（1=虚拟币充值；2=VIP 订阅）',
     enum: PaymentOrderTypeEnum,
     example: PaymentOrderTypeEnum.CURRENCY_RECHARGE,
+    validation: false,
   })
   orderType!: PaymentOrderTypeEnum
 
@@ -827,6 +928,7 @@ export class AdminPaymentOrderPageItemDto extends BaseDto {
     description: '支付渠道（1=支付宝；2=微信）',
     enum: PaymentChannelEnum,
     example: PaymentChannelEnum.ALIPAY,
+    validation: false,
   })
   channel!: PaymentChannelEnum
 
@@ -834,13 +936,15 @@ export class AdminPaymentOrderPageItemDto extends BaseDto {
     description: '支付场景（1=App；2=H5；3=小程序）',
     enum: PaymentSceneEnum,
     example: PaymentSceneEnum.APP,
+    validation: false,
   })
   paymentScene!: PaymentSceneEnum
 
   @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
+    validation: false,
   })
   platform!: ClientPlatformEnum
 
@@ -848,12 +952,14 @@ export class AdminPaymentOrderPageItemDto extends BaseDto {
     description: '运行环境（1=沙箱；2=正式）',
     enum: ProviderEnvironmentEnum,
     example: ProviderEnvironmentEnum.SANDBOX,
+    validation: false,
   })
   environment!: ProviderEnvironmentEnum
 
   @StringProperty({
     description: '客户端应用键',
     example: 'default-app',
+    validation: false,
   })
   clientAppKey!: string
 
@@ -861,6 +967,7 @@ export class AdminPaymentOrderPageItemDto extends BaseDto {
     description: '订阅模式（1=一次性）',
     enum: PaymentSubscriptionModeEnum,
     example: PaymentSubscriptionModeEnum.ONE_TIME,
+    validation: false,
   })
   subscriptionMode!: PaymentSubscriptionModeEnum
 
@@ -868,30 +975,35 @@ export class AdminPaymentOrderPageItemDto extends BaseDto {
     description: '订单状态（1=待支付；2=已支付；3=已关闭；4=退款中；5=已退款）',
     enum: PaymentOrderStatusEnum,
     example: PaymentOrderStatusEnum.PENDING,
+    validation: false,
   })
   status!: PaymentOrderStatusEnum
 
   @NumberProperty({
     description: '应付金额，单位为分',
     example: 1000,
+    validation: false,
   })
   payableAmount!: number
 
   @NumberProperty({
     description: '实付金额，单位为分',
     example: 1000,
+    validation: false,
   })
   paidAmount!: number
 
   @NumberProperty({
     description: '业务目标 ID，例如充值包 ID 或 VIP 套餐 ID',
     example: 1,
+    validation: false,
   })
   targetId!: number
 
   @NumberProperty({
     description: '支付 provider 账号选项值',
     example: 1,
+    validation: false,
   })
   providerConfigId!: number
 
@@ -912,27 +1024,31 @@ export class AdminPaymentOrderPageItemDto extends BaseDto {
   @StringProperty({
     description: '第三方交易号',
     example: 'provider-trade-no',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  providerTradeNo?: string | null
+  providerTradeNo!: string | null
 
   @DateProperty({
     description: '支付完成时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  paidAt?: Date | null
+  paidAt!: Date | null
 
   @DateProperty({
     description: '关闭时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  closedAt?: Date | null
+  closedAt!: Date | null
 
   @DateProperty({
     description: '退款完成时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  refundedAt?: Date | null
+  refundedAt!: Date | null
 }
 
 export class ConfirmPaymentOrderDto {
@@ -967,9 +1083,7 @@ export class ConfirmPaymentOrderDto {
 
 export class QueryPaymentOrderDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(PaymentOrderResultDto, ['orderType', 'status'] as const),
-  ),
+  PartialType(PaymentOrderLifecycleQueryFieldsDto),
 ) {
   @StringProperty({
     description: '站内订单号',
@@ -1010,7 +1124,7 @@ export class QueryPaymentOrderDto extends IntersectionType(
   paymentScene?: PaymentSceneEnum
 
   @EnumProperty({
-    description: '客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）',
+    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
     required: false,
@@ -1086,7 +1200,7 @@ export class AdminPaymentReconciliationPageItemDto extends BaseDto {
   @NumberProperty({
     description: '支付订单 ID',
     example: 1,
-    required: false,
+    nullable: true,
     validation: false,
   })
   paymentOrderId!: number | null
@@ -1139,7 +1253,7 @@ export class AdminPaymentReconciliationPageItemDto extends BaseDto {
   @StringProperty({
     description: '第三方交易号',
     example: 'provider-trade-no',
-    required: false,
+    nullable: true,
     validation: false,
   })
   providerTradeNo!: string | null
@@ -1154,7 +1268,7 @@ export class AdminPaymentReconciliationPageItemDto extends BaseDto {
   @NumberProperty({
     description: 'provider 金额，单位为分',
     example: 1000,
-    required: false,
+    nullable: true,
     validation: false,
   })
   providerAmount!: number | null
@@ -1169,7 +1283,7 @@ export class AdminPaymentReconciliationPageItemDto extends BaseDto {
   @ObjectProperty({
     description: '对账证据摘要，敏感字段已脱敏',
     example: { providerStatus: 'SUCCESS' },
-    required: false,
+    nullable: true,
     validation: false,
   })
   evidence!: Record<string, unknown> | null
@@ -1177,7 +1291,7 @@ export class AdminPaymentReconciliationPageItemDto extends BaseDto {
   @StringProperty({
     description: '处理备注',
     example: '已按 provider 已支付事实修复',
-    required: false,
+    nullable: true,
     validation: false,
   })
   handledRemark!: string | null

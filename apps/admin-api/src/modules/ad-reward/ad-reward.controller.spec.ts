@@ -77,7 +77,7 @@ describe('admin AdRewardController route smoke', () => {
     await expect(
       controller.getAdRewardRecordPage({ pageIndex: 1 } as any),
     ).resolves.toEqual({ pageIndex: 1 })
-    await expect(controller.getAdRewardRecordDetail(7)).resolves.toEqual({
+    await expect(controller.getAdRewardRecordDetail({ id: 7 })).resolves.toEqual({
       id: 7,
     })
     await expect(

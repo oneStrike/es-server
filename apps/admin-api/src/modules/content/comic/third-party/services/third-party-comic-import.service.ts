@@ -1,4 +1,5 @@
 import type {
+  DetailComicRequestDto,
   ThirdPartyComicChapterDto,
   ThirdPartyComicDetailDto,
   ThirdPartyComicImageDto,
@@ -42,7 +43,6 @@ import {
   ThirdPartyComicImportCoverModeEnum,
   ThirdPartyComicImportCoverStatusEnum,
   ThirdPartyComicImportModeEnum,
-  ThirdPartyComicImportPreviewRequestDto,
   ThirdPartyComicImportStatusEnum,
   ThirdPartyComicImportWorkStatusEnum,
 } from '@libs/content/work/content/dto/content.dto'
@@ -126,7 +126,7 @@ export class ThirdPartyComicImportService {
   }
 
   // 预览第三方漫画导入方案，只读取 provider 数据不写入本地。
-  async previewImport(dto: ThirdPartyComicImportPreviewRequestDto) {
+  async previewImport(dto: DetailComicRequestDto) {
     const provider = this.registry.resolve(dto.platform)
     const detail = await provider.getDetail(dto)
     const chapters = await provider.getChapters(dto)
@@ -142,7 +142,6 @@ export class ThirdPartyComicImportService {
         providerComicId: detail.id,
         providerPathWord: detail.pathWord,
         providerGroupPathWord: this.resolvePreviewGroup(dto.group),
-        pathWord: detail.pathWord,
         uuid: detail.uuid,
         fetchedAt: new Date().toISOString(),
       },
@@ -151,12 +150,13 @@ export class ThirdPartyComicImportService {
       chapters,
       workDraft: {
         name: detail.name,
-        alias: detail.alias,
+        alias: detail.alias ?? null,
         description: detail.brief || detail.name,
         originalSource: `CopyManga:${detail.pathWord}`,
         remark: `三方导入：CopyManga ${detail.pathWord}`,
-        suggestedRegion: detail.region,
-        suggestedSerialStatus: this.resolveSuggestedSerialStatus(detail.status),
+        suggestedRegion: detail.region ?? null,
+        suggestedSerialStatus:
+          this.resolveSuggestedSerialStatus(detail.status) ?? null,
       },
       coverOptions: {
         provider: detail.cover
@@ -164,7 +164,7 @@ export class ThirdPartyComicImportService {
               providerImageId: this.buildCoverProviderImageId(detail),
               url: detail.cover,
             }
-          : undefined,
+          : null,
         localRequired: !detail.cover,
       },
       relationCandidates,
@@ -391,7 +391,7 @@ export class ThirdPartyComicImportService {
       mode: dto.mode,
       status: ThirdPartyComicImportStatusEnum.SUCCESS,
       work: prepared.work,
-      cover: prepared.cover,
+      cover: prepared.cover ?? null,
       chapters: chapterResults,
     }
   }
@@ -596,11 +596,14 @@ export class ThirdPartyComicImportService {
       return {
         cover: {
           status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+          filePath: null,
+          errorCode: null,
           message: '挂载已有作品不修改作品封面',
         },
         work: {
           id: dto.targetWorkId,
           status: ThirdPartyComicImportWorkStatusEnum.ATTACHED,
+          errorCode: null,
           message: '已挂载到本地作品',
         },
       }
@@ -654,11 +657,13 @@ export class ThirdPartyComicImportService {
             ? ThirdPartyComicImportCoverStatusEnum.LOCAL
             : ThirdPartyComicImportCoverStatusEnum.UPLOADED,
         filePath: coverPath,
+        errorCode: null,
         message: '作品封面处理成功',
       },
       work: {
         id: workId,
         status: ThirdPartyComicImportWorkStatusEnum.CREATED,
+        errorCode: null,
         message: '作品创建成功',
       },
     }
@@ -740,6 +745,7 @@ export class ThirdPartyComicImportService {
         cover,
         imageTotal: 0,
         imageSucceeded: 0,
+        errorCode: null,
         message: '章节元数据已处理，未导入图片',
       }
     }
@@ -773,6 +779,7 @@ export class ThirdPartyComicImportService {
       cover,
       imageTotal: chapterPlan.imageTotal,
       imageSucceeded: filePaths.length,
+      errorCode: null,
       message: '章节图片导入成功',
     }
   }
@@ -931,19 +938,23 @@ export class ThirdPartyComicImportService {
     ) {
       return {
         status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+        filePath: null,
+        errorCode: null,
         message: '章节封面未导入',
       }
     }
     if (chapter.cover.mode === ThirdPartyComicImportCoverModeEnum.LOCAL) {
       return {
         status: ThirdPartyComicImportCoverStatusEnum.LOCAL,
-        filePath: chapter.cover.localPath,
+        filePath: chapter.cover.localPath ?? null,
+        errorCode: null,
         message: '使用本地章节封面',
       }
     }
 
     return {
       status: ThirdPartyComicImportCoverStatusEnum.FAILED,
+      filePath: null,
       errorCode: 'CHAPTER_COVER_UNAVAILABLE',
       message: 'CopyManga 章节列表未提供章节封面',
     }
@@ -1334,6 +1345,8 @@ export class ThirdPartyComicImportService {
     return {
       cover: {
         status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+        filePath: null,
+        errorCode: null,
         message: '自动重试复用已准备作品封面',
       },
       work: {
@@ -1342,6 +1355,7 @@ export class ThirdPartyComicImportService {
           dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW
             ? ThirdPartyComicImportWorkStatusEnum.CREATED
             : ThirdPartyComicImportWorkStatusEnum.ATTACHED,
+        errorCode: null,
         message: '自动重试复用已准备本地作品',
       },
       sourceBinding: {

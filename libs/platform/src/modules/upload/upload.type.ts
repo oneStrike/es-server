@@ -1,21 +1,10 @@
 import type { DynamicModule, Type } from '@nestjs/common'
+import type { UploadProviderEnum } from './upload.constant'
 
 /**
  * 上传模块配置提供器注入 token。
  */
 export const UPLOAD_CONFIG_PROVIDER = 'UPLOAD_CONFIG_PROVIDER'
-
-/**
- * 上传 provider 类型。
- */
-export enum UploadProviderEnum {
-  /** 本地文件系统。 */
-  LOCAL = 'local',
-  /** 七牛云对象存储。 */
-  QINIU = 'qiniu',
-  /** Superbed 图床。 */
-  SUPERBED = 'superbed',
-}
 
 /**
  * 七牛上传系统配置。
@@ -68,14 +57,6 @@ export interface UploadConfigProvider {
  */
 export interface UploadModuleOptions {
   imports?: Array<DynamicModule | Type<object>>
-}
-
-/**
- * multipart 表单字段的最小读取结构。
- */
-export interface MultipartFieldLike {
-  type?: string
-  value?: string | number
 }
 
 /**
@@ -166,7 +147,7 @@ export interface UploadProviderResolutionContext {
 
 /**
  * 单次上传的通用策略选项。
- * 默认不传时保持公共上传入口的既有 provider、scene 和分类语义。
+ * 默认不传时使用公共上传入口默认 scene。
  */
 export interface UploadFileOptions {
   sceneOverride?: string
@@ -236,7 +217,7 @@ export interface UploadResult {
   fileType: string
   fileCategory: UploadFileCategory
   scene: string
-  width?: number
-  height?: number
+  width: number | null
+  height: number | null
   uploadTime: Date
 }

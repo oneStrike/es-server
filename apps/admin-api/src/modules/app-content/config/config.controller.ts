@@ -1,6 +1,6 @@
 import { AppConfigService } from '@libs/app-config/config.service'
 import {
-  BaseAppConfigDto,
+  AppConfigOutputDto,
   UpdateAppConfigDto,
 } from '@libs/app-config/dto/config.dto'
 import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
@@ -22,7 +22,7 @@ export class AppConfigController {
   @Get('active')
   @ApiDoc({
     summary: '获取最新应用配置',
-    model: BaseAppConfigDto,
+    model: AppConfigOutputDto,
   })
   async findActive() {
     return this.appConfigService.findActiveConfig()

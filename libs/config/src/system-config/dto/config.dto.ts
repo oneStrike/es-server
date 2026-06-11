@@ -6,8 +6,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto } from '@libs/platform/dto'
-import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.constant'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 // ============================================================================
@@ -473,8 +473,7 @@ export class SuperbedUploadConfigDto {
 
 export class UploadConfigDto {
   @EnumProperty({
-    description:
-      '上传提供方（local=本地存储；qiniu=七牛云存储；superbed=Superbed图床）',
+    description: '上传提供方（本地存储；七牛云存储；Superbed 图床）',
     enum: UploadProviderEnum,
     example: UploadProviderEnum.LOCAL,
     required: false,
@@ -504,6 +503,455 @@ export class UploadConfigDto {
     nullable: false,
   })
   superbed?: SuperbedUploadConfigDto | null
+}
+
+export class AliyunSmsConfigOutputDto {
+  @StringProperty({
+    description: '短信服务端点',
+    example: 'dypnsapi.aliyuncs.com',
+    required: true,
+    validation: false,
+  })
+  endpoint!: string
+
+  @StringProperty({
+    description: '短信签名名称',
+    example: '阿里云',
+    required: true,
+    validation: false,
+  })
+  signName!: string
+
+  @NumberProperty({
+    description: '验证码长度',
+    example: 6,
+    required: true,
+    validation: false,
+  })
+  verifyCodeLength!: number
+
+  @NumberProperty({
+    description: '验证码过期时间（秒）',
+    example: 300,
+    required: true,
+    validation: false,
+  })
+  verifyCodeExpire!: number
+}
+
+export class AliyunConfigOutputDto {
+  @StringProperty({
+    description: 'AccessKey ID（敏感字段，管理端读取时脱敏）',
+    example: 'LTAI...',
+    required: true,
+    validation: false,
+  })
+  accessKeyId!: string
+
+  @StringProperty({
+    description: 'AccessKey Secret（敏感字段，管理端读取时脱敏）',
+    example: 'secret...',
+    required: true,
+    validation: false,
+  })
+  accessKeySecret!: string
+
+  @NestedProperty({
+    description: '短信服务配置',
+    type: AliyunSmsConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  sms!: AliyunSmsConfigOutputDto
+}
+
+export class SiteConfigOutputDto {
+  @StringProperty({
+    description: '站点名称',
+    example: '示例站点',
+    required: true,
+    validation: false,
+  })
+  siteName!: string
+
+  @StringProperty({
+    description: '站点描述',
+    example: '这是一个示例站点',
+    required: true,
+    validation: false,
+  })
+  siteDescription!: string
+
+  @StringProperty({
+    description: '站点关键词（SEO用）',
+    example: '漫画,社区',
+    required: true,
+    validation: false,
+  })
+  siteKeywords!: string
+
+  @StringProperty({
+    description: '站点Logo URL',
+    example: 'https://example.com/logo.png',
+    required: true,
+    validation: false,
+  })
+  siteLogo!: string
+
+  @StringProperty({
+    description: '站点图标 URL',
+    example: 'https://example.com/favicon.ico',
+    required: true,
+    validation: false,
+  })
+  siteFavicon!: string
+
+  @StringProperty({
+    description: '联系邮箱',
+    example: 'support@example.com',
+    required: true,
+    validation: false,
+  })
+  contactEmail!: string
+
+  @StringProperty({
+    description: 'ICP备案号',
+    example: '粤ICP备xxxxxx号',
+    required: true,
+    validation: false,
+  })
+  icpNumber!: string
+}
+
+export class MaintenanceConfigOutputDto {
+  @BooleanProperty({
+    description: '是否启用维护模式',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  enableMaintenanceMode!: boolean
+
+  @StringProperty({
+    description: '维护模式提示信息',
+    example: '系统维护中，请稍后再试',
+    required: true,
+    validation: false,
+  })
+  maintenanceMessage!: string
+}
+
+export class ContentReviewActionOutputDto {
+  @EnumProperty({
+    description: '审核状态（0=待审核；1=已通过；2=已拒绝）',
+    example: AuditStatusEnum.REJECTED,
+    enum: AuditStatusEnum,
+    required: true,
+    validation: false,
+  })
+  auditStatus!: AuditStatusEnum
+
+  @BooleanProperty({
+    description: '是否隐藏',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  isHidden!: boolean
+}
+
+export class ContentReviewPolicyOutputDto {
+  @NestedProperty({
+    description: '严重敏感词处理策略',
+    type: ContentReviewActionOutputDto,
+    required: true,
+    validation: false,
+  })
+  severeAction!: ContentReviewActionOutputDto
+
+  @NestedProperty({
+    description: '一般敏感词处理策略',
+    type: ContentReviewActionOutputDto,
+    required: true,
+    validation: false,
+  })
+  generalAction!: ContentReviewActionOutputDto
+
+  @NestedProperty({
+    description: '轻微敏感词处理策略',
+    type: ContentReviewActionOutputDto,
+    required: true,
+    validation: false,
+  })
+  lightAction!: ContentReviewActionOutputDto
+
+  @BooleanProperty({
+    description: '是否记录敏感词命中明细',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  recordHits!: boolean
+}
+
+export class ForumHashtagConfigOutputDto {
+  @NumberProperty({
+    description:
+      '话题创建模式（1=仅引用已存在且可用话题；2=正文中允许自动创建话题）',
+    example: 2,
+    required: true,
+    validation: false,
+  })
+  creationMode!: number
+}
+
+export class OperationConfigOutputDto {
+  @NestedProperty({
+    description: 'forum 话题配置',
+    type: ForumHashtagConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  forumHashtagConfig!: ForumHashtagConfigOutputDto
+}
+
+export class RemoteImageImportSecurityConfigOutputDto {
+  @BooleanProperty({
+    description: '是否启用远程图片 DNS 不安全地址防护',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  enableAddressGuard!: boolean
+}
+
+export class SecurityConfigOutputDto {
+  @NestedProperty({
+    description: '远程图片导入安全配置',
+    type: RemoteImageImportSecurityConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  remoteImageImport!: RemoteImageImportSecurityConfigOutputDto
+}
+
+export class ThirdPartyResourceParseConfigOutputDto {
+  @BooleanProperty({
+    description: '是否启用三方资源解析节流',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  enabled!: boolean
+
+  @NumberProperty({
+    description: 'CopyManga API 请求最小间隔（毫秒）',
+    example: 3000,
+    required: true,
+    validation: false,
+  })
+  apiIntervalMs!: number
+
+  @NumberProperty({
+    description: '三方远程图片下载最小间隔（毫秒）',
+    example: 3000,
+    required: true,
+    validation: false,
+  })
+  imageIntervalMs!: number
+
+  @NumberProperty({
+    description: 'CopyManga host discovery 缓存 TTL（秒）',
+    example: 60,
+    required: true,
+    validation: false,
+  })
+  hostCacheTtlSeconds!: number
+
+  @NumberProperty({
+    description: '每个资源解析通道允许排队的最大请求数',
+    example: 1000,
+    required: true,
+    validation: false,
+  })
+  maxQueueSize!: number
+}
+
+export class WalletCurrencyDisplayConfigOutputDto {
+  @StringProperty({
+    description: '虚拟币稳定资产键',
+    example: 'reading_coin',
+    required: true,
+    validation: false,
+  })
+  assetKey!: string
+
+  @StringProperty({
+    description: '虚拟币展示名称',
+    example: '阅读币',
+    required: true,
+    validation: false,
+  })
+  currencyName!: string
+
+  @StringProperty({
+    description: '虚拟币单位名称',
+    example: '币',
+    required: true,
+    validation: false,
+  })
+  currencyUnitName!: string
+
+  @StringProperty({
+    description: '虚拟币图标 URL',
+    example: 'https://example.com/reading-coin.png',
+    required: true,
+    validation: false,
+  })
+  currencyIconUrl!: string
+}
+
+export class QiniuUploadConfigOutputDto {
+  @StringProperty({
+    description: '七牛 AccessKey（敏感字段，管理端读取时脱敏）',
+    example: 'your-access-key',
+    required: true,
+    validation: false,
+  })
+  accessKey!: string
+
+  @StringProperty({
+    description: '七牛 SecretKey（敏感字段，管理端读取时脱敏）',
+    example: 'your-secret-key',
+    required: true,
+    validation: false,
+  })
+  secretKey!: string
+
+  @StringProperty({
+    description: '七牛存储空间 bucket',
+    example: 'es-public',
+    required: true,
+    validation: false,
+  })
+  bucket!: string
+
+  @StringProperty({
+    description: '七牛公开访问域名',
+    example: 'https://cdn.example.com',
+    required: true,
+    validation: false,
+  })
+  domain!: string
+
+  @StringProperty({
+    description: '七牛区域 ID，留空时自动查询',
+    example: 'z0',
+    required: true,
+    validation: false,
+  })
+  region!: string
+
+  @StringProperty({
+    description: '七牛对象前缀',
+    example: 'uploads',
+    required: true,
+    validation: false,
+  })
+  pathPrefix!: string
+
+  @BooleanProperty({
+    description: '是否使用 HTTPS',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  useHttps!: boolean
+
+  @NumberProperty({
+    description: '上传凭证有效期（秒）',
+    example: 3600,
+    required: true,
+    validation: false,
+  })
+  tokenExpires!: number
+}
+
+export class SuperbedUploadConfigOutputDto {
+  @StringProperty({
+    description: 'Superbed token（敏感字段，管理端读取时脱敏）',
+    example: 'your-superbed-token',
+    required: true,
+    validation: false,
+  })
+  token!: string
+
+  @StringProperty({
+    description: 'Superbed 相册分类，多个使用英文逗号分隔',
+    example: 'cover,chapter',
+    required: true,
+    validation: false,
+  })
+  categories!: string
+
+  @BooleanProperty({
+    description: '是否开启水印',
+    example: false,
+    nullable: true,
+    validation: false,
+  })
+  watermark!: boolean | null
+
+  @BooleanProperty({
+    description: '是否开启压缩',
+    example: true,
+    nullable: true,
+    validation: false,
+  })
+  compress!: boolean | null
+
+  @BooleanProperty({
+    description: '是否强制转 webp',
+    example: false,
+    nullable: true,
+    validation: false,
+  })
+  webp!: boolean | null
+}
+
+export class UploadConfigOutputDto {
+  @EnumProperty({
+    description: '上传提供方（本地存储；七牛云存储；Superbed 图床）',
+    enum: UploadProviderEnum,
+    example: UploadProviderEnum.LOCAL,
+    required: true,
+    validation: false,
+  })
+  provider!: UploadProviderEnum
+
+  @BooleanProperty({
+    description: '当 provider 为 superbed 时，非图片文件是否自动回落本地',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  superbedNonImageFallbackToLocal!: boolean
+
+  @NestedProperty({
+    description: '七牛上传配置',
+    type: QiniuUploadConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  qiniu!: QiniuUploadConfigOutputDto
+
+  @NestedProperty({
+    description: 'Superbed 上传配置',
+    type: SuperbedUploadConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  superbed!: SuperbedUploadConfigOutputDto
 }
 
 // ============================================================================
@@ -675,6 +1123,88 @@ export class BaseSystemConfigDto extends BaseDto {
     nullable: false,
   })
   uploadConfig?: UploadConfigDto | null
+}
+
+export class SystemConfigDetailDto extends BaseDto {
+  @NumberProperty({
+    description: '最后修改人 ID',
+    example: 1,
+    nullable: true,
+    validation: false,
+  })
+  updatedById!: number | null
+
+  @NestedProperty({
+    description: '阿里云配置',
+    type: AliyunConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  aliyunConfig!: AliyunConfigOutputDto
+
+  @NestedProperty({
+    description: '站点配置',
+    type: SiteConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  siteConfig!: SiteConfigOutputDto
+
+  @NestedProperty({
+    description: '运营配置',
+    type: OperationConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  operationConfig!: OperationConfigOutputDto
+
+  @NestedProperty({
+    description: '安全配置',
+    type: SecurityConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  securityConfig!: SecurityConfigOutputDto
+
+  @NestedProperty({
+    description: '三方资源解析配置',
+    type: ThirdPartyResourceParseConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  thirdPartyResourceParseConfig!: ThirdPartyResourceParseConfigOutputDto
+
+  @NestedProperty({
+    description: '钱包虚拟币展示配置',
+    type: WalletCurrencyDisplayConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  walletCurrencyDisplayConfig!: WalletCurrencyDisplayConfigOutputDto
+
+  @NestedProperty({
+    description: '维护配置',
+    type: MaintenanceConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  maintenanceConfig!: MaintenanceConfigOutputDto
+
+  @NestedProperty({
+    description: '内容审核策略',
+    type: ContentReviewPolicyOutputDto,
+    required: true,
+    validation: false,
+  })
+  contentReviewPolicy!: ContentReviewPolicyOutputDto
+
+  @NestedProperty({
+    description: '上传配置',
+    type: UploadConfigOutputDto,
+    required: true,
+    validation: false,
+  })
+  uploadConfig!: UploadConfigOutputDto
 }
 
 export class UpdateSystemConfigDto extends IntersectionType(

@@ -74,28 +74,24 @@ export class ImageChatMessagePayloadDto {
   @StringProperty({
     description: '上传接口返回的文件路径',
     example: '/files/chat/image/2026-05-04/photo-1200x800.png',
-    validation: false,
   })
   filePath!: string
 
   @StringProperty({
     description: '文件分类，图片固定为 image',
     example: 'image',
-    validation: false,
   })
   fileCategory!: 'image'
 
   @StringProperty({
     description: '文件 MIME 类型',
     example: 'image/png',
-    validation: false,
   })
   mimeType!: string
 
   @NumberProperty({
     description: '文件大小',
     example: 102400,
-    validation: false,
   })
   fileSize!: number
 
@@ -103,7 +99,6 @@ export class ImageChatMessagePayloadDto {
     description: '图片宽度',
     example: 1200,
     required: false,
-    validation: false,
   })
   width?: number
 
@@ -111,7 +106,6 @@ export class ImageChatMessagePayloadDto {
     description: '图片高度',
     example: 800,
     required: false,
-    validation: false,
   })
   height?: number
 
@@ -119,7 +113,6 @@ export class ImageChatMessagePayloadDto {
     description: '原始文件名',
     example: 'photo.png',
     required: false,
-    validation: false,
   })
   originalName?: string
 }
@@ -129,35 +122,30 @@ export class VoiceChatMessagePayloadDto {
   @StringProperty({
     description: '上传接口返回的文件路径',
     example: '/files/chat/audio/2026-05-04/voice.mp3',
-    validation: false,
   })
   filePath!: string
 
   @StringProperty({
     description: '文件分类，语音固定为 audio',
     example: 'audio',
-    validation: false,
   })
   fileCategory!: 'audio'
 
   @StringProperty({
     description: '文件 MIME 类型',
     example: 'audio/mpeg',
-    validation: false,
   })
   mimeType!: string
 
   @NumberProperty({
     description: '文件大小',
     example: 204800,
-    validation: false,
   })
   fileSize!: number
 
   @NumberProperty({
     description: '语音时长（秒）',
     example: 12.5,
-    validation: false,
   })
   durationSeconds!: number
 
@@ -165,7 +153,6 @@ export class VoiceChatMessagePayloadDto {
     description: '原始文件名',
     example: 'voice.mp3',
     required: false,
-    validation: false,
   })
   originalName?: string
 }
@@ -175,28 +162,24 @@ export class VideoChatMessagePayloadDto {
   @StringProperty({
     description: '上传接口返回的文件路径',
     example: '/files/chat/video/2026-05-04/clip.mp4',
-    validation: false,
   })
   filePath!: string
 
   @StringProperty({
     description: '文件分类，视频固定为 video',
     example: 'video',
-    validation: false,
   })
   fileCategory!: 'video'
 
   @StringProperty({
     description: '文件 MIME 类型',
     example: 'video/mp4',
-    validation: false,
   })
   mimeType!: string
 
   @NumberProperty({
     description: '文件大小',
     example: 4096000,
-    validation: false,
   })
   fileSize!: number
 
@@ -204,7 +187,6 @@ export class VideoChatMessagePayloadDto {
     description: '视频时长（秒）',
     example: 30.5,
     required: false,
-    validation: false,
   })
   durationSeconds?: number
 
@@ -212,7 +194,6 @@ export class VideoChatMessagePayloadDto {
     description: '视频宽度',
     example: 1920,
     required: false,
-    validation: false,
   })
   width?: number
 
@@ -220,7 +201,6 @@ export class VideoChatMessagePayloadDto {
     description: '视频高度',
     example: 1080,
     required: false,
-    validation: false,
   })
   height?: number
 
@@ -228,7 +208,6 @@ export class VideoChatMessagePayloadDto {
     description: '原始文件名',
     example: 'clip.mp4',
     required: false,
-    validation: false,
   })
   originalName?: string
 }
@@ -280,7 +259,7 @@ export class SendChatMessageDto {
 
   @ApiProperty({
     description:
-      '扩展载荷；文本消息可传普通 JSON 对象，图片/语音/视频必须传对应媒体载荷对象且来自 scene=chat 上传结果。',
+      '扩展载荷；文本消息可传普通 JSON 对象，图片/语音/视频必须传对应媒体载荷对象且来自聊天场景上传结果。',
     anyOf: createChatMessagePayloadAnyOfSchemas(),
     example: {
       filePath: '/files/chat/image/2026-05-04/photo-1200x800.png',
@@ -451,24 +430,27 @@ export class BaseChatPeerDto {
   @NumberProperty({
     description: '用户ID',
     example: 10002,
+    validation: false,
   })
   id!: number
 
   @StringProperty({
     description: '昵称',
     example: 'Tom',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  nickname?: string
+  nickname!: string | null
 
   @StringProperty({
     description: '头像地址',
     example: 'https://example.com/avatar.png',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 500,
   })
-  avatar?: string
+  avatar!: string | null
 }
 
 /** 聊天消息基础数据传输对象 */
@@ -484,24 +466,28 @@ export class BaseChatMessageDto {
   @StringProperty({
     description: '消息ID（BigInt）',
     example: '123456789',
+    validation: false,
   })
   id!: string
 
   @NumberProperty({
     description: '会话ID',
     example: 1,
+    validation: false,
   })
   conversationId!: number
 
   @StringProperty({
     description: '会话消息序列号（BigInt）',
     example: '1',
+    validation: false,
   })
   messageSeq!: string
 
   @NumberProperty({
     description: '发送者用户ID',
     example: 10001,
+    validation: false,
   })
   senderId!: number
 
@@ -509,6 +495,7 @@ export class BaseChatMessageDto {
     description: '消息类型（1=文本；2=图片；3=语音；4=视频；99=系统）',
     example: ChatMessageTypeEnum.TEXT,
     enum: ChatMessageTypeEnum,
+    validation: false,
   })
   messageType!: ChatMessageTypeEnum
 
@@ -516,13 +503,15 @@ export class BaseChatMessageDto {
     description: '消息内容',
     example: 'hello',
     maxLength: CHAT_MESSAGE_CONTENT_MAX_LENGTH,
+    validation: false,
   })
   content!: string
 
   @ApiProperty({
     description:
-      '文本消息正文语义 token；用于渲染普通文本与表情。媒体消息和历史空值会被省略。',
-    required: false,
+      '文本消息正文语义 token；用于渲染普通文本与表情。媒体消息和历史空值返回 null。',
+    required: true,
+    nullable: true,
     type: 'array',
     items: {
       oneOf: createChatMessageBodyTokenOneOfSchemas(),
@@ -532,23 +521,24 @@ export class BaseChatMessageDto {
       { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
     ],
   })
-  bodyTokens?: Array<
+  bodyTokens!: Array<
     | ChatMessageBodyTextTokenDto
     | ChatMessageBodyEmojiUnicodeTokenDto
     | ChatMessageBodyEmojiCustomTokenDto
-  >
+  > | null
 
   @StringProperty({
     description: '客户端幂等键',
     example: 'cmsg_9d7a4a0b',
-    required: false,
+    nullable: true,
     maxLength: CHAT_MESSAGE_CLIENT_MESSAGE_ID_MAX_LENGTH,
+    validation: false,
   })
-  clientMessageId?: string
+  clientMessageId!: string | null
 
   @ApiProperty({
     description:
-      '扩展载荷；文本/系统消息为普通 JSON 对象，媒体消息为图片/语音/视频载荷对象。',
+      '扩展载荷；文本/系统消息为普通 JSON 对象，媒体消息为图片/语音/视频载荷对象，无载荷或历史非法载荷返回 null。',
     anyOf: createChatMessagePayloadAnyOfSchemas(),
     example: {
       filePath: '/files/chat/image/2026-05-04/photo-1200x800.png',
@@ -559,17 +549,20 @@ export class BaseChatMessageDto {
       height: 800,
       originalName: 'photo.png',
     },
-    required: false,
+    required: true,
+    nullable: true,
   })
-  payload?:
+  payload!:
     | JsonObject
     | ImageChatMessagePayloadDto
     | VoiceChatMessagePayloadDto
     | VideoChatMessagePayloadDto
+    | null
 
   @DateProperty({
     description: '创建时间',
     example: '2026-03-07T12:00:00.000Z',
+    validation: false,
   })
   createdAt!: Date
 }
@@ -579,65 +572,74 @@ export class BaseChatConversationDto {
   @NumberProperty({
     description: '会话ID',
     example: 1,
+    validation: false,
   })
   id!: number
 
   @NumberProperty({
     description: '未读消息数',
     example: 2,
+    validation: false,
   })
   unreadCount!: number
 
   @BooleanProperty({
     description: '当前用户是否置顶',
     example: false,
+    validation: false,
   })
   isPinned!: boolean
 
   @StringProperty({
     description: '最后消息ID（BigInt）',
     example: '123456',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  lastMessageId?: string
+  lastMessageId!: string | null
 
   @DateProperty({
     description: '最后消息时间',
     example: '2026-03-07T12:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  lastMessageAt?: Date
+  lastMessageAt!: Date | null
 
   @NumberProperty({
     description: '最后发送者ID',
     example: 10001,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  lastSenderId?: number
+  lastSenderId!: number | null
 
   @StringProperty({
     description: '最后消息内容',
     example: 'hello',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: CHAT_MESSAGE_CONTENT_MAX_LENGTH,
   })
-  lastMessageContent?: string
+  lastMessageContent!: string | null
 
   @DateProperty({
     description: '当前用户最后阅读时间',
     example: '2026-03-07T12:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  lastReadAt?: Date
+  lastReadAt!: Date | null
 
   @StringProperty({
     description: '当前用户最后阅读消息ID（BigInt）',
     example: '123455',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  lastReadMessageId?: string
+  lastReadMessageId!: string | null
 
-  peerUser?: BaseChatPeerDto
+  peerUser!: BaseChatPeerDto | null
 }
 
 /**
@@ -647,11 +649,10 @@ export class ChatConversationDto extends BaseChatConversationDto {
   @NestedProperty({
     description: '对端用户',
     type: BaseChatPeerDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  declare peerUser: BaseChatPeerDto
+  declare peerUser: BaseChatPeerDto | null
 }
 
 /**
@@ -668,10 +669,10 @@ export class ChatConversationMessagesResponseDto {
   @StringProperty({
     description: '下一页游标',
     example: '120',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  nextCursor?: string | null
+  nextCursor!: string | null
 
   @BooleanProperty({
     description: '是否还有更多消息',

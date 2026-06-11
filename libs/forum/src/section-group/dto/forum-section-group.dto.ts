@@ -1,5 +1,5 @@
 import {
-  AdminForumSectionTreeSectionDto,
+  AdminForumSectionDto,
   PublicForumSectionListItemDto,
 } from '@libs/forum/section/dto/forum-section.dto'
 import {
@@ -10,7 +10,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, DragReorderDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -35,10 +37,11 @@ export class BaseForumSectionGroupDto extends BaseDto {
   @StringProperty({
     description: '分组描述',
     example: '包含所有技术相关的板块',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  description?: string | null
+  description!: string | null
 
   @NumberProperty({
     description: '排序权重',
@@ -76,9 +79,18 @@ export class BaseForumSectionGroupDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateForumSectionGroupDto extends OmitType(
+class CreateForumSectionGroupRequiredFieldsDto extends OmitType(
   BaseForumSectionGroupDto,
-  [...OMIT_BASE_FIELDS, 'deletedAt'] as const,
+  [...OMIT_BASE_FIELDS, 'description', 'deletedAt'] as const,
+) {}
+
+class CreateForumSectionGroupOptionalFieldsDto extends PartialType(
+  PickType(BaseForumSectionGroupDto, ['description'] as const),
+) {}
+
+export class CreateForumSectionGroupDto extends IntersectionType(
+  CreateForumSectionGroupRequiredFieldsDto,
+  CreateForumSectionGroupOptionalFieldsDto,
 ) {}
 
 export class UpdateForumSectionGroupDto extends IntersectionType(
@@ -110,19 +122,15 @@ export class UpdateForumSectionGroupEnabledDto extends IntersectionType(
   PickType(BaseForumSectionGroupDto, ['isEnabled'] as const),
 ) {}
 
+export class ForumSectionGroupOutputDto extends OmitType(
+  BaseForumSectionGroupDto,
+  ['deletedAt'] as const,
+) {}
+
 export class SwapForumSectionGroupSortDto extends PickType(DragReorderDto, [
   'dragId',
   'targetId',
 ] as const) {}
-
-/**
- * 管理端板块树节点中的分组信息 DTO。
- * 保留分组管理所需的稳定字段，供配置页直接展示与编辑。
- */
-export class AdminForumSectionTreeGroupDto extends OmitType(
-  BaseForumSectionGroupDto,
-  ['deletedAt'] as const,
-) {}
 
 /**
  * 管理端板块树节点 DTO。
@@ -139,19 +147,19 @@ export class ForumSectionTreeNodeDto {
 
   @NestedProperty({
     description: '分组信息；未分组节点为空',
-    required: false,
-    type: AdminForumSectionTreeGroupDto,
+    nullable: true,
+    type: ForumSectionGroupOutputDto,
     validation: false,
   })
-  group?: AdminForumSectionTreeGroupDto
+  group!: ForumSectionGroupOutputDto | null
 
   @ArrayProperty({
     description: '该节点下的板块列表',
-    itemClass: AdminForumSectionTreeSectionDto,
+    itemClass: AdminForumSectionDto,
     required: true,
     validation: false,
   })
-  sections!: AdminForumSectionTreeSectionDto[]
+  sections!: AdminForumSectionDto[]
 }
 
 /**

@@ -172,6 +172,8 @@ export interface BooleanPropertyOptions extends BaseValidateOptions {
   example?: boolean
   /** 默认值 */
   default?: boolean
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }
@@ -200,6 +202,8 @@ export interface JsonPropertyOptions extends BaseValidateOptions {
   example?: string | object | null
   /** 默认值 */
   default?: string
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }

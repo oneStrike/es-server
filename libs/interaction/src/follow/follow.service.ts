@@ -333,7 +333,10 @@ export class FollowService {
       list: page.list.map((item) => {
         const author = detailMap.get(item.targetId)
         if (!author || typeof author !== 'object') {
-          return item
+          return {
+            ...item,
+            author: null,
+          }
         }
 
         return {
@@ -361,7 +364,10 @@ export class FollowService {
       list: page.list.map((item) => {
         const section = detailMap.get(item.targetId)
         if (!section || typeof section !== 'object') {
-          return item
+          return {
+            ...item,
+            section: null,
+          }
         }
 
         return {
@@ -389,7 +395,10 @@ export class FollowService {
       list: page.list.map((item) => {
         const hashtag = detailMap.get(item.targetId)
         if (!hashtag || typeof hashtag !== 'object') {
-          return item
+          return {
+            ...item,
+            hashtag: null,
+          }
         }
 
         return {
@@ -446,7 +455,7 @@ export class FollowService {
         const isFollowedByTarget = followedByMap.get(item.targetId) ?? false
         return {
           ...item,
-          user: detailMap.get(item.targetId),
+          user: detailMap.get(item.targetId) ?? null,
           isFollowing: true,
           isFollowedByTarget,
           isMutualFollow: isFollowedByTarget,
@@ -505,7 +514,7 @@ export class FollowService {
         const isFollowing = followingMap.get(item.userId) ?? false
         return {
           ...item,
-          user: detailMap.get(item.userId),
+          user: detailMap.get(item.userId) ?? null,
           isFollowing,
           isFollowedByTarget: true,
           isMutualFollow: isFollowing,

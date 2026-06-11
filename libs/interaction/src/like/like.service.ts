@@ -4,7 +4,11 @@ import { SceneTypeEnum } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
-import { LikePageQueryDto, LikeRecordDto } from './dto/like.dto'
+import {
+  LikePageQueryDto,
+  LikeRecordDto,
+  LikeTargetDetailDto,
+} from './dto/like.dto'
 import {
   ILikeTargetResolver,
   LikeTargetMeta,
@@ -49,6 +53,43 @@ export class LikeService {
 
   private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
+  }
+
+  private toLikeTargetDetail(detail: unknown): LikeTargetDetailDto | null {
+    if (!detail || typeof detail !== 'object') {
+      return null
+    }
+    const item = detail as Record<string, unknown>
+    const id = item.id
+    if (typeof id !== 'number') {
+      return null
+    }
+    const user = item.user as Record<string, unknown> | null | undefined
+    const userId = user?.id
+    const userNickname = user?.nickname
+
+    return {
+      id,
+      name: typeof item.name === 'string' ? item.name : null,
+      cover: typeof item.cover === 'string' ? item.cover : null,
+      title: typeof item.title === 'string' ? item.title : null,
+      images: Array.isArray(item.images)
+        ? item.images.filter(
+            (image): image is string => typeof image === 'string',
+          )
+        : null,
+      videos: item.videos ?? null,
+      floor: typeof item.floor === 'number' ? item.floor : null,
+      content: typeof item.content === 'string' ? item.content : null,
+      createdAt: item.createdAt instanceof Date ? item.createdAt : null,
+      user:
+        typeof userId === 'number' && typeof userNickname === 'string'
+          ? {
+              id: userId,
+              nickname: userNickname,
+            }
+          : null,
+    }
   }
 
   private resolveLevelBusiness(
@@ -173,9 +214,11 @@ export class LikeService {
       list: page.list.map((item) => ({
         id: item.id,
         userId: item.userId,
+        targetId: item.targetId,
+        targetType: item.targetType,
         sceneType: item.sceneType,
         sceneId: item.sceneId,
-        commentLevel: item.commentLevel,
+        commentLevel: item.commentLevel ?? null,
         createdAt: item.createdAt,
       })),
     }
@@ -323,14 +366,28 @@ export class LikeService {
 
     const resolver = this.getResolver(query.targetType)
     if (!resolver.batchGetDetails) {
-      return page
+      return {
+        ...page,
+        list: page.list.map((item) => ({
+          ...item,
+          commentLevel: item.commentLevel ?? null,
+          targetDetail: null,
+        })),
+      }
     }
 
     const targetIds = this.uniqueTargetIds(
       page.list.map((item) => item.targetId),
     )
     if (targetIds.length === 0) {
-      return page
+      return {
+        ...page,
+        list: page.list.map((item) => ({
+          ...item,
+          commentLevel: item.commentLevel ?? null,
+          targetDetail: null,
+        })),
+      }
     }
 
     const startedAt = Date.now()
@@ -343,13 +400,27 @@ export class LikeService {
           error instanceof Error ? error.message : String(error)
         }`,
       )
-      return page
+      return {
+        ...page,
+        list: page.list.map((item) => ({
+          ...item,
+          commentLevel: item.commentLevel ?? null,
+          targetDetail: null,
+        })),
+      }
     }
     if (!detailMap || detailMap.size === 0) {
       this.logger.warn(
         `like_detail_empty targetType=${query.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt}`,
       )
-      return page
+      return {
+        ...page,
+        list: page.list.map((item) => ({
+          ...item,
+          commentLevel: item.commentLevel ?? null,
+          targetDetail: null,
+        })),
+      }
     }
     if (detailMap.size < targetIds.length) {
       this.logger.warn(
@@ -361,13 +432,11 @@ export class LikeService {
       ...page,
       list: page.list.map((item) => {
         const detail = detailMap.get(item.targetId)
-        if (detail) {
-          return {
-            ...item,
-            targetDetail: detail,
-          }
+        return {
+          ...item,
+          commentLevel: item.commentLevel ?? null,
+          targetDetail: this.toLikeTargetDetail(detail),
         }
-        return item
       }),
     }
   }

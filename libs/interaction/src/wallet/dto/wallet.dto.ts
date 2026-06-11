@@ -6,7 +6,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { CreatePaymentOrderBaseDto } from '../../payment/dto/payment.dto'
 
@@ -41,38 +42,43 @@ export class BaseCurrencyPackageDto extends BaseDto {
     description: '赠送虚拟币数量',
     example: 100,
     min: 0,
-    required: false,
     default: 0,
   })
-  bonusAmount?: number
+  bonusAmount!: number
 
   @NumberProperty({
     description: '排序值',
     example: 0,
     min: 0,
-    required: false,
     default: 0,
   })
-  sortOrder?: number
+  sortOrder!: number
 
   @BooleanProperty({
     description: '是否启用',
     example: true,
-    required: false,
     default: true,
   })
-  isEnabled?: boolean
+  isEnabled!: boolean
 }
 
-export class CreateCurrencyPackageDto extends PickType(BaseCurrencyPackageDto, [
-  'packageKey',
-  'name',
-  'price',
-  'currencyAmount',
-  'bonusAmount',
-  'sortOrder',
-  'isEnabled',
-] as const) {}
+class RequiredCurrencyPackageWritableFieldsDto extends PickType(
+  BaseCurrencyPackageDto,
+  ['packageKey', 'name', 'price', 'currencyAmount'] as const,
+) {}
+
+class OptionalCurrencyPackageDefaultFieldsDto extends PartialType(
+  PickType(BaseCurrencyPackageDto, [
+    'bonusAmount',
+    'sortOrder',
+    'isEnabled',
+  ] as const),
+) {}
+
+export class CreateCurrencyPackageDto extends IntersectionType(
+  RequiredCurrencyPackageWritableFieldsDto,
+  OptionalCurrencyPackageDefaultFieldsDto,
+) {}
 
 export class UpdateCurrencyPackageDto extends IntersectionType(
   IdDto,
@@ -82,6 +88,22 @@ export class UpdateCurrencyPackageDto extends IntersectionType(
 export class QueryCurrencyPackageDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseCurrencyPackageDto, ['name', 'isEnabled'] as const)),
+) {}
+
+export class AdminCurrencyPackagePageItemDto extends PickType(
+  BaseCurrencyPackageDto,
+  [
+    'id',
+    'packageKey',
+    'name',
+    'price',
+    'currencyAmount',
+    'bonusAmount',
+    'sortOrder',
+    'isEnabled',
+    'createdAt',
+    'updatedAt',
+  ] as const,
 ) {}
 
 export class AppCurrencyPackageDto {
@@ -140,10 +162,10 @@ export class WalletDetailDto {
   @DateProperty({
     description: 'VIP 到期时间',
     example: '2026-06-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  vipExpiresAt?: Date | null
+  vipExpiresAt!: Date | null
 
   @NumberProperty({
     description: '可用券数量',
@@ -167,8 +189,6 @@ export class WalletDetailDto {
   purchasedChapterCount!: number
 }
 
-export class QueryWalletLedgerDto extends PageDto {}
-
 export class QueryAdminWalletLedgerDto extends PageDto {
   @NumberProperty({
     description: '用户 ID',
@@ -186,7 +206,7 @@ export class WalletLedgerRecordDto {
   id!: number
 
   @EnumProperty({
-    description: '流水动作',
+    description: '流水动作（1=发放资产；2=扣减资产；3=规则判定过程；4=授予徽章）',
     enum: GrowthLedgerActionEnum,
     example: GrowthLedgerActionEnum.GRANT,
     validation: false,
@@ -224,10 +244,10 @@ export class WalletLedgerRecordDto {
   @StringProperty({
     description: '展示备注',
     example: '虚拟币充值',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  remark?: string
+  remark!: string | null
 
   @DateProperty({
     description: '创建时间',

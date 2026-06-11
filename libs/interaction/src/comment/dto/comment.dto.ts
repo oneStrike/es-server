@@ -11,8 +11,9 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -97,32 +98,34 @@ export class BaseCommentDto extends IntersectionType(
     example: '写得很棒 #TypeScript',
     required: true,
     contract: false,
+    validation: false,
   })
   content!: string
 
   @NumberProperty({
     description: '楼层号',
     example: 1,
-    required: false,
+    nullable: true,
     min: 1,
+    validation: false,
   })
-  floor?: number | null
+  floor!: number | null
 
   @NumberProperty({
     description: '回复的评论 ID',
     example: 1,
-    required: false,
+    nullable: true,
     min: 1,
   })
-  replyToId?: number | null
+  replyToId!: number | null
 
   @NumberProperty({
     description: '实际回复的根评论 ID',
     example: 1,
-    required: false,
+    nullable: true,
     min: 1,
   })
-  actualReplyToId?: number | null
+  actualReplyToId!: number | null
 
   @BooleanProperty({
     description: '是否隐藏',
@@ -144,39 +147,43 @@ export class BaseCommentDto extends IntersectionType(
   @NumberProperty({
     description: '审核人 ID',
     example: 1,
-    required: false,
+    nullable: true,
     min: 1,
+    validation: false,
   })
-  auditById?: number | null
+  auditById!: number | null
 
   @EnumProperty({
     description: '审核角色（0=版主；1=管理员）',
     enum: AuditRoleEnum,
     example: AuditRoleEnum.ADMIN,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  auditRole?: AuditRoleEnum | null
+  auditRole!: AuditRoleEnum | null
 
   @StringProperty({
     description: '审核原因',
     example: '违反社区规范',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  auditReason?: string | null
+  auditReason!: string | null
 
   @DateProperty({
     description: '审核时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  auditAt?: Date | null
+  auditAt!: Date | null
 
   @NumberProperty({
     description: '点赞数',
     example: 0,
     required: true,
     default: 0,
+    validation: false,
   })
   likeCount!: number
 
@@ -191,46 +198,47 @@ export class BaseCommentDto extends IntersectionType(
 
   @ArrayProperty({
     description: '敏感词命中记录',
-    itemClass: BaseSensitiveWordHitDto,
-    required: false,
+    itemClass: SensitiveWordHitDto,
+    nullable: true,
+    validation: false,
   })
-  sensitiveWordHits?: BaseSensitiveWordHitDto[] | null
+  sensitiveWordHits!: SensitiveWordHitDto[] | null
 
   @StringProperty({
     description: '评论提交时解析到的国家/地区',
     example: '中国',
-    required: false,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoCountry?: string
+  geoCountry!: string | null
 
   @StringProperty({
     description: '评论提交时解析到的省份/州',
     example: '广东省',
-    required: false,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoProvince?: string
+  geoProvince!: string | null
 
   @StringProperty({
     description: '评论提交时解析到的城市',
     example: '深圳市',
-    required: false,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoCity?: string
+  geoCity!: string | null
 
   @StringProperty({
     description: '评论提交时解析到的网络运营商',
     example: '电信',
-    required: false,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoIsp?: string
+  geoIsp!: string | null
 
   @StringProperty({
     description: '属地解析来源',
@@ -245,11 +253,10 @@ export class BaseCommentDto extends IntersectionType(
   @DateProperty({
     description: '删除时间',
     example: '2026-03-27T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
-    contract: false,
   })
-  deletedAt?: Date | null
+  deletedAt!: Date | null
 }
 
 export class CommentIdDto {
@@ -311,7 +318,7 @@ export class ReplyCommentBodyDto extends IntersectionType(
 
 export class CommentSortDto {
   @EnumProperty({
-    description: '排序类型（latest=最新，hot=最热）',
+    description: '排序类型（最新；最热）',
     enum: CommentSortTypeEnum,
     example: CommentSortTypeEnum.LATEST,
     required: false,
@@ -409,7 +416,8 @@ export class QueryAdminCommentPageDto extends IntersectionType(
 
 export class UpdateCommentAuditStatusDto extends IntersectionType(
   IdDto,
-  PickType(BaseCommentDto, ['auditStatus', 'auditReason'] as const),
+  PickType(BaseCommentDto, ['auditStatus'] as const),
+  PartialType(PickType(BaseCommentDto, ['auditReason'] as const)),
 ) {
   @NumberProperty({
     description: '审核人ID；由后台上下文注入。',
@@ -445,12 +453,11 @@ export class CommentReplyTargetDto extends PickType(BaseCommentDto, [
 ] as const) {
   @NestedProperty({
     description: '被回复用户',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: CommentUserDto,
     validation: false,
   })
-  user!: CommentUserDto
+  user!: CommentUserDto | null
 }
 
 /**
@@ -489,21 +496,19 @@ export class CommentReplyItemDto extends PickType(BaseCommentDto, [
 
   @NestedProperty({
     description: '回复用户',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: CommentUserDto,
     validation: false,
   })
-  user!: CommentUserDto
+  user!: CommentUserDto | null
 
   @NestedProperty({
     description: '被回复目标简要信息',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: CommentReplyTargetDto,
     validation: false,
   })
-  replyTo?: CommentReplyTargetDto
+  replyTo!: CommentReplyTargetDto | null
 }
 
 class BaseCommentReplyViewDto extends PickType(CommentReplyItemDto, [
@@ -551,12 +556,11 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
 ] as const) {
   @NestedProperty({
     description: '评论用户',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: CommentUserDto,
     validation: false,
   })
-  user!: CommentUserDto
+  user!: CommentUserDto | null
 
   @BooleanProperty({
     description: '当前用户是否已点赞该评论',
@@ -629,21 +633,19 @@ export class MyCommentPageItemDto extends PickType(BaseCommentDto, [
 ] as const) {
   @NestedProperty({
     description: '被回复目标简要信息',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: CommentReplyTargetDto,
     validation: false,
   })
-  replyTo?: CommentReplyTargetDto
+  replyTo!: CommentReplyTargetDto | null
 
   @NestedProperty({
     description: '评论目标展示摘要',
-    required: false,
     nullable: true,
     type: InteractionCommentTargetSummaryDto,
     validation: false,
   })
-  targetSummary?: InteractionCommentTargetSummaryDto | null
+  targetSummary!: InteractionCommentTargetSummaryDto | null
 }
 
 export class AdminCommentUserDto extends PickType(BaseAppUserDto, [
@@ -667,12 +669,11 @@ export class AdminCommentReplyTargetDto extends PickType(BaseCommentDto, [
 ] as const) {
   @NestedProperty({
     description: '被回复评论的作者信息',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: AdminCommentUserDto,
     validation: false,
   })
-  user!: AdminCommentUserDto
+  user!: AdminCommentUserDto | null
 }
 
 export class AdminCommentPageItemDto extends PickType(BaseCommentDto, [
@@ -697,30 +698,27 @@ export class AdminCommentPageItemDto extends PickType(BaseCommentDto, [
 ] as const) {
   @NestedProperty({
     description: '评论作者信息',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: AdminCommentUserDto,
     validation: false,
   })
-  user!: AdminCommentUserDto
+  user!: AdminCommentUserDto | null
 
   @NestedProperty({
     description: '评论目标展示摘要',
-    required: false,
     nullable: true,
     type: InteractionCommentTargetSummaryDto,
     validation: false,
   })
-  targetSummary?: InteractionCommentTargetSummaryDto | null
+  targetSummary!: InteractionCommentTargetSummaryDto | null
 
   @NestedProperty({
     description: '被回复评论展示摘要',
-    required: false,
     nullable: true,
     type: InteractionReplyCommentSummaryDto,
     validation: false,
   })
-  replyToSummary?: InteractionReplyCommentSummaryDto | null
+  replyToSummary!: InteractionReplyCommentSummaryDto | null
 }
 
 export class AdminCommentDetailDto extends PickType(BaseCommentDto, [
@@ -746,37 +744,33 @@ export class AdminCommentDetailDto extends PickType(BaseCommentDto, [
 ] as const) {
   @NestedProperty({
     description: '评论作者信息',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: AdminCommentUserDto,
     validation: false,
   })
-  user!: AdminCommentUserDto
+  user!: AdminCommentUserDto | null
 
   @NestedProperty({
     description: '评论目标展示摘要',
-    required: false,
     nullable: true,
     type: InteractionCommentTargetSummaryDto,
     validation: false,
   })
-  targetSummary?: InteractionCommentTargetSummaryDto | null
+  targetSummary!: InteractionCommentTargetSummaryDto | null
 
   @NestedProperty({
     description: '审核人展示摘要',
-    required: false,
     nullable: true,
     type: InteractionActorSummaryDto,
     validation: false,
   })
-  auditorSummary?: InteractionActorSummaryDto | null
+  auditorSummary!: InteractionActorSummaryDto | null
 
   @NestedProperty({
     description: '被回复评论简要信息',
-    required: false,
-    nullable: false,
+    nullable: true,
     type: AdminCommentReplyTargetDto,
     validation: false,
   })
-  replyTo!: AdminCommentReplyTargetDto
+  replyTo!: AdminCommentReplyTargetDto | null
 }

@@ -4,8 +4,6 @@ import {
 } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
-  WorkflowArchiveDto,
-  WorkflowExpireDto,
   WorkflowItemDto,
   WorkflowItemPageRequestDto,
   WorkflowJobDetailDto,
@@ -18,7 +16,7 @@ import {
   WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
   WorkflowTypeOptionsResponseDto,
-} from '@libs/platform/modules/workflow/dto'
+} from '@libs/platform/modules/workflow/dto/workflow.dto'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -112,7 +110,7 @@ export class AdminWorkflowController {
     },
   })
   // 归档终态工作流任务；仅隐藏默认列表，不清理 retained resource。
-  async archiveJob(@Body() body: WorkflowArchiveDto) {
+  async archiveJob(@Body() body: WorkflowJobIdDto) {
     return this.workflowService.archiveJob(body)
   }
 
@@ -138,7 +136,7 @@ export class AdminWorkflowController {
     },
   })
   // 过期清理失败工作流保留的临时资源。
-  async expireJob(@Body() body: WorkflowExpireDto) {
+  async expireJob(@Body() body: WorkflowJobIdDto) {
     return this.workflowService.expireJob(body)
   }
 }

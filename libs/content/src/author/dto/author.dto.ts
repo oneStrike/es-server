@@ -9,7 +9,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -34,21 +35,21 @@ export class BaseAuthorDto extends BaseDto {
   @StringProperty({
     description: '作者头像 URL',
     example: 'https://example.com/avatar.jpg',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  avatar?: string | null
+  avatar!: string | null
 
   @StringProperty({
     description: '作者描述',
     example: '日本著名小说家，代表作有《挪威的森林》等',
-    required: false,
+    nullable: true,
     maxLength: 1000,
   })
-  description?: string | null
+  description!: string | null
 
   @BooleanProperty({
-    description: '启用状态（true=启用；false=禁用）',
+    description: '启用状态',
     example: true,
     required: true,
     default: true,
@@ -58,18 +59,18 @@ export class BaseAuthorDto extends BaseDto {
   @ArrayProperty({
     description: '作者角色类型（1=漫画家；2=轻小说作者）',
     example: [AuthorTypeEnum.NOVEL],
-    required: false,
+    nullable: true,
     itemEnum: AuthorTypeEnum,
   })
-  type?: AuthorTypeEnum[] | null
+  type!: AuthorTypeEnum[] | null
 
   @StringProperty({
     description: '国籍',
     example: '日本',
-    required: false,
+    nullable: true,
     maxLength: 50,
   })
-  nationality?: string | null
+  nationality!: string | null
 
   @EnumProperty({
     description: '性别（0=未知；1=男性；2=女性；3=其他；4=保密）',
@@ -83,10 +84,10 @@ export class BaseAuthorDto extends BaseDto {
   @StringProperty({
     description: '管理员备注',
     example: '优秀作者，作品质量高',
-    required: false,
+    nullable: true,
     maxLength: 1000,
   })
-  remark?: string | null
+  remark!: string | null
 
   @NumberProperty({
     description: '作品数量（冗余字段，用于提升查询性能）',
@@ -124,13 +125,33 @@ export class BaseAuthorDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateAuthorDto extends OmitType(BaseAuthorDto, [
+class CreateAuthorRequiredFieldsDto extends OmitType(BaseAuthorDto, [
   ...OMIT_BASE_FIELDS,
+  'avatar',
+  'description',
+  'type',
+  'nationality',
+  'remark',
   'workCount',
   'isEnabled',
   'isRecommended',
   'followersCount',
 ] as const) {}
+
+class CreateAuthorOptionalFieldsDto extends PartialType(
+  PickType(BaseAuthorDto, [
+    'avatar',
+    'description',
+    'type',
+    'nationality',
+    'remark',
+  ] as const),
+) {}
+
+export class CreateAuthorDto extends IntersectionType(
+  CreateAuthorRequiredFieldsDto,
+  CreateAuthorOptionalFieldsDto,
+) {}
 
 export class UpdateAuthorDto extends IntersectionType(
   IdDto,
@@ -177,7 +198,19 @@ export class AuthorWorkCountRepairResultDto extends IntersectionType(
   PickType(BaseAuthorDto, ['workCount'] as const),
 ) {}
 
-export class AuthorPageResponseDto extends OmitType(BaseAuthorDto, [
+export class AuthorNullableOutputFieldsDto extends PickType(BaseAuthorDto, [
+  'avatar',
+  'description',
+  'type',
+  'nationality',
+  'remark',
+] as const) {}
+
+export class AuthorOutputBaseDto extends OmitType(BaseAuthorDto, [
+  'deletedAt',
+] as const) {}
+
+export class AuthorPageResponseDto extends OmitType(AuthorOutputBaseDto, [
   'remark',
   'description',
 ] as const) {}

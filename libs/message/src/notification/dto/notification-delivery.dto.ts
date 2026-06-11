@@ -52,7 +52,7 @@ export class NotificationDeliveryLookupFieldsDto {
   @EnumProperty({
     description: '通知分类键，表示通知所属业务分类',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
-    required: false,
+    nullable: true,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
   categoryKey!: MessageNotificationCategoryKey | null
@@ -60,14 +60,14 @@ export class NotificationDeliveryLookupFieldsDto {
   @NumberProperty({
     description: '接收用户 ID',
     example: 1001,
-    required: false,
+    nullable: true,
   })
   receiverUserId!: number | null
 
   @StringProperty({
     description: '通知投影键',
     example: 'announcement:notify:42:user:7',
-    required: false,
+    nullable: true,
     maxLength: 180,
   })
   projectionKey!: string | null
@@ -88,7 +88,7 @@ export class BaseNotificationDeliveryDto extends IntersectionType(
   @NumberProperty({
     description: '任务 ID',
     example: 3,
-    required: false,
+    nullable: true,
     validation: false,
   })
   taskId!: number | null
@@ -96,7 +96,7 @@ export class BaseNotificationDeliveryDto extends IntersectionType(
   @NumberProperty({
     description: '任务实例 ID',
     example: 88,
-    required: false,
+    nullable: true,
     validation: false,
   })
   instanceId!: number | null
@@ -104,7 +104,7 @@ export class BaseNotificationDeliveryDto extends IntersectionType(
   @StringProperty({
     description: '任务提醒子类型',
     example: 'reward_granted',
-    required: false,
+    nullable: true,
     maxLength: 40,
     validation: false,
   })
@@ -113,7 +113,7 @@ export class BaseNotificationDeliveryDto extends IntersectionType(
   @NumberProperty({
     description: '关联的站内通知 ID',
     example: 88,
-    required: false,
+    nullable: true,
     validation: false,
   })
   notificationId!: number | null
@@ -129,7 +129,7 @@ export class BaseNotificationDeliveryDto extends IntersectionType(
   @NumberProperty({
     description: '命中的模板 ID',
     example: 3,
-    required: false,
+    nullable: true,
     validation: false,
   })
   templateId!: number | null
@@ -144,7 +144,7 @@ export class BaseNotificationDeliveryDto extends IntersectionType(
   @StringProperty({
     description: '模板回退原因',
     example: 'missing_or_disabled',
-    required: false,
+    nullable: true,
     maxLength: 64,
     validation: false,
   })
@@ -153,7 +153,7 @@ export class BaseNotificationDeliveryDto extends IntersectionType(
   @StringProperty({
     description: '最近一次失败原因',
     example: 'notification template render failed',
-    required: false,
+    nullable: true,
     maxLength: 500,
     validation: false,
   })

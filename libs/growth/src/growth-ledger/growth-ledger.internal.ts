@@ -91,17 +91,17 @@ export interface PublicGrowthLedgerRecord {
   id: number
   userId: number
   assetType: GrowthAssetTypeEnum
-  assetKey?: string
+  assetKey: string | null
   source: string
-  ruleId?: number
-  ruleType?: number
-  targetType?: number
-  targetId?: number
+  ruleId: number | null
+  ruleType: number | null
+  targetType: number | null
+  targetId: number | null
   delta: number
   beforeValue: number
   afterValue: number
   bizKey: string
-  remark?: string
-  context?: PublicGrowthLedgerContext
+  remark: string | null
+  context: PublicGrowthLedgerContext | null
   createdAt: Date
 }

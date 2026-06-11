@@ -18,7 +18,7 @@ import {
   AuditStatusEnum,
   BusinessErrorCode,
 } from '@libs/platform/constant'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import {

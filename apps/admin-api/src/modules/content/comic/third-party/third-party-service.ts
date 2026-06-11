@@ -2,7 +2,6 @@ import type {
   ChapterContentComicRequestDto,
   DetailComicRequestDto,
   SearchComicRequestDto,
-  ThirdPartyComicImportPreviewRequestDto,
   ThirdPartyComicImportRequestDto,
   ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
@@ -48,7 +47,7 @@ export class ComicThirdPartyService {
   }
 
   // 生成第三方漫画导入前预览，不产生本地写入副作用。
-  async previewImport(dto: ThirdPartyComicImportPreviewRequestDto) {
+  async previewImport(dto: DetailComicRequestDto) {
     return this.importService.previewImport(dto)
   }
 

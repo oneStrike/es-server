@@ -15,7 +15,7 @@ function isPlainRecord<T>(
 
 export function mapNotificationActor(actor?: NotificationActorSource | null) {
   if (!actor) {
-    return undefined
+    return null
   }
 
   return {
@@ -57,8 +57,8 @@ export function mapUserNotificationToPublicView(
     },
     data: mapNotificationData(notification.payload),
     isRead: notification.isRead,
-    readAt: notification.readAt ?? undefined,
-    expiresAt: notification.expiresAt ?? undefined,
+    readAt: notification.readAt ?? null,
+    expiresAt: notification.expiresAt ?? null,
     createdAt: notification.createdAt,
     updatedAt: notification.updatedAt,
   }

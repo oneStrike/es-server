@@ -88,11 +88,11 @@ export class ForumHashtagFollowResolver
           id: hashtag.id,
           slug: hashtag.slug,
           displayName: hashtag.displayName,
-          description: hashtag.description ?? undefined,
+          description: hashtag.description ?? null,
           topicRefCount: hashtag.topicRefCount,
           commentRefCount: hashtag.commentRefCount,
           followerCount: hashtag.followerCount,
-          lastReferencedAt: hashtag.lastReferencedAt ?? undefined,
+          lastReferencedAt: hashtag.lastReferencedAt ?? null,
         },
       ]),
     )

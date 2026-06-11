@@ -93,7 +93,7 @@ export class ComicContentService {
       content: this.parseContent(chapter.content),
       id: chapter.id,
       title: chapter.title,
-      subtitle: chapter.subtitle,
+      subtitle: chapter.subtitle ?? null,
     }
   }
 
@@ -130,7 +130,9 @@ export class ComicContentService {
       query.workId.toString(),
       'chapter',
       chapterId.toString(),
-    ])
+    ], {
+      sceneOverride: 'content',
+    })
 
     const contents: string[] = await this.getChapterContentsInternal(chapterId)
 

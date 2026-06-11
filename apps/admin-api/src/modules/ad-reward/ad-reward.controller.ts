@@ -2,20 +2,19 @@ import { AdRewardService } from '@libs/interaction/ad-reward/ad-reward.service'
 import {
   AdminAdRewardReconcileItemDto,
   AdminAdRewardRecordDetailDto,
-  AdminAdRewardRecordPageItemDto,
+  AdProviderConfigOutputDto,
   AdRewardCredentialOptionDto,
+  BaseAdRewardRecordDto,
   AdRewardRevokeDto,
-  BaseAdProviderConfigDto,
   CreateAdProviderConfigDto,
   QueryAdProviderConfigDto,
-  QueryAdRewardReconcileDto,
   QueryAdRewardRecordDto,
   UpdateAdProviderConfigDto,
 } from '@libs/interaction/ad-reward/dto/ad-reward.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, ParseIntPipe, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -28,7 +27,7 @@ export class AdRewardController {
   @Get('provider/page')
   @ApiPageDoc({
     summary: '分页查询广告 provider 配置',
-    model: BaseAdProviderConfigDto,
+    model: AdProviderConfigOutputDto,
   })
   async getAdProviderConfigPage(@Query() query: QueryAdProviderConfigDto) {
     return this.adRewardService.getAdProviderConfigPage(query)
@@ -49,7 +48,7 @@ export class AdRewardController {
   @Get('record/page')
   @ApiPageDoc({
     summary: '分页查询广告奖励记录',
-    model: AdminAdRewardRecordPageItemDto,
+    model: BaseAdRewardRecordDto,
   })
   async getAdRewardRecordPage(@Query() query: QueryAdRewardRecordDto) {
     return this.adRewardService.getAdRewardRecordPage(query)
@@ -61,8 +60,8 @@ export class AdRewardController {
     summary: '查询广告奖励记录详情',
     model: AdminAdRewardRecordDetailDto,
   })
-  async getAdRewardRecordDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.adRewardService.getAdRewardRecordDetail(id)
+  async getAdRewardRecordDetail(@Query() query: IdDto) {
+    return this.adRewardService.getAdRewardRecordDetail(query.id)
   }
 
   // 分页查询广告奖励和内容权益对账视图。
@@ -71,7 +70,7 @@ export class AdRewardController {
     summary: '分页查询广告奖励和内容权益对账视图',
     model: AdminAdRewardReconcileItemDto,
   })
-  async getAdRewardReconcilePage(@Query() query: QueryAdRewardReconcileDto) {
+  async getAdRewardReconcilePage(@Query() query: QueryAdRewardRecordDto) {
     return this.adRewardService.getAdRewardReconcilePage(query)
   }
 

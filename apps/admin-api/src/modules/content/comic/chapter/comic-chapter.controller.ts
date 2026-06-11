@@ -1,5 +1,6 @@
 import {
   AdminWorkChapterPageItemDto,
+  AdminWorkChapterDetailDto,
   CreateWorkChapterDto,
   QueryWorkChapterDto,
   UpdateWorkChapterDto,
@@ -7,12 +8,8 @@ import {
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import {
-  BatchUpdatePublishedStatusDto,
-  DragReorderDto,
-  IdDto,
-  IdsDto,
-} from '@libs/platform/dto'
+import { BatchUpdatePublishedStatusDto, IdDto, IdsDto } from '@libs/platform/dto/base.dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -58,7 +55,7 @@ export class ComicChapterController {
   @Get('detail')
   @ApiDoc({
     summary: '获取漫画章节详情',
-    model: IdDto,
+    model: AdminWorkChapterDetailDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.workChapterService.getChapterDetail(query.id, {

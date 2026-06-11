@@ -3,7 +3,8 @@ import {
   DateProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -93,7 +94,22 @@ export class QueryPublishedAgreementDto extends PartialType(
   PickType(BaseAgreementDto, ['showInAuth'] as const),
 ) {}
 
-export class AgreementListItemDto extends OmitType(BaseAgreementDto, [
+class AgreementOutputFieldsDto {
+  @DateProperty({
+    description: '发布时间',
+    example: '2024-01-01T00:00:00.000Z',
+    nullable: true,
+    validation: false,
+  })
+  publishedAt!: Date | null
+}
+
+export class AgreementOutputBaseDto extends IntersectionType(
+  OmitType(BaseAgreementDto, ['publishedAt'] as const),
+  AgreementOutputFieldsDto,
+) {}
+
+export class AgreementListItemDto extends OmitType(AgreementOutputBaseDto, [
   'content',
 ] as const) {}
 
@@ -103,6 +119,7 @@ export class AgreementAccessFieldsDto {
     example: '/api/admin/agreement/access?id=1',
     required: true,
     maxLength: 500,
+    validation: false,
   })
   accessPath!: string
 }
@@ -113,6 +130,6 @@ export class AdminAgreementListItemDto extends IntersectionType(
 ) {}
 
 export class AdminAgreementDetailDto extends IntersectionType(
-  BaseAgreementDto,
+  AgreementOutputBaseDto,
   AgreementAccessFieldsDto,
 ) {}

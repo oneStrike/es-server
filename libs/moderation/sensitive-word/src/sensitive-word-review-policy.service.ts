@@ -93,19 +93,20 @@ export class SensitiveWordReviewPolicyService {
     const result = this.detectService.getMatchedWordsWithMetadataBySegments(
       input.segments.filter((segment) => segment.content.length > 0),
     )
+    const highestLevel = result.highestLevel ?? undefined
     const policy = this.configReader.getContentReviewPolicy()
     const recordHits = policy?.recordHits !== false
-    const baseDecision = this.resolveGlobalDecision(result.highestLevel)
+    const baseDecision = this.resolveGlobalDecision(highestLevel)
     const auditStatus = this.applyTopicReviewPolicy({
       auditStatus: baseDecision.auditStatus,
-      highestLevel: result.highestLevel,
+      highestLevel,
       topicReviewPolicy: input.topicReviewPolicy,
     })
 
     return {
       auditStatus,
       detectorReady: true,
-      highestLevel: result.highestLevel,
+      highestLevel,
       isHidden: baseDecision.isHidden,
       publicHits: recordHits ? result.publicHits : [],
       recordHits,

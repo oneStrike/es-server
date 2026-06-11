@@ -8,9 +8,15 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import {
   EMOJI_SCENE_VALUES,
   EmojiAssetKindEnum,
@@ -40,18 +46,20 @@ export class BaseEmojiPackDto extends BaseDto {
   @StringProperty({
     description: '描述',
     example: '平台默认表情包',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  description?: string | null
+  description!: string | null
 
   @StringProperty({
     description: '图标地址',
     example: 'https://cdn.example.com/emoji/default.png',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  iconUrl?: string | null
+  iconUrl!: string | null
 
   @NumberProperty({
     description: '排序值',
@@ -86,18 +94,20 @@ export class BaseEmojiPackDto extends BaseDto {
   @NumberProperty({
     description: '创建人ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  createdById?: number | null
+  createdById!: number | null
 
   @NumberProperty({
     description: '更新人ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  updatedById?: number | null
+  updatedById!: number | null
 
   @DateProperty({
     description: '删除时间',
@@ -109,13 +119,20 @@ export class BaseEmojiPackDto extends BaseDto {
   deletedAt?: Date | null
 }
 
+export class EmojiPackOutputDto extends OmitType(
+  BaseEmojiPackDto,
+  ['deletedAt'] as const,
+) {}
+
 class CreateEmojiPackWritableFieldsDto extends PickType(BaseEmojiPackDto, [
   'code',
   'name',
-  'description',
-  'iconUrl',
   'sceneType',
 ] as const) {}
+
+class CreateEmojiPackNullableFieldsDto extends PartialType(
+  PickType(BaseEmojiPackDto, ['description', 'iconUrl'] as const),
+) {}
 
 class CreateEmojiPackOptionalFieldsDto {
   @NumberProperty({
@@ -144,7 +161,10 @@ class CreateEmojiPackOptionalFieldsDto {
 }
 
 export class CreateEmojiPackDto extends IntersectionType(
-  CreateEmojiPackWritableFieldsDto,
+  IntersectionType(
+    CreateEmojiPackWritableFieldsDto,
+    CreateEmojiPackNullableFieldsDto,
+  ),
   CreateEmojiPackOptionalFieldsDto,
 ) {}
 
@@ -192,34 +212,38 @@ export class BaseEmojiAssetDto extends BaseDto {
   @StringProperty({
     description: '短码（custom 必填）',
     example: 'smile',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 32,
   })
-  shortcode?: string | null
+  shortcode!: string | null
 
   @StringProperty({
     description: 'Unicode 序列（unicode 必填）',
     example: '😀',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 191,
   })
-  unicodeSequence?: string | null
+  unicodeSequence!: string | null
 
   @StringProperty({
     description: '资源地址（custom 必填）',
     example: 'https://cdn.example.com/emoji/smile.gif',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  imageUrl?: string | null
+  imageUrl!: string | null
 
   @StringProperty({
     description: '静态资源地址',
     example: 'https://cdn.example.com/emoji/smile.png',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  staticUrl?: string | null
+  staticUrl!: string | null
 
   @BooleanProperty({
     description: '是否动图',
@@ -231,19 +255,21 @@ export class BaseEmojiAssetDto extends BaseDto {
   @StringProperty({
     description: '分类',
     example: 'people',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 32,
   })
-  category?: string | null
+  category!: string | null
 
   @ObjectProperty({
     description: '关键词（多语言）',
     // prettier-ignore
     example: { "zh-CN": ["微笑"], "en-US": ["smile"] },
     additionalProperties: { type: 'array', items: { type: 'string' } },
-    required: false,
+    required: true,
+    nullable: true,
   })
-  keywords?: Record<string, string[]> | null
+  keywords!: Record<string, string[]> | null
 
   @NumberProperty({
     description: '排序值',
@@ -263,18 +289,20 @@ export class BaseEmojiAssetDto extends BaseDto {
   @NumberProperty({
     description: '创建人ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  createdById?: number | null
+  createdById!: number | null
 
   @NumberProperty({
     description: '更新人ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  updatedById?: number | null
+  updatedById!: number | null
 
   @DateProperty({
     description: '删除时间',
@@ -286,16 +314,26 @@ export class BaseEmojiAssetDto extends BaseDto {
   deletedAt?: Date | null
 }
 
+export class EmojiAssetOutputDto extends OmitType(
+  BaseEmojiAssetDto,
+  ['deletedAt'] as const,
+) {}
+
 class CreateEmojiAssetWritableFieldsDto extends PickType(BaseEmojiAssetDto, [
   'packId',
   'kind',
+] as const) {}
+
+class CreateEmojiAssetNullableFieldsDto extends PartialType(
+  PickType(BaseEmojiAssetDto, [
   'shortcode',
   'unicodeSequence',
   'imageUrl',
   'staticUrl',
   'category',
   'keywords',
-] as const) {}
+  ] as const),
+) {}
 
 class CreateEmojiAssetOptionalFieldsDto {
   @BooleanProperty({
@@ -324,7 +362,10 @@ class CreateEmojiAssetOptionalFieldsDto {
 }
 
 export class CreateEmojiAssetDto extends IntersectionType(
-  CreateEmojiAssetWritableFieldsDto,
+  IntersectionType(
+    CreateEmojiAssetWritableFieldsDto,
+    CreateEmojiAssetNullableFieldsDto,
+  ),
   CreateEmojiAssetOptionalFieldsDto,
 ) {}
 
@@ -388,7 +429,7 @@ export class QueryEmojiRecentDto extends QueryEmojiCatalogDto {
   limit?: number
 }
 
-class EmojiPackSnapshotDto extends PickType(BaseEmojiPackDto, [
+class EmojiPackSnapshotDto extends PickType(EmojiPackOutputDto, [
   'id',
   'code',
   'name',
@@ -398,7 +439,7 @@ class EmojiPackSnapshotDto extends PickType(BaseEmojiPackDto, [
 /**
  * 表情资源 DTO。
  */
-export class EmojiAssetDto extends PickType(BaseEmojiAssetDto, [
+export class EmojiAssetDto extends PickType(EmojiAssetOutputDto, [
   'id',
   'kind',
   'shortcode',
@@ -427,10 +468,11 @@ export class EmojiAssetDto extends PickType(BaseEmojiAssetDto, [
   @StringProperty({
     description: '所属表情包图标地址',
     example: 'https://cdn.example.com/emoji/default.png',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  packIconUrl?: EmojiPackSnapshotDto['iconUrl']
+  packIconUrl!: EmojiPackSnapshotDto['iconUrl']
 }
 
 /**
@@ -463,10 +505,11 @@ export class EmojiCatalogPackDto extends PickType(BaseEmojiPackDto, [
   @StringProperty({
     description: '表情包图标地址',
     example: 'https://cdn.example.com/emoji/default.png',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  packIconUrl?: EmojiPackSnapshotDto['iconUrl']
+  packIconUrl!: EmojiPackSnapshotDto['iconUrl']
 
   @ArrayProperty({
     description: '表情资源列表',

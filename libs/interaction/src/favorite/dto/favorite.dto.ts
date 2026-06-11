@@ -2,7 +2,8 @@ import { PageWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { PublicForumTopicPageItemDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import { BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty } from '@libs/platform/decorators'
 
-import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
@@ -30,6 +31,7 @@ export class BaseFavoriteDto extends IntersectionType(IdDto, UserIdDto) {
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
+    validation: false,
   })
   createdAt!: Date
 }
@@ -69,11 +71,11 @@ export class FavoriteWorkPageItemDto extends BaseFavoriteDto {
   @NestedProperty({
     description: '作品详情',
     type: PageWorkDto,
-    required: false,
-    nullable: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  work!: PageWorkDto
+  work!: PageWorkDto | null
 }
 
 /**
@@ -83,11 +85,11 @@ export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
   @NestedProperty({
     description: '论坛主题详情',
     type: PublicForumTopicPageItemDto,
-    required: false,
-    nullable: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  topic!: PublicForumTopicPageItemDto
+  topic!: PublicForumTopicPageItemDto | null
 }
 
 export class QueryUserFavoriteDto extends IntersectionType(

@@ -1,13 +1,15 @@
+import type { SensitiveWordSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { buildLikePattern, DrizzleService, toPageResult } from '@db/core'
-import { UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 import { Injectable } from '@nestjs/common'
 import { and, eq, like } from 'drizzle-orm'
 import {
   CreateSensitiveWordDto,
   QuerySensitiveWordDto,
-  SensitiveWordStatisticsQueryDto,
+  SensitiveWordOutputDto,
   SensitiveWordStatisticsResponseDto,
+  StatisticsTypeFieldDto,
   UpdateSensitiveWordDto,
 } from './dto/sensitive-word.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
@@ -68,7 +70,11 @@ export class SensitiveWordService {
       this.db.$count(this.sensitiveWord, where),
     ])
 
-    return toPageResult(list, total, page)
+    const result = toPageResult(list, total, page)
+    return {
+      ...result,
+      list: result.list.map((item) => this.toSensitiveWordOutputDto(item)),
+    }
   }
 
   // 创建敏感词。
@@ -134,7 +140,7 @@ export class SensitiveWordService {
   }
 
   // 获取统计查询结果
-  async getStatistics(dto: SensitiveWordStatisticsQueryDto) {
+  async getStatistics(dto: StatisticsTypeFieldDto) {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 
     let data: SensitiveWordStatisticsResponseDto['data']
@@ -159,6 +165,19 @@ export class SensitiveWordService {
     return {
       type,
       data,
+    }
+  }
+
+  private toSensitiveWordOutputDto(
+    word: SensitiveWordSelect,
+  ): SensitiveWordOutputDto {
+    return {
+      ...word,
+      replaceWord: word.replaceWord ?? null,
+      remark: word.remark ?? null,
+      createdBy: word.createdBy ?? null,
+      updatedBy: word.updatedBy ?? null,
+      lastHitAt: word.lastHitAt ?? null,
     }
   }
 }

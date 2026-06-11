@@ -8,13 +8,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import {
-  BaseDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-  UserIdDto,
-} from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, UserIdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -38,10 +33,11 @@ export class BaseForumModeratorDto extends IntersectionType(
   @NumberProperty({
     description: '分组ID（为空表示非分组版主）',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     min: 1,
   })
-  groupId?: number | null
+  groupId!: number | null
 
   @EnumProperty({
     description: '版主角色类型（1=超级版主；2=分组版主；3=板块版主）',
@@ -56,9 +52,10 @@ export class BaseForumModeratorDto extends IntersectionType(
       '版主权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
     itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2, 3, 4, 5, 6],
-    required: false,
+    required: true,
+    nullable: true,
   })
-  permissions?: ForumModeratorPermissionEnum[] | null
+  permissions!: ForumModeratorPermissionEnum[] | null
 
   @BooleanProperty({
     description: '是否启用',
@@ -71,10 +68,11 @@ export class BaseForumModeratorDto extends IntersectionType(
   @StringProperty({
     description: '备注',
     example: '资深版主',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  remark?: string | null
+  remark!: string | null
 
   @DateProperty({
     description: '删除时间',
@@ -96,9 +94,29 @@ export class ForumModeratorSectionIdsDto {
   sectionIds!: number[]
 }
 
+class CreateForumModeratorRequiredFieldsDto extends OmitType(
+  BaseForumModeratorDto,
+  [
+    ...OMIT_BASE_FIELDS,
+    'groupId',
+    'permissions',
+    'remark',
+    'deletedAt',
+  ] as const,
+) {}
+
+class CreateForumModeratorOptionalBaseFieldsDto extends IntersectionType(
+  PickType(BaseForumModeratorDto, ['groupId', 'permissions', 'remark'] as const),
+  ForumModeratorSectionIdsDto,
+) {}
+
+class CreateForumModeratorOptionalFieldsDto extends PartialType(
+  CreateForumModeratorOptionalBaseFieldsDto,
+) {}
+
 export class CreateForumModeratorDto extends IntersectionType(
-  OmitType(BaseForumModeratorDto, [...OMIT_BASE_FIELDS, 'deletedAt'] as const),
-  PartialType(ForumModeratorSectionIdsDto),
+  CreateForumModeratorRequiredFieldsDto,
+  CreateForumModeratorOptionalFieldsDto,
 ) {}
 
 export class UpdateForumModeratorDto extends IntersectionType(
@@ -108,7 +126,7 @@ export class UpdateForumModeratorDto extends IntersectionType(
 
 export class AssignForumModeratorSectionDto extends IntersectionType(
   ForumModeratorSectionIdsDto,
-  PickType(BaseForumModeratorDto, ['permissions'] as const),
+  PartialType(PickType(BaseForumModeratorDto, ['permissions'] as const)),
 ) {
   @NumberProperty({
     description: '版主ID',
@@ -207,7 +225,13 @@ export class ForumModeratorSectionItemDto {
   finalPermissions!: ForumModeratorPermissionEnum[]
 }
 
-export class ForumModeratorDto extends BaseForumModeratorDto {
+export class ForumModeratorDto extends OmitType(
+  BaseForumModeratorDto,
+  [
+    'permissions',
+    'deletedAt',
+  ] as const,
+) {
   @ArrayProperty({
     description: '权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
     itemEnum: ForumModeratorPermissionEnum,
@@ -228,18 +252,20 @@ export class ForumModeratorDto extends BaseForumModeratorDto {
   @StringProperty({
     description: '用户头像',
     example: 'https://example.com/avatar.jpg',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  avatar?: string
+  avatar!: string | null
 
   @NestedProperty({
     description: '所属分组',
-    required: false,
+    required: true,
+    nullable: true,
     type: ForumModeratorGroupDto,
     validation: false,
   })
-  group?: ForumModeratorGroupDto
+  group!: ForumModeratorGroupDto | null
 
   @ArrayProperty({
     description: '权限中文名称列表',
@@ -292,45 +318,50 @@ export class AppForumModeratorProfileDto {
   @StringProperty({
     description: '身份不可用原因',
     example: '当前版主已禁用',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  disabledReason?: string
+  disabledReason!: string | null
 
   @NumberProperty({
     description: '版主ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     min: 1,
     validation: false,
   })
-  moderatorId?: number
+  moderatorId!: number | null
 
   @NumberProperty({
     description: '用户ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     min: 1,
     validation: false,
   })
-  userId?: number
+  userId!: number | null
 
   @EnumProperty({
     description: '版主角色类型（1=超级版主；2=分组版主；3=板块版主）',
     example: ForumModeratorRoleTypeEnum.SECTION,
-    required: false,
+    required: true,
+    nullable: true,
     enum: ForumModeratorRoleTypeEnum,
     validation: false,
   })
-  roleType?: ForumModeratorRoleTypeEnum
+  roleType!: ForumModeratorRoleTypeEnum | null
 
   @NestedProperty({
     description: '所属分组',
-    required: false,
+    required: true,
+    nullable: true,
     type: ForumModeratorGroupDto,
     validation: false,
   })
-  group?: ForumModeratorGroupDto
+  group!: ForumModeratorGroupDto | null
 
   @ArrayProperty({
     description: '权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',

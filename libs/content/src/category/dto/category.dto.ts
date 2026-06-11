@@ -7,13 +7,9 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import {
-  BaseDto,
-  DragReorderDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -37,10 +33,10 @@ export class BaseCategoryDto extends BaseDto {
   @StringProperty({
     description: '分类图标 URL',
     example: 'https://example.com/icon.png',
-    required: false,
+    nullable: true,
     maxLength: 255,
   })
-  icon?: string | null
+  icon!: string | null
 
   @NumberProperty({
     description: '人气值',
@@ -72,29 +68,47 @@ export class BaseCategoryDto extends BaseDto {
   @ArrayProperty({
     description: '分类关联的内容类型（1=漫画；2=小说；3=帖子）',
     example: [ContentTypeEnum.COMIC],
-    required: false,
+    nullable: true,
     itemEnum: ContentTypeEnum,
   })
-  contentType?: ContentTypeEnum[] | null
+  contentType!: ContentTypeEnum[] | null
 
   @StringProperty({
     description: '分类描述',
     example: '科幻类分类',
-    required: false,
+    nullable: true,
     maxLength: 200,
   })
-  description?: string | null
+  description!: string | null
 }
 
-export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
+class CreateCategoryRequiredFieldsDto extends OmitType(BaseCategoryDto, [
   ...OMIT_BASE_FIELDS,
   'popularity',
+  'icon',
+  'contentType',
+  'description',
 ] as const) {}
+
+class CreateCategoryOptionalFieldsDto extends PartialType(
+  PickType(BaseCategoryDto, [
+    'icon',
+    'contentType',
+    'description',
+  ] as const),
+) {}
+
+export class CreateCategoryDto extends IntersectionType(
+  CreateCategoryRequiredFieldsDto,
+  CreateCategoryOptionalFieldsDto,
+) {}
 
 export class UpdateCategoryDto extends IntersectionType(
   IdDto,
   PartialType(CreateCategoryDto),
 ) {}
+
+export class CategoryOutputDto extends BaseCategoryDto {}
 
 export class QueryCategoryDto extends IntersectionType(
   PageDto,

@@ -94,6 +94,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
       return {
         hits: [],
         publicHits: [],
+        highestLevel: null,
       }
     }
 
@@ -118,7 +119,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
     const result = this.getMatchedWordsWithMetadata(dto)
     return {
       hits: result.publicHits,
-      highestLevel: result.highestLevel,
+      highestLevel: result.highestLevel ?? null,
     }
   }
 
@@ -129,7 +130,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
 
   // 获取文本命中的最高敏感词等级。
   getHighestSensitiveWordLevel(dto: SensitiveWordDetectDto) {
-    return this.getMatchedWordsWithMetadata(dto).highestLevel
+    return this.getMatchedWordsWithMetadata(dto).highestLevel ?? null
   }
 
   // 替换逻辑仍只作用于单段文本，不参与多字段位置合并。
@@ -356,7 +357,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
       end: hit.end,
       level: hit.level,
       type: hit.type,
-      replaceWord: hit.replaceWord,
+      replaceWord: hit.replaceWord ?? null,
       field: hit.field,
     }
   }

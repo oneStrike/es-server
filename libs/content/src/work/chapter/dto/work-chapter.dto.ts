@@ -9,7 +9,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -46,26 +47,29 @@ export class BaseWorkChapterDto extends BaseDto {
   @StringProperty({
     description: '章节副标题',
     example: '序章',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 200,
   })
-  subtitle?: string
+  subtitle!: string | null
 
   @StringProperty({
     description: '章节封面',
     example: 'https://example.com/cover.jpg',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  cover?: string
+  cover!: string | null
 
   @StringProperty({
     description: '章节简介',
     example: '章节简介',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 1000,
   })
-  description?: string
+  description!: string | null
 
   @NumberProperty({ description: '排序值', example: 1, required: true })
   sortOrder!: number
@@ -79,9 +83,10 @@ export class BaseWorkChapterDto extends BaseDto {
   @DateProperty({
     description: '发布时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    required: true,
+    nullable: true,
   })
-  publishAt?: Date
+  publishAt!: Date | null
 
   @EnumProperty({
     description:
@@ -95,9 +100,10 @@ export class BaseWorkChapterDto extends BaseDto {
   @NumberProperty({
     description: '历史阅读等级ID（目标态不参与阅读权限）',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
   })
-  requiredViewLevelId?: number
+  requiredViewLevelId!: number | null
 
   @NumberProperty({ description: '章节价格', example: 0, required: true })
   price!: number
@@ -119,9 +125,10 @@ export class BaseWorkChapterDto extends BaseDto {
   @StringProperty({
     description: '章节内容',
     example: '内容路径或文本',
-    required: false,
+    required: true,
+    nullable: true,
   })
-  content?: string
+  content!: string | null
 
   @NumberProperty({
     description: '字数',
@@ -174,10 +181,11 @@ export class BaseWorkChapterDto extends BaseDto {
   @StringProperty({
     description: '备注',
     example: '管理员备注',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 1000,
   })
-  remark?: string
+  remark!: string | null
 
   @DateProperty({
     description: '删除时间',
@@ -189,25 +197,54 @@ export class BaseWorkChapterDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
+class CreateWorkChapterRequiredFieldsDto extends OmitType(BaseWorkChapterDto, [
   ...OMIT_BASE_FIELDS,
+  'subtitle',
+  'cover',
+  'description',
   'isPublished',
+  'publishAt',
+  'requiredViewLevelId',
+  'content',
   'viewCount',
   'likeCount',
   'commentCount',
   'purchaseCount',
   'downloadCount',
   'wordCount',
+  'remark',
   'deletedAt',
-] as const) {
+] as const) {}
+
+class CreateWorkChapterNullableFieldsDto extends PartialType(
+  PickType(BaseWorkChapterDto, [
+    'subtitle',
+    'cover',
+    'description',
+    'publishAt',
+    'requiredViewLevelId',
+    'content',
+    'remark',
+  ] as const),
+) {}
+
+class CreateWorkChapterOptionalStatusDto {
   @BooleanProperty({
     description: '发布状态',
     example: false,
     required: false,
     default: false,
   })
-  isPublished!: boolean
+  isPublished?: boolean
 }
+
+export class CreateWorkChapterDto extends IntersectionType(
+  IntersectionType(
+    CreateWorkChapterRequiredFieldsDto,
+    CreateWorkChapterNullableFieldsDto,
+  ),
+  CreateWorkChapterOptionalStatusDto,
+) {}
 
 export class QueryWorkChapterDto extends IntersectionType(
   PageDto,
@@ -222,28 +259,10 @@ export class QueryWorkChapterDto extends IntersectionType(
   ] as const),
 ) {}
 
-export class QueryAppWorkChapterPageDto extends PickType(BaseWorkChapterDto, [
-  'workId',
-] as const) {
-  @NumberProperty({
-    description: '单页大小，最大100，默认15',
-    example: 15,
-    max: 100,
-    min: 1,
-    required: false,
-    default: 15,
-  })
-  pageSize?: number
-
-  @NumberProperty({
-    description: '当前页码（从1开始）',
-    example: 1,
-    min: 1,
-    required: false,
-    default: 1,
-  })
-  pageIndex?: number
-}
+export class QueryAppWorkChapterPageDto extends IntersectionType(
+  PickType(PageDto, ['pageIndex', 'pageSize'] as const),
+  PickType(BaseWorkChapterDto, ['workId'] as const),
+) {}
 
 export class UpdateWorkChapterDto extends IntersectionType(
   PartialType(
@@ -276,7 +295,7 @@ export class AppWorkChapterPageItemDto extends PickType(BaseWorkChapterDto, [
   @NestedProperty({
     description: '购买价格信息',
     type: ContentPurchasePricingDto,
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })
@@ -361,13 +380,109 @@ class WorkChapterDetailBodyDto extends IntersectionType(
   ContentPurchasePricingFieldsDto,
 ) {}
 
+class AdminWorkChapterWorkSummaryDto {
+  @NumberProperty({
+    description: '作品 ID',
+    example: 1,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '作品名称',
+    example: '进击的巨人',
+    validation: false,
+  })
+  name!: string
+
+  @EnumProperty({
+    description: '作品类型（1=漫画；2=小说）',
+    example: WorkTypeEnum.COMIC,
+    enum: WorkTypeEnum,
+    validation: false,
+  })
+  type!: WorkTypeEnum
+}
+
+class AdminWorkChapterRequiredViewLevelDto {
+  @NumberProperty({
+    description: '等级规则 ID',
+    example: 1,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '等级名称',
+    example: '新手',
+    validation: false,
+  })
+  name!: string
+
+  @StringProperty({
+    description: '等级专属颜色',
+    example: '#FF5733',
+    nullable: true,
+    validation: false,
+  })
+  color!: string | null
+}
+
+class AdminWorkChapterDetailBaseDto extends PickType(BaseWorkChapterDto, [
+  'id',
+  'workId',
+  'workType',
+  'title',
+  'subtitle',
+  'cover',
+  'description',
+  'sortOrder',
+  'isPublished',
+  'isPreview',
+  'publishAt',
+  'viewRule',
+  'requiredViewLevelId',
+  'price',
+  'canDownload',
+  'canComment',
+  'content',
+  'wordCount',
+  'viewCount',
+  'likeCount',
+  'commentCount',
+  'purchaseCount',
+  'downloadCount',
+  'remark',
+  'createdAt',
+  'updatedAt',
+] as const) {}
+
+export class AdminWorkChapterDetailDto extends AdminWorkChapterDetailBaseDto {
+  @NestedProperty({
+    description: '所属作品摘要',
+    type: AdminWorkChapterWorkSummaryDto,
+    validation: false,
+  })
+  work!: AdminWorkChapterWorkSummaryDto
+
+  @NestedProperty({
+    description: '历史阅读等级摘要；为空表示不限制等级',
+    type: AdminWorkChapterRequiredViewLevelDto,
+    nullable: true,
+    validation: false,
+  })
+  requiredViewLevel!: AdminWorkChapterRequiredViewLevelDto | null
+}
+
+class WorkChapterContentBaseDto extends IntersectionType(
+  IdDto,
+  PickType(BaseWorkChapterDto, ['title', 'subtitle'] as const),
+) {}
+
 /**
  * 漫画章节内容 DTO。
  */
-export class ComicChapterContentDto extends IntersectionType(
-  IdDto,
-  PickType(BaseWorkChapterDto, ['title', 'subtitle'] as const),
-) {
+export class ComicChapterContentDto extends WorkChapterContentBaseDto {
   @ArrayProperty({
     description: '章节图片内容',
     itemType: 'string',
@@ -380,11 +495,16 @@ export class ComicChapterContentDto extends IntersectionType(
 /**
  * 小说章节内容 DTO。
  */
-export class NovelChapterContentDto extends IntersectionType(
-  IdDto,
-  OmitType(ComicChapterContentDto, ['content'] as const),
-  PickType(BaseWorkChapterDto, ['content'] as const),
-) {}
+export class NovelChapterContentDto extends WorkChapterContentBaseDto {
+  @StringProperty({
+    description: '章节内容',
+    example: '内容路径或文本',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  content!: string | null
+}
 
 /**
  * 作品章节详情 DTO。

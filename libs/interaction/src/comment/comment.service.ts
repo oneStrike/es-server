@@ -367,7 +367,7 @@ export class CommentService {
         {
           id: item.id,
           userId: item.userId,
-          user: userMap.get(item.userId) ?? undefined,
+          user: userMap.get(item.userId) ?? null,
         },
       ]),
     )
@@ -659,10 +659,10 @@ export class CommentService {
         html: string
         content: string
         likeCount: number
-        geoCountry?: string
-        geoProvince?: string
-        geoCity?: string
-        geoIsp?: string
+        geoCountry: string | null
+        geoProvince: string | null
+        geoCity: string | null
+        geoIsp: string | null
         createdAt: Date
       }>
     >()
@@ -756,10 +756,10 @@ export class CommentService {
         html: reply.html,
         content: reply.content,
         likeCount: reply.likeCount,
-        geoCountry: reply.geoCountry ?? undefined,
-        geoProvince: reply.geoProvince ?? undefined,
-        geoCity: reply.geoCity ?? undefined,
-        geoIsp: reply.geoIsp ?? undefined,
+        geoCountry: reply.geoCountry ?? null,
+        geoProvince: reply.geoProvince ?? null,
+        geoCity: reply.geoCity ?? null,
+        geoIsp: reply.geoIsp ?? null,
         createdAt: reply.createdAt,
       })
       previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
@@ -1756,8 +1756,8 @@ export class CommentService {
         const replyItem = this.omitActualReplyToId(this.omitGeoSource(item))
         const replyTo =
           replyTargetId === undefined
-            ? undefined
-            : (replyTargetMap.get(replyTargetId) ?? undefined)
+            ? null
+            : (replyTargetMap.get(replyTargetId) ?? null)
 
         return {
           ...replyItem,
@@ -1765,8 +1765,8 @@ export class CommentService {
           isAuthorComment:
             topicAuthorUserId !== undefined &&
             item.userId === topicAuthorUserId,
-          user: userMap.get(item.userId) ?? undefined,
-          ...(replyTo ? { replyTo } : {}),
+          user: userMap.get(item.userId) ?? null,
+          replyTo,
         }
       }),
     }
@@ -1961,8 +1961,8 @@ export class CommentService {
             )
             const replyTo =
               replyTargetId === undefined
-                ? undefined
-                : (replyTargetMap.get(replyTargetId) ?? undefined)
+                ? null
+                : (replyTargetMap.get(replyTargetId) ?? null)
 
             return {
               id: reply.id,
@@ -1979,23 +1979,23 @@ export class CommentService {
               isAuthorComment:
                 topicAuthorUserId !== undefined &&
                 reply.userId === topicAuthorUserId,
-              user: userMap.get(reply.userId) ?? undefined,
-              ...(replyTo ? { replyTo } : {}),
+              user: userMap.get(reply.userId) ?? null,
+              replyTo: replyTo ?? null,
             }
           },
         )
 
         return {
           ...item,
-          geoCountry: item.geoCountry ?? undefined,
-          geoProvince: item.geoProvince ?? undefined,
-          geoCity: item.geoCity ?? undefined,
-          geoIsp: item.geoIsp ?? undefined,
+          geoCountry: item.geoCountry ?? null,
+          geoProvince: item.geoProvince ?? null,
+          geoCity: item.geoCity ?? null,
+          geoIsp: item.geoIsp ?? null,
           liked: likedMap.get(item.id) ?? false,
           isAuthorComment:
             topicAuthorUserId !== undefined &&
             item.userId === topicAuthorUserId,
-          user: userMap.get(item.userId) ?? undefined,
+          user: userMap.get(item.userId) ?? null,
           replyCount,
           previewReplies,
           hasMoreReplies: replyCount > previewReplies.length,
@@ -2094,8 +2094,8 @@ export class CommentService {
         )
         const replyTo =
           replyTargetId === undefined
-            ? undefined
-            : (replyTargetMap.get(replyTargetId) ?? undefined)
+            ? null
+            : (replyTargetMap.get(replyTargetId) ?? null)
 
         return {
           ...this.omitGeoSource(item),
@@ -2103,7 +2103,7 @@ export class CommentService {
             targetSummaryMap.get(
               this.interactionSummaryReadService.buildTargetSummaryKey(item),
             ) ?? null,
-          ...(replyTo ? { replyTo } : {}),
+          replyTo,
         }
       }),
     }
@@ -2233,7 +2233,7 @@ export class CommentService {
       list: page.list.map((item) => {
         return {
           ...this.omitGeoSource(item),
-          user: userMap.get(item.userId) ?? undefined,
+          user: userMap.get(item.userId) ?? null,
           targetSummary:
             targetSummaryMap.get(
               this.interactionSummaryReadService.buildTargetSummaryKey(item),
@@ -2337,9 +2337,17 @@ export class CommentService {
         auditById: comment.auditById,
         auditRole: comment.auditRole as AuditRoleEnum | null,
       })
+    const replyTo = comment.replyTo
+      ? {
+          ...comment.replyTo,
+          user: comment.replyTo.user ?? null,
+        }
+      : null
 
     return {
       ...this.omitGeoSource(comment),
+      user: comment.user ?? null,
+      replyTo,
       targetSummary:
         targetSummaryMap.get(
           this.interactionSummaryReadService.buildTargetSummaryKey(comment),

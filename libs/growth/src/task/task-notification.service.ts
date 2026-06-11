@@ -104,11 +104,11 @@ export class TaskNotificationService {
       },
       reminder: {
         kind: normalizedReminderKind,
-        instanceId: params.instanceId,
-        cycleKey: params.cycleKey,
-        expiredAt: params.expiredAt,
+        instanceId: params.instanceId ?? null,
+        cycleKey: params.cycleKey ?? null,
+        expiredAt: params.expiredAt ?? null,
       },
-      reward: rewardSummary,
+      reward: rewardSummary ?? null,
     } satisfies TaskReminderNotificationPayload
 
     return {

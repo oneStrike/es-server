@@ -38,7 +38,7 @@ export class TaskTemplateFilterFieldDto {
   label!: string
 
   @EnumProperty({
-    description: '字段值类型（number=数值；string=字符串；boolean=布尔值）',
+    description: '字段值类型（数值；字符串；布尔值）',
     example: 'string',
     enum: { NUMBER: 'number', STRING: 'string', BOOLEAN: 'boolean' },
   })
@@ -118,7 +118,7 @@ export class TaskEventTemplateOptionDto {
 
   @EnumProperty({
     description:
-      '底层事件实现状态（declared=已声明但未接线；implemented=已正式接线；legacy_compat=仅保留历史兼容）',
+      '底层事件实现状态（已声明但未接线；已正式接线；仅保留历史兼容）',
     example: EventDefinitionImplStatusEnum.IMPLEMENTED,
     enum: EventDefinitionImplStatusEnum,
   })
@@ -132,7 +132,7 @@ export class TaskEventTemplateOptionDto {
 
   @EnumProperty({
     description:
-      '命中的目标实体类型（如 comic_work=漫画作品；novel_work=小说作品；content=内容；user=用户）',
+      '命中的目标实体类型（用户；任务头；任务实例；论坛主题；论坛回复；评论；漫画作品；小说作品；漫画章节；小说章节；签到记录；徽章；用户资料；通用内容；举报；被举报目标；管理端操作）',
     example: EventDefinitionEntityTypeEnum.COMIC_WORK,
     enum: EventDefinitionEntityTypeEnum,
   })

@@ -62,14 +62,6 @@ export class ForumSearchService {
   }
 
   /**
-   * 兼容旧入口的后台搜索代理。
-   * 当前直接复用管理端搜索逻辑，避免在调用侧维护第二套接口。
-   */
-  async search(searchInput: ForumSearchDto) {
-    return this.searchAdmin(searchInput)
-  }
-
-  /**
    * 管理端搜索。
    * 不做公开可见性过滤，返回后台可检索的主题和评论。
    */
@@ -224,17 +216,6 @@ export class ForumSearchService {
     return this.forumPermissionService.getAccessibleSectionIds(options.userId)
   }
 
-  /**
-   * 解析话题筛选 ID。
-   * - 新合同使用 hashtagId。
-   * - 兼容期内继续接受旧 tagId，优先采用新字段。
-   */
-  private resolveHashtagFilterId(
-    dto: Pick<ForumSearchDto, 'hashtagId' | 'tagId'>,
-  ) {
-    return dto.hashtagId ?? dto.tagId
-  }
-
   private compactConditions(
     conditions: ForumSearchCondition[],
   ): ForumSearchConditionTuple | undefined {
@@ -249,7 +230,7 @@ export class ForumSearchService {
 
   /**
    * 构建评论搜索的话题过滤条件。
-   * - 兼容期内同时接受“主题命中 hashtag”与“评论自身命中 hashtag”两种来源。
+   * - 同时接受“主题命中 hashtag”与“评论自身命中 hashtag”两种来源。
    */
   private buildCommentHashtagFilterCondition(params: {
     topicIdsByHashtag?: number[]
@@ -365,7 +346,9 @@ export class ForumSearchService {
         sectionName: sectionMap.get(topic.sectionId) ?? '',
         userId: topic.userId,
         userNickname: user?.nickname ?? '',
-        userAvatarUrl: user?.avatarUrl ?? undefined,
+        userAvatarUrl: user?.avatarUrl ?? null,
+        commentId: null,
+        commentContentSnippet: null,
         createdAt: topic.createdAt,
         commentCount: topic.commentCount,
         viewCount: topic.viewCount,
@@ -434,7 +417,8 @@ export class ForumSearchService {
         sectionName: sectionMap.get(comment.sectionId) ?? '',
         userId: comment.userId,
         userNickname: user?.nickname ?? '',
-        userAvatarUrl: user?.avatarUrl ?? undefined,
+        userAvatarUrl: user?.avatarUrl ?? null,
+        topicContentSnippet: null,
         commentId: comment.commentId,
         commentContentSnippet: this.buildSnippet(
           comment.commentContent,
@@ -522,7 +506,7 @@ export class ForumSearchService {
       return this.createEmptyPage(dto)
     }
 
-    const hashtagFilterId = this.resolveHashtagFilterId(dto)
+    const hashtagFilterId = dto.hashtagId
     const topicIdsByHashtag = hashtagFilterId
       ? await this.getSourceIdsByHashtag(
           hashtagFilterId,
@@ -581,7 +565,7 @@ export class ForumSearchService {
   /**
    * 搜索评论。
    * 评论搜索通过 join 主题表继承板块和审核过滤。
-   * hashtag 兼容期内同时接受主题级引用与评论级引用，保证旧 tag 搜索口径不被收窄。
+   * 评论搜索同时接受主题级引用与评论级引用，保证话题筛选口径覆盖完整。
    */
   private async searchComments(
     dto: ForumSearchDto,
@@ -595,7 +579,7 @@ export class ForumSearchService {
       return this.createEmptyPage(dto)
     }
 
-    const hashtagFilterId = this.resolveHashtagFilterId(dto)
+    const hashtagFilterId = dto.hashtagId
     const [topicIdsByHashtag, commentIdsByHashtag] = hashtagFilterId
       ? await Promise.all([
           this.getSourceIdsByHashtag(

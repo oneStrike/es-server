@@ -1,20 +1,20 @@
 import type { FastifyReply } from 'fastify'
 import { AppConfigService } from '@libs/app-config/config.service'
-import { BaseAppConfigDto } from '@libs/app-config/dto/config.dto'
+import { AppConfigOutputDto } from '@libs/app-config/dto/config.dto'
 import { sendAgreementHtml } from '@libs/app-content/agreement/agreement-html'
 import { AgreementService } from '@libs/app-content/agreement/agreement.service'
 import {
   AgreementListItemDto,
-  BaseAgreementDto,
+  AgreementOutputBaseDto,
   QueryPublishedAgreementDto,
 } from '@libs/app-content/agreement/dto/agreement.dto'
 import { AppAnnouncementService } from '@libs/app-content/announcement/announcement.service'
 import {
-  AppAnnouncementDetailDto,
   AppAnnouncementListItemDto,
+  AnnouncementOutputBaseDto,
   QueryAnnouncementDto,
 } from '@libs/app-content/announcement/dto/announcement.dto'
-import { BaseAppPageDto } from '@libs/app-content/page/dto/page.dto'
+import { AppPageOutputDto } from '@libs/app-content/page/dto/page.dto'
 import { AppPageService } from '@libs/app-content/page/page.service'
 import {
   AppUpdateCheckDto,
@@ -28,10 +28,10 @@ import {
   CurrentUser,
   Public,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { ConfigReader } from '@libs/system-config/config-reader'
 
-import { WalletCurrencyDisplayConfigDto } from '@libs/system-config/dto/config.dto'
+import { WalletCurrencyDisplayConfigOutputDto } from '@libs/system-config/dto/config.dto'
 import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -56,7 +56,7 @@ export class SystemController {
   @Get('config')
   @ApiDoc({
     summary: 'APP系统配置',
-    model: BaseAppConfigDto,
+    model: AppConfigOutputDto,
   })
   @Public()
   // 查询当前生效的 APP 系统配置。
@@ -67,7 +67,7 @@ export class SystemController {
   @Get('wallet-currency-display-config')
   @ApiDoc({
     summary: '钱包虚拟币展示配置',
-    model: WalletCurrencyDisplayConfigDto,
+    model: WalletCurrencyDisplayConfigOutputDto,
   })
   @Public()
   async getWalletCurrencyDisplayConfig() {
@@ -88,7 +88,7 @@ export class SystemController {
   @Get('page/list')
   @ApiDoc({
     summary: 'APP页面列表',
-    model: BaseAppPageDto,
+    model: AppPageOutputDto,
     isArray: true,
   })
   @Public()
@@ -111,7 +111,7 @@ export class SystemController {
   @Get('announcement/detail')
   @ApiDoc({
     summary: '系统公告详情',
-    model: AppAnnouncementDetailDto,
+    model: AnnouncementOutputBaseDto,
   })
   @Public()
   // 查询公开可见的系统公告详情。
@@ -162,7 +162,7 @@ export class SystemController {
   @Get('agreement/detail')
   @ApiDoc({
     summary: '协议详情',
-    model: BaseAgreementDto,
+    model: AgreementOutputBaseDto,
   })
   @Public()
   // 查询公开可见的已发布协议详情。

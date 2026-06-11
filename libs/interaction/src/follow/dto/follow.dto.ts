@@ -1,4 +1,7 @@
-import { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
+import {
+  AuthorNullableOutputFieldsDto,
+  BaseAuthorDto,
+} from '@libs/content/author/dto/author.dto'
 import { ForumHashtagBriefDto } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
 import { PublicForumSectionListItemDto } from '@libs/forum/section/dto/forum-section.dto'
 import {
@@ -9,7 +12,8 @@ import {
   NumberProperty,
 } from '@libs/platform/decorators'
 
-import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
@@ -38,6 +42,7 @@ export class BaseFollowDto extends IntersectionType(IdDto, UserIdDto) {
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
+    validation: false,
   })
   createdAt!: Date
 }
@@ -104,54 +109,46 @@ export class FollowUserBriefDto extends PickType(BaseAppUserDto, [
   @NumberProperty({
     description: '关注用户数',
     example: 12,
-    required: false,
     validation: false,
   })
-  followingUserCount?: number
+  followingUserCount!: number
 
   @NumberProperty({
     description: '关注作者数',
     example: 6,
-    required: false,
     validation: false,
   })
-  followingAuthorCount?: number
+  followingAuthorCount!: number
 
   @NumberProperty({
     description: '关注板块数',
     example: 4,
-    required: false,
     validation: false,
   })
-  followingSectionCount?: number
+  followingSectionCount!: number
 
   @NumberProperty({
     description: '关注话题数',
     example: 3,
-    required: false,
     validation: false,
   })
-  followingHashtagCount?: number
+  followingHashtagCount!: number
 
   @NumberProperty({
     description: '粉丝数',
     example: 34,
-    required: false,
     validation: false,
   })
-  followersCount?: number
+  followersCount!: number
 }
 
 /**
  * 关注作者摘要 DTO。
  */
-export class FollowAuthorBriefDto extends PickType(BaseAuthorDto, [
-  'id',
-  'name',
-  'avatar',
-  'type',
-  'followersCount',
-] as const) {
+export class FollowAuthorBriefDto extends IntersectionType(
+  PickType(BaseAuthorDto, ['id', 'name', 'followersCount'] as const),
+  PickType(AuthorNullableOutputFieldsDto, ['avatar', 'type'] as const),
+) {
   @BooleanProperty({
     description: '当前用户是否已关注该作者',
     example: true,
@@ -167,11 +164,11 @@ export class FollowAuthorPageItemDto extends BaseFollowDto {
   @NestedProperty({
     description: '作者信息',
     type: FollowAuthorBriefDto,
-    required: false,
+    required: true,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  author!: FollowAuthorBriefDto
+  author!: FollowAuthorBriefDto | null
 }
 
 /**
@@ -181,11 +178,11 @@ export class FollowSectionPageItemDto extends BaseFollowDto {
   @NestedProperty({
     description: '板块信息',
     type: PublicForumSectionListItemDto,
-    required: false,
+    required: true,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  section!: PublicForumSectionListItemDto
+  section!: PublicForumSectionListItemDto | null
 }
 
 /**
@@ -195,11 +192,11 @@ export class FollowHashtagPageItemDto extends BaseFollowDto {
   @NestedProperty({
     description: '话题信息',
     type: ForumHashtagBriefDto,
-    required: false,
+    required: true,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  hashtag!: ForumHashtagBriefDto
+  hashtag!: ForumHashtagBriefDto | null
 }
 
 /**
@@ -209,11 +206,11 @@ export class FollowUserPageItemDto extends BaseFollowDto {
   @NestedProperty({
     description: '用户简要信息',
     type: FollowUserBriefDto,
-    required: false,
+    required: true,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  user!: FollowUserBriefDto
+  user!: FollowUserBriefDto | null
 
   @BooleanProperty({
     description: '当前用户是否已关注该用户',

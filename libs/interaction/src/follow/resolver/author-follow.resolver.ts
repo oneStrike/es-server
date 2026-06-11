@@ -77,8 +77,8 @@ export class AuthorFollowResolver
         {
           id: author.id,
           name: author.name,
-          avatar: author.avatar ?? undefined,
-          type: author.type ?? undefined,
+          avatar: author.avatar ?? null,
+          type: author.type ?? null,
           followersCount: author.followersCount,
         },
       ]),

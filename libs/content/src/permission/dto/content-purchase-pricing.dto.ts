@@ -46,7 +46,7 @@ export class ContentPurchasePricingFieldsDto {
   @NestedProperty({
     description: '购买价格信息',
     type: ContentPurchasePricingDto,
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })

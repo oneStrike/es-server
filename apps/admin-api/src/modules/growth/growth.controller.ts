@@ -1,5 +1,5 @@
 import {
-  GrowthRewardSettlementPageItemDto,
+  BaseGrowthRewardSettlementDto,
   GrowthRewardSettlementRetryBatchResultDto,
   QueryGrowthRewardSettlementPageDto,
   RetryGrowthRewardSettlementBatchDto,
@@ -11,7 +11,7 @@ import {
 } from '@libs/growth/growth/dto/growth.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -48,7 +48,7 @@ export class GrowthController {
   @Get('reward-settlement/page')
   @ApiPageDoc({
     summary: '分页查询通用成长奖励补偿记录',
-    model: GrowthRewardSettlementPageItemDto,
+    model: BaseGrowthRewardSettlementDto,
   })
   async getGrowthRewardSettlementPage(
     @Query() query: QueryGrowthRewardSettlementPageDto,

@@ -1,5 +1,6 @@
 import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
 import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
+import { ContentPurchasePricingFieldsDto } from '@libs/content/permission/dto/content-purchase-pricing.dto'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,
@@ -9,7 +10,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -17,7 +19,6 @@ import {
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from '../purchase.constant'
-import { PurchasePricingFieldsDto } from './purchase-pricing.dto'
 
 /**
  * 基础购买记录 DTO
@@ -49,9 +50,9 @@ export class BasePurchaseRecordDto extends BaseDto {
     description: '购买状态（1=成功；2=失败；3=退款中；4=已退款）',
     enum: PurchaseStatusEnum,
     example: PurchaseStatusEnum.SUCCESS,
-    required: false,
+    required: true,
   })
-  status?: PurchaseStatusEnum
+  status!: PurchaseStatusEnum
 
   @EnumProperty({
     description: '支付方式（1=虚拟币余额；2=支付宝；3=微信；4=历史积分购买）',
@@ -64,42 +65,58 @@ export class BasePurchaseRecordDto extends BaseDto {
   @StringProperty({
     description: '第三方支付订单号（如有）',
     example: '2024010123456789',
-    required: false,
+    required: true,
+    nullable: true,
   })
-  outTradeNo?: string | null
+  outTradeNo!: string | null
 
   @NumberProperty({
     description: '折扣金额快照',
     example: 10,
     min: 0,
-    required: false,
+    required: true,
+    validation: false,
   })
-  discountAmount?: number
+  discountAmount!: number
 
   @NumberProperty({
     description: '折扣券实例 ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
   })
-  couponInstanceId?: number | null
+  couponInstanceId!: number | null
 
   @NumberProperty({
     description: '折扣来源（0=无折扣；1=折扣券）',
     example: 1,
     min: 0,
     max: 1,
-    required: false,
+    required: true,
+    validation: false,
   })
-  discountSource?: number
+  discountSource!: number
 }
 
-export class PurchaseTargetBodyDto extends PickType(BasePurchaseRecordDto, [
+export class PurchaseRecordResponseDto extends BasePurchaseRecordDto {}
+
+class PurchaseTargetRequiredFieldsDto extends PickType(BasePurchaseRecordDto, [
   'targetId',
   'targetType',
   'paymentMethod',
+] as const) {}
+
+class PurchaseTargetOptionalFieldsDto extends PartialType(
+  PickType(BasePurchaseRecordDto, [
   'outTradeNo',
   'couponInstanceId',
-] as const) {}
+  ] as const),
+) {}
+
+export class PurchaseTargetBodyDto extends IntersectionType(
+  PurchaseTargetRequiredFieldsDto,
+  PurchaseTargetOptionalFieldsDto,
+) {}
 
 export class PurchaseTargetCommandDto extends IntersectionType(
   PurchaseTargetBodyDto,
@@ -186,8 +203,8 @@ export class PurchasedChapterInfoDto extends PickType(BaseWorkChapterDto, [
 ] as const) {}
 
 export class PurchasedWorkChapterItemDto extends IntersectionType(
-  BasePurchaseRecordDto,
-  PurchasePricingFieldsDto,
+  PurchaseRecordResponseDto,
+  ContentPurchasePricingFieldsDto,
 ) {
   @NestedProperty({
     description: '章节信息',
@@ -200,6 +217,6 @@ export class PurchasedWorkChapterItemDto extends IntersectionType(
 }
 
 export class PurchaseChapterResultDto extends IntersectionType(
-  BasePurchaseRecordDto,
-  PurchasePricingFieldsDto,
+  PurchaseRecordResponseDto,
+  ContentPurchasePricingFieldsDto,
 ) {}

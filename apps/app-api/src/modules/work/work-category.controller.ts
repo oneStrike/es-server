@@ -1,6 +1,6 @@
 import { WorkCategoryService } from '@libs/content/category/category.service'
 import {
-  BaseCategoryDto,
+  CategoryOutputDto,
   QueryCategoryDto,
 } from '@libs/content/category/dto/category.dto'
 import { ApiPageDoc, OptionalAuth } from '@libs/platform/decorators'
@@ -16,7 +16,7 @@ export class WorkCategoryController {
   @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询作品分类列表',
-    model: BaseCategoryDto,
+    model: CategoryOutputDto,
   })
   async getCategoryPage(@Query() query: QueryCategoryDto) {
     return this.categoryService.getCategoryPage({

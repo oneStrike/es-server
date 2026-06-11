@@ -5,7 +5,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -49,42 +50,43 @@ export class BaseGrowthRewardRuleDto extends BaseGrowthRuleConfigDto {
   @DateProperty({
     description: '归档时间；为空表示当前生效规则',
     example: '2026-06-07T12:00:00.000Z',
-    required: false,
     nullable: true,
+    validation: false,
   })
-  archivedAt?: Date | null
+  archivedAt!: Date | null
 
   @NumberProperty({
     description: '归档操作者管理员 ID；系统迁移自动归档为空',
     example: 1,
-    required: false,
     nullable: true,
+    validation: false,
   })
-  archivedBy?: number | null
+  archivedBy!: number | null
 
   @StringProperty({
     description: '归档原因码',
     example: 'OPERATOR_ARCHIVE',
-    required: false,
     nullable: true,
+    validation: false,
     maxLength: 80,
   })
-  archiveReasonCode?: string | null
+  archiveReasonCode!: string | null
 
   @StringProperty({
     description: '归档原因说明',
     example: '运营下线旧规则',
-    required: false,
     nullable: true,
+    validation: false,
     maxLength: 500,
   })
-  archiveReason?: string | null
+  archiveReason!: string | null
 }
 
-export class CreateGrowthRewardRuleDto extends OmitType(
+class CreateGrowthRewardRuleRequiredDto extends OmitType(
   BaseGrowthRewardRuleDto,
   [
     ...OMIT_BASE_FIELDS,
+    'remark',
     'archivedAt',
     'archivedBy',
     'archiveReasonCode',
@@ -92,10 +94,21 @@ export class CreateGrowthRewardRuleDto extends OmitType(
   ] as const,
 ) {}
 
+class CreateGrowthRewardRuleOptionalDto extends PartialType(
+  PickType(BaseGrowthRewardRuleDto, ['remark'] as const),
+) {}
+
+export class CreateGrowthRewardRuleDto extends IntersectionType(
+  CreateGrowthRewardRuleRequiredDto,
+  CreateGrowthRewardRuleOptionalDto,
+) {}
+
 export class UpdateGrowthRewardRuleDto extends IntersectionType(
   IdDto,
   PartialType(CreateGrowthRewardRuleDto),
 ) {}
+
+export class GrowthRewardRuleOutputDto extends BaseGrowthRewardRuleDto {}
 
 export class QueryGrowthRewardRuleFilterDto extends PartialType(
   PickType(BaseGrowthRewardRuleDto, [
@@ -112,12 +125,6 @@ export class QueryGrowthRewardRuleFilterDto extends PartialType(
   })
   status?: GrowthRewardRuleArchiveStatusEnum
 
-  @BooleanProperty({
-    description: '是否包含已归档规则；兼容旧查询，推荐使用 status',
-    example: false,
-    required: false,
-  })
-  includeArchived?: boolean
 }
 
 export class QueryGrowthRewardRuleDto extends IntersectionType(

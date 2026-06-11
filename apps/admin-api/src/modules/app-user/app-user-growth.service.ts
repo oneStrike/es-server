@@ -159,17 +159,17 @@ export class AppUserGrowthService extends AppUserServiceSupport {
             name: level.name,
             requiredExperience: level.requiredExperience,
           }
-        : undefined,
+        : null,
       nextLevel: nextLevel
         ? {
             id: nextLevel.id,
             name: nextLevel.name,
             requiredExperience: nextLevel.requiredExperience,
           }
-        : undefined,
+        : null,
       gapToNextLevel: nextLevel
         ? Math.max(nextLevel.requiredExperience - growth.experience, 0)
-        : undefined,
+        : null,
     }
   }
 
@@ -295,7 +295,13 @@ export class AppUserGrowthService extends AppUserServiceSupport {
       ...page,
       list: page.list.map((item) => ({
         createdAt: item.assignment.createdAt,
-        badge: item.badge,
+        badge: {
+          ...item.badge,
+          description: item.badge.description ?? null,
+          icon: item.badge.icon ?? null,
+          business: item.badge.business ?? null,
+          eventKey: item.badge.eventKey ?? null,
+        },
       })),
     }
   }

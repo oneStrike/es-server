@@ -34,22 +34,32 @@ export class InteractionAppUserSummaryDto extends PickType(BaseAppUserDto, [
 export class InteractionActorSummaryDto extends PickType(BaseAdminUserDto, [
   'id',
   'username',
-  'avatar',
 ] as const) {
   @StringProperty({
+    description: '头像',
+    example: 'https://example.com/avatar.png',
+    nullable: true,
+    validation: false,
+    maxLength: 200,
+  })
+  declare avatar: string | null
+
+  @StringProperty({
     description: '昵称；管理员默认使用用户名兜底',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  nickname?: string | null
+  nickname!: string | null
 
   @StringProperty({
     description: '角色名称',
     example: '普通管理员',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 20,
   })
-  roleName?: string | null
+  roleName!: string | null
 }
 
 /**
@@ -61,6 +71,7 @@ export class InteractionCommentTargetSummaryDto {
     example: 1,
     required: true,
     min: 1,
+    validation: false,
   })
   targetId!: number
 
@@ -70,6 +81,7 @@ export class InteractionCommentTargetSummaryDto {
     enum: CommentTargetTypeEnum,
     example: CommentTargetTypeEnum.COMIC,
     required: true,
+    validation: false,
   })
   targetType!: CommentTargetTypeEnum
 
@@ -78,60 +90,68 @@ export class InteractionCommentTargetSummaryDto {
     example: '漫画作品',
     required: true,
     maxLength: 20,
+    validation: false,
   })
   targetTypeName!: string
 
   @StringProperty({
     description: '目标标题',
     example: '第一话 出发',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 200,
   })
-  title?: string | null
+  title!: string | null
 
   @StringProperty({
     description: '目标名称',
     example: '进击的巨人',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  name?: string | null
+  name!: string | null
 
   @StringProperty({
     description: '章节所属作品名称',
     example: '进击的巨人',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  workName?: string | null
+  workName!: string | null
 
   @StringProperty({
     description: '论坛主题所属板块名称',
     example: '综合讨论',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  sectionName?: string | null
+  sectionName!: string | null
 
   @BooleanProperty({
     description: '目标是否隐藏',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  isHidden?: boolean | null
+  isHidden!: boolean | null
 
   @EnumProperty({
     description: '目标审核状态（0=待审核；1=已通过；2=已拒绝）',
     enum: AuditStatusEnum,
     example: AuditStatusEnum.APPROVED,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  auditStatus?: AuditStatusEnum | null
+  auditStatus!: AuditStatusEnum | null
 
   @DateProperty({
     description: '目标删除时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  deletedAt?: Date | null
+  deletedAt!: Date | null
 }
 
 /**
@@ -143,59 +163,67 @@ export class InteractionReplyCommentSummaryDto {
     example: 1,
     required: true,
     min: 1,
+    validation: false,
   })
   commentId!: number
 
   @StringProperty({
     description: '被回复评论内容摘要',
     example: '这段内容很精彩',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 50,
   })
-  contentExcerpt?: string | null
+  contentExcerpt!: string | null
 
   @StringProperty({
     description: '被回复评论用户昵称',
     example: '张三',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  userNickname?: string | null
+  userNickname!: string | null
 
   @StringProperty({
     description: '被回复评论用户头像 URL',
     example: 'https://example.com/avatar.png',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 500,
   })
-  userAvatarUrl?: string | null
+  userAvatarUrl!: string | null
 
   @EnumProperty({
     description:
       '被回复评论用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  userStatus?: UserStatusEnum | null
+  userStatus!: UserStatusEnum | null
 
   @BooleanProperty({
     description: '被回复评论用户是否启用',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  userIsEnabled?: boolean | null
+  userIsEnabled!: boolean | null
 
   @EnumProperty({
     description: '被回复评论审核状态（0=待审核；1=已通过；2=已拒绝）',
     enum: AuditStatusEnum,
     example: AuditStatusEnum.APPROVED,
     required: true,
+    validation: false,
   })
   auditStatus!: AuditStatusEnum
 
   @BooleanProperty({
     description: '被回复评论是否隐藏',
     required: true,
+    validation: false,
   })
   isHidden!: boolean
 }
@@ -209,6 +237,7 @@ export class InteractionReportTargetSummaryDto {
     example: 1,
     required: true,
     min: 1,
+    validation: false,
   })
   targetId!: number
 
@@ -218,6 +247,7 @@ export class InteractionReportTargetSummaryDto {
     enum: ReportTargetTypeEnum,
     example: ReportTargetTypeEnum.COMIC,
     required: true,
+    validation: false,
   })
   targetType!: ReportTargetTypeEnum
 
@@ -226,91 +256,103 @@ export class InteractionReportTargetSummaryDto {
     example: '漫画作品',
     required: true,
     maxLength: 20,
+    validation: false,
   })
   targetTypeName!: string
 
   @StringProperty({
     description: '举报目标标题',
     example: '第一话 出发',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 200,
   })
-  title?: string | null
+  title!: string | null
 
   @StringProperty({
     description: '举报目标名称',
     example: '进击的巨人',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  name?: string | null
+  name!: string | null
 
   @StringProperty({
     description: '举报评论内容摘要',
     example: '这条评论包含不当内容',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 50,
   })
-  contentExcerpt?: string | null
+  contentExcerpt!: string | null
 
   @StringProperty({
     description: '章节所属作品名称',
     example: '进击的巨人',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  workName?: string | null
+  workName!: string | null
 
   @StringProperty({
     description: '作者昵称',
     example: '张三',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  authorNickname?: string | null
+  authorNickname!: string | null
 
   @StringProperty({
     description: '作者头像 URL',
     example: 'https://example.com/avatar.png',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 500,
   })
-  authorAvatarUrl?: string | null
+  authorAvatarUrl!: string | null
 
   @BooleanProperty({
     description: '目标是否隐藏',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  isHidden?: boolean | null
+  isHidden!: boolean | null
 
   @EnumProperty({
     description: '目标审核状态（0=待审核；1=已通过；2=已拒绝）',
     enum: AuditStatusEnum,
     example: AuditStatusEnum.APPROVED,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  auditStatus?: AuditStatusEnum | null
+  auditStatus!: AuditStatusEnum | null
 
   @BooleanProperty({
     description: '目标用户是否启用',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  isEnabled?: boolean | null
+  isEnabled!: boolean | null
 
   @EnumProperty({
     description:
       '目标用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  status?: UserStatusEnum | null
+  status!: UserStatusEnum | null
 
   @DateProperty({
     description: '目标删除时间',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  deletedAt?: Date | null
+  deletedAt!: Date | null
 }
 
 /**
@@ -322,6 +364,7 @@ export class InteractionSceneSummaryDto {
     example: 1,
     required: true,
     min: 1,
+    validation: false,
   })
   sceneId!: number
 
@@ -331,6 +374,7 @@ export class InteractionSceneSummaryDto {
     enum: SceneTypeEnum,
     example: SceneTypeEnum.COMIC_WORK,
     required: true,
+    validation: false,
   })
   sceneType!: SceneTypeEnum
 
@@ -339,32 +383,36 @@ export class InteractionSceneSummaryDto {
     example: '漫画作品',
     required: true,
     maxLength: 20,
+    validation: false,
   })
   sceneTypeName!: string
 
   @StringProperty({
     description: '业务场景标题',
     example: '第一话 出发',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 200,
   })
-  title?: string | null
+  title!: string | null
 
   @StringProperty({
     description: '业务场景名称',
     example: '进击的巨人',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  name?: string | null
+  name!: string | null
 
   @StringProperty({
     description: '业务场景所属上级名称',
     example: '综合讨论',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  parentName?: string | null
+  parentName!: string | null
 }
 
 /**
@@ -376,28 +424,32 @@ export class InteractionReportCommentSummaryDto {
     example: 1,
     required: true,
     min: 1,
+    validation: false,
   })
   commentId!: number
 
   @StringProperty({
     description: '评论内容摘要',
     example: '这条评论包含不当内容',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 50,
   })
-  contentExcerpt?: string | null
+  contentExcerpt!: string | null
 
   @EnumProperty({
     description: '评论层级（1=根评论；2=回复评论）',
     enum: CommentLevelEnum,
     example: CommentLevelEnum.ROOT,
     required: true,
+    validation: false,
   })
   commentLevel!: CommentLevelEnum
 
   @BooleanProperty({
     description: '评论是否隐藏',
     required: true,
+    validation: false,
   })
   isHidden!: boolean
 
@@ -406,37 +458,42 @@ export class InteractionReportCommentSummaryDto {
     enum: AuditStatusEnum,
     example: AuditStatusEnum.APPROVED,
     required: true,
+    validation: false,
   })
   auditStatus!: AuditStatusEnum
 
   @StringProperty({
     description: '评论用户昵称',
     example: '张三',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 100,
   })
-  userNickname?: string | null
+  userNickname!: string | null
 
   @StringProperty({
     description: '评论用户头像 URL',
     example: 'https://example.com/avatar.png',
-    required: false,
+    nullable: true,
+    validation: false,
     maxLength: 500,
   })
-  userAvatarUrl?: string | null
+  userAvatarUrl!: string | null
 
   @EnumProperty({
     description:
       '评论用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  userStatus?: UserStatusEnum | null
+  userStatus!: UserStatusEnum | null
 
   @BooleanProperty({
     description: '评论用户是否启用',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  userIsEnabled?: boolean | null
+  userIsEnabled!: boolean | null
 }

@@ -1,7 +1,18 @@
-import { LibDictionaryService } from '@libs/dictionary/dictionary.service';
-import { BaseDictionaryDto, BaseDictionaryItemDto, CreateDictionaryDto, CreateDictionaryItemDto, QueryAllDictionaryItemDto, QueryDictionaryDto, QueryDictionaryItemDto, UpdateDictionaryDto, UpdateDictionaryItemDto } from '@libs/dictionary/dto/dictionary.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto';
+import { LibDictionaryService } from '@libs/dictionary/dictionary.service'
+import {
+  CreateDictionaryDto,
+  CreateDictionaryItemDto,
+  DictionaryItemOutputDto,
+  DictionaryOutputDto,
+  QueryAllDictionaryItemDto,
+  QueryDictionaryDto,
+  QueryDictionaryItemDto,
+  UpdateDictionaryDto,
+  UpdateDictionaryItemDto,
+} from '@libs/dictionary/dto/dictionary.dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -17,7 +28,7 @@ export class DictionaryController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询字典',
-    model: BaseDictionaryDto,
+    model: DictionaryOutputDto,
   })
   async getPage(@Query() query: QueryDictionaryDto) {
     return this.libDictionaryService.findDictionaries(query)
@@ -26,7 +37,7 @@ export class DictionaryController {
   @Get('detail')
   @ApiDoc({
     summary: '获取字典详情',
-    model: BaseDictionaryDto,
+    model: DictionaryOutputDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.libDictionaryService.findDictionaryById(query)
@@ -83,7 +94,7 @@ export class DictionaryController {
   @Get('item/page')
   @ApiPageDoc({
     summary: '分页获取字典项',
-    model: BaseDictionaryItemDto,
+    model: DictionaryItemOutputDto,
   })
   async getItems(@Query() query: QueryDictionaryItemDto) {
     return this.libDictionaryService.findDictionaryItems(query)
@@ -92,7 +103,8 @@ export class DictionaryController {
   @Get('item/list')
   @ApiDoc({
     summary: '获取所有字典项',
-    model: BaseDictionaryItemDto,
+    model: DictionaryItemOutputDto,
+    isArray: true,
   })
   async getAllItems(@Query() query: QueryAllDictionaryItemDto) {
     return this.libDictionaryService.findAllDictionaryItems(query)

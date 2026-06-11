@@ -1,7 +1,7 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { Cache } from 'cache-manager'
 import { DrizzleService } from '@db/core'
-import { CheckVerifyCodeDto, SendVerifyCodeDto } from '@libs/platform/modules/sms/dto'
+import { CheckVerifyCodeDto, SendVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto'
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import { SmsService as LibSmsService } from '@libs/platform/modules/sms/sms.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'

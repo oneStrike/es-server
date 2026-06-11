@@ -6,7 +6,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 import {
@@ -18,7 +19,7 @@ import { BaseCheckInPatternRewardRuleDto } from './check-in-pattern-reward-rule.
 import { CheckInRewardItemDto } from './check-in-reward-item.dto'
 import { BaseCheckInStreakRewardRuleDto } from './check-in-streak-reward-rule.dto'
 
-export class UpdateCheckInConfigDto {
+export class BaseCheckInConfigDto {
   @BooleanProperty({
     description: '是否启用签到功能。',
     example: true,
@@ -42,41 +43,55 @@ export class UpdateCheckInConfigDto {
   @ArrayProperty({
     description: '默认基础奖励项。',
     itemClass: CheckInRewardItemDto,
-    required: false,
     nullable: true,
   })
-  baseRewardItems?: CheckInRewardItemDto[] | null
+  baseRewardItems!: CheckInRewardItemDto[] | null
 
   @StringProperty({
     description: '补签图标 URL。',
     example: 'https://cdn.example.com/check-in/makeup.png',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  makeupIconUrl?: string | null
+  makeupIconUrl!: string | null
 
   @StringProperty({
     description: '基础奖励日历汇总图标 URL。',
     example: 'https://cdn.example.com/check-in/reward-overview.png',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  rewardOverviewIconUrl?: string | null
+  rewardOverviewIconUrl!: string | null
 
   @ArrayProperty({
     description: '具体日期奖励规则列表。',
     itemClass: CheckInDateRewardRuleFieldsDto,
-    required: false,
   })
-  dateRewardRules?: CheckInDateRewardRuleFieldsDto[]
+  dateRewardRules!: CheckInDateRewardRuleFieldsDto[]
 
   @ArrayProperty({
     description: '周期模式奖励规则列表。',
     itemClass: BaseCheckInPatternRewardRuleDto,
-    required: false,
   })
-  patternRewardRules?: BaseCheckInPatternRewardRuleDto[]
+  patternRewardRules!: BaseCheckInPatternRewardRuleDto[]
 }
+
+export class UpdateCheckInConfigDto extends IntersectionType(
+  PickType(BaseCheckInConfigDto, [
+    'isEnabled',
+    'makeupPeriodType',
+    'periodicAllowance',
+  ] as const),
+  PartialType(
+    PickType(BaseCheckInConfigDto, [
+      'baseRewardItems',
+      'makeupIconUrl',
+      'rewardOverviewIconUrl',
+      'dateRewardRules',
+      'patternRewardRules',
+    ] as const),
+  ),
+) {}
 
 export class UpdateCheckInEnabledDto extends PickType(UpdateCheckInConfigDto, [
   'isEnabled',
@@ -84,7 +99,7 @@ export class UpdateCheckInEnabledDto extends PickType(UpdateCheckInConfigDto, [
 
 export class CheckInConfigDetailResponseDto extends IntersectionType(
   BaseDto,
-  UpdateCheckInConfigDto,
+  BaseCheckInConfigDto,
 ) {}
 
 export class QueryCheckInStreakRulePageDto extends IntersectionType(
@@ -161,8 +176,8 @@ export class CheckInStreakRuleDetailResponseDto extends IntersectionType(
   @StringProperty({
     description: '生效结束时间。',
     example: '2026-04-20T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  effectiveTo?: string | Date | null
+  effectiveTo!: string | Date | null
 }

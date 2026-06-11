@@ -4,7 +4,7 @@ jest.mock('@libs/platform/modules/auth/auth.service', () => ({
 
 import { appUser } from '@db/schema'
 import type { SessionClientContext } from '@libs/identity/session.type'
-import type { LoginDto, RefreshTokenDto } from '@libs/platform/modules/auth/dto'
+import type { LoginDto, RefreshTokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto'
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import { BadRequestException } from '@nestjs/common'
 import { AuthService } from './auth.service'
@@ -144,6 +144,14 @@ describe('AuthService latest login geo', () => {
     )
     expect(result.user).not.toHaveProperty('lastLoginGeo')
     expect(result.user).not.toHaveProperty('lastLoginIp')
+    expect(result.user).toMatchObject({
+      avatarUrl: null,
+      profileBackgroundImageUrl: null,
+      emailAddress: null,
+      birthDate: null,
+      signature: null,
+      bio: null,
+    })
   })
 
   it('does not overwrite login geo snapshot when refreshing tokens', async () => {

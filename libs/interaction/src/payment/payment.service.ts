@@ -37,6 +37,7 @@ import {
   PaymentProviderCertificateOptionQueryDto,
   PaymentProviderCredentialOptionDto,
   PaymentProviderCredentialOptionQueryDto,
+  ProviderPaymentNotifyAckDto,
   QueryPaymentOrderDto,
   QueryPaymentProviderConfigDto,
   QueryPaymentReconciliationDto,
@@ -178,10 +179,10 @@ export class PaymentService {
       providerConfigVersionLabel: this.buildProviderConfigVersionLabel(
         order.providerConfigVersion,
       ),
-      providerTradeNo: order.providerTradeNo,
-      paidAt: order.paidAt,
-      closedAt: order.closedAt,
-      refundedAt: order.refundedAt,
+      providerTradeNo: order.providerTradeNo ?? null,
+      paidAt: order.paidAt ?? null,
+      closedAt: order.closedAt ?? null,
+      refundedAt: order.refundedAt ?? null,
     }
   }
 
@@ -1343,7 +1344,7 @@ export class PaymentService {
             status: PaymentOrderStatusEnum.PAID,
             paidAmount,
             providerTradeNo,
-            notifyPayload: this.redactProviderNotifyPayload(input.body),
+            notifyPayload: this.redactProviderNotifyPayload(input.body.raw),
             paidAt: new Date(),
           })
           .where(
@@ -1410,9 +1411,9 @@ export class PaymentService {
 
   private buildProviderNotifyPayload(input: ProviderPaymentNotifyRequest) {
     return {
-      body: input.body,
-      headers: input.headers,
-      query: input.query,
+      body: input.body.raw,
+      headers: input.headers.raw,
+      query: input.query.raw,
       rawBody: input.rawBody,
     }
   }
@@ -1421,10 +1422,10 @@ export class PaymentService {
     return createHash('sha256')
       .update(
         JSON.stringify({
-          body: input.body,
+          body: input.body.raw,
           channel: input.channel,
-          headers: input.headers,
-          query: input.query,
+          headers: input.headers.raw,
+          query: input.query.raw,
           rawBody: input.rawBody ?? null,
         }),
       )
@@ -1441,10 +1442,10 @@ export class PaymentService {
         channel: input.channel,
         eventType: 4,
         payloadHash,
-        headers: this.redactProviderNotifyPayload(input.headers),
+        headers: this.redactProviderNotifyPayload(input.headers.raw),
         redactedPayload: this.redactProviderNotifyPayload({
-          ...input.body,
-          query: input.query,
+          ...input.body.raw,
+          query: input.query.raw,
           rawBody: input.rawBody ? '[RAW_BODY_PRESENT]' : null,
         }),
         verifyStatus: PAYMENT_NOTIFY_VERIFY_STATUS.PENDING,
@@ -1894,7 +1895,9 @@ export class PaymentService {
     return typeof value === 'string' && value.trim() ? value.trim() : undefined
   }
 
-  private buildProviderNotifyAck(channel: PaymentChannelEnum) {
+  private buildProviderNotifyAck(
+    channel: PaymentChannelEnum,
+  ): ProviderPaymentNotifyAckDto | string {
     if (channel === PaymentChannelEnum.ALIPAY) {
       return 'success'
     }
@@ -1971,9 +1974,11 @@ export class PaymentService {
       configName: config.configName,
       appId: config.appId,
       mchId: config.mchId,
-      notifyUrl: config.notifyUrl,
-      returnUrl: config.returnUrl,
-      allowedReturnDomains: this.toStringArray(config.allowedReturnDomains),
+      notifyUrl: config.notifyUrl ?? null,
+      returnUrl: config.returnUrl ?? null,
+      allowedReturnDomains: this.toNullableStringArray(
+        config.allowedReturnDomains,
+      ),
       certMode: config.certMode,
       configMetadata: this.asRecord(config.configMetadata),
       sortOrder: config.sortOrder,
@@ -1981,9 +1986,9 @@ export class PaymentService {
     }
   }
 
-  private toStringArray(input: unknown) {
+  private toNullableStringArray(input: unknown) {
     if (!Array.isArray(input)) {
-      return []
+      return null
     }
     return input.filter(
       (item): item is string => typeof item === 'string' && item.trim() !== '',

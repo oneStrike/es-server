@@ -1,7 +1,7 @@
 import { ApiDoc, CurrentUser } from '@libs/platform/decorators';
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { BaseSystemConfigDto, UpdateSystemConfigDto } from '@libs/system-config/dto/config.dto';
+import { SystemConfigDetailDto, UpdateSystemConfigDto } from '@libs/system-config/dto/config.dto';
 import { SystemConfigService } from '@libs/system-config/system-config.service';
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -19,7 +19,7 @@ export class SystemConfigController {
   @Get('config')
   @ApiDoc({
     summary: '获取系统配置',
-    model: BaseSystemConfigDto,
+    model: SystemConfigDetailDto,
   })
   async getConfig() {
     return this.systemConfigService.findMaskedConfig()

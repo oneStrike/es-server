@@ -27,8 +27,6 @@ import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
 import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm'
 import {
-  WorkflowArchiveDto,
-  WorkflowExpireDto,
   WorkflowItemPageRequestDto,
   WorkflowJobIdDto,
   WorkflowJobPageRequestDto,
@@ -36,7 +34,7 @@ import {
   WorkflowNotificationListRequestDto,
   WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
-} from './dto'
+} from './dto/workflow.dto'
 import {
   WorkflowCancellationError,
   WorkflowCancellationSignal,
@@ -382,7 +380,7 @@ export class WorkflowService {
   }
 
   // 归档终态工作流任务，仅从默认列表隐藏，不触发清理或生命周期变更。
-  async archiveJob(input: WorkflowArchiveDto) {
+  async archiveJob(input: WorkflowJobIdDto) {
     return this.drizzle.withTransaction(async (tx) => {
       const job = await this.readJobWithDb(input.jobId, tx)
       if (!isTerminalWorkflowJobStatus(job.status)) {
@@ -666,7 +664,7 @@ export class WorkflowService {
   }
 
   // 过期清理失败或部分失败工作流保留的 retained resource。
-  async expireJob(input: WorkflowExpireDto) {
+  async expireJob(input: WorkflowJobIdDto) {
     const expired = await this.drizzle.withTransaction(async (tx) => {
       const job = await this.readJobWithDb(input.jobId, tx)
       if (!WORKFLOW_RETRYABLE_JOB_STATUSES.includes(job.status)) {

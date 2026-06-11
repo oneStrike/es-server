@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { PaymentOrderResultDto } from './dto/payment.dto'
 import {
@@ -610,16 +610,16 @@ describe('paymentService domain split contract', () => {
     await expect(
       Promise.all([
         service.handleProviderPaymentNotify({
-          body: { orderNo: pendingOrder.orderNo },
+          body: { raw: { orderNo: pendingOrder.orderNo } },
           channel: PaymentChannelEnum.ALIPAY,
-          headers: {},
-          query: {},
+          headers: { raw: {} },
+          query: { raw: {} },
         }),
         service.handleProviderPaymentNotify({
-          body: { orderNo: pendingOrder.orderNo },
+          body: { raw: { orderNo: pendingOrder.orderNo } },
           channel: PaymentChannelEnum.ALIPAY,
-          headers: {},
-          query: {},
+          headers: { raw: {} },
+          query: { raw: {} },
         }),
       ]),
     ).resolves.toEqual(['success', 'success'])
@@ -688,10 +688,10 @@ describe('paymentService domain split contract', () => {
 
     await expect(
       service.handleProviderPaymentNotify({
-        body: { orderNo: paidOrder.orderNo },
+        body: { raw: { orderNo: paidOrder.orderNo } },
         channel: PaymentChannelEnum.ALIPAY,
-        headers: {},
-        query: {},
+        headers: { raw: {} },
+        query: { raw: {} },
       }),
     ).resolves.toBe('success')
 
@@ -839,10 +839,10 @@ describe('paymentService domain split contract', () => {
 
     await expect(
       service.handleProviderPaymentNotify({
-        body: { orderNo: pendingOrder.orderNo },
+        body: { raw: { orderNo: pendingOrder.orderNo } },
         channel: PaymentChannelEnum.WECHAT,
-        headers: {},
-        query: {},
+        headers: { raw: {} },
+        query: { raw: {} },
       }),
     ).resolves.toEqual({ code: 'SUCCESS', message: '成功' })
 

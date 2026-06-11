@@ -247,14 +247,33 @@ export class ForumModeratorApplicationService {
 
     return rows.map((row) => {
       const permissions = this.normalizePermissions(row.permissions)
+      const applicant = applicantMap.get(row.applicantId)
+      const section = sectionMap.get(row.sectionId)
+
+      if (!applicant || !section) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '版主申请关联数据缺失',
+        )
+      }
 
       return {
-        ...row,
+        id: row.id,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        applicantId: row.applicantId,
+        sectionId: row.sectionId,
+        auditById: row.auditById ?? null,
+        status: row.status,
         permissions,
+        reason: row.reason,
+        auditReason: row.auditReason ?? null,
+        remark: row.remark ?? null,
+        auditAt: row.auditAt ?? null,
         permissionNames: this.getPermissionNames(permissions),
-        applicant: applicantMap.get(row.applicantId),
-        auditor: row.auditById ? auditorMap.get(row.auditById) : undefined,
-        section: sectionMap.get(row.sectionId),
+        applicant,
+        auditor: row.auditById ? (auditorMap.get(row.auditById) ?? null) : null,
+        section,
       }
     })
   }

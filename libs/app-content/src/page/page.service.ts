@@ -1,8 +1,9 @@
 import type { JsonValue } from '@libs/platform/utils'
+import type { AppPageSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
-import { IdDto, IdsDto } from '@libs/platform/dto'
+import { IdDto, IdsDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, arrayOverlaps, eq, inArray } from 'drizzle-orm'
@@ -104,16 +105,21 @@ export class AppPageService {
       this.db.$count(this.appPage, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toAppPageOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   /**
    * 查询所有已启用页面，供 app/public 侧一次性拉取静态页面配置。
    */
   async findActivePages() {
-    return this.db.query.appPage.findMany({
+    const pages = await this.db.query.appPage.findMany({
       where: { isEnabled: true },
     })
+    return pages.map((page) => this.toAppPageOutputDto(page))
   }
 
   /**
@@ -130,7 +136,7 @@ export class AppPageService {
         '页面不存在',
       )
     }
-    return page
+    return this.toAppPageOutputDto(page)
   }
 
   /**
@@ -147,7 +153,7 @@ export class AppPageService {
         '页面不存在',
       )
     }
-    return page
+    return this.toAppPageOutputDto(page)
   }
 
   /**
@@ -218,5 +224,13 @@ export class AppPageService {
     }
 
     return platforms.length > 0 ? [...new Set(platforms)] : undefined
+  }
+
+  private toAppPageOutputDto(page: AppPageSelect) {
+    return {
+      ...page,
+      enablePlatform: page.enablePlatform ?? null,
+      description: page.description ?? null,
+    }
   }
 }

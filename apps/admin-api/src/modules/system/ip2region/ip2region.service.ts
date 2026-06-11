@@ -9,7 +9,7 @@ import {
   GeoService,
   resolveGeoManagedStorageDir,
 } from '@libs/platform/modules/geo/geo.service'
-import { GEO_RUNTIME_SOURCE } from '@libs/platform/modules/geo/geo.type'
+import { GEO_RUNTIME_SOURCE } from '@libs/platform/modules/geo/geo.constant'
 import { LoggerService } from '@libs/platform/modules/logger/logger.service'
 import {
   BadRequestException,

@@ -1,5 +1,6 @@
-import type { IdDto } from '@libs/platform/dto'
+import type { IdDto } from '@libs/platform/dto/base.dto'
 import type { SQL } from 'drizzle-orm'
+import type { userBadge } from '@db/schema'
 import type {
   AssignUserBadgeDto,
   CreateUserBadgeDto,
@@ -15,6 +16,8 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+
+type UserBadgeSelect = typeof userBadge.$inferSelect
 
 @Injectable()
 export class UserBadgeService {
@@ -195,7 +198,7 @@ export class UserBadgeService {
       )
     }
 
-    return badge
+    return this.toBadgeOutputDto(badge)
   }
 
   /**
@@ -223,7 +226,11 @@ export class UserBadgeService {
       this.db.$count(this.userBadge, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toBadgeOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   /**
@@ -307,7 +314,7 @@ export class UserBadgeService {
       ? and(eq(this.userBadgeAssignment.userId, userId), badgeWhere)
       : eq(this.userBadgeAssignment.userId, userId)
 
-    return this.db
+    const rows = await this.db
       .select({
         userId: this.userBadgeAssignment.userId,
         badgeId: this.userBadgeAssignment.badgeId,
@@ -324,6 +331,10 @@ export class UserBadgeService {
         desc(this.userBadgeAssignment.createdAt),
         asc(this.userBadgeAssignment.badgeId),
       )
+    return rows.map((item) => ({
+      ...item,
+      badge: this.toBadgeOutputDto(item.badge),
+    }))
   }
 
   /**
@@ -396,7 +407,10 @@ export class UserBadgeService {
       list: list.map((item) => ({
         ...item,
         user: {
-          ...item.user,
+          id: item.user.id,
+          nickname: item.user.nickname,
+          avatar: item.user.avatar ?? null,
+          level: item.user.level ?? null,
           point: pointMap.get(item.userId) ?? 0,
         },
       })),
@@ -479,7 +493,9 @@ export class UserBadgeService {
 
     const badgeMap = new Map(badges.map((badge) => [badge.id, badge]))
     const topBadgesWithDetails = topBadges.map((item) => ({
-      badge: badgeMap.get(item.badgeId),
+      badge: badgeMap.get(item.badgeId)
+        ? this.toBadgeOutputDto(badgeMap.get(item.badgeId)!)
+        : null,
       count: Number(item.count),
     }))
 
@@ -497,6 +513,16 @@ export class UserBadgeService {
         count: Number(item.count),
       })),
       topBadges: topBadgesWithDetails,
+    }
+  }
+
+  private toBadgeOutputDto(badge: UserBadgeSelect) {
+    return {
+      ...badge,
+      description: badge.description ?? null,
+      icon: badge.icon ?? null,
+      business: badge.business ?? null,
+      eventKey: badge.eventKey ?? null,
     }
   }
 }

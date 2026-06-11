@@ -1,5 +1,5 @@
 import {
-  BaseAppPageDto,
+  AppPageOutputDto,
   CreateAppPageDto,
   QueryAppPageDto,
   QueryPageByCodeDto,
@@ -7,7 +7,7 @@ import {
 } from '@libs/app-content/page/dto/page.dto'
 import { AppPageService } from '@libs/app-content/page/page.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, IdsDto } from '@libs/platform/dto'
+import { IdDto, IdsDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -39,7 +39,7 @@ export class AppPageController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询页面配置列表',
-    model: BaseAppPageDto,
+    model: AppPageOutputDto,
   })
   async findPage(@Query() query: QueryAppPageDto) {
     return this.libAppPageService.findPage(query)
@@ -48,7 +48,7 @@ export class AppPageController {
   @Get('detail')
   @ApiDoc({
     summary: '根据ID查询页面配置详情',
-    model: BaseAppPageDto,
+    model: AppPageOutputDto,
   })
   async findDetail(@Query() query: IdDto) {
     return this.libAppPageService.findById(query)
@@ -58,7 +58,7 @@ export class AppPageController {
   @Get('code/detail')
   @ApiDoc({
     summary: '根据页面编码查询页面配置详情',
-    model: BaseAppPageDto,
+    model: AppPageOutputDto,
   })
   async findByCode(@Query() query: QueryPageByCodeDto) {
     return this.libAppPageService.findByCode(query)

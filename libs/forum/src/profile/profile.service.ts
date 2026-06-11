@@ -106,27 +106,27 @@ export class UserProfileService {
     return {
       id: user.id,
       account: user.account,
-      phoneNumber: user.phoneNumber ?? undefined,
-      emailAddress: user.emailAddress ?? undefined,
-      levelId: user.levelId ?? undefined,
+      phoneNumber: user.phoneNumber ?? null,
+      emailAddress: user.emailAddress ?? null,
+      levelId: user.levelId ?? null,
       nickname: user.nickname,
-      avatarUrl: user.avatarUrl ?? undefined,
-      profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? undefined,
-      signature: user.signature ?? undefined,
-      bio: user.bio ?? undefined,
+      avatarUrl: user.avatarUrl ?? null,
+      profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? null,
+      signature: user.signature ?? null,
+      bio: user.bio ?? null,
       isEnabled: user.isEnabled,
       genderType: user.genderType,
-      birthDate: user.birthDate ?? undefined,
+      birthDate: user.birthDate ?? null,
       points: growth.points,
       experience: growth.experience,
       status: user.status,
-      banReason: user.banReason ?? undefined,
-      banUntil: user.banUntil ?? undefined,
-      lastLoginAt: user.lastLoginAt ?? undefined,
-      lastLoginIp: user.lastLoginIp ?? undefined,
+      banReason: user.banReason ?? null,
+      banUntil: user.banUntil ?? null,
+      lastLoginAt: user.lastLoginAt ?? null,
+      lastLoginIp: user.lastLoginIp ?? null,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      deletedAt: user.deletedAt ?? undefined,
+      deletedAt: user.deletedAt ?? null,
     }
   }
 
@@ -282,7 +282,7 @@ export class UserProfileService {
       const growth = growthMap.get(item.id) ?? { points: 0, experience: 0 }
       return {
         ...this.mapUser(item, growth),
-        avatar: item.avatarUrl ?? undefined,
+        avatar: item.avatarUrl ?? null,
         counts: this.mapCountRow(countMap.get(item.id), item.id),
         userBadges: badgeMap.get(item.id) ?? [],
       }
@@ -324,7 +324,7 @@ export class UserProfileService {
       )
     return {
       ...this.mapUser(user, growth),
-      avatar: user.avatarUrl ?? undefined,
+      avatar: user.avatarUrl ?? null,
       counts: this.mapCountRow(counts, userId),
       userBadges,
     }
@@ -361,6 +361,14 @@ export class UserProfileService {
     viewerUserId?: number,
     query?: PublicUserProfileTopicPageQuery,
   ) {
+    const targetUser = await this.getTopicUserBriefById(targetUserId)
+    if (!targetUser) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
+    }
+
     const pageQuery = this.drizzle.buildPage({
       pageIndex: query?.pageIndex,
       pageSize: query?.pageSize,
@@ -442,7 +450,7 @@ export class UserProfileService {
     const sectionIds = [
       ...new Set(page.list.map((item) => item.sectionId).filter((id) => !!id)),
     ]
-    const [likedMap, favoritedMap, sections, user] = await Promise.all([
+    const [likedMap, favoritedMap, sections] = await Promise.all([
       viewerUserId
         ? this.likeService.checkStatusBatch(
             LikeTargetTypeEnum.FORUM_TOPIC,
@@ -473,7 +481,6 @@ export class UserProfileService {
               ),
             )
         : Promise.resolve<ProfileTopicSectionBrief[]>([]),
-      this.getTopicUserBriefById(targetUserId),
     ])
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
     const list = page.list
@@ -488,13 +495,14 @@ export class UserProfileService {
 
         return {
           ...item,
-          geoCountry: item.geoCountry ?? undefined,
-          geoProvince: item.geoProvince ?? undefined,
-          geoCity: item.geoCity ?? undefined,
-          geoIsp: item.geoIsp ?? undefined,
+          geoCountry: item.geoCountry ?? null,
+          geoProvince: item.geoProvince ?? null,
+          geoCity: item.geoCity ?? null,
+          geoIsp: item.geoIsp ?? null,
+          lastCommentAt: item.lastCommentAt ?? null,
           liked: likedMap.get(item.id) ?? false,
           favorited: favoritedMap.get(item.id) ?? false,
-          user,
+          user: targetUser,
           section,
         }
       })
@@ -602,6 +610,13 @@ export class UserProfileService {
       this.getTopicUserBriefById(userId),
     ])
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
+    }
+
     const list = page.list.map((item) => {
       const section = item.sectionId
         ? (sectionMap.get(item.sectionId) ?? null)
@@ -609,10 +624,11 @@ export class UserProfileService {
 
       return {
         ...item,
-        geoCountry: item.geoCountry ?? undefined,
-        geoProvince: item.geoProvince ?? undefined,
-        geoCity: item.geoCity ?? undefined,
-        geoIsp: item.geoIsp ?? undefined,
+        geoCountry: item.geoCountry ?? null,
+        geoProvince: item.geoProvince ?? null,
+        geoCity: item.geoCity ?? null,
+        geoIsp: item.geoIsp ?? null,
+        lastCommentAt: item.lastCommentAt ?? null,
         liked: likedMap.get(item.id) ?? false,
         favorited: favoritedMap.get(item.id) ?? false,
         user,
@@ -693,11 +709,11 @@ export class UserProfileService {
       list: page.list.map((item) => ({
         id: item.id,
         userId: item.userId,
-        ruleId: item.ruleId ?? undefined,
+        ruleId: item.ruleId ?? null,
         points: item.delta,
         beforePoints: item.beforeValue,
         afterPoints: item.afterValue,
-        remark: item.remark ?? undefined,
+        remark: item.remark ?? null,
         createdAt: item.createdAt,
       })),
     }

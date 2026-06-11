@@ -21,6 +21,7 @@ import { ForumPermissionService } from '../permission/forum-permission.service'
 import { FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE } from '../section-group/forum-section-group.constant'
 import { ForumSectionGroupService } from '../section-group/forum-section-group.service'
 import {
+  AdminForumSectionDto,
   CreateForumSectionDto,
   QueryForumSectionDto,
   QueryPublicForumSectionDto,
@@ -384,8 +385,8 @@ export class ForumSectionService {
         canAccess: accessState.canAccess,
         requiredExperience: accessState.requiredExperience,
         accessDeniedReason: accessState.canAccess
-          ? undefined
-          : accessState.accessDeniedReason,
+          ? null
+          : (accessState.accessDeniedReason ?? null),
         isFollowed: followStatusMap.get(section.id) ?? false,
       }
     })
@@ -486,7 +487,7 @@ export class ForumSectionService {
           description: group.description,
           sortOrder: group.sortOrder,
         }
-      : undefined
+      : null
 
     const [followStatus, accessStateMap] = await Promise.all([
       userId
@@ -511,8 +512,8 @@ export class ForumSectionService {
       canAccess: accessState.canAccess,
       requiredExperience: accessState.requiredExperience,
       accessDeniedReason: accessState.canAccess
-        ? undefined
-        : accessState.accessDeniedReason,
+        ? null
+        : (accessState.accessDeniedReason ?? null),
       isFollowed: followStatus?.isFollowing ?? false,
     }
   }
@@ -607,7 +608,7 @@ export class ForumSectionService {
         moderatorId: row.moderatorId,
         userId: row.userId,
         nickname: row.nickname,
-        avatar: row.avatar,
+        avatar: row.avatar ?? null,
         roleType: row.roleType,
         permissionNames: permissions.map(
           (permission) => FORUM_MODERATOR_PERMISSION_LABELS[permission],
@@ -737,7 +738,11 @@ export class ForumSectionService {
       this.db.$count(this.forumSection, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((section) => this.toAdminForumSectionDto(section)),
+      total,
+      page,
+    )
   }
 
   /**
@@ -761,7 +766,26 @@ export class ForumSectionService {
         })
       : null
 
-    return { ...section, group }
+    return {
+      ...this.toAdminForumSectionDto(section),
+      group: group
+        ? {
+            id: group.id,
+            name: group.name,
+            description: group.description ?? null,
+            sortOrder: group.sortOrder,
+            isEnabled: group.isEnabled,
+          }
+        : null,
+    }
+  }
+
+  private toAdminForumSectionDto(
+    section: typeof this.forumSection.$inferSelect,
+  ): AdminForumSectionDto {
+    const { deletedAt, ...output } = section
+    void deletedAt
+    return output
   }
 
   /**

@@ -1,6 +1,6 @@
 import { EnumProperty, NestedProperty } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { TaskDefinitionStatusEnum } from '../task.constant'
 import { BaseTaskDefinitionDto, TaskStepSummaryDto } from './task-view.dto'

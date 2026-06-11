@@ -73,19 +73,19 @@ export class UploadResponseDto {
 
   @NumberProperty({
     description: '图片宽度',
-    required: false,
+    nullable: true,
     example: 1200,
     validation: false,
   })
-  width?: number
+  width!: number | null
 
   @NumberProperty({
     description: '图片高度',
-    required: false,
+    nullable: true,
     example: 800,
     validation: false,
   })
-  height?: number
+  height!: number | null
 
   @StringProperty({
     description: '原始文件名',

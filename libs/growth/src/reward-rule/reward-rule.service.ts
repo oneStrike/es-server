@@ -1,4 +1,5 @@
 import type { SQL } from 'drizzle-orm'
+import type { GrowthRewardRuleSelect } from '@db/schema'
 import { DrizzleService, toPageResult } from '@db/core'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -55,10 +56,7 @@ export class GrowthRewardRuleService {
       conditions.push(eq(this.growthRewardRule.isEnabled, dto.isEnabled))
     }
     const archiveStatus =
-      dto.status ??
-      (dto.includeArchived
-        ? GrowthRewardRuleArchiveStatusEnum.ALL
-        : GrowthRewardRuleArchiveStatusEnum.ACTIVE)
+      dto.status ?? GrowthRewardRuleArchiveStatusEnum.ACTIVE
     if (archiveStatus === GrowthRewardRuleArchiveStatusEnum.ACTIVE) {
       conditions.push(isNull(this.growthRewardRule.archivedAt))
     } else if (archiveStatus === GrowthRewardRuleArchiveStatusEnum.ARCHIVED) {
@@ -81,7 +79,11 @@ export class GrowthRewardRuleService {
       this.db.$count(this.growthRewardRule, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toRewardRuleOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   async getRewardRuleDetail(id: number) {
@@ -98,7 +100,7 @@ export class GrowthRewardRuleService {
       )
     }
 
-    return rule
+    return this.toRewardRuleOutputDto(rule)
   }
 
   async updateRewardRule(dto: UpdateGrowthRewardRuleDto) {
@@ -126,10 +128,6 @@ export class GrowthRewardRuleService {
       },
     )
     return true
-  }
-
-  async deleteRewardRule(id: number) {
-    return this.archiveRewardRule({ id })
   }
 
   async archiveRewardRule(
@@ -276,5 +274,16 @@ export class GrowthRewardRuleService {
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       '已归档的成长奖励规则不可编辑',
     )
+  }
+
+  private toRewardRuleOutputDto(rule: GrowthRewardRuleSelect) {
+    return {
+      ...rule,
+      remark: rule.remark ?? null,
+      archivedAt: rule.archivedAt ?? null,
+      archivedBy: rule.archivedBy ?? null,
+      archiveReasonCode: rule.archiveReasonCode ?? null,
+      archiveReason: rule.archiveReason ?? null,
+    }
   }
 }

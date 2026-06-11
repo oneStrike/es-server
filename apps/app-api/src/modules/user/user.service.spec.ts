@@ -182,7 +182,7 @@ describe('UserService user center latest login geo', () => {
     const result = await service.getUserCenter(7)
 
     expect(result.growth).toMatchObject({
-      levelId: undefined,
+      levelId: null,
       levelName: null,
       levelIcon: null,
       levelColor: null,

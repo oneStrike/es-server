@@ -39,11 +39,14 @@ export class NovelContentService {
     const result = await this.contentPermissionService.checkChapterAccess(
       chapterId,
       userId,
-      { content: true, workId: true, workType: true },
+      { content: true, id: true, title: true, subtitle: true, workId: true, workType: true },
     )
     const chapter = result.chapter as {
+      id: number
       workId: number
       workType: number
+      title: string
+      subtitle?: string | null
       content: string | null
     }
     if (userId) {
@@ -54,7 +57,12 @@ export class NovelContentService {
         lastReadChapterId: chapterId,
       })
     }
-    return chapter.content
+    return {
+      id: chapter.id,
+      title: chapter.title,
+      subtitle: chapter.subtitle ?? null,
+      content: chapter.content ?? null,
+    }
   }
 
   // 获取章节内容（无权限校验），管理端使用。
@@ -108,7 +116,9 @@ export class NovelContentService {
       query.workId.toString(),
       'chapter',
       chapterId.toString(),
-    ])
+    ], {
+      sceneOverride: 'content',
+    })
 
     await this.drizzle.withErrorHandling(
       () =>

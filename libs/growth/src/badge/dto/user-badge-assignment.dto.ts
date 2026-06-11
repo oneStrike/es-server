@@ -1,4 +1,4 @@
-import { DateProperty, NumberProperty } from '@libs/platform/decorators';
+import { DateProperty, NumberProperty } from '@libs/platform/decorators'
 
 export class BaseUserBadgeAssignmentDto {
   @NumberProperty({
@@ -19,6 +19,7 @@ export class BaseUserBadgeAssignmentDto {
     description: '获得时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
+    validation: false,
   })
   createdAt!: Date
 }

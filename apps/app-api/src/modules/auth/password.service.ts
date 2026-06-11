@@ -6,7 +6,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
-} from '@libs/platform/modules/auth/dto'
+} from '@libs/platform/modules/auth/dto/auth-scene.dto'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/helpers'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'

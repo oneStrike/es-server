@@ -32,7 +32,7 @@ export class AppAvailableTaskPageItemDto extends PickType(
 ) {
   @EnumProperty({
     description:
-      '用户可见状态（claimable=可领取；claimed=已领取；in_progress=进行中；completed=已完成；reward_pending=奖励待补偿；reward_granted=奖励已到账；expired=已过期；unavailable=当前不可用）',
+      '用户可见状态（可领取；已领取；进行中；已完成；奖励待补偿；奖励已到账；已过期；当前不可用）',
     example: TaskVisibleStatusEnum.CLAIMABLE,
     enum: TaskVisibleStatusEnum,
     validation: false,

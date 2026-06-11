@@ -1,7 +1,16 @@
-import { BaseUserLevelRuleDto, CheckUserLevelPermissionDto, CreateUserLevelRuleDto, QueryUserLevelRuleDto, UpdateUserLevelRuleDto, UserLevelInfoDto, UserLevelPermissionResultDto, UserLevelStatisticsDto } from '@libs/growth/level-rule/dto/level-rule.dto';
-import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto';
+import {
+  CheckUserLevelPermissionDto,
+  CreateUserLevelRuleDto,
+  QueryUserLevelRuleDto,
+  UpdateUserLevelRuleDto,
+  UserLevelInfoDto,
+  UserLevelPermissionResultDto,
+  UserLevelRuleOutputDto,
+  UserLevelStatisticsDto,
+} from '@libs/growth/level-rule/dto/level-rule.dto'
+import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -19,7 +28,7 @@ export class LevelRuleController {
   @Get('page')
   @ApiPageDoc({
     summary: '获取用户等级规则分页',
-    model: BaseUserLevelRuleDto,
+    model: UserLevelRuleOutputDto,
   })
   async getLevelRules(@Query() query: QueryUserLevelRuleDto) {
     return this.levelRuleService.getLevelRulePage(query)
@@ -28,7 +37,7 @@ export class LevelRuleController {
   @Get('detail')
   @ApiDoc({
     summary: '获取用户等级规则详情',
-    model: BaseUserLevelRuleDto,
+    model: UserLevelRuleOutputDto,
   })
   async getLevelRule(@Query() dto: IdDto) {
     return this.levelRuleService.getLevelRuleDetail(dto.id)

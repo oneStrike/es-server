@@ -16,7 +16,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -223,18 +223,18 @@ export class UserStatusSummaryDto extends PickType(BaseAppUserDto, [
   @StringProperty({
     description: '限制原因',
     example: '违反平台规则。',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  reason?: string | null
+  reason!: string | null
 
   @DateProperty({
     description: '限制到期时间',
     example: '2026-03-08T10:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  until?: Date | null
+  until!: Date | null
 }
 
 /**
@@ -269,28 +269,26 @@ export class UserExperienceStatsDto {
   @NestedProperty({
     description: '当前等级信息',
     type: UserLevelSummaryDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  level!: UserLevelSummaryDto
+  level!: UserLevelSummaryDto | null
 
   @NestedProperty({
     description: '下一等级信息',
     type: UserLevelSummaryDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  nextLevel!: UserLevelSummaryDto
+  nextLevel!: UserLevelSummaryDto | null
 
   @NumberProperty({
     description: '距离下一等级的经验值差距',
     example: 50,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  gapToNextLevel?: number
+  gapToNextLevel!: number | null
 }
 
 /**
@@ -315,10 +313,10 @@ export class UserCenterGrowthDto extends UserGrowthSnapshotFieldsDto {
   @NumberProperty({
     description: '当前等级ID',
     example: 1,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  levelId?: number | null
+  levelId!: number | null
 
   @StringProperty({
     description: '当前等级名称',
@@ -411,44 +409,39 @@ export class UserCenterLastLoginGeoDto {
   @StringProperty({
     description: '最近一次登录IP归属国家/地区',
     example: '中国',
-    required: false,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoCountry?: string | null
+  geoCountry!: string | null
 
   @StringProperty({
     description: '最近一次登录IP归属省份',
     example: '广东省',
-    required: false,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoProvince?: string | null
+  geoProvince!: string | null
 
   @StringProperty({
     description: '最近一次登录IP归属城市',
     example: '深圳市',
-    required: false,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoCity?: string | null
+  geoCity!: string | null
 
   @StringProperty({
     description: '最近一次登录IP归属运营商',
     example: '电信',
-    required: false,
+    nullable: true,
     maxLength: 100,
     validation: false,
   })
-  geoIsp?: string | null
+  geoIsp!: string | null
 }
-
-/**
- * 用户中心通知未读摘要 DTO。
- */
-export class UserCenterNotificationUnreadDto extends BaseNotificationUnreadDto {}
 
 /**
  * 用户中心消息摘要 DTO。
@@ -456,11 +449,11 @@ export class UserCenterNotificationUnreadDto extends BaseNotificationUnreadDto {
 export class UserCenterMessageDto {
   @NestedProperty({
     description: '通知未读摘要',
-    type: UserCenterNotificationUnreadDto,
+    type: BaseNotificationUnreadDto,
     validation: false,
     nullable: false,
   })
-  notificationUnread!: UserCenterNotificationUnreadDto
+  notificationUnread!: BaseNotificationUnreadDto
 
   @NumberProperty({
     description: '收件箱未读消息总数',

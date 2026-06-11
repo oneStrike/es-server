@@ -82,7 +82,7 @@ export function JsonProperty(options: JsonPropertyOptions) {
       example: options.example,
       required: options.required ?? true,
       default: options.default,
-      nullable: !(options.required ?? true),
+      nullable: options.nullable ?? !(options.required ?? true),
       type: String,
       format: 'json',
     })),

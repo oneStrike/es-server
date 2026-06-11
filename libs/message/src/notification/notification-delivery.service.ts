@@ -242,7 +242,7 @@ export class MessageNotificationDeliveryService {
               ? getMessageNotificationCategoryLabel(
                   item.categoryKey as MessageNotificationCategoryKey,
                 )
-              : undefined,
+              : null,
           statusLabel: getMessageNotificationDispatchStatusLabel(
             item.status as MessageNotificationDispatchStatusEnum,
           ),

@@ -10,13 +10,12 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION } from '../../event-definition/event-definition.constant'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
-import {
-  BaseGrowthRecordSharedDto,
-} from '../../growth/dto/growth-shared.dto'
+import { BaseGrowthRecordSharedDto } from '../../growth/dto/growth-shared.dto'
 
 export enum ExperienceDeltaDirectionEnum {
   INCREASE = 1,
@@ -49,22 +48,12 @@ export class BaseUserExperienceRecordDto extends BaseGrowthRecordSharedDto {
   @StringProperty({
     description: '账本来源（如 growth_rule、task_bonus、purchase）',
     example: 'growth_rule',
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
     maxLength: 40,
   })
-  source?: string | null
-}
-
-export class QueryUserExperienceRecordPageDto extends PageDto {
-  @NumberProperty({
-    description: '单页大小，最大100，默认15',
-    example: 15,
-    max: 100,
-    min: 1,
-    required: false,
-    default: 15,
-  })
-  pageSize?: number = undefined
+  source!: string | null
 }
 
 export class QueryUserExperienceRecordFilterDto extends PartialType(
@@ -108,7 +97,7 @@ export class QueryUserExperienceRecordFilterDto extends PartialType(
 }
 
 export class QueryUserExperienceRecordDto extends IntersectionType(
-  QueryUserExperienceRecordPageDto,
+  PageDto,
   QueryUserExperienceRecordFilterDto,
 ) {
   @NumberProperty({
@@ -121,7 +110,7 @@ export class QueryUserExperienceRecordDto extends IntersectionType(
 }
 
 export class QueryScopedUserExperienceRecordDto extends IntersectionType(
-  QueryUserExperienceRecordPageDto,
+  PageDto,
   QueryUserExperienceRecordFilterDto,
 ) {
   @NumberProperty({
@@ -172,8 +161,7 @@ export class UserExperienceRecordDto extends PickType(
   ruleId!: number | null
 
   @EnumProperty({
-    description:
-      '成长记录关联的事件编码，直接复用统一事件定义编码；无事件时为 null',
+    description: `${GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION}；无事件时为 null`,
     example: GrowthRuleTypeEnum.CREATE_TOPIC,
     enum: GrowthRuleTypeEnum,
     nullable: true,

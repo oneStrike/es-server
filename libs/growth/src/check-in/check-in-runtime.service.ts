@@ -3,7 +3,7 @@ import type {
   CheckInRecordSelect,
   CheckInStreakGrantSelect,
 } from '@db/schema'
-import type { PageDto } from '@libs/platform/dto'
+import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInGrantItemView,
@@ -12,7 +12,6 @@ import type {
   CheckInRewardItems,
 } from './check-in.type'
 import type {
-  QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
 import { DrizzleService, toPageResult } from '@db/core'
@@ -51,14 +50,14 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const now = new Date()
     const today = this.formatDateOnly(now)
     const config = await this.getRequiredConfig()
-    const makeup = await this.checkInMakeupService.buildCurrentMakeupAccountView(
-      userId,
-      config,
-      today,
-    )
-    const activeRules = await this.checkInStreakService.listActiveStreakRulesAt(
-      now,
-    )
+    const makeup =
+      await this.checkInMakeupService.buildCurrentMakeupAccountView(
+        userId,
+        config,
+        today,
+      )
+    const activeRules =
+      await this.checkInStreakService.listActiveStreakRulesAt(now)
     const rewardRules = this.checkInStreakService.toStreakRewardRuleViews(
       activeRules,
       now,
@@ -68,10 +67,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     })
     const effectiveCurrentStreak =
       this.checkInStreakService.resolveEffectiveCurrentStreak(
-      progress?.currentStreak ?? 0,
-      progress?.lastSignedDate,
-      today,
-    )
+        progress?.currentStreak ?? 0,
+        progress?.lastSignedDate,
+        today,
+      )
     const effectiveLastSignedDate =
       this.checkInStreakService.resolveEffectiveLastSignedDate(
         progress?.lastSignedDate,
@@ -87,8 +86,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         streakStartedAt:
           effectiveCurrentStreak > 0 && progress?.streakStartedAt
             ? this.toDateOnlyValue(progress.streakStartedAt)
-            : undefined,
-        lastSignedDate: effectiveLastSignedDate,
+            : null,
+        lastSignedDate: effectiveLastSignedDate ?? null,
         nextReward:
           this.checkInRewardPolicyService.resolveNextStreakReward(
             rewardRules,
@@ -106,9 +105,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   async getStreakDetail(userId: number) {
     const now = new Date()
     const today = this.formatDateOnly(now)
-    const activeRules = await this.checkInStreakService.listActiveStreakRulesAt(
-      now,
-    )
+    const activeRules =
+      await this.checkInStreakService.listActiveStreakRulesAt(now)
     const rewardRules = this.checkInStreakService.toStreakRewardRuleViews(
       activeRules,
       now,
@@ -129,12 +127,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         streakStartedAt:
           effectiveCurrentStreak > 0 && progress?.streakStartedAt
             ? this.toDateOnlyValue(progress.streakStartedAt)
-            : undefined,
+            : null,
         lastSignedDate:
           this.checkInStreakService.resolveEffectiveLastSignedDate(
             progress?.lastSignedDate,
             today,
-          ),
+          ) ?? null,
       },
       rewardRules,
     }
@@ -172,7 +170,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const pageQuery = this.drizzle.buildPage(query)
     const orderQuery = this.drizzle.buildOrderBy(
       query.orderBy?.trim() ||
-      JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
+        JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
       { table: this.checkInRecordTable },
     )
     const [list, total] = await Promise.all([
@@ -202,9 +200,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   // 查询当前连续签到排行榜，并补齐用户信息与名次。
-  async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
+  async getLeaderboardPage(query: PageDto) {
     const today = this.formatDateOnly(new Date())
-    const where = this.checkInStreakService.buildActiveStreakProgressWhere(today)
+    const where =
+      this.checkInStreakService.buildActiveStreakProgressWhere(today)
     const pageQuery = this.drizzle.buildPage(query)
     const orderQuery = this.drizzle.buildOrderBy(
       JSON.stringify([
@@ -244,11 +243,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       ...page,
       list: page.list.map((item, index) => ({
         rank: (page.pageIndex - 1) * page.pageSize + index + 1,
-        user: userMap.get(item.userId),
+        user: userMap.get(item.userId) ?? null,
         currentStreak: item.currentStreak,
         lastSignedDate: item.lastSignedDate
           ? this.toDateOnlyValue(item.lastSignedDate)
-          : undefined,
+          : null,
       })),
     }
   }
@@ -309,7 +308,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const pageQuery = this.drizzle.buildPage(query)
     const orderQuery = this.drizzle.buildOrderBy(
       query.orderBy?.trim() ||
-      JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
+        JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
       { table: this.checkInRecordTable },
     )
     const [list, total] = await Promise.all([
@@ -324,11 +323,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     ])
     const page = toPageResult(list, total, pageQuery)
 
-    const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
-      page.list
-        .map((record) => record.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
-    )
+    const settlementMap =
+      await this.checkInSettlementService.buildSettlementMapById(
+        page.list
+          .map((record) => record.rewardSettlementId)
+          .filter((id): id is number => typeof id === 'number'),
+      )
     const grantMap = await this.buildGrantMapForRecords(page.list)
 
     return {
@@ -340,9 +340,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
             userId: record.userId,
             signDate: this.toDateOnlyValue(record.signDate),
             recordType: record.recordType,
-            rewardSettlementId: record.rewardSettlementId,
-            resolvedRewardSourceType: record.resolvedRewardSourceType,
-            resolvedRewardRuleKey: record.resolvedRewardRuleKey,
+            rewardSettlementId: record.rewardSettlementId ?? null,
+            resolvedRewardSourceType: record.resolvedRewardSourceType ?? null,
+            resolvedRewardRuleKey: record.resolvedRewardRuleKey ?? null,
             resolvedRewardItems:
               this.checkInRewardPolicyService.parseStoredRewardItems(
                 record.resolvedRewardItems,
@@ -351,8 +351,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
                 },
               ),
             resolvedRewardOverviewIconUrl:
-              record.resolvedRewardOverviewIconUrl,
-            resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
+              record.resolvedRewardOverviewIconUrl ?? null,
+            resolvedMakeupIconUrl: record.resolvedMakeupIconUrl ?? null,
             rewardSettlement: record.rewardSettlementId
               ? this.checkInSettlementService.toRewardSettlementSummary(
                   settlementMap.get(record.rewardSettlementId) ?? null,
@@ -407,7 +407,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
 
   private toAppRecordItemView(
     record: CheckInRecordSelect,
-    grants: Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>,
+    grants: Array<
+      Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>
+    >,
   ) {
     return {
       id: record.id,
@@ -415,16 +417,18 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       updatedAt: record.updatedAt,
       signDate: this.toDateOnlyValue(record.signDate),
       recordType: record.recordType,
-      resolvedRewardSourceType: record.resolvedRewardSourceType,
-      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-      resolvedRewardItems: this.checkInRewardPolicyService.parseStoredRewardItems(
-        record.resolvedRewardItems,
-        {
-          allowEmpty: true,
-        },
-      ),
-      resolvedRewardOverviewIconUrl: record.resolvedRewardOverviewIconUrl,
-      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl,
+      resolvedRewardSourceType: record.resolvedRewardSourceType ?? null,
+      resolvedRewardRuleKey: record.resolvedRewardRuleKey ?? null,
+      resolvedRewardItems:
+        this.checkInRewardPolicyService.parseStoredRewardItems(
+          record.resolvedRewardItems,
+          {
+            allowEmpty: true,
+          },
+        ),
+      resolvedRewardOverviewIconUrl:
+        record.resolvedRewardOverviewIconUrl ?? null,
+      resolvedMakeupIconUrl: record.resolvedMakeupIconUrl ?? null,
       grants,
     }
   }
@@ -433,7 +437,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   private async listAppGrantsForRecord(
     userId: number,
     signDate: string,
-  ): Promise<Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>> {
+  ): Promise<
+    Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>
+  > {
     const grants = await this.db
       .select()
       .from(this.checkInStreakGrantTable)
@@ -445,9 +451,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       )
       .orderBy(asc(this.checkInStreakGrantTable.id))
 
-    const rewardItemMap = await this.checkInSettlementService.buildGrantRewardItemMap(
-      grants.map((grant) => grant.id),
-    )
+    const rewardItemMap =
+      await this.checkInSettlementService.buildGrantRewardItemMap(
+        grants.map((grant) => grant.id),
+      )
     return grants.map((grant) =>
       this.toAppGrantItemView(grant, rewardItemMap.get(grant.id) ?? []),
     )
@@ -459,7 +466,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   ): Promise<
     Map<
       string,
-      Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>
+      Array<
+        Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>
+      >
     >
   > {
     if (records.length === 0) {
@@ -492,7 +501,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
 
     const grantMap = new Map<
       string,
-      Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>
+      Array<
+        Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>
+      >
     >()
     for (const grant of grants) {
       const key = `${grant.userId}:${this.toDateOnlyValue(grant.triggerSignDate)}`
@@ -532,14 +543,16 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         asc(this.checkInStreakGrantTable.id),
       )
 
-    const rewardItemMap = await this.checkInSettlementService.buildGrantRewardItemMap(
-      grants.map((grant) => grant.id),
-    )
-    const settlementMap = await this.checkInSettlementService.buildSettlementMapById(
-      grants
-        .map((grant) => grant.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
-    )
+    const rewardItemMap =
+      await this.checkInSettlementService.buildGrantRewardItemMap(
+        grants.map((grant) => grant.id),
+      )
+    const settlementMap =
+      await this.checkInSettlementService.buildSettlementMapById(
+        grants
+          .map((grant) => grant.rewardSettlementId)
+          .filter((id): id is number => typeof id === 'number'),
+      )
 
     const grantMap = new Map<string, CheckInGrantItemView[]>()
     for (const grant of grants) {
@@ -557,7 +570,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         rewardOverviewIconUrl: grant.rewardOverviewIconUrl ?? null,
         repeatable: grant.repeatable,
         triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
-        rewardSettlementId: grant.rewardSettlementId,
+        rewardSettlementId: grant.rewardSettlementId ?? null,
         rewardSettlement: grant.rewardSettlementId
           ? this.checkInSettlementService.toRewardSettlementSummary(
               settlementMap.get(grant.rewardSettlementId) ?? null,
@@ -656,9 +669,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       isEnabled: config.isEnabled === 1,
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
-      makeupIconUrl: rewardDefinition.makeupIconUrl,
-      rewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl,
-      baseRewardItems: rewardDefinition.baseRewardItems,
+      makeupIconUrl: rewardDefinition.makeupIconUrl ?? null,
+      rewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl ?? null,
+      baseRewardItems: rewardDefinition.baseRewardItems ?? null,
     }
   }
 }

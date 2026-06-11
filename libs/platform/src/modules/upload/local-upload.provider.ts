@@ -4,7 +4,7 @@ import { mkdir, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { UploadProviderEnum } from './upload.type'
+import { UploadProviderEnum } from './upload.constant'
 
 @Injectable()
 export class LocalUploadProvider {

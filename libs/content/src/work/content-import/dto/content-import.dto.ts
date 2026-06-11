@@ -6,8 +6,8 @@ import {
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
-import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ContentImportItemStageEnum,
@@ -66,7 +66,7 @@ export class ContentImportItemDto {
   @StringProperty({
     description: '三方章节ID',
     example: 'chapter-001',
-    required: false,
+    nullable: true,
     validation: false,
   })
   providerChapterId!: string | null
@@ -74,7 +74,7 @@ export class ContentImportItemDto {
   @NumberProperty({
     description: '本地章节ID',
     example: 1,
-    required: false,
+    nullable: true,
     validation: false,
   })
   localChapterId!: number | null
@@ -134,7 +134,7 @@ export class ContentImportItemDto {
       stage: 'import-chapter',
     },
     nullable: true,
-    required: false,
+    required: true,
     type: WorkflowErrorFactsDto,
     validation: false,
   })
@@ -143,7 +143,8 @@ export class ContentImportItemDto {
   @DateProperty({
     description: '自动重试下次可执行时间',
     example: '2026-05-17T03:10:00.000Z',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
   nextRetryAt!: Date | null
@@ -175,7 +176,7 @@ export class ContentImportItemDto {
       stage: 'rate-limit',
     },
     nullable: true,
-    required: false,
+    required: true,
     type: WorkflowErrorFactsDto,
     validation: false,
   })
@@ -200,7 +201,7 @@ export class ContentImportItemDto {
   @ObjectProperty({
     description: '条目元数据',
     example: { providerChapterId: 'chapter-001' },
-    required: false,
+    required: true,
     validation: false,
     nullable: true,
   })

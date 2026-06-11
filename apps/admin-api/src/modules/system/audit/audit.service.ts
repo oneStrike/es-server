@@ -1,5 +1,5 @@
 import type { requestLog } from '@db/schema'
-import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto'
+import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto/audit.dto'
 import type { FastifyRequest } from 'fastify'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 

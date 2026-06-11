@@ -2,13 +2,14 @@ import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,
   EnumProperty,
-  JsonProperty,
   NestedProperty,
   NumberProperty,
+  ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -41,9 +42,9 @@ export class BaseReportDto extends BaseDto {
   @NumberProperty({
     description: '处理人 ID',
     example: 1,
-    required: false,
+    nullable: true,
   })
-  handlerId?: number | null
+  handlerId!: number | null
 
   @NumberProperty({
     description: '举报目标 ID',
@@ -81,9 +82,10 @@ export class BaseReportDto extends BaseDto {
     description: '评论层级（1=根评论；2=回复评论）',
     enum: CommentLevelEnum,
     example: CommentLevelEnum.ROOT,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  commentLevel?: CommentLevelEnum | null
+  commentLevel!: CommentLevelEnum | null
 
   @EnumProperty({
     description:
@@ -96,16 +98,16 @@ export class BaseReportDto extends BaseDto {
 
   @StringProperty({
     description: '详细说明',
-    required: false,
+    nullable: true,
   })
-  description?: string | null
+  description!: string | null
 
   @StringProperty({
     description: '证据图片URL',
     example: 'https://example.com/evidence.png',
-    required: false,
+    nullable: true,
   })
-  evidenceUrl?: string | null
+  evidenceUrl!: string | null
 
   @EnumProperty({
     description: '举报状态（1=待处理；2=处理中；3=已解决；4=已驳回）',
@@ -118,9 +120,9 @@ export class BaseReportDto extends BaseDto {
   @StringProperty({
     description: '处理备注',
     example: '已受理，待审核',
-    required: false,
+    nullable: true,
   })
-  handlingNote?: string | null
+  handlingNote!: string | null
 
   @EnumProperty({
     description:
@@ -134,10 +136,10 @@ export class BaseReportDto extends BaseDto {
   @StringProperty({
     description: '目标处置原因',
     example: '举报成立，评论违反社区规范',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  targetActionReason?: string | null
+  targetActionReason!: string | null
 
   @EnumProperty({
     description:
@@ -148,9 +150,9 @@ export class BaseReportDto extends BaseDto {
   })
   targetActionStatus!: ReportDispositionStatusEnum
 
-  @JsonProperty({
+  @ObjectProperty({
     description: '目标处置结构化结果',
-    required: false,
+    nullable: true,
     validation: false,
     example: {
       applied: true,
@@ -159,21 +161,23 @@ export class BaseReportDto extends BaseDto {
       message: '评论已隐藏',
     },
   })
-  targetActionResult?: Record<string, unknown> | null
+  targetActionResult!: Record<string, unknown> | null
 
   @DateProperty({
     description: '目标处置完成时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  targetActionAppliedAt?: Date | null
+  targetActionAppliedAt!: Date | null
 
   @DateProperty({
     description: '处理时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  handledAt?: Date | null
+  handledAt!: Date | null
 }
 
 export class ReportTargetDto extends PickType(BaseReportDto, [
@@ -181,11 +185,10 @@ export class ReportTargetDto extends PickType(BaseReportDto, [
   'targetType',
 ] as const) {}
 
-export class ReportReasonBodyDto extends PickType(BaseReportDto, [
-  'reasonType',
-  'description',
-  'evidenceUrl',
-] as const) {}
+export class ReportReasonBodyDto extends IntersectionType(
+  PickType(BaseReportDto, ['reasonType'] as const),
+  PartialType(PickType(BaseReportDto, ['description', 'evidenceUrl'] as const)),
+) {}
 
 export class CreateReportBodyDto extends IntersectionType(
   ReportTargetDto,
@@ -260,38 +263,16 @@ const AdminHandleReportStatusEnum = {
   REJECTED: ReportStatusEnum.REJECTED,
 } as const
 
-export class HandleAdminReportDto extends IdDto {
+class HandleAdminReportStatusDto extends IdDto {
   @EnumProperty({
     description: '裁决结果（3=已解决；4=已驳回）',
     enum: AdminHandleReportStatusEnum,
     example: ReportStatusEnum.RESOLVED,
   })
   status!: ReportStatusEnum.RESOLVED | ReportStatusEnum.REJECTED
+}
 
-  @StringProperty({
-    description: '处理备注',
-    example: '证据充分，裁决为有效举报',
-    required: false,
-    maxLength: 500,
-  })
-  handlingNote?: string
-
-  @EnumProperty({
-    description:
-      '目标处置动作（1=无需处置；2=隐藏评论；3=拒绝评论；4=隐藏论坛主题；5=拒绝论坛主题；6=禁用用户；7=禁言用户）',
-    enum: ReportDispositionActionEnum,
-    example: ReportDispositionActionEnum.HIDE_COMMENT,
-  })
-  targetAction!: ReportDispositionActionEnum
-
-  @StringProperty({
-    description: '目标处置原因；有效举报处置或显式无需处置时必填',
-    example: '举报成立，评论违反社区规范',
-    required: false,
-    maxLength: 500,
-  })
-  targetActionReason?: string
-
+class HandleAdminReportSanctionFieldsDto {
   @NumberProperty({
     description: '用户处罚时长（分钟）；仅用户处罚动作可用',
     example: 1440,
@@ -301,6 +282,16 @@ export class HandleAdminReportDto extends IdDto {
   sanctionDurationMinutes?: number
 }
 
+export class HandleAdminReportDto extends IntersectionType(
+  HandleAdminReportStatusDto,
+  PickType(BaseReportDto, ['targetAction'] as const),
+  PartialType(PickType(BaseReportDto, [
+    'handlingNote',
+    'targetActionReason',
+  ] as const)),
+  HandleAdminReportSanctionFieldsDto,
+) {}
+
 export class HandleAdminReportCommandDto extends IntersectionType(
   HandleAdminReportDto,
   PickType(BaseReportDto, ['handlerId'] as const),
@@ -309,52 +300,47 @@ export class HandleAdminReportCommandDto extends IntersectionType(
 class ReportTargetSceneSummaryFieldsDto {
   @NestedProperty({
     description: '举报目标展示摘要',
-    required: false,
     nullable: true,
     type: InteractionReportTargetSummaryDto,
     validation: false,
   })
-  targetSummary?: InteractionReportTargetSummaryDto | null
+  targetSummary!: InteractionReportTargetSummaryDto | null
 
   @NestedProperty({
     description: '举报业务场景展示摘要',
-    required: false,
     nullable: true,
     type: InteractionSceneSummaryDto,
     validation: false,
   })
-  sceneSummary?: InteractionSceneSummaryDto | null
+  sceneSummary!: InteractionSceneSummaryDto | null
 }
 
 class ReportCommentSummaryFieldDto {
   @NestedProperty({
     description: '被举报评论展示摘要；仅举报目标为评论时返回',
-    required: false,
     nullable: true,
     type: InteractionReportCommentSummaryDto,
     validation: false,
   })
-  commentSummary?: InteractionReportCommentSummaryDto | null
+  commentSummary!: InteractionReportCommentSummaryDto | null
 }
 
 class AdminReportActorSummaryFieldsDto {
   @NestedProperty({
     description: '举报人展示摘要',
-    required: false,
     nullable: true,
     type: InteractionAppUserSummaryDto,
     validation: false,
   })
-  reporterSummary?: InteractionAppUserSummaryDto | null
+  reporterSummary!: InteractionAppUserSummaryDto | null
 
   @NestedProperty({
     description: '处理人展示摘要',
-    required: false,
     nullable: true,
     type: InteractionActorSummaryDto,
     validation: false,
   })
-  handlerSummary?: InteractionActorSummaryDto | null
+  handlerSummary!: InteractionActorSummaryDto | null
 }
 
 export class ReportDispositionAttemptDto extends BaseDto {
@@ -362,35 +348,41 @@ export class ReportDispositionAttemptDto extends BaseDto {
     description: '举报 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   reportId!: number
 
   @EnumProperty({
-    description: '目标处置动作',
+    description:
+      '目标处置动作（1=无需处置；2=隐藏评论；3=拒绝评论；4=隐藏论坛主题；5=拒绝论坛主题；6=禁用用户；7=禁言用户）',
     enum: ReportDispositionActionEnum,
     example: ReportDispositionActionEnum.HIDE_COMMENT,
     required: true,
+    validation: false,
   })
   targetAction!: ReportDispositionActionEnum
 
   @StringProperty({
     description: '失败码',
     example: 'OWNER_DISPOSITION_FAILED',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  failureCode?: string | null
+  failureCode!: string | null
 
   @StringProperty({
     description: '失败信息',
     example: '评论状态已变化，请刷新后重试',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  failureMessage?: string | null
+  failureMessage!: string | null
 
   @DateProperty({
     description: '尝试发生时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
+    validation: false,
   })
   attemptedAt!: Date
 }
@@ -398,12 +390,11 @@ export class ReportDispositionAttemptDto extends BaseDto {
 class AdminReportDispositionAttemptFieldDto {
   @NestedProperty({
     description: '最新未解决处置失败记录',
-    required: false,
     nullable: true,
     type: ReportDispositionAttemptDto,
     validation: false,
   })
-  latestFailedDispositionAttempt?: ReportDispositionAttemptDto | null
+  latestFailedDispositionAttempt!: ReportDispositionAttemptDto | null
 }
 
 class AdminReportPageSummaryFieldsDto extends IntersectionType(

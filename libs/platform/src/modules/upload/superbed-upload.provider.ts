@@ -10,7 +10,7 @@ import type {
 } from './upload.type'
 import { openAsBlob } from 'node:fs'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
-import { UploadProviderEnum } from './upload.type'
+import { UploadProviderEnum } from './upload.constant'
 
 @Injectable()
 export class SuperbedUploadProvider {

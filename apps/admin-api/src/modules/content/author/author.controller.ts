@@ -1,7 +1,7 @@
 import { WorkAuthorService } from '@libs/content/author/author.service';
-import { AuthorFollowCountRepairResultDto, AuthorPageResponseDto, AuthorWorkCountRepairResultDto, BaseAuthorDto, CreateAuthorDto, QueryAuthorDto, UpdateAuthorDto, UpdateAuthorRecommendedDto, UpdateAuthorStatusDto } from '@libs/content/author/dto/author.dto';
+import { AuthorFollowCountRepairResultDto, AuthorOutputBaseDto, AuthorPageResponseDto, AuthorWorkCountRepairResultDto, CreateAuthorDto, QueryAuthorDto, UpdateAuthorDto, UpdateAuthorRecommendedDto, UpdateAuthorStatusDto } from '@libs/content/author/dto/author.dto';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto';
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -49,7 +49,7 @@ export class ContentAuthorController {
   @Get('detail')
   @ApiDoc({
     summary: '获取作者详情',
-    model: BaseAuthorDto,
+    model: AuthorOutputBaseDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.authorService.getAuthorDetail(query)

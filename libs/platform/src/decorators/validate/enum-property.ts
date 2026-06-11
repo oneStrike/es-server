@@ -1,7 +1,7 @@
 import type { EnumPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
-import { IsOptional } from 'class-validator'
+import { IsOptional, ValidateIf } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'
 import {
   createEnumValueValidator,
@@ -61,6 +61,10 @@ export function EnumProperty(options: EnumPropertyOptions) {
   const decorators: PropertyDecorator[] = []
 
   if (validation) {
+    if (options.nullable) {
+      decorators.push(ValidateIf((_object, value) => value !== null))
+    }
+
     decorators.push(
       createEnumValueValidator(options.enum, enumArtifacts, {
         message: `必须是有效的枚举值: ${enumArtifacts.validValues.join(', ')}`,

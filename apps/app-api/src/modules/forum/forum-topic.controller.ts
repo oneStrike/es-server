@@ -22,7 +22,7 @@ import {
   OptionalAuth,
 } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import {
   extractRequestContext,

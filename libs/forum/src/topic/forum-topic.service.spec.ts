@@ -3,6 +3,7 @@
 import type { Db } from '@db/core'
 import type { ForumTopicSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
+import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { Test } from '@nestjs/testing'
@@ -211,6 +212,7 @@ describe('ForumTopicService facade delegation', () => {
         updateTopicDto,
         {},
         2,
+        {},
       )
 
       await expect(
@@ -221,6 +223,7 @@ describe('ForumTopicService facade delegation', () => {
         topic,
         {},
         2,
+        {},
       )
 
       await expect(service.deleteTopic(1, {}, 2)).resolves.toBe('deleteTopic')
@@ -407,6 +410,7 @@ describe('ForumTopicService DI smoke', () => {
         { provide: ForumTopicService, useValue: service },
         { provide: CommentService, useValue: {} },
         { provide: ForumModeratorActionLogService, useValue: {} },
+        { provide: GrowthRewardSettlementService, useValue: {} },
       ],
     }).compile()
 

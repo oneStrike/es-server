@@ -2,11 +2,18 @@ import {
   ArrayProperty,
   BooleanProperty,
   DateProperty,
+  EnumProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { PickType } from '@nestjs/swagger'
 
+import {
+  MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
+  MessageNotificationCategoryKey,
+} from '../../notification/notification.constant'
 import { BaseNotificationUnreadDto } from '../../notification/dto/notification-unread.dto'
 /**
  * 收件箱通知摘要 DTO。
@@ -15,8 +22,20 @@ export class InboxNotificationBriefDto {
   @NumberProperty({ description: '通知ID', example: 1, validation: false })
   id!: number
 
-  @StringProperty({ description: '通知类型', example: '1', validation: false })
-  type!: string
+  @EnumProperty({
+    description: '通知分类键，表示通知所属业务分类',
+    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
+    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
+    validation: false,
+  })
+  categoryKey!: MessageNotificationCategoryKey
+
+  @StringProperty({
+    description: '通知分类中文标签',
+    example: '评论回复',
+    validation: false,
+  })
+  categoryLabel!: string
 
   @StringProperty({
     description: '通知标题',
@@ -28,9 +47,10 @@ export class InboxNotificationBriefDto {
   @StringProperty({
     description: '通知内容',
     example: '你收到了一条新的评论回复',
+    nullable: true,
     validation: false,
   })
-  content!: string
+  content!: string | null
 
   @DateProperty({
     description: '创建时间',
@@ -50,40 +70,35 @@ export class InboxChatBriefDto {
   @StringProperty({
     description: '最后消息ID',
     example: '123456',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  lastMessageId?: string
+  lastMessageId!: string | null
 
   @DateProperty({
     description: '最后消息时间',
     example: '2026-03-07T12:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  lastMessageAt?: Date
+  lastMessageAt!: Date | null
 
   @StringProperty({
     description: '最后消息内容',
     example: 'hello',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  lastMessageContent?: string
+  lastMessageContent!: string | null
 
   @NumberProperty({
     description: '最后发送者ID',
     example: 1,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  lastSenderId?: number
+  lastSenderId!: number | null
 }
-
-/**
- * 收件箱通知未读摘要 DTO。
- */
-export class InboxNotificationUnreadDto extends BaseNotificationUnreadDto {}
 
 /**
  * 收件箱摘要 DTO。
@@ -91,11 +106,11 @@ export class InboxNotificationUnreadDto extends BaseNotificationUnreadDto {}
 export class InboxSummaryDto {
   @NestedProperty({
     description: '通知未读摘要',
-    type: InboxNotificationUnreadDto,
+    type: BaseNotificationUnreadDto,
     validation: false,
     nullable: false,
   })
-  notificationUnread!: InboxNotificationUnreadDto
+  notificationUnread!: BaseNotificationUnreadDto
 
   @NumberProperty({ description: '聊天未读数', example: 2, validation: false })
   chatUnreadCount!: number
@@ -106,20 +121,18 @@ export class InboxSummaryDto {
   @NestedProperty({
     description: '最新通知',
     type: InboxNotificationBriefDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  latestNotification!: InboxNotificationBriefDto
+  latestNotification!: InboxNotificationBriefDto | null
 
   @NestedProperty({
     description: '最新聊天',
     type: InboxChatBriefDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  latestChat!: InboxChatBriefDto
+  latestChat!: InboxChatBriefDto | null
 }
 
 /**
@@ -129,31 +142,35 @@ export class InboxTimelineItemDto {
   @StringProperty({
     description: '来源类型',
     example: 'notification',
+    validation: false,
   })
   sourceType!: 'notification' | 'chat'
 
   @DateProperty({
     description: '时间',
     example: '2026-03-07T12:00:00.000Z',
+    validation: false,
   })
   createdAt!: Date
 
   @StringProperty({
     description: '标题',
     example: '收到新的评论回复',
+    validation: false,
   })
   title!: string
 
   @StringProperty({
     description: '摘要',
     example: '你收到了一条新的评论回复',
-    required: false,
+    validation: false,
   })
-  content?: string
+  content!: string
 
   @StringProperty({
     description: '业务ID',
     example: 'n:1',
+    validation: false,
   })
   bizId!: string
 }
@@ -162,17 +179,9 @@ export class InboxTimelineItemDto {
  * 收件箱时间线查询 DTO。
  * 使用 keyset 游标翻页，避免深页跳页扫描。
  */
-export class QueryInboxTimelineDto {
-  @NumberProperty({
-    description: '单页大小，最大100，默认15',
-    example: 15,
-    max: 100,
-    min: 1,
-    required: false,
-    default: 15,
-  })
-  pageSize?: number
-
+export class QueryInboxTimelineDto extends PickType(PageDto, [
+  'pageSize',
+] as const) {
   @StringProperty({
     description: '下一页游标',
     example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJiaXpJZCI6Im46MSJ9',
@@ -195,10 +204,10 @@ export class InboxTimelineResponseDto {
   @StringProperty({
     description: '下一页游标',
     example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJiaXpJZCI6Im46MSJ9',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  nextCursor?: string | null
+  nextCursor!: string | null
 
   @BooleanProperty({
     description: '是否还有更多消息',

@@ -4,10 +4,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
-  OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
@@ -21,11 +20,18 @@ import {
  * 版主操作日志基础 DTO。
  * 严格对应 forum_moderator_action_log 表对外可查询字段。
  */
-export class BaseForumModeratorActionLogDto extends IdDto {
+export class BaseForumModeratorActionLogDto {
+  @NumberProperty({
+    description: '主键ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
   @NumberProperty({
     description: '版主ID；后台管理员发起的治理日志为空',
     example: 1,
-    required: false,
     nullable: true,
     min: 1,
   })
@@ -77,24 +83,9 @@ export class BaseForumModeratorActionLogDto extends IdDto {
     example: '隐藏评论',
     required: true,
     maxLength: 200,
+    validation: false,
   })
   actionDescription!: string
-
-  @StringProperty({
-    description: '操作前数据快照',
-    example: '{"isHidden":false}',
-    required: false,
-    validation: false,
-  })
-  beforeData?: string | null
-
-  @StringProperty({
-    description: '操作后数据快照',
-    example: '{"isHidden":true}',
-    required: false,
-    validation: false,
-  })
-  afterData?: string | null
 
   @DateProperty({
     description: '操作时间',
@@ -105,11 +96,29 @@ export class BaseForumModeratorActionLogDto extends IdDto {
   createdAt!: Date
 }
 
-export class ForumModeratorActionLogDto extends BaseForumModeratorActionLogDto {}
+class ForumModeratorActionLogSnapshotOutputFieldsDto {
+  @StringProperty({
+    description: '操作前数据快照',
+    example: '{"isHidden":false}',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  beforeData!: string | null
 
-export class AppForumModeratorActionLogDto extends OmitType(
+  @StringProperty({
+    description: '操作后数据快照',
+    example: '{"isHidden":true}',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  afterData!: string | null
+}
+
+export class ForumModeratorActionLogDto extends IntersectionType(
   BaseForumModeratorActionLogDto,
-  ['beforeData', 'afterData'] as const,
+  ForumModeratorActionLogSnapshotOutputFieldsDto,
 ) {}
 
 class QueryForumModeratorActionLogFilterDto extends PartialType(

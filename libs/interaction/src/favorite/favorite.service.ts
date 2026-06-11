@@ -316,7 +316,7 @@ export class FavoriteService {
       ...page,
       list: page.list.map((item) => ({
         ...item,
-        work: detailMaps.get(item.targetType)?.get(item.targetId),
+        work: detailMaps.get(item.targetType)?.get(item.targetId) ?? null,
       })),
     }
   }
@@ -335,7 +335,7 @@ export class FavoriteService {
       ...page,
       list: page.list.map((item) => ({
         ...item,
-        topic: detailMaps.get(item.targetType)?.get(item.targetId),
+        topic: detailMaps.get(item.targetType)?.get(item.targetId) ?? null,
       })),
     }
   }

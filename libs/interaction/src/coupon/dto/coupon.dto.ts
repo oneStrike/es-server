@@ -6,8 +6,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
 import {
   CouponInstanceStatusEnum,
   CouponRedemptionTargetTypeEnum,
@@ -92,6 +93,77 @@ export class BaseCouponDefinitionDto extends BaseDto {
   isEnabled?: boolean
 }
 
+class CouponDefinitionDefaultOutputFieldsDto {
+  @NumberProperty({
+    description: '折扣金额',
+    example: 10,
+    min: 0,
+    validation: false,
+  })
+  discountAmount!: number
+
+  @NumberProperty({
+    description: '折扣率基点，10000=不打折',
+    example: 9000,
+    min: 0,
+    max: 10000,
+    validation: false,
+  })
+  discountRateBps!: number
+
+  @NumberProperty({
+    description: '单张券可用次数',
+    example: 1,
+    min: 1,
+    validation: false,
+  })
+  usageLimit!: number
+
+  @NumberProperty({
+    description: '有效天数，后台创建的券定义必须为正整数',
+    example: 7,
+    min: 0,
+    validation: false,
+  })
+  validDays!: number
+
+  @NumberProperty({
+    description: 'VIP 试用天数',
+    example: 7,
+    min: 0,
+    validation: false,
+  })
+  benefitDays!: number
+
+  @NumberProperty({
+    description: '补签次数',
+    example: 1,
+    min: 0,
+    validation: false,
+  })
+  benefitCount!: number
+
+  @BooleanProperty({
+    description: '是否启用',
+    example: true,
+    validation: false,
+  })
+  isEnabled!: boolean
+}
+
+export class CouponDefinitionOutputDto extends IntersectionType(
+  OmitType(BaseCouponDefinitionDto, [
+    'discountAmount',
+    'discountRateBps',
+    'usageLimit',
+    'validDays',
+    'benefitDays',
+    'benefitCount',
+    'isEnabled',
+  ] as const),
+  CouponDefinitionDefaultOutputFieldsDto,
+) {}
+
 export class CreateCouponDefinitionDto extends PickType(
   BaseCouponDefinitionDto,
   [
@@ -134,15 +206,6 @@ export class GrantCouponDto {
     example: 1,
   })
   couponDefinitionId!: number
-
-  @EnumProperty({
-    description:
-      '兼容旧客户端字段；后台发券服务端固定按后台发放记录',
-    enum: CouponSourceTypeEnum,
-    example: CouponSourceTypeEnum.ADMIN_GRANT,
-    required: false,
-  })
-  sourceType?: CouponSourceTypeEnum
 
   @NumberProperty({
     description: '来源 ID',
@@ -223,12 +286,14 @@ export class UserCouponItemDto extends BaseDto {
   @NumberProperty({
     description: '用户 ID',
     example: 1,
+    validation: false,
   })
   userId!: number
 
   @NumberProperty({
     description: '券定义 ID',
     example: 1,
+    validation: false,
   })
   couponDefinitionId!: number
 
@@ -236,6 +301,7 @@ export class UserCouponItemDto extends BaseDto {
     description: '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）',
     enum: CouponTypeEnum,
     example: CouponTypeEnum.READING,
+    validation: false,
   })
   couponType!: CouponTypeEnum
 
@@ -243,12 +309,14 @@ export class UserCouponItemDto extends BaseDto {
     description: '券状态（1=可用；2=已用完；3=已过期；4=已撤销）',
     enum: CouponInstanceStatusEnum,
     example: CouponInstanceStatusEnum.AVAILABLE,
+    validation: false,
   })
   status!: CouponInstanceStatusEnum
 
   @NumberProperty({
     description: '剩余次数',
     example: 1,
+    validation: false,
   })
   remainingUses!: number
 
@@ -262,10 +330,10 @@ export class UserCouponItemDto extends BaseDto {
   @DateProperty({
     description: '过期时间',
     example: '2026-06-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  expiresAt?: Date | null
+  expiresAt!: Date | null
 }
 
 export class QueryUserCouponDto extends PageDto {
@@ -316,6 +384,7 @@ export class CouponRedemptionResultDto extends BaseDto {
   @NumberProperty({
     description: '券实例 ID',
     example: 1,
+    validation: false,
   })
   couponInstanceId!: number
 
@@ -323,6 +392,7 @@ export class CouponRedemptionResultDto extends BaseDto {
     description: '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）',
     enum: CouponTypeEnum,
     example: CouponTypeEnum.READING,
+    validation: false,
   })
   couponType!: CouponTypeEnum
 
@@ -330,13 +400,15 @@ export class CouponRedemptionResultDto extends BaseDto {
     description: '目标类型（1=漫画章节；2=小说章节；3=VIP；4=签到）',
     enum: CouponRedemptionTargetTypeEnum,
     example: CouponRedemptionTargetTypeEnum.COMIC_CHAPTER,
+    validation: false,
   })
   targetType!: CouponRedemptionTargetTypeEnum
 
   @NumberProperty({
     description: '目标 ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
   targetId!: number | null

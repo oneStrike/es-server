@@ -371,10 +371,10 @@ describe('chat.service conversation list visibility', () => {
       },
     })
     expect(result.list[0]).not.toHaveProperty('bizKey')
-    expect(result.list[0].lastMessageId).toBeUndefined()
-    expect(result.list[0].lastMessageAt).toBeUndefined()
-    expect(result.list[0].lastSenderId).toBeUndefined()
-    expect(result.list[0].lastMessageContent).toBeUndefined()
+    expect(result.list[0].lastMessageId).toBeNull()
+    expect(result.list[0].lastMessageAt).toBeNull()
+    expect(result.list[0].lastSenderId).toBeNull()
+    expect(result.list[0].lastMessageContent).toBeNull()
     expect(mocks.messageMapQueryWhere).not.toHaveBeenCalled()
   })
 })
@@ -931,12 +931,14 @@ describe('chat.service realtime message fanout', () => {
     })
   })
 
-  it('keeps null bodyTokens as undefined in chat.message.new payloads', async () => {
+  it('keeps nullable message fields as explicit null in chat.message.new payloads', async () => {
     const { service, mocks } = createService()
     mocks.chatMessageFindFirst.mockResolvedValueOnce(
       createMessage({
         id: 205n,
         bodyTokens: null,
+        clientMessageId: null,
+        payload: null,
       }),
     )
     mocks.chatConversationMemberFindMany.mockResolvedValueOnce(
@@ -951,7 +953,12 @@ describe('chat.service realtime message fanout', () => {
     const [, payload] =
       mocks.messageNotificationRealtimeService.emitChatMessageNew.mock.calls[0]
 
-    expect(payload.message.bodyTokens).toBeUndefined()
+    expect(payload.message).toMatchObject({
+      id: '205',
+      bodyTokens: null,
+      clientMessageId: null,
+      payload: null,
+    })
   })
 
   it('emits media messages with empty content and unpolluted payloads', async () => {
@@ -1026,7 +1033,7 @@ describe('chat.service realtime message fanout', () => {
     })
   })
 
-  it('omits non-object system payloads in realtime outputs', async () => {
+  it('returns null for non-object system payloads in realtime outputs', async () => {
     const { service, mocks } = createService()
     mocks.chatMessageFindFirst.mockResolvedValueOnce(
       createMessage({
@@ -1047,10 +1054,10 @@ describe('chat.service realtime message fanout', () => {
     const [, payload] =
       mocks.messageNotificationRealtimeService.emitChatMessageNew.mock.calls[0]
 
-    expect(payload.message.payload).toBeUndefined()
+    expect(payload.message.payload).toBeNull()
   })
 
-  it('omits malformed media payloads in realtime outputs', async () => {
+  it('returns null for malformed media payloads in realtime outputs', async () => {
     const { service, mocks } = createService()
     mocks.chatMessageFindFirst.mockResolvedValueOnce(
       createMessage({
@@ -1075,7 +1082,7 @@ describe('chat.service realtime message fanout', () => {
     const [, payload] =
       mocks.messageNotificationRealtimeService.emitChatMessageNew.mock.calls[0]
 
-    expect(payload.message.payload).toBeUndefined()
+    expect(payload.message.payload).toBeNull()
   })
 })
 

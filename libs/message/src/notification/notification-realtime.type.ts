@@ -32,8 +32,8 @@ export interface NotificationChatMessageNewPayload {
 export interface NotificationChatConversationUpdatePayload {
   conversationId: number
   unreadCount: number
-  lastReadAt?: Date
-  lastReadMessageId?: string
+  lastReadAt?: Date | null
+  lastReadMessageId?: string | null
   lastMessageId?: string
   lastMessageAt?: Date
   lastSenderId?: number

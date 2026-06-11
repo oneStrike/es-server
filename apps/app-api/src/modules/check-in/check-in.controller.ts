@@ -1,5 +1,4 @@
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
-import { CheckInCalendarDetailResponseDto } from '@libs/growth/check-in/dto/check-in-calendar-app.dto'
 import { QueryCheckInCalendarDetailDto } from '@libs/growth/check-in/dto/check-in-calendar-query.dto'
 import {
   AppCheckInActionResponseDto,
@@ -11,10 +10,9 @@ import {
   AppCheckInSummaryResponseDto,
   CheckInLeaderboardItemDto,
   CheckInStreakDetailResponseDto,
-  QueryCheckInLeaderboardDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -57,7 +55,7 @@ export class CheckInController {
   @Get('calendar/detail')
   @ApiDoc({
     summary: '获取目标日期所属周期的签到日历',
-    model: CheckInCalendarDetailResponseDto,
+    model: AppCheckInCalendarResponseDto,
   })
   // 返回当前用户在目标日期所属周期内的签到日历视图。
   async getCalendarDetail(
@@ -86,7 +84,7 @@ export class CheckInController {
     model: CheckInLeaderboardItemDto,
   })
   // 分页返回当前连续签到排行榜。
-  async getLeaderboardPage(@Query() query: QueryCheckInLeaderboardDto) {
+  async getLeaderboardPage(@Query() query: PageDto) {
     return this.checkInService.getLeaderboardPage(query)
   }
 

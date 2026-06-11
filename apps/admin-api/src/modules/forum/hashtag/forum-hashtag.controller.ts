@@ -1,5 +1,5 @@
 import {
-  BaseForumHashtagDto,
+  AdminForumHashtagDto,
   CreateForumHashtagDto,
   QueryForumHashtagDto,
   UpdateForumHashtagAuditStatusDto,
@@ -9,7 +9,7 @@ import {
 import { ForumHashtagService } from '@libs/forum/hashtag/forum-hashtag.service'
 import { AuditRoleEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -23,7 +23,7 @@ export class ForumHashtagController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询论坛话题',
-    model: BaseForumHashtagDto,
+    model: AdminForumHashtagDto,
   })
   async getPage(@Query() query: QueryForumHashtagDto) {
     return this.forumHashtagService.getHashtagPage({
@@ -38,7 +38,7 @@ export class ForumHashtagController {
   @Get('detail')
   @ApiDoc({
     summary: '获取论坛话题详情',
-    model: BaseForumHashtagDto,
+    model: AdminForumHashtagDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.forumHashtagService.getHashtagDetail(query.id)

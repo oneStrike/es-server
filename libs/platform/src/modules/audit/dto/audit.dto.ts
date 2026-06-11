@@ -9,7 +9,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { AuditActionTypeEnum } from '../audit-action.constant'
 

@@ -3,10 +3,10 @@ import type { UserNotificationSelect } from '@db/schema'
 /** inbox 最新聊天摘要，供消息中心聚合响应复用。 */
 export interface InboxLatestChatSummary {
   conversationId: number
-  lastMessageId?: string
-  lastMessageAt?: Date
-  lastMessageContent?: string
-  lastSenderId?: number
+  lastMessageId: string | null
+  lastMessageAt: Date | null
+  lastMessageContent: string | null
+  lastSenderId: number | null
 }
 
 /** 原生 SQL 查询结果行容器。 */

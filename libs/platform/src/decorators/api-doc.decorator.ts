@@ -23,6 +23,8 @@ export interface ApiDocOptions<TModel> {
   model?: Type<TModel> | Record<string, any>
   /** 是否返回数组 */
   isArray?: boolean
+  /** data 是否允许为 null；用于真实返回整个 data=null 的接口 */
+  nullable?: boolean
 }
 
 /**
@@ -73,7 +75,7 @@ function baseResponse(summary: string) {
 export function ApiDoc<TModel extends Type<object>>(
   options: ApiDocOptions<TModel>,
 ) {
-  const { summary, model, isArray } = options
+  const { summary, model, isArray, nullable } = options
   let dataSchema
   const response = baseResponse(summary)
   const decorators = [ApiOperation({ summary })]
@@ -100,6 +102,13 @@ export function ApiDoc<TModel extends Type<object>>(
         type: 'array',
         items: dataSchema,
       }
+    }
+
+    if (nullable) {
+      dataSchema =
+        dataSchema.$ref !== undefined
+          ? { allOf: [dataSchema], nullable: true }
+          : { ...dataSchema, nullable: true }
     }
   }
   decorators.push(

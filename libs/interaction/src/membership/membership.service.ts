@@ -610,7 +610,11 @@ export class MembershipService {
         .offset(pageQuery.offset),
       this.db.$count(this.membershipPageConfig, where),
     ])
-    const page = toPageResult(list, total, pageQuery)
+    const page = toPageResult(
+      list.map((item) => this.toMembershipPageConfigOutput(item)),
+      total,
+      pageQuery,
+    )
     const listWithAgreements = await this.withPageAgreements(page.list)
     return {
       ...page,
@@ -664,7 +668,9 @@ export class MembershipService {
     }
     return pageConfigs.map((pageConfig) => ({
       ...pageConfig,
-      agreements: agreementsByPageConfigId.get(pageConfig.id) ?? [],
+      agreements: (agreementsByPageConfigId.get(pageConfig.id) ?? []).map(
+        (agreement) => this.toAgreementListItemOutput(agreement),
+      ),
     }))
   }
 
@@ -1305,7 +1311,7 @@ export class MembershipService {
       conditions.push(eq(this.membershipBenefitDefinition.isEnabled, true))
     }
 
-    return runner
+    const rows = await runner
       .select({
         id: this.membershipPlanBenefit.id,
         planId: this.membershipPlanBenefit.planId,
@@ -1343,6 +1349,13 @@ export class MembershipService {
         asc(this.membershipPlanBenefit.sortOrder),
         asc(this.membershipPlanBenefit.id),
       )
+
+    return rows.map((row) => ({
+      ...row,
+      benefitValue: this.asBenefitValueRecord(
+        row.benefitValue as BenefitValueRecord | null | undefined,
+      ),
+    }))
   }
 
   // 创建 VIP 订阅支付订单，并冻结下单时的购买上下文。
@@ -1396,10 +1409,11 @@ export class MembershipService {
   private async resolveEnabledMembershipAgreementSnapshots(
     pageConfig: MembershipPageConfigSelect,
   ) {
-    const agreements = await this.getMembershipPageAgreementItems(
-      pageConfig.id,
-      { publishedOnly: true },
-    )
+    const agreements = (
+      await this.getMembershipPageAgreementItems(pageConfig.id, {
+        publishedOnly: true,
+      })
+    ).map((agreement) => this.toAgreementListItemOutput(agreement))
     if (agreements.length === 0) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -1487,10 +1501,11 @@ export class MembershipService {
     dto: QueryVipSubscriptionPageDto = {},
   ) {
     const pageConfig = await this.getEnabledMembershipPageConfig(dto.pageKey)
-    const agreements = await this.getMembershipPageAgreementItems(
-      pageConfig.id,
-      { publishedOnly: true },
-    )
+    const agreements = (
+      await this.getMembershipPageAgreementItems(pageConfig.id, {
+        publishedOnly: true,
+      })
+    ).map((agreement) => this.toAgreementListItemOutput(agreement))
     const plans = await this.getEnabledMembershipPlanListForPage(pageConfig.id)
     const planIds = plans.map((plan) => plan.id)
     const benefits =
@@ -1498,10 +1513,12 @@ export class MembershipService {
     const currentSubscription =
       await this.resolveMembershipSubscriptionSummary(userId)
 
+    const outputPageConfig = this.toMembershipPageConfigOutput(pageConfig)
     return {
       pageConfig: {
-        ...pageConfig,
+        ...outputPageConfig,
         agreements,
+        plans,
       },
       plans,
       benefits,
@@ -1700,5 +1717,27 @@ export class MembershipService {
     const output = new Date(input)
     output.setDate(output.getDate() + days)
     return output
+  }
+
+  private toMembershipPageConfigOutput(config: MembershipPageConfigSelect) {
+    return {
+      ...config,
+      memberNoticeItems: Array.isArray(config.memberNoticeItems)
+        ? config.memberNoticeItems.map(String)
+        : null,
+    }
+  }
+
+  private toAgreementListItemOutput<
+    TAgreement extends {
+      pageConfigId?: number
+      publishedAt?: Date | null
+    },
+  >(agreement: TAgreement) {
+    const { pageConfigId: _pageConfigId, publishedAt, ...output } = agreement
+    return {
+      ...output,
+      publishedAt: publishedAt ?? null,
+    }
   }
 }

@@ -3,10 +3,12 @@ import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto';
 import { ContentTypeEnum } from '@libs/platform/constant';
 import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty } from '@libs/platform/decorators';
 
-import { PageDto, UserIdDto } from '@libs/platform/dto';
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { UserIdDto } from '@libs/platform/dto/base.dto'
 
 import {
   IntersectionType,
+  OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
@@ -35,17 +37,17 @@ export class BaseReadingStateDto extends UserIdDto {
     description: '最近阅读时间',
     example: '2026-03-10T08:00:00.000Z',
     required: true,
-    validation: false,
   })
   lastReadAt!: Date
 
   @NumberProperty({
     description: '最近阅读的章节 ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     min: 1,
   })
-  lastReadChapterId?: number | null
+  lastReadChapterId!: number | null
 }
 
 export class QueryReadingHistoryDto extends IntersectionType(
@@ -104,10 +106,10 @@ export class ReadingHistoryWorkSnapshotDto extends PickType(BaseWorkDto, [
   @BooleanProperty({
     description: '作品是否应从历史中移除',
     example: false,
-    required: false,
+    required: true,
     validation: false,
   })
-  shouldDelete?: boolean
+  shouldDelete!: boolean
 }
 
 export class ReadingHistoryChapterSnapshotDto extends PickType(
@@ -117,13 +119,27 @@ export class ReadingHistoryChapterSnapshotDto extends PickType(
   @BooleanProperty({
     description: '章节是否应从历史中移除',
     example: false,
-    required: false,
+    required: true,
     validation: false,
   })
-  shouldDelete?: boolean
+  shouldDelete!: boolean
 }
 
-export class ReadingHistoryWorkDto extends BaseReadingStateDto {
+class ReadingHistoryContinueChapterFieldDto {
+  @NestedProperty({
+    description: '继续阅读章节',
+    type: ReadingHistoryChapterSnapshotDto,
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  continueChapter!: ReadingHistoryChapterSnapshotDto | null
+}
+
+export class ReadingHistoryWorkDto extends IntersectionType(
+  OmitType(BaseReadingStateDto, ['userId'] as const),
+  ReadingHistoryContinueChapterFieldDto,
+) {
   @NestedProperty({
     description: '作品信息',
     type: ReadingHistoryWorkSnapshotDto,
@@ -132,12 +148,4 @@ export class ReadingHistoryWorkDto extends BaseReadingStateDto {
     nullable: false,
   })
   work!: ReadingHistoryWorkSnapshotDto
-
-  @NestedProperty({
-    description: '继续阅读章节',
-    type: ReadingHistoryChapterSnapshotDto,
-    required: false,
-    validation: false,
-  })
-  continueChapter?: ReadingHistoryChapterSnapshotDto
 }

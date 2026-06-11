@@ -1,8 +1,9 @@
 import type { SQL } from 'drizzle-orm'
+import type { WorkCategorySelect } from '@db/schema'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
@@ -99,7 +100,11 @@ export class WorkCategoryService {
       this.db.$count(this.workCategory, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toCategoryOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   // 获取分类详情，未命中时抛出业务异常，避免上层误把空结果当成可编辑分类。
@@ -113,7 +118,7 @@ export class WorkCategoryService {
         '分类不存在',
       )
     }
-    return category
+    return this.toCategoryOutputDto(category)
   }
 
   // 更新分类，禁用前校验无关联作品；名称重复由共享错误处理转换为业务异常。
@@ -267,5 +272,14 @@ export class WorkCategoryService {
       .from(this.workCategory)
 
     return row?.value ?? 0
+  }
+
+  private toCategoryOutputDto(category: WorkCategorySelect) {
+    return {
+      ...category,
+      icon: category.icon ?? null,
+      contentType: category.contentType ?? null,
+      description: category.description ?? null,
+    }
   }
 }

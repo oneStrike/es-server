@@ -20,16 +20,16 @@ export class BaseCheckInPatternRewardRuleDto {
   @NumberProperty({
     description: '按周固定星期几时使用，1=周一；7=周日。',
     example: 1,
-    required: false,
+    nullable: true,
   })
-  weekday?: number | null
+  weekday!: number | null
 
   @NumberProperty({
     description: '按月固定日期时使用，1..31。',
     example: 15,
-    required: false,
+    nullable: true,
   })
-  monthDay?: number | null
+  monthDay!: number | null
 
   @ArrayProperty({
     description: '周期模式奖励项列表。',
@@ -40,8 +40,8 @@ export class BaseCheckInPatternRewardRuleDto {
   @StringProperty({
     description: '该周期奖励概览图标 URL。',
     example: 'https://cdn.example.com/check-in/pattern-overview.png',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  rewardOverviewIconUrl?: string | null
+  rewardOverviewIconUrl!: string | null
 }

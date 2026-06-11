@@ -344,24 +344,24 @@ export class UserService {
     return {
       id: user.id,
       account: user.account,
-      phoneNumber: user.phoneNumber,
-      emailAddress: user.emailAddress,
-      levelId: user.levelId,
+      phoneNumber: user.phoneNumber ?? null,
+      emailAddress: user.emailAddress ?? null,
+      levelId: user.levelId ?? null,
       nickname: user.nickname,
-      avatarUrl: user.avatarUrl,
-      profileBackgroundImageUrl: user.profileBackgroundImageUrl,
-      signature: user.signature,
-      bio: user.bio,
+      avatarUrl: user.avatarUrl ?? null,
+      profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? null,
+      signature: user.signature ?? null,
+      bio: user.bio ?? null,
       isEnabled: user.isEnabled,
       genderType: user.genderType,
-      birthDate: user.birthDate,
+      birthDate: user.birthDate ?? null,
       points: growth?.points ?? 0,
       experience: growth?.experience ?? 0,
       status: user.status,
-      banReason: user.banReason,
-      banUntil: user.banUntil,
-      lastLoginAt: user.lastLoginAt,
-      lastLoginIp: user.lastLoginIp,
+      banReason: user.banReason ?? null,
+      banUntil: user.banUntil ?? null,
+      lastLoginAt: user.lastLoginAt ?? null,
+      lastLoginIp: user.lastLoginIp ?? null,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }
@@ -380,7 +380,7 @@ export class UserService {
     const canFollow = user.isEnabled && !isBanned
     const reason = !user.isEnabled
       ? user.banReason || '账号已被禁用'
-      : user.banReason || undefined
+      : (user.banReason ?? null)
 
     return {
       isEnabled: user.isEnabled,
@@ -392,7 +392,7 @@ export class UserService {
       canFavorite,
       canFollow,
       reason,
-      until: user.banUntil,
+      until: user.banUntil ?? null,
     }
   }
 
@@ -430,8 +430,8 @@ export class UserService {
       ? {
           id: level.id,
           name: level.name,
-          icon: level.icon,
-          color: level.color,
+          icon: level.icon ?? null,
+          color: level.color ?? null,
           requiredExperience: level.requiredExperience,
         }
       : undefined

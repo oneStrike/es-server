@@ -6,7 +6,7 @@ import type {
 } from './upload.type'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import * as qiniu from 'qiniu'
-import { UploadProviderEnum } from './upload.type'
+import { UploadProviderEnum } from './upload.constant'
 
 const TRAILING_SLASH_REGEX = /\/+$/
 const HTTP_PREFIX_REGEX = /^https?:\/\//i

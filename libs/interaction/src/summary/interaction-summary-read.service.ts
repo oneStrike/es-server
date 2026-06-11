@@ -243,7 +243,7 @@ export class InteractionSummaryReadService {
         id: admin.id,
         username: admin.username,
         nickname: admin.username,
-        avatar: admin.avatar ?? undefined,
+        avatar: admin.avatar ?? null,
         roleName: this.getAdminUserRoleName(admin.role as AdminUserRoleEnum),
       })
     }
@@ -281,9 +281,9 @@ export class InteractionSummaryReadService {
     for (const [moderatorId, user] of moderatorMap) {
       summaryMap.set(`moderator:${moderatorId}`, {
         id: user.id,
-        username: user.nickname,
-        nickname: user.nickname,
-        avatar: user.avatarUrl ?? undefined,
+        username: user.nickname ?? '',
+        nickname: user.nickname ?? null,
+        avatar: user.avatarUrl ?? null,
         roleName: '版主',
       })
     }
@@ -321,10 +321,10 @@ export class InteractionSummaryReadService {
       summaryMap.set(comment.id, {
         commentId: comment.id,
         contentExcerpt: this.toExcerpt(comment.content),
-        userNickname: user?.nickname,
-        userAvatarUrl: user?.avatarUrl,
-        userStatus: user?.status,
-        userIsEnabled: user?.isEnabled,
+        userNickname: user?.nickname ?? null,
+        userAvatarUrl: user?.avatarUrl ?? null,
+        userStatus: user?.status ?? null,
+        userIsEnabled: user?.isEnabled ?? null,
         auditStatus: comment.auditStatus as AuditStatusEnum,
         isHidden: comment.isHidden,
       })
@@ -369,10 +369,10 @@ export class InteractionSummaryReadService {
           : CommentLevelEnum.ROOT,
         isHidden: comment.isHidden,
         auditStatus: comment.auditStatus as AuditStatusEnum,
-        userNickname: user?.nickname,
-        userAvatarUrl: user?.avatarUrl,
-        userStatus: user?.status,
-        userIsEnabled: user?.isEnabled,
+        userNickname: user?.nickname ?? null,
+        userAvatarUrl: user?.avatarUrl ?? null,
+        userStatus: user?.status ?? null,
+        userIsEnabled: user?.isEnabled ?? null,
       })
     }
 
@@ -459,8 +459,13 @@ export class InteractionSummaryReadService {
           targetId: row.id,
           targetType: pair.targetType,
           targetTypeName: this.getCommentTargetTypeName(pair.targetType),
+          title: null,
           name: row.name,
-          deletedAt: row.deletedAt,
+          workName: null,
+          sectionName: null,
+          isHidden: null,
+          auditStatus: null,
+          deletedAt: row.deletedAt ?? null,
         },
       )
     }
@@ -504,8 +509,12 @@ export class InteractionSummaryReadService {
           targetType: pair.targetType,
           targetTypeName: this.getCommentTargetTypeName(pair.targetType),
           title: row.title,
-          workName: row.workName,
-          deletedAt: row.deletedAt,
+          name: null,
+          workName: row.workName ?? null,
+          sectionName: null,
+          isHidden: null,
+          auditStatus: null,
+          deletedAt: row.deletedAt ?? null,
         },
       )
     }
@@ -554,12 +563,14 @@ export class InteractionSummaryReadService {
             CommentTargetTypeEnum.FORUM_TOPIC,
           ),
           title: row.title,
-          sectionName: options.detail ? row.sectionName : undefined,
-          isHidden: options.detail ? row.isHidden : undefined,
+          name: null,
+          workName: null,
+          sectionName: options.detail ? (row.sectionName ?? null) : null,
+          isHidden: options.detail ? row.isHidden : null,
           auditStatus: options.detail
             ? (row.auditStatus as AuditStatusEnum)
-            : undefined,
-          deletedAt: options.detail ? row.deletedAt : undefined,
+            : null,
+          deletedAt: options.detail ? (row.deletedAt ?? null) : null,
         },
       )
     }
@@ -600,8 +611,17 @@ export class InteractionSummaryReadService {
           targetId: row.id,
           targetType: pair.targetType,
           targetTypeName: this.getReportTargetTypeName(pair.targetType),
+          title: null,
           name: row.name,
-          deletedAt: row.deletedAt,
+          contentExcerpt: null,
+          workName: null,
+          authorNickname: null,
+          authorAvatarUrl: null,
+          isHidden: null,
+          auditStatus: null,
+          isEnabled: null,
+          status: null,
+          deletedAt: row.deletedAt ?? null,
         },
       )
     }
@@ -645,8 +665,16 @@ export class InteractionSummaryReadService {
           targetType: pair.targetType,
           targetTypeName: this.getReportTargetTypeName(pair.targetType),
           title: row.title,
-          workName: row.workName,
-          deletedAt: row.deletedAt,
+          name: null,
+          contentExcerpt: null,
+          workName: row.workName ?? null,
+          authorNickname: null,
+          authorAvatarUrl: null,
+          isHidden: null,
+          auditStatus: null,
+          isEnabled: null,
+          status: null,
+          deletedAt: row.deletedAt ?? null,
         },
       )
     }
@@ -696,13 +724,18 @@ export class InteractionSummaryReadService {
             ReportTargetTypeEnum.FORUM_TOPIC,
           ),
           title: row.title,
-          authorNickname: user?.nickname,
-          authorAvatarUrl: user?.avatarUrl,
-          isHidden: options.detail ? row.isHidden : undefined,
+          name: null,
+          contentExcerpt: null,
+          workName: null,
+          authorNickname: user?.nickname ?? null,
+          authorAvatarUrl: user?.avatarUrl ?? null,
+          isHidden: options.detail ? row.isHidden : null,
           auditStatus: options.detail
             ? (row.auditStatus as AuditStatusEnum)
-            : undefined,
-          deletedAt: options.detail ? row.deletedAt : undefined,
+            : null,
+          isEnabled: null,
+          status: null,
+          deletedAt: options.detail ? (row.deletedAt ?? null) : null,
         },
       )
     }
@@ -751,14 +784,19 @@ export class InteractionSummaryReadService {
           targetTypeName: this.getReportTargetTypeName(
             ReportTargetTypeEnum.COMMENT,
           ),
+          title: null,
+          name: null,
           contentExcerpt: this.toExcerpt(row.content),
-          authorNickname: user?.nickname,
-          authorAvatarUrl: user?.avatarUrl,
-          isHidden: options.detail ? row.isHidden : undefined,
+          workName: null,
+          authorNickname: user?.nickname ?? null,
+          authorAvatarUrl: user?.avatarUrl ?? null,
+          isHidden: options.detail ? row.isHidden : null,
           auditStatus: options.detail
             ? (row.auditStatus as AuditStatusEnum)
-            : undefined,
-          deletedAt: options.detail ? row.deletedAt : undefined,
+            : null,
+          isEnabled: null,
+          status: null,
+          deletedAt: options.detail ? (row.deletedAt ?? null) : null,
         },
       )
     }
@@ -790,11 +828,17 @@ export class InteractionSummaryReadService {
           targetTypeName: this.getReportTargetTypeName(
             ReportTargetTypeEnum.USER,
           ),
+          title: null,
           name: user.nickname,
-          authorNickname: user.nickname,
-          authorAvatarUrl: user.avatarUrl,
+          contentExcerpt: null,
+          workName: null,
+          authorNickname: user.nickname ?? null,
+          authorAvatarUrl: user.avatarUrl ?? null,
+          isHidden: null,
+          auditStatus: null,
           status: user.status,
           isEnabled: user.isEnabled,
+          deletedAt: null,
         },
       )
     }
@@ -827,7 +871,9 @@ export class InteractionSummaryReadService {
           sceneId: row.id,
           sceneType,
           sceneTypeName: this.getSceneTypeName(sceneType),
+          title: null,
           name: row.name,
+          parentName: null,
         },
       )
     }
@@ -868,7 +914,8 @@ export class InteractionSummaryReadService {
           sceneType,
           sceneTypeName: this.getSceneTypeName(sceneType),
           title: row.title,
-          parentName: row.workName,
+          name: null,
+          parentName: row.workName ?? null,
         },
       )
     }
@@ -908,7 +955,8 @@ export class InteractionSummaryReadService {
           sceneType: SceneTypeEnum.FORUM_TOPIC,
           sceneTypeName: this.getSceneTypeName(SceneTypeEnum.FORUM_TOPIC),
           title: row.title,
-          parentName: row.sectionName,
+          name: null,
+          parentName: row.sectionName ?? null,
         },
       )
     }
@@ -935,7 +983,9 @@ export class InteractionSummaryReadService {
           sceneId: userId,
           sceneType: SceneTypeEnum.USER_PROFILE,
           sceneTypeName: this.getSceneTypeName(SceneTypeEnum.USER_PROFILE),
+          title: null,
           name: user.nickname,
+          parentName: null,
         },
       )
     }

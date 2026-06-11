@@ -2,11 +2,11 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  JsonProperty,
   NumberProperty,
+  ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, UserIdDto } from '@libs/platform/dto'
+import { BaseDto, UserIdDto } from '@libs/platform/dto/base.dto'
 
 import {
   GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION,
@@ -52,13 +52,21 @@ export class BaseGrowthRuleConfigDto extends BaseDto {
   @StringProperty({
     description: '备注',
     example: '规则说明',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  remark?: string
+  remark!: string | null
 }
 
-export class BaseGrowthRecordSharedDto extends IdDto {
+export class BaseGrowthRecordSharedDto {
+  @NumberProperty({
+    description: '主键ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
   @NumberProperty({
     description: '关联的用户ID',
     example: 1,
@@ -69,31 +77,39 @@ export class BaseGrowthRecordSharedDto extends IdDto {
   @NumberProperty({
     description: '关联的规则ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
   })
-  ruleId?: number | null
+  ruleId!: number | null
 
   @EnumProperty({
     description: GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION,
     example: GrowthRuleTypeEnum.CREATE_TOPIC,
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
     enum: GrowthRuleTypeEnum,
   })
-  ruleType?: GrowthRuleTypeEnum | null
+  ruleType!: GrowthRuleTypeEnum | null
 
   @NumberProperty({
     description: '关联目标类型',
     example: 3,
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
   })
-  targetType?: number | null
+  targetType!: number | null
 
   @NumberProperty({
     description: '关联目标ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
   })
-  targetId?: number | null
+  targetId!: number | null
 
   @NumberProperty({
     description: '变更前余额',
@@ -120,17 +136,21 @@ export class BaseGrowthRecordSharedDto extends IdDto {
   @StringProperty({
     description: '账本说明文案',
     example: '浏览漫画作品',
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
     maxLength: 500,
   })
-  remark?: string | null
+  remark!: string | null
 
-  @JsonProperty({
+  @ObjectProperty({
     description: '扩展上下文（仅返回白名单解释字段）',
     example: { taskId: 9, assignmentId: 18 },
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
   })
-  context?: Record<string, unknown> | null
+  context!: Record<string, unknown> | null
 
   @DateProperty({
     description: '创建时间',

@@ -155,6 +155,7 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
             followingUserCount: this.appUserCount.followingUserCount,
             followingAuthorCount: this.appUserCount.followingAuthorCount,
             followingSectionCount: this.appUserCount.followingSectionCount,
+            followingHashtagCount: this.appUserCount.followingHashtagCount,
             followersCount: this.appUserCount.followersCount,
           })
           .from(this.appUserCount)
@@ -170,13 +171,15 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
         {
           id: user.id,
           nickname: user.nickname,
-          avatarUrl: user.avatarUrl ?? undefined,
-          signature: user.signature ?? undefined,
+          avatarUrl: user.avatarUrl ?? null,
+          signature: user.signature ?? null,
           followingUserCount: countMap.get(user.id)?.followingUserCount ?? 0,
           followingAuthorCount:
             countMap.get(user.id)?.followingAuthorCount ?? 0,
           followingSectionCount:
             countMap.get(user.id)?.followingSectionCount ?? 0,
+          followingHashtagCount:
+            countMap.get(user.id)?.followingHashtagCount ?? 0,
           followersCount: countMap.get(user.id)?.followersCount ?? 0,
         },
       ]),

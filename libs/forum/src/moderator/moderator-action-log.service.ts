@@ -194,6 +194,15 @@ export class ForumModeratorActionLogService {
         .offset(page.offset),
       this.db.$count(this.forumModeratorActionLog, where),
     ])
-    return toPageResult(list, total, page)
+    const result = toPageResult(list, total, page)
+
+    return {
+      ...result,
+      list: result.list.map((item) => ({
+        ...item,
+        beforeData: item.beforeData ?? null,
+        afterData: item.afterData ?? null,
+      })),
+    }
   }
 }

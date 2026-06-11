@@ -1,4 +1,4 @@
-import type { UserNotificationDto } from './dto/notification.dto'
+import type { BaseUserNotificationDto } from './dto/notification.dto'
 import type {
   NotificationChatConversationUpdatePayload,
   NotificationChatMessageNewPayload,
@@ -15,7 +15,10 @@ export class MessageNotificationRealtimeService {
     private readonly messageWebSocketService: MessageWebSocketService,
   ) {}
 
-  emitNotificationCreated(userId: number, notification: UserNotificationDto) {
+  emitNotificationCreated(
+    userId: number,
+    notification: BaseUserNotificationDto,
+  ) {
     const receiverUserId = Number(userId)
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       return
@@ -27,7 +30,10 @@ export class MessageNotificationRealtimeService {
     )
   }
 
-  emitNotificationUpdated(userId: number, notification: UserNotificationDto) {
+  emitNotificationUpdated(
+    userId: number,
+    notification: BaseUserNotificationDto,
+  ) {
     const receiverUserId = Number(userId)
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       return

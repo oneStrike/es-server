@@ -108,6 +108,7 @@ export class BaseDto extends IdDto {
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
+    validation: false,
   })
   createdAt!: Date
 
@@ -115,6 +116,7 @@ export class BaseDto extends IdDto {
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
+    validation: false,
   })
   updatedAt!: Date
 }

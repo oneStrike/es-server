@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import type { PurchasePricingDto } from './dto/purchase-pricing.dto'
+import type { ContentPurchasePricingDto } from '@libs/content/permission/dto/content-purchase-pricing.dto'
 import { DrizzleService } from '@db/core'
 import {
   ContentEntitlementGrantSourceEnum,
@@ -187,7 +187,7 @@ export class PurchaseService {
     originalPrice: number
     paidPrice: number
     payableRate: number | string
-  }): PurchasePricingDto {
+  }): ContentPurchasePricingDto {
     const payableRate = Number(input.payableRate)
 
     return {
@@ -596,11 +596,11 @@ export class PurchaseService {
           workId: row.chapterWorkId,
           workType: row.chapterWorkType,
           title: row.chapterTitle,
-          subtitle: row.chapterSubtitle,
-          cover: row.chapterCover,
+          subtitle: row.chapterSubtitle ?? null,
+          cover: row.chapterCover ?? null,
           sortOrder: row.chapterSortOrder,
           isPublished: row.chapterIsPublished,
-          publishAt: row.chapterPublishAt,
+          publishAt: row.chapterPublishAt ?? null,
         },
       })),
       total,

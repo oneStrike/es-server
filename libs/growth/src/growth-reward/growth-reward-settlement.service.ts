@@ -1,6 +1,7 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
+  BaseGrowthRewardSettlementDto,
   GrowthRewardSettlementCheckInRecordRewardPayloadDto,
   GrowthRewardSettlementCheckInStreakRewardPayloadDto,
   QueryGrowthRewardSettlementPageDto,
@@ -229,7 +230,11 @@ export class GrowthRewardSettlementService {
       this.db.$count(this.growthRewardSettlement, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((row) => this.toSettlementPageItem(row)),
+      total,
+      page,
+    )
   }
 
   // 按主键读取单条补偿记录。
@@ -496,6 +501,82 @@ export class GrowthRewardSettlementService {
     )
   }
 
+  private toSettlementPageItem(
+    row: typeof this.growthRewardSettlement.$inferSelect,
+  ): BaseGrowthRewardSettlementDto {
+    return {
+      id: row.id,
+      userId: row.userId,
+      bizKey: row.bizKey,
+      settlementType: row.settlementType,
+      eventCode: row.eventCode ?? null,
+      eventKey: row.eventKey ?? null,
+      source: row.source,
+      sourceRecordId: row.sourceRecordId ?? null,
+      targetType: row.targetType ?? null,
+      targetId: row.targetId ?? null,
+      eventOccurredAt: row.eventOccurredAt,
+      settlementStatus: row.settlementStatus,
+      settlementResultType: row.settlementResultType ?? null,
+      ledgerRecordIds: row.ledgerRecordIds ?? [],
+      retryCount: row.retryCount,
+      lastRetryAt: row.lastRetryAt ?? null,
+      settledAt: row.settledAt ?? null,
+      lastError: row.lastError ?? null,
+      requestPayload: this.toSettlementRequestPayload(row),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }
+  }
+
+  private toSettlementRequestPayload(
+    row: typeof this.growthRewardSettlement.$inferSelect,
+  ): BaseGrowthRewardSettlementDto['requestPayload'] {
+    if (row.settlementType !== GrowthRewardSettlementTypeEnum.GROWTH_EVENT) {
+      return row.requestPayload as BaseGrowthRewardSettlementDto['requestPayload']
+    }
+
+    const payload = this.asRecord(row.requestPayload) ?? {}
+    const eventEnvelope = this.asRecord(payload.eventEnvelope) ?? {}
+
+    return {
+      eventEnvelope: {
+        code: Number(eventEnvelope.code ?? row.eventCode),
+        key: String(eventEnvelope.key ?? row.eventKey),
+        subjectType: String(eventEnvelope.subjectType ?? 'user'),
+        subjectId: Number(eventEnvelope.subjectId ?? row.userId),
+        targetType: String(eventEnvelope.targetType ?? row.targetType ?? ''),
+        targetId: Number(eventEnvelope.targetId ?? row.targetId),
+        operatorId:
+          typeof eventEnvelope.operatorId === 'number'
+            ? eventEnvelope.operatorId
+            : null,
+        occurredAt: String(
+          eventEnvelope.occurredAt ?? row.eventOccurredAt.toISOString(),
+        ),
+        governanceStatus: String(eventEnvelope.governanceStatus ?? ''),
+        context: this.asRecord(eventEnvelope.context),
+      },
+      bizKey: String(payload.bizKey ?? row.bizKey),
+      source: String(payload.source ?? row.source),
+      targetType:
+        typeof payload.targetType === 'number'
+          ? payload.targetType
+          : row.targetType ?? null,
+      targetId:
+        typeof payload.targetId === 'number'
+          ? payload.targetId
+          : row.targetId ?? null,
+      context: this.asRecord(payload.context),
+    }
+  }
+
+  private asRecord(input: unknown) {
+    return input && typeof input === 'object' && !Array.isArray(input)
+      ? (input as Record<string, unknown>)
+      : null
+  }
+
   // 根据失败原因判断当前补偿记录应保持待重试还是直接落为终态失败。
   private resolveFailureStatus(growthResult: GrowthRuleRewardSettlementResult) {
     if (
@@ -545,16 +626,16 @@ export class GrowthRewardSettlementService {
         subjectId: input.eventEnvelope.subjectId,
         targetType: String(input.eventEnvelope.targetType),
         targetId: input.eventEnvelope.targetId,
-        operatorId: input.eventEnvelope.operatorId,
+        operatorId: input.eventEnvelope.operatorId ?? null,
         occurredAt: input.eventEnvelope.occurredAt.toISOString(),
         governanceStatus: String(input.eventEnvelope.governanceStatus),
-        context: input.eventEnvelope.context,
+        context: input.eventEnvelope.context ?? null,
       },
       bizKey: input.bizKey,
       source: input.source,
-      targetType: input.targetType,
-      targetId: input.targetId,
-      context: input.context,
+      targetType: input.targetType ?? null,
+      targetId: input.targetId ?? null,
+      context: input.context ?? null,
     }
   }
 }

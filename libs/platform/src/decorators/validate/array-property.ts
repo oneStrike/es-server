@@ -12,6 +12,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  ValidateIf,
   ValidateBy,
   ValidateNested,
 } from 'class-validator'
@@ -190,6 +191,10 @@ export function ArrayProperty<T = string | number | boolean>(
   const decorators: PropertyDecorator[] = []
 
   if (validation) {
+    if (options.nullable) {
+      decorators.push(ValidateIf((_object, value) => value !== null))
+    }
+
     decorators.push(
       IsArray({ message: '必须是数组类型' }),
       enumArtifacts

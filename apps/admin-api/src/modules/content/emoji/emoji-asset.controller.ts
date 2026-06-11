@@ -1,8 +1,9 @@
-import { BaseEmojiAssetDto, CreateEmojiAssetDto, QueryEmojiAssetDto, UpdateEmojiAssetDto } from '@libs/interaction/emoji/dto/emoji.dto';
+import { CreateEmojiAssetDto, EmojiAssetOutputDto, QueryEmojiAssetDto, UpdateEmojiAssetDto } from '@libs/interaction/emoji/dto/emoji.dto';
 import { EmojiAssetService } from '@libs/interaction/emoji/emoji-asset.service';
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
 
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto';
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -17,7 +18,7 @@ export class EmojiAssetController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询表情资源',
-    model: BaseEmojiAssetDto,
+    model: EmojiAssetOutputDto,
   })
   async getPage(@Query() query: QueryEmojiAssetDto) {
     return this.emojiAssetService.getAssetPage(query)
@@ -26,7 +27,7 @@ export class EmojiAssetController {
   @Get('detail')
   @ApiDoc({
     summary: '查询表情资源详情',
-    model: BaseEmojiAssetDto,
+    model: EmojiAssetOutputDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.emojiAssetService.getAssetDetail(query.id)

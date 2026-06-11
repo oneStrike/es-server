@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { AppConfigSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { desc, eq, sql } from 'drizzle-orm'
@@ -30,12 +31,8 @@ export class AppConfigService {
    * 若数据库中尚未存在配置记录，会先落一条默认配置并返回，避免上层处理“未初始化”分支。
    */
   async findActiveConfig() {
-    const config = await this.findLatestConfig()
-    if (config) {
-      return config
-    }
-
-    return this.ensureActiveConfig()
+    const config = (await this.findLatestConfig()) ?? (await this.ensureActiveConfig())
+    return this.toAppConfigOutputDto(config)
   }
 
   /**
@@ -44,7 +41,8 @@ export class AppConfigService {
    * 若首次写入发生在空表状态，会先初始化默认配置，再在同一逻辑链路内更新目标字段。
    */
   async updateConfig(updateConfigDto: UpdateAppConfigDto, userId: number) {
-    const existingConfig = await this.findActiveConfig()
+    const existingConfig =
+      (await this.findLatestConfig()) ?? (await this.ensureActiveConfig())
 
     await this.drizzle.withErrorHandling(
       () =>
@@ -96,5 +94,18 @@ export class AppConfigService {
 
       return newConfig
     })
+  }
+
+  private toAppConfigOutputDto(config: AppConfigSelect) {
+    return {
+      ...config,
+      appDesc: config.appDesc ?? null,
+      appLogo: config.appLogo ?? null,
+      onboardingImage: config.onboardingImage ?? null,
+      secondaryColor: config.secondaryColor ?? null,
+      optionalThemeColors: config.optionalThemeColors ?? null,
+      maintenanceMessage: config.maintenanceMessage ?? null,
+      updatedById: config.updatedById ?? null,
+    }
   }
 }

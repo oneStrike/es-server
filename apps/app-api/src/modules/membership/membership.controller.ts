@@ -1,6 +1,6 @@
 import {
-  BaseMembershipPlanDto,
   CreateVipSubscriptionOrderDto,
+  MembershipPlanOutputDto,
   QueryVipSubscriptionPageDto,
   VipSubscriptionPageDto,
 } from '@libs/interaction/membership/dto/membership.dto'
@@ -19,7 +19,7 @@ export class MembershipController {
   @Get('plan/list')
   @ApiDoc({
     summary: '获取 VIP 套餐列表',
-    model: BaseMembershipPlanDto,
+    model: MembershipPlanOutputDto,
     isArray: true,
   })
   async getMembershipPlanList() {

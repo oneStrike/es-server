@@ -3,12 +3,12 @@ import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.ser
 import {
   AppCurrencyPackageDto,
   CreateCurrencyRechargeOrderDto,
-  QueryWalletLedgerDto,
   WalletDetailDto,
   WalletLedgerRecordDto,
 } from '@libs/interaction/wallet/dto/wallet.dto'
 import { WalletService } from '@libs/interaction/wallet/wallet.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -49,7 +49,7 @@ export class WalletController {
   })
   async getWalletLedgerPage(
     @CurrentUser('sub') userId: number,
-    @Query() query: QueryWalletLedgerDto,
+    @Query() query: PageDto,
   ) {
     return this.walletService.getWalletLedgerPage(userId, query)
   }

@@ -10,6 +10,7 @@ import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   CreateForumSectionGroupDto,
+  ForumSectionGroupOutputDto,
   ForumSectionTreeNodeDto,
   QueryForumSectionGroupDto,
   QueryVisibleForumSectionGroupCommandDto,
@@ -81,7 +82,7 @@ export class ForumSectionGroupService {
         '板块分组不存在',
       )
     }
-    return group
+    return this.toForumSectionGroupOutputDto(group)
   }
 
   /**
@@ -121,7 +122,11 @@ export class ForumSectionGroupService {
       this.db.$count(this.forumSectionGroup, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((group) => this.toForumSectionGroupOutputDto(group)),
+      total,
+      page,
+    )
   }
 
   /**
@@ -201,6 +206,7 @@ export class ForumSectionGroupService {
     return groups
       .map((group) => ({
         ...group,
+        description: group.description ?? null,
         sections: sections
           .filter((section) => section.groupId === group.id)
           .map((section) => {
@@ -214,8 +220,8 @@ export class ForumSectionGroupService {
               canAccess: accessState.canAccess,
               requiredExperience: accessState.requiredExperience,
               accessDeniedReason: accessState.canAccess
-                ? undefined
-                : accessState.accessDeniedReason,
+                ? null
+                : (accessState.accessDeniedReason ?? null),
               isFollowed: sectionFollowStatusMap.get(section.id) ?? false,
             }
           }),
@@ -440,15 +446,25 @@ export class ForumSectionGroupService {
 
     const nodes: ForumSectionTreeNodeDto[] = groups.map((group) => ({
       isUngrouped: false,
-      group,
+      group: this.toForumSectionGroupOutputDto(group),
       sections: sectionsByGroup.get(group.id) ?? [],
     }))
 
     nodes.push({
       isUngrouped: true,
+      group: null,
       sections: ungroupedSections,
     })
 
     return nodes
+  }
+
+  private toForumSectionGroupOutputDto(
+    group: Omit<typeof this.forumSectionGroup.$inferSelect, 'deletedAt'>,
+  ): ForumSectionGroupOutputDto {
+    return {
+      ...group,
+      description: group.description ?? null,
+    }
   }
 }

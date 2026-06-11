@@ -2,7 +2,7 @@ import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { NumberPropertyOptions } from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
-import { IsNumber, IsOptional, Max, Min } from 'class-validator'
+import { IsNumber, IsOptional, Max, Min, ValidateIf } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'
 
 /**
@@ -52,6 +52,10 @@ export function NumberProperty(options: NumberPropertyOptions) {
   const decorators: PropertyDecorator[] = []
 
   if (validation) {
+    if (options.nullable) {
+      decorators.push(ValidateIf((_object, value) => value !== null))
+    }
+
     decorators.push(IsNumber({}, { message: '必须是数字类型' }))
 
     if (options.max !== undefined) {

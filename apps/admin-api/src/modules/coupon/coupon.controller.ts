@@ -1,16 +1,16 @@
 import { CouponAdminGrantWorkflowService } from '@libs/interaction/coupon/coupon-admin-grant-workflow.service'
 import { CouponService } from '@libs/interaction/coupon/coupon.service'
 import {
-  BaseCouponDefinitionDto,
+  CouponDefinitionOutputDto,
   CreateCouponDefinitionDto,
   CreateCouponGrantWorkflowDto,
   QueryCouponDefinitionDto,
   UpdateCouponDefinitionDto,
 } from '@libs/interaction/coupon/dto/coupon.dto'
 import { ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
+import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
@@ -27,7 +27,7 @@ export class CouponController {
   @Get('definition/page')
   @ApiPageDoc({
     summary: '分页查询券定义',
-    model: BaseCouponDefinitionDto,
+    model: CouponDefinitionOutputDto,
   })
   async getCouponDefinitionPage(@Query() query: QueryCouponDefinitionDto) {
     return this.couponService.getCouponDefinitionPage(query)

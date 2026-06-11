@@ -17,18 +17,19 @@ import {
 } from '@libs/message/inbox/dto/inbox.dto'
 import { MessageInboxService } from '@libs/message/inbox/inbox.service'
 import {
-  NotificationUnreadDto,
+  BaseUserNotificationDto,
   QueryUserNotificationListDto,
   UpdateUserNotificationPreferencesDto,
-  UserNotificationDto,
   UserNotificationPreferenceListDto,
 } from '@libs/message/notification/dto/notification.dto'
+import { BaseNotificationUnreadDto } from '@libs/message/notification/dto/notification-unread.dto'
 import { MessageNotificationPreferenceService } from '@libs/message/notification/notification-preference.service'
 import { MessageNotificationService } from '@libs/message/notification/notification.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto, PageDto } from '@libs/platform/dto'
-import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto'
 
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -47,7 +48,7 @@ export class MessageController {
   @Get('notification/page')
   @ApiPageDoc({
     summary: '分页查询站内通知',
-    model: UserNotificationDto,
+    model: BaseUserNotificationDto,
   })
   async list(
     @Query() query: QueryUserNotificationListDto,
@@ -62,7 +63,7 @@ export class MessageController {
   @Get('notification/unread-count')
   @ApiDoc({
     summary: '获取未读通知数量',
-    model: NotificationUnreadDto,
+    model: BaseNotificationUnreadDto,
   })
   async unreadCount(@CurrentUser('sub') userId: number) {
     return this.messageNotificationService.getUnreadCount(userId)

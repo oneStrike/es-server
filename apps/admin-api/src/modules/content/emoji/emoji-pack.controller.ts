@@ -1,8 +1,9 @@
-import { BaseEmojiPackDto, CreateEmojiPackDto, QueryEmojiPackDto, UpdateEmojiPackDto, UpdateEmojiPackSceneTypeDto } from '@libs/interaction/emoji/dto/emoji.dto';
+import { CreateEmojiPackDto, EmojiPackOutputDto, QueryEmojiPackDto, UpdateEmojiPackDto, UpdateEmojiPackSceneTypeDto } from '@libs/interaction/emoji/dto/emoji.dto';
 import { EmojiAssetService } from '@libs/interaction/emoji/emoji-asset.service';
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
 
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto';
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -17,7 +18,7 @@ export class EmojiPackController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询表情包',
-    model: BaseEmojiPackDto,
+    model: EmojiPackOutputDto,
   })
   async getPage(@Query() query: QueryEmojiPackDto) {
     return this.emojiAssetService.getPackPage(query)
@@ -26,7 +27,7 @@ export class EmojiPackController {
   @Get('detail')
   @ApiDoc({
     summary: '查询表情包详情',
-    model: BaseEmojiPackDto,
+    model: EmojiPackOutputDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.emojiAssetService.getPackDetail(query.id)

@@ -18,7 +18,7 @@ import {
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'

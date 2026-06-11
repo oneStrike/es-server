@@ -17,13 +17,14 @@ import {
   WorkTypeEnum,
 } from '@libs/platform/constant'
 
-import { BatchUpdatePublishedStatusDto } from '@libs/platform/dto'
+import { BatchUpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { jsonParse } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
+  AdminWorkChapterDetailDto,
   CreateWorkChapterDto,
   QueryAppWorkChapterPageDto,
   QueryWorkChapterDto,
@@ -119,20 +120,22 @@ export class WorkChapterService {
       workId: chapter.workId,
       workType: chapter.workType,
       title: chapter.title,
-      subtitle: chapter.subtitle,
-      cover: chapter.cover,
-      description: chapter.description,
+      subtitle: chapter.subtitle ?? null,
+      cover: chapter.cover ?? null,
+      description: chapter.description ?? null,
       sortOrder: chapter.sortOrder,
       isPublished: chapter.isPublished,
       isPreview: chapter.isPreview,
-      publishAt: chapter.publishAt,
+      publishAt: chapter.publishAt ?? null,
       viewRule: chapter.resolvedViewRule ?? chapter.viewRule,
       requiredViewLevelId:
-        chapter.resolvedRequiredViewLevelId ?? chapter.requiredViewLevelId,
+        chapter.resolvedRequiredViewLevelId ??
+        chapter.requiredViewLevelId ??
+        null,
       purchasePricing: chapter.purchasePricing ?? null,
       canDownload: chapter.canDownload,
       canComment: chapter.canComment,
-      content: chapter.content,
+      content: chapter.content ?? null,
       wordCount: chapter.wordCount,
       viewCount: chapter.viewCount,
       likeCount: chapter.likeCount,
@@ -141,6 +144,70 @@ export class WorkChapterService {
       downloadCount: chapter.downloadCount,
       createdAt: chapter.createdAt,
       updatedAt: chapter.updatedAt,
+    }
+  }
+
+  private buildAdminChapterDetail(
+    chapter: WorkChapterSelect & {
+      content: string | null
+      work: {
+        id: number
+        name: string
+        type: number
+      } | null
+      requiredViewLevel: {
+        id: number
+        name: string
+        color: string | null
+      } | null
+    },
+  ): AdminWorkChapterDetailDto {
+    if (!chapter.work) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节所属作品不存在',
+      )
+    }
+
+    return {
+      id: chapter.id,
+      workId: chapter.workId,
+      workType: chapter.workType,
+      title: chapter.title,
+      subtitle: chapter.subtitle ?? null,
+      cover: chapter.cover ?? null,
+      description: chapter.description ?? null,
+      sortOrder: chapter.sortOrder,
+      isPublished: chapter.isPublished,
+      isPreview: chapter.isPreview,
+      publishAt: chapter.publishAt ?? null,
+      viewRule: chapter.viewRule,
+      requiredViewLevelId: chapter.requiredViewLevelId ?? null,
+      price: chapter.price,
+      canDownload: chapter.canDownload,
+      canComment: chapter.canComment,
+      content: chapter.content ?? null,
+      wordCount: chapter.wordCount,
+      viewCount: chapter.viewCount,
+      likeCount: chapter.likeCount,
+      commentCount: chapter.commentCount,
+      purchaseCount: chapter.purchaseCount,
+      downloadCount: chapter.downloadCount,
+      remark: chapter.remark ?? null,
+      createdAt: chapter.createdAt,
+      updatedAt: chapter.updatedAt,
+      work: {
+        id: chapter.work.id,
+        name: chapter.work.name,
+        type: chapter.work.type as WorkTypeEnum,
+      },
+      requiredViewLevel: chapter.requiredViewLevel
+        ? {
+            id: chapter.requiredViewLevel.id,
+            name: chapter.requiredViewLevel.name,
+            color: chapter.requiredViewLevel.color ?? null,
+          }
+        : null,
     }
   }
 
@@ -266,15 +333,15 @@ export class WorkChapterService {
         return {
           id: chapter.id,
           isPreview: chapter.isPreview,
-          cover: chapter.cover,
+          cover: chapter.cover ?? null,
           title: chapter.title,
-          subtitle: chapter.subtitle,
+          subtitle: chapter.subtitle ?? null,
           canComment: chapter.canComment,
           sortOrder: chapter.sortOrder,
           viewRule: permission?.viewRule ?? chapter.viewRule,
           canDownload: chapter.canDownload,
           purchasePricing: permission?.purchasePricing ?? null,
-          publishAt: chapter.publishAt,
+          publishAt: chapter.publishAt ?? null,
           createdAt: chapter.createdAt,
           updatedAt: chapter.updatedAt,
           isPublished: chapter.isPublished,
@@ -309,16 +376,16 @@ export class WorkChapterService {
         workId: chapter.workId,
         workType: chapter.workType,
         isPreview: chapter.isPreview,
-        cover: chapter.cover,
+        cover: chapter.cover ?? null,
         title: chapter.title,
-        subtitle: chapter.subtitle,
+        subtitle: chapter.subtitle ?? null,
         price: chapter.price,
         canComment: chapter.canComment,
         sortOrder: chapter.sortOrder,
         viewRule: chapter.viewRule,
         canDownload: chapter.canDownload,
-        requiredViewLevelId: chapter.requiredViewLevelId,
-        publishAt: chapter.publishAt,
+        requiredViewLevelId: chapter.requiredViewLevelId ?? null,
+        publishAt: chapter.publishAt ?? null,
         createdAt: chapter.createdAt,
         updatedAt: chapter.updatedAt,
         isPublished: chapter.isPublished,
@@ -435,8 +502,10 @@ export class WorkChapterService {
     // 未登录用户直接返回基础信息
     if (!userId) {
       if (bypassVisibilityCheck) {
-        chapter.content = parsedContent
-        return chapter
+        return this.buildAdminChapterDetail({
+          ...chapter,
+          content: parsedContent,
+        })
       }
 
       return {
@@ -520,7 +589,11 @@ export class WorkChapterService {
     }
 
     if (bypassVisibilityCheck) {
-      return detail
+      return this.buildAdminChapterDetail({
+        ...chapter,
+        content: parsedContent,
+        viewCount: detail.viewCount,
+      })
     }
 
     return {

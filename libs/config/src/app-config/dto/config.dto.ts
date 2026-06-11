@@ -4,8 +4,13 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto'
-import { OmitType } from '@nestjs/swagger'
+import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 /**
  * 应用配置基础 DTO
@@ -22,26 +27,26 @@ export class BaseAppConfigDto extends BaseDto {
   @StringProperty({
     description: '应用描述',
     example: '这是一个示例应用',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  appDesc?: string | null
+  appDesc!: string | null
 
   @StringProperty({
     description: '应用 Logo URL',
     example: 'https://example.com/logo.png',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  appLogo?: string | null
+  appLogo!: string | null
 
   @StringProperty({
     description: '引导页图片 URL',
     example: 'https://example.com/onboarding.jpg',
-    required: false,
+    nullable: true,
     maxLength: 1000,
   })
-  onboardingImage?: string | null
+  onboardingImage!: string | null
 
   @StringProperty({
     description: '主题色',
@@ -55,18 +60,18 @@ export class BaseAppConfigDto extends BaseDto {
   @StringProperty({
     description: '第二主题色',
     example: '#5856D6',
-    required: false,
+    nullable: true,
     maxLength: 20,
   })
-  secondaryColor?: string | null
+  secondaryColor!: string | null
 
   @StringProperty({
     description: '可选的主题色',
     example: '#FF9500,#FF3B30,#4CD964,#5AC8FA,#007AFF',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  optionalThemeColors?: string | null
+  optionalThemeColors!: string | null
 
   @BooleanProperty({
     description: '是否启用维护模式',
@@ -79,10 +84,10 @@ export class BaseAppConfigDto extends BaseDto {
   @StringProperty({
     description: '维护模式提示信息',
     example: '系统维护中，请稍后再试',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  maintenanceMessage?: string | null
+  maintenanceMessage!: string | null
 
   @StringProperty({
     description: '配置版本号',
@@ -96,12 +101,37 @@ export class BaseAppConfigDto extends BaseDto {
   @NumberProperty({
     description: '最后修改人ID',
     example: 1,
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  updatedById?: number | null
+  updatedById!: number | null
 }
 
-export class UpdateAppConfigDto extends OmitType(BaseAppConfigDto, [
+class UpdateAppConfigRequiredFieldsDto extends OmitType(BaseAppConfigDto, [
   ...OMIT_BASE_FIELDS,
   'updatedById',
+  'appDesc',
+  'appLogo',
+  'onboardingImage',
+  'secondaryColor',
+  'optionalThemeColors',
+  'maintenanceMessage',
 ] as const) {}
+
+class UpdateAppConfigOptionalFieldsDto extends PartialType(
+  PickType(BaseAppConfigDto, [
+    'appDesc',
+    'appLogo',
+    'onboardingImage',
+    'secondaryColor',
+    'optionalThemeColors',
+    'maintenanceMessage',
+  ] as const),
+) {}
+
+export class UpdateAppConfigDto extends IntersectionType(
+  UpdateAppConfigRequiredFieldsDto,
+  UpdateAppConfigOptionalFieldsDto,
+) {}
+
+export class AppConfigOutputDto extends BaseAppConfigDto {}

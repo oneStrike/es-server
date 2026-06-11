@@ -15,7 +15,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { PageDto, UserIdDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { UserIdDto } from '@libs/platform/dto/base.dto'
 
 import {
   IntersectionType,
@@ -76,28 +77,26 @@ export class AdminAppUserExperienceStatsDto {
   @NestedProperty({
     description: '当前等级信息',
     type: AdminAppUserLevelDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  level!: AdminAppUserLevelDto
+  level!: AdminAppUserLevelDto | null
 
   @NestedProperty({
     description: '下一等级信息',
     type: AdminAppUserLevelDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  nextLevel!: AdminAppUserLevelDto
+  nextLevel!: AdminAppUserLevelDto | null
 
   @NumberProperty({
     description: '距离下一等级的经验差值',
     example: 50,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  gapToNextLevel?: number
+  gapToNextLevel!: number | null
 }
 
 export class AdminAppUserGrowthRuleActionDto extends IntersectionType(
@@ -116,18 +115,18 @@ export class AdminAppUserPageItemDto extends AppUserResponseDto {
   @DateProperty({
     description: '删除时间',
     example: '2026-03-27T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  declare deletedAt?: Date | null
+  declare deletedAt: Date | null
 
   @StringProperty({
     description: '等级名称',
     example: '新手',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  levelName?: string
+  levelName!: string | null
 
   @NestedProperty({
     description: '用户计数',
@@ -142,24 +141,22 @@ export class AdminAppUserDetailDto extends AppUserResponseDto {
   @DateProperty({
     description: '删除时间',
     example: '2026-03-27T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  declare deletedAt?: Date | null
+  declare deletedAt: Date | null
 
   @NestedProperty({
     description: '等级信息',
     type: AdminAppUserLevelDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  level!: AdminAppUserLevelDto
+  level!: AdminAppUserLevelDto | null
 
   @NestedProperty({
     description: '用户计数',
     type: AdminAppUserCountDto,
-    required: false,
     validation: false,
     nullable: false,
   })
@@ -410,7 +407,15 @@ export class ConsumeAdminAppUserPointsDto extends AdminAppUserManualOperationDto
   operationNote?: string
 }
 
-export class AdminAppUserBadgeOperationResultDto extends UserIdDto {
+export class AdminAppUserBadgeOperationResultDto {
+  @NumberProperty({
+    description: '用户ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  userId!: number
+
   @NumberProperty({
     description: '徽章ID',
     example: 1,

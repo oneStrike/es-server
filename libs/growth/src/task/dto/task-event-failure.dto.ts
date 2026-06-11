@@ -6,7 +6,8 @@ import {
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   TASK_EVENT_FAILURE_MAX_RETRY_COUNT,
@@ -27,7 +28,6 @@ export class BaseTaskEventFailureDto extends BaseDto {
     description: '成长事件 key',
     example: 'COMIC_WORK_VIEW',
     maxLength: 80,
-    validation: false,
   })
   eventKey!: string
 
@@ -35,14 +35,12 @@ export class BaseTaskEventFailureDto extends BaseDto {
     description: '事件业务幂等键',
     example: 'view:comic:1:user:10001',
     maxLength: 180,
-    validation: false,
   })
   eventBizKey!: string
 
   @NumberProperty({
     description: '成长事件编码',
     example: 100,
-    validation: false,
   })
   eventCode!: number
 
@@ -58,7 +56,6 @@ export class BaseTaskEventFailureDto extends BaseDto {
   @NumberProperty({
     description: '归属用户 ID',
     example: 10001,
-    validation: false,
   })
   userId!: number
 
@@ -83,7 +80,6 @@ export class BaseTaskEventFailureDto extends BaseDto {
     description: '失败事实状态（1=待重试；2=重试中；3=已解决；4=终态失败）',
     example: TaskEventFailureStatusEnum.PENDING,
     enum: TaskEventFailureStatusEnum,
-    validation: false,
   })
   status!: TaskEventFailureStatusEnum
 
@@ -161,9 +157,6 @@ export class QueryTaskEventFailurePageDto extends IntersectionType(
   PageDto,
   PartialType(TaskEventFailurePageFilterFieldsDto),
 ) {}
-
-/** 任务事件消费失败事实分页项 DTO。 */
-export class TaskEventFailurePageItemDto extends BaseTaskEventFailureDto {}
 
 /** 任务事件消费失败单条重试结果 DTO。 */
 export class TaskEventFailureRetryResultDto {

@@ -1,10 +1,10 @@
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 
-import { ChangePasswordDto, ForgotPasswordDto, LoginDto, LoginResponseDto, RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto'
+import { ChangePasswordDto, ForgotPasswordDto, LoginDto, LoginResponseDto, RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
-import { SendVerifyCodeDto } from '@libs/platform/modules/sms/dto'
+import { SendVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto'
 import { extractIpAddress } from '@libs/platform/utils/requestParse'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

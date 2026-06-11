@@ -1,4 +1,4 @@
-import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.type'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.constant'
 
 /**
  * 配置安全元数据 - 定义每个配置项的敏感字段

@@ -1,6 +1,6 @@
 import { EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { BaseGrowthRecordSharedDto } from '../../growth/dto/growth-shared.dto'
 import { GrowthAssetTypeEnum } from '../growth-ledger.constant'

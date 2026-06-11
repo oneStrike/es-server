@@ -39,7 +39,7 @@ export class RetryTaskRewardBatchDto {
   rewardSettlementId?: number
 
   @EnumProperty({
-    description: '奖励结算状态；来自后台筛选条件',
+    description: '奖励结算状态；来自后台筛选条件（0=待补偿重试；1=已补偿成功；2=终态失败无需再次重试）',
     example: GrowthRewardSettlementStatusEnum.PENDING,
     enum: GrowthRewardSettlementStatusEnum,
     required: false,

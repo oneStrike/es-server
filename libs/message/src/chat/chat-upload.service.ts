@@ -6,11 +6,9 @@ import type {
 } from '@libs/platform/modules/upload/upload.type'
 import type { FastifyRequest } from 'fastify'
 import type { ChatMediaFileCategory } from './chat-media-origin-policy.type'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.constant'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
-import {
-  UPLOAD_CONFIG_PROVIDER,
-  UploadProviderEnum,
-} from '@libs/platform/modules/upload/upload.type'
+import { UPLOAD_CONFIG_PROVIDER } from '@libs/platform/modules/upload/upload.type'
 import {
   Inject,
   Injectable,

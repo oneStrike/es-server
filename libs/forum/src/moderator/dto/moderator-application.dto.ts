@@ -8,10 +8,16 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { ForumModeratorApplicationStatusEnum } from '../moderator-application.constant'
 import { ForumModeratorPermissionEnum } from '../moderator.constant'
 
@@ -39,10 +45,12 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
   @NumberProperty({
     description: '审核人ID',
     example: 2,
-    required: false,
+    required: true,
+    nullable: true,
     min: 1,
+    validation: false,
   })
-  auditById?: number | null
+  auditById!: number | null
 
   @EnumProperty({
     description: '申请状态（0=待审核；1=已通过；2=已拒绝）',
@@ -57,9 +65,9 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
       '申请权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
     itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2, 5],
-    required: false,
+    required: true,
   })
-  permissions?: ForumModeratorPermissionEnum[] | null
+  permissions!: ForumModeratorPermissionEnum[]
 
   @StringProperty({
     description: '申请理由',
@@ -72,25 +80,29 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
   @StringProperty({
     description: '审核意见',
     example: '符合要求，予以通过',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  auditReason?: string | null
+  auditReason!: string | null
 
   @StringProperty({
     description: '备注',
     example: '补充说明',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  remark?: string | null
+  remark!: string | null
 
   @DateProperty({
     description: '审核时间',
     example: '2026-03-19T12:00:00.000Z',
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
   })
-  auditAt?: Date | null
+  auditAt!: Date | null
 
   @DateProperty({
     description: '删除时间',
@@ -102,9 +114,18 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateForumModeratorApplicationDto extends PickType(
+class CreateForumModeratorApplicationRequiredFieldsDto extends PickType(
   BaseForumModeratorApplicationDto,
-  ['sectionId', 'permissions', 'reason', 'remark'] as const,
+  ['sectionId', 'permissions', 'reason'] as const,
+) {}
+
+class CreateForumModeratorApplicationOptionalFieldsDto extends PartialType(
+  PickType(BaseForumModeratorApplicationDto, ['remark'] as const),
+) {}
+
+export class CreateForumModeratorApplicationDto extends IntersectionType(
+  CreateForumModeratorApplicationRequiredFieldsDto,
+  CreateForumModeratorApplicationOptionalFieldsDto,
 ) {}
 
 export class QueryForumModeratorApplicationDto extends IntersectionType(
@@ -127,24 +148,16 @@ export class QueryForumModeratorApplicationDto extends IntersectionType(
 
 export class AuditForumModeratorApplicationDto extends IntersectionType(
   IdDto,
-  PickType(BaseForumModeratorApplicationDto, ['status'] as const),
-) {
-  @StringProperty({
-    description: '审核意见',
-    example: '审核通过',
-    required: false,
-    maxLength: 500,
-  })
-  auditReason?: string
-
-  @StringProperty({
-    description: '备注',
-    example: '安排试用期观察',
-    required: false,
-    maxLength: 500,
-  })
-  remark?: string
-}
+  IntersectionType(
+    PickType(BaseForumModeratorApplicationDto, ['status'] as const),
+    PartialType(
+      PickType(BaseForumModeratorApplicationDto, [
+        'auditReason',
+        'remark',
+      ] as const),
+    ),
+  ),
+) {}
 
 class ForumModeratorApplicationUserDto extends PickType(BaseAppUserDto, [
   'id',
@@ -157,7 +170,10 @@ class ForumModeratorApplicationSectionDto extends PickType(
   ['id', 'name', 'description', 'icon', 'cover'] as const,
 ) {}
 
-export class ForumModeratorApplicationDto extends BaseForumModeratorApplicationDto {
+export class ForumModeratorApplicationDto extends OmitType(
+  BaseForumModeratorApplicationDto,
+  ['deletedAt'] as const,
+) {
   @ArrayProperty({
     description: '权限名称列表',
     itemType: 'string',
@@ -169,7 +185,7 @@ export class ForumModeratorApplicationDto extends BaseForumModeratorApplicationD
 
   @NestedProperty({
     description: '申请人信息',
-    required: false,
+    required: true,
     type: ForumModeratorApplicationUserDto,
     validation: false,
     nullable: false,
@@ -178,15 +194,16 @@ export class ForumModeratorApplicationDto extends BaseForumModeratorApplicationD
 
   @NestedProperty({
     description: '审核人信息',
-    required: false,
+    required: true,
+    nullable: true,
     type: ForumModeratorApplicationUserDto,
     validation: false,
   })
-  auditor?: ForumModeratorApplicationUserDto
+  auditor!: ForumModeratorApplicationUserDto | null
 
   @NestedProperty({
     description: '板块信息',
-    required: false,
+    required: true,
     type: ForumModeratorApplicationSectionDto,
     validation: false,
     nullable: false,

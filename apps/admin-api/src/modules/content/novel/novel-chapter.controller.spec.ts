@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
+import { WorkTypeEnum } from '@libs/platform/constant'
 import { NovelChapterController } from './novel-chapter.controller'
 
 describe('NovelChapterController', () => {
@@ -13,7 +14,10 @@ describe('NovelChapterController', () => {
 
     await expect(controller.delete({ id: 1 })).resolves.toBe(true)
 
-    expect(workChapterService.deleteChapter).toHaveBeenCalledWith(1)
+    expect(workChapterService.deleteChapter).toHaveBeenCalledWith(
+      1,
+      WorkTypeEnum.NOVEL,
+    )
   })
 
   it('batch deletes novel chapters with the ids contract', async () => {
@@ -25,6 +29,9 @@ describe('NovelChapterController', () => {
 
     await expect(controller.batchDelete({ ids: [1, 2, 3] })).resolves.toBe(true)
 
-    expect(workChapterService.deleteChapters).toHaveBeenCalledWith([1, 2, 3])
+    expect(workChapterService.deleteChapters).toHaveBeenCalledWith(
+      [1, 2, 3],
+      WorkTypeEnum.NOVEL,
+    )
   })
 })

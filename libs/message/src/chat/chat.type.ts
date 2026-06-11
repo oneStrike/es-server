@@ -30,8 +30,8 @@ export type ChatMessageOutput = Omit<
   BaseChatMessageDto,
   'bodyTokens' | 'payload'
 > & {
-  bodyTokens?: ChatBodyToken[]
-  payload?: ChatMessageOutputPayload
+  bodyTokens: ChatBodyToken[] | null
+  payload: ChatMessageOutputPayload | null
 }
 
 /**

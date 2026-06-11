@@ -8,8 +8,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -40,17 +41,17 @@ export class BaseForumHashtagDto extends BaseDto {
   @StringProperty({
     description: '运营描述',
     example: '与 TypeScript 学习、实践和生态相关的话题',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 200,
   })
-  description?: string | null
+  description!: string | null
 
   @NumberProperty({
     description: '人工热度加权',
     example: 0,
     required: true,
     default: 0,
-    validation: false,
   })
   manualBoost!: number
 
@@ -73,34 +74,40 @@ export class BaseForumHashtagDto extends BaseDto {
   @NumberProperty({
     description: '审核人 ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     min: 1,
+    validation: false,
   })
-  auditById?: number | null
+  auditById!: number | null
 
   @EnumProperty({
     description: '审核角色（0=版主；1=管理员）',
     example: AuditRoleEnum.ADMIN,
     enum: AuditRoleEnum,
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
   })
-  auditRole?: AuditRoleEnum | null
+  auditRole!: AuditRoleEnum | null
 
   @StringProperty({
     description: '审核原因',
     example: '命中敏感词，需人工复核',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 500,
   })
-  auditReason?: string | null
+  auditReason!: string | null
 
   @DateProperty({
     description: '审核时间',
     example: '2026-04-28T00:00:00.000Z',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  auditAt?: Date | null
+  auditAt!: Date | null
 
   @EnumProperty({
     description:
@@ -115,19 +122,21 @@ export class BaseForumHashtagDto extends BaseDto {
   @NumberProperty({
     description: '创建该话题资源的用户 ID',
     example: 1,
-    required: false,
+    required: true,
+    nullable: true,
     min: 1,
     validation: false,
   })
-  createdByUserId?: number | null
+  createdByUserId!: number | null
 
   @ArrayProperty({
     description: '敏感词命中记录',
-    itemClass: BaseSensitiveWordHitDto,
-    required: false,
+    itemClass: SensitiveWordHitDto,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  sensitiveWordHits?: BaseSensitiveWordHitDto[] | null
+  sensitiveWordHits!: SensitiveWordHitDto[] | null
 
   @NumberProperty({
     description: '可见主题引用数',
@@ -159,10 +168,11 @@ export class BaseForumHashtagDto extends BaseDto {
   @DateProperty({
     description: '最近一次被引用时间',
     example: '2026-04-28T00:00:00.000Z',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  lastReferencedAt?: Date | null
+  lastReferencedAt!: Date | null
 }
 
 /**
@@ -178,6 +188,8 @@ export class ForumHashtagBriefDto extends PickType(BaseForumHashtagDto, [
   'followerCount',
   'lastReferencedAt',
 ] as const) {}
+
+export class AdminForumHashtagDto extends BaseForumHashtagDto {}
 
 /**
  * forum 话题用户关注状态字段 DTO。
@@ -245,9 +257,14 @@ export class UpdateForumHashtagDto extends IntersectionType(
 /**
  * forum 话题审核状态更新 DTO。
  */
+class UpdateForumHashtagAuditStatusFieldsDto extends IntersectionType(
+  PickType(BaseForumHashtagDto, ['auditStatus'] as const),
+  PartialType(PickType(BaseForumHashtagDto, ['auditReason'] as const)),
+) {}
+
 export class UpdateForumHashtagAuditStatusDto extends IntersectionType(
   IdDto,
-  PickType(BaseForumHashtagDto, ['auditStatus', 'auditReason'] as const),
+  UpdateForumHashtagAuditStatusFieldsDto,
 ) {}
 
 /**
@@ -385,7 +402,7 @@ export class ForumHashtagCommentPageItemDto {
 
   @NestedProperty({
     description: '评论用户',
-    required: false,
+    required: true,
     type: PickType(BaseAppUserDto, ['id', 'nickname', 'avatarUrl'] as const),
     validation: false,
     nullable: false,

@@ -1,8 +1,9 @@
 import type { SQL } from 'drizzle-orm'
+import type { WorkTagSelect } from '@db/schema'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
@@ -70,7 +71,11 @@ export class WorkTagService {
       this.db.$count(this.workTag, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toTagOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   // 后台分页查询标签；后台运营不展示人气字段，避免把内部指标误当成可运营排序依据。
@@ -97,7 +102,11 @@ export class WorkTagService {
       this.db.$count(this.workTag, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toAdminTagOutputDto(item)),
+      total,
+      page,
+    )
   }
 
   private buildTagPageQuery(queryDto: QueryTagDto) {
@@ -136,7 +145,7 @@ export class WorkTagService {
         '标签不存在',
       )
     }
-    return tag
+    return this.toTagOutputDto(tag)
   }
 
   // 后台获取标签详情；隐藏人气字段，保持后台详情与后台列表合同一致。
@@ -151,7 +160,7 @@ export class WorkTagService {
         '标签不存在',
       )
     }
-    return tag
+    return this.toAdminTagOutputDto(tag)
   }
 
   // 更新标签主体字段，该入口只处理基础资料编辑；启用状态切换统一走 `updateTagStatus`，避免约束分散。
@@ -302,5 +311,21 @@ export class WorkTagService {
       .from(this.workTag)
 
     return row?.value ?? 0
+  }
+
+  private toTagOutputDto(tag: WorkTagSelect) {
+    return {
+      ...tag,
+      icon: tag.icon ?? null,
+      description: tag.description ?? null,
+    }
+  }
+
+  private toAdminTagOutputDto(tag: Omit<WorkTagSelect, 'popularity'>) {
+    return {
+      ...tag,
+      icon: tag.icon ?? null,
+      description: tag.description ?? null,
+    }
   }
 }

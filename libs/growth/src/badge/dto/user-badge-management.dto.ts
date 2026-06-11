@@ -1,6 +1,14 @@
-import { ArrayProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
+import {
+  ArrayProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
-import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto';
+import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 
 import {
   IntersectionType,
@@ -10,13 +18,7 @@ import {
 } from '@nestjs/swagger'
 import { UserBadgeTypeEnum } from '../user-badge.constant'
 import { BaseUserBadgeAssignmentDto } from './user-badge-assignment.dto'
-import { BaseUserBadgeDto } from './user-badge.dto'
-
-export class UserBadgePageDto extends PickType(PageDto, [
-  'pageSize',
-  'pageIndex',
-  'orderBy',
-] as const) {}
+import { BaseUserBadgeDto, UserBadgeOutputDto } from './user-badge.dto'
 
 export class QueryUserBadgeFiltersDto extends PartialType(
   PickType(BaseUserBadgeDto, [
@@ -28,9 +30,29 @@ export class QueryUserBadgeFiltersDto extends PartialType(
   ] as const),
 ) {}
 
-export class CreateUserBadgeDto extends OmitType(
+class CreateUserBadgeRequiredFieldsDto extends OmitType(
   BaseUserBadgeDto,
-  OMIT_BASE_FIELDS,
+  [
+    ...OMIT_BASE_FIELDS,
+    'description',
+    'icon',
+    'business',
+    'eventKey',
+  ] as const,
+) {}
+
+class CreateUserBadgeOptionalFieldsDto extends PartialType(
+  PickType(BaseUserBadgeDto, [
+    'description',
+    'icon',
+    'business',
+    'eventKey',
+  ] as const),
+) {}
+
+export class CreateUserBadgeDto extends IntersectionType(
+  CreateUserBadgeRequiredFieldsDto,
+  CreateUserBadgeOptionalFieldsDto,
 ) {}
 
 export class UpdateUserBadgeDto extends IntersectionType(
@@ -44,7 +66,7 @@ export class UpdateUserBadgeStatusDto extends IntersectionType(
 ) {}
 
 export class QueryUserBadgeDto extends IntersectionType(
-  UserBadgePageDto,
+  PickType(PageDto, ['pageSize', 'pageIndex', 'orderBy'] as const),
   QueryUserBadgeFiltersDto,
 ) {}
 
@@ -53,7 +75,7 @@ class QueryUserBadgePublicFiltersDto extends PartialType(
 ) {}
 
 export class QueryUserBadgePublicDto extends IntersectionType(
-  UserBadgePageDto,
+  PickType(PageDto, ['pageSize', 'pageIndex', 'orderBy'] as const),
   QueryUserBadgePublicFiltersDto,
 ) {}
 
@@ -63,37 +85,26 @@ export class AssignUserBadgeDto extends PickType(BaseUserBadgeAssignmentDto, [
 ] as const) {}
 
 export class QueryBadgeUserPageDto extends IntersectionType(
-  UserBadgePageDto,
+  PickType(PageDto, ['pageSize', 'pageIndex', 'orderBy'] as const),
   PickType(BaseUserBadgeAssignmentDto, ['badgeId'] as const),
 ) {}
 
-export class BadgeUserInfoDto {
-  @NumberProperty({ description: '用户ID', example: 1, validation: false })
-  id!: number
-
-  @StringProperty({
-    description: '昵称',
-    example: '测试用户',
-    required: false,
-    validation: false,
-  })
-  nickname?: string
-
+class BadgeUserNullableOutputFieldsDto {
   @StringProperty({
     description: '头像地址',
     example: 'https://example.com/avatar.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  avatar?: string | null
+  avatar!: string | null
 
   @StringProperty({
     description: '等级名称',
     example: '新手',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  level?: string | null
+  level!: string | null
 
   @NumberProperty({
     description: '当前积分',
@@ -102,6 +113,11 @@ export class BadgeUserInfoDto {
   })
   point!: number
 }
+
+export class BadgeUserInfoDto extends IntersectionType(
+  PickType(BaseAppUserDto, ['id', 'nickname'] as const),
+  BadgeUserNullableOutputFieldsDto,
+) {}
 
 export class BadgeUserPageItemDto extends BaseUserBadgeAssignmentDto {
   @NestedProperty({
@@ -118,14 +134,14 @@ export class UserBadgeItemDto extends PickType(BaseUserBadgeAssignmentDto, [
 ] as const) {
   @NestedProperty({
     description: '徽章详情',
-    type: BaseUserBadgeDto,
+    type: UserBadgeOutputDto,
     validation: false,
     nullable: false,
   })
-  badge!: BaseUserBadgeDto
+  badge!: UserBadgeOutputDto
 }
 
-export class UserBadgePublicInfoDto extends PickType(BaseUserBadgeDto, [
+export class UserBadgePublicInfoDto extends PickType(UserBadgeOutputDto, [
   'id',
   'name',
   'description',
@@ -163,11 +179,11 @@ export class UserBadgeTypeDistributionItemDto {
 export class UserBadgeTopBadgeItemDto {
   @NestedProperty({
     description: '徽章信息',
-    type: BaseUserBadgeDto,
-    required: false,
+    type: UserBadgeOutputDto,
+    nullable: true,
     validation: false,
   })
-  badge?: BaseUserBadgeDto
+  badge!: UserBadgeOutputDto | null
 
   @NumberProperty({ description: '分配次数', example: 20, validation: false })
   count!: number

@@ -1,6 +1,6 @@
 import { EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
 import { BaseGrowthRecordSharedDto } from '../../growth/dto/growth-shared.dto'
@@ -24,10 +24,12 @@ export class BaseUserPointRecordDto extends BaseGrowthRecordSharedDto {
   @StringProperty({
     description: '账本来源（如 growth_rule、task_bonus、purchase）',
     example: 'growth_rule',
-    required: false,
+    required: true,
+    nullable: true,
+    validation: false,
     maxLength: 40,
   })
-  source?: string | null
+  source!: string | null
 }
 
 export class QueryUserPointRecordDto extends IntersectionType(

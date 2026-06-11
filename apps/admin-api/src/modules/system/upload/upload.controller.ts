@@ -1,9 +1,12 @@
 import type { FastifyRequest } from 'fastify'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
+import {
+  UploadFileDto,
+  UploadResponseDto,
+} from '@libs/platform/modules/upload/dto/upload.dto'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 
-import { Controller, Post, Req } from '@nestjs/common'
+import { Controller, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -21,7 +24,9 @@ export class UploadController {
       actionType: AuditActionTypeEnum.UPLOAD,
     },
   })
-  async uploadFile(@Req() req: FastifyRequest) {
-    return this.uploadService.uploadFile(req)
+  async uploadFile(@Req() req: FastifyRequest, @Query() query: UploadFileDto) {
+    return this.uploadService.uploadFile(req, undefined, {
+      sceneOverride: query.scene,
+    })
   }
 }

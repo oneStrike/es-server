@@ -1,6 +1,14 @@
-import { ArrayProperty, BooleanProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -25,18 +33,18 @@ export class BaseUserLevelRuleDto extends BaseDto {
   @StringProperty({
     description: '等级描述',
     example: '新手用户等级',
-    required: false,
+    nullable: true,
     maxLength: 200,
   })
-  description?: string
+  description!: string | null
 
   @StringProperty({
     description: '等级图标URL',
     example: 'https://example.com/icons/level1.png',
-    required: false,
+    nullable: true,
     maxLength: 255,
   })
-  icon?: string | null
+  icon!: string | null
 
   @NumberProperty({
     description: '所需经验值',
@@ -55,10 +63,10 @@ export class BaseUserLevelRuleDto extends BaseDto {
   @StringProperty({
     description: '业务域标识',
     example: 'forum',
-    required: false,
+    nullable: true,
     maxLength: 20,
   })
-  business?: string | null
+  business!: string | null
 
   @BooleanProperty({
     description: '是否启用',
@@ -113,21 +121,43 @@ export class BaseUserLevelRuleDto extends BaseDto {
   @StringProperty({
     description: '等级专属颜色（十六进制）',
     example: '#FF5733',
-    required: false,
+    nullable: true,
     maxLength: 20,
   })
-  color?: string | null
+  color!: string | null
 }
 
-export class CreateUserLevelRuleDto extends OmitType(
+class CreateUserLevelRuleRequiredDto extends OmitType(
   BaseUserLevelRuleDto,
-  OMIT_BASE_FIELDS,
+  [
+    ...OMIT_BASE_FIELDS,
+    'description',
+    'icon',
+    'business',
+    'color',
+  ] as const,
+) {}
+
+class CreateUserLevelRuleOptionalDto extends PartialType(
+  PickType(BaseUserLevelRuleDto, [
+    'description',
+    'icon',
+    'business',
+    'color',
+  ] as const),
+) {}
+
+export class CreateUserLevelRuleDto extends IntersectionType(
+  CreateUserLevelRuleRequiredDto,
+  CreateUserLevelRuleOptionalDto,
 ) {}
 
 export class UpdateUserLevelRuleDto extends IntersectionType(
   IdDto,
   PartialType(CreateUserLevelRuleDto),
 ) {}
+
+export class UserLevelRuleOutputDto extends BaseUserLevelRuleDto {}
 
 export class QueryUserLevelRuleDto extends IntersectionType(
   PageDto,
@@ -158,26 +188,26 @@ export class UserLevelInfoDto {
   @StringProperty({
     description: '等级描述',
     example: '新手用户等级',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  levelDescription?: string
+  levelDescription!: string | null
 
   @StringProperty({
     description: '等级图标URL',
     example: 'https://example.com/icons/level1.png',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  levelIcon?: string
+  levelIcon!: string | null
 
   @StringProperty({
     description: '等级专属颜色（十六进制）',
     example: '#FF5733',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  levelColor?: string
+  levelColor!: string | null
 
   @NumberProperty({
     description: '当前经验值',
@@ -189,18 +219,17 @@ export class UserLevelInfoDto {
   @NumberProperty({
     description: '下一等级所需经验值',
     example: 500,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  nextLevelExperience?: number
+  nextLevelExperience!: number | null
 
   @NumberProperty({
     description: '升级进度百分比',
     example: 20,
-    required: false,
     validation: false,
   })
-  progressPercentage?: number
+  progressPercentage!: number
 
   @NestedProperty({
     description: '等级权限',
@@ -220,7 +249,8 @@ export class CheckUserLevelPermissionDto {
   userId!: number
 
   @EnumProperty({
-    description: '权限类型（dailyTopicLimit=每日发帖数量上限；dailyReplyCommentLimit=每日回复和评论数量上限；postInterval=发帖间隔秒数；dailyLikeLimit=每日点赞次数上限；dailyFavoriteLimit=每日收藏次数上限）',
+    description:
+      '权限类型（每日发帖数量上限；每日回复和评论数量上限；发帖间隔秒数；每日点赞次数上限；每日收藏次数上限）',
     example: UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
     required: true,
     enum: UserLevelRulePermissionEnum,
@@ -254,58 +284,58 @@ export class UserLevelPermissionResultDto {
   @NumberProperty({
     description: '限制数量',
     example: 10,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  limit?: number | null
+  limit!: number | null
 
   @NumberProperty({
     description: '已使用数量',
     example: 5,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  used?: number | null
+  used!: number | null
 
   @NumberProperty({
     description: '剩余数量',
     example: 5,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  remaining?: number | null
+  remaining!: number | null
 
   @NumberProperty({
     description: '间隔限制秒数，仅 postInterval 返回',
     example: 30,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  limitSeconds?: number | null
+  limitSeconds!: number | null
 
   @NumberProperty({
     description: '距上次发帖/回复已过秒数，仅 postInterval 返回',
     example: 20,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  elapsedSeconds?: number | null
+  elapsedSeconds!: number | null
 
   @NumberProperty({
     description: '距离下次允许操作剩余秒数，仅 postInterval 返回',
     example: 10,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  remainingSeconds?: number | null
+  remainingSeconds!: number | null
 
   @StringProperty({
     description: '下次允许操作时间，仅 postInterval 且受限时返回',
     example: '2026-06-08T12:00:30.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  nextAllowedAt?: string | null
+  nextAllowedAt!: string | null
 }
 
 export class UserLevelDistributionItemDto {

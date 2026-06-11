@@ -3,7 +3,12 @@ import type {
   PaymentOrderSelect,
   PaymentProviderConfigSelect,
 } from '@db/schema'
-import type { CreatePaymentOrderBaseDto } from '../dto/payment.dto'
+import type {
+  CreatePaymentOrderBaseDto,
+  ProviderPaymentNotifyBodyDto,
+  ProviderPaymentNotifyHeadersDto,
+  ProviderPaymentNotifyQueryDto,
+} from '../dto/payment.dto'
 import type {
   PaymentChannelEnum,
   PaymentOrderStatusEnum,
@@ -60,9 +65,9 @@ export interface PaymentOrderStatusResult {
  */
 export interface ProviderPaymentNotifyRequest {
   channel: PaymentChannelEnum
-  headers: Record<string, unknown>
-  query: Record<string, unknown>
-  body: Record<string, unknown>
+  headers: ProviderPaymentNotifyHeadersDto
+  query: ProviderPaymentNotifyQueryDto
+  body: ProviderPaymentNotifyBodyDto
   rawBody?: string
 }
 

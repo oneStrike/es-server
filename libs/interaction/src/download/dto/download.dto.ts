@@ -3,7 +3,8 @@ import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto';
 import { WorkTypeEnum } from '@libs/platform/constant';
 import { DateProperty, EnumProperty, NestedProperty, NumberProperty } from '@libs/platform/decorators';
 
-import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto';
+import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { DownloadTargetTypeEnum } from '../download.constant'
@@ -87,6 +88,7 @@ export class DownloadedWorkItemDto {
     type: DownloadedWorkInfoDto,
     required: true,
     nullable: false,
+    validation: false,
   })
   work!: DownloadedWorkInfoDto
 
@@ -95,6 +97,7 @@ export class DownloadedWorkItemDto {
     example: 12,
     required: true,
     min: 0,
+    validation: false,
   })
   downloadedChapterCount!: number
 
@@ -102,6 +105,7 @@ export class DownloadedWorkItemDto {
     description: '最近下载时间',
     example: '2026-03-04T09:00:00.000Z',
     required: true,
+    validation: false,
   })
   lastDownloadedAt!: Date
 }
@@ -109,20 +113,14 @@ export class DownloadedWorkItemDto {
 export class DownloadedChapterInfoDto extends PickType(BaseWorkChapterDto, [
   'id',
   'workId',
+  'workType',
   'title',
   'subtitle',
   'cover',
   'sortOrder',
   'isPublished',
   'publishAt',
-] as const) {
-  @NumberProperty({
-    description: '作品类型（1=漫画；2=小说）',
-    example: WorkTypeEnum.COMIC,
-    required: true,
-  })
-  workType!: number
-}
+] as const) {}
 
 export class DownloadedWorkChapterItemDto extends BaseDownloadRecordDto {
   @NestedProperty({
@@ -130,6 +128,7 @@ export class DownloadedWorkChapterItemDto extends BaseDownloadRecordDto {
     type: DownloadedChapterInfoDto,
     required: true,
     nullable: false,
+    validation: false,
   })
   chapter!: DownloadedChapterInfoDto
 }

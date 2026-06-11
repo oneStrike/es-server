@@ -97,6 +97,9 @@ describe('MessageChatReadQueryService', () => {
       '"chat_conversation"."has_messages" = $',
     )
     expect(compileSql(conversationListQuery.orderBy[0])).toContain(
+      '"chat_conversation_member"."is_pinned" desc',
+    )
+    expect(compileSql(conversationListQuery.orderBy[1])).toContain(
       '"chat_conversation"."last_message_at" desc nulls last',
     )
     expect(conversationListQuery.execute).toHaveBeenCalledWith({

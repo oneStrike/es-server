@@ -88,9 +88,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       isEnabled: config.isEnabled === 1,
       makeupPeriodType: config.makeupPeriodType,
       periodicAllowance: config.periodicAllowance,
-      makeupIconUrl: rewardDefinition.makeupIconUrl,
-      rewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl,
-      baseRewardItems: rewardDefinition.baseRewardItems,
+      makeupIconUrl: rewardDefinition.makeupIconUrl ?? null,
+      rewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl ?? null,
+      baseRewardItems: rewardDefinition.baseRewardItems ?? null,
       dateRewardRules:
         this.checkInRewardPolicyService.toEditableDateRewardRules(
           rewardDefinition.dateRewardRules,
@@ -209,9 +209,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     const ruleCode = this.checkInStreakService.buildStreakRuleCode(
       query.streakDays,
     )
-    const rules = await this.checkInStreakService.listStreakRuleVersionsByCode(
-      ruleCode,
-    )
+    const rules =
+      await this.checkInStreakService.listStreakRuleVersionsByCode(ruleCode)
     const pageIndex = query.pageIndex ?? 1
     const pageSize = query.pageSize ?? 20
     const start = (pageIndex - 1) * pageSize
@@ -265,14 +264,16 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         sql`SELECT pg_advisory_xact_lock(${CHECK_IN_STREAK_MUTATION_LOCK_KEY})`,
       )
 
-      const latest = await this.checkInStreakService.findLatestStreakRuleVersion(
-        ruleCode,
-        tx,
-      )
-      const existing = await this.checkInStreakService.listStreakRuleVersionsByCode(
-        ruleCode,
-        tx,
-      )
+      const latest =
+        await this.checkInStreakService.findLatestStreakRuleVersion(
+          ruleCode,
+          tx,
+        )
+      const existing =
+        await this.checkInStreakService.listStreakRuleVersionsByCode(
+          ruleCode,
+          tx,
+        )
 
       for (const rule of existing.filter(
         (item) =>
@@ -458,10 +459,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   // 查询连续签到主页面的代表行。
   // 通过窗口函数在数据库侧为每个 ruleCode 只保留一条代表版本，避免在应用层重复分组。
-  private async listStreakRulePageRows(
-    query: StreakRulePageQuery,
-    at: Date,
-  ) {
+  private async listStreakRulePageRows(query: StreakRulePageQuery, at: Date) {
     const rowsResult = await this.db.execute(sql`
       WITH base_rules AS (
         SELECT
@@ -707,7 +705,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     incomingRules: CheckInDateRewardRuleView[],
     today: string,
   ) {
-    const editableRules = incomingRules.filter((rule) => rule.rewardDate >= today)
+    const editableRules = incomingRules.filter(
+      (rule) => rule.rewardDate >= today,
+    )
 
     return [...lockedPastRules, ...editableRules].sort((left, right) =>
       left.rewardDate.localeCompare(right.rewardDate),
@@ -725,15 +725,19 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         .filter((rule) => rule.rewardDate < today)
         .map((rule) => [rule.rewardDate, rule] as const),
     )
-    const window = this.checkInMakeupService.buildMakeupWindow(today, periodType)
+    const window = this.checkInMakeupService.buildMakeupWindow(
+      today,
+      periodType,
+    )
 
     let cursor = window.periodStartDate
     while (cursor < today) {
-      const resolvedReward = this.checkInRewardPolicyService.resolveRewardForDate(
-        rewardDefinition,
-        cursor,
-        periodType,
-      )
+      const resolvedReward =
+        this.checkInRewardPolicyService.resolveRewardForDate(
+          rewardDefinition,
+          cursor,
+          periodType,
+        )
 
       lockedRuleMap.set(cursor, {
         rewardDate: cursor,
@@ -759,9 +763,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       return []
     }
 
-    const loadedRules = await this.checkInStreakService.loadStreakRewardRuleRowsByIds(
-      rules.map((rule) => rule.id),
-    )
+    const loadedRules =
+      await this.checkInStreakService.loadStreakRewardRuleRowsByIds(
+        rules.map((rule) => rule.id),
+      )
     const loadedRuleMap = new Map(loadedRules.map((rule) => [rule.id, rule]))
 
     return rules.map((rule) => {
@@ -773,42 +778,41 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         )
       }
 
-      const definition = this.checkInRewardPolicyService.parseStreakRuleDefinition(
-        {
-        ...ruleWithItems,
-        rewardItems: this.checkInRewardPolicyService.parseRewardItems(
-          ruleWithItems.rewardItems.map((item) => ({
-            amount: item.amount,
-            assetKey: item.assetKey,
-            assetType: item.assetType,
-            iconUrl: item.iconUrl,
-          })),
-          {
-            allowEmpty: false,
-          },
-        )!,
-      },
-      )
+      const definition =
+        this.checkInRewardPolicyService.parseStreakRuleDefinition({
+          ...ruleWithItems,
+          rewardItems: this.checkInRewardPolicyService.parseRewardItems(
+            ruleWithItems.rewardItems.map((item) => ({
+              amount: item.amount,
+              assetKey: item.assetKey,
+              assetType: item.assetType,
+              iconUrl: item.iconUrl,
+            })),
+            {
+              allowEmpty: false,
+            },
+          )!,
+        })
       const status = this.checkInStreakService.resolveStreakRuleStatus(
         ruleWithItems,
         at,
       )
 
-        return {
-          id: rule.id,
-          ruleCode: definition.ruleCode,
-          streakDays: definition.streakDays,
-          version: definition.version,
-          status,
-          publishStrategy: definition.publishStrategy,
-          isCurrent: status === CheckInStreakConfigStatusEnum.ACTIVE,
-          effectiveFrom: definition.effectiveFrom,
-          effectiveTo: definition.effectiveTo,
-          rewardItems: definition.rewardItems,
-          rewardOverviewIconUrl: definition.rewardOverviewIconUrl,
-          repeatable: definition.repeatable,
-          createdAt: rule.createdAt,
-          updatedAt: rule.updatedAt,
+      return {
+        id: rule.id,
+        ruleCode: definition.ruleCode,
+        streakDays: definition.streakDays,
+        version: definition.version,
+        status,
+        publishStrategy: definition.publishStrategy,
+        isCurrent: status === CheckInStreakConfigStatusEnum.ACTIVE,
+        effectiveFrom: definition.effectiveFrom,
+        effectiveTo: definition.effectiveTo,
+        rewardItems: definition.rewardItems,
+        rewardOverviewIconUrl: definition.rewardOverviewIconUrl,
+        repeatable: definition.repeatable,
+        createdAt: rule.createdAt,
+        updatedAt: rule.updatedAt,
       }
     })
   }

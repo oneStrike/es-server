@@ -198,8 +198,8 @@ export class AppUserQueryService extends AppUserServiceSupport {
           item,
           growthMap.get(item.id),
         ),
-        deletedAt: item.deletedAt ?? undefined,
-        levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
+        deletedAt: item.deletedAt ?? null,
+        levelName: item.levelId ? (levelMap.get(item.levelId) ?? null) : null,
         counts: this.mapAdminAppUserCounts(countMap.get(item.id)),
       })),
     }
@@ -229,14 +229,14 @@ export class AppUserQueryService extends AppUserServiceSupport {
 
     return {
       ...this.userCoreService.mapBaseUser(user, growth),
-      deletedAt: user.deletedAt ?? undefined,
+      deletedAt: user.deletedAt ?? null,
       level: level
         ? {
             id: level.id,
             name: level.name,
             requiredExperience: level.requiredExperience,
           }
-        : undefined,
+        : null,
       counts: this.mapAdminAppUserCounts(counts),
       badgeCount,
       pointStats,

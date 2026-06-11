@@ -1,7 +1,14 @@
 import { EnablePlatformEnum } from '@libs/platform/constant'
-import { ArrayProperty, BooleanProperty, EnumProperty, JsonProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  JsonProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import {
   IntersectionType,
@@ -50,10 +57,10 @@ export class BaseAppPageDto extends BaseDto {
   @ArrayProperty({
     description: '启用的平台（1=H5；2=App；3=小程序）',
     example: [EnablePlatformEnum.APP],
-    required: false,
+    nullable: true,
     itemEnum: EnablePlatformEnum,
   })
-  enablePlatform?: EnablePlatformEnum[] | null
+  enablePlatform!: EnablePlatformEnum[] | null
 
   @EnumProperty({
     description: '页面权限级别（0=游客；1=登录；2=会员；3=高级会员）',
@@ -75,20 +82,29 @@ export class BaseAppPageDto extends BaseDto {
   @StringProperty({
     description: '页面描述信息',
     example: '应用首页，展示主要功能和内容',
-    required: false,
+    nullable: true,
     maxLength: 500,
   })
-  description?: string | null
+  description!: string | null
 }
 
-export class CreateAppPageDto extends OmitType(BaseAppPageDto, [
-  ...OMIT_BASE_FIELDS,
-] as const) {}
+export class CreateAppPageDto extends IntersectionType(
+  OmitType(BaseAppPageDto, [
+    ...OMIT_BASE_FIELDS,
+    'enablePlatform',
+    'description',
+  ] as const),
+  PartialType(
+    PickType(BaseAppPageDto, ['enablePlatform', 'description'] as const),
+  ),
+) {}
 
 export class UpdateAppPageDto extends IntersectionType(
   IdDto,
   PartialType(CreateAppPageDto),
 ) {}
+
+export class AppPageOutputDto extends BaseAppPageDto {}
 
 export class QueryAppPageDto extends IntersectionType(
   PageDto,

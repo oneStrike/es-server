@@ -1,6 +1,6 @@
 import { AppForumModeratorProfileDto } from '@libs/forum/moderator/dto/moderator.dto'
 import {
-  AppForumModeratorActionLogDto,
+  BaseForumModeratorActionLogDto,
   QueryAppForumModeratorActionLogDto,
 } from '@libs/forum/moderator/dto/moderator-action-log.dto'
 import { ForumModeratorActionLogService } from '@libs/forum/moderator/moderator-action-log.service'
@@ -20,7 +20,7 @@ import {
 } from '@libs/interaction/comment/dto/comment.dto'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -46,7 +46,7 @@ export class ForumModeratorController {
   @Get('action-log/my/page')
   @ApiPageDoc({
     summary: '分页查询我的版主操作日志',
-    model: AppForumModeratorActionLogDto,
+    model: BaseForumModeratorActionLogDto,
   })
   async getMyActionLogPage(
     @Query() query: QueryAppForumModeratorActionLogDto,

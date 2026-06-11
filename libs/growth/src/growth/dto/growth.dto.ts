@@ -7,7 +7,7 @@ import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-r
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { ArrayProperty, BooleanProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 
@@ -65,12 +65,12 @@ export class GrowthRuleAssetSummaryDto {
   assetType!: GrowthRewardRuleAssetTypeEnum
 
   @StringProperty({
-    description: '资产键；积分/经验为空字符串，扩展资产使用稳定业务键',
-    example: '',
-    required: false,
+    description: '资产键；积分/经验为 null，扩展资产使用稳定业务键',
+    example: null,
+    nullable: true,
     validation: false,
   })
-  assetKey?: string
+  assetKey!: string | null
 
   @BooleanProperty({
     description: '该资产规则是否存在',
@@ -82,50 +82,45 @@ export class GrowthRuleAssetSummaryDto {
   @NumberProperty({
     description: '规则 ID',
     example: 12,
-    required: false,
     validation: false,
   })
-  id?: number
+  id!: number
 
   @BooleanProperty({
     description: '规则是否启用',
     example: true,
-    required: false,
     validation: false,
   })
-  isEnabled?: boolean
+  isEnabled!: boolean
 
   @NumberProperty({
     description: '奖励值',
     example: 5,
-    required: false,
     validation: false,
   })
-  amount?: number
+  amount!: number
 
   @NumberProperty({
     description: '每日上限（0=无限制）',
     example: 0,
-    required: false,
     validation: false,
   })
-  dailyLimit?: number
+  dailyLimit!: number
 
   @NumberProperty({
     description: '总上限（0=无限制）',
     example: 0,
-    required: false,
     validation: false,
   })
-  totalLimit?: number
+  totalLimit!: number
 
   @StringProperty({
     description: '规则备注',
-    example: '用户发帖基础奖励',
-    required: false,
+    example: null,
+    nullable: true,
     validation: false,
   })
-  remark?: string
+  remark!: string | null
 }
 
 export class GrowthRuleTaskBindingSummaryDto {
@@ -203,7 +198,7 @@ export class GrowthRuleEventPageItemDto {
 
   @EnumProperty({
     description:
-      '事件所属领域（forum=论坛；comment=评论；comic_work=漫画作品；novel_work=小说作品；comic_chapter=漫画章节；novel_chapter=小说章节；engagement=互动；badge=徽章；profile=资料；social=社交；report=举报；system=系统）',
+      '事件所属领域（论坛；评论；漫画作品；小说作品；漫画章节；小说章节；互动；徽章；资料；社交；举报；系统）',
     example: EventDefinitionDomainEnum.FORUM,
     enum: EventDefinitionDomainEnum,
     validation: false,
@@ -212,7 +207,7 @@ export class GrowthRuleEventPageItemDto {
 
   @EnumProperty({
     description:
-      '治理闸门类型（none=无闸门；topic_approval=主题审核；comment_approval=评论审核；report_judgement=举报裁决）',
+      '治理闸门类型（无闸门；主题审核；评论审核；举报裁决）',
     example: EventDefinitionGovernanceGateEnum.NONE,
     enum: EventDefinitionGovernanceGateEnum,
     validation: false,
@@ -220,8 +215,7 @@ export class GrowthRuleEventPageItemDto {
   governanceGate!: EventDefinitionGovernanceGateEnum
 
   @EnumProperty({
-    description:
-      '实现状态（declared=已声明；implemented=已实现；legacy_compat=历史兼容）',
+    description: '实现状态（已声明；已实现；历史兼容）',
     example: EventDefinitionImplStatusEnum.IMPLEMENTED,
     enum: EventDefinitionImplStatusEnum,
     validation: false,

@@ -15,13 +15,14 @@ import { and, asc, desc, eq, ilike } from 'drizzle-orm'
 import { PaymentOrderService } from '../payment/payment-order.service'
 import { PaymentOrderTypeEnum } from '../payment/payment.constant'
 import {
+  AdminCurrencyPackagePageItemDto,
   CreateCurrencyPackageDto,
   CreateCurrencyRechargeOrderDto,
   QueryAdminWalletLedgerDto,
   QueryCurrencyPackageDto,
-  QueryWalletLedgerDto,
   UpdateCurrencyPackageDto,
 } from '../wallet/dto/wallet.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { READING_COIN_ASSET_KEY } from '../wallet/wallet.constant'
 
 @Injectable()
@@ -107,7 +108,20 @@ export class WalletService {
       this.db.$count(this.currencyPackage, where),
     ])
 
-    return toPageResult(list, total, page)
+    const pageItems: AdminCurrencyPackagePageItemDto[] = list.map((item) => ({
+      id: item.id,
+      packageKey: item.packageKey,
+      name: item.name,
+      price: item.price,
+      currencyAmount: item.currencyAmount,
+      bonusAmount: item.bonusAmount,
+      sortOrder: item.sortOrder,
+      isEnabled: item.isEnabled,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }))
+
+    return toPageResult(pageItems, total, page)
   }
 
   // 创建虚拟币充值支付订单。
@@ -202,7 +216,7 @@ export class WalletService {
     }
   }
 
-  async getWalletLedgerPage(userId: number, dto: QueryWalletLedgerDto) {
+  async getWalletLedgerPage(userId: number, dto: PageDto) {
     return this.getWalletLedgerPageByUser(userId, dto)
   }
 
@@ -251,7 +265,7 @@ export class WalletService {
 
   private async getWalletLedgerPageByUser(
     userId: number,
-    dto: QueryWalletLedgerDto,
+    dto: PageDto,
   ) {
     const table = this.drizzle.schema.growthLedgerRecord
     const where = and(
@@ -290,7 +304,7 @@ export class WalletService {
         beforeValue: item.beforeValue,
         afterValue: item.afterValue,
         source: item.source,
-        remark: item.remark ?? undefined,
+        remark: item.remark ?? null,
         createdAt: item.createdAt,
       })),
       total,

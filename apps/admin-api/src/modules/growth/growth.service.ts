@@ -122,14 +122,14 @@ export class GrowthService {
           })
           .map((item) => ({
             assetType: item.assetType as GrowthRewardRuleAssetTypeEnum,
-            assetKey: item.assetKey || undefined,
+            assetKey: item.assetKey || null,
             exists: true,
             id: item.id,
             isEnabled: item.isEnabled,
             amount: item.delta,
             dailyLimit: item.dailyLimit,
             totalLimit: item.totalLimit,
-            remark: item.remark ?? undefined,
+            remark: item.remark ?? null,
           }))
         const taskBinding = taskBindingMap.get(definition.code) ?? {
           exists: false,

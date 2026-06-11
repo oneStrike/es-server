@@ -1,6 +1,11 @@
-import { BooleanProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
+import {
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto';
+import { BaseDto } from '@libs/platform/dto/base.dto'
 import { UserBadgeTypeEnum } from '../user-badge.constant'
 
 export class BaseUserBadgeDto extends BaseDto {
@@ -15,34 +20,38 @@ export class BaseUserBadgeDto extends BaseDto {
   @StringProperty({
     description: '徽章描述',
     example: '连续登录7天',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 200,
   })
-  description?: string | null
+  description!: string | null
 
   @StringProperty({
     description: '徽章图标URL',
     example: 'https://example.com/badge.png',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 255,
   })
-  icon?: string | null
+  icon!: string | null
 
   @StringProperty({
     description: '业务域标识',
     example: 'forum',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 20,
   })
-  business?: string | null
+  business!: string | null
 
   @StringProperty({
     description: '事件键',
     example: 'forum.topic.create',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 50,
   })
-  eventKey?: string | null
+  eventKey!: string | null
 
   @EnumProperty({
     description: '徽章类型（1=系统徽章；2=成就徽章；3=活动徽章）',
@@ -69,3 +78,5 @@ export class BaseUserBadgeDto extends BaseDto {
   })
   isEnabled!: boolean
 }
+
+export class UserBadgeOutputDto extends BaseUserBadgeDto {}

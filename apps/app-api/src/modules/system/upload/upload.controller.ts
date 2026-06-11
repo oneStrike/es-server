@@ -1,9 +1,12 @@
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc } from '@libs/platform/decorators'
-import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
+import {
+  UploadFileDto,
+  UploadResponseDto,
+} from '@libs/platform/modules/upload/dto/upload.dto'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 
-import { Controller, Post, Req } from '@nestjs/common'
+import { Controller, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('文件上传')
@@ -16,7 +19,9 @@ export class UploadController {
     summary: '上传文件',
     model: UploadResponseDto,
   })
-  async uploadFile(@Req() req: FastifyRequest) {
-    return this.uploadService.uploadFile(req)
+  async uploadFile(@Req() req: FastifyRequest, @Query() query: UploadFileDto) {
+    return this.uploadService.uploadFile(req, undefined, {
+      sceneOverride: query.scene,
+    })
   }
 }

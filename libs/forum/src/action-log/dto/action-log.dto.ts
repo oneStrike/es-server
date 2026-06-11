@@ -6,7 +6,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { IdDto, PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -18,7 +18,15 @@ import {
  * 论坛用户操作日志基础 DTO。
  * 严格对应 forum_user_action_log 表字段。
  */
-export class BaseForumActionLogDto extends IdDto {
+export class BaseForumActionLogDto {
+  @NumberProperty({
+    description: '主键ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
   @NumberProperty({
     description: '关联的用户ID',
     example: 1,
@@ -86,47 +94,47 @@ export class BaseForumActionLogDto extends IdDto {
   @StringProperty({
     description: '操作发生时解析到的国家/地区',
     example: '中国',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 100,
-    validation: false,
   })
-  geoCountry?: string | null
+  geoCountry!: string | null
 
   @StringProperty({
     description: '操作发生时解析到的省份/州',
     example: '广东省',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 100,
-    validation: false,
   })
-  geoProvince?: string | null
+  geoProvince!: string | null
 
   @StringProperty({
     description: '操作发生时解析到的城市',
     example: '深圳市',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 100,
-    validation: false,
   })
-  geoCity?: string | null
+  geoCity!: string | null
 
   @StringProperty({
     description: '操作发生时解析到的网络运营商',
     example: '电信',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 100,
-    validation: false,
   })
-  geoIsp?: string | null
+  geoIsp!: string | null
 
   @StringProperty({
     description: '属地解析来源',
     example: 'ip2region',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 50,
-    validation: false,
   })
-  geoSource?: string | null
+  geoSource!: string | null
 
   @DateProperty({
     description: '创建时间',
@@ -136,17 +144,27 @@ export class BaseForumActionLogDto extends IdDto {
   createdAt!: Date
 }
 
-export class CreateForumActionLogDto extends PickType(BaseForumActionLogDto, [
+class CreateForumActionLogRequiredFieldsDto extends PickType(BaseForumActionLogDto, [
   'userId',
   'actionType',
   'targetType',
   'targetId',
+] as const) {}
+
+class CreateForumActionLogGeoFieldsDto extends PartialType(
+  PickType(BaseForumActionLogDto, [
   'geoCountry',
   'geoProvince',
   'geoCity',
   'geoIsp',
   'geoSource',
-] as const) {
+  ] as const),
+) {}
+
+export class CreateForumActionLogDto extends IntersectionType(
+  CreateForumActionLogRequiredFieldsDto,
+  CreateForumActionLogGeoFieldsDto,
+) {
   @JsonProperty({
     description: '操作前数据快照',
     required: false,

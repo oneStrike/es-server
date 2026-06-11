@@ -1,7 +1,7 @@
-import { BaseForumSectionGroupDto, CreateForumSectionGroupDto, QueryForumSectionGroupDto, SwapForumSectionGroupSortDto, UpdateForumSectionGroupDto, UpdateForumSectionGroupEnabledDto } from '@libs/forum/section-group/dto/forum-section-group.dto';
+import { CreateForumSectionGroupDto, ForumSectionGroupOutputDto, QueryForumSectionGroupDto, SwapForumSectionGroupSortDto, UpdateForumSectionGroupDto, UpdateForumSectionGroupEnabledDto } from '@libs/forum/section-group/dto/forum-section-group.dto';
 import { ForumSectionGroupService } from '@libs/forum/section-group/forum-section-group.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto';
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -17,7 +17,7 @@ export class ForumSectionGroupController {
   @Get('page')
   @ApiPageDoc({
     summary: '查看板块组列表',
-    model: BaseForumSectionGroupDto,
+    model: ForumSectionGroupOutputDto,
   })
   async getSectionGroupPage(@Query() query: QueryForumSectionGroupDto) {
     return this.forumSectionGroupService.getSectionGroupPage(query)
@@ -26,7 +26,7 @@ export class ForumSectionGroupController {
   @Get('detail')
   @ApiDoc({
     summary: '查看板块组详情',
-    model: BaseForumSectionGroupDto,
+    model: ForumSectionGroupOutputDto,
   })
   async getSectionGroupDetail(@Query() query: IdDto) {
     return this.forumSectionGroupService.getSectionGroupById(query.id)

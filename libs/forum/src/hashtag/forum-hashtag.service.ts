@@ -1,5 +1,8 @@
 import type { SQL } from 'drizzle-orm'
 import type {
+  ForumHashtagSelect,
+} from '@db/schema'
+import type {
   CreateForumHashtagInput,
   ForumHashtagAdminPageQuery,
   ForumHashtagHotPageQuery,
@@ -87,6 +90,31 @@ export class ForumHashtagService {
   // 生成热门分值 SQL。
   private buildHotScoreSql() {
     return sql<number>`(${this.forumHashtag.manualBoost} * 1000 + ${this.forumHashtag.topicRefCount} * 8 + ${this.forumHashtag.commentRefCount} * 3 + ${this.forumHashtag.followerCount} * 5)::int`
+  }
+
+  private toAdminForumHashtagDto(hashtag: ForumHashtagSelect) {
+    return {
+      id: hashtag.id,
+      slug: hashtag.slug,
+      displayName: hashtag.displayName,
+      description: hashtag.description ?? null,
+      manualBoost: hashtag.manualBoost,
+      auditStatus: hashtag.auditStatus,
+      isHidden: hashtag.isHidden,
+      auditById: hashtag.auditById ?? null,
+      auditRole: hashtag.auditRole ?? null,
+      auditReason: hashtag.auditReason ?? null,
+      auditAt: hashtag.auditAt ?? null,
+      createSourceType: hashtag.createSourceType,
+      createdByUserId: hashtag.createdByUserId ?? null,
+      sensitiveWordHits: hashtag.sensitiveWordHits ?? null,
+      topicRefCount: hashtag.topicRefCount,
+      commentRefCount: hashtag.commentRefCount,
+      followerCount: hashtag.followerCount,
+      lastReferencedAt: hashtag.lastReferencedAt ?? null,
+      createdAt: hashtag.createdAt,
+      updatedAt: hashtag.updatedAt,
+    }
   }
 
   // 解析话题列表分页项的当前用户关注状态。
@@ -280,7 +308,11 @@ export class ForumHashtagService {
       this.db.$count(this.forumHashtag, where),
     ])
 
-    return toPageResult(list, total, page)
+    return toPageResult(
+      list.map((item) => this.toAdminForumHashtagDto(item)),
+      total,
+      page,
+    )
   }
 
   // 查询管理端话题详情。
@@ -299,7 +331,7 @@ export class ForumHashtagService {
       )
     }
 
-    return hashtag
+    return this.toAdminForumHashtagDto(hashtag)
   }
 
   // 查询 app 侧公开话题详情。
@@ -336,11 +368,11 @@ export class ForumHashtagService {
       id: hashtag.id,
       slug: hashtag.slug,
       displayName: hashtag.displayName,
-      description: hashtag.description,
+      description: hashtag.description ?? null,
       topicRefCount: hashtag.topicRefCount,
       commentRefCount: hashtag.commentRefCount,
       followerCount: hashtag.followerCount,
-      lastReferencedAt: hashtag.lastReferencedAt,
+      lastReferencedAt: hashtag.lastReferencedAt ?? null,
       isFollowed: followedMap.get(id) ?? false,
     }
   }
@@ -397,11 +429,11 @@ export class ForumHashtagService {
         id: item.id,
         slug: item.slug,
         displayName: item.displayName,
-        description: item.description,
+        description: item.description ?? null,
         topicRefCount: item.topicRefCount,
         commentRefCount: item.commentRefCount,
         followerCount: item.followerCount,
-        lastReferencedAt: item.lastReferencedAt,
+        lastReferencedAt: item.lastReferencedAt ?? null,
         hotScore: item.hotScore,
         isFollowed: followedMap.get(item.id) ?? false,
       })),
@@ -459,6 +491,8 @@ export class ForumHashtagService {
 
     return rows.map((item) => ({
       ...item,
+      description: item.description ?? null,
+      lastReferencedAt: item.lastReferencedAt ?? null,
       isFollowed: followedMap.get(item.id) ?? false,
     }))
   }
@@ -588,10 +622,11 @@ export class ForumHashtagService {
 
           return {
             ...topic,
-            geoCountry: topic.geoCountry ?? undefined,
-            geoProvince: topic.geoProvince ?? undefined,
-            geoCity: topic.geoCity ?? undefined,
-            geoIsp: topic.geoIsp ?? undefined,
+            geoCountry: topic.geoCountry ?? null,
+            geoProvince: topic.geoProvince ?? null,
+            geoCity: topic.geoCity ?? null,
+            geoIsp: topic.geoIsp ?? null,
+            lastCommentAt: topic.lastCommentAt ?? null,
             liked: likedMap.get(topic.id) ?? false,
             favorited: favoritedMap.get(topic.id) ?? false,
             user,
@@ -668,10 +703,23 @@ export class ForumHashtagService {
     )
 
     return {
-      list: rows.map((item) => ({
-        ...item,
-        user: userMap.get(item.userId),
-      })),
+      list: rows.map((item) => {
+        const user = userMap.get(item.userId)
+        if (!user) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '话题评论用户数据缺失',
+          )
+        }
+        return {
+          ...item,
+          user: {
+            id: user.id,
+            nickname: user.nickname,
+            avatarUrl: user.avatarUrl ?? null,
+          },
+        }
+      }),
       total,
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,

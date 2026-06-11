@@ -14,7 +14,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto } from '@libs/platform/dto/base.dto'
 import { ApiExtraModels, PickType } from '@nestjs/swagger'
 import {
   TaskClaimModeEnum,
@@ -365,7 +365,7 @@ export class TaskInstanceViewDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '统一后的用户可见状态（claimable=可领取；claimed=已领取；in_progress=进行中；completed=已完成；reward_pending=奖励待补偿；reward_granted=奖励已到账；expired=已过期；unavailable=当前不可用）',
+      '统一后的用户可见状态（可领取；已领取；进行中；已完成；奖励待补偿；奖励已到账；已过期；当前不可用）',
     example: TaskVisibleStatusEnum.IN_PROGRESS,
     enum: TaskVisibleStatusEnum,
     validation: false,
@@ -422,6 +422,16 @@ export class TaskInstanceViewDto extends BaseDto {
     nullable: true,
   })
   rewardSettlement!: TaskRewardSettlementSummaryDto | null
+}
+
+export class AdminTaskInstancePageItemDto extends TaskInstanceViewDto {
+  @NestedProperty({
+    description: '任务头详情',
+    type: AdminTaskDefinitionDetailDto,
+    validation: false,
+    nullable: true,
+  })
+  task!: AdminTaskDefinitionDetailDto | null
 }
 
 export class TaskLatestEventSummaryDto {
@@ -517,15 +527,7 @@ export class TaskUniqueFactSummaryDto {
   latestOccurredAt!: Date | null
 }
 
-export class AdminTaskReconciliationItemDto extends TaskInstanceViewDto {
-  @NestedProperty({
-    description: '任务头详情',
-    type: AdminTaskDefinitionDetailDto,
-    validation: false,
-    nullable: true,
-  })
-  task!: AdminTaskDefinitionDetailDto | null
-
+export class AdminTaskReconciliationItemDto extends AdminTaskInstancePageItemDto {
   @NestedProperty({
     description: '最近事件摘要',
     type: TaskLatestEventSummaryDto,

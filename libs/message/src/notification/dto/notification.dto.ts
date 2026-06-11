@@ -3,10 +3,9 @@ import type {
   SchemaObject,
 } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
 import { BaseAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto'
-import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { BaseForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
+import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { BaseTaskDefinitionDto } from '@libs/growth/task/dto/task-view.dto'
 import {
   ArrayProperty,
@@ -17,7 +16,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { WorkTypeEnum } from '@libs/platform/constant'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   ApiExtraModels,
@@ -116,10 +117,10 @@ export class NotificationCommentSnapshotDto {
   @StringProperty({
     description: '评论摘要',
     example: '这条评论很关键',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  snippet?: string
+  snippet!: string | null
 }
 
 /**
@@ -130,8 +131,6 @@ export class NotificationCommentSnapshotDto {
  */
 export class NotificationTopicSnapshotDto extends PickType(BaseForumTopicDto, [
   'id',
-  'title',
-  'sectionId',
 ]) {
   @StringProperty({
     description: '对象类型，固定为 topic',
@@ -139,6 +138,22 @@ export class NotificationTopicSnapshotDto extends PickType(BaseForumTopicDto, [
     validation: false,
   })
   kind!: 'topic'
+
+  @StringProperty({
+    description: '主题标题',
+    example: '如何学习 TypeScript？',
+    nullable: true,
+    validation: false,
+  })
+  title!: string | null
+
+  @NumberProperty({
+    description: '关联的板块 ID',
+    example: 1,
+    nullable: true,
+    validation: false,
+  })
+  sectionId!: number | null
 }
 
 /**
@@ -147,10 +162,9 @@ export class NotificationTopicSnapshotDto extends PickType(BaseForumTopicDto, [
  * 在通知中展示作品的基本信息
  * 用于作品相关评论通知场景，展示作品封面和类型
  */
-export class NotificationWorkSnapshotDto extends IntersectionType(
-  PickType(BaseWorkDto, ['id', 'cover']),
-  PickType(BaseWorkChapterDto, ['workType']),
-) {
+export class NotificationWorkSnapshotDto extends PickType(IdDto, [
+  'id',
+] as const) {
   @StringProperty({
     description: '对象类型，固定为 work',
     example: 'work',
@@ -161,10 +175,27 @@ export class NotificationWorkSnapshotDto extends IntersectionType(
   @StringProperty({
     description: '作品标题',
     example: '鬼灭之刃',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  title?: string
+  title!: string | null
+
+  @StringProperty({
+    description: '作品封面',
+    example: 'https://example.com/cover.jpg',
+    nullable: true,
+    validation: false,
+  })
+  cover!: string | null
+
+  @EnumProperty({
+    description: '作品类型（1=漫画；2=小说）',
+    example: WorkTypeEnum.COMIC,
+    enum: WorkTypeEnum,
+    nullable: true,
+    validation: false,
+  })
+  workType!: WorkTypeEnum | null
 }
 
 /**
@@ -173,16 +204,56 @@ export class NotificationWorkSnapshotDto extends IntersectionType(
  * 在通知中展示章节的基本信息
  * 用于章节评论相关通知场景，包含所属作品 ID 和类型
  */
-export class NotificationChapterSnapshotDto extends PickType(
-  BaseWorkChapterDto,
-  ['id', 'title', 'subtitle', 'cover', 'workId', 'workType'],
-) {
+export class NotificationChapterSnapshotDto extends PickType(IdDto, [
+  'id',
+] as const) {
   @StringProperty({
     description: '对象类型，固定为 chapter',
     example: 'chapter',
     validation: false,
   })
   kind!: 'chapter'
+
+  @StringProperty({
+    description: '章节标题',
+    example: '第 1 话',
+    nullable: true,
+    validation: false,
+  })
+  title!: string | null
+
+  @StringProperty({
+    description: '章节副标题',
+    example: '序章',
+    nullable: true,
+    validation: false,
+  })
+  subtitle!: string | null
+
+  @StringProperty({
+    description: '章节封面',
+    example: 'https://example.com/chapter-cover.jpg',
+    nullable: true,
+    validation: false,
+  })
+  cover!: string | null
+
+  @NumberProperty({
+    description: '作品 ID',
+    example: 1,
+    nullable: true,
+    validation: false,
+  })
+  workId!: number | null
+
+  @EnumProperty({
+    description: '作品类型（1=漫画；2=小说）',
+    example: WorkTypeEnum.COMIC,
+    enum: WorkTypeEnum,
+    nullable: true,
+    validation: false,
+  })
+  workType!: WorkTypeEnum | null
 }
 
 /**
@@ -193,7 +264,7 @@ export class NotificationChapterSnapshotDto extends PickType(
  */
 export class NotificationAnnouncementSnapshotDto extends PickType(
   BaseAnnouncementDto,
-  ['id', 'title', 'summary', 'announcementType', 'priorityLevel'],
+  ['id', 'title', 'announcementType', 'priorityLevel'],
 ) {
   @StringProperty({
     description: '对象类型，固定为 announcement',
@@ -201,6 +272,14 @@ export class NotificationAnnouncementSnapshotDto extends PickType(
     validation: false,
   })
   kind!: 'announcement'
+
+  @StringProperty({
+    description: '公告摘要',
+    example: '系统维护通知，预计维护时间 2 小时',
+    nullable: true,
+    validation: false,
+  })
+  summary!: string | null
 }
 
 /**
@@ -215,10 +294,10 @@ export class NotificationTaskSnapshotDto extends PickType(
 ) {
   @NumberProperty({
     description: '任务场景类型（1=新手引导；2=日常；4=活动）',
-    example: 2,
+    example: TaskTypeEnum.DAILY,
     validation: false,
   })
-  type!: number
+  type!: TaskTypeEnum
 
   @StringProperty({
     description: '对象类型，固定为 task',
@@ -240,26 +319,26 @@ class NotificationTaskReminderOptionalFieldsDto {
   @StringProperty({
     description: '周期键',
     example: '2026-04-22',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  cycleKey?: string
+  cycleKey!: string | null
 
   @DateProperty({
     description: '过期时间',
     example: '2026-04-23T00:00:00.000Z',
-    required: false,
+    nullable: true,
     validation: false,
   })
-  expiredAt?: Date
+  expiredAt!: Date | null
 
   @NumberProperty({
     description: '任务实例 ID',
     example: 88,
-    required: false,
+    nullable: true,
     validation: false,
   })
-  instanceId?: number
+  instanceId!: number | null
 }
 
 export class NotificationTaskReminderInfoDto extends NotificationTaskReminderOptionalFieldsDto {
@@ -326,11 +405,11 @@ export type NotificationCommentContainerDto =
 export interface NotificationCommentActionDataDto {
   object: NotificationCommentSnapshotDto
   container: NotificationCommentContainerDto
-  parentContainer?: NotificationWorkSnapshotDto
+  parentContainer: NotificationWorkSnapshotDto | null
 }
 
 export interface NotificationCommentReplyDataDto extends NotificationCommentActionDataDto {
-  parentComment?: NotificationCommentSnapshotDto
+  parentComment: NotificationCommentSnapshotDto | null
 }
 
 export interface NotificationTopicObjectDataDto {
@@ -349,7 +428,7 @@ export interface NotificationAnnouncementDataDto {
 export interface NotificationTaskReminderDataDto {
   object: NotificationTaskSnapshotDto
   reminder: NotificationTaskReminderInfoDto
-  reward?: NotificationTaskRewardSnapshotDto
+  reward: NotificationTaskRewardSnapshotDto | null
 }
 
 export interface NotificationDataByTypeDto {
@@ -386,10 +465,12 @@ function createNotificationDataAnyOfSchemas() {
         oneOf: createNotificationCommentContainerOneOfSchemas(),
       },
       parentContainer: {
-        $ref: getSchemaPath(NotificationWorkSnapshotDto),
+        allOf: [{ $ref: getSchemaPath(NotificationWorkSnapshotDto) }],
+        nullable: true,
       },
       parentComment: {
-        $ref: getSchemaPath(NotificationCommentSnapshotDto),
+        allOf: [{ $ref: getSchemaPath(NotificationCommentSnapshotDto) }],
+        nullable: true,
       },
     }
 
@@ -402,7 +483,8 @@ function createNotificationDataAnyOfSchemas() {
       oneOf: createNotificationCommentContainerOneOfSchemas(),
     },
     parentContainer: {
-      $ref: getSchemaPath(NotificationWorkSnapshotDto),
+      allOf: [{ $ref: getSchemaPath(NotificationWorkSnapshotDto) }],
+      nullable: true,
     },
   }
 
@@ -428,7 +510,10 @@ function createNotificationDataAnyOfSchemas() {
     {
       object: { $ref: getSchemaPath(NotificationTaskSnapshotDto) },
       reminder: { $ref: getSchemaPath(NotificationTaskReminderInfoDto) },
-      reward: { $ref: getSchemaPath(NotificationTaskRewardSnapshotDto) },
+      reward: {
+        allOf: [{ $ref: getSchemaPath(NotificationTaskRewardSnapshotDto) }],
+        nullable: true,
+      },
     }
 
   return [
@@ -436,14 +521,14 @@ function createNotificationDataAnyOfSchemas() {
       title: '评论回复通知数据',
       type: 'object',
       additionalProperties: false,
-      required: ['object', 'container'],
+      required: ['object', 'container', 'parentContainer', 'parentComment'],
       properties: commentReplyProperties,
     },
     {
       title: '评论提及 / 点赞通知数据',
       type: 'object',
       additionalProperties: false,
-      required: ['object', 'container'],
+      required: ['object', 'container', 'parentContainer'],
       properties: commentActionProperties,
     },
     {
@@ -471,7 +556,7 @@ function createNotificationDataAnyOfSchemas() {
       title: '任务提醒通知数据',
       type: 'object',
       additionalProperties: false,
-      required: ['object', 'reminder'],
+      required: ['object', 'reminder', 'reward'],
       properties: taskReminderProperties,
     },
   ] satisfies SchemaObject[]
@@ -488,11 +573,23 @@ function createNotificationDataAnyOfSchemas() {
  * - isRead/readAt: 已读状态和时间
  * - expiresAt: 过期时间
  */
+@ApiExtraModels(
+  NotificationCommentSnapshotDto,
+  NotificationTopicSnapshotDto,
+  NotificationWorkSnapshotDto,
+  NotificationChapterSnapshotDto,
+  NotificationAnnouncementSnapshotDto,
+  NotificationTaskSnapshotDto,
+  NotificationTaskReminderInfoDto,
+  NotificationTaskRewardItemDto,
+  NotificationTaskRewardSnapshotDto,
+)
 export class BaseUserNotificationDto extends BaseDto {
   @EnumProperty({
     description: '通知分类键，表示通知所属业务分类',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
+    validation: false,
   })
   type!: MessageNotificationCategoryKey
 
@@ -556,31 +653,33 @@ export class BaseUserNotificationDto extends BaseDto {
   @NestedProperty({
     description: '触发用户信息',
     type: NotificationActorDto,
-    required: false,
     validation: false,
-    nullable: false,
+    nullable: true,
   })
-  actor?: NotificationActorDto
+  actor!: NotificationActorDto | null
 
   @BooleanProperty({
     description: '是否已读',
     example: false,
+    validation: false,
   })
   isRead!: boolean
 
   @DateProperty({
     description: '已读时间',
     example: '2026-04-13T12:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  readAt?: Date
+  readAt!: Date | null
 
   @DateProperty({
     description: '过期时间',
     example: '2026-04-14T12:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  expiresAt?: Date
+  expiresAt!: Date | null
 }
 
 /**
@@ -611,13 +710,12 @@ export class QueryUserNotificationListDto extends PageDto {
 }
 
 /**
- * 更新用户通知偏好项 DTO
- *
- * 用于设置单个通知分类的启用状态
+ * 用户通知偏好可写字段。
  */
-export class UpdateUserNotificationPreferenceItemDto {
+class UserNotificationPreferenceWritableFieldsDto {
   @EnumProperty({
-    description: '通知分类键，表示通知所属业务分类',
+    description:
+      '通知分类键（评论回复；评论提及；评论点赞；主题点赞；主题收藏；主题评论；主题提及；用户关注；系统公告；任务提醒）',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -629,6 +727,16 @@ export class UpdateUserNotificationPreferenceItemDto {
   })
   isEnabled!: boolean
 }
+
+/**
+ * 更新用户通知偏好项 DTO
+ *
+ * 用于设置单个通知分类的启用状态
+ */
+export class UpdateUserNotificationPreferenceItemDto extends PickType(
+  UserNotificationPreferenceWritableFieldsDto,
+  ['categoryKey', 'isEnabled'] as const,
+) {}
 
 /**
  * 更新用户通知偏好列表 DTO
@@ -667,31 +775,37 @@ export class QueryNotificationDeliveryPageDto extends IntersectionType(
   PartialType(BaseNotificationDeliveryQueryDto),
 ) {}
 
-/**
- * 用户通知 DTO（完整版）
- *
- * 继承 BaseUserNotificationDto，通过 @ApiExtraModels 注册所有可能用到的子模型
- * 用于 Swagger 文档生成正确的 OpenAPI Schema
- */
-@ApiExtraModels(
-  NotificationCommentSnapshotDto,
-  NotificationTopicSnapshotDto,
-  NotificationWorkSnapshotDto,
-  NotificationChapterSnapshotDto,
-  NotificationAnnouncementSnapshotDto,
-  NotificationTaskSnapshotDto,
-  NotificationTaskReminderInfoDto,
-  NotificationTaskRewardItemDto,
-  NotificationTaskRewardSnapshotDto,
-)
-export class UserNotificationDto extends BaseUserNotificationDto {}
+class UserNotificationPreferenceOutputFieldsDto {
+  @StringProperty({
+    description: '通知分类中文标签',
+    example: getMessageNotificationCategoryLabel('comment_reply'),
+    validation: false,
+  })
+  categoryLabel!: string
 
-/**
- * 用户通知未读统计 DTO
- *
- * 继承自基础未读统计 DTO
- */
-export class NotificationUnreadDto extends BaseNotificationUnreadDto {}
+  @BooleanProperty({
+    description: '该通知分类的默认启用状态',
+    example: true,
+    validation: false,
+  })
+  defaultEnabled!: boolean
+
+  @EnumProperty({
+    description: '偏好来源（系统默认；用户显式覆盖）',
+    example: MessageNotificationPreferenceSourceEnum.DEFAULT,
+    enum: MessageNotificationPreferenceSourceEnum,
+    validation: false,
+  })
+  source!: MessageNotificationPreferenceSourceEnum
+
+  @DateProperty({
+    description: '最近一次显式覆盖更新时间',
+    example: '2026-04-13T12:30:00.000Z',
+    nullable: true,
+    validation: false,
+  })
+  updatedAt!: Date | null
+}
 
 /**
  * 用户通知偏好项 DTO
@@ -703,46 +817,10 @@ export class NotificationUnreadDto extends BaseNotificationUnreadDto {}
  * - source: 状态来源（默认策略或用户显式覆盖）
  * - updatedAt: 最近更新时间
  */
-export class UserNotificationPreferenceItemDto {
-  @EnumProperty({
-    description: '通知分类键，表示通知所属业务分类',
-    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
-    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
-  })
-  categoryKey!: MessageNotificationCategoryKey
-
-  @StringProperty({
-    description: '通知分类中文标签',
-    example: getMessageNotificationCategoryLabel('comment_reply'),
-  })
-  categoryLabel!: string
-
-  @BooleanProperty({
-    description: '当前是否启用',
-    example: true,
-  })
-  isEnabled!: boolean
-
-  @BooleanProperty({
-    description: '该通知分类的默认启用状态',
-    example: true,
-  })
-  defaultEnabled!: boolean
-
-  @EnumProperty({
-    description: '偏好来源，表示当前配置来自系统默认值或用户显式覆盖',
-    example: MessageNotificationPreferenceSourceEnum.DEFAULT,
-    enum: MessageNotificationPreferenceSourceEnum,
-  })
-  source!: MessageNotificationPreferenceSourceEnum
-
-  @DateProperty({
-    description: '最近一次显式覆盖更新时间',
-    example: '2026-04-13T12:30:00.000Z',
-    required: false,
-  })
-  updatedAt?: Date
-}
+export class UserNotificationPreferenceItemDto extends IntersectionType(
+  UserNotificationPreferenceWritableFieldsDto,
+  UserNotificationPreferenceOutputFieldsDto,
+) {}
 
 /**
  * 用户通知偏好列表 DTO

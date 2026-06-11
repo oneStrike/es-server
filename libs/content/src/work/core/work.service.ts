@@ -155,23 +155,23 @@ export class WorkService {
       isHot: work.isHot,
       isNew: work.isNew,
       serialStatus: work.serialStatus,
-      publisher: work.publisher,
+      publisher: work.publisher ?? null,
       language: work.language,
       region: work.region,
-      ageRating: work.ageRating,
+      ageRating: work.ageRating ?? null,
       createdAt: work.createdAt,
       updatedAt: work.updatedAt,
-      publishAt: work.publishAt,
+      publishAt: work.publishAt ?? null,
       isPublished: work.isPublished,
-      alias: work.alias,
+      alias: work.alias ?? null,
       description: work.description,
-      originalSource: work.originalSource,
-      copyright: work.copyright,
-      disclaimer: work.disclaimer,
-      lastUpdated: work.lastUpdated,
+      originalSource: work.originalSource ?? null,
+      copyright: work.copyright ?? null,
+      disclaimer: work.disclaimer ?? null,
+      lastUpdated: work.lastUpdated ?? null,
       viewRule: work.viewRule,
-      requiredViewLevelId: work.requiredViewLevelId,
-      forumSectionId: work.forumSectionId,
+      requiredViewLevelId: work.requiredViewLevelId ?? null,
+      forumSectionId: work.forumSectionId ?? null,
       chapterPurchasePricing,
       canComment: work.canComment,
       viewCount: work.viewCount,
@@ -179,7 +179,7 @@ export class WorkService {
       likeCount: work.likeCount,
       commentCount: work.commentCount,
       downloadCount: work.downloadCount,
-      rating: work.rating,
+      rating: work.rating ?? null,
       authors,
       categories,
       tags,
@@ -928,7 +928,14 @@ export class WorkService {
   }
 
   // 批量附加作品的关联数据（作者、分类、标签），采用批量查询 + 内存映射的方式避免 N+1 查询问题。
-  private async attachWorkRelations<TWork extends { id: number }>(
+  private async attachWorkRelations<
+    TWork extends {
+      id: number
+      publisher?: string | null
+      ageRating?: string | null
+      publishAt?: Date | string | null
+    },
+  >(
     page: {
       list: TWork[]
       total: number
@@ -1017,11 +1024,16 @@ export class WorkService {
       ...page,
       list: page.list.map((item) => ({
         ...item,
+        publisher: item.publisher ?? null,
+        ageRating: item.ageRating ?? null,
+        publishAt: item.publishAt ?? null,
         authors: (authorMap.get(item.id) ?? [])
           .map((relation) =>
             relation.author
               ? {
                   ...relation.author,
+                  avatar: relation.author.avatar ?? null,
+                  type: relation.author.type ?? null,
                   isFollowed:
                     authorFollowStatusMap.get(relation.authorId) ?? false,
                 }
@@ -1029,11 +1041,25 @@ export class WorkService {
           )
           .filter(Boolean),
         categories: (categoryMap.get(item.id) ?? [])
-          .map((relation) => relation.category)
+          .map((relation) =>
+            relation.category
+              ? {
+                  ...relation.category,
+                  icon: relation.category.icon ?? null,
+                }
+              : undefined,
+          )
           .filter(Boolean),
         hasThirdPartySourceBinding: sourceBindingWorkIds.has(item.id),
         tags: (tagMap.get(item.id) ?? [])
-          .map((relation) => relation.tag)
+          .map((relation) =>
+            relation.tag
+              ? {
+                  ...relation.tag,
+                  icon: relation.tag.icon ?? null,
+                }
+              : undefined,
+          )
           .filter(Boolean),
       })),
     }
@@ -1159,8 +1185,28 @@ export class WorkService {
 
     const workAuthors = authors.map((author) => ({
       ...author,
+      avatar: author.avatar ?? null,
+      type: author.type ?? null,
       isFollowed: false,
     }))
+    const buildAdminWorkDetail = (
+      responseAuthors: typeof workAuthors,
+      viewCount = workData.viewCount,
+    ) => ({
+      ...this.buildPublicWorkDetail({
+        work: {
+          ...workData,
+          viewCount,
+        },
+        authors: responseAuthors,
+        categories,
+        tags,
+        chapterPurchasePricing: null,
+      }),
+      chapterPrice: workData.chapterPrice,
+      recommendWeight: workData.recommendWeight,
+      remark: workData.remark ?? null,
+    })
     const publicWorkDetail = this.buildPublicWorkDetail({
       work: workData,
       authors: workAuthors,
@@ -1173,13 +1219,12 @@ export class WorkService {
     if (!userId) {
       if (bypassVisibilityCheck) {
         return {
-          ...workData,
-          authors: workAuthors,
-          categories,
-          tags,
+          ...buildAdminWorkDetail(workAuthors),
           liked: false,
           favorited: false,
           viewed: false,
+          lastReadAt: null,
+          continueChapter: null,
         }
       }
 
@@ -1188,6 +1233,8 @@ export class WorkService {
         liked: false,
         favorited: false,
         viewed: false,
+        lastReadAt: null,
+        continueChapter: null,
       }
     }
 
@@ -1225,10 +1272,10 @@ export class WorkService {
       ? {
           id: continueChapter.id,
           title: continueChapter.title,
-          subtitle: continueChapter.subtitle ?? undefined,
+          subtitle: continueChapter.subtitle ?? null,
           sortOrder: continueChapter.sortOrder,
         }
-      : undefined
+      : null
 
     // 历史记录和阅读状态服务于不同目的：
     // - user_browse_log 保持只追加的浏览轨迹和计数器
@@ -1256,16 +1303,14 @@ export class WorkService {
 
     const resolvedAuthors = authors.map((author) => ({
       ...author,
+      avatar: author.avatar ?? null,
+      type: author.type ?? null,
       isFollowed: authorFollowStatusMap.get(author.id) ?? false,
     }))
 
     if (bypassVisibilityCheck) {
       return {
-        ...workData,
-        authors: resolvedAuthors,
-        categories,
-        tags,
-        viewCount: workData.viewCount + 1,
+        ...buildAdminWorkDetail(resolvedAuthors, workData.viewCount + 1),
         liked,
         favorited,
         viewed: true,

@@ -48,7 +48,7 @@ import {
 import { UserGrowthRewardService } from '@libs/growth/growth-reward/growth-reward.service'
 import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
   buildDateOnlyRangeInAppTimeZone,
@@ -219,10 +219,10 @@ export class TaskExecutionService extends TaskServiceSupport {
           rewardSettlementStatus: item.rewardSettlement?.settlementStatus,
         }),
         rewardApplicable: item.instance.rewardApplicable,
-        rewardSettlementId: item.instance.rewardSettlementId,
-        claimedAt: item.instance.claimedAt,
-        completedAt: item.instance.completedAt,
-        expiredAt: item.instance.expiredAt,
+        rewardSettlementId: item.instance.rewardSettlementId ?? null,
+        claimedAt: item.instance.claimedAt ?? null,
+        completedAt: item.instance.completedAt ?? null,
+        expiredAt: item.instance.expiredAt ?? null,
         steps: instanceStepMap.get(item.instance.id) ?? [],
         task: item.task
           ? this.toAppAvailableTaskItem(
@@ -599,10 +599,10 @@ export class TaskExecutionService extends TaskServiceSupport {
           rewardSettlementStatus: item.rewardSettlement?.settlementStatus,
         }),
         rewardApplicable: item.instance.rewardApplicable,
-        rewardSettlementId: item.instance.rewardSettlementId,
-        claimedAt: item.instance.claimedAt,
-        completedAt: item.instance.completedAt,
-        expiredAt: item.instance.expiredAt,
+        rewardSettlementId: item.instance.rewardSettlementId ?? null,
+        claimedAt: item.instance.claimedAt ?? null,
+        completedAt: item.instance.completedAt ?? null,
+        expiredAt: item.instance.expiredAt ?? null,
         steps: instanceStepMap.get(item.instance.id) ?? [],
         rewardSettlement: this.toTaskRewardSettlementSummary(
           item.rewardSettlement,
@@ -723,10 +723,10 @@ export class TaskExecutionService extends TaskServiceSupport {
           rewardSettlementStatus: item.rewardSettlement?.settlementStatus,
         }),
         rewardApplicable: item.instance.rewardApplicable,
-        rewardSettlementId: item.instance.rewardSettlementId,
-        claimedAt: item.instance.claimedAt,
-        completedAt: item.instance.completedAt,
-        expiredAt: item.instance.expiredAt,
+        rewardSettlementId: item.instance.rewardSettlementId ?? null,
+        claimedAt: item.instance.claimedAt ?? null,
+        completedAt: item.instance.completedAt ?? null,
+        expiredAt: item.instance.expiredAt ?? null,
         steps: instanceStepMap.get(item.instance.id) ?? [],
         rewardSettlement: this.toTaskRewardSettlementSummary(
           item.rewardSettlement,

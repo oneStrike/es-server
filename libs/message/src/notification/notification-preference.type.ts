@@ -16,7 +16,7 @@ export interface EffectiveMessageNotificationPreference {
   isEnabled: boolean
   defaultEnabled: boolean
   source: MessageNotificationPreferenceSourceEnum
-  updatedAt?: Date
+  updatedAt: Date | null
 }
 
 /** 稳定领域类型 `CreateNotificationFromOutboxResult`。仅供内部领域/服务链路复用，避免重复定义。 */

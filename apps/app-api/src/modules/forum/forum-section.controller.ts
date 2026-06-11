@@ -2,12 +2,12 @@ import {
   PublicForumSectionDetailDto,
   PublicForumSectionListItemDto,
   PublicForumSectionModeratorDto,
-  QueryPublicForumSectionDetailDto,
   QueryPublicForumSectionDto,
   QueryPublicForumSectionModeratorsDto,
 } from '@libs/forum/section/dto/forum-section.dto'
 import { ForumSectionService } from '@libs/forum/section/forum-section.service'
 import { ApiDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto/base.dto'
 
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -41,7 +41,7 @@ export class ForumSectionController {
     model: PublicForumSectionDetailDto,
   })
   async getDetail(
-    @Query() query: QueryPublicForumSectionDetailDto,
+    @Query() query: IdDto,
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumSectionService.getVisibleSectionDetail(query.id, userId)

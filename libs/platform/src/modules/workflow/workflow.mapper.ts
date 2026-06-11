@@ -56,6 +56,7 @@ export function toWorkflowAttemptDto(row: WorkflowAttemptSelect) {
     claimExpiresAt: row.claimExpiresAt,
     heartbeatAt: row.heartbeatAt,
     error: toWorkflowErrorView(row),
+    errorDiagnostic: asNullableWorkflowObject(row.errorDiagnostic),
     startedAt: row.startedAt,
     finishedAt: row.finishedAt,
     createdAt: row.createdAt,
