@@ -241,12 +241,31 @@ function createQueryService(options?: {
         orderBy,
       }),
     ),
+    buildAllowlistedOrderBy: jest.fn((orderBy: unknown) => ({
+      orderBySql: ['allowlisted_order'],
+      orderBy,
+    })),
     buildPage: jest.fn((query: { pageIndex?: number; pageSize?: number }) => ({
       limit: query.pageSize ?? 20,
       offset: ((query.pageIndex ?? 1) - 1) * (query.pageSize ?? 20),
       pageIndex: query.pageIndex ?? 1,
       pageSize: query.pageSize ?? 20,
     })),
+    buildPageParams: jest.fn(
+      (query: { pageIndex?: number; pageSize?: number; orderBy?: string }) => ({
+        page: {
+          limit: query.pageSize ?? 20,
+          offset: ((query.pageIndex ?? 1) - 1) * (query.pageSize ?? 20),
+          pageIndex: query.pageIndex ?? 1,
+          pageSize: query.pageSize ?? 20,
+        },
+        order: {
+          orderBy: query.orderBy,
+          orderBySql: ['allowlisted_order'],
+        },
+        dateRange: undefined,
+      }),
+    ),
     db,
     schema,
   }
@@ -326,38 +345,68 @@ describe('ForumTopicQueryService pagination order', () => {
     await service.getHotPublicTopics({ pageSize: 20 })
     await service.getTopics({ pageIndex: 1, pageSize: 20 })
 
-    expect(drizzle.buildOrderBy).toHaveBeenNthCalledWith(
+    expect(drizzle.buildPageParams).toHaveBeenNthCalledWith(
       1,
-      undefined,
+      expect.objectContaining({ pageSize: 20 }),
       expect.objectContaining({
-        fallbackOrderBy: [
-          { isPinned: 'desc' },
-          { lastCommentAt: 'desc' },
-          { createdAt: 'desc' },
-          { id: 'desc' },
-        ],
+        allowlistedOrderBy: expect.objectContaining({
+          fallbackOrderBy: [
+            { isPinned: 'desc' },
+            { lastCommentAt: 'desc' },
+            { createdAt: 'desc' },
+            { id: 'desc' },
+          ],
+        }),
       }),
     )
-    expect(drizzle.buildOrderBy).toHaveBeenNthCalledWith(
+    expect(drizzle.buildPageParams).toHaveBeenNthCalledWith(
       2,
-      undefined,
+      expect.objectContaining({ pageSize: 20 }),
       expect.objectContaining({
-        fallbackOrderBy: [
-          { commentCount: 'desc' },
-          { likeCount: 'desc' },
-          { viewCount: 'desc' },
-          { createdAt: 'desc' },
-          { id: 'desc' },
-        ],
+        allowlistedOrderBy: expect.objectContaining({
+          fallbackOrderBy: [
+            { commentCount: 'desc' },
+            { likeCount: 'desc' },
+            { viewCount: 'desc' },
+            { createdAt: 'desc' },
+            { id: 'desc' },
+          ],
+        }),
       }),
     )
-    expect(drizzle.buildOrderBy).toHaveBeenNthCalledWith(
-      3,
+    expect(drizzle.buildOrderBy).toHaveBeenCalledWith(
       undefined,
       expect.objectContaining({
         fallbackOrderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
       }),
     )
+  })
+
+  it('uses endpoint allowlist for explicit public orderBy', async () => {
+    const { drizzle, service } = createQueryService()
+
+    await service.getPublicTopics({
+      orderBy: '{"createdAt":"asc"}',
+      pageSize: 20,
+    })
+
+    expect(drizzle.buildPageParams).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: '{"createdAt":"asc"}',
+      }),
+      expect.objectContaining({
+        allowlistedOrderBy: expect.objectContaining({
+          columns: expect.objectContaining({
+            createdAt: expect.anything(),
+            id: expect.anything(),
+            commentCount: expect.anything(),
+            likeCount: expect.anything(),
+            viewCount: expect.anything(),
+          }),
+        }),
+      }),
+    )
+    expect(drizzle.buildOrderBy).not.toHaveBeenCalled()
   })
 
   it('rejects unsupported admin orderBy fields before querying', async () => {

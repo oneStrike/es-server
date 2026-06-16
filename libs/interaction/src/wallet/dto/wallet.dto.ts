@@ -6,8 +6,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { CreatePaymentOrderBaseDto } from '../../payment/dto/payment.dto'
 
@@ -197,15 +196,6 @@ export class QueryAdminWalletLedgerDto extends PageDto {
   userId!: number
 }
 
-export class QueryWalletLedgerDto extends CursorPageSizeDto {
-  @StringProperty({
-    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
-    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
-
 export class WalletLedgerRecordDto {
   @NumberProperty({
     description: '流水 ID',
@@ -215,7 +205,8 @@ export class WalletLedgerRecordDto {
   id!: number
 
   @EnumProperty({
-    description: '流水动作（1=发放资产；2=扣减资产；3=规则判定过程；4=授予徽章）',
+    description:
+      '流水动作（1=发放资产；2=扣减资产；3=规则判定过程；4=授予徽章）',
     enum: GrowthLedgerActionEnum,
     example: GrowthLedgerActionEnum.GRANT,
     validation: false,

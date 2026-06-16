@@ -1,6 +1,6 @@
+import { ContentPurchasePricingFieldsDto } from '@libs/content/permission/dto/content-purchase-pricing.dto'
 import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
 import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
-import { ContentPurchasePricingFieldsDto } from '@libs/content/permission/dto/content-purchase-pricing.dto'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,
@@ -10,8 +10,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -107,10 +106,7 @@ class PurchaseTargetRequiredFieldsDto extends PickType(BasePurchaseRecordDto, [
 ] as const) {}
 
 class PurchaseTargetOptionalFieldsDto extends PartialType(
-  PickType(BasePurchaseRecordDto, [
-  'outTradeNo',
-  'couponInstanceId',
-  ] as const),
+  PickType(BasePurchaseRecordDto, ['outTradeNo', 'couponInstanceId'] as const),
 ) {}
 
 export class PurchaseTargetBodyDto extends IntersectionType(
@@ -124,7 +120,7 @@ export class PurchaseTargetCommandDto extends IntersectionType(
 ) {}
 
 export class QueryPurchasedWorkDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   PickType(PartialType(BasePurchaseRecordDto), ['status'] as const),
 ) {
   @EnumProperty({
@@ -134,13 +130,6 @@ export class QueryPurchasedWorkDto extends IntersectionType(
     required: false,
   })
   workType?: WorkTypeEnum
-
-  @StringProperty({
-    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
-    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
 }
 
 export class QueryPurchasedWorkCommandDto extends IntersectionType(

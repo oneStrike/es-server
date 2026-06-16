@@ -34,13 +34,7 @@ import type {
   TaskUniqueFactSummaryRecord,
 } from './types/task.type'
 import { randomUUID } from 'node:crypto'
-import { DrizzleService, extractRows } from '@db/core'
-import {
-  encodeGrowthCursor,
-  parseGrowthCursor,
-  rejectOffsetPaginationFields,
-  toCursorPage,
-} from '@libs/growth/growth/cursor-page.util'
+import { DrizzleService, extractRows, toPageResult } from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
   canConsumeEventEnvelopeByConsumer,
@@ -54,7 +48,7 @@ import {
 import { UserGrowthRewardService } from '@libs/growth/growth-reward/growth-reward.service'
 import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
   buildDateOnlyRangeInAppTimeZone,
@@ -119,28 +113,46 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 分页查询可领取任务。
   async getAvailableTasks(queryDto: QueryAvailableTaskPageDto, userId: number) {
-    rejectOffsetPaginationFields(queryDto, '可领取任务列表')
     const now = new Date()
-    const page = this.drizzle.buildPage({ pageSize: queryDto.pageSize })
-    const cursor = this.parseAvailableTaskCursor(queryDto.cursor)
-    const availableTaskIds = await this.getAvailableTaskDefinitionIds(
-      queryDto,
-      userId,
-      now,
-      page.limit + 1,
-      cursor,
-    )
+    const pageParams = this.drizzle.buildPageParams(queryDto, {
+      allowlistedOrderBy: {
+        columns: {
+          sortOrder: sql`c.sort_order`,
+          id: sql`c.id`,
+          createdAt: sql`c.created_at`,
+          updatedAt: sql`c.updated_at`,
+        },
+        fallbackOrderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      },
+    })
+    const [availableTaskIds, total] = await Promise.all([
+      this.getAvailableTaskDefinitionIds(
+        queryDto,
+        userId,
+        now,
+        pageParams.page.limit,
+        pageParams.page.offset,
+        pageParams.order.orderByClause ?? sql.empty(),
+        pageParams.dateRange?.gte,
+        pageParams.dateRange?.lt,
+      ),
+      this.countAvailableTaskDefinitions(
+        queryDto,
+        userId,
+        now,
+        pageParams.dateRange?.gte,
+        pageParams.dateRange?.lt,
+      ),
+    ])
     const rows = await this.getTaskDefinitionsByOrderedIds(availableTaskIds)
-    const cursorPage = toCursorPage(rows, page.limit, (task) =>
-      this.encodeAvailableTaskCursor(task),
-    )
+    const pageResult = toPageResult(rows, total, pageParams.page)
     const stepSummaryMap = await this.getTaskStepSummaryMap(
-      cursorPage.list.map((item) => item.id),
+      pageResult.list.map((item) => item.id),
     )
 
     return {
-      ...cursorPage,
-      list: cursorPage.list.map((task) =>
+      ...pageResult,
+      list: pageResult.list.map((task) =>
         this.toAppAvailableTaskItem(task, stepSummaryMap.get(task.id) ?? []),
       ),
     }
@@ -148,73 +160,80 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 分页查询我的任务。
   async getMyTasks(queryDto: QueryMyTaskPageDto, userId: number) {
-    rejectOffsetPaginationFields(queryDto, '我的任务列表')
-    const page = this.drizzle.buildPage({ pageSize: queryDto.pageSize })
-    const cursor = this.parseMyTaskCursor(queryDto.cursor)
+    const pageParams = this.drizzle.buildPageParams(queryDto, {
+      table: this.taskInstanceTable,
+      fallbackOrderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+    })
     const where = and(
       eq(this.taskInstanceTable.userId, userId),
       isNull(this.taskInstanceTable.deletedAt),
       queryDto.status !== undefined
         ? eq(this.taskInstanceTable.status, queryDto.status)
         : undefined,
+      pageParams.dateRange?.gte
+        ? gte(this.taskInstanceTable.createdAt, pageParams.dateRange.gte)
+        : undefined,
+      pageParams.dateRange?.lt
+        ? lt(this.taskInstanceTable.createdAt, pageParams.dateRange.lt)
+        : undefined,
+    )
+    const pageWhere = and(
+      where,
+      queryDto.sceneType !== undefined
+        ? eq(this.taskDefinitionTable.sceneType, queryDto.sceneType)
+        : undefined,
     )
 
-    const rows = await this.db
-      .select({
-        instance: this.taskInstanceTable,
-        task: this.taskDefinitionTable,
-        rewardSettlement: this.growthRewardSettlementTable,
-      })
-      .from(this.taskInstanceTable)
-      .leftJoin(
-        this.taskDefinitionTable,
-        eq(this.taskInstanceTable.taskId, this.taskDefinitionTable.id),
-      )
-      .leftJoin(
-        this.growthRewardSettlementTable,
-        eq(
-          this.taskInstanceTable.rewardSettlementId,
-          this.growthRewardSettlementTable.id,
-        ),
-      )
-      .where(
-        and(
-          where,
-          queryDto.sceneType !== undefined
-            ? eq(this.taskDefinitionTable.sceneType, queryDto.sceneType)
-            : undefined,
-          cursor
-            ? or(
-                lt(this.taskInstanceTable.updatedAt, cursor.updatedAt),
-                and(
-                  eq(this.taskInstanceTable.updatedAt, cursor.updatedAt),
-                  lt(this.taskInstanceTable.id, cursor.id),
-                ),
-              )
-            : undefined,
-        ),
-      )
-      .orderBy(
-        desc(this.taskInstanceTable.updatedAt),
-        desc(this.taskInstanceTable.id),
-      )
-      .limit(page.limit + 1)
-    const cursorPage = toCursorPage(rows, page.limit, (item) =>
-      this.encodeMyTaskCursor(item.instance),
+    const [rows, totalRows] = await Promise.all([
+      this.db
+        .select({
+          instance: this.taskInstanceTable,
+          task: this.taskDefinitionTable,
+          rewardSettlement: this.growthRewardSettlementTable,
+        })
+        .from(this.taskInstanceTable)
+        .leftJoin(
+          this.taskDefinitionTable,
+          eq(this.taskInstanceTable.taskId, this.taskDefinitionTable.id),
+        )
+        .leftJoin(
+          this.growthRewardSettlementTable,
+          eq(
+            this.taskInstanceTable.rewardSettlementId,
+            this.growthRewardSettlementTable.id,
+          ),
+        )
+        .where(pageWhere)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.taskInstanceTable)
+        .leftJoin(
+          this.taskDefinitionTable,
+          eq(this.taskInstanceTable.taskId, this.taskDefinitionTable.id),
+        )
+        .where(pageWhere),
+    ])
+    const pageResult = toPageResult(
+      rows,
+      Number(totalRows[0]?.count ?? 0),
+      pageParams.page,
     )
 
-    const taskIds = cursorPage.list
+    const taskIds = pageResult.list
       .map((item) => item.task?.id)
       .filter((id): id is number => typeof id === 'number')
-    const instanceIds = cursorPage.list.map((item) => item.instance.id)
+    const instanceIds = pageResult.list.map((item) => item.instance.id)
     const [stepSummaryMap, instanceStepMap] = await Promise.all([
       this.getTaskStepSummaryMap(taskIds),
       this.getTaskInstanceStepViewMap(instanceIds),
     ])
 
     return {
-      ...cursorPage,
-      list: cursorPage.list.map((item) => ({
+      ...pageResult,
+      list: pageResult.list.map((item) => ({
         id: item.instance.id,
         taskId: item.instance.taskId,
         cycleKey: item.instance.cycleKey,
@@ -545,6 +564,10 @@ export class TaskExecutionService extends TaskServiceSupport {
         : undefined,
     )
 
+    const orderQuery = this.drizzle.buildOrderBy(queryDto.orderBy, {
+      table: this.taskInstanceTable,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
     const rows = await this.db
       .select({
         instance: this.taskInstanceTable,
@@ -564,7 +587,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         ),
       )
       .where(where)
-      .orderBy(desc(this.taskInstanceTable.createdAt))
+      .orderBy(...orderQuery.orderBySql)
       .limit(page.limit)
       .offset(page.offset)
 
@@ -656,6 +679,10 @@ export class TaskExecutionService extends TaskServiceSupport {
         : undefined,
     )
 
+    const orderQuery = this.drizzle.buildOrderBy(queryDto.orderBy, {
+      table: this.taskInstanceTable,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
     const rows = await this.db
       .select({
         instance: this.taskInstanceTable,
@@ -675,7 +702,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         ),
       )
       .where(where)
-      .orderBy(desc(this.taskInstanceTable.createdAt))
+      .orderBy(...orderQuery.orderBySql)
       .limit(page.limit)
       .offset(page.offset)
 
@@ -894,10 +921,7 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
     if (retryScope.rewardSettlementId !== undefined) {
       scopeConditions.push(
-        eq(
-          this.growthRewardSettlementTable.id,
-          retryScope.rewardSettlementId,
-        ),
+        eq(this.growthRewardSettlementTable.id, retryScope.rewardSettlementId),
       )
     }
     if (retryScope.settlementStatus !== undefined) {
@@ -910,10 +934,14 @@ export class TaskExecutionService extends TaskServiceSupport {
       }
     }
     if (createdRange?.gte) {
-      scopeConditions.push(gte(this.taskInstanceTable.createdAt, createdRange.gte))
+      scopeConditions.push(
+        gte(this.taskInstanceTable.createdAt, createdRange.gte),
+      )
     }
     if (createdRange?.lt) {
-      scopeConditions.push(lt(this.taskInstanceTable.createdAt, createdRange.lt))
+      scopeConditions.push(
+        lt(this.taskInstanceTable.createdAt, createdRange.lt),
+      )
     }
 
     const rows = await this.db
@@ -989,9 +1017,7 @@ export class TaskExecutionService extends TaskServiceSupport {
   // 规整后台选中的任务实例 ID，避免重复扫描和无效输入污染 SQL。
   private normalizeTaskInstanceIds(ids?: number[]) {
     return [
-      ...new Set(
-        (ids ?? []).filter((id) => Number.isInteger(id) && id > 0),
-      ),
+      ...new Set((ids ?? []).filter((id) => Number.isInteger(id) && id > 0)),
     ]
   }
 
@@ -1946,21 +1972,29 @@ export class TaskExecutionService extends TaskServiceSupport {
     userId: number,
     now: Date,
     limit: number,
-    cursor?: { sortOrder: number, id: number },
+    offset: number,
+    orderByClause: SQL,
+    startDate?: Date,
+    endDate?: Date,
   ) {
     const cycleKeys = this.buildCurrentTaskCycleKeys(now)
     const sceneFilter =
       queryDto.sceneType !== undefined
         ? sql`AND d.scene_type = ${queryDto.sceneType}`
         : sql.empty()
-    const cursorFilter = cursor
-      ? sql`AND (c.sort_order > ${cursor.sortOrder} OR (c.sort_order = ${cursor.sortOrder} AND c.id > ${cursor.id}))`
+    const startDateFilter = startDate
+      ? sql`AND d.created_at >= ${startDate}`
+      : sql.empty()
+    const endDateFilter = endDate
+      ? sql`AND d.created_at < ${endDate}`
       : sql.empty()
     const result = await this.db.execute(sql`
       WITH claimable_candidates AS (
         SELECT
           d.id,
           d.sort_order,
+          d.created_at,
+          d.updated_at,
           CASE d.repeat_type
             WHEN ${TaskRepeatCycleEnum.DAILY} THEN ${cycleKeys.daily}
             WHEN ${TaskRepeatCycleEnum.WEEKLY} THEN ${cycleKeys.weekly}
@@ -1974,6 +2008,8 @@ export class TaskExecutionService extends TaskServiceSupport {
           AND (d.start_at IS NULL OR d.start_at <= ${now})
           AND (d.end_at IS NULL OR d.end_at >= ${now})
           ${sceneFilter}
+          ${startDateFilter}
+          ${endDateFilter}
       )
       SELECT c.id
       FROM claimable_candidates c
@@ -1985,58 +2021,12 @@ export class TaskExecutionService extends TaskServiceSupport {
           AND i.task_id = c.id
           AND i.cycle_key = c.cycle_key
       )
-      ${cursorFilter}
-      ORDER BY c.sort_order ASC, c.id ASC
+      ORDER BY ${orderByClause}
       LIMIT ${limit}
+      OFFSET ${offset}
     `)
 
     return extractRows<{ id: number }>(result).map((row) => Number(row.id))
-  }
-
-  private encodeAvailableTaskCursor(
-    task: Pick<TaskDefinitionSelect, 'sortOrder' | 'id'>,
-  ) {
-    return encodeGrowthCursor({ sortOrder: task.sortOrder, id: task.id })
-  }
-
-  private parseAvailableTaskCursor(cursor?: string | null) {
-    return parseGrowthCursor(cursor, '可领取任务分页游标非法', (payload) => {
-      const sortOrder = Number(payload.sortOrder)
-      const id = Number(payload.id)
-      if (
-        !Number.isInteger(sortOrder) ||
-        sortOrder < 0 ||
-        !Number.isInteger(id) ||
-        id <= 0
-      ) {
-        return undefined
-      }
-      return { sortOrder, id }
-    })
-  }
-
-  private encodeMyTaskCursor(
-    task: Pick<TaskInstanceSelect, 'updatedAt' | 'id'>,
-  ) {
-    return encodeGrowthCursor({
-      updatedAt: task.updatedAt.toISOString(),
-      id: task.id,
-    })
-  }
-
-  private parseMyTaskCursor(cursor?: string | null) {
-    return parseGrowthCursor(cursor, '我的任务分页游标非法', (payload) => {
-      const updatedAt = new Date(String(payload.updatedAt))
-      const id = Number(payload.id)
-      if (
-        Number.isNaN(updatedAt.getTime()) ||
-        !Number.isInteger(id) ||
-        id <= 0
-      ) {
-        return undefined
-      }
-      return { updatedAt, id }
-    })
   }
 
   // 数据库侧统计当前用户仍可领取的任务数量。
@@ -2044,12 +2034,20 @@ export class TaskExecutionService extends TaskServiceSupport {
     queryDto: QueryAvailableTaskPageDto,
     userId: number,
     now: Date,
+    startDate?: Date,
+    endDate?: Date,
   ) {
     const cycleKeys = this.buildCurrentTaskCycleKeys(now)
     const sceneFilter =
       queryDto.sceneType !== undefined
         ? sql`AND d.scene_type = ${queryDto.sceneType}`
         : sql.empty()
+    const startDateFilter = startDate
+      ? sql`AND d.created_at >= ${startDate}`
+      : sql.empty()
+    const endDateFilter = endDate
+      ? sql`AND d.created_at < ${endDate}`
+      : sql.empty()
     const result = await this.db.execute(sql`
       WITH claimable_candidates AS (
         SELECT
@@ -2067,6 +2065,8 @@ export class TaskExecutionService extends TaskServiceSupport {
           AND (d.start_at IS NULL OR d.start_at <= ${now})
           AND (d.end_at IS NULL OR d.end_at >= ${now})
           ${sceneFilter}
+          ${startDateFilter}
+          ${endDateFilter}
       )
       SELECT count(*)::int AS count
       FROM claimable_candidates c
@@ -2339,7 +2339,10 @@ export class TaskExecutionService extends TaskServiceSupport {
 
     const stepMap = new Map<
       number,
-      Array<{ id: number, dedupeScope: number | null }>
+      Array<{
+        id: number
+        dedupeScope: number | null
+      }>
     >()
     for (const step of stepRows) {
       const current = stepMap.get(step.taskId) ?? []

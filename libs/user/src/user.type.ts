@@ -1,5 +1,4 @@
 import type { AppUserSelect } from '@db/schema'
-import type { UserMentionCandidateDto } from './dto/user-self.dto'
 
 /**
  * 用户成长余额快照。
@@ -8,17 +7,6 @@ import type { UserMentionCandidateDto } from './dto/user-self.dto'
 export interface UserGrowthSnapshot {
   points: number
   experience: number
-}
-
-/**
- * 提及候选分页结果。
- * 供共享用户服务与 app 端 controller 链路复用统一分页结构。
- */
-export interface UserMentionCandidatePageResult {
-  list: UserMentionCandidateDto[]
-  pageSize: number
-  hasMore: boolean
-  nextCursor: string | null
 }
 
 /**

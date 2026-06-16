@@ -11,6 +11,7 @@ import type { MessageNotificationRealtimeService } from '../notification/notific
 import type { MessageChatReadQueryService } from './chat-read-query.service'
 import { BadRequestException, Logger } from '@nestjs/common'
 import { UploadConfig } from '@libs/platform/config'
+import { sql } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core/dialect'
 import {
   ChatMessageStatusEnum,
@@ -25,6 +26,7 @@ type ChatReadQueryMock = jest.Mocked<
   Pick<
     MessageChatReadQueryService,
     | 'getConversationList'
+    | 'countConversationList'
     | 'getConversationMessages'
     | 'getConversationMessagesBefore'
     | 'getConversationMessagesAfter'
@@ -197,6 +199,25 @@ function createService() {
         offset: (pageIndex - 1) * pageSize,
       }
     }),
+    buildPageParams: jest.fn(
+      (dto: { pageIndex?: number; pageSize?: number }) => {
+        const pageIndex = dto.pageIndex ?? 1
+        const pageSize = dto.pageSize ?? 20
+
+        return {
+          page: {
+            pageIndex,
+            pageSize,
+            limit: pageSize,
+            offset: (pageIndex - 1) * pageSize,
+          },
+          order: {
+            orderBySql: [sql.raw('"is_pinned" desc')],
+          },
+          dateRange: undefined,
+        }
+      },
+    ),
     withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
     assertAffectedRows: jest.fn(),
     isUniqueViolation: jest.fn().mockReturnValue(false),
@@ -231,6 +252,7 @@ function createService() {
   }
   const chatReadQueryService: ChatReadQueryMock = {
     getConversationList: jest.fn(),
+    countConversationList: jest.fn().mockResolvedValue(0),
     getConversationMessages: jest.fn().mockResolvedValue([]),
     getConversationMessagesBefore: jest.fn().mockResolvedValue([]),
     getConversationMessagesAfter: jest.fn().mockResolvedValue([]),
@@ -294,9 +316,10 @@ function createService() {
 }
 
 describe('chat.service conversation list visibility', () => {
-  it('returns an empty cursor page without counting conversations', async () => {
+  it('returns an empty ApiPage-style conversation page', async () => {
     const { service, mocks } = createService()
     mocks.chatReadQueryService.getConversationList.mockResolvedValueOnce([])
+    mocks.chatReadQueryService.countConversationList.mockResolvedValueOnce(0)
 
     const result = await service.getConversationList(7, {
       pageSize: 20,
@@ -306,16 +329,28 @@ describe('chat.service conversation list visibility', () => {
     expect(mocks.chatReadQueryService.getConversationList).toHaveBeenCalledWith(
       {
         userId: 7,
-        limit: 21,
-        cursor: undefined,
+        limit: 20,
+        offset: 0,
+        orderBySql: expect.any(Array),
+        startDate: undefined,
+        endDate: undefined,
       },
     )
+    expect(
+      mocks.chatReadQueryService.countConversationList,
+    ).toHaveBeenCalledWith({
+      userId: 7,
+      startDate: undefined,
+      endDate: undefined,
+    })
     expect(result).toMatchObject({
       list: [],
+      pageIndex: 1,
       pageSize: 20,
-      hasMore: false,
-      nextCursor: null,
+      total: 0,
     })
+    expect(result).not.toHaveProperty('hasMore')
+    expect(result).not.toHaveProperty('nextCursor')
   })
 
   it('maps conversations with sent messages even when last-message snapshot is cleared', async () => {
@@ -330,6 +365,7 @@ describe('chat.service conversation list visibility', () => {
         lastSenderId: null,
       },
     ])
+    mocks.chatReadQueryService.countConversationList.mockResolvedValueOnce(1)
     mocks.memberQueryWhere.mockResolvedValueOnce([
       {
         conversationId: 10,
@@ -359,10 +395,13 @@ describe('chat.service conversation list visibility', () => {
       pageSize: 20,
     })
 
-    expect(result).not.toHaveProperty('total')
-    expect(result).not.toHaveProperty('pageIndex')
-    expect(result.hasMore).toBe(false)
-    expect(result.nextCursor).toBeNull()
+    expect(result).toMatchObject({
+      pageIndex: 1,
+      pageSize: 20,
+      total: 1,
+    })
+    expect(result).not.toHaveProperty('hasMore')
+    expect(result).not.toHaveProperty('nextCursor')
     expect(result.list[0]).toMatchObject({
       id: 10,
       unreadCount: 0,
@@ -874,7 +913,9 @@ describe('chat.service realtime message fanout', () => {
     const warnSpy = jest
       .spyOn(Logger.prototype, 'warn')
       .mockImplementation(() => undefined)
-    mocks.chatMessageFindFirst.mockResolvedValueOnce(createMessage({ id: 211n }))
+    mocks.chatMessageFindFirst.mockResolvedValueOnce(
+      createMessage({ id: 211n }),
+    )
     mocks.chatConversationMemberFindMany.mockResolvedValueOnce([
       {
         userId: 7,

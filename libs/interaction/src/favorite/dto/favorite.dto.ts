@@ -6,11 +6,8 @@ import {
   EnumProperty,
   NestedProperty,
   NumberProperty,
-  StringProperty,
 } from '@libs/platform/decorators'
-
-import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
@@ -54,16 +51,9 @@ export class FavoriteRecordDto extends IntersectionType(
 ) {}
 
 export class FavoritePageCommandDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   PickType(BaseFavoriteDto, ['userId'] as const),
-) {
-  @StringProperty({
-    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
-    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 /**
  * 收藏状态 DTO。
  */
@@ -107,12 +97,5 @@ export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
 
 export class QueryUserFavoriteDto extends IntersectionType(
   PartialType(UserIdDto),
-  CursorPageSizeDto,
-) {
-  @StringProperty({
-    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
-    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
+  PageDto,
+) {}

@@ -1,21 +1,24 @@
+import type { AppDateRange } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
-import {
-  encodeGrowthCursor,
-  parseGrowthCursor,
-  rejectOffsetPaginationFields,
-  toCursorPage,
-} from '@libs/growth/growth/cursor-page.util'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import {
-  buildDateOnlyRangeInAppTimeZone,
-  startOfTodayInAppTimeZone,
-} from '@libs/platform/utils'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
-import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm'
+import {
+  and,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  sql,
+} from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerFailReasonLabel,
@@ -148,102 +151,27 @@ export class UserExperienceService {
    * @returns 分页的记录列表
    */
   async getExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
-    const conditions: SQL[] = [
-      eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
-    ]
-
-    if (dto.userId !== undefined) {
-      conditions.push(eq(this.growthLedgerRecord.userId, dto.userId))
-    }
-    if (dto.ruleId !== undefined) {
-      conditions.push(
-        dto.ruleId === null
-          ? isNull(this.growthLedgerRecord.ruleId)
-          : eq(this.growthLedgerRecord.ruleId, dto.ruleId),
-      )
-    }
-    if (dto.hasRule !== undefined) {
-      conditions.push(
-        dto.hasRule
-          ? isNotNull(this.growthLedgerRecord.ruleId)
-          : isNull(this.growthLedgerRecord.ruleId),
-      )
-    }
-    if (dto.ruleType !== undefined) {
-      conditions.push(
-        dto.ruleType === null
-          ? isNull(this.growthLedgerRecord.ruleType)
-          : eq(this.growthLedgerRecord.ruleType, dto.ruleType),
-      )
-    }
-    if (dto.source !== undefined) {
-      conditions.push(
-        dto.source === null
-          ? isNull(this.growthLedgerRecord.source)
-          : eq(this.growthLedgerRecord.source, dto.source),
-      )
-    }
-    if (dto.targetType !== undefined) {
-      conditions.push(
-        dto.targetType === null
-          ? isNull(this.growthLedgerRecord.targetType)
-          : eq(this.growthLedgerRecord.targetType, dto.targetType),
-      )
-    }
-    if (dto.targetId !== undefined) {
-      conditions.push(
-        dto.targetId === null
-          ? isNull(this.growthLedgerRecord.targetId)
-          : eq(this.growthLedgerRecord.targetId, dto.targetId),
-      )
-    }
-    if (dto.bizKey !== undefined) {
-      conditions.push(eq(this.growthLedgerRecord.bizKey, dto.bizKey))
-    }
-    if (dto.deltaDirection === ExperienceDeltaDirectionEnum.INCREASE) {
-      conditions.push(gt(this.growthLedgerRecord.delta, 0))
-    }
-    if (dto.deltaDirection === ExperienceDeltaDirectionEnum.DECREASE) {
-      conditions.push(lt(this.growthLedgerRecord.delta, 0))
-    }
-    if (dto.minDelta !== undefined) {
-      conditions.push(gte(this.growthLedgerRecord.delta, dto.minDelta))
-    }
-    if (dto.maxDelta !== undefined) {
-      conditions.push(lte(this.growthLedgerRecord.delta, dto.maxDelta))
-    }
-
-    const createdRange = buildDateOnlyRangeInAppTimeZone(
-      dto.startDate,
-      dto.endDate,
-    )
-    if (createdRange?.gte) {
-      conditions.push(gte(this.growthLedgerRecord.createdAt, createdRange.gte))
-    }
-    if (createdRange?.lt) {
-      conditions.push(lt(this.growthLedgerRecord.createdAt, createdRange.lt))
-    }
-
-    const orderBy = dto.orderBy?.trim()
-      ? dto.orderBy
-      : { createdAt: 'desc' as const, id: 'desc' as const }
-
-    const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage(dto, { maxPageSize: 100 })
-    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+    const pageParams = this.drizzle.buildPageParams(dto, {
       table: this.growthLedgerRecord,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      maxPageSize: 100,
     })
+    const conditions = this.buildExperienceRecordConditions(
+      dto,
+      pageParams.dateRange ?? null,
+    )
+    const where = and(...conditions)
     const [list, total] = await Promise.all([
       this.db
         .select()
         .from(this.growthLedgerRecord)
         .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
       this.db.$count(this.growthLedgerRecord, where),
     ])
-    const page = toPageResult(list, total, pageQuery)
+    const page = toPageResult(list, total, pageParams.page)
     const userMap = await this.buildExperienceRecordUserMap(
       page.list.map((item) => item.userId),
     )
@@ -259,41 +187,29 @@ export class UserExperienceService {
     }
   }
 
-  async getAppExperienceRecordCursorPage(
-    dto: Omit<QueryUserExperienceRecordDto, 'pageIndex' | 'orderBy'> & {
-      cursor?: string
-    },
-  ) {
-    rejectOffsetPaginationFields(dto, '用户经验记录列表')
-    const cursor = this.parseExperienceRecordCursor(dto.cursor)
-    const conditions = this.buildExperienceRecordConditions(dto)
-    if (cursor) {
-      conditions.push(
-        or(
-          lt(this.growthLedgerRecord.createdAt, cursor.createdAt),
-          and(
-            eq(this.growthLedgerRecord.createdAt, cursor.createdAt),
-            lt(this.growthLedgerRecord.id, cursor.id),
-          ),
-        )!,
-      )
-    }
-
-    const pageQuery = this.drizzle.buildPage({
-      pageSize: dto.pageSize,
-    }, { maxPageSize: 100 })
-    const rows = await this.db
-      .select()
-      .from(this.growthLedgerRecord)
-      .where(and(...conditions))
-      .orderBy(
-        desc(this.growthLedgerRecord.createdAt),
-        desc(this.growthLedgerRecord.id),
-      )
-      .limit(pageQuery.limit + 1)
-    const page = toCursorPage(rows, pageQuery.limit, (item) =>
-      this.encodeExperienceRecordCursor(item),
+  async getAppExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      table: this.growthLedgerRecord,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      maxPageSize: 100,
+    })
+    const conditions = this.buildExperienceRecordConditions(
+      dto,
+      pageParams.dateRange ?? null,
     )
+
+    const where = and(...conditions)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.growthLedgerRecord)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.growthLedgerRecord, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
     const userMap = await this.buildExperienceRecordUserMap(
       page.list.map((item) => item.userId),
     )
@@ -403,6 +319,7 @@ export class UserExperienceService {
 
   private buildExperienceRecordConditions(
     dto: Omit<QueryUserExperienceRecordDto, 'pageIndex' | 'orderBy'>,
+    dateRange?: AppDateRange | null,
   ) {
     const conditions: SQL[] = [
       eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
@@ -469,40 +386,14 @@ export class UserExperienceService {
       conditions.push(lte(this.growthLedgerRecord.delta, dto.maxDelta))
     }
 
-    const createdRange = buildDateOnlyRangeInAppTimeZone(
-      dto.startDate,
-      dto.endDate,
-    )
-    if (createdRange?.gte) {
-      conditions.push(gte(this.growthLedgerRecord.createdAt, createdRange.gte))
+    if (dateRange?.gte) {
+      conditions.push(gte(this.growthLedgerRecord.createdAt, dateRange.gte))
     }
-    if (createdRange?.lt) {
-      conditions.push(lt(this.growthLedgerRecord.createdAt, createdRange.lt))
+    if (dateRange?.lt) {
+      conditions.push(lt(this.growthLedgerRecord.createdAt, dateRange.lt))
     }
 
     return conditions
-  }
-
-  private encodeExperienceRecordCursor(record: { createdAt: Date, id: number }) {
-    return encodeGrowthCursor({
-      createdAt: record.createdAt.toISOString(),
-      id: record.id,
-    })
-  }
-
-  private parseExperienceRecordCursor(cursor?: string | null) {
-    return parseGrowthCursor(cursor, '经验记录分页游标非法', (payload) => {
-      const createdAt = new Date(String(payload.createdAt))
-      const id = Number(payload.id)
-      if (
-        Number.isNaN(createdAt.getTime()) ||
-        !Number.isInteger(id) ||
-        id <= 0
-      ) {
-        return undefined
-      }
-      return { createdAt, id }
-    })
   }
 
   private toExperienceRecord(
@@ -533,7 +424,8 @@ export class UserExperienceService {
       user,
       userId: record.userId,
       ruleId: record.ruleId ?? null,
-      ruleType: (record.ruleType as GrowthRuleTypeEnum | null | undefined) ?? null,
+      ruleType:
+        (record.ruleType as GrowthRuleTypeEnum | null | undefined) ?? null,
       source: record.source ?? null,
       targetType: record.targetType ?? null,
       targetId: record.targetId ?? null,

@@ -7,9 +7,14 @@ import type {
 } from './drizzle.type'
 import type { PostgresError } from './error/postgres-error'
 import type {
+  AllowlistedOrderByOptions,
   DrizzleOrderByInput,
   DrizzleOrderByOptions,
 } from './query/order-by'
+import type {
+  DrizzlePageParamsInput,
+  DrizzlePageParamsOptions,
+} from './query/page-params'
 import type {
   DrizzlePageQueryInput,
   DrizzlePageQueryOptions,
@@ -32,7 +37,8 @@ import {
   isSerializationFailure,
   isUniqueViolation,
 } from './error/error-handler'
-import { buildDrizzleOrderBy } from './query/order-by'
+import { buildAllowlistedOrderBy, buildDrizzleOrderBy } from './query/order-by'
+import { buildDrizzlePageParams } from './query/page-params'
 import { buildDrizzlePageQuery } from './query/page-query'
 
 /**
@@ -79,6 +85,21 @@ export class DrizzleService implements OnApplicationShutdown {
   }
 
   /**
+   * 一次性归一化完整 PageDto 参数，排序和日期范围只返回普通数据，由 owner service 显式组装查询条件。
+   */
+  buildPageParams<TTable extends AnyPgTable>(
+    input: DrizzlePageParamsInput = {},
+    options: Partial<DrizzlePageParamsOptions<TTable>> = {},
+  ) {
+    return buildDrizzlePageParams(input, {
+      ...options,
+      defaultPageIndex: options.defaultPageIndex ?? this.queryConfig.pageIndex,
+      defaultPageSize: options.defaultPageSize ?? this.queryConfig.pageSize,
+      maxPageSize: options.maxPageSize ?? this.queryConfig.maxListItemLimit,
+    })
+  }
+
+  /**
    * 提供可复用的排序构造入口，供 findFirst、findMany 和手写查询共享同一套排序语义。
    */
   buildOrderBy<TTable extends AnyPgTable>(
@@ -86,6 +107,16 @@ export class DrizzleService implements OnApplicationShutdown {
     options?: DrizzleOrderByOptions<TTable>,
   ) {
     return buildDrizzleOrderBy(input, options)
+  }
+
+  /**
+   * 为原生 SQL 和派生字段分页提供受控排序入口，调用方必须传入显式字段白名单。
+   */
+  buildAllowlistedOrderBy(
+    input: DrizzleOrderByInput,
+    options: AllowlistedOrderByOptions,
+  ) {
+    return buildAllowlistedOrderBy(input, options)
   }
 
   /**

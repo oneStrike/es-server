@@ -6,13 +6,9 @@ import {
   QueryUserFavoriteDto,
 } from '@libs/interaction/favorite/dto/favorite.dto'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
-import {
-  ApiCursorPageDoc,
-  ApiDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -70,7 +66,7 @@ export class FavoriteController {
   }
 
   @Get('work/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询用户收藏的作品',
     model: FavoriteWorkPageItemDto,
   })
@@ -85,7 +81,7 @@ export class FavoriteController {
   }
 
   @Get('topic/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询用户收藏的论坛主题',
     model: FavoriteTopicPageItemDto,
   })

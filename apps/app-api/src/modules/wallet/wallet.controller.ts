@@ -3,16 +3,12 @@ import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.ser
 import {
   AppCurrencyPackageDto,
   CreateCurrencyRechargeOrderDto,
-  QueryWalletLedgerDto,
   WalletDetailDto,
   WalletLedgerRecordDto,
 } from '@libs/interaction/wallet/dto/wallet.dto'
 import { WalletService } from '@libs/interaction/wallet/wallet.service'
-import {
-  ApiCursorPageDoc,
-  ApiDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -47,13 +43,13 @@ export class WalletController {
 
   // 分页查询当前用户虚拟币流水。
   @Get('ledger/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询虚拟币流水',
     model: WalletLedgerRecordDto,
   })
   async getWalletLedgerPage(
     @CurrentUser('sub') userId: number,
-    @Query() query: QueryWalletLedgerDto,
+    @Query() query: PageDto,
   ) {
     return this.walletService.getWalletLedgerPage(userId, query)
   }

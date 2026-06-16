@@ -1,6 +1,7 @@
-import type { IdDto } from '@libs/platform/dto/base.dto'
-import type { SQL } from 'drizzle-orm'
 import type { userBadge } from '@db/schema'
+import type { IdDto } from '@libs/platform/dto'
+import type { AppDateRange } from '@libs/platform/utils'
+import type { SQL } from 'drizzle-orm'
 import type {
   AssignUserBadgeDto,
   CreateUserBadgeDto,
@@ -15,7 +16,7 @@ import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.co
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm'
 
 type UserBadgeSelect = typeof userBadge.$inferSelect
 
@@ -152,7 +153,10 @@ export class UserBadgeService {
    * 根据查询 DTO 组装徽章筛选条件。
    * `business` 与 `eventKey` 允许显式传 `null` 表达“筛选空值”，因此这里需要区分未传与传空。
    */
-  private buildBadgeWhere(dto: QueryUserBadgeDto) {
+  private buildBadgeWhere(
+    dto: QueryUserBadgeDto,
+    dateRange?: AppDateRange | null,
+  ) {
     const conditions: SQL[] = []
 
     if (dto.name) {
@@ -177,6 +181,12 @@ export class UserBadgeService {
           ? isNull(this.userBadge.eventKey)
           : eq(this.userBadge.eventKey, dto.eventKey),
       )
+    }
+    if (dateRange?.gte) {
+      conditions.push(gte(this.userBadge.createdAt, dateRange.gte))
+    }
+    if (dateRange?.lt) {
+      conditions.push(lt(this.userBadge.createdAt, dateRange.lt))
     }
 
     return conditions.length > 0 ? and(...conditions) : undefined
@@ -206,30 +216,26 @@ export class UserBadgeService {
    * 未显式传入排序时，默认遵循后台维护的 sortOrder 升序。
    */
   async getBadges(dto: QueryUserBadgeDto) {
-    const orderBy = dto.orderBy?.trim()
-      ? dto.orderBy
-      : { sortOrder: 'asc' as const }
-
-    const where = this.buildBadgeWhere(dto)
-    const page = this.drizzle.buildPage(dto)
-    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
+    const pageParams = this.drizzle.buildPageParams(dto, {
       table: this.userBadge,
+      fallbackOrderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
     })
+    const where = this.buildBadgeWhere(dto, pageParams.dateRange ?? null)
     const [list, total] = await Promise.all([
       this.db
         .select()
         .from(this.userBadge)
         .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(page.limit)
-        .offset(page.offset),
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
       this.db.$count(this.userBadge, where),
     ])
 
     return toPageResult(
       list.map((item) => this.toBadgeOutputDto(item)),
       total,
-      page,
+      pageParams.page,
     )
   }
 
@@ -353,13 +359,20 @@ export class UserBadgeService {
       )
     }
 
-    const page = this.drizzle.buildPage(dto)
-    const order = this.drizzle.buildOrderBy(dto.orderBy, {
+    const pageParams = this.drizzle.buildPageParams(dto, {
       table: this.userBadgeAssignment,
       fallbackOrderBy: [{ createdAt: 'desc' }, { userId: 'asc' }],
     })
 
-    const where = eq(this.userBadgeAssignment.badgeId, badgeId)
+    const where = and(
+      eq(this.userBadgeAssignment.badgeId, badgeId),
+      pageParams.dateRange?.gte
+        ? gte(this.userBadgeAssignment.createdAt, pageParams.dateRange.gte)
+        : undefined,
+      pageParams.dateRange?.lt
+        ? lt(this.userBadgeAssignment.createdAt, pageParams.dateRange.lt)
+        : undefined,
+    )
 
     const [totalRow] = await this.db
       .select({ total: sql<number>`count(*)` })
@@ -396,9 +409,9 @@ export class UserBadgeService {
         eq(this.userLevelRule.id, this.appUser.levelId),
       )
       .where(where)
-      .orderBy(...order.orderBySql)
-      .limit(page.limit)
-      .offset(page.offset)
+      .orderBy(...pageParams.order.orderBySql)
+      .limit(pageParams.page.limit)
+      .offset(pageParams.page.offset)
 
     const pointMap = await this.buildPointsMap(list.map((item) => item.userId))
 
@@ -415,9 +428,9 @@ export class UserBadgeService {
         },
       })),
       total,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-      totalPage: Math.ceil(total / page.pageSize),
+      pageIndex: pageParams.page.pageIndex,
+      pageSize: pageParams.page.pageSize,
+      totalPage: Math.ceil(total / pageParams.page.pageSize),
     }
   }
 

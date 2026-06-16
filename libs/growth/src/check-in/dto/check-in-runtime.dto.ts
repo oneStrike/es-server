@@ -8,16 +8,10 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
-import { CursorPageDto } from '../../growth/dto/cursor-page.dto'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
-import {
-  ApiExtraModels,
-  IntersectionType,
-  PickType,
-} from '@nestjs/swagger'
+import { ApiExtraModels, IntersectionType, PickType } from '@nestjs/swagger'
 import { CheckInMakeupPeriodTypeEnum } from '../check-in.constant'
 import { CheckInConfigDetailResponseDto } from './check-in-definition.dto'
 import {
@@ -117,10 +111,6 @@ export class CheckInLeaderboardItemDto extends CheckInStreakRuntimeFieldsDto {
   })
   signCount!: number
 }
-
-export class QueryAppCheckInRecordPageDto extends CursorPageDto {}
-
-export class QueryAppCheckInLeaderboardPageDto extends CursorPageDto {}
 
 @ApiExtraModels(CheckInRewardSettlementSummaryDto)
 export class CheckInRecordItemDto extends BaseCheckInRecordDto {

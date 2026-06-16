@@ -5,11 +5,7 @@ import {
   ReadingHistoryWorkDto,
 } from '@libs/interaction/reading-state/dto/reading-state.dto'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
-import {
-  ApiCursorPageDoc,
-  ApiDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -20,7 +16,7 @@ export class ReadingHistoryController {
   constructor(private readonly readingStateService: ReadingStateService) {}
 
   @Get('my/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询我的阅读记录',
     model: ReadingHistoryWorkDto,
   })
@@ -43,12 +39,10 @@ export class ReadingHistoryController {
     @Body() body: DeleteReadingHistoryDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.readingStateService.deleteUserReadingHistory(
-      {
-        ...body,
-        userId,
-      },
-    )
+    return this.readingStateService.deleteUserReadingHistory({
+      ...body,
+      userId,
+    })
   }
 
   @Post('clear')
@@ -60,11 +54,9 @@ export class ReadingHistoryController {
     @Body() body: ClearReadingHistoryDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.readingStateService.clearUserReadingHistory(
-      {
-        ...body,
-        userId,
-      },
-    )
+    return this.readingStateService.clearUserReadingHistory({
+      ...body,
+      userId,
+    })
   }
 }

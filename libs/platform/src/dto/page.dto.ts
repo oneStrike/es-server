@@ -1,6 +1,8 @@
-import { JsonProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
-import { ApiHideProperty, IntersectionType, PickType } from '@nestjs/swagger'
-import { ValidateBy } from 'class-validator'
+import {
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 /**
  * 日期范围
@@ -50,68 +52,4 @@ export class PageDto extends DateRangeDto {
     required: false,
   })
   orderBy?: string
-}
-
-export class ForbiddenOffsetPaginationFieldsDto {
-  @ApiHideProperty()
-  @ValidateBy(
-    {
-      name: 'isAbsent',
-      validator: {
-        validate: (value: unknown) => value === undefined,
-      },
-    },
-    { message: 'cursor 分页不支持 pageIndex 参数' },
-  )
-  pageIndex?: never
-
-  @ApiHideProperty()
-  @ValidateBy(
-    {
-      name: 'isAbsent',
-      validator: {
-        validate: (value: unknown) => value === undefined,
-      },
-    },
-    { message: 'cursor 分页不支持 orderBy 参数' },
-  )
-  orderBy?: never
-
-  @ApiHideProperty()
-  @ValidateBy(
-    {
-      name: 'isAbsent',
-      validator: {
-        validate: (value: unknown) => value === undefined,
-      },
-    },
-    { message: 'cursor 分页不支持 startDate 参数' },
-  )
-  startDate?: never
-
-  @ApiHideProperty()
-  @ValidateBy(
-    {
-      name: 'isAbsent',
-      validator: {
-        validate: (value: unknown) => value === undefined,
-      },
-    },
-    { message: 'cursor 分页不支持 endDate 参数' },
-  )
-  endDate?: never
-}
-
-export class CursorPageSizeDto extends IntersectionType(
-  PickType(PageDto, ['pageSize'] as const),
-  ForbiddenOffsetPaginationFieldsDto,
-) {}
-
-export class CursorPageDto extends CursorPageSizeDto {
-  @StringProperty({
-    description: '游标；首次请求不传，后续请求传上次响应 nextCursor',
-    example: 'eyJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
 }

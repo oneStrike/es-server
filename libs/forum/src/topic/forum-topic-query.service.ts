@@ -3,7 +3,6 @@ import type { DbQueryOrderByRecord } from '@libs/platform/config'
 import type { JsonValue } from '@libs/platform/utils'
 import type { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import type { SQL } from 'drizzle-orm'
-import { Buffer } from 'node:buffer'
 import type {
   FollowingPublicForumTopicQuery,
   HydratePublicTopicPageOptions,
@@ -13,7 +12,7 @@ import type {
   PublicTopicPageRow,
   VisiblePublicTopicDetailRow,
 } from './forum-topic.type'
-import { buildLikePattern, DrizzleService } from '@db/core'
+import { buildLikePattern, DrizzleService, toPageResult } from '@db/core'
 import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
 import { BodyHtmlCodecService } from '@libs/interaction/body/body-html-codec.service'
@@ -36,7 +35,7 @@ import {
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import {
   and,
   eq,
@@ -93,25 +92,6 @@ const ADMIN_TOPIC_ORDER_FIELDS = new Set([
   'commentCount',
   'favoriteCount',
 ])
-
-interface DefaultPublicTopicCursor {
-  kind: 'default'
-  isPinned: boolean
-  lastCommentAt: Date | null
-  createdAt: Date
-  id: number
-}
-
-interface HotPublicTopicCursor {
-  kind: 'hot'
-  commentCount: number
-  likeCount: number
-  viewCount: number
-  createdAt: Date
-  id: number
-}
-
-type PublicTopicCursor = DefaultPublicTopicCursor | HotPublicTopicCursor
 
 // 论坛主题查询服务。
 // 负责公开分页、后台分页、详情聚合等读模型，
@@ -345,19 +325,15 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     fallbackOrderBy: DbQueryOrderByRecord[],
     extraCondition?: SQL,
   ) {
-    this.rejectUnsupportedPublicTopicPagination(query)
-    const pageQuery = this.drizzle.buildPage({
-      pageSize: query.pageSize,
+    const pageParams = this.drizzle.buildPageParams(query, {
+      allowlistedOrderBy: {
+        columns: this.getPublicTopicOrderColumns(),
+        fallbackOrderBy,
+      },
     })
-    const cursor = this.parsePublicTopicCursor(query.cursor, fallbackOrderBy)
 
     if (sectionIds.length === 0) {
-      return {
-        list: [],
-        pageSize: pageQuery.pageSize,
-        hasMore: false,
-        nextCursor: null,
-      }
+      return toPageResult([], 0, pageParams.page)
     }
 
     const conditions: SQL[] = [
@@ -369,231 +345,54 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     if (extraCondition) {
       conditions.push(extraCondition)
     }
+    if (pageParams.dateRange?.gte) {
+      conditions.push(
+        gte(this.forumTopicTable.createdAt, pageParams.dateRange.gte),
+      )
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(
+        lt(this.forumTopicTable.createdAt, pageParams.dateRange.lt),
+      )
+    }
 
     const where = and(...conditions)
-    const order = this.drizzle.buildOrderBy(undefined, {
-      table: this.forumTopicTable,
-      fallbackOrderBy,
-    })
-    const cursorWhere = cursor
-      ? this.buildPublicTopicCursorWhere(cursor)
-      : undefined
-    const pagedWhere = cursorWhere ? and(where, cursorWhere) : where
     const listQuery = this.db
       .select(this.buildPublicTopicPageSelect())
       .from(this.forumTopicTable)
-      .where(pagedWhere)
-      .limit(pageQuery.limit + 1)
+      .where(where)
+      .limit(pageParams.page.limit)
+      .offset(pageParams.page.offset)
 
-    const list = await listQuery.orderBy(...order.orderBySql)
-    const pageRows = list.slice(0, pageQuery.limit)
-    const hasMore = list.length > pageQuery.limit
-    const nextCursor =
-      hasMore && pageRows.length > 0
-        ? this.encodePublicTopicCursor(
-            pageRows[pageRows.length - 1] as PublicTopicPageRow,
-            fallbackOrderBy,
-          )
-        : null
-
-    return {
-      list: await this.hydratePublicTopicPageItems(
-        pageRows as PublicTopicPageRow[],
-        {
-          userId: query.userId,
-          sectionId: query.sectionId,
-        },
-      ),
-      pageSize: pageQuery.pageSize,
-      hasMore,
-      nextCursor,
-    }
-  }
-
-  private rejectUnsupportedPublicTopicPagination(
-    query: PublicForumTopicQueryWithUser,
-  ) {
-    const rawQuery = query as unknown as Record<string, unknown>
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => rawQuery[field] !== undefined && rawQuery[field] !== null)
-
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `公开主题列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private encodePublicTopicCursor(
-    row: PublicTopicPageRow,
-    fallbackOrderBy: DbQueryOrderByRecord[],
-  ) {
-    const payload =
-      fallbackOrderBy === HOT_PUBLIC_TOPIC_FEED_ORDER
-        ? {
-            commentCount: row.commentCount,
-            likeCount: row.likeCount,
-            viewCount: row.viewCount,
-            createdAt: row.createdAt.toISOString(),
-            id: row.id,
-          }
-        : {
-            isPinned: row.isPinned,
-            lastCommentAt: row.lastCommentAt?.toISOString() ?? null,
-            createdAt: row.createdAt.toISOString(),
-            id: row.id,
-          }
-
-    return Buffer.from(JSON.stringify(payload)).toString('base64url')
-  }
-
-  private parsePublicTopicCursor(
-    cursor: string | null | undefined,
-    fallbackOrderBy: DbQueryOrderByRecord[],
-  ) {
-    if (!cursor?.trim()) {
-      return undefined
-    }
-
-    try {
-      const parsed = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as Record<string, unknown>
-      return fallbackOrderBy === HOT_PUBLIC_TOPIC_FEED_ORDER
-        ? this.parseHotPublicTopicCursorPayload(parsed)
-        : this.parseDefaultPublicTopicCursorPayload(parsed)
-    } catch {
-      throw new BadRequestException('主题分页游标非法')
-    }
-  }
-
-  private parseDefaultPublicTopicCursorPayload(payload: Record<string, unknown>) {
-    const createdAt = new Date(String(payload.createdAt))
-    const lastCommentAt =
-      payload.lastCommentAt === null
-        ? null
-        : new Date(String(payload.lastCommentAt))
-    const id = Number(payload.id)
-    if (
-      typeof payload.isPinned !== 'boolean' ||
-      Number.isNaN(createdAt.getTime()) ||
-      (lastCommentAt !== null && Number.isNaN(lastCommentAt.getTime())) ||
-      !Number.isInteger(id) ||
-      id <= 0
-    ) {
-      throw new TypeError('invalid public topic cursor payload')
-    }
+    const [list, total] = await Promise.all([
+      listQuery.orderBy(...pageParams.order.orderBySql),
+      this.db.$count(this.forumTopicTable, where),
+    ])
+    const page = toPageResult(
+      list as PublicTopicPageRow[],
+      total,
+      pageParams.page,
+    )
 
     return {
-      kind: 'default' as const,
-      isPinned: payload.isPinned,
-      lastCommentAt,
-      createdAt,
-      id,
+      ...page,
+      list: await this.hydratePublicTopicPageItems(page.list, {
+        userId: query.userId,
+        sectionId: query.sectionId,
+      }),
     }
   }
 
-  private parseHotPublicTopicCursorPayload(payload: Record<string, unknown>) {
-    const createdAt = new Date(String(payload.createdAt))
-    const commentCount = Number(payload.commentCount)
-    const likeCount = Number(payload.likeCount)
-    const viewCount = Number(payload.viewCount)
-    const id = Number(payload.id)
-    if (
-      Number.isNaN(createdAt.getTime()) ||
-      !Number.isInteger(commentCount) ||
-      !Number.isInteger(likeCount) ||
-      !Number.isInteger(viewCount) ||
-      !Number.isInteger(id) ||
-      id <= 0
-    ) {
-      throw new TypeError('invalid hot public topic cursor payload')
-    }
-
+  private getPublicTopicOrderColumns() {
     return {
-      kind: 'hot' as const,
-      commentCount,
-      likeCount,
-      viewCount,
-      createdAt,
-      id,
+      isPinned: this.forumTopicTable.isPinned,
+      lastCommentAt: this.forumTopicTable.lastCommentAt,
+      createdAt: this.forumTopicTable.createdAt,
+      id: this.forumTopicTable.id,
+      commentCount: this.forumTopicTable.commentCount,
+      likeCount: this.forumTopicTable.likeCount,
+      viewCount: this.forumTopicTable.viewCount,
     }
-  }
-
-  private buildPublicTopicCursorWhere(
-    cursor: PublicTopicCursor,
-  ) {
-    return cursor.kind === 'hot'
-      ? this.buildHotPublicTopicCursorWhere(cursor)
-      : this.buildDefaultPublicTopicCursorWhere(cursor)
-  }
-
-  private buildDefaultPublicTopicCursorWhere(
-    cursor: DefaultPublicTopicCursor,
-  ) {
-    const sameLastCommentNullTail = cursor.lastCommentAt
-      ? and(
-          isNotNull(this.forumTopicTable.lastCommentAt),
-          or(
-            lt(this.forumTopicTable.lastCommentAt, cursor.lastCommentAt),
-            and(
-              eq(this.forumTopicTable.lastCommentAt, cursor.lastCommentAt),
-              this.buildCreatedAtIdDescCursorWhere(cursor),
-            ),
-          ),
-        )
-      : or(
-          isNotNull(this.forumTopicTable.lastCommentAt),
-          and(
-            isNull(this.forumTopicTable.lastCommentAt),
-            this.buildCreatedAtIdDescCursorWhere(cursor),
-          ),
-        )
-
-    return or(
-      lt(this.forumTopicTable.isPinned, cursor.isPinned),
-      and(
-        eq(this.forumTopicTable.isPinned, cursor.isPinned),
-        sameLastCommentNullTail,
-      ),
-    )!
-  }
-
-  private buildHotPublicTopicCursorWhere(
-    cursor: HotPublicTopicCursor,
-  ) {
-    return or(
-      lt(this.forumTopicTable.commentCount, cursor.commentCount),
-      and(
-        eq(this.forumTopicTable.commentCount, cursor.commentCount),
-        or(
-          lt(this.forumTopicTable.likeCount, cursor.likeCount),
-          and(
-            eq(this.forumTopicTable.likeCount, cursor.likeCount),
-            or(
-              lt(this.forumTopicTable.viewCount, cursor.viewCount),
-              and(
-                eq(this.forumTopicTable.viewCount, cursor.viewCount),
-                this.buildCreatedAtIdDescCursorWhere(cursor),
-              ),
-            ),
-          ),
-        ),
-      ),
-    )!
-  }
-
-  private buildCreatedAtIdDescCursorWhere(cursor: {
-    createdAt: Date
-    id: number
-  }) {
-    return or(
-      lt(this.forumTopicTable.createdAt, cursor.createdAt),
-      and(
-        eq(this.forumTopicTable.createdAt, cursor.createdAt),
-        lt(this.forumTopicTable.id, cursor.id),
-      ),
-    )!
   }
 
   // ─── 公开详情内部方法 ──────────────────────────────────────
@@ -964,7 +763,8 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
 
     let parsedOrderBy: unknown
     try {
-      parsedOrderBy = typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy
+      parsedOrderBy =
+        typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy
     } catch {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -1262,8 +1062,8 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     const order = this.drizzle.buildOrderBy(
       this.normalizeAdminTopicOrderBy(otherDto.orderBy),
       {
-      table: this.forumTopicTable,
-      fallbackOrderBy: DEFAULT_ADMIN_TOPIC_PAGE_ORDER,
+        table: this.forumTopicTable,
+        fallbackOrderBy: DEFAULT_ADMIN_TOPIC_PAGE_ORDER,
       },
     )
 

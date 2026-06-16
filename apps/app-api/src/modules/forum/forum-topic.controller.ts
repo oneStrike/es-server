@@ -16,13 +16,13 @@ import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
 import {
-  ApiCursorPageDoc,
   ApiDoc,
+  ApiPageDoc,
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import {
   extractRequestContext,
@@ -59,7 +59,7 @@ export class ForumTopicController {
 
   @Get('page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询论坛主题（综合/板块）',
     model: PublicForumTopicPageItemDto,
   })
@@ -75,7 +75,7 @@ export class ForumTopicController {
 
   @Get('hot/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询热门论坛主题',
     model: PublicForumTopicPageItemDto,
   })
@@ -90,7 +90,7 @@ export class ForumTopicController {
   }
 
   @Get('following/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询关注论坛主题',
     model: PublicForumTopicPageItemDto,
   })
@@ -126,7 +126,7 @@ export class ForumTopicController {
 
   @Get('comment/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询论坛主题评论',
     model: TargetCommentItemDto,
   })
@@ -134,23 +134,21 @@ export class ForumTopicController {
     @Query() query: QueryForumTopicCommentPageDto,
     @CurrentUser('sub') userId?: number,
   ) {
+    const { id, ...commentQuery } = query
     const target = await this.forumTopicService.getTopicCommentTarget(
-      query.id,
+      id,
       userId,
     )
     return this.commentService.getTargetComments({
+      ...commentQuery,
       ...target,
-      pageSize: query.pageSize,
-      cursor: query.cursor,
-      sort: query.sort,
-      onlyAuthor: query.onlyAuthor,
       userId,
     })
   }
 
   @Get('user/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询指定用户的公开主题',
     model: PublicForumTopicPageItemDto,
   })
@@ -166,7 +164,7 @@ export class ForumTopicController {
   }
 
   @Get('my/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询我的论坛主题',
     model: MyForumTopicItemDto,
   })

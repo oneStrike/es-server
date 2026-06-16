@@ -8,8 +8,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
@@ -293,16 +292,6 @@ export class QueryForumHashtagDto extends IntersectionType(
   keyword?: string
 }
 
-class CursorPageQueryDto extends CursorPageSizeDto {
-  @StringProperty({
-    description: '下一页游标；提供后按固定排序游标翻页，避免深页 offset',
-    example:
-      'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
-
 /**
  * forum 话题公开搜索 DTO。
  */
@@ -331,7 +320,7 @@ export class QueryPublicForumHashtagSearchDto {
  */
 export class QueryForumHashtagTopicPageDto extends IntersectionType(
   IdDto,
-  CursorPageQueryDto,
+  PageDto,
 ) {}
 
 /**
@@ -339,10 +328,8 @@ export class QueryForumHashtagTopicPageDto extends IntersectionType(
  */
 export class QueryForumHashtagCommentPageDto extends IntersectionType(
   IdDto,
-  CursorPageQueryDto,
+  PageDto,
 ) {}
-
-export class QueryForumHashtagHotPageDto extends CursorPageQueryDto {}
 
 /**
  * forum 话题创建模式 DTO。

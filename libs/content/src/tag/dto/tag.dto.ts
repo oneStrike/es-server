@@ -3,10 +3,13 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import {
+  BaseDto,
+  DragReorderDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
 
 import {
   IntersectionType,
@@ -99,17 +102,10 @@ export class QueryTagDto extends IntersectionType(
   PartialType(PickType(BaseTagDto, ['name', 'isEnabled'] as const)),
 ) {}
 
-export class QueryAppTagCursorDto extends IntersectionType(
-  CursorPageSizeDto,
+export class QueryAppTagPageDto extends IntersectionType(
+  PageDto,
   PartialType(PickType(BaseTagDto, ['name'] as const)),
-) {
-  @StringProperty({
-    description: '下一页游标；按 sortOrder/id 升序翻页',
-    example: 'eyJzb3J0T3JkZXIiOjEsImlkIjoxMDB9',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class UpdateTagDto extends IntersectionType(
   IdDto,

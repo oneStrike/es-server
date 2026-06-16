@@ -1,15 +1,9 @@
 import type { UserFavoriteSelect } from '@db/schema'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, desc, eq, inArray, lt, or } from 'drizzle-orm'
-import {
-  assertCursorOnlyQuery,
-  encodeCreatedAtIdCursor,
-  parseCreatedAtIdCursor,
-  toCursorPageResult,
-} from './cursor-pagination.helper'
+import { and, eq, gte, inArray, lt } from 'drizzle-orm'
 import { FavoritePageCommandDto, FavoriteRecordDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
@@ -237,32 +231,31 @@ export class FavoriteService {
     query: FavoritePageCommandDto,
     targetTypes: FavoriteTargetTypeEnum[],
   ) {
-    assertCursorOnlyQuery(query, '用户收藏列表')
-    const cursor = parseCreatedAtIdCursor(query.cursor, '用户收藏列表')
-    const cursorWhere = cursor
-      ? or(
-          lt(this.userFavorite.createdAt, cursor.createdAt),
-          and(
-            eq(this.userFavorite.createdAt, cursor.createdAt),
-            lt(this.userFavorite.id, cursor.id),
-          ),
-        )
-      : undefined
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.userFavorite,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
     const where = and(
       eq(this.userFavorite.userId, query.userId),
       inArray(this.userFavorite.targetType, targetTypes),
-      cursorWhere,
+      pageParams.dateRange?.gte
+        ? gte(this.userFavorite.createdAt, pageParams.dateRange.gte)
+        : undefined,
+      pageParams.dateRange?.lt
+        ? lt(this.userFavorite.createdAt, pageParams.dateRange.lt)
+        : undefined,
     )
-    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
-    const rows = await this.db
-      .select()
-      .from(this.userFavorite)
-      .where(where)
-      .orderBy(desc(this.userFavorite.createdAt), desc(this.userFavorite.id))
-      .limit(pageQuery.limit + 1)
-    const page = toCursorPageResult(rows, pageQuery.limit, (item) =>
-      encodeCreatedAtIdCursor(item),
-    )
+    const [rows, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userFavorite)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userFavorite, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     if (page.list.length === 0) {
       return {

@@ -4,12 +4,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { PageDto } from '@libs/platform/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ForumGovernanceActorTypeEnum,
   ForumModeratorActionTargetTypeEnum,
@@ -130,17 +126,9 @@ class QueryForumModeratorActionLogFilterDto extends PartialType(
 ) {}
 
 export class QueryAppForumModeratorActionLogDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   QueryForumModeratorActionLogFilterDto,
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按操作时间倒序游标翻页',
-    example:
-      'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class QueryAdminForumModeratorActionLogDto extends IntersectionType(
   PageDto,

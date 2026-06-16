@@ -1,10 +1,13 @@
-import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto';
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto';
-import { WorkTypeEnum } from '@libs/platform/constant';
-import { DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
-
-import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto } from '@libs/platform/dto/page.dto'
+import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
+import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
+import { WorkTypeEnum } from '@libs/platform/constant'
+import {
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+} from '@libs/platform/decorators'
+import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { DownloadTargetTypeEnum } from '../download.constant'
@@ -46,7 +49,7 @@ export class DownloadTargetCommandDto extends IntersectionType(
   PickType(BaseDownloadRecordDto, ['userId'] as const),
 ) {}
 
-export class QueryDownloadedWorkDto extends CursorPageSizeDto {
+export class QueryDownloadedWorkDto extends PageDto {
   @EnumProperty({
     description: '作品类型（1=漫画；2=小说）',
     enum: WorkTypeEnum,
@@ -54,13 +57,6 @@ export class QueryDownloadedWorkDto extends CursorPageSizeDto {
     required: false,
   })
   workType?: WorkTypeEnum
-
-  @StringProperty({
-    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
-    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
 }
 
 export class QueryDownloadedWorkCommandDto extends IntersectionType(

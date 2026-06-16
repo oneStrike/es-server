@@ -11,8 +11,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
@@ -336,67 +335,23 @@ export class CommentOnlyAuthorDto {
 }
 
 export class QueryMyCommentPageDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   PartialType(CommentTargetDto),
   PickType(PartialType(BaseCommentDto), ['auditStatus'] as const),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按评论时间游标翻页，避免深页 offset',
-    example:
-      'eyJraW5kIjoiY3JlYXRlZERlc2MiLCJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class QueryCommentRepliesDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   CommentIdDto,
   PartialType(CommentOnlyAuthorDto),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按回复时间游标翻页，避免深页 offset',
-    example:
-      'eyJraW5kIjoiY3JlYXRlQXNjIiwiY3JlYXRlZEF0IjoiMjAyNi0wNi0wMVQwMDowMDowMC4wMDBaIiwiaWQiOjEwMH0',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class QueryTargetCommentsDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   CommentTargetDto,
   PartialType(CommentSortDto),
   PartialType(CommentOnlyAuthorDto),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按评论列表固定排序游标翻页',
-    example:
-      'eyJraW5kIjoiZmxvb3JBc2MiLCJmbG9vciI6MSwiaWQiOjEwMH0',
-    required: false,
-  })
-  cursor?: string
-
-  @NumberProperty({
-    description: '预览回复数量上限',
-    example: 3,
-    required: false,
-    min: 0,
-    contract: false,
-    validation: false,
-  })
-  previewReplyLimit?: number
-
-  @NumberProperty({
-    description: '当前用户ID；为空表示匿名访问，仅用于补充点赞状态。',
-    example: 1,
-    required: false,
-    min: 1,
-    contract: false,
-    validation: false,
-  })
-  userId?: number
-}
+) {}
 
 export class QueryAdminCommentPageDto extends IntersectionType(
   PageDto,

@@ -14,6 +14,33 @@ function routeArgsMetadata(methodName: keyof UserController) {
   ) as Record<string, { index: number; data?: unknown }> | undefined
 }
 
+function responseDataProperties(methodName: keyof UserController) {
+  const responses = Reflect.getMetadata(
+    DECORATORS.API_RESPONSE,
+    UserController.prototype[methodName],
+  ) as
+    | Record<
+        string,
+        {
+          content?: {
+            'application/json'?: {
+              schema?: {
+                properties?: {
+                  data?: {
+                    properties?: Record<string, unknown>
+                  }
+                }
+              }
+            }
+          }
+        }
+      >
+    | undefined
+
+  return responses?.['200']?.content?.['application/json']?.schema?.properties
+    ?.data?.properties
+}
+
 describe('App UserController center contract', () => {
   it('registers app user center route and forwards only the current user id', async () => {
     const userService = {
@@ -48,5 +75,24 @@ describe('App UserController center contract', () => {
         UserController.prototype.getCenter,
       ),
     ).toBeUndefined()
+  })
+
+  it('documents growth app pages with ApiPage schema instead of cursor schema', () => {
+    for (const methodName of [
+      'getPointRecords',
+      'getExperienceRecords',
+      'getBadges',
+    ] as const) {
+      const properties = responseDataProperties(methodName)
+
+      expect(properties).toMatchObject({
+        list: expect.any(Object),
+        pageIndex: expect.any(Object),
+        pageSize: expect.any(Object),
+        total: expect.any(Object),
+      })
+      expect(properties).not.toHaveProperty('hasMore')
+      expect(properties).not.toHaveProperty('nextCursor')
+    }
   })
 })

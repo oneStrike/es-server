@@ -5,11 +5,7 @@ import {
   LikeTargetDto,
 } from '@libs/interaction/like/dto/like.dto'
 import { LikeService } from '@libs/interaction/like/like.service'
-import {
-  ApiCursorPageDoc,
-  ApiDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -66,7 +62,7 @@ export class LikeController {
   }
 
   @Get('my/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询我的点赞记录',
     model: LikePageItemDto,
   })

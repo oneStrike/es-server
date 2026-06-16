@@ -5,13 +5,9 @@ import {
   QueryMyReportPageDto,
 } from '@libs/interaction/report/dto/report.dto'
 import { ReportService } from '@libs/interaction/report/report.service'
-import {
-  ApiCursorPageDoc,
-  ApiDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -38,7 +34,7 @@ export class ReportController {
   }
 
   @Get('my/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询我的举报记录',
     model: MyReportPageItemDto,
   })

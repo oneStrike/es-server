@@ -7,6 +7,7 @@ import {
 import { CheckInCalendarReadModelService } from './check-in-calendar-read-model.service'
 import { CheckInExecutionService } from './check-in-execution.service'
 import { CheckInRuntimeService } from './check-in-runtime.service'
+import { sql } from 'drizzle-orm'
 
 describe('CheckIn app/admin contract boundaries', () => {
   it('app summary returns narrow config and app-safe latest record without settlement lookups', async () => {
@@ -174,6 +175,13 @@ describe('CheckIn app/admin contract boundaries', () => {
     const page = await service.getMyRecords({ pageSize: 10 } as never, 33)
 
     expect(page.list).toHaveLength(2)
+    expect(page).toMatchObject({
+      pageIndex: 1,
+      pageSize: 10,
+      total: 2,
+    })
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
     expect(page.list[0].grants).toEqual([
       expect.objectContaining({
         id: 88,
@@ -187,11 +195,12 @@ describe('CheckIn app/admin contract boundaries', () => {
     expect(settlementService.buildSettlementMapById).not.toHaveBeenCalled()
   })
 
-  it('app leaderboard uses cursor tuple without absolute rank output', async () => {
+  it('app leaderboard returns ApiPage-style page without cursor output', async () => {
     const db = {
       ...buildRuntimeDb(),
-      execute: jest.fn(() =>
-        Promise.resolve({
+      execute: jest
+        .fn()
+        .mockResolvedValueOnce({
           rows: [
             {
               currentStreak: 7,
@@ -199,15 +208,15 @@ describe('CheckIn app/admin contract boundaries', () => {
               signCount: 20,
               userId: 33,
             },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rows: [
             {
-              currentStreak: 6,
-              lastSignedDate: '2026-05-31',
-              signCount: 18,
-              userId: 34,
+              count: 2,
             },
           ],
         }),
-      ),
     }
     const service = new CheckInRuntimeService(
       buildDrizzle(db) as never,
@@ -222,17 +231,15 @@ describe('CheckIn app/admin contract boundaries', () => {
     const page = await service.getLeaderboardPage({ pageSize: 1 } as never)
 
     expect(page.list).toHaveLength(1)
-    expect(page.list[0]).not.toHaveProperty('rank')
-    expect(page.nextCursor).toBeTruthy()
-    const cursor = JSON.parse(
-      Buffer.from(page.nextCursor!, 'base64url').toString('utf8'),
-    )
-    expect(cursor).toEqual({
-      currentStreak: 7,
-      signCount: 20,
-      userId: 33,
+    expect(page).toMatchObject({
+      pageIndex: 1,
+      pageSize: 1,
+      total: 2,
     })
-    expect(cursor).not.toHaveProperty('rankAfter')
+    expect(page.list[0]).not.toHaveProperty('rank')
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
+    expect(db.execute).toHaveBeenCalledTimes(2)
   })
 
   it('admin signed-user mapper keeps settlement diagnostics', async () => {
@@ -427,11 +434,31 @@ function buildActionDb() {
 function buildDrizzle(db: Record<string, unknown>) {
   return {
     buildOrderBy: jest.fn(() => ({ orderBySql: [] })),
+    buildAllowlistedOrderBy: jest.fn(() => ({
+      orderByClause: sql.raw(
+        'p.current_streak DESC, count(r.id)::int DESC, p.user_id ASC',
+      ),
+    })),
     buildPage: jest.fn((query?: { pageSize?: number }) => ({
       limit: query?.pageSize ?? 1,
       offset: 0,
       pageIndex: 1,
       pageSize: query?.pageSize ?? 1,
+    })),
+    buildPageParams: jest.fn((query?: { pageSize?: number }) => ({
+      page: {
+        limit: query?.pageSize ?? 1,
+        offset: 0,
+        pageIndex: 1,
+        pageSize: query?.pageSize ?? 1,
+      },
+      order: {
+        orderByClause: sql.raw(
+          'p.current_streak DESC, count(r.id)::int DESC, p.user_id ASC',
+        ),
+        orderBySql: [],
+      },
+      dateRange: undefined,
     })),
     db,
     schema: {

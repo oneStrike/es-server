@@ -9,8 +9,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,
@@ -159,18 +158,21 @@ export class BaseAnnouncementDto extends BaseDto {
   viewCount!: number
 }
 
-class CreateAnnouncementRequiredFieldsDto extends OmitType(BaseAnnouncementDto, [
-  ...OMIT_BASE_FIELDS,
-  'isPublished',
-  'viewCount',
-  'summary',
-  'publishStartTime',
-  'publishEndTime',
-  'pageId',
-  'popupBackgroundImage',
-  'popupBackgroundPosition',
-  'enablePlatform',
-] as const) {}
+class CreateAnnouncementRequiredFieldsDto extends OmitType(
+  BaseAnnouncementDto,
+  [
+    ...OMIT_BASE_FIELDS,
+    'isPublished',
+    'viewCount',
+    'summary',
+    'publishStartTime',
+    'publishEndTime',
+    'pageId',
+    'popupBackgroundImage',
+    'popupBackgroundPosition',
+    'enablePlatform',
+  ] as const,
+) {}
 
 class CreateAnnouncementOptionalFieldsDto extends PartialType(
   PickType(BaseAnnouncementDto, [
@@ -241,19 +243,6 @@ export class QueryAnnouncementDto extends IntersectionType(
   enablePlatform?: string
 }
 
-/**
- * APP 公开公告游标分页查询 DTO。
- */
-export class QueryPublicAnnouncementCursorDto extends CursorPageSizeDto {
-  @StringProperty({
-    description: '下一页游标',
-    example:
-      'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
-
 export class AnnouncementRuntimeFieldsDto {
   @EnumProperty({
     description: '派生发布状态（未发布；待生效；生效中；已过期）',
@@ -309,44 +298,10 @@ export class AnnouncementPageItemDto extends IntersectionType(
   AnnouncementRuntimeFieldsDto,
 ) {}
 
-export class AppAnnouncementListItemDto extends OmitType(AnnouncementOutputBaseDto, [
-  'content',
-] as const) {}
-
-/**
- * APP 公开公告游标分页响应 DTO。
- */
-export class PublicAnnouncementCursorResponseDto {
-  @ArrayProperty({
-    description: '公告列表',
-    itemClass: AppAnnouncementListItemDto,
-    validation: false,
-  })
-  list!: AppAnnouncementListItemDto[]
-
-  @NumberProperty({
-    description: '本次请求单页大小',
-    example: 15,
-    validation: false,
-  })
-  pageSize!: number
-
-  @BooleanProperty({
-    description: '是否还有更多公告',
-    example: true,
-    validation: false,
-  })
-  hasMore!: boolean
-
-  @StringProperty({
-    description: '下一页游标',
-    example:
-      'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    nullable: true,
-    validation: false,
-  })
-  nextCursor!: string | null
-}
+export class AppAnnouncementListItemDto extends OmitType(
+  AnnouncementOutputBaseDto,
+  ['content'] as const,
+) {}
 
 export class AnnouncementRelatedPageDto extends PickType(BaseAppPageDto, [
   'id',

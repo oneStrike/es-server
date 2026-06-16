@@ -2,49 +2,78 @@
 
 import type { ArgumentMetadata } from '@nestjs/common'
 import { BadRequestException, ValidationPipe } from '@nestjs/common'
-import { CursorPageDto } from './page.dto'
+import { PageDto } from './page.dto'
 
-describe('CursorPageDto validation boundary', () => {
+describe('PageDto validation boundary', () => {
   const pipe = new ValidationPipe({
     transform: true,
     whitelist: true,
   })
   const metadata: ArgumentMetadata = {
     type: 'query',
-    metatype: CursorPageDto,
+    metatype: PageDto,
     data: '',
   }
 
-  it.each(['pageIndex', 'orderBy', 'startDate', 'endDate'])(
-    'rejects legacy cursor field %s before whitelist can strip it',
-    async (field) => {
-      await expect(
-        pipe.transform(
-          {
-            pageSize: '10',
-            cursor: 'cursor-1',
-            [field]: '',
-          },
-          metadata,
-        ),
-      ).rejects.toThrow(BadRequestException)
-    },
-  )
-
-  it('keeps cursor fields and strips unrelated unknown fields', async () => {
+  it('accepts complete app pagination query fields', async () => {
     const result = await pipe.transform(
       {
-        pageSize: '10',
-        cursor: 'cursor-1',
+        pageIndex: '2',
+        pageSize: '30',
+        orderBy: '{"createdAt":"desc"}',
+        startDate: '2025-05-29',
+        endDate: '2025-05-30',
         ignored: 'value',
       },
       metadata,
     )
 
     expect(result).toMatchObject({
-      pageSize: 10,
-      cursor: 'cursor-1',
+      pageIndex: 2,
+      pageSize: 30,
+      orderBy: '{"createdAt":"desc"}',
+      startDate: '2025-05-29',
+      endDate: '2025-05-30',
     })
     expect(result).not.toHaveProperty('ignored')
+  })
+
+  it('keeps omitted page fields optional at DTO boundary', async () => {
+    const result = await pipe.transform({}, metadata)
+
+    expect(result).toMatchObject({
+      pageIndex: undefined,
+      pageSize: undefined,
+    })
+  })
+
+  it.each([
+    ['pageIndex', '0'],
+    ['pageSize', '0'],
+    ['pageSize', '501'],
+  ])('rejects invalid %s value %s', async (field, value) => {
+    await expect(
+      pipe.transform(
+        {
+          [field]: value,
+        },
+        metadata,
+      ),
+    ).rejects.toThrow(BadRequestException)
+  })
+
+  it.each([
+    ['orderBy', "{createdAt:'desc'}"],
+    ['startDate', '2025-99-99'],
+    ['endDate', 'not-a-date'],
+  ])('rejects invalid %s value', async (field, value) => {
+    await expect(
+      pipe.transform(
+        {
+          [field]: value,
+        },
+        metadata,
+      ),
+    ).rejects.toThrow(BadRequestException)
   })
 })

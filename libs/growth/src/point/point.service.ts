@@ -1,16 +1,10 @@
 import type { Db, SQL } from '@db/core'
 import { DrizzleService, toPageResult } from '@db/core'
-import {
-  encodeGrowthCursor,
-  parseGrowthCursor,
-  rejectOffsetPaginationFields,
-  toCursorPage,
-} from '@libs/growth/growth/cursor-page.util'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
-import { and, desc, eq, gte, isNull, lt, or, sql } from 'drizzle-orm'
+import { and, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -281,6 +275,10 @@ export class UserPointService {
    * @returns 分页的记录列表
    */
   async getPointRecordPage(dto: QueryUserPointRecordDto) {
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      table: this.growthLedgerRecord,
+      fallbackOrderBy: [{ id: 'desc' }],
+    })
     const conditions: SQL[] = [
       eq(this.growthLedgerRecord.userId, dto.userId),
       eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
@@ -307,25 +305,29 @@ export class UserPointService {
           : eq(this.growthLedgerRecord.targetId, dto.targetId),
       )
     }
-    // 历史上这里走 JSON 字符串默认排序，现统一收口为字面量对象，减少调用层分支。
-    const orderBy = dto.orderBy?.trim() ? dto.orderBy : { id: 'desc' as const }
+    if (pageParams.dateRange?.gte) {
+      conditions.push(
+        gte(this.growthLedgerRecord.createdAt, pageParams.dateRange.gte),
+      )
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(
+        lt(this.growthLedgerRecord.createdAt, pageParams.dateRange.lt),
+      )
+    }
 
     const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage(dto)
-    const orderQuery = this.drizzle.buildOrderBy(orderBy, {
-      table: this.growthLedgerRecord,
-    })
     const [list, total] = await Promise.all([
       this.db
         .select()
         .from(this.growthLedgerRecord)
         .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
       this.db.$count(this.growthLedgerRecord, where),
     ])
-    const page = toPageResult(list, total, pageQuery)
+    const page = toPageResult(list, total, pageParams.page)
 
     return {
       ...page,
@@ -337,13 +339,11 @@ export class UserPointService {
     }
   }
 
-  async getAppPointRecordCursorPage(
-    dto: Omit<QueryUserPointRecordDto, 'pageIndex' | 'orderBy'> & {
-      cursor?: string
-    },
-  ) {
-    rejectOffsetPaginationFields(dto, '用户积分记录列表')
-    const cursor = this.parsePointRecordCursor(dto.cursor)
+  async getAppPointRecordPage(dto: QueryUserPointRecordDto) {
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      table: this.growthLedgerRecord,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
     const conditions: SQL[] = [
       eq(this.growthLedgerRecord.userId, dto.userId),
       eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
@@ -370,31 +370,29 @@ export class UserPointService {
           : eq(this.growthLedgerRecord.targetId, dto.targetId),
       )
     }
-    if (cursor) {
+    if (pageParams.dateRange?.gte) {
       conditions.push(
-        or(
-          lt(this.growthLedgerRecord.createdAt, cursor.createdAt),
-          and(
-            eq(this.growthLedgerRecord.createdAt, cursor.createdAt),
-            lt(this.growthLedgerRecord.id, cursor.id),
-          ),
-        )!,
+        gte(this.growthLedgerRecord.createdAt, pageParams.dateRange.gte),
+      )
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(
+        lt(this.growthLedgerRecord.createdAt, pageParams.dateRange.lt),
       )
     }
 
-    const pageQuery = this.drizzle.buildPage({ pageSize: dto.pageSize })
-    const rows = await this.db
-      .select()
-      .from(this.growthLedgerRecord)
-      .where(and(...conditions))
-      .orderBy(
-        desc(this.growthLedgerRecord.createdAt),
-        desc(this.growthLedgerRecord.id),
-      )
-      .limit(pageQuery.limit + 1)
-    const page = toCursorPage(rows, pageQuery.limit, (item) =>
-      this.encodePointRecordCursor(item),
-    )
+    const where = and(...conditions)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.growthLedgerRecord)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.growthLedgerRecord, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     return {
       ...page,
@@ -491,28 +489,6 @@ export class UserPointService {
     })
 
     return balance?.balance ?? 0
-  }
-
-  private encodePointRecordCursor(record: { createdAt: Date, id: number }) {
-    return encodeGrowthCursor({
-      createdAt: record.createdAt.toISOString(),
-      id: record.id,
-    })
-  }
-
-  private parsePointRecordCursor(cursor?: string | null) {
-    return parseGrowthCursor(cursor, '积分记录分页游标非法', (payload) => {
-      const createdAt = new Date(String(payload.createdAt))
-      const id = Number(payload.id)
-      if (
-        Number.isNaN(createdAt.getTime()) ||
-        !Number.isInteger(id) ||
-        id <= 0
-      ) {
-        return undefined
-      }
-      return { createdAt, id }
-    })
   }
 
   /**
@@ -667,7 +643,8 @@ export class UserPointService {
       targetType: record.targetType ?? null,
       targetId: record.targetId ?? null,
       bizKey: record.bizKey ?? '',
-      context: this.growthLedgerService.sanitizePublicContext(record.context) ?? null,
+      context:
+        this.growthLedgerService.sanitizePublicContext(record.context) ?? null,
       points: record.delta,
       beforePoints: record.beforeValue,
       afterPoints: record.afterValue,

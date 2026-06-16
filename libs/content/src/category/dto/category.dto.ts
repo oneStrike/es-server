@@ -6,10 +6,13 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import {
+  BaseDto,
+  DragReorderDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
 
 import {
   IntersectionType,
@@ -91,11 +94,7 @@ class CreateCategoryRequiredFieldsDto extends OmitType(BaseCategoryDto, [
 ] as const) {}
 
 class CreateCategoryOptionalFieldsDto extends PartialType(
-  PickType(BaseCategoryDto, [
-    'icon',
-    'contentType',
-    'description',
-  ] as const),
+  PickType(BaseCategoryDto, ['icon', 'contentType', 'description'] as const),
 ) {}
 
 export class CreateCategoryDto extends IntersectionType(
@@ -122,8 +121,8 @@ export class QueryCategoryDto extends IntersectionType(
   contentType?: string
 }
 
-export class QueryAppCategoryCursorDto extends IntersectionType(
-  CursorPageSizeDto,
+export class QueryAppCategoryPageDto extends IntersectionType(
+  PageDto,
   PartialType(PickType(BaseCategoryDto, ['name'] as const)),
 ) {
   @JsonProperty({
@@ -132,13 +131,6 @@ export class QueryAppCategoryCursorDto extends IntersectionType(
     required: false,
   })
   contentType?: string
-
-  @StringProperty({
-    description: '下一页游标；按 sortOrder/id 升序翻页',
-    example: 'eyJzb3J0T3JkZXIiOjEsImlkIjoxMDB9',
-    required: false,
-  })
-  cursor?: string
 }
 
 export class UpdateCategoryStatusDto extends IntersectionType(

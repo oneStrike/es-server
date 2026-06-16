@@ -9,15 +9,10 @@ import {
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
+import { PageDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, asc, desc, eq, ilike, lt, or } from 'drizzle-orm'
-import {
-  assertCursorOnlyQuery,
-  encodeCreatedAtIdCursor,
-  parseCreatedAtIdCursor,
-  toCursorPageResult,
-} from '../favorite/cursor-pagination.helper'
+import { and, asc, eq, gte, ilike, lt } from 'drizzle-orm'
 import { PaymentOrderService } from '../payment/payment-order.service'
 import { PaymentOrderTypeEnum } from '../payment/payment.constant'
 import {
@@ -25,11 +20,9 @@ import {
   CreateCurrencyPackageDto,
   CreateCurrencyRechargeOrderDto,
   QueryAdminWalletLedgerDto,
-  QueryWalletLedgerDto,
   QueryCurrencyPackageDto,
   UpdateCurrencyPackageDto,
 } from '../wallet/dto/wallet.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
 import { READING_COIN_ASSET_KEY } from '../wallet/wallet.constant'
 
 @Injectable()
@@ -223,41 +216,43 @@ export class WalletService {
     }
   }
 
-  async getWalletLedgerPage(userId: number, dto: QueryWalletLedgerDto) {
-    assertCursorOnlyQuery(dto, '钱包流水列表')
+  async getWalletLedgerPage(userId: number, dto: PageDto) {
     const table = this.drizzle.schema.growthLedgerRecord
-    const cursor = parseCreatedAtIdCursor(dto.cursor, '钱包流水列表')
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      table,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
     const conditions: SQL[] = [
       eq(table.userId, userId),
       eq(table.assetType, GrowthAssetTypeEnum.CURRENCY),
       eq(table.assetKey, READING_COIN_ASSET_KEY),
     ]
-    if (cursor) {
-      conditions.push(
-        or(
-          lt(table.createdAt, cursor.createdAt),
-          and(eq(table.createdAt, cursor.createdAt), lt(table.id, cursor.id)),
-        )!,
-      )
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(table.createdAt, pageParams.dateRange.gte))
     }
-    const page = this.drizzle.buildPage({ pageSize: dto.pageSize })
-    const rows = await this.db
-      .select({
-        id: table.id,
-        delta: table.delta,
-        beforeValue: table.beforeValue,
-        afterValue: table.afterValue,
-        source: table.source,
-        remark: table.remark,
-        createdAt: table.createdAt,
-      })
-      .from(table)
-      .where(and(...conditions))
-      .orderBy(desc(table.createdAt), desc(table.id))
-      .limit(page.limit + 1)
-    const pageResult = toCursorPageResult(rows, page.limit, (item) =>
-      encodeCreatedAtIdCursor(item),
-    )
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(table.createdAt, pageParams.dateRange.lt))
+    }
+    const where = and(...conditions)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select({
+          id: table.id,
+          delta: table.delta,
+          beforeValue: table.beforeValue,
+          afterValue: table.afterValue,
+          source: table.source,
+          remark: table.remark,
+          createdAt: table.createdAt,
+        })
+        .from(table)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(table, where),
+    ])
+    const pageResult = toPageResult(rows, total, pageParams.page)
 
     return {
       ...pageResult,
@@ -308,17 +303,23 @@ export class WalletService {
     return result
   }
 
-  private async getWalletLedgerPageByUser(
-    userId: number,
-    dto: PageDto,
-  ) {
+  private async getWalletLedgerPageByUser(userId: number, dto: PageDto) {
     const table = this.drizzle.schema.growthLedgerRecord
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      table,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
     const where = and(
       eq(table.userId, userId),
       eq(table.assetType, GrowthAssetTypeEnum.CURRENCY),
       eq(table.assetKey, READING_COIN_ASSET_KEY),
+      pageParams.dateRange?.gte
+        ? gte(table.createdAt, pageParams.dateRange.gte)
+        : undefined,
+      pageParams.dateRange?.lt
+        ? lt(table.createdAt, pageParams.dateRange.lt)
+        : undefined,
     )
-    const page = this.drizzle.buildPage(dto)
     const [list, total] = await Promise.all([
       this.db
         .select({
@@ -332,16 +333,16 @@ export class WalletService {
         })
         .from(table)
         .where(where)
-        .orderBy(desc(table.createdAt), desc(table.id))
-        .limit(page.limit)
-        .offset(page.offset),
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
       this.db.$count(table, where),
     ])
 
     return toPageResult(
       this.toWalletLedgerRecords(list),
       total,
-      page,
+      pageParams.page,
     )
   }
 

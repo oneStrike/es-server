@@ -3,13 +3,7 @@ import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, desc, eq, inArray, lt, or } from 'drizzle-orm'
-import {
-  assertCursorOnlyQuery,
-  encodeCreatedAtIdCursor,
-  parseCreatedAtIdCursor,
-  toCursorPageResult,
-} from '../favorite/cursor-pagination.helper'
+import { and, eq, gte, inArray, lt } from 'drizzle-orm'
 import {
   LikePageQueryDto,
   LikeRecordDto,
@@ -340,37 +334,35 @@ export class LikeService {
    * 查询指定用户的点赞记录，支持分页，并关联查询目标详情
    * @param query - 查询参数
    * @param query.targetType - 点赞目标类型
-   * @param query.cursor - 下一页游标
    * @param query.pageSize - 每页数量（默认15）
    * @returns 分页点赞记录列表，包含目标详情
    */
   async getUserLikes(query: LikePageQueryDto & Pick<LikeRecordDto, 'userId'>) {
-    assertCursorOnlyQuery(query, '我的点赞列表')
-    const cursor = parseCreatedAtIdCursor(query.cursor, '我的点赞列表')
-    const cursorWhere = cursor
-      ? or(
-          lt(this.userLike.createdAt, cursor.createdAt),
-          and(
-            eq(this.userLike.createdAt, cursor.createdAt),
-            lt(this.userLike.id, cursor.id),
-          ),
-        )
-      : undefined
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.userLike,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
     const where = and(
       eq(this.userLike.targetType, query.targetType),
       eq(this.userLike.userId, query.userId),
-      cursorWhere,
+      pageParams.dateRange?.gte
+        ? gte(this.userLike.createdAt, pageParams.dateRange.gte)
+        : undefined,
+      pageParams.dateRange?.lt
+        ? lt(this.userLike.createdAt, pageParams.dateRange.lt)
+        : undefined,
     )
-    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
-    const rows = await this.db
-      .select()
-      .from(this.userLike)
-      .where(where)
-      .orderBy(desc(this.userLike.createdAt), desc(this.userLike.id))
-      .limit(pageQuery.limit + 1)
-    const page = toCursorPageResult(rows, pageQuery.limit, (item) =>
-      encodeCreatedAtIdCursor(item),
-    )
+    const [rows, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userLike)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userLike, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     if (page.list.length === 0) {
       return page

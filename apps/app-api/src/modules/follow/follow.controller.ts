@@ -8,13 +8,9 @@ import {
   QueryUserFollowPageDto,
 } from '@libs/interaction/follow/dto/follow.dto'
 import { FollowService } from '@libs/interaction/follow/follow.service'
-import {
-  ApiCursorPageDoc,
-  ApiDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -70,7 +66,7 @@ export class FollowController {
   }
 
   @Get('author/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询用户关注的作者',
     model: FollowAuthorPageItemDto,
   })
@@ -85,7 +81,7 @@ export class FollowController {
   }
 
   @Get('section/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询用户关注的论坛板块',
     model: FollowSectionPageItemDto,
   })
@@ -100,7 +96,7 @@ export class FollowController {
   }
 
   @Get('hashtag/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询用户关注的话题',
     model: FollowHashtagPageItemDto,
   })
@@ -115,7 +111,7 @@ export class FollowController {
   }
 
   @Get('user/following/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询用户关注的用户',
     model: FollowUserPageItemDto,
   })
@@ -130,7 +126,7 @@ export class FollowController {
   }
 
   @Get('user/follower/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询关注用户的用户',
     model: FollowUserPageItemDto,
   })

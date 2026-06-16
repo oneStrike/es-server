@@ -3,13 +3,18 @@ import type {
   DbQueryOrderByRecord,
 } from '@libs/platform/config'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
-import type { SQL } from '../drizzle.type'
+import type { SQL, SQLWrapper } from '../drizzle.type'
 import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException } from '@nestjs/common'
-import { asc, desc, getColumns } from 'drizzle-orm'
+import { asc, desc, getColumns, sql } from 'drizzle-orm'
 
 export interface DrizzleOrderByOptions<TTable extends AnyPgTable = AnyPgTable> {
   table?: TTable
+  fallbackOrderBy?: DrizzleOrderByInput
+}
+
+export interface AllowlistedOrderByOptions {
+  columns: Record<string, SQL | SQLWrapper>
   fallbackOrderBy?: DrizzleOrderByInput
 }
 
@@ -231,5 +236,29 @@ export function buildDrizzleOrderBy<TTable extends AnyPgTable = AnyPgTable>(
   return {
     orderBy,
     orderBySql: buildOrderBySql(orderBy, validColumns),
+  }
+}
+
+/**
+ * 为原生 SQL、聚合字段或跨表派生字段构建受控排序，调用方只能暴露显式 allowlist。
+ */
+export function buildAllowlistedOrderBy(
+  inputOrderBy: DrizzleOrderByInput,
+  options: AllowlistedOrderByOptions,
+) {
+  let orderByRecords = normalizeOrderByRecords(
+    inputOrderBy ?? options.fallbackOrderBy,
+    options.columns,
+  )
+
+  orderByRecords = appendStableIdOrderBy(orderByRecords, options.columns)
+  const orderBy = buildRelationOrderBy(orderByRecords)
+  const orderBySql = buildOrderBySql(orderBy, options.columns)
+
+  return {
+    orderBy,
+    orderBySql,
+    orderByClause:
+      orderBySql.length > 0 ? sql.join(orderBySql, sql`, `) : sql.empty(),
   }
 }

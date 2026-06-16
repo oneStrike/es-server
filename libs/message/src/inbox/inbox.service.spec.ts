@@ -1,8 +1,13 @@
 /// <reference types="jest" />
 
 import type { DrizzleService } from '@db/core'
-import { chatConversation, chatConversationMember, chatMessage, userNotification } from '@db/schema'
-import { BadRequestException } from '@nestjs/common'
+import {
+  chatConversation,
+  chatConversationMember,
+  chatMessage,
+  userNotification,
+} from '@db/schema'
+import { sql } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core/dialect'
 import { MessageInboxService } from './inbox.service'
 
@@ -52,51 +57,40 @@ describe('MessageInboxService unread summary', () => {
 })
 
 describe('MessageInboxService timeline', () => {
-  function createTimelineBuilder(rows: Record<string, unknown>[]) {
-    const whereConditions: unknown[] = []
-    const orderByExpressions: unknown[] = []
-    const builder: Record<string, jest.Mock> = {}
-
-    builder.from = jest.fn(() => builder)
-    builder.innerJoin = jest.fn(() => builder)
-    builder.leftJoin = jest.fn(() => builder)
-    builder.where = jest.fn((condition: unknown) => {
-      whereConditions.push(condition)
-      return builder
-    })
-    builder.orderBy = jest.fn((...expressions: unknown[]) => {
-      orderByExpressions.push(...expressions)
-      return builder
-    })
-    builder.limit = jest.fn(() => Promise.resolve(rows))
-    builder.offset = jest.fn()
-
-    return {
-      builder,
-      sqlText: () =>
-        [...whereConditions, ...orderByExpressions]
-          .map((expression) => dialect.sqlToQuery(expression as never).sql)
-          .join('\n')
-          .toLowerCase(),
-    }
-  }
-
   function createTimelineService(
-    notificationRows: Record<string, unknown>[] = [],
-    chatRows: Record<string, unknown>[] = [],
+    rows: Record<string, unknown>[] = [],
+    total = rows.length,
   ) {
-    const notificationBuilder = createTimelineBuilder(notificationRows)
-    const chatBuilder = createTimelineBuilder(chatRows)
-    const execute = jest.fn()
-    const select = jest
+    const execute = jest
       .fn()
-      .mockImplementationOnce(() => notificationBuilder.builder)
-      .mockImplementationOnce(() => chatBuilder.builder)
+      .mockResolvedValueOnce({ rows })
+      .mockResolvedValueOnce({ rows: [{ total }] })
+    const buildPageParams = jest.fn(
+      (dto: { pageIndex?: number; pageSize?: number }) => {
+        const pageIndex = dto.pageIndex ?? 1
+        const pageSize = dto.pageSize ?? 15
+        return {
+          page: {
+            pageIndex,
+            pageSize,
+            limit: pageSize,
+            offset: (pageIndex - 1) * pageSize,
+          },
+          order: {
+            orderBySql: [] as unknown[],
+            orderByClause: sql.raw('"createdAt" desc, "bizId" desc'),
+          },
+          dateRange: undefined as
+            | { gte?: Date | undefined; lt?: Date | undefined }
+            | undefined,
+        }
+      },
+    )
     const drizzle = {
       db: {
         execute,
-        select,
       },
+      buildPageParams,
       schema: {
         chatConversation,
         chatConversationMember,
@@ -109,32 +103,14 @@ describe('MessageInboxService timeline', () => {
     return {
       service,
       mocks: {
-        chatBuilder,
+        buildPageParams,
         execute,
-        notificationBuilder,
-        select,
       },
     }
   }
 
-  it('merges bounded notification and chat candidates without raw combined deep paging', async () => {
+  it('returns an ApiPage timeline from a single raw union source and count query', async () => {
     const { service, mocks } = createTimelineService(
-      [
-        {
-          sourceType: 'notification',
-          createdAt: new Date('2026-03-07T12:01:00.000Z'),
-          title: '通知-10',
-          content: '通知内容',
-          bizId: 'n:10',
-        },
-        {
-          sourceType: 'notification',
-          createdAt: new Date('2026-03-07T11:59:00.000Z'),
-          title: '通知-9',
-          content: '旧通知',
-          bizId: 'n:9',
-        },
-      ],
       [
         {
           sourceType: 'chat',
@@ -144,16 +120,18 @@ describe('MessageInboxService timeline', () => {
           bizId: 'c:4',
         },
         {
-          sourceType: 'chat',
+          sourceType: 'notification',
           createdAt: new Date('2026-03-07T12:01:00.000Z'),
-          title: '新聊天消息',
-          content: '同时间聊天',
-          bizId: 'c:9',
+          title: '通知-10',
+          content: '通知内容',
+          bizId: 'n:10',
         },
       ],
+      4,
     )
 
     const page = await service.getTimeline(7, {
+      pageIndex: 2,
       pageSize: 2,
     })
 
@@ -170,53 +148,81 @@ describe('MessageInboxService timeline', () => {
           bizId: 'n:10',
         },
       ],
-      hasMore: true,
+      pageIndex: 2,
       pageSize: 2,
+      total: 4,
     })
-    expect(page.nextCursor).toEqual(expect.any(String))
-    expect(
-      JSON.parse(Buffer.from(page.nextCursor!, 'base64url').toString('utf8')),
-    ).toMatchObject({
-      createdAt: '2026-03-07T12:01:00.000Z',
-      bizId: 'n:10',
-    })
-    expect(mocks.execute).not.toHaveBeenCalled()
-    expect(mocks.select).toHaveBeenCalledTimes(2)
-    expect(mocks.notificationBuilder.builder.limit).toHaveBeenCalledWith(3)
-    expect(mocks.chatBuilder.builder.limit).toHaveBeenCalledWith(3)
-    expect(mocks.notificationBuilder.builder.offset).not.toHaveBeenCalled()
-    expect(mocks.chatBuilder.builder.offset).not.toHaveBeenCalled()
-    const generatedSql = [
-      mocks.notificationBuilder.sqlText(),
-      mocks.chatBuilder.sqlText(),
-    ].join('\n')
-    expect(generatedSql).not.toContain(['union', 'all'].join(' '))
-    expect(generatedSql).not.toContain(['off', 'set'].join(''))
-  })
-
-  it('rejects invalid cursors before querying timeline candidates', async () => {
-    const { service, mocks } = createTimelineService()
-    const invalidCursor = Buffer.from(
-      JSON.stringify({ createdAt: 'not-a-date', bizId: 'bad' }),
-    ).toString('base64url')
-
-    await expect(
-      service.getTimeline(7, {
-        cursor: invalidCursor,
-      }),
-    ).rejects.toBeInstanceOf(BadRequestException)
-    expect(mocks.select).not.toHaveBeenCalled()
-  })
-
-  it('rejects legacy page and ordering parameters on the cursor timeline', async () => {
-    const { service, mocks } = createTimelineService()
-
-    await expect(
-      service.getTimeline(7, {
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
+    expect(mocks.buildPageParams).toHaveBeenCalledWith(
+      {
         pageIndex: 2,
+        pageSize: 2,
+      },
+      expect.objectContaining({
+        defaultPageSize: 15,
+        maxPageSize: 100,
+        allowlistedOrderBy: expect.objectContaining({
+          columns: expect.objectContaining({
+            createdAt: expect.anything(),
+            bizId: expect.anything(),
+            id: expect.anything(),
+          }),
+        }),
+      }),
+    )
+    expect(mocks.execute).toHaveBeenCalledTimes(2)
+    const listSql = dialect
+      .sqlToQuery(mocks.execute.mock.calls[0][0] as never)
+      .sql.toLowerCase()
+    const countSql = dialect
+      .sqlToQuery(mocks.execute.mock.calls[1][0] as never)
+      .sql.toLowerCase()
+    expect(listSql).toContain(['union', 'all'].join(' '))
+    expect(listSql).toContain(['order', 'by'].join(' '))
+    expect(listSql).toContain('limit')
+    expect(listSql).toContain(['off', 'set'].join(''))
+    expect(countSql).toContain(['count', '('].join(''))
+    expect(countSql).toContain(['union', 'all'].join(' '))
+  })
+
+  it('passes PageDto date range through the shared helper before SQL construction', async () => {
+    const { service, mocks } = createTimelineService([], 0)
+    mocks.buildPageParams.mockReturnValueOnce({
+      page: {
+        pageIndex: 1,
         pageSize: 15,
-      } as never),
-    ).rejects.toThrow('消息时间线仅支持 pageSize 和 cursor 查询')
-    expect(mocks.select).not.toHaveBeenCalled()
+        limit: 15,
+        offset: 0,
+      },
+      order: {
+        orderBySql: [],
+        orderByClause: sql.raw('"createdAt" desc, "bizId" desc'),
+      },
+      dateRange: {
+        gte: new Date('2026-03-06T16:00:00.000Z'),
+        lt: new Date('2026-03-07T16:00:00.000Z'),
+      },
+    })
+
+    await service.getTimeline(7, {
+      startDate: '2026-03-07',
+      endDate: '2026-03-07',
+    })
+
+    expect(mocks.buildPageParams).toHaveBeenCalledWith(
+      {
+        startDate: '2026-03-07',
+        endDate: '2026-03-07',
+      },
+      expect.any(Object),
+    )
+    const listSql = dialect
+      .sqlToQuery(mocks.execute.mock.calls[0][0] as never)
+      .sql.toLowerCase()
+    expect(listSql).toContain('un.created_at >=')
+    expect(listSql).toContain('un.created_at <')
+    expect(listSql).toContain('cc.last_message_at >=')
+    expect(listSql).toContain('cc.last_message_at <')
   })
 })

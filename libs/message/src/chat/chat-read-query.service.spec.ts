@@ -5,6 +5,7 @@ import {
   chatConversationMember,
   chatMessage,
 } from '@db/schema'
+import { desc } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core/dialect'
 import { MessageChatReadQueryService } from './chat-read-query.service'
 
@@ -16,6 +17,7 @@ interface PreparedSelectCapture {
   where?: unknown
   orderBy: unknown[]
   limit?: unknown
+  offset?: unknown
   execute: jest.Mock
 }
 
@@ -46,7 +48,10 @@ function createSelectMock(prepared: PreparedSelectCapture[]) {
       capture.orderBy = orderBy
       return builder
     })
-    builder.offset = jest.fn(() => builder)
+    builder.offset = jest.fn((offset: unknown) => {
+      capture.offset = offset
+      return builder
+    })
     builder.limit = jest.fn((limit: unknown) => {
       capture.limit = limit
       return builder
@@ -80,28 +85,37 @@ function createService() {
 }
 
 describe('MessageChatReadQueryService', () => {
-  it('builds and executes the conversation list keyset query', async () => {
+  it('builds and executes the conversation list offset query', async () => {
     const { service, prepared } = createService()
 
     await service.getConversationList({
       userId: 7,
       limit: 10,
-      cursor: {
-        isPinned: false,
-        lastMessageAt: new Date('2026-03-07T12:00:00.000Z'),
-        id: 99,
-      },
+      offset: 20,
+      orderBySql: [
+        desc(chatConversationMember.isPinned),
+        desc(chatConversation.lastMessageAt),
+        desc(chatConversation.id),
+      ],
+      startDate: new Date('2026-03-07T00:00:00.000Z'),
+      endDate: new Date('2026-03-08T00:00:00.000Z'),
     })
     const conversationListQuery = prepared[3]
 
     expect(compileSql(conversationListQuery.joins[0].condition)).toContain(
-      '"chat_conversation_member"."user_id" = $1',
-    )
-    expect(compileSql(conversationListQuery.joins[0].condition)).toContain(
-      '"chat_conversation_member"."left_at" is null',
+      '"chat_conversation_member"."conversation_id" = "chat_conversation"."id"',
     )
     expect(compileSql(conversationListQuery.where)).toContain(
       '"chat_conversation"."has_messages" = $',
+    )
+    expect(compileSql(conversationListQuery.where)).toContain(
+      '"chat_conversation_member"."user_id" = $',
+    )
+    expect(compileSql(conversationListQuery.where)).toContain(
+      '"chat_conversation_member"."left_at" is null',
+    )
+    expect(compileSql(conversationListQuery.where)).toContain(
+      '"chat_conversation"."last_message_at" >= $',
     )
     expect(compileSql(conversationListQuery.where)).toContain(
       '"chat_conversation"."last_message_at" < $',
@@ -110,9 +124,10 @@ describe('MessageChatReadQueryService', () => {
       '"chat_conversation_member"."is_pinned" desc',
     )
     expect(compileSql(conversationListQuery.orderBy[1])).toContain(
-      '"chat_conversation"."last_message_at" desc nulls last',
+      '"chat_conversation"."last_message_at" desc',
     )
     expect(conversationListQuery.limit).toBe(10)
+    expect(conversationListQuery.offset).toBe(20)
   })
 
   it('builds message page queries for initial, before-cursor, and after-seq reads', () => {

@@ -5,6 +5,7 @@ import {
   ContentTypeEnum,
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
+import { sql } from 'drizzle-orm'
 import { PurchaseService } from './purchase.service'
 import { PaymentMethodEnum, PurchaseTargetTypeEnum } from './purchase.constant'
 
@@ -187,7 +188,32 @@ describe('PurchaseService domain split contract', () => {
           return Promise.resolve({ rows: [] })
         }),
       },
-      buildPage: jest.fn(() => ({ limit: 20, offset: 0 })),
+      buildPage: jest.fn(() => ({
+        limit: 20,
+        offset: 0,
+        pageIndex: 1,
+        pageSize: 20,
+      })),
+      buildPageParams: jest.fn(() => ({
+        page: {
+          limit: 20,
+          offset: 0,
+          pageIndex: 1,
+          pageSize: 20,
+        },
+        order: {
+          orderByClause: sql.raw(
+            'MAX(COALESCE(upr.created_at, uce.created_at)) DESC, wc.work_id DESC',
+          ),
+          orderBySql: [],
+        },
+        dateRange: undefined,
+      })),
+      buildAllowlistedOrderBy: jest.fn(() => ({
+        orderByClause: sql.raw(
+          'MAX(COALESCE(upr.created_at, uce.created_at)) DESC, wc.work_id DESC',
+        ),
+      })),
       isUniqueViolation: jest.fn(() => false),
       withErrorHandling: jest.fn(),
     }
@@ -206,6 +232,13 @@ describe('PurchaseService domain split contract', () => {
       pageSize: 20,
     })
 
+    expect(drizzle.buildPageParams).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 33,
+        pageSize: 20,
+      }),
+      expect.any(Object),
+    )
     const sqlText = flattenSqlText(executedQueries[0]).replace(/\s+/g, ' ')
     expect(sqlText).toContain(
       'MAX(COALESCE(upr.created_at, uce.created_at)) AS "lastPurchasedAt"',
@@ -213,118 +246,48 @@ describe('PurchaseService domain split contract', () => {
     expect(sqlText).toContain(
       'ORDER BY MAX(COALESCE(upr.created_at, uce.created_at)) DESC, wc.work_id DESC',
     )
-    expect(sqlText).not.toContain(
-      'COALESCE(upr.created_at, uce.created_at) >=',
-    )
+    expect(sqlText).toContain('LIMIT')
+    expect(sqlText).toContain('OFFSET')
+    expect(sqlText).not.toContain('COALESCE(upr.created_at, uce.created_at) >=')
   })
 
-  it('rejects app purchased work date filters after cursor-only contract', async () => {
-    const drizzle = {
-      schema,
-      db: {
-        execute: jest.fn(() => Promise.resolve({ rows: [] })),
-      },
-      buildPage: jest.fn(() => ({ limit: 20, offset: 0 })),
-      isUniqueViolation: jest.fn(() => false),
-      withErrorHandling: jest.fn(),
-    }
-    const service = new (PurchaseService as any)(
-      drizzle,
-      {},
-      {},
-      {},
-      {},
-      {},
-      {},
-    ) as PurchaseService
-
-    await expect(
-      service.getPurchasedWorks({
-        userId: 33,
-        pageSize: 20,
-        startDate: '2026-05-01',
-      } as never),
-    ).rejects.toThrow('startDate')
-    expect(drizzle.db.execute).not.toHaveBeenCalled()
-  })
-
-  it('rejects app purchased chapter date filters after cursor-only contract', async () => {
-    const drizzle = {
-      schema,
-      db: {
-        execute: jest.fn(() => Promise.resolve({ rows: [] })),
-      },
-      buildPage: jest.fn(() => ({ limit: 20, offset: 0 })),
-      isUniqueViolation: jest.fn(() => false),
-      withErrorHandling: jest.fn(),
-    }
-    const service = new (PurchaseService as any)(
-      drizzle,
-      {},
-      {},
-      {},
-      {},
-      {},
-      {},
-    ) as PurchaseService
-
-    await expect(
-      service.getPurchasedWorkChapters({
-        userId: 33,
-        workId: 44,
-        pageSize: 20,
-        endDate: '2026-05-07',
-      } as never),
-    ).rejects.toThrow('endDate')
-    expect(drizzle.db.execute).not.toHaveBeenCalled()
-  })
-
-  it('uses purchase tuple cursor for purchased work chapters', async () => {
+  it('uses offset pagination for purchased work chapters', async () => {
     const executedQueries: unknown[] = []
     const drizzle = {
       schema,
       db: {
         execute: jest.fn((query: unknown) => {
           executedQueries.push(query)
+          if (executedQueries.length > 1) {
+            return Promise.resolve({ rows: [{ total: 2n }] })
+          }
+
           return Promise.resolve({
             rows: [
               {
                 id: 101,
                 targetType: 1,
                 targetId: 201,
-                purchaseRecordId: 101,
-                grantSource: 1,
-                purchaseStatus: 1,
+                userId: 33,
+                originalPrice: 30,
+                paidPrice: 27,
+                payableRate: '0.90',
+                status: 1,
+                paymentMethod: 1,
+                outTradeNo: null,
+                discountAmount: 3,
+                couponInstanceId: 44,
+                discountSource: 1,
                 createdAt: new Date('2026-05-07T08:00:00.000Z'),
-                entitlementCreatedAt: new Date('2026-05-07T08:00:00.000Z'),
-                workId: 44,
-                workName: '测试作品',
-                workType: 1,
+                updatedAt: new Date('2026-05-07T08:01:00.000Z'),
                 workCover: null,
                 chapterId: 201,
                 chapterWorkId: 44,
+                chapterWorkType: 1,
                 chapterTitle: '第一章',
+                chapterSubtitle: null,
+                chapterCover: null,
                 chapterSortOrder: 1,
-                chapterIsPublished: true,
-                chapterPublishAt: null,
-              },
-              {
-                id: 100,
-                targetType: 1,
-                targetId: 202,
-                purchaseRecordId: 100,
-                grantSource: 1,
-                purchaseStatus: 1,
-                createdAt: new Date('2026-05-07T07:00:00.000Z'),
-                entitlementCreatedAt: new Date('2026-05-07T07:00:00.000Z'),
-                workId: 44,
-                workName: '测试作品',
-                workType: 1,
-                workCover: null,
-                chapterId: 202,
-                chapterWorkId: 44,
-                chapterTitle: '第二章',
-                chapterSortOrder: 2,
                 chapterIsPublished: true,
                 chapterPublishAt: null,
               },
@@ -332,7 +295,32 @@ describe('PurchaseService domain split contract', () => {
           })
         }),
       },
-      buildPage: jest.fn(() => ({ limit: 1, offset: 0 })),
+      buildPage: jest.fn(() => ({
+        limit: 1,
+        offset: 1,
+        pageIndex: 2,
+        pageSize: 1,
+      })),
+      buildPageParams: jest.fn(() => ({
+        page: {
+          limit: 1,
+          offset: 1,
+          pageIndex: 2,
+          pageSize: 1,
+        },
+        order: {
+          orderByClause: sql.raw(
+            'COALESCE(upr.created_at, uce.created_at) DESC, COALESCE(upr.id, uce.id) DESC',
+          ),
+          orderBySql: [],
+        },
+        dateRange: undefined,
+      })),
+      buildAllowlistedOrderBy: jest.fn(() => ({
+        orderByClause: sql.raw(
+          'COALESCE(upr.created_at, uce.created_at) DESC, COALESCE(upr.id, uce.id) DESC',
+        ),
+      })),
       isUniqueViolation: jest.fn(() => false),
       withErrorHandling: jest.fn(),
     }
@@ -349,22 +337,59 @@ describe('PurchaseService domain split contract', () => {
     const page = await service.getPurchasedWorkChapters({
       userId: 33,
       workId: 44,
+      pageIndex: 2,
       pageSize: 1,
     })
 
-    expect(page.list).toHaveLength(1)
-    expect(page.hasMore).toBe(true)
-    expect(page.nextCursor).toBeTruthy()
-    const cursor = JSON.parse(
-      Buffer.from(page.nextCursor!, 'base64url').toString('utf8'),
+    expect(drizzle.buildPageParams).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 33,
+        workId: 44,
+        pageIndex: 2,
+        pageSize: 1,
+      }),
+      expect.any(Object),
     )
-    expect(cursor).toEqual({
-      createdAt: '2026-05-07T08:00:00.000Z',
-      id: 101,
+    expect(page).toMatchObject({
+      total: 2,
+      pageIndex: 2,
+      pageSize: 1,
+      list: [
+        {
+          id: 101,
+          targetType: 1,
+          targetId: 201,
+          userId: 33,
+          purchasePricing: {
+            originalPrice: 30,
+            payableRate: 0.9,
+            payablePrice: 27,
+            discountAmount: 3,
+          },
+          status: 1,
+          paymentMethod: 1,
+          discountAmount: 3,
+          couponInstanceId: 44,
+          discountSource: 1,
+          chapter: {
+            id: 201,
+            workId: 44,
+            workType: 1,
+            title: '第一章',
+            subtitle: null,
+            cover: null,
+            sortOrder: 1,
+            isPublished: true,
+            publishAt: null,
+          },
+        },
+      ],
     })
     const sqlText = flattenSqlText(executedQueries[0]).replace(/\s+/g, ' ')
     expect(sqlText).toContain(
       'ORDER BY COALESCE(upr.created_at, uce.created_at) DESC, COALESCE(upr.id, uce.id) DESC',
     )
+    expect(sqlText).toContain('LIMIT')
+    expect(sqlText).toContain('OFFSET')
   })
 })

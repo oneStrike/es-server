@@ -23,7 +23,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, desc, eq, gt, isNull, lt, or, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, isNull, lt, or, sql } from 'drizzle-orm'
 import {
   CouponInstanceStatusEnum,
   CouponRedemptionStatusEnum,
@@ -32,12 +32,6 @@ import {
   CouponTargetScopeEnum,
   CouponTypeEnum,
 } from '../coupon/coupon.constant'
-import {
-  assertCursorOnlyQuery,
-  encodeCreatedAtIdCursor,
-  parseCreatedAtIdCursor,
-  toCursorPageResult,
-} from '../favorite/cursor-pagination.helper'
 import {
   CouponDefinitionOutputDto,
   CouponRedemptionResultDto,
@@ -48,6 +42,16 @@ import {
   RedeemCouponCommandDto,
   UpdateCouponDefinitionDto,
 } from '../coupon/dto/coupon.dto'
+
+interface WritableCouponDefinition {
+  couponType: CouponTypeEnum
+  targetScope: CouponTargetScopeEnum
+  usageLimit: number
+  discountAmount: number
+  discountRateBps: number
+  benefitDays: number
+  benefitCount: number
+}
 
 @Injectable()
 export class CouponService {
@@ -151,10 +155,7 @@ export class CouponService {
         '发券有效天数必须为正整数',
       )
     }
-    if (
-      input.grantKeys !== undefined &&
-      input.grantKeys.length !== quantity
-    ) {
+    if (input.grantKeys !== undefined && input.grantKeys.length !== quantity) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '发券幂等键数量必须和发券数量一致',
@@ -194,10 +195,7 @@ export class CouponService {
       ...definition,
       validDays,
     })
-    const expiresAt =
-      validDays > 0
-        ? this.addDays(new Date(), validDays)
-        : null
+    const expiresAt = validDays > 0 ? this.addDays(new Date(), validDays) : null
     const items: GrantCouponsForSourceResult['items'] = []
 
     for (let index = 0; index < quantity; index += 1) {
@@ -261,7 +259,10 @@ export class CouponService {
 
   private async ensureAdminGrantOperationLock(
     tx: CouponTx,
-    input: { operationId: string, userId: number },
+    input: {
+      operationId: string
+      userId: number
+    },
   ) {
     await this.drizzle.withErrorHandling(() =>
       tx.execute(
@@ -439,7 +440,9 @@ export class CouponService {
         ...(data.discountRateBps !== undefined
           ? { discountRateBps: data.discountRateBps }
           : {}),
-        ...(data.usageLimit !== undefined ? { usageLimit: data.usageLimit } : {}),
+        ...(data.usageLimit !== undefined
+          ? { usageLimit: data.usageLimit }
+          : {}),
         ...(data.benefitDays !== undefined
           ? { benefitDays: data.benefitDays }
           : {}),
@@ -487,7 +490,10 @@ export class CouponService {
     }
 
     if (dto.couponType === CouponTypeEnum.DISCOUNT) {
-      if ((dto.discountAmount ?? 0) <= 0 && (dto.discountRateBps ?? 10000) >= 10000) {
+      if (
+        (dto.discountAmount ?? 0) <= 0 &&
+        (dto.discountRateBps ?? 10000) >= 10000
+      ) {
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
           '折扣券必须配置折扣金额或折扣率',
@@ -523,16 +529,9 @@ export class CouponService {
     )
   }
 
-  private ensureCouponDefinitionWritable<T extends {
-    couponType: CouponTypeEnum
-    targetScope: CouponTargetScopeEnum
-    usageLimit: number
-    discountAmount: number
-    discountRateBps: number
-    benefitDays: number
-    benefitCount: number
-  }>(definition: T
-) {
+  private ensureCouponDefinitionWritable<T extends WritableCouponDefinition>(
+    definition: T,
+  ) {
     this.assertCouponAbility(definition)
     return definition
   }
@@ -560,8 +559,7 @@ export class CouponService {
     if (
       definition.couponType === CouponTypeEnum.DISCOUNT &&
       (definition.targetScope !== CouponTargetScopeEnum.CHAPTER ||
-        (definition.discountAmount <= 0 &&
-          definition.discountRateBps >= 10000))
+        (definition.discountAmount <= 0 && definition.discountRateBps >= 10000))
     ) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -646,10 +644,7 @@ export class CouponService {
         'discountAmount',
       ),
       benefitDays: this.readSnapshotNumber(value.benefitDays, 'benefitDays'),
-      benefitCount: this.readSnapshotNumber(
-        value.benefitCount,
-        'benefitCount',
-      ),
+      benefitCount: this.readSnapshotNumber(value.benefitCount, 'benefitCount'),
       validDays: this.readSnapshotNumber(value.validDays, 'validDays'),
       issuedAt:
         this.readSnapshotString(value.issuedAt) ??
@@ -690,7 +685,9 @@ export class CouponService {
       dto.endDate,
     )
     if (dateRange?.gte) {
-      conditions.push(sql`${this.couponDefinition.createdAt} >= ${dateRange.gte}`)
+      conditions.push(
+        sql`${this.couponDefinition.createdAt} >= ${dateRange.gte}`,
+      )
     }
     if (dateRange?.lt) {
       conditions.push(sql`${this.couponDefinition.createdAt} < ${dateRange.lt}`)
@@ -1088,56 +1085,57 @@ export class CouponService {
 
   // 分页查询用户当前可用券实例。
   async getUserCouponPage(userId: number, dto: QueryUserCouponDto) {
-    assertCursorOnlyQuery(dto, '我的优惠券列表')
-    const page = this.drizzle.buildPage({ pageSize: dto.pageSize })
-    const cursor = parseCreatedAtIdCursor(dto.cursor, '我的优惠券列表')
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      table: this.userCouponInstance,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
+    const now = new Date()
     const conditions = [
       eq(this.userCouponInstance.userId, userId),
       eq(this.userCouponInstance.status, CouponInstanceStatusEnum.AVAILABLE),
       gt(this.userCouponInstance.remainingUses, 0),
       or(
         isNull(this.userCouponInstance.expiresAt),
-        gt(this.userCouponInstance.expiresAt, new Date()),
+        gt(this.userCouponInstance.expiresAt, now),
       ),
     ]
     if (dto.couponType !== undefined) {
       conditions.push(eq(this.userCouponInstance.couponType, dto.couponType))
     }
-    if (cursor) {
+    if (pageParams.dateRange?.gte) {
       conditions.push(
-        or(
-          lt(this.userCouponInstance.createdAt, cursor.createdAt),
-          and(
-            eq(this.userCouponInstance.createdAt, cursor.createdAt),
-            lt(this.userCouponInstance.id, cursor.id),
-          ),
-        )!,
+        gte(this.userCouponInstance.createdAt, pageParams.dateRange.gte),
+      )
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(
+        lt(this.userCouponInstance.createdAt, pageParams.dateRange.lt),
       )
     }
 
-    const rows = await this.db
-      .select({
-        id: this.userCouponInstance.id,
-        userId: this.userCouponInstance.userId,
-        couponDefinitionId: this.userCouponInstance.couponDefinitionId,
-        couponType: this.userCouponInstance.couponType,
-        status: this.userCouponInstance.status,
-        remainingUses: this.userCouponInstance.remainingUses,
-        expiresAt: this.userCouponInstance.expiresAt,
-        createdAt: this.userCouponInstance.createdAt,
-        updatedAt: this.userCouponInstance.updatedAt,
-        grantSnapshot: this.userCouponInstance.grantSnapshot,
-      })
-      .from(this.userCouponInstance)
-      .where(and(...conditions))
-      .orderBy(
-        desc(this.userCouponInstance.createdAt),
-        desc(this.userCouponInstance.id),
-      )
-      .limit(page.limit + 1)
-    const pageResult = toCursorPageResult(rows, page.limit, (row) =>
-      encodeCreatedAtIdCursor(row),
-    )
+    const where = and(...conditions)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.userCouponInstance.id,
+          userId: this.userCouponInstance.userId,
+          couponDefinitionId: this.userCouponInstance.couponDefinitionId,
+          couponType: this.userCouponInstance.couponType,
+          status: this.userCouponInstance.status,
+          remainingUses: this.userCouponInstance.remainingUses,
+          expiresAt: this.userCouponInstance.expiresAt,
+          createdAt: this.userCouponInstance.createdAt,
+          updatedAt: this.userCouponInstance.updatedAt,
+          grantSnapshot: this.userCouponInstance.grantSnapshot,
+        })
+        .from(this.userCouponInstance)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userCouponInstance, where),
+    ])
+    const pageResult = toPageResult(rows, total, pageParams.page)
 
     return {
       ...pageResult,
@@ -1149,7 +1147,10 @@ export class CouponService {
     }
   }
 
-  private requireTargetId(targetId: number | null | undefined, message: string) {
+  private requireTargetId(
+    targetId: number | null | undefined,
+    message: string,
+  ) {
     if (targetId === undefined || targetId === null) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,

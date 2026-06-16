@@ -23,7 +23,6 @@ import {
   ChatMessageTypeEnum,
   ChatSendMessageTypeEnum,
 } from '../chat.constant'
-import { CursorPageSizeDto } from '@libs/platform/dto/page.dto'
 
 export class OpenDirectConversationDto {
   @NumberProperty({
@@ -69,19 +68,6 @@ export class QueryChatConversationMessagesDto extends PickType(
   BaseChatConversationMessagesQueryDto,
   ['conversationId', 'cursor', 'afterSeq', 'limit'] as const,
 ) {}
-
-/**
- * 会话列表游标查询 DTO。
- */
-export class QueryChatConversationListDto extends CursorPageSizeDto {
-  @StringProperty({
-    description: '下一页游标',
-    example:
-      'eyJpc1Bpbm5lZCI6ZmFsc2UsImxhc3RNZXNzYWdlQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
 
 /** 图片聊天消息载荷 */
 export class ImageChatMessagePayloadDto {
@@ -694,39 +680,4 @@ export class ChatConversationMessagesResponseDto {
     validation: false,
   })
   hasMore!: boolean
-}
-
-/**
- * 会话列表游标分页响应 DTO。
- */
-export class ChatConversationListResponseDto {
-  @ArrayProperty({
-    description: '会话列表',
-    itemClass: ChatConversationDto,
-    validation: false,
-  })
-  list!: ChatConversationDto[]
-
-  @NumberProperty({
-    description: '本次请求单页大小',
-    example: 20,
-    validation: false,
-  })
-  pageSize!: number
-
-  @BooleanProperty({
-    description: '是否还有更多会话',
-    example: true,
-    validation: false,
-  })
-  hasMore!: boolean
-
-  @StringProperty({
-    description: '下一页游标',
-    example:
-      'eyJpc1Bpbm5lZCI6ZmFsc2UsImxhc3RNZXNzYWdlQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    nullable: true,
-    validation: false,
-  })
-  nextCursor!: string | null
 }

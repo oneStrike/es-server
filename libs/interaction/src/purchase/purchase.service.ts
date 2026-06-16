@@ -1,5 +1,5 @@
 import type { ContentPurchasePricingDto } from '@libs/content/permission/dto/content-purchase-pricing.dto'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import {
   ContentEntitlementGrantSourceEnum,
   ContentEntitlementTargetTypeEnum,
@@ -18,12 +18,6 @@ import { Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 import { CouponRedemptionTargetTypeEnum } from '../coupon/coupon.constant'
 import { CouponService } from '../coupon/coupon.service'
-import {
-  assertCursorOnlyQuery,
-  encodeCreatedAtIdCursor,
-  parseCreatedAtIdCursor,
-  toCursorPageResult,
-} from '../favorite/cursor-pagination.helper'
 import { WalletService } from '../wallet/wallet.service'
 import {
   PurchaseChapterResultDto,
@@ -77,6 +71,16 @@ export class PurchaseService {
     }
     const rows = (result as { rows?: T[] | null }).rows
     return Array.isArray(rows) ? rows : []
+  }
+
+  private extractTotal(
+    result: { rows?: unknown[] | null } | object | null | undefined,
+  ) {
+    const [row] = this.extractRows<{
+      total?: bigint | number | string | null
+    }>(result)
+
+    return Number(row?.total ?? 0)
   }
 
   private buildPurchaseCreatedAtExpression() {
@@ -234,7 +238,9 @@ export class PurchaseService {
         const purchasePricing = {
           originalPrice,
           payableRate:
-            originalPrice > 0 ? Number((paidPrice / originalPrice).toFixed(2)) : 1,
+            originalPrice > 0
+              ? Number((paidPrice / originalPrice).toFixed(2))
+              : 1,
           payablePrice: paidPrice,
           discountAmount: originalPrice - paidPrice,
         }
@@ -355,24 +361,31 @@ export class PurchaseService {
    * 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
    */
   async getPurchasedWorks(query: QueryPurchasedWorkCommandDto) {
-    assertCursorOnlyQuery(query, '已购作品列表')
-    const {
-      userId,
-      workType,
-      status = PurchaseStatusEnum.SUCCESS,
-      pageSize,
-    } = query
-    const page = this.drizzle.buildPage({ pageSize })
-    const cursor = parseCreatedAtIdCursor(query.cursor, '已购作品列表')
+    const { userId, workType, status = PurchaseStatusEnum.SUCCESS } = query
     const purchaseCreatedAt = this.buildPurchaseCreatedAtExpression()
+    const pageParams = this.drizzle.buildPageParams(query, {
+      allowlistedOrderBy: {
+        columns: {
+          lastPurchasedAt: sql`MAX(${purchaseCreatedAt})`,
+          purchasedChapterCount: sql`COUNT(*)::bigint`,
+          workId: sql`wc.work_id`,
+          workType: sql`w.type`,
+        },
+        fallbackOrderBy: [{ lastPurchasedAt: 'desc' }, { workId: 'desc' }],
+      },
+    })
     const workTypeFilter = workType
       ? sql` AND w.type = ${workType}`
       : sql.empty()
-    const cursorHaving = cursor
-      ? sql` HAVING MAX(${purchaseCreatedAt}) < ${cursor.createdAt} OR (MAX(${purchaseCreatedAt}) = ${cursor.createdAt} AND wc.work_id < ${cursor.id})`
+    const startDateFilter = pageParams.dateRange?.gte
+      ? sql` AND ${purchaseCreatedAt} >= ${pageParams.dateRange.gte}`
+      : sql.empty()
+    const endDateFilter = pageParams.dateRange?.lt
+      ? sql` AND ${purchaseCreatedAt} < ${pageParams.dateRange.lt}`
       : sql.empty()
 
-    const rowsResult = await this.db.execute(sql`
+    const [rowsResult, totalResult] = await Promise.all([
+      this.db.execute(sql`
         SELECT
           wc.work_id AS "workId",
           w.type AS "workType",
@@ -390,11 +403,33 @@ export class PurchaseService {
           AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND (upr.id IS NULL OR upr.status = ${status})
           ${workTypeFilter}
+          ${startDateFilter}
+          ${endDateFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
-        ${cursorHaving}
-        ORDER BY MAX(${purchaseCreatedAt}) DESC, wc.work_id DESC
-        LIMIT ${page.limit + 1}
-      `)
+        ORDER BY ${pageParams.order.orderByClause}
+        LIMIT ${pageParams.page.limit}
+        OFFSET ${pageParams.page.offset}
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::bigint AS "total"
+        FROM (
+          SELECT wc.work_id
+          FROM user_content_entitlement uce
+          LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
+          INNER JOIN work_chapter wc ON wc.id = uce.target_id
+          INNER JOIN work w ON w.id = wc.work_id
+          WHERE uce.user_id = ${userId}
+            AND uce.status = 1
+            AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
+            AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+            AND (upr.id IS NULL OR upr.status = ${status})
+            ${workTypeFilter}
+            ${startDateFilter}
+            ${endDateFilter}
+          GROUP BY wc.work_id, w.type, w.name, w.cover
+        ) grouped_purchased_works
+      `),
+    ])
     const rows = this.extractRows<{
       workId: number
       workType: number
@@ -403,16 +438,10 @@ export class PurchaseService {
       purchasedChapterCount: bigint
       lastPurchasedAt: Date
     }>(rowsResult)
-    const pageResult = toCursorPageResult(rows, page.limit, (row) =>
-      encodeCreatedAtIdCursor({
-        createdAt: row.lastPurchasedAt,
-        id: row.workId,
-      }),
-    )
+    const total = this.extractTotal(totalResult)
 
-    return {
-      ...pageResult,
-      list: pageResult.list.map((row) => ({
+    return toPageResult(
+      rows.map((row) => ({
         work: {
           id: row.workId,
           type: row.workType,
@@ -422,7 +451,9 @@ export class PurchaseService {
         purchasedChapterCount: Number(row.purchasedChapterCount),
         lastPurchasedAt: row.lastPurchasedAt,
       })),
-    }
+      total,
+      pageParams.page,
+    )
   }
 
   /**
@@ -430,25 +461,39 @@ export class PurchaseService {
    * 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
    */
   async getPurchasedWorkChapters(query: QueryPurchasedWorkChapterCommandDto) {
-    assertCursorOnlyQuery(query, '已购章节列表')
     const {
       userId,
       workId,
       workType,
       status = PurchaseStatusEnum.SUCCESS,
-      pageSize,
     } = query
-    const page = this.drizzle.buildPage({ pageSize })
-    const cursor = parseCreatedAtIdCursor(query.cursor, '已购章节列表')
     const purchaseCreatedAt = this.buildPurchaseCreatedAtExpression()
+    const pageParams = this.drizzle.buildPageParams(query, {
+      allowlistedOrderBy: {
+        columns: {
+          createdAt: purchaseCreatedAt,
+          updatedAt: sql`COALESCE(upr.updated_at, uce.updated_at)`,
+          id: sql`COALESCE(upr.id, uce.id)`,
+          targetId: sql`uce.target_id`,
+          chapterId: sql`wc.id`,
+          chapterSortOrder: sql`wc.sort_order`,
+          chapterPublishAt: sql`wc.publish_at`,
+        },
+        fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      },
+    })
     const workTypeFilter = workType
       ? sql` AND wc.work_type = ${workType}`
       : sql.empty()
-    const cursorFilter = cursor
-      ? sql` AND (${purchaseCreatedAt} < ${cursor.createdAt} OR (${purchaseCreatedAt} = ${cursor.createdAt} AND COALESCE(upr.id, uce.id) < ${cursor.id}))`
+    const startDateFilter = pageParams.dateRange?.gte
+      ? sql` AND ${purchaseCreatedAt} >= ${pageParams.dateRange.gte}`
+      : sql.empty()
+    const endDateFilter = pageParams.dateRange?.lt
+      ? sql` AND ${purchaseCreatedAt} < ${pageParams.dateRange.lt}`
       : sql.empty()
 
-    const rowsResult = await this.db.execute(sql`
+    const [rowsResult, totalResult] = await Promise.all([
+      this.db.execute(sql`
         SELECT
           COALESCE(upr.id, uce.id) AS "id",
           uce.target_type AS "targetType",
@@ -485,10 +530,29 @@ export class PurchaseService {
           AND (upr.id IS NULL OR upr.status = ${status})
           AND wc.work_id = ${workId}
           ${workTypeFilter}
-          ${cursorFilter}
-        ORDER BY ${purchaseCreatedAt} DESC, COALESCE(upr.id, uce.id) DESC
-        LIMIT ${page.limit + 1}
-      `)
+          ${startDateFilter}
+          ${endDateFilter}
+        ORDER BY ${pageParams.order.orderByClause}
+        LIMIT ${pageParams.page.limit}
+        OFFSET ${pageParams.page.offset}
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::bigint AS "total"
+        FROM user_content_entitlement uce
+        LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
+        INNER JOIN work_chapter wc ON wc.id = uce.target_id
+        INNER JOIN work w ON w.id = wc.work_id
+        WHERE uce.user_id = ${userId}
+          AND uce.status = 1
+          AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
+          AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
+          AND (upr.id IS NULL OR upr.status = ${status})
+          AND wc.work_id = ${workId}
+          ${workTypeFilter}
+          ${startDateFilter}
+          ${endDateFilter}
+      `),
+    ])
     const rows = this.extractRows<{
       id: number
       targetType: number
@@ -515,13 +579,10 @@ export class PurchaseService {
       chapterIsPublished: boolean
       chapterPublishAt: Date | null
     }>(rowsResult)
-    const pageResult = toCursorPageResult(rows, page.limit, (row) =>
-      encodeCreatedAtIdCursor(row),
-    )
+    const total = this.extractTotal(totalResult)
 
-    return {
-      ...pageResult,
-      list: pageResult.list.map((row) => ({
+    return toPageResult(
+      rows.map((row) => ({
         id: row.id,
         targetType: row.targetType,
         targetId: row.targetId,
@@ -551,6 +612,8 @@ export class PurchaseService {
           publishAt: row.chapterPublishAt ?? null,
         },
       })),
-    }
+      total,
+      pageParams.page,
+    )
   }
 }

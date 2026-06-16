@@ -3,7 +3,6 @@ import {
   PublicForumHashtagDetailDto,
   PublicForumHashtagHotPageItemDto,
   PublicForumHashtagSearchItemDto,
-  QueryForumHashtagHotPageDto,
   QueryForumHashtagCommentPageDto,
   QueryForumHashtagTopicPageDto,
   QueryPublicForumHashtagSearchDto,
@@ -11,12 +10,12 @@ import {
 import { ForumHashtagService } from '@libs/forum/hashtag/forum-hashtag.service'
 import { PublicForumTopicPageItemDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import {
-  ApiCursorPageDoc,
   ApiDoc,
+  ApiPageDoc,
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -37,24 +36,23 @@ export class ForumHashtagController {
 
   @Get('hot/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询热门论坛话题',
     model: PublicForumHashtagHotPageItemDto,
   })
   async getHotPage(
-    @Query() query: QueryForumHashtagHotPageDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumHashtagService.getHotHashtagPage({
-      pageSize: query.pageSize ?? 10,
-      cursor: query.cursor,
+      ...query,
       userId,
     })
   }
 
   @Get('topic/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询话题关联的主题',
     model: PublicForumTopicPageItemDto,
   })
@@ -62,16 +60,16 @@ export class ForumHashtagController {
     @Query() query: QueryForumHashtagTopicPageDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    return this.forumHashtagService.getHashtagTopicPage(query.id, {
-      pageSize: query.pageSize ?? 10,
-      cursor: query.cursor,
+    const { id, ...pageQuery } = query
+    return this.forumHashtagService.getHashtagTopicPage(id, {
+      ...pageQuery,
       userId,
     })
   }
 
   @Get('comment/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询话题关联的评论',
     model: ForumHashtagCommentPageItemDto,
   })
@@ -79,9 +77,9 @@ export class ForumHashtagController {
     @Query() query: QueryForumHashtagCommentPageDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    return this.forumHashtagService.getHashtagCommentPage(query.id, {
-      pageSize: query.pageSize ?? 10,
-      cursor: query.cursor,
+    const { id, ...pageQuery } = query
+    return this.forumHashtagService.getHashtagCommentPage(id, {
+      ...pageQuery,
       userId,
     })
   }

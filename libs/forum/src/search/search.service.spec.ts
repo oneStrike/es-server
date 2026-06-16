@@ -1,6 +1,5 @@
 /// <reference types="jest" />
 
-import { BadRequestException } from '@nestjs/common'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 import { ForumSearchService } from './search.service'
 
@@ -12,6 +11,18 @@ function buildService() {
         offset: 0,
         pageIndex: 1,
         pageSize: 10,
+      })),
+      buildPageParams: jest.fn(() => ({
+        page: {
+          limit: 10,
+          offset: 0,
+          pageIndex: 1,
+          pageSize: 10,
+        },
+        order: {
+          orderBySql: [],
+        },
+        dateRange: undefined,
       })),
       db: {},
       schema: {},
@@ -52,30 +63,7 @@ function buildSearchResult(
   }
 }
 
-function buildFingerprint(
-  service: any,
-  overrides: Partial<{
-    keyword: string
-    type: ForumSearchTypeEnum
-    sectionId: number | null
-    hashtagId: number | null
-    sort: ForumSearchSortTypeEnum
-    userId: number
-  }> = {},
-) {
-  return service.buildSearchQueryFingerprint(
-    {
-      keyword: overrides.keyword ?? ' 测试 ',
-      type: overrides.type ?? ForumSearchTypeEnum.ALL,
-      sectionId: overrides.sectionId ?? 1,
-      hashtagId: overrides.hashtagId ?? 2,
-      sort: overrides.sort ?? ForumSearchSortTypeEnum.RELEVANCE,
-    },
-    overrides.userId,
-  )
-}
-
-describe('ForumSearchService public cursor contract', () => {
+describe('ForumSearchService public page contract', () => {
   it('orders mixed search by createdAt, result type, comment id, and topic id', () => {
     const service = buildService()
     const createdAt = new Date('2026-06-01T00:00:00.000Z')
@@ -103,187 +91,93 @@ describe('ForumSearchService public cursor contract', () => {
       service.compareResults(left, right, ForumSearchSortTypeEnum.RELEVANCE),
     )
 
-    expect(results.map((item) => [item.resultType, item.commentId, item.topicId]))
-      .toEqual([
-        [ForumSearchTypeEnum.COMMENT, 102, 11],
-        [ForumSearchTypeEnum.COMMENT, 101, 10],
-        [ForumSearchTypeEnum.TOPIC, null, 20],
-      ])
+    expect(
+      results.map((item) => [item.resultType, item.commentId, item.topicId]),
+    ).toEqual([
+      [ForumSearchTypeEnum.COMMENT, 102, 11],
+      [ForumSearchTypeEnum.COMMENT, 101, 10],
+      [ForumSearchTypeEnum.TOPIC, null, 20],
+    ])
   })
 
-  it('encodes and validates destructive mixed-search cursor fields', () => {
+  it('delegates public search to the standard page contract', async () => {
     const service = buildService()
-    const queryFingerprint = buildFingerprint(service, {
-      sort: ForumSearchSortTypeEnum.HOT,
-    })
-    const cursor = service.encodeSearchCursor(
+    const pageResult = {
+      list: [buildSearchResult()],
+      total: 1,
+      pageIndex: 2,
+      pageSize: 5,
+    }
+    const searchInternal = jest
+      .spyOn(service, 'searchInternal')
+      .mockResolvedValue(pageResult)
+
+    const result = await service.searchPublic(
+      {
+        keyword: '测试',
+        pageIndex: 2,
+        pageSize: 5,
+      },
+      10,
+    )
+
+    expect(searchInternal).toHaveBeenCalledWith(
+      {
+        keyword: '测试',
+        pageIndex: 2,
+        pageSize: 5,
+      },
+      { publicOnly: true, userId: 10 },
+    )
+    expect(result).toEqual(pageResult)
+    expect(result).not.toHaveProperty('hasMore')
+    expect(result).not.toHaveProperty('nextCursor')
+  })
+
+  it('rejects ambiguous sort and orderBy protocol', async () => {
+    const service = buildService()
+
+    await expect(
+      service.searchPublic(
+        {
+          keyword: '测试',
+          orderBy: '{"createdAt":"desc"}',
+          pageIndex: 1,
+          pageSize: 5,
+          sort: ForumSearchSortTypeEnum.HOT,
+        } as any,
+        10,
+      ),
+    ).rejects.toThrow('sort 和 orderBy')
+  })
+
+  it('orders mixed search by explicit orderBy fields', () => {
+    const service = buildService()
+    const results = [
+      buildSearchResult({
+        resultType: ForumSearchTypeEnum.TOPIC,
+        topicId: 20,
+        likeCount: 1,
+      }),
       buildSearchResult({
         resultType: ForumSearchTypeEnum.COMMENT,
         topicId: 10,
         commentId: 101,
+        likeCount: 5,
       }),
-      ForumSearchSortTypeEnum.HOT,
-      queryFingerprint,
-    )
-    const decoded = JSON.parse(
-      Buffer.from(cursor, 'base64url').toString('utf8'),
-    )
-
-    expect(decoded).toMatchObject({
-      sort: ForumSearchSortTypeEnum.HOT,
-      queryFingerprint: {
-        keyword: '测试',
-        type: ForumSearchTypeEnum.ALL,
-        sectionId: 1,
-        hashtagId: 2,
-        sort: ForumSearchSortTypeEnum.HOT,
-        viewerScope: 'guest',
-      },
-      resultTypeRank: 1,
-      commentIdForSort: 101,
-      topicId: 10,
-      commentId: 101,
-    })
-    expect(service.parseSearchCursor(cursor)).toMatchObject({
-      sort: ForumSearchSortTypeEnum.HOT,
-      queryFingerprint: {
-        keyword: '测试',
-        type: ForumSearchTypeEnum.ALL,
-        sectionId: 1,
-        hashtagId: 2,
-        sort: ForumSearchSortTypeEnum.HOT,
-        viewerScope: 'guest',
-      },
-      resultTypeRank: 1,
-      commentIdForSort: 101,
-      topicId: 10,
-      commentId: 101,
-    })
-  })
-
-  it('rejects old or inconsistent public search cursors', () => {
-    const service = buildService()
-    const oldCursor = Buffer.from(
-      JSON.stringify({
-        sort: ForumSearchSortTypeEnum.RELEVANCE,
-        hotScore: 1,
-        createdAt: '2026-06-01T00:00:00.000Z',
-        topicId: 10,
-        commentId: null,
+      buildSearchResult({
+        resultType: ForumSearchTypeEnum.TOPIC,
+        topicId: 30,
+        likeCount: 3,
       }),
-    ).toString('base64url')
-    const inconsistentCursor = Buffer.from(
-      JSON.stringify({
-        sort: ForumSearchSortTypeEnum.RELEVANCE,
-        queryFingerprint: buildFingerprint(service),
-        hotScore: 1,
-        createdAt: '2026-06-01T00:00:00.000Z',
-        resultTypeRank: 1,
-        commentIdForSort: 102,
-        topicId: 10,
-        commentId: 101,
+    ]
+
+    results.sort((left, right) =>
+      service.compareResultsByOrderBy(left, right, {
+        likeCount: 'desc',
       }),
-    ).toString('base64url')
-
-    expect(() => service.parseSearchCursor(oldCursor)).toThrow(
-      BadRequestException,
-    )
-    expect(() => service.parseSearchCursor(inconsistentCursor)).toThrow(
-      BadRequestException,
-    )
-  })
-
-  it('rejects public search cursor when sort changes between pages', async () => {
-    const service = buildService()
-    const queryFingerprint = buildFingerprint(service, {
-      sort: ForumSearchSortTypeEnum.HOT,
-    })
-    const cursor = service.encodeSearchCursor(
-      buildSearchResult(),
-      ForumSearchSortTypeEnum.HOT,
-      queryFingerprint,
     )
 
-    await expect(
-      service.searchPublic({
-        keyword: '测试',
-        pageSize: 10,
-        sort: ForumSearchSortTypeEnum.RELEVANCE,
-        cursor,
-      }),
-    ).rejects.toThrow('搜索条件不匹配')
-  })
-
-  it.each([
-    ['keyword', { keyword: '别的' }],
-    ['type', { type: ForumSearchTypeEnum.TOPIC }],
-    ['sectionId', { sectionId: 9 }],
-    ['hashtagId', { hashtagId: 8 }],
-    ['sort', { sort: ForumSearchSortTypeEnum.HOT }],
-    ['viewerScope', { userId: 10 }],
-  ])(
-    'rejects public search cursor when normalized %s changes',
-    async (_field, overrides) => {
-      const service = buildService()
-      const { userId, ...queryOverrides } = overrides as typeof overrides & {
-        userId?: number
-      }
-      const cursor = service.encodeSearchCursor(
-        buildSearchResult(),
-        ForumSearchSortTypeEnum.RELEVANCE,
-        buildFingerprint(service),
-      )
-
-      await expect(
-        service.searchPublic({
-          keyword: '测试',
-          type: ForumSearchTypeEnum.ALL,
-          sectionId: 1,
-          hashtagId: 2,
-          sort: ForumSearchSortTypeEnum.RELEVANCE,
-          pageSize: 10,
-          cursor,
-          ...queryOverrides,
-        }, userId),
-      ).rejects.toThrow('搜索条件不匹配')
-    },
-  )
-
-  it('rejects public search cursor when viewer changes from user to guest', async () => {
-    const service = buildService()
-    const cursor = service.encodeSearchCursor(
-      buildSearchResult(),
-      ForumSearchSortTypeEnum.RELEVANCE,
-      buildFingerprint(service, { userId: 10 }),
-    )
-
-    await expect(
-      service.searchPublic({
-        keyword: '测试',
-        type: ForumSearchTypeEnum.ALL,
-        sectionId: 1,
-        hashtagId: 2,
-        sort: ForumSearchSortTypeEnum.RELEVANCE,
-        pageSize: 10,
-        cursor,
-      }),
-    ).rejects.toThrow('搜索条件不匹配')
-  })
-
-  it('normalizes forum search query fingerprint values', () => {
-    const service = buildService()
-
-    expect(
-      service.buildSearchQueryFingerprint({
-        keyword: '  TeSt  ',
-      }),
-    ).toEqual({
-      keyword: 'test',
-      type: ForumSearchTypeEnum.ALL,
-      sectionId: null,
-      hashtagId: null,
-      sort: ForumSearchSortTypeEnum.RELEVANCE,
-      viewerScope: 'guest',
-    })
+    expect(results.map((item) => item.likeCount)).toEqual([5, 3, 1])
   })
 })

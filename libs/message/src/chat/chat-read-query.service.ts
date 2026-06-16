@@ -1,5 +1,6 @@
+import type { SQL } from 'drizzle-orm'
 import type {
-  ChatConversationListCursor,
+  ChatConversationListCountInput,
   ChatConversationListQueryInput,
   ChatMessageAfterSeqQueryInput,
   ChatMessageBeforeCursorQueryInput,
@@ -13,6 +14,7 @@ import {
   desc,
   eq,
   gt,
+  gte,
   isNull,
   lt,
   placeholder,
@@ -113,9 +115,6 @@ export class MessageChatReadQueryService {
 
   // 查询当前用户的会话列表页。
   async getConversationList(params: ChatConversationListQueryInput) {
-    const baseWhere = eq(this.drizzle.schema.chatConversation.hasMessages, true)
-    const cursorWhere = this.buildConversationListCursorWhere(params.cursor)
-
     return this.drizzle.db
       .select({
         id: this.drizzle.schema.chatConversation.id,
@@ -133,18 +132,31 @@ export class MessageChatReadQueryService {
             this.drizzle.schema.chatConversationMember.conversationId,
             this.drizzle.schema.chatConversation.id,
           ),
-          eq(this.drizzle.schema.chatConversationMember.userId, params.userId),
-          isNull(this.drizzle.schema.chatConversationMember.leftAt),
-          isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
         ),
       )
-      .where(cursorWhere ? and(baseWhere, cursorWhere) : baseWhere)
-      .orderBy(
-        desc(this.drizzle.schema.chatConversationMember.isPinned),
-        sql`${this.drizzle.schema.chatConversation.lastMessageAt} desc nulls last`,
-        desc(this.drizzle.schema.chatConversation.id),
-      )
+      .where(this.buildConversationListWhere(params))
+      .orderBy(...params.orderBySql)
       .limit(params.limit)
+      .offset(params.offset)
+  }
+
+  // 统计当前用户可见的会话列表总数。
+  async countConversationList(params: ChatConversationListCountInput) {
+    const [row] = await this.drizzle.db
+      .select({
+        total: sql<number>`count(*)::int`,
+      })
+      .from(this.drizzle.schema.chatConversation)
+      .innerJoin(
+        this.drizzle.schema.chatConversationMember,
+        eq(
+          this.drizzle.schema.chatConversationMember.conversationId,
+          this.drizzle.schema.chatConversation.id,
+        ),
+      )
+      .where(this.buildConversationListWhere(params))
+
+    return Number(row?.total ?? 0)
   }
 
   // 查询会话最新一页消息。
@@ -164,21 +176,27 @@ export class MessageChatReadQueryService {
     return this.conversationMessagesAfterQuery.execute(params)
   }
 
-  private buildConversationListCursorWhere(
-    cursor?: ChatConversationListCursor,
-  ) {
-    if (!cursor) {
-      return undefined
+  private buildConversationListWhere(params: ChatConversationListCountInput) {
+    const conditions: SQL[] = [
+      eq(this.drizzle.schema.chatConversation.hasMessages, true),
+      eq(this.drizzle.schema.chatConversationMember.userId, params.userId),
+      isNull(this.drizzle.schema.chatConversationMember.leftAt),
+      isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
+    ]
+    if (params.startDate) {
+      conditions.push(
+        gte(
+          this.drizzle.schema.chatConversation.lastMessageAt,
+          params.startDate,
+        ),
+      )
+    }
+    if (params.endDate) {
+      conditions.push(
+        lt(this.drizzle.schema.chatConversation.lastMessageAt, params.endDate),
+      )
     }
 
-    const isPinned = this.drizzle.schema.chatConversationMember.isPinned
-    const lastMessageAt = this.drizzle.schema.chatConversation.lastMessageAt
-    const id = this.drizzle.schema.chatConversation.id
-
-    if (cursor.lastMessageAt === null) {
-      return sql`(${isPinned} < ${cursor.isPinned} OR (${isPinned} = ${cursor.isPinned} AND ${lastMessageAt} is null AND ${id} < ${cursor.id}))`
-    }
-
-    return sql`(${isPinned} < ${cursor.isPinned} OR (${isPinned} = ${cursor.isPinned} AND (${lastMessageAt} < ${cursor.lastMessageAt} OR ${lastMessageAt} is null OR (${lastMessageAt} = ${cursor.lastMessageAt} AND ${id} < ${cursor.id}))))`
+    return and(...conditions)
   }
 }

@@ -2,16 +2,10 @@ import type {
   ReadingHistoryIndexedRow,
   ReadingHistoryItem,
 } from './reading-state.type'
-import { DrizzleService } from '@db/core'
-import { ContentTypeEnum } from '@libs/platform/constant';
+import { DrizzleService, toPageResult } from '@db/core'
+import { ContentTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, desc, eq, inArray, lt, or, SQL } from 'drizzle-orm'
-import {
-  assertCursorOnlyQuery,
-  encodeCreatedAtIdCursor,
-  parseCreatedAtIdCursor,
-  toCursorPageResult,
-} from '../favorite/cursor-pagination.helper'
+import { and, eq, gte, inArray, lt, SQL } from 'drizzle-orm'
 import {
   ClearReadingHistoryCommandDto,
   DeleteReadingHistoryCommandDto,
@@ -217,10 +211,12 @@ export class ReadingStateService {
    * 获取用户的阅读历史列表
    */
   async getUserReadingHistory(query: QueryReadingHistoryCommandDto) {
-    assertCursorOnlyQuery(query, '阅读历史列表')
-    const { workType, userId, workId, pageSize } = query
+    const { workType, userId, workId } = query
     const conditions: SQL[] = [eq(this.userWorkReadingState.userId, userId)]
-    const cursor = parseCreatedAtIdCursor(query.cursor, '阅读历史列表')
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.userWorkReadingState,
+      fallbackOrderBy: [{ lastReadAt: 'desc' }, { workId: 'desc' }],
+    })
 
     if (workId !== undefined) {
       conditions.push(eq(this.userWorkReadingState.workId, workId))
@@ -228,35 +224,29 @@ export class ReadingStateService {
     if (workType !== undefined) {
       conditions.push(eq(this.userWorkReadingState.workType, workType))
     }
-    if (cursor) {
+    if (pageParams.dateRange?.gte) {
       conditions.push(
-        or(
-          lt(this.userWorkReadingState.lastReadAt, cursor.createdAt),
-          and(
-            eq(this.userWorkReadingState.lastReadAt, cursor.createdAt),
-            lt(this.userWorkReadingState.workId, cursor.id),
-          ),
-        )!,
+        gte(this.userWorkReadingState.lastReadAt, pageParams.dateRange.gte),
+      )
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(
+        lt(this.userWorkReadingState.lastReadAt, pageParams.dateRange.lt),
       )
     }
 
     const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage({ pageSize })
-    const rawRows = await this.db
-      .select()
-      .from(this.userWorkReadingState)
-      .where(where)
-      .orderBy(
-        desc(this.userWorkReadingState.lastReadAt),
-        desc(this.userWorkReadingState.workId),
-      )
-      .limit(pageQuery.limit + 1)
-    const page = toCursorPageResult(rawRows, pageQuery.limit, (item) =>
-      encodeCreatedAtIdCursor({
-        createdAt: item.lastReadAt,
-        id: item.workId,
-      }),
-    )
+    const [rawRows, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userWorkReadingState)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userWorkReadingState, where),
+    ])
+    const page = toPageResult(rawRows, total, pageParams.page)
 
     const orderedList: Array<ReadingHistoryItem | undefined> = Array.from({
       length: page.list.length,
@@ -292,7 +282,10 @@ export class ReadingStateService {
       const workMap = new Map(works.map((w) => [w.id, w]))
       const chapterRefsMap = new Map<
         number,
-        { workId: number, chapterId: number }
+        {
+          workId: number
+          chapterId: number
+        }
       >()
       for (const item of items) {
         if (
@@ -355,15 +348,18 @@ export class ReadingStateService {
    * 删除单条阅读历史记录
    */
   async deleteUserReadingHistory(input: DeleteReadingHistoryCommandDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.userWorkReadingState)
-        .where(
-          and(
-            eq(this.userWorkReadingState.userId, input.userId),
-            inArray(this.userWorkReadingState.workId, input.workIds),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .delete(this.userWorkReadingState)
+          .where(
+            and(
+              eq(this.userWorkReadingState.userId, input.userId),
+              inArray(this.userWorkReadingState.workId, input.workIds),
+            ),
           ),
-        ), { notFound: '阅读历史不存在' },)
+      { notFound: '阅读历史不存在' },
+    )
   }
 
   /**

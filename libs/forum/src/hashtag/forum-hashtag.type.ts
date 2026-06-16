@@ -73,20 +73,27 @@ export interface UpdateForumHashtagAuditStatusOptions {
 export interface ForumHashtagAdminPageQuery {
   pageIndex: number
   pageSize: number
+  orderBy?: string
   keyword?: string
   auditStatus?: AuditStatusEnum
   isHidden?: boolean
 }
 
 export interface ForumHashtagHotPageQuery {
-  pageSize: number
-  cursor?: string
+  pageIndex?: number
+  pageSize?: number
+  orderBy?: string
+  startDate?: string
+  endDate?: string
   userId?: number
 }
 
 export interface ForumHashtagLinkedContentPageQuery {
-  pageSize: number
-  cursor?: string
+  pageIndex?: number
+  pageSize?: number
+  orderBy?: string
+  startDate?: string
+  endDate?: string
   userId?: number
 }
 

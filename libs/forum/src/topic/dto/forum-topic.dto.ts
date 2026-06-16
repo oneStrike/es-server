@@ -20,8 +20,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 
 import { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 
@@ -117,7 +116,8 @@ export class ForumTopicContentPreviewSegmentDto {
   kind?: EmojiAssetKindEnum
 
   @StringProperty({
-    description: 'Unicode 表情序列；片段类型为表情且资源类型为 Unicode 表情时返回',
+    description:
+      'Unicode 表情序列；片段类型为表情且资源类型为 Unicode 表情时返回',
     example: '😀',
     required: false,
     validation: false,
@@ -563,44 +563,20 @@ export class QueryForumTopicDto extends IntersectionType(
 }
 
 export class QueryPublicForumTopicDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   PartialType(PickType(BaseForumTopicDto, ['sectionId'] as const)),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按公开 feed 固定排序游标翻页，避免深页 offset',
-    example:
-      'eyJpc1Bpbm5lZCI6ZmFsc2UsImxhc3RDb21tZW50QXQiOm51bGwsImNyZWF0ZWRBdCI6IjIwMjYtMDYtMDFUMDA6MDA6MDAuMDAwWiIsImlkIjoxMDB9',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class QueryPublicUserForumTopicDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   UserIdDto,
   PartialType(PickType(BaseForumTopicDto, ['sectionId'] as const)),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按公开 feed 固定排序游标翻页，避免深页 offset',
-    example:
-      'eyJpc1Bpbm5lZCI6ZmFsc2UsImxhc3RDb21tZW50QXQiOm51bGwsImNyZWF0ZWRBdCI6IjIwMjYtMDYtMDFUMDA6MDA6MDAuMDAwWiIsImlkIjoxMDB9',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class QueryMyForumTopicDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   PartialType(PickType(BaseForumTopicDto, ['sectionId'] as const)),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按公开 feed 固定排序游标翻页，避免深页 offset',
-    example:
-      'eyJpc1Bpbm5lZCI6ZmFsc2UsImxhc3RDb21tZW50QXQiOm51bGwsImNyZWF0ZWRBdCI6IjIwMjYtMDYtMDFUMDA6MDA6MDAuMDAwWiIsImlkIjoxMDB9',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class ForumTopicSectionBriefDto extends PickType(BaseForumSectionDto, [
   'id',
@@ -757,19 +733,11 @@ export class MyForumTopicItemDto extends IntersectionType(
 }
 
 export class QueryForumTopicCommentPageDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   IdDto,
   PartialType(CommentSortDto),
   PartialType(CommentOnlyAuthorDto),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按当前评论排序继续翻页',
-    example:
-      'eyJraW5kIjoiZmxvb3JBc2MiLCJmbG9vciI6MSwiaWQiOjEwMH0',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class UpdateForumTopicAuditStatusDto extends IntersectionType(
   IdDto,

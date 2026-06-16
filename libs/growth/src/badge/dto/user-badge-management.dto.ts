@@ -6,9 +6,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
-import { CursorPageDto } from '../../growth/dto/cursor-page.dto'
+import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 
 import {
@@ -31,16 +29,13 @@ export class QueryUserBadgeFiltersDto extends PartialType(
   ] as const),
 ) {}
 
-class CreateUserBadgeRequiredFieldsDto extends OmitType(
-  BaseUserBadgeDto,
-  [
-    ...OMIT_BASE_FIELDS,
-    'description',
-    'icon',
-    'business',
-    'eventKey',
-  ] as const,
-) {}
+class CreateUserBadgeRequiredFieldsDto extends OmitType(BaseUserBadgeDto, [
+  ...OMIT_BASE_FIELDS,
+  'description',
+  'icon',
+  'business',
+  'eventKey',
+] as const) {}
 
 class CreateUserBadgeOptionalFieldsDto extends PartialType(
   PickType(BaseUserBadgeDto, [
@@ -67,7 +62,7 @@ export class UpdateUserBadgeStatusDto extends IntersectionType(
 ) {}
 
 export class QueryUserBadgeDto extends IntersectionType(
-  PickType(PageDto, ['pageSize', 'pageIndex', 'orderBy'] as const),
+  PageDto,
   QueryUserBadgeFiltersDto,
 ) {}
 
@@ -76,7 +71,7 @@ class QueryUserBadgePublicFiltersDto extends PartialType(
 ) {}
 
 export class QueryUserBadgePublicDto extends IntersectionType(
-  CursorPageDto,
+  PageDto,
   QueryUserBadgePublicFiltersDto,
 ) {}
 
@@ -86,7 +81,7 @@ export class AssignUserBadgeDto extends PickType(BaseUserBadgeAssignmentDto, [
 ] as const) {}
 
 export class QueryBadgeUserPageDto extends IntersectionType(
-  PickType(PageDto, ['pageSize', 'pageIndex', 'orderBy'] as const),
+  PageDto,
   PickType(BaseUserBadgeAssignmentDto, ['badgeId'] as const),
 ) {}
 
@@ -200,7 +195,11 @@ export class UserBadgeStatisticsDto {
   @NumberProperty({ description: '停用数', example: 2, validation: false })
   disabledCount!: number
 
-  @NumberProperty({ description: '总分配次数', example: 200, validation: false })
+  @NumberProperty({
+    description: '总分配次数',
+    example: 200,
+    validation: false,
+  })
   totalAssignments!: number
 
   @ArrayProperty({

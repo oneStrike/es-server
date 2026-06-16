@@ -7,14 +7,13 @@ import { BaseUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
 import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets/dto/user-assets.dto'
 import { BaseNotificationUnreadDto } from '@libs/message/notification/dto/notification-unread.dto'
 import {
-  ArrayProperty,
   BooleanProperty,
   DateProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { CursorPageDto, PageDto } from '@libs/platform/dto/page.dto'
+import { PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,
@@ -36,10 +35,10 @@ export {
 } from '@libs/growth/badge/dto/user-badge-management.dto'
 
 /**
- * app 端提及候选分页查询 DTO。
+ * app 端提及候选检索字段。
  * 仅提供轻量昵称检索，不承担完整用户搜索能力。
  */
-export class QueryUserMentionPageDto extends CursorPageDto {
+class UserMentionQueryFilterDto {
   @StringProperty({
     description: '昵称关键字',
     example: '测试',
@@ -47,8 +46,15 @@ export class QueryUserMentionPageDto extends CursorPageDto {
     maxLength: 100,
   })
   q?: string
-
 }
+
+/**
+ * app 端提及候选分页查询 DTO。
+ */
+export class QueryUserMentionPageDto extends IntersectionType(
+  PageDto,
+  UserMentionQueryFilterDto,
+) {}
 
 /**
  * 提及候选用户 DTO。
@@ -58,41 +64,6 @@ export class UserMentionCandidateDto extends PickType(BaseAppUserDto, [
   'nickname',
   'avatarUrl',
 ] as const) {}
-
-/**
- * 提及候选用户游标分页响应 DTO。
- */
-export class UserMentionCandidateCursorResponseDto {
-  @ArrayProperty({
-    description: '提及候选用户列表',
-    itemClass: UserMentionCandidateDto,
-    validation: false,
-  })
-  list!: UserMentionCandidateDto[]
-
-  @NumberProperty({
-    description: '本次请求单页大小',
-    example: 10,
-    validation: false,
-  })
-  pageSize!: number
-
-  @BooleanProperty({
-    description: '是否还有更多候选用户',
-    example: true,
-    validation: false,
-  })
-  hasMore!: boolean
-
-  @StringProperty({
-    description: '下一页游标',
-    example:
-      'eyJuaWNrbmFtZSI6InRlc3QiLCJhY2NvdW50IjoidTEwMDAxIiwiaWQiOjEwMDAxfQ',
-    nullable: true,
-    validation: false,
-  })
-  nextCursor!: string | null
-}
 
 /**
  * 更新用户资料 DTO。
@@ -149,7 +120,7 @@ export class ChangeMyPhoneDto {
  * 查询我的积分记录 DTO。
  */
 export class QueryMyPointRecordDto extends IntersectionType(
-  CursorPageDto,
+  PageDto,
   PartialType(
     PickType(BaseUserPointRecordDto, [
       'ruleId',
@@ -181,7 +152,7 @@ export class UserPointRecordDto extends IntersectionType(
  * 查询我的经验记录 DTO。
  */
 export class QueryMyExperienceRecordDto extends IntersectionType(
-  CursorPageDto,
+  PageDto,
   QueryUserExperienceRecordFilterDto,
 ) {}
 

@@ -25,13 +25,9 @@ describe('UserExperienceService admin audit contract', () => {
       endDate: '2026-06-07',
     })
 
-    expect(drizzle.buildPage).toHaveBeenCalledWith(
+    expect(drizzle.buildPageParams).toHaveBeenCalledWith(
       expect.objectContaining({ pageSize: 500 }),
-      { maxPageSize: 100 },
-    )
-    expect(drizzle.buildOrderBy).toHaveBeenCalledWith(
-      { createdAt: 'desc', id: 'desc' },
-      { table: growthLedgerRecord },
+      expect.objectContaining({ maxPageSize: 100 }),
     )
     expect(query.where).toHaveBeenCalledTimes(1)
     expect(result.total).toBe(1)
@@ -53,6 +49,44 @@ describe('UserExperienceService admin audit contract', () => {
         },
       }),
     )
+  })
+
+  it('returns app experience records as ApiPage-style page without cursor output', async () => {
+    const { service, drizzle, query } = createExperienceService([
+      buildLedgerRecord(),
+    ])
+    drizzle.buildPageParams.mockReturnValue({
+      page: {
+        limit: 10,
+        offset: 10,
+        pageIndex: 2,
+        pageSize: 10,
+      },
+      order: {
+        orderBySql: ['created_desc', 'id_desc'],
+      },
+      dateRange: undefined,
+    })
+
+    const result = await service.getAppExperienceRecordPage({
+      pageIndex: 2,
+      pageSize: 10,
+      userId: 7,
+    })
+
+    expect(drizzle.buildPageParams).toHaveBeenCalledWith(
+      expect.objectContaining({ pageIndex: 2, pageSize: 10, userId: 7 }),
+      expect.objectContaining({ maxPageSize: 100 }),
+    )
+    expect(query.limit).toHaveBeenCalledWith(10)
+    expect(query.offset).toHaveBeenCalledWith(10)
+    expect(result).toMatchObject({
+      pageIndex: 2,
+      pageSize: 10,
+      total: 1,
+    })
+    expect(result).not.toHaveProperty('hasMore')
+    expect(result).not.toHaveProperty('nextCursor')
   })
 
   it('maps nullable record fields to null, not undefined', () => {
@@ -114,7 +148,9 @@ describe('UserExperienceService admin audit contract', () => {
   })
 })
 
-function createExperienceService(records: ReturnType<typeof buildLedgerRecord>[]) {
+function createExperienceService(
+  records: ReturnType<typeof buildLedgerRecord>[],
+) {
   const query = {
     from: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
@@ -158,6 +194,18 @@ function createExperienceService(records: ReturnType<typeof buildLedgerRecord>[]
       pageSize: 100,
     })),
     buildOrderBy: jest.fn(() => ({ orderBySql: ['created_desc', 'id_desc'] })),
+    buildPageParams: jest.fn(() => ({
+      page: {
+        limit: 100,
+        offset: 0,
+        pageIndex: 1,
+        pageSize: 100,
+      },
+      order: {
+        orderBySql: ['created_desc', 'id_desc'],
+      },
+      dateRange: undefined,
+    })),
   }
   const growthLedgerService = {
     sanitizePublicContext: jest.fn(() => null),

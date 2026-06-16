@@ -9,8 +9,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 
 import {
   IntersectionType,
@@ -259,37 +258,20 @@ export class QueryWorkChapterDto extends IntersectionType(
 ) {}
 
 export class QueryAppWorkChapterPageDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   PickType(BaseWorkChapterDto, ['workId'] as const),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按 sortOrder/id 游标翻页，避免深页 offset',
-    example: 'eyJzb3J0T3JkZXIiOjEsImlkIjoxMDB9',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class UpdateWorkChapterDto extends IntersectionType(
-  PartialType(
-    OmitType(CreateWorkChapterDto, ['workId', 'workType'] as const),
-  ),
+  PartialType(OmitType(CreateWorkChapterDto, ['workId', 'workType'] as const)),
   IdDto,
 ) {}
 
 export class QueryWorkChapterCommentPageDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   IdDto,
   PartialType(CommentSortDto),
-) {
-  @StringProperty({
-    description: '下一页游标；提供后按评论列表固定排序游标翻页',
-    example:
-      'eyJraW5kIjoiZmxvb3JBc2MiLCJmbG9vciI6MSwiaWQiOjEwMH0',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class AppWorkChapterPageItemDto extends PickType(BaseWorkChapterDto, [
   'id',

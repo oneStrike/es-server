@@ -1,6 +1,10 @@
 import type { Db } from '@db/core'
-import type { CheckInRuleIdQuery, GrantEventMakeupAllowanceInput } from './check-in.type'
+import type { PageDto } from '@libs/platform/dto'
 
+import type {
+  CheckInRuleIdQuery,
+  GrantEventMakeupAllowanceInput,
+} from './check-in.type'
 import type {
   QueryAdminCheckInSignedUserPageDto,
   QueryAdminUserCheckInCalendarDetailDto,
@@ -18,11 +22,7 @@ import type {
   RepairCheckInRewardDto,
   RepairCheckInStreakDto,
 } from './dto/check-in-execution.dto'
-import type {
-  QueryCheckInReconciliationDto,
-  QueryAppCheckInLeaderboardPageDto,
-  QueryAppCheckInRecordPageDto,
-} from './dto/check-in-runtime.dto'
+import type { QueryCheckInReconciliationDto } from './dto/check-in-runtime.dto'
 import { Injectable } from '@nestjs/common'
 import { CheckInCalendarReadModelService } from './check-in-calendar-read-model.service'
 import { CheckInDefinitionService } from './check-in-definition.service'
@@ -110,7 +110,10 @@ export class CheckInService {
   }
 
   // 查询 app 侧目标日期所属周期的签到日历。
-  async getCalendarDetail(query: QueryCheckInCalendarDetailDto, userId: number) {
+  async getCalendarDetail(
+    query: QueryCheckInCalendarDetailDto,
+    userId: number,
+  ) {
     return this.checkInCalendarReadModelService.getCurrentUserCalendarByTargetDate(
       userId,
       query.targetDate,
@@ -118,12 +121,12 @@ export class CheckInService {
   }
 
   // 分页查询当前用户的签到记录。
-  async getMyRecords(query: QueryAppCheckInRecordPageDto, userId: number) {
+  async getMyRecords(query: PageDto, userId: number) {
     return this.checkInRuntimeService.getMyRecords(query, userId)
   }
 
   // 分页查询当前连续签到排行榜。
-  async getLeaderboardPage(query: QueryAppCheckInLeaderboardPageDto) {
+  async getLeaderboardPage(query: PageDto) {
     return this.checkInRuntimeService.getLeaderboardPage(query)
   }
 
@@ -157,7 +160,9 @@ export class CheckInService {
   }
 
   // 查询 admin 侧指定用户目标日期所属周期的签到日历。
-  async getAdminUserCalendarDetail(query: QueryAdminUserCheckInCalendarDetailDto) {
+  async getAdminUserCalendarDetail(
+    query: QueryAdminUserCheckInCalendarDetailDto,
+  ) {
     return this.checkInCalendarReadModelService.getSpecifiedUserCalendarByTargetDate(
       query.userId,
       query.targetDate,

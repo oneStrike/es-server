@@ -13,13 +13,13 @@ import { NovelContentService } from '@libs/content/work/content/novel-content.se
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
 import {
-  ApiCursorPageDoc,
   ApiDoc,
+  ApiPageDoc,
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import {
   extractRequestContext,
   serializeDeviceInfo,
@@ -39,7 +39,7 @@ export class WorkChapterController {
 
   @Get('page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询作品章节',
     model: AppWorkChapterPageItemDto,
   })
@@ -72,7 +72,7 @@ export class WorkChapterController {
 
   @Get('comment/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询章节评论',
     model: TargetCommentItemDto,
   })
@@ -80,14 +80,11 @@ export class WorkChapterController {
     @Query() query: QueryWorkChapterCommentPageDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    const target = await this.workChapterService.getChapterCommentTarget(
-      query.id,
-    )
+    const { id, ...commentQuery } = query
+    const target = await this.workChapterService.getChapterCommentTarget(id)
     return this.commentService.getTargetComments({
+      ...commentQuery,
       ...target,
-      pageSize: query.pageSize,
-      cursor: query.cursor,
-      sort: query.sort,
       previewReplyLimit: 3,
       userId,
     })

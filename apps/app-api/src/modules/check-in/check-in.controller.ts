@@ -9,15 +9,10 @@ import {
   AppCheckInRecordItemDto,
   AppCheckInSummaryResponseDto,
   CheckInLeaderboardItemDto,
-  QueryAppCheckInLeaderboardPageDto,
-  QueryAppCheckInRecordPageDto,
   CheckInStreakDetailResponseDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
-import {
-  ApiCursorPageDoc,
-  ApiDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -71,25 +66,25 @@ export class CheckInController {
   }
 
   @Get('my/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页获取我的签到记录',
     model: AppCheckInRecordItemDto,
   })
   // 分页返回当前用户的签到记录。
   async getMyRecords(
-    @Query() query: QueryAppCheckInRecordPageDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.checkInService.getMyRecords(query, userId)
   }
 
   @Get('leaderboard/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页获取签到排行榜',
     model: CheckInLeaderboardItemDto,
   })
   // 分页返回当前连续签到排行榜。
-  async getLeaderboardPage(@Query() query: QueryAppCheckInLeaderboardPageDto) {
+  async getLeaderboardPage(@Query() query: PageDto) {
     return this.checkInService.getLeaderboardPage(query)
   }
 

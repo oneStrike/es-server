@@ -3,7 +3,6 @@
 import * as schema from '@db/schema'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException } from '@nestjs/common'
 import { WorkService } from './work.service'
 
 function createInsertBuilder(returningId = 1) {
@@ -368,12 +367,15 @@ describe('WorkService relation integrity', () => {
     db.query.work.findFirst.mockResolvedValueOnce(null)
 
     await expect(
-      service.updateWork({
-        id: 20,
-        name: '新作品',
-        description: '新简介',
-        isPublished: false,
-      } as any, 1),
+      service.updateWork(
+        {
+          id: 20,
+          name: '新作品',
+          description: '新简介',
+          isPublished: false,
+        } as any,
+        1,
+      ),
     ).resolves.toBe(true)
 
     expect(forumSectionService.syncManagedSectionForWork).toHaveBeenCalledWith(
@@ -597,132 +599,5 @@ describe('WorkService relation integrity', () => {
     await expectResourceNotFound(service.deleteWork(20, 1))
 
     expect(db.$count).not.toHaveBeenCalled()
-  })
-
-  it('encodes recommended public feed cursors with recommendWeight and feed kind', () => {
-    const { service } = createSubject()
-    const context = (service as any).buildAppWorkCursorContext(
-      {
-        isRecommended: true,
-      },
-      'recommended',
-    )
-    const cursor = (service as any).encodeAppWorkCursor(
-      {
-        id: 20,
-        popularity: 7,
-        recommendWeight: 9.5,
-        publishAt: new Date('2026-06-01T00:00:00.000Z'),
-      },
-      'recommended',
-      context,
-    )
-    const decoded = JSON.parse(
-      Buffer.from(cursor, 'base64url').toString('utf8'),
-    )
-
-    expect(decoded).toEqual({
-      kind: 'recommended',
-      context,
-      publishAt: '2026-06-01T00:00:00.000Z',
-      id: 20,
-      recommendWeight: 9.5,
-    })
-    expect((service as any).parseAppWorkCursor(cursor, 'recommended')).toEqual({
-      kind: 'recommended',
-      context,
-      publishAt: '2026-06-01T00:00:00.000Z',
-      id: 20,
-      recommendWeight: 9.5,
-    })
-  })
-
-  it('rejects app work cursors from another public feed kind', () => {
-    const { service } = createSubject()
-    const context = (service as any).buildAppWorkCursorContext({}, 'hot')
-    const cursor = (service as any).encodeAppWorkCursor(
-      {
-        id: 20,
-        popularity: 7,
-        recommendWeight: 9.5,
-        publishAt: null,
-      },
-      'hot',
-      context,
-    )
-
-    expect(() =>
-      (service as any).parseAppWorkCursor(cursor, 'recommended'),
-    ).toThrow(BadRequestException)
-  })
-
-  it('rejects old app work cursors without a feed kind', () => {
-    const { service } = createSubject()
-    const oldCursor = Buffer.from(
-      JSON.stringify({
-        publishAt: '2026-06-01T00:00:00.000Z',
-        id: 20,
-      }),
-    ).toString('base64url')
-
-    expect(() =>
-      (service as any).parseAppWorkCursor(oldCursor, 'default'),
-    ).toThrow(BadRequestException)
-  })
-
-  it('rejects app work cursors when public filter context changes', () => {
-    const { service } = createSubject()
-    const context = (service as any).buildAppWorkCursorContext(
-      {
-        name: '  Hero ',
-        categoryIds: [3, 1, 3],
-        isHot: true,
-      },
-      'hot',
-    )
-    const cursor = (service as any).encodeAppWorkCursor(
-      {
-        id: 20,
-        popularity: 7,
-        recommendWeight: 9.5,
-        publishAt: null,
-      },
-      'hot',
-      context,
-    )
-
-    expect(
-      (service as any).parseAppWorkCursor(
-        cursor,
-        'hot',
-        (service as any).buildAppWorkCursorContext(
-          {
-            name: 'hero',
-            categoryIds: [1, 3],
-            isHot: true,
-          },
-          'hot',
-        ),
-      ),
-    ).toMatchObject({
-      kind: 'hot',
-      popularity: 7,
-      publishAt: null,
-      id: 20,
-    })
-    expect(() =>
-      (service as any).parseAppWorkCursor(
-        cursor,
-        'hot',
-        (service as any).buildAppWorkCursorContext(
-          {
-            name: 'hero',
-            categoryIds: [1, 2],
-            isHot: true,
-          },
-          'hot',
-        ),
-      ),
-    ).toThrow('查询条件不匹配')
   })
 })

@@ -2,6 +2,7 @@ import type { UserCommentSelect } from '@db/schema'
 import type { MaterializedForumHashtagFact } from '@libs/forum/hashtag/forum-hashtag.type'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
+import type { QueryTargetCommentsDto } from './dto/comment.dto'
 import type { CommentTargetMeta } from './interfaces/comment-target-resolver.interface'
 
 /**
@@ -111,4 +112,13 @@ export type ReplyTargetSnapshot = Pick<
 export interface AuthorCommentDelta {
   commentCount: number
   receivedLikeCount: number
+}
+
+/**
+ * 目标评论分页内部查询输入。
+ * 公开查询 DTO 只承载 HTTP contract；预览数量和当前用户由 controller/service 链路内部装配。
+ */
+export type TargetCommentsQueryInput = QueryTargetCommentsDto & {
+  previewReplyLimit?: number
+  userId?: number
 }

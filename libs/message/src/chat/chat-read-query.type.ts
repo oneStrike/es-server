@@ -1,3 +1,5 @@
+import type { SQL } from '@db/core'
+
 /** 聊天会话列表分页查询参数。 */
 export interface ChatConversationListQueryInput extends Record<
   string,
@@ -5,15 +7,17 @@ export interface ChatConversationListQueryInput extends Record<
 > {
   userId: number
   limit: number
-  cursor?: ChatConversationListCursor
+  offset: number
+  orderBySql: SQL[]
+  startDate?: Date
+  endDate?: Date
 }
 
-/** 聊天会话列表 keyset 游标。 */
-export interface ChatConversationListCursor {
-  isPinned: boolean
-  lastMessageAt: Date | null
-  id: number
-}
+/** 聊天会话列表计数查询参数。 */
+export interface ChatConversationListCountInput extends Pick<
+  ChatConversationListQueryInput,
+  'userId' | 'startDate' | 'endDate'
+> {}
 
 /** 聊天消息第一页或无游标历史查询参数。 */
 export interface ChatMessagePageQueryInput extends Record<string, unknown> {

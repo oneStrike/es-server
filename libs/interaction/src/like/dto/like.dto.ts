@@ -1,5 +1,5 @@
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto';
-import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant';
+import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
+import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -9,16 +9,12 @@ import {
   NestedProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/platform/decorators';
+} from '@libs/platform/decorators'
 
-import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
-import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
+import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 
-import {
-  IntersectionType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { LikeTargetTypeEnum } from '../like.constant'
 
 /**
@@ -42,7 +38,8 @@ export class BaseLikeDto extends IntersectionType(IdDto, UserIdDto) {
   targetType!: LikeTargetTypeEnum
 
   @EnumProperty({
-    description: '业务场景类型（1=漫画作品；2=小说作品；3=论坛主题；10=漫画章节；11=小说章节；12=用户主页）',
+    description:
+      '业务场景类型（1=漫画作品；2=小说作品；3=论坛主题；10=漫画章节；11=小说章节；12=用户主页）',
     enum: SceneTypeEnum,
     example: SceneTypeEnum.COMIC_WORK,
     required: true,
@@ -86,16 +83,9 @@ export class LikeRecordDto extends IntersectionType(
 ) {}
 
 export class LikePageQueryDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   PickType(BaseLikeDto, ['targetType'] as const),
-) {
-  @StringProperty({
-    description: '下一页游标；按创建时间倒序和 ID 倒序翻页',
-    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 /**
  * 点赞状态 DTO。
@@ -199,7 +189,8 @@ export class LikeTargetDetailDto extends PickType(BaseWorkDto, [
  */
 export class LikePageItemDto extends BaseLikeDto {
   @NestedProperty({
-    description: '目标简要信息（作品返回 name/cover，论坛主题返回 title/images/videos）',
+    description:
+      '目标简要信息（作品返回 name/cover，论坛主题返回 title/images/videos）',
     type: LikeTargetDetailDto,
     required: true,
     nullable: true,

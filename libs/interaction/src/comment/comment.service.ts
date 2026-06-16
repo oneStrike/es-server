@@ -9,11 +9,11 @@ import type {
   CommentWriteContext,
   MaterializedCommentBodyWriteResult,
   ReplyTargetSnapshot,
+  TargetCommentsQueryInput,
   TransactionRetryOptions,
   VisibleCommentEffectPayload,
 } from './comment.type'
 
-import { Buffer } from 'node:buffer'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { ForumHashtagBodyService } from '@libs/forum/hashtag/forum-hashtag-body.service'
 import { ForumHashtagReferenceService } from '@libs/forum/hashtag/forum-hashtag-reference.service'
@@ -53,7 +53,6 @@ import {
   asc,
   desc,
   eq,
-  gt,
   gte,
   inArray,
   isNull,
@@ -77,7 +76,6 @@ import {
   QueryAdminCommentPageDto,
   QueryCommentRepliesDto,
   QueryMyCommentPageDto,
-  QueryTargetCommentsDto,
   ReplyCommentBodyDto,
   UpdateCommentAuditStatusDto,
   UpdateCommentHiddenDto,
@@ -86,26 +84,6 @@ import {
   CommentTargetMeta,
   ICommentTargetResolver,
 } from './interfaces/comment-target-resolver.interface'
-
-type CommentCreatedCursorKind = 'createdAsc' | 'createdDesc'
-
-type CommentCursorPayload =
-  | {
-      kind: CommentCreatedCursorKind
-      createdAt: Date
-      id: number
-    }
-  | {
-      kind: 'floorAsc'
-      floor: number
-      id: number
-    }
-  | {
-      kind: 'hot'
-      likeCount: number
-      createdAt: Date
-      id: number
-    }
 
 /**
  * 评论服务
@@ -551,210 +529,6 @@ export class CommentService {
     const nextItem = { ...item } as T & { geoSource?: string | null }
     delete nextItem.geoSource
     return nextItem
-  }
-
-  /**
-   * 构建评论列表排序规则。
-   * latest 按最新时间倒序；hot 对回复和我的评论优先按点赞数排序。
-   */
-  private buildCommentOrderBy(sort?: CommentSortTypeEnum) {
-    if (sort === CommentSortTypeEnum.HOT) {
-      return [
-        { likeCount: 'desc' },
-        { createdAt: 'desc' },
-        { id: 'desc' },
-      ] as Array<Record<string, 'asc' | 'desc'>>
-    }
-
-    return [{ createdAt: 'desc' }, { id: 'desc' }] as Array<
-      Record<string, 'asc' | 'desc'>
-    >
-  }
-
-  private assertCommentCursorOnlyQuery(
-    query: unknown,
-    resourceName: string,
-  ) {
-    const legacyQuery = query as Record<string, unknown>
-    const unsupportedFields = [
-      'pageIndex',
-      'orderBy',
-      'startDate',
-      'endDate',
-    ].filter(
-      (field) =>
-        legacyQuery[field] !== undefined && legacyQuery[field] !== null,
-    )
-
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `${resourceName}仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private encodeCommentCursor(payload: CommentCursorPayload) {
-    const serialized =
-      payload.kind === 'floorAsc'
-        ? payload
-        : {
-            ...payload,
-            createdAt: payload.createdAt.toISOString(),
-          }
-
-    return Buffer.from(JSON.stringify(serialized)).toString('base64url')
-  }
-
-  private parseCommentCursor(
-    cursor: string | null | undefined,
-    expectedKind: CommentCursorPayload['kind'],
-    resourceName: string,
-  ): CommentCursorPayload | undefined {
-    if (!cursor?.trim()) {
-      return undefined
-    }
-
-    try {
-      const parsed = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as Record<string, unknown>
-
-      if (parsed.kind !== expectedKind) {
-        throw new TypeError('unexpected cursor kind')
-      }
-
-      const id = parsed.id
-      if (
-        typeof id !== 'number' ||
-        !Number.isSafeInteger(id) ||
-        id <= 0
-      ) {
-        throw new TypeError('invalid cursor id')
-      }
-
-      if (expectedKind === 'floorAsc') {
-        const floor = parsed.floor
-        if (
-          typeof floor !== 'number' ||
-          !Number.isSafeInteger(floor) ||
-          floor <= 0
-        ) {
-          throw new TypeError('invalid cursor floor')
-        }
-
-        return {
-          kind: 'floorAsc',
-          floor,
-          id,
-        }
-      }
-
-      const createdAt =
-        typeof parsed.createdAt === 'string'
-          ? new Date(parsed.createdAt)
-          : undefined
-      if (!createdAt || Number.isNaN(createdAt.getTime())) {
-        throw new TypeError('invalid cursor createdAt')
-      }
-
-      if (expectedKind === 'hot') {
-        const likeCount = parsed.likeCount
-        if (
-          typeof likeCount !== 'number' ||
-          !Number.isSafeInteger(likeCount) ||
-          likeCount < 0
-        ) {
-          throw new TypeError('invalid cursor likeCount')
-        }
-
-        return {
-          kind: 'hot',
-          likeCount,
-          createdAt,
-          id,
-        }
-      }
-
-      return {
-        kind: expectedKind,
-        createdAt,
-        id,
-      }
-    } catch {
-      throw new BadRequestException(`${resourceName} cursor 非法`)
-    }
-  }
-
-  private toCommentCursorPage<T>(
-    rows: T[],
-    pageSize: number,
-    encodeRow: (row: T) => string,
-  ) {
-    const hasMore = rows.length > pageSize
-    const list = hasMore ? rows.slice(0, pageSize) : rows
-
-    return {
-      list,
-      pageSize,
-      hasMore,
-      nextCursor:
-        hasMore && list.length > 0 ? encodeRow(list[list.length - 1]) : null,
-    }
-  }
-
-  private buildCreatedDescCursorWhere(cursor: {
-    createdAt: Date
-    id: number
-  }) {
-    return or(
-      lt(this.userComment.createdAt, cursor.createdAt),
-      and(
-        eq(this.userComment.createdAt, cursor.createdAt),
-        lt(this.userComment.id, cursor.id),
-      ),
-    ) as SQL
-  }
-
-  private buildCreatedAscCursorWhere(cursor: {
-    createdAt: Date
-    id: number
-  }) {
-    return or(
-      gt(this.userComment.createdAt, cursor.createdAt),
-      and(
-        eq(this.userComment.createdAt, cursor.createdAt),
-        gt(this.userComment.id, cursor.id),
-      ),
-    ) as SQL
-  }
-
-  private buildFloorAscCursorWhere(cursor: { floor: number; id: number }) {
-    return or(
-      gt(this.userComment.floor, cursor.floor),
-      and(
-        eq(this.userComment.floor, cursor.floor),
-        gt(this.userComment.id, cursor.id),
-      ),
-    ) as SQL
-  }
-
-  private buildHotCursorWhere(cursor: {
-    likeCount: number
-    createdAt: Date
-    id: number
-  }) {
-    return or(
-      lt(this.userComment.likeCount, cursor.likeCount),
-      and(
-        eq(this.userComment.likeCount, cursor.likeCount),
-        lt(this.userComment.createdAt, cursor.createdAt),
-      ),
-      and(
-        eq(this.userComment.likeCount, cursor.likeCount),
-        eq(this.userComment.createdAt, cursor.createdAt),
-        lt(this.userComment.id, cursor.id),
-      ),
-    ) as SQL
   }
 
   /**
@@ -1416,11 +1190,8 @@ export class CommentService {
                 targetType,
               )
               const decision = this.resolveAuditDecision(compiledBody.plainText)
-              const {
-                recordHits,
-                statisticsHits,
-                ...persistedDecision
-              } = decision
+              const { recordHits, statisticsHits, ...persistedDecision } =
+                decision
 
               const floor = await this.allocateRootCommentFloorInTx(
                 tx,
@@ -1914,65 +1685,61 @@ export class CommentService {
    * @returns 分页的回复列表，包含用户基本信息
    */
   async getReplies(query: QueryCommentRepliesDto & { userId?: number }) {
-    this.assertCommentCursorOnlyQuery(query, '评论回复列表')
     const legacyReplySort = (query as unknown as Record<string, unknown>).sort
     if (legacyReplySort !== undefined && legacyReplySort !== null) {
       throw new BadRequestException('评论回复列表不支持 sort 参数')
     }
 
-    const { commentId, pageSize, userId, onlyAuthor } = query
+    const { commentId, userId, onlyAuthor } = query
     const topicAuthorUserId =
       await this.getForumTopicAuthorUserIdByRootCommentId(commentId)
     const replyAuthorUserId =
       onlyAuthor && topicAuthorUserId !== undefined
         ? topicAuthorUserId
         : undefined
-    const pageQuery = this.drizzle.buildPage({ pageSize })
-    const cursor = this.parseCommentCursor(
-      query.cursor,
-      'createdAsc',
-      '评论回复列表',
-    )
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.userComment,
+      fallbackOrderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    })
     const conditions = [
       ...this.buildVisibleReplyConditions({
         rootCommentId: commentId,
         authorUserId: replyAuthorUserId,
       }),
-      ...(cursor?.kind === 'createdAsc'
-        ? [this.buildCreatedAscCursorWhere(cursor)]
-        : []),
     ]
-    const rows = await this.db
-      .select({
-        id: this.userComment.id,
-        targetType: this.userComment.targetType,
-        targetId: this.userComment.targetId,
-        userId: this.userComment.userId,
-        html: this.userComment.html,
-        floor: this.userComment.floor,
-        replyToId: this.userComment.replyToId,
-        actualReplyToId: this.userComment.actualReplyToId,
-        likeCount: this.userComment.likeCount,
-        geoCountry: this.userComment.geoCountry,
-        geoProvince: this.userComment.geoProvince,
-        geoCity: this.userComment.geoCity,
-        geoIsp: this.userComment.geoIsp,
-        createdAt: this.userComment.createdAt,
-      })
-      .from(this.userComment)
-      .where(and(...conditions))
-      .orderBy(asc(this.userComment.createdAt), asc(this.userComment.id))
-      .limit(pageQuery.pageSize + 1)
-    const page = this.toCommentCursorPage(
-      rows,
-      pageQuery.pageSize,
-      (row) =>
-        this.encodeCommentCursor({
-          kind: 'createdAsc',
-          createdAt: row.createdAt,
-          id: row.id,
-        }),
-    )
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(this.userComment.createdAt, pageParams.dateRange.gte))
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.userComment.createdAt, pageParams.dateRange.lt))
+    }
+    const where = and(...conditions)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.userComment.id,
+          targetType: this.userComment.targetType,
+          targetId: this.userComment.targetId,
+          userId: this.userComment.userId,
+          html: this.userComment.html,
+          floor: this.userComment.floor,
+          replyToId: this.userComment.replyToId,
+          actualReplyToId: this.userComment.actualReplyToId,
+          likeCount: this.userComment.likeCount,
+          geoCountry: this.userComment.geoCountry,
+          geoProvince: this.userComment.geoProvince,
+          geoCity: this.userComment.geoCity,
+          geoIsp: this.userComment.geoIsp,
+          createdAt: this.userComment.createdAt,
+        })
+        .from(this.userComment)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userComment, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     if (page.list.length === 0) {
       return page
@@ -2032,17 +1799,20 @@ export class CommentService {
    * @param query - 查询参数，包含目标类型、目标ID、分页信息、回复预览数量限制
    * @returns 分页的评论列表，每条评论包含用户信息、回复计数、回复预览
    */
-  async getTargetComments(query: QueryTargetCommentsDto) {
-    this.assertCommentCursorOnlyQuery(query, '目标评论列表')
+  async getTargetComments(query: TargetCommentsQueryInput) {
     const {
       targetType,
       targetId,
-      pageSize,
       previewReplyLimit = 3,
       userId,
       sort,
+      orderBy: clientOrderBy,
       onlyAuthor,
     } = query
+    if (clientOrderBy?.trim() && sort !== undefined) {
+      throw new BadRequestException('评论列表不支持同时使用 sort 和 orderBy')
+    }
+
     const limit = Math.max(0, Math.min(previewReplyLimit, 10))
     const topicAuthorUserId = await this.getForumTopicAuthorUserId(
       targetType,
@@ -2057,77 +1827,62 @@ export class CommentService {
       targetId,
       authorUserId: rootCommentAuthorUserId,
     })
-    const pageQuery = this.drizzle.buildPage({ pageSize })
-    const cursorKind =
-      sort === CommentSortTypeEnum.HOT
-        ? 'hot'
-        : sort === CommentSortTypeEnum.LATEST
-          ? 'createdDesc'
-          : 'floorAsc'
-    const cursor = this.parseCommentCursor(
-      query.cursor,
-      cursorKind,
-      '目标评论列表',
-    )
-    const cursorCondition =
-      cursor?.kind === 'hot'
-        ? this.buildHotCursorWhere(cursor)
-        : cursor?.kind === 'createdDesc'
-          ? this.buildCreatedDescCursorWhere(cursor)
-          : cursor?.kind === 'floorAsc'
-            ? this.buildFloorAscCursorWhere(cursor)
-            : undefined
-    const rows = await this.db
-      .select({
-        id: this.userComment.id,
-        userId: this.userComment.userId,
-        targetType: this.userComment.targetType,
-        targetId: this.userComment.targetId,
-        html: this.userComment.html,
-        floor: this.userComment.floor,
-        likeCount: this.userComment.likeCount,
-        geoCountry: this.userComment.geoCountry,
-        geoProvince: this.userComment.geoProvince,
-        geoCity: this.userComment.geoCity,
-        geoIsp: this.userComment.geoIsp,
-        createdAt: this.userComment.createdAt,
-      })
-      .from(this.userComment)
-      .where(and(...rootConditions, ...(cursorCondition ? [cursorCondition] : [])))
-      .orderBy(
-        ...(cursorKind === 'hot'
-          ? [
-              desc(this.userComment.likeCount),
-              desc(this.userComment.createdAt),
-              desc(this.userComment.id),
-            ]
-          : cursorKind === 'createdDesc'
-            ? [desc(this.userComment.createdAt), desc(this.userComment.id)]
-            : [asc(this.userComment.floor), asc(this.userComment.id)]),
-      )
-      .limit(pageQuery.pageSize + 1)
-    const page = this.toCommentCursorPage(rows, pageQuery.pageSize, (row) => {
-      if (cursorKind === 'hot') {
-        return this.encodeCommentCursor({
-          kind: 'hot',
-          likeCount: row.likeCount,
-          createdAt: row.createdAt,
-          id: row.id,
-        })
-      }
-      if (cursorKind === 'createdDesc') {
-        return this.encodeCommentCursor({
-          kind: 'createdDesc',
-          createdAt: row.createdAt,
-          id: row.id,
-        })
-      }
-      return this.encodeCommentCursor({
-        kind: 'floorAsc',
-        floor: row.floor ?? row.id,
-        id: row.id,
-      })
+    const pageParams = this.drizzle.buildPageParams(query, {
+      allowlistedOrderBy: {
+        columns: {
+          floor: this.userComment.floor,
+          likeCount: this.userComment.likeCount,
+          createdAt: this.userComment.createdAt,
+          id: this.userComment.id,
+        },
+      },
     })
+    if (pageParams.dateRange?.gte) {
+      rootConditions.push(
+        gte(this.userComment.createdAt, pageParams.dateRange.gte),
+      )
+    }
+    if (pageParams.dateRange?.lt) {
+      rootConditions.push(
+        lt(this.userComment.createdAt, pageParams.dateRange.lt),
+      )
+    }
+    const orderBy = clientOrderBy?.trim()
+      ? pageParams.order.orderBySql
+      : sort === CommentSortTypeEnum.HOT
+        ? [
+            desc(this.userComment.likeCount),
+            desc(this.userComment.createdAt),
+            desc(this.userComment.id),
+          ]
+        : sort === CommentSortTypeEnum.LATEST
+          ? [desc(this.userComment.createdAt), desc(this.userComment.id)]
+          : [asc(this.userComment.floor), asc(this.userComment.id)]
+    const where = and(...rootConditions)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.userComment.id,
+          userId: this.userComment.userId,
+          targetType: this.userComment.targetType,
+          targetId: this.userComment.targetId,
+          html: this.userComment.html,
+          floor: this.userComment.floor,
+          likeCount: this.userComment.likeCount,
+          geoCountry: this.userComment.geoCountry,
+          geoProvince: this.userComment.geoProvince,
+          geoCity: this.userComment.geoCity,
+          geoIsp: this.userComment.geoIsp,
+          createdAt: this.userComment.createdAt,
+        })
+        .from(this.userComment)
+        .where(where)
+        .orderBy(...orderBy)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userComment, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     if (page.list.length === 0) {
       return page
@@ -2230,7 +1985,6 @@ export class CommentService {
    * @returns 分页的评论列表
    */
   async getUserComments(query: QueryMyCommentPageDto, userId: number) {
-    this.assertCommentCursorOnlyQuery(query, '我的评论列表')
     const legacyMyCommentSort = (query as unknown as Record<string, unknown>)
       .sort
     if (legacyMyCommentSort !== undefined && legacyMyCommentSort !== null) {
@@ -2241,6 +1995,10 @@ export class CommentService {
       eq(this.userComment.userId, userId),
       isNull(this.userComment.deletedAt),
     ]
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.userComment,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
 
     if (query.targetType !== undefined) {
       conditions.push(eq(this.userComment.targetType, query.targetType))
@@ -2251,56 +2009,49 @@ export class CommentService {
     if (query.auditStatus !== undefined) {
       conditions.push(eq(this.userComment.auditStatus, query.auditStatus))
     }
-
-    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
-    const cursor = this.parseCommentCursor(
-      query.cursor,
-      'createdDesc',
-      '我的评论列表',
-    )
-    if (cursor?.kind === 'createdDesc') {
-      conditions.push(this.buildCreatedDescCursorWhere(cursor))
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(this.userComment.createdAt, pageParams.dateRange.gte))
     }
-    const rows = await this.db
-      .select({
-        id: this.userComment.id,
-        targetType: this.userComment.targetType,
-        targetId: this.userComment.targetId,
-        userId: this.userComment.userId,
-        html: this.userComment.html,
-        floor: this.userComment.floor,
-        replyToId: this.userComment.replyToId,
-        actualReplyToId: this.userComment.actualReplyToId,
-        isHidden: this.userComment.isHidden,
-        auditStatus: this.userComment.auditStatus,
-        auditById: this.userComment.auditById,
-        auditRole: this.userComment.auditRole,
-        auditReason: this.userComment.auditReason,
-        auditAt: this.userComment.auditAt,
-        likeCount: this.userComment.likeCount,
-        sensitiveWordHits: this.userComment.sensitiveWordHits,
-        geoCountry: this.userComment.geoCountry,
-        geoProvince: this.userComment.geoProvince,
-        geoCity: this.userComment.geoCity,
-        geoIsp: this.userComment.geoIsp,
-        deletedAt: this.userComment.deletedAt,
-        createdAt: this.userComment.createdAt,
-        updatedAt: this.userComment.updatedAt,
-      })
-      .from(this.userComment)
-      .where(and(...conditions))
-      .orderBy(desc(this.userComment.createdAt), desc(this.userComment.id))
-      .limit(pageQuery.pageSize + 1)
-    const page = this.toCommentCursorPage(
-      rows,
-      pageQuery.pageSize,
-      (row) =>
-        this.encodeCommentCursor({
-          kind: 'createdDesc',
-          createdAt: row.createdAt,
-          id: row.id,
-        }),
-    )
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.userComment.createdAt, pageParams.dateRange.lt))
+    }
+
+    const where = and(...conditions)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.userComment.id,
+          targetType: this.userComment.targetType,
+          targetId: this.userComment.targetId,
+          userId: this.userComment.userId,
+          html: this.userComment.html,
+          floor: this.userComment.floor,
+          replyToId: this.userComment.replyToId,
+          actualReplyToId: this.userComment.actualReplyToId,
+          isHidden: this.userComment.isHidden,
+          auditStatus: this.userComment.auditStatus,
+          auditById: this.userComment.auditById,
+          auditRole: this.userComment.auditRole,
+          auditReason: this.userComment.auditReason,
+          auditAt: this.userComment.auditAt,
+          likeCount: this.userComment.likeCount,
+          sensitiveWordHits: this.userComment.sensitiveWordHits,
+          geoCountry: this.userComment.geoCountry,
+          geoProvince: this.userComment.geoProvince,
+          geoCity: this.userComment.geoCity,
+          geoIsp: this.userComment.geoIsp,
+          deletedAt: this.userComment.deletedAt,
+          createdAt: this.userComment.createdAt,
+          updatedAt: this.userComment.updatedAt,
+        })
+        .from(this.userComment)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userComment, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     const [replyTargetMap, targetSummaryMap] = await Promise.all([
       this.getReplyTargetMap(

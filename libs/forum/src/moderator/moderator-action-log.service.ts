@@ -1,10 +1,11 @@
 import type { Db } from '@db/core'
+import type { AppDateRange } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
 import type { ForumModeratorActionLogInput } from './moderator.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, desc, eq, gte, lt, or } from 'drizzle-orm'
+import { Injectable } from '@nestjs/common'
+import { and, eq, gte, lt } from 'drizzle-orm'
 import {
   QueryAdminForumModeratorActionLogDto,
   QueryAppForumModeratorActionLogDto,
@@ -45,12 +46,13 @@ export class ForumModeratorActionLogService {
     query: QueryAdminForumModeratorActionLogDto & {
       moderatorId?: number | null
     },
+    parsedDateRange?: AppDateRange | null,
   ) {
     const conditions: SQL[] = []
-    const dateRange = buildDateOnlyRangeInAppTimeZone(
-      query.startDate,
-      query.endDate,
-    )
+    const dateRange =
+      parsedDateRange === undefined
+        ? buildDateOnlyRangeInAppTimeZone(query.startDate, query.endDate)
+        : parsedDateRange
 
     if (query.moderatorId != null) {
       conditions.push(
@@ -58,7 +60,9 @@ export class ForumModeratorActionLogService {
       )
     }
     if (query.actorType !== undefined) {
-      conditions.push(eq(this.forumModeratorActionLog.actorType, query.actorType))
+      conditions.push(
+        eq(this.forumModeratorActionLog.actorType, query.actorType),
+      )
     }
     if (query.actorUserId !== undefined) {
       conditions.push(
@@ -88,57 +92,6 @@ export class ForumModeratorActionLogService {
     }
 
     return conditions.length > 0 ? and(...conditions) : undefined
-  }
-
-  private assertAppCursorQuery(query: Record<string, unknown>) {
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => query[field] !== undefined)
-
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `我的版主操作日志仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private encodeCursor(row: { createdAt: Date, id: number }) {
-    return Buffer.from(
-      JSON.stringify({
-        createdAt: row.createdAt.toISOString(),
-        id: row.id,
-      }),
-    ).toString('base64url')
-  }
-
-  private parseCursor(cursor?: string | null) {
-    if (!cursor?.trim()) {
-      return null
-    }
-
-    try {
-      const payload = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      )
-      const createdAt = new Date(String(payload.createdAt))
-      const id = Number(payload.id)
-      if (!Number.isInteger(id) || id < 1 || Number.isNaN(createdAt.getTime())) {
-        throw new TypeError('invalid action log cursor')
-      }
-      return { createdAt, id }
-    }
-    catch {
-      throw new BadRequestException('版主操作日志分页游标非法')
-    }
-  }
-
-  private buildCursorWhere(cursor: { createdAt: Date, id: number }) {
-    return or(
-      lt(this.forumModeratorActionLog.createdAt, cursor.createdAt),
-      and(
-        eq(this.forumModeratorActionLog.createdAt, cursor.createdAt),
-        lt(this.forumModeratorActionLog.id, cursor.id),
-      ),
-    )
   }
 
   private async insertActionLog(db: Db, input: ForumModeratorActionLogInput) {
@@ -186,22 +139,20 @@ export class ForumModeratorActionLogService {
     moderatorId: number,
     query: QueryAppForumModeratorActionLogDto,
   ) {
-    this.assertAppCursorQuery(query as unknown as Record<string, unknown>)
-    const { cursor: cursorInput, ...pageDto } = query
-    const cursor = this.parseCursor(cursorInput)
-    const where = this.buildQueryWhere({
-      ...pageDto,
+    const effectiveQuery = {
+      ...query,
       moderatorId,
+    }
+    const pageParams = this.drizzle.buildPageParams(effectiveQuery, {
+      table: this.forumModeratorActionLog,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     })
-    const cursorWhere = cursor ? this.buildCursorWhere(cursor) : undefined
-    const pagedWhere = where && cursorWhere
-      ? and(where, cursorWhere)
-      : (cursorWhere ?? where)
-    const pageQuery = this.drizzle.buildPage({
-      pageIndex: 1,
-      pageSize: pageDto.pageSize,
-    })
-    const rows = await this.db
+    const where = this.buildQueryWhere(
+      effectiveQuery,
+      pageParams.dateRange ?? null,
+    )
+    const [list, total] = await Promise.all([
+      this.db
         .select({
           id: this.forumModeratorActionLog.id,
           moderatorId: this.forumModeratorActionLog.moderatorId,
@@ -214,24 +165,14 @@ export class ForumModeratorActionLogService {
           createdAt: this.forumModeratorActionLog.createdAt,
         })
         .from(this.forumModeratorActionLog)
-        .where(pagedWhere)
-        .orderBy(
-          desc(this.forumModeratorActionLog.createdAt),
-          desc(this.forumModeratorActionLog.id),
-        )
-        .limit(pageQuery.limit + 1)
-    const list = rows.slice(0, pageQuery.limit)
-    const hasMore = rows.length > pageQuery.limit
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.forumModeratorActionLog, where),
+    ])
 
-    return {
-      list,
-      pageSize: pageQuery.pageSize,
-      hasMore,
-      nextCursor:
-        hasMore && list.length > 0
-          ? this.encodeCursor(list[list.length - 1])
-          : null,
-    }
+    return toPageResult(list, total, pageParams.page)
   }
 
   /**
@@ -239,12 +180,13 @@ export class ForumModeratorActionLogService {
    * 保留 beforeData/afterData 快照，供具备后台权限的运维审计场景使用。
    */
   async getAdminActionLogPage(query: QueryAdminForumModeratorActionLogDto) {
-    const { orderBy: _clientOrderBy, ...pageDto } = query
+    const pageDto = query
 
     const where = this.buildQueryWhere(pageDto)
     const page = this.drizzle.buildPage(pageDto)
-    const orderQuery = this.drizzle.buildOrderBy({ createdAt: 'desc' }, {
+    const orderQuery = this.drizzle.buildOrderBy(pageDto.orderBy, {
       table: this.forumModeratorActionLog,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     })
     const [list, total] = await Promise.all([
       this.db

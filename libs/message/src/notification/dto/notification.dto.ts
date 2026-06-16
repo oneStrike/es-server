@@ -5,8 +5,9 @@ import type {
 import { BaseAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto'
 import { BaseForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
-import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { BaseTaskDefinitionDto } from '@libs/growth/task/dto/task-view.dto'
+import { TaskTypeEnum } from '@libs/growth/task/task.constant'
+import { WorkTypeEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -16,9 +17,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { WorkTypeEnum } from '@libs/platform/constant'
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   ApiExtraModels,
@@ -41,7 +40,6 @@ import {
 } from '../notification.constant'
 import { NotificationDeliveryLookupFilterDto } from './notification-delivery-filter.dto'
 import { BaseNotificationDeliveryDto } from './notification-delivery.dto'
-import { BaseNotificationUnreadDto } from './notification-unread.dto'
 
 /**
  * 通知分类键过滤器校验装饰器
@@ -688,7 +686,7 @@ export class BaseUserNotificationDto extends BaseDto {
  * 支持分页查询，可按已读状态和通知分类键筛选
  * categoryKeys 支持多分类键筛选，使用分隔符连接
  */
-export class QueryUserNotificationListDto extends PageDto {
+export class QueryUserNotificationPageDto extends PageDto {
   @BooleanProperty({
     description: '是否已读',
     required: false,
@@ -707,59 +705,6 @@ export class QueryUserNotificationListDto extends PageDto {
     },
   })
   categoryKeys?: string
-}
-
-/**
- * APP 用户通知游标分页查询 DTO。
- */
-export class QueryUserNotificationCursorDto extends IntersectionType(
-  CursorPageSizeDto,
-  PartialType(
-    PickType(QueryUserNotificationListDto, ['isRead', 'categoryKeys'] as const),
-  ),
-) {
-  @StringProperty({
-    description: '下一页游标',
-    example:
-      'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
-
-/**
- * APP 用户通知游标分页响应 DTO。
- */
-export class UserNotificationCursorResponseDto {
-  @ArrayProperty({
-    description: '通知列表',
-    itemClass: BaseUserNotificationDto,
-    validation: false,
-  })
-  list!: BaseUserNotificationDto[]
-
-  @NumberProperty({
-    description: '本次请求单页大小',
-    example: 15,
-    validation: false,
-  })
-  pageSize!: number
-
-  @BooleanProperty({
-    description: '是否还有更多通知',
-    example: true,
-    validation: false,
-  })
-  hasMore!: boolean
-
-  @StringProperty({
-    description: '下一页游标',
-    example:
-      'eyJjcmVhdGVkQXQiOiIyMDI2LTAzLTA3VDEyOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    nullable: true,
-    validation: false,
-  })
-  nextCursor!: string | null
 }
 
 /**

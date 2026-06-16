@@ -10,14 +10,8 @@ import type { SQL } from 'drizzle-orm'
  * - 用户资产统计（购买、下载、收藏、点赞等）
  * - 用户成长信息（积分、经验、等级、徽章）
  */
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience/experience.service'
-import {
-  encodeGrowthCursor,
-  parseGrowthCursor,
-  rejectOffsetPaginationFields,
-  toCursorPage,
-} from '@libs/growth/growth/cursor-page.util'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { UserPointService } from '@libs/growth/point/point.service'
 import { TaskService } from '@libs/growth/task/task.service'
@@ -43,7 +37,7 @@ import {
 } from '@libs/user/dto/user-self.dto'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { Injectable } from '@nestjs/common'
-import { and, desc, eq, gt, gte, inArray, lt, or, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, lt, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'
 import { SmsService } from '../auth/sms.service'
 
@@ -350,7 +344,7 @@ export class UserService {
    * @returns 积分记录分页数据
    */
   async getUserPointRecords(userId: number, query: QueryMyPointRecordDto) {
-    const page = await this.userPointService.getAppPointRecordCursorPage({
+    const page = await this.userPointService.getAppPointRecordPage({
       ...query,
       userId,
     })
@@ -466,7 +460,7 @@ export class UserService {
     userId: number,
     query: QueryMyExperienceRecordDto,
   ) {
-    const page = await this.userExperienceService.getAppExperienceRecordCursorPage({
+    const page = await this.userExperienceService.getAppExperienceRecordPage({
       ...query,
       userId,
     })
@@ -493,11 +487,13 @@ export class UserService {
    * @returns 徽章列表分页数据
    */
   async getUserBadges(userId: number, query: QueryMyBadgeDto) {
-    rejectOffsetPaginationFields(query, '用户徽章列表')
     await this.userCoreService.ensureUserExists(userId)
 
-    const { name, type, isEnabled, ...pageQuery } = query
-    const cursor = this.parseUserBadgeCursor(query.cursor)
+    const { name, type, isEnabled } = query
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.userBadgeAssignment,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { badgeId: 'desc' }],
+    })
     const badgeConditions: SQL[] = []
 
     if (name) {
@@ -518,41 +514,35 @@ export class UserService {
       .where(badgeWhere)
     const badgeIds = badges.map((item) => item.id)
     if (badgeIds.length === 0) {
-      return {
-        list: [],
-        pageSize: this.drizzle.buildPage({ pageSize: pageQuery.pageSize })
-          .pageSize,
-        hasMore: false,
-        nextCursor: null,
-      }
+      return toPageResult([], 0, pageParams.page)
     }
 
-    const where = and(
+    const assignmentConditions: SQL[] = [
       eq(this.userBadgeAssignment.userId, userId),
       inArray(this.userBadgeAssignment.badgeId, badgeIds),
-      cursor
-        ? or(
-            lt(this.userBadgeAssignment.createdAt, cursor.createdAt),
-            and(
-              eq(this.userBadgeAssignment.createdAt, cursor.createdAt),
-              lt(this.userBadgeAssignment.badgeId, cursor.badgeId),
-            ),
-          )
-        : undefined,
-    )
-    const pageParams = this.drizzle.buildPage({ pageSize: pageQuery.pageSize })
-    const rows = await this.db
-      .select()
-      .from(this.userBadgeAssignment)
-      .where(where)
-      .orderBy(
-        desc(this.userBadgeAssignment.createdAt),
-        desc(this.userBadgeAssignment.badgeId),
+    ]
+    if (pageParams.dateRange?.gte) {
+      assignmentConditions.push(
+        gte(this.userBadgeAssignment.createdAt, pageParams.dateRange.gte),
       )
-      .limit(pageParams.limit + 1)
-    const page = toCursorPage(rows, pageParams.limit, (item) =>
-      this.encodeUserBadgeCursor(item),
-    )
+    }
+    if (pageParams.dateRange?.lt) {
+      assignmentConditions.push(
+        lt(this.userBadgeAssignment.createdAt, pageParams.dateRange.lt),
+      )
+    }
+    const where = and(...assignmentConditions)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userBadgeAssignment)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userBadgeAssignment, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
     const pageBadgeIds = page.list.map((item) => item.badgeId)
     const pageBadges = pageBadgeIds.length
       ? await this.db
@@ -591,28 +581,6 @@ export class UserService {
         }
       }),
     }
-  }
-
-  private encodeUserBadgeCursor(item: { createdAt: Date, badgeId: number }) {
-    return encodeGrowthCursor({
-      createdAt: item.createdAt.toISOString(),
-      badgeId: item.badgeId,
-    })
-  }
-
-  private parseUserBadgeCursor(cursor?: string | null) {
-    return parseGrowthCursor(cursor, '用户徽章分页游标非法', (payload) => {
-      const createdAt = new Date(String(payload.createdAt))
-      const badgeId = Number(payload.badgeId)
-      if (
-        Number.isNaN(createdAt.getTime()) ||
-        !Number.isInteger(badgeId) ||
-        badgeId <= 0
-      ) {
-        return undefined
-      }
-      return { createdAt, badgeId }
-    })
   }
 
   /**

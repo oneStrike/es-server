@@ -10,6 +10,7 @@ import { randomUUID } from 'node:crypto'
 import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { sql } from 'drizzle-orm'
 import { TaskDefinitionService } from './task-definition.service'
 import { TaskExecutionService } from './task-execution.service'
 import {
@@ -95,6 +96,23 @@ function createExecutionService() {
       pageSize: 20,
       limit: 20,
       offset: 0,
+    })),
+    buildPageParams: jest.fn(() => ({
+      page: {
+        pageIndex: 1,
+        pageSize: 20,
+        limit: 20,
+        offset: 0,
+      },
+      order: {
+        orderByClause: sql.raw('c.sort_order ASC, c.id ASC'),
+        orderBySql: ['order_by'],
+      },
+      dateRange: undefined,
+    })),
+    buildOrderBy: jest.fn(() => ({ orderBySql: ['order_by'] })),
+    buildAllowlistedOrderBy: jest.fn(() => ({
+      orderByClause: sql.raw('c.sort_order ASC, c.id ASC'),
     })),
     withTransaction: jest.fn(async (callback: (runner: typeof tx) => unknown) =>
       callback(tx),
@@ -205,9 +223,9 @@ describe('TaskExecutionService review regressions', () => {
     expect(
       objectContainsReference(whereCondition, schema.taskDefinition.claimMode),
     ).toBe(true)
-    expect(objectContainsReference(whereCondition, TaskClaimModeEnum.AUTO)).toBe(
-      true,
-    )
+    expect(
+      objectContainsReference(whereCondition, TaskClaimModeEnum.AUTO),
+    ).toBe(true)
   })
 
   it('claimTask creates instance step immediately in the claim transaction', async () => {
@@ -318,6 +336,124 @@ describe('TaskExecutionService review regressions', () => {
       schema.taskDefinition,
       expect.anything(),
     )
+    expect(totalBuilder.leftJoin).toHaveBeenCalledWith(
+      schema.taskDefinition,
+      expect.anything(),
+    )
+  })
+
+  it('getAvailableTasks returns ApiPage-style page without cursor output', async () => {
+    const { service, drizzle, db } = createExecutionService()
+    const task = createManualTask({ id: 1, sortOrder: 10 })
+    drizzle.buildPageParams.mockReturnValue({
+      page: {
+        limit: 1,
+        offset: 1,
+        pageIndex: 2,
+        pageSize: 1,
+      },
+      order: {
+        orderByClause: sql.raw('c.sort_order ASC, c.id ASC'),
+        orderBySql: ['order_by'],
+      },
+      dateRange: undefined,
+    })
+    db.execute = jest
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ id: task.id }] })
+      .mockResolvedValueOnce({ rows: [{ count: 3 }] })
+    ;(db.select as jest.Mock).mockReturnValue(createThenableBuilder([task]))
+    jest
+      .spyOn(service as any, 'getTaskStepSummaryMap')
+      .mockResolvedValue(new Map())
+    jest
+      .spyOn(service as any, 'toAppAvailableTaskItem')
+      .mockImplementation((item: unknown) => ({
+        id: (item as { id: number }).id,
+      }))
+
+    const page = await service.getAvailableTasks(
+      { pageIndex: 2, pageSize: 1, sceneType: TaskTypeEnum.DAILY },
+      202,
+    )
+
+    expect(page).toMatchObject({
+      list: [{ id: task.id }],
+      pageIndex: 2,
+      pageSize: 1,
+      total: 3,
+    })
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
+    expect(db.execute).toHaveBeenCalledTimes(2)
+  })
+
+  it('getMyTasks returns ApiPage-style page and counts with sceneType filter', async () => {
+    const { service, drizzle, db } = createExecutionService()
+    const task = createManualTask({ id: 1 })
+    const instance = createInstance({
+      id: 101,
+      taskId: task.id,
+      updatedAt: new Date('2026-06-01T00:00:00.000Z'),
+    })
+    const listBuilder = createThenableBuilder([
+      {
+        instance,
+        rewardSettlement: null,
+        task,
+      },
+    ])
+    const totalBuilder = createThenableBuilder([{ count: 4 }])
+    drizzle.buildPageParams.mockReturnValue({
+      page: {
+        limit: 10,
+        offset: 10,
+        pageIndex: 2,
+        pageSize: 10,
+      },
+      order: {
+        orderByClause: sql.raw('task_instance.updated_at DESC'),
+        orderBySql: ['order_by'],
+      },
+      dateRange: undefined,
+    })
+    db.select = jest
+      .fn()
+      .mockReturnValueOnce(listBuilder)
+      .mockReturnValueOnce(totalBuilder)
+    jest
+      .spyOn(service as any, 'getTaskStepSummaryMap')
+      .mockResolvedValue(new Map())
+    jest
+      .spyOn(service as any, 'getTaskInstanceStepViewMap')
+      .mockResolvedValue(new Map())
+    jest
+      .spyOn(service as any, 'toAppAvailableTaskItem')
+      .mockImplementation((item: unknown) => ({
+        id: (item as { id: number }).id,
+      }))
+    jest
+      .spyOn(service as any, 'toTaskRewardSettlementSummary')
+      .mockReturnValue(null)
+
+    const page = await service.getMyTasks(
+      { pageIndex: 2, pageSize: 10, sceneType: TaskTypeEnum.DAILY },
+      202,
+    )
+
+    expect(page).toMatchObject({
+      pageIndex: 2,
+      pageSize: 10,
+      total: 4,
+    })
+    expect(page.list[0]).toMatchObject({
+      id: instance.id,
+      task: { id: task.id },
+    })
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
+    expect(listBuilder.limit).toHaveBeenCalledWith(10)
+    expect(listBuilder.offset).toHaveBeenCalledWith(10)
     expect(totalBuilder.leftJoin).toHaveBeenCalledWith(
       schema.taskDefinition,
       expect.anything(),
@@ -631,14 +767,10 @@ describe('TaskExecutionService review regressions', () => {
     ;(db as any).update = jest
       .fn()
       .mockReturnValueOnce(
-        createThenableBuilder([
-          { id: 909, token: 'task-reward-claim-token' },
-        ]),
+        createThenableBuilder([{ id: 909, token: 'task-reward-claim-token' }]),
       )
       .mockReturnValueOnce(createThenableBuilder([]))
-    ;(tx as any).update = jest.fn(() =>
-      createThenableBuilder([{ id: 909 }]),
-    )
+    ;(tx as any).update = jest.fn(() => createThenableBuilder([{ id: 909 }]))
 
     const rewardResult = {
       success: true,
@@ -736,9 +868,9 @@ describe('TaskExecutionService review regressions', () => {
         GrowthRewardSettlementStatusEnum.TERMINAL,
       ),
     ).toBe(true)
-    expect(objectContainsReference(resultWhere, 'task-reward-claim-token')).toBe(
-      true,
-    )
+    expect(
+      objectContainsReference(resultWhere, 'task-reward-claim-token'),
+    ).toBe(true)
   })
 
   it('expired settlement lease takeover leaves stale claim results unable to overwrite', async () => {
@@ -768,14 +900,12 @@ describe('TaskExecutionService review regressions', () => {
       createThenableBuilder([], staleResultRecorder),
     )
 
-    const staleClaim = await (service as any).claimTaskRewardSettlementExecution(
-      909,
-      false,
-    )
-    const freshClaim = await (service as any).claimTaskRewardSettlementExecution(
-      909,
-      true,
-    )
+    const staleClaim = await (
+      service as any
+    ).claimTaskRewardSettlementExecution(909, false)
+    const freshClaim = await (
+      service as any
+    ).claimTaskRewardSettlementExecution(909, true)
     const staleUpdate = await (service as any).updateRewardSettlementResultInTx(
       tx,
       909,
@@ -825,7 +955,9 @@ describe('TaskExecutionService review regressions', () => {
   it('retryCompletedTaskRewardsBatch rejects empty admin scope', async () => {
     const { service } = createExecutionService()
 
-    await expect(service.retryCompletedTaskRewardsBatch({})).rejects.toMatchObject({
+    await expect(
+      service.retryCompletedTaskRewardsBatch({}),
+    ).rejects.toMatchObject({
       code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
     })
   })
@@ -992,7 +1124,9 @@ describe('TaskDefinitionService review regressions', () => {
         } as any,
         9,
       ),
-    ).rejects.toThrow('任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发')
+    ).rejects.toThrow(
+      '任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发',
+    )
     expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
   })
 
@@ -1024,7 +1158,9 @@ describe('TaskDefinitionService review regressions', () => {
         } as any,
         9,
       ),
-    ).rejects.toThrow('任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发')
+    ).rejects.toThrow(
+      '任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发',
+    )
     expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
   })
 
@@ -1059,7 +1195,9 @@ describe('TaskDefinitionService review regressions', () => {
         },
         9,
       ),
-    ).rejects.toThrow('任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发')
+    ).rejects.toThrow(
+      '任务执行模式仅支持自动领取+事件驱动，或手动领取+手动触发',
+    )
     expect(drizzle.withErrorHandling).not.toHaveBeenCalled()
   })
 

@@ -2,7 +2,6 @@ import type { UploadConfigInterface } from '@libs/platform/config'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { JsonObject } from '@libs/platform/utils'
-import type { ChatConversationListCursor } from './chat-read-query.type'
 import type {
   ChatMediaMessagePayload,
   ChatMessageOutputPayload,
@@ -17,7 +16,7 @@ import type {
   ChatMessageCreatedDomainEventPayload,
   ChatMessageOutput,
 } from './chat.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 
 import {
   appUser,
@@ -30,6 +29,7 @@ import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service
 import { buildRecentEmojiUsageItems } from '@libs/interaction/emoji/emoji-recent-usage.helper'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
+import { PageDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
 import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
@@ -63,7 +63,6 @@ import {
   MarkConversationReadDto,
   OpenDirectConversationDto,
   PinChatConversationDto,
-  QueryChatConversationListDto,
   QueryChatConversationMessagesDto,
   SendChatMessageDto,
 } from './dto/chat.dto'
@@ -268,30 +267,44 @@ export class MessageChatService {
    * @param dto - 分页查询参数
    * @returns 分页的会话列表
    */
-  async getConversationList(userId: number, dto: QueryChatConversationListDto) {
-    this.assertCursorPageQuery(dto, '会话列表')
-    const pageSize = this.normalizeCursorPageSize(dto.pageSize, 20, 100)
-    const cursor = this.parseConversationListCursor(dto.cursor)
-    const conversationRows = await this.chatReadQueryService.getConversationList(
-      {
-        userId,
-        limit: pageSize + 1,
-        cursor,
+  async getConversationList(userId: number, dto: PageDto) {
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      defaultPageSize: 20,
+      maxPageSize: 100,
+      allowlistedOrderBy: {
+        columns: {
+          isPinned: chatConversationMember.isPinned,
+          lastMessageAt: sql`coalesce(${chatConversation.lastMessageAt}, '-infinity'::timestamptz)`,
+          id: chatConversation.id,
+        },
+        fallbackOrderBy: [
+          { isPinned: 'desc' },
+          { lastMessageAt: 'desc' },
+          { id: 'desc' },
+        ],
       },
-    )
-    const hasMore = conversationRows.length > pageSize
-    const pageRows = conversationRows.slice(0, pageSize)
+    })
+    const [conversationRows, total] = await Promise.all([
+      this.chatReadQueryService.getConversationList({
+        userId,
+        limit: pageParams.page.limit,
+        offset: pageParams.page.offset,
+        orderBySql: pageParams.order.orderBySql,
+        startDate: pageParams.dateRange?.gte,
+        endDate: pageParams.dateRange?.lt,
+      }),
+      this.chatReadQueryService.countConversationList({
+        userId,
+        startDate: pageParams.dateRange?.gte,
+        endDate: pageParams.dateRange?.lt,
+      }),
+    ])
 
-    if (pageRows.length === 0) {
-      return {
-        list: [],
-        pageSize,
-        hasMore: false,
-        nextCursor: null,
-      }
+    if (conversationRows.length === 0) {
+      return toPageResult([], total, pageParams.page)
     }
 
-    const conversationIds = pageRows.map((item) => item.id)
+    const conversationIds = conversationRows.map((item) => item.id)
     const [members, lastMessageMap] = await Promise.all([
       this.db
         .select({
@@ -314,7 +327,7 @@ export class MessageChatService {
           ),
         ),
       this.getMessageMapByIds(
-        pageRows
+        conversationRows
           .map((item) => item.lastMessageId)
           .filter((item): item is bigint => typeof item === 'bigint'),
       ),
@@ -338,7 +351,7 @@ export class MessageChatService {
       memberMap.set(member.conversationId, list)
     }
 
-    const list = pageRows.map((item) =>
+    const list = conversationRows.map((item) =>
       this.toConversationOutput(
         {
           id: item.id,
@@ -356,14 +369,7 @@ export class MessageChatService {
       ),
     )
 
-    return {
-      list,
-      pageSize,
-      hasMore,
-      nextCursor: hasMore
-        ? this.encodeConversationListCursor(pageRows[pageRows.length - 1])
-        : null,
-    }
+    return toPageResult(list, total, pageParams.page)
   }
 
   /**
@@ -1151,6 +1157,8 @@ export class MessageChatService {
    *
    * @param conversation - 会话数据
    * @param conversation.id - 会话ID
+   * @param conversation.bizKey - 会话业务键
+   * @param conversation.isPinned - 当前用户是否置顶
    * @param conversation.lastMessageId - 最后消息ID
    * @param conversation.lastMessageAt - 最后消息时间
    * @param conversation.lastSenderId - 最后发送者ID
@@ -1298,9 +1306,7 @@ export class MessageChatService {
       case ChatMessageTypeEnum.IMAGE:
       case ChatMessageTypeEnum.VOICE:
       case ChatMessageTypeEnum.VIDEO:
-        return this.isMediaOutputPayload(messageType, payload)
-          ? payload
-          : null
+        return this.isMediaOutputPayload(messageType, payload) ? payload : null
       case ChatMessageTypeEnum.TEXT:
       case ChatMessageTypeEnum.SYSTEM:
         return this.isJsonObjectPayload(payload) ? payload : null
@@ -1566,87 +1572,6 @@ export class MessageChatService {
     const minUserId = Math.min(userId, targetUserId)
     const maxUserId = Math.max(userId, targetUserId)
     return `direct:${minUserId}:${maxUserId}`
-  }
-
-  private encodeConversationListCursor(item: {
-    isPinned: boolean
-    lastMessageAt: Date | null
-    id: number
-  }) {
-    return Buffer.from(
-      JSON.stringify({
-        isPinned: item.isPinned,
-        lastMessageAt: item.lastMessageAt?.toISOString() ?? null,
-        id: item.id,
-      }),
-    ).toString('base64url')
-  }
-
-  private parseConversationListCursor(cursor?: string | null) {
-    if (!cursor?.trim()) {
-      return undefined
-    }
-
-    try {
-      const payload = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as Partial<{
-        isPinned: unknown
-        lastMessageAt: unknown
-        id: unknown
-      }>
-      if (
-        typeof payload.isPinned !== 'boolean' ||
-        !Number.isInteger(payload.id) ||
-        Number(payload.id) <= 0
-      ) {
-        throw new TypeError('invalid cursor payload')
-      }
-      if (payload.lastMessageAt !== null) {
-        if (typeof payload.lastMessageAt !== 'string') {
-          throw new TypeError('invalid cursor payload')
-        }
-        const lastMessageAt = new Date(payload.lastMessageAt)
-        if (Number.isNaN(lastMessageAt.getTime())) {
-          throw new TypeError('invalid cursor payload')
-        }
-        return {
-          isPinned: payload.isPinned,
-          lastMessageAt,
-          id: Number(payload.id),
-        } satisfies ChatConversationListCursor
-      }
-
-      return {
-        isPinned: payload.isPinned,
-        lastMessageAt: null,
-        id: Number(payload.id),
-      } satisfies ChatConversationListCursor
-    } catch {
-      throw new BadRequestException('cursor 格式无效')
-    }
-  }
-
-  private assertCursorPageQuery(dto: object, label: string) {
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => Object.prototype.hasOwnProperty.call(dto, field))
-
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `${label}仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private normalizeCursorPageSize(
-    pageSize: number | undefined,
-    defaultPageSize: number,
-    maxPageSize: number,
-  ) {
-    const value = Number.isFinite(Number(pageSize))
-      ? Math.floor(Number(pageSize))
-      : defaultPageSize
-    return Math.min(Math.max(1, value), maxPageSize)
   }
 
   /**

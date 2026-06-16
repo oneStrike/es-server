@@ -10,14 +10,17 @@ import { WorkService } from '@libs/content/work/core/work.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
 import {
-  ApiCursorPageDoc,
   ApiDoc,
+  ApiPageDoc,
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
-import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils'
+import { IdDto } from '@libs/platform/dto'
+import {
+  extractRequestContext,
+  serializeDeviceInfo,
+} from '@libs/platform/utils'
 import { Controller, Get, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -31,7 +34,7 @@ export class WorkController {
 
   @Get('hot/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询热门作品',
     model: PageWorkDto,
   })
@@ -41,7 +44,7 @@ export class WorkController {
 
   @Get('new/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询最新作品',
     model: PageWorkDto,
   })
@@ -51,7 +54,7 @@ export class WorkController {
 
   @Get('recommended/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询推荐作品',
     model: PageWorkDto,
   })
@@ -61,7 +64,7 @@ export class WorkController {
 
   @Get('page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询作品列表',
     model: PageWorkDto,
   })
@@ -92,7 +95,7 @@ export class WorkController {
 
   @Get('comment/page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询作品评论',
     model: TargetCommentItemDto,
   })
@@ -100,12 +103,11 @@ export class WorkController {
     @Query() query: QueryWorkCommentPageDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    const target = await this.workService.getWorkCommentTarget(query.id)
+    const { id, ...commentQuery } = query
+    const target = await this.workService.getWorkCommentTarget(id)
     return this.commentService.getTargetComments({
+      ...commentQuery,
       ...target,
-      pageSize: query.pageSize,
-      cursor: query.cursor,
-      sort: query.sort,
       previewReplyLimit: 3,
       userId,
     })

@@ -4,19 +4,24 @@ import type { SQL } from 'drizzle-orm'
 import type { AnnouncementFanoutPort } from './announcement-fanout.port'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import { IdDto, PageDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { assertValidTimeRange } from '@libs/platform/utils'
-import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/common'
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Optional,
+} from '@nestjs/common'
 import {
   and,
   arrayOverlaps,
-  desc,
   eq,
   getColumns,
   gt,
   gte,
   isNull,
+  lt,
   lte,
   or,
   sql,
@@ -29,11 +34,10 @@ import {
   resolveAnnouncementPublishStatus,
 } from './announcement.constant'
 import {
-  AppAnnouncementListItemDto,
   AnnouncementOutputBaseDto,
+  AppAnnouncementListItemDto,
   CreateAnnouncementDto,
   QueryAnnouncementDto,
-  QueryPublicAnnouncementCursorDto,
   UpdateAnnouncementDto,
 } from './dto/announcement.dto'
 
@@ -62,11 +66,11 @@ type AnnouncementInternalRuntimeColumn =
   | 'notificationFanoutTaskId'
   | 'notificationFanoutUpdatedAt'
   | 'notificationStartBoundaryAt'
-type AnnouncementResponseRow = Omit<
-  AppAnnouncementSelect,
-  AnnouncementInternalRuntimeColumn
-> &
-AnnouncementFanoutRuntimeFields
+interface AnnouncementResponseRow
+  extends
+    Omit<AppAnnouncementSelect, AnnouncementInternalRuntimeColumn>,
+    AnnouncementFanoutRuntimeFields {}
+
 type AnnouncementOutputFieldSource = Pick<
   AppAnnouncementSelect,
   | 'enablePlatform'
@@ -77,6 +81,7 @@ type AnnouncementOutputFieldSource = Pick<
   | 'publishStartTime'
   | 'summary'
 >
+type AnnouncementOutputInput = Partial<AnnouncementOutputFieldSource>
 
 /**
  * 系统公告服务
@@ -196,50 +201,58 @@ export class AppAnnouncementService {
       this.db.$count(this.appAnnouncement, where),
     ])
 
-    return toPageResult(await this.hydrateAdminAnnouncementRows(list), total, page)
+    return toPageResult(
+      await this.hydrateAdminAnnouncementRows(list),
+      total,
+      page,
+    )
   }
 
   /**
    * APP 公开公告分页。强制 APP 平台和当前生效窗口，并排除正文大字段。
    */
-  async findPublicAnnouncementPage(
-    queryAnnouncementDto: QueryPublicAnnouncementCursorDto,
-  ) {
-    this.assertCursorPageQuery(queryAnnouncementDto)
+  async findPublicAnnouncementPage(queryAnnouncementDto: PageDto) {
+    const pageParams = this.drizzle.buildPageParams(queryAnnouncementDto, {
+      table: this.appAnnouncement,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      maxPageSize: 100,
+    })
     const { where } = this.buildAnnouncementPageQuery(
-      {} as QueryAnnouncementDto,
+      queryAnnouncementDto as QueryAnnouncementDto,
       {
         appVisibleOnly: true,
       },
     )
-    const pageSize = this.normalizeCursorPageSize(
-      queryAnnouncementDto.pageSize,
-      15,
-      100,
-    )
-    const cursor = this.parseAnnouncementCursor(queryAnnouncementDto.cursor)
-    const cursorWhere = cursor
-      ? sql`(${this.appAnnouncement.createdAt} < ${cursor.createdAt} OR (${this.appAnnouncement.createdAt} = ${cursor.createdAt} AND ${this.appAnnouncement.id} < ${cursor.id}))`
-      : undefined
-    const rows = await this.db
-      .select(this.buildPublicAnnouncementListSelect())
-      .from(this.appAnnouncement)
-      .where(cursorWhere ? and(where, cursorWhere) : where)
-      .orderBy(desc(this.appAnnouncement.createdAt), desc(this.appAnnouncement.id))
-      .limit(pageSize + 1)
-    const hasMore = rows.length > pageSize
-    const pageRows = rows.slice(0, pageSize)
+    const conditions: SQL[] = where ? [where] : []
+    if (pageParams.dateRange?.gte) {
+      conditions.push(
+        gte(this.appAnnouncement.createdAt, pageParams.dateRange.gte),
+      )
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(
+        lt(this.appAnnouncement.createdAt, pageParams.dateRange.lt),
+      )
+    }
+    const publicWhere = conditions.length ? and(...conditions) : undefined
+    const [rows, total] = await Promise.all([
+      this.db
+        .select(this.buildPublicAnnouncementListSelect())
+        .from(this.appAnnouncement)
+        .where(publicWhere)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.appAnnouncement, publicWhere),
+    ])
 
-    return {
-      list: pageRows.map((item) =>
+    return toPageResult(
+      rows.map((item) =>
         this.toAnnouncementOutputDto(item),
       ) as AppAnnouncementListItemDto[],
-      pageSize,
-      hasMore,
-      nextCursor: hasMore
-        ? this.encodeAnnouncementCursor(pageRows[pageRows.length - 1])
-        : null,
-    }
+      total,
+      pageParams.page,
+    )
   }
 
   /**
@@ -282,9 +295,7 @@ export class AppAnnouncementService {
           : updateData.popupBackgroundImage,
       popupBackgroundPosition:
         updateData.popupBackgroundPosition === undefined
-          ? (announcement.popupBackgroundPosition as
-          | PopupBackgroundPositionEnum
-          | null)
+          ? (announcement.popupBackgroundPosition as PopupBackgroundPositionEnum | null)
           : updateData.popupBackgroundPosition,
       showAsPopup: updateData.showAsPopup ?? announcement.showAsPopup,
     })
@@ -526,63 +537,6 @@ export class AppAnnouncementService {
     return this.incrementPublicAnnouncementViewCount(dto, userId)
   }
 
-  private encodeAnnouncementCursor(item: { createdAt: Date; id: number }) {
-    return Buffer.from(
-      JSON.stringify({
-        createdAt: item.createdAt.toISOString(),
-        id: item.id,
-      }),
-    ).toString('base64url')
-  }
-
-  private parseAnnouncementCursor(cursor?: string | null) {
-    if (!cursor?.trim()) {
-      return undefined
-    }
-
-    try {
-      const payload = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as Partial<{ createdAt: unknown; id: unknown }>
-      if (
-        typeof payload.createdAt !== 'string' ||
-        !Number.isInteger(payload.id) ||
-        Number(payload.id) <= 0
-      ) {
-        throw new TypeError('invalid cursor payload')
-      }
-      const createdAt = new Date(payload.createdAt)
-      if (Number.isNaN(createdAt.getTime())) {
-        throw new TypeError('invalid cursor payload')
-      }
-      return { createdAt, id: Number(payload.id) }
-    } catch {
-      throw new BadRequestException('cursor 格式无效')
-    }
-  }
-
-  private assertCursorPageQuery(dto: object) {
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => Object.prototype.hasOwnProperty.call(dto, field))
-
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `公告列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private normalizeCursorPageSize(
-    pageSize: number | undefined,
-    defaultPageSize: number,
-    maxPageSize: number,
-  ) {
-    const value = Number.isFinite(Number(pageSize))
-      ? Math.floor(Number(pageSize))
-      : defaultPageSize
-    return Math.min(Math.max(1, value), maxPageSize)
-  }
-
   private buildAnnouncementPageQuery(
     queryAnnouncementDto: QueryAnnouncementDto,
     options?: {
@@ -630,7 +584,9 @@ export class AppAnnouncementService {
       )
     }
     if (announcementType !== undefined) {
-      conditions.push(eq(this.appAnnouncement.announcementType, announcementType))
+      conditions.push(
+        eq(this.appAnnouncement.announcementType, announcementType),
+      )
     }
     if (priorityLevel !== undefined) {
       conditions.push(eq(this.appAnnouncement.priorityLevel, priorityLevel))
@@ -714,7 +670,9 @@ export class AppAnnouncementService {
     return conditions
   }
 
-  private buildLatestFanoutStatusCondition(status: AnnouncementFanoutStatusEnum) {
+  private buildLatestFanoutStatusCondition(
+    status: AnnouncementFanoutStatusEnum,
+  ) {
     return eq(this.appAnnouncement.notificationFanoutStatus, status)
   }
 
@@ -805,9 +763,7 @@ export class AppAnnouncementService {
     }))
   }
 
-  private toAnnouncementOutputDto<T extends Partial<AnnouncementOutputFieldSource>>(
-    row: T,
-  ) {
+  private toAnnouncementOutputDto<T extends AnnouncementOutputInput>(row: T) {
     return {
       ...row,
       summary: row.summary ?? null,

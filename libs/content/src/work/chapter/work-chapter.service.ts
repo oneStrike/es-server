@@ -1,6 +1,5 @@
 import type { WorkChapterSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import { Buffer } from 'node:buffer'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
@@ -18,10 +17,10 @@ import {
   WorkTypeEnum,
 } from '@libs/platform/constant'
 
-import { BatchUpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import { BatchUpdatePublishedStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { Injectable } from '@nestjs/common'
+import { and, eq, gte, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   AdminWorkChapterDetailDto,
@@ -300,52 +299,49 @@ export class WorkChapterService {
     dto: QueryAppWorkChapterPageDto,
     _context: { userId?: number } = {},
   ) {
-    this.rejectUnsupportedAppChapterPagination(dto)
     const now = new Date()
-    const where = and(
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      table: this.workChapter,
+      fallbackOrderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+    })
+    const conditions: SQL[] = [
       isNull(this.workChapter.deletedAt),
       eq(this.workChapter.workId, dto.workId),
       eq(this.workChapter.isPublished, true),
       or(
         isNull(this.workChapter.publishAt),
         lte(this.workChapter.publishAt, now),
-      ),
-    )
-    const cursor = this.parseAppChapterCursor(dto.cursor)
-    const pageQuery = this.drizzle.buildPage({
-      pageSize: dto.pageSize,
-    })
-    const orderQuery = this.drizzle.buildOrderBy(
-      [{ sortOrder: 'asc' as const }, { id: 'asc' as const }],
-      { table: this.workChapter },
-    )
-    const rows = await this.db
-      .select(this.appChapterPageColumns())
-      .from(this.workChapter)
-      .where(cursor ? and(where!, this.buildAppChapterCursorWhere(cursor))! : where)
-      .orderBy(...orderQuery.orderBySql)
-      .limit(pageQuery.limit + 1)
-    const list = rows.slice(0, pageQuery.limit)
-    const hasMore = rows.length > pageQuery.limit
+      )!,
+    ]
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(this.workChapter.publishAt, pageParams.dateRange.gte))
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.workChapter.publishAt, pageParams.dateRange.lt))
+    }
 
-    return this.buildAppChapterPageResponse({
-      list,
-      pageSize: pageQuery.pageSize,
-      hasMore,
-      nextCursor:
-        hasMore && list.length > 0
-          ? this.encodeAppChapterCursor(list[list.length - 1])
-          : null,
-    })
+    const where = and(...conditions)
+    const [list, total] = await Promise.all([
+      this.db
+        .select(this.appChapterPageColumns())
+        .from(this.workChapter)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.workChapter, where),
+    ])
+
+    return this.buildAppChapterPageResponse(
+      toPageResult(list, total, pageParams.page),
+    )
   }
 
   private async buildAppChapterPageResponse(page: {
     list: AppChapterPageRow[]
-    total?: number
-    pageIndex?: number
+    total: number
+    pageIndex: number
     pageSize: number
-    hasMore?: boolean
-    nextCursor?: string | null
   }) {
     if (page.list.length === 0) {
       return { ...page, list: [] }
@@ -379,65 +375,6 @@ export class WorkChapterService {
         }
       }),
     }
-  }
-
-  private rejectUnsupportedAppChapterPagination(dto: QueryAppWorkChapterPageDto) {
-    const query = dto as unknown as Record<string, unknown>
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => query[field] !== undefined && query[field] !== null)
-
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `公开章节列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private encodeAppChapterCursor(chapter: Pick<AppChapterPageRow, 'id' | 'sortOrder'>) {
-    return Buffer.from(
-      JSON.stringify({
-        sortOrder: chapter.sortOrder,
-        id: chapter.id,
-      }),
-    ).toString('base64url')
-  }
-
-  private parseAppChapterCursor(cursor?: string | null) {
-    if (!cursor?.trim()) {
-      return undefined
-    }
-
-    try {
-      const parsed = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as { id?: unknown, sortOrder?: unknown }
-      const id = Number(parsed.id)
-      const sortOrder = Number(parsed.sortOrder)
-      if (
-        !Number.isInteger(id) ||
-        id <= 0 ||
-        !Number.isInteger(sortOrder)
-      ) {
-        throw new TypeError('invalid app chapter cursor payload')
-      }
-
-      return { id, sortOrder }
-    } catch {
-      throw new BadRequestException('章节分页游标非法')
-    }
-  }
-
-  private buildAppChapterCursorWhere(cursor: {
-    id: number
-    sortOrder: number
-  }) {
-    return or(
-      gt(this.workChapter.sortOrder, cursor.sortOrder),
-      and(
-        eq(this.workChapter.sortOrder, cursor.sortOrder),
-        gt(this.workChapter.id, cursor.id),
-      ),
-    )!
   }
 
   // 分页查询 admin 管理章节列表。

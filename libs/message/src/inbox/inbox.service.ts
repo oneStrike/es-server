@@ -1,24 +1,17 @@
-import type { SQL, SQLWrapper } from 'drizzle-orm'
 import type {
   InboxLatestChatSummary,
   InboxLatestNotificationRow,
 } from './inbox.type'
-import { Buffer } from 'node:buffer'
-import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm'
+import { DrizzleService, extractRows, toPageResult } from '@db/core'
+import { PageDto } from '@libs/platform/dto'
+import { Injectable } from '@nestjs/common'
+import { and, eq, gt, isNull, or, sql } from 'drizzle-orm'
 import { buildNotificationUnreadSummary } from '../notification/notification-unread.type'
 import {
   getMessageNotificationCategoryLabel,
   MessageNotificationCategoryKey,
 } from '../notification/notification.constant'
-import { QueryInboxTimelineDto } from './dto/inbox.dto'
 import { MessageInboxSummaryQueryService } from './inbox-summary-query.service'
-
-interface InboxTimelineCursor {
-  createdAt: Date
-  bizId: string
-}
 
 interface InboxTimelineCandidate {
   sourceType: 'notification' | 'chat'
@@ -195,199 +188,84 @@ export class MessageInboxService {
     }
   }
 
-  // 查询消息中心 timeline。两侧各取有界候选后在服务层归并，避免深页跳页扫描。
-  async getTimeline(userId: number, dto: QueryInboxTimelineDto) {
-    this.rejectUnsupportedTimelineQuery(dto)
-    const pageSize = this.normalizeTimelinePageSize(dto.pageSize)
+  // 查询消息中心 timeline。使用同一 union 查询完成排序、页深和总数语义。
+  async getTimeline(userId: number, dto: PageDto) {
+    const pageParams = this.drizzle.buildPageParams(dto, {
+      defaultPageSize: 15,
+      maxPageSize: 100,
+      allowlistedOrderBy: {
+        columns: {
+          createdAt: sql.raw('"createdAt"'),
+          bizId: sql.raw('"bizId"'),
+          id: sql.raw('"bizId"'),
+        },
+        fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      },
+    })
     const now = new Date()
-    const cursor = this.parseTimelineCursor(dto.cursor)
-    const notificationWhere = this.buildNotificationWhere(userId, now)
-    const candidateLimit = pageSize + 1
-    const [notificationRows, chatRows] = await Promise.all([
-      this.getNotificationTimelineCandidates(
-        notificationWhere,
-        cursor,
-        candidateLimit,
-      ),
-      this.getChatTimelineCandidates(userId, cursor, candidateLimit),
+    const notificationStartDateFilter = pageParams.dateRange?.gte
+      ? sql` AND un.created_at >= ${pageParams.dateRange.gte}`
+      : sql.empty()
+    const notificationEndDateFilter = pageParams.dateRange?.lt
+      ? sql` AND un.created_at < ${pageParams.dateRange.lt}`
+      : sql.empty()
+    const chatStartDateFilter = pageParams.dateRange?.gte
+      ? sql` AND cc.last_message_at >= ${pageParams.dateRange.gte}`
+      : sql.empty()
+    const chatEndDateFilter = pageParams.dateRange?.lt
+      ? sql` AND cc.last_message_at < ${pageParams.dateRange.lt}`
+      : sql.empty()
+
+    const timelineSourceSql = sql`
+      SELECT
+        'notification'::text AS "sourceType",
+        un.created_at AS "createdAt",
+        un.title AS "title",
+        un.content AS "content",
+        ('n:' || un.id::text) AS "bizId"
+      FROM user_notification un
+      WHERE un.receiver_user_id = ${userId}
+        AND un.is_hidden = false
+        AND (un.expires_at IS NULL OR un.expires_at > ${now})
+        ${notificationStartDateFilter}
+        ${notificationEndDateFilter}
+      UNION ALL
+      SELECT
+        'chat'::text AS "sourceType",
+        cc.last_message_at AS "createdAt",
+        '新聊天消息'::text AS "title",
+        COALESCE(cm.content, '') AS "content",
+        ('c:' || cc.id::text) AS "bizId"
+      FROM chat_conversation cc
+      INNER JOIN chat_conversation_member ccm
+        ON ccm.conversation_id = cc.id
+        AND ccm.user_id = ${userId}
+        AND ccm.left_at IS NULL
+        AND ccm.hidden_at IS NULL
+      LEFT JOIN chat_message cm ON cm.id = cc.last_message_id
+      WHERE cc.has_messages = true
+        AND cc.last_message_at IS NOT NULL
+        ${chatStartDateFilter}
+        ${chatEndDateFilter}
+    `
+    const [rowsResult, totalResult] = await Promise.all([
+      this.db.execute(sql`
+        SELECT *
+        FROM (${timelineSourceSql}) timeline
+        ORDER BY ${pageParams.order.orderByClause}
+        LIMIT ${pageParams.page.limit}
+        OFFSET ${pageParams.page.offset}
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::bigint AS "total"
+        FROM (${timelineSourceSql}) timeline
+      `),
     ])
+    const rows = extractRows<InboxTimelineCandidate>(rowsResult)
+    const [totalRow] = extractRows<{
+      total?: bigint | number | string | null
+    }>(totalResult)
 
-    const mergedCandidates = [...notificationRows, ...chatRows]
-      .flatMap((item): InboxTimelineCandidate[] =>
-        item.createdAt
-          ? [
-              {
-                sourceType: item.sourceType,
-                createdAt: item.createdAt,
-                title: item.title,
-                content: item.content ?? '',
-                bizId: item.bizId,
-              },
-            ]
-          : [],
-      )
-      .sort((left, right) => this.compareTimelineCandidates(left, right))
-    const pageItems = mergedCandidates.slice(0, pageSize)
-    const hasMore = mergedCandidates.length > pageSize
-    const nextCursor =
-      hasMore && pageItems.length
-        ? this.encodeTimelineCursor(pageItems[pageItems.length - 1])
-        : null
-
-    return {
-      list: pageItems,
-      hasMore,
-      nextCursor,
-      pageSize,
-    }
-  }
-
-  private getNotificationTimelineCandidates(
-    baseWhere: SQL | undefined,
-    cursor: InboxTimelineCursor | undefined,
-    limit: number,
-  ) {
-    const bizId = sql<string>`('n:' || ${this.notification.id}::text)`
-    const cursorWhere = this.buildTimelineCursorWhere(
-      this.notification.createdAt,
-      bizId,
-      cursor,
-    )
-
-    return this.db
-      .select({
-        sourceType: sql<'notification'>`'notification'::text`,
-        createdAt: this.notification.createdAt,
-        title: this.notification.title,
-        content: this.notification.content,
-        bizId,
-      })
-      .from(this.notification)
-      .where(cursorWhere ? and(baseWhere, cursorWhere) : baseWhere)
-      .orderBy(sql`${this.notification.createdAt} desc`, sql`${bizId} desc`)
-      .limit(limit)
-  }
-
-  private getChatTimelineCandidates(
-    userId: number,
-    cursor: InboxTimelineCursor | undefined,
-    limit: number,
-  ) {
-    const bizId = sql<string>`('c:' || ${this.conversation.id}::text)`
-    const cursorWhere = this.buildTimelineCursorWhere(
-      this.conversation.lastMessageAt,
-      bizId,
-      cursor,
-    )
-
-    return this.db
-      .select({
-        sourceType: sql<'chat'>`'chat'::text`,
-        createdAt: this.conversation.lastMessageAt,
-        title: sql<string>`'新聊天消息'::text`,
-        content: sql<string>`COALESCE(${this.drizzle.schema.chatMessage.content}, '')`,
-        bizId,
-      })
-      .from(this.conversation)
-      .innerJoin(
-        this.conversationMember,
-        and(
-          eq(this.conversationMember.conversationId, this.conversation.id),
-          eq(this.conversationMember.userId, userId),
-          isNull(this.conversationMember.leftAt),
-          isNull(this.conversationMember.hiddenAt),
-        ),
-      )
-      .leftJoin(
-        this.drizzle.schema.chatMessage,
-        eq(this.drizzle.schema.chatMessage.id, this.conversation.lastMessageId),
-      )
-      .where(
-        cursorWhere
-          ? and(isNotNull(this.conversation.lastMessageAt), cursorWhere)
-          : isNotNull(this.conversation.lastMessageAt),
-      )
-      .orderBy(sql`${this.conversation.lastMessageAt} desc`, sql`${bizId} desc`)
-      .limit(limit)
-  }
-
-  private buildTimelineCursorWhere(
-    createdAtSql: SQLWrapper,
-    bizIdSql: SQLWrapper,
-    cursor?: InboxTimelineCursor,
-  ): SQL | undefined {
-    if (!cursor) {
-      return undefined
-    }
-
-    return sql`(${createdAtSql} < ${cursor.createdAt} OR (${createdAtSql} = ${cursor.createdAt} AND ${bizIdSql} < ${cursor.bizId}))`
-  }
-
-  private compareTimelineCandidates(
-    left: InboxTimelineCandidate,
-    right: InboxTimelineCandidate,
-  ) {
-    const timeDiff = right.createdAt.getTime() - left.createdAt.getTime()
-    return timeDiff || right.bizId.localeCompare(left.bizId)
-  }
-
-  private encodeTimelineCursor(
-    item: Pick<InboxTimelineCandidate, 'bizId' | 'createdAt'>,
-  ) {
-    return Buffer.from(
-      JSON.stringify({
-        createdAt: item.createdAt.toISOString(),
-        bizId: item.bizId,
-      }),
-    ).toString('base64url')
-  }
-
-  private parseTimelineCursor(
-    cursor?: string | null,
-  ): InboxTimelineCursor | undefined {
-    if (!cursor?.trim()) {
-      return undefined
-    }
-
-    try {
-      const parsed = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as { bizId?: unknown, createdAt?: unknown }
-      const createdAt = new Date(String(parsed.createdAt))
-      if (
-        Number.isNaN(createdAt.getTime()) ||
-        typeof parsed.bizId !== 'string' ||
-        !/^[cn]:\d+$/.test(parsed.bizId)
-      ) {
-        throw new TypeError('invalid cursor payload')
-      }
-
-      return {
-        createdAt,
-        bizId: parsed.bizId,
-      }
-    } catch {
-      throw new BadRequestException('消息时间线游标非法')
-    }
-  }
-
-  private normalizeTimelinePageSize(pageSize?: number) {
-    const parsed = Number(pageSize ?? 15)
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-      return 15
-    }
-    return Math.min(parsed, 100)
-  }
-
-  private rejectUnsupportedTimelineQuery(dto: QueryInboxTimelineDto) {
-    const query = dto as Record<string, unknown>
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => query[field] !== undefined && query[field] !== null)
-
-    if (unsupportedFields.length) {
-      throw new BadRequestException(
-        `消息时间线仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
+    return toPageResult(rows, Number(totalRow?.total ?? 0), pageParams.page)
   }
 }

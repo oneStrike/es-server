@@ -1,6 +1,6 @@
-import { QueryAppTagCursorDto, TagOutputDto } from '@libs/content/tag/dto/tag.dto'
+import { QueryAppTagPageDto, TagOutputDto } from '@libs/content/tag/dto/tag.dto'
 import { WorkTagService } from '@libs/content/tag/tag.service'
-import { ApiCursorPageDoc, OptionalAuth } from '@libs/platform/decorators'
+import { ApiPageDoc, OptionalAuth } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -11,11 +11,11 @@ export class WorkTagController {
 
   @Get('page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询作品标签列表',
     model: TagOutputDto,
   })
-  async getTagPage(@Query() query: QueryAppTagCursorDto) {
-    return this.tagService.getAppTagCursorPage(query)
+  async getTagPage(@Query() query: QueryAppTagPageDto) {
+    return this.tagService.getAppTagPage(query)
   }
 }

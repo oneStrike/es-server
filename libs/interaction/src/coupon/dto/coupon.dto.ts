@@ -6,13 +6,16 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
-import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import {
   CouponInstanceStatusEnum,
   CouponRedemptionTargetTypeEnum,
-  CouponSourceTypeEnum,
   CouponTypeEnum,
   CouponWorkflowType,
 } from '../coupon.constant'
@@ -187,10 +190,7 @@ export class UpdateCouponDefinitionDto extends IntersectionType(
 export class QueryCouponDefinitionDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseCouponDefinitionDto, [
-      'couponType',
-      'isEnabled',
-    ] as const),
+    PickType(BaseCouponDefinitionDto, ['couponType', 'isEnabled'] as const),
   ),
 ) {}
 
@@ -336,7 +336,7 @@ export class UserCouponItemDto extends BaseDto {
   expiresAt!: Date | null
 }
 
-export class QueryUserCouponDto extends CursorPageSizeDto {
+export class QueryUserCouponDto extends PageDto {
   @EnumProperty({
     description: '券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）',
     enum: CouponTypeEnum,
@@ -344,13 +344,6 @@ export class QueryUserCouponDto extends CursorPageSizeDto {
     required: false,
   })
   couponType?: CouponTypeEnum
-
-  @StringProperty({
-    description: '下一页游标；按券状态桶、过期时间和 ID 翻页',
-    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
 }
 
 export class RedeemCouponBodyDto {

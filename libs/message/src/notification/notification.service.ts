@@ -1,9 +1,9 @@
 import type { SQL } from 'drizzle-orm'
-import type { QueryUserNotificationCursorDto } from './dto/notification.dto'
+import type { QueryUserNotificationPageDto } from './dto/notification.dto'
 import type { NotificationActorSource } from './notification-public.mapper'
-import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
+import { DrizzleService, toPageResult } from '@db/core'
+import { Injectable } from '@nestjs/common'
+import { and, eq, gt, gte, inArray, isNull, lt, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { normalizeMessageNotificationCategoryKeysFilter } from './notification-category-key-filter.util'
 import { mapUserNotificationToPublicView } from './notification-public.mapper'
@@ -31,12 +31,14 @@ export class MessageNotificationService {
 
   async queryUserNotificationList(
     receiverUserId: number,
-    queryDto: QueryUserNotificationCursorDto,
+    queryDto: QueryUserNotificationPageDto,
   ) {
-    this.assertCursorPageQuery(queryDto)
+    const pageParams = this.drizzle.buildPageParams(queryDto, {
+      table: this.notification,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      maxPageSize: 100,
+    })
     const { isRead, categoryKeys } = queryDto
-    const pageSize = this.normalizeCursorPageSize(queryDto.pageSize, 15, 100)
-    const cursor = this.parseTimelineCursor(queryDto.cursor)
     const conditions: Array<SQL | undefined> = [
       this.buildActiveNotificationWhere(receiverUserId),
     ]
@@ -51,24 +53,29 @@ export class MessageNotificationService {
         inArray(this.notification.categoryKey, normalizedCategoryKeys),
       )
     }
-    if (cursor) {
+    if (pageParams.dateRange?.gte) {
       conditions.push(
-        sql`(${this.notification.createdAt} < ${cursor.createdAt} OR (${this.notification.createdAt} = ${cursor.createdAt} AND ${this.notification.id} < ${cursor.id}))`,
+        gte(this.notification.createdAt, pageParams.dateRange.gte),
       )
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.notification.createdAt, pageParams.dateRange.lt))
     }
 
     const where = and(...conditions)
-    const rows = await this.db
-      .select()
-      .from(this.notification)
-      .where(where)
-      .orderBy(desc(this.notification.createdAt), desc(this.notification.id))
-      .limit(pageSize + 1)
-    const hasMore = rows.length > pageSize
-    const pageRows = rows.slice(0, pageSize)
+    const [rows, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.notification)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.notification, where),
+    ])
     const actorUserIds = [
       ...new Set(
-        pageRows
+        rows
           .map((item) => item.actorUserId)
           .filter((item): item is number => typeof item === 'number'),
       ),
@@ -89,21 +96,14 @@ export class MessageNotificationService {
           })
         : []
     const actorMap = new Map(actors.map((item) => [item.id, item]))
-    const list = pageRows.map((item) =>
+    const list = rows.map((item) =>
       mapUserNotificationToPublicView(
         item,
         this.resolveNotificationActor(actorMap, item.actorUserId),
       ),
     )
 
-    return {
-      list,
-      pageSize,
-      hasMore,
-      nextCursor: hasMore
-        ? this.encodeTimelineCursor(pageRows[pageRows.length - 1])
-        : null,
-    }
+    return toPageResult(list, total, pageParams.page)
   }
 
   async getUnreadCount(receiverUserId: number) {
@@ -226,62 +226,5 @@ export class MessageNotificationService {
     }
 
     return actorMap.get(actorUserId)
-  }
-
-  private encodeTimelineCursor(item: { createdAt: Date; id: number }) {
-    return Buffer.from(
-      JSON.stringify({
-        createdAt: item.createdAt.toISOString(),
-        id: item.id,
-      }),
-    ).toString('base64url')
-  }
-
-  private parseTimelineCursor(cursor?: string | null) {
-    if (!cursor?.trim()) {
-      return undefined
-    }
-
-    try {
-      const payload = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as Partial<{ createdAt: unknown; id: unknown }>
-      if (
-        typeof payload.createdAt !== 'string' ||
-        !Number.isInteger(payload.id) ||
-        Number(payload.id) <= 0
-      ) {
-        throw new TypeError('invalid cursor payload')
-      }
-      const createdAt = new Date(payload.createdAt)
-      if (Number.isNaN(createdAt.getTime())) {
-        throw new TypeError('invalid cursor payload')
-      }
-      return { createdAt, id: Number(payload.id) }
-    } catch {
-      throw new BadRequestException('cursor 格式无效')
-    }
-  }
-
-  private assertCursorPageQuery(dto: object) {
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => Object.prototype.hasOwnProperty.call(dto, field))
-
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `通知列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private normalizeCursorPageSize(
-    pageSize: number | undefined,
-    defaultPageSize: number,
-    maxPageSize: number,
-  ) {
-    const value = Number.isFinite(Number(pageSize))
-      ? Math.floor(Number(pageSize))
-      : defaultPageSize
-    return Math.min(Math.max(1, value), maxPageSize)
   }
 }

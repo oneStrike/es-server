@@ -5,11 +5,7 @@ import {
   RedeemCouponBodyDto,
   UserCouponItemDto,
 } from '@libs/interaction/coupon/dto/coupon.dto'
-import {
-  ApiCursorPageDoc,
-  ApiDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -20,7 +16,7 @@ export class CouponController {
 
   // 分页查询当前用户券包。
   @Get('my/page')
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页查询我的券包',
     model: UserCouponItemDto,
   })

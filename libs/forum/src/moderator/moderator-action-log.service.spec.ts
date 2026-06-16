@@ -123,6 +123,18 @@ function createActionLogService() {
       pageIndex: 1,
       pageSize: 15,
     })),
+    buildPageParams: jest.fn(() => ({
+      page: {
+        limit: 15,
+        offset: 0,
+        pageIndex: 1,
+        pageSize: 15,
+      },
+      order: {
+        orderBySql: ['createdAtDesc'],
+      },
+      dateRange: undefined,
+    })),
     withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
   }
   const service = new ForumModeratorActionLogService(drizzle as any)
@@ -132,7 +144,7 @@ function createActionLogService() {
 
 describe('ForumModeratorActionLogService query', () => {
   it('forces app self-audit queries to the current moderator and strips snapshots', async () => {
-    const { drizzle, service } = createActionLogService()
+    const { drizzle, selectRecorder, service } = createActionLogService()
     const buildQueryWhereSpy = jest.spyOn(
       service as unknown as {
         buildQueryWhere: (query: { moderatorId?: number }) => unknown
@@ -150,15 +162,27 @@ describe('ForumModeratorActionLogService query', () => {
       expect.objectContaining({
         moderatorId: 5,
       }),
+      null,
+    )
+    expect(drizzle.buildPageParams).toHaveBeenCalledWith(
+      expect.objectContaining({
+        moderatorId: 5,
+      }),
+      expect.any(Object),
     )
     expect(drizzle.buildOrderBy).not.toHaveBeenCalled()
     expect(page).toEqual(
       expect.objectContaining({
-        hasMore: false,
-        nextCursor: null,
+        total: 1,
+        pageIndex: 1,
         pageSize: 15,
       }),
     )
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
+    expect(selectRecorder.limit).toHaveBeenCalledWith(15)
+    expect(selectRecorder.offset).toHaveBeenCalledWith(0)
+    expect(drizzle.db.$count).toHaveBeenCalled()
     expect(page.list[0]).toEqual(
       expect.not.objectContaining({
         beforeData: expect.anything(),

@@ -1,8 +1,6 @@
 import { NumberProperty, StringProperty } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
-import { CursorPageDto } from '../../growth/dto/cursor-page.dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -54,7 +52,7 @@ export class QueryTaskDefinitionPageDto extends IntersectionType(
 ) {}
 
 export class QueryAvailableTaskPageDto extends IntersectionType(
-  CursorPageDto,
+  PageDto,
   PartialType(TaskAvailablePageFilterFieldsDto),
 ) {}
 
@@ -64,7 +62,7 @@ export class QueryTaskInstancePageDto extends IntersectionType(
 ) {}
 
 export class QueryMyTaskPageDto extends IntersectionType(
-  CursorPageDto,
+  PageDto,
   PartialType(TaskMyPageFilterFieldsDto),
 ) {}
 

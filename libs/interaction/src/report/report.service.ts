@@ -4,9 +4,7 @@ import type {
   UserReportSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import type {
-  ReportDispositionResult,
-} from './interfaces/report-target-resolver.interface'
+import type { ReportDispositionResult } from './interfaces/report-target-resolver.interface'
 import type {
   CreateUserReportOptions,
   CreateUserReportPayload,
@@ -22,13 +20,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, desc, eq, exists, gte, inArray, isNull, lt, or } from 'drizzle-orm'
-import {
-  assertCursorOnlyQuery,
-  encodeCreatedAtIdCursor,
-  parseCreatedAtIdCursor,
-  toCursorPageResult,
-} from '../favorite/cursor-pagination.helper'
+import { and, desc, eq, exists, gte, inArray, isNull, lt } from 'drizzle-orm'
 import {
   CreateReportCommandDto,
   HandleAdminReportCommandDto,
@@ -45,6 +37,10 @@ import {
   ReportStatusEnum,
   ReportTargetTypeEnum,
 } from './report.constant'
+
+type UserReportWithDispositionEvents = UserReportSelect & {
+  dispositionEvents?: ReportDispositionResult[]
+}
 
 /**
  * 举报服务
@@ -203,9 +199,11 @@ export class ReportService {
    * @returns 分页举报记录
    */
   async getUserReports(query: QueryMyReportPageCommandDto) {
-    assertCursorOnlyQuery(query, '我的举报列表')
     const conditions: SQL[] = [eq(this.userReport.reporterId, query.reporterId)]
-    const cursor = parseCreatedAtIdCursor(query.cursor, '我的举报列表')
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.userReport,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
 
     if (query.targetType !== undefined) {
       conditions.push(eq(this.userReport.targetType, query.targetType))
@@ -219,29 +217,25 @@ export class ReportService {
     if (query.status !== undefined) {
       conditions.push(eq(this.userReport.status, query.status))
     }
-    if (cursor) {
-      conditions.push(
-        or(
-          lt(this.userReport.createdAt, cursor.createdAt),
-          and(
-            eq(this.userReport.createdAt, cursor.createdAt),
-            lt(this.userReport.id, cursor.id),
-          ),
-        )!,
-      )
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(this.userReport.createdAt, pageParams.dateRange.gte))
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.userReport.createdAt, pageParams.dateRange.lt))
     }
 
     const where = and(...conditions)
-    const pageQuery = this.drizzle.buildPage({ pageSize: query.pageSize })
-    const rows = await this.db
-      .select()
-      .from(this.userReport)
-      .where(where)
-      .orderBy(desc(this.userReport.createdAt), desc(this.userReport.id))
-      .limit(pageQuery.limit + 1)
-    const page = toCursorPageResult(rows, pageQuery.limit, (item) =>
-      encodeCreatedAtIdCursor(item),
-    )
+    const [rows, total] = await Promise.all([
+      this.db
+        .select()
+        .from(this.userReport)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.userReport, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     if (page.list.length === 0) {
       return page
@@ -371,7 +365,9 @@ export class ReportService {
       )
     }
     if (query.dispositionStatus !== undefined) {
-      if (query.dispositionStatus === ReportDispositionStatusFilterEnum.FAILED) {
+      if (
+        query.dispositionStatus === ReportDispositionStatusFilterEnum.FAILED
+      ) {
         conditions.push(
           exists(
             this.db
@@ -585,11 +581,7 @@ export class ReportService {
     this.ensureCanHandleReportStatus(current.status, input.status)
     this.ensureTargetActionMatchesReport(current, input)
 
-    let handledReport:
-      | (UserReportSelect & {
-          dispositionEvents?: ReportDispositionResult[]
-        })
-        | null = null
+    let handledReport: UserReportWithDispositionEvents | null = null
 
     try {
       handledReport = await this.drizzle.withErrorHandling(async () =>
@@ -637,8 +629,7 @@ export class ReportService {
             ({
               applied: false,
               message:
-                targetActionStatus ===
-                ReportDispositionStatusEnum.NOT_REQUIRED
+                targetActionStatus === ReportDispositionStatusEnum.NOT_REQUIRED
                   ? '无需目标处置'
                   : '目标处置已完成',
             } satisfies Record<string, unknown>)
@@ -789,10 +780,7 @@ export class ReportService {
   private isSameFinalDisposition(
     report: Pick<
       UserReportSelect,
-      | 'status'
-      | 'targetAction'
-      | 'targetActionReason'
-      | 'targetActionStatus'
+      'status' | 'targetAction' | 'targetActionReason' | 'targetActionStatus'
     >,
     input: HandleAdminReportCommandDto,
   ) {

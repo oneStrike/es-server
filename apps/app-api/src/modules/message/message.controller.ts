@@ -3,33 +3,30 @@ import { MessageChatUploadService } from '@libs/message/chat/chat-upload.service
 import { MessageChatService } from '@libs/message/chat/chat.service'
 import {
   ChatConversationDto,
-  ChatConversationListResponseDto,
   ChatConversationMessagesResponseDto,
   HideChatConversationDto,
   MarkConversationReadDto,
   OpenDirectConversationDto,
   PinChatConversationDto,
-  QueryChatConversationListDto,
   QueryChatConversationMessagesDto,
 } from '@libs/message/chat/dto/chat.dto'
 import {
   InboxSummaryDto,
-  InboxTimelineResponseDto,
-  QueryInboxTimelineDto,
+  InboxTimelineItemDto,
 } from '@libs/message/inbox/dto/inbox.dto'
 import { MessageInboxService } from '@libs/message/inbox/inbox.service'
+import { BaseNotificationUnreadDto } from '@libs/message/notification/dto/notification-unread.dto'
 import {
-  QueryUserNotificationCursorDto,
+  BaseUserNotificationDto,
+  QueryUserNotificationPageDto,
   UpdateUserNotificationPreferencesDto,
-  UserNotificationCursorResponseDto,
   UserNotificationPreferenceListDto,
 } from '@libs/message/notification/dto/notification.dto'
-import { BaseNotificationUnreadDto } from '@libs/message/notification/dto/notification-unread.dto'
 import { MessageNotificationPreferenceService } from '@libs/message/notification/notification-preference.service'
 import { MessageNotificationService } from '@libs/message/notification/notification.service'
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto'
 
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
@@ -47,12 +44,12 @@ export class MessageController {
   ) {}
 
   @Get('notification/page')
-  @ApiDoc({
-    summary: '游标查询站内通知',
-    model: UserNotificationCursorResponseDto,
+  @ApiPageDoc({
+    summary: '分页查询站内通知',
+    model: BaseUserNotificationDto,
   })
   async list(
-    @Query() query: QueryUserNotificationCursorDto,
+    @Query() query: QueryUserNotificationPageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageNotificationService.queryUserNotificationList(
@@ -143,12 +140,12 @@ export class MessageController {
   }
 
   @Get('chat/conversation/page')
-  @ApiDoc({
-    summary: '游标查询会话列表',
-    model: ChatConversationListResponseDto,
+  @ApiPageDoc({
+    summary: '分页查询会话列表',
+    model: ChatConversationDto,
   })
   async conversationList(
-    @Query() query: QueryChatConversationListDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageChatService.getConversationList(userId, query)
@@ -222,12 +219,12 @@ export class MessageController {
   }
 
   @Get('inbox/timeline/page')
-  @ApiDoc({
-    summary: '游标查询消息中心时间线',
-    model: InboxTimelineResponseDto,
+  @ApiPageDoc({
+    summary: '分页查询消息中心时间线',
+    model: InboxTimelineItemDto,
   })
   async inboxTimeline(
-    @Query() query: QueryInboxTimelineDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageInboxService.getTimeline(userId, query)

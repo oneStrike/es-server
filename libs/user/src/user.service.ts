@@ -1,14 +1,14 @@
 import type { AppUserSelect } from '@db/schema'
+import type { SQL } from 'drizzle-orm'
 import type { AppUserCountSnapshot } from './app-user-count.type'
 import type {
   AppUserAccessCheckResult,
   UserBanAccessSource,
   UserBanGuardSource,
   UserGrowthSnapshot,
-  UserMentionCandidatePageResult,
   UserStatusSource,
 } from './user.type'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -17,8 +17,8 @@ import {
   AppUserAccessMessages,
   UserStatusEnum,
 } from '@libs/user/app-user.constant'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { Injectable } from '@nestjs/common'
+import { and, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
 import { AppUserResponseDto } from './dto/base-app-user.dto'
 import {
@@ -198,121 +198,61 @@ export class UserService {
 
   // 分页查询提及候选用户。
   // 空关键字直接返回空页，避免把接口误用成通用用户搜索。
-  async queryMentionCandidates(
-    query: QueryUserMentionPageDto,
-  ): Promise<UserMentionCandidatePageResult> {
-    this.assertMentionCursorPageQuery(query)
+  async queryMentionCandidates(query: QueryUserMentionPageDto) {
+    const pageParams = this.drizzle.buildPageParams(query, {
+      defaultPageSize: 10,
+      maxPageSize: 20,
+      allowlistedOrderBy: {
+        columns: {
+          nickname: this.appUser.nickname,
+          account: this.appUser.account,
+          id: this.appUser.id,
+        },
+        fallbackOrderBy: [
+          { nickname: 'asc' },
+          { account: 'asc' },
+          { id: 'asc' },
+        ],
+      },
+    })
     const keyword = query.q?.trim()
-    const pageSize = this.normalizeCursorPageSize(query.pageSize, 10, 20)
 
     if (!keyword) {
-      return {
-        list: [],
-        pageSize,
-        hasMore: false,
-        nextCursor: null,
-      }
+      return toPageResult([], 0, pageParams.page)
     }
 
-    const cursor = this.parseMentionCursor(query.cursor)
-    const condition = and(
+    const conditions: SQL[] = [
       eq(this.appUser.isEnabled, true),
       isNull(this.appUser.deletedAt),
-      buildILikeCondition(this.appUser.nickname, keyword),
-      cursor
-        ? sql`(${this.appUser.nickname} > ${cursor.nickname} OR (${this.appUser.nickname} = ${cursor.nickname} AND ${this.appUser.account} > ${cursor.account}) OR (${this.appUser.nickname} = ${cursor.nickname} AND ${this.appUser.account} = ${cursor.account} AND ${this.appUser.id} > ${cursor.id}))`
-        : undefined,
-    )
-
-    const rows = await this.db
-      .select({
-        id: this.appUser.id,
-        account: this.appUser.account,
-        nickname: this.appUser.nickname,
-        avatarUrl: this.appUser.avatarUrl,
-      })
-      .from(this.appUser)
-      .where(condition)
-      .orderBy(
-        asc(this.appUser.nickname),
-        asc(this.appUser.account),
-        asc(this.appUser.id),
-      )
-      .limit(pageSize + 1)
-    const hasMore = rows.length > pageSize
-    const pageRows = rows.slice(0, pageSize)
-
-    return {
-      list: pageRows.map(({ account: _account, ...item }) => item),
-      pageSize,
-      hasMore,
-      nextCursor: hasMore
-        ? this.encodeMentionCursor(pageRows[pageRows.length - 1])
-        : null,
+    ]
+    const keywordCondition = buildILikeCondition(this.appUser.nickname, keyword)
+    if (keywordCondition) {
+      conditions.push(keywordCondition)
     }
-  }
-
-  private encodeMentionCursor(item: {
-    nickname: string
-    account: string
-    id: number
-  }) {
-    return Buffer.from(
-      JSON.stringify({
-        nickname: item.nickname,
-        account: item.account,
-        id: item.id,
-      }),
-    ).toString('base64url')
-  }
-
-  private parseMentionCursor(cursor?: string | null) {
-    if (!cursor?.trim()) {
-      return undefined
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(this.appUser.createdAt, pageParams.dateRange.gte))
     }
-
-    try {
-      const payload = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as Partial<{ nickname: unknown; account: unknown; id: unknown }>
-      if (
-        typeof payload.nickname !== 'string' ||
-        typeof payload.account !== 'string' ||
-        !Number.isInteger(payload.id) ||
-        Number(payload.id) <= 0
-      ) {
-        throw new TypeError('invalid cursor payload')
-      }
-      return {
-        nickname: payload.nickname,
-        account: payload.account,
-        id: Number(payload.id),
-      }
-    } catch {
-      throw new BadRequestException('cursor 格式无效')
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.appUser.createdAt, pageParams.dateRange.lt))
     }
-  }
+    const where = and(...conditions)
 
-  private assertMentionCursorPageQuery(dto: object) {
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => Object.prototype.hasOwnProperty.call(dto, field))
+    const [rows, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.appUser.id,
+          nickname: this.appUser.nickname,
+          avatarUrl: this.appUser.avatarUrl,
+        })
+        .from(this.appUser)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.appUser, where),
+    ])
 
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `提及候选用户仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private normalizeCursorPageSize(
-    pageSize: number | undefined,
-    defaultPageSize: number,
-    maxPageSize: number,
-  ) {
-    const value = Number.isFinite(Number(pageSize))
-      ? Math.floor(Number(pageSize))
-      : defaultPageSize
-    return Math.min(Math.max(1, value), maxPageSize)
+    return toPageResult(rows, total, pageParams.page)
   }
 
   // 判断状态码是否属于禁言态。

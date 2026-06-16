@@ -1,10 +1,15 @@
-import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto';
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto';
-import { ContentTypeEnum } from '@libs/platform/constant';
-import { ArrayProperty, BooleanProperty, DateProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators';
-
-import { CursorPageSizeDto, PageDto } from '@libs/platform/dto/page.dto'
-import { UserIdDto } from '@libs/platform/dto/base.dto'
+import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
+import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
+import { ContentTypeEnum } from '@libs/platform/constant'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+} from '@libs/platform/decorators'
+import { PageDto, UserIdDto } from '@libs/platform/dto'
 
 import {
   IntersectionType,
@@ -51,16 +56,9 @@ export class BaseReadingStateDto extends UserIdDto {
 }
 
 export class QueryReadingHistoryDto extends IntersectionType(
-  CursorPageSizeDto,
+  PageDto,
   PickType(PartialType(BaseReadingStateDto), ['workId', 'workType'] as const),
-) {
-  @StringProperty({
-    description: '下一页游标；按最近阅读时间倒序和作品 ID 倒序翻页',
-    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA2LTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6MTAwfQ',
-    required: false,
-  })
-  cursor?: string
-}
+) {}
 
 export class QueryReadingHistoryCommandDto extends IntersectionType(
   QueryReadingHistoryDto,

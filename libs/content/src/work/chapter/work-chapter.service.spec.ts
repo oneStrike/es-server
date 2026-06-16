@@ -140,6 +140,20 @@ function createPaginationDb(list: unknown[] = []) {
       pageIndex: input.pageIndex ?? 1,
       pageSize: input.pageSize ?? 15,
     })),
+    buildPageParams: jest.fn(
+      (input: { pageIndex?: number; pageSize?: number }) => ({
+        page: {
+          limit: input.pageSize ?? 15,
+          offset: ((input.pageIndex ?? 1) - 1) * (input.pageSize ?? 15),
+          pageIndex: input.pageIndex ?? 1,
+          pageSize: input.pageSize ?? 15,
+        },
+        order: {
+          orderBySql: ['order-sql'],
+        },
+        dateRange: undefined,
+      }),
+    ),
     db: {
       $count: jest.fn(async () => list.length),
       select,
@@ -248,9 +262,11 @@ describe('WorkChapterService chapter page projection', () => {
         'requiredViewLevelId',
       ]),
     )
-    expect(drizzle.buildOrderBy).toHaveBeenCalledWith(
-      [{ sortOrder: 'asc' }, { id: 'asc' }],
-      expect.anything(),
+    expect(drizzle.buildPageParams).toHaveBeenCalledWith(
+      expect.objectContaining({ pageSize: 100, workId: 10 }),
+      expect.objectContaining({
+        fallbackOrderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      }),
     )
     expect(drizzle.pageQuery.orderBy).toHaveBeenCalledWith('order-sql')
     expect(

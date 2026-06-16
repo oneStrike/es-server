@@ -59,6 +59,38 @@ describe('UserService user center latest login geo', () => {
         vipExpiresAt: null,
       })),
     }
+    const userPointService = {
+      getUserPointStats: jest.fn(),
+      getAppPointRecordPage: jest.fn(async () => ({
+        list: [
+          {
+            bizKey: 'point:biz',
+            context: { privateTrace: 'trace-1' },
+            id: 1,
+            points: 5,
+          },
+        ],
+        pageIndex: 2,
+        pageSize: 10,
+        total: 1,
+      })),
+    }
+    const userExperienceService = {
+      getAppExperienceRecordPage: jest.fn(async () => ({
+        list: [
+          {
+            bizKey: 'experience:biz',
+            context: { privateTrace: 'trace-1' },
+            experience: 8,
+            id: 2,
+            updatedAt: new Date('2026-06-01T00:00:00.000Z'),
+          },
+        ],
+        pageIndex: 3,
+        pageSize: 20,
+        total: 1,
+      })),
+    }
     const taskService = {
       getUserTaskSummary: jest.fn(async () => ({
         unfinishedCount: 2,
@@ -92,13 +124,20 @@ describe('UserService user center latest login geo', () => {
       userCoreService as never,
       {} as never,
       userAssetsService as never,
-      {} as never,
-      {} as never,
+      userPointService as never,
+      userExperienceService as never,
       taskService as never,
       messageInboxService as never,
     )
 
-    return { service, userCoreService, userAssetsService, messageInboxService }
+    return {
+      service,
+      userCoreService,
+      userAssetsService,
+      userExperienceService,
+      userPointService,
+      messageInboxService,
+    }
   }
 
   it('returns a stable latest login geo object without leaking raw login fields', async () => {
@@ -224,6 +263,125 @@ describe('UserService user center latest login geo', () => {
     } else {
       process.env.NODE_ENV = originalNodeEnv
     }
+  })
+
+  it('delegates point records to the ApiPage app service contract', async () => {
+    const { service, userPointService } = createService()
+
+    const page = await service.getUserPointRecords(7, {
+      pageIndex: 2,
+      pageSize: 10,
+    })
+
+    expect(userPointService.getAppPointRecordPage).toHaveBeenCalledWith({
+      pageIndex: 2,
+      pageSize: 10,
+      userId: 7,
+    })
+    expect(page).toMatchObject({
+      list: [{ id: 1, points: 5 }],
+      pageIndex: 2,
+      pageSize: 10,
+      total: 1,
+    })
+    expect(page.list[0]).not.toHaveProperty('bizKey')
+    expect(page.list[0]).not.toHaveProperty('context')
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
+  })
+
+  it('delegates experience records to the ApiPage app service contract', async () => {
+    const { service, userExperienceService } = createService()
+
+    const page = await service.getUserExperienceRecords(7, {
+      pageIndex: 3,
+      pageSize: 20,
+    })
+
+    expect(
+      userExperienceService.getAppExperienceRecordPage,
+    ).toHaveBeenCalledWith({
+      pageIndex: 3,
+      pageSize: 20,
+      userId: 7,
+    })
+    expect(page).toMatchObject({
+      list: [{ experience: 8, id: 2 }],
+      pageIndex: 3,
+      pageSize: 20,
+      total: 1,
+    })
+    expect(page.list[0]).not.toHaveProperty('bizKey')
+    expect(page.list[0]).not.toHaveProperty('context')
+    expect(page.list[0]).not.toHaveProperty('updatedAt')
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
+  })
+
+  it('returns an ApiPage-style empty badge page without cursor output', async () => {
+    const userCoreService = {
+      ensureUserExists: jest.fn(async () => ({ id: 7 })),
+    }
+    const badgeQuery = {
+      from: jest.fn(() => ({
+        where: jest.fn(async () => []),
+      })),
+    }
+    const drizzle = {
+      buildPageParams: jest.fn(() => ({
+        page: {
+          limit: 10,
+          offset: 10,
+          pageIndex: 2,
+          pageSize: 10,
+        },
+        order: {
+          orderBySql: ['user_badge_assignment.created_at desc'],
+        },
+        dateRange: undefined,
+      })),
+      db: {
+        select: jest.fn(() => badgeQuery),
+      },
+      schema: {
+        userBadge: {
+          id: 'user_badge.id',
+          isEnabled: 'user_badge.is_enabled',
+          name: 'user_badge.name',
+          type: 'user_badge.type',
+        },
+        userBadgeAssignment: {
+          badgeId: 'user_badge_assignment.badge_id',
+          createdAt: 'user_badge_assignment.created_at',
+          userId: 'user_badge_assignment.user_id',
+        },
+      },
+    }
+    const service = new UserService(
+      drizzle as never,
+      userCoreService as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+
+    const page = await service.getUserBadges(7, {
+      pageIndex: 2,
+      pageSize: 10,
+    })
+
+    expect(userCoreService.ensureUserExists).toHaveBeenCalledWith(7)
+    expect(page).toEqual({
+      list: [],
+      pageIndex: 2,
+      pageSize: 10,
+      total: 0,
+    })
+    expect(page).not.toHaveProperty('hasMore')
+    expect(page).not.toHaveProperty('nextCursor')
   })
 
   it('validates phone-change codes with the binding templates', async () => {

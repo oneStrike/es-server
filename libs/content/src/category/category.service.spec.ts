@@ -1,7 +1,6 @@
 /// <reference types="jest" />
 
 import { workCategory } from '@db/schema'
-import { BadRequestException } from '@nestjs/common'
 import { WorkCategoryService } from './category.service'
 
 const now = new Date('2026-06-11T00:00:00.000Z')
@@ -27,23 +26,58 @@ function createSubject(rows: Array<typeof workCategory.$inferSelect>) {
     from: jest.fn(() => query),
     where: jest.fn(() => query),
     orderBy: jest.fn(() => query),
-    limit: jest.fn(async () => rows),
+    limit: jest.fn(() => query),
+    offset: jest.fn(async () => rows),
   }
   const drizzle = {
     db: {
       select: jest.fn(() => query),
-      $count: jest.fn(),
+      $count: jest.fn(async () => 3),
     },
     schema: {
       workCategory,
       workCategoryRelation: {},
       work: {},
     },
-    buildPage: jest.fn((queryDto: { pageSize?: number }) => ({
-      limit: queryDto.pageSize ?? 15,
-      offset: 0,
-      pageIndex: 1,
-      pageSize: queryDto.pageSize ?? 15,
+    buildPageParams: jest.fn(
+      (queryDto: {
+        pageIndex?: number
+        pageSize?: number
+        startDate?: string
+        endDate?: string
+      }) => ({
+        page: {
+          limit: queryDto.pageSize ?? 15,
+          offset: ((queryDto.pageIndex ?? 1) - 1) * (queryDto.pageSize ?? 15),
+          pageIndex: queryDto.pageIndex ?? 1,
+          pageSize: queryDto.pageSize ?? 15,
+        },
+        order: {
+          orderBySql: ['sort_order_asc', 'id_asc'],
+        },
+        dateRange:
+          queryDto.startDate || queryDto.endDate
+            ? {
+                gte: queryDto.startDate
+                  ? new Date('2026-06-01T00:00:00.000Z')
+                  : undefined,
+                lt: queryDto.endDate
+                  ? new Date('2026-06-03T00:00:00.000Z')
+                  : undefined,
+              }
+            : undefined,
+      }),
+    ),
+    buildPage: jest.fn(
+      (queryDto: { pageIndex?: number; pageSize?: number }) => ({
+        limit: queryDto.pageSize ?? 15,
+        offset: ((queryDto.pageIndex ?? 1) - 1) * (queryDto.pageSize ?? 15),
+        pageIndex: queryDto.pageIndex ?? 1,
+        pageSize: queryDto.pageSize ?? 15,
+      }),
+    ),
+    buildOrderBy: jest.fn(() => ({
+      orderBySql: ['sort_order_asc', 'id_asc'],
     })),
   }
 
@@ -54,82 +88,48 @@ function createSubject(rows: Array<typeof workCategory.$inferSelect>) {
   }
 }
 
-describe('WorkCategoryService app cursor pagination', () => {
-  it('uses sortOrder/id cursor result shape without exact count', async () => {
+describe('WorkCategoryService app pagination', () => {
+  it('returns an offset page with exact count', async () => {
     const rows = [
       createCategory({ id: 10, name: 'A', sortOrder: 1 }),
       createCategory({ id: 11, name: 'B', sortOrder: 1 }),
-      createCategory({ id: 12, name: 'C', sortOrder: 1 }),
     ]
     const { drizzle, query, service } = createSubject(rows)
 
-    const result = await service.getAppCategoryCursorPage({ pageSize: 2 })
-    const decodedCursor = JSON.parse(
-      Buffer.from(result.nextCursor, 'base64url').toString('utf8'),
-    )
-
-    expect(result).toMatchObject({
+    const result = await service.getAppCategoryPage({
+      contentType: '[1]',
+      pageIndex: 2,
       pageSize: 2,
-      hasMore: true,
+      startDate: '2026-06-01',
+      endDate: '2026-06-02',
+    })
+
+    expect(result).toEqual({
       list: [
-        { id: 10, sortOrder: 1 },
-        { id: 11, sortOrder: 1 },
+        { ...rows[0], contentType: null, description: null, icon: null },
+        { ...rows[1], contentType: null, description: null, icon: null },
       ],
+      total: 3,
+      pageIndex: 2,
+      pageSize: 2,
     })
-    expect(result).not.toHaveProperty('total')
-    expect(result).not.toHaveProperty('pageIndex')
-    expect(decodedCursor).toEqual({
-      sortOrder: 1,
-      id: 11,
-      context: {
-        name: null,
-        contentType: [],
-      },
-    })
-    expect(query.limit).toHaveBeenCalledWith(3)
-    expect(query.orderBy).toHaveBeenCalledWith(
+    expect(query.limit).toHaveBeenCalledWith(2)
+    expect(query.offset).toHaveBeenCalledWith(2)
+    expect(query.orderBy).toHaveBeenCalledWith('sort_order_asc', 'id_asc')
+    expect(drizzle.buildPageParams).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startDate: '2026-06-01',
+        endDate: '2026-06-02',
+      }),
+      expect.objectContaining({
+        table: workCategory,
+        fallbackOrderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      }),
+    )
+    expect(query.where).toHaveBeenCalledWith(expect.anything())
+    expect(drizzle.db.$count).toHaveBeenCalledWith(
+      workCategory,
       expect.anything(),
-      expect.anything(),
     )
-    expect(drizzle.db.$count).not.toHaveBeenCalled()
-  })
-
-  it('rejects invalid app category cursors', () => {
-    const { service } = createSubject([])
-
-    expect(() => service.parseCategoryCursor('not-base64-json')).toThrow(
-      BadRequestException,
-    )
-  })
-
-  it('rejects app category cursors when filter context changes', () => {
-    const { service } = createSubject([])
-    const context = service.buildCategoryCursorContext({
-      name: '  Manga ',
-      contentType: '[2,1,2]',
-    })
-    const cursor = service.encodeCategoryCursor(
-      createCategory({ id: 11, sortOrder: 1 }),
-      context,
-    )
-
-    expect(
-      service.parseCategoryCursor(
-        cursor,
-        service.buildCategoryCursorContext({
-          name: 'manga',
-          contentType: '[1,2]',
-        }),
-      ),
-    ).toEqual({ sortOrder: 1, id: 11 })
-    expect(() =>
-      service.parseCategoryCursor(
-        cursor,
-        service.buildCategoryCursorContext({
-          name: 'novel',
-          contentType: '[1,2]',
-        }),
-      ),
-    ).toThrow('查询条件不匹配')
   })
 })

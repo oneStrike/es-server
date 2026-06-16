@@ -2,7 +2,6 @@ import type { Db } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 
 import type { SQL } from 'drizzle-orm'
-import { Buffer } from 'node:buffer'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
@@ -13,8 +12,8 @@ import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, inArray, isNull, lt, or } from 'drizzle-orm'
+import { Injectable } from '@nestjs/common'
+import { and, asc, desc, eq, gte, inArray, isNull, lt } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import { QueryUserProfileListDto, UpdateUserStatusDto } from './dto/profile.dto'
 import {
@@ -229,23 +228,29 @@ export class UserProfileService {
       conditions.push(buildILikeCondition(this.appUser.nickname, nickname)!)
     }
 
-    const where = conditions.length > 0 ? and(...conditions) : undefined
-
-    const pageQuery = this.drizzle.buildPage(rest)
-    const orderQuery = this.drizzle.buildOrderBy(rest.orderBy, {
+    const pageParams = this.drizzle.buildPageParams(rest, {
       table: this.appUser,
+      fallbackOrderBy: [{ id: 'desc' }],
     })
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(this.appUser.createdAt, pageParams.dateRange.gte))
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.appUser.createdAt, pageParams.dateRange.lt))
+    }
+    const effectiveWhere =
+      conditions.length > 0 ? and(...conditions) : undefined
     const [profileRows, profileTotal] = await Promise.all([
       this.db
         .select()
         .from(this.appUser)
-        .where(where)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.appUser, where),
+        .where(effectiveWhere)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.appUser, effectiveWhere),
     ])
-    const page = toPageResult(profileRows, profileTotal, pageQuery)
+    const page = toPageResult(profileRows, profileTotal, pageParams.page)
     const userIds = page.list.map((item) => item.id)
     const counts = await this.getUserCountRowsByUserIds(userIds)
     const countMap = new Map(counts.map((item) => [item.userId, item]))
@@ -362,7 +367,6 @@ export class UserProfileService {
     viewerUserId?: number,
     query?: PublicUserProfileTopicPageQuery,
   ) {
-    this.rejectUnsupportedProfileTopicPagination(query)
     const targetUser = await this.getTopicUserBriefById(targetUserId)
     if (!targetUser) {
       throw new BusinessException(
@@ -371,20 +375,15 @@ export class UserProfileService {
       )
     }
 
-    const pageQuery = this.drizzle.buildPage({
-      pageSize: query?.pageSize,
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.forumTopic,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     })
-    const cursor = this.parseProfileTopicCursor(query?.cursor)
     const visibleSectionIds =
       await this.resolvePublicUserTopicVisibleSectionIds(viewerUserId, query)
 
     if (visibleSectionIds.length === 0) {
-      return {
-        list: [],
-        pageSize: pageQuery.pageSize,
-        hasMore: false,
-        nextCursor: null,
-      }
+      return toPageResult([], 0, pageParams.page)
     }
 
     const conditions: SQL[] = [
@@ -398,17 +397,14 @@ export class UserProfileService {
     if (query?.sectionId !== undefined) {
       conditions.push(eq(this.forumTopic.sectionId, query.sectionId))
     }
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(this.forumTopic.createdAt, pageParams.dateRange.gte))
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.forumTopic.createdAt, pageParams.dateRange.lt))
+    }
 
-    const where = and(
-      ...conditions,
-      ...(cursor ? [this.buildProfileTopicCursorWhere(cursor)] : []),
-    )
-    const order = this.drizzle.buildOrderBy(
-      [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
-      {
-        table: this.forumTopic,
-      },
-    )
+    const where = and(...conditions)
     const listQuery = this.db
       .select({
         id: this.forumTopic.id,
@@ -434,19 +430,13 @@ export class UserProfileService {
       })
       .from(this.forumTopic)
       .where(where)
-      .limit(pageQuery.limit + 1)
-    const rows = await listQuery.orderBy(...order.orderBySql)
-    const pageList = rows.slice(0, pageQuery.limit)
-    const hasMore = rows.length > pageQuery.limit
-    const page = {
-      list: pageList,
-      pageSize: pageQuery.pageSize,
-      hasMore,
-      nextCursor:
-        hasMore && pageList.length > 0
-          ? this.encodeProfileTopicCursor(pageList[pageList.length - 1])
-          : null,
-    }
+      .limit(pageParams.page.limit)
+      .offset(pageParams.page.offset)
+    const [rows, total] = await Promise.all([
+      listQuery.orderBy(...pageParams.order.orderBySql),
+      this.db.$count(this.forumTopic, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     if (page.list.length === 0) {
       return page
@@ -519,11 +509,10 @@ export class UserProfileService {
   // 查看我的论坛主题。
   // 返回当前用户全部未删除主题，并保留治理状态供自助管理使用。
   async getMyTopics(userId: number, query?: MyProfileTopicPageQuery) {
-    this.rejectUnsupportedProfileTopicPagination(query)
-    const pageQuery = this.drizzle.buildPage({
-      pageSize: query?.pageSize,
+    const pageParams = this.drizzle.buildPageParams(query, {
+      table: this.forumTopic,
+      fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     })
-    const cursor = this.parseProfileTopicCursor(query?.cursor)
     const conditions: SQL[] = [
       eq(this.forumTopic.userId, userId),
       isNull(this.forumTopic.deletedAt),
@@ -532,17 +521,14 @@ export class UserProfileService {
     if (query?.sectionId !== undefined) {
       conditions.push(eq(this.forumTopic.sectionId, query.sectionId))
     }
+    if (pageParams.dateRange?.gte) {
+      conditions.push(gte(this.forumTopic.createdAt, pageParams.dateRange.gte))
+    }
+    if (pageParams.dateRange?.lt) {
+      conditions.push(lt(this.forumTopic.createdAt, pageParams.dateRange.lt))
+    }
 
-    const where = and(
-      ...conditions,
-      ...(cursor ? [this.buildProfileTopicCursorWhere(cursor)] : []),
-    )
-    const order = this.drizzle.buildOrderBy(
-      [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
-      {
-        table: this.forumTopic,
-      },
-    )
+    const where = and(...conditions)
     const listQuery = this.db
       .select({
         id: this.forumTopic.id,
@@ -569,19 +555,13 @@ export class UserProfileService {
       })
       .from(this.forumTopic)
       .where(where)
-      .limit(pageQuery.limit + 1)
-    const rows = await listQuery.orderBy(...order.orderBySql)
-    const pageList = rows.slice(0, pageQuery.limit)
-    const hasMore = rows.length > pageQuery.limit
-    const page = {
-      list: pageList,
-      pageSize: pageQuery.pageSize,
-      hasMore,
-      nextCursor:
-        hasMore && pageList.length > 0
-          ? this.encodeProfileTopicCursor(pageList[pageList.length - 1])
-          : null,
-    }
+      .limit(pageParams.page.limit)
+      .offset(pageParams.page.offset)
+    const [rows, total] = await Promise.all([
+      listQuery.orderBy(...pageParams.order.orderBySql),
+      this.db.$count(this.forumTopic, where),
+    ])
+    const page = toPageResult(rows, total, pageParams.page)
 
     if (page.list.length === 0) {
       return page
@@ -647,60 +627,6 @@ export class UserProfileService {
       }
     })
     return { ...page, list }
-  }
-
-  private rejectUnsupportedProfileTopicPagination(
-    query?: PublicUserProfileTopicPageQuery | MyProfileTopicPageQuery,
-  ) {
-    const rawQuery = (query ?? {}) as unknown as Record<string, unknown>
-    const unsupportedFields = ['pageIndex', 'orderBy', 'startDate', 'endDate']
-      .filter((field) => rawQuery[field] !== undefined && rawQuery[field] !== null)
-
-    if (unsupportedFields.length > 0) {
-      throw new BadRequestException(
-        `公开用户主题列表仅支持 pageSize 和 cursor 查询，不支持 ${unsupportedFields.join(', ')}`,
-      )
-    }
-  }
-
-  private encodeProfileTopicCursor(topic: { createdAt: Date, id: number }) {
-    return Buffer.from(
-      JSON.stringify({
-        createdAt: topic.createdAt.toISOString(),
-        id: topic.id,
-      }),
-    ).toString('base64url')
-  }
-
-  private parseProfileTopicCursor(cursor?: string | null) {
-    if (!cursor?.trim()) {
-      return undefined
-    }
-
-    try {
-      const parsed = JSON.parse(
-        Buffer.from(cursor.trim(), 'base64url').toString('utf8'),
-      ) as { createdAt?: unknown, id?: unknown }
-      const createdAt = new Date(String(parsed.createdAt))
-      const id = Number(parsed.id)
-      if (Number.isNaN(createdAt.getTime()) || !Number.isInteger(id) || id <= 0) {
-        throw new TypeError('invalid profile topic cursor payload')
-      }
-
-      return { createdAt, id }
-    } catch {
-      throw new BadRequestException('用户主题分页游标非法')
-    }
-  }
-
-  private buildProfileTopicCursorWhere(cursor: { createdAt: Date, id: number }) {
-    return or(
-      lt(this.forumTopic.createdAt, cursor.createdAt),
-      and(
-        eq(this.forumTopic.createdAt, cursor.createdAt),
-        lt(this.forumTopic.id, cursor.id),
-      ),
-    )!
   }
 
   // 初始化用户资料。

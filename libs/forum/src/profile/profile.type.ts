@@ -60,7 +60,7 @@ export interface ProfileTopicSectionBrief {
  */
 export type PublicUserProfileTopicPageQuery = Pick<
   QueryPublicUserForumTopicDto,
-  'sectionId' | 'pageSize' | 'cursor'
+  'sectionId' | 'pageIndex' | 'pageSize'
 >
 
 /**
@@ -69,5 +69,5 @@ export type PublicUserProfileTopicPageQuery = Pick<
  */
 export type MyProfileTopicPageQuery = Pick<
   QueryMyForumTopicDto,
-  'sectionId' | 'pageSize' | 'cursor'
+  'sectionId' | 'pageIndex' | 'pageSize'
 >

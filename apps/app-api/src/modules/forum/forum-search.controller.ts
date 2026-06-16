@@ -4,7 +4,7 @@ import {
 } from '@libs/forum/search/dto/search.dto'
 import { ForumSearchService } from '@libs/forum/search/search.service'
 import {
-  ApiCursorPageDoc,
+  ApiPageDoc,
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
@@ -19,7 +19,7 @@ export class ForumSearchController {
 
   @Get('page')
   @OptionalAuth()
-  @ApiCursorPageDoc({
+  @ApiPageDoc({
     summary: '分页搜索论坛主题与回复',
     model: ForumSearchResultDto,
   })
