@@ -1,6 +1,76 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { INestApplication } from '@nestjs/common'
+import type {
+  OpenAPIObject,
+  ReferenceObject,
+  SchemaObject,
+} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+
+type SchemaOrReference = SchemaObject | ReferenceObject
+
+function isReferenceObject(
+  schema: SchemaOrReference,
+): schema is ReferenceObject {
+  return '$ref' in schema
+}
+
+function hasSingleReferenceAllOf(
+  allOf: SchemaObject['allOf'],
+): allOf is [ReferenceObject] {
+  return (
+    Array.isArray(allOf) &&
+    allOf.length === 1 &&
+    typeof allOf[0] === 'object' &&
+    allOf[0] !== null &&
+    '$ref' in allOf[0] &&
+    typeof allOf[0].$ref === 'string'
+  )
+}
+
+function normalizeNullableReferenceProperty(
+  property: SchemaOrReference,
+): SchemaOrReference {
+  if (isReferenceObject(property)) {
+    return property
+  }
+
+  if (property.nullable !== true || !hasSingleReferenceAllOf(property.allOf)) {
+    return property
+  }
+
+  const { allOf, type, ...restProperty } = property
+
+  return {
+    $ref: allOf[0].$ref,
+    ...restProperty,
+    nullable: true,
+  }
+}
+
+export function normalizeNullableReferenceSchemas(
+  document: OpenAPIObject,
+): OpenAPIObject {
+  const schemas = document.components?.schemas
+
+  if (!schemas) {
+    return document
+  }
+
+  for (const schema of Object.values(schemas as SchemaRecord)) {
+    if (isReferenceObject(schema) || !schema.properties) {
+      continue
+    }
+
+    for (const [propertyName, property] of Object.entries(schema.properties)) {
+      schema.properties[propertyName] = normalizeNullableReferenceProperty(
+        property as SchemaOrReference,
+      )
+    }
+  }
+
+  return document
+}
 
 /**
  * 配置 Swagger API 文档
@@ -21,6 +91,8 @@ export function setupSwagger(
     .setVersion(config.version)
     .build()
 
-  const adminDocument = SwaggerModule.createDocument(app, adminConfig, {})
+  const adminDocument = normalizeNullableReferenceSchemas(
+    SwaggerModule.createDocument(app, adminConfig, {}),
+  )
   SwaggerModule.setup(config.path, app, adminDocument)
 }
