@@ -8,6 +8,7 @@ import type { ReportDispositionResult } from './interfaces/report-target-resolve
 import type {
   CreateUserReportOptions,
   CreateUserReportPayload,
+  UserReportWithDispositionEvents,
 } from './report.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import {
@@ -37,10 +38,6 @@ import {
   ReportStatusEnum,
   ReportTargetTypeEnum,
 } from './report.constant'
-
-type UserReportWithDispositionEvents = UserReportSelect & {
-  dispositionEvents?: ReportDispositionResult[]
-}
 
 /**
  * 举报服务

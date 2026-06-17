@@ -2,12 +2,15 @@ import type { SQL } from 'drizzle-orm'
 import type {
   ConsumeCouponRedemptionInput,
   ConsumeCouponRedemptionResult,
+  CouponAbilityDefinition,
   CouponGrantSnapshot,
+  CouponGrantSnapshotSource,
   CouponInstanceLookupInput,
   CouponTx,
   GrantCouponsForSourceInput,
   GrantCouponsForSourceResult,
   ReserveDiscountCouponInput,
+  WritableCouponDefinition,
 } from '../coupon/types/coupon.type'
 import { createHash } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
@@ -42,16 +45,6 @@ import {
   RedeemCouponCommandDto,
   UpdateCouponDefinitionDto,
 } from '../coupon/dto/coupon.dto'
-
-interface WritableCouponDefinition {
-  couponType: CouponTypeEnum
-  targetScope: CouponTargetScopeEnum
-  usageLimit: number
-  discountAmount: number
-  discountRateBps: number
-  benefitDays: number
-  benefitCount: number
-}
 
 @Injectable()
 export class CouponService {
@@ -536,15 +529,7 @@ export class CouponService {
     return definition
   }
 
-  private assertCouponAbility(definition: {
-    couponType: CouponTypeEnum
-    targetScope: CouponTargetScopeEnum
-    usageLimit: number
-    discountAmount: number
-    discountRateBps: number
-    benefitDays: number
-    benefitCount: number
-  }) {
+  private assertCouponAbility(definition: CouponAbilityDefinition) {
     if (
       definition.couponType === CouponTypeEnum.READING &&
       (definition.targetScope !== CouponTargetScopeEnum.CHAPTER ||
@@ -590,17 +575,9 @@ export class CouponService {
     }
   }
 
-  private buildGrantSnapshot(definition: {
-    name: string
-    couponType: CouponTypeEnum
-    targetScope: CouponTargetScopeEnum
-    usageLimit: number
-    discountRateBps: number
-    discountAmount: number
-    benefitDays: number
-    benefitCount: number
-    validDays: number
-  }): CouponGrantSnapshot {
+  private buildGrantSnapshot(
+    definition: CouponGrantSnapshotSource,
+  ): CouponGrantSnapshot {
     return {
       name: definition.name,
       couponType: definition.couponType,

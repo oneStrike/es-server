@@ -3,7 +3,7 @@ import { ApiDoc } from '@libs/platform/decorators'
 import {
   UploadFileDto,
   UploadResponseDto,
-} from '@libs/platform/modules/upload/dto/upload.dto'
+} from '@libs/platform/modules/upload/dto'
 import { UploadService } from '@libs/platform/modules/upload/upload.service'
 
 import { Controller, Post, Query, Req } from '@nestjs/common'

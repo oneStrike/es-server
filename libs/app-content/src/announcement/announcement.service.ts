@@ -1,7 +1,10 @@
-import type { AppAnnouncementSelect } from '@db/schema'
 import type { JsonValue } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
 import type { AnnouncementFanoutPort } from './announcement-fanout.port'
+import type {
+  AnnouncementOutputInput,
+  AnnouncementResponseRow,
+} from './announcement.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
 import { IdDto, PageDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
@@ -51,37 +54,6 @@ const DEFAULT_ENABLE_PLATFORM = [
   EnablePlatformEnum.APP,
   EnablePlatformEnum.MINI_PROGRAM,
 ]
-
-interface AnnouncementFanoutRuntimeFields {
-  fanoutDesiredEventKey: string | null
-  fanoutLastError: string | null
-  fanoutStatus: AnnouncementFanoutStatusEnum | null
-  fanoutUpdatedAt: Date | null
-}
-type AnnouncementInternalRuntimeColumn =
-  | 'notificationEndBoundaryAt'
-  | 'notificationFanoutDesiredEventKey'
-  | 'notificationFanoutLastError'
-  | 'notificationFanoutStatus'
-  | 'notificationFanoutTaskId'
-  | 'notificationFanoutUpdatedAt'
-  | 'notificationStartBoundaryAt'
-interface AnnouncementResponseRow
-  extends
-    Omit<AppAnnouncementSelect, AnnouncementInternalRuntimeColumn>,
-    AnnouncementFanoutRuntimeFields {}
-
-type AnnouncementOutputFieldSource = Pick<
-  AppAnnouncementSelect,
-  | 'enablePlatform'
-  | 'pageId'
-  | 'popupBackgroundImage'
-  | 'popupBackgroundPosition'
-  | 'publishEndTime'
-  | 'publishStartTime'
-  | 'summary'
->
-type AnnouncementOutputInput = Partial<AnnouncementOutputFieldSource>
 
 /**
  * 系统公告服务

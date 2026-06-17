@@ -13,10 +13,13 @@ import {
   UploadContentDto,
 } from '@libs/content/work/content/dto/content.dto'
 import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto'
-import { WorkflowJobDto, WorkflowJobIdDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
+import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
+import {
+  WorkflowJobDto,
+  WorkflowJobIdDto,
+} from '@libs/platform/modules/workflow/dto'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'

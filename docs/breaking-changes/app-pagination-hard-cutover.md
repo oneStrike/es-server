@@ -50,12 +50,18 @@
 
 ### Release Gate
 
-- 服务端发布时间窗口：`TBD / blocker`，必须由 product/release owner 在发版前补齐。
-- 最低客户端版本或 build：`TBD / blocker`，必须由 app 客户端 owner 在发版前补齐。
-- Owner sign-off：`TBD / blocker`，至少需要服务端 owner、app 客户端 owner、release owner 三方确认。
-- Rollback trigger：`TBD / blocker`，必须在发版前明确，例如旧客户端请求比例、分页错误率、关键页面不可用率或回滚窗口。
+- Release status: `blocked-before-release`。
+- Missing release inputs:
+  - 服务端发布时间窗口，由 product/release owner 在发版前补齐。
+  - 最低客户端版本或 build，由 app 客户端 owner 在发版前补齐。
+  - Owner sign-off，至少需要服务端 owner、app 客户端 owner、release owner 三方确认。
+  - Rollback trigger，必须在发版前明确旧客户端请求比例、分页错误率、关键页面不可用率或回滚窗口。
+  - 监控 dashboard 或查询链接，用于发布后巡检旧客户端请求、分页错误率、空页率和关键页面可用性。
 
-上述四项没有补齐前，不得把本次 hard cutover 标记为可发布。
+上述输入没有补齐并把 release status 更新为 `releasable` 前，本次 hard
+cutover 只能进入实现与验证，不得发布到生产。缺失发布治理输入不能通过旧
+cursor 入参、旧响应字段、兼容包装、双写双读、shadow DTO 或运行时 shim
+替代。
 
 ### Compatibility Model
 

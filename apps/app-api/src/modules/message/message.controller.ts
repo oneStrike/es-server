@@ -27,7 +27,7 @@ import { MessageNotificationService } from '@libs/message/notification/notificat
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto, PageDto } from '@libs/platform/dto'
-import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto'
+import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
 
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

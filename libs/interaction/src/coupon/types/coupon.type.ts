@@ -96,6 +96,7 @@ export interface GrantCouponsForSourceItem {
   created: boolean
 }
 
+/** 通用发券聚合结果，汇总本次发放条目与实际新建数量。 */
 export interface GrantCouponsForSourceResult {
   items: GrantCouponsForSourceItem[]
   createdCount: number
@@ -111,3 +112,20 @@ export interface ReserveDiscountCouponInput {
   targetId: number
   originalPrice: number
 }
+
+/** 券定义中可由规则归一化函数校正的可写字段集合。 */
+export interface WritableCouponDefinition {
+  couponType: CouponTypeEnum
+  targetScope: CouponTargetScopeEnum
+  usageLimit: number
+  discountAmount: number
+  discountRateBps: number
+  benefitDays: number
+  benefitCount: number
+}
+
+/** 券能力校验所需的规则字段视图。 */
+export type CouponAbilityDefinition = WritableCouponDefinition
+
+/** 券发放快照构造所需的券定义字段视图。 */
+export type CouponGrantSnapshotSource = Omit<CouponGrantSnapshot, 'issuedAt'>

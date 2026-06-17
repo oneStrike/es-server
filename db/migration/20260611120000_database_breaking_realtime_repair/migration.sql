@@ -176,45 +176,29 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  IF left(btrim(raw_content), 1) <> '[' THEN
-    RETURN NULL;
-  END IF;
-
   BEGIN
     parsed := raw_content::jsonb;
   EXCEPTION WHEN others THEN
-    RETURN NULL;
+    RAISE EXCEPTION
+      'work_chapter %.content is not valid comic JSON array',
+      chapter_id;
   END;
 
   IF jsonb_typeof(parsed) <> 'array' THEN
-    RETURN NULL;
+    RAISE EXCEPTION
+      'work_chapter %.content is not a comic JSON array',
+      chapter_id;
   END IF;
 
   RETURN parsed;
 END $$;
 --> statement-breakpoint
 UPDATE "work_chapter"
-SET "description" = left(btrim("content"), 1000)
+SET "comic_content_manifest" =
+  "__work_chapter_comic_content_to_jsonb"("content", "id")
 WHERE "work_type" = 1
   AND "content" IS NOT NULL
-  AND btrim("content") <> ''
-  AND ("description" IS NULL OR btrim("description") = '')
-  AND "__work_chapter_comic_content_to_jsonb"("content", "id") IS NULL;
---> statement-breakpoint
-WITH "comic_content_candidate" AS (
-  SELECT
-    "id",
-    "__work_chapter_comic_content_to_jsonb"("content", "id") AS "manifest"
-  FROM "work_chapter"
-  WHERE "work_type" = 1
-    AND "content" IS NOT NULL
-    AND "comic_content_manifest" IS NULL
-)
-UPDATE "work_chapter"
-SET "comic_content_manifest" = "comic_content_candidate"."manifest"
-FROM "comic_content_candidate"
-WHERE "work_chapter"."id" = "comic_content_candidate"."id"
-  AND "comic_content_candidate"."manifest" IS NOT NULL;
+  AND "comic_content_manifest" IS NULL;
 --> statement-breakpoint
 UPDATE "work_chapter"
 SET "novel_content_path" = "content"

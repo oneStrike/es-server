@@ -4,8 +4,6 @@
 
 This migration is destructive and must run in a controlled deployment window. It uses plain `ALTER TABLE` and `CREATE INDEX IF NOT EXISTS` statements because project migrations run as normal migration DDL, not as out-of-transaction online index jobs.
 
-Legacy `work_chapter.content` is removed. During the cutover, novel rows move the old value to `novel_content_path`; comic rows only move the old value to `comic_content_manifest` when it is already a JSON image-path array. Existing non-array comic text is preserved only as `description` when that field is empty, then the obsolete mixed-purpose `content` column is dropped.
-
 Expected lock-sensitive objects:
 
 - `work_chapter`
