@@ -12,8 +12,8 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  ValidateIf,
   ValidateBy,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'

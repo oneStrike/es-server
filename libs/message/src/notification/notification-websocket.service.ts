@@ -1,7 +1,7 @@
+import type { DbNotificationSubscription } from '@db/core'
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { AuthConfigInterface } from '@libs/platform/types'
-import type { DbNotificationSubscription } from '@db/core'
 import type { Notification } from 'pg'
 import type { WebSocket } from 'ws'
 import type { MessageChatService } from '../chat/chat.service'

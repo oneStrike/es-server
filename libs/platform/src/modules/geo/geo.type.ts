@@ -1,5 +1,4 @@
-import type { GeoRuntimeSource } from './geo.constant'
-import { GEO_RUNTIME_SOURCE } from './geo.constant'
+import type { GEO_RUNTIME_SOURCE, GeoRuntimeSource } from './geo.constant'
 
 /**
  * 属地来源常量。

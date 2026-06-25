@@ -1733,7 +1733,8 @@ export class MembershipService {
       pageConfigId?: number
       publishedAt?: Date | null
     },
-  >(agreement: TAgreement) {
+  >(agreement: TAgreement
+) {
     const { pageConfigId: _pageConfigId, publishedAt, ...output } = agreement
     return {
       ...output,

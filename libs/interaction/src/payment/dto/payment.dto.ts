@@ -270,8 +270,8 @@ export class PaymentProviderConfigOptionalWritableFieldsDto extends PartialType(
     'certMode',
     'sortOrder',
     'isEnabled',
-  ] as const,
-)) {}
+  ] as const,)
+) {}
 
 export class CreatePaymentProviderConfigDto extends IntersectionType(
   PaymentProviderConfigRequiredWritableFieldsDto,

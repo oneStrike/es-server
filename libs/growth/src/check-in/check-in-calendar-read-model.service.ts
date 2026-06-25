@@ -614,7 +614,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     if (distinctUserIds.length === 0) {
       return new Map<
         number,
-        { id: number; nickname?: string | null; avatarUrl?: string | null }
+        { id: number, nickname?: string | null, avatarUrl?: string | null }
       >()
     }
 

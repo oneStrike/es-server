@@ -6,7 +6,7 @@ export type CursorContextFingerprint = Record<string, CursorContextValue>
 
 export function normalizeCursorText(
   value: unknown,
-  options: { lowerCase?: boolean; emptyValue?: string | null } = {},
+  options: { lowerCase?: boolean, emptyValue?: string | null } = {},
 ): string | null {
   const emptyValue = options.emptyValue ?? null
   if (value === null || value === undefined) {

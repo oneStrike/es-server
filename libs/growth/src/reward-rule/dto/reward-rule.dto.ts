@@ -1,5 +1,4 @@
 import {
-  BooleanProperty,
   DateProperty,
   EnumProperty,
   NumberProperty,
@@ -124,7 +123,6 @@ export class QueryGrowthRewardRuleFilterDto extends PartialType(
     required: false,
   })
   status?: GrowthRewardRuleArchiveStatusEnum
-
 }
 
 export class QueryGrowthRewardRuleDto extends IntersectionType(

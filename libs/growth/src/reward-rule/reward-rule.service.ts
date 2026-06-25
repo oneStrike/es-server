@@ -1,5 +1,5 @@
-import type { SQL } from 'drizzle-orm'
 import type { GrowthRewardRuleSelect } from '@db/schema'
+import type { SQL } from 'drizzle-orm'
 import { DrizzleService, toPageResult } from '@db/core'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { BusinessErrorCode } from '@libs/platform/constant'

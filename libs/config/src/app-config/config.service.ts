@@ -32,7 +32,8 @@ export class AppConfigService {
    * 若数据库中尚未存在配置记录，会先落一条默认配置并返回，避免上层处理“未初始化”分支。
    */
   async findActiveConfig() {
-    const config = (await this.findLatestConfig()) ?? (await this.ensureActiveConfig())
+    const config =
+      (await this.findLatestConfig()) ?? (await this.ensureActiveConfig())
     return this.toAppConfigOutputDto(config)
   }
 
@@ -42,9 +43,6 @@ export class AppConfigService {
    * 若首次写入发生在空表状态，会先初始化默认配置，再在同一逻辑链路内更新目标字段。
    */
   async updateConfig(updateConfigDto: UpdateAppConfigDto, userId: number) {
-    const existingConfig =
-      (await this.findLatestConfig()) ?? (await this.ensureActiveConfig())
-
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -81,7 +79,9 @@ export class AppConfigService {
    */
   private async ensureActiveConfig() {
     return this.drizzle.withTransaction(async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${APP_CONFIG_INIT_LOCK_KEY})`)
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(${APP_CONFIG_INIT_LOCK_KEY})`,
+      )
 
       const existingConfig = await this.findLatestConfig(tx)
       if (existingConfig) {
