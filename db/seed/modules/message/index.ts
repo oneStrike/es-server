@@ -1,1 +1,0 @@
-export { seedMessageDomain } from './domain'

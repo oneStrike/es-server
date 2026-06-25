@@ -1,7 +1,3 @@
-/**
- * Auto-converted from legacy schema.
- */
-
 import { integer, snakeCase, timestamp, unique } from 'drizzle-orm/pg-core'
 
 /**

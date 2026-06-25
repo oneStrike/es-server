@@ -1,31 +1,26 @@
-import type { Pool, PoolClient } from 'pg'
+import type { Notification } from 'pg'
 import type { WebSocket } from 'ws'
-import { EventEmitter } from 'node:events'
 import { MessageWebSocketService } from './notification-websocket.service'
 
 const FANOUT_CHANNEL = 'message_ws_fanout'
 
-interface TestPoolClient extends PoolClient {
-  emit: EventEmitter['emit']
-  query: jest.Mock
-  release: jest.Mock
-}
-
-function createPoolClient(): TestPoolClient {
-  const client = new EventEmitter() as EventEmitter & {
-    query: jest.Mock
-    release: jest.Mock
-  }
-  client.query = jest.fn(async () => ({ rowCount: 0, rows: [] }))
-  client.release = jest.fn()
-  return client as TestPoolClient
+interface NotificationSubscriptionOptions {
+  channel: string
+  onNotification: (message: Notification) => void
+  onError?: (error: Error) => void
 }
 
 function createService() {
-  const listener = createPoolClient()
-  const pool = {
-    connect: jest.fn(async () => listener),
-    query: jest.fn(async () => ({ rowCount: 1, rows: [] })),
+  const subscription = {
+    close: jest.fn(async () => undefined),
+  }
+  let subscriptionOptions: NotificationSubscriptionOptions | undefined
+  const dbNotificationService = {
+    notify: jest.fn(async () => undefined),
+    subscribe: jest.fn(async (options: NotificationSubscriptionOptions) => {
+      subscriptionOptions = options
+      return subscription
+    }),
   }
   const configService = {
     get: jest.fn((key: string) => (key === 'upload' ? {} : undefined)),
@@ -44,10 +39,16 @@ function createService() {
     { get: jest.fn() } as never,
     monitorService as never,
     { getAppUserAccessCheck: jest.fn() } as never,
-    pool as unknown as Pool,
+    dbNotificationService as never,
   )
 
-  return { listener, monitorService, pool, service }
+  return {
+    dbNotificationService,
+    getSubscriptionOptions: () => subscriptionOptions,
+    monitorService,
+    service,
+    subscription,
+  }
 }
 
 function bindNativeUser(
@@ -69,20 +70,19 @@ async function flushAsyncWork() {
 }
 
 describe('MessageWebSocketService cross-instance fanout', () => {
-  it('publishes websocket events to PostgreSQL notify for remote app instances', () => {
-    const { pool, service } = createService()
+  it('publishes websocket events through DbNotificationService for remote app instances', async () => {
+    const { dbNotificationService, service } = createService()
 
     service.emitToUser(42, 'inbox.summary.updated', { totalUnreadCount: 3 })
+    await flushAsyncWork()
 
-    expect(pool.query).toHaveBeenCalledWith('SELECT pg_notify($1, $2)', [
+    expect(dbNotificationService.notify).toHaveBeenCalledWith(
       FANOUT_CHANNEL,
       expect.any(String),
-    ])
-    const call = pool.query.mock.calls[0] as unknown as [
-      string,
-      [string, string],
-    ]
-    const payload = JSON.parse(call[1][1])
+    )
+    const notifyCall = dbNotificationService.notify.mock
+      .calls[0] as unknown as [string, string]
+    const payload = JSON.parse(notifyCall[1])
     expect(payload).toMatchObject({
       userId: 42,
       event: 'inbox.summary.updated',
@@ -91,8 +91,29 @@ describe('MessageWebSocketService cross-instance fanout', () => {
     expect(typeof payload.sourceId).toBe('string')
   })
 
+  it('starts the cross-instance subscription only after the first local user binds', async () => {
+    const { dbNotificationService, service } = createService()
+    const client = {
+      readyState: 1,
+      send: jest.fn(),
+    } as unknown as WebSocket
+
+    service.initializeNativeClient(client)
+    expect(dbNotificationService.subscribe).not.toHaveBeenCalled()
+
+    bindNativeUser(service, client, 7)
+    await flushAsyncWork()
+
+    expect(dbNotificationService.subscribe).toHaveBeenCalledWith({
+      channel: FANOUT_CHANNEL,
+      onNotification: expect.any(Function),
+      onError: expect.any(Function),
+    })
+  })
+
   it('delivers remote fanout payloads to local clients without republishing', async () => {
-    const { listener, pool, service } = createService()
+    const { dbNotificationService, getSubscriptionOptions, service } =
+      createService()
 
     const client = {
       readyState: 1,
@@ -102,7 +123,7 @@ describe('MessageWebSocketService cross-instance fanout', () => {
     bindNativeUser(service, client, 7)
     await flushAsyncWork()
 
-    listener.emit('notification', {
+    getSubscriptionOptions()?.onNotification({
       channel: FANOUT_CHANNEL,
       payload: JSON.stringify({
         sourceId: 'remote-instance',
@@ -110,7 +131,7 @@ describe('MessageWebSocketService cross-instance fanout', () => {
         event: 'chat.conversation.update',
         payload: { conversationId: 10 },
       }),
-    })
+    } as Notification)
 
     expect(client.send).toHaveBeenCalledWith(
       JSON.stringify({
@@ -118,13 +139,12 @@ describe('MessageWebSocketService cross-instance fanout', () => {
         data: { conversationId: 10 },
       }),
     )
-    expect(pool.query).not.toHaveBeenCalled()
-
-    await service.onApplicationShutdown()
+    expect(dbNotificationService.notify).not.toHaveBeenCalled()
   })
 
   it('ignores fanout notifications published by the same app instance', async () => {
-    const { listener, pool, service } = createService()
+    const { dbNotificationService, getSubscriptionOptions, service } =
+      createService()
 
     const client = {
       readyState: 1,
@@ -135,7 +155,7 @@ describe('MessageWebSocketService cross-instance fanout', () => {
     await flushAsyncWork()
 
     const sourceId = (service as unknown as { instanceId: string }).instanceId
-    listener.emit('notification', {
+    getSubscriptionOptions()?.onNotification({
       channel: FANOUT_CHANNEL,
       payload: JSON.stringify({
         sourceId,
@@ -143,28 +163,28 @@ describe('MessageWebSocketService cross-instance fanout', () => {
         event: 'chat.conversation.update',
         payload: { conversationId: 10 },
       }),
-    })
+    } as Notification)
 
     expect(client.send).not.toHaveBeenCalled()
-    expect(pool.query).not.toHaveBeenCalled()
-
-    await service.onApplicationShutdown()
+    expect(dbNotificationService.notify).not.toHaveBeenCalled()
   })
 
   it('skips oversized PostgreSQL notify payloads', () => {
-    const { monitorService, pool, service } = createService()
+    const { dbNotificationService, monitorService, service } = createService()
 
     service.emitToUser(42, 'chat.message.created', {
       body: 'x'.repeat(8_000),
     })
 
-    expect(pool.query).not.toHaveBeenCalled()
+    expect(dbNotificationService.notify).not.toHaveBeenCalled()
     expect(monitorService.recordFanoutSkipped).toHaveBeenCalled()
   })
 
   it('records fanout publish failures for monitor visibility', async () => {
-    const { monitorService, pool, service } = createService()
-    pool.query.mockRejectedValueOnce(new Error('notify failed'))
+    const { dbNotificationService, monitorService, service } = createService()
+    dbNotificationService.notify.mockRejectedValueOnce(
+      new Error('notify failed'),
+    )
 
     service.emitToUser(42, 'chat.message.created', { body: 'hello' })
     await flushAsyncWork()
@@ -172,111 +192,8 @@ describe('MessageWebSocketService cross-instance fanout', () => {
     expect(monitorService.recordFanoutPublishFailed).toHaveBeenCalled()
   })
 
-  it('reconnects the fanout listener after listener errors while users are bound', async () => {
-    jest.useFakeTimers()
-    const { listener, pool, service } = createService()
-
-    const client = {
-      readyState: 1,
-      send: jest.fn(),
-    } as unknown as WebSocket
-    service.initializeNativeClient(client)
-    bindNativeUser(service, client, 7)
-    await flushAsyncWork()
-
-    const error = new Error('listener disconnected')
-    listener.emit('error', error)
-
-    expect(listener.release).toHaveBeenCalledWith(error)
-
-    jest.advanceTimersByTime(1_000)
-    await Promise.resolve()
-    await Promise.resolve()
-
-    expect(pool.connect).toHaveBeenCalledTimes(2)
-
-    jest.useRealTimers()
-    await service.onApplicationShutdown()
-  })
-
-  it('unlistens and releases the fanout listener on shutdown', async () => {
-    const { listener, service } = createService()
-    const client = {
-      readyState: 1,
-      send: jest.fn(),
-    } as unknown as WebSocket
-    service.initializeNativeClient(client)
-    bindNativeUser(service, client, 7)
-    await flushAsyncWork()
-
-    await service.onApplicationShutdown()
-
-    expect(listener.query).toHaveBeenCalledWith(`UNLISTEN ${FANOUT_CHANNEL}`)
-    expect(listener.release).toHaveBeenCalledWith()
-  })
-
-  it('releases a fanout listener that finishes connecting during shutdown', async () => {
-    const { listener, pool, service } = createService()
-    let resolveConnect!: (client: TestPoolClient) => void
-    pool.connect.mockImplementationOnce(
-      () =>
-        new Promise<TestPoolClient>((resolve) => {
-          resolveConnect = resolve
-        }),
-    )
-    const client = {
-      readyState: 1,
-      send: jest.fn(),
-    } as unknown as WebSocket
-
-    service.initializeNativeClient(client)
-    bindNativeUser(service, client, 7)
-    const shutdownPromise = service.onApplicationShutdown()
-    await flushAsyncWork()
-
-    expect(listener.release).not.toHaveBeenCalled()
-
-    resolveConnect(listener)
-    await shutdownPromise
-
-    expect(listener.query).toHaveBeenCalledWith(`LISTEN ${FANOUT_CHANNEL}`)
-    expect(listener.query).toHaveBeenCalledWith(`UNLISTEN ${FANOUT_CHANNEL}`)
-    expect(listener.release).toHaveBeenCalledWith()
-  })
-
-  it('retries the fanout listener when user binding follows an initial startup failure', async () => {
-    jest.useFakeTimers()
-    const { listener, pool, service } = createService()
-    pool.connect
-      .mockRejectedValueOnce(new Error('listener boot failed'))
-      .mockResolvedValueOnce(listener)
-
-    const client = {
-      readyState: 1,
-      send: jest.fn(),
-    } as unknown as WebSocket
-
-    service.initializeNativeClient(client)
-    await flushAsyncWork()
-    expect(pool.connect).not.toHaveBeenCalled()
-
-    bindNativeUser(service, client, 9)
-    await flushAsyncWork()
-
-    expect(pool.connect).toHaveBeenCalledTimes(1)
-
-    jest.advanceTimersByTime(1_000)
-    await flushAsyncWork()
-
-    expect(pool.connect).toHaveBeenCalledTimes(2)
-    expect(listener.query).toHaveBeenCalledWith(`LISTEN ${FANOUT_CHANNEL}`)
-
-    jest.useRealTimers()
-    await service.onApplicationShutdown()
-  })
-
-  it('releases the fanout listener when the last local user disconnects', async () => {
-    const { listener, service } = createService()
+  it('releases the cross-instance subscription when the last local user disconnects', async () => {
+    const { service, subscription } = createService()
     const client = {
       readyState: 1,
       send: jest.fn(),
@@ -289,7 +206,22 @@ describe('MessageWebSocketService cross-instance fanout', () => {
     service.unregisterNativeClient(client)
     await flushAsyncWork()
 
-    expect(listener.query).toHaveBeenCalledWith(`UNLISTEN ${FANOUT_CHANNEL}`)
-    expect(listener.release).toHaveBeenCalledWith()
+    expect(subscription.close).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes the active cross-instance subscription on shutdown', async () => {
+    const { service, subscription } = createService()
+    const client = {
+      readyState: 1,
+      send: jest.fn(),
+    } as unknown as WebSocket
+
+    service.initializeNativeClient(client)
+    bindNativeUser(service, client, 7)
+    await flushAsyncWork()
+
+    await service.onApplicationShutdown()
+
+    expect(subscription.close).toHaveBeenCalledTimes(1)
   })
 })

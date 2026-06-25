@@ -4,7 +4,7 @@ import process from 'node:process'
 import { ConfigService } from '@nestjs/config'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { relations } from '../relations'
+import { relations } from './drizzle-relations'
 
 // Internal raw pg Pool token. Keep it out of @db/core's public barrel; inject it
 // only for driver-level features such as LISTEN/NOTIFY or lifecycle management.

@@ -1,7 +1,7 @@
 import { defineRelationsPart } from 'drizzle-orm'
-import * as schema from '../schema'
+import * as schema from '@db/schema'
 
-export const systemRelations = defineRelationsPart(schema, r => ({
+export const systemRelations = defineRelationsPart(schema, (r) => ({
   domainEvent: {
     dispatches: r.many.domainEventDispatch(),
   },

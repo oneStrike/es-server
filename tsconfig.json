@@ -6,8 +6,8 @@
     "experimentalDecorators": true,
     "module": "commonjs",
     "paths": {
-      "@db": ["./db"],
-      "@db/*": ["./db/*"],
+      "@db/core": ["./db/core"],
+      "@db/schema": ["./db/schema"],
       "@libs/platform/*": ["./libs/platform/src/*"],
       "@libs/app-content/*": ["./libs/app-content/src/*"],
       "@libs/app-config": ["./libs/config/src/app-config"],

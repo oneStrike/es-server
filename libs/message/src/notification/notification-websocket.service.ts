@@ -1,7 +1,8 @@
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { AuthConfigInterface } from '@libs/platform/types'
-import type { Notification, Pool, PoolClient } from 'pg'
+import type { DbNotificationSubscription } from '@db/core'
+import type { Notification } from 'pg'
 import type { WebSocket } from 'ws'
 import type { MessageChatService } from '../chat/chat.service'
 import type {
@@ -16,7 +17,7 @@ import type {
 } from './notification-websocket.type'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
-import { DRIZZLE_POOL } from '@db/core/drizzle.provider'
+import { DbNotificationService } from '@db/core'
 import {
   BusinessErrorCode,
   getPlatformErrorCode,
@@ -65,27 +66,13 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     NativeWsClientState
   >()
 
-  private crossInstanceListener?: PoolClient
-  private crossInstanceListenerPromise?: Promise<void>
-  private crossInstanceReconnectTimer?: NodeJS.Timeout
+  private crossInstanceSubscription?: DbNotificationSubscription
+  private crossInstanceSubscriptionPromise?: Promise<void>
   private isShuttingDown = false
   private readonly handleCrossInstanceListenerError = (error: Error) => {
     this.logger.warn(
       `Message WS fanout listener disconnected: ${this.stringifyError(error)}`,
     )
-    const listener = this.crossInstanceListener
-    this.crossInstanceListener = undefined
-    this.crossInstanceListenerPromise = undefined
-
-    if (listener) {
-      listener.removeListener('notification', this.handleCrossInstanceFanout)
-      listener.removeListener('error', this.handleCrossInstanceListenerError)
-      listener.release(error)
-    }
-
-    if (!this.isShuttingDown) {
-      this.scheduleCrossInstanceListenerReconnect()
-    }
   }
 
   private readonly handleCrossInstanceFanout = (message: Notification) => {
@@ -109,8 +96,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     private readonly moduleRef: ModuleRef,
     private readonly messageWsMonitorService: MessageWsMonitorService,
     private readonly userCoreService: UserService,
-    @Inject(DRIZZLE_POOL)
-    private readonly pgPool: Pool,
+    private readonly dbNotificationService: DbNotificationService,
     @Optional()
     @Inject(UPLOAD_CONFIG_PROVIDER)
     private readonly uploadConfigProvider?: UploadConfigProvider,
@@ -120,32 +106,17 @@ export class MessageWebSocketService implements OnApplicationShutdown {
 
   async onApplicationShutdown(): Promise<void> {
     this.isShuttingDown = true
-    if (this.crossInstanceReconnectTimer) {
-      clearTimeout(this.crossInstanceReconnectTimer)
-      this.crossInstanceReconnectTimer = undefined
+    if (this.crossInstanceSubscriptionPromise) {
+      await this.crossInstanceSubscriptionPromise
     }
 
-    if (this.crossInstanceListenerPromise) {
-      await this.crossInstanceListenerPromise
-    }
-
-    const listener = this.crossInstanceListener
-    this.crossInstanceListener = undefined
-    if (!listener) {
+    const subscription = this.crossInstanceSubscription
+    this.crossInstanceSubscription = undefined
+    if (!subscription) {
       return
     }
 
-    listener.removeListener('notification', this.handleCrossInstanceFanout)
-    listener.removeAllListeners('error')
-    try {
-      await listener.query(`UNLISTEN ${MESSAGE_WS_FANOUT_CHANNEL}`)
-    } catch (error) {
-      this.logger.warn(
-        `Failed to unlisten message WS fanout channel: ${this.stringifyError(error)}`,
-      )
-    } finally {
-      listener.release()
-    }
+    await subscription.close()
   }
 
   // 初始化 native ws 客户端状态，连接建立后等待 auth 事件绑定用户。
@@ -403,74 +374,43 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return
     }
 
-    if (this.crossInstanceListener || this.crossInstanceListenerPromise) {
-      return this.crossInstanceListenerPromise
+    if (this.crossInstanceSubscription) {
+      return
     }
 
-    this.crossInstanceListenerPromise = this.createCrossInstanceListener()
-    return this.crossInstanceListenerPromise
+    if (this.crossInstanceSubscriptionPromise) {
+      return this.crossInstanceSubscriptionPromise
+    }
+
+    this.crossInstanceSubscriptionPromise =
+      this.createCrossInstanceSubscription()
+    return this.crossInstanceSubscriptionPromise
   }
 
-  private async createCrossInstanceListener() {
-    let listener: PoolClient | undefined
+  private async createCrossInstanceSubscription() {
     try {
-      listener = await this.pgPool.connect()
-      listener.on('notification', this.handleCrossInstanceFanout)
-      listener.on('error', this.handleCrossInstanceListenerError)
-      await listener.query(`LISTEN ${MESSAGE_WS_FANOUT_CHANNEL}`)
+      const subscription = await this.dbNotificationService.subscribe({
+        channel: MESSAGE_WS_FANOUT_CHANNEL,
+        onNotification: this.handleCrossInstanceFanout,
+        onError: this.handleCrossInstanceListenerError,
+      })
+
       if (this.isShuttingDown) {
-        listener.removeListener('notification', this.handleCrossInstanceFanout)
-        listener.removeListener('error', this.handleCrossInstanceListenerError)
-        try {
-          await listener.query(`UNLISTEN ${MESSAGE_WS_FANOUT_CHANNEL}`)
-        } catch (error) {
-          this.logger.warn(
-            `Failed to unlisten message WS fanout channel during shutdown: ${this.stringifyError(error)}`,
-          )
-        } finally {
-          listener.release()
-          listener = undefined
-        }
+        await subscription.close()
         return
       }
-      this.crossInstanceListener = listener
-      listener = undefined
+
+      this.crossInstanceSubscription = subscription
       if (this.nativeClientsByUserId.size === 0) {
         await this.stopCrossInstanceListenerIfIdle()
       }
     } catch (error) {
-      if (listener) {
-        listener.removeListener('notification', this.handleCrossInstanceFanout)
-        listener.removeListener('error', this.handleCrossInstanceListenerError)
-        listener.release(error instanceof Error ? error : undefined)
-      }
-      this.crossInstanceListener = undefined
       this.logger.warn(
         `Failed to start message WS fanout listener: ${this.stringifyError(error)}`,
       )
-      if (!this.isShuttingDown) {
-        this.scheduleCrossInstanceListenerReconnect()
-      }
     } finally {
-      this.crossInstanceListenerPromise = undefined
+      this.crossInstanceSubscriptionPromise = undefined
     }
-  }
-
-  private scheduleCrossInstanceListenerReconnect() {
-    if (this.isShuttingDown) {
-      return
-    }
-
-    if (this.crossInstanceReconnectTimer) {
-      return
-    }
-
-    this.crossInstanceReconnectTimer = setTimeout(() => {
-      this.crossInstanceReconnectTimer = undefined
-      if (this.nativeClientsByUserId.size > 0) {
-        void this.ensureCrossInstanceListener()
-      }
-    }, 1_000)
   }
 
   private async stopCrossInstanceListenerIfIdle() {
@@ -478,28 +418,13 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return
     }
 
-    if (this.crossInstanceReconnectTimer) {
-      clearTimeout(this.crossInstanceReconnectTimer)
-      this.crossInstanceReconnectTimer = undefined
-    }
-
-    const listener = this.crossInstanceListener
-    this.crossInstanceListener = undefined
-    if (!listener) {
+    const subscription = this.crossInstanceSubscription
+    this.crossInstanceSubscription = undefined
+    if (!subscription) {
       return
     }
 
-    listener.removeListener('notification', this.handleCrossInstanceFanout)
-    listener.removeListener('error', this.handleCrossInstanceListenerError)
-    try {
-      await listener.query(`UNLISTEN ${MESSAGE_WS_FANOUT_CHANNEL}`)
-    } catch (error) {
-      this.logger.warn(
-        `Failed to stop idle message WS fanout listener: ${this.stringifyError(error)}`,
-      )
-    } finally {
-      listener.release()
-    }
+    await subscription.close()
   }
 
   private async publishCrossInstanceFanout<TPayload>(
@@ -526,10 +451,10 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     }
 
     try {
-      await this.pgPool.query('SELECT pg_notify($1, $2)', [
+      await this.dbNotificationService.notify(
         MESSAGE_WS_FANOUT_CHANNEL,
         serialized,
-      ])
+      )
     } catch (error) {
       this.logger.warn(
         `Failed to publish message WS fanout: ${this.stringifyError(error)}`,

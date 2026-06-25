@@ -12,7 +12,7 @@ import {
   notificationTemplate,
   userComment,
   userNotification,
-} from '../../../schema'
+} from '@db/schema'
 import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
 const templateFixtures = [

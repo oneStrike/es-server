@@ -1,9 +1,5 @@
 import { sql } from 'drizzle-orm'
 
-/**
- * Auto-converted from legacy schema.
- */
-
 import {
   index,
   integer,

@@ -1,1 +1,0 @@
-export { seedWorkDomain } from './domain'

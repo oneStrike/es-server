@@ -8,7 +8,7 @@ import {
 } from 'drizzle-orm'
 import { Pool } from 'pg'
 import ts from 'typescript'
-import * as runtimeSchema from '../schema'
+import * as runtimeSchema from '@db/schema'
 
 const DB_DIR = resolve(__dirname, '..')
 const SCHEMA_DIR = resolve(DB_DIR, 'schema')

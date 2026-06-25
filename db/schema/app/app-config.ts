@@ -1,7 +1,3 @@
-/**
- * Auto-converted from legacy schema.
- */
-
 import { sql } from 'drizzle-orm'
 import {
   boolean,
@@ -98,7 +94,10 @@ export const appConfig = snakeCase.table(
     /**
      * 单例配置键闭合约束。
      */
-    check('app_config_config_key_valid_chk', sql`${table.configKey} = 'global'`),
+    check(
+      'app_config_config_key_valid_chk',
+      sql`${table.configKey} = 'global'`,
+    ),
   ],
 )
 

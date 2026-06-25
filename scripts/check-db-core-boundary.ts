@@ -5,18 +5,21 @@ import ts from 'typescript'
 
 const WORKSPACE_ROOT = resolve(__dirname, '..')
 const SCAN_ROOTS = ['apps', 'libs', 'db', 'scripts']
+const DB_CORE_ROOT = resolve(WORKSPACE_ROOT, 'db', 'core')
+const DB_SCHEMA_ROOT = resolve(WORKSPACE_ROOT, 'db', 'schema')
+const DB_RELATIONS_ROOT = resolve(WORKSPACE_ROOT, 'db', 'relations')
 const PUBLIC_BARREL_PATH = resolve(WORKSPACE_ROOT, 'db', 'core', 'index.ts')
 
 const ALLOWED_CORE_EXPORTS = new Set([
   'Db',
+  'DbNotificationSubscription',
+  'DbNotificationSubscriptionOptions',
+  'DbNotificationService',
   'DrizzleModule',
-  'DrizzleErrorMessages',
   'DrizzleMutationResult',
   'DrizzleService',
   'PgTable',
-  'PostgresError',
   'SQL',
-  'SQLWrapper',
   'TableConfig',
   'buildILikeCondition',
   'buildLikePattern',
@@ -42,8 +45,15 @@ interface BoundaryViolation {
 }
 
 const violations: BoundaryViolation[] = []
+const TYPE_SCRIPT_FILES = listTypeScriptFiles(SCAN_ROOTS)
+const SOURCE_FILES = new Map(
+  TYPE_SCRIPT_FILES.map((filePath) => [filePath, createSourceFile(filePath)]),
+)
 
 checkCoreImports()
+checkForbiddenDbAliasImports()
+checkRelativeSchemaImports()
+checkRelativeRelationsImports()
 checkNoDirectErrorInternalImports()
 checkPublicBarrel()
 
@@ -60,11 +70,11 @@ if (violations.length > 0) {
 }
 
 function checkCoreImports() {
-  for (const filePath of listTypeScriptFiles(SCAN_ROOTS)) {
-    const sourceFile = createSourceFile(filePath)
+  for (const filePath of TYPE_SCRIPT_FILES) {
+    const sourceFile = getSourceFile(filePath)
 
     sourceFile.forEachChild((node) => {
-      if (!ts.isImportDeclaration(node)) {
+      if (!ts.isImportDeclaration(node) && !ts.isExportDeclaration(node)) {
         return
       }
 
@@ -72,46 +82,169 @@ function checkCoreImports() {
         return
       }
 
-      const importClause = node.importClause
-      if (!importClause) {
+      if (ts.isImportDeclaration(node)) {
+        checkCoreImportDeclaration(filePath, node)
         return
       }
 
-      if (importClause.name) {
-        addViolation(filePath, '@db/core does not expose a default export')
-      }
+      checkCoreExportDeclaration(filePath, node)
+    })
+  }
+}
 
-      const namedBindings = importClause.namedBindings
-      if (!namedBindings) {
+function checkCoreImportDeclaration(
+  filePath: string,
+  node: ts.ImportDeclaration,
+) {
+  const importClause = node.importClause
+  if (!importClause) {
+    return
+  }
+
+  if (importClause.name) {
+    addViolation(filePath, '@db/core does not expose a default export')
+  }
+
+  const namedBindings = importClause.namedBindings
+  if (!namedBindings) {
+    return
+  }
+
+  if (ts.isNamespaceImport(namedBindings)) {
+    addViolation(filePath, '@db/core namespace imports are not allowed')
+    return
+  }
+
+  for (const specifier of namedBindings.elements) {
+    const importedName = specifier.propertyName?.text ?? specifier.name.text
+
+    if (!ALLOWED_CORE_EXPORTS.has(importedName)) {
+      addViolation(
+        filePath,
+        `imports non-public @db/core symbol "${importedName}"`,
+      )
+    }
+  }
+}
+
+function checkCoreExportDeclaration(
+  filePath: string,
+  node: ts.ExportDeclaration,
+) {
+  if (!node.exportClause) {
+    addViolation(filePath, '@db/core broad re-exports are not allowed')
+    return
+  }
+
+  if (!ts.isNamedExports(node.exportClause)) {
+    addViolation(filePath, '@db/core namespace re-exports are not allowed')
+    return
+  }
+
+  for (const specifier of node.exportClause.elements) {
+    const exportedName = specifier.propertyName?.text ?? specifier.name.text
+
+    if (!ALLOWED_CORE_EXPORTS.has(exportedName)) {
+      addViolation(
+        filePath,
+        `re-exports non-public @db/core symbol "${exportedName}"`,
+      )
+    }
+  }
+}
+
+function checkForbiddenDbAliasImports() {
+  for (const filePath of TYPE_SCRIPT_FILES) {
+    const sourceFile = getSourceFile(filePath)
+
+    sourceFile.forEachChild((node) => {
+      if (!ts.isImportDeclaration(node) && !ts.isExportDeclaration(node)) {
         return
       }
 
-      if (ts.isNamespaceImport(namedBindings)) {
-        addViolation(filePath, '@db/core namespace imports are not allowed')
+      const moduleSpecifier = getModuleSpecifier(node)
+      if (!moduleSpecifier) {
         return
       }
 
-      for (const specifier of namedBindings.elements) {
-        const importedName = specifier.propertyName?.text ?? specifier.name.text
+      if (
+        moduleSpecifier.startsWith('@db/core/') ||
+        moduleSpecifier.startsWith('@db/schema/') ||
+        moduleSpecifier === '@db/relations' ||
+        moduleSpecifier.startsWith('@db/relations/')
+      ) {
+        addViolation(
+          filePath,
+          `references forbidden db alias "${moduleSpecifier}"`,
+        )
+      }
+    })
+  }
+}
 
-        if (!ALLOWED_CORE_EXPORTS.has(importedName)) {
-          addViolation(
-            filePath,
-            `imports non-public @db/core symbol "${importedName}"`,
-          )
-        }
+function checkRelativeSchemaImports() {
+  for (const filePath of TYPE_SCRIPT_FILES) {
+    if (isInsideRoot(filePath, DB_SCHEMA_ROOT)) {
+      continue
+    }
+
+    const sourceFile = getSourceFile(filePath)
+
+    sourceFile.forEachChild((node) => {
+      if (!ts.isImportDeclaration(node) && !ts.isExportDeclaration(node)) {
+        return
+      }
+
+      const moduleSpecifier = getModuleSpecifier(node)
+      if (!moduleSpecifier || !moduleSpecifier.startsWith('.')) {
+        return
+      }
+
+      if (resolvesInsideRoot(filePath, moduleSpecifier, DB_SCHEMA_ROOT)) {
+        addViolation(
+          filePath,
+          `uses relative import into db/schema: "${moduleSpecifier}"`,
+        )
+      }
+    })
+  }
+}
+
+function checkRelativeRelationsImports() {
+  for (const filePath of TYPE_SCRIPT_FILES) {
+    if (isInsideDbCore(filePath)) {
+      continue
+    }
+
+    const sourceFile = getSourceFile(filePath)
+
+    sourceFile.forEachChild((node) => {
+      if (!ts.isImportDeclaration(node) && !ts.isExportDeclaration(node)) {
+        return
+      }
+
+      const moduleSpecifier = getModuleSpecifier(node)
+      if (!moduleSpecifier || !moduleSpecifier.startsWith('.')) {
+        return
+      }
+
+      if (resolvesInsideRoot(filePath, moduleSpecifier, DB_RELATIONS_ROOT)) {
+        addViolation(
+          filePath,
+          `uses relative import into db/relations: "${moduleSpecifier}"`,
+        )
       }
     })
   }
 }
 
 function checkNoDirectErrorInternalImports() {
-  for (const filePath of listTypeScriptFiles(SCAN_ROOTS)) {
+  for (const filePath of TYPE_SCRIPT_FILES) {
     if (isInsideDbCore(filePath)) {
       continue
     }
 
-    const sourceFile = createSourceFile(filePath)
+    const sourceFile = getSourceFile(filePath)
 
     sourceFile.forEachChild((node) => {
       if (!ts.isImportDeclaration(node) && !ts.isExportDeclaration(node)) {
@@ -134,7 +267,7 @@ function checkNoDirectErrorInternalImports() {
 }
 
 function checkPublicBarrel() {
-  const sourceFile = createSourceFile(PUBLIC_BARREL_PATH)
+  const sourceFile = getSourceFile(PUBLIC_BARREL_PATH)
 
   sourceFile.forEachChild((node) => {
     if (!ts.isExportDeclaration(node)) {
@@ -161,10 +294,19 @@ function checkPublicBarrel() {
 
     for (const specifier of node.exportClause.elements) {
       const exportedName = specifier.name.text
-      if (FORBIDDEN_CORE_EXPORTS.has(exportedName)) {
+      const sourceName = specifier.propertyName?.text ?? exportedName
+
+      if (FORBIDDEN_CORE_EXPORTS.has(sourceName)) {
         addViolation(
           PUBLIC_BARREL_PATH,
-          `exports forbidden provider symbol "${exportedName}"`,
+          `exports forbidden provider symbol "${sourceName}"`,
+        )
+      }
+
+      if (!ALLOWED_CORE_EXPORTS.has(sourceName)) {
+        addViolation(
+          PUBLIC_BARREL_PATH,
+          `exports non-allowlisted source symbol "${sourceName}"`,
         )
       }
 
@@ -222,6 +364,16 @@ function createSourceFile(filePath: string) {
   )
 }
 
+function getSourceFile(filePath: string) {
+  const sourceFile = SOURCE_FILES.get(filePath)
+  if (!sourceFile) {
+    throw new Error(
+      `Missing cached source file: ${relative(WORKSPACE_ROOT, filePath)}`,
+    )
+  }
+  return sourceFile
+}
+
 function getModuleSpecifier(node: ts.ImportDeclaration | ts.ExportDeclaration) {
   const specifier = node.moduleSpecifier
   if (!specifier || !ts.isStringLiteral(specifier)) {
@@ -232,36 +384,38 @@ function getModuleSpecifier(node: ts.ImportDeclaration | ts.ExportDeclaration) {
 }
 
 function isInsideDbCore(filePath: string) {
-  const relativePath = normalizePath(relative(WORKSPACE_ROOT, filePath))
-  return (
-    relativePath === 'db/core/index.ts' || relativePath.startsWith('db/core/')
-  )
+  return isInsideRoot(filePath, DB_CORE_ROOT)
 }
 
 function isDbCoreErrorInternalImport(
   filePath: string,
   moduleSpecifier: string,
 ) {
-  if (
-    moduleSpecifier === '@db/core/error' ||
-    moduleSpecifier.startsWith('@db/core/error/')
-  ) {
-    return true
-  }
-
   if (!moduleSpecifier.startsWith('.')) {
     return false
   }
 
-  const resolvedImportPath = normalizePath(
-    resolve(filePath, '..', moduleSpecifier),
+  return resolvesInsideRoot(
+    filePath,
+    moduleSpecifier,
+    resolve(DB_CORE_ROOT, 'error'),
   )
-  const errorInternalPath = normalizePath(
-    resolve(WORKSPACE_ROOT, 'db', 'core', 'error'),
-  )
+}
+
+function resolvesInsideRoot(
+  fromFilePath: string,
+  moduleSpecifier: string,
+  rootPath: string,
+) {
+  return isInsideRoot(resolve(fromFilePath, '..', moduleSpecifier), rootPath)
+}
+
+function isInsideRoot(filePath: string, rootPath: string) {
+  const normalizedFilePath = normalizePath(filePath)
+  const normalizedRootPath = normalizePath(rootPath)
   return (
-    resolvedImportPath === errorInternalPath ||
-    resolvedImportPath.startsWith(`${errorInternalPath}/`)
+    normalizedFilePath === normalizedRootPath ||
+    normalizedFilePath.startsWith(`${normalizedRootPath}/`)
   )
 }
 

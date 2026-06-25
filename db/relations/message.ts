@@ -1,5 +1,5 @@
 import { defineRelationsPart } from 'drizzle-orm'
-import * as schema from '../schema'
+import * as schema from '@db/schema'
 
 export const messageRelations = defineRelationsPart(schema, (r) => ({
   chatConversation: {

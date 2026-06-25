@@ -161,7 +161,8 @@
       "<rootDir>/db/"
     ],
     "moduleNameMapper": {
-      "^@db(|/.*)$": "<rootDir>/db/$1",
+      "^@db/core$": "<rootDir>/db/core/index.ts",
+      "^@db/schema$": "<rootDir>/db/schema/index.ts",
       "^@libs/app-content/(.*)$": "<rootDir>/libs/app-content/src/$1",
       "^@libs/app-config(|/.*)$": "<rootDir>/libs/config/src/app-config/$1",
       "^@libs/config(|/.*)$": "<rootDir>/libs/config/src/$1",

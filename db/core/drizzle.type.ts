@@ -1,7 +1,7 @@
 import type { SQL, SQLWrapper } from 'drizzle-orm'
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import type { PgTable, TableConfig } from 'drizzle-orm/pg-core'
-import type { relations } from '../relations'
+import type { relations } from './drizzle-relations'
 
 /** 稳定领域类型 `Db`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type Db = NodePgDatabase<typeof relations>

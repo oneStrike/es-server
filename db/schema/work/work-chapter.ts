@@ -11,9 +11,6 @@ import {
   uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
-/**
- * Auto-converted from legacy schema.
- */
 
 /**
  * 作品章节表

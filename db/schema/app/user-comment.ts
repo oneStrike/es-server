@@ -1,7 +1,3 @@
-/**
- * Auto-converted from legacy schema.
- */
-
 import { sql } from 'drizzle-orm'
 import {
   boolean,
@@ -184,7 +180,12 @@ export const userComment = snakeCase.table(
         sql`${table.replyToId} is null and ${table.auditStatus} = 1 and ${table.isHidden} = false and ${table.deletedAt} is null`,
       ),
     index('user_comment_target_visible_created_id_idx')
-      .on(table.targetType, table.targetId, table.createdAt.desc(), table.id.desc())
+      .on(
+        table.targetType,
+        table.targetId,
+        table.createdAt.desc(),
+        table.id.desc(),
+      )
       .where(
         sql`${table.auditStatus} = 1 and ${table.isHidden} = false and ${table.deletedAt} is null`,
       ),
@@ -313,7 +314,9 @@ export const userComment = snakeCase.table(
     ),
     index('user_comment_forum_topic_restore_batch_idx')
       .on(table.targetId, table.topicDeleteCascadeId, table.deletedAt)
-      .where(sql`${table.targetType} = 5 and ${table.topicDeleteCascadeId} is not null`),
+      .where(
+        sql`${table.targetType} = 5 and ${table.topicDeleteCascadeId} is not null`,
+      ),
     /**
      * 正文版本索引
      */

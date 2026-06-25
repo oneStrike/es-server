@@ -10,13 +10,15 @@ function loadTsconfigAliases() {
   const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf8'))
   const aliases = {}
 
-  for (const [key, targets] of Object.entries(tsconfig.compilerOptions?.paths || {})) {
+  for (const [key, targets] of Object.entries(
+    tsconfig.compilerOptions?.paths || {},
+  )) {
     const target = Array.isArray(targets) ? targets[0] : undefined
     if (!target) {
       continue
     }
 
-    const aliasKey = key.endsWith('/*') ? key.slice(0, -2) : key
+    const aliasKey = key.endsWith('/*') ? key.slice(0, -2) : `${key}$`
     const aliasTarget = target.endsWith('/*') ? target.slice(0, -2) : target
     aliases[aliasKey] = path.resolve(__dirname, aliasTarget)
   }
@@ -129,13 +131,7 @@ module.exports = function (options, webpack) {
       ...options.plugins,
       new webpack.HotModuleReplacementPlugin(),
       new webpack.WatchIgnorePlugin({
-        paths: [
-          /\.js$/,
-          /\.d\.ts$/,
-          /node_modules/,
-          /\.cache/,
-          /dist/,
-        ],
+        paths: [/\.js$/, /\.d\.ts$/, /node_modules/, /\.cache/, /dist/],
       }),
       new RunScriptWebpackPlugin({
         name: options.output.filename,

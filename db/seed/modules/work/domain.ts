@@ -14,7 +14,7 @@ import {
   workNovel,
   workTag,
   workTagRelation,
-} from '../../../schema'
+} from '@db/schema'
 import {
   addHours,
   createAvatar,
@@ -616,9 +616,7 @@ export async function seedWorkDomain(db: Db) {
         publishAt,
         viewRule: chapterFixture.viewRule,
         requiredViewLevelId:
-          chapterFixture.viewRule === 3
-            ? requiredLevelId
-            : null,
+          chapterFixture.viewRule === 3 ? requiredLevelId : null,
         price: chapterFixture.price,
         canDownload: true,
         canComment: true,

@@ -1,7 +1,3 @@
-/**
- * Auto-converted from legacy schema.
- */
-
 import { sql } from 'drizzle-orm'
 import {
   check,

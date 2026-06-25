@@ -22,11 +22,10 @@ import type {
 import { resolveDbQueryConfig } from '@libs/platform/config'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { Pool } from 'pg'
-import * as schema from '../schema'
-import { DRIZZLE_DB, DRIZZLE_POOL } from './drizzle.provider'
+import * as schema from '@db/schema'
+import { DRIZZLE_DB } from './drizzle.provider'
 import {
   executeWithErrorHandling,
   extractError,
@@ -45,22 +44,14 @@ import { buildDrizzlePageQuery } from './query/page-query'
  * 统一封装仓库级 Drizzle 入口、查询默认值和错误处理能力。
  */
 @Injectable()
-export class DrizzleService implements OnApplicationShutdown {
+export class DrizzleService {
   private readonly queryConfig: DbQueryConfig
 
   constructor(
     @Inject(DRIZZLE_DB) public readonly db: Db,
-    @Inject(DRIZZLE_POOL) private readonly pool: Pool,
     private readonly configService: ConfigService,
   ) {
     this.queryConfig = this.resolveQueryConfig()
-  }
-
-  /**
-   * 在 Nest 应用退出时关闭连接池，避免测试和本地脚本残留数据库连接。
-   */
-  async onApplicationShutdown(): Promise<void> {
-    await this.pool.end()
   }
 
   /**

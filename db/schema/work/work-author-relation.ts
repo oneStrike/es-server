@@ -1,13 +1,4 @@
-/**
- * Auto-converted from legacy schema.
- */
-
-import {
-  index,
-  integer,
-  primaryKey,
-  snakeCase,
-} from 'drizzle-orm/pg-core'
+import { index, integer, primaryKey, snakeCase } from 'drizzle-orm/pg-core'
 
 /**
  * 作品作者关联表（多对多关系中间表）
