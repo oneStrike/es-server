@@ -1,5 +1,5 @@
 import type { JsonObject } from '@libs/platform/utils'
-import type { ReferenceObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
+import type { ApiPropertyOptions } from '@nestjs/swagger'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -219,7 +219,7 @@ function createChatMessagePayloadAnyOfSchemas() {
     { $ref: getSchemaPath(ImageChatMessagePayloadDto) },
     { $ref: getSchemaPath(VoiceChatMessagePayloadDto) },
     { $ref: getSchemaPath(VideoChatMessagePayloadDto) },
-  ]
+  ] satisfies NonNullable<ApiPropertyOptions['anyOf']>
 }
 
 @ApiExtraModels(
@@ -422,7 +422,7 @@ function createChatMessageBodyTokenOneOfSchemas() {
     { $ref: getSchemaPath(ChatMessageBodyTextTokenDto) },
     { $ref: getSchemaPath(ChatMessageBodyEmojiUnicodeTokenDto) },
     { $ref: getSchemaPath(ChatMessageBodyEmojiCustomTokenDto) },
-  ] satisfies ReferenceObject[]
+  ] satisfies NonNullable<ApiPropertyOptions['oneOf']>
 }
 
 /** 聊天对方用户基础信息 */

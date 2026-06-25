@@ -2,7 +2,7 @@
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants'
-import { DECORATORS } from '@nestjs/swagger/dist/constants'
+import { DECORATORS } from '@nestjs/swagger'
 import { PaymentController } from './payment.controller'
 import 'reflect-metadata'
 

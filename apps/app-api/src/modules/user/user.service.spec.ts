@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
-import { DECORATORS } from '@nestjs/swagger/dist/constants'
+import { DECORATORS } from '@nestjs/swagger'
 import { UserService } from './user.service'
 
 describe('UserService user center latest login geo', () => {

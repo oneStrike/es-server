@@ -1,4 +1,4 @@
-import type { OpenAPIObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
+import type { OpenAPIObject } from '@nestjs/swagger'
 import { normalizeNullableReferenceSchemas } from './swagger'
 
 describe('normalizeNullableReferenceSchemas', () => {

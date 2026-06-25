@@ -1,7 +1,4 @@
-import type {
-  ReferenceObject,
-  SchemaObject,
-} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
+import type { ApiPropertyOptions } from '@nestjs/swagger'
 import { BaseAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto'
 import { BaseForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
@@ -452,30 +449,11 @@ function createNotificationCommentContainerOneOfSchemas() {
     { $ref: getSchemaPath(NotificationWorkSnapshotDto) },
     { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
     { $ref: getSchemaPath(NotificationChapterSnapshotDto) },
-  ] satisfies ReferenceObject[]
+  ] satisfies NonNullable<ApiPropertyOptions['oneOf']>
 }
 
 function createNotificationDataAnyOfSchemas() {
-  const commentReplyProperties: Record<string, SchemaObject | ReferenceObject> =
-    {
-      object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
-      container: {
-        oneOf: createNotificationCommentContainerOneOfSchemas(),
-      },
-      parentContainer: {
-        allOf: [{ $ref: getSchemaPath(NotificationWorkSnapshotDto) }],
-        nullable: true,
-      },
-      parentComment: {
-        allOf: [{ $ref: getSchemaPath(NotificationCommentSnapshotDto) }],
-        nullable: true,
-      },
-    }
-
-  const commentActionProperties: Record<
-    string,
-    SchemaObject | ReferenceObject
-  > = {
+  const commentReplyProperties = {
     object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
     container: {
       oneOf: createNotificationCommentContainerOneOfSchemas(),
@@ -484,35 +462,44 @@ function createNotificationDataAnyOfSchemas() {
       allOf: [{ $ref: getSchemaPath(NotificationWorkSnapshotDto) }],
       nullable: true,
     },
-  }
+    parentComment: {
+      allOf: [{ $ref: getSchemaPath(NotificationCommentSnapshotDto) }],
+      nullable: true,
+    },
+  } satisfies Record<string, ApiPropertyOptions | { $ref: string }>
 
-  const topicObjectProperties: Record<string, SchemaObject | ReferenceObject> =
-    {
-      object: { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
-    }
+  const commentActionProperties = {
+    object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
+    container: {
+      oneOf: createNotificationCommentContainerOneOfSchemas(),
+    },
+    parentContainer: {
+      allOf: [{ $ref: getSchemaPath(NotificationWorkSnapshotDto) }],
+      nullable: true,
+    },
+  } satisfies Record<string, ApiPropertyOptions | { $ref: string }>
 
-  const topicCommentedProperties: Record<
-    string,
-    SchemaObject | ReferenceObject
-  > = {
+  const topicObjectProperties = {
+    object: { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
+  } satisfies Record<string, ApiPropertyOptions | { $ref: string }>
+
+  const topicCommentedProperties = {
     object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
     container: { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
-  }
+  } satisfies Record<string, ApiPropertyOptions | { $ref: string }>
 
-  const announcementProperties: Record<string, SchemaObject | ReferenceObject> =
-    {
-      object: { $ref: getSchemaPath(NotificationAnnouncementSnapshotDto) },
-    }
+  const announcementProperties = {
+    object: { $ref: getSchemaPath(NotificationAnnouncementSnapshotDto) },
+  } satisfies Record<string, ApiPropertyOptions | { $ref: string }>
 
-  const taskReminderProperties: Record<string, SchemaObject | ReferenceObject> =
-    {
-      object: { $ref: getSchemaPath(NotificationTaskSnapshotDto) },
-      reminder: { $ref: getSchemaPath(NotificationTaskReminderInfoDto) },
-      reward: {
-        allOf: [{ $ref: getSchemaPath(NotificationTaskRewardSnapshotDto) }],
-        nullable: true,
-      },
-    }
+  const taskReminderProperties = {
+    object: { $ref: getSchemaPath(NotificationTaskSnapshotDto) },
+    reminder: { $ref: getSchemaPath(NotificationTaskReminderInfoDto) },
+    reward: {
+      allOf: [{ $ref: getSchemaPath(NotificationTaskRewardSnapshotDto) }],
+      nullable: true,
+    },
+  } satisfies Record<string, ApiPropertyOptions | { $ref: string }>
 
   return [
     {
@@ -557,7 +544,7 @@ function createNotificationDataAnyOfSchemas() {
       required: ['object', 'reminder', 'reward'],
       properties: taskReminderProperties,
     },
-  ] satisfies SchemaObject[]
+  ] satisfies NonNullable<ApiPropertyOptions['anyOf']>
 }
 
 /**

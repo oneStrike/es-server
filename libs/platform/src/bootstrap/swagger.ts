@@ -1,23 +1,22 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { INestApplication } from '@nestjs/common'
+import type { OpenAPIObject } from '@nestjs/swagger'
 import type {
-  OpenAPIObject,
-  ReferenceObject,
-  SchemaObject,
-} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
+  SwaggerReferenceObject,
+  SwaggerSchemaObject,
+  SwaggerSchemaOrReference,
+} from './swagger.type'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
-type SchemaOrReference = SchemaObject | ReferenceObject
-
 function isReferenceObject(
-  schema: SchemaOrReference,
-): schema is ReferenceObject {
+  schema: SwaggerSchemaOrReference,
+): schema is SwaggerReferenceObject {
   return '$ref' in schema
 }
 
 function hasSingleReferenceAllOf(
-  allOf: SchemaObject['allOf'],
-): allOf is [ReferenceObject] {
+  allOf: SwaggerSchemaObject['allOf'],
+): allOf is [SwaggerReferenceObject] {
   return (
     Array.isArray(allOf) &&
     allOf.length === 1 &&
@@ -29,8 +28,8 @@ function hasSingleReferenceAllOf(
 }
 
 function normalizeNullableReferenceProperty(
-  property: SchemaOrReference,
-): SchemaOrReference {
+  property: SwaggerSchemaOrReference,
+): SwaggerSchemaOrReference {
   if (isReferenceObject(property)) {
     return property
   }
@@ -57,14 +56,14 @@ export function normalizeNullableReferenceSchemas(
     return document
   }
 
-  for (const schema of Object.values(schemas as SchemaRecord)) {
+  for (const schema of Object.values(schemas)) {
     if (isReferenceObject(schema) || !schema.properties) {
       continue
     }
 
     for (const [propertyName, property] of Object.entries(schema.properties)) {
       schema.properties[propertyName] = normalizeNullableReferenceProperty(
-        property as SchemaOrReference,
+        property,
       )
     }
   }

@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 
 import process from 'node:process'
-import { DECORATORS } from '@nestjs/swagger/dist/constants'
+import { DECORATORS } from '@nestjs/swagger'
 import { validate } from 'class-validator'
 import { ArrayProperty } from './array-property'
 import { EnumArrayProperty } from './enum-array-property'

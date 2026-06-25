@@ -28,6 +28,7 @@
     "db:repair:app-user-counts": "tsx scripts/rebuild-app-user-counts.ts",
     "db:repair:content-forum-counts": "tsx scripts/rebuild-content-forum-counts.ts",
     "db:core:check": "tsx scripts/check-db-core-boundary.ts",
+    "swagger:imports:check": "tsx scripts/check-swagger-import-boundary.ts",
     "db:generate": "drizzle-kit generate",
     "db:comments:generate": "tsx scripts/db-comments.ts",
     "db:comments:check": "tsx scripts/db-comments.ts --check",
@@ -138,47 +139,6 @@
     "webpack": "^5.106.2",
     "webpack-cli": "^7.0.2",
     "webpack-node-externals": "^3.0.0"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "./coverage",
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/apps/",
-      "<rootDir>/libs/",
-      "<rootDir>/db/"
-    ],
-    "moduleNameMapper": {
-      "^@db/core$": "<rootDir>/db/core/index.ts",
-      "^@db/schema$": "<rootDir>/db/schema/index.ts",
-      "^@libs/app-content/(.*)$": "<rootDir>/libs/app-content/src/$1",
-      "^@libs/app-config(|/.*)$": "<rootDir>/libs/config/src/app-config/$1",
-      "^@libs/config(|/.*)$": "<rootDir>/libs/config/src/$1",
-      "^@libs/platform(|/.*)$": "<rootDir>/libs/platform/src/$1",
-      "^@libs/content/(.*)$": "<rootDir>/libs/content/src/$1",
-      "^@libs/dictionary(|/.*)$": "<rootDir>/libs/config/src/dictionary/$1",
-      "^@libs/forum/(.*)$": "<rootDir>/libs/forum/src/$1",
-      "^@libs/sensitive-word(|/.*)$": "<rootDir>/libs/moderation/sensitive-word/src/$1",
-      "^@libs/system-config(|/.*)$": "<rootDir>/libs/config/src/system-config/$1",
-      "^@libs/message/(.*)$": "<rootDir>/libs/message/src/$1",
-      "^@libs/user(|/.*)$": "<rootDir>/libs/user/src/$1",
-      "^@libs/identity(|/.*)$": "<rootDir>/libs/identity/src/$1",
-      "^@libs/growth/task(|/.*)$": "<rootDir>/libs/growth/src/task/$1",
-      "^@libs/growth/(.*)$": "<rootDir>/libs/growth/src/$1",
-      "^@libs/interaction/(.*)$": "<rootDir>/libs/interaction/src/$1"
-    }
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged"
