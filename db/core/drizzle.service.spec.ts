@@ -13,13 +13,10 @@ const pageParamTestTable = pgTable('page_param_test', {
 
 describe('DrizzleService', () => {
   let service: DrizzleService
-  let pool: { end: jest.Mock }
 
   beforeEach(() => {
-    pool = { end: jest.fn() }
     service = new DrizzleService(
       { transaction: jest.fn((fn) => fn({ tx: true })) } as never,
-      pool as never,
       {
         get: jest.fn(() => ({
           pageIndex: 1,
@@ -80,13 +77,10 @@ describe('DrizzleService', () => {
     })
   })
 
-  it('runs transactions through the injected db and closes the pool on shutdown', async () => {
+  it('runs transactions through the injected db', async () => {
     await expect(
       service.withTransaction(async () => ({ tx: true as const })),
     ).resolves.toEqual({ tx: true })
-
-    await service.onApplicationShutdown()
-    expect(pool.end).toHaveBeenCalledTimes(1)
   })
 
   it('normalizes complete PageDto params with configured defaults', () => {

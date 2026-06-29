@@ -1,8 +1,9 @@
 import 'reflect-metadata'
 
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
-import { DECORATORS } from '@nestjs/swagger'
 import { UserService } from './user.service'
+
+const SWAGGER_API_MODEL_PROPERTIES = 'swagger/apiModelProperties'
 
 describe('UserService user center latest login geo', () => {
   function createService(userOverrides = {}) {
@@ -247,7 +248,7 @@ describe('UserService user center latest login geo', () => {
       for (const propertyKey of ['levelName', 'levelIcon', 'levelColor']) {
         expect(
           Reflect.getMetadata(
-            DECORATORS.API_MODEL_PROPERTIES,
+            SWAGGER_API_MODEL_PROPERTIES,
             UserCenterGrowthDto.prototype,
             propertyKey,
           ),

@@ -1,17 +1,18 @@
 import 'reflect-metadata'
 
-import { DECORATORS } from '@nestjs/swagger'
+const SWAGGER_API_EXTRA_MODELS = 'swagger/apiExtraModels'
+const SWAGGER_API_MODEL_PROPERTIES = 'swagger/apiModelProperties'
 
 function swaggerPropertyMetadata(target: object, propertyKey: string) {
   return Reflect.getMetadata(
-    DECORATORS.API_MODEL_PROPERTIES,
+    SWAGGER_API_MODEL_PROPERTIES,
     target,
     propertyKey,
   ) as Record<string, unknown>
 }
 
 function swaggerExtraModels(target: Function) {
-  return Reflect.getMetadata(DECORATORS.API_EXTRA_MODELS, target) as Function[]
+  return Reflect.getMetadata(SWAGGER_API_EXTRA_MODELS, target) as Function[]
 }
 
 describe('BaseChatMessageDto swagger contract', () => {

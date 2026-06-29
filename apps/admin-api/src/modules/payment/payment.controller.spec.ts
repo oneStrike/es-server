@@ -2,11 +2,15 @@
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants'
-import { DECORATORS } from '@nestjs/swagger'
 import { PaymentController } from './payment.controller'
 import 'reflect-metadata'
 
-type PaymentControllerService = ConstructorParameters<typeof PaymentController>[0]
+const SWAGGER_API_EXTRA_MODELS = 'swagger/apiExtraModels'
+const SWAGGER_API_RESPONSE = 'swagger/apiResponse'
+
+type PaymentControllerService = ConstructorParameters<
+  typeof PaymentController
+>[0]
 type SwaggerResponses = Record<
   number,
   {
@@ -113,22 +117,13 @@ describe('admin PaymentController route smoke', () => {
       ),
     ).toBe(0)
     expect(
-      Reflect.getMetadata(
-        PATH_METADATA,
-        routeHandler('repairPaidOrder'),
-      ),
+      Reflect.getMetadata(PATH_METADATA, routeHandler('repairPaidOrder')),
     ).toBe('order/repair-paid')
     expect(
-      Reflect.getMetadata(
-        METHOD_METADATA,
-        routeHandler('repairPaidOrder'),
-      ),
+      Reflect.getMetadata(METHOD_METADATA, routeHandler('repairPaidOrder')),
     ).toBe(1)
     expect(
-      Reflect.getMetadata(
-        'audit',
-        routeHandler('repairPaidOrder'),
-      ),
+      Reflect.getMetadata('audit', routeHandler('repairPaidOrder')),
     ).toMatchObject({
       actionType: AuditActionTypeEnum.UPDATE,
       content: '异常修复支付订单为已支付',
@@ -146,9 +141,9 @@ describe('admin PaymentController route smoke', () => {
     await expect(
       controller.getPaymentReconciliationPage(reconciliationQuery),
     ).resolves.toEqual(reconciliationQuery)
-    await expect(
-      controller.repairPaidOrder(repairPayload, 7),
-    ).resolves.toEqual({ orderNo: 'PAY-1', status: 2 })
+    await expect(controller.repairPaidOrder(repairPayload, 7)).resolves.toEqual(
+      { orderNo: 'PAY-1', status: 2 },
+    )
     expect(paymentService.repairPaidOrder).toHaveBeenCalledWith(
       repairPayload,
       7,
@@ -158,12 +153,12 @@ describe('admin PaymentController route smoke', () => {
   it('documents order page with the admin page item DTO instead of the app payment result DTO', () => {
     const method = routeHandler('getPaymentOrderPage')
     const extraModels =
-      (Reflect.getMetadata(DECORATORS.API_EXTRA_MODELS, method) as
-      | Array<{ name: string }>
-      | undefined) ?? []
+      (Reflect.getMetadata(SWAGGER_API_EXTRA_MODELS, method) as
+        | Array<{ name: string }>
+        | undefined) ?? []
     const modelNames = extraModels.map((model) => model.name)
     const responses = Reflect.getMetadata(
-      DECORATORS.API_RESPONSE,
+      SWAGGER_API_RESPONSE,
       method,
     ) as SwaggerResponses
 

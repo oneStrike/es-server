@@ -3,8 +3,10 @@
 import 'reflect-metadata'
 import { PATH_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants'
 import { RouteParamtypes } from '@nestjs/common/enums/route-paramtypes.enum'
-import { DECORATORS } from '@nestjs/swagger'
 import { UserController } from './user.controller'
+
+const SWAGGER_API_PARAMETERS = 'swagger/apiParameters'
+const SWAGGER_API_RESPONSE = 'swagger/apiResponse'
 
 function routeArgsMetadata(methodName: keyof UserController) {
   return Reflect.getMetadata(
@@ -16,7 +18,7 @@ function routeArgsMetadata(methodName: keyof UserController) {
 
 function responseDataProperties(methodName: keyof UserController) {
   const responses = Reflect.getMetadata(
-    DECORATORS.API_RESPONSE,
+    SWAGGER_API_RESPONSE,
     UserController.prototype[methodName],
   ) as
     | Record<
@@ -71,7 +73,7 @@ describe('App UserController center contract', () => {
     ).toBe(false)
     expect(
       Reflect.getMetadata(
-        DECORATORS.API_PARAMETERS,
+        SWAGGER_API_PARAMETERS,
         UserController.prototype.getCenter,
       ),
     ).toBeUndefined()

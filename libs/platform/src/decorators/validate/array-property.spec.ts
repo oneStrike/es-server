@@ -1,10 +1,11 @@
 import 'reflect-metadata'
 
 import process from 'node:process'
-import { DECORATORS } from '@nestjs/swagger'
 import { validate } from 'class-validator'
 import { ArrayProperty } from './array-property'
 import { EnumArrayProperty } from './enum-array-property'
+
+const SWAGGER_API_MODEL_PROPERTIES = 'swagger/apiModelProperties'
 
 class ArrayItemDto {
   id!: number
@@ -17,7 +18,7 @@ enum ArrayStatusEnum {
 
 function swaggerPropertyMetadata(target: object, propertyKey: string) {
   return Reflect.getMetadata(
-    DECORATORS.API_MODEL_PROPERTIES,
+    SWAGGER_API_MODEL_PROPERTIES,
     target,
     propertyKey,
   ) as Record<string, unknown>
