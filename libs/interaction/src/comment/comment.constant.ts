@@ -1,4 +1,4 @@
-import { SceneTypeEnum } from '@libs/platform/constant';
+import { SceneTypeEnum } from '@libs/platform/constant'
 
 /**
  * 评论目标类型枚举
@@ -27,6 +27,16 @@ export enum CommentSortTypeEnum {
   /** 最热 */
   HOT = 'hot',
 }
+
+/**
+ * 评论点赞计数增减失败原因。
+ */
+export const CommentLikeCountDeltaFailureCauseCode = {
+  // 目标评论不存在或已删除。
+  TARGET_NOT_FOUND: 'count_delta_target_not_found',
+  // 当前评论点赞数不足以完成扣减，通常表示事实表与读模型已经漂移。
+  INSUFFICIENT_COUNT: 'count_delta_insufficient_count',
+} as const
 
 /**
  * 评论模块只允许挂载到根业务对象，不支持继续挂载评论。

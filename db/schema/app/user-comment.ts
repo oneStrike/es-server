@@ -349,6 +349,10 @@ export const userComment = snakeCase.table(
       sql`${table.bodyVersion} in (1)`,
     ),
     check(
+      'user_comment_like_count_non_negative_chk',
+      sql`${table.likeCount} >= 0`,
+    ),
+    check(
       'user_comment_root_floor_required_chk',
       sql`${table.replyToId} is not null or ${table.floor} is not null`,
     ),

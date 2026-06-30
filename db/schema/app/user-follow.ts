@@ -22,7 +22,7 @@ export const userFollow = snakeCase.table(
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     /**
      * 关注目标类型
-     * 1=用户，2=作者，3=论坛板块
+     * 1=用户，2=作者，3=论坛板块，4=论坛话题（hashtag）
      */
     targetType: smallint().notNull(),
     /**

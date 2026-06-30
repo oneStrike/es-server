@@ -6,6 +6,11 @@ import type {
   WorkCountField,
 } from './work-counter.type'
 import { DrizzleService } from '@db/core'
+import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import {
   AuditStatusEnum,
   BusinessErrorCode,
@@ -23,18 +28,6 @@ import { WorkCountDeltaFailureCauseCode } from './work-counter.constant'
  */
 @Injectable()
 export class WorkCounterService {
-  /**
-   * 交互目标类型常量。
-   * 这里保留内容域本地映射，避免 counter owner service 反向依赖 interaction 模块实现。
-   */
-  private readonly workComicTargetType = 1
-  private readonly workNovelTargetType = 2
-  private readonly chapterComicBrowseCommentTargetType = 3
-  private readonly chapterNovelBrowseCommentTargetType = 4
-  private readonly chapterComicLikeTargetType = 4
-  private readonly chapterNovelLikeTargetType = 5
-  private readonly chapterComicPurchaseDownloadTargetType = 1
-  private readonly chapterNovelPurchaseDownloadTargetType = 2
   private readonly purchaseGrantSource = 1
   private readonly entitlementActiveStatus = 1
 
@@ -107,57 +100,61 @@ export class WorkCounterService {
     )
   }
 
-  // 根据作品类型返回作品级交互目标类型，点赞、收藏、浏览和评论共享同一套映射。
-  private getWorkTargetType(workType: number) {
+  // 获取作品点赞目标类型。
+  private getWorkLikeTargetType(workType: number) {
     switch (workType) {
       case ContentTypeEnum.COMIC:
-        return this.workComicTargetType
+        return LikeTargetTypeEnum.WORK_COMIC
       case ContentTypeEnum.NOVEL:
-        return this.workNovelTargetType
+        return LikeTargetTypeEnum.WORK_NOVEL
       default:
         this.throwUnsupportedWorkType()
     }
   }
 
-  // 获取作品点赞目标类型。
-  private getWorkLikeTargetType(workType: number) {
-    return this.getWorkTargetType(workType)
-  }
-
   // 获取作品收藏目标类型。
   private getWorkFavoriteTargetType(workType: number) {
-    return this.getWorkTargetType(workType)
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return FavoriteTargetTypeEnum.WORK_COMIC
+      case ContentTypeEnum.NOVEL:
+        return FavoriteTargetTypeEnum.WORK_NOVEL
+      default:
+        this.throwUnsupportedWorkType()
+    }
   }
 
   // 获取作品浏览目标类型。
   private getWorkBrowseTargetType(workType: number) {
-    return this.getWorkTargetType(workType)
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return BrowseLogTargetTypeEnum.COMIC
+      case ContentTypeEnum.NOVEL:
+        return BrowseLogTargetTypeEnum.NOVEL
+      default:
+        this.throwUnsupportedWorkType()
+    }
   }
 
   // 获取作品评论目标类型。
   private getWorkCommentTargetType(workType: number) {
-    return this.getWorkTargetType(workType)
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return CommentTargetTypeEnum.COMIC
+      case ContentTypeEnum.NOVEL:
+        return CommentTargetTypeEnum.NOVEL
+      default:
+        this.throwUnsupportedWorkType()
+    }
   }
 
   // 获取章节点赞目标类型。
   private getWorkChapterLikeTargetType(workType: number) {
     switch (workType) {
       case ContentTypeEnum.COMIC:
-        return this.chapterComicLikeTargetType
+        return LikeTargetTypeEnum.WORK_COMIC_CHAPTER
       case ContentTypeEnum.NOVEL:
-        return this.chapterNovelLikeTargetType
-      default:
-        this.throwUnsupportedWorkType()
-    }
-  }
-
-  // 根据作品类型返回章节浏览/评论目标类型。
-  private getWorkChapterBrowseCommentTargetType(workType: number) {
-    switch (workType) {
-      case ContentTypeEnum.COMIC:
-        return this.chapterComicBrowseCommentTargetType
-      case ContentTypeEnum.NOVEL:
-        return this.chapterNovelBrowseCommentTargetType
+        return LikeTargetTypeEnum.WORK_NOVEL_CHAPTER
       default:
         this.throwUnsupportedWorkType()
     }
@@ -165,21 +162,23 @@ export class WorkCounterService {
 
   // 获取章节浏览目标类型。
   private getWorkChapterBrowseTargetType(workType: number) {
-    return this.getWorkChapterBrowseCommentTargetType(workType)
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return BrowseLogTargetTypeEnum.COMIC_CHAPTER
+      case ContentTypeEnum.NOVEL:
+        return BrowseLogTargetTypeEnum.NOVEL_CHAPTER
+      default:
+        this.throwUnsupportedWorkType()
+    }
   }
 
   // 获取章节评论目标类型。
   private getWorkChapterCommentTargetType(workType: number) {
-    return this.getWorkChapterBrowseCommentTargetType(workType)
-  }
-
-  // 根据作品类型返回章节购买/下载目标类型。
-  private getWorkChapterPurchaseDownloadTargetType(workType: number) {
     switch (workType) {
       case ContentTypeEnum.COMIC:
-        return this.chapterComicPurchaseDownloadTargetType
+        return CommentTargetTypeEnum.COMIC_CHAPTER
       case ContentTypeEnum.NOVEL:
-        return this.chapterNovelPurchaseDownloadTargetType
+        return CommentTargetTypeEnum.NOVEL_CHAPTER
       default:
         this.throwUnsupportedWorkType()
     }
@@ -187,12 +186,26 @@ export class WorkCounterService {
 
   // 获取章节购买目标类型。
   private getWorkChapterPurchaseTargetType(workType: number) {
-    return this.getWorkChapterPurchaseDownloadTargetType(workType)
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return DownloadTargetTypeEnum.COMIC_CHAPTER
+      case ContentTypeEnum.NOVEL:
+        return DownloadTargetTypeEnum.NOVEL_CHAPTER
+      default:
+        this.throwUnsupportedWorkType()
+    }
   }
 
   // 获取章节下载目标类型。
   private getWorkChapterDownloadTargetType(workType: number) {
-    return this.getWorkChapterPurchaseDownloadTargetType(workType)
+    switch (workType) {
+      case ContentTypeEnum.COMIC:
+        return DownloadTargetTypeEnum.COMIC_CHAPTER
+      case ContentTypeEnum.NOVEL:
+        return DownloadTargetTypeEnum.NOVEL_CHAPTER
+      default:
+        this.throwUnsupportedWorkType()
+    }
   }
 
   // 更新 work Count Field。
@@ -214,8 +227,9 @@ export class WorkCounterService {
       eq(this.work.isPublished, true),
       isNull(this.work.deletedAt),
     )!
-    await this.runCountUpdate(tx, async (client) =>
-      this.applyWorkCountDelta(client, where, field, delta, message),)
+    await this.runCountUpdate(tx, async (client) => {
+      await this.applyWorkCountDelta(client, where, field, delta, message)
+    })
   }
 
   // 更新 work Chapter Count Field。
@@ -236,8 +250,15 @@ export class WorkCounterService {
       eq(this.workChapter.workType, workType),
       isNull(this.workChapter.deletedAt),
     )!
-    await this.runCountUpdate(tx, async (client) =>
-      this.applyWorkChapterCountDelta(client, where, field, delta, message),)
+    await this.runCountUpdate(tx, async (client) => {
+      await this.applyWorkChapterCountDelta(
+        client,
+        where,
+        field,
+        delta,
+        message,
+      )
+    })
   }
 
   // 为 work 表构造类型约束下的计数字段增减表达式。

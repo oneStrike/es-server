@@ -22,7 +22,8 @@ import { FollowTargetTypeEnum } from '../follow.constant'
  */
 export class BaseFollowDto extends IntersectionType(IdDto, UserIdDto) {
   @EnumProperty({
-    description: '关注目标类型（1=用户，2=作者，3=论坛板块）',
+    description:
+      '关注目标类型（1=用户，2=作者，3=论坛板块，4=论坛话题（hashtag））',
     enum: FollowTargetTypeEnum,
     example: FollowTargetTypeEnum.USER,
     required: true,

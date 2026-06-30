@@ -9,7 +9,7 @@ import { BusinessErrorCode, CommentLevelEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
 import {
   ILikeTargetResolver,
   LikeTargetMeta,
@@ -17,7 +17,7 @@ import {
 import { LikeTargetTypeEnum } from '../../like/like.constant'
 import { LikeService } from '../../like/like.service'
 import {
-  CommentTargetTypeEnum,
+  CommentLikeCountDeltaFailureCauseCode,
   mapCommentTargetTypeToSceneType,
 } from '../comment.constant'
 
@@ -74,9 +74,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
       )
     }
 
-    const sceneType = mapCommentTargetTypeToSceneType(
-      comment.targetType as CommentTargetTypeEnum,
-    )
+    const sceneType = mapCommentTargetTypeToSceneType(comment.targetType)
     if (!sceneType) {
       throw new BadRequestException('评论挂载的目标类型不合法')
     }
@@ -105,17 +103,36 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
       return
     }
 
+    const amount = Math.abs(delta)
+    const baseWhere = and(
+      eq(userComment.id, targetId),
+      isNull(userComment.deletedAt),
+    )
+    const updateWhere =
+      delta > 0 ? baseWhere : and(baseWhere, gte(userComment.likeCount, amount))
     const updated = await tx
       .update(userComment)
       .set({
-        likeCount: sql`${userComment.likeCount} + ${delta}`,
+        likeCount:
+          delta > 0
+            ? sql`${userComment.likeCount} + ${amount}`
+            : sql`${userComment.likeCount} - ${amount}`,
       })
-      .where(and(eq(userComment.id, targetId), isNull(userComment.deletedAt)))
+      .where(updateWhere)
       .returning({ id: userComment.id, userId: userComment.userId })
     if (!updated[0]) {
+      const [existing] = await tx
+        .select({ id: userComment.id })
+        .from(userComment)
+        .where(baseWhere)
+        .limit(1)
+      const causeCode = existing
+        ? CommentLikeCountDeltaFailureCauseCode.INSUFFICIENT_COUNT
+        : CommentLikeCountDeltaFailureCauseCode.TARGET_NOT_FOUND
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '评论不存在',
+        { cause: { code: causeCode } },
       )
     }
 

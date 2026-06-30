@@ -1,4 +1,5 @@
-import { integer, snakeCase, timestamp } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { check, integer, snakeCase, timestamp } from 'drizzle-orm/pg-core'
 
 /**
  * 应用用户计数表
@@ -77,7 +78,59 @@ export const appUserCount = snakeCase.table(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  () => [],
+  (table) => [
+    /**
+     * 计数字段非负约束
+     */
+    check(
+      'app_user_count_comment_count_non_negative_chk',
+      sql`${table.commentCount} >= 0`,
+    ),
+    check(
+      'app_user_count_like_count_non_negative_chk',
+      sql`${table.likeCount} >= 0`,
+    ),
+    check(
+      'app_user_count_favorite_count_non_negative_chk',
+      sql`${table.favoriteCount} >= 0`,
+    ),
+    check(
+      'app_user_count_following_user_count_non_negative_chk',
+      sql`${table.followingUserCount} >= 0`,
+    ),
+    check(
+      'app_user_count_following_author_count_non_negative_chk',
+      sql`${table.followingAuthorCount} >= 0`,
+    ),
+    check(
+      'app_user_count_following_section_count_non_negative_chk',
+      sql`${table.followingSectionCount} >= 0`,
+    ),
+    check(
+      'app_user_count_following_hashtag_count_non_negative_chk',
+      sql`${table.followingHashtagCount} >= 0`,
+    ),
+    check(
+      'app_user_count_followers_count_non_negative_chk',
+      sql`${table.followersCount} >= 0`,
+    ),
+    check(
+      'app_user_count_forum_topic_count_non_negative_chk',
+      sql`${table.forumTopicCount} >= 0`,
+    ),
+    check(
+      'app_user_count_comment_received_like_count_non_negative_chk',
+      sql`${table.commentReceivedLikeCount} >= 0`,
+    ),
+    check(
+      'app_user_count_forum_topic_received_like_count_non_negative_chk',
+      sql`${table.forumTopicReceivedLikeCount} >= 0`,
+    ),
+    check(
+      'app_user_count_forum_topic_received_favorite_count_non_negative_chk',
+      sql`${table.forumTopicReceivedFavoriteCount} >= 0`,
+    ),
+  ],
 )
 
 export type AppUserCountSelect = typeof appUserCount.$inferSelect

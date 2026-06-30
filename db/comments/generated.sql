@@ -1496,7 +1496,7 @@ COMMENT ON COLUMN "public"."user_favorite"."user_id" IS E'用户ID（关联 app_
 COMMENT ON COLUMN "public"."user_favorite"."created_at" IS E'创建时间（收藏时间）';
 COMMENT ON TABLE "public"."user_follow" IS E'用户关注事实表\n统一记录用户对用户、作者、论坛板块等目标的单向关注关系';
 COMMENT ON COLUMN "public"."user_follow"."id" IS E'主键 ID';
-COMMENT ON COLUMN "public"."user_follow"."target_type" IS E'关注目标类型\n1=用户，2=作者，3=论坛板块';
+COMMENT ON COLUMN "public"."user_follow"."target_type" IS E'关注目标类型\n1=用户，2=作者，3=论坛板块，4=论坛话题（hashtag）';
 COMMENT ON COLUMN "public"."user_follow"."target_id" IS E'关注目标 ID';
 COMMENT ON COLUMN "public"."user_follow"."user_id" IS E'发起关注的用户 ID';
 COMMENT ON COLUMN "public"."user_follow"."created_at" IS E'创建时间';
