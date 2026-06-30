@@ -20,4 +20,4 @@
 - [注释规范](./05-comments.md) - 代码注释与数据表字段注释要求
 - [错误处理规范](./06-error-handling.md) - 错误处理、异常与业务码规范
 - [Drizzle 使用规范](./07-drizzle.md) - Drizzle ORM 使用、查询与 Migration 规范
-- [测试规范](./08-testing.md) - 测试原则与验证命令
+- [验证与临时测试规范](./08-testing.md) - 验证原则与测试文件清理要求

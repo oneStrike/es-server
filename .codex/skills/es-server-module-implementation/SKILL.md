@@ -29,8 +29,8 @@ description: Use when implementing, refactoring, or reviewing a business module 
 4. 只有当结构不是 HTTP 契约时，才新增 `*.type.ts`；若与 DTO 同构，直接复用 DTO。
 5. 只有在业务确实需要时才改 schema、migration 或 query shape；表字段、可空性和推导类型始终以 Drizzle schema 为准。
 6. Service 负责业务编排、查询和事务边界；controller 只做协议层装配。
-7. 每次改动后按最小范围跑验证：相关测试、`eslint`、`pnpm type-check`。
-8. 若为验证当前改动临时新增 `*.spec.ts`、脚本或探针文件，完成验证后按仓库约定删除，不把一次性验证资产留在模块里。
+7. 每次改动后按最小范围跑验证：必要的临时测试验证、`eslint`、`pnpm type-check`、build 或静态检查。
+8. 若为验证当前改动临时新增 `*.spec.ts`、`*.test.ts`、脚本或探针文件，完成验证后按仓库约定删除，不把一次性验证资产留在模块里。
 9. 交付说明里明确兼容性、风险点和例外，不静默扩散历史坏模式。
 
 ## Controller Checklist
@@ -104,8 +104,8 @@ description: Use when implementing, refactoring, or reviewing a business module 
 - [ ] `*.type.ts` 只承载非 HTTP 结构，且使用 `import type`。
 - [ ] Drizzle schema、query、transaction、returning 语义与真实业务一致。
 - [ ] Service、Helper、exported type comments 满足注释规范。
-- [ ] 相关测试、`eslint`、`pnpm type-check` 已完成。
-- [ ] 若为了本次任务临时新增验证文件，交付前已删除。
+- [ ] 必要的临时测试验证、`eslint`、`pnpm type-check` 或 build / 静态检查已完成。
+- [ ] 若为了本次任务临时新增测试或验证文件，交付前已删除。
 
 ## 参考
 

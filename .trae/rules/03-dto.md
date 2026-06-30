@@ -52,7 +52,7 @@
 - 当共享字段在查询场景需要可选化时，必须从 required owner 字段通过 `PartialType(PickType(...))` 或等价组合派生；不要把 owner 字段本身改成 `required: false` 来迁就查询条件，除非该字段的真实输出 contract 也允许缺省或为 null。
 - 当输出字段只是输入字段的别名、左连接 nullable 视图或派生展示字段时，应建立语义明确的字段块 DTO 作为当前 API contract owner，并在注释或命名中体现别名/nullable 边界；不得在 Query DTO 和 PageItem DTO 中各手写一份装饰器。
 - `validation: false` 与 `contract: false` 不是同一件事：前者保留对外文档但关闭请求校验元数据，后者隐藏对外文档并用于非对外字段。不要混用。
-- 测试输出 DTO contract 时，优先验证 Swagger / contract metadata 或 service 返回形状；不要用 class-validator 结果证明纯输出字段“有效”。测试输入 DTO 时，必须继续验证 class-validator 行为。
+- 临时验证输出 DTO contract 时，优先验证 Swagger / contract metadata 或 service 返回形状；不要用 class-validator 结果证明纯输出字段“有效”。临时验证输入 DTO 时，必须继续验证 class-validator 行为，相关测试文件交付前必须删除。
 
 ## 禁止项
 

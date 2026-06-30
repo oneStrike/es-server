@@ -33,8 +33,6 @@ pnpm build:app
 
 # 验证
 pnpm type-check
-pnpm test
-pnpm test:cov
 
 # 数据库
 pnpm db:generate
@@ -52,8 +50,8 @@ pnpm publish-api:app
 - 提交信息使用 Conventional Commits。
 - 仓库当前没有 `pnpm run commit` 脚本，请直接使用 `git commit`。
 - 仓库内存在 `.husky/pre-commit` 与 `.husky/commit-msg` 文件，但本地是否生效取决于 Git hooks 配置；不要把钩子当作跳过手工验证的前提。
-- 正式 `*.spec.ts` 是仓库资产，不因任务完成而删除；只删除临时探针、一次性脚本或明确标记为临时的验证文件。
-- `pnpm test:e2e` 当前不作为默认验证命令；对应配置 `apps/akaiito-server-nestjs/test/jest-e2e.json` 尚不存在。
+- 仓库不保留任何测试文件；开发中临时创建的 `*.spec.ts`、`*.test.ts`、`*.e2e.spec.ts`、探针脚本或测试目录必须在交付前删除。
+- `pnpm test`、`pnpm test:cov`、`pnpm test:e2e` 不作为默认交付验证命令；交付验证以 `pnpm type-check` 及必要的 lint、build、静态检查为准。
 
 ## 规范入口
 

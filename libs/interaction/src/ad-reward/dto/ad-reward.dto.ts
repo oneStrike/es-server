@@ -34,7 +34,8 @@ export class BaseAdProviderConfigDto extends BaseDto {
   provider!: AdProviderEnum
 
   @EnumProperty({
-    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
+    description:
+      '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
   })
@@ -327,7 +328,8 @@ export class AdRewardVerificationDto {
   provider!: AdProviderEnum
 
   @EnumProperty({
-    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
+    description:
+      '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
   })
@@ -550,7 +552,8 @@ export class QueryAdRewardRecordDto extends IntersectionType(
   provider?: AdProviderEnum
 
   @EnumProperty({
-    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
+    description:
+      '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
     required: false,

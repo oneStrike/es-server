@@ -106,9 +106,8 @@
 
 - `仓库约定`：逐条展开全部 bullet。
 - `默认动作`：逐条展开全部 bullet。
-- `何时必须补测试`：逐条展开全部 bullet。
-- `测试层次`：逐条展开全部 bullet。
-- `如何写`：逐条展开全部 bullet。
+- `何时必须临时测试`：逐条展开全部 bullet。
+- `临时测试文件要求`：逐条展开全部 bullet。
 - `默认验证命令`：逐条展开全部 bullet。
 - `禁止项`：逐条展开全部 bullet。
 - `正反例`：只作为取证样例，不替代规则点。
@@ -122,7 +121,7 @@
 - `types`：`*.type.ts`、`*.types.ts`、推导类型、内部结构。
 - `schema`：`db/schema/**/*`、注释、check、闭集值域、推导类型。
 - `migration`：本轮 schema 变化对应的 migration、历史数据处理、`db/comments/generated.sql`。
-- `tests`：相关 `*.spec.ts`、是否覆盖行为、错误语义、事务、通知、幂等、回归风险。
+- `verification`：`pnpm type-check`、lint、build、静态检查、临时测试验证证据，以及临时测试文件是否已删除。
 
 每个代码面至少补充：
 
@@ -139,7 +138,7 @@
 - 所有 `已完成` 条目都带有证据。
 - 所有 `不适用` 条目都带有明确理由。
 - 若仍有 `阻塞` 条目，输出必须明确标注“审查未完成”，并列出阻塞点。
-- 代码范围矩阵已闭合，未留下 owner 文件、上下游、DTO、types、schema、migration、tests 的盲区。
+- 代码范围矩阵已闭合，未留下 owner 文件、上下游、DTO、types、schema、migration、verification 的盲区。
 - 输出已包含：
   - `Rules checked: <n>/<n>`
   - `Rule points closed: <n>/<n>`

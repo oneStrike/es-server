@@ -19,7 +19,7 @@ Treat `.trae/rules/PROJECT_RULES.md` as the single source of truth and align imp
 4. Inspect sibling modules and shared abstractions with `rg` before introducing a new pattern.
 5. Implement with existing platform helpers and owner files; follow the import boundary rules in `PROJECT_RULES.md` instead of inventing new barrels or directory-level shortcuts.
 6. Run validation with the narrowest useful commands from `../../../.codex/skills/es-server-standards/references/repo-map.md`.
-7. If verification requires temporary scripts or probes, delete them before delivery; committed repo `*.spec.ts` are long-lived assets unless they were created purely as throwaway verification files.
+7. If verification requires temporary scripts, probes, or `*.spec.ts` / `*.test.ts` files, delete them before delivery; this repository must not keep committed test files.
 8. Report any rule conflict explicitly in delivery notes; do not silently spread inconsistent legacy patterns.
 
 ## Layer Checklists
@@ -68,7 +68,7 @@ Treat `.trae/rules/PROJECT_RULES.md` as the single source of truth and align imp
 - Type-check is required: `pnpm type-check`.
 - Run targeted compile checks for touched app(s) when needed.
 - Run `eslint` on touched files when rule-sensitive layers change (controller/DTO/type/schema/service).
-- Add or update tests when behavior/contract/error semantics change; keep committed repo tests unless a file is explicitly temporary verification scaffolding.
+- Use the narrowest useful verification when behavior/contract/error semantics change. Temporary test files are allowed only during development and must be deleted before delivery.
 
 ## Repo Notes
 

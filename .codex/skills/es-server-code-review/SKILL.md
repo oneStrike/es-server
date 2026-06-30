@@ -1,6 +1,6 @@
 ---
 name: es-server-code-review
-description: Use when reviewing code, diffs, PRs, or modules in the `es-server` monorepo and you must produce a strict Chinese normative review that re-reads every applicable `AGENTS.md` plus every document under `.trae/rules/`, expands each rule point into an explicit checklist, checks every applicable rule point against the real owner files and related DTO/type/schema/migration/test surfaces, and does not finish until every rule point is closed with evidence, a justified not-applicable decision, or an explicit blocker.
+description: Use when reviewing code, diffs, PRs, or modules in the `es-server` monorepo and you must produce a strict Chinese normative review that re-reads every applicable `AGENTS.md` plus every document under `.trae/rules/`, expands each rule point into an explicit checklist, checks every applicable rule point against the real owner files and related DTO/type/schema/migration/verification surfaces, and does not finish until every rule point is closed with evidence, a justified not-applicable decision, or an explicit blocker.
 ---
 
 # ES Server Code Review
@@ -33,7 +33,7 @@ description: Use when reviewing code, diffs, PRs, or modules in the `es-server` 
    - `../../../.trae/rules/08-testing.md`
    - 若目录中新出现其他规范文档，必须一并纳入本次审查。
 3. 重读 `./references/review-matrix.md`，把它当成“规则点展开与闭合协议”，而不是可选参考。
-4. 只有在上述材料读完，并把工作矩阵展开到“规则点”粒度后，才开始读取目标代码、上下游调用点、DTO、类型、schema、migration 与测试。
+4. 只有在上述材料读完，并把工作矩阵展开到“规则点”粒度后，才开始读取目标代码、上下游调用点、DTO、类型、schema、migration 与验证证据。
 
 ## Rule-Point Matrix Protocol
 
@@ -52,8 +52,8 @@ description: Use when reviewing code, diffs, PRs, or modules in the `es-server` 
 ## Scope Expansion
 
 - 先根据用户给定范围定位真实 owner 文件，不依赖 barrel、README 或过期文档描述。
-- 默认把审查范围扩到“变更点 + 同模块关键上下游 + 相关 DTO / type / schema / migration / spec”，以便把适用规则点真正闭合。
-- 若用户只给一个文件，也要继续检查该文件绑定的 contract、调用链、测试与持久化层；不要只盯住单文件表面。
+- 默认把审查范围扩到“变更点 + 同模块关键上下游 + 相关 DTO / type / schema / migration / verification”，以便把适用规则点真正闭合。
+- 若用户只给一个文件，也要继续检查该文件绑定的 contract、调用链、验证要求与持久化层；不要只盯住单文件表面。
 - 若用户给的是 diff / PR，先审 diff，再沿着真实 owner 文件把影响链路补齐。
 - 不为做泛化排查而无限扩范围；只在闭合具体规则点所必需的代码面上扩展。
 
@@ -67,13 +67,13 @@ description: Use when reviewing code, diffs, PRs, or modules in the `es-server` 
    - 检查真实 owner 文件与直接相关代码面。
    - 记录 `已完成`、`不适用` 或 `阻塞`，并补充证据 / 理由。
 5. 若某个规则点命中了规范问题，继续沿该规则点覆盖到直接相关的同模块 / 同链路实现，避免同类点位遗留未查。
-6. 规则点全部闭合后，再回看代码范围矩阵，确认模块本体、上下游、DTO、types、schema、migration、tests 都已按适用规则点检查到位。
+6. 规则点全部闭合后，再回看代码范围矩阵，确认模块本体、上下游、DTO、types、schema、migration、verification 都已按适用规则点检查到位。
 7. 最后输出 findings、覆盖情况、开放问题与剩余风险；若仍有未闭合条目，明确标注审查未完成。
 
 ## What Counts As A Normative Finding
 
 - 明确违反 `AGENTS.md` 或 `.trae/rules/*` 的实现，即使它暂时还没有触发线上故障。
-- 会制造契约漂移、错误语义漂移、分层失真、schema 脱节、测试缺口或维护风险的规范硬违例。
+- 会制造契约漂移、错误语义漂移、分层失真、schema 脱节、验证缺口或维护风险的规范硬违例。
 - 不要把“只是风格不同”包装成问题；只有违反规范、破坏一致性、或已经形成规则层风险时才报告。
 - 若某个现象同时表现为行为异常与规范违例，仍然只按“违反了哪条规范”来归档和论证；不要额外创建第二条问题分类。
 
@@ -101,7 +101,7 @@ description: Use when reviewing code, diffs, PRs, or modules in the `es-server` 
 
 - 不要因为已经发现阻塞问题、问题数量足够多、或某个文件明显有错就提前结束。
 - 不要因为某条规则已经命中问题，就跳过其余规则点。
-- 不要因为某个模块已有明显违例，就跳过其余上下游、DTO、type、schema、migration 或测试代码面。
+- 不要因为某个模块已有明显违例，就跳过其余上下游、DTO、type、schema、migration 或验证代码面。
 - 只有当以下条件同时满足时，才允许宣布审查完成：
   - `.trae/rules/` 当前全部规范文档都已对照完成；
   - 每份规范文档中的规则点都已闭合；
