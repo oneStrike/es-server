@@ -1,8 +1,9 @@
-import type { UploadConfigInterface } from '@libs/platform/config';
+import type { UploadConfigInterface } from '@libs/platform/config'
 import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
+import type { StaticHeadersResponse } from './multipart.type'
 import { mkdir } from 'node:fs/promises'
 import { extname } from 'node:path'
 import fastifyMultipart from '@fastify/multipart'
@@ -10,12 +11,8 @@ import fastifyStatic from '@fastify/static'
 import { ConfigService } from '@nestjs/config'
 
 const EXT_LEADING_DOT_REGEX = /^\./
-export const SVG_CONTENT_SECURITY_POLICY
-  = "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
-
-interface StaticHeadersResponse {
-  setHeader: (name: string, value: string) => void
-}
+export const SVG_CONTENT_SECURITY_POLICY =
+  "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
 
 /**
  * 解析静态文件响应头。
@@ -38,8 +35,11 @@ export function resolveStaticFileHeaders(
       }
     }
 
-    const { document, archive, package: packageExtensions } =
-      uploadConfig.allowExtensions
+    const {
+      document,
+      archive,
+      package: packageExtensions,
+    } = uploadConfig.allowExtensions
     const isDoc = document?.includes(ext)
     const isArchive = archive?.includes(ext)
     const isPackage = packageExtensions?.includes(ext)

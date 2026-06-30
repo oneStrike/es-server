@@ -13,7 +13,7 @@ import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
 import {
   ILikeTargetResolver,
   LikeTargetMeta,
-} from '../../like/interfaces/like-target-resolver.interface'
+} from '../../like/interfaces/like-target-resolver.type'
 import { LikeTargetTypeEnum } from '../../like/like.constant'
 import { LikeService } from '../../like/like.service'
 import {

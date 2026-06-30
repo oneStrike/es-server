@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { ReportDispositionResult } from '../../report/interfaces/report-target-resolver.interface'
+import type { ReportDispositionResult } from '../../report/interfaces/report-target-resolver.type'
 
 import {
   AuditRoleEnum,
@@ -9,14 +9,13 @@ import {
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { IReportTargetResolver } from '../../report/interfaces/report-target-resolver.interface'
+import { IReportTargetResolver } from '../../report/interfaces/report-target-resolver.type'
 import {
   ReportDispositionActionEnum,
   ReportTargetTypeEnum,
 } from '../../report/report.constant'
 import { ReportService } from '../../report/report.service'
 import {
-  CommentTargetTypeEnum,
   mapCommentTargetTypeToSceneType,
 } from '../comment.constant'
 import { CommentService } from '../comment.service'
@@ -75,7 +74,7 @@ export class CommentReportResolver
     }
 
     const sceneType = mapCommentTargetTypeToSceneType(
-      comment.targetType as CommentTargetTypeEnum,
+      comment.targetType,
     )
     if (!sceneType) {
       throw new BadRequestException('评论挂载的目标类型不合法')

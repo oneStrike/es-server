@@ -3,7 +3,7 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing/domain-event.type'
-import type { NotificationActorSource } from '../notification/notification-public.mapper'
+import type { NotificationActorSource } from '../notification/notification-public.type'
 import type { NotificationEventHandler } from './message-event.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'

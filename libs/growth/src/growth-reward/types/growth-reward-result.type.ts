@@ -2,7 +2,7 @@ import type {
   GrowthLedgerFailReasonEnum,
   GrowthLedgerSourceEnum,
 } from '../../growth-ledger/growth-ledger.constant'
-import type { GrowthLedgerApplyResult } from '../../growth-ledger/growth-ledger.internal'
+import type { GrowthLedgerApplyResult } from '../../growth-ledger/growth-ledger.type'
 import type { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import type { GrowthRewardRuleAssetTypeEnum } from '../../reward-rule/reward-rule.constant'
 import type { TaskRewardSettlementResultTypeEnum } from '../../task/task.constant'

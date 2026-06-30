@@ -1,29 +1,12 @@
 import type { Cache } from 'cache-manager'
+import type { CacheManagerLike, CacheStoreLike } from './health.type'
 import { DrizzleService } from '@db/core'
-import { isDevelopment, isProduction } from '@libs/platform/utils';
+import { isDevelopment, isProduction } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 
 const PONG_VALUE = 'pong'
-
-interface CacheStoreLike {
-  opts?: {
-    store?: {
-      constructor?: {
-        name?: string
-      }
-    }
-  }
-  set?: (key: string, value: string, ttl?: number) => Promise<boolean | void>
-  get?: (key: string) => Promise<string | undefined>
-  delete?: (key: string) => Promise<boolean | void>
-  del?: (key: string) => Promise<boolean | void>
-}
-
-interface CacheManagerLike {
-  stores?: CacheStoreLike[]
-}
 
 function isMemoryStore(store: CacheStoreLike | undefined) {
   return (

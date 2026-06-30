@@ -77,9 +77,6 @@ export enum AnnouncementFanoutStatusEnum {
   FAILED = 3,
 }
 
-export type AnnouncementPublishStatus =
-  `${AnnouncementPublishStatusEnum}`
-
 /**
  * 判断公告是否应进入通知中心
  *

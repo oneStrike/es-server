@@ -12,7 +12,7 @@ import {
 import {
   ILikeTargetResolver,
   LikeTargetMeta,
-} from './interfaces/like-target-resolver.interface'
+} from './interfaces/like-target-resolver.type'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeTargetTypeEnum } from './like.constant'
 

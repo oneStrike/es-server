@@ -1,7 +1,7 @@
 import type { Db } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
-import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant';
+import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import type { JsonObject } from '@libs/platform/utils'
 import type {
   ReportDispositionActionEnum,

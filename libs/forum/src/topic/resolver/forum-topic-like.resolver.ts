@@ -2,7 +2,7 @@ import type { Db } from '@db/core'
 import type {
   ILikeTargetResolver,
   LikeTargetMeta,
-} from '@libs/interaction/like/interfaces/like-target-resolver.interface'
+} from '@libs/interaction/like/interfaces/like-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'

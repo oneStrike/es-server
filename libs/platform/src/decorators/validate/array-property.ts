@@ -1,5 +1,9 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
-import type { ArrayPropertyOptions } from './validate.type'
+import type {
+  ArrayPropertyOptions,
+  PrimitiveArrayHelpers,
+  PrimitiveArrayItemType,
+} from './validate.type'
 import { applyDecorators } from '@nestjs/common'
 import { Transform, Type } from 'class-transformer'
 import {
@@ -22,16 +26,6 @@ import {
   normalizeEnumArrayItem,
   resolveEnumValidationArtifacts,
 } from './enum-shared'
-
-type PrimitiveArrayItemType = 'string' | 'number' | 'boolean'
-
-interface PrimitiveArrayHelpers {
-  apiType: StringConstructor | NumberConstructor | BooleanConstructor
-  itemValidator: PropertyDecorator
-  normalizeItem: (
-    item: string | number | boolean | null | undefined,
-  ) => string | number | boolean | null | undefined
-}
 
 function resolvePrimitiveItemType<TValue extends string | number | boolean>(
   options: ArrayPropertyOptions<TValue>,

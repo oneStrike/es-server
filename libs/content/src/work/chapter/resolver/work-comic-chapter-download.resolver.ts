@@ -3,7 +3,7 @@ import { DrizzleService } from '@db/core'
 import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant'
 import { DownloadService } from '@libs/interaction/download/download.service'
-import { IDownloadTargetResolver } from '@libs/interaction/download/interfaces/download-target-resolver.interface'
+import { IDownloadTargetResolver } from '@libs/interaction/download/interfaces/download-target-resolver.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
@@ -57,7 +57,10 @@ export class WorkComicChapterDownloadResolver
       )
     }
 
-    if (!Array.isArray(chapter.comicContentManifest) || chapter.comicContentManifest.length === 0) {
+    if (
+      !Array.isArray(chapter.comicContentManifest) ||
+      chapter.comicContentManifest.length === 0
+    ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '下载内容不存在',

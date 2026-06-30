@@ -1,3 +1,5 @@
+import type { sensitiveWord } from '@db/schema'
+import type { AuditStatusEnum } from '@libs/platform/constant'
 import type {
   MatchModeEnum,
   SensitiveWordHitEntityTypeEnum,
@@ -124,4 +126,35 @@ export interface TrieNode {
   output: boolean
   word: string | null
   depth: number
+}
+
+/** 敏感词定义表读取行，供缓存服务返回启用词库。 */
+export type SensitiveWordSelect = typeof sensitiveWord.$inferSelect
+
+/** 敏感词检测器不可用时的审核降级原因。 */
+export type SensitiveWordReviewFallbackReason =
+  'sensitive_word_detector_not_ready'
+
+/** 敏感词审核策略决策结果，统一驱动审核状态、隐藏状态和命中记录。 */
+export interface SensitiveWordReviewDecision {
+  auditStatus: AuditStatusEnum
+  detectorReady: boolean
+  fallbackReason?: SensitiveWordReviewFallbackReason
+  highestLevel?: SensitiveWordLevelEnum
+  isHidden: boolean
+  publicHits: SensitiveWordHitBase[]
+  recordHits: boolean
+  statisticsHits: SensitiveWordDetectedHit[]
+}
+
+/** 敏感词审核策略解析输入，包含待检测片段和主题侧额外审核策略。 */
+export interface ResolveSensitiveWordReviewDecisionInput {
+  segments: SensitiveWordHitSegment[]
+  topicReviewPolicy?: number | null
+}
+
+/** 内容审核动作配置的最小形状，来自系统配置并允许字段缺省。 */
+export interface ContentReviewAction {
+  auditStatus?: AuditStatusEnum | null
+  isHidden?: boolean | null
 }

@@ -3,20 +3,22 @@ import type { StructuredValue } from '@libs/platform/utils'
 import type {
   NotificationAnnouncementSnapshotDto,
   NotificationChapterSnapshotDto,
-  NotificationCommentActionDataDto,
-  NotificationCommentContainerDto,
-  NotificationCommentReplyDataDto,
   NotificationCommentSnapshotDto,
-  NotificationDataByTypeDto,
-  NotificationTaskReminderDataDto,
   NotificationTaskReminderInfoDto,
   NotificationTaskRewardSnapshotDto,
   NotificationTaskSnapshotDto,
-  NotificationTopicCommentedDataDto,
   NotificationTopicSnapshotDto,
   NotificationWorkSnapshotDto,
 } from './dto/notification.dto'
-import type { MessageNotificationCategoryKey } from './notification.constant'
+import type {
+  MessageNotificationCategoryKey,
+  NotificationCommentActionDataDto,
+  NotificationCommentContainerDto,
+  NotificationCommentReplyDataDto,
+  NotificationDataByTypeDto,
+  NotificationTaskReminderDataDto,
+  NotificationTopicCommentedDataDto,
+} from './notification.type'
 
 export type MessageNotificationType = MessageNotificationCategoryKey
 
@@ -75,6 +77,4 @@ export type MessageNotificationData =
 
 /** JSON 归一化后允许写入 payload 列的新通知数据。 */
 export type MessageNotificationStoredData =
-  | StructuredValue
-  | MessageNotificationData
-  | null
+  StructuredValue | MessageNotificationData | null

@@ -1,6 +1,6 @@
-export interface BusinessExceptionOptions {
-  cause?: unknown
-}
+import type { BusinessExceptionOptions } from './business-exception.type'
+
+export type { BusinessExceptionOptions } from './business-exception.type'
 
 export class BusinessException extends Error {
   readonly code: number

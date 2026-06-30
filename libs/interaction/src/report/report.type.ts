@@ -3,7 +3,7 @@ import type { CreateReportCommandDto } from './dto/report.dto'
 import type {
   ReportDispositionResult,
   ReportTargetMeta,
-} from './interfaces/report-target-resolver.interface'
+} from './interfaces/report-target-resolver.type'
 
 /** 举报记录落库载荷，包含目标解析后得到的场景与处理状态字段。 */
 export type CreateUserReportPayload = CreateReportCommandDto &

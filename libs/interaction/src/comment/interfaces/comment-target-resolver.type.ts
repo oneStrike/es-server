@@ -47,10 +47,7 @@ export interface ICommentTargetResolver {
    * @param targetId - 目标ID
    * @throws 当不允许评论时抛出 BadRequestException
    */
-  ensureCanComment: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<void>
+  ensureCanComment: (tx: Db, targetId: number) => Promise<void>
 
   /**
    * 应用评论计数增量
@@ -59,11 +56,7 @@ export interface ICommentTargetResolver {
    * @param targetId - 目标ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void>
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
 
   /**
    * 解析目标元信息
@@ -73,10 +66,7 @@ export interface ICommentTargetResolver {
    * @param targetId - 目标ID
    * @returns 目标元信息
    */
-  resolveMeta: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<CommentTargetMeta>
+  resolveMeta: (tx: Db, targetId: number) => Promise<CommentTargetMeta>
 
   /**
    * 评论成功后钩子（可选）

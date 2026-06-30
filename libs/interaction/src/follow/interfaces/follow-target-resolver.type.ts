@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { FollowTargetTypeEnum } from '../follow.constant'
+import type { FollowTargetTypeEnum } from '../follow.type'
 
 export interface IFollowTargetResolver {
   /**

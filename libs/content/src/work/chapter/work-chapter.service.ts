@@ -30,50 +30,12 @@ import {
   UpdateWorkChapterDto,
 } from './dto/work-chapter.dto'
 import {
+  AdminChapterPageRow,
+  AppChapterPageRow,
   SwapWorkChapterNumbersInput,
   WorkChapterDetailContext,
   WorkChapterPublicDetailRow,
 } from './work-chapter.type'
-
-type AppChapterPageRow = Pick<
-  WorkChapterSelect,
-  | 'id'
-  | 'workId'
-  | 'workType'
-  | 'title'
-  | 'subtitle'
-  | 'cover'
-  | 'sortOrder'
-  | 'isPublished'
-  | 'isPreview'
-  | 'publishAt'
-  | 'viewRule'
-  | 'price'
-  | 'canDownload'
-  | 'canComment'
-  | 'createdAt'
-  | 'updatedAt'
->
-type AdminChapterPageRow = Pick<
-  WorkChapterSelect,
-  | 'id'
-  | 'workId'
-  | 'workType'
-  | 'cover'
-  | 'title'
-  | 'subtitle'
-  | 'sortOrder'
-  | 'viewRule'
-  | 'price'
-  | 'requiredViewLevelId'
-  | 'isPreview'
-  | 'canDownload'
-  | 'canComment'
-  | 'isPublished'
-  | 'publishAt'
-  | 'createdAt'
-  | 'updatedAt'
->
 
 /**
  * 作品章节服务
@@ -198,7 +160,7 @@ export class WorkChapterService {
       work: {
         id: chapter.work.id,
         name: chapter.work.name,
-        type: chapter.work.type as WorkTypeEnum,
+        type: chapter.work.type,
       },
       requiredViewLevel: chapter.requiredViewLevel
         ? {
@@ -595,7 +557,7 @@ export class WorkChapterService {
     await this.readingStateService.touchByWorkSafely({
       userId,
       workId: chapter.workId,
-      workType: chapter.workType as ContentTypeEnum,
+      workType: chapter.workType,
       lastReadChapterId: id,
     })
 

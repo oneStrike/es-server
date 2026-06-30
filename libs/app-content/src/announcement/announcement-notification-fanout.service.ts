@@ -1,5 +1,11 @@
 import type { Db } from '@db/core'
 import type { AppAnnouncementNotificationFanoutTaskSelect } from '@db/schema'
+import type {
+  AnnouncementDecisionSnapshot,
+  AnnouncementFanoutConsumeBudget,
+  AnnouncementFanoutConsumeOptions,
+  AnnouncementFanoutEventKey,
+} from './announcement.type'
 import { DrizzleService } from '@db/core'
 import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
@@ -37,33 +43,6 @@ export const ANNOUNCEMENT_FANOUT_PENDING_STATUS = 0
 export const ANNOUNCEMENT_FANOUT_PROCESSING_STATUS = 1
 export const ANNOUNCEMENT_FANOUT_SUCCESS_STATUS = 2
 export const ANNOUNCEMENT_FANOUT_FAILED_STATUS = 3
-type AnnouncementFanoutEventKey =
-  | 'announcement.published'
-  | 'announcement.unpublished'
-
-interface AnnouncementDecisionSnapshot {
-  enablePlatform: number[]
-  id: number
-  isPublished: boolean
-  isRealtime: boolean
-  publishEndTime?: Date | null
-  publishStartTime?: Date | null
-  updatedAt?: Date | null
-}
-interface AnnouncementFanoutConsumeBudget {
-  maxBatchesPerTask: number
-  maxRuntimeMs: number
-  nowMs: () => number
-  startedAtMs: number
-}
-type AnnouncementFanoutConsumeOptions = Partial<
-  Pick<
-    AnnouncementFanoutConsumeBudget,
-    'maxBatchesPerTask' | 'maxRuntimeMs' | 'nowMs'
-  >
-> & {
-  maxTasks?: number
-}
 
 @Injectable()
 export class AnnouncementNotificationFanoutService {
@@ -152,7 +131,10 @@ export class AnnouncementNotificationFanoutService {
     return enqueuedCount
   }
 
-  async retryFailedAnnouncementFanout(announcementId: number, tx: Db = this.db) {
+  async retryFailedAnnouncementFanout(
+    announcementId: number,
+    tx: Db = this.db,
+  ) {
     const latestRows = await tx
       .select({
         id: this.fanoutTask.id,
@@ -192,7 +174,10 @@ export class AnnouncementNotificationFanoutService {
       )
       .returning()
 
-    this.drizzle.assertAffectedRows(result, '消息中心通知任务已变化，请刷新后重试')
+    this.drizzle.assertAffectedRows(
+      result,
+      '消息中心通知任务已变化，请刷新后重试',
+    )
     if (result[0]) {
       await this.syncCurrentAnnouncementFanoutRuntime(result[0], tx)
     }
@@ -206,15 +191,11 @@ export class AnnouncementNotificationFanoutService {
 
     this.isConsumingPendingTasks = true
     try {
-      const maxTasks =
-        options.maxTasks ?? ANNOUNCEMENT_FANOUT_CONSUME_MAX_TASKS
+      const maxTasks = options.maxTasks ?? ANNOUNCEMENT_FANOUT_CONSUME_MAX_TASKS
       const budget = this.createConsumeBudget(options)
       let consumedCount = 0
 
-      while (
-        consumedCount < maxTasks &&
-        this.hasConsumeTimeBudget(budget)
-      ) {
+      while (consumedCount < maxTasks && this.hasConsumeTimeBudget(budget)) {
         const task = await this.claimNextRunnableTask()
         if (!task) {
           return consumedCount
@@ -296,7 +277,9 @@ export class AnnouncementNotificationFanoutService {
         {
           announcementId: announcement.id,
           desiredEventKey: 'announcement.unpublished',
-          eventBoundaryKey: this.buildEndBoundaryKey(announcement.publishEndTime),
+          eventBoundaryKey: this.buildEndBoundaryKey(
+            announcement.publishEndTime,
+          ),
         },
         tx,
       )
@@ -326,7 +309,11 @@ export class AnnouncementNotificationFanoutService {
       task.announcementId,
     )
     if (!decision && eventKey === 'announcement.published') {
-      await this.markTaskFailed(task, task.cursorUserId, 'announcement_not_found')
+      await this.markTaskFailed(
+        task,
+        task.cursorUserId,
+        'announcement_not_found',
+      )
       return
     }
     if (decision && this.resolveAnnouncementEventKey(decision) !== eventKey) {
@@ -342,7 +329,11 @@ export class AnnouncementNotificationFanoutService {
       task.announcementId,
     )
     if (eventKey === 'announcement.published' && !announcement) {
-      await this.markTaskFailed(task, task.cursorUserId, 'announcement_not_found')
+      await this.markTaskFailed(
+        task,
+        task.cursorUserId,
+        'announcement_not_found',
+      )
       return
     }
 
@@ -666,8 +657,7 @@ export class AnnouncementNotificationFanoutService {
     return {
       maxBatchesPerTask:
         options.maxBatchesPerTask ?? ANNOUNCEMENT_FANOUT_TASK_MAX_BATCHES,
-      maxRuntimeMs:
-        options.maxRuntimeMs ?? ANNOUNCEMENT_FANOUT_CONSUME_MAX_MS,
+      maxRuntimeMs: options.maxRuntimeMs ?? ANNOUNCEMENT_FANOUT_CONSUME_MAX_MS,
       nowMs,
       startedAtMs: nowMs(),
     }
@@ -745,7 +735,10 @@ export class AnnouncementNotificationFanoutService {
           ),
         ),
       )
-      .orderBy(asc(this.appAnnouncement.publishStartTime), asc(this.appAnnouncement.id))
+      .orderBy(
+        asc(this.appAnnouncement.publishStartTime),
+        asc(this.appAnnouncement.id),
+      )
       .limit(ANNOUNCEMENT_LIFECYCLE_ENQUEUE_BATCH_SIZE)
   }
 
@@ -768,7 +761,10 @@ export class AnnouncementNotificationFanoutService {
           sql`${this.appAnnouncement.notificationEndBoundaryAt} is distinct from ${this.appAnnouncement.publishEndTime}`,
         ),
       )
-      .orderBy(asc(this.appAnnouncement.publishEndTime), asc(this.appAnnouncement.id))
+      .orderBy(
+        asc(this.appAnnouncement.publishEndTime),
+        asc(this.appAnnouncement.id),
+      )
       .limit(ANNOUNCEMENT_LIFECYCLE_ENQUEUE_BATCH_SIZE)
   }
 
@@ -787,7 +783,10 @@ export class AnnouncementNotificationFanoutService {
       .where(
         and(
           eq(this.appAnnouncement.id, announcement.id),
-          eq(this.appAnnouncement.publishStartTime, announcement.publishStartTime),
+          eq(
+            this.appAnnouncement.publishStartTime,
+            announcement.publishStartTime,
+          ),
         ),
       )
   }

@@ -1,3 +1,4 @@
+import type { AppDateInput, AppDateOnlyParts, AppDateRange } from './time.type'
 import process from 'node:process'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
@@ -12,20 +13,7 @@ const DEFAULT_APP_TIME_ZONE = 'Asia/Shanghai'
 const DATE_ONLY_FORMAT = 'YYYY-MM-DD'
 const DATE_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
 
-type AppDateInput = Date | string | number
-
-export interface AppDateRange {
-  gte?: Date
-  lt?: Date
-}
-
-export interface AppDateOnlyParts {
-  dayOfMonth: number
-  daysInMonth: number
-  monthEndDate: string
-  monthStartDate: string
-  weekday: number
-}
+export type { AppDateInput, AppDateOnlyParts, AppDateRange } from './time.type'
 
 function parseDateOnlyDayjsInAppTimeZone(value: string) {
   const trimmedValue = value.trim()

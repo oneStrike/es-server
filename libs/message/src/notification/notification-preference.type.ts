@@ -4,10 +4,13 @@ import type {
 } from '@db/schema'
 
 import type {
-  MessageNotificationCategoryKey,
   MessageNotificationDispatchStatusEnum,
   MessageNotificationPreferenceSourceEnum,
 } from './notification.constant'
+
+import type {
+  MessageNotificationCategoryKey,
+} from './notification.type'
 
 /** 稳定领域类型 `EffectiveMessageNotificationPreference`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EffectiveMessageNotificationPreference {

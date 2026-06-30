@@ -1,4 +1,5 @@
 import type { FastifyRequest } from 'fastify'
+import type { ActiveMetadata } from './ip2region.type'
 import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, join } from 'node:path'
 import { pipeline } from 'node:stream'
@@ -22,13 +23,6 @@ const ACTIVE_METADATA_FILE = 'metadata.json'
 const EXPECTED_UPLOAD_FILE_NAME = 'ip2region_v4.xdb'
 const ISO_TIMESTAMP_STRIP_MILLISECONDS_REGEX = /\.\d{3}Z$/
 const ISO_TIMESTAMP_STRIP_SYMBOL_REGEX = /[-:]/g
-
-interface ActiveMetadata {
-  activeFileName: string
-  originalFileName: string
-  activatedAt: string
-  fileSize: number
-}
 
 /**
  * 管理端 ip2region 服务。

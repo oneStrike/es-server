@@ -1,11 +1,7 @@
-import type { AppUserSelect, UserNotificationSelect } from '@db/schema'
-import type { UserNotificationDataDto } from './dto/notification.dto'
+import type { UserNotificationSelect } from '@db/schema'
+import type { NotificationActorSource } from './notification-public.type'
+import type { UserNotificationDataDto } from './notification.type'
 import { isMessageNotificationCategoryKey } from './notification.constant'
-
-export type NotificationActorSource = Pick<
-  AppUserSelect,
-  'id' | 'nickname' | 'avatarUrl'
->
 
 function isPlainRecord<T>(
   value: T,

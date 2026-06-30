@@ -1,4 +1,5 @@
 import type { AdProviderConfigSelect } from '@db/schema'
+import type { ProviderEnvironmentEnum } from '../../payment/payment.constant'
 import type { AdProviderEnum } from '../ad-reward.constant'
 import type { AdRewardVerificationDto } from '../dto/ad-reward.dto'
 
@@ -28,4 +29,13 @@ export interface AdRewardProviderAdapter {
   parseRewardPayload: (
     input: AdRewardProviderVerifyInput,
   ) => AdRewardProviderParsedPayload
+}
+
+/** 管理端可选择的广告验签密钥定义，映射 provider、环境与环境变量名。 */
+export interface AdRewardCredentialOptionDefinition {
+  value: string
+  label: string
+  provider: AdProviderEnum
+  environment: ProviderEnvironmentEnum
+  envKey: string
 }

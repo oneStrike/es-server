@@ -1,7 +1,7 @@
 import type {
-  SensitiveWordDetectedHit,
-  SensitiveWordHitBase,
-  SensitiveWordHitSegment,
+  ContentReviewAction,
+  ResolveSensitiveWordReviewDecisionInput,
+  SensitiveWordReviewDecision,
 } from './sensitive-word.type'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { ConfigReader } from '@libs/system-config/config-reader'
@@ -20,30 +20,6 @@ const TOPIC_REVIEW_POLICY = {
 
 export const SENSITIVE_WORD_DETECTOR_NOT_READY_FALLBACK_REASON =
   'sensitive_word_detector_not_ready' as const
-
-export type SensitiveWordReviewFallbackReason =
-  typeof SENSITIVE_WORD_DETECTOR_NOT_READY_FALLBACK_REASON
-
-export interface SensitiveWordReviewDecision {
-  auditStatus: AuditStatusEnum
-  detectorReady: boolean
-  fallbackReason?: SensitiveWordReviewFallbackReason
-  highestLevel?: SensitiveWordLevelEnum
-  isHidden: boolean
-  publicHits: SensitiveWordHitBase[]
-  recordHits: boolean
-  statisticsHits: SensitiveWordDetectedHit[]
-}
-
-export interface ResolveSensitiveWordReviewDecisionInput {
-  segments: SensitiveWordHitSegment[]
-  topicReviewPolicy?: number | null
-}
-
-interface ContentReviewAction {
-  auditStatus?: AuditStatusEnum | null
-  isHidden?: boolean | null
-}
 
 /**
  * 敏感词业务审核决策服务。
@@ -138,21 +114,21 @@ export class SensitiveWordReviewPolicyService {
     if (highestLevel === SensitiveWordLevelEnum.SEVERE) {
       return this.normalizeAction(policy?.severeAction, {
         auditStatus: DEFAULT_CONFIG.contentReviewPolicy.severeAction
-          .auditStatus as AuditStatusEnum,
+          .auditStatus,
         isHidden: DEFAULT_CONFIG.contentReviewPolicy.severeAction.isHidden,
       })
     }
     if (highestLevel === SensitiveWordLevelEnum.GENERAL) {
       return this.normalizeAction(policy?.generalAction, {
         auditStatus: DEFAULT_CONFIG.contentReviewPolicy.generalAction
-          .auditStatus as AuditStatusEnum,
+          .auditStatus,
         isHidden: DEFAULT_CONFIG.contentReviewPolicy.generalAction.isHidden,
       })
     }
 
     return this.normalizeAction(policy?.lightAction, {
       auditStatus: DEFAULT_CONFIG.contentReviewPolicy.lightAction
-        .auditStatus as AuditStatusEnum,
+        .auditStatus,
       isHidden: DEFAULT_CONFIG.contentReviewPolicy.lightAction.isHidden,
     })
   }

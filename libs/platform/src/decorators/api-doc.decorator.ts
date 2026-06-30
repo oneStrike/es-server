@@ -1,4 +1,8 @@
-import type { Type } from '@nestjs/common'
+import type {
+  ApiDocConstructorModel,
+  ApiDocOptions,
+  ApiHtmlDocOptions,
+} from './api-doc.type'
 import { applyDecorators } from '@nestjs/common'
 import {
   ApiExtraModels,
@@ -10,38 +14,8 @@ import {
 } from '@nestjs/swagger'
 import { ApiSuccessCode } from '../constant'
 
-/**
- * API 文档装饰器配置
- * 用于统一 Swagger 元数据
- *
- * @template TModel 返回模型类型
- */
-export interface ApiDocOptions<TModel> {
-  /** 接口摘要 */
-  summary: string
-  /** 返回模型 */
-  model?: Type<TModel> | Record<string, any>
-  /** 是否返回数组 */
-  isArray?: boolean
-  /** data 是否允许为 null；用于真实返回整个 data=null 的接口 */
-  nullable?: boolean
-}
-
-/**
- * HTML 响应文档配置。
- * 用于少数直接返回 text/html、不会经过 JSON envelope 包装的接口。
- */
-export interface ApiHtmlDocOptions {
-  /** 接口摘要 */
-  summary: string
-  /** 响应描述 */
-  description?: string
-  /** HTML 示例 */
-  example?: string
-}
-
 // 工具函数：判断是否是类
-function isClass(model: object): model is Type<object> {
+function isClass(model: object): model is ApiDocConstructorModel {
   return typeof model === 'function' && model.prototype
 }
 
@@ -72,7 +46,7 @@ function baseResponse(summary: string) {
   }
 }
 
-export function ApiDoc<TModel extends Type<object>>(
+export function ApiDoc<TModel extends object = object>(
   options: ApiDocOptions<TModel>,
 ) {
   const { summary, model, isArray, nullable } = options
@@ -155,7 +129,7 @@ export function ApiHtmlDoc(options: ApiHtmlDocOptions) {
   )
 }
 
-export function ApiPageDoc<TModel extends Type<object>>(
+export function ApiPageDoc<TModel extends object = object>(
   options: ApiDocOptions<TModel>,
 ) {
   const { summary, model } = options

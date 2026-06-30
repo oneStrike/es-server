@@ -110,12 +110,7 @@ export interface SuperbedReadResponseOptions {
  * 用于场景校验、对象 key 规划和 provider 兼容处理。
  */
 export type UploadFileCategory =
-  | 'image'
-  | 'audio'
-  | 'video'
-  | 'document'
-  | 'archive'
-  | 'package'
+  'image' | 'audio' | 'video' | 'document' | 'archive' | 'package'
 
 /**
  * 已完成校验和对象 key 规划的待上传文件。
@@ -164,6 +159,12 @@ export interface StoredUploadNameResult {
   finalName: string
   width?: number
   height?: number
+}
+
+/** 本地图片文件解析得到的像素尺寸。 */
+export interface UploadImageDimensions {
+  width: number
+  height: number
 }
 
 /**

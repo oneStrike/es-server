@@ -1,4 +1,3 @@
-import type { MessageNotificationCategoryKey } from '../notification.constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -55,7 +54,9 @@ export class NotificationDeliveryLookupFieldsDto {
     nullable: true,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
-  categoryKey!: MessageNotificationCategoryKey | null
+  categoryKey!:
+    | (typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM)[keyof typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM]
+    | null
 
   @NumberProperty({
     description: '接收用户 ID',

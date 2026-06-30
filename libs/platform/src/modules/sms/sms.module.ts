@@ -1,15 +1,7 @@
-import type { DynamicModule, Provider, Type } from '@nestjs/common'
+import type { DynamicModule } from '@nestjs/common'
+import type { SmsModuleOptions } from './sms.type'
 import { Module } from '@nestjs/common'
 import { SmsService } from './sms.service'
-
-/**
- * 阿里云短信模块
- * 提供短信发送、验证码发送等功能
- */
-export interface SmsModuleOptions {
-  imports?: Array<DynamicModule | Type<object>>
-  providers?: Provider[]
-}
 
 @Module({})
 export class SmsModule {

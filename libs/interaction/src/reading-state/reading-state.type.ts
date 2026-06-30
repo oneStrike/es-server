@@ -1,7 +1,7 @@
 import type {
   ReadingStateChapterSnapshot,
   ReadingStateWorkSnapshot,
-} from './interfaces/reading-state-resolver.interface'
+} from './interfaces/reading-state-resolver.type'
 
 /**
  * 阅读历史基础行结构。

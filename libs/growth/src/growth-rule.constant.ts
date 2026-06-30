@@ -84,12 +84,6 @@ export enum GrowthRuleTypeEnum {
 }
 
 /**
- * 成长规则英文键名。
- * 供事件定义层等元数据模块复用稳定 key。
- */
-export type GrowthRuleTypeKey = keyof typeof GrowthRuleTypeEnum
-
-/**
  * 成长规则的稳定数值编码列表。
  * 用于事件定义覆盖校验、配置筛选和枚举遍历，避免受 TS 数字枚举反向映射影响。
  */

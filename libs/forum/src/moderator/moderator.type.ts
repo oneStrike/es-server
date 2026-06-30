@@ -1,5 +1,9 @@
 import type { Db } from '@db/core'
-import type { ForumModeratorSectionSelect, ForumModeratorSelect } from '@db/schema'
+import type {
+  ForumModeratorSectionSelect,
+  ForumModeratorSelect,
+} from '@db/schema'
+import type { ForumModeratorLifecycleEventTypeEnum } from './moderator-lifecycle-log.constant'
 import type {
   ForumModeratorPermissionEnum,
   ForumModeratorRoleTypeEnum,
@@ -90,4 +94,15 @@ export interface ForumModeratorActionLogInput {
   actionDescription: string
   beforeData?: unknown
   afterData?: unknown
+}
+
+/** 版主任期生命周期日志写入入参，统一约束申请、任命、变更和移除日志字段。 */
+export interface CreateForumModeratorLifecycleLogInput {
+  eventType: ForumModeratorLifecycleEventTypeEnum
+  moderatorId?: number | null
+  applicationId?: number | null
+  actorAdminUserId: number
+  reason?: string | null
+  beforeData?: unknown | null
+  afterData?: unknown | null
 }

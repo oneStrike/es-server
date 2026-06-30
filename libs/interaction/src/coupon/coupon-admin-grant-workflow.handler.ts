@@ -7,6 +7,7 @@ import type {
   WorkflowItemPageContext,
   WorkflowRetryContext,
 } from '@libs/platform/modules/workflow/workflow.type'
+import type { CouponAdminGrantItemCounters } from './types/coupon.type'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -27,12 +28,6 @@ import {
 import { CouponService } from './coupon.service'
 
 const EXECUTION_CHUNK_SIZE = 50
-
-interface CouponAdminGrantAttemptCounters {
-  failedItemCount: number
-  skippedItemCount: number
-  successItemCount: number
-}
 
 @Injectable()
 export class CouponAdminGrantWorkflowHandler
@@ -74,8 +69,7 @@ export class CouponAdminGrantWorkflowHandler
           attemptCounters: {
             ...attemptCounters,
             skippedItemCount:
-              attemptCounters.skippedItemCount +
-              cancellation.skippedItemCount,
+              attemptCounters.skippedItemCount + cancellation.skippedItemCount,
           },
         })
       }
@@ -315,7 +309,9 @@ export class CouponAdminGrantWorkflowHandler
           currentAttemptNo: nextAttemptNo,
           updatedAt: new Date(),
         })
-        .where(inArray(this.drizzle.schema.couponAdminGrantItem.id, recoverableIds))
+        .where(
+          inArray(this.drizzle.schema.couponAdminGrantItem.id, recoverableIds),
+        )
     }
     const jobCounters = await this.grantWorkflowService.aggregateCounters(
       grantJob.id,
@@ -525,7 +521,7 @@ export class CouponAdminGrantWorkflowHandler
     }
   }
 
-  private emptyCounters(): CouponAdminGrantAttemptCounters {
+  private emptyCounters(): CouponAdminGrantItemCounters {
     return {
       successItemCount: 0,
       failedItemCount: 0,

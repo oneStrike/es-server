@@ -10,7 +10,7 @@ import {
   QueryDownloadedWorkChapterCommandDto,
   QueryDownloadedWorkCommandDto,
 } from './dto/download.dto'
-import { IDownloadTargetResolver } from './interfaces/download-target-resolver.interface'
+import { IDownloadTargetResolver } from './interfaces/download-target-resolver.type'
 
 const DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL = sql.join(
   DOWNLOAD_WORK_CHAPTER_TARGET_TYPES.map((targetType) => sql`${targetType}`),

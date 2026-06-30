@@ -1,4 +1,5 @@
 import type { Db, SQL } from '@db/core'
+import type { LedgerRecordShape } from './point.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -18,23 +19,6 @@ import {
   ConsumeUserPointsDto,
   QueryUserPointRecordDto,
 } from './dto/point-record.dto'
-
-interface LedgerRecordShape {
-  id: number
-  userId: number
-  ruleId: number | null
-  ruleType?: number | null
-  targetType: number | null
-  targetId: number | null
-  delta: number
-  beforeValue: number
-  afterValue: number
-  bizKey?: string
-  createdAt: Date
-  updatedAt?: Date
-  remark: string | null
-  context?: Record<string, unknown> | null
-}
 
 function buildOperationNoteContext(operationNote?: string) {
   if (typeof operationNote !== 'string' || operationNote.trim() === '') {

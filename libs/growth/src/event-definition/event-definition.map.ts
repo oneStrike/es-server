@@ -1,4 +1,4 @@
-import type { GrowthRuleTypeKey } from '../growth-rule.constant'
+import type { GrowthRuleTypeKey } from '../growth-rule.type'
 import type {
   EventDefinition,
   EventDefinitionDraft,

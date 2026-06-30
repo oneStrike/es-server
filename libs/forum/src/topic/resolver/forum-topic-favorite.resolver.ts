@@ -2,7 +2,7 @@ import type { Db } from '@db/core'
 import type {
   FavoriteTargetContext,
   IFavoriteTargetResolver,
-} from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
+} from '@libs/interaction/favorite/interfaces/favorite-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'

@@ -1,6 +1,6 @@
 import type { JsonValue } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
-import type { AnnouncementFanoutPort } from './announcement-fanout.port'
+import type { AnnouncementFanoutPort } from './announcement-fanout.type'
 import type {
   AnnouncementOutputInput,
   AnnouncementResponseRow,
@@ -190,7 +190,7 @@ export class AppAnnouncementService {
       maxPageSize: 100,
     })
     const { where } = this.buildAnnouncementPageQuery(
-      queryAnnouncementDto as QueryAnnouncementDto,
+      queryAnnouncementDto,
       {
         appVisibleOnly: true,
       },

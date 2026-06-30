@@ -80,3 +80,8 @@ export interface ITokenStorageService {
    */
   deleteOldRevokedTokens: (retentionDays: number) => Promise<number>
 }
+
+/** 刷新 access token 时允许调用方提供 refresh token 原子消费钩子。 */
+export interface RefreshAccessTokenOptions {
+  consumeRefreshTokenJti?: (jti: string) => boolean | Promise<boolean>
+}

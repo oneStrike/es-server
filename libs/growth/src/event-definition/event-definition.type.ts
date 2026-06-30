@@ -1,7 +1,5 @@
-import type {
-  GrowthRuleTypeEnum,
-  GrowthRuleTypeKey,
-} from '../growth-rule.constant'
+import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
+import type { GrowthRuleTypeKey } from '../growth-rule.type'
 import type {
   EventDefinitionConsumerEnum,
   EventDefinitionDomainEnum,

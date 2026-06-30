@@ -16,7 +16,7 @@ import {
 import {
   IReadingStateResolver,
   ReadingStateWorkSnapshot,
-} from './interfaces/reading-state-resolver.interface'
+} from './interfaces/reading-state-resolver.type'
 
 @Injectable()
 export class ReadingStateService {
@@ -187,7 +187,7 @@ export class ReadingStateService {
     await this.touchByWork({
       userId,
       workId: chapter.workId,
-      workType: chapter.workType as ContentTypeEnum,
+      workType: chapter.workType,
       lastReadChapterId: chapterId,
     })
   }
@@ -254,7 +254,7 @@ export class ReadingStateService {
     const typeGroups = new Map<ContentTypeEnum, ReadingHistoryIndexedRow[]>()
 
     for (const [index, item] of page.list.entries()) {
-      const type = item.workType as ContentTypeEnum
+      const type = item.workType
       if (!typeGroups.has(type)) {
         typeGroups.set(type, [])
       }

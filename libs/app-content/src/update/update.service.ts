@@ -1,7 +1,4 @@
-import type {
-  AppUpdateReleaseInsert,
-  AppUpdateReleaseSelect,
-} from '@db/schema'
+import type { AppUpdateReleaseInsert, AppUpdateReleaseSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   AppUpdateCheckResponseDto,
@@ -28,8 +25,6 @@ import {
   AppUpdatePopupBackgroundPositionEnum,
   AppUpdateTypeEnum,
 } from './update.constant'
-
-type AppUpdateReleaseRecord = AppUpdateReleaseSelect
 
 /**
  * App 更新服务。
@@ -105,7 +100,7 @@ export class AppUpdateService {
       ...result,
       list: result.list.map<AppUpdateReleaseListItemDto>((item) => ({
         id: item.id,
-        platform: item.platform as AppUpdateReleaseListItemDto['platform'],
+        platform: item.platform,
         versionName: item.versionName,
         buildCode: item.buildCode,
         forceUpdate: item.forceUpdate,
@@ -314,7 +309,7 @@ export class AppUpdateService {
       where: { id },
     })
 
-    return release as AppUpdateReleaseRecord | undefined
+    return release
   }
 
   /**
@@ -333,7 +328,7 @@ export class AppUpdateService {
       ],
     })
 
-    return release as AppUpdateReleaseRecord | undefined
+    return release
   }
 
   /**
@@ -423,7 +418,7 @@ export class AppUpdateService {
   /**
    * 发布前校验至少存在一种分发目标。
    */
-  private assertDistributionTargets(release: AppUpdateReleaseRecord) {
+  private assertDistributionTargets(release: AppUpdateReleaseSelect) {
     const hasDistributionTarget = Boolean(release.packageUrl)
 
     if (!hasDistributionTarget) {
@@ -470,7 +465,7 @@ export class AppUpdateService {
    * 后台详情映射。
    * 统一补齐可空默认值，减少管理端 diff 抖动。
    */
-  private toReleaseDetailDto(release: AppUpdateReleaseRecord) {
+  private toReleaseDetailDto(release: AppUpdateReleaseSelect) {
     return {
       ...release,
       releaseNotes: release.releaseNotes ?? null,
@@ -486,6 +481,6 @@ export class AppUpdateService {
       popupBackgroundPosition:
         (release.popupBackgroundPosition as AppUpdatePopupBackgroundPositionEnum | null) ??
         null,
-    } as AppUpdateReleaseDetailDto
+    }
   }
 }

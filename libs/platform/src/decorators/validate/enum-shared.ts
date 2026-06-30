@@ -1,11 +1,6 @@
-import type { EnumLike } from './validate.type'
+import type { EnumLike, EnumValidationArtifacts } from './validate.type'
 import { getNumberEnumValues, isNumberEnum } from '@libs/platform/utils'
 import { IsEnum, IsIn } from 'class-validator'
-
-export interface EnumValidationArtifacts {
-  isNumericEnum: boolean
-  validValues: Array<string | number>
-}
 
 export function resolveEnumValidationArtifacts(
   enumLike: EnumLike,

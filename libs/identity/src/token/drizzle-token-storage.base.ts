@@ -1,4 +1,3 @@
-import type { adminUserToken, appUserToken } from '@db/schema'
 import type {
   CreateTokenInput,
   ITokenEntity,
@@ -8,13 +7,12 @@ import type {
 } from '@libs/platform/modules/auth/types'
 import type { Cache } from 'cache-manager'
 import type { SQL } from 'drizzle-orm'
+import type { TokenTable } from './drizzle-token-storage.type'
 import { DrizzleService } from '@db/core'
 import { BaseTokenStorageService } from '@libs/platform/modules/auth/base-token-storage.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject } from '@nestjs/common'
 import { and, eq, gt, inArray, isNotNull, isNull, lt } from 'drizzle-orm'
-
-type TokenTable = typeof appUserToken | typeof adminUserToken
 
 export abstract class BaseDrizzleTokenStorageService<
   TEntity extends ITokenEntity,

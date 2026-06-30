@@ -5,7 +5,7 @@ import { BrowseLogGrowthService } from './browse-log-growth.service'
 import { BrowseLogInteractionService } from './browse-log-interaction.service'
 import { BrowseLogPermissionService } from './browse-log-permission.service'
 import { BrowseLogTargetTypeEnum } from './browse-log.constant'
-import { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolver.interface'
+import { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolver.type'
 
 @Injectable()
 export class BrowseLogService {

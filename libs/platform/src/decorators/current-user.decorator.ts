@@ -1,11 +1,7 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
 import type { ExecutionContext } from '@nestjs/common'
+import type { UserField } from './current-user.type'
 import { createParamDecorator } from '@nestjs/common'
-
-/**
- * CurrentUser 装饰器支持的字段类型
- */
-export type UserField = keyof JwtUserInfoInterface
 
 /**
  * CurrentUser 装饰器

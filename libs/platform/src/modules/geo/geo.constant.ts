@@ -13,6 +13,3 @@ export const GEO_RUNTIME_SOURCE = {
   /** 当前进程没有可用属地库。 */
   UNAVAILABLE: 'unavailable',
 } as const
-
-export type GeoRuntimeSource =
-  (typeof GEO_RUNTIME_SOURCE)[keyof typeof GEO_RUNTIME_SOURCE]

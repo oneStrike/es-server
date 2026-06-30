@@ -61,3 +61,46 @@ export type WorkChapterPublicDetailRow = Pick<
   resolvedRequiredViewLevelId?: number | null
   purchasePricing?: ContentPurchasePricingDto | null
 }
+
+/** app 章节分页查询使用的章节字段投影，避免公开列表依赖完整章节行。 */
+export type AppChapterPageRow = Pick<
+  WorkChapterSelect,
+  | 'id'
+  | 'workId'
+  | 'workType'
+  | 'title'
+  | 'subtitle'
+  | 'cover'
+  | 'sortOrder'
+  | 'isPublished'
+  | 'isPreview'
+  | 'publishAt'
+  | 'viewRule'
+  | 'price'
+  | 'canDownload'
+  | 'canComment'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+/** admin 章节分页查询使用的章节字段投影，包含后台列表额外展示字段。 */
+export type AdminChapterPageRow = Pick<
+  WorkChapterSelect,
+  | 'id'
+  | 'workId'
+  | 'workType'
+  | 'cover'
+  | 'title'
+  | 'subtitle'
+  | 'sortOrder'
+  | 'viewRule'
+  | 'price'
+  | 'requiredViewLevelId'
+  | 'isPreview'
+  | 'canDownload'
+  | 'canComment'
+  | 'isPublished'
+  | 'publishAt'
+  | 'createdAt'
+  | 'updatedAt'
+>

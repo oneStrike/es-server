@@ -129,3 +129,20 @@ export type CouponAbilityDefinition = WritableCouponDefinition
 
 /** 券发放快照构造所需的券定义字段视图。 */
 export type CouponGrantSnapshotSource = Omit<CouponGrantSnapshot, 'issuedAt'>
+
+/** 批量发券 workflow 条目错误事实结构，供条目页和错误持久化读取复用。 */
+export interface CouponAdminGrantErrorFacts {
+  code: string
+  context: Record<string, unknown>
+  domain: string
+  retryable: boolean
+  severity: string
+  stage: string
+}
+
+/** 批量发券 workflow 任务与 attempt 通用计数字段。 */
+export interface CouponAdminGrantItemCounters {
+  failedItemCount: number
+  skippedItemCount: number
+  successItemCount: number
+}

@@ -4,7 +4,7 @@ import type {
   UserReportSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import type { ReportDispositionResult } from './interfaces/report-target-resolver.interface'
+import type { ReportDispositionResult } from './interfaces/report-target-resolver.type'
 import type {
   CreateUserReportOptions,
   CreateUserReportPayload,
@@ -28,7 +28,7 @@ import {
   QueryAdminReportPageDto,
   QueryMyReportPageCommandDto,
 } from './dto/report.dto'
-import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
+import { IReportTargetResolver } from './interfaces/report-target-resolver.type'
 import { ReportGrowthService } from './report-growth.service'
 import {
   ReportDispositionActionEnum,
@@ -687,7 +687,7 @@ export class ReportService {
       reporterId: handledReport.reporterId,
       handlerId: handledReport.handlerId,
       status: handledReport.status,
-      targetType: handledReport.targetType as ReportTargetTypeEnum,
+      targetType: handledReport.targetType,
       targetId: handledReport.targetId,
       occurredAt: handledReport.handledAt ?? undefined,
     })
@@ -697,7 +697,7 @@ export class ReportService {
     })
 
     const resolver = this.getResolver(
-      handledReport.targetType as ReportTargetTypeEnum,
+      handledReport.targetType,
     )
     if (resolver.postDispositionCommit) {
       for (const event of handledReport.dispositionEvents ?? []) {
@@ -839,7 +839,7 @@ export class ReportService {
       return null
     }
 
-    const resolver = this.getResolver(report.targetType as ReportTargetTypeEnum)
+    const resolver = this.getResolver(report.targetType)
     if (!resolver.applyDisposition) {
       throw new BadRequestException('该举报目标类型暂不支持目标写入处置')
     }

@@ -1,11 +1,10 @@
+import type { EmojiKeywords } from './emoji-normalizer.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 
 const EMOJI_UNICODE_REGEX = /\p{RGI_Emoji}/gv
 const CODEPOINT_TOKEN_REGEX = /^(?:U\+|0x)?[0-9a-f]{4,6}$/i
 const SHORTCODE_REGEX = /^[a-z0-9_]{2,32}$/
-
-export type EmojiKeywords = Record<string, string[]>
 
 export function normalizeEmojiShortcode(value: unknown): string | null {
   if (value === undefined || value === null || value === '') {
@@ -84,7 +83,9 @@ export function normalizeEmojiKeywords(value: unknown): EmojiKeywords | null {
 
 export function isEmojiUnicodeSequence(value: string) {
   const matches = Array.from(
-    value.matchAll(new RegExp(EMOJI_UNICODE_REGEX.source, EMOJI_UNICODE_REGEX.flags)),
+    value.matchAll(
+      new RegExp(EMOJI_UNICODE_REGEX.source, EMOJI_UNICODE_REGEX.flags),
+    ),
     (match) => match[0],
   )
   return matches.length > 0 && matches.join('') === value

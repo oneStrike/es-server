@@ -1,3 +1,4 @@
+import type { ApiDocOptions } from '@libs/platform/decorators'
 import type { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 
 /**
@@ -13,3 +14,10 @@ export interface AuditMetadata {
    */
   content: string
 }
+
+/** admin-api 审计文档组合装饰器配置，复用平台 ApiDoc 配置并补充审计动作元数据。 */
+export type ApiAuditDocOptions<TModel extends object = object> =
+  ApiDocOptions<TModel> & {
+    audit: Pick<AuditMetadata, 'actionType'> &
+      Partial<Pick<AuditMetadata, 'content'>>
+  }

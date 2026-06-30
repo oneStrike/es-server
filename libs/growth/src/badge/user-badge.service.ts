@@ -1,4 +1,3 @@
-import type { userBadge } from '@db/schema'
 import type { IdDto } from '@libs/platform/dto'
 import type { AppDateRange } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
@@ -10,6 +9,7 @@ import type {
   UpdateUserBadgeDto,
   UpdateUserBadgeStatusDto,
 } from './dto/user-badge-management.dto'
+import type { UserBadgeSelect } from './user-badge.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
@@ -17,8 +17,6 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm'
-
-type UserBadgeSelect = typeof userBadge.$inferSelect
 
 @Injectable()
 export class UserBadgeService {

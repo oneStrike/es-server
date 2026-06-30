@@ -1,8 +1,13 @@
-type CursorContextScalar = string | number | boolean | null
+import type {
+  CursorContextFingerprint,
+  CursorContextScalar,
+  CursorContextValue,
+} from './cursor-context.type'
 
-export type CursorContextValue = CursorContextScalar | CursorContextScalar[]
-
-export type CursorContextFingerprint = Record<string, CursorContextValue>
+export type {
+  CursorContextFingerprint,
+  CursorContextValue,
+} from './cursor-context.type'
 
 export function normalizeCursorText(
   value: unknown,
@@ -102,7 +107,9 @@ export function isSameCursorContextFingerprint(
   left: CursorContextFingerprint,
   right: CursorContextFingerprint,
 ): boolean {
-  return stableStringifyCursorContext(left) === stableStringifyCursorContext(right)
+  return (
+    stableStringifyCursorContext(left) === stableStringifyCursorContext(right)
+  )
 }
 
 export function assertSameCursorContextFingerprint(

@@ -6,10 +6,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseNotificationUnreadDto } from '../../notification/dto/notification-unread.dto'
-import {
-  MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
-  MessageNotificationCategoryKey,
-} from '../../notification/notification.constant'
+import { MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM } from '../../notification/notification.constant'
 /**
  * 收件箱通知摘要 DTO。
  */
@@ -23,7 +20,7 @@ export class InboxNotificationBriefDto {
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
     validation: false,
   })
-  categoryKey!: MessageNotificationCategoryKey
+  categoryKey!: (typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM)[keyof typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM]
 
   @StringProperty({
     description: '通知分类中文标签',

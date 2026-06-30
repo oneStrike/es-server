@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.interface'
+import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { WorkAuthorService } from '@libs/content/author/author.service'
 import { BusinessErrorCode } from '@libs/platform/constant'

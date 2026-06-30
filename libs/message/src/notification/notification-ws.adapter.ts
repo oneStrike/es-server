@@ -2,7 +2,9 @@ import type { MessageMappingProperties } from '@nestjs/websockets/gateway-metada
 import type { Observable } from 'rxjs'
 import type {
   NativeWsAdapterClient,
+  NativeWsAdapterIncomingMessage,
   NativeWsAdapterMessage,
+  NativeWsAdapterMessageData,
   NativeWsAdapterMessageEvent,
   NativeWsAdapterMessageTuple,
 } from './notification-websocket.type'
@@ -12,10 +14,6 @@ import { EMPTY, fromEvent } from 'rxjs'
 import { filter, first, mergeMap, share, takeUntil } from 'rxjs/operators'
 
 const NATIVE_WS_OPEN = 1
-type NativeWsAdapterIncomingMessage =
-  | NativeWsAdapterMessageEvent
-  | NativeWsAdapterMessageTuple
-type NativeWsAdapterMessageData = NativeWsAdapterMessageTuple[0]
 
 export class MessageWsAdapter extends WsAdapter {
   // 绑定 native ws 消息处理器，并把协议层解析失败显式转成 ws.error。
@@ -124,19 +122,14 @@ export class MessageWsAdapter extends WsAdapter {
     args: unknown[],
   ): NativeWsAdapterIncomingMessage {
     if (args.length > 1) {
-      return [
-        args[0] as NativeWsAdapterMessageData,
-        args[1] === true,
-      ]
+      return [args[0] as NativeWsAdapterMessageData, args[1] === true]
     }
 
     return args[0] as NativeWsAdapterMessageEvent
   }
 
   // 兼容 Node EventEmitter 测试夹具与 ws EventTarget 运行时事件。
-  private normalizeRawMessage(
-    rawMessage: NativeWsAdapterIncomingMessage,
-  ) {
+  private normalizeRawMessage(rawMessage: NativeWsAdapterIncomingMessage) {
     if (Array.isArray(rawMessage)) {
       return this.normalizeMessageData(rawMessage[0], rawMessage[1] === true)
     }
@@ -149,7 +142,7 @@ export class MessageWsAdapter extends WsAdapter {
     }
 
     return this.normalizeMessageData(
-      rawMessage as NativeWsAdapterMessageData,
+      rawMessage,
       false,
     )
   }

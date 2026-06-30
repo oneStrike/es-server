@@ -1,4 +1,4 @@
-import type { AppUserInsert } from '@db/schema'
+import type { AppUserProfileUpdateInput } from './app-user-command.type'
 import { DrizzleService } from '@db/core'
 import { AppUserTokenStorageService } from '@libs/identity/token/app-user-token-storage.service'
 import { BusinessErrorCode, GenderEnum } from '@libs/platform/constant'
@@ -20,21 +20,6 @@ import { UserService as UserCoreService } from '@libs/user/user.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, eq, isNotNull, isNull } from 'drizzle-orm'
 import { AppUserServiceSupport } from './app-user.service.support'
-
-type AppUserProfileUpdateInput = Partial<
-  Pick<
-    AppUserInsert,
-    | 'nickname'
-    | 'avatarUrl'
-    | 'profileBackgroundImageUrl'
-    | 'phoneNumber'
-    | 'emailAddress'
-    | 'genderType'
-    | 'birthDate'
-    | 'signature'
-    | 'bio'
-  >
->
 
 /**
  * APP 用户账号命令服务。

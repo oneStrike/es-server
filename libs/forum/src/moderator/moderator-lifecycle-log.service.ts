@@ -1,21 +1,11 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type { QueryForumModeratorLifecycleLogDto } from './dto/moderator-lifecycle-log.dto'
-import type { ForumModeratorLifecycleEventTypeEnum } from './moderator-lifecycle-log.constant'
+import type { CreateForumModeratorLifecycleLogInput } from './moderator.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gte, lt } from 'drizzle-orm'
-
-export interface CreateForumModeratorLifecycleLogInput {
-  eventType: ForumModeratorLifecycleEventTypeEnum
-  moderatorId?: number | null
-  applicationId?: number | null
-  actorAdminUserId: number
-  reason?: string | null
-  beforeData?: unknown | null
-  afterData?: unknown | null
-}
 
 @Injectable()
 export class ForumModeratorLifecycleLogService {

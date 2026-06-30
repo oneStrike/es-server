@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { ErrorDescriptor } from './http-exception-filter.type'
 import { extractError, getPostgresErrorResponseDescriptor } from '@db/core'
 
 import {
@@ -15,13 +16,6 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common'
-
-interface ErrorDescriptor {
-  status: HttpStatus
-  responseCode: number
-  message: string
-  businessCode?: number
-}
 
 const ROUTE_NOT_FOUND_MESSAGE_REGEX = /^Cannot\b/i
 
@@ -239,7 +233,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       typeof payload === 'object' &&
       payload !== null &&
       'message' in payload &&
-      typeof (payload as { message?: string }).message === 'string'
+      typeof (payload).message === 'string'
     ) {
       return (payload as { message: string }).message
     }

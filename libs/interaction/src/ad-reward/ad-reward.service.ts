@@ -1,6 +1,7 @@
 import type { adRewardRecord as adRewardRecordTable } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { AdProviderConfigWritableFieldsDto } from '../ad-reward/dto/ad-reward.dto'
+import type { AdRewardCredentialOptionDefinition } from './types/ad-reward.type'
 import { createHash } from 'node:crypto'
 import process from 'node:process'
 import { DrizzleService, toPageResult } from '@db/core'
@@ -40,14 +41,6 @@ import {
 } from '../ad-reward/dto/ad-reward.dto'
 import { CouponRedemptionTargetTypeEnum } from '../coupon/coupon.constant'
 import { ProviderEnvironmentEnum } from '../payment/payment.constant'
-
-interface AdRewardCredentialOptionDefinition {
-  value: string
-  label: string
-  provider: AdProviderEnum
-  environment: ProviderEnvironmentEnum
-  envKey: string
-}
 
 const AD_REWARD_CREDENTIAL_OPTIONS: AdRewardCredentialOptionDefinition[] = [
   {
@@ -389,7 +382,10 @@ export class AdRewardService {
         ),
       )
       .where(where)
-      .orderBy(desc(this.adRewardRecord.createdAt), desc(this.adRewardRecord.id))
+      .orderBy(
+        desc(this.adRewardRecord.createdAt),
+        desc(this.adRewardRecord.id),
+      )
       .limit(page.limit)
       .offset(page.offset)
     const total = await this.db.$count(this.adRewardRecord, where)

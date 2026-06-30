@@ -2,10 +2,8 @@ import type {
   EventDefinitionEntityTypeEnum,
   EventDefinitionImplStatusEnum,
 } from '@libs/growth/event-definition/event-definition.constant'
-import type {
-  GrowthRuleTypeEnum,
-  GrowthRuleTypeKey,
-} from '@libs/growth/growth-rule.constant'
+import type { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
+import type { GrowthRuleTypeKey } from '@libs/growth/growth-rule.type'
 
 /**
  * 任务模板可配置的过滤字段定义。

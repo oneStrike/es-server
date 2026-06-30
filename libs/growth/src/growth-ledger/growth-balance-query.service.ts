@@ -1,12 +1,8 @@
+import type { UserGrowthSnapshot } from './growth-balance-query.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { GrowthAssetTypeEnum } from './growth-ledger.constant'
-
-export interface UserGrowthSnapshot {
-  points: number
-  experience: number
-}
 
 /**
  * 成长余额查询服务。

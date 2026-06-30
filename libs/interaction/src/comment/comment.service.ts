@@ -1,7 +1,6 @@
 import type { Db, SQL } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { DispatchDefinedGrowthEventPayload } from '@libs/growth/growth-reward/types/growth-event-dispatch.type'
-import type { JsonValue } from '@libs/platform/utils'
 import type {
   AuthorCommentDelta,
   CommentModerationState,
@@ -83,7 +82,7 @@ import {
 import {
   CommentTargetMeta,
   ICommentTargetResolver,
-} from './interfaces/comment-target-resolver.interface'
+} from './interfaces/comment-target-resolver.type'
 
 /**
  * 评论服务
@@ -577,7 +576,7 @@ export class CommentService {
     }
 
     return this.getForumTopicAuthorUserId(
-      rootComment.targetType as CommentTargetTypeEnum,
+      rootComment.targetType,
       rootComment.targetId,
     )
   }
@@ -729,7 +728,7 @@ export class CommentService {
         .from(subquery)
         .where(
           lte(subquery.rn, params.previewReplyLimit),
-        )) as typeof previewReplies
+        ))
 
       for (const reply of loadedPreviewReplies) {
         if (
@@ -875,7 +874,7 @@ export class CommentService {
       }
     }
 
-    const targetType = params.current.targetType as CommentTargetTypeEnum
+    const targetType = params.current.targetType
     const resolver = this.getResolver(targetType)
     const meta = await resolver.resolveMeta(tx, params.current.targetId)
     const commentPayload = this.toVisibleCommentEffectPayload(params.current)
@@ -1207,7 +1206,7 @@ export class CommentService {
                   userId,
                   html: compiledBody.html,
                   content: compiledBody.plainText,
-                  body: compiledBody.body as unknown as JsonValue,
+                  body: compiledBody.body,
                   bodyVersion: BODY_VERSION_V1,
                   floor,
                   ...persistedDecision,
@@ -1283,7 +1282,7 @@ export class CommentService {
                 {
                   commentId: newComment.id,
                   userId: newComment.userId,
-                  targetType: newComment.targetType as CommentTargetTypeEnum,
+                  targetType: newComment.targetType,
                   targetId: newComment.targetId,
                   replyToId: newComment.replyToId,
                   occurredAt: newComment.createdAt,
@@ -1392,7 +1391,7 @@ export class CommentService {
     // 校验用户是否有权限在该目标下评论
     await this.commentPermissionService.ensureCanComment(
       userId,
-      targetType as CommentTargetTypeEnum,
+      targetType,
       targetId,
     )
 
@@ -1403,20 +1402,20 @@ export class CommentService {
       ? (replyTo.actualReplyToId ?? replyTo.id)
       : replyTo.id
 
-    const resolver = this.getResolver(targetType as CommentTargetTypeEnum)
+    const resolver = this.getResolver(targetType)
 
     const created = await this.drizzle.withTransaction(async (tx) => {
       await resolver.ensureCanComment(tx, targetId)
       await this.commentPermissionService.ensureCommentRateLimitInTx(
         tx,
         userId,
-        targetType as CommentTargetTypeEnum,
+        targetType,
       )
       const compiledBody = await this.materializeCommentBodyInTx(
         tx,
         html,
         userId,
-        targetType as CommentTargetTypeEnum,
+        targetType,
       )
       const decision = this.resolveAuditDecision(compiledBody.plainText)
       const { recordHits, statisticsHits, ...persistedDecision } = decision
@@ -1429,7 +1428,7 @@ export class CommentService {
           userId,
           html: compiledBody.html,
           content: compiledBody.plainText,
-          body: compiledBody.body as unknown as JsonValue,
+          body: compiledBody.body,
           bodyVersion: BODY_VERSION_V1,
           replyToId,
           actualReplyToId,
@@ -1502,7 +1501,7 @@ export class CommentService {
       const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
         commentId: newComment.id,
         userId: newComment.userId,
-        targetType: newComment.targetType as CommentTargetTypeEnum,
+        targetType: newComment.targetType,
         targetId: newComment.targetId,
         replyToId: newComment.replyToId,
         occurredAt: newComment.createdAt,
@@ -1513,7 +1512,7 @@ export class CommentService {
       if (this.isVisible({ ...decision, deletedAt: null })) {
         await this.applyCommentCountDelta(
           tx,
-          targetType as CommentTargetTypeEnum,
+          targetType,
           targetId,
           1,
         )
@@ -1646,11 +1645,11 @@ export class CommentService {
       return true
     }
 
-    const resolver = this.getResolver(found.targetType as CommentTargetTypeEnum)
+    const resolver = this.getResolver(found.targetType)
 
     await this.applyCommentCountDelta(
       tx,
-      found.targetType as CommentTargetTypeEnum,
+      found.targetType,
       found.targetId,
       -visibleDeletedCount,
     )
@@ -1662,7 +1661,7 @@ export class CommentService {
         {
           id: found.id,
           userId: found.userId,
-          targetType: found.targetType as CommentTargetTypeEnum,
+          targetType: found.targetType,
           targetId: found.targetId,
           replyToId: found.replyToId,
           content: found.content,
@@ -2309,14 +2308,14 @@ export class CommentService {
       this.interactionSummaryReadService.getAuditorSummaryMap([
         {
           auditById: comment.auditById,
-          auditRole: comment.auditRole as AuditRoleEnum | null,
+          auditRole: comment.auditRole,
         },
       ]),
     ])
     const auditorSummaryKey =
       this.interactionSummaryReadService.buildAuditorSummaryKey({
         auditById: comment.auditById,
-        auditRole: comment.auditRole as AuditRoleEnum | null,
+        auditRole: comment.auditRole,
       })
     const replyTo = comment.replyTo
       ? {
@@ -2376,12 +2375,12 @@ export class CommentService {
       )
     }
 
-    if ((current.auditStatus as AuditStatusEnum) === input.auditStatus) {
+    if ((current.auditStatus) === input.auditStatus) {
       return true
     }
 
     this.ensureCanUpdateCommentAuditStatus(
-      current.auditStatus as AuditStatusEnum,
+      current.auditStatus,
       input.auditStatus,
     )
 
@@ -2454,7 +2453,7 @@ export class CommentService {
     }
 
     if (
-      (comment.auditStatus as AuditStatusEnum) === input.auditStatus &&
+      (comment.auditStatus) === input.auditStatus &&
       (comment.auditReason ?? null) === (input.auditReason ?? null)
     ) {
       return {
@@ -2465,7 +2464,7 @@ export class CommentService {
     }
 
     this.ensureCanUpdateCommentAuditStatus(
-      comment.auditStatus as AuditStatusEnum,
+      comment.auditStatus,
       input.auditStatus,
     )
 
@@ -2510,7 +2509,7 @@ export class CommentService {
         )
       }
       if (
-        (latest.auditStatus as AuditStatusEnum) === input.auditStatus &&
+        (latest.auditStatus) === input.auditStatus &&
         (latest.auditReason ?? null) === (input.auditReason ?? null)
       ) {
         return {
@@ -2520,7 +2519,7 @@ export class CommentService {
         }
       }
       this.ensureCanUpdateCommentAuditStatus(
-        latest.auditStatus as AuditStatusEnum,
+        latest.auditStatus,
         input.auditStatus,
       )
       throw new BusinessException(
@@ -2551,7 +2550,7 @@ export class CommentService {
     }
 
     const handled = await this.syncCommentVisibilityTransition(tx, {
-      current: comment as CommentModerationState,
+      current: comment,
       nextAuditStatus: input.auditStatus,
       nextIsHidden: comment.isHidden,
     })
@@ -2725,12 +2724,12 @@ export class CommentService {
         tx,
         sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
         sourceId: comment.id,
-        sourceAuditStatus: comment.auditStatus as AuditStatusEnum,
+        sourceAuditStatus: comment.auditStatus,
         sourceIsHidden: input.isHidden,
         isSourceVisible:
           topicVisible &&
           this.isVisible({
-            auditStatus: comment.auditStatus as AuditStatusEnum,
+            auditStatus: comment.auditStatus,
             isHidden: input.isHidden,
             deletedAt: null,
           }),
@@ -2739,7 +2738,7 @@ export class CommentService {
 
     const handled = await this.syncCommentVisibilityTransition(tx, {
       current: comment as CommentModerationState,
-      nextAuditStatus: comment.auditStatus as AuditStatusEnum,
+      nextAuditStatus: comment.auditStatus,
       nextIsHidden: input.isHidden,
     })
 
@@ -2798,11 +2797,11 @@ export class CommentService {
       eventEnvelope: this.buildCommentCreatedEventEnvelope({
         commentId: comment.id,
         userId: comment.userId,
-        targetType: comment.targetType as CommentTargetTypeEnum,
+        targetType: comment.targetType,
         targetId: comment.targetId,
         replyToId: comment.replyToId,
         occurredAt: comment.createdAt,
-        auditStatus: comment.auditStatus as AuditStatusEnum,
+        auditStatus: comment.auditStatus,
         isHidden: comment.isHidden,
       }),
     })

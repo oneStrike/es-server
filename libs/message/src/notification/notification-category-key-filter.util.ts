@@ -1,4 +1,4 @@
-import type { MessageNotificationCategoryKey } from './notification.constant'
+import type { MessageNotificationCategoryKey } from './notification.type'
 import { isMessageNotificationCategoryKey } from './notification.constant'
 
 const MESSAGE_NOTIFICATION_CATEGORY_KEY_FILTER_DELIMITER_REGEX = /[\s,，;；|]+/u

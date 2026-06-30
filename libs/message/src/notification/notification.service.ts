@@ -1,6 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import type { QueryUserNotificationPageDto } from './dto/notification.dto'
-import type { NotificationActorSource } from './notification-public.mapper'
+import type { NotificationActorSource } from './notification-public.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, isNull, lt, or } from 'drizzle-orm'

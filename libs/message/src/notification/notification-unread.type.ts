@@ -1,4 +1,4 @@
-import type { MessageNotificationCategoryKey } from './notification.constant'
+import type { MessageNotificationCategoryKey } from './notification.type'
 import {
   isMessageNotificationCategoryKey,
   MESSAGE_NOTIFICATION_CATEGORY_KEYS,

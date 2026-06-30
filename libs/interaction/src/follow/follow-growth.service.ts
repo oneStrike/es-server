@@ -1,6 +1,7 @@
-import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
-import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
-import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
+import type { FollowTargetTypeEnum as FollowTargetType } from './follow.type'
+import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { Injectable, Logger } from '@nestjs/common'
 import { FollowTargetTypeEnum } from './follow.constant'
 
@@ -20,7 +21,7 @@ export class FollowGrowthService {
    * 关注成功后发放成长奖励
    */
   async rewardFollowCreated(
-    targetType: FollowTargetTypeEnum,
+    targetType: FollowTargetType,
     targetId: number,
     userId: number,
   ) {

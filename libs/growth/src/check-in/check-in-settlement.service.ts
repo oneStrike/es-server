@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
+import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.type'
 import type {
   CheckInGrantRewardSettlementSource,
   CheckInOptionalRewardSettlementSummary,

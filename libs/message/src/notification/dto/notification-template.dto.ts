@@ -9,7 +9,6 @@ import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   getMessageNotificationCategoryLabel,
   MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
-  MessageNotificationCategoryKey,
 } from '../notification.constant'
 
 export class BaseMessageNotificationTemplateDto extends BaseDto {
@@ -18,7 +17,7 @@ export class BaseMessageNotificationTemplateDto extends BaseDto {
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
-  categoryKey!: MessageNotificationCategoryKey
+  categoryKey!: (typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM)[keyof typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM]
 
   @StringProperty({
     description:
@@ -100,7 +99,9 @@ export class UpdateNotificationTemplateEnabledDto extends IntersectionType(
 
 export class PreviewNotificationTemplateDto extends IntersectionType(
   MessageNotificationTemplateMutableDto,
-  PartialType(PickType(BaseMessageNotificationTemplateDto, ['isEnabled'] as const)),
+  PartialType(
+    PickType(BaseMessageNotificationTemplateDto, ['isEnabled'] as const),
+  ),
 ) {}
 
 export class AdminMessageNotificationTemplateDto extends BaseMessageNotificationTemplateDto {

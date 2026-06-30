@@ -3,7 +3,7 @@ import type {
   UpdateUserNotificationPreferencesDto,
 } from './dto/notification.dto'
 import type { NotificationPreferenceSnapshot } from './notification-preference.type'
-import type { MessageNotificationCategoryKey } from './notification.constant'
+import type { MessageNotificationCategoryKey } from './notification.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'

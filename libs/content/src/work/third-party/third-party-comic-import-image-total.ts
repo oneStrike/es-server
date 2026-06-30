@@ -1,11 +1,6 @@
-import type { HydratedThirdPartyComicImportChapterItem } from '@libs/content/work/third-party/third-party-comic-import.type'
+import type { ThirdPartyComicImportImageTotalSource } from './third-party-comic-import-image-total.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-
-export type ThirdPartyComicImportImageTotalSource = Pick<
-  HydratedThirdPartyComicImportChapterItem,
-  'imageCount' | 'importImages' | 'providerChapterId'
->
 
 export function resolveThirdPartyComicImportImageTotal(
   chapter: ThirdPartyComicImportImageTotalSource,

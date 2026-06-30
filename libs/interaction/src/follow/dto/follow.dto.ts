@@ -28,7 +28,7 @@ export class BaseFollowDto extends IntersectionType(IdDto, UserIdDto) {
     example: FollowTargetTypeEnum.USER,
     required: true,
   })
-  targetType!: FollowTargetTypeEnum
+  targetType!: (typeof FollowTargetTypeEnum)[keyof typeof FollowTargetTypeEnum]
 
   @NumberProperty({
     description: '关注目标 ID',

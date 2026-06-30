@@ -1,5 +1,7 @@
 export * from './api-doc.decorator'
+export * from './api-doc.type'
 export * from './current-user.decorator'
+export * from './current-user.type'
 export * from './public.decorator'
 export * from './validate'
 export * from './validate.decorator'

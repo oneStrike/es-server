@@ -3,11 +3,9 @@ import type {
   QueryAdminChatMessagePageDto,
 } from '@libs/message/monitor/dto/message-monitor.dto'
 import type { SQL } from 'drizzle-orm'
+import type { ChatUserSummary } from './message-chat-investigation.type'
 import { DrizzleService } from '@db/core'
-import {
-  ChatMessageStatusEnum,
-  ChatMessageTypeEnum,
-} from '@libs/message/chat/chat.constant'
+
 import { jsonParse } from '@libs/platform/utils'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -25,12 +23,6 @@ import {
   sql,
 } from 'drizzle-orm'
 import { AdminUserService } from '../admin-user/admin-user.service'
-
-interface ChatUserSummary {
-  userId: number
-  nickname: string | null
-  avatarUrl: string | null
-}
 
 @Injectable()
 export class MessageChatInvestigationService {
@@ -119,7 +111,9 @@ export class MessageChatInvestigationService {
             userId: this.conversationMember.userId,
           })
           .from(this.conversationMember)
-          .where(inArray(this.conversationMember.conversationId, conversationIds))
+          .where(
+            inArray(this.conversationMember.conversationId, conversationIds),
+          )
       : []
     const userIds = Array.from(
       new Set([
@@ -236,8 +230,8 @@ export class MessageChatInvestigationService {
         conversationId: item.conversationId,
         messageSeq: item.messageSeq.toString(),
         senderId: item.senderId,
-        messageType: item.messageType as ChatMessageTypeEnum,
-        status: item.status as ChatMessageStatusEnum,
+        messageType: item.messageType,
+        status: item.status,
         contentPreview: this.sanitizeMessagePreview(item.content),
         hasPayload: item.hasPayload,
         hasBodyTokens: item.hasBodyTokens,

@@ -2,7 +2,7 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing/domain-event.type'
-import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
+import type { MessageNotificationCategoryKey } from '../notification/notification.type'
 import type {
   NotificationProjectionApplyResult,
   NotificationProjectionCommand,
@@ -43,10 +43,7 @@ function toNotificationKind<K extends string>(
 
 function toWorkType(value: unknown): WorkTypeEnum | undefined {
   const normalized = toPositiveInteger(value)
-  if (
-    normalized === WorkTypeEnum.COMIC ||
-    normalized === WorkTypeEnum.NOVEL
-  ) {
+  if (normalized === WorkTypeEnum.COMIC || normalized === WorkTypeEnum.NOVEL) {
     return normalized
   }
   return undefined
@@ -390,7 +387,9 @@ export class NotificationProjectionService {
     }
   }
 
-  private async loadCurrentSystemAnnouncementProjection(announcementId: number) {
+  private async loadCurrentSystemAnnouncementProjection(
+    announcementId: number,
+  ) {
     const announcement = await this.db.query.appAnnouncement.findFirst({
       where: { id: announcementId },
       columns: {
@@ -529,7 +528,9 @@ export class NotificationProjectionService {
     }
   }
 
-  private async normalizeTopicCommentedPayload(payload: Record<string, unknown>) {
+  private async normalizeTopicCommentedPayload(
+    payload: Record<string, unknown>,
+  ) {
     const object = isPlainRecord(payload.object) ? payload.object : undefined
     const container = isPlainRecord(payload.container)
       ? payload.container
@@ -645,9 +646,7 @@ export class NotificationProjectionService {
       kind: 'work',
       id: workId,
       title:
-        toNonEmptyString(work?.name) ??
-        toNonEmptyString(current.title) ??
-        null,
+        toNonEmptyString(work?.name) ?? toNonEmptyString(current.title) ?? null,
       cover:
         toNonEmptyString(work?.cover) ??
         toNonEmptyString(current.cover) ??
@@ -762,9 +761,7 @@ export class NotificationProjectionService {
           toPositiveInteger(current.workId) ??
           null,
         workType:
-          toWorkType(chapter?.workType) ??
-          toWorkType(current.workType) ??
-          null,
+          toWorkType(chapter?.workType) ?? toWorkType(current.workType) ?? null,
       },
       parentContainer:
         resolvedParentContainer &&

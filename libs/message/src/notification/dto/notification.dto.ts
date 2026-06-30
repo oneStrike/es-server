@@ -32,7 +32,6 @@ import {
 import {
   getMessageNotificationCategoryLabel,
   MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
-  MessageNotificationCategoryKey,
   MessageNotificationPreferenceSourceEnum,
 } from '../notification.constant'
 import { NotificationDeliveryLookupFilterDto } from './notification-delivery-filter.dto'
@@ -392,58 +391,6 @@ export class NotificationTaskRewardSnapshotDto {
   ledgerRecordIds!: number[]
 }
 
-export type NotificationCommentContainerDto =
-  | NotificationWorkSnapshotDto
-  | NotificationTopicSnapshotDto
-  | NotificationChapterSnapshotDto
-
-export interface NotificationCommentActionDataDto {
-  object: NotificationCommentSnapshotDto
-  container: NotificationCommentContainerDto
-  parentContainer: NotificationWorkSnapshotDto | null
-}
-
-export interface NotificationCommentReplyDataDto extends NotificationCommentActionDataDto {
-  parentComment: NotificationCommentSnapshotDto | null
-}
-
-export interface NotificationTopicObjectDataDto {
-  object: NotificationTopicSnapshotDto
-}
-
-export interface NotificationTopicCommentedDataDto {
-  object: NotificationCommentSnapshotDto
-  container: NotificationTopicSnapshotDto
-}
-
-export interface NotificationAnnouncementDataDto {
-  object: NotificationAnnouncementSnapshotDto
-}
-
-export interface NotificationTaskReminderDataDto {
-  object: NotificationTaskSnapshotDto
-  reminder: NotificationTaskReminderInfoDto
-  reward: NotificationTaskRewardSnapshotDto | null
-}
-
-export interface NotificationDataByTypeDto {
-  comment_reply: NotificationCommentReplyDataDto
-  comment_mention: NotificationCommentActionDataDto
-  comment_like: NotificationCommentActionDataDto
-  topic_like: NotificationTopicObjectDataDto
-  topic_favorited: NotificationTopicObjectDataDto
-  topic_commented: NotificationTopicCommentedDataDto
-  topic_mentioned: NotificationTopicObjectDataDto
-  user_followed: null
-  system_announcement: NotificationAnnouncementDataDto
-  task_reminder: NotificationTaskReminderDataDto
-}
-
-export type UserNotificationDataDto = Exclude<
-  NotificationDataByTypeDto[MessageNotificationCategoryKey],
-  null
->
-
 function createNotificationCommentContainerOneOfSchemas() {
   return [
     { $ref: getSchemaPath(NotificationWorkSnapshotDto) },
@@ -576,7 +523,7 @@ export class BaseUserNotificationDto extends BaseDto {
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
     validation: false,
   })
-  type!: MessageNotificationCategoryKey
+  type!: (typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM)[keyof typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM]
 
   @NestedProperty({
     description: '通知文案',
@@ -633,7 +580,7 @@ export class BaseUserNotificationDto extends BaseDto {
     nullable: true,
     anyOf: createNotificationDataAnyOfSchemas(),
   })
-  data!: UserNotificationDataDto | null
+  data!: object | null
 
   @NestedProperty({
     description: '触发用户信息',
@@ -704,7 +651,7 @@ class UserNotificationPreferenceWritableFieldsDto {
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
-  categoryKey!: MessageNotificationCategoryKey
+  categoryKey!: (typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM)[keyof typeof MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM]
 
   @BooleanProperty({
     description: '是否启用该分类通知',

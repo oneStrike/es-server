@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.interface'
+import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'

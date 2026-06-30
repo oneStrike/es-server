@@ -1,7 +1,9 @@
 import type { Cache } from 'cache-manager'
-import type { CacheQueryConfig } from './sensitive-word.type'
+import type {
+  CacheQueryConfig,
+  SensitiveWordSelect,
+} from './sensitive-word.type'
 import { DrizzleService } from '@db/core'
-import { sensitiveWord } from '@db/schema'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
@@ -9,9 +11,6 @@ import {
   SENSITIVE_WORD_CACHE_KEYS,
   SENSITIVE_WORD_CACHE_TTL,
 } from './sensitive-word-cache.constant'
-
-/** 敏感词实体类型 */
-type SensitiveWord = typeof sensitiveWord.$inferSelect
 
 /**
  * 敏感词缓存服务
@@ -61,7 +60,7 @@ export class SensitiveWordCacheService {
 
   // 正常路径优先读缓存，缓存未命中时回源数据库。
   async getAllWords() {
-    return this.getFromCache<SensitiveWord>({
+    return this.getFromCache<SensitiveWordSelect>({
       cacheKey: SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS,
       queryFn: async () => this.loadAllWordsFromDb(),
     })

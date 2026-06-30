@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.interface'
+import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.type'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { Injectable, OnModuleInit } from '@nestjs/common'
@@ -50,10 +50,11 @@ export class ForumSectionFollowResolver
   }
 
   async batchGetDetails(targetIds: number[], userId?: number) {
-    const sections = await this.forumSectionService.batchGetVisibleSectionListItems(
-      targetIds,
-      userId,
-    )
+    const sections =
+      await this.forumSectionService.batchGetVisibleSectionListItems(
+        targetIds,
+        userId,
+      )
 
     return new Map(sections.map((section) => [section.id, section]))
   }

@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { IReadingStateResolver } from '@libs/interaction/reading-state/interfaces/reading-state-resolver.interface'
+import type { IReadingStateResolver } from '@libs/interaction/reading-state/interfaces/reading-state-resolver.type'
 import type { WorkReadingChapterRef } from '../work.type'
 import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
@@ -42,7 +42,7 @@ export class WorkReadingStateResolver
     this.readingStateService.registerResolver({
       ...this,
       workType: ContentTypeEnum.NOVEL,
-    } as WorkReadingStateResolver)
+    })
   }
 
   // 解析章节快照。
@@ -171,7 +171,7 @@ export class WorkReadingStateResolver
 
     return {
       workId: chapter.workId,
-      workType: chapter.workType as ContentTypeEnum,
+      workType: chapter.workType,
     }
   }
 }

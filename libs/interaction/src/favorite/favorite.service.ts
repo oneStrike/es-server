@@ -7,7 +7,7 @@ import { and, eq, gte, inArray, lt } from 'drizzle-orm'
 import { FavoritePageCommandDto, FavoriteRecordDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
-import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.interface'
+import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.type'
 
 /**
  * 收藏服务

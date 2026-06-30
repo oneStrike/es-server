@@ -13,16 +13,14 @@ import type {
   NotificationTemplateRenderResult,
   RenderNotificationTemplateInput,
 } from './notification-template.type'
+import type { MessageNotificationCategoryKey } from './notification.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, lt } from 'drizzle-orm'
-import {
-  MESSAGE_NOTIFICATION_CATEGORY_KEYS,
-  MessageNotificationCategoryKey,
-} from './notification.constant'
+import { MESSAGE_NOTIFICATION_CATEGORY_KEYS } from './notification.constant'
 
 const TEMPLATE_PLACEHOLDER_REGEXP = /\{\{\s*([\w.]+)\s*\}\}/g
 const NOTIFICATION_TEMPLATE_PLACEHOLDER_ALLOWLIST: Record<

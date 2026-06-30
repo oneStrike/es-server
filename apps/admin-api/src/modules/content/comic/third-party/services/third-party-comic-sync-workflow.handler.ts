@@ -18,6 +18,7 @@ import type {
   WorkflowItemPageContext,
   WorkflowRetryContext,
 } from '@libs/platform/modules/workflow/workflow.type'
+import type { ContentImportTaskProgressState } from './third-party-comic-workflow.type'
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
 import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
 import { RemoteImageImportService } from '@libs/content/work/third-party/services/remote-image-import.service'
@@ -40,8 +41,6 @@ import { WorkflowRegistry } from '@libs/platform/modules/workflow/workflow.regis
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ThirdPartyComicSyncService } from './third-party-comic-sync.service'
 import { createWorkflowTaskContext } from './workflow-task-context.adapter'
-
-type ContentImportTaskProgressState = 'cancelled' | 'prepare-failed' | 'updated'
 
 /** 第三方漫画最新章节同步 workflow 处理器。 */
 @Injectable()

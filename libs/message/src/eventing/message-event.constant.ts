@@ -1,39 +1,8 @@
-import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
+import type {
+  MessageDomainEventDefinition,
+  MessageDomainEventKey,
+} from './message-event.type'
 import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
-
-export type MessageDomainEventKey =
-  | 'comment.replied'
-  | 'comment.mentioned'
-  | 'comment.liked'
-  | 'topic.liked'
-  | 'topic.favorited'
-  | 'topic.commented'
-  | 'topic.mentioned'
-  | 'user.followed'
-  | 'announcement.published'
-  | 'announcement.unpublished'
-  | 'task.reminder.auto_assigned'
-  | 'task.reminder.expiring'
-  | 'task.reminder.reward_granted'
-  | 'chat.message.created'
-
-export type MessageNotificationProjectionMode =
-  | 'append'
-  | 'upsert'
-  | 'delete'
-  | 'none'
-
-export interface MessageDomainEventDefinition {
-  eventKey: MessageDomainEventKey
-  label: string
-  domain: 'message'
-  consumers: DomainEventConsumerEnum[]
-  notification?: {
-    categoryKey: MessageNotificationCategoryKey
-    mandatory: boolean
-    projectionMode: MessageNotificationProjectionMode
-  }
-}
 
 export const MESSAGE_DOMAIN_EVENT_DEFINITIONS = [
   {
@@ -209,7 +178,8 @@ export function getMessageDomainEventLabel(
   if (!eventKey) {
     return ''
   }
-  return MESSAGE_DOMAIN_EVENT_DEFINITION_MAP.get(
-    eventKey as MessageDomainEventKey,
-  )?.label ?? eventKey
+  return (
+    MESSAGE_DOMAIN_EVENT_DEFINITION_MAP.get(eventKey as MessageDomainEventKey)
+      ?.label ?? eventKey
+  )
 }

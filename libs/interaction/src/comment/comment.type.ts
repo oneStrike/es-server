@@ -3,7 +3,7 @@ import type { MaterializedForumHashtagFact } from '@libs/forum/hashtag/forum-has
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { QueryTargetCommentsDto } from './dto/comment.dto'
-import type { CommentTargetMeta } from './interfaces/comment-target-resolver.interface'
+import type { CommentTargetMeta } from './interfaces/comment-target-resolver.type'
 
 /**
  * 事务冲突重试配置。

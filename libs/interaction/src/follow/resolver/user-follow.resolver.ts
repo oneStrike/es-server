@@ -1,9 +1,7 @@
 import type { Db } from '@db/core'
-import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.interface'
+import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.type'
 import { DrizzleService } from '@db/core'
-import {
-  MessageDomainEventFactoryService,
-} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'

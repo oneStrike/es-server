@@ -23,9 +23,6 @@ export const MESSAGE_NOTIFICATION_CATEGORY_KEYS = [
   'task_reminder',
 ] as const
 
-export type MessageNotificationCategoryKey =
-  (typeof MESSAGE_NOTIFICATION_CATEGORY_KEYS)[number]
-
 export const MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM = {
   COMMENT_REPLY: 'comment_reply',
   COMMENT_MENTION: 'comment_mention',
@@ -37,16 +34,21 @@ export const MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM = {
   USER_FOLLOWED: 'user_followed',
   SYSTEM_ANNOUNCEMENT: 'system_announcement',
   TASK_REMINDER: 'task_reminder',
-} as const satisfies Record<string, MessageNotificationCategoryKey>
+} as const satisfies Record<
+  string,
+  (typeof MESSAGE_NOTIFICATION_CATEGORY_KEYS)[number]
+>
 
 export function isMessageNotificationCategoryKey(
   value: string,
-): value is MessageNotificationCategoryKey {
-  return (MESSAGE_NOTIFICATION_CATEGORY_KEYS as readonly string[]).includes(value)
+): value is (typeof MESSAGE_NOTIFICATION_CATEGORY_KEYS)[number] {
+  return (MESSAGE_NOTIFICATION_CATEGORY_KEYS as readonly string[]).includes(
+    value,
+  )
 }
 
 const MESSAGE_NOTIFICATION_CATEGORY_LABEL_MAP: Record<
-  MessageNotificationCategoryKey,
+  (typeof MESSAGE_NOTIFICATION_CATEGORY_KEYS)[number],
   string
 > = {
   comment_reply: '评论回复',
@@ -62,7 +64,7 @@ const MESSAGE_NOTIFICATION_CATEGORY_LABEL_MAP: Record<
 }
 
 export function getMessageNotificationCategoryLabel(
-  categoryKey: MessageNotificationCategoryKey,
+  categoryKey: (typeof MESSAGE_NOTIFICATION_CATEGORY_KEYS)[number],
 ) {
   return MESSAGE_NOTIFICATION_CATEGORY_LABEL_MAP[categoryKey]
 }

@@ -1,6 +1,14 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
 import type { UserLevelRuleSelect } from '@db/schema'
 import type { AnyColumn } from 'drizzle-orm'
+import type {
+  DailyQuotaInput,
+  LevelBusiness,
+  LevelPurchasePricing,
+  LevelResolveInput,
+  LevelRuleResolveInput,
+  PurchasePricingInput,
+} from './level-rule.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
@@ -8,7 +16,20 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm'
 import {
   CheckUserLevelPermissionDto,
   CreateUserLevelRuleDto,
@@ -18,36 +39,6 @@ import {
   UserLevelStatisticsDto,
 } from './dto/level-rule.dto'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
-
-type LevelBusiness = string | null | undefined
-
-interface LevelResolveInput {
-  userId: number
-  business?: LevelBusiness
-}
-
-interface LevelRuleResolveInput {
-  experience: number
-  business?: LevelBusiness
-}
-
-interface DailyQuotaInput {
-  userId: number
-  business?: LevelBusiness
-}
-
-interface PurchasePricingInput {
-  userId: number
-  originalPrice: number
-  business?: LevelBusiness
-}
-
-interface LevelPurchasePricing {
-  originalPrice: number
-  levelPayableRate: string
-  levelPayablePrice: number
-  levelDiscountAmount: number
-}
 
 @Injectable()
 export class UserLevelRuleService {
@@ -128,10 +119,7 @@ export class UserLevelRuleService {
           duplicate: '经验规则已经存在',
         },
       )
-      await this.assertEnabledBusinessHasOneBaseLevelInTx(
-        tx,
-        payload.business,
-      )
+      await this.assertEnabledBusinessHasOneBaseLevelInTx(tx, payload.business)
       return true
     })
   }
@@ -234,10 +222,7 @@ export class UserLevelRuleService {
           notFound: '等级规则不存在',
         },
       )
-      await this.assertEnabledBusinessHasOneBaseLevelInTx(
-        tx,
-        existing.business,
-      )
+      await this.assertEnabledBusinessHasOneBaseLevelInTx(tx, existing.business)
       await this.assertEnabledBusinessHasOneBaseLevelInTx(
         tx,
         'business' in payload ? payload.business : existing.business,
@@ -269,10 +254,7 @@ export class UserLevelRuleService {
         .select({ total: sql<number>`count(*)` })
         .from(this.appUser)
         .where(
-          and(
-            eq(this.appUser.levelId, id),
-            isNull(this.appUser.deletedAt),
-          ),
+          and(eq(this.appUser.levelId, id), isNull(this.appUser.deletedAt)),
         )
 
       if (Number(activeUsers?.total ?? 0) > 0) {
@@ -295,7 +277,8 @@ export class UserLevelRuleService {
       )
 
       await this.drizzle.withErrorHandling(
-        () => tx.delete(this.userLevelRule).where(eq(this.userLevelRule.id, id)),
+        () =>
+          tx.delete(this.userLevelRule).where(eq(this.userLevelRule.id, id)),
         { notFound: '等级规则不存在' },
       )
       await this.assertEnabledBusinessHasOneBaseLevelInTx(tx, rule.business)
@@ -322,11 +305,17 @@ export class UserLevelRuleService {
       .where(
         and(
           eq(this.userLevelRule.isEnabled, true),
-          this.buildBusinessCondition(this.userLevelRule.business, level.business),
+          this.buildBusinessCondition(
+            this.userLevelRule.business,
+            level.business,
+          ),
           gt(this.userLevelRule.requiredExperience, currentExperience),
         ),
       )
-      .orderBy(asc(this.userLevelRule.requiredExperience), asc(this.userLevelRule.id))
+      .orderBy(
+        asc(this.userLevelRule.requiredExperience),
+        asc(this.userLevelRule.id),
+      )
       .limit(1)
 
     let progressPercentage = 0
@@ -410,7 +399,10 @@ export class UserLevelRuleService {
           lte(this.userLevelRule.requiredExperience, resolveInput.experience),
         ),
       )
-      .orderBy(desc(this.userLevelRule.requiredExperience), desc(this.userLevelRule.id))
+      .orderBy(
+        desc(this.userLevelRule.requiredExperience),
+        desc(this.userLevelRule.id),
+      )
       .limit(1)
     return levelRule ?? null
   }

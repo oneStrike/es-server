@@ -1,4 +1,3 @@
-import type { GeoRuntimeSource } from '../geo.constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -37,7 +36,7 @@ export class Ip2regionRuntimeStatusDto {
     required: true,
     validation: false,
   })
-  source!: GeoRuntimeSource
+  source!: (typeof GEO_RUNTIME_SOURCE)[keyof typeof GEO_RUNTIME_SOURCE]
 
   @StringProperty({
     description: '当前生效文件名',

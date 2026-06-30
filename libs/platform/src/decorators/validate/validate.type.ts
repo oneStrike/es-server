@@ -108,6 +108,22 @@ type ArrayPropertyShape<T> =
   | EnumValueArrayPropertyShape
 
 /**
+ * 基础数组元素类型。
+ */
+export type PrimitiveArrayItemType = 'string' | 'number' | 'boolean'
+
+/**
+ * 基础类型数组的文档、校验与转换辅助结构。
+ */
+export interface PrimitiveArrayHelpers {
+  apiType: StringConstructor | NumberConstructor | BooleanConstructor
+  itemValidator: PropertyDecorator
+  normalizeItem: (
+    item: string | number | boolean | null | undefined,
+  ) => string | number | boolean | null | undefined
+}
+
+/**
  * 通用数组属性装饰器选项。
  */
 export type ArrayPropertyOptions<T = string | number | boolean> =
@@ -245,6 +261,14 @@ export interface RegexPropertyOptions extends BaseValidateOptions {
  * 支持TypeScript原生枚举和手动定义的枚举对象
  */
 export type EnumLike = Record<string | number, string | number>
+
+/**
+ * 枚举校验所需的运行期派生信息。
+ */
+export interface EnumValidationArtifacts {
+  isNumericEnum: boolean
+  validValues: Array<string | number>
+}
 
 /**
  * 枚举属性选项

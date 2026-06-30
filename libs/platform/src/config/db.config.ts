@@ -1,25 +1,18 @@
+import type {
+  DbConfigInterface,
+  DbPoolConfig,
+  DbQueryConfig,
+} from './db.type'
 import process from 'node:process'
 import { registerAs } from '@nestjs/config'
 
-export type DbQueryOrderByRecord = Record<string, 'asc' | 'desc'>
-
-export type DbQueryOrderBy = DbQueryOrderByRecord | DbQueryOrderByRecord[]
-
-export interface DbQueryConfig {
-  pageSize: number
-  pageIndex: number
-  maxListItemLimit: number
-}
-
-export interface DbPoolConfig {
-  max: number
-}
-
-export interface DbConfigInterface {
-  connection?: string
-  pool: DbPoolConfig
-  query: DbQueryConfig
-}
+export type {
+  DbConfigInterface,
+  DbPoolConfig,
+  DbQueryConfig,
+  DbQueryOrderBy,
+  DbQueryOrderByRecord,
+} from './db.type'
 
 export function resolveDbQueryConfig(
   queryConfig?: Partial<DbQueryConfig>,
@@ -39,17 +32,14 @@ export function resolveDbPoolConfig(
   }
 }
 
-export const DbConfigRegister = registerAs(
-  'db',
-  (): DbConfigInterface => ({
-    // 数据库连接配置
-    connection: process.env.DATABASE_URL,
-    pool: resolveDbPoolConfig({
-      max: Number(process.env.DB_POOL_MAX),
-    }),
-    query: resolveDbQueryConfig(),
+export const DbConfigRegister = registerAs('db', (): DbConfigInterface => ({
+  // 数据库连接配置
+  connection: process.env.DATABASE_URL,
+  pool: resolveDbPoolConfig({
+    max: Number(process.env.DB_POOL_MAX),
   }),
-)
+  query: resolveDbQueryConfig(),
+}))
 
 function resolvePositiveInteger(
   value: number | undefined,

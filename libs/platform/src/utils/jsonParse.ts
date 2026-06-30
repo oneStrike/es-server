@@ -5,24 +5,19 @@
  * - 解析失败时返回 defaultValue
  */
 
+import type { JsonInput, JsonPrimitive, JsonValue } from './json-parse.type'
+
 // BOM 字符正则表达式（模块作用域，避免重复编译）
 const BOM_REGEX = /^\uFEFF/
 
-export type JsonPrimitive = string | number | boolean | null
-export interface JsonObject {
-  [key: string]: JsonValue
-}
-export type JsonValue = JsonPrimitive | JsonValue[] | JsonObject
-export type JsonInput = JsonValue | undefined
-export interface StructuredObject {
-  [key: string]: StructuredValue
-}
-export type StructuredValue =
-  | JsonPrimitive
-  | Date
-  | object
-  | StructuredValue[]
-  | StructuredObject
+export type {
+  JsonInput,
+  JsonObject,
+  JsonPrimitive,
+  JsonValue,
+  StructuredObject,
+  StructuredValue,
+} from './json-parse.type'
 
 function isObjectLike(
   value: JsonInput,

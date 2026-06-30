@@ -1,5 +1,6 @@
 import type { UserFollowSelect } from '@db/schema'
-import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
+import type { FollowTargetTypeEnum as FollowTargetType } from './follow.type'
+import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
@@ -21,7 +22,7 @@ import { FollowTargetTypeEnum } from './follow.constant'
 export class FollowService {
   private readonly logger = new Logger(FollowService.name)
   private readonly resolvers = new Map<
-    FollowTargetTypeEnum,
+    FollowTargetType,
     IFollowTargetResolver
   >()
 
@@ -56,7 +57,7 @@ export class FollowService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  private getResolver(targetType: FollowTargetTypeEnum) {
+  private getResolver(targetType: FollowTargetType) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException(`不支持的关注类型: ${targetType}`)
@@ -65,7 +66,7 @@ export class FollowService {
   }
 
   async checkStatusBatch(
-    targetType: FollowTargetTypeEnum,
+    targetType: FollowTargetType,
     targetIds: number[],
     userId: number,
   ) {
@@ -253,7 +254,7 @@ export class FollowService {
    */
   private async getFollowPageByTargetType(
     query: FollowPageCommandDto,
-    targetType: FollowTargetTypeEnum,
+    targetType: FollowTargetType,
   ) {
     const pageParams = this.drizzle.buildPageParams(query, {
       table: this.userFollow,

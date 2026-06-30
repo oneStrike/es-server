@@ -3,7 +3,7 @@ import type {
   CommentTargetHookPayload,
   CommentTargetMeta,
   ICommentTargetResolver,
-} from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
+} from '@libs/interaction/comment/interfaces/comment-target-resolver.type'
 import type {
   ForumTopicCommentHookPayload,
   ForumTopicCommentTargetSnapshotOptions,

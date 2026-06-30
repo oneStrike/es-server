@@ -1,4 +1,5 @@
 import type { AuthConfigInterface } from '@libs/platform/types'
+import type { RefreshAccessTokenOptions } from './auth.type'
 import { Buffer } from 'node:buffer'
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -6,10 +7,6 @@ import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
 import { AuthErrorMessages } from './auth.constant'
 import { JwtBlacklistService } from './jwt-blacklist.service'
-
-interface RefreshAccessTokenOptions {
-  consumeRefreshTokenJti?: (jti: string) => boolean | Promise<boolean>
-}
 
 /**
  * JWT 认证服务。

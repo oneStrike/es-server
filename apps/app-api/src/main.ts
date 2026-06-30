@@ -1,5 +1,6 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import type { HotModule } from './main.type'
 import { MessageWsAdapter } from '@libs/message/notification/notification-ws.adapter'
 import { logStartupInfo, setupApp } from '@libs/platform/bootstrap'
 
@@ -7,11 +8,6 @@ import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { AppModule } from './app.module'
-
-interface HotModule {
-  accept: () => void
-  dispose: (callback: () => void | Promise<void>) => void
-}
 
 declare const module: {
   hot?: HotModule

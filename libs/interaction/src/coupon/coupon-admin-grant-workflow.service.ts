@@ -5,7 +5,11 @@ import type {
   CouponDefinitionSelect,
   WorkflowJobSelect,
 } from '@db/schema'
-import type { CouponGrantSnapshot } from './types/coupon.type'
+import type {
+  CouponAdminGrantErrorFacts,
+  CouponAdminGrantItemCounters,
+  CouponGrantSnapshot,
+} from './types/coupon.type'
 import { createHash, randomUUID } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -31,21 +35,6 @@ import { CreateCouponGrantWorkflowDto } from './dto/coupon.dto'
 const USER_VALIDATE_CHUNK_SIZE = 500
 const ITEM_INSERT_CHUNK_SIZE = 500
 const GRANT_KEY_PREFIX = 'adminGrant'
-
-interface CouponAdminGrantErrorFacts {
-  code: string
-  context: Record<string, unknown>
-  domain: string
-  retryable: boolean
-  severity: string
-  stage: string
-}
-
-interface CouponAdminGrantJobCounters {
-  failedItemCount: number
-  skippedItemCount: number
-  successItemCount: number
-}
 
 @Injectable()
 export class CouponAdminGrantWorkflowService {
@@ -86,9 +75,14 @@ export class CouponAdminGrantWorkflowService {
   }
 
   // 创建后台批量发券 workflow。
-  async createWorkflow(input: CreateCouponGrantWorkflowDto, operatorUserId: number) {
+  async createWorkflow(
+    input: CreateCouponGrantWorkflowDto,
+    operatorUserId: number,
+  ) {
     const command = this.normalizeCreateCommand(input, operatorUserId)
-    const existingJob = await this.readJobByOperationId(command.identity.operationId)
+    const existingJob = await this.readJobByOperationId(
+      command.identity.operationId,
+    )
     if (existingJob) {
       return this.resolveExistingJob(existingJob, command.identity.payloadHash)
     }
@@ -119,7 +113,9 @@ export class CouponAdminGrantWorkflowService {
           },
         },
         conflictKeys: [
-          this.buildOperationConflictKey(preparedCommand.identity.operationHash),
+          this.buildOperationConflictKey(
+            preparedCommand.identity.operationHash,
+          ),
         ],
       },
       async ({ tx, workflowJob }) => {
@@ -180,7 +176,7 @@ export class CouponAdminGrantWorkflowService {
   async aggregateCounters(
     couponAdminGrantJobId: number,
     db: Db = this.db,
-  ): Promise<CouponAdminGrantJobCounters> {
+  ): Promise<CouponAdminGrantItemCounters> {
     const rows = await db
       .select({
         status: this.couponAdminGrantItem.status,
@@ -248,10 +244,7 @@ export class CouponAdminGrantWorkflowService {
   }) {
     const { grantJob } = await this.readGrantJobByWorkflowJobId(input.jobId)
     const conditions = [
-      eq(
-        this.couponAdminGrantItem.couponAdminGrantJobId,
-        grantJob.id,
-      ),
+      eq(this.couponAdminGrantItem.couponAdminGrantJobId, grantJob.id),
     ]
     if (input.status !== undefined) {
       conditions.push(eq(this.couponAdminGrantItem.status, input.status))
@@ -262,9 +255,7 @@ export class CouponAdminGrantWorkflowService {
       pageSize: input.pageSize,
     })
     const orderQuery = this.drizzle.buildOrderBy(
-      input.orderBy?.trim()
-        ? input.orderBy
-        : { updatedAt: 'desc', id: 'asc' },
+      input.orderBy?.trim() ? input.orderBy : { updatedAt: 'desc', id: 'asc' },
       { table: this.couponAdminGrantItem },
     )
     const [list, total] = await Promise.all([
@@ -296,7 +287,7 @@ export class CouponAdminGrantWorkflowService {
           id: Number(row.item.id),
           itemId: row.item.itemId,
           title: label,
-          status: row.item.status as WorkflowItemStatusEnum,
+          status: row.item.status,
           subjectType: 'app-user',
           subjectId: row.item.userId,
           subjectLabel: label,
@@ -395,9 +386,9 @@ export class CouponAdminGrantWorkflowService {
     }
     const normalized = [
       ...new Set(
-        userIds.map((userId) => Number(userId)).filter((userId) =>
-          Number.isInteger(userId) && userId > 0
-        ),
+        userIds
+          .map((userId) => Number(userId))
+          .filter((userId) => Number.isInteger(userId) && userId > 0),
       ),
     ].sort((left, right) => left - right)
     if (normalized.length === 0) {
@@ -555,11 +546,13 @@ export class CouponAdminGrantWorkflowService {
     return createHash('sha256').update(value).digest('hex')
   }
 
-  private buildGrantSnapshot(definition: CouponDefinitionSelect): CouponGrantSnapshot {
+  private buildGrantSnapshot(
+    definition: CouponDefinitionSelect,
+  ): CouponGrantSnapshot {
     return {
       name: definition.name,
-      couponType: definition.couponType as CouponTypeEnum,
-      targetScope: definition.targetScope as CouponTargetScopeEnum,
+      couponType: definition.couponType,
+      targetScope: definition.targetScope,
       usageLimit: definition.usageLimit,
       discountRateBps: definition.discountRateBps,
       discountAmount: definition.discountAmount,
@@ -585,8 +578,7 @@ export class CouponAdminGrantWorkflowService {
     if (
       definition.couponType === CouponTypeEnum.DISCOUNT &&
       (definition.targetScope !== CouponTargetScopeEnum.CHAPTER ||
-        (definition.discountAmount <= 0 &&
-          definition.discountRateBps >= 10000))
+        (definition.discountAmount <= 0 && definition.discountRateBps >= 10000))
     ) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -630,7 +622,9 @@ export class CouponAdminGrantWorkflowService {
       : null
   }
 
-  private asErrorFactsOrNull(value: unknown): CouponAdminGrantErrorFacts | null {
+  private asErrorFactsOrNull(
+    value: unknown,
+  ): CouponAdminGrantErrorFacts | null {
     const object = this.asObjectOrNull(value)
     if (!object || typeof object.code !== 'string') {
       return null
@@ -641,8 +635,7 @@ export class CouponAdminGrantWorkflowService {
       domain: typeof object.domain === 'string' ? object.domain : 'coupon',
       retryable:
         typeof object.retryable === 'boolean' ? object.retryable : true,
-      severity:
-        typeof object.severity === 'string' ? object.severity : 'error',
+      severity: typeof object.severity === 'string' ? object.severity : 'error',
       stage: typeof object.stage === 'string' ? object.stage : 'grant-user',
     }
   }

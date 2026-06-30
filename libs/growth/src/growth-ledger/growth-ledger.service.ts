@@ -7,7 +7,7 @@ import type {
   PublicGrowthLedgerContextKey,
   PublicGrowthLedgerContextValue,
   PublicGrowthLedgerRecord,
-} from './growth-ledger.internal'
+} from './growth-ledger.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -25,8 +25,6 @@ import {
   GrowthRuleUsageSlotTypeEnum,
 } from './growth-ledger.constant'
 import { PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS } from './growth-ledger.internal'
-
-type Tx = Db
 
 /**
  * 统一成长账本服务
@@ -89,7 +87,7 @@ export class GrowthLedgerService {
    * 6. 写入审计日志
    */
   async applyByRule(
-    tx: Tx,
+    tx: Db,
     params: ApplyRuleParams,
   ): Promise<GrowthLedgerApplyResult> {
     const {
@@ -332,7 +330,7 @@ export class GrowthLedgerService {
    * 5. 写入审计日志
    */
   async applyDelta(
-    tx: Tx,
+    tx: Db,
     params: ApplyDeltaParams,
   ): Promise<GrowthLedgerApplyResult> {
     const {
@@ -491,7 +489,10 @@ export class GrowthLedgerService {
     const sanitizedEntries = this.publicGrowthLedgerContextKeys
       .map((key) => {
         const value = (
-          context as Record<string, string | number | boolean | null | undefined>
+          context as Record<
+            string,
+            string | number | boolean | null | undefined
+          >
         )[key]
         return this.isPublicContextValue(value) ? [key, value] : null
       })
@@ -504,7 +505,7 @@ export class GrowthLedgerService {
       return undefined
     }
 
-    return Object.fromEntries(sanitizedEntries) as PublicGrowthLedgerContext
+    return Object.fromEntries(sanitizedEntries)
   }
 
   /**
@@ -632,7 +633,7 @@ export class GrowthLedgerService {
    * @returns 更新后的余额值
    */
   private async incrementUserBalance(
-    tx: Tx,
+    tx: Db,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -678,7 +679,7 @@ export class GrowthLedgerService {
    * @returns 是否成功扣减
    */
   private async decrementUserBalance(
-    tx: Tx,
+    tx: Db,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -718,7 +719,7 @@ export class GrowthLedgerService {
    * 记录所有结算请求的决策和结果，用于问题排查
    */
   private async writeAuditLog(
-    tx: Tx,
+    tx: Db,
     params: {
       userId: number
       bizKey: string
@@ -751,7 +752,7 @@ export class GrowthLedgerService {
   }
 
   private async syncUserLevelByExperience(
-    tx: Tx,
+    tx: Db,
     userId: number,
     experience?: number,
   ): Promise<void> {
@@ -769,7 +770,7 @@ export class GrowthLedgerService {
   }
 
   private async syncUserLevelByCurrentExperience(
-    tx: Tx,
+    tx: Db,
     userId: number,
   ): Promise<void> {
     const experience = await this.getUserAssetBalance(tx, {
@@ -786,7 +787,7 @@ export class GrowthLedgerService {
   }
 
   private async findRuleByType(
-    tx: Tx,
+    tx: Db,
     assetType: GrowthAssetTypeEnum,
     assetKey: string,
     ruleType: number,
@@ -813,7 +814,7 @@ export class GrowthLedgerService {
   }
 
   private async findLedgerByUserBizKey(
-    tx: Tx,
+    tx: Db,
     params: { userId: number, bizKey: string },
   ) {
     return tx.query.growthLedgerRecord.findFirst({
@@ -832,7 +833,7 @@ export class GrowthLedgerService {
   }
 
   private async ensureLedgerOperationLock(
-    tx: Tx,
+    tx: Db,
     params: { userId: number, bizKey: string },
   ) {
     await this.drizzle.withErrorHandling(() =>
@@ -842,22 +843,19 @@ export class GrowthLedgerService {
     )
   }
 
-  private normalizeAssetKey(
-    assetType: GrowthAssetTypeEnum,
-    assetKey?: string,
-  ) {
+  private normalizeAssetKey(assetType: GrowthAssetTypeEnum, assetKey?: string) {
     const normalizedAssetKey = assetKey?.trim() ?? ''
     if (
-      (assetType === GrowthAssetTypeEnum.POINTS
-        || assetType === GrowthAssetTypeEnum.EXPERIENCE)
-      && normalizedAssetKey !== ''
+      (assetType === GrowthAssetTypeEnum.POINTS ||
+        assetType === GrowthAssetTypeEnum.EXPERIENCE) &&
+        normalizedAssetKey !== ''
     ) {
       throw new Error('points/experience assetKey must be empty')
     }
     return normalizedAssetKey
   }
 
-  private async ensureUserExists(tx: Tx, userId: number) {
+  private async ensureUserExists(tx: Db, userId: number) {
     const user = await tx.query.appUser.findFirst({
       where: { id: userId },
       columns: { id: true },
@@ -871,7 +869,7 @@ export class GrowthLedgerService {
   }
 
   private async insertLedgerRecord(
-    tx: Tx,
+    tx: Db,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -919,7 +917,7 @@ export class GrowthLedgerService {
   }
 
   private async incrementUsageCounter(
-    tx: Tx,
+    tx: Db,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -964,7 +962,7 @@ export class GrowthLedgerService {
   }
 
   async getUserAssetBalance(
-    tx: Tx,
+    tx: Db,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -984,7 +982,7 @@ export class GrowthLedgerService {
     return balanceRecord?.balance ?? 0
   }
 
-  private async findTargetLevelRule(tx: Tx, experience: number) {
+  private async findTargetLevelRule(tx: Db, experience: number) {
     const rows = await tx
       .select({
         id: this.userLevelRule.id,
@@ -1006,7 +1004,7 @@ export class GrowthLedgerService {
   }
 
   private async syncUserLevel(
-    tx: Tx,
+    tx: Db,
     userId: number,
     levelId: number,
   ): Promise<void> {

@@ -6,6 +6,7 @@ import type { Notification } from 'pg'
 import type { WebSocket } from 'ws'
 import type { MessageChatService } from '../chat/chat.service'
 import type {
+  MessageWsFanoutEnvelope,
   NativeWsAuthResult,
   NativeWsClientState,
   NativeWsGatewaySendResult,
@@ -47,13 +48,6 @@ const DIGIT_STRING_REGEX = /^\d+$/
 const NATIVE_WS_OPEN = 1
 const MESSAGE_WS_FANOUT_CHANNEL = 'message_ws_fanout'
 const POSTGRES_NOTIFY_PAYLOAD_LIMIT_BYTES = 7_600
-
-interface MessageWsFanoutEnvelope {
-  sourceId: string
-  userId: number
-  event: string
-  payload?: unknown
-}
 
 @Injectable()
 export class MessageWebSocketService implements OnApplicationShutdown {

@@ -1,7 +1,15 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { Cache } from 'cache-manager'
+import type {
+  RedisRateLimitClient,
+  RedisRateLimitStore,
+  SmsRateLimitConfig,
+} from './sms.type'
 import { DrizzleService } from '@db/core'
-import { CheckVerifyCodeDto, SendVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto'
+import {
+  CheckVerifyCodeDto,
+  SendVerifyCodeDto,
+} from '@libs/platform/modules/sms/dto/sms.dto'
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import { SmsService as LibSmsService } from '@libs/platform/modules/sms/sms.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
@@ -17,29 +25,6 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
-
-interface SmsRateLimitConfig {
-  phoneTemplateCooldownSeconds: number
-  phoneTemplateDailyLimit: number
-  ipTemplateMinuteLimit: number
-  phoneIpHourLimit: number
-}
-
-interface RedisRateLimitClient {
-  expire: (key: string, seconds: number) => Promise<unknown>
-  incr: (key: string) => Promise<number>
-  set: (
-    key: string,
-    value: string,
-    options?: { NX?: boolean, PX?: number },
-  ) => Promise<null | string>
-}
-
-interface RedisRateLimitStore {
-  client?: RedisRateLimitClient
-  keyPrefixSeparator?: string
-  namespace?: string
-}
 
 const DEFAULT_SMS_RATE_LIMIT: SmsRateLimitConfig = {
   phoneTemplateCooldownSeconds: 60,
@@ -290,14 +275,16 @@ export class SmsService {
       (this.cacheManager as Cache & { stores?: Array<{ store?: unknown }> })
         .stores ?? []
     const store = keyvStore?.store as
-      | (Partial<RedisRateLimitStore> & { client?: Partial<RedisRateLimitClient> })
-      | undefined
+      | (Partial<RedisRateLimitStore> & {
+          client?: Partial<RedisRateLimitClient>
+        })
+        | undefined
     if (
       typeof store?.client?.set === 'function' &&
       typeof store.client.incr === 'function' &&
       typeof store.client.expire === 'function'
     ) {
-      return store as RedisRateLimitStore
+      return store
     }
     return undefined
   }
@@ -332,7 +319,10 @@ export class SmsService {
     const current = new Promise<void>((resolve) => {
       release = resolve
     })
-    const queued = previous.then(async () => current, async () => current)
+    const queued = previous.then(
+      async () => current,
+      async () => current,
+    )
     this.rateLimitLocks.set(key, queued)
 
     await previous
@@ -355,7 +345,11 @@ export class SmsService {
     await this.cacheManager.set(key, Date.now(), seconds * 1000)
   }
 
-  private async ensureCounterLimit(key: string, limit: number, seconds: number) {
+  private async ensureCounterLimit(
+    key: string,
+    limit: number,
+    seconds: number,
+  ) {
     const current = (await this.cacheManager.get<number>(key)) ?? 0
     if (current >= limit) {
       this.throwRateLimited()
@@ -380,6 +374,9 @@ export class SmsService {
   }
 
   private throwRateLimited(): never {
-    throw new HttpException('验证码请求过于频繁，请稍后再试', HttpStatus.TOO_MANY_REQUESTS)
+    throw new HttpException(
+      '验证码请求过于频繁，请稍后再试',
+      HttpStatus.TOO_MANY_REQUESTS,
+    )
   }
 }

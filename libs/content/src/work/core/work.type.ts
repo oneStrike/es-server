@@ -129,3 +129,6 @@ export interface WorkReadingChapterRef {
   workId: number
   chapterId: number
 }
+
+/** app 作品流分页类型，用于区分默认、热门和推荐三套排序口径。 */
+export type AppWorkFeedKind = 'default' | 'hot' | 'recommended'

@@ -1,6 +1,10 @@
-import type { requestLog } from '@db/schema'
-import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto/audit.dto'
+import type {
+  AuditPageRequestDto,
+  CreateRequestLogDto,
+  CreateRequestLogSimpleDto,
+} from '@libs/platform/modules/audit/dto/audit.dto'
 import type { FastifyRequest } from 'fastify'
+import type { RequestLogInsert } from './audit.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -15,8 +19,6 @@ import {
   normalizeAuditActionType,
   resolveAuditActionTypeSearchTerms,
 } from './audit.helpers'
-
-type RequestLogInsert = typeof requestLog.$inferInsert
 
 /**
  * 审计日志服务

@@ -1,17 +1,29 @@
+import type {
+  WorkflowErrorColumns,
+  WorkflowErrorContext,
+  WorkflowErrorDiagnosticInput,
+  WorkflowErrorFacts,
+  WorkflowErrorFactsInput,
+  WorkflowErrorRegistryEntry,
+  WorkflowErrorView,
+  WorkflowLastErrorColumns,
+  WorkflowRetryColumns,
+} from './workflow-error-facts.type'
 import { Buffer } from 'node:buffer'
 
-export type WorkflowErrorContext = Record<string, unknown>
-
-export type WorkflowErrorDomain =
-  | 'archive-import'
-  | 'content-import'
-  | 'database'
-  | 'storage'
-  | 'third-party-source'
-  | 'unknown'
-  | 'workflow'
-
-export type WorkflowErrorSeverity = 'error' | 'fatal' | 'info' | 'warning'
+export type {
+  WorkflowErrorColumns,
+  WorkflowErrorContext,
+  WorkflowErrorDiagnosticInput,
+  WorkflowErrorDomain,
+  WorkflowErrorFacts,
+  WorkflowErrorFactsInput,
+  WorkflowErrorRegistryEntry,
+  WorkflowErrorSeverity,
+  WorkflowErrorView,
+  WorkflowLastErrorColumns,
+  WorkflowRetryColumns,
+} from './workflow-error-facts.type'
 
 export enum WorkflowErrorCodeEnum {
   ARCHIVE_CHAPTER_IMPORT_FAILED = 'ARCHIVE_CHAPTER_IMPORT_FAILED',
@@ -38,16 +50,6 @@ export enum WorkflowErrorCodeEnum {
   THIRD_PARTY_SYNC_COMPLETED = 'THIRD_PARTY_SYNC_COMPLETED',
   UNKNOWN_WORKFLOW_PROGRESS = 'UNKNOWN_WORKFLOW_PROGRESS',
   UNKNOWN_WORKFLOW_ERROR = 'UNKNOWN_WORKFLOW_ERROR',
-}
-
-export interface WorkflowErrorRegistryEntry {
-  code: WorkflowErrorCodeEnum
-  domain: WorkflowErrorDomain
-  stage: string
-  severity: WorkflowErrorSeverity
-  retryable: boolean
-  requiredContextKeys: readonly string[]
-  diagnosticPolicy: 'internal' | 'none'
 }
 
 export const WORKFLOW_ERROR_DIAGNOSTIC_LIMITS = {
@@ -145,7 +147,12 @@ export const WORKFLOW_ERROR_CODES = {
     stage: 'import-images',
     severity: 'info',
     retryable: false,
-    requiredContextKeys: ['chapterIndex', 'chapterTotal', 'imageIndex', 'imageTotal'],
+    requiredContextKeys: [
+      'chapterIndex',
+      'chapterTotal',
+      'imageIndex',
+      'imageTotal',
+    ],
     diagnosticPolicy: 'none',
   },
   [WorkflowErrorCodeEnum.ATTEMPT_LEASE_EXPIRED]: {
@@ -276,66 +283,16 @@ export const WORKFLOW_ERROR_CODES = {
   },
 } as const satisfies Record<WorkflowErrorCodeEnum, WorkflowErrorRegistryEntry>
 
-export interface WorkflowErrorFacts {
-  code: WorkflowErrorCodeEnum | string
-  context: WorkflowErrorContext
-  domain: WorkflowErrorDomain | string
-  retryable: boolean
-  severity: WorkflowErrorSeverity | string
-  stage: string
-}
-
-export interface WorkflowErrorFactsInput {
-  code: WorkflowErrorCodeEnum | string
-  context?: WorkflowErrorContext | null
-  domain?: WorkflowErrorDomain | string
-  retryable?: boolean
-  severity?: WorkflowErrorSeverity | string
-  stage?: string
-}
-
-export interface WorkflowErrorDiagnosticInput {
-  diagnostic?: unknown
-  error?: unknown
-  source?: string
-}
-
-export interface WorkflowErrorColumns {
-  errorCode: string | null
-  errorContext: WorkflowErrorContext | null
-  errorDiagnostic: WorkflowErrorContext | null
-  errorDomain: string | null
-  errorRetryable: boolean | null
-  errorSeverity: string | null
-  errorStage: string | null
-}
-
-export interface WorkflowLastErrorColumns {
-  lastErrorCode: string | null
-  lastErrorContext: WorkflowErrorContext | null
-  lastErrorDiagnostic: WorkflowErrorContext | null
-  lastErrorDomain: string | null
-  lastErrorRetryable: boolean | null
-  lastErrorSeverity: string | null
-  lastErrorStage: string | null
-}
-
-export interface WorkflowRetryColumns {
-  lastRetryCode: string | null
-  lastRetryContext: WorkflowErrorContext | null
-  lastRetryDiagnostic: WorkflowErrorContext | null
-}
-
-export interface WorkflowErrorView extends WorkflowErrorFacts {}
-
-const SECRET_KEY_RE = /authorization|cookie|password|secret|signature|token|accesskey|access_key/i
+const SECRET_KEY_RE =
+  /authorization|cookie|password|secret|signature|token|accesskey|access_key/i
 const REDACTED = '[REDACTED]'
 
 export function createWorkflowErrorFacts(
   input: WorkflowErrorFactsInput,
 ): WorkflowErrorFacts {
-  const registryEntry = WORKFLOW_ERROR_CODES[input.code as WorkflowErrorCodeEnum]
-    ?? WORKFLOW_ERROR_CODES[WorkflowErrorCodeEnum.UNKNOWN_WORKFLOW_ERROR]
+  const registryEntry =
+    WORKFLOW_ERROR_CODES[input.code as WorkflowErrorCodeEnum] ??
+    WORKFLOW_ERROR_CODES[WorkflowErrorCodeEnum.UNKNOWN_WORKFLOW_ERROR]
 
   return {
     code: input.code,
@@ -363,7 +320,8 @@ export function normalizeUnknownWorkflowError(
   error: unknown,
   context?: WorkflowErrorContext | null,
 ) {
-  const errorName = error instanceof Error && error.name ? error.name : undefined
+  const errorName =
+    error instanceof Error && error.name ? error.name : undefined
   return createWorkflowErrorFacts({
     code: WorkflowErrorCodeEnum.UNKNOWN_WORKFLOW_ERROR,
     context: {
@@ -577,7 +535,7 @@ function serializeDiagnosticValue(value: unknown, depth: number): unknown {
 
     const sliced = value
       .slice(0, WORKFLOW_ERROR_DIAGNOSTIC_LIMITS.maxDiagnosticArrayItems)
-      .map(item => serializeDiagnosticValue(item, depth + 1))
+      .map((item) => serializeDiagnosticValue(item, depth + 1))
 
     return value.length > sliced.length
       ? { items: sliced, truncated: true, totalItems: value.length }
@@ -590,7 +548,9 @@ function serializeDiagnosticValue(value: unknown, depth: number): unknown {
     }
 
     const output: WorkflowErrorContext = {}
-    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    for (const [key, child] of Object.entries(
+      value as Record<string, unknown>,
+    )) {
       output[key] = SECRET_KEY_RE.test(key)
         ? REDACTED
         : serializeDiagnosticValue(child, depth + 1)
@@ -603,7 +563,10 @@ function serializeDiagnosticValue(value: unknown, depth: number): unknown {
 
 function serializeError(error: Error, depth: number): WorkflowErrorContext {
   return {
-    cause: serializeDiagnosticValue((error as { cause?: unknown }).cause, depth + 1),
+    cause: serializeDiagnosticValue(
+      (error as { cause?: unknown }).cause,
+      depth + 1,
+    ),
     message: truncateString(error.message),
     name: error.name,
     stack: error.stack ? truncateString(error.stack) : undefined,
@@ -617,9 +580,14 @@ function truncateString(value: string) {
     : value
 }
 
-function enforceDiagnosticByteLimit(value: WorkflowErrorContext): WorkflowErrorContext {
+function enforceDiagnosticByteLimit(
+  value: WorkflowErrorContext,
+): WorkflowErrorContext {
   const serialized = safeJsonStringify(value)
-  if (Buffer.byteLength(serialized) <= WORKFLOW_ERROR_DIAGNOSTIC_LIMITS.maxDiagnosticBytes) {
+  if (
+    Buffer.byteLength(serialized) <=
+    WORKFLOW_ERROR_DIAGNOSTIC_LIMITS.maxDiagnosticBytes
+  ) {
     return value
   }
 

@@ -5,5 +5,3 @@ import { FollowTargetTypeContractEnum } from '@libs/platform/constant'
  * 用于统一标识用户关注的业务目标
  */
 export const FollowTargetTypeEnum = FollowTargetTypeContractEnum
-// eslint-disable-next-line ts/no-redeclare
-export type FollowTargetTypeEnum = FollowTargetTypeContractEnum

@@ -2,6 +2,7 @@ import type { Db } from '@db/core'
 import type { WorkSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
+  AppWorkFeedKind,
   BuildPublicWorkDetailParams,
   WorkDetailContext,
   WorkFlagUpdateInput,
@@ -39,8 +40,6 @@ import {
   UpdateWorkDto,
   UpdateWorkStatusDto,
 } from './dto/work.dto'
-
-type AppWorkFeedKind = 'default' | 'hot' | 'recommended'
 
 /**
  * 作品服务类
@@ -873,7 +872,7 @@ export class WorkService {
   // app/public 作品列表按 route 语义使用固定排序，并返回统一 offset 分页结果。
   private async paginateAppWorkList(dto: QueryAppWorkDto, userId?: number) {
     const feedKind = this.getAppWorkFeedKind(dto)
-    const conditions = this.buildWorkPageConditions(dto as QueryWorkDto, {
+    const conditions = this.buildWorkPageConditions(dto, {
       forcePublished: true,
     })
     const pageParams = this.drizzle.buildPageParams(dto, {
@@ -1370,11 +1369,7 @@ export class WorkService {
           targetId: id,
           userId,
         }),
-        this.readingStateService.getReadingState(
-          work.type as ContentTypeEnum,
-          id,
-          userId,
-        ),
+        this.readingStateService.getReadingState(work.type, id, userId),
         authorIds.length > 0
           ? this.followService.checkStatusBatch(
               FollowTargetTypeEnum.AUTHOR,
@@ -1413,7 +1408,7 @@ export class WorkService {
     await this.readingStateService.touchByWorkSafely({
       userId,
       workId: id,
-      workType: workData.type as ContentTypeEnum,
+      workType: workData.type,
       lastReadAt: now,
       lastReadChapterId: continueChapter?.id,
     })

@@ -76,8 +76,23 @@ export type NativeWsAdapterMessageTuple = [
   boolean?,
 ]
 
+/** 原生 ws adapter 支持的两种入站 message 形态。 */
+export type NativeWsAdapterIncomingMessage =
+  NativeWsAdapterMessageEvent | NativeWsAdapterMessageTuple
+
+/** 原生 ws adapter 入站消息中的数据载荷。 */
+export type NativeWsAdapterMessageData = NativeWsAdapterMessageTuple[0]
+
 /** 原生 ws adapter 归一化后的入站消息。 */
 export interface NativeWsAdapterMessage {
   event: string
   data?: unknown
+}
+
+/** 跨实例消息 websocket fanout 的 PostgreSQL notify 载荷。 */
+export interface MessageWsFanoutEnvelope {
+  sourceId: string
+  userId: number
+  event: string
+  payload?: unknown
 }

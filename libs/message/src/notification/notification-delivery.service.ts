@@ -1,7 +1,14 @@
-import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
+import type {
+  DomainEventDispatchRecord,
+  DomainEventRecord,
+} from '@libs/platform/modules/eventing/domain-event.type'
 import type { SQL } from 'drizzle-orm'
-import type { NotificationProjectionApplyResult } from '../eventing/message-event.type'
+import type {
+  MessageDomainEventKey,
+  NotificationProjectionApplyResult,
+} from '../eventing/message-event.type'
 import type { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
+import type { MessageNotificationCategoryKey } from './notification.type'
 import { DrizzleService } from '@db/core'
 
 import { jsonParse } from '@libs/platform/utils'
@@ -11,14 +18,12 @@ import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import {
   getMessageDomainEventDefinition,
   getMessageDomainEventLabel,
-  MessageDomainEventKey,
 } from '../eventing/message-event.constant'
 import { parsePositiveBigintQueryId } from './notification-query-id.util'
 import {
   getMessageNotificationCategoryLabel,
   getMessageNotificationDispatchStatusLabel,
   MESSAGE_NOTIFICATION_CATEGORY_KEYS,
-  MessageNotificationCategoryKey,
   MessageNotificationDispatchStatusEnum,
 } from './notification.constant'
 
@@ -231,7 +236,7 @@ export class MessageNotificationDeliveryService {
           eventId: item.eventId.toString(),
           dispatchId: item.dispatchId.toString(),
           eventLabel: getMessageDomainEventLabel(item.eventKey),
-          status: item.status as MessageNotificationDispatchStatusEnum,
+          status: item.status,
           failureReason: this.sanitizeDiagnosticText(item.failureReason),
           fallbackReason: this.sanitizeDiagnosticText(item.fallbackReason),
           categoryLabel:
@@ -244,7 +249,7 @@ export class MessageNotificationDeliveryService {
                 )
               : null,
           statusLabel: getMessageNotificationDispatchStatusLabel(
-            item.status as MessageNotificationDispatchStatusEnum,
+            item.status,
           ),
         }
       }),
@@ -456,7 +461,9 @@ export class MessageNotificationDeliveryService {
 
   private normalizeOrderByRecords(input: unknown) {
     const parsed =
-      typeof input === 'string' ? jsonParse<Record<string, string>[]>(input) : input
+      typeof input === 'string'
+        ? jsonParse<Record<string, string>[]>(input)
+        : input
     const records = Array.isArray(parsed) ? parsed : [parsed]
     return records.map((record) => {
       if (!record || typeof record !== 'object' || Array.isArray(record)) {
@@ -470,7 +477,7 @@ export class MessageNotificationDeliveryService {
       if (direction !== 'asc' && direction !== 'desc') {
         throw new BadRequestException(`排序字段 "${field}" 的排序方向无效`)
       }
-      return { [field]: direction } as Record<string, 'asc' | 'desc'>
+      return { [field]: direction }
     })
   }
 }

@@ -1,4 +1,4 @@
-import type { GEO_RUNTIME_SOURCE, GeoRuntimeSource } from './geo.constant'
+import type { GEO_RUNTIME_SOURCE } from './geo.constant'
 
 /**
  * 属地来源常量。
@@ -8,6 +8,10 @@ export const GEO_SOURCE = 'ip2region' as const
 
 /** 稳定领域类型 `GeoSource`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type GeoSource = typeof GEO_SOURCE
+
+/** 当前进程属地库来源。 */
+export type GeoRuntimeSource =
+  (typeof GEO_RUNTIME_SOURCE)[keyof typeof GEO_RUNTIME_SOURCE]
 
 /**
  * 统一属地快照。

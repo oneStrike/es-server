@@ -27,6 +27,15 @@ export interface InboxTimelineRawRow {
   bizId: string
 }
 
+/** inbox timeline 聚合候选行，统一通知和聊天两类来源的排序字段。 */
+export interface InboxTimelineCandidate {
+  sourceType: 'notification' | 'chat'
+  createdAt: Date
+  title: string
+  content: string | null
+  bizId: string
+}
+
 /** 最新通知摘要查询返回行。 */
 export type InboxLatestNotificationRow = Pick<
   UserNotificationSelect,

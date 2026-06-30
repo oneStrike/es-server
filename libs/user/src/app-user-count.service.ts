@@ -1,4 +1,5 @@
 import type { Db, SQL } from '@db/core'
+import type { FollowTargetTypeEnum as FollowTargetType } from '@libs/interaction/follow/follow.type'
 import type {
   AppUserCountField,
   AppUserCountSnapshot,
@@ -59,7 +60,7 @@ export class AppUserCountService {
 
   // 将 follow 表 targetType 映射为 app_user_count 的具体分项字段。
   // 若出现未知类型，抛出稳定业务异常，避免把计数写进错误字段。
-  private resolveFollowingCountField(targetType: FollowTargetTypeEnum) {
+  private resolveFollowingCountField(targetType: FollowTargetType) {
     switch (targetType) {
       case FollowTargetTypeEnum.USER:
         return 'followingUserCount'
@@ -358,11 +359,9 @@ export class AppUserCountService {
       ? AppUserCountDeltaFailureCauseCode.INSUFFICIENT_COUNT
       : AppUserCountDeltaFailureCauseCode.TARGET_NOT_FOUND
 
-    throw new BusinessException(
-      BusinessErrorCode.RESOURCE_NOT_FOUND,
-      message,
-      { cause: { code: causeCode } },
-    )
+    throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message, {
+      cause: { code: causeCode },
+    })
   }
 
   // 更新用户评论数。
@@ -384,7 +383,7 @@ export class AppUserCountService {
   async updateFollowingCountByTargetType(
     tx: Db | undefined,
     userId: number,
-    targetType: FollowTargetTypeEnum,
+    targetType: FollowTargetType,
     delta: number,
   ) {
     const field = this.resolveFollowingCountField(targetType)

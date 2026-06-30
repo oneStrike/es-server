@@ -1,7 +1,7 @@
 import type { Db } from '@db/core'
 import type { ForumTopicSelect } from '@db/schema'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
-import type { CommentTargetHookPayload } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
+import type { CommentTargetHookPayload } from '@libs/interaction/comment/interfaces/comment-target-resolver.type'
 import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { MaterializedForumHashtagFact } from '../hashtag/forum-hashtag.type'

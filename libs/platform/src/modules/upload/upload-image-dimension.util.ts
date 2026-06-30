@@ -1,10 +1,5 @@
+import type { UploadImageDimensions } from './upload.type'
 import { imageSizeFromFile } from 'image-size/fromFile'
-
-/** 稳定内部类型 `UploadImageDimensions`。仅供上传模块命名链路复用，避免重复定义。 */
-export interface UploadImageDimensions {
-  width: number
-  height: number
-}
 
 /**
  * 从本地图片文件中解析像素尺寸。

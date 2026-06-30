@@ -19,7 +19,11 @@ export interface IDownloadTargetResolver {
    * @returns 下载内容 (如章节内容字符串)
    * @throws BadRequestException 如果目标不存在或不可下载
    */
-  ensureDownloadable: (tx: Db, targetId: number, userId: number) => Promise<string>
+  ensureDownloadable: (
+    tx: Db,
+    targetId: number,
+    userId: number,
+  ) => Promise<string>
 
   /**
    * 更新目标的下载统计数

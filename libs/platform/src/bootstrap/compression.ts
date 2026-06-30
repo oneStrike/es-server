@@ -1,4 +1,5 @@
 import type { FastifyAdapter } from '@nestjs/platform-fastify'
+import type { FastifyRegisterPlugin } from './compression.type'
 import * as zlib from 'node:zlib'
 import fastifyCompress from '@fastify/compress'
 
@@ -6,7 +7,8 @@ import fastifyCompress from '@fastify/compress'
  * 可压缩内容类型的正则匹配
  * 仅对文本类和 JSON/XML 等结构化内容启用压缩
  */
-const COMPRESSIBLE_CONTENT_TYPES = /^text\/|application\/json|application\/javascript|application\/xml/
+const COMPRESSIBLE_CONTENT_TYPES =
+  /^text\/|application\/json|application\/javascript|application\/xml/
 
 /**
  * 配置 Fastify 响应压缩
@@ -17,8 +19,7 @@ const COMPRESSIBLE_CONTENT_TYPES = /^text\/|application\/json|application\/javas
  * @param fastifyAdapter - Fastify 适配器实例
  */
 export async function setupCompression(fastifyAdapter: FastifyAdapter) {
-  type RegisterPlugin = Parameters<FastifyAdapter['register']>[0]
-  await fastifyAdapter.register(fastifyCompress as RegisterPlugin, {
+  await fastifyAdapter.register(fastifyCompress as FastifyRegisterPlugin, {
     global: true,
     threshold: 1024,
 

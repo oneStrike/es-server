@@ -1,25 +1,16 @@
+import type { MessageNotificationCategoryKey } from '../notification/notification.type'
 import type {
   InboxLatestChatSummary,
   InboxLatestNotificationRow,
+  InboxTimelineCandidate,
 } from './inbox.type'
 import { DrizzleService, extractRows, toPageResult } from '@db/core'
 import { PageDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNull, or, sql } from 'drizzle-orm'
 import { buildNotificationUnreadSummary } from '../notification/notification-unread.type'
-import {
-  getMessageNotificationCategoryLabel,
-  MessageNotificationCategoryKey,
-} from '../notification/notification.constant'
+import { getMessageNotificationCategoryLabel } from '../notification/notification.constant'
 import { MessageInboxSummaryQueryService } from './inbox-summary-query.service'
-
-interface InboxTimelineCandidate {
-  sourceType: 'notification' | 'chat'
-  createdAt: Date
-  title: string
-  content: string | null
-  bizId: string
-}
 
 @Injectable()
 export class MessageInboxService {
