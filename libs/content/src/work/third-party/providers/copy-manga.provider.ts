@@ -3,14 +3,17 @@ import type {
   DetailComicRequestDto,
   SearchComicRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
+import type { ThirdPartyProviderPolicy } from '../third-party-provider-policy.type'
 import type { ComicThirdPartyProvider } from './comic-third-party-provider.type'
 import type {
-  CopyMangaApiFailureCause,
+  CopyMangaChapterContentImage,
   CopyMangaChapterContentResults,
+  CopyMangaChapterListItem,
   CopyMangaChapterResults,
   CopyMangaDetailResults,
   CopyMangaNamedItem,
   CopyMangaResponse,
+  CopyMangaSearchItem,
   CopyMangaSearchResults,
 } from './copy-manga.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -25,6 +28,36 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     name: '拷贝',
   }
 
+  readonly policy: ThirdPartyProviderPolicy = {
+    apiHostPolicy: {
+      allowedExactHosts: ['api.2024manga.com'],
+      allowedHostSuffixes: ['2024manga.com'],
+      allowPort: false,
+      redirect: 'error',
+      addressGuard: 'system-config',
+    },
+    imageHostPolicy: {
+      allowedExactHosts: [],
+      allowedHostSuffixes: ['mangafunb.fun'],
+      allowPort: false,
+      redirect: 'error',
+      addressGuard: 'system-config',
+    },
+    display: {
+      displayName: '拷贝',
+      sourceLabel: 'CopyManga',
+      workRemarkPrefix: '三方导入',
+    },
+    chapterCover: {
+      mode: 'unsupported',
+      reason: '拷贝章节列表未提供章节封面',
+    },
+    throttle: {
+      apiChannel: 'copy-manga-api',
+      imageChannel: 'copy-manga-image',
+    },
+  }
+
   // 注入 CopyManga HTTP client，provider 只负责三方响应形状转换。
   constructor(private readonly httpClient: CopyMangaHttpClient) {}
 
@@ -34,35 +67,38 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     const pageIndex = dto.pageIndex ?? 1
     const offset = (pageIndex - 1) * pageSize
     const results = this.unwrapResults<CopyMangaSearchResults>(
-      await this.httpClient.getJson('/api/v3/search/comic', {
-        limit: pageSize,
-        offset,
-        q: dto.keyword,
-      }),
+      await this.httpClient.getJson(
+        '/api/v3/search/comic',
+        {
+          limit: pageSize,
+          offset,
+          q: dto.keyword,
+        },
+        this.policy,
+      ),
       '搜索第三方漫画失败',
     )
+
+    if (!Array.isArray(results.list)) {
+      throw this.providerError('第三方搜索结果列表缺失')
+    }
 
     return {
       total: results.total ?? 0,
       pageIndex: Math.floor((results.offset ?? offset) / pageSize) + 1,
       pageSize: results.limit ?? pageSize,
-      list: (results.list ?? []).map((item) => ({
-        id: item.path_word ?? '',
-        name: item.name ?? '',
-        cover: item.cover ?? '',
-        author: (item.author ?? [])
-          .map((author) => author.name)
-          .filter((name): name is string => Boolean(name)),
-        source: this.platform.name,
-        platform: this.platform.code,
-      })),
+      list: results.list.map((item, index) => this.toSearchItem(item, index)),
     }
   }
 
   // 获取 CopyManga 漫画详情并转换为本地详情 DTO。
   async getDetail(dto: DetailComicRequestDto) {
     const results = this.unwrapResults<CopyMangaDetailResults>(
-      await this.httpClient.getJson(`/api/v3/comic2/${dto.comicId}`),
+      await this.httpClient.getJson(
+        `/api/v3/comic2/${dto.comicId}`,
+        {},
+        this.policy,
+      ),
       '获取第三方漫画详情失败',
     )
     const comic = results.comic
@@ -79,12 +115,12 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
 
     return {
       id: comic.path_word,
-      uuid: comic.uuid,
+      uuid: comic.uuid ?? null,
       name: comic.name,
-      alias: comic.alias,
+      alias: comic.alias ?? null,
       pathWord: comic.path_word,
-      cover: comic.cover,
-      brief: comic.brief,
+      cover: comic.cover ?? null,
+      brief: comic.brief ?? null,
       region: this.displayValue(comic.region),
       status: this.displayValue(comic.status),
       authors: this.toNames(comic.author),
@@ -96,8 +132,8 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
           [comic.reclass].filter(Boolean) as CopyMangaNamedItem[],
         ),
       ],
-      popular: comic.popular ?? results.popular,
-      datetimeUpdated: comic.datetime_updated,
+      popular: comic.popular ?? results.popular ?? null,
+      datetimeUpdated: comic.datetime_updated ?? null,
       groups,
       sourceFlags: {
         isLock: Boolean(results.is_lock),
@@ -118,19 +154,18 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
           limit: 500,
           offset: 0,
         },
+        this.policy,
       ),
       '获取第三方章节列表失败',
     )
 
-    return (results.list ?? []).map((chapter, index) => ({
-      providerChapterId: chapter.uuid ?? '',
-      title: chapter.name ?? `章节 ${index + 1}`,
-      group: chapter.group_path_word ?? group,
-      sortOrder: (chapter.index ?? index) + 1,
-      imageCount: this.resolveChapterImageCount(chapter, index),
-      chapterApiVersion: chapter.type,
-      datetimeCreated: chapter.datetime_created,
-    }))
+    if (!Array.isArray(results.list)) {
+      throw this.providerError('第三方章节列表缺失')
+    }
+
+    return results.list.map((chapter, index) =>
+      this.toChapterItem(chapter, index, group),
+    )
   }
 
   // 获取 CopyManga 章节图片列表并保持三方图片顺序。
@@ -140,18 +175,14 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
       '获取第三方章节内容失败',
     )
     const chapter = results.chapter
-    if (!chapter?.uuid) {
+    if (!chapter?.uuid || !chapter.name) {
       throw this.providerError('第三方章节内容为空')
     }
 
     const chapterUuid = chapter.uuid
-    const images = (chapter?.contents ?? [])
-      .filter((item) => Boolean(item.url))
-      .map((item, index) => ({
-        providerImageId: this.resolveImageProviderId(chapterUuid, item, index),
-        url: item.url!,
-        sortOrder: index + 1,
-      }))
+    const images = (chapter?.contents ?? []).map((item, index) =>
+      this.toChapterImageItem(chapterUuid, item, index),
+    )
 
     if (images.length === 0) {
       throw this.providerError('第三方章节内容为空')
@@ -159,20 +190,20 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
 
     return {
       providerChapterId: chapter.uuid,
-      title: chapter.name ?? chapter.uuid,
+      title: chapter.name,
       images,
     }
   }
 
   // 校验 CopyManga 外层响应并取出有效 results。
-  private unwrapResults<TResult>(payload: unknown, fallbackMessage: string) {
+  private unwrapResults<TResult>(payload: unknown, defaultMessage: string) {
     if (!payload || typeof payload !== 'object') {
       throw this.providerError('第三方平台返回了非 JSON 响应')
     }
 
     const response = payload as CopyMangaResponse<TResult>
     if (response.code !== 200) {
-      throw this.providerError(response.message || fallbackMessage)
+      throw this.providerError(response.message || defaultMessage)
     }
 
     if (response.results === null || response.results === undefined) {
@@ -190,8 +221,74 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     )
   }
 
+  // 将搜索结果收敛为共享 DTO；关键展示/身份字段缺失时失败关闭。
+  private toSearchItem(item: CopyMangaSearchItem, index: number) {
+    if (!item.path_word || !item.name || !item.cover) {
+      throw this.providerError(`第三方搜索结果字段缺失: index-${index + 1}`)
+    }
+
+    return {
+      id: item.path_word,
+      name: item.name,
+      cover: item.cover,
+      author: (item.author ?? [])
+        .map((author) => author.name)
+        .filter((name): name is string => Boolean(name)),
+      source: this.policy.display.displayName,
+      platform: this.platform.code,
+    }
+  }
+
+  // 将章节列表结果收敛为共享 DTO；章节身份和标题缺失时失败关闭。
+  private toChapterItem(
+    chapter: CopyMangaChapterListItem,
+    index: number,
+    group: string,
+  ) {
+    if (!chapter.uuid || !chapter.name) {
+      throw this.providerError(`第三方章节字段缺失: index-${index + 1}`)
+    }
+    if (
+      typeof chapter.index !== 'number' ||
+      !Number.isInteger(chapter.index) ||
+      chapter.index < 0
+    ) {
+      throw this.providerError(`第三方章节排序缺失或非法: ${chapter.uuid}`)
+    }
+
+    return {
+      providerChapterId: chapter.uuid,
+      title: chapter.name,
+      group: chapter.group_path_word ?? group,
+      sortOrder: chapter.index + 1,
+      imageCount: this.resolveChapterImageCount(chapter, index),
+      chapterApiVersion: chapter.type ?? null,
+      datetimeCreated: chapter.datetime_created ?? null,
+    }
+  }
+
+  // 将章节图片结果收敛为共享 DTO；图片身份和 URL 缺失时失败关闭。
+  private toChapterImageItem(
+    chapterUuid: string,
+    item: CopyMangaChapterContentImage,
+    index: number,
+  ) {
+    if (!item.uuid || !item.url) {
+      throw this.providerError(
+        `第三方章节图片字段缺失: ${chapterUuid}:${index + 1}`,
+      )
+    }
+
+    return {
+      providerImageId: item.uuid,
+      url: item.url,
+      sortOrder: index + 1,
+    }
+  }
+
+  // 解析章节图片数量；缺失或非法时直接拒绝导入该 provider 数据。
   private resolveChapterImageCount(
-    chapter: NonNullable<CopyMangaChapterResults['list']>[number],
+    chapter: CopyMangaChapterListItem,
     index: number,
   ) {
     const imageCount = chapter.size ?? chapter.count
@@ -209,92 +306,32 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     )
   }
 
+  // 按章节内容接口版本生成唯一 API 路径；缺失或未知版本直接拒绝。
   private async fetchChapterContent(dto: ChapterContentComicRequestDto) {
-    let lastError: unknown
-    const paths = this.buildChapterContentPaths(dto)
-    for (const [index, path] of paths.entries()) {
-      try {
-        return await this.httpClient.getJson(path)
-      } catch (error) {
-        lastError = error
-        if (!this.isRecoverableRouteCandidateError(error, path)) {
-          throw error
-        }
-        if (index === paths.length - 1) {
-          throw error
-        }
-      }
-    }
-
-    throw lastError
-  }
-
-  private buildChapterContentPaths(dto: ChapterContentComicRequestDto) {
-    const suffix = this.resolveChapterApiSuffix(dto.chapterApiVersion)
-    const suffixes = this.uniqueSuffixes(
-      suffix === undefined ? ['', '2'] : [suffix, '', '2'],
+    return this.httpClient.getJson(
+      this.buildChapterContentPath(dto),
+      {},
+      this.policy,
     )
-    return suffixes.map((item) => this.buildChapterContentPath(dto, item))
   }
 
-  private buildChapterContentPath(
-    dto: ChapterContentComicRequestDto,
-    suffix: string,
-  ) {
+  // 组装单个章节内容 API 路径。
+  private buildChapterContentPath(dto: ChapterContentComicRequestDto) {
+    const suffix = this.resolveChapterApiSuffix(dto.chapterApiVersion)
     return `/api/v3/comic/${dto.comicId}/chapter${suffix}/${dto.chapterId}`
   }
 
-  private resolveImageProviderId(
-    chapterUuid: string,
-    item: { uuid?: string },
-    index: number,
-  ) {
-    return item.uuid ?? `${chapterUuid}:${index + 1}`
-  }
-
+  // 将 provider 章节内容接口版本映射为路由后缀。
   private resolveChapterApiSuffix(version?: number) {
+    if (version === 1) {
+      return ''
+    }
     if (version === 2 || version === 3) {
       return String(version)
     }
-    return undefined
-  }
-
-  private uniqueSuffixes(suffixes: string[]) {
-    return suffixes.filter(
-      (suffix, index) => suffixes.indexOf(suffix) === index,
+    throw this.providerError(
+      `第三方章节接口版本缺失或不支持: ${version ?? 'null'}`,
     )
-  }
-
-  // 判断当前章节内容候选路由失败是否允许继续尝试下一个候选。
-  private isRecoverableRouteCandidateError(error: unknown, path: string) {
-    if (!(error instanceof BusinessException)) {
-      return false
-    }
-
-    const cause = this.readCopyMangaApiFailureCause(error)
-    if (!cause) {
-      return false
-    }
-
-    return cause.path === path && cause.routeCandidateRecoverable === true
-  }
-
-  // 收窄 CopyManga HTTP client 提供的安全失败原因。
-  private readCopyMangaApiFailureCause(
-    error: BusinessException,
-  ): CopyMangaApiFailureCause | undefined {
-    const cause = error.cause
-    if (!cause || typeof cause !== 'object') {
-      return undefined
-    }
-    const candidate = cause as Partial<CopyMangaApiFailureCause>
-    if (
-      typeof candidate.path !== 'string' ||
-      typeof candidate.routeCandidateRecoverable !== 'boolean'
-    ) {
-      return undefined
-    }
-    return candidate as CopyMangaApiFailureCause
   }
 
   // 将 CopyManga 命名对象列表收敛为可展示名称数组。
@@ -304,13 +341,13 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
       .filter((name): name is string => Boolean(name))
   }
 
-  // 兼容 CopyManga 字符串或命名对象两种展示字段。
+  // 解析 CopyManga 字符串或命名对象展示字段。
   private displayValue(value?: CopyMangaNamedItem | string) {
     if (!value) {
-      return undefined
+      return null
     }
     return typeof value === 'string'
       ? value
-      : (value.display ?? value.name ?? value.value)
+      : (value.display ?? value.name ?? value.value ?? null)
   }
 }

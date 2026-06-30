@@ -163,11 +163,11 @@ export const DEFAULT_CONFIG = {
   thirdPartyResourceParseConfig: {
     /** 是否启用三方资源解析节流（默认开启） */
     enabled: true,
-    /** CopyManga API 请求最小间隔（毫秒） */
+    /** 三方 provider API 请求最小间隔（毫秒） */
     apiIntervalMs: 3000,
     /** 三方远程图片下载最小间隔（毫秒） */
     imageIntervalMs: 3000,
-    /** CopyManga host discovery 缓存 TTL（秒） */
+    /** 三方 provider host discovery 缓存 TTL（秒） */
     hostCacheTtlSeconds: 60,
     /** 每个资源解析通道允许排队的最大请求数 */
     maxQueueSize: 1000,

@@ -16,7 +16,12 @@ import type {
 } from '@libs/platform/modules/workflow/workflow.type'
 import type { Buffer } from 'node:buffer'
 import type { LookupAddress } from 'node:dns'
+import type {
+  ThirdPartyHostPolicy,
+  ThirdPartyProviderPolicy,
+} from './third-party-provider-policy.type'
 
+/** 三方漫画导入进度 reporter 初始化选项。 */
 export interface ThirdPartyComicImportProgressReporterOptions {
   code?: WorkflowErrorCodeEnum | string | null
   context?: WorkflowObject | null
@@ -28,6 +33,7 @@ export interface ThirdPartyComicImportProgressReporterOptions {
   detail?: WorkflowObject
 }
 
+/** 三方漫画导入进度推进入参。 */
 export interface ThirdPartyComicImportProgressReporterAdvanceInput {
   amount?: number
   code?: WorkflowErrorCodeEnum | string | null
@@ -36,6 +42,7 @@ export interface ThirdPartyComicImportProgressReporterAdvanceInput {
   detail?: WorkflowObject
 }
 
+/** 三方漫画导入进度快照。 */
 export type ThirdPartyComicImportProgress = WorkflowProgress & {
   current: number
   detail?: WorkflowObject
@@ -44,6 +51,7 @@ export type ThirdPartyComicImportProgress = WorkflowProgress & {
   unit?: string
 }
 
+/** 三方漫画导入进度 reporter。 */
 export interface ThirdPartyComicImportProgressReporter {
   advance: (
     input?: ThirdPartyComicImportProgressReporterAdvanceInput,
@@ -168,6 +176,7 @@ export interface ThirdPartyComicImportTaskDraft {
 export interface ThirdPartyComicPreparedWorkflowImport {
   cover: ThirdPartyComicImportResultDto['cover']
   mode: HydratedThirdPartyComicImportRequest['mode']
+  providerPolicy: ThirdPartyProviderPolicy
   work: NonNullable<ThirdPartyComicImportResultDto['work']>
   sourceBinding: {
     id: number
@@ -246,6 +255,8 @@ export type RemoteImageImportSuccessHandler = (
 
 /** 远程图片导入期间的长 I/O 取消检查选项。 */
 export interface RemoteImageImportCancellationOptions {
+  hostPolicy: ThirdPartyHostPolicy
+  throttleChannel: string
   assertNotCancelled?: () => Promise<void>
   cancellationCheckIntervalMs?: number
 }
@@ -253,6 +264,11 @@ export interface RemoteImageImportCancellationOptions {
 /** 单次远程图片导入操作选项，允许批量导入复用外层取消检查。 */
 export interface RemoteImageImportOperationOptions extends RemoteImageImportCancellationOptions {
   skipDownloadInitialCancellationCheck?: boolean
+}
+
+/** 远程图片导入内部取消检查控制项。 */
+export interface RemoteImageImportCancellationRuntimeOptions {
+  skipInitialCancellationCheck?: boolean
 }
 
 /** 完成基础 URL 与 DNS 校验后的远程图片请求目标。 */

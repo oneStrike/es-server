@@ -7,11 +7,13 @@ import type { LookupFunction } from 'node:net'
 import type {
   DownloadedRemoteImage,
   RemoteImageImportCancellationOptions,
+  RemoteImageImportCancellationRuntimeOptions,
   RemoteImageImportFailureContext,
   RemoteImageImportOperationOptions,
   RemoteImageImportSuccessHandler,
   SafeRemoteImageUrl,
 } from '../third-party-comic-import.type'
+import type { ThirdPartyHostPolicy } from '../third-party-provider-policy.type'
 import { Buffer } from 'node:buffer'
 import { lookup } from 'node:dns/promises'
 import { promises as fs } from 'node:fs'
@@ -35,7 +37,6 @@ import { ThirdPartyResourceThrottleService } from './third-party-resource-thrott
 const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
 const REMOTE_IMAGE_DOWNLOAD_TIMEOUT_MS = 300000
 const REMOTE_IMAGE_CANCELLATION_CHECK_INTERVAL_MS = 60000
-const COPY_MANGA_IMAGE_HOST_PATTERN = /^[a-z0-9-]+\.mangafunb\.fun$/i
 
 @Injectable()
 export class RemoteImageImportService {
@@ -58,10 +59,10 @@ export class RemoteImageImportService {
   async importImage(
     url: string,
     objectKeySegments: string[],
-    options: RemoteImageImportOperationOptions = {},
+    options: RemoteImageImportOperationOptions,
   ) {
     const downloadResult = await this.withCancellationCheck(
-      async () => this.downloadToTemp(url),
+      async () => this.downloadToTemp(url, options),
       options,
       {
         skipInitialCancellationCheck:
@@ -100,8 +101,8 @@ export class RemoteImageImportService {
   async importImages(
     images: ThirdPartyComicImageDto[],
     objectKeySegments: string[],
-    onImported?: RemoteImageImportSuccessHandler,
-    options: RemoteImageImportCancellationOptions = {},
+    onImported: RemoteImageImportSuccessHandler | undefined,
+    options: RemoteImageImportCancellationOptions,
   ) {
     const filePaths: string[] = []
     for (const [index, image] of images.entries()) {
@@ -156,7 +157,7 @@ export class RemoteImageImportService {
   private async withCancellationCheck<T>(
     operation: () => Promise<T>,
     options: RemoteImageImportCancellationOptions,
-    cancellationOptions: { skipInitialCancellationCheck?: boolean } = {},
+    cancellationOptions: RemoteImageImportCancellationRuntimeOptions = {},
   ) {
     if (!options.assertNotCancelled) {
       return {
@@ -165,10 +166,12 @@ export class RemoteImageImportService {
       }
     }
 
+    const configuredCancellationCheckIntervalMs =
+      options.cancellationCheckIntervalMs ??
+      REMOTE_IMAGE_CANCELLATION_CHECK_INTERVAL_MS
     const cancellationIntervalMs = Math.max(
       1000,
-      options.cancellationCheckIntervalMs ??
-      REMOTE_IMAGE_CANCELLATION_CHECK_INTERVAL_MS,
+      configuredCancellationCheckIntervalMs,
     )
     if (!cancellationOptions.skipInitialCancellationCheck) {
       await options.assertNotCancelled?.()
@@ -198,9 +201,12 @@ export class RemoteImageImportService {
   }
 
   // 将远程图片下载到临时文件，默认固定已校验 DNS 结果。
-  private async downloadToTemp(url: string) {
-    const safeRemote = await this.assertSafeUrl(url)
-    await this.throttle.waitForImageSlot()
+  private async downloadToTemp(
+    url: string,
+    options: RemoteImageImportOperationOptions,
+  ) {
+    const safeRemote = await this.assertSafeUrl(url, options.hostPolicy)
+    await this.throttle.waitForImageSlot(options.throttleChannel)
     const response = await this.downloadRemoteImage(safeRemote)
 
     const contentType = response.contentType
@@ -234,7 +240,10 @@ export class RemoteImageImportService {
   }
 
   // 校验 URL、域名和 DNS 结果；系统安全配置关闭地址防护时只保留基础 URL 约束。
-  private async assertSafeUrl(url: string): Promise<SafeRemoteImageUrl> {
+  private async assertSafeUrl(
+    url: string,
+    hostPolicy: ThirdPartyHostPolicy,
+  ): Promise<SafeRemoteImageUrl> {
     let parsedUrl: URL
     try {
       parsedUrl = new URL(url)
@@ -245,7 +254,10 @@ export class RemoteImageImportService {
     if (parsedUrl.protocol !== 'https:') {
       throw this.remoteImageError('远程图片必须使用 HTTPS')
     }
-    if (!COPY_MANGA_IMAGE_HOST_PATTERN.test(parsedUrl.hostname)) {
+    if (!hostPolicy.allowPort && parsedUrl.port) {
+      throw this.remoteImageError('远程图片地址不允许携带端口')
+    }
+    if (!this.isAllowedHost(parsedUrl.hostname, hostPolicy)) {
       throw this.remoteImageError('远程图片域名不在允许范围内')
     }
 
@@ -273,6 +285,23 @@ export class RemoteImageImportService {
   private isAddressGuardEnabled() {
     return this.configReader.getRemoteImageImportSecurityConfig()
       .enableAddressGuard
+  }
+
+  // 判断请求 host 是否命中 provider 声明的精确 host 或子域后缀。
+  private isAllowedHost(hostname: string, hostPolicy: ThirdPartyHostPolicy) {
+    const normalizedHostname = hostname.toLowerCase()
+    if (
+      hostPolicy.allowedExactHosts
+        .map((host) => host.toLowerCase())
+        .includes(normalizedHostname)
+    ) {
+      return true
+    }
+
+    return hostPolicy.allowedHostSuffixes.some((suffix) => {
+      const normalizedSuffix = suffix.replace(/^\./, '').toLowerCase()
+      return normalizedHostname.endsWith(`.${normalizedSuffix}`)
+    })
   }
 
   // 下载远程图片并在原生请求层保持无重定向、超时、大小限制和 DNS pinning。
@@ -358,6 +387,9 @@ export class RemoteImageImportService {
   // 将远程图片 HTTP 限流响应转换为统一三方限流 cause。
   private buildRemoteImageHttpError(response: IncomingMessage) {
     const status = response.statusCode ?? 0
+    if (status >= 300 && status < 400) {
+      return this.remoteImageError('远程图片下载不允许重定向')
+    }
     if (status === 429) {
       const retryAfterHeader = this.readRetryAfterHeader(response)
       return this.remoteImageError('远程图片下载被限流', {
@@ -371,6 +403,7 @@ export class RemoteImageImportService {
     return this.remoteImageError('远程图片下载失败')
   }
 
+  // 读取远程图片响应中的 Retry-After 头。
   private readRetryAfterHeader(response: IncomingMessage) {
     const header = response.headers['retry-after']
     return Array.isArray(header) ? header[0] : header

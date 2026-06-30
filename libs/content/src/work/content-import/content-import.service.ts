@@ -2,7 +2,7 @@ import type { Db } from '@db/core'
 import type { ContentImportItemSelect } from '@db/schema'
 import type { ThirdPartyComicSyncChapterPlan } from '@libs/content/work/third-party/third-party-comic-sync.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import type { WorkflowItemPageRequestDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
+import type { WorkflowItemPageRequestDto } from '@libs/platform/modules/workflow/dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   ContentImportAttemptCounters,
@@ -117,7 +117,7 @@ export class ContentImportService {
         providerComicId: input.dto.sourceSnapshot.providerComicId,
         providerPathWord: input.dto.sourceSnapshot.providerPathWord,
         providerGroupPathWord,
-        sourceSnapshot: input.dto as unknown as Record<string, unknown>,
+        sourceSnapshot: input.dto,
         publishBoundaryStatus:
           ContentImportPublishBoundaryStatusEnum.NEEDS_MANUAL_REVIEW,
         selectedItemCount: input.dto.chapters.length,
@@ -528,7 +528,10 @@ export class ContentImportService {
       input.error,
       input.errorDiagnostic,
     )
-    const retryColumns = toWorkflowRetryColumns(input.error, input.errorDiagnostic)
+    const retryColumns = toWorkflowRetryColumns(
+      input.error,
+      input.errorDiagnostic,
+    )
     const attemptErrorColumns = toWorkflowErrorColumns(
       input.error,
       input.errorDiagnostic,
@@ -574,16 +577,21 @@ export class ContentImportService {
     input: ContentImportMarkItemRetryExhaustedInput,
   ) {
     const now = new Date()
-    const error = input.error ?? createWorkflowErrorFactsByCode(
-      WorkflowErrorCodeEnum.CONTENT_IMPORT_RETRY_EXHAUSTED,
-      { itemId: input.itemId },
-    )
+    const error =
+      input.error ??
+      createWorkflowErrorFactsByCode(
+        WorkflowErrorCodeEnum.CONTENT_IMPORT_RETRY_EXHAUSTED,
+        { itemId: input.itemId },
+      )
     const lastErrorColumns = toWorkflowLastErrorColumns(
       error,
       input.errorDiagnostic,
     )
     const retryColumns = toWorkflowRetryColumns(error, input.errorDiagnostic)
-    const attemptErrorColumns = toWorkflowErrorColumns(error, input.errorDiagnostic)
+    const attemptErrorColumns = toWorkflowErrorColumns(
+      error,
+      input.errorDiagnostic,
+    )
     const imageCounters = this.buildImageCounterPatch(input)
     const [item] = await this.db
       .update(this.contentImportItem)
@@ -744,7 +752,7 @@ export class ContentImportService {
         provider: String(input.deleteTarget.provider),
         filePath: input.deleteTarget.filePath,
         localPath: input.deleteTarget.objectKey ?? null,
-        metadata: input.deleteTarget as unknown as Record<string, unknown>,
+        metadata: input.deleteTarget,
         cleanupStatus: ContentImportResidueCleanupStatusEnum.PENDING,
         cleanupError: null,
         createdAt: new Date(),
@@ -1322,7 +1330,10 @@ export class ContentImportService {
     imageTotal?: number
     imageSuccessCount?: number
   }) {
-    if (input.imageTotal === undefined && input.imageSuccessCount === undefined) {
+    if (
+      input.imageTotal === undefined &&
+      input.imageSuccessCount === undefined
+    ) {
       return {}
     }
     const imageTotal = this.normalizeImageCount(input.imageTotal)

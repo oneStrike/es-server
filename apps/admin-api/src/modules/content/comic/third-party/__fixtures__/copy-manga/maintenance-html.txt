@@ -1,5 +1,0 @@
-<html>
-  <body>
-    <div>服務器升級中</div>
-  </body>
-</html>

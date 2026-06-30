@@ -10,7 +10,10 @@ import type {
   ThirdPartyComicImportWorkDraftDto,
   ThirdPartyComicSourceSnapshotDto,
 } from '@libs/content/work/content/dto/content.dto'
-import type { ThirdPartyComicChapterBindingInput } from '@libs/content/work/third-party/third-party-comic-binding.type'
+import type {
+  ThirdPartyComicChapterBindingInput,
+  ThirdPartyComicSourceScopeInput,
+} from '@libs/content/work/third-party/third-party-comic-binding.type'
 import type {
   HydratedThirdPartyComicImportChapterItem,
   HydratedThirdPartyComicImportRequest,
@@ -30,6 +33,7 @@ import type {
   ThirdPartyComicRetryReservationSnapshot,
   ThirdPartyComicUpdatedChapterSnapshot,
 } from '@libs/content/work/third-party/third-party-comic-import.type'
+import type { ThirdPartyProviderPolicy } from '@libs/content/work/third-party/third-party-provider-policy.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import { DrizzleService } from '@db/core'
 import { AuthorTypeEnum } from '@libs/content/author/author.constant'
@@ -130,6 +134,7 @@ export class ThirdPartyComicImportService {
     const provider = this.registry.resolve(dto.platform)
     const detail = await provider.getDetail(dto)
     const chapters = await provider.getChapters(dto)
+    const displayPolicy = provider.policy.display
     const relationCandidates = await this.resolvePreviewRelationCandidates(
       detail.authors,
       detail.taxonomies,
@@ -152,8 +157,8 @@ export class ThirdPartyComicImportService {
         name: detail.name,
         alias: detail.alias ?? null,
         description: detail.brief || detail.name,
-        originalSource: `CopyManga:${detail.pathWord}`,
-        remark: `三方导入：CopyManga ${detail.pathWord}`,
+        originalSource: `${displayPolicy.sourceLabel}:${detail.pathWord}`,
+        remark: `${displayPolicy.workRemarkPrefix}：${displayPolicy.displayName} ${detail.pathWord}`,
         suggestedRegion: detail.region ?? null,
         suggestedSerialStatus:
           this.resolveSuggestedSerialStatus(detail.status) ?? null,
@@ -327,9 +332,9 @@ export class ThirdPartyComicImportService {
     const hydratedChapter = {
       ...chapter,
       imageCount: providerChapter.imageCount,
-      group: providerChapter.group,
-      chapterApiVersion: providerChapter.chapterApiVersion,
-      datetimeCreated: providerChapter.datetimeCreated,
+      group: providerChapter.group ?? undefined,
+      chapterApiVersion: providerChapter.chapterApiVersion ?? undefined,
+      datetimeCreated: providerChapter.datetimeCreated ?? undefined,
     }
     resolveThirdPartyComicImportImageTotal(hydratedChapter)
     return hydratedChapter
@@ -411,7 +416,12 @@ export class ThirdPartyComicImportService {
       dto.sourceSnapshot,
     )
     await this.assertImportStillAllowed(dto, providerGroupPathWord)
-    const preparedWork = await this.prepareWork(dto, detail, context)
+    const preparedWork = await this.prepareWork(
+      dto,
+      detail,
+      provider.policy,
+      context,
+    )
     const workResult = preparedWork.work
 
     if (!workResult.id) {
@@ -432,6 +442,7 @@ export class ThirdPartyComicImportService {
     return {
       cover: preparedWork.cover,
       mode: dto.mode,
+      providerPolicy: provider.policy,
       work: workResult,
       sourceBinding,
       chapterPlans,
@@ -448,6 +459,7 @@ export class ThirdPartyComicImportService {
     return {
       cover: target.cover,
       mode: dto.mode,
+      providerPolicy: this.registry.resolve(dto.platform).policy,
       work: target.work,
       sourceBinding: target.sourceBinding,
       chapterPlans,
@@ -497,6 +509,7 @@ export class ThirdPartyComicImportService {
       prepared.sourceBinding.providerGroupPathWord,
       context,
       imageProgressReporter,
+      prepared.providerPolicy,
     )
   }
 
@@ -579,6 +592,7 @@ export class ThirdPartyComicImportService {
   private async prepareWork(
     dto: HydratedThirdPartyComicImportRequest,
     detail: ThirdPartyComicDetailDto,
+    providerPolicy: ThirdPartyProviderPolicy,
     context: ThirdPartyComicImportTaskContext,
   ) {
     if (dto.mode === ThirdPartyComicImportModeEnum.ATTACH_TO_EXISTING) {
@@ -620,7 +634,12 @@ export class ThirdPartyComicImportService {
     let coverFailureCause: Error | string | undefined
     let coverPath: string | undefined
     try {
-      const coverImport = await this.resolveWorkCover(dto, detail, context)
+      const coverImport = await this.resolveWorkCover(
+        dto,
+        detail,
+        context,
+        providerPolicy,
+      )
       coverPath = coverImport?.filePath
       if (coverImport?.deleteTarget) {
         await this.recordUploadedFile(context, coverImport.deleteTarget)
@@ -725,6 +744,7 @@ export class ThirdPartyComicImportService {
     sourceGroup: string,
     context: ThirdPartyComicImportTaskContext,
     imageProgressReporter: ThirdPartyComicImportProgressReporter,
+    providerPolicy: ThirdPartyProviderPolicy,
   ) {
     const { chapter } = chapterPlan
     const localChapterId = await this.prepareChapter(
@@ -734,7 +754,7 @@ export class ThirdPartyComicImportService {
       sourceGroup,
       context,
     )
-    const cover = await this.importChapterCover(chapter)
+    const cover = await this.importChapterCover(chapter, providerPolicy)
 
     if (!chapter.importImages) {
       return {
@@ -761,6 +781,8 @@ export class ThirdPartyComicImportService {
         })
       },
       {
+        hostPolicy: providerPolicy.imageHostPolicy,
+        throttleChannel: providerPolicy.throttle.imageChannel,
         assertNotCancelled: async () => context.assertNotCancelled(),
       },
     )
@@ -928,9 +950,10 @@ export class ThirdPartyComicImportService {
     return localChapterId
   }
 
-  // 解析章节封面导入结果，CopyManga 当前不提供章节封面远程下载。
+  // 按 provider 声明的章节封面能力解析导入结果。
   private async importChapterCover(
     chapter: ThirdPartyComicImportChapterItemDto,
+    providerPolicy: ThirdPartyProviderPolicy,
   ) {
     if (
       !chapter.cover ||
@@ -952,11 +975,20 @@ export class ThirdPartyComicImportService {
       }
     }
 
+    if (providerPolicy.chapterCover.mode === 'unsupported') {
+      return {
+        status: ThirdPartyComicImportCoverStatusEnum.FAILED,
+        filePath: null,
+        errorCode: 'CHAPTER_COVER_UNAVAILABLE',
+        message: providerPolicy.chapterCover.reason,
+      }
+    }
+
     return {
       status: ThirdPartyComicImportCoverStatusEnum.FAILED,
       filePath: null,
       errorCode: 'CHAPTER_COVER_UNAVAILABLE',
-      message: 'CopyManga 章节列表未提供章节封面',
+      message: '章节封面远程导入缺少 provider 图片地址',
     }
   }
 
@@ -965,6 +997,7 @@ export class ThirdPartyComicImportService {
     dto: HydratedThirdPartyComicImportRequest,
     detail: ThirdPartyComicDetailDto,
     context: ThirdPartyComicImportTaskContext,
+    providerPolicy: ThirdPartyProviderPolicy,
   ) {
     if (dto.cover?.mode === ThirdPartyComicImportCoverModeEnum.LOCAL) {
       return {
@@ -984,6 +1017,8 @@ export class ThirdPartyComicImportService {
       detail.cover,
       ['comic', 'image', formatDateOnlyInAppTimeZone(new Date())],
       {
+        hostPolicy: providerPolicy.imageHostPolicy,
+        throttleChannel: providerPolicy.throttle.imageChannel,
         assertNotCancelled: async () => context.assertNotCancelled(),
       },
     )
@@ -1300,11 +1335,7 @@ export class ThirdPartyComicImportService {
 
   // 确认三方来源作用域未被其他作品占用，允许目标作品上的同 scope 幂等复用。
   private async assertSourceScopeAvailable(
-    source: {
-      platform: string
-      providerComicId: string
-      providerGroupPathWord: string
-    },
+    source: ThirdPartyComicSourceScopeInput,
     allowedWorkId: number | null,
   ) {
     const binding =
@@ -1690,12 +1721,10 @@ export class ThirdPartyComicImportService {
       : never,
   ) {
     const residue = await context.getResidue()
-    const currentList = Array.isArray(residue[key])
-      ? (residue[key] as unknown[])
-      : []
+    const currentList = Array.isArray(residue[key]) ? residue[key] : []
     await context.recordResidue({
       [key]: [...currentList, value],
-    } as Partial<ThirdPartyComicImportResidue>)
+    })
   }
 
   // 记录已上传文件的删除句柄；若记录失败则立即同步清理，避免丢失回滚依据。
@@ -1823,7 +1852,7 @@ export class ThirdPartyComicImportService {
   }
 
   // 将三方连载状态文本映射为本地作品连载状态值。
-  private resolveSuggestedSerialStatus(status?: string) {
+  private resolveSuggestedSerialStatus(status?: string | null) {
     if (!status) {
       return undefined
     }

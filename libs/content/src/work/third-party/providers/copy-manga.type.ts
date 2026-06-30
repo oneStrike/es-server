@@ -42,11 +42,23 @@ export interface CopyMangaApiFailureCause {
   reason: string
   status?: number
   code?: string
-  routeCandidateRecoverable: boolean
   rateLimited?: true
   retryAfterHeader?: string
   retryAfterMs?: number
   retryAt?: string
+}
+
+/** CopyManga 安全 JSON 请求入参。 */
+export interface CopyMangaJsonRequestInput {
+  url: URL
+  address: import('node:dns').LookupAddress
+  headers: Record<string, string>
+}
+
+/** CopyManga host 通过 allowlist 和 DNS 校验后的请求目标。 */
+export interface CopyMangaValidatedRequestTarget {
+  url: URL
+  address: import('node:dns').LookupAddress
 }
 
 /** CopyManga 分类、作者、地区等命名项的原始形状。 */
@@ -69,6 +81,11 @@ export interface CopyMangaSearchResults {
     author?: CopyMangaNamedItem[]
   }>
 }
+
+/** CopyManga 搜索接口的单条漫画结果。 */
+export type CopyMangaSearchItem = NonNullable<
+  CopyMangaSearchResults['list']
+>[number]
 
 /** CopyManga 漫画详情接口的结果对象。 */
 export interface CopyMangaDetailResults {
@@ -118,6 +135,11 @@ export interface CopyMangaChapterResults {
   }>
 }
 
+/** CopyManga 章节列表接口的单条章节结果。 */
+export type CopyMangaChapterListItem = NonNullable<
+  CopyMangaChapterResults['list']
+>[number]
+
 /** CopyManga 章节内容接口的图片结果对象。 */
 export interface CopyMangaChapterContentResults {
   chapter?: {
@@ -129,3 +151,8 @@ export interface CopyMangaChapterContentResults {
     }>
   }
 }
+
+/** CopyManga 章节内容接口中的单张图片对象。 */
+export type CopyMangaChapterContentImage = NonNullable<
+  NonNullable<CopyMangaChapterContentResults['chapter']>['contents']
+>[number]

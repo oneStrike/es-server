@@ -8,8 +8,8 @@ import {
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto/page.dto'
-import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
+import { PageDto } from '@libs/platform/dto'
+import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto'
 import { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
 import { PickType } from '@nestjs/swagger'
 import {
@@ -498,8 +498,7 @@ export class ChapterContentComicRequestDto extends DetailComicRequestDto {
 
   @NumberProperty({
     required: false,
-    description:
-      '三方章节内容接口版本；CopyManga 第一版使用 chapter，第二版及以上使用 chapterN',
+    description: '三方章节内容接口版本；具体版本含义由 provider 定义',
     example: 1,
   })
   chapterApiVersion?: number
@@ -706,10 +705,11 @@ export class ThirdPartyComicDetailDto {
   @StringProperty({
     description: '第三方漫画 UUID',
     example: '3b65f136-a419-11eb-a88c-024352452ce0',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  uuid?: string
+  uuid!: string | null
 
   @StringProperty({
     description: '漫画名称',
@@ -721,10 +721,11 @@ export class ThirdPartyComicDetailDto {
   @StringProperty({
     description: '漫画别名',
     example: 'Solo Leveling',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  alias?: string
+  alias!: string | null
 
   @StringProperty({
     description: '第三方路径标识',
@@ -736,34 +737,38 @@ export class ThirdPartyComicDetailDto {
   @StringProperty({
     description: '三方封面 URL',
     example: 'https://example.com/cover.jpg',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  cover?: string
+  cover!: string | null
 
   @StringProperty({
     description: '三方简介',
     example: '作品简介',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  brief?: string
+  brief!: string | null
 
   @StringProperty({
     description: '三方地区展示值',
     example: '韩国',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  region?: string
+  region!: string | null
 
   @StringProperty({
     description: '三方状态展示值',
     example: '已完结',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  status?: string
+  status!: string | null
 
   @ArrayProperty({
     description: '三方作者名称列表',
@@ -784,18 +789,20 @@ export class ThirdPartyComicDetailDto {
   @NumberProperty({
     description: '三方热度',
     example: 1000,
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  popular?: number
+  popular!: number | null
 
   @StringProperty({
     description: '三方最后更新时间',
     example: '2026-05-11',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  datetimeUpdated?: string
+  datetimeUpdated!: string | null
 
   @ArrayProperty({
     description: '三方章节分组',
@@ -853,10 +860,11 @@ export class ThirdPartyComicChapterDto {
   @StringProperty({
     description: '三方章节分组',
     example: 'default',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  group?: string
+  group!: string | null
 
   @NumberProperty({
     description: '章节排序',
@@ -875,18 +883,20 @@ export class ThirdPartyComicChapterDto {
   @NumberProperty({
     description: '三方章节内容接口版本',
     example: 1,
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  chapterApiVersion?: number
+  chapterApiVersion!: number | null
 
   @StringProperty({
     description: '三方章节创建时间',
     example: '2026-05-11T00:00:00+08:00',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  datetimeCreated?: string
+  datetimeCreated!: string | null
 }
 
 export class ThirdPartyComicChapterContentDto {
@@ -934,10 +944,11 @@ export class ThirdPartyComicSourceSnapshotDto {
   @StringProperty({
     description: '三方 UUID',
     example: '3b65f136-a419-11eb-a88c-024352452ce0',
-    required: false,
+    nullable: true,
+    required: true,
     validation: false,
   })
-  uuid?: string
+  uuid!: string | null
 
   @StringProperty({
     description: '抓取时间',
@@ -1290,7 +1301,8 @@ export class ThirdPartyComicImportPreviewDto {
 
 export class ThirdPartyComicImportCoverDto {
   @EnumProperty({
-    description: '封面处理方式（使用第三方平台图片；使用本地已上传图片；跳过封面处理）',
+    description:
+      'provider=使用第三方平台图片；local=使用本地已上传图片；skip=跳过封面处理',
     enum: ThirdPartyComicImportCoverModeEnum,
     example: ThirdPartyComicImportCoverModeEnum.PROVIDER,
     required: true,
@@ -1328,7 +1340,7 @@ export class ThirdPartyComicImportChapterItemDto {
   chapterApiVersion?: number
 
   @EnumProperty({
-    description: '章节导入动作（新建章节；更新已有章节）',
+    description: 'create=新建章节；update=更新已有章节',
     enum: ThirdPartyComicImportChapterActionEnum,
     example: ThirdPartyComicImportChapterActionEnum.CREATE,
     required: true,
@@ -1423,7 +1435,7 @@ export class ThirdPartyComicImportRequestDto {
   comicId!: string
 
   @EnumProperty({
-    description: '导入模式（新建本地作品；挂载已有本地作品）',
+    description: 'createNew=新建本地作品；attachToExisting=挂载已有本地作品',
     enum: ThirdPartyComicImportModeEnum,
     example: ThirdPartyComicImportModeEnum.CREATE_NEW,
     required: true,
@@ -1480,7 +1492,8 @@ export class ThirdPartyComicImportWorkResultDto {
   id!: number | null
 
   @EnumProperty({
-    description: '作品处理状态（已新建作品；已挂载已有作品；作品处理失败）',
+    description:
+      'created=已新建作品；attached=已挂载已有作品；failed=作品处理失败',
     enum: ThirdPartyComicImportWorkStatusEnum,
     example: ThirdPartyComicImportWorkStatusEnum.CREATED,
     validation: false,
@@ -1508,7 +1521,8 @@ export class ThirdPartyComicImportWorkResultDto {
 
 export class ThirdPartyComicImportCoverResultDto {
   @EnumProperty({
-    description: '封面处理状态（已上传第三方封面；使用本地封面；跳过封面；封面处理失败）',
+    description:
+      'uploaded=已上传第三方封面；local=使用本地封面；skipped=跳过封面；failed=封面处理失败',
     enum: ThirdPartyComicImportCoverStatusEnum,
     example: ThirdPartyComicImportCoverStatusEnum.UPLOADED,
     validation: false,
@@ -1561,7 +1575,7 @@ export class ThirdPartyComicImportChapterResultDto {
   localChapterId!: number | null
 
   @EnumProperty({
-    description: '章节导入动作（新建章节；更新已有章节）',
+    description: 'create=新建章节；update=更新已有章节',
     enum: ThirdPartyComicImportChapterActionEnum,
     example: ThirdPartyComicImportChapterActionEnum.CREATE,
     validation: false,
@@ -1570,7 +1584,7 @@ export class ThirdPartyComicImportChapterResultDto {
 
   @EnumProperty({
     description:
-      '章节处理状态（已新建元数据；已更新元数据；已导入图片；仅处理元数据；已跳过；章节处理失败）',
+      'created=已新建元数据；updated=已更新元数据；content_imported=已导入图片；metadata_only=仅处理元数据；skipped=已跳过；failed=章节处理失败',
     enum: ThirdPartyComicImportChapterStatusEnum,
     example: ThirdPartyComicImportChapterStatusEnum.CONTENT_IMPORTED,
     validation: false,
@@ -1623,7 +1637,7 @@ export class ThirdPartyComicImportChapterResultDto {
 
 export class ThirdPartyComicImportResultDto {
   @EnumProperty({
-    description: '导入模式（新建本地作品；挂载已有本地作品）',
+    description: 'createNew=新建本地作品；attachToExisting=挂载已有本地作品',
     enum: ThirdPartyComicImportModeEnum,
     example: ThirdPartyComicImportModeEnum.CREATE_NEW,
     validation: false,
@@ -1631,7 +1645,8 @@ export class ThirdPartyComicImportResultDto {
   mode!: ThirdPartyComicImportModeEnum
 
   @EnumProperty({
-    description: '导入状态（全部成功；部分章节失败；整体失败）',
+    description:
+      'success=全部成功；partial_failed=部分章节失败；failed=整体失败',
     enum: ThirdPartyComicImportStatusEnum,
     example: ThirdPartyComicImportStatusEnum.SUCCESS,
     validation: false,

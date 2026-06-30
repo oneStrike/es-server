@@ -316,10 +316,10 @@ export class ThirdPartyComicSyncService {
       plans.push({
         providerChapterId: chapter.providerChapterId,
         title: chapter.title,
-        group: chapter.group,
+        group: chapter.group ?? undefined,
         sortOrder: chapter.sortOrder,
-        chapterApiVersion: chapter.chapterApiVersion,
-        datetimeCreated: chapter.datetimeCreated,
+        chapterApiVersion: chapter.chapterApiVersion ?? undefined,
+        datetimeCreated: chapter.datetimeCreated ?? undefined,
         localSortOrder,
         images: [],
         imageTotal: 0,
@@ -358,6 +358,9 @@ export class ThirdPartyComicSyncService {
     )
     await this.recordCreatedChapter(context, chapterId)
 
+    const providerPolicy = this.registry.resolve(
+      context.payload.platform,
+    ).policy
     const filePaths = await this.remoteImageImportService.importImages(
       plan.images,
       ['work', 'comic', String(work.id), 'chapter', String(chapterId)],
@@ -368,6 +371,8 @@ export class ThirdPartyComicSyncService {
         })
       },
       {
+        hostPolicy: providerPolicy.imageHostPolicy,
+        throttleChannel: providerPolicy.throttle.imageChannel,
         assertNotCancelled: async () => context.assertNotCancelled(),
       },
     )
@@ -579,12 +584,10 @@ export class ThirdPartyComicSyncService {
       : never,
   ) {
     const residue = await context.getResidue()
-    const currentList = Array.isArray(residue[key])
-      ? (residue[key] as unknown[])
-      : []
+    const currentList = Array.isArray(residue[key]) ? residue[key] : []
     await context.recordResidue({
       [key]: [...currentList, value],
-    } as Partial<ThirdPartyComicSyncResidue>)
+    })
   }
 
   // 残留写入失败时同步删除已上传文件；若删除也失败则显式抛出冲突错误。

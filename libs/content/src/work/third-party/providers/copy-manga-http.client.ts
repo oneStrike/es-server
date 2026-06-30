@@ -1,11 +1,25 @@
+import type { LookupAddress } from 'node:dns'
+import type { IncomingMessage } from 'node:http'
+import type { LookupFunction } from 'node:net'
+import type {
+  ThirdPartyHostPolicy,
+  ThirdPartyProviderPolicy,
+} from '../third-party-provider-policy.type'
 import type {
   CopyMangaApiFailureCause,
   CopyMangaApiHostCache,
+  CopyMangaJsonRequestInput,
   CopyMangaNetworkResponse,
   CopyMangaTransportError,
+  CopyMangaValidatedRequestTarget,
 } from './copy-manga.type'
+import { Buffer } from 'node:buffer'
+import { lookup } from 'node:dns/promises'
+import { request as httpsRequest } from 'node:https'
+import { isIP } from 'node:net'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { ConfigReader } from '@libs/system-config/config-reader'
 import { Injectable } from '@nestjs/common'
 import { ThirdPartyResourceThrottleService } from '../services/third-party-resource-throttle.service'
 import { parseRetryAfterHeader } from '../third-party-rate-limit'
@@ -16,26 +30,31 @@ const COPY_MANGA_PLATFORM = 3
 const COPY_MANGA_REQUEST_ATTEMPTS = 5
 const COPY_MANGA_VERSION = '2024.4.28'
 const COPY_MANGA_REQUEST_TIMEOUT_MS = 20000
+const COPY_MANGA_JSON_RESPONSE_MAX_BYTES = 5 * 1024 * 1024
 
 @Injectable()
 export class CopyMangaHttpClient {
   private apiHostCache: CopyMangaApiHostCache | null = null
 
   // 注入三方资源解析节流器，统一控制 discovery 和业务 API 节奏。
-  constructor(private readonly throttle: ThirdPartyResourceThrottleService) {}
+  constructor(
+    private readonly throttle: ThirdPartyResourceThrottleService,
+    private readonly configReader: ConfigReader,
+  ) {}
 
   // 读取 host 缓存或在缓存失效后重新发现，发现失败时不继续请求内容 API。
   async getJson<TPayload = unknown>(
     path: string,
     params: Record<string, unknown> = {},
+    providerPolicy: ThirdPartyProviderPolicy,
   ): Promise<TPayload> {
-    const apiHosts = await this.getApiHosts()
+    const apiHosts = await this.getApiHosts(providerPolicy)
 
     let lastError: unknown
     for (let attempt = 0; attempt < COPY_MANGA_REQUEST_ATTEMPTS; attempt++) {
       const host = apiHosts[attempt % apiHosts.length]
       try {
-        await this.throttle.waitForApiSlot()
+        await this.throttle.waitForApiSlot(providerPolicy.throttle.apiChannel)
       } catch (error) {
         if (error instanceof BusinessException) {
           throw error
@@ -50,6 +69,7 @@ export class CopyMangaHttpClient {
             ...params,
             platform: COPY_MANGA_PLATFORM,
           },
+          providerPolicy.apiHostPolicy,
         )
         this.throwIfProviderRateLimited(path, payload)
         return payload
@@ -66,14 +86,14 @@ export class CopyMangaHttpClient {
   }
 
   // 复用有效 host 缓存；过期后清空旧缓存再发现，避免失败时回退到过期 host。
-  private async getApiHosts() {
+  private async getApiHosts(providerPolicy: ThirdPartyProviderPolicy) {
     const cached = this.apiHostCache
     if (cached && cached.expiresAt > Date.now()) {
       return cached.hosts
     }
 
     this.apiHostCache = null
-    const hosts = await this.refreshApiHosts()
+    const hosts = await this.refreshApiHosts(providerPolicy)
     this.apiHostCache = {
       expiresAt: Date.now() + this.throttle.getHostCacheTtlMs(),
       hosts,
@@ -82,11 +102,11 @@ export class CopyMangaHttpClient {
   }
 
   // 调用 CopyManga host discovery，并对所有异常/畸形结果执行 fail closed。
-  private async refreshApiHosts() {
+  private async refreshApiHosts(providerPolicy: ThirdPartyProviderPolicy) {
     let lastError: unknown
     for (let attempt = 0; attempt < COPY_MANGA_REQUEST_ATTEMPTS; attempt++) {
       try {
-        await this.throttle.waitForApiSlot()
+        await this.throttle.waitForApiSlot(providerPolicy.throttle.apiChannel)
       } catch (error) {
         if (error instanceof BusinessException) {
           throw error
@@ -100,6 +120,7 @@ export class CopyMangaHttpClient {
           {
             platform: COPY_MANGA_PLATFORM,
           },
+          providerPolicy.apiHostPolicy,
         )
         this.throwIfProviderRateLimited(COPY_MANGA_DISCOVERY_PATH, data)
         if (data.code !== 200) {
@@ -109,7 +130,10 @@ export class CopyMangaHttpClient {
           continue
         }
 
-        const discoveredHosts = this.extractApiHosts(data.results?.api)
+        const discoveredHosts = this.extractApiHosts(
+          data.results?.api,
+          providerPolicy.apiHostPolicy,
+        )
         if (discoveredHosts.length === 0) {
           throw this.hostDiscoveryError(
             'CopyManga host discovery returned no hosts',
@@ -143,7 +167,7 @@ export class CopyMangaHttpClient {
   }
 
   // 从 discovery 原始结果提取可用 host，拒绝非二维数组结构。
-  private extractApiHosts(api: unknown) {
+  private extractApiHosts(api: unknown, hostPolicy: ThirdPartyHostPolicy) {
     if (!Array.isArray(api)) {
       throw this.hostDiscoveryError(
         'CopyManga host discovery payload malformed',
@@ -152,10 +176,67 @@ export class CopyMangaHttpClient {
 
     const hosts = api
       .flat()
-      .map((host) => (typeof host === 'string' ? host.trim() : ''))
+      .map((host) => {
+        if (typeof host !== 'string') {
+          throw this.hostDiscoveryError(
+            'CopyManga host discovery returned non-string host',
+          )
+        }
+        return this.normalizeDiscoveredApiHost(host, hostPolicy)
+      })
       .filter((host) => host.length > 0)
 
     return Array.from(new Set(hosts))
+  }
+
+  // 将 discovery 返回值收敛为纯 hostname；URL、路径、端口和非白名单 host 均失败关闭。
+  private normalizeDiscoveredApiHost(
+    host: string,
+    hostPolicy: ThirdPartyHostPolicy,
+  ) {
+    const candidate = host.trim().toLowerCase()
+    if (!candidate) {
+      return ''
+    }
+    if (/[/?#@]/.test(candidate)) {
+      throw this.hostDiscoveryError(
+        'CopyManga host discovery returned URL-like host',
+      )
+    }
+    if (!hostPolicy.allowPort && candidate.includes(':')) {
+      throw this.hostDiscoveryError(
+        'CopyManga host discovery returned host with port',
+      )
+    }
+
+    let parsedUrl: URL
+    try {
+      parsedUrl = new URL(`https://${candidate}`)
+    } catch {
+      throw this.hostDiscoveryError(
+        'CopyManga host discovery returned invalid host',
+      )
+    }
+    if (
+      parsedUrl.username ||
+      parsedUrl.password ||
+      parsedUrl.pathname !== '/' ||
+      parsedUrl.search ||
+      parsedUrl.hash ||
+      (!hostPolicy.allowPort && parsedUrl.port)
+    ) {
+      throw this.hostDiscoveryError(
+        'CopyManga host discovery returned unsafe host',
+      )
+    }
+
+    const hostname = parsedUrl.hostname.toLowerCase()
+    if (!this.isAllowedHost(hostname, hostPolicy)) {
+      throw this.hostDiscoveryError(
+        'CopyManga host discovery returned disallowed host',
+      )
+    }
+    return hostname
   }
 
   // 统一 discovery 的可预期失败，避免静默回退到默认或旧 host。
@@ -199,9 +280,6 @@ export class CopyMangaHttpClient {
       kind: status === undefined ? 'transport' : 'http',
       path,
       reason,
-      routeCandidateRecoverable: rateLimited
-        ? false
-        : this.isRouteCandidateRecoverable(path, error, status),
       ...(code === undefined ? {} : { code }),
       ...(status === undefined ? {} : { status }),
       ...(rateLimited ? { rateLimited: true as const } : {}),
@@ -254,91 +332,265 @@ export class CopyMangaHttpClient {
     )
   }
 
-  // 判断失败是否允许 provider 继续尝试下一个章节内容候选路由。
-  private isRouteCandidateRecoverable(
-    path: string,
-    error: unknown,
-    status?: number,
-  ) {
-    if (!this.isChapterContentPath(path)) {
-      return false
-    }
-    if (status === 404) {
-      return true
-    }
-    if (status !== undefined || !this.isFetchStageError(error)) {
-      return false
-    }
-    return this.isRecoverableStatuslessTransportError(error)
-  }
-
-  // 只允许章节内容接口进入候选路由 fallback。
-  private isChapterContentPath(path: string) {
-    return /^\/api\/v3\/comic\/[^/]+\/chapter(?:2|3)?\/[^/]+$/.test(path)
-  }
-
-  // 识别无 HTTP 状态的 socket/连接类 fetch 错误，排除 timeout/abort/JSON 解析错误。
-  private isRecoverableStatuslessTransportError(error: unknown) {
-    if (!(error instanceof Error) || error instanceof SyntaxError) {
-      return false
-    }
-    if (this.isAbortOrTimeoutError(error)) {
-      return false
-    }
-
-    const code = this.readTransportCode(error)
-    return (
-      error instanceof TypeError ||
-      code === 'UND_ERR_SOCKET' ||
-      code === 'ECONNRESET' ||
-      code === 'ECONNREFUSED' ||
-      code === 'EPIPE'
-    )
-  }
-
-  // 识别 AbortSignal 或 undici timeout，避免把限时失败误当成路由候选失败。
-  private isAbortOrTimeoutError(error: Error) {
-    const code = this.readTransportCode(error)
-    return (
-      error.name === 'AbortError' ||
-      error.name === 'TimeoutError' ||
-      code === 'ABORT_ERR' ||
-      code === 'UND_ERR_CONNECT_TIMEOUT' ||
-      code === 'UND_ERR_HEADERS_TIMEOUT' ||
-      code === 'UND_ERR_BODY_TIMEOUT'
-    )
-  }
-
   // 发送 CopyManga JSON 请求，统一保留请求头、超时和 HTTP 失败形状。
   private async fetchJson<TPayload>(
     url: string,
     params: Record<string, unknown>,
+    hostPolicy: ThirdPartyHostPolicy,
   ): Promise<TPayload> {
-    try {
-      const response = await fetch(this.withParams(url, params), {
-        headers: this.buildHeaders(),
-        signal: AbortSignal.timeout(COPY_MANGA_REQUEST_TIMEOUT_MS),
-      })
-      if (!response.ok) {
-        const retryAfterHeader =
-          response.headers?.get('retry-after') ?? undefined
-        throw Object.assign(new Error(`HTTP ${response.status}`), {
-          response: {
-            status: response.status,
-            ...(retryAfterHeader ? { retryAfterHeader } : {}),
-          },
-        } satisfies Pick<CopyMangaTransportError, 'response'>)
-      }
-      return (await response.json()) as TPayload
-    } catch (error) {
-      if (error instanceof Error) {
-        Object.defineProperty(error, 'copyMangaFetchStage', {
-          configurable: true,
-          value: true,
-        })
-      }
-      throw error
+    const target = await this.toSafeRequestTarget(
+      this.withParams(url, params),
+      hostPolicy,
+    )
+    return this.requestJson<TPayload>({
+      url: target.url,
+      address: target.address,
+      headers: this.buildHeaders(),
+    })
+  }
+
+  // 校验 CopyManga API 请求目标，并把 DNS 结果固定到后续 HTTPS 连接。
+  private async toSafeRequestTarget(
+    url: string,
+    hostPolicy: ThirdPartyHostPolicy,
+  ): Promise<CopyMangaValidatedRequestTarget> {
+    const parsedUrl = new URL(url)
+    if (parsedUrl.protocol !== 'https:') {
+      throw this.transportError('CopyManga API must use HTTPS')
     }
+    if (!hostPolicy.allowPort && parsedUrl.port) {
+      throw this.transportError('CopyManga API host must not include port')
+    }
+    if (!this.isAllowedHost(parsedUrl.hostname, hostPolicy)) {
+      throw this.transportError('CopyManga API host is not allowed')
+    }
+
+    const addresses = await lookup(parsedUrl.hostname, { all: true })
+    if (addresses.length === 0) {
+      throw this.transportError('CopyManga API host resolved no addresses')
+    }
+    if (
+      this.isAddressGuardEnabled() &&
+      addresses.some((address) => this.isUnsafeAddress(address.address))
+    ) {
+      throw this.transportError('CopyManga API host resolved unsafe address')
+    }
+
+    return {
+      url: parsedUrl,
+      address: addresses[0],
+    }
+  }
+
+  // 使用原生 HTTPS 请求发送 JSON 请求，默认不跟随任何重定向。
+  private async requestJson<TPayload>(
+    input: CopyMangaJsonRequestInput,
+  ): Promise<TPayload> {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = []
+      let totalBytes = 0
+      const request = httpsRequest(
+        input.url,
+        {
+          headers: input.headers,
+          lookup: this.createPinnedLookup(input.url.hostname, input.address),
+          method: 'GET',
+        },
+        (response) => {
+          if (this.isRedirectResponse(response)) {
+            response.resume()
+            reject(this.buildHttpTransportError(response))
+            return
+          }
+
+          response.on('data', (chunk: Buffer) => {
+            totalBytes += chunk.length
+            if (totalBytes > COPY_MANGA_JSON_RESPONSE_MAX_BYTES) {
+              request.destroy(
+                Object.assign(new Error('CopyManga API response too large'), {
+                  code: 'PAYLOAD_TOO_LARGE',
+                }),
+              )
+              return
+            }
+            chunks.push(chunk)
+          })
+          response.on('end', () => {
+            if (!this.isSuccessfulResponse(response)) {
+              reject(this.buildHttpTransportError(response))
+              return
+            }
+            try {
+              resolve(
+                JSON.parse(Buffer.concat(chunks).toString('utf8')) as TPayload,
+              )
+            } catch (error) {
+              reject(error)
+            }
+          })
+          response.on('error', reject)
+        },
+      )
+
+      request.setTimeout(COPY_MANGA_REQUEST_TIMEOUT_MS, () => {
+        request.destroy(
+          Object.assign(
+            new Error(`timeout of ${COPY_MANGA_REQUEST_TIMEOUT_MS}ms exceeded`),
+            { code: 'ETIMEDOUT' },
+          ),
+        )
+      })
+      request.on('error', reject)
+      request.end()
+    })
+  }
+
+  // 只允许 2xx JSON 响应，其余 HTTP 状态统一按传输错误归类。
+  private isSuccessfulResponse(response: IncomingMessage) {
+    const statusCode = response.statusCode ?? 0
+    return statusCode >= 200 && statusCode < 300
+  }
+
+  // 重定向在本批次固定失败关闭，不做手动跳转。
+  private isRedirectResponse(response: IncomingMessage) {
+    const statusCode = response.statusCode ?? 0
+    return statusCode >= 300 && statusCode < 400
+  }
+
+  // 将 HTTP 失败转换为 provider 可读取的 transport error 形状。
+  private buildHttpTransportError(response: IncomingMessage) {
+    const status = response.statusCode ?? 0
+    const retryAfterHeader = this.readResponseRetryAfterHeader(response)
+    return Object.assign(new Error(`HTTP ${status}`), {
+      response: {
+        status,
+        ...(retryAfterHeader ? { retryAfterHeader } : {}),
+      },
+    } satisfies Pick<CopyMangaTransportError, 'response'>)
+  }
+
+  // 读取原生响应上的 Retry-After 头。
+  private readResponseRetryAfterHeader(response: IncomingMessage) {
+    const header = response.headers['retry-after']
+    return Array.isArray(header) ? header[0] : header
+  }
+
+  // 构造 API 请求传输错误，保留 code 供 workflow 诊断。
+  private transportError(message: string) {
+    return Object.assign(new Error(message), {
+      code: 'COPY_MANGA_SAFE_REQUEST_REJECTED',
+    })
+  }
+
+  // 判断请求 host 是否命中 provider 声明的精确 host 或子域后缀。
+  private isAllowedHost(hostname: string, hostPolicy: ThirdPartyHostPolicy) {
+    const normalizedHostname = hostname.toLowerCase()
+    if (
+      hostPolicy.allowedExactHosts
+        .map((host) => host.toLowerCase())
+        .includes(normalizedHostname)
+    ) {
+      return true
+    }
+
+    return hostPolicy.allowedHostSuffixes.some((suffix) => {
+      const normalizedSuffix = suffix.replace(/^\./, '').toLowerCase()
+      return normalizedHostname.endsWith(`.${normalizedSuffix}`)
+    })
+  }
+
+  // 读取系统安全配置，决定是否拒绝特殊用途 IP 地址。
+  private isAddressGuardEnabled() {
+    return this.configReader.getRemoteImageImportSecurityConfig()
+      .enableAddressGuard
+  }
+
+  // 为原生请求固定已验证地址，避免校验后再次进行不受控 DNS 解析。
+  private createPinnedLookup(
+    expectedHostname: string,
+    address: LookupAddress,
+  ): LookupFunction {
+    return (hostname, options, callback) => {
+      if (hostname !== expectedHostname) {
+        callback(
+          Object.assign(new Error('CopyManga API 请求域名与校验域名不一致'), {
+            code: 'ERR_COPY_MANGA_API_HOST_CHANGED',
+          }),
+          '',
+          0,
+        )
+        return
+      }
+
+      if (options.all) {
+        callback(null, [address])
+        return
+      }
+
+      callback(null, address.address, address.family)
+    }
+  }
+
+  // 判断 DNS 地址是否落入内网、环回、链路本地、多播或保留地址段。
+  private isUnsafeAddress(address: string) {
+    switch (isIP(address)) {
+      case 4:
+        return this.isUnsafeIpv4Address(address)
+      case 6:
+        return this.isUnsafeIpv6Address(address)
+      default:
+        return true
+    }
+  }
+
+  // 判断 IPv4 地址是否属于不允许服务端访问的地址段。
+  private isUnsafeIpv4Address(address: string) {
+    const parts = address.split('.').map((part) => Number(part))
+    if (
+      parts.length !== 4 ||
+      parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)
+    ) {
+      return true
+    }
+
+    const [a, b, c] = parts
+    return (
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 0 && c === 0) ||
+      (a === 192 && b === 0 && c === 2) ||
+      (a === 192 && b === 168) ||
+      (a === 198 && (b === 18 || b === 19)) ||
+      (a === 198 && b === 51 && c === 100) ||
+      (a === 203 && b === 0 && c === 113) ||
+      a >= 224
+    )
+  }
+
+  // 判断 IPv6 地址是否属于不允许服务端访问的地址段。
+  private isUnsafeIpv6Address(address: string) {
+    const normalizedAddress = address.toLowerCase()
+    const mappedIpv4 = normalizedAddress.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/)
+    if (mappedIpv4) {
+      return this.isUnsafeIpv4Address(mappedIpv4[1])
+    }
+
+    return (
+      normalizedAddress === '::' ||
+      normalizedAddress === '::1' ||
+      normalizedAddress.startsWith('fe8') ||
+      normalizedAddress.startsWith('fe9') ||
+      normalizedAddress.startsWith('fea') ||
+      normalizedAddress.startsWith('feb') ||
+      normalizedAddress.startsWith('fc') ||
+      normalizedAddress.startsWith('fd') ||
+      normalizedAddress.startsWith('ff') ||
+      normalizedAddress.startsWith('2001:db8')
+    )
   }
 
   // 构建 CopyManga 固定请求头，使用普通对象避免 Node/Jest 环境缺失 Headers。
@@ -370,14 +622,6 @@ export class CopyMangaHttpClient {
     error: unknown,
   ): error is CopyMangaTransportError {
     return error instanceof Error && 'response' in error
-  }
-
-  // 判断错误是否来自 fetchJson 内部，而不是 throttle/discovery 前置流程。
-  private isFetchStageError(error: unknown) {
-    return (
-      error instanceof Error &&
-      (error as { copyMangaFetchStage?: boolean }).copyMangaFetchStage === true
-    )
   }
 
   // 将 provider 业务响应中的限流语义提升为可被 workflow 识别的异常。
@@ -415,7 +659,6 @@ export class CopyMangaHttpClient {
           kind: 'provider',
           path,
           reason,
-          routeCandidateRecoverable: false,
           rateLimited: true,
           ...(code === undefined ? {} : { code }),
           ...(retryAfterHeader === undefined ? {} : { retryAfterHeader }),

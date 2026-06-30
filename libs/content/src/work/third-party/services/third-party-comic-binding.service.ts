@@ -9,7 +9,7 @@ import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 
 /**
  * 三方漫画绑定服务。
@@ -207,6 +207,7 @@ export class ThirdPartyComicBindingService {
           isNull(this.chapterBinding.deletedAt),
         ),
       )
+      .orderBy(asc(this.chapterBinding.id))
   }
 
   // 软删除指定来源绑定。

@@ -6,8 +6,8 @@ import {
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto/page.dto'
-import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
+import { PageDto } from '@libs/platform/dto'
+import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ContentImportItemStageEnum,
@@ -28,7 +28,8 @@ class ContentImportWorkflowJobIdFieldsDto {
 /** 内容导入条目状态字段。 */
 class ContentImportItemStatusFieldsDto {
   @EnumProperty({
-    description: '条目状态（1=待处理；2=处理中；3=成功；4=失败；5=重试中；6=已跳过）',
+    description:
+      '条目状态（1=待处理；2=处理中；3=成功；4=失败；5=重试中；6=已跳过）',
     enum: ContentImportItemStatusEnum,
     example: ContentImportItemStatusEnum.FAILED,
     required: true,

@@ -6,7 +6,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { BaseDto, IdDto } from '@libs/platform/dto'
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.constant'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
@@ -295,7 +295,7 @@ export class ThirdPartyResourceParseConfigDto {
   enabled?: boolean
 
   @NumberProperty({
-    description: 'CopyManga API 请求最小间隔（毫秒）',
+    description: '三方 provider API 请求最小间隔（毫秒）',
     example: 3000,
     default: 3000,
     required: false,
@@ -315,7 +315,7 @@ export class ThirdPartyResourceParseConfigDto {
   imageIntervalMs?: number
 
   @NumberProperty({
-    description: 'CopyManga host discovery 缓存 TTL（秒）',
+    description: '三方 provider host discovery 缓存 TTL（秒）',
     example: 60,
     default: 60,
     required: false,
@@ -745,7 +745,7 @@ export class ThirdPartyResourceParseConfigOutputDto {
   enabled!: boolean
 
   @NumberProperty({
-    description: 'CopyManga API 请求最小间隔（毫秒）',
+    description: '三方 provider API 请求最小间隔（毫秒）',
     example: 3000,
     required: true,
     validation: false,
@@ -761,7 +761,7 @@ export class ThirdPartyResourceParseConfigOutputDto {
   imageIntervalMs!: number
 
   @NumberProperty({
-    description: 'CopyManga host discovery 缓存 TTL（秒）',
+    description: '三方 provider host discovery 缓存 TTL（秒）',
     example: 60,
     required: true,
     validation: false,

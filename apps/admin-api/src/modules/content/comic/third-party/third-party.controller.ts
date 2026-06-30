@@ -18,7 +18,7 @@ import {
 } from '@libs/content/work/content/dto/content.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto/workflow.dto'
+import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
