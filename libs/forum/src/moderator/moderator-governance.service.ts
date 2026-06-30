@@ -18,7 +18,7 @@ import {
   AuditStatusEnum,
   BusinessErrorCode,
 } from '@libs/platform/constant'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import {
@@ -308,9 +308,8 @@ export class ForumModeratorGovernanceService {
       nextAuditStatus: AuditStatusEnum
     },
   ) {
-    const payload = this.forumTopicService.buildApprovedTopicGrowthEventPayload(
-      params,
-    )
+    const payload =
+      this.forumTopicService.buildApprovedTopicGrowthEventPayload(params)
     if (!payload) {
       return true
     }
@@ -333,9 +332,8 @@ export class ForumModeratorGovernanceService {
       >[0]['rewardComment']
     },
   ) {
-    const payload = this.commentService.buildCommentCreatedGrowthEventPayload(
-      params,
-    )
+    const payload =
+      this.commentService.buildCommentCreatedGrowthEventPayload(params)
     return this.ensureCommentGrowthSettlementPayload(tx, payload)
   }
 
@@ -617,31 +615,36 @@ export class ForumModeratorGovernanceService {
       ForumModeratorPermissionEnum.AUDIT,
     )
 
-    await this.forumTopicService.updateTopic(input, context, actor.actorUserId, {
-      recordUserActionLog: false,
-      afterUpdateInTx: async (tx, nextTopic) => {
-        await this.createTopicActionLog({
-          tx,
-          actor,
-          grant,
-          topicId: current.id,
-          actionType: ForumModeratorActionTypeEnum.UPDATE_TOPIC,
-          actionDescription: '更新主题内容',
-          beforeData: {
-            sectionId: current.sectionId,
-            title: current.title,
-            userId: current.userId,
-          },
-          afterData: {
-            auditStatus: nextTopic.auditStatus,
-            isHidden: nextTopic.isHidden,
-            sectionId: nextTopic.sectionId,
-            title: nextTopic.title,
-            userId: nextTopic.userId,
-          },
-        })
+    await this.forumTopicService.updateTopic(
+      input,
+      context,
+      actor.actorUserId,
+      {
+        recordUserActionLog: false,
+        afterUpdateInTx: async (tx, nextTopic) => {
+          await this.createTopicActionLog({
+            tx,
+            actor,
+            grant,
+            topicId: current.id,
+            actionType: ForumModeratorActionTypeEnum.UPDATE_TOPIC,
+            actionDescription: '更新主题内容',
+            beforeData: {
+              sectionId: current.sectionId,
+              title: current.title,
+              userId: current.userId,
+            },
+            afterData: {
+              auditStatus: nextTopic.auditStatus,
+              isHidden: nextTopic.isHidden,
+              sectionId: nextTopic.sectionId,
+              title: nextTopic.title,
+              userId: nextTopic.userId,
+            },
+          })
+        },
       },
-    })
+    )
 
     return true
   }
@@ -781,7 +784,7 @@ export class ForumModeratorGovernanceService {
       await this.ensureApprovedTopicGrowthSettlement(tx, {
         topicId: current.id,
         userId: current.userId,
-        previousAuditStatus: current.auditStatus as AuditStatusEnum,
+        previousAuditStatus: current.auditStatus,
         nextAuditStatus: input.auditStatus,
       })
     })

@@ -10,7 +10,6 @@ import type { InteractionSummaryReadService } from '@libs/interaction/summary/in
 import type { InteractionAuditorSummaryKey } from '@libs/interaction/summary/interaction-summary.type'
 import type { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import type { ForumCounterService } from '../counter/forum-counter.service'
-import type { ForumReviewPolicyEnum } from '../forum.constant'
 import type { ForumHashtagBodyService } from '../hashtag/forum-hashtag-body.service'
 import type { ForumHashtagReferenceService } from '../hashtag/forum-hashtag-reference.service'
 import type { ForumPermissionService } from '../permission/forum-permission.service'
@@ -199,7 +198,7 @@ export abstract class ForumTopicServiceSupport {
       )
     }
 
-    return section.topicReviewPolicy as ForumReviewPolicyEnum
+    return section.topicReviewPolicy
   }
 
   // 批量获取主题列表使用的发帖用户简要信息；仅查询列表展示所需字段，避免在公开分页中暴露额外资料。

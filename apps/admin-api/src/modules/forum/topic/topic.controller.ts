@@ -18,7 +18,7 @@ import {
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
@@ -34,6 +34,7 @@ export class ForumTopicController {
     private readonly geoService: GeoService,
   ) {}
 
+  // 提取后台主题写操作需要记录的客户端来源信息。
   private async buildTopicClientContext(
     req: FastifyRequest,
   ): Promise<ForumTopicClientContext> {
@@ -50,6 +51,7 @@ export class ForumTopicController {
     }
   }
 
+  // 后台按治理筛选条件分页查看主题列表。
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询论坛主题列表',
@@ -59,6 +61,7 @@ export class ForumTopicController {
     return this.forumTopicService.getTopics(query)
   }
 
+  // 后台查看主题详情、作者、板块和审核辅助信息。
   @Get('detail')
   @ApiDoc({
     summary: '获取论坛主题详情',
@@ -68,6 +71,7 @@ export class ForumTopicController {
     return this.forumTopicService.getTopicById(query.id)
   }
 
+  // 后台代创建主题并记录客户端来源。
   @Post('create')
   @ApiAuditDoc({
     summary: '创建论坛主题',
@@ -83,6 +87,7 @@ export class ForumTopicController {
     )
   }
 
+  // 后台治理链路更新主题正文与来源快照。
   @Post('update')
   @ApiAuditDoc({
     summary: '更新论坛主题',
@@ -106,6 +111,7 @@ export class ForumTopicController {
     )
   }
 
+  // 后台删除主题并同步治理计数与可见性。
   @Post('delete')
   @ApiAuditDoc({
     summary: '删除论坛主题',
@@ -129,6 +135,7 @@ export class ForumTopicController {
     )
   }
 
+  // 后台恢复已删除主题并重建可见性关联。
   @Post('restore')
   @ApiAuditDoc({
     summary: '恢复已删除论坛主题',
@@ -152,6 +159,7 @@ export class ForumTopicController {
     )
   }
 
+  // 后台移动主题所属板块。
   @Post('move')
   @ApiAuditDoc({
     summary: '移动论坛主题板块',
@@ -170,6 +178,7 @@ export class ForumTopicController {
     })
   }
 
+  // 后台更新主题置顶状态。
   @Post('update-pinned')
   @ApiAuditDoc({
     summary: '更新主题置顶状态',
@@ -188,6 +197,7 @@ export class ForumTopicController {
     })
   }
 
+  // 后台更新主题精华状态。
   @Post('update-featured')
   @ApiAuditDoc({
     summary: '更新主题精华状态',
@@ -206,6 +216,7 @@ export class ForumTopicController {
     })
   }
 
+  // 后台更新主题锁定状态。
   @Post('update-locked')
   @ApiAuditDoc({
     summary: '更新主题锁定状态',
@@ -224,6 +235,7 @@ export class ForumTopicController {
     })
   }
 
+  // 后台更新主题隐藏状态并同步公开可见性。
   @Post('update-hidden')
   @ApiAuditDoc({
     summary: '更新主题隐藏状态',
@@ -242,6 +254,7 @@ export class ForumTopicController {
     })
   }
 
+  // 后台更新主题审核状态并触发审核后治理逻辑。
   @Post('update-audit-status')
   @ApiAuditDoc({
     summary: '更新主题审核状态',

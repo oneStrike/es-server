@@ -20,7 +20,10 @@ import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-bal
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
 import { BodyHtmlCodecService } from '@libs/interaction/body/body-html-codec.service'
-import { BODY_VERSION_V1, BodySceneEnum } from '@libs/interaction/body/body.constant'
+import {
+  BODY_VERSION_V1,
+  BodySceneEnum,
+} from '@libs/interaction/body/body.constant'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
@@ -152,11 +155,12 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           inputTitle,
           compiledBody.plainText,
         )
-        const decision = this.sensitiveWordReviewPolicyService.resolveTopicDecision(
-          title,
-          compiledBody.plainText,
-          liveSection.topicReviewPolicy,
-        )
+        const decision =
+          this.sensitiveWordReviewPolicyService.resolveTopicDecision(
+            title,
+            compiledBody.plainText,
+            liveSection.topicReviewPolicy,
+          )
         const createPayload = {
           title,
           html: compiledBody.html,
@@ -210,10 +214,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           topicId: newTopic.id,
           sectionId,
           userId,
-          sourceAuditStatus: newTopic.auditStatus as AuditStatusEnum,
+          sourceAuditStatus: newTopic.auditStatus,
           sourceIsHidden: newTopic.isHidden,
           isSourceVisible: this.isTopicVisible({
-            auditStatus: newTopic.auditStatus as AuditStatusEnum,
+            auditStatus: newTopic.auditStatus,
             isHidden: newTopic.isHidden,
             deletedAt: newTopic.deletedAt,
           }),
@@ -223,7 +227,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         await this.forumCounterService.syncSectionVisibleState(tx, sectionId)
         if (
           this.isTopicVisible({
-            auditStatus: newTopic.auditStatus as AuditStatusEnum,
+            auditStatus: newTopic.auditStatus,
             isHidden: newTopic.isHidden,
             deletedAt: newTopic.deletedAt,
           })
@@ -255,7 +259,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     const topicCreatedEvent = this.buildCreateTopicEventEnvelope({
       topicId: topic.id,
       userId,
-      auditStatus: topic.auditStatus as AuditStatusEnum,
+      auditStatus: topic.auditStatus,
       occurredAt: topic.createdAt,
       context: { sectionId, auditStatus: topic.auditStatus },
     })
@@ -318,11 +322,12 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           nextTitleInput,
         )
         const nextContent = compiledBody.plainText
-        const decision = this.sensitiveWordReviewPolicyService.resolveTopicDecision(
-          nextTitle,
-          nextContent,
-          reviewPolicy,
-        )
+        const decision =
+          this.sensitiveWordReviewPolicyService.resolveTopicDecision(
+            nextTitle,
+            nextContent,
+            reviewPolicy,
+          )
         const updatePayload = {
           title: nextTitle,
           html: compiledBody.html,
@@ -381,10 +386,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           topicId: nextTopic.id,
           sectionId: topic.sectionId,
           userId: nextTopic.userId,
-          sourceAuditStatus: nextTopic.auditStatus as AuditStatusEnum,
+          sourceAuditStatus: nextTopic.auditStatus,
           sourceIsHidden: nextTopic.isHidden,
           isSourceVisible: this.isTopicVisible({
-            auditStatus: nextTopic.auditStatus as AuditStatusEnum,
+            auditStatus: nextTopic.auditStatus,
             isHidden: nextTopic.isHidden,
             deletedAt: nextTopic.deletedAt,
           }),
@@ -398,14 +403,14 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           tx,
           nextTopic.id,
           this.isTopicVisible({
-            auditStatus: nextTopic.auditStatus as AuditStatusEnum,
+            auditStatus: nextTopic.auditStatus,
             isHidden: nextTopic.isHidden,
             deletedAt: nextTopic.deletedAt,
           }),
         )
         if (
           this.isTopicVisible({
-            auditStatus: nextTopic.auditStatus as AuditStatusEnum,
+            auditStatus: nextTopic.auditStatus,
             isHidden: nextTopic.isHidden,
             deletedAt: nextTopic.deletedAt,
           })
@@ -760,7 +765,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
               CommentTargetTypeEnum.FORUM_TOPIC,
             ),
             eq(this.userCommentTable.targetId, topic.id),
-            eq(this.userCommentTable.topicDeleteCascadeId, topicDeleteCascadeId),
+            eq(
+              this.userCommentTable.topicDeleteCascadeId,
+              topicDeleteCascadeId,
+            ),
             isNotNull(this.userCommentTable.deletedAt),
           ),
         )
@@ -779,7 +787,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       BodySceneEnum.TOPIC,
     )
     const isVisible = this.isTopicVisible({
-      auditStatus: topic.auditStatus as AuditStatusEnum,
+      auditStatus: topic.auditStatus,
       isHidden: topic.isHidden,
       deletedAt: null,
     })
@@ -797,7 +805,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       topicId: topic.id,
       sectionId: nextSectionId,
       userId: topic.userId,
-      sourceAuditStatus: topic.auditStatus as AuditStatusEnum,
+      sourceAuditStatus: topic.auditStatus,
       sourceIsHidden: topic.isHidden,
       isSourceVisible: isVisible,
       hashtagFacts: materialized.hashtagFacts,
@@ -928,12 +936,12 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         topicId: input.topicId,
         sectionId: input.sectionId,
         userId: comment.userId,
-        sourceAuditStatus: comment.auditStatus as AuditStatusEnum,
+        sourceAuditStatus: comment.auditStatus,
         sourceIsHidden: comment.isHidden,
         isSourceVisible:
           input.parentTopicVisible &&
           this.isTopicVisible({
-            auditStatus: comment.auditStatus as AuditStatusEnum,
+            auditStatus: comment.auditStatus,
             isHidden: comment.isHidden,
             deletedAt: null,
           }),
@@ -1211,10 +1219,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       tx,
       sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
       sourceId: topic.id,
-      sourceAuditStatus: topic.auditStatus as AuditStatusEnum,
+      sourceAuditStatus: topic.auditStatus,
       sourceIsHidden: updateTopicHiddenDto.isHidden,
       isSourceVisible: this.isTopicVisible({
-        auditStatus: topic.auditStatus as AuditStatusEnum,
+        auditStatus: topic.auditStatus,
         isHidden: updateTopicHiddenDto.isHidden,
         deletedAt: null,
       }),
@@ -1223,7 +1231,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       tx,
       topic.id,
       this.isTopicVisible({
-        auditStatus: topic.auditStatus as AuditStatusEnum,
+        auditStatus: topic.auditStatus,
         isHidden: updateTopicHiddenDto.isHidden,
         deletedAt: null,
       }),
@@ -1232,9 +1240,9 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       topicId: topic.id,
       actorUserId: topic.userId,
       topicTitle: topic.title,
-      currentAuditStatus: topic.auditStatus as AuditStatusEnum,
+      currentAuditStatus: topic.auditStatus,
       currentIsHidden: topic.isHidden,
-      nextAuditStatus: topic.auditStatus as AuditStatusEnum,
+      nextAuditStatus: topic.auditStatus,
       nextIsHidden: updateTopicHiddenDto.isHidden,
     })
     return true
@@ -1322,7 +1330,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     await this.dispatchApprovedTopicRewardIfNeeded({
       topicId: currentTopic.id,
       userId: currentTopic.userId,
-      previousAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
+      previousAuditStatus: currentTopic.auditStatus,
       nextAuditStatus: auditStatus,
     })
     return true
@@ -1397,7 +1405,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       topicId: topic.id,
       actorUserId: topic.userId,
       topicTitle: topic.title,
-      currentAuditStatus: topic.auditStatus as AuditStatusEnum,
+      currentAuditStatus: topic.auditStatus,
       currentIsHidden: topic.isHidden,
       nextAuditStatus: auditStatus,
       nextIsHidden: topic.isHidden,

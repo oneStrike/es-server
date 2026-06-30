@@ -27,11 +27,7 @@ import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { MentionService } from '@libs/interaction/mention/mention.service'
 import { InteractionSummaryReadService } from '@libs/interaction/summary/interaction-summary-read.service'
-import {
-  AuditRoleEnum,
-  AuditStatusEnum,
-  BusinessErrorCode,
-} from '@libs/platform/constant'
+import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
@@ -81,17 +77,6 @@ const DEFAULT_ADMIN_TOPIC_PAGE_ORDER: DbQueryOrderByRecord[] = [
   { updatedAt: 'desc' as const },
   { id: 'desc' as const },
 ]
-
-const ADMIN_TOPIC_ORDER_FIELDS = new Set([
-  'id',
-  'createdAt',
-  'updatedAt',
-  'lastCommentAt',
-  'viewCount',
-  'likeCount',
-  'commentCount',
-  'favoriteCount',
-])
 
 // 论坛主题查询服务。
 // 负责公开分页、后台分页、详情聚合等读模型，
@@ -392,6 +377,20 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       commentCount: this.forumTopicTable.commentCount,
       likeCount: this.forumTopicTable.likeCount,
       viewCount: this.forumTopicTable.viewCount,
+    }
+  }
+
+  // 后台主题分页允许排序的字段白名单，避免暴露整表列排序能力。
+  private getAdminTopicOrderColumns() {
+    return {
+      id: this.forumTopicTable.id,
+      createdAt: this.forumTopicTable.createdAt,
+      updatedAt: this.forumTopicTable.updatedAt,
+      lastCommentAt: this.forumTopicTable.lastCommentAt,
+      viewCount: this.forumTopicTable.viewCount,
+      likeCount: this.forumTopicTable.likeCount,
+      commentCount: this.forumTopicTable.commentCount,
+      favoriteCount: this.forumTopicTable.favoriteCount,
     }
   }
 
@@ -756,48 +755,6 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       .filter((item): item is SensitiveWordHitDto => item !== null)
   }
 
-  private normalizeAdminTopicOrderBy(orderBy: QueryForumTopicDto['orderBy']) {
-    if (!orderBy) {
-      return undefined
-    }
-
-    let parsedOrderBy: unknown
-    try {
-      parsedOrderBy =
-        typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy
-    } catch {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        'orderBy 参数格式不合法',
-      )
-    }
-
-    const records = Array.isArray(parsedOrderBy)
-      ? parsedOrderBy
-      : [parsedOrderBy]
-    for (const record of records) {
-      if (!record || typeof record !== 'object' || Array.isArray(record)) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          'orderBy 参数格式不合法',
-        )
-      }
-      for (const [field, direction] of Object.entries(record)) {
-        if (
-          !ADMIN_TOPIC_ORDER_FIELDS.has(field) ||
-          (direction !== 'asc' && direction !== 'desc')
-        ) {
-          throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            `不支持的主题排序字段或方向：${field}`,
-          )
-        }
-      }
-    }
-
-    return orderBy
-  }
-
   // 校验并复制单条敏感词命中，避免将未知 JSON 原样透传到输出 DTO。
   private normalizeSensitiveWordHitItem(
     value: unknown,
@@ -865,11 +822,50 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
         id,
       },
       with: {
-        section: true,
+        section: {
+          columns: {
+            id: true,
+            name: true,
+            description: true,
+            icon: true,
+            cover: true,
+            isEnabled: true,
+            topicReviewPolicy: true,
+          },
+        },
         user: {
+          columns: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+            signature: true,
+            bio: true,
+            isEnabled: true,
+            levelId: true,
+            status: true,
+            banReason: true,
+            banUntil: true,
+          },
           with: {
-            counts: true,
-            level: true,
+            counts: {
+              columns: {
+                commentCount: true,
+                likeCount: true,
+                favoriteCount: true,
+                forumTopicCount: true,
+                commentReceivedLikeCount: true,
+                forumTopicReceivedLikeCount: true,
+                forumTopicReceivedFavoriteCount: true,
+              },
+            },
+            level: {
+              columns: {
+                id: true,
+                name: true,
+                icon: true,
+                sortOrder: true,
+              },
+            },
           },
         },
       },
@@ -892,7 +888,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       this.getTopicHashtags(topic.id),
       this.getTopicAuditorSummary({
         auditById: topic.auditById,
-        auditRole: topic.auditRole as AuditRoleEnum | null,
+        auditRole: topic.auditRole,
       }),
     ])
 
@@ -1059,13 +1055,10 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       pageIndex: otherDto.pageIndex,
       pageSize: otherDto.pageSize,
     })
-    const order = this.drizzle.buildOrderBy(
-      this.normalizeAdminTopicOrderBy(otherDto.orderBy),
-      {
-        table: this.forumTopicTable,
-        fallbackOrderBy: DEFAULT_ADMIN_TOPIC_PAGE_ORDER,
-      },
-    )
+    const order = this.drizzle.buildAllowlistedOrderBy(otherDto.orderBy, {
+      columns: this.getAdminTopicOrderColumns(),
+      fallbackOrderBy: DEFAULT_ADMIN_TOPIC_PAGE_ORDER,
+    })
 
     // 排除：正文大字段(html/content/body/bodyVersion)、审核人字段(auditById/auditRole)、
     // 内部控制字段(version/sensitiveWordHits/geoSource/deletedAt)

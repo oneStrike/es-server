@@ -41,6 +41,7 @@ export class ForumTopicController {
     private readonly geoService: GeoService,
   ) {}
 
+  // 提取用户主题写操作需要记录的客户端来源信息。
   private async buildTopicClientContext(
     req: FastifyRequest,
   ): Promise<ForumTopicClientContext> {
@@ -57,6 +58,7 @@ export class ForumTopicController {
     }
   }
 
+  // 公开分页查询综合或板块主题。
   @Get('page')
   @OptionalAuth()
   @ApiPageDoc({
@@ -73,6 +75,7 @@ export class ForumTopicController {
     })
   }
 
+  // 公开分页查询热门主题。
   @Get('hot/page')
   @OptionalAuth()
   @ApiPageDoc({
@@ -89,6 +92,7 @@ export class ForumTopicController {
     })
   }
 
+  // 查询当前用户关注范围内的主题分页。
   @Get('following/page')
   @ApiPageDoc({
     summary: '分页查询关注论坛主题',
@@ -104,6 +108,7 @@ export class ForumTopicController {
     })
   }
 
+  // 查看公开主题详情并补记浏览上下文。
   @Get('detail')
   @OptionalAuth()
   @ApiDoc({
@@ -124,6 +129,7 @@ export class ForumTopicController {
     })
   }
 
+  // 查询主题评论分页并复用评论域排序与可见性规则。
   @Get('comment/page')
   @OptionalAuth()
   @ApiPageDoc({
@@ -146,6 +152,7 @@ export class ForumTopicController {
     })
   }
 
+  // 查询指定用户公开可见的主题分页。
   @Get('user/page')
   @OptionalAuth()
   @ApiPageDoc({
@@ -163,6 +170,7 @@ export class ForumTopicController {
     )
   }
 
+  // 查询当前登录用户自己的主题分页。
   @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的论坛主题',
@@ -175,6 +183,7 @@ export class ForumTopicController {
     return this.userProfileService.getMyTopics(userId, query)
   }
 
+  // 创建当前用户主题并记录客户端来源。
   @Post('create')
   @ApiDoc({
     summary: '创建论坛主题',
@@ -194,6 +203,7 @@ export class ForumTopicController {
     )
   }
 
+  // 更新当前用户自己的主题内容。
   @Post('update')
   @ApiDoc({
     summary: '更新我的论坛主题',
@@ -211,6 +221,7 @@ export class ForumTopicController {
     )
   }
 
+  // 删除当前用户自己的主题并同步相关可见性。
   @Post('delete')
   @ApiDoc({
     summary: '删除我的论坛主题',

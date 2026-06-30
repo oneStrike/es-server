@@ -37,9 +37,13 @@ import {
 } from '@nestjs/swagger'
 import { ForumTopicContentPreviewSegmentTypeEnum } from '../forum-topic.constant'
 
+// 后台主题删除状态筛选值。
 export enum ForumTopicDeletedStateEnum {
+  // 仅查询未删除主题。
   ACTIVE = 'active',
+  // 仅查询已删除主题。
   DELETED = 'deleted',
+  // 查询全部主题。
   ALL = 'all',
 }
 
@@ -540,7 +544,7 @@ export class QueryForumTopicDto extends IntersectionType(
   keyword?: string
 
   @EnumProperty({
-    description: '删除状态筛选（正常；已删除；全部）',
+    description: '删除状态筛选（active=正常；deleted=已删除；all=全部）',
     example: ForumTopicDeletedStateEnum.ACTIVE,
     enum: ForumTopicDeletedStateEnum,
     required: false,
