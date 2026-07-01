@@ -68,9 +68,14 @@ RUN --mount=type=cache,target=/root/.cache/corepack \
     find node_modules -type d -empty -delete 2>/dev/null || true
 
 # --------------------------------
-# 阶段 3: Bun 运行时 (Runtime)
+# 阶段 3: 复制 Bun，供数据库迁移脚本使用
 # --------------------------------
-FROM oven/bun:alpine AS runtime
+FROM oven/bun:alpine AS bun-runtime
+
+# --------------------------------
+# 阶段 4: Node 运行时 (Runtime)
+# --------------------------------
+FROM node:24-alpine AS runtime
 
 ARG APP_TYPE=admin
 ENV NODE_ENV=production \
@@ -88,6 +93,8 @@ RUN apk add --no-cache dumb-init tzdata && \
         /app/uploads \
         /app/uploads/${APP_TYPE}
 
+COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=deps --chown=nestjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nestjs:nodejs /app/tsconfig.json ./tsconfig.json
@@ -100,4 +107,4 @@ EXPOSE 8080
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
-CMD ["bun", "main.js"]
+CMD ["node", "main.js"]
