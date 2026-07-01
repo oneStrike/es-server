@@ -57,6 +57,40 @@ export interface ForumAccessUserContext extends Pick<AppUserSelect, 'id' | 'isEn
 export interface ForumSectionAccessState {
   canAccess: boolean
   requiredExperience: number | null
-  accessDeniedCode?: ForumSectionAccessDeniedCode
+    accessDeniedCode?: ForumSectionAccessDeniedCode
   accessDeniedReason?: string
 }
+
+/** 板块分组可用性快照，用于公开可用性判断。 */
+export interface SectionGroupAvailability {
+  isEnabled: boolean
+  deletedAt: Date | null
+}
+
+/** 板块公开可用性判断入参。 */
+export type SectionPublicAvailabilityInput = Pick<
+  ForumSectionPermissionContext,
+  'groupId' | 'deletedAt' | 'isEnabled'
+> & {
+  group?: SectionGroupAvailability | null
+}
+
+/** 等级规则经验值快照，用于访问上下文构建。 */
+export interface SectionLevelRuleExperience {
+  requiredExperience: number
+}
+
+/** 板块访问上下文构建入参。 */
+export type SectionAccessContextInput = Pick<
+  ForumSectionPermissionContext,
+  'groupId' | 'deletedAt' | 'isEnabled' | 'userLevelRuleId'
+> & {
+  group?: SectionGroupAvailability | null
+  userLevelRule?: SectionLevelRuleExperience | null
+}
+
+/** 发帖用户经验引用，用于权限校验。 */
+export type PostingUserExperienceRef = Pick<
+  ForumPostingUserContext,
+  'experience'
+>

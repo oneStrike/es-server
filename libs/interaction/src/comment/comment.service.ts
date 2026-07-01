@@ -13,6 +13,10 @@ import type {
   VisibleCommentEffectPayload,
 } from './comment.type'
 
+import type {
+  CommentTargetMeta,
+  ICommentTargetResolver,
+} from './interfaces/comment-target-resolver.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { ForumHashtagBodyService } from '@libs/forum/hashtag/forum-hashtag-body.service'
 import { ForumHashtagReferenceService } from '@libs/forum/hashtag/forum-hashtag-reference.service'
@@ -24,8 +28,8 @@ import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event
 import {
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition/event-envelope.type'
+} from '@libs/growth/event-definition/event-envelope.helper'
+import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'
 import { BodyHtmlCodecService } from '@libs/interaction/body/body-html-codec.service'
@@ -35,12 +39,12 @@ import {
 } from '@libs/interaction/body/body.constant'
 import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
+
 import {
   AuditRoleEnum,
   AuditStatusEnum,
   BusinessErrorCode,
 } from '@libs/platform/constant'
-
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { SensitiveWordReviewPolicyService } from '@libs/sensitive-word/sensitive-word-review-policy.service'
@@ -79,10 +83,6 @@ import {
   UpdateCommentAuditStatusDto,
   UpdateCommentHiddenDto,
 } from './dto/comment.dto'
-import {
-  CommentTargetMeta,
-  ICommentTargetResolver,
-} from './interfaces/comment-target-resolver.type'
 
 /**
  * 评论服务

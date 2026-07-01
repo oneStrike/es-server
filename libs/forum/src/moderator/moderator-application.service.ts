@@ -1,5 +1,6 @@
 import type { Db, DrizzleMutationResult } from '@db/core'
 import type { ForumModeratorApplicationSelect } from '@db/schema'
+import type { ModeratorApplicationSnapshotInput } from './moderator.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -140,19 +141,7 @@ export class ForumModeratorApplicationService {
   }
 
   private buildApplicationSnapshot(
-    application: Pick<
-      ForumModeratorApplicationSelect,
-      | 'id'
-      | 'applicantId'
-      | 'sectionId'
-      | 'status'
-      | 'permissions'
-      | 'reason'
-      | 'auditReason'
-      | 'remark'
-      | 'auditById'
-      | 'auditAt'
-    >,
+    application: ModeratorApplicationSnapshotInput,
   ) {
     return {
       id: application.id,

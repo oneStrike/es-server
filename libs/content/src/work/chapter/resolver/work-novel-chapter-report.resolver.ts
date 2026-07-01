@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.type'
+import type { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.type'
 import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
 import { ReportService } from '@libs/interaction/report/report.service'
 import { BusinessErrorCode, SceneTypeEnum } from '@libs/platform/constant'

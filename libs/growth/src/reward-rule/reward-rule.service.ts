@@ -1,5 +1,6 @@
 import type { GrowthRewardRuleSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
+import type { GrowthRewardRuleWriteInput } from './reward-rule.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -165,7 +166,7 @@ export class GrowthRewardRuleService {
     return true
   }
 
-  private normalizeWriteDto<T extends Partial<CreateGrowthRewardRuleDto>>(dto: T) {
+  private normalizeWriteDto<T extends GrowthRewardRuleWriteInput>(dto: T) {
     return {
       ...dto,
       assetKey:
@@ -174,7 +175,7 @@ export class GrowthRewardRuleService {
   }
 
   private validateRewardRuleWrite(
-    dto: Partial<CreateGrowthRewardRuleDto>,
+    dto: GrowthRewardRuleWriteInput,
   ) {
     if (
       dto.type !== undefined &&
@@ -246,7 +247,7 @@ export class GrowthRewardRuleService {
   }
 
   private assertExperienceRewardRuleEventConfigurable(
-    dto: Partial<CreateGrowthRewardRuleDto>,
+    dto: GrowthRewardRuleWriteInput,
   ) {
     if (
       dto.assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE ||

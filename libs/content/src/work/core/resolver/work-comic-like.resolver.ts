@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
+import type { ILikeTargetResolver } from '@libs/interaction/like/interfaces/like-target-resolver.type'
 import { DrizzleService } from '@db/core'
-import { ILikeTargetResolver } from '@libs/interaction/like/interfaces/like-target-resolver.type'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { BusinessErrorCode, SceneTypeEnum } from '@libs/platform/constant'

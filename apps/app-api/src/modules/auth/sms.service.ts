@@ -3,7 +3,9 @@ import type { Cache } from 'cache-manager'
 import type {
   RedisRateLimitClient,
   RedisRateLimitStore,
+  RedisRateLimitStoreWithClient,
   SmsRateLimitConfig,
+  SmsRateLimitConfigPartial,
 } from './sms.type'
 import { DrizzleService } from '@db/core'
 import {
@@ -119,7 +121,7 @@ export class SmsService {
   private getSmsRateLimitConfig(): SmsRateLimitConfig {
     const configured =
       this.configService.get<AppConfigInterface>('app')?.auth?.smsRateLimit ??
-      this.configService.get<Partial<SmsRateLimitConfig>>(
+      this.configService.get<SmsRateLimitConfigPartial>(
         'app.auth.smsRateLimit',
       ) ??
       {}
@@ -275,11 +277,7 @@ export class SmsService {
     const [keyvStore] =
       (this.cacheManager as Cache & { stores?: Array<{ store?: unknown }> })
         .stores ?? []
-    const store = keyvStore?.store as
-      | (Partial<RedisRateLimitStore> & {
-          client?: Partial<RedisRateLimitClient>
-        })
-        | undefined
+    const store = keyvStore?.store as RedisRateLimitStoreWithClient | undefined
     if (
       typeof store?.client?.set === 'function' &&
       typeof store.client.incr === 'function' &&

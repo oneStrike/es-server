@@ -5,6 +5,8 @@ import type { SQL } from 'drizzle-orm'
 import type {
   ForumModeratorGroupLimitOptions,
   ForumModeratorPermissionGrant,
+  ModeratorLifecycleSnapshotInput,
+  ModeratorSectionViewInput,
   NormalizedModeratorScope,
   NormalizeModeratorScopeOptions,
 } from './moderator.type'
@@ -267,17 +269,7 @@ export class ForumModeratorService {
   }
 
   private buildLifecycleSnapshot(
-    moderator: Pick<
-      ForumModeratorSelect,
-      | 'id'
-      | 'userId'
-      | 'groupId'
-      | 'roleType'
-      | 'permissions'
-      | 'isEnabled'
-      | 'remark'
-      | 'deletedAt'
-    >,
+    moderator: ModeratorLifecycleSnapshotInput,
     sectionIds: number[] = [],
   ) {
     return {
@@ -487,7 +479,7 @@ export class ForumModeratorService {
 
   // 将板块与版主权限拼装为后台可读视图。 自定义权限为空时显式标记 inheritFromParent，便于前端区分继承和覆写状态。
   private buildSectionView(
-    section: Pick<ForumSectionSelect, 'id' | 'name'>,
+    section: ModeratorSectionViewInput,
     basePermissions: ForumModeratorPermissionEnum[],
     customPermissions?: Array<number | null | undefined> | null,
   ) {

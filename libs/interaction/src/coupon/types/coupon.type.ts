@@ -1,9 +1,6 @@
 import type { Db } from '@db/core'
-import type {
-  CouponDefinitionSelect,
-  CouponRedemptionRecordSelect,
-  UserCouponInstanceSelect,
-} from '@db/schema'
+import type { AppUserSelect, CouponDefinitionSelect, CouponRedemptionRecordSelect, UserCouponInstanceSelect } from '@db/schema'
+
 import type {
   CouponRedemptionTargetTypeEnum,
   CouponSourceTypeEnum,
@@ -146,3 +143,15 @@ export interface CouponAdminGrantItemCounters {
   skippedItemCount: number
   successItemCount: number
 }
+
+/** 券定义更新入参，排除 ID 字段。 */
+export type CouponDefinitionUpdateInput = Omit<
+  import('../dto/coupon.dto').UpdateCouponDefinitionDto,
+  'id'
+>
+
+/** 券发放用户标签引用，仅承载展示所需的最小字段。 */
+export type CouponGrantUserRef = Pick<
+  AppUserSelect,
+  'account' | 'nickname' | 'phoneNumber'
+>

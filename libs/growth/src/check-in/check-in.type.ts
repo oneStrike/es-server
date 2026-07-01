@@ -426,3 +426,9 @@ export type CheckInPublishEffectiveInput = Pick<
   PublishCheckInStreakRuleDto,
   'effectiveFrom' | 'publishStrategy'
 >
+
+/** 签到奖励项视图（不含结算字段），用于 App 端记录展示。 */
+export type CheckInGrantItemWithoutSettlement = Omit<
+  CheckInGrantItemView,
+  'rewardSettlementId' | 'rewardSettlement'
+>

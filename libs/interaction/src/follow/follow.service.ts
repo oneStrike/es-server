@@ -1,5 +1,7 @@
-import type { UserFollowSelect } from '@db/schema'
-import type { FollowTargetTypeEnum as FollowTargetType } from './follow.type'
+import type {
+  FollowCreateResult,
+  FollowTargetTypeEnum as FollowTargetType,
+} from './follow.type'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
@@ -122,7 +124,7 @@ export class FollowService {
     return statusMap
   }
 
-  async follow(input: FollowRecordDto): Promise<Pick<UserFollowSelect, 'id'>> {
+  async follow(input: FollowRecordDto): Promise<FollowCreateResult> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 

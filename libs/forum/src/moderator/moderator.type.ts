@@ -1,7 +1,9 @@
 import type { Db } from '@db/core'
 import type {
+  ForumModeratorApplicationSelect,
   ForumModeratorSectionSelect,
   ForumModeratorSelect,
+  ForumSectionSelect,
 } from '@db/schema'
 import type { ForumModeratorLifecycleEventTypeEnum } from './moderator-lifecycle-log.constant'
 import type {
@@ -106,3 +108,37 @@ export interface CreateForumModeratorLifecycleLogInput {
   beforeData?: unknown | null
   afterData?: unknown | null
 }
+
+/** 版主生命周期快照入参，承载生命周期日志所需的最小字段子集。 */
+export type ModeratorLifecycleSnapshotInput = Pick<
+  ForumModeratorSelect,
+  | 'id'
+  | 'userId'
+  | 'groupId'
+  | 'roleType'
+  | 'permissions'
+  | 'isEnabled'
+  | 'remark'
+  | 'deletedAt'
+>
+
+/** 版主板块视图入参，仅承载展示所需的板块 ID 和名称。 */
+export type ModeratorSectionViewInput = Pick<
+  ForumSectionSelect,
+  'id' | 'name'
+>
+
+/** 版主申请快照入参，承载申请审核日志所需的最小字段子集。 */
+export type ModeratorApplicationSnapshotInput = Pick<
+  ForumModeratorApplicationSelect,
+  | 'id'
+  | 'applicantId'
+  | 'sectionId'
+  | 'status'
+  | 'permissions'
+  | 'reason'
+  | 'auditReason'
+  | 'remark'
+  | 'auditById'
+  | 'auditAt'
+>

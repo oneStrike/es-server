@@ -1,8 +1,12 @@
 import type { Db } from '@db/core'
+import type { AppUserSelect } from '@db/schema'
 import type { CommentTargetTypeEnum } from '../comment/comment.constant'
 import type { EmojiSceneEnum } from '../emoji/emoji.constant'
 import type { MentionDraftDto } from './dto/mention.dto'
 import type { MentionSourceTypeEnum } from './mention.constant'
+
+/** 触发者用户快照，仅承载通知文案所需的最小字段。 */
+export type MentionUserRef = Pick<AppUserSelect, 'id' | 'nickname'>
 
 /**
  * 已规范化的提及草稿。

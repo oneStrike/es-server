@@ -14,7 +14,6 @@ import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.c
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { Audit } from '../../../common/decorators/audit.decorator'
 
 @ApiTags('内容管理/小说管理/章节管理')
 @Controller('admin/content/novel/chapter')

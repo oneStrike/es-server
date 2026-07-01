@@ -7,6 +7,7 @@ import type { PageDto } from '@libs/platform/dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInGrantItemView,
+  CheckInGrantItemWithoutSettlement,
   CheckInReconciliationPageItemView,
   CheckInRecordGrantLookup,
   CheckInRewardItems,
@@ -449,7 +450,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   private toAppRecordItemView(
     record: CheckInRecordSelect,
     grants: Array<
-      Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>
+      CheckInGrantItemWithoutSettlement
     >,
   ) {
     return {
@@ -479,7 +480,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     userId: number,
     signDate: string,
   ): Promise<
-    Array<Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>>
+    Array<CheckInGrantItemWithoutSettlement>
   > {
     const grants = await this.db
       .select()
@@ -508,7 +509,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     Map<
       string,
       Array<
-        Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>
+        CheckInGrantItemWithoutSettlement
       >
     >
   > {
@@ -543,7 +544,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const grantMap = new Map<
       string,
       Array<
-        Omit<CheckInGrantItemView, 'rewardSettlementId' | 'rewardSettlement'>
+        CheckInGrantItemWithoutSettlement
       >
     >()
     for (const grant of grants) {

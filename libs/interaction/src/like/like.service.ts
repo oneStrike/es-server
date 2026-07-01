@@ -1,3 +1,8 @@
+import type {
+  ILikeTargetResolver,
+  LikeTargetMeta,
+} from './interfaces/like-target-resolver.type'
+import type { LikePageUserQuery } from './like.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { SceneTypeEnum } from '@libs/platform/constant'
@@ -5,14 +10,9 @@ import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, inArray, lt } from 'drizzle-orm'
 import {
-  LikePageQueryDto,
   LikeRecordDto,
   LikeTargetDetailDto,
 } from './dto/like.dto'
-import {
-  ILikeTargetResolver,
-  LikeTargetMeta,
-} from './interfaces/like-target-resolver.type'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeTargetTypeEnum } from './like.constant'
 
@@ -288,7 +288,7 @@ export class LikeService {
   }
 
   // 分页查询用户点赞列表，并关联解析器批量获取目标详情。
-  async getUserLikes(query: LikePageQueryDto & Pick<LikeRecordDto, 'userId'>) {
+  async getUserLikes(query: LikePageUserQuery) {
     const pageParams = this.drizzle.buildPageParams(query, {
       table: this.userLike,
       fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],

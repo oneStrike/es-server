@@ -1,7 +1,7 @@
 import type { adRewardRecord as adRewardRecordTable } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import type { AdProviderConfigWritableFieldsDto } from '../ad-reward/dto/ad-reward.dto'
-import type { AdRewardCredentialOptionDefinition } from './types/ad-reward.type'
+import type { AdProviderConfigUpdateInput, AdRewardCredentialOptionDefinition } from './types/ad-reward.type'
+
 import { createHash } from 'node:crypto'
 import process from 'node:process'
 import { DrizzleService, toPageResult } from '@db/core'
@@ -924,7 +924,7 @@ export class AdRewardService {
   }
 
   private buildAdProviderConfigUpdateData(
-    dto: Partial<AdProviderConfigWritableFieldsDto>,
+    dto: AdProviderConfigUpdateInput,
     expectedConfig: {
       provider: AdProviderEnum
       environment: ProviderEnvironmentEnum

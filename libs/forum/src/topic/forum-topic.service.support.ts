@@ -29,10 +29,8 @@ import type {
   TopicBodyWriteFields,
   TopicMentionVisibilityTransitionParams,
 } from './forum-topic.type'
-import {
-  createDefinedEventEnvelope,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition/event-envelope.type'
+import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.helper'
+import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BodySceneEnum } from '@libs/interaction/body/body.constant'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'

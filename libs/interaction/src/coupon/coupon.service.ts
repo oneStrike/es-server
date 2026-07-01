@@ -3,6 +3,7 @@ import type {
   ConsumeCouponRedemptionInput,
   ConsumeCouponRedemptionResult,
   CouponAbilityDefinition,
+  CouponDefinitionUpdateInput,
   CouponGrantSnapshot,
   CouponGrantSnapshotSource,
   CouponInstanceLookupInput,
@@ -413,7 +414,7 @@ export class CouponService {
 
   // 更新券类型时不继承旧能力字段，避免保存出新类型下不完整的券能力。
   private normalizeCouponDefinitionUpdate(
-    data: Omit<UpdateCouponDefinitionDto, 'id'>,
+    data: CouponDefinitionUpdateInput,
     existing: CreateCouponDefinitionDto,
   ) {
     const nextCouponType = data.couponType ?? existing.couponType

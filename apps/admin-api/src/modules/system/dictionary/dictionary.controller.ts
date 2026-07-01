@@ -17,7 +17,6 @@ import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.c
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { Audit } from '../../../common/decorators/audit.decorator'
 
 @ApiTags('系统管理/字典管理')
 @Controller('admin/dictionary')

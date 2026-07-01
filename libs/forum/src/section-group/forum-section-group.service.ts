@@ -1,4 +1,5 @@
 import type { Db, SQL } from '@db/core'
+import type { ForumSectionGroupRow } from './forum-section-group.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
@@ -436,7 +437,7 @@ export class ForumSectionGroupService {
   }
 
   private toForumSectionGroupOutputDto(
-    group: Omit<typeof this.forumSectionGroup.$inferSelect, 'deletedAt'>,
+    group: ForumSectionGroupRow,
   ): ForumSectionGroupOutputDto {
     return {
       ...group,

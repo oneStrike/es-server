@@ -4,7 +4,7 @@ import type {
 } from './types/growth-event-dispatch.type'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
-import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
+import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.helper'
 import { TaskService } from '@libs/growth/task/task.service'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { UserGrowthRewardService } from './growth-reward.service'

@@ -39,3 +39,8 @@ export interface AdRewardCredentialOptionDefinition {
   environment: ProviderEnvironmentEnum
   envKey: string
 }
+
+/** 广告提供者配置更新入参，允许部分字段更新。 */
+export type AdProviderConfigUpdateInput = Partial<
+  import('../dto/ad-reward.dto').AdProviderConfigWritableFieldsDto
+>

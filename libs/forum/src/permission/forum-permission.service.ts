@@ -4,6 +4,9 @@ import type {
   ForumPostingUserContext,
   ForumSectionAccessState,
   ForumSectionPermissionContext,
+  PostingUserExperienceRef,
+  SectionAccessContextInput,
+  SectionPublicAvailabilityInput,
 } from './forum-permission.type'
 import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
@@ -123,15 +126,7 @@ export class ForumPermissionService {
 
   // 判断板块在公开访问语义下是否可用。 板块本身必须启用；若挂载分组，则分组也必须启用且未删除。
   isSectionPubliclyAvailable(
-    section: Pick<
-      ForumSectionPermissionContext,
-      'groupId' | 'deletedAt' | 'isEnabled'
-    > & {
-      group?: {
-        isEnabled: boolean
-        deletedAt: Date | null
-      } | null
-    },
+    section: SectionPublicAvailabilityInput,
   ) {
     if (section.deletedAt) {
       return false
@@ -152,18 +147,7 @@ export class ForumPermissionService {
 
   // 将板块查询结果归一化为访问状态计算所需字段。 统一在这里补齐 requiredExperience 与公开可见性，避免各入口各自复制同一套映射。
   private buildSectionAccessContext(
-    section: Pick<
-      ForumSectionPermissionContext,
-      'groupId' | 'deletedAt' | 'isEnabled' | 'userLevelRuleId'
-    > & {
-      group?: {
-        isEnabled: boolean
-        deletedAt: Date | null
-      } | null
-      userLevelRule?: {
-        requiredExperience: number
-      } | null
-    },
+    section: SectionAccessContextInput,
   ) {
     return {
       groupId: section.groupId,
@@ -264,7 +248,7 @@ export class ForumPermissionService {
     section: ForumSectionPermissionContext,
     user?:
       | ForumAccessUserContext
-      | Pick<ForumPostingUserContext, 'experience'>
+      | PostingUserExperienceRef
       | null,
   ) {
     const accessState = this.resolveSectionAccessState(section, user)
@@ -306,7 +290,7 @@ export class ForumPermissionService {
     >,
     user?:
       | ForumAccessUserContext
-      | Pick<ForumPostingUserContext, 'experience'>
+      | PostingUserExperienceRef
       | null,
   ): ForumSectionAccessState {
     const requiredExperience =

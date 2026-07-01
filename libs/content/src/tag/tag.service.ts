@@ -1,5 +1,6 @@
 import type { WorkTagSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
+import type { WorkTagAdminView } from './tag.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -359,7 +360,7 @@ export class WorkTagService {
     }
   }
 
-  private toAdminTagOutputDto(tag: Omit<WorkTagSelect, 'popularity'>) {
+  private toAdminTagOutputDto(tag: WorkTagAdminView) {
     return {
       ...tag,
       icon: tag.icon ?? null,

@@ -1,10 +1,10 @@
-import type { AppUserSelect } from '@db/schema'
 import type { BodyToken } from '../body/body-token.type'
 import type {
   BuildMentionBodyTokensInput,
   DeleteMentionsInTxInput,
   DispatchCommentMentionsInTxInput,
   DispatchTopicMentionsInTxInput,
+  MentionUserRef,
   NormalizedMentionDraft,
   ReplaceMentionsInTxInput,
 } from './mention.type'
@@ -414,7 +414,7 @@ export class MentionService {
   private async getActorSnapshot(
     tx: ReplaceMentionsInTxInput['tx'],
     actorUserId: number,
-  ): Promise<Pick<AppUserSelect, 'id' | 'nickname'> | undefined> {
+  ): Promise<MentionUserRef | undefined> {
     return tx.query.appUser.findFirst({
       where: {
         id: actorUserId,

@@ -1,9 +1,9 @@
 import type { Db } from '@db/core'
-import { DrizzleService } from '@db/core'
+import type { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.type'
 
+import { DrizzleService } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { CommentService } from '@libs/interaction/comment/comment.service'
-import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'

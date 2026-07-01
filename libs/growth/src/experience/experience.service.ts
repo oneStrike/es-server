@@ -1,5 +1,9 @@
 import type { AppDateRange } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
+import type {
+  ExperienceRecordQueryConditions,
+  ManualAddExperienceInput,
+} from './experience.type'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -300,7 +304,7 @@ export class UserExperienceService {
   }
 
   private buildExperienceRecordConditions(
-    dto: Omit<QueryUserExperienceRecordDto, 'pageIndex' | 'orderBy'>,
+    dto: ExperienceRecordQueryConditions,
     dateRange?: AppDateRange | null,
   ) {
     const conditions: SQL[] = [
@@ -524,10 +528,7 @@ export class UserExperienceService {
   }
 
   private buildAddExperienceContext(
-    addExperienceDto: Pick<UserGrowthRuleActionDto, 'operationNote'> & {
-      context?: Record<string, unknown>
-      adminUserId?: number
-    },
+    addExperienceDto: ManualAddExperienceInput,
   ) {
     if (
       !addExperienceDto.context &&

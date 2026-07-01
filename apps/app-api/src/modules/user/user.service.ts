@@ -1,5 +1,9 @@
-import type { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets/dto/user-assets.dto'
 import type { SQL } from 'drizzle-orm'
+import type {
+  UserAssetsSummaryPartial,
+  UserCenterTaskPartial,
+  UserCountPartial,
+} from './user.type'
 /**
  * 应用端用户服务。
  * 提供用户中心相关的业务逻辑，包括资料获取/更新、用户中心汇总、状态判断、资产统计与成长信息。
@@ -26,8 +30,6 @@ import {
   QueryUserMentionPageDto,
   UpdateMyProfileDto,
   UserCenterDto,
-  UserCenterTaskDto,
-  UserCountDto,
 } from '@libs/user/dto/user-self.dto'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { Injectable } from '@nestjs/common'
@@ -79,7 +81,7 @@ export class UserService {
   }
 
   // 将共享用户计数读模型收敛为用户中心 DTO 约定结构，显式排除内部字段并为缺失值兜底为 0。
-  private mapUserCenterCounts(counts?: Partial<UserCountDto>) {
+  private mapUserCenterCounts(counts?: UserCountPartial) {
     return {
       commentCount: counts?.commentCount ?? 0,
       likeCount: counts?.likeCount ?? 0,
@@ -98,7 +100,7 @@ export class UserService {
   }
 
   // 收敛用户资产摘要输出，避免资产域内部补充字段外泄到用户中心契约。
-  private mapUserCenterAssets(assets?: Partial<BaseUserAssetsSummaryDto>) {
+  private mapUserCenterAssets(assets?: UserAssetsSummaryPartial) {
     return {
       currencyBalance: assets?.currencyBalance ?? 0,
       vipExpiresAt: assets?.vipExpiresAt ?? null,
@@ -115,7 +117,7 @@ export class UserService {
   }
 
   // 收敛用户中心任务摘要，避免执行层内部辅助字段透传到 HTTP 契约。
-  private mapUserCenterTaskSummary(taskSummary?: Partial<UserCenterTaskDto>) {
+  private mapUserCenterTaskSummary(taskSummary?: UserCenterTaskPartial) {
     return {
       claimableCount: taskSummary?.claimableCount ?? 0,
       claimedCount: taskSummary?.claimedCount ?? 0,

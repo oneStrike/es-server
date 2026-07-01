@@ -1,6 +1,5 @@
 import type { Db } from '@db/core'
 import type {
-  AppUserSelect,
   CouponAdminGrantJobSelect,
   CouponDefinitionSelect,
   WorkflowJobSelect,
@@ -9,6 +8,7 @@ import type {
   CouponAdminGrantErrorFacts,
   CouponAdminGrantItemCounters,
   CouponGrantSnapshot,
+  CouponGrantUserRef,
 } from './types/coupon.type'
 import { createHash, randomUUID } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
@@ -610,7 +610,7 @@ export class CouponAdminGrantWorkflowService {
   }
 
   private buildUserLabel(
-    user: Pick<AppUserSelect, 'account' | 'nickname' | 'phoneNumber'> | null,
+    user: CouponGrantUserRef | null,
     userId: number,
   ) {
     return user?.nickname?.trim() || user?.account?.trim() || `用户 #${userId}`

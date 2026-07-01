@@ -1,13 +1,16 @@
 import type { Db } from '@db/core'
 import type {
   PaymentOrderSelect,
+  PaymentProviderConfigInsert,
   PaymentProviderConfigSelect,
 } from '@db/schema'
 import type {
   CreatePaymentOrderBaseDto,
+  CreatePaymentProviderConfigDto,
   ProviderPaymentNotifyBodyDto,
   ProviderPaymentNotifyHeadersDto,
   ProviderPaymentNotifyQueryDto,
+  UpdatePaymentProviderConfigDto,
 } from '../dto/payment.dto'
 import type {
   PaymentChannelEnum,
@@ -169,3 +172,12 @@ export interface PaymentProviderAdapter {
     input: PaymentProviderNotifyInput,
   ) => PaymentRefundParsedNotify
 }
+
+/** 支付提供者配置写入 DTO 联合类型，涵盖创建和更新两种输入。 */
+export type PaymentProviderConfigWriteDto =
+  | CreatePaymentProviderConfigDto
+  | Omit<UpdatePaymentProviderConfigDto, 'id'>
+
+/** 支付提供者配置写入值，用于落库前的部分字段组装。 */
+export type PaymentProviderConfigWriteValues =
+  Partial<PaymentProviderConfigInsert>

@@ -73,7 +73,7 @@ export class AliyunConfigDto {
     required: false,
     nullable: false,
   })
-  sms?: AliyunSmsConfigDto | null
+  sms!: AliyunSmsConfigDto | null
 }
 
 // ============================================================================
@@ -193,7 +193,7 @@ export class ContentReviewPolicyDto {
     required: false,
     nullable: false,
   })
-  severeAction?: ContentReviewActionDto | null
+  severeAction!: ContentReviewActionDto | null
 
   @NestedProperty({
     description: '一般敏感词处理策略',
@@ -201,7 +201,7 @@ export class ContentReviewPolicyDto {
     required: false,
     nullable: false,
   })
-  generalAction?: ContentReviewActionDto | null
+  generalAction!: ContentReviewActionDto | null
 
   @NestedProperty({
     description: '轻微敏感词处理策略',
@@ -209,7 +209,7 @@ export class ContentReviewPolicyDto {
     required: false,
     nullable: false,
   })
-  lightAction?: ContentReviewActionDto | null
+  lightAction!: ContentReviewActionDto | null
 
   @BooleanProperty({
     description: '是否记录敏感词命中明细',
@@ -245,7 +245,7 @@ export class OperationConfigDto {
     required: false,
     nullable: false,
   })
-  forumHashtagConfig?: ForumHashtagConfigDto | null
+  forumHashtagConfig!: ForumHashtagConfigDto | null
 }
 
 // ============================================================================
@@ -275,7 +275,7 @@ export class SecurityConfigDto {
     required: false,
     nullable: false,
   })
-  remoteImageImport?: RemoteImageImportSecurityConfigDto | null
+  remoteImageImport!: RemoteImageImportSecurityConfigDto | null
 }
 
 // ============================================================================
@@ -494,7 +494,7 @@ export class UploadConfigDto {
     required: false,
     nullable: false,
   })
-  qiniu?: QiniuUploadConfigDto | null
+  qiniu!: QiniuUploadConfigDto | null
 
   @NestedProperty({
     description: 'Superbed 上传配置',
@@ -502,7 +502,7 @@ export class UploadConfigDto {
     required: false,
     nullable: false,
   })
-  superbed?: SuperbedUploadConfigDto | null
+  superbed!: SuperbedUploadConfigDto | null
 }
 
 export class AliyunSmsConfigOutputDto {
@@ -968,7 +968,7 @@ export class BaseSystemConfigDto extends BaseDto {
     example: 1,
     required: false,
   })
-  updatedById?: number | null
+  updatedById!: number | null
 
   @NestedProperty({
     description: '阿里云配置',
@@ -986,7 +986,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  aliyunConfig?: AliyunConfigDto | null
+  aliyunConfig!: AliyunConfigDto | null
 
   @NestedProperty({
     description: '站点配置',
@@ -1003,7 +1003,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  siteConfig?: SiteConfigDto | null
+  siteConfig!: SiteConfigDto | null
 
   @NestedProperty({
     description: '运营配置',
@@ -1016,7 +1016,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  operationConfig?: OperationConfigDto | null
+  operationConfig!: OperationConfigDto | null
 
   @NestedProperty({
     description: '安全配置',
@@ -1029,7 +1029,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  securityConfig?: SecurityConfigDto | null
+  securityConfig!: SecurityConfigDto | null
 
   @NestedProperty({
     description: '三方资源解析配置',
@@ -1044,7 +1044,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  thirdPartyResourceParseConfig?: ThirdPartyResourceParseConfigDto | null
+  thirdPartyResourceParseConfig!: ThirdPartyResourceParseConfigDto | null
 
   @NestedProperty({
     description: '钱包虚拟币展示配置',
@@ -1058,7 +1058,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  walletCurrencyDisplayConfig?: WalletCurrencyDisplayConfigDto | null
+  walletCurrencyDisplayConfig!: WalletCurrencyDisplayConfigDto | null
 
   @NestedProperty({
     description: '维护配置',
@@ -1070,7 +1070,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  maintenanceConfig?: MaintenanceConfigDto | null
+  maintenanceConfig!: MaintenanceConfigDto | null
 
   @NestedProperty({
     description: '内容审核策略',
@@ -1093,7 +1093,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  contentReviewPolicy?: ContentReviewPolicyDto | null
+  contentReviewPolicy!: ContentReviewPolicyDto | null
 
   @NestedProperty({
     description: '上传配置',
@@ -1122,7 +1122,7 @@ export class BaseSystemConfigDto extends BaseDto {
     required: false,
     nullable: false,
   })
-  uploadConfig?: UploadConfigDto | null
+  uploadConfig!: UploadConfigDto | null
 }
 
 export class SystemConfigDetailDto extends BaseDto {

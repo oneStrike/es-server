@@ -1,4 +1,5 @@
-import type { UserFavoriteSelect } from '@db/schema'
+import type { FavoriteCreateResult } from './favorite.type'
+import type { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
@@ -7,7 +8,6 @@ import { and, eq, gte, inArray, lt } from 'drizzle-orm'
 import { FavoritePageCommandDto, FavoriteRecordDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
-import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.type'
 
 /**
  * 收藏服务
@@ -108,7 +108,7 @@ export class FavoriteService {
   // 收藏目标
   async favorite(
     input: FavoriteRecordDto,
-  ): Promise<Pick<UserFavoriteSelect, 'id'>> {
+  ): Promise<FavoriteCreateResult> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -301,7 +301,7 @@ export class FavoriteService {
   }
 
   // 分页查询用户收藏的论坛主题。 主题收藏只返回论坛主题字段，避免与作品结构混杂。
-  async getUserTopicFavorites(query: FavoritePageCommandDto): Promise<any> {
+  async getUserTopicFavorites(query: FavoritePageCommandDto) {
     const { page, detailMaps } = await this.getFavoritePageByTargetTypes(
       query,
       [FavoriteTargetTypeEnum.FORUM_TOPIC],

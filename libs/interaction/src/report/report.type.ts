@@ -5,6 +5,27 @@ import type {
   ReportTargetMeta,
 } from './interfaces/report-target-resolver.type'
 
+/** 举报处理对比所需的处置状态字段子集。 */
+export type ReportDispositionComparison = Pick<
+  UserReportSelect,
+  'status' | 'targetAction' | 'targetActionReason' | 'targetActionStatus'
+>
+
+/** 举报目标类型引用，仅承载 targetType 字段。 */
+export type ReportTargetTypeRef = Pick<UserReportSelect, 'targetType'>
+
+/** 举报目标关键字段，用于处置事务内定位目标。 */
+export type ReportTargetKeyFields = Pick<
+  UserReportSelect,
+  'id' | 'targetId' | 'targetType'
+>
+
+/** 举报处置事务返回结果。 */
+export interface ReportDispositionTxResult {
+  result: Record<string, unknown>
+  events: ReportDispositionResult[]
+}
+
 /** 举报记录落库载荷，包含目标解析后得到的场景与处理状态字段。 */
 export type CreateUserReportPayload = CreateReportCommandDto &
   Pick<ReportTargetMeta, 'sceneType' | 'sceneId' | 'commentLevel'> &

@@ -1,11 +1,11 @@
 import type { Db } from '@db/core'
+import type { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { BrowseLogGrowthService } from './browse-log-growth.service'
 import { BrowseLogInteractionService } from './browse-log-interaction.service'
 import { BrowseLogPermissionService } from './browse-log-permission.service'
 import { BrowseLogTargetTypeEnum } from './browse-log.constant'
-import { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolver.type'
 
 @Injectable()
 export class BrowseLogService {

@@ -1,5 +1,7 @@
 import type { UserCommentSelect } from '@db/schema'
 import type { MaterializedForumHashtagFact } from '@libs/forum/hashtag/forum-hashtag.type'
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
+import type { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { QueryTargetCommentsDto } from './dto/comment.dto'
@@ -121,4 +123,21 @@ export interface AuthorCommentDelta {
 export type TargetCommentsQueryInput = QueryTargetCommentsDto & {
   previewReplyLimit?: number
   userId?: number
+}
+
+/** 评论创建奖励入参，承载评论关键字段与可选发生时间和事件外壳。 */
+export type CommentCreatedRewardInput = Pick<
+  UserCommentSelect,
+  'userId' | 'id' | 'targetType' | 'targetId'
+> & {
+  occurredAt?: Date
+  eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum>
+}
+
+/** 评论被点赞奖励入参，承载评论 ID、作者 ID 与点赞者 ID。 */
+export type CommentLikedRewardInput = Pick<
+  UserCommentSelect,
+  'id' | 'userId'
+> & {
+  likerUserId: number
 }

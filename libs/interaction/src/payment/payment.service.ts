@@ -13,6 +13,8 @@ import type {
   PaymentOrderPublicResult,
   PaymentOrderStatusResult,
   PaymentProviderAdapter,
+  PaymentProviderConfigWriteDto,
+  PaymentProviderConfigWriteValues,
   PaymentProviderCredentialMaterial,
   PaymentTx,
   ProviderPaymentNotifyRequest,
@@ -276,10 +278,8 @@ export class PaymentService {
   }
 
   private toPaymentProviderConfigBaseWriteValues(
-    dto:
-      | CreatePaymentProviderConfigDto
-      | Omit<UpdatePaymentProviderConfigDto, 'id'>,
-  ): Partial<PaymentProviderConfigInsert> {
+    dto: PaymentProviderConfigWriteDto,
+  ): PaymentProviderConfigWriteValues {
     const {
       credentialOptionId: _credentialOptionId,
       privateKeyCredentialId: _privateKeyCredentialId,
@@ -294,11 +294,9 @@ export class PaymentService {
   }
 
   private async buildPaymentProviderConfigWriteValues(
-    dto:
-      | CreatePaymentProviderConfigDto
-      | Omit<UpdatePaymentProviderConfigDto, 'id'>,
+    dto: PaymentProviderConfigWriteDto,
     currentConfig?: PaymentProviderConfigSelect,
-  ): Promise<Partial<PaymentProviderConfigInsert>> {
+  ): Promise<PaymentProviderConfigWriteValues> {
     const channel = dto.channel ?? currentConfig?.channel
     if (channel === undefined) {
       throw new BusinessException(

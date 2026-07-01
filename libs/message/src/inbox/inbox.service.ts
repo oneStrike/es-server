@@ -8,7 +8,7 @@ import { DrizzleService, extractRows, toPageResult } from '@db/core'
 import { PageDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNull, or, sql } from 'drizzle-orm'
-import { buildNotificationUnreadSummary } from '../notification/notification-unread.type'
+import { buildNotificationUnreadSummary } from '../notification/notification-unread.helper'
 import { getMessageNotificationCategoryLabel } from '../notification/notification.constant'
 import { MessageInboxSummaryQueryService } from './inbox-summary-query.service'
 

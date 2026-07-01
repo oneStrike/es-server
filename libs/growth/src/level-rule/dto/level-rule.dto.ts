@@ -262,7 +262,7 @@ export class CheckUserLevelPermissionDto {
     required: false,
     maxLength: 20,
   })
-  business?: string | null
+  business!: string | null
 }
 
 export class UserLevelPermissionResultDto {

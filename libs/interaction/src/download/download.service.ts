@@ -1,3 +1,4 @@
+import type { IDownloadTargetResolver } from './interfaces/download-target-resolver.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
@@ -10,7 +11,6 @@ import {
   QueryDownloadedWorkChapterCommandDto,
   QueryDownloadedWorkCommandDto,
 } from './dto/download.dto'
-import { IDownloadTargetResolver } from './interfaces/download-target-resolver.type'
 
 const DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL = sql.join(
   DOWNLOAD_WORK_CHAPTER_TARGET_TYPES.map((targetType) => sql`${targetType}`),

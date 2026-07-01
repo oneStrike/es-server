@@ -201,7 +201,7 @@ export class PaymentProviderConfigCredentialSelectorFieldsDto {
     min: 1,
     required: false,
   })
-  credentialOptionId?: number | null
+  credentialOptionId!: number | null
 
   @NumberProperty({
     description: '应用私钥凭据选项 ID，后台写入时解析为内部引用',
@@ -209,7 +209,7 @@ export class PaymentProviderConfigCredentialSelectorFieldsDto {
     min: 1,
     required: false,
   })
-  privateKeyCredentialId?: number | null
+  privateKeyCredentialId!: number | null
 
   @NumberProperty({
     description: '支付宝公钥凭据选项 ID，后台写入时解析为内部引用',
@@ -217,7 +217,7 @@ export class PaymentProviderConfigCredentialSelectorFieldsDto {
     min: 1,
     required: false,
   })
-  publicKeyCredentialId?: number | null
+  publicKeyCredentialId!: number | null
 
   @NumberProperty({
     description: '微信 APIv3 key 凭据选项 ID，后台写入时解析为内部引用',
@@ -225,7 +225,7 @@ export class PaymentProviderConfigCredentialSelectorFieldsDto {
     min: 1,
     required: false,
   })
-  apiV3KeyCredentialId?: number | null
+  apiV3KeyCredentialId!: number | null
 
   @NumberProperty({
     description: '应用证书选项 ID，后台写入时解析为内部引用',
@@ -233,7 +233,7 @@ export class PaymentProviderConfigCredentialSelectorFieldsDto {
     min: 1,
     required: false,
   })
-  appCertificateId?: number | null
+  appCertificateId!: number | null
 
   @NumberProperty({
     description: '平台证书选项 ID，后台写入时解析为内部引用',
@@ -241,7 +241,7 @@ export class PaymentProviderConfigCredentialSelectorFieldsDto {
     min: 1,
     required: false,
   })
-  platformCertificateId?: number | null
+  platformCertificateId!: number | null
 
   @NumberProperty({
     description: '根证书选项 ID，后台写入时解析为内部引用',
@@ -249,7 +249,7 @@ export class PaymentProviderConfigCredentialSelectorFieldsDto {
     min: 1,
     required: false,
   })
-  rootCertificateId?: number | null
+  rootCertificateId!: number | null
 }
 
 export class PaymentProviderConfigRequiredWritableFieldsDto extends PickType(
@@ -1062,7 +1062,7 @@ export class ConfirmPaymentOrderDto {
     example: 'provider-trade-no',
     required: false,
   })
-  providerTradeNo?: string | null
+  providerTradeNo!: string | null
 
   @NumberProperty({
     description: '实付金额，单位为分',
@@ -1070,7 +1070,7 @@ export class ConfirmPaymentOrderDto {
     min: 0,
     required: false,
   })
-  paidAmount?: number | null
+  paidAmount!: number | null
 
   @ObjectProperty({
     description: '原始通知 payload',

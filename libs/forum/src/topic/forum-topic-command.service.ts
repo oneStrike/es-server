@@ -15,7 +15,7 @@ import type {
 import { randomUUID } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
-import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
+import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.helper'
 import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
 import { BodyCompilerService } from '@libs/interaction/body/body-compiler.service'

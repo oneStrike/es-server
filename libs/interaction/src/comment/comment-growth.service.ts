@@ -1,10 +1,12 @@
-import type { UserCommentSelect } from '@db/schema'
-import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
+import type {
+  CommentCreatedRewardInput,
+  CommentLikedRewardInput,
+} from './comment.type'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
-} from '@libs/growth/event-definition/event-envelope.type'
+} from '@libs/growth/event-definition/event-envelope.helper'
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
@@ -16,13 +18,7 @@ export class CommentGrowthService {
   ) {}
 
   async rewardCommentCreated(
-    params: Pick<
-      UserCommentSelect,
-      'userId' | 'id' | 'targetType' | 'targetId'
-    > & {
-      occurredAt?: Date
-      eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum>
-    },
+    params: CommentCreatedRewardInput,
   ) {
     const {
       userId,
@@ -64,7 +60,7 @@ export class CommentGrowthService {
   }
 
   async rewardCommentLiked(
-    params: Pick<UserCommentSelect, 'id' | 'userId'> & { likerUserId: number },
+    params: CommentLikedRewardInput,
   ) {
     const { id: commentId, userId: authorUserId, likerUserId } = params
 

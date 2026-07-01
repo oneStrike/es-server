@@ -39,8 +39,8 @@ import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event
 import {
   canConsumeEventEnvelopeByConsumer,
   createEventEnvelope,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition/event-envelope.type'
+} from '@libs/growth/event-definition/event-envelope.helper'
+import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type'
 import {
   GrowthRewardSettlementStatusEnum,
   GrowthRewardSettlementTypeEnum,

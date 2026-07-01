@@ -73,9 +73,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
     for (const rewardItem of rewardItems) {
       const dedupeKey = `${rewardItem.assetType}:${rewardItem.assetKey ?? ''}`
       if (dedupeKeySet.has(dedupeKey)) {
-        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-          `奖励项重复：assetType=${rewardItem.assetType} assetKey=${rewardItem.assetKey ?? ''}`,
-        )
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `奖励项重复：assetType=${rewardItem.assetType} assetKey=${rewardItem.assetKey ?? ''}`,)
       }
       dedupeKeySet.add(dedupeKey)
     }
@@ -190,9 +188,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           patternType !== CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
           patternType !== CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY
         ) {
-          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-            '按月模式下仅支持按月日期或月末奖励规则',
-          )
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '按月模式下仅支持按月日期或月末奖励规则',)
         }
         if (
           patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
@@ -213,9 +209,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
           (weekday !== null || monthDay !== null)
         ) {
-          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-            '按月最后一天规则不能配置 weekday 或 monthDay',
-          )
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '按月最后一天规则不能配置 weekday 或 monthDay',)
         }
       }
 
@@ -237,9 +231,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
         normalizedRules.map((rule) => String(rule.weekday)),
       )
       if (duplicateWeekday) {
-        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-          `周期模式奖励规则重复：按周星期=${duplicateWeekday}`,
-        )
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `周期模式奖励规则重复：按周星期=${duplicateWeekday}`,)
       }
     } else {
       const duplicateMonthDay = this.findDuplicateValue(
@@ -251,9 +243,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           .map((rule) => String(rule.monthDay)),
       )
       if (duplicateMonthDay) {
-        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-          `周期模式奖励规则重复：按月日期=${duplicateMonthDay}`,
-        )
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `周期模式奖励规则重复：按月日期=${duplicateMonthDay}`,)
       }
 
       const monthLastDayRuleCount = normalizedRules.filter(
@@ -301,9 +291,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       normalizedRules.map((rule) => rule.ruleCode),
     )
     if (duplicateRuleCode) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-        `连续奖励规则编码重复：${duplicateRuleCode}`,
-      )
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `连续奖励规则编码重复：${duplicateRuleCode}`,)
     }
 
     const duplicateStreakDays = this.findDuplicateValue(
@@ -450,9 +438,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       (key) => !['assetType', 'assetKey', 'amount', 'iconUrl'].includes(key),
     )
     if (unsupportedKeys.length > 0) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-        `rewardItems[${index}] 暂不支持字段：${unsupportedKeys.join(', ')}`,
-      )
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `rewardItems[${index}] 暂不支持字段：${unsupportedKeys.join(', ')}`,)
     }
 
     const assetType = Number(record.assetType)
@@ -461,9 +447,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       (assetType !== GrowthRewardRuleAssetTypeEnum.POINTS &&
         assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE)
     ) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-        `rewardItems[${index}].assetType 仅支持 1=积分、2=经验`,
-      )
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `rewardItems[${index}].assetType 仅支持 1=积分、2=经验`,)
     }
 
     const amount = Number(record.amount)
@@ -474,9 +458,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
     const assetKey =
       typeof record.assetKey === 'string' ? record.assetKey.trim() : ''
     if (assetKey !== '') {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
-        `rewardItems[${index}].assetKey 当前必须为空字符串`,
-      )
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `rewardItems[${index}].assetKey 当前必须为空字符串`,)
     }
 
     return {

@@ -23,3 +23,11 @@ export interface RedisRateLimitStore {
   keyPrefixSeparator?: string
   namespace?: string
 }
+
+/** 短信限流配置的部分字段，用于配置读取。 */
+export type SmsRateLimitConfigPartial = Partial<SmsRateLimitConfig>
+
+/** cache-manager store 中 Redis 限流能力的部分结构视图。 */
+export type RedisRateLimitStoreWithClient = Partial<RedisRateLimitStore> & {
+  client?: Partial<RedisRateLimitClient>
+}

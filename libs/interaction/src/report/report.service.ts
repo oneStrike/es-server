@@ -1,20 +1,21 @@
 import type { Db } from '@db/core'
 import type {
   UserReportDispositionAttemptSelect,
-  UserReportSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import type { ReportDispositionResult } from './interfaces/report-target-resolver.type'
+import type { IReportTargetResolver } from './interfaces/report-target-resolver.type'
 import type {
   CreateUserReportOptions,
   CreateUserReportPayload,
+  ReportDispositionComparison,
+  ReportDispositionTxResult,
+  ReportTargetKeyFields,
+  ReportTargetTypeRef,
   UserReportWithDispositionEvents,
 } from './report.type'
 import { DrizzleService, toPageResult } from '@db/core'
-import {
-  createDefinedEventEnvelope,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition/event-envelope.type'
+import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.helper'
+import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { InteractionSummaryReadService } from '@libs/interaction/summary/interaction-summary-read.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -28,7 +29,6 @@ import {
   QueryAdminReportPageDto,
   QueryMyReportPageCommandDto,
 } from './dto/report.dto'
-import { IReportTargetResolver } from './interfaces/report-target-resolver.type'
 import { ReportGrowthService } from './report-growth.service'
 import {
   ReportDispositionActionEnum,
@@ -739,10 +739,7 @@ export class ReportService {
   }
 
   private isSameFinalDisposition(
-    report: Pick<
-      UserReportSelect,
-      'status' | 'targetAction' | 'targetActionReason' | 'targetActionStatus'
-    >,
+    report: ReportDispositionComparison,
     input: HandleAdminReportCommandDto,
   ) {
     if (report.status !== input.status) {
@@ -765,7 +762,7 @@ export class ReportService {
   }
 
   private ensureTargetActionMatchesReport(
-    report: Pick<UserReportSelect, 'targetType'>,
+    report: ReportTargetTypeRef,
     input: HandleAdminReportCommandDto,
   ) {
     if (input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED) {
@@ -793,12 +790,9 @@ export class ReportService {
 
   private async applyTargetDispositionInTx(
     tx: Db,
-    report: Pick<UserReportSelect, 'id' | 'targetId' | 'targetType'>,
+    report: ReportTargetKeyFields,
     input: HandleAdminReportCommandDto,
-  ): Promise<{
-    result: Record<string, unknown>
-    events: ReportDispositionResult[]
-  } | null> {
+  ): Promise<ReportDispositionTxResult | null> {
     if (input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED) {
       return null
     }
@@ -852,7 +846,7 @@ export class ReportService {
 
   private shouldRecordDispositionAttempt(
     input: HandleAdminReportCommandDto,
-    report: Pick<UserReportSelect, 'targetType'>,
+    report: ReportTargetTypeRef,
   ) {
     if (input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED) {
       return false
