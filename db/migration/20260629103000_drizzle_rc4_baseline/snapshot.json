@@ -42701,13 +42701,6 @@
       "table": "app_announcement"
     },
     {
-      "value": "\"show_as_popup\" = false or btrim(coalesce(\"popup_background_image\", '')) <> ''",
-      "name": "app_announcement_popup_background_required_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "app_announcement"
-    },
-    {
       "value": "\"view_count\" >= 0",
       "name": "app_announcement_view_count_non_negative_chk",
       "entityType": "checks",

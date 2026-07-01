@@ -5,7 +5,6 @@ DECLARE
   invalid_priority_count bigint;
   invalid_publish_window_count bigint;
   invalid_type_count bigint;
-  missing_popup_background_count bigint;
   unsupported_platform_count bigint;
   unsupported_popup_position_count bigint;
 BEGIN
@@ -44,12 +43,6 @@ BEGIN
     );
 
   SELECT count(*)
-    INTO missing_popup_background_count
-  FROM "app_announcement"
-  WHERE "show_as_popup" = true
-    AND btrim(coalesce("popup_background_image", '')) = '';
-
-  SELECT count(*)
     INTO invalid_type_count
   FROM "app_announcement"
   WHERE "announcement_type" NOT IN (0,1,2,3,4);
@@ -68,17 +61,15 @@ BEGIN
     OR empty_platform_count <> 0
     OR invalid_publish_window_count <> 0
     OR unsupported_popup_position_count <> 0
-    OR missing_popup_background_count <> 0
     OR invalid_type_count <> 0
     OR invalid_priority_count <> 0
     OR invalid_fanout_status_count <> 0 THEN
     RAISE EXCEPTION
-      'system announcement breaking repair blocked: unsupported_platform_count=%, empty_platform_count=%, invalid_publish_window_count=%, unsupported_popup_position_count=%, missing_popup_background_count=%, invalid_type_count=%, invalid_priority_count=%, invalid_fanout_status_count=%',
+      'system announcement breaking repair blocked: unsupported_platform_count=%, empty_platform_count=%, invalid_publish_window_count=%, unsupported_popup_position_count=%, invalid_type_count=%, invalid_priority_count=%, invalid_fanout_status_count=%',
       unsupported_platform_count,
       empty_platform_count,
       invalid_publish_window_count,
       unsupported_popup_position_count,
-      missing_popup_background_count,
       invalid_type_count,
       invalid_priority_count,
       invalid_fanout_status_count;
@@ -159,12 +150,6 @@ BEGIN
 
   ALTER TABLE "app_announcement"
     DROP CONSTRAINT IF EXISTS "app_announcement_popup_background_required_chk";
-  ALTER TABLE "app_announcement"
-    ADD CONSTRAINT "app_announcement_popup_background_required_chk"
-    CHECK (
-      "show_as_popup" = false
-      OR btrim(coalesce("popup_background_image", '')) <> ''
-    );
 
   ALTER TABLE "app_announcement"
     DROP CONSTRAINT IF EXISTS "app_announcement_view_count_non_negative_chk";

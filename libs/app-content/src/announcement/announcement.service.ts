@@ -230,7 +230,6 @@ export class AppAnnouncementService {
       columns: {
         id: true,
         pageId: true,
-        popupBackgroundImage: true,
         popupBackgroundPosition: true,
         publishStartTime: true,
         publishEndTime: true,
@@ -251,10 +250,6 @@ export class AppAnnouncementService {
       '发布开始时间不能大于或等于结束时间',
     )
     this.assertValidPopupConfig({
-      popupBackgroundImage:
-        updateData.popupBackgroundImage === undefined
-          ? announcement.popupBackgroundImage
-          : updateData.popupBackgroundImage,
       popupBackgroundPosition:
         updateData.popupBackgroundPosition === undefined
           ? (announcement.popupBackgroundPosition as PopupBackgroundPositionEnum | null)
@@ -790,7 +785,6 @@ export class AppAnnouncementService {
   }
 
   private assertValidPopupConfig(input: {
-    popupBackgroundImage?: string | null
     popupBackgroundPosition?: PopupBackgroundPositionEnum | null
     showAsPopup?: boolean
   }) {
@@ -798,9 +792,6 @@ export class AppAnnouncementService {
       return
     }
 
-    if (!input.popupBackgroundImage?.trim()) {
-      throw new BadRequestException('弹窗公告必须配置背景图片')
-    }
     if (input.popupBackgroundPosition === null) {
       throw new BadRequestException('弹窗背景位置不能为空')
     }

@@ -246,10 +246,6 @@ export const appAnnouncement = snakeCase.table(
       sql`${table.popupBackgroundPosition} in ('center', 'top center', 'top left', 'top right', 'bottom center', 'bottom left', 'bottom right', 'left center', 'right center')`,
     ),
     check(
-      'app_announcement_popup_background_required_chk',
-      sql`${table.showAsPopup} = false or btrim(coalesce(${table.popupBackgroundImage}, '')) <> ''`,
-    ),
-    check(
       'app_announcement_view_count_non_negative_chk',
       sql`${table.viewCount} >= 0`,
     ),
