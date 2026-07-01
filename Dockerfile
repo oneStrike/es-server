@@ -90,6 +90,7 @@ RUN apk add --no-cache dumb-init tzdata && \
 
 COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=deps --chown=nestjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nestjs:nodejs /app/tsconfig.json ./tsconfig.json
 COPY --from=builder --chown=nestjs:nodejs /app/db ./db
 COPY --from=builder --chown=nestjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/${APP_TYPE}-api/ ./
