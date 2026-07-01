@@ -609,8 +609,8 @@ export class TaskExecutionService extends TaskServiceSupport {
       this.getTaskInstanceStepViewMap(instanceIds),
     ])
 
-    return {
-      list: rows.map((item) => ({
+    return toPageResult(
+      rows.map((item) => ({
         id: item.instance.id,
         createdAt: item.instance.createdAt,
         updatedAt: item.instance.updatedAt,
@@ -639,10 +639,9 @@ export class TaskExecutionService extends TaskServiceSupport {
             )
           : null,
       })),
-      total: Number(totalRows[0]?.count ?? 0),
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-    }
+      Number(totalRows[0]?.count ?? 0),
+      page,
+    )
   }
 
   // 分页查询对账页。
@@ -737,8 +736,8 @@ export class TaskExecutionService extends TaskServiceSupport {
         this.getTaskUniqueFactSummaryMap(reconciliationInstances),
       ])
 
-    return {
-      list: rows.map((item) => ({
+    return toPageResult(
+      rows.map((item) => ({
         id: item.instance.id,
         createdAt: item.instance.createdAt,
         updatedAt: item.instance.updatedAt,
@@ -769,10 +768,9 @@ export class TaskExecutionService extends TaskServiceSupport {
         latestEvent: latestEventMap.get(item.instance.id) ?? null,
         uniqueFacts: uniqueFactMap.get(item.instance.id) ?? [],
       })),
-      total: Number(totalRows[0]?.count ?? 0),
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-    }
+      Number(totalRows[0]?.count ?? 0),
+      page,
+    )
   }
 
   // 对账页的“待补偿”需与批量补偿扫描保持同一口径，包含缺失结算事实的坏链路。

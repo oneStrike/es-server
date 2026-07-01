@@ -332,33 +332,36 @@ export class UserService {
 
   // 将数据库用户实体映射为安全的对外用户对象。
   // 运行时明确排除 deletedAt 等内部审计字段，避免响应泄露只靠 Swagger 隐藏兜底。
+  // 排除敏感/内部字段：password、登录地理信息（lastLoginGeoCountry/Province/City/Isp）、deletedAt。
   mapBaseUser(
     user: AppUserSelect,
     growth?: UserGrowthSnapshot,
   ): AppUserResponseDto {
+    const {
+      password,
+      lastLoginGeoCountry,
+      lastLoginGeoProvince,
+      lastLoginGeoCity,
+      lastLoginGeoIsp,
+      deletedAt,
+      ...rest
+    } = user
     return {
-      id: user.id,
-      account: user.account,
+      ...rest,
       phoneNumber: user.phoneNumber ?? null,
       emailAddress: user.emailAddress ?? null,
       levelId: user.levelId ?? null,
-      nickname: user.nickname,
       avatarUrl: user.avatarUrl ?? null,
       profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? null,
       signature: user.signature ?? null,
       bio: user.bio ?? null,
-      isEnabled: user.isEnabled,
-      genderType: user.genderType,
       birthDate: user.birthDate ?? null,
-      points: growth?.points ?? 0,
-      experience: growth?.experience ?? 0,
-      status: user.status,
       banReason: user.banReason ?? null,
       banUntil: user.banUntil ?? null,
       lastLoginAt: user.lastLoginAt ?? null,
       lastLoginIp: user.lastLoginIp ?? null,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      points: growth?.points ?? 0,
+      experience: growth?.experience ?? 0,
     }
   }
 

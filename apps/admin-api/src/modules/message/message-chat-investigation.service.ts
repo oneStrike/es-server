@@ -4,7 +4,7 @@ import type {
 } from '@libs/message/monitor/dto/message-monitor.dto'
 import type { SQL } from 'drizzle-orm'
 import type { ChatUserSummary } from './message-chat-investigation.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 
 import { buildDateOnlyRangeInAppTimeZone, jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -132,8 +132,8 @@ export class MessageChatInvestigationService {
       membersByConversationId.set(member.conversationId, members)
     }
 
-    return {
-      list: rows.map((item) => {
+    return toPageResult(
+      rows.map((item) => {
         const peerUserId =
           membersByConversationId
             .get(item.conversationId)
@@ -160,9 +160,8 @@ export class MessageChatInvestigationService {
         }
       }),
       total,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-    }
+      page,
+    )
   }
 
   async getMessagePage(
@@ -223,8 +222,8 @@ export class MessageChatInvestigationService {
         .offset(page.offset),
     ])
 
-    return {
-      list: rows.map((item) => ({
+    return toPageResult(
+      rows.map((item) => ({
         messageId: item.id.toString(),
         conversationId: item.conversationId,
         messageSeq: item.messageSeq.toString(),
@@ -237,9 +236,8 @@ export class MessageChatInvestigationService {
         createdAt: item.createdAt,
       })),
       total,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-    }
+      page,
+    )
   }
 
   private buildConversationConditions(

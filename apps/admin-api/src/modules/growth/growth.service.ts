@@ -3,7 +3,7 @@ import type {
   GrowthConfigurableRewardEventOptionDto,
   QueryGrowthRuleEventPageDto,
 } from '@libs/growth/growth/dto/growth.dto'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 import {
   EventDefinitionConsumerEnum,
   EventDefinitionImplStatusEnum,
@@ -180,12 +180,11 @@ export class GrowthService {
       .sort((prev, next) => prev.ruleType - next.ruleType)
 
     const page = this.drizzle.buildPage(query)
-    return {
-      list: rows.slice(page.offset, page.offset + page.limit),
-      total: rows.length,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-    }
+    return toPageResult(
+      rows.slice(page.offset, page.offset + page.limit),
+      rows.length,
+      page,
+    )
   }
 
   // 获取可配置奖励事件选项列表。

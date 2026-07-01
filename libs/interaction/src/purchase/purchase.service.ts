@@ -303,19 +303,16 @@ export class PurchaseService {
           `purchase_success userId=${userId} targetType=${targetType} targetId=${targetId} originalPrice=${originalPrice} paidPrice=${paidPrice} purchaseId=${record.id}`,
         )
 
+        // 排除内部计价快照字段，返回 DTO 不暴露原始价格/支付比例。
+        const {
+          originalPrice: _originalPrice,
+          paidPrice: _paidPrice,
+          payableRate: _payableRate,
+          ...purchaseRecord
+        } = record
+
         return {
-          id: record.id,
-          targetType: record.targetType,
-          targetId: record.targetId,
-          userId: record.userId,
-          status: record.status,
-          paymentMethod: record.paymentMethod,
-          outTradeNo: record.outTradeNo,
-          discountAmount: record.discountAmount,
-          couponInstanceId: record.couponInstanceId,
-          discountSource: record.discountSource,
-          createdAt: record.createdAt,
-          updatedAt: record.updatedAt,
+          ...purchaseRecord,
           purchasePricing,
         }
       })
@@ -348,6 +345,7 @@ export class PurchaseService {
   }
 
   // 获取已购作品列表 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
+  // 使用原生 SQL：涉及跨表 JOIN + GROUP BY + COALESCE 表达式，Drizzle query builder 表达能力不足。
   async getPurchasedWorks(query: QueryPurchasedWorkCommandDto) {
     const { userId, workType, status = PurchaseStatusEnum.SUCCESS } = query
     const purchaseCreatedAt = this.buildPurchaseCreatedAtExpression()
@@ -445,6 +443,7 @@ export class PurchaseService {
   }
 
   // 获取已购章节列表 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
+  // 使用原生 SQL：涉及跨表 JOIN + GROUP BY + COALESCE 表达式，Drizzle query builder 表达能力不足。
   async getPurchasedWorkChapters(query: QueryPurchasedWorkChapterCommandDto) {
     const {
       userId,

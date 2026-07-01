@@ -5,7 +5,7 @@ import type {
 } from '@libs/message/monitor/dto/message-monitor.dto'
 import type { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto'
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 
 import { getMessageDomainEventLabel } from '@libs/message/eventing/message-event.constant'
 import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
@@ -94,8 +94,10 @@ export class MessageMonitorService {
     const domainEventDispatch = this.domainEventDispatch
     const notificationDelivery = this.notificationDelivery
     const conditions = this.buildDispatchPageConditions(query)
-    const pageIndex = this.normalizePositiveInteger(query.pageIndex, 1)
-    const pageSize = this.normalizePositiveInteger(query.pageSize, 15, 100)
+    const page = this.drizzle.buildPage(query, {
+      defaultPageSize: 15,
+      maxPageSize: 100,
+    })
     const whereClause = and(...conditions)
     const orderBySql = this.buildDispatchOrderBy(
       query.orderBy?.trim()
@@ -138,11 +140,11 @@ export class MessageMonitorService {
       )
       .where(whereClause)
       .orderBy(...orderBySql)
-      .limit(pageSize)
-      .offset((pageIndex - 1) * pageSize)
+      .limit(page.limit)
+      .offset(page.offset)
 
-    return {
-      list: rows.map((item) => ({
+    return toPageResult(
+      rows.map((item) => ({
         ...item,
         dispatchId: item.dispatchId.toString(),
         eventId: item.eventId.toString(),
@@ -150,14 +152,12 @@ export class MessageMonitorService {
         eventLabel: getMessageDomainEventLabel(item.eventKey),
         domain: item.domain ?? '',
         categoryKey: item.categoryKey ?? null,
-        dispatchStatus: item.dispatchStatus,
         deliveryStatus: item.deliveryStatus ?? null,
         lastError: this.sanitizeDiagnosticText(item.lastError),
       })),
-      total: Number(totalRow?.count ?? 0),
-      pageIndex,
-      pageSize,
-    }
+      Number(totalRow?.count ?? 0),
+      page,
+    )
   }
 
   async retryNotificationDelivery(
@@ -428,21 +428,6 @@ export class MessageMonitorService {
       throw new BadRequestException('重试原因至少 5 个字符')
     }
     return normalized.slice(0, 200)
-  }
-
-  // 规整分页正整数，非法值回落到默认值。
-  private normalizePositiveInteger(
-    value: number | undefined,
-    defaultValue: number,
-    maxValue?: number,
-  ): number {
-    if (!Number.isInteger(value) || Number(value) <= 0) {
-      return defaultValue
-    }
-    if (maxValue === undefined) {
-      return Number(value)
-    }
-    return Math.min(Number(value), maxValue)
   }
 
   // 计算四位小数比率，分母为空时返回 0。

@@ -9,11 +9,11 @@ import type {
 } from '../eventing/message-event.type'
 import type { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import type { MessageNotificationCategoryKey } from './notification.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, toPageResult } from '@db/core'
 
 import { buildDateOnlyRangeInAppTimeZone, jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, lt } from 'drizzle-orm'
 import {
   getMessageDomainEventDefinition,
   getMessageDomainEventLabel,
@@ -198,64 +198,52 @@ export class MessageNotificationDeliveryService {
       conditions.push(lt(this.notificationDelivery.updatedAt, dateRange.lt))
     }
 
-    const pageIndex =
-      Number.isInteger(query.pageIndex) && Number(query.pageIndex) > 0
-        ? Number(query.pageIndex)
-        : 1
-    const pageSize =
-      Number.isInteger(query.pageSize) && Number(query.pageSize) > 0
-        ? Math.min(Number(query.pageSize), 100)
-        : 15
+    const page = this.drizzle.buildPage(query, {
+      defaultPageSize: 15,
+      maxPageSize: 100,
+    })
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined
-
-    const [totalRow] = await this.db
-      .select({ count: sql<number>`COUNT(*)::int` })
-      .from(this.notificationDelivery)
-      .where(whereClause)
-
     const orderBySql = this.buildDeliveryOrderBy(
       query.orderBy?.trim()
         ? query.orderBy
         : [{ updatedAt: 'desc' as const }, { id: 'desc' as const }],
     )
-    const rows = await this.db
-      .select()
-      .from(this.notificationDelivery)
-      .where(whereClause)
-      .orderBy(...orderBySql)
-      .limit(pageSize)
-      .offset((pageIndex - 1) * pageSize)
 
-    return {
-      list: rows.map((item) => {
-        const { instanceId, ...rest } = item
-        return {
-          ...rest,
-          instanceId,
-          eventId: item.eventId.toString(),
-          dispatchId: item.dispatchId.toString(),
-          eventLabel: getMessageDomainEventLabel(item.eventKey),
-          status: item.status,
-          failureReason: this.sanitizeDiagnosticText(item.failureReason),
-          fallbackReason: this.sanitizeDiagnosticText(item.fallbackReason),
-          categoryLabel:
-            item.categoryKey &&
-            MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(
-              item.categoryKey as MessageNotificationCategoryKey,
-            )
-              ? getMessageNotificationCategoryLabel(
-                  item.categoryKey as MessageNotificationCategoryKey,
-                )
-              : null,
-          statusLabel: getMessageNotificationDispatchStatusLabel(
-            item.status,
-          ),
-        }
-      }),
-      total: Number(totalRow?.count ?? 0),
-      pageIndex,
-      pageSize,
-    }
+    const [total, rows] = await Promise.all([
+      this.db.$count(this.notificationDelivery, whereClause),
+      this.db
+        .select()
+        .from(this.notificationDelivery)
+        .where(whereClause)
+        .orderBy(...orderBySql)
+        .limit(page.limit)
+        .offset(page.offset),
+    ])
+
+    return toPageResult(
+      rows.map((item) => ({
+        ...item,
+        eventId: item.eventId.toString(),
+        dispatchId: item.dispatchId.toString(),
+        eventLabel: getMessageDomainEventLabel(item.eventKey),
+        failureReason: this.sanitizeDiagnosticText(item.failureReason),
+        fallbackReason: this.sanitizeDiagnosticText(item.fallbackReason),
+        categoryLabel:
+          item.categoryKey &&
+          MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(
+            item.categoryKey as MessageNotificationCategoryKey,
+          )
+            ? getMessageNotificationCategoryLabel(
+                item.categoryKey as MessageNotificationCategoryKey,
+              )
+            : null,
+        statusLabel: getMessageNotificationDispatchStatusLabel(
+          item.status,
+        ),
+      })),
+      total,
+      page,
+    )
   }
 
   private async upsertDeliveryRecord(input: {

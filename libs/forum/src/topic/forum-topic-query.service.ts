@@ -1087,11 +1087,10 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       this.db.$count(this.forumTopicTable, where),
     ])
 
-    return {
-      list: await this.hydrateAdminTopicPageItems(list),
+    return toPageResult(
+      await this.hydrateAdminTopicPageItems(list),
       total,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-    }
+      page,
+    )
   }
 }

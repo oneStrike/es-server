@@ -641,6 +641,7 @@ export class AppAnnouncementService {
 
   private buildAnnouncementResponseSelect() {
     const {
+      // 内部投递生命周期标记只用于服务端调度，不暴露给 APP；排除后重命名部分字段用于响应。
       notificationEndBoundaryAt,
       notificationFanoutDesiredEventKey,
       notificationFanoutLastError,
@@ -661,6 +662,7 @@ export class AppAnnouncementService {
 
   private buildPublicAnnouncementDetailSelect() {
     const {
+      // 内部投递生命周期标记只用于服务端调度，不暴露给 APP。
       notificationEndBoundaryAt,
       notificationFanoutDesiredEventKey,
       notificationFanoutLastError,

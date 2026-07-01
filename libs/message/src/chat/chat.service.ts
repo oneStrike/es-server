@@ -781,6 +781,7 @@ export class MessageChatService {
               'Conversation not found',
             )
           }
+          // 使用 PostgreSQL advisory lock 防止同一会话并发发送消息产生序号空洞；Drizzle 不支持 advisory lock 函数。
           await tx.execute(sql`SELECT pg_advisory_xact_lock(${conversationId})`)
           if (clientMessageId) {
             const existedMessage = await tx.query.chatMessage.findFirst({

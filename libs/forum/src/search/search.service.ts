@@ -604,12 +604,11 @@ export class ForumSearchService {
       )
       .slice(page.offset, page.offset + page.pageSize)
 
-    return {
-      list: mergedList,
-      total: topicResults.total + commentResults.total,
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
-    }
+    return toPageResult(
+      mergedList,
+      topicResults.total + commentResults.total,
+      page,
+    )
   }
 
   // 搜索主题。 public 模式下会叠加审核与隐藏过滤，并支持按话题引用缩小结果集。
@@ -792,11 +791,10 @@ export class ForumSearchService {
         .where(where),
     ])
 
-    return {
-      list: await this.mapCommentResults(rows, dto.keyword),
-      total: totalRows[0]?.total ?? 0,
-      pageIndex: pageParams.page.pageIndex,
-      pageSize: pageParams.page.pageSize,
-    }
+    return toPageResult(
+      await this.mapCommentResults(rows, dto.keyword),
+      totalRows[0]?.total ?? 0,
+      pageParams.page,
+    )
   }
 }

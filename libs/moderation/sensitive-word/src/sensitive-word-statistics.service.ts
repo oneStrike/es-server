@@ -599,6 +599,7 @@ export class SensitiveWordStatisticsService {
     const aggregateRows = [...aggregateMap.entries()].map(
       ([sensitiveWordId, hitCount]) => sql`(${sensitiveWordId}, ${hitCount})`,
     )
+    // 使用原生 SQL：Drizzle 不支持 FROM (VALUES ...) 批量聚合 UPDATE 语法，需要数据库原子表达式。
     await this.drizzle.withErrorHandling(() =>
       tx.execute(sql`
         UPDATE "sensitive_word" AS sw
