@@ -84,7 +84,7 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-RUN apk add --no-cache dumb-init tzdata && \
+RUN \
     addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 && \
     install -d -m 0755 -o nestjs -g nodejs \
@@ -104,7 +104,6 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/${APP_TYPE}-api/ ./
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
 CMD ["node", "main.js"]
