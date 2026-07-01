@@ -103,6 +103,12 @@ export interface WorkflowRetryColumns {
   lastRetryDiagnostic: WorkflowErrorContext | null
 }
 
+/** 按错误码构造错误事实时的覆盖字段。 */
+export type WorkflowErrorFactsOverrides = Omit<
+  WorkflowErrorFactsInput,
+  'code' | 'context'
+>
+
 /**
  * 对外展示的工作流错误视图。
  */

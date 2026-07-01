@@ -16,8 +16,10 @@ import type {
 } from './check-in.type'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { getDateOnlyPartsInAppTimeZone } from '@libs/platform/utils'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
   CheckInMakeupPeriodTypeEnum,
@@ -51,17 +53,17 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       if (options.allowEmpty) {
         return null
       }
-      throw new BadRequestException('奖励项不能为空')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '奖励项不能为空')
     }
 
     if (!Array.isArray(value)) {
-      throw new BadRequestException('奖励项非法')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '奖励项非法')
     }
     if (value.length === 0) {
       if (options.allowEmpty) {
         return null
       }
-      throw new BadRequestException('奖励项不能为空')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '奖励项不能为空')
     }
 
     const rewardItems = value.map((item, index) =>
@@ -71,7 +73,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
     for (const rewardItem of rewardItems) {
       const dedupeKey = `${rewardItem.assetType}:${rewardItem.assetKey ?? ''}`
       if (dedupeKeySet.has(dedupeKey)) {
-        throw new BadRequestException(
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
           `奖励项重复：assetType=${rewardItem.assetType} assetKey=${rewardItem.assetKey ?? ''}`,
         )
       }
@@ -108,7 +110,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       normalizedRules.map((rule) => rule.rewardDate),
     )
     if (duplicateRewardDate) {
-      throw new BadRequestException(`具体日期奖励重复：${duplicateRewardDate}`)
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `具体日期奖励重复：${duplicateRewardDate}`)
     }
 
     return normalizedRules.sort((left, right) =>
@@ -141,7 +143,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       normalizedRules.map((item) => item.rewardDate),
     )
     if (duplicateRewardDate) {
-      throw new BadRequestException(`具体日期奖励重复：${duplicateRewardDate}`)
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `具体日期奖励重复：${duplicateRewardDate}`)
     }
 
     return normalizedRules.sort((left, right) =>
@@ -168,7 +170,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
 
       if (periodType === CheckInMakeupPeriodTypeEnum.WEEKLY) {
         if (patternType !== CheckInPatternRewardRuleTypeEnum.WEEKDAY) {
-          throw new BadRequestException('按周模式下仅支持星期几奖励规则')
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '按周模式下仅支持星期几奖励规则')
         }
         if (
           weekday === null ||
@@ -176,10 +178,10 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           weekday < 1 ||
           weekday > 7
         ) {
-          throw new BadRequestException('weekday 必须是 1..7')
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 'weekday 必须是 1..7')
         }
         if (monthDay !== null) {
-          throw new BadRequestException('按周规则不能配置 monthDay')
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '按周规则不能配置 monthDay')
         }
       }
 
@@ -188,7 +190,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           patternType !== CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
           patternType !== CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY
         ) {
-          throw new BadRequestException(
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
             '按月模式下仅支持按月日期或月末奖励规则',
           )
         }
@@ -199,19 +201,19 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
             monthDay < 1 ||
             monthDay > 31)
         ) {
-          throw new BadRequestException('monthDay 必须是 1..31')
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 'monthDay 必须是 1..31')
         }
         if (
           patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
           weekday !== null
         ) {
-          throw new BadRequestException('按月日期规则不能配置 weekday')
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '按月日期规则不能配置 weekday')
         }
         if (
           patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
           (weekday !== null || monthDay !== null)
         ) {
-          throw new BadRequestException(
+          throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
             '按月最后一天规则不能配置 weekday 或 monthDay',
           )
         }
@@ -235,7 +237,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
         normalizedRules.map((rule) => String(rule.weekday)),
       )
       if (duplicateWeekday) {
-        throw new BadRequestException(
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
           `周期模式奖励规则重复：按周星期=${duplicateWeekday}`,
         )
       }
@@ -249,7 +251,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           .map((rule) => String(rule.monthDay)),
       )
       if (duplicateMonthDay) {
-        throw new BadRequestException(
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
           `周期模式奖励规则重复：按月日期=${duplicateMonthDay}`,
         )
       }
@@ -259,7 +261,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
           rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
       ).length
       if (monthLastDayRuleCount > 1) {
-        throw new BadRequestException('周期模式奖励规则重复：按月最后一天')
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '周期模式奖励规则重复：按月最后一天')
       }
     }
 
@@ -272,7 +274,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
   normalizeStreakRewardRules(rules?: CheckInStreakRewardRuleInput[]) {
     const normalizedRules = (rules ?? []).map((rule) => {
       if (!Number.isInteger(rule.streakDays) || rule.streakDays <= 0) {
-        throw new BadRequestException('连续奖励阈值必须为正整数')
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '连续奖励阈值必须为正整数')
       }
       const rawRuleCode =
         'ruleCode' in rule && typeof rule.ruleCode === 'string'
@@ -299,7 +301,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       normalizedRules.map((rule) => rule.ruleCode),
     )
     if (duplicateRuleCode) {
-      throw new BadRequestException(
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
         `连续奖励规则编码重复：${duplicateRuleCode}`,
       )
     }
@@ -308,7 +310,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       normalizedRules.map((rule) => String(rule.streakDays)),
     )
     if (duplicateStreakDays) {
-      throw new BadRequestException(`连续奖励阈值重复：${duplicateStreakDays}`)
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `连续奖励阈值重复：${duplicateStreakDays}`)
     }
 
     return normalizedRules.sort((left, right) => {
@@ -441,14 +443,14 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
   private parseRewardItem(value: unknown, index: number) {
     const record = this.asRecord(value)
     if (!record) {
-      throw new BadRequestException(`rewardItems[${index}] 必须是对象`)
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `rewardItems[${index}] 必须是对象`)
     }
 
     const unsupportedKeys = Object.keys(record).filter(
       (key) => !['assetType', 'assetKey', 'amount', 'iconUrl'].includes(key),
     )
     if (unsupportedKeys.length > 0) {
-      throw new BadRequestException(
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
         `rewardItems[${index}] 暂不支持字段：${unsupportedKeys.join(', ')}`,
       )
     }
@@ -459,20 +461,20 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       (assetType !== GrowthRewardRuleAssetTypeEnum.POINTS &&
         assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE)
     ) {
-      throw new BadRequestException(
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
         `rewardItems[${index}].assetType 仅支持 1=积分、2=经验`,
       )
     }
 
     const amount = Number(record.amount)
     if (!Number.isInteger(amount) || amount <= 0) {
-      throw new BadRequestException(`rewardItems[${index}].amount 必须是正整数`)
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, `rewardItems[${index}].amount 必须是正整数`)
     }
 
     const assetKey =
       typeof record.assetKey === 'string' ? record.assetKey.trim() : ''
     if (assetKey !== '') {
-      throw new BadRequestException(
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, 
         `rewardItems[${index}].assetKey 当前必须为空字符串`,
       )
     }

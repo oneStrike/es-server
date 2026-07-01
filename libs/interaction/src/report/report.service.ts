@@ -20,7 +20,7 @@ import { InteractionSummaryReadService } from '@libs/interaction/summary/interac
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, desc, eq, exists, gte, inArray, isNull, lt } from 'drizzle-orm'
 import {
   CreateReportCommandDto,
@@ -115,7 +115,7 @@ export class ReportService {
   private getResolver(targetType: ReportTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
-      throw new BadRequestException('不支持的举报目标类型')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '不支持的举报目标类型')
     }
     return resolver
   }
@@ -708,17 +708,17 @@ export class ReportService {
 
   private ensureHandleContract(input: HandleAdminReportCommandDto) {
     if (input.targetAction === undefined || input.targetAction === null) {
-      throw new BadRequestException('必须选择目标处置动作')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '必须选择目标处置动作')
     }
     if (input.handlerId === undefined || input.handlerId === null) {
-      throw new BadRequestException('缺少处理人')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '缺少处理人')
     }
 
     if (
       input.status === ReportStatusEnum.REJECTED &&
       input.targetAction !== ReportDispositionActionEnum.NO_ACTION_REQUIRED
     ) {
-      throw new BadRequestException('驳回举报时不能处置目标')
+      throw new BusinessException(BusinessErrorCode.STATE_CONFLICT, '驳回举报时不能处置目标')
     }
 
     const reason = input.targetActionReason?.trim()
@@ -727,14 +727,14 @@ export class ReportService {
       input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED &&
       !reason
     ) {
-      throw new BadRequestException('有效举报无需处置时必须填写原因')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '有效举报无需处置时必须填写原因')
     }
 
     if (
       input.targetAction !== ReportDispositionActionEnum.NO_ACTION_REQUIRED &&
       !reason
     ) {
-      throw new BadRequestException('目标处置原因不能为空')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '目标处置原因不能为空')
     }
   }
 
@@ -779,10 +779,10 @@ export class ReportService {
       ) {
         return
       }
-      throw new BadRequestException('评论举报不支持该目标处置动作')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '评论举报不支持该目标处置动作')
     }
 
-    throw new BadRequestException('该举报目标类型暂不支持目标写入处置')
+    throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '该举报目标类型暂不支持目标写入处置')
   }
 
   private resolveTargetActionStatus(input: HandleAdminReportCommandDto) {
@@ -805,7 +805,7 @@ export class ReportService {
 
     const resolver = this.getResolver(report.targetType)
     if (!resolver.applyDisposition) {
-      throw new BadRequestException('该举报目标类型暂不支持目标写入处置')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '该举报目标类型暂不支持目标写入处置')
     }
 
     const disposition = await resolver.applyDisposition(tx, {
@@ -978,7 +978,7 @@ export class ReportService {
       nextStatus !== ReportStatusEnum.RESOLVED &&
       nextStatus !== ReportStatusEnum.REJECTED
     ) {
-      throw new BadRequestException('举报处理结果只允许为已解决或已驳回')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '举报处理结果只允许为已解决或已驳回')
     }
 
     if (

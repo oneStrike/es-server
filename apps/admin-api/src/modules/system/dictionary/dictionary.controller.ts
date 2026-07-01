@@ -138,13 +138,13 @@ export class DictionaryController {
   }
 
   @Post('item/update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '启用禁用字典项',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新字典项状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+      content: '更新字典项状态',
+    },
   })
   async enableItem(@Body() query: UpdateEnabledStatusDto) {
     return this.libDictionaryService.updateDictionaryItemStatus(query)
@@ -162,17 +162,13 @@ export class DictionaryController {
     return this.libDictionaryService.deleteDictionaryItem(query)
   }
 
-  /**
-   * 拖拽排序
-   */
   @Post('item/swap-sort-order')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '字典项交换排序',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '交换字典项排序',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async itemOrder(@Body() body: DragReorderDto) {
     return this.libDictionaryService.updateDictionaryItemSort(body)

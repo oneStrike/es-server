@@ -150,7 +150,7 @@ async function getOpenAPIDocument(
 }
 
 async function publishToApifox(
-  openAPIDoc: any,
+  openAPIDoc: Record<string, unknown>,
   appConfig: AppConfig,
 ): Promise<void> {
   try {

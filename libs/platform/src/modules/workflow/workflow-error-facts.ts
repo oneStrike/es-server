@@ -4,6 +4,7 @@ import type {
   WorkflowErrorDiagnosticInput,
   WorkflowErrorFacts,
   WorkflowErrorFactsInput,
+  WorkflowErrorFactsOverrides,
   WorkflowErrorRegistryEntry,
   WorkflowErrorView,
   WorkflowLastErrorColumns,
@@ -18,6 +19,7 @@ export type {
   WorkflowErrorDomain,
   WorkflowErrorFacts,
   WorkflowErrorFactsInput,
+  WorkflowErrorFactsOverrides,
   WorkflowErrorRegistryEntry,
   WorkflowErrorSeverity,
   WorkflowErrorView,
@@ -307,7 +309,7 @@ export function createWorkflowErrorFacts(
 export function createWorkflowErrorFactsByCode(
   code: WorkflowErrorCodeEnum,
   context?: WorkflowErrorContext | null,
-  overrides: Omit<WorkflowErrorFactsInput, 'code' | 'context'> = {},
+  overrides: WorkflowErrorFactsOverrides = {},
 ) {
   return createWorkflowErrorFacts({
     ...overrides,

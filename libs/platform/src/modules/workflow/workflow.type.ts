@@ -288,3 +288,9 @@ export interface WorkflowAttemptCreationResult {
   attemptNo: number
   triggerType: WorkflowAttemptTriggerTypeEnum
 }
+
+/** 构建 attempt completion WHERE 条件所需的输入字段子集。 */
+export type AttemptCompletionWhereInput = Pick<
+  CompleteWorkflowAttemptInput,
+  'completionOwnerClaimedBy'
+>

@@ -66,9 +66,10 @@ export class BaseAgreementDto extends BaseDto {
   @DateProperty({
     description: '发布时间',
     example: '2024-01-01T00:00:00.000Z',
-    required: false,
+    nullable: true,
+    validation: false,
   })
-  publishedAt?: Date | null
+  publishedAt!: Date | null
 }
 
 export class CreateAgreementDto extends OmitType(BaseAgreementDto, [

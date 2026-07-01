@@ -89,13 +89,13 @@ export class AdminUserController {
 
   // 修改当前管理员密码。
   @Post('password/change')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '修改密码',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '用户修改账户密码',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+      content: '用户修改账户密码',
+    },
   })
   async changePassword(
     @Body() body: ChangePasswordDto,

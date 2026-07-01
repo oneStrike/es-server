@@ -6,6 +6,7 @@ import type {
 import type { SQL } from 'drizzle-orm'
 import type {
   AppendWorkflowEventInput,
+  AttemptCompletionWhereInput,
   CompleteCurrentWorkflowAttemptInput,
   CompleteCurrentWorkflowAttemptWithDelayedRetryInput,
   CompleteWorkflowAttemptByAttemptIdInput,
@@ -1946,7 +1947,7 @@ export class WorkflowService {
   // 构建最终 completion 写入条件；context-bound completion 必须在 UPDATE 内再次证明 ownership。
   private buildAttemptCompletionWhere(
     attempt: WorkflowAttemptSelect,
-    input: Pick<CompleteWorkflowAttemptInput, 'completionOwnerClaimedBy'>,
+    input: AttemptCompletionWhereInput,
     now: Date,
   ) {
     const conditions = [eq(this.workflowAttempt.id, attempt.id)]

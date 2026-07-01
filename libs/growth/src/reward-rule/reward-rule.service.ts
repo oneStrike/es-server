@@ -4,7 +4,7 @@ import { DrizzleService, toPageResult } from '@db/core'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNotNull, isNull } from 'drizzle-orm'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
@@ -180,34 +180,34 @@ export class GrowthRewardRuleService {
       dto.type !== undefined &&
       !Object.values(GrowthRuleTypeEnum).includes(dto.type)
     ) {
-      throw new BadRequestException('成长奖励规则类型无效')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则类型无效')
     }
     if (
       dto.assetType !== undefined &&
       !Object.values(GrowthRewardRuleAssetTypeEnum).includes(dto.assetType)
     ) {
-      throw new BadRequestException('成长奖励资产类型无效')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励资产类型无效')
     }
     if (dto.delta !== undefined) {
       if (!Number.isInteger(dto.delta) || dto.delta <= 0) {
-        throw new BadRequestException('成长奖励规则 delta 必须是正整数')
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则 delta 必须是正整数')
       }
     }
     if (dto.dailyLimit !== undefined) {
       if (!Number.isInteger(dto.dailyLimit) || dto.dailyLimit < 0) {
-        throw new BadRequestException('成长奖励规则每日上限必须是大于等于 0 的整数')
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则每日上限必须是大于等于 0 的整数')
       }
     }
     if (dto.totalLimit !== undefined) {
       if (!Number.isInteger(dto.totalLimit) || dto.totalLimit < 0) {
-        throw new BadRequestException('成长奖励规则总上限必须是大于等于 0 的整数')
+        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则总上限必须是大于等于 0 的整数')
       }
     }
     if (
       dto.assetKey !== undefined &&
       (typeof dto.assetKey !== 'string' || dto.assetKey.length > 64)
     ) {
-      throw new BadRequestException('成长奖励规则 assetKey 非法')
+      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则 assetKey 非法')
     }
 
     if (dto.assetType === undefined) {
@@ -222,7 +222,8 @@ export class GrowthRewardRuleService {
       )
       && normalizedAssetKey !== ''
     ) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '积分/经验成长奖励规则 assetKey 必须为空字符串',
       )
     }
@@ -235,7 +236,8 @@ export class GrowthRewardRuleService {
       )
       && normalizedAssetKey === ''
     ) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '扩展成长奖励规则必须提供非空 assetKey',
       )
     }

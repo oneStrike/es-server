@@ -115,13 +115,13 @@ export class NovelChapterController {
   }
 
   @Post('swap-sort-order')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '交换章节序号',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '交换小说章节序号',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+      content: '交换小说章节序号',
+    },
   })
   async swapSortOrder(@Body() body: DragReorderDto) {
     return this.workChapterService.swapChapterNumbers(body, WorkTypeEnum.NOVEL)
