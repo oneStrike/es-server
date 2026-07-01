@@ -17,7 +17,6 @@ import { DrizzleService } from '@db/core'
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import {
   AuditRoleEnum,
-  AuditStatusEnum,
   CommentLevelEnum,
   SceneTypeEnum,
 } from '@libs/platform/constant'
@@ -244,7 +243,7 @@ export class InteractionSummaryReadService {
         username: admin.username,
         nickname: admin.username,
         avatar: admin.avatar ?? null,
-        roleName: this.getAdminUserRoleName(admin.role as AdminUserRoleEnum),
+        roleName: this.getAdminUserRoleName(admin.role),
       })
     }
 
@@ -325,7 +324,7 @@ export class InteractionSummaryReadService {
         userAvatarUrl: user?.avatarUrl ?? null,
         userStatus: user?.status ?? null,
         userIsEnabled: user?.isEnabled ?? null,
-        auditStatus: comment.auditStatus as AuditStatusEnum,
+        auditStatus: comment.auditStatus,
         isHidden: comment.isHidden,
       })
     }
@@ -368,7 +367,7 @@ export class InteractionSummaryReadService {
           ? CommentLevelEnum.REPLY
           : CommentLevelEnum.ROOT,
         isHidden: comment.isHidden,
-        auditStatus: comment.auditStatus as AuditStatusEnum,
+        auditStatus: comment.auditStatus,
         userNickname: user?.nickname ?? null,
         userAvatarUrl: user?.avatarUrl ?? null,
         userStatus: user?.status ?? null,
@@ -568,7 +567,7 @@ export class InteractionSummaryReadService {
           sectionName: options.detail ? (row.sectionName ?? null) : null,
           isHidden: options.detail ? row.isHidden : null,
           auditStatus: options.detail
-            ? (row.auditStatus as AuditStatusEnum)
+            ? (row.auditStatus)
             : null,
           deletedAt: options.detail ? (row.deletedAt ?? null) : null,
         },
@@ -731,7 +730,7 @@ export class InteractionSummaryReadService {
           authorAvatarUrl: user?.avatarUrl ?? null,
           isHidden: options.detail ? row.isHidden : null,
           auditStatus: options.detail
-            ? (row.auditStatus as AuditStatusEnum)
+            ? (row.auditStatus)
             : null,
           isEnabled: null,
           status: null,
@@ -792,7 +791,7 @@ export class InteractionSummaryReadService {
           authorAvatarUrl: user?.avatarUrl ?? null,
           isHidden: options.detail ? row.isHidden : null,
           auditStatus: options.detail
-            ? (row.auditStatus as AuditStatusEnum)
+            ? (row.auditStatus)
             : null,
           isEnabled: null,
           status: null,

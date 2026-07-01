@@ -16,7 +16,7 @@ import {
   WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
   WorkflowTypeOptionsResponseDto,
-} from '@libs/platform/modules/workflow/dto/workflow.dto'
+} from '@libs/platform/modules/workflow/dto'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

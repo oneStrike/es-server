@@ -2,7 +2,7 @@ import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 
 /**
  * 浏览权限服务

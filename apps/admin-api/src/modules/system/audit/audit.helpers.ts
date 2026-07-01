@@ -13,8 +13,8 @@ export function normalizeAuditActionType(
     return null
   }
 
-  if (typeof actionType === 'number' && AUDIT_ACTION_TYPES.has(actionType as AuditActionTypeEnum)) {
-    return actionType as AuditActionTypeEnum
+  if (typeof actionType === 'number' && AUDIT_ACTION_TYPES.has(actionType)) {
+    return actionType
   }
   return null
 }

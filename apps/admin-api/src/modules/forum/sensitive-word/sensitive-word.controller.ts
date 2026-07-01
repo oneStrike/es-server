@@ -1,5 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   CreateSensitiveWordDto,

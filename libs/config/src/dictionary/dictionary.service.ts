@@ -3,8 +3,7 @@ import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
-import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'

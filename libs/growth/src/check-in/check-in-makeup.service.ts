@@ -96,7 +96,7 @@ export class CheckInMakeupService extends CheckInServiceSupport {
   ): Promise<CheckInMakeupAccountView> {
     const periodType = Number(
       config.makeupPeriodType,
-    ) as CheckInMakeupPeriodTypeEnum
+    )
     const window = this.buildMakeupWindow(today, periodType)
     const currentAccount = await this.getCurrentMakeupAccount(
       userId,
@@ -136,7 +136,7 @@ export class CheckInMakeupService extends CheckInServiceSupport {
   ) {
     const periodType = Number(
       config.makeupPeriodType,
-    ) as CheckInMakeupPeriodTypeEnum
+    )
     const window = this.buildMakeupWindow(today, periodType)
     const existing = await this.getCurrentMakeupAccount(
       userId,
@@ -371,7 +371,7 @@ export class CheckInMakeupService extends CheckInServiceSupport {
     )
     const window = this.buildMakeupWindow(
       today,
-      config.makeupPeriodType as CheckInMakeupPeriodTypeEnum,
+      config.makeupPeriodType,
     )
 
     const [fact] = await tx

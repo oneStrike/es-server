@@ -8,7 +8,7 @@ import {
 } from '@libs/interaction/wallet/dto/wallet.dto'
 import { WalletService } from '@libs/interaction/wallet/wallet.service'
 import { ApiPageDoc } from '@libs/platform/decorators'
-import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
+import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

@@ -241,7 +241,7 @@ export class DomainEventDispatchService {
 
     for (const dispatch of staleRows) {
       await this.markDispatchFailed(
-        dispatch as DomainEventDispatchRecord,
+        dispatch,
         new Error('domain event dispatch processing timeout recovered'),
       )
     }

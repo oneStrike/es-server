@@ -69,7 +69,7 @@ export class PurchaseService {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
     }
-    const rows = (result as { rows?: T[] | null }).rows
+    const rows = (result).rows
     return Array.isArray(rows) ? rows : []
   }
 

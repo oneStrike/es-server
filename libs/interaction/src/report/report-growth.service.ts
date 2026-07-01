@@ -67,8 +67,8 @@ export class ReportGrowthService {
     }
 
     return {
-      reportStatus: reportStatus as ReportStatusEnum,
-      reportedTargetType: reportedTargetType as ReportTargetTypeEnum,
+      reportStatus,
+      reportedTargetType,
       reportedTargetId,
     }
   }

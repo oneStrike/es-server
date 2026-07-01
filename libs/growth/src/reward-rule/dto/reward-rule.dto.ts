@@ -4,8 +4,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,

@@ -7,7 +7,7 @@ import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-r
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { ArrayProperty, BooleanProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 

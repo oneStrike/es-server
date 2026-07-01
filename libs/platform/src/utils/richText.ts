@@ -124,7 +124,7 @@ function renderPlainTextFromJsonRichText(value: JsonValue): string {
   const fragments: string[] = []
   for (const child of Object.values(value)) {
     if (Array.isArray(child) || (child && typeof child === 'object')) {
-      const fragment = renderPlainTextFromJsonRichText(child as JsonValue)
+      const fragment = renderPlainTextFromJsonRichText(child)
       if (fragment) {
         fragments.push(fragment)
       }

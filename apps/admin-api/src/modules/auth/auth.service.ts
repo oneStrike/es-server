@@ -3,7 +3,7 @@ import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
 import { AuthSessionService } from '@libs/identity/session.service'
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
-import { RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto'
+import { RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto'
 import { AuthConstants, AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
 

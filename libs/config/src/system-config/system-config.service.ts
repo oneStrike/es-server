@@ -457,7 +457,7 @@ export class SystemConfigService implements OnModuleInit {
   // 将持久化快照与默认配置合并，补齐缺失节点。
   private mergeWithDefaults(config: Record<string, unknown>) {
     return this.deepMerge(
-      this.cloneConfig(DEFAULT_CONFIG) as Record<string, unknown>,
+      this.cloneConfig(DEFAULT_CONFIG),
       this.removeNullValues(this.cloneConfig(config)),
     )
   }

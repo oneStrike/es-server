@@ -101,10 +101,10 @@ export function toWorkflowErrorObject(error: unknown) {
 export function normalizeWorkflowJobStatus(status: number) {
   if (
     Object.values(WorkflowJobStatusEnum).includes(
-      status as WorkflowJobStatusEnum,
+      status,
     )
   ) {
-    return status as WorkflowJobStatusEnum
+    return status
   }
   throw new BusinessException(
     BusinessErrorCode.STATE_CONFLICT,
@@ -115,10 +115,10 @@ export function normalizeWorkflowJobStatus(status: number) {
 function normalizeWorkflowAttemptStatus(status: number) {
   if (
     Object.values(WorkflowAttemptStatusEnum).includes(
-      status as WorkflowAttemptStatusEnum,
+      status,
     )
   ) {
-    return status as WorkflowAttemptStatusEnum
+    return status
   }
   throw new BusinessException(
     BusinessErrorCode.STATE_CONFLICT,

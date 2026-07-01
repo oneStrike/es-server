@@ -111,7 +111,7 @@ export class EmojiCatalogService {
   private toAssetSnapshot(row: EmojiAssetSnapshotRow) {
     return {
       id: row.id,
-      kind: row.kind as EmojiAssetKindEnum,
+      kind: row.kind,
       shortcode: row.shortcode,
       unicodeSequence: row.unicodeSequence,
       imageUrl: row.imageUrl,

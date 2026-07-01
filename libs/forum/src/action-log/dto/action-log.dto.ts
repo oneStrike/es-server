@@ -6,7 +6,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { PageDto } from '@libs/platform/dto'
 
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {

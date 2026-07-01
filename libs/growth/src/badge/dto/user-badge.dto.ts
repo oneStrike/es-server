@@ -5,7 +5,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto/base.dto'
+import { BaseDto } from '@libs/platform/dto'
 import { UserBadgeTypeEnum } from '../user-badge.constant'
 
 export class BaseUserBadgeDto extends BaseDto {

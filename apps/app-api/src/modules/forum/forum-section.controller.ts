@@ -7,7 +7,7 @@ import {
 } from '@libs/forum/section/dto/forum-section.dto'
 import { ForumSectionService } from '@libs/forum/section/forum-section.service'
 import { ApiDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

@@ -153,7 +153,7 @@ export class ComicArchiveImportService {
       contentType: ContentImportContentTypeEnum.COMIC,
       sourceType: ContentImportSourceTypeEnum.ARCHIVE_IMPORT,
       workId: input.workId,
-      sourceSnapshot: input as unknown as Record<string, unknown>,
+      sourceSnapshot: input,
       publishBoundaryStatus:
         ContentImportPublishBoundaryStatusEnum.NEEDS_MANUAL_REVIEW,
       selectedItemCount: 0,

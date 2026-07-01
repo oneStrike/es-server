@@ -15,8 +15,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { UserIdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { PageDto, UserIdDto } from '@libs/platform/dto'
 
 import {
   IntersectionType,

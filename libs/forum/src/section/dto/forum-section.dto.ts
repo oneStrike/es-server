@@ -9,9 +9,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
-import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, DragReorderDto, IdDto, PageDto } from '@libs/platform/dto'
 
 import {
   IntersectionType,

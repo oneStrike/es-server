@@ -14,7 +14,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto/base.dto'
+import { BaseDto } from '@libs/platform/dto'
 import { ApiExtraModels, PickType } from '@nestjs/swagger'
 import {
   TaskClaimModeEnum,

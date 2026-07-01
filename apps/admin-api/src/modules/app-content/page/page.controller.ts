@@ -7,7 +7,7 @@ import {
 } from '@libs/app-content/page/dto/page.dto'
 import { AppPageService } from '@libs/app-content/page/page.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, IdsDto } from '@libs/platform/dto/base.dto'
+import { IdDto, IdsDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

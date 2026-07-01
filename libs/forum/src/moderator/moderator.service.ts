@@ -305,9 +305,7 @@ export class ForumModeratorService {
     options: NormalizeModeratorScopeOptions = {},
   ): Promise<NormalizedModeratorScope> {
     const client = options.client ?? this.db
-    const roleType = (input.roleType ?? options.current?.roleType) as
-      | ForumModeratorRoleTypeEnum
-      | undefined
+    const roleType = (input.roleType ?? options.current?.roleType)
 
     if (
       roleType === undefined ||

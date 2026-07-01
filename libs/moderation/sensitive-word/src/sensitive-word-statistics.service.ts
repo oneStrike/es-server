@@ -27,10 +27,7 @@ import { QuerySensitiveWordHitLogDto } from './dto/sensitive-word.dto'
 import {
   SensitiveWordHitEntityTypeEnum,
   SensitiveWordHitLogEntityStatusEnum,
-  SensitiveWordHitOperationTypeEnum,
-  SensitiveWordLevelEnum,
   SensitiveWordLevelNames,
-  SensitiveWordTypeEnum,
   SensitiveWordTypeNames,
 } from './sensitive-word-constant'
 import {
@@ -375,11 +372,11 @@ export class SensitiveWordStatisticsService {
         sensitiveWordId: row.sensitiveWordId,
         word: row.word ?? null,
         matchedWord: row.matchedWord,
-        level: row.level as SensitiveWordLevelEnum,
-        type: row.type as SensitiveWordTypeEnum,
-        entityType: row.entityType as SensitiveWordHitEntityTypeEnum,
+        level: row.level,
+        type: row.type,
+        entityType: row.entityType,
         entityId: row.entityId,
-        operationType: row.operationType as SensitiveWordHitOperationTypeEnum,
+        operationType: row.operationType,
         entitySummary: this.buildEntitySummary(row),
         authorSummary: this.buildAuthorSummary(row),
         createdAt: row.createdAt,
@@ -477,7 +474,7 @@ export class SensitiveWordStatisticsService {
         auditStatus:
           row.topicAuditStatus === null
             ? null
-            : (row.topicAuditStatus as AuditStatusEnum),
+            : (row.topicAuditStatus),
         isHidden: row.topicIsHidden ?? null,
         targetType: null,
         targetId: null,
@@ -499,7 +496,7 @@ export class SensitiveWordStatisticsService {
       auditStatus:
         row.commentAuditStatus === null
           ? null
-          : (row.commentAuditStatus as AuditStatusEnum),
+          : (row.commentAuditStatus),
       isHidden: row.commentIsHidden ?? null,
       targetType: row.commentTargetType ?? null,
       targetId: row.commentTargetId ?? null,

@@ -18,8 +18,7 @@ import {
   DomainEventConsumerEnum,
   DomainEventDispatchStatusEnum,
 } from '@libs/platform/modules/eventing/eventing.constant'
-import { jsonParse } from '@libs/platform/utils'
-import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
+import { buildDateOnlyRangeInAppTimeZone, jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
 import { AdminUserService } from '../admin-user/admin-user.service'
@@ -508,7 +507,7 @@ export class MessageMonitorService {
       if (direction !== 'asc' && direction !== 'desc') {
         throw new BadRequestException(`排序字段 "${field}" 的排序方向无效`)
       }
-      return { [field]: direction } as Record<string, 'asc' | 'desc'>
+      return { [field]: direction }
     })
   }
 

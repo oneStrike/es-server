@@ -25,7 +25,6 @@ import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
 import { CheckInStreakService } from './check-in-streak.service'
 import {
-  CheckInMakeupPeriodTypeEnum,
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRepairTargetTypeEnum,
@@ -237,7 +236,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             )
           const window = this.checkInMakeupService.buildMakeupWindow(
             today,
-            config.makeupPeriodType as CheckInMakeupPeriodTypeEnum,
+            config.makeupPeriodType,
           )
 
           if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
@@ -255,7 +254,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             this.checkInRewardPolicyService.resolveRewardForDate(
               rewardDefinition,
               input.signDate,
-              config.makeupPeriodType as CheckInMakeupPeriodTypeEnum,
+              config.makeupPeriodType,
             )
 
           const [record] = await tx

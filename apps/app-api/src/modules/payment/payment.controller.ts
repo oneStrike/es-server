@@ -29,7 +29,7 @@ import { ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger'
 const ProviderNotifyHeaders = createParamDecorator(
   (_data: unknown, context: ExecutionContext): ProviderPaymentNotifyHeadersDto => {
     const request = context.switchToHttp().getRequest<FastifyRequest>()
-    return { raw: request.headers as Record<string, unknown> }
+    return { raw: request.headers }
   },
 )
 

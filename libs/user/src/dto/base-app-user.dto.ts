@@ -7,7 +7,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto/base.dto'
+import { BaseDto } from '@libs/platform/dto'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { IntersectionType } from '@nestjs/swagger'
 import { UserGrowthSnapshotFieldsDto } from './app-user-growth-shared.dto'

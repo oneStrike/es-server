@@ -8,8 +8,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, UserIdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto, UserIdDto } from '@libs/platform/dto'
 
 import {
   IntersectionType,

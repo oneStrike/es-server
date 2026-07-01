@@ -334,7 +334,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
         Array.isArray(config.patternRewardRules)
           ? (config.patternRewardRules as CheckInPatternRewardRuleView[])
           : [],
-        Number(config.makeupPeriodType) as CheckInMakeupPeriodTypeEnum,
+        Number(config.makeupPeriodType),
       ),
       makeupIconUrl: this.normalizeIconUrl(config.makeupIconUrl),
       rewardOverviewIconUrl: this.normalizeIconUrl(config.rewardOverviewIconUrl),
@@ -347,7 +347,7 @@ export class CheckInRewardPolicyService extends CheckInServiceSupport {
       ruleCode: rule.ruleCode,
       streakDays: rule.streakDays,
       version: rule.version,
-      status: rule.status as CheckInStreakConfigStatusEnum,
+      status: rule.status,
       publishStrategy: rule.publishStrategy,
       rewardItems: this.parseRewardItems(rule.rewardItems, {
         allowEmpty: false,

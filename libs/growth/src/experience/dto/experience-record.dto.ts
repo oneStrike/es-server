@@ -10,7 +10,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION } from '../../event-definition/event-definition.constant'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'

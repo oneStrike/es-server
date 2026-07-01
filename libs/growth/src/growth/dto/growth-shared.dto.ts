@@ -6,7 +6,7 @@ import {
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { BaseDto, UserIdDto } from '@libs/platform/dto'
 
 import {
   GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION,

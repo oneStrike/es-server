@@ -7,7 +7,7 @@ import {
 } from '@libs/growth/experience/dto/experience-record.dto'
 import { UserExperienceService } from '@libs/growth/experience/experience.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 /**

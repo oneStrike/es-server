@@ -2,7 +2,7 @@ import type {
   AuditPageRequestDto,
   CreateRequestLogDto,
   CreateRequestLogSimpleDto,
-} from '@libs/platform/modules/audit/dto/audit.dto'
+} from '@libs/platform/modules/audit/dto'
 import type { FastifyRequest } from 'fastify'
 import type { RequestLogInsert } from './audit.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'

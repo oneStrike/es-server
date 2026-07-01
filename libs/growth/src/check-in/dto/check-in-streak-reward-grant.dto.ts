@@ -6,7 +6,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 
-import { BaseDto } from '@libs/platform/dto/base.dto'
+import { BaseDto } from '@libs/platform/dto'
 import { ApiExtraModels, OmitType } from '@nestjs/swagger'
 import { CheckInRewardSettlementSummaryDto } from './check-in-record.dto'
 import { CheckInRewardItemDto } from './check-in-reward-item.dto'

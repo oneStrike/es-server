@@ -1,8 +1,7 @@
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { BooleanProperty, DateProperty, EnumProperty, StringProperty } from '@libs/platform/decorators';
 
-import { BaseDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 
 import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
 

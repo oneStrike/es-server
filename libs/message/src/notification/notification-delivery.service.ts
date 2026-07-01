@@ -11,8 +11,7 @@ import type { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import type { MessageNotificationCategoryKey } from './notification.type'
 import { DrizzleService } from '@db/core'
 
-import { jsonParse } from '@libs/platform/utils'
-import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
+import { buildDateOnlyRangeInAppTimeZone, jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import {

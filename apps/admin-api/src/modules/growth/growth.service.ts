@@ -11,7 +11,6 @@ import {
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { GrowthRewardSettlementRetryService } from '@libs/growth/growth-reward/growth-reward-settlement-retry.service'
 import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
-import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import { normalizeTaskType, TaskDefinitionStatusEnum, TaskStepTriggerModeEnum } from '@libs/growth/task/task.constant'
 
 import { Injectable } from '@nestjs/common'
@@ -124,7 +123,7 @@ export class GrowthService {
             return prev.id - next.id
           })
           .map((item) => ({
-            assetType: item.assetType as GrowthRewardRuleAssetTypeEnum,
+            assetType: item.assetType,
             assetKey: item.assetKey || null,
             exists: true,
             id: item.id,

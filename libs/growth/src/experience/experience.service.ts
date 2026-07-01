@@ -407,7 +407,7 @@ export class UserExperienceService {
       userId: record.userId,
       ruleId: record.ruleId ?? null,
       ruleType:
-        (record.ruleType as GrowthRuleTypeEnum | null | undefined) ?? null,
+        (record.ruleType) ?? null,
       source: record.source ?? null,
       targetType: record.targetType ?? null,
       targetId: record.targetId ?? null,

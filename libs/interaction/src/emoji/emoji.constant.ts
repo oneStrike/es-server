@@ -23,7 +23,7 @@ export const EMOJI_SCENE_VALUES = [
 export function isEmojiScene<T>(value: T): value is Extract<T, EmojiSceneEnum> {
   return (
     typeof value === 'number' &&
-    EMOJI_SCENE_VALUES.includes(value as EmojiSceneEnum)
+    EMOJI_SCENE_VALUES.includes(value)
   )
 }
 

@@ -18,7 +18,7 @@ import {
   RegexProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto/page.dto'
+import { PageDto } from '@libs/platform/dto'
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {

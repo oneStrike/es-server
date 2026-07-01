@@ -11,7 +11,7 @@ import {
 } from '@libs/forum/section/dto/forum-section.dto'
 import { ForumSectionService } from '@libs/forum/section/forum-section.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
-import { IdDto } from '@libs/platform/dto/base.dto'
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

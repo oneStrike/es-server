@@ -4,7 +4,7 @@ import {
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 
 /**

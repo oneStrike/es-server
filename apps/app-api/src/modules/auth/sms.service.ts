@@ -9,7 +9,7 @@ import { DrizzleService } from '@db/core'
 import {
   CheckVerifyCodeDto,
   SendVerifyCodeDto,
-} from '@libs/platform/modules/sms/dto/sms.dto'
+} from '@libs/platform/modules/sms/dto'
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import { SmsService as LibSmsService } from '@libs/platform/modules/sms/sms.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'

@@ -157,7 +157,7 @@ export class ForumHashtagBodyService {
       existingRows.map((row) => [row.slug, row] as const),
     )
     const creationMode = this.configReader.getForumHashtagConfig()
-      .creationMode as ForumHashtagCreationModeEnum
+      .creationMode
 
     if (creationMode === ForumHashtagCreationModeEnum.EXISTING_ONLY) {
       const invalidCandidate = uniqueCandidates.find((candidate) => {

@@ -1673,7 +1673,7 @@ export class MembershipService {
     const benefits = await this.getEnabledPlanBenefitItems([planId], tx)
     for (const benefit of benefits) {
       const value = this.asBenefitValueRecord(
-        benefit.benefitValue as BenefitValueRecord | null | undefined,
+        benefit.benefitValue,
       )
       this.assertMembershipBenefitContract(
         benefit.benefit.benefitType,

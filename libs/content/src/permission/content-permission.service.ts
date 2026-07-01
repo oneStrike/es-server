@@ -237,7 +237,7 @@ export class ContentPermissionService {
     const permission = await this.resolveWorkPermission(workId)
     return this.checkAccessPermission(userId, {
       scope: 'work',
-      viewRule: permission.viewRule as WorkViewPermissionEnum,
+      viewRule: permission.viewRule,
       requiredExperience: null,
     })
   }
@@ -261,7 +261,7 @@ export class ContentPermissionService {
 
     // 解析权限配置
     const permission = await this.resolveChapterPermissionFromData(
-      chapter as PermissionChapterData,
+      chapter,
     )
     if (
       !userId &&
@@ -291,7 +291,7 @@ export class ContentPermissionService {
               (chapter as Record<string, unknown>)[key],
             ]),
           )
-        : (chapter as Record<string, unknown>),
+        : (chapter),
     }
   }
 
@@ -301,8 +301,8 @@ export class ContentPermissionService {
   ): ResolvedChapterPermission {
     const viewRule =
       chapter.viewRule === WorkViewPermissionEnum.INHERIT && inheritedWork
-        ? (inheritedWork.viewRule as WorkViewPermissionEnum)
-        : (chapter.viewRule as WorkViewPermissionEnum)
+        ? (inheritedWork.viewRule)
+        : (chapter.viewRule)
     const purchasePrice =
       chapter.viewRule === WorkViewPermissionEnum.INHERIT && inheritedWork
         ? inheritedWork.chapterPrice

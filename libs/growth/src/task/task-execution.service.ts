@@ -1520,7 +1520,7 @@ export class TaskExecutionService extends TaskServiceSupport {
       afterValue: Number(row.afterValue),
       appliedDelta: Number(row.appliedDelta),
       targetValue: Number(row.targetValue),
-      status: Number(row.status) as TaskInstanceStatusEnum,
+      status: Number(row.status),
       completed: Number(row.status) === TaskInstanceStatusEnum.COMPLETED,
     }
   }
@@ -2752,6 +2752,6 @@ export class TaskExecutionService extends TaskServiceSupport {
       return null
     }
 
-    return snapshotPayload as TaskReminderSnapshotPayload
+    return snapshotPayload
   }
 }

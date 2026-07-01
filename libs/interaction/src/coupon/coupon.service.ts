@@ -609,8 +609,8 @@ export class CouponService {
       name:
         this.readSnapshotString(value.name) ??
         this.throwInvalidGrantSnapshot('券发放快照名称缺失'),
-      couponType: couponType as CouponTypeEnum,
-      targetScope: targetScope as CouponTargetScopeEnum,
+      couponType,
+      targetScope,
       usageLimit: this.readSnapshotNumber(value.usageLimit, 'usageLimit'),
       discountRateBps: this.readSnapshotNumber(
         value.discountRateBps,

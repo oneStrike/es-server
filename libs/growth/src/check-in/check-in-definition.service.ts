@@ -146,7 +146,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       this.checkInRewardPolicyService.parseRewardDefinition(current)
     const lockedPastDateRewardRules = this.buildLockedPastDateRewardRules(
       currentRewardDefinition,
-      Number(current.makeupPeriodType) as CheckInMakeupPeriodTypeEnum,
+      Number(current.makeupPeriodType),
       today,
     )
 
@@ -696,7 +696,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       return []
     }
 
-    const rows = (result as { rows?: T[] | null }).rows
+    const rows = (result).rows
     return Array.isArray(rows) ? rows : []
   }
 

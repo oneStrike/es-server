@@ -84,7 +84,7 @@ export function isWorkflowAttemptDue(
 
 export function isTerminalWorkflowJobStatus(status: number) {
   return (WORKFLOW_TERMINAL_JOB_STATUSES as readonly WorkflowJobStatusEnum[])
-    .includes(status as WorkflowJobStatusEnum)
+    .includes(status)
 }
 
 export function normalizeWorkflowOperator(

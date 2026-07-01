@@ -189,7 +189,7 @@ export class ForumSearchService {
         likeCount: sql`likeCount`,
         favoriteCount: sql`favoriteCount`,
       },
-    }).orderBy as Record<string, 'asc' | 'desc'> | undefined
+    }).orderBy
   }
 
   // 合并搜索结果时的统一排序比较器。 hot 模式使用主题互动热度，非 hot 模式则统一按时间和主键倒序稳定排序。

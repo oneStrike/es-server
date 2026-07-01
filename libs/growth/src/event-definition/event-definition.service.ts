@@ -20,7 +20,7 @@ export class EventDefinitionService {
   getEventDefinition(
     code: GrowthRuleTypeEnum | number,
   ): EventDefinition | undefined {
-    const definition = EVENT_DEFINITION_MAP[code as GrowthRuleTypeEnum]
+    const definition = EVENT_DEFINITION_MAP[code]
     return definition ? this.cloneDefinition(definition) : undefined
   }
 

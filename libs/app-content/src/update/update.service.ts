@@ -8,7 +8,7 @@ import type {
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { HTTP_URL_REGEXP } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'

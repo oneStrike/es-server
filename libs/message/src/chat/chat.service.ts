@@ -1130,11 +1130,11 @@ export class MessageChatService {
       messageSeq: item.messageSeq.toString(),
       senderId: item.senderId,
       clientMessageId: item.clientMessageId ?? null,
-      messageType: item.messageType as ChatMessageTypeEnum,
+      messageType: item.messageType,
       content: item.content,
       bodyTokens: (item.bodyTokens as ChatBodyToken[] | null) ?? null,
       payload: this.normalizeMessageOutputPayload(
-        item.messageType as ChatMessageTypeEnum,
+        item.messageType,
         item.payload,
       ),
       createdAt: item.createdAt,

@@ -2,8 +2,7 @@ import { CreateEmojiPackDto, EmojiPackOutputDto, QueryEmojiPackDto, UpdateEmojiP
 import { EmojiAssetService } from '@libs/interaction/emoji/emoji-asset.service';
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators';
 
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
-import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

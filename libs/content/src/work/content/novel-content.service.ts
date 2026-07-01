@@ -3,7 +3,6 @@ import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
 import {
   BusinessErrorCode,
-  ContentTypeEnum,
   WorkTypeEnum,
 } from '@libs/platform/constant'
 
@@ -60,7 +59,7 @@ export class NovelContentService {
       await this.readingStateService.touchByWorkSafely({
         userId,
         workId: chapter.workId,
-        workType: chapter.workType as ContentTypeEnum,
+        workType: chapter.workType,
         lastReadChapterId: chapterId,
       })
     }

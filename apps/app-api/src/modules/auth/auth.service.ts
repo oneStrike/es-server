@@ -13,7 +13,7 @@ import {
   LoginDto,
   RefreshTokenDto,
   TokenDto,
-} from '@libs/platform/modules/auth/dto/auth-scene.dto'
+} from '@libs/platform/modules/auth/dto'
 import {
   AuthConstants,
   AuthDefaultValue,

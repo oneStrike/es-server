@@ -24,7 +24,6 @@ import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
 import {
-  CheckInMakeupPeriodTypeEnum,
   CheckInRecordTypeEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
@@ -89,7 +88,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
         this.checkInRewardPolicyService.resolveRewardForDate(
           rewardDefinition,
           cursor,
-          Number(config.makeupPeriodType) as CheckInMakeupPeriodTypeEnum,
+          Number(config.makeupPeriodType),
         )
       const records = recordBucketMap.get(cursor) ?? []
       days.push({
@@ -301,7 +300,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
       this.checkInRewardPolicyService.parseRewardDefinition(config)
     const periodType = Number(
       config.makeupPeriodType,
-    ) as CheckInMakeupPeriodTypeEnum
+    )
     const window = this.checkInMakeupService.buildMakeupWindow(
       targetDateValue,
       periodType,

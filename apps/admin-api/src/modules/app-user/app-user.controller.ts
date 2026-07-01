@@ -5,7 +5,7 @@ import {
 import { QueryScopedUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
 import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { IdDto, UserIdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   AdminAppUserDetailDto,
