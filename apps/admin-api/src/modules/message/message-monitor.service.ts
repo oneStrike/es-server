@@ -13,6 +13,8 @@ import { parsePositiveBigintQueryId } from '@libs/message/notification/notificat
 import {
   MessageNotificationDispatchStatusEnum,
 } from '@libs/message/notification/notification.constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
 import {
   DomainEventConsumerEnum,
@@ -180,10 +182,16 @@ export class MessageMonitorService {
       },
     })
     if (!delivery) {
-      throw new BadRequestException('投递记录不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '投递记录不存在',
+      )
     }
     if (delivery.status !== MessageNotificationDispatchStatusEnum.FAILED) {
-      throw new BadRequestException('只有投递失败的通知可以重试')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '只有投递失败的通知可以重试',
+      )
     }
 
     const dispatch = await this.db.query.domainEventDispatch.findFirst({
@@ -198,7 +206,10 @@ export class MessageMonitorService {
       !dispatch ||
       dispatch.consumer !== DomainEventConsumerEnum.NOTIFICATION
     ) {
-      throw new BadRequestException('投递记录未关联通知发送任务')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '投递记录未关联通知发送任务',
+      )
     }
 
     try {

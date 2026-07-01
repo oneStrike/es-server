@@ -4,7 +4,9 @@ import Credential, { Config } from '@alicloud/credentials'
 import Dypnsapi20170525, * as $Dypnsapi20170525 from '@alicloud/dypnsapi20170525'
 import * as $OpenApi from '@alicloud/openapi-client'
 import * as $Util from '@alicloud/tea-util'
-import { Inject, Injectable, Logger } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common'
 import { maskString } from '../../utils/mask'
 import { CheckVerifyCodeDto, SendVerifyCodeDto } from './dto/sms.dto'
 import {
@@ -47,10 +49,10 @@ export class SmsService {
 
     // 校验必要配置
     if (!aliyunConfig.accessKeyId || !aliyunConfig.accessKeySecret) {
-      throw new Error(SmsErrorMessages.CONFIG_NOT_FOUND)
+      throw new InternalServerErrorException(SmsErrorMessages.CONFIG_NOT_FOUND)
     }
     if (!aliyunConfig.sms?.signName) {
-      throw new Error('阿里云短信签名未配置')
+      throw new InternalServerErrorException('阿里云短信签名未配置')
     }
 
     // 配置变更时重置客户端
@@ -154,7 +156,10 @@ export class SmsService {
       const response = resp.body as SendSmsVerifyCodeResponseBody
 
       if (!response.code || response.code !== 'OK') {
-        throw new Error(SmsErrorMap[response?.code || '验证码服务异常'])
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          SmsErrorMap[response?.code || '验证码服务异常'],
+        )
       }
 
       this.logger.log(`验证码发送成功 - 手机号: ${maskedPhone}`)

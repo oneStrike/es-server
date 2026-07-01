@@ -1823,7 +1823,10 @@ export class ThirdPartyComicImportService {
           cleanupError,
         )}`,
         {
-          cause: residueError instanceof Error ? residueError : undefined,
+          cause: {
+            residueError,
+            cleanupError,
+          },
         },
       )
     }

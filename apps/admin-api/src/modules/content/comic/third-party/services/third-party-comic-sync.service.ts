@@ -604,7 +604,10 @@ export class ThirdPartyComicSyncService {
           cleanupError,
         )}`,
         {
-          cause: residueError instanceof Error ? residueError : undefined,
+          cause: {
+            residueError,
+            cleanupError,
+          },
         },
       )
     }
