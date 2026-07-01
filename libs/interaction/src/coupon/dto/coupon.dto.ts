@@ -9,7 +9,6 @@ import {
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
-  OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
@@ -38,70 +37,7 @@ export class BaseCouponDefinitionDto extends BaseDto {
     description: '折扣金额',
     example: 10,
     min: 0,
-    required: false,
     default: 0,
-  })
-  discountAmount?: number
-
-  @NumberProperty({
-    description: '折扣率基点，10000=不打折',
-    example: 9000,
-    min: 0,
-    max: 10000,
-    required: false,
-    default: 10000,
-  })
-  discountRateBps?: number
-
-  @NumberProperty({
-    description: '单张券可用次数',
-    example: 1,
-    min: 1,
-    required: false,
-    default: 1,
-  })
-  usageLimit?: number
-
-  @NumberProperty({
-    description: '有效天数，后台创建的券定义必须为正整数',
-    example: 7,
-    min: 1,
-    required: false,
-    default: 7,
-  })
-  validDays?: number
-
-  @NumberProperty({
-    description: 'VIP 试用天数',
-    example: 7,
-    min: 1,
-    required: false,
-  })
-  benefitDays?: number
-
-  @NumberProperty({
-    description: '补签次数',
-    example: 1,
-    min: 1,
-    required: false,
-  })
-  benefitCount?: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: false,
-    default: true,
-  })
-  isEnabled?: boolean
-}
-
-class CouponDefinitionDefaultOutputFieldsDto {
-  @NumberProperty({
-    description: '折扣金额',
-    example: 10,
-    min: 0,
-    validation: false,
   })
   discountAmount!: number
 
@@ -110,7 +46,7 @@ class CouponDefinitionDefaultOutputFieldsDto {
     example: 9000,
     min: 0,
     max: 10000,
-    validation: false,
+    default: 10000,
   })
   discountRateBps!: number
 
@@ -118,68 +54,57 @@ class CouponDefinitionDefaultOutputFieldsDto {
     description: '单张券可用次数',
     example: 1,
     min: 1,
-    validation: false,
+    default: 1,
   })
   usageLimit!: number
 
   @NumberProperty({
     description: '有效天数，后台创建的券定义必须为正整数',
     example: 7,
-    min: 0,
-    validation: false,
+    min: 1,
+    default: 7,
   })
   validDays!: number
 
   @NumberProperty({
     description: 'VIP 试用天数',
     example: 7,
-    min: 0,
-    validation: false,
+    min: 1,
+    nullable: true,
   })
-  benefitDays!: number
+  benefitDays!: number | null
 
   @NumberProperty({
     description: '补签次数',
     example: 1,
-    min: 0,
-    validation: false,
+    min: 1,
+    nullable: true,
   })
-  benefitCount!: number
+  benefitCount!: number | null
 
   @BooleanProperty({
     description: '是否启用',
     example: true,
-    validation: false,
+    default: true,
   })
   isEnabled!: boolean
 }
 
-export class CouponDefinitionOutputDto extends IntersectionType(
-  OmitType(BaseCouponDefinitionDto, [
-    'discountAmount',
-    'discountRateBps',
-    'usageLimit',
-    'validDays',
-    'benefitDays',
-    'benefitCount',
-    'isEnabled',
-  ] as const),
-  CouponDefinitionDefaultOutputFieldsDto,
-) {}
+export class CouponDefinitionOutputDto extends BaseCouponDefinitionDto {}
 
-export class CreateCouponDefinitionDto extends PickType(
-  BaseCouponDefinitionDto,
-  [
-    'name',
-    'couponType',
-    'discountAmount',
-    'discountRateBps',
-    'usageLimit',
-    'validDays',
-    'benefitDays',
-    'benefitCount',
-    'isEnabled',
-  ] as const,
+export class CreateCouponDefinitionDto extends IntersectionType(
+  PickType(BaseCouponDefinitionDto, ['name', 'couponType'] as const),
+  PartialType(
+    PickType(BaseCouponDefinitionDto, [
+      'discountAmount',
+      'discountRateBps',
+      'usageLimit',
+      'validDays',
+      'benefitDays',
+      'benefitCount',
+      'isEnabled',
+    ] as const),
+  ),
 ) {}
 
 export class UpdateCouponDefinitionDto extends IntersectionType(

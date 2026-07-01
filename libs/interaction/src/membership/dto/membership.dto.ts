@@ -12,7 +12,6 @@ import {
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
-  OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
@@ -24,7 +23,101 @@ import {
   MembershipPlanTierEnum,
 } from '../membership.constant'
 
-export class MembershipPlanBenefitInputDto {
+// ---------------------------------------------------------------------------
+// Membership Benefit Definition
+// ---------------------------------------------------------------------------
+
+export class BaseMembershipBenefitDefinitionDto extends BaseDto {
+  @StringProperty({
+    description: '权益业务键，由服务端生成',
+    example: 'daily_gift',
+  })
+  code!: string
+
+  @StringProperty({
+    description: '权益名称',
+    example: '每日礼包',
+  })
+  name!: string
+
+  @StringProperty({
+    description: '权益图标资源键或 URL',
+    example: 'calendar',
+    default: '',
+  })
+  icon!: string
+
+  @EnumProperty({
+    description: '权益类型（1=纯展示；2=券发放）',
+    enum: MembershipBenefitTypeEnum,
+    example: MembershipBenefitTypeEnum.DISPLAY,
+  })
+  benefitType!: MembershipBenefitTypeEnum
+
+  @StringProperty({
+    description: '权益说明',
+    example: '订阅期展示会员身份标识',
+    default: '',
+  })
+  description!: string
+
+  @NumberProperty({
+    description: '排序值',
+    example: 0,
+    min: 0,
+    default: 0,
+  })
+  sortOrder!: number
+
+  @BooleanProperty({
+    description: '是否启用',
+    example: true,
+    default: true,
+  })
+  isEnabled!: boolean
+}
+
+export class MembershipBenefitDefinitionOutputDto extends BaseMembershipBenefitDefinitionDto {}
+
+export class CreateMembershipBenefitDefinitionDto extends IntersectionType(
+  PickType(BaseMembershipBenefitDefinitionDto, ['name', 'benefitType'] as const),
+  PartialType(
+    PickType(BaseMembershipBenefitDefinitionDto, [
+      'icon',
+      'description',
+      'sortOrder',
+      'isEnabled',
+    ] as const),
+  ),
+) {}
+
+export class UpdateMembershipBenefitDefinitionDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateMembershipBenefitDefinitionDto),
+) {}
+
+export class QueryMembershipBenefitDefinitionDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseMembershipBenefitDefinitionDto, [
+      'name',
+      'benefitType',
+      'isEnabled',
+    ] as const),
+  ),
+) {}
+
+// ---------------------------------------------------------------------------
+// Membership Plan Benefit (base + input/output)
+// ---------------------------------------------------------------------------
+
+export class BaseMembershipPlanBenefitDto extends BaseDto {
+  @NumberProperty({
+    description: 'VIP 套餐 ID',
+    example: 1,
+  })
+  planId!: number
+
   @NumberProperty({
     description: '会员权益定义 ID',
     example: 1,
@@ -42,27 +135,42 @@ export class MembershipPlanBenefitInputDto {
     description:
       '权益配置值：纯展示权益为空或展示元数据；券发放权益必须配置 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期',
     example: { couponDefinitionId: 1, grantCount: 1 },
-    required: false,
+    nullable: true,
   })
-  benefitValue?: Record<string, unknown> | null
+  benefitValue!: Record<string, unknown> | null
 
   @NumberProperty({
     description: '排序值',
     example: 0,
     min: 0,
-    required: false,
     default: 0,
   })
-  sortOrder?: number
+  sortOrder!: number
 
   @BooleanProperty({
     description: '是否启用',
     example: true,
-    required: false,
     default: true,
   })
-  isEnabled?: boolean
+  isEnabled!: boolean
 }
+
+export class MembershipPlanBenefitOutputDto extends BaseMembershipPlanBenefitDto {}
+
+export class MembershipPlanBenefitInputDto extends IntersectionType(
+  PickType(BaseMembershipPlanBenefitDto, ['benefitId', 'grantPolicy'] as const),
+  PartialType(
+    PickType(BaseMembershipPlanBenefitDto, [
+      'benefitValue',
+      'sortOrder',
+      'isEnabled',
+    ] as const),
+  ),
+) {}
+
+// ---------------------------------------------------------------------------
+// Membership Plan
+// ---------------------------------------------------------------------------
 
 export class BaseMembershipPlanDto extends BaseDto {
   @StringProperty({
@@ -81,10 +189,9 @@ export class BaseMembershipPlanDto extends BaseDto {
     description: '套餐层级（1=VIP；2=超级 VIP）',
     enum: MembershipPlanTierEnum,
     example: MembershipPlanTierEnum.VIP,
-    required: false,
     default: MembershipPlanTierEnum.VIP,
   })
-  tier?: MembershipPlanTierEnum
+  tier!: MembershipPlanTierEnum
 
   @NumberProperty({
     description: '套餐售价，单位为分',
@@ -97,10 +204,9 @@ export class BaseMembershipPlanDto extends BaseDto {
     description: '划线原价，单位为分',
     example: 3000,
     min: 0,
-    required: false,
     default: 0,
   })
-  originalPriceAmount?: number
+  originalPriceAmount!: number
 
   @NumberProperty({
     description: '有效天数',
@@ -112,62 +218,7 @@ export class BaseMembershipPlanDto extends BaseDto {
   @StringProperty({
     description: '订阅页营销标签',
     example: '热门',
-    required: false,
     default: '',
-  })
-  displayTag?: string
-
-  @NumberProperty({
-    description: '开通赠送积分数量',
-    example: 340,
-    min: 0,
-    required: false,
-    default: 0,
-  })
-  bonusPointAmount?: number
-
-  @NumberProperty({
-    description: '排序值',
-    example: 0,
-    min: 0,
-    required: false,
-    default: 0,
-  })
-  sortOrder?: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: false,
-    default: true,
-  })
-  isEnabled?: boolean
-}
-
-class MembershipPlanOutputFieldsDto {
-  @EnumProperty({
-    description: '套餐层级（1=VIP；2=超级 VIP）',
-    enum: MembershipPlanTierEnum,
-    example: MembershipPlanTierEnum.VIP,
-    required: true,
-    validation: false,
-  })
-  tier!: MembershipPlanTierEnum
-
-  @NumberProperty({
-    description: '划线原价，单位为分',
-    example: 3000,
-    min: 0,
-    required: true,
-    validation: false,
-  })
-  originalPriceAmount!: number
-
-  @StringProperty({
-    description: '订阅页营销标签',
-    example: '热门',
-    required: true,
-    validation: false,
   })
   displayTag!: string
 
@@ -175,8 +226,7 @@ class MembershipPlanOutputFieldsDto {
     description: '开通赠送积分数量',
     example: 340,
     min: 0,
-    required: true,
-    validation: false,
+    default: 0,
   })
   bonusPointAmount!: number
 
@@ -184,43 +234,33 @@ class MembershipPlanOutputFieldsDto {
     description: '排序值',
     example: 0,
     min: 0,
-    required: true,
-    validation: false,
+    default: 0,
   })
   sortOrder!: number
 
   @BooleanProperty({
     description: '是否启用',
     example: true,
-    required: true,
-    validation: false,
+    default: true,
   })
   isEnabled!: boolean
 }
 
-export class MembershipPlanOutputDto extends IntersectionType(
-  OmitType(BaseMembershipPlanDto, [
-    'tier',
-    'originalPriceAmount',
-    'displayTag',
-    'bonusPointAmount',
-    'sortOrder',
-    'isEnabled',
-  ] as const),
-  MembershipPlanOutputFieldsDto,
-) {}
+export class MembershipPlanOutputDto extends BaseMembershipPlanDto {}
 
-export class CreateMembershipPlanDto extends PickType(BaseMembershipPlanDto, [
-  'name',
-  'tier',
-  'priceAmount',
-  'originalPriceAmount',
-  'durationDays',
-  'displayTag',
-  'bonusPointAmount',
-  'sortOrder',
-  'isEnabled',
-] as const) {
+export class CreateMembershipPlanDto extends IntersectionType(
+  PickType(BaseMembershipPlanDto, ['name', 'priceAmount', 'durationDays'] as const),
+  PartialType(
+    PickType(BaseMembershipPlanDto, [
+      'tier',
+      'originalPriceAmount',
+      'displayTag',
+      'bonusPointAmount',
+      'sortOrder',
+      'isEnabled',
+    ] as const),
+  ),
+) {
   @ArrayProperty({
     description: '套餐关联权益列表',
     itemClass: MembershipPlanBenefitInputDto,
@@ -251,216 +291,9 @@ export class QueryMembershipPlanDto extends IntersectionType(
   ),
 ) {}
 
-export class BaseMembershipBenefitDefinitionDto extends BaseDto {
-  @StringProperty({
-    description: '权益业务键，由服务端生成',
-    example: 'daily_gift',
-  })
-  code!: string
-
-  @StringProperty({
-    description: '权益名称',
-    example: '每日礼包',
-  })
-  name!: string
-
-  @StringProperty({
-    description: '权益图标资源键或 URL',
-    example: 'calendar',
-    required: false,
-    default: '',
-  })
-  icon?: string
-
-  @EnumProperty({
-    description: '权益类型（1=纯展示；2=券发放）',
-    enum: MembershipBenefitTypeEnum,
-    example: MembershipBenefitTypeEnum.DISPLAY,
-  })
-  benefitType!: MembershipBenefitTypeEnum
-
-  @StringProperty({
-    description: '权益说明',
-    example: '订阅期展示会员身份标识',
-    required: false,
-    default: '',
-  })
-  description?: string
-
-  @NumberProperty({
-    description: '排序值',
-    example: 0,
-    min: 0,
-    required: false,
-    default: 0,
-  })
-  sortOrder?: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: false,
-    default: true,
-  })
-  isEnabled?: boolean
-}
-
-class MembershipBenefitDefinitionOutputFieldsDto {
-  @StringProperty({
-    description: '权益图标资源键或 URL',
-    example: 'calendar',
-    required: true,
-    validation: false,
-  })
-  icon!: string
-
-  @StringProperty({
-    description: '权益说明',
-    example: '订阅期展示会员身份标识',
-    required: true,
-    validation: false,
-  })
-  description!: string
-
-  @NumberProperty({
-    description: '排序值',
-    example: 0,
-    min: 0,
-    required: true,
-    validation: false,
-  })
-  sortOrder!: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  isEnabled!: boolean
-}
-
-export class MembershipBenefitDefinitionOutputDto extends IntersectionType(
-  OmitType(BaseMembershipBenefitDefinitionDto, [
-    'icon',
-    'description',
-    'sortOrder',
-    'isEnabled',
-  ] as const),
-  MembershipBenefitDefinitionOutputFieldsDto,
-) {}
-
-export class CreateMembershipBenefitDefinitionDto extends PickType(
-  BaseMembershipBenefitDefinitionDto,
-  [
-    'name',
-    'icon',
-    'benefitType',
-    'description',
-    'sortOrder',
-    'isEnabled',
-  ] as const,
-) {}
-
-export class UpdateMembershipBenefitDefinitionDto extends IntersectionType(
-  IdDto,
-  PartialType(CreateMembershipBenefitDefinitionDto),
-) {}
-
-export class QueryMembershipBenefitDefinitionDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseMembershipBenefitDefinitionDto, [
-      'name',
-      'benefitType',
-      'isEnabled',
-    ] as const),
-  ),
-) {}
-
-export class BaseMembershipPlanBenefitDto extends BaseDto {
-  @NumberProperty({
-    description: 'VIP 套餐 ID',
-    example: 1,
-  })
-  planId!: number
-
-  @NumberProperty({
-    description: '会员权益定义 ID',
-    example: 1,
-  })
-  benefitId!: number
-
-  @EnumProperty({
-    description: '发放策略（1=仅展示；2=开通时自动发放）',
-    enum: MembershipBenefitGrantPolicyEnum,
-    example: MembershipBenefitGrantPolicyEnum.DISPLAY_ONLY,
-  })
-  grantPolicy!: MembershipBenefitGrantPolicyEnum
-
-  @ObjectProperty({
-    description:
-      '权益配置值：纯展示权益为空或展示元数据；券发放权益必须配置 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期',
-    example: { couponDefinitionId: 1, grantCount: 1 },
-    required: false,
-  })
-  benefitValue?: Record<string, unknown> | null
-
-  @NumberProperty({
-    description: '排序值',
-    example: 0,
-    min: 0,
-    required: false,
-    default: 0,
-  })
-  sortOrder?: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: false,
-    default: true,
-  })
-  isEnabled?: boolean
-}
-
-class MembershipPlanBenefitOutputFieldsDto {
-  @ObjectProperty({
-    description:
-      '权益配置值：纯展示权益为空或展示元数据；券发放权益必须配置 couponDefinitionId/grantCount，可选 validDays 覆盖赠券有效期',
-    example: { couponDefinitionId: 1, grantCount: 1 },
-    required: true,
-    nullable: true,
-    validation: false,
-  })
-  benefitValue!: Record<string, unknown> | null
-
-  @NumberProperty({
-    description: '排序值',
-    example: 0,
-    min: 0,
-    required: true,
-    validation: false,
-  })
-  sortOrder!: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  isEnabled!: boolean
-}
-
-export class MembershipPlanBenefitOutputDto extends IntersectionType(
-  OmitType(BaseMembershipPlanBenefitDto, [
-    'benefitValue',
-    'sortOrder',
-    'isEnabled',
-  ] as const),
-  MembershipPlanBenefitOutputFieldsDto,
-) {}
+// ---------------------------------------------------------------------------
+// Membership Plan Benefit (item + composition)
+// ---------------------------------------------------------------------------
 
 export class MembershipPlanBenefitItemDto extends MembershipPlanBenefitOutputDto {
   @NestedProperty({
@@ -488,6 +321,10 @@ export class MembershipPlanItemDto extends IntersectionType(
   MembershipPlanBenefitsOutputDto,
 ) {}
 
+// ---------------------------------------------------------------------------
+// Membership Page Config
+// ---------------------------------------------------------------------------
+
 export class BaseMembershipPageConfigDto extends BaseDto {
   @StringProperty({
     description: '页面业务键，由服务端生成',
@@ -504,67 +341,21 @@ export class BaseMembershipPageConfigDto extends BaseDto {
   @ArrayProperty({
     description: '会员说明条目',
     itemType: 'string',
-    required: false,
-  })
-  memberNoticeItems?: string[] | null
-
-  @StringProperty({
-    description: '确认开通协议提示文案',
-    example: '开通即同意《会员服务协议》和《隐私政策》',
-    required: false,
-    default: '',
-  })
-  checkoutAgreementText?: string
-
-  @StringProperty({
-    description: '支付按钮文案模板',
-    example: '¥{price} 确认协议并开通',
-    required: false,
-    default: '',
-  })
-  submitButtonTemplate?: string
-
-  @NumberProperty({
-    description: '排序值',
-    example: 0,
-    min: 0,
-    required: false,
-    default: 0,
-  })
-  sortOrder?: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: false,
-    default: true,
-  })
-  isEnabled?: boolean
-}
-
-class MembershipPageConfigOutputFieldsDto {
-  @ArrayProperty({
-    description: '会员说明条目',
-    itemType: 'string',
-    required: true,
     nullable: true,
-    validation: false,
   })
   memberNoticeItems!: string[] | null
 
   @StringProperty({
     description: '确认开通协议提示文案',
     example: '开通即同意《会员服务协议》和《隐私政策》',
-    required: true,
-    validation: false,
+    default: '',
   })
   checkoutAgreementText!: string
 
   @StringProperty({
     description: '支付按钮文案模板',
     example: '¥{price} 确认协议并开通',
-    required: true,
-    validation: false,
+    default: '',
   })
   submitButtonTemplate!: string
 
@@ -572,30 +363,19 @@ class MembershipPageConfigOutputFieldsDto {
     description: '排序值',
     example: 0,
     min: 0,
-    required: true,
-    validation: false,
+    default: 0,
   })
   sortOrder!: number
 
   @BooleanProperty({
     description: '是否启用',
     example: true,
-    required: true,
-    validation: false,
+    default: true,
   })
   isEnabled!: boolean
 }
 
-export class MembershipPageConfigOutputBaseDto extends IntersectionType(
-  OmitType(BaseMembershipPageConfigDto, [
-    'memberNoticeItems',
-    'checkoutAgreementText',
-    'submitButtonTemplate',
-    'sortOrder',
-    'isEnabled',
-  ] as const),
-  MembershipPageConfigOutputFieldsDto,
-) {}
+export class MembershipPageConfigOutputBaseDto extends BaseMembershipPageConfigDto {}
 
 export class MembershipPageConfigAgreementIdsDto {
   @ArrayProperty({
@@ -651,14 +431,16 @@ export class MembershipPageConfigItemDto extends IntersectionType(
 ) {}
 
 export class CreateMembershipPageConfigDto extends IntersectionType(
-  PickType(BaseMembershipPageConfigDto, [
-    'title',
-    'memberNoticeItems',
-    'checkoutAgreementText',
-    'submitButtonTemplate',
-    'sortOrder',
-    'isEnabled',
-  ] as const),
+  PickType(BaseMembershipPageConfigDto, ['title'] as const),
+  PartialType(
+    PickType(BaseMembershipPageConfigDto, [
+      'memberNoticeItems',
+      'checkoutAgreementText',
+      'submitButtonTemplate',
+      'sortOrder',
+      'isEnabled',
+    ] as const),
+  ),
   MembershipPageConfigRelationsDto,
 ) {}
 
@@ -681,6 +463,10 @@ export class QueryMembershipPageConfigDto extends IntersectionType(
 export class QueryVipSubscriptionPageDto extends PartialType(
   PickType(BaseMembershipPageConfigDto, ['pageKey'] as const),
 ) {}
+
+// ---------------------------------------------------------------------------
+// Payment / Subscription
+// ---------------------------------------------------------------------------
 
 export class CreateVipSubscriptionOrderDto extends CreatePaymentOrderBaseDto {
   @NumberProperty({

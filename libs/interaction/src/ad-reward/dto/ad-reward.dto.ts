@@ -50,18 +50,16 @@ export class BaseAdProviderConfigDto extends BaseDto {
   @StringProperty({
     description: '客户端应用键',
     example: 'default-app',
-    required: false,
     default: '',
   })
-  clientAppKey?: string
+  clientAppKey!: string
 
   @StringProperty({
     description: 'provider 应用 ID',
     example: 'pangle-app-id',
-    required: false,
     default: '',
   })
-  appId?: string
+  appId!: string
 
   @StringProperty({
     description: '广告位 key',
@@ -80,19 +78,17 @@ export class BaseAdProviderConfigDto extends BaseDto {
     description: '每日次数上限，0=不限制',
     example: 5,
     min: 0,
-    required: false,
     default: 0,
   })
-  dailyLimit?: number
+  dailyLimit!: number
 
   @NumberProperty({
     description: '配置版本',
     example: 1,
     min: 1,
-    required: false,
     default: 1,
   })
-  configVersion?: number
+  configVersion!: number
 
   @StringProperty({
     description: 'SSV 密钥版本引用',
@@ -123,78 +119,19 @@ export class BaseAdProviderConfigDto extends BaseDto {
     description: '排序值',
     example: 0,
     min: 0,
-    required: false,
     default: 0,
-  })
-  sortOrder?: number
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: false,
-    default: true,
-  })
-  isEnabled?: boolean
-}
-
-class AdProviderConfigDefaultOutputFieldsDto {
-  @StringProperty({
-    description: '客户端应用键',
-    example: 'default-app',
-    validation: false,
-  })
-  clientAppKey!: string
-
-  @StringProperty({
-    description: 'provider 应用 ID',
-    example: 'pangle-app-id',
-    validation: false,
-  })
-  appId!: string
-
-  @NumberProperty({
-    description: '每日次数上限，0=不限制',
-    example: 5,
-    min: 0,
-    validation: false,
-  })
-  dailyLimit!: number
-
-  @NumberProperty({
-    description: '配置版本',
-    example: 1,
-    min: 1,
-    validation: false,
-  })
-  configVersion!: number
-
-  @NumberProperty({
-    description: '排序值',
-    example: 0,
-    min: 0,
-    validation: false,
   })
   sortOrder!: number
 
   @BooleanProperty({
     description: '是否启用',
     example: true,
-    validation: false,
+    default: true,
   })
   isEnabled!: boolean
 }
 
-export class AdProviderConfigOutputDto extends IntersectionType(
-  OmitType(BaseAdProviderConfigDto, [
-    'clientAppKey',
-    'appId',
-    'dailyLimit',
-    'configVersion',
-    'sortOrder',
-    'isEnabled',
-  ] as const),
-  AdProviderConfigDefaultOutputFieldsDto,
-) {}
+export class AdProviderConfigOutputDto extends BaseAdProviderConfigDto {}
 
 export class AdProviderConfigWritableFieldsDto extends OmitType(
   BaseAdProviderConfigDto,

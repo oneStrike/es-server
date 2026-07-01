@@ -94,20 +94,7 @@ export class QueryPublishedAgreementDto extends PartialType(
   PickType(BaseAgreementDto, ['showInAuth'] as const),
 ) {}
 
-class AgreementOutputFieldsDto {
-  @DateProperty({
-    description: '发布时间',
-    example: '2024-01-01T00:00:00.000Z',
-    nullable: true,
-    validation: false,
-  })
-  publishedAt!: Date | null
-}
-
-export class AgreementOutputBaseDto extends IntersectionType(
-  OmitType(BaseAgreementDto, ['publishedAt'] as const),
-  AgreementOutputFieldsDto,
-) {}
+export class AgreementOutputBaseDto extends BaseAgreementDto {}
 
 export class AgreementListItemDto extends OmitType(AgreementOutputBaseDto, [
   'content',

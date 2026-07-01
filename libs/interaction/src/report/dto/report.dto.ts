@@ -341,7 +341,10 @@ class AdminReportActorSummaryFieldsDto {
   handlerSummary!: InteractionActorSummaryDto | null
 }
 
-export class ReportDispositionAttemptDto extends BaseDto {
+export class ReportDispositionAttemptDto extends IntersectionType(
+  BaseDto,
+  PickType(BaseReportDto, ['targetAction'] as const),
+) {
   @NumberProperty({
     description: '举报 ID',
     example: 1,
@@ -349,16 +352,6 @@ export class ReportDispositionAttemptDto extends BaseDto {
     validation: false,
   })
   reportId!: number
-
-  @EnumProperty({
-    description:
-      '目标处置动作（1=无需处置；2=隐藏评论；3=拒绝评论；4=隐藏论坛主题；5=拒绝论坛主题；6=禁用用户；7=禁言用户）',
-    enum: ReportDispositionActionEnum,
-    example: ReportDispositionActionEnum.HIDE_COMMENT,
-    required: true,
-    validation: false,
-  })
-  targetAction!: ReportDispositionActionEnum
 
   @StringProperty({
     description: '失败码',

@@ -133,31 +133,9 @@ class CreateEmojiPackNullableFieldsDto extends PartialType(
   PickType(BaseEmojiPackDto, ['description', 'iconUrl'] as const),
 ) {}
 
-class CreateEmojiPackOptionalFieldsDto {
-  @NumberProperty({
-    description: '排序值',
-    example: 10,
-    required: false,
-    min: 0,
-  })
-  sortOrder?: number
-
-  @BooleanProperty({
-    description: '启用状态',
-    example: true,
-    default: true,
-    required: false,
-  })
-  isEnabled?: boolean
-
-  @BooleanProperty({
-    description: '是否在选择器可见',
-    example: true,
-    default: true,
-    required: false,
-  })
-  visibleInPicker?: boolean
-}
+class CreateEmojiPackOptionalFieldsDto extends PartialType(
+  PickType(BaseEmojiPackDto, ['sortOrder', 'isEnabled', 'visibleInPicker'] as const),
+) {}
 
 export class CreateEmojiPackDto extends IntersectionType(
   IntersectionType(
@@ -334,31 +312,9 @@ class CreateEmojiAssetNullableFieldsDto extends PartialType(
   ] as const),
 ) {}
 
-class CreateEmojiAssetOptionalFieldsDto {
-  @BooleanProperty({
-    description: '是否动图',
-    example: false,
-    default: false,
-    required: false,
-  })
-  isAnimated?: boolean
-
-  @NumberProperty({
-    description: '排序值',
-    example: 10,
-    required: false,
-    min: 0,
-  })
-  sortOrder?: number
-
-  @BooleanProperty({
-    description: '启用状态',
-    example: true,
-    default: true,
-    required: false,
-  })
-  isEnabled?: boolean
-}
+class CreateEmojiAssetOptionalFieldsDto extends PartialType(
+  PickType(BaseEmojiAssetDto, ['isAnimated', 'sortOrder', 'isEnabled'] as const),
+) {}
 
 export class CreateEmojiAssetDto extends IntersectionType(
   IntersectionType(
