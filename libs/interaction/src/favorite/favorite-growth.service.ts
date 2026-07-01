@@ -26,12 +26,7 @@ export class FavoriteGrowthService {
     private readonly growthEventBridgeService: GrowthEventBridgeService,
   ) {}
 
-  /**
-   * 收藏成功后发放成长奖励
-   * @param targetType 目标类型
-   * @param targetId 目标 ID
-   * @param userId 用户 ID
-   */
+  // 收藏成功后发放成长奖励
   async rewardFavoriteCreated(
     targetType: FavoriteTargetTypeEnum,
     targetId: number,

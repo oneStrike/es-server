@@ -45,12 +45,12 @@ export abstract class BaseTokenStorageService<
     where: TokenStorageWhereInput,
   ): Promise<number>
 
-  /** 计算 token 距离过期的剩余毫秒数，供缓存 TTL 复用。 */
+  // 计算 token 距离过期的剩余毫秒数，供缓存 TTL 复用。
   private getTokenTtlMs(expiresAt: Date) {
     return Math.max(0, Math.floor(expiresAt.getTime() - Date.now()))
   }
 
-  /** 创建单条 token 并同步写入缓存命中标记。 */
+  // 创建单条 token 并同步写入缓存命中标记。
   async createToken(data: CreateTokenInput) {
     const result = await this.createOne(data)
     const ttlMs = this.getTokenTtlMs(data.expiresAt)
@@ -60,7 +60,7 @@ export abstract class BaseTokenStorageService<
     return result
   }
 
-  /** 批量创建 token 并为每条记录建立缓存命中标记。 */
+  // 批量创建 token 并为每条记录建立缓存命中标记。
   async createTokens(tokens: CreateTokenInput[]) {
     const result = await this.createManyItems(tokens)
     await Promise.all(
@@ -74,16 +74,12 @@ export abstract class BaseTokenStorageService<
     return result
   }
 
-  /** 按 jti 查询 token。 */
+  // 按 jti 查询 token。
   async findByJti(jti: string) {
     return this.findOneByJti(jti)
   }
 
-  /**
-   * 判断 token 当前是否有效。
-   * 无效缓存可直接拒绝；有效状态必须回源数据库，避免用户级批量撤销后
-   * 旧的 valid 缓存标记继续放行。
-   */
+  // 判断 token 当前是否有效。 无效缓存可直接拒绝；有效状态必须回源数据库，避免用户级批量撤销后 旧的 valid 缓存标记继续放行。
   async isTokenValid(jti: string): Promise<boolean> {
     const cached = await this.cacheManager.get(`token:${jti}`)
     if (cached === 'invalid') {
@@ -132,7 +128,7 @@ export abstract class BaseTokenStorageService<
     return false
   }
 
-  /** 按 jti 撤销单条 token，并立即写入无效缓存。 */
+  // 按 jti 撤销单条 token，并立即写入无效缓存。
   async revokeByJti(jti: string, reason: RevokeTokenReasonEnum) {
     await this.updateManyItems(
       { jti },
@@ -148,7 +144,7 @@ export abstract class BaseTokenStorageService<
     )
   }
 
-  /** 批量撤销多条 token，并同步写入无效缓存。 */
+  // 批量撤销多条 token，并同步写入无效缓存。
   async revokeByJtis(jtis: string[], reason: RevokeTokenReasonEnum) {
     await this.updateManyItems(
       { jti: { in: jtis } },
@@ -168,10 +164,7 @@ export abstract class BaseTokenStorageService<
     )
   }
 
-  /**
-   * 原子消费 refresh token。
-   * 仅未撤销且未过期的记录可被成功消费，返回值用于上层判断是否允许继续刷新。
-   */
+  // 原子消费 refresh token。 仅未撤销且未过期的记录可被成功消费，返回值用于上层判断是否允许继续刷新。
   async consumeByJti(
     jti: string,
     reason: RevokeTokenReasonEnum,
@@ -195,7 +188,7 @@ export abstract class BaseTokenStorageService<
     return affectedRows > 0
   }
 
-  /** 撤销指定用户的全部有效 token。 */
+  // 撤销指定用户的全部有效 token。
   async revokeAllByUserId(userId: number, reason: RevokeTokenReasonEnum) {
     const tokens = await this.findManyItems(
       {
@@ -231,7 +224,7 @@ export abstract class BaseTokenStorageService<
     )
   }
 
-  /** 查询指定用户当前仍有效的 token 列表。 */
+  // 查询指定用户当前仍有效的 token 列表。
   async findActiveTokensByUserId(userId: number) {
     return this.findManyItems({
       userId,
@@ -240,7 +233,7 @@ export abstract class BaseTokenStorageService<
     })
   }
 
-  /** 将已过期但尚未标记撤销的 token 批量回收。 */
+  // 将已过期但尚未标记撤销的 token 批量回收。
   async cleanupExpiredTokens() {
     return this.updateManyItems(
       {
@@ -254,7 +247,7 @@ export abstract class BaseTokenStorageService<
     )
   }
 
-  /** 删除保留期之前的已撤销 token 记录。 */
+  // 删除保留期之前的已撤销 token 记录。
   async deleteOldRevokedTokens(retentionDays: number = 30) {
     const date = new Date()
     date.setDate(date.getDate() - retentionDays)

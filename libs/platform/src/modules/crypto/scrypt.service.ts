@@ -6,19 +6,12 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 const scrypt = promisify(_scrypt)
 
 /**
- * 加密服务
- * 提供密码加密和验证功能
+ * 密码加密服务。
+ * 基于 scrypt 算法提供密码加密与验证，供认证链路统一复用。
  */
 @Injectable()
 export class ScryptService {
-  /**
-   * 密码加密函数
-   * 使用 scrypt 算法对密码进行加密
-   * 返回格式为 "salt.hash"
-   * @param password 原始密码
-   * @param salt 可选的盐值，如果不提供则随机生成
-   * @returns 加密后的密码字符串
-   */
+  // 使用 scrypt 算法加密密码，返回 "salt.hash" 格式字符串。
   async encryptPassword(password: string, salt?: string): Promise<string> {
     // 输入验证
     if (!password || password.length < 8) {
@@ -37,13 +30,7 @@ export class ScryptService {
     return `${salt}.${key.toString('hex')}`
   }
 
-  /**
-   * 验证密码函数
-   * 比较输入的密码与存储的加密密码是否匹配
-   * @param inputPassword 用户输入的原始密码
-   * @param storedPassword 数据库中存储的加密密码
-   * @returns 密码是否匹配
-   */
+  // 比较输入密码与存储的加密密码是否匹配，使用常量时间比较防止时序攻击。
   async verifyPassword(
     inputPassword: string,
     storedPassword: string,

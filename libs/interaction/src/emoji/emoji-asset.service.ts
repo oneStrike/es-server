@@ -49,11 +49,7 @@ export class EmojiAssetService {
     return this.drizzle.schema.emojiAsset
   }
 
-  /**
-   * 分页查询表情包列表。
-   * - 默认按 sortOrder 升序、id 升序排列。
-   * - 自动排除已软删除的记录。
-   */
+  // 分页查询表情包列表。 - 默认按 sortOrder 升序、id 升序排列。 - 自动排除已软删除的记录。
   async getPackPage(dto: QueryEmojiPackDto) {
     const conditions: SQL[] = [isNull(this.emojiPack.deletedAt)]
 
@@ -96,11 +92,7 @@ export class EmojiAssetService {
     }
   }
 
-  /**
-   * 获取表情包详情。
-   * - 仅返回未删除的记录。
-   * @throws BusinessException 表情包不存在或已删除
-   */
+  // 获取表情包详情。 - 仅返回未删除的记录。
   async getPackDetail(id: number) {
     const pack = await this.db.query.emojiPack.findFirst({
       where: {
@@ -118,12 +110,7 @@ export class EmojiAssetService {
     return this.toEmojiPackOutputDto(pack)
   }
 
-  /**
-   * 创建表情包。
-   * - 自动计算 sortOrder（未指定时取当前最大排序值 +1）。
-   * - sceneType 合法性由 DTO 负责校验。
-   * @throws BusinessException 表情包编码已存在（由 withErrorHandling 转换）
-   */
+  // 创建表情包。 - 自动计算 sortOrder（未指定时取当前最大排序值 +1）。 - sceneType 合法性由 DTO 负责校验。
   async createPack(dto: CreateEmojiPackDto, adminUserId: number) {
     const sortOrder =
       dto.sortOrder ??
@@ -148,13 +135,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 更新表情包。
-   * - 允许部分字段更新，未传入的字段保持原值。
-   * - sceneType 合法性由 DTO 负责校验。
-   * @throws BusinessException 表情包不存在或已删除
-   * @throws BusinessException 表情包编码已存在（由 withErrorHandling 转换）
-   */
+  // 更新表情包。 - 允许部分字段更新，未传入的字段保持原值。 - sceneType 合法性由 DTO 负责校验。
   async updatePack(dto: UpdateEmojiPackDto, adminUserId: number) {
     const { id, ...updateData } = dto
     await this.drizzle.withErrorHandling(
@@ -176,11 +157,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 更新表情包启用状态。
-   * - 用于管理端的启用/禁用切换。
-   * @throws BusinessException 表情包不存在或已删除
-   */
+  // 更新表情包启用状态。 - 用于管理端的启用/禁用切换。
   async updatePackEnabled(
     id: number,
     isEnabled: boolean,
@@ -202,11 +179,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 更新表情包场景类型。
-   * - 独立接口用于单独修改场景可见性。
-   * @throws BusinessException 表情包不存在或已删除
-   */
+  // 更新表情包场景类型。 - 独立接口用于单独修改场景可见性。
   async updatePackSceneType(
     dto: UpdateEmojiPackSceneTypeDto,
     adminUserId: number,
@@ -230,10 +203,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 交换两个表情包的排序值。
-   * - 用于管理端的拖拽排序。
-   */
+  // 交换两个表情包的排序值。 - 用于管理端的拖拽排序。
   async swapPackSortOrder(dragId: number, targetId: number) {
     return this.drizzle.withTransaction(async (tx) => {
       const rows = await tx
@@ -280,12 +250,7 @@ export class EmojiAssetService {
     })
   }
 
-  /**
-   * 删除表情包（软删除）。
-   * - 删除前校验：若表情包下存在未删除的资源，禁止删除以避免孤儿资源。
-   * @throws BusinessException 表情包不存在或已删除
-   * @throws BusinessException 表情包下仍有资源
-   */
+  // 删除表情包（软删除）。 - 删除前校验：若表情包下存在未删除的资源，禁止删除以避免孤儿资源。
   async deletePack(id: number) {
     // 删除前保护：存在未删除资源时禁止删除表情包，避免孤儿资源。
     const [pack, assetCountRow] = await Promise.all([
@@ -333,11 +298,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 分页查询表情资源列表。
-   * - 默认按 sortOrder 升序、id 升序排列。
-   * - 自动排除已软删除的记录。
-   */
+  // 分页查询表情资源列表。 - 默认按 sortOrder 升序、id 升序排列。 - 自动排除已软删除的记录。
   async getAssetPage(dto: QueryEmojiAssetDto) {
     const conditions: SQL[] = [isNull(this.emojiAsset.deletedAt)]
 
@@ -387,11 +348,7 @@ export class EmojiAssetService {
     }
   }
 
-  /**
-   * 获取表情资源详情。
-   * - 仅返回未删除的记录。
-   * @throws BusinessException 表情资源不存在或已删除
-   */
+  // 获取表情资源详情。 - 仅返回未删除的记录。
   async getAssetDetail(id: number) {
     const asset = await this.db.query.emojiAsset.findFirst({
       where: {
@@ -408,12 +365,7 @@ export class EmojiAssetService {
     return this.toEmojiAssetOutputDto(asset)
   }
 
-  /**
-   * 创建表情资源。
-   * - 自动计算 sortOrder（未指定时取当前包内最大排序值 +1）。
-   * - 根据 kind 校验必填字段：CUSTOM 需 shortcode+imageUrl，UNICODE 需 unicodeSequence。
-   * @throws BusinessException 表情包不存在或字段校验失败
-   */
+  // 创建表情资源。 - 自动计算 sortOrder（未指定时取当前包内最大排序值 +1）。 - 根据 kind 校验必填字段：CUSTOM 需 shortcode+imageUrl，UNICODE 需 unicodeSequence。
   async createAsset(dto: CreateEmojiAssetDto, adminUserId: number) {
     await this.ensurePackExists(dto.packId)
     const normalizedAsset = this.prepareAssetPayload(dto.kind, dto)
@@ -436,13 +388,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 更新表情资源。
-   * - 允许部分字段更新，未传入的字段保持原值。
-   * - 若更新 kind，需重新校验字段完整性。
-   * @throws BusinessException 表情资源不存在或已删除
-   * @throws BusinessException 目标表情包不存在或字段校验失败
-   */
+  // 更新表情资源。 - 允许部分字段更新，未传入的字段保持原值。 - 若更新 kind，需重新校验字段完整性。
   async updateAsset(dto: UpdateEmojiAssetDto, adminUserId: number) {
     if (dto.packId !== undefined) {
       await this.ensurePackExists(dto.packId)
@@ -482,11 +428,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 更新表情资源启用状态。
-   * - 用于管理端的启用/禁用切换。
-   * @throws BusinessException 表情资源不存在或已删除
-   */
+  // 更新表情资源启用状态。 - 用于管理端的启用/禁用切换。
   async updateAssetEnabled(
     id: number,
     isEnabled: boolean,
@@ -508,10 +450,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 交换两个表情资源的排序值。
-   * - 仅允许同一表情包（packId 相同）内的资源交换顺序。
-   */
+  // 交换两个表情资源的排序值。 - 仅允许同一表情包（packId 相同）内的资源交换顺序。
   async swapAssetSortOrder(dragId: number, targetId: number) {
     return this.drizzle.withTransaction(async (tx) => {
       const rows = await tx
@@ -572,10 +511,7 @@ export class EmojiAssetService {
     })
   }
 
-  /**
-   * 删除表情资源（软删除）。
-   * @throws BusinessException 表情资源不存在或已删除
-   */
+  // 删除表情资源（软删除）。
   async deleteAsset(id: number) {
     await this.drizzle.withErrorHandling(
       () =>
@@ -590,12 +526,7 @@ export class EmojiAssetService {
     return true
   }
 
-  /**
-   * 根据资源类型校验字段完整性。
-   * - CUSTOM 类型：必须提供 shortcode 和 imageUrl。
-   * - UNICODE 类型：必须提供 unicodeSequence。
-   * @throws BusinessException 字段不满足类型要求
-   */
+  // 根据资源类型校验字段完整性。 - CUSTOM 类型：必须提供 shortcode 和 imageUrl。 - UNICODE 类型：必须提供 unicodeSequence。
   private prepareAssetPayload(
     kind: CreateEmojiAssetDto['kind'],
     payload: ValidateEmojiAssetPayload,
@@ -632,11 +563,7 @@ export class EmojiAssetService {
     }
   }
 
-  /**
-   * 校验表情包存在且未删除。
-   * - 用于创建/更新表情资源前的外键前置校验。
-   * @throws BusinessException 表情包不存在或已删除
-   */
+  // 校验表情包存在且未删除。 - 用于创建/更新表情资源前的外键前置校验。
   private async ensurePackExists(packId: number) {
     const pack = await this.db.query.emojiPack.findFirst({
       where: {

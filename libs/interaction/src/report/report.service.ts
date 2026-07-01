@@ -70,10 +70,7 @@ export class ReportService {
     return this.drizzle.schema.userReportDispositionAttempt
   }
 
-  /**
-   * 构建举报裁决事件 envelope。
-   * 统一表达举报正式成立后的 code / target / operator / governanceStatus 语义。
-   */
+  // 构建举报裁决事件 envelope。 统一表达举报正式成立后的 code / target / operator / governanceStatus 语义。
   private buildHandledReportEventEnvelope(params: {
     reportId: number
     reporterId: number
@@ -104,11 +101,7 @@ export class ReportService {
     })
   }
 
-  /**
-   * 注册目标解析器
-   * 供其他模块在应用启动时注册自己的举报解析器
-   * @param resolver - 举报目标解析器实例
-   */
+  // 注册目标解析器 供其他模块在应用启动时注册自己的举报解析器
   registerResolver(resolver: IReportTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
       console.warn(
@@ -118,12 +111,7 @@ export class ReportService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  /**
-   * 获取指定目标类型的解析器
-   * @param targetType - 举报目标类型
-   * @returns 对应的目标解析器
-   * @throws BadRequestException 当目标类型不支持时抛出异常
-   */
+  // 获取指定目标类型的解析器
   private getResolver(targetType: ReportTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
@@ -132,13 +120,7 @@ export class ReportService {
     return resolver
   }
 
-  /**
-   * 创建举报
-   * 执行完整的举报流程：解析目标元数据、校验举报人、拦截自举报、创建举报记录、执行后置钩子
-   * @param dto - 创建举报入参
-   * @param options - 可选项
-   * @returns 创建的举报记录
-   */
+  // 创建举报 执行完整的举报流程：解析目标元数据、校验举报人、拦截自举报、创建举报记录、执行后置钩子
   async createReport(
     dto: CreateReportCommandDto,
     options: CreateUserReportOptions = {},
@@ -190,11 +172,7 @@ export class ReportService {
     return report
   }
 
-  /**
-   * 获取用户举报列表
-   * @param query - 举报列表查询条件
-   * @returns 分页举报记录
-   */
+  // 获取用户举报列表
   async getUserReports(query: QueryMyReportPageCommandDto) {
     const conditions: SQL[] = [eq(this.userReport.reporterId, query.reporterId)]
     const pageParams = this.drizzle.buildPageParams(query, {
@@ -259,12 +237,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * 获取用户举报详情
-   * @param reportId - 举报记录 ID
-   * @param reporterId - 举报人 ID
-   * @returns 举报记录详情
-   */
+  // 获取用户举报详情
   async getReportDetail(reportId: number, reporterId: number) {
     const [report] = await this.db
       .select()
@@ -314,10 +287,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * 获取管理端举报分页列表。
-   * 管理端视角不再限制举报人，可按目标、原因、处理人和状态筛选。
-   */
+  // 获取管理端举报分页列表。 管理端视角不再限制举报人，可按目标、原因、处理人和状态筛选。
   async getAdminReportPage(query: QueryAdminReportPageDto) {
     const conditions: SQL[] = []
     const createdRange = buildDateOnlyRangeInAppTimeZone(
@@ -469,10 +439,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * 获取管理端举报详情。
-   * 该接口不限制举报人，用于后台处理时查看完整举报记录。
-   */
+  // 获取管理端举报详情。 该接口不限制举报人，用于后台处理时查看完整举报记录。
   async getAdminReportDetail(reportId: number) {
     const [report] = await this.db
       .select()
@@ -540,10 +507,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * 处理举报。
-   * 只允许 PENDING / PROCESSING 进入 RESOLVED / REJECTED，并在裁决后触发奖励结算。
-   */
+  // 处理举报。 只允许 PENDING / PROCESSING 进入 RESOLVED / REJECTED，并在裁决后触发奖励结算。
   async handleReport(input: HandleAdminReportCommandDto) {
     this.ensureHandleContract(input)
 
@@ -931,14 +895,7 @@ export class ReportService {
     )
   }
 
-  /**
-   * 真正执行举报落库
-   * 该方法只负责写库，不再承担目标校验职责
-   * @param tx - 事务客户端
-   * @param dto - 创建举报记录的完整数据
-   * @param options - 可选项
-   * @returns 创建的举报记录
-   */
+  // 真正执行举报落库 该方法只负责写库，不再承担目标校验职责
   private async createUserReport(
     tx: Db,
     dto: CreateUserReportPayload,
@@ -962,11 +919,7 @@ export class ReportService {
     return rows[0]
   }
 
-  /**
-   * 校验举报人是否存在
-   * @param reporterId - 举报人ID
-   * @throws BadRequestException 当举报人不存在时抛出异常
-   */
+  // 校验举报人是否存在
   private async ensureReporterExists(reporterId: number) {
     const [reporter] = await this.db
       .select({ id: this.drizzle.schema.appUser.id })
@@ -986,12 +939,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * 拦截举报自己内容的请求
-   * @param reporterId - 举报人ID
-   * @param ownerUserId - 目标所有者ID
-   * @throws BadRequestException 当举报自己的内容时抛出异常
-   */
+  // 拦截举报自己内容的请求
   private ensureCanReportOwnTarget(reporterId: number, ownerUserId?: number) {
     if (ownerUserId && ownerUserId === reporterId) {
       throw new BusinessException(
@@ -1001,11 +949,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * 根据目标类型生成更明确的重复举报提示
-   * @param targetType - 目标类型
-   * @returns 重复举报提示信息
-   */
+  // 根据目标类型生成更明确的重复举报提示
   private getDuplicateMessage(targetType: ReportTargetTypeEnum) {
     switch (targetType) {
       case ReportTargetTypeEnum.COMIC:
@@ -1025,10 +969,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * 校验举报处理状态流转。
-   * 只允许待处理中的举报进入最终裁决态，避免已处理记录被错误回滚或重复裁决。
-   */
+  // 校验举报处理状态流转。 只允许待处理中的举报进入最终裁决态，避免已处理记录被错误回滚或重复裁决。
   private ensureCanHandleReportStatus(
     currentStatus: ReportStatusEnum,
     nextStatus: ReportStatusEnum,

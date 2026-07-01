@@ -58,35 +58,29 @@ export class ForumModeratorGovernanceService {
     private readonly growthRewardSettlementService: GrowthRewardSettlementService,
   ) {}
 
-  /** 统一复用当前模块的 Drizzle 数据库实例。 */
+  // 统一复用当前模块的 Drizzle 数据库实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** forum_topic 表访问入口。 */
+  // forum_topic 表访问入口。
   private get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
-  /** user_comment 表访问入口。 */
+  // user_comment 表访问入口。
   private get userComment() {
     return this.drizzle.schema.userComment
   }
 
-  /**
-   * 解析治理 actor 的审核角色枚举。
-   * 当前仅 topic/comment 审核动作需要回填审核角色。
-   */
+  // 解析治理 actor 的审核角色枚举。 当前仅 topic/comment 审核动作需要回填审核角色。
   private resolveAuditRole(actor: ForumModeratorGovernanceActor) {
     return actor.actorType === 'moderator'
       ? AuditRoleEnum.MODERATOR
       : AuditRoleEnum.ADMIN
   }
 
-  /**
-   * 根据治理 actor 决定是否需要版主权限校验。
-   * admin 直接放行，moderator 则按板块作用域和权限做强校验。
-   */
+  // 根据治理 actor 决定是否需要版主权限校验。 admin 直接放行，moderator 则按板块作用域和权限做强校验。
   private async resolveModeratorGrant(
     actor: ForumModeratorGovernanceActor,
     sectionId: number,
@@ -103,10 +97,7 @@ export class ForumModeratorGovernanceService {
     )
   }
 
-  /**
-   * 查询主题治理所需的当前快照。
-   * 统一补齐板块作用域与现态字段，供权限校验和日志使用。
-   */
+  // 查询主题治理所需的当前快照。 统一补齐板块作用域与现态字段，供权限校验和日志使用。
   private async getTopicGovernanceSnapshot(topicId: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
@@ -154,10 +145,7 @@ export class ForumModeratorGovernanceService {
     return topic
   }
 
-  /**
-   * 查询论坛评论治理所需的当前快照。
-   * 非 forum comment 会被直接拦截，避免版主权限误作用到跨域评论。
-   */
+  // 查询论坛评论治理所需的当前快照。 非 forum comment 会被直接拦截，避免版主权限误作用到跨域评论。
   private async getCommentGovernanceSnapshot(commentId: number) {
     const comment = await this.db.query.userComment.findFirst({
       where: {
@@ -189,10 +177,7 @@ export class ForumModeratorGovernanceService {
     return comment
   }
 
-  /**
-   * 解析评论治理需要的 moderator 权限上下文。
-   * admin 不受 forum comment 作用域限制；moderator 只允许治理论坛评论。
-   */
+  // 解析评论治理需要的 moderator 权限上下文。 admin 不受 forum comment 作用域限制；moderator 只允许治理论坛评论。
   private async resolveCommentModeratorGrant(
     actor: ForumModeratorGovernanceActor,
     comment: Awaited<
@@ -233,10 +218,7 @@ export class ForumModeratorGovernanceService {
     return this.resolveModeratorGrant(actor, topic.sectionId, permission)
   }
 
-  /**
-   * 移动主题前校验 moderator 是否同时对来源和目标板块具备 MOVE 权限。
-   * 同板块 no-op 时仅校验来源板块，避免重复鉴权。
-   */
+  // 移动主题前校验 moderator 是否同时对来源和目标板块具备 MOVE 权限。 同板块 no-op 时仅校验来源板块，避免重复鉴权。
   private async resolveTopicMoveGrant(
     actor: ForumModeratorGovernanceActor,
     currentSectionId: number,
@@ -261,10 +243,7 @@ export class ForumModeratorGovernanceService {
     return sourceGrant
   }
 
-  /**
-   * 写入 topic moderator action log。
-   * 仅 moderator actor 落日志，admin 走共享事实写入主链但不写版主日志。
-   */
+  // 写入 topic moderator action log。 仅 moderator actor 落日志，admin 走共享事实写入主链但不写版主日志。
   private async createTopicActionLog(params: {
     tx?: Db
     actor: ForumModeratorGovernanceActor
@@ -352,10 +331,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 写入 comment moderator action log。
-   * 统一记录 moderator 对 forum comment 的审核/隐藏动作。
-   */
+  // 写入 comment moderator action log。 统一记录 moderator 对 forum comment 的审核/隐藏动作。
   private async createCommentActionLog(params: {
     tx?: Db
     actor: ForumModeratorGovernanceActor
@@ -390,10 +366,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 更新主题置顶状态。
-   * moderator 需具备 PIN 权限；admin 共享同一事实写入链但跳过 moderator 权限校验。
-   */
+  // 更新主题置顶状态。 moderator 需具备 PIN 权限；admin 共享同一事实写入链但跳过 moderator 权限校验。
   async updateTopicPinned(
     input: UpdateForumTopicPinnedDto,
     actor: ForumModeratorGovernanceActor,
@@ -428,10 +401,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 更新主题精华状态。
-   * moderator 需具备 FEATURE 权限。
-   */
+  // 更新主题精华状态。 moderator 需具备 FEATURE 权限。
   async updateTopicFeatured(
     input: UpdateForumTopicFeaturedDto,
     actor: ForumModeratorGovernanceActor,
@@ -466,10 +436,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 更新主题锁定状态。
-   * moderator 需具备 LOCK 权限。
-   */
+  // 更新主题锁定状态。 moderator 需具备 LOCK 权限。
   async updateTopicLocked(
     input: UpdateForumTopicLockedDto,
     actor: ForumModeratorGovernanceActor,
@@ -504,10 +471,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 删除主题。
-   * moderator 需具备 DELETE 权限；删除动作走正式 topic 删除链并补记 moderator action log。
-   */
+  // 删除主题。 moderator 需具备 DELETE 权限；删除动作走正式 topic 删除链并补记 moderator action log。
   async deleteTopic(
     input: IdDto,
     actor: ForumModeratorGovernanceActor,
@@ -551,10 +515,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 恢复已删除主题。
-   * moderator 需具备 DELETE 权限；admin 跳过 moderator 权限但写入统一治理日志。
-   */
+  // 恢复已删除主题。 moderator 需具备 DELETE 权限；admin 跳过 moderator 权限但写入统一治理日志。
   async restoreTopic(
     input: RestoreForumTopicDto,
     actor: ForumModeratorGovernanceActor,
@@ -599,10 +560,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 更新主题内容。
-   * admin/moderator 内容治理写入 canonical governance log，不写 user action log。
-   */
+  // 更新主题内容。 admin/moderator 内容治理写入 canonical governance log，不写 user action log。
   async updateTopicContent(
     input: UpdateForumTopicDto,
     actor: ForumModeratorGovernanceActor,
@@ -649,10 +607,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 移动主题板块归属。
-   * moderator 需同时具备来源板块和目标板块的 MOVE 权限，避免跨板块越权搬运主题。
-   */
+  // 移动主题板块归属。 moderator 需同时具备来源板块和目标板块的 MOVE 权限，避免跨板块越权搬运主题。
   async moveTopic(
     input: MoveForumTopicDto,
     actor: ForumModeratorGovernanceActor,
@@ -685,10 +640,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 更新主题隐藏状态。
-   * 当前把隐藏/取消隐藏视为 moderator 的 DELETE 权限语义。
-   */
+  // 更新主题隐藏状态。 当前把隐藏/取消隐藏视为 moderator 的 DELETE 权限语义。
   async updateTopicHidden(
     input: UpdateForumTopicHiddenDto,
     actor: ForumModeratorGovernanceActor,
@@ -723,10 +675,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 更新主题审核状态。
-   * moderator 需具备 AUDIT 权限；topic auditBy/auditRole 由治理 actor 上下文统一回填。
-   */
+  // 更新主题审核状态。 moderator 需具备 AUDIT 权限；topic auditBy/auditRole 由治理 actor 上下文统一回填。
   async updateTopicAuditStatus(
     input: UpdateForumTopicAuditStatusDto,
     actor: ForumModeratorGovernanceActor,
@@ -799,10 +748,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 更新评论隐藏状态。
-   * 当前把评论隐藏视为 moderator 的 DELETE 权限语义。
-   */
+  // 更新评论隐藏状态。 当前把评论隐藏视为 moderator 的 DELETE 权限语义。
   async updateCommentHidden(
     input: UpdateCommentHiddenDto,
     actor: ForumModeratorGovernanceActor,
@@ -847,10 +793,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 删除评论。
-   * forum comment 的 moderator 删除会复用正式评论删除链，并记录版主删除日志。
-   */
+  // 删除评论。 forum comment 的 moderator 删除会复用正式评论删除链，并记录版主删除日志。
   async deleteComment(input: IdDto, actor: ForumModeratorGovernanceActor) {
     const current = await this.getCommentGovernanceSnapshot(input.id)
     const grant = await this.resolveCommentModeratorGrant(
@@ -880,10 +823,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 更新评论审核状态。
-   * forum comment 的 moderator 审核会同时回填 auditBy/auditRole，并记录正式版主日志。
-   */
+  // 更新评论审核状态。 forum comment 的 moderator 审核会同时回填 auditBy/auditRole，并记录正式版主日志。
   async updateCommentAuditStatus(
     input: UpdateCommentAuditStatusDto,
     actor: ForumModeratorGovernanceActor,
@@ -953,10 +893,7 @@ export class ForumModeratorGovernanceService {
     return true
   }
 
-  /**
-   * 返回 moderator permissions 的中文提示。
-   * 当前用于 controller / service 报错文案与调试输出对齐。
-   */
+  // 返回 moderator permissions 的中文提示。 当前用于 controller / service 报错文案与调试输出对齐。
   getPermissionLabel(permission: ForumModeratorPermissionEnum) {
     return FORUM_MODERATOR_PERMISSION_LABELS[permission]
   }

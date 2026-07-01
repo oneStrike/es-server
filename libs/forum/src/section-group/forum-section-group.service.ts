@@ -32,17 +32,17 @@ export class ForumSectionGroupService {
     private readonly followService: FollowService,
   ) {}
 
-  /** 数据库连接实例。 */
+  // 数据库连接实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** 板块分组表。 */
+  // 板块分组表。
   get forumSectionGroup() {
     return this.drizzle.schema.forumSectionGroup
   }
 
-  /** 板块表。 */
+  // 板块表。
   get forumSection() {
     return this.drizzle.schema.forumSection
   }
@@ -54,10 +54,7 @@ export class ForumSectionGroupService {
     )
   }
 
-  /**
-   * 创建板块分组。
-   * 分组名称全局唯一，重复名称通过 `withErrorHandling` 转换成稳定业务异常。
-   */
+  // 创建板块分组。 分组名称全局唯一，重复名称通过 `withErrorHandling` 转换成稳定业务异常。
   async createSectionGroup(dto: CreateForumSectionGroupDto) {
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.forumSectionGroup).values(dto),
@@ -66,10 +63,7 @@ export class ForumSectionGroupService {
     return true
   }
 
-  /**
-   * 查询单个板块分组详情。
-   * 仅返回未软删除记录，缺失时抛出稳定的 not-found 异常。
-   */
+  // 查询单个板块分组详情。 仅返回未软删除记录，缺失时抛出稳定的 not-found 异常。
   async getSectionGroupById(id: number) {
     const group = await this.db.query.forumSectionGroup.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -85,10 +79,7 @@ export class ForumSectionGroupService {
     return this.toForumSectionGroupOutputDto(group)
   }
 
-  /**
-   * 管理端分页查询板块分组。
-   * 未显式传入排序时，默认按 sortOrder 升序返回，保持后台拖拽顺序。
-   */
+  // 管理端分页查询板块分组。 未显式传入排序时，默认按 sortOrder 升序返回，保持后台拖拽顺序。
   async getSectionGroupPage(dto: QueryForumSectionGroupDto) {
     const conditions: SQL[] = [isNull(this.forumSectionGroup.deletedAt)]
 
@@ -129,10 +120,7 @@ export class ForumSectionGroupService {
     )
   }
 
-  /**
-   * 查询应用侧板块分组可见列表。
-   * 仅返回启用中的分组，并挂载启用板块及访问状态信息。
-   */
+  // 查询应用侧板块分组可见列表。 仅返回启用中的分组，并挂载启用板块及访问状态信息。
   async getVisibleSectionGroupList(
     query: QueryVisibleForumSectionGroupCommandDto = {},
   ) {
@@ -229,10 +217,7 @@ export class ForumSectionGroupService {
       .filter((group) => group.sections.length > 0)
   }
 
-  /**
-   * 更新板块分组。
-   * 写后校验受影响行数，确保分组存在且未被软删除。
-   */
+  // 更新板块分组。 写后校验受影响行数，确保分组存在且未被软删除。
   async updateSectionGroup(updateSectionGroupDto: UpdateForumSectionGroupDto) {
     const { id, ...updateData } = updateSectionGroupDto
     await this.drizzle.withErrorHandling(
@@ -254,10 +239,7 @@ export class ForumSectionGroupService {
     return true
   }
 
-  /**
-   * 软删除板块分组。
-   * 删除前会阻止仍挂有板块的分组被移除，避免产生悬空的板块归属关系。
-   */
+  // 软删除板块分组。 删除前会阻止仍挂有板块的分组被移除，避免产生悬空的板块归属关系。
   async deleteSectionGroup(id: number) {
     await this.drizzle.withTransaction(async (tx) => {
       await this.lockSectionGroupForMutation(tx, id)
@@ -311,10 +293,7 @@ export class ForumSectionGroupService {
     return true
   }
 
-  /**
-   * 交换板块分组排序顺序。
-   * 仅交换拖拽目标的排序值，不改动其它字段。
-   */
+  // 交换板块分组排序顺序。 仅交换拖拽目标的排序值，不改动其它字段。
   async swapSectionGroupSortOrder(dto: SwapForumSectionGroupSortDto) {
     return this.drizzle.withTransaction(async (tx) => {
       const rows = await tx
@@ -383,10 +362,7 @@ export class ForumSectionGroupService {
     })
   }
 
-  /**
-   * 更新板块分组启用状态。
-   * 写路径只允许修改启用位，并对软删除记录保持不可见。
-   */
+  // 更新板块分组启用状态。 写路径只允许修改启用位，并对软删除记录保持不可见。
   async updateSectionGroupEnabled(
     updateSectionGroupEnabledDto: UpdateForumSectionGroupEnabledDto,
   ) {

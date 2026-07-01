@@ -41,13 +41,7 @@ export class SmsService {
     private readonly configProvider: SmsConfigProvider,
   ) {}
 
-  /**
-   * 获取阿里云客户端实例（单例模式）
-   *
-   * 配置从 ConfigReader 同步读取，当 AccessKeyId 变化时重建客户端
-   *
-   * @returns Dypnsapi20170525 客户端实例
-   */
+  // 获取阿里云客户端实例（单例模式） 配置从 ConfigReader 同步读取，当 AccessKeyId 变化时重建客户端
   private getClient() {
     const aliyunConfig = this.configProvider.getAliyunConfig()
 
@@ -73,16 +67,7 @@ export class SmsService {
     return this.client
   }
 
-  /**
-   * 创建阿里云短信客户端
-   *
-   * @param config 阿里云配置
-   * @param config.accessKeyId 阿里云 AccessKeyId
-   * @param config.accessKeySecret 阿里云 AccessKeySecret
-   * @param config.sms 短信配置
-   * @param config.sms.endpoint 短信服务端点（可选）
-   * @returns Dypnsapi20170525 客户端实例
-   */
+  // 创建阿里云短信客户端
   private createClient(config: SmsAliyunConfig) {
     const credential = new Credential(
       new Config({
@@ -99,14 +84,7 @@ export class SmsService {
     return new Dypnsapi20170525(openApiConfig)
   }
 
-  /**
-   * 校验短信验证码
-   *
-   * 使用阿里云短信服务接口进行验证码校验，验证码由阿里云生成和管理。
-   *
-   * @param dto 校验请求参数
-   * @returns 校验是否通过
-   */
+  // 校验短信验证码 使用阿里云短信服务接口进行验证码校验，验证码由阿里云生成和管理。
   async checkVerifyCode(dto: CheckVerifyCodeDto): Promise<boolean> {
     const {
       phone,
@@ -140,15 +118,7 @@ export class SmsService {
     return isPassed
   }
 
-  /**
-   * 发送短信验证码
-   *
-   * 使用阿里云短信服务发送验证码，验证码由阿里云生成、发送和校验。
-   * 验证码有效期和长度从系统配置读取。
-   *
-   * @param dto 发送请求参数
-   * @returns 发送是否成功
-   */
+  // 发送短信验证码 使用阿里云短信服务发送验证码，验证码由阿里云生成、发送和校验。 验证码有效期和长度从系统配置读取。
   async sendVerifyCode(dto: SendVerifyCodeDto): Promise<boolean> {
     const { phone, templateCode } = dto
     const maskedPhone = maskString(phone, 3, 4)

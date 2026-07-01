@@ -26,10 +26,7 @@ export class LoggerService {
     this.logger = createLogger(this.buildLoggerOptions())
   }
 
-  /**
-   * 构建日志格式化器
-   * @returns 包含基础格式和控制台格式的对象
-   */
+  // 构建日志格式化器
   buildFormats(): {
     consoleFmt: ReturnType<typeof format.combine>
     jsonFmt: ReturnType<typeof format.combine>
@@ -89,10 +86,7 @@ export class LoggerService {
     return { consoleFmt, jsonFmt }
   }
 
-  /**
-   * 构建默认日志器配置
-   * @returns Winston日志器配置选项
-   */
+  // 构建默认日志器配置
   buildLoggerOptions() {
     const conf = this.configService.get<LoggerConfig>('logger')!
     const level = conf.level
@@ -114,10 +108,7 @@ export class LoggerService {
     }
   }
 
-  /**
-   * 获取默认日志器实例
-   * @returns 默认日志器
-   */
+  // 获取默认日志器实例
   getLogger() {
     return this.logger
   }

@@ -12,12 +12,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 export class BrowseLogPermissionService {
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /**
-   * 校验用户是否可以浏览内容
-   *
-   * @param userId - 用户ID
-   * @throws BadRequestException 用户不存在、已禁用或被封禁
-   */
+  // 校验用户是否可以浏览内容
   async ensureUserCanView(userId: number): Promise<void> {
     const user = await this.drizzle.db.query.appUser.findFirst({
       where: { id: userId },
@@ -49,12 +44,7 @@ export class BrowseLogPermissionService {
     }
   }
 
-  /**
-   * 校验用户是否可以浏览
-   *
-   * @param userId - 用户ID
-   * @throws BadRequestException 用户不存在、已禁用或被封禁
-   */
+  // 校验用户是否可以浏览
   async ensureCanBrowse(userId: number): Promise<void> {
     await this.ensureUserCanView(userId)
   }

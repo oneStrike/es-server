@@ -13,13 +13,7 @@ const EMOJI_UNICODE_REGEX = /\p{RGI_Emoji}/gv
 export class EmojiParserService {
   constructor(private readonly emojiCatalogService: EmojiCatalogService) {}
 
-  /**
-   * 将文本解析为普通文本、Unicode 表情和自定义短码三类 token。
-   * - 先提取所有短码和 Unicode 序列并批量查询映射，再按顺序生成 token 列表。
-   * - 未命中映射的短码保持原文，避免误替换造成内容丢失。
-   * - 命中平台托管资源的 token 会补齐 emojiAssetId，供最近使用统计复用。
-   * - 剩余文本段再拆分 Unicode 表情，最后合并连续文本 token。
-   */
+  // 将文本解析为普通文本、Unicode 表情和自定义短码三类 token。 - 先提取所有短码和 Unicode 序列并批量查询映射，再按顺序生成 token 列表。 - 未命中映射的短码保持原文，避免误替换造成内容丢失。 - 命中平台托管资源的 token 会补齐 emojiAssetId，供最近使用统计复用。 - 剩余文本段再拆分 Unicode 表情，最后合并连续文本 token。
   async parse(input: EmojiParseInput): Promise<EmojiParseToken[]> {
     const body = input.body || ''
     if (!body) {
@@ -92,12 +86,7 @@ export class EmojiParserService {
     return tokens
   }
 
-  /**
-   * 将文本段拆分为普通文本和 Unicode 表情 token。
-   * - 使用 RGI_Emoji 正则匹配完整 Unicode 表情序列。
-   * - 命中平台托管 Unicode 资源时补齐 emojiAssetId。
-   * - 递归调用 pushTextToken 合并连续的普通文本。
-   */
+  // 将文本段拆分为普通文本和 Unicode 表情 token。 - 使用 RGI_Emoji 正则匹配完整 Unicode 表情序列。 - 命中平台托管 Unicode 资源时补齐 emojiAssetId。 - 递归调用 pushTextToken 合并连续的普通文本。
   private pushTextSegment(
     tokens: EmojiParseToken[],
     segment: string,
@@ -131,11 +120,7 @@ export class EmojiParserService {
     }
   }
 
-  /**
-   * 添加普通文本 token。
-   * - 如果最后一个 token 已是文本类型，则合并到该 token。
-   * - 避免生成连续的文本 token，减少结果数组长度。
-   */
+  // 添加普通文本 token。 - 如果最后一个 token 已是文本类型，则合并到该 token。 - 避免生成连续的文本 token，减少结果数组长度。
   private pushTextToken(tokens: EmojiParseToken[], text: string) {
     if (!text) {
       return

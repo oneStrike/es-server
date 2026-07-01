@@ -32,10 +32,7 @@ export class BrowseLogService {
     IBrowseLogTargetResolver
   >()
 
-  /**
-   * 注册目标解析器
-   * @param resolver - 浏览日志目标解析器实例
-   */
+  // 注册目标解析器
   registerResolver(resolver: IBrowseLogTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
       console.warn(
@@ -45,11 +42,7 @@ export class BrowseLogService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  /**
-   * 获取指定目标类型的解析器
-   * @param targetType - 浏览目标类型
-   * @returns 对应的目标解析器
-   */
+  // 获取指定目标类型的解析器
   getResolver(targetType: BrowseLogTargetTypeEnum): IBrowseLogTargetResolver {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
@@ -58,9 +51,7 @@ export class BrowseLogService {
     return resolver
   }
 
-  /**
-   * 应用浏览数量变更到目标对象
-   */
+  // 应用浏览数量变更到目标对象
   private async applyTargetCountDelta(
     tx: Db,
     targetType: BrowseLogTargetTypeEnum,
@@ -85,19 +76,7 @@ export class BrowseLogService {
     )
   }
 
-  /**
-   * 记录浏览日志
-   *
-   * @param targetType - 目标类型
-   * @param targetId - 目标ID
-   * @param userId - 用户ID
-   * @param ipAddress - IP地址
-   * @param device - 设备信息
-   * @param userAgent - UserAgent
-   * @param options - 附加选项
-   * @param options.skipTargetValidation - 是否跳过目标合法性校验
-   * @param options.deferPostProcess - 是否延迟执行后置处理（成长奖励等）
-   */
+  // 记录浏览日志
   async recordBrowseLog(
     targetType: BrowseLogTargetTypeEnum,
     targetId: number,

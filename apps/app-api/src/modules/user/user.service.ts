@@ -1,14 +1,8 @@
 import type { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets/dto/user-assets.dto'
 import type { SQL } from 'drizzle-orm'
 /**
- * 用户服务
- *
- * 提供用户中心相关的业务逻辑，包括：
- * - 用户基本信息的获取和更新
- * - 用户中心汇总信息
- * - 用户状态判断
- * - 用户资产统计（购买、下载、收藏、点赞等）
- * - 用户成长信息（积分、经验、等级、徽章）
+ * 应用端用户服务。
+ * 提供用户中心相关的业务逻辑，包括资料获取/更新、用户中心汇总、状态判断、资产统计与成长信息。
  */
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience/experience.service'
@@ -54,36 +48,37 @@ export class UserService {
     private readonly messageInboxService: MessageInboxService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
+  // 复用应用用户表。
   private get appUser() {
     return this.drizzle.schema.appUser
   }
 
+  // 复用用户徽章分配表。
   private get userBadgeAssignment() {
     return this.drizzle.schema.userBadgeAssignment
   }
 
+  // 复用用户徽章表。
   private get userBadge() {
     return this.drizzle.schema.userBadge
   }
 
+  // 复用用户等级规则表。
   private get userLevelRule() {
     return this.drizzle.schema.userLevelRule
   }
 
+  // 复用成长台账记录表。
   private get growthLedgerRecord() {
     return this.drizzle.schema.growthLedgerRecord
   }
 
-  /**
-   * 将共享用户计数读模型收敛为用户中心 DTO 约定结构。
-   *
-   * 运行时显式排除 `userId` 等内部字段，并为缺失值兜底为 0，
-   * 避免下游读模型扩展后直接漂移到用户中心 HTTP 契约。
-   */
+  // 将共享用户计数读模型收敛为用户中心 DTO 约定结构，显式排除内部字段并为缺失值兜底为 0。
   private mapUserCenterCounts(counts?: Partial<UserCountDto>) {
     return {
       commentCount: counts?.commentCount ?? 0,
@@ -102,9 +97,7 @@ export class UserService {
     }
   }
 
-  /**
-   * 收敛用户资产摘要输出，避免资产域内部补充字段后直接外泄到用户中心契约。
-   */
+  // 收敛用户资产摘要输出，避免资产域内部补充字段外泄到用户中心契约。
   private mapUserCenterAssets(assets?: Partial<BaseUserAssetsSummaryDto>) {
     return {
       currencyBalance: assets?.currencyBalance ?? 0,
@@ -121,9 +114,7 @@ export class UserService {
     }
   }
 
-  /**
-   * 收敛用户中心任务摘要，避免执行层内部辅助字段透传到 HTTP 契约。
-   */
+  // 收敛用户中心任务摘要，避免执行层内部辅助字段透传到 HTTP 契约。
   private mapUserCenterTaskSummary(taskSummary?: Partial<UserCenterTaskDto>) {
     return {
       claimableCount: taskSummary?.claimableCount ?? 0,
@@ -133,18 +124,14 @@ export class UserService {
     }
   }
 
-  /**
-   * 获取用户资料
-   */
+  // 获取用户资料，包含成长快照。
   async getUserProfile(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
     const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
     return this.userCoreService.mapBaseUser(user, growth)
   }
 
-  /**
-   * 更新用户资料
-   */
+  // 更新用户资料，邮箱唯一冲突时抛出业务异常。
   async updateUserProfile(userId: number, dto: UpdateMyProfileDto) {
     await this.userCoreService.ensureUserExists(userId)
 
@@ -181,16 +168,7 @@ export class UserService {
     }
   }
 
-  /**
-   * 换绑当前用户手机号。
-   *
-   * 该操作要求用户先校验旧手机号，再校验新手机号，避免高风险账号标识被未授权篡改。
-   * 新手机号占用冲突统一翻译为稳定业务文案，不直接暴露数据库唯一约束错误。
-   *
-   * @param userId 当前用户ID
-   * @param dto 换绑手机号入参
-   * @returns 是否换绑成功
-   */
+  // 换绑手机号：需先校验旧手机号再校验新手机号，新号占用冲突统一翻译为稳定业务文案。
   async changeMyPhone(userId: number, dto: ChangeMyPhoneDto) {
     const user = await this.userCoreService.ensureUserExists(userId)
 
@@ -248,9 +226,7 @@ export class UserService {
     }
   }
 
-  /**
-   * 获取用户中心汇总信息
-   */
+  // 获取用户中心汇总信息：用户、成长、计数、徽章、资产、消息、任务。
   async getUserCenter(userId: number): Promise<UserCenterDto> {
     const [
       user,
@@ -318,31 +294,18 @@ export class UserService {
     }
   }
 
-  /**
-   * 获取用户状态信息
-   */
+  // 获取用户状态信息。
   async getUserStatus(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
     return this.userCoreService.buildUserStatus(user)
   }
 
-  /**
-   * 获取用户积分统计
-   *
-   * @param userId 用户ID
-   * @returns 用户积分统计
-   */
+  // 获取用户积分统计。
   async getUserPointStats(userId: number) {
     return this.userPointService.getUserPointStats(userId)
   }
 
-  /**
-   * 获取用户积分记录
-   *
-   * @param userId 用户ID
-   * @param query 查询条件
-   * @returns 积分记录分页数据
-   */
+  // 分页获取用户积分记录，剥离内部字段后返回。
   async getUserPointRecords(userId: number, query: QueryMyPointRecordDto) {
     const page = await this.userPointService.getAppPointRecordPage({
       ...query,
@@ -358,12 +321,7 @@ export class UserService {
     }
   }
 
-  /**
-   * 获取用户经验统计
-   *
-   * @param userId 用户ID
-   * @returns 用户经验统计
-   */
+  // 获取用户经验统计，含今日已获经验、当前等级与下一等级信息。
   async getUserExperienceStats(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
     const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
@@ -449,13 +407,7 @@ export class UserService {
     }
   }
 
-  /**
-   * 获取用户经验记录
-   *
-   * @param userId 用户ID
-   * @param query 查询条件
-   * @returns 经验记录分页数据
-   */
+  // 分页获取用户经验记录，剥离内部字段后返回。
   async getUserExperienceRecords(
     userId: number,
     query: QueryMyExperienceRecordDto,
@@ -479,13 +431,7 @@ export class UserService {
     }
   }
 
-  /**
-   * 获取用户徽章列表
-   *
-   * @param userId 用户ID
-   * @param query 查询条件
-   * @returns 徽章列表分页数据
-   */
+  // 分页获取用户徽章列表，支持按名称/类型/启用状态过滤。
   async getUserBadges(userId: number, query: QueryMyBadgeDto) {
     await this.userCoreService.ensureUserExists(userId)
 
@@ -583,23 +529,13 @@ export class UserService {
     }
   }
 
-  /**
-   * 获取用户资产统计
-   *
-   * 包括购买、下载、收藏、点赞、浏览、评论等统计数据
-   *
-   * @param userId 用户ID
-   * @returns 用户资产统计
-   */
+  // 获取用户资产统计，包括购买、下载、收藏、点赞、浏览、评论等。
   async getUserAssetsSummary(userId: number) {
     await this.userCoreService.ensureUserExists(userId)
     return this.userAssetsService.getUserAssetsSummary(userId)
   }
 
-  /**
-   * 获取 @ 提及候选用户。
-   * 仅代理共享用户域的轻量搜索结果，不在 app 层重复拼接额外字段。
-   */
+  // 获取 @ 提及候选用户，代理共享用户域的轻量搜索。
   async getMentionCandidates(query: QueryUserMentionPageDto) {
     return this.userCoreService.queryMentionCandidates(query)
   }

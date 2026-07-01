@@ -24,12 +24,7 @@ export class CaptchaService {
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  /**
-   * 生成SVG验证码
-   * @param prefix 缓存key前缀
-   * @param config 验证码配置
-   * @returns 包含验证码图片和ID的对象
-   */
+  // 生成SVG验证码
   async generateSvgCaptcha(prefix: string, config?: CaptchaConfig) {
     const finalConfig = { ...this.defaultConfig, ...config }
 
@@ -52,14 +47,7 @@ export class CaptchaService {
     }
   }
 
-  /**
-   * 验证验证码
-   * @param prefix 缓存key前缀
-   * @param id 验证码ID
-   * @param userInput 用户输入的验证码
-   * @param ignoreCase 是否忽略大小写（默认true）
-   * @returns 验证是否通过
-   */
+  // 验证验证码
   async verify(
     prefix: string,
     id: string,
@@ -83,11 +71,7 @@ export class CaptchaService {
     return expectedText === inputText
   }
 
-  /**
-   * 删除验证码（使用后应删除）
-   * @param prefix 缓存key前缀
-   * @param id 验证码ID
-   */
+  // 删除验证码（使用后应删除）
   async remove(prefix: string, id: string): Promise<void> {
     const cacheKey = prefix + id
     await this.cacheManager.del(cacheKey)

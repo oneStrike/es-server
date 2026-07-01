@@ -34,9 +34,7 @@ export class DownloadService {
     return this.drizzle.schema.userDownloadRecord
   }
 
-  /**
-   * 注册下载目标解析器
-   */
+  // 注册下载目标解析器
   registerResolver(resolver: IDownloadTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
       console.warn(
@@ -46,9 +44,7 @@ export class DownloadService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  /**
-   * 获取指定的下载解析器
-   */
+  // 获取指定的下载解析器
   private getResolver(targetType: DownloadTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
@@ -73,11 +69,7 @@ export class DownloadService {
     return Number(row?.total ?? 0)
   }
 
-  /**
-   * 执行下载逻辑
-   * @param input 下载请求信息
-   * @returns 章节内容
-   */
+  // 执行下载逻辑
   async downloadTarget(input: DownloadTargetCommandDto): Promise<string> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
@@ -105,16 +97,12 @@ export class DownloadService {
     })
   }
 
-  /**
-   * 下载章节（对外通用接口）
-   */
+  // 下载章节（对外通用接口）
   async downloadChapter(input: DownloadTargetCommandDto) {
     return this.downloadTarget(input)
   }
 
-  /**
-   * 检查下载状态
-   */
+  // 检查下载状态
   async checkDownloadStatus(input: DownloadTargetCommandDto) {
     const record = await this.db.query.userDownloadRecord.findFirst({
       where: input,
@@ -125,9 +113,7 @@ export class DownloadService {
     return Boolean(record)
   }
 
-  /**
-   * 批量检查状态
-   */
+  // 批量检查状态
   async checkStatusBatch(
     targetType: DownloadTargetTypeEnum,
     targetIds: number[],
@@ -164,9 +150,7 @@ export class DownloadService {
     return result
   }
 
-  /**
-   * 获取已下载作品列表
-   */
+  // 获取已下载作品列表
   async getDownloadedWorks(query: QueryDownloadedWorkCommandDto) {
     const { userId, workType } = query
     const pageParams = this.drizzle.buildPageParams(query, {
@@ -254,9 +238,7 @@ export class DownloadService {
     )
   }
 
-  /**
-   * 获取已下载章节列表
-   */
+  // 获取已下载章节列表
   async getDownloadedWorkChapters(query: QueryDownloadedWorkChapterCommandDto) {
     const { userId, workId, workType } = query
     const pageParams = this.drizzle.buildPageParams(query, {

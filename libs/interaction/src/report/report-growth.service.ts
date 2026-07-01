@@ -14,10 +14,7 @@ export class ReportGrowthService {
     private readonly growthEventBridgeService: GrowthEventBridgeService,
   ) {}
 
-  /**
-   * 按举报裁决结果发放奖励。
-   * 统一使用裁决状态作为正式奖励口径，复用成长域既有 bizKey 幂等保护。
-   */
+  // 按举报裁决结果发放奖励。 统一使用裁决状态作为正式奖励口径，复用成长域既有 bizKey 幂等保护。
   async rewardReportHandled(params: {
     eventEnvelope: EventEnvelope<GrowthRuleTypeEnum>
   }): Promise<void> {

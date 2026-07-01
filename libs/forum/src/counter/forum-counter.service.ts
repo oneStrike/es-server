@@ -34,50 +34,47 @@ export class ForumCounterService {
     private readonly appUserCountService: AppUserCountService,
   ) {}
 
-  /** 数据库连接实例。 */
+  // 数据库连接实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** 板块表。 */
+  // 板块表。
   get forumSection() {
     return this.drizzle.schema.forumSection
   }
 
-  /** 主题表。 */
+  // 主题表。
   get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
-  /** 关注事实表。 */
+  // 关注事实表。
   private get userFollow() {
     return this.drizzle.schema.userFollow
   }
 
-  /** 点赞事实表。 */
+  // 点赞事实表。
   private get userLike() {
     return this.drizzle.schema.userLike
   }
 
-  /** 收藏事实表。 */
+  // 收藏事实表。
   private get userFavorite() {
     return this.drizzle.schema.userFavorite
   }
 
-  /** 浏览事实表。 */
+  // 浏览事实表。
   private get userBrowseLog() {
     return this.drizzle.schema.userBrowseLog
   }
 
-  /** 评论事实表。 */
+  // 评论事实表。
   private get userComment() {
     return this.drizzle.schema.userComment
   }
 
-  /**
-   * 在事务上下文或默认错误处理上下文中执行计数落库。
-   * 统一收口“受影响行数为 0”时的异常语义，避免不同重建入口各自处理不存在场景。
-   */
+  // 在事务上下文或默认错误处理上下文中执行计数落库。 统一收口“受影响行数为 0”时的异常语义，避免不同重建入口各自处理不存在场景。
   private async executeCountUpdate(
     tx: Db | undefined,
     operation: ForumCounterMutationOperation,
@@ -90,10 +87,7 @@ export class ForumCounterService {
     this.drizzle.assertAffectedRows(result, message)
   }
 
-  /**
-   * 更新板块级冗余计数字段。
-   * 当 delta 为 0 时直接跳过，避免写入无意义更新；板块不存在时会转换成调用方可识别的业务异常。
-   */
+  // 更新板块级冗余计数字段。 当 delta 为 0 时直接跳过，避免写入无意义更新；板块不存在时会转换成调用方可识别的业务异常。
   private async updateSectionCountField(
     tx: Db | undefined,
     sectionId: number,
@@ -118,10 +112,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 更新主题级冗余计数字段。
-   * 点赞、收藏、浏览等对象计数统一走这里，避免多条写路径各自手写 delta SQL。
-   */
+  // 更新主题级冗余计数字段。 点赞、收藏、浏览等对象计数统一走这里，避免多条写路径各自手写 delta SQL。
   private async updateTopicCountField(
     tx: Db | undefined,
     topicId: number,
@@ -310,13 +301,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 更新版块的主题数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param sectionId - 版块ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的版块信息
-   */
+  // 更新版块的主题数量
   async updateSectionTopicCount(
     tx: Db | undefined,
     sectionId: number,
@@ -331,13 +316,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 更新版块的评论数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param sectionId - 版块ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的版块信息
-   */
+  // 更新版块的评论数量
   async updateSectionCommentCount(
     tx: Db | undefined,
     sectionId: number,
@@ -352,13 +331,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 更新主题的点赞数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param topicId - 主题ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的主题信息
-   */
+  // 更新主题的点赞数量
   async updateTopicLikeCount(
     tx: Db | undefined,
     topicId: number,
@@ -373,13 +346,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 更新主题的收藏数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param topicId - 主题ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的主题信息
-   */
+  // 更新主题的收藏数量
   async updateTopicFavoriteCount(
     tx: Db | undefined,
     topicId: number,
@@ -394,10 +361,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 更新主题浏览数量
-   * 浏览计数允许异步补偿，因此这里仅做幂等增量更新，不附带额外业务判断。
-   */
+  // 更新主题浏览数量 浏览计数允许异步补偿，因此这里仅做幂等增量更新，不附带额外业务判断。
   async updateTopicViewCount(
     tx: Db | undefined,
     topicId: number,
@@ -412,13 +376,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 更新用户的论坛主题数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param userId - 用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的用户计数信息
-   */
+  // 更新用户的论坛主题数量
   async updateUserForumTopicCount(
     tx: Db | undefined,
     userId: number,
@@ -427,13 +385,7 @@ export class ForumCounterService {
     await this.appUserCountService.updateForumTopicCount(tx, userId, delta)
   }
 
-  /**
-   * 更新用户收到的论坛主题点赞数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param userId - 用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的用户计数信息
-   */
+  // 更新用户收到的论坛主题点赞数量
   async updateUserForumTopicReceivedLikeCount(
     tx: Db | undefined,
     userId: number,
@@ -446,10 +398,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 更新板块关注人数
-   * 供 follow 域写路径调用，统一维护板块的冗余关注人数。
-   */
+  // 更新板块关注人数 供 follow 域写路径调用，统一维护板块的冗余关注人数。
   async updateSectionFollowersCount(
     tx: Db | undefined,
     sectionId: number,
@@ -464,9 +413,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 根据 follow 事实表重建板块关注人数。
-   */
+  // 根据 follow 事实表重建板块关注人数。
   async rebuildSectionFollowersCount(tx: Db | undefined, sectionId: number) {
     const client = tx ?? this.db
     const row = await client
@@ -497,10 +444,7 @@ export class ForumCounterService {
     }
   }
 
-  /**
-   * 根据点赞/收藏/浏览事实表重建主题对象计数。
-   * commentCount 与最后评论快照由 syncTopicCommentState 负责重算。
-   */
+  // 根据点赞/收藏/浏览事实表重建主题对象计数。 commentCount 与最后评论快照由 syncTopicCommentState 负责重算。
   async rebuildTopicInteractionCounts(tx: Db | undefined, topicId: number) {
     const client = tx ?? this.db
     const [likeCount, favoriteCount, viewCount] = await Promise.all([
@@ -555,9 +499,7 @@ export class ForumCounterService {
     }
   }
 
-  /**
-   * 按可见评论事实表重建主题 commentCount 与最后评论信息。
-   */
+  // 按可见评论事实表重建主题 commentCount 与最后评论信息。
   async syncTopicCommentState(tx: Db | undefined, topicId: number) {
     const client = tx ?? this.db
     const visibleCommentWhere = and(
@@ -609,9 +551,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 按可见主题事实表重建板块 topicCount/commentCount/lastTopicId/lastPostAt。
-   */
+  // 按可见主题事实表重建板块 topicCount/commentCount/lastTopicId/lastPostAt。
   async syncSectionVisibleState(tx: Db | undefined, sectionId: number) {
     const client = tx ?? this.db
     const visibleTopicWhere = and(
@@ -674,13 +614,7 @@ export class ForumCounterService {
     }
   }
 
-  /**
-   * 更新用户收到的论坛主题收藏数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param userId - 用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的用户计数信息
-   */
+  // 更新用户收到的论坛主题收藏数量
   async updateUserForumTopicReceivedFavoriteCount(
     tx: Db | undefined,
     userId: number,
@@ -693,15 +627,7 @@ export class ForumCounterService {
     )
   }
 
-  /**
-   * 批量更新主题点赞相关的所有计数
-   * 包括主题点赞数、主题作者收到的论坛点赞数。
-   * 该入口保证对象计数和用户收到计数在同一调用点推进，降低写路径遗漏风险。
-   * @param tx - 事务对象
-   * @param topicId - 主题ID
-   * @param authorUserId - 主题作者的用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   */
+  // 批量更新主题点赞相关的所有计数 包括主题点赞数、主题作者收到的论坛点赞数。 该入口保证对象计数和用户收到计数在同一调用点推进，降低写路径遗漏风险。
   async updateTopicLikeRelatedCounts(
     tx: Db | undefined,
     topicId: number,
@@ -714,15 +640,7 @@ export class ForumCounterService {
     ])
   }
 
-  /**
-   * 批量更新主题收藏相关的所有计数
-   * 包括主题收藏数、主题作者收到的论坛收藏数。
-   * 收藏写路径通过同一入口并发更新对象计数和用户计数，保持统计口径一致。
-   * @param tx - 事务对象
-   * @param topicId - 主题ID
-   * @param authorUserId - 主题作者的用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   */
+  // 批量更新主题收藏相关的所有计数 包括主题收藏数、主题作者收到的论坛收藏数。 收藏写路径通过同一入口并发更新对象计数和用户计数，保持统计口径一致。
   async updateTopicFavoriteRelatedCounts(
     tx: Db | undefined,
     topicId: number,
@@ -735,10 +653,7 @@ export class ForumCounterService {
     ])
   }
 
-  /**
-   * 获取主题的最小识别信息。
-   * 供外部写路径在不读取整条主题记录的前提下拿到作者和板块归属。
-   */
+  // 获取主题的最小识别信息。 供外部写路径在不读取整条主题记录的前提下拿到作者和板块归属。
   async getTopicInfo(topicId: number) {
     return this.db.query.forumTopic.findFirst({
       where: { id: topicId },

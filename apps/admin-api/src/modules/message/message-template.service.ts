@@ -13,8 +13,8 @@ import {
 import { Injectable } from '@nestjs/common'
 
 /**
- * 管理端通知模板服务
- * 负责拼装管理端返回视图，底层配置与渲染逻辑仍复用消息域模板服务
+ * 管理端通知模板服务。
+ * 负责拼装管理端返回视图，底层配置与渲染逻辑复用消息域模板服务。
  */
 @Injectable()
 export class MessageTemplateService {
@@ -22,10 +22,7 @@ export class MessageTemplateService {
     private readonly messageNotificationTemplateService: MessageNotificationTemplateService,
   ) {}
 
-  /**
-   * 获取通知模板分页
-   * 在表字段基础上补充通知分类中文标签，方便管理端直接展示
-   */
+  // 获取通知模板分页，补充通知分类中文标签。
   async getNotificationTemplatePage(query: QueryNotificationTemplatePageDto) {
     const page =
       await this.messageNotificationTemplateService.getNotificationTemplatePage(
@@ -38,10 +35,7 @@ export class MessageTemplateService {
     }
   }
 
-  /**
-   * 获取通知模板详情
-   * 详情页与分页项使用同一映射口径，避免管理端两套文案解释
-   */
+  // 获取通知模板详情，与分页项使用同一映射口径。
   async getNotificationTemplateDetail(id: number) {
     const template =
       await this.messageNotificationTemplateService.getNotificationTemplateDetail(
@@ -50,30 +44,21 @@ export class MessageTemplateService {
     return this.mapTemplateView(template)
   }
 
-  /**
-   * 创建通知模板
-   * 模板键由底层服务根据通知类型稳定推导
-   */
+  // 创建通知模板，模板键由底层服务根据通知类型推导。
   async createNotificationTemplate(input: CreateNotificationTemplateDto) {
     return this.messageNotificationTemplateService.createNotificationTemplate(
       input,
     )
   }
 
-  /**
-   * 更新通知模板
-   * 管理端仅透传可编辑字段，实际约束由消息域模板服务统一执行
-   */
+  // 更新通知模板，管理端仅透传可编辑字段。
   async updateNotificationTemplate(input: UpdateNotificationTemplateDto) {
     return this.messageNotificationTemplateService.updateNotificationTemplate(
       input,
     )
   }
 
-  /**
-   * 更新通知模板启用状态
-   * 供运营快速停用异常模板，而不需要改动正文配置
-   */
+  // 更新通知模板启用状态，供运营快速停用异常模板。
   async updateNotificationTemplateEnabled(
     input: UpdateNotificationTemplateEnabledDto,
   ) {
@@ -82,10 +67,7 @@ export class MessageTemplateService {
     )
   }
 
-  /**
-   * 预览通知模板
-   * 使用消息域真实模板渲染逻辑，避免管理端另写一套变量替换规则
-   */
+  // 预览通知模板，使用消息域真实渲染逻辑。
   async previewNotificationTemplate(input: PreviewNotificationTemplateDto) {
     const result =
       await this.messageNotificationTemplateService.previewNotificationTemplate(
@@ -100,10 +82,7 @@ export class MessageTemplateService {
     }
   }
 
-  /**
-   * 映射管理端通知模板视图
-   * 在稳定表字段上补充 label，避免每个调用方重复做分类解释
-   */
+  // 映射管理端通知模板视图，在稳定表字段上补充 categoryLabel。
   private mapTemplateView(
     template: Awaited<
       ReturnType<
@@ -117,6 +96,7 @@ export class MessageTemplateService {
     }
   }
 
+  // 获取通知分类中文标签，未知分类返回带 key 的提示。
   private getCategoryLabel(categoryKey: string) {
     if (!isMessageNotificationCategoryKey(categoryKey)) {
       return `未知分类(${categoryKey})`

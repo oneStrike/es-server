@@ -34,20 +34,17 @@ import {
 export class AppUpdateService {
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 数据库连接实例。 */
+  // 数据库连接实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** 更新发布表。 */
+  // 更新发布表。
   private get appUpdateRelease() {
     return this.drizzle.schema.appUpdateRelease
   }
 
-  /**
-   * 分页查询版本发布列表。
-   * 列表接口只返回后台概览字段，并补齐分发目标摘要。
-   */
+  // 分页查询版本发布列表。 列表接口只返回后台概览字段，并补齐分发目标摘要。
   async findPage(queryDto: QueryAppUpdateReleaseDto) {
     const conditions: SQL[] = []
 
@@ -113,10 +110,7 @@ export class AppUpdateService {
     }
   }
 
-  /**
-   * 查询版本发布详情。
-   * 详情接口直接回填版本配置，避免管理端自行补默认值。
-   */
+  // 查询版本发布详情。 详情接口直接回填版本配置，避免管理端自行补默认值。
   async findDetail(dto: IdDto): Promise<AppUpdateReleaseDetailDto> {
     const release = await this.findReleaseById(dto.id)
     if (!release) {
@@ -129,10 +123,7 @@ export class AppUpdateService {
     return this.toReleaseDetailDto(release)
   }
 
-  /**
-   * 创建更新草稿。
-   * 写入前会规范化地址，并校验同平台构建号唯一约束。
-   */
+  // 创建更新草稿。 写入前会规范化地址，并校验同平台构建号唯一约束。
   async create(dto: AppUpdateReleaseWriteDto, userId: number) {
     const normalized = await this.normalizeWriteDto(dto)
 
@@ -151,10 +142,7 @@ export class AppUpdateService {
     return true
   }
 
-  /**
-   * 更新更新草稿。
-   * 已发布版本禁止原地编辑，避免线上版本被静默篡改。
-   */
+  // 更新更新草稿。 已发布版本禁止原地编辑，避免线上版本被静默篡改。
   async update(dto: UpdateAppUpdateReleaseDto, userId: number) {
     const existingRelease = await this.findReleaseById(dto.id)
     if (!existingRelease) {
@@ -192,10 +180,7 @@ export class AppUpdateService {
     return true
   }
 
-  /**
-   * 切换发布状态。
-   * 发布时会先撤销同平台旧发布，再发布当前草稿，确保同平台只有一条生效版本。
-   */
+  // 切换发布状态。 发布时会先撤销同平台旧发布，再发布当前草稿，确保同平台只有一条生效版本。
   async updatePublishStatus(dto: UpdatePublishedStatusDto, userId: number) {
     const release = await this.findReleaseById(dto.id)
     if (!release) {
@@ -263,10 +248,7 @@ export class AppUpdateService {
     return true
   }
 
-  /**
-   * 客户端检查更新。
-   * 仅按平台挑选最新发布版本，更新判断只依赖 buildCode。
-   */
+  // 客户端检查更新。 仅按平台挑选最新发布版本，更新判断只依赖 buildCode。
   async checkUpdate(
     dto: AppUpdateCheckDto,
   ): Promise<AppUpdateCheckResponseDto> {
@@ -300,10 +282,7 @@ export class AppUpdateService {
     }
   }
 
-  /**
-   * 查询单条发布记录。
-   * 统一从发布表读取草稿或已发布版本。
-   */
+  // 查询单条发布记录。 统一从发布表读取草稿或已发布版本。
   private async findReleaseById(id: number) {
     const release = await this.db.query.appUpdateRelease.findFirst({
       where: { id },
@@ -312,10 +291,7 @@ export class AppUpdateService {
     return release
   }
 
-  /**
-   * 查询指定平台当前最新发布版本。
-   * 若同平台历史上存在多个已发布版本，统一以 buildCode 和 id 倒序收口到最新一条。
-   */
+  // 查询指定平台当前最新发布版本。 若同平台历史上存在多个已发布版本，统一以 buildCode 和 id 倒序收口到最新一条。
   private async findLatestPublishedRelease(platform: AppUpdatePlatformEnum) {
     const release = await this.db.query.appUpdateRelease.findFirst({
       where: {
@@ -331,10 +307,7 @@ export class AppUpdateService {
     return release
   }
 
-  /**
-   * 标准化写入 DTO。
-   * 统一收口地址、包来源和可空字段，避免 create/update 分叉。
-   */
+  // 标准化写入 DTO。 统一收口地址、包来源和可空字段，避免 create/update 分叉。
   private async normalizeWriteDto(dto: AppUpdateReleaseWriteDto) {
     const releaseNotes = this.normalizeNullableString(dto.releaseNotes)
     const packageUrl = this.normalizeNullableString(dto.packageUrl)
@@ -415,9 +388,7 @@ export class AppUpdateService {
     return { release }
   }
 
-  /**
-   * 发布前校验至少存在一种分发目标。
-   */
+  // 发布前校验至少存在一种分发目标。
   private assertDistributionTargets(release: AppUpdateReleaseSelect) {
     const hasDistributionTarget = Boolean(release.packageUrl)
 
@@ -429,42 +400,28 @@ export class AppUpdateService {
     }
   }
 
-  /**
-   * 规范化可空字符串。
-   * 空字符串统一收口为 null，避免数据库里出现无意义空值。
-   */
+  // 规范化可空字符串。 空字符串统一收口为 null，避免数据库里出现无意义空值。
   private normalizeNullableString(value?: string | null) {
     const trimmed = value?.trim()
     return trimmed || null
   }
 
-  /**
-   * 判断是否为 HTTP/HTTPS URL。
-   */
+  // 判断是否为 HTTP/HTTPS URL。
   private isHttpUrl(value?: string | null) {
     return Boolean(value && HTTP_URL_REGEXP.test(value))
   }
 
-  /**
-   * 判断是否为 HTTPS URL。
-   * 外部下载地址和中转页地址只允许加密链路，避免发布明文下载入口。
-   */
+  // 判断是否为 HTTPS URL。 外部下载地址和中转页地址只允许加密链路，避免发布明文下载入口。
   private isHttpsUrl(value?: string | null) {
     return Boolean(value && /^https:\/\//i.test(value) && this.isHttpUrl(value))
   }
 
-  /**
-   * 判断是否为上传安装包地址。
-   * 本地上传返回 `/files/...`，云存储上传可能返回 HTTP/HTTPS 绝对地址。
-   */
+  // 判断是否为上传安装包地址。 本地上传返回 `/files/...`，云存储上传可能返回 HTTP/HTTPS 绝对地址。
   private isUploadPackageUrl(value?: string | null) {
     return Boolean(value?.startsWith('/files/') || this.isHttpUrl(value))
   }
 
-  /**
-   * 后台详情映射。
-   * 统一补齐可空默认值，减少管理端 diff 抖动。
-   */
+  // 后台详情映射。 统一补齐可空默认值，减少管理端 diff 抖动。
   private toReleaseDetailDto(release: AppUpdateReleaseSelect) {
     return {
       ...release,

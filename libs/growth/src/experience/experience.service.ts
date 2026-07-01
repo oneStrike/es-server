@@ -59,18 +59,12 @@ export class UserExperienceService {
     return this.drizzle.schema.userAssetBalance
   }
 
-  /**
-   * 获取用户资料数据库访问器
-   */
+  // 获取用户资料数据库访问器
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  /**
-   * 增加经验
-   * @param addExperienceDto 增加经验的数据
-   * @returns 增加经验的结果
-   */
+  // 增加经验
   async addExperience(
     addExperienceDto: UserGrowthRuleActionDto & {
       bizKey?: string
@@ -145,11 +139,7 @@ export class UserExperienceService {
     return true
   }
 
-  /**
-   * 分页查询经验记录列表
-   * @param dto 查询条件
-   * @returns 分页的记录列表
-   */
+  // 分页查询经验记录列表
   async getExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
     const pageParams = this.drizzle.buildPageParams(dto, {
       table: this.growthLedgerRecord,
@@ -225,11 +215,7 @@ export class UserExperienceService {
     }
   }
 
-  /**
-   * 获取用户经验记录详情
-   * @param id 记录ID
-   * @returns 记录详情信息
-   */
+  // 获取用户经验记录详情
   async getExperienceRecordDetail(id: number) {
     const record = await this.db.query.growthLedgerRecord.findFirst({
       where: {
@@ -259,11 +245,7 @@ export class UserExperienceService {
     }
   }
 
-  /**
-   * 获取用户经验统计
-   * @param userId 用户ID
-   * @returns 经验统计信息
-   */
+  // 获取用户经验统计
   async getUserExperienceStats(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
@@ -473,7 +455,7 @@ export class UserExperienceService {
       : 'Experience grant failed'
   }
 
-  /** 按成长账本拒绝原因映射经验发放失败语义。 */
+  // 按成长账本拒绝原因映射经验发放失败语义。
   private throwExperienceGrantFailure(
     reason?: keyof typeof GrowthLedgerFailReasonLabel,
   ): never {

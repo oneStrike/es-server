@@ -21,11 +21,12 @@ import {
 } from './audit.helpers'
 
 /**
- * 审计日志服务
- * 负责记录与查询后台操作审计日志
+ * 审计日志服务。
+ * 负责记录与查询后台操作审计日志。
  */
 @Injectable()
 export class AuditService {
+  // 复用请求日志表。
   get requestLog() {
     return this.drizzle.schema.requestLog
   }
@@ -35,13 +36,12 @@ export class AuditService {
     private readonly geoService: GeoService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
-  /**
-   * 创建请求日志
-   */
+  // 创建请求日志，自动填充 IP 属地等请求上下文。
   async createRequestLog(createDto: CreateRequestLogDto, req: FastifyRequest) {
     const normalizedActionType = normalizeAuditActionType(createDto.actionType)
     const requestContext = await this.geoService.buildRequestContext(req)
@@ -61,13 +61,7 @@ export class AuditService {
     return created
   }
 
-  /**
-   * 创建成功请求日志的通用方法
-   * @param actionType 操作类型
-   * @param createDto 创建请求日志的数据
-   * @param req FastifyRequest 对象
-   * @returns 创建的请求日志ID
-   */
+  // 创建成功请求日志的通用方法。
   private async createSuccessRequestLog(
     actionType: AuditActionTypeEnum,
     createDto: CreateRequestLogSimpleDto,
@@ -79,11 +73,7 @@ export class AuditService {
     )
   }
 
-  /**
-   * 根据ID获取请求日志详情
-   * @param id 请求日志ID
-   * @returns 请求日志详情
-   */
+  // 按 ID 获取请求日志详情，不存在时抛出业务异常。
   async getRequestLogById(id: number) {
     const [requestLog] = await this.db
       .select()
@@ -101,11 +91,7 @@ export class AuditService {
     return this.decorateRequestLog(requestLog)
   }
 
-  /**
-   * 分页获取请求日志列表
-   * @param queryDto 分页查询参数
-   * @returns 分页结果
-   */
+  // 分页获取请求日志列表，支持多维度过滤。
   async getAuditPage(queryDto: AuditPageRequestDto) {
     const {
       userId,
@@ -164,6 +150,7 @@ export class AuditService {
     }
   }
 
+  // 装饰请求日志：补充 actionType 规范值与中文标签。
   private decorateRequestLog<T extends { actionType: number | null }>(
     requestLog: T,
   ) {

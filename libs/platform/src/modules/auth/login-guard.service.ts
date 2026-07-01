@@ -17,11 +17,7 @@ import {
 export class LoginGuardService {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
-  /**
-   * 检查是否被锁定
-   * @param lockKey 锁定Key
-   * @throws BadRequestException 如果被锁定，抛出包含剩余时间的异常
-   */
+  // 检查是否被锁定
   async checkLock(lockKey: string) {
     const unlockTime = await this.cacheManager.get<number>(lockKey)
     if (unlockTime && unlockTime > Date.now()) {
@@ -33,13 +29,7 @@ export class LoginGuardService {
     }
   }
 
-  /**
-   * 记录失败并检查是否需要锁定
-   * @param failKey 失败计数Key
-   * @param lockKey 锁定Key
-   * @param config 配置参数
-   * @throws BadRequestException 抛出密码错误提示（含剩余次数）或锁定提示
-   */
+  // 记录失败并检查是否需要锁定
   async recordFail(failKey: string, lockKey: string, config: LoginGuardConfig) {
     // 获取当前失败次数
     const count = ((await this.cacheManager.get<number>(failKey)) || 0) + 1
@@ -64,20 +54,12 @@ export class LoginGuardService {
     throw new UnauthorizedException(`账号或密码错误，还剩 ${remaining} 次机会`)
   }
 
-  /**
-   * 清除登录失败计数
-   * @param failKey 失败计数Key
-   */
+  // 清除登录失败计数
   async clearHistory(failKey: string) {
     await this.cacheManager.del(failKey)
   }
 
-  /**
-   * 解锁账号
-   * 同时清除锁定标记和失败计数
-   * @param lockKey 锁定Key
-   * @param failKey 失败计数Key
-   */
+  // 解锁账号 同时清除锁定标记和失败计数
   async unlock(lockKey: string, failKey: string) {
     await this.cacheManager.del(lockKey)
     await this.cacheManager.del(failKey)

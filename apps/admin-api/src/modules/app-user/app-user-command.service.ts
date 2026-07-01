@@ -40,11 +40,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     super(drizzle, userCoreService)
   }
 
-  /**
-   * 新建 APP 用户。
-   *
-   * 创建链路统一先解密前端 RSA 密码，再做 scrypt 哈希，避免把密文直接写入密码库。
-   */
+  // 新建 APP 用户，先解密前端 RSA 密码再 scrypt 哈希。
   async createAppUser(adminUserId: number, dto: CreateAdminAppUserDto) {
     await this.ensureSuperAdmin(adminUserId)
     const account = await this.generateUniqueAccount()
@@ -102,7 +98,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     return true
   }
 
-  /** 更新 APP 用户基础资料。 */
+  // 更新 APP 用户基础资料。
   async updateAppUserProfile(
     adminUserId: number,
     dto: UpdateAdminAppUserProfileDto,
@@ -164,7 +160,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     return true
   }
 
-  /** 更新 APP 用户账号启用状态。 */
+  // 更新 APP 用户账号启用状态。
   async updateAppUserEnabled(
     adminUserId: number,
     dto: UpdateAdminAppUserEnabledDto,
@@ -191,11 +187,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     return true
   }
 
-  /**
-   * 更新 APP 用户状态。
-   *
-   * 统一在写入前校验禁言/封禁原因与截止时间，避免状态字段与附属字段组合失真。
-   */
+  // 更新 APP 用户状态，写入前校验禁言/封禁原因与截止时间。
   async updateAppUserStatus(
     adminUserId: number,
     dto: UpdateAdminAppUserStatusDto,
@@ -244,7 +236,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     return true
   }
 
-  /** 软删除 APP 用户。 */
+  // 软删除 APP 用户。
   async deleteAppUser(adminUserId: number, userId: number) {
     await this.ensureSuperAdmin(adminUserId)
     await this.drizzle.withErrorHandling(
@@ -267,7 +259,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     return true
   }
 
-  /** 恢复已软删除的 APP 用户。 */
+  // 恢复已软删除的 APP 用户。
   async restoreAppUser(adminUserId: number, userId: number) {
     await this.ensureSuperAdmin(adminUserId)
     await this.drizzle.withErrorHandling(
@@ -286,11 +278,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     return true
   }
 
-  /**
-   * 重置 APP 用户密码。
-   *
-   * 密码更新成功后立即撤销 APP 侧全部登录态，保证安全边界与应用端自助改密一致。
-   */
+  // 重置 APP 用户密码，成功后立即撤销全部登录态。
   async resetAppUserPassword(
     adminUserId: number,
     dto: ResetAdminAppUserPasswordDto,
@@ -320,22 +308,14 @@ export class AppUserCommandService extends AppUserServiceSupport {
     return true
   }
 
-  /**
-   * 重建单个 APP 用户关注相关计数。
-   *
-   * 当前仅回填关注分项与 `followersCount`。
-   */
+  // 重建单个 APP 用户关注相关计数。
   async rebuildAppUserFollowCounts(adminUserId: number, userId: number) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(userId)
     return this.appUserCountService.rebuildFollowCounts(undefined, userId)
   }
 
-  /**
-   * 全量重建 APP 用户关注相关计数。
-   *
-   * 仅处理未软删除账号，并按批次执行，避免一次性全表修复造成尖峰压力。
-   */
+  // 全量重建 APP 用户关注相关计数，按批次执行避免尖峰压力。
   async rebuildAllAppUserFollowCounts(adminUserId: number, batchSize = 200) {
     await this.ensureSuperAdmin(adminUserId)
     const userIds = await this.db

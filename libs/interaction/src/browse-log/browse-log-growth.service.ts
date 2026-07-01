@@ -24,14 +24,7 @@ export class BrowseLogGrowthService {
     private readonly growthEventBridgeService: GrowthEventBridgeService,
   ) {}
 
-  /**
-   * 奖励浏览记录
-   * 根据目标类型发放对应的积分和经验奖励
-   *
-   * @param targetType - 浏览目标类型
-   * @param targetId - 目标ID
-   * @param userId - 用户ID
-   */
+  // 奖励浏览记录 根据目标类型发放对应的积分和经验奖励
   async rewardBrowseLogRecorded(
     targetType: BrowseLogTargetTypeEnum,
     targetId: number,

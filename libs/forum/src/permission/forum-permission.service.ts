@@ -50,9 +50,7 @@ export class ForumPermissionService {
     return this.drizzle.schema.userAssetBalance
   }
 
-  /**
-   * 获取发帖所需的用户上下文，包含等级配置中的频控参数。
-   */
+  // 获取发帖所需的用户上下文，包含等级配置中的频控参数。
   private async getPostingUserContext(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: {
@@ -85,10 +83,7 @@ export class ForumPermissionService {
     }
   }
 
-  /**
-   * 获取访问权限校验所需的用户上下文。
-   * 用户不存在时返回 null，由调用方决定如何处理。
-   */
+  // 获取访问权限校验所需的用户上下文。 用户不存在时返回 null，由调用方决定如何处理。
   private async getAccessUserContext(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: {
@@ -126,10 +121,7 @@ export class ForumPermissionService {
     return balance?.balance ?? 0
   }
 
-  /**
-   * 判断板块在公开访问语义下是否可用。
-   * 板块本身必须启用；若挂载分组，则分组也必须启用且未删除。
-   */
+  // 判断板块在公开访问语义下是否可用。 板块本身必须启用；若挂载分组，则分组也必须启用且未删除。
   isSectionPubliclyAvailable(
     section: Pick<
       ForumSectionPermissionContext,
@@ -158,10 +150,7 @@ export class ForumPermissionService {
     )
   }
 
-  /**
-   * 将板块查询结果归一化为访问状态计算所需字段。
-   * 统一在这里补齐 requiredExperience 与公开可见性，避免各入口各自复制同一套映射。
-   */
+  // 将板块查询结果归一化为访问状态计算所需字段。 统一在这里补齐 requiredExperience 与公开可见性，避免各入口各自复制同一套映射。
   private buildSectionAccessContext(
     section: Pick<
       ForumSectionPermissionContext,
@@ -186,9 +175,7 @@ export class ForumPermissionService {
     }
   }
 
-  /**
-   * 获取板块权限上下文，包含等级规则与所需经验值。
-   */
+  // 获取板块权限上下文，包含等级规则与所需经验值。
   private async getSectionPermissionContext(
     sectionId: number,
     options?: {
@@ -248,10 +235,7 @@ export class ForumPermissionService {
     }
   }
 
-  /**
-   * 校验用户是否可发帖。
-   * 禁用用户、禁言/封禁状态用户不允许发帖。
-   */
+  // 校验用户是否可发帖。 禁用用户、禁言/封禁状态用户不允许发帖。
   private ensurePostingUserAvailable(user: ForumPostingUserContext) {
     if (!user.isEnabled) {
       throw new BusinessException(
@@ -275,11 +259,7 @@ export class ForumPermissionService {
     }
   }
 
-  /**
-   * 校验用户等级是否满足板块访问要求。
-   * - 无等级限制的板块直接放行
-   * - 有等级限制时，未登录用户需先登录，已登录用户需经验值达标
-   */
+  // 校验用户等级是否满足板块访问要求。 - 无等级限制的板块直接放行 - 有等级限制时，未登录用户需先登录，已登录用户需经验值达标
   ensureSectionLevelAccess(
     section: ForumSectionPermissionContext,
     user?:
@@ -314,10 +294,7 @@ export class ForumPermissionService {
     }
   }
 
-  /**
-   * 计算用户对板块的访问状态。
-   * 用于“板块可见但访问受限”场景向前端返回可读提示。
-   */
+  // 计算用户对板块的访问状态。 用于“板块可见但访问受限”场景向前端返回可读提示。
   private resolveSectionAccessState(
     section: Pick<
       ForumSectionPermissionContext,
@@ -386,11 +363,7 @@ export class ForumPermissionService {
     }
   }
 
-  /**
-   * 校验用户是否可在指定板块发帖。
-   * 依次检查：用户状态 → 板块等级限制 → 发帖频率限制。
-   * @returns 板块权限上下文，供上层读取审核策略等字段
-   */
+  // 校验用户是否可在指定板块发帖。 依次检查：用户状态 → 板块等级限制 → 发帖频率限制。
   async ensureUserCanCreateTopic(userId: number, sectionId: number) {
     const [user, section] = await Promise.all([
       this.getPostingUserContext(userId),
@@ -409,10 +382,7 @@ export class ForumPermissionService {
     })
   }
 
-  /**
-   * 校验当前用户是否可访问指定主题所属板块。
-   * 供评论等目标链路复用 forum 侧统一的板块公开访问事实源。
-   */
+  // 校验当前用户是否可访问指定主题所属板块。 供评论等目标链路复用 forum 侧统一的板块公开访问事实源。
   async ensureUserCanAccessTopicSection(topicId: number, userId: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
@@ -443,10 +413,7 @@ export class ForumPermissionService {
     })
   }
 
-  /**
-   * 校验当前用户是否可访问指定板块。
-   * 仅检查板块等级限制，不涉及发帖频控。
-   */
+  // 校验当前用户是否可访问指定板块。 仅检查板块等级限制，不涉及发帖频控。
   async ensureUserCanAccessSection(
     sectionId: number,
     userId?: number,
@@ -464,10 +431,7 @@ export class ForumPermissionService {
     return section
   }
 
-  /**
-   * 获取当前用户可访问的板块 ID 列表。
-   * 未登录用户只能访问没有等级限制的板块。
-   */
+  // 获取当前用户可访问的板块 ID 列表。 未登录用户只能访问没有等级限制的板块。
   async getAccessibleSectionIds(userId?: number) {
     const [sections, user] = await Promise.all([
       this.db.query.forumSection.findMany({
@@ -510,10 +474,7 @@ export class ForumPermissionService {
       .map((section) => section.id)
   }
 
-  /**
-   * 批量计算板块访问状态。
-   * 用于列表接口返回板块可见性与访问限制提示。
-   */
+  // 批量计算板块访问状态。 用于列表接口返回板块可见性与访问限制提示。
   async getSectionAccessStateMap(sectionIds: number[], userId?: number) {
     const uniqueSectionIds = [...new Set(sectionIds)]
     if (uniqueSectionIds.length === 0) {

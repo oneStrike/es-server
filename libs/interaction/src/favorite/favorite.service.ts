@@ -52,9 +52,7 @@ export class FavoriteService {
       : null
   }
 
-  /**
-   * 供其他模块在应用启动时注册自己的解析器
-   */
+  // 供其他模块在应用启动时注册自己的解析器
   registerResolver(resolver: IFavoriteTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
       console.warn(
@@ -64,9 +62,7 @@ export class FavoriteService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  /**
-   * 获取对应的解析器
-   */
+  // 获取对应的解析器
   private getResolver(targetType: FavoriteTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
@@ -75,13 +71,7 @@ export class FavoriteService {
     return resolver
   }
 
-  /**
-   * 批量检查收藏状态
-   * @param targetType 目标类型
-   * @param targetIds 目标 ID 列表
-   * @param userId 用户 ID
-   * @returns 目标 ID 与收藏状态的映射
-   */
+  // 批量检查收藏状态
   async checkStatusBatch(
     targetType: FavoriteTargetTypeEnum,
     targetIds: number[],
@@ -115,10 +105,7 @@ export class FavoriteService {
     return statusMap
   }
 
-  /**
-   * 收藏目标
-   * @param input 收藏参数
-   */
+  // 收藏目标
   async favorite(
     input: FavoriteRecordDto,
   ): Promise<Pick<UserFavoriteSelect, 'id'>> {
@@ -173,10 +160,7 @@ export class FavoriteService {
     return { id: record.id }
   }
 
-  /**
-   * 取消收藏
-   * @param input 取消收藏参数
-   */
+  // 取消收藏
   async unfavorite(input: FavoriteRecordDto) {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
@@ -202,11 +186,7 @@ export class FavoriteService {
     })
   }
 
-  /**
-   * 检查单个目标收藏状态
-   * @param input 查询参数
-   * @returns 是否已收藏
-   */
+  // 检查单个目标收藏状态
   async checkFavoriteStatus(input: FavoriteRecordDto): Promise<boolean> {
     const { targetType, targetId, userId } = input
     const [favorite] = await this.db
@@ -223,10 +203,7 @@ export class FavoriteService {
     return !!favorite
   }
 
-  /**
-   * 按目标类型分页查询用户收藏记录。
-   * 该方法只负责基础分页，不直接拼装对外响应结构。
-   */
+  // 按目标类型分页查询用户收藏记录。 该方法只负责基础分页，不直接拼装对外响应结构。
   private async getFavoritePageByTargetTypes(
     query: FavoritePageCommandDto,
     targetTypes: FavoriteTargetTypeEnum[],
@@ -307,10 +284,7 @@ export class FavoriteService {
     }
   }
 
-  /**
-   * 分页查询用户收藏的作品。
-   * 作品收藏由漫画与小说两种目标类型组成，统一返回 work 字段。
-   */
+  // 分页查询用户收藏的作品。 作品收藏由漫画与小说两种目标类型组成，统一返回 work 字段。
   async getUserWorkFavorites(query: FavoritePageCommandDto) {
     const { page, detailMaps } = await this.getFavoritePageByTargetTypes(
       query,
@@ -326,10 +300,7 @@ export class FavoriteService {
     }
   }
 
-  /**
-   * 分页查询用户收藏的论坛主题。
-   * 主题收藏只返回论坛主题字段，避免与作品结构混杂。
-   */
+  // 分页查询用户收藏的论坛主题。 主题收藏只返回论坛主题字段，避免与作品结构混杂。
   async getUserTopicFavorites(query: FavoritePageCommandDto): Promise<any> {
     const { page, detailMaps } = await this.getFavoritePageByTargetTypes(
       query,

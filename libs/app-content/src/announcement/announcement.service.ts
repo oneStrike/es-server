@@ -68,35 +68,32 @@ export class AppAnnouncementService {
     private readonly announcementFanout?: AnnouncementFanoutPort,
   ) {}
 
-  /** 数据库连接实例 */
+  // 数据库连接实例
   private get db() {
     return this.drizzle.db
   }
 
-  /** 公告表 */
+  // 公告表
   private get appAnnouncement() {
     return this.drizzle.schema.appAnnouncement
   }
 
-  /** 公告阅读表 */
+  // 公告阅读表
   private get appAnnouncementRead() {
     return this.drizzle.schema.appAnnouncementRead
   }
 
-  /** 公告浏览表 */
+  // 公告浏览表
   private get appAnnouncementView() {
     return this.drizzle.schema.appAnnouncementView
   }
 
-  /** 页面表 */
+  // 页面表
   private get appPage() {
     return this.drizzle.schema.appPage
   }
 
-  /**
-   * 创建公告并在写入成功后入队公告通知 fanout 任务。
-   * 写入前会校验发布时间区间和关联页面，通知 fanout 改由后台任务执行。
-   */
+  // 创建公告并在写入成功后入队公告通知 fanout 任务。 写入前会校验发布时间区间和关联页面，通知 fanout 改由后台任务执行。
   async createAnnouncement(createAnnouncementDto: CreateAnnouncementDto) {
     assertValidTimeRange(
       createAnnouncementDto.publishStartTime,
@@ -151,9 +148,7 @@ export class AppAnnouncementService {
     return true
   }
 
-  /**
-   * 管理端公告分页。
-   */
+  // 管理端公告分页。
   async findAnnouncementPage(queryAnnouncementDto: QueryAnnouncementDto) {
     const { where, pageParams } =
       this.buildAnnouncementPageQuery(queryAnnouncementDto)
@@ -180,9 +175,7 @@ export class AppAnnouncementService {
     )
   }
 
-  /**
-   * APP 公开公告分页。强制 APP 平台和当前生效窗口，并排除正文大字段。
-   */
+  // APP 公开公告分页。强制 APP 平台和当前生效窗口，并排除正文大字段。
   async findPublicAnnouncementPage(queryAnnouncementDto: PageDto) {
     const pageParams = this.drizzle.buildPageParams(queryAnnouncementDto, {
       table: this.appAnnouncement,
@@ -227,10 +220,7 @@ export class AppAnnouncementService {
     )
   }
 
-  /**
-   * 按公告 id 更新主体字段，并在成功后重新入队公告通知 fanout 任务。
-   * 若请求显式变更 `pageId`，会先校验目标页面是否存在。
-   */
+  // 按公告 id 更新主体字段，并在成功后重新入队公告通知 fanout 任务。 若请求显式变更 `pageId`，会先校验目标页面是否存在。
   async updateAnnouncement(updateAnnouncementDto: UpdateAnnouncementDto) {
     const { enablePlatform, id, pageId, ...updateData } = updateAnnouncementDto
 
@@ -314,9 +304,7 @@ export class AppAnnouncementService {
     return true
   }
 
-  /**
-   * 切换公告发布状态，并在成功后重新入队公告通知 fanout 任务。
-   */
+  // 切换公告发布状态，并在成功后重新入队公告通知 fanout 任务。
   async updateAnnouncementStatus(dto: UpdatePublishedStatusDto) {
     await this.drizzle.withTransaction(async (tx) => {
       const result = await tx
@@ -333,9 +321,7 @@ export class AppAnnouncementService {
     return true
   }
 
-  /**
-   * 通过 `isPublished=false` 逻辑下线公告，不执行物理删除。
-   */
+  // 通过 `isPublished=false` 逻辑下线公告，不执行物理删除。
   async deleteAnnouncement(dto: IdDto) {
     const { id } = dto
     await this.drizzle.withTransaction(async (tx) => {
@@ -353,9 +339,7 @@ export class AppAnnouncementService {
     return true
   }
 
-  /**
-   * 重试当前公告最新失败的消息中心通知任务。
-   */
+  // 重试当前公告最新失败的消息中心通知任务。
   async retryAnnouncementFanout(dto: IdDto) {
     const announcement = await this.db.query.appAnnouncement.findFirst({
       where: { id: dto.id },
@@ -373,9 +357,7 @@ export class AppAnnouncementService {
     )
   }
 
-  /**
-   * 查询公告详情并补齐关联页面、发布状态和消息中心扇出状态。
-   */
+  // 查询公告详情并补齐关联页面、发布状态和消息中心扇出状态。
   async findAnnouncementDetail(dto: IdDto) {
     const announcement = await this.db.query.appAnnouncement.findFirst({
       where: { id: dto.id },
@@ -424,9 +406,7 @@ export class AppAnnouncementService {
     }
   }
 
-  /**
-   * 查询 APP 公开公告详情，只允许 APP 平台且当前生效的公告。
-   */
+  // 查询 APP 公开公告详情，只允许 APP 平台且当前生效的公告。
   async findPublicAnnouncementDetail(
     dto: IdDto,
   ): Promise<AnnouncementOutputBaseDto> {
@@ -434,9 +414,7 @@ export class AppAnnouncementService {
     return this.toAnnouncementOutputDto(announcement)
   }
 
-  /**
-   * 当前用户标记公告已读。
-   */
+  // 当前用户标记公告已读。
   async markAnnouncementRead(dto: IdDto, userId: number) {
     await this.findVisiblePublicAnnouncement(dto.id)
     await this.db
@@ -451,9 +429,7 @@ export class AppAnnouncementService {
     return true
   }
 
-  /**
-   * 以原子自增方式累加 APP 公开公告浏览量，避免并发读改写覆盖。
-   */
+  // 以原子自增方式累加 APP 公开公告浏览量，避免并发读改写覆盖。
   async incrementPublicAnnouncementViewCount(dto: IdDto, userId: number) {
     await this.drizzle.withTransaction(async (tx) => {
       const visibleRows = await tx
@@ -502,9 +478,7 @@ export class AppAnnouncementService {
     return true
   }
 
-  /**
-   * 以原子自增方式累加浏览量，避免并发读改写覆盖。
-   */
+  // 以原子自增方式累加浏览量，避免并发读改写覆盖。
   async incrementViewCount(dto: IdDto, userId: number) {
     return this.incrementPublicAnnouncementViewCount(dto, userId)
   }
@@ -762,10 +736,7 @@ export class AppAnnouncementService {
     return enablePlatform.map((item) => Number(item)) as EnablePlatformEnum[]
   }
 
-  /**
-   * 解析公告平台筛选参数。
-   * 仅接受数字数组 JSON，避免传入合法 JSON 但结构错误时把坏请求打成 500。
-   */
+  // 解析公告平台筛选参数。 仅接受数字数组 JSON，避免传入合法 JSON 但结构错误时把坏请求打成 500。
   private parseEnablePlatforms(enablePlatform?: string) {
     if (!enablePlatform || enablePlatform === '[]') {
       return undefined

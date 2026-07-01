@@ -39,12 +39,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
     super(drizzle, userCoreService)
   }
 
-  /**
-   * 获取 APP 用户分页列表。
-   *
-   * 管理端分页查询继续沿用 `PageDto` 的 `pageIndex/pageSize/orderBy`
-   * 契约，并补齐等级名与聚合计数摘要。
-   */
+  // 获取 APP 用户分页列表，补齐等级名与聚合计数摘要。
   async getAppUserPage(query: QueryAdminAppUserPageDto) {
     const {
       id,
@@ -205,11 +200,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
     }
   }
 
-  /**
-   * 获取 APP 用户详情。
-   *
-   * 统一收口等级、计数、徽章数和成长摘要，确保 detail 输出与 DTO 契约一致。
-   */
+  // 获取 APP 用户详情，统一收口等级、计数、徽章数和成长摘要。
   async getAppUserDetail(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
     const growth = await this.growthBalanceQueryService.getUserGrowthSnapshot(

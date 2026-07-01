@@ -204,10 +204,7 @@ export class CommentService {
     throw lastError
   }
 
-  /**
-   * 注册目标解析器
-   * @param resolver - 评论目标解析器实例
-   */
+  // 注册目标解析器
   registerResolver(resolver: ICommentTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
       console.warn(
@@ -217,11 +214,7 @@ export class CommentService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  /**
-   * 获取指定目标类型的解析器
-   * @param targetType - 评论目标类型
-   * @returns 对应的目标解析器
-   */
+  // 获取指定目标类型的解析器
   getResolver(targetType: CommentTargetTypeEnum): ICommentTargetResolver {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
@@ -230,17 +223,7 @@ export class CommentService {
     return resolver
   }
 
-  /**
-   * 判断评论是否对用户可见
-   *
-   * 可见条件：审核通过 + 未隐藏 + 未删除
-   *
-   * @param comment 包含审核状态、隐藏标记、删除时间的评论对象
-   * @param comment.auditStatus 审核状态
-   * @param comment.isHidden 是否隐藏
-   * @param comment.deletedAt 删除时间
-   * @returns 是否可见
-   */
+  // 判断评论是否对用户可见 可见条件：审核通过 + 未隐藏 + 未删除
   private isVisible(comment: CommentVisibleState) {
     return (
       comment.auditStatus === AuditStatusEnum.APPROVED &&
@@ -249,10 +232,7 @@ export class CommentService {
     )
   }
 
-  /**
-   * 将评论审核结果映射为统一事件治理状态。
-   * 隐藏或拒绝的评论不进入奖励主链路，待审核评论保留为 pending。
-   */
+  // 将评论审核结果映射为统一事件治理状态。 隐藏或拒绝的评论不进入奖励主链路，待审核评论保留为 pending。
   private resolveCommentGovernanceStatus(params: {
     auditStatus: AuditStatusEnum
     isHidden: boolean
@@ -266,10 +246,7 @@ export class CommentService {
     return EventEnvelopeGovernanceStatusEnum.PASSED
   }
 
-  /**
-   * 构建评论创建事件 envelope。
-   * 统一收口 comment create / reply 的目标、治理态和业务上下文。
-   */
+  // 构建评论创建事件 envelope。 统一收口 comment create / reply 的目标、治理态和业务上下文。
   private buildCommentCreatedEventEnvelope(params: {
     commentId: number
     userId: number
@@ -299,12 +276,7 @@ export class CommentService {
     })
   }
 
-  /**
-   * 批量查询评论点赞状态。
-   *
-   * 仅在登录用户场景下查询，匿名访问统一返回空映射，
-   * 由调用方按需兜底为 false，保持响应结构稳定。
-   */
+  // 批量查询评论点赞状态。 仅在登录用户场景下查询，匿名访问统一返回空映射， 由调用方按需兜底为 false，保持响应结构稳定。
   private async getCommentLikedMap(commentIds: number[], userId?: number) {
     if (!userId || commentIds.length === 0) {
       return new Map<number, boolean>()
@@ -317,10 +289,7 @@ export class CommentService {
     )
   }
 
-  /**
-   * 批量加载评论作者精简信息。
-   * 统一复用回复分页、目标评论分页和我的评论分页的用户装配逻辑。
-   */
+  // 批量加载评论作者精简信息。 统一复用回复分页、目标评论分页和我的评论分页的用户装配逻辑。
   private async getCommentUserMap(userIds: number[]) {
     const uniqueUserIds = [...new Set(userIds)]
     if (uniqueUserIds.length === 0) {
@@ -346,10 +315,7 @@ export class CommentService {
     return new Map(users.map((item) => [item.id, item] as const))
   }
 
-  /**
-   * 批量加载被回复目标简要信息。
-   * 只返回未删除的父评论；已删除或缺失的父评论统一视为 undefined。
-   */
+  // 批量加载被回复目标简要信息。 只返回未删除的父评论；已删除或缺失的父评论统一视为 undefined。
   private async getReplyTargetMap(
     replyToIds: Array<number | null | undefined>,
   ) {
@@ -405,10 +371,7 @@ export class CommentService {
     )
   }
 
-  /**
-   * 判断用户侧响应是否需要拼接 replyTo。
-   * 直接回复主楼时不再回填 replyTo，只有回复某条楼中楼回复时才返回被回复目标。
-   */
+  // 判断用户侧响应是否需要拼接 replyTo。 直接回复主楼时不再回填 replyTo，只有回复某条楼中楼回复时才返回被回复目标。
   private shouldAttachReplyTarget(
     replyToId?: number | null,
     actualReplyToId?: number | null,
@@ -420,10 +383,7 @@ export class CommentService {
     )
   }
 
-  /**
-   * 返回用户侧真正需要拼接的 replyToId。
-   * 直接回复主楼时统一返回 undefined，避免调用方重复写分支。
-   */
+  // 返回用户侧真正需要拼接的 replyToId。 直接回复主楼时统一返回 undefined，避免调用方重复写分支。
   private getReplyTargetId(
     replyToId?: number | null,
     actualReplyToId?: number | null,
@@ -530,10 +490,7 @@ export class CommentService {
     return nextItem
   }
 
-  /**
-   * 解析论坛主题作者用户 ID。
-   * 非论坛主题场景固定返回 undefined，供作者标记与作者筛选复用。
-   */
+  // 解析论坛主题作者用户 ID。 非论坛主题场景固定返回 undefined，供作者标记与作者筛选复用。
   private async getForumTopicAuthorUserId(
     targetType: CommentTargetTypeEnum,
     targetId: number,
@@ -555,10 +512,7 @@ export class CommentService {
     return topic?.userId
   }
 
-  /**
-   * 通过一级评论解析论坛主题作者。
-   * 回复分页的作者标记依赖 commentId 先回溯到挂载目标。
-   */
+  // 通过一级评论解析论坛主题作者。 回复分页的作者标记依赖 commentId 先回溯到挂载目标。
   private async getForumTopicAuthorUserIdByRootCommentId(commentId: number) {
     const rootComment = await this.db.query.userComment.findFirst({
       where: {
@@ -581,10 +535,7 @@ export class CommentService {
     )
   }
 
-  /**
-   * 构建一级评论查询条件。
-   * 统一收口目标维度、可见性和“仅作者评论”过滤，避免 latest/hot 两条链路口径漂移。
-   */
+  // 构建一级评论查询条件。 统一收口目标维度、可见性和“仅作者评论”过滤，避免 latest/hot 两条链路口径漂移。
   private buildVisibleRootCommentConditions(params: {
     targetType: CommentTargetTypeEnum
     targetId: number
@@ -606,10 +557,7 @@ export class CommentService {
     return conditions
   }
 
-  /**
-   * 构建可见回复查询条件。
-   * 支持按根评论集合和“仅主题作者回复”两种维度裁剪。
-   */
+  // 构建可见回复查询条件。 支持按根评论集合和“仅主题作者回复”两种维度裁剪。
   private buildVisibleReplyConditions(params: {
     rootCommentId?: number
     rootCommentIds?: number[]
@@ -638,10 +586,7 @@ export class CommentService {
     return conditions
   }
 
-  /**
-   * 加载一级评论下的回复预览与回复数。
-   * 预览仍按创建时间正序返回，但 replyCount 会严格遵循“仅作者回复”过滤口径。
-   */
+  // 加载一级评论下的回复预览与回复数。 预览仍按创建时间正序返回，但 replyCount 会严格遵循“仅作者回复”过滤口径。
   private async loadReplyPreviewBundle(params: {
     rootIds: number[]
     previewReplyLimit: number
@@ -786,17 +731,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 应用评论数量变更到目标对象
-   *
-   * 更新目标对象（如漫画、小说等）的评论计数字段。
-   * 当 delta 为 0 时跳过操作。
-   *
-   * @param tx - 事务客户端
-   * @param targetType - 目标类型（漫画、小说等）
-   * @param targetId - 目标ID
-   * @param delta - 变更量（+1 增加，-1 减少）
-   */
+  // 应用评论数量变更到目标对象 更新目标对象（如漫画、小说等）的评论计数字段。 当 delta 为 0 时跳过操作。
   private async applyCommentCountDelta(
     tx: Db,
     targetType: CommentTargetTypeEnum,
@@ -811,10 +746,7 @@ export class CommentService {
     await resolver.applyCountDelta(tx, targetId, delta)
   }
 
-  /**
-   * 将治理态快照映射为可见副作用载荷。
-   * 统一复用 comment create / 审核补偿 / 取消隐藏三类链路的最小字段集。
-   */
+  // 将治理态快照映射为可见副作用载荷。 统一复用 comment create / 审核补偿 / 取消隐藏三类链路的最小字段集。
   private toVisibleCommentEffectPayload(comment: CommentModerationState) {
     return {
       id: comment.id,
@@ -828,10 +760,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 校验评论审核状态更新是否合法。
-   * 已进入终态的评论不允许回滚到待审核，避免后台误操作破坏治理事实。
-   */
+  // 校验评论审核状态更新是否合法。 已进入终态的评论不允许回滚到待审核，避免后台误操作破坏治理事实。
   private ensureCanUpdateCommentAuditStatus(
     currentStatus: AuditStatusEnum,
     nextStatus: AuditStatusEnum,
@@ -847,11 +776,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 同步评论可见性迁移的副作用。
-   * - 首次变为可见：补评论计数、目标钩子、回复通知，并回传奖励所需事件壳
-   * - 从可见变不可见：回退评论计数与目标派生字段
-   */
+  // 同步评论可见性迁移的副作用。 - 首次变为可见：补评论计数、目标钩子、回复通知，并回传奖励所需事件壳 - 从可见变不可见：回退评论计数与目标派生字段
   private async syncCommentVisibilityTransition(
     tx: Db,
     params: {
@@ -932,15 +857,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 根据敏感词检测结果解析审核决策
-   *
-   * 根据配置的审核策略，对内容进行敏感词检测，
-   * 并根据敏感词级别（严重/一般/轻微）返回对应的审核状态和隐藏标记。
-   *
-   * @param content - 待检测的评论内容
-   * @returns 审核决策结果，包含审核状态、是否隐藏、敏感词命中记录
-   */
+  // 根据敏感词检测结果解析审核决策 根据配置的审核策略，对内容进行敏感词检测， 并根据敏感词级别（严重/一般/轻微）返回对应的审核状态和隐藏标记。
   private resolveAuditDecision(content: string) {
     const decision =
       this.sensitiveWordReviewPolicyService.resolveContentDecision(content)
@@ -956,16 +873,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 补偿可见评论的副作用
-   *
-   * 当评论变为可见状态时，需要执行以下补偿操作：
-   * 1. 给评论者发放成长奖励（积分/经验）
-   * 2. 如果是回复评论，向被回复者发送通知
-   *
-   * @param tx - 事务客户端
-   * @param comment - 可见评论的载荷数据
-   */
+  // 补偿可见评论的副作用 当评论变为可见状态时，需要执行以下补偿操作： 1. 给评论者发放成长奖励（积分/经验） 2. 如果是回复评论，向被回复者发送通知
   private async compensateVisibleCommentEffects(
     tx: Db,
     comment: VisibleCommentEffectPayload,
@@ -1055,11 +963,7 @@ export class CommentService {
     // 如果后续需要添加"作品被评论"通知，可以在这里或 resolver postCommentHook 处理。
   }
 
-  /**
-   * 计算删除评论时需要覆盖的评论范围。
-   * - 删除回复：仅删除当前回复自身
-   * - 删除一级评论：级联删除根评论及其整棵楼中楼回复树
-   */
+  // 计算删除评论时需要覆盖的评论范围。 - 删除回复：仅删除当前回复自身 - 删除一级评论：级联删除根评论及其整棵楼中楼回复树
   private async getDeleteScopeComments(
     tx: Db,
     found: {
@@ -1104,10 +1008,7 @@ export class CommentService {
       )
   }
 
-  /**
-   * 回退被删除评论作者的评论数与评论获赞数。
-   * 一级评论级联删除时按作者聚合后再写入，避免逐条更新放大事务开销。
-   */
+  // 回退被删除评论作者的评论数与评论获赞数。 一级评论级联删除时按作者聚合后再写入，避免逐条更新放大事务开销。
   private async rollbackDeletedCommentAuthorCounts(
     tx: Db,
     comments: Array<{
@@ -1143,19 +1044,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 创建一级评论
-   *
-   * 在目标对象下创建新的评论（非回复）。
-   * 自动分配楼层号，进行敏感词审核，并处理可见评论的副作用。
-   *
-   * 使用 Serializable 隔离级别事务确保楼层号分配的准确性，
-   * 并支持冲突重试机制。
-   *
-   * @param input - 创建评论参数，包含用户ID、目标类型、目标ID、评论内容
-   * @returns 新创建的评论ID
-   * @throws BadRequestException - 当权限不足或请求冲突时抛出
-   */
+  // 创建一级评论 在目标对象下创建新的评论（非回复）。 自动分配楼层号，进行敏感词审核，并处理可见评论的副作用。 使用 Serializable 隔离级别事务确保楼层号分配的准确性， 并支持冲突重试机制。
   async createComment(
     input: CreateCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
@@ -1340,17 +1229,7 @@ export class CommentService {
     return { id: created.comment.id }
   }
 
-  /**
-   * 回复评论
-   *
-   * 对已有评论进行回复。
-   * 自动处理回复链（actualReplyToId 指向一级评论），
-   * 进行敏感词审核，并处理可见回复的副作用。
-   *
-   * @param input - 回复评论参数，包含用户ID、评论内容、被回复评论ID
-   * @returns 新创建的回复ID
-   * @throws BadRequestException - 当被回复的评论不存在时抛出
-   */
+  // 回复评论 对已有评论进行回复。 自动处理回复链（actualReplyToId 指向一级评论）， 进行敏感词审核，并处理可见回复的副作用。
   async replyComment(
     input: ReplyCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
@@ -1560,17 +1439,7 @@ export class CommentService {
     return { id: created.comment.id }
   }
 
-  /**
-   * 删除评论
-   *
-   * 软删除评论（设置 deletedAt 时间戳）。
-   * 如果删除前评论是可见状态，需要减少目标对象的评论计数。
-   *
-   * @param commentId - 待删除的评论ID
-   * @param userId - 可选，指定用户ID时只能删除自己的评论（用户侧调用）
-   *                 不指定时可删除任意评论（管理员侧调用）
-   * @returns 被删除的评论ID
-   */
+  // 删除评论 软删除评论（设置 deletedAt 时间戳）。 如果删除前评论是可见状态，需要减少目标对象的评论计数。 不指定时可删除任意评论（管理员侧调用）
   async deleteComment(commentId: number, userId?: number) {
     return this.drizzle.withTransaction(async (tx) => {
       return this.deleteCommentInTx(tx, commentId, userId)
@@ -1674,15 +1543,7 @@ export class CommentService {
     return true
   }
 
-  /**
-   * 获取评论的回复列表
-   *
-   * 分页查询指定一级评论下的所有回复（扁平化展示）。
-   * 只返回审核通过、未隐藏、未删除的回复。
-   *
-   * @param query - 查询参数，包含一级评论ID和分页信息
-   * @returns 分页的回复列表，包含用户基本信息
-   */
+  // 获取评论的回复列表 分页查询指定一级评论下的所有回复（扁平化展示）。 只返回审核通过、未隐藏、未删除的回复。
   async getReplies(query: QueryCommentRepliesDto & { userId?: number }) {
     const legacyReplySort = (query as unknown as Record<string, unknown>).sort
     if (legacyReplySort !== undefined && legacyReplySort !== null) {
@@ -1786,18 +1647,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 获取目标对象的评论列表
-   *
-   * 分页查询指定目标（漫画/小说等）下的一级评论，
-   * 并预加载每条评论的前 N 条回复预览。
-   *
-   * 只返回审核通过、未隐藏、未删除的评论。
-   * 回复采用扁平化展示（actualReplyToId 指向一级评论）。
-   *
-   * @param query - 查询参数，包含目标类型、目标ID、分页信息、回复预览数量限制
-   * @returns 分页的评论列表，每条评论包含用户信息、回复计数、回复预览
-   */
+  // 获取目标对象的评论列表 分页查询指定目标（漫画/小说等）下的一级评论， 并预加载每条评论的前 N 条回复预览。 只返回审核通过、未隐藏、未删除的评论。 回复采用扁平化展示（actualReplyToId 指向一级评论）。
   async getTargetComments(query: TargetCommentsQueryInput) {
     const {
       targetType,
@@ -1973,16 +1823,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 获取用户的评论列表
-   *
-   * 分页查询指定用户的所有评论（包括回复）。
-   * 包含已隐藏和待审核的评论（用户自己的评论需要能看到状态）。
-   *
-   * @param query - 查询参数，包含分页信息
-   * @param userId - 用户ID
-   * @returns 分页的评论列表
-   */
+  // 获取用户的评论列表 分页查询指定用户的所有评论（包括回复）。 包含已隐藏和待审核的评论（用户自己的评论需要能看到状态）。
   async getUserComments(query: QueryMyCommentPageDto, userId: number) {
     const legacyMyCommentSort = (query as unknown as Record<string, unknown>)
       .sort
@@ -2089,10 +1930,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 分页查询管理端评论列表。
-   * 支持按评论自身、目标、回复链、审核状态、隐藏状态与关键词筛选。
-   */
+  // 分页查询管理端评论列表。 支持按评论自身、目标、回复链、审核状态、隐藏状态与关键词筛选。
   async getAdminCommentPage(query: QueryAdminCommentPageDto) {
     const conditions: SQL[] = [isNull(this.userComment.deletedAt)]
     const createdRange = buildDateOnlyRangeInAppTimeZone(
@@ -2226,10 +2064,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 获取管理端评论详情。
-   * 额外补齐评论作者和被回复评论的基础信息，方便后台审核定位上下文。
-   */
+  // 获取管理端评论详情。 额外补齐评论作者和被回复评论的基础信息，方便后台审核定位上下文。
   async getAdminCommentDetail(commentId: number) {
     const comment = await this.db.query.userComment.findFirst({
       where: {
@@ -2338,11 +2173,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 更新评论审核状态。
-   * 审核通过首次使评论可见时，补发评论奖励与回复通知；
-   * 已进入终态的评论不允许回退为待审核。
-   */
+  // 更新评论审核状态。 审核通过首次使评论可见时，补发评论奖励与回复通知； 已进入终态的评论不允许回退为待审核。
   async updateCommentAuditStatus(
     input: UpdateCommentAuditStatusDto & {
       auditById: number
@@ -2561,10 +2392,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * 更新评论隐藏状态。
-   * 仅在可见性真正发生变化时同步评论计数与目标派生字段。
-   */
+  // 更新评论隐藏状态。 仅在可见性真正发生变化时同步评论计数与目标派生字段。
   async updateCommentHidden(input: UpdateCommentHiddenDto) {
     const current = await this.db.query.userComment.findFirst({
       where: {

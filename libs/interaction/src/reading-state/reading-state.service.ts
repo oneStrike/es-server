@@ -51,9 +51,7 @@ export class ReadingStateService {
     }
   }
 
-  /**
-   * 注册阅读状态解析器
-   */
+  // 注册阅读状态解析器
   registerResolver(resolver: IReadingStateResolver) {
     if (this.resolvers.has(resolver.workType)) {
       console.warn(
@@ -63,9 +61,7 @@ export class ReadingStateService {
     this.resolvers.set(resolver.workType, resolver)
   }
 
-  /**
-   * 获取指定的阅读状态解析器
-   */
+  // 获取指定的阅读状态解析器
   private getResolver(workType: ContentTypeEnum) {
     const resolver = this.resolvers.get(workType)
     if (!resolver) {
@@ -74,9 +70,7 @@ export class ReadingStateService {
     return resolver
   }
 
-  /**
-   * 获取用户的阅读状态
-   */
+  // 获取用户的阅读状态
   async getReadingState(
     workType: ContentTypeEnum,
     workId: number,
@@ -110,9 +104,7 @@ export class ReadingStateService {
     }
   }
 
-  /**
-   * 更新阅读状态（按作品）
-   */
+  // 更新阅读状态（按作品）
   async touchByWork(params: TouchReadingStateByWorkDto) {
     const {
       userId,
@@ -152,9 +144,7 @@ export class ReadingStateService {
     return rows[0]
   }
 
-  /**
-   * 安全地更新阅读状态（按作品）
-   */
+  // 安全地更新阅读状态（按作品）
   async touchByWorkSafely(params: TouchReadingStateByWorkDto) {
     try {
       await this.touchByWork(params)
@@ -167,9 +157,7 @@ export class ReadingStateService {
     }
   }
 
-  /**
-   * 更新阅读状态（按章节）
-   */
+  // 更新阅读状态（按章节）
   async touchByChapter(userId: number, chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId },
@@ -192,9 +180,7 @@ export class ReadingStateService {
     })
   }
 
-  /**
-   * 安全地更新阅读状态（按章节）
-   */
+  // 安全地更新阅读状态（按章节）
   async touchByChapterSafely(userId: number, chapterId: number) {
     try {
       await this.touchByChapter(userId, chapterId)
@@ -207,9 +193,7 @@ export class ReadingStateService {
     }
   }
 
-  /**
-   * 获取用户的阅读历史列表
-   */
+  // 获取用户的阅读历史列表
   async getUserReadingHistory(query: QueryReadingHistoryCommandDto) {
     const { workType, userId, workId } = query
     const conditions: SQL[] = [eq(this.userWorkReadingState.userId, userId)]
@@ -344,9 +328,7 @@ export class ReadingStateService {
     }
   }
 
-  /**
-   * 删除单条阅读历史记录
-   */
+  // 删除单条阅读历史记录
   async deleteUserReadingHistory(input: DeleteReadingHistoryCommandDto) {
     await this.drizzle.withErrorHandling(
       () =>
@@ -362,9 +344,7 @@ export class ReadingStateService {
     )
   }
 
-  /**
-   * 清空用户的阅读历史
-   */
+  // 清空用户的阅读历史
   async clearUserReadingHistory(input: ClearReadingHistoryCommandDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db

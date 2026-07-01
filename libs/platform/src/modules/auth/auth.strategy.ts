@@ -50,14 +50,7 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
     this.name = authConfig.strategyKey
   }
 
-  /**
-   * 验证 JWT 负载
-   * 该方法在 JWT 被成功解码后调用
-   * @param request 请求对象
-   * @param payload JWT 负载
-   * @returns 验证通过的用户信息
-   * @throws UnauthorizedException 如果验证失败
-   */
+  // 验证 JWT 负载 该方法在 JWT 被成功解码后调用
   async validate(request: Request, payload: JwtPayload): Promise<JwtPayload> {
     // 验证 audience
     const expectedAud = this.configService.get<string>('auth.aud')

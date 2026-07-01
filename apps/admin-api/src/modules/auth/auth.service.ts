@@ -22,7 +22,8 @@ import { eq } from 'drizzle-orm'
 import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
 
 /**
- * 管理端认证服务
+ * 管理端认证服务。
+ * 负责管理员登录、登出与令牌刷新。
  */
 @Injectable()
 export class AuthService {
@@ -36,24 +37,22 @@ export class AuthService {
     private readonly loginGuardService: LoginGuardService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
+  // 复用管理员用户表。
   private get adminUserTable() {
     return this.drizzle.schema.adminUser
   }
 
-  /**
-   * 获取验证码
-   */
+  // 生成 SVG 验证码供管理端登录使用。
   async getCaptcha() {
     return this.captchaService.generateSvgCaptcha(AdminAuthCacheKeys.CAPTCHA)
   }
 
-  /**
-   * 登录
-   */
+  // 管理员登录：验证码校验 → 查找用户 → 密码解密与验证 → 登录保护 → 签发令牌。
   async login(body: UserLoginDto, clientContext: SessionClientContext) {
     // 检查用户输入的验证码
     if (!body.captcha) {
@@ -160,16 +159,12 @@ export class AuthService {
     }
   }
 
-  /**
-   * 退出登录
-   */
+  // 管理员退出登录，撤销数据库令牌。
   async logout(body: TokenDto) {
     return this.authSessionService.logout(body, { revokeDbTokens: true })
   }
 
-  /**
-   * 刷新访问令牌
-   */
+  // 刷新访问令牌，校验用户状态后返回新令牌对。
   async refreshToken(
     body: RefreshTokenDto,
     clientContext: SessionClientContext,

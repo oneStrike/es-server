@@ -30,11 +30,7 @@ export class HealthService {
     private readonly drizzle: DrizzleService,
   ) {}
 
-  /**
-   * 检查数据库健康状态
-   * @param key 健康检查标识符
-   * @returns HealthIndicatorResult
-   */
+  // 检查数据库健康状态
   async ping(key = 'database') {
     try {
       await this.drizzle.db.execute(sql`SELECT 1`)
@@ -53,11 +49,7 @@ export class HealthService {
     }
   }
 
-  /**
-   * 检查内存缓存健康状态
-   * @param key 健康检查标识符
-   * @returns HealthIndicatorResult
-   */
+  // 检查内存缓存健康状态
   async checkMemory(key = 'cache_memory') {
     try {
       const stores = (this.cacheManager as Cache & CacheManagerLike).stores
@@ -107,11 +99,7 @@ export class HealthService {
     }
   }
 
-  /**
-   * 检查 Redis 缓存健康状态
-   * @param key 健康检查标识符
-   * @returns HealthIndicatorResult
-   */
+  // 检查 Redis 缓存健康状态
   async checkRedis(key = 'cache_redis') {
     try {
       const stores = (this.cacheManager as Cache & CacheManagerLike).stores
@@ -161,12 +149,7 @@ export class HealthService {
     }
   }
 
-  /**
-   * 根据环境检查相应类型的缓存健康状态
-   * 开发环境只检查内存缓存，生产环境只检查Redis缓存
-   * @param key 健康检查标识符
-   * @returns HealthIndicatorResult
-   */
+  // 根据环境检查相应类型的缓存健康状态 开发环境只检查内存缓存，生产环境只检查Redis缓存
   async checkCacheByEnv(key = 'cache') {
     // 开发环境和测试环境只检查内存缓存
     if (isDevelopment()) {

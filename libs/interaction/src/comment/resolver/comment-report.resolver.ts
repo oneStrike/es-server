@@ -37,23 +37,12 @@ export class CommentReportResolver
     private readonly commentService: CommentService,
   ) {}
 
-  /**
-   * 模块初始化时注册解析器到举报服务
-   * 使举报服务能够识别并处理评论类型的举报请求
-   */
+  // 模块初始化时注册解析器到举报服务 使举报服务能够识别并处理评论类型的举报请求
   onModuleInit() {
     this.reportService.registerResolver(this)
   }
 
-  /**
-   * 解析目标评论的场景元数据
-   * 验证评论存在性，根据评论挂载的目标类型和回复关系确定场景类型和评论层级
-   * @param tx - 事务客户端
-   * @param targetId - 评论ID
-   * @returns 包含场景类型、场景ID、评论层级和评论作者的元数据对象
-   * @throws BusinessException 当评论不存在时抛出异常
-   * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
-   */
+  // 解析目标评论的场景元数据 验证评论存在性，根据评论挂载的目标类型和回复关系确定场景类型和评论层级
   async resolveMeta(tx: Db, targetId: number) {
     const comment = await tx.query.userComment.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },

@@ -171,19 +171,14 @@ export class UploadService {
     }
   }
 
-  /**
-   * 将本地文件继续走统一上传 provider 流程。
-   * 用于压缩包解压后的图片按既有上传配置决定最终落点。
-   */
+  // 将本地文件继续走统一上传 provider 流程。 用于压缩包解压后的图片按既有上传配置决定最终落点。
   async uploadLocalFile(
     options: UploadLocalFileOptions,
   ): Promise<UploadResult> {
     return (await this.uploadLocalFileWithDeleteTarget(options)).upload
   }
 
-  /**
-   * 将本地文件继续走统一上传 provider 流程，并返回后台补偿所需的删除句柄。
-   */
+  // 将本地文件继续走统一上传 provider 流程，并返回后台补偿所需的删除句柄。
   async uploadLocalFileWithDeleteTarget(
     options: UploadLocalFileOptions,
   ): Promise<UploadStoredFileResult> {
@@ -239,10 +234,7 @@ export class UploadService {
     return this.uploadPreparedFileWithDeleteTarget(preparedFile)
   }
 
-  /**
-   * 按 provider 删除已上传文件。
-   * 后台任务回滚必须只依赖上传时生成的删除句柄。
-   */
+  // 按 provider 删除已上传文件。 后台任务回滚必须只依赖上传时生成的删除句柄。
   async deleteUploadedFile(target: UploadDeleteTarget) {
     switch (target.provider) {
       case UploadProviderEnum.QINIU:
@@ -261,10 +253,7 @@ export class UploadService {
     }
   }
 
-  /**
-   * 读取当前系统上传配置。
-   * 当未注入动态配置提供器时回退到本地 provider，避免后台初始化阶段直接失效。
-   */
+  // 读取当前系统上传配置。 当未注入动态配置提供器时回退到本地 provider，避免后台初始化阶段直接失效。
   private getSystemUploadConfig() {
     return (
       this.uploadConfigProvider?.getUploadConfig() ?? {
@@ -300,7 +289,7 @@ export class UploadService {
     )
   }
 
-  /** 根据系统配置选择实际上传 provider。 */
+  // 根据系统配置选择实际上传 provider。
   private async uploadByProvider(
     provider: UploadProviderEnum,
     file: PreparedUploadFile,
@@ -317,10 +306,7 @@ export class UploadService {
     }
   }
 
-  /**
-   * 解析最终使用的 provider。
-   * superbed 对非图片资源可按配置回退到本地存储，避免不支持的资源类型直接失败。
-   */
+  // 解析最终使用的 provider。 superbed 对非图片资源可按配置回退到本地存储，避免不支持的资源类型直接失败。
   private resolveProvider(
     provider: UploadProviderEnum,
     fileCategory: UploadFileCategory,
@@ -337,10 +323,7 @@ export class UploadService {
     return provider
   }
 
-  /**
-   * 执行统一上传流程并映射为标准响应结构。
-   * 所有 provider 成功后都在这里收口返回字段，避免控制器感知底层差异。
-   */
+  // 执行统一上传流程并映射为标准响应结构。 所有 provider 成功后都在这里收口返回字段，避免控制器感知底层差异。
   private async uploadPreparedFile(
     preparedFile: PreparedUploadFile,
     options: UploadFileOptions = {},
@@ -350,10 +333,7 @@ export class UploadService {
     ).upload
   }
 
-  /**
-   * 执行统一上传流程并返回删除句柄。
-   * 删除句柄由 provider 在上传成功时一并产出，供后台补偿链直接消费。
-   */
+  // 执行统一上传流程并返回删除句柄。 删除句柄由 provider 在上传成功时一并产出，供后台补偿链直接消费。
   private async uploadPreparedFileWithDeleteTarget(
     preparedFile: PreparedUploadFile,
     options: UploadFileOptions = {},
@@ -397,9 +377,7 @@ export class UploadService {
     }
   }
 
-  /**
-   * 根据 object key 删除本地文件，缺失文件按幂等成功处理。
-   */
+  // 根据 object key 删除本地文件，缺失文件按幂等成功处理。
   private async deleteLocalFileByObjectKey(objectKey?: string) {
     const normalizedSegments = this.normalizePathSegments(
       (objectKey ?? '').split('/'),
@@ -413,7 +391,7 @@ export class UploadService {
     })
   }
 
-  /** 构建最终 objectKey，未显式传路径时按文件分类和日期自动分桶。 */
+  // 构建最终 objectKey，未显式传路径时按文件分类和日期自动分桶。
   private buildObjectKey(
     scene: string,
     fileCategory: UploadFileCategory,
@@ -431,7 +409,7 @@ export class UploadService {
     return posix.join(scene, fileCategory, dateStr, finalName)
   }
 
-  /** 规范化并校验上传路径片段，阻止非法路径段和目录穿越。 */
+  // 规范化并校验上传路径片段，阻止非法路径段和目录穿越。
   private normalizePathSegments(pathSegments?: string[]) {
     return (pathSegments ?? [])
       .map((segment) => segment.trim())
@@ -447,7 +425,7 @@ export class UploadService {
       })
   }
 
-  /** 解析最终文件名；若调用方未指定则自动生成 UUID 文件名。 */
+  // 解析最终文件名；若调用方未指定则自动生成 UUID 文件名。
   private resolveFinalName(ext: string, finalName?: string) {
     if (!finalName) {
       return `${uuidv4()}.${ext}`
@@ -470,7 +448,7 @@ export class UploadService {
     return `${nameWithoutExt}.${ext}`
   }
 
-  /** 为图片文件拼接尺寸后缀；尺寸不可用时保持原始文件名。 */
+  // 为图片文件拼接尺寸后缀；尺寸不可用时保持原始文件名。
   private async resolveStoredFinalName(
     tempPath: string,
     ext: string,
@@ -498,7 +476,7 @@ export class UploadService {
     }
   }
 
-  /** 将图片尺寸规范化为单个后缀，避免重复追加历史尺寸片段。 */
+  // 将图片尺寸规范化为单个后缀，避免重复追加历史尺寸片段。
   private appendImageDimensionsToFinalName(
     finalName: string,
     width: number,
@@ -512,10 +490,7 @@ export class UploadService {
     return `${nameWithoutExt}-${width}x${height}${extension}`
   }
 
-  /**
-   * 解析文件扩展名、MIME 和业务分类。
-   * 优先信任探测结果，再回退到原始文件名和请求头信息，避免仅凭客户端声明放行。
-   */
+  // 解析文件扩展名、MIME 和业务分类。 优先信任探测结果，再回退到原始文件名和请求头信息，避免仅凭客户端声明放行。
   private resolveFileType(
     detectedExt: string | undefined,
     detectedMime: string | undefined,
@@ -559,7 +534,7 @@ export class UploadService {
     }
   }
 
-  /** 根据扩展名查找标准 MIME。 */
+  // 根据扩展名查找标准 MIME。
   private lookupMimeByExt(ext: string) {
     if (UPLOAD_CUSTOM_MIME_BY_EXT[ext]) {
       return UPLOAD_CUSTOM_MIME_BY_EXT[ext]
@@ -569,10 +544,7 @@ export class UploadService {
     return lookupValue ? String(lookupValue).toLowerCase() : ''
   }
 
-  /**
-   * 对安装包这类 zip 容器优先尊重原始扩展名。
-   * 避免 `apk/ipa` 被 file-type 统一识别为 `zip` 后误判成压缩包。
-   */
+  // 对安装包这类 zip 容器优先尊重原始扩展名。 避免 `apk/ipa` 被 file-type 统一识别为 `zip` 后误判成压缩包。
   private resolvePreferredExtension(
     detectedExt: string | undefined,
     filenameExt: string,
@@ -584,7 +556,7 @@ export class UploadService {
     return detectedExt || filenameExt
   }
 
-  /** 根据扩展名解析仓库内定义的文件分类。 */
+  // 根据扩展名解析仓库内定义的文件分类。
   private getFileCategoryFromExt(ext: string) {
     const lowerExt = ext.toLowerCase()
     for (const type of Object.keys(
@@ -629,17 +601,14 @@ export class UploadService {
     )
   }
 
-  /**
-   * 在 provider 执行前统一兜底文件大小限制。
-   * 避免本地二次上传路径绕过 Fastify multipart 的请求级限流。
-   */
+  // 在 provider 执行前统一兜底文件大小限制。 避免本地二次上传路径绕过 Fastify multipart 的请求级限流。
   private assertFileSizeWithinLimit(fileSize: number) {
     if (fileSize > this.uploadConfig.maxFileSize) {
       throw new PayloadTooLargeException('文件大小超过限制')
     }
   }
 
-  /** 读取流的首个数据块，供 MIME 探测复用，同时尽量不消费后续正文。 */
+  // 读取流的首个数据块，供 MIME 探测复用，同时尽量不消费后续正文。
   private async readFirstChunk(
     stream: NodeJS.ReadableStream & {
       read: (size?: number) => NodeBuffer | null
@@ -682,12 +651,12 @@ export class UploadService {
     })
   }
 
-  /** 将字符串或 Buffer 输入统一转换为 Buffer。 */
+  // 将字符串或 Buffer 输入统一转换为 Buffer。
   private toBuffer(chunk: string | NodeBuffer) {
     return typeof chunk === 'string' ? NodeBuffer.from(chunk) : chunk
   }
 
-  /** 吞掉剩余流数据，避免提前失败时残留未消费流占用连接。 */
+  // 吞掉剩余流数据，避免提前失败时残留未消费流占用连接。
   private async consumeStream(stream: NodeJS.ReadableStream) {
     return new Promise((resolve) => {
       stream.on('end', resolve)

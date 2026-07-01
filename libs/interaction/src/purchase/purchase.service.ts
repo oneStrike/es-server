@@ -87,9 +87,7 @@ export class PurchaseService {
     return sql`COALESCE(upr.created_at, uce.created_at)`
   }
 
-  /**
-   * 校验购买条件并获取价格
-   */
+  // 校验购买条件并获取价格
   async checkNeedPurchase(
     targetType: PurchaseTargetTypeEnum,
     targetId: number,
@@ -164,10 +162,7 @@ export class PurchaseService {
     }
   }
 
-  /**
-   * 将订单快照映射为统一价格读模型。
-   * 历史订单展示统一读取冻结值，避免后续等级变动导致已购记录漂移。
-   */
+  // 将订单快照映射为统一价格读模型。 历史订单展示统一读取冻结值，避免后续等级变动导致已购记录漂移。
   private toPurchasePricingSnapshot(input: {
     originalPrice: number
     paidPrice: number
@@ -183,9 +178,7 @@ export class PurchaseService {
     }
   }
 
-  /**
-   * 执行购买逻辑
-   */
+  // 执行购买逻辑
   async purchaseTarget(
     input: PurchaseTargetCommandDto,
   ): Promise<PurchaseChapterResultDto> {
@@ -349,17 +342,12 @@ export class PurchaseService {
     }
   }
 
-  /**
-   * 购买章节（对外通用接口）
-   */
+  // 购买章节（对外通用接口）
   async purchaseChapter(input: PurchaseTargetCommandDto) {
     return this.purchaseTarget(input)
   }
 
-  /**
-   * 获取已购作品列表
-   * 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
-   */
+  // 获取已购作品列表 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
   async getPurchasedWorks(query: QueryPurchasedWorkCommandDto) {
     const { userId, workType, status = PurchaseStatusEnum.SUCCESS } = query
     const purchaseCreatedAt = this.buildPurchaseCreatedAtExpression()
@@ -456,10 +444,7 @@ export class PurchaseService {
     )
   }
 
-  /**
-   * 获取已购章节列表
-   * 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
-   */
+  // 获取已购章节列表 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
   async getPurchasedWorkChapters(query: QueryPurchasedWorkChapterCommandDto) {
     const {
       userId,

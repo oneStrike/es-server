@@ -146,9 +146,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     return this.nativeClientState.get(client)?.userId ?? null
   }
 
-  /**
-   * 解析原生 WS auth 事件中的 token，并复用共享用户状态事实源。
-   */
+  // 解析原生 WS auth 事件中的 token，并复用共享用户状态事实源。
   async resolveNativeAuthToken(
     token?: string | null,
   ): Promise<NativeWsAuthResult> {
@@ -197,10 +195,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     }
   }
 
-  /**
-   * 校验访问令牌并提取用户 ID。
-   * 仅接受 access token，配置缺失或校验失败时返回 null。
-   */
+  // 校验访问令牌并提取用户 ID。 仅接受 access token，配置缺失或校验失败时返回 null。
   async authenticateToken(token?: string | null) {
     if (!token) {
       return null
@@ -480,10 +475,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     }
   }
 
-  /**
-   * 处理聊天发送请求。
-   * 负责鉴权、参数校验、发送消息并统一封装 ack。
-   */
+  // 处理聊天发送请求。 负责鉴权、参数校验、发送消息并统一封装 ack。
   async handleChatSend(
     userId: number | null,
     body: WsRequestEnvelope<WsSendPayload>,
@@ -586,10 +578,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     })
   }
 
-  /**
-   * 处理会话已读请求。
-   * 对 conversationId 与 messageId 做最小校验后委托聊天服务执行。
-   */
+  // 处理会话已读请求。 对 conversationId 与 messageId 做最小校验后委托聊天服务执行。
   async handleChatRead(
     userId: number | null,
     body: WsRequestEnvelope<WsReadPayload>,
@@ -679,9 +668,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     return JSON.stringify(message)
   }
 
-  /**
-   * 构造原生 WS ack 消息体。
-   */
+  // 构造原生 WS ack 消息体。
   createNativeAckMessage(payload: WsAckPayload) {
     return JSON.stringify({
       event: 'chat.ack',
@@ -689,9 +676,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     })
   }
 
-  /**
-   * 构造原生 WS 错误消息体。
-   */
+  // 构造原生 WS 错误消息体。
   createNativeErrorMessage(
     code: number,
     message: string,
@@ -707,25 +692,19 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     })
   }
 
-  /**
-   * 构造原生 WS 鉴权必需提示消息。
-   */
+  // 构造原生 WS 鉴权必需提示消息。
   createNativeAuthRequiredMessage() {
     return this.createNativeEventMessage('ws.auth.required', {
       message: 'Authentication required',
     })
   }
 
-  /**
-   * 构造原生 WS 鉴权成功消息。
-   */
+  // 构造原生 WS 鉴权成功消息。
   createNativeAuthOkMessage(userId: number) {
     return this.createNativeEventMessage('ws.auth.ok', { userId })
   }
 
-  /**
-   * 构造原生 WS 鉴权失败消息。
-   */
+  // 构造原生 WS 鉴权失败消息。
   createNativeAuthErrorMessage(
     code = 40101,
     message = 'Authentication failed',
@@ -736,9 +715,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     })
   }
 
-  /**
-   * 判断 ack 后是否需要主动断开客户端连接。
-   */
+  // 判断 ack 后是否需要主动断开客户端连接。
   shouldDisconnectAfterAck(ack: WsAckPayload) {
     return (
       ack.code === 40101 ||
@@ -747,19 +724,14 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     )
   }
 
-  /**
-   * 记录 ack 延迟指标并返回最终 ack 载荷。
-   */
+  // 记录 ack 延迟指标并返回最终 ack 载荷。
   private finishAck(payload: WsAckPayload, requestStartAt: number) {
     const latencyMs = Math.max(0, Date.now() - requestStartAt)
     this.recordAckMetric(payload.code, latencyMs)
     return payload
   }
 
-  /**
-   * 惰性解析聊天服务实例。
-   * 避免 websocket 服务初始化阶段形成强耦合依赖。
-   */
+  // 惰性解析聊天服务实例。 避免 websocket 服务初始化阶段形成强耦合依赖。
   private getMessageChatService() {
     if (!this.messageChatService) {
       this.messageChatService = this.moduleRef.get<MessageChatService>(
@@ -775,10 +747,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     return this.messageChatService
   }
 
-  /**
-   * 标准化客户端 requestId。
-   * 空字符串会被视为缺失，并统一限制最大长度。
-   */
+  // 标准化客户端 requestId。 空字符串会被视为缺失，并统一限制最大长度。
   private normalizeRequestId(requestId?: string) {
     if (typeof requestId !== 'string' || !requestId.trim()) {
       return undefined
@@ -786,17 +755,13 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     return requestId.trim().slice(0, 100)
   }
 
-  /**
-   * 判断输入值是否为正整数。
-   */
+  // 判断输入值是否为正整数。
   private isPositiveInteger(value: unknown): boolean {
     const normalized = Number(value)
     return Number.isInteger(normalized) && normalized > 0
   }
 
-  /**
-   * 把领域异常映射为 websocket ack 错误码。
-   */
+  // 把领域异常映射为 websocket ack 错误码。
   private mapErrorToAck(error: unknown) {
     if (error instanceof BusinessException) {
       return {
@@ -823,9 +788,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     }
   }
 
-  /**
-   * 从 Nest 异常对象中提取用户可读错误信息。
-   */
+  // 从 Nest 异常对象中提取用户可读错误信息。
   private getErrorMessage(
     error: { getResponse: () => unknown },
     fallback: string,
@@ -853,9 +816,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     return fallback
   }
 
-  /**
-   * 记录 websocket 请求总数指标。
-   */
+  // 记录 websocket 请求总数指标。
   private recordRequestMetric() {
     void this.messageWsMonitorService.recordRequest().catch((error) => {
       this.logger.warn(
@@ -864,9 +825,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     })
   }
 
-  /**
-   * 记录 websocket ack 结果与延迟指标。
-   */
+  // 记录 websocket ack 结果与延迟指标。
   private recordAckMetric(code: number, latencyMs: number) {
     void this.messageWsMonitorService
       .recordAck(code, latencyMs)
@@ -877,9 +836,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       })
   }
 
-  /**
-   * 记录 websocket 重连指标。
-   */
+  // 记录 websocket 重连指标。
   private recordReconnectMetric() {
     void this.messageWsMonitorService.recordReconnect().catch((error) => {
       this.logger.warn(
@@ -888,9 +845,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     })
   }
 
-  /**
-   * 记录跨实例 fanout 因 PostgreSQL notify 载荷限制被跳过。
-   */
+  // 记录跨实例 fanout 因 PostgreSQL notify 载荷限制被跳过。
   private recordFanoutSkippedMetric() {
     void this.messageWsMonitorService.recordFanoutSkipped().catch((error) => {
       this.logger.warn(
@@ -899,9 +854,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     })
   }
 
-  /**
-   * 记录跨实例 fanout 发布失败。
-   */
+  // 记录跨实例 fanout 发布失败。
   private recordFanoutPublishFailedMetric() {
     void this.messageWsMonitorService
       .recordFanoutPublishFailed()
@@ -912,9 +865,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       })
   }
 
-  /**
-   * 把未知错误对象收敛成日志可读文本。
-   */
+  // 把未知错误对象收敛成日志可读文本。
   private stringifyError(error: unknown): string {
     if (error instanceof Error) {
       return error.message

@@ -28,10 +28,7 @@ export class AuthService {
     this.config = config
   }
 
-  /**
-   * 生成 access/refresh token 对。
-   * 两类 token 会分别生成独立 jti，避免刷新链路和登出链路共享同一幂等锚点。
-   */
+  // 生成 access/refresh token 对。 两类 token 会分别生成独立 jti，避免刷新链路和登出链路共享同一幂等锚点。
   async generateTokens(payload) {
     const basePayload = {
       ...payload,
@@ -55,10 +52,7 @@ export class AuthService {
     return { accessToken, refreshToken }
   }
 
-  /**
-   * 使用 refresh token 刷新新的 token 对。
-   * 刷新成功后会立即把旧 refresh token 加入黑名单，避免同一 refresh token 被重复消费。
-   */
+  // 使用 refresh token 刷新新的 token 对。 刷新成功后会立即把旧 refresh token 加入黑名单，避免同一 refresh token 被重复消费。
   async refreshAccessToken(
     refreshToken: string,
     options: RefreshAccessTokenOptions = {},
@@ -108,10 +102,7 @@ export class AuthService {
     }
   }
 
-  /**
-   * 计算 token 剩余有效时长并提取 jti。
-   * 该方法允许忽略过期校验，用于登出或失效清理场景回收已过期 token。
-   */
+  // 计算 token 剩余有效时长并提取 jti。 该方法允许忽略过期校验，用于登出或失效清理场景回收已过期 token。
   protected async tokenTtlMsAndJti(token: string) {
     const publicKey = this.configService.get('rsa.publicKey')
 
@@ -131,10 +122,7 @@ export class AuthService {
     return { ttlMs, ...payload }
   }
 
-  /**
-   * 登出并同时撤销 access token 和 refresh token。
-   * 两类 token 都会被写入黑名单，避免客户端仅销毁一端后仍能继续访问。
-   */
+  // 登出并同时撤销 access token 和 refresh token。 两类 token 都会被写入黑名单，避免客户端仅销毁一端后仍能继续访问。
   async logout(accessToken: string, refreshToken: string): Promise<boolean> {
     await Promise.all([
       this.addToBlacklist(accessToken),
@@ -143,10 +131,7 @@ export class AuthService {
     return true
   }
 
-  /**
-   * 将 token 加入黑名单。
-   * 仅当 token 仍有剩余 TTL 时写入黑名单，避免为已过期 token 额外占用缓存。
-   */
+  // 将 token 加入黑名单。 仅当 token 仍有剩余 TTL 时写入黑名单，避免为已过期 token 额外占用缓存。
   async addToBlacklist(token: string) {
     const { jti, ttlMs } = await this.tokenTtlMsAndJti(token)
     if (!jti || typeof ttlMs !== 'number' || ttlMs <= 0) {
@@ -155,10 +140,7 @@ export class AuthService {
     await this.blacklistService.addBlacklist(jti, ttlMs)
   }
 
-  /**
-   * 解码 token 载荷而不做签名校验。
-   * 仅用于调试或辅助流程，不能替代正式验签结果。
-   */
+  // 解码 token 载荷而不做签名校验。 仅用于调试或辅助流程，不能替代正式验签结果。
   async decodeToken(token: string) {
     const parts = token.split('.')
     if (parts.length !== 3) {
@@ -170,10 +152,7 @@ export class AuthService {
     return JSON.parse(decoded)
   }
 
-  /**
-   * 验签并解析 Token。
-   * 默认校验过期时间；在登出等场景可按需忽略过期限制。
-   */
+  // 验签并解析 Token。 默认校验过期时间；在登出等场景可按需忽略过期限制。
   async verifyToken(token: string, options?: { ignoreExpiration?: boolean }) {
     return this.jwtService.verifyAsync(token, {
       ignoreExpiration: options?.ignoreExpiration ?? false,

@@ -24,11 +24,12 @@ import { AdminAuthRedisKeys } from '../auth/auth.constant'
 import { AdminTokenStorageService } from '../auth/token-storage.service'
 
 /**
- * 管理员用户服务
- * 负责后台用户的注册、查询、权限校验与密码管理
+ * 管理员用户服务。
+ * 负责后台用户的注册、查询、权限校验与密码管理。
  */
 @Injectable()
 export class AdminUserService {
+  // 复用管理员用户表。
   get adminUser() {
     return this.drizzle.schema.adminUser
   }
@@ -40,14 +41,12 @@ export class AdminUserService {
     private readonly tokenStorageService: AdminTokenStorageService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
-  /**
-   * 校验当前操作人是否为超级管理员。
-   * 角色不足属于已登录但无权限的场景，需要返回 Forbidden 语义。
-   */
+  // 校验当前操作人是否为超级管理员，角色不足时抛出 ForbiddenException。
   async isSuperAdmin(userId: number) {
     const [adminUser] = await this.db
       .select({ role: this.adminUser.role })
@@ -66,9 +65,7 @@ export class AdminUserService {
     }
   }
 
-  /**
-   * 更新用户信息
-   */
+  // 更新管理员用户信息，包含用户名/手机号唯一性校验与安全保护。
   async updateUserInfo(userId: number, updateData: UpdateUserDto) {
     await this.isSuperAdmin(userId)
     // 先读取当前快照，避免把同一账号自己的用户名或手机号误判成冲突。
@@ -141,9 +138,7 @@ export class AdminUserService {
     return true
   }
 
-  /**
-   * 注册管理员用户
-   */
+  // 注册新管理员用户，包含用户名与手机号唯一性校验。
   async register(operatorId: number, data: UserRegisterDto) {
     await this.isSuperAdmin(operatorId)
     const { username, password, avatar, role, mobile, confirmPassword } = data
@@ -198,9 +193,7 @@ export class AdminUserService {
     return true
   }
 
-  /**
-   * 获取用户信息
-   */
+  // 按 ID 获取管理员用户信息（不含密码）。
   async getUserInfo(userId: number) {
     const [user] = await this.db
       .select()
@@ -220,9 +213,7 @@ export class AdminUserService {
     return rest
   }
 
-  /**
-   * 获取用户列表（分页）
-   */
+  // 分页查询管理员用户列表。
   async getUsers(queryDto: UserPageDto) {
     const { username, isEnabled, mobile, role, ...pageDto } = queryDto
     const conditions: SQL[] = []
@@ -262,9 +253,7 @@ export class AdminUserService {
     }
   }
 
-  /**
-   * 修改密码
-   */
+  // 修改管理员密码，验证旧密码后更新并撤销已有令牌。
   async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
     const { oldPassword, newPassword, confirmPassword } = changePasswordDto
 
@@ -329,10 +318,7 @@ export class AdminUserService {
     return true
   }
 
-  /**
-   * 解锁指定管理员账号的登录锁定状态。
-   * 该能力会直接修改登录保护状态，只允许超级管理员操作。
-   */
+  // 解锁指定管理员账号的登录锁定状态，只允许超级管理员操作。
   async unlockUser(operatorId: number, userId: number) {
     await this.isSuperAdmin(operatorId)
 
@@ -357,9 +343,7 @@ export class AdminUserService {
     return true
   }
 
-  /**
-   * 重置用户密码为一次性临时密码。
-   */
+  // 重置用户密码为一次性临时密码，并撤销已有令牌。
   async resetPassword(userId: number, id: number) {
     await this.isSuperAdmin(userId)
     const temporaryPassword = this.generateTemporaryPassword()
@@ -384,6 +368,7 @@ export class AdminUserService {
     return { temporaryPassword }
   }
 
+  // 安全保护：禁止自降/自禁与最后一个超级管理员被禁用或降级。
   private async ensureSafeAdminAccountUpdate(
     operatorId: number,
     target: {
@@ -429,6 +414,7 @@ export class AdminUserService {
     }
   }
 
+  // 生成含大小写字母、数字与特殊字符的 16 位随机临时密码。
   private generateTemporaryPassword() {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const lowercase = 'abcdefghijklmnopqrstuvwxyz'

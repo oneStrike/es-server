@@ -37,8 +37,8 @@ const SMS_RATE_LIMIT_KEY_PREFIX = 'app:auth:sms'
 const UNKNOWN_IP = 'unknown'
 
 /**
- * 短信服务类
- * 负责发送验证码、校验验证码等短信相关操作
+ * 应用端短信服务。
+ * 负责发送验证码、校验验证码及频控。
  */
 @Injectable()
 export class SmsService {
@@ -52,18 +52,17 @@ export class SmsService {
     private readonly cacheManager: Cache,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
+  // 复用应用用户表。
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  /**
-   * 发送验证码
-   * @param dto - 验证码发送请求DTO，包含手机号和短信模板代码
-   */
+  // 发送验证码，根据模板做手机号存在性校验与多维度频控。
   async sendVerifyCode(dto: SendVerifyCodeDto, clientIp = UNKNOWN_IP) {
     const templateCode = dto.templateCode || SmsTemplateCodeEnum.LOGIN_REGISTER
     const normalizedDto = { ...dto, templateCode }
@@ -102,10 +101,7 @@ export class SmsService {
     )
   }
 
-  /**
-   * 校验验证码
-   * @param dto - 验证码校验请求DTO，包含手机号、验证码和短信模板代码
-   */
+  // 校验验证码，失败时抛出 UnauthorizedException。
   async validateVerifyCode(dto: CheckVerifyCodeDto) {
     const normalizedDto = {
       ...dto,
@@ -119,6 +115,7 @@ export class SmsService {
     )
   }
 
+  // 从配置读取短信频控参数，缺失时回退到默认值。
   private getSmsRateLimitConfig(): SmsRateLimitConfig {
     const configured =
       this.configService.get<AppConfigInterface>('app')?.auth?.smsRateLimit ??
@@ -147,6 +144,7 @@ export class SmsService {
     }
   }
 
+  // 执行短信频控：优先 Redis，降级到本地 cache + 进程内锁。
   private async enforceSmsRateLimit(
     dto: SendVerifyCodeDto & { templateCode: string },
     clientIp: string,
@@ -207,6 +205,7 @@ export class SmsService {
     )
   }
 
+  // 使用 Redis 执行短信频控，不可用时返回 false 降级。
   private async enforceRedisSmsRateLimit(
     keys: {
       phoneTemplateKey: string
@@ -255,6 +254,7 @@ export class SmsService {
     return true
   }
 
+  // Redis 计数器递增，超限抛出 429。
   private async incrementRedisCounter(
     key: string,
     limit: number,
@@ -270,6 +270,7 @@ export class SmsService {
     }
   }
 
+  // 从 cache-manager 的 stores 中探测可用的 Redis 客户端。
   private getRedisRateLimitStore(): RedisRateLimitStore | undefined {
     const [keyvStore] =
       (this.cacheManager as Cache & { stores?: Array<{ store?: unknown }> })
@@ -289,6 +290,7 @@ export class SmsService {
     return undefined
   }
 
+  // 将原始 key 加上 Redis namespace 前缀。
   private toRedisCacheKey(key: string, store: RedisRateLimitStore) {
     if (!store.namespace) {
       return key
@@ -296,6 +298,7 @@ export class SmsService {
     return `${store.namespace}${store.keyPrefixSeparator ?? '::'}${key}`
   }
 
+  // 递归地按 key 顺序获取进程内锁，确保同 key 串行执行。
   private async withRateLimitLocks<T>(
     keys: string[],
     action: () => Promise<T>,
@@ -310,6 +313,7 @@ export class SmsService {
       this.withRateLimitLocks(remainingKeys, action),)
   }
 
+  // 单 key 进程内锁：排队等待前一个 Promise 完成后再执行。
   private async withSingleRateLimitLock<T>(
     key: string,
     action: () => Promise<T>,
@@ -336,6 +340,7 @@ export class SmsService {
     }
   }
 
+  // 冷却期检查：key 存在说明仍在冷却期，抛出 429。
   private async ensureCooldown(key: string, seconds: number) {
     const cached = await this.cacheManager.get<number>(key)
     if (cached) {
@@ -345,6 +350,7 @@ export class SmsService {
     await this.cacheManager.set(key, Date.now(), seconds * 1000)
   }
 
+  // 计数器检查：达到上限抛出 429，否则递增。
   private async ensureCounterLimit(
     key: string,
     limit: number,
@@ -358,6 +364,7 @@ export class SmsService {
     await this.cacheManager.set(key, current + 1, seconds * 1000)
   }
 
+  // 按作用域和组成部分拼接频控 key。
   private buildRateLimitKey(scope: string, ...parts: string[]) {
     return [
       SMS_RATE_LIMIT_KEY_PREFIX,
@@ -366,6 +373,7 @@ export class SmsService {
     ].join(':')
   }
 
+  // 安全转换为正整数，非正整数或 NaN 返回 fallback。
   private toPositiveInteger(value: unknown, fallback: number) {
     const numericValue = Number(value)
     return Number.isInteger(numericValue) && numericValue > 0
@@ -373,6 +381,7 @@ export class SmsService {
       : fallback
   }
 
+  // 抛出 429 Too Many Requests。
   private throwRateLimited(): never {
     throw new HttpException(
       '验证码请求过于频繁，请稍后再试',

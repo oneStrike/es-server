@@ -33,61 +33,52 @@ export class ForumSearchService {
     private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
-  /** 统一复用当前模块的 Drizzle 数据库实例。 */
+  // 统一复用当前模块的 Drizzle 数据库实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** forum_topic 表访问入口。 */
+  // forum_topic 表访问入口。
   get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
-  /** user_comment 表访问入口。 */
+  // user_comment 表访问入口。
   get userComment() {
     return this.drizzle.schema.userComment
   }
 
-  /** forum_hashtag_reference 表访问入口。 */
+  // forum_hashtag_reference 表访问入口。
   get forumHashtagReference() {
     return this.drizzle.schema.forumHashtagReference
   }
 
-  /** forum_hashtag 表访问入口。 */
+  // forum_hashtag 表访问入口。
   get forumHashtag() {
     return this.drizzle.schema.forumHashtag
   }
 
-  /** forum_section 表访问入口。 */
+  // forum_section 表访问入口。
   get forumSection() {
     return this.drizzle.schema.forumSection
   }
 
-  /** app_user 表访问入口。 */
+  // app_user 表访问入口。
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  /**
-   * 管理端搜索。
-   * 不做公开可见性过滤，返回后台可检索的主题和评论。
-   */
+  // 管理端搜索。 不做公开可见性过滤，返回后台可检索的主题和评论。
   async searchAdmin(searchInput: ForumSearchDto) {
     return this.searchInternal(searchInput, { publicOnly: false })
   }
 
-  /**
-   * 应用侧公开搜索。
-   * 会按当前用户权限收窄板块范围，并过滤未通过审核或已隐藏内容。
-   */
+  // 应用侧公开搜索。 会按当前用户权限收窄板块范围，并过滤未通过审核或已隐藏内容。
   async searchPublic(searchInput: PublicForumSearchDto, userId?: number) {
     return this.searchInternal(searchInput, { publicOnly: true, userId })
   }
 
-  /**
-   * 生成关键词摘要。
-   * 优先截取命中片段附近内容，未命中时退回前缀截断，避免返回整段正文。
-   */
+  // 生成关键词摘要。 优先截取命中片段附近内容，未命中时退回前缀截断，避免返回整段正文。
   private buildSnippet(content: string, keyword: string, size = 120) {
     const normalizedContent = content.trim()
     if (!normalizedContent) {
@@ -107,10 +98,7 @@ export class ForumSearchService {
     return normalizedContent.slice(start, end)
   }
 
-  /**
-   * 根据排序模式生成主题排序规则。
-   * hot 模式按互动指标聚合回退到发布时间，其它模式统一按最新时间倒序。
-   */
+  // 根据排序模式生成主题排序规则。 hot 模式按互动指标聚合回退到发布时间，其它模式统一按最新时间倒序。
   private getTopicOrderBy(sort?: ForumSearchSortTypeEnum) {
     if (sort === ForumSearchSortTypeEnum.HOT) {
       return [
@@ -127,10 +115,7 @@ export class ForumSearchService {
     >
   }
 
-  /**
-   * 根据排序模式生成评论排序规则。
-   * 评论热度优先看点赞数，再以发布时间兜底。
-   */
+  // 根据排序模式生成评论排序规则。 评论热度优先看点赞数，再以发布时间兜底。
   private getCommentFallbackOrderBy(
     sort?: ForumSearchSortTypeEnum,
   ): Array<Record<string, 'asc' | 'desc'>> {
@@ -207,10 +192,7 @@ export class ForumSearchService {
     }).orderBy as Record<string, 'asc' | 'desc'> | undefined
   }
 
-  /**
-   * 合并搜索结果时的统一排序比较器。
-   * hot 模式使用主题互动热度，非 hot 模式则统一按时间和主键倒序稳定排序。
-   */
+  // 合并搜索结果时的统一排序比较器。 hot 模式使用主题互动热度，非 hot 模式则统一按时间和主键倒序稳定排序。
   private compareResults(
     left: ForumSearchResultDto,
     right: ForumSearchResultDto,
@@ -333,10 +315,7 @@ export class ForumSearchService {
       : FORUM_SEARCH_TOPIC_RANK
   }
 
-  /**
-   * 解析当前查询可访问的板块范围。
-   * publicOnly 模式会调用权限服务校验显式 sectionId，或回退为当前用户可访问板块集合。
-   */
+  // 解析当前查询可访问的板块范围。 publicOnly 模式会调用权限服务校验显式 sectionId，或回退为当前用户可访问板块集合。
   private async resolveSectionScope(
     sectionId: number | undefined,
     options: {
@@ -374,10 +353,7 @@ export class ForumSearchService {
       : undefined
   }
 
-  /**
-   * 构建评论搜索的话题过滤条件。
-   * - 同时接受“主题命中 hashtag”与“评论自身命中 hashtag”两种来源。
-   */
+  // 构建评论搜索的话题过滤条件。 - 同时接受“主题命中 hashtag”与“评论自身命中 hashtag”两种来源。
   private buildCommentHashtagFilterCondition(params: {
     topicIdsByHashtag?: number[]
     commentIdsByHashtag?: number[]
@@ -402,10 +378,7 @@ export class ForumSearchService {
     return or(...conditionTuple)
   }
 
-  /**
-   * 解析话题对应的来源 ID 集合。
-   * publicOnly 模式只保留当前公开可见引用。
-   */
+  // 解析话题对应的来源 ID 集合。 publicOnly 模式只保留当前公开可见引用。
   private async getSourceIdsByHashtag(
     hashtagId: number,
     sourceType: ForumHashtagReferenceSourceTypeEnum,
@@ -444,10 +417,7 @@ export class ForumSearchService {
     return [...new Set(rows.map((item) => item.sourceId))]
   }
 
-  /**
-   * 将主题查询结果映射为统一搜索结果 DTO。
-   * 这里会补齐板块名、用户昵称和正文摘要，供分页接口直接返回。
-   */
+  // 将主题查询结果映射为统一搜索结果 DTO。 这里会补齐板块名、用户昵称和正文摘要，供分页接口直接返回。
   private async mapTopicResults(
     topics: ForumTopicSelect[],
     keyword: string,
@@ -504,10 +474,7 @@ export class ForumSearchService {
     })
   }
 
-  /**
-   * 将评论查询结果映射为统一搜索结果 DTO。
-   * 评论结果保留 commentId 和评论摘要，主题维度指标仍复用所属主题的聚合字段。
-   */
+  // 将评论查询结果映射为统一搜索结果 DTO。 评论结果保留 commentId 和评论摘要，主题维度指标仍复用所属主题的聚合字段。
   private async mapCommentResults(
     comments: Array<{
       commentId: number
@@ -579,10 +546,7 @@ export class ForumSearchService {
     })
   }
 
-  /**
-   * 搜索分发主入口。
-   * all 模式会分别拉取主题与评论窗口后合并排序，保持分页层看到的是统一结果流。
-   */
+  // 搜索分发主入口。 all 模式会分别拉取主题与评论窗口后合并排序，保持分页层看到的是统一结果流。
   private async searchInternal(
     searchInput: ForumSearchDto,
     options: {
@@ -648,10 +612,7 @@ export class ForumSearchService {
     }
   }
 
-  /**
-   * 搜索主题。
-   * public 模式下会叠加审核与隐藏过滤，并支持按话题引用缩小结果集。
-   */
+  // 搜索主题。 public 模式下会叠加审核与隐藏过滤，并支持按话题引用缩小结果集。
   private async searchTopics(
     dto: ForumSearchDto,
     options: {
@@ -723,11 +684,7 @@ export class ForumSearchService {
     }
   }
 
-  /**
-   * 搜索评论。
-   * 评论搜索通过 join 主题表继承板块和审核过滤。
-   * 评论搜索同时接受主题级引用与评论级引用，保证话题筛选口径覆盖完整。
-   */
+  // 搜索评论。 评论搜索通过 join 主题表继承板块和审核过滤。 评论搜索同时接受主题级引用与评论级引用，保证话题筛选口径覆盖完整。
   private async searchComments(
     dto: ForumSearchDto,
     options: {

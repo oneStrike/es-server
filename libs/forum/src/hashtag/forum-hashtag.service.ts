@@ -184,10 +184,7 @@ export class ForumHashtagService {
     return new Map(sections.map((section) => [section.id, section] as const))
   }
 
-  /**
-   * 管理端创建话题资源。
-   * 资源创建后名称不可变，因此这里只允许创建时写 displayName。
-   */
+  // 管理端创建话题资源。 资源创建后名称不可变，因此这里只允许创建时写 displayName。
   async createHashtag(input: CreateForumHashtagInput, adminUserId: number) {
     const displayName = input.displayName.normalize('NFKC').trim()
     const slug = this.normalizeSlug(displayName)

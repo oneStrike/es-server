@@ -17,9 +17,7 @@ export class FollowGrowthService {
     private readonly growthEventBridgeService: GrowthEventBridgeService,
   ) {}
 
-  /**
-   * 关注成功后发放成长奖励
-   */
+  // 关注成功后发放成长奖励
   async rewardFollowCreated(
     targetType: FollowTargetType,
     targetId: number,

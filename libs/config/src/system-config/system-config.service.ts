@@ -57,34 +57,27 @@ export class SystemConfigService implements OnModuleInit {
     private readonly drizzle: DrizzleService,
   ) {}
 
-  /** 模块初始化时加载配置到缓存 */
+  // 模块初始化时加载配置到缓存
   async onModuleInit() {
     await this.initCache()
   }
 
-  /** 数据库连接实例 */
+  // 数据库连接实例
   private get db() {
     return this.drizzle.db
   }
 
-  /** 系统配置表 */
+  // 系统配置表
   private get systemConfig() {
     return this.drizzle.schema.systemConfig
   }
 
-  /**
-   * 获取系统配置（内部使用，解密为明文）
-   * @returns 包含明文敏感信息的配置对象
-   */
+  // 获取系统配置（内部使用，解密为明文）
   async findActiveConfig() {
     return this.configReader.get()
   }
 
-  /**
-   * 获取脱敏后的系统配置（供前端展示）
-   * 敏感字段会被替换为掩码（如 ****）
-   * @returns 脱敏后的配置对象
-   */
+  // 获取脱敏后的系统配置（供前端展示） 敏感字段会被替换为掩码（如 ****）
   async findMaskedConfig() {
     const latestConfig = await this.findLatestConfig()
     if (!latestConfig) {
@@ -98,17 +91,7 @@ export class SystemConfigService implements OnModuleInit {
     )
   }
 
-  /**
-   * 更新系统配置（自动处理加密和掩码忽略）
-   *
-   * 处理逻辑：
-   * 1. 字段过滤：只更新 DEFAULT_CONFIG 中定义的字段
-   * 2. 敏感字段加密：前端传输的明文或 RSA 加密数据会被 AES 加密后存储
-   * 3. 掩码忽略：前端传回的掩码值（****）会被忽略，保留原值
-   * 4. 缓存刷新：更新后自动刷新缓存并通知 ConfigReader
-   *
-   * 管理端只允许更新 DTO 明确定义的顶层配置节点；未知字段会在进入该方法前被 whitelist 过滤。
-   */
+  // 更新系统配置（自动处理加密和掩码忽略） 处理逻辑： 1. 字段过滤：只更新 DEFAULT_CONFIG 中定义的字段 2. 敏感字段加密：前端传输的明文或 RSA 加密数据会被 AES 加密后存储 3. 掩码忽略：前端传回的掩码值（****）会被忽略，保留原值 4. 缓存刷新：更新后自动刷新缓存并通知 ConfigReader 管理端只允许更新 DTO 明确定义的顶层配置节点；未知字段会在进入该方法前被 whitelist 过滤。
   async updateConfig(dto: UpdateSystemConfigDto, userId: number) {
     const result = await this.drizzle.withTransaction(async (tx) => {
       await tx.execute(
@@ -214,10 +197,7 @@ export class SystemConfigService implements OnModuleInit {
     return result
   }
 
-  /**
-   * 处理敏感字段（掩码回填 + 加密）
-   * 前端回传掩码值时保留原密文，回传明文或 RSA 密文时统一转成 AES 密文存储。
-   */
+  // 处理敏感字段（掩码回填 + 加密） 前端回传掩码值时保留原密文，回传明文或 RSA 密文时统一转成 AES 密文存储。
   private async processSensitiveFields(
     input: Record<string, unknown>,
     current: Record<string, unknown> | null,
@@ -261,10 +241,7 @@ export class SystemConfigService implements OnModuleInit {
     return input
   }
 
-  /**
-   * 刷新缓存并通知 ConfigReader 重新装载。
-   * 缓存内始终保存合并默认值且已解密的配置快照，供业务模块同步读取。
-   */
+  // 刷新缓存并通知 ConfigReader 重新装载。 缓存内始终保存合并默认值且已解密的配置快照，供业务模块同步读取。
   private async refreshCache(config: Record<string, unknown>) {
     const mergedConfig = await this.buildReadableSnapshot(config)
     await this.cacheManager.set(
@@ -275,10 +252,7 @@ export class SystemConfigService implements OnModuleInit {
     await this.configReader.refresh()
   }
 
-  /**
-   * 模块初始化时预热缓存。
-   * 若数据库中还没有配置记录，会先写入一条默认快照，保证读取侧永远能拿到完整配置。
-   */
+  // 模块初始化时预热缓存。 若数据库中还没有配置记录，会先写入一条默认快照，保证读取侧永远能拿到完整配置。
   private async initCache() {
     const config = await this.findLatestConfig()
     if (config) {
@@ -292,9 +266,7 @@ export class SystemConfigService implements OnModuleInit {
     }
   }
 
-  /**
-   * 读取最新一条系统配置快照。
-   */
+  // 读取最新一条系统配置快照。
   private async findLatestConfig(db: Db = this.db) {
     const configs = await db
       .select()
@@ -305,10 +277,7 @@ export class SystemConfigService implements OnModuleInit {
     return configs[0] ?? null
   }
 
-  /**
-   * 获取配置历史分页。
-   * 历史页保留原始快照，供后台追溯每次配置变更的落库结果。
-   */
+  // 获取配置历史分页。 历史页保留原始快照，供后台追溯每次配置变更的落库结果。
   async findConfigHistory(page = 1, pageSize = 10) {
     const pageQuery = this.drizzle.buildPage({ pageIndex: page, pageSize })
     const orderQuery = this.drizzle.buildOrderBy(
@@ -334,10 +303,7 @@ export class SystemConfigService implements OnModuleInit {
     }
   }
 
-  /**
-   * 解密快照中的敏感字段。
-   * 解密失败时保留原值，避免单个字段损坏导致整份配置不可读。
-   */
+  // 解密快照中的敏感字段。 解密失败时保留原值，避免单个字段损坏导致整份配置不可读。
   private async decryptSensitiveFields(config: Record<string, unknown>) {
     for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
       const configItem = config[key] as Record<string, unknown> | undefined
@@ -360,10 +326,7 @@ export class SystemConfigService implements OnModuleInit {
     }
   }
 
-  /**
-   * 把持久化快照转换成可读配置快照。
-   * 该快照保留 id / createdAt / updatedAt 等元信息，供管理端作为版本基线使用。
-   */
+  // 把持久化快照转换成可读配置快照。 该快照保留 id / createdAt / updatedAt 等元信息，供管理端作为版本基线使用。
   private async buildReadableSnapshot(config: Record<string, unknown>) {
     const mergedConfig = this.mergeWithDefaults(config)
     mergedConfig.updatedById = config.updatedById ?? null
@@ -491,9 +454,7 @@ export class SystemConfigService implements OnModuleInit {
     } as SystemConfigDetailDto
   }
 
-  /**
-   * 将持久化快照与默认配置合并，补齐缺失节点。
-   */
+  // 将持久化快照与默认配置合并，补齐缺失节点。
   private mergeWithDefaults(config: Record<string, unknown>) {
     return this.deepMerge(
       this.cloneConfig(DEFAULT_CONFIG) as Record<string, unknown>,
@@ -501,9 +462,7 @@ export class SystemConfigService implements OnModuleInit {
     )
   }
 
-  /**
-   * 组装落库快照，只持久化允许存储的顶层配置块和更新人。
-   */
+  // 组装落库快照，只持久化允许存储的顶层配置块和更新人。
   private buildPersistedSnapshot(
     config: Record<string, unknown>,
     userId?: number,
@@ -522,9 +481,7 @@ export class SystemConfigService implements OnModuleInit {
     }
   }
 
-  /**
-   * 递归合并对象，`undefined` 不覆盖目标值。
-   */
+  // 递归合并对象，`undefined` 不覆盖目标值。
   private deepMerge(
     target: Record<string, unknown>,
     source: Record<string, unknown>,
@@ -584,9 +541,7 @@ export class SystemConfigService implements OnModuleInit {
     return value
   }
 
-  /**
-   * 按路径读取对象值，路径格式为 `a.b.c`。
-   */
+  // 按路径读取对象值，路径格式为 `a.b.c`。
   private getValueByPath(target: Record<string, unknown> | null, path: string) {
     if (!target) {
       return undefined
@@ -614,9 +569,7 @@ export class SystemConfigService implements OnModuleInit {
     return current
   }
 
-  /**
-   * 按路径写入对象值，缺失的中间节点会自动补成空对象。
-   */
+  // 按路径写入对象值，缺失的中间节点会自动补成空对象。
   private setValueByPath(
     target: Record<string, unknown>,
     path: string,
@@ -640,9 +593,7 @@ export class SystemConfigService implements OnModuleInit {
     current[lastSegment] = value
   }
 
-  /**
-   * 判断对象上是否存在指定路径。
-   */
+  // 判断对象上是否存在指定路径。
   private hasPath(target: Record<string, unknown>, path: string) {
     const segments = path.split('.')
     let current: Record<string, unknown> | undefined = target
@@ -657,9 +608,7 @@ export class SystemConfigService implements OnModuleInit {
     return true
   }
 
-  /**
-   * 生成带随机偏移的 TTL（防止缓存雪崩）
-   */
+  // 生成带随机偏移的 TTL（防止缓存雪崩）
   private getRandomTTL(baseTTL: number) {
     const offset = Math.floor(baseTTL * 0.1)
     return baseTTL + Math.floor(Math.random() * (2 * offset + 1)) - offset

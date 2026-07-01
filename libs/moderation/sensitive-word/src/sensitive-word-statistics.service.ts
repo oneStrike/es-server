@@ -46,17 +46,17 @@ import {
 export class SensitiveWordStatisticsService {
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 数据库连接实例 */
+  // 数据库连接实例
   private get db() {
     return this.drizzle.db
   }
 
-  /** 敏感词表 */
+  // 敏感词表
   private get sensitiveWord() {
     return this.drizzle.schema.sensitiveWord
   }
 
-  /** 敏感词命中明细表 */
+  // 敏感词命中明细表
   private get sensitiveWordHitLog() {
     return this.drizzle.schema.sensitiveWordHitLog
   }
@@ -73,11 +73,7 @@ export class SensitiveWordStatisticsService {
     return this.drizzle.schema.appUser
   }
 
-  /**
-   * 获取完整的统计数据
-   * 包含所有维度的统计信息
-   * @returns 完整的统计数据
-   */
+  // 获取完整的统计数据 包含所有维度的统计信息
   async getStatistics() {
     const [
       totalWords,
@@ -120,10 +116,7 @@ export class SensitiveWordStatisticsService {
     }
   }
 
-  /**
-   * 获取敏感词总数
-   * @returns 敏感词总数
-   */
+  // 获取敏感词总数
   private async getTotalWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
@@ -131,10 +124,7 @@ export class SensitiveWordStatisticsService {
     return Number(result?.count ?? 0)
   }
 
-  /**
-   * 获取启用的敏感词数量
-   * @returns 启用的敏感词数量
-   */
+  // 获取启用的敏感词数量
   private async getEnabledWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
@@ -143,10 +133,7 @@ export class SensitiveWordStatisticsService {
     return Number(result?.count ?? 0)
   }
 
-  /**
-   * 获取禁用的敏感词数量
-   * @returns 禁用的敏感词数量
-   */
+  // 获取禁用的敏感词数量
   private async getDisabledWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
@@ -155,11 +142,7 @@ export class SensitiveWordStatisticsService {
     return Number(result?.count ?? 0)
   }
 
-  /**
-   * 获取总命中次数
-   * 统计所有敏感词的命中次数总和
-   * @returns 总命中次数
-   */
+  // 获取总命中次数 统计所有敏感词的命中次数总和
   private async getTotalHits() {
     const [result] = await this.db
       .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
@@ -167,12 +150,7 @@ export class SensitiveWordStatisticsService {
     return Number(result?.sum ?? 0)
   }
 
-  /**
-   * 获取指定时间范围内的命中次数
-   * 统计指定时间范围内所有敏感词的命中次数总和
-   * @param startDate - 开始时间
-   * @returns 命中次数
-   */
+  // 获取指定时间范围内的命中次数 统计指定时间范围内所有敏感词的命中次数总和
   private async getHitsInDateRange(startDate: Date) {
     const [result] = await this.db
       .select({ sum: sql<number>`count(*)` })
@@ -181,41 +159,25 @@ export class SensitiveWordStatisticsService {
     return Number(result?.sum ?? 0)
   }
 
-  /**
-   * 获取今日命中次数
-   * 统计今日所有敏感词的命中次数总和
-   * @returns 今日命中次数
-   */
+  // 获取今日命中次数 统计今日所有敏感词的命中次数总和
   private async getTodayHits() {
     const today = startOfTodayInAppTimeZone()
     return this.getHitsInDateRange(today)
   }
 
-  /**
-   * 获取最近一周命中次数
-   * 统计最近一周所有敏感词的命中次数总和
-   * @returns 最近一周命中次数
-   */
+  // 获取最近一周命中次数 统计最近一周所有敏感词的命中次数总和
   private async getLastWeekHits() {
     const lastWeek = subtractDaysInAppTimeZone(7)
     return this.getHitsInDateRange(lastWeek)
   }
 
-  /**
-   * 获取最近一月命中次数
-   * 统计最近一月所有敏感词的命中次数总和
-   * @returns 最近一月命中次数
-   */
+  // 获取最近一月命中次数 统计最近一月所有敏感词的命中次数总和
   private async getLastMonthHits() {
     const lastMonth = subtractMonthsInAppTimeZone(1)
     return this.getHitsInDateRange(lastMonth)
   }
 
-  /**
-   * 获取级别统计
-   * 按敏感词级别分组统计，包含每个级别的敏感词数量和命中次数
-   * @returns 级别统计列表
-   */
+  // 获取级别统计 按敏感词级别分组统计，包含每个级别的敏感词数量和命中次数
   async getLevelStatistics() {
     const results = await this.db
       .select({
@@ -234,11 +196,7 @@ export class SensitiveWordStatisticsService {
     }))
   }
 
-  /**
-   * 获取类型统计
-   * 按敏感词类型分组统计，包含每个类型的敏感词数量和命中次数
-   * @returns 类型统计列表
-   */
+  // 获取类型统计 按敏感词类型分组统计，包含每个类型的敏感词数量和命中次数
   async getTypeStatistics() {
     const results = await this.db
       .select({
@@ -257,11 +215,7 @@ export class SensitiveWordStatisticsService {
     }))
   }
 
-  /**
-   * 获取命中次数最多的敏感词
-   * 返回命中次数最高的20个敏感词
-   * @returns 热门敏感词列表
-   */
+  // 获取命中次数最多的敏感词 返回命中次数最高的20个敏感词
   async getTopHitWords() {
     const results = await this.db
       .select({
@@ -285,11 +239,7 @@ export class SensitiveWordStatisticsService {
     }))
   }
 
-  /**
-   * 获取最近命中的敏感词
-   * 返回最近命中的20个敏感词，按最后命中时间倒序排列
-   * @returns 最近命中的敏感词列表
-   */
+  // 获取最近命中的敏感词 返回最近命中的20个敏感词，按最后命中时间倒序排列
   async getRecentHitWords() {
     const results = await this.db
       .select({
@@ -616,10 +566,7 @@ export class SensitiveWordStatisticsService {
     return normalized ? normalized.slice(0, 200) : null
   }
 
-  /**
-   * 在业务写事务中记录敏感词命中，并同步词表累计快照。
-   * 管理端检测/替换接口不调用该方法，避免把调试流量混入业务统计。
-   */
+  // 在业务写事务中记录敏感词命中，并同步词表累计快照。 管理端检测/替换接口不调用该方法，避免把调试流量混入业务统计。
   async recordEntityHitsInTx(
     tx: Db,
     input: RecordSensitiveWordEntityHitsInput,

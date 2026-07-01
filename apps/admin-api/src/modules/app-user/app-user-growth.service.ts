@@ -40,23 +40,19 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     super(drizzle, userCoreService)
   }
 
-  /** 获取 APP 用户积分统计。 */
+  // 获取 APP 用户积分统计。
   async getAppUserPointStats(userId: number) {
     await this.userCoreService.ensureUserExists(userId)
     return this.userPointService.getUserPointStats(userId)
   }
 
-  /** 获取 APP 用户积分记录分页。 */
+  // 获取 APP 用户积分记录分页。
   async getAppUserPointRecords(query: QueryUserPointRecordDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.userPointService.getPointRecordPage(query)
   }
 
-  /**
-   * 手动增加 APP 用户积分。
-   *
-   * 入口层先拦截软删除用户，避免共享成长服务继续对无效账号写入资产。
-   */
+  // 手动增加 APP 用户积分，入口层先拦截软删除用户。
   async addAppUserPoints(
     adminUserId: number,
     dto: AdminAppUserGrowthRuleActionDto,
@@ -76,11 +72,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     })
   }
 
-  /**
-   * 手动扣减 APP 用户积分。
-   *
-   * 入口层先拦截软删除用户，避免共享成长服务继续对无效账号写入资产。
-   */
+  // 手动扣减 APP 用户积分，入口层先拦截软删除用户。
   async consumeAppUserPoints(
     adminUserId: number,
     dto: ConsumeAdminAppUserPointsDto,
@@ -100,11 +92,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     })
   }
 
-  /**
-   * 获取 APP 用户经验统计。
-   *
-   * 统一汇总当日新增、当前等级和下一等级差值，供详情页和独立统计接口复用。
-   */
+  // 获取 APP 用户经验统计，含当日新增、当前等级和下一等级差值。
   async getAppUserExperienceStats(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
     const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
@@ -173,23 +161,19 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     }
   }
 
-  /** 获取 APP 用户经验记录分页。 */
+  // 获取 APP 用户经验记录分页。
   async getAppUserExperienceRecords(query: QueryScopedUserExperienceRecordDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.userExperienceService.getExperienceRecordPage(query)
   }
 
-  /** 获取 APP 用户混合成长流水分页。 */
+  // 获取 APP 用户混合成长流水分页。
   async getAppUserGrowthLedgerRecords(query: QueryAdminAppUserGrowthLedgerDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.growthLedgerService.getGrowthLedgerPage(query)
   }
 
-  /**
-   * 手动增加 APP 用户经验。
-   *
-   * 入口层先拦截软删除用户，避免共享成长服务继续对无效账号写入资产。
-   */
+  // 手动增加 APP 用户经验，入口层先拦截软删除用户。
   async addAppUserExperience(
     adminUserId: number,
     dto: AdminAppUserGrowthRuleActionDto,
@@ -209,11 +193,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     })
   }
 
-  /**
-   * 获取 APP 用户徽章分页。
-   *
-   * 直接在分配表分页查询中关联徽章过滤，避免先拉取全部候选徽章 ID。
-   */
+  // 获取 APP 用户徽章分页，在分配表分页查询中关联徽章过滤。
   async getAppUserBadges(query: QueryAdminAppUserBadgeDto) {
     await this.userCoreService.ensureUserExists(query.userId)
 
@@ -306,11 +286,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     }
   }
 
-  /**
-   * 为 APP 用户分配徽章。
-   *
-   * 入口层先拦截软删除用户，避免恢复账号时暴露隐藏写入。
-   */
+  // 为 APP 用户分配徽章，入口层先拦截软删除用户。
   async assignAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)
@@ -319,11 +295,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     return true
   }
 
-  /**
-   * 撤销 APP 用户徽章。
-   *
-   * 入口层先拦截软删除用户，避免恢复账号时暴露隐藏写入。
-   */
+  // 撤销 APP 用户徽章，入口层先拦截软删除用户。
   async revokeAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)

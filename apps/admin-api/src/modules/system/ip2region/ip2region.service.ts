@@ -41,10 +41,7 @@ export class Ip2regionService {
     return this.loggerService.getLoggerWithContext('ip2region-admin')
   }
 
-  /**
-   * 读取当前 ip2region 运行状态。
-   * 在 GeoService 基础状态上补充当前是否正在热切换。
-   */
+  // 获取当前 ip2region 运行状态，包含热切换标志。
   async getStatus() {
     return {
       ...(await this.geoService.getRuntimeStatus()),
@@ -52,10 +49,7 @@ export class Ip2regionService {
     }
   }
 
-  /**
-   * 上传并激活新的 ip2region 库。
-   * 仅允许一个热切换流程并发执行，避免当前进程查询器状态被覆盖。
-   */
+  // 上传并激活新的 ip2region 库，仅允许一个热切换流程并发执行。
   async uploadAndActivate(req: FastifyRequest, operatorUserId?: number) {
     if (this.reloading) {
       throw new BusinessException(
@@ -146,18 +140,12 @@ export class Ip2regionService {
     }
   }
 
-  /**
-   * 获取 ip2region 专用存储根目录。
-   * 复用 GeoService 的目录解析，避免上传链路与运行时恢复链路出现双份默认值。
-   */
+  // 获取 ip2region 专用存储根目录，复用 GeoService 目录解析。
   private resolveStorageRoot() {
     return resolveGeoManagedStorageDir()
   }
 
-  /**
-   * 初始化 ip2region 存储目录。
-   * 根目录按 tmp、versions、active 三段收口。
-   */
+  // 初始化 ip2region 存储目录：tmp、versions、active 三段。
   private async ensureStoragePaths() {
     const storageRoot = this.resolveStorageRoot()
     const tmpDir = join(storageRoot, 'tmp')
@@ -178,10 +166,7 @@ export class Ip2regionService {
     }
   }
 
-  /**
-   * 校验上传文件名。
-   * 当前仅接受标准 `ip2region_v4.xdb`，显式拒绝自定义命名和 v6 文件。
-   */
+  // 校验上传文件名，仅接受标准 ip2region_v4.xdb。
   private assertUploadFileName(fileName: string) {
     if (!fileName) {
       throw new BadRequestException('上传文件不能为空')
@@ -192,10 +177,7 @@ export class Ip2regionService {
     }
   }
 
-  /**
-   * 生成版本文件名。
-   * 使用时间戳前缀保留历史版本，并避免 active / versions 文件名冲突。
-   */
+  // 生成带时间戳前缀的版本文件名，避免 active/versions 文件名冲突。
   private buildVersionedFileName(date: Date, originalFileName: string) {
     const timestamp = date
       .toISOString()
@@ -206,10 +188,7 @@ export class Ip2regionService {
     return `${timestamp}-${originalFileName}`
   }
 
-  /**
-   * 写入 active 目录元信息。
-   * 采用临时文件覆盖，避免直接写 metadata.json 时留下半成品。
-   */
+  // 写入 active 目录元信息，采用临时文件覆盖避免半成品。
   private async writeActiveMetadata(
     activeDir: string,
     metadata: ActiveMetadata,
@@ -225,10 +204,7 @@ export class Ip2regionService {
     await fs.rename(tempMetadataPath, metadataPath)
   }
 
-  /**
-   * 清理旧的 active 库文件。
-   * 当前只保留最近一次生效的 `.xdb` 与 metadata.json`，历史版本统一放在 versions 目录。
-   */
+  // 清理旧的 active 库文件，只保留最近一次生效的 .xdb 与 metadata.json。
   private async cleanupOldActiveFiles(
     activeDir: string,
     currentFileName: string,

@@ -24,20 +24,17 @@ import {
 export class AgreementService {
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 数据库连接实例 */
+  // 数据库连接实例
   private get db() {
     return this.drizzle.db
   }
 
-  /** 协议表 */
+  // 协议表
   private get agreement() {
     return this.drizzle.schema.appAgreement
   }
 
-  /**
-   * 读取协议最小生命周期状态。
-   * 统一给更新、下线等入口复用，避免各处分散判断“是否已发布”。
-   */
+  // 读取协议最小生命周期状态。 统一给更新、下线等入口复用，避免各处分散判断“是否已发布”。
   private async findAgreementLifecycle(id: number) {
     const agreement = await this.db.query.appAgreement.findFirst({
       where: { id },
@@ -93,10 +90,7 @@ export class AgreementService {
       })
   }
 
-  /**
-   * 创建协议草稿。
-   * 标题和版本命中唯一约束时，统一交给 `withErrorHandling` 转换为业务异常。
-   */
+  // 创建协议草稿。 标题和版本命中唯一约束时，统一交给 `withErrorHandling` 转换为业务异常。
   async create(dto: CreateAgreementDto) {
     await this.drizzle.withErrorHandling(
       () =>
@@ -112,10 +106,7 @@ export class AgreementService {
     return true
   }
 
-  /**
-   * 更新协议主体字段，不在此入口处理发布状态切换。
-   * 发布动作统一走 `updatePublishStatus`，避免同一语义分散在两个入口里。
-   */
+  // 更新协议主体字段，不在此入口处理发布状态切换。 发布动作统一走 `updatePublishStatus`，避免同一语义分散在两个入口里。
   async update(dto: UpdateAgreementDto) {
     const { id, ...updateData } = dto
     const agreement = await this.findAgreementLifecycle(id)
@@ -140,10 +131,7 @@ export class AgreementService {
     return true
   }
 
-  /**
-   * 切换协议发布状态。
-   * 发布时补写 `publishedAt`，下线统一通过 `update-status(false)` 完成。
-   */
+  // 切换协议发布状态。 发布时补写 `publishedAt`，下线统一通过 `update-status(false)` 完成。
   async updatePublishStatus(dto: UpdatePublishedStatusDto) {
     const agreement = await this.findAgreementLifecycle(dto.id)
     if (!dto.isPublished && !agreement.isPublished) {
@@ -168,10 +156,7 @@ export class AgreementService {
     return true
   }
 
-  /**
-   * 按主键查询协议详情。
-   * `publishedOnly=true` 时只允许返回已发布版本，用于 app/public 侧公开读取。
-   */
+  // 按主键查询协议详情。 `publishedOnly=true` 时只允许返回已发布版本，用于 app/public 侧公开读取。
   async findOne(
     dto: IdDto,
     options?: {
@@ -194,9 +179,7 @@ export class AgreementService {
     return this.toAgreementDetailDto(agreement)
   }
 
-  /**
-   * 组合标题与发布状态筛选条件，并在分页结果中省略正文内容。
-   */
+  // 组合标题与发布状态筛选条件，并在分页结果中省略正文内容。
   async findPage(query: QueryAgreementDto) {
     const conditions: SQL[] = []
 
@@ -244,10 +227,7 @@ export class AgreementService {
     )
   }
 
-  /**
-   * 查询公开可见的最新协议列表。
-   * 该接口按标题收敛为最新发布版本，并省略正文，供登录注册等轻量场景使用。
-   */
+  // 查询公开可见的最新协议列表。 该接口按标题收敛为最新发布版本，并省略正文，供登录注册等轻量场景使用。
   async getAllLatest(dto: QueryPublishedAgreementDto) {
     const agreements = await this.db.query.appAgreement.findMany({
       where: {

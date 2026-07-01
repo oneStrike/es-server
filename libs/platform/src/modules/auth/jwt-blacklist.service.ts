@@ -13,10 +13,7 @@ export class JwtBlacklistService {
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  /**
-   * 将 jti 写入黑名单。
-   * 过期时间沿用 token 剩余 TTL，确保缓存条目与 token 生命周期一致回收。
-   */
+  // 将 jti 写入黑名单。 过期时间沿用 token 剩余 TTL，确保缓存条目与 token 生命周期一致回收。
   async addBlacklist(jti: string, expiresInMs: number): Promise<void> {
     if (!Number.isFinite(expiresInMs) || expiresInMs <= 0) {
       return
@@ -28,19 +25,13 @@ export class JwtBlacklistService {
     )
   }
 
-  /**
-   * 判断 jti 是否已在黑名单中。
-   * 这里不回落数据库，只以缓存为事实源，保持认证链路查询开销最小。
-   */
+  // 判断 jti 是否已在黑名单中。 这里不回落数据库，只以缓存为事实源，保持认证链路查询开销最小。
   async isInBlacklist(jti: string): Promise<boolean> {
     const result = await this.cacheManager.get(this.BLACKLIST_PREFIX + jti)
     return result === true
   }
 
-  /**
-   * 从黑名单中移除 jti。
-   * 仅供测试或人工补偿场景使用，正常业务链路不应主动解封已撤销 token。
-   */
+  // 从黑名单中移除 jti。 仅供测试或人工补偿场景使用，正常业务链路不应主动解封已撤销 token。
   async removeFromBlacklist(jti: string): Promise<void> {
     await this.cacheManager.del(this.BLACKLIST_PREFIX + jti)
   }

@@ -26,16 +26,19 @@ export class GrowthService {
     private readonly growthRewardSettlementRetryService: GrowthRewardSettlementRetryService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
+  // 分页查询成长奖励结算记录。
   async getGrowthRewardSettlementPage(
     query: QueryGrowthRewardSettlementPageDto,
   ) {
     return this.growthRewardSettlementStore.getSettlementPage(query)
   }
 
+  // 重试单条成长奖励结算。
   async retryGrowthRewardSettlement(id: number, adminUserId: number) {
     return this.growthRewardSettlementRetryService.retrySettlement(
       id,
@@ -43,6 +46,7 @@ export class GrowthService {
     )
   }
 
+  // 批量重试待处理的成长奖励结算。
   async retryPendingGrowthRewardSettlementsBatch(
     limit: number | undefined,
     adminUserId: number,
@@ -53,23 +57,22 @@ export class GrowthService {
     )
   }
 
+  // 复用成长奖励规则表。
   private get growthRewardRule() {
     return this.drizzle.schema.growthRewardRule
   }
 
+  // 复用任务定义表。
   private get taskTable() {
     return this.drizzle.schema.taskDefinition
   }
 
+  // 复用任务步骤表。
   private get taskStepTable() {
     return this.drizzle.schema.taskStep
   }
 
-  /**
-   * 按事件聚合基础奖励与任务 bonus 关联关系。
-   *
-   * 该视图只负责“读模型解释力”，不改动积分/经验底层表结构。
-   */
+  // 按事件聚合基础奖励与任务 bonus 关联关系，只负责读模型解释力。
   async getGrowthRuleEventPage(query: QueryGrowthRuleEventPageDto) {
     const definitions = this.eventDefinitionService
       .listGrowthEventCoverageDefinitions()
@@ -186,6 +189,7 @@ export class GrowthService {
     }
   }
 
+  // 获取可配置奖励事件选项列表。
   getConfigurableRewardEventOptions(): GrowthConfigurableRewardEventOptionDto[] {
     return this.eventDefinitionService
       .listRuleConfigurableEventDefinitions()
@@ -203,6 +207,7 @@ export class GrowthService {
       .sort((prev, next) => prev.ruleType - next.ruleType)
   }
 
+  // 查询指定规则类型对应的奖励规则。
   private async queryRewardRules(ruleTypes: number[]) {
     if (ruleTypes.length === 0) {
       return []
@@ -218,6 +223,7 @@ export class GrowthService {
       )
   }
 
+  // 查询指定事件类型关联的任务及其步骤。
   private async queryEventTasks(ruleTypes: number[]) {
     if (ruleTypes.length === 0) {
       return []
@@ -244,6 +250,7 @@ export class GrowthService {
       )
   }
 
+  // 将任务行按事件码聚合为绑定摘要 Map。
   private buildTaskBindingMap(
     taskRows: Array<{
       id: number

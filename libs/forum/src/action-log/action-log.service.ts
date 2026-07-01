@@ -74,28 +74,17 @@ export class ForumUserActionLogService {
     return data[0]
   }
 
-  /**
-   * 创建用户操作日志
-   * @param dto - 操作日志选项对象
-   * @returns 创建的操作日志记录
-   */
+  // 创建用户操作日志
   async createActionLog(dto: CreateForumActionLogDto) {
     return this.insertActionLog(this.db, dto)
   }
 
-  /**
-   * 在现有事务中写入一条用户操作日志。
-   * 供论坛交互链路在事务内复用，避免日志脱离主写入上下文。
-   */
+  // 在现有事务中写入一条用户操作日志。 供论坛交互链路在事务内复用，避免日志脱离主写入上下文。
   async createActionLogInTx(tx: Db, dto: CreateForumActionLogDto) {
     return this.insertActionLog(tx, dto)
   }
 
-  /**
-   * 根据用户ID查询操作日志（分页）
-   * @param dto - 查询选项对象
-   * @returns 操作日志分页结果，包含列表、总数、页码和每页数量
-   */
+  // 根据用户ID查询操作日志（分页）
   async getActionLogsByUserId(dto: QueryForumActionLogDto) {
     const { userId, actionType, targetType, targetId, ...pageDto } = dto
     const conditions: SQL[] = []

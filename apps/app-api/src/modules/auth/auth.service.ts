@@ -40,8 +40,8 @@ const APP_USER_ACCOUNT_UNIQUE_CONSTRAINT = 'app_user_account_key'
 const APP_USER_ACCOUNT_MAX_RETRIES = 5
 
 /**
- * 认证服务
- * 负责应用端用户的注册、登录、登出与令牌刷新
+ * 应用端认证服务。
+ * 负责用户注册、登录、登出与令牌刷新。
  */
 @Injectable()
 export class AuthService {
@@ -58,14 +58,17 @@ export class AuthService {
     private readonly userCoreService: UserCoreService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
+  // 复用应用用户表。
   get appUserTable() {
     return this.drizzle.schema.appUser
   }
 
+  // 校验用户是否允许建立会话，禁用或封禁态会抛出对应异常。
   private ensureSessionAllowed(user: {
     isEnabled: boolean
     status: number
@@ -79,9 +82,7 @@ export class AuthService {
     this.userCoreService.ensureAppUserNotBanned(user)
   }
 
-  /**
-   * 生成唯一账号
-   */
+  // 生成唯一的 6 位数字账号，最多重试指定次数。
   async generateUniqueAccount(tx: Db) {
     for (
       let attempt = 0;
@@ -106,9 +107,7 @@ export class AuthService {
     )
   }
 
-  /**
-   * 用户注册
-   */
+  // 用户注册：校验短信验证码后创建用户并初始化资料。
   async register(body: LoginDto, clientContext: SessionClientContext) {
     if (!body.phone) {
       throw new BadRequestException(
@@ -134,9 +133,7 @@ export class AuthService {
     return this.handleLoginSuccess(user, clientContext)
   }
 
-  /**
-   * 用户登录
-   */
+  // 用户登录：支持验证码与密码两种方式，验证码登录找不到用户时自动注册。
   async login(body: LoginDto, clientContext: SessionClientContext) {
     if (!body.phone && !body.account) {
       throw new BadRequestException(
@@ -244,9 +241,7 @@ export class AuthService {
     return this.handleLoginSuccess(user, clientContext)
   }
 
-  /**
-   * 更新最后登录信息
-   */
+  // 更新用户最后登录时间与属地快照。
   private async updateUserLoginInfo(
     userId: number,
     clientContext: SessionClientContext,
@@ -266,16 +261,12 @@ export class AuthService {
     )
   }
 
-  /**
-   * 用户退出登录
-   */
+  // 用户退出登录，撤销数据库令牌。
   async logout(dto: TokenDto) {
     return this.authSessionService.logout(dto, { revokeDbTokens: true })
   }
 
-  /**
-   * 刷新令牌
-   */
+  // 刷新令牌，校验用户状态后返回新令牌对。
   async refreshToken(
     dto: RefreshTokenDto,
     clientContext: SessionClientContext,
@@ -302,9 +293,7 @@ export class AuthService {
     return tokens
   }
 
-  /**
-   * 登录成功后的统一处理
-   */
+  // 登录成功后的统一处理：更新登录信息、签发令牌、返回脱敏用户对象。
   private async handleLoginSuccess(
     user: AppUserSelect,
     clientContext: SessionClientContext,
@@ -325,9 +314,7 @@ export class AuthService {
     }
   }
 
-  /**
-   * 脱敏返回用户信息
-   */
+  // 脱敏返回用户信息，只保留安全字段。
   private sanitizeUser(user: AppUserSelect, growth: UserGrowthSnapshot) {
     return {
       id: user.id,
@@ -348,6 +335,7 @@ export class AuthService {
     }
   }
 
+  // 在事务中创建注册用户，账号冲突时重试。
   private async createRegisteredUser(
     phone: string,
     hashedPassword: string,
@@ -403,6 +391,7 @@ export class AuthService {
     throw lastError
   }
 
+  // 判断异常是否为 app_user_account_key 唯一约束冲突。
   private isAccountUniqueViolation(error: unknown) {
     if (!this.drizzle.isUniqueViolation(error)) {
       return false
@@ -414,6 +403,7 @@ export class AuthService {
     )
   }
 
+  // 记录密码登录失败并抛出统一错误。
   private async recordPasswordLoginFailure(userId: number): Promise<never> {
     await this.loginGuardService.recordFail(
       AppAuthRedisKeys.LOGIN_FAIL_COUNT(userId),

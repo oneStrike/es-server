@@ -42,10 +42,7 @@ export class MentionService {
     return this.drizzle.schema.userComment
   }
 
-  /**
-   * 构建正文 token。
-   * 先校验 mentions 区间，再把 mention token 与 emoji token 按原始顺序拼回。
-   */
+  // 构建正文 token。 先校验 mentions 区间，再把 mention token 与 emoji token 按原始顺序拼回。
   async buildBodyTokens(input: BuildMentionBodyTokensInput) {
     const normalizedMentions = this.normalizeMentions(
       input.content,
@@ -96,10 +93,7 @@ export class MentionService {
     return tokens
   }
 
-  /**
-   * 在事务内全量替换来源正文的 mention 事实。
-   * 同一用户若已经通知过，则在本次替换中继续保留 notifiedAt，避免可见更新重复提醒。
-   */
+  // 在事务内全量替换来源正文的 mention 事实。 同一用户若已经通知过，则在本次替换中继续保留 notifiedAt，避免可见更新重复提醒。
   async replaceMentionsInTx(input: ReplaceMentionsInTxInput) {
     const normalizedMentions = this.normalizeMentions(
       input.content,
@@ -184,10 +178,7 @@ export class MentionService {
     }
   }
 
-  /**
-   * 补发评论 mention 通知。
-   * 仅消费当前仍未通知的 mention 事实，并在同一事务内标记 notifiedAt。
-   */
+  // 补发评论 mention 通知。 仅消费当前仍未通知的 mention 事实，并在同一事务内标记 notifiedAt。
   async dispatchCommentMentionsInTx(
     tx: ReplaceMentionsInTxInput['tx'],
     input: DispatchCommentMentionsInTxInput,
@@ -233,10 +224,7 @@ export class MentionService {
     )
   }
 
-  /**
-   * 补发主题 mention 通知。
-   * 可见创建、可见更新以及首次转可见都复用这一条链路。
-   */
+  // 补发主题 mention 通知。 可见创建、可见更新以及首次转可见都复用这一条链路。
   async dispatchTopicMentionsInTx(
     tx: ReplaceMentionsInTxInput['tx'],
     input: DispatchTopicMentionsInTxInput,
@@ -279,10 +267,7 @@ export class MentionService {
     )
   }
 
-  /**
-   * 删除来源关联的 mention 事实。
-   * 用于评论/主题删除时清理残留提及记录。
-   */
+  // 删除来源关联的 mention 事实。 用于评论/主题删除时清理残留提及记录。
   async deleteMentionsInTx(input: DeleteMentionsInTxInput) {
     if (input.sourceIds.length === 0) {
       return
@@ -300,10 +285,7 @@ export class MentionService {
       )
   }
 
-  /**
-   * 按论坛主题删除其所有评论 mention 事实。
-   * user_mention 没有 topic 维度，只能通过 user_comment 关联定位；Drizzle delete builder 不支持 DELETE USING，因此使用参数化原生 SQL。
-   */
+  // 按论坛主题删除其所有评论 mention 事实。 user_mention 没有 topic 维度，只能通过 user_comment 关联定位；Drizzle delete builder 不支持 DELETE USING，因此使用参数化原生 SQL。
   async deleteCommentMentionsByForumTopicInTx(
     tx: DeleteMentionsInTxInput['tx'],
     topicId: number,
@@ -318,11 +300,7 @@ export class MentionService {
     `)
   }
 
-  /**
-   * 规范化 mentions。
-   * - 位置必须位于正文内且不重叠
-   * - 正文切片必须精确等于 `@昵称`
-   */
+  // 规范化 mentions。 - 位置必须位于正文内且不重叠 - 正文切片必须精确等于 `@昵称`
   private normalizeMentions(
     content: string,
     mentions?: BuildMentionBodyTokensInput['mentions'],
@@ -373,10 +351,7 @@ export class MentionService {
     return normalizedMentions
   }
 
-  /**
-   * 过滤当前这次真正需要补发通知的接收人。
-   * 自提及和已被其他通知链路覆盖的接收人只回写 notifiedAt，不重复落通知。
-   */
+  // 过滤当前这次真正需要补发通知的接收人。 自提及和已被其他通知链路覆盖的接收人只回写 notifiedAt，不重复落通知。
   private resolveDispatchReceiverUserIds(
     receiverUserIds: number[],
     excludedReceiverUserIds: number[],
@@ -387,9 +362,7 @@ export class MentionService {
     )
   }
 
-  /**
-   * 查询当前来源上仍未通知的接收人。
-   */
+  // 查询当前来源上仍未通知的接收人。
   private async getPendingMentionReceiverUserIds(
     tx: ReplaceMentionsInTxInput['tx'],
     sourceType: MentionSourceTypeEnum,
@@ -411,9 +384,7 @@ export class MentionService {
     return [...new Set(rows.map((row) => row.mentionedUserId))]
   }
 
-  /**
-   * 在同一事务内回写 notifiedAt，避免重复补发。
-   */
+  // 在同一事务内回写 notifiedAt，避免重复补发。
   private async markMentionReceiversNotifiedInTx(
     tx: ReplaceMentionsInTxInput['tx'],
     sourceType: MentionSourceTypeEnum,
@@ -439,10 +410,7 @@ export class MentionService {
       )
   }
 
-  /**
-   * 加载触发者昵称快照。
-   * 只取通知文案需要的最小字段。
-   */
+  // 加载触发者昵称快照。 只取通知文案需要的最小字段。
   private async getActorSnapshot(
     tx: ReplaceMentionsInTxInput['tx'],
     actorUserId: number,

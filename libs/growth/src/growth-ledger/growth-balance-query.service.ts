@@ -22,9 +22,7 @@ export class GrowthBalanceQueryService {
     return this.drizzle.schema.userAssetBalance
   }
 
-  /**
-   * 读取单用户成长余额快照。
-   */
+  // 读取单用户成长余额快照。
   async getUserGrowthSnapshot(userId: number): Promise<UserGrowthSnapshot> {
     const snapshotMap = await this.getUserGrowthSnapshotMap([userId])
     return (
@@ -35,9 +33,7 @@ export class GrowthBalanceQueryService {
     )
   }
 
-  /**
-   * 批量读取用户成长余额快照。
-   */
+  // 批量读取用户成长余额快照。
   async getUserGrowthSnapshotMap(
     userIds: number[],
   ): Promise<Map<number, UserGrowthSnapshot>> {

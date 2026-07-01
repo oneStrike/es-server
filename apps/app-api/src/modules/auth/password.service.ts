@@ -18,8 +18,8 @@ import { AppAuthErrorMessages } from './auth.constant'
 import { SmsService } from './sms.service'
 
 /**
- * 密码服务类
- * 负责处理密码重置、修改密码等安全相关操作
+ * 应用端密码服务。
+ * 负责密码重置与修改等安全相关操作。
  */
 @Injectable()
 export class PasswordService {
@@ -33,19 +33,17 @@ export class PasswordService {
     private readonly userCoreService: UserCoreService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
+  // 复用应用用户表。
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  /**
-   * 生成安全的随机密码
-   * 密码长度为16位，包含大小写字母、数字和特殊字符
-   * @returns 16位随机密码
-   */
+  // 生成含大小写字母、数字与特殊字符的 16 位随机密码。
   generateSecureRandomPassword() {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const lowercase = 'abcdefghijklmnopqrstuvwxyz'
@@ -80,14 +78,7 @@ export class PasswordService {
     return passwordChars.join('')
   }
 
-  /**
-   * 找回密码
-   * 校验短信验证码后更新手机号绑定账号的密码，并撤销旧会话。
-   *
-   * @param body - 找回密码数据，包含手机号、验证码和新密码
-   * @returns 找回结果
-   * @throws {BadRequestException} 账号不存在
-   */
+  // 找回密码：校验短信验证码后更新密码并撤销旧会话。
   async forgotPassword(body: ForgotPasswordDto) {
     const { phone, code, password } = body
     const [user] = await this.db
@@ -146,12 +137,7 @@ export class PasswordService {
     return true
   }
 
-  /**
-   * 修改密码
-   * @param userId - 用户ID
-   * @param body - 修改密码数据
-   * @returns 修改结果
-   */
+  // 修改密码：验证旧密码后更新新密码并撤销已有令牌。
   async changePassword(userId: number, body: ChangePasswordDto) {
     const [user] = await this.db
       .select({ id: this.appUser.id, password: this.appUser.password })

@@ -19,16 +19,12 @@ export class UserPermissionService {
     return this.drizzle.db
   }
 
-  /**
-   * 获取 AppUser 模型访问器
-   */
+  // 获取 AppUser 模型访问器
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  /**
-   * 获取 UserLevelRule 模型访问器
-   */
+  // 获取 UserLevelRule 模型访问器
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
   }
@@ -37,12 +33,7 @@ export class UserPermissionService {
     return this.drizzle.schema.userAssetBalance
   }
 
-  /**
-   * 根据用户ID获取用户及其会员等级信息
-   * @param userId - 用户ID
-   * @returns 包含会员等级信息的用户对象
-   * @throws BadRequestException 当用户不存在时抛出异常
-   */
+  // 根据用户ID获取用户及其会员等级信息
   async getUserWithLevel(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
@@ -59,22 +50,7 @@ export class UserPermissionService {
     return user
   }
 
-  /**
-   * 验证用户的视图权限
-   * 根据视图规则判断用户是否有权限访问特定内容
-   *
-   * @param viewRule - 视图权限规则枚举值
-   * @param userId - 用户ID（可选）
-   * @param _requiredViewLevelId - 历史等级阅读字段，目标态不再用于内容阅读
-   *
-   * 权限规则说明：
-   * - ALL: 所有人可见，无需验证
-   * - INHERIT: 继承父级权限，无需验证
-   * - LOGGED_IN: 需要登录，验证用户存在即可
-   * - VIP: 内容 VIP 阅读必须由 content 权限服务判定
-   *
-   * @throws BadRequestException 当权限不足时抛出异常
-   */
+  // 验证用户的视图权限 根据视图规则判断用户是否有权限访问特定内容 权限规则说明： - ALL: 所有人可见，无需验证 - INHERIT: 继承父级权限，无需验证 - LOGGED_IN: 需要登录，验证用户存在即可 - VIP: 内容 VIP 阅读必须由 content 权限服务判定
   async validateViewPermission(
     viewRule: WorkViewPermissionEnum,
     userId?: number,
@@ -112,13 +88,7 @@ export class UserPermissionService {
     }
   }
 
-  /**
-   * 验证用户积分是否充足
-   * @param userId - 用户ID
-   * @param points - 需要验证的积分数
-   * @returns 用户对象
-   * @throws BadRequestException 当用户不存在或积分不足时抛出异常
-   */
+  // 验证用户积分是否充足
   async validatePoints(userId: number, points: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },

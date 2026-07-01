@@ -60,56 +60,52 @@ export class UserLevelRuleService {
 
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 数据库连接实例。 */
+  // 数据库连接实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** 用户表。 */
+  // 用户表。
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  /** 等级规则表。 */
+  // 等级规则表。
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
   }
 
-  /** 统一用户资产余额表。 */
+  // 统一用户资产余额表。
   get userAssetBalance() {
     return this.drizzle.schema.userAssetBalance
   }
 
-  /** 主题表。 */
+  // 主题表。
   get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
-  /** 回复/评论表。 */
+  // 回复/评论表。
   get forumReply() {
     return this.drizzle.schema.userComment
   }
 
-  /** 评论事实表。 */
+  // 评论事实表。
   get userComment() {
     return this.drizzle.schema.userComment
   }
 
-  /** 点赞事实表。 */
+  // 点赞事实表。
   get userLike() {
     return this.drizzle.schema.userLike
   }
 
-  /** 收藏事实表。 */
+  // 收藏事实表。
   get userFavorite() {
     return this.drizzle.schema.userFavorite
   }
 
-  /**
-   * 创建等级规则
-   * @param dto 等级规则数据
-   * @returns 创建的等级规则
-   */
+  // 创建等级规则
   async createLevelRule(dto: CreateUserLevelRuleDto) {
     return this.drizzle.withTransaction(async (tx) => {
       const payload = this.normalizeRulePayload(dto)
@@ -124,11 +120,7 @@ export class UserLevelRuleService {
     })
   }
 
-  /**
-   * 获取等级规则分页列表
-   * @param dto 查询参数
-   * @returns 分页的等级规则列表
-   */
+  // 获取等级规则分页列表
   async getLevelRulePage(dto: QueryUserLevelRuleDto) {
     const conditions: SQL[] = []
 
@@ -173,11 +165,7 @@ export class UserLevelRuleService {
     )
   }
 
-  /**
-   * 获取等级规则详情
-   * @param id 等级规则ID
-   * @returns 等级规则详情
-   */
+  // 获取等级规则详情
   async getLevelRuleDetail(id: number) {
     const rule = await this.db.query.userLevelRule.findFirst({
       where: { id },
@@ -191,11 +179,7 @@ export class UserLevelRuleService {
     return this.toLevelRuleOutputDto(rule)
   }
 
-  /**
-   * 更新等级规则
-   * @param updateLevelRuleDto 更新数据
-   * @returns 更新后的等级规则
-   */
+  // 更新等级规则
   async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
     return this.drizzle.withTransaction(async (tx) => {
@@ -231,11 +215,7 @@ export class UserLevelRuleService {
     })
   }
 
-  /**
-   * 删除等级规则
-   * @param id 等级规则ID
-   * @returns 删除结果
-   */
+  // 删除等级规则
   async deleteLevelRule(id: number) {
     return this.drizzle.withTransaction(async (tx) => {
       const rule = await tx.query.userLevelRule.findFirst({
@@ -291,10 +271,7 @@ export class UserLevelRuleService {
    * @param userId 用户ID
    * @returns 用户等级信息，包括当前等级、进度、权限等
    */
-  /**
-   * 获取用户等级信息。
-   * 同时计算到下一等级的进度百分比，供前台和后台直接展示当前升级进度。
-   */
+  // 获取用户等级信息。 同时计算到下一等级的进度百分比，供前台和后台直接展示当前升级进度。
   async getUserLevelInfo(userId: number): Promise<UserLevelInfoDto> {
     const { level, experience: currentExperience } =
       await this.resolveEffectiveUserLevel({ userId })
@@ -378,10 +355,7 @@ export class UserLevelRuleService {
     return balance?.balance ?? 0
   }
 
-  /**
-   * 在指定事务中按经验值反查当前应命中的最高等级。
-   * 供账本、升级和修复链路复用，避免不同上下文复制相同排序逻辑。
-   */
+  // 在指定事务中按经验值反查当前应命中的最高等级。 供账本、升级和修复链路复用，避免不同上下文复制相同排序逻辑。
   async getHighestLevelRuleByExperienceInTx(
     tx: Db,
     input: number | LevelRuleResolveInput,
@@ -597,11 +571,7 @@ export class UserLevelRuleService {
     }
   }
 
-  /**
-   * 检查用户等级权限
-   * @param dto 等级权限检查DTO
-   * @returns 权限检查结果
-   */
+  // 检查用户等级权限
   async checkLevelPermission(dto: CheckUserLevelPermissionDto) {
     const { userId, permissionType } = dto
     const business = this.normalizeBusiness(dto.business)
@@ -728,10 +698,7 @@ export class UserLevelRuleService {
     }
   }
 
-  /**
-   * 获取等级统计信息
-   * @returns 等级统计数据
-   */
+  // 获取等级统计信息
   async getLevelStatistics(): Promise<UserLevelStatisticsDto> {
     const levels = await this.db
       .select({
@@ -774,10 +741,7 @@ export class UserLevelRuleService {
     }
   }
 
-  /**
-   * 对任意事实表执行 count(*) 聚合。
-   * 等级权限校验和统计概览都通过该方法复用统一计数逻辑。
-   */
+  // 对任意事实表执行 count(*) 聚合。 等级权限校验和统计概览都通过该方法复用统一计数逻辑。
   private async countByCondition(
     table: PgTable<TableConfig>,
     where: SQL | undefined,

@@ -24,18 +24,12 @@ export class AesService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  /**
-   * 获取加密密钥
-   */
+  // 获取配置中的加密密钥，未配置时回退到默认值。
   private getSecretKey() {
     return this.configService.get<string>('app.secret', this.defaultSecret)
   }
 
-  /**
-   * 加密数据
-   * @param text 明文
-   * @returns 加密后的十六进制字符串 (iv:content)
-   */
+  // 加密明文，返回 "iv:content" 格式的十六进制字符串。
   async encrypt(text: string): Promise<string> {
     const secret = this.getSecretKey()
     // 生成随机初始化向量
@@ -51,11 +45,7 @@ export class AesService {
     return `${iv.toString('hex')}:${encrypted.toString('hex')}`
   }
 
-  /**
-   * 解密数据
-   * @param encryptedText 加密后的字符串 (iv:content)
-   * @returns 明文
-   */
+  // 解密 "iv:content" 格式的密文，返回明文。
   async decrypt(encryptedText: string): Promise<string> {
     const [ivHex, contentHex] = encryptedText.split(':')
     if (!ivHex || !contentHex) {

@@ -115,18 +115,12 @@ export class GeoService implements OnModuleDestroy {
   private unavailable = false
   private activeStatus?: GeoRuntimeStatus
 
-  /**
-   * 获取 ip2region 托管目录。
-   * 未配置时回退到管理端默认上传目录，保持运行时与后台管理目录解析一致。
-   */
+  // 获取 ip2region 托管目录。 未配置时回退到管理端默认上传目录，保持运行时与后台管理目录解析一致。
   private getManagedStorageDir() {
     return resolveGeoManagedStorageDir()
   }
 
-  /**
-   * 读取 active 目录元信息。
-   * 元信息损坏时降级为 undefined，避免状态文件问题拖垮主链路。
-   */
+  // 读取 active 目录元信息。 元信息损坏时降级为 undefined，避免状态文件问题拖垮主链路。
   private readManagedActiveMetadata() {
     const storageDir = this.getManagedStorageDir()
     if (!storageDir) {
@@ -156,10 +150,7 @@ export class GeoService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * 解析 active 目录中的当前生效文件。
-   * 优先读取 metadata.json，缺失时退回到 active 目录中的最新 `.xdb` 文件。
-   */
+  // 解析 active 目录中的当前生效文件。 优先读取 metadata.json，缺失时退回到 active 目录中的最新 `.xdb` 文件。
   private resolveManagedActiveStatus() {
     const metadataResult = this.readManagedActiveMetadata()
     if (metadataResult) {
@@ -214,10 +205,7 @@ export class GeoService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * 解析当前应加载的属地库状态。
-   * 按优先级依次尝试托管 active 文件、显式配置路径和仓库内默认库。
-   */
+  // 解析当前应加载的属地库状态。 按优先级依次尝试托管 active 文件、显式配置路径和仓库内默认库。
   private resolvePreferredStatus() {
     const managedStatus = this.resolveManagedActiveStatus()
     if (managedStatus) {
@@ -263,20 +251,14 @@ export class GeoService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * 根据文件路径构建查询器。
-   * 查询器创建失败时抛出原始异常，由上层决定是否回退。
-   */
+  // 根据文件路径构建查询器。 查询器创建失败时抛出原始异常，由上层决定是否回退。
   private createSearcherFromFile(dbPath: string) {
     ip2regionWithVerify.verifyFromFile(dbPath)
     const dbContent = loadContentFromFile(dbPath)
     return newWithBuffer(IPv4, dbContent)
   }
 
-  /**
-   * 基于给定文件路径生成运行状态。
-   * 热切换场景优先使用调用方已知的元信息，避免额外依赖磁盘 stat。
-   */
+  // 基于给定文件路径生成运行状态。 热切换场景优先使用调用方已知的元信息，避免额外依赖磁盘 stat。
   private buildStatusFromFile(filePath: string, info: GeoReloadFileInfo = {}) {
     const fileStat = existsSync(filePath) ? statSync(filePath) : undefined
 
@@ -291,10 +273,7 @@ export class GeoService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * 确保当前进程已加载查询器。
-   * 首次加载按优先级解析当前生效库；加载失败时保留降级为空属地的语义。
-   */
+  // 确保当前进程已加载查询器。 首次加载按优先级解析当前生效库；加载失败时保留降级为空属地的语义。
   private async ensureSearcher() {
     if (this.searcher || this.unavailable) {
       return
@@ -328,10 +307,7 @@ export class GeoService implements OnModuleDestroy {
     await this.initializePromise
   }
 
-  /**
-   * 获取当前进程的属地库运行状态。
-   * 未触发查询前也可返回当前应加载的候选文件与来源，便于后台管理页排障。
-   */
+  // 获取当前进程的属地库运行状态。 未触发查询前也可返回当前应加载的候选文件与来源，便于后台管理页排障。
   async getRuntimeStatus(): Promise<GeoRuntimeStatus> {
     if (this.activeStatus) {
       return {
@@ -343,10 +319,7 @@ export class GeoService implements OnModuleDestroy {
     return this.resolvePreferredStatus()
   }
 
-  /**
-   * 使用指定 `.xdb` 文件热切换当前进程查询器。
-   * 仅在新查询器创建成功后才替换旧实例，确保失败时仍保留在线查询能力。
-   */
+  // 使用指定 `.xdb` 文件热切换当前进程查询器。 仅在新查询器创建成功后才替换旧实例，确保失败时仍保留在线查询能力。
   async reloadFromFile(
     filePath: string,
     info: GeoReloadFileInfo = {},
@@ -365,19 +338,13 @@ export class GeoService implements OnModuleDestroy {
     return nextStatus
   }
 
-  /**
-   * 校验指定 `.xdb` 文件是否可被当前进程加载。
-   * 仅用于预检上传文件结构，不会修改当前在线查询器。
-   */
+  // 校验指定 `.xdb` 文件是否可被当前进程加载。 仅用于预检上传文件结构，不会修改当前在线查询器。
   async validateFile(filePath: string): Promise<void> {
     const searcher = this.createSearcherFromFile(filePath)
     searcher.close()
   }
 
-  /**
-   * 按 IP 解析属地。
-   * xdb 缺失、查询失败或结果为空时均降级为空字段，避免把附加信息查询放大为主链路错误。
-   */
+  // 按 IP 解析属地。 xdb 缺失、查询失败或结果为空时均降级为空字段，避免把附加信息查询放大为主链路错误。
   async resolveByIp(ip?: string): Promise<GeoLookupResult> {
     const normalizedIp = normalizeLookupIp(ip)
     const emptyGeo = parseIpRegionText()
@@ -403,27 +370,21 @@ export class GeoService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * 为已有客户端上下文补齐属地字段。
-   */
+  // 为已有客户端上下文补齐属地字段。
   async enrichClientRequestContext(
     context: ClientRequestContext,
   ): Promise<ClientRequestContext> {
     return mergeGeoClientContext(context, await this.resolveByIp(context.ip))
   }
 
-  /**
-   * 从 FastifyRequest 构建包含属地的客户端上下文。
-   */
+  // 从 FastifyRequest 构建包含属地的客户端上下文。
   async buildClientRequestContext(
     req: FastifyRequest,
   ): Promise<ClientRequestContext> {
     return this.enrichClientRequestContext(extractClientRequestContext(req))
   }
 
-  /**
-   * 从 FastifyRequest 构建包含属地的完整请求上下文。
-   */
+  // 从 FastifyRequest 构建包含属地的完整请求上下文。
   async buildRequestContext(req: FastifyRequest) {
     return {
       ...extractRequestContext(req),

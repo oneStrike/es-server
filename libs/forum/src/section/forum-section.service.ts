@@ -255,10 +255,7 @@ export class ForumSectionService {
     }
   }
 
-  /**
-   * 分批处理 ID 列表，避免单次操作数据量过大。
-   * 用于全量重建等运维场景，按批次串行推进。
-   */
+  // 分批处理 ID 列表，避免单次操作数据量过大。 用于全量重建等运维场景，按批次串行推进。
   private async processIdsInBatches(
     ids: number[],
     batchSize: number,
@@ -270,10 +267,7 @@ export class ForumSectionService {
     }
   }
 
-  /**
-   * 查询公开可见板块原始行。
-   * 支持按分组或指定 ID 集合裁剪，但始终复用同一套公开可见规则。
-   */
+  // 查询公开可见板块原始行。 支持按分组或指定 ID 集合裁剪，但始终复用同一套公开可见规则。
   private async getVisibleSectionRows(
     options?: ForumVisibleSectionQueryOptions,
   ) {
@@ -337,10 +331,7 @@ export class ForumSectionService {
       })
   }
 
-  /**
-   * 将公开板块原始行映射为应用侧公开 DTO 所需字段。
-   * 统一补齐访问状态与关注状态，避免多入口各自拼装。
-   */
+  // 将公开板块原始行映射为应用侧公开 DTO 所需字段。 统一补齐访问状态与关注状态，避免多入口各自拼装。
   private async mapVisibleSectionListItems(
     sections: ForumVisibleSectionRow[],
     userId?: number,
@@ -392,22 +383,13 @@ export class ForumSectionService {
     })
   }
 
-  /**
-   * 批量查询公开可见板块列表项。
-   * 供关注列表等聚合场景复用统一的公开 contract。
-   */
+  // 批量查询公开可见板块列表项。 供关注列表等聚合场景复用统一的公开 contract。
   async batchGetVisibleSectionListItems(sectionIds: number[], userId?: number) {
     const sections = await this.getVisibleSectionRows({ sectionIds })
     return this.mapVisibleSectionListItems(sections, userId)
   }
 
-  /**
-   * 查询板块可见列表。
-   * - 仅返回启用且未删除的板块
-   * - 有分组的板块要求分组也处于启用状态
-   * - 列表侧不拦截访问权限，统一返回 canAccess 与限制提示
-   * - 默认按分组排序、板块排序输出，便于应用侧直接渲染
-   */
+  // 查询板块可见列表。 - 仅返回启用且未删除的板块 - 有分组的板块要求分组也处于启用状态 - 列表侧不拦截访问权限，统一返回 canAccess 与限制提示 - 默认按分组排序、板块排序输出，便于应用侧直接渲染
   async getVisibleSectionList(query: QueryPublicForumSectionDto = {}) {
     const sections = await this.getVisibleSectionRows({
       groupId: query.groupId,
@@ -416,10 +398,7 @@ export class ForumSectionService {
     return this.mapVisibleSectionListItems(sections, query.userId)
   }
 
-  /**
-   * 查询板块可见详情。
-   * 详情侧返回访问状态，由主题列表接口执行强权限校验。
-   */
+  // 查询板块可见详情。 详情侧返回访问状态，由主题列表接口执行强权限校验。
   async getVisibleSectionDetail(id: number, userId?: number) {
     const section = await this.db.query.forumSection.findFirst({
       where: {
@@ -518,10 +497,7 @@ export class ForumSectionService {
     }
   }
 
-  /**
-   * 查询公开可见板块的版主摘要。
-   * 默认仅展示直接绑定该板块的板块版主，以及作用于该分组的分组版主。
-   */
+  // 查询公开可见板块的版主摘要。 默认仅展示直接绑定该板块的板块版主，以及作用于该分组的分组版主。
   async getVisibleSectionModerators(sectionId: number) {
     const section = await this.db.query.forumSection.findFirst({
       where: {
@@ -617,10 +593,7 @@ export class ForumSectionService {
     })
   }
 
-  /**
-   * 基于事实表实时计算板块的主题数与评论数。
-   * 用于 repair 场景校验冗余计数字段准确性，不作为常规查询入口。
-   */
+  // 基于事实表实时计算板块的主题数与评论数。 用于 repair 场景校验冗余计数字段准确性，不作为常规查询入口。
   private async calculateStatistics(sectionId: number) {
     const section = await this.db.query.forumSection.findFirst({
       where: { id: sectionId, deletedAt: { isNull: true } },
@@ -647,11 +620,7 @@ export class ForumSectionService {
     }
   }
 
-  /**
-   * 创建论坛板块。
-   * - 板块名称全局唯一（未删除范围内）
-   * - 关联分组与等级规则时需校验目标存在性
-   */
+  // 创建论坛板块。 - 板块名称全局唯一（未删除范围内） - 关联分组与等级规则时需校验目标存在性
   async createSection(createSectionDto: CreateForumSectionDto) {
     const { groupId, userLevelRuleId, ...sectionData } = createSectionDto
 
@@ -685,18 +654,12 @@ export class ForumSectionService {
     return true
   }
 
-  /**
-   * 获取板块分组树形结构，用于管理端板块配置页渲染。
-   */
+  // 获取板块分组树形结构，用于管理端板块配置页渲染。
   async getSectionTree() {
     return this.forumSectionGroupService.getAdminSectionTree()
   }
 
-  /**
-   * 管理端分页查询板块列表。
-   * 支持按名称模糊搜索、分组筛选、启用状态与审核策略筛选。
-   * 未显式传入排序时，默认遵循板块手动排序顺序。
-   */
+  // 管理端分页查询板块列表。 支持按名称模糊搜索、分组筛选、启用状态与审核策略筛选。 未显式传入排序时，默认遵循板块手动排序顺序。
   async getSectionPage(queryForumSectionDto: QueryForumSectionDto) {
     const { name, groupId, isUngrouped, ...otherDto } = queryForumSectionDto
     const conditions: SQL[] = [isNull(this.forumSection.deletedAt)]
@@ -745,9 +708,7 @@ export class ForumSectionService {
     )
   }
 
-  /**
-   * 管理端获取板块详情，包含关联分组信息。
-   */
+  // 管理端获取板块详情，包含关联分组信息。
   async getSectionDetail(id: number) {
     const section = await this.db.query.forumSection.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -788,10 +749,7 @@ export class ForumSectionService {
     return output
   }
 
-  /**
-   * 重建板块关注人数。
-   * 用于管理端修复入口与离线运维场景。
-   */
+  // 重建板块关注人数。 用于管理端修复入口与离线运维场景。
   async rebuildSectionCounts(id: number) {
     const result = await this.drizzle.withTransaction(async (tx) => {
       const section = await tx.query.forumSection.findFirst({
@@ -826,10 +784,7 @@ export class ForumSectionService {
     }
   }
 
-  /**
-   * 全量重建板块计数。
-   * 当前用于管理端运维入口，按批次串行推进以避免单次压力过大。
-   */
+  // 全量重建板块计数。 当前用于管理端运维入口，按批次串行推进以避免单次压力过大。
   async rebuildAllSectionCounts(
     batchSize = 200,
     maxSynchronousSections = DEFAULT_REBUILD_ALL_SECTION_LIMIT,
@@ -875,12 +830,7 @@ export class ForumSectionService {
     return true
   }
 
-  /**
-   * 更新论坛板块。
-   * - 名称变更时校验全局唯一性
-   * - 分组与等级规则变更时校验目标存在性
-   * - 写后校验受影响行数，确保板块存在
-   */
+  // 更新论坛板块。 - 名称变更时校验全局唯一性 - 分组与等级规则变更时校验目标存在性 - 写后校验受影响行数，确保板块存在
   async updateSection(updateSectionDto: UpdateForumSectionDto) {
     const { id, name, groupId, ...updateData } = updateSectionDto
     await this.drizzle.withTransaction(
@@ -962,10 +912,7 @@ export class ForumSectionService {
     return true
   }
 
-  /**
-   * 软删除论坛板块。
-   * 存在主题时禁止删除，避免孤立数据。
-   */
+  // 软删除论坛板块。 存在主题时禁止删除，避免孤立数据。
   async deleteSection(id: number) {
     await this.drizzle.withTransaction(async (tx) => {
       await this.lockSectionForMutation(tx, id)
@@ -1038,10 +985,7 @@ export class ForumSectionService {
     return true
   }
 
-  /**
-   * 更新板块启用状态。
-   * 写后校验受影响行数，确保板块存在。
-   */
+  // 更新板块启用状态。 写后校验受影响行数，确保板块存在。
   async updateEnabledStatus(dto: UpdateForumSectionEnabledDto) {
     await this.drizzle.withTransaction(async (tx) => {
       await this.lockSectionForMutation(tx, dto.id)
@@ -1060,10 +1004,7 @@ export class ForumSectionService {
     return true
   }
 
-  /**
-   * 拖拽排序，交换两个板块的 sortOrder 字段。
-   * 仅允许同一分组内交换；未分组板块之间允许互换。
-   */
+  // 拖拽排序，交换两个板块的 sortOrder 字段。 仅允许同一分组内交换；未分组板块之间允许互换。
   async updateSectionSort(updateSortDto: SwapForumSectionSortDto) {
     return this.drizzle.withTransaction(async (tx) => {
       const rows = await tx

@@ -62,10 +62,7 @@ export class EmojiCatalogService {
     return this.drizzle.schema.emojiRecentUsage
   }
 
-  /**
-   * 构建场景包含条件。
-   * - sceneType 为 smallint[]，通过数组包含运算表达单场景可见性。
-   */
+  // 构建场景包含条件。 - sceneType 为 smallint[]，通过数组包含运算表达单场景可见性。
   private buildSceneContainsCondition(scene: EmojiSceneEnum) {
     return sql`${this.emojiPack.sceneType} @> ARRAY[${scene}]::smallint[]`
   }
@@ -90,10 +87,7 @@ export class EmojiCatalogService {
     )!
   }
 
-  /**
-   * 构建表情资源有效状态条件。
-   * - 条件包括：已启用、未删除。
-   */
+  // 构建表情资源有效状态条件。 - 条件包括：已启用、未删除。
   private buildActiveAssetCondition() {
     return and(
       eq(this.emojiAsset.isEnabled, true),
@@ -101,31 +95,19 @@ export class EmojiCatalogService {
     )!
   }
 
-  /**
-   * 规范化搜索数量限制。
-   * - 默认值为 EMOJI_SEARCH_LIMIT_DEFAULT。
-   * - 限制在 1 到 EMOJI_SEARCH_LIMIT_MAX 之间。
-   */
+  // 规范化搜索数量限制。 - 默认值为 EMOJI_SEARCH_LIMIT_DEFAULT。 - 限制在 1 到 EMOJI_SEARCH_LIMIT_MAX 之间。
   private normalizeSearchLimit(limit?: number) {
     const value = limit ?? EMOJI_SEARCH_LIMIT_DEFAULT
     return Math.max(1, Math.min(EMOJI_SEARCH_LIMIT_MAX, value))
   }
 
-  /**
-   * 规范化最近使用数量限制。
-   * - 默认值为 EMOJI_RECENT_LIMIT_DEFAULT。
-   * - 限制在 1 到 EMOJI_RECENT_LIMIT_MAX 之间。
-   */
+  // 规范化最近使用数量限制。 - 默认值为 EMOJI_RECENT_LIMIT_DEFAULT。 - 限制在 1 到 EMOJI_RECENT_LIMIT_MAX 之间。
   private normalizeRecentLimit(limit?: number) {
     const value = limit ?? EMOJI_RECENT_LIMIT_DEFAULT
     return Math.max(1, Math.min(EMOJI_RECENT_LIMIT_MAX, value))
   }
 
-  /**
-   * 将数据库行转换为表情资源快照。
-   * - 处理类型转换（kind、keywords）。
-   * - 合并表情包信息到快照对象。
-   */
+  // 将数据库行转换为表情资源快照。 - 处理类型转换（kind、keywords）。 - 合并表情包信息到快照对象。
   private toAssetSnapshot(row: EmojiAssetSnapshotRow) {
     return {
       id: row.id,
@@ -405,12 +387,7 @@ export class EmojiCatalogService {
     }))
   }
 
-  /**
-   * 在既有事务中批量写入最近使用记录。
-   * - 调用方需先完成事实写入，确保"消息发送成功才记 recent"的口径。
-   * - 同一 userId+scene+emojiAssetId 只保留一条聚合记录，冲突时原子累加 useCount。
-   * - 会再次校验资产在当前场景下仍然可见，避免脏 token 写入 recent。
-   */
+  // 在既有事务中批量写入最近使用记录。 - 调用方需先完成事实写入，确保"消息发送成功才记 recent"的口径。 - 同一 userId+scene+emojiAssetId 只保留一条聚合记录，冲突时原子累加 useCount。 - 会再次校验资产在当前场景下仍然可见，避免脏 token 写入 recent。
   async recordRecentUsageInTx(
     tx: Db,
     input: RecordEmojiRecentUsageInput,
@@ -450,11 +427,7 @@ export class EmojiCatalogService {
       })
   }
 
-  /**
-   * 过滤出当前场景仍可用的最近使用聚合项。
-   * - 只保留启用、未删除、且对 scene 可见的表情资源。
-   * - 同时过滤掉非正数 useCount，避免异常 token 产生脏数据。
-   */
+  // 过滤出当前场景仍可用的最近使用聚合项。 - 只保留启用、未删除、且对 scene 可见的表情资源。 - 同时过滤掉非正数 useCount，避免异常 token 产生脏数据。
   private async filterActiveRecentUsageItems(
     tx: Db,
     scene: EmojiSceneEnum,
@@ -483,12 +456,7 @@ export class EmojiCatalogService {
     return sanitizedItems.filter((item) => activeIds.has(item.emojiAssetId))
   }
 
-  /**
-   * 根据短码列表批量查询自定义表情。
-   * - 用于文本解析器将短码替换为表情图片。
-   * - 只返回当前场景可见且启用的 CUSTOM 类型资源。
-   * - 空输入直接返回空 Map，避免无意义 SQL。
-   */
+  // 根据短码列表批量查询自定义表情。 - 用于文本解析器将短码替换为表情图片。 - 只返回当前场景可见且启用的 CUSTOM 类型资源。 - 空输入直接返回空 Map，避免无意义 SQL。
   async findCustomAssetsByShortcodes(
     scene: EmojiSceneEnum,
     shortcodes: string[],
@@ -541,11 +509,7 @@ export class EmojiCatalogService {
     return map
   }
 
-  /**
-   * 根据 Unicode 序列批量查询平台托管的 Unicode 表情。
-   * - 用于解析器为 unicode token 补齐 emojiAssetId。
-   * - 若同一序列命中多个可用资源，按包排序和资源排序取首个，保证结果稳定。
-   */
+  // 根据 Unicode 序列批量查询平台托管的 Unicode 表情。 - 用于解析器为 unicode token 补齐 emojiAssetId。 - 若同一序列命中多个可用资源，按包排序和资源排序取首个，保证结果稳定。
   async findUnicodeAssetsBySequences(
     scene: EmojiSceneEnum,
     unicodeSequences: string[],

@@ -24,7 +24,7 @@ import { LikeTargetTypeEnum } from './like.constant'
 @Injectable()
 export class LikeService {
   private readonly logger = new Logger(LikeService.name)
-  /** 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器 */
+  // 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器。
   private readonly resolvers = new Map<
     LikeTargetTypeEnum,
     ILikeTargetResolver
@@ -39,22 +39,27 @@ export class LikeService {
     private readonly drizzle: DrizzleService,
   ) {}
 
+  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
+  // 复用用户点赞表。
   private get userLike() {
     return this.drizzle.schema.userLike
   }
 
+  // 对目标 ID 数组去重。
   private uniqueTargetIds(targetIds: number[]) {
     return [...new Set(targetIds)]
   }
 
+  // 从异常中提取稳定错误码，缺失时返回 'unknown'。
   private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
+  // 将解析器返回的原始对象安全映射为点赞目标详情 DTO。
   private toLikeTargetDetail(detail: unknown): LikeTargetDetailDto | null {
     if (!detail || typeof detail !== 'object') {
       return null
@@ -92,6 +97,7 @@ export class LikeService {
     }
   }
 
+  // 判断点赞目标是否属于论坛业务，返回对应的业务标识或 null。
   private resolveLevelBusiness(
     targetType: LikeTargetTypeEnum,
     targetMeta: LikeTargetMeta,
@@ -105,11 +111,7 @@ export class LikeService {
     return null
   }
 
-  /**
-   * 注册目标解析器
-   * 供其他模块在应用启动时注册自己的点赞解析器
-   * @param resolver - 点赞目标解析器实例
-   */
+  // 供其他模块在应用启动时注册自己的点赞目标解析器。
   registerResolver(resolver: ILikeTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
       console.warn(
@@ -119,12 +121,7 @@ export class LikeService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  /**
-   * 获取指定目标类型的解析器
-   * @param targetType - 点赞目标类型
-   * @returns 对应的目标解析器
-   * @throws BadRequestException 当目标类型不支持时抛出异常
-   */
+  // 按目标类型获取已注册的解析器，未注册时抛出 BadRequestException。
   private getResolver(targetType: LikeTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
@@ -133,14 +130,7 @@ export class LikeService {
     return resolver
   }
 
-  /**
-   * 批量检查点赞状态
-   * 用于在列表页批量查询用户对多个目标的点赞状态
-   * @param targetType - 点赞目标类型
-   * @param targetIds - 目标ID数组
-   * @param userId - 用户ID
-   * @returns 目标ID到点赞状态的映射Map（true表示已点赞）
-   */
+  // 批量查询用户对多个目标的点赞状态，返回 targetId → boolean 映射。
   async checkStatusBatch(
     targetType: LikeTargetTypeEnum,
     targetIds: number[],
@@ -174,15 +164,7 @@ export class LikeService {
     return statusMap
   }
 
-  /**
-   * 获取目标的点赞列表
-   * 查询指定目标的点赞记录，支持分页
-   * @param targetType - 点赞目标类型
-   * @param targetId - 目标ID
-   * @param pageIndex - 页码（默认1）
-   * @param pageSize - 每页数量（默认20）
-   * @returns 分页点赞记录列表
-   */
+  // 分页查询指定目标的点赞记录列表。
   async getTargetLikes(
     targetType: LikeTargetTypeEnum,
     targetId: number,
@@ -224,15 +206,7 @@ export class LikeService {
     }
   }
 
-  /**
-   * 点赞操作
-   * 执行完整的点赞流程：解析目标元数据、创建点赞记录、更新计数、执行后置钩子、发放成长奖励
-   * @param input - 点赞参数
-   * @param input.targetType - 点赞目标类型
-   * @param input.targetId - 目标ID
-   * @param input.userId - 用户ID
-   * @throws BadRequestException 当已点赞或目标不存在时抛出异常
-   */
+  // 执行点赞：在同一事务中解析目标、写入记录、更新计数并执行后置钩子，事务后发放成长奖励。
   async like(input: LikeRecordDto): Promise<void> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
@@ -270,15 +244,7 @@ export class LikeService {
     await this.likeGrowthService.rewardLikeCreated(targetType, targetId, userId)
   }
 
-  /**
-   * 取消点赞操作
-   * 执行完整的取消点赞流程：删除点赞记录、更新计数
-   * @param input - 取消点赞参数
-   * @param input.targetType - 点赞目标类型
-   * @param input.targetId - 目标ID
-   * @param input.userId - 用户ID
-   * @throws BadRequestException 当点赞记录不存在时抛出异常
-   */
+  // 取消点赞：在同一事务中删除记录、回退计数并执行后置钩子。
   async unlike(input: LikeRecordDto) {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
@@ -304,15 +270,7 @@ export class LikeService {
     })
   }
 
-  /**
-   * 检查点赞状态
-   * 查询指定用户对指定目标的点赞状态
-   * @param input - 查询参数
-   * @param input.targetType - 点赞目标类型
-   * @param input.targetId - 目标ID
-   * @param input.userId - 用户ID
-   * @returns 是否已点赞（true表示已点赞）
-   */
+  // 查询指定用户对单个目标的点赞状态。
   async checkLikeStatus(input: LikeRecordDto): Promise<boolean> {
     const { targetType, targetId, userId } = input
     const [like] = await this.db
@@ -329,14 +287,7 @@ export class LikeService {
     return !!like
   }
 
-  /**
-   * 获取用户的点赞列表
-   * 查询指定用户的点赞记录，支持分页，并关联查询目标详情
-   * @param query - 查询参数
-   * @param query.targetType - 点赞目标类型
-   * @param query.pageSize - 每页数量（默认15）
-   * @returns 分页点赞记录列表，包含目标详情
-   */
+  // 分页查询用户点赞列表，并关联解析器批量获取目标详情。
   async getUserLikes(query: LikePageQueryDto & Pick<LikeRecordDto, 'userId'>) {
     const pageParams = this.drizzle.buildPageParams(query, {
       table: this.userLike,

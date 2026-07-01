@@ -39,17 +39,17 @@ export class UserPointService {
     private readonly growthLedgerService: GrowthLedgerService,
   ) {}
 
-  /** 数据库连接实例。 */
+  // 数据库连接实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** 统一成长账本表。 */
+  // 统一成长账本表。
   private get growthLedgerRecord() {
     return this.drizzle.schema.growthLedgerRecord
   }
 
-  /** 用户表。 */
+  // 用户表。
   get appUser() {
     return this.drizzle.schema.appUser
   }
@@ -58,11 +58,7 @@ export class UserPointService {
     return this.drizzle.schema.userAssetBalance
   }
 
-  /**
-   * 增加积分
-   * @param addPointsDto 增加积分的数据
-   * @returns 增加积分的结果
-   */
+  // 增加积分
   async addPoints(
     addPointsDto: UserGrowthRuleActionDto & {
       bizKey?: string
@@ -114,11 +110,7 @@ export class UserPointService {
     return true
   }
 
-  /**
-   * 消费积分
-   * @param consumePointsDto 消费积分的数据
-   * @returns 消费积分的结果
-   */
+  // 消费积分
   async consumePoints(
     consumePointsDto: ConsumeUserPointsDto & {
       bizKey?: string
@@ -190,7 +182,7 @@ export class UserPointService {
     return applyConsume(tx)
   }
 
-  /** 按成长账本拒绝原因映射积分发放失败语义。 */
+  // 按成长账本拒绝原因映射积分发放失败语义。
   private throwPointGrantFailure(
     reason?: keyof typeof GrowthLedgerFailReasonLabel,
   ): never {
@@ -228,7 +220,7 @@ export class UserPointService {
     )
   }
 
-  /** 按成长账本拒绝原因映射积分扣减失败语义。 */
+  // 按成长账本拒绝原因映射积分扣减失败语义。
   private throwPointConsumeFailure(
     reason?: keyof typeof GrowthLedgerFailReasonLabel,
   ): never {
@@ -253,11 +245,7 @@ export class UserPointService {
     throw new InternalServerErrorException('积分扣减失败')
   }
 
-  /**
-   * 分页查询积分记录列表
-   * @param dto 查询条件
-   * @returns 分页的记录列表
-   */
+  // 分页查询积分记录列表
   async getPointRecordPage(dto: QueryUserPointRecordDto) {
     const pageParams = this.drizzle.buildPageParams(dto, {
       table: this.growthLedgerRecord,
@@ -388,11 +376,7 @@ export class UserPointService {
     }
   }
 
-  /**
-   * 获取用户积分记录详情
-   * @param id 记录ID
-   * @returns 记录详情信息
-   */
+  // 获取用户积分记录详情
   async getPointRecordDetail(id: number) {
     const record = await this.db.query.growthLedgerRecord.findFirst({
       where: {
@@ -419,11 +403,7 @@ export class UserPointService {
     }
   }
 
-  /**
-   * 获取用户积分统计
-   * @param userId 用户ID
-   * @returns 积分统计信息
-   */
+  // 获取用户积分统计
   async getUserPointStats(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
@@ -475,13 +455,7 @@ export class UserPointService {
     return balance?.balance ?? 0
   }
 
-  /**
-   * 与漫画系统互通接口
-   * @param userId 用户ID
-   * @param points 积分数量
-   * @param operation 操作类型（add=增加, consume=消费）
-   * @returns 操作结果
-   */
+  // 与漫画系统互通接口
   async syncWithComicSystem(
     userId: number,
     points: number,
@@ -526,10 +500,7 @@ export class UserPointService {
     return result
   }
 
-  /**
-   * 根据账本记录 ID 回查积分流水。
-   * 用于在发放 / 扣减成功后确认记录已落库，避免下游继续处理不存在的 recordId。
-   */
+  // 根据账本记录 ID 回查积分流水。 用于在发放 / 扣减成功后确认记录已落库，避免下游继续处理不存在的 recordId。
   private async findLedgerRecordById(
     tx: Db,
     id: number,
@@ -558,13 +529,7 @@ export class UserPointService {
     return record
   }
 
-  /**
-   * 根据规则类型获取积分
-   * @param userId 用户ID
-   * @param ruleType 规则类型
-   * @param operationNote 内部操作备注
-   * @returns 操作结果
-   */
+  // 根据规则类型获取积分
   async addPointsByRuleType(
     userId: number,
     ruleType: GrowthRuleTypeEnum,
@@ -585,10 +550,7 @@ export class UserPointService {
     })
   }
 
-  /**
-   * 构建稳定业务键。
-   * 相同业务上下文会生成相同 bizKey，用于积分流水幂等和管理端操作串联。
-   */
+  // 构建稳定业务键。 相同业务上下文会生成相同 bizKey，用于积分流水幂等和管理端操作串联。
   private buildStableBizKey(prefix: string, payload: Record<string, unknown>) {
     const serializedPayload = Object.entries(payload)
       .filter(([, value]) => value !== undefined)
@@ -598,10 +560,7 @@ export class UserPointService {
     return `${prefix}:${serializedPayload}`
   }
 
-  /**
-   * 将账本记录映射为积分记录响应结构。
-   * 该映射统一收敛 points / beforePoints / afterPoints 字段命名，避免调用方各自转换。
-   */
+  // 将账本记录映射为积分记录响应结构。 该映射统一收敛 points / beforePoints / afterPoints 字段命名，避免调用方各自转换。
   private toPointRecord(record: {
     id: number
     userId: number

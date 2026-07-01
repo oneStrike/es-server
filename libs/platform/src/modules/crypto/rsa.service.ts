@@ -4,33 +4,24 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 
 /**
- * RSA服务
+ * RSA 非对称加密服务。
+ * 供认证链路对客户端密码等敏感数据进行加密传输。
  */
 @Injectable()
 export class RsaService {
   constructor(private configService: ConfigService) {}
 
-  /**
-   * 获取 RSA公钥
-   * @returns RSA公钥
-   */
+  // 获取配置中的 RSA 公钥。
   getPublicKey() {
     return this.configService.get('rsa.publicKey')
   }
 
-  /**
-   * 获取 RSA 私钥
-   * @returns RSA 私钥
-   */
+  // 获取配置中的 RSA 私钥。
   getPrivateKey() {
     return this.configService.get('rsa.privateKey')
   }
 
-  /**
-   * 使用RSA公钥加密数据
-   * @param data 要加密的数据
-   * @returns 加密后的数据（Base64编码）
-   */
+  // 使用 RSA 公钥加密数据，返回 Base64 编码字符串。
   encrypt(data: string): string {
     const buffer = Buffer.from(data, 'utf8')
     const encrypted = publicEncrypt(
@@ -47,11 +38,7 @@ export class RsaService {
     return encrypted.toString('base64')
   }
 
-  /**
-   * 使用RSA私钥解密数据
-   * @param encryptedData 加密后的数据（Base64编码）
-   * @returns 解密后的数据
-   */
+  // 使用 RSA 私钥解密 Base64 编码的密文。
   decrypt(encryptedData: string): string {
     try {
       const buffer = Buffer.from(encryptedData, 'base64')
@@ -71,11 +58,7 @@ export class RsaService {
     }
   }
 
-  /**
-   * 使用 RSA私钥解密数据
-   * @param encryptedData 加密后的数据
-   * @returns 解密后的数据
-   */
+  // decrypt 的语义化别名，供调用方表达“使用私钥解密”意图。
   decryptWith(encryptedData: string): string {
     return this.decrypt(encryptedData)
   }

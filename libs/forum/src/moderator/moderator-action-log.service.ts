@@ -20,20 +20,17 @@ import { ForumGovernanceActorTypeEnum } from './moderator-action-log.constant'
 export class ForumModeratorActionLogService {
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 统一复用当前模块的 Drizzle 数据库实例。 */
+  // 统一复用当前模块的 Drizzle 数据库实例。
   private get db() {
     return this.drizzle.db
   }
 
-  /** forum_moderator_action_log 表访问入口。 */
+  // forum_moderator_action_log 表访问入口。
   private get forumModeratorActionLog() {
     return this.drizzle.schema.forumModeratorActionLog
   }
 
-  /**
-   * 将操作前后快照序列化为 JSON 字符串。
-   * 仅在有值时落库，避免空字符串污染日志语义。
-   */
+  // 将操作前后快照序列化为 JSON 字符串。 仅在有值时落库，避免空字符串污染日志语义。
   private serializeSnapshot(snapshot?: unknown) {
     if (snapshot === undefined) {
       return null
@@ -116,25 +113,17 @@ export class ForumModeratorActionLogService {
     return true
   }
 
-  /**
-   * 写入一条正式版主操作日志。
-   * 当前 topic/comment moderator governance 统一通过本服务落日志。
-   */
+  // 写入一条正式版主操作日志。 当前 topic/comment moderator governance 统一通过本服务落日志。
   async createActionLog(input: ForumModeratorActionLogInput) {
     return this.insertActionLog(this.db, input)
   }
 
-  /**
-   * 在现有事务中写入版主操作日志，保证治理写入和审计事实同生共死。
-   */
+  // 在现有事务中写入版主操作日志，保证治理写入和审计事实同生共死。
   async createActionLogInTx(tx: Db, input: ForumModeratorActionLogInput) {
     return this.insertActionLog(tx, input)
   }
 
-  /**
-   * 查询当前版主自己的操作日志。
-   * moderatorId 由服务端身份解析后强制传入，禁止信任客户端传入的 moderatorId。
-   */
+  // 查询当前版主自己的操作日志。 moderatorId 由服务端身份解析后强制传入，禁止信任客户端传入的 moderatorId。
   async getAppActionLogPage(
     moderatorId: number,
     query: QueryAppForumModeratorActionLogDto,
@@ -175,10 +164,7 @@ export class ForumModeratorActionLogService {
     return toPageResult(list, total, pageParams.page)
   }
 
-  /**
-   * 管理端分页查询版主操作日志。
-   * 保留 beforeData/afterData 快照，供具备后台权限的运维审计场景使用。
-   */
+  // 管理端分页查询版主操作日志。 保留 beforeData/afterData 快照，供具备后台权限的运维审计场景使用。
   async getAdminActionLogPage(query: QueryAdminForumModeratorActionLogDto) {
     const pageDto = query
 

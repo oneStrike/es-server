@@ -29,20 +29,17 @@ const ENABLE_PLATFORM_VALUES = new Set<number>(
 export class AppPageService {
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 数据库连接实例 */
+  // 数据库连接实例
   private get db() {
     return this.drizzle.db
   }
 
-  /** 页面表 */
+  // 页面表
   private get appPage() {
     return this.drizzle.schema.appPage
   }
 
-  /**
-   * 创建页面配置。
-   * 页面 `code` 和 `path` 命中唯一约束时统一转成业务异常，避免泄露底层数据库错误。
-   */
+  // 创建页面配置。 页面 `code` 和 `path` 命中唯一约束时统一转成业务异常，避免泄露底层数据库错误。
   async createPage(createPageDto: CreateAppPageDto) {
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.appPage).values(createPageDto),
@@ -51,11 +48,7 @@ export class AppPageService {
     return true
   }
 
-  /**
-   * 根据名称、编码、权限和平台等条件查询页面分页。
-   * `enablePlatform` 保持 JSON 字符串输入，兼容 query 参数的序列化方式。
-   * 平台过滤使用 PostgreSQL 数组重叠操作符 `&&`，匹配任意一个命中平台即可返回。
-   */
+  // 根据名称、编码、权限和平台等条件查询页面分页。 `enablePlatform` 保持 JSON 字符串输入，兼容 query 参数的序列化方式。 平台过滤使用 PostgreSQL 数组重叠操作符 `&&`，匹配任意一个命中平台即可返回。
   async findPage(queryPageDto: QueryAppPageDto) {
     const { name, code, accessLevel, isEnabled, enablePlatform, ...other } =
       queryPageDto
@@ -112,9 +105,7 @@ export class AppPageService {
     )
   }
 
-  /**
-   * 查询所有已启用页面，供 app/public 侧一次性拉取静态页面配置。
-   */
+  // 查询所有已启用页面，供 app/public 侧一次性拉取静态页面配置。
   async findActivePages() {
     const pages = await this.db.query.appPage.findMany({
       where: { isEnabled: true },
@@ -122,9 +113,7 @@ export class AppPageService {
     return pages.map((page) => this.toAppPageOutputDto(page))
   }
 
-  /**
-   * 按主键查询页面详情，未命中时抛出 `BusinessException`。
-   */
+  // 按主键查询页面详情，未命中时抛出 `BusinessException`。
   async findById(dto: IdDto) {
     const page = await this.db.query.appPage.findFirst({
       where: { id: dto.id },
@@ -139,9 +128,7 @@ export class AppPageService {
     return this.toAppPageOutputDto(page)
   }
 
-  /**
-   * 按页面编码查询详情，适用于需要通过业务编码定位页面的后台入口。
-   */
+  // 按页面编码查询详情，适用于需要通过业务编码定位页面的后台入口。
   async findByCode(dto: QueryPageByCodeDto) {
     const page = await this.db.query.appPage.findFirst({
       where: { code: dto.code },
@@ -156,10 +143,7 @@ export class AppPageService {
     return this.toAppPageOutputDto(page)
   }
 
-  /**
-   * 更新页面配置主体字段。
-   * 主键不存在或命中唯一约束时，分别转换为明确的业务异常。
-   */
+  // 更新页面配置主体字段。 主键不存在或命中唯一约束时，分别转换为明确的业务异常。
   async updatePage(updatePageDto: UpdateAppPageDto) {
     const { id, ...updateData } = updatePageDto
 
@@ -177,10 +161,7 @@ export class AppPageService {
     return true
   }
 
-  /**
-   * 批量下线页面。
-   * 该操作只更新启用状态，保留页面记录用于后续审计和恢复。
-   */
+  // 批量下线页面。 该操作只更新启用状态，保留页面记录用于后续审计和恢复。
   async batchDelete(dto: IdsDto) {
     const { ids } = dto
     await this.drizzle.withErrorHandling(
@@ -194,10 +175,7 @@ export class AppPageService {
     return true
   }
 
-  /**
-   * 解析页面平台筛选参数。
-   * 仅接受平台枚举值数组，避免合法 JSON 在 service 层被误判成 500。
-   */
+  // 解析页面平台筛选参数。 仅接受平台枚举值数组，避免合法 JSON 在 service 层被误判成 500。
   private parseEnablePlatforms(enablePlatform?: string) {
     if (!enablePlatform || enablePlatform === '[]') {
       return undefined

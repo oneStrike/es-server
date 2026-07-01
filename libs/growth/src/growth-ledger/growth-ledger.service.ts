@@ -75,17 +75,7 @@ export class GrowthLedgerService {
   private readonly publicGrowthLedgerContextKeys: readonly PublicGrowthLedgerContextKey[] =
     PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS
 
-  /**
-   * 按规则结算（发放）
-   *
-   * 流程：
-   * 1. 根据资产类型查询对应规则表
-   * 2. 检查规则是否启用、数值是否有效
-   * 3. 创建账本记录（幂等检查）
-   * 4. 检查每日限额和总限额
-   * 5. 更新用户余额
-   * 6. 写入审计日志
-   */
+  // 按规则结算（发放） 流程： 1. 根据资产类型查询对应规则表 2. 检查规则是否启用、数值是否有效 3. 创建账本记录（幂等检查） 4. 检查每日限额和总限额 5. 更新用户余额 6. 写入审计日志
   async applyByRule(
     tx: Db,
     params: ApplyRuleParams,
@@ -319,16 +309,7 @@ export class GrowthLedgerService {
     }
   }
 
-  /**
-   * 直接结算（不走规则表）
-   *
-   * 流程：
-   * 1. 验证变动金额
-   * 2. 创建账本记录（幂等检查）
-   * 3. 消费时检查余额是否充足
-   * 4. 更新用户余额
-   * 5. 写入审计日志
-   */
+  // 直接结算（不走规则表） 流程： 1. 验证变动金额 2. 创建账本记录（幂等检查） 3. 消费时检查余额是否充足 4. 更新用户余额 5. 写入审计日志
   async applyDelta(
     tx: Db,
     params: ApplyDeltaParams,
@@ -475,10 +456,7 @@ export class GrowthLedgerService {
     }
   }
 
-  /**
-   * 将账本 context 裁剪为可公开展示的解释字段。
-   * 只保留少量稳定、业务可读的白名单键，避免把内部调试载荷直接透出。
-   */
+  // 将账本 context 裁剪为可公开展示的解释字段。 只保留少量稳定、业务可读的白名单键，避免把内部调试载荷直接透出。
   sanitizePublicContext(
     context?: Record<string, unknown> | null,
   ): PublicGrowthLedgerContext | undefined {
@@ -508,10 +486,7 @@ export class GrowthLedgerService {
     return Object.fromEntries(sanitizedEntries)
   }
 
-  /**
-   * 分页查询混合成长账本时间线。
-   * 统一返回积分/经验流水，按 createdAt desc, id desc 稳定排序。
-   */
+  // 分页查询混合成长账本时间线。 统一返回积分/经验流水，按 createdAt desc, id desc 稳定排序。
   async getGrowthLedgerPage(dto: QueryGrowthLedgerPageDto) {
     const conditions = [eq(this.growthLedgerRecord.userId, dto.userId)]
 
@@ -627,11 +602,7 @@ export class GrowthLedgerService {
     )
   }
 
-  /**
-   * 增加用户余额
-   * 使用原子 upsert 更新统一余额表
-   * @returns 更新后的余额值
-   */
+  // 增加用户余额 使用原子 upsert 更新统一余额表
   private async incrementUserBalance(
     tx: Db,
     params: {
@@ -673,11 +644,7 @@ export class GrowthLedgerService {
     return balance
   }
 
-  /**
-   * 减少用户余额
-   * 使用条件更新确保余额充足时才扣减
-   * @returns 是否成功扣减
-   */
+  // 减少用户余额 使用条件更新确保余额充足时才扣减
   private async decrementUserBalance(
     tx: Db,
     params: {
@@ -714,10 +681,7 @@ export class GrowthLedgerService {
     return { ok: true, afterValue }
   }
 
-  /**
-   * 写入审计日志
-   * 记录所有结算请求的决策和结果，用于问题排查
-   */
+  // 写入审计日志 记录所有结算请求的决策和结果，用于问题排查
   private async writeAuditLog(
     tx: Db,
     params: {
@@ -781,7 +745,7 @@ export class GrowthLedgerService {
     await this.syncUserLevelByExperience(tx, userId, experience)
   }
 
-  /** 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键 */
+  // 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键
   private formatDateKey(input: Date) {
     return formatDateKeyInAppTimeZone(input)
   }

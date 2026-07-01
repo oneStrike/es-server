@@ -113,21 +113,7 @@ export class MessageChatService {
     return this.drizzle.db
   }
 
-  /**
-   * 打开或创建私聊会话
-   *
-   * 业务逻辑：
-   * 1. 校验目标用户存在且未被封禁
-   * 2. 基于双方用户ID生成唯一的 bizKey
-   * 3. 使用事务原子性地执行：
-   *    - upsert 会话记录（已存在则不创建新的）
-   *    - upsert 发起者成员记录（如果是已退出的会话，重置 leftAt 为 null）
-   *    - upsert 目标用户成员记录（如果是已退出的会话，重置 leftAt 为 null）
-   *
-   * @param userId - 发起者用户ID
-   * @param dto - 包含目标用户ID的请求参数
-   * @returns 会话详情，包含成员信息和未读数
-   */
+  // 打开或创建私聊会话 业务逻辑： 1. 校验目标用户存在且未被封禁 2. 基于双方用户ID生成唯一的 bizKey 3. 使用事务原子性地执行： - upsert 会话记录（已存在则不创建新的） - upsert 发起者成员记录（如果是已退出的会话，重置 leftAt 为 null） - upsert 目标用户成员记录（如果是已退出的会话，重置 leftAt 为 null）
   async openDirectConversation(userId: number, dto: OpenDirectConversationDto) {
     const targetUserId = this.parsePositiveInteger(
       dto.targetUserId,
@@ -255,18 +241,7 @@ export class MessageChatService {
     return this.getConversationDetailForUser(conversation.id, userId)
   }
 
-  /**
-   * 获取用户的会话列表
-   *
-   * 查询逻辑：
-   * 1. 查询用户作为成员且未退出的会话
-   * 2. 按最后消息时间倒序排列（最新消息的会话在最前）
-   * 3. 批量查询最后一条消息内容
-   *
-   * @param userId - 用户ID
-   * @param dto - 分页查询参数
-   * @returns 分页的会话列表
-   */
+  // 获取用户的会话列表 查询逻辑： 1. 查询用户作为成员且未退出的会话 2. 按最后消息时间倒序排列（最新消息的会话在最前） 3. 批量查询最后一条消息内容
   async getConversationList(userId: number, dto: PageDto) {
     const pageParams = this.drizzle.buildPageParams(dto, {
       defaultPageSize: 20,
@@ -372,19 +347,7 @@ export class MessageChatService {
     return toPageResult(list, total, pageParams.page)
   }
 
-  /**
-   * 获取会话的消息记录
-   *
-   * 支持两种分页模式：
-   * 1. cursor 模式：基于消息序列号向前翻页（查看历史消息）
-   * 2. afterSeq 模式：获取指定序列号之后的新消息（用于实时拉取）
-   *
-   * 注意：两种模式互斥，不能同时使用
-   *
-   * @param userId - 用户ID
-   * @param dto - 查询参数，包含会话ID、游标或序列号
-   * @returns 消息列表及分页信息
-   */
+  // 获取会话的消息记录 支持两种分页模式： 1. cursor 模式：基于消息序列号向前翻页（查看历史消息） 2. afterSeq 模式：获取指定序列号之后的新消息（用于实时拉取） 注意：两种模式互斥，不能同时使用
   async getConversationMessages(
     userId: number,
     dto: QueryChatConversationMessagesDto,
@@ -441,18 +404,7 @@ export class MessageChatService {
     }
   }
 
-  /**
-   * 发送消息
-   *
-   * 核心功能：
-   * 1. 消息幂等性：通过 clientMessageId 防止重复发送
-   * 2. 消息序列号生成：使用 PostgreSQL 咨询锁保证并发安全
-   * 3. 实时通知：发送成功后推送 WebSocket 事件
-   *
-   * @param userId - 发送者用户ID
-   * @param dto - 消息内容参数
-   * @returns 消息ID、序列号等信息
-   */
+  // 发送消息 核心功能： 1. 消息幂等性：通过 clientMessageId 防止重复发送 2. 消息序列号生成：使用 PostgreSQL 咨询锁保证并发安全 3. 实时通知：发送成功后推送 WebSocket 事件
   async sendMessage(userId: number, dto: SendChatMessageDto) {
     const normalizedInput = assertChatMessageSendInput(
       dto,
@@ -500,11 +452,7 @@ export class MessageChatService {
     }
   }
 
-  /**
-   * 分发 CHAT 域“消息已创建”领域事件。
-   * - 由 sendMessage 在提交后做一次即时补偿，worker 失败重试时也会复用同一入口
-   * - 读取当前 chat 事实表而不是信任历史快照，避免旧未读数覆盖新状态
-   */
+  // 分发 CHAT 域“消息已创建”领域事件。 - 由 sendMessage 在提交后做一次即时补偿，worker 失败重试时也会复用同一入口 - 读取当前 chat 事实表而不是信任历史快照，避免旧未读数覆盖新状态
   async dispatchMessageCreatedDomainEvent(event: DomainEventRecord) {
     const payload = this.parseChatMessageCreatedDomainEvent(event)
     await this.dispatchMessageCreatedPayload(payload)
@@ -607,22 +555,7 @@ export class MessageChatService {
     )
   }
 
-  /**
-   * 标记会话已读
-   *
-   * 业务逻辑：
-   * 1. 在事务中完成所有数据库操作
-   * 2. 支持已读位置回退保护（不会因为旧消息标记而减少已读范围）
-   * 3. 重新计算未读消息数
-   *
-   * 已读位置回退保护：
-   * - 如果用户之前已读的消息序列号比当前标记的更大，则保留之前的已读位置
-   * - 这样可以防止用户标记旧消息时导致已读位置后退
-   *
-   * @param userId - 用户ID
-   * @param dto - 包含会话ID和已读消息ID的参数
-   * @returns 已读标记结果
-   */
+  // 标记会话已读 业务逻辑： 1. 在事务中完成所有数据库操作 2. 支持已读位置回退保护（不会因为旧消息标记而减少已读范围） 3. 重新计算未读消息数 已读位置回退保护： - 如果用户之前已读的消息序列号比当前标记的更大，则保留之前的已读位置 - 这样可以防止用户标记旧消息时导致已读位置后退
   async markConversationRead(userId: number, dto: MarkConversationReadDto) {
     const conversationId = this.parsePositiveInteger(
       dto.conversationId,
@@ -787,28 +720,7 @@ export class MessageChatService {
     return true
   }
 
-  /**
-   * 创建消息（带重试机制）
-   *
-   * 核心设计：
-   * 1. 使用 PostgreSQL 咨询锁（pg_advisory_xact_lock）保证消息序列号的并发安全
-   * 2. 支持幂等性：通过 clientMessageId 检查是否已发送过相同消息
-   * 3. 重试机制：处理并发时的唯一约束冲突（唯一约束冲突）
-   * 4. 文本消息成功落库后，在同一事务中同步最近使用表情聚合记录
-   *
-   * 并发控制说明：
-   * - 咨询锁在事务级别生效，事务结束后自动释放
-   * - 同一会话的消息创建会串行执行，避免序列号冲突
-   *
-   * @param conversationId - 会话ID
-   * @param userId - 发送者ID
-   * @param messageType - 消息类型
-   * @param content - 消息内容
-   * @param bodyTokens - Emoji 解析后的正文 token 列表
-   * @param payload - 消息载荷
-   * @param clientMessageId - 客户端消息ID（用于幂等）
-   * @returns 消息信息、是否为新消息，以及可选的领域事件即时补偿锚点
-   */
+  // 创建消息（带重试机制） 核心设计： 1. 使用 PostgreSQL 咨询锁（pg_advisory_xact_lock）保证消息序列号的并发安全 2. 支持幂等性：通过 clientMessageId 检查是否已发送过相同消息 3. 重试机制：处理并发时的唯一约束冲突（唯一约束冲突） 4. 文本消息成功落库后，在同一事务中同步最近使用表情聚合记录 并发控制说明： - 咨询锁在事务级别生效，事务结束后自动释放 - 同一会话的消息创建会串行执行，避免序列号冲突
   private async createMessageWithRetry(
     conversationId: number,
     userId: number,
@@ -998,16 +910,7 @@ export class MessageChatService {
     throw lastError
   }
 
-  /**
-   * 根据 clientMessageId 查找消息
-   *
-   * 用于幂等性检查，通过唯一约束字段匹配 clientMessageId
-   *
-   * @param conversationId - 会话ID
-   * @param userId - 发送者ID
-   * @param clientMessageId - 客户端消息ID
-   * @returns 找到的消息或 null
-   */
+  // 根据 clientMessageId 查找消息 用于幂等性检查，通过唯一约束字段匹配 clientMessageId
   private async findMessageByClientMessageId(
     conversationId: number,
     userId: number,
@@ -1022,15 +925,7 @@ export class MessageChatService {
     })
   }
 
-  /**
-   * 确保用户是会话成员
-   *
-   * 权限校验方法，检查用户是否为会话成员且未退出
-   *
-   * @param conversationId - 会话ID
-   * @param userId - 用户ID
-   * @throws BusinessException 如果用户不是会话成员或已退出
-   */
+  // 确保用户是会话成员 权限校验方法，检查用户是否为会话成员且未退出
   private async ensureConversationMember(
     conversationId: number,
     userId: number,
@@ -1052,18 +947,7 @@ export class MessageChatService {
     }
   }
 
-  /**
-   * 获取用户视角的会话详情
-   *
-   * 查询会话信息并构建输出格式，包含：
-   * - 会话基本信息
-   * - 成员信息（包括对端用户信息）
-   * - 当前用户的未读数和已读位置
-   *
-   * @param conversationId - 会话ID
-   * @param userId - 用户ID
-   * @returns 会话详情
-   */
+  // 获取用户视角的会话详情 查询会话信息并构建输出格式，包含： - 会话基本信息 - 成员信息（包括对端用户信息） - 当前用户的未读数和已读位置
   private async getConversationDetailForUser(
     conversationId: number,
     userId: number,
@@ -1144,29 +1028,7 @@ export class MessageChatService {
     )
   }
 
-  /**
-   * 转换会话数据为输出格式
-   *
-   * 输出字段说明：
-   * - id: 会话ID
-   * - unreadCount: 当前用户的未读消息数
-   * - isPinned: 当前用户是否置顶
-   * - lastMessageId/lastMessageAt/lastSenderId: 最后消息信息
-   * - lastReadAt/lastReadMessageId: 当前用户的已读位置
-   * - peerUser: 对端用户信息（私聊场景）
-   *
-   * @param conversation - 会话数据
-   * @param conversation.id - 会话ID
-   * @param conversation.bizKey - 会话业务键
-   * @param conversation.isPinned - 当前用户是否置顶
-   * @param conversation.lastMessageId - 最后消息ID
-   * @param conversation.lastMessageAt - 最后消息时间
-   * @param conversation.lastSenderId - 最后发送者ID
-   * @param conversation.members - 会话成员列表
-   * @param userId - 当前用户ID
-   * @param lastMessageContent - 最后消息内容
-   * @returns 格式化的会话输出
-   */
+  // 转换会话数据为输出格式 输出字段说明： - id: 会话ID - unreadCount: 当前用户的未读消息数 - isPinned: 当前用户是否置顶 - lastMessageId/lastMessageAt/lastSenderId: 最后消息信息 - lastReadAt/lastReadMessageId: 当前用户的已读位置 - peerUser: 对端用户信息（私聊场景）
   private toConversationOutput(
     conversation: {
       id: number
@@ -1234,14 +1096,7 @@ export class MessageChatService {
     }
   }
 
-  /**
-   * 批量获取消息内容映射
-   *
-   * 用于会话列表中批量查询最后消息内容，避免 N+1 查询问题
-   *
-   * @param ids - 消息ID数组
-   * @returns 消息ID -> 消息内容的映射
-   */
+  // 批量获取消息内容映射 用于会话列表中批量查询最后消息内容，避免 N+1 查询问题
   private async getMessageMapByIds(ids: bigint[]) {
     if (!ids.length) {
       return new Map<string, ChatMessageContentSource>()
@@ -1265,14 +1120,7 @@ export class MessageChatService {
     )
   }
 
-  /**
-   * 转换消息数据为输出格式
-   *
-   * 主要处理 bigint 类型转换为字符串，避免前端精度丢失
-   *
-   * @param item - 消息数据
-   * @returns 格式化的消息输出
-   */
+  // 转换消息数据为输出格式 主要处理 bigint 类型转换为字符串，避免前端精度丢失
   private toMessageOutput(
     item: typeof chatMessage.$inferSelect,
   ): ChatMessageOutput {
@@ -1482,11 +1330,7 @@ export class MessageChatService {
     return value === undefined || typeof value === 'string'
   }
 
-  /**
-   * 提交后尝试即时分发新消息领域事件。
-   * - 即时分发失败不回滚主链路，保留 dispatch 待 worker 重试
-   * - 即时分发成功后标记 dispatch 为 success，避免后续重复 fanout
-   */
+  // 提交后尝试即时分发新消息领域事件。 - 即时分发失败不回滚主链路，保留 dispatch 待 worker 重试 - 即时分发成功后标记 dispatch 为 success，避免后续重复 fanout
   private async tryDispatchMessageCreatedDomainEvent(
     eventId: bigint,
     payload: ChatMessageCreatedDomainEventPayload,
@@ -1558,28 +1402,14 @@ export class MessageChatService {
     }
   }
 
-  /**
-   * 构建私聊会话的业务标识
-   *
-   * 使用两个用户ID的最小值和最大值组合，确保双向一致性
-   * 例如：用户1和用户2的会话，无论谁发起，bizKey 都是 "direct:1:2"
-   *
-   * @param userId - 用户ID
-   * @param targetUserId - 目标用户ID
-   * @returns 业务标识字符串
-   */
+  // 构建私聊会话的业务标识 使用两个用户ID的最小值和最大值组合，确保双向一致性 例如：用户1和用户2的会话，无论谁发起，bizKey 都是 "direct:1:2"
   private buildDirectBizKey(userId: number, targetUserId: number) {
     const minUserId = Math.min(userId, targetUserId)
     const maxUserId = Math.max(userId, targetUserId)
     return `direct:${minUserId}:${maxUserId}`
   }
 
-  /**
-   * 标准化消息查询数量限制
-   *
-   * @param limit - 原始限制值
-   * @returns 标准化后的限制值
-   */
+  // 标准化消息查询数量限制
   private normalizeMessageLimit(limit?: number) {
     const value = Number.isFinite(Number(limit))
       ? Math.floor(Number(limit))
@@ -1620,15 +1450,7 @@ export class MessageChatService {
     return BigInt(value.trim())
   }
 
-  /**
-   * 解析游标参数
-   *
-   * 游标为可选参数，空值返回 undefined
-   *
-   * @param cursor - 游标字符串
-   * @param fieldName - 字段名
-   * @returns BigInt 游标值或 undefined
-   */
+  // 解析游标参数 游标为可选参数，空值返回 undefined
   private parseBigintCursor(cursor: string | undefined, fieldName: string) {
     if (!cursor || !cursor.trim()) {
       return undefined
@@ -1639,17 +1461,7 @@ export class MessageChatService {
     return BigInt(cursor.trim())
   }
 
-  /**
-   * 将 clientMessageId 附加到消息载荷中
-   *
-   * 如果载荷不存在，创建新的载荷对象
-   * 如果载荷已存在，合并 clientMessageId 字段
-   *
-   * @param payload - 原始载荷
-   * @param clientMessageId - 客户端消息ID
-   * @returns 合并后的载荷
-   * @throws BadRequestException 如果原始载荷不是 JSON 对象
-   */
+  // 将 clientMessageId 附加到消息载荷中 如果载荷不存在，创建新的载荷对象 如果载荷已存在，合并 clientMessageId 字段
   private attachClientMessageId(
     payload: ChatTextMessagePayload,
     clientMessageId?: string,

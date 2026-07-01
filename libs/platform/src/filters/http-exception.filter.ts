@@ -54,11 +54,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     },
   }
 
-  /**
-   * 异常处理入口
-   *
-   * 提取错误信息、记录结构化日志，并返回统一的响应格式。
-   */
+  // 异常处理入口 提取错误信息、记录结构化日志，并返回统一的响应格式。
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<FastifyReply>()
@@ -103,12 +99,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     })
   }
 
-  /**
-   * 提取异常信息
-   *
-   * 按优先级处理：HttpException > Postgres 错误 > 未知错误。
-   * 对于数据库错误，尽可能提取约束、表名、字段等上下文信息。
-   */
+  // 提取异常信息 按优先级处理：HttpException > Postgres 错误 > 未知错误。 对于数据库错误，尽可能提取约束、表名、字段等上下文信息。
   private extractErrorInfo(exception: unknown) {
     const postgresError = this.extractPostgresError(exception)
 
@@ -191,11 +182,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
   }
 
-  /**
-   * 提取 Postgres 错误
-   *
-   * 支持直接抛出的数据库错误，以及 HttpException 包装的数据库错误（通过 cause 传递）。
-   */
+  // 提取 Postgres 错误 支持直接抛出的数据库错误，以及 HttpException 包装的数据库错误（通过 cause 传递）。
   private extractPostgresError(exception: unknown) {
     const directError = extractError(exception)
     if (directError) {
@@ -209,7 +196,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return null
   }
 
-  /** 从包装异常中读取原始 cause，供数据库错误元信息提取复用。 */
+  // 从包装异常中读取原始 cause，供数据库错误元信息提取复用。
   private getErrorCause(error: unknown): unknown {
     return error instanceof Error ? error.cause : undefined
   }
@@ -247,11 +234,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     )
   }
 
-  /**
-   * 安全解析请求日志字段
-   *
-   * 解析失败时返回 undefined，避免日志记录本身影响异常处理流程。
-   */
+  // 安全解析请求日志字段 解析失败时返回 undefined，避免日志记录本身影响异常处理流程。
   private safeParse(req: FastifyRequest | undefined) {
     try {
       return req ? buildRequestLogFields(req) : undefined

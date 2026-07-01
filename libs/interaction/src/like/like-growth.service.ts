@@ -46,10 +46,7 @@ export class LikeGrowthService {
     return this.drizzle.db
   }
 
-  /**
-   * 构建点赞创建事件 envelope。
-   * 统一沉淀点赞类事件的 code / key / target / operator 语义。
-   */
+  // 构建点赞创建事件 envelope。 统一沉淀点赞类事件的 code / key / target / operator 语义。
   private buildLikeCreatedEventEnvelope(params: {
     ruleType: GrowthRuleTypeEnum
     userId: number
@@ -66,10 +63,7 @@ export class LikeGrowthService {
     })
   }
 
-  /**
-   * 构建评论被点赞事件 envelope。
-   * 评论作者是事件主体，点赞人单独放入 operatorId，便于后续通知与治理复用。
-   */
+  // 构建评论被点赞事件 envelope。 评论作者是事件主体，点赞人单独放入 operatorId，便于后续通知与治理复用。
   private buildCommentLikedEventEnvelope(params: {
     commentId: number
     authorUserId: number
@@ -86,15 +80,7 @@ export class LikeGrowthService {
     })
   }
 
-  /**
-   * 点赞创建奖励
-   * 根据点赞目标类型发放对应的成长奖励（积分、经验值）
-   * - 作品、章节、主题点赞：奖励点赞人
-   * - 评论点赞：奖励评论作者
-   * @param targetType - 点赞目标类型
-   * @param targetId - 目标ID
-   * @param userId - 执行点赞的用户ID
-   */
+  // 点赞创建奖励 根据点赞目标类型发放对应的成长奖励（积分、经验值） - 作品、章节、主题点赞：奖励点赞人 - 评论点赞：奖励评论作者
   async rewardLikeCreated(
     targetType: LikeTargetTypeEnum,
     targetId: number,
@@ -134,12 +120,7 @@ export class LikeGrowthService {
     }
   }
 
-  /**
-   * 奖励被点赞的评论作者
-   * 查询评论作者并发放积分和经验值奖励
-   * @param commentId - 评论ID
-   * @param likerUserId - 点赞者用户ID
-   */
+  // 奖励被点赞的评论作者 查询评论作者并发放积分和经验值奖励
   private async rewardCommentLiked(
     commentId: number,
     likerUserId: number,

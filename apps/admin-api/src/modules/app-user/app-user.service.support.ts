@@ -26,49 +26,47 @@ export abstract class AppUserServiceSupport {
     protected readonly userCoreService: UserCoreService,
   ) {}
 
-  /** 数据库连接实例。 */
+  // 数据库连接实例。
   protected get db() {
     return this.drizzle.db
   }
 
-  /** APP 用户表。 */
+  // APP 用户表。
   protected get appUserTable() {
     return this.drizzle.schema.appUser
   }
 
-  /** 管理端用户表。 */
+  // 管理端用户表。
   protected get adminUserTable() {
     return this.drizzle.schema.adminUser
   }
 
-  /** APP 用户计数表。 */
+  // APP 用户计数表。
   protected get appUserCountTable() {
     return this.drizzle.schema.appUserCount
   }
 
-  /** 用户等级规则表。 */
+  // 用户等级规则表。
   protected get userLevelRuleTable() {
     return this.drizzle.schema.userLevelRule
   }
 
-  /** 成长账本记录表。 */
+  // 成长账本记录表。
   protected get growthLedgerRecordTable() {
     return this.drizzle.schema.growthLedgerRecord
   }
 
-  /** 用户徽章分配表。 */
+  // 用户徽章分配表。
   protected get userBadgeAssignmentTable() {
     return this.drizzle.schema.userBadgeAssignment
   }
 
-  /** 用户徽章表。 */
+  // 用户徽章表。
   protected get userBadgeTable() {
     return this.drizzle.schema.userBadge
   }
 
-  /**
-   * 按批次处理 ID 列表，避免全量修复类操作一次性压满数据库。
-   */
+  // 按批次处理 ID 列表，避免全量修复类操作一次性压满数据库。
   protected async processIdsInBatches(
     ids: number[],
     batchSize: number,
@@ -80,11 +78,7 @@ export abstract class AppUserServiceSupport {
     }
   }
 
-  /**
-   * 校验当前管理端用户是否为超级管理员。
-   *
-   * 已登录但角色不足时返回 `ForbiddenException`，避免前端误判为登录失效。
-   */
+  // 校验当前管理端用户是否为超级管理员，角色不足抛出 ForbiddenException。
   protected async ensureSuperAdmin(adminUserId: number) {
     const [adminUser] = await this.db
       .select({ role: this.adminUserTable.role })
@@ -104,11 +98,7 @@ export abstract class AppUserServiceSupport {
     }
   }
 
-  /**
-   * 将共享用户计数读模型收敛为管理端 DTO 约定的输出结构。
-   *
-   * 运行时显式排除 `userId` 等内部字段，并为缺失值兜底为 0。
-   */
+  // 将共享用户计数读模型收敛为管理端 DTO 约定的输出结构，缺失值兜底为 0。
   protected mapAdminAppUserCounts(counts?: Partial<AdminAppUserCountDto>) {
     return {
       commentCount: counts?.commentCount ?? 0,
@@ -126,16 +116,12 @@ export abstract class AppUserServiceSupport {
     }
   }
 
-  /** 构建日期范围查询条件。 */
+  // 构建日期范围查询条件。
   protected buildDateRange(startDate?: string, endDate?: string) {
     return buildDateOnlyRangeInAppTimeZone(startDate, endDate)
   }
 
-  /**
-   * 构建后台人工操作稳定业务键。
-   *
-   * 同一 `operationKey` 重试时保持 bizKey 不变，用于账本幂等和审计串联。
-   */
+  // 构建后台人工操作稳定业务键，同一 operationKey 重试时保持 bizKey 不变。
   protected buildManualOperationBizKey(
     action: string,
     adminUserId: number,
@@ -145,11 +131,7 @@ export abstract class AppUserServiceSupport {
     return `${action}:admin:${adminUserId}:user:${appUserId}:operation:${operationKey}`
   }
 
-  /**
-   * 归一化出生日期输入。
-   *
-   * 支持保留 `undefined`、显式清空为 `null`，以及把 `Date` 收口为业务时区日期串。
-   */
+  // 归一化出生日期输入：保留 undefined、显式清空为 null、Date 收口为业务时区日期串。
   protected normalizeBirthDate(value?: string | Date | null) {
     if (value === undefined) {
       return undefined
@@ -163,11 +145,7 @@ export abstract class AppUserServiceSupport {
     return formatDateOnlyInAppTimeZone(value)
   }
 
-  /**
-   * 生成当前未占用的 6 位账号。
-   *
-   * 新建后台创建用户时仍沿用现有随机账号策略，避免与既有注册口径漂移。
-   */
+  // 生成当前未占用的 6 位账号，最多重试指定次数。
   protected async generateUniqueAccount() {
     for (
       let attempt = 0;

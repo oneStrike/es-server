@@ -248,10 +248,7 @@ export class FollowService {
     }
   }
 
-  /**
-   * 按目标类型分页查询当前用户的关注记录。
-   * 该方法只负责分页与详情聚合，不直接决定对外字段命名。
-   */
+  // 按目标类型分页查询当前用户的关注记录。 该方法只负责分页与详情聚合，不直接决定对外字段命名。
   private async getFollowPageByTargetType(
     query: FollowPageCommandDto,
     targetType: FollowTargetType,
@@ -325,9 +322,7 @@ export class FollowService {
     }
   }
 
-  /**
-   * 分页查询指定用户关注的作者。
-   */
+  // 分页查询指定用户关注的作者。
   async getFollowedAuthorPage(query: FollowPageCommandDto) {
     const { page, detailMap } = await this.getFollowPageByTargetType(
       query,
@@ -356,9 +351,7 @@ export class FollowService {
     }
   }
 
-  /**
-   * 分页查询指定用户关注的论坛板块。
-   */
+  // 分页查询指定用户关注的论坛板块。
   async getFollowedSectionPage(query: FollowPageCommandDto) {
     const { page, detailMap } = await this.getFollowPageByTargetType(
       query,
@@ -387,9 +380,7 @@ export class FollowService {
     }
   }
 
-  /**
-   * 分页查询指定用户关注的话题。
-   */
+  // 分页查询指定用户关注的话题。
   async getFollowedHashtagPage(query: FollowPageCommandDto) {
     const { page, detailMap } = await this.getFollowPageByTargetType(
       query,
@@ -415,9 +406,7 @@ export class FollowService {
     }
   }
 
-  /**
-   * 分页查询指定用户关注的用户。
-   */
+  // 分页查询指定用户关注的用户。
   async getFollowingUserPage(query: FollowPageCommandDto) {
     const pageParams = this.drizzle.buildPageParams(query, {
       table: this.userFollow,
@@ -475,9 +464,7 @@ export class FollowService {
     }
   }
 
-  /**
-   * 分页查询关注指定用户的用户。
-   */
+  // 分页查询关注指定用户的用户。
   async getFollowerUserPage(query: FollowPageCommandDto) {
     const pageParams = this.drizzle.buildPageParams(query, {
       table: this.userFollow,
