@@ -3,6 +3,7 @@ import type { AppUserSelect } from '@db/schema'
 import type { SessionClientContext } from '@libs/identity/session.type'
 import type { UserGrowthSnapshot } from '@libs/user/user.type'
 import { randomInt } from 'node:crypto'
+import { env } from 'node:process'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
 import { AuthSessionService } from '@libs/identity/session.service'
@@ -38,6 +39,18 @@ import { SmsService } from './sms.service'
 
 const APP_USER_ACCOUNT_UNIQUE_CONSTRAINT = 'app_user_account_key'
 const APP_USER_ACCOUNT_MAX_RETRIES = 5
+const APP_LOGIN_ALIYUN_VERIFY_DISABLED =
+  env.APP_LOGIN_ALIYUN_VERIFY_DISABLED === 'true'
+
+interface RegisterOptions {
+  skipVerifyCode?: boolean
+}
+
+interface LoginVerifyCodeInput {
+  phone: string
+  code: string
+  templateCode: SmsTemplateCodeEnum
+}
 
 /**
  * 应用端认证服务。
@@ -108,7 +121,11 @@ export class AuthService {
   }
 
   // 用户注册：校验短信验证码后创建用户并初始化资料。
-  async register(body: LoginDto, clientContext: SessionClientContext) {
+  async register(
+    body: LoginDto,
+    clientContext: SessionClientContext,
+    options: RegisterOptions = {},
+  ) {
     if (!body.phone) {
       throw new BadRequestException(
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_REGISTER,
@@ -118,11 +135,13 @@ export class AuthService {
       throw new BadRequestException(AppAuthErrorMessages.VERIFY_CODE_REQUIRED)
     }
 
-    await this.smsService.validateVerifyCode({
-      phone: body.phone,
-      code: body.code,
-      templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
-    })
+    if (!options.skipVerifyCode) {
+      await this.smsService.validateVerifyCode({
+        phone: body.phone,
+        code: body.code,
+        templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
+      })
+    }
 
     const hashedPassword = await this.scryptService.encryptPassword(
       this.passwordService.generateSecureRandomPassword(),
@@ -183,7 +202,9 @@ export class AuthService {
 
     if (!user) {
       if (body.code) {
-        return this.register(body, clientContext)
+        return this.register(body, clientContext, {
+          skipVerifyCode: APP_LOGIN_ALIYUN_VERIFY_DISABLED,
+        })
       }
 
       throw new UnauthorizedException(
@@ -205,7 +226,7 @@ export class AuthService {
         )
       }
 
-      await this.smsService.validateVerifyCode({
+      await this.validateLoginVerifyCode({
         phone: user.phoneNumber,
         code: body.code,
         templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
@@ -239,6 +260,14 @@ export class AuthService {
     this.ensureSessionAllowed(user)
 
     return this.handleLoginSuccess(user, clientContext)
+  }
+
+  private async validateLoginVerifyCode(input: LoginVerifyCodeInput) {
+    if (APP_LOGIN_ALIYUN_VERIFY_DISABLED) {
+      return
+    }
+
+    await this.smsService.validateVerifyCode(input)
   }
 
   // 更新用户最后登录时间与属地快照。
