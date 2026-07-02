@@ -2,6 +2,7 @@ import type { Db } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 import type { SessionClientContext } from '@libs/identity/session.type'
 import type { UserGrowthSnapshot } from '@libs/user/user.type'
+import type { LoginVerifyCodeInput, RegisterOptions } from './auth.type'
 import { randomInt } from 'node:crypto'
 import { env } from 'node:process'
 import { DrizzleService } from '@db/core'
@@ -41,16 +42,6 @@ const APP_USER_ACCOUNT_UNIQUE_CONSTRAINT = 'app_user_account_key'
 const APP_USER_ACCOUNT_MAX_RETRIES = 5
 const APP_LOGIN_ALIYUN_VERIFY_DISABLED =
   env.APP_LOGIN_ALIYUN_VERIFY_DISABLED === 'true'
-
-interface RegisterOptions {
-  skipVerifyCode?: boolean
-}
-
-interface LoginVerifyCodeInput {
-  phone: string
-  code: string
-  templateCode: SmsTemplateCodeEnum
-}
 
 /**
  * 应用端认证服务。
@@ -262,6 +253,7 @@ export class AuthService {
     return this.handleLoginSuccess(user, clientContext)
   }
 
+  // 登录验证码校验，环境变量开启时跳过阿里云验证。
   private async validateLoginVerifyCode(input: LoginVerifyCodeInput) {
     if (APP_LOGIN_ALIYUN_VERIFY_DISABLED) {
       return

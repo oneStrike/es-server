@@ -78,6 +78,7 @@ FROM oven/bun:alpine AS bun-runtime
 FROM node:24-alpine AS runtime
 
 ARG APP_TYPE=admin
+# TZ 依赖 Node.js 24 内置 ICU 时区数据，无需安装系统 tzdata
 ENV NODE_ENV=production \
     PORT=8080 \
     TZ="Asia/Shanghai"

@@ -769,7 +769,10 @@ export class AppAnnouncementService {
       return undefined
     }
     if (!Array.isArray(enablePlatform) || enablePlatform.length === 0) {
-      throw new BadRequestException('发布平台不能为空')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '发布平台不能为空',
+      )
     }
 
     const platforms = [...new Set(enablePlatform.map((item) => Number(item)))]
@@ -778,7 +781,10 @@ export class AppAnnouncementService {
         (item) => !Number.isInteger(item) || !ENABLE_PLATFORM_VALUES.has(item),
       )
     ) {
-      throw new BadRequestException('发布平台包含不支持的平台')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '发布平台包含不支持的平台',
+      )
     }
 
     return platforms as EnablePlatformEnum[]
@@ -793,7 +799,10 @@ export class AppAnnouncementService {
     }
 
     if (input.popupBackgroundPosition === null) {
-      throw new BadRequestException('弹窗背景位置不能为空')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '弹窗背景位置不能为空',
+      )
     }
   }
 
