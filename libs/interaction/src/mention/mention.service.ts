@@ -15,7 +15,7 @@ import { MessageDomainEventPublisher } from '@libs/message/eventing/message-doma
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UserService } from '@libs/user/user.service'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { CommentTargetTypeEnum } from '../comment/comment.constant'
 import { MentionSourceTypeEnum } from './mention.constant'
@@ -313,7 +313,10 @@ export class MentionService {
       .map((mention) => {
         const nickname = mention.nickname.trim()
         if (!nickname) {
-          throw new BadRequestException('提及昵称不能为空')
+          throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '提及昵称不能为空',
+    )
         }
         if (
           !Number.isInteger(mention.start) ||
@@ -322,12 +325,18 @@ export class MentionService {
           mention.end <= mention.start ||
           mention.end > content.length
         ) {
-          throw new BadRequestException('提及位置非法')
+          throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '提及位置非法',
+    )
         }
 
         const text = content.slice(mention.start, mention.end)
         if (text !== `@${nickname}`) {
-          throw new BadRequestException('提及位置与正文不匹配')
+          throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '提及位置与正文不匹配',
+    )
         }
 
         return {
@@ -343,7 +352,10 @@ export class MentionService {
     let previousEnd = -1
     for (const mention of normalizedMentions) {
       if (mention.start < previousEnd) {
-        throw new BadRequestException('提及区间不能重叠')
+        throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '提及区间不能重叠',
+    )
       }
       previousEnd = mention.end
     }

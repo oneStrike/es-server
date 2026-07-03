@@ -449,7 +449,10 @@ export class MessageNotificationTemplateService {
   private normalizeTemplateText(value: string, errorMessage: string) {
     const normalized = value.trim()
     if (!normalized) {
-      throw new BadRequestException(errorMessage)
+      throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      errorMessage,
+    )
     }
     return normalized
   }
@@ -498,9 +501,10 @@ export class MessageNotificationTemplateService {
 
     for (const path of placeholders) {
       if (!allowedPlaceholders.has(path)) {
-        throw new BadRequestException(
-          `${fieldName} 存在当前通知分类不支持的占位符: ${path}`,
-        )
+throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `${fieldName} 存在当前通知分类不支持的占位符: ${path}`,
+      )
       }
     }
   }
@@ -517,11 +521,17 @@ export class MessageNotificationTemplateService {
     value: unknown,
   ): MessageNotificationCategoryKey {
     if (typeof value !== 'string' || !value.trim()) {
-      throw new BadRequestException('通知分类非法')
-    }
-    const categoryKey = value.trim() as MessageNotificationCategoryKey
-    if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
-      throw new BadRequestException('通知分类非法')
+throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '通知分类非法',
+    )
+  }
+  const categoryKey = value.trim() as MessageNotificationCategoryKey
+  if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '通知分类非法',
+    )
     }
     return categoryKey
   }

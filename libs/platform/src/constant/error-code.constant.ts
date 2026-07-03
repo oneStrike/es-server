@@ -63,6 +63,10 @@ export const BusinessErrorCode = {
    * 额度不足
    */
   QUOTA_NOT_ENOUGH: 20005,
+  /**
+   * 操作目标类型不支持
+   */
+  INVALID_OPERATION_TARGET: 20006,
 } as const
 
 export function getPlatformErrorCode(status: number): number {

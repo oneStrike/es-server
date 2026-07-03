@@ -5,9 +5,10 @@ import type {
 import type { LikePageUserQuery } from './like.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
-import { SceneTypeEnum } from '@libs/platform/constant'
+import { BusinessErrorCode, SceneTypeEnum } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, inArray, lt } from 'drizzle-orm'
 import {
   LikeRecordDto,
@@ -121,11 +122,14 @@ export class LikeService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  // 按目标类型获取已注册的解析器，未注册时抛出 BadRequestException。
+  // 按目标类型获取已注册的解析器，未注册时抛出 BusinessException。
   private getResolver(targetType: LikeTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
-      throw new BadRequestException('不支持的点赞目标类型')
+      throw new BusinessException(
+      BusinessErrorCode.INVALID_OPERATION_TARGET,
+      '不支持的点赞目标类型',
+    )
     }
     return resolver
   }

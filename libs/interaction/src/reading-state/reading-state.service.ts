@@ -3,8 +3,9 @@ import type {
   ReadingHistoryItem,
 } from './reading-state.type'
 import { DrizzleService, toPageResult } from '@db/core'
-import { ContentTypeEnum } from '@libs/platform/constant'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { BusinessErrorCode, ContentTypeEnum } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, inArray, lt, SQL } from 'drizzle-orm'
 import {
   ClearReadingHistoryCommandDto,
@@ -65,7 +66,10 @@ export class ReadingStateService {
   private getResolver(workType: ContentTypeEnum) {
     const resolver = this.resolvers.get(workType)
     if (!resolver) {
-      throw new BadRequestException('不支持的阅读状态业务类型')
+      throw new BusinessException(
+      BusinessErrorCode.INVALID_OPERATION_TARGET,
+      '不支持的阅读状态业务类型',
+    )
     }
     return resolver
   }

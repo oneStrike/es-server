@@ -218,7 +218,10 @@ export class CommentService {
   getResolver(targetType: CommentTargetTypeEnum): ICommentTargetResolver {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
-      throw new BadRequestException('不支持的评论目标类型')
+      throw new BusinessException(
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        '不支持的评论目标类型',
+      )
     }
     return resolver
   }

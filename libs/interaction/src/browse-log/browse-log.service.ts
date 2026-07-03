@@ -1,7 +1,9 @@
 import type { Db } from '@db/core'
 import type { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolver.type'
 import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, Logger } from '@nestjs/common'
 import { BrowseLogGrowthService } from './browse-log-growth.service'
 import { BrowseLogInteractionService } from './browse-log-interaction.service'
 import { BrowseLogPermissionService } from './browse-log-permission.service'
@@ -46,7 +48,10 @@ export class BrowseLogService {
   getResolver(targetType: BrowseLogTargetTypeEnum): IBrowseLogTargetResolver {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
-      throw new BadRequestException('不支持的浏览目标类型')
+      throw new BusinessException(
+      BusinessErrorCode.INVALID_OPERATION_TARGET,
+      '不支持的浏览目标类型',
+    )
     }
     return resolver
   }

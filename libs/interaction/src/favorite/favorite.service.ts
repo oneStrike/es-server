@@ -2,8 +2,10 @@ import type { FavoriteCreateResult } from './favorite.type'
 import type { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, inArray, lt } from 'drizzle-orm'
 import { FavoritePageCommandDto, FavoriteRecordDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
@@ -66,7 +68,10 @@ export class FavoriteService {
   private getResolver(targetType: FavoriteTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
-      throw new BadRequestException(`不支持的收藏类型: ${targetType}`)
+      throw new BusinessException(
+      BusinessErrorCode.INVALID_OPERATION_TARGET,
+      `不支持的收藏类型: ${targetType}`,
+    )
     }
     return resolver
   }

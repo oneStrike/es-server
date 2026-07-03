@@ -5,7 +5,9 @@ import type {
 import type { NotificationPreferenceSnapshot } from './notification-preference.type'
 import type { MessageNotificationCategoryKey } from './notification.type'
 import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
   getMessageNotificationCategoryLabel,
@@ -130,7 +132,10 @@ export class MessageNotificationPreferenceService {
     preferences: UpdateUserNotificationPreferenceItemDto[],
   ) {
     if (!Array.isArray(preferences) || preferences.length === 0) {
-      throw new BadRequestException('preferences 不能为空')
+      throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      'preferences 不能为空',
+    )
     }
 
     const normalized: UpdateUserNotificationPreferenceItemDto[] = []
@@ -141,7 +146,10 @@ export class MessageNotificationPreferenceService {
         preference.categoryKey,
       )
       if (seenKeys.has(categoryKey)) {
-        throw new BadRequestException('preferences 中存在重复的通知分类')
+        throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      'preferences 中存在重复的通知分类',
+    )
       }
       seenKeys.add(categoryKey)
       normalized.push({
@@ -155,12 +163,18 @@ export class MessageNotificationPreferenceService {
 
   private ensureSupportedCategoryKey<T>(value: T) {
     if (typeof value !== 'string' || !value.trim()) {
-      throw new BadRequestException('通知分类非法')
-    }
+throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '通知分类非法',
+    )
+  }
 
-    const categoryKey = value.trim() as MessageNotificationCategoryKey
-    if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
-      throw new BadRequestException('通知分类非法')
+  const categoryKey = value.trim() as MessageNotificationCategoryKey
+  if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '通知分类非法',
+    )
     }
     return categoryKey
   }

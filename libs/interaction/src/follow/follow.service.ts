@@ -4,9 +4,10 @@ import type {
 } from './follow.type'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.type'
 import { DrizzleService, toPageResult } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -62,7 +63,10 @@ export class FollowService {
   private getResolver(targetType: FollowTargetType) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
-      throw new BadRequestException(`不支持的关注类型: ${targetType}`)
+      throw new BusinessException(
+      BusinessErrorCode.INVALID_OPERATION_TARGET,
+      `不支持的关注类型: ${targetType}`,
+    )
     }
     return resolver
   }

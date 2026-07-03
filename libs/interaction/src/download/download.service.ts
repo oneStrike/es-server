@@ -1,6 +1,8 @@
 import type { IDownloadTargetResolver } from './interfaces/download-target-resolver.type'
 import { DrizzleService, toPageResult } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   DOWNLOAD_WORK_CHAPTER_TARGET_TYPES,
@@ -48,7 +50,10 @@ export class DownloadService {
   private getResolver(targetType: DownloadTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
-      throw new BadRequestException('不支持的下载业务类型')
+      throw new BusinessException(
+      BusinessErrorCode.INVALID_OPERATION_TARGET,
+      '不支持的下载业务类型',
+    )
     }
     return resolver
   }
