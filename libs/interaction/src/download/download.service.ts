@@ -58,6 +58,7 @@ export class DownloadService {
     return resolver
   }
 
+  // 从分页查询结果中提取行数据，兼容单值和对象返回。
   private extractRows<T, TResult = object | null | undefined>(result: TResult) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
@@ -66,6 +67,7 @@ export class DownloadService {
     return Array.isArray(rows) ? rows : []
   }
 
+  // 从分页查询结果中提取 total 字段。
   private extractTotal(result: object | null | undefined) {
     const [row] = this.extractRows<{
       total?: bigint | number | string | null

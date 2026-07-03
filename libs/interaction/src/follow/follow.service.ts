@@ -43,23 +43,27 @@ export class FollowService {
     return this.drizzle.schema.userFollow
   }
 
+  // 对目标 ID 数组去重。
   private uniqueTargetIds(targetIds: number[]) {
     return [...new Set(targetIds)]
   }
 
+  // 从异常中提取稳定错误码，缺失时返回 'unknown'。
   private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
+  // 注册关注目标解析器，供其他模块在应用启动时注册自己的解析器。
   registerResolver(resolver: IFollowTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
-      console.warn(
+      this.logger.warn(
         `Follow resolver for type ${resolver.targetType} is being overwritten.`,
       )
     }
     this.resolvers.set(resolver.targetType, resolver)
   }
 
+  // 按目标类型获取已注册的解析器，未注册时抛出业务异常。
   private getResolver(targetType: FollowTargetType) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
@@ -71,6 +75,7 @@ export class FollowService {
     return resolver
   }
 
+  // 批量检查当前用户对一组目标的关注状态。 返回 targetId → boolean 映射。
   async checkStatusBatch(
     targetType: FollowTargetType,
     targetIds: number[],
@@ -128,6 +133,7 @@ export class FollowService {
     return statusMap
   }
 
+  // 关注指定目标。 在事务内写入关注记录并回填计数，支持唯一约束冲突重试。
   async follow(input: FollowRecordDto): Promise<FollowCreateResult> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
@@ -179,6 +185,7 @@ export class FollowService {
     return { id: record.id }
   }
 
+  // 取消关注指定目标。 在事务内删除关注记录并回退计数。
   async unfollow(input: FollowRecordDto) {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
@@ -207,6 +214,7 @@ export class FollowService {
     return true
   }
 
+  // 检查当前用户是否已关注指定目标。
   async checkFollowStatus(input: FollowRecordDto): Promise<{
     isFollowing: boolean
     isFollowedByTarget: boolean

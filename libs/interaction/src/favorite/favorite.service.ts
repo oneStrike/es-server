@@ -40,14 +40,17 @@ export class FavoriteService {
     return this.drizzle.schema.userFavorite
   }
 
+  // 对目标 ID 数组去重。
   private uniqueTargetIds(targetIds: number[]) {
     return [...new Set(targetIds)]
   }
 
+  // 从异常中提取稳定错误码，缺失时返回 'unknown'。
   private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
+  // 解析收藏目标类型对应的等级业务标识，用于成长奖励路由。
   private resolveLevelBusiness(targetType: FavoriteTargetTypeEnum) {
     return targetType === FavoriteTargetTypeEnum.FORUM_TOPIC
       ? this.forumBusiness
@@ -57,7 +60,7 @@ export class FavoriteService {
   // 供其他模块在应用启动时注册自己的解析器
   registerResolver(resolver: IFavoriteTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
-      console.warn(
+      this.logger.warn(
         `Favorite resolver for type ${resolver.targetType} is being overwritten.`,
       )
     }

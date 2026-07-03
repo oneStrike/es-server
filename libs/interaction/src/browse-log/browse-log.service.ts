@@ -67,6 +67,7 @@ export class BrowseLogService {
     await resolver.applyCountDelta(tx, targetId, delta)
   }
 
+  // 记录浏览日志后处理失败时的降级日志记录，不影响主读取流程。
   private logPostProcessFailure(
     targetType: BrowseLogTargetTypeEnum,
     targetId: number,
