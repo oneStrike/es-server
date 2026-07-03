@@ -496,6 +496,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
     if (!this.isEffectiveStreakDate(lastSignedDate, today)) {
       return undefined
     }
+    // 内部方法返回值，type 签名为 string | undefined，空值按未传处理。
     return this.toDateOnlyValue(lastSignedDate) || undefined
   }
 

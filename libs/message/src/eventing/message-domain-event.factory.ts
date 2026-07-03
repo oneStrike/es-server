@@ -22,6 +22,7 @@ export class MessageDomainEventFactoryService {
     const normalized = value
       ?.replace(MESSAGE_NOTIFICATION_WHITESPACE_REGEX, ' ')
       .trim()
+    // 事件 payload 内部字段，空值按 undefined 处理，不参与输出 DTO 序列化。
     return normalized || undefined
   }
 

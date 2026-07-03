@@ -649,6 +649,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     return {
       currentStreak: progress.currentStreak,
+      // 内部聚合对象，空值按 undefined 处理，与消费方 type 签名一致。
       streakStartedAt:
         this.toDateOnlyValue(progress.streakStartedAt) || undefined,
       lastSignedDate: currentLastSignedDate || undefined,

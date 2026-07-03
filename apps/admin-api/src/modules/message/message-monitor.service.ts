@@ -399,6 +399,7 @@ export class MessageMonitorService {
   // 去除字符串首尾空白，空字符串按未传处理。
   private getTrimmedString(value?: string | null): string | undefined {
     const normalizedValue = value?.trim()
+    // 查询条件专用：空字符串按"不筛选"处理，返回 undefined 让 Drizzle where 跳过该条件。
     return normalizedValue || undefined
   }
 

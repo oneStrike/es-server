@@ -331,6 +331,7 @@ export class MessageNotificationDeliveryService {
       return undefined
     }
     const normalized = value.trim()
+    // 查询条件专用：空字符串按"不筛选"处理，返回 undefined 让 Drizzle where 跳过该条件。
     return normalized || undefined
   }
 

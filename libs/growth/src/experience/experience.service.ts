@@ -541,6 +541,7 @@ export class UserExperienceService {
 
     return {
       ...(addExperienceDto.context ?? {}),
+      // 内部 context 对象，operationNote 类型为可选字段，空字符串按未传处理。
       operationNote: addExperienceDto.operationNote?.trim() || undefined,
       actorUserId: addExperienceDto.adminUserId,
     }
