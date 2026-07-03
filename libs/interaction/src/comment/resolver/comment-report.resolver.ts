@@ -8,7 +8,7 @@ import {
   CommentLevelEnum,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 
 import {
   ReportDispositionActionEnum,
@@ -66,7 +66,10 @@ export class CommentReportResolver
       comment.targetType,
     )
     if (!sceneType) {
-      throw new BadRequestException('评论挂载的目标类型不合法')
+      throw new BusinessException(
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        '评论挂载的目标类型不合法',
+      )
     }
 
     const commentLevel = comment.replyToId
@@ -164,7 +167,10 @@ export class CommentReportResolver
       }
     }
 
-    throw new BadRequestException('评论举报不支持该处置动作')
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '评论举报不支持该处置动作',
+    )
   }
 
   async postDispositionCommit(result: ReportDispositionResult) {

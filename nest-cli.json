@@ -90,6 +90,42 @@
       "compilerOptions": {
         "tsConfigPath": "libs/growth/tsconfig.lib.json"
       }
+    },
+    "interaction": {
+      "type": "library",
+      "root": "libs/interaction",
+      "entryFile": "index",
+      "sourceRoot": "libs/interaction/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/interaction/tsconfig.lib.json"
+      }
+    },
+    "identity": {
+      "type": "library",
+      "root": "libs/identity",
+      "entryFile": "index",
+      "sourceRoot": "libs/identity/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/identity/tsconfig.lib.json"
+      }
+    },
+    "moderation": {
+      "type": "library",
+      "root": "libs/moderation",
+      "entryFile": "index",
+      "sourceRoot": "libs/moderation/sensitive-word/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/moderation/tsconfig.lib.json"
+      }
+    },
+    "user": {
+      "type": "library",
+      "root": "libs/user",
+      "entryFile": "index",
+      "sourceRoot": "libs/user/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/user/tsconfig.lib.json"
+      }
     }
   }
 }

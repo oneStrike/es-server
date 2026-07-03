@@ -8,7 +8,7 @@ import { BusinessErrorCode, CommentLevelEnum } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
 import {
   ILikeTargetResolver,
@@ -65,7 +65,10 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
 
     const sceneType = mapCommentTargetTypeToSceneType(comment.targetType)
     if (!sceneType) {
-      throw new BadRequestException('评论挂载的目标类型不合法')
+      throw new BusinessException(
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        '评论挂载的目标类型不合法',
+      )
     }
 
     // 根据 replyToId 判断评论层级：有回复ID则为回复评论，否则为根评论
