@@ -1,5 +1,5 @@
-import { defineRelationsPart } from 'drizzle-orm'
 import * as schema from '@db/schema'
+import { defineRelationsPart } from 'drizzle-orm'
 
 export const workRelations = defineRelationsPart(schema, (r) => ({
   work: {

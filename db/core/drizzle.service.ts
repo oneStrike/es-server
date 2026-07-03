@@ -19,12 +19,12 @@ import type {
   DrizzlePageQueryInput,
   DrizzlePageQueryOptions,
 } from './query/page-query'
+import * as schema from '@db/schema'
 import { resolveDbQueryConfig } from '@libs/platform/config'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import * as schema from '@db/schema'
 import { DRIZZLE_DB } from './drizzle.provider'
 import {
   executeWithErrorHandling,

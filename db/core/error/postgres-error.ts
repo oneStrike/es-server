@@ -156,7 +156,7 @@ function getPostgresErrorFromValue(
 
 function asCarrier(value: unknown): PostgresErrorCarrier | null {
   return typeof value === 'object' && value !== null
-    ? (value as PostgresErrorCarrier)
+    ? (value)
     : null
 }
 

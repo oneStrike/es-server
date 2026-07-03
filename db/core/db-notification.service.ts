@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common'
 import { DRIZZLE_POOL } from './drizzle.provider'
 
-const POSTGRES_NOTIFICATION_CHANNEL_REGEX = /^[A-Za-z_][A-Za-z0-9_]{0,62}$/
+const POSTGRES_NOTIFICATION_CHANNEL_REGEX = /^[A-Z_]\w{0,62}$/i
 
 /**
  * Stable low-level PostgreSQL LISTEN/NOTIFY primitive for cross-instance coordination.
@@ -68,7 +68,7 @@ export class DbNotificationService implements OnApplicationShutdown {
     this.isShuttingDown = true
     const subscriptions = [...this.subscriptions]
     this.subscriptions.clear()
-    await Promise.all(subscriptions.map((subscription) => subscription.close()))
+    await Promise.all(subscriptions.map(async (subscription) => subscription.close()))
   }
 
   /** 应用关闭时释放全部活动 LISTEN 订阅。 */

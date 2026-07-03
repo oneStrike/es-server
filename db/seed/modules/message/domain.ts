@@ -1,6 +1,4 @@
 import type { Db } from '../../db-client'
-import { and, eq } from 'drizzle-orm'
-import { getCanonicalNotificationTemplateContract } from '../../../libs/message/src/notification/notification-template-contract'
 import {
   appAnnouncement,
   appUser,
@@ -13,6 +11,8 @@ import {
   userComment,
   userNotification,
 } from '@db/schema'
+import { and, eq } from 'drizzle-orm'
+import { getCanonicalNotificationTemplateContract } from '../../../libs/message/src/notification/notification-template-contract'
 import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
 const templateFixtures = [

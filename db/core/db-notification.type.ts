@@ -9,5 +9,5 @@ export interface DbNotificationSubscriptionOptions {
 
 /** 稳定领域类型 `DbNotificationSubscription`。封装订阅生命周期关闭入口。 */
 export interface DbNotificationSubscription {
-  close(): Promise<void>
+  close: () => Promise<void>
 }

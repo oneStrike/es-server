@@ -1,5 +1,5 @@
-import type { Db as CoreDb } from '../core/drizzle.type'
 import type * as operators from 'drizzle-orm'
+import type { Db as CoreDb } from '../core/drizzle.type'
 
 /**
  * Seed relational query 的最小查询配置。
