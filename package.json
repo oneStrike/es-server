@@ -142,6 +142,7 @@
     "commit-msg": "npx --no -- commitlint --edit $1"
   },
   "lint-staged": {
-    "*": "eslint --fix"
+    "*.{ts,tsx,js,jsx,mjs,cjs}": "eslint --fix",
+    "*.{md,json,yml,yaml,jsonc}": "prettier --write"
   }
 }

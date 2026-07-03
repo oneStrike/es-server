@@ -29,14 +29,10 @@ export default antfu(
     },
   },
   {
+    // 全局规则（对所有文件生效）
     rules: {
       'no-console': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/strict-boolean-expressions': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/restrict-template-expressions': 'off',
 
       // 禁用与 Prettier 冲突的样式规则
@@ -54,6 +50,28 @@ export default antfu(
       // 确保花括号规则与 Prettier 一致
       "curly": ['error', 'all'],
       'nonblock-statement-body-position': 'off',
+    },
+  },
+  {
+    // type-aware 规则只对 TypeScript 文件生效（.mjs/.js 等无类型信息）
+    files: ['**/*.ts', '**/*.tsx'],
+    rules: {
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+    },
+  },
+  {
+    // Markdown 代码块虽提取为虚拟 .ts 文件但没有类型信息，禁用 type-aware 规则
+    files: ['**/*.md/**'],
+    rules: {
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
     },
   }
 )
