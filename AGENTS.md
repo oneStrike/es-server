@@ -32,5 +32,5 @@
 
 - 提交信息遵循 Conventional Commits。
 - 仓库当前没有 `pnpm run commit` 脚本；使用普通 `git commit` 即可。
-- 仓库内存在 `.husky/pre-commit` 与 `.husky/commit-msg` 文件，但是否在本地生效取决于 Git hooks 配置；不要把“钩子会自动兜底”当作跳过手工验证的理由。
+- 仓库通过 `simple-git-hooks` 配置 `pre-commit`（lint-staged）与 `commit-msg`（commitlint）钩子，但本地是否生效取决于 hooks 是否已安装；不要把“钩子会自动兜底”当作跳过手工验证的理由。
 - 声称“已修复”“已完成”“验证通过”之前，必须先运行对应验证命令，并以最新输出作为证据。
