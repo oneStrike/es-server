@@ -18,7 +18,7 @@ import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, lt } from 'drizzle-orm'
 import { MESSAGE_NOTIFICATION_CATEGORY_KEYS } from './notification.constant'
 
