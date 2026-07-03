@@ -21,7 +21,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/akaiito-server-nestjs/test/jest-e2e.json",
-    "publish-api:admin": "node publish-api.ts --app admin",
+    "publish-api:admin": "tsx publish-api.ts --app admin",
     "publish-api:app": "tsx publish-api.ts --app app",
     "db:repair:follow-counts": "tsx scripts/rebuild-follow-counts.ts",
     "db:repair:author-counts": "tsx scripts/rebuild-author-counts.ts",
@@ -103,6 +103,8 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.1.0",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@nestjs/cli": "^11.0.23",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.27",
@@ -141,7 +143,8 @@
     "webpack-node-externals": "^3.0.0"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm lint-staged"
+    "pre-commit": "pnpm lint-staged",
+    "commit-msg": "npx --no -- commitlint --edit $1"
   },
   "lint-staged": {
     "*": "eslint --fix"
