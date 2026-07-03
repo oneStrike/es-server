@@ -103,6 +103,18 @@ export interface AuthConfigInterface {
   strategyKey: string
 }
 
+/** RSA 密钥对配置。 */
+export interface RsaConfigInterface {
+  privateKey: string
+  publicKey: string
+}
+
+/** Redis 连接配置。 */
+export interface RedisConfigInterface {
+  connection: string
+  namespace?: string
+}
+
 /** 稳定领域类型 `QueryOrderByInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type QueryOrderByInput = DbQueryOrderBy | string
 

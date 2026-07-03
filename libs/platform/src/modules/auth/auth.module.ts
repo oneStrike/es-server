@@ -1,3 +1,4 @@
+import type { AuthConfigInterface, RsaConfigInterface } from '@libs/platform/types'
 import { Global, Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
@@ -18,8 +19,12 @@ import { LoginGuardService } from './login-guard.service'
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const authConfig = configService.get('auth')
-        const rsaConfig = configService.get('rsa')
+        const authConfig = configService.get<AuthConfigInterface>('auth')
+        const rsaConfig = configService.get<RsaConfigInterface>('rsa')
+
+        if (!authConfig || !rsaConfig) {
+          throw new Error('JwtAuthModule: 缺少 auth 或 rsa 配置')
+        }
 
         return {
           privateKey: rsaConfig.privateKey,

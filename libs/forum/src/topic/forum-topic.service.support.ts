@@ -28,6 +28,7 @@ import type {
   NormalizeVideoValueOptions,
   TopicBodyWriteFields,
   TopicMentionVisibilityTransitionParams,
+  TopicSectionBrief,
 } from './forum-topic.type'
 import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.helper'
 import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type'
@@ -224,7 +225,9 @@ export abstract class ForumTopicServiceSupport {
   }
 
   // 获取主题列表使用的板块简要信息；仅返回列表展示所需字段，供公开分页等场景复用。
-  protected async getTopicSectionBrief(sectionId: number) {
+  protected async getTopicSectionBrief(
+    sectionId: number,
+  ): Promise<TopicSectionBrief | null> {
     const section = await this.db.query.forumSection.findFirst({
       where: {
         id: sectionId,
@@ -268,18 +271,10 @@ export abstract class ForumTopicServiceSupport {
   protected async getTopicSectionBriefMap(
     sectionIds: number[],
     options?: ForumTopicSectionBriefMapOptions,
-  ) {
+  ): Promise<Map<number, TopicSectionBrief>> {
     const uniqueSectionIds = [...new Set(sectionIds)]
     if (uniqueSectionIds.length === 0) {
-      return new Map<
-        number,
-        {
-          id: number
-          name: string
-          icon: string | null
-          cover: string | null
-        }
-      >()
+      return new Map()
     }
 
     const baseWhere = {

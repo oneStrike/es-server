@@ -1,3 +1,4 @@
+import type { RedisConfigInterface } from '@libs/platform/types'
 import { createKeyv } from '@keyv/redis'
 import { isDevelopment } from '@libs/platform/utils';
 import { CacheModule } from '@nestjs/cache-manager'
@@ -19,7 +20,7 @@ export class CustomCacheModule {
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => {
-          const { connection, namespace = 0 } = configService.get('redis')
+          const { connection, namespace = '0' } = configService.get<RedisConfigInterface>('redis') ?? { connection: '' }
 
           const redisUrl = connection
           const stores = isDevelopment()

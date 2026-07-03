@@ -106,6 +106,24 @@ export interface SuperbedReadResponseOptions {
 }
 
 /**
+ * Superbed API 统一响应结构。
+ */
+export interface SuperbedApiResponse {
+  /** 错误码，0 表示成功 */
+  err?: number
+  /** 上传成功后的文件 URL */
+  url?: string
+  /** 错误消息 */
+  msg?: string
+  /** 错误消息（别名） */
+  message?: string
+  /** 错误码（别名） */
+  code?: string | number
+  /** 错误信息（别名） */
+  error?: string
+}
+
+/**
  * 上传文件大类。
  * 用于场景校验、对象 key 规划和 provider 兼容处理。
  */

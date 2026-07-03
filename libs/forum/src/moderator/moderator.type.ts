@@ -1,5 +1,6 @@
 import type { Db } from '@db/core'
 import type {
+  AppUserSelect,
   ForumModeratorApplicationSelect,
   ForumModeratorSectionSelect,
   ForumModeratorSelect,
@@ -126,6 +127,12 @@ export type ModeratorLifecycleSnapshotInput = Pick<
 export type ModeratorSectionViewInput = Pick<
   ForumSectionSelect,
   'id' | 'name'
+>
+
+/** 版主申请/审核人简要信息，仅承载展示所需的 ID、昵称和头像。 */
+export type ModeratorApplicantBrief = Pick<
+  AppUserSelect,
+  'id' | 'nickname' | 'avatarUrl'
 >
 
 /** 版主申请快照入参，承载申请审核日志所需的最小字段子集。 */

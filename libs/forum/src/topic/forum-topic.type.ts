@@ -1,5 +1,8 @@
 import type { Db } from '@db/core'
-import type { ForumTopicSelect } from '@db/schema'
+import type {
+  ForumSectionSelect,
+  ForumTopicSelect,
+} from '@db/schema'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
 import type { CommentTargetHookPayload } from '@libs/interaction/comment/interfaces/comment-target-resolver.type'
 import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
@@ -236,6 +239,15 @@ export interface ForumTopicReviewPolicyOptions {
   notFoundMessage?: string
   client?: Db
 }
+
+/**
+ * 主题列表展示所需的板块简要信息。
+ * 统一 getTopicSectionBrief / getTopicSectionBriefMap 的返回值类型。
+ */
+export type TopicSectionBrief = Pick<
+  ForumSectionSelect,
+  'id' | 'name' | 'icon' | 'cover'
+>
 
 /**
  * 批量获取主题板块简要信息时的可见性过滤选项。

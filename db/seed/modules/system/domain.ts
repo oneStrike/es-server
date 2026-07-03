@@ -125,7 +125,7 @@ export async function seedSystemReferenceData(db: Db) {
 
   for (const dictFixture of DICTIONARY_FIXTURES) {
     const existingDictionary = await db.query.dictionary.findFirst({
-      where: (table, { eq }) => eq(table.code, dictFixture.code),
+      where: eq(dictionary.code, dictFixture.code),
     })
 
     let currentDictionary = existingDictionary

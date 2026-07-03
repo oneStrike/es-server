@@ -1,4 +1,4 @@
-import type { UserCommentSelect } from '@db/schema'
+import type { AppUserSelect, UserCommentSelect } from '@db/schema'
 import type { MaterializedForumHashtagFact } from '@libs/forum/hashtag/forum-hashtag.type'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
@@ -7,10 +7,12 @@ import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
 import type { QueryTargetCommentsDto } from './dto/comment.dto'
 import type { CommentTargetMeta } from './interfaces/comment-target-resolver.type'
 
-/**
- * 事务冲突重试配置。
- * - maxRetries 表示最大重试次数
- */
+/** 评论列表展示所需的用户简要信息。 */
+export type CommentUserBrief = Pick<
+  AppUserSelect,
+  'id' | 'nickname' | 'avatarUrl' | 'isEnabled' | 'status'
+>
+
 /** 稳定领域类型 `TransactionRetryOptions`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TransactionRetryOptions {
   maxRetries?: number

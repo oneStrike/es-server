@@ -74,7 +74,7 @@ export function EnumArrayProperty(options: EnumArrayPropertyOptions) {
     }
 
     decorators.push(
-      Transform(({ value }) => {
+      Transform(({ value }: { value: unknown }) => {
         if (
           (value === undefined || value === null) &&
           options.default !== undefined
@@ -86,7 +86,12 @@ export function EnumArrayProperty(options: EnumArrayPropertyOptions) {
           return value
         }
 
-        return value.map((item) => normalizeEnumArrayItem(item, enumArtifacts))
+        return value.map((item: unknown) =>
+          normalizeEnumArrayItem(
+            item as string | number | boolean | null | undefined,
+            enumArtifacts,
+          ),
+        )
       }),
     )
 

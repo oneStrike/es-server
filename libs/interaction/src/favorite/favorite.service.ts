@@ -84,7 +84,7 @@ export class FavoriteService {
     targetType: FavoriteTargetTypeEnum,
     targetIds: number[],
     userId: number,
-  ) {
+  ): Promise<Map<number, boolean>> {
     if (targetIds.length === 0) {
       return new Map()
     }

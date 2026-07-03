@@ -22,7 +22,7 @@ export function ObjectProperty(options: ObjectPropertyOptions) {
     }
 
     decorators.push(
-      Transform(({ value }) => {
+      Transform(({ value }: { value: unknown }) => {
         if (
           (value === undefined || value === null) &&
           options.default !== undefined

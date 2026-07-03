@@ -52,7 +52,7 @@ export class QiniuUploadProvider {
         objectKey,
         file.tempPath,
         putExtra,
-      )
+      ) as { resp: { statusCode: number }, data: { error?: string } | undefined }
 
       if (resp.statusCode !== 200) {
         throw new InternalServerErrorException(

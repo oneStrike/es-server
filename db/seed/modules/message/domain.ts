@@ -1,3 +1,4 @@
+import type { MessageNotificationCategoryKey } from '@libs/message/notification/notification.type'
 import type { Db } from '../../db-client'
 import {
   appAnnouncement,
@@ -11,11 +12,11 @@ import {
   userComment,
   userNotification,
 } from '@db/schema'
+import { getCanonicalNotificationTemplateContract } from '@libs/message/notification/notification-template-contract'
 import { and, eq } from 'drizzle-orm'
-import { getCanonicalNotificationTemplateContract } from '../../../libs/message/src/notification/notification-template-contract'
 import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
-const templateFixtures = [
+const TEMPLATE_CATEGORY_KEYS: readonly MessageNotificationCategoryKey[] = [
   'comment_reply',
   'comment_mention',
   'comment_like',
@@ -26,7 +27,9 @@ const templateFixtures = [
   'user_followed',
   'system_announcement',
   'task_reminder',
-].map((categoryKey) => {
+]
+
+const templateFixtures = TEMPLATE_CATEGORY_KEYS.map((categoryKey) => {
   const contract = getCanonicalNotificationTemplateContract(categoryKey)
   return {
     categoryKey,
@@ -34,7 +37,7 @@ const templateFixtures = [
     contentTemplate: contract.contentTemplate,
     remark: contract.remark,
   }
-}) as const
+})
 
 export async function seedMessageDomain(db: Db) {
   console.log('🌱 初始化消息域数据...')

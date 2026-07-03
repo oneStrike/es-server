@@ -1,24 +1,9 @@
-import type * as operators from 'drizzle-orm'
-import type { Db as CoreDb } from '../core/drizzle.type'
+import type * as schema from '@db/schema'
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import type { relations } from '../core/drizzle-relations'
 
 /**
- * Seed relational query 的最小查询配置。
+ * Seed 脚本使用的数据库客户端类型。
+ * 传入完整 schema（表 + relations），使 db.query 拥有完整的类型推导。
  */
-export interface SeedQueryConfig {
-  where?: object | ((table: object, ops: typeof operators) => object)
-}
-
-/**
- * Seed 脚本使用的轻量表查询代理。
- */
-export interface SeedTableQuery {
-  findFirst?: (config?: SeedQueryConfig) => Promise<object | undefined>
-  findMany?: (config?: SeedQueryConfig) => Promise<object[]>
-}
-
-/**
- * Seed 脚本的数据库客户端类型，补齐动态 query 代理。
- */
-export type Db = Omit<CoreDb, 'query'> & {
-  query: Record<string, SeedTableQuery>
-}
+export type Db = NodePgDatabase<typeof schema & typeof relations>

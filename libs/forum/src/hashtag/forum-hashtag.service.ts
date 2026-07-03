@@ -1,4 +1,8 @@
-import type { ForumHashtagSelect } from '@db/schema'
+import type {
+  AppUserSelect,
+  ForumHashtagSelect,
+  ForumSectionSelect,
+} from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateForumHashtagInput,
@@ -140,7 +144,9 @@ export class ForumHashtagService {
   }
 
   // 获取公开 topic 列表装配所需的用户简要信息。
-  private async getTopicUserBriefMap(userIds: number[]) {
+  private async getTopicUserBriefMap(
+    userIds: number[],
+  ): Promise<Map<number, Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl'>>> {
     const uniqueUserIds = [...new Set(userIds)]
     if (uniqueUserIds.length === 0) {
       return new Map()
@@ -161,7 +167,9 @@ export class ForumHashtagService {
   }
 
   // 获取公开 topic 列表装配所需的板块简要信息。
-  private async getTopicSectionBriefMap(sectionIds: number[]) {
+  private async getTopicSectionBriefMap(
+    sectionIds: number[],
+  ): Promise<Map<number, Pick<ForumSectionSelect, 'id' | 'name' | 'icon' | 'cover'>>> {
     const uniqueSectionIds = [...new Set(sectionIds)]
     if (uniqueSectionIds.length === 0) {
       return new Map()

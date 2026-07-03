@@ -1,4 +1,4 @@
-import type { AuthConfigInterface } from '@libs/platform/types'
+import type { AuthConfigInterface, RsaConfigInterface } from '@libs/platform/types'
 import type { ITokenStorageService, JwtPayload } from './auth.type'
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -28,7 +28,7 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
   ) {
     // 获取并验证必要的配置
     const authConfig = configService.get<AuthConfigInterface>('auth')
-    const rsaConfig = configService.get('rsa')
+    const rsaConfig = configService.get<RsaConfigInterface>('rsa')
 
     if (!authConfig) {
       throw new Error('AuthStrategy：缺少 auth 配置')

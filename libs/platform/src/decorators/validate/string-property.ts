@@ -104,7 +104,7 @@ export function StringProperty(options: StringPropertyOptions) {
     }
 
     decorators.push(
-      Transform(({ value }) => {
+      Transform(({ value }: { value: unknown }) => {
         if (
           (value === undefined || value === null) &&
           options.default !== undefined

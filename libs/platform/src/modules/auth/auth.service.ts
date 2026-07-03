@@ -1,5 +1,5 @@
-import type { AuthConfigInterface } from '@libs/platform/types'
-import type { RefreshAccessTokenOptions } from './auth.type'
+import type { AuthConfigInterface, RsaConfigInterface } from '@libs/platform/types'
+import type { JwtPayload, RefreshAccessTokenOptions, TokenGenerateInput } from './auth.type'
 import { Buffer } from 'node:buffer'
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -29,7 +29,7 @@ export class AuthService {
   }
 
   // 生成 access/refresh token 对。 两类 token 会分别生成独立 jti，避免刷新链路和登出链路共享同一幂等锚点。
-  async generateTokens(payload) {
+  async generateTokens(payload: TokenGenerateInput) {
     const basePayload = {
       ...payload,
     }
@@ -87,9 +87,9 @@ export class AuthService {
     return this.generateTokens(payload)
   }
 
-  private async verifyRefreshToken(refreshToken: string) {
+  private async verifyRefreshToken(refreshToken: string): Promise<JwtPayload> {
     try {
-      return await this.jwtService.verifyAsync(refreshToken)
+      return await this.jwtService.verifyAsync<JwtPayload>(refreshToken)
     } catch (error) {
       if (
         error instanceof JsonWebTokenError ||
@@ -103,16 +103,16 @@ export class AuthService {
   }
 
   // 计算 token 剩余有效时长并提取 jti。 该方法允许忽略过期校验，用于登出或失效清理场景回收已过期 token。
-  protected async tokenTtlMsAndJti(token: string) {
-    const publicKey = this.configService.get('rsa.publicKey')
+  protected async tokenTtlMsAndJti(token: string): Promise<JwtPayload & { ttlMs: number }> {
+    const rsaConfig = this.configService.get<RsaConfigInterface>('rsa')
 
-    if (!publicKey) {
+    if (!rsaConfig?.publicKey) {
       throw new Error('无法验证 Token: 未配置 RSA 公钥')
     }
 
-    const verifyOptions = { publicKey, algorithms: ['RS256' as const] }
+    const verifyOptions = { publicKey: rsaConfig.publicKey, algorithms: ['RS256' as const] }
 
-    const payload = await this.jwtService.verifyAsync(token, {
+    const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
       ...verifyOptions,
       ignoreExpiration: true,
     })
@@ -141,7 +141,7 @@ export class AuthService {
   }
 
   // 解码 token 载荷而不做签名校验。 仅用于调试或辅助流程，不能替代正式验签结果。
-  async decodeToken(token: string) {
+  async decodeToken(token: string): Promise<JwtPayload> {
     const parts = token.split('.')
     if (parts.length !== 3) {
       throw new UnauthorizedException('无效的 Token 格式')
@@ -149,12 +149,12 @@ export class AuthService {
 
     const payload = parts[1]
     const decoded = Buffer.from(payload, 'base64').toString('utf-8')
-    return JSON.parse(decoded)
+    return JSON.parse(decoded) as JwtPayload
   }
 
   // 验签并解析 Token。 默认校验过期时间；在登出等场景可按需忽略过期限制。
-  async verifyToken(token: string, options?: { ignoreExpiration?: boolean }) {
-    return this.jwtService.verifyAsync(token, {
+  async verifyToken(token: string, options?: { ignoreExpiration?: boolean }): Promise<JwtPayload> {
+    return this.jwtService.verifyAsync<JwtPayload>(token, {
       ignoreExpiration: options?.ignoreExpiration ?? false,
     })
   }

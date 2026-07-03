@@ -255,7 +255,7 @@ export function ArrayProperty<T = string | number | boolean>(
     }
 
     decorators.push(
-      Transform(({ value }) => {
+      Transform(({ value }: { value: unknown }) => {
         if (
           (value === undefined || value === null) &&
           options.default !== undefined
@@ -264,15 +264,18 @@ export function ArrayProperty<T = string | number | boolean>(
         }
 
         if (Array.isArray(value)) {
-          return value.map((item) => {
+          return value.map((item: unknown) => {
             if (enumArtifacts) {
-              return normalizeEnumArrayItem(item, enumArtifacts)
+              return normalizeEnumArrayItem(
+                item as string | number | boolean | null | undefined,
+                enumArtifacts,
+              )
             }
 
             if (!primitiveHelpers) {
               if (typeof item === 'string') {
                 try {
-                  return JSON.parse(item)
+                  return JSON.parse(item) as unknown
                 } catch {
                   return item
                 }
@@ -281,7 +284,9 @@ export function ArrayProperty<T = string | number | boolean>(
               return item
             }
 
-            return primitiveHelpers.normalizeItem(item)
+            return primitiveHelpers.normalizeItem(
+              item as string | number | boolean | null | undefined,
+            )
           })
         }
 

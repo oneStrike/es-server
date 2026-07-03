@@ -51,7 +51,7 @@ export function DateProperty(options: DatePropertyOptions) {
     }
 
     decorators.push(
-      Transform(({ value }) => {
+      Transform(({ value }: { value: unknown }) => {
         if (
           (value === undefined || value === null) &&
           options.default !== undefined

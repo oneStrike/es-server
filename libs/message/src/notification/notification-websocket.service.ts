@@ -1,5 +1,6 @@
 import type { DbNotificationSubscription } from '@db/core'
 import type { UploadConfigInterface } from '@libs/platform/config'
+import type { JwtPayload } from '@libs/platform/modules/auth/types'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { AuthConfigInterface } from '@libs/platform/types'
 import type { Notification } from 'pg'
@@ -209,7 +210,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         publicKey,
         algorithms: ['RS256'],
         audience: authConfig.aud,

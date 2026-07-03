@@ -10,6 +10,7 @@ import type {
   PublicForumTopicQueryWithUser,
   PublicTopicInteractionSnapshot,
   PublicTopicPageRow,
+  TopicSectionBrief,
   VisiblePublicTopicDetailRow,
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService, toPageResult } from '@db/core'
@@ -259,7 +260,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
               rows.map((item) => item.sectionId),
               { requireEnabled: true },
             )
-          : Promise.resolve(new Map()),
+          : Promise.resolve(new Map<number, TopicSectionBrief>()),
         this.getTopicUserBriefMap(userIds),
         options.userId
           ? this.likeService.checkStatusBatch(

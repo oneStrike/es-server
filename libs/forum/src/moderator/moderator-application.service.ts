@@ -1,6 +1,6 @@
 import type { Db, DrizzleMutationResult } from '@db/core'
 import type { ForumModeratorApplicationSelect } from '@db/schema'
-import type { ModeratorApplicationSnapshotInput } from './moderator.type'
+import type { ModeratorApplicantBrief, ModeratorApplicationSnapshotInput } from './moderator.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -191,7 +191,7 @@ export class ForumModeratorApplicationService {
               avatarUrl: true,
             },
           })
-        : Promise.resolve([]),
+        : Promise.resolve<ModeratorApplicantBrief[]>([]),
       this.db.query.forumSection.findMany({
         where: { id: { in: sectionIds } },
         columns: {

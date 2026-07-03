@@ -4,6 +4,7 @@ import type { DispatchDefinedGrowthEventPayload } from '@libs/growth/growth-rewa
 import type {
   AuthorCommentDelta,
   CommentModerationState,
+  CommentUserBrief,
   CommentVisibleState,
   CommentWriteContext,
   MaterializedCommentBodyWriteResult,
@@ -2041,7 +2042,7 @@ export class CommentService {
             })
             .from(this.appUser)
             .where(inArray(this.appUser.id, userIds))
-        : [],
+        : (Promise.resolve([]) as Promise<CommentUserBrief[]>),
       this.interactionSummaryReadService.getCommentTargetSummaryMap(page.list),
       this.interactionSummaryReadService.getReplyCommentSummaryMap(
         page.list.map((item) => item.replyToId),

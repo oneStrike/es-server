@@ -2,9 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "1b9a2587-4cf7-4c2d-ba50-745cc3011a77",
-  "prevIds": [
-    "43576ae1-3308-4d6e-808f-91e328eef34b"
-  ],
+  "prevIds": ["43576ae1-3308-4d6e-808f-91e328eef34b"],
   "ddl": [
     {
       "isRlsEnabled": false,
@@ -29142,10 +29140,7 @@
       "table": "work_tag_relation"
     },
     {
-      "columns": [
-        "announcement_id",
-        "user_id"
-      ],
+      "columns": ["announcement_id", "user_id"],
       "nameExplicit": false,
       "name": "app_announcement_read_pkey",
       "entityType": "pks",
@@ -29153,11 +29148,7 @@
       "table": "app_announcement_read"
     },
     {
-      "columns": [
-        "user_id",
-        "scene",
-        "emoji_asset_id"
-      ],
+      "columns": ["user_id", "scene", "emoji_asset_id"],
       "nameExplicit": false,
       "name": "emoji_recent_usage_pkey",
       "entityType": "pks",
@@ -29165,10 +29156,7 @@
       "table": "emoji_recent_usage"
     },
     {
-      "columns": [
-        "page_config_id",
-        "agreement_id"
-      ],
+      "columns": ["page_config_id", "agreement_id"],
       "nameExplicit": false,
       "name": "membership_page_config_agreement_pkey",
       "entityType": "pks",
@@ -29176,10 +29164,7 @@
       "table": "membership_page_config_agreement"
     },
     {
-      "columns": [
-        "page_config_id",
-        "plan_id"
-      ],
+      "columns": ["page_config_id", "plan_id"],
       "nameExplicit": false,
       "name": "membership_page_config_plan_pkey",
       "entityType": "pks",
@@ -29187,10 +29172,7 @@
       "table": "membership_page_config_plan"
     },
     {
-      "columns": [
-        "user_id",
-        "badge_id"
-      ],
+      "columns": ["user_id", "badge_id"],
       "nameExplicit": false,
       "name": "user_badge_assignment_pkey",
       "entityType": "pks",
@@ -29198,10 +29180,7 @@
       "table": "user_badge_assignment"
     },
     {
-      "columns": [
-        "user_id",
-        "work_id"
-      ],
+      "columns": ["user_id", "work_id"],
       "nameExplicit": false,
       "name": "user_work_reading_state_pkey",
       "entityType": "pks",
@@ -29209,10 +29188,7 @@
       "table": "user_work_reading_state"
     },
     {
-      "columns": [
-        "moderator_id",
-        "section_id"
-      ],
+      "columns": ["moderator_id", "section_id"],
       "nameExplicit": false,
       "name": "forum_moderator_section_pkey",
       "entityType": "pks",
@@ -29220,10 +29196,7 @@
       "table": "forum_moderator_section"
     },
     {
-      "columns": [
-        "conversation_id",
-        "user_id"
-      ],
+      "columns": ["conversation_id", "user_id"],
       "nameExplicit": false,
       "name": "chat_conversation_member_pkey",
       "entityType": "pks",
@@ -29231,10 +29204,7 @@
       "table": "chat_conversation_member"
     },
     {
-      "columns": [
-        "work_id",
-        "author_id"
-      ],
+      "columns": ["work_id", "author_id"],
       "nameExplicit": false,
       "name": "work_author_relation_pkey",
       "entityType": "pks",
@@ -29242,10 +29212,7 @@
       "table": "work_author_relation"
     },
     {
-      "columns": [
-        "work_id",
-        "category_id"
-      ],
+      "columns": ["work_id", "category_id"],
       "nameExplicit": false,
       "name": "work_category_relation_pkey",
       "entityType": "pks",
@@ -29253,10 +29220,7 @@
       "table": "work_category_relation"
     },
     {
-      "columns": [
-        "work_id",
-        "tag_id"
-      ],
+      "columns": ["work_id", "tag_id"],
       "nameExplicit": false,
       "name": "work_tag_relation_pkey",
       "entityType": "pks",
@@ -29264,9 +29228,7 @@
       "table": "work_tag_relation"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "admin_user_pkey",
       "schema": "public",
@@ -29274,9 +29236,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "admin_user_token_pkey",
       "schema": "public",
@@ -29284,9 +29244,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ad_provider_config_pkey",
       "schema": "public",
@@ -29294,9 +29252,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ad_reward_record_pkey",
       "schema": "public",
@@ -29304,9 +29260,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_agreement_pkey",
       "schema": "public",
@@ -29314,9 +29268,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_agreement_log_pkey",
       "schema": "public",
@@ -29324,9 +29276,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_announcement_pkey",
       "schema": "public",
@@ -29334,9 +29284,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_announcement_notification_fanout_task_pkey",
       "schema": "public",
@@ -29344,9 +29292,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_config_pkey",
       "schema": "public",
@@ -29354,9 +29300,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_page_pkey",
       "schema": "public",
@@ -29364,9 +29308,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_update_release_pkey",
       "schema": "public",
@@ -29374,9 +29316,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_user_pkey",
       "schema": "public",
@@ -29384,9 +29324,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nameExplicit": false,
       "name": "app_user_count_pkey",
       "schema": "public",
@@ -29394,9 +29332,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_user_token_pkey",
       "schema": "public",
@@ -29404,9 +29340,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_config_pkey",
       "schema": "public",
@@ -29414,9 +29348,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_makeup_account_pkey",
       "schema": "public",
@@ -29424,9 +29356,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_makeup_fact_pkey",
       "schema": "public",
@@ -29434,9 +29364,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_record_pkey",
       "schema": "public",
@@ -29444,9 +29372,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_streak_grant_pkey",
       "schema": "public",
@@ -29454,9 +29380,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_streak_grant_reward_item_pkey",
       "schema": "public",
@@ -29464,9 +29388,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_streak_progress_pkey",
       "schema": "public",
@@ -29474,9 +29396,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_streak_rule_pkey",
       "schema": "public",
@@ -29484,9 +29404,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_in_streak_rule_reward_item_pkey",
       "schema": "public",
@@ -29494,9 +29412,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "coupon_definition_pkey",
       "schema": "public",
@@ -29504,9 +29420,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "coupon_redemption_record_pkey",
       "schema": "public",
@@ -29514,9 +29428,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "currency_package_pkey",
       "schema": "public",
@@ -29524,9 +29436,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "emoji_asset_pkey",
       "schema": "public",
@@ -29534,9 +29444,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "emoji_pack_pkey",
       "schema": "public",
@@ -29544,9 +29452,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "growth_audit_log_pkey",
       "schema": "public",
@@ -29554,9 +29460,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "growth_ledger_record_pkey",
       "schema": "public",
@@ -29564,9 +29468,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "growth_reward_rule_pkey",
       "schema": "public",
@@ -29574,9 +29476,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "growth_reward_settlement_pkey",
       "schema": "public",
@@ -29584,9 +29484,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "growth_rule_usage_counter_pkey",
       "schema": "public",
@@ -29594,9 +29492,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "membership_auto_renew_agreement_pkey",
       "schema": "public",
@@ -29604,9 +29500,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "membership_benefit_claim_record_pkey",
       "schema": "public",
@@ -29614,9 +29508,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "membership_benefit_definition_pkey",
       "schema": "public",
@@ -29624,9 +29516,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "membership_page_config_pkey",
       "schema": "public",
@@ -29634,9 +29524,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "membership_plan_pkey",
       "schema": "public",
@@ -29644,9 +29532,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "membership_plan_benefit_pkey",
       "schema": "public",
@@ -29654,9 +29540,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "payment_order_pkey",
       "schema": "public",
@@ -29664,9 +29548,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "payment_provider_config_pkey",
       "schema": "public",
@@ -29674,9 +29556,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "task_definition_pkey",
       "schema": "public",
@@ -29684,9 +29564,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "task_event_log_pkey",
       "schema": "public",
@@ -29694,9 +29572,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "task_instance_pkey",
       "schema": "public",
@@ -29704,9 +29580,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "task_instance_step_pkey",
       "schema": "public",
@@ -29714,9 +29588,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "task_step_pkey",
       "schema": "public",
@@ -29724,9 +29596,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "task_step_unique_fact_pkey",
       "schema": "public",
@@ -29734,9 +29604,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_asset_balance_pkey",
       "schema": "public",
@@ -29744,9 +29612,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_badge_pkey",
       "schema": "public",
@@ -29754,9 +29620,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_browse_log_pkey",
       "schema": "public",
@@ -29764,9 +29628,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_comment_pkey",
       "schema": "public",
@@ -29774,9 +29636,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_content_entitlement_pkey",
       "schema": "public",
@@ -29784,9 +29644,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_coupon_instance_pkey",
       "schema": "public",
@@ -29794,9 +29652,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_download_record_pkey",
       "schema": "public",
@@ -29804,9 +29660,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_favorite_pkey",
       "schema": "public",
@@ -29814,9 +29668,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_follow_pkey",
       "schema": "public",
@@ -29824,9 +29676,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_level_rule_pkey",
       "schema": "public",
@@ -29834,9 +29684,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_like_pkey",
       "schema": "public",
@@ -29844,9 +29692,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_membership_subscription_pkey",
       "schema": "public",
@@ -29854,9 +29700,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_mention_pkey",
       "schema": "public",
@@ -29864,9 +29708,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_purchase_record_pkey",
       "schema": "public",
@@ -29874,9 +29716,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_report_pkey",
       "schema": "public",
@@ -29884,9 +29724,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_hashtag_pkey",
       "schema": "public",
@@ -29894,9 +29732,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_hashtag_reference_pkey",
       "schema": "public",
@@ -29904,9 +29740,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_moderator_pkey",
       "schema": "public",
@@ -29914,9 +29748,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_moderator_action_log_pkey",
       "schema": "public",
@@ -29924,9 +29756,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_moderator_application_pkey",
       "schema": "public",
@@ -29934,9 +29764,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_section_pkey",
       "schema": "public",
@@ -29944,9 +29772,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_section_group_pkey",
       "schema": "public",
@@ -29954,9 +29780,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_topic_pkey",
       "schema": "public",
@@ -29964,9 +29788,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "forum_user_action_log_pkey",
       "schema": "public",
@@ -29974,9 +29796,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "chat_conversation_pkey",
       "schema": "public",
@@ -29984,9 +29804,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "chat_message_pkey",
       "schema": "public",
@@ -29994,9 +29812,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "message_ws_metric_pkey",
       "schema": "public",
@@ -30004,9 +29820,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "notification_delivery_pkey",
       "schema": "public",
@@ -30014,9 +29828,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "notification_preference_pkey",
       "schema": "public",
@@ -30024,9 +29836,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "notification_template_pkey",
       "schema": "public",
@@ -30034,9 +29844,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_notification_pkey",
       "schema": "public",
@@ -30044,9 +29852,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "background_task_pkey",
       "schema": "public",
@@ -30054,9 +29860,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "domain_event_pkey",
       "schema": "public",
@@ -30064,9 +29868,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "domain_event_dispatch_pkey",
       "schema": "public",
@@ -30074,9 +29876,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "sys_request_log_pkey",
       "schema": "public",
@@ -30084,9 +29884,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "sensitive_word_pkey",
       "schema": "public",
@@ -30094,9 +29892,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "sensitive_word_hit_log_pkey",
       "schema": "public",
@@ -30104,9 +29900,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "sys_config_pkey",
       "schema": "public",
@@ -30114,9 +29908,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "sys_dictionary_pkey",
       "schema": "public",
@@ -30124,9 +29916,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "sys_dictionary_item_pkey",
       "schema": "public",
@@ -30134,9 +29924,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_pkey",
       "schema": "public",
@@ -30144,9 +29932,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_author_pkey",
       "schema": "public",
@@ -30154,9 +29940,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_category_pkey",
       "schema": "public",
@@ -30164,9 +29948,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_chapter_pkey",
       "schema": "public",
@@ -30174,9 +29956,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_comic_pkey",
       "schema": "public",
@@ -30184,9 +29964,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_comic_archive_import_preview_session_pkey",
       "schema": "public",
@@ -30194,9 +29972,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_comic_archive_import_task_pkey",
       "schema": "public",
@@ -30204,9 +29980,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_novel_pkey",
       "schema": "public",
@@ -30214,9 +29988,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_tag_pkey",
       "schema": "public",
@@ -30225,9 +29997,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "username"
-      ],
+      "columns": ["username"],
       "nullsNotDistinct": false,
       "name": "admin_user_username_key",
       "entityType": "uniques",
@@ -30236,9 +30006,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "mobile"
-      ],
+      "columns": ["mobile"],
       "nullsNotDistinct": false,
       "name": "admin_user_mobile_key",
       "entityType": "uniques",
@@ -30247,9 +30015,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "jti"
-      ],
+      "columns": ["jti"],
       "nullsNotDistinct": false,
       "name": "admin_user_token_jti_key",
       "entityType": "uniques",
@@ -30258,10 +30024,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "ad_provider_config_id",
-        "provider_reward_id"
-      ],
+      "columns": ["ad_provider_config_id", "provider_reward_id"],
       "nullsNotDistinct": false,
       "name": "ad_reward_record_config_reward_key",
       "entityType": "uniques",
@@ -30270,10 +30033,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "title",
-        "version"
-      ],
+      "columns": ["title", "version"],
       "nullsNotDistinct": false,
       "name": "app_agreement_title_version_key",
       "entityType": "uniques",
@@ -30282,9 +30042,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "announcement_id"
-      ],
+      "columns": ["announcement_id"],
       "nullsNotDistinct": false,
       "name": "app_announcement_notification_fanout_task_announcement_id_key",
       "entityType": "uniques",
@@ -30293,9 +30051,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nullsNotDistinct": false,
       "name": "app_page_code_key",
       "entityType": "uniques",
@@ -30304,9 +30060,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "path"
-      ],
+      "columns": ["path"],
       "nullsNotDistinct": false,
       "name": "app_page_path_key",
       "entityType": "uniques",
@@ -30315,10 +30069,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "platform",
-        "build_code"
-      ],
+      "columns": ["platform", "build_code"],
       "nullsNotDistinct": false,
       "name": "app_update_release_platform_build_code_key",
       "entityType": "uniques",
@@ -30327,9 +30078,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "account"
-      ],
+      "columns": ["account"],
       "nullsNotDistinct": false,
       "name": "app_user_account_key",
       "entityType": "uniques",
@@ -30338,9 +30087,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "phone_number"
-      ],
+      "columns": ["phone_number"],
       "nullsNotDistinct": false,
       "name": "app_user_phone_number_key",
       "entityType": "uniques",
@@ -30349,9 +30096,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "email_address"
-      ],
+      "columns": ["email_address"],
       "nullsNotDistinct": false,
       "name": "app_user_email_address_key",
       "entityType": "uniques",
@@ -30360,9 +30105,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "jti"
-      ],
+      "columns": ["jti"],
       "nullsNotDistinct": false,
       "name": "app_user_token_jti_key",
       "entityType": "uniques",
@@ -30371,11 +30114,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "period_type",
-        "period_key"
-      ],
+      "columns": ["user_id", "period_type", "period_key"],
       "nullsNotDistinct": false,
       "name": "check_in_makeup_account_user_period_key_key",
       "entityType": "uniques",
@@ -30384,10 +30123,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "biz_key"
-      ],
+      "columns": ["user_id", "biz_key"],
       "nullsNotDistinct": false,
       "name": "check_in_makeup_fact_user_biz_key_key",
       "entityType": "uniques",
@@ -30396,10 +30132,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "sign_date"
-      ],
+      "columns": ["user_id", "sign_date"],
       "nullsNotDistinct": false,
       "name": "check_in_record_user_sign_date_key",
       "entityType": "uniques",
@@ -30408,10 +30141,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "biz_key"
-      ],
+      "columns": ["user_id", "biz_key"],
       "nullsNotDistinct": false,
       "name": "check_in_record_user_biz_key_key",
       "entityType": "uniques",
@@ -30420,10 +30150,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "biz_key"
-      ],
+      "columns": ["user_id", "biz_key"],
       "nullsNotDistinct": false,
       "name": "check_in_streak_grant_user_biz_key_key",
       "entityType": "uniques",
@@ -30432,9 +30159,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nullsNotDistinct": false,
       "name": "check_in_streak_progress_user_id_key",
       "entityType": "uniques",
@@ -30443,10 +30168,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "rule_code",
-        "version"
-      ],
+      "columns": ["rule_code", "version"],
       "nullsNotDistinct": false,
       "name": "check_in_streak_rule_rule_code_version_key",
       "entityType": "uniques",
@@ -30455,10 +30177,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "rule_code",
-        "effective_from"
-      ],
+      "columns": ["rule_code", "effective_from"],
       "nullsNotDistinct": false,
       "name": "check_in_streak_rule_rule_code_effective_from_key",
       "entityType": "uniques",
@@ -30467,10 +30186,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "biz_key"
-      ],
+      "columns": ["user_id", "biz_key"],
       "nullsNotDistinct": false,
       "name": "coupon_redemption_record_user_biz_key_key",
       "entityType": "uniques",
@@ -30479,9 +30195,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "package_key"
-      ],
+      "columns": ["package_key"],
       "nullsNotDistinct": false,
       "name": "currency_package_package_key_key",
       "entityType": "uniques",
@@ -30490,9 +30204,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nullsNotDistinct": false,
       "name": "emoji_pack_code_key",
       "entityType": "uniques",
@@ -30501,10 +30213,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "biz_key"
-      ],
+      "columns": ["user_id", "biz_key"],
       "nullsNotDistinct": false,
       "name": "growth_ledger_record_user_id_biz_key_key",
       "entityType": "uniques",
@@ -30513,11 +30222,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "type",
-        "asset_type",
-        "asset_key"
-      ],
+      "columns": ["type", "asset_type", "asset_key"],
       "nullsNotDistinct": false,
       "name": "growth_reward_rule_type_asset_type_asset_key_key",
       "entityType": "uniques",
@@ -30526,10 +30231,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "biz_key"
-      ],
+      "columns": ["user_id", "biz_key"],
       "nullsNotDistinct": false,
       "name": "growth_reward_settlement_user_biz_key_key",
       "entityType": "uniques",
@@ -30554,10 +30256,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "provider_config_id",
-        "agreement_no"
-      ],
+      "columns": ["provider_config_id", "agreement_no"],
       "nullsNotDistinct": false,
       "name": "membership_auto_renew_agreement_no_key",
       "entityType": "uniques",
@@ -30566,9 +30265,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "biz_key"
-      ],
+      "columns": ["biz_key"],
       "nullsNotDistinct": false,
       "name": "membership_benefit_claim_record_biz_key_key",
       "entityType": "uniques",
@@ -30577,9 +30274,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nullsNotDistinct": false,
       "name": "membership_benefit_definition_code_key",
       "entityType": "uniques",
@@ -30588,9 +30283,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "page_key"
-      ],
+      "columns": ["page_key"],
       "nullsNotDistinct": false,
       "name": "membership_page_config_page_key_key",
       "entityType": "uniques",
@@ -30599,9 +30292,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "plan_key"
-      ],
+      "columns": ["plan_key"],
       "nullsNotDistinct": false,
       "name": "membership_plan_plan_key_key",
       "entityType": "uniques",
@@ -30610,10 +30301,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "plan_id",
-        "benefit_id"
-      ],
+      "columns": ["plan_id", "benefit_id"],
       "nullsNotDistinct": false,
       "name": "membership_plan_benefit_plan_benefit_key",
       "entityType": "uniques",
@@ -30622,9 +30310,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "order_no"
-      ],
+      "columns": ["order_no"],
       "nullsNotDistinct": false,
       "name": "payment_order_order_no_key",
       "entityType": "uniques",
@@ -30633,9 +30319,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "provider_trade_no"
-      ],
+      "columns": ["provider_trade_no"],
       "nullsNotDistinct": false,
       "name": "payment_order_provider_trade_no_key",
       "entityType": "uniques",
@@ -30644,9 +30328,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nullsNotDistinct": false,
       "name": "task_definition_code_key",
       "entityType": "uniques",
@@ -30655,11 +30337,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "task_id",
-        "user_id",
-        "cycle_key"
-      ],
+      "columns": ["task_id", "user_id", "cycle_key"],
       "nullsNotDistinct": false,
       "name": "task_instance_task_id_user_id_cycle_key_key",
       "entityType": "uniques",
@@ -30668,10 +30346,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "instance_id",
-        "step_id"
-      ],
+      "columns": ["instance_id", "step_id"],
       "nullsNotDistinct": false,
       "name": "task_instance_step_instance_id_step_id_key",
       "entityType": "uniques",
@@ -30680,10 +30355,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "task_id",
-        "step_key"
-      ],
+      "columns": ["task_id", "step_key"],
       "nullsNotDistinct": false,
       "name": "task_step_task_id_step_key_key",
       "entityType": "uniques",
@@ -30692,10 +30364,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "task_id",
-        "step_no"
-      ],
+      "columns": ["task_id", "step_no"],
       "nullsNotDistinct": false,
       "name": "task_step_task_id_step_no_key",
       "entityType": "uniques",
@@ -30704,12 +30373,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "step_id",
-        "user_id",
-        "scope_key",
-        "dimension_hash"
-      ],
+      "columns": ["step_id", "user_id", "scope_key", "dimension_hash"],
       "nullsNotDistinct": false,
       "name": "task_step_unique_fact_step_id_user_id_scope_key_dimension_hash_key",
       "entityType": "uniques",
@@ -30718,11 +30382,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "asset_type",
-        "asset_key"
-      ],
+      "columns": ["user_id", "asset_type", "asset_key"],
       "nullsNotDistinct": false,
       "name": "user_asset_balance_user_id_asset_type_asset_key_key",
       "entityType": "uniques",
@@ -30731,11 +30391,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "target_type",
-        "target_id",
-        "user_id"
-      ],
+      "columns": ["target_type", "target_id", "user_id"],
       "nullsNotDistinct": false,
       "name": "user_download_record_target_type_target_id_user_id_key",
       "entityType": "uniques",
@@ -30744,11 +30400,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "target_type",
-        "target_id",
-        "user_id"
-      ],
+      "columns": ["target_type", "target_id", "user_id"],
       "nullsNotDistinct": false,
       "name": "user_favorite_target_type_target_id_user_id_key",
       "entityType": "uniques",
@@ -30757,11 +30409,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "target_type",
-        "target_id",
-        "user_id"
-      ],
+      "columns": ["target_type", "target_id", "user_id"],
       "nullsNotDistinct": false,
       "name": "user_follow_target_type_target_id_user_id_key",
       "entityType": "uniques",
@@ -30770,9 +30418,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "user_level_rule_name_key",
       "entityType": "uniques",
@@ -30781,11 +30427,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "target_type",
-        "target_id",
-        "user_id"
-      ],
+      "columns": ["target_type", "target_id", "user_id"],
       "nullsNotDistinct": false,
       "name": "user_like_target_type_target_id_user_id_key",
       "entityType": "uniques",
@@ -30809,11 +30451,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "reporter_id",
-        "target_type",
-        "target_id"
-      ],
+      "columns": ["reporter_id", "target_type", "target_id"],
       "nullsNotDistinct": false,
       "name": "user_report_reporter_id_target_type_target_id_key",
       "entityType": "uniques",
@@ -30822,9 +30460,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nullsNotDistinct": false,
       "name": "forum_hashtag_slug_key",
       "entityType": "uniques",
@@ -30833,11 +30469,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "hashtag_id",
-        "source_type",
-        "source_id"
-      ],
+      "columns": ["hashtag_id", "source_type", "source_id"],
       "nullsNotDistinct": false,
       "name": "forum_hashtag_reference_unique_key",
       "entityType": "uniques",
@@ -30846,9 +30478,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nullsNotDistinct": false,
       "name": "forum_moderator_user_id_key",
       "entityType": "uniques",
@@ -30857,10 +30487,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "applicant_id",
-        "section_id"
-      ],
+      "columns": ["applicant_id", "section_id"],
       "nullsNotDistinct": false,
       "name": "forum_moderator_application_applicant_id_section_id_key",
       "entityType": "uniques",
@@ -30869,9 +30496,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "forum_section_group_name_key",
       "entityType": "uniques",
@@ -30880,9 +30505,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "biz_key"
-      ],
+      "columns": ["biz_key"],
       "nullsNotDistinct": false,
       "name": "chat_conversation_biz_key_key",
       "entityType": "uniques",
@@ -30891,10 +30514,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "conversation_id",
-        "message_seq"
-      ],
+      "columns": ["conversation_id", "message_seq"],
       "nullsNotDistinct": false,
       "name": "chat_message_conversation_id_message_seq_key",
       "entityType": "uniques",
@@ -30903,11 +30523,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "conversation_id",
-        "sender_id",
-        "client_message_id"
-      ],
+      "columns": ["conversation_id", "sender_id", "client_message_id"],
       "nullsNotDistinct": false,
       "name": "chat_message_conversation_id_sender_id_client_message_id_key",
       "entityType": "uniques",
@@ -30916,9 +30532,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "bucket_at"
-      ],
+      "columns": ["bucket_at"],
       "nullsNotDistinct": false,
       "name": "message_ws_metric_bucket_at_key",
       "entityType": "uniques",
@@ -30927,9 +30541,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "dispatch_id"
-      ],
+      "columns": ["dispatch_id"],
       "nullsNotDistinct": false,
       "name": "notification_delivery_dispatch_id_key",
       "entityType": "uniques",
@@ -30938,10 +30550,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "category_key"
-      ],
+      "columns": ["user_id", "category_key"],
       "nullsNotDistinct": false,
       "name": "notification_preference_user_id_category_key_key",
       "entityType": "uniques",
@@ -30950,9 +30559,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "category_key"
-      ],
+      "columns": ["category_key"],
       "nullsNotDistinct": false,
       "name": "notification_template_category_key_key",
       "entityType": "uniques",
@@ -30961,10 +30568,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "receiver_user_id",
-        "projection_key"
-      ],
+      "columns": ["receiver_user_id", "projection_key"],
       "nullsNotDistinct": false,
       "name": "user_notification_receiver_user_id_projection_key_key",
       "entityType": "uniques",
@@ -30973,9 +30577,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "task_id"
-      ],
+      "columns": ["task_id"],
       "nullsNotDistinct": false,
       "name": "background_task_task_id_key",
       "entityType": "uniques",
@@ -30984,10 +30586,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "domain",
-        "idempotency_key"
-      ],
+      "columns": ["domain", "idempotency_key"],
       "nullsNotDistinct": false,
       "name": "domain_event_domain_idempotency_key_key",
       "entityType": "uniques",
@@ -30996,10 +30595,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "event_id",
-        "consumer"
-      ],
+      "columns": ["event_id", "consumer"],
       "nullsNotDistinct": false,
       "name": "domain_event_dispatch_event_id_consumer_key",
       "entityType": "uniques",
@@ -31008,9 +30604,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "word"
-      ],
+      "columns": ["word"],
       "nullsNotDistinct": false,
       "name": "sensitive_word_word_key",
       "entityType": "uniques",
@@ -31019,9 +30613,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "sys_dictionary_name_key",
       "entityType": "uniques",
@@ -31030,9 +30622,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nullsNotDistinct": false,
       "name": "sys_dictionary_code_key",
       "entityType": "uniques",
@@ -31041,10 +30631,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "dictionary_code",
-        "code"
-      ],
+      "columns": ["dictionary_code", "code"],
       "nullsNotDistinct": false,
       "name": "sys_dictionary_item_dictionary_code_code_key",
       "entityType": "uniques",
@@ -31053,9 +30640,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "forum_section_id"
-      ],
+      "columns": ["forum_section_id"],
       "nullsNotDistinct": false,
       "name": "work_forum_section_id_key",
       "entityType": "uniques",
@@ -31064,9 +30649,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "work_author_name_key",
       "entityType": "uniques",
@@ -31075,9 +30658,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "work_category_name_key",
       "entityType": "uniques",
@@ -31086,9 +30667,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "work_id"
-      ],
+      "columns": ["work_id"],
       "nullsNotDistinct": false,
       "name": "work_comic_work_id_key",
       "entityType": "uniques",
@@ -31097,9 +30676,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "task_id"
-      ],
+      "columns": ["task_id"],
       "nullsNotDistinct": false,
       "name": "work_comic_archive_import_preview_session_task_id_key",
       "entityType": "uniques",
@@ -31108,9 +30685,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "task_id"
-      ],
+      "columns": ["task_id"],
       "nullsNotDistinct": false,
       "name": "work_comic_archive_import_task_task_id_key",
       "entityType": "uniques",
@@ -31119,9 +30694,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "work_id"
-      ],
+      "columns": ["work_id"],
       "nullsNotDistinct": false,
       "name": "work_novel_work_id_key",
       "entityType": "uniques",
@@ -31130,9 +30703,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "work_tag_name_key",
       "entityType": "uniques",

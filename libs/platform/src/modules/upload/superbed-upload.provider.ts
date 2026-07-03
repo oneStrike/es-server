@@ -1,5 +1,6 @@
 import type {
   PreparedUploadFile,
+  SuperbedApiResponse,
   SuperbedNativeTransportError,
   SuperbedPostBody,
   SuperbedPostOptions,
@@ -343,7 +344,7 @@ export class SuperbedUploadProvider {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
       return false
     }
-    const prototype = Object.getPrototypeOf(value)
+    const prototype = Object.getPrototypeOf(value) as object | null
     return prototype === Object.prototype || prototype === null
   }
 
@@ -400,7 +401,7 @@ export class SuperbedUploadProvider {
     url: string,
     body: SuperbedPostBody,
     options: SuperbedPostOptions = {},
-  ) {
+  ): Promise<SuperbedApiResponse | undefined> {
     const isMultipartBody = body instanceof FormData
     const requestBody = isMultipartBody ? body : JSON.stringify(body)
     const headers = isMultipartBody
@@ -437,9 +438,9 @@ export class SuperbedUploadProvider {
   private async readResponseJson(
     response: Response,
     options: SuperbedReadResponseOptions = {},
-  ) {
+  ): Promise<SuperbedApiResponse | undefined> {
     try {
-      return await response.json()
+      return (await response.json()) as SuperbedApiResponse
     } catch (error) {
       if (options.allowInvalidJson) {
         return undefined

@@ -9,15 +9,35 @@ type JwtPayloadField =
   | Record<string, string | number | boolean | null>
 
 /**
- * JWT负载接口定义
+ * JWT 负载接口定义
  */
 export interface JwtPayload {
   /** JWT ID */
   jti: string
   /** 受众 */
   aud: string
+  /** 签发时间 */
+  iat?: number
+  /** 过期时间 */
+  exp: number
+  /** 生效时间 */
+  nbf?: number
+  /** 签发者 */
+  iss?: string
+  /** 主体 */
+  sub?: string
+  /** token 类型 */
+  type?: string
   /** 其他扩展字段 */
-  [key: string]: JwtPayloadField
+  [key: string]: JwtPayloadField | undefined
+}
+
+/** 生成 token 时的输入载荷。 */
+export interface TokenGenerateInput {
+  /** 主体（用户 ID） */
+  sub?: string
+  /** 其他扩展字段 */
+  [key: string]: JwtPayloadField | undefined
 }
 
 /**
