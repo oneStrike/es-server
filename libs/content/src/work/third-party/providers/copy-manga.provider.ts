@@ -31,7 +31,15 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
   readonly policy: ThirdPartyProviderPolicy = {
     apiHostPolicy: {
       allowedExactHosts: ['api.2024manga.com'],
-      allowedHostSuffixes: ['2024manga.com'],
+      allowedHostSuffixes: [
+        '2024manga.com',
+        'hotmangasg.com',
+        'hotmangasd.com',
+        'hotmangasf.com',
+        'elfgjfghkk.club',
+        'fgjfghkkcenter.club',
+        'fgjfghkk.club',
+      ],
       allowPort: false,
       redirect: 'error',
       addressGuard: 'system-config',
