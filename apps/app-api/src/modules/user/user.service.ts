@@ -133,6 +133,17 @@ export class UserService {
     return this.userCoreService.mapBaseUser(user, growth)
   }
 
+  // 规范化生日更新值，保留显式 null 以支持前端清空字段。
+  private normalizeBirthDateForUpdate(birthDate: UpdateMyProfileDto['birthDate']) {
+    if (birthDate === undefined) {
+      return undefined
+    }
+    if (birthDate === null) {
+      return null
+    }
+    return formatDateOnlyInAppTimeZone(birthDate)
+  }
+
   // 更新用户资料，邮箱唯一冲突时抛出业务异常。
   async updateUserProfile(userId: number, dto: UpdateMyProfileDto) {
     await this.userCoreService.ensureUserExists(userId)
@@ -150,9 +161,7 @@ export class UserService {
               genderType: dto.genderType,
               signature: dto.signature,
               bio: dto.bio,
-              birthDate: dto.birthDate
-                ? formatDateOnlyInAppTimeZone(dto.birthDate)
-                : undefined,
+              birthDate: this.normalizeBirthDateForUpdate(dto.birthDate),
             })
             .where(eq(this.appUser.id, userId)),
         { notFound: '用户不存在' },

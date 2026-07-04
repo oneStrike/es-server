@@ -29,10 +29,10 @@ import { AppUserStatusGuard } from './modules/auth/app-user-status.guard'
       isGlobal: true,
       cache: true,
       envFilePath: [
-        'apps/app-api/.env',
         `apps/app-api/.env.${getEnv()}`,
-        '.env',
+        'apps/app-api/.env',
         `.env.${getEnv()}`,
+        '.env',
       ],
       load: [
         AppConfigRegister,
