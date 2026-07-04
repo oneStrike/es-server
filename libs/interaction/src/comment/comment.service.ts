@@ -128,10 +128,6 @@ export class CommentService {
     return this.drizzle.schema.userCommentFloorCounter
   }
 
-  private get forumTopic() {
-    return this.drizzle.schema.forumTopic
-  }
-
   private get appUser() {
     return this.drizzle.schema.appUser
   }

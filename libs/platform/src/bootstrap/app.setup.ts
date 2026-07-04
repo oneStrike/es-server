@@ -45,7 +45,7 @@ export async function setupApp(
 
   // 兼容客户端 POST 请求未携带 Content-Type 或 Content-Type 不标准的情况
   // 避免无 Body 的 POST 接口（如签到）因 Fastify content type 解析失败而返回 415
-  fastifyInstance.addContentTypeParser('*', (request, payload, done) => {
+  fastifyInstance.addContentTypeParser('*', (_request, payload, done) => {
     done(null, payload)
   })
 

@@ -7,7 +7,7 @@ import type {
 import { DrizzleService, extractRows, toPageResult } from '@db/core'
 import { PageDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
-import { and, eq, gt, isNull, or, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { buildNotificationUnreadSummary } from '../notification/notification-unread.helper'
 import { getMessageNotificationCategoryLabel } from '../notification/notification.constant'
 import { MessageInboxSummaryQueryService } from './inbox-summary-query.service'
@@ -22,33 +22,6 @@ export class MessageInboxService {
   // 获取统一 Drizzle 数据库入口。
   private get db() {
     return this.drizzle.db
-  }
-
-  // 获取用户通知读模型表。
-  private get notification() {
-    return this.drizzle.schema.userNotification
-  }
-
-  // 获取聊天会话读模型表。
-  private get conversation() {
-    return this.drizzle.schema.chatConversation
-  }
-
-  // 获取聊天会话成员表。
-  private get conversationMember() {
-    return this.drizzle.schema.chatConversationMember
-  }
-
-  // 构造当前用户未过期通知的基础可见条件。
-  private buildNotificationWhere(userId: number, now: Date) {
-    return and(
-      eq(this.notification.receiverUserId, userId),
-      eq(this.notification.isHidden, false),
-      or(
-        isNull(this.notification.expiresAt),
-        gt(this.notification.expiresAt, now),
-      ),
-    )
   }
 
   // 将最新通知行裁剪为 inbox 对外摘要结构。

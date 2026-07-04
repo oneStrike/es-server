@@ -26,7 +26,7 @@ import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, isNull, lt, or, sql } from 'drizzle-orm'
 import {
   CouponInstanceStatusEnum,
@@ -49,8 +49,6 @@ import {
 
 @Injectable()
 export class CouponService {
-  private readonly logger = new Logger(CouponService.name)
-
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly contentEntitlementService: ContentEntitlementService,

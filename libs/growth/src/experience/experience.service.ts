@@ -59,10 +59,6 @@ export class UserExperienceService {
     return this.drizzle.schema.growthLedgerRecord
   }
 
-  private get userAssetBalance() {
-    return this.drizzle.schema.userAssetBalance
-  }
-
   // 获取用户资料数据库访问器
   get appUser() {
     return this.drizzle.schema.appUser

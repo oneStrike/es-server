@@ -88,11 +88,6 @@ export class AppAnnouncementService {
     return this.drizzle.schema.appAnnouncementView
   }
 
-  // 页面表
-  private get appPage() {
-    return this.drizzle.schema.appPage
-  }
-
   // 创建公告并在写入成功后入队公告通知 fanout 任务。 写入前会校验发布时间区间和关联页面，通知 fanout 改由后台任务执行。
   async createAnnouncement(createAnnouncementDto: CreateAnnouncementDto) {
     assertValidTimeRange(

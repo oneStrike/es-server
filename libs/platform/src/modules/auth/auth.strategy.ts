@@ -51,7 +51,7 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
   }
 
   // 验证 JWT 负载 该方法在 JWT 被成功解码后调用
-  async validate(request: Request, payload: JwtPayload): Promise<JwtPayload> {
+  async validate(_request: Request, payload: JwtPayload): Promise<JwtPayload> {
     // 验证 audience
     const expectedAud = this.configService.get<string>('auth.aud')
     if (expectedAud && payload.aud !== expectedAud) {

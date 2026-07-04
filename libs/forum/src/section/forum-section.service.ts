@@ -593,33 +593,6 @@ export class ForumSectionService {
     })
   }
 
-  // 基于事实表实时计算板块的主题数与评论数。 用于 repair 场景校验冗余计数字段准确性，不作为常规查询入口。
-  private async calculateStatistics(sectionId: number) {
-    const section = await this.db.query.forumSection.findFirst({
-      where: { id: sectionId, deletedAt: { isNull: true } },
-      with: {
-        topics: {
-          where: { deletedAt: { isNull: true } },
-          columns: { commentCount: true },
-        },
-      },
-    })
-
-    if (!section) {
-      return { topicCount: 0, commentCount: 0 }
-    }
-
-    const totalCommentCount = section.topics.reduce(
-      (sum, topic) => sum + topic.commentCount,
-      0,
-    )
-
-    return {
-      topicCount: section.topics.length,
-      commentCount: totalCommentCount,
-    }
-  }
-
   // 创建论坛板块。 - 板块名称全局唯一（未删除范围内） - 关联分组与等级规则时需校验目标存在性
   async createSection(createSectionDto: CreateForumSectionDto) {
     const { groupId, userLevelRuleId, ...sectionData } = createSectionDto

@@ -1836,7 +1836,7 @@ export class WorkflowService {
 
   // 为当前 attempt 续租。
   private async renewLeaseForAttempt(
-    job: WorkflowJobSelect,
+    _job: WorkflowJobSelect,
     attempt: WorkflowAttemptSelect,
   ) {
     const now = new Date()

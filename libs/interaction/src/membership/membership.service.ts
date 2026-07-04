@@ -25,7 +25,7 @@ import {
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, inArray, ne } from 'drizzle-orm'
 import { CouponSourceTypeEnum } from '../coupon/coupon.constant'
 import { CouponService } from '../coupon/coupon.service'
@@ -56,8 +56,6 @@ import {
 
 @Injectable()
 export class MembershipService {
-  private readonly logger = new Logger(MembershipService.name)
-
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly growthLedgerService: GrowthLedgerService,

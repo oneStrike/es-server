@@ -78,14 +78,6 @@ export class ForumHashtagService {
     return this.drizzle.schema.userComment
   }
 
-  private get appUser() {
-    return this.drizzle.schema.appUser
-  }
-
-  private get forumSection() {
-    return this.drizzle.schema.forumSection
-  }
-
   // 判断 hashtag 是否公开可见。
   private isPublic(hashtag: ForumHashtagVisibilityState) {
     return (

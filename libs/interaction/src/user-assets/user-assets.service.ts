@@ -46,10 +46,6 @@ export class UserAssetsService {
     return this.drizzle.schema.userContentEntitlement
   }
 
-  private get userAssetBalance() {
-    return this.drizzle.schema.userAssetBalance
-  }
-
   private get userMembershipSubscription() {
     return this.drizzle.schema.userMembershipSubscription
   }

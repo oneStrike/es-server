@@ -1,6 +1,5 @@
 import type { Db } from '@db/core'
 import type { IDownloadTargetResolver } from '@libs/interaction/download/interfaces/download-target-resolver.type'
-import { DrizzleService } from '@db/core'
 import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant'
 import { DownloadService } from '@libs/interaction/download/download.service'
@@ -24,15 +23,9 @@ export class WorkComicChapterDownloadResolver
   // 初始化 WorkComicChapterDownloadResolver 依赖。
   constructor(
     private readonly downloadService: DownloadService,
-    private readonly drizzle: DrizzleService,
     private readonly workCounterService: WorkCounterService,
     private readonly contentPermissionService: ContentPermissionService,
   ) {}
-
-  // 读取 workChapter。
-  private get workChapter() {
-    return this.drizzle.schema.workChapter
-  }
 
   // 模块初始化时注册解析器。
   onModuleInit() {

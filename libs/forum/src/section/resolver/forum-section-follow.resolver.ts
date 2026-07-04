@@ -28,7 +28,7 @@ export class ForumSectionFollowResolver
     this.followService.registerResolver(this)
   }
 
-  async ensureExists(tx: Db, targetId: number, actorUserId: number) {
+  async ensureExists(_tx: Db, targetId: number, actorUserId: number) {
     await this.forumPermissionService.ensureUserCanAccessSection(
       targetId,
       actorUserId,

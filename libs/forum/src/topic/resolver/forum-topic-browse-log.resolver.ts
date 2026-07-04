@@ -1,6 +1,5 @@
 import type { Db } from '@db/core'
 import type { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.type'
-import { DrizzleService } from '@db/core'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
@@ -23,7 +22,6 @@ export class ForumTopicBrowseLogResolver
 
   constructor(
     private readonly browseLogService: BrowseLogService,
-    private readonly drizzle: DrizzleService,
     private readonly forumCounterService: ForumCounterService,
     private readonly forumPermissionService: ForumPermissionService,
   ) {}

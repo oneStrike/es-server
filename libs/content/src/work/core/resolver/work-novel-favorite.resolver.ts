@@ -1,6 +1,5 @@
 import type { Db } from '@db/core'
 import type { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.type'
-import { DrizzleService } from '@db/core'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -22,16 +21,10 @@ export class WorkNovelFavoriteResolver
 
   // 初始化 WorkNovelFavoriteResolver 依赖。
   constructor(
-    private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
     private readonly workCounterService: WorkCounterService,
     private readonly workService: WorkService,
   ) {}
-
-  // 读取 db。
-  private get db() {
-    return this.drizzle.db
-  }
 
   // 模块初始化时注册解析器到收藏服务，使收藏服务能够识别并处理小说作品类型的收藏请求。
   onModuleInit() {

@@ -13,7 +13,7 @@ import process from 'node:process'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, asc, eq } from 'drizzle-orm'
 import { CreatePaymentOrderBaseDto } from '../payment/dto/payment.dto'
 import { PAYMENT_PROVIDER_ADAPTERS } from '../payment/payment-provider.adapter'
@@ -25,8 +25,6 @@ import {
 
 @Injectable()
 export class PaymentOrderService {
-  private readonly logger = new Logger(PaymentOrderService.name)
-
   constructor(private readonly drizzle: DrizzleService) {}
 
   // 获取支付订单表定义。
@@ -47,16 +45,6 @@ export class PaymentOrderService {
   // 获取支付 provider 配置不可变版本表定义。
   private get paymentProviderConfigVersion() {
     return this.drizzle.schema.paymentProviderConfigVersion
-  }
-
-  // 获取支付 provider 凭据表定义。
-  private get paymentProviderCredential() {
-    return this.drizzle.schema.paymentProviderCredential
-  }
-
-  // 获取支付 provider 证书表定义。
-  private get paymentProviderCertificate() {
-    return this.drizzle.schema.paymentProviderCertificate
   }
 
   // 创建支付订单并写入 provider 原生客户端支付参数。

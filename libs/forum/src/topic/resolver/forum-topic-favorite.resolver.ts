@@ -3,7 +3,6 @@ import type {
   FavoriteTargetContext,
   IFavoriteTargetResolver,
 } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.type'
-import { DrizzleService } from '@db/core'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
@@ -33,7 +32,6 @@ export class ForumTopicFavoriteResolver
   readonly targetType = FavoriteTargetTypeEnum.FORUM_TOPIC
 
   constructor(
-    private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
     private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
     private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,

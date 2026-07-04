@@ -54,10 +54,6 @@ export class UserPointService {
     return this.drizzle.schema.appUser
   }
 
-  private get userAssetBalance() {
-    return this.drizzle.schema.userAssetBalance
-  }
-
   // 增加积分
   async addPoints(
     addPointsDto: UserGrowthRuleActionDto & {

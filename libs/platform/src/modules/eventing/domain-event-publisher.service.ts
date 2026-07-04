@@ -17,10 +17,6 @@ import { DomainEventDispatchStatusEnum } from './eventing.constant'
 export class DomainEventPublisher {
   constructor(private readonly drizzle: DrizzleService) {}
 
-  private get db() {
-    return this.drizzle.db
-  }
-
   private get domainEvent() {
     return this.drizzle.schema.domainEvent
   }

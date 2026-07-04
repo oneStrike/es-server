@@ -2334,15 +2334,6 @@ export class PaymentService {
     return input as Record<string, unknown>
   }
 
-  private readSnapshotString(
-    snapshot: Record<string, unknown> | null,
-    field: string,
-    fallback: string,
-  ) {
-    const value = snapshot?.[field]
-    return typeof value === 'string' ? value : fallback
-  }
-
   private readSnapshotNullableString(
     snapshot: Record<string, unknown> | null,
     field: string,
@@ -2353,17 +2344,6 @@ export class PaymentService {
       return null
     }
     return typeof value === 'string' ? value : fallback
-  }
-
-  private readSnapshotNumber(
-    snapshot: Record<string, unknown> | null,
-    field: string,
-    fallback: number,
-  ) {
-    const value = snapshot?.[field]
-    return typeof value === 'number' && Number.isFinite(value)
-      ? value
-      : fallback
   }
 
   // 获取指定支付渠道的 provider 适配器。

@@ -1,7 +1,6 @@
 import type {
   AuditPageRequestDto,
   CreateRequestLogDto,
-  CreateRequestLogSimpleDto,
 } from '@libs/platform/modules/audit/dto'
 import type { FastifyRequest } from 'fastify'
 import type { RequestLogInsert } from './audit.type'
@@ -9,7 +8,6 @@ import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { buildRequestLogFields } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
@@ -59,18 +57,6 @@ export class AuditService {
         .returning({ id: this.requestLog.id }),
     )
     return created
-  }
-
-  // 创建成功请求日志的通用方法。
-  private async createSuccessRequestLog(
-    actionType: AuditActionTypeEnum,
-    createDto: CreateRequestLogSimpleDto,
-    req: FastifyRequest,
-  ) {
-    return this.createRequestLog(
-      { ...createDto, actionType, isSuccess: true },
-      req,
-    )
   }
 
   // 按 ID 获取请求日志详情，不存在时抛出业务异常。

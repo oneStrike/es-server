@@ -340,21 +340,6 @@ export class UserLevelRuleService {
     })
   }
 
-  private async getCurrentExperience(userId: number) {
-    const balance = await this.db.query.userAssetBalance.findFirst({
-      where: {
-        userId,
-        assetType: GrowthAssetTypeEnum.EXPERIENCE,
-        assetKey: '',
-      },
-      columns: {
-        balance: true,
-      },
-    })
-
-    return balance?.balance ?? 0
-  }
-
   // 在指定事务中按经验值反查当前应命中的最高等级。 供账本、升级和修复链路复用，避免不同上下文复制相同排序逻辑。
   async getHighestLevelRuleByExperienceInTx(
     tx: Db,

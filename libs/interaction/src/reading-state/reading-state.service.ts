@@ -34,10 +34,6 @@ export class ReadingStateService {
     return this.drizzle.schema.userWorkReadingState
   }
 
-  private get workChapter() {
-    return this.drizzle.schema.workChapter
-  }
-
   private buildFallbackWorkSnapshot(
     workId: number,
     workType: number,

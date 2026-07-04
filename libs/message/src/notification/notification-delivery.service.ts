@@ -42,10 +42,6 @@ export class MessageNotificationDeliveryService {
     return this.drizzle.schema.notificationDelivery
   }
 
-  private get domainEvent() {
-    return this.drizzle.schema.domainEvent
-  }
-
   async recordHandledDispatch(
     event: DomainEventRecord,
     dispatch: DomainEventDispatchRecord,

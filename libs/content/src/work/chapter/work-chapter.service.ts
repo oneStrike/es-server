@@ -7,7 +7,6 @@ import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.servic
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant'
 import { DownloadService } from '@libs/interaction/download/download.service'
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
@@ -47,7 +46,6 @@ export class WorkChapterService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
-    private readonly favoriteService: FavoriteService,
     private readonly browseLogService: BrowseLogService,
     private readonly downloadService: DownloadService,
     private readonly contentPermissionService: ContentPermissionService,

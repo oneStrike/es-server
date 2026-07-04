@@ -33,26 +33,6 @@ export class ForumPermissionService {
     return this.drizzle.db
   }
 
-  private get appUser() {
-    return this.drizzle.schema.appUser
-  }
-
-  private get forumSection() {
-    return this.drizzle.schema.forumSection
-  }
-
-  private get forumTopic() {
-    return this.drizzle.schema.forumTopic
-  }
-
-  private get userComment() {
-    return this.drizzle.schema.userComment
-  }
-
-  private get userAssetBalance() {
-    return this.drizzle.schema.userAssetBalance
-  }
-
   // 获取发帖所需的用户上下文，包含等级配置中的频控参数。
   private async getPostingUserContext(userId: number) {
     const user = await this.db.query.appUser.findFirst({

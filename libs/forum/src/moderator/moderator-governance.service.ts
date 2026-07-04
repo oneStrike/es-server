@@ -63,16 +63,6 @@ export class ForumModeratorGovernanceService {
     return this.drizzle.db
   }
 
-  // forum_topic 表访问入口。
-  private get forumTopic() {
-    return this.drizzle.schema.forumTopic
-  }
-
-  // user_comment 表访问入口。
-  private get userComment() {
-    return this.drizzle.schema.userComment
-  }
-
   // 解析治理 actor 的审核角色枚举。 当前仅 topic/comment 审核动作需要回填审核角色。
   private resolveAuditRole(actor: ForumModeratorGovernanceActor) {
     return actor.actorType === 'moderator'

@@ -25,10 +25,6 @@ export class DomainEventDispatchService {
     return this.drizzle.db
   }
 
-  private get domainEvent() {
-    return this.drizzle.schema.domainEvent
-  }
-
   private get domainEventDispatch() {
     return this.drizzle.schema.domainEventDispatch
   }
