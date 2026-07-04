@@ -188,9 +188,9 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     }
 
     const chapterUuid = chapter.uuid
-    const images = (chapter?.contents ?? []).map((item, index) =>
-      this.toChapterImageItem(chapterUuid, item, index),
-    )
+    const images = (chapter?.contents ?? [])
+      .map((item, index) => this.toChapterImageItem(chapterUuid, item, index))
+      .filter((item): item is NonNullable<typeof item> => item !== null)
 
     if (images.length === 0) {
       throw this.providerError('第三方章节内容为空')
@@ -275,20 +275,18 @@ export class CopyMangaProvider implements ComicThirdPartyProvider {
     }
   }
 
-  // 将章节图片结果收敛为共享 DTO；图片身份和 URL 缺失时失败关闭。
+  // 将章节图片结果收敛为共享 DTO；url 缺失的图片项跳过，uuid 缺失时合成稳定 ID。
   private toChapterImageItem(
     chapterUuid: string,
     item: CopyMangaChapterContentImage,
     index: number,
   ) {
-    if (!item.uuid || !item.url) {
-      throw this.providerError(
-        `第三方章节图片字段缺失: ${chapterUuid}:${index + 1}`,
-      )
+    if (!item.url) {
+      return null
     }
 
     return {
-      providerImageId: item.uuid,
+      providerImageId: item.uuid ?? `${chapterUuid}:${index + 1}`,
       url: item.url,
       sortOrder: index + 1,
     }
