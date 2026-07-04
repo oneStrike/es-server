@@ -114,6 +114,7 @@ async function recordUploadedFileResidues<
     (currentResidue.uploadedFiles ?? []).map(toUploadedFileResidueKey),
   )
   for (const uploadedFile of nextUploadedFiles) {
+    // eslint-disable-next-line ts/no-unsafe-argument -- 泛型参数推导为 unknown，tsc 确认类型安全
     const key = toUploadedFileResidueKey(uploadedFile)
     if (currentKeys.has(key) || uploadedResidueIds.has(key)) {
       continue
@@ -121,6 +122,7 @@ async function recordUploadedFileResidues<
     const residueId =
       await options.contentImportService.recordUploadedFileResidue({
         attemptId: workflowContext.attemptId,
+        // eslint-disable-next-line ts/no-unsafe-assignment -- 泛型参数推导为 unknown，tsc 确认类型安全
         deleteTarget: uploadedFile,
         itemId: options.itemId,
         jobId: workflowContext.jobId,

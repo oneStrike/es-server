@@ -2432,7 +2432,7 @@ export class TaskExecutionService extends TaskServiceSupport {
       const rewardItems = (snapshotPayload as { rewardItems?: unknown })
         .rewardItems
       if (Array.isArray(rewardItems)) {
-        return rewardItems
+        return rewardItems as unknown[]
       }
     }
 

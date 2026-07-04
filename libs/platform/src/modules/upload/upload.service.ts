@@ -518,7 +518,7 @@ export class UploadService {
         ? requestMime.toLowerCase()
         : ''
     const mime =
-      UPLOAD_CUSTOM_MIME_BY_EXT[ext] ||
+      (UPLOAD_CUSTOM_MIME_BY_EXT as Record<string, string | undefined>)[ext] ||
       detectedMime?.toLowerCase() ||
       requestMimeValue ||
       this.lookupMimeByExt(ext)
@@ -535,9 +535,10 @@ export class UploadService {
   }
 
   // 根据扩展名查找标准 MIME。
-  private lookupMimeByExt(ext: string) {
-    if (UPLOAD_CUSTOM_MIME_BY_EXT[ext]) {
-      return UPLOAD_CUSTOM_MIME_BY_EXT[ext]
+  private lookupMimeByExt(ext: string): string {
+    const customMime = (UPLOAD_CUSTOM_MIME_BY_EXT as Record<string, string | undefined>)[ext]
+    if (customMime) {
+      return customMime
     }
 
     const lookupValue = mime.lookup(ext)
@@ -548,7 +549,7 @@ export class UploadService {
   private resolvePreferredExtension(
     detectedExt: string | undefined,
     filenameExt: string,
-  ) {
+  ): string | undefined {
     if (detectedExt === 'zip' && ['apk', 'ipa'].includes(filenameExt)) {
       return filenameExt
     }
@@ -557,7 +558,7 @@ export class UploadService {
   }
 
   // 根据扩展名解析仓库内定义的文件分类。
-  private getFileCategoryFromExt(ext: string) {
+  private getFileCategoryFromExt(ext: string): UploadFileCategory | null {
     const lowerExt = ext.toLowerCase()
     for (const type of Object.keys(
       this.uploadConfig.allowExtensions,

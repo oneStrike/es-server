@@ -71,7 +71,7 @@ export function jsonParse<T>(input: JsonInput, defaultValue?: T): T | null {
   }
 
   try {
-    const parsed = JSON.parse(str)
+    const parsed: unknown = JSON.parse(str)
     return parsed as T
   } catch {
     return defaultValue || null

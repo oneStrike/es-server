@@ -4,7 +4,10 @@ import { DrizzleService } from '@db/core'
 import { AuthSessionService } from '@libs/identity/session.service'
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
 import { RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto'
-import { AuthConstants, AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
+import {
+  AuthConstants,
+  AuthErrorMessages,
+} from '@libs/platform/modules/auth/helpers'
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
 
 import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service'
@@ -101,7 +104,10 @@ export class AuthService {
     let password = body.password
     try {
       password = this.rsaService.decryptWith(body.password)
-    } catch {
+    } catch (error) {
+      if (!(error instanceof BadRequestException)) {
+        throw error
+      }
       await this.loginGuardService.recordFail(
         AdminAuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
         AdminAuthRedisKeys.LOGIN_LOCK(user.id),

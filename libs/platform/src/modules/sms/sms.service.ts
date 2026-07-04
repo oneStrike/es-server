@@ -158,6 +158,7 @@ export class SmsService {
       if (!response.code || response.code !== 'OK') {
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          // eslint-disable-next-line ts/no-unsafe-argument -- SmsErrorMap 索引返回 string | undefined，tsc 确认类型安全
           SmsErrorMap[response?.code || '验证码服务异常'],
         )
       }

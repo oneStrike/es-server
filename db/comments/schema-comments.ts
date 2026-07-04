@@ -137,7 +137,7 @@ export function buildSchemaCommentsArtifact(
 
     for (const [columnKey, column] of Object.entries(runtimeColumns)) {
       const columnComment = sourceTable.columnComments.get(columnKey)
-      const columnName = column.name
+      const columnName: string = (column as { name: string }).name
 
       if (!columnComment) {
         warnings.push({

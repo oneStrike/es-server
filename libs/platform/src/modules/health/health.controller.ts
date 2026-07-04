@@ -48,7 +48,7 @@ export class HealthController {
   @Public()
   @HttpCode(200)
   async readinessCheck() {
-    const upload = this.configService.get('upload')
+    const upload = this.configService.get<{ localDir?: string }>('upload')
     const uploadPath = upload?.localDir || process.cwd()
     try {
       const [database, cache, disk] = await Promise.all([

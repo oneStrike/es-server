@@ -1,4 +1,4 @@
-import type { FastifyRequest } from 'fastify'
+import type { CurrentUserRequest } from '@libs/platform/decorators'
 import type { AuditMetadata } from '../decorators/audit.type'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
@@ -19,7 +19,7 @@ export class AuditInterceptor implements NestInterceptor {
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler) {
-    const request = context.switchToHttp().getRequest<FastifyRequest>()
+    const request = context.switchToHttp().getRequest<CurrentUserRequest>()
     const metadata = this.reflector.get<AuditMetadata>(
       'audit',
       context.getHandler(),
@@ -50,7 +50,7 @@ export class AuditInterceptor implements NestInterceptor {
    * @param metadata 审计元数据
    */
   private async logAudit(
-    request: FastifyRequest,
+    request: CurrentUserRequest,
     isSuccess: boolean,
     metadata: AuditMetadata,
   ) {
@@ -76,8 +76,10 @@ export class AuditInterceptor implements NestInterceptor {
       }
 
       if (actionType === AuditActionTypeEnum.LOGIN) {
-        // @ts-expect-error ignore
-        logContent.username = request.body.username
+        const body = request.body as { username?: string } | undefined
+        if (body?.username) {
+          logContent.username = body.username
+        }
       }
 
       // 调用审计服务记录日志

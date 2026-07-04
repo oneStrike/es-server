@@ -187,6 +187,7 @@ export class SensitiveWordStatisticsService {
 
     return results.map((result) => ({
       level: result.level,
+      // eslint-disable-next-line ts/no-unsafe-assignment -- ESLint type checker cannot resolve Record<enum, T> indexed by number; tsc confirms type is string
       levelName: SensitiveWordLevelNames[result.level] || '未知',
       count: Number(result.count),
       hitCount: Number(result.hitCount) || 0,
@@ -206,6 +207,7 @@ export class SensitiveWordStatisticsService {
 
     return results.map((result) => ({
       type: result.type,
+      // eslint-disable-next-line ts/no-unsafe-assignment -- ESLint type checker cannot resolve Record<enum, T> indexed by number; tsc confirms type is string
       typeName: SensitiveWordTypeNames[result.type] || '未知',
       count: Number(result.count),
       hitCount: Number(result.hitCount) || 0,

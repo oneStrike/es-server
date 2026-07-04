@@ -18,10 +18,7 @@ import {
 } from '@nestjs/common'
 import { desc, sql } from 'drizzle-orm'
 import { ConfigReader } from './config-reader'
-import {
-  SystemConfigDetailDto,
-  UpdateSystemConfigDto,
-} from './dto/config.dto'
+import { SystemConfigDetailDto, UpdateSystemConfigDto } from './dto/config.dto'
 import {
   CACHE_KEY,
   CACHE_TTL,
@@ -78,7 +75,7 @@ export class SystemConfigService implements OnModuleInit {
   }
 
   // 获取脱敏后的系统配置（供前端展示） 敏感字段会被替换为掩码（如 ****）
-  async findMaskedConfig() {
+  async findMaskedConfig(): Promise<SystemConfigDetailDto> {
     const latestConfig = await this.findLatestConfig()
     if (!latestConfig) {
       await this.initCache()
@@ -228,7 +225,11 @@ export class SystemConfigService implements OnModuleInit {
             path,
             await this.aesService.encrypt(decryptedValue),
           )
-        } catch {
+        } catch (error) {
+          if (!(error instanceof BadRequestException)) {
+            throw error
+          }
+
           this.setValueByPath(
             input,
             path,
@@ -343,8 +344,7 @@ export class SystemConfigService implements OnModuleInit {
 
     for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
       const configItem = maskedConfig[key] as
-        | Record<string, unknown>
-        | undefined
+        Record<string, unknown> | undefined
       if (!configItem) {
         continue
       }
@@ -513,16 +513,16 @@ export class SystemConfigService implements OnModuleInit {
   /**
    * 通过 JSON 序列化复制配置对象，避免原地修改缓存快照。
    */
-  private cloneConfig<T>(config: T) {
+  private cloneConfig<T>(config: T): T {
     return JSON.parse(JSON.stringify(config)) as T
   }
 
   /**
    * 递归移除对象中的 `null` 值，避免数据库里的空值覆盖默认配置。
    */
-  private removeNullValues<T>(value: T) {
+  private removeNullValues<T>(value: T): T {
     if (Array.isArray(value)) {
-      return value.map((item) => this.removeNullValues(item)) as T
+      return value.map((item: unknown) => this.removeNullValues(item)) as T
     }
 
     if (this.isPlainObject(value)) {
@@ -548,23 +548,14 @@ export class SystemConfigService implements OnModuleInit {
     }
 
     let current:
-      | Record<string, unknown>
-      | string
-      | number
-      | boolean
-      | null
-      | undefined = target
+      Record<string, unknown> | string | number | boolean | null | undefined =
+      target
     for (const segment of path.split('.')) {
       if (!this.isPlainObject(current)) {
         return undefined
       }
       current = current[segment] as
-      | Record<string, unknown>
-      | string
-      | number
-      | boolean
-      | null
-      | undefined
+        Record<string, unknown> | string | number | boolean | null | undefined
     }
     return current
   }

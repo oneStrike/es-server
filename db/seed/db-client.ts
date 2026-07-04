@@ -1,9 +1,9 @@
 import type { Db } from './db-client.type'
 import process from 'node:process'
+import { seedRelations } from '@db/core'
 import * as schema from '@db/schema'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { relations } from '../core/drizzle-relations'
 
 export type { Db } from './db-client.type'
 
@@ -20,7 +20,7 @@ export function createDbClient(connectionString: string) {
 
   const db = drizzle({
     client: pool,
-    schema: { ...schema, ...relations },
+    schema: { ...schema, ...seedRelations },
     logger: process.env.NODE_ENV === 'development',
   })
 

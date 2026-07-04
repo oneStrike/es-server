@@ -202,7 +202,7 @@ export function extractRequestParams(req: FastifyRequest) {
  * @returns User-Agent 字符串，如果不存在则返回 undefined
  */
 export function extractUserAgent(req: FastifyRequest) {
-  const userAgent = req.headers['user-agent']
+  const userAgent = req.headers['user-agent'] as string | string[] | undefined
   const userAgentValue = Array.isArray(userAgent) ? userAgent[0] : userAgent
   return typeof userAgentValue === 'string' ? userAgentValue.trim() : undefined
 }

@@ -3,6 +3,7 @@ import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
+import type { FastifyInstance } from 'fastify/types/instance'
 import fastifyHelmet from '@fastify/helmet'
 import { isDevelopment } from '@libs/platform/utils'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
@@ -36,7 +37,7 @@ export async function setupApp(
     })
   }
 
-  const fastifyInstance = fastifyAdapter.getInstance()
+  const fastifyInstance = fastifyAdapter.getInstance<FastifyInstance>()
 
   fastifyInstance.get('/favicon.ico', async (_req, reply) => {
     reply.type('image/x-icon').code(204).send()

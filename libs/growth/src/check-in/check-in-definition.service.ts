@@ -567,6 +567,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         throw new BadRequestException('排序字段非法')
       }
 
+      // eslint-disable-next-line ts/no-unsafe-argument -- record 已收窄为 object，ESLint 无法推导 Object.entries 的键类型
       const entries = Object.entries(record)
       if (entries.length !== 1) {
         throw new BadRequestException('排序字段非法')

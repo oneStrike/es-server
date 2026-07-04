@@ -19,6 +19,8 @@ const ALLOWED_CORE_EXPORTS = new Set([
   'DrizzleMutationResult',
   'DrizzleService',
   'PgTable',
+  'seedRelations',
+  'SeedDb',
   'SQL',
   'TableConfig',
   'buildILikeCondition',
@@ -38,6 +40,8 @@ const FORBIDDEN_CORE_EXPORTS = new Set([
   'DrizzleDbProvider',
   ['Drizzle', 'Db', 'LegacyProvider'].join(''),
 ])
+
+const ALLOWED_CORE_EXPORT_ALIASES = new Map([['seedRelations', 'relations']])
 
 interface BoundaryViolation {
   filePath: string
@@ -295,6 +299,8 @@ function checkPublicBarrel() {
     for (const specifier of node.exportClause.elements) {
       const exportedName = specifier.name.text
       const sourceName = specifier.propertyName?.text ?? exportedName
+      const allowedAliasedSourceName =
+        ALLOWED_CORE_EXPORT_ALIASES.get(exportedName)
 
       if (FORBIDDEN_CORE_EXPORTS.has(sourceName)) {
         addViolation(
@@ -303,7 +309,10 @@ function checkPublicBarrel() {
         )
       }
 
-      if (!ALLOWED_CORE_EXPORTS.has(sourceName)) {
+      if (
+        !ALLOWED_CORE_EXPORTS.has(sourceName) &&
+        allowedAliasedSourceName !== sourceName
+      ) {
         addViolation(
           PUBLIC_BARREL_PATH,
           `exports non-allowlisted source symbol "${sourceName}"`,

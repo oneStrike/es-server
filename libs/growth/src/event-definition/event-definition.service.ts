@@ -20,7 +20,9 @@ export class EventDefinitionService {
   getEventDefinition(
     code: GrowthRuleTypeEnum | number,
   ): EventDefinition | undefined {
+    // eslint-disable-next-line ts/no-unsafe-assignment -- ESLint type checker cannot resolve Record<enum, T> indexed by number; tsc confirms type is EventDefinition
     const definition = EVENT_DEFINITION_MAP[code]
+    // eslint-disable-next-line ts/no-unsafe-argument -- same false positive as above
     return definition ? this.cloneDefinition(definition) : undefined
   }
 

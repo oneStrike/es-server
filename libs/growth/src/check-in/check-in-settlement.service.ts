@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { GrowthRewardSettlementSelect } from '@db/schema'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.type'
 import type {
   CheckInGrantRewardSettlementSource,
@@ -256,9 +257,12 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   }
 
   // 按 ID 批量查询奖励补偿事实，并收敛成 Map 便于后续复用。
-  async buildSettlementMapById(ids: number[], db: Db = this.db) {
+  async buildSettlementMapById(
+    ids: number[],
+    db: Db = this.db,
+  ): Promise<Map<number, GrowthRewardSettlementSelect>> {
     if (ids.length === 0) {
-      return new Map()
+      return new Map<number, GrowthRewardSettlementSelect>()
     }
 
     const rows = await db

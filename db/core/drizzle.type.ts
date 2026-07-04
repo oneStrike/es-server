@@ -6,6 +6,9 @@ import type { relations } from './drizzle-relations'
 /** 稳定领域类型 `Db`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type Db = NodePgDatabase<typeof relations>
 
+/** Seed 脚本使用的数据库客户端类型。 */
+export type SeedDb = Db
+
 export type { PgTable }
 
 export type { SQL, SQLWrapper, TableConfig }

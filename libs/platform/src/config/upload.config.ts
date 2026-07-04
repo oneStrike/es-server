@@ -2,7 +2,7 @@ import { isAbsolute, resolve } from 'node:path'
 import process from 'node:process'
 import { parseBytes } from '@libs/platform/utils'
 import { registerAs } from '@nestjs/config'
-import mime from 'mime-types'
+import * as mime from 'mime-types'
 
 export const UPLOAD_CUSTOM_MIME_BY_EXT = {
   apk: 'application/vnd.android.package-archive',
@@ -57,11 +57,10 @@ export const allowExtensionsFlat = Object.values(allowExtensions).flat()
 
 // 允许的MIME类型
 const allowMimeTypes: Partial<typeof allowExtensions> = {}
-for (const key in allowExtensions) {
-  const element = allowExtensions[key]
-  allowMimeTypes[key as keyof typeof allowExtensions] = element
-    .map((ext) => UPLOAD_CUSTOM_MIME_BY_EXT[ext] || mime.lookup(ext))
-    .filter((item) => item !== false)
+for (const [key, element] of Object.entries(allowExtensions) as [keyof typeof allowExtensions, string[]][]) {
+  allowMimeTypes[key] = element
+    .map(ext => (UPLOAD_CUSTOM_MIME_BY_EXT as Record<string, string | undefined>)[ext] || mime.lookup(ext))
+    .filter((item): item is string => item !== false)
 }
 
 // 允许的MIME类型数组

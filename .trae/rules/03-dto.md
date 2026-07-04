@@ -67,8 +67,7 @@
 - 禁止为平台通用 DTO 新增空心别名或改名包装；需要单个 `id`、分页参数、`userId`、`ids` 时，直接在 controller / service 签名中使用 `IdDto`、`PageDto`、`UserIdDto`、`IdsDto`。
 - 禁止在 DTO 文件中为了复用局部装饰器文案，新增 `*_DESCRIPTION`、`*_EXAMPLE`、`*_MESSAGE` 这类只服务当前文件的短文本常量。
 - 禁止通过 `*.public.dto.ts`、`response.dto.ts`、`detail.dto.ts` 拆出仅做转发的文件；若属于同一 owner 域，优先收口在同一个 owner DTO 文件中。
-- 禁止在输出 DTO 中对数据库 nullable 字段使用 `?: T | null`（可选字段），必须使用 `: T | null`（必填字段），确保 JSON 序列化时字段始终存在。
-- 禁止在 Service 层对输出 DTO 的 nullable 字段赋值 `undefined`（如 `level?.name`、`value ?? undefined`、`value || undefined`），导致字段被 JSON 序列化省略；必须使用 `?? null` 确保值始终为 `null` 或实际值。
+- 禁止违反 nullable 字段规则（见"默认动作"）：输出 DTO 中 nullable 字段必须使用 `: T | null`，Service 层必须使用 `?? null` 而非 `?? undefined`。
 
 ## 枚举字段描述规范
 

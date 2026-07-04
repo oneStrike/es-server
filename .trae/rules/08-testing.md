@@ -40,8 +40,12 @@
 - 基线：`pnpm type-check`
 - 规则敏感层变更：对改动文件运行必要的 `eslint` 或等价静态检查。
 - 入口或构建链路变更：运行对应 app / package 的 build 命令。
-- 临时测试验证：可运行 `pnpm test -- --runInBand --runTestsByPath <temp-spec-path>`，随后删除临时测试文件。
+- 临时测试验证：可运行 `pnpm exec jest --runInBand --runTestsByPath <temp-spec-path>`，随后删除临时测试文件。
 - `pnpm test`、`pnpm test:cov`、`pnpm test:e2e` 不作为默认交付验证命令。
+
+## 已知配置矛盾
+
+- `package.json` 安装了 `jest`、`ts-jest`、`supertest`、`@types/jest`、`@types/supertest` 等测试依赖，但未定义 `test` 脚本，且仓库不保留测试文件。当前临时测试通过 `pnpm exec jest` 直接调用，不依赖 `pnpm test` 脚本。后续如需统一入口，应先补充 `test` 脚本或清理未使用的测试依赖；两者取其一，不应长期并存。
 
 ## 禁止项
 

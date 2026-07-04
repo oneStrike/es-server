@@ -470,8 +470,8 @@ export class CopyMangaHttpClient {
   }
 
   // 读取原生响应上的 Retry-After 头。
-  private readResponseRetryAfterHeader(response: IncomingMessage) {
-    const header = response.headers['retry-after']
+  private readResponseRetryAfterHeader(response: IncomingMessage): string | undefined {
+    const header = response.headers['retry-after'] as string | string[] | undefined
     return Array.isArray(header) ? header[0] : header
   }
 

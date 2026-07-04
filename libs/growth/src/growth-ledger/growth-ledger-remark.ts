@@ -16,10 +16,12 @@ import {
  */
 export function resolveGrowthLedgerRemark(
   input: ResolveGrowthLedgerRemarkInput,
-) {
+): string {
   if (typeof input.ruleType === 'number') {
+    // eslint-disable-next-line ts/no-unsafe-assignment, ts/no-unsafe-member-access -- ESLint type checker cannot resolve Record<enum, T> indexed by number; tsc confirms type is EventDefinition
     const ruleRemark = EVENT_DEFINITION_MAP[input.ruleType]?.ledgerRemark
     if (ruleRemark) {
+      // eslint-disable-next-line ts/no-unsafe-return -- same false positive as above
       return ruleRemark
     }
   }
@@ -33,7 +35,7 @@ export function resolveGrowthLedgerRemark(
  */
 export function resolveStoredGrowthLedgerRemark(
   input: ResolveStoredGrowthLedgerRemarkInput,
-) {
+): string {
   const action =
     input.delta < 0
       ? GrowthLedgerActionEnum.CONSUME
@@ -49,7 +51,7 @@ export function resolveStoredGrowthLedgerRemark(
 
 function resolveDirectGrowthLedgerRemark(
   input: ResolveGrowthLedgerRemarkInput,
-) {
+): string {
   switch (input.source) {
     case GrowthLedgerSourceEnum.TASK_BONUS:
       return buildBracketedAssetRemark('任务奖励', input.assetType)

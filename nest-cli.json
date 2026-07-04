@@ -111,8 +111,8 @@
     },
     "moderation": {
       "type": "library",
-      "root": "libs/moderation",
-      "entryFile": "index",
+      "root": "libs/moderation/sensitive-word",
+      "entryFile": "sensitive-word.module",
       "sourceRoot": "libs/moderation/sensitive-word/src",
       "compilerOptions": {
         "tsConfigPath": "libs/moderation/tsconfig.lib.json"

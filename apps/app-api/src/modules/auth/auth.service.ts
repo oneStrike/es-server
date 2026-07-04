@@ -162,7 +162,7 @@ export class AuthService {
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN,
       )
     }
-    let user
+    let user: AppUserSelect | undefined
     if (body.phone) {
       ;[user] = await this.db
         .select()
@@ -230,7 +230,10 @@ export class AuthService {
       let password = ''
       try {
         password = this.rsaService.decryptWith(body.password!)
-      } catch {
+      } catch (error) {
+        if (!(error instanceof BadRequestException)) {
+          throw error
+        }
         await this.recordPasswordLoginFailure(user.id)
       }
 

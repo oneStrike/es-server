@@ -16,7 +16,7 @@ import { ApiSuccessCode } from '../constant'
 
 // 工具函数：判断是否是类
 function isClass(model: object): model is ApiDocConstructorModel {
-  return typeof model === 'function' && model.prototype
+  return typeof model === 'function' && Boolean((model as { prototype: unknown }).prototype)
 }
 
 // 基础响应结构（不含 data）
@@ -50,7 +50,7 @@ export function ApiDoc<TModel extends object = object>(
   options: ApiDocOptions<TModel>,
 ) {
   const { summary, model, isArray, nullable } = options
-  let dataSchema
+  let dataSchema: Record<string, unknown> | undefined
   const response = baseResponse(summary)
   const decorators = [ApiOperation({ summary })]
 
@@ -133,7 +133,7 @@ export function ApiPageDoc<TModel extends object = object>(
   options: ApiDocOptions<TModel>,
 ) {
   const { summary, model } = options
-  let dataSchema
+  let dataSchema: Record<string, unknown> | undefined
   const response = baseResponse(summary)
   const decorators = [ApiOperation({ summary })]
 
@@ -169,30 +169,29 @@ export function ApiPageDoc<TModel extends object = object>(
                   pageIndex: {
                     type: 'number',
                     description: '当前页码（从1开始）',
-                    required: true,
                     example: 1,
                   },
                   pageSize: {
                     type: 'number',
                     description: '每页条数',
-                    required: true,
                     example: 15,
                   },
                   total: {
                     type: 'number',
                     description: '总条数',
-                    required: true,
                     example: 100,
                   },
                   ...(dataSchema && {
                     list: {
                       type: 'array',
-                      required: true,
                       description: '列表数据',
                       items: dataSchema,
                     },
                   }),
                 },
+                required: dataSchema
+                  ? ['pageIndex', 'pageSize', 'total', 'list']
+                  : ['pageIndex', 'pageSize', 'total'],
               },
             },
           },

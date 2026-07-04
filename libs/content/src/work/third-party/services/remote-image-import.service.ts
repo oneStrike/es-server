@@ -404,8 +404,8 @@ export class RemoteImageImportService {
   }
 
   // 读取远程图片响应中的 Retry-After 头。
-  private readRetryAfterHeader(response: IncomingMessage) {
-    const header = response.headers['retry-after']
+  private readRetryAfterHeader(response: IncomingMessage): string | undefined {
+    const header = response.headers['retry-after'] as string | string[] | undefined
     return Array.isArray(header) ? header[0] : header
   }
 
@@ -743,7 +743,7 @@ export class RemoteImageImportService {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
       return false
     }
-    const prototype = Object.getPrototypeOf(value)
+    const prototype = Object.getPrototypeOf(value) as object | null
     return prototype === Object.prototype || prototype === null
   }
 

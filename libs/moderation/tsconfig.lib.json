@@ -1,9 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "rootDir": "../../",
     "declaration": true,
     "outDir": "../../dist/libs/moderation/sensitive-word"
   },
-  "include": ["src/**/*"],
+  "include": ["sensitive-word/src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

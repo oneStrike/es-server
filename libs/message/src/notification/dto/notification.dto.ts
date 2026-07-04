@@ -635,6 +635,7 @@ export class QueryUserNotificationPageDto extends PageDto {
     required: false,
     example: `${MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY},${MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_LIKE}`,
     transform: ({ value }) => {
+      // eslint-disable-next-line ts/no-unsafe-argument -- transform value 类型为 unknown，tsc 确认类型安全
       return serializeMessageNotificationCategoryKeysFilter(value)
     },
   })

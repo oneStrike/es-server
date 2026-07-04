@@ -4,7 +4,7 @@
 
 ## 核心原则
 
-- 接口继续采用 RPC over HTTP，不强制改成 REST。
+- 接口继续采用动作型路由（RPC 风格）over HTTP，不强制改成 RESTful。
 - Controller 只负责入参接收、上下文装配、权限与审计装饰器、Swagger 注解、调用 service。
 - Controller 入参 DTO 与响应 DTO 统一从 `libs/*` 复用；`apps/*` 不重复定义同构 DTO。
 - Controller 不写数据库查询，不承载复杂业务编排，不保留第二套正式业务实现。
@@ -19,7 +19,7 @@
 
 ## Swagger 规范
 
-- 统一使用 `ApiDoc`、`ApiPageDoc`。
+- 统一使用 `ApiDoc`、`ApiPageDoc`、`ApiHtmlDoc`。其中 `ApiHtmlDoc` 仅用于返回 `text/html` 的特殊接口（如协议页、公告页渲染），保持 `ApiDoc` 的 JSON envelope 语义不变。
 - 响应模型必须是输出 DTO 或基础类型；禁止把 `CreateXxxDto`、`UpdateXxxDto` 作为输出模型。
 - `ApiPageDoc` 只用于真实返回分页结构的接口。
 - `@ApiTags` 只用于文档分组，不驱动模块拆分。

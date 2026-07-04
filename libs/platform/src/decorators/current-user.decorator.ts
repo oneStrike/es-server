@@ -1,6 +1,6 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
 import type { ExecutionContext } from '@nestjs/common'
-import type { UserField } from './current-user.type'
+import type { CurrentUserRequest, UserField } from './current-user.type'
 import { createParamDecorator } from '@nestjs/common'
 
 /**
@@ -21,13 +21,16 @@ import { createParamDecorator } from '@nestjs/common'
  */
 export const CurrentUser = createParamDecorator(
   (data: UserField | undefined, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest()
-    const requestUser = request.user as JwtUserInfoInterface
+    const request = ctx.switchToHttp().getRequest<CurrentUserRequest>()
+    const requestUser = request.user
     if (!requestUser) {
       return null
     }
-    requestUser.sub = Number(requestUser.sub)
+    const normalizedUser: JwtUserInfoInterface = {
+      ...requestUser,
+      sub: Number(requestUser.sub),
+    }
     // 如果传入了字段名，返回该字段的值；否则返回完整用户信息
-    return data ? requestUser[data] : requestUser
+    return data ? normalizedUser[data] : normalizedUser
   },
 )

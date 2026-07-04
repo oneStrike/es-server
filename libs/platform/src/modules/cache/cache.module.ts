@@ -1,6 +1,6 @@
 import type { RedisConfigInterface } from '@libs/platform/types'
 import { createKeyv } from '@keyv/redis'
-import { isDevelopment } from '@libs/platform/utils';
+import { isDevelopment } from '@libs/platform/utils'
 import { CacheModule } from '@nestjs/cache-manager'
 import { DynamicModule, Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
@@ -20,16 +20,26 @@ export class CustomCacheModule {
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => {
-          const { connection, namespace = '0' } = configService.get<RedisConfigInterface>('redis') ?? { connection: '' }
+          const redisConfig =
+            configService.get<RedisConfigInterface>('redis') ?? null
+          const namespace = redisConfig?.namespace?.trim() || '0'
 
-          const redisUrl = connection
           const stores = isDevelopment()
             ? new Keyv({
                 store: new CacheableMemory({ lruSize: 5000 }),
               })
-            : createKeyv(redisUrl, {
-                namespace,
-              })
+            : (() => {
+                const redisUrl = redisConfig?.connection
+                if (!redisUrl?.trim()) {
+                  throw new Error(
+                    'redis.connection must be configured outside development',
+                  )
+                }
+
+                return createKeyv(redisUrl, {
+                  namespace,
+                })
+              })()
 
           return {
             ttl: 0,

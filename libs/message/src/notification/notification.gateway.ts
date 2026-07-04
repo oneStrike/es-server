@@ -44,6 +44,7 @@ function isMessageWsOriginAllowed(origin?: string): boolean {
 
 const messageWsVerifyClient: ServerOptions['verifyClient'] =
   function verifyMessageWsClient(info): boolean {
+    // eslint-disable-next-line ts/no-unsafe-argument, ts/no-unsafe-member-access -- ws VerifyClient info 类型推导为 unknown，tsc 确认类型安全
     return isMessageWsOriginAllowed(info.origin)
   }
 

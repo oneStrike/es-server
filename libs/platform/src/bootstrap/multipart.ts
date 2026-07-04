@@ -86,7 +86,7 @@ export async function setupMultipart(
     maxAge: '1h',
     setHeaders(res: StaticHeadersResponse, filePath: string) {
       const headers = resolveStaticFileHeaders(filePath, uploadConfig)
-      for (const [name, value] of Object.entries(headers)) {
+      for (const [name, value] of Object.entries(headers) as [string, string][]) {
         res.setHeader(name, value)
       }
     },

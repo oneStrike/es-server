@@ -55,6 +55,14 @@
 - `Record<string, unknown>` 仅用于开放键集合；如果键和值都已知，应改成明确字段结构。
 - 输出 DTO 中数据库 nullable 字段的类型声明必须使用 `: T | null`（必填但可为 null），不得使用 `?: T | null`（可选）。`?:` 修饰符意味着字段可以不存在，会导致 JSON 序列化时字段缺失，破坏前端数据结构稳定性。
 
+## 编译器与 Lint 配置约束
+
+- `tsconfig.json` 中 `noImplicitAny` 必须设为 `true`，与"禁止使用 `any`"的规范意图一致；不允许通过隐式 `any` 绕过类型安全。
+- `tsconfig.json` 中 `forceConsistentCasingInFileNames` 必须设为 `true`，避免 Windows 与 Linux 之间因文件名大小写不一致导致构建失败。
+- `tsconfig.json` 中 `strictNullChecks` 必须设为 `true`（当前已启用），确保 nullable 字段在类型层面得到显式处理。
+- ESLint 中 `@typescript-eslint/no-unsafe-*` 系列规则（`no-unsafe-return`、`no-unsafe-assignment`、`no-unsafe-call`、`no-unsafe-argument`、`no-unsafe-member-access`）必须设为 `error`，不允许通过 `warn` 绕过。
+- 当前已知配置差距：`tsconfig.json` 中 `noImplicitAny` 为 `false`、`forceConsistentCasingInFileNames` 为 `false`；`eslint.config.mjs` 中 `no-unsafe-*` 系列规则为 `warn`。这些差距应在后续迭代中修复，修改前需先运行 `pnpm type-check` 确认基线，修改后逐项验证。
+
 ## 禁止项
 
 - 禁止在 `*.type.ts` 中重复声明 DTO 同构结构。

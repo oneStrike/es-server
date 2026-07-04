@@ -32,11 +32,12 @@
 ## 错误码与映射
 
 - 平台层固定 code 以 `PlatformErrorCode` 为准，例如 `10001`（Bad Request）、`10002`（Unauthorized）、`10003`（Forbidden）、`10004`（Route Not Found）、`10005`（Payload Too Large）、`10006`（Rate Limited）、`50001`（Internal Server Error）。
-- 业务层固定 code 以 `BusinessErrorCode` 为准，例如 `20001`（资源不存在）、`20002`（资源已存在）、`20003`（状态冲突）、`20004`（当前操作不允许）、`20005`（额度不足）。
+- 业务层固定 code 以 `BusinessErrorCode` 为准，例如 `20001`（资源不存在）、`20002`（资源已存在）、`20003`（状态冲突）、`20004`（当前操作不允许）、`20005`（额度不足）、`20006`（操作目标类型不支持）。
 - `db/core/error/postgres-error.ts` 是 PostgreSQL 默认错误码映射的单一来源。
 - `NOT NULL`、`CHECK` 等数据库约束暴露出的输入非法，默认继续按平台层 `400 / 10001` 处理。
 - 唯一约束冲突默认映射到 `20002`；序列化失败、乐观并发冲突默认映射到 `20003`；0 行变更且语义为目标不存在时默认映射到 `20001`。
 - 数据库错误若被转换为业务异常，必须保留原始 `cause`，不能丢失底层上下文。
+- 新增错误码必须同步更新 `libs/platform/src/constant/error-code.constant.ts` 常量定义与本规范文档的错误码列表；不允许只改代码不更新规范，也不允许只更新规范不补充代码。
 
 ## 日志与诊断
 

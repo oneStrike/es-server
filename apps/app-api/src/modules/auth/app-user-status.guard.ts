@@ -1,3 +1,4 @@
+import type { CurrentUserRequest } from '@libs/platform/decorators'
 import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
@@ -27,9 +28,7 @@ export class AppUserStatusGuard implements CanActivate {
       return true
     }
 
-    const request = context.switchToHttp().getRequest<{
-      user?: { sub?: number | string }
-    }>()
+    const request = context.switchToHttp().getRequest<CurrentUserRequest>()
     const userId = Number(request.user?.sub)
 
     if (!Number.isFinite(userId) || userId <= 0) {

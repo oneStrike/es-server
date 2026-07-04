@@ -183,7 +183,7 @@ export class AppPageService {
 
     let parsedValue: JsonValue | null
     try {
-      parsedValue = JSON.parse(enablePlatform)
+      parsedValue = JSON.parse(enablePlatform) as JsonValue
     } catch {
       throw new BadRequestException('启用平台筛选必须是合法 JSON 数组')
     }

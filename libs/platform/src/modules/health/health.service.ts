@@ -61,7 +61,7 @@ export class HealthService {
             }
             const k = makePingKey('memory')
             await store.set(k, PONG_VALUE, 10000)
-            const value = await store.get(k)
+            const value: unknown = await store.get(k)
             if (typeof store.delete === 'function') {
               await store.delete(k)
             } else if (typeof store.del === 'function') {
@@ -111,7 +111,7 @@ export class HealthService {
             }
             const k = makePingKey('redis')
             await store.set(k, PONG_VALUE, 10000)
-            const value = await store.get(k)
+            const value: unknown = await store.get(k)
             if (typeof store.delete === 'function') {
               await store.delete(k)
             } else if (typeof store.del === 'function') {
