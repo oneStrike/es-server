@@ -45,14 +45,11 @@
 
 ## 补充验证命令
 
-- 仓库级通用基线沿用 `AGENTS.md`；本节只列需要额外启用的测试相关命令。
+- 仓库级通用基线沿用 `AGENTS.md`；本节只补测试相关入口。
 - 规则敏感层变更：对改动文件运行必要的 `eslint` 或等价静态检查。
 - 入口或构建链路变更：运行对应 app / package 的 build 命令。
 - 临时测试验证：可运行 `pnpm exec jest --runInBand --runTestsByPath <temp-spec-path>`，随后删除临时测试文件。
 - `pnpm test`、`pnpm test:cov`、`pnpm test:e2e` 不作为默认交付验证命令。
-
-## 已知配置矛盾
-
 - Jest 依赖、`test` 脚本缺位与临时测试入口的当前现状，统一见 [AI_EXCEPTIONS.md](./AI_EXCEPTIONS.md)。
 
 ## 禁止项

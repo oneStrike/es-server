@@ -1,18 +1,16 @@
 # AI 已知例外
 
-本文件只汇总当前仓库已知、仍然有效的现实例外与配置差距。
+本文件只记录当前仍有效的现实例外与配置差距。
 
 - 它不是放宽规则的许可。
-- 它的作用是帮助 AI 区分“当前任务必须立刻修复的问题”和“仓库已知存在、需按任务边界处理的问题”。
 - 除非任务明确要求，否则不要在普通任务里顺手修这些差距。
-- 如果仓库现状发生变化，应与相关规则或配置同轮更新本文件。
+- 仓库现状变化时，与相关规则或配置同轮更新本文件。
 
 ## TypeScript / ESLint 基线差距
 
 - 当前状态：
   - `tsconfig.json` 中 `noImplicitAny` 目前为 `false`
   - `tsconfig.json` 中 `forceConsistentCasingInFileNames` 目前为 `false`
-  - `strictNullChecks` 已启用
   - `eslint.config.mjs` 中 `@typescript-eslint/no-unsafe-*` 目前为 `warn`
 - 关联规则：
   - [04-typescript-types.md](./04-typescript-types.md)
@@ -87,12 +85,11 @@
 - 当前状态：
   - `eslint.config.mjs` 忽略了 `docs/**`
   - 仓库级规则已明确：Markdown 文档默认使用 `pnpm exec prettier --check <files...>` 检查
-  - 规则 / 规范文档改动除 Markdown 检查外，还需要额外执行 `pnpm type-check`
 - 关联规则：
   - [AGENTS.md](../../AGENTS.md)
   - [08-testing.md](./08-testing.md)
 - 默认处理：
   - 不要把 ESLint 当作 Markdown 文档的默认检查路径。
-  - 改动规则文档时，不要只做格式检查就宣称完成。
+  - 改动规则文档时，除了 Markdown 检查，仍按 `AGENTS.md` 补仓库级基线验证。
 - 升级条件：
   - 文档与代码现状冲突，需要同轮修正文档与实现

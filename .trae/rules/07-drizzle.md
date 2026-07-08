@@ -5,23 +5,29 @@
 ## TL;DR
 
 - 何时看：改 Drizzle 查询、schema、migration、seed、bootstrap、分页 / 排序 / 原子更新时先看本篇。
-- 必做：统一通过 `DrizzleService` 使用数据库能力；schema、DTO、常量 / 枚举、migration 同轮对齐；结构变更先生成并检查 migration。
+- 必做：统一通过 `DrizzleService` 使用数据库能力；schema、DTO、常量 / 枚举、migration 同轮对齐；结构变更先走受控 migration / 注释入口。
 - 不要：使用 `drizzle-kit push`，不要把 seed 当 bootstrap，不要省略显式排序，也不要新增数据库外键。
-- 最低验证：`pnpm type-check`；若涉及 schema / migration，再继续执行本篇要求的 migration / 注释检查。
+- 最低验证：`pnpm type-check`；若涉及 schema / migration，再继续执行附录中的 migration / 注释检查入口。
+
+本篇只定义 Drizzle 规则本身；命令入口与操作顺序统一收敛到 [07-drizzle-operations.md](./07-drizzle-operations.md)。
 
 ## 仓库约定
 
-- 本仓库统一通过注入的 `DrizzleService` 使用 `drizzle.db`、`drizzle.schema`、`buildPage(...)`、`buildOrderBy(...)`、`withTransaction(...)`、`withErrorHandling(...)` 等基础能力；不在业务层自行创建新的 Drizzle 实例。
+- 数据库能力统一通过注入的 `DrizzleService` 使用；不在业务层自行创建新的 Drizzle 实例。
+- `drizzle.db`、`drizzle.schema`、`buildPage(...)`、`buildOrderBy(...)`、`withTransaction(...)`、`withErrorHandling(...)` 等基础能力都属于这一入口。
 - 闭集状态 / 类型 / 模式 / 角色字段默认使用 `smallint` / `smallint[]`，并同步补 `check(...)` 约束。
-- 开放业务键继续保持字符串，不为了“统一 smallint”而强行数字化；典型例外包括 `eventKey`、`categoryKey`、`projectionKey`、`domain`、`packageMimeType`、模板键、路由键等。
+- 开放业务键继续保持字符串；不要为了“统一 smallint”而强行数字化。
+- 常见例外包括 `eventKey`、`categoryKey`、`projectionKey`、`domain`、`packageMimeType`、模板键、路由键。
 - DTO、常量 / 枚举、`db/schema` 中同一闭集值域必须同轮对齐；不能一层改成数字枚举，另一层仍保留旧字符串或不一致的数值范围。
-- `db/schema/**/*.ts` 中导出的 Drizzle 推导类型统一使用 `XxxSelect = typeof table.$inferSelect`、`XxxInsert = typeof table.$inferInsert`；不要额外导出 `Xxx = typeof table.$inferSelect` 这类无意义中间别名。
+- `db/schema/**/*.ts` 中导出的 Drizzle 推导类型统一使用 `XxxSelect = typeof table.$inferSelect`、`XxxInsert = typeof table.$inferInsert`。
+- 不要额外导出 `Xxx = typeof table.$inferSelect` 这类无意义中间别名。
 
 ## 默认动作
 
 - 查询表和关系表时，默认从 `this.drizzle.schema` 取用；查询语句在业务 owner 中显式使用 Drizzle query builder 表达。
 - 事务默认通过 `db.transaction(async (tx) => ...)` 或 `drizzle.withTransaction(async (tx) => ...)` 启动，并沿调用链显式透传 `tx`。
-- 常规分页默认在业务 service 中显式写出 `select`、`where`、`orderBy`、`limit`、`offset` 和 `$count`，再用 `toPageResult(...)` 组装返回形状。
+- 常规分页默认在业务 service 中显式写出 `select`、`where`、`orderBy`、`limit`、`offset` 和 `$count`。
+- 分页返回统一用 `toPageResult(...)` 组装。
 - 分页统一采用 1-based `pageIndex`。
 - 动态查询条件默认使用 `SQL[]` 收集，再通过 `and(...)` / `or(...)` 组合。
 - Drizzle relational query 的对象式 `where` 存在多分支时，必须先用命名的基础条件和作用域条件配合 `if / else if` 线性构造；不要把多套条件对象塞进嵌套三元表达式。
@@ -39,8 +45,9 @@
 ## 查询与写路径
 
 - `count`、余额、库存、计数器、乐观锁版本号等增减，必须使用原子更新并与事实写入位于同一事务。
-- 0 行 update / delete 若业务语义是“目标不存在”，应通过 `assertAffectedRows(...)` 或 `withErrorHandling(..., { notFound: ... })` 收口。
-- 分页结果组装只允许复用薄的 `toPageResult(...)`；分页查询、存在性判断、最大序号、交换字段、计数器增减等业务语义必须在 owner service 或领域方法中显式表达，不再通过通用 table/field helper 隐藏。
+- 0 行 update / delete 若业务语义是“目标不存在”，通过 `assertAffectedRows(...)` 或 `withErrorHandling(..., { notFound: ... })` 收口。
+- 分页结果组装只允许复用薄的 `toPageResult(...)`。
+- 分页查询、存在性判断、最大序号、交换字段、计数器增减等业务语义必须在 owner service 或领域方法中显式表达；不要再用通用 table/field helper 隐藏。
 - 读路径需要补记浏览、日志、统计时，优先与主业务分离，并确保附带写入可降级。
 
 ## 原生 SQL
@@ -52,24 +59,26 @@
 
 ## Schema 与 migration 联动
 
-- 常规 schema 差异默认通过 `pnpm db:generate` 生成 migration。
-- 生成 migration 后必须先运行 `pnpm db:migration:check`，再执行 `pnpm db:migrate`；生产 migrator 必须通过 `pnpm db:migrate:prod` / `bun run db:migrate:prod` 这一受控入口运行，不能绕开 check gate。
+- 常规 schema 差异必须先生成 migration，再通过受控 check / migrate 入口执行；具体命令见 [07-drizzle-operations.md](./07-drizzle-operations.md)。
 - 若生成过程中出现交互，必须停止并由用户亲自执行；不要替用户继续回答交互提示。
 - migration 只允许新建，不允许在已存在、已提交或已执行的 migration 文件中继续追加新 DDL。
 - 无法自动生成的 DDL 可手写补充，但必须说明原因、范围与风险。
 - 字段改类型、改值域、改数组元素、改 JSON 内部枚举、改约束时，migration 必须同步处理历史数据；不能依赖清库、丢字段、跳过旧值或要求人工补数据。
-- 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并确保生成结果 `Warnings: 0`。
+- 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并通过受控注释检查入口确认生成结果 `Warnings: 0`。
 - `db/schema`、migration、`db/comments/generated.sql` 三者必须同轮一致，不能只改其中一层。
-- 本仓库数据库层禁止使用数据库外键：`db/schema` 与手写 migration 都不得新增 `references(...)`、`foreign key` 或 `alter table ... add constraint ... foreign key`。Drizzle relations 只用于查询组织与类型推导，不代表数据库约束。
+- 本仓库数据库层禁止使用数据库外键。
+- `db/schema` 与手写 migration 都不得新增 `references(...)`、`foreign key` 或 `alter table ... add constraint ... foreign key`。
+- Drizzle relations 只用于查询组织与类型推导，不代表数据库约束。
 - 禁止使用 `drizzle-kit push`、`drizzle-kit push --force` 或重新引入 `db:push` 作为迁移路径；所有结构变更必须落为可审计 migration。
 - 生产迁移脚本只负责 migration 与注释同步，不得在全新数据库上自动执行 seed。
 
 ## Seed 与 bootstrap
 
-- `db/seed` 是本地 demo/联调用的破坏性数据脚本，包含清理演示数据、固定演示账号、演示 token 等行为；只能通过 `pnpm db:seed:demo` 显式执行。
-- 执行 demo seed 前必须先通过 `pnpm db:seed:demo:check`，并显式设置 `ALLOW_DB_SEED=true`；`NODE_ENV=production/prod` 或目标库名、主机名、用户名命中生产危险关键字时必须失败。
-- 生产或准生产初始化只允许使用 `pnpm db:bootstrap:reference` / `pnpm db:bootstrap:reference:prod` 这类 bootstrap 命令；bootstrap 不得复用 demo seed，不得创建固定 token，不得内置固定生产密码。
-- 初始化管理员账号时必须由操作员提供 `BOOTSTRAP_ADMIN_USERNAME` 与 `BOOTSTRAP_ADMIN_PASSWORD`，且 bootstrap 只能创建缺失账号，不得静默重置已有账号密码。
+- `db/seed` 是本地 demo/联调用的破坏性数据脚本，包含清理演示数据、固定演示账号、演示 token 等行为；只能通过附录列出的受控 demo seed 入口显式执行。
+- 执行 demo seed 前必须先通过环境检查，并显式设置 `ALLOW_DB_SEED=true`；`NODE_ENV=production/prod` 或目标库名、主机名、用户名命中生产危险关键字时必须失败。
+- 生产或准生产初始化只允许使用附录列出的 bootstrap 入口；bootstrap 不得复用 demo seed，不得创建固定 token，不得内置固定生产密码。
+- 初始化管理员账号时必须由操作员提供 `BOOTSTRAP_ADMIN_USERNAME` 与 `BOOTSTRAP_ADMIN_PASSWORD`。
+- bootstrap 只能创建缺失账号，不得静默重置已有账号密码。
 
 ## 破坏性更新
 
@@ -91,13 +100,13 @@
 - 禁止新增数据库外键或把 Drizzle relations 误写成数据库 FK 约束。
 - 禁止绕过 `db:migration:check` 直接迁移。
 - 禁止在生产迁移中自动 seed 或执行 demo 数据清理。
-- 禁止在 `db/schema` 中为 `inferSelect` / `inferInsert` 再套一层仅做改名的别名链，例如 `Foo = typeof foo.$inferSelect` 后再导出 `FooSelect = Foo`。
-- 禁止在 select 或返回对象组装中逐字段列举全部同名字段（即 `id: obj.id, name: obj.name, ...` 全部 1:1 透传），应使用 spread 或 `getColumns` + 解构排除。
+- 禁止在 `db/schema` 中为 `inferSelect` / `inferInsert` 再套一层仅做改名的别名链。
+- 禁止在 select 或返回对象组装中逐字段列举全部同名字段；应使用 spread 或 `getColumns` + 解构排除。
 - 禁止在 spread 之后重复写出已在 spread 中包含的同名字段（如 `...item, geoCountry: item.geoCountry`）。
 
 ## 正反例
 
-- 允许：`const page = this.drizzle.buildPage(query); const [list, total] = await Promise.all([this.drizzle.db.select().from(this.workTable).where(where).orderBy(desc(this.workTable.updatedAt), desc(this.workTable.id)).limit(page.limit).offset(page.offset), this.drizzle.db.$count(this.workTable, where)]); return toPageResult(list, total, page)`
+- 允许：分页查询显式写 `where`、`orderBy`、`limit`、`offset` 和 `$count`，最后用 `toPageResult(...)` 组装返回。
 - 允许：`await this.drizzle.withTransaction(async (tx) => { ... })`
 - 允许：`viewCount: sql\`${this.table.viewCount} + 1\``
 - 允许：闭集状态字段使用 `smallint().default(1).notNull()` 并补 `check(...)`
