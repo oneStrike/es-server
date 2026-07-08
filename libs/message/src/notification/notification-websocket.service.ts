@@ -1,5 +1,6 @@
 import type { DbNotificationSubscription } from '@db/core'
 import type { UploadConfigInterface } from '@libs/platform/config'
+import type { ApiErrorCode, ApiResponseCode } from '@libs/platform/constant'
 import type { JwtPayload } from '@libs/platform/modules/auth/types'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { AuthConfigInterface } from '@libs/platform/types'
@@ -21,6 +22,7 @@ import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { DbNotificationService } from '@db/core'
 import {
+  ApiSuccessCode,
   BusinessErrorCode,
   getPlatformErrorCode,
   PlatformErrorCode,
@@ -128,7 +130,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     if (!authResult.userId) {
       return {
         message: this.createNativeAuthErrorMessage(
-          authResult.code ?? 40101,
+          authResult.code ?? PlatformErrorCode.UNAUTHORIZED,
           authResult.message,
         ),
         shouldClose: authResult.shouldClose,
@@ -155,7 +157,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     if (!userId) {
       return {
         userId: null,
-        code: 40101,
+        code: PlatformErrorCode.UNAUTHORIZED,
         message: 'Authentication failed',
         shouldClose: false,
       }
@@ -173,7 +175,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     if (accessCheck.reason === 'not_found') {
       return {
         userId: null,
-        code: 40101,
+        code: PlatformErrorCode.UNAUTHORIZED,
         message: AuthErrorMessages.LOGIN_INVALID,
         shouldClose: true,
       }
@@ -245,7 +247,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     if (accessCheck.reason === 'not_found') {
       return {
         requestId,
-        code: 40101,
+        code: PlatformErrorCode.UNAUTHORIZED,
         message: 'Unauthorized',
       }
     }
@@ -489,7 +491,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId: null,
-          code: 40001,
+          code: PlatformErrorCode.BAD_REQUEST,
           message: 'requestId is required',
         },
         requestStartAt,
@@ -500,7 +502,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId,
-          code: 40101,
+          code: PlatformErrorCode.UNAUTHORIZED,
           message: 'Unauthorized',
         },
         requestStartAt,
@@ -517,7 +519,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId,
-          code: 40001,
+          code: PlatformErrorCode.BAD_REQUEST,
           message: 'Invalid chat.send payload',
         },
         requestStartAt,
@@ -532,7 +534,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId,
-          code: 40001,
+          code: PlatformErrorCode.BAD_REQUEST,
           message: 'Invalid chat.send payload',
         },
         requestStartAt,
@@ -551,7 +553,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId,
-          code: 0,
+          code: ApiSuccessCode,
           message: 'ok',
           data: {
             ...result,
@@ -592,7 +594,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId: null,
-          code: 40001,
+          code: PlatformErrorCode.BAD_REQUEST,
           message: 'requestId is required',
         },
         requestStartAt,
@@ -603,7 +605,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId,
-          code: 40101,
+          code: PlatformErrorCode.UNAUTHORIZED,
           message: 'Unauthorized',
         },
         requestStartAt,
@@ -625,7 +627,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId,
-          code: 40001,
+          code: PlatformErrorCode.BAD_REQUEST,
           message: 'Invalid chat.read payload',
         },
         requestStartAt,
@@ -644,7 +646,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return this.finishAck(
         {
           requestId,
-          code: 0,
+          code: ApiSuccessCode,
           message: 'ok',
           data: result,
         },
@@ -679,7 +681,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
 
   // 构造原生 WS 错误消息体。
   createNativeErrorMessage(
-    code: number,
+    code: ApiErrorCode,
     message: string,
     requestId: string | null = null,
   ) {
@@ -707,7 +709,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
 
   // 构造原生 WS 鉴权失败消息。
   createNativeAuthErrorMessage(
-    code = 40101,
+    code: ApiErrorCode = PlatformErrorCode.UNAUTHORIZED,
     message = 'Authentication failed',
   ) {
     return this.createNativeEventMessage('ws.auth.error', {
@@ -719,7 +721,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
   // 判断 ack 后是否需要主动断开客户端连接。
   shouldDisconnectAfterAck(ack: WsAckPayload) {
     return (
-      ack.code === 40101 ||
+      ack.code === PlatformErrorCode.UNAUTHORIZED ||
       ack.code === PlatformErrorCode.FORBIDDEN ||
       ack.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
     )
@@ -827,7 +829,7 @@ export class MessageWebSocketService implements OnApplicationShutdown {
   }
 
   // 记录 websocket ack 结果与延迟指标。
-  private recordAckMetric(code: number, latencyMs: number) {
+  private recordAckMetric(code: ApiResponseCode, latencyMs: number) {
     void this.messageWsMonitorService
       .recordAck(code, latencyMs)
       .catch((error) => {

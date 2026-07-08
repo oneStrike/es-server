@@ -405,7 +405,8 @@ export class RemoteImageImportService {
 
   // 读取远程图片响应中的 Retry-After 头。
   private readRetryAfterHeader(response: IncomingMessage): string | undefined {
-    const header = response.headers['retry-after'] as string | string[] | undefined
+    const header = response.headers['retry-after'] as
+      string | string[] | undefined
     return Array.isArray(header) ? header[0] : header
   }
 
@@ -562,6 +563,7 @@ export class RemoteImageImportService {
     const cause = this.attachRateLimitContext(error, failureContext)
     if (error instanceof BusinessException) {
       return new BusinessException(error.code, error.message, {
+        httpStatus: error.httpStatus,
         cause,
       })
     }

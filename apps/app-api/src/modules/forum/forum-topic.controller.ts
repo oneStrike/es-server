@@ -28,7 +28,15 @@ import {
   extractRequestContext,
   serializeDeviceInfo,
 } from '@libs/platform/utils'
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import {
+  HttpCode,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('论坛/主题')
@@ -186,6 +194,7 @@ export class ForumTopicController {
   // 创建当前用户主题并记录客户端来源。
   @Post('create')
   @ApiDoc({
+    successStatus: 201,
     summary: '创建论坛主题',
     model: IdDto,
   })
@@ -205,6 +214,7 @@ export class ForumTopicController {
 
   // 更新当前用户自己的主题内容。
   @Post('update')
+  @HttpCode(200)
   @ApiDoc({
     summary: '更新我的论坛主题',
     model: Boolean,
@@ -223,6 +233,7 @@ export class ForumTopicController {
 
   // 删除当前用户自己的主题并同步相关可见性。
   @Post('delete')
+  @HttpCode(200)
   @ApiDoc({
     summary: '删除我的论坛主题',
     model: Boolean,

@@ -19,7 +19,7 @@ import {
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 import { ComicThirdPartyService } from './third-party-service'
@@ -86,6 +86,7 @@ export class ComicThirdPartyController {
   }
 
   @Post('import/preview')
+  @HttpCode(200)
   @ApiDoc({
     summary: '预览第三方漫画导入',
     model: ThirdPartyComicImportPreviewDto,
@@ -96,6 +97,7 @@ export class ComicThirdPartyController {
   }
 
   @Post('import/confirm')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '确认第三方漫画导入并创建工作流任务',
     model: WorkflowJobDto,
@@ -114,6 +116,7 @@ export class ComicThirdPartyController {
   }
 
   @Post('sync/latest')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '同步第三方漫画最新章节',
     model: WorkflowJobDto,

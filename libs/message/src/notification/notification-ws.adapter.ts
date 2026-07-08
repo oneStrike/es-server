@@ -1,4 +1,5 @@
 import type { MessageMappingProperties } from '@nestjs/websockets/gateway-metadata-explorer'
+import type { ApiErrorCode } from '@libs/platform/constant'
 import type { Observable } from 'rxjs'
 import type {
   NativeWsAdapterClient,
@@ -9,6 +10,7 @@ import type {
   NativeWsAdapterMessageTuple,
 } from './notification-websocket.type'
 import { Buffer } from 'node:buffer'
+import { PlatformErrorCode } from '@libs/platform/constant'
 import { WsAdapter } from '@nestjs/platform-ws'
 import { EMPTY, fromEvent } from 'rxjs'
 import { filter, first, mergeMap, share, takeUntil } from 'rxjs/operators'
@@ -69,7 +71,7 @@ export class MessageWsAdapter extends WsAdapter {
     if (!messageHandler) {
       this.sendProtocolError(
         client,
-        40004,
+        PlatformErrorCode.BAD_REQUEST,
         `Unsupported event: ${message.event}`,
         this.extractRequestId(message.data),
       )
@@ -86,7 +88,11 @@ export class MessageWsAdapter extends WsAdapter {
   ): NativeWsAdapterMessage | null {
     const { data, isBinary } = this.normalizeRawMessage(rawMessage)
     if (isBinary || typeof data !== 'string') {
-      this.sendProtocolError(client, 40001, 'Binary frames are not supported')
+      this.sendProtocolError(
+        client,
+        PlatformErrorCode.BAD_REQUEST,
+        'Binary frames are not supported',
+      )
       return null
     }
 
@@ -100,7 +106,7 @@ export class MessageWsAdapter extends WsAdapter {
       if (!event) {
         this.sendProtocolError(
           client,
-          40001,
+          PlatformErrorCode.BAD_REQUEST,
           'event is required',
           this.extractRequestId(message?.data),
         )
@@ -112,7 +118,11 @@ export class MessageWsAdapter extends WsAdapter {
         data: message?.data,
       }
     } catch {
-      this.sendProtocolError(client, 40001, 'Message must be valid JSON')
+      this.sendProtocolError(
+        client,
+        PlatformErrorCode.BAD_REQUEST,
+        'Message must be valid JSON',
+      )
       return null
     }
   }
@@ -141,10 +151,7 @@ export class MessageWsAdapter extends WsAdapter {
       )
     }
 
-    return this.normalizeMessageData(
-      rawMessage,
-      false,
-    )
+    return this.normalizeMessageData(rawMessage, false)
   }
 
   private isNativeMessageEvent(
@@ -207,7 +214,7 @@ export class MessageWsAdapter extends WsAdapter {
   // 发送统一 ws.error 帧，保持协议层错误对客户端可见。
   private sendProtocolError(
     client: NativeWsAdapterClient,
-    code: number,
+    code: ApiErrorCode,
     message: string,
     requestId: string | null = null,
   ) {

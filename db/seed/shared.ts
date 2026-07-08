@@ -4,7 +4,8 @@ import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 export const SEED_ADMIN_USERNAME =
   process.env.SEED_ADMIN_USERNAME?.trim() || 'admin'
 
-export const SEED_ACCOUNT_PASSWORD = 'Seed@123456'
+export const SEED_ACCOUNT_PASSWORD =
+  process.env.SEED_ACCOUNT_PASSWORD?.trim() || 'Seed@123456'
 
 const SEED_READER_ACCOUNT_BASE_PREFIXES = [
   'tsuki',

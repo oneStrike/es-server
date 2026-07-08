@@ -42,6 +42,7 @@ export class MembershipController {
   // 创建 VIP 订阅订单。
   @Post('order/create')
   @ApiDoc({
+    successStatus: 201,
     summary: '创建 VIP 订阅订单',
     model: PaymentOrderResultDto,
   })

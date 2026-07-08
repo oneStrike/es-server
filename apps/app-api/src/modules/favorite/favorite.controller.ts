@@ -9,7 +9,7 @@ import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('收藏')
@@ -18,6 +18,7 @@ export class FavoriteController {
   constructor(private readonly favoriteService: FavoriteService) {}
 
   @Post('favorite')
+  @HttpCode(200)
   @ApiDoc({
     summary: '收藏',
     model: IdDto,
@@ -33,6 +34,7 @@ export class FavoriteController {
   }
 
   @Post('cancel')
+  @HttpCode(200)
   @ApiDoc({
     summary: '取消收藏',
     model: Boolean,

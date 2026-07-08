@@ -10,7 +10,7 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -43,6 +43,7 @@ export class AppUpdateController {
 
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建更新版本草稿',
     model: Boolean,
     audit: {
@@ -57,6 +58,7 @@ export class AppUpdateController {
   }
 
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新更新版本草稿',
     model: Boolean,
@@ -72,6 +74,7 @@ export class AppUpdateController {
   }
 
   @Post('update-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新更新版本发布状态',
     model: Boolean,

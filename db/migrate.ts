@@ -1,4 +1,3 @@
-import { execSync } from 'node:child_process'
 import { existsSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
@@ -42,10 +41,14 @@ interface MigrationTableSnapshot {
 }
 
 function hasRunnableLocalMigrations(localMigrations: LocalMigrationMeta[]) {
-  return localMigrations.some(migration => migration.hasMigrationSql)
+  return localMigrations.some((migration) => migration.hasMigrationSql)
 }
 
-function log(level: LogLevel, message: string, details?: Record<string, LogValue>) {
+function log(
+  level: LogLevel,
+  message: string,
+  details?: Record<string, LogValue>,
+) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`)
 
   if (!details) {
@@ -71,13 +74,13 @@ function formatLogValue(value: LogValue) {
       return '(empty)'
     }
 
-    const isPrimitiveList = value.every(item =>
-      item === null
-      || ['string', 'number', 'boolean'].includes(typeof item),
+    const isPrimitiveList = value.every(
+      (item) =>
+        item === null || ['string', 'number', 'boolean'].includes(typeof item),
     )
 
     return isPrimitiveList
-      ? value.map(item => String(item)).join(', ')
+      ? value.map((item) => String(item)).join(', ')
       : JSON.stringify(value)
   }
 
@@ -108,7 +111,7 @@ function getRuntimeLabel() {
     : `node ${process.version}`
 }
 
-function serializeError(error: Error | string | number | boolean | null | undefined): string {
+function serializeError(error: unknown): string {
   if (error instanceof Error) {
     const parts: string[] = []
     parts.push(error.stack ?? `${error.name}: ${error.message}`)
@@ -117,7 +120,9 @@ function serializeError(error: Error | string | number | boolean | null | undefi
     let cause = (error as Error & { cause?: unknown }).cause
     let depth = 0
     while (cause instanceof Error && depth < 5) {
-      parts.push(`\n  Caused by: ${cause.stack ?? `${cause.name}: ${cause.message}`}`)
+      parts.push(
+        `\n  Caused by: ${cause.stack ?? `${cause.name}: ${cause.message}`}`,
+      )
       cause = (cause as Error & { cause?: unknown }).cause
       depth++
     }
@@ -134,7 +139,7 @@ function readLocalMigrations(migrationsFolder: string) {
   }
 
   return readdirSync(migrationsFolder, { withFileTypes: true })
-    .filter(entry => entry.isDirectory())
+    .filter((entry) => entry.isDirectory())
     .sort((left, right) => left.name.localeCompare(right.name))
     .map((entry) => {
       const directoryPath = join(migrationsFolder, entry.name)
@@ -159,7 +164,7 @@ async function getMigrationTableSnapshot(pool: Pool) {
     [MIGRATIONS_SCHEMA, MIGRATIONS_TABLE],
   )
 
-  const columns = columnResult.rows.map(row => row.column_name)
+  const columns = columnResult.rows.map((row) => row.column_name)
 
   if (columns.length === 0) {
     return {
@@ -181,13 +186,13 @@ async function getMigrationTableSnapshot(pool: Pool) {
 
   const qualifiedTable = `"${MIGRATIONS_SCHEMA}"."${MIGRATIONS_TABLE}"`
   const recordResult = await pool.query<Record<string, unknown>>(
-    `SELECT ${selectedColumns.map(column => `"${column}"`).join(', ')} FROM ${qualifiedTable} ORDER BY "id" ASC`,
+    `SELECT ${selectedColumns.map((column) => `"${column}"`).join(', ')} FROM ${qualifiedTable} ORDER BY "id" ASC`,
   )
 
   return {
     exists: true,
     columns,
-    records: recordResult.rows.map(row => ({
+    records: recordResult.rows.map((row) => ({
       id: Number(row.id ?? 0),
       hash: String(row.hash ?? ''),
       createdAt: String(row.created_at ?? ''),
@@ -203,8 +208,8 @@ function getPendingLocalMigrationNames(
 ): string[] | null {
   if (!snapshot.exists) {
     return localMigrations
-      .filter(migration => migration.hasMigrationSql)
-      .map(migration => migration.name)
+      .filter((migration) => migration.hasMigrationSql)
+      .map((migration) => migration.name)
   }
 
   if (!snapshot.columns.includes('name')) {
@@ -213,22 +218,25 @@ function getPendingLocalMigrationNames(
 
   const appliedNames = new Set(
     snapshot.records
-      .map(record => record.name)
+      .map((record) => record.name)
       .filter((name): name is string => Boolean(name)),
   )
 
   return localMigrations
-    .filter(migration => migration.hasMigrationSql && !appliedNames.has(migration.name))
-    .map(migration => migration.name)
+    .filter(
+      (migration) =>
+        migration.hasMigrationSql && !appliedNames.has(migration.name),
+    )
+    .map((migration) => migration.name)
 }
 
 function getNewMigrationRecords(
   beforeSnapshot: MigrationTableSnapshot,
   afterSnapshot: MigrationTableSnapshot,
 ): DbMigrationRecord[] {
-  const appliedIds = new Set(beforeSnapshot.records.map(record => record.id))
+  const appliedIds = new Set(beforeSnapshot.records.map((record) => record.id))
 
-  return afterSnapshot.records.filter(record => !appliedIds.has(record.id))
+  return afterSnapshot.records.filter((record) => !appliedIds.has(record.id))
 }
 
 async function runMigration() {
@@ -239,10 +247,10 @@ async function runMigration() {
     cwd: process.cwd(),
   })
   const migrationsFolder = resolve(__dirname, 'migration')
-  // Seed 仍沿用当前基于 cwd 的定位方式，避免改变现有脚本的执行契约。
-  const seedTsPath = join(process.cwd(), 'db', 'seed', 'index.ts')
   const localMigrations = readLocalMigrations(migrationsFolder)
-  const invalidLocalMigrations = localMigrations.filter(migration => !migration.hasMigrationSql)
+  const invalidLocalMigrations = localMigrations.filter(
+    (migration) => !migration.hasMigrationSql,
+  )
 
   log('INFO', '迁移脚本配置已解析', {
     migrationsFolder,
@@ -252,7 +260,9 @@ async function runMigration() {
 
   if (invalidLocalMigrations.length > 0) {
     log('WARN', '检测到缺少 migration.sql 的 migration 目录', {
-      invalidMigrationDirectories: invalidLocalMigrations.map(migration => migration.name),
+      invalidMigrationDirectories: invalidLocalMigrations.map(
+        (migration) => migration.name,
+      ),
     })
   }
 
@@ -297,14 +307,17 @@ async function runMigration() {
     isFreshDb = !beforeSnapshot.exists
 
     if (isFreshDb) {
-      log('INFO', '检测到全新的空数据库，迁移结束后将自动执行 Seed')
+      log('INFO', '检测到全新的空数据库，迁移流程不会自动执行 Seed')
     } else {
       log('INFO', '迁移记录表状态', {
         appliedCount: beforeSnapshot.records.length,
       })
     }
 
-    const pendingLocalMigrationNames = getPendingLocalMigrationNames(localMigrations, beforeSnapshot)
+    const pendingLocalMigrationNames = getPendingLocalMigrationNames(
+      localMigrations,
+      beforeSnapshot,
+    )
 
     if (pendingLocalMigrationNames === null) {
       log('INFO', '当前无法精确推断待执行 migration 名称', {
@@ -356,33 +369,6 @@ async function runMigration() {
     })
   }
 
-  if (isFreshDb) {
-    const seedStartedAt = Date.now()
-
-    if (!existsSync(seedTsPath)) {
-      log('WARN', '找不到种子数据脚本文件，跳过 Auto-Seed', {
-        seedTsPath,
-      })
-    } else {
-      log('INFO', '开始自动执行 Seed', {
-        seedTsPath,
-      })
-
-      try {
-        execSync(`bun "${seedTsPath}"`, { stdio: 'inherit' })
-        log('SUCCESS', 'Auto-Seed 执行完成', {
-          cost: formatDuration(Date.now() - seedStartedAt),
-        })
-      } catch (seedError) {
-        log('ERROR', 'Auto-Seed 执行失败', {
-          cost: formatDuration(Date.now() - seedStartedAt),
-          error: serializeError(seedError),
-        })
-        throw seedError
-      }
-    }
-  }
-
   const commentStartedAt = Date.now()
   log('INFO', '开始同步数据库注释')
 
@@ -414,8 +400,4 @@ if (require.main === module) {
   })
 }
 
-export {
-  hasRunnableLocalMigrations,
-  readLocalMigrations,
-  runMigration,
-}
+export { hasRunnableLocalMigrations, readLocalMigrations, runMigration }

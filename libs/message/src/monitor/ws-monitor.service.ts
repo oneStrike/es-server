@@ -1,5 +1,7 @@
 import type { MessageWsMetricDelta } from './ws-monitor.type'
+import type { ApiResponseCode } from '@libs/platform/constant'
 import { DrizzleService } from '@db/core'
+import { ApiSuccessCode } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
 import { eq, sql } from 'drizzle-orm'
 
@@ -23,11 +25,12 @@ export class MessageWsMonitorService {
   }
 
   // 记录一次 ACK 结果，并把延迟规整成非负整数毫秒。
-  async recordAck(code: number, latencyMs: number) {
+  async recordAck(code: ApiResponseCode, latencyMs: number) {
     const normalizedLatencyMs = Math.max(0, Math.floor(Number(latencyMs) || 0))
+    const isSuccess = code === ApiSuccessCode
     await this.applyDelta({
-      ackSuccessCount: code === 0 ? 1 : 0,
-      ackErrorCount: code === 0 ? 0 : 1,
+      ackSuccessCount: isSuccess ? 1 : 0,
+      ackErrorCount: isSuccess ? 0 : 1,
       ackLatencyTotalMs: normalizedLatencyMs,
     })
   }

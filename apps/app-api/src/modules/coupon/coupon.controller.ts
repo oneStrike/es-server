@@ -30,6 +30,7 @@ export class CouponController {
   // 核销当前用户券。
   @Post('redemption/create')
   @ApiDoc({
+    successStatus: 201,
     summary: '核销券',
     model: CouponRedemptionResultDto,
   })

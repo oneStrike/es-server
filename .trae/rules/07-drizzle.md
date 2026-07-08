@@ -46,12 +46,23 @@
 ## Schema 与 migration 联动
 
 - 常规 schema 差异默认通过 `pnpm db:generate` 生成 migration。
+- 生成 migration 后必须先运行 `pnpm db:migration:check`，再执行 `pnpm db:migrate`；生产 migrator 必须通过 `pnpm db:migrate:prod` / `bun run db:migrate:prod` 这一受控入口运行，不能绕开 check gate。
 - 若生成过程中出现交互，必须停止并由用户亲自执行；不要替用户继续回答交互提示。
 - migration 只允许新建，不允许在已存在、已提交或已执行的 migration 文件中继续追加新 DDL。
 - 无法自动生成的 DDL 可手写补充，但必须说明原因、范围与风险。
 - 字段改类型、改值域、改数组元素、改 JSON 内部枚举、改约束时，migration 必须同步处理历史数据；不能依赖清库、丢字段、跳过旧值或要求人工补数据。
 - 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并确保生成结果 `Warnings: 0`。
 - `db/schema`、migration、`db/comments/generated.sql` 三者必须同轮一致，不能只改其中一层。
+- 本仓库数据库层禁止使用数据库外键：`db/schema` 与手写 migration 都不得新增 `references(...)`、`foreign key` 或 `alter table ... add constraint ... foreign key`。Drizzle relations 只用于查询组织与类型推导，不代表数据库约束。
+- 禁止使用 `drizzle-kit push`、`drizzle-kit push --force` 或重新引入 `db:push` 作为迁移路径；所有结构变更必须落为可审计 migration。
+- 生产迁移脚本只负责 migration 与注释同步，不得在全新数据库上自动执行 seed。
+
+## Seed 与 bootstrap
+
+- `db/seed` 是本地 demo/联调用的破坏性数据脚本，包含清理演示数据、固定演示账号、演示 token 等行为；只能通过 `pnpm db:seed:demo` 显式执行。
+- 执行 demo seed 前必须先通过 `pnpm db:seed:demo:check`，并显式设置 `ALLOW_DB_SEED=true`；`NODE_ENV=production/prod` 或目标库名、主机名、用户名命中生产危险关键字时必须失败。
+- 生产或准生产初始化只允许使用 `pnpm db:bootstrap:reference` / `pnpm db:bootstrap:reference:prod` 这类 bootstrap 命令；bootstrap 不得复用 demo seed，不得创建固定 token，不得内置固定生产密码。
+- 初始化管理员账号时必须由操作员提供 `BOOTSTRAP_ADMIN_USERNAME` 与 `BOOTSTRAP_ADMIN_PASSWORD`，且 bootstrap 只能创建缺失账号，不得静默重置已有账号密码。
 
 ## 破坏性更新
 
@@ -70,6 +81,9 @@
 - 禁止把闭集业务值域留在 `varchar` / `integer[]` 中继续漂移。
 - 禁止用原生 SQL 字符串拼接代替 `sql` 模板。
 - 禁止 schema、DTO、常量 / 枚举、migration 四层脱节。
+- 禁止新增数据库外键或把 Drizzle relations 误写成数据库 FK 约束。
+- 禁止绕过 `db:migration:check` 直接迁移。
+- 禁止在生产迁移中自动 seed 或执行 demo 数据清理。
 - 禁止在 `db/schema` 中为 `inferSelect` / `inferInsert` 再套一层仅做改名的别名链，例如 `Foo = typeof foo.$inferSelect` 后再导出 `FooSelect = Foo`。
 - 禁止在 select 或返回对象组装中逐字段列举全部同名字段（即 `id: obj.id, name: obj.name, ...` 全部 1:1 透传），应使用 spread 或 `getColumns` + 解构排除。
 - 禁止在 spread 之后重复写出已在 spread 中包含的同名字段（如 `...item, geoCountry: item.geoCountry`）。

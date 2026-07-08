@@ -1,13 +1,20 @@
 import type { FastifyRequest } from 'fastify'
-import { LoginResponseDto, UserLoginDto } from '@libs/identity/dto/admin-auth.dto';
-import { ApiDoc, Public } from '@libs/platform/decorators';
+import {
+  LoginResponseDto,
+  UserLoginDto,
+} from '@libs/identity/dto/admin-auth.dto'
+import { ApiDoc, Public } from '@libs/platform/decorators'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto';
+import {
+  RefreshTokenDto,
+  RsaPublicKeyDto,
+  TokenDto,
+} from '@libs/platform/modules/auth/dto'
 import { CaptchaDto } from '@libs/platform/modules/captcha/dto'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
-import { Body, Controller, Get, Post, Req } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuthService } from './auth.service'
@@ -42,6 +49,7 @@ export class AuthController {
    * 用户登录接口
    */
   @Post('login')
+  @HttpCode(200)
   @ApiDoc({
     summary: '管理员登录',
     model: LoginResponseDto,
@@ -62,6 +70,7 @@ export class AuthController {
    * 管理员登出接口
    */
   @Post('logout')
+  @HttpCode(200)
   @ApiDoc({
     summary: '管理员登出',
     model: {
@@ -83,12 +92,16 @@ export class AuthController {
    * @returns 新的访问令牌及有效期
    */
   @Post('token/refresh')
+  @HttpCode(200)
   @ApiDoc({
     summary: '刷新访问令牌',
     model: TokenDto,
   })
   @Public()
-  async refreshToken(@Body() body: RefreshTokenDto, @Req() req: FastifyRequest) {
+  async refreshToken(
+    @Body() body: RefreshTokenDto,
+    @Req() req: FastifyRequest,
+  ) {
     return this.authService.refreshToken(
       body,
       await this.geoService.buildClientRequestContext(req),

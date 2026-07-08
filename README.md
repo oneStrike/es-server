@@ -36,8 +36,13 @@ pnpm type-check
 
 # 数据库
 pnpm db:generate
+pnpm db:migration:check
 pnpm db:migrate
 pnpm db:comments:check
+pnpm db:bootstrap:reference:check
+pnpm db:bootstrap:reference
+pnpm db:seed:demo:check
+pnpm db:seed:demo
 pnpm db:studio
 
 # API 发布
@@ -52,6 +57,13 @@ pnpm publish-api:app
 - 仓库内存在 `.husky/pre-commit` 与 `.husky/commit-msg` 文件，但本地是否生效取决于 Git hooks 配置；不要把钩子当作跳过手工验证的前提。
 - 仓库不保留任何测试文件；开发中临时创建的 `*.spec.ts`、`*.test.ts`、`*.e2e.spec.ts`、探针脚本或测试目录必须在交付前删除。
 - `pnpm test`、`pnpm test:cov`、`pnpm test:e2e` 不作为默认交付验证命令；交付验证以 `pnpm type-check` 及必要的 lint、build、静态检查为准。
+
+## 数据库迁移与初始化
+
+- 结构变更流程固定为 `pnpm db:generate` -> `pnpm db:migration:check` -> `pnpm db:migrate`；生产迁移使用 `bun run db:migrate:prod`，该入口同样会先执行 Drizzle migration check。
+- 本仓库不使用数据库外键，不使用 `drizzle-kit push` / `push --force` 作为交付路径。
+- 生产迁移不会自动 seed。生产或准生产初始化使用 `BOOTSTRAP_ADMIN_USERNAME`、`BOOTSTRAP_ADMIN_PASSWORD` 等操作员提供的变量执行 `pnpm db:bootstrap:reference`。
+- `pnpm db:seed:demo` 仅用于本地 demo/联调数据，执行前必须通过 `pnpm db:seed:demo:check` 并设置 `ALLOW_DB_SEED=true`。
 
 ## 规范入口
 

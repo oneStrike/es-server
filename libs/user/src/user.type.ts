@@ -1,4 +1,5 @@
 import type { AppUserSelect } from '@db/schema'
+import type { BusinessErrorCodeValue } from '@libs/platform/constant'
 
 /**
  * 用户成长余额快照。
@@ -74,7 +75,7 @@ export interface AppUserAccessDisabledResult {
 export interface AppUserAccessBannedResult {
   allowed: false
   reason: 'banned'
-  code: number
+  code: BusinessErrorCodeValue
   message: string
 }
 
@@ -97,5 +98,4 @@ export type AppUserAccessDeniedResult =
  * APP 用户访问检查的完整判定结果。
  */
 export type AppUserAccessCheckResult =
-  | AppUserAccessAllowedResult
-  | AppUserAccessDeniedResult
+  AppUserAccessAllowedResult | AppUserAccessDeniedResult

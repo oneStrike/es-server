@@ -21,7 +21,15 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import {
+  HttpCode,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -74,6 +82,7 @@ export class ForumTopicController {
   // 后台代创建主题并记录客户端来源。
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建论坛主题',
     model: IdDto,
     audit: {
@@ -89,6 +98,7 @@ export class ForumTopicController {
 
   // 后台治理链路更新主题正文与来源快照。
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新论坛主题',
     model: Boolean,
@@ -113,6 +123,7 @@ export class ForumTopicController {
 
   // 后台删除主题并同步治理计数与可见性。
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除论坛主题',
     model: Boolean,
@@ -137,6 +148,7 @@ export class ForumTopicController {
 
   // 后台恢复已删除主题并重建可见性关联。
   @Post('restore')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '恢复已删除论坛主题',
     model: Boolean,
@@ -161,6 +173,7 @@ export class ForumTopicController {
 
   // 后台移动主题所属板块。
   @Post('move')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '移动论坛主题板块',
     model: Boolean,
@@ -180,6 +193,7 @@ export class ForumTopicController {
 
   // 后台更新主题置顶状态。
   @Post('update-pinned')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新主题置顶状态',
     model: Boolean,
@@ -199,6 +213,7 @@ export class ForumTopicController {
 
   // 后台更新主题精华状态。
   @Post('update-featured')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新主题精华状态',
     model: Boolean,
@@ -218,6 +233,7 @@ export class ForumTopicController {
 
   // 后台更新主题锁定状态。
   @Post('update-locked')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新主题锁定状态',
     model: Boolean,
@@ -237,6 +253,7 @@ export class ForumTopicController {
 
   // 后台更新主题隐藏状态并同步公开可见性。
   @Post('update-hidden')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新主题隐藏状态',
     model: Boolean,
@@ -256,6 +273,7 @@ export class ForumTopicController {
 
   // 后台更新主题审核状态并触发审核后治理逻辑。
   @Post('update-audit-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新主题审核状态',
     model: Boolean,

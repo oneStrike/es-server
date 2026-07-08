@@ -3,7 +3,9 @@ import type { ErrorDescriptor } from './http-exception-filter.type'
 import { extractError, getPostgresErrorResponseDescriptor } from '@db/core'
 
 import {
+  getBusinessErrorHttpStatus,
   getPlatformErrorCode,
+  isBusinessErrorCode,
   PlatformErrorCode,
 } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -75,7 +77,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const logger = this.loggerService.getLoggerWithContext('http-exception')
 
     logger.log({
-      level: 'error',
+      level: status >= HttpStatus.INTERNAL_SERVER_ERROR ? 'error' : 'warn',
       message: 'http_exception',
       errorCode: code,
       errorConstraint: constraint,
@@ -83,6 +85,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       errorColumn: column,
       errorDetail: detail,
       businessCode,
+      responseCode,
+      httpStatus: status,
       errorMessage: message,
       stack: exception instanceof Error ? exception.stack : undefined,
       status,
@@ -104,8 +108,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const postgresError = this.extractPostgresError(exception)
 
     if (exception instanceof BusinessException) {
+      const status =
+        exception.httpStatus ?? getBusinessErrorHttpStatus(exception.code)
       return {
-        status: HttpStatus.OK,
+        status,
         responseCode: exception.code,
         message: exception.message,
         businessCode: exception.code,
@@ -151,10 +157,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
           status: descriptor.status,
           responseCode: descriptor.responseCode,
           message: descriptor.message,
-          businessCode:
-            descriptor.status === HttpStatus.OK
-              ? descriptor.responseCode
-              : undefined,
+          businessCode: isBusinessErrorCode(descriptor.responseCode)
+            ? descriptor.responseCode
+            : undefined,
           code,
           constraint: postgresError.constraint,
           table: postgresError.table,
@@ -189,7 +194,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return directError
     }
 
-    if (exception instanceof HttpException) {
+    if (exception instanceof Error) {
       return extractError(this.getErrorCause(exception))
     }
 
@@ -220,7 +225,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       typeof payload === 'object' &&
       payload !== null &&
       'message' in payload &&
-      typeof (payload).message === 'string'
+      typeof payload.message === 'string'
     ) {
       return (payload as { message: string }).message
     }

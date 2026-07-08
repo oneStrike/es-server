@@ -10,7 +10,7 @@ This destructive migration aligns `emoji_asset` with the server/admin contract.
 - `keywords` strings become `{ "und": ["value"] }`.
 - `keywords` string arrays become `{ "und": [...] }`.
 - Empty, mixed, malformed, or unsupported keyword values become `null`.
-- FK constraints are added as `NOT VALID`: new writes are enforced, while historical orphan cleanup can be audited before later validation.
+- No database foreign keys are added. Historical orphan cleanup is handled by the preflight/orphan checks below and by application-level write guards.
 
 ## Preflight SQL
 
@@ -64,12 +64,21 @@ WHERE app_user.id IS NULL OR emoji_asset.id IS NULL
 LIMIT 100;
 ```
 
-## Follow-up Validation
+## Follow-up Orphan Audit
 
-After historical orphan cleanup, validate the FKs explicitly:
+After historical cleanup, re-run the orphan checks explicitly:
 
 ```sql
-ALTER TABLE emoji_asset VALIDATE CONSTRAINT emoji_asset_pack_id_fkey;
-ALTER TABLE emoji_recent_usage VALIDATE CONSTRAINT emoji_recent_usage_user_id_fkey;
-ALTER TABLE emoji_recent_usage VALIDATE CONSTRAINT emoji_recent_usage_emoji_asset_id_fkey;
+SELECT emoji_asset.id, emoji_asset.pack_id
+FROM emoji_asset
+LEFT JOIN emoji_pack ON emoji_pack.id = emoji_asset.pack_id
+WHERE emoji_pack.id IS NULL
+LIMIT 100;
+
+SELECT recent.user_id, recent.scene, recent.emoji_asset_id
+FROM emoji_recent_usage AS recent
+LEFT JOIN app_user ON app_user.id = recent.user_id
+LEFT JOIN emoji_asset ON emoji_asset.id = recent.emoji_asset_id
+WHERE app_user.id IS NULL OR emoji_asset.id IS NULL
+LIMIT 100;
 ```

@@ -102,32 +102,13 @@ function sanitizeRequestValue<T>(value: T): StructuredValue {
 
 /**
  * 从 FastifyRequest 中提取 IP 地址
- * 优先级：x-forwarded-for > x-real-ip > req.ip > socket.remoteAddress
+ * 优先级：req.ip > socket.remoteAddress
+ * 代理转发头只允许由 Fastify trustProxy 配置解析，业务代码不直接读取原始头部。
  *
  * @param req - Fastify 请求对象
  * @returns IP 地址字符串，如果无法获取则返回 undefined
  */
 export function extractIpAddress(req: FastifyRequest) {
-  const forwardedFor = req.headers['x-forwarded-for']
-  const forwardedForValue = Array.isArray(forwardedFor)
-    ? forwardedFor[0]
-    : forwardedFor
-  if (typeof forwardedForValue === 'string') {
-    const firstIp = forwardedForValue.split(',')[0]?.trim()
-    if (firstIp) {
-      return firstIp
-    }
-  }
-
-  const realIp = req.headers['x-real-ip']
-  const realIpValue = Array.isArray(realIp) ? realIp[0] : realIp
-  if (typeof realIpValue === 'string') {
-    const normalizedRealIp = realIpValue.trim()
-    if (normalizedRealIp) {
-      return normalizedRealIp
-    }
-  }
-
   if (req.ip) {
     return req.ip
   }

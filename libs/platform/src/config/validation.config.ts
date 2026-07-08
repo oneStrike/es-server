@@ -1,4 +1,36 @@
 import Joi from 'joi'
+import { isValidTrustedProxyEntry } from '@libs/platform/bootstrap'
+
+// 校验 TRUSTED_PROXY_IPS 是否为逗号分隔的 IP/CIDR 列表，并返回规范化后的值。
+function validateTrustedProxyIps(value: string) {
+  const entries = value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+
+  const invalidEntry = entries.find((entry) => !isValidTrustedProxyEntry(entry))
+  if (invalidEntry) {
+    throw new Error(`TRUSTED_PROXY_IPS 包含非法 IP/CIDR：${invalidEntry}`)
+  }
+
+  return entries.join(',')
+}
+
+// 校验代理信任配置的互斥关系，正整数 hop-count 不能和 IP/CIDR allowlist 同时启用。
+function validateProxyTrustConfig(value: Record<string, unknown>) {
+  const trustedProxyIps =
+    typeof value.TRUSTED_PROXY_IPS === 'string'
+      ? value.TRUSTED_PROXY_IPS.trim()
+      : ''
+  const trustedProxyHops =
+    typeof value.TRUST_PROXY_HOPS === 'number' ? value.TRUST_PROXY_HOPS : 0
+
+  if (trustedProxyIps && trustedProxyHops > 0) {
+    throw new Error('TRUSTED_PROXY_IPS 不能和正整数 TRUST_PROXY_HOPS 同时配置')
+  }
+
+  return value
+}
 
 export const environmentValidationSchema = Joi.object({
   // 应用运行环境
@@ -29,6 +61,14 @@ export const environmentValidationSchema = Joi.object({
     .default('info'),
   LOG_CONSOLE_LEVEL: Joi.string().default('info'),
 
+  // 反向代理信任配置。默认关闭；生产环境应按 docs/architecture/reverse-proxy-trust.md 配置。
+  TRUSTED_PROXY_IPS: Joi.string()
+    .trim()
+    .empty('')
+    .custom(validateTrustedProxyIps)
+    .optional(),
+  TRUST_PROXY_HOPS: Joi.number().integer().min(0).empty('').optional(),
+
   // 文件上传配置
   UPLOAD_LOCAL_DIR: Joi.string().default('./uploads/public'),
   UPLOAD_TMP_DIR: Joi.string().default('./uploads/tmp'),
@@ -38,4 +78,4 @@ export const environmentValidationSchema = Joi.object({
   // ip2region 配置
   IP2REGION_XDB_PATH: Joi.string().optional(),
   IP2REGION_DATA_DIR: Joi.string().default('./uploads/ip2region'),
-})
+}).custom(validateProxyTrustConfig)

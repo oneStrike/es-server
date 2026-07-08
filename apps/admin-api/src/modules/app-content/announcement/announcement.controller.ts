@@ -9,7 +9,7 @@ import {
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -28,6 +28,7 @@ export class AppAnnouncementController {
 
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建公告',
     model: Boolean,
     audit: {
@@ -57,6 +58,7 @@ export class AppAnnouncementController {
   }
 
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新公告',
     model: Boolean,
@@ -69,6 +71,7 @@ export class AppAnnouncementController {
   }
 
   @Post('update-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新公告状态',
     model: Boolean,
@@ -81,6 +84,7 @@ export class AppAnnouncementController {
   }
 
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '下线公告',
     model: Boolean,
@@ -93,6 +97,7 @@ export class AppAnnouncementController {
   }
 
   @Post('retry-fanout')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重试公告消息中心通知',
     model: Boolean,

@@ -1,9 +1,16 @@
-import { WorkCategoryService } from '@libs/content/category/category.service';
-import { CategoryOutputDto, CreateCategoryDto, QueryCategoryDto, UpdateCategoryDto, UpdateCategorySortDto, UpdateCategoryStatusDto } from '@libs/content/category/dto/category.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
+import { WorkCategoryService } from '@libs/content/category/category.service'
+import {
+  CategoryOutputDto,
+  CreateCategoryDto,
+  QueryCategoryDto,
+  UpdateCategoryDto,
+  UpdateCategorySortDto,
+  UpdateCategoryStatusDto,
+} from '@libs/content/category/dto/category.dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -21,6 +28,7 @@ export class ContentCategoryController {
    */
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建分类',
     model: Boolean,
     audit: {
@@ -59,6 +67,7 @@ export class ContentCategoryController {
    * 更新分类信息
    */
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新分类信息',
     model: Boolean,
@@ -74,6 +83,7 @@ export class ContentCategoryController {
    * 更新分类状态
    */
   @Post('update-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新分类状态',
     model: Boolean,
@@ -89,6 +99,7 @@ export class ContentCategoryController {
    * 批量删除分类
    */
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除分类',
     model: Boolean,
@@ -104,6 +115,7 @@ export class ContentCategoryController {
    * 拖拽排序
    */
   @Post('swap-sort-order')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '分类交换排序',
     model: Boolean,

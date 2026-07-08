@@ -1,4 +1,6 @@
+import type { ApiErrorCode } from '@libs/platform/constant'
 import { BusinessErrorCode, PlatformErrorCode } from '@libs/platform/constant'
+import { HttpStatus } from '@nestjs/common'
 
 /**
  * PostgreSQL 错误码常量。
@@ -22,10 +24,7 @@ export type PostgresErrorCodeValue =
 export type PostgresExceptionKind = 'business' | 'http'
 
 export type PostgresErrorMessageKey =
-  | 'duplicate'
-  | 'notNull'
-  | 'check'
-  | 'conflict'
+  'duplicate' | 'notNull' | 'check' | 'conflict'
 
 /** 规范化后的 PostgreSQL 错误元信息。 */
 export interface PostgresError {
@@ -40,7 +39,7 @@ export interface PostgresError {
 export interface PostgresErrorResponseDescriptor {
   message: string
   status: number
-  responseCode: number
+  responseCode: ApiErrorCode
   exceptionKind: PostgresExceptionKind
   messageKey: PostgresErrorMessageKey
 }
@@ -63,28 +62,28 @@ const POSTGRES_ERROR_DESCRIPTORS: Record<
 > = {
   [PostgresErrorCode.UNIQUE_VIOLATION]: {
     message: '数据已存在',
-    status: 200,
+    status: HttpStatus.CONFLICT,
     responseCode: BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
     exceptionKind: 'business',
     messageKey: 'duplicate',
   },
   [PostgresErrorCode.NOT_NULL_VIOLATION]: {
     message: '必填字段不能为空',
-    status: 400,
+    status: HttpStatus.BAD_REQUEST,
     responseCode: PlatformErrorCode.BAD_REQUEST,
     exceptionKind: 'http',
     messageKey: 'notNull',
   },
   [PostgresErrorCode.CHECK_VIOLATION]: {
     message: '数据不符合要求',
-    status: 400,
-    responseCode: PlatformErrorCode.BAD_REQUEST,
+    status: HttpStatus.UNPROCESSABLE_ENTITY,
+    responseCode: PlatformErrorCode.VALIDATION_FAILED,
     exceptionKind: 'http',
     messageKey: 'check',
   },
   [PostgresErrorCode.SERIALIZATION_FAILURE]: {
     message: '操作冲突，请重试',
-    status: 200,
+    status: HttpStatus.CONFLICT,
     responseCode: BusinessErrorCode.STATE_CONFLICT,
     exceptionKind: 'business',
     messageKey: 'conflict',
@@ -155,9 +154,7 @@ function getPostgresErrorFromValue(
 }
 
 function asCarrier(value: unknown): PostgresErrorCarrier | null {
-  return typeof value === 'object' && value !== null
-    ? (value)
-    : null
+  return typeof value === 'object' && value !== null ? value : null
 }
 
 function getString(value: unknown): string | undefined {

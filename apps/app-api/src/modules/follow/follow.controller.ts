@@ -12,7 +12,7 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('关注')
@@ -21,6 +21,7 @@ export class FollowController {
   constructor(private readonly followService: FollowService) {}
 
   @Post('follow')
+  @HttpCode(200)
   @ApiDoc({
     summary: '关注目标',
     model: IdDto,
@@ -36,6 +37,7 @@ export class FollowController {
   }
 
   @Post('cancel')
+  @HttpCode(200)
   @ApiDoc({
     summary: '取消关注',
     model: Boolean,

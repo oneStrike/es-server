@@ -1,9 +1,16 @@
-import { CreateForumSectionGroupDto, ForumSectionGroupOutputDto, QueryForumSectionGroupDto, SwapForumSectionGroupSortDto, UpdateForumSectionGroupDto, UpdateForumSectionGroupEnabledDto } from '@libs/forum/section-group/dto/forum-section-group.dto';
-import { ForumSectionGroupService } from '@libs/forum/section-group/forum-section-group.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators';
+import {
+  CreateForumSectionGroupDto,
+  ForumSectionGroupOutputDto,
+  QueryForumSectionGroupDto,
+  SwapForumSectionGroupSortDto,
+  UpdateForumSectionGroupDto,
+  UpdateForumSectionGroupEnabledDto,
+} from '@libs/forum/section-group/dto/forum-section-group.dto'
+import { ForumSectionGroupService } from '@libs/forum/section-group/forum-section-group.service'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -34,6 +41,7 @@ export class ForumSectionGroupController {
 
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '添加板块组',
     model: Boolean,
     audit: {
@@ -45,6 +53,7 @@ export class ForumSectionGroupController {
   }
 
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新板块组',
     model: Boolean,
@@ -57,6 +66,7 @@ export class ForumSectionGroupController {
   }
 
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除板块组',
     model: Boolean,
@@ -69,6 +79,7 @@ export class ForumSectionGroupController {
   }
 
   @Post('update-enabled')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新板块组启用状态',
     model: Boolean,
@@ -81,6 +92,7 @@ export class ForumSectionGroupController {
   }
 
   @Post('swap-sort-order')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '交换板块组排序顺序',
     model: Boolean,

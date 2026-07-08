@@ -14,7 +14,6 @@ import { basename, resolve } from 'node:path'
 import process from 'node:process'
 import {
   extractClientRequestContext,
-  extractIpAddress,
   extractRequestContext,
 } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
@@ -386,9 +385,11 @@ export class GeoService implements OnModuleDestroy {
 
   // 从 FastifyRequest 构建包含属地的完整请求上下文。
   async buildRequestContext(req: FastifyRequest) {
+    const requestContext = extractRequestContext(req)
+
     return {
-      ...extractRequestContext(req),
-      ...(await this.resolveByIp(extractIpAddress(req))),
+      ...requestContext,
+      ...(await this.resolveByIp(requestContext.ip)),
     }
   }
 

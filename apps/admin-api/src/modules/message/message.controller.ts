@@ -14,7 +14,7 @@ import {
 import { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../common/decorators/audit.decorator'
@@ -41,6 +41,7 @@ export class MessageController {
   }
 
   @Post('monitor/delivery/retry')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '按投递记录重试失败的通知投递',
     model: Boolean,

@@ -2,7 +2,11 @@ import type { AppConfigInterface } from '@libs/platform/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import type { HotModule } from './main.type'
 import process from 'node:process'
-import { logStartupInfo, setupApp } from '@libs/platform/bootstrap'
+import {
+  logStartupInfo,
+  resolveFastifyTrustProxy,
+  setupApp,
+} from '@libs/platform/bootstrap'
 
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
@@ -15,7 +19,7 @@ declare const module: {
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
-    trustProxy: true, // 启用代理信任，用于正确解析 X-Forwarded-For 头部
+    trustProxy: resolveFastifyTrustProxy(),
   })
 
   const app = await NestFactory.create<NestFastifyApplication>(

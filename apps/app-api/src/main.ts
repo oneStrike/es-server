@@ -2,7 +2,11 @@ import type { AppConfigInterface } from '@libs/platform/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import type { HotModule } from './main.type'
 import { MessageWsAdapter } from '@libs/message/notification/notification-ws.adapter'
-import { logStartupInfo, setupApp } from '@libs/platform/bootstrap'
+import {
+  logStartupInfo,
+  resolveFastifyTrustProxy,
+  setupApp,
+} from '@libs/platform/bootstrap'
 
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
@@ -15,7 +19,7 @@ declare const module: {
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
-    trustProxy: true,
+    trustProxy: resolveFastifyTrustProxy(),
   })
 
   const app = await NestFactory.create<NestFastifyApplication>(

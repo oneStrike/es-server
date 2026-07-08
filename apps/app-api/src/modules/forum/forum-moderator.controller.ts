@@ -22,7 +22,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('论坛/版主治理')
@@ -69,6 +69,7 @@ export class ForumModeratorController {
   }
 
   @Post('topic/update-pinned')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主更新主题置顶状态',
     model: Boolean,
@@ -84,6 +85,7 @@ export class ForumModeratorController {
   }
 
   @Post('topic/update-featured')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主更新主题精华状态',
     model: Boolean,
@@ -99,6 +101,7 @@ export class ForumModeratorController {
   }
 
   @Post('topic/update-locked')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主更新主题锁定状态',
     model: Boolean,
@@ -114,6 +117,7 @@ export class ForumModeratorController {
   }
 
   @Post('topic/delete')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主删除主题',
     model: Boolean,
@@ -126,6 +130,7 @@ export class ForumModeratorController {
   }
 
   @Post('topic/move')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主移动主题板块',
     model: Boolean,
@@ -141,6 +146,7 @@ export class ForumModeratorController {
   }
 
   @Post('topic/update-hidden')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主更新主题隐藏状态',
     model: Boolean,
@@ -156,6 +162,7 @@ export class ForumModeratorController {
   }
 
   @Post('topic/update-audit-status')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主更新主题审核状态',
     model: Boolean,
@@ -171,6 +178,7 @@ export class ForumModeratorController {
   }
 
   @Post('comment/update-hidden')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主更新评论隐藏状态',
     model: Boolean,
@@ -186,6 +194,7 @@ export class ForumModeratorController {
   }
 
   @Post('comment/delete')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主删除评论',
     model: Boolean,
@@ -198,6 +207,7 @@ export class ForumModeratorController {
   }
 
   @Post('comment/update-audit-status')
+  @HttpCode(200)
   @ApiDoc({
     summary: '版主更新评论审核状态',
     model: Boolean,

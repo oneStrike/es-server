@@ -3,4 +3,5 @@
  */
 export interface BusinessExceptionOptions {
   cause?: unknown
+  httpStatus?: number
 }

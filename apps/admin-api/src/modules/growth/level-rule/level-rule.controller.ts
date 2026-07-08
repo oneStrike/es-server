@@ -12,7 +12,7 @@ import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -45,6 +45,7 @@ export class LevelRuleController {
 
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建用户等级规则',
     model: Boolean,
     audit: {
@@ -56,6 +57,7 @@ export class LevelRuleController {
   }
 
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新用户等级规则',
     model: Boolean,
@@ -68,6 +70,7 @@ export class LevelRuleController {
   }
 
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除用户等级规则',
     model: Boolean,
@@ -89,6 +92,7 @@ export class LevelRuleController {
   }
 
   @Post('permission/check')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '检查用户等级权限配置',
     model: UserLevelPermissionResultDto,

@@ -17,7 +17,7 @@ import {
   AppUserAccessMessages,
   UserStatusEnum,
 } from '@libs/user/app-user.constant'
-import { Injectable } from '@nestjs/common'
+import { HttpStatus, Injectable } from '@nestjs/common'
 import { and, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
 import { AppUserResponseDto } from './dto/base-app-user.dto'
@@ -326,6 +326,7 @@ export class UserService {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         this.buildBanAccessMessage(user),
+        { httpStatus: HttpStatus.FORBIDDEN },
       )
     }
   }

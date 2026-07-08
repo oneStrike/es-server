@@ -33,7 +33,7 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -96,6 +96,7 @@ export class CheckInController {
   }
 
   @Post('config/update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新签到配置',
     model: Boolean,
@@ -112,6 +113,7 @@ export class CheckInController {
   }
 
   @Post('config/update-enabled')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新签到开关',
     model: Boolean,
@@ -170,6 +172,7 @@ export class CheckInController {
   }
 
   @Post('streak/publish')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '发布连续签到记录',
     model: Boolean,
@@ -186,6 +189,7 @@ export class CheckInController {
   }
 
   @Post('streak/terminate')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '终止连续签到记录',
     model: Boolean,
@@ -212,6 +216,7 @@ export class CheckInController {
   }
 
   @Post('reconciliation/repair')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '补偿签到奖励',
     model: RepairCheckInRewardResponseDto,
@@ -228,6 +233,7 @@ export class CheckInController {
   }
 
   @Post('streak/repair')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重算连续签到进度',
     model: RepairCheckInStreakResponseDto,

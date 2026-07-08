@@ -12,6 +12,10 @@ import { PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.cons
 import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { sql } from 'drizzle-orm'
+import {
+  assertSafeDemoSeedEnvironment,
+  shouldCheckDatabaseToolEnvironmentOnly,
+} from '../runtime-guard'
 import { createDbClient, disconnectDbClient, getDatabaseUrl } from './db-client'
 import { seedAdminDomain } from './modules/admin/domain'
 import { seedAppCoreDomain } from './modules/app/domain'
@@ -25,6 +29,7 @@ import {
 } from './modules/system/domain'
 
 async function runSeeds() {
+  assertSafeDemoSeedEnvironment(process.env)
   console.log('🌱 开始初始化 Drizzle 种子数据...\n')
 
   const db = createDbClient(getDatabaseUrl())
@@ -529,7 +534,20 @@ async function cleanupRetiredChatDomain(db: Db) {
   `)
 }
 
-runSeeds()
+async function main() {
+  const environment = assertSafeDemoSeedEnvironment(process.env)
+
+  if (shouldCheckDatabaseToolEnvironmentOnly(process.argv)) {
+    console.log('✅ Demo seed 环境检查通过')
+    console.log(`  - target: ${environment.safeLabel}`)
+    console.log(`  - nodeEnv: ${environment.nodeEnv}`)
+    return
+  }
+
+  await runSeeds()
+}
+
+main()
   .then(() => {
     process.exit(0)
   })

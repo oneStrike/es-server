@@ -33,13 +33,7 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-} from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiBody, ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -55,6 +49,7 @@ export class TaskController {
   // 创建一条任务定义。
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建任务',
     model: Boolean,
     audit: {
@@ -70,6 +65,7 @@ export class TaskController {
 
   // 更新一条任务定义。
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新任务',
     model: Boolean,
@@ -86,6 +82,7 @@ export class TaskController {
 
   // 更新一条任务定义的状态。
   @Post('update-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新任务状态',
     model: Boolean,
@@ -99,6 +96,7 @@ export class TaskController {
 
   // 软删除一条任务定义。
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除任务',
     model: Boolean,
@@ -164,6 +162,7 @@ export class TaskController {
 
   // 按任务实例维度重试奖励补偿。
   @Post('instance/reward/retry')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重试单条任务实例奖励补偿',
     model: TaskRewardRetryResultDto,
@@ -177,6 +176,7 @@ export class TaskController {
 
   // 批量重试待补偿的任务奖励，必须由当前筛选或选中实例限定范围。
   @Post('instance/reward/retry-pending/batch')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '批量重试待补偿的任务实例奖励',
     model: TaskRewardRetryBatchResultDto,
@@ -203,6 +203,7 @@ export class TaskController {
 
   // 重试单条任务事件消费失败事实。
   @Post('event-failure/retry')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重试单条任务事件消费失败事实',
     model: TaskEventFailureRetryResultDto,
@@ -216,6 +217,7 @@ export class TaskController {
 
   // 批量重试待处理的任务事件消费失败事实。
   @Post('event-failure/retry-pending/batch')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '批量重试待处理的任务事件消费失败事实',
     model: TaskEventFailureRetryBatchResultDto,

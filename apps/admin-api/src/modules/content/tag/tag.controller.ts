@@ -9,7 +9,7 @@ import { WorkTagService } from '@libs/content/tag/tag.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -27,6 +27,7 @@ export class ContentTagController {
    */
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建标签',
     model: Boolean,
     audit: {
@@ -65,6 +66,7 @@ export class ContentTagController {
    * 更新标签信息
    */
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新标签信息',
     model: Boolean,
@@ -80,6 +82,7 @@ export class ContentTagController {
    * 批量更新标签状态
    */
   @Post('update-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新标签状态',
     model: Boolean,
@@ -95,6 +98,7 @@ export class ContentTagController {
    * 批量删除标签
    */
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除标签',
     model: Boolean,
@@ -110,6 +114,7 @@ export class ContentTagController {
    * 标签拖拽排序
    */
   @Post('swap-sort-order')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '标签交换排序',
     model: Boolean,

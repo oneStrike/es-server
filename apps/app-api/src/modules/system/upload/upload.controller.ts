@@ -16,6 +16,7 @@ export class UploadController {
 
   @Post('file/upload')
   @ApiDoc({
+    successStatus: 201,
     summary: '上传文件',
     model: UploadResponseDto,
   })

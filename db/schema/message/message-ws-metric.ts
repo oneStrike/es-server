@@ -26,11 +26,11 @@ export const messageWsMetric = snakeCase.table(
      */
     requestCount: integer().default(0).notNull(),
     /**
-     * ack 成功数量（code=0）
+     * ack 成功数量（code=SUCCESS）
      */
     ackSuccessCount: integer().default(0).notNull(),
     /**
-     * ack 失败数量（code!=0）
+     * ack 失败数量（code!=SUCCESS）
      */
     ackErrorCount: integer().default(0).notNull(),
     /**

@@ -13,7 +13,7 @@ import {
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('签到')
@@ -89,6 +89,7 @@ export class CheckInController {
   }
 
   @Post('sign')
+  @HttpCode(200)
   @ApiDoc({
     summary: '今日签到',
     model: AppCheckInActionResponseDto,
@@ -99,6 +100,7 @@ export class CheckInController {
   }
 
   @Post('makeup')
+  @HttpCode(200)
   @ApiDoc({
     summary: '补签',
     model: AppCheckInActionResponseDto,

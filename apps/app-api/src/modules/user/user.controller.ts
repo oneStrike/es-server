@@ -16,7 +16,7 @@ import {
   UserPointRecordDto,
   UserStatusSummaryDto,
 } from '@libs/user/dto/user-self.dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { UserService } from './user.service'
 
@@ -41,6 +41,7 @@ export class UserController {
    * 更新当前用户资料
    */
   @Post('profile/update')
+  @HttpCode(200)
   @ApiDoc({
     summary: '更新当前用户资料',
     model: Boolean,
@@ -56,6 +57,7 @@ export class UserController {
    * 换绑当前用户手机号
    */
   @Post('phone/change')
+  @HttpCode(200)
   @ApiDoc({
     summary: '换绑当前用户手机号',
     model: Boolean,

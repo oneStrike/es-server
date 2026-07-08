@@ -11,7 +11,7 @@ import { ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -36,6 +36,7 @@ export class CouponController {
   // 创建券定义。
   @Post('definition/create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建券定义',
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
@@ -46,6 +47,7 @@ export class CouponController {
 
   // 更新券定义。
   @Post('definition/update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新券定义',
     model: Boolean,
@@ -57,6 +59,7 @@ export class CouponController {
 
   // 更新券定义启用状态。
   @Post('definition/update-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新券定义启用状态',
     model: Boolean,
@@ -72,6 +75,7 @@ export class CouponController {
   // 创建批量发券工作流。
   @Post('grant-workflow/create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建批量发券任务',
     model: WorkflowJobDto,
     audit: { actionType: AuditActionTypeEnum.CREATE },

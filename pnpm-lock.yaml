@@ -107,6 +107,9 @@ importers:
       debug:
         specifier: ^4.4.3
         version: 4.4.3
+      drizzle-kit:
+        specifier: 1.0.0-rc.3
+        version: 1.0.0-rc.3
       drizzle-orm:
         specifier: 1.0.0-rc.4
         version: 1.0.0-rc.4(@electric-sql/pglite@0.3.15)(@sinclair/typebox@0.34.49)(@types/mssql@9.1.9)(@types/pg@8.20.0)(mssql@11.0.1)(mysql2@3.15.3)(pg@8.22.0)(postgres@3.4.7)(valibot@1.2.0(typescript@6.0.3))
@@ -246,9 +249,6 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
-      drizzle-kit:
-        specifier: 1.0.0-rc.3
-        version: 1.0.0-rc.3
       eslint:
         specifier: ^10.6.0
         version: 10.6.0(jiti@2.7.0)

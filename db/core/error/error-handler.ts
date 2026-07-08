@@ -1,10 +1,7 @@
 import type { DrizzleErrorMessages } from '../drizzle.type'
+import { isBusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import {
-  BadRequestException,
-  HttpException,
-  InternalServerErrorException,
-} from '@nestjs/common'
+import { HttpException, InternalServerErrorException } from '@nestjs/common'
 import {
   getPostgresError,
   getPostgresErrorResponseDescriptor,
@@ -65,12 +62,19 @@ export function handleError(
   const message = messages?.[descriptor.messageKey] ?? descriptor.message
 
   if (descriptor.exceptionKind === 'business') {
+    if (!isBusinessErrorCode(descriptor.responseCode)) {
+      throw new InternalServerErrorException('数据库错误映射配置错误', {
+        cause: error,
+      })
+    }
+
     throw new BusinessException(descriptor.responseCode, message, {
+      httpStatus: descriptor.status,
       cause: error,
     })
   }
 
-  throw new BadRequestException(message, { cause: error })
+  throw new HttpException(message, descriptor.status, { cause: error })
 }
 
 export async function executeWithErrorHandling<T>(

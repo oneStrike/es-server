@@ -4,6 +4,7 @@ import type {
   PaymentOrderSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
+import type { BusinessErrorCodeValue } from '@libs/platform/constant'
 import type {
   BenefitValueRecord,
   MembershipAgreementSnapshot,
@@ -708,9 +709,11 @@ export class MembershipService {
     await this.drizzle.withErrorHandling(
       async () =>
         this.drizzle.withTransaction(async (tx) => {
-          const existing = await tx.query.membershipBenefitDefinition.findFirst({
-            where: { id },
-          })
+          const existing = await tx.query.membershipBenefitDefinition.findFirst(
+            {
+              where: { id },
+            },
+          )
           if (!existing) {
             throw new BusinessException(
               BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1006,7 +1009,7 @@ export class MembershipService {
     benefitType: number,
     grantPolicy: number,
     value: BenefitValueRecord | null,
-    errorCode: number = BusinessErrorCode.OPERATION_NOT_ALLOWED,
+    errorCode: BusinessErrorCodeValue = BusinessErrorCode.OPERATION_NOT_ALLOWED,
   ) {
     if (
       benefitType === MembershipBenefitTypeEnum.DISPLAY &&
@@ -1031,7 +1034,9 @@ export class MembershipService {
 
   // 判断值为正整数或未填写，供可选有效期覆盖使用。
   private isPositiveIntegerOrEmpty(value: unknown) {
-    return value === undefined || value === null || this.isPositiveInteger(value)
+    return (
+      value === undefined || value === null || this.isPositiveInteger(value)
+    )
   }
 
   // 将开放权益配置字段收窄为正整数，便于发放链路只处理已校验事实。
@@ -1109,7 +1114,7 @@ export class MembershipService {
   // 校验开通自动发券需要的最小事实，validDays 留空时使用券定义默认有效期。
   private assertCouponGrantBenefitValue(
     value: BenefitValueRecord | null,
-    errorCode: number,
+    errorCode: BusinessErrorCodeValue,
   ) {
     if (
       !value ||
@@ -1670,9 +1675,7 @@ export class MembershipService {
   ) {
     const benefits = await this.getEnabledPlanBenefitItems([planId], tx)
     for (const benefit of benefits) {
-      const value = this.asBenefitValueRecord(
-        benefit.benefitValue,
-      )
+      const value = this.asBenefitValueRecord(benefit.benefitValue)
       this.assertMembershipBenefitContract(
         benefit.benefit.benefitType,
         benefit.grantPolicy,
@@ -1731,8 +1734,7 @@ export class MembershipService {
       pageConfigId?: number
       publishedAt?: Date | null
     },
-  >(agreement: TAgreement
-) {
+  >(agreement: TAgreement) {
     const { pageConfigId: _pageConfigId, publishedAt, ...output } = agreement
     return {
       ...output,

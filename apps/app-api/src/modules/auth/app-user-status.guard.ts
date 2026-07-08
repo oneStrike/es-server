@@ -7,6 +7,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -48,6 +49,8 @@ export class AppUserStatusGuard implements CanActivate {
       throw new ForbiddenException(accessCheck.message)
     }
 
-    throw new BusinessException(accessCheck.code, accessCheck.message)
+    throw new BusinessException(accessCheck.code, accessCheck.message, {
+      httpStatus: HttpStatus.FORBIDDEN,
+    })
   }
 }

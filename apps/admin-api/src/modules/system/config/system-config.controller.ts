@@ -1,9 +1,12 @@
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators';
+import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { SystemConfigDetailDto, UpdateSystemConfigDto } from '@libs/system-config/dto/config.dto';
-import { SystemConfigService } from '@libs/system-config/system-config.service';
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import {
+  SystemConfigDetailDto,
+  UpdateSystemConfigDto,
+} from '@libs/system-config/dto/config.dto'
+import { SystemConfigService } from '@libs/system-config/system-config.service'
+import { HttpCode, Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -26,6 +29,7 @@ export class SystemConfigController {
   }
 
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新系统配置',
     model: Boolean,

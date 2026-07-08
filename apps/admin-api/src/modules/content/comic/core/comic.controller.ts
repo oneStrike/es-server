@@ -14,7 +14,7 @@ import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 
@@ -25,6 +25,7 @@ export class ComicController {
 
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建漫画',
     model: Boolean,
     audit: {
@@ -57,6 +58,7 @@ export class ComicController {
   }
 
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新漫画信息',
     model: Boolean,
@@ -69,6 +71,7 @@ export class ComicController {
   }
 
   @Post('update-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新漫画发布状态',
     model: Boolean,
@@ -81,6 +84,7 @@ export class ComicController {
   }
 
   @Post('update-recommended')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新漫画推荐状态',
     model: Boolean,
@@ -99,6 +103,7 @@ export class ComicController {
   }
 
   @Post('update-hot')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新漫画热门状态',
     model: Boolean,
@@ -117,6 +122,7 @@ export class ComicController {
   }
 
   @Post('update-new')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新漫画新作状态',
     model: Boolean,
@@ -135,6 +141,7 @@ export class ComicController {
   }
 
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '软删除漫画',
     model: Boolean,

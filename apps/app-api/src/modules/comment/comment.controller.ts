@@ -11,7 +11,15 @@ import {
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import {
+  HttpCode,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('评论')
@@ -23,6 +31,7 @@ export class CommentController {
   ) {}
 
   @Post('post')
+  @HttpCode(200)
   @ApiDoc({
     summary: '发表评论',
     model: IdDto,
@@ -42,6 +51,7 @@ export class CommentController {
   }
 
   @Post('reply')
+  @HttpCode(200)
   @ApiDoc({
     summary: '回复评论',
     model: IdDto,
@@ -61,6 +71,7 @@ export class CommentController {
   }
 
   @Post('delete')
+  @HttpCode(200)
   @ApiDoc({
     summary: '删除我的评论',
     model: Boolean,

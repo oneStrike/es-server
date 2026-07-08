@@ -31,7 +31,15 @@ import { IdDto, PageDto } from '@libs/platform/dto'
 import { ConfigReader } from '@libs/system-config/config-reader'
 
 import { WalletCurrencyDisplayConfigOutputDto } from '@libs/system-config/dto/config.dto'
-import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
+import {
+  HttpCode,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 /**
@@ -119,6 +127,7 @@ export class SystemController {
   }
 
   @Post('announcement/read')
+  @HttpCode(200)
   @ApiDoc({
     summary: '标记系统公告已读',
     model: Boolean,
@@ -131,6 +140,7 @@ export class SystemController {
   }
 
   @Post('announcement/view')
+  @HttpCode(200)
   @ApiDoc({
     summary: '记录系统公告浏览',
     model: Boolean,

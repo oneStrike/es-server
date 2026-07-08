@@ -5,7 +5,15 @@ import { ApiDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import {
+  HttpCode,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -25,6 +33,7 @@ export class NovelContentController {
 
   @Post('upload')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '上传章节文件',
     model: UploadResponseDto,
     audit: {
@@ -36,6 +45,7 @@ export class NovelContentController {
   }
 
   @Post('delete')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除章节文件',
     model: Boolean,

@@ -18,6 +18,7 @@ export class ReportController {
 
   @Post('create')
   @ApiDoc({
+    successStatus: 201,
     summary: '创建举报',
     model: IdDto,
   })

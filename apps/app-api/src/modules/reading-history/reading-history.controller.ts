@@ -7,7 +7,7 @@ import {
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('阅读记录')
@@ -31,6 +31,7 @@ export class ReadingHistoryController {
   }
 
   @Post('batch-delete')
+  @HttpCode(200)
   @ApiDoc({
     summary: '删除阅读记录',
     model: Boolean,
@@ -46,6 +47,7 @@ export class ReadingHistoryController {
   }
 
   @Post('clear')
+  @HttpCode(200)
   @ApiDoc({
     summary: '清空阅读记录',
     model: Boolean,

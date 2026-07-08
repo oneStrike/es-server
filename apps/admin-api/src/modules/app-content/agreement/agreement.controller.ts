@@ -16,7 +16,15 @@ import {
 } from '@libs/platform/decorators'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
+import {
+  HttpCode,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
@@ -38,6 +46,7 @@ export class AgreementController {
 
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建协议',
     model: Boolean,
     audit: {
@@ -50,6 +59,7 @@ export class AgreementController {
   }
 
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新协议',
     model: Boolean,
@@ -63,6 +73,7 @@ export class AgreementController {
   }
 
   @Post('update-status')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新协议发布状态',
     model: Boolean,

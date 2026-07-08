@@ -10,7 +10,7 @@ import {
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { MessageTemplateService } from './message-template.service'
@@ -22,7 +22,9 @@ import { MessageTemplateService } from './message-template.service'
 @ApiTags('消息中心/通知模板')
 @Controller('admin/message/notification-templates')
 export class MessageTemplateController {
-  constructor(private readonly messageTemplateService: MessageTemplateService) {}
+  constructor(
+    private readonly messageTemplateService: MessageTemplateService,
+  ) {}
 
   /**
    * 获取通知模板分页
@@ -55,6 +57,7 @@ export class MessageTemplateController {
    */
   @Post('create')
   @ApiAuditDoc({
+    successStatus: 201,
     summary: '创建通知模板',
     model: Boolean,
     audit: {
@@ -71,6 +74,7 @@ export class MessageTemplateController {
    * 更新通知模板
    */
   @Post('update')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新通知模板',
     model: Boolean,
@@ -88,6 +92,7 @@ export class MessageTemplateController {
    * 更新通知模板启用状态
    */
   @Post('update-enabled')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新通知模板启用状态',
     model: Boolean,
@@ -105,6 +110,7 @@ export class MessageTemplateController {
    * 预览通知模板
    */
   @Post('preview')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '预览通知模板渲染结果',
     model: PreviewNotificationTemplateResponseDto,

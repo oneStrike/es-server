@@ -1,12 +1,20 @@
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 
-import { ChangePasswordDto, ForgotPasswordDto, LoginDto, LoginResponseDto, RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto'
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  LoginDto,
+  LoginResponseDto,
+  RefreshTokenDto,
+  RsaPublicKeyDto,
+  TokenDto,
+} from '@libs/platform/modules/auth/dto'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { SendVerifyCodeDto } from '@libs/platform/modules/sms/dto'
 import { extractIpAddress } from '@libs/platform/utils'
-import { Body, Controller, Get, Post, Req } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
 import { PasswordService } from './password.service'
@@ -24,6 +32,7 @@ export class AuthController {
   ) {}
 
   @Post('verify-code/send')
+  @HttpCode(200)
   @ApiDoc({
     summary: '发送验证码',
     model: {
@@ -51,6 +60,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(200)
   @ApiDoc({
     summary: '用户登录',
     model: LoginResponseDto,
@@ -64,6 +74,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @HttpCode(200)
   @ApiDoc({
     summary: '用户退出登录',
     model: {
@@ -75,6 +86,7 @@ export class AuthController {
   }
 
   @Post('token/refresh')
+  @HttpCode(200)
   @ApiDoc({
     summary: '刷新访问令牌',
     model: TokenDto,
@@ -91,6 +103,7 @@ export class AuthController {
   }
 
   @Post('password/forgot')
+  @HttpCode(200)
   @ApiDoc({
     summary: '找回密码',
     model: LoginResponseDto,
@@ -101,6 +114,7 @@ export class AuthController {
   }
 
   @Post('password/change')
+  @HttpCode(200)
   @ApiDoc({
     summary: '修改密码',
     model: {

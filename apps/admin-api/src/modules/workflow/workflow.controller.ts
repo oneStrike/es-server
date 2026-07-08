@@ -1,7 +1,4 @@
-import {
-  ApiDoc,
-  ApiPageDoc,
-} from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   WorkflowItemDto,
@@ -18,7 +15,7 @@ import {
   WorkflowTypeOptionsResponseDto,
 } from '@libs/platform/modules/workflow/dto'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -64,7 +61,9 @@ export class AdminWorkflowController {
     model: WorkflowNotificationListResponseDto,
   })
   // 查询后台全局工作流通知事实。
-  async getNotificationList(@Query() query: WorkflowNotificationListRequestDto) {
+  async getNotificationList(
+    @Query() query: WorkflowNotificationListRequestDto,
+  ) {
     return this.workflowService.getNotificationList(query)
   }
 
@@ -89,6 +88,7 @@ export class AdminWorkflowController {
   }
 
   @Post('cancel')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '取消工作流任务',
     model: WorkflowJobDto,
@@ -102,6 +102,7 @@ export class AdminWorkflowController {
   }
 
   @Post('archive')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '归档工作流任务',
     model: WorkflowJobDto,
@@ -115,6 +116,7 @@ export class AdminWorkflowController {
   }
 
   @Post('retry-items')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重试工作流失败条目',
     model: WorkflowJobDto,
@@ -128,6 +130,7 @@ export class AdminWorkflowController {
   }
 
   @Post('expire')
+  @HttpCode(200)
   @ApiAuditDoc({
     summary: '过期清理工作流 retained resource',
     model: WorkflowJobDto,
