@@ -5,7 +5,7 @@
 ## TL;DR
 
 - 何时看：改错误码、`BusinessException`、HTTP 状态、数据库错误转换、响应 envelope 时先看本篇。
-- 必做：可预期业务失败统一抛 `BusinessException` 并引用共享错误码；数据库错误优先通过 Drizzle 边界收口；POST 成功默认 `200`，需要保留 `201` 时显式声明。
+- 必做：可预期业务失败统一抛 `BusinessException` 并引用共享错误码；数据库错误优先通过 Drizzle 边界收口；成功 `POST` 的状态与 `@HttpCode()` 约定遵循 [02-controller.md](./02-controller.md)。
 - 不要：用 `NotFoundException`、`ConflictException` 代替业务异常，不要手写数字 / 裸字符串错误码，也不要通过匹配 `error.message` 做业务分支。
 - 最低验证：`pnpm type-check`；若错误语义变化，再按 [08-testing.md](./08-testing.md) 补验证。
 
@@ -28,9 +28,7 @@
 - `BusinessException` 默认 HTTP 状态由 `getBusinessErrorHttpStatus(...)` 决定；同一业务码在鉴权、账号封禁等特殊上下文需要不同协议状态时，通过 `httpStatus` 显式覆盖。
 - 数据库读写优先通过 `drizzle.withErrorHandling(...)`、`drizzle.withTransaction(...)`、`drizzle.assertAffectedRows(...)` 收口。
 - 业务层若需要感知 PostgreSQL 细节，应通过 `extractError(...)`、共享错误描述器或 `withErrorHandling` 的映射能力获取，不要自行解析驱动错误字符串。
-- 平台层全局将未显式声明状态码的 `POST` 成功响应归一为 `200`；Controller 不需要书写 `@HttpCode(200)`。
-- 需要保留 `201` 的创建/上传类 `POST` 接口，使用 NestJS 官方 `@HttpCode(201)` 显式声明；Swagger 成功状态也应同步保持一致。
-- 禁止用 `@HttpCode(200)` 做冗余声明；未加 `@HttpCode` 的 POST 默认即为 `200`。
+- 成功 `POST` 的状态码与 `@HttpCode()` 约定遵循 [02-controller.md](./02-controller.md) 的“返回语义”小节；本篇不重复定义。
 
 ## 分层职责
 

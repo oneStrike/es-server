@@ -5,7 +5,7 @@
 ## TL;DR
 
 - 何时看：改 DTO、返回结构、字段复用、nullable 字段、`validation: false` 时先看本篇。
-- 必做：业务 DTO 默认定义在 `libs/*`；优先用 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 复用字段；输出 nullable 字段写成 `: T | null`，赋值时用 `?? null`。
+- 必做：业务 DTO 默认定义在 `libs/*`；HTTP / DTO 与 `*.type.ts` 的边界判断以本篇为准；优先用 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 复用字段；输出 nullable 字段写成 `: T | null`，赋值时用 `?? null`。
 - 不要：在 `apps/*` 新增同构 DTO，不要在 DTO 文件导入 `*.type.ts`，不要手写重复字段，也不要为平台通用 DTO 包空心别名。
 - 最低验证：`pnpm type-check`；若公开 contract 变化，再按 [08-testing.md](./08-testing.md) 补验证。
 

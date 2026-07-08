@@ -5,7 +5,7 @@
 ## TL;DR
 
 - 何时看：改 Controller、路由、Swagger、响应模型、`@HttpCode()` 时先看本篇。
-- 必做：Controller 只做入参接收、装配、注解和调用 service；入参 / 出参 DTO 从 `libs/*` 复用。
+- 必做：Controller 只做入参接收、装配、注解和调用 service；入参 / 出参 DTO 从 `libs/*` 复用；成功 `POST` 的状态与 `@HttpCode()` 约定以本篇“返回语义”小节为准。
 - 不要：在 Controller 里写数据库查询或复杂业务编排，不要把 `CreateXxxDto`、`UpdateXxxDto` 当输出模型，也不要机械补 `@HttpCode(200)`。
 - 最低验证：`pnpm type-check`；若接口 contract 变化，再按 [08-testing.md](./08-testing.md) 补验证。
 

@@ -5,7 +5,7 @@
 ## TL;DR
 
 - 何时看：改 `*.type.ts`、Drizzle `infer` 类型、复杂函数签名、内部类型复用时先看本篇。
-- 必做：HTTP contract 继续用 DTO；内部可复用类型收口到 `*.type.ts`；优先从 DTO、Drizzle schema、既有 owner type 推导。
+- 必做：HTTP contract 继续用 DTO，DTO / type 边界与输出 nullable contract 的最终约定以 [03-dto.md](./03-dto.md) 为准；内部可复用类型收口到 `*.type.ts`；优先从 DTO、Drizzle schema、既有 owner type 推导。
 - 不要：在 service / controller / dto 文件里直接声明顶层复杂类型，不要重复手写 DTO 同构结构，也不要新增无意义类型别名。
 - 最低验证：`pnpm type-check`。
 
@@ -60,7 +60,7 @@
 - `unknown` 仅允许出现在真实边界场景，例如 JSON blob、事件上下文、模板上下文、第三方原始 payload、暂未收敛的扩展字段。
 - 使用 `unknown` 后，必须在消费前做收窄、校验或转换；不要把 `unknown` 沿调用链继续透传。
 - `Record<string, unknown>` 仅用于开放键集合；如果键和值都已知，应改成明确字段结构。
-- 输出 DTO 中数据库 nullable 字段的类型声明必须使用 `: T | null`（必填但可为 null），不得使用 `?: T | null`（可选）。`?:` 修饰符意味着字段可以不存在，会导致 JSON 序列化时字段缺失，破坏前端数据结构稳定性。
+- 若结构已经归类为输出 DTO，nullable 字段 contract 遵循 [03-dto.md](./03-dto.md)；本篇不再重复定义 DTO 的可选 / 可空语义。
 
 ## 编译器与 Lint 配置约束
 
@@ -68,7 +68,7 @@
 - `tsconfig.json` 中 `forceConsistentCasingInFileNames` 必须设为 `true`，避免 Windows 与 Linux 之间因文件名大小写不一致导致构建失败。
 - `tsconfig.json` 中 `strictNullChecks` 必须设为 `true`（当前已启用），确保 nullable 字段在类型层面得到显式处理。
 - ESLint 中 `@typescript-eslint/no-unsafe-*` 系列规则（`no-unsafe-return`、`no-unsafe-assignment`、`no-unsafe-call`、`no-unsafe-argument`、`no-unsafe-member-access`）必须设为 `error`，不允许通过 `warn` 绕过。
-- 当前已知配置差距：`tsconfig.json` 中 `noImplicitAny` 为 `false`、`forceConsistentCasingInFileNames` 为 `false`；`eslint.config.mjs` 中 `no-unsafe-*` 系列规则为 `warn`。这些差距应在后续迭代中修复，修改前需先运行 `pnpm type-check` 确认基线，修改后逐项验证。
+- 当前仓库类型 / lint 配置与本节规则存在已知差距；具体现状与任务边界处理方式见 [AI_EXCEPTIONS.md](./AI_EXCEPTIONS.md)。
 
 ## 禁止项
 
