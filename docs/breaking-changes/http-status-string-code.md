@@ -20,7 +20,7 @@
 - 平台错误 body `code` 从数字码迁移为 `BAD_REQUEST`、`VALIDATION_FAILED`、`UNAUTHORIZED`、`FORBIDDEN`、`ROUTE_NOT_FOUND`、`PAYLOAD_TOO_LARGE`、`RATE_LIMITED`、`HTTP_ERROR`、`INTERNAL_SERVER_ERROR`。
 - 业务错误 body `code` 从数字码迁移为 `RESOURCE_NOT_FOUND`、`RESOURCE_ALREADY_EXISTS`、`STATE_CONFLICT`、`OPERATION_NOT_ALLOWED`、`QUOTA_NOT_ENOUGH`、`INVALID_OPERATION_TARGET`。
 - `BusinessException` 不再统一通过 HTTP 200 返回。资源不存在、冲突、不可处理操作等会返回对应 4xx 状态。
-- 非创建语义的 POST action 显式返回 HTTP 200；创建或上传语义 POST 保留 HTTP 201。
+- 非创建语义的 POST action 默认返回 HTTP 200（由全局拦截器归一化）；创建或上传语义 POST 通过 `@HttpCode(201)` 显式保留 HTTP 201。
 - WebSocket ACK 与认证失败消息使用同一套字符串响应码。
 
 ## 默认 HTTP 映射
@@ -49,6 +49,7 @@
 ## 后端新增约束
 
 - 新增 API response code 必须更新 `libs/platform/src/constant/error-code.constant.ts` 与 `.trae/rules/06-error-handling.md`。
-- 新增非创建 POST action 必须加 `@HttpCode(200)`。
+- 新增非创建 POST action 不需要加 `@HttpCode(200)`，全局拦截器自动归一化。
+- 新增创建或上传 POST action 必须加 `@HttpCode(201)` 显式保留 201。
 - 新增创建或上传 POST 若使用 `ApiDoc` / `ApiAuditDoc`，必须显式 `successStatus: 201`。
 - 第三方 provider 原始响应中的数字 `code` 属于上游协议字段，不得直接作为本仓库 API envelope code 对外透出。

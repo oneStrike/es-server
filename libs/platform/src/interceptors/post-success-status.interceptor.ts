@@ -2,9 +2,9 @@ import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/com
 import type { FastifyReply } from 'fastify'
 import type { Observable } from 'rxjs'
 import { HttpStatus, Injectable } from '@nestjs/common'
+import { HTTP_CODE_METADATA } from '@nestjs/common/constants'
 import { Reflector } from '@nestjs/core'
 import { tap } from 'rxjs'
-import { SKIP_POST_STATUS_NORMALIZATION_KEY } from '../decorators/skip-post-status-normalization.decorator'
 
 @Injectable()
 export class PostSuccessStatusInterceptor implements NestInterceptor {
@@ -32,11 +32,7 @@ export class PostSuccessStatusInterceptor implements NestInterceptor {
     ) => unknown
     let shouldSkip = this.skipCache.get(handler)
     if (shouldSkip === undefined) {
-      shouldSkip =
-        this.reflector.getAllAndOverride<boolean>(
-          SKIP_POST_STATUS_NORMALIZATION_KEY,
-          [handler, context.getClass()],
-        ) ?? false
+      shouldSkip = this.reflector.get(HTTP_CODE_METADATA, handler) !== undefined
       this.skipCache.set(handler, shouldSkip)
     }
     if (shouldSkip) {

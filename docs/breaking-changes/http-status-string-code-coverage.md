@@ -11,7 +11,7 @@
 | `libs/platform/src/filters/http-exception.filter.ts`                                      | 业务异常、HTTP 异常、PostgreSQL 异常都按真实 HTTP status 输出 envelope。                                            |
 | `libs/platform/src/interceptors/transform.interceptor.ts`                                 | 成功 envelope 固定写入 `SUCCESS`，不再修改 HTTP status。                                                            |
 | `db/core/error/*`                                                                         | PostgreSQL 唯一、非空、check、序列化失败映射到对应 HTTP status 与字符串 code。                                      |
-| `apps/*/**/*.controller.ts`                                                               | 233 个非创建 POST action 加 `@HttpCode(200)`；创建、上传与归档会话类 POST 保留 201。                                |
+| `apps/*/**/*.controller.ts`                                                               | 非创建 POST action 不加 `@HttpCode`，由全局拦截器归一为 200；创建/上传类 POST 加 `@HttpCode(201)` 显式保留 201。    |
 | `libs/platform/src/decorators/api-doc.*`                                                  | Swagger 成功响应 code 改为字符串；错误响应补充常见 4xx/5xx envelope；创建类接口通过 `successStatus: 201` 显式声明。 |
 | `libs/message/src/notification/*`、`libs/message/src/monitor/*`                           | WebSocket ACK、认证失败、指标成功判断改为字符串 code。                                                              |
 | `apps/app-api/src/modules/auth/app-user-status.guard.ts`、`libs/user/src/user.service.ts` | 账号封禁业务码保留，HTTP status 显式覆盖为 403。                                                                    |
@@ -22,9 +22,9 @@
 | 扫描目标               | 结论                                                                                |
 | ---------------------- | ----------------------------------------------------------------------------------- |
 | 数字 API 响应码        | 未发现平台、业务、成功响应码继续使用数字值。                                        |
-| 非创建 POST action     | 覆盖脚本确认无缺失 `@HttpCode(200)` 的非创建 POST。                                 |
+| 非创建 POST action     | 覆盖脚本确认非创建 POST 未使用 `@HttpCode(200)` 冗余声明。                          |
 | 创建类 Swagger 状态    | 覆盖脚本确认使用 `ApiDoc` / `ApiAuditDoc` 的创建类 POST 都带 `successStatus: 201`。 |
-| `@HttpCode` import     | 覆盖脚本确认所有使用 `@HttpCode` 的 controller 都已从 `@nestjs/common` 导入。       |
+| `@HttpCode` import     | 覆盖脚本确认所有使用 `@HttpCode(201)` 的 controller 都已从 `@nestjs/common` 导入。  |
 | WebSocket ACK 成功判断 | `recordAck` 与 ACK payload 类型均使用 `SUCCESS` 字符串。                            |
 
 ## 已审计保留项
