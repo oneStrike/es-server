@@ -2,6 +2,13 @@
 
 适用范围：`libs/*` 与 `apps/*` 中的错误处理、异常抛出、响应 envelope、WebSocket ACK 与数据库错误转换。
 
+## TL;DR
+
+- 何时看：改错误码、`BusinessException`、HTTP 状态、数据库错误转换、响应 envelope 时先看本篇。
+- 必做：可预期业务失败统一抛 `BusinessException` 并引用共享错误码；数据库错误优先通过 Drizzle 边界收口；POST 成功默认 `200`，需要保留 `201` 时显式声明。
+- 不要：用 `NotFoundException`、`ConflictException` 代替业务异常，不要手写数字 / 裸字符串错误码，也不要通过匹配 `error.message` 做业务分支。
+- 最低验证：`pnpm type-check`；若错误语义变化，再按 [08-testing.md](./08-testing.md) 补验证。
+
 ## 仓库约定
 
 - 本仓库采用“HTTP 状态表达协议结果，body `code` 表达应用结果”的双层模型。

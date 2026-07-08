@@ -2,6 +2,13 @@
 
 适用范围：`libs/*` 与 `apps/*` 中使用 Drizzle ORM 的数据库操作，以及对应的 schema / migration 联动。
 
+## TL;DR
+
+- 何时看：改 Drizzle 查询、schema、migration、seed、bootstrap、分页 / 排序 / 原子更新时先看本篇。
+- 必做：统一通过 `DrizzleService` 使用数据库能力；schema、DTO、常量 / 枚举、migration 同轮对齐；结构变更先生成并检查 migration。
+- 不要：使用 `drizzle-kit push`，不要把 seed 当 bootstrap，不要省略显式排序，也不要新增数据库外键。
+- 最低验证：`pnpm type-check`；若涉及 schema / migration，再继续执行本篇要求的 migration / 注释检查。
+
 ## 仓库约定
 
 - 本仓库统一通过注入的 `DrizzleService` 使用 `drizzle.db`、`drizzle.schema`、`buildPage(...)`、`buildOrderBy(...)`、`withTransaction(...)`、`withErrorHandling(...)` 等基础能力；不在业务层自行创建新的 Drizzle 实例。

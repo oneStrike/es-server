@@ -2,6 +2,13 @@
 
 适用范围：`libs/*` 与 `apps/*` 中可复用的 TypeScript 类型定义，以及 `*.type.ts` 文件。
 
+## TL;DR
+
+- 何时看：改 `*.type.ts`、Drizzle `infer` 类型、复杂函数签名、内部类型复用时先看本篇。
+- 必做：HTTP contract 继续用 DTO；内部可复用类型收口到 `*.type.ts`；优先从 DTO、Drizzle schema、既有 owner type 推导。
+- 不要：在 service / controller / dto 文件里直接声明顶层复杂类型，不要重复手写 DTO 同构结构，也不要新增无意义类型别名。
+- 最低验证：`pnpm type-check`。
+
 ## 默认动作
 
 - 涉及 HTTP 入参 / 出参、Swagger 文档、字段校验的结构，默认定义或复用 DTO；不要先写 `type` 再让 Controller / Service 手动对齐 DTO。

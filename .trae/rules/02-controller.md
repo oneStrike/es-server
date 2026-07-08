@@ -2,6 +2,13 @@
 
 适用范围：`apps/admin-api`、`apps/app-api` 的 Controller、Module 与 Swagger 暴露层。
 
+## TL;DR
+
+- 何时看：改 Controller、路由、Swagger、响应模型、`@HttpCode()` 时先看本篇。
+- 必做：Controller 只做入参接收、装配、注解和调用 service；入参 / 出参 DTO 从 `libs/*` 复用。
+- 不要：在 Controller 里写数据库查询或复杂业务编排，不要把 `CreateXxxDto`、`UpdateXxxDto` 当输出模型，也不要机械补 `@HttpCode(200)`。
+- 最低验证：`pnpm type-check`；若接口 contract 变化，再按 [08-testing.md](./08-testing.md) 补验证。
+
 ## 核心原则
 
 - 接口继续采用动作型路由（RPC 风格）over HTTP，不强制改成 RESTful。

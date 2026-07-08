@@ -2,6 +2,13 @@
 
 适用范围：全仓库 TypeScript/JavaScript 文件的导入语句。
 
+## TL;DR
+
+- 何时看：改导入路径、文件放置、barrel、`libs/platform` / `db` 入口时先看本篇。
+- 必做：业务域默认直连 owner 文件；命中 `libs/platform`、`db` 时只走白名单公共入口。
+- 不要：新增 `index.ts` / `dto/index.ts` 一类转发入口，不要用目录语义路径代替具体文件，也不要直连 `libs/platform` / `db` 具体文件。
+- 最低验证：`pnpm type-check`。
+
 ## 核心原则
 
 - 全仓统一使用文件直连导入；业务域不依赖 `index.ts`、`dto/index.ts`、`core/index.ts`、`module/index.ts`、`module.ts`、`contracts.ts` 等转发入口。

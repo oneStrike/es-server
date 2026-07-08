@@ -4,6 +4,13 @@
 
 本文件只定义项目级最小约束、验证基线与交付要求。规范事实源已统一收敛至 `.trae/rules/PROJECT_RULES.md`。
 
+## AI 快速入口
+
+- 第一次进入仓库、或暂时判断不清本次改动归属时，先读 `.trae/rules/AI_RULE_ROUTER.md`
+- 遇到 `owner 文件`、`稳定 contract`、`闭集字段` 这类术语时，读 `.trae/rules/AI_TERMS.md`
+- 看到仓库现实与理想规则不完全一致时，先读 `.trae/rules/AI_EXCEPTIONS.md`
+- 上述 3 份文档只作导航、释义与例外汇总，不替代 `.trae/rules/PROJECT_RULES.md` 和各专项规则
+
 ## 1. 决策顺序
 
 1. 当前可运行的共享抽象、真实脚本与现有对外契约。
