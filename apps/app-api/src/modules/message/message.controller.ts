@@ -30,7 +30,6 @@ import { IdDto, PageDto } from '@libs/platform/dto'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
 
 import {
-  HttpCode,
   Body,
   Controller,
   Get,
@@ -89,7 +88,6 @@ export class MessageController {
   }
 
   @Post('notification/preference/update')
-  @HttpCode(200)
   @ApiDoc({
     summary: '更新通知偏好',
     model: UserNotificationPreferenceListDto,
@@ -107,7 +105,6 @@ export class MessageController {
   }
 
   @Post('notification/read')
-  @HttpCode(200)
   @ApiDoc({
     summary: '标记单条通知已读',
     model: Boolean,
@@ -117,7 +114,6 @@ export class MessageController {
   }
 
   @Post('notification/read-all')
-  @HttpCode(200)
   @ApiDoc({
     summary: '标记全部通知已读',
     model: Boolean,
@@ -127,7 +123,6 @@ export class MessageController {
   }
 
   @Post('notification/hide')
-  @HttpCode(200)
   @ApiDoc({
     summary: '隐藏单条通知',
     model: Boolean,
@@ -140,7 +135,6 @@ export class MessageController {
   }
 
   @Post('chat/direct/open')
-  @HttpCode(200)
   @ApiDoc({
     summary: '打开私聊会话',
     model: ChatConversationDto,
@@ -177,7 +171,6 @@ export class MessageController {
   }
 
   @Post('chat/conversation/read')
-  @HttpCode(200)
   @ApiDoc({
     summary: '标记会话已读',
     model: Boolean,
@@ -190,7 +183,6 @@ export class MessageController {
   }
 
   @Post('chat/conversation/hide')
-  @HttpCode(200)
   @ApiDoc({
     summary: '隐藏会话',
     model: Boolean,
@@ -203,7 +195,6 @@ export class MessageController {
   }
 
   @Post('chat/conversation/pin')
-  @HttpCode(200)
   @ApiDoc({
     summary: '设置会话置顶',
     model: Boolean,
@@ -218,7 +209,6 @@ export class MessageController {
   // 上传聊天媒体文件，scene 与 provider 兼容策略由消息域服务收口。
   @Post('chat/media/upload')
   @ApiDoc({
-    successStatus: 201,
     summary: '上传聊天媒体文件',
     model: UploadResponseDto,
   })

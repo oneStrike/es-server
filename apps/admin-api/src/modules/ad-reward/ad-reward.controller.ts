@@ -14,7 +14,7 @@ import {
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -77,7 +77,6 @@ export class AdRewardController {
   // 创建广告 provider 配置。
   @Post('provider/create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建广告 provider 配置',
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
@@ -88,7 +87,6 @@ export class AdRewardController {
 
   // 更新广告 provider 配置。
   @Post('provider/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新广告 provider 配置',
     model: Boolean,
@@ -100,7 +98,6 @@ export class AdRewardController {
 
   // 更新广告 provider 启用状态。
   @Post('provider/update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新广告 provider 启用状态',
     model: Boolean,
@@ -112,7 +109,6 @@ export class AdRewardController {
 
   // 撤销广告奖励记录。
   @Post('record/revoke')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '撤销广告奖励记录',
     model: Boolean,

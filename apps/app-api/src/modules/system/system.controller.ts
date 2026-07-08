@@ -32,7 +32,6 @@ import { ConfigReader } from '@libs/system-config/config-reader'
 
 import { WalletCurrencyDisplayConfigOutputDto } from '@libs/system-config/dto/config.dto'
 import {
-  HttpCode,
   Body,
   Controller,
   Get,
@@ -127,7 +126,6 @@ export class SystemController {
   }
 
   @Post('announcement/read')
-  @HttpCode(200)
   @ApiDoc({
     summary: '标记系统公告已读',
     model: Boolean,
@@ -140,7 +138,6 @@ export class SystemController {
   }
 
   @Post('announcement/view')
-  @HttpCode(200)
   @ApiDoc({
     summary: '记录系统公告浏览',
     model: Boolean,

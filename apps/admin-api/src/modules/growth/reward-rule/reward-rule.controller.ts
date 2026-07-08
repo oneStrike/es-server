@@ -9,7 +9,7 @@ import { GrowthRewardRuleService } from '@libs/growth/reward-rule/reward-rule.se
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -40,7 +40,6 @@ export class RewardRuleController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建成长奖励规则',
     model: Boolean,
     audit: {
@@ -52,7 +51,6 @@ export class RewardRuleController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新成长奖励规则',
     model: Boolean,
@@ -65,7 +63,6 @@ export class RewardRuleController {
   }
 
   @Post('archive')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '归档成长奖励规则',
     model: Boolean,

@@ -8,7 +8,7 @@ import {
 } from '@libs/interaction/purchase/dto/purchase.dto'
 import { PurchaseService } from '@libs/interaction/purchase/purchase.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('购买')
@@ -47,7 +47,6 @@ export class PurchaseController {
   }
 
   @Post('chapter')
-  @HttpCode(200)
   @ApiDoc({
     summary: '购买章节（漫画/小说）',
     model: PurchaseChapterResultDto,

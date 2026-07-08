@@ -19,7 +19,7 @@ import { PaymentService } from '@libs/interaction/payment/payment.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -82,7 +82,6 @@ export class PaymentController {
   // 创建支付 provider 配置。
   @Post('provider/create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建支付 provider 配置',
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
@@ -95,7 +94,6 @@ export class PaymentController {
 
   // 更新支付 provider 配置。
   @Post('provider/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新支付 provider 配置',
     model: Boolean,
@@ -109,7 +107,6 @@ export class PaymentController {
 
   // 更新支付 provider 启用状态。
   @Post('provider/update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新支付 provider 启用状态',
     model: Boolean,
@@ -146,7 +143,6 @@ export class PaymentController {
 
   // 异常修复支付订单为已支付，并复用支付结算幂等核心。
   @Post('order/repair-paid')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '异常修复支付订单为已支付',
     model: PaymentOrderResultDto,

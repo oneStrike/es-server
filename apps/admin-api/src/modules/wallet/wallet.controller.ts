@@ -10,7 +10,7 @@ import { WalletService } from '@libs/interaction/wallet/wallet.service'
 import { ApiPageDoc } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -42,7 +42,6 @@ export class WalletController {
   // 创建虚拟币充值包。
   @Post('currency-package/create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建虚拟币充值包',
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
@@ -53,7 +52,6 @@ export class WalletController {
 
   // 更新虚拟币充值包。
   @Post('currency-package/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新虚拟币充值包',
     model: Boolean,
@@ -65,7 +63,6 @@ export class WalletController {
 
   // 更新虚拟币充值包启用状态。
   @Post('currency-package/update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新虚拟币充值包启用状态',
     model: Boolean,

@@ -8,7 +8,7 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -38,7 +38,6 @@ export class ForumModeratorApplicationController {
   }
 
   @Post('audit')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '审核版主申请',
     model: Boolean,
@@ -54,7 +53,6 @@ export class ForumModeratorApplicationController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除版主申请',
     model: Boolean,

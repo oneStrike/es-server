@@ -11,7 +11,7 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -42,7 +42,6 @@ export class CommentController {
   }
 
   @Post('update-audit-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新评论审核状态',
     model: Boolean,
@@ -61,7 +60,6 @@ export class CommentController {
   }
 
   @Post('update-hidden')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新评论隐藏状态',
     model: Boolean,
@@ -80,7 +78,6 @@ export class CommentController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除评论',
     model: Boolean,

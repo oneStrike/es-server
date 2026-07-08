@@ -24,7 +24,6 @@ export class Ip2regionController {
 
   @Post('upload')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '上传 ip2region xdb 并热切换当前进程',
     model: Ip2regionRuntimeStatusDto,
     audit: {

@@ -15,7 +15,6 @@ export class AdRewardController {
   // 创建广告奖励验证。
   @Post('verification/create')
   @ApiDoc({
-    successStatus: 201,
     summary: '创建广告奖励验证',
     model: AdRewardResultDto,
   })

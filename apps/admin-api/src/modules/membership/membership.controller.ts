@@ -16,7 +16,7 @@ import { MembershipService } from '@libs/interaction/membership/membership.servi
 import { ApiPageDoc } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -38,7 +38,6 @@ export class MembershipController {
   // 创建 VIP 套餐。
   @Post('plan/create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建 VIP 套餐',
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
@@ -49,7 +48,6 @@ export class MembershipController {
 
   // 更新 VIP 套餐。
   @Post('plan/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新 VIP 套餐',
     model: Boolean,
@@ -61,7 +59,6 @@ export class MembershipController {
 
   // 更新 VIP 套餐启用状态。
   @Post('plan/update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新 VIP 套餐启用状态',
     model: Boolean,
@@ -89,7 +86,6 @@ export class MembershipController {
   // 创建会员权益定义。
   @Post('benefit/create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建会员权益定义',
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
@@ -102,7 +98,6 @@ export class MembershipController {
 
   // 更新会员权益定义。
   @Post('benefit/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新会员权益定义',
     model: Boolean,
@@ -116,7 +111,6 @@ export class MembershipController {
 
   // 更新会员权益启用状态。
   @Post('benefit/update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新会员权益启用状态',
     model: Boolean,
@@ -146,7 +140,6 @@ export class MembershipController {
   // 创建会员订阅页配置。
   @Post('page-config/create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建会员订阅页配置',
     model: Boolean,
     audit: { actionType: AuditActionTypeEnum.CREATE },
@@ -159,7 +152,6 @@ export class MembershipController {
 
   // 更新会员订阅页配置。
   @Post('page-config/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新会员订阅页配置',
     model: Boolean,
@@ -173,7 +165,6 @@ export class MembershipController {
 
   // 更新会员订阅页配置启用状态。
   @Post('page-config/update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新会员订阅页配置启用状态',
     model: Boolean,

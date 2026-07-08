@@ -13,7 +13,7 @@ import { UserBadgeService } from '@libs/growth/badge/user-badge.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -48,7 +48,6 @@ export class UserBadgeController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建用户徽章',
     model: Boolean,
     audit: {
@@ -60,7 +59,6 @@ export class UserBadgeController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新用户徽章',
     model: Boolean,
@@ -73,7 +71,6 @@ export class UserBadgeController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除用户徽章',
     model: Boolean,
@@ -86,7 +83,6 @@ export class UserBadgeController {
   }
 
   @Post('update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新用户徽章状态',
     model: Boolean,
@@ -99,7 +95,6 @@ export class UserBadgeController {
   }
 
   @Post('assign')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '为用户分配用户徽章',
     model: Boolean,
@@ -112,7 +107,6 @@ export class UserBadgeController {
   }
 
   @Post('revoke')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '撤销用户徽章',
     model: Boolean,

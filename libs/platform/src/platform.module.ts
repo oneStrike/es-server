@@ -18,6 +18,7 @@ import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { ClsModule } from 'nestjs-cls'
 import { v4 as uuidv4 } from 'uuid'
+import { PostSuccessStatusInterceptor } from './interceptors/post-success-status.interceptor'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
 import { CustomCacheModule } from './modules/cache/cache.module'
 import { HealthModule } from './modules/health/health.module'
@@ -60,6 +61,7 @@ export class PlatformModule {
       enableThrottler: true,
       enableHealth: true,
       enableGlobalValidationPipe: true,
+      enableGlobalPostSuccessStatusInterceptor: true,
       enableGlobalTransformInterceptor: true,
     }
 
@@ -116,6 +118,13 @@ export class PlatformModule {
     // 健康检查模块
     if (mergedOptions.enableHealth) {
       imports.push(HealthModule)
+    }
+
+    if (mergedOptions.enableGlobalPostSuccessStatusInterceptor) {
+      providers.push({
+        provide: APP_INTERCEPTOR,
+        useClass: PostSuccessStatusInterceptor,
+      })
     }
 
     // 全局响应转换拦截器

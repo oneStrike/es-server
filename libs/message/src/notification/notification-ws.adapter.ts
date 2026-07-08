@@ -1,5 +1,5 @@
-import type { MessageMappingProperties } from '@nestjs/websockets/gateway-metadata-explorer'
 import type { ApiErrorCode } from '@libs/platform/constant'
+import type { MessageMappingProperties } from '@nestjs/websockets/gateway-metadata-explorer'
 import type { Observable } from 'rxjs'
 import type {
   NativeWsAdapterClient,

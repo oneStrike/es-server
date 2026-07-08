@@ -16,7 +16,7 @@ import {
 } from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -27,7 +27,6 @@ export class NovelChapterController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建小说章节',
     model: Boolean,
     audit: {
@@ -69,7 +68,6 @@ export class NovelChapterController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新小说章节',
     model: Boolean,
@@ -82,7 +80,6 @@ export class NovelChapterController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除小说章节',
     model: Boolean,
@@ -95,7 +92,6 @@ export class NovelChapterController {
   }
 
   @Post('batch-delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '批量删除小说章节',
     model: Boolean,
@@ -108,7 +104,6 @@ export class NovelChapterController {
   }
 
   @Post('batch-update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '批量更新小说章节发布状态',
     model: Boolean,
@@ -124,7 +119,6 @@ export class NovelChapterController {
   }
 
   @Post('swap-sort-order')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '交换章节序号',
     model: Boolean,

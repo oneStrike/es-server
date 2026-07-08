@@ -10,7 +10,7 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AdminUserService } from './admin-user.service'
@@ -27,7 +27,6 @@ export class AdminUserController {
   // 注册新管理员账号。
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '用户注册',
     model: Boolean,
     audit: {
@@ -43,7 +42,6 @@ export class AdminUserController {
 
   // 更新管理员用户信息。
   @Post('profile/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新用户信息',
     model: Boolean,
@@ -90,7 +88,6 @@ export class AdminUserController {
 
   // 修改当前管理员密码。
   @Post('password/change')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '修改密码',
     model: Boolean,
@@ -108,7 +105,6 @@ export class AdminUserController {
 
   // 重置指定管理员密码为临时密码。
   @Post('password/reset')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重置用户密码',
     model: ResetAdminUserPasswordResultDto,
@@ -125,7 +121,6 @@ export class AdminUserController {
 
   // 解锁指定管理员的登录锁定状态。
   @Post('unlock')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '解锁指定用户的锁定状态',
     model: Boolean,

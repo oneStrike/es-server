@@ -3,8 +3,8 @@ import type {
   MembershipPlanSelect,
   PaymentOrderSelect,
 } from '@db/schema'
-import type { SQL } from 'drizzle-orm'
 import type { BusinessErrorCodeValue } from '@libs/platform/constant'
+import type { SQL } from 'drizzle-orm'
 import type {
   BenefitValueRecord,
   MembershipAgreementSnapshot,
@@ -1734,7 +1734,8 @@ export class MembershipService {
       pageConfigId?: number
       publishedAt?: Date | null
     },
-  >(agreement: TAgreement) {
+  >(agreement: TAgreement
+) {
     const { pageConfigId: _pageConfigId, publishedAt, ...output } = agreement
     return {
       ...output,

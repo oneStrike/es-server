@@ -17,7 +17,6 @@ import {
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
-  HttpCode,
   Body,
   Controller,
   Get,
@@ -46,7 +45,6 @@ export class AgreementController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建协议',
     model: Boolean,
     audit: {
@@ -59,7 +57,6 @@ export class AgreementController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新协议',
     model: Boolean,
@@ -73,7 +70,6 @@ export class AgreementController {
   }
 
   @Post('update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新协议发布状态',
     model: Boolean,

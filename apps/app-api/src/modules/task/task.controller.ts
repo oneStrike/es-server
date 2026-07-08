@@ -11,7 +11,7 @@ import { TaskService } from '@libs/growth/task/task.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('任务')
@@ -48,7 +48,6 @@ export class TaskController {
 
   // 领取一条手动任务。
   @Post('claim')
-  @HttpCode(200)
   @ApiDoc({
     summary: '领取任务',
     model: Boolean,
@@ -59,7 +58,6 @@ export class TaskController {
 
   // 上报一条手动任务进度。
   @Post('progress')
-  @HttpCode(200)
   @ApiDoc({
     summary: '上报任务进度',
     model: Boolean,
@@ -73,7 +71,6 @@ export class TaskController {
 
   // 手动完成一条任务实例。
   @Post('complete')
-  @HttpCode(200)
   @ApiDoc({
     summary: '完成任务',
     model: Boolean,

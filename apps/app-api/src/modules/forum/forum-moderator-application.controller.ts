@@ -7,7 +7,7 @@ import { ForumModeratorApplicationService } from '@libs/forum/moderator/moderato
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('论坛/版主申请')
@@ -46,7 +46,6 @@ export class ForumModeratorApplicationController {
 
   @Post('create')
   @ApiDoc({
-    successStatus: 201,
     summary: '提交版主申请',
     model: Boolean,
   })
@@ -62,7 +61,6 @@ export class ForumModeratorApplicationController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiDoc({
     summary: '删除我的版主申请',
     model: Boolean,

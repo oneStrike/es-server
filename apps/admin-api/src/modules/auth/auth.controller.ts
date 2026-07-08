@@ -14,7 +14,7 @@ import {
 import { CaptchaDto } from '@libs/platform/modules/captcha/dto'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
-import { HttpCode, Body, Controller, Get, Post, Req } from '@nestjs/common'
+import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuthService } from './auth.service'
@@ -49,7 +49,6 @@ export class AuthController {
    * 用户登录接口
    */
   @Post('login')
-  @HttpCode(200)
   @ApiDoc({
     summary: '管理员登录',
     model: LoginResponseDto,
@@ -70,7 +69,6 @@ export class AuthController {
    * 管理员登出接口
    */
   @Post('logout')
-  @HttpCode(200)
   @ApiDoc({
     summary: '管理员登出',
     model: {
@@ -92,7 +90,6 @@ export class AuthController {
    * @returns 新的访问令牌及有效期
    */
   @Post('token/refresh')
-  @HttpCode(200)
   @ApiDoc({
     summary: '刷新访问令牌',
     model: TokenDto,

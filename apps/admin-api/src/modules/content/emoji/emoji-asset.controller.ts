@@ -14,7 +14,7 @@ import {
 } from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -43,7 +43,6 @@ export class EmojiAssetController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建表情资源',
     model: Boolean,
     audit: {
@@ -58,7 +57,6 @@ export class EmojiAssetController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新表情资源',
     model: Boolean,
@@ -74,7 +72,6 @@ export class EmojiAssetController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除表情资源',
     model: Boolean,
@@ -87,7 +84,6 @@ export class EmojiAssetController {
   }
 
   @Post('update-enabled')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新表情资源启用状态',
     model: Boolean,
@@ -107,7 +103,6 @@ export class EmojiAssetController {
   }
 
   @Post('swap-sort-order')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '交换表情资源排序',
     model: Boolean,

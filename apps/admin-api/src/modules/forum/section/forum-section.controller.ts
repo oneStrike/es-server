@@ -13,7 +13,7 @@ import { ForumSectionService } from '@libs/forum/section/forum-section.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -52,7 +52,6 @@ export class ForumSectionController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '添加板块',
     model: Boolean,
     audit: {
@@ -64,7 +63,6 @@ export class ForumSectionController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新板块',
     model: Boolean,
@@ -77,7 +75,6 @@ export class ForumSectionController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除板块',
     model: Boolean,
@@ -90,7 +87,6 @@ export class ForumSectionController {
   }
 
   @Post('update-enabled')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新板块启用状态',
     model: Boolean,
@@ -103,7 +99,6 @@ export class ForumSectionController {
   }
 
   @Post('rebuild-counts')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重建板块计数',
     model: ForumSectionCountRepairResultDto,
@@ -116,7 +111,6 @@ export class ForumSectionController {
   }
 
   @Post('rebuild-counts-all')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '全量重建板块计数',
     model: Boolean,
@@ -129,7 +123,6 @@ export class ForumSectionController {
   }
 
   @Post('swap-sort-order')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '交换板块排序顺序',
     model: Boolean,

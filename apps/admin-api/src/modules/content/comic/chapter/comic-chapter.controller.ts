@@ -16,7 +16,7 @@ import {
 } from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../../../common/decorators/audit.decorator'
@@ -28,7 +28,6 @@ export class ComicChapterController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建漫画章节',
     model: Boolean,
     audit: {
@@ -70,7 +69,6 @@ export class ComicChapterController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新漫画章节',
     model: Boolean,
@@ -83,7 +81,6 @@ export class ComicChapterController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除漫画章节',
     model: Boolean,
@@ -96,7 +93,6 @@ export class ComicChapterController {
   }
 
   @Post('batch-delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '批量删除漫画章节',
     model: Boolean,
@@ -109,7 +105,6 @@ export class ComicChapterController {
   }
 
   @Post('batch-update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '批量更新漫画章节发布状态',
     model: Boolean,
@@ -125,7 +120,6 @@ export class ComicChapterController {
   }
 
   @Post('swap-sort-order')
-  @HttpCode(200)
   @ApiDoc({
     summary: '交换章节序号',
     model: Boolean,

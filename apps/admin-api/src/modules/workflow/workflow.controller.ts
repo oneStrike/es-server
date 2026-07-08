@@ -15,7 +15,7 @@ import {
   WorkflowTypeOptionsResponseDto,
 } from '@libs/platform/modules/workflow/dto'
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
@@ -88,7 +88,6 @@ export class AdminWorkflowController {
   }
 
   @Post('cancel')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '取消工作流任务',
     model: WorkflowJobDto,
@@ -102,7 +101,6 @@ export class AdminWorkflowController {
   }
 
   @Post('archive')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '归档工作流任务',
     model: WorkflowJobDto,
@@ -116,7 +114,6 @@ export class AdminWorkflowController {
   }
 
   @Post('retry-items')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重试工作流失败条目',
     model: WorkflowJobDto,
@@ -130,7 +127,6 @@ export class AdminWorkflowController {
   }
 
   @Post('expire')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '过期清理工作流 retained resource',
     model: WorkflowJobDto,

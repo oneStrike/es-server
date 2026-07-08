@@ -9,7 +9,7 @@ import { ForumModeratorService } from '@libs/forum/moderator/moderator.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -38,7 +38,6 @@ export class ModeratorController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '添加版主',
     model: Boolean,
     audit: {
@@ -53,7 +52,6 @@ export class ModeratorController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新版主信息',
     model: Boolean,
@@ -69,7 +67,6 @@ export class ModeratorController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '移除版主',
     model: Boolean,
@@ -85,7 +82,6 @@ export class ModeratorController {
   }
 
   @Post('assign-section')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '分配版主管理的板块',
     model: Boolean,

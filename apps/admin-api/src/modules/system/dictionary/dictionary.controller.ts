@@ -18,7 +18,7 @@ import {
 } from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -47,7 +47,6 @@ export class DictionaryController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建字典',
     model: Boolean,
     audit: {
@@ -59,7 +58,6 @@ export class DictionaryController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新字典',
     model: Boolean,
@@ -72,7 +70,6 @@ export class DictionaryController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除字典',
     model: Boolean,
@@ -85,7 +82,6 @@ export class DictionaryController {
   }
 
   @Post('update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新字典状态',
     model: Boolean,
@@ -118,7 +114,6 @@ export class DictionaryController {
 
   @Post('item/create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建字典项',
     model: Boolean,
     audit: {
@@ -132,7 +127,6 @@ export class DictionaryController {
   }
 
   @Post('item/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新字典项',
     model: Boolean,
@@ -147,7 +141,6 @@ export class DictionaryController {
   }
 
   @Post('item/update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '启用禁用字典项',
     model: Boolean,
@@ -161,7 +154,6 @@ export class DictionaryController {
   }
 
   @Post('item/delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除字典项',
     model: Boolean,
@@ -174,7 +166,6 @@ export class DictionaryController {
   }
 
   @Post('item/swap-sort-order')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '字典项交换排序',
     model: Boolean,

@@ -14,7 +14,6 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
-  HttpCode,
   Controller,
   createParamDecorator,
   ExecutionContext,
@@ -70,7 +69,6 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('provider/:channel/notify')
-  @HttpCode(200)
   @Public()
   @ApiProduces('text/plain', 'application/json')
   @ApiOkResponse({

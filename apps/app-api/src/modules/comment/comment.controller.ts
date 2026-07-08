@@ -12,7 +12,6 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import {
-  HttpCode,
   Body,
   Controller,
   Get,
@@ -31,7 +30,6 @@ export class CommentController {
   ) {}
 
   @Post('post')
-  @HttpCode(200)
   @ApiDoc({
     summary: '发表评论',
     model: IdDto,
@@ -51,7 +49,6 @@ export class CommentController {
   }
 
   @Post('reply')
-  @HttpCode(200)
   @ApiDoc({
     summary: '回复评论',
     model: IdDto,
@@ -71,7 +68,6 @@ export class CommentController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiDoc({
     summary: '删除我的评论',
     model: Boolean,

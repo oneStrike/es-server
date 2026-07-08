@@ -1,5 +1,5 @@
-import Joi from 'joi'
 import { isValidTrustedProxyEntry } from '@libs/platform/bootstrap'
+import Joi from 'joi'
 
 // 校验 TRUSTED_PROXY_IPS 是否为逗号分隔的 IP/CIDR 列表，并返回规范化后的值。
 function validateTrustedProxyIps(value: string) {

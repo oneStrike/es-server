@@ -13,7 +13,7 @@ import {
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -31,7 +31,6 @@ export class ContentAuthorController {
    */
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建作者',
     model: Boolean,
     audit: {
@@ -70,7 +69,6 @@ export class ContentAuthorController {
    * 更新作者信息
    */
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新作者信息',
     model: Boolean,
@@ -86,7 +84,6 @@ export class ContentAuthorController {
    * 更新作者状态
    */
   @Post('update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新作者状态',
     model: Boolean,
@@ -102,7 +99,6 @@ export class ContentAuthorController {
    * 批量更新作者推荐状态
    */
   @Post('update-recommended')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新作者推荐状态',
     model: Boolean,
@@ -115,7 +111,6 @@ export class ContentAuthorController {
   }
 
   @Post('rebuild-follow-count')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重建作者关注计数',
     model: AuthorFollowCountRepairResultDto,
@@ -128,7 +123,6 @@ export class ContentAuthorController {
   }
 
   @Post('rebuild-follow-count-all')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '全量重建作者关注计数',
     model: Boolean,
@@ -141,7 +135,6 @@ export class ContentAuthorController {
   }
 
   @Post('rebuild-work-count')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重建作者作品计数',
     model: AuthorWorkCountRepairResultDto,
@@ -154,7 +147,6 @@ export class ContentAuthorController {
   }
 
   @Post('rebuild-work-count-all')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '全量重建作者作品计数',
     model: Boolean,
@@ -170,7 +162,6 @@ export class ContentAuthorController {
    * 删除作者
    */
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除作者',
     model: Boolean,

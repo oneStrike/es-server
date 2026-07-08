@@ -22,7 +22,7 @@ import {
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { SensitiveWordService } from '@libs/sensitive-word/sensitive-word.service'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -49,7 +49,6 @@ export class SensitiveWordController {
   // 创建敏感词。
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建敏感词',
     model: Boolean,
     audit: {
@@ -62,7 +61,6 @@ export class SensitiveWordController {
 
   // 更新敏感词。
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新敏感词',
     model: Boolean,
@@ -76,7 +74,6 @@ export class SensitiveWordController {
 
   // 删除敏感词。
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除敏感词',
     model: Boolean,
@@ -90,7 +87,6 @@ export class SensitiveWordController {
 
   // 更新敏感词状态。
   @Post('update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新敏感词状态',
     model: Boolean,
@@ -104,7 +100,6 @@ export class SensitiveWordController {
 
   // 检测文本中的敏感词。
   @Post('detect')
-  @HttpCode(200)
   @ApiDoc({
     summary: '检测文本中的敏感词',
     model: SensitiveWordDetectResponseDto,
@@ -145,7 +140,6 @@ export class SensitiveWordController {
 
   // 替换文本中的敏感词。
   @Post('replace')
-  @HttpCode(200)
   @ApiDoc({
     summary: '替换文本中的敏感词',
     model: SensitiveWordReplaceResponseDto,
@@ -158,7 +152,6 @@ export class SensitiveWordController {
 
   // 获取文本中敏感词的最高等级。
   @Post('detect/highest-level')
-  @HttpCode(200)
   @ApiDoc({
     summary: '获取文本中敏感词的最高等级',
     model: SensitiveWordHighestLevelResponseDto,

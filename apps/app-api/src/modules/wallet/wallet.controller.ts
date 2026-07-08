@@ -57,7 +57,6 @@ export class WalletController {
   // 创建虚拟币充值订单。
   @Post('recharge/create')
   @ApiDoc({
-    successStatus: 201,
     summary: '创建虚拟币充值订单',
     model: PaymentOrderResultDto,
   })

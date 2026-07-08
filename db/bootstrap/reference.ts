@@ -1,11 +1,11 @@
-import { Buffer } from 'node:buffer'
+import type { Buffer } from 'node:buffer'
 import { scrypt as _scrypt, randomBytes } from 'node:crypto'
 import process from 'node:process'
 import { promisify } from 'node:util'
+import { adminUser } from '@db/schema'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { adminUser } from '@db/schema'
 import {
   assertReferenceBootstrapEnvironment,
   shouldCheckDatabaseToolEnvironmentOnly,

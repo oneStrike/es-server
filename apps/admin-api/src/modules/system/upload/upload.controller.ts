@@ -17,7 +17,6 @@ export class UploadController {
 
   @Post('file/upload')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '上传文件',
     model: UploadResponseDto,
     isArray: false,

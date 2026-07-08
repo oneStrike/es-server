@@ -6,7 +6,6 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
 import {
-  HttpCode,
   Body,
   Controller,
   Get,
@@ -33,7 +32,6 @@ export class NovelContentController {
 
   @Post('upload')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '上传章节文件',
     model: UploadResponseDto,
     audit: {
@@ -45,7 +43,6 @@ export class NovelContentController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除章节文件',
     model: Boolean,

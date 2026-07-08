@@ -21,7 +21,8 @@
 - `BusinessException` 默认 HTTP 状态由 `getBusinessErrorHttpStatus(...)` 决定；同一业务码在鉴权、账号封禁等特殊上下文需要不同协议状态时，通过 `httpStatus` 显式覆盖。
 - 数据库读写优先通过 `drizzle.withErrorHandling(...)`、`drizzle.withTransaction(...)`、`drizzle.assertAffectedRows(...)` 收口。
 - 业务层若需要感知 PostgreSQL 细节，应通过 `extractError(...)`、共享错误描述器或 `withErrorHandling` 的映射能力获取，不要自行解析驱动错误字符串。
-- 非创建语义的 POST action 必须显式 `@HttpCode(200)`；创建或上传语义的 POST 可保留 Nest 默认 `201`，并在 `ApiDoc` / `ApiAuditDoc` 中显式 `successStatus: 201`。
+- 平台层全局将 `POST` 成功响应状态码归一为 `200`；Controller 不再显式书写 `@HttpCode(200)`，Swagger 成功状态也应保持 `200`。
+- 若极少数 `POST` 接口必须保留非 `200` 成功状态码，必须通过受控例外显式声明，并同步更新 Swagger 文档与规则说明。
 
 ## 分层职责
 

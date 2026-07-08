@@ -2,7 +2,7 @@ import { statfs } from 'node:fs/promises'
 import * as process from 'node:process'
 import { Public } from '@libs/platform/decorators';
 import { getEnv } from '@libs/platform/utils';
-import { Controller, Get, HttpCode } from '@nestjs/common'
+import { Controller, Get } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
 import { HealthService } from './health.service'
@@ -46,7 +46,6 @@ export class HealthController {
 
   @Get('ready')
   @Public()
-  @HttpCode(200)
   async readinessCheck() {
     const upload = this.configService.get<{ localDir?: string }>('upload')
     const uploadPath = upload?.localDir || process.cwd()

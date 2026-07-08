@@ -7,7 +7,7 @@ import {
 import { LikeService } from '@libs/interaction/like/like.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('点赞')
@@ -16,7 +16,6 @@ export class LikeController {
   constructor(private readonly likeService: LikeService) {}
 
   @Post('like')
-  @HttpCode(200)
   @ApiDoc({
     summary: '点赞',
     model: Boolean,
@@ -30,7 +29,6 @@ export class LikeController {
   }
 
   @Post('cancel')
-  @HttpCode(200)
   @ApiDoc({
     summary: '取消点赞',
     model: Boolean,

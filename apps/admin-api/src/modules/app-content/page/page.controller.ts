@@ -9,7 +9,7 @@ import { AppPageService } from '@libs/app-content/page/page.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto, IdsDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -26,7 +26,6 @@ export class AppPageController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建页面配置',
     model: Boolean,
     audit: {
@@ -66,7 +65,6 @@ export class AppPageController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新页面配置',
     model: Boolean,
@@ -79,7 +77,6 @@ export class AppPageController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '批量下线页面配置',
     model: Boolean,

@@ -21,7 +21,6 @@ import {
   WorkflowJobIdDto,
 } from '@libs/platform/modules/workflow/dto'
 import {
-  HttpCode,
   Body,
   Controller,
   Get,
@@ -52,7 +51,6 @@ export class ChapterContentController {
 
   @Post('upload')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '上传章节内容',
     model: UploadResponseDto,
     audit: {
@@ -64,7 +62,6 @@ export class ChapterContentController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新章节内容',
     model: Boolean,
@@ -77,7 +74,6 @@ export class ChapterContentController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除章节内容',
     model: Boolean,
@@ -90,7 +86,6 @@ export class ChapterContentController {
   }
 
   @Post('move')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '移动章节内容',
     model: Boolean,
@@ -103,7 +98,6 @@ export class ChapterContentController {
   }
 
   @Post('clear')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '清空章节内容',
     model: Boolean,
@@ -116,7 +110,6 @@ export class ChapterContentController {
   }
 
   @Post('archive/preview')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '预解析漫画压缩包',
     model: ComicArchiveTaskResponseDto,
@@ -133,7 +126,6 @@ export class ChapterContentController {
 
   @Post('archive/session')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建漫画压缩包预解析会话',
     model: WorkflowJobIdDto,
     audit: {
@@ -148,7 +140,6 @@ export class ChapterContentController {
   }
 
   @Post('archive/discard')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '丢弃漫画压缩包预解析会话',
     model: WorkflowJobDto,
@@ -161,7 +152,6 @@ export class ChapterContentController {
   }
 
   @Post('archive/confirm')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '确认漫画压缩包导入',
     model: WorkflowJobDto,

@@ -14,7 +14,7 @@ export interface ApiDocOptions<TModel extends object = object> {
   isArray?: boolean
   /** data 是否允许为 null；用于真实返回整个 data=null 的接口。 */
   nullable?: boolean
-  /** 成功响应 HTTP 状态码；创建类接口可显式传 201。 */
+  /** 成功响应 HTTP 状态码；默认使用 200，仅在少量受控例外时显式覆盖。 */
   successStatus?: number
 }
 

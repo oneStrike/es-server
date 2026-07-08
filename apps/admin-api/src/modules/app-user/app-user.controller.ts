@@ -27,7 +27,7 @@ import {
   UpdateAdminAppUserStatusDto,
 } from '@libs/user/dto/admin-app-user.dto'
 import { UserPointStatsFieldsDto } from '@libs/user/dto/app-user-growth-shared.dto'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AppUserService } from './app-user.service'
@@ -67,7 +67,6 @@ export class AppUserController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '新建 APP 用户',
     model: Boolean,
     audit: {
@@ -85,7 +84,6 @@ export class AppUserController {
    * 更新 APP 用户资料
    */
   @Post('profile/update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新 APP 用户资料',
     model: Boolean,
@@ -104,7 +102,6 @@ export class AppUserController {
    * 更新 APP 用户启用状态
    */
   @Post('update-enabled')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新 APP 用户启用状态',
     model: Boolean,
@@ -123,7 +120,6 @@ export class AppUserController {
    * 更新 APP 用户状态
    */
   @Post('update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新 APP 用户状态',
     model: Boolean,
@@ -139,7 +135,6 @@ export class AppUserController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除 APP 用户',
     model: Boolean,
@@ -152,7 +147,6 @@ export class AppUserController {
   }
 
   @Post('restore')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '恢复 APP 用户',
     model: Boolean,
@@ -168,7 +162,6 @@ export class AppUserController {
   }
 
   @Post('rebuild-follow-count')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重建 APP 用户关注计数',
     model: AdminAppUserFollowCountRepairResultDto,
@@ -184,7 +177,6 @@ export class AppUserController {
   }
 
   @Post('rebuild-follow-count-all')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '全量重建 APP 用户关注计数',
     model: Boolean,
@@ -197,7 +189,6 @@ export class AppUserController {
   }
 
   @Post('password/reset')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重置 APP 用户密码',
     model: Boolean,
@@ -240,7 +231,6 @@ export class AppUserController {
    * 手动增加 APP 用户积分
    */
   @Post('points/grant')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '手动增加 APP 用户积分',
     model: Boolean,
@@ -259,7 +249,6 @@ export class AppUserController {
    * 手动扣减 APP 用户积分
    */
   @Post('points/consume')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '手动扣减 APP 用户积分',
     model: Boolean,
@@ -318,7 +307,6 @@ export class AppUserController {
    * 手动增加 APP 用户经验
    */
   @Post('experience/grant')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '手动增加 APP 用户经验',
     model: Boolean,
@@ -349,7 +337,6 @@ export class AppUserController {
    * 为 APP 用户分配徽章
    */
   @Post('badges/assign')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '为 APP 用户分配徽章',
     model: Boolean,
@@ -368,7 +355,6 @@ export class AppUserController {
    * 撤销 APP 用户徽章
    */
   @Post('badges/revoke')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '撤销 APP 用户徽章',
     model: Boolean,

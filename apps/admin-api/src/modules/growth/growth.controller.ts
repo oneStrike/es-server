@@ -13,7 +13,7 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { GrowthService } from './growth.service'
@@ -58,7 +58,6 @@ export class GrowthController {
 
   // 手动重试单条成长奖励补偿记录。
   @Post('reward-settlement/retry')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '重试单条通用成长奖励补偿',
     model: Boolean,
@@ -75,7 +74,6 @@ export class GrowthController {
 
   // 批量重试当前仍处于待补偿状态的成长奖励记录。
   @Post('reward-settlement/retry-pending/batch')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '批量重试待补偿的通用成长奖励记录',
     model: GrowthRewardSettlementRetryBatchResultDto,

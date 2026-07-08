@@ -14,7 +14,7 @@ import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -25,7 +25,6 @@ export class NovelController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建小说',
     model: Boolean,
     audit: {
@@ -58,7 +57,6 @@ export class NovelController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新小说信息',
     model: Boolean,
@@ -71,7 +69,6 @@ export class NovelController {
   }
 
   @Post('update-status')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新小说发布状态',
     model: Boolean,
@@ -84,7 +81,6 @@ export class NovelController {
   }
 
   @Post('update-recommended')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新小说推荐状态',
     model: Boolean,
@@ -103,7 +99,6 @@ export class NovelController {
   }
 
   @Post('update-hot')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新小说热门状态',
     model: Boolean,
@@ -122,7 +117,6 @@ export class NovelController {
   }
 
   @Post('update-new')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新小说新作状态',
     model: Boolean,
@@ -141,7 +135,6 @@ export class NovelController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '软删除小说',
     model: Boolean,

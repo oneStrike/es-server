@@ -8,7 +8,7 @@ import {
 } from '@libs/interaction/download/dto/download.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('下载')
@@ -47,7 +47,6 @@ export class DownloadController {
   }
 
   @Post('chapter')
-  @HttpCode(200)
   @ApiDoc({
     summary: '下载章节（漫画/小说）',
     model: String,

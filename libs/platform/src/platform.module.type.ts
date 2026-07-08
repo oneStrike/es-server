@@ -23,6 +23,8 @@ export interface PlatformModuleOptions {
   enableHealth?: boolean
   /** 是否启用全局验证管道 */
   enableGlobalValidationPipe?: boolean
+  /** 是否启用全局 POST 成功状态码归一化拦截器 */
+  enableGlobalPostSuccessStatusInterceptor?: boolean
   /** 是否启用全局响应转换拦截器 */
   enableGlobalTransformInterceptor?: boolean
 }

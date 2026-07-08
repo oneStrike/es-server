@@ -15,7 +15,7 @@ import {
 } from '@libs/platform/dto'
 
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { HttpCode, Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
@@ -44,7 +44,6 @@ export class EmojiPackController {
 
   @Post('create')
   @ApiAuditDoc({
-    successStatus: 201,
     summary: '创建表情包',
     model: Boolean,
     audit: {
@@ -59,7 +58,6 @@ export class EmojiPackController {
   }
 
   @Post('update')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新表情包',
     model: Boolean,
@@ -75,7 +73,6 @@ export class EmojiPackController {
   }
 
   @Post('delete')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '删除表情包',
     model: Boolean,
@@ -88,7 +85,6 @@ export class EmojiPackController {
   }
 
   @Post('update-enabled')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新表情包启用状态',
     model: Boolean,
@@ -108,7 +104,6 @@ export class EmojiPackController {
   }
 
   @Post('swap-sort-order')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '交换表情包排序',
     model: Boolean,
@@ -121,7 +116,6 @@ export class EmojiPackController {
   }
 
   @Post('update-scene-type')
-  @HttpCode(200)
   @ApiAuditDoc({
     summary: '更新表情包场景类型',
     model: Boolean,
