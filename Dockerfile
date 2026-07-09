@@ -9,13 +9,18 @@
 # --------------------------------
 # 阶段 1: 构建器 (Builder) - 优化缓存
 # --------------------------------
+ARG NPM_REGISTRY=https://registry.npmmirror.com
 FROM node:24-alpine AS builder
+
+ARG NPM_REGISTRY
+ENV PNPM_HOME="/pnpm" \
+    PATH="$PNPM_HOME:$PATH" \
+    COREPACK_NPM_REGISTRY="${NPM_REGISTRY}" \
+    NPM_CONFIG_REGISTRY="${NPM_REGISTRY}"
 
 # 启用 pnpm - 使用缓存避免重复执行
 RUN --mount=type=cache,target=/root/.cache/corepack \
     corepack enable
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
 
 WORKDIR /app
 
@@ -25,6 +30,7 @@ COPY pnpm-lock.yaml package.json nest-cli.json tsconfig*.json drizzle.config.ts 
 # 安装依赖 - 统一缓存ID，提高命中率
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && \
+    pnpm config set registry "${NPM_REGISTRY}" && \
     pnpm install --frozen-lockfile
 
 # 复制源代码
@@ -44,9 +50,12 @@ RUN pnpm exec cross-env NODE_ENV=production nest build ${APP_TYPE}-api --webpack
 FROM node:24-alpine AS deps
 
 ARG APP_TYPE=admin
+ARG NPM_REGISTRY
 ENV NODE_ENV=production \
     PNPM_HOME="/pnpm" \
-    PATH="/pnpm:$PATH"
+    PATH="/pnpm:$PATH" \
+    COREPACK_NPM_REGISTRY="${NPM_REGISTRY}" \
+    NPM_CONFIG_REGISTRY="${NPM_REGISTRY}"
 
 WORKDIR /app
 
@@ -58,6 +67,7 @@ RUN --mount=type=cache,target=/root/.cache/corepack \
     --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     corepack enable && \
     pnpm config set store-dir /pnpm/store && \
+    pnpm config set registry "${NPM_REGISTRY}" && \
     pnpm install --prod --frozen-lockfile --config.node-linker=hoisted && \
     # 清理优化
     find node_modules -type f \( \
