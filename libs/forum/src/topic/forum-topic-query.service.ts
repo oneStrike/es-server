@@ -386,12 +386,8 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     return {
       id: this.forumTopicTable.id,
       createdAt: this.forumTopicTable.createdAt,
-      updatedAt: this.forumTopicTable.updatedAt,
-      lastCommentAt: this.forumTopicTable.lastCommentAt,
-      viewCount: this.forumTopicTable.viewCount,
       likeCount: this.forumTopicTable.likeCount,
       commentCount: this.forumTopicTable.commentCount,
-      favoriteCount: this.forumTopicTable.favoriteCount,
     }
   }
 
@@ -1061,23 +1057,22 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       fallbackOrderBy: DEFAULT_ADMIN_TOPIC_PAGE_ORDER,
     })
 
-    // 排除：正文大字段(html/content/body/bodyVersion)、审核人字段(auditById/auditRole)、
-    // 内部控制字段(version/sensitiveWordHits/geoSource/deletedAt)
-    const {
-      html,
-      content,
-      body,
-      bodyVersion,
-      auditById,
-      auditRole,
-      version,
-      sensitiveWordHits,
-      geoSource,
-      ...adminTopicColumns
-    } = getColumns(this.forumTopicTable)
-
     const listQuery = this.db
-      .select({ ...adminTopicColumns })
+      .select({
+        id: this.forumTopicTable.id,
+        sectionId: this.forumTopicTable.sectionId,
+        userId: this.forumTopicTable.userId,
+        title: this.forumTopicTable.title,
+        isPinned: this.forumTopicTable.isPinned,
+        isFeatured: this.forumTopicTable.isFeatured,
+        isLocked: this.forumTopicTable.isLocked,
+        isHidden: this.forumTopicTable.isHidden,
+        auditStatus: this.forumTopicTable.auditStatus,
+        commentCount: this.forumTopicTable.commentCount,
+        likeCount: this.forumTopicTable.likeCount,
+        createdAt: this.forumTopicTable.createdAt,
+        deletedAt: this.forumTopicTable.deletedAt,
+      })
       .from(this.forumTopicTable)
       .where(where)
       .limit(page.limit)

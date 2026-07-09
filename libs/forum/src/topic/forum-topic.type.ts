@@ -151,7 +151,7 @@ export type PublicTopicPageRow = Pick<
 
 /**
  * 后台主题分页查询结果行。
- * 与后台分页 DTO 的基础主题字段保持一致，摘要字段在 hydrate 阶段补齐。
+ * 与后台分页 DTO 的基础主题字段保持一致；userId 仅用于 hydrate 用户摘要，不返回给客户端。
  */
 export type AdminTopicPageRow = Pick<
   ForumTopicSelect,
@@ -159,28 +159,15 @@ export type AdminTopicPageRow = Pick<
   | 'sectionId'
   | 'userId'
   | 'title'
-  | 'contentPreview'
-  | 'geoCountry'
-  | 'geoProvince'
-  | 'geoCity'
-  | 'geoIsp'
-  | 'images'
-  | 'videos'
   | 'isPinned'
   | 'isFeatured'
   | 'isLocked'
   | 'isHidden'
   | 'auditStatus'
-  | 'auditReason'
-  | 'auditAt'
-  | 'viewCount'
   | 'likeCount'
   | 'commentCount'
-  | 'favoriteCount'
-  | 'lastCommentAt'
-  | 'lastCommentUserId'
   | 'createdAt'
-  | 'updatedAt'
+  | 'deletedAt'
 >
 
 /**

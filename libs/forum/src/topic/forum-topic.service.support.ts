@@ -329,9 +329,6 @@ export abstract class ForumTopicServiceSupport {
           id: number
           nickname: string
           avatarUrl: string | null
-          status: number
-          isEnabled: boolean
-          levelName: string | null
         }
       >()
     }
@@ -345,24 +342,10 @@ export abstract class ForumTopicServiceSupport {
         id: true,
         nickname: true,
         avatarUrl: true,
-        status: true,
-        isEnabled: true,
-      },
-      with: {
-        level: {
-          columns: {
-            name: true,
-          },
-        },
       },
     })
 
-    return new Map(
-      users.map((user) => {
-        const { level, ...rest } = user
-        return [user.id, { ...rest, levelName: level?.name ?? null }]
-      }),
-    )
+    return new Map(users.map((user) => [user.id, user]))
   }
 
   // 批量获取后台主题列表所需的板块摘要。
@@ -374,9 +357,6 @@ export abstract class ForumTopicServiceSupport {
         {
           id: number
           name: string
-          isEnabled: boolean
-          topicReviewPolicy: number
-          groupName: string | null
         }
       >()
     }
@@ -389,31 +369,10 @@ export abstract class ForumTopicServiceSupport {
       columns: {
         id: true,
         name: true,
-        isEnabled: true,
-        topicReviewPolicy: true,
-      },
-      with: {
-        group: {
-          columns: {
-            name: true,
-            deletedAt: true,
-          },
-        },
       },
     })
 
-    return new Map(
-      sections.map((section) => {
-        const { group, ...rest } = section
-        return [
-          section.id,
-          {
-            ...rest,
-            groupName: group && !group.deletedAt ? group.name : null,
-          },
-        ]
-      }),
-    )
+    return new Map(sections.map((section) => [section.id, section]))
   }
 
   // 为后台主题分页条目补齐发帖用户与所属板块摘要。
@@ -427,15 +386,14 @@ export abstract class ForumTopicServiceSupport {
       this.getAdminTopicSectionSummaryMap(items.map((item) => item.sectionId)),
     ])
 
-    return items.map((item) => ({
-      ...item,
-      auditReason: item.auditReason ?? null,
-      auditAt: item.auditAt ?? null,
-      lastCommentAt: item.lastCommentAt ?? null,
-      lastCommentUserId: item.lastCommentUserId ?? null,
-      userSummary: userSummaryMap.get(item.userId) ?? null,
-      sectionSummary: sectionSummaryMap.get(item.sectionId) ?? null,
-    }))
+    return items.map((item) => {
+      const { userId, ...publicItem } = item
+      return {
+        ...publicItem,
+        userSummary: userSummaryMap.get(userId) ?? null,
+        sectionSummary: sectionSummaryMap.get(item.sectionId) ?? null,
+      }
+    })
   }
 
   // 获取主题审核人展示摘要。

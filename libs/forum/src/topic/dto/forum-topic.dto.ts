@@ -841,32 +841,12 @@ export class AdminForumTopicUserSummaryDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',
   'avatarUrl',
-  'status',
-  'isEnabled',
-] as const) {
-  @StringProperty({
-    description: '论坛等级名称',
-    example: 'Lv2',
-    required: true,
-    nullable: true,
-    validation: false,
-  })
-  levelName!: string | null
-}
+] as const) {}
 
 export class AdminForumTopicSectionSummaryDto extends PickType(
   BaseForumSectionDto,
-  ['id', 'name', 'isEnabled', 'topicReviewPolicy'] as const,
-) {
-  @StringProperty({
-    description: '所属分组名称',
-    example: '综合讨论',
-    required: true,
-    nullable: true,
-    validation: false,
-  })
-  groupName!: string | null
-}
+  ['id', 'name'] as const,
+) {}
 
 export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'id',
@@ -942,26 +922,15 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
 export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'id',
   'sectionId',
-  'userId',
   'title',
-  'images',
-  'videos',
   'isPinned',
   'isFeatured',
   'isLocked',
   'isHidden',
   'auditStatus',
-  'auditReason',
-  'auditAt',
-  'viewCount',
   'likeCount',
   'commentCount',
-  'favoriteCount',
-  'lastCommentAt',
-  'lastCommentUserId',
   'createdAt',
-  'updatedAt',
-  'contentPreview',
 ] as const) {
   @DateProperty({
     description: '删除时间',
