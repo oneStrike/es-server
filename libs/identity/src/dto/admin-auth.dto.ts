@@ -1,7 +1,7 @@
 import { NestedProperty, StringProperty } from '@libs/platform/decorators';
 import { TokenDto } from '@libs/platform/modules/auth/dto'
 import { CaptchaDto } from '@libs/platform/modules/captcha/dto'
-import { AdminUserResponseDto } from './admin-user.dto'
+import { AdminCurrentUserDto } from './admin-user.dto'
 
 /**
  * 管理端登录入参 DTO。
@@ -41,9 +41,9 @@ export class LoginResponseDto {
   @NestedProperty({
     description: '用户信息',
     required: true,
-    type: AdminUserResponseDto,
+    type: AdminCurrentUserDto,
     validation: false,
     nullable: false,
   })
-  user!: AdminUserResponseDto
+  user!: AdminCurrentUserDto
 }

@@ -1,8 +1,11 @@
 import {
-  AdminUserResponseDto,
+  AdminAccountUpdateDto,
+  AdminCurrentUserDto,
+  AdminSelfProfileUpdateDto,
+  AdminUserDetailDto,
+  AdminUserListItemDto,
   ChangePasswordDto,
   ResetAdminUserPasswordResultDto,
-  UpdateUserDto,
   UserPageDto,
   UserRegisterDto,
 } from '@libs/identity/dto/admin-user.dto'
@@ -10,10 +13,11 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
+import { AdminSelfProfileLegacyFieldsGuard } from './admin-self-profile-legacy-fields.guard'
 import { AdminUserService } from './admin-user.service'
 
 /**
@@ -46,25 +50,47 @@ export class AdminUserController {
     return this.adminUserService.register(userId, body)
   }
 
-  // 更新管理员用户信息。
+  // 更新当前登录管理员资料。
   @Post('profile/update')
+  @UseGuards(AdminSelfProfileLegacyFieldsGuard)
   @AdminPermission({
     code: 'system:user:profile:update',
-    name: '更新用户信息',
+    name: '更新当前用户资料',
     groupCode: 'system:user',
   })
   @ApiAuditDoc({
-    summary: '更新用户信息',
+    summary: '更新当前用户资料',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updateUserInfo(
-    @Body() body: UpdateUserDto,
+  async updateSelfProfile(
+    @Body() body: AdminSelfProfileUpdateDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.updateUserInfo(userId, body)
+    return this.adminUserService.updateSelfProfile(userId, body)
+  }
+
+  // 更新指定管理员账号信息与角色。
+  @Post('update')
+  @AdminPermission({
+    code: 'system:user:update',
+    name: '更新管理员账号',
+    groupCode: 'system:user',
+  })
+  @ApiAuditDoc({
+    summary: '更新管理员账号',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async updateAdminAccount(
+    @Body() body: AdminAccountUpdateDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.adminUserService.updateAdminAccount(userId, body)
   }
 
   // 获取当前登录管理员信息。
@@ -76,10 +102,10 @@ export class AdminUserController {
   })
   @ApiDoc({
     summary: '获取当前用户信息',
-    model: AdminUserResponseDto,
+    model: AdminCurrentUserDto,
   })
   async getUserInfo(@CurrentUser('sub') userId: number) {
-    return this.adminUserService.getUserInfo(userId)
+    return this.adminUserService.getCurrentUserInfo(userId)
   }
 
   // 按 ID 获取管理员用户信息。
@@ -91,10 +117,10 @@ export class AdminUserController {
   })
   @ApiDoc({
     summary: '根据ID获取用户信息',
-    model: AdminUserResponseDto,
+    model: AdminUserDetailDto,
   })
   async getUserById(@Query() query: IdDto) {
-    return this.adminUserService.getUserInfo(query.id)
+    return this.adminUserService.getUserDetail(query.id)
   }
 
   // 分页查询管理员用户列表。
@@ -106,7 +132,7 @@ export class AdminUserController {
   })
   @ApiPageDoc({
     summary: '获取管理端用户分页列表',
-    model: AdminUserResponseDto,
+    model: AdminUserListItemDto,
   })
   async getUsers(@Query() query: UserPageDto) {
     return this.adminUserService.getUsers(query)

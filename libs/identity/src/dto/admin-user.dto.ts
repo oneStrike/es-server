@@ -71,9 +71,9 @@ export class BaseAdminUserDto extends BaseDto {
 }
 
 /**
- * 管理员账号输出 DTO。
+ * 管理员账号列表项 DTO。
  */
-export class AdminUserResponseDto extends OmitType(BaseAdminUserDto, [
+export class AdminUserListItemDto extends OmitType(BaseAdminUserDto, [
   'password',
   'mobile',
   'avatar',
@@ -132,7 +132,17 @@ export class AdminUserResponseDto extends OmitType(BaseAdminUserDto, [
     validation: false,
   })
   roles!: AdminRoleSummaryDto[]
+}
 
+/**
+ * 管理员账号详情 DTO。
+ */
+export class AdminUserDetailDto extends AdminUserListItemDto {}
+
+/**
+ * 当前登录管理员账号 DTO。
+ */
+export class AdminCurrentUserDto extends AdminUserDetailDto {
   @ArrayProperty({
     description: '权限编码列表',
     itemType: 'string',
@@ -193,7 +203,7 @@ export class UserRegisterDto extends PickType(BaseAdminUserDto, [
 /**
  * 更新管理员账号 DTO。
  */
-export class UpdateUserDto extends PickType(BaseAdminUserDto, [
+export class AdminAccountUpdateDto extends PickType(BaseAdminUserDto, [
   'id',
   'username',
   'avatar',
@@ -208,6 +218,13 @@ export class UpdateUserDto extends PickType(BaseAdminUserDto, [
   })
   roleIds!: number[]
 }
+
+/**
+ * 更新当前管理员资料 DTO。
+ */
+export class AdminSelfProfileUpdateDto extends PartialType(
+  PickType(BaseAdminUserDto, ['username', 'avatar', 'mobile'] as const),
+) {}
 
 /**
  * 管理员账号分页查询 DTO。

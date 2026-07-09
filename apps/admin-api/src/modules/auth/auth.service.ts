@@ -1,4 +1,7 @@
-import type { UserLoginDto } from '@libs/identity/dto/admin-auth.dto'
+import type {
+  LoginResponseDto,
+  UserLoginDto,
+} from '@libs/identity/dto/admin-auth.dto'
 import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
 import { AuthSessionService } from '@libs/identity/session.service'
@@ -22,6 +25,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
+import { AdminRbacService } from '../rbac/admin-rbac.service'
 import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
 
 /**
@@ -38,6 +42,7 @@ export class AuthService {
     private readonly authSessionService: AuthSessionService,
     private readonly captchaService: CaptchaService,
     private readonly loginGuardService: LoginGuardService,
+    private readonly rbacService: AdminRbacService,
   ) {}
 
   // 复用当前模块共享数据库连接。
@@ -56,7 +61,10 @@ export class AuthService {
   }
 
   // 管理员登录：验证码校验 → 查找用户 → 密码解密与验证 → 登录保护 → 签发令牌。
-  async login(body: UserLoginDto, clientContext: SessionClientContext) {
+  async login(
+    body: UserLoginDto,
+    clientContext: SessionClientContext,
+  ): Promise<LoginResponseDto> {
     // 检查用户输入的验证码
     if (!body.captcha) {
       throw new BadRequestException('请输入验证码')
@@ -138,16 +146,24 @@ export class AuthService {
       throw new UnauthorizedException('账号或密码错误')
     }
 
+    const lastLoginAt = new Date()
+    const lastLoginIp = clientContext.ip || 'unknown'
+
     // 更新登录信息
     await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.adminUserTable)
         .set({
-          lastLoginAt: new Date(),
-          lastLoginIp: clientContext.ip || 'unknown',
+          lastLoginAt,
+          lastLoginIp,
         })
         .where(eq(this.adminUserTable.id, user.id)),
     )
+    const [roles, snapshot] = await Promise.all([
+      this.rbacService.getUserRoleSummaries(user.id),
+      this.rbacService.getSubjectSnapshot(user.id),
+    ])
+
     // 生成令牌
     const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),
@@ -156,11 +172,21 @@ export class AuthService {
 
     await this.authSessionService.persistTokens(user.id, tokens, clientContext)
 
-    // 去除 user 对象的 password 属性
+    // 去除 user 对象的 password 属性并返回当前用户授权视图。
     const { password: _password, ...userWithoutPassword } = user
 
     return {
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutPassword,
+        mobile: user.mobile ?? null,
+        avatar: user.avatar ?? null,
+        lastLoginAt,
+        lastLoginIp,
+        roleIds: roles.map((role) => role.id),
+        roles,
+        accessCodes: snapshot.permissionCodes,
+        isSuperAdmin: snapshot.isSuperAdmin,
+      },
       tokens,
     }
   }

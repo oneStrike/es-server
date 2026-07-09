@@ -33,10 +33,15 @@ import {
 } from '@libs/identity/admin-rbac.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { ForbiddenException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, asc, count, eq, inArray, ne, notInArray, sql } from 'drizzle-orm'
 import { AdminRbacCacheService } from './admin-rbac-cache.service'
 import { ADMIN_DEFAULT_MENUS } from './admin-rbac.defaults'
+
+const ADMIN_BASELINE_PERMISSION_CODE_SET = new Set<string>(
+  ADMIN_BASELINE_PERMISSION_CODES,
+)
+const ADMIN_SUPER_ADMIN_MUTATION_LOCK_KEY = 42_001
 
 @Injectable()
 export class AdminRbacService {
@@ -211,7 +216,10 @@ export class AdminRbacService {
   async updateRole(data: AdminRoleUpdateDto) {
     const role = await this.getRoleForUpdate(data.id)
     if (Object.hasOwn(data, 'isEnabled')) {
-      throw new ForbiddenException('角色启用状态请通过状态接口变更')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '角色启用状态请通过状态接口变更',
+      )
     }
     await this.drizzle.withTransaction(async (tx) => {
       await tx
@@ -253,7 +261,10 @@ export class AdminRbacService {
   async updateRoleStatus(id: number, isEnabled: boolean) {
     const role = await this.getRoleForUpdate(id)
     if (role.code === AdminSystemRoleCode.SUPER_ADMIN && !isEnabled) {
-      throw new ForbiddenException('系统超级管理员角色不能禁用')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '系统超级管理员角色不能禁用',
+      )
     }
     await this.drizzle.withTransaction(async (tx) => {
       await tx
@@ -270,7 +281,10 @@ export class AdminRbacService {
   async bindRolePermissions(data: AdminRolePermissionBindDto) {
     const role = await this.getRoleForUpdate(data.id)
     if (role.code === AdminSystemRoleCode.SUPER_ADMIN) {
-      throw new ForbiddenException('系统超级管理员角色默认拥有全部权限')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '系统超级管理员角色默认拥有全部权限',
+      )
     }
     const permissionIds = Array.from(new Set(data.permissionIds ?? []))
     await this.assertPermissionIdsExist(permissionIds)
@@ -296,7 +310,10 @@ export class AdminRbacService {
   async bindRoleMenus(data: AdminRoleMenuBindDto) {
     const role = await this.getRoleForUpdate(data.id)
     if (role.code === AdminSystemRoleCode.SUPER_ADMIN) {
-      throw new ForbiddenException('系统超级管理员角色默认拥有全部菜单')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '系统超级管理员角色默认拥有全部菜单',
+      )
     }
     const menuIds = Array.from(new Set(data.menuIds ?? []))
     await this.assertMenuIdsExist(menuIds)
@@ -339,25 +356,29 @@ export class AdminRbacService {
 
   // 创建后台菜单。
   async createMenu(data: AdminMenuCreateDto) {
-    if (data.parentId) {
-      await this.assertMenuIdsExist([data.parentId])
-    }
     await this.drizzle.withTransaction(async (tx) => {
-      await tx.insert(this.menuTable).values({
-        ...data,
-        code: data.code.trim(),
-        title: data.title.trim(),
-        parentId: data.parentId ?? null,
-        name: this.emptyToNull(data.name),
-        component: this.emptyToNull(data.component),
-        redirect: this.emptyToNull(data.redirect),
-        icon: this.emptyToNull(data.icon),
-        externalLink: this.emptyToNull(data.externalLink),
-        sortOrder: data.sortOrder ?? 0,
-        isVisible: data.isVisible ?? true,
-        isEnabled: data.isEnabled ?? true,
-        keepAlive: data.keepAlive ?? false,
-      })
+      if (data.parentId) {
+        await this.assertMenuIdsExist([data.parentId], tx)
+      }
+      const insertedRows = await tx
+        .insert(this.menuTable)
+        .values({
+          ...data,
+          code: data.code.trim(),
+          title: data.title.trim(),
+          parentId: data.parentId ?? null,
+          name: this.emptyToNull(data.name),
+          component: this.emptyToNull(data.component),
+          redirect: this.emptyToNull(data.redirect),
+          icon: this.emptyToNull(data.icon),
+          externalLink: this.emptyToNull(data.externalLink),
+          sortOrder: data.sortOrder ?? 0,
+          isVisible: data.isVisible ?? true,
+          isEnabled: data.isEnabled ?? true,
+          keepAlive: data.keepAlive ?? false,
+        })
+        .returning({ id: this.menuTable.id })
+      this.drizzle.assertAffectedRows(insertedRows, '菜单创建失败')
       await this.bumpRevision(tx)
     })
     await this.cache.invalidate()
@@ -378,12 +399,12 @@ export class AdminRbacService {
     if (nextParentId && nextParentId === data.id) {
       throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '菜单不能挂载到自身')
     }
-    if (nextParentId) {
-      await this.assertMenuIdsExist([nextParentId])
-      await this.assertMenuParentIsNotDescendant(data.id, nextParentId)
-    }
     await this.drizzle.withTransaction(async (tx) => {
-      await tx
+      if (nextParentId) {
+        await this.assertMenuIdsExist([nextParentId], tx)
+        await this.assertMenuParentIsNotDescendant(data.id, nextParentId, tx)
+      }
+      const updatedRows = await tx
         .update(this.menuTable)
         .set({
           parentId: nextParentId,
@@ -411,6 +432,8 @@ export class AdminRbacService {
           updatedAt: new Date(),
         })
         .where(eq(this.menuTable.id, data.id))
+        .returning({ id: this.menuTable.id })
+      this.drizzle.assertAffectedRows(updatedRows, '菜单不存在')
       await this.bumpRevision(tx)
     })
     await this.cache.invalidate()
@@ -419,11 +442,15 @@ export class AdminRbacService {
 
   // 删除没有子节点的菜单。
   async deleteMenu(id: number) {
-    await this.assertMenuIdsExist([id])
-    await this.assertMenuHasNoChildren(id)
     await this.drizzle.withTransaction(async (tx) => {
+      await this.assertMenuIdsExist([id], tx)
+      await this.assertMenuHasNoChildren(id, tx)
       await tx.delete(this.roleMenuTable).where(eq(this.roleMenuTable.menuId, id))
-      await tx.delete(this.menuTable).where(eq(this.menuTable.id, id))
+      const deletedRows = await tx
+        .delete(this.menuTable)
+        .where(eq(this.menuTable.id, id))
+        .returning({ id: this.menuTable.id })
+      this.drizzle.assertAffectedRows(deletedRows, '菜单不存在')
       await this.bumpRevision(tx)
     })
     await this.cache.invalidate()
@@ -433,10 +460,12 @@ export class AdminRbacService {
   // 单独更新菜单启用状态。
   async updateMenuStatus(id: number, isEnabled: boolean) {
     await this.drizzle.withTransaction(async (tx) => {
-      await tx
+      const updatedRows = await tx
         .update(this.menuTable)
         .set({ isEnabled, updatedAt: new Date() })
         .where(eq(this.menuTable.id, id))
+        .returning({ id: this.menuTable.id })
+      this.drizzle.assertAffectedRows(updatedRows, '菜单不存在')
       await this.bumpRevision(tx)
     })
     await this.cache.invalidate()
@@ -448,12 +477,13 @@ export class AdminRbacService {
     if (data.parentId && data.parentId === data.id) {
       throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '菜单不能挂载到自身')
     }
-    if (data.parentId) {
-      await this.assertMenuIdsExist([data.parentId])
-      await this.assertMenuParentIsNotDescendant(data.id, data.parentId)
-    }
     await this.drizzle.withTransaction(async (tx) => {
-      await tx
+      await this.assertMenuIdsExist([data.id], tx)
+      if (data.parentId) {
+        await this.assertMenuIdsExist([data.parentId], tx)
+        await this.assertMenuParentIsNotDescendant(data.id, data.parentId, tx)
+      }
+      const updatedRows = await tx
         .update(this.menuTable)
         .set({
           parentId: data.parentId ?? null,
@@ -461,6 +491,8 @@ export class AdminRbacService {
           updatedAt: new Date(),
         })
         .where(eq(this.menuTable.id, data.id))
+        .returning({ id: this.menuTable.id })
+      this.drizzle.assertAffectedRows(updatedRows, '菜单不存在')
       await this.bumpRevision(tx)
     })
     await this.cache.invalidate()
@@ -469,27 +501,49 @@ export class AdminRbacService {
 
   // 绑定管理员账号拥有的角色。
   async bindUserRoles(adminUserId: number, roleIds: number[]) {
-    const normalizedRoleIds = await this.normalizeRoleIds(roleIds)
     await this.drizzle.withTransaction(async (tx) => {
-      await tx
-        .delete(this.userRoleTable)
-        .where(eq(this.userRoleTable.adminUserId, adminUserId))
-      if (normalizedRoleIds.length > 0) {
-        await tx.insert(this.userRoleTable).values(
-          normalizedRoleIds.map((roleId) => ({
-            adminUserId,
-            roleId,
-          })),
-        )
-      }
-      await this.bumpRevision(tx)
+      await this.bindUserRolesInTransaction(tx, adminUserId, roleIds)
     })
+    await this.cache.invalidate([adminUserId])
+  }
+
+  // 在外层事务内替换管理员角色并递增 RBAC 版本。
+  async bindUserRolesInTransaction(
+    tx: AdminRbacDb,
+    adminUserId: number,
+    roleIds: number[],
+  ) {
+    const normalizedRoleIds = await this.normalizeRoleIds(roleIds, tx)
+    await tx
+      .delete(this.userRoleTable)
+      .where(eq(this.userRoleTable.adminUserId, adminUserId))
+    if (normalizedRoleIds.length > 0) {
+      await tx.insert(this.userRoleTable).values(
+        normalizedRoleIds.map((roleId) => ({
+          adminUserId,
+          roleId,
+        })),
+      )
+    }
+    await this.bumpRevision(tx)
+  }
+
+  // 提交事务后清理指定管理员的 RBAC 缓存。
+  async invalidateUserAccess(adminUserId: number) {
     await this.cache.invalidate([adminUserId])
   }
 
   // 查询管理员账号的角色摘要。
   async getUserRoleSummaries(adminUserId: number): Promise<AdminRoleSummaryDto[]> {
-    const rows = await this.db
+    return this.getUserRoleSummariesInTransaction(this.db, adminUserId)
+  }
+
+  // 在指定事务上下文内查询管理员账号角色摘要。
+  async getUserRoleSummariesInTransaction(
+    tx: AdminRbacDb,
+    adminUserId: number,
+  ): Promise<AdminRoleSummaryDto[]> {
+    const rows = await tx
       .select({
         id: this.roleTable.id,
         code: this.roleTable.code,
@@ -537,7 +591,18 @@ export class AdminRbacService {
 
   // 校验移除超级管理员能力后仍至少保留一个可用超级管理员。
   async assertCanRemoveSuperAdminFromUser(adminUserId: number) {
-    const roles = await this.getUserRoleSummaries(adminUserId)
+    await this.drizzle.withTransaction(async (tx) =>
+      this.assertCanRemoveSuperAdminFromUserInTransaction(tx, adminUserId),
+    )
+  }
+
+  // 在事务内串行校验移除超级管理员能力后仍至少保留一个可用超级管理员。
+  async assertCanRemoveSuperAdminFromUserInTransaction(
+    tx: AdminRbacDb,
+    adminUserId: number,
+  ) {
+    await this.lockSuperAdminMutationInTransaction(tx)
+    const roles = await this.getUserRoleSummariesInTransaction(tx, adminUserId)
     if (
       !roles.some(
         (role) => role.code === AdminSystemRoleCode.SUPER_ADMIN && role.isEnabled,
@@ -545,7 +610,7 @@ export class AdminRbacService {
     ) {
       return
     }
-    const [{ count: otherEnabledSuperAdminCount = 0 } = { count: 0 }] = await this.db
+    const [{ count: otherEnabledSuperAdminCount = 0 } = { count: 0 }] = await tx
       .select({ count: count() })
       .from(this.userRoleTable)
       .innerJoin(this.roleTable, eq(this.roleTable.id, this.userRoleTable.roleId))
@@ -560,25 +625,36 @@ export class AdminRbacService {
           eq(this.adminUserTable.isEnabled, true),
           ne(this.userRoleTable.adminUserId, adminUserId),
         ),
-      )
+    )
     if (otherEnabledSuperAdminCount < 1) {
-      throw new ForbiddenException('至少需要保留一个可用的超级管理员')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '至少需要保留一个可用的超级管理员',
+      )
     }
   }
 
-  // 读取 RBAC 全局版本并写入缓存。
+  // 串行化超级管理员授予、移除和禁用路径。
+  async lockSuperAdminMutationInTransaction(tx: AdminRbacDb) {
+    await tx.execute(
+      sql`SELECT pg_advisory_xact_lock(${ADMIN_SUPER_ADMIN_MUTATION_LOCK_KEY})`,
+    )
+  }
+
+  // 从数据库读取权威 RBAC 全局版本并镜像到缓存。
   private async getCurrentRevision() {
-    const cached = await this.cache.getRevision()
-    if (typeof cached === 'number' && cached > 0) {
-      return cached
-    }
-    await this.ensureRevision(this.db)
     const [row] = await this.db
       .select({ revision: this.revisionTable.revision })
       .from(this.revisionTable)
       .where(eq(this.revisionTable.code, ADMIN_RBAC_REVISION_CODE))
       .limit(1)
-    const revision = row?.revision ?? 1
+    if (!row || row.revision <= 0) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        'RBAC版本不可用',
+      )
+    }
+    const revision = row.revision
     await this.cache.setRevision(revision)
     return revision
   }
@@ -605,7 +681,7 @@ export class AdminRbacService {
       roleCodes,
       isSuperAdmin,
       permissionCodes,
-      menuCodes: menuRows.map((item) => item.code),
+      menuCodes: Array.from(new Set(menuRows.map((item) => item.code))),
       menus,
       expiresAt: Date.now() + this.cache.getSnapshotTtlMs(),
     }
@@ -851,19 +927,23 @@ export class AdminRbacService {
         }
         parentId = parentMenuId
       }
-      await tx
+      const updatedRows = await tx
         .update(this.menuTable)
         .set({ parentId, updatedAt: new Date() })
         .where(eq(this.menuTable.id, menuId))
+        .returning({ id: this.menuTable.id })
+      this.drizzle.assertAffectedRows(updatedRows, '默认菜单不存在')
     }
   }
 
   // 标记默认菜单首次种子已经完成。
   private async markDefaultMenusSeeded(tx: AdminRbacDb) {
-    await tx
+    const updatedRows = await tx
       .update(this.revisionTable)
       .set({ menuSeededAt: new Date(), updatedAt: new Date() })
       .where(eq(this.revisionTable.code, ADMIN_RBAC_REVISION_CODE))
+      .returning({ code: this.revisionTable.code })
+    this.drizzle.assertAffectedRows(updatedRows, 'RBAC版本不存在')
   }
 
   // 幂等授予系统内置角色的默认权限和菜单。
@@ -897,7 +977,7 @@ export class AdminRbacService {
         )
         .onConflictDoNothing()
       const baseline = permissions.filter((permission) =>
-        ADMIN_BASELINE_PERMISSION_CODES.includes(permission.code as never),
+        ADMIN_BASELINE_PERMISSION_CODE_SET.has(permission.code),
       )
       if (baseline.length > 0) {
         await tx
@@ -932,7 +1012,7 @@ export class AdminRbacService {
 
   // 原子递增 RBAC 全局版本。
   private async bumpRevision(tx: AdminRbacDb) {
-    await tx
+    const updatedRows = await tx
       .update(this.revisionTable)
       .set({
         revision: sql<number>`${this.revisionTable.revision} + 1`,
@@ -940,29 +1020,31 @@ export class AdminRbacService {
       })
       .where(eq(this.revisionTable.code, ADMIN_RBAC_REVISION_CODE))
       .returning({ revision: this.revisionTable.revision })
+    this.drizzle.assertAffectedRows(updatedRows, 'RBAC版本不存在')
   }
 
-  // 规范化账号角色集合，空集合回落为普通管理员角色。
-  private async normalizeRoleIds(roleIds: number[] | undefined) {
+  // 规范化账号角色集合，空集合直接拒绝。
+  private async normalizeRoleIds(
+    roleIds: number[] | undefined,
+    tx: AdminRbacDb = this.db,
+  ) {
     const normalized = Array.from(new Set(roleIds ?? []))
     if (normalized.length === 0) {
-      const [normalRole] = await this.db
-        .select({ id: this.roleTable.id })
-        .from(this.roleTable)
-        .where(eq(this.roleTable.code, AdminSystemRoleCode.NORMAL_ADMIN))
-        .limit(1)
-      return normalRole ? [normalRole.id] : []
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '至少选择一个角色',
+      )
     }
-    await this.assertRoleIdsExist(normalized)
+    await this.assertRoleIdsExist(normalized, tx)
     return normalized
   }
 
   // 校验角色 id 集合都存在。
-  private async assertRoleIdsExist(ids: number[]) {
+  private async assertRoleIdsExist(ids: number[], tx: AdminRbacDb = this.db) {
     if (ids.length === 0) {
       return
     }
-    const rows = await this.db
+    const rows = await tx
       .select({ id: this.roleTable.id })
       .from(this.roleTable)
       .where(inArray(this.roleTable.id, ids))
@@ -986,11 +1068,11 @@ export class AdminRbacService {
   }
 
   // 校验菜单 id 集合都存在。
-  private async assertMenuIdsExist(ids: number[]) {
+  private async assertMenuIdsExist(ids: number[], tx: AdminRbacDb = this.db) {
     if (ids.length === 0) {
       return
     }
-    const rows = await this.db
+    const rows = await tx
       .select({ id: this.menuTable.id })
       .from(this.menuTable)
       .where(inArray(this.menuTable.id, ids))
@@ -1000,8 +1082,8 @@ export class AdminRbacService {
   }
 
   // 删除菜单前确保没有子菜单。
-  private async assertMenuHasNoChildren(id: number) {
-    const [{ count: childCount = 0 } = { count: 0 }] = await this.db
+  private async assertMenuHasNoChildren(id: number, tx: AdminRbacDb = this.db) {
+    const [{ count: childCount = 0 } = { count: 0 }] = await tx
       .select({ count: count() })
       .from(this.menuTable)
       .where(eq(this.menuTable.parentId, id))
@@ -1014,8 +1096,12 @@ export class AdminRbacService {
   }
 
   // 防止菜单被移动到自己的后代节点下。
-  private async assertMenuParentIsNotDescendant(id: number, parentId: number) {
-    const result = await this.db.execute(sql`
+  private async assertMenuParentIsNotDescendant(
+    id: number,
+    parentId: number,
+    tx: AdminRbacDb = this.db,
+  ) {
+    const result = await tx.execute(sql`
       WITH RECURSIVE descendants AS (
         SELECT id
         FROM admin_menu
@@ -1055,7 +1141,10 @@ export class AdminRbacService {
   // 系统角色禁止删除。
   private assertMutableRole(role: AdminMutableRole) {
     if (role.isSystem || role.code === AdminSystemRoleCode.SUPER_ADMIN) {
-      throw new ForbiddenException('系统内置角色不能删除')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '系统内置角色不能删除',
+      )
     }
   }
 
@@ -1117,17 +1206,20 @@ export class AdminRbacService {
     const byId = new Map<number, T>()
     const roots: T[] = []
     for (const row of rows) {
-      byId.set(row.id, row)
+      if (!byId.has(row.id)) {
+        row.children = []
+        byId.set(row.id, row)
+      }
     }
-    for (const row of rows) {
-      if (row.parentId && byId.has(row.parentId)) {
-        byId.get(row.parentId)!.children.push(row)
-      } else {
+    for (const row of byId.values()) {
+      if (row.parentId === null) {
         roots.push(row)
+      } else if (row.parentId !== row.id && byId.has(row.parentId)) {
+        byId.get(row.parentId)!.children.push(row)
       }
     }
     const sortTree = (items: T[]) => {
-      items.sort((a, b) => a.sortOrder - b.sortOrder)
+      items.sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)
       for (const item of items) {
         sortTree(item.children)
       }
@@ -1136,15 +1228,24 @@ export class AdminRbacService {
     return roots
   }
 
-  // 兼容 Drizzle execute 返回结构并提取 rows。
+  // 校验 Drizzle execute 返回结构并提取 rows。
   private extractExecutedRows<T>(
     result: AdminExecutedRowsResult<T> | object | null | undefined,
   ) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
-      return []
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        'RBAC原生查询结果结构异常',
+      )
     }
     const rows = result.rows
-    return Array.isArray(rows) ? rows : []
+    if (!Array.isArray(rows)) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        'RBAC原生查询结果结构异常',
+      )
+    }
+    return rows
   }
 
   // 将空字符串统一收敛为 null。

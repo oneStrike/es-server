@@ -55,7 +55,7 @@ export interface AdminMenuTreeNode<TNode> {
 /** 角色删除保护只需要系统标记和角色编码。 */
 export type AdminMutableRole = Pick<AdminRoleSelect, 'isSystem' | 'code'>
 
-/** 原生 SQL execute 返回行的兼容形状。 */
+/** 原生 SQL execute 返回行结构。 */
 export interface AdminExecutedRowsResult<T> {
   rows: T[] | null | undefined
 }
