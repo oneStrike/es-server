@@ -1,20 +1,9 @@
+import type { AdminDefaultMenu } from './admin-rbac.type'
 import { AdminMenuType } from '@libs/identity/admin-rbac.constant'
 
-export interface AdminDefaultMenu {
-  code: string
-  parentCode?: string
-  type: AdminMenuType
-  title: string
-  path: string
-  name: string
-  component?: string
-  redirect?: string
-  icon?: string
-  sortOrder: number
-  isVisible?: boolean
-  keepAlive?: boolean
-}
-
+/**
+ * 管理端首次启动时补齐的默认菜单骨架。
+ */
 export const ADMIN_DEFAULT_MENUS: AdminDefaultMenu[] = [
   {
     code: 'dashboard',

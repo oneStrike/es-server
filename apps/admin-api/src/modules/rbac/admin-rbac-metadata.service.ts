@@ -1,17 +1,15 @@
 import type { Type } from '@nestjs/common'
 import type { AdminPermissionMetadata } from '../../common/decorators/admin-permission.decorator'
+import type {
+  AdminPermissionDefinition,
+  AdminRbacHandler,
+} from './admin-rbac.type'
 import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
 import { Injectable } from '@nestjs/common'
 import { DiscoveryService, Reflector } from '@nestjs/core'
 import { ADMIN_AUTH_ONLY_KEY, ADMIN_PERMISSION_KEY } from '../../common/decorators/admin-permission.decorator'
 
-export interface AdminPermissionDefinition extends AdminPermissionMetadata {
-  controllerName: string
-  handlerName: string
-}
-
-type AdminRbacHandler = (...args: unknown[]) => unknown
-
+// 收窄 controller prototype 上的未知属性，避免把非函数成员当成 handler。
 function isAdminRbacHandler(value: unknown): value is AdminRbacHandler {
   return typeof value === 'function'
 }
@@ -23,6 +21,7 @@ export class AdminRbacMetadataService {
     private readonly reflector: Reflector,
   ) {}
 
+  // 扫描所有 admin controller handler 上声明的权限元数据。
   getPermissionDefinitions(): AdminPermissionDefinition[] {
     const definitions: AdminPermissionDefinition[] = []
     for (const wrapper of this.discoveryService.getControllers()) {
@@ -63,6 +62,7 @@ export class AdminRbacMetadataService {
     return definitions
   }
 
+  // 读取当前 handler 对应的权限元数据。
   getHandlerPermission(contextClass: Type<unknown>, handler: unknown) {
     if (!isAdminRbacHandler(handler)) {
       return undefined
@@ -73,6 +73,7 @@ export class AdminRbacMetadataService {
     )
   }
 
+  // 判断当前 handler 是否显式公开访问。
   isPublic(contextClass: Type<unknown>, handler: unknown) {
     if (!isAdminRbacHandler(handler)) {
       return undefined
@@ -83,6 +84,7 @@ export class AdminRbacMetadataService {
     ])
   }
 
+  // 判断当前 handler 是否只要求登录、不要求业务权限码。
   isAuthOnly(contextClass: Type<unknown>, handler: unknown) {
     if (!isAdminRbacHandler(handler)) {
       return undefined

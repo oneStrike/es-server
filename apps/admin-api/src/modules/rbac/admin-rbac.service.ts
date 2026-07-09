@@ -1,4 +1,3 @@
-import type { Db } from '@db/core'
 import type {
   AdminMenuSelect as AdminMenuRow,
   AdminRoleSelect as AdminRoleRow,
@@ -17,8 +16,14 @@ import type {
   AdminRoleSummaryDto,
   AdminRoleUpdateDto,
 } from '@libs/identity/dto/admin-rbac.dto'
-import type { AdminPermissionDefinition } from './admin-rbac-metadata.service'
-import type { AdminRbacSubjectSnapshot } from './admin-rbac.type'
+import type {
+  AdminExecutedRowsResult,
+  AdminMenuTreeNode,
+  AdminMutableRole,
+  AdminPermissionDefinition,
+  AdminRbacDb,
+  AdminRbacSubjectSnapshot,
+} from './admin-rbac.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import {
   ADMIN_BASELINE_PERMISSION_CODES,
@@ -40,42 +45,52 @@ export class AdminRbacService {
     private readonly cache: AdminRbacCacheService,
   ) {}
 
+  // 统一读取 Drizzle 数据库实例。
   private get db() {
     return this.drizzle.db
   }
 
+  // 管理端角色表。
   private get roleTable() {
     return this.drizzle.schema.adminRole
   }
 
+  // 管理端权限表。
   private get permissionTable() {
     return this.drizzle.schema.adminPermission
   }
 
+  // 管理端菜单表。
   private get menuTable() {
     return this.drizzle.schema.adminMenu
   }
 
+  // 角色与权限关系表。
   private get rolePermissionTable() {
     return this.drizzle.schema.adminRolePermission
   }
 
+  // 角色与菜单关系表。
   private get roleMenuTable() {
     return this.drizzle.schema.adminRoleMenu
   }
 
+  // 管理员与角色关系表。
   private get userRoleTable() {
     return this.drizzle.schema.adminUserRole
   }
 
+  // 管理员账号表。
   private get adminUserTable() {
     return this.drizzle.schema.adminUser
   }
 
+  // RBAC 全局版本表。
   private get revisionTable() {
     return this.drizzle.schema.adminRbacRevision
   }
 
+  // 同步代码装饰器声明的权限，并完成首次 RBAC bootstrap。
   async syncCodePermissions(definitions: AdminPermissionDefinition[]) {
     const uniqueDefinitions = this.assertUniqueDefinitions(definitions)
     await this.drizzle.withTransaction(async (tx) => {
@@ -115,6 +130,7 @@ export class AdminRbacService {
     await this.cache.invalidate()
   }
 
+  // 分页查询角色列表。
   async pageRoles(query: AdminRolePageDto) {
     const page = this.drizzle.buildPage(query)
     const conditions = [
@@ -138,6 +154,7 @@ export class AdminRbacService {
     return toPageResult(list.map((item) => this.toRoleDto(item)), totalRows[0]?.count ?? 0, page)
   }
 
+  // 查询全部角色列表。
   async listRoles() {
     const rows = await this.db
       .select()
@@ -146,6 +163,7 @@ export class AdminRbacService {
     return rows.map((item) => this.toRoleDto(item))
   }
 
+  // 查询角色详情和绑定关系。
   async getRoleDetail(id: number) {
     const [role] = await this.db
       .select()
@@ -172,6 +190,7 @@ export class AdminRbacService {
     }
   }
 
+  // 创建业务角色并刷新 RBAC 版本。
   async createRole(data: AdminRoleCreateDto) {
     await this.drizzle.withTransaction(async (tx) => {
       await tx.insert(this.roleTable).values({
@@ -188,6 +207,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 更新角色基础信息。
   async updateRole(data: AdminRoleUpdateDto) {
     const role = await this.getRoleForUpdate(data.id)
     if (Object.hasOwn(data, 'isEnabled')) {
@@ -212,6 +232,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 删除非系统内置角色。
   async deleteRole(id: number) {
     const role = await this.getRoleForUpdate(id)
     this.assertMutableRole(role)
@@ -228,6 +249,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 单独更新角色启用状态。
   async updateRoleStatus(id: number, isEnabled: boolean) {
     const role = await this.getRoleForUpdate(id)
     if (role.code === AdminSystemRoleCode.SUPER_ADMIN && !isEnabled) {
@@ -244,6 +266,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 绑定角色可访问的权限。
   async bindRolePermissions(data: AdminRolePermissionBindDto) {
     const role = await this.getRoleForUpdate(data.id)
     if (role.code === AdminSystemRoleCode.SUPER_ADMIN) {
@@ -269,6 +292,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 绑定角色可访问的菜单。
   async bindRoleMenus(data: AdminRoleMenuBindDto) {
     const role = await this.getRoleForUpdate(data.id)
     if (role.code === AdminSystemRoleCode.SUPER_ADMIN) {
@@ -292,6 +316,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 查询管理端权限清单。
   async listPermissions(): Promise<AdminPermissionDto[]> {
     const rows = await this.db
       .select()
@@ -299,11 +324,11 @@ export class AdminRbacService {
       .orderBy(asc(this.permissionTable.groupCode), asc(this.permissionTable.code))
     return rows.map((item) => ({
       ...item,
-      description: item.description ?? undefined,
-      source: item.source as AdminPermissionSource,
+      description: item.description ?? null,
     }))
   }
 
+  // 查询完整菜单树。
   async menuTree(): Promise<AdminMenuDto[]> {
     const rows = await this.db
       .select()
@@ -312,6 +337,7 @@ export class AdminRbacService {
     return this.buildMenuTree(rows.map((item) => this.toMenuDto(item)))
   }
 
+  // 创建后台菜单。
   async createMenu(data: AdminMenuCreateDto) {
     if (data.parentId) {
       await this.assertMenuIdsExist([data.parentId])
@@ -338,6 +364,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 更新后台菜单配置。
   async updateMenu(data: AdminMenuUpdateDto) {
     const [menu] = await this.db
       .select()
@@ -390,6 +417,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 删除没有子节点的菜单。
   async deleteMenu(id: number) {
     await this.assertMenuIdsExist([id])
     await this.assertMenuHasNoChildren(id)
@@ -402,6 +430,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 单独更新菜单启用状态。
   async updateMenuStatus(id: number, isEnabled: boolean) {
     await this.drizzle.withTransaction(async (tx) => {
       await tx
@@ -414,6 +443,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 拖拽调整菜单父级和排序。
   async dragReorderMenu(data: AdminMenuDragReorderDto) {
     if (data.parentId && data.parentId === data.id) {
       throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '菜单不能挂载到自身')
@@ -437,6 +467,7 @@ export class AdminRbacService {
     return true
   }
 
+  // 绑定管理员账号拥有的角色。
   async bindUserRoles(adminUserId: number, roleIds: number[]) {
     const normalizedRoleIds = await this.normalizeRoleIds(roleIds)
     await this.drizzle.withTransaction(async (tx) => {
@@ -456,6 +487,7 @@ export class AdminRbacService {
     await this.cache.invalidate([adminUserId])
   }
 
+  // 查询管理员账号的角色摘要。
   async getUserRoleSummaries(adminUserId: number): Promise<AdminRoleSummaryDto[]> {
     const rows = await this.db
       .select({
@@ -472,6 +504,7 @@ export class AdminRbacService {
     return rows
   }
 
+  // 读取或构建管理员 RBAC subject 快照。
   async getSubjectSnapshot(adminUserId: number): Promise<AdminRbacSubjectSnapshot> {
     const revision = await this.getCurrentRevision()
     const cached = await this.cache.getSubject(adminUserId)
@@ -483,6 +516,7 @@ export class AdminRbacService {
     return snapshot
   }
 
+  // 组装当前登录管理员的 RBAC 引导信息。
   async getCurrentBootstrap(adminUserId: number) {
     const snapshot = await this.getSubjectSnapshot(adminUserId)
     return {
@@ -495,11 +529,13 @@ export class AdminRbacService {
     }
   }
 
+  // 判断管理员是否拥有超级管理员角色。
   async isSuperAdmin(adminUserId: number) {
     const snapshot = await this.getSubjectSnapshot(adminUserId)
     return snapshot.isSuperAdmin
   }
 
+  // 校验移除超级管理员能力后仍至少保留一个可用超级管理员。
   async assertCanRemoveSuperAdminFromUser(adminUserId: number) {
     const roles = await this.getUserRoleSummaries(adminUserId)
     if (
@@ -530,6 +566,7 @@ export class AdminRbacService {
     }
   }
 
+  // 读取 RBAC 全局版本并写入缓存。
   private async getCurrentRevision() {
     const cached = await this.cache.getRevision()
     if (typeof cached === 'number' && cached > 0) {
@@ -546,6 +583,7 @@ export class AdminRbacService {
     return revision
   }
 
+  // 基于角色、权限和菜单构建 subject 快照。
   private async buildSubjectSnapshot(
     adminUserId: number,
     revision: number,
@@ -573,6 +611,7 @@ export class AdminRbacService {
     }
   }
 
+  // 查询所有启用权限编码。
   private async loadAllPermissionCodes() {
     const rows = await this.db
       .select({ code: this.permissionTable.code })
@@ -581,6 +620,7 @@ export class AdminRbacService {
     return rows.map((item) => item.code)
   }
 
+  // 查询指定角色拥有的启用权限编码。
   private async loadPermissionCodesByRoles(roleIds: number[]) {
     if (roleIds.length === 0) {
       return []
@@ -601,6 +641,7 @@ export class AdminRbacService {
     return Array.from(new Set(rows.map((item) => item.code)))
   }
 
+  // 查询所有启用且可见的菜单。
   private async loadAllMenus() {
     return this.db
       .select()
@@ -609,6 +650,7 @@ export class AdminRbacService {
       .orderBy(asc(this.menuTable.parentId), asc(this.menuTable.sortOrder), asc(this.menuTable.id))
   }
 
+  // 查询指定角色拥有的启用且可见菜单。
   private async loadMenusByRoles(roleIds: number[]) {
     if (roleIds.length === 0) {
       return []
@@ -645,6 +687,7 @@ export class AdminRbacService {
       .orderBy(asc(this.menuTable.parentId), asc(this.menuTable.sortOrder), asc(this.menuTable.id))
   }
 
+  // 校验权限元数据编码唯一且必填字段完整。
   private assertUniqueDefinitions(definitions: AdminPermissionDefinition[]) {
     const byCode = new Map<string, AdminPermissionDefinition>()
     for (const definition of definitions) {
@@ -662,14 +705,16 @@ export class AdminRbacService {
     return [...byCode.values()]
   }
 
-  private async ensureRevision(tx: Db) {
+  // 确保 RBAC 全局版本单例行存在。
+  private async ensureRevision(tx: AdminRbacDb) {
     await tx
       .insert(this.revisionTable)
       .values({ code: ADMIN_RBAC_REVISION_CODE, revision: 1 })
       .onConflictDoNothing()
   }
 
-  private async retireMissingCodePermissions(tx: Db, activeCodes: string[]) {
+  // 停用代码中已不存在的装饰器权限。
+  private async retireMissingCodePermissions(tx: AdminRbacDb, activeCodes: string[]) {
     const where =
       activeCodes.length > 0
         ? and(
@@ -694,7 +739,8 @@ export class AdminRbacService {
     }
   }
 
-  private async ensureBuiltInRoles(tx: Db) {
+  // 幂等补齐系统内置角色。
+  private async ensureBuiltInRoles(tx: AdminRbacDb) {
     await tx
       .insert(this.roleTable)
       .values({
@@ -719,7 +765,8 @@ export class AdminRbacService {
       .onConflictDoNothing()
   }
 
-  private async ensureDefaultMenus(tx: Db) {
+  // 首次 bootstrap 时补齐默认菜单并记录完成时间。
+  private async ensureDefaultMenus(tx: AdminRbacDb) {
     const [revision] = await tx
       .select({ menuSeededAt: this.revisionTable.menuSeededAt })
       .from(this.revisionTable)
@@ -733,7 +780,8 @@ export class AdminRbacService {
     await this.markDefaultMenusSeeded(tx)
   }
 
-  private async seedMissingDefaultMenus(tx: Db) {
+  // 插入缺失的默认菜单并返回编码到 id 的映射。
+  private async seedMissingDefaultMenus(tx: AdminRbacDb) {
     const inserted = new Map<string, number>()
     const existingRows = await tx
       .select({ id: this.menuTable.id, code: this.menuTable.code })
@@ -785,8 +833,9 @@ export class AdminRbacService {
     return inserted
   }
 
+  // 首次种子阶段修正默认菜单父子关系。
   private async normalizeDefaultMenuParents(
-    tx: Db,
+    tx: AdminRbacDb,
     menuIdsByCode: Map<string, number>,
   ) {
     for (const menu of ADMIN_DEFAULT_MENUS) {
@@ -809,14 +858,16 @@ export class AdminRbacService {
     }
   }
 
-  private async markDefaultMenusSeeded(tx: Db) {
+  // 标记默认菜单首次种子已经完成。
+  private async markDefaultMenusSeeded(tx: AdminRbacDb) {
     await tx
       .update(this.revisionTable)
       .set({ menuSeededAt: new Date(), updatedAt: new Date() })
       .where(eq(this.revisionTable.code, ADMIN_RBAC_REVISION_CODE))
   }
 
-  private async grantBuiltInRoleDefaults(tx: Db) {
+  // 幂等授予系统内置角色的默认权限和菜单。
+  private async grantBuiltInRoleDefaults(tx: AdminRbacDb) {
     const roles = await tx
       .select({ id: this.roleTable.id, code: this.roleTable.code })
       .from(this.roleTable)
@@ -879,7 +930,8 @@ export class AdminRbacService {
     }
   }
 
-  private async bumpRevision(tx: Db) {
+  // 原子递增 RBAC 全局版本。
+  private async bumpRevision(tx: AdminRbacDb) {
     await tx
       .update(this.revisionTable)
       .set({
@@ -890,6 +942,7 @@ export class AdminRbacService {
       .returning({ revision: this.revisionTable.revision })
   }
 
+  // 规范化账号角色集合，空集合回落为普通管理员角色。
   private async normalizeRoleIds(roleIds: number[] | undefined) {
     const normalized = Array.from(new Set(roleIds ?? []))
     if (normalized.length === 0) {
@@ -904,6 +957,7 @@ export class AdminRbacService {
     return normalized
   }
 
+  // 校验角色 id 集合都存在。
   private async assertRoleIdsExist(ids: number[]) {
     if (ids.length === 0) {
       return
@@ -917,6 +971,7 @@ export class AdminRbacService {
     }
   }
 
+  // 校验权限 id 集合都存在。
   private async assertPermissionIdsExist(ids: number[]) {
     if (ids.length === 0) {
       return
@@ -930,6 +985,7 @@ export class AdminRbacService {
     }
   }
 
+  // 校验菜单 id 集合都存在。
   private async assertMenuIdsExist(ids: number[]) {
     if (ids.length === 0) {
       return
@@ -943,6 +999,7 @@ export class AdminRbacService {
     }
   }
 
+  // 删除菜单前确保没有子菜单。
   private async assertMenuHasNoChildren(id: number) {
     const [{ count: childCount = 0 } = { count: 0 }] = await this.db
       .select({ count: count() })
@@ -956,6 +1013,7 @@ export class AdminRbacService {
     }
   }
 
+  // 防止菜单被移动到自己的后代节点下。
   private async assertMenuParentIsNotDescendant(id: number, parentId: number) {
     const result = await this.db.execute(sql`
       WITH RECURSIVE descendants AS (
@@ -981,6 +1039,7 @@ export class AdminRbacService {
     }
   }
 
+  // 查询角色并作为写入前校验依据。
   private async getRoleForUpdate(id: number) {
     const [role] = await this.db
       .select()
@@ -993,52 +1052,56 @@ export class AdminRbacService {
     return role
   }
 
-  private assertMutableRole(role: { isSystem: boolean, code: string }) {
+  // 系统角色禁止删除。
+  private assertMutableRole(role: AdminMutableRole) {
     if (role.isSystem || role.code === AdminSystemRoleCode.SUPER_ADMIN) {
       throw new ForbiddenException('系统内置角色不能删除')
     }
   }
 
+  // 映射角色输出 DTO。
   private toRoleDto(role: AdminRoleRow): AdminRoleDto {
     return {
       ...role,
-      description: role.description ?? undefined,
+      description: role.description ?? null,
     }
   }
 
+  // 映射后台菜单输出 DTO。
   private toMenuDto(menu: AdminMenuRow): AdminMenuDto {
     return {
       id: menu.id,
       code: menu.code,
       parentId: menu.parentId,
-      type: menu.type as AdminMenuDto['type'],
+      type: menu.type,
       title: menu.title,
       path: menu.path,
-      name: menu.name ?? undefined,
-      component: menu.component ?? undefined,
-      redirect: menu.redirect ?? undefined,
-      icon: menu.icon ?? undefined,
+      name: menu.name ?? null,
+      component: menu.component ?? null,
+      redirect: menu.redirect ?? null,
+      icon: menu.icon ?? null,
       sortOrder: menu.sortOrder,
       isVisible: menu.isVisible,
       isEnabled: menu.isEnabled,
       keepAlive: menu.keepAlive,
-      externalLink: menu.externalLink ?? undefined,
+      externalLink: menu.externalLink ?? null,
       createdAt: menu.createdAt,
       updatedAt: menu.updatedAt,
       children: [],
     }
   }
 
+  // 映射当前登录管理员菜单 DTO。
   private toCurrentMenuDto(menu: AdminMenuRow) {
     return {
       id: menu.id,
       code: menu.code,
       title: menu.title,
       path: menu.path,
-      name: menu.name ?? undefined,
-      component: menu.component ?? undefined,
-      redirect: menu.redirect ?? undefined,
-      icon: menu.icon ?? undefined,
+      name: menu.name ?? null,
+      component: menu.component ?? null,
+      redirect: menu.redirect ?? null,
+      icon: menu.icon ?? null,
       sortOrder: menu.sortOrder,
       isVisible: menu.isVisible,
       keepAlive: menu.keepAlive,
@@ -1047,15 +1110,14 @@ export class AdminRbacService {
     }
   }
 
-  private buildMenuTree<T extends { id?: number, parentId?: number | null, sortOrder: number, children: T[] }>(
+  // 根据 parentId 组装并排序菜单树。
+  private buildMenuTree<T extends AdminMenuTreeNode<T>>(
     rows: T[],
   ): T[] {
     const byId = new Map<number, T>()
     const roots: T[] = []
     for (const row of rows) {
-      if (typeof row.id === 'number') {
-        byId.set(row.id, row)
-      }
+      byId.set(row.id, row)
     }
     for (const row of rows) {
       if (row.parentId && byId.has(row.parentId)) {
@@ -1074,8 +1136,9 @@ export class AdminRbacService {
     return roots
   }
 
+  // 兼容 Drizzle execute 返回结构并提取 rows。
   private extractExecutedRows<T>(
-    result: { rows?: T[] | null } | object | null | undefined,
+    result: AdminExecutedRowsResult<T> | object | null | undefined,
   ) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
@@ -1084,7 +1147,8 @@ export class AdminRbacService {
     return Array.isArray(rows) ? rows : []
   }
 
-  private emptyToNull(value?: string | null) {
+  // 将空字符串统一收敛为 null。
+  private emptyToNull(value: string | null | undefined) {
     const normalized = value?.trim()
     return normalized || null
   }

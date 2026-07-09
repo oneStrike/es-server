@@ -1,11 +1,16 @@
 import type { AdminRoleSummaryDto } from '@libs/identity/dto/admin-rbac.dto'
 import type {
+  AdminUserResponseDto,
   ChangePasswordDto,
   UpdateUserDto,
   UserPageDto,
   UserRegisterDto,
 } from '@libs/identity/dto/admin-user.dto'
 import type { SQL } from 'drizzle-orm'
+import type {
+  AdminUserResponseRow,
+  AdminUserSafeUpdateTarget,
+} from './admin-user.type'
 import { randomInt } from 'node:crypto'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { AdminSystemRoleCode } from '@libs/identity/admin-rbac.constant'
@@ -25,14 +30,17 @@ import { AdminRbacService } from '../rbac/admin-rbac.service'
  */
 @Injectable()
 export class AdminUserService {
+  // 管理员账号表。
   get adminUser() {
     return this.drizzle.schema.adminUser
   }
 
+  // 管理端角色表。
   private get adminRole() {
     return this.drizzle.schema.adminRole
   }
 
+  // 管理员与角色关系表。
   private get adminUserRole() {
     return this.drizzle.schema.adminUserRole
   }
@@ -45,10 +53,12 @@ export class AdminUserService {
     private readonly rbacService: AdminRbacService,
   ) {}
 
+  // 统一读取 Drizzle 数据库实例。
   private get db() {
     return this.drizzle.db
   }
 
+  // 更新管理员账号资料与角色绑定。
   async updateUserInfo(operatorId: number, updateData: UpdateUserDto) {
     const [user] = await this.db
       .select({
@@ -118,6 +128,7 @@ export class AdminUserService {
     return true
   }
 
+  // 注册新的管理员账号。
   async register(_operatorId: number, data: UserRegisterDto) {
     const { username, password, avatar, mobile, confirmPassword, roleIds } = data
 
@@ -172,6 +183,7 @@ export class AdminUserService {
     return true
   }
 
+  // 查询当前管理员账号信息。
   async getUserInfo(userId: number) {
     const [user] = await this.db
       .select()
@@ -188,6 +200,7 @@ export class AdminUserService {
     return this.toUserResponse(user)
   }
 
+  // 分页查询管理员账号列表。
   async getUsers(queryDto: UserPageDto) {
     const { username, isEnabled, mobile, roleId, ...pageDto } = queryDto
     const conditions: SQL[] = []
@@ -235,6 +248,7 @@ export class AdminUserService {
     return toPageResult(responseList, total, pageQuery)
   }
 
+  // 修改当前管理员账号密码。
   async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
     const { oldPassword, newPassword, confirmPassword } = changePasswordDto
 
@@ -294,6 +308,7 @@ export class AdminUserService {
     return true
   }
 
+  // 解锁管理员登录限制。
   async unlockUser(_operatorId: number, userId: number) {
     const [user] = await this.db
       .select({ id: this.adminUser.id })
@@ -315,6 +330,7 @@ export class AdminUserService {
     return true
   }
 
+  // 重置管理员账号密码并撤销旧 token。
   async resetPassword(_operatorId: number, id: number) {
     const temporaryPassword = this.generateTemporaryPassword()
     const encryptedPassword =
@@ -338,7 +354,10 @@ export class AdminUserService {
     return { temporaryPassword }
   }
 
-  private async toUserResponse(user: typeof this.adminUser.$inferSelect) {
+  // 映射管理员账号输出 DTO。
+  private async toUserResponse(
+    user: AdminUserResponseRow,
+  ): Promise<AdminUserResponseDto> {
     const { password: _password, ...rest } = user
     const [roles, snapshot] = await Promise.all([
       this.rbacService.getUserRoleSummaries(user.id),
@@ -353,12 +372,10 @@ export class AdminUserService {
     }
   }
 
+  // 防止禁用或移除最后一个可用超级管理员。
   private async ensureSafeAdminAccountUpdate(
     operatorId: number,
-    target: {
-      id: number
-      isEnabled: boolean
-    },
+    target: AdminUserSafeUpdateTarget,
     updateData: UpdateUserDto,
   ) {
     const currentRoles = await this.rbacService.getUserRoleSummaries(target.id)
@@ -382,10 +399,12 @@ export class AdminUserService {
     }
   }
 
+  // 判断角色摘要列表是否包含超级管理员角色。
   private hasSuperAdminRole(roles: AdminRoleSummaryDto[]) {
     return roles.some((role) => role.code === AdminSystemRoleCode.SUPER_ADMIN)
   }
 
+  // 查询指定角色 id 的摘要信息。
   private async getRoleSummariesByIds(ids: number[]) {
     if (ids.length === 0) {
       return []
@@ -402,6 +421,7 @@ export class AdminUserService {
       .where(inArray(this.adminRole.id, ids))
   }
 
+  // 校验角色 id 集合非空且全部存在。
   private async assertRoleIdsExist(ids: number[]) {
     const normalized = Array.from(new Set(ids ?? []))
     if (normalized.length === 0) {
@@ -416,6 +436,7 @@ export class AdminUserService {
     }
   }
 
+  // 生成一次性临时密码。
   private generateTemporaryPassword() {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const lowercase = 'abcdefghijklmnopqrstuvwxyz'

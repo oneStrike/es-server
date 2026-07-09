@@ -5,6 +5,7 @@ import {
   index,
   integer,
   primaryKey,
+  smallint,
   snakeCase,
   timestamp,
   unique,
@@ -96,9 +97,9 @@ export const adminPermission = snakeCase.table(
      */
     description: varchar({ length: 300 }),
     /**
-     * 权限来源
+     * 权限来源（1=后端接口装饰器同步）
      */
-    source: varchar({ length: 30 }).default('api').notNull(),
+    source: smallint().default(1).notNull(),
     /**
      * 是否启用
      */
@@ -124,7 +125,7 @@ export const adminPermission = snakeCase.table(
       'admin_permission_code_not_blank_chk',
       sql`length(trim(${table.code})) > 0`,
     ),
-    check('admin_permission_source_chk', sql`${table.source} in ('api')`),
+    check('admin_permission_source_chk', sql`${table.source} in (1)`),
   ],
 )
 
@@ -147,9 +148,9 @@ export const adminMenu = snakeCase.table(
      */
     parentId: integer(),
     /**
-     * 菜单类型
+     * 菜单类型（1=目录，2=菜单）
      */
-    type: varchar({ length: 20 }).default('menu').notNull(),
+    type: smallint().default(2).notNull(),
     /**
      * 菜单标题
      */
@@ -211,7 +212,7 @@ export const adminMenu = snakeCase.table(
     unique('admin_menu_code_key').on(table.code),
     index('admin_menu_parent_sort_idx').on(table.parentId, table.sortOrder),
     index('admin_menu_is_enabled_idx').on(table.isEnabled),
-    check('admin_menu_type_chk', sql`${table.type} in ('catalog', 'menu')`),
+    check('admin_menu_type_chk', sql`${table.type} in (1, 2)`),
     check(
       'admin_menu_code_not_blank_chk',
       sql`length(trim(${table.code})) > 0`,

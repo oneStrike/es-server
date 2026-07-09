@@ -75,7 +75,47 @@ export class BaseAdminUserDto extends BaseDto {
  */
 export class AdminUserResponseDto extends OmitType(BaseAdminUserDto, [
   'password',
+  'mobile',
+  'avatar',
+  'lastLoginAt',
+  'lastLoginIp',
 ] as const) {
+  @StringProperty({
+    description: '手机号',
+    example: '13800000000',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  mobile!: string | null
+
+  @StringProperty({
+    description: '头像',
+    example: 'https://example.com/avatar.png',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  avatar!: string | null
+
+  @DateProperty({
+    description: '最后登录时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  lastLoginAt!: Date | null
+
+  @StringProperty({
+    description: '最后登录IP',
+    example: '192.168.1.1',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  lastLoginIp!: string | null
+
   @ArrayProperty({
     description: '角色id集合',
     itemType: 'number',

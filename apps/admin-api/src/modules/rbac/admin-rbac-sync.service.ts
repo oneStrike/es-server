@@ -11,6 +11,7 @@ export class AdminRbacSyncService implements OnApplicationBootstrap {
     private readonly rbacService: AdminRbacService,
   ) {}
 
+  // 应用启动后同步权限元数据并执行 RBAC 首次 bootstrap。
   async onApplicationBootstrap() {
     const definitions = this.metadataService.getPermissionDefinitions()
     await this.rbacService.syncCodePermissions(definitions)

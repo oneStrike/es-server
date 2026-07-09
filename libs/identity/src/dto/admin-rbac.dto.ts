@@ -78,10 +78,11 @@ export class AdminRoleDto extends BaseDto {
   @StringProperty({
     description: '角色说明',
     example: '负责内容配置与审核',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 300,
   })
-  description?: string
+  description!: string | null
 
   @BooleanProperty({
     description: '是否系统内置角色',
@@ -130,15 +131,29 @@ export class AdminRoleDetailDto extends AdminRoleDto {
 }
 
 /**
- * 创建管理端角色 DTO。
+ * 创建角色必填字段块。
  */
-export class AdminRoleCreateDto extends PickType(AdminRoleDto, [
+class AdminRoleCreateRequiredFieldsDto extends PickType(AdminRoleDto, [
   'code',
   'name',
+] as const) {}
+
+/**
+ * 创建角色可选字段块。
+ */
+class AdminRoleCreateOptionalFieldsDto extends PartialType(PickType(AdminRoleDto, [
   'description',
   'isEnabled',
   'sortOrder',
-] as const) {}
+] as const)) {}
+
+/**
+ * 创建管理端角色 DTO。
+ */
+export class AdminRoleCreateDto extends IntersectionType(
+  AdminRoleCreateRequiredFieldsDto,
+  AdminRoleCreateOptionalFieldsDto,
+) {}
 
 /**
  * 更新管理端角色 DTO。
@@ -215,13 +230,14 @@ export class AdminPermissionDto extends BaseDto {
   @StringProperty({
     description: '权限说明',
     example: '允许创建管理端账号',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  description?: string
+  description!: string | null
 
   @EnumProperty({
-    description: '权限来源',
+    description: '权限来源（1=后端接口装饰器同步）',
     enum: AdminPermissionSource,
     example: AdminPermissionSource.API,
     required: true,
@@ -253,13 +269,13 @@ export class AdminMenuDto extends BaseDto {
   @NumberProperty({
     description: '父级菜单id',
     example: 1,
-    required: false,
+    required: true,
     nullable: true,
   })
-  parentId?: number | null
+  parentId!: number | null
 
   @EnumProperty({
-    description: '菜单类型',
+    description: '菜单类型（1=目录；2=菜单）',
     enum: AdminMenuType,
     example: AdminMenuType.MENU,
     required: true,
@@ -285,34 +301,38 @@ export class AdminMenuDto extends BaseDto {
   @StringProperty({
     description: '路由名称',
     example: 'SystemAccountManager',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 120,
   })
-  name?: string
+  name!: string | null
 
   @StringProperty({
     description: '前端组件键',
     example: '/system-manager/account-manager/index',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 240,
   })
-  component?: string
+  component!: string | null
 
   @StringProperty({
     description: '重定向路径',
     example: '/system-manager/profile',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 200,
   })
-  redirect?: string
+  redirect!: string | null
 
   @StringProperty({
     description: '图标',
     example: 'lucide:settings',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 80,
   })
-  icon?: string
+  icon!: string | null
 
   @NumberProperty({
     description: '排序值',
@@ -345,10 +365,11 @@ export class AdminMenuDto extends BaseDto {
   @StringProperty({
     description: '外链地址',
     example: 'https://example.com',
-    required: false,
+    required: true,
+    nullable: true,
     maxLength: 300,
   })
-  externalLink?: string
+  externalLink!: string | null
 
   @ArrayProperty({
     description: '子菜单',
@@ -360,14 +381,20 @@ export class AdminMenuDto extends BaseDto {
 }
 
 /**
- * 创建管理端菜单 DTO。
+ * 创建菜单必填字段块。
  */
-export class AdminMenuCreateDto extends PickType(AdminMenuDto, [
+class AdminMenuCreateRequiredFieldsDto extends PickType(AdminMenuDto, [
   'code',
-  'parentId',
   'type',
   'title',
   'path',
+] as const) {}
+
+/**
+ * 创建菜单可选字段块。
+ */
+class AdminMenuCreateOptionalFieldsDto extends PartialType(PickType(AdminMenuDto, [
+  'parentId',
   'name',
   'component',
   'redirect',
@@ -377,7 +404,15 @@ export class AdminMenuCreateDto extends PickType(AdminMenuDto, [
   'isEnabled',
   'keepAlive',
   'externalLink',
-] as const) {}
+] as const)) {}
+
+/**
+ * 创建管理端菜单 DTO。
+ */
+export class AdminMenuCreateDto extends IntersectionType(
+  AdminMenuCreateRequiredFieldsDto,
+  AdminMenuCreateOptionalFieldsDto,
+) {}
 
 /**
  * 更新管理端菜单 DTO。
@@ -446,43 +481,47 @@ export class AdminCurrentMenuDto {
   @NumberProperty({
     description: '父级菜单id',
     example: 1,
-    required: false,
+    required: true,
     nullable: true,
     validation: false,
   })
-  parentId?: number | null
+  parentId!: number | null
 
   @StringProperty({
     description: '路由名称',
     example: 'SystemAccountManager',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  name?: string
+  name!: string | null
 
   @StringProperty({
     description: '前端组件键',
     example: '/system-manager/account-manager/index',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  component?: string
+  component!: string | null
 
   @StringProperty({
     description: '重定向路径',
     example: '/system-manager/profile',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  redirect?: string
+  redirect!: string | null
 
   @StringProperty({
     description: '图标',
     example: 'lucide:settings',
-    required: false,
+    required: true,
+    nullable: true,
     validation: false,
   })
-  icon?: string
+  icon!: string | null
 
   @NumberProperty({
     description: '排序值',
