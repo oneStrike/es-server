@@ -731,36 +731,49 @@ export class AdminRbacService {
     if (roleIds.length === 0) {
       return []
     }
-    return this.db
-      .select({
-        id: this.menuTable.id,
-        code: this.menuTable.code,
-        parentId: this.menuTable.parentId,
-        type: this.menuTable.type,
-        title: this.menuTable.title,
-        path: this.menuTable.path,
-        name: this.menuTable.name,
-        component: this.menuTable.component,
-        redirect: this.menuTable.redirect,
-        icon: this.menuTable.icon,
-        sortOrder: this.menuTable.sortOrder,
-        isVisible: this.menuTable.isVisible,
-        isEnabled: this.menuTable.isEnabled,
-        keepAlive: this.menuTable.keepAlive,
-        externalLink: this.menuTable.externalLink,
-        createdAt: this.menuTable.createdAt,
-        updatedAt: this.menuTable.updatedAt,
-      })
-      .from(this.roleMenuTable)
-      .innerJoin(this.menuTable, eq(this.menuTable.id, this.roleMenuTable.menuId))
-      .where(
-        and(
-          inArray(this.roleMenuTable.roleId, roleIds),
-          eq(this.menuTable.isEnabled, true),
-          eq(this.menuTable.isVisible, true),
-        ),
+    const roleIdList = sql.join(roleIds.map((roleId) => sql`${roleId}`), sql`, `)
+    // 使用递归 CTE 读取授权菜单及祖先目录，避免只绑定子菜单时生成孤儿菜单树。
+    const result = await this.db.execute(sql`
+      WITH RECURSIVE authorized_menu AS (
+        SELECT menu.*
+        FROM admin_role_menu role_menu
+        INNER JOIN admin_menu menu ON menu.id = role_menu.menu_id
+        WHERE
+          role_menu.role_id IN (${roleIdList})
+          AND menu.is_enabled = true
+          AND menu.is_visible = true
+
+        UNION
+
+        SELECT parent.*
+        FROM admin_menu parent
+        INNER JOIN authorized_menu child ON child.parent_id = parent.id
+        WHERE
+          parent.is_enabled = true
+          AND parent.is_visible = true
       )
-      .orderBy(asc(this.menuTable.parentId), asc(this.menuTable.sortOrder), asc(this.menuTable.id))
+      SELECT
+        id,
+        code,
+        parent_id AS "parentId",
+        type,
+        title,
+        path,
+        name,
+        component,
+        redirect,
+        icon,
+        sort_order AS "sortOrder",
+        is_visible AS "isVisible",
+        is_enabled AS "isEnabled",
+        keep_alive AS "keepAlive",
+        external_link AS "externalLink",
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM authorized_menu
+      ORDER BY parent_id ASC NULLS FIRST, sort_order ASC, id ASC
+    `)
+    return this.extractExecutedRows<AdminMenuRow>(result)
   }
 
   // 校验权限元数据编码唯一且必填字段完整。
