@@ -386,6 +386,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     return {
       id: this.forumTopicTable.id,
       createdAt: this.forumTopicTable.createdAt,
+      updatedAt: this.forumTopicTable.updatedAt,
       likeCount: this.forumTopicTable.likeCount,
       commentCount: this.forumTopicTable.commentCount,
     }
