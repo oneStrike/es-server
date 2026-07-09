@@ -21,10 +21,6 @@ services:
         limits:
           cpus: '1.0'
           memory: 1G
-    # 依赖迁移服务
-    depends_on:
-      migrator:
-        condition: service_completed_successfully
     # 安全选项
     security_opt:
       - no-new-privileges:true
@@ -66,7 +62,6 @@ services:
   # 数据库迁移服务
   migrator:
     image: es/app/server:${SERVER_VERSION}
-    container_name: es-migrator
     pull_policy: never
     user: '1001:1001'
     # 覆盖默认启动命令，执行生产环境离线迁移脚本
@@ -102,10 +97,6 @@ services:
         limits:
           cpus: '1.0'
           memory: 1G
-    # 依赖迁移服务
-    depends_on:
-      migrator:
-        condition: service_completed_successfully
     # 安全选项
     security_opt:
       - no-new-privileges:true

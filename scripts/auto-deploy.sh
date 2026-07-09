@@ -44,8 +44,8 @@ error() {
 }
 
 # Git retry configuration
-readonly GIT_TIMEOUT_SECONDS="${GIT_TIMEOUT_SECONDS:-90}"
-readonly GIT_FETCH_TIMEOUT_SECONDS="${GIT_FETCH_TIMEOUT_SECONDS:-${GIT_FETCH_MAIN_TIMEOUT_SECONDS:-30}}"
+readonly GIT_TIMEOUT_SECONDS="${GIT_TIMEOUT_SECONDS:-180}"
+readonly GIT_FETCH_TIMEOUT_SECONDS="${GIT_FETCH_TIMEOUT_SECONDS:-${GIT_FETCH_MAIN_TIMEOUT_SECONDS:-180}}"
 readonly GIT_CONNECT_TIMEOUT_SECONDS="${GIT_CONNECT_TIMEOUT_SECONDS:-15}"
 readonly GIT_LOW_SPEED_LIMIT="${GIT_LOW_SPEED_LIMIT:-1024}"
 readonly GIT_LOW_SPEED_TIME="${GIT_LOW_SPEED_TIME:-30}"
@@ -374,11 +374,9 @@ deploy_project() {
             ;;
 
         es-server)
-            # migrator 必须同步等待完成（不带 -d），否则 depends_on: service_completed_successfully
-            # 条件尚未满足，compose 在启动 admin-server/app-server 时会重新触发 migrator
+            # 迁移作为一次性任务显式执行，成功后再重启服务。
             log "执行数据库迁移 (migrator)..."
-            docker compose rm -s -f migrator 2>/dev/null || true
-            if ! docker compose up --force-recreate migrator; then
+            if ! docker compose run --rm --no-deps migrator; then
                 error "migrator 执行失败"
                 deploy_failed=true
             fi
