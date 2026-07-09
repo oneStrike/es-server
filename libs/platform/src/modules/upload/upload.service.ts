@@ -171,7 +171,7 @@ export class UploadService {
     }
   }
 
-  // 将本地文件继续走统一上传 provider 流程。 用于压缩包解压后的图片按既有上传配置决定最终落点!
+  // 将本地文件继续走统一上传 provider 流程。 用于压缩包解压后的图片按既有上传配置决定最终落点。
   async uploadLocalFile(
     options: UploadLocalFileOptions,
   ): Promise<UploadResult> {
