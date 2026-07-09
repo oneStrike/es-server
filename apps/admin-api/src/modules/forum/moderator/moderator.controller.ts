@@ -11,6 +11,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @Controller('admin/forum/moderators')
@@ -19,6 +20,11 @@ export class ModeratorController {
   constructor(private readonly forumModeratorService: ForumModeratorService) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'forum:moderators:page',
+    name: '查看版主列表',
+    groupCode: 'forum:moderators',
+  })
   @ApiPageDoc({
     summary: '查看版主列表',
     model: ForumModeratorDto,
@@ -28,6 +34,11 @@ export class ModeratorController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'forum:moderators:detail',
+    name: '查看版主详情',
+    groupCode: 'forum:moderators',
+  })
   @ApiDoc({
     summary: '查看版主详情',
     model: ForumModeratorDto,
@@ -37,6 +48,11 @@ export class ModeratorController {
   }
 
   @Post('create')
+  @AdminPermission({
+    code: 'forum:moderators:create',
+    name: '添加版主',
+    groupCode: 'forum:moderators',
+  })
   @ApiAuditDoc({
     summary: '添加版主',
     model: Boolean,
@@ -52,6 +68,11 @@ export class ModeratorController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'forum:moderators:update',
+    name: '更新版主信息',
+    groupCode: 'forum:moderators',
+  })
   @ApiAuditDoc({
     summary: '更新版主信息',
     model: Boolean,
@@ -67,6 +88,11 @@ export class ModeratorController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'forum:moderators:delete',
+    name: '移除版主',
+    groupCode: 'forum:moderators',
+  })
   @ApiAuditDoc({
     summary: '移除版主',
     model: Boolean,
@@ -82,6 +108,11 @@ export class ModeratorController {
   }
 
   @Post('assign-section')
+  @AdminPermission({
+    code: 'forum:moderators:assign:section',
+    name: '分配版主管理的板块',
+    groupCode: 'forum:moderators',
+  })
   @ApiAuditDoc({
     summary: '分配版主管理的板块',
     model: Boolean,

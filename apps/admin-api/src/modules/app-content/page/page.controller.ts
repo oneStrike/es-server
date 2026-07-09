@@ -11,6 +11,7 @@ import { IdDto, IdsDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -25,6 +26,11 @@ export class AppPageController {
   constructor(private readonly libAppPageService: AppPageService) {}
 
   @Post('create')
+  @AdminPermission({
+    code: 'app:page:create',
+    name: '创建页面配置',
+    groupCode: 'app:page',
+  })
   @ApiAuditDoc({
     summary: '创建页面配置',
     model: Boolean,
@@ -37,6 +43,11 @@ export class AppPageController {
   }
 
   @Get('page')
+  @AdminPermission({
+    code: 'app:page:page',
+    name: '分页查询页面配置列表',
+    groupCode: 'app:page',
+  })
   @ApiPageDoc({
     summary: '分页查询页面配置列表',
     model: AppPageOutputDto,
@@ -46,6 +57,11 @@ export class AppPageController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'app:page:detail',
+    name: '根据ID查询页面配置详情',
+    groupCode: 'app:page',
+  })
   @ApiDoc({
     summary: '根据ID查询页面配置详情',
     model: AppPageOutputDto,
@@ -56,6 +72,11 @@ export class AppPageController {
 
   // 兼容历史 `detail/code` 路由，同时提供更符合规范的 `code/detail` 入口。
   @Get('code/detail')
+  @AdminPermission({
+    code: 'app:page:code:detail',
+    name: '根据页面编码查询页面配置详情',
+    groupCode: 'app:page',
+  })
   @ApiDoc({
     summary: '根据页面编码查询页面配置详情',
     model: AppPageOutputDto,
@@ -65,6 +86,11 @@ export class AppPageController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'app:page:update',
+    name: '更新页面配置',
+    groupCode: 'app:page',
+  })
   @ApiAuditDoc({
     summary: '更新页面配置',
     model: Boolean,
@@ -77,6 +103,11 @@ export class AppPageController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'app:page:delete',
+    name: '批量下线页面配置',
+    groupCode: 'app:page',
+  })
   @ApiAuditDoc({
     summary: '批量下线页面配置',
     model: Boolean,

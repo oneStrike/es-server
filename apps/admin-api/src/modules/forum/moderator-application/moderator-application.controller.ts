@@ -10,6 +10,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('论坛管理/版主申请')
@@ -20,6 +21,11 @@ export class ForumModeratorApplicationController {
   ) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'forum:moderator:application:page',
+    name: '分页查询版主申请',
+    groupCode: 'forum:moderator:application',
+  })
   @ApiPageDoc({
     summary: '分页查询版主申请',
     model: ForumModeratorApplicationDto,
@@ -29,6 +35,11 @@ export class ForumModeratorApplicationController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'forum:moderator:application:detail',
+    name: '获取版主申请详情',
+    groupCode: 'forum:moderator:application',
+  })
   @ApiDoc({
     summary: '获取版主申请详情',
     model: ForumModeratorApplicationDto,
@@ -38,6 +49,11 @@ export class ForumModeratorApplicationController {
   }
 
   @Post('audit')
+  @AdminPermission({
+    code: 'forum:moderator:application:audit',
+    name: '审核版主申请',
+    groupCode: 'forum:moderator:application',
+  })
   @ApiAuditDoc({
     summary: '审核版主申请',
     model: Boolean,
@@ -53,6 +69,11 @@ export class ForumModeratorApplicationController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'forum:moderator:application:delete',
+    name: '删除版主申请',
+    groupCode: 'forum:moderator:application',
+  })
   @ApiAuditDoc({
     summary: '删除版主申请',
     model: Boolean,

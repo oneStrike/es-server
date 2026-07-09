@@ -3,6 +3,7 @@ import { ForumSearchService } from '@libs/forum/search/search.service';
 import { ApiPageDoc } from '@libs/platform/decorators';
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 
 @ApiTags('论坛管理/搜索')
 @Controller('admin/forum/search')
@@ -10,6 +11,11 @@ export class ForumSearchController {
   constructor(private readonly forumSearchService: ForumSearchService) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'forum:search:page',
+    name: '分页搜索论坛主题与回复',
+    groupCode: 'forum:search',
+  })
   @ApiPageDoc({
     summary: '分页搜索论坛主题与回复',
     model: ForumSearchResultDto,

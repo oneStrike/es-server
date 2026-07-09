@@ -12,6 +12,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { MessageTemplateService } from './message-template.service'
 
@@ -30,6 +31,11 @@ export class MessageTemplateController {
    * 获取通知模板分页
    */
   @Get('page')
+  @AdminPermission({
+    code: 'message:notification:templates:page',
+    name: '分页查询通知模板',
+    groupCode: 'message:notification:templates',
+  })
   @ApiPageDoc({
     summary: '分页查询通知模板',
     model: AdminMessageNotificationTemplateDto,
@@ -44,6 +50,11 @@ export class MessageTemplateController {
    * 获取通知模板详情
    */
   @Get('detail')
+  @AdminPermission({
+    code: 'message:notification:templates:detail',
+    name: '获取通知模板详情',
+    groupCode: 'message:notification:templates',
+  })
   @ApiDoc({
     summary: '获取通知模板详情',
     model: AdminMessageNotificationTemplateDto,
@@ -56,6 +67,11 @@ export class MessageTemplateController {
    * 创建通知模板
    */
   @Post('create')
+  @AdminPermission({
+    code: 'message:notification:templates:create',
+    name: '创建通知模板',
+    groupCode: 'message:notification:templates',
+  })
   @ApiAuditDoc({
     summary: '创建通知模板',
     model: Boolean,
@@ -73,6 +89,11 @@ export class MessageTemplateController {
    * 更新通知模板
    */
   @Post('update')
+  @AdminPermission({
+    code: 'message:notification:templates:update',
+    name: '更新通知模板',
+    groupCode: 'message:notification:templates',
+  })
   @ApiAuditDoc({
     summary: '更新通知模板',
     model: Boolean,
@@ -90,6 +111,11 @@ export class MessageTemplateController {
    * 更新通知模板启用状态
    */
   @Post('update-enabled')
+  @AdminPermission({
+    code: 'message:notification:templates:update:enabled',
+    name: '更新通知模板启用状态',
+    groupCode: 'message:notification:templates',
+  })
   @ApiAuditDoc({
     summary: '更新通知模板启用状态',
     model: Boolean,
@@ -107,6 +133,11 @@ export class MessageTemplateController {
    * 预览通知模板
    */
   @Post('preview')
+  @AdminPermission({
+    code: 'message:notification:templates:preview',
+    name: '预览通知模板渲染结果',
+    groupCode: 'message:notification:templates',
+  })
   @ApiAuditDoc({
     summary: '预览通知模板渲染结果',
     model: PreviewNotificationTemplateResponseDto,

@@ -2,6 +2,7 @@ import { ApiPageDoc } from '@libs/platform/decorators'
 import { AuditItemDto, AuditPageRequestDto } from '@libs/platform/modules/audit/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { AuditService } from './audit.service'
 
 @Controller('admin/audit')
@@ -13,6 +14,11 @@ export class AuditController {
    * 获取审计日志列表
    */
   @Get('page')
+  @AdminPermission({
+    code: 'audit:page',
+    name: '获取审计日志列表',
+    groupCode: 'audit',
+  })
   @ApiPageDoc({
     summary: '获取审计日志列表',
     model: AuditItemDto,

@@ -2,14 +2,12 @@ import type { DrizzleService } from '@db/core'
 import type { AdminAppUserCountDto } from '@libs/user/dto/admin-app-user.dto'
 import type { UserService as UserCoreService } from '@libs/user/user.service'
 import { randomInt } from 'node:crypto'
-import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
   buildDateOnlyRangeInAppTimeZone,
   formatDateOnlyInAppTimeZone,
 } from '@libs/platform/utils'
-import { ForbiddenException } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 
 const APP_USER_ACCOUNT_MAX_RETRIES = 10
@@ -34,11 +32,6 @@ export abstract class AppUserServiceSupport {
   // APP 用户表。
   protected get appUserTable() {
     return this.drizzle.schema.appUser
-  }
-
-  // 管理端用户表。
-  protected get adminUserTable() {
-    return this.drizzle.schema.adminUser
   }
 
   // APP 用户计数表。
@@ -75,26 +68,6 @@ export abstract class AppUserServiceSupport {
     for (let index = 0; index < ids.length; index += batchSize) {
       const batchIds = ids.slice(index, index + batchSize)
       await handler(batchIds)
-    }
-  }
-
-  // 校验当前管理端用户是否为超级管理员，角色不足抛出 ForbiddenException。
-  protected async ensureSuperAdmin(adminUserId: number) {
-    const [adminUser] = await this.db
-      .select({ role: this.adminUserTable.role })
-      .from(this.adminUserTable)
-      .where(eq(this.adminUserTable.id, adminUserId))
-      .limit(1)
-
-    if (!adminUser) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '管理端用户不存在',
-      )
-    }
-
-    if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
-      throw new ForbiddenException('权限不足')
     }
   }
 

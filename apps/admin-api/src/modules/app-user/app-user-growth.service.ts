@@ -57,7 +57,6 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     adminUserId: number,
     dto: AdminAppUserGrowthRuleActionDto,
   ) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)
 
     return this.userPointService.addPoints({
@@ -77,7 +76,6 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     adminUserId: number,
     dto: ConsumeAdminAppUserPointsDto,
   ) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)
 
     return this.userPointService.consumePoints({
@@ -178,7 +176,6 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     adminUserId: number,
     dto: AdminAppUserGrowthRuleActionDto,
   ) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)
 
     return this.userExperienceService.addExperience({
@@ -288,7 +285,6 @@ export class AppUserGrowthService extends AppUserServiceSupport {
 
   // 为 APP 用户分配徽章，入口层先拦截软删除用户。
   async assignAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)
 
     await this.userBadgeService.assignBadge(dto)
@@ -297,7 +293,6 @@ export class AppUserGrowthService extends AppUserServiceSupport {
 
   // 撤销 APP 用户徽章，入口层先拦截软删除用户。
   async revokeAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)
 
     await this.userBadgeService.revokeBadge(dto)

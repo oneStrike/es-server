@@ -16,6 +16,7 @@ import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminAuthOnly } from '../../common/decorators/admin-permission.decorator'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuthService } from './auth.service'
 
@@ -69,6 +70,7 @@ export class AuthController {
    * 管理员登出接口
    */
   @Post('logout')
+  @AdminAuthOnly()
   @ApiDoc({
     summary: '管理员登出',
     model: {

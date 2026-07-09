@@ -14,7 +14,6 @@ import type {
   ReportWorkTargetTypePair,
 } from './interaction-summary.type'
 import { DrizzleService } from '@db/core'
-import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import {
   AuditRoleEnum,
   CommentLevelEnum,
@@ -71,6 +70,16 @@ export class InteractionSummaryReadService {
   // 获取后台管理员表定义。
   private get adminUser() {
     return this.drizzle.schema.adminUser
+  }
+
+  // 获取管理端用户角色关系表定义。
+  private get adminUserRole() {
+    return this.drizzle.schema.adminUserRole
+  }
+
+  // 获取管理端角色表定义。
+  private get adminRole() {
+    return this.drizzle.schema.adminRole
   }
 
   // 构建多态目标摘要 map key，避免不同类型下相同 ID 相互覆盖。
@@ -232,18 +241,32 @@ export class InteractionSummaryReadService {
         id: this.adminUser.id,
         username: this.adminUser.username,
         avatar: this.adminUser.avatar,
-        role: this.adminUser.role,
       })
       .from(this.adminUser)
       .where(inArray(this.adminUser.id, uniqueAdminIds))
+    const roleRows = await this.db
+      .select({
+        adminUserId: this.adminUserRole.adminUserId,
+        name: this.adminRole.name,
+      })
+      .from(this.adminUserRole)
+      .innerJoin(this.adminRole, eq(this.adminRole.id, this.adminUserRole.roleId))
+      .where(inArray(this.adminUserRole.adminUserId, uniqueAdminIds))
+    const roleNamesByAdminId = new Map<number, string[]>()
+    for (const role of roleRows) {
+      const names = roleNamesByAdminId.get(role.adminUserId) ?? []
+      names.push(role.name)
+      roleNamesByAdminId.set(role.adminUserId, names)
+    }
 
     for (const admin of admins) {
+      const roleNames = roleNamesByAdminId.get(admin.id) ?? []
       summaryMap.set(this.buildAdminActorSummaryKey(admin.id), {
         id: admin.id,
         username: admin.username,
         nickname: admin.username,
         avatar: admin.avatar ?? null,
-        roleName: this.getAdminUserRoleName(admin.role),
+        roleName: roleNames.length > 0 ? roleNames.join('、') : '管理员',
       })
     }
 
@@ -1047,17 +1070,6 @@ export class InteractionSummaryReadService {
         return '用户主页'
       default:
         return '未知场景'
-    }
-  }
-
-  // 获取管理员账号角色名称。
-  private getAdminUserRoleName(role: AdminUserRoleEnum) {
-    switch (role) {
-      case AdminUserRoleEnum.SUPER_ADMIN:
-        return '超级管理员'
-      case AdminUserRoleEnum.NORMAL_ADMIN:
-      default:
-        return '普通管理员'
     }
   }
 }

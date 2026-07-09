@@ -29,6 +29,7 @@ import {
   Req,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/漫画管理/章节内容')
@@ -40,6 +41,11 @@ export class ChapterContentController {
   ) {}
 
   @Get('list')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:list',
+    name: '获取章节内容',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiDoc({
     summary: '获取章节内容',
     model: String,
@@ -50,6 +56,11 @@ export class ChapterContentController {
   }
 
   @Post('upload')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:upload',
+    name: '上传章节内容',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '上传章节内容',
     model: UploadResponseDto,
@@ -62,6 +73,11 @@ export class ChapterContentController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:update',
+    name: '更新章节内容',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '更新章节内容',
     model: Boolean,
@@ -74,6 +90,11 @@ export class ChapterContentController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:delete',
+    name: '删除章节内容',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '删除章节内容',
     model: Boolean,
@@ -86,6 +107,11 @@ export class ChapterContentController {
   }
 
   @Post('move')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:move',
+    name: '移动章节内容',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '移动章节内容',
     model: Boolean,
@@ -98,6 +124,11 @@ export class ChapterContentController {
   }
 
   @Post('clear')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:clear',
+    name: '清空章节内容',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '清空章节内容',
     model: Boolean,
@@ -110,6 +141,11 @@ export class ChapterContentController {
   }
 
   @Post('archive/preview')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:archive:preview',
+    name: '预解析漫画压缩包',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '预解析漫画压缩包',
     model: ComicArchiveTaskResponseDto,
@@ -125,6 +161,11 @@ export class ChapterContentController {
   }
 
   @Post('archive/session')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:archive:session',
+    name: '创建漫画压缩包预解析会话',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '创建漫画压缩包预解析会话',
     model: WorkflowJobIdDto,
@@ -140,6 +181,11 @@ export class ChapterContentController {
   }
 
   @Post('archive/discard')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:archive:discard',
+    name: '丢弃漫画压缩包预解析会话',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '丢弃漫画压缩包预解析会话',
     model: WorkflowJobDto,
@@ -152,6 +198,11 @@ export class ChapterContentController {
   }
 
   @Post('archive/confirm')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:archive:confirm',
+    name: '确认漫画压缩包导入',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '确认漫画压缩包导入',
     model: WorkflowJobDto,
@@ -164,6 +215,11 @@ export class ChapterContentController {
   }
 
   @Get('archive/detail')
+  @AdminPermission({
+    code: 'content:comic:chapter:content:archive:detail',
+    name: '查询漫画压缩包导入任务详情',
+    groupCode: 'content:comic:chapter:content',
+  })
   @ApiDoc({
     summary: '查询漫画压缩包导入任务详情',
     model: ComicArchiveTaskResponseDto,

@@ -16,6 +16,7 @@ import {
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/表情管理')
@@ -24,6 +25,11 @@ export class EmojiAssetController {
   constructor(private readonly emojiAssetService: EmojiAssetService) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'content:emoji:asset:page',
+    name: '分页查询表情资源',
+    groupCode: 'content:emoji:asset',
+  })
   @ApiPageDoc({
     summary: '分页查询表情资源',
     model: EmojiAssetOutputDto,
@@ -33,6 +39,11 @@ export class EmojiAssetController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'content:emoji:asset:detail',
+    name: '查询表情资源详情',
+    groupCode: 'content:emoji:asset',
+  })
   @ApiDoc({
     summary: '查询表情资源详情',
     model: EmojiAssetOutputDto,
@@ -42,6 +53,11 @@ export class EmojiAssetController {
   }
 
   @Post('create')
+  @AdminPermission({
+    code: 'content:emoji:asset:create',
+    name: '创建表情资源',
+    groupCode: 'content:emoji:asset',
+  })
   @ApiAuditDoc({
     summary: '创建表情资源',
     model: Boolean,
@@ -57,6 +73,11 @@ export class EmojiAssetController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'content:emoji:asset:update',
+    name: '更新表情资源',
+    groupCode: 'content:emoji:asset',
+  })
   @ApiAuditDoc({
     summary: '更新表情资源',
     model: Boolean,
@@ -72,6 +93,11 @@ export class EmojiAssetController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'content:emoji:asset:delete',
+    name: '删除表情资源',
+    groupCode: 'content:emoji:asset',
+  })
   @ApiAuditDoc({
     summary: '删除表情资源',
     model: Boolean,
@@ -84,6 +110,11 @@ export class EmojiAssetController {
   }
 
   @Post('update-enabled')
+  @AdminPermission({
+    code: 'content:emoji:asset:update:enabled',
+    name: '更新表情资源启用状态',
+    groupCode: 'content:emoji:asset',
+  })
   @ApiAuditDoc({
     summary: '更新表情资源启用状态',
     model: Boolean,
@@ -103,6 +134,11 @@ export class EmojiAssetController {
   }
 
   @Post('swap-sort-order')
+  @AdminPermission({
+    code: 'content:emoji:asset:swap:sort:order',
+    name: '交换表情资源排序',
+    groupCode: 'content:emoji:asset',
+  })
   @ApiAuditDoc({
     summary: '交换表情资源排序',
     model: Boolean,

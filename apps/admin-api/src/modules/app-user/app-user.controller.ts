@@ -29,6 +29,7 @@ import {
 import { UserPointStatsFieldsDto } from '@libs/user/dto/app-user-growth-shared.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AppUserService } from './app-user.service'
 
@@ -45,6 +46,11 @@ export class AppUserController {
    * 获取 APP 用户分页列表
    */
   @Get('page')
+  @AdminPermission({
+    code: 'app:users:page',
+    name: '分页查询 APP 用户列表',
+    groupCode: 'app:users',
+  })
   @ApiPageDoc({
     summary: '分页查询 APP 用户列表',
     model: AdminAppUserPageItemDto,
@@ -57,6 +63,11 @@ export class AppUserController {
    * 获取 APP 用户详情
    */
   @Get('detail')
+  @AdminPermission({
+    code: 'app:users:detail',
+    name: '获取 APP 用户详情',
+    groupCode: 'app:users',
+  })
   @ApiDoc({
     summary: '获取 APP 用户详情',
     model: AdminAppUserDetailDto,
@@ -66,6 +77,11 @@ export class AppUserController {
   }
 
   @Post('create')
+  @AdminPermission({
+    code: 'app:users:create',
+    name: '新建 APP 用户',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '新建 APP 用户',
     model: Boolean,
@@ -84,6 +100,11 @@ export class AppUserController {
    * 更新 APP 用户资料
    */
   @Post('profile/update')
+  @AdminPermission({
+    code: 'app:users:profile:update',
+    name: '更新 APP 用户资料',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '更新 APP 用户资料',
     model: Boolean,
@@ -102,6 +123,11 @@ export class AppUserController {
    * 更新 APP 用户启用状态
    */
   @Post('update-enabled')
+  @AdminPermission({
+    code: 'app:users:update:enabled',
+    name: '更新 APP 用户启用状态',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '更新 APP 用户启用状态',
     model: Boolean,
@@ -120,6 +146,11 @@ export class AppUserController {
    * 更新 APP 用户状态
    */
   @Post('update-status')
+  @AdminPermission({
+    code: 'app:users:update:status',
+    name: '更新 APP 用户状态',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '更新 APP 用户状态',
     model: Boolean,
@@ -135,6 +166,11 @@ export class AppUserController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'app:users:delete',
+    name: '删除 APP 用户',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '删除 APP 用户',
     model: Boolean,
@@ -147,6 +183,11 @@ export class AppUserController {
   }
 
   @Post('restore')
+  @AdminPermission({
+    code: 'app:users:restore',
+    name: '恢复 APP 用户',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '恢复 APP 用户',
     model: Boolean,
@@ -162,6 +203,11 @@ export class AppUserController {
   }
 
   @Post('rebuild-follow-count')
+  @AdminPermission({
+    code: 'app:users:rebuild:follow:count',
+    name: '重建 APP 用户关注计数',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '重建 APP 用户关注计数',
     model: AdminAppUserFollowCountRepairResultDto,
@@ -177,6 +223,11 @@ export class AppUserController {
   }
 
   @Post('rebuild-follow-count-all')
+  @AdminPermission({
+    code: 'app:users:rebuild:follow:count:all',
+    name: '全量重建 APP 用户关注计数',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '全量重建 APP 用户关注计数',
     model: Boolean,
@@ -189,6 +240,11 @@ export class AppUserController {
   }
 
   @Post('password/reset')
+  @AdminPermission({
+    code: 'app:users:password:reset',
+    name: '重置 APP 用户密码',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '重置 APP 用户密码',
     model: Boolean,
@@ -207,6 +263,11 @@ export class AppUserController {
    * 获取 APP 用户积分统计
    */
   @Get('points/stats')
+  @AdminPermission({
+    code: 'app:users:points:stats',
+    name: '获取 APP 用户积分统计',
+    groupCode: 'app:users',
+  })
   @ApiDoc({
     summary: '获取 APP 用户积分统计',
     model: UserPointStatsFieldsDto,
@@ -219,6 +280,11 @@ export class AppUserController {
    * 获取 APP 用户积分记录分页
    */
   @Get('points/record/page')
+  @AdminPermission({
+    code: 'app:users:points:record:page',
+    name: '分页查询 APP 用户积分记录',
+    groupCode: 'app:users',
+  })
   @ApiPageDoc({
     summary: '分页查询 APP 用户积分记录',
     model: AdminAppUserPointRecordDto,
@@ -231,6 +297,11 @@ export class AppUserController {
    * 手动增加 APP 用户积分
    */
   @Post('points/grant')
+  @AdminPermission({
+    code: 'app:users:points:grant',
+    name: '手动增加 APP 用户积分',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '手动增加 APP 用户积分',
     model: Boolean,
@@ -249,6 +320,11 @@ export class AppUserController {
    * 手动扣减 APP 用户积分
    */
   @Post('points/consume')
+  @AdminPermission({
+    code: 'app:users:points:consume',
+    name: '手动扣减 APP 用户积分',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '手动扣减 APP 用户积分',
     model: Boolean,
@@ -267,6 +343,11 @@ export class AppUserController {
    * 获取 APP 用户经验统计
    */
   @Get('experience/stats')
+  @AdminPermission({
+    code: 'app:users:experience:stats',
+    name: '获取 APP 用户经验统计',
+    groupCode: 'app:users',
+  })
   @ApiDoc({
     summary: '获取 APP 用户经验统计',
     model: AdminAppUserExperienceStatsDto,
@@ -279,6 +360,11 @@ export class AppUserController {
    * 获取 APP 用户经验记录分页
    */
   @Get('experience/record/page')
+  @AdminPermission({
+    code: 'app:users:experience:record:page',
+    name: '分页查询 APP 用户经验记录',
+    groupCode: 'app:users',
+  })
   @ApiPageDoc({
     summary: '分页查询 APP 用户经验记录',
     model: AdminAppUserExperienceRecordDto,
@@ -293,6 +379,11 @@ export class AppUserController {
    * 获取 APP 用户混合成长流水分页
    */
   @Get('growth/record/page')
+  @AdminPermission({
+    code: 'app:users:growth:record:page',
+    name: '分页查询 APP 用户混合成长流水',
+    groupCode: 'app:users',
+  })
   @ApiPageDoc({
     summary: '分页查询 APP 用户混合成长流水',
     model: AdminAppUserGrowthLedgerRecordDto,
@@ -307,6 +398,11 @@ export class AppUserController {
    * 手动增加 APP 用户经验
    */
   @Post('experience/grant')
+  @AdminPermission({
+    code: 'app:users:experience:grant',
+    name: '手动增加 APP 用户经验',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '手动增加 APP 用户经验',
     model: Boolean,
@@ -325,6 +421,11 @@ export class AppUserController {
    * 获取 APP 用户徽章分页
    */
   @Get('badges/page')
+  @AdminPermission({
+    code: 'app:users:badges:page',
+    name: '分页查询 APP 用户徽章',
+    groupCode: 'app:users',
+  })
   @ApiPageDoc({
     summary: '分页查询 APP 用户徽章',
     model: UserBadgeItemDto,
@@ -337,6 +438,11 @@ export class AppUserController {
    * 为 APP 用户分配徽章
    */
   @Post('badges/assign')
+  @AdminPermission({
+    code: 'app:users:badges:assign',
+    name: '为 APP 用户分配徽章',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '为 APP 用户分配徽章',
     model: Boolean,
@@ -355,6 +461,11 @@ export class AppUserController {
    * 撤销 APP 用户徽章
    */
   @Post('badges/revoke')
+  @AdminPermission({
+    code: 'app:users:badges:revoke',
+    name: '撤销 APP 用户徽章',
+    groupCode: 'app:users',
+  })
   @ApiAuditDoc({
     summary: '撤销 APP 用户徽章',
     model: Boolean,

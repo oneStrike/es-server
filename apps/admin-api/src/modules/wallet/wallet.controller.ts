@@ -12,6 +12,7 @@ import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('钱包管理')
@@ -21,6 +22,11 @@ export class WalletController {
 
   // 分页查询虚拟币充值包。
   @Get('currency-package/page')
+  @AdminPermission({
+    code: 'wallet:currency:package:page',
+    name: '分页查询虚拟币充值包',
+    groupCode: 'wallet',
+  })
   @ApiPageDoc({
     summary: '分页查询虚拟币充值包',
     model: AdminCurrencyPackagePageItemDto,
@@ -31,6 +37,11 @@ export class WalletController {
 
   // 分页查询指定用户虚拟币流水。
   @Get('ledger/page')
+  @AdminPermission({
+    code: 'wallet:ledger:page',
+    name: '分页查询虚拟币流水',
+    groupCode: 'wallet',
+  })
   @ApiPageDoc({
     summary: '分页查询虚拟币流水',
     model: WalletLedgerRecordDto,
@@ -41,6 +52,11 @@ export class WalletController {
 
   // 创建虚拟币充值包。
   @Post('currency-package/create')
+  @AdminPermission({
+    code: 'wallet:currency:package:create',
+    name: '创建虚拟币充值包',
+    groupCode: 'wallet',
+  })
   @ApiAuditDoc({
     summary: '创建虚拟币充值包',
     model: Boolean,
@@ -52,6 +68,11 @@ export class WalletController {
 
   // 更新虚拟币充值包。
   @Post('currency-package/update')
+  @AdminPermission({
+    code: 'wallet:currency:package:update',
+    name: '更新虚拟币充值包',
+    groupCode: 'wallet',
+  })
   @ApiAuditDoc({
     summary: '更新虚拟币充值包',
     model: Boolean,
@@ -63,6 +84,11 @@ export class WalletController {
 
   // 更新虚拟币充值包启用状态。
   @Post('currency-package/update-status')
+  @AdminPermission({
+    code: 'wallet:currency:package:update:status',
+    name: '更新虚拟币充值包启用状态',
+    groupCode: 'wallet',
+  })
   @ApiAuditDoc({
     summary: '更新虚拟币充值包启用状态',
     model: Boolean,

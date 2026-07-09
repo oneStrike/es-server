@@ -30,6 +30,7 @@ import {
   Req,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('论坛管理/主题管理')
@@ -60,6 +61,11 @@ export class ForumTopicController {
 
   // 后台按治理筛选条件分页查看主题列表。
   @Get('page')
+  @AdminPermission({
+    code: 'forum:topic:page',
+    name: '分页查询论坛主题列表',
+    groupCode: 'forum:topic',
+  })
   @ApiPageDoc({
     summary: '分页查询论坛主题列表',
     model: AdminForumTopicPageItemDto,
@@ -70,6 +76,11 @@ export class ForumTopicController {
 
   // 后台查看主题详情、作者、板块和审核辅助信息。
   @Get('detail')
+  @AdminPermission({
+    code: 'forum:topic:detail',
+    name: '获取论坛主题详情',
+    groupCode: 'forum:topic',
+  })
   @ApiDoc({
     summary: '获取论坛主题详情',
     model: AdminForumTopicDetailDto,
@@ -80,6 +91,11 @@ export class ForumTopicController {
 
   // 后台代创建主题并记录客户端来源。
   @Post('create')
+  @AdminPermission({
+    code: 'forum:topic:create',
+    name: '创建论坛主题',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '创建论坛主题',
     model: IdDto,
@@ -96,6 +112,11 @@ export class ForumTopicController {
 
   // 后台治理链路更新主题正文与来源快照。
   @Post('update')
+  @AdminPermission({
+    code: 'forum:topic:update',
+    name: '更新论坛主题',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '更新论坛主题',
     model: Boolean,
@@ -120,6 +141,11 @@ export class ForumTopicController {
 
   // 后台删除主题并同步治理计数与可见性。
   @Post('delete')
+  @AdminPermission({
+    code: 'forum:topic:delete',
+    name: '删除论坛主题',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '删除论坛主题',
     model: Boolean,
@@ -144,6 +170,11 @@ export class ForumTopicController {
 
   // 后台恢复已删除主题并重建可见性关联。
   @Post('restore')
+  @AdminPermission({
+    code: 'forum:topic:restore',
+    name: '恢复已删除论坛主题',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '恢复已删除论坛主题',
     model: Boolean,
@@ -168,6 +199,11 @@ export class ForumTopicController {
 
   // 后台移动主题所属板块。
   @Post('move')
+  @AdminPermission({
+    code: 'forum:topic:move',
+    name: '移动论坛主题板块',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '移动论坛主题板块',
     model: Boolean,
@@ -187,6 +223,11 @@ export class ForumTopicController {
 
   // 后台更新主题置顶状态。
   @Post('update-pinned')
+  @AdminPermission({
+    code: 'forum:topic:update:pinned',
+    name: '更新主题置顶状态',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '更新主题置顶状态',
     model: Boolean,
@@ -206,6 +247,11 @@ export class ForumTopicController {
 
   // 后台更新主题精华状态。
   @Post('update-featured')
+  @AdminPermission({
+    code: 'forum:topic:update:featured',
+    name: '更新主题精华状态',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '更新主题精华状态',
     model: Boolean,
@@ -225,6 +271,11 @@ export class ForumTopicController {
 
   // 后台更新主题锁定状态。
   @Post('update-locked')
+  @AdminPermission({
+    code: 'forum:topic:update:locked',
+    name: '更新主题锁定状态',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '更新主题锁定状态',
     model: Boolean,
@@ -244,6 +295,11 @@ export class ForumTopicController {
 
   // 后台更新主题隐藏状态并同步公开可见性。
   @Post('update-hidden')
+  @AdminPermission({
+    code: 'forum:topic:update:hidden',
+    name: '更新主题隐藏状态',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '更新主题隐藏状态',
     model: Boolean,
@@ -263,6 +319,11 @@ export class ForumTopicController {
 
   // 后台更新主题审核状态并触发审核后治理逻辑。
   @Post('update-audit-status')
+  @AdminPermission({
+    code: 'forum:topic:update:audit:status',
+    name: '更新主题审核状态',
+    groupCode: 'forum:topic',
+  })
   @ApiAuditDoc({
     summary: '更新主题审核状态',
     model: Boolean,

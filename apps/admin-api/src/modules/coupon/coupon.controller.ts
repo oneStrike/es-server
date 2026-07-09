@@ -13,6 +13,7 @@ import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.c
 import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('券管理')
@@ -25,6 +26,11 @@ export class CouponController {
 
   // 分页查询券定义。
   @Get('definition/page')
+  @AdminPermission({
+    code: 'coupon:definition:page',
+    name: '分页查询券定义',
+    groupCode: 'coupon',
+  })
   @ApiPageDoc({
     summary: '分页查询券定义',
     model: CouponDefinitionOutputDto,
@@ -35,6 +41,11 @@ export class CouponController {
 
   // 创建券定义。
   @Post('definition/create')
+  @AdminPermission({
+    code: 'coupon:definition:create',
+    name: '创建券定义',
+    groupCode: 'coupon',
+  })
   @ApiAuditDoc({
     summary: '创建券定义',
     model: Boolean,
@@ -46,6 +57,11 @@ export class CouponController {
 
   // 更新券定义。
   @Post('definition/update')
+  @AdminPermission({
+    code: 'coupon:definition:update',
+    name: '更新券定义',
+    groupCode: 'coupon',
+  })
   @ApiAuditDoc({
     summary: '更新券定义',
     model: Boolean,
@@ -57,6 +73,11 @@ export class CouponController {
 
   // 更新券定义启用状态。
   @Post('definition/update-status')
+  @AdminPermission({
+    code: 'coupon:definition:update:status',
+    name: '更新券定义启用状态',
+    groupCode: 'coupon',
+  })
   @ApiAuditDoc({
     summary: '更新券定义启用状态',
     model: Boolean,
@@ -71,6 +92,11 @@ export class CouponController {
 
   // 创建批量发券工作流。
   @Post('grant-workflow/create')
+  @AdminPermission({
+    code: 'coupon:grant:workflow:create',
+    name: '创建批量发券任务',
+    groupCode: 'coupon',
+  })
   @ApiAuditDoc({
     summary: '创建批量发券任务',
     model: WorkflowJobDto,

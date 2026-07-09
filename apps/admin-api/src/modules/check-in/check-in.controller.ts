@@ -35,6 +35,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('签到管理')
@@ -44,6 +45,11 @@ export class CheckInController {
   constructor(private readonly checkInService: CheckInService) {}
 
   @Get('config/detail')
+  @AdminPermission({
+    code: 'check:in:config:detail',
+    name: '查询签到配置详情',
+    groupCode: 'check:in',
+  })
   @ApiDoc({
     summary: '查询签到配置详情',
     model: CheckInConfigDetailResponseDto,
@@ -54,6 +60,11 @@ export class CheckInController {
   }
 
   @Get('calendar/detail')
+  @AdminPermission({
+    code: 'check:in:calendar:detail',
+    name: '查询目标周期全局签到日历',
+    groupCode: 'check:in',
+  })
   @ApiDoc({
     summary: '查询目标周期全局签到日历',
     model: AdminCheckInCalendarDetailResponseDto,
@@ -64,6 +75,11 @@ export class CheckInController {
   }
 
   @Get('calendar/overview')
+  @AdminPermission({
+    code: 'check:in:calendar:overview',
+    name: '查询目标周期签到轻量概览',
+    groupCode: 'check:in',
+  })
   @ApiDoc({
     summary: '查询目标周期签到轻量概览',
     model: AdminCheckInCalendarOverviewResponseDto,
@@ -74,6 +90,11 @@ export class CheckInController {
   }
 
   @Get('calendar/user/detail')
+  @AdminPermission({
+    code: 'check:in:calendar:user:detail',
+    name: '查询指定用户目标周期签到日历',
+    groupCode: 'check:in',
+  })
   @ApiDoc({
     summary: '查询指定用户目标周期签到日历',
     model: CheckInCalendarResponseDto,
@@ -86,6 +107,11 @@ export class CheckInController {
   }
 
   @Get('calendar/signed-user/page')
+  @AdminPermission({
+    code: 'check:in:calendar:signed:user:page',
+    name: '分页查询某日已签用户列表',
+    groupCode: 'check:in',
+  })
   @ApiPageDoc({
     summary: '分页查询某日已签用户列表',
     model: AdminCheckInSignedUserPageItemDto,
@@ -96,6 +122,11 @@ export class CheckInController {
   }
 
   @Post('config/update')
+  @AdminPermission({
+    code: 'check:in:config:update',
+    name: '更新签到配置',
+    groupCode: 'check:in',
+  })
   @ApiAuditDoc({
     summary: '更新签到配置',
     model: Boolean,
@@ -112,6 +143,11 @@ export class CheckInController {
   }
 
   @Post('config/update-enabled')
+  @AdminPermission({
+    code: 'check:in:config:update:enabled',
+    name: '更新签到开关',
+    groupCode: 'check:in',
+  })
   @ApiAuditDoc({
     summary: '更新签到开关',
     model: Boolean,
@@ -128,6 +164,11 @@ export class CheckInController {
   }
 
   @Get('streak/page')
+  @AdminPermission({
+    code: 'check:in:streak:page',
+    name: '分页查询连续签到记录',
+    groupCode: 'check:in',
+  })
   @ApiPageDoc({
     summary: '分页查询连续签到记录',
     model: CheckInStreakRuleDetailResponseDto,
@@ -138,6 +179,11 @@ export class CheckInController {
   }
 
   @Get('streak/detail')
+  @AdminPermission({
+    code: 'check:in:streak:detail',
+    name: '查询连续签到记录详情',
+    groupCode: 'check:in',
+  })
   @ApiDoc({
     summary: '查询连续签到记录详情',
     model: CheckInStreakRuleDetailResponseDto,
@@ -148,6 +194,11 @@ export class CheckInController {
   }
 
   @Get('streak/history/page')
+  @AdminPermission({
+    code: 'check:in:streak:history:page',
+    name: '分页查询连续签到记录历史',
+    groupCode: 'check:in',
+  })
   @ApiPageDoc({
     summary: '分页查询连续签到记录历史',
     model: CheckInStreakRuleDetailResponseDto,
@@ -160,6 +211,11 @@ export class CheckInController {
   }
 
   @Get('streak/history/detail')
+  @AdminPermission({
+    code: 'check:in:streak:history:detail',
+    name: '查询连续签到记录历史详情',
+    groupCode: 'check:in',
+  })
   @ApiDoc({
     summary: '查询连续签到记录历史详情',
     model: CheckInStreakRuleDetailResponseDto,
@@ -170,6 +226,11 @@ export class CheckInController {
   }
 
   @Post('streak/publish')
+  @AdminPermission({
+    code: 'check:in:streak:publish',
+    name: '发布连续签到记录',
+    groupCode: 'check:in',
+  })
   @ApiAuditDoc({
     summary: '发布连续签到记录',
     model: Boolean,
@@ -186,6 +247,11 @@ export class CheckInController {
   }
 
   @Post('streak/terminate')
+  @AdminPermission({
+    code: 'check:in:streak:terminate',
+    name: '终止连续签到记录',
+    groupCode: 'check:in',
+  })
   @ApiAuditDoc({
     summary: '终止连续签到记录',
     model: Boolean,
@@ -202,6 +268,11 @@ export class CheckInController {
   }
 
   @Get('reconciliation/page')
+  @AdminPermission({
+    code: 'check:in:reconciliation:page',
+    name: '分页查询签到对账结果',
+    groupCode: 'check:in',
+  })
   @ApiPageDoc({
     summary: '分页查询签到对账结果',
     model: CheckInReconciliationPageItemDto,
@@ -212,6 +283,11 @@ export class CheckInController {
   }
 
   @Post('reconciliation/repair')
+  @AdminPermission({
+    code: 'check:in:reconciliation:repair',
+    name: '补偿签到奖励',
+    groupCode: 'check:in',
+  })
   @ApiAuditDoc({
     summary: '补偿签到奖励',
     model: RepairCheckInRewardResponseDto,
@@ -228,6 +304,11 @@ export class CheckInController {
   }
 
   @Post('streak/repair')
+  @AdminPermission({
+    code: 'check:in:streak:repair',
+    name: '重算连续签到进度',
+    groupCode: 'check:in',
+  })
   @ApiAuditDoc({
     summary: '重算连续签到进度',
     model: RepairCheckInStreakResponseDto,

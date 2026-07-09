@@ -24,6 +24,7 @@ import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-w
 import { SensitiveWordService } from '@libs/sensitive-word/sensitive-word.service'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 // 敏感词管理控制器，提供敏感词管理、检测、统计相关的 API 接口。
@@ -38,6 +39,11 @@ export class SensitiveWordController {
 
   // 获取敏感词分页列表。
   @Get('page')
+  @AdminPermission({
+    code: 'forum:sensitive:word:page',
+    name: '获取敏感词分页列表',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiPageDoc({
     summary: '获取敏感词分页列表',
     model: SensitiveWordOutputDto,
@@ -48,6 +54,11 @@ export class SensitiveWordController {
 
   // 创建敏感词。
   @Post('create')
+  @AdminPermission({
+    code: 'forum:sensitive:word:create',
+    name: '创建敏感词',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiAuditDoc({
     summary: '创建敏感词',
     model: Boolean,
@@ -61,6 +72,11 @@ export class SensitiveWordController {
 
   // 更新敏感词。
   @Post('update')
+  @AdminPermission({
+    code: 'forum:sensitive:word:update',
+    name: '更新敏感词',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiAuditDoc({
     summary: '更新敏感词',
     model: Boolean,
@@ -74,6 +90,11 @@ export class SensitiveWordController {
 
   // 删除敏感词。
   @Post('delete')
+  @AdminPermission({
+    code: 'forum:sensitive:word:delete',
+    name: '删除敏感词',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiAuditDoc({
     summary: '删除敏感词',
     model: Boolean,
@@ -87,6 +108,11 @@ export class SensitiveWordController {
 
   // 更新敏感词状态。
   @Post('update-status')
+  @AdminPermission({
+    code: 'forum:sensitive:word:update:status',
+    name: '更新敏感词状态',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiAuditDoc({
     summary: '更新敏感词状态',
     model: Boolean,
@@ -100,6 +126,11 @@ export class SensitiveWordController {
 
   // 检测文本中的敏感词。
   @Post('detect')
+  @AdminPermission({
+    code: 'forum:sensitive:word:detect',
+    name: '检测文本中的敏感词',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiDoc({
     summary: '检测文本中的敏感词',
     model: SensitiveWordDetectResponseDto,
@@ -110,6 +141,11 @@ export class SensitiveWordController {
 
   // 获取统计查询结果。
   @Get('stats')
+  @AdminPermission({
+    code: 'forum:sensitive:word:stats',
+    name: '获取统计查询结果',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiDoc({
     summary: '获取统计查询结果',
     model: SensitiveWordStatisticsResponseDto,
@@ -120,6 +156,11 @@ export class SensitiveWordController {
 
   // 获取完整统计数据。
   @Get('stats/full')
+  @AdminPermission({
+    code: 'forum:sensitive:word:stats:full',
+    name: '获取完整统计数据',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiDoc({
     summary: '获取完整统计数据',
     model: SensitiveWordStatisticsDataDto,
@@ -130,6 +171,11 @@ export class SensitiveWordController {
 
   // 获取敏感词命中日志分页列表。
   @Get('hit-log/page')
+  @AdminPermission({
+    code: 'forum:sensitive:word:hit:log:page',
+    name: '获取敏感词命中日志分页列表',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiPageDoc({
     summary: '获取敏感词命中日志分页列表',
     model: SensitiveWordHitLogPageItemDto,
@@ -140,6 +186,11 @@ export class SensitiveWordController {
 
   // 替换文本中的敏感词。
   @Post('replace')
+  @AdminPermission({
+    code: 'forum:sensitive:word:replace',
+    name: '替换文本中的敏感词',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiDoc({
     summary: '替换文本中的敏感词',
     model: SensitiveWordReplaceResponseDto,
@@ -152,6 +203,11 @@ export class SensitiveWordController {
 
   // 获取文本中敏感词的最高等级。
   @Post('detect/highest-level')
+  @AdminPermission({
+    code: 'forum:sensitive:word:detect:highest:level',
+    name: '获取文本中敏感词的最高等级',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiDoc({
     summary: '获取文本中敏感词的最高等级',
     model: SensitiveWordHighestLevelResponseDto,
@@ -165,6 +221,11 @@ export class SensitiveWordController {
 
   // 检查敏感词检测器状态。
   @Get('detect/status')
+  @AdminPermission({
+    code: 'forum:sensitive:word:detect:status',
+    name: '检查敏感词检测器状态',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiDoc({
     summary: '检查敏感词检测器状态',
     model: SensitiveWordDetectStatusResponseDto,
@@ -178,6 +239,11 @@ export class SensitiveWordController {
 
   // 获取当前加载的敏感词数量。
   @Get('count')
+  @AdminPermission({
+    code: 'forum:sensitive:word:count',
+    name: '获取当前加载的敏感词数量',
+    groupCode: 'forum:sensitive:word',
+  })
   @ApiDoc({
     summary: '获取当前加载的敏感词数量',
     model: SensitiveWordCountResponseDto,

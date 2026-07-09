@@ -8,6 +8,7 @@ import {
 import { SystemConfigService } from '@libs/system-config/system-config.service'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -20,6 +21,11 @@ export class SystemConfigController {
   constructor(private readonly systemConfigService: SystemConfigService) {}
 
   @Get('config')
+  @AdminPermission({
+    code: 'system:config',
+    name: '获取系统配置',
+    groupCode: 'system',
+  })
   @ApiDoc({
     summary: '获取系统配置',
     model: SystemConfigDetailDto,
@@ -29,6 +35,11 @@ export class SystemConfigController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'system:update',
+    name: '更新系统配置',
+    groupCode: 'system',
+  })
   @ApiAuditDoc({
     summary: '更新系统配置',
     model: Boolean,

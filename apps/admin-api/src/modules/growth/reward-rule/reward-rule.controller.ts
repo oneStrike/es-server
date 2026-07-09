@@ -11,6 +11,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('用户成长/奖励规则管理')
@@ -21,6 +22,11 @@ export class RewardRuleController {
   ) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'growth:reward:rules:page',
+    name: '分页查询成长奖励规则',
+    groupCode: 'growth:reward:rules',
+  })
   @ApiPageDoc({
     summary: '分页查询成长奖励规则',
     model: GrowthRewardRuleOutputDto,
@@ -30,6 +36,11 @@ export class RewardRuleController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'growth:reward:rules:detail',
+    name: '查询成长奖励规则详情',
+    groupCode: 'growth:reward:rules',
+  })
   @ApiDoc({
     summary: '查询成长奖励规则详情',
     model: GrowthRewardRuleOutputDto,
@@ -39,6 +50,11 @@ export class RewardRuleController {
   }
 
   @Post('create')
+  @AdminPermission({
+    code: 'growth:reward:rules:create',
+    name: '创建成长奖励规则',
+    groupCode: 'growth:reward:rules',
+  })
   @ApiAuditDoc({
     summary: '创建成长奖励规则',
     model: Boolean,
@@ -51,6 +67,11 @@ export class RewardRuleController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'growth:reward:rules:update',
+    name: '更新成长奖励规则',
+    groupCode: 'growth:reward:rules',
+  })
   @ApiAuditDoc({
     summary: '更新成长奖励规则',
     model: Boolean,
@@ -63,6 +84,11 @@ export class RewardRuleController {
   }
 
   @Post('archive')
+  @AdminPermission({
+    code: 'growth:reward:rules:archive',
+    name: '归档成长奖励规则',
+    groupCode: 'growth:reward:rules',
+  })
   @ApiAuditDoc({
     summary: '归档成长奖励规则',
     model: Boolean,

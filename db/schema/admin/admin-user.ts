@@ -1,10 +1,7 @@
-import { sql } from 'drizzle-orm'
 import {
   boolean,
-  check,
   index,
   integer,
-  smallint,
   snakeCase,
   timestamp,
   unique,
@@ -37,10 +34,6 @@ export const adminUser = snakeCase.table(
      * 头像
      */
     avatar: varchar({ length: 200 }),
-    /**
-     * 账号角色（0=普通管理员，1=超级管理员）
-     */
-    role: smallint().default(0).notNull(),
     /**
      * 是否启用账号
      */
@@ -80,10 +73,6 @@ export const adminUser = snakeCase.table(
      */
     index('admin_user_is_enabled_idx').on(table.isEnabled),
     /**
-     * 角色索引
-     */
-    index('admin_user_role_idx').on(table.role),
-    /**
      * 创建时间索引
      */
     index('admin_user_created_at_idx').on(table.createdAt),
@@ -91,10 +80,6 @@ export const adminUser = snakeCase.table(
      * 最近登录时间索引
      */
     index('admin_user_last_login_at_idx').on(table.lastLoginAt),
-    /**
-     * 角色值域约束
-     */
-    check('admin_user_role_valid_chk', sql`${table.role} in (0, 1)`),
   ],
 )
 

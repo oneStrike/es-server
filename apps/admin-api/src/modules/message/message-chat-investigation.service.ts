@@ -21,14 +21,10 @@ import {
   lt,
   sql,
 } from 'drizzle-orm'
-import { AdminUserService } from '../admin-user/admin-user.service'
 
 @Injectable()
 export class MessageChatInvestigationService {
-  constructor(
-    private readonly drizzle: DrizzleService,
-    private readonly adminUserService: AdminUserService,
-  ) {}
+  constructor(private readonly drizzle: DrizzleService) {}
 
   private get db() {
     return this.drizzle.db
@@ -54,7 +50,6 @@ export class MessageChatInvestigationService {
     adminUserId: number,
     query: QueryAdminChatConversationPageDto,
   ) {
-    await this.adminUserService.isSuperAdmin(adminUserId)
     const page = this.drizzle.buildPage(query, { maxPageSize: 100 })
     const conditions = this.buildConversationConditions(query)
     const whereClause = and(...conditions)
@@ -168,7 +163,6 @@ export class MessageChatInvestigationService {
     adminUserId: number,
     query: QueryAdminChatMessagePageDto,
   ) {
-    await this.adminUserService.isSuperAdmin(adminUserId)
     const page = this.drizzle.buildPage(query, { maxPageSize: 100 })
     const conditions = this.buildMessageConditions(query)
     const whereClause = and(...conditions)

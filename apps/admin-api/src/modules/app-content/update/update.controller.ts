@@ -12,6 +12,7 @@ import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -24,6 +25,11 @@ export class AppUpdateController {
   constructor(private readonly appUpdateService: AppUpdateService) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'app:update:page',
+    name: '分页查询更新版本列表',
+    groupCode: 'app:update',
+  })
   @ApiPageDoc({
     summary: '分页查询更新版本列表',
     model: AppUpdateReleaseListItemDto,
@@ -33,6 +39,11 @@ export class AppUpdateController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'app:update:detail',
+    name: '获取更新版本详情',
+    groupCode: 'app:update',
+  })
   @ApiDoc({
     summary: '获取更新版本详情',
     model: AppUpdateReleaseDetailDto,
@@ -42,6 +53,11 @@ export class AppUpdateController {
   }
 
   @Post('create')
+  @AdminPermission({
+    code: 'app:update:create',
+    name: '创建更新版本草稿',
+    groupCode: 'app:update',
+  })
   @ApiAuditDoc({
     summary: '创建更新版本草稿',
     model: Boolean,
@@ -57,6 +73,11 @@ export class AppUpdateController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'app:update:update',
+    name: '更新更新版本草稿',
+    groupCode: 'app:update',
+  })
   @ApiAuditDoc({
     summary: '更新更新版本草稿',
     model: Boolean,
@@ -72,6 +93,11 @@ export class AppUpdateController {
   }
 
   @Post('update-status')
+  @AdminPermission({
+    code: 'app:update:update:status',
+    name: '更新更新版本发布状态',
+    groupCode: 'app:update',
+  })
   @ApiAuditDoc({
     summary: '更新更新版本发布状态',
     model: Boolean,

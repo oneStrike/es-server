@@ -11,6 +11,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容治理/举报处理')
@@ -19,6 +20,11 @@ export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'report:page',
+    name: '分页查询举报记录',
+    groupCode: 'report',
+  })
   @ApiPageDoc({
     summary: '分页查询举报记录',
     model: AdminReportPageItemDto,
@@ -28,6 +34,11 @@ export class ReportController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'report:detail',
+    name: '获取举报详情',
+    groupCode: 'report',
+  })
   @ApiDoc({
     summary: '获取举报详情',
     model: AdminReportDetailDto,
@@ -37,6 +48,11 @@ export class ReportController {
   }
 
   @Post('handle')
+  @AdminPermission({
+    code: 'report:handle',
+    name: '处理举报',
+    groupCode: 'report',
+  })
   @ApiAuditDoc({
     summary: '处理举报',
     model: Boolean,

@@ -21,6 +21,7 @@ import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.c
 import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 import { ComicThirdPartyService } from './third-party-service'
 
@@ -34,6 +35,11 @@ export class ComicThirdPartyController {
   ) {}
 
   @Get('platform/list')
+  @AdminPermission({
+    code: 'content:comic:third:party:platform:list',
+    name: '获取第三方漫画平台列表',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiDoc({
     summary: '获取第三方漫画平台列表',
     model: PlatformResponseDto,
@@ -45,6 +51,11 @@ export class ComicThirdPartyController {
   }
 
   @Get('search/page')
+  @AdminPermission({
+    code: 'content:comic:third:party:search:page',
+    name: '搜索第三方平台漫画',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiPageDoc({
     summary: '搜索第三方平台漫画',
     model: SearchComicItemDto,
@@ -55,6 +66,11 @@ export class ComicThirdPartyController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'content:comic:third:party:detail',
+    name: '获取第三方平台漫画详情',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiDoc({
     summary: '获取第三方平台漫画详情',
     model: ThirdPartyComicDetailDto,
@@ -65,6 +81,11 @@ export class ComicThirdPartyController {
   }
 
   @Get('chapter/list')
+  @AdminPermission({
+    code: 'content:comic:third:party:chapter:list',
+    name: '获取第三方平台漫画章节列表',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiDoc({
     summary: '获取第三方平台漫画章节列表',
     model: ThirdPartyComicChapterDto,
@@ -76,6 +97,11 @@ export class ComicThirdPartyController {
   }
 
   @Get('chapter-content/detail')
+  @AdminPermission({
+    code: 'content:comic:third:party:chapter:content:detail',
+    name: '获取第三方平台漫画章节内容',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiDoc({
     summary: '获取第三方平台漫画章节内容',
     model: ThirdPartyComicChapterContentDto,
@@ -86,6 +112,11 @@ export class ComicThirdPartyController {
   }
 
   @Post('import/preview')
+  @AdminPermission({
+    code: 'content:comic:third:party:import:preview',
+    name: '预览第三方漫画导入',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiDoc({
     summary: '预览第三方漫画导入',
     model: ThirdPartyComicImportPreviewDto,
@@ -96,6 +127,11 @@ export class ComicThirdPartyController {
   }
 
   @Post('import/confirm')
+  @AdminPermission({
+    code: 'content:comic:third:party:import:confirm',
+    name: '确认第三方漫画导入并创建工作流任务',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiAuditDoc({
     summary: '确认第三方漫画导入并创建工作流任务',
     model: WorkflowJobDto,
@@ -114,6 +150,11 @@ export class ComicThirdPartyController {
   }
 
   @Post('sync/latest')
+  @AdminPermission({
+    code: 'content:comic:third:party:sync:latest',
+    name: '同步第三方漫画最新章节',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiAuditDoc({
     summary: '同步第三方漫画最新章节',
     model: WorkflowJobDto,
@@ -131,6 +172,11 @@ export class ComicThirdPartyController {
   }
 
   @Get('import/item/page')
+  @AdminPermission({
+    code: 'content:comic:third:party:import:item:page',
+    name: '分页查询三方解析内容导入条目',
+    groupCode: 'content:comic:third:party',
+  })
   @ApiPageDoc({
     summary: '分页查询三方解析内容导入条目',
     model: ContentImportItemDto,

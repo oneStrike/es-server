@@ -15,6 +15,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { GrowthService } from './growth.service'
 
@@ -25,6 +26,11 @@ export class GrowthController {
 
   // 分页查询事件维度的基础奖励与任务 bonus 关联关系。
   @Get('rule-events/page')
+  @AdminPermission({
+    code: 'growth:rule:events:page',
+    name: '按事件聚合查看积分规则、经验规则与任务 bonus 关联关系',
+    groupCode: 'growth',
+  })
   @ApiPageDoc({
     summary: '按事件聚合查看积分规则、经验规则与任务 bonus 关联关系',
     model: GrowthRuleEventPageItemDto,
@@ -35,6 +41,11 @@ export class GrowthController {
 
   // 查询允许配置基础奖励规则的成长事件选项。
   @Get('reward-event-option/list')
+  @AdminPermission({
+    code: 'growth:reward:event:option:list',
+    name: '查询允许配置基础奖励规则的成长事件选项',
+    groupCode: 'growth',
+  })
   @ApiDoc({
     summary: '查询允许配置基础奖励规则的成长事件选项',
     model: GrowthConfigurableRewardEventOptionDto,
@@ -46,6 +57,11 @@ export class GrowthController {
 
   // 分页查询成长奖励补偿记录。
   @Get('reward-settlement/page')
+  @AdminPermission({
+    code: 'growth:reward:settlement:page',
+    name: '分页查询通用成长奖励补偿记录',
+    groupCode: 'growth',
+  })
   @ApiPageDoc({
     summary: '分页查询通用成长奖励补偿记录',
     model: BaseGrowthRewardSettlementDto,
@@ -58,6 +74,11 @@ export class GrowthController {
 
   // 手动重试单条成长奖励补偿记录。
   @Post('reward-settlement/retry')
+  @AdminPermission({
+    code: 'growth:reward:settlement:retry',
+    name: '重试单条通用成长奖励补偿',
+    groupCode: 'growth',
+  })
   @ApiAuditDoc({
     summary: '重试单条通用成长奖励补偿',
     model: Boolean,
@@ -74,6 +95,11 @@ export class GrowthController {
 
   // 批量重试当前仍处于待补偿状态的成长奖励记录。
   @Post('reward-settlement/retry-pending/batch')
+  @AdminPermission({
+    code: 'growth:reward:settlement:retry:pending:batch',
+    name: '批量重试待补偿的通用成长奖励记录',
+    groupCode: 'growth',
+  })
   @ApiAuditDoc({
     summary: '批量重试待补偿的通用成长奖励记录',
     model: GrowthRewardSettlementRetryBatchResultDto,

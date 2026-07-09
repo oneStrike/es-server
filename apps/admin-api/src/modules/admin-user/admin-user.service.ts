@@ -1,3 +1,4 @@
+import type { AdminRoleSummaryDto } from '@libs/identity/dto/admin-rbac.dto'
 import type {
   ChangePasswordDto,
   UpdateUserDto,
@@ -7,31 +8,33 @@ import type {
 import type { SQL } from 'drizzle-orm'
 import { randomInt } from 'node:crypto'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
-
-import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
+import { AdminSystemRoleCode } from '@libs/identity/admin-rbac.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/helpers'
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
-
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
-import {
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { Injectable } from '@nestjs/common'
+import { and, eq, inArray } from 'drizzle-orm'
 import { AdminAuthRedisKeys } from '../auth/auth.constant'
 import { AdminTokenStorageService } from '../auth/token-storage.service'
+import { AdminRbacService } from '../rbac/admin-rbac.service'
 
 /**
  * 管理员用户服务。
- * 负责后台用户的注册、查询、权限校验与密码管理。
  */
 @Injectable()
 export class AdminUserService {
-  // 复用管理员用户表。
   get adminUser() {
     return this.drizzle.schema.adminUser
+  }
+
+  private get adminRole() {
+    return this.drizzle.schema.adminRole
+  }
+
+  private get adminUserRole() {
+    return this.drizzle.schema.adminUserRole
   }
 
   constructor(
@@ -39,42 +42,19 @@ export class AdminUserService {
     private readonly scryptService: ScryptService,
     private readonly loginGuardService: LoginGuardService,
     private readonly tokenStorageService: AdminTokenStorageService,
+    private readonly rbacService: AdminRbacService,
   ) {}
 
-  // 复用当前模块共享数据库连接。
   private get db() {
     return this.drizzle.db
   }
 
-  // 校验当前操作人是否为超级管理员，角色不足时抛出 ForbiddenException。
-  async isSuperAdmin(userId: number) {
-    const [adminUser] = await this.db
-      .select({ role: this.adminUser.role })
-      .from(this.adminUser)
-      .where(eq(this.adminUser.id, userId))
-      .limit(1)
-    if (!adminUser) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '用户不存在',
-      )
-    }
-
-    if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
-      throw new ForbiddenException('权限不足')
-    }
-  }
-
-  // 更新管理员用户信息，包含用户名/手机号唯一性校验与安全保护。
-  async updateUserInfo(userId: number, updateData: UpdateUserDto) {
-    await this.isSuperAdmin(userId)
-    // 先读取当前快照，避免把同一账号自己的用户名或手机号误判成冲突。
+  async updateUserInfo(operatorId: number, updateData: UpdateUserDto) {
     const [user] = await this.db
       .select({
         id: this.adminUser.id,
         username: this.adminUser.username,
         mobile: this.adminUser.mobile,
-        role: this.adminUser.role,
         isEnabled: this.adminUser.isEnabled,
       })
       .from(this.adminUser)
@@ -87,7 +67,6 @@ export class AdminUserService {
       )
     }
 
-    // 如果要更新用户名，检查是否已存在
     if (updateData.username && updateData.username !== user.username) {
       const [existingUser] = await this.db
         .select({ id: this.adminUser.id })
@@ -118,9 +97,9 @@ export class AdminUserService {
       }
     }
 
-    await this.ensureSafeAdminAccountUpdate(userId, user, updateData)
+    await this.ensureSafeAdminAccountUpdate(operatorId, user, updateData)
 
-    const { id: _id, ...data } = updateData
+    const { id: _id, roleIds, ...data } = updateData
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -129,6 +108,7 @@ export class AdminUserService {
           .where(eq(this.adminUser.id, updateData.id)),
       { notFound: '用户不存在' },
     )
+    await this.rbacService.bindUserRoles(updateData.id, roleIds)
     if (updateData.isEnabled === false && user.isEnabled) {
       await this.tokenStorageService.revokeAllByUserId(
         updateData.id,
@@ -138,10 +118,8 @@ export class AdminUserService {
     return true
   }
 
-  // 注册新管理员用户，包含用户名与手机号唯一性校验。
-  async register(operatorId: number, data: UserRegisterDto) {
-    await this.isSuperAdmin(operatorId)
-    const { username, password, avatar, role, mobile, confirmPassword } = data
+  async register(_operatorId: number, data: UserRegisterDto) {
+    const { username, password, avatar, mobile, confirmPassword, roleIds } = data
 
     if (password !== confirmPassword) {
       throw new BusinessException(
@@ -149,8 +127,8 @@ export class AdminUserService {
         '两次输入的密码不一致',
       )
     }
+    await this.assertRoleIdsExist(roleIds)
 
-    // 检查用户名是否已存在
     const [usernameExists] = await this.db
       .select({ id: this.adminUser.id })
       .from(this.adminUser)
@@ -162,7 +140,7 @@ export class AdminUserService {
         '用户名已存在',
       )
     }
-    // 检查手机号是否已存在
+
     const [mobileExists] = mobile
       ? await this.db
           .select({ id: this.adminUser.id })
@@ -177,23 +155,23 @@ export class AdminUserService {
       )
     }
 
-    // 加密密码
     const encryptedPassword = await this.scryptService.encryptPassword(password)
-
-    await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.adminUser).values({
-        username,
-        password: encryptedPassword,
-        avatar,
-        mobile,
-        role: role || AdminUserRoleEnum.NORMAL_ADMIN,
-        isEnabled: true,
-      }),
+    const [created] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.adminUser)
+        .values({
+          username,
+          password: encryptedPassword,
+          avatar,
+          mobile,
+          isEnabled: true,
+        })
+        .returning({ id: this.adminUser.id }),
     )
+    await this.rbacService.bindUserRoles(created.id, roleIds)
     return true
   }
 
-  // 按 ID 获取管理员用户信息（不含密码）。
   async getUserInfo(userId: number) {
     const [user] = await this.db
       .select()
@@ -207,28 +185,33 @@ export class AdminUserService {
         '用户不存在',
       )
     }
-
-    // 返回用户信息（不包含密码）
-    const { password: _password, ...rest } = user
-    return rest
+    return this.toUserResponse(user)
   }
 
-  // 分页查询管理员用户列表。
   async getUsers(queryDto: UserPageDto) {
-    const { username, isEnabled, mobile, role, ...pageDto } = queryDto
+    const { username, isEnabled, mobile, roleId, ...pageDto } = queryDto
     const conditions: SQL[] = []
 
     if (isEnabled !== undefined) {
       conditions.push(eq(this.adminUser.isEnabled, isEnabled))
-    }
-    if (role !== undefined) {
-      conditions.push(eq(this.adminUser.role, role))
     }
     if (username) {
       conditions.push(buildILikeCondition(this.adminUser.username, username)!)
     }
     if (mobile) {
       conditions.push(buildILikeCondition(this.adminUser.mobile, mobile)!)
+    }
+    if (roleId !== undefined) {
+      const rows = await this.db
+        .select({ adminUserId: this.adminUserRole.adminUserId })
+        .from(this.adminUserRole)
+        .where(eq(this.adminUserRole.roleId, roleId))
+      const userIds = rows.map((item) => item.adminUserId)
+      if (userIds.length === 0) {
+        const pageQuery = this.drizzle.buildPage(pageDto)
+        return toPageResult([], 0, pageQuery)
+      }
+      conditions.push(inArray(this.adminUser.id, userIds))
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -246,18 +229,15 @@ export class AdminUserService {
         .offset(pageQuery.offset),
       this.db.$count(this.adminUser, where),
     ])
-    const page = toPageResult(list, total, pageQuery)
-    return {
-      ...page,
-      list: page.list.map(({ password: _password, ...item }) => item),
-    }
+    const responseList = await Promise.all(
+      list.map(async (item) => this.toUserResponse(item)),
+    )
+    return toPageResult(responseList, total, pageQuery)
   }
 
-  // 修改管理员密码，验证旧密码后更新并撤销已有令牌。
   async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
     const { oldPassword, newPassword, confirmPassword } = changePasswordDto
 
-    // 检查新密码和确认密码是否一致
     if (newPassword !== confirmPassword) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -265,7 +245,6 @@ export class AdminUserService {
       )
     }
 
-    // 检查新密码与旧密码是否相同
     if (oldPassword === newPassword) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -273,7 +252,6 @@ export class AdminUserService {
       )
     }
 
-    // 查找用户（优化：只选择密码字段）
     const [user] = await this.db
       .select({ id: this.adminUser.id, password: this.adminUser.password })
       .from(this.adminUser)
@@ -286,7 +264,6 @@ export class AdminUserService {
       )
     }
 
-    // 验证旧密码
     const isPasswordValid = await this.scryptService.verifyPassword(
       oldPassword,
       user.password,
@@ -298,7 +275,6 @@ export class AdminUserService {
       )
     }
 
-    // 更新密码
     await this.drizzle.withErrorHandling(
       async () =>
         this.db
@@ -318,10 +294,7 @@ export class AdminUserService {
     return true
   }
 
-  // 解锁指定管理员账号的登录锁定状态，只允许超级管理员操作。
-  async unlockUser(operatorId: number, userId: number) {
-    await this.isSuperAdmin(operatorId)
-
+  async unlockUser(_operatorId: number, userId: number) {
     const [user] = await this.db
       .select({ id: this.adminUser.id })
       .from(this.adminUser)
@@ -334,7 +307,6 @@ export class AdminUserService {
       )
     }
 
-    // 解锁用户（清除 Redis 锁）
     await this.loginGuardService.unlock(
       AdminAuthRedisKeys.LOGIN_LOCK(userId),
       AdminAuthRedisKeys.LOGIN_FAIL_COUNT(userId),
@@ -343,9 +315,7 @@ export class AdminUserService {
     return true
   }
 
-  // 重置用户密码为一次性临时密码，并撤销已有令牌。
-  async resetPassword(userId: number, id: number) {
-    await this.isSuperAdmin(userId)
+  async resetPassword(_operatorId: number, id: number) {
     const temporaryPassword = this.generateTemporaryPassword()
     const encryptedPassword =
       await this.scryptService.encryptPassword(temporaryPassword)
@@ -368,53 +338,84 @@ export class AdminUserService {
     return { temporaryPassword }
   }
 
-  // 安全保护：禁止自降/自禁与最后一个超级管理员被禁用或降级。
+  private async toUserResponse(user: typeof this.adminUser.$inferSelect) {
+    const { password: _password, ...rest } = user
+    const [roles, snapshot] = await Promise.all([
+      this.rbacService.getUserRoleSummaries(user.id),
+      this.rbacService.getSubjectSnapshot(user.id),
+    ])
+    return {
+      ...rest,
+      roleIds: roles.map((role) => role.id),
+      roles,
+      accessCodes: snapshot.permissionCodes,
+      isSuperAdmin: snapshot.isSuperAdmin,
+    }
+  }
+
   private async ensureSafeAdminAccountUpdate(
     operatorId: number,
     target: {
       id: number
-      role: AdminUserRoleEnum
       isEnabled: boolean
     },
     updateData: UpdateUserDto,
   ) {
+    const currentRoles = await this.rbacService.getUserRoleSummaries(target.id)
+    const targetIsSuperAdmin = this.hasSuperAdminRole(currentRoles)
+    if (!targetIsSuperAdmin) {
+      return
+    }
+
+    const nextRoles = await this.getRoleSummariesByIds(updateData.roleIds)
+    const removesSuperRole = !this.hasSuperAdminRole(nextRoles)
     const disablesTarget = updateData.isEnabled === false && target.isEnabled
-    const downgradesTarget =
-      updateData.role !== undefined &&
-      updateData.role !== AdminUserRoleEnum.SUPER_ADMIN &&
-      target.role === AdminUserRoleEnum.SUPER_ADMIN
 
-    if (target.id === operatorId && (disablesTarget || downgradesTarget)) {
+    if (target.id === operatorId && (disablesTarget || removesSuperRole)) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '不能禁用或降级当前登录的超级管理员',
+        '不能禁用或移除当前登录超级管理员的超级管理员角色',
       )
     }
-
-    if (target.role !== AdminUserRoleEnum.SUPER_ADMIN) {
-      return
-    }
-    if (!disablesTarget && !downgradesTarget) {
-      return
-    }
-
-    const enabledSuperAdminCount = await this.db.$count(
-      this.adminUser,
-      and(
-        eq(this.adminUser.role, AdminUserRoleEnum.SUPER_ADMIN),
-        eq(this.adminUser.isEnabled, true),
-      ),
-    )
-
-    if (enabledSuperAdminCount <= 1) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '不能禁用或降级最后一个启用的超级管理员',
-      )
+    if (disablesTarget || removesSuperRole) {
+      await this.rbacService.assertCanRemoveSuperAdminFromUser(target.id)
     }
   }
 
-  // 生成含大小写字母、数字与特殊字符的 16 位随机临时密码。
+  private hasSuperAdminRole(roles: AdminRoleSummaryDto[]) {
+    return roles.some((role) => role.code === AdminSystemRoleCode.SUPER_ADMIN)
+  }
+
+  private async getRoleSummariesByIds(ids: number[]) {
+    if (ids.length === 0) {
+      return []
+    }
+    return this.db
+      .select({
+        id: this.adminRole.id,
+        code: this.adminRole.code,
+        name: this.adminRole.name,
+        isSystem: this.adminRole.isSystem,
+        isEnabled: this.adminRole.isEnabled,
+      })
+      .from(this.adminRole)
+      .where(inArray(this.adminRole.id, ids))
+  }
+
+  private async assertRoleIdsExist(ids: number[]) {
+    const normalized = Array.from(new Set(ids ?? []))
+    if (normalized.length === 0) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '至少选择一个角色',
+      )
+    }
+    const rows = await this.getRoleSummariesByIds(normalized)
+    if (rows.length !== normalized.length) {
+      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, '角色不存在')
+    }
+  }
+
   private generateTemporaryPassword() {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const lowercase = 'abcdefghijklmnopqrstuvwxyz'

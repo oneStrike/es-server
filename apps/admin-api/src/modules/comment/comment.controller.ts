@@ -13,6 +13,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容治理/评论处理')
@@ -24,6 +25,11 @@ export class CommentController {
   ) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'comment:page',
+    name: '分页查询评论记录',
+    groupCode: 'comment',
+  })
   @ApiPageDoc({
     summary: '分页查询评论记录',
     model: AdminCommentPageItemDto,
@@ -33,6 +39,11 @@ export class CommentController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'comment:detail',
+    name: '获取评论详情',
+    groupCode: 'comment',
+  })
   @ApiDoc({
     summary: '获取评论详情',
     model: AdminCommentDetailDto,
@@ -42,6 +53,11 @@ export class CommentController {
   }
 
   @Post('update-audit-status')
+  @AdminPermission({
+    code: 'comment:update:audit:status',
+    name: '更新评论审核状态',
+    groupCode: 'comment',
+  })
   @ApiAuditDoc({
     summary: '更新评论审核状态',
     model: Boolean,
@@ -60,6 +76,11 @@ export class CommentController {
   }
 
   @Post('update-hidden')
+  @AdminPermission({
+    code: 'comment:update:hidden',
+    name: '更新评论隐藏状态',
+    groupCode: 'comment',
+  })
   @ApiAuditDoc({
     summary: '更新评论隐藏状态',
     model: Boolean,
@@ -78,6 +99,11 @@ export class CommentController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'comment:delete',
+    name: '删除评论',
+    groupCode: 'comment',
+  })
   @ApiAuditDoc({
     summary: '删除评论',
     model: Boolean,

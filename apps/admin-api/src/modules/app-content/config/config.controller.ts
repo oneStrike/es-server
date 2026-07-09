@@ -8,6 +8,7 @@ import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -20,6 +21,11 @@ export class AppConfigController {
   constructor(private readonly appConfigService: AppConfigService) {}
 
   @Get('active')
+  @AdminPermission({
+    code: 'app:config:active',
+    name: '获取最新应用配置',
+    groupCode: 'app:config',
+  })
   @ApiDoc({
     summary: '获取最新应用配置',
     model: AppConfigOutputDto,
@@ -29,6 +35,11 @@ export class AppConfigController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'app:config:update',
+    name: '更新应用配置',
+    groupCode: 'app:config',
+  })
   @ApiAuditDoc({
     summary: '更新应用配置',
     model: Boolean,

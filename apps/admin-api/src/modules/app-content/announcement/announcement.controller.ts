@@ -11,6 +11,7 @@ import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -27,6 +28,11 @@ export class AppAnnouncementController {
   ) {}
 
   @Post('create')
+  @AdminPermission({
+    code: 'announcement:create',
+    name: '创建公告',
+    groupCode: 'announcement',
+  })
   @ApiAuditDoc({
     summary: '创建公告',
     model: Boolean,
@@ -39,6 +45,11 @@ export class AppAnnouncementController {
   }
 
   @Get('page')
+  @AdminPermission({
+    code: 'announcement:page',
+    name: '分页查询公告列表',
+    groupCode: 'announcement',
+  })
   @ApiPageDoc({
     summary: '分页查询公告列表',
     model: AnnouncementPageItemDto,
@@ -48,6 +59,11 @@ export class AppAnnouncementController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'announcement:detail',
+    name: '公告详情',
+    groupCode: 'announcement',
+  })
   @ApiDoc({
     summary: '公告详情',
     model: AnnouncementDetailDto,
@@ -57,6 +73,11 @@ export class AppAnnouncementController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'announcement:update',
+    name: '更新公告',
+    groupCode: 'announcement',
+  })
   @ApiAuditDoc({
     summary: '更新公告',
     model: Boolean,
@@ -69,6 +90,11 @@ export class AppAnnouncementController {
   }
 
   @Post('update-status')
+  @AdminPermission({
+    code: 'announcement:update:status',
+    name: '更新公告状态',
+    groupCode: 'announcement',
+  })
   @ApiAuditDoc({
     summary: '更新公告状态',
     model: Boolean,
@@ -81,6 +107,11 @@ export class AppAnnouncementController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'announcement:delete',
+    name: '下线公告',
+    groupCode: 'announcement',
+  })
   @ApiAuditDoc({
     summary: '下线公告',
     model: Boolean,
@@ -93,6 +124,11 @@ export class AppAnnouncementController {
   }
 
   @Post('retry-fanout')
+  @AdminPermission({
+    code: 'announcement:retry:fanout',
+    name: '重试公告消息中心通知',
+    groupCode: 'announcement',
+  })
   @ApiAuditDoc({
     summary: '重试公告消息中心通知',
     model: Boolean,

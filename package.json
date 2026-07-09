@@ -37,6 +37,8 @@
     "db:bootstrap:reference:prod": "bun db/bootstrap/reference.ts",
     "db:bootstrap:reference:prod:check": "bun db/bootstrap/reference.ts --check-env",
     "db:studio": "drizzle-kit studio",
+    "rbac:coverage:check": "tsx scripts/check-admin-rbac-coverage.ts",
+    "rbac:smoke": "tsx scripts/smoke-admin-rbac.ts",
     "db:migrate:prod": "drizzle-kit check --config=drizzle.config.ts && bun db/migrate.ts"
   },
   "dependencies": {

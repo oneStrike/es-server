@@ -42,7 +42,6 @@ export class AppUserCommandService extends AppUserServiceSupport {
 
   // 新建 APP 用户，先解密前端 RSA 密码再 scrypt 哈希。
   async createAppUser(adminUserId: number, dto: CreateAdminAppUserDto) {
-    await this.ensureSuperAdmin(adminUserId)
     const account = await this.generateUniqueAccount()
     const plainPassword = this.rsaService.decryptWith(dto.password)
     const hashedPassword =
@@ -103,7 +102,6 @@ export class AppUserCommandService extends AppUserServiceSupport {
     adminUserId: number,
     dto: UpdateAdminAppUserProfileDto,
   ) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
 
     const userData: AppUserProfileUpdateInput = {}
@@ -165,7 +163,6 @@ export class AppUserCommandService extends AppUserServiceSupport {
     adminUserId: number,
     dto: UpdateAdminAppUserEnabledDto,
   ) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
 
     await this.drizzle.withErrorHandling(
@@ -192,7 +189,6 @@ export class AppUserCommandService extends AppUserServiceSupport {
     adminUserId: number,
     dto: UpdateAdminAppUserStatusDto,
   ) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
 
     const isNormal = dto.status === UserStatusEnum.NORMAL
@@ -238,7 +234,6 @@ export class AppUserCommandService extends AppUserServiceSupport {
 
   // 软删除 APP 用户。
   async deleteAppUser(adminUserId: number, userId: number) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -261,7 +256,6 @@ export class AppUserCommandService extends AppUserServiceSupport {
 
   // 恢复已软删除的 APP 用户。
   async restoreAppUser(adminUserId: number, userId: number) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -283,7 +277,6 @@ export class AppUserCommandService extends AppUserServiceSupport {
     adminUserId: number,
     dto: ResetAdminAppUserPasswordDto,
   ) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
     const plainPassword = this.rsaService.decryptWith(dto.password)
     const encryptedPassword =
@@ -310,14 +303,12 @@ export class AppUserCommandService extends AppUserServiceSupport {
 
   // 重建单个 APP 用户关注相关计数。
   async rebuildAppUserFollowCounts(adminUserId: number, userId: number) {
-    await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(userId)
     return this.appUserCountService.rebuildFollowCounts(undefined, userId)
   }
 
   // 全量重建 APP 用户关注相关计数，按批次执行避免尖峰压力。
   async rebuildAllAppUserFollowCounts(adminUserId: number, batchSize = 200) {
-    await this.ensureSuperAdmin(adminUserId)
     const userIds = await this.db
       .select({ id: this.appUserTable.id })
       .from(this.appUserTable)

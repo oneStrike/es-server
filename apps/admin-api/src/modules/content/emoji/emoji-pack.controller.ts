@@ -17,6 +17,7 @@ import {
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/表情管理')
@@ -25,6 +26,11 @@ export class EmojiPackController {
   constructor(private readonly emojiAssetService: EmojiAssetService) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'content:emoji:pack:page',
+    name: '分页查询表情包',
+    groupCode: 'content:emoji:pack',
+  })
   @ApiPageDoc({
     summary: '分页查询表情包',
     model: EmojiPackOutputDto,
@@ -34,6 +40,11 @@ export class EmojiPackController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'content:emoji:pack:detail',
+    name: '查询表情包详情',
+    groupCode: 'content:emoji:pack',
+  })
   @ApiDoc({
     summary: '查询表情包详情',
     model: EmojiPackOutputDto,
@@ -43,6 +54,11 @@ export class EmojiPackController {
   }
 
   @Post('create')
+  @AdminPermission({
+    code: 'content:emoji:pack:create',
+    name: '创建表情包',
+    groupCode: 'content:emoji:pack',
+  })
   @ApiAuditDoc({
     summary: '创建表情包',
     model: Boolean,
@@ -58,6 +74,11 @@ export class EmojiPackController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'content:emoji:pack:update',
+    name: '更新表情包',
+    groupCode: 'content:emoji:pack',
+  })
   @ApiAuditDoc({
     summary: '更新表情包',
     model: Boolean,
@@ -73,6 +94,11 @@ export class EmojiPackController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'content:emoji:pack:delete',
+    name: '删除表情包',
+    groupCode: 'content:emoji:pack',
+  })
   @ApiAuditDoc({
     summary: '删除表情包',
     model: Boolean,
@@ -85,6 +111,11 @@ export class EmojiPackController {
   }
 
   @Post('update-enabled')
+  @AdminPermission({
+    code: 'content:emoji:pack:update:enabled',
+    name: '更新表情包启用状态',
+    groupCode: 'content:emoji:pack',
+  })
   @ApiAuditDoc({
     summary: '更新表情包启用状态',
     model: Boolean,
@@ -104,6 +135,11 @@ export class EmojiPackController {
   }
 
   @Post('swap-sort-order')
+  @AdminPermission({
+    code: 'content:emoji:pack:swap:sort:order',
+    name: '交换表情包排序',
+    groupCode: 'content:emoji:pack',
+  })
   @ApiAuditDoc({
     summary: '交换表情包排序',
     model: Boolean,
@@ -116,6 +152,11 @@ export class EmojiPackController {
   }
 
   @Post('update-scene-type')
+  @AdminPermission({
+    code: 'content:emoji:pack:update:scene:type',
+    name: '更新表情包场景类型',
+    groupCode: 'content:emoji:pack',
+  })
   @ApiAuditDoc({
     summary: '更新表情包场景类型',
     model: Boolean,

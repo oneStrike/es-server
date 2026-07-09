@@ -8,6 +8,7 @@ import { UploadService } from '@libs/platform/modules/upload/upload.service'
 
 import { Controller, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('系统管理/文件上传')
@@ -16,6 +17,11 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post('file/upload')
+  @AdminPermission({
+    code: 'upload:file:upload',
+    name: '上传文件',
+    groupCode: 'upload',
+  })
   @ApiAuditDoc({
     summary: '上传文件',
     model: UploadResponseDto,

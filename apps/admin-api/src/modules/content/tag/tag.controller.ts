@@ -11,6 +11,7 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -26,6 +27,11 @@ export class ContentTagController {
    * 创建标签
    */
   @Post('create')
+  @AdminPermission({
+    code: 'content:tag:create',
+    name: '创建标签',
+    groupCode: 'content:tag',
+  })
   @ApiAuditDoc({
     summary: '创建标签',
     model: Boolean,
@@ -41,6 +47,11 @@ export class ContentTagController {
    * 分页查询标签列表
    */
   @Get('page')
+  @AdminPermission({
+    code: 'content:tag:page',
+    name: '分页查询标签列表',
+    groupCode: 'content:tag',
+  })
   @ApiPageDoc({
     summary: '分页查询标签列表',
     model: AdminTagDto,
@@ -53,6 +64,11 @@ export class ContentTagController {
    * 获取标签详情
    */
   @Get('detail')
+  @AdminPermission({
+    code: 'content:tag:detail',
+    name: '获取标签详情',
+    groupCode: 'content:tag',
+  })
   @ApiDoc({
     summary: '获取标签详情',
     model: AdminTagDto,
@@ -65,6 +81,11 @@ export class ContentTagController {
    * 更新标签信息
    */
   @Post('update')
+  @AdminPermission({
+    code: 'content:tag:update',
+    name: '更新标签信息',
+    groupCode: 'content:tag',
+  })
   @ApiAuditDoc({
     summary: '更新标签信息',
     model: Boolean,
@@ -80,6 +101,11 @@ export class ContentTagController {
    * 批量更新标签状态
    */
   @Post('update-status')
+  @AdminPermission({
+    code: 'content:tag:update:status',
+    name: '更新标签状态',
+    groupCode: 'content:tag',
+  })
   @ApiAuditDoc({
     summary: '更新标签状态',
     model: Boolean,
@@ -95,6 +121,11 @@ export class ContentTagController {
    * 批量删除标签
    */
   @Post('delete')
+  @AdminPermission({
+    code: 'content:tag:delete',
+    name: '删除标签',
+    groupCode: 'content:tag',
+  })
   @ApiAuditDoc({
     summary: '删除标签',
     model: Boolean,
@@ -110,6 +141,11 @@ export class ContentTagController {
    * 标签拖拽排序
    */
   @Post('swap-sort-order')
+  @AdminPermission({
+    code: 'content:tag:swap:sort:order',
+    name: '标签交换排序',
+    groupCode: 'content:tag',
+  })
   @ApiAuditDoc({
     summary: '标签交换排序',
     model: Boolean,

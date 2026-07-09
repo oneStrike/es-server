@@ -12,6 +12,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -27,6 +28,11 @@ export class ContentCategoryController {
    * 创建分类
    */
   @Post('create')
+  @AdminPermission({
+    code: 'content:category:create',
+    name: '创建分类',
+    groupCode: 'content:category',
+  })
   @ApiAuditDoc({
     summary: '创建分类',
     model: Boolean,
@@ -42,6 +48,11 @@ export class ContentCategoryController {
    * 分页查询分类列表
    */
   @Get('page')
+  @AdminPermission({
+    code: 'content:category:page',
+    name: '分页查询分类列表',
+    groupCode: 'content:category',
+  })
   @ApiPageDoc({
     summary: '分页查询分类列表',
     model: CategoryOutputDto,
@@ -54,6 +65,11 @@ export class ContentCategoryController {
    * 获取分类详情
    */
   @Get('detail')
+  @AdminPermission({
+    code: 'content:category:detail',
+    name: '获取分类详情',
+    groupCode: 'content:category',
+  })
   @ApiDoc({
     summary: '获取分类详情',
     model: CategoryOutputDto,
@@ -66,6 +82,11 @@ export class ContentCategoryController {
    * 更新分类信息
    */
   @Post('update')
+  @AdminPermission({
+    code: 'content:category:update',
+    name: '更新分类信息',
+    groupCode: 'content:category',
+  })
   @ApiAuditDoc({
     summary: '更新分类信息',
     model: Boolean,
@@ -81,6 +102,11 @@ export class ContentCategoryController {
    * 更新分类状态
    */
   @Post('update-status')
+  @AdminPermission({
+    code: 'content:category:update:status',
+    name: '更新分类状态',
+    groupCode: 'content:category',
+  })
   @ApiAuditDoc({
     summary: '更新分类状态',
     model: Boolean,
@@ -96,6 +122,11 @@ export class ContentCategoryController {
    * 批量删除分类
    */
   @Post('delete')
+  @AdminPermission({
+    code: 'content:category:delete',
+    name: '删除分类',
+    groupCode: 'content:category',
+  })
   @ApiAuditDoc({
     summary: '删除分类',
     model: Boolean,
@@ -111,6 +142,11 @@ export class ContentCategoryController {
    * 拖拽排序
    */
   @Post('swap-sort-order')
+  @AdminPermission({
+    code: 'content:category:swap:sort:order',
+    name: '分类交换排序',
+    groupCode: 'content:category',
+  })
   @ApiAuditDoc({
     summary: '分类交换排序',
     model: Boolean,

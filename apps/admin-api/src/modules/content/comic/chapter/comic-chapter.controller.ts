@@ -18,6 +18,7 @@ import {
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../../../common/decorators/audit.decorator'
 
@@ -27,6 +28,11 @@ export class ComicChapterController {
   constructor(private readonly workChapterService: WorkChapterService) {}
 
   @Post('create')
+  @AdminPermission({
+    code: 'content:comic:chapter:create',
+    name: '创建漫画章节',
+    groupCode: 'content:comic:chapter',
+  })
   @ApiAuditDoc({
     summary: '创建漫画章节',
     model: Boolean,
@@ -45,6 +51,11 @@ export class ComicChapterController {
   }
 
   @Get('page')
+  @AdminPermission({
+    code: 'content:comic:chapter:page',
+    name: '分页查询漫画章节列表',
+    groupCode: 'content:comic:chapter',
+  })
   @ApiPageDoc({
     summary: '分页查询漫画章节列表',
     model: AdminWorkChapterPageItemDto,
@@ -57,6 +68,11 @@ export class ComicChapterController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'content:comic:chapter:detail',
+    name: '获取漫画章节详情',
+    groupCode: 'content:comic:chapter',
+  })
   @ApiDoc({
     summary: '获取漫画章节详情',
     model: AdminWorkChapterDetailDto,
@@ -69,6 +85,11 @@ export class ComicChapterController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'content:comic:chapter:update',
+    name: '更新漫画章节',
+    groupCode: 'content:comic:chapter',
+  })
   @ApiAuditDoc({
     summary: '更新漫画章节',
     model: Boolean,
@@ -81,6 +102,11 @@ export class ComicChapterController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'content:comic:chapter:delete',
+    name: '删除漫画章节',
+    groupCode: 'content:comic:chapter',
+  })
   @ApiAuditDoc({
     summary: '删除漫画章节',
     model: Boolean,
@@ -93,6 +119,11 @@ export class ComicChapterController {
   }
 
   @Post('batch-delete')
+  @AdminPermission({
+    code: 'content:comic:chapter:batch:delete',
+    name: '批量删除漫画章节',
+    groupCode: 'content:comic:chapter',
+  })
   @ApiAuditDoc({
     summary: '批量删除漫画章节',
     model: Boolean,
@@ -105,6 +136,11 @@ export class ComicChapterController {
   }
 
   @Post('batch-update-status')
+  @AdminPermission({
+    code: 'content:comic:chapter:batch:update:status',
+    name: '批量更新漫画章节发布状态',
+    groupCode: 'content:comic:chapter',
+  })
   @ApiAuditDoc({
     summary: '批量更新漫画章节发布状态',
     model: Boolean,
@@ -120,6 +156,11 @@ export class ComicChapterController {
   }
 
   @Post('swap-sort-order')
+  @AdminPermission({
+    code: 'content:comic:chapter:swap:sort:order',
+    name: '交换章节序号',
+    groupCode: 'content:comic:chapter',
+  })
   @ApiDoc({
     summary: '交换章节序号',
     model: Boolean,

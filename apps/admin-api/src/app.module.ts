@@ -21,6 +21,8 @@ import { AppConfigRegister } from './config/app.config'
 import { appConfigValidationSchema } from './config/validation.config'
 import { AdminModule } from './modules/admin.module'
 import { AdminUserStatusGuard } from './modules/auth/admin-user-status.guard'
+import { AdminRbacGuard } from './modules/rbac/admin-rbac.guard'
+import { AdminRbacModule } from './modules/rbac/admin-rbac.module'
 import { AuditModule } from './modules/system/audit/audit.module'
 
 @Module({
@@ -51,6 +53,7 @@ import { AuditModule } from './modules/system/audit/audit.module'
     PlatformModule.forRoot(),
     JwtAuthModule,
     ScheduleModule.forRoot(),
+    AdminRbacModule,
     // 业务功能模块
     AuditModule, // 业务审计模块
     AdminModule, // 管理模块
@@ -68,6 +71,10 @@ import { AuditModule } from './modules/system/audit/audit.module'
     {
       provide: APP_GUARD,
       useClass: AdminUserStatusGuard, // 管理端用户状态守卫
+    },
+    {
+      provide: APP_GUARD,
+      useExisting: AdminRbacGuard, // 管理端 RBAC 权限守卫
     },
     {
       provide: APP_INTERCEPTOR,

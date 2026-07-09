@@ -23,7 +23,6 @@ import {
 import { buildDateOnlyRangeInAppTimeZone, jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
-import { AdminUserService } from '../admin-user/admin-user.service'
 
 @Injectable()
 export class MessageMonitorService {
@@ -33,7 +32,6 @@ export class MessageMonitorService {
     private readonly drizzle: DrizzleService,
     private readonly messageNotificationDeliveryService: MessageNotificationDeliveryService,
     private readonly domainEventDispatchService: DomainEventDispatchService,
-    private readonly adminUserService: AdminUserService,
   ) {}
 
   // 读取注入的数据库客户端。
@@ -164,7 +162,6 @@ export class MessageMonitorService {
     adminUserId: number,
     body: RetryMessageNotificationDeliveryDto,
   ) {
-    await this.adminUserService.isSuperAdmin(adminUserId)
     const deliveryId = this.parsePositiveIntegerId(body.deliveryId, 'deliveryId')
     const reason = this.normalizeRetryReason(body.reason)
     const delivery = await this.db.query.notificationDelivery.findFirst({

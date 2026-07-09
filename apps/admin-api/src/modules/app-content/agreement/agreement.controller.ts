@@ -26,6 +26,7 @@ import {
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -44,6 +45,11 @@ export class AgreementController {
   ) {}
 
   @Post('create')
+  @AdminPermission({
+    code: 'agreement:create',
+    name: '创建协议',
+    groupCode: 'agreement',
+  })
   @ApiAuditDoc({
     summary: '创建协议',
     model: Boolean,
@@ -57,6 +63,11 @@ export class AgreementController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'agreement:update',
+    name: '更新协议',
+    groupCode: 'agreement',
+  })
   @ApiAuditDoc({
     summary: '更新协议',
     model: Boolean,
@@ -70,6 +81,11 @@ export class AgreementController {
   }
 
   @Post('update-status')
+  @AdminPermission({
+    code: 'agreement:update:status',
+    name: '更新协议发布状态',
+    groupCode: 'agreement',
+  })
   @ApiAuditDoc({
     summary: '更新协议发布状态',
     model: Boolean,
@@ -83,6 +99,11 @@ export class AgreementController {
   }
 
   @Get('page')
+  @AdminPermission({
+    code: 'agreement:page',
+    name: '查询协议分页',
+    groupCode: 'agreement',
+  })
   @ApiPageDoc({
     summary: '查询协议分页',
     model: AdminAgreementListItemDto,
@@ -98,6 +119,11 @@ export class AgreementController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'agreement:detail',
+    name: '获取协议详情',
+    groupCode: 'agreement',
+  })
   @ApiDoc({
     summary: '获取协议详情',
     model: AdminAgreementDetailDto,

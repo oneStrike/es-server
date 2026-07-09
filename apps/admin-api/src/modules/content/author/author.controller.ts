@@ -15,6 +15,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -30,6 +31,11 @@ export class ContentAuthorController {
    * 创建作者
    */
   @Post('create')
+  @AdminPermission({
+    code: 'content:author:create',
+    name: '创建作者',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '创建作者',
     model: Boolean,
@@ -45,6 +51,11 @@ export class ContentAuthorController {
    * 分页查询作者列表
    */
   @Get('page')
+  @AdminPermission({
+    code: 'content:author:page',
+    name: '分页查询作者列表',
+    groupCode: 'content:author',
+  })
   @ApiPageDoc({
     summary: '分页查询作者列表',
     model: AuthorPageResponseDto,
@@ -57,6 +68,11 @@ export class ContentAuthorController {
    * 获取作者详情
    */
   @Get('detail')
+  @AdminPermission({
+    code: 'content:author:detail',
+    name: '获取作者详情',
+    groupCode: 'content:author',
+  })
   @ApiDoc({
     summary: '获取作者详情',
     model: AuthorOutputBaseDto,
@@ -69,6 +85,11 @@ export class ContentAuthorController {
    * 更新作者信息
    */
   @Post('update')
+  @AdminPermission({
+    code: 'content:author:update',
+    name: '更新作者信息',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '更新作者信息',
     model: Boolean,
@@ -84,6 +105,11 @@ export class ContentAuthorController {
    * 更新作者状态
    */
   @Post('update-status')
+  @AdminPermission({
+    code: 'content:author:update:status',
+    name: '更新作者状态',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '更新作者状态',
     model: Boolean,
@@ -99,6 +125,11 @@ export class ContentAuthorController {
    * 批量更新作者推荐状态
    */
   @Post('update-recommended')
+  @AdminPermission({
+    code: 'content:author:update:recommended',
+    name: '更新作者推荐状态',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '更新作者推荐状态',
     model: Boolean,
@@ -111,6 +142,11 @@ export class ContentAuthorController {
   }
 
   @Post('rebuild-follow-count')
+  @AdminPermission({
+    code: 'content:author:rebuild:follow:count',
+    name: '重建作者关注计数',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '重建作者关注计数',
     model: AuthorFollowCountRepairResultDto,
@@ -123,6 +159,11 @@ export class ContentAuthorController {
   }
 
   @Post('rebuild-follow-count-all')
+  @AdminPermission({
+    code: 'content:author:rebuild:follow:count:all',
+    name: '全量重建作者关注计数',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '全量重建作者关注计数',
     model: Boolean,
@@ -135,6 +176,11 @@ export class ContentAuthorController {
   }
 
   @Post('rebuild-work-count')
+  @AdminPermission({
+    code: 'content:author:rebuild:work:count',
+    name: '重建作者作品计数',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '重建作者作品计数',
     model: AuthorWorkCountRepairResultDto,
@@ -147,6 +193,11 @@ export class ContentAuthorController {
   }
 
   @Post('rebuild-work-count-all')
+  @AdminPermission({
+    code: 'content:author:rebuild:work:count:all',
+    name: '全量重建作者作品计数',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '全量重建作者作品计数',
     model: Boolean,
@@ -162,6 +213,11 @@ export class ContentAuthorController {
    * 删除作者
    */
   @Post('delete')
+  @AdminPermission({
+    code: 'content:author:delete',
+    name: '删除作者',
+    groupCode: 'content:author',
+  })
   @ApiAuditDoc({
     summary: '删除作者',
     model: Boolean,

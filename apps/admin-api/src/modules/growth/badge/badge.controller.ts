@@ -15,6 +15,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
@@ -29,6 +30,11 @@ export class UserBadgeController {
   constructor(private readonly userBadgeService: UserBadgeService) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'growth:badges:page',
+    name: '获取用户徽章分页',
+    groupCode: 'growth:badges',
+  })
   @ApiPageDoc({
     summary: '获取用户徽章分页',
     model: UserBadgeOutputDto,
@@ -38,6 +44,11 @@ export class UserBadgeController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'growth:badges:detail',
+    name: '获取用户徽章详情',
+    groupCode: 'growth:badges',
+  })
   @ApiDoc({
     summary: '获取用户徽章详情',
     model: UserBadgeOutputDto,
@@ -47,6 +58,11 @@ export class UserBadgeController {
   }
 
   @Post('create')
+  @AdminPermission({
+    code: 'growth:badges:create',
+    name: '创建用户徽章',
+    groupCode: 'growth:badges',
+  })
   @ApiAuditDoc({
     summary: '创建用户徽章',
     model: Boolean,
@@ -59,6 +75,11 @@ export class UserBadgeController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'growth:badges:update',
+    name: '更新用户徽章',
+    groupCode: 'growth:badges',
+  })
   @ApiAuditDoc({
     summary: '更新用户徽章',
     model: Boolean,
@@ -71,6 +92,11 @@ export class UserBadgeController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'growth:badges:delete',
+    name: '删除用户徽章',
+    groupCode: 'growth:badges',
+  })
   @ApiAuditDoc({
     summary: '删除用户徽章',
     model: Boolean,
@@ -83,6 +109,11 @@ export class UserBadgeController {
   }
 
   @Post('update-status')
+  @AdminPermission({
+    code: 'growth:badges:update:status',
+    name: '更新用户徽章状态',
+    groupCode: 'growth:badges',
+  })
   @ApiAuditDoc({
     summary: '更新用户徽章状态',
     model: Boolean,
@@ -95,6 +126,11 @@ export class UserBadgeController {
   }
 
   @Post('assign')
+  @AdminPermission({
+    code: 'growth:badges:assign',
+    name: '为用户分配用户徽章',
+    groupCode: 'growth:badges',
+  })
   @ApiAuditDoc({
     summary: '为用户分配用户徽章',
     model: Boolean,
@@ -107,6 +143,11 @@ export class UserBadgeController {
   }
 
   @Post('revoke')
+  @AdminPermission({
+    code: 'growth:badges:revoke',
+    name: '撤销用户徽章',
+    groupCode: 'growth:badges',
+  })
   @ApiAuditDoc({
     summary: '撤销用户徽章',
     model: Boolean,
@@ -119,6 +160,11 @@ export class UserBadgeController {
   }
 
   @Get('user/page')
+  @AdminPermission({
+    code: 'growth:badges:user:page',
+    name: '获取拥有某个用户徽章的用户列表',
+    groupCode: 'growth:badges',
+  })
   @ApiPageDoc({
     summary: '获取拥有某个用户徽章的用户列表',
     model: BadgeUserPageItemDto,
@@ -128,6 +174,11 @@ export class UserBadgeController {
   }
 
   @Get('stats')
+  @AdminPermission({
+    code: 'growth:badges:stats',
+    name: '获取用户徽章统计信息',
+    groupCode: 'growth:badges',
+  })
   @ApiDoc({
     summary: '获取用户徽章统计信息',
     model: UserBadgeStatisticsDto,

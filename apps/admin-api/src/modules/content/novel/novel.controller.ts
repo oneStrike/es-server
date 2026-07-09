@@ -16,6 +16,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/小说管理/基础信息')
@@ -24,6 +25,11 @@ export class NovelController {
   constructor(private readonly workService: WorkService) {}
 
   @Post('create')
+  @AdminPermission({
+    code: 'content:novel:create',
+    name: '创建小说',
+    groupCode: 'content:novel',
+  })
   @ApiAuditDoc({
     summary: '创建小说',
     model: Boolean,
@@ -36,6 +42,11 @@ export class NovelController {
   }
 
   @Get('page')
+  @AdminPermission({
+    code: 'content:novel:page',
+    name: '分页查询小说列表',
+    groupCode: 'content:novel',
+  })
   @ApiPageDoc({
     summary: '分页查询小说列表',
     model: PageWorkDto,
@@ -45,6 +56,11 @@ export class NovelController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'content:novel:detail',
+    name: '获取小说详情',
+    groupCode: 'content:novel',
+  })
   @ApiDoc({
     summary: '获取小说详情',
     model: AdminWorkDetailDto,
@@ -57,6 +73,11 @@ export class NovelController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'content:novel:update',
+    name: '更新小说信息',
+    groupCode: 'content:novel',
+  })
   @ApiAuditDoc({
     summary: '更新小说信息',
     model: Boolean,
@@ -69,6 +90,11 @@ export class NovelController {
   }
 
   @Post('update-status')
+  @AdminPermission({
+    code: 'content:novel:update:status',
+    name: '更新小说发布状态',
+    groupCode: 'content:novel',
+  })
   @ApiAuditDoc({
     summary: '更新小说发布状态',
     model: Boolean,
@@ -81,6 +107,11 @@ export class NovelController {
   }
 
   @Post('update-recommended')
+  @AdminPermission({
+    code: 'content:novel:update:recommended',
+    name: '更新小说推荐状态',
+    groupCode: 'content:novel',
+  })
   @ApiAuditDoc({
     summary: '更新小说推荐状态',
     model: Boolean,
@@ -99,6 +130,11 @@ export class NovelController {
   }
 
   @Post('update-hot')
+  @AdminPermission({
+    code: 'content:novel:update:hot',
+    name: '更新小说热门状态',
+    groupCode: 'content:novel',
+  })
   @ApiAuditDoc({
     summary: '更新小说热门状态',
     model: Boolean,
@@ -117,6 +153,11 @@ export class NovelController {
   }
 
   @Post('update-new')
+  @AdminPermission({
+    code: 'content:novel:update:new',
+    name: '更新小说新作状态',
+    groupCode: 'content:novel',
+  })
   @ApiAuditDoc({
     summary: '更新小说新作状态',
     model: Boolean,
@@ -135,6 +176,11 @@ export class NovelController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'content:novel:delete',
+    name: '软删除小说',
+    groupCode: 'content:novel',
+  })
   @ApiAuditDoc({
     summary: '软删除小说',
     model: Boolean,

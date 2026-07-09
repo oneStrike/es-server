@@ -16,6 +16,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/漫画管理/基础信息')
@@ -24,6 +25,11 @@ export class ComicController {
   constructor(private readonly workService: WorkService) {}
 
   @Post('create')
+  @AdminPermission({
+    code: 'content:comic:create',
+    name: '创建漫画',
+    groupCode: 'content:comic',
+  })
   @ApiAuditDoc({
     summary: '创建漫画',
     model: Boolean,
@@ -36,6 +42,11 @@ export class ComicController {
   }
 
   @Get('page')
+  @AdminPermission({
+    code: 'content:comic:page',
+    name: '分页查询漫画列表',
+    groupCode: 'content:comic',
+  })
   @ApiPageDoc({
     summary: '分页查询漫画列表',
     model: PageWorkDto,
@@ -45,6 +56,11 @@ export class ComicController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'content:comic:detail',
+    name: '获取漫画详情',
+    groupCode: 'content:comic',
+  })
   @ApiDoc({
     summary: '获取漫画详情',
     model: AdminWorkDetailDto,
@@ -57,6 +73,11 @@ export class ComicController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'content:comic:update',
+    name: '更新漫画信息',
+    groupCode: 'content:comic',
+  })
   @ApiAuditDoc({
     summary: '更新漫画信息',
     model: Boolean,
@@ -69,6 +90,11 @@ export class ComicController {
   }
 
   @Post('update-status')
+  @AdminPermission({
+    code: 'content:comic:update:status',
+    name: '更新漫画发布状态',
+    groupCode: 'content:comic',
+  })
   @ApiAuditDoc({
     summary: '更新漫画发布状态',
     model: Boolean,
@@ -81,6 +107,11 @@ export class ComicController {
   }
 
   @Post('update-recommended')
+  @AdminPermission({
+    code: 'content:comic:update:recommended',
+    name: '更新漫画推荐状态',
+    groupCode: 'content:comic',
+  })
   @ApiAuditDoc({
     summary: '更新漫画推荐状态',
     model: Boolean,
@@ -99,6 +130,11 @@ export class ComicController {
   }
 
   @Post('update-hot')
+  @AdminPermission({
+    code: 'content:comic:update:hot',
+    name: '更新漫画热门状态',
+    groupCode: 'content:comic',
+  })
   @ApiAuditDoc({
     summary: '更新漫画热门状态',
     model: Boolean,
@@ -117,6 +153,11 @@ export class ComicController {
   }
 
   @Post('update-new')
+  @AdminPermission({
+    code: 'content:comic:update:new',
+    name: '更新漫画新作状态',
+    groupCode: 'content:comic',
+  })
   @ApiAuditDoc({
     summary: '更新漫画新作状态',
     model: Boolean,
@@ -135,6 +176,11 @@ export class ComicController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'content:comic:delete',
+    name: '软删除漫画',
+    groupCode: 'content:comic',
+  })
   @ApiAuditDoc({
     summary: '软删除漫画',
     model: Boolean,

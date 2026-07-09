@@ -14,6 +14,7 @@ import {
   Req,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/小说管理/章节内容')
@@ -22,6 +23,11 @@ export class NovelContentController {
   constructor(private readonly novelContentService: NovelContentService) {}
 
   @Get('detail')
+  @AdminPermission({
+    code: 'content:novel:chapter:content:detail',
+    name: '获取章节内容',
+    groupCode: 'content:novel:chapter:content',
+  })
   @ApiDoc({
     summary: '获取章节内容',
     model: String,
@@ -31,6 +37,11 @@ export class NovelContentController {
   }
 
   @Post('upload')
+  @AdminPermission({
+    code: 'content:novel:chapter:content:upload',
+    name: '上传章节文件',
+    groupCode: 'content:novel:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '上传章节文件',
     model: UploadResponseDto,
@@ -43,6 +54,11 @@ export class NovelContentController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'content:novel:chapter:content:delete',
+    name: '删除章节文件',
+    groupCode: 'content:novel:chapter:content',
+  })
   @ApiAuditDoc({
     summary: '删除章节文件',
     model: Boolean,

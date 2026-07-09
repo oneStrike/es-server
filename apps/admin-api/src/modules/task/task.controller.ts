@@ -35,6 +35,7 @@ import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiBody, ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('任务管理/任务配置')
@@ -48,6 +49,11 @@ export class TaskController {
 
   // 创建一条任务定义。
   @Post('create')
+  @AdminPermission({
+    code: 'task:create',
+    name: '创建任务',
+    groupCode: 'task',
+  })
   @ApiAuditDoc({
     summary: '创建任务',
     model: Boolean,
@@ -64,6 +70,11 @@ export class TaskController {
 
   // 更新一条任务定义。
   @Post('update')
+  @AdminPermission({
+    code: 'task:update',
+    name: '更新任务',
+    groupCode: 'task',
+  })
   @ApiAuditDoc({
     summary: '更新任务',
     model: Boolean,
@@ -80,6 +91,11 @@ export class TaskController {
 
   // 更新一条任务定义的状态。
   @Post('update-status')
+  @AdminPermission({
+    code: 'task:update:status',
+    name: '更新任务状态',
+    groupCode: 'task',
+  })
   @ApiAuditDoc({
     summary: '更新任务状态',
     model: Boolean,
@@ -93,6 +109,11 @@ export class TaskController {
 
   // 软删除一条任务定义。
   @Post('delete')
+  @AdminPermission({
+    code: 'task:delete',
+    name: '删除任务',
+    groupCode: 'task',
+  })
   @ApiAuditDoc({
     summary: '删除任务',
     model: Boolean,
@@ -106,6 +127,11 @@ export class TaskController {
 
   // 查询任务可选事件模板。
   @Get('template-options')
+  @AdminPermission({
+    code: 'task:template:options',
+    name: '查询 task 可消费事件模板选项',
+    groupCode: 'task',
+  })
   @ApiDoc({
     summary: '查询 task 可消费事件模板选项',
     model: TaskTemplateOptionsResponseDto,
@@ -116,6 +142,11 @@ export class TaskController {
 
   // 分页查询任务定义列表。
   @Get('page')
+  @AdminPermission({
+    code: 'task:page',
+    name: '分页查询任务',
+    groupCode: 'task',
+  })
   @ApiPageDoc({
     summary: '分页查询任务',
     model: AdminTaskDefinitionListItemDto,
@@ -126,6 +157,11 @@ export class TaskController {
 
   // 查询任务定义详情。
   @Get('detail')
+  @AdminPermission({
+    code: 'task:detail',
+    name: '查询任务详情',
+    groupCode: 'task',
+  })
   @ApiDoc({
     summary: '查询任务详情',
     model: AdminTaskDefinitionDetailDto,
@@ -136,6 +172,11 @@ export class TaskController {
 
   // 分页查询任务实例列表。
   @Get('instance/page')
+  @AdminPermission({
+    code: 'task:instance:page',
+    name: '分页查询任务实例记录',
+    groupCode: 'task',
+  })
   @ApiPageDoc({
     summary: '分页查询任务实例记录',
     model: AdminTaskInstancePageItemDto,
@@ -146,6 +187,11 @@ export class TaskController {
 
   // 分页查询任务奖励与通知对账视图。
   @Get('instance/reconciliation/page')
+  @AdminPermission({
+    code: 'task:instance:reconciliation:page',
+    name: '分页查询任务奖励与通知对账视图',
+    groupCode: 'task',
+  })
   @ApiPageDoc({
     summary: '分页查询任务奖励与通知对账视图',
     model: AdminTaskReconciliationItemDto,
@@ -158,6 +204,11 @@ export class TaskController {
 
   // 按任务实例维度重试奖励补偿。
   @Post('instance/reward/retry')
+  @AdminPermission({
+    code: 'task:instance:reward:retry',
+    name: '重试单条任务实例奖励补偿',
+    groupCode: 'task',
+  })
   @ApiAuditDoc({
     summary: '重试单条任务实例奖励补偿',
     model: TaskRewardRetryResultDto,
@@ -171,6 +222,11 @@ export class TaskController {
 
   // 批量重试待补偿的任务奖励，必须由当前筛选或选中实例限定范围。
   @Post('instance/reward/retry-pending/batch')
+  @AdminPermission({
+    code: 'task:instance:reward:retry:pending:batch',
+    name: '批量重试待补偿的任务实例奖励',
+    groupCode: 'task',
+  })
   @ApiAuditDoc({
     summary: '批量重试待补偿的任务实例奖励',
     model: TaskRewardRetryBatchResultDto,
@@ -187,6 +243,11 @@ export class TaskController {
 
   // 分页查询任务事件消费失败事实。
   @Get('event-failure/page')
+  @AdminPermission({
+    code: 'task:event:failure:page',
+    name: '分页查询任务事件消费失败事实',
+    groupCode: 'task',
+  })
   @ApiPageDoc({
     summary: '分页查询任务事件消费失败事实',
     model: BaseTaskEventFailureDto,
@@ -197,6 +258,11 @@ export class TaskController {
 
   // 重试单条任务事件消费失败事实。
   @Post('event-failure/retry')
+  @AdminPermission({
+    code: 'task:event:failure:retry',
+    name: '重试单条任务事件消费失败事实',
+    groupCode: 'task',
+  })
   @ApiAuditDoc({
     summary: '重试单条任务事件消费失败事实',
     model: TaskEventFailureRetryResultDto,
@@ -210,6 +276,11 @@ export class TaskController {
 
   // 批量重试待处理的任务事件消费失败事实。
   @Post('event-failure/retry-pending/batch')
+  @AdminPermission({
+    code: 'task:event:failure:retry:pending:batch',
+    name: '批量重试待处理的任务事件消费失败事实',
+    groupCode: 'task',
+  })
   @ApiAuditDoc({
     summary: '批量重试待处理的任务事件消费失败事实',
     model: TaskEventFailureRetryBatchResultDto,

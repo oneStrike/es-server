@@ -16,6 +16,7 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('广告激励')
@@ -25,6 +26,11 @@ export class AdRewardController {
 
   // 分页查询广告 provider 配置。
   @Get('provider/page')
+  @AdminPermission({
+    code: 'ad:reward:provider:page',
+    name: '分页查询广告 provider 配置',
+    groupCode: 'ad:reward',
+  })
   @ApiPageDoc({
     summary: '分页查询广告 provider 配置',
     model: AdProviderConfigOutputDto,
@@ -35,6 +41,11 @@ export class AdRewardController {
 
   // 查询广告验签密钥选项。
   @Get('credential-option/list')
+  @AdminPermission({
+    code: 'ad:reward:credential:option:list',
+    name: '查询广告验签密钥选项',
+    groupCode: 'ad:reward',
+  })
   @ApiDoc({
     summary: '查询广告验签密钥选项',
     model: AdRewardCredentialOptionDto,
@@ -46,6 +57,11 @@ export class AdRewardController {
 
   // 分页查询广告奖励记录。
   @Get('record/page')
+  @AdminPermission({
+    code: 'ad:reward:record:page',
+    name: '分页查询广告奖励记录',
+    groupCode: 'ad:reward',
+  })
   @ApiPageDoc({
     summary: '分页查询广告奖励记录',
     model: BaseAdRewardRecordDto,
@@ -56,6 +72,11 @@ export class AdRewardController {
 
   // 查询广告奖励记录详情。
   @Get('record/detail')
+  @AdminPermission({
+    code: 'ad:reward:record:detail',
+    name: '查询广告奖励记录详情',
+    groupCode: 'ad:reward',
+  })
   @ApiDoc({
     summary: '查询广告奖励记录详情',
     model: AdminAdRewardRecordDetailDto,
@@ -66,6 +87,11 @@ export class AdRewardController {
 
   // 分页查询广告奖励和内容权益对账视图。
   @Get('record/reconcile/page')
+  @AdminPermission({
+    code: 'ad:reward:record:reconcile:page',
+    name: '分页查询广告奖励和内容权益对账视图',
+    groupCode: 'ad:reward',
+  })
   @ApiPageDoc({
     summary: '分页查询广告奖励和内容权益对账视图',
     model: AdminAdRewardReconcileItemDto,
@@ -76,6 +102,11 @@ export class AdRewardController {
 
   // 创建广告 provider 配置。
   @Post('provider/create')
+  @AdminPermission({
+    code: 'ad:reward:provider:create',
+    name: '创建广告 provider 配置',
+    groupCode: 'ad:reward',
+  })
   @ApiAuditDoc({
     summary: '创建广告 provider 配置',
     model: Boolean,
@@ -87,6 +118,11 @@ export class AdRewardController {
 
   // 更新广告 provider 配置。
   @Post('provider/update')
+  @AdminPermission({
+    code: 'ad:reward:provider:update',
+    name: '更新广告 provider 配置',
+    groupCode: 'ad:reward',
+  })
   @ApiAuditDoc({
     summary: '更新广告 provider 配置',
     model: Boolean,
@@ -98,6 +134,11 @@ export class AdRewardController {
 
   // 更新广告 provider 启用状态。
   @Post('provider/update-status')
+  @AdminPermission({
+    code: 'ad:reward:provider:update:status',
+    name: '更新广告 provider 启用状态',
+    groupCode: 'ad:reward',
+  })
   @ApiAuditDoc({
     summary: '更新广告 provider 启用状态',
     model: Boolean,
@@ -109,6 +150,11 @@ export class AdRewardController {
 
   // 撤销广告奖励记录。
   @Post('record/revoke')
+  @AdminPermission({
+    code: 'ad:reward:record:revoke',
+    name: '撤销广告奖励记录',
+    groupCode: 'ad:reward',
+  })
   @ApiAuditDoc({
     summary: '撤销广告奖励记录',
     model: Boolean,

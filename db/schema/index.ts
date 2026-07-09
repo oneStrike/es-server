@@ -1,3 +1,4 @@
+export * from './admin/admin-rbac'
 export * from './admin/admin-user'
 export * from './admin/admin-user-token'
 

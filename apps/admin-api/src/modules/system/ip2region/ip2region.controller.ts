@@ -5,6 +5,7 @@ import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.c
 import { Ip2regionRuntimeStatusDto } from '@libs/platform/modules/geo/dto'
 import { Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { Ip2regionService } from './ip2region.service'
 
@@ -14,6 +15,11 @@ export class Ip2regionController {
   constructor(private readonly ip2regionService: Ip2regionService) {}
 
   @Get('status')
+  @AdminPermission({
+    code: 'system:ip2region:status',
+    name: '获取当前 IP 属地库状态',
+    groupCode: 'system:ip2region',
+  })
   @ApiDoc({
     summary: '获取当前 IP 属地库状态',
     model: Ip2regionRuntimeStatusDto,
@@ -23,6 +29,11 @@ export class Ip2regionController {
   }
 
   @Post('upload')
+  @AdminPermission({
+    code: 'system:ip2region:upload',
+    name: '上传 ip2region xdb 并热切换当前进程',
+    groupCode: 'system:ip2region',
+  })
   @ApiAuditDoc({
     summary: '上传 ip2region xdb 并热切换当前进程',
     model: Ip2regionRuntimeStatusDto,

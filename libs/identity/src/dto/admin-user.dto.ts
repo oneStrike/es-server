@@ -1,13 +1,16 @@
-import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
-import { BooleanProperty, DateProperty, EnumProperty, StringProperty } from '@libs/platform/decorators';
-
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
-
 import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
+import { AdminRoleSummaryDto } from './admin-rbac.dto'
 
 /**
  * 管理端用户基础 DTO。
- * 对齐 admin_user 表的稳定公开字段，供后台账号场景复用。
  */
 export class BaseAdminUserDto extends BaseDto {
   @StringProperty({
@@ -43,15 +46,6 @@ export class BaseAdminUserDto extends BaseDto {
   })
   avatar?: string
 
-  @EnumProperty({
-    description: '角色（0=普通管理员；1=超级管理员）',
-    example: AdminUserRoleEnum.NORMAL_ADMIN,
-    default: AdminUserRoleEnum.NORMAL_ADMIN,
-    enum: AdminUserRoleEnum,
-    required: true,
-  })
-  role!: AdminUserRoleEnum
-
   @BooleanProperty({
     description: '是否启用',
     example: true,
@@ -78,11 +72,44 @@ export class BaseAdminUserDto extends BaseDto {
 
 /**
  * 管理员账号输出 DTO。
- * 收敛后台读取场景可见字段，避免把 password 暴露进 Swagger 响应模型。
  */
 export class AdminUserResponseDto extends OmitType(BaseAdminUserDto, [
   'password',
-] as const) {}
+] as const) {
+  @ArrayProperty({
+    description: '角色id集合',
+    itemType: 'number',
+    example: [1],
+    required: true,
+    validation: false,
+  })
+  roleIds!: number[]
+
+  @ArrayProperty({
+    description: '角色列表',
+    itemClass: AdminRoleSummaryDto,
+    required: true,
+    validation: false,
+  })
+  roles!: AdminRoleSummaryDto[]
+
+  @ArrayProperty({
+    description: '权限编码列表',
+    itemType: 'string',
+    example: ['system:user:create'],
+    required: true,
+    validation: false,
+  })
+  accessCodes!: string[]
+
+  @BooleanProperty({
+    description: '是否超级管理员',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  isSuperAdmin!: boolean
+}
 
 /**
  * 管理员密码重置结果 DTO。
@@ -104,7 +131,6 @@ export class UserRegisterDto extends PickType(BaseAdminUserDto, [
   'username',
   'mobile',
   'avatar',
-  'role',
   'password',
 ] as const) {
   @StringProperty({
@@ -114,6 +140,14 @@ export class UserRegisterDto extends PickType(BaseAdminUserDto, [
     password: true,
   })
   confirmPassword!: string
+
+  @ArrayProperty({
+    description: '角色id集合',
+    itemType: 'number',
+    example: [1],
+    required: true,
+  })
+  roleIds!: number[]
 }
 
 /**
@@ -125,18 +159,30 @@ export class UpdateUserDto extends PickType(BaseAdminUserDto, [
   'avatar',
   'mobile',
   'isEnabled',
-  'role',
-] as const) {}
+] as const) {
+  @ArrayProperty({
+    description: '角色id集合',
+    itemType: 'number',
+    example: [1],
+    required: true,
+  })
+  roleIds!: number[]
+}
 
 /**
  * 管理员账号分页查询 DTO。
  */
 export class UserPageDto extends IntersectionType(
-  PartialType(
-    PickType(BaseAdminUserDto, ['username', 'mobile', 'isEnabled', 'role'] as const),
-  ),
+  PartialType(PickType(BaseAdminUserDto, ['username', 'mobile', 'isEnabled'] as const)),
   PageDto,
-) {}
+) {
+  @NumberProperty({
+    description: '角色id',
+    example: 1,
+    required: false,
+  })
+  roleId?: number
+}
 
 /**
  * 管理员账号修改密码 DTO。

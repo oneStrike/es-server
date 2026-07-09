@@ -20,6 +20,7 @@ import {
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('系统管理/字典管理')
@@ -28,6 +29,11 @@ export class DictionaryController {
   constructor(private readonly libDictionaryService: LibDictionaryService) {}
 
   @Get('page')
+  @AdminPermission({
+    code: 'dictionary:page',
+    name: '分页查询字典',
+    groupCode: 'dictionary',
+  })
   @ApiPageDoc({
     summary: '分页查询字典',
     model: DictionaryOutputDto,
@@ -37,6 +43,11 @@ export class DictionaryController {
   }
 
   @Get('detail')
+  @AdminPermission({
+    code: 'dictionary:detail',
+    name: '获取字典详情',
+    groupCode: 'dictionary',
+  })
   @ApiDoc({
     summary: '获取字典详情',
     model: DictionaryOutputDto,
@@ -46,6 +57,11 @@ export class DictionaryController {
   }
 
   @Post('create')
+  @AdminPermission({
+    code: 'dictionary:create',
+    name: '创建字典',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '创建字典',
     model: Boolean,
@@ -58,6 +74,11 @@ export class DictionaryController {
   }
 
   @Post('update')
+  @AdminPermission({
+    code: 'dictionary:update',
+    name: '更新字典',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '更新字典',
     model: Boolean,
@@ -70,6 +91,11 @@ export class DictionaryController {
   }
 
   @Post('delete')
+  @AdminPermission({
+    code: 'dictionary:delete',
+    name: '删除字典',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '删除字典',
     model: Boolean,
@@ -82,6 +108,11 @@ export class DictionaryController {
   }
 
   @Post('update-status')
+  @AdminPermission({
+    code: 'dictionary:update:status',
+    name: '更新字典状态',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '更新字典状态',
     model: Boolean,
@@ -94,6 +125,11 @@ export class DictionaryController {
   }
 
   @Get('item/page')
+  @AdminPermission({
+    code: 'dictionary:item:page',
+    name: '分页获取字典项',
+    groupCode: 'dictionary',
+  })
   @ApiPageDoc({
     summary: '分页获取字典项',
     model: DictionaryItemOutputDto,
@@ -103,6 +139,11 @@ export class DictionaryController {
   }
 
   @Get('item/list')
+  @AdminPermission({
+    code: 'dictionary:item:list',
+    name: '获取所有字典项',
+    groupCode: 'dictionary',
+  })
   @ApiDoc({
     summary: '获取所有字典项',
     model: DictionaryItemOutputDto,
@@ -113,6 +154,11 @@ export class DictionaryController {
   }
 
   @Post('item/create')
+  @AdminPermission({
+    code: 'dictionary:item:create',
+    name: '创建字典项',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '创建字典项',
     model: Boolean,
@@ -127,6 +173,11 @@ export class DictionaryController {
   }
 
   @Post('item/update')
+  @AdminPermission({
+    code: 'dictionary:item:update',
+    name: '更新字典项',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '更新字典项',
     model: Boolean,
@@ -141,6 +192,11 @@ export class DictionaryController {
   }
 
   @Post('item/update-status')
+  @AdminPermission({
+    code: 'dictionary:item:update:status',
+    name: '启用禁用字典项',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '启用禁用字典项',
     model: Boolean,
@@ -154,6 +210,11 @@ export class DictionaryController {
   }
 
   @Post('item/delete')
+  @AdminPermission({
+    code: 'dictionary:item:delete',
+    name: '删除字典项',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '删除字典项',
     model: Boolean,
@@ -166,6 +227,11 @@ export class DictionaryController {
   }
 
   @Post('item/swap-sort-order')
+  @AdminPermission({
+    code: 'dictionary:item:swap:sort:order',
+    name: '字典项交换排序',
+    groupCode: 'dictionary',
+  })
   @ApiAuditDoc({
     summary: '字典项交换排序',
     model: Boolean,
