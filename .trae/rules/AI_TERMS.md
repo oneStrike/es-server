@@ -1,100 +1,82 @@
 # AI 术语表
 
-本文件只解释项目内高频术语，不替代专项规则。
+本文件只解释项目内高频术语，不替代专项规则或 ADR。
 
 ## owner 文件
 
-- 含义：
-  - 某个符号真正定义和维护的具体文件。
-  - 对大多数业务域代码来说，导入时默认应直连 owner 文件，而不是经过目录语义路径或转发入口。
-- 典型例子：
-  - `@libs/forum/section/dto/forum-section.dto`
-  - `@libs/growth/growth-reward/types/growth-reward-result.type`
-- 常见误解：
-  - “只要路径更短，就可以新建 `index.ts` 或改走目录入口。”
-  - 这是错的；导入边界默认要求直连 owner 文件。
-- 特别注意：
-  - `libs/platform` 和 `db` 不是普通例子，它们走的是白名单公共入口，而不是“能看到具体文件就直连具体文件”。
+- 某个符号真正定义和维护的具体文件。大多数业务域导入默认直连 owner 文件，不经过目录语义路径或转发入口。
+- 例如 `@libs/forum/section/dto/forum-section.dto`、`@libs/growth/growth-reward/types/growth-reward-result.type`。
+- `libs/platform` 与 `db` 是受控 public API 例外，入口以 [01-import-boundaries.md](./01-import-boundaries.md) 及其白名单为准。
 
 ## owner 模块
 
-- 含义：
-  - 某个业务概念实际归属和维护的模块边界。
-  - 新增 DTO、type、service 相关文件时，默认贴近 owner 模块放置。
-- 典型例子：
-  - 论坛主题相关 DTO 应收敛在 `libs/forum/...` 对应 owner 模块内。
-  - 增长奖励相关内部类型应收敛在 `libs/growth/.../types/*.type.ts`。
-- 常见误解：
-  - “当前文件要用到这个结构，所以就近在本地再定义一份。”
-  - 这是错的；先回到 owner 模块看能否复用。
+- 某个业务概念、provider 或 use case 实际归属和维护的模块边界。
+- DTO、type、service 与 provider 默认贴近 owner 模块；调用方不得就地复制定义或重复注册 provider。
 
-## 稳定 contract
+## provider owner
 
-- 含义：
-  - 当前外部调用方已经依赖的稳定接口语义。
-  - 包括但不限于：路由路径、DTO 字段形状、字段是否始终存在、错误码语义、HTTP 状态、分页行为、数据库闭集值域。
-- 典型例子：
-  - 输出 DTO 中 nullable 字段必须以 `field: T | null` 的形式稳定存在，而不是有时缺字段。
-  - 业务失败要通过约定的业务字符串错误码表达，而不是临时换成其他异常语义。
-- 常见误解：
-  - “只是内部整理一下，不算 breaking change。”
-  - 如果客户端、调用方、脚本或既有模块会观察到结果差异，它通常就属于 contract 变化。
+- 唯一把某个 provider/token 放入 `providers` 的 Nest module。
+- 其他 module 只能显式 import owner module 并消费其最小 exports；重复注册、业务 global 与 `ModuleRef strict:false` 都不是 owner 机制。
+- 完整规则见 [09-nestjs-architecture.md](./09-nestjs-architecture.md)。
+
+## canonical contract
+
+- 当前唯一被代码、OpenAPI、DTO、错误码、schema、comments 与测试共同声明的合同。
+- 字段存在性、nullability、路由、错误语义、分页、闭集值域和 transport 行为都属于 contract。
+- 当前 development epoch 以新 canonical contract 原子替换旧合同；旧输入、旧输出与旧数据解释不构成第二套合同。
+
+## development epoch
+
+- 从不可变起点 tag 到完成 tag 的一次原子变更窗口；可分阶段提交，但中间状态不发布。
+- 当前 epoch 的范围、数据库 gate、回退与关闭条件以[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md) 为唯一事实源。
+
+## no-compat
+
+- 不接受或解释已删除的路由、字段、配置、值域、ORM API、migration log 或开发数据。
+- 禁止 shim、alias、版本路由、静默转换、旧值 fallback、双读、双写与旧 migration 解释器。
+- 可观察故障降级、确定性默认排序与状态机补偿不属于旧合同解释能力，但必须进入有 owner 和测试的 resilience allowlist。
+
+## migration baseline reset
+
+- 当前 development epoch 内、只针对已证明可销毁的 dev/test 数据库执行的一次性 migration 历史重建。
+- 它必须通过 ADR 定义的三重 guard 与 Gate A/B/C；epoch 完成后自动恢复 append-only，不是未来改写历史的通用许可。
+
+## consumer-owned port
+
+- consumer 为真实跨域同步能力或外部 SDK 定义的最小接口；adapter 在 app composition 绑定。
+- port 不用于包装所有数据库调用，也不得隐藏新事务。事务上下文需要沿同步调用链显式传播。
+
+## producer-owned event
+
+- producer 为已经发生的业务事实拥有的 event contract；consumer 依赖该 contract，而不是反向依赖 producer service。
+- 可靠投递使用 producer transaction 内的 outbox，consumer 负责幂等。
+
+## composition root
+
+- `apps/*` 中显式选择 module、provider adapter 与 transport enhancer 的唯一装配位置。
+- HTTP 和 WS 的 pipe/guard/filter/interceptor/error mapper 必须分别可见；Gateway 不依赖 HTTP globals 的隐式继承。
 
 ## 闭集字段
 
-- 含义：
-  - 值域有限、可枚举、需要在 schema / DTO / 常量之间保持一致的字段。
-  - 常见于状态、类型、模式、角色、平台、目标、场景等字段。
-- 典型例子：
-  - 使用 `smallint` / `smallint[]` 承载的状态字段。
-  - DTO `description` 需要写成 `1=...；2=...` 的枚举语义字段。
-- 常见误解：
-  - “所有字符串键都该改成数字枚举。”
-  - 这是错的；`eventKey`、`categoryKey`、`projectionKey` 等开放业务键不属于闭集字段。
+- 值域有限、可枚举、需要在 schema/DTO/常量之间保持一致的字段，常见于状态、类型、模式、角色、平台、目标和场景。
+- `eventKey`、`categoryKey`、`projectionKey` 等开放业务键不属于闭集字段。
 
 ## 事实源
 
-- 含义：
-  - 当前仓库里真正起规范约束作用的文档和实现基线。
-  - 本仓库的事实源优先级以 `AGENTS.md` 和 `.trae/rules/PROJECT_RULES.md` 为入口，再下钻到 `01-08` 专项规则。
-- 典型例子：
-  - 想知道 DTO nullable 字段怎么写，应以 [03-dto.md](./03-dto.md) 为准。
-  - 想知道 schema 变更如何交付，应以 [07-drizzle.md](./07-drizzle.md) 为准。
-- 常见误解：
-  - “AI 快速入口文档本身就是新的规则正文。”
-  - 不是；这些辅助文档只帮你更快找到事实源。
-
-## 兼容入口
-
-- 含义：
-  - 为了兼容既有调用方而保留的版本化入口、兼容路由或兼容编排层。
-  - 兼容入口可以存在，但不应复制第二套正式业务实现。
-- 典型例子：
-  - breaking change 期间保留旧入口，但底层仍复用同一 service 或共享编排逻辑。
-- 常见误解：
-  - “要兼容旧行为，就把逻辑整份复制一份。”
-  - 这是错的；规范要求兼容入口复用同一业务实现或共享编排。
+- 当前仓库真正起约束作用的 ADR、规则与 canonical implementation。
+- `AGENTS.md` 和 [PROJECT_RULES.md](./PROJECT_RULES.md) 是入口，再下钻到 `01-09` 专项规则；快速路由、术语与例外文档不复制专项正文。
 
 ## barrel
 
-- 含义：
-  - 仅用于转发导出的目录入口或汇总文件，例如 `index.ts`、`dto/index.ts`、`types/index.ts`。
-- 典型例子：
-  - `index.ts`
-  - `dto/index.ts`
-  - `module/index.ts`
-- 常见误解：
-  - “barrel 只是风格问题，不影响规范判断。”
-  - 在本仓库里不是；大多数业务域明确禁止新增 barrel。
+- 仅用于转发导出的目录入口或汇总文件，例如 `index.ts`、`dto/index.ts`、`types/index.ts`。
+- 大多数业务域禁止新增 barrel；受控例外以 01 规则白名单为准。
+
+## 长期测试资产
+
+- 能防止行为、contract、事务、架构边界或性能回归的 unit/integration/e2e/architecture/performance 测试、fixture 与 benchmark。
+- 这类资产必须提交并持续维护；一次性诊断探针不属于长期测试，使用后删除。
 
 ## 最低验证
 
-- 含义：
-  - 当前任务在可以诚实宣称“已完成”之前，至少要跑的最小验证集合。
-  - 它不是“能少跑就少跑”的借口，而是“证明当前结论成立”的底线。
-- 典型例子：
-  - 规则 / 规范文档改动：Markdown 检查 + `pnpm type-check`
-  - 一般代码改动：至少 `pnpm type-check`，再按行为变化补充更具体验证
-- 常见误解：
-  - “改动不大，可以直接凭肉眼判断完成。”
-  - 这是错的；没有新鲜验证输出，就不能声称完成。
+- 诚实宣称完成前必须运行的最小证据集合；它是底线，不是减少验证的借口。
+- 规则文档通常需要 Markdown check + type-check；代码改动至少 type-check，并按行为变化运行分层测试、build、边界或性能门禁。

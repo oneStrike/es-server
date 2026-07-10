@@ -6,8 +6,10 @@
 
 - 何时看：改 Controller、路由、Swagger、响应模型、`@HttpCode()` 时先看本篇。
 - 必做：Controller 只做入参接收、装配、注解和调用 service；入参 / 出参 DTO 从 `libs/*` 复用；成功 `POST` 的状态与 `@HttpCode()` 约定以本篇“返回语义”小节为准。
-- 不要：在 Controller 里写数据库查询或复杂业务编排，不要把 `CreateXxxDto`、`UpdateXxxDto` 当输出模型，也不要机械补 `@HttpCode(200)`。
-- 最低验证：`pnpm type-check`；若接口 contract 变化，再按 [08-testing.md](./08-testing.md) 补验证。
+- 不要：在 Controller 里写数据库查询或复杂业务编排，不要把输入 DTO 当输出模型，不要机械补 `@HttpCode(200)`，也不要为旧路由新增 alias/version 入口。
+- 最低验证：`pnpm type-check`、目标 HTTP e2e 与 OpenAPI check。
+
+Controller 是 HTTP transport；WebSocket gateway/adapter 的装配与 HTTP/WS 隔离以 [09-nestjs-architecture.md](./09-nestjs-architecture.md) 为准。
 
 ## 核心原则
 
@@ -15,7 +17,8 @@
 - Controller 只负责入参接收、上下文装配、权限与审计装饰器、Swagger 注解、调用 service。
 - Controller 入参 DTO 与响应 DTO 统一从 `libs/*` 复用；`apps/*` 不重复定义同构 DTO。
 - Controller 不写数据库查询，不承载复杂业务编排，不保留第二套正式业务实现。
-- breaking change 必须提供 versioning / compat 方案与下线计划。
+- app composition 必须显式装配 HTTP pipe、guard、filter、interceptor 与 error mapper；不得假设这些 application globals 适用于 WS。
+- 当前 development epoch 的 contract 变更按 ADR 原子硬切；旧路由、旧字段与旧错误入口明确失败，不提供 versioning、alias、shim 或转换层。
 
 ## 路由规范
 
@@ -44,7 +47,9 @@
 - admin-api 默认受保护，`@Public()` 只用于认证或明确公开能力。
 - admin 侧变更类接口优先使用 `@ApiAuditDoc()`，记录变更操作与影响。
 
-## 兼容与维护
+## Contract 切换与维护
 
-- 兼容入口必须复用同一 service 或共享编排逻辑，不复制第二套业务实现。
-- 发现规范与当前稳定契约冲突时，优先记录例外，不静默改坏线上行为。
+- 当前 canonical route、DTO、HTTP status、error code 与 OpenAPI 必须同轮一致。
+- 未被有效 ADR 覆盖的公开 contract 变化必须先形成显式决策；不得由局部 Controller 改动自行制造第二套入口。
+- 当前 epoch 删除的旧入口必须由永久 HTTP e2e 证明返回明确 4xx，并由 OpenAPI check 证明不再暴露。
+- 外部 OpenAPI publish 属于凭据化写操作，不由本规则或普通验证授权；边界见[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。

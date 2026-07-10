@@ -5,9 +5,11 @@
 ## TL;DR
 
 - 何时看：改导入路径、文件放置、barrel、`libs/platform` / `db` 入口时先看本篇。
-- 必做：业务域默认直连 owner 文件；命中 `libs/platform`、`db` 时只走白名单公共入口。
-- 不要：新增 `index.ts` / `dto/index.ts` 一类转发入口，不要用目录语义路径代替具体文件，也不要直连 `libs/platform` / `db` 具体文件。
-- 最低验证：`pnpm type-check`。
+- 必做：业务域默认直连 owner 文件；命中 `libs/platform`、`db` 时只走白名单公共入口；所有 runtime edge 同时遵循唯一 package DAG。
+- 不要：新增转发入口、反向 package edge 或循环依赖，不要用目录语义路径代替具体文件，也不要直连 `libs/platform` / `db` 具体文件。
+- 最低验证：`pnpm type-check`、`pnpm boundaries:check`。
+
+本篇只定义导入路径形状与 public API 白名单；package 方向、provider owner、port/event 和 composition root 以 [09-nestjs-architecture.md](./09-nestjs-architecture.md) 为单一事实源。
 
 ## 核心原则
 
@@ -17,7 +19,9 @@
 - 对 `@libs/platform/*`、`@db/*` 而言，“文件是否存在”“owner 文件更短”“当前只用一个符号”都不构成直连理由；必须回到白名单目录入口拿符号。
 - DTO 文件默认只依赖稳定 DTO、常量、类型和声明期组合工具；禁止通过 DTO 拉起业务运行时对象。
 - Service、Resolver、Module、Controller 直接依赖 owner 文件，不通过中间入口“顺手带出”其他符号。
-- 禁止通过“调整导出顺序”掩盖循环依赖；应通过收敛共享字段或调整依赖方向解决根因。
+- 文件直连不等于允许跨越 package DAG；任何 runtime import 都必须同时满足 09 规则定义的方向。
+- 禁止通过“调整导出顺序”、`forwardRef()`、动态 lookup 或 barrel 掩盖循环依赖；应删除反向边并收敛 owner。
+- 当前 development epoch 不保留 deprecated import alias、旧 module 入口或第二套公共路径；授权范围见[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
 
 ## 明确禁止
 
@@ -28,6 +32,8 @@
 - 禁止直连 `libs/platform` 与 `db` 下的具体文件，例如 `@libs/platform/dto/base.dto`、`@libs/platform/decorators/validate/string-property`、`@db/core/query/page-query`、`@db/schema/app/app-user`
 - 禁止使用 `@libs/platform/modules/<name>` 根入口；`modules` 目录下必须继续下沉到具体子模块，例如 `dto`、`helpers`、`types`、`*.module.ts`、`*.service.ts`、`*.constant.ts`
 - 禁止把 framework、ORM 或业务层的运行时对象伪装成“DTO 依赖”带入 DTO 文件
+- 禁止新增不符合唯一 package DAG 的 runtime import、Nest imports edge 或跨域反向依赖
+- 禁止为打破循环建立中央万能 `contracts`、`integration`、repository 或 service locator 包
 
 ## 分层导入规则
 
@@ -39,7 +45,9 @@
 - DTO 文件禁止导入：任何 barrel、`*.service.ts`、`*.module.ts`、`*.resolver.ts`，以及会引入业务行为的 provider、service、repository、entity、module 级依赖。
 - Service / Resolver / Module / Controller 必须直连具体文件，不通过 DTO barrel。
 - 业务域 `types/` 目录下的类型文件同样必须直连具体 `*.type.ts` 文件；禁止导入 `../types`、`@libs/foo/bar/types` 这类目录语义路径。
-- `apps/*` 也必须直连具体文件，不是例外。
+- `apps/*` 也必须直连具体文件，不是例外；它只做 composition、transport、启动与 adapter 绑定。
+- 跨域同步接口由 consumer owner 定义，adapter 由 app composition 绑定；异步事实 contract 由 producer owner 定义。导入方向不得因此反转。
+- owner service 可以按 09 规则直接依赖 `DrizzleService`；禁止为了“统一边界”把所有数据库调用搬进通用 repository/port。
 
 ## 例外白名单
 

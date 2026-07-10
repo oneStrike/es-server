@@ -64,6 +64,11 @@
 
 ## 编译器与 Lint 配置约束
 
+- canonical `pnpm type-check` 必须以 strict 配置覆盖第一方 `apps`、`libs`、`db`、`scripts`、`test`、`config` 与根级 TypeScript config 源码；这些范围内的 TypeScript 诊断必须为 0，不得用窄 `include`、路径排除或单文件跳过制造绿色结果。
+- canonical type-check 固定使用 `skipLibCheck: true`。第三方包自身 `.d.ts` 文件体内的声明诊断不阻断交付，也不计入本仓库实现债；第三方类型一旦在第一方使用点产生诊断，仍属于第一方错误并阻断门禁。
+- `apps`、`libs`、`db`、`scripts`、`test` 与根目录不得新增会被 `skipLibCheck` 跳过的第一方 `.d.ts` 或 module shim；需要表达的类型必须落在正常 owner `.ts` 文件，并由 canonical Program 检查。
+- 禁止为消除第三方声明诊断而 patch 依赖、增加 shim、维护 fork、引入 compatibility 层，或按 package / 文件 / 错误码逐条建立白名单。上游声明风险进入有 owner 和复核周期的 risk register，不进入 type-check 例外清单。
+- Drizzle 继续精确使用 RC4 与 RQBv2；第三方声明噪声不得成为降级 ORM、保留 RQBv1 或新增双轨兼容代码的理由。
 - `tsconfig.json` 中 `noImplicitAny` 必须设为 `true`，与"禁止使用 `any`"的规范意图一致；不允许通过隐式 `any` 绕过类型安全。
 - `tsconfig.json` 中 `forceConsistentCasingInFileNames` 必须设为 `true`，避免 Windows 与 Linux 之间因文件名大小写不一致导致构建失败。
 - `tsconfig.json` 中 `strictNullChecks` 必须设为 `true`（当前已启用），确保 nullable 字段在类型层面得到显式处理。

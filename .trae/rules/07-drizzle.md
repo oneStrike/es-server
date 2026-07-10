@@ -5,9 +5,9 @@
 ## TL;DR
 
 - 何时看：改 Drizzle 查询、schema、migration、seed、bootstrap、分页 / 排序 / 原子更新时先看本篇。
-- 必做：统一通过 `DrizzleService` 使用数据库能力；schema、DTO、常量 / 枚举、migration 同轮对齐；结构变更先走受控 migration / 注释入口。
-- 不要：使用 `drizzle-kit push`，不要把 seed 当 bootstrap，不要省略显式排序，也不要新增数据库外键。
-- 最低验证：`pnpm type-check`；若涉及 schema / migration，再继续执行附录中的 migration / 注释检查入口。
+- 必做：统一通过 `DrizzleService` 使用数据库能力；schema、DTO、常量/枚举、migration 同轮对齐；常规 migration append-only；当前 epoch reset 严格经过 ADR gate。
+- 不要：使用 `drizzle-kit push`，不要把 seed 当 bootstrap，不要省略显式排序、新增数据库外键，或在未过 Gate B 前删除旧 migration。
+- 最低验证：`pnpm type-check`、目标 DB integration，以及附录中的 migration/comments/baseline 检查入口。
 
 本篇只定义 Drizzle 规则本身；命令入口与操作顺序统一收敛到 [07-drizzle-operations.md](./07-drizzle-operations.md)。
 
@@ -31,6 +31,7 @@
 - 分页统一采用 1-based `pageIndex`。
 - 动态查询条件默认使用 `SQL[]` 收集，再通过 `and(...)` / `or(...)` 组合。
 - Drizzle relational query 的对象式 `where` 存在多分支时，必须先用命名的基础条件和作用域条件配合 `if / else if` 线性构造；不要把多套条件对象塞进嵌套三元表达式。
+- RQBv2 查询入口、`where`、`with` 与嵌套 relation options 必须保持 AST 可静态分析：禁止通过别名 options、简写属性、动态键或 spread 隐藏旧形状；`orderBy` 依照当前 RC 合同允许对象或回调，两者都不是 RQBv1 判据。
 - 排序字段必须显式声明；禁止依赖数据库返回“自然顺序”。
 
 ## select 字段投影
@@ -61,7 +62,7 @@
 
 - 常规 schema 差异必须先生成 migration，再通过受控 check / migrate 入口执行；具体命令见 [07-drizzle-operations.md](./07-drizzle-operations.md)。
 - 若生成过程中出现交互，必须停止并由用户亲自执行；不要替用户继续回答交互提示。
-- migration 只允许新建，不允许在已存在、已提交或已执行的 migration 文件中继续追加新 DDL。
+- 常规 migration 采用 append-only：只允许新建，不允许修改、删除或在已存在、已提交、已执行的 migration 文件中追加 DDL。
 - 无法自动生成的 DDL 可手写补充，但必须说明原因、范围与风险。
 - 字段改类型、改值域、改数组元素、改 JSON 内部枚举、改约束时，migration 必须同步处理历史数据；不能依赖清库、丢字段、跳过旧值或要求人工补数据。
 - 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并通过受控注释检查入口确认生成结果 `Warnings: 0`。
@@ -72,6 +73,16 @@
 - 禁止使用 `drizzle-kit push`、`drizzle-kit push --force` 或重新引入 `db:push` 作为迁移路径；所有结构变更必须落为可审计 migration。
 - 生产迁移脚本只负责 migration 与注释同步，不得在全新数据库上自动执行 seed。
 
+### 当前 development epoch 的一次性 baseline reset
+
+- 本节只适用于[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)，不是普通任务改写 migration 历史的许可。
+- schema、relations、closed sets、indexes 与 comments 冻结前，只能在隔离目录生成 candidate init；不得修改或删除现有 migration 目录。
+- 任何销毁动作必须同时通过三重 guard：`NODE_ENV=development|test`；`ALLOW_DESTRUCTIVE_DB_RESET=true` 且 `DESTRUCTIVE_DB_EPOCH=20260710_ZERO_DEBT` 精确匹配；host allowlist 与 disposable 数据库名规则同时命中并打印唯一目标。任一条件不符立即失败。
+- Gate B 必须在至少两个独立空 PostgreSQL 实例完成 candidate `migrate → comments → bootstrap → seed → app start/readback`，校验 schema/index/comment digest、第二次 migrate no-op 与 bootstrap 幂等。
+- Gate B 全绿后，才可删除旧 migration、snapshot、reconcile/rollback 与旧 migration-log 解释器，固化唯一 `0000_init`；随后 Gate C 只重建已通过 Gate A 的 dev/test 数据库。
+- reset 默认不保留旧开发数据，不新增在线转换、双读、旧值映射或 migration fallback。确需样本时只允许 epoch 前离线导出和一次性导入，工具在 epoch 关闭前删除。
+- 完成提交/标签与 reset 证据记录后，本节授权失效，append-only 纪律自动恢复。失败时只回退 Git/重新创建 disposable 数据库，不添加运行时旧链解释能力。
+
 ## Seed 与 bootstrap
 
 - `db/seed` 是本地 demo/联调用的破坏性数据脚本，包含清理演示数据、固定演示账号、演示 token 等行为；只能通过附录列出的受控 demo seed 入口显式执行。
@@ -80,25 +91,29 @@
 - 初始化管理员账号时必须由操作员提供 `BOOTSTRAP_ADMIN_USERNAME` 与 `BOOTSTRAP_ADMIN_PASSWORD`。
 - bootstrap 只能创建缺失账号，不得静默重置已有账号密码。
 
-## 破坏性更新
+## Canonical contract 与破坏性更新
 
-- 当任务明确声明“破坏性更新 / 不做兼容层”时，`db/schema`、相关常量 / 枚举、DTO、service / resolver / controller、破坏性更新文档必须同轮改完。
+- 当前 development epoch 的破坏性更新必须让 `db/schema`、relations、comments、相关常量/枚举、DTO、service/resolver/controller、OpenAPI、测试与 candidate baseline 同轮收敛。
 - 禁止只改表、不改接口合同。
 - 禁止只改 DTO / 常量、不改底层持久化值域。
-- 禁止保留临时双读、旧值 fallback、旧字符串兼容映射，除非任务明确要求兼容期。
+- 禁止保留临时双读、双写、旧值 fallback、旧字符串映射、旧 ORM API 或旧 migration-log 解释器。
+- 未被有效 ADR 覆盖的 schema 破坏性变化必须先形成新的显式决策，不得复用本 epoch 授权。
 
 ## 禁止项
 
 - 禁止在业务层直接 new Drizzle 或绕开 `DrizzleService` 访问数据库。
 - 禁止隐式事务；事务上下文必须显式透传。
 - 禁止分页不写排序字段。
-- 禁止新增或继续使用 `drizzle.ext`、`@db/extensions`、通用 table/field 字符串 helper、兼容 shim 或 deprecated ext 入口。
+- 禁止新增或继续使用 `drizzle.ext`、`@db/extensions`、通用 table/field 字符串 helper、shim 或 deprecated ext 入口。
 - 禁止在 Drizzle 查询参数中用嵌套三元表达式构造 `where`、`orderBy` 或字段投影；多分支条件必须改成命名变量、`if / else if`、`SQL[]` 条件数组或已有扩展能力。
 - 禁止把闭集业务值域留在 `varchar` / `integer[]` 中继续漂移。
 - 禁止用原生 SQL 字符串拼接代替 `sql` 模板。
 - 禁止 schema、DTO、常量 / 枚举、migration 四层脱节。
 - 禁止新增数据库外键或把 Drizzle relations 误写成数据库 FK 约束。
 - 禁止绕过 `db:migration:check` 直接迁移。
+- 禁止在当前 epoch Gate B 全绿前删除、改写或移动旧 migration；epoch 关闭后禁止任何历史重写。
+- 禁止对 production/prod、未知、共享或未通过三重 guard 的数据库执行 baseline reset。
+- 禁止 `--ignore-conflicts`、旧 migration fallback、reconcile/rollback helper 或普通 `pnpm check` 隐式触发 reset。
 - 禁止在生产迁移中自动 seed 或执行 demo 数据清理。
 - 禁止在 `db/schema` 中为 `inferSelect` / `inferInsert` 再套一层仅做改名的别名链。
 - 禁止在 select 或返回对象组装中逐字段列举全部同名字段；应使用 spread 或 `getColumns` + 解构排除。

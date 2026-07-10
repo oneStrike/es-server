@@ -4,69 +4,50 @@
 
 ## 边界
 
-- 本文件只做导航，不替代 `AGENTS.md`、`PROJECT_RULES.md` 和 `01-08` 专项规则。
-- 如果本文件与专项规则冲突，以后者为准。
+- 本文件只做导航，不替代 `AGENTS.md`、`PROJECT_RULES.md`、已接受 ADR 和 `01-09` 专项规则。
+- 如果本文件与专项规则冲突，以专项规则为准；如果当前任务命中有效 ADR，以 ADR 的明确范围为准。
 
 ## 先判类型
 
-按本次改动的主要落点，先选一类：
+- 改导入路径、文件放置、barrel、`libs/platform` / `db` 入口：读 [01-import-boundaries.md](./01-import-boundaries.md)。
+- 改 Controller、路由、Swagger、`@HttpCode()`、HTTP 响应模型：读 [02-controller.md](./02-controller.md)；成功/失败语义同时读 [06-error-handling.md](./06-error-handling.md)。
+- 改 DTO、返回结构、nullable、unknown field、字段复用：读 [03-dto.md](./03-dto.md)；Controller 出参同时读 02。
+- 改 `*.type.ts`、Drizzle infer 或复杂签名：读 [04-typescript-types.md](./04-typescript-types.md)；HTTP contract 回到 03。
+- 改注释、schema 字段说明、导出类型/常量/枚举说明：读 [05-comments.md](./05-comments.md)。
+- 改错误码、`BusinessException`、HTTP/WS 错误映射、数据库错误转换：读 [06-error-handling.md](./06-error-handling.md)。
+- 改 Drizzle 查询、schema、migration、seed、bootstrap：读 [07-drizzle.md](./07-drizzle.md) 与 [07-drizzle-operations.md](./07-drizzle-operations.md)；涉及 DTO/错误再读 03/06。
+- 改测试、fixture、覆盖率、性能场景或验证入口：读 [08-testing.md](./08-testing.md) 与 [AGENTS.md](../../AGENTS.md)。
+- 改 Nest module、provider owner、`@Global()`、`ModuleRef`、package DAG、port/event、事务 owner 或 HTTP/WS composition：读 [09-nestjs-architecture.md](./09-nestjs-architecture.md)。
+- 改当前 epoch 的旧合同删除、baseline reset 或可销毁开发数据：除对应专项规则外，必须读[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
+- 只改文档/规则：读 [AGENTS.md](../../AGENTS.md) 验证基线与 [PROJECT_RULES.md](./PROJECT_RULES.md)。
 
-- 改导入路径、文件放置、barrel、`libs/platform` / `db` 入口：
-  - 先读 [01-import-boundaries.md](./01-import-boundaries.md)
-- 改 Controller、路由、Swagger、`@HttpCode()`、响应模型：
-  - 先读 [02-controller.md](./02-controller.md)
-  - 如果同时改成功 / 失败语义，再读 [06-error-handling.md](./06-error-handling.md)
-- 改 DTO、返回结构、nullable 字段、`validation: false`、字段复用：
-  - 先读 [03-dto.md](./03-dto.md)
-  - 如果同时改 Controller 出参，再读 [02-controller.md](./02-controller.md)
-- 改 `*.type.ts`、类型推导、签名类型、Drizzle `infer` 类型：
-  - 先读 [04-typescript-types.md](./04-typescript-types.md)
-  - 如果结构本质上是 HTTP contract，再回到 [03-dto.md](./03-dto.md)
-- 改注释、schema 字段说明、导出类型 / 常量 / 枚举注释：
-  - 先读 [05-comments.md](./05-comments.md)
-- 改错误码、`BusinessException`、HTTP 状态、数据库错误转换：
-  - 先读 [06-error-handling.md](./06-error-handling.md)
-  - 如果同时改 Controller 响应，再读 [02-controller.md](./02-controller.md)
-- 改 Drizzle 查询、schema、migration、seed、bootstrap：
-  - 先读 [07-drizzle.md](./07-drizzle.md)
-  - 如果同时改 DTO / 返回 contract，再读 [03-dto.md](./03-dto.md)
-  - 如果同时改错误收口，再读 [06-error-handling.md](./06-error-handling.md)
-- 改验证方式、临时测试、探针脚本、交付前检查：
-  - 先读 [08-testing.md](./08-testing.md)
-  - 再回看 [AGENTS.md](../../AGENTS.md) 的验证基线
-- 只改文档、规则、说明文字：
-  - 先读 [AGENTS.md](../../AGENTS.md) 的验证基线
-  - 如果改的是规则文档，再读 [PROJECT_RULES.md](./PROJECT_RULES.md)
-
-如果一次改动命中多类，取并集，不要只读一篇规则就开始改。
+一次改动命中多类时取并集，不要只读一篇规则就开始改。
 
 ## 速查表
 
-| 改动类型                                    | 必须先读                                                                                                   | 常见误判                                                                                       | 最低验证                                                                                              | 相关例外                                                             |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| 导入路径 / owner 放置 / barrel              | [01-import-boundaries.md](./01-import-boundaries.md)                                                       | 把 `libs/platform`、`db` 当成普通 owner 文件；为了缩短路径新增 `index.ts`                      | 至少 `pnpm type-check`；涉及仓库边界时再补 `pnpm db:core:check` / `pnpm swagger:imports:check`        | [AI_TERMS.md](./AI_TERMS.md)、[AI_EXCEPTIONS.md](./AI_EXCEPTIONS.md) |
-| Controller / 路由 / Swagger / `@HttpCode()` | [02-controller.md](./02-controller.md)、[06-error-handling.md](./06-error-handling.md)                     | 冗余写 `@HttpCode(200)`；把输入 DTO 当输出模型；遗漏稳定 `null` 字段                           | `pnpm type-check`                                                                                     | `AI_EXCEPTIONS.md` 中的“POST 200 / 201 约定”                         |
-| DTO / 返回结构 / nullable / 输出校验归属    | [03-dto.md](./03-dto.md)、[02-controller.md](./02-controller.md)                                           | 用 `?: T \| null`；复制字段而不复用；把输出字段漏成 `validation: true`                         | `pnpm type-check`；若 contract 语义改变，按 [08-testing.md](./08-testing.md) 补充验证                 | `AI_TERMS.md` 中的“稳定 contract”                                    |
-| 内部类型 / `*.type.ts` / infer 类型         | [04-typescript-types.md](./04-typescript-types.md)、[03-dto.md](./03-dto.md)                               | 在业务文件里直接声明顶层复杂类型；为现有类型再套无意义别名；把 DTO 问题下沉成 type             | `pnpm type-check`                                                                                     | `AI_EXCEPTIONS.md` 中的“TypeScript / ESLint 基线差距”                |
-| 注释 / 字段说明 / 枚举成员说明              | [05-comments.md](./05-comments.md)                                                                         | 用注释复述代码；只写常量整体注释，不写字段级语义                                               | `pnpm type-check`（代码注释）或 Markdown 对应检查                                                     | 无                                                                   |
-| 错误语义 / 业务错误码 / 异常映射            | [06-error-handling.md](./06-error-handling.md)、[02-controller.md](./02-controller.md)                     | 用 `NotFoundException` 代替 `BusinessException`；手写数字错误码；吞异常降级成 `false` / `null` | `pnpm type-check`；若行为改变，按 [08-testing.md](./08-testing.md) 补充验证                           | `AI_EXCEPTIONS.md` 中的“POST 200 / 201 约定”                         |
-| Drizzle / schema / migration / seed         | [07-drizzle.md](./07-drizzle.md)、[03-dto.md](./03-dto.md)、[06-error-handling.md](./06-error-handling.md) | 改 schema 不补 migration；把 seed 当 bootstrap；使用 `drizzle-kit push`                        | 至少 `pnpm type-check`；涉及 schema 时继续跑 `pnpm db:migration:check`、`pnpm db:comments:check`      | `AI_EXCEPTIONS.md` 中的“migration、seed 与 bootstrap 边界”           |
-| 验证 / 临时测试 / 探针                      | [08-testing.md](./08-testing.md)、[AGENTS.md](../../AGENTS.md)                                             | 保留测试文件；依赖 `pnpm test`；没跑验证就声称完成                                             | 选择最小有效验证；临时 spec 可定点运行 `pnpm exec jest --runInBand --runTestsByPath <temp-spec-path>` | `AI_EXCEPTIONS.md` 中的“测试依赖与测试文件策略”                      |
-| 纯文档 / 规则文档                           | [AGENTS.md](../../AGENTS.md)、[PROJECT_RULES.md](./PROJECT_RULES.md)                                       | 只改文档就跳过基线检查；拿 ESLint 当 Markdown 检查                                             | 对改动 Markdown 跑 `pnpm exec prettier --check <files...>`；规则文档再跑 `pnpm type-check`            | `AI_EXCEPTIONS.md` 中的“Markdown 文档检查路径”                       |
+| 改动类型                   | 必须先读                  | 常见误判                                                           | 最低验证                                              |
+| -------------------------- | ------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
+| 导入/owner/barrel          | 01、09                    | 只改路径形状却形成反向 package edge；新增转发入口                  | `pnpm type-check`、`pnpm boundaries:check`            |
+| Controller/HTTP contract   | 02、03、06                | 输入 DTO 当输出；HTTP 规则套到 WS；保留旧 route alias              | type-check、目标 HTTP e2e、OpenAPI check              |
+| DTO/nullable/unknown field | 03、02                    | 用 `?: T \| null`；复制字段；静默丢弃旧字段                        | type-check、unit/HTTP e2e                             |
+| 内部 type/infer            | 04、03                    | 在业务文件声明复杂顶层类型；重复 DTO/schema 结构                   | `pnpm type-check`                                     |
+| 错误/异常/ACK              | 06、02、09                | 手写错误码；吞异常；让 WS 隐式继承 HTTP filter                     | type-check、目标 HTTP/WS e2e                          |
+| Schema/migration/seed      | 07、07 operations、03、06 | 用 `push`；把 seed 当 bootstrap；未过 gate 就删旧 migration        | type-check、DB integration、migration/comments checks |
+| Module/provider/DAG        | 09、01                    | 新增 business global、重复 provider、`strict:false`、中央万能 port | architecture test、TestingModule、boundaries check    |
+| 测试/性能                  | 08                        | 删除长期测试；真实外网/共享 DB；共享 CI 噪声充当性能证据           | 对应分层测试；完整交付 `pnpm check`                   |
+| 纯文档/规则                | AGENTS、PROJECT_RULES     | 只改文档就跳过检查；拿 ESLint 当 Markdown 检查                     | Prettier check；规则文档再跑 type-check               |
 
-## 最常见组合
+## 当前 epoch 快速判断
 
-- `Controller + DTO`：同时读 [02-controller.md](./02-controller.md) 和 [03-dto.md](./03-dto.md)
-- `DTO + Type`：同时读 [03-dto.md](./03-dto.md) 和 [04-typescript-types.md](./04-typescript-types.md)
-- `DTO + 错误语义`：同时读 [03-dto.md](./03-dto.md) 和 [06-error-handling.md](./06-error-handling.md)
-- `Schema + DTO + Migration`：至少读 [07-drizzle.md](./07-drizzle.md) 和 [03-dto.md](./03-dto.md)；若值域或错误收口变化，再补 [06-error-handling.md](./06-error-handling.md)
-- `规则文档 + 验证`：同时读 [AGENTS.md](../../AGENTS.md) 和 [08-testing.md](./08-testing.md)
+- 旧客户端、旧配置、旧数据库值域、旧 ORM API 或旧 migration log 是否被请求继续解释？若是，停止新增运行时分支，回到 epoch ADR 的 no-compat 边界。
+- 是否准备销毁数据库或改写 migration 历史？若是，先证明三重 guard 和 Gate A/B/C 顺序；普通 `db:migrate` 与 `pnpm check` 不得隐式执行 reset。
+- 是否准备调用 `publish-api:*` 或其他凭据化外部写操作？当前 ADR 不授权；必须满足 Gate D 并取得当次明确授权。
 
 ## 固定执行顺序
 
-1. 先判断本次改动的主要类型。
+1. 判断改动类型与是否命中有效 ADR。
 2. 读取对应专项规则；多类改动取并集。
-3. 遇到 `owner 文件`、`稳定 contract`、`闭集字段` 这类词时，查 [AI_TERMS.md](./AI_TERMS.md)。
-4. 如果看到仓库现状与理想规则不完全一致，先查 [AI_EXCEPTIONS.md](./AI_EXCEPTIONS.md)，不要急着把所有历史差距都当作当前任务范围。
-5. 选择最小但足以证明结论的验证命令。
-6. 声称“已完成”前，使用最新验证输出作为证据。
+3. 遇到项目术语时查 [AI_TERMS.md](./AI_TERMS.md)。
+4. 仓库现状与目标规则不一致时查 [AI_EXCEPTIONS.md](./AI_EXCEPTIONS.md)；例外只描述现状，不授予新增债务。
+5. 先建立长期行为保护，再实施破坏性或结构性改动。
+6. 选择足以证明结论的验证；声称完成前使用同一最终工作区的新输出。

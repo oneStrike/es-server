@@ -5,9 +5,9 @@
 ## TL;DR
 
 - 何时看：改 DTO、返回结构、字段复用、nullable 字段、`validation: false` 时先看本篇。
-- 必做：业务 DTO 默认定义在 `libs/*`；HTTP / DTO 与 `*.type.ts` 的边界判断以本篇为准；优先用 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 复用字段；输出 nullable 字段写成 `: T | null`，赋值时用 `?? null`。
-- 不要：在 `apps/*` 新增同构 DTO，不要在 DTO 文件导入 `*.type.ts`，不要手写重复字段，也不要为平台通用 DTO 包空心别名。
-- 最低验证：`pnpm type-check`；若公开 contract 变化，再按 [08-testing.md](./08-testing.md) 补验证。
+- 必做：业务 DTO 默认定义在 `libs/*`；优先用组合工具复用字段；输出 nullable 字段写成 `: T | null`；输入边界明确拒绝 unknown field。
+- 不要：在 `apps/*` 新增同构 DTO，不要在 DTO 文件导入 `*.type.ts`，不要手写重复字段，不要保留旧字段 alias、静默 strip 或转换映射。
+- 最低验证：`pnpm type-check`、目标 unit/HTTP e2e 与 OpenAPI check。
 
 ## 默认动作
 
@@ -20,6 +20,8 @@
 - 输出 DTO 中数据库 nullable 字段必须声明为 `: T | null`；禁止使用 `?: T | null`。
 - 输出 DTO 的 nullable 字段必须始终存在；即使值为 `null` 也不能缺字段。
 - Service 层赋值时，对可能为 `undefined` 的来源使用 `?? null`；不要让字段在 JSON 序列化时被省略。
+- HTTP 输入必须通过统一 ValidationPipe 明确拒绝未声明字段；`whitelist` 不能只静默删除 unknown field。
+- 当前 development epoch 只接受 canonical 字段、枚举和值域；删除的字段不得通过 alias、transform、deprecated DTO 或宽松索引签名继续进入业务层。授权范围见[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
 
 ## 分层与职责
 
@@ -66,8 +68,8 @@
 - 当输出字段只是输入字段的别名、左连接 nullable 视图或派生展示字段时，建立语义明确的字段块 DTO 作为当前 API contract owner。
 - 不得在 Query DTO 和 PageItem DTO 中各手写一份装饰器。
 - `validation: false` 与 `contract: false` 不是同一件事：前者保留对外文档但关闭请求校验元数据，后者隐藏对外文档并用于非对外字段。不要混用。
-- 临时验证输出 DTO contract 时，优先验证 Swagger / contract metadata 或 service 返回形状；不要用 class-validator 结果证明纯输出字段“有效”。
-- 临时验证输入 DTO 时，继续验证 class-validator 行为；相关测试文件交付前必须删除。
+- 验证输出 DTO contract 时，使用永久 unit/HTTP e2e 与 OpenAPI artifact 断言字段存在性和 nullability；不要用 class-validator 结果证明纯输出字段“有效”。
+- 输入 DTO 必须用永久测试覆盖 unknown field、转换、边界值和错误语义。
 
 ## 禁止项
 
@@ -83,6 +85,7 @@
 - 禁止在 DTO 文件中为了复用局部装饰器文案，新增 `*_DESCRIPTION`、`*_EXAMPLE`、`*_MESSAGE` 这类只服务当前文件的短文本常量。
 - 禁止通过 `*.public.dto.ts`、`response.dto.ts`、`detail.dto.ts` 拆出仅做转发的文件；若属于同一 owner 域，优先收口在同一个 owner DTO 文件中。
 - 禁止违反 nullable 字段规则（见“默认动作”）：输出 DTO 中 nullable 字段必须使用 `: T | null`，Service 层必须使用 `?? null`。
+- 禁止为已删除字段、旧枚举或旧输入形状保留 `@Transform`、alias property、deprecated DTO、silent strip 或双 contract。
 
 ## 枚举字段描述规范
 

@@ -5,9 +5,9 @@
 ## TL;DR
 
 - 何时看：改错误码、`BusinessException`、HTTP 状态、数据库错误转换、响应 envelope 时先看本篇。
-- 必做：可预期业务失败统一抛 `BusinessException` 并引用共享错误码；数据库错误优先通过 Drizzle 边界收口；成功 `POST` 的状态与 `@HttpCode()` 约定遵循 [02-controller.md](./02-controller.md)。
-- 不要：用 `NotFoundException`、`ConflictException` 代替业务异常，不要手写数字 / 裸字符串错误码，也不要通过匹配 `error.message` 做业务分支。
-- 最低验证：`pnpm type-check`；若错误语义变化，再按 [08-testing.md](./08-testing.md) 补验证。
+- 必做：可预期业务失败统一抛 `BusinessException` 并引用共享错误码；数据库错误通过 Drizzle 边界收口；HTTP 与 WS 使用各自显式 mapper。
+- 不要：用 Nest HTTP 异常代替业务异常，不要手写错误码、匹配 `error.message`，也不要让 WS 隐式继承 HTTP filter/interceptor。
+- 最低验证：`pnpm type-check` 与目标 HTTP/WS e2e；数据库映射变化再跑 integration。
 
 ## 仓库约定
 
@@ -18,8 +18,7 @@
 - 平台层共享错误码以 `PlatformErrorCode` 为单一来源；业务层共享错误码以 `BusinessErrorCode` 为单一来源。
 - 数据库错误在 Drizzle 边界统一分类；controller 不重复发明数据库语义。
 - 幂等优先使用数据库原生约束、原子更新和唯一键设计，不以异常驱动正常流程。
-- 读接口若附带写入、副作用或统计补记，必须可降级。
-- 不要让主读取流程因为附带写入失败而整体失败。
+- 读接口附带的非关键写入、统计补记或外部副作用只有进入有 owner、指标与永久测试的 resilience allowlist 后才可降级；安全边界与事实写入不得 fail-open。
 
 ## 默认动作
 
@@ -41,7 +40,9 @@
 - Service / Resolver：定义业务规则、判断可预期失败、抛出 `BusinessException`。
 - Drizzle / `db/core`：提取 PostgreSQL 元信息、做默认错误映射、保留原始 `cause`。
 - 全局过滤器：统一响应结构与结构化日志，区分 `BusinessException`、`HttpException`、PostgreSQL 错误与未知异常。
-- WebSocket：ACK 使用同一套字符串响应码；成功为 `"SUCCESS"`，失败为平台或业务字符串错误码。
+- HTTP：由 HTTP composition 显式绑定 filter/mapper，输出约定的 status 与 JSON envelope。
+- WebSocket：由 WS composition 显式绑定 exception/ACK mapper；ACK 使用同一套字符串响应码，成功为 `"SUCCESS"`，失败为平台或业务字符串错误码，但不得执行 HTTP response/header 逻辑。
+- HTTP/WS 可以复用纯错误 policy 和错误码事实源，不共享 transport adapter；完整装配规则见 [09-nestjs-architecture.md](./09-nestjs-architecture.md)。
 
 ## 错误码与映射
 
@@ -56,6 +57,7 @@
 - 数据库错误若被转换为业务异常，必须保留原始 `cause`，不能丢失底层上下文。
 - 新增错误码必须同步更新 `libs/platform/src/constant/error-code.constant.ts` 常量定义与本规范文档的错误码列表。
 - 不允许只改代码不更新规范，也不允许只更新规范不补充代码。
+- 当前 development epoch 删除的旧错误码、旧 HTTP status 或旧 WS ACK 形状不得保留 alias、翻译表或双输出；canonical mapper、OpenAPI 与永久 e2e 必须同轮切换。授权范围见[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
 
 ## 日志与诊断
 
@@ -80,6 +82,8 @@
 - 禁止依赖异常 message 字符串做业务分支。
 - 禁止把正常幂等路径写成“先执行，再靠异常判断是否重复”。
 - 禁止为了省事吞掉异常、降级为 `null` / `false` / 空数组而不保留错误语义。
+- 禁止为旧调用方保留 error-code alias、旧 envelope mapper、双 status 分支或 silent fallback。
+- 禁止让普通降级分支绕过鉴权、吊销、限流、事务事实写入或其他安全/一致性边界。
 
 ## 正反例
 
