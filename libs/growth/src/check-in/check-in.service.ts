@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { PageDto } from '@libs/platform/dto'
 
 import type {
@@ -188,7 +188,7 @@ export class CheckInService {
 
   // 在外部事务内发放活动补签卡额度。
   async grantEventMakeupAllowance(
-    tx: Db,
+    tx: DbExecutor,
     input: GrantEventMakeupAllowanceInput,
   ) {
     return this.checkInMakeupService.grantEventMakeupAllowance(tx, input)

@@ -2,23 +2,11 @@ import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
 
-import {
-  AppUserDeletedScopeEnum,
-} from '@libs/user/app-user.constant'
-import {
-  QueryAdminAppUserPageDto,
-} from '@libs/user/dto/admin-app-user.dto'
+import { AppUserDeletedScopeEnum } from '@libs/user/app-user.constant'
+import { QueryAdminAppUserPageDto } from '@libs/user/dto/admin-app-user.dto'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { Injectable } from '@nestjs/common'
-import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  isNull,
-  lt,
-} from 'drizzle-orm'
+import { and, eq, gte, inArray, isNotNull, isNull, lt } from 'drizzle-orm'
 import { AppUserGrowthService } from './app-user-growth.service'
 import { AppUserServiceSupport } from './app-user.service.support'
 
@@ -127,7 +115,30 @@ export class AppUserQueryService extends AppUserServiceSupport {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.appUserTable.id,
+          account: this.appUserTable.account,
+          phoneNumber: this.appUserTable.phoneNumber,
+          emailAddress: this.appUserTable.emailAddress,
+          levelId: this.appUserTable.levelId,
+          nickname: this.appUserTable.nickname,
+          avatarUrl: this.appUserTable.avatarUrl,
+          profileBackgroundImageUrl:
+            this.appUserTable.profileBackgroundImageUrl,
+          signature: this.appUserTable.signature,
+          bio: this.appUserTable.bio,
+          isEnabled: this.appUserTable.isEnabled,
+          genderType: this.appUserTable.genderType,
+          birthDate: this.appUserTable.birthDate,
+          status: this.appUserTable.status,
+          banReason: this.appUserTable.banReason,
+          banUntil: this.appUserTable.banUntil,
+          lastLoginAt: this.appUserTable.lastLoginAt,
+          lastLoginIp: this.appUserTable.lastLoginIp,
+          createdAt: this.appUserTable.createdAt,
+          updatedAt: this.appUserTable.updatedAt,
+          deletedAt: this.appUserTable.deletedAt,
+        })
         .from(this.appUserTable)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -159,8 +170,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
               likeCount: this.appUserCountTable.likeCount,
               favoriteCount: this.appUserCountTable.favoriteCount,
               followingUserCount: this.appUserCountTable.followingUserCount,
-              followingAuthorCount:
-                this.appUserCountTable.followingAuthorCount,
+              followingAuthorCount: this.appUserCountTable.followingAuthorCount,
               followingSectionCount:
                 this.appUserCountTable.followingSectionCount,
               followersCount: this.appUserCountTable.followersCount,
@@ -184,17 +194,15 @@ export class AppUserQueryService extends AppUserServiceSupport {
       // eslint-disable-next-line ts/no-unsafe-member-access -- Drizzle 联合查询推导为 unknown，tsc 确认类型安全
       countRows.map((item) => [item.userId, item] as const),
     )
-    const growthMap = await this.growthBalanceQueryService.getUserGrowthSnapshotMap(
-      page.list.map((item) => item.id),
-    )
+    const growthMap =
+      await this.growthBalanceQueryService.getUserGrowthSnapshotMap(
+        page.list.map((item) => item.id),
+      )
 
     return {
       ...page,
       list: page.list.map((item) => ({
-        ...this.userCoreService.mapBaseUser(
-          item,
-          growthMap.get(item.id),
-        ),
+        ...this.userCoreService.mapBaseUser(item, growthMap.get(item.id)),
         deletedAt: item.deletedAt ?? null,
         // eslint-disable-next-line ts/no-unsafe-assignment -- Map 值类型推导为 unknown，tsc 确认类型安全
         levelName: item.levelId ? (levelMap.get(item.levelId) ?? null) : null,
@@ -206,10 +214,9 @@ export class AppUserQueryService extends AppUserServiceSupport {
 
   // 获取 APP 用户详情，统一收口等级、计数、徽章数和成长摘要。
   async getAppUserDetail(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
-    const growth = await this.growthBalanceQueryService.getUserGrowthSnapshot(
-      userId,
-    )
+    const user = await this.userCoreService.getAppUserResponseSource(userId)
+    const growth =
+      await this.growthBalanceQueryService.getUserGrowthSnapshot(userId)
 
     const [level, counts, badgeCount, pointStats, experienceStats] =
       await Promise.all([
@@ -224,7 +231,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
 
     return {
       ...this.userCoreService.mapBaseUser(user, growth),
-      deletedAt: user.deletedAt ?? null,
+      deletedAt: null,
       level: level
         ? {
             id: level.id,

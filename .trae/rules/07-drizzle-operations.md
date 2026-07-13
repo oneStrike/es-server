@@ -1,54 +1,58 @@
 # Drizzle 操作附录
 
-本文件是 [Drizzle 使用规范](./07-drizzle.md) 的操作附录，只承载受控命令入口与执行顺序。
+本文件只定义真实存在的受控命令和顺序；数据建模与 RQB v2 规则以
+[07-drizzle.md](./07-drizzle.md) 为准。
 
-- 它不是独立规则文件。
-- Drizzle 约束、禁止项和建模原则仍以 [07-drizzle.md](./07-drizzle.md) 为准。
+这些命令的 migration/static gate 实现统一由 `db/operations/**` 持有，登记 target 的安全
+解析由 `db/targets/**` 持有；`scripts/` 不再作为数据库 operational CLI/helper owner。
 
-## 结构变更入口
+## 常规只读检查
 
-- 生成 migration：`pnpm db:generate`
-- 检查 migration：`pnpm db:migration:check`
-- 开发环境执行 migration：`pnpm db:migrate`
-- 生产环境执行 migration：`pnpm db:migrate:prod`
-- 生成 schema 注释 SQL：`pnpm db:comments:generate`
-- 检查 schema 注释 SQL：`pnpm db:comments:check`
+```bash
+pnpm db:active:migration:check
+pnpm db:migration:check
+pnpm db:comments:check
+pnpm db:core:check
+```
 
-常规结构变更始终 append-only；不得修改或删除已生成、已提交或已执行的 migration。
+`db:migrate` 不是无参数命令，必须显式提供 mode 与已登记 disposable target；它不会
+接受 production/shared URL：
 
-## Development epoch baseline 入口
+```bash
+pnpm db:migrate -- --mode active --target-id <registered-local-target>
+```
 
-- 规则与授权事实源：[07-drizzle.md](./07-drizzle.md) 与[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
-- candidate 检查目标入口：`pnpm db:baseline:candidate:check`。
-- baseline reset 必须使用独立的显式 epoch 命令；普通 `db:migrate`、`pnpm check`、应用启动和测试命令不得包含销毁副作用。
-- 专用 reset 命令尚未在仓库建立前，禁止手工删除 migration 目录或直接销毁数据库；不得用临时 shell 命令绕过 guard。
+`db:active:migration:check` 校验正常 active history 的每个目录名、非空
+`migration.sql`、SQL hash 和零 physical FK；它遵循 Drizzle 的 append-only runtime
+lifecycle。
 
-## Demo seed 入口
+已存在的 journal 必须已经是当前 Drizzle RC 形状（`id`、`hash`、`created_at`、`name`、
+`applied_at`）；运行入口不解释、升级或兼容旧 journal。不存在 `db:migrate:prod`、
+`db:studio`、`db:push`、`pnpm check` 或自动 seed 的替代入口；不得用 shell、
+`drizzle-kit push` 或直接连库绕过这一限制。
 
-- 环境检查：`pnpm db:seed:demo:check`
-- 显式设置 `ALLOW_DB_SEED=true` 后执行：`pnpm db:seed:demo`
+任何写入前，active journal 必须是本地 history 的连续 append-only 前缀（空库允许）；
+不符合时在调用 Drizzle migrator 前失败，写后仍执行完整 history 复核。
 
-## Bootstrap 入口
+## Reference bootstrap
 
-- 本地 / 准生产环境检查：`pnpm db:bootstrap:reference:check`
-- 本地 / 准生产环境执行：`pnpm db:bootstrap:reference`
-- 生产环境检查：`pnpm db:bootstrap:reference:prod:check`
-- 生产环境执行：`pnpm db:bootstrap:reference:prod`
+```bash
+pnpm db:bootstrap:reference:check -- --target-id <registered-local-target>
+pnpm db:bootstrap:reference -- --target-id <registered-local-target>
+```
 
-## 固定顺序
+reference bootstrap 可重复同步 RBAC reference data；migrator 永不自动调用它。写入前会重新
+解析 target registry，并在 session 中核验 `current_database()`。
 
-- 改 schema：先生成 migration，再检查 migration，再执行迁移。
-- 改 schema 注释：刷新 `db/comments/generated.sql` 后再做注释检查。
-- 跑 demo seed：先做环境检查，再显式设置 `ALLOW_DB_SEED=true` 执行。
-- 跑 bootstrap：先做环境检查，再执行对应环境入口。
+## Demo seed
 
-## 当前 epoch 的 Gate A/B/C 顺序
+```bash
+pnpm db:seed:demo:target -- --target-id <registered-local-target> --check-env
+pnpm db:seed:demo:target -- --target-id <registered-local-target>
+```
 
-1. Gate A：确认 `NODE_ENV=development|test`；确认 `ALLOW_DESTRUCTIVE_DB_RESET=true` 与 `DESTRUCTIVE_DB_EPOCH=20260710_ZERO_DEBT`；确认 host allowlist、disposable 数据库名并打印唯一目标。
-2. 冻结 schema/index/comments；candidate init 只写隔离目录，不改旧 migration。
-3. Gate B：对至少两个独立空 PostgreSQL 实例执行 candidate migrate、comments、bootstrap、seed、app start/readback；校验 digest、第二次 migrate no-op 与 bootstrap 幂等。
-4. Gate B 全绿后，固化唯一 `0000_init`，删除旧 migration/snapshot/reconcile/rollback/旧日志解释器。
-5. Gate C：只对 Gate A 枚举的 dev/test 目标执行 reset，并用唯一 baseline 重建与 smoke。
-6. 记录完成提交/标签和证据；恢复常规 append-only。
+demo seed 只允许登记的 local disposable target，且要求 `ALLOW_DB_SEED=true`；它不会被
+migrator 或 bootstrap 隐式调用。
 
-任何一步失败都停止；只允许回退 Git 与重建 disposable 数据库，不运行 `push`、`--ignore-conflicts` 或旧链 fallback。
+任何失败都停止并记录必要的脱敏诊断。不得启用旧 migration log fallback、兼容 API、双读、
+双写、`--ignore-conflicts` 或未登记的临时写入命令。

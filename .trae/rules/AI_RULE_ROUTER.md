@@ -18,7 +18,7 @@
 - 改 Drizzle 查询、schema、migration、seed、bootstrap：读 [07-drizzle.md](./07-drizzle.md) 与 [07-drizzle-operations.md](./07-drizzle-operations.md)；涉及 DTO/错误再读 03/06。
 - 改测试、fixture、覆盖率、性能场景或验证入口：读 [08-testing.md](./08-testing.md) 与 [AGENTS.md](../../AGENTS.md)。
 - 改 Nest module、provider owner、`@Global()`、`ModuleRef`、package DAG、port/event、事务 owner 或 HTTP/WS composition：读 [09-nestjs-architecture.md](./09-nestjs-architecture.md)。
-- 改当前 epoch 的旧合同删除、baseline reset 或可销毁开发数据：除对应专项规则外，必须读[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
+- 改旧合同删除、迁移历史或可销毁开发数据：除对应专项规则外，必须先形成明确的操作与回退决策。
 - 只改文档/规则：读 [AGENTS.md](../../AGENTS.md) 验证基线与 [PROJECT_RULES.md](./PROJECT_RULES.md)。
 
 一次改动命中多类时取并集，不要只读一篇规则就开始改。
@@ -27,14 +27,14 @@
 
 | 改动类型                   | 必须先读                  | 常见误判                                                           | 最低验证                                              |
 | -------------------------- | ------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
-| 导入/owner/barrel          | 01、09                    | 只改路径形状却形成反向 package edge；新增转发入口                  | `pnpm type-check`、`pnpm boundaries:check`            |
+| 导入/owner/barrel          | 01、09                    | 只改路径形状却形成反向 package edge；新增转发入口                  | `pnpm type-check`、对应静态 owner/import gate         |
 | Controller/HTTP contract   | 02、03、06                | 输入 DTO 当输出；HTTP 规则套到 WS；保留旧 route alias              | type-check、目标 HTTP e2e、OpenAPI check              |
 | DTO/nullable/unknown field | 03、02                    | 用 `?: T \| null`；复制字段；静默丢弃旧字段                        | type-check、unit/HTTP e2e                             |
 | 内部 type/infer            | 04、03                    | 在业务文件声明复杂顶层类型；重复 DTO/schema 结构                   | `pnpm type-check`                                     |
 | 错误/异常/ACK              | 06、02、09                | 手写错误码；吞异常；让 WS 隐式继承 HTTP filter                     | type-check、目标 HTTP/WS e2e                          |
 | Schema/migration/seed      | 07、07 operations、03、06 | 用 `push`；把 seed 当 bootstrap；未过 gate 就删旧 migration        | type-check、DB integration、migration/comments checks |
 | Module/provider/DAG        | 09、01                    | 新增 business global、重复 provider、`strict:false`、中央万能 port | architecture test、TestingModule、boundaries check    |
-| 测试/性能                  | 08                        | 删除长期测试；真实外网/共享 DB；共享 CI 噪声充当性能证据           | 对应分层测试；完整交付 `pnpm check`                   |
+| 测试/性能                  | 08                        | 遗留测试文件；真实外网/共享 DB；共享 CI 噪声充当性能证据           | 对应 gate/evidence；type-check 与必要 build           |
 | 纯文档/规则                | AGENTS、PROJECT_RULES     | 只改文档就跳过检查；拿 ESLint 当 Markdown 检查                     | Prettier check；规则文档再跑 type-check               |
 
 ## 当前 epoch 快速判断
@@ -49,5 +49,5 @@
 2. 读取对应专项规则；多类改动取并集。
 3. 遇到项目术语时查 [AI_TERMS.md](./AI_TERMS.md)。
 4. 仓库现状与目标规则不一致时查 [AI_EXCEPTIONS.md](./AI_EXCEPTIONS.md)；例外只描述现状，不授予新增债务。
-5. 先建立长期行为保护，再实施破坏性或结构性改动。
+5. 先建立可重复的 contract/operation gate 或 ephemeral 行为验证，再实施破坏性或结构性改动。
 6. 选择足以证明结论的验证；声称完成前使用同一最终工作区的新输出。

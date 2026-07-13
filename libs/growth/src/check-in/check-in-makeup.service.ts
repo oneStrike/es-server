@@ -1,8 +1,6 @@
-import type { Db } from '@db/core'
-import type {
-  CheckInConfigSelect,
-  CheckInMakeupAccountSelect,
-} from '@db/schema'
+import type { Db, DbExecutor } from '@db/core'
+import type { CheckInMakeupAccountSelect } from '@db/schema'
+import type { CheckInConfigRuntimeRow } from './check-in.service.support'
 import type {
   CheckInMakeupAccountBalance,
   CheckInMakeupAccountView,
@@ -29,6 +27,43 @@ import {
   CheckInMakeupSourceTypeEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
+
+type CheckInMakeupConfig = Pick<
+  CheckInConfigRuntimeRow,
+  'makeupPeriodType' | 'periodicAllowance'
+>
+
+type CheckInMakeupAccountViewRow = Pick<
+  CheckInMakeupAccountSelect,
+  'periodicGranted' | 'periodicUsed' | 'eventAvailable'
+>
+
+type CheckInMakeupLatestAccountViewRow = Pick<
+  CheckInMakeupAccountSelect,
+  'eventAvailable'
+>
+
+type CheckInMakeupAccountMutationRow = Pick<
+  CheckInMakeupAccountSelect,
+  | 'id'
+  | 'userId'
+  | 'periodType'
+  | 'periodKey'
+  | 'periodicGranted'
+  | 'periodicUsed'
+  | 'eventAvailable'
+  | 'version'
+  | 'lastSyncedFactId'
+>
+
+type CheckInMakeupAccountRolloverRow = Pick<
+  CheckInMakeupAccountSelect,
+  | 'periodType'
+  | 'periodKey'
+  | 'periodicGranted'
+  | 'periodicUsed'
+  | 'eventAvailable'
+>
 
 /**
  * 签到补签额度服务。
@@ -78,10 +113,7 @@ export class CheckInMakeupService extends CheckInServiceSupport {
   }
 
   // 判断目标签到日期是否仍位于当前补签窗口内。
-  isDateWithinMakeupWindow(
-    signDate: string,
-    window: CheckInMakeupWindowView,
-  ) {
+  isDateWithinMakeupWindow(signDate: string, window: CheckInMakeupWindowView) {
     return (
       signDate >= window.periodStartDate && signDate <= window.periodEndDate
     )
@@ -90,15 +122,13 @@ export class CheckInMakeupService extends CheckInServiceSupport {
   // 构建当前周期的补签账户读模型，不存在账户时回退到默认视图。
   async buildCurrentMakeupAccountView(
     userId: number,
-    config: CheckInConfigSelect,
+    config: CheckInMakeupConfig,
     today = this.formatDateOnly(new Date()),
     db: Db = this.db,
   ): Promise<CheckInMakeupAccountView> {
-    const periodType = Number(
-      config.makeupPeriodType,
-    )
+    const periodType = Number(config.makeupPeriodType)
     const window = this.buildMakeupWindow(today, periodType)
-    const currentAccount = await this.getCurrentMakeupAccount(
+    const currentAccount = await this.getCurrentMakeupAccountView(
       userId,
       window.periodType,
       window.periodKey,
@@ -117,7 +147,7 @@ export class CheckInMakeupService extends CheckInServiceSupport {
       }
     }
 
-    const latestAccount = await this.getLatestAccount(userId, db)
+    const latestAccount = await this.getLatestMakeupAccountView(userId, db)
     return {
       ...window,
       periodicGranted: config.periodicAllowance,
@@ -130,15 +160,13 @@ export class CheckInMakeupService extends CheckInServiceSupport {
   // 确保当前周期补签账户存在，并在跨周期时完成滚动初始化。
   async ensureCurrentMakeupAccount(
     userId: number,
-    config: CheckInConfigSelect,
+    config: CheckInMakeupConfig,
     today: string,
-    tx: Db,
-  ) {
-    const periodType = Number(
-      config.makeupPeriodType,
-    )
+    tx: DbExecutor,
+  ): Promise<CheckInMakeupAccountMutationRow> {
+    const periodType = Number(config.makeupPeriodType)
     const window = this.buildMakeupWindow(today, periodType)
-    const existing = await this.getCurrentMakeupAccount(
+    const existing = await this.getCurrentMakeupAccountForMutation(
       userId,
       window.periodType,
       window.periodKey,
@@ -148,7 +176,7 @@ export class CheckInMakeupService extends CheckInServiceSupport {
       return existing
     }
 
-    const previous = await this.getLatestAccount(userId, tx)
+    const previous = await this.getLatestMakeupAccountForRollover(userId, tx)
     if (previous && previous.periodKey !== window.periodKey) {
       const periodicRemaining = Math.max(
         previous.periodicGranted - previous.periodicUsed,
@@ -228,12 +256,12 @@ export class CheckInMakeupService extends CheckInServiceSupport {
           this.checkInMakeupAccountTable.periodKey,
         ],
       })
-      .returning()
+      .returning(this.buildCurrentMakeupAccountMutationSelect())
     if (account) {
       return account
     }
 
-    const concurrent = await this.getCurrentMakeupAccount(
+    const concurrent = await this.getCurrentMakeupAccountForMutation(
       userId,
       window.periodType,
       window.periodKey,
@@ -282,9 +310,9 @@ export class CheckInMakeupService extends CheckInServiceSupport {
 
   // 在事务内写入补签消费事实并乐观更新当前账户。
   async consumeMakeupAllowance(
-    account: CheckInMakeupAccountSelect,
+    account: CheckInMakeupAccountMutationRow,
     consumePlan: CheckInMakeupConsumePlanItem[],
-    tx: Db,
+    tx: DbExecutor,
   ) {
     let periodicUsed = account.periodicUsed
     let eventAvailable = account.eventAvailable
@@ -343,7 +371,7 @@ export class CheckInMakeupService extends CheckInServiceSupport {
 
   // 在外部事务内发放活动补签卡额度，并同步当前周期补签账户。
   async grantEventMakeupAllowance(
-    tx: Db,
+    tx: DbExecutor,
     input: GrantEventMakeupAllowanceInput,
   ): Promise<GrantEventMakeupAllowanceResult> {
     if (!Number.isInteger(input.amount) || input.amount < 1) {
@@ -369,10 +397,7 @@ export class CheckInMakeupService extends CheckInServiceSupport {
       today,
       tx,
     )
-    const window = this.buildMakeupWindow(
-      today,
-      config.makeupPeriodType,
-    )
+    const window = this.buildMakeupWindow(today, config.makeupPeriodType)
 
     const [fact] = await tx
       .insert(this.checkInMakeupFactTable)
@@ -399,8 +424,20 @@ export class CheckInMakeupService extends CheckInServiceSupport {
       .returning({ id: this.checkInMakeupFactTable.id })
 
     if (!fact) {
+      const resultAccount = await this.getCurrentMakeupAccountForResult(
+        input.userId,
+        account.periodType,
+        account.periodKey,
+        tx,
+      )
+      if (!resultAccount) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '补签账户初始化冲突，请稍后重试',
+        )
+      }
       return {
-        account,
+        account: resultAccount,
         created: false,
         factId: null,
       }
@@ -433,10 +470,13 @@ export class CheckInMakeupService extends CheckInServiceSupport {
     }
   }
 
-  // 查询用户最近一次补签账户快照。
-  private async getLatestAccount(userId: number, db: Db = this.db) {
+  // 读取视图只关心最近账户的活动补签卡余额。
+  private async getLatestMakeupAccountView(
+    userId: number,
+    db: Db = this.db,
+  ): Promise<CheckInMakeupLatestAccountViewRow | undefined> {
     const [account] = await db
-      .select()
+      .select({ eventAvailable: this.checkInMakeupAccountTable.eventAvailable })
       .from(this.checkInMakeupAccountTable)
       .where(eq(this.checkInMakeupAccountTable.userId, userId))
       .orderBy(desc(this.checkInMakeupAccountTable.id))
@@ -444,15 +484,15 @@ export class CheckInMakeupService extends CheckInServiceSupport {
     return account
   }
 
-  // 查询当前周期对应的补签账户。
-  private async getCurrentMakeupAccount(
+  // 当前补签摘要只读取余额视图字段。
+  private async getCurrentMakeupAccountView(
     userId: number,
     periodType: CheckInMakeupPeriodTypeEnum,
     periodKey: string,
     db: Db = this.db,
-  ) {
+  ): Promise<CheckInMakeupAccountViewRow | undefined> {
     const [account] = await db
-      .select()
+      .select(this.buildCurrentMakeupAccountViewSelect())
       .from(this.checkInMakeupAccountTable)
       .where(
         and(
@@ -463,5 +503,109 @@ export class CheckInMakeupService extends CheckInServiceSupport {
       )
       .limit(1)
     return account
+  }
+
+  // 写入链需要账户定位、余额、版本与事实同步点。
+  private async getCurrentMakeupAccountForMutation(
+    userId: number,
+    periodType: CheckInMakeupPeriodTypeEnum,
+    periodKey: string,
+    db: Db = this.db,
+  ): Promise<CheckInMakeupAccountMutationRow | undefined> {
+    const [account] = await db
+      .select(this.buildCurrentMakeupAccountMutationSelect())
+      .from(this.checkInMakeupAccountTable)
+      .where(
+        and(
+          eq(this.checkInMakeupAccountTable.userId, userId),
+          eq(this.checkInMakeupAccountTable.periodType, periodType),
+          eq(this.checkInMakeupAccountTable.periodKey, periodKey),
+        ),
+      )
+      .limit(1)
+    return account
+  }
+
+  // 跨周期滚动只读取过期计算和新周期继承所需的余额字段。
+  private async getLatestMakeupAccountForRollover(
+    userId: number,
+    db: Db = this.db,
+  ): Promise<CheckInMakeupAccountRolloverRow | undefined> {
+    const [account] = await db
+      .select(this.buildLatestMakeupAccountRolloverSelect())
+      .from(this.checkInMakeupAccountTable)
+      .where(eq(this.checkInMakeupAccountTable.userId, userId))
+      .orderBy(desc(this.checkInMakeupAccountTable.id))
+      .limit(1)
+    return account
+  }
+
+  // 幂等活动补签卡发放保持既有完整账户返回结构。
+  private async getCurrentMakeupAccountForResult(
+    userId: number,
+    periodType: CheckInMakeupPeriodTypeEnum,
+    periodKey: string,
+    db: Db = this.db,
+  ): Promise<CheckInMakeupAccountSelect | undefined> {
+    const [account] = await db
+      .select(this.buildCurrentMakeupAccountResultSelect())
+      .from(this.checkInMakeupAccountTable)
+      .where(
+        and(
+          eq(this.checkInMakeupAccountTable.userId, userId),
+          eq(this.checkInMakeupAccountTable.periodType, periodType),
+          eq(this.checkInMakeupAccountTable.periodKey, periodKey),
+        ),
+      )
+      .limit(1)
+    return account
+  }
+
+  private buildCurrentMakeupAccountViewSelect() {
+    return {
+      periodicGranted: this.checkInMakeupAccountTable.periodicGranted,
+      periodicUsed: this.checkInMakeupAccountTable.periodicUsed,
+      eventAvailable: this.checkInMakeupAccountTable.eventAvailable,
+    } as const
+  }
+
+  private buildCurrentMakeupAccountMutationSelect() {
+    return {
+      id: this.checkInMakeupAccountTable.id,
+      userId: this.checkInMakeupAccountTable.userId,
+      periodType: this.checkInMakeupAccountTable.periodType,
+      periodKey: this.checkInMakeupAccountTable.periodKey,
+      periodicGranted: this.checkInMakeupAccountTable.periodicGranted,
+      periodicUsed: this.checkInMakeupAccountTable.periodicUsed,
+      eventAvailable: this.checkInMakeupAccountTable.eventAvailable,
+      version: this.checkInMakeupAccountTable.version,
+      lastSyncedFactId: this.checkInMakeupAccountTable.lastSyncedFactId,
+    } as const
+  }
+
+  private buildLatestMakeupAccountRolloverSelect() {
+    return {
+      periodType: this.checkInMakeupAccountTable.periodType,
+      periodKey: this.checkInMakeupAccountTable.periodKey,
+      periodicGranted: this.checkInMakeupAccountTable.periodicGranted,
+      periodicUsed: this.checkInMakeupAccountTable.periodicUsed,
+      eventAvailable: this.checkInMakeupAccountTable.eventAvailable,
+    } as const
+  }
+
+  private buildCurrentMakeupAccountResultSelect() {
+    return {
+      id: this.checkInMakeupAccountTable.id,
+      userId: this.checkInMakeupAccountTable.userId,
+      periodType: this.checkInMakeupAccountTable.periodType,
+      periodKey: this.checkInMakeupAccountTable.periodKey,
+      periodicGranted: this.checkInMakeupAccountTable.periodicGranted,
+      periodicUsed: this.checkInMakeupAccountTable.periodicUsed,
+      eventAvailable: this.checkInMakeupAccountTable.eventAvailable,
+      version: this.checkInMakeupAccountTable.version,
+      lastSyncedFactId: this.checkInMakeupAccountTable.lastSyncedFactId,
+      createdAt: this.checkInMakeupAccountTable.createdAt,
+      updatedAt: this.checkInMakeupAccountTable.updatedAt,
+    } as const
   }
 }

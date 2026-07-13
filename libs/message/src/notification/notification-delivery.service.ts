@@ -1,3 +1,4 @@
+import type { DbTransaction } from '@db/core'
 import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
@@ -9,9 +10,17 @@ import type {
 } from '../eventing/message-event.type'
 import type { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import type { MessageNotificationCategoryKey } from './notification.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 
-import { buildDateOnlyRangeInAppTimeZone, jsonParse } from '@libs/platform/utils'
+import {
+  buildDateOnlyRangeInAppTimeZone,
+  jsonParse,
+} from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, lt } from 'drizzle-orm'
 import {
@@ -30,6 +39,23 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+interface NotificationDeliveryRecordInput {
+  event: DomainEventRecord
+  dispatch: DomainEventDispatchRecord
+  receiverUserId?: number
+  projectionKey?: string
+  categoryKey?: string
+  notificationId: number | null
+  status: MessageNotificationDispatchStatusEnum
+  templateId: number | null
+  usedTemplate: boolean
+  fallbackReason: string | null
+  failureReason?: string | null
+  taskId?: number
+  instanceId?: number
+  reminderKind?: string
+}
+
 @Injectable()
 export class MessageNotificationDeliveryService {
   constructor(private readonly drizzle: DrizzleService) {}
@@ -40,6 +66,35 @@ export class MessageNotificationDeliveryService {
 
   private get notificationDelivery() {
     return this.drizzle.schema.notificationDelivery
+  }
+
+  // 后台投递监控的稳定审计 contract；归档/保留窗口字段仅供内部清理任务使用。
+  private buildNotificationDeliveryPageSelect() {
+    return {
+      id: this.notificationDelivery.id,
+      eventId: this.notificationDelivery.eventId,
+      dispatchId: this.notificationDelivery.dispatchId,
+      eventKey: this.notificationDelivery.eventKey,
+      receiverUserId: this.notificationDelivery.receiverUserId,
+      projectionKey: this.notificationDelivery.projectionKey,
+      categoryKey: this.notificationDelivery.categoryKey,
+      taskId: this.notificationDelivery.taskId,
+      instanceId: this.notificationDelivery.instanceId,
+      reminderKind: this.notificationDelivery.reminderKind,
+      notificationId: this.notificationDelivery.notificationId,
+      status: this.notificationDelivery.status,
+      templateId: this.notificationDelivery.templateId,
+      usedTemplate: this.notificationDelivery.usedTemplate,
+      fallbackReason: this.notificationDelivery.fallbackReason,
+      failureReason: this.notificationDelivery.failureReason,
+      lastAttemptAt: this.notificationDelivery.lastAttemptAt,
+      createdAt: this.notificationDelivery.createdAt,
+      updatedAt: this.notificationDelivery.updatedAt,
+    }
+  }
+
+  private get notification() {
+    return this.drizzle.schema.userNotification
   }
 
   async recordHandledDispatch(
@@ -208,7 +263,7 @@ export class MessageNotificationDeliveryService {
     const [total, rows] = await Promise.all([
       this.db.$count(this.notificationDelivery, whereClause),
       this.db
-        .select()
+        .select(this.buildNotificationDeliveryPageSelect())
         .from(this.notificationDelivery)
         .where(whereClause)
         .orderBy(...orderBySql)
@@ -233,39 +288,63 @@ export class MessageNotificationDeliveryService {
                 item.categoryKey as MessageNotificationCategoryKey,
               )
             : null,
-        statusLabel: getMessageNotificationDispatchStatusLabel(
-          item.status,
-        ),
+        statusLabel: getMessageNotificationDispatchStatusLabel(item.status),
       })),
       total,
       page,
     )
   }
 
-  private async upsertDeliveryRecord(input: {
-    event: DomainEventRecord
-    dispatch: DomainEventDispatchRecord
-    receiverUserId?: number
-    projectionKey?: string
-    categoryKey?: string
-    notificationId: number | null
-    status: MessageNotificationDispatchStatusEnum
-    templateId: number | null
-    usedTemplate: boolean
-    fallbackReason: string | null
-    failureReason?: string | null
-    taskId?: number
-    instanceId?: number
-    reminderKind?: string
-  }) {
+  private async upsertDeliveryRecord(input: NotificationDeliveryRecordInput) {
     const attemptedAt = new Date()
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.notificationDelivery)
-        .values({
-          eventId: input.event.id,
-          dispatchId: input.dispatch.id,
+    await this.drizzle.withTransaction({
+      execute: async (tx) =>
+        this.upsertDeliveryRecordInTransaction(tx, input, attemptedAt),
+    })
+  }
+
+  /**
+   * notificationId 非空时，必须在与父删除共享的记录锁下重查父通知。
+   * 父通知已删除时保留投递审计，并将可空引用降为 null。
+   */
+  private async upsertDeliveryRecordInTransaction(
+    tx: DbTransaction,
+    input: NotificationDeliveryRecordInput,
+    attemptedAt: Date,
+  ) {
+    const notificationId =
+      input.notificationId === null
+        ? null
+        : await this.lockAndRecheckNotificationForDeliveryInTransaction(
+            tx,
+            input.notificationId,
+          )
+    const failureReason = this.normalizeFailureReason(input.failureReason)
+
+    await tx
+      .insert(this.notificationDelivery)
+      .values({
+        eventId: input.event.id,
+        dispatchId: input.dispatch.id,
+        eventKey: input.event.eventKey,
+        receiverUserId: input.receiverUserId ?? null,
+        projectionKey: input.projectionKey ?? null,
+        categoryKey: input.categoryKey ?? null,
+        taskId: input.taskId ?? null,
+        instanceId: input.instanceId ?? null,
+        reminderKind: input.reminderKind ?? null,
+        notificationId,
+        status: input.status,
+        templateId: input.templateId,
+        usedTemplate: input.usedTemplate,
+        fallbackReason: input.fallbackReason,
+        failureReason,
+        lastAttemptAt: attemptedAt,
+      })
+      .onConflictDoUpdate({
+        target: this.notificationDelivery.dispatchId,
+        set: {
           eventKey: input.event.eventKey,
           receiverUserId: input.receiverUserId ?? null,
           projectionKey: input.projectionKey ?? null,
@@ -273,35 +352,33 @@ export class MessageNotificationDeliveryService {
           taskId: input.taskId ?? null,
           instanceId: input.instanceId ?? null,
           reminderKind: input.reminderKind ?? null,
-          notificationId: input.notificationId,
+          notificationId,
           status: input.status,
           templateId: input.templateId,
           usedTemplate: input.usedTemplate,
           fallbackReason: input.fallbackReason,
-          failureReason: this.normalizeFailureReason(input.failureReason),
+          failureReason,
           lastAttemptAt: attemptedAt,
-        })
-        .onConflictDoUpdate({
-          target: this.notificationDelivery.dispatchId,
-          set: {
-            eventKey: input.event.eventKey,
-            receiverUserId: input.receiverUserId ?? null,
-            projectionKey: input.projectionKey ?? null,
-            categoryKey: input.categoryKey ?? null,
-            taskId: input.taskId ?? null,
-            instanceId: input.instanceId ?? null,
-            reminderKind: input.reminderKind ?? null,
-            notificationId: input.notificationId,
-            status: input.status,
-            templateId: input.templateId,
-            usedTemplate: input.usedTemplate,
-            fallbackReason: input.fallbackReason,
-            failureReason: this.normalizeFailureReason(input.failureReason),
-            lastAttemptAt: attemptedAt,
-            updatedAt: attemptedAt,
-          },
-        }),
-    )
+          updatedAt: attemptedAt,
+        },
+      })
+  }
+
+  private async lockAndRecheckNotificationForDeliveryInTransaction(
+    tx: DbTransaction,
+    notificationId: number,
+  ) {
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('user_notification', notificationId),
+    ])
+
+    const [notification] = await tx
+      .select({ id: this.notification.id })
+      .from(this.notification)
+      .where(eq(this.notification.id, notificationId))
+      .limit(1)
+
+    return notification?.id ?? null
   }
 
   private resolveHandledStatus(result: NotificationProjectionApplyResult) {

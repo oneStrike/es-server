@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { ForumPermissionService } from '@libs/forum/permission/forum-permission.service'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
@@ -77,7 +77,7 @@ export class CommentPermissionService {
   }
 
   async ensureCommentRateLimitInTx(
-    tx: Db,
+    tx: DbTransaction,
     userId: number,
     targetType: CommentTargetTypeEnum,
   ) {

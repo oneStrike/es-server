@@ -114,6 +114,9 @@ export const paymentOrder = snakeCase.table(
       table.status,
       table.createdAt,
     ),
+    index('payment_order_provider_config_version_id_idx').on(
+      table.providerConfigVersionId,
+    ),
     index('payment_order_user_created_at_idx').on(
       table.userId,
       table.createdAt,

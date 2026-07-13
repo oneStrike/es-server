@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { WorkAuthorService } from '@libs/content/author/author.service'
@@ -28,7 +28,7 @@ export class AuthorFollowResolver
     this.followService.registerResolver(this)
   }
 
-  async ensureExists(tx: Db, targetId: number) {
+  async ensureExists(tx: DbExecutor, targetId: number) {
     const author = await tx.query.workAuthor.findFirst({
       where: {
         id: targetId,
@@ -48,7 +48,7 @@ export class AuthorFollowResolver
     return {}
   }
 
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     await this.workAuthorService.updateAuthorFollowersCount(tx, targetId, delta)
   }
 

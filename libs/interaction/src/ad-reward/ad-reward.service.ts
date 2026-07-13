@@ -1,6 +1,10 @@
-import type { adRewardRecord as adRewardRecordTable } from '@db/schema'
+import type { AdProviderConfigSelect, AdRewardRecordSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import type { AdProviderConfigUpdateInput, AdRewardCredentialOptionDefinition } from './types/ad-reward.type'
+import type {
+  AdProviderConfigUpdateInput,
+  AdRewardCredentialOptionDefinition,
+  AdRewardProviderVerificationConfig,
+} from './types/ad-reward.type'
 
 import { createHash } from 'node:crypto'
 import process from 'node:process'
@@ -32,6 +36,7 @@ import {
 import {
   AdProviderConfigOutputDto,
   AdRewardCredentialOptionDto,
+  AdRewardResultDto,
   AdRewardRevokeDto,
   AdRewardVerificationDto,
   CreateAdProviderConfigDto,
@@ -72,6 +77,65 @@ const AD_REWARD_CREDENTIAL_OPTIONS: AdRewardCredentialOptionDefinition[] = [
     envKey: 'ES_AD_TENCENT_YOU_LIANG_HUI_SSV_SECRET',
   },
 ]
+
+type AdProviderConfigPageRow = Pick<
+  AdProviderConfigSelect,
+  | 'id'
+  | 'provider'
+  | 'platform'
+  | 'environment'
+  | 'clientAppKey'
+  | 'appId'
+  | 'placementKey'
+  | 'targetScope'
+  | 'dailyLimit'
+  | 'configVersion'
+  | 'credentialVersionRef'
+  | 'callbackUrl'
+  | 'configMetadata'
+  | 'sortOrder'
+  | 'isEnabled'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type AdRewardRecordDetailRow = Pick<
+  AdRewardRecordSelect,
+  | 'id'
+  | 'userId'
+  | 'adProviderConfigVersion'
+  | 'placementKey'
+  | 'targetScope'
+  | 'targetType'
+  | 'targetId'
+  | 'status'
+  | 'clientContext'
+  | 'verifyPayload'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type AdRewardResultRow = Pick<
+  AdRewardRecordSelect,
+  'userId' | 'status' | 'providerRewardId'
+>
+
+type AdRewardRevokeRecord = Pick<
+  AdRewardRecordSelect,
+  'id' | 'status' | 'verifyPayload'
+>
+
+type AdProviderConfigMutationSnapshot = Pick<
+  AdProviderConfigSelect,
+  | 'provider'
+  | 'platform'
+  | 'environment'
+  | 'placementKey'
+  | 'targetScope'
+  | 'credentialVersionRef'
+  | 'configMetadata'
+  | 'isEnabled'
+>
 
 @Injectable()
 export class AdRewardService {
@@ -119,6 +183,107 @@ export class AdRewardService {
       createdAt: this.adRewardRecord.createdAt,
       updatedAt: this.adRewardRecord.updatedAt,
     }
+  }
+
+  private get adProviderConfigPageSelect() {
+    return {
+      id: this.adProviderConfig.id,
+      provider: this.adProviderConfig.provider,
+      platform: this.adProviderConfig.platform,
+      environment: this.adProviderConfig.environment,
+      clientAppKey: this.adProviderConfig.clientAppKey,
+      appId: this.adProviderConfig.appId,
+      placementKey: this.adProviderConfig.placementKey,
+      targetScope: this.adProviderConfig.targetScope,
+      dailyLimit: this.adProviderConfig.dailyLimit,
+      configVersion: this.adProviderConfig.configVersion,
+      credentialVersionRef: this.adProviderConfig.credentialVersionRef,
+      callbackUrl: this.adProviderConfig.callbackUrl,
+      configMetadata: this.adProviderConfig.configMetadata,
+      sortOrder: this.adProviderConfig.sortOrder,
+      isEnabled: this.adProviderConfig.isEnabled,
+      createdAt: this.adProviderConfig.createdAt,
+      updatedAt: this.adProviderConfig.updatedAt,
+    }
+  }
+
+  private get adRewardRecordDetailColumns() {
+    return {
+      id: true,
+      userId: true,
+      adProviderConfigVersion: true,
+      placementKey: true,
+      targetScope: true,
+      targetType: true,
+      targetId: true,
+      status: true,
+      clientContext: true,
+      verifyPayload: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  // 撤销只依赖状态、写回的验证快照及奖励记录主键。
+  private get adRewardRevokeColumns() {
+    return {
+      id: true,
+      status: true,
+      verifyPayload: true,
+    } as const
+  }
+
+  // 回调验签和奖励写入的最小 provider 配置读取模型。
+  private get adProviderConfigVerificationSelect() {
+    return {
+      id: this.adProviderConfig.id,
+      provider: this.adProviderConfig.provider,
+      platform: this.adProviderConfig.platform,
+      environment: this.adProviderConfig.environment,
+      clientAppKey: this.adProviderConfig.clientAppKey,
+      appId: this.adProviderConfig.appId,
+      placementKey: this.adProviderConfig.placementKey,
+      targetScope: this.adProviderConfig.targetScope,
+      dailyLimit: this.adProviderConfig.dailyLimit,
+      configVersion: this.adProviderConfig.configVersion,
+      credentialVersionRef: this.adProviderConfig.credentialVersionRef,
+      configMetadata: this.adProviderConfig.configMetadata,
+      isEnabled: this.adProviderConfig.isEnabled,
+    } as const
+  }
+
+  // 管理配置更新前只读取校验与合并实际消费的字段。
+  private get adProviderConfigMutationColumns() {
+    return {
+      provider: true,
+      platform: true,
+      environment: true,
+      placementKey: true,
+      targetScope: true,
+      credentialVersionRef: true,
+      configMetadata: true,
+      isEnabled: true,
+    } as const
+  }
+
+  private get adRewardDuplicateResultColumns() {
+    return {
+      userId: true,
+      status: true,
+      providerRewardId: true,
+      targetScope: true,
+      targetType: true,
+      targetId: true,
+    } as const
+  }
+
+  private get adRewardCreatedResultSelect() {
+    return {
+      id: this.adRewardRecord.id,
+      userId: this.adRewardRecord.userId,
+      status: this.adRewardRecord.status,
+      providerRewardId: this.adRewardRecord.providerRewardId,
+    } as const
   }
 
   // 启用或停用广告 provider 配置。
@@ -263,7 +428,7 @@ export class AdRewardService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.adProviderConfigPageSelect)
         .from(this.adProviderConfig)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -306,6 +471,7 @@ export class AdRewardService {
   async getAdRewardRecordDetail(id: number) {
     const record = await this.db.query.adRewardRecord.findFirst({
       where: { id },
+      columns: this.adRewardRecordDetailColumns,
     })
     if (!record) {
       throw new BusinessException(
@@ -318,35 +484,39 @@ export class AdRewardService {
 
   // 撤销广告奖励和它精确来源写入的内容权益。
   async revokeAdRewardRecord(dto: AdRewardRevokeDto) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const record = await tx.query.adRewardRecord.findFirst({
-        where: { id: dto.id },
-      })
-      if (!record) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '广告奖励记录不存在',
-        )
-      }
-      if (record.status !== AdRewardStatusEnum.REVOKED) {
-        await tx
-          .update(this.adRewardRecord)
-          .set({
-            status: AdRewardStatusEnum.REVOKED,
-            verifyPayload: {
-              ...(this.asRecord(record.verifyPayload) ?? {}),
-              revokeReason: dto.reason?.trim() || null,
-              revokedAt: new Date().toISOString(),
-            },
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const record: AdRewardRevokeRecord | undefined =
+          await tx.query.adRewardRecord.findFirst({
+            where: { id: dto.id },
+            columns: this.adRewardRevokeColumns,
           })
-          .where(eq(this.adRewardRecord.id, dto.id))
-      }
+        if (!record) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '广告奖励记录不存在',
+          )
+        }
+        if (record.status !== AdRewardStatusEnum.REVOKED) {
+          await tx
+            .update(this.adRewardRecord)
+            .set({
+              status: AdRewardStatusEnum.REVOKED,
+              verifyPayload: {
+                ...(this.asRecord(record.verifyPayload) ?? {}),
+                revokeReason: dto.reason?.trim() || null,
+                revokedAt: new Date().toISOString(),
+              },
+            })
+            .where(eq(this.adRewardRecord.id, dto.id))
+        }
 
-      await this.contentEntitlementService.revokeEntitlementBySource(tx, {
-        grantSource: ContentEntitlementGrantSourceEnum.AD,
-        sourceId: record.id,
-      })
-      return true
+        await this.contentEntitlementService.revokeEntitlementBySource(tx, {
+          grantSource: ContentEntitlementGrantSourceEnum.AD,
+          sourceId: record.id,
+        })
+        return true
+      },
     })
   }
 
@@ -421,114 +591,128 @@ export class AdRewardService {
     })
     const targetType = await this.assertAdTargetAllowed(dto)
 
-    return this.drizzle.withTransaction(async (tx) => {
-      const existing = await tx.query.adRewardRecord.findFirst({
-        where: {
-          adProviderConfigId: config.id,
-          providerRewardId: rewardPayload.providerRewardId,
-        },
-      })
-      if (existing) {
-        this.assertDuplicateRewardMatches(existing, {
-          userId,
-          targetScope: dto.targetScope,
-          targetType,
-          targetId: dto.targetId,
-        })
-        return existing
-      }
-
-      if (config.dailyLimit > 0) {
-        const [countRow] = await tx
-          .select({ count: sql<number>`count(*)::int` })
-          .from(this.adRewardRecord)
-          .where(
-            and(
-              eq(this.adRewardRecord.userId, userId),
-              eq(this.adRewardRecord.adProviderConfigId, config.id),
-              eq(this.adRewardRecord.status, AdRewardStatusEnum.SUCCESS),
-              gte(this.adRewardRecord.createdAt, startOfTodayInAppTimeZone()),
-            ),
-          )
-        if (Number(countRow?.count ?? 0) >= config.dailyLimit) {
-          throw new BusinessException(
-            BusinessErrorCode.QUOTA_NOT_ENOUGH,
-            '广告奖励次数已达上限',
-          )
-        }
-      }
-
-      const [record] = await tx
-        .insert(this.adRewardRecord)
-        .values({
-          userId,
-          adProviderConfigId: config.id,
-          adProviderConfigVersion: config.configVersion,
-          credentialVersionRef: config.credentialVersionRef,
-          providerRewardId: rewardPayload.providerRewardId,
-          placementKey: rewardPayload.placementKey,
-          targetScope: dto.targetScope,
-          targetType,
-          targetId: dto.targetId,
-          status: AdRewardStatusEnum.SUCCESS,
-          clientContext: dto.clientContext,
-          rawNotifyPayload: dto.verifyPayload,
-          verifyPayload: {
-            provider: dto.provider,
-            platform: dto.platform,
-            environment: dto.environment,
-            clientAppKey: this.normalizeKey(dto.clientAppKey),
-            appId: this.normalizeKey(dto.appId),
-            targetScope: dto.targetScope,
-          },
-        })
-        .onConflictDoNothing()
-        .returning()
-      if (!record) {
-        const duplicated = await tx.query.adRewardRecord.findFirst({
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const existing = await tx.query.adRewardRecord.findFirst({
           where: {
             adProviderConfigId: config.id,
             providerRewardId: rewardPayload.providerRewardId,
           },
+          columns: this.adRewardDuplicateResultColumns,
         })
-        if (duplicated) {
-          this.assertDuplicateRewardMatches(duplicated, {
+        if (existing) {
+          this.assertDuplicateRewardMatches(existing, {
             userId,
             targetScope: dto.targetScope,
             targetType,
             targetId: dto.targetId,
           })
-          return duplicated
+          return this.toAdRewardResult(existing)
         }
-        throw new BusinessException(
-          BusinessErrorCode.STATE_CONFLICT,
-          '广告奖励写入失败',
+
+        if (config.dailyLimit > 0) {
+          const [countRow] = await tx
+            .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
+            .from(this.adRewardRecord)
+            .where(
+              and(
+                eq(this.adRewardRecord.userId, userId),
+                eq(this.adRewardRecord.adProviderConfigId, config.id),
+                eq(this.adRewardRecord.status, AdRewardStatusEnum.SUCCESS),
+                gte(this.adRewardRecord.createdAt, startOfTodayInAppTimeZone()),
+              ),
+            )
+          if (Number(countRow?.count ?? 0) >= config.dailyLimit) {
+            throw new BusinessException(
+              BusinessErrorCode.QUOTA_NOT_ENOUGH,
+              '广告奖励次数已达上限',
+            )
+          }
+        }
+
+        const [record] = await tx
+          .insert(this.adRewardRecord)
+          .values({
+            userId,
+            adProviderConfigId: config.id,
+            adProviderConfigVersion: config.configVersion,
+            credentialVersionRef: config.credentialVersionRef,
+            providerRewardId: rewardPayload.providerRewardId,
+            placementKey: rewardPayload.placementKey,
+            targetScope: dto.targetScope,
+            targetType,
+            targetId: dto.targetId,
+            status: AdRewardStatusEnum.SUCCESS,
+            clientContext: dto.clientContext,
+            rawNotifyPayload: dto.verifyPayload,
+            verifyPayload: {
+              provider: dto.provider,
+              platform: dto.platform,
+              environment: dto.environment,
+              clientAppKey: this.normalizeKey(dto.clientAppKey),
+              appId: this.normalizeKey(dto.appId),
+              targetScope: dto.targetScope,
+            },
+          })
+          .onConflictDoNothing()
+          .returning(this.adRewardCreatedResultSelect)
+        if (!record) {
+          const duplicated = await tx.query.adRewardRecord.findFirst({
+            where: {
+              adProviderConfigId: config.id,
+              providerRewardId: rewardPayload.providerRewardId,
+            },
+            columns: this.adRewardDuplicateResultColumns,
+          })
+          if (duplicated) {
+            this.assertDuplicateRewardMatches(duplicated, {
+              userId,
+              targetScope: dto.targetScope,
+              targetType,
+              targetId: dto.targetId,
+            })
+            return this.toAdRewardResult(duplicated)
+          }
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '广告奖励写入失败',
+          )
+        }
+
+        await this.contentEntitlementService.grantEntitlement(tx, {
+          userId,
+          targetType,
+          targetId: dto.targetId,
+          grantSource: ContentEntitlementGrantSourceEnum.AD,
+          sourceId: record.id,
+          sourceKey: rewardPayload.providerRewardId,
+          expiresAt: this.addDays(new Date(), 1),
+          grantSnapshot: {
+            adProviderConfigId: config.id,
+            adProviderConfigVersion: config.configVersion,
+            credentialVersionRef: config.credentialVersionRef,
+            placementKey: rewardPayload.placementKey,
+            targetScope: dto.targetScope,
+          },
+        })
+
+        this.logger.log(
+          `ad_reward_success userId=${userId} adProviderConfigId=${config.id} adProviderConfigVersion=${config.configVersion} providerRewardId=${rewardPayload.providerRewardId}`,
         )
-      }
 
-      await this.contentEntitlementService.grantEntitlement(tx, {
-        userId,
-        targetType,
-        targetId: dto.targetId,
-        grantSource: ContentEntitlementGrantSourceEnum.AD,
-        sourceId: record.id,
-        sourceKey: rewardPayload.providerRewardId,
-        expiresAt: this.addDays(new Date(), 1),
-        grantSnapshot: {
-          adProviderConfigId: config.id,
-          adProviderConfigVersion: config.configVersion,
-          credentialVersionRef: config.credentialVersionRef,
-          placementKey: rewardPayload.placementKey,
-          targetScope: dto.targetScope,
-        },
-      })
-
-      this.logger.log(
-        `ad_reward_success userId=${userId} adProviderConfigId=${config.id} adProviderConfigVersion=${config.configVersion} providerRewardId=${rewardPayload.providerRewardId}`,
-      )
-
-      return record
+        return this.toAdRewardResult(record)
+      },
     })
+  }
+
+  private toAdRewardResult(
+    record: AdRewardResultRow,
+  ): Pick<AdRewardResultDto, 'userId' | 'status' | 'providerRewardId'> {
+    return {
+      userId: record.userId,
+      status: record.status,
+      providerRewardId: record.providerRewardId,
+    }
   }
 
   // 基于输入时间增加指定天数。
@@ -617,8 +801,8 @@ export class AdRewardService {
 
   // 按广告奖励请求解析可用的广告 provider 配置。
   private async resolveAdProviderConfig(dto: AdRewardVerificationDto) {
-    const candidates = await this.db
-      .select()
+    const candidates: AdRewardProviderVerificationConfig[] = await this.db
+      .select(this.adProviderConfigVerificationSelect)
       .from(this.adProviderConfig)
       .where(
         and(
@@ -836,9 +1020,7 @@ export class AdRewardService {
       : null
   }
 
-  private sanitizeAdRewardRecordDetail(
-    record: typeof adRewardRecordTable.$inferSelect,
-  ) {
+  private sanitizeAdRewardRecordDetail(record: AdRewardRecordDetailRow) {
     const verifyPayload = this.asRecord(record.verifyPayload)
     return {
       id: record.id,
@@ -885,9 +1067,11 @@ export class AdRewardService {
   }
 
   private async getAdProviderConfigOrThrow(id: number) {
-    const row = await this.db.query.adProviderConfig.findFirst({
-      where: { id },
-    })
+    const row: AdProviderConfigMutationSnapshot | undefined =
+      await this.db.query.adProviderConfig.findFirst({
+        where: { id },
+        columns: this.adProviderConfigMutationColumns,
+      })
     if (!row) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -1004,7 +1188,7 @@ export class AdRewardService {
   }
 
   private sanitizeAdProviderConfigForAdmin(
-    row: typeof this.adProviderConfig.$inferSelect,
+    row: AdProviderConfigPageRow,
   ): AdProviderConfigOutputDto {
     const metadata = this.asRecord(row.configMetadata)
     const safeMetadata = metadata

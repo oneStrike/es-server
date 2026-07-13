@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor, DbTransaction } from '@db/core'
 import type {
   ApplyDeltaParams,
   ApplyRuleParams,
@@ -8,7 +8,13 @@ import type {
   PublicGrowthLedgerContextValue,
   PublicGrowthLedgerRecord,
 } from './growth-ledger.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  relationIntegrityLock,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { formatDateKeyInAppTimeZone } from '@libs/platform/utils'
@@ -72,12 +78,34 @@ export class GrowthLedgerService {
     return this.drizzle.schema.userLevelRule
   }
 
+  // 用户成长时间线的稳定公开 read-model；归档字段仅服务保留策略，不能随整行查询进入响应。
+  private buildGrowthLedgerPageSelect() {
+    return {
+      id: this.growthLedgerRecord.id,
+      userId: this.growthLedgerRecord.userId,
+      assetType: this.growthLedgerRecord.assetType,
+      assetKey: this.growthLedgerRecord.assetKey,
+      source: this.growthLedgerRecord.source,
+      ruleId: this.growthLedgerRecord.ruleId,
+      ruleType: this.growthLedgerRecord.ruleType,
+      targetType: this.growthLedgerRecord.targetType,
+      targetId: this.growthLedgerRecord.targetId,
+      delta: this.growthLedgerRecord.delta,
+      beforeValue: this.growthLedgerRecord.beforeValue,
+      afterValue: this.growthLedgerRecord.afterValue,
+      bizKey: this.growthLedgerRecord.bizKey,
+      remark: this.growthLedgerRecord.remark,
+      context: this.growthLedgerRecord.context,
+      createdAt: this.growthLedgerRecord.createdAt,
+    }
+  }
+
   private readonly publicGrowthLedgerContextKeys: readonly PublicGrowthLedgerContextKey[] =
     PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS
 
   // 按规则结算（发放） 流程： 1. 根据资产类型查询对应规则表 2. 检查规则是否启用、数值是否有效 3. 创建账本记录（幂等检查） 4. 检查每日限额和总限额 5. 更新用户余额 6. 写入审计日志
   async applyByRule(
-    tx: Db,
+    tx: DbTransaction,
     params: ApplyRuleParams,
   ): Promise<GrowthLedgerApplyResult> {
     const {
@@ -311,7 +339,7 @@ export class GrowthLedgerService {
 
   // 直接结算（不走规则表） 流程： 1. 验证变动金额 2. 创建账本记录（幂等检查） 3. 消费时检查余额是否充足 4. 更新用户余额 5. 写入审计日志
   async applyDelta(
-    tx: Db,
+    tx: DbTransaction,
     params: ApplyDeltaParams,
   ): Promise<GrowthLedgerApplyResult> {
     const {
@@ -533,7 +561,7 @@ export class GrowthLedgerService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildGrowthLedgerPageSelect())
         .from(this.growthLedgerRecord)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -604,7 +632,7 @@ export class GrowthLedgerService {
 
   // 增加用户余额 使用原子 upsert 更新统一余额表
   private async incrementUserBalance(
-    tx: Db,
+    tx: DbExecutor,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -646,7 +674,7 @@ export class GrowthLedgerService {
 
   // 减少用户余额 使用条件更新确保余额充足时才扣减
   private async decrementUserBalance(
-    tx: Db,
+    tx: DbExecutor,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -683,7 +711,7 @@ export class GrowthLedgerService {
 
   // 写入审计日志 记录所有结算请求的决策和结果，用于问题排查
   private async writeAuditLog(
-    tx: Db,
+    tx: DbExecutor,
     params: {
       userId: number
       bizKey: string
@@ -716,7 +744,7 @@ export class GrowthLedgerService {
   }
 
   private async syncUserLevelByExperience(
-    tx: Db,
+    tx: DbTransaction,
     userId: number,
     experience?: number,
   ): Promise<void> {
@@ -730,11 +758,23 @@ export class GrowthLedgerService {
       return
     }
 
-    await this.syncUserLevel(tx, userId, levelRule.id)
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('user_level_rule', levelRule.id),
+    ])
+    const lockedLevelRule = await this.findEligibleLevelRuleById(
+      tx,
+      levelRule.id,
+      experience,
+    )
+    if (!lockedLevelRule) {
+      return
+    }
+
+    await this.syncUserLevel(tx, userId, lockedLevelRule.id)
   }
 
   private async syncUserLevelByCurrentExperience(
-    tx: Db,
+    tx: DbTransaction,
     userId: number,
   ): Promise<void> {
     const experience = await this.getUserAssetBalance(tx, {
@@ -751,7 +791,7 @@ export class GrowthLedgerService {
   }
 
   private async findRuleByType(
-    tx: Db,
+    tx: DbExecutor,
     assetType: GrowthAssetTypeEnum,
     assetKey: string,
     ruleType: number,
@@ -778,7 +818,7 @@ export class GrowthLedgerService {
   }
 
   private async findLedgerByUserBizKey(
-    tx: Db,
+    tx: DbExecutor,
     params: { userId: number, bizKey: string },
   ) {
     return tx.query.growthLedgerRecord.findFirst({
@@ -797,13 +837,17 @@ export class GrowthLedgerService {
   }
 
   private async ensureLedgerOperationLock(
-    tx: Db,
+    tx: DbTransaction,
     params: { userId: number, bizKey: string },
   ) {
-    await this.drizzle.withErrorHandling(() =>
-      tx.execute(
-        sql`SELECT pg_advisory_xact_lock(${params.userId}, hashtext(${params.bizKey}))`,
-      ),
+    await this.drizzle.withErrorHandling(async () =>
+      acquireIntegrityLocks(tx, [
+        relationIntegrityLock(
+          'growth-ledger-biz-key',
+          params.userId,
+          params.bizKey,
+        ),
+      ]),
     )
   }
 
@@ -819,7 +863,7 @@ export class GrowthLedgerService {
     return normalizedAssetKey
   }
 
-  private async ensureUserExists(tx: Db, userId: number) {
+  private async ensureUserExists(tx: DbExecutor, userId: number) {
     const user = await tx.query.appUser.findFirst({
       where: { id: userId },
       columns: { id: true },
@@ -833,7 +877,7 @@ export class GrowthLedgerService {
   }
 
   private async insertLedgerRecord(
-    tx: Db,
+    tx: DbExecutor,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -881,7 +925,7 @@ export class GrowthLedgerService {
   }
 
   private async incrementUsageCounter(
-    tx: Db,
+    tx: DbExecutor,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -926,7 +970,7 @@ export class GrowthLedgerService {
   }
 
   async getUserAssetBalance(
-    tx: Db,
+    tx: DbExecutor,
     params: {
       userId: number
       assetType: GrowthAssetTypeEnum
@@ -946,7 +990,7 @@ export class GrowthLedgerService {
     return balanceRecord?.balance ?? 0
   }
 
-  private async findTargetLevelRule(tx: Db, experience: number) {
+  private async findTargetLevelRule(tx: DbTransaction, experience: number) {
     const rows = await tx
       .select({
         id: this.userLevelRule.id,
@@ -967,8 +1011,32 @@ export class GrowthLedgerService {
     return rows[0]
   }
 
+  /**
+   * 在拿到该等级规则的 canonical lock 后，按同一业务条件重查最初选中的记录。
+   * 不回退到一个未加锁的新候选项，避免并发删除时写入悬挂 levelId。
+   */
+  private async findEligibleLevelRuleById(
+    tx: DbTransaction,
+    levelRuleId: number,
+    experience: number,
+  ) {
+    const rows = await tx
+      .select({ id: this.userLevelRule.id })
+      .from(this.userLevelRule)
+      .where(
+        and(
+          eq(this.userLevelRule.id, levelRuleId),
+          eq(this.userLevelRule.isEnabled, true),
+          isNull(this.userLevelRule.business),
+          lte(this.userLevelRule.requiredExperience, experience),
+        ),
+      )
+      .limit(1)
+    return rows[0]
+  }
+
   private async syncUserLevel(
-    tx: Db,
+    tx: DbTransaction,
     userId: number,
     levelId: number,
   ): Promise<void> {

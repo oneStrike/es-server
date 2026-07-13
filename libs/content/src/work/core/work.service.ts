@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor, DbTransaction } from '@db/core'
 import type { WorkSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
@@ -7,10 +7,15 @@ import type {
   WorkDetailContext,
   WorkFlagUpdateInput,
   WorkPageConditionOptions,
-  WorkPaginationOptions,
 } from './work.type'
 
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 import { ForumSectionService } from '@libs/forum/section/forum-section.service'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
@@ -40,6 +45,31 @@ import {
   UpdateWorkDto,
   UpdateWorkStatusDto,
 } from './dto/work.dto'
+import {
+  workCatalogRelationEndpointLocks,
+  workCatalogWorkLock,
+} from './work-integrity-lock'
+
+/** 作品存在性检查只需主键。 */
+type WorkExistenceRow = Pick<WorkSelect, 'id'>
+
+/** 作品写路径关联作者时只需作者 ID。 */
+interface WorkAuthorRelationIdRow {
+  authorId: number
+}
+
+/** 更新作品基础资料、同步板块和更新作者计数所需的当前快照。 */
+type WorkUpdateSnapshotRow = Pick<
+  WorkSelect,
+  'name' | 'type' | 'forumSectionId'
+> & {
+  authorRelations: WorkAuthorRelationIdRow[]
+}
+
+/** 删除作品、释放板块和扣减作者计数所需的当前快照。 */
+type WorkDeleteSnapshotRow = Pick<WorkSelect, 'forumSectionId'> & {
+  authorRelations: WorkAuthorRelationIdRow[]
+}
 
 /**
  * 作品服务类
@@ -79,6 +109,11 @@ export class WorkService {
   // app_user 表访问入口。
   get appUser() {
     return this.drizzle.schema.appUser
+  }
+
+  // 用户等级规则表访问入口。
+  get userLevelRule() {
+    return this.drizzle.schema.userLevelRule
   }
 
   // work_author 表访问入口。
@@ -121,6 +156,30 @@ export class WorkService {
     return this.drizzle.schema.workThirdPartyChapterBinding
   }
 
+  // 存在性与重名检查不需要加载作品正文和运营字段。
+  private getWorkExistenceColumns() {
+    return { id: true } as const
+  }
+
+  // 作品写路径只以作者 ID 计算关系差集和计数。
+  private getWorkAuthorRelationIdColumns() {
+    return { authorId: true } as const
+  }
+
+  // 更新时只读取后续分支使用的名称、类型、论坛板块和作者关系。
+  private getWorkUpdateSnapshotColumns() {
+    return {
+      name: true,
+      type: true,
+      forumSectionId: true,
+    } as const
+  }
+
+  // 删除时只读取板块释放和作者计数所需的字段。
+  private getWorkDeleteSnapshotColumns() {
+    return { forumSectionId: true } as const
+  }
+
   // 构建作品列表页的最小字段投影，列表查询统一复用这一组 select 字段，避免不同分页接口出现字段面不一致。
   private getPageWorkSelectFields() {
     return {
@@ -142,6 +201,82 @@ export class WorkService {
       publishAt: this.work.publishAt,
       isPublished: this.work.isPublished,
     }
+  }
+
+  // app 作品详情只读取公开 DTO 字段；chapterPrice 仅用于计算章节购买价格，构建响应前必须剥离。
+  private getPublicWorkDetailColumns() {
+    return {
+      id: true,
+      name: true,
+      type: true,
+      cover: true,
+      popularity: true,
+      isRecommended: true,
+      isHot: true,
+      isNew: true,
+      serialStatus: true,
+      publisher: true,
+      language: true,
+      region: true,
+      ageRating: true,
+      createdAt: true,
+      updatedAt: true,
+      publishAt: true,
+      isPublished: true,
+      alias: true,
+      description: true,
+      originalSource: true,
+      copyright: true,
+      disclaimer: true,
+      lastUpdated: true,
+      viewRule: true,
+      requiredViewLevelId: true,
+      forumSectionId: true,
+      canComment: true,
+      viewCount: true,
+      favoriteCount: true,
+      likeCount: true,
+      commentCount: true,
+      downloadCount: true,
+      rating: true,
+      chapterPrice: true,
+    } as const
+  }
+
+  // admin/bypass 详情在公开详情字段基础上显式增加后台专属运营字段。
+  private getAdminWorkDetailColumns() {
+    return {
+      ...this.getPublicWorkDetailColumns(),
+      recommendWeight: true,
+      remark: true,
+    } as const
+  }
+
+  private getWorkDetailRelations() {
+    return {
+      authors: {
+        columns: {
+          id: true,
+          name: true,
+          type: true,
+          avatar: true,
+        },
+      },
+      categories: {
+        columns: {
+          id: true,
+          name: true,
+          icon: true,
+        },
+      },
+      tags: {
+        columns: {
+          id: true,
+          name: true,
+          icon: true,
+        },
+      },
+    } as const
   }
 
   // 构建 app/public 作品详情响应，公开场景显式裁剪运营内部字段，避免基础表字段变更后意外外泄。
@@ -166,33 +301,6 @@ export class WorkService {
       categories,
       tags,
     }
-  }
-
-  // 验证作品和用户是否存在。
-  async verifyWorkAndUserExist(id: number, userId: number) {
-    const [work, user] = await Promise.all([
-      this.db.query.work.findFirst({
-        where: { id, deletedAt: { isNull: true } },
-      }),
-      this.db.query.appUser.findFirst({
-        where: { id: userId, deletedAt: { isNull: true } },
-      }),
-    ])
-
-    if (!work) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '作品不存在',
-      )
-    }
-
-    if (!user) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '用户不存在',
-      )
-    }
-    return { work, user }
   }
 
   private assertNonEmptyRelationIds(
@@ -221,7 +329,10 @@ export class WorkService {
     )
   }
 
-  private async findEnabledAuthors(authorIds?: number[]) {
+  private async findEnabledAuthors(
+    authorIds?: number[],
+    runner: DbExecutor = this.db,
+  ) {
     if (authorIds === undefined) {
       return [] as Array<{
         id: number
@@ -229,7 +340,7 @@ export class WorkService {
       }>
     }
 
-    return this.db.query.workAuthor.findMany({
+    return runner.query.workAuthor.findMany({
       where: {
         id: { in: authorIds },
         isEnabled: true,
@@ -239,12 +350,15 @@ export class WorkService {
     })
   }
 
-  private async findEnabledCategories(categoryIds?: number[]) {
+  private async findEnabledCategories(
+    categoryIds?: number[],
+    runner: DbExecutor = this.db,
+  ) {
     if (categoryIds === undefined) {
       return [] as Array<{ id: number }>
     }
 
-    return this.db.query.workCategory.findMany({
+    return runner.query.workCategory.findMany({
       where: {
         id: { in: categoryIds },
         isEnabled: true,
@@ -253,12 +367,15 @@ export class WorkService {
     })
   }
 
-  private async findEnabledTags(tagIds?: number[]) {
+  private async findEnabledTags(
+    tagIds?: number[],
+    runner: DbExecutor = this.db,
+  ) {
     if (tagIds === undefined) {
       return [] as Array<{ id: number }>
     }
 
-    return this.db.query.workTag.findMany({
+    return runner.query.workTag.findMany({
       where: {
         id: { in: tagIds },
         isEnabled: true,
@@ -276,6 +393,7 @@ export class WorkService {
       requireAll?: boolean
       workType?: WorkTypeEnum
     } = {},
+    runner: DbExecutor = this.db,
   ) {
     this.assertNonEmptyRelationIds(authorIds, '作者', options.requireAll)
     this.assertNonEmptyRelationIds(categoryIds, '分类', options.requireAll)
@@ -283,9 +401,9 @@ export class WorkService {
 
     const [existingAuthors, existingCategories, existingTags] =
       await Promise.all([
-        this.findEnabledAuthors(authorIds),
-        this.findEnabledCategories(categoryIds),
-        this.findEnabledTags(tagIds),
+        this.findEnabledAuthors(authorIds, runner),
+        this.findEnabledCategories(categoryIds, runner),
+        this.findEnabledTags(tagIds, runner),
       ])
 
     if (
@@ -328,6 +446,26 @@ export class WorkService {
     }
   }
 
+  /**
+   * work.required_view_level_id 无物理外键；锁与 user_level_rule 删除使用同一
+   * canonical key，再在当前事务内确认目标仍存在。
+   */
+  private async assertRequiredViewLevelInTx(
+    tx: DbTransaction,
+    requiredViewLevelId: number,
+  ) {
+    const levelRule = await tx.query.userLevelRule.findFirst({
+      where: { id: requiredViewLevelId },
+      columns: { id: true },
+    })
+    if (!levelRule) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '阅读等级规则不存在',
+      )
+    }
+  }
+
   // 创建作品，并在同一事务中创建论坛板块、关系记录和作者作品计数。
   async createWork(createWorkDto: CreateWorkDto) {
     await this.createWorkReturningId(createWorkDto)
@@ -343,15 +481,18 @@ export class WorkService {
         ? new Date(workData.publishAt).toISOString()
         : undefined,
     }
+    const requiredViewLevelId = normalizedWorkData.requiredViewLevelId
 
     // 同类型作品名称必须保持唯一，软删除作品不参与冲突判断。
-    const existingWork = await this.db.query.work.findFirst({
-      where: {
-        name: normalizedWorkData.name,
-        type: normalizedWorkData.type,
-        deletedAt: { isNull: true },
-      },
-    })
+    const existingWork: WorkExistenceRow | undefined =
+      await this.db.query.work.findFirst({
+        where: {
+          name: normalizedWorkData.name,
+          type: normalizedWorkData.type,
+          deletedAt: { isNull: true },
+        },
+        columns: this.getWorkExistenceColumns(),
+      })
 
     if (existingWork) {
       throw new BusinessException(
@@ -368,6 +509,44 @@ export class WorkService {
 
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          ...workCatalogRelationEndpointLocks({
+            authorIds,
+            categoryIds,
+            tagIds,
+          }),
+          ...(requiredViewLevelId === undefined || requiredViewLevelId === null
+            ? []
+            : [tableIntegrityLock('user_level_rule', requiredViewLevelId)]),
+        ])
+        const lockedExistingWork: WorkExistenceRow | undefined =
+          await tx.query.work.findFirst({
+            where: {
+              name: normalizedWorkData.name,
+              type: normalizedWorkData.type,
+              deletedAt: { isNull: true },
+            },
+            columns: this.getWorkExistenceColumns(),
+          })
+        if (lockedExistingWork) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+            '同类型作品名称已存在',
+          )
+        }
+        await this.validateWorkRelations(
+          authorIds,
+          categoryIds,
+          tagIds,
+          {
+            requireAll: true,
+            workType: normalizedWorkData.type,
+          },
+          tx,
+        )
+        if (requiredViewLevelId !== undefined && requiredViewLevelId !== null) {
+          await this.assertRequiredViewLevelInTx(tx, requiredViewLevelId)
+        }
         const forumSectionId =
           await this.forumSectionService.createManagedSectionForWork(tx, {
             name: workData.name,
@@ -438,76 +617,150 @@ export class WorkService {
         : updateData.publishAt,
     }
 
-    const existingWork = await this.db.query.work.findFirst({
-      where: {
-        id,
-        type: expectedType,
-        deletedAt: { isNull: true },
-      },
-      with: {
-        authorRelations: {
-          columns: { authorId: true },
-        },
-      },
-    })
-    if (!existingWork) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '作品不存在',
-      )
-    }
-
-    const resultingWorkName = updateData.name ?? existingWork.name
-    const originalAuthorIds = existingWork.authorRelations.map(
-      (rel) => rel.authorId,
-    )
-
-    // 作品类型创建后不可变，仅作品名称变更时校验当前类型下重名。
-    if (isNotNil(updateData.name) && updateData.name !== existingWork.name) {
-      const duplicateWork = await this.db.query.work.findFirst({
-        where: {
-          name: resultingWorkName,
-          type: existingWork.type,
-          deletedAt: { isNull: true },
-          id: { ne: id },
-        },
-      })
-      if (duplicateWork) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-          '同类型作品名称已存在',
-        )
-      }
-    }
-
-    // 仅在调用方显式传入关系 ID 时校验关系有效性。
-    if (
-      authorIds !== undefined ||
-      categoryIds !== undefined ||
-      tagIds !== undefined
-    ) {
-      await this.validateWorkRelations(authorIds, categoryIds, tagIds, {
-        workType: existingWork.type,
-      })
-    }
-
-    const shouldSyncSectionName =
-      isNotNil(updateData.name) && updateData.name !== existingWork.name
-    const shouldSyncSectionDescription = isNotNil(updateData.description)
-    const shouldSyncSectionEnabled = isNotNil(updateData.isPublished)
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const result = await tx
-          .update(this.work)
-          .set(normalizedUpdateData)
-          .where(
-            and(
-              eq(this.work.id, id),
-              eq(this.work.type, expectedType),
-              isNull(this.work.deletedAt),
-            ),
+        const requestedRequiredViewLevelId =
+          normalizedUpdateData.requiredViewLevelId
+        const integrityLocks = [workCatalogWorkLock(id)]
+        if (
+          requestedRequiredViewLevelId !== undefined &&
+          requestedRequiredViewLevelId !== null
+        ) {
+          integrityLocks.push(
+            tableIntegrityLock('user_level_rule', requestedRequiredViewLevelId),
           )
-        this.drizzle.assertAffectedRows(result, '作品不存在')
+        }
+        await acquireIntegrityLocks(tx, integrityLocks)
+        const existingWork: WorkUpdateSnapshotRow | undefined =
+          await tx.query.work.findFirst({
+            where: {
+              id,
+              type: expectedType,
+              deletedAt: { isNull: true },
+            },
+            columns: this.getWorkUpdateSnapshotColumns(),
+            with: {
+              authorRelations: {
+                columns: this.getWorkAuthorRelationIdColumns(),
+              },
+            },
+          })
+        if (!existingWork) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '作品不存在',
+          )
+        }
+
+        if (
+          requestedRequiredViewLevelId !== undefined &&
+          requestedRequiredViewLevelId !== null
+        ) {
+          await this.assertRequiredViewLevelInTx(
+            tx,
+            requestedRequiredViewLevelId,
+          )
+        }
+
+        const resultingWorkName = updateData.name ?? existingWork.name
+        const originalAuthorIds = existingWork.authorRelations.map(
+          (rel) => rel.authorId,
+        )
+        const [originalCategoryIds, originalTagIds] = await Promise.all([
+          categoryIds === undefined
+            ? Promise.resolve<number[]>([])
+            : tx
+                .select({ id: this.workCategoryRelation.categoryId })
+                .from(this.workCategoryRelation)
+                .where(eq(this.workCategoryRelation.workId, id))
+                .then((rows) => rows.map((row) => row.id)),
+          tagIds === undefined
+            ? Promise.resolve<number[]>([])
+            : tx
+                .select({ id: this.workTagRelation.tagId })
+                .from(this.workTagRelation)
+                .where(eq(this.workTagRelation.workId, id))
+                .then((rows) => rows.map((row) => row.id)),
+        ])
+        await acquireIntegrityLocks(
+          tx,
+          workCatalogRelationEndpointLocks({
+            authorIds:
+              authorIds === undefined
+                ? []
+                : [...originalAuthorIds, ...authorIds],
+            categoryIds:
+              categoryIds === undefined
+                ? []
+                : [...originalCategoryIds, ...categoryIds],
+            tagIds: tagIds === undefined ? [] : [...originalTagIds, ...tagIds],
+            workIds: [id],
+          }),
+        )
+        if (
+          isNotNil(updateData.name) &&
+          updateData.name !== existingWork.name
+        ) {
+          const duplicateWork: WorkExistenceRow | undefined =
+            await tx.query.work.findFirst({
+              where: {
+                name: resultingWorkName,
+                type: existingWork.type,
+                deletedAt: { isNull: true },
+                id: { ne: id },
+              },
+              columns: this.getWorkExistenceColumns(),
+            })
+          if (duplicateWork) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+              '同类型作品名称已存在',
+            )
+          }
+        }
+
+        if (
+          authorIds !== undefined ||
+          categoryIds !== undefined ||
+          tagIds !== undefined
+        ) {
+          await this.validateWorkRelations(
+            authorIds,
+            categoryIds,
+            tagIds,
+            { workType: existingWork.type },
+            tx,
+          )
+        }
+
+        const shouldSyncSectionName =
+          isNotNil(updateData.name) && updateData.name !== existingWork.name
+        const shouldSyncSectionDescription = isNotNil(updateData.description)
+        const shouldSyncSectionEnabled = isNotNil(updateData.isPublished)
+        const hasScalarUpdate = Object.values(normalizedUpdateData).some(
+          (value) => value !== undefined,
+        )
+        const workWhere = and(
+          eq(this.work.id, id),
+          eq(this.work.type, expectedType),
+          isNull(this.work.deletedAt),
+        )
+
+        if (hasScalarUpdate) {
+          const result = await tx
+            .update(this.work)
+            .set(normalizedUpdateData)
+            .where(workWhere)
+          this.drizzle.assertAffectedRows(result, '作品不存在')
+        } else {
+          // 关联关系单独更新时仍锁定目标行，保留事务内的存在性与并发语义。
+          const lockedRows = await tx
+            .select({ id: this.work.id })
+            .from(this.work)
+            .where(workWhere)
+            .for('update')
+          this.drizzle.assertAffectedRows(lockedRows, '作品不存在')
+        }
 
         if (
           existingWork.forumSectionId &&
@@ -618,25 +871,26 @@ export class WorkService {
 
   // 更新作品发布状态。
   async updateStatus(body: UpdateWorkStatusDto, expectedType: WorkTypeEnum) {
-    const work = await this.db.query.work.findFirst({
-      where: {
-        id: body.id,
-        type: expectedType,
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        id: true,
-        forumSectionId: true,
-      },
-    })
-    if (!work) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '作品不存在',
-      )
-    }
-    return this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [workCatalogWorkLock(body.id)])
+        const work = await tx.query.work.findFirst({
+          where: {
+            id: body.id,
+            type: expectedType,
+            deletedAt: { isNull: true },
+          },
+          columns: {
+            id: true,
+            forumSectionId: true,
+          },
+        })
+        if (!work) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '作品不存在',
+          )
+        }
         const result = await tx
           .update(this.work)
           .set({ isPublished: body.isPublished })
@@ -658,8 +912,8 @@ export class WorkService {
         }
 
         return true
-      }),
-    )
+      },
+    })
   }
 
   // 批量更新作品标志位（发布/推荐/热门/新作），用于管理端快速切换作品的展示状态。
@@ -668,20 +922,37 @@ export class WorkService {
     data: WorkFlagUpdateInput,
     expectedType: WorkTypeEnum,
   ) {
-    const result = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.work)
-        .set(data)
-        .where(
-          and(
-            eq(this.work.id, id),
-            eq(this.work.type, expectedType),
-            isNull(this.work.deletedAt),
-          ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '作品不存在')
-    return true
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [workCatalogWorkLock(id)])
+        const work = await tx.query.work.findFirst({
+          where: {
+            id,
+            type: expectedType,
+            deletedAt: { isNull: true },
+          },
+          columns: { id: true },
+        })
+        if (!work) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '作品不存在',
+          )
+        }
+        const result = await tx
+          .update(this.work)
+          .set(data)
+          .where(
+            and(
+              eq(this.work.id, id),
+              eq(this.work.type, expectedType),
+              isNull(this.work.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '作品不存在')
+        return true
+      },
+    })
   }
 
   // 按类型分页查询作品的通用方法，支持热门、新作、推荐等标志位过滤，返回精简字段列表以优化列表页性能。
@@ -964,7 +1235,7 @@ export class WorkService {
   private async paginateWorkList(
     dto: QueryWorkDto,
     userId?: number,
-    options?: WorkPaginationOptions,
+    options?: WorkPageConditionOptions,
   ) {
     const where = and(...this.buildWorkPageConditions(dto, options))
     const pageQuery = this.drizzle.buildPage({
@@ -974,43 +1245,9 @@ export class WorkService {
     const orderQuery = this.drizzle.buildOrderBy(dto.orderBy, {
       table: this.work,
     })
-    if (options?.selectPageFields) {
-      const [list, total] = await Promise.all([
-        this.db
-          .select({
-            id: this.work.id,
-            type: this.work.type,
-            name: this.work.name,
-            cover: this.work.cover,
-            popularity: this.work.popularity,
-            isRecommended: this.work.isRecommended,
-            isHot: this.work.isHot,
-            isNew: this.work.isNew,
-            serialStatus: this.work.serialStatus,
-            publisher: this.work.publisher,
-            language: this.work.language,
-            region: this.work.region,
-            ageRating: this.work.ageRating,
-            createdAt: this.work.createdAt,
-            updatedAt: this.work.updatedAt,
-            publishAt: this.work.publishAt,
-            isPublished: this.work.isPublished,
-          })
-          .from(this.work)
-          .where(where)
-          .orderBy(...orderQuery.orderBySql)
-          .limit(pageQuery.limit)
-          .offset(pageQuery.offset),
-        this.db.$count(this.work, where),
-      ])
-      const page = toPageResult(list, total, pageQuery)
-
-      return this.attachWorkRelations(page, userId)
-    }
-
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.getPageWorkSelectFields())
         .from(this.work)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -1048,6 +1285,10 @@ export class WorkService {
     const [authors, categories, tags, sourceBindings] = await Promise.all([
       this.db.query.workAuthorRelation.findMany({
         where: { workId: { in: workIds } },
+        columns: {
+          workId: true,
+          authorId: true,
+        },
         orderBy: (relation, { asc }) => [
           asc(relation.sortOrder),
           asc(relation.authorId),
@@ -1060,6 +1301,10 @@ export class WorkService {
       }),
       this.db.query.workCategoryRelation.findMany({
         where: { workId: { in: workIds } },
+        columns: {
+          workId: true,
+          categoryId: true,
+        },
         orderBy: (relation, { asc }) => [
           asc(relation.sortOrder),
           asc(relation.categoryId),
@@ -1068,6 +1313,10 @@ export class WorkService {
       }),
       this.db.query.workTagRelation.findMany({
         where: { workId: { in: workIds } },
+        columns: {
+          workId: true,
+          tagId: true,
+        },
         orderBy: (relation, { asc }) => [
           asc(relation.sortOrder),
           asc(relation.tagId),
@@ -1221,40 +1470,22 @@ export class WorkService {
       bypassVisibilityCheck = false,
       expectedType,
     } = context
-    const work = await this.db.query.work.findFirst({
-      where: {
-        id,
-        ...(expectedType ? { type: expectedType } : {}),
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        deletedAt: false,
-      },
-      with: {
-        authors: {
-          columns: {
-            id: true,
-            name: true,
-            type: true,
-            avatar: true,
-          },
-        },
-        categories: {
-          columns: {
-            id: true,
-            name: true,
-            icon: true,
-          },
-        },
-        tags: {
-          columns: {
-            id: true,
-            name: true,
-            icon: true,
-          },
-        },
-      },
-    })
+    const where = {
+      id,
+      ...(expectedType ? { type: expectedType } : {}),
+      deletedAt: { isNull: true },
+    } as const
+    const work = bypassVisibilityCheck
+      ? await this.db.query.work.findFirst({
+          where,
+          columns: this.getAdminWorkDetailColumns(),
+          with: this.getWorkDetailRelations(),
+        })
+      : await this.db.query.work.findFirst({
+          where,
+          columns: this.getPublicWorkDetailColumns(),
+          with: this.getWorkDetailRelations(),
+        })
 
     if (!work) {
       throw new BusinessException(
@@ -1270,13 +1501,13 @@ export class WorkService {
       )
     }
 
-    const { authors, categories, tags, ...workData } = work
+    const { authors, categories, tags, chapterPrice, ...workData } = work
+    const adminWork =
+      'recommendWeight' in work && 'remark' in work ? work : undefined
     const chapterPurchasePricing =
       !bypassVisibilityCheck &&
       workData.viewRule === WorkRootViewPermissionEnum.PURCHASE
-        ? this.contentPermissionService.buildPurchasePricing(
-            workData.chapterPrice,
-          )
+        ? this.contentPermissionService.buildPurchasePricing(chapterPrice)
         : null
 
     const workAuthors = authors.map((author) => ({
@@ -1299,9 +1530,9 @@ export class WorkService {
         tags,
         chapterPurchasePricing: null,
       }),
-      chapterPrice: workData.chapterPrice,
-      recommendWeight: workData.recommendWeight,
-      remark: workData.remark ?? null,
+      chapterPrice,
+      recommendWeight: adminWork!.recommendWeight,
+      remark: adminWork!.remark ?? null,
     })
     const publicWorkDetail = this.buildPublicWorkDetail({
       work: workData,
@@ -1432,41 +1663,44 @@ export class WorkService {
 
   // 软删除作品，并在同一事务中停用关联论坛板块和扣减作者作品数。
   async deleteWork(id: number, expectedType: WorkTypeEnum) {
-    const work = await this.db.query.work.findFirst({
-      where: {
-        id,
-        type: expectedType,
-        deletedAt: { isNull: true },
-      },
-      with: {
-        authorRelations: {
-          columns: { authorId: true },
-        },
-      },
-    })
-
-    if (!work) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '作品不存在',
-      )
-    }
-
-    // 仍有未删除章节的作品不能软删除，避免产生悬空章节。
-    const chapterCount = await this.db.$count(
-      this.workChapter,
-      and(eq(this.workChapter.workId, id), isNull(this.workChapter.deletedAt)),
-    )
-
-    if (chapterCount > 0) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        `该作品还有 ${chapterCount} 个关联章节，无法删除`,
-      )
-    }
-
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        await acquireIntegrityLocks(tx, [workCatalogWorkLock(id)])
+        const work: WorkDeleteSnapshotRow | undefined =
+          await tx.query.work.findFirst({
+            where: {
+              id,
+              type: expectedType,
+              deletedAt: { isNull: true },
+            },
+            columns: this.getWorkDeleteSnapshotColumns(),
+            with: {
+              authorRelations: {
+                columns: this.getWorkAuthorRelationIdColumns(),
+              },
+            },
+          })
+        if (!work) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '作品不存在',
+          )
+        }
+
+        const chapterCount = await tx.$count(
+          this.workChapter,
+          and(
+            eq(this.workChapter.workId, id),
+            isNull(this.workChapter.deletedAt),
+          ),
+        )
+        if (chapterCount > 0) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            `该作品还有 ${chapterCount} 个关联章节，无法删除`,
+          )
+        }
+
         const now = new Date()
         await this.softDeleteThirdPartyBindingsForWork(id, tx, now)
 
@@ -1503,7 +1737,7 @@ export class WorkService {
   // 软删除作品时同步释放 active 三方来源和章节绑定，避免已删除作品继续占用三方来源。
   private async softDeleteThirdPartyBindingsForWork(
     workId: number,
-    tx: Db,
+    tx: DbExecutor,
     now: Date,
   ) {
     const sourceBindings = await tx

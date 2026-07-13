@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type {
   WorkflowAttemptSelect,
   WorkflowEventSelect,
@@ -75,7 +75,7 @@ export interface CreateWorkflowJobInput {
 
 /** 领域资源初始化入参。 */
 export interface CreateWorkflowDraftResourceInitializerInput {
-  tx: Db
+  tx: DbTransaction
   workflowJob: WorkflowJobSelect
 }
 
@@ -105,8 +105,7 @@ export interface CompleteWorkflowAttemptInput {
 }
 
 /** 完成当前 attempt 后延后再次执行的入参。 */
-export interface CompleteWorkflowAttemptWithDelayedRetryInput
-  extends CompleteWorkflowAttemptInput {
+export interface CompleteWorkflowAttemptWithDelayedRetryInput extends CompleteWorkflowAttemptInput {
   nextRetryAt: Date
   delayedSelectedItemCount: number
 }
@@ -262,16 +261,14 @@ export interface WorkflowHandler {
   prepareRetry?: (
     context: WorkflowRetryContext,
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) => Promise<WorkflowRetryPreparationResult>
   recoverExpiredAttempt?: (
     context: WorkflowExpiredAttemptRecoveryContext,
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) => Promise<WorkflowExpiredAttemptRecoveryResult>
-  getItemPage?: (
-    context: WorkflowItemPageContext,
-  ) => Promise<{
+  getItemPage?: (context: WorkflowItemPageContext) => Promise<{
     list: WorkflowItemDto[]
     pageIndex: number
     pageSize: number

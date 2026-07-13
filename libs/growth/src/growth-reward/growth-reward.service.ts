@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor, DbTransaction } from '@db/core'
 import type { JsonObject } from '@libs/platform/utils'
 import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.type'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
@@ -228,25 +228,27 @@ export class UserGrowthRewardService {
     try {
       const rewardResults: TaskRewardAssetResult[] = []
 
-      await this.drizzle.withTransaction(async (tx) => {
-        for (const rewardItem of rewardItems) {
-          const ledgerAssetType = this.toLedgerAssetType(rewardItem.assetType)
-          const applyResult = await this.growthLedgerService.applyDelta(tx, {
-            userId: params.userId,
-            assetType: ledgerAssetType,
-            action: GrowthLedgerActionEnum.GRANT,
-            amount: rewardItem.amount,
-            bizKey: this.buildTaskRewardItemBizKey(baseBizKey, rewardItem),
-            source: GrowthLedgerSourceEnum.TASK_BONUS,
-            targetId: params.taskId,
-            context,
-          })
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          for (const rewardItem of rewardItems) {
+            const ledgerAssetType = this.toLedgerAssetType(rewardItem.assetType)
+            const applyResult = await this.growthLedgerService.applyDelta(tx, {
+              userId: params.userId,
+              assetType: ledgerAssetType,
+              action: GrowthLedgerActionEnum.GRANT,
+              amount: rewardItem.amount,
+              bizKey: this.buildTaskRewardItemBizKey(baseBizKey, rewardItem),
+              source: GrowthLedgerSourceEnum.TASK_BONUS,
+              targetId: params.taskId,
+              context,
+            })
 
-          this.ensureTaskRewardApplySucceeded(rewardItem, applyResult)
-          rewardResults.push(
-            this.toTaskRewardAssetResult(rewardItem, applyResult),
-          )
-        }
+            this.ensureTaskRewardApplySucceeded(rewardItem, applyResult)
+            rewardResults.push(
+              this.toTaskRewardAssetResult(rewardItem, applyResult),
+            )
+          }
+        },
       })
 
       return this.buildTaskRewardSettlementResult({
@@ -468,7 +470,7 @@ export class UserGrowthRewardService {
 
   // 读取指定事件规则下启用判断所需的最小奖励规则字段。
   private async listRewardRulesByType(
-    tx: Db,
+    tx: DbExecutor,
     ruleType: GrowthRuleTypeEnum,
   ): Promise<GrowthRewardRuleProjection[]> {
     return tx
@@ -497,13 +499,13 @@ export class UserGrowthRewardService {
 
   // 已有事务时直接复用，否则由奖励服务自行开启事务。
   private async runWithOptionalTransaction<T>(
-    tx: Db | undefined,
+    tx: DbTransaction | undefined,
     callback: RunWithOptionalTransactionCallback<T>,
   ) {
     if (tx) {
       return callback(tx)
     }
-    return this.drizzle.withTransaction(callback)
+    return this.drizzle.withTransaction({ execute: callback })
   }
 
   // 解析任务奖励项快照，只接收任务链路允许的积分/经验资产。

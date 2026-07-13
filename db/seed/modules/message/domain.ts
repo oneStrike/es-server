@@ -1,15 +1,11 @@
 import type { MessageNotificationCategoryKey } from '@libs/message/notification/notification.type'
 import type { Db } from '../../db-client'
 import {
-  appAnnouncement,
-  appUser,
   chatConversation,
   chatConversationMember,
   chatMessage,
-  forumTopic,
   messageWsMetric,
   notificationTemplate,
-  userComment,
   userNotification,
 } from '@db/schema'
 import { getCanonicalNotificationTemplateContract } from '@libs/message/notification/notification-template-contract'
@@ -44,7 +40,10 @@ export async function seedMessageDomain(db: Db) {
 
   for (const definition of templateFixtures) {
     const existing = await db.query.notificationTemplate.findFirst({
-      where: eq(notificationTemplate.categoryKey, definition.categoryKey),
+      where: { categoryKey: definition.categoryKey },
+      columns: {
+        id: true,
+      },
     })
     const payload = {
       categoryKey: definition.categoryKey,
@@ -66,13 +65,25 @@ export async function seedMessageDomain(db: Db) {
   console.log('  ✓ 通知模板完成')
 
   const userA = await db.query.appUser.findFirst({
-    where: eq(appUser.account, SEED_ACCOUNTS.readerA),
+    where: { account: SEED_ACCOUNTS.readerA },
+    columns: {
+      id: true,
+      nickname: true,
+    },
   })
   const userB = await db.query.appUser.findFirst({
-    where: eq(appUser.account, SEED_ACCOUNTS.readerB),
+    where: { account: SEED_ACCOUNTS.readerB },
+    columns: {
+      id: true,
+      nickname: true,
+    },
   })
   const userC = await db.query.appUser.findFirst({
-    where: eq(appUser.account, SEED_ACCOUNTS.readerC),
+    where: { account: SEED_ACCOUNTS.readerC },
+    columns: {
+      id: true,
+      nickname: true,
+    },
   })
 
   if (!userA || !userB || !userC) {
@@ -84,7 +95,10 @@ export async function seedMessageDomain(db: Db) {
   const conversationBizKey = `direct:${directPair[0]}:${directPair[1]}`
 
   let conversation = await db.query.chatConversation.findFirst({
-    where: eq(chatConversation.bizKey, conversationBizKey),
+    where: { bizKey: conversationBizKey },
+    columns: {
+      id: true,
+    },
   })
 
   if (!conversation) {
@@ -139,10 +153,15 @@ export async function seedMessageDomain(db: Db) {
 
   for (const fixture of messageFixtures) {
     const existing = await db.query.chatMessage.findFirst({
-      where: and(
-        eq(chatMessage.conversationId, conversation.id),
-        eq(chatMessage.messageSeq, fixture.messageSeq),
-      ),
+      where: {
+        AND: [
+          { conversationId: conversation.id },
+          { messageSeq: fixture.messageSeq },
+        ],
+      },
+      columns: {
+        id: true,
+      },
     })
 
     if (!existing) {
@@ -162,7 +181,13 @@ export async function seedMessageDomain(db: Db) {
   }
 
   const messages = await db.query.chatMessage.findMany({
-    where: eq(chatMessage.conversationId, conversation.id),
+    where: { conversationId: conversation.id },
+    columns: {
+      id: true,
+      messageSeq: true,
+      createdAt: true,
+      senderId: true,
+    },
   })
   const lastMessage = [...messages]
     .sort((left, right) => Number(left.messageSeq - right.messageSeq))
@@ -206,10 +231,12 @@ export async function seedMessageDomain(db: Db) {
 
   for (const fixture of memberFixtures) {
     const existing = await db.query.chatConversationMember.findFirst({
-      where: and(
-        eq(chatConversationMember.conversationId, conversation.id),
-        eq(chatConversationMember.userId, fixture.userId),
-      ),
+      where: {
+        AND: [{ conversationId: conversation.id }, { userId: fixture.userId }],
+      },
+      columns: {
+        conversationId: true,
+      },
     })
 
     if (!existing) {
@@ -235,20 +262,33 @@ export async function seedMessageDomain(db: Db) {
   console.log('  ✓ 会话成员完成')
 
   const announcement = await db.query.appAnnouncement.findFirst({
-    where: eq(appAnnouncement.title, '2026 春季版本更新'),
+    where: { title: '2026 春季版本更新' },
+    columns: {
+      id: true,
+      title: true,
+      summary: true,
+      announcementType: true,
+      priorityLevel: true,
+    },
   })
   const rootReply = await db.query.userComment.findFirst({
-    where: eq(userComment.content, '我觉得第一卷就把未来冲突埋得很深。'),
+    where: { content: '我觉得第一卷就把未来冲突埋得很深。' },
+    columns: {
+      id: true,
+      userId: true,
+      targetId: true,
+      content: true,
+    },
   })
   const replyComment = await db.query.userComment.findFirst({
-    where: eq(
-      userComment.content,
-      '而且艾伦和调查兵团的立场差异很早就有预警。',
-    ),
+    where: { content: '而且艾伦和调查兵团的立场差异很早就有预警。' },
+    columns: {
+      id: true,
+    },
   })
   const commentTopic = rootReply?.targetId
     ? await db.query.forumTopic.findFirst({
-        where: eq(forumTopic.id, rootReply.targetId),
+        where: { id: rootReply.targetId },
         columns: {
           id: true,
           userId: true,
@@ -361,6 +401,9 @@ export async function seedMessageDomain(db: Db) {
         receiverUserId: fixture.receiverUserId,
         projectionKey: fixture.projectionKey,
       },
+      columns: {
+        id: true,
+      },
     })
 
     if (!existing) {
@@ -375,7 +418,9 @@ export async function seedMessageDomain(db: Db) {
   console.log('  ✓ 站内通知完成')
 
   const [existingMetric] = await db
-    .select()
+    .select({
+      id: messageWsMetric.id,
+    })
     .from(messageWsMetric)
     .where(eq(messageWsMetric.bucketAt, SEED_TIMELINE.chatBucket))
     .limit(1)

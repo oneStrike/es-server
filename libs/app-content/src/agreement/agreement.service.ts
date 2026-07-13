@@ -15,6 +15,16 @@ import {
   UpdateAgreementDto,
 } from './dto/agreement.dto'
 
+interface PublishedAgreement {
+  id: number
+  title: string
+  publishedAt?: Date | null
+}
+
+interface AgreementOutput {
+  publishedAt?: Date | null
+}
+
 /**
  * 协议服务
  *
@@ -32,6 +42,37 @@ export class AgreementService {
   // 协议表
   private get agreement() {
     return this.drizzle.schema.appAgreement
+  }
+
+  // 协议详情的稳定完整 contract；正文仅在 detail 路径显式读取。
+  private getAgreementDetailColumns() {
+    return {
+      id: true,
+      title: true,
+      content: true,
+      version: true,
+      isForce: true,
+      showInAuth: true,
+      isPublished: true,
+      publishedAt: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  // 协议列表不读取正文大字段。
+  private getAgreementListColumns() {
+    return {
+      id: true,
+      title: true,
+      version: true,
+      isForce: true,
+      showInAuth: true,
+      isPublished: true,
+      publishedAt: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
   }
 
   // 读取协议最小生命周期状态。 统一给更新、下线等入口复用，避免各处分散判断“是否已发布”。
@@ -58,14 +99,9 @@ export class AgreementService {
    * 从公开协议列表中按标题收敛到最新发布版本。
    * 当同一标题存在多个历史发布版本时，只保留发布时间最新的一条。
    */
-  private pickLatestPublishedAgreements<
-    T extends {
-      id: number
-      title: string
-      publishedAt?: Date | null
-    },
-  >(agreements: T[]
-) {
+  private pickLatestPublishedAgreements<T extends PublishedAgreement>(
+    agreements: T[],
+  ) {
     const seenTitles = new Set<string>()
 
     return [...agreements]
@@ -168,6 +204,7 @@ export class AgreementService {
         id: dto.id,
         isPublished: options?.publishedOnly ? true : undefined,
       },
+      columns: this.getAgreementDetailColumns(),
     })
 
     if (!agreement) {
@@ -237,7 +274,7 @@ export class AgreementService {
       orderBy: {
         publishedAt: 'desc',
       },
-      columns: { content: false },
+      columns: this.getAgreementListColumns(),
     })
 
     return this.pickLatestPublishedAgreements(agreements).map((agreement) =>
@@ -245,7 +282,7 @@ export class AgreementService {
     )
   }
 
-  private toAgreementDetailDto<TAgreement extends { publishedAt?: Date | null }>(
+  private toAgreementDetailDto<TAgreement extends AgreementOutput>(
     agreement: TAgreement,
   ) {
     return {
@@ -254,7 +291,7 @@ export class AgreementService {
     } as TAgreement & AgreementOutputBaseDto
   }
 
-  private toAgreementListItemDto<TAgreement extends { publishedAt?: Date | null }>(
+  private toAgreementListItemDto<TAgreement extends AgreementOutput>(
     agreement: TAgreement,
   ) {
     return {

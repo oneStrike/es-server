@@ -77,6 +77,12 @@ export const taskEventFailure = snakeCase.table(
     index('task_event_failure_status_created_at_idx')
       .on(table.status, table.createdAt.desc(), table.id.desc())
       .where(sql`${table.deletedAt} is null`),
+    /**
+     * 管理端失败事件按事件键和状态筛选的稳定分页索引。
+     */
+    index('task_event_failure_event_status_created_at_idx')
+      .on(table.eventKey, table.status, table.createdAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
     index('task_event_failure_event_key_biz_key_idx').on(
       table.eventKey,
       table.eventBizKey,
@@ -104,10 +110,7 @@ export const taskEventFailure = snakeCase.table(
       'task_event_failure_template_key_not_blank_chk',
       sql`${table.templateKey} is null or btrim(${table.templateKey}) <> ''`,
     ),
-    check(
-      'task_event_failure_user_id_positive_chk',
-      sql`${table.userId} > 0`,
-    ),
+    check('task_event_failure_user_id_positive_chk', sql`${table.userId} > 0`),
     check(
       'task_event_failure_target_type_not_blank_chk',
       sql`${table.targetType} is null or btrim(${table.targetType}) <> ''`,

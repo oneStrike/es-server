@@ -137,6 +137,14 @@ export const requestLog = snakeCase.table(
       table.createdAt.desc(),
       table.id.desc(),
     ),
+    /**
+     * 审计页默认按 id 倒序；此索引避免 api/action 深页在过滤后再排序。
+     */
+    index('sys_request_log_api_action_id_idx').on(
+      table.apiType,
+      table.actionType,
+      table.id.desc(),
+    ),
     index('sys_request_log_user_created_id_idx').on(
       table.userId,
       table.createdAt.desc(),

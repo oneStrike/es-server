@@ -1,8 +1,6 @@
 import type { Db } from '../../db-client'
 import {
   forumSection,
-  forumSectionGroup,
-  userLevelRule,
   work,
   workAuthor,
   workAuthorRelation,
@@ -14,7 +12,7 @@ import {
   workTag,
   workTagRelation,
 } from '@db/schema'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import {
   addHours,
   createAvatar,
@@ -371,7 +369,10 @@ export async function seedWorkDomain(db: Db) {
 
   for (const categoryFixture of CATEGORY_FIXTURES) {
     const existing = await db.query.workCategory.findFirst({
-      where: eq(workCategory.name, categoryFixture.name),
+      where: { name: categoryFixture.name },
+      columns: {
+        id: true,
+      },
     })
 
     if (!existing) {
@@ -395,7 +396,10 @@ export async function seedWorkDomain(db: Db) {
 
   for (const tagFixture of TAG_FIXTURES) {
     const existing = await db.query.workTag.findFirst({
-      where: eq(workTag.name, tagFixture.name),
+      where: { name: tagFixture.name },
+      columns: {
+        id: true,
+      },
     })
 
     if (!existing) {
@@ -417,7 +421,10 @@ export async function seedWorkDomain(db: Db) {
 
   for (const authorFixture of AUTHOR_FIXTURES) {
     const existing = await db.query.workAuthor.findFirst({
-      where: eq(workAuthor.name, authorFixture.name),
+      where: { name: authorFixture.name },
+      columns: {
+        id: true,
+      },
     })
 
     if (!existing) {
@@ -442,21 +449,32 @@ export async function seedWorkDomain(db: Db) {
   console.log('  ✓ 作者完成')
 
   const workSectionGroup = await db.query.forumSectionGroup.findFirst({
-    where: and(
-      eq(forumSectionGroup.name, WORK_SECTION_GROUP_NAME),
-      isNull(forumSectionGroup.deletedAt),
-    ),
+    where: {
+      AND: [{ name: WORK_SECTION_GROUP_NAME }, { deletedAt: { isNull: true } }],
+    },
+    columns: {
+      id: true,
+    },
   })
   const advancedLevel = await db.query.userLevelRule.findFirst({
-    where: eq(userLevelRule.name, ADVANCED_LEVEL_NAME),
+    where: { name: ADVANCED_LEVEL_NAME },
+    columns: {
+      id: true,
+    },
   })
 
   for (const [index, workFixture] of WORK_FIXTURES.entries()) {
     let section = await db.query.forumSection.findFirst({
-      where: and(
-        eq(forumSection.name, workFixture.name),
-        isNull(forumSection.deletedAt),
-      ),
+      where: {
+        AND: [{ name: workFixture.name }, { deletedAt: { isNull: true } }],
+      },
+      columns: {
+        id: true,
+        topicCount: true,
+        commentCount: true,
+        lastPostAt: true,
+        lastTopicId: true,
+      },
     })
 
     const sectionPayload = {
@@ -490,10 +508,16 @@ export async function seedWorkDomain(db: Db) {
     }
 
     const existingWork = await db.query.work.findFirst({
-      where: and(
-        eq(work.name, workFixture.name),
-        eq(work.type, workFixture.type),
-      ),
+      where: { AND: [{ name: workFixture.name }, { type: workFixture.type }] },
+      columns: {
+        id: true,
+        name: true,
+        viewCount: true,
+        favoriteCount: true,
+        likeCount: true,
+        commentCount: true,
+        downloadCount: true,
+      },
     })
 
     const requiredLevelId =
@@ -552,7 +576,10 @@ export async function seedWorkDomain(db: Db) {
 
     if (workFixture.type === 1) {
       const existingComic = await db.query.workComic.findFirst({
-        where: eq(workComic.workId, currentWork.id),
+        where: { workId: currentWork.id },
+        columns: {
+          id: true,
+        },
       })
 
       if (!existingComic) {
@@ -569,7 +596,10 @@ export async function seedWorkDomain(db: Db) {
         0,
       )
       const existingNovel = await db.query.workNovel.findFirst({
-        where: eq(workNovel.workId, currentWork.id),
+        where: { workId: currentWork.id },
+        columns: {
+          id: true,
+        },
       })
 
       if (!existingNovel) {
@@ -597,10 +627,20 @@ export async function seedWorkDomain(db: Db) {
         index * 6 + chapterIndex,
       )
       const existingChapter = await db.query.workChapter.findFirst({
-        where: and(
-          eq(workChapter.workId, currentWork.id),
-          eq(workChapter.sortOrder, chapterFixture.sortOrder),
-        ),
+        where: {
+          AND: [
+            { workId: currentWork.id },
+            { sortOrder: chapterFixture.sortOrder },
+          ],
+        },
+        columns: {
+          id: true,
+          viewCount: true,
+          likeCount: true,
+          commentCount: true,
+          purchaseCount: true,
+          downloadCount: true,
+        },
       })
 
       const chapterPayload = {
@@ -644,10 +684,10 @@ export async function seedWorkDomain(db: Db) {
 
   for (const workFixture of WORK_FIXTURES) {
     const currentWork = await db.query.work.findFirst({
-      where: and(
-        eq(work.name, workFixture.name),
-        eq(work.type, workFixture.type),
-      ),
+      where: { AND: [{ name: workFixture.name }, { type: workFixture.type }] },
+      columns: {
+        id: true,
+      },
     })
 
     if (!currentWork) {
@@ -656,17 +696,20 @@ export async function seedWorkDomain(db: Db) {
 
     for (const [sortOrder, authorName] of workFixture.authors.entries()) {
       const author = await db.query.workAuthor.findFirst({
-        where: eq(workAuthor.name, authorName),
+        where: { name: authorName },
+        columns: {
+          id: true,
+        },
       })
       if (!author) {
         continue
       }
 
       const existingRelation = await db.query.workAuthorRelation.findFirst({
-        where: and(
-          eq(workAuthorRelation.workId, currentWork.id),
-          eq(workAuthorRelation.authorId, author.id),
-        ),
+        where: { AND: [{ workId: currentWork.id }, { authorId: author.id }] },
+        columns: {
+          workId: true,
+        },
       })
 
       if (!existingRelation) {
@@ -692,17 +735,22 @@ export async function seedWorkDomain(db: Db) {
 
     for (const [sortOrder, categoryName] of workFixture.categories.entries()) {
       const category = await db.query.workCategory.findFirst({
-        where: eq(workCategory.name, categoryName),
+        where: { name: categoryName },
+        columns: {
+          id: true,
+        },
       })
       if (!category) {
         continue
       }
 
       const existingRelation = await db.query.workCategoryRelation.findFirst({
-        where: and(
-          eq(workCategoryRelation.workId, currentWork.id),
-          eq(workCategoryRelation.categoryId, category.id),
-        ),
+        where: {
+          AND: [{ workId: currentWork.id }, { categoryId: category.id }],
+        },
+        columns: {
+          workId: true,
+        },
       })
 
       if (!existingRelation) {
@@ -726,17 +774,20 @@ export async function seedWorkDomain(db: Db) {
 
     for (const [sortOrder, tagName] of workFixture.tags.entries()) {
       const tag = await db.query.workTag.findFirst({
-        where: eq(workTag.name, tagName),
+        where: { name: tagName },
+        columns: {
+          id: true,
+        },
       })
       if (!tag) {
         continue
       }
 
       const existingRelation = await db.query.workTagRelation.findFirst({
-        where: and(
-          eq(workTagRelation.workId, currentWork.id),
-          eq(workTagRelation.tagId, tag.id),
-        ),
+        where: { AND: [{ workId: currentWork.id }, { tagId: tag.id }] },
+        columns: {
+          sortOrder: true,
+        },
       })
 
       if (!existingRelation) {
@@ -761,11 +812,18 @@ export async function seedWorkDomain(db: Db) {
   console.log('  ✓ 作品关联完成')
 
   const authors = await db.query.workAuthor.findMany({
-    where: isNull(workAuthor.deletedAt),
+    where: { deletedAt: { isNull: true } },
+    columns: {
+      id: true,
+      followersCount: true,
+    },
   })
   for (const author of authors) {
     const relations = await db.query.workAuthorRelation.findMany({
-      where: eq(workAuthorRelation.authorId, author.id),
+      where: { authorId: author.id },
+      columns: {
+        workId: true,
+      },
     })
 
     await db

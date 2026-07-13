@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, DbExecutor } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInActiveStreakDayRule,
@@ -76,7 +76,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
       return []
     }
     const rules = await db
-      .select()
+      .select(this.buildStreakRuleDetailSelect())
       .from(this.checkInStreakRuleTable)
       .where(inArray(this.checkInStreakRuleTable.id, targetRuleIds))
       .orderBy(
@@ -90,7 +90,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
       ruleIds.length === 0
         ? []
         : await db
-            .select()
+            .select(this.buildStreakRewardItemSelect())
             .from(this.checkInStreakRuleRewardItemTable)
             .where(
               inArray(this.checkInStreakRuleRewardItemTable.ruleId, ruleIds),
@@ -116,7 +116,19 @@ export class CheckInStreakService extends CheckInServiceSupport {
   // 查询某个规则编码下的全部历史版本。
   async listStreakRuleVersionsByCode(ruleCode: string, db: Db = this.db) {
     return db
-      .select()
+      .select(this.buildStreakRuleLifecycleSelect())
+      .from(this.checkInStreakRuleTable)
+      .where(eq(this.checkInStreakRuleTable.ruleCode, ruleCode))
+      .orderBy(
+        desc(this.checkInStreakRuleTable.version),
+        desc(this.checkInStreakRuleTable.id),
+      )
+  }
+
+  // 查询某个规则编码下的历史版本 ID，详情由规则加载器统一补齐。
+  async listStreakRuleVersionIdsByCode(ruleCode: string, db: Db = this.db) {
+    return db
+      .select({ id: this.checkInStreakRuleTable.id })
       .from(this.checkInStreakRuleTable)
       .where(eq(this.checkInStreakRuleTable.ruleCode, ruleCode))
       .orderBy(
@@ -128,7 +140,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
   // 查询某个规则编码下的最新版本。
   async findLatestStreakRuleVersion(ruleCode: string, db: Db = this.db) {
     const [rule] = await db
-      .select()
+      .select({ version: this.checkInStreakRuleTable.version })
       .from(this.checkInStreakRuleTable)
       .where(eq(this.checkInStreakRuleTable.ruleCode, ruleCode))
       .orderBy(
@@ -156,8 +168,11 @@ export class CheckInStreakService extends CheckInServiceSupport {
   async listActiveStreakRulesAt(at: CheckInDateLike, db: Db = this.db) {
     const lookupAt =
       typeof at === 'string' ? this.resolveConfigLookupAt(at) : at
-    const rules = await db
-      .select()
+    const activeRuleRows = await db
+      .select({
+        id: this.checkInStreakRuleTable.id,
+        streakDays: this.checkInStreakRuleTable.streakDays,
+      })
       .from(this.checkInStreakRuleTable)
       .where(
         and(
@@ -176,12 +191,50 @@ export class CheckInStreakService extends CheckInServiceSupport {
         desc(this.checkInStreakRuleTable.id),
       )
 
-    this.assertNoDuplicatedActiveStreakDays(rules)
+    this.assertNoDuplicatedActiveStreakDays(activeRuleRows)
 
     return this.loadStreakRewardRuleRowsByIds(
-      rules.map((rule) => rule.id),
+      activeRuleRows.map((rule) => rule.id),
       db,
     )
+  }
+
+  private buildStreakRuleDetailSelect() {
+    return {
+      id: this.checkInStreakRuleTable.id,
+      ruleCode: this.checkInStreakRuleTable.ruleCode,
+      streakDays: this.checkInStreakRuleTable.streakDays,
+      version: this.checkInStreakRuleTable.version,
+      status: this.checkInStreakRuleTable.status,
+      publishStrategy: this.checkInStreakRuleTable.publishStrategy,
+      effectiveFrom: this.checkInStreakRuleTable.effectiveFrom,
+      effectiveTo: this.checkInStreakRuleTable.effectiveTo,
+      repeatable: this.checkInStreakRuleTable.repeatable,
+      rewardOverviewIconUrl: this.checkInStreakRuleTable.rewardOverviewIconUrl,
+      createdAt: this.checkInStreakRuleTable.createdAt,
+      updatedAt: this.checkInStreakRuleTable.updatedAt,
+    } as const
+  }
+
+  private buildStreakRewardItemSelect() {
+    return {
+      id: this.checkInStreakRuleRewardItemTable.id,
+      ruleId: this.checkInStreakRuleRewardItemTable.ruleId,
+      assetType: this.checkInStreakRuleRewardItemTable.assetType,
+      assetKey: this.checkInStreakRuleRewardItemTable.assetKey,
+      amount: this.checkInStreakRuleRewardItemTable.amount,
+      iconUrl: this.checkInStreakRuleRewardItemTable.iconUrl,
+      sortOrder: this.checkInStreakRuleRewardItemTable.sortOrder,
+    } as const
+  }
+
+  private buildStreakRuleLifecycleSelect() {
+    return {
+      id: this.checkInStreakRuleTable.id,
+      status: this.checkInStreakRuleTable.status,
+      effectiveFrom: this.checkInStreakRuleTable.effectiveFrom,
+      effectiveTo: this.checkInStreakRuleTable.effectiveTo,
+    } as const
   }
 
   // 把规则表行转换成运行时使用的连续奖励视图。
@@ -214,9 +267,10 @@ export class CheckInStreakService extends CheckInServiceSupport {
   }
 
   // 读取或初始化连续签到进度，处理并发首建场景。
-  async getOrCreateStreakProgress(userId: number, tx: Db) {
+  async getOrCreateStreakProgress(userId: number, tx: DbExecutor) {
     const existing = await tx.query.checkInStreakProgress.findFirst({
       where: { userId },
+      columns: this.getStreakProgressMutationColumns(),
     })
     if (existing) {
       return existing
@@ -241,6 +295,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
 
     const concurrent = await tx.query.checkInStreakProgress.findFirst({
       where: { userId },
+      columns: this.getStreakProgressMutationColumns(),
     })
     if (!concurrent) {
       throw new BusinessException(
@@ -249,6 +304,20 @@ export class CheckInStreakService extends CheckInServiceSupport {
       )
     }
     return concurrent
+  }
+
+  // 进度创建与乐观锁更新共用完整的写入快照，避免默认 RQB 全列选择。
+  private getStreakProgressMutationColumns() {
+    return {
+      id: true,
+      userId: true,
+      currentStreak: true,
+      streakStartedAt: true,
+      lastSignedDate: true,
+      version: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
   }
 
   // 按签到记录序列重算连续签到聚合结果。
@@ -395,7 +464,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
       today: string
       currentProgress: CheckInStreakProgressSnapshot
     },
-    tx: Db,
+    tx: DbExecutor,
   ) {
     const maxPeriodSpan =
       diffDateOnlyInAppTimeZone(input.today, input.periodStartDate) ?? 0
@@ -589,7 +658,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
   async updateStreakProgress(
     progress: CheckInStreakProgressSnapshot,
     aggregation: CheckInStreakAggregation,
-    tx: Db,
+    tx: DbExecutor,
   ) {
     const [updated] = await tx
       .update(this.checkInStreakProgressTable)
@@ -615,7 +684,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
   }
 
   // 读取用户全部签到记录，供连续签到重算使用。
-  async listUserRecords(userId: number, tx: Db) {
+  async listUserRecords(userId: number, tx: DbExecutor) {
     return tx
       .select({
         signDate: this.checkInRecordTable.signDate,
@@ -633,7 +702,7 @@ export class CheckInStreakService extends CheckInServiceSupport {
     userId: number,
     startDate: string,
     endDate: string,
-    tx: Db,
+    tx: DbExecutor,
   ) {
     return tx
       .select({

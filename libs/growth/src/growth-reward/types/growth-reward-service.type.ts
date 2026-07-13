@@ -1,10 +1,13 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type { GrowthRewardRuleSelect } from '@db/schema'
 import type { EventEnvelope } from '../../event-definition/event-envelope.type'
 import type { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import type { GrowthRewardItems } from '../../reward-rule/reward-item.type'
 import type { TaskRewardSettlementResultTypeEnum } from '../../task/task.constant'
-import type { GrowthRuleRewardAssetResult, TaskRewardAssetResult } from './growth-reward-result.type'
+import type {
+  GrowthRuleRewardAssetResult,
+  TaskRewardAssetResult,
+} from './growth-reward-result.type'
 
 /** 按成长规则发奖时使用的内部入参。 */
 export interface RewardByRuleParams {
@@ -16,7 +19,7 @@ export interface RewardByRuleParams {
   targetId?: number
   context?: Record<string, unknown>
   occurredAt?: Date
-  tx?: Db
+  tx?: DbTransaction
 }
 
 /** 任务完成奖励结算时使用的内部入参。 */
@@ -57,4 +60,6 @@ export interface BuildRuleRewardSettlementResultParams {
 }
 
 /** 事务复用回调。 */
-export type RunWithOptionalTransactionCallback<T> = (runner: Db) => Promise<T>
+export type RunWithOptionalTransactionCallback<T> = (
+  runner: DbTransaction,
+) => Promise<T>

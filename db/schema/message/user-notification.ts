@@ -69,17 +69,31 @@ export const userNotification = snakeCase.table(
       table.isHidden,
       table.isRead,
       table.createdAt.desc(),
+      table.id.desc(),
     ),
     index('user_notification_receiver_user_id_category_key_created_at_idx').on(
       table.receiverUserId,
       table.isHidden,
       table.categoryKey,
       table.createdAt.desc(),
+      table.id.desc(),
     ),
     index('user_notification_receiver_user_id_created_at_idx').on(
       table.receiverUserId,
       table.isHidden,
       table.createdAt.desc(),
+      table.id.desc(),
+    ),
+    /**
+     * 通知中心高增长路径：同时按未读状态和分类筛选时复用同一稳定分页索引。
+     */
+    index('user_notification_receiver_read_category_created_id_idx').on(
+      table.receiverUserId,
+      table.isHidden,
+      table.isRead,
+      table.categoryKey,
+      table.createdAt.desc(),
+      table.id.desc(),
     ),
     index('user_notification_receiver_created_at_id_idx').on(
       table.receiverUserId,
@@ -101,7 +115,7 @@ export const userNotification = snakeCase.table(
     ),
     index('user_notification_actor_user_id_idx').on(table.actorUserId),
     check(
-      'user_notification_system_announcement_requires_announcement_id_chk',
+      'user_notification_system_announcement_requires_id_chk',
       sql`${table.categoryKey} <> 'system_announcement' OR ${table.announcementId} IS NOT NULL`,
     ),
   ],

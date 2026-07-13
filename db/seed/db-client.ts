@@ -1,11 +1,16 @@
-import type { Db } from './db-client.type'
+import type { SeedClientDb } from './db-client.type'
 import process from 'node:process'
-import { seedRelations } from '@db/core'
-import * as schema from '@db/schema'
+import { relations } from '@db/core'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 
 export type { Db } from './db-client.type'
+
+/** Seed client 与其显式生命周期 owner。 */
+export interface SeedDbClient {
+  db: SeedClientDb
+  pool: Pool
+}
 
 export function getDatabaseUrl() {
   const url = process.env.DATABASE_URL
@@ -15,20 +20,19 @@ export function getDatabaseUrl() {
   return url
 }
 
-export function createDbClient(connectionString: string) {
+export function createDbClient(connectionString: string): SeedDbClient {
   const pool = new Pool({ connectionString })
 
   const db = drizzle({
     client: pool,
-    schema: { ...schema, ...seedRelations },
+    relations,
+    jit: true,
     logger: process.env.NODE_ENV === 'development',
   })
 
-  return db
+  return { db, pool }
 }
 
-export async function disconnectDbClient(db: Db) {
-  // @ts-expect-error - accessing internal pool for cleanup
-  const pool = db.$client as Pool
+export async function disconnectDbClient({ pool }: SeedDbClient) {
   await pool.end()
 }

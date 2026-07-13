@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
@@ -40,40 +40,41 @@ export class WorkComicBrowseLogResolver
   }
 
   // 应用浏览计数增量，更新漫画作品的浏览数。
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
-    async (tx, targetId, delta) => {
-      await this.workCounterService.updateWorkViewCount(
-        tx,
-        targetId,
-        this.workType,
-        delta,
-        '漫画作品不存在',
-      )
-    }
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void> = async (tx, targetId, delta) => {
+    await this.workCounterService.updateWorkViewCount(
+      tx,
+      targetId,
+      this.workType,
+      delta,
+      '漫画作品不存在',
+    )
+  }
 
   // 校验漫画作品是否有效。
-  ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
-    tx,
-    targetId,
-  ) => {
-    const work = await tx
-      .select({ id: this.work.id })
-      .from(this.work)
-      .where(
-        and(
-          eq(this.work.id, targetId),
-          eq(this.work.type, this.workType),
-          eq(this.work.isPublished, true),
-          isNull(this.work.deletedAt),
-        ),
-      )
-      .limit(1)
+  ensureTargetValid: (tx: DbExecutor, targetId: number) => Promise<void> =
+    async (tx, targetId) => {
+      const work = await tx
+        .select({ id: this.work.id })
+        .from(this.work)
+        .where(
+          and(
+            eq(this.work.id, targetId),
+            eq(this.work.type, this.workType),
+            eq(this.work.isPublished, true),
+            isNull(this.work.deletedAt),
+          ),
+        )
+        .limit(1)
 
-    if (!work[0]) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '漫画作品不存在',
-      )
+      if (!work[0]) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '漫画作品不存在',
+        )
+      }
     }
-  }
 }

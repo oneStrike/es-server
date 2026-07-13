@@ -19,7 +19,11 @@ import type {
   UpdateCheckInConfigDto,
   UpdateCheckInEnabledDto,
 } from './dto/check-in-definition.dto'
-import { DrizzleService } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  relationIntegrityLock,
+} from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -39,7 +43,10 @@ import {
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
-const CHECK_IN_STREAK_MUTATION_LOCK_KEY = 1_048_102
+const CHECK_IN_STREAK_MUTATION_LOCK = relationIntegrityLock(
+  'check-in-streak-rule',
+  'global',
+)
 const STREAK_RULE_PAGE_DEFAULT_ORDER = [
   { field: 'streakDays', direction: 'asc' },
   { field: 'version', direction: 'desc' },
@@ -210,18 +217,19 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     const ruleCode = this.checkInStreakService.buildStreakRuleCode(
       query.streakDays,
     )
-    const rules =
-      await this.checkInStreakService.listStreakRuleVersionsByCode(ruleCode)
+    const ruleIds = (
+      await this.checkInStreakService.listStreakRuleVersionIdsByCode(ruleCode)
+    ).map((rule) => rule.id)
     const pageIndex = query.pageIndex ?? 1
     const pageSize = query.pageSize ?? 20
     const start = (pageIndex - 1) * pageSize
-    const list = rules.slice(start, start + pageSize)
+    const pageRuleIds = ruleIds.slice(start, start + pageSize)
 
     return {
-      list: await this.buildStreakRuleDetailViews(list),
+      list: await this.buildStreakRuleDetailViewsByIds(pageRuleIds),
       pageIndex,
       pageSize,
-      total: rules.length,
+      total: ruleIds.length,
     }
   }
 
@@ -229,6 +237,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   async getStreakRuleHistoryDetail(query: CheckInRuleIdQuery) {
     const rule = await this.db.query.checkInStreakRule.findFirst({
       where: { id: query.id },
+      columns: { id: true },
     })
     if (!rule) {
       throw new BusinessException(
@@ -236,7 +245,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         '连续签到记录不存在',
       )
     }
-    return this.buildStreakRuleDetailView(rule)
+    return this.buildStreakRuleDetailView(rule.id)
   }
 
   // 发布新的连续签到规则版本，并桥接旧版本的生效窗口。
@@ -260,87 +269,87 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       dto.streakDays,
     )
 
-    await this.drizzle.withTransaction(async (tx) => {
-      await tx.execute(
-        sql`SELECT pg_advisory_xact_lock(${CHECK_IN_STREAK_MUTATION_LOCK_KEY})`,
-      )
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [CHECK_IN_STREAK_MUTATION_LOCK])
 
-      const latest =
-        await this.checkInStreakService.findLatestStreakRuleVersion(
-          ruleCode,
-          tx,
-        )
-      const existing =
-        await this.checkInStreakService.listStreakRuleVersionsByCode(
-          ruleCode,
-          tx,
-        )
+        const latest =
+          await this.checkInStreakService.findLatestStreakRuleVersion(
+            ruleCode,
+            tx,
+          )
+        const existing =
+          await this.checkInStreakService.listStreakRuleVersionsByCode(
+            ruleCode,
+            tx,
+          )
 
-      for (const rule of existing.filter(
-        (item) =>
-          item.status !== CheckInStreakConfigStatusEnum.DRAFT &&
-          item.status !== CheckInStreakConfigStatusEnum.TERMINATED &&
-          item.effectiveFrom < effectiveFrom &&
-          (item.effectiveTo === null || item.effectiveTo > effectiveFrom),
-      )) {
-        await tx
-          .update(this.checkInStreakRuleTable)
-          .set({
-            effectiveTo: effectiveFrom,
-            status: this.checkInStreakService.resolveStreakRuleStatus(
-              {
-                status: rule.status,
-                effectiveFrom: rule.effectiveFrom,
-                effectiveTo: effectiveFrom,
-              },
-              now,
-            ),
+        for (const rule of existing.filter(
+          (item) =>
+            item.status !== CheckInStreakConfigStatusEnum.DRAFT &&
+            item.status !== CheckInStreakConfigStatusEnum.TERMINATED &&
+            item.effectiveFrom < effectiveFrom &&
+            (item.effectiveTo === null || item.effectiveTo > effectiveFrom),
+        )) {
+          await tx
+            .update(this.checkInStreakRuleTable)
+            .set({
+              effectiveTo: effectiveFrom,
+              status: this.checkInStreakService.resolveStreakRuleStatus(
+                {
+                  status: rule.status,
+                  effectiveFrom: rule.effectiveFrom,
+                  effectiveTo: effectiveFrom,
+                },
+                now,
+              ),
+              updatedById: adminUserId,
+            })
+            .where(eq(this.checkInStreakRuleTable.id, rule.id))
+        }
+
+        for (const rule of existing.filter(
+          (item) =>
+            item.status !== CheckInStreakConfigStatusEnum.DRAFT &&
+            item.status !== CheckInStreakConfigStatusEnum.TERMINATED &&
+            item.effectiveFrom >= effectiveFrom,
+        )) {
+          await tx
+            .update(this.checkInStreakRuleTable)
+            .set({
+              status: CheckInStreakConfigStatusEnum.TERMINATED,
+              updatedById: adminUserId,
+            })
+            .where(eq(this.checkInStreakRuleTable.id, rule.id))
+        }
+
+        const [insertedRule] = await tx
+          .insert(this.checkInStreakRuleTable)
+          .values({
+            effectiveFrom,
+            effectiveTo: null,
+            publishStrategy: dto.publishStrategy,
+            repeatable: dto.repeatable ?? false,
+            rewardOverviewIconUrl: dto.rewardOverviewIconUrl?.trim() || null,
+            ruleCode,
+            status: this.resolvePublishedRuleStatus(effectiveFrom),
+            streakDays: dto.streakDays,
             updatedById: adminUserId,
+            version: (latest?.version ?? 0) + 1,
           })
-          .where(eq(this.checkInStreakRuleTable.id, rule.id))
-      }
+          .returning({ id: this.checkInStreakRuleTable.id })
 
-      for (const rule of existing.filter(
-        (item) =>
-          item.status !== CheckInStreakConfigStatusEnum.DRAFT &&
-          item.status !== CheckInStreakConfigStatusEnum.TERMINATED &&
-          item.effectiveFrom >= effectiveFrom,
-      )) {
-        await tx
-          .update(this.checkInStreakRuleTable)
-          .set({
-            status: CheckInStreakConfigStatusEnum.TERMINATED,
-            updatedById: adminUserId,
-          })
-          .where(eq(this.checkInStreakRuleTable.id, rule.id))
-      }
-
-      const [insertedRule] = await tx
-        .insert(this.checkInStreakRuleTable)
-        .values({
-          effectiveFrom,
-          effectiveTo: null,
-          publishStrategy: dto.publishStrategy,
-          repeatable: dto.repeatable ?? false,
-          rewardOverviewIconUrl: dto.rewardOverviewIconUrl?.trim() || null,
-          ruleCode,
-          status: this.resolvePublishedRuleStatus(effectiveFrom),
-          streakDays: dto.streakDays,
-          updatedById: adminUserId,
-          version: (latest?.version ?? 0) + 1,
-        })
-        .returning({ id: this.checkInStreakRuleTable.id })
-
-      await tx.insert(this.checkInStreakRuleRewardItemTable).values(
-        rewardItems.map((item, sortOrder) => ({
-          amount: item.amount,
-          assetKey: item.assetKey,
-          assetType: item.assetType,
-          iconUrl: item.iconUrl ?? null,
-          ruleId: insertedRule.id,
-          sortOrder,
-        })),
-      )
+        await tx.insert(this.checkInStreakRuleRewardItemTable).values(
+          rewardItems.map((item, sortOrder) => ({
+            amount: item.amount,
+            assetKey: item.assetKey,
+            assetType: item.assetType,
+            iconUrl: item.iconUrl ?? null,
+            ruleId: insertedRule.id,
+            sortOrder,
+          })),
+        )
+      },
     })
 
     return true
@@ -348,106 +357,110 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   // 终止指定规则版本，并在排期版本场景下回补前驱窗口。
   async terminateStreakRule(query: CheckInRuleIdQuery, adminUserId: number) {
-    await this.drizzle.withTransaction(async (tx) => {
-      await tx.execute(
-        sql`SELECT pg_advisory_xact_lock(${CHECK_IN_STREAK_MUTATION_LOCK_KEY})`,
-      )
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [CHECK_IN_STREAK_MUTATION_LOCK])
 
-      const current = await tx.query.checkInStreakRule.findFirst({
-        where: { id: query.id },
-      })
-      if (!current) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '连续签到记录不存在',
-        )
-      }
-
-      const now = new Date()
-      const status = this.checkInStreakService.resolveStreakRuleStatus(
-        current,
-        now,
-      )
-      if (
-        status !== CheckInStreakConfigStatusEnum.SCHEDULED &&
-        status !== CheckInStreakConfigStatusEnum.ACTIVE
-      ) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '仅支持终止未过期的连续签到记录',
-        )
-      }
-
-      await tx
-        .update(this.checkInStreakRuleTable)
-        .set({
-          ...(status === CheckInStreakConfigStatusEnum.ACTIVE
-            ? { effectiveTo: now }
-            : {}),
-          status: CheckInStreakConfigStatusEnum.TERMINATED,
-          updatedById: adminUserId,
+        const current = await tx.query.checkInStreakRule.findFirst({
+          where: { id: query.id },
+          columns: {
+            id: true,
+            ruleCode: true,
+            status: true,
+            effectiveFrom: true,
+            effectiveTo: true,
+          },
         })
-        .where(eq(this.checkInStreakRuleTable.id, current.id))
-
-      if (status === CheckInStreakConfigStatusEnum.SCHEDULED) {
-        const candidates = (
-          await this.checkInStreakService.listStreakRuleVersionsByCode(
-            current.ruleCode,
-            tx,
+        if (!current) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '连续签到记录不存在',
           )
-        ).filter(
-          (rule) =>
-            rule.id !== current.id &&
-            rule.status !== CheckInStreakConfigStatusEnum.DRAFT &&
-            rule.status !== CheckInStreakConfigStatusEnum.TERMINATED,
-        )
-        const predecessor = [...candidates]
-          .filter((rule) => rule.effectiveFrom < current.effectiveFrom)
-          .sort((left, right) => {
-            const diff =
-              right.effectiveFrom.getTime() - left.effectiveFrom.getTime()
-            return diff !== 0 ? diff : right.id - left.id
-          })[0]
-        const successor = [...candidates]
-          .filter((rule) => rule.effectiveFrom > current.effectiveFrom)
-          .sort((left, right) => {
-            const diff =
-              left.effectiveFrom.getTime() - right.effectiveFrom.getTime()
-            return diff !== 0 ? diff : left.id - right.id
-          })[0]
-
-        if (!predecessor) {
-          return
         }
 
-        const bridgedEffectiveTo = successor?.effectiveFrom ?? null
+        const now = new Date()
+        const status = this.checkInStreakService.resolveStreakRuleStatus(
+          current,
+          now,
+        )
+        if (
+          status !== CheckInStreakConfigStatusEnum.SCHEDULED &&
+          status !== CheckInStreakConfigStatusEnum.ACTIVE
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '仅支持终止未过期的连续签到记录',
+          )
+        }
+
         await tx
           .update(this.checkInStreakRuleTable)
           .set({
-            effectiveTo: bridgedEffectiveTo,
-            status: this.checkInStreakService.resolveStreakRuleStatus(
-              {
-                status: predecessor.status,
-                effectiveFrom: predecessor.effectiveFrom,
-                effectiveTo: bridgedEffectiveTo,
-              },
-              now,
-            ),
+            ...(status === CheckInStreakConfigStatusEnum.ACTIVE
+              ? { effectiveTo: now }
+              : {}),
+            status: CheckInStreakConfigStatusEnum.TERMINATED,
             updatedById: adminUserId,
           })
-          .where(eq(this.checkInStreakRuleTable.id, predecessor.id))
-      }
+          .where(eq(this.checkInStreakRuleTable.id, current.id))
+
+        if (status === CheckInStreakConfigStatusEnum.SCHEDULED) {
+          const candidates = (
+            await this.checkInStreakService.listStreakRuleVersionsByCode(
+              current.ruleCode,
+              tx,
+            )
+          ).filter(
+            (rule) =>
+              rule.id !== current.id &&
+              rule.status !== CheckInStreakConfigStatusEnum.DRAFT &&
+              rule.status !== CheckInStreakConfigStatusEnum.TERMINATED,
+          )
+          const predecessor = [...candidates]
+            .filter((rule) => rule.effectiveFrom < current.effectiveFrom)
+            .sort((left, right) => {
+              const diff =
+                right.effectiveFrom.getTime() - left.effectiveFrom.getTime()
+              return diff !== 0 ? diff : right.id - left.id
+            })[0]
+          const successor = [...candidates]
+            .filter((rule) => rule.effectiveFrom > current.effectiveFrom)
+            .sort((left, right) => {
+              const diff =
+                left.effectiveFrom.getTime() - right.effectiveFrom.getTime()
+              return diff !== 0 ? diff : left.id - right.id
+            })[0]
+
+          if (!predecessor) {
+            return
+          }
+
+          const bridgedEffectiveTo = successor?.effectiveFrom ?? null
+          await tx
+            .update(this.checkInStreakRuleTable)
+            .set({
+              effectiveTo: bridgedEffectiveTo,
+              status: this.checkInStreakService.resolveStreakRuleStatus(
+                {
+                  status: predecessor.status,
+                  effectiveFrom: predecessor.effectiveFrom,
+                  effectiveTo: bridgedEffectiveTo,
+                },
+                now,
+              ),
+              updatedById: adminUserId,
+            })
+            .where(eq(this.checkInStreakRuleTable.id, predecessor.id))
+        }
+      },
     })
 
     return true
   }
 
   // 构建单条规则详情；若规则缺失则统一转成资源不存在异常。
-  private async buildStreakRuleDetailView(
-    rule: StreakRulePageRow,
-    at = new Date(),
-  ) {
-    const [detail] = await this.buildStreakRuleDetailViews([rule], at)
+  private async buildStreakRuleDetailView(ruleId: number, at = new Date()) {
+    const [detail] = await this.buildStreakRuleDetailViewsByIds([ruleId], at)
     if (!detail) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -486,7 +499,20 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           }
       ),
       filtered_rules AS (
-        SELECT *
+        SELECT
+          id,
+          rule_code,
+          streak_days,
+          version,
+          status,
+          publish_strategy,
+          effective_from,
+          effective_to,
+          repeatable,
+          updated_by_id,
+          created_at,
+          updated_at,
+          resolved_status
         FROM base_rules
         ${
           query.status !== undefined
@@ -496,7 +522,19 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       ),
       ranked_rules AS (
         SELECT
-          *,
+          id,
+          rule_code,
+          streak_days,
+          version,
+          status,
+          publish_strategy,
+          effective_from,
+          effective_to,
+          repeatable,
+          updated_by_id,
+          created_at,
+          updated_at,
+          resolved_status,
           ROW_NUMBER() OVER (
             PARTITION BY rule_code
             ORDER BY ${this.buildRepresentativeRowOrderBySql(query.status)}
@@ -697,7 +735,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       return []
     }
 
-    const rows = (result).rows
+    const rows = result.rows
     return Array.isArray(rows) ? rows : []
   }
 
@@ -761,18 +799,27 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     rules: StreakRulePageRow[],
     at = new Date(),
   ) {
-    if (rules.length === 0) {
+    return this.buildStreakRuleDetailViewsByIds(
+      rules.map((rule) => rule.id),
+      at,
+    )
+  }
+
+  // 使用详情加载器按 ID 补齐规则和奖励项，避免历史页预读完整规则行。
+  private async buildStreakRuleDetailViewsByIds(
+    ruleIds: number[],
+    at = new Date(),
+  ) {
+    if (ruleIds.length === 0) {
       return []
     }
 
     const loadedRules =
-      await this.checkInStreakService.loadStreakRewardRuleRowsByIds(
-        rules.map((rule) => rule.id),
-      )
+      await this.checkInStreakService.loadStreakRewardRuleRowsByIds(ruleIds)
     const loadedRuleMap = new Map(loadedRules.map((rule) => [rule.id, rule]))
 
-    return rules.map((rule) => {
-      const ruleWithItems = loadedRuleMap.get(rule.id)
+    return ruleIds.map((ruleId) => {
+      const ruleWithItems = loadedRuleMap.get(ruleId)
       if (!ruleWithItems) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -801,7 +848,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       )
 
       return {
-        id: rule.id,
+        id: ruleWithItems.id,
         ruleCode: definition.ruleCode,
         streakDays: definition.streakDays,
         version: definition.version,
@@ -813,8 +860,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         rewardItems: definition.rewardItems,
         rewardOverviewIconUrl: definition.rewardOverviewIconUrl,
         repeatable: definition.repeatable,
-        createdAt: rule.createdAt,
-        updatedAt: rule.updatedAt,
+        createdAt: ruleWithItems.createdAt,
+        updatedAt: ruleWithItems.updatedAt,
       }
     })
   }

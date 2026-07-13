@@ -27,9 +27,22 @@ export class MessageNotificationPreferenceService {
     return this.drizzle.schema.notificationPreference
   }
 
+  // 偏好读取只服务于有效状态计算；用户和主键已由查询条件/Map 维度固定，无需加载。
+  private getNotificationPreferenceSnapshotColumns() {
+    return {
+      categoryKey: true,
+      isEnabled: true,
+      updatedAt: true,
+    } as const
+  }
+
   async getUserNotificationPreferenceList(userId: number) {
     const preferences = await this.db.query.notificationPreference.findMany({
-      where: { userId },
+      where: {
+        userId,
+        categoryKey: { in: [...MESSAGE_NOTIFICATION_CATEGORY_KEYS] },
+      },
+      columns: this.getNotificationPreferenceSnapshotColumns(),
     })
     const preferenceMap = new Map(
       preferences.map((item) => [item.categoryKey, item] as const),
@@ -104,6 +117,7 @@ export class MessageNotificationPreferenceService {
         userId,
         categoryKey: normalizedCategoryKey,
       },
+      columns: this.getNotificationPreferenceSnapshotColumns(),
     })
 
     return this.buildEffectivePreference(normalizedCategoryKey, preference)
@@ -133,9 +147,9 @@ export class MessageNotificationPreferenceService {
   ) {
     if (!Array.isArray(preferences) || preferences.length === 0) {
       throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      'preferences 不能为空',
-    )
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'preferences 不能为空',
+      )
     }
 
     const normalized: UpdateUserNotificationPreferenceItemDto[] = []
@@ -147,9 +161,9 @@ export class MessageNotificationPreferenceService {
       )
       if (seenKeys.has(categoryKey)) {
         throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      'preferences 中存在重复的通知分类',
-    )
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          'preferences 中存在重复的通知分类',
+        )
       }
       seenKeys.add(categoryKey)
       normalized.push({
@@ -163,18 +177,18 @@ export class MessageNotificationPreferenceService {
 
   private ensureSupportedCategoryKey<T>(value: T) {
     if (typeof value !== 'string' || !value.trim()) {
-throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '通知分类非法',
-    )
-  }
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '通知分类非法',
+      )
+    }
 
-  const categoryKey = value.trim() as MessageNotificationCategoryKey
-  if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
-    throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '通知分类非法',
-    )
+    const categoryKey = value.trim() as MessageNotificationCategoryKey
+    if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '通知分类非法',
+      )
     }
     return categoryKey
   }

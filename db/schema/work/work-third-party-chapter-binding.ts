@@ -41,9 +41,7 @@ export const workThirdPartyChapterBinding = snakeCase.table(
     deletedAt: timestamp({ withTimezone: true, precision: 6 }),
   },
   (table) => [
-    uniqueIndex(
-      'work_third_party_chapter_binding_source_provider_chapter_live_idx',
-    )
+    uniqueIndex('work_tp_chapter_binding_source_provider_chapter_live_uidx')
       .on(table.workThirdPartySourceBindingId, table.providerChapterId)
       .where(sql`${table.deletedAt} is null`),
     uniqueIndex('work_third_party_chapter_binding_chapter_id_live_idx')
@@ -57,7 +55,7 @@ export const workThirdPartyChapterBinding = snakeCase.table(
       table.deletedAt,
     ),
     check(
-      'work_third_party_chapter_binding_provider_chapter_id_nonblank_chk',
+      'work_tp_chapter_binding_provider_chapter_nonblank_chk',
       sql`length(trim(${table.providerChapterId})) > 0`,
     ),
   ],

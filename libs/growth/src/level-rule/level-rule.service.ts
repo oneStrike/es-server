@@ -1,4 +1,10 @@
-import type { Db, PgTable, SQL, TableConfig } from '@db/core'
+import type {
+  DbExecutor,
+  DbTransaction,
+  PgTable,
+  SQL,
+  TableConfig,
+} from '@db/core'
 import type { UserLevelRuleSelect } from '@db/schema'
 import type { AnyColumn } from 'drizzle-orm'
 import type {
@@ -9,7 +15,14 @@ import type {
   LevelRuleResolveInput,
   PurchasePricingInput,
 } from './level-rule.type'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  DrizzleService,
+  relationIntegrityLock,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -40,6 +53,27 @@ import {
 } from './dto/level-rule.dto'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
+type LevelRuleOutputRow = Pick<
+  UserLevelRuleSelect,
+  | 'id'
+  | 'name'
+  | 'requiredExperience'
+  | 'description'
+  | 'icon'
+  | 'color'
+  | 'sortOrder'
+  | 'isEnabled'
+  | 'business'
+  | 'dailyTopicLimit'
+  | 'dailyReplyCommentLimit'
+  | 'postInterval'
+  | 'dailyLikeLimit'
+  | 'dailyFavoriteLimit'
+  | 'purchasePayableRate'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
 @Injectable()
 export class UserLevelRuleService {
   /**
@@ -56,8 +90,6 @@ export class UserLevelRuleService {
   private readonly comicChapterSceneType = 10
   private readonly novelChapterSceneType = 11
   private readonly levelStateRepairMessage = '用户等级状态需要修复'
-  private readonly quotaLockNamespace = 902081
-
   constructor(private readonly drizzle: DrizzleService) {}
 
   // 数据库连接实例。
@@ -68,6 +100,21 @@ export class UserLevelRuleService {
   // 用户表。
   get appUser() {
     return this.drizzle.schema.appUser
+  }
+
+  // 论坛板块表。
+  get forumSection() {
+    return this.drizzle.schema.forumSection
+  }
+
+  // 作品表。
+  get work() {
+    return this.drizzle.schema.work
+  }
+
+  // 作品章节表。
+  get workChapter() {
+    return this.drizzle.schema.workChapter
   }
 
   // 等级规则表。
@@ -105,18 +152,87 @@ export class UserLevelRuleService {
     return this.drizzle.schema.userFavorite
   }
 
+  // 后台等级规则的稳定输出模型；不把内部索引、生命周期或变更控制字段隐式带入接口。
+  private buildLevelRuleOutputSelect() {
+    return {
+      id: this.userLevelRule.id,
+      name: this.userLevelRule.name,
+      requiredExperience: this.userLevelRule.requiredExperience,
+      description: this.userLevelRule.description,
+      icon: this.userLevelRule.icon,
+      color: this.userLevelRule.color,
+      sortOrder: this.userLevelRule.sortOrder,
+      isEnabled: this.userLevelRule.isEnabled,
+      business: this.userLevelRule.business,
+      dailyTopicLimit: this.userLevelRule.dailyTopicLimit,
+      dailyReplyCommentLimit: this.userLevelRule.dailyReplyCommentLimit,
+      postInterval: this.userLevelRule.postInterval,
+      dailyLikeLimit: this.userLevelRule.dailyLikeLimit,
+      dailyFavoriteLimit: this.userLevelRule.dailyFavoriteLimit,
+      purchasePayableRate: this.userLevelRule.purchasePayableRate,
+      createdAt: this.userLevelRule.createdAt,
+      updatedAt: this.userLevelRule.updatedAt,
+    }
+  }
+
+  private getLevelRuleOutputColumns() {
+    return {
+      id: true,
+      name: true,
+      requiredExperience: true,
+      description: true,
+      icon: true,
+      color: true,
+      sortOrder: true,
+      isEnabled: true,
+      business: true,
+      dailyTopicLimit: true,
+      dailyReplyCommentLimit: true,
+      postInterval: true,
+      dailyLikeLimit: true,
+      dailyFavoriteLimit: true,
+      purchasePayableRate: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  // 当前等级解析的热路径只读取进度、权限和计价所需字段。
+  private buildEffectiveLevelRuleSelect() {
+    return {
+      id: this.userLevelRule.id,
+      name: this.userLevelRule.name,
+      requiredExperience: this.userLevelRule.requiredExperience,
+      description: this.userLevelRule.description,
+      icon: this.userLevelRule.icon,
+      color: this.userLevelRule.color,
+      business: this.userLevelRule.business,
+      dailyTopicLimit: this.userLevelRule.dailyTopicLimit,
+      dailyReplyCommentLimit: this.userLevelRule.dailyReplyCommentLimit,
+      postInterval: this.userLevelRule.postInterval,
+      dailyLikeLimit: this.userLevelRule.dailyLikeLimit,
+      dailyFavoriteLimit: this.userLevelRule.dailyFavoriteLimit,
+      purchasePayableRate: this.userLevelRule.purchasePayableRate,
+    }
+  }
+
   // 创建等级规则
   async createLevelRule(dto: CreateUserLevelRuleDto) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const payload = this.normalizeRulePayload(dto)
-      await this.drizzle.withErrorHandling(
-        () => tx.insert(this.userLevelRule).values(payload),
-        {
-          duplicate: '经验规则已经存在',
-        },
-      )
-      await this.assertEnabledBusinessHasOneBaseLevelInTx(tx, payload.business)
-      return true
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const payload = this.normalizeRulePayload(dto)
+        await this.drizzle.withErrorHandling(
+          () => tx.insert(this.userLevelRule).values(payload),
+          {
+            duplicate: '经验规则已经存在',
+          },
+        )
+        await this.assertEnabledBusinessHasOneBaseLevelInTx(
+          tx,
+          payload.business,
+        )
+        return true
+      },
     })
   }
 
@@ -149,7 +265,7 @@ export class UserLevelRuleService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildLevelRuleOutputSelect())
         .from(this.userLevelRule)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -169,6 +285,7 @@ export class UserLevelRuleService {
   async getLevelRuleDetail(id: number) {
     const rule = await this.db.query.userLevelRule.findFirst({
       where: { id },
+      columns: this.getLevelRuleOutputColumns(),
     })
     if (!rule) {
       throw new BusinessException(
@@ -182,87 +299,86 @@ export class UserLevelRuleService {
   // 更新等级规则
   async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
-    return this.drizzle.withTransaction(async (tx) => {
-      const existing = await tx.query.userLevelRule.findFirst({
-        where: { id },
-        columns: { business: true },
-      })
-      if (!existing) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '等级规则不存在',
-        )
-      }
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockLevelRulesForMutation(tx, [id])
+        const existing = await tx.query.userLevelRule.findFirst({
+          where: { id },
+          columns: { business: true },
+        })
+        if (!existing) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '等级规则不存在',
+          )
+        }
 
-      const payload = this.normalizeRulePayload(updateData)
-      await this.drizzle.withErrorHandling(
-        () =>
-          tx
-            .update(this.userLevelRule)
-            .set(payload)
-            .where(eq(this.userLevelRule.id, id)),
-        {
-          duplicate: 'Level rule already exists',
-          notFound: '等级规则不存在',
-        },
-      )
-      await this.assertEnabledBusinessHasOneBaseLevelInTx(tx, existing.business)
-      await this.assertEnabledBusinessHasOneBaseLevelInTx(
-        tx,
-        'business' in payload ? payload.business : existing.business,
-      )
-      return true
+        const payload = this.normalizeRulePayload(updateData)
+        await this.drizzle.withErrorHandling(
+          () =>
+            tx
+              .update(this.userLevelRule)
+              .set(payload)
+              .where(eq(this.userLevelRule.id, id)),
+          {
+            duplicate: 'Level rule already exists',
+            notFound: '等级规则不存在',
+          },
+        )
+        await this.assertEnabledBusinessHasOneBaseLevelInTx(
+          tx,
+          existing.business,
+        )
+        await this.assertEnabledBusinessHasOneBaseLevelInTx(
+          tx,
+          'business' in payload ? payload.business : existing.business,
+        )
+        return true
+      },
     })
   }
 
   // 删除等级规则
   async deleteLevelRule(id: number) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const rule = await tx.query.userLevelRule.findFirst({
-        where: { id },
-        columns: { id: true, business: true },
-      })
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockLevelRulesForMutation(tx, [id])
+        const rule = await tx.query.userLevelRule.findFirst({
+          where: { id },
+          columns: { id: true, business: true },
+        })
 
-      if (!rule) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '等级规则不存在',
-        )
-      }
+        if (!rule) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '等级规则不存在',
+          )
+        }
 
-      const [activeUsers] = await tx
-        .select({ total: sql<number>`count(*)` })
-        .from(this.appUser)
-        .where(
-          and(eq(this.appUser.levelId, id), isNull(this.appUser.deletedAt)),
-        )
-
-      if (Number(activeUsers?.total ?? 0) > 0) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '该等级规则下还有用户，无法删除',
-        )
-      }
-
-      await this.drizzle.withErrorHandling(() =>
-        tx
-          .update(this.appUser)
-          .set({ levelId: null })
+        const [activeUsers] = await tx
+          .select({ total: sql<number>`count(*)`.mapWith(Number) })
+          .from(this.appUser)
           .where(
-            and(
-              eq(this.appUser.levelId, id),
-              isNotNull(this.appUser.deletedAt),
-            ),
-          ),
-      )
+            and(eq(this.appUser.levelId, id), isNull(this.appUser.deletedAt)),
+          )
 
-      await this.drizzle.withErrorHandling(
-        () =>
-          tx.delete(this.userLevelRule).where(eq(this.userLevelRule.id, id)),
-        { notFound: '等级规则不存在' },
-      )
-      await this.assertEnabledBusinessHasOneBaseLevelInTx(tx, rule.business)
-      return true
+        if (Number(activeUsers?.total ?? 0) > 0) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '该等级规则下还有用户，无法删除',
+          )
+        }
+
+        await this.clearLevelRuleReferencesInTx(tx, id)
+
+        await this.drizzle.withErrorHandling(
+          () =>
+            tx.delete(this.userLevelRule).where(eq(this.userLevelRule.id, id)),
+          { notFound: '等级规则不存在' },
+        )
+        await this.assertEnabledBusinessHasOneBaseLevelInTx(tx, rule.business)
+        return true
+      },
     })
   }
 
@@ -277,7 +393,7 @@ export class UserLevelRuleService {
       await this.resolveEffectiveUserLevel({ userId })
 
     const [nextLevelRule] = await this.db
-      .select()
+      .select({ requiredExperience: this.userLevelRule.requiredExperience })
       .from(this.userLevelRule)
       .where(
         and(
@@ -342,14 +458,14 @@ export class UserLevelRuleService {
 
   // 在指定事务中按经验值反查当前应命中的最高等级。 供账本、升级和修复链路复用，避免不同上下文复制相同排序逻辑。
   async getHighestLevelRuleByExperienceInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: number | LevelRuleResolveInput,
   ) {
     const resolveInput =
       typeof input === 'number' ? { experience: input } : input
     const business = this.normalizeBusiness(resolveInput.business)
     const [levelRule] = await tx
-      .select()
+      .select(this.buildEffectiveLevelRuleSelect())
       .from(this.userLevelRule)
       .where(
         and(
@@ -370,7 +486,10 @@ export class UserLevelRuleService {
     return this.resolveEffectiveUserLevelInTx(this.db, input)
   }
 
-  async resolveEffectiveUserLevelInTx(tx: Db, input: LevelResolveInput) {
+  async resolveEffectiveUserLevelInTx(
+    tx: DbExecutor,
+    input: LevelResolveInput,
+  ) {
     const business = this.normalizeBusiness(input.business)
     const user = await tx.query.appUser.findFirst({
       where: {
@@ -398,7 +517,7 @@ export class UserLevelRuleService {
   }
 
   async resolveLevelPurchasePricingInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: PurchasePricingInput,
   ): Promise<LevelPurchasePricing> {
     const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
@@ -415,7 +534,7 @@ export class UserLevelRuleService {
     }
   }
 
-  async ensureDailyLikeQuotaInTx(tx: Db, input: DailyQuotaInput) {
+  async ensureDailyLikeQuotaInTx(tx: DbTransaction, input: DailyQuotaInput) {
     const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
     await this.acquireDailyQuotaLockInTx(tx, {
       userId: input.userId,
@@ -435,7 +554,10 @@ export class UserLevelRuleService {
     })
   }
 
-  async ensureDailyFavoriteQuotaInTx(tx: Db, input: DailyQuotaInput) {
+  async ensureDailyFavoriteQuotaInTx(
+    tx: DbTransaction,
+    input: DailyQuotaInput,
+  ) {
     const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
     await this.acquireDailyQuotaLockInTx(tx, {
       userId: input.userId,
@@ -455,7 +577,7 @@ export class UserLevelRuleService {
     })
   }
 
-  async ensureCommentRateLimitInTx(tx: Db, input: DailyQuotaInput) {
+  async ensureCommentRateLimitInTx(tx: DbTransaction, input: DailyQuotaInput) {
     const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
     await this.acquireDailyQuotaLockInTx(tx, {
       userId: input.userId,
@@ -502,7 +624,10 @@ export class UserLevelRuleService {
     }
   }
 
-  async ensureForumTopicRateLimitInTx(tx: Db, input: { userId: number }) {
+  async ensureForumTopicRateLimitInTx(
+    tx: DbTransaction,
+    input: { userId: number },
+  ) {
     const business = 'forum'
     const { level } = await this.resolveEffectiveUserLevelInTx(tx, {
       userId: input.userId,
@@ -695,7 +820,7 @@ export class UserLevelRuleService {
       .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
 
     const [allLevelsCount] = await this.db
-      .select({ total: sql<number>`count(*)` })
+      .select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(this.userLevelRule)
 
     const levelIds = levels.map((item) => item.id)
@@ -704,7 +829,7 @@ export class UserLevelRuleService {
         ? await this.db
             .select({
               levelId: this.appUser.levelId,
-              total: sql<number>`count(*)`,
+              total: sql<number>`count(*)`.mapWith(Number),
             })
             .from(this.appUser)
             .where(inArray(this.appUser.levelId, levelIds))
@@ -732,7 +857,7 @@ export class UserLevelRuleService {
     where: SQL | undefined,
   ): Promise<number> {
     const [result] = await this.db
-      .select({ total: sql<number>`count(*)` })
+      .select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(table)
       .where(where)
     return Number(result?.total ?? 0)
@@ -765,7 +890,7 @@ export class UserLevelRuleService {
     return business === null ? isNull(column) : eq(column, business)
   }
 
-  private async getCurrentExperienceInTx(tx: Db, userId: number) {
+  private async getCurrentExperienceInTx(tx: DbExecutor, userId: number) {
     const balance = await tx.query.userAssetBalance.findFirst({
       where: {
         userId,
@@ -781,7 +906,7 @@ export class UserLevelRuleService {
   }
 
   private async assertEnabledBusinessHasOneBaseLevelInTx(
-    tx: Db,
+    tx: DbTransaction,
     inputBusiness: LevelBusiness,
   ) {
     const business = this.normalizeBusiness(inputBusiness)
@@ -790,14 +915,14 @@ export class UserLevelRuleService {
       business,
     )
     const [enabled] = await tx
-      .select({ total: sql<number>`count(*)` })
+      .select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(this.userLevelRule)
       .where(and(eq(this.userLevelRule.isEnabled, true), businessWhere))
     if (Number(enabled?.total ?? 0) === 0) {
       return
     }
     const [base] = await tx
-      .select({ total: sql<number>`count(*)` })
+      .select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(this.userLevelRule)
       .where(
         and(
@@ -815,7 +940,7 @@ export class UserLevelRuleService {
   }
 
   private async acquireDailyQuotaLockInTx(
-    tx: Db,
+    tx: DbTransaction,
     input: {
       userId: number
       permissionType: UserLevelRulePermissionEnum
@@ -827,7 +952,7 @@ export class UserLevelRuleService {
   }
 
   private async acquirePermissionLockInTx(
-    tx: Db,
+    tx: DbTransaction,
     input: {
       userId: number
       permissionType: UserLevelRulePermissionEnum
@@ -837,13 +962,68 @@ export class UserLevelRuleService {
   ) {
     const business = this.normalizeBusiness(input.business) ?? 'default'
     const lockKey = `${input.userId}:${input.permissionType}:${business}:${input.scopeKey}`
-    await tx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, ${this.quotaLockNamespace}))`,
+    await acquireIntegrityLocks(tx, [
+      relationIntegrityLock('level-rule-quota', lockKey),
+    ])
+  }
+
+  /**
+   * user_level_rule 不使用物理外键。父规则删除/更新与所有子引用写入必须争用
+   * 同一个 canonical record lock，锁后再在当前事务内读取目标记录。
+   */
+  private async lockLevelRulesForMutation(
+    tx: DbTransaction,
+    ruleIds: readonly number[],
+  ) {
+    await acquireIntegrityLocks(
+      tx,
+      [...new Set(ruleIds)].map((ruleId) =>
+        tableIntegrityLock('user_level_rule', ruleId),
+      ),
+    )
+  }
+
+  /**
+   * 删除等级规则时保留既有“仍有有效用户则拒绝删除”的语义；其余 nullable
+   * 引用统一清空，避免无物理外键场景留下悬挂 ID。
+   */
+  private async clearLevelRuleReferencesInTx(
+    tx: DbTransaction,
+    ruleId: number,
+  ) {
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.appUser)
+        .set({ levelId: null })
+        .where(
+          and(
+            eq(this.appUser.levelId, ruleId),
+            isNotNull(this.appUser.deletedAt),
+          ),
+        ),
+    )
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.forumSection)
+        .set({ userLevelRuleId: null })
+        .where(eq(this.forumSection.userLevelRuleId, ruleId)),
+    )
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.work)
+        .set({ requiredViewLevelId: null })
+        .where(eq(this.work.requiredViewLevelId, ruleId)),
+    )
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.workChapter)
+        .set({ requiredViewLevelId: null })
+        .where(eq(this.workChapter.requiredViewLevelId, ruleId)),
     )
   }
 
   private async assertDailyQuotaInTx(
-    _tx: Db,
+    _tx: DbExecutor,
     input: { userId: number, limit: number, used: number, message: string },
   ) {
     if (input.limit > 0 && input.used >= input.limit) {
@@ -855,14 +1035,14 @@ export class UserLevelRuleService {
   }
 
   private async countTodayByConditionInTx(
-    tx: Db,
+    tx: DbExecutor,
     table: PgTable<TableConfig>,
     createdAt: AnyColumn,
     where: SQL | undefined,
   ) {
     const today = startOfTodayInAppTimeZone()
     const [result] = await tx
-      .select({ total: sql<number>`count(*)` })
+      .select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(table)
       .where(and(where, gte(createdAt, today)))
     return Number(result?.total ?? 0)
@@ -912,7 +1092,7 @@ export class UserLevelRuleService {
     return and(eq(this.userComment.userId, userId), businessTargetCondition)
   }
 
-  private async getLatestPostAtInTx(tx: Db, input: DailyQuotaInput) {
+  private async getLatestPostAtInTx(tx: DbExecutor, input: DailyQuotaInput) {
     const [lastComment] = await tx
       .select({ createdAt: this.userComment.createdAt })
       .from(this.userComment)
@@ -940,7 +1120,7 @@ export class UserLevelRuleService {
     return lastTopic?.createdAt ?? lastComment?.createdAt ?? null
   }
 
-  private toLevelRuleOutputDto(rule: UserLevelRuleSelect) {
+  private toLevelRuleOutputDto(rule: LevelRuleOutputRow) {
     return {
       ...rule,
       description: rule.description ?? null,

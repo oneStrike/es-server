@@ -66,6 +66,17 @@ export const couponRedemptionRecord = snakeCase.table(
       'coupon_redemption_record_target_type_valid_chk',
       sql`${table.targetType} in (1, 2, 3, 4)`,
     ),
+    /**
+     * 只有章节核销拥有可验证的物理目标；VIP/补签分支必须保持 targetId 为空，
+     * 由运行时多态注册表决定其余锁与重查协议。
+     */
+    check(
+      'coupon_redemption_record_target_reference_shape_chk',
+      sql`
+        (${table.targetType} in (1, 2) and ${table.targetId} is not null)
+        or (${table.targetType} in (3, 4) and ${table.targetId} is null)
+      `,
+    ),
     check(
       'coupon_redemption_record_status_valid_chk',
       sql`${table.status} in (1, 2, 3)`,

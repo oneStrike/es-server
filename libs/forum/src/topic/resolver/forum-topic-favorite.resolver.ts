@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type {
   FavoriteTargetContext,
   IFavoriteTargetResolver,
@@ -47,7 +47,7 @@ export class ForumTopicFavoriteResolver
   }
 
   // 校验主题公开可见，并返回收藏通知需要的所有者和标题。
-  async ensureExists(tx: Db, targetId: number) {
+  async ensureExists(tx: DbExecutor, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
@@ -93,7 +93,7 @@ export class ForumTopicFavoriteResolver
   }
 
   // 收藏或取消收藏后同步主题与作者收到收藏计数。
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     if (delta === 0) {
       return
     }
@@ -123,7 +123,7 @@ export class ForumTopicFavoriteResolver
 
   // 收藏后记录用户动作，并向主题作者发送收藏通知。
   async postFavoriteHook(
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
     options: FavoriteTargetContext,
@@ -160,7 +160,11 @@ export class ForumTopicFavoriteResolver
   }
 
   // 取消收藏后写入论坛用户操作日志。
-  async postUnfavoriteHook(tx: Db, targetId: number, actorUserId: number) {
+  async postUnfavoriteHook(
+    tx: DbExecutor,
+    targetId: number,
+    actorUserId: number,
+  ) {
     await this.actionLogService.createActionLogInTx(tx, {
       userId: actorUserId,
       actionType: ForumUserActionTypeEnum.UNFAVORITE_TOPIC,

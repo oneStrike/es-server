@@ -38,6 +38,7 @@ export default antfu(
       // 禁用与 Prettier 冲突的样式规则
       'style/brace-style': 'off',
       'style/indent': 'off',
+      'style/indent-binary-ops': 'off',
       'style/quotes': 'off',
       'style/semi': 'off',
       'style/comma-dangle': 'off',
@@ -48,7 +49,7 @@ export default antfu(
       'style/arrow-parens': 'off', // 禁用箭头函数参数括号规则，交给 Prettier 处理
 
       // 确保花括号规则与 Prettier 一致
-      "curly": ['error', 'all'],
+      curly: ['error', 'all'],
       'nonblock-statement-body-position': 'off',
     },
   },
@@ -73,5 +74,5 @@ export default antfu(
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
     },
-  }
+  },
 )

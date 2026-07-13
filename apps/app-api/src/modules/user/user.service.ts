@@ -128,13 +128,15 @@ export class UserService {
 
   // 获取用户资料，包含成长快照。
   async getUserProfile(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
+    const user = await this.userCoreService.getAppUserResponseSource(userId)
     const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
     return this.userCoreService.mapBaseUser(user, growth)
   }
 
   // 规范化生日更新值，保留显式 null 以支持前端清空字段。
-  private normalizeBirthDateForUpdate(birthDate: UpdateMyProfileDto['birthDate']) {
+  private normalizeBirthDateForUpdate(
+    birthDate: UpdateMyProfileDto['birthDate'],
+  ) {
     if (birthDate === undefined) {
       return undefined
     }
@@ -146,7 +148,7 @@ export class UserService {
 
   // 更新用户资料，邮箱唯一冲突时抛出业务异常。
   async updateUserProfile(userId: number, dto: UpdateMyProfileDto) {
-    await this.userCoreService.ensureUserExists(userId)
+    await this.userCoreService.assertActiveUserExists(userId)
 
     try {
       await this.drizzle.withErrorHandling(
@@ -181,7 +183,7 @@ export class UserService {
 
   // 换绑手机号：需先校验旧手机号再校验新手机号，新号占用冲突统一翻译为稳定业务文案。
   async changeMyPhone(userId: number, dto: ChangeMyPhoneDto) {
-    const user = await this.userCoreService.ensureUserExists(userId)
+    const user = await this.userCoreService.getUserPhoneSource(userId)
 
     if (!user.phoneNumber) {
       throw new BusinessException(
@@ -248,7 +250,7 @@ export class UserService {
       messageSummary,
       taskSummary,
     ] = await Promise.all([
-      this.userCoreService.ensureUserExists(userId),
+      this.userCoreService.getUserCenterSource(userId),
       this.userCoreService.getUserGrowthSnapshot(userId),
       this.userCoreService.getUserCounts(userId),
       this.userCoreService.getBadgeCount(userId),
@@ -307,7 +309,7 @@ export class UserService {
 
   // 获取用户状态信息。
   async getUserStatus(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
+    const user = await this.userCoreService.getUserStatusSource(userId)
     return this.userCoreService.buildUserStatus(user)
   }
 
@@ -334,7 +336,7 @@ export class UserService {
 
   // 获取用户经验统计，含今日已获经验、当前等级与下一等级信息。
   async getUserExperienceStats(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
+    const user = await this.userCoreService.getUserLevelSource(userId)
     const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
 
     // 获取今日开始时间
@@ -343,7 +345,9 @@ export class UserService {
     const [todayEarnedRows, levelRows, nextLevelRows] = await Promise.all([
       this.db
         .select({
-          sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int`,
+          sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int`.mapWith(
+            Number,
+          ),
         })
         .from(this.growthLedgerRecord)
         .where(
@@ -444,7 +448,7 @@ export class UserService {
 
   // 分页获取用户徽章列表，支持按名称/类型/启用状态过滤。
   async getUserBadges(userId: number, query: QueryMyBadgeDto) {
-    await this.userCoreService.ensureUserExists(userId)
+    await this.userCoreService.assertActiveUserExists(userId)
 
     const { name, type, isEnabled } = query
     const pageParams = this.drizzle.buildPageParams(query, {
@@ -488,42 +492,57 @@ export class UserService {
         lt(this.userBadgeAssignment.createdAt, pageParams.dateRange.lt),
       )
     }
-    const where = and(...assignmentConditions)
+    const assignmentCountWhere = and(...assignmentConditions)
     const [rows, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.userBadgeAssignment)
-        .where(where)
-        .orderBy(...pageParams.order.orderBySql)
-        .limit(pageParams.page.limit)
-        .offset(pageParams.page.offset),
-      this.db.$count(this.userBadgeAssignment, where),
+      this.db.query.userBadgeAssignment.findMany({
+        where: {
+          userId,
+          badgeId: { in: badgeIds },
+          ...(pageParams.dateRange?.gte || pageParams.dateRange?.lt
+            ? {
+                createdAt: {
+                  ...(pageParams.dateRange?.gte
+                    ? { gte: pageParams.dateRange.gte }
+                    : {}),
+                  ...(pageParams.dateRange?.lt
+                    ? { lt: pageParams.dateRange.lt }
+                    : {}),
+                },
+              }
+            : {}),
+        },
+        orderBy: pageParams.order.orderBy,
+        limit: pageParams.page.limit,
+        offset: pageParams.page.offset,
+        columns: {
+          createdAt: true,
+        },
+        with: {
+          badge: {
+            columns: {
+              id: true,
+              name: true,
+              type: true,
+              description: true,
+              icon: true,
+              business: true,
+              eventKey: true,
+              sortOrder: true,
+              isEnabled: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      }),
+      this.db.$count(this.userBadgeAssignment, assignmentCountWhere),
     ])
     const page = toPageResult(rows, total, pageParams.page)
-    const pageBadgeIds = page.list.map((item) => item.badgeId)
-    const pageBadges = pageBadgeIds.length
-      ? await this.db
-          .select()
-          .from(this.userBadge)
-          .where(inArray(this.userBadge.id, pageBadgeIds))
-      : []
-    const badgeMap = new Map(
-      pageBadges.map((item) => [
-        item.id,
-        {
-          ...item,
-          description: item.description ?? null,
-          icon: item.icon ?? null,
-          business: item.business ?? null,
-          eventKey: item.eventKey ?? null,
-        },
-      ]),
-    )
 
     return {
       ...page,
       list: page.list.map((item) => {
-        const badge = badgeMap.get(item.badgeId)
+        const badge = item.badge
 
         if (!badge) {
           throw new BusinessException(
@@ -534,7 +553,13 @@ export class UserService {
 
         return {
           createdAt: item.createdAt,
-          badge,
+          badge: {
+            ...badge,
+            description: badge.description ?? null,
+            icon: badge.icon ?? null,
+            business: badge.business ?? null,
+            eventKey: badge.eventKey ?? null,
+          },
         }
       }),
     }
@@ -542,7 +567,7 @@ export class UserService {
 
   // 获取用户资产统计，包括购买、下载、收藏、点赞、浏览、评论等。
   async getUserAssetsSummary(userId: number) {
-    await this.userCoreService.ensureUserExists(userId)
+    await this.userCoreService.assertActiveUserExists(userId)
     return this.userAssetsService.getUserAssetsSummary(userId)
   }
 

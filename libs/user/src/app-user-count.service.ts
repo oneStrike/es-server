@@ -1,4 +1,4 @@
-import type { Db, SQL } from '@db/core'
+import type { Db, DbExecutor, SQL } from '@db/core'
 import type { FollowTargetTypeEnum as FollowTargetType } from '@libs/interaction/follow/follow.type'
 import type {
   AppUserCountField,
@@ -87,7 +87,7 @@ export class AppUserCountService {
     const rows = await client
       .select({
         targetType: this.userFollow.targetType,
-        count: sql<number>`count(*)::int`,
+        count: sql<number>`count(*)::int`.mapWith(Number),
       })
       .from(this.userFollow)
       .where(eq(this.userFollow.userId, userId))
@@ -154,7 +154,7 @@ export class AppUserCountService {
 
   // 初始化用户聚合计数读模型。
   // 新建用户时统一写入 0 值，避免后续增减路径反复补记录。
-  async initUserCounts(tx: Db | undefined, userId: number) {
+  async initUserCounts(tx: DbExecutor | undefined, userId: number) {
     const client = tx ?? this.db
     await client.insert(this.appUserCount).values({
       userId,
@@ -176,7 +176,7 @@ export class AppUserCountService {
   // 原子更新单个计数字段。
   // 统一处理 delta=0 短路、事务透传，以及“目标不存在/计数不足”的异常翻译。
   private async updateCountField(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     field: AppUserCountField,
     delta: number,
@@ -365,23 +365,35 @@ export class AppUserCountService {
   }
 
   // 更新用户评论数。
-  async updateCommentCount(tx: Db | undefined, userId: number, delta: number) {
+  async updateCommentCount(
+    tx: DbExecutor | undefined,
+    userId: number,
+    delta: number,
+  ) {
     await this.updateCountField(tx, userId, 'commentCount', delta)
   }
 
   // 更新用户点赞数。
-  async updateLikeCount(tx: Db | undefined, userId: number, delta: number) {
+  async updateLikeCount(
+    tx: DbExecutor | undefined,
+    userId: number,
+    delta: number,
+  ) {
     await this.updateCountField(tx, userId, 'likeCount', delta)
   }
 
   // 更新用户收藏数。
-  async updateFavoriteCount(tx: Db | undefined, userId: number, delta: number) {
+  async updateFavoriteCount(
+    tx: DbExecutor | undefined,
+    userId: number,
+    delta: number,
+  ) {
     await this.updateCountField(tx, userId, 'favoriteCount', delta)
   }
 
   // 按关注目标类型更新用户发起关注分项数量。
   async updateFollowingCountByTargetType(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     targetType: FollowTargetType,
     delta: number,
@@ -392,7 +404,7 @@ export class AppUserCountService {
 
   // 更新用户粉丝数量。
   async updateFollowersCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     delta: number,
   ) {
@@ -401,12 +413,12 @@ export class AppUserCountService {
 
   // 根据 follow 事实表重建用户关注相关计数。
   // 仅回填关注分项与 followersCount，不改动其他计数字段。
-  async rebuildFollowCounts(tx: Db | undefined, userId: number) {
+  async rebuildFollowCounts(tx: DbExecutor | undefined, userId: number) {
     const client = tx ?? this.db
     const [followingCounts, followersRow] = await Promise.all([
       this.getFollowingCounts(client, userId),
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userFollow)
         .where(
           and(
@@ -451,7 +463,7 @@ export class AppUserCountService {
   // 根据事实表重建 app_user_count 的全部核心聚合字段。
   // 该方法以事实表为准，不依赖现有读模型值。
   async rebuildUserCounts(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
   ): Promise<AppUserCountSnapshot> {
     const client = tx ?? this.db
@@ -467,7 +479,7 @@ export class AppUserCountService {
       forumTopicReceivedFavoriteRow,
     ] = await Promise.all([
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userComment)
         .where(
           and(
@@ -477,18 +489,18 @@ export class AppUserCountService {
         )
         .then((rows) => rows[0]),
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userLike)
         .where(eq(this.userLike.userId, userId))
         .then((rows) => rows[0]),
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userFavorite)
         .where(eq(this.userFavorite.userId, userId))
         .then((rows) => rows[0]),
       this.getFollowingCounts(client, userId),
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userFollow)
         .where(
           and(
@@ -498,7 +510,7 @@ export class AppUserCountService {
         )
         .then((rows) => rows[0]),
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.forumTopic)
         .where(
           and(
@@ -508,7 +520,7 @@ export class AppUserCountService {
         )
         .then((rows) => rows[0]),
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userLike)
         .innerJoin(
           this.userComment,
@@ -521,7 +533,7 @@ export class AppUserCountService {
         .where(eq(this.userLike.targetType, LikeTargetTypeEnum.COMMENT))
         .then((rows) => rows[0]),
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userLike)
         .innerJoin(
           this.forumTopic,
@@ -534,7 +546,7 @@ export class AppUserCountService {
         .where(eq(this.userLike.targetType, LikeTargetTypeEnum.FORUM_TOPIC))
         .then((rows) => rows[0]),
       client
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userFavorite)
         .innerJoin(
           this.forumTopic,
@@ -593,7 +605,7 @@ export class AppUserCountService {
 
   // 更新用户论坛主题数。
   async updateForumTopicCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     delta: number,
   ) {
@@ -602,7 +614,7 @@ export class AppUserCountService {
 
   // 更新用户评论收到的点赞数。
   async updateCommentReceivedLikeCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     delta: number,
   ) {
@@ -611,7 +623,7 @@ export class AppUserCountService {
 
   // 更新用户论坛主题收到的点赞数。
   async updateForumTopicReceivedLikeCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     delta: number,
   ) {
@@ -625,7 +637,7 @@ export class AppUserCountService {
 
   // 更新用户论坛主题收到的收藏数。
   async updateForumTopicReceivedFavoriteCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     delta: number,
   ) {

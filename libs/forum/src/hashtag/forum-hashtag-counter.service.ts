@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { Injectable } from '@nestjs/common'
@@ -26,7 +26,7 @@ export class ForumHashtagCounterService {
   }
 
   // 重建指定话题的冗余统计字段。
-  async rebuildHashtagStatsInTx(tx: Db, hashtagIds: number[]) {
+  async rebuildHashtagStatsInTx(tx: DbExecutor, hashtagIds: number[]) {
     const uniqueHashtagIds = [...new Set(hashtagIds)]
     if (uniqueHashtagIds.length === 0) {
       return
@@ -36,8 +36,8 @@ export class ForumHashtagCounterService {
       tx
         .select({
           hashtagId: this.forumHashtagReference.hashtagId,
-          topicRefCount: sql<number>`sum(case when ${this.forumHashtagReference.isSourceVisible} = true and ${this.forumHashtagReference.sourceType} = ${ForumHashtagReferenceSourceTypeEnum.TOPIC} then 1 else 0 end)::int`,
-          commentRefCount: sql<number>`sum(case when ${this.forumHashtagReference.isSourceVisible} = true and ${this.forumHashtagReference.sourceType} = ${ForumHashtagReferenceSourceTypeEnum.COMMENT} then 1 else 0 end)::int`,
+          topicRefCount: sql<number>`sum(case when ${this.forumHashtagReference.isSourceVisible} = true and ${this.forumHashtagReference.sourceType} = ${ForumHashtagReferenceSourceTypeEnum.TOPIC} then 1 else 0 end)::int`.mapWith(Number),
+          commentRefCount: sql<number>`sum(case when ${this.forumHashtagReference.isSourceVisible} = true and ${this.forumHashtagReference.sourceType} = ${ForumHashtagReferenceSourceTypeEnum.COMMENT} then 1 else 0 end)::int`.mapWith(Number),
           lastReferencedAt: sql<Date | null>`max(case when ${this.forumHashtagReference.isSourceVisible} = true then ${this.forumHashtagReference.createdAt} else null end)`,
         })
         .from(this.forumHashtagReference)
@@ -46,7 +46,7 @@ export class ForumHashtagCounterService {
       tx
         .select({
           hashtagId: this.userFollow.targetId,
-          followerCount: sql<number>`count(*)::int`,
+          followerCount: sql<number>`count(*)::int`.mapWith(Number),
         })
         .from(this.userFollow)
         .where(

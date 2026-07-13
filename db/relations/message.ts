@@ -51,6 +51,14 @@ export const messageRelations = defineRelationsPart(schema, (r) => ({
     }),
   },
   notificationDelivery: {
+    event: r.one.domainEvent({
+      from: r.notificationDelivery.eventId,
+      to: r.domainEvent.id,
+    }),
+    dispatch: r.one.domainEventDispatch({
+      from: r.notificationDelivery.dispatchId,
+      to: r.domainEventDispatch.id,
+    }),
     receiverUser: r.one.appUser({
       from: r.notificationDelivery.receiverUserId,
       to: r.appUser.id,
@@ -58,6 +66,18 @@ export const messageRelations = defineRelationsPart(schema, (r) => ({
     notification: r.one.userNotification({
       from: r.notificationDelivery.notificationId,
       to: r.userNotification.id,
+    }),
+    task: r.one.taskDefinition({
+      from: r.notificationDelivery.taskId,
+      to: r.taskDefinition.id,
+    }),
+    instance: r.one.taskInstance({
+      from: r.notificationDelivery.instanceId,
+      to: r.taskInstance.id,
+    }),
+    template: r.one.notificationTemplate({
+      from: r.notificationDelivery.templateId,
+      to: r.notificationTemplate.id,
     }),
   },
   notificationPreference: {
@@ -67,7 +87,12 @@ export const messageRelations = defineRelationsPart(schema, (r) => ({
       alias: 'NotificationPreferenceUser',
     }),
   },
-  notificationTemplate: {},
+  notificationTemplate: {
+    deliveries: r.many.notificationDelivery({
+      from: r.notificationTemplate.id,
+      to: r.notificationDelivery.templateId,
+    }),
+  },
   userNotification: {
     user: r.one.appUser({
       from: r.userNotification.receiverUserId,
@@ -82,6 +107,10 @@ export const messageRelations = defineRelationsPart(schema, (r) => ({
     deliveryRecords: r.many.notificationDelivery({
       from: r.userNotification.id,
       to: r.notificationDelivery.notificationId,
+    }),
+    announcement: r.one.appAnnouncement({
+      from: r.userNotification.announcementId,
+      to: r.appAnnouncement.id,
     }),
   },
 }))

@@ -1,5 +1,4 @@
-import type { Db } from '@db/core'
-import type { GrowthRewardSettlementSelect } from '@db/schema'
+import type { Db, DbExecutor, DbTransaction } from '@db/core'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.type'
 import type {
   CheckInGrantRewardSettlementSource,
@@ -8,6 +7,7 @@ import type {
   CheckInRewardApplyInput,
   CheckInRewardItems,
   CheckInRewardSettlementContext,
+  CheckInRewardSettlementSummaryRecord,
 } from './check-in.type'
 import { DrizzleService } from '@db/core'
 import {
@@ -48,60 +48,72 @@ export class CheckInSettlementService extends CheckInServiceSupport {
     context: CheckInRewardSettlementContext,
   ) {
     try {
-      await this.drizzle.withTransaction(async (tx) => {
-        const record = await tx.query.checkInRecord.findFirst({
-          where: { id: recordId },
-        })
-        if (!record) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '签到记录不存在',
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          const record = await tx.query.checkInRecord.findFirst({
+            where: { id: recordId },
+            columns: {
+              id: true,
+              userId: true,
+              signDate: true,
+              resolvedRewardItems: true,
+              rewardSettlementId: true,
+            },
+          })
+          if (!record) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '签到记录不存在',
+            )
+          }
+          if (!record.resolvedRewardItems) {
+            return
+          }
+          const rewardItems = this.parseStoredRewardItems(
+            record.resolvedRewardItems,
+            {
+              allowEmpty: false,
+            },
+          )!
+          const settlement = await this.ensureRecordRewardSettlement(record, tx)
+          const latestSettlement = await this.getSettlementById(
+            settlement.id,
+            tx,
           )
-        }
-        if (!record.resolvedRewardItems) {
-          return
-        }
-        const rewardItems = this.parseStoredRewardItems(
-          record.resolvedRewardItems,
-          {
-            allowEmpty: false,
-          },
-        )!
-        const settlement = await this.ensureRecordRewardSettlement(record, tx)
-        const latestSettlement = await this.getSettlementById(settlement.id, tx)
-        if (
-          latestSettlement?.settlementStatus ===
-          GrowthRewardSettlementStatusEnum.SUCCESS
-        ) {
-          return
-        }
-        if (
-          latestSettlement?.settlementStatus ===
-          GrowthRewardSettlementStatusEnum.TERMINAL
-        ) {
-          throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            '签到奖励已进入终态失败，无需重试',
+          if (
+            latestSettlement?.settlementStatus ===
+            GrowthRewardSettlementStatusEnum.SUCCESS
+          ) {
+            return
+          }
+          if (
+            latestSettlement?.settlementStatus ===
+            GrowthRewardSettlementStatusEnum.TERMINAL
+          ) {
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
+              '签到奖励已进入终态失败，无需重试',
+            )
+          }
+
+          const rewardResult = await this.applyRewardItems(tx, {
+            userId: record.userId,
+            rewardItems,
+            baseBizKey: this.buildBaseRewardBizKey(record.id, record.userId),
+            source: GrowthLedgerSourceEnum.CHECK_IN_BASE_BONUS,
+            actorUserId: context.actorUserId,
+          })
+
+          await this.growthRewardSettlementService.syncManualSettlementResult(
+            settlement.id,
+            {
+              success: true,
+              resultType: rewardResult.resultType,
+              ledgerRecordIds: rewardResult.ledgerIds,
+            },
+            { isRetry: context.isRetry, tx },
           )
-        }
-
-        const rewardResult = await this.applyRewardItems(tx, {
-          userId: record.userId,
-          rewardItems,
-          baseBizKey: this.buildBaseRewardBizKey(record.id, record.userId),
-          source: GrowthLedgerSourceEnum.CHECK_IN_BASE_BONUS,
-          actorUserId: context.actorUserId,
-        })
-
-        await this.growthRewardSettlementService.syncManualSettlementResult(
-          settlement.id,
-          {
-            success: true,
-            resultType: rewardResult.resultType,
-            ledgerRecordIds: rewardResult.ledgerIds,
-          },
-          { isRetry: context.isRetry, tx },
-        )
+        },
       })
       return true
     } catch (error) {
@@ -121,6 +133,13 @@ export class CheckInSettlementService extends CheckInServiceSupport {
 
       const record = await this.db.query.checkInRecord.findFirst({
         where: { id: recordId },
+        columns: {
+          id: true,
+          userId: true,
+          signDate: true,
+          resolvedRewardItems: true,
+          rewardSettlementId: true,
+        },
       })
       if (record && this.asArray(record.resolvedRewardItems)?.length) {
         const settlement = await this.ensureRecordRewardSettlement(record)
@@ -145,63 +164,79 @@ export class CheckInSettlementService extends CheckInServiceSupport {
     context: CheckInRewardSettlementContext,
   ) {
     try {
-      await this.drizzle.withTransaction(async (tx) => {
-        const grant = await tx.query.checkInStreakGrant.findFirst({
-          where: { id: grantId },
-        })
-        if (!grant) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '连续奖励发放事实不存在',
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          const grant = await tx.query.checkInStreakGrant.findFirst({
+            where: { id: grantId },
+            columns: {
+              id: true,
+              userId: true,
+              ruleId: true,
+              ruleCode: true,
+              triggerSignDate: true,
+              rewardSettlementId: true,
+            },
+          })
+          if (!grant) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '连续奖励发放事实不存在',
+            )
+          }
+          const rewardItemMap = await this.buildGrantRewardItemMap(
+            [grant.id],
+            tx,
           )
-        }
-        const rewardItemMap = await this.buildGrantRewardItemMap([grant.id], tx)
-        const settlement = await this.ensureGrantRewardSettlement(
-          {
-            ...grant,
-            rewardItems: rewardItemMap.get(grant.id) ?? [],
-          },
-          tx,
-        )
-        const latestSettlement = await this.getSettlementById(settlement.id, tx)
-        if (
-          latestSettlement?.settlementStatus ===
-          GrowthRewardSettlementStatusEnum.SUCCESS
-        ) {
-          return
-        }
-        if (
-          latestSettlement?.settlementStatus ===
-          GrowthRewardSettlementStatusEnum.TERMINAL
-        ) {
-          throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            '签到奖励已进入终态失败，无需重试',
+          const settlement = await this.ensureGrantRewardSettlement(
+            {
+              ...grant,
+              rewardItems: rewardItemMap.get(grant.id) ?? [],
+            },
+            tx,
           )
-        }
+          const latestSettlement = await this.getSettlementById(
+            settlement.id,
+            tx,
+          )
+          if (
+            latestSettlement?.settlementStatus ===
+            GrowthRewardSettlementStatusEnum.SUCCESS
+          ) {
+            return
+          }
+          if (
+            latestSettlement?.settlementStatus ===
+            GrowthRewardSettlementStatusEnum.TERMINAL
+          ) {
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
+              '签到奖励已进入终态失败，无需重试',
+            )
+          }
 
-        const rewardItems = rewardItemMap.get(grant.id) ?? []
-        const rewardResult = await this.applyRewardItems(tx, {
-          userId: grant.userId,
-          rewardItems,
-          baseBizKey: this.buildStreakRewardBizKey(
-            grant.id,
-            grant.ruleCode,
-            grant.userId,
-          ),
-          source: GrowthLedgerSourceEnum.CHECK_IN_STREAK_BONUS,
-          actorUserId: context.actorUserId,
-        })
+          const rewardItems = rewardItemMap.get(grant.id) ?? []
+          const rewardResult = await this.applyRewardItems(tx, {
+            userId: grant.userId,
+            rewardItems,
+            baseBizKey: this.buildStreakRewardBizKey(
+              grant.id,
+              grant.ruleCode,
+              grant.userId,
+            ),
+            source: GrowthLedgerSourceEnum.CHECK_IN_STREAK_BONUS,
+            actorUserId: context.actorUserId,
+          })
 
-        await this.growthRewardSettlementService.syncManualSettlementResult(
-          settlement.id,
-          {
-            success: true,
-            resultType: rewardResult.resultType,
-            ledgerRecordIds: rewardResult.ledgerIds,
-          },
-          { isRetry: context.isRetry, tx },
-        )
+          await this.growthRewardSettlementService.syncManualSettlementResult(
+            settlement.id,
+            {
+              success: true,
+              resultType: rewardResult.resultType,
+              ledgerRecordIds: rewardResult.ledgerIds,
+            },
+            { isRetry: context.isRetry, tx },
+          )
+        },
       })
       return true
     } catch (error) {
@@ -221,6 +256,14 @@ export class CheckInSettlementService extends CheckInServiceSupport {
 
       const grant = await this.db.query.checkInStreakGrant.findFirst({
         where: { id: grantId },
+        columns: {
+          id: true,
+          userId: true,
+          ruleId: true,
+          ruleCode: true,
+          triggerSignDate: true,
+          rewardSettlementId: true,
+        },
       })
       if (grant) {
         const rewardItemMap = await this.buildGrantRewardItemMap([grant.id])
@@ -260,13 +303,23 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   async buildSettlementMapById(
     ids: number[],
     db: Db = this.db,
-  ): Promise<Map<number, GrowthRewardSettlementSelect>> {
+  ): Promise<Map<number, CheckInRewardSettlementSummaryRecord>> {
     if (ids.length === 0) {
-      return new Map<number, GrowthRewardSettlementSelect>()
+      return new Map<number, CheckInRewardSettlementSummaryRecord>()
     }
 
     const rows = await db
-      .select()
+      .select({
+        id: this.growthRewardSettlementTable.id,
+        settlementStatus: this.growthRewardSettlementTable.settlementStatus,
+        settlementResultType:
+          this.growthRewardSettlementTable.settlementResultType,
+        ledgerRecordIds: this.growthRewardSettlementTable.ledgerRecordIds,
+        retryCount: this.growthRewardSettlementTable.retryCount,
+        lastRetryAt: this.growthRewardSettlementTable.lastRetryAt,
+        settledAt: this.growthRewardSettlementTable.settledAt,
+        lastError: this.growthRewardSettlementTable.lastError,
+      })
       .from(this.growthRewardSettlementTable)
       .where(inArray(this.growthRewardSettlementTable.id, ids))
     return new Map(rows.map((row) => [row.id, row]))
@@ -279,7 +332,13 @@ export class CheckInSettlementService extends CheckInServiceSupport {
     }
 
     const rewardItems = await db
-      .select()
+      .select({
+        grantId: this.checkInStreakGrantRewardItemTable.grantId,
+        assetType: this.checkInStreakGrantRewardItemTable.assetType,
+        assetKey: this.checkInStreakGrantRewardItemTable.assetKey,
+        amount: this.checkInStreakGrantRewardItemTable.amount,
+        iconUrl: this.checkInStreakGrantRewardItemTable.iconUrl,
+      })
       .from(this.checkInStreakGrantRewardItemTable)
       .where(inArray(this.checkInStreakGrantRewardItemTable.grantId, grantIds))
       .orderBy(
@@ -306,7 +365,7 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   async insertGrantRewardItems(
     grantId: number,
     rewardItems: CheckInRewardItems,
-    tx: Db,
+    tx: DbExecutor,
   ) {
     if (rewardItems.length === 0) {
       return
@@ -339,7 +398,10 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   }
 
   // 按奖励项逐条落到账本，并返回每条落账结果。
-  private async applyRewardItems(tx: Db, input: CheckInRewardApplyInput) {
+  private async applyRewardItems(
+    tx: DbTransaction,
+    input: CheckInRewardApplyInput,
+  ) {
     const results: GrowthLedgerApplyResult[] = []
 
     for (const rewardItem of input.rewardItems) {
@@ -413,7 +475,7 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   // 确保基础奖励存在结算事实，必要时补建待处理记录。
   private async ensureRecordRewardSettlement(
     record: CheckInRecordRewardSettlementSource,
-    tx?: Db,
+    tx?: DbExecutor,
   ) {
     const existing = record.rewardSettlementId
       ? await this.getSettlementById(record.rewardSettlementId, tx)
@@ -447,7 +509,7 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   // 确保连续奖励存在结算事实，必要时补建待处理记录。
   private async ensureGrantRewardSettlement(
     grant: CheckInGrantRewardSettlementSource,
-    tx?: Db,
+    tx?: DbExecutor,
   ) {
     const existing = grant.rewardSettlementId
       ? await this.getSettlementById(grant.rewardSettlementId, tx)
@@ -479,9 +541,13 @@ export class CheckInSettlementService extends CheckInServiceSupport {
   }
 
   // 读取奖励补偿记录，不存在时统一返回资源不存在异常。
-  private async getSettlementById(id: number, tx?: Db) {
+  private async getSettlementById(id: number, tx?: DbExecutor) {
     return (tx ?? this.db).query.growthRewardSettlement.findFirst({
       where: { id },
+      columns: {
+        id: true,
+        settlementStatus: true,
+      },
     })
   }
 }

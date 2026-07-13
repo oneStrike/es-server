@@ -1,9 +1,9 @@
-import type { PaymentOrderSelect } from '@db/schema'
 import type {
   PaymentProviderAdapter,
   PaymentProviderCreateOrderInput,
   PaymentProviderNotifyInput,
   PaymentProviderNotifyOrderNoInput,
+  PaymentProviderOrderSnapshot,
   PaymentRefundParsedNotify,
 } from './types/payment.type'
 import { Buffer } from 'node:buffer'
@@ -17,10 +17,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Logger } from '@nestjs/common'
 import { AlipaySdk } from 'alipay-sdk'
-import {
-  PaymentChannelEnum,
-  PaymentSceneEnum,
-} from './payment.constant'
+import { PaymentChannelEnum, PaymentSceneEnum } from './payment.constant'
 import {
   readNumberField,
   readRecord,
@@ -126,7 +123,7 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
   }
 
   // Provider 订单查询未接真实通道前必须 fail closed，避免把本地订单行误当三方事实。
-  queryOrder(order: PaymentOrderSelect): Record<string, unknown> {
+  queryOrder(order: PaymentProviderOrderSnapshot): Record<string, unknown> {
     throw new BusinessException(
       BusinessErrorCode.OPERATION_NOT_ALLOWED,
       `支付订单 ${order.orderNo} 的 provider 查询未接入`,
@@ -134,7 +131,7 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
   }
 
   // 本轮退款执行固定 fail closed，避免形成未闭环的资金反向路径。
-  refund(order: PaymentOrderSelect): Record<string, unknown> {
+  refund(order: PaymentProviderOrderSnapshot): Record<string, unknown> {
     this.logger.warn(
       `payment_refund_blocked orderNo=${order.orderNo} channel=${order.channel} status=${order.status} providerConfigId=${order.providerConfigId}`,
     )
@@ -170,8 +167,10 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
       privateKey,
       alipayPublicKey: input.credentialMaterial?.alipayPublicKeyPem,
       endpoint:
-        this.readMetadataString(input.config.configMetadata, 'alipayEndpoint') ??
-        undefined,
+        this.readMetadataString(
+          input.config.configMetadata,
+          'alipayEndpoint',
+        ) ?? undefined,
       keyType: input.credentialMaterial?.alipayKeyType ?? 'PKCS8',
       signType: 'RSA2',
     })
@@ -322,13 +321,14 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
     const endpoint =
       this.readMetadataString(input.config.configMetadata, 'wechatEndpoint') ??
       'https://api.mch.weixin.qq.com'
+    const headers = Object.fromEntries([
+      ['Accept', 'application/json'],
+      ['Authorization', this.buildWechatAuthorization(input, path, bodyText)],
+      ['Content-Type', 'application/json'],
+    ])
     const response = await fetch(`${endpoint}${path}`, {
       body: bodyText,
-      headers: {
-        "Accept": 'application/json',
-        "Authorization": this.buildWechatAuthorization(input, path, bodyText),
-        'Content-Type': 'application/json',
-      },
+      headers,
       method: 'POST',
     })
     const responseText = await response.text()

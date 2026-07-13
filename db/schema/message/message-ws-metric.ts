@@ -1,6 +1,5 @@
 import {
   bigint,
-  index,
   integer,
   snakeCase,
   timestamp,
@@ -75,9 +74,5 @@ export const messageWsMetric = snakeCase.table(
      * 唯一索引: bucketAt
      */
     unique('message_ws_metric_bucket_at_key').on(table.bucketAt),
-    /**
-     * 索引: bucketAt
-     */
-    index('message_ws_metric_bucket_at_idx').on(table.bucketAt),
   ],
 )

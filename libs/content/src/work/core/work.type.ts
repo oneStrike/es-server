@@ -106,14 +106,6 @@ export interface WorkPageConditionOptions {
 }
 
 /**
- * 作品分页查询选项。
- * 控制是否只查询列表页需要的最小字段集。
- */
-export interface WorkPaginationOptions extends WorkPageConditionOptions {
-  selectPageFields?: boolean
-}
-
-/**
  * 作品展示标志位更新入参。
  * 供管理端快速切换发布、推荐、热门、新作状态。
  */

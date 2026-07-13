@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { ContentTypeEnum } from '@libs/platform/constant'
 
 /**
@@ -41,7 +41,7 @@ export interface IReadingStateResolver {
    * @param chapterId - 章节ID
    */
   resolveChapterSnapshot: (
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     workId: number,
     chapterId: number,
   ) => Promise<ReadingStateChapterSnapshot | undefined>

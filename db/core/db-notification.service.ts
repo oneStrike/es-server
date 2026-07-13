@@ -1,5 +1,6 @@
-import type { Pool, PoolClient } from 'pg'
+import type { Client, Notification, Pool } from 'pg'
 import type {
+  DbNotificationMetrics,
   DbNotificationSubscription,
   DbNotificationSubscriptionOptions,
 } from './db-notification.type'
@@ -9,22 +10,52 @@ import {
   Logger,
   OnApplicationShutdown,
 } from '@nestjs/common'
-import { DRIZZLE_POOL } from './drizzle.provider'
+import { Client as PgClient } from 'pg'
+import { DRIZZLE_POOL, DRIZZLE_RUNTIME_CONFIG } from './drizzle.provider'
 
 const POSTGRES_NOTIFICATION_CHANNEL_REGEX = /^[A-Z_]\w{0,62}$/i
+const RECONNECT_BASE_DELAY_MS = 250
+const RECONNECT_MAX_DELAY_MS = 10_000
+
+interface NotificationCallback {
+  onNotification: (notification: Notification) => void
+  onError?: (error: Error) => void
+}
+
+interface NotificationChannel {
+  callbacks: Set<NotificationCallback>
+}
+
+interface DbNotificationRuntimeConfig {
+  connectionString: string
+  listenerConnections: 0 | 1
+}
 
 /**
  * Stable low-level PostgreSQL LISTEN/NOTIFY primitive for cross-instance coordination.
- * Domain modules own channel names and payload semantics; db/core only validates channel
- * identifiers and manages the underlying connection lifecycle.
+ *
+ * Query traffic stays on the shared `Pool`; all subscriptions in one process multiplex
+ * through one independent `pg.Client`, keyed by channel and reference-counted callbacks.
  */
 @Injectable()
 export class DbNotificationService implements OnApplicationShutdown {
   private readonly logger = new Logger(DbNotificationService.name)
-  private readonly subscriptions = new Set<PgNotificationSubscription>()
+  private readonly channels = new Map<string, NotificationChannel>()
+  private readonly listeningChannels = new Set<string>()
+  private operationQueue: Promise<void> = Promise.resolve()
+  private client?: Client
+  private reconnectTimer?: NodeJS.Timeout
+  private reconnectAttempt = 0
+  private reconnectCount = 0
+  private errorCount = 0
+  private reconnectDelayMs: number | null = null
   private isShuttingDown = false
 
-  constructor(@Inject(DRIZZLE_POOL) private readonly pool: Pool) {}
+  constructor(
+    @Inject(DRIZZLE_POOL) private readonly pool: Pool,
+    @Inject(DRIZZLE_RUNTIME_CONFIG)
+    private readonly runtimeConfig: DbNotificationRuntimeConfig,
+  ) {}
 
   /** 向指定 PostgreSQL 通知通道发布 payload。 */
   async notify(channel: string, payload: string): Promise<void> {
@@ -35,7 +66,10 @@ export class DbNotificationService implements OnApplicationShutdown {
     ])
   }
 
-  /** 建立指定通道的 LISTEN 订阅，并托管连接重试与释放。 */
+  /**
+   * 建立指定通道的订阅。一个进程中同一通道只会执行一次 LISTEN，多个回调共用
+   * 同一个独立 listener client。
+   */
   async subscribe(
     options: DbNotificationSubscriptionOptions,
   ): Promise<DbNotificationSubscription> {
@@ -43,159 +77,318 @@ export class DbNotificationService implements OnApplicationShutdown {
       throw new Error('DbNotificationService is shutting down')
     }
 
-    const validatedChannel = normalizeNotificationChannel(options.channel)
-    const subscription = new PgNotificationSubscription(
-      this.pool,
-      {
-        ...options,
-        channel: validatedChannel,
-      },
-      this.logger,
-    )
-    this.subscriptions.add(subscription)
-    await subscription.start()
+    if (this.runtimeConfig.listenerConnections !== 1) {
+      throw new Error(
+        'Database notification listener is disabled for this process role',
+      )
+    }
 
+    const channel = normalizeNotificationChannel(options.channel)
+    const callback: NotificationCallback = {
+      onNotification: options.onNotification,
+      onError: options.onError,
+    }
+    const channelState = this.channels.get(channel) ?? { callbacks: new Set() }
+    channelState.callbacks.add(callback)
+    this.channels.set(channel, channelState)
+
+    await this.enqueue(async () => {
+      await this.ensureListener()
+    })
+
+    let isClosed = false
     return {
       close: async () => {
-        this.subscriptions.delete(subscription)
-        await subscription.close()
+        if (isClosed) {
+          return
+        }
+
+        isClosed = true
+        await this.unsubscribe(channel, callback)
       },
     }
   }
 
-  /** 释放全部活动 LISTEN 订阅，并阻止后续新订阅建立。 */
-  async closeAllSubscriptions(): Promise<void> {
-    this.isShuttingDown = true
-    const subscriptions = [...this.subscriptions]
-    this.subscriptions.clear()
-    await Promise.all(subscriptions.map(async (subscription) => subscription.close()))
+  /** 返回 listener 的连接、重连和订阅数量，供 health/metrics owner 读取。 */
+  getMetrics(): DbNotificationMetrics {
+    return {
+      configuredListenerConnections: this.runtimeConfig.listenerConnections,
+      activeListenerConnections: this.client ? 1 : 0,
+      connected: this.client !== undefined,
+      channelCount: this.channels.size,
+      subscriptionCount: [...this.channels.values()].reduce(
+        (total, channel) => total + channel.callbacks.size,
+        0,
+      ),
+      reconnectCount: this.reconnectCount,
+      errorCount: this.errorCount,
+      reconnectDelayMs: this.reconnectDelayMs,
+      isShuttingDown: this.isShuttingDown,
+    }
   }
 
-  /** 应用关闭时释放全部活动 LISTEN 订阅。 */
+  /** 释放全部活动订阅，并阻止后续新订阅建立。 */
+  async closeAllSubscriptions(): Promise<void> {
+    if (this.isShuttingDown) {
+      return
+    }
+
+    this.isShuttingDown = true
+    this.clearReconnectTimer()
+    this.channels.clear()
+
+    await this.enqueue(async () => {
+      await this.closeActiveClient()
+    })
+  }
+
+  /** 应用关闭时释放独立 listener client。 */
   async onApplicationShutdown(): Promise<void> {
     await this.closeAllSubscriptions()
   }
-}
 
-class PgNotificationSubscription {
-  private client?: PoolClient
-  private connectPromise?: Promise<void>
-  private reconnectTimer?: NodeJS.Timeout
-  private isClosed = false
-
-  constructor(
-    private readonly pool: Pool,
-    private readonly options: DbNotificationSubscriptionOptions,
-    private readonly logger: Logger,
-  ) {}
-
-  async start(): Promise<void> {
-    if (this.connectPromise) {
-      return this.connectPromise
-    }
-
-    if (this.client || this.isClosed) {
+  private async unsubscribe(
+    channel: string,
+    callback: NotificationCallback,
+  ): Promise<void> {
+    const channelState = this.channels.get(channel)
+    if (!channelState) {
       return
     }
 
-    this.connectPromise = this.connect()
-    return this.connectPromise
-  }
-
-  async close(): Promise<void> {
-    this.isClosed = true
-
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = undefined
-    }
-
-    if (this.connectPromise) {
-      await this.connectPromise
-    }
-
-    const client = this.client
-    this.client = undefined
-    if (!client) {
+    channelState.callbacks.delete(callback)
+    if (channelState.callbacks.size > 0) {
       return
     }
 
-    await this.releaseClient(client)
-  }
+    this.channels.delete(channel)
 
-  private async connect(): Promise<void> {
-    let client: PoolClient | undefined
-
-    try {
-      client = await this.pool.connect()
-      if (this.isClosed) {
-        client.release()
+    await this.enqueue(async () => {
+      if (this.channels.size === 0) {
+        this.clearReconnectTimer()
+        await this.closeActiveClient()
         return
       }
 
-      client.on('notification', this.options.onNotification)
-      client.on('error', this.handleClientError)
-      await client.query(`LISTEN ${this.options.channel}`)
+      const client = this.client
+      if (!client) {
+        return
+      }
 
-      if (this.isClosed) {
-        await this.releaseClient(client)
+      if (!this.listeningChannels.delete(channel)) {
+        return
+      }
+
+      try {
+        await client.query(`UNLISTEN ${quoteIdentifier(channel)}`)
+      } catch (error) {
+        await this.handleClientFailure(client, toError(error))
+      }
+    })
+  }
+
+  private async ensureListener(): Promise<void> {
+    if (this.isShuttingDown || this.channels.size === 0) {
+      return
+    }
+
+    const currentClient = this.client
+    if (currentClient) {
+      try {
+        await this.syncListeningChannels(currentClient)
+      } catch (error) {
+        await this.handleClientFailure(currentClient, toError(error))
+      }
+      return
+    }
+
+    const client = new PgClient({
+      connectionString: this.runtimeConfig.connectionString,
+    })
+    client.on('notification', this.handleNotification)
+    client.on('error', (error) => {
+      void this.enqueue(async () => {
+        await this.handleClientFailure(client, error)
+      })
+    })
+    client.on('end', () => {
+      void this.enqueue(async () => {
+        await this.handleClientFailure(
+          client,
+          new Error('PostgreSQL notification listener ended unexpectedly'),
+        )
+      })
+    })
+
+    try {
+      await client.connect()
+      if (this.isShuttingDown || this.channels.size === 0) {
+        await this.endClient(client)
         return
       }
 
       this.client = client
-      client = undefined
+      await this.syncListeningChannels(client)
+      this.reconnectAttempt = 0
+      this.reconnectDelayMs = null
     } catch (error) {
-      if (client) {
-        client.removeListener('notification', this.options.onNotification)
-        client.removeListener('error', this.handleClientError)
-        client.release(toError(error))
+      if (this.client === client) {
+        this.client = undefined
+      }
+      this.listeningChannels.clear()
+      await this.endClient(client)
+      this.reportListenerFailure(toError(error))
+    }
+  }
+
+  private async syncListeningChannels(client: Client): Promise<void> {
+    for (const channel of this.channels.keys()) {
+      if (this.listeningChannels.has(channel)) {
+        continue
       }
 
-      this.options.onError?.(toError(error))
-      this.scheduleReconnect()
-    } finally {
-      this.connectPromise = undefined
+      await client.query(`LISTEN ${quoteIdentifier(channel)}`)
+      this.listeningChannels.add(channel)
     }
   }
 
-  private readonly handleClientError = (error: Error) => {
-    const client = this.client
-    this.client = undefined
-
-    if (client) {
-      client.removeListener('notification', this.options.onNotification)
-      client.removeListener('error', this.handleClientError)
-      client.release(error)
-    }
-
-    this.options.onError?.(error)
-    this.scheduleReconnect()
-  }
-
-  private scheduleReconnect() {
-    if (this.isClosed || this.reconnectTimer) {
+  private async handleClientFailure(
+    client: Client,
+    error: Error,
+  ): Promise<void> {
+    if (this.client !== client) {
       return
     }
 
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = undefined
-      void this.start()
-    }, 1_000)
+    this.client = undefined
+    this.listeningChannels.clear()
+    await this.endClient(client)
+    this.reportListenerFailure(error)
   }
 
-  private async releaseClient(client: PoolClient) {
-    client.removeListener('notification', this.options.onNotification)
-    client.removeListener('error', this.handleClientError)
+  private reportListenerFailure(error: Error): void {
+    if (this.isShuttingDown) {
+      return
+    }
+
+    this.errorCount += 1
+    this.logger.warn(`Database notification listener failed: ${error.message}`)
+    this.notifySubscriberErrors(error)
+    this.scheduleReconnect()
+  }
+
+  private scheduleReconnect(): void {
+    if (
+      this.isShuttingDown ||
+      this.channels.size === 0 ||
+      this.reconnectTimer
+    ) {
+      return
+    }
+
+    this.reconnectAttempt += 1
+    this.reconnectCount += 1
+    const cappedDelay = Math.min(
+      RECONNECT_MAX_DELAY_MS,
+      RECONNECT_BASE_DELAY_MS * 2 ** (this.reconnectAttempt - 1),
+    )
+    this.reconnectDelayMs = Math.floor(Math.random() * (cappedDelay + 1))
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = undefined
+      this.reconnectDelayMs = null
+      void this.enqueue(async () => {
+        await this.ensureListener()
+      })
+    }, this.reconnectDelayMs)
+  }
+
+  private async closeActiveClient(): Promise<void> {
+    const client = this.client
+    this.client = undefined
+    this.listeningChannels.clear()
+
+    if (client) {
+      await this.endClient(client)
+    }
+  }
+
+  private async endClient(client: Client): Promise<void> {
+    client.removeListener('notification', this.handleNotification)
 
     try {
-      await client.query(`UNLISTEN ${this.options.channel}`)
+      await client.end()
     } catch (error) {
       this.logger.warn(
-        `Failed to unlisten db notification channel "${this.options.channel}": ${stringifyError(error)}`,
+        `Failed to close database notification listener: ${toError(error).message}`,
       )
-    } finally {
-      client.release()
     }
+  }
+
+  private notifySubscriberErrors(error: Error): void {
+    for (const channel of this.channels.values()) {
+      for (const callback of channel.callbacks) {
+        this.invokeCallbackError(callback, error)
+      }
+    }
+  }
+
+  private readonly handleNotification = (notification: Notification) => {
+    const channel = notification.channel
+    if (!channel) {
+      return
+    }
+
+    const channelState = this.channels.get(channel)
+    if (!channelState) {
+      return
+    }
+
+    for (const callback of channelState.callbacks) {
+      try {
+        callback.onNotification(notification)
+      } catch (error) {
+        this.errorCount += 1
+        const callbackError = toError(error)
+        this.logger.error(
+          `Database notification callback failed for channel "${channel}": ${callbackError.message}`,
+        )
+        this.invokeCallbackError(callback, callbackError)
+      }
+    }
+  }
+
+  private invokeCallbackError(
+    callback: NotificationCallback,
+    error: Error,
+  ): void {
+    try {
+      callback.onError?.(error)
+    } catch (callbackError) {
+      this.errorCount += 1
+      this.logger.error(
+        `Database notification error callback failed: ${toError(callbackError).message}`,
+      )
+    }
+  }
+
+  private clearReconnectTimer(): void {
+    if (!this.reconnectTimer) {
+      return
+    }
+
+    clearTimeout(this.reconnectTimer)
+    this.reconnectTimer = undefined
+    this.reconnectDelayMs = null
+  }
+
+  private async enqueue(operation: () => Promise<void>): Promise<void> {
+    const queuedOperation = this.operationQueue.then(operation, operation)
+    this.operationQueue = queuedOperation.then(
+      () => undefined,
+      () => undefined,
+    )
+    await queuedOperation
   }
 }
 
@@ -211,26 +404,14 @@ function toError(error: unknown): Error {
   return new Error('Database notification listener failed')
 }
 
-function stringifyError(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  if (typeof error === 'string') {
-    return error
-  }
-
-  try {
-    return JSON.stringify(error)
-  } catch {
-    return 'unknown'
-  }
-}
-
 function normalizeNotificationChannel(channel: string): string {
   if (POSTGRES_NOTIFICATION_CHANNEL_REGEX.test(channel)) {
     return channel
   }
 
   throw new Error(`Invalid PostgreSQL notification channel: ${channel}`)
+}
+
+function quoteIdentifier(identifier: string): string {
+  return `"${identifier.replaceAll('"', '""')}"`
 }

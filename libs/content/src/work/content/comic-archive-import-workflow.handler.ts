@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type {
   WorkflowExecuteContext,
   WorkflowExpiredAttemptRecoveryContext,
@@ -42,7 +42,7 @@ export class ComicArchiveImportWorkflowHandler
   async recoverExpiredAttempt(
     context: WorkflowExpiredAttemptRecoveryContext,
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) {
     return this.contentImportService.recoverExpiredAttempt(
       context.jobId,

@@ -6,8 +6,6 @@ import type {
 } from './types/task.type'
 import { randomBytes } from 'node:crypto'
 import { DrizzleService } from '@db/core'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq, sql } from 'drizzle-orm'
 import {
@@ -59,46 +57,51 @@ export class TaskDefinitionService extends TaskServiceSupport {
       template?.eventCode,
       template?.supportsUniqueCounting,
     )
-    this.ensureTaskExecutionModeMatrix(input.claimMode, normalizedStep.triggerMode)
+    this.ensureTaskExecutionModeMatrix(
+      input.claimMode,
+      normalizedStep.triggerMode,
+    )
 
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          const [taskDefinition] = await tx
-            .insert(this.taskDefinitionTable)
-            .values({
-              code,
-              title: input.title,
-              description: input.description,
-              cover: input.cover,
-              sceneType: input.sceneType,
-              status: input.status,
-              sortOrder: input.sortOrder,
-              claimMode: input.claimMode,
-              completionPolicy:
-                input.completionPolicy ?? TaskCompletionPolicyEnum.ALL_STEPS,
-              repeatType: input.repeatType ?? TaskRepeatCycleEnum.ONCE,
-              startAt: input.startAt,
-              endAt: input.endAt,
-              rewardItems: input.rewardItems ?? null,
-              createdById: adminUserId,
-              updatedById: adminUserId,
-            })
-            .returning({ id: this.taskDefinitionTable.id })
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const [taskDefinition] = await tx
+              .insert(this.taskDefinitionTable)
+              .values({
+                code,
+                title: input.title,
+                description: input.description,
+                cover: input.cover,
+                sceneType: input.sceneType,
+                status: input.status,
+                sortOrder: input.sortOrder,
+                claimMode: input.claimMode,
+                completionPolicy:
+                  input.completionPolicy ?? TaskCompletionPolicyEnum.ALL_STEPS,
+                repeatType: input.repeatType ?? TaskRepeatCycleEnum.ONCE,
+                startAt: input.startAt,
+                endAt: input.endAt,
+                rewardItems: input.rewardItems ?? null,
+                createdById: adminUserId,
+                updatedById: adminUserId,
+              })
+              .returning({ id: this.taskDefinitionTable.id })
 
-          await tx.insert(this.taskStepTable).values({
-            taskId: taskDefinition.id,
-            stepKey: 'step_001',
-            title: normalizedStep.title,
-            description: normalizedStep.description,
-            stepNo: 1,
-            triggerMode: normalizedStep.triggerMode,
-            eventCode: normalizedStep.eventCode ?? null,
-            targetValue: normalizedStep.targetValue,
-            templateKey: normalizedStep.templateKey ?? null,
-            filterPayload: normalizedStep.filterPayload ?? null,
-            dedupeScope: normalizedStep.dedupeScope ?? null,
-          })
+            await tx.insert(this.taskStepTable).values({
+              taskId: taskDefinition.id,
+              stepKey: 'step_001',
+              title: normalizedStep.title,
+              description: normalizedStep.description,
+              stepNo: 1,
+              triggerMode: normalizedStep.triggerMode,
+              eventCode: normalizedStep.eventCode ?? null,
+              targetValue: normalizedStep.targetValue,
+              templateKey: normalizedStep.templateKey ?? null,
+              filterPayload: normalizedStep.filterPayload ?? null,
+              dedupeScope: normalizedStep.dedupeScope ?? null,
+            })
+          },
         }),
       { duplicate: '任务编码已存在' },
     )
@@ -116,8 +119,10 @@ export class TaskDefinitionService extends TaskServiceSupport {
     const [list, total] = await Promise.all([
       this.db
         .select({
-          task: this.taskDefinitionTable,
-          stepCount: sql<number>`count(${this.taskStepTable.id})::int`,
+          task: this.getTaskDefinitionAdminReadSelect(),
+          stepCount: sql<number>`count(${this.taskStepTable.id})::int`.mapWith(
+            Number,
+          ),
         })
         .from(this.taskDefinitionTable)
         .leftJoin(
@@ -132,7 +137,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
         .limit(page.limit)
         .offset(page.offset),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.taskDefinitionTable)
         .where(where),
     ])
@@ -157,7 +162,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
 
   // 查询新任务头详情。
   async getTaskDefinitionDetail(id: number) {
-    const taskRecord = await this.getTaskDefinitionRecordOrThrow(id)
+    const taskRecord = await this.getTaskDefinitionDetailRecordOrThrow(id)
     const [stepSummaryMap, runtimeSummaryMap] = await Promise.all([
       this.getTaskStepSummaryMap([id]),
       this.getTaskDefinitionRuntimeSummaryMap([id]),
@@ -175,117 +180,123 @@ export class TaskDefinitionService extends TaskServiceSupport {
     input: UpdateTaskDefinitionDto,
     adminUserId: number,
   ) {
-    const existing = await this.getTaskDefinitionRecordOrThrow(input.id)
-    const nextTaskTitle = input.title ?? existing.title
-    const currentStep = await this.db.query.taskStep.findFirst({
-      where: {
-        taskId: input.id,
-        stepNo: 1,
-      },
-    })
-
-    if (!currentStep) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '任务步骤不存在',
-      )
-    }
-
-    this.ensureTaskDefinitionWriteInput(input)
-
-    const nextStep: TaskStepWriteInput | null = input.step
-      ? this.buildTaskStepWriteInput(input.step, nextTaskTitle, currentStep)
-      : null
-
-    const template = nextStep?.templateKey
-      ? this.taskEventTemplateRegistry.getTemplateByKey(nextStep.templateKey)
-      : null
-    if (nextStep) {
-      this.ensureTaskStepWriteInput(
-        nextStep,
-        template?.isSelectable ?? false,
-        template?.eventCode,
-        template?.supportsUniqueCounting,
-      )
-    }
-    this.ensureTaskExecutionModeMatrix(
-      input.claimMode ?? existing.claimMode,
-      nextStep?.triggerMode ?? currentStep.triggerMode,
-    )
-    const shouldGuardExecutionContract = this.hasExecutionContractChange(
-      existing,
-      currentStep,
-      input,
-      nextStep,
-    )
-
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          if (shouldGuardExecutionContract) {
-            await this.ensureNoActiveTaskInstances(tx, input.id)
-          }
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await this.lockTaskDefinitionForMutation(tx, input.id)
+            const existing = await this.getTaskDefinitionRecordOrThrowInTx(
+              tx,
+              input.id,
+            )
+            const currentStep = await this.getSingleTaskStepOrThrowInTx(
+              tx,
+              input.id,
+              1,
+            )
+            const nextTaskTitle = input.title ?? existing.title
 
-          await tx
-            .update(this.taskDefinitionTable)
-            .set({
-              code: existing.code,
-              title: input.title ?? existing.title,
-              description:
-                input.description !== undefined
-                  ? input.description
-                  : existing.description,
-              cover: input.cover !== undefined ? input.cover : existing.cover,
-              sceneType: input.sceneType ?? existing.sceneType,
-              status: input.status ?? existing.status,
-              sortOrder: input.sortOrder ?? existing.sortOrder,
-              claimMode: input.claimMode ?? existing.claimMode,
-              completionPolicy:
-                input.completionPolicy ?? existing.completionPolicy,
-              repeatType: input.repeatType ?? existing.repeatType,
-              startAt:
-                input.startAt !== undefined ? input.startAt : existing.startAt,
-              endAt: input.endAt !== undefined ? input.endAt : existing.endAt,
-              rewardItems:
-                input.rewardItems !== undefined
-                  ? input.rewardItems
-                  : existing.rewardItems,
-              updatedById: adminUserId,
-            })
-            .where(eq(this.taskDefinitionTable.id, input.id))
+            this.ensureTaskDefinitionWriteInput(input)
 
-          if (nextStep) {
-            await tx
-              .update(this.taskStepTable)
-              .set({
-                title: nextTaskTitle,
-                description: nextStep.description,
-                triggerMode: nextStep.triggerMode,
-                eventCode: nextStep.eventCode ?? null,
-                targetValue: nextStep.targetValue,
-                templateKey: nextStep.templateKey ?? null,
-                filterPayload: nextStep.filterPayload ?? null,
-                dedupeScope: nextStep.dedupeScope ?? null,
-              })
-              .where(
-                and(
-                  eq(this.taskStepTable.taskId, input.id),
-                  eq(this.taskStepTable.stepNo, 1),
-                ),
+            const nextStep: TaskStepWriteInput | null = input.step
+              ? this.buildTaskStepWriteInput(
+                  input.step,
+                  nextTaskTitle,
+                  currentStep,
+                )
+              : null
+            const template = nextStep?.templateKey
+              ? this.taskEventTemplateRegistry.getTemplateByKey(
+                  nextStep.templateKey,
+                )
+              : null
+            if (nextStep) {
+              this.ensureTaskStepWriteInput(
+                nextStep,
+                template?.isSelectable ?? false,
+                template?.eventCode,
+                template?.supportsUniqueCounting,
               )
-          } else if (nextTaskTitle !== currentStep.title) {
-            await tx
-              .update(this.taskStepTable)
-              .set({
-                title: nextTaskTitle,
-              })
-              .where(
-                and(
-                  eq(this.taskStepTable.taskId, input.id),
-                  eq(this.taskStepTable.stepNo, 1),
-                ),
+            }
+            this.ensureTaskExecutionModeMatrix(
+              input.claimMode ?? existing.claimMode,
+              nextStep?.triggerMode ?? currentStep.triggerMode,
+            )
+            const shouldGuardExecutionContract =
+              this.hasExecutionContractChange(
+                existing,
+                currentStep,
+                input,
+                nextStep,
               )
-          }
+
+            if (shouldGuardExecutionContract) {
+              await this.ensureNoActiveTaskInstances(tx, input.id)
+            }
+
+            await tx
+              .update(this.taskDefinitionTable)
+              .set({
+                code: existing.code,
+                title: input.title ?? existing.title,
+                description:
+                  input.description !== undefined
+                    ? input.description
+                    : existing.description,
+                cover: input.cover !== undefined ? input.cover : existing.cover,
+                sceneType: input.sceneType ?? existing.sceneType,
+                status: input.status ?? existing.status,
+                sortOrder: input.sortOrder ?? existing.sortOrder,
+                claimMode: input.claimMode ?? existing.claimMode,
+                completionPolicy:
+                  input.completionPolicy ?? existing.completionPolicy,
+                repeatType: input.repeatType ?? existing.repeatType,
+                startAt:
+                  input.startAt !== undefined
+                    ? input.startAt
+                    : existing.startAt,
+                endAt: input.endAt !== undefined ? input.endAt : existing.endAt,
+                rewardItems:
+                  input.rewardItems !== undefined
+                    ? input.rewardItems
+                    : existing.rewardItems,
+                updatedById: adminUserId,
+              })
+              .where(eq(this.taskDefinitionTable.id, input.id))
+
+            if (nextStep) {
+              await tx
+                .update(this.taskStepTable)
+                .set({
+                  title: nextTaskTitle,
+                  description: nextStep.description,
+                  triggerMode: nextStep.triggerMode,
+                  eventCode: nextStep.eventCode ?? null,
+                  targetValue: nextStep.targetValue,
+                  templateKey: nextStep.templateKey ?? null,
+                  filterPayload: nextStep.filterPayload ?? null,
+                  dedupeScope: nextStep.dedupeScope ?? null,
+                })
+                .where(
+                  and(
+                    eq(this.taskStepTable.taskId, input.id),
+                    eq(this.taskStepTable.stepNo, 1),
+                  ),
+                )
+            } else if (nextTaskTitle !== currentStep.title) {
+              await tx
+                .update(this.taskStepTable)
+                .set({
+                  title: nextTaskTitle,
+                })
+                .where(
+                  and(
+                    eq(this.taskStepTable.taskId, input.id),
+                    eq(this.taskStepTable.stepNo, 1),
+                  ),
+                )
+            }
+          },
         }),
       {
         duplicate: '任务编码已存在',
@@ -299,59 +310,58 @@ export class TaskDefinitionService extends TaskServiceSupport {
   // 更新新任务头状态。
   async updateTaskDefinitionStatus(id: number, status: number) {
     this.ensureTaskDefinitionStatus(status)
-    const existing = await this.getTaskDefinitionRecordOrThrow(id)
 
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          if (status === TaskDefinitionStatusEnum.ACTIVE) {
-            const currentStep = await tx.query.taskStep.findFirst({
-              where: {
-                taskId: id,
-                stepNo: 1,
-              },
-            })
-            if (!currentStep) {
-              throw new BusinessException(
-                BusinessErrorCode.RESOURCE_NOT_FOUND,
-                '任务步骤不存在',
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await this.lockTaskDefinitionForMutation(tx, id)
+            const existing = await this.getTaskDefinitionRecordOrThrowInTx(
+              tx,
+              id,
+            )
+            if (status === TaskDefinitionStatusEnum.ACTIVE) {
+              const currentStep = await this.getSingleTaskStepOrThrowInTx(
+                tx,
+                id,
+                1,
+              )
+              const template = currentStep.templateKey
+                ? this.taskEventTemplateRegistry.getTemplateByKey(
+                    currentStep.templateKey,
+                  )
+                : null
+              this.ensureTaskDefinitionWindow(existing.startAt, existing.endAt)
+              this.ensureTaskRewardItemsContract(existing.rewardItems)
+              this.ensureTaskStepWriteInput(
+                {
+                  title: currentStep.title,
+                  description: currentStep.description ?? undefined,
+                  triggerMode: currentStep.triggerMode,
+                  eventCode: currentStep.eventCode ?? undefined,
+                  targetValue: currentStep.targetValue,
+                  templateKey: currentStep.templateKey ?? undefined,
+                  filterPayload: currentStep.filterPayload,
+                  dedupeScope: currentStep.dedupeScope ?? undefined,
+                },
+                template?.isSelectable ?? false,
+                template?.eventCode,
+                template?.supportsUniqueCounting,
+              )
+              this.ensureTaskExecutionModeMatrix(
+                existing.claimMode,
+                currentStep.triggerMode,
               )
             }
-            const template = currentStep.templateKey
-              ? this.taskEventTemplateRegistry.getTemplateByKey(
-                  currentStep.templateKey,
-                )
-              : null
-            this.ensureTaskDefinitionWindow(existing.startAt, existing.endAt)
-            this.ensureTaskRewardItemsContract(existing.rewardItems)
-            this.ensureTaskStepWriteInput(
-              {
-                title: currentStep.title,
-                description: currentStep.description ?? undefined,
-                triggerMode: currentStep.triggerMode,
-                eventCode: currentStep.eventCode ?? undefined,
-                targetValue: currentStep.targetValue,
-                templateKey: currentStep.templateKey ?? undefined,
-                filterPayload: currentStep.filterPayload,
-                dedupeScope: currentStep.dedupeScope ?? undefined,
-              },
-              template?.isSelectable ?? false,
-              template?.eventCode,
-              template?.supportsUniqueCounting,
-            )
-            this.ensureTaskExecutionModeMatrix(
-              existing.claimMode,
-              currentStep.triggerMode,
-            )
-          }
-          if (status === TaskDefinitionStatusEnum.ARCHIVED) {
-            await this.ensureNoActiveTaskInstances(tx, id)
-          }
+            if (status === TaskDefinitionStatusEnum.ARCHIVED) {
+              await this.ensureNoActiveTaskInstances(tx, id)
+            }
 
-          return tx
-            .update(this.taskDefinitionTable)
-            .set({ status })
-            .where(eq(this.taskDefinitionTable.id, id))
+            return tx
+              .update(this.taskDefinitionTable)
+              .set({ status })
+              .where(eq(this.taskDefinitionTable.id, id))
+          },
         }),
       { notFound: '任务不存在' },
     )
@@ -360,15 +370,17 @@ export class TaskDefinitionService extends TaskServiceSupport {
 
   // 软删除新任务头。
   async deleteTaskDefinition(id: number) {
-    await this.getTaskDefinitionRecordOrThrow(id)
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockTaskDefinitionForMutation(tx, id)
+        await this.getTaskDefinitionRecordOrThrowInTx(tx, id)
+        await this.ensureNoActiveTaskInstances(tx, id)
 
-    await this.drizzle.withTransaction(async (tx) => {
-      await this.ensureNoActiveTaskInstances(tx, id)
-
-      await tx
-        .update(this.taskDefinitionTable)
-        .set({ deletedAt: new Date() })
-        .where(eq(this.taskDefinitionTable.id, id))
+        await tx
+          .update(this.taskDefinitionTable)
+          .set({ deletedAt: new Date() })
+          .where(eq(this.taskDefinitionTable.id, id))
+      },
     })
 
     return true
@@ -397,15 +409,22 @@ export class TaskDefinitionService extends TaskServiceSupport {
       return false
     }
 
+    const eventCodeChanged =
+      this.normalizeNullableValue(nextStep.eventCode) !==
+      this.normalizeNullableValue(currentStep.eventCode)
+    const templateKeyChanged =
+      this.normalizeNullableValue(nextStep.templateKey) !==
+      this.normalizeNullableValue(currentStep.templateKey)
+    const dedupeScopeChanged =
+      this.normalizeNullableValue(nextStep.dedupeScope) !==
+      this.normalizeNullableValue(currentStep.dedupeScope)
+
     return (
       nextStep.triggerMode !== currentStep.triggerMode ||
       nextStep.targetValue !== currentStep.targetValue ||
-      this.normalizeNullableValue(nextStep.eventCode) !==
-      this.normalizeNullableValue(currentStep.eventCode) ||
-      this.normalizeNullableValue(nextStep.templateKey) !==
-      this.normalizeNullableValue(currentStep.templateKey) ||
-      this.normalizeNullableValue(nextStep.dedupeScope) !==
-      this.normalizeNullableValue(currentStep.dedupeScope) ||
+      eventCodeChanged ||
+      templateKeyChanged ||
+      dedupeScopeChanged ||
       !this.isJsonEqual(nextStep.filterPayload, currentStep.filterPayload)
     )
   }
@@ -460,9 +479,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
     const currentFilters = this.taskEventTemplateRegistry.buildFilterValues(
       currentStep?.templateKey ?? undefined,
       (currentStep?.filterPayload as
-      | Record<string, unknown>
-      | null
-      | undefined) ?? undefined,
+        Record<string, unknown> | null | undefined) ?? undefined,
     )
     let filters = currentFilters
 

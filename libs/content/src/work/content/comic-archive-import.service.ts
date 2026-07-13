@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { WorkflowExecutionContext } from '@libs/platform/modules/workflow/workflow.type'
@@ -15,7 +15,11 @@ import type {
 import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, dirname, extname, join } from 'node:path'
 import { pipeline } from 'node:stream/promises'
-import { DrizzleService } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+} from '@db/core'
 import {
   ContentImportContentTypeEnum,
   ContentImportItemStageEnum,
@@ -72,6 +76,11 @@ const AUTO_IGNORED_ENTRY_NAMES = new Set(['__MACOSX', '.DS_Store', 'Thumbs.db'])
 const CHAPTER_ID_DIRECTORY_RE = /^\d+$/
 const WINDOWS_ABSOLUTE_PATH_RE = /^[a-z]:/i
 
+interface UploadedFileResidue {
+  residueId?: string
+  target: UploadDeleteTarget
+}
+
 /**
  * 漫画压缩包导入服务。
  * 负责预解析 zip、生成前端确认结果，以及驱动确认后的 workflow 导入执行。
@@ -126,8 +135,60 @@ export class ComicArchiveImportService {
     return this.drizzle.schema.contentImportItem
   }
 
+  private get archiveDetailWorkflowJobSelect() {
+    return {
+      status: this.workflowJob.status,
+      progressCode: this.workflowJob.progressCode,
+      progressContext: this.workflowJob.progressContext,
+      progressDetail: this.workflowJob.progressDetail,
+      startedAt: this.workflowJob.startedAt,
+      finishedAt: this.workflowJob.finishedAt,
+      expiresAt: this.workflowJob.expiresAt,
+      createdAt: this.workflowJob.createdAt,
+      updatedAt: this.workflowJob.updatedAt,
+    }
+  }
+
+  private get archiveDetailImportJobSelect() {
+    return {
+      id: this.contentImportJob.id,
+      workId: this.contentImportJob.workId,
+      previewMode: this.contentImportJob.previewMode,
+      archiveName: this.contentImportJob.archiveName,
+      imageTotal: this.contentImportJob.imageTotal,
+      successItemCount: this.contentImportJob.successItemCount,
+      failedItemCount: this.contentImportJob.failedItemCount,
+    }
+  }
+
+  private get archiveDetailPreviewItemSelect() {
+    return {
+      status: this.contentImportPreviewItem.status,
+      metadata: this.contentImportPreviewItem.metadata,
+    }
+  }
+
+  private get archiveDetailItemSelect() {
+    return {
+      localChapterId: this.contentImportItem.localChapterId,
+      targetChapterId: this.contentImportItem.targetChapterId,
+      title: this.contentImportItem.title,
+      imageSuccessCount: this.contentImportItem.imageSuccessCount,
+      status: this.contentImportItem.status,
+      lastErrorCode: this.contentImportItem.lastErrorCode,
+      lastErrorDomain: this.contentImportItem.lastErrorDomain,
+      lastErrorStage: this.contentImportItem.lastErrorStage,
+      lastErrorSeverity: this.contentImportItem.lastErrorSeverity,
+      lastErrorRetryable: this.contentImportItem.lastErrorRetryable,
+      lastErrorContext: this.contentImportItem.lastErrorContext,
+    }
+  }
+
   // 创建预解析会话，前端拿到 jobId 后再发起 multipart 预解析上传。
-  async createPreviewSession(input: CreateComicArchiveSessionDto, userId: number) {
+  async createPreviewSession(
+    input: CreateComicArchiveSessionDto,
+    userId: number,
+  ) {
     await this.assertWorkExists(input.workId)
 
     const now = new Date()
@@ -208,65 +269,72 @@ export class ComicArchiveImportService {
         chapters,
       )
       const now = new Date()
-      await this.drizzle.withTransaction(async (tx) => {
-        await this.lockArchiveDraft(input.jobId, input.workId, tx)
-        await tx
-          .update(this.contentImportJob)
-          .set({
-            archiveName: archiveFile.filename,
-            archivePath,
-            extractPath: extractDir,
-            previewMode: previewResult.mode,
-            selectedItemCount: previewResult.matchedItems.length,
-            imageTotal: previewResult.matchedItems.reduce(
-              (sum, item) => sum + item.imageCount,
-              0,
-            ),
-            updatedAt: now,
-          })
-          .where(eq(this.contentImportJob.id, importJob.id))
-        await tx
-          .delete(this.contentImportPreviewItem)
-          .where(eq(this.contentImportPreviewItem.contentImportJobId, importJob.id))
-        const previewItems = [
-          ...previewResult.matchedItems.map((item) => ({
-            previewItemId: uuidv4(),
-            contentImportJobId: importJob.id,
-            itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
-            sourcePath: item.path,
-            providerChapterId: null,
-            targetChapterId: item.chapterId,
-            title: item.chapterTitle,
-            sortOrder: item.chapterId,
-            imageTotal: item.imageCount,
-            status: 1,
-            ignoreReason: null,
-            warningMessage: null,
-            metadata: item as unknown as Record<string, unknown>,
-            createdAt: now,
-            updatedAt: now,
-          })),
-          ...previewResult.ignoredItems.map((item, index) => ({
-            previewItemId: uuidv4(),
-            contentImportJobId: importJob.id,
-            itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
-            sourcePath: item.path,
-            providerChapterId: null,
-            targetChapterId: null,
-            title: item.path || `ignored-${index + 1}`,
-            sortOrder: index,
-            imageTotal: 0,
-            status: 2,
-            ignoreReason: String(item.reason),
-            warningMessage: null,
-            metadata: item as unknown as Record<string, unknown>,
-            createdAt: now,
-            updatedAt: now,
-          })),
-        ]
-        if (previewItems.length > 0) {
-          await tx.insert(this.contentImportPreviewItem).values(previewItems)
-        }
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          await this.lockArchiveDraft(input.jobId, input.workId, tx)
+          await tx
+            .update(this.contentImportJob)
+            .set({
+              archiveName: archiveFile.filename,
+              archivePath,
+              extractPath: extractDir,
+              previewMode: previewResult.mode,
+              selectedItemCount: previewResult.matchedItems.length,
+              imageTotal: previewResult.matchedItems.reduce(
+                (sum, item) => sum + item.imageCount,
+                0,
+              ),
+              updatedAt: now,
+            })
+            .where(eq(this.contentImportJob.id, importJob.id))
+          await tx
+            .delete(this.contentImportPreviewItem)
+            .where(
+              eq(
+                this.contentImportPreviewItem.contentImportJobId,
+                importJob.id,
+              ),
+            )
+          const previewItems = [
+            ...previewResult.matchedItems.map((item) => ({
+              previewItemId: uuidv4(),
+              contentImportJobId: importJob.id,
+              itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
+              sourcePath: item.path,
+              providerChapterId: null,
+              targetChapterId: item.chapterId,
+              title: item.chapterTitle,
+              sortOrder: item.chapterId,
+              imageTotal: item.imageCount,
+              status: 1,
+              ignoreReason: null,
+              warningMessage: null,
+              metadata: item as unknown as Record<string, unknown>,
+              createdAt: now,
+              updatedAt: now,
+            })),
+            ...previewResult.ignoredItems.map((item, index) => ({
+              previewItemId: uuidv4(),
+              contentImportJobId: importJob.id,
+              itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
+              sourcePath: item.path,
+              providerChapterId: null,
+              targetChapterId: null,
+              title: item.path || `ignored-${index + 1}`,
+              sortOrder: index,
+              imageTotal: 0,
+              status: 2,
+              ignoreReason: String(item.reason),
+              warningMessage: null,
+              metadata: item as unknown as Record<string, unknown>,
+              createdAt: now,
+              updatedAt: now,
+            })),
+          ]
+          if (previewItems.length > 0) {
+            await tx.insert(this.contentImportPreviewItem).values(previewItems)
+          }
+        },
       })
       return await this.getArchiveDetail({ jobId: input.jobId })
     } catch (error) {
@@ -295,64 +363,96 @@ export class ComicArchiveImportService {
       )
     }
 
-    const importJob =
-      await this.contentImportService.readContentImportJobByWorkflowJobId(
-        input.jobId,
-      )
-    await this.assertArchiveDraftOpen(input.jobId, importJob.workId ?? undefined)
-    const previewItems = await this.db
-      .select()
-      .from(this.contentImportPreviewItem)
-      .where(
-        and(
-          eq(this.contentImportPreviewItem.contentImportJobId, importJob.id),
-          inArray(this.contentImportPreviewItem.targetChapterId, confirmedChapterIds),
-        ),
-      )
-    if (previewItems.length !== confirmedChapterIds.length) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '存在未通过预解析确认的章节',
-      )
-    }
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const initialWorkflowJob = await this.readWorkflowJob(input.jobId, tx)
+        const initialImportJob =
+          await this.contentImportService.readContentImportJobByWorkflowJobId(
+            input.jobId,
+            tx,
+          )
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('workflow_job', initialWorkflowJob.id),
+          tableIntegrityLock('content_import_job', initialImportJob.id),
+        ])
+        const { importJob } = await this.assertArchiveDraftOpen(
+          input.jobId,
+          initialImportJob.workId ?? undefined,
+          tx,
+        )
+        const previewItems = await tx
+          .select({
+            targetChapterId: this.contentImportPreviewItem.targetChapterId,
+            title: this.contentImportPreviewItem.title,
+            sortOrder: this.contentImportPreviewItem.sortOrder,
+            imageTotal: this.contentImportPreviewItem.imageTotal,
+            metadata: this.contentImportPreviewItem.metadata,
+          })
+          .from(this.contentImportPreviewItem)
+          .where(
+            and(
+              eq(
+                this.contentImportPreviewItem.contentImportJobId,
+                importJob.id,
+              ),
+              inArray(
+                this.contentImportPreviewItem.targetChapterId,
+                confirmedChapterIds,
+              ),
+            ),
+          )
+        if (previewItems.length !== confirmedChapterIds.length) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '存在未通过预解析确认的章节',
+          )
+        }
 
-    const now = new Date()
-    await this.db.delete(this.contentImportItem).where(
-      eq(this.contentImportItem.contentImportJobId, importJob.id),
-    )
-    await this.db.insert(this.contentImportItem).values(
-      previewItems.map((item) => ({
-        itemId: uuidv4(),
-        contentImportJobId: importJob.id,
-        itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
-        providerChapterId: null,
-        targetChapterId: item.targetChapterId,
-        localChapterId: item.targetChapterId,
-        title: item.title,
-        sortOrder: item.sortOrder,
-        status: ContentImportItemStatusEnum.PENDING,
-        stage: ContentImportItemStageEnum.READING_SOURCE,
-        failureCount: 0,
-        ...toWorkflowLastErrorColumns(null),
-        lastFailedAt: null,
-        ...toWorkflowRetryColumns(null),
-        imageTotal: item.imageTotal,
-        imageSuccessCount: 0,
-        currentAttemptNo: null,
-        metadata: item.metadata as Record<string, unknown>,
-        createdAt: now,
-        updatedAt: now,
-      })),
-    )
-    await this.db
-      .update(this.contentImportJob)
-      .set({
-        selectedItemCount: previewItems.length,
-        imageTotal: previewItems.reduce((sum, item) => sum + item.imageTotal, 0),
-        updatedAt: now,
-      })
-      .where(eq(this.contentImportJob.id, importJob.id))
-    return this.workflowService.confirmDraft({ jobId: input.jobId })
+        const now = new Date()
+        await tx
+          .delete(this.contentImportItem)
+          .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
+        await tx.insert(this.contentImportItem).values(
+          previewItems.map((item) => ({
+            itemId: uuidv4(),
+            contentImportJobId: importJob.id,
+            itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
+            providerChapterId: null,
+            targetChapterId: item.targetChapterId,
+            localChapterId: item.targetChapterId,
+            title: item.title,
+            sortOrder: item.sortOrder,
+            status: ContentImportItemStatusEnum.PENDING,
+            stage: ContentImportItemStageEnum.READING_SOURCE,
+            failureCount: 0,
+            ...toWorkflowLastErrorColumns(null),
+            lastFailedAt: null,
+            ...toWorkflowRetryColumns(null),
+            imageTotal: item.imageTotal,
+            imageSuccessCount: 0,
+            currentAttemptNo: null,
+            metadata: item.metadata as Record<string, unknown>,
+            createdAt: now,
+            updatedAt: now,
+          })),
+        )
+        await tx
+          .update(this.contentImportJob)
+          .set({
+            selectedItemCount: previewItems.length,
+            imageTotal: previewItems.reduce(
+              (sum, item) => sum + item.imageTotal,
+              0,
+            ),
+            updatedAt: now,
+          })
+          .where(eq(this.contentImportJob.id, importJob.id))
+        return this.workflowService.confirmDraftInTransaction(
+          { jobId: input.jobId },
+          tx,
+        )
+      },
+    })
   }
 
   // 丢弃预确认漫画压缩包导入会话，先关闭草稿状态再移除本地临时目录，避免迟到上传复活预览。
@@ -375,19 +475,24 @@ export class ComicArchiveImportService {
   // 查询漫画压缩包导入任务详情，前端可用该接口轮询预解析草稿和 workflow 导入执行状态。
   async getArchiveDetail(input: ComicArchiveDetailInput) {
     const jobId = input.jobId
-    const workflowJob = await this.readWorkflowJob(jobId)
-    const importJob =
-      await this.contentImportService.readContentImportJobByWorkflowJobId(jobId)
+    const workflowJob = await this.readArchiveDetailWorkflowJob(jobId)
+    const importJob = await this.readArchiveDetailImportJob(jobId)
     const previewItems = await this.db
-      .select()
+      .select(this.archiveDetailPreviewItemSelect)
       .from(this.contentImportPreviewItem)
       .where(eq(this.contentImportPreviewItem.contentImportJobId, importJob.id))
-      .orderBy(asc(this.contentImportPreviewItem.sortOrder), asc(this.contentImportPreviewItem.id))
+      .orderBy(
+        asc(this.contentImportPreviewItem.sortOrder),
+        asc(this.contentImportPreviewItem.id),
+      )
     const items = await this.db
-      .select()
+      .select(this.archiveDetailItemSelect)
       .from(this.contentImportItem)
       .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
-      .orderBy(asc(this.contentImportItem.sortOrder), asc(this.contentImportItem.id))
+      .orderBy(
+        asc(this.contentImportItem.sortOrder),
+        asc(this.contentImportItem.id),
+      )
 
     return {
       jobId,
@@ -415,20 +520,28 @@ export class ComicArchiveImportService {
               : ComicArchiveImportItemStatusEnum.PENDING,
       })),
       progressCode: workflowJob.progressCode ?? null,
-      progressContext: this.toNullableWorkflowObject(workflowJob.progressContext),
+      progressContext: this.toNullableWorkflowObject(
+        workflowJob.progressContext,
+      ),
       progressDetail: this.toNullableWorkflowObject(workflowJob.progressDetail),
       confirmedChapterIds: items
         .map((item) => item.localChapterId ?? item.targetChapterId)
-        .filter((chapterId): chapterId is number => typeof chapterId === 'number'),
+        .filter(
+          (chapterId): chapterId is number => typeof chapterId === 'number',
+        ),
       startedAt: workflowJob.startedAt ?? null,
       finishedAt: workflowJob.finishedAt ?? null,
       expiresAt:
         workflowJob.expiresAt ??
         new Date(workflowJob.createdAt.getTime() + ARCHIVE_TASK_TTL_MS),
-      lastError: items.map(item => toWorkflowLastErrorView(item)).find(Boolean) ?? null,
+      lastError:
+        items.map((item) => toWorkflowLastErrorView(item)).find(Boolean) ??
+        null,
       summary: {
-        matchedChapterCount: previewItems.filter((item) => item.status === 1).length,
-        ignoredItemCount: previewItems.filter((item) => item.status === 2).length,
+        matchedChapterCount: previewItems.filter((item) => item.status === 1)
+          .length,
+        ignoredItemCount: previewItems.filter((item) => item.status === 2)
+          .length,
         imageCount: importJob.imageTotal,
         successCount: importJob.successItemCount,
         failureCount: importJob.failedItemCount,
@@ -472,9 +585,13 @@ export class ComicArchiveImportService {
         context.attemptId,
         item.itemId,
       )
-      const matchedItem = item.metadata as unknown as ComicArchiveMatchedItemRecord
+      const matchedItem =
+        item.metadata as ComicArchiveMatchedItemRecord
       try {
-        await this.cleanupPendingUploadedFileResidues(context.jobId, item.itemId)
+        await this.cleanupPendingUploadedFileResidues(
+          context.jobId,
+          item.itemId,
+        )
         const contents = await this.importChapter(
           { ...record, chapterIndex: index + 1, itemId: item.itemId },
           matchedItem,
@@ -564,9 +681,12 @@ export class ComicArchiveImportService {
   }
 
   // 使用公开 workflow jobId 读取 workflow job。
-  private async readWorkflowJob(jobId: string) {
-    const [row] = await this.db
-      .select()
+  private async readWorkflowJob(jobId: string, db: DbExecutor = this.db) {
+    const [row] = await db
+      .select({
+        id: this.workflowJob.id,
+        status: this.workflowJob.status,
+      })
       .from(this.workflowJob)
       .where(eq(this.workflowJob.jobId, jobId))
       .limit(1)
@@ -574,6 +694,42 @@ export class ComicArchiveImportService {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '工作流任务不存在',
+      )
+    }
+    return row
+  }
+
+  // 归档详情只读取对外轮询需要的 workflow 状态和进度字段，不能复用写链完整读取器。
+  private async readArchiveDetailWorkflowJob(jobId: string) {
+    const [row] = await this.db
+      .select(this.archiveDetailWorkflowJobSelect)
+      .from(this.workflowJob)
+      .where(eq(this.workflowJob.jobId, jobId))
+      .limit(1)
+    if (!row) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '工作流任务不存在',
+      )
+    }
+    return row
+  }
+
+  // 归档详情使用独立的导入任务视图，避免把本地路径和执行诊断带到轮询链路。
+  private async readArchiveDetailImportJob(jobId: string) {
+    const [row] = await this.db
+      .select(this.archiveDetailImportJobSelect)
+      .from(this.contentImportJob)
+      .innerJoin(
+        this.workflowJob,
+        eq(this.contentImportJob.workflowJobId, this.workflowJob.id),
+      )
+      .where(eq(this.workflowJob.jobId, jobId))
+      .limit(1)
+    if (!row) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '内容导入任务不存在',
       )
     }
     return row
@@ -587,8 +743,12 @@ export class ComicArchiveImportService {
   }
 
   // 校验压缩包预解析 workflow 仍处于草稿态。
-  private async assertArchiveDraftOpen(jobId: string, workId?: number) {
-    const workflowJob = await this.readWorkflowJob(jobId)
+  private async assertArchiveDraftOpen(
+    jobId: string,
+    workId?: number,
+    db: DbExecutor = this.db,
+  ) {
+    const workflowJob = await this.readWorkflowJob(jobId, db)
     if (workflowJob.status !== WorkflowJobStatusEnum.DRAFT) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
@@ -596,7 +756,10 @@ export class ComicArchiveImportService {
       )
     }
     const importJob =
-      await this.contentImportService.readContentImportJobByWorkflowJobId(jobId)
+      await this.contentImportService.readContentImportJobByWorkflowJobId(
+        jobId,
+        db,
+      )
     if (
       importJob.sourceType !== ContentImportSourceTypeEnum.ARCHIVE_IMPORT ||
       (workId !== undefined && importJob.workId !== workId)
@@ -610,7 +773,11 @@ export class ComicArchiveImportService {
   }
 
   // 在事务内锁住草稿 workflow，避免 discard 与迟到 preview 并发写入。
-  private async lockArchiveDraft(jobId: string, workId: number, tx: Db) {
+  private async lockArchiveDraft(
+    jobId: string,
+    workId: number,
+    tx: DbExecutor,
+  ) {
     const now = new Date()
     const [workflowJob] = await tx
       .update(this.workflowJob)
@@ -629,7 +796,10 @@ export class ComicArchiveImportService {
       )
     }
     const importJob =
-      await this.contentImportService.readContentImportJobByWorkflowJobId(jobId, tx)
+      await this.contentImportService.readContentImportJobByWorkflowJobId(
+        jobId,
+        tx,
+      )
     if (
       importJob.sourceType !== ContentImportSourceTypeEnum.ARCHIVE_IMPORT ||
       importJob.workId !== workId
@@ -734,11 +904,13 @@ export class ComicArchiveImportService {
       const residueIds = uploadedFiles
         .map((item) => item.residueId)
         .filter((residueId): residueId is string => Boolean(residueId))
-      await this.drizzle.withTransaction(
-        async (tx) => {
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
           const updateResult = await tx
             .update(this.workChapter)
-            .set({ comicContentManifest: contents.length > 0 ? contents : null })
+            .set({
+              comicContentManifest: contents.length > 0 ? contents : null,
+            })
             .where(
               and(
                 eq(this.workChapter.id, matchedItem.chapterId),
@@ -749,8 +921,8 @@ export class ComicArchiveImportService {
           this.drizzle.assertAffectedRows(updateResult, '章节不存在')
           await this.contentImportService.markResiduesCleaned(residueIds, tx)
         },
-        { notFound: '章节不存在' },
-      )
+        messages: { notFound: '章节不存在' },
+      })
       contentPersisted = true
       return contents
     } catch (error) {
@@ -762,9 +934,7 @@ export class ComicArchiveImportService {
   }
 
   // 删除本章节失败前已经上传的图片，保证章节失败不会留下部分外部文件。
-  private async cleanupUploadedFiles(
-    uploadedFiles: Array<{ residueId?: string, target: UploadDeleteTarget }>,
-  ) {
+  private async cleanupUploadedFiles(uploadedFiles: UploadedFileResidue[]) {
     const cleanupFailures: string[] = []
     for (const uploadedFile of uploadedFiles.reverse()) {
       try {
@@ -782,7 +952,10 @@ export class ComicArchiveImportService {
         )
         if (uploadedFile.residueId) {
           await this.contentImportService
-            .markResidueCleanupFailed(uploadedFile.residueId, this.stringifyError(error))
+            .markResidueCleanupFailed(
+              uploadedFile.residueId,
+              this.stringifyError(error),
+            )
             .catch(() => undefined)
         }
       }
@@ -843,7 +1016,10 @@ export class ComicArchiveImportService {
       if (entry.isFile()) {
         ignoredItems.push({
           code: WorkflowErrorCodeEnum.ARCHIVE_IMPORT_ITEM_IGNORED,
-          context: { path: entry.name, reason: ComicArchiveIgnoreReasonEnum.NESTED_DIRECTORY_IGNORED },
+          context: {
+            path: entry.name,
+            reason: ComicArchiveIgnoreReasonEnum.NESTED_DIRECTORY_IGNORED,
+          },
           path: entry.name,
           reason: ComicArchiveIgnoreReasonEnum.NESTED_DIRECTORY_IGNORED,
         })
@@ -1145,20 +1321,20 @@ export class ComicArchiveImportService {
 
   // 加载 work Chapters。
   private async loadWorkChapters(workId: number) {
-    const chapters = await this.db.query.workChapter.findMany({
-      where: {
-        workId,
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        id: true,
-        title: true,
-        comicContentManifest: true,
-      },
-      orderBy: {
-        sortOrder: 'asc',
-      },
-    })
+    const chapters = await this.db
+      .select({
+        id: this.workChapter.id,
+        title: this.workChapter.title,
+        comicContentManifest: this.workChapter.comicContentManifest,
+      })
+      .from(this.workChapter)
+      .where(
+        and(
+          eq(this.workChapter.workId, workId),
+          isNull(this.workChapter.deletedAt),
+        ),
+      )
+      .orderBy(asc(this.workChapter.sortOrder))
     return chapters.map((chapter) => ({
       id: chapter.id,
       title: chapter.title,
@@ -1213,7 +1389,10 @@ export class ComicArchiveImportService {
   }
 
   // 清理失败/取消后仍处于 pending 的外部上传文件残留。
-  private async cleanupPendingUploadedFileResidues(jobId: string, itemId?: string) {
+  private async cleanupPendingUploadedFileResidues(
+    jobId: string,
+    itemId?: string,
+  ) {
     const residues =
       await this.contentImportService.listPendingUploadedFileResidues(jobId, {
         itemId,
@@ -1225,7 +1404,10 @@ export class ComicArchiveImportService {
         await this.contentImportService.markResiduesCleaned([residue.residueId])
       } catch (error) {
         await this.contentImportService
-          .markResidueCleanupFailed(residue.residueId, this.stringifyError(error))
+          .markResidueCleanupFailed(
+            residue.residueId,
+            this.stringifyError(error),
+          )
           .catch(() => undefined)
         cleanupFailures.push(
           `${residue.deleteTarget.provider}:${residue.deleteTarget.filePath} (${this.stringifyError(

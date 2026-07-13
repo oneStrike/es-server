@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import * as runtimeSchema from '@db/schema'
@@ -7,7 +8,6 @@ import {
   getTableUniqueName,
   isTable,
 } from 'drizzle-orm'
-import { Pool } from 'pg'
 import ts from 'typescript'
 
 const DB_DIR = resolve(__dirname, '..')
@@ -52,14 +52,19 @@ interface WriteSchemaCommentsResult {
 interface ApplySchemaCommentsResult {
   appliedStatementCount: number
   outputPath: string
+  sqlSha256: string
 }
 
 export interface BuildSchemaCommentsOptions {
   outputPath?: string
 }
 
+export interface SchemaCommentsExecutor {
+  query: (sqlText: string) => Promise<unknown>
+}
+
 export interface ApplySchemaCommentsOptions extends BuildSchemaCommentsOptions {
-  databaseUrl: string
+  executor: SchemaCommentsExecutor
 }
 
 export function getSchemaCommentsOutputPath(
@@ -208,20 +213,13 @@ export async function applySchemaComments(
 ): Promise<ApplySchemaCommentsResult> {
   const artifact = buildSchemaCommentsArtifact(options)
 
-  const pool = new Pool({
-    connectionString: options.databaseUrl,
-  })
-
-  try {
-    await pool.query(artifact.sql)
-  } finally {
-    await pool.end()
-  }
+  await options.executor.query(artifact.sql)
 
   return {
     appliedStatementCount:
       artifact.tableCommentCount + artifact.columnCommentCount,
     outputPath: artifact.outputPath,
+    sqlSha256: createHash('sha256').update(artifact.sql, 'utf8').digest('hex'),
   }
 }
 

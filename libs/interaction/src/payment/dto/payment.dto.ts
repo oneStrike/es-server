@@ -35,7 +35,8 @@ export class BasePaymentProviderConfigDto extends BaseDto {
   paymentScene!: PaymentSceneEnum
 
   @EnumProperty({
-    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
+    description:
+      '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
   })
@@ -269,7 +270,7 @@ export class PaymentProviderConfigOptionalWritableFieldsDto extends PartialType(
     'certMode',
     'sortOrder',
     'isEnabled',
-  ] as const,)
+  ] as const),
 ) {}
 
 export class CreatePaymentProviderConfigDto extends IntersectionType(
@@ -297,6 +298,22 @@ export class QueryPaymentProviderConfigDto extends IntersectionType(
       'isEnabled',
     ] as const),
   ),
+) {}
+
+/**
+ * 支付 provider 账号选项查询条件。
+ *
+ * 该接口始终返回受限数量的完整选项列表，不能继承分页、排序或日期查询字段。
+ */
+export class PaymentProviderAccountOptionQueryDto extends PartialType(
+  PickType(BasePaymentProviderConfigDto, [
+    'channel',
+    'paymentScene',
+    'platform',
+    'environment',
+    'clientAppKey',
+    'isEnabled',
+  ] as const),
 ) {}
 
 export class AdminPaymentProviderConfigPageItemDto extends PickType(
@@ -355,7 +372,8 @@ export class PaymentProviderAccountOptionDto {
   paymentScene!: PaymentSceneEnum
 
   @EnumProperty({
-    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
+    description:
+      '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
     validation: false,
@@ -416,7 +434,8 @@ export class PaymentProviderCredentialOptionQueryDto {
   channel?: PaymentChannelEnum
 
   @NumberProperty({
-    description: '凭据用途（1=应用私钥；2=支付宝公钥；3=微信 APIv3 key；4=商户私钥）',
+    description:
+      '凭据用途（1=应用私钥；2=支付宝公钥；3=微信 APIv3 key；4=商户私钥）',
     example: 1,
     min: 1,
     required: false,
@@ -456,7 +475,8 @@ export class PaymentProviderCredentialOptionDto {
   channel!: PaymentChannelEnum
 
   @NumberProperty({
-    description: '凭据用途（1=应用私钥；2=支付宝公钥；3=微信 APIv3 key；4=商户私钥）',
+    description:
+      '凭据用途（1=应用私钥；2=支付宝公钥；3=微信 APIv3 key；4=商户私钥）',
     example: 1,
     validation: false,
   })
@@ -666,7 +686,8 @@ export class BasePaymentOrderDto extends BaseDto {
   paymentScene!: PaymentSceneEnum
 
   @EnumProperty({
-    description: '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
+    description:
+      '客户端平台（1=安卓端；2=苹果端；3=鸿蒙端；4=网页端；5=小程序）',
     enum: ClientPlatformEnum,
     example: ClientPlatformEnum.ANDROID,
   })
@@ -1055,7 +1076,8 @@ export class AdminPaymentReconciliationPageItemDto extends BaseDto {
   status!: number
 
   @EnumProperty({
-    description: '本地订单状态（1=待支付；2=已支付；3=已关闭；4=退款中；5=已退款）',
+    description:
+      '本地订单状态（1=待支付；2=已支付；3=已关闭；4=退款中；5=已退款）',
     enum: PaymentOrderStatusEnum,
     example: PaymentOrderStatusEnum.PENDING,
     validation: false,

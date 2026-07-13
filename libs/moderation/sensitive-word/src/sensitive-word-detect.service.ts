@@ -1,8 +1,8 @@
-import type { SensitiveWordSelect } from '@db/schema'
 import type {
   SensitiveWordDetectDto,
   SensitiveWordReplaceDto,
 } from './dto/sensitive-word.dto'
+import type { SensitiveWordDetectorRow } from './sensitive-word-cache.service'
 import type { SensitiveWordLevelEnum } from './sensitive-word-constant'
 import type {
   FuzzyMatchResult,
@@ -26,7 +26,7 @@ import { FuzzyMatcher } from './utils/fuzzy-matcher'
 export class SensitiveWordDetectService implements OnModuleInit {
   private automaton: ACAutomaton
   private fuzzyMatcher: FuzzyMatcher
-  private wordMap: Map<string, SensitiveWordSelect>
+  private wordMap: Map<string, SensitiveWordDetectorRow>
   private isInitialized: boolean
 
   constructor(private readonly cacheService: SensitiveWordCacheService) {
@@ -47,7 +47,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   // 成功加载空词库也视为就绪，避免把“无词”误判成初始化失败。
-  initialize(words: SensitiveWordSelect[]) {
+  initialize(words: SensitiveWordDetectorRow[]) {
     this.resetDetector()
 
     const activeWords = words.filter((word) => word.isEnabled && word.word)
@@ -161,7 +161,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   // 缓存链路失败时回退数据库直读，避免审核在故障窗口内直接失效。
   private async loadWordsWithFallback(
     options: { preloadCache?: boolean } = {},
-  ) {
+  ): Promise<SensitiveWordDetectorRow[]> {
     try {
       if (options.preloadCache) {
         await this.cacheService.preloadCache()

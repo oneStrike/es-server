@@ -91,7 +91,18 @@ export class AuthService {
 
     // 查找用户
     const [user] = await this.db
-      .select()
+      .select({
+        id: this.adminUserTable.id,
+        username: this.adminUserTable.username,
+        password: this.adminUserTable.password,
+        mobile: this.adminUserTable.mobile,
+        avatar: this.adminUserTable.avatar,
+        isEnabled: this.adminUserTable.isEnabled,
+        lastLoginAt: this.adminUserTable.lastLoginAt,
+        lastLoginIp: this.adminUserTable.lastLoginIp,
+        createdAt: this.adminUserTable.createdAt,
+        updatedAt: this.adminUserTable.updatedAt,
+      })
       .from(this.adminUserTable)
       .where(eq(this.adminUserTable.username, body.username))
       .limit(1)
@@ -172,16 +183,17 @@ export class AuthService {
 
     await this.authSessionService.persistTokens(user.id, tokens, clientContext)
 
-    // 去除 user 对象的 password 属性并返回当前用户授权视图。
-    const { password: _password, ...userWithoutPassword } = user
-
     return {
       user: {
-        ...userWithoutPassword,
+        id: user.id,
+        username: user.username,
         mobile: user.mobile ?? null,
         avatar: user.avatar ?? null,
+        isEnabled: user.isEnabled,
         lastLoginAt,
         lastLoginIp,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
         roleIds: roles.map((role) => role.id),
         roles,
         accessCodes: snapshot.permissionCodes,

@@ -66,10 +66,6 @@ export const workTag = snakeCase.table(
      */
     index('work_tag_sort_order_idx').on(table.sortOrder),
     /**
-     * 名称索引
-     */
-    index('work_tag_name_idx').on(table.name),
-    /**
      * 启用状态索引
      */
     index('work_tag_is_enabled_idx').on(table.isEnabled),

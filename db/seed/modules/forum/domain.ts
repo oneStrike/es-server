@@ -30,6 +30,7 @@ import {
   ForumHashtagReferenceSourceTypeEnum,
 } from '@libs/forum/hashtag/forum-hashtag.constant'
 import {
+  ForumGovernanceActorTypeEnum,
   ForumModeratorActionTargetTypeEnum,
   ForumModeratorActionTypeEnum,
 } from '@libs/forum/moderator/moderator-action-log.constant'
@@ -46,7 +47,7 @@ import {
   CommentLevelEnum,
   SceneTypeEnum,
 } from '@libs/platform/constant'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   addMinutes,
   SEED_READER_ACCOUNT_SLUGS,
@@ -1031,6 +1032,10 @@ interface SeedCommentRow {
   createdAt: Date
 }
 
+interface SeedSectionSnapshot {
+  id: number
+}
+
 interface SeedMentionTarget {
   userId: number
   nickname: string
@@ -1073,10 +1078,12 @@ export async function seedForumReferenceDomain(db: Db) {
 
   for (const groupFixture of SECTION_GROUP_FIXTURES) {
     const existing = await db.query.forumSectionGroup.findFirst({
-      where: and(
-        eq(forumSectionGroup.name, groupFixture.name),
-        isNull(forumSectionGroup.deletedAt),
-      ),
+      where: {
+        AND: [{ name: groupFixture.name }, { deletedAt: { isNull: true } }],
+      },
+      columns: {
+        id: true,
+      },
     })
 
     if (!existing) {
@@ -1098,17 +1105,29 @@ export async function seedForumReferenceDomain(db: Db) {
 
   for (const sectionFixture of SECTION_FIXTURES) {
     const group = await db.query.forumSectionGroup.findFirst({
-      where: and(
-        eq(forumSectionGroup.name, sectionFixture.groupName),
-        isNull(forumSectionGroup.deletedAt),
-      ),
+      where: {
+        AND: [
+          { name: sectionFixture.groupName },
+          { deletedAt: { isNull: true } },
+        ],
+      },
+      columns: {
+        id: true,
+      },
     })
 
     const existing = await db.query.forumSection.findFirst({
-      where: and(
-        eq(forumSection.name, sectionFixture.name),
-        isNull(forumSection.deletedAt),
-      ),
+      where: {
+        AND: [{ name: sectionFixture.name }, { deletedAt: { isNull: true } }],
+      },
+      columns: {
+        id: true,
+        topicCount: true,
+        commentCount: true,
+        followersCount: true,
+        lastPostAt: true,
+        lastTopicId: true,
+      },
     })
 
     const payload = {
@@ -1159,10 +1178,12 @@ export async function seedForumActivityDomain(db: Db) {
 
   for (const [sectionIndex, sectionFixture] of SECTION_FIXTURES.entries()) {
     const section = await db.query.forumSection.findFirst({
-      where: and(
-        eq(forumSection.name, sectionFixture.name),
-        isNull(forumSection.deletedAt),
-      ),
+      where: {
+        AND: [{ name: sectionFixture.name }, { deletedAt: { isNull: true } }],
+      },
+      columns: {
+        id: true,
+      },
     })
     if (!section) {
       continue
@@ -1296,6 +1317,12 @@ async function resetForumSimulationData(db: Db) {
           AND target_id IN (SELECT id FROM target_comments))
       RETURNING id
     ),
+    deleted_comment_floor_counters AS (
+      DELETE FROM user_comment_floor_counter
+      WHERE target_type = ${FORUM_TOPIC_COMMENT_TARGET_TYPE}
+        AND target_id IN (SELECT id FROM target_topics)
+      RETURNING id
+    ),
     deleted_comments AS (
       DELETE FROM user_comment
       WHERE id IN (SELECT id FROM target_comments)
@@ -1340,7 +1367,9 @@ async function resetForumSimulationData(db: Db) {
       (SELECT COUNT(*) FROM deleted_perf_sections) AS perf_section_count,
       (SELECT COUNT(*) FROM deleted_hashtag_refs) AS hashtag_ref_count,
       (SELECT COUNT(*) FROM deleted_mentions) AS mention_count,
-      (SELECT COUNT(*) FROM deleted_orphan_seed_hashtags) AS hashtag_count
+      (SELECT COUNT(*) FROM deleted_orphan_seed_hashtags) AS hashtag_count,
+      (SELECT COUNT(*) FROM deleted_comment_floor_counters)
+        AS comment_floor_counter_count
   `)
 
   await db.execute(sql`
@@ -1367,7 +1396,17 @@ async function resetForumSimulationData(db: Db) {
 
 async function loadSeedUsers(db: Db) {
   const users = await db
-    .select()
+    .select({
+      id: appUser.id,
+      account: appUser.account,
+      nickname: appUser.nickname,
+      lastLoginIp: appUser.lastLoginIp,
+      lastLoginGeoCountry: appUser.lastLoginGeoCountry,
+      lastLoginGeoProvince: appUser.lastLoginGeoProvince,
+      lastLoginGeoCity: appUser.lastLoginGeoCity,
+      lastLoginGeoIsp: appUser.lastLoginGeoIsp,
+      deletedAt: appUser.deletedAt,
+    })
     .from(appUser)
     .where(
       and(
@@ -1398,7 +1437,10 @@ async function loadSeedUsers(db: Db) {
 async function ensureForumModerator(db: Db, seedUsers: SeedUserRow[]) {
   const moderatorUser = seedUsers[2] ?? seedUsers[0]
   let moderator = await db.query.forumModerator.findFirst({
-    where: eq(forumModerator.userId, moderatorUser.id),
+    where: { userId: moderatorUser.id },
+    columns: {
+      id: true,
+    },
   })
 
   const payload = {
@@ -1421,19 +1463,21 @@ async function ensureForumModerator(db: Db, seedUsers: SeedUserRow[]) {
   }
 
   const targetSection = await db.query.forumSection.findFirst({
-    where: and(
-      eq(forumSection.name, '新番追更'),
-      isNull(forumSection.deletedAt),
-    ),
+    where: { AND: [{ name: '新番追更' }, { deletedAt: { isNull: true } }] },
+    columns: {
+      id: true,
+    },
   })
   const applicant = seedUsers[0]
   if (targetSection && applicant) {
     const existingApplication =
       await db.query.forumModeratorApplication.findFirst({
-        where: and(
-          eq(forumModeratorApplication.applicantId, applicant.id),
-          eq(forumModeratorApplication.sectionId, targetSection.id),
-        ),
+        where: {
+          AND: [{ applicantId: applicant.id }, { sectionId: targetSection.id }],
+        },
+        columns: {
+          id: true,
+        },
       })
     const applicationPayload = {
       applicantId: applicant.id,
@@ -1465,10 +1509,10 @@ async function ensureModeratorSection(
   sectionId: number,
 ) {
   const existingRelation = await db.query.forumModeratorSection.findFirst({
-    where: and(
-      eq(forumModeratorSection.moderatorId, moderatorId),
-      eq(forumModeratorSection.sectionId, sectionId),
-    ),
+    where: { AND: [{ moderatorId }, { sectionId }] },
+    columns: {
+      moderatorId: true,
+    },
   })
 
   const payload = {
@@ -1495,7 +1539,7 @@ async function ensureModeratorSection(
 async function seedSectionTopics(
   db: Db,
   input: {
-    section: typeof forumSection.$inferSelect
+    section: SeedSectionSnapshot
     sectionIndex: number
     sectionFixture: (typeof SECTION_FIXTURES)[number]
     seedUsers: SeedUserRow[]
@@ -1549,11 +1593,26 @@ async function seedSectionTopics(
     const isFeatured = topicIndex % 11 === 0 || topicIndex === 3
 
     const existingTopic = await db.query.forumTopic.findFirst({
-      where: and(
-        eq(forumTopic.sectionId, input.section.id),
-        eq(forumTopic.title, title),
-        isNull(forumTopic.deletedAt),
-      ),
+      where: {
+        AND: [
+          { sectionId: input.section.id },
+          { title },
+          { deletedAt: { isNull: true } },
+        ],
+      },
+      columns: {
+        id: true,
+        sectionId: true,
+        userId: true,
+        title: true,
+        lastCommentUserId: true,
+        version: true,
+        viewCount: true,
+        likeCount: true,
+        commentCount: true,
+        favoriteCount: true,
+        lastCommentAt: true,
+      },
     })
 
     const topicPayload = {
@@ -1630,6 +1689,7 @@ async function seedSectionTopics(
     if (isPinned || isFeatured) {
       await ensureModeratorTopicLog(db, {
         moderatorId: input.moderatorId,
+        actorUserId: input.moderatorUserId,
         topicId: currentTopic.id,
         actionType: isPinned
           ? ForumModeratorActionTypeEnum.PIN_TOPIC
@@ -1711,12 +1771,20 @@ async function seedTopicComments(
     )
 
     const existingComment = await db.query.userComment.findFirst({
-      where: and(
-        eq(userComment.targetType, FORUM_TOPIC_COMMENT_TARGET_TYPE),
-        eq(userComment.targetId, topic.id),
-        eq(userComment.userId, commenter.id),
-        eq(userComment.content, content),
-      ),
+      where: {
+        AND: [
+          { targetType: FORUM_TOPIC_COMMENT_TARGET_TYPE },
+          { targetId: topic.id },
+          { userId: commenter.id },
+          { content },
+        ],
+      },
+      columns: {
+        id: true,
+        userId: true,
+        floor: true,
+        likeCount: true,
+      },
     })
 
     const commentPayload = {
@@ -1730,7 +1798,7 @@ async function seedTopicComments(
       isHidden: false,
       auditStatus: 1,
       auditById: null,
-      auditRole: 0,
+      auditRole: null,
       auditReason: 'seed: 演示评论自动通过',
       auditAt: addMinutes(createdAt, 2),
       likeCount: existingComment?.likeCount ?? 0,
@@ -1804,11 +1872,16 @@ async function seedTopicLikes(
   ])
   for (const user of users) {
     const existing = await db.query.userLike.findFirst({
-      where: and(
-        eq(userLike.targetType, FORUM_TOPIC_LIKE_TARGET_TYPE),
-        eq(userLike.targetId, topic.id),
-        eq(userLike.userId, user.id),
-      ),
+      where: {
+        AND: [
+          { targetType: FORUM_TOPIC_LIKE_TARGET_TYPE },
+          { targetId: topic.id },
+          { userId: user.id },
+        ],
+      },
+      columns: {
+        id: true,
+      },
     })
     if (!existing) {
       await db.insert(userLike).values({
@@ -1845,11 +1918,16 @@ async function seedTopicFavorites(
   ])
   for (const user of users) {
     const existing = await db.query.userFavorite.findFirst({
-      where: and(
-        eq(userFavorite.targetType, FORUM_TOPIC_FAVORITE_TARGET_TYPE),
-        eq(userFavorite.targetId, topic.id),
-        eq(userFavorite.userId, user.id),
-      ),
+      where: {
+        AND: [
+          { targetType: FORUM_TOPIC_FAVORITE_TARGET_TYPE },
+          { targetId: topic.id },
+          { userId: user.id },
+        ],
+      },
+      columns: {
+        id: true,
+      },
     })
     if (!existing) {
       await db.insert(userFavorite).values({
@@ -1881,11 +1959,16 @@ async function seedTopicBrowseLogs(
   const users = pickUniqueUsers(seedUsers, random, randomInt(random, 5, 18), [])
   for (const user of users) {
     const existing = await db.query.userBrowseLog.findFirst({
-      where: and(
-        eq(userBrowseLog.targetType, FORUM_TOPIC_BROWSE_TARGET_TYPE),
-        eq(userBrowseLog.targetId, topic.id),
-        eq(userBrowseLog.userId, user.id),
-      ),
+      where: {
+        AND: [
+          { targetType: FORUM_TOPIC_BROWSE_TARGET_TYPE },
+          { targetId: topic.id },
+          { userId: user.id },
+        ],
+      },
+      columns: {
+        id: true,
+      },
     })
     const payload = {
       targetType: FORUM_TOPIC_BROWSE_TARGET_TYPE,
@@ -1920,11 +2003,16 @@ async function seedCommentLikes(
     ])
     for (const user of users) {
       const existing = await db.query.userLike.findFirst({
-        where: and(
-          eq(userLike.targetType, LikeTargetTypeEnum.COMMENT),
-          eq(userLike.targetId, comment.id),
-          eq(userLike.userId, user.id),
-        ),
+        where: {
+          AND: [
+            { targetType: LikeTargetTypeEnum.COMMENT },
+            { targetId: comment.id },
+            { userId: user.id },
+          ],
+        },
+        columns: {
+          id: true,
+        },
       })
       if (!existing) {
         await db.insert(userLike).values({
@@ -1953,10 +2041,15 @@ async function seedCommentLikes(
     }
 
     const likes = await db.query.userLike.findMany({
-      where: and(
-        eq(userLike.targetType, LikeTargetTypeEnum.COMMENT),
-        eq(userLike.targetId, comment.id),
-      ),
+      where: {
+        AND: [
+          { targetType: LikeTargetTypeEnum.COMMENT },
+          { targetId: comment.id },
+        ],
+      },
+      columns: {
+        id: true,
+      },
     })
     await db
       .update(userComment)
@@ -1967,31 +2060,52 @@ async function seedCommentLikes(
 
 async function rebuildTopicCounter(db: Db, topicId: number) {
   const comments = await db.query.userComment.findMany({
-    where: and(
-      eq(userComment.targetType, FORUM_TOPIC_COMMENT_TARGET_TYPE),
-      eq(userComment.targetId, topicId),
-      eq(userComment.auditStatus, 1),
-      eq(userComment.isHidden, false),
-      isNull(userComment.deletedAt),
-    ),
+    where: {
+      AND: [
+        { targetType: FORUM_TOPIC_COMMENT_TARGET_TYPE },
+        { targetId: topicId },
+        { auditStatus: 1 },
+        { isHidden: false },
+        { deletedAt: { isNull: true } },
+      ],
+    },
+    columns: {
+      userId: true,
+      createdAt: true,
+    },
   })
   const likes = await db.query.userLike.findMany({
-    where: and(
-      eq(userLike.targetType, FORUM_TOPIC_LIKE_TARGET_TYPE),
-      eq(userLike.targetId, topicId),
-    ),
+    where: {
+      AND: [
+        { targetType: FORUM_TOPIC_LIKE_TARGET_TYPE },
+        { targetId: topicId },
+      ],
+    },
+    columns: {
+      id: true,
+    },
   })
   const favorites = await db.query.userFavorite.findMany({
-    where: and(
-      eq(userFavorite.targetType, FORUM_TOPIC_FAVORITE_TARGET_TYPE),
-      eq(userFavorite.targetId, topicId),
-    ),
+    where: {
+      AND: [
+        { targetType: FORUM_TOPIC_FAVORITE_TARGET_TYPE },
+        { targetId: topicId },
+      ],
+    },
+    columns: {
+      id: true,
+    },
   })
   const browseLogs = await db.query.userBrowseLog.findMany({
-    where: and(
-      eq(userBrowseLog.targetType, FORUM_TOPIC_BROWSE_TARGET_TYPE),
-      eq(userBrowseLog.targetId, topicId),
-    ),
+    where: {
+      AND: [
+        { targetType: FORUM_TOPIC_BROWSE_TARGET_TYPE },
+        { targetId: topicId },
+      ],
+    },
+    columns: {
+      id: true,
+    },
   })
   const latestComment = [...comments]
     .sort(
@@ -2020,17 +2134,28 @@ async function rebuildForumCounters(db: Db, sectionIds: number[]) {
   }
 
   const sections = await db.query.forumSection.findMany({
-    where: inArray(forumSection.id, sectionIds),
+    where: { id: { in: sectionIds } },
+    columns: {
+      id: true,
+    },
   })
 
   for (const section of sections) {
     const topics = await db.query.forumTopic.findMany({
-      where: and(
-        eq(forumTopic.sectionId, section.id),
-        eq(forumTopic.auditStatus, 1),
-        eq(forumTopic.isHidden, false),
-        isNull(forumTopic.deletedAt),
-      ),
+      where: {
+        AND: [
+          { sectionId: section.id },
+          { auditStatus: 1 },
+          { isHidden: false },
+          { deletedAt: { isNull: true } },
+        ],
+      },
+      columns: {
+        id: true,
+        commentCount: true,
+        lastCommentAt: true,
+        createdAt: true,
+      },
     })
     const lastTopic = [...topics]
       .sort((left, right) => {
@@ -2096,7 +2221,8 @@ async function rebuildForumHashtagCounters(db: Db) {
     SET
       topic_ref_count = stats.topic_ref_count,
       comment_ref_count = stats.comment_ref_count,
-      last_referenced_at = stats.last_referenced_at
+      last_referenced_at = stats.last_referenced_at,
+      updated_at = now()
     FROM stats
     WHERE h.id = stats.hashtag_id
   `)
@@ -2105,47 +2231,71 @@ async function rebuildForumHashtagCounters(db: Db) {
 async function rebuildSeedUserCounters(db: Db, seedUsers: SeedUserRow[]) {
   for (const user of seedUsers) {
     const comments = await db.query.userComment.findMany({
-      where: and(
-        eq(userComment.userId, user.id),
-        isNull(userComment.deletedAt),
-      ),
+      where: { AND: [{ userId: user.id }, { deletedAt: { isNull: true } }] },
+      columns: {
+        id: true,
+      },
     })
     const likes = await db.query.userLike.findMany({
-      where: eq(userLike.userId, user.id),
+      where: { userId: user.id },
+      columns: {
+        id: true,
+      },
     })
     const favorites = await db.query.userFavorite.findMany({
-      where: eq(userFavorite.userId, user.id),
+      where: { userId: user.id },
+      columns: {
+        id: true,
+      },
     })
     const topics = await db.query.forumTopic.findMany({
-      where: and(eq(forumTopic.userId, user.id), isNull(forumTopic.deletedAt)),
+      where: { AND: [{ userId: user.id }, { deletedAt: { isNull: true } }] },
+      columns: {
+        id: true,
+      },
     })
     const commentIds = comments.map((comment) => comment.id)
     const topicIds = topics.map((topic) => topic.id)
     const commentReceivedLikes =
       commentIds.length > 0
         ? await db.query.userLike.findMany({
-            where: and(
-              eq(userLike.targetType, LikeTargetTypeEnum.COMMENT),
-              inArray(userLike.targetId, commentIds),
-            ),
+            where: {
+              AND: [
+                { targetType: LikeTargetTypeEnum.COMMENT },
+                { targetId: { in: commentIds } },
+              ],
+            },
+            columns: {
+              id: true,
+            },
           })
         : []
     const topicReceivedLikes =
       topicIds.length > 0
         ? await db.query.userLike.findMany({
-            where: and(
-              eq(userLike.targetType, FORUM_TOPIC_LIKE_TARGET_TYPE),
-              inArray(userLike.targetId, topicIds),
-            ),
+            where: {
+              AND: [
+                { targetType: FORUM_TOPIC_LIKE_TARGET_TYPE },
+                { targetId: { in: topicIds } },
+              ],
+            },
+            columns: {
+              id: true,
+            },
           })
         : []
     const topicReceivedFavorites =
       topicIds.length > 0
         ? await db.query.userFavorite.findMany({
-            where: and(
-              eq(userFavorite.targetType, FORUM_TOPIC_FAVORITE_TARGET_TYPE),
-              inArray(userFavorite.targetId, topicIds),
-            ),
+            where: {
+              AND: [
+                { targetType: FORUM_TOPIC_FAVORITE_TARGET_TYPE },
+                { targetId: { in: topicIds } },
+              ],
+            },
+            columns: {
+              id: true,
+            },
           })
         : []
 
@@ -2160,7 +2310,10 @@ async function rebuildSeedUserCounters(db: Db, seedUsers: SeedUserRow[]) {
       forumTopicReceivedFavoriteCount: topicReceivedFavorites.length,
     }
     const existingCount = await db.query.appUserCount.findFirst({
-      where: eq(appUserCount.userId, user.id),
+      where: { userId: user.id },
+      columns: {
+        userId: true,
+      },
     })
 
     if (!existingCount) {
@@ -2187,12 +2340,17 @@ async function ensureForumUserActionLog(
   },
 ) {
   const existing = await db.query.forumUserActionLog.findFirst({
-    where: and(
-      eq(forumUserActionLog.userId, input.userId),
-      eq(forumUserActionLog.targetId, input.targetId),
-      eq(forumUserActionLog.actionType, input.actionType),
-      eq(forumUserActionLog.targetType, input.targetType),
-    ),
+    where: {
+      AND: [
+        { userId: input.userId },
+        { targetId: input.targetId },
+        { actionType: input.actionType },
+        { targetType: input.targetType },
+      ],
+    },
+    columns: {
+      id: true,
+    },
   })
 
   if (!existing) {
@@ -2215,6 +2373,7 @@ async function ensureModeratorTopicLog(
   db: Db,
   input: {
     moderatorId: number
+    actorUserId: number
     topicId: number
     actionType: ForumModeratorActionTypeEnum
     actionDescription: string
@@ -2222,20 +2381,24 @@ async function ensureModeratorTopicLog(
   },
 ) {
   const existing = await db.query.forumModeratorActionLog.findFirst({
-    where: and(
-      eq(forumModeratorActionLog.moderatorId, input.moderatorId),
-      eq(forumModeratorActionLog.targetId, input.topicId),
-      eq(forumModeratorActionLog.actionType, input.actionType),
-      eq(
-        forumModeratorActionLog.targetType,
-        ForumModeratorActionTargetTypeEnum.TOPIC,
-      ),
-    ),
+    where: {
+      AND: [
+        { moderatorId: input.moderatorId },
+        { targetId: input.topicId },
+        { actionType: input.actionType },
+        { targetType: ForumModeratorActionTargetTypeEnum.TOPIC },
+      ],
+    },
+    columns: {
+      id: true,
+    },
   })
 
   if (!existing) {
     await db.insert(forumModeratorActionLog).values({
       moderatorId: input.moderatorId,
+      actorType: ForumGovernanceActorTypeEnum.MODERATOR,
+      actorUserId: input.actorUserId,
       targetId: input.topicId,
       actionType: input.actionType,
       targetType: ForumModeratorActionTargetTypeEnum.TOPIC,
@@ -2927,7 +3090,11 @@ async function ensureSeedHashtagRecords(
   const slugs = input.candidates.map((item) => item.slug)
   const existingRows = slugs.length
     ? await db
-        .select()
+        .select({
+          id: forumHashtag.id,
+          slug: forumHashtag.slug,
+          displayName: forumHashtag.displayName,
+        })
         .from(forumHashtag)
         .where(inArray(forumHashtag.slug, slugs))
     : []

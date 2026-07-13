@@ -53,6 +53,33 @@ export class MessageNotificationTemplateService {
     return this.drizzle.schema.notificationTemplate
   }
 
+  // 通知模板管理端的完整当前 contract，显式固定表字段以避免默认查询随 schema 演进扩张。
+  private buildNotificationTemplateReadSelect() {
+    return {
+      id: this.notificationTemplate.id,
+      categoryKey: this.notificationTemplate.categoryKey,
+      titleTemplate: this.notificationTemplate.titleTemplate,
+      contentTemplate: this.notificationTemplate.contentTemplate,
+      isEnabled: this.notificationTemplate.isEnabled,
+      remark: this.notificationTemplate.remark,
+      createdAt: this.notificationTemplate.createdAt,
+      updatedAt: this.notificationTemplate.updatedAt,
+    }
+  }
+
+  private getNotificationTemplateReadColumns() {
+    return {
+      id: true,
+      categoryKey: true,
+      titleTemplate: true,
+      contentTemplate: true,
+      isEnabled: true,
+      remark: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
   async getNotificationTemplatePage(query: QueryNotificationTemplatePageDto) {
     const conditions: SQL[] = []
 
@@ -84,7 +111,7 @@ export class MessageNotificationTemplateService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildNotificationTemplateReadSelect())
         .from(this.notificationTemplate)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -99,6 +126,7 @@ export class MessageNotificationTemplateService {
   async getNotificationTemplateDetail(id: number) {
     const template = await this.db.query.notificationTemplate.findFirst({
       where: { id },
+      columns: this.getNotificationTemplateReadColumns(),
     })
     if (!template) {
       throw new BusinessException(
@@ -450,9 +478,9 @@ export class MessageNotificationTemplateService {
     const normalized = value.trim()
     if (!normalized) {
       throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      errorMessage,
-    )
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        errorMessage,
+      )
     }
     return normalized
   }
@@ -501,10 +529,10 @@ export class MessageNotificationTemplateService {
 
     for (const path of placeholders) {
       if (!allowedPlaceholders.has(path)) {
-throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        `${fieldName} 存在当前通知分类不支持的占位符: ${path}`,
-      )
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `${fieldName} 存在当前通知分类不支持的占位符: ${path}`,
+        )
       }
     }
   }
@@ -521,17 +549,17 @@ throw new BusinessException(
     value: unknown,
   ): MessageNotificationCategoryKey {
     if (typeof value !== 'string' || !value.trim()) {
-throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '通知分类非法',
-    )
-  }
-  const categoryKey = value.trim() as MessageNotificationCategoryKey
-  if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
-    throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '通知分类非法',
-    )
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '通知分类非法',
+      )
+    }
+    const categoryKey = value.trim() as MessageNotificationCategoryKey
+    if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '通知分类非法',
+      )
     }
     return categoryKey
   }

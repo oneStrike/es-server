@@ -47,7 +47,14 @@ The migration validates the constraints after adding them. On large `coupon_defi
 
 ## Large table online path
 
-`db:migrate:prod` uses Drizzle migrator and `db:migrate` uses `drizzle-kit migrate`; the checked-in SQL therefore uses regular `CREATE INDEX IF NOT EXISTS` rather than `CREATE INDEX CONCURRENTLY`. For large production tables, run the two index statements below manually outside the migration transaction before this migration, then apply the migration during a maintenance window. The `IF NOT EXISTS` statements in the migration will then be no-ops for those indexes.
+`pnpm db:migrate -- --mode active --target-id <registered-local-target>` runs the
+checked-in SQL through the guarded Drizzle migrator against registered
+disposable targets only. The SQL therefore uses regular `CREATE INDEX IF NOT
+EXISTS` rather than `CREATE INDEX CONCURRENTLY`. For a large disposable
+production-like dataset, run the two index statements below manually outside
+the migration transaction before this migration, then apply the migration in a
+maintenance window. The `IF NOT EXISTS` statements in the migration will then
+be no-ops for those indexes.
 
 ```sql
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "coupon_definition_created_at_idx"

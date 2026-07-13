@@ -35,7 +35,11 @@ import type {
 } from '@libs/content/work/third-party/third-party-comic-import.type'
 import type { ThirdPartyProviderPolicy } from '@libs/content/work/third-party/third-party-provider-policy.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import { DrizzleService } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+} from '@db/core'
 import { AuthorTypeEnum } from '@libs/content/author/author.constant'
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
@@ -274,23 +278,31 @@ export class ThirdPartyComicImportService {
     const hydratedDto = await this.hydrateImportRequestFromProvider(dto)
     resolveThirdPartyComicImportImageTotals(hydratedDto.chapters)
     const draft = await this.buildImportTaskDraft(hydratedDto)
-    const job = await this.workflowService.createDraft({
-      workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
-      displayName: draft.displayName,
-      operator: {
-        type: WorkflowOperatorTypeEnum.ADMIN,
-        userId,
+    const job = await this.workflowService.createDraftWithResources(
+      {
+        workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+        displayName: draft.displayName,
+        operator: {
+          type: WorkflowOperatorTypeEnum.ADMIN,
+          userId,
+        },
+        selectedItemCount: hydratedDto.chapters.length,
+        summary: {
+          sourceType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+        },
+        conflictKeys: draft.reservation.conflictKeys,
       },
-      selectedItemCount: hydratedDto.chapters.length,
-      summary: {
-        sourceType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+      async ({ tx, workflowJob }) => {
+        await this.contentImportService.createThirdPartyImportJobWithDb(
+          tx,
+          workflowJob,
+          {
+            jobId: workflowJob.jobId,
+            dto: hydratedDto,
+          },
+        )
       },
-      conflictKeys: draft.reservation.conflictKeys,
-    })
-    await this.contentImportService.createThirdPartyImportJob({
-      jobId: job.jobId,
-      dto: hydratedDto,
-    })
+    )
     return this.workflowService.confirmDraft({ jobId: job.jobId })
   }
 
@@ -1677,9 +1689,49 @@ export class ThirdPartyComicImportService {
   private async restoreChapterSnapshot(
     snapshot: ThirdPartyComicUpdatedChapterSnapshot,
   ) {
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('work_chapter', snapshot.id),
+          ...(snapshot.requiredViewLevelId === null
+            ? []
+            : [
+                tableIntegrityLock(
+                  'user_level_rule',
+                  snapshot.requiredViewLevelId,
+                ),
+              ]),
+        ])
+
+        const chapter = await tx.query.workChapter.findFirst({
+          where: {
+            id: snapshot.id,
+            workType: WorkTypeEnum.COMIC,
+            deletedAt: { isNull: true },
+          },
+          columns: { id: true },
+        })
+        if (!chapter) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '章节不存在',
+          )
+        }
+
+        if (snapshot.requiredViewLevelId !== null) {
+          const levelRule = await tx.query.userLevelRule.findFirst({
+            where: { id: snapshot.requiredViewLevelId },
+            columns: { id: true },
+          })
+          if (!levelRule) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '阅读等级规则不存在',
+            )
+          }
+        }
+
+        const restoredRows = await tx
           .update(this.workChapter)
           .set({
             title: snapshot.title,
@@ -1703,9 +1755,11 @@ export class ThirdPartyComicImportService {
               eq(this.workChapter.workType, WorkTypeEnum.COMIC),
               isNull(this.workChapter.deletedAt),
             ),
-          ),
-      { notFound: '章节不存在' },
-    )
+          )
+          .returning({ id: this.workChapter.id })
+        this.drizzle.assertAffectedRows(restoredRows, '章节不存在')
+      },
+    })
   }
 
   // 向残留对象中的数组字段追加一项。

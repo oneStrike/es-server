@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import type { LikeTargetTypeEnum } from '../like.constant'
 
@@ -38,7 +38,7 @@ export interface ILikeTargetResolver {
    * @returns 目标元信息
    * @throws 目标不存在时抛出异常
    */
-  resolveMeta: (tx: Db, targetId: number) => Promise<LikeTargetMeta>
+  resolveMeta: (tx: DbExecutor, targetId: number) => Promise<LikeTargetMeta>
 
   /**
    * 更新点赞计数
@@ -47,7 +47,11 @@ export interface ILikeTargetResolver {
    * @param targetId - 目标ID
    * @param delta - 变化量（点赞+1，取消点赞-1）
    */
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void>
 
   /**
    * 点赞成功后钩子（可选）
@@ -58,7 +62,7 @@ export interface ILikeTargetResolver {
    * @param meta - 目标元信息
    */
   postLikeHook?: (
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
     meta: LikeTargetMeta,
@@ -72,7 +76,7 @@ export interface ILikeTargetResolver {
    * @param actorUserId - 执行取消点赞的用户ID
    */
   postUnlikeHook?: (
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
   ) => Promise<void>

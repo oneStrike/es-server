@@ -78,22 +78,56 @@ export const contentImportJob = snakeCase.table(
       table.sourceType,
       table.workId,
     ),
+    index('content_import_job_work_id_idx').on(table.workId),
     index('content_import_job_platform_source_idx').on(
       table.platform,
       table.providerComicId,
       table.providerGroupPathWord,
     ),
-    check('content_import_job_content_type_valid_chk', sql`${table.contentType} in (1)`),
-    check('content_import_job_source_type_valid_chk', sql`${table.sourceType} in (1, 2, 3)`),
-    check('content_import_job_preview_mode_valid_chk', sql`${table.previewMode} is null or ${table.previewMode} in (1, 2)`),
-    check('content_import_job_publish_boundary_status_valid_chk', sql`${table.publishBoundaryStatus} in (1, 2)`),
-    check('content_import_job_selected_item_count_non_negative_chk', sql`${table.selectedItemCount} >= 0`),
-    check('content_import_job_success_item_count_non_negative_chk', sql`${table.successItemCount} >= 0`),
-    check('content_import_job_failed_item_count_non_negative_chk', sql`${table.failedItemCount} >= 0`),
-    check('content_import_job_skipped_item_count_non_negative_chk', sql`${table.skippedItemCount} >= 0`),
-    check('content_import_job_image_total_non_negative_chk', sql`${table.imageTotal} >= 0`),
-    check('content_import_job_image_success_count_non_negative_chk', sql`${table.imageSuccessCount} >= 0`),
-    check('content_import_job_image_failed_count_non_negative_chk', sql`${table.imageFailedCount} >= 0`),
+    check(
+      'content_import_job_content_type_valid_chk',
+      sql`${table.contentType} in (1)`,
+    ),
+    check(
+      'content_import_job_source_type_valid_chk',
+      sql`${table.sourceType} in (1, 2, 3)`,
+    ),
+    check(
+      'content_import_job_preview_mode_valid_chk',
+      sql`${table.previewMode} is null or ${table.previewMode} in (1, 2)`,
+    ),
+    check(
+      'content_import_job_publish_boundary_status_valid_chk',
+      sql`${table.publishBoundaryStatus} in (1, 2)`,
+    ),
+    check(
+      'content_import_job_selected_item_count_non_negative_chk',
+      sql`${table.selectedItemCount} >= 0`,
+    ),
+    check(
+      'content_import_job_success_item_count_non_negative_chk',
+      sql`${table.successItemCount} >= 0`,
+    ),
+    check(
+      'content_import_job_failed_item_count_non_negative_chk',
+      sql`${table.failedItemCount} >= 0`,
+    ),
+    check(
+      'content_import_job_skipped_item_count_non_negative_chk',
+      sql`${table.skippedItemCount} >= 0`,
+    ),
+    check(
+      'content_import_job_image_total_non_negative_chk',
+      sql`${table.imageTotal} >= 0`,
+    ),
+    check(
+      'content_import_job_image_success_count_non_negative_chk',
+      sql`${table.imageSuccessCount} >= 0`,
+    ),
+    check(
+      'content_import_job_image_failed_count_non_negative_chk',
+      sql`${table.imageFailedCount} >= 0`,
+    ),
   ],
 )
 

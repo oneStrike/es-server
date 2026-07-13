@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type { CouponAdminGrantItemSelect } from '@db/schema'
 import type {
   WorkflowExecuteContext,
@@ -28,6 +28,16 @@ import {
 import { CouponService } from './coupon.service'
 
 const EXECUTION_CHUNK_SIZE = 50
+
+type CouponAdminGrantExecutionItem = Pick<
+  CouponAdminGrantItemSelect,
+  'id' | 'itemId' | 'userId'
+>
+
+type CouponAdminGrantRunningItem = Pick<
+  CouponAdminGrantItemSelect,
+  'id' | 'userId'
+>
 
 @Injectable()
 export class CouponAdminGrantWorkflowHandler
@@ -197,7 +207,7 @@ export class CouponAdminGrantWorkflowHandler
   async prepareRetry(
     context: WorkflowRetryContext,
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) {
     const { grantJob } =
       await this.grantWorkflowService.readGrantJobByWorkflowJobId(
@@ -242,7 +252,7 @@ export class CouponAdminGrantWorkflowHandler
   async recoverExpiredAttempt(
     context: WorkflowExpiredAttemptRecoveryContext,
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) {
     const { grantJob } =
       await this.grantWorkflowService.readGrantJobByWorkflowJobId(
@@ -250,7 +260,10 @@ export class CouponAdminGrantWorkflowHandler
         tx,
       )
     const runningItems = await tx
-      .select()
+      .select({
+        id: this.drizzle.schema.couponAdminGrantItem.id,
+        userId: this.drizzle.schema.couponAdminGrantItem.userId,
+      })
       .from(this.drizzle.schema.couponAdminGrantItem)
       .where(
         and(
@@ -280,7 +293,11 @@ export class CouponAdminGrantWorkflowHandler
       tx,
     )
     const recoverableItems = await tx
-      .select()
+      .select({
+        currentAttemptNo:
+          this.drizzle.schema.couponAdminGrantItem.currentAttemptNo,
+        id: this.drizzle.schema.couponAdminGrantItem.id,
+      })
       .from(this.drizzle.schema.couponAdminGrantItem)
       .where(
         and(
@@ -336,7 +353,11 @@ export class CouponAdminGrantWorkflowHandler
 
   private async listExecutableItems(couponAdminGrantJobId: number) {
     return this.drizzle.db
-      .select()
+      .select({
+        id: this.drizzle.schema.couponAdminGrantItem.id,
+        itemId: this.drizzle.schema.couponAdminGrantItem.itemId,
+        userId: this.drizzle.schema.couponAdminGrantItem.userId,
+      })
       .from(this.drizzle.schema.couponAdminGrantItem)
       .where(
         and(
@@ -364,77 +385,79 @@ export class CouponAdminGrantWorkflowHandler
       operationHash: string
       perUserQuantity: number
     },
-    item: CouponAdminGrantItemSelect,
+    item: CouponAdminGrantExecutionItem,
     attemptNo: number,
   ) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const now = new Date()
-      const [runningItem] = await tx
-        .update(this.drizzle.schema.couponAdminGrantItem)
-        .set({
-          status: CouponAdminGrantItemStatusEnum.RUNNING,
-          currentAttemptNo: attemptNo,
-          updatedAt: now,
-        })
-        .where(
-          and(
-            eq(this.drizzle.schema.couponAdminGrantItem.id, item.id),
-            inArray(this.drizzle.schema.couponAdminGrantItem.status, [
-              CouponAdminGrantItemStatusEnum.PENDING,
-              CouponAdminGrantItemStatusEnum.RETRYING,
-            ]),
-          ),
-        )
-        .returning()
-      if (!runningItem) {
-        return { claimed: false, success: false, createdCount: 0 }
-      }
-
-      try {
-        const grantKeys = this.grantWorkflowService.buildGrantKeys({
-          operationHash: grantJob.operationHash,
-          quantity: grantJob.perUserQuantity,
-          userId: item.userId,
-        })
-        const result = await this.couponService.grantCouponsForSource(tx, {
-          userId: item.userId,
-          couponDefinitionId: grantJob.couponDefinitionId,
-          sourceType: CouponSourceTypeEnum.ADMIN_GRANT,
-          sourceId: grantJob.id,
-          quantity: grantJob.perUserQuantity,
-          grantKeys,
-        })
-        await tx
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const now = new Date()
+        const [runningItem] = await tx
           .update(this.drizzle.schema.couponAdminGrantItem)
           .set({
-            status: CouponAdminGrantItemStatusEnum.SUCCESS,
-            createdCount: result.createdCount,
-            lastError: null,
-            lastFailedAt: null,
-            nextRetryAt: null,
-            updatedAt: new Date(),
+            status: CouponAdminGrantItemStatusEnum.RUNNING,
+            currentAttemptNo: attemptNo,
+            updatedAt: now,
           })
-          .where(eq(this.drizzle.schema.couponAdminGrantItem.id, item.id))
-        return {
-          claimed: true,
-          success: true,
-          createdCount: result.createdCount,
+          .where(
+            and(
+              eq(this.drizzle.schema.couponAdminGrantItem.id, item.id),
+              inArray(this.drizzle.schema.couponAdminGrantItem.status, [
+                CouponAdminGrantItemStatusEnum.PENDING,
+                CouponAdminGrantItemStatusEnum.RETRYING,
+              ]),
+            ),
+          )
+          .returning()
+        if (!runningItem) {
+          return { claimed: false, success: false, createdCount: 0 }
         }
-      } catch (error) {
-        const errorFacts = this.toErrorFacts(error, item)
-        await tx
-          .update(this.drizzle.schema.couponAdminGrantItem)
-          .set({
-            status: CouponAdminGrantItemStatusEnum.FAILED,
-            failureCount: sql`${this.drizzle.schema.couponAdminGrantItem.failureCount} + 1`,
-            lastError: errorFacts,
-            lastFailedAt: new Date(),
-            nextRetryAt: null,
-            updatedAt: new Date(),
+
+        try {
+          const grantKeys = this.grantWorkflowService.buildGrantKeys({
+            operationHash: grantJob.operationHash,
+            quantity: grantJob.perUserQuantity,
+            userId: item.userId,
           })
-          .where(eq(this.drizzle.schema.couponAdminGrantItem.id, item.id))
-        return { claimed: true, success: false, createdCount: 0 }
-      }
+          const result = await this.couponService.grantCouponsForSource(tx, {
+            userId: item.userId,
+            couponDefinitionId: grantJob.couponDefinitionId,
+            sourceType: CouponSourceTypeEnum.ADMIN_GRANT,
+            sourceId: grantJob.id,
+            quantity: grantJob.perUserQuantity,
+            grantKeys,
+          })
+          await tx
+            .update(this.drizzle.schema.couponAdminGrantItem)
+            .set({
+              status: CouponAdminGrantItemStatusEnum.SUCCESS,
+              createdCount: result.createdCount,
+              lastError: null,
+              lastFailedAt: null,
+              nextRetryAt: null,
+              updatedAt: new Date(),
+            })
+            .where(eq(this.drizzle.schema.couponAdminGrantItem.id, item.id))
+          return {
+            claimed: true,
+            success: true,
+            createdCount: result.createdCount,
+          }
+        } catch (error) {
+          const errorFacts = this.toErrorFacts(error, item)
+          await tx
+            .update(this.drizzle.schema.couponAdminGrantItem)
+            .set({
+              status: CouponAdminGrantItemStatusEnum.FAILED,
+              failureCount: sql`${this.drizzle.schema.couponAdminGrantItem.failureCount} + 1`,
+              lastError: errorFacts,
+              lastFailedAt: new Date(),
+              nextRetryAt: null,
+              updatedAt: new Date(),
+            })
+            .where(eq(this.drizzle.schema.couponAdminGrantItem.id, item.id))
+          return { claimed: true, success: false, createdCount: 0 }
+        }
+      },
     })
   }
 
@@ -445,9 +468,9 @@ export class CouponAdminGrantWorkflowHandler
       operationHash: string
       perUserQuantity: number
     },
-    runningItems: CouponAdminGrantItemSelect[],
+    runningItems: CouponAdminGrantRunningItem[],
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) {
     const counters = {
       ...this.emptyCounters(),
@@ -506,7 +529,7 @@ export class CouponAdminGrantWorkflowHandler
     return counters
   }
 
-  private toErrorFacts(error: unknown, item: CouponAdminGrantItemSelect) {
+  private toErrorFacts(error: unknown, item: CouponAdminGrantExecutionItem) {
     return {
       code: 'COUPON_ADMIN_GRANT_ITEM_FAILED',
       context: {

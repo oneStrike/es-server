@@ -84,10 +84,6 @@ export const sensitiveWord = snakeCase.table(
      */
     unique('sensitive_word_word_key').on(table.word),
     /**
-     * 敏感词索引
-     */
-    index('sensitive_word_word_idx').on(table.word),
-    /**
      * 类型索引
      */
     index('sensitive_word_type_idx').on(table.type),

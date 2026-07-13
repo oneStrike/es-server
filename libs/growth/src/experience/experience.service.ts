@@ -64,6 +64,45 @@ export class UserExperienceService {
     return this.drizzle.schema.appUser
   }
 
+  // 后台经验流水的稳定 read-model；资产键与归档维护字段不属于接口 contract。
+  private buildExperienceRecordPageSelect() {
+    return {
+      id: this.growthLedgerRecord.id,
+      userId: this.growthLedgerRecord.userId,
+      ruleId: this.growthLedgerRecord.ruleId,
+      ruleType: this.growthLedgerRecord.ruleType,
+      source: this.growthLedgerRecord.source,
+      targetType: this.growthLedgerRecord.targetType,
+      targetId: this.growthLedgerRecord.targetId,
+      delta: this.growthLedgerRecord.delta,
+      beforeValue: this.growthLedgerRecord.beforeValue,
+      afterValue: this.growthLedgerRecord.afterValue,
+      bizKey: this.growthLedgerRecord.bizKey,
+      remark: this.growthLedgerRecord.remark,
+      context: this.growthLedgerRecord.context,
+      createdAt: this.growthLedgerRecord.createdAt,
+    }
+  }
+
+  private getExperienceRecordDetailColumns() {
+    return {
+      id: true,
+      userId: true,
+      ruleId: true,
+      ruleType: true,
+      source: true,
+      targetType: true,
+      targetId: true,
+      delta: true,
+      beforeValue: true,
+      afterValue: true,
+      bizKey: true,
+      remark: true,
+      context: true,
+      createdAt: true,
+    } as const
+  }
+
   // 增加经验
   async addExperience(
     addExperienceDto: UserGrowthRuleActionDto & {
@@ -105,36 +144,39 @@ export class UserExperienceService {
         adminUserId: addExperienceDto.adminUserId,
       })
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const result = await this.growthLedgerService.applyByRule(tx, {
-        userId,
-        assetType: GrowthAssetTypeEnum.EXPERIENCE,
-        ruleType,
-        bizKey,
-        source,
-        targetType: addExperienceDto.targetType,
-        targetId: addExperienceDto.targetId,
-        context,
-      })
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await this.growthLedgerService.applyByRule(tx, {
+          userId,
+          assetType: GrowthAssetTypeEnum.EXPERIENCE,
+          ruleType,
+          bizKey,
+          source,
+          targetType: addExperienceDto.targetType,
+          targetId: addExperienceDto.targetId,
+          context,
+        })
 
-      if (!result.success && !result.duplicated) {
-        this.throwExperienceGrantFailure(result.reason)
-      }
+        if (!result.success && !result.duplicated) {
+          this.throwExperienceGrantFailure(result.reason)
+        }
 
-      const recordId = result.recordId
-      if (!recordId) {
-        throw new InternalServerErrorException('经验发放失败')
-      }
+        const recordId = result.recordId
+        if (!recordId) {
+          throw new InternalServerErrorException('经验发放失败')
+        }
 
-      const record = await tx.query.growthLedgerRecord.findFirst({
-        where: { id: recordId },
-      })
-      if (!record) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '经验记录不存在',
-        )
-      }
+        const record = await tx.query.growthLedgerRecord.findFirst({
+          where: { id: recordId },
+          columns: { id: true },
+        })
+        if (!record) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '经验记录不存在',
+          )
+        }
+      },
     })
     return true
   }
@@ -153,7 +195,7 @@ export class UserExperienceService {
     const where = and(...conditions)
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildExperienceRecordPageSelect())
         .from(this.growthLedgerRecord)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -191,7 +233,7 @@ export class UserExperienceService {
     const where = and(...conditions)
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildExperienceRecordPageSelect())
         .from(this.growthLedgerRecord)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -222,6 +264,7 @@ export class UserExperienceService {
         id,
         assetType: GrowthAssetTypeEnum.EXPERIENCE,
       },
+      columns: this.getExperienceRecordDetailColumns(),
     })
 
     if (!record) {
@@ -249,8 +292,15 @@ export class UserExperienceService {
   async getUserExperienceStats(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
+      columns: { id: true },
       with: {
-        level: true,
+        level: {
+          columns: {
+            id: true,
+            name: true,
+            requiredExperience: true,
+          },
+        },
       },
     })
 
@@ -265,7 +315,10 @@ export class UserExperienceService {
 
     const [todayEarned] = await this.db
       .select({
-        total: sql<number>`coalesce(sum(${this.growthLedgerRecord.delta}), 0)`,
+        total:
+          sql<number>`coalesce(sum(${this.growthLedgerRecord.delta}), 0)`.mapWith(
+            Number,
+          ),
       })
       .from(this.growthLedgerRecord)
       .where(
@@ -406,8 +459,7 @@ export class UserExperienceService {
       user,
       userId: record.userId,
       ruleId: record.ruleId ?? null,
-      ruleType:
-        (record.ruleType) ?? null,
+      ruleType: record.ruleType ?? null,
       source: record.source ?? null,
       targetType: record.targetType ?? null,
       targetId: record.targetId ?? null,

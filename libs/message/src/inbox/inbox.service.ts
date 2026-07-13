@@ -159,9 +159,9 @@ export class MessageInboxService {
       maxPageSize: 100,
       allowlistedOrderBy: {
         columns: {
-          createdAt: sql.raw('"createdAt"'),
-          bizId: sql.raw('"bizId"'),
-          id: sql.raw('"bizId"'),
+          createdAt: sql.identifier('createdAt'),
+          bizId: sql.identifier('bizId'),
+          id: sql.identifier('bizId'),
         },
         fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       },
@@ -214,7 +214,12 @@ export class MessageInboxService {
     `
     const [rowsResult, totalResult] = await Promise.all([
       this.db.execute(sql`
-        SELECT *
+        SELECT
+          timeline."sourceType",
+          timeline."createdAt",
+          timeline."title",
+          timeline."content",
+          timeline."bizId"
         FROM (${timelineSourceSql}) timeline
         ORDER BY ${pageParams.order.orderByClause}
         LIMIT ${pageParams.page.limit}

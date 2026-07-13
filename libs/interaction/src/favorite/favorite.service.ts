@@ -40,6 +40,16 @@ export class FavoriteService {
     return this.drizzle.schema.userFavorite
   }
 
+  private get favoriteReadSelect() {
+    return {
+      id: this.userFavorite.id,
+      targetType: this.userFavorite.targetType,
+      targetId: this.userFavorite.targetId,
+      userId: this.userFavorite.userId,
+      createdAt: this.userFavorite.createdAt,
+    }
+  }
+
   // 对目标 ID 数组去重。
   private uniqueTargetIds(targetIds: number[]) {
     return [...new Set(targetIds)]
@@ -72,9 +82,9 @@ export class FavoriteService {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BusinessException(
-      BusinessErrorCode.INVALID_OPERATION_TARGET,
-      `不支持的收藏类型: ${targetType}`,
-    )
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        `不支持的收藏类型: ${targetType}`,
+      )
     }
     return resolver
   }
@@ -114,49 +124,49 @@ export class FavoriteService {
   }
 
   // 收藏目标
-  async favorite(
-    input: FavoriteRecordDto,
-  ): Promise<FavoriteCreateResult> {
+  async favorite(input: FavoriteRecordDto): Promise<FavoriteCreateResult> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    const record = await this.drizzle.withTransaction(async (tx) => {
-      const { ownerUserId, targetTitle } = await resolver.ensureExists(
-        tx,
-        targetId,
-      )
-      await this.userLevelRuleService.ensureDailyFavoriteQuotaInTx(tx, {
-        userId,
-        business: this.resolveLevelBusiness(targetType),
-      })
-      const rows = await this.drizzle.withErrorHandling(
-        () =>
-          tx
-            .insert(this.userFavorite)
-            .values({
-              targetType,
-              targetId,
-              userId,
-            })
-            .returning({
-              id: this.userFavorite.id,
-            }),
-        {
-          duplicate: '无法重复收藏',
-        },
-      )
-      const favoriteRecord = rows[0] ?? null
-
-      await this.appUserCountService.updateFavoriteCount(tx, userId, 1)
-      await resolver.applyCountDelta(tx, targetId, 1)
-
-      if (resolver.postFavoriteHook) {
-        await resolver.postFavoriteHook(tx, targetId, userId, {
-          ownerUserId,
-          targetTitle,
+    const record = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const { ownerUserId, targetTitle } = await resolver.ensureExists(
+          tx,
+          targetId,
+        )
+        await this.userLevelRuleService.ensureDailyFavoriteQuotaInTx(tx, {
+          userId,
+          business: this.resolveLevelBusiness(targetType),
         })
-      }
-      return favoriteRecord
+        const rows = await this.drizzle.withErrorHandling(
+          () =>
+            tx
+              .insert(this.userFavorite)
+              .values({
+                targetType,
+                targetId,
+                userId,
+              })
+              .returning({
+                id: this.userFavorite.id,
+              }),
+          {
+            duplicate: '无法重复收藏',
+          },
+        )
+        const favoriteRecord = rows[0] ?? null
+
+        await this.appUserCountService.updateFavoriteCount(tx, userId, 1)
+        await resolver.applyCountDelta(tx, targetId, 1)
+
+        if (resolver.postFavoriteHook) {
+          await resolver.postFavoriteHook(tx, targetId, userId, {
+            ownerUserId,
+            targetTitle,
+          })
+        }
+        return favoriteRecord
+      },
     })
 
     // 独立于主事务执行，防止崩溃或者过长影响核心数据落库
@@ -173,24 +183,26 @@ export class FavoriteService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const deleted = await tx
-        .delete(this.userFavorite)
-        .where(
-          and(
-            eq(this.userFavorite.targetType, targetType),
-            eq(this.userFavorite.targetId, targetId),
-            eq(this.userFavorite.userId, userId),
-          ),
-        )
-      this.drizzle.assertAffectedRows(deleted, '收藏记录或用户不存在')
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const deleted = await tx
+          .delete(this.userFavorite)
+          .where(
+            and(
+              eq(this.userFavorite.targetType, targetType),
+              eq(this.userFavorite.targetId, targetId),
+              eq(this.userFavorite.userId, userId),
+            ),
+          )
+        this.drizzle.assertAffectedRows(deleted, '收藏记录或用户不存在')
 
-      await this.appUserCountService.updateFavoriteCount(tx, userId, -1)
-      await resolver.applyCountDelta(tx, targetId, -1)
+        await this.appUserCountService.updateFavoriteCount(tx, userId, -1)
+        await resolver.applyCountDelta(tx, targetId, -1)
 
-      if (resolver.postUnfavoriteHook) {
-        await resolver.postUnfavoriteHook(tx, targetId, userId)
-      }
+        if (resolver.postUnfavoriteHook) {
+          await resolver.postUnfavoriteHook(tx, targetId, userId)
+        }
+      },
     })
   }
 
@@ -232,7 +244,7 @@ export class FavoriteService {
     )
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.favoriteReadSelect)
         .from(this.userFavorite)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)

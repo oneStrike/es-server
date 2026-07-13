@@ -39,6 +39,40 @@ export class AppPageService {
     return this.drizzle.schema.appPage
   }
 
+  // 页面列表与详情共用稳定完整 contract，避免 schema 新列被隐式读取或外送。
+  private buildAppPageReadSelect() {
+    return {
+      id: this.appPage.id,
+      code: this.appPage.code,
+      path: this.appPage.path,
+      name: this.appPage.name,
+      title: this.appPage.title,
+      description: this.appPage.description,
+      accessLevel: this.appPage.accessLevel,
+      isEnabled: this.appPage.isEnabled,
+      enablePlatform: this.appPage.enablePlatform,
+      createdAt: this.appPage.createdAt,
+      updatedAt: this.appPage.updatedAt,
+    }
+  }
+
+  // RQB v2 读取同样使用纯 include projection。
+  private getAppPageReadColumns() {
+    return {
+      id: true,
+      code: true,
+      path: true,
+      name: true,
+      title: true,
+      description: true,
+      accessLevel: true,
+      isEnabled: true,
+      enablePlatform: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
   // 创建页面配置。 页面 `code` 和 `path` 命中唯一约束时统一转成业务异常，避免泄露底层数据库错误。
   async createPage(createPageDto: CreateAppPageDto) {
     await this.drizzle.withErrorHandling(
@@ -89,7 +123,7 @@ export class AppPageService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildAppPageReadSelect())
         .from(this.appPage)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -109,6 +143,7 @@ export class AppPageService {
   async findActivePages() {
     const pages = await this.db.query.appPage.findMany({
       where: { isEnabled: true },
+      columns: this.getAppPageReadColumns(),
     })
     return pages.map((page) => this.toAppPageOutputDto(page))
   }
@@ -117,6 +152,7 @@ export class AppPageService {
   async findById(dto: IdDto) {
     const page = await this.db.query.appPage.findFirst({
       where: { id: dto.id },
+      columns: this.getAppPageReadColumns(),
     })
 
     if (!page) {
@@ -132,6 +168,7 @@ export class AppPageService {
   async findByCode(dto: QueryPageByCodeDto) {
     const page = await this.db.query.appPage.findFirst({
       where: { code: dto.code },
+      columns: this.getAppPageReadColumns(),
     })
 
     if (!page) {

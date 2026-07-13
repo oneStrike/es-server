@@ -33,11 +33,11 @@ export class UserPermissionService {
     return this.drizzle.schema.userAssetBalance
   }
 
-  // 根据用户ID获取用户及其会员等级信息
+  // 根据用户 ID 获取登录态校验所需的最小用户快照。
   async getUserWithLevel(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      with: { level: true },
+      columns: { id: true },
     })
 
     if (!user) {
@@ -92,6 +92,7 @@ export class UserPermissionService {
   async validatePoints(userId: number, points: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
+      columns: { id: true },
     })
 
     if (!user) {

@@ -1,4 +1,7 @@
-import type { WorkThirdPartySourceBindingSelect } from '@db/schema'
+import type {
+  WorkThirdPartyChapterBindingSelect,
+  WorkThirdPartySourceBindingSelect,
+} from '@db/schema'
 import type {
   ThirdPartyComicBindingMutationResult,
   ThirdPartyComicChapterBindingInput,
@@ -10,6 +13,41 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
+
+/** 同步任务读取来源绑定所需的稳定字段，不携带来源快照 JSON。 */
+type ThirdPartyComicSourceBindingSyncRow = Pick<
+  WorkThirdPartySourceBindingSelect,
+  | 'id'
+  | 'workId'
+  | 'platform'
+  | 'providerComicId'
+  | 'providerPathWord'
+  | 'providerGroupPathWord'
+>
+
+/** 来源作用域冲突校验只需要判定归属作品和复用绑定 ID。 */
+type ThirdPartyComicSourceBindingConflictRow = Pick<
+  WorkThirdPartySourceBindingSelect,
+  'id' | 'workId'
+>
+
+/** 同步时仅用 provider 章节 ID 构建已绑定集合。 */
+type ThirdPartyComicChapterBindingSyncRow = Pick<
+  WorkThirdPartyChapterBindingSelect,
+  'providerChapterId'
+>
+
+/** provider 章节幂等冲突校验需要本地章节归属。 */
+type ThirdPartyComicChapterBindingProviderConflictRow = Pick<
+  WorkThirdPartyChapterBindingSelect,
+  'id' | 'chapterId'
+>
+
+/** 本地章节幂等冲突校验只需要确认已有绑定存在。 */
+type ThirdPartyComicChapterBindingLocalConflictRow = Pick<
+  WorkThirdPartyChapterBindingSelect,
+  'id'
+>
 
 /**
  * 三方漫画绑定服务。
@@ -35,6 +73,48 @@ export class ThirdPartyComicBindingService {
     return this.drizzle.schema.workThirdPartyChapterBinding
   }
 
+  // 同步来源查询只读取工作流 payload 与 provider 调用所需字段，避免加载 sourceSnapshot。
+  private get sourceBindingSyncSelect() {
+    return {
+      id: this.sourceBinding.id,
+      workId: this.sourceBinding.workId,
+      platform: this.sourceBinding.platform,
+      providerComicId: this.sourceBinding.providerComicId,
+      providerPathWord: this.sourceBinding.providerPathWord,
+      providerGroupPathWord: this.sourceBinding.providerGroupPathWord,
+    } as const
+  }
+
+  // 来源作用域已由 where 精确限定，冲突处理只需要绑定 ID 和所属作品。
+  private get sourceBindingConflictSelect() {
+    return {
+      id: this.sourceBinding.id,
+      workId: this.sourceBinding.workId,
+    } as const
+  }
+
+  // 章节同步只判断 provider 章节是否已绑定，避免加载 snapshot。
+  private get chapterBindingSyncSelect() {
+    return {
+      providerChapterId: this.chapterBinding.providerChapterId,
+    } as const
+  }
+
+  // provider 章节幂等判断需要确认其绑定的本地章节。
+  private get chapterBindingProviderConflictSelect() {
+    return {
+      id: this.chapterBinding.id,
+      chapterId: this.chapterBinding.chapterId,
+    } as const
+  }
+
+  // 本地章节冲突分支只依赖绑定是否存在。
+  private get chapterBindingLocalConflictSelect() {
+    return {
+      id: this.chapterBinding.id,
+    } as const
+  }
+
   // 生成三方来源作用域键，供 workflow 去重和诊断使用。
   buildSourceScopeKey(input: ThirdPartyComicSourceScopeInput) {
     return `${input.platform}:${input.providerComicId}:${input.providerGroupPathWord}`
@@ -48,9 +128,11 @@ export class ThirdPartyComicBindingService {
   }
 
   // 读取作品当前 active 三方来源绑定。
-  async getActiveSourceBindingByWorkId(workId: number) {
+  async getActiveSourceBindingByWorkId(
+    workId: number,
+  ): Promise<ThirdPartyComicSourceBindingSyncRow | null> {
     const [row] = await this.db
-      .select()
+      .select(this.sourceBindingSyncSelect)
       .from(this.sourceBinding)
       .where(
         and(
@@ -64,9 +146,11 @@ export class ThirdPartyComicBindingService {
   }
 
   // 读取指定 active 三方来源绑定。
-  async getActiveSourceBindingById(id: number) {
+  async getActiveSourceBindingById(
+    id: number,
+  ): Promise<ThirdPartyComicSourceBindingSyncRow | null> {
     const [row] = await this.db
-      .select()
+      .select(this.sourceBindingSyncSelect)
       .from(this.sourceBinding)
       .where(
         and(
@@ -194,9 +278,11 @@ export class ThirdPartyComicBindingService {
   }
 
   // 查询来源绑定下全部 active 章节绑定。
-  async listActiveChapterBindings(sourceBindingId: number) {
+  async listActiveChapterBindings(
+    sourceBindingId: number,
+  ): Promise<ThirdPartyComicChapterBindingSyncRow[]> {
     return this.db
-      .select()
+      .select(this.chapterBindingSyncSelect)
       .from(this.chapterBinding)
       .where(
         and(
@@ -249,9 +335,9 @@ export class ThirdPartyComicBindingService {
   // 按平台、三方漫画和章节分组读取 active 来源绑定。
   private async findActiveSourceBindingByScope(
     input: ThirdPartyComicSourceScopeInput,
-  ) {
+  ): Promise<ThirdPartyComicSourceBindingConflictRow | null> {
     const [row] = await this.db
-      .select()
+      .select(this.sourceBindingConflictSelect)
       .from(this.sourceBinding)
       .where(
         and(
@@ -297,9 +383,9 @@ export class ThirdPartyComicBindingService {
   private async findActiveChapterBindingByProvider(
     sourceBindingId: number,
     providerChapterId: string,
-  ) {
+  ): Promise<ThirdPartyComicChapterBindingProviderConflictRow | null> {
     const [row] = await this.db
-      .select()
+      .select(this.chapterBindingProviderConflictSelect)
       .from(this.chapterBinding)
       .where(
         and(
@@ -317,9 +403,11 @@ export class ThirdPartyComicBindingService {
   }
 
   // 按本地章节 ID 读取 active 章节绑定。
-  private async findActiveChapterBindingByChapterId(chapterId: number) {
+  private async findActiveChapterBindingByChapterId(
+    chapterId: number,
+  ): Promise<ThirdPartyComicChapterBindingLocalConflictRow | null> {
     const [row] = await this.db
-      .select()
+      .select(this.chapterBindingLocalConflictSelect)
       .from(this.chapterBinding)
       .where(
         and(
@@ -380,7 +468,10 @@ export class ThirdPartyComicBindingService {
 
   // 判断已有绑定是否与本次输入处于同一三方来源作用域。
   private isSameSourceScope(
-    binding: WorkThirdPartySourceBindingSelect,
+    binding: Pick<
+      WorkThirdPartySourceBindingSelect,
+      'platform' | 'providerComicId' | 'providerGroupPathWord'
+    >,
     input: ThirdPartyComicSourceBindingInput,
   ) {
     return (

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
@@ -37,7 +37,7 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
   }
 
   // 校验被关注用户是否存在且不是自己。 返回 ownerUserId 供后续通知链路直接复用。
-  async ensureExists(tx: Db, targetId: number, actorUserId: number) {
+  async ensureExists(tx: DbExecutor, targetId: number, actorUserId: number) {
     if (targetId === actorUserId) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -65,7 +65,7 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
   }
 
   // 回填用户粉丝计数。 当目标用户不存在时直接报错，避免脏数据静默跳过。
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     const user = await tx.query.appUser.findFirst({
       where: {
         id: targetId,
@@ -86,7 +86,7 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
 
   // 在关注成功后写入通知 outbox 事件。 同一用户关注自己不会生成通知。
   async postFollowHook(
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
     options: { ownerUserId?: number },

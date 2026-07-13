@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, DbTransaction } from '@db/core'
 import type {
   CouponAdminGrantJobSelect,
   CouponDefinitionSelect,
@@ -11,7 +11,12 @@ import type {
   CouponGrantUserRef,
 } from './types/coupon.type'
 import { createHash, randomUUID } from 'node:crypto'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -23,7 +28,7 @@ import { toWorkflowJobDto } from '@libs/platform/modules/workflow/workflow.mappe
 import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { Injectable } from '@nestjs/common'
-import { and, count, eq, inArray, isNull } from 'drizzle-orm'
+import { and, count, eq, getTableName, inArray, isNull } from 'drizzle-orm'
 import {
   CouponAdminGrantItemStatusEnum,
   CouponTargetScopeEnum,
@@ -35,6 +40,20 @@ import { CreateCouponGrantWorkflowDto } from './dto/coupon.dto'
 const USER_VALIDATE_CHUNK_SIZE = 500
 const ITEM_INSERT_CHUNK_SIZE = 500
 const GRANT_KEY_PREFIX = 'adminGrant'
+
+type CouponDefinitionGrantableSnapshot = Pick<
+  CouponDefinitionSelect,
+  | 'id'
+  | 'name'
+  | 'couponType'
+  | 'targetScope'
+  | 'usageLimit'
+  | 'discountRateBps'
+  | 'discountAmount'
+  | 'benefitDays'
+  | 'benefitCount'
+  | 'validDays'
+>
 
 @Injectable()
 export class CouponAdminGrantWorkflowService {
@@ -62,6 +81,21 @@ export class CouponAdminGrantWorkflowService {
   // 读取券定义表。
   private get couponDefinition() {
     return this.drizzle.schema.couponDefinition
+  }
+
+  private get couponDefinitionGrantableSelect() {
+    return {
+      benefitCount: this.couponDefinition.benefitCount,
+      benefitDays: this.couponDefinition.benefitDays,
+      couponType: this.couponDefinition.couponType,
+      discountAmount: this.couponDefinition.discountAmount,
+      discountRateBps: this.couponDefinition.discountRateBps,
+      id: this.couponDefinition.id,
+      name: this.couponDefinition.name,
+      targetScope: this.couponDefinition.targetScope,
+      usageLimit: this.couponDefinition.usageLimit,
+      validDays: this.couponDefinition.validDays,
+    }
   }
 
   // 读取 APP 用户表。
@@ -119,7 +153,22 @@ export class CouponAdminGrantWorkflowService {
         ],
       },
       async ({ tx, workflowJob }) => {
-        await this.createDomainJobWithItems(tx, workflowJob, preparedCommand)
+        await tx.transaction(async (grantTx) => {
+          const lockedCommand = await this.prepareCreateCommandInTransaction(
+            grantTx,
+            command,
+          )
+          await this.refreshWorkflowDraftPresentation(
+            grantTx,
+            workflowJob,
+            lockedCommand,
+          )
+          await this.createDomainJobWithItems(
+            grantTx,
+            workflowJob,
+            lockedCommand,
+          )
+        })
       },
     )
 
@@ -141,12 +190,13 @@ export class CouponAdminGrantWorkflowService {
     quantity: number
     userId: number
   }) {
-    return Array.from({ length: input.quantity }, (_, index) =>
+    return Array.from({ length: input.quantity }).map((_, index) =>
       this.buildGrantKey({
         operationHash: input.operationHash,
         userId: input.userId,
         index,
-      }),)
+      }),
+    )
   }
 
   // 读取批量发券任务和 workflow 任务。
@@ -370,11 +420,37 @@ export class CouponAdminGrantWorkflowService {
     )
     this.assertCouponAbility(couponDefinition)
     await this.assertUsersGrantable(command.userIds)
-    return {
-      ...command,
-      couponDefinition,
-      couponSnapshot: this.buildGrantSnapshot(couponDefinition),
-    }
+    return this.buildPreparedCreateCommand(command, couponDefinition)
+  }
+
+  /**
+   * workflow 草稿已由同一事务创建；在写入领域 job 前必须锁住所有物理父记录并重查，
+   * 防止券定义停用、用户状态变更或操作者删除落在预检与写入之间。
+   */
+  private async prepareCreateCommandInTransaction(
+    tx: DbTransaction,
+    command: ReturnType<typeof this.normalizeCreateCommand>,
+  ) {
+    const userIds = [...new Set([command.operatorUserId, ...command.userIds])]
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock(
+        getTableName(this.couponDefinition),
+        command.couponDefinitionId,
+      ),
+      ...userIds.map((userId) =>
+        tableIntegrityLock(getTableName(this.appUser), userId),
+      ),
+    ])
+
+    await this.assertOperatorExists(command.operatorUserId, tx)
+    const couponDefinition =
+      await this.readEnabledCouponDefinitionInTransaction(
+        tx,
+        command.couponDefinitionId,
+      )
+    this.assertCouponAbility(couponDefinition)
+    await this.assertUsersGrantableInTransaction(tx, command.userIds)
+    return this.buildPreparedCreateCommand(command, couponDefinition)
   }
 
   private normalizeUserIds(userIds: number[] | undefined) {
@@ -402,7 +478,31 @@ export class CouponAdminGrantWorkflowService {
 
   private async readEnabledCouponDefinition(couponDefinitionId: number) {
     const [row] = await this.db
-      .select()
+      .select(this.couponDefinitionGrantableSelect)
+      .from(this.couponDefinition)
+      .where(
+        and(
+          eq(this.couponDefinition.id, couponDefinitionId),
+          eq(this.couponDefinition.isEnabled, true),
+        ),
+      )
+      .limit(1)
+    if (!row) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '券定义不存在或未启用',
+      )
+    }
+    return row
+  }
+
+  /** 在已锁定的事务中重查可发放券定义，供后续领域 job 写入继承同一事务证据。 */
+  private async readEnabledCouponDefinitionInTransaction(
+    tx: DbTransaction,
+    couponDefinitionId: number,
+  ) {
+    const [row] = await tx
+      .select(this.couponDefinitionGrantableSelect)
       .from(this.couponDefinition)
       .where(
         and(
@@ -436,11 +536,70 @@ export class CouponAdminGrantWorkflowService {
         )
       rows.forEach((row) => foundIds.add(row.id))
     }
+    this.assertGrantableUserIds(userIds, foundIds)
+  }
+
+  /** 在已锁定的事务中重查全部目标用户的当前可发券状态。 */
+  private async assertUsersGrantableInTransaction(
+    tx: DbTransaction,
+    userIds: number[],
+  ) {
+    const foundIds = new Set<number>()
+    for (const chunk of this.chunk(userIds, USER_VALIDATE_CHUNK_SIZE)) {
+      const rows = await tx
+        .select({ id: this.appUser.id })
+        .from(this.appUser)
+        .where(
+          and(
+            inArray(this.appUser.id, chunk),
+            eq(this.appUser.isEnabled, true),
+            eq(this.appUser.status, UserStatusEnum.NORMAL),
+            isNull(this.appUser.deletedAt),
+          ),
+        )
+      rows.forEach((row) => foundIds.add(row.id))
+    }
+    this.assertGrantableUserIds(userIds, foundIds)
+  }
+
+  private assertGrantableUserIds(
+    userIds: number[],
+    foundIds: ReadonlySet<number>,
+  ) {
     const invalidIds = userIds.filter((userId) => !foundIds.has(userId))
     if (invalidIds.length > 0) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         `存在不可发券用户: ${invalidIds.slice(0, 20).join(',')}`,
+      )
+    }
+  }
+
+  private buildPreparedCreateCommand(
+    command: ReturnType<typeof this.normalizeCreateCommand>,
+    couponDefinition: CouponDefinitionGrantableSnapshot,
+  ) {
+    return {
+      ...command,
+      couponDefinition,
+      couponSnapshot: this.buildGrantSnapshot(couponDefinition),
+    }
+  }
+
+  /** 在同一锁事务中确认 workflow 与领域任务引用的操作者仍存在。 */
+  private async assertOperatorExists(
+    operatorUserId: number,
+    tx: DbTransaction,
+  ) {
+    const [operator] = await tx
+      .select({ id: this.appUser.id })
+      .from(this.appUser)
+      .where(eq(this.appUser.id, operatorUserId))
+      .limit(1)
+    if (!operator) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '后台批量发券操作者不存在',
       )
     }
   }
@@ -493,7 +652,7 @@ export class CouponAdminGrantWorkflowService {
   }
 
   private async createDomainJobWithItems(
-    tx: Db,
+    tx: DbTransaction,
     workflowJob: WorkflowJobSelect,
     command: Awaited<ReturnType<typeof this.prepareCreateCommand>>,
   ) {
@@ -538,6 +697,29 @@ export class CouponAdminGrantWorkflowService {
     }
   }
 
+  /** 将最终锁后快照同步到刚创建的 workflow 草稿，避免元数据与领域快照不一致。 */
+  private async refreshWorkflowDraftPresentation(
+    tx: DbTransaction,
+    workflowJob: WorkflowJobSelect,
+    command: Awaited<ReturnType<typeof this.prepareCreateCommand>>,
+  ) {
+    await tx
+      .update(this.workflowJob)
+      .set({
+        displayName: `批量发券：${command.couponDefinition.name} x${command.quantity}`,
+        summary: {
+          couponDefinitionId: command.couponDefinition.id,
+          couponName: command.couponDefinition.name,
+          operatorUserId: command.operatorUserId,
+          perUserQuantity: command.quantity,
+          requestedGrantCount: command.requestedGrantCount,
+          selectedUserCount: command.userIds.length,
+        },
+        updatedAt: new Date(),
+      })
+      .where(eq(this.workflowJob.id, workflowJob.id))
+  }
+
   private buildOperationConflictKey(operationHash: string) {
     return `coupon-admin-grant:operation:${operationHash}`
   }
@@ -547,7 +729,7 @@ export class CouponAdminGrantWorkflowService {
   }
 
   private buildGrantSnapshot(
-    definition: CouponDefinitionSelect,
+    definition: CouponDefinitionGrantableSnapshot,
   ): CouponGrantSnapshot {
     return {
       name: definition.name,
@@ -563,7 +745,7 @@ export class CouponAdminGrantWorkflowService {
     }
   }
 
-  private assertCouponAbility(definition: CouponDefinitionSelect) {
+  private assertCouponAbility(definition: CouponDefinitionGrantableSnapshot) {
     if (
       definition.couponType === CouponTypeEnum.READING &&
       (definition.targetScope !== CouponTargetScopeEnum.CHAPTER ||
@@ -609,10 +791,7 @@ export class CouponAdminGrantWorkflowService {
     }
   }
 
-  private buildUserLabel(
-    user: CouponGrantUserRef | null,
-    userId: number,
-  ) {
+  private buildUserLabel(user: CouponGrantUserRef | null, userId: number) {
     return user?.nickname?.trim() || user?.account?.trim() || `用户 #${userId}`
   }
 

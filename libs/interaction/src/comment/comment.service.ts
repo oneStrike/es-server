@@ -1,4 +1,4 @@
-import type { Db, SQL } from '@db/core'
+import type { DbExecutor, DbTransaction, SQL } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { DispatchDefinedGrowthEventPayload } from '@libs/growth/growth-reward/types/growth-event-dispatch.type'
 import type {
@@ -18,7 +18,13 @@ import type {
   CommentTargetMeta,
   ICommentTargetResolver,
 } from './interfaces/comment-target-resolver.type'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 import { ForumHashtagBodyService } from '@libs/forum/hashtag/forum-hashtag-body.service'
 import { ForumHashtagReferenceService } from '@libs/forum/hashtag/forum-hashtag-reference.service'
 import {
@@ -139,7 +145,7 @@ export class CommentService {
   >()
 
   private async allocateRootCommentFloorInTx(
-    tx: Db,
+    tx: DbExecutor,
     targetType: CommentTargetTypeEnum,
     targetId: number,
   ) {
@@ -221,6 +227,25 @@ export class CommentService {
       )
     }
     return resolver
+  }
+
+  // 锁定回复关联评论，再由目标解析器校验可评论性。
+  private async lockRelatedCommentsAndEnsureTargetInTx(
+    tx: DbExecutor,
+    params: {
+      targetId: number
+      resolver: ICommentTargetResolver
+      relatedCommentIds?: readonly number[]
+    },
+  ) {
+    const locks = (params.relatedCommentIds ?? []).map((commentId) =>
+      tableIntegrityLock('user_comment', commentId),
+    )
+    if (locks.length > 0) {
+      await acquireIntegrityLocks(tx, locks)
+    }
+
+    await params.resolver.ensureCanComment(tx, params.targetId)
   }
 
   // 判断评论是否对用户可见 可见条件：审核通过 + 未隐藏 + 未删除
@@ -406,7 +431,7 @@ export class CommentService {
 
   // 在事务内将评论正文物化为带 hashtag 事实的 canonical body 编译结果。
   private async materializeCommentBodyInTx(
-    tx: Db,
+    tx: DbExecutor,
     html: string,
     actorUserId: number,
     targetType: CommentTargetTypeEnum,
@@ -461,7 +486,7 @@ export class CommentService {
   }
 
   // 判断论坛主题当前是否对外可见。
-  private async isForumTopicVisibleInTx(tx: Db, topicId: number) {
+  private async isForumTopicVisibleInTx(tx: DbExecutor, topicId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: topicId,
@@ -656,24 +681,22 @@ export class CommentService {
           geoCity: this.userComment.geoCity,
           geoIsp: this.userComment.geoIsp,
           createdAt: this.userComment.createdAt,
-          rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
-            'rn',
-          ),
+          rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`
+            .mapWith(Number)
+            .as('rn'),
           totalCount:
-            sql<number>`COUNT(*) OVER (PARTITION BY ${this.userComment.actualReplyToId})`.as(
-              'totalCount',
-            ),
+            sql<number>`COUNT(*) OVER (PARTITION BY ${this.userComment.actualReplyToId})`
+              .mapWith(Number)
+              .as('totalCount'),
         })
         .from(this.userComment)
         .where(and(...replyConditions))
         .as('t')
 
-      loadedPreviewReplies = (await this.db
+      loadedPreviewReplies = await this.db
         .select()
         .from(subquery)
-        .where(
-          lte(subquery.rn, params.previewReplyLimit),
-        ))
+        .where(lte(subquery.rn, params.previewReplyLimit))
 
       for (const reply of loadedPreviewReplies) {
         if (
@@ -687,7 +710,7 @@ export class CommentService {
       const replyCountRows = await this.db
         .select({
           rootId: this.userComment.actualReplyToId,
-          count: sql<number>`count(*)`,
+          count: sql<number>`count(*)`.mapWith(Number),
         })
         .from(this.userComment)
         .where(and(...replyConditions))
@@ -733,7 +756,7 @@ export class CommentService {
 
   // 应用评论数量变更到目标对象 更新目标对象（如漫画、小说等）的评论计数字段。 当 delta 为 0 时跳过操作。
   private async applyCommentCountDelta(
-    tx: Db,
+    tx: DbExecutor,
     targetType: CommentTargetTypeEnum,
     targetId: number,
     delta: number,
@@ -778,7 +801,7 @@ export class CommentService {
 
   // 同步评论可见性迁移的副作用。 - 首次变为可见：补评论计数、目标钩子、回复通知，并回传奖励所需事件壳 - 从可见变不可见：回退评论计数与目标派生字段
   private async syncCommentVisibilityTransition(
-    tx: Db,
+    tx: DbExecutor,
     params: {
       current: CommentModerationState
       nextAuditStatus: AuditStatusEnum
@@ -875,7 +898,7 @@ export class CommentService {
 
   // 补偿可见评论的副作用 当评论变为可见状态时，需要执行以下补偿操作： 1. 给评论者发放成长奖励（积分/经验） 2. 如果是回复评论，向被回复者发送通知
   private async compensateVisibleCommentEffects(
-    tx: Db,
+    tx: DbExecutor,
     comment: VisibleCommentEffectPayload,
     meta: CommentTargetMeta,
     eventEnvelope: ReturnType<
@@ -965,7 +988,7 @@ export class CommentService {
 
   // 计算删除评论时需要覆盖的评论范围。 - 删除回复：仅删除当前回复自身 - 删除一级评论：级联删除根评论及其整棵楼中楼回复树
   private async getDeleteScopeComments(
-    tx: Db,
+    tx: DbExecutor,
     found: {
       id: number
       userId: number
@@ -1010,7 +1033,7 @@ export class CommentService {
 
   // 回退被删除评论作者的评论数与评论获赞数。 一级评论级联删除时按作者聚合后再写入，避免逐条更新放大事务开销。
   private async rollbackDeletedCommentAuthorCounts(
-    tx: Db,
+    tx: DbExecutor,
     comments: Array<{
       userId: number
       likeCount: number
@@ -1065,7 +1088,10 @@ export class CommentService {
         this.withTransactionConflictRetry(
           async () =>
             this.db.transaction(async (tx) => {
-              await resolver.ensureCanComment(tx, targetId)
+              await this.lockRelatedCommentsAndEnsureTargetInTx(tx, {
+                targetId,
+                resolver,
+              })
               await this.commentPermissionService.ensureCommentRateLimitInTx(
                 tx,
                 userId,
@@ -1283,141 +1309,169 @@ export class CommentService {
 
     const resolver = this.getResolver(targetType)
 
-    const created = await this.drizzle.withTransaction(async (tx) => {
-      await resolver.ensureCanComment(tx, targetId)
-      await this.commentPermissionService.ensureCommentRateLimitInTx(
-        tx,
-        userId,
-        targetType,
-      )
-      const compiledBody = await this.materializeCommentBodyInTx(
-        tx,
-        html,
-        userId,
-        targetType,
-      )
-      const decision = this.resolveAuditDecision(compiledBody.plainText)
-      const { recordHits, statisticsHits, ...persistedDecision } = decision
-
-      const [newComment] = await tx
-        .insert(this.userComment)
-        .values({
-          targetType,
+    const created = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockRelatedCommentsAndEnsureTargetInTx(tx, {
           targetId,
-          userId,
-          html: compiledBody.html,
-          content: compiledBody.plainText,
-          body: compiledBody.body,
-          bodyVersion: BODY_VERSION_V1,
-          replyToId,
-          actualReplyToId,
-          ...persistedDecision,
-          geoCountry: context.geoCountry,
-          geoProvince: context.geoProvince,
-          geoCity: context.geoCity,
-          geoIsp: context.geoIsp,
-          geoSource: context.geoSource,
+          resolver,
+          relatedCommentIds: [replyToId, actualReplyToId],
         })
-        .returning({
-          id: this.userComment.id,
-          userId: this.userComment.userId,
-          targetType: this.userComment.targetType,
-          targetId: this.userComment.targetId,
-          replyToId: this.userComment.replyToId,
-          html: this.userComment.html,
-          content: this.userComment.content,
-          createdAt: this.userComment.createdAt,
+        const lockedReplyTo = await tx.query.userComment.findFirst({
+          where: {
+            id: replyToId,
+            deletedAt: { isNull: true },
+          },
+          columns: {
+            id: true,
+            userId: true,
+            replyToId: true,
+            actualReplyToId: true,
+            auditStatus: true,
+            isHidden: true,
+          },
         })
-
-      if (recordHits && statisticsHits.length) {
-        await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
-          entityType: 'comment',
-          entityId: newComment.id,
-          operationType: 'create',
-          hits: statisticsHits,
-          occurredAt: newComment.createdAt,
-        })
-      }
-
-      await this.mentionService.replaceMentionsInTx({
-        tx,
-        sourceType: MentionSourceTypeEnum.COMMENT,
-        sourceId: newComment.id,
-        content: compiledBody.plainText,
-        mentions: compiledBody.mentionFacts,
-      })
-      await this.emojiCatalogService.recordRecentUsageInTx(tx, {
-        userId,
-        scene: EmojiSceneEnum.COMMENT,
-        items: compiledBody.emojiRecentUsageItems,
-      })
-      if (targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
-        const meta = await resolver.resolveMeta(tx, targetId)
-        if (!meta.sectionId) {
+        if (
+          !lockedReplyTo ||
+          lockedReplyTo.auditStatus !== AuditStatusEnum.APPROVED ||
+          lockedReplyTo.isHidden
+        ) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '帖子板块信息缺失',
+            '回复目标不存在',
           )
         }
-        await this.forumHashtagReferenceService.replaceReferencesInTx({
+        const lockedActualReplyToId = lockedReplyTo.replyToId
+          ? (lockedReplyTo.actualReplyToId ?? lockedReplyTo.id)
+          : lockedReplyTo.id
+        await this.commentPermissionService.ensureCommentRateLimitInTx(
           tx,
-          sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
-          sourceId: newComment.id,
-          topicId: targetId,
-          sectionId: meta.sectionId,
           userId,
-          sourceAuditStatus: decision.auditStatus,
-          sourceIsHidden: decision.isHidden,
-          isSourceVisible:
-            this.isVisible({ ...decision, deletedAt: null }) &&
-            (await this.isForumTopicVisibleInTx(tx, targetId)),
-          hashtagFacts: compiledBody.hashtagFacts,
-        })
-      }
-
-      await this.appUserCountService.updateCommentCount(tx, userId, 1)
-
-      const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
-        commentId: newComment.id,
-        userId: newComment.userId,
-        targetType: newComment.targetType,
-        targetId: newComment.targetId,
-        replyToId: newComment.replyToId,
-        occurredAt: newComment.createdAt,
-        auditStatus: decision.auditStatus,
-        isHidden: decision.isHidden,
-      })
-
-      if (this.isVisible({ ...decision, deletedAt: null })) {
-        await this.applyCommentCountDelta(
-          tx,
           targetType,
-          targetId,
-          1,
         )
-
-        const meta = await resolver.resolveMeta(tx, targetId)
-        const visibleCommentPayload = {
-          ...newComment,
-          replyTargetUserId: replyTo.userId,
-        }
-        if (resolver.postCommentHook) {
-          await resolver.postCommentHook(tx, visibleCommentPayload, meta)
-        }
-
-        await this.compensateVisibleCommentEffects(
+        const compiledBody = await this.materializeCommentBodyInTx(
           tx,
-          visibleCommentPayload,
-          meta,
-          commentCreatedEvent,
+          html,
+          userId,
+          targetType,
         )
-      }
+        const decision = this.resolveAuditDecision(compiledBody.plainText)
+        const { recordHits, statisticsHits, ...persistedDecision } = decision
 
-      return {
-        comment: newComment,
-        visible: this.isVisible({ ...decision, deletedAt: null }),
-        eventEnvelope: commentCreatedEvent,
-      }
+        const [newComment] = await tx
+          .insert(this.userComment)
+          .values({
+            targetType,
+            targetId,
+            userId,
+            html: compiledBody.html,
+            content: compiledBody.plainText,
+            body: compiledBody.body,
+            bodyVersion: BODY_VERSION_V1,
+            replyToId,
+            actualReplyToId: lockedActualReplyToId,
+            ...persistedDecision,
+            geoCountry: context.geoCountry,
+            geoProvince: context.geoProvince,
+            geoCity: context.geoCity,
+            geoIsp: context.geoIsp,
+            geoSource: context.geoSource,
+          })
+          .returning({
+            id: this.userComment.id,
+            userId: this.userComment.userId,
+            targetType: this.userComment.targetType,
+            targetId: this.userComment.targetId,
+            replyToId: this.userComment.replyToId,
+            html: this.userComment.html,
+            content: this.userComment.content,
+            createdAt: this.userComment.createdAt,
+          })
+
+        if (recordHits && statisticsHits.length) {
+          await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
+            entityType: 'comment',
+            entityId: newComment.id,
+            operationType: 'create',
+            hits: statisticsHits,
+            occurredAt: newComment.createdAt,
+          })
+        }
+
+        await this.mentionService.replaceMentionsInTx({
+          tx,
+          sourceType: MentionSourceTypeEnum.COMMENT,
+          sourceId: newComment.id,
+          content: compiledBody.plainText,
+          mentions: compiledBody.mentionFacts,
+        })
+        await this.emojiCatalogService.recordRecentUsageInTx(tx, {
+          userId,
+          scene: EmojiSceneEnum.COMMENT,
+          items: compiledBody.emojiRecentUsageItems,
+        })
+        if (targetType === CommentTargetTypeEnum.FORUM_TOPIC) {
+          const meta = await resolver.resolveMeta(tx, targetId)
+          if (!meta.sectionId) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '帖子板块信息缺失',
+            )
+          }
+          await this.forumHashtagReferenceService.replaceReferencesInTx({
+            tx,
+            sourceType: ForumHashtagReferenceSourceTypeEnum.COMMENT,
+            sourceId: newComment.id,
+            topicId: targetId,
+            sectionId: meta.sectionId,
+            userId,
+            sourceAuditStatus: decision.auditStatus,
+            sourceIsHidden: decision.isHidden,
+            isSourceVisible:
+              this.isVisible({ ...decision, deletedAt: null }) &&
+              (await this.isForumTopicVisibleInTx(tx, targetId)),
+            hashtagFacts: compiledBody.hashtagFacts,
+          })
+        }
+
+        await this.appUserCountService.updateCommentCount(tx, userId, 1)
+
+        const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
+          commentId: newComment.id,
+          userId: newComment.userId,
+          targetType: newComment.targetType,
+          targetId: newComment.targetId,
+          replyToId: newComment.replyToId,
+          occurredAt: newComment.createdAt,
+          auditStatus: decision.auditStatus,
+          isHidden: decision.isHidden,
+        })
+
+        if (this.isVisible({ ...decision, deletedAt: null })) {
+          await this.applyCommentCountDelta(tx, targetType, targetId, 1)
+
+          const meta = await resolver.resolveMeta(tx, targetId)
+          const visibleCommentPayload = {
+            ...newComment,
+            replyTargetUserId: lockedReplyTo.userId,
+          }
+          if (resolver.postCommentHook) {
+            await resolver.postCommentHook(tx, visibleCommentPayload, meta)
+          }
+
+          await this.compensateVisibleCommentEffects(
+            tx,
+            visibleCommentPayload,
+            meta,
+            commentCreatedEvent,
+          )
+        }
+
+        return {
+          comment: newComment,
+          visible: this.isVisible({ ...decision, deletedAt: null }),
+          eventEnvelope: commentCreatedEvent,
+        }
+      },
     })
 
     if (
@@ -1441,23 +1495,24 @@ export class CommentService {
 
   // 删除评论 软删除评论（设置 deletedAt 时间戳）。 如果删除前评论是可见状态，需要减少目标对象的评论计数。 不指定时可删除任意评论（管理员侧调用）
   async deleteComment(commentId: number, userId?: number) {
-    return this.drizzle.withTransaction(async (tx) => {
-      return this.deleteCommentInTx(tx, commentId, userId)
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        return this.deleteCommentInTx(tx, commentId, userId)
+      },
     })
   }
 
-  async deleteCommentInTx(tx: Db, commentId: number, userId?: number) {
+  async deleteCommentInTx(
+    tx: DbTransaction,
+    commentId: number,
+    userId?: number,
+  ) {
     const found = await tx.query.userComment.findFirst({
-      where: userId
-        ? {
-            id: commentId,
-            userId,
-            deletedAt: { isNull: true },
-          }
-        : {
-            id: commentId,
-            deletedAt: { isNull: true },
-          },
+      where: {
+        id: commentId,
+        ...(userId ? { userId } : {}),
+        deletedAt: { isNull: true },
+      },
       columns: {
         id: true,
         userId: true,
@@ -1479,7 +1534,47 @@ export class CommentService {
       )
     }
 
-    const deleteScopeComments = await this.getDeleteScopeComments(tx, found)
+    const initialDeleteScopeComments = await this.getDeleteScopeComments(
+      tx,
+      found,
+    )
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('user_comment', found.id),
+      ...initialDeleteScopeComments.map((comment) =>
+        tableIntegrityLock('user_comment', comment.id),
+      ),
+    ])
+    const lockedFound = await tx.query.userComment.findFirst({
+      where: {
+        id: commentId,
+        ...(userId ? { userId } : {}),
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        userId: true,
+        targetType: true,
+        targetId: true,
+        replyToId: true,
+        content: true,
+        createdAt: true,
+        auditStatus: true,
+        isHidden: true,
+        likeCount: true,
+        deletedAt: true,
+      },
+    })
+    if (!lockedFound) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '删除失败：数据不存在',
+      )
+    }
+
+    const deleteScopeComments = await this.getDeleteScopeComments(
+      tx,
+      lockedFound,
+    )
     const deleteScopeIds = deleteScopeComments.map((item) => item.id)
     const deletedAt = new Date()
 
@@ -1490,7 +1585,7 @@ export class CommentService {
       })
       .where(
         deleteScopeIds.length === 1
-          ? eq(this.userComment.id, found.id)
+          ? eq(this.userComment.id, lockedFound.id)
           : inArray(this.userComment.id, deleteScopeIds),
       )
 
@@ -1514,27 +1609,27 @@ export class CommentService {
       return true
     }
 
-    const resolver = this.getResolver(found.targetType)
+    const resolver = this.getResolver(lockedFound.targetType)
 
     await this.applyCommentCountDelta(
       tx,
-      found.targetType,
-      found.targetId,
+      lockedFound.targetType,
+      lockedFound.targetId,
       -visibleDeletedCount,
     )
 
-    const meta = await resolver.resolveMeta(tx, found.targetId)
+    const meta = await resolver.resolveMeta(tx, lockedFound.targetId)
     if (resolver.postDeleteCommentHook) {
       await resolver.postDeleteCommentHook(
         tx,
         {
-          id: found.id,
-          userId: found.userId,
-          targetType: found.targetType,
-          targetId: found.targetId,
-          replyToId: found.replyToId,
-          content: found.content,
-          createdAt: found.createdAt,
+          id: lockedFound.id,
+          userId: lockedFound.userId,
+          targetType: lockedFound.targetType,
+          targetId: lockedFound.targetId,
+          replyToId: lockedFound.replyToId,
+          content: lockedFound.content,
+          createdAt: lockedFound.createdAt,
         },
         meta,
       )
@@ -2206,7 +2301,7 @@ export class CommentService {
       )
     }
 
-    if ((current.auditStatus) === input.auditStatus) {
+    if (current.auditStatus === input.auditStatus) {
       return true
     }
 
@@ -2247,7 +2342,7 @@ export class CommentService {
   }
 
   async updateCommentAuditStatusInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: UpdateCommentAuditStatusDto & {
       auditById: number
       auditRole?: AuditRoleEnum
@@ -2284,7 +2379,7 @@ export class CommentService {
     }
 
     if (
-      (comment.auditStatus) === input.auditStatus &&
+      comment.auditStatus === input.auditStatus &&
       (comment.auditReason ?? null) === (input.auditReason ?? null)
     ) {
       return {
@@ -2340,7 +2435,7 @@ export class CommentService {
         )
       }
       if (
-        (latest.auditStatus) === input.auditStatus &&
+        latest.auditStatus === input.auditStatus &&
         (latest.auditReason ?? null) === (input.auditReason ?? null)
       ) {
         return {
@@ -2456,7 +2551,7 @@ export class CommentService {
   }
 
   async updateCommentHiddenInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: UpdateCommentHiddenDto,
     current?: CommentModerationState,
   ) {

@@ -3,23 +3,32 @@ import { join, relative, resolve } from 'node:path'
 import process from 'node:process'
 import ts from 'typescript'
 
-const WORKSPACE_ROOT = resolve(__dirname, '..')
+const WORKSPACE_ROOT = resolve(__dirname, '..', '..')
 const SCAN_ROOTS = ['apps', 'libs', 'db', 'scripts']
 const DB_CORE_ROOT = resolve(WORKSPACE_ROOT, 'db', 'core')
 const DB_SCHEMA_ROOT = resolve(WORKSPACE_ROOT, 'db', 'schema')
 const DB_RELATIONS_ROOT = resolve(WORKSPACE_ROOT, 'db', 'relations')
+const DB_OPERATIONS_ROOT = resolve(WORKSPACE_ROOT, 'db', 'operations')
 const PUBLIC_BARREL_PATH = resolve(WORKSPACE_ROOT, 'db', 'core', 'index.ts')
+const ALLOWED_OPERATIONAL_IMPORTERS = new Set([
+  normalizePath(resolve(WORKSPACE_ROOT, 'db', 'migrate.ts')),
+])
 
 const ALLOWED_CORE_EXPORTS = new Set([
   'Db',
+  'DbExecutor',
+  'DbNotificationMetrics',
   'DbNotificationSubscription',
   'DbNotificationSubscriptionOptions',
   'DbNotificationService',
+  'DbTransaction',
+  'DbTransactionConfig',
   'DrizzleModule',
+  'DrizzleErrorMessages',
   'DrizzleMutationResult',
   'DrizzleService',
+  'DrizzleTransactionOptions',
   'PgTable',
-  'seedRelations',
   'SeedDb',
   'SQL',
   'TableConfig',
@@ -28,7 +37,24 @@ const ALLOWED_CORE_EXPORTS = new Set([
   'extractError',
   'extractRows',
   'getPostgresErrorResponseDescriptor',
+  'relations',
   'toPageResult',
+  // Zero-FK integrity protocol: all data owners share this explicit public
+  // contract rather than reaching into db/core implementation files.
+  'acquireIntegrityLocks',
+  'acquireIntegrityLocksWithQueryExecutor',
+  'ADMIN_RBAC_RELATION_INTEGRITY_LOCKS',
+  'integrityLock',
+  'IntegrityLockNamespace',
+  'isIntegrityLockHeldByAnotherTransaction',
+  'jobIntegrityLock',
+  'relationIntegrityLock',
+  'tableIntegrityLock',
+  'IntegrityLock',
+  'IntegrityLockExecutor',
+  'IntegrityLockNamespaceValue',
+  'IntegrityLockOwnerPart',
+  'IntegrityLockQueryExecutor',
 ])
 
 const FORBIDDEN_CORE_EXPORTS = new Set([
@@ -41,7 +67,7 @@ const FORBIDDEN_CORE_EXPORTS = new Set([
   ['Drizzle', 'Db', 'LegacyProvider'].join(''),
 ])
 
-const ALLOWED_CORE_EXPORT_ALIASES = new Map([['seedRelations', 'relations']])
+const ALLOWED_CORE_EXPORT_ALIASES = new Map<string, string>()
 
 interface BoundaryViolation {
   filePath: string
@@ -59,6 +85,7 @@ checkForbiddenDbAliasImports()
 checkRelativeSchemaImports()
 checkRelativeRelationsImports()
 checkNoDirectErrorInternalImports()
+checkOperationalImports()
 checkPublicBarrel()
 
 if (violations.length > 0) {
@@ -92,6 +119,36 @@ function checkCoreImports() {
       }
 
       checkCoreExportDeclaration(filePath, node)
+    })
+  }
+}
+
+// 防止 runtime owner 反向依赖数据库 operational composition。
+function checkOperationalImports() {
+  for (const filePath of TYPE_SCRIPT_FILES) {
+    if (
+      isInsideRoot(filePath, DB_OPERATIONS_ROOT) ||
+      ALLOWED_OPERATIONAL_IMPORTERS.has(normalizePath(filePath))
+    ) {
+      continue
+    }
+
+    const sourceFile = getSourceFile(filePath)
+    sourceFile.forEachChild((node) => {
+      if (!ts.isImportDeclaration(node) && !ts.isExportDeclaration(node)) {
+        return
+      }
+
+      const moduleSpecifier = getModuleSpecifier(node)
+      if (
+        moduleSpecifier?.startsWith('.') &&
+        resolvesInsideRoot(filePath, moduleSpecifier, DB_OPERATIONS_ROOT)
+      ) {
+        addViolation(
+          filePath,
+          `must not import operational database composition "${moduleSpecifier}"`,
+        )
+      }
     })
   }
 }

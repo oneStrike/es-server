@@ -348,6 +348,22 @@ export const userComment = snakeCase.table(
       'user_comment_body_version_valid_chk',
       sql`${table.bodyVersion} in (1)`,
     ),
+    /**
+     * 多态评论目标必须属于注册表的闭集；零外键模型下由写入事务按该类型
+     * 锁定并重查对应父记录。
+     */
+    check(
+      'user_comment_target_type_valid_chk',
+      sql`${table.targetType} in (1, 2, 3, 4, 5)`,
+    ),
+    check(
+      'user_comment_audit_role_valid_chk',
+      sql`${table.auditRole} is null or ${table.auditRole} in (0, 1)`,
+    ),
+    check(
+      'user_comment_audit_actor_pair_chk',
+      sql`(${table.auditRole} is null) = (${table.auditById} is null)`,
+    ),
     check(
       'user_comment_like_count_non_negative_chk',
       sql`${table.likeCount} >= 0`,

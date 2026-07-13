@@ -37,7 +37,6 @@ import {
   and,
   eq,
   exists,
-  getColumns,
   gte,
   ilike,
   inArray,
@@ -116,32 +115,64 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
     )
   }
 
+  private get adminTopicDetailColumns() {
+    return {
+      id: true,
+      sectionId: true,
+      userId: true,
+      lastCommentUserId: true,
+      auditById: true,
+      title: true,
+      html: true,
+      images: true,
+      videos: true,
+      isPinned: true,
+      isFeatured: true,
+      isLocked: true,
+      isHidden: true,
+      auditStatus: true,
+      auditRole: true,
+      auditReason: true,
+      auditAt: true,
+      version: true,
+      sensitiveWordHits: true,
+      viewCount: true,
+      likeCount: true,
+      commentCount: true,
+      favoriteCount: true,
+      lastCommentAt: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+    } as const
+  }
+
   // ─── 公开分页内部方法 ──────────────────────────────────────
 
-  // 构建公开主题分页的 select 投影，复用统一字段列表。
-  // 排除：正文大字段(html/content/body/bodyVersion)、审核管理字段(auditById/auditStatus/auditRole/auditReason/auditAt/isHidden)、
-  // 内部控制字段(version/sensitiveWordHits/geoSource/lastCommentUserId/updatedAt/deletedAt)
+  // 构建公开主题分页的最小字段投影，禁止随表新增列自动外泄。
   private buildPublicTopicPageSelect() {
-    const {
-      html,
-      content,
-      body,
-      bodyVersion,
-      auditById,
-      auditStatus,
-      auditRole,
-      auditReason,
-      auditAt,
-      isHidden,
-      version,
-      sensitiveWordHits,
-      geoSource,
-      lastCommentUserId,
-      updatedAt,
-      deletedAt,
-      ...rest
-    } = getColumns(this.forumTopicTable)
-    return rest
+    return {
+      id: this.forumTopicTable.id,
+      sectionId: this.forumTopicTable.sectionId,
+      userId: this.forumTopicTable.userId,
+      title: this.forumTopicTable.title,
+      contentPreview: this.forumTopicTable.contentPreview,
+      images: this.forumTopicTable.images,
+      videos: this.forumTopicTable.videos,
+      isPinned: this.forumTopicTable.isPinned,
+      isFeatured: this.forumTopicTable.isFeatured,
+      isLocked: this.forumTopicTable.isLocked,
+      geoCountry: this.forumTopicTable.geoCountry,
+      geoProvince: this.forumTopicTable.geoProvince,
+      geoCity: this.forumTopicTable.geoCity,
+      geoIsp: this.forumTopicTable.geoIsp,
+      viewCount: this.forumTopicTable.viewCount,
+      likeCount: this.forumTopicTable.likeCount,
+      commentCount: this.forumTopicTable.commentCount,
+      favoriteCount: this.forumTopicTable.favoriteCount,
+      lastCommentAt: this.forumTopicTable.lastCommentAt,
+      createdAt: this.forumTopicTable.createdAt,
+    }
   }
 
   // 解析公开主题分页的可用板块 ID 列表；传入 sectionId 时校验单板块权限，否则取全部可访问板块。
@@ -403,6 +434,29 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
         auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
       },
+      columns: {
+        id: true,
+        sectionId: true,
+        userId: true,
+        title: true,
+        html: true,
+        images: true,
+        videos: true,
+        isPinned: true,
+        isFeatured: true,
+        isLocked: true,
+        geoCountry: true,
+        geoProvince: true,
+        geoCity: true,
+        geoIsp: true,
+        viewCount: true,
+        likeCount: true,
+        commentCount: true,
+        favoriteCount: true,
+        lastCommentAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       with: {
         section: {
           columns: {
@@ -484,35 +538,28 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       )
     }
 
-    // 排除不应透传到公开 DTO 的字段：正文派生列(content/contentPreview/body/bodyVersion)、审核管理字段、
-    // 内部控制字段(version/sensitiveWordHits/geoSource/lastCommentUserId/deletedAt)、关系查询的关联对象需重新构造
-    const {
-      content,
-      contentPreview,
-      body,
-      bodyVersion,
-      auditById,
-      auditStatus,
-      auditRole,
-      auditReason,
-      auditAt,
-      isHidden,
-      version,
-      sensitiveWordHits,
-      geoSource,
-      lastCommentUserId,
-      viewCount,
-      videos,
-      deletedAt,
-      section: _section,
-      user: _user,
-      ...topicFields
-    } = topic
-
     return {
-      ...topicFields,
-      videos: videos as JsonValue,
+      id: topic.id,
+      sectionId: topic.sectionId,
+      userId: topic.userId,
+      title: topic.title,
+      html: topic.html,
+      geoCountry: topic.geoCountry,
+      geoProvince: topic.geoProvince,
+      geoCity: topic.geoCity,
+      geoIsp: topic.geoIsp,
+      images: topic.images,
+      videos: topic.videos as JsonValue,
+      isPinned: topic.isPinned,
+      isFeatured: topic.isFeatured,
+      isLocked: topic.isLocked,
       viewCount: interaction.viewCount,
+      commentCount: topic.commentCount,
+      likeCount: topic.likeCount,
+      favoriteCount: topic.favoriteCount,
+      lastCommentAt: topic.lastCommentAt,
+      createdAt: topic.createdAt,
+      updatedAt: topic.updatedAt,
       liked: interaction.liked,
       favorited: interaction.favorited,
       user: {
@@ -819,6 +866,7 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       where: {
         id,
       },
+      columns: this.adminTopicDetailColumns,
       with: {
         section: {
           columns: {
@@ -898,39 +946,34 @@ export class ForumTopicQueryService extends ForumTopicServiceSupport {
       points = growth.points
     }
 
-    // 排除不应透传到 DTO 的字段：正文派生列(content/contentPreview/body/bodyVersion)、审核人内部字段(auditById/auditRole)、
-    // 属地快照字段(geoCountry/geoProvince/geoCity/geoIsp/geoSource)
-    const {
-      content,
-      contentPreview,
-      body,
-      bodyVersion,
-      auditById,
-      auditRole,
-      geoCountry,
-      geoProvince,
-      geoCity,
-      geoIsp,
-      geoSource,
-      images,
-      videos,
-      sensitiveWordHits,
-      // 关系查询带出的关联对象需要在返回时重新构造，避免直接透传
-      section: _section,
-      user: _user,
-      ...topicFields
-    } = topic
-
     const detail: AdminForumTopicDetailDto = {
-      ...topicFields,
-      images: images ?? [],
-      videos: this.normalizeTopicVideoOutput(videos),
+      id: topic.id,
+      sectionId: topic.sectionId,
+      userId: topic.userId,
+      title: topic.title,
+      html: topic.html,
+      images: topic.images ?? [],
+      videos: this.normalizeTopicVideoOutput(topic.videos),
+      isPinned: topic.isPinned,
+      isFeatured: topic.isFeatured,
+      isLocked: topic.isLocked,
+      isHidden: topic.isHidden,
+      auditStatus: topic.auditStatus,
       auditReason: topic.auditReason ?? null,
       auditAt: topic.auditAt ?? null,
-      sensitiveWordHits:
-        this.normalizeSensitiveWordHitOutput(sensitiveWordHits),
+      viewCount: topic.viewCount,
+      likeCount: topic.likeCount,
+      commentCount: topic.commentCount,
+      favoriteCount: topic.favoriteCount,
+      version: topic.version,
+      sensitiveWordHits: this.normalizeSensitiveWordHitOutput(
+        topic.sensitiveWordHits,
+      ),
       lastCommentAt: topic.lastCommentAt ?? null,
       lastCommentUserId: topic.lastCommentUserId ?? null,
+      createdAt: topic.createdAt,
+      updatedAt: topic.updatedAt,
+      deletedAt: topic.deletedAt ?? null,
       hashtags,
       section: {
         id: topic.section.id,

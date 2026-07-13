@@ -122,6 +122,10 @@ export const appAgreementLog = snakeCase.table(
       table.agreementId,
     ),
     /**
+     * 协议签署记录反向关联索引。
+     */
+    index('app_agreement_log_agreement_id_idx').on(table.agreementId),
+    /**
      * 签署时间索引
      */
     index('app_agreement_log_agreed_at_idx').on(table.agreedAt),

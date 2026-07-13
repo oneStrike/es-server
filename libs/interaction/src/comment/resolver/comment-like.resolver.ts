@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { appUser, userComment } from '@db/schema'
 
@@ -45,7 +45,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
   }
 
   // 解析目标评论的场景元数据 验证评论存在性，根据评论挂载的目标类型和回复关系确定场景类型和评论层级
-  async resolveMeta(tx: Db, targetId: number) {
+  async resolveMeta(tx: DbExecutor, targetId: number) {
     const comment = await tx.query.userComment.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },
       columns: {
@@ -84,7 +84,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
   }
 
   // 应用点赞计数增量 当用户点赞或取消点赞时，更新评论的点赞计数
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     if (delta === 0) {
       return
     }
@@ -131,7 +131,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
 
   // 点赞后钩子函数 当用户成功点赞评论后，向评论作者发送通知（点赞者与被点赞者不是同一人时）
   async postLikeHook(
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
     _meta: LikeTargetMeta,

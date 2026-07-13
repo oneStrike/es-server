@@ -36,9 +36,10 @@ export class TaskRuntimeService extends TaskServiceSupport {
   @Cron('0 */5 * * * *')
   async expireTaskInstances() {
     const now = new Date()
-    return this.drizzle.withTransaction(async (tx) => {
-      // 使用原生 SQL 是为了在同一事务语句中锁定到期实例、更新实例和步骤，并返回事件日志所需投影。
-      const result = await tx.execute(sql`
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        // 使用原生 SQL 是为了在同一事务语句中锁定到期实例、更新实例和步骤，并返回事件日志所需投影。
+        const result = await tx.execute(sql`
         WITH due_instances AS (
           SELECT
             id,
@@ -54,6 +55,7 @@ export class TaskRuntimeService extends TaskServiceSupport {
           UPDATE task_instance i
           SET
             status = ${TaskInstanceStatusEnum.EXPIRED},
+            updated_at = ${now},
             version = i.version + 1
           FROM due_instances
           WHERE i.id = due_instances.id
@@ -67,6 +69,7 @@ export class TaskRuntimeService extends TaskServiceSupport {
           UPDATE task_instance_step s
           SET
             status = ${TaskInstanceStatusEnum.EXPIRED},
+            updated_at = ${now},
             version = s.version + 1
           FROM updated_instances
           WHERE s.instance_id = updated_instances.instance_id
@@ -79,26 +82,27 @@ export class TaskRuntimeService extends TaskServiceSupport {
           user_id AS "userId"
         FROM updated_instances
       `)
-      const rows = extractRows<TaskExpiredInstanceRawRow>(result)
+        const rows = extractRows<TaskExpiredInstanceRawRow>(result)
 
-      if (rows.length > 0) {
-        await tx.insert(this.taskEventLogTable).values(
-          rows.map((row) => ({
-            taskId: row.taskId,
-            instanceId: row.instanceId,
-            userId: row.userId,
-            actionType: TaskEventActionTypeEnum.EXPIRE,
-            progressSource: TaskEventProgressSourceEnum.SYSTEM,
-            accepted: true,
-            delta: 0,
-            beforeValue: 0,
-            afterValue: 0,
-            occurredAt: now,
-          })),
-        )
-      }
+        if (rows.length > 0) {
+          await tx.insert(this.taskEventLogTable).values(
+            rows.map((row) => ({
+              taskId: row.taskId,
+              instanceId: row.instanceId,
+              userId: row.userId,
+              actionType: TaskEventActionTypeEnum.EXPIRE,
+              progressSource: TaskEventProgressSourceEnum.SYSTEM,
+              accepted: true,
+              delta: 0,
+              beforeValue: 0,
+              afterValue: 0,
+              occurredAt: now,
+            })),
+          )
+        }
 
-      return rows.length
+        return rows.length
+      },
     })
   }
 

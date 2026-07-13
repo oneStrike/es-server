@@ -1,5 +1,10 @@
-import type { Db } from '@db/core'
-import type { AppUserSelect, CouponDefinitionSelect, CouponRedemptionRecordSelect, UserCouponInstanceSelect } from '@db/schema'
+import type { DbTransaction } from '@db/core'
+import type {
+  AppUserSelect,
+  CouponDefinitionSelect,
+  CouponRedemptionRecordSelect,
+  UserCouponInstanceSelect,
+} from '@db/schema'
 
 import type {
   CouponRedemptionTargetTypeEnum,
@@ -9,7 +14,7 @@ import type {
 } from '../coupon.constant'
 
 /** 券域事务上下文，供购买和核销链路显式透传。 */
-export type CouponTx = Db
+export type CouponTx = DbTransaction
 
 /**
  * 可核销券实例与券定义的合并视图，只服务核销事务内部校验。
@@ -86,16 +91,11 @@ export interface GrantCouponsForSourceInput {
   grantKeys?: string[]
 }
 
-/** 通用发券结果，created=false 表示命中幂等键。 */
-export interface GrantCouponsForSourceItem {
-  grantKey: string | null
-  couponInstance: UserCouponInstanceSelect | null
-  created: boolean
-}
-
-/** 通用发券聚合结果，汇总本次发放条目与实际新建数量。 */
+/**
+ * 通用发券聚合结果。调用方只依赖实际新建数量；不保留整批券实例行，避免大批量
+ * 发券在事务内累积无消费价值的返回对象。
+ */
 export interface GrantCouponsForSourceResult {
-  items: GrantCouponsForSourceItem[]
   createdCount: number
 }
 

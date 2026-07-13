@@ -81,10 +81,6 @@ export const workflowAttempt = snakeCase.table(
       table.workflowJobId,
       table.attemptNo,
     ),
-    index('workflow_attempt_job_attempt_no_idx').on(
-      table.workflowJobId,
-      table.attemptNo,
-    ),
     index('workflow_attempt_status_created_at_id_idx').on(
       table.status,
       table.createdAt,
@@ -100,13 +96,34 @@ export const workflowAttempt = snakeCase.table(
       table.status,
       table.claimExpiresAt,
     ),
-    check('workflow_attempt_attempt_no_positive_chk', sql`${table.attemptNo} > 0`),
-    check('workflow_attempt_trigger_type_valid_chk', sql`${table.triggerType} in (1, 2, 3)`),
-    check('workflow_attempt_status_valid_chk', sql`${table.status} in (1, 2, 3, 4, 5, 6)`),
-    check('workflow_attempt_selected_item_count_non_negative_chk', sql`${table.selectedItemCount} >= 0`),
-    check('workflow_attempt_success_item_count_non_negative_chk', sql`${table.successItemCount} >= 0`),
-    check('workflow_attempt_failed_item_count_non_negative_chk', sql`${table.failedItemCount} >= 0`),
-    check('workflow_attempt_skipped_item_count_non_negative_chk', sql`${table.skippedItemCount} >= 0`),
+    check(
+      'workflow_attempt_attempt_no_positive_chk',
+      sql`${table.attemptNo} > 0`,
+    ),
+    check(
+      'workflow_attempt_trigger_type_valid_chk',
+      sql`${table.triggerType} in (1, 2, 3)`,
+    ),
+    check(
+      'workflow_attempt_status_valid_chk',
+      sql`${table.status} in (1, 2, 3, 4, 5, 6)`,
+    ),
+    check(
+      'workflow_attempt_selected_item_count_non_negative_chk',
+      sql`${table.selectedItemCount} >= 0`,
+    ),
+    check(
+      'workflow_attempt_success_item_count_non_negative_chk',
+      sql`${table.successItemCount} >= 0`,
+    ),
+    check(
+      'workflow_attempt_failed_item_count_non_negative_chk',
+      sql`${table.failedItemCount} >= 0`,
+    ),
+    check(
+      'workflow_attempt_skipped_item_count_non_negative_chk',
+      sql`${table.skippedItemCount} >= 0`,
+    ),
   ],
 )
 

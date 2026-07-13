@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, DbExecutor } from '@db/core'
 import type {
   ForumCounterMutationOperation,
   ForumSectionCountField,
@@ -76,7 +76,7 @@ export class ForumCounterService {
 
   // 在事务上下文或默认错误处理上下文中执行计数落库。 统一收口“受影响行数为 0”时的异常语义，避免不同重建入口各自处理不存在场景。
   private async executeCountUpdate(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     operation: ForumCounterMutationOperation,
     message: string,
   ) {
@@ -89,7 +89,7 @@ export class ForumCounterService {
 
   // 更新板块级冗余计数字段。 当 delta 为 0 时直接跳过，避免写入无意义更新；板块不存在时会转换成调用方可识别的业务异常。
   private async updateSectionCountField(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     sectionId: number,
     field: ForumSectionCountField,
     delta: number,
@@ -114,7 +114,7 @@ export class ForumCounterService {
 
   // 更新主题级冗余计数字段。 点赞、收藏、浏览等对象计数统一走这里，避免多条写路径各自手写 delta SQL。
   private async updateTopicCountField(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     topicId: number,
     field: ForumTopicCountField,
     delta: number,
@@ -303,7 +303,7 @@ export class ForumCounterService {
 
   // 更新版块的主题数量
   async updateSectionTopicCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     sectionId: number,
     delta: number,
   ) {
@@ -318,7 +318,7 @@ export class ForumCounterService {
 
   // 更新版块的评论数量
   async updateSectionCommentCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     sectionId: number,
     delta: number,
   ) {
@@ -333,7 +333,7 @@ export class ForumCounterService {
 
   // 更新主题的点赞数量
   async updateTopicLikeCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     topicId: number,
     delta: number,
   ) {
@@ -348,7 +348,7 @@ export class ForumCounterService {
 
   // 更新主题的收藏数量
   async updateTopicFavoriteCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     topicId: number,
     delta: number,
   ) {
@@ -363,7 +363,7 @@ export class ForumCounterService {
 
   // 更新主题浏览数量 浏览计数允许异步补偿，因此这里仅做幂等增量更新，不附带额外业务判断。
   async updateTopicViewCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     topicId: number,
     delta: number,
   ) {
@@ -378,7 +378,7 @@ export class ForumCounterService {
 
   // 更新用户的论坛主题数量
   async updateUserForumTopicCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     delta: number,
   ) {
@@ -387,7 +387,7 @@ export class ForumCounterService {
 
   // 更新用户收到的论坛主题点赞数量
   async updateUserForumTopicReceivedLikeCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     delta: number,
   ) {
@@ -400,7 +400,7 @@ export class ForumCounterService {
 
   // 更新板块关注人数 供 follow 域写路径调用，统一维护板块的冗余关注人数。
   async updateSectionFollowersCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     sectionId: number,
     delta: number,
   ) {
@@ -414,10 +414,13 @@ export class ForumCounterService {
   }
 
   // 根据 follow 事实表重建板块关注人数。
-  async rebuildSectionFollowersCount(tx: Db | undefined, sectionId: number) {
+  async rebuildSectionFollowersCount(
+    tx: DbExecutor | undefined,
+    sectionId: number,
+  ) {
     const client = tx ?? this.db
     const row = await client
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
       .from(this.userFollow)
       .where(
         and(
@@ -445,7 +448,10 @@ export class ForumCounterService {
   }
 
   // 根据点赞/收藏/浏览事实表重建主题对象计数。 commentCount 与最后评论快照由 syncTopicCommentState 负责重算。
-  async rebuildTopicInteractionCounts(tx: Db | undefined, topicId: number) {
+  async rebuildTopicInteractionCounts(
+    tx: DbExecutor | undefined,
+    topicId: number,
+  ) {
     const client = tx ?? this.db
     const [likeCount, favoriteCount, viewCount] = await Promise.all([
       client.$count(
@@ -500,7 +506,7 @@ export class ForumCounterService {
   }
 
   // 按可见评论事实表重建主题 commentCount 与最后评论信息。
-  async syncTopicCommentState(tx: Db | undefined, topicId: number) {
+  async syncTopicCommentState(tx: DbExecutor | undefined, topicId: number) {
     const client = tx ?? this.db
     const visibleCommentWhere = and(
       eq(this.userComment.targetType, this.forumTopicCommentTargetType),
@@ -513,7 +519,7 @@ export class ForumCounterService {
     const [commentSummaryRows, latestCommentRows] = await Promise.all([
       client
         .select({
-          commentCount: sql<number>`count(*)::int`,
+          commentCount: sql<number>`count(*)::int`.mapWith(Number),
         })
         .from(this.userComment)
         .where(visibleCommentWhere),
@@ -552,7 +558,7 @@ export class ForumCounterService {
   }
 
   // 按可见主题事实表重建板块 topicCount/commentCount/lastTopicId/lastPostAt。
-  async syncSectionVisibleState(tx: Db | undefined, sectionId: number) {
+  async syncSectionVisibleState(tx: DbExecutor | undefined, sectionId: number) {
     const client = tx ?? this.db
     const visibleTopicWhere = and(
       eq(this.forumTopic.sectionId, sectionId),
@@ -566,8 +572,8 @@ export class ForumCounterService {
     const [summaryRows, latestTopicRows] = await Promise.all([
       client
         .select({
-          topicCount: sql<number>`count(*)::int`,
-          commentCount: sql<number>`coalesce(sum(${this.forumTopic.commentCount}), 0)::int`,
+          topicCount: sql<number>`count(*)::int`.mapWith(Number),
+          commentCount: sql<number>`coalesce(sum(${this.forumTopic.commentCount}), 0)::int`.mapWith(Number),
         })
         .from(this.forumTopic)
         .where(visibleTopicWhere),
@@ -616,7 +622,7 @@ export class ForumCounterService {
 
   // 更新用户收到的论坛主题收藏数量
   async updateUserForumTopicReceivedFavoriteCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     userId: number,
     delta: number,
   ) {
@@ -629,7 +635,7 @@ export class ForumCounterService {
 
   // 批量更新主题点赞相关的所有计数 包括主题点赞数、主题作者收到的论坛点赞数。 该入口保证对象计数和用户收到计数在同一调用点推进，降低写路径遗漏风险。
   async updateTopicLikeRelatedCounts(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     topicId: number,
     authorUserId: number,
     delta: number,
@@ -642,7 +648,7 @@ export class ForumCounterService {
 
   // 批量更新主题收藏相关的所有计数 包括主题收藏数、主题作者收到的论坛收藏数。 收藏写路径通过同一入口并发更新对象计数和用户计数，保持统计口径一致。
   async updateTopicFavoriteRelatedCounts(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     topicId: number,
     authorUserId: number,
     delta: number,

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IDownloadTargetResolver } from '@libs/interaction/download/interfaces/download-target-resolver.type'
 import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant'
@@ -33,7 +33,7 @@ export class WorkComicChapterDownloadResolver
   }
 
   // 检查下载权限并获取内容。
-  async ensureDownloadable(tx: Db, targetId: number, userId: number) {
+  async ensureDownloadable(tx: DbExecutor, targetId: number, userId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
@@ -66,7 +66,7 @@ export class WorkComicChapterDownloadResolver
   }
 
   // 更新下载计数。
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     await this.workCounterService.updateWorkDownloadCountsByChapter(
       tx,
       targetId,

@@ -56,7 +56,6 @@ export const couponAdminGrantJob = snakeCase.table(
       table.workflowJobId,
     ),
     unique('coupon_admin_grant_job_operation_id_key').on(table.operationId),
-    index('coupon_admin_grant_job_workflow_job_id_idx').on(table.workflowJobId),
     index('coupon_admin_grant_job_coupon_definition_created_at_idx').on(
       table.couponDefinitionId,
       table.createdAt.desc(),
@@ -88,7 +87,5 @@ export const couponAdminGrantJob = snakeCase.table(
   ],
 )
 
-export type CouponAdminGrantJobSelect =
-  typeof couponAdminGrantJob.$inferSelect
-export type CouponAdminGrantJobInsert =
-  typeof couponAdminGrantJob.$inferInsert
+export type CouponAdminGrantJobSelect = typeof couponAdminGrantJob.$inferSelect
+export type CouponAdminGrantJobInsert = typeof couponAdminGrantJob.$inferInsert

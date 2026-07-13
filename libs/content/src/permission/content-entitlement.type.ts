@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type { UserContentEntitlementInsert } from '@db/schema'
 import type {
   ContentEntitlementGrantSourceEnum,
@@ -50,4 +50,4 @@ export interface RevokeContentEntitlementBySourceInput {
  * 内容权益事务上下文。
  * 购买、券和广告链路需要把权益写入纳入同一个业务事务。
  */
-export type ContentEntitlementTx = Db
+export type ContentEntitlementTx = DbTransaction

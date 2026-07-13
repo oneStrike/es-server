@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.type'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
@@ -28,7 +28,7 @@ export class ForumSectionFollowResolver
     this.followService.registerResolver(this)
   }
 
-  async ensureExists(_tx: Db, targetId: number, actorUserId: number) {
+  async ensureExists(_tx: DbExecutor, targetId: number, actorUserId: number) {
     await this.forumPermissionService.ensureUserCanAccessSection(
       targetId,
       actorUserId,
@@ -41,7 +41,7 @@ export class ForumSectionFollowResolver
     return {}
   }
 
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     await this.forumCounterService.updateSectionFollowersCount(
       tx,
       targetId,

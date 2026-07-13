@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IReadingStateResolver } from '@libs/interaction/reading-state/interfaces/reading-state-resolver.type'
 import type { WorkReadingChapterRef } from '../work.type'
 import { DrizzleService } from '@db/core'
@@ -47,7 +47,7 @@ export class WorkReadingStateResolver
 
   // 解析章节快照。
   async resolveChapterSnapshot(
-    _tx: Db | undefined,
+    _tx: DbExecutor | undefined,
     workId: number,
     chapterId: number,
   ) {

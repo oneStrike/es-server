@@ -144,6 +144,14 @@ export const forumHashtag = snakeCase.table(
       sql`${table.auditStatus} in (0, 1, 2)`,
     ),
     check(
+      'forum_hashtag_audit_role_valid_chk',
+      sql`${table.auditRole} is null or ${table.auditRole} in (0, 1)`,
+    ),
+    check(
+      'forum_hashtag_audit_actor_pair_chk',
+      sql`(${table.auditRole} is null) = (${table.auditById} is null)`,
+    ),
+    check(
       'forum_hashtag_create_source_type_valid_chk',
       sql`${table.createSourceType} in (1, 2, 3)`,
     ),

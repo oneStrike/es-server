@@ -1,6 +1,12 @@
-import type { Db, SQL } from '@db/core'
+import type { DbTransaction, SQL } from '@db/core'
 import type { ForumSectionGroupRow } from './forum-section-group.type'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
@@ -19,7 +25,6 @@ import {
   UpdateForumSectionGroupDto,
   UpdateForumSectionGroupEnabledDto,
 } from './dto/forum-section-group.dto'
-import { FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE } from './forum-section-group.constant'
 
 /**
  * 论坛板块分组服务。
@@ -48,11 +53,63 @@ export class ForumSectionGroupService {
     return this.drizzle.schema.forumSection
   }
 
+  private getSectionGroupOutputColumns() {
+    return {
+      id: true,
+      name: true,
+      description: true,
+      sortOrder: true,
+      isEnabled: true,
+      maxModerators: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  private getSectionGroupOutputSelection() {
+    return {
+      id: this.forumSectionGroup.id,
+      name: this.forumSectionGroup.name,
+      description: this.forumSectionGroup.description,
+      sortOrder: this.forumSectionGroup.sortOrder,
+      isEnabled: this.forumSectionGroup.isEnabled,
+      maxModerators: this.forumSectionGroup.maxModerators,
+      createdAt: this.forumSectionGroup.createdAt,
+      updatedAt: this.forumSectionGroup.updatedAt,
+    }
+  }
+
+  private getAdminSectionColumns() {
+    return {
+      id: true,
+      groupId: true,
+      userLevelRuleId: true,
+      lastTopicId: true,
+      name: true,
+      description: true,
+      icon: true,
+      cover: true,
+      sortOrder: true,
+      isEnabled: true,
+      topicReviewPolicy: true,
+      remark: true,
+      topicCount: true,
+      commentCount: true,
+      followersCount: true,
+      lastPostAt: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
   // 串行化单个分组的删除与关联治理写操作，避免并发下出现悬空引用。
-  private async lockSectionGroupForMutation(client: Db, groupId: number) {
-    await client.execute(
-      sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_GROUP_MUTATION_LOCK_NAMESPACE}, ${groupId})`,
-    )
+  private async lockSectionGroupForMutation(
+    tx: DbTransaction,
+    groupId: number,
+  ) {
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('forum_section_group', groupId),
+    ])
   }
 
   // 创建板块分组。 分组名称全局唯一，重复名称通过 `withErrorHandling` 转换成稳定业务异常。
@@ -68,7 +125,7 @@ export class ForumSectionGroupService {
   async getSectionGroupById(id: number) {
     const group = await this.db.query.forumSectionGroup.findFirst({
       where: { id, deletedAt: { isNull: true } },
-      columns: { deletedAt: false },
+      columns: this.getSectionGroupOutputColumns(),
     })
 
     if (!group) {
@@ -105,7 +162,7 @@ export class ForumSectionGroupService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.getSectionGroupOutputSelection())
         .from(this.forumSectionGroup)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -242,124 +299,132 @@ export class ForumSectionGroupService {
 
   // 软删除板块分组。 删除前会阻止仍挂有板块的分组被移除，避免产生悬空的板块归属关系。
   async deleteSectionGroup(id: number) {
-    await this.drizzle.withTransaction(async (tx) => {
-      await this.lockSectionGroupForMutation(tx, id)
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockSectionGroupForMutation(tx, id)
 
-      const group = await tx.query.forumSectionGroup.findFirst({
-        where: { id, deletedAt: { isNull: true } },
-        with: {
-          sections: {
-            where: { deletedAt: { isNull: true } },
-            columns: { id: true },
+        const group = await tx.query.forumSectionGroup.findFirst({
+          where: { id, deletedAt: { isNull: true } },
+          columns: { id: true },
+          with: {
+            sections: {
+              where: { deletedAt: { isNull: true } },
+              columns: { id: true },
+            },
+            moderators: {
+              where: { deletedAt: { isNull: true } },
+              columns: { id: true },
+            },
           },
-          moderators: {
-            where: { deletedAt: { isNull: true } },
-            columns: { id: true },
-          },
-        },
-      })
+        })
 
-      if (!group) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '板块分组不存在',
-        )
-      }
+        if (!group) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '板块分组不存在',
+          )
+        }
 
-      if (group.sections.length > 0) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '该分组下还有板块，无法删除',
-        )
-      }
+        if (group.sections.length > 0) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '该分组下还有板块，无法删除',
+          )
+        }
 
-      if (group.moderators.length > 0) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '该分组下还有版主，无法删除',
-        )
-      }
+        if (group.moderators.length > 0) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '该分组下还有版主，无法删除',
+          )
+        }
 
-      const result = await tx
-        .update(this.forumSectionGroup)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            eq(this.forumSectionGroup.id, id),
-            isNull(this.forumSectionGroup.deletedAt),
-          ),
-        )
-      this.drizzle.assertAffectedRows(result, '板块分组不存在')
+        const result = await tx
+          .update(this.forumSectionGroup)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              eq(this.forumSectionGroup.id, id),
+              isNull(this.forumSectionGroup.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '板块分组不存在')
+      },
     })
     return true
   }
 
   // 交换板块分组排序顺序。 仅交换拖拽目标的排序值，不改动其它字段。
   async swapSectionGroupSortOrder(dto: SwapForumSectionGroupSortDto) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const rows = await tx
-        .select({
-          id: this.forumSectionGroup.id,
-          sortOrder: this.forumSectionGroup.sortOrder,
-        })
-        .from(this.forumSectionGroup)
-        .where(
-          and(
-            inArray(this.forumSectionGroup.id, [dto.dragId, dto.targetId]),
-            isNull(this.forumSectionGroup.deletedAt),
-          ),
-        )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const rows = await tx
+          .select({
+            id: this.forumSectionGroup.id,
+            sortOrder: this.forumSectionGroup.sortOrder,
+          })
+          .from(this.forumSectionGroup)
+          .where(
+            and(
+              inArray(this.forumSectionGroup.id, [dto.dragId, dto.targetId]),
+              isNull(this.forumSectionGroup.deletedAt),
+            ),
+          )
 
-      const dragGroup = rows.find((row) => row.id === dto.dragId)
-      const targetGroup = rows.find((row) => row.id === dto.targetId)
+        const dragGroup = rows.find((row) => row.id === dto.dragId)
+        const targetGroup = rows.find((row) => row.id === dto.targetId)
 
-      if (!dragGroup || !targetGroup) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '板块分组不存在',
-        )
-      }
-      if (dragGroup.sortOrder === targetGroup.sortOrder) {
+        if (!dragGroup || !targetGroup) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '板块分组不存在',
+          )
+        }
+        if (dragGroup.sortOrder === targetGroup.sortOrder) {
+          return true
+        }
+
+        const [minimumSortOrder] = await tx
+          .select({
+            value:
+              sql<number>`min(${this.forumSectionGroup.sortOrder})`.mapWith(
+                Number,
+              ),
+          })
+          .from(this.forumSectionGroup)
+          .where(isNull(this.forumSectionGroup.deletedAt))
+        const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
+
+        await tx
+          .update(this.forumSectionGroup)
+          .set({ sortOrder: temporarySortOrder })
+          .where(
+            and(
+              eq(this.forumSectionGroup.id, dragGroup.id),
+              isNull(this.forumSectionGroup.deletedAt),
+            ),
+          )
+        await tx
+          .update(this.forumSectionGroup)
+          .set({ sortOrder: dragGroup.sortOrder })
+          .where(
+            and(
+              eq(this.forumSectionGroup.id, targetGroup.id),
+              isNull(this.forumSectionGroup.deletedAt),
+            ),
+          )
+        await tx
+          .update(this.forumSectionGroup)
+          .set({ sortOrder: targetGroup.sortOrder })
+          .where(
+            and(
+              eq(this.forumSectionGroup.id, dragGroup.id),
+              isNull(this.forumSectionGroup.deletedAt),
+            ),
+          )
+
         return true
-      }
-
-      const [minimumSortOrder] = await tx
-        .select({
-          value: sql<number>`min(${this.forumSectionGroup.sortOrder})`,
-        })
-        .from(this.forumSectionGroup)
-        .where(isNull(this.forumSectionGroup.deletedAt))
-      const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
-
-      await tx
-        .update(this.forumSectionGroup)
-        .set({ sortOrder: temporarySortOrder })
-        .where(
-          and(
-            eq(this.forumSectionGroup.id, dragGroup.id),
-            isNull(this.forumSectionGroup.deletedAt),
-          ),
-        )
-      await tx
-        .update(this.forumSectionGroup)
-        .set({ sortOrder: dragGroup.sortOrder })
-        .where(
-          and(
-            eq(this.forumSectionGroup.id, targetGroup.id),
-            isNull(this.forumSectionGroup.deletedAt),
-          ),
-        )
-      await tx
-        .update(this.forumSectionGroup)
-        .set({ sortOrder: targetGroup.sortOrder })
-        .where(
-          and(
-            eq(this.forumSectionGroup.id, dragGroup.id),
-            isNull(this.forumSectionGroup.deletedAt),
-          ),
-        )
-
-      return true
+      },
     })
   }
 
@@ -390,9 +455,7 @@ export class ForumSectionGroupService {
       where: {
         deletedAt: { isNull: true },
       },
-      columns: {
-        deletedAt: false,
-      },
+      columns: this.getSectionGroupOutputColumns(),
       orderBy: (group, { asc }) => [asc(group.sortOrder), asc(group.id)],
     })
 
@@ -400,9 +463,7 @@ export class ForumSectionGroupService {
       where: {
         deletedAt: { isNull: true },
       },
-      columns: {
-        deletedAt: false,
-      },
+      columns: this.getAdminSectionColumns(),
       orderBy: (section, { asc }) => [asc(section.sortOrder), asc(section.id)],
     })
 

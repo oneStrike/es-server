@@ -1,3 +1,4 @@
+import type { TaskEventFailureSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   TaskEventFailureClaimResult,
@@ -24,6 +25,30 @@ import {
 import { TaskServiceSupport } from './task.service.support'
 
 const TASK_EVENT_FAILURE_CLAIM_LEASE_MS = 10 * 60 * 1000
+
+type TaskEventFailurePageSource = Pick<
+  TaskEventFailureSelect,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'idempotencyKey'
+  | 'eventKey'
+  | 'eventBizKey'
+  | 'eventCode'
+  | 'templateKey'
+  | 'userId'
+  | 'targetType'
+  | 'targetId'
+  | 'status'
+  | 'retryCount'
+  | 'lastRetryAt'
+  | 'lastErrorMessage'
+  | 'resolvedAt'
+  | 'terminalErrorAt'
+  | 'terminalReason'
+  | 'occurredAt'
+  | 'requestPayload'
+>
 
 /**
  * 任务事件消费失败事实服务。
@@ -147,7 +172,9 @@ export class TaskEventFailureService extends TaskServiceSupport {
       )
     }
     if (params.eventCode !== undefined) {
-      conditions.push(eq(this.taskEventFailureTable.eventCode, params.eventCode))
+      conditions.push(
+        eq(this.taskEventFailureTable.eventCode, params.eventCode),
+      )
     }
     if (params.userId !== undefined) {
       conditions.push(eq(this.taskEventFailureTable.userId, params.userId))
@@ -156,7 +183,7 @@ export class TaskEventFailureService extends TaskServiceSupport {
     const where = and(...conditions)
     const [list, totalRows] = await Promise.all([
       this.db
-        .select()
+        .select(this.getTaskEventFailurePageSelect())
         .from(this.taskEventFailureTable)
         .where(where)
         .orderBy(
@@ -166,7 +193,7 @@ export class TaskEventFailureService extends TaskServiceSupport {
         .limit(page.limit)
         .offset(page.offset),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.taskEventFailureTable)
         .where(where),
     ])
@@ -184,7 +211,9 @@ export class TaskEventFailureService extends TaskServiceSupport {
     const claim = await this.claimTaskEventFailure(id)
 
     try {
-      const replayPayload = this.parseReplayPayload(claim.failure.requestPayload)
+      const replayPayload = this.parseReplayPayload(
+        claim.failure.requestPayload,
+      )
       await this.taskExecutionService.consumeEventProgress({
         eventEnvelope: replayPayload.eventEnvelope,
         bizKey: replayPayload.bizKey,
@@ -283,7 +312,9 @@ export class TaskEventFailureService extends TaskServiceSupport {
   ): Promise<TaskEventFailureClaimResult> {
     const token = randomUUID()
     const now = new Date()
-    const expiredAt = new Date(now.getTime() + TASK_EVENT_FAILURE_CLAIM_LEASE_MS)
+    const expiredAt = new Date(
+      now.getTime() + TASK_EVENT_FAILURE_CLAIM_LEASE_MS,
+    )
 
     const [failure] = await this.db
       .update(this.taskEventFailureTable)
@@ -389,7 +420,7 @@ export class TaskEventFailureService extends TaskServiceSupport {
   }
 
   private toTaskEventFailurePageItem(
-    failure: typeof this.taskEventFailureTable.$inferSelect,
+    failure: TaskEventFailurePageSource,
   ): BaseTaskEventFailureDto {
     return {
       id: failure.id,
@@ -429,6 +460,32 @@ export class TaskEventFailureService extends TaskServiceSupport {
         ...payload.eventEnvelope,
         occurredAt: payload.eventEnvelope.occurredAt,
       },
+    }
+  }
+
+  // 管理端失败事实分页的最小读取投影；保留已公开的 requestPayload。
+  private getTaskEventFailurePageSelect() {
+    return {
+      id: this.taskEventFailureTable.id,
+      createdAt: this.taskEventFailureTable.createdAt,
+      updatedAt: this.taskEventFailureTable.updatedAt,
+      idempotencyKey: this.taskEventFailureTable.idempotencyKey,
+      eventKey: this.taskEventFailureTable.eventKey,
+      eventBizKey: this.taskEventFailureTable.eventBizKey,
+      eventCode: this.taskEventFailureTable.eventCode,
+      templateKey: this.taskEventFailureTable.templateKey,
+      userId: this.taskEventFailureTable.userId,
+      targetType: this.taskEventFailureTable.targetType,
+      targetId: this.taskEventFailureTable.targetId,
+      status: this.taskEventFailureTable.status,
+      retryCount: this.taskEventFailureTable.retryCount,
+      lastRetryAt: this.taskEventFailureTable.lastRetryAt,
+      lastErrorMessage: this.taskEventFailureTable.lastErrorMessage,
+      resolvedAt: this.taskEventFailureTable.resolvedAt,
+      terminalErrorAt: this.taskEventFailureTable.terminalErrorAt,
+      terminalReason: this.taskEventFailureTable.terminalReason,
+      occurredAt: this.taskEventFailureTable.occurredAt,
+      requestPayload: this.taskEventFailureTable.requestPayload,
     }
   }
 

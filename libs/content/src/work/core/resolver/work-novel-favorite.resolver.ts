@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.type'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -32,7 +32,7 @@ export class WorkNovelFavoriteResolver
   }
 
   // 验证目标小说作品是否存在。
-  async ensureExists(tx: Db, targetId: number) {
+  async ensureExists(tx: DbExecutor, targetId: number) {
     const target = await tx.query.work.findFirst({
       where: {
         id: targetId,
@@ -54,7 +54,7 @@ export class WorkNovelFavoriteResolver
   }
 
   // 应用收藏计数增量，当用户收藏或取消收藏时，更新小说作品的收藏计数。
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     await this.workCounterService.updateWorkFavoriteCount(
       tx,
       targetId,

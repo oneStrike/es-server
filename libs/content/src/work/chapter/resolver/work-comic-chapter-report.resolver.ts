@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.type'
 import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
 import { ReportService } from '@libs/interaction/report/report.service'
@@ -27,7 +27,7 @@ export class WorkComicChapterReportResolver
   }
 
   // 解析目标漫画章节的场景元数据，验证章节存在性并返回场景类型和场景ID。
-  async resolveMeta(tx: Db, targetId: number) {
+  async resolveMeta(tx: DbExecutor, targetId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,

@@ -9,4 +9,4 @@ export {
 export type { FastifyTrustProxyConfig } from './fastify-trust-proxy'
 export { logStartupInfo } from './logStartupInfo'
 export { setupMultipart } from './multipart'
-export { setupSwagger } from './swagger'
+export { normalizeNullableReferenceSchemas, setupSwagger } from './swagger'

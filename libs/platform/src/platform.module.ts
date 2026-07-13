@@ -142,6 +142,7 @@ export class PlatformModule {
         useValue: new ValidationPipe({
           transform: true, // 自动转换请求数据类型
           whitelist: true, // 过滤掉未在 DTO 中定义的属性
+          forbidNonWhitelisted: true, // 明确拒绝 DTO 未声明的输入字段
           exceptionFactory: (errors) => {
             const messages = flattenValidationErrors(errors)
             return new BadRequestException(

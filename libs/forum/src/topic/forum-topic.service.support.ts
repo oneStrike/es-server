@@ -1,4 +1,4 @@
-import type { Db, DrizzleService } from '@db/core'
+import type { DbExecutor, DbTransaction, DrizzleService } from '@db/core'
 import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
 
 import type { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
@@ -29,19 +29,21 @@ import type {
   TopicBodyWriteFields,
   TopicMentionVisibilityTransitionParams,
   TopicSectionBrief,
+  TopicSectionSnapshot,
+  TopicUpdateCurrentSnapshot,
 } from './forum-topic.type'
+import { acquireIntegrityLocks, tableIntegrityLock } from '@db/core'
 import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.helper'
 import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BodySceneEnum } from '@libs/interaction/body/body.constant'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { and, desc, eq, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, isNull } from 'drizzle-orm'
 import {
   ForumHashtagCreateSourceTypeEnum,
   ForumHashtagReferenceSourceTypeEnum,
 } from '../hashtag/forum-hashtag.constant'
-import { FORUM_SECTION_MUTATION_LOCK_NAMESPACE } from '../section/forum-section.constant'
 import { buildForumTopicContentPreview } from './forum-topic-preview.helper'
 import { FORUM_TOPIC_IMAGE_MAX_COUNT } from './forum-topic.constant'
 
@@ -94,33 +96,40 @@ export abstract class ForumTopicServiceSupport {
   }
 
   // 串行化同一板块的删板块与发帖写路径，避免删除后仍写入新主题。
-  protected async lockSectionForMutation(client: Db, sectionId: number) {
-    await client.execute(
-      sql`SELECT pg_advisory_xact_lock(${FORUM_SECTION_MUTATION_LOCK_NAMESPACE}, ${sectionId})`,
-    )
+  protected async lockSectionForMutation(tx: DbTransaction, sectionId: number) {
+    await this.lockSectionsForMutation(tx, [sectionId])
   }
 
   protected async lockSectionsForMutation(
-    client: Db,
+    tx: DbTransaction,
     sectionIds: Array<number | null | undefined>,
   ) {
     const uniqueSectionIds = [
       ...new Set(sectionIds.filter(Boolean) as number[]),
-    ].sort((left, right) => left - right)
-
-    for (const sectionId of uniqueSectionIds) {
-      await this.lockSectionForMutation(client, sectionId)
-    }
+    ]
+    await acquireIntegrityLocks(
+      tx,
+      uniqueSectionIds.map((sectionId) =>
+        tableIntegrityLock('forum_section', sectionId),
+      ),
+    )
   }
 
   // ─── 通用查询 ──────────────────────────────────────────────
 
   // 获取未删除的主题快照；供编辑、删除等需要复用主题当前状态的写路径共享使用。
-  protected async getActiveTopicOrThrow(id: number) {
+  protected async getActiveTopicOrThrow(
+    id: number,
+  ): Promise<TopicUpdateCurrentSnapshot> {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
         id,
         deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        userId: true,
+        isLocked: true,
       },
     })
 
@@ -135,11 +144,18 @@ export abstract class ForumTopicServiceSupport {
   }
 
   // 在事务内获取未删除的主题快照；供 moderator-governance 等需要在已有事务中操作的场景使用。
-  async getActiveTopicByIdInTx(tx: Db, id: number) {
+  async getActiveTopicByIdInTx(
+    tx: DbTransaction,
+    id: number,
+  ): Promise<TopicSectionSnapshot> {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id,
         deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        sectionId: true,
       },
     })
 
@@ -283,9 +299,10 @@ export abstract class ForumTopicServiceSupport {
     }
 
     const sections = await this.db.query.forumSection.findMany({
-      where: options?.requireEnabled
-        ? { ...baseWhere, isEnabled: true }
-        : baseWhere,
+      where: {
+        ...baseWhere,
+        ...(options?.requireEnabled ? { isEnabled: true } : {}),
+      },
       columns: {
         id: true,
         groupId: true,
@@ -514,7 +531,7 @@ export abstract class ForumTopicServiceSupport {
 
   // 在事务内同步主题 mention 可见性跃迁；当主题从不可见变为可见时补发 mention 通知。
   protected async syncTopicMentionVisibilityTransitionInTx(
-    tx: Db,
+    tx: DbExecutor,
     params: TopicMentionVisibilityTransitionParams,
   ) {
     const wasVisible = this.isTopicVisible({
@@ -543,7 +560,7 @@ export abstract class ForumTopicServiceSupport {
 
   // 在事务内将 topic DTO 的双模输入物化为带 hashtag 事实的 canonical body 编译结果。
   protected async materializeTopicBodyInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: TopicBodyWriteFields,
     actorUserId: number,
   ): Promise<MaterializedTopicBodyWriteResult> {

@@ -86,6 +86,21 @@ export const userContentEntitlement = snakeCase.table(
       'user_content_entitlement_grant_source_valid_chk',
       sql`${table.grantSource} in (1, 2, 3, 4, 5)`,
     ),
+    /**
+     * 可验证来源必须携带父记录 ID；没有单一物理父表的后台/VIP 来源必须携带
+     * 不透明业务键。运行时再按多态注册表对真实父记录加锁并重查。
+     */
+    check(
+      'user_content_entitlement_grant_source_reference_shape_chk',
+      sql`
+        (${table.grantSource} in (1, 2, 3) and ${table.sourceId} is not null)
+        or (
+          ${table.grantSource} in (4, 5)
+          and ${table.sourceKey} is not null
+          and length(btrim(${table.sourceKey})) > 0
+        )
+      `,
+    ),
     check(
       'user_content_entitlement_status_valid_chk',
       sql`${table.status} in (1, 2, 3)`,

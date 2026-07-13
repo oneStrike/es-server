@@ -40,8 +40,10 @@ class BaseChatConversationMessagesQueryDto {
   conversationId!: number
 
   @StringProperty({
-    description: '分页游标，使用上一页最小 messageSeq',
-    example: '120',
+    description:
+      '历史分页游标，使用上一页返回的签名不透明 token；与当前用户和会话绑定',
+    example:
+      'eyJib3VuZGFyeU1lc3NhZ2VTZXEiOiIxMjAifQ.u0aL0Cy0QIL2rZ7Gz8Qb8J7YQ0f8c1rF43xwkLrP7vI',
     required: false,
   })
   cursor?: string
@@ -667,8 +669,10 @@ export class ChatConversationMessagesResponseDto {
   list!: BaseChatMessageDto[]
 
   @StringProperty({
-    description: '下一页游标',
-    example: '120',
+    description:
+      '历史分页的下一页签名不透明游标；afterSeq 增量重同步时为最后一条 messageSeq',
+    example:
+      'eyJib3VuZGFyeU1lc3NhZ2VTZXEiOiIxMjAifQ.u0aL0Cy0QIL2rZ7Gz8Qb8J7YQ0f8c1rF43xwkLrP7vI',
     nullable: true,
     validation: false,
   })

@@ -58,9 +58,12 @@ export const taskStepUniqueFact = snakeCase.table(
   },
   (table) => [
     /** 同步骤、同用户、同作用域、同唯一对象唯一约束。 */
-    unique(
-      'task_step_unique_fact_step_id_user_id_scope_key_dimension_hash_key',
-    ).on(table.stepId, table.userId, table.scopeKey, table.dimensionHash),
+    unique('task_step_unique_fact_step_user_scope_dim_key').on(
+      table.stepId,
+      table.userId,
+      table.scopeKey,
+      table.dimensionHash,
+    ),
     /** 用户与步骤索引。 */
     index('task_step_unique_fact_user_id_step_id_idx').on(
       table.userId,

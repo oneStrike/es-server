@@ -15,102 +15,86 @@ import {
   eq,
   gt,
   gte,
+  inArray,
   isNull,
   lt,
-  placeholder,
   sql,
 } from 'drizzle-orm'
 import { CHAT_READABLE_MESSAGE_STATUSES } from './chat.constant'
 
 @Injectable()
 export class MessageChatReadQueryService {
-  private readonly conversationMessagesInitialQuery: ReturnType<
-    MessageChatReadQueryService['buildConversationMessagesInitialQuery']
-  >
+  constructor(private readonly drizzle: DrizzleService) {}
 
-  private readonly conversationMessagesBeforeQuery: ReturnType<
-    MessageChatReadQueryService['buildConversationMessagesBeforeQuery']
-  >
-
-  private readonly conversationMessagesAfterQuery: ReturnType<
-    MessageChatReadQueryService['buildConversationMessagesAfterQuery']
-  >
-
-  constructor(private readonly drizzle: DrizzleService) {
-    this.conversationMessagesInitialQuery =
-      this.buildConversationMessagesInitialQuery()
-    this.conversationMessagesBeforeQuery =
-      this.buildConversationMessagesBeforeQuery()
-    this.conversationMessagesAfterQuery =
-      this.buildConversationMessagesAfterQuery()
-  }
-
-  // 构建会话最新消息页 prepared query。
-  private buildConversationMessagesInitialQuery() {
+  // 构建会话最新消息页查询。
+  private buildConversationMessagesInitialQuery(
+    params: ChatMessagePageQueryInput,
+  ) {
     return this.drizzle.db
-      .select()
+      .select(this.buildMessageOutputColumns())
       .from(this.drizzle.schema.chatMessage)
       .where(
         and(
           eq(
             this.drizzle.schema.chatMessage.conversationId,
-            placeholder('conversationId'),
+            params.conversationId,
           ),
-          sql`${this.drizzle.schema.chatMessage.status} in (${sql.raw(
-            CHAT_READABLE_MESSAGE_STATUSES.join(', '),
-          )})`,
+          inArray(
+            this.drizzle.schema.chatMessage.status,
+            CHAT_READABLE_MESSAGE_STATUSES,
+          ),
         ),
       )
       .orderBy(desc(this.drizzle.schema.chatMessage.messageSeq))
-      .limit(placeholder('limit'))
-      .prepare('message_chat_messages_initial')
+      .limit(params.limit)
   }
 
-  // 构建会话游标之前历史消息 prepared query。
-  private buildConversationMessagesBeforeQuery() {
+  // 构建会话游标之前历史消息查询。
+  private buildConversationMessagesBeforeQuery(
+    params: ChatMessageBeforeCursorQueryInput,
+  ) {
     return this.drizzle.db
-      .select()
+      .select(this.buildMessageOutputColumns())
       .from(this.drizzle.schema.chatMessage)
       .where(
         and(
           eq(
             this.drizzle.schema.chatMessage.conversationId,
-            placeholder('conversationId'),
+            params.conversationId,
           ),
-          sql`${this.drizzle.schema.chatMessage.status} in (${sql.raw(
-            CHAT_READABLE_MESSAGE_STATUSES.join(', '),
-          )})`,
-          lt(this.drizzle.schema.chatMessage.messageSeq, placeholder('cursor')),
+          inArray(
+            this.drizzle.schema.chatMessage.status,
+            CHAT_READABLE_MESSAGE_STATUSES,
+          ),
+          lt(this.drizzle.schema.chatMessage.messageSeq, params.cursor),
         ),
       )
       .orderBy(desc(this.drizzle.schema.chatMessage.messageSeq))
-      .limit(placeholder('limit'))
-      .prepare('message_chat_messages_before')
+      .limit(params.limit)
   }
 
-  // 构建会话指定序号之后增量消息 prepared query。
-  private buildConversationMessagesAfterQuery() {
+  // 构建会话指定序号之后增量消息查询。
+  private buildConversationMessagesAfterQuery(
+    params: ChatMessageAfterSeqQueryInput,
+  ) {
     return this.drizzle.db
-      .select()
+      .select(this.buildMessageOutputColumns())
       .from(this.drizzle.schema.chatMessage)
       .where(
         and(
           eq(
             this.drizzle.schema.chatMessage.conversationId,
-            placeholder('conversationId'),
+            params.conversationId,
           ),
-          sql`${this.drizzle.schema.chatMessage.status} in (${sql.raw(
-            CHAT_READABLE_MESSAGE_STATUSES.join(', '),
-          )})`,
-          gt(
-            this.drizzle.schema.chatMessage.messageSeq,
-            placeholder('afterSeq'),
+          inArray(
+            this.drizzle.schema.chatMessage.status,
+            CHAT_READABLE_MESSAGE_STATUSES,
           ),
+          gt(this.drizzle.schema.chatMessage.messageSeq, params.afterSeq),
         ),
       )
       .orderBy(asc(this.drizzle.schema.chatMessage.messageSeq))
-      .limit(placeholder('limit'))
-      .prepare('message_chat_messages_after')
+      .limit(params.limit)
   }
 
   // 查询当前用户的会话列表页。
@@ -144,7 +128,7 @@ export class MessageChatReadQueryService {
   async countConversationList(params: ChatConversationListCountInput) {
     const [row] = await this.drizzle.db
       .select({
-        total: sql<number>`count(*)::int`,
+        total: sql<number>`count(*)::int`.mapWith(Number),
       })
       .from(this.drizzle.schema.chatConversation)
       .innerJoin(
@@ -161,19 +145,37 @@ export class MessageChatReadQueryService {
 
   // 查询会话最新一页消息。
   async getConversationMessages(params: ChatMessagePageQueryInput) {
-    return this.conversationMessagesInitialQuery.execute(params)
+    return this.buildConversationMessagesInitialQuery(params)
   }
 
   // 查询会话游标之前的历史消息。
   async getConversationMessagesBefore(
     params: ChatMessageBeforeCursorQueryInput,
   ) {
-    return this.conversationMessagesBeforeQuery.execute(params)
+    return this.buildConversationMessagesBeforeQuery(params)
   }
 
   // 查询会话指定序号之后的增量消息。
   async getConversationMessagesAfter(params: ChatMessageAfterSeqQueryInput) {
-    return this.conversationMessagesAfterQuery.execute(params)
+    return this.buildConversationMessagesAfterQuery(params)
+  }
+
+  // 会话消息列表的稳定输出投影，避免历史分页读取撤回/审计等未参与响应的宽列。
+  private buildMessageOutputColumns() {
+    const { chatMessage } = this.drizzle.schema
+
+    return {
+      id: chatMessage.id,
+      conversationId: chatMessage.conversationId,
+      messageSeq: chatMessage.messageSeq,
+      senderId: chatMessage.senderId,
+      clientMessageId: chatMessage.clientMessageId,
+      messageType: chatMessage.messageType,
+      content: chatMessage.content,
+      bodyTokens: chatMessage.bodyTokens,
+      payload: chatMessage.payload,
+      createdAt: chatMessage.createdAt,
+    }
   }
 
   private buildConversationListWhere(params: ChatConversationListCountInput) {

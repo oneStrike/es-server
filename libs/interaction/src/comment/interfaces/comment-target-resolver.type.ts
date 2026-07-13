@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { CommentTargetTypeEnum } from '../comment.constant'
 
 /**
@@ -47,7 +47,7 @@ export interface ICommentTargetResolver {
    * @param targetId - 目标ID
    * @throws 当不允许评论时抛出 BadRequestException
    */
-  ensureCanComment: (tx: Db, targetId: number) => Promise<void>
+  ensureCanComment: (tx: DbExecutor, targetId: number) => Promise<void>
 
   /**
    * 应用评论计数增量
@@ -56,7 +56,11 @@ export interface ICommentTargetResolver {
    * @param targetId - 目标ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void>
 
   /**
    * 解析目标元信息
@@ -66,7 +70,7 @@ export interface ICommentTargetResolver {
    * @param targetId - 目标ID
    * @returns 目标元信息
    */
-  resolveMeta: (tx: Db, targetId: number) => Promise<CommentTargetMeta>
+  resolveMeta: (tx: DbExecutor, targetId: number) => Promise<CommentTargetMeta>
 
   /**
    * 评论成功后钩子（可选）
@@ -77,7 +81,7 @@ export interface ICommentTargetResolver {
    * @param meta - 目标元信息
    */
   postCommentHook?: (
-    tx: Db,
+    tx: DbExecutor,
     comment: CommentTargetHookPayload & { content: string },
     meta: CommentTargetMeta,
   ) => Promise<void>
@@ -87,7 +91,7 @@ export interface ICommentTargetResolver {
    * 在事务内执行，可用于同步回复计数、最后回复时间等派生字段
    */
   postDeleteCommentHook?: (
-    tx: Db,
+    tx: DbExecutor,
     comment: CommentTargetHookPayload,
     meta: CommentTargetMeta,
   ) => Promise<void>

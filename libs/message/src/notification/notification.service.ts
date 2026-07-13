@@ -65,7 +65,19 @@ export class MessageNotificationService {
     const where = and(...conditions)
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.notification.id,
+          categoryKey: this.notification.categoryKey,
+          actorUserId: this.notification.actorUserId,
+          title: this.notification.title,
+          content: this.notification.content,
+          payload: this.notification.payload,
+          isRead: this.notification.isRead,
+          readAt: this.notification.readAt,
+          expiresAt: this.notification.expiresAt,
+          createdAt: this.notification.createdAt,
+          updatedAt: this.notification.updatedAt,
+        })
         .from(this.notification)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)

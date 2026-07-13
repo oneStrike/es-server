@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 /**
@@ -23,7 +23,10 @@ export interface IFavoriteTargetResolver {
    * @returns 属主 UserId（如果需要发通知）
    * @throws BadRequestException 如果目标不存在
    */
-  ensureExists: (tx: Db, targetId: number) => Promise<FavoriteTargetContext>
+  ensureExists: (
+    tx: DbExecutor,
+    targetId: number,
+  ) => Promise<FavoriteTargetContext>
 
   /**
    * 更新目标的收藏统计数
@@ -31,13 +34,17 @@ export interface IFavoriteTargetResolver {
    * @param targetId 目标 ID
    * @param delta 增量 (+1 或 -1)
    */
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void>
 
   /**
    * 收藏成功的后续钩子（在事务内执行，主要用于发送入库消息）
    */
   postFavoriteHook?: (
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
     options: FavoriteTargetContext,
@@ -47,7 +54,7 @@ export interface IFavoriteTargetResolver {
    * 取消收藏后的后续钩子（在事务内执行，可用于记录日志等回退副作用）
    */
   postUnfavoriteHook?: (
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
   ) => Promise<void>

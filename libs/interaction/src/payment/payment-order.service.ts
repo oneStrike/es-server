@@ -2,12 +2,14 @@ import type {
   PaymentOrderSelect,
   PaymentProviderCertificateSelect,
   PaymentProviderConfigSelect,
+  PaymentProviderConfigVersionSelect,
   PaymentProviderCredentialSelect,
 } from '@db/schema'
 import type {
   CreatePaymentOrderInput,
   PaymentOrderPublicResult,
   PaymentProviderCredentialMaterial,
+  PaymentProviderOrderSnapshot,
 } from '../payment/types/payment.type'
 import process from 'node:process'
 import { DrizzleService } from '@db/core'
@@ -22,6 +24,56 @@ import {
   PaymentSceneEnum,
   PaymentSubscriptionModeEnum,
 } from '../payment/payment.constant'
+
+type PaymentProviderCredentialMaterialSource = Pick<
+  PaymentProviderCredentialSelect,
+  'metadata'
+>
+
+type PaymentProviderCertificateMaterialSource = Pick<
+  PaymentProviderCertificateSelect,
+  'metadata' | 'serialNo'
+>
+
+type PaymentOrderCreateSnapshot = PaymentProviderOrderSnapshot &
+  Pick<PaymentOrderSelect, 'id' | 'orderType' | 'subscriptionMode'>
+
+type PaymentOrderPublicResultSource = Pick<
+  PaymentOrderSelect,
+  'orderNo' | 'orderType' | 'payableAmount' | 'status' | 'subscriptionMode'
+>
+
+type PaymentProviderConfigOrderSnapshot = Pick<
+  PaymentProviderConfigSelect,
+  | 'allowedReturnDomains'
+  | 'apiV3KeyRef'
+  | 'appCertRef'
+  | 'appId'
+  | 'certMode'
+  | 'channel'
+  | 'clientAppKey'
+  | 'configMetadata'
+  | 'configName'
+  | 'configVersion'
+  | 'credentialVersionRef'
+  | 'environment'
+  | 'id'
+  | 'isEnabled'
+  | 'mchId'
+  | 'notifyUrl'
+  | 'paymentScene'
+  | 'platform'
+  | 'platformCertRef'
+  | 'privateKeyRef'
+  | 'publicKeyRef'
+  | 'returnUrl'
+  | 'rootCertRef'
+>
+
+type PaymentProviderConfigVersionIdSnapshot = Pick<
+  PaymentProviderConfigVersionSelect,
+  'id'
+>
 
 @Injectable()
 export class PaymentOrderService {
@@ -45,6 +97,62 @@ export class PaymentOrderService {
   // 获取支付 provider 配置不可变版本表定义。
   private get paymentProviderConfigVersion() {
     return this.drizzle.schema.paymentProviderConfigVersion
+  }
+
+  private get paymentOrderCreateSnapshotSelect() {
+    return {
+      id: this.paymentOrder.id,
+      orderNo: this.paymentOrder.orderNo,
+      orderType: this.paymentOrder.orderType,
+      channel: this.paymentOrder.channel,
+      paymentScene: this.paymentOrder.paymentScene,
+      subscriptionMode: this.paymentOrder.subscriptionMode,
+      status: this.paymentOrder.status,
+      payableAmount: this.paymentOrder.payableAmount,
+      providerConfigId: this.paymentOrder.providerConfigId,
+      credentialVersionRef: this.paymentOrder.credentialVersionRef,
+    } as const
+  }
+
+  private get paymentProviderConfigOrderSelect() {
+    return {
+      id: this.paymentProviderConfig.id,
+      channel: this.paymentProviderConfig.channel,
+      paymentScene: this.paymentProviderConfig.paymentScene,
+      platform: this.paymentProviderConfig.platform,
+      environment: this.paymentProviderConfig.environment,
+      clientAppKey: this.paymentProviderConfig.clientAppKey,
+      configName: this.paymentProviderConfig.configName,
+      appId: this.paymentProviderConfig.appId,
+      mchId: this.paymentProviderConfig.mchId,
+      notifyUrl: this.paymentProviderConfig.notifyUrl,
+      returnUrl: this.paymentProviderConfig.returnUrl,
+      allowedReturnDomains: this.paymentProviderConfig.allowedReturnDomains,
+      certMode: this.paymentProviderConfig.certMode,
+      publicKeyRef: this.paymentProviderConfig.publicKeyRef,
+      privateKeyRef: this.paymentProviderConfig.privateKeyRef,
+      apiV3KeyRef: this.paymentProviderConfig.apiV3KeyRef,
+      appCertRef: this.paymentProviderConfig.appCertRef,
+      platformCertRef: this.paymentProviderConfig.platformCertRef,
+      rootCertRef: this.paymentProviderConfig.rootCertRef,
+      configVersion: this.paymentProviderConfig.configVersion,
+      credentialVersionRef: this.paymentProviderConfig.credentialVersionRef,
+      configMetadata: this.paymentProviderConfig.configMetadata,
+      isEnabled: this.paymentProviderConfig.isEnabled,
+    } as const
+  }
+
+  private get paymentProviderCredentialMaterialColumns() {
+    return {
+      metadata: true,
+    } as const
+  }
+
+  private get paymentProviderCertificateMaterialColumns() {
+    return {
+      metadata: true,
+      serialNo: true,
+    } as const
   }
 
   // 创建支付订单并写入 provider 原生客户端支付参数。
@@ -83,7 +191,7 @@ export class PaymentOrderService {
       targetSnapshot: input.targetSnapshot,
     }
 
-    const [order] = await this.db
+    const [order]: PaymentOrderCreateSnapshot[] = await this.db
       .insert(this.paymentOrder)
       .values({
         orderNo,
@@ -109,7 +217,7 @@ export class PaymentOrderService {
         configSnapshot: this.buildProviderConfigSnapshot(config),
         clientContext,
       })
-      .returning()
+      .returning(this.paymentOrderCreateSnapshotSelect)
 
     const adapter = this.getPaymentAdapter(input.channel)
     const clientPayPayload = await adapter.createOrder({
@@ -134,7 +242,7 @@ export class PaymentOrderService {
 
   // 将支付订单行映射为 App 公开支付结果，禁止透出 provider 内部字段。
   private toPaymentOrderResult(
-    order: PaymentOrderSelect,
+    order: PaymentOrderPublicResultSource,
     clientPayPayload: Record<string, unknown>,
   ): PaymentOrderPublicResult {
     return {
@@ -162,7 +270,9 @@ export class PaymentOrderService {
   }
 
   // 构建不含明文密钥的 provider 配置快照。
-  private buildProviderConfigSnapshot(config: PaymentProviderConfigSelect) {
+  private buildProviderConfigSnapshot(
+    config: PaymentProviderConfigOrderSnapshot,
+  ) {
     return {
       channel: config.channel,
       paymentScene: config.paymentScene,
@@ -189,17 +299,18 @@ export class PaymentOrderService {
   }
 
   private async ensurePaymentProviderConfigVersion(
-    config: PaymentProviderConfigSelect,
+    config: PaymentProviderConfigOrderSnapshot,
     credentialSnapshot: ReturnType<
       PaymentOrderService['readPaymentProviderSelectionSnapshot']
     >,
   ) {
-    const existing =
+    const existing: PaymentProviderConfigVersionIdSnapshot | undefined =
       await this.db.query.paymentProviderConfigVersion.findFirst({
         where: {
           configVersion: config.configVersion,
           providerConfigId: config.id,
         },
+        columns: { id: true },
       })
     if (existing) {
       return existing
@@ -238,16 +349,18 @@ export class PaymentOrderService {
         wechatApiV3CredentialId: credentialSnapshot.wechatApiV3CredentialId,
       })
       .onConflictDoNothing()
-      .returning()
+      .returning({ id: this.paymentProviderConfigVersion.id })
     if (created) {
       return created
     }
-    const raced = await this.db.query.paymentProviderConfigVersion.findFirst({
-      where: {
-        configVersion: config.configVersion,
-        providerConfigId: config.id,
-      },
-    })
+    const raced: PaymentProviderConfigVersionIdSnapshot | undefined =
+      await this.db.query.paymentProviderConfigVersion.findFirst({
+        where: {
+          configVersion: config.configVersion,
+          providerConfigId: config.id,
+        },
+        columns: { id: true },
+      })
     if (!raced) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
@@ -258,7 +371,7 @@ export class PaymentOrderService {
   }
 
   private buildCredentialSnapshot(
-    config: PaymentProviderConfigSelect,
+    config: PaymentProviderConfigOrderSnapshot,
     credentialSnapshot: ReturnType<
       PaymentOrderService['readPaymentProviderSelectionSnapshot']
     >,
@@ -281,7 +394,7 @@ export class PaymentOrderService {
   }
 
   private async resolveCreateOrderCredentialMaterial(
-    config: PaymentProviderConfigSelect,
+    config: PaymentProviderConfigOrderSnapshot,
     credentialSnapshot: ReturnType<
       PaymentOrderService['readPaymentProviderSelectionSnapshot']
     >,
@@ -335,11 +448,12 @@ export class PaymentOrderService {
   private async resolvePaymentCredentialByIdOrRef(
     id: number | null,
     credentialRef: string | null,
-  ): Promise<PaymentProviderCredentialSelect | null> {
+  ): Promise<PaymentProviderCredentialMaterialSource | null> {
     if (id != null) {
       return (
         (await this.db.query.paymentProviderCredential.findFirst({
           where: { id },
+          columns: this.paymentProviderCredentialMaterialColumns,
         })) ?? null
       )
     }
@@ -349,6 +463,7 @@ export class PaymentOrderService {
     return (
       (await this.db.query.paymentProviderCredential.findFirst({
         where: { credentialRef },
+        columns: this.paymentProviderCredentialMaterialColumns,
       })) ?? null
     )
   }
@@ -356,11 +471,12 @@ export class PaymentOrderService {
   private async resolvePaymentCertificateByIdOrRef(
     id: number | null,
     certificateRef: string | null,
-  ): Promise<PaymentProviderCertificateSelect | null> {
+  ): Promise<PaymentProviderCertificateMaterialSource | null> {
     if (id != null) {
       return (
         (await this.db.query.paymentProviderCertificate.findFirst({
           where: { id },
+          columns: this.paymentProviderCertificateMaterialColumns,
         })) ?? null
       )
     }
@@ -370,6 +486,7 @@ export class PaymentOrderService {
     return (
       (await this.db.query.paymentProviderCertificate.findFirst({
         where: { certificateRef },
+        columns: this.paymentProviderCertificateMaterialColumns,
       })) ?? null
     )
   }
@@ -429,8 +546,8 @@ export class PaymentOrderService {
 
   // 按客户端场景解析唯一可用的支付 provider 配置。
   private async resolvePaymentProviderConfig(input: CreatePaymentOrderBaseDto) {
-    const candidates = await this.db
-      .select()
+    const candidates: PaymentProviderConfigOrderSnapshot[] = await this.db
+      .select(this.paymentProviderConfigOrderSelect)
       .from(this.paymentProviderConfig)
       .where(
         and(
@@ -486,7 +603,10 @@ export class PaymentOrderService {
 
   private assertPaymentReturnUrlAllowed(
     returnUrl: string | null | undefined,
-    config: PaymentProviderConfigSelect,
+    config: Pick<
+      PaymentProviderConfigOrderSnapshot,
+      'allowedReturnDomains' | 'paymentScene'
+    >,
   ) {
     if (config.paymentScene !== PaymentSceneEnum.H5) {
       return
@@ -553,7 +673,7 @@ export class PaymentOrderService {
   }
 
   private readPaymentProviderSelectionSnapshot(
-    config: PaymentProviderConfigSelect,
+    config: Pick<PaymentProviderConfigOrderSnapshot, 'configMetadata'>,
   ) {
     const metadata = this.asRecord(config.configMetadata)
     const credentialOptions = this.asRecord(metadata?.credentialOptions)

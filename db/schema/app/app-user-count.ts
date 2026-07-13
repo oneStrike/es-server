@@ -127,7 +127,7 @@ export const appUserCount = snakeCase.table(
       sql`${table.forumTopicReceivedLikeCount} >= 0`,
     ),
     check(
-      'app_user_count_forum_topic_received_favorite_count_non_negative_chk',
+      'app_user_count_forum_topic_received_fav_nonnegative_chk',
       sql`${table.forumTopicReceivedFavoriteCount} >= 0`,
     ),
   ],

@@ -2,7 +2,6 @@ import {
   boolean,
   index,
   integer,
-  smallserial,
   snakeCase,
   text,
   timestamp,
@@ -90,7 +89,7 @@ export const dictionaryItem = snakeCase.table(
     /**
      * 显示排序（数值越小越靠前）
      */
-    sortOrder: smallserial(),
+    sortOrder: integer().default(0).notNull(),
     /**
      * 字典项图标URL
      */
@@ -125,13 +124,13 @@ export const dictionaryItem = snakeCase.table(
       table.code,
     ),
     /**
-     * 字典编码索引
+     * 字典内稳定排序索引。
      */
-    index('sys_dictionary_item_dictionary_code_idx').on(table.dictionaryCode),
-    /**
-     * 排序索引
-     */
-    index('sys_dictionary_item_sort_order_idx').on(table.sortOrder),
+    index('sys_dictionary_item_dictionary_code_sort_order_id_idx').on(
+      table.dictionaryCode,
+      table.sortOrder,
+      table.id,
+    ),
   ],
 )
 

@@ -118,6 +118,16 @@ export const notificationDelivery = snakeCase.table(
       table.updatedAt.desc(),
       table.id.desc(),
     ),
+    /**
+     * 后台投递监控按事件、分类和状态筛选的稳定分页索引。
+     */
+    index('notification_delivery_event_category_status_updated_id_idx').on(
+      table.eventKey,
+      table.categoryKey,
+      table.status,
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
     index('notification_delivery_task_lookup_idx').on(
       table.categoryKey,
       table.taskId,

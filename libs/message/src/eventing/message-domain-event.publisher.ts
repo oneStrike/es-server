@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type {
   PublishDomainEventBatchResult,
   PublishDomainEventInput,
@@ -24,7 +24,7 @@ export class MessageDomainEventPublisher {
   }
 
   async publishInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: PublishMessageDomainEventInput,
   ): Promise<PublishDomainEventResult> {
     return this.domainEventPublisher.publishInTx(

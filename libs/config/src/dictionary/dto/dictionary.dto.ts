@@ -87,9 +87,9 @@ export class BaseDictionaryItemDto extends BaseDto {
   @NumberProperty({
     description: '显示排序（数值越小越靠前）',
     example: 1,
-    nullable: true,
+    required: true,
   })
-  sortOrder!: number | null
+  sortOrder!: number
 
   @StringProperty({
     description: '字典项图标 URL',

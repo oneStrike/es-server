@@ -1,4 +1,5 @@
 import type { ForumTopicSelect } from '@db/schema'
+import type { AppDateRange } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
 import type {
   ForumSearchCondition,
@@ -9,7 +10,18 @@ import { buildLikePattern, DrizzleService, toPageResult } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gte, ilike, inArray, isNull, lt, or, sql } from 'drizzle-orm'
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  lt,
+  or,
+  sql,
+} from 'drizzle-orm'
 import { ForumHashtagReferenceSourceTypeEnum } from '../hashtag/forum-hashtag.constant'
 import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
@@ -19,8 +31,43 @@ import {
 } from './dto/search.dto'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 
-const FORUM_SEARCH_TOPIC_RANK = 0
-const FORUM_SEARCH_COMMENT_RANK = 1
+type ForumSearchTopicSource = Pick<
+  ForumTopicSelect,
+  | 'id'
+  | 'sectionId'
+  | 'userId'
+  | 'title'
+  | 'content'
+  | 'createdAt'
+  | 'commentCount'
+  | 'viewCount'
+  | 'likeCount'
+  | 'favoriteCount'
+>
+
+interface ForumSearchOptions {
+  publicOnly: boolean
+  userId?: number
+}
+
+interface ForumSearchMixedRow {
+  commentContent: string | null
+  commentCount: number
+  commentId: number | null
+  createdAt: Date
+  favoriteCount: number
+  likeCount: number
+  resultType: ForumSearchTypeEnum
+  sectionId: number
+  sectionName: string | null
+  topicContent: string | null
+  topicId: number
+  topicTitle: string
+  userAvatarUrl: string | null
+  userId: number
+  userNickname: string | null
+  viewCount: number
+}
 
 /**
  * 论坛搜索服务。
@@ -176,152 +223,10 @@ export class ForumSearchService {
     })
   }
 
-  private buildMixedSearchOrderBy(dto: ForumSearchDto) {
-    if (!dto.orderBy?.trim()) {
-      return undefined
-    }
-
-    return this.drizzle.buildAllowlistedOrderBy(dto.orderBy, {
-      columns: {
-        createdAt: sql`createdAt`,
-        commentCount: sql`commentCount`,
-        viewCount: sql`viewCount`,
-        likeCount: sql`likeCount`,
-        favoriteCount: sql`favoriteCount`,
-      },
-    }).orderBy
-  }
-
-  // 合并搜索结果时的统一排序比较器。 hot 模式使用主题互动热度，非 hot 模式则统一按时间和主键倒序稳定排序。
-  private compareResults(
-    left: ForumSearchResultDto,
-    right: ForumSearchResultDto,
-    sort?: ForumSearchSortTypeEnum,
-  ) {
-    if (sort === ForumSearchSortTypeEnum.HOT) {
-      const leftHotScore =
-        left.commentCount * 5 +
-        left.likeCount * 3 +
-        left.favoriteCount * 3 +
-        left.viewCount
-      const rightHotScore =
-        right.commentCount * 5 +
-        right.likeCount * 3 +
-        right.favoriteCount * 3 +
-        right.viewCount
-
-      if (leftHotScore !== rightHotScore) {
-        return rightHotScore - leftHotScore
-      }
-    }
-
-    const createdAtDiff = right.createdAt.getTime() - left.createdAt.getTime()
-    if (createdAtDiff !== 0) {
-      return createdAtDiff
-    }
-
-    const resultTypeRankDiff =
-      this.getSearchResultTypeRank(right) - this.getSearchResultTypeRank(left)
-    if (resultTypeRankDiff !== 0) {
-      return resultTypeRankDiff
-    }
-
-    const commentIdDiff = (right.commentId ?? 0) - (left.commentId ?? 0)
-    if (commentIdDiff !== 0) {
-      return commentIdDiff
-    }
-
-    return right.topicId - left.topicId
-  }
-
-  private compareResultsByOrderBy(
-    left: ForumSearchResultDto,
-    right: ForumSearchResultDto,
-    orderBy: Record<string, 'asc' | 'desc'>,
-    fallbackSort?: ForumSearchSortTypeEnum,
-  ) {
-    for (const [field, direction] of Object.entries(orderBy)) {
-      const compared = this.compareSearchResultField(
-        this.getSearchResultOrderValue(left, field),
-        this.getSearchResultOrderValue(right, field),
-        direction,
-      )
-      if (compared !== 0) {
-        return compared
-      }
-    }
-
-    return this.compareResults(left, right, fallbackSort)
-  }
-
-  private compareSearchResultField(
-    leftValue: Date | number | string | null,
-    rightValue: Date | number | string | null,
-    direction: 'asc' | 'desc',
-  ) {
-    if (leftValue === null && rightValue === null) {
-      return 0
-    }
-    if (leftValue === null) {
-      return 1
-    }
-    if (rightValue === null) {
-      return -1
-    }
-
-    let compared: number
-    if (leftValue instanceof Date && rightValue instanceof Date) {
-      compared = leftValue.getTime() - rightValue.getTime()
-    } else if (
-      typeof leftValue === 'number' &&
-      typeof rightValue === 'number'
-    ) {
-      compared = leftValue - rightValue
-    } else {
-      compared = String(leftValue).localeCompare(String(rightValue))
-    }
-
-    return direction === 'asc' ? compared : -compared
-  }
-
-  private getSearchResultOrderValue(item: ForumSearchResultDto, field: string) {
-    if (field === 'resultType') {
-      return item.resultType
-    }
-    if (field === 'createdAt') {
-      return item.createdAt
-    }
-    if (field === 'commentId') {
-      return item.commentId
-    }
-    if (field === 'topicId') {
-      return item.topicId
-    }
-    if (
-      field === 'commentCount' ||
-      field === 'viewCount' ||
-      field === 'likeCount' ||
-      field === 'favoriteCount'
-    ) {
-      return item[field]
-    }
-
-    return null
-  }
-
-  private getSearchResultTypeRank(item: ForumSearchResultDto) {
-    return item.resultType === ForumSearchTypeEnum.COMMENT
-      ? FORUM_SEARCH_COMMENT_RANK
-      : FORUM_SEARCH_TOPIC_RANK
-  }
-
   // 解析当前查询可访问的板块范围。 publicOnly 模式会调用权限服务校验显式 sectionId，或回退为当前用户可访问板块集合。
   private async resolveSectionScope(
     sectionId: number | undefined,
-    options: {
-      publicOnly: boolean
-      userId?: number
-    },
+    options: ForumSearchOptions,
   ) {
     if (!options.publicOnly) {
       return sectionId === undefined ? undefined : [sectionId]
@@ -419,7 +324,7 @@ export class ForumSearchService {
 
   // 将主题查询结果映射为统一搜索结果 DTO。 这里会补齐板块名、用户昵称和正文摘要，供分页接口直接返回。
   private async mapTopicResults(
-    topics: ForumTopicSelect[],
+    topics: ForumSearchTopicSource[],
     keyword: string,
   ): Promise<ForumSearchResultDto[]> {
     if (topics.length === 0) {
@@ -546,83 +451,47 @@ export class ForumSearchService {
     })
   }
 
-  // 搜索分发主入口。 all 模式会分别拉取主题与评论窗口后合并排序，保持分页层看到的是统一结果流。
-  private async searchInternal(
-    searchInput: ForumSearchDto,
-    options: {
-      publicOnly: boolean
-      userId?: number
-    },
-  ) {
-    this.assertSingleSearchOrderProtocol(searchInput)
-    const type = searchInput.type ?? ForumSearchTypeEnum.ALL
+  private async mapMixedSearchResults(
+    rows: ForumSearchMixedRow[],
+    keyword: string,
+  ): Promise<ForumSearchResultDto[]> {
+    return rows.map((row) => {
+      const isComment = row.resultType === ForumSearchTypeEnum.COMMENT
 
-    if (type === ForumSearchTypeEnum.TOPIC) {
-      return this.searchTopics(searchInput, options)
-    }
-
-    if (type === ForumSearchTypeEnum.COMMENT) {
-      return this.searchComments(searchInput, options)
-    }
-
-    const pageParams = this.drizzle.buildPageParams(searchInput)
-    const page = pageParams.page
-    const mergedWindowSize = page.offset + page.pageSize
-
-    const [topicResults, commentResults] = await Promise.all([
-      this.searchTopics(
-        {
-          ...searchInput,
-          type: ForumSearchTypeEnum.TOPIC,
-          pageIndex: 1,
-          pageSize: mergedWindowSize,
-        },
-        options,
-      ),
-      this.searchComments(
-        {
-          ...searchInput,
-          type: ForumSearchTypeEnum.COMMENT,
-          pageIndex: 1,
-          pageSize: mergedWindowSize,
-        },
-        options,
-      ),
-    ])
-
-    const mixedOrderBy = this.buildMixedSearchOrderBy(searchInput)
-    const mergedList = [...topicResults.list, ...commentResults.list]
-      .sort((left, right) =>
-        mixedOrderBy
-          ? this.compareResultsByOrderBy(
-              left,
-              right,
-              mixedOrderBy,
-              searchInput.sort,
-            )
-          : this.compareResults(left, right, searchInput.sort),
-      )
-      .slice(page.offset, page.offset + page.pageSize)
-
-    return toPageResult(
-      mergedList,
-      topicResults.total + commentResults.total,
-      page,
-    )
+      return {
+        resultType: row.resultType,
+        topicId: row.topicId,
+        topicTitle: row.topicTitle,
+        topicContentSnippet: isComment
+          ? null
+          : this.buildSnippet(row.topicContent ?? '', keyword),
+        sectionId: row.sectionId,
+        sectionName: row.sectionName ?? '',
+        userId: row.userId,
+        userNickname: row.userNickname ?? '',
+        userAvatarUrl: row.userAvatarUrl,
+        commentId: row.commentId,
+        commentContentSnippet: isComment
+          ? this.buildSnippet(row.commentContent ?? '', keyword)
+          : null,
+        createdAt: row.createdAt,
+        commentCount: row.commentCount,
+        viewCount: row.viewCount,
+        likeCount: row.likeCount,
+        favoriteCount: row.favoriteCount,
+      }
+    })
   }
 
-  // 搜索主题。 public 模式下会叠加审核与隐藏过滤，并支持按话题引用缩小结果集。
-  private async searchTopics(
+  // 主题和评论共用 all 查询的可见性条件；空范围显式返回 undefined，调用方不会误发全表查询。
+  private async buildTopicSearchWhere(
     dto: ForumSearchDto,
-    options: {
-      publicOnly: boolean
-      userId?: number
-    },
+    options: ForumSearchOptions,
+    dateRange?: AppDateRange,
   ) {
-    const pageParams = this.buildTopicSearchPageParams(dto)
     const sectionIds = await this.resolveSectionScope(dto.sectionId, options)
     if (sectionIds && sectionIds.length === 0) {
-      return toPageResult([], 0, pageParams.page)
+      return undefined
     }
 
     const hashtagFilterId = dto.hashtagId
@@ -634,7 +503,7 @@ export class ForumSearchService {
         )
       : undefined
     if (topicIdsByHashtag && topicIdsByHashtag.length === 0) {
-      return toPageResult([], 0, pageParams.page)
+      return undefined
     }
 
     const keywordLike = buildLikePattern(dto.keyword)!
@@ -656,45 +525,24 @@ export class ForumSearchService {
       topicIdsByHashtag
         ? inArray(this.forumTopic.id, topicIdsByHashtag)
         : undefined,
-      pageParams.dateRange?.gte
-        ? gte(this.forumTopic.createdAt, pageParams.dateRange.gte)
+      dateRange?.gte
+        ? gte(this.forumTopic.createdAt, dateRange.gte)
         : undefined,
-      pageParams.dateRange?.lt
-        ? lt(this.forumTopic.createdAt, pageParams.dateRange.lt)
-        : undefined,
-    ])!
-
-    const where = and(...conditionTuple)
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.forumTopic)
-        .where(where)
-        .orderBy(...pageParams.order.orderBySql)
-        .limit(pageParams.page.limit)
-        .offset(pageParams.page.offset),
-      this.db.$count(this.forumTopic, where),
+      dateRange?.lt ? lt(this.forumTopic.createdAt, dateRange.lt) : undefined,
     ])
-    const page = toPageResult(list, total, pageParams.page)
 
-    return {
-      ...page,
-      list: await this.mapTopicResults(page.list, dto.keyword),
-    }
+    return conditionTuple ? and(...conditionTuple) : undefined
   }
 
-  // 搜索评论。 评论搜索通过 join 主题表继承板块和审核过滤。 评论搜索同时接受主题级引用与评论级引用，保证话题筛选口径覆盖完整。
-  private async searchComments(
+  // 评论条件必须保留目标主题关联，确保 public/admin 可见性和 hashtag 范围与单类搜索完全一致。
+  private async buildCommentSearchWhere(
     dto: ForumSearchDto,
-    options: {
-      publicOnly: boolean
-      userId?: number
-    },
+    options: ForumSearchOptions,
+    dateRange?: AppDateRange,
   ) {
-    const pageParams = this.buildCommentSearchPageParams(dto)
     const sectionIds = await this.resolveSectionScope(dto.sectionId, options)
     if (sectionIds && sectionIds.length === 0) {
-      return toPageResult([], 0, pageParams.page)
+      return undefined
     }
 
     const hashtagFilterId = dto.hashtagId
@@ -717,7 +565,7 @@ export class ForumSearchService {
       (topicIdsByHashtag?.length ?? 0) === 0 &&
       (commentIdsByHashtag?.length ?? 0) === 0
     ) {
-      return toPageResult([], 0, pageParams.page)
+      return undefined
     }
 
     const keywordLike = buildLikePattern(dto.keyword)!
@@ -745,15 +593,266 @@ export class ForumSearchService {
           : inArray(this.forumTopic.sectionId, sectionIds)
         : undefined,
       commentHashtagFilter,
-      pageParams.dateRange?.gte
-        ? gte(this.userComment.createdAt, pageParams.dateRange.gte)
+      dateRange?.gte
+        ? gte(this.userComment.createdAt, dateRange.gte)
         : undefined,
-      pageParams.dateRange?.lt
-        ? lt(this.userComment.createdAt, pageParams.dateRange.lt)
-        : undefined,
-    ])!
+      dateRange?.lt ? lt(this.userComment.createdAt, dateRange.lt) : undefined,
+    ])
 
-    const where = and(...conditionTuple)
+    return conditionTuple ? and(...conditionTuple) : undefined
+  }
+
+  // all 模式在数据库中 union all 后再做稳定排序和分页，避免深页受 PageDto 单次 pageSize 上限截断。
+  private async searchAll(dto: ForumSearchDto, options: ForumSearchOptions) {
+    const pageParams = this.drizzle.buildPageParams(dto)
+    const [topicWhere, commentWhere] = await Promise.all([
+      this.buildTopicSearchWhere(dto, options, pageParams.dateRange),
+      this.buildCommentSearchWhere(dto, options, pageParams.dateRange),
+    ])
+    if (!topicWhere && !commentWhere) {
+      return toPageResult([], 0, pageParams.page)
+    }
+
+    const topicRows = this.db
+      .select({
+        commentCount: this.forumTopic.commentCount,
+        commentId: sql<number | null>`null::integer`.as('comment_id'),
+        createdAt: this.forumTopic.createdAt,
+        favoriteCount: this.forumTopic.favoriteCount,
+        likeCount: this.forumTopic.likeCount,
+        resultType: sql<ForumSearchTypeEnum>`'topic'`.as('result_type'),
+        resultTypeRank: sql`0::integer`.mapWith(Number).as('result_type_rank'),
+        sortCommentId: sql`0::integer`.mapWith(Number).as('sort_comment_id'),
+        topicId: this.forumTopic.id,
+        userId: this.forumTopic.userId,
+        viewCount: this.forumTopic.viewCount,
+      })
+      .from(this.forumTopic)
+      .where(topicWhere ?? sql`false`)
+    const commentRows = this.db
+      .select({
+        commentCount: this.forumTopic.commentCount,
+        commentId: sql<number | null>`${this.userComment.id}`.as('comment_id'),
+        createdAt: this.userComment.createdAt,
+        favoriteCount: this.forumTopic.favoriteCount,
+        likeCount: this.userComment.likeCount,
+        resultType: sql<ForumSearchTypeEnum>`'comment'`.as('result_type'),
+        resultTypeRank: sql`1::integer`.mapWith(Number).as('result_type_rank'),
+        sortCommentId: this.userComment.id,
+        topicId: this.forumTopic.id,
+        userId: this.userComment.userId,
+        viewCount: this.forumTopic.viewCount,
+      })
+      .from(this.userComment)
+      .innerJoin(
+        this.forumTopic,
+        eq(this.userComment.targetId, this.forumTopic.id),
+      )
+      .where(commentWhere ?? sql`false`)
+    const mixedSearchRows = this.db
+      .$with('forum_search')
+      .as(topicRows.unionAll(commentRows))
+    const explicitOrderBy = this.drizzle.buildAllowlistedOrderBy(dto.orderBy, {
+      columns: {
+        commentCount: mixedSearchRows.commentCount,
+        createdAt: mixedSearchRows.createdAt,
+        favoriteCount: mixedSearchRows.favoriteCount,
+        likeCount: mixedSearchRows.likeCount,
+        viewCount: mixedSearchRows.viewCount,
+      },
+    }).orderBySql
+    const hotScore = sql`(
+      ${mixedSearchRows.commentCount}::bigint * 5 +
+      ${mixedSearchRows.likeCount}::bigint * 3 +
+      ${mixedSearchRows.favoriteCount}::bigint * 3 +
+      ${mixedSearchRows.viewCount}::bigint
+    )`
+    const fallbackOrderBy = [
+      ...(dto.sort === ForumSearchSortTypeEnum.HOT ? [desc(hotScore)] : []),
+      desc(mixedSearchRows.createdAt),
+      desc(mixedSearchRows.resultTypeRank),
+      desc(mixedSearchRows.sortCommentId),
+      desc(mixedSearchRows.topicId),
+    ]
+    const pagedSearchRows = this.db.$with('forum_search_page').as(
+      this.db
+        .select({
+          commentCount: mixedSearchRows.commentCount,
+          commentId: mixedSearchRows.commentId,
+          createdAt: mixedSearchRows.createdAt,
+          favoriteCount: mixedSearchRows.favoriteCount,
+          likeCount: mixedSearchRows.likeCount,
+          resultType: mixedSearchRows.resultType,
+          topicId: mixedSearchRows.topicId,
+          userId: mixedSearchRows.userId,
+          viewCount: mixedSearchRows.viewCount,
+        })
+        .from(mixedSearchRows)
+        .orderBy(...explicitOrderBy, ...fallbackOrderBy)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+    )
+    const searchTotal = this.db.$with('forum_search_total').as(
+      this.db
+        .select({
+          total: sql<number>`count(*)::bigint`.mapWith(Number).as('total'),
+        })
+        .from(mixedSearchRows),
+    )
+    const rows = await this.db
+      .with(mixedSearchRows, pagedSearchRows, searchTotal)
+      .select({
+        commentContent: this.userComment.content,
+        commentCount: pagedSearchRows.commentCount,
+        commentId: pagedSearchRows.commentId,
+        createdAt: pagedSearchRows.createdAt,
+        favoriteCount: pagedSearchRows.favoriteCount,
+        likeCount: pagedSearchRows.likeCount,
+        resultType: pagedSearchRows.resultType,
+        sectionId: this.forumTopic.sectionId,
+        sectionName: this.forumSection.name,
+        topicContent: this.forumTopic.content,
+        topicId: pagedSearchRows.topicId,
+        topicTitle: this.forumTopic.title,
+        total: searchTotal.total,
+        userAvatarUrl: this.appUser.avatarUrl,
+        userId: pagedSearchRows.userId,
+        userNickname: this.appUser.nickname,
+        viewCount: pagedSearchRows.viewCount,
+      })
+      .from(searchTotal)
+      .leftJoin(pagedSearchRows, sql`true`)
+      .leftJoin(
+        this.forumTopic,
+        eq(pagedSearchRows.topicId, this.forumTopic.id),
+      )
+      .leftJoin(
+        this.userComment,
+        eq(pagedSearchRows.commentId, this.userComment.id),
+      )
+      .leftJoin(
+        this.forumSection,
+        eq(this.forumTopic.sectionId, this.forumSection.id),
+      )
+      .leftJoin(this.appUser, eq(pagedSearchRows.userId, this.appUser.id))
+    const list: ForumSearchMixedRow[] = []
+    for (const row of rows) {
+      if (
+        row.commentCount === null ||
+        row.createdAt === null ||
+        row.favoriteCount === null ||
+        row.likeCount === null ||
+        row.resultType === null ||
+        row.sectionId === null ||
+        row.topicId === null ||
+        row.topicTitle === null ||
+        row.userId === null ||
+        row.viewCount === null
+      ) {
+        continue
+      }
+
+      list.push({
+        commentContent: row.commentContent,
+        commentCount: row.commentCount,
+        commentId: row.commentId,
+        createdAt: row.createdAt,
+        favoriteCount: row.favoriteCount,
+        likeCount: row.likeCount,
+        resultType: row.resultType,
+        sectionId: row.sectionId,
+        sectionName: row.sectionName,
+        topicContent: row.topicContent,
+        topicId: row.topicId,
+        topicTitle: row.topicTitle,
+        userAvatarUrl: row.userAvatarUrl,
+        userId: row.userId,
+        userNickname: row.userNickname,
+        viewCount: row.viewCount,
+      })
+    }
+
+    return toPageResult(
+      await this.mapMixedSearchResults(list, dto.keyword),
+      rows[0]?.total ?? 0,
+      pageParams.page,
+    )
+  }
+
+  // 搜索分发主入口。 all 模式由数据库完成集合合并、稳定排序和分页，单类搜索保留各自的排序协议。
+  private async searchInternal(
+    searchInput: ForumSearchDto,
+    options: ForumSearchOptions,
+  ) {
+    this.assertSingleSearchOrderProtocol(searchInput)
+    const type = searchInput.type ?? ForumSearchTypeEnum.ALL
+
+    if (type === ForumSearchTypeEnum.TOPIC) {
+      return this.searchTopics(searchInput, options)
+    }
+
+    if (type === ForumSearchTypeEnum.COMMENT) {
+      return this.searchComments(searchInput, options)
+    }
+
+    return this.searchAll(searchInput, options)
+  }
+
+  // 搜索主题。 public 模式下会叠加审核与隐藏过滤，并支持按话题引用缩小结果集。
+  private async searchTopics(dto: ForumSearchDto, options: ForumSearchOptions) {
+    const pageParams = this.buildTopicSearchPageParams(dto)
+    const where = await this.buildTopicSearchWhere(
+      dto,
+      options,
+      pageParams.dateRange,
+    )
+    if (!where) {
+      return toPageResult([], 0, pageParams.page)
+    }
+
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          id: this.forumTopic.id,
+          sectionId: this.forumTopic.sectionId,
+          userId: this.forumTopic.userId,
+          title: this.forumTopic.title,
+          content: this.forumTopic.content,
+          createdAt: this.forumTopic.createdAt,
+          commentCount: this.forumTopic.commentCount,
+          viewCount: this.forumTopic.viewCount,
+          likeCount: this.forumTopic.likeCount,
+          favoriteCount: this.forumTopic.favoriteCount,
+        })
+        .from(this.forumTopic)
+        .where(where)
+        .orderBy(...pageParams.order.orderBySql)
+        .limit(pageParams.page.limit)
+        .offset(pageParams.page.offset),
+      this.db.$count(this.forumTopic, where),
+    ])
+    const page = toPageResult(list, total, pageParams.page)
+
+    return {
+      ...page,
+      list: await this.mapTopicResults(page.list, dto.keyword),
+    }
+  }
+
+  // 搜索评论。 评论搜索通过 join 主题表继承板块和审核过滤。 评论搜索同时接受主题级引用与评论级引用，保证话题筛选口径覆盖完整。
+  private async searchComments(
+    dto: ForumSearchDto,
+    options: ForumSearchOptions,
+  ) {
+    const pageParams = this.buildCommentSearchPageParams(dto)
+    const where = await this.buildCommentSearchWhere(
+      dto,
+      options,
+      pageParams.dateRange,
+    )
+    if (!where) {
+      return toPageResult([], 0, pageParams.page)
+    }
 
     const [rows, totalRows] = await Promise.all([
       this.db
@@ -781,7 +880,7 @@ export class ForumSearchService {
         .offset(pageParams.page.offset),
       this.db
         .select({
-          total: sql<number>`count(*)::int`,
+          total: sql<number>`count(*)::int`.mapWith(Number),
         })
         .from(this.userComment)
         .innerJoin(

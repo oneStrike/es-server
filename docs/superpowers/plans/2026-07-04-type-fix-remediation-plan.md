@@ -99,6 +99,9 @@ pnpm exec nest build moderation
 
 ### 任务 2：`db/seed` 边界收口
 
+> 后续 owner 迁移说明：本历史计划中的 `scripts/check-db-core-boundary.ts` 已迁至
+> `db/operations/check-db-core-boundary.ts`；命令名仍为 `pnpm db:core:check`。
+
 **文件：**
 
 - 修改：`db/core/index.ts`
@@ -109,12 +112,15 @@ pnpm exec nest build moderation
 
 - [ ] **步骤 1：新增 seed 专用公共导出**
 
+> 历史计划说明：本节的 `seedRelations` alias 已被 RQB v2 breaking migration 移除。
+> 当前唯一 relation owner 为 `relations`，seed 直接消费它，不保留别名兼容层。
+
 在 `@db/core` 公开：
 
-- `seedRelations`
+- `relations`
 - `SeedDb`
 
-禁止直接公开内部 `relations` 原名。
+禁止新增 relation alias。
 
 - [ ] **步骤 2：迁移 seed 调用点**
 
@@ -123,7 +129,7 @@ pnpm exec nest build moderation
 
 - [ ] **步骤 3：更新 allowlist**
 
-在 `scripts/check-db-core-boundary.ts` 中仅新增 `seedRelations` 与 `SeedDb` 这两个名字。
+在 `scripts/check-db-core-boundary.ts` 中仅新增 `relations` 与 `SeedDb` 这两个名字。
 
 - [ ] **步骤 4：验证**
 

@@ -289,6 +289,10 @@ export const forumTopic = snakeCase.table(
       'forum_topic_audit_role_valid_chk',
       sql`${table.auditRole} is null or ${table.auditRole} in (0, 1)`,
     ),
+    check(
+      'forum_topic_audit_actor_pair_chk',
+      sql`(${table.auditRole} is null) = (${table.auditById} is null)`,
+    ),
     /**
      * 索引: lastCommentAt
      */
@@ -407,6 +411,17 @@ export const forumTopic = snakeCase.table(
      */
     index('forum_topic_admin_active_section_updated_idx')
       .on(table.sectionId, table.updatedAt.desc(), table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
+    /**
+     * 后台主题按板块和审核状态筛选的默认分页索引。
+     */
+    index('forum_topic_admin_active_section_audit_updated_idx')
+      .on(
+        table.sectionId,
+        table.auditStatus,
+        table.updatedAt.desc(),
+        table.id.desc(),
+      )
       .where(sql`${table.deletedAt} is null`),
     /**
      * 后台正常主题发帖用户筛选索引。

@@ -1,5 +1,8 @@
-import type { Db } from '@db/core'
-import type { IReportTargetResolver, ReportDispositionResult } from '../../report/interfaces/report-target-resolver.type'
+import type { DbExecutor } from '@db/core'
+import type {
+  IReportTargetResolver,
+  ReportDispositionResult,
+} from '../../report/interfaces/report-target-resolver.type'
 
 import {
   AuditRoleEnum,
@@ -15,9 +18,7 @@ import {
   ReportTargetTypeEnum,
 } from '../../report/report.constant'
 import { ReportService } from '../../report/report.service'
-import {
-  mapCommentTargetTypeToSceneType,
-} from '../comment.constant'
+import { mapCommentTargetTypeToSceneType } from '../comment.constant'
 import { CommentService } from '../comment.service'
 
 /**
@@ -43,7 +44,7 @@ export class CommentReportResolver
   }
 
   // 解析目标评论的场景元数据 验证评论存在性，根据评论挂载的目标类型和回复关系确定场景类型和评论层级
-  async resolveMeta(tx: Db, targetId: number) {
+  async resolveMeta(tx: DbExecutor, targetId: number) {
     const comment = await tx.query.userComment.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },
       columns: {
@@ -62,9 +63,7 @@ export class CommentReportResolver
       )
     }
 
-    const sceneType = mapCommentTargetTypeToSceneType(
-      comment.targetType,
-    )
+    const sceneType = mapCommentTargetTypeToSceneType(comment.targetType)
     if (!sceneType) {
       throw new BusinessException(
         BusinessErrorCode.INVALID_OPERATION_TARGET,
@@ -85,7 +84,7 @@ export class CommentReportResolver
   }
 
   async applyDisposition(
-    tx: Db,
+    tx: DbExecutor,
     input: {
       reportId: number
       targetId: number

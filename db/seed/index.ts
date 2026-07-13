@@ -1,5 +1,7 @@
 import type { Db } from './db-client'
-import process from 'node:process'
+import type { DemoSeedRunOptions } from './seed.type'
+import { acquireIntegrityLocks, jobIntegrityLock } from '@db/core'
+import * as schema from '@db/schema'
 import { ForumUserActionTargetTypeEnum } from '@libs/forum/action-log/action-log.constant'
 import { ForumModeratorActionTargetTypeEnum } from '@libs/forum/moderator/moderator-action-log.constant'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
@@ -12,11 +14,10 @@ import { PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.cons
 import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { sql } from 'drizzle-orm'
-import {
-  assertSafeDemoSeedEnvironment,
-  shouldCheckDatabaseToolEnvironmentOnly,
-} from '../runtime-guard'
-import { createDbClient, disconnectDbClient, getDatabaseUrl } from './db-client'
+import { assertSafeDemoSeedEnvironment } from '../runtime-guard'
+import { readRegisteredDisposableDatabaseTarget } from '../targets/registered-disposable-target'
+import { createDbClient, disconnectDbClient } from './db-client'
+import { acquirePublicSchemaMaintenanceTableLocks } from './maintenance-table-lock'
 import { seedAdminDomain } from './modules/admin/domain'
 import { seedAppCoreDomain } from './modules/app/domain'
 import {
@@ -28,38 +29,77 @@ import {
   seedSystemReferenceData,
 } from './modules/system/domain'
 
-async function runSeeds() {
-  assertSafeDemoSeedEnvironment(process.env)
+const DATABASE_INITIALIZATION_JOB_LOCK = 'reference-data-bootstrap'
+
+/**
+ * 在通过环境与目标身份校验后写入本地 demo 数据。
+ *
+ * 入口必须传入登记 target；函数会重新解析 registry，并在连接 session 中核验
+ * current_database()，不接受任意 DATABASE_URL 或无 target 的 generic 调用。
+ */
+export async function runDemoSeed(options: DemoSeedRunOptions) {
+  const target = readRegisteredDisposableDatabaseTarget(options.target.id)
+  if (
+    target.databaseName !== options.target.databaseName ||
+    target.url !== options.target.url
+  ) {
+    throw new Error('Demo seed target no longer matches the registered target')
+  }
+  const environment = assertSafeDemoSeedEnvironment({
+    ...options.environment,
+    DATABASE_URL: target.url,
+  })
+  if (environment.databaseName !== target.databaseName) {
+    throw new Error(
+      'Demo seed environment does not match the registered target',
+    )
+  }
   console.log('🌱 开始初始化 Drizzle 种子数据...\n')
 
-  const db = createDbClient(getDatabaseUrl())
+  const client = createDbClient(environment.databaseUrl)
+  const { db } = client
 
   try {
-    await resetPublicIdentitySequences(db)
-    await cleanupRetiredDemoDomains(db)
-    await resetPublicIdentitySequences(db)
+    const sessionIdentity = await client.pool.query<{ database_name: string }>(
+      'SELECT current_database() AS database_name',
+    )
+    if (sessionIdentity.rows[0]?.database_name !== target.databaseName) {
+      throw new Error('Demo seed connected to an unexpected database')
+    }
+    await db.transaction(async (tx) => {
+      await acquireIntegrityLocks(tx, [
+        jobIntegrityLock(DATABASE_INITIALIZATION_JOB_LOCK),
+      ])
 
-    console.log('📦 第一阶段：全局参考数据\n')
-    await seedSystemReferenceData(db)
-    await seedAdminDomain(db)
-    await seedAppCoreDomain(db)
-    await seedForumReferenceDomain(db)
-    console.log('\n✅ 全局参考数据初始化完成\n')
+      // advisory job lock 只串行化 seed 任务；应用写入由下面的表锁隔离。
+      await acquirePublicSchemaMaintenanceTableLocks(tx)
 
-    console.log('📦 第二阶段：论坛主体与互动数据\n')
-    await seedForumActivityDomain(db)
-    console.log('\n✅ 论坛主体与互动数据初始化完成\n')
+      await resetPublicIdentitySequences(tx)
+      await cleanupRetiredDemoDomains(tx)
+      await resetPublicIdentitySequences(tx)
 
-    console.log('📦 第三阶段：系统运行数据\n')
-    await seedSystemOperationalData(db)
-    console.log('\n✅ 系统运行数据初始化完成\n')
+      console.log('📦 第一阶段：全局参考数据\n')
+      await seedSystemReferenceData(tx)
+      await seedAdminDomain(tx)
+      await seedAppCoreDomain(tx)
+      await seedForumReferenceDomain(tx)
+      console.log('\n✅ 全局参考数据初始化完成\n')
+
+      console.log('📦 第二阶段：论坛主体与互动数据\n')
+      await seedForumActivityDomain(tx)
+      console.log('\n✅ 论坛主体与互动数据初始化完成\n')
+
+      console.log('📦 第三阶段：系统运行数据\n')
+      await seedSystemOperationalData(tx)
+      console.log('\n✅ 系统运行数据初始化完成\n')
+    })
 
     console.log('🎉 所有 Drizzle 种子数据初始化完成！')
   } catch (error) {
     console.error('❌ 种子数据初始化失败:', error)
     throw error
   } finally {
-    await disconnectDbClient(db)
+    await disconnectDbClient(client)
   }
 }
 
@@ -88,7 +128,7 @@ async function resetPublicIdentitySequences(db: Db) {
             row_record.table_name
           ) INTO max_id;
           EXECUTE format(
-            'SELECT setval(%L, %s, false)',
+            'ALTER SEQUENCE %s RESTART WITH %s',
             seq_name,
             max_id + 1
           );
@@ -196,6 +236,12 @@ async function cleanupLegacyForumResidue(db: Db) {
           AND target_id IN (SELECT id FROM target_forum_comments))
       RETURNING id
     ),
+    deleted_comment_floor_counters AS (
+      DELETE FROM user_comment_floor_counter
+      WHERE target_type = ${CommentTargetTypeEnum.FORUM_TOPIC}
+        AND target_id IN (SELECT id FROM target_forum_topics)
+      RETURNING id
+    ),
     deleted_comments AS (
       DELETE FROM user_comment
       WHERE id IN (SELECT id FROM target_forum_comments)
@@ -235,80 +281,82 @@ async function cleanupLegacyForumResidue(db: Db) {
       (SELECT COUNT(*) FROM deleted_topics) AS topic_count,
       (SELECT COUNT(*) FROM deleted_sections) AS section_count,
       (SELECT COUNT(*) FROM deleted_empty_groups) AS group_count,
-      (SELECT COUNT(*) FROM deleted_hashtag_refs) AS hashtag_ref_count
+      (SELECT COUNT(*) FROM deleted_hashtag_refs) AS hashtag_ref_count,
+      (SELECT COUNT(*) FROM deleted_comment_floor_counters)
+        AS comment_floor_counter_count
   `)
 }
 
 async function cleanupRetiredAppUserDomain(db: Db) {
-  await db.execute(sql`DELETE FROM notification_delivery`)
-  await db.execute(sql`DELETE FROM notification_preference`)
-  await db.execute(sql`DELETE FROM user_notification`)
+  await db.delete(schema.notificationDelivery)
+  await db.delete(schema.notificationPreference)
+  await db.delete(schema.userNotification)
 
-  await db.execute(sql`DELETE FROM user_mention`)
-  await db.execute(sql`DELETE FROM forum_hashtag_reference`)
-  await db.execute(sql`DELETE FROM forum_user_action_log`)
-  await db.execute(sql`DELETE FROM forum_moderator_action_log`)
-  await db.execute(sql`DELETE FROM forum_moderator_section`)
-  await db.execute(sql`DELETE FROM forum_moderator_application`)
-  await db.execute(sql`DELETE FROM forum_moderator`)
+  await db.delete(schema.userMention)
+  await db.delete(schema.forumHashtagReference)
+  await db.delete(schema.forumUserActionLog)
+  await db.delete(schema.forumModeratorActionLog)
+  await db.delete(schema.forumModeratorSection)
+  await db.delete(schema.forumModeratorApplication)
+  await db.delete(schema.forumModerator)
 
-  await db.execute(sql`DELETE FROM user_like`)
-  await db.execute(sql`DELETE FROM user_favorite`)
-  await db.execute(sql`DELETE FROM user_browse_log`)
-  await db.execute(sql`DELETE FROM user_report`)
-  await db.execute(sql`DELETE FROM user_comment`)
-  await db.execute(sql`DELETE FROM forum_topic`)
+  await db.delete(schema.userLike)
+  await db.delete(schema.userFavorite)
+  await db.delete(schema.userBrowseLog)
+  await db.delete(schema.userReport)
+  await db.delete(schema.userCommentFloorCounter)
+  await db.delete(schema.userComment)
+  await db.delete(schema.forumTopic)
 
-  await db.execute(sql`DELETE FROM forum_hashtag`)
-  await db.execute(sql`
-    UPDATE forum_section
-    SET topic_count = 0,
-        comment_count = 0,
-        last_topic_id = NULL,
-        last_post_at = NULL
-  `)
+  await db.delete(schema.forumHashtag)
+  await db.update(schema.forumSection).set({
+    commentCount: 0,
+    lastPostAt: null,
+    lastTopicId: null,
+    topicCount: 0,
+  })
 
-  await db.execute(sql`DELETE FROM app_announcement_read`)
-  await db.execute(sql`DELETE FROM app_agreement_log`)
-  await db.execute(sql`DELETE FROM ad_reward_record`)
-  await db.execute(sql`DELETE FROM app_user_token`)
-  await db.execute(sql`DELETE FROM app_user_count`)
-  await db.execute(sql`DELETE FROM emoji_recent_usage`)
-  await db.execute(sql`DELETE FROM user_asset_balance`)
-  await db.execute(sql`DELETE FROM user_coupon_instance`)
-  await db.execute(sql`DELETE FROM user_badge_assignment`)
-  await db.execute(sql`DELETE FROM user_membership_subscription`)
-  await db.execute(sql`DELETE FROM user_follow`)
-  await db.execute(sql`DELETE FROM user_download_record`)
-  await db.execute(sql`DELETE FROM user_purchase_record`)
-  await db.execute(sql`DELETE FROM user_content_entitlement`)
-  await db.execute(sql`DELETE FROM coupon_redemption_record`)
-  await db.execute(sql`DELETE FROM coupon_admin_grant_item`)
-  await db.execute(sql`DELETE FROM payment_order`)
-  await db.execute(sql`DELETE FROM user_work_reading_state`)
+  await db.delete(schema.appAnnouncementRead)
+  await db.delete(schema.appAgreementLog)
+  await db.delete(schema.userContentEntitlement)
+  await db.delete(schema.adRewardRecord)
+  await db.delete(schema.appUserToken)
+  await db.delete(schema.appUserCount)
+  await db.delete(schema.emojiRecentUsage)
+  await db.delete(schema.userAssetBalance)
+  await db.delete(schema.userCouponInstance)
+  await db.delete(schema.userBadgeAssignment)
+  await db.delete(schema.userMembershipSubscription)
+  await db.delete(schema.userFollow)
+  await db.delete(schema.userDownloadRecord)
+  await db.delete(schema.userPurchaseRecord)
+  await db.delete(schema.couponRedemptionRecord)
+  await db.delete(schema.couponAdminGrantItem)
+  await db.delete(schema.paymentOrder)
+  await db.delete(schema.userWorkReadingState)
 
-  await db.execute(sql`DELETE FROM check_in_streak_grant_reward_item`)
-  await db.execute(sql`DELETE FROM check_in_streak_grant`)
-  await db.execute(sql`DELETE FROM check_in_streak_progress`)
-  await db.execute(sql`DELETE FROM check_in_makeup_fact`)
-  await db.execute(sql`DELETE FROM check_in_makeup_account`)
-  await db.execute(sql`DELETE FROM check_in_record`)
+  await db.delete(schema.checkInStreakGrantRewardItem)
+  await db.delete(schema.checkInStreakGrant)
+  await db.delete(schema.checkInStreakProgress)
+  await db.delete(schema.checkInMakeupFact)
+  await db.delete(schema.checkInMakeupAccount)
+  await db.delete(schema.checkInRecord)
 
-  await db.execute(sql`DELETE FROM growth_audit_log`)
-  await db.execute(sql`DELETE FROM growth_ledger_record`)
-  await db.execute(sql`DELETE FROM growth_reward_settlement`)
-  await db.execute(sql`DELETE FROM growth_rule_usage_counter`)
+  await db.delete(schema.growthAuditLog)
+  await db.delete(schema.growthLedgerRecord)
+  await db.delete(schema.growthRewardSettlement)
+  await db.delete(schema.growthRuleUsageCounter)
 
-  await db.execute(sql`DELETE FROM task_event_log`)
-  await db.execute(sql`DELETE FROM task_instance_step`)
-  await db.execute(sql`DELETE FROM task_step_unique_fact`)
-  await db.execute(sql`DELETE FROM task_instance`)
+  await db.delete(schema.taskEventLog)
+  await db.delete(schema.taskInstanceStep)
+  await db.delete(schema.taskStepUniqueFact)
+  await db.delete(schema.taskInstance)
 
-  await db.execute(sql`DELETE FROM chat_conversation_member`)
-  await db.execute(sql`DELETE FROM chat_message`)
-  await db.execute(sql`DELETE FROM chat_conversation`)
+  await db.delete(schema.chatConversationMember)
+  await db.delete(schema.chatMessage)
+  await db.delete(schema.chatConversation)
 
-  await db.execute(sql`DELETE FROM app_user`)
+  await db.delete(schema.appUser)
 
   console.log('  ✓ 已清理旧用户、互动、提及与论坛主题数据')
 }
@@ -389,6 +437,24 @@ async function cleanupRetiredWorkDomain(db: Db) {
     deleted_work_comments AS (
       DELETE FROM user_comment
       WHERE id IN (SELECT id FROM target_work_comments)
+      RETURNING id
+    ),
+    deleted_work_comment_floor_counters AS (
+      DELETE FROM user_comment_floor_counter
+      WHERE (
+          target_type IN (
+            ${CommentTargetTypeEnum.COMIC},
+            ${CommentTargetTypeEnum.NOVEL}
+          )
+          AND target_id IN (SELECT id FROM target_work_ids)
+        )
+        OR (
+          target_type IN (
+            ${CommentTargetTypeEnum.COMIC_CHAPTER},
+            ${CommentTargetTypeEnum.NOVEL_CHAPTER}
+          )
+          AND target_id IN (SELECT id FROM target_chapter_ids)
+        )
       RETURNING id
     ),
     deleted_purchase_records AS (
@@ -533,25 +599,3 @@ async function cleanupRetiredChatDomain(db: Db) {
       (SELECT COUNT(*) FROM deleted_members) AS member_count
   `)
 }
-
-async function main() {
-  const environment = assertSafeDemoSeedEnvironment(process.env)
-
-  if (shouldCheckDatabaseToolEnvironmentOnly(process.argv)) {
-    console.log('✅ Demo seed 环境检查通过')
-    console.log(`  - target: ${environment.safeLabel}`)
-    console.log(`  - nodeEnv: ${environment.nodeEnv}`)
-    return
-  }
-
-  await runSeeds()
-}
-
-main()
-  .then(() => {
-    process.exit(0)
-  })
-  .catch((error) => {
-    console.error(error)
-    process.exit(1)
-  })

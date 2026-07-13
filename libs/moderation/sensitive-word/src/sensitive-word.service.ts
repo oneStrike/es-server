@@ -17,6 +17,24 @@ import { StatisticsTypeEnum } from './sensitive-word-constant'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'
 import { SensitiveWordStatisticsService } from './sensitive-word-statistics.service'
 
+type SensitiveWordAdminPageRow = Pick<
+  SensitiveWordSelect,
+  | 'id'
+  | 'word'
+  | 'replaceWord'
+  | 'level'
+  | 'type'
+  | 'matchMode'
+  | 'isEnabled'
+  | 'remark'
+  | 'createdBy'
+  | 'updatedBy'
+  | 'hitCount'
+  | 'lastHitAt'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
 // 敏感词服务类，负责敏感词的增删改查、状态管理以及统计分析。
 @Injectable()
 export class SensitiveWordService {
@@ -61,7 +79,7 @@ export class SensitiveWordService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildSensitiveWordAdminPageSelect())
         .from(this.sensitiveWord)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -169,15 +187,42 @@ export class SensitiveWordService {
   }
 
   private toSensitiveWordOutputDto(
-    word: SensitiveWordSelect,
+    word: SensitiveWordAdminPageRow,
   ): SensitiveWordOutputDto {
     return {
-      ...word,
+      id: word.id,
+      word: word.word,
       replaceWord: word.replaceWord ?? null,
+      level: word.level,
+      type: word.type,
+      matchMode: word.matchMode,
+      isEnabled: word.isEnabled,
       remark: word.remark ?? null,
       createdBy: word.createdBy ?? null,
       updatedBy: word.updatedBy ?? null,
+      hitCount: word.hitCount,
       lastHitAt: word.lastHitAt ?? null,
+      createdAt: word.createdAt,
+      updatedAt: word.updatedAt,
     }
+  }
+
+  private buildSensitiveWordAdminPageSelect() {
+    return {
+      id: this.sensitiveWord.id,
+      word: this.sensitiveWord.word,
+      replaceWord: this.sensitiveWord.replaceWord,
+      level: this.sensitiveWord.level,
+      type: this.sensitiveWord.type,
+      matchMode: this.sensitiveWord.matchMode,
+      isEnabled: this.sensitiveWord.isEnabled,
+      remark: this.sensitiveWord.remark,
+      createdBy: this.sensitiveWord.createdBy,
+      updatedBy: this.sensitiveWord.updatedBy,
+      hitCount: this.sensitiveWord.hitCount,
+      lastHitAt: this.sensitiveWord.lastHitAt,
+      createdAt: this.sensitiveWord.createdAt,
+      updatedAt: this.sensitiveWord.updatedAt,
+    } as const
   }
 }

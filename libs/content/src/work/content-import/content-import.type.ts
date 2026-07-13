@@ -1,4 +1,3 @@
-import type { Db } from '@db/core'
 import type { ContentImportItemSelect } from '@db/schema'
 import type { ThirdPartyComicSyncLatestRequestDto } from '@libs/content/work/content/dto/content.dto'
 import type {
@@ -34,9 +33,14 @@ export interface CreateThirdPartySyncContentJobInput {
 }
 
 /** 可执行内容导入条目。 */
-export interface ContentImportExecutableItem extends ContentImportItemSelect {
-  metadata: Record<string, unknown> | null
-}
+export type ContentImportExecutableItem = Pick<
+  ContentImportItemSelect,
+  | 'autoRetryCount'
+  | 'itemId'
+  | 'maxAutoRetries'
+  | 'metadata'
+  | 'providerChapterId'
+>
 
 /** 三方导入章节元数据。 */
 export interface ThirdPartyImportChapterItemMetadata {
@@ -120,6 +124,3 @@ export interface ContentImportRecordUploadedFileResidueInput {
   itemId?: string
   jobId: string
 }
-
-/** 内容导入事务回调。 */
-export type ContentImportTransaction = Db

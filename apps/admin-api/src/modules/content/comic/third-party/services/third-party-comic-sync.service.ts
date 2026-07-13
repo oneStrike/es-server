@@ -95,24 +95,32 @@ export class ThirdPartyComicSyncService {
       sourceScopeKey,
     }
 
-    const job = await this.workflowService.createDraft({
-      workflowType: ContentImportWorkflowType.THIRD_PARTY_SYNC,
-      displayName: work.name,
-      operator: {
-        type: WorkflowOperatorTypeEnum.ADMIN,
-        userId,
+    const job = await this.workflowService.createDraftWithResources(
+      {
+        workflowType: ContentImportWorkflowType.THIRD_PARTY_SYNC,
+        displayName: work.name,
+        operator: {
+          type: WorkflowOperatorTypeEnum.ADMIN,
+          userId,
+        },
+        selectedItemCount: 0,
+        summary: {
+          sourceType: ContentImportWorkflowType.THIRD_PARTY_SYNC,
+        },
+        conflictKeys: [`source-scope:${sourceScopeKey}`],
       },
-      selectedItemCount: 0,
-      summary: {
-        sourceType: ContentImportWorkflowType.THIRD_PARTY_SYNC,
+      async ({ tx, workflowJob }) => {
+        await this.contentImportService.createThirdPartySyncJobWithDb(
+          tx,
+          workflowJob,
+          {
+            jobId: workflowJob.jobId,
+            dto,
+            source: payload,
+          },
+        )
       },
-      conflictKeys: [`source-scope:${sourceScopeKey}`],
-    })
-    await this.contentImportService.createThirdPartySyncJob({
-      jobId: job.jobId,
-      dto,
-      source: payload,
-    })
+    )
     return this.workflowService.confirmDraft({ jobId: job.jobId })
   }
 

@@ -3,6 +3,21 @@ import type { NotificationActorSource } from './notification-public.type'
 import type { UserNotificationDataDto } from './notification.type'
 import { isMessageNotificationCategoryKey } from './notification.constant'
 
+type UserNotificationPublicSource = Pick<
+  UserNotificationSelect,
+  | 'id'
+  | 'categoryKey'
+  | 'actorUserId'
+  | 'title'
+  | 'content'
+  | 'payload'
+  | 'isRead'
+  | 'readAt'
+  | 'expiresAt'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
 function isPlainRecord<T>(
   value: T,
 ): value is Extract<T, Record<string, unknown>> {
@@ -24,7 +39,7 @@ export function mapNotificationActor(actor?: NotificationActorSource | null) {
   }
 }
 
-function mapNotificationData(payload: UserNotificationSelect['payload']) {
+function mapNotificationData(payload: UserNotificationPublicSource['payload']) {
   if (isPlainRecord(payload)) {
     return payload as UserNotificationDataDto
   }
@@ -33,7 +48,7 @@ function mapNotificationData(payload: UserNotificationSelect['payload']) {
 }
 
 export function mapUserNotificationToPublicView(
-  notification: UserNotificationSelect,
+  notification: UserNotificationPublicSource,
   actor?: NotificationActorSource | null,
 ) {
   const rawCategoryKey = notification.categoryKey

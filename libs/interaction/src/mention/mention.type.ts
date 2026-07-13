@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 import type { CommentTargetTypeEnum } from '../comment/comment.constant'
 import type { EmojiSceneEnum } from '../emoji/emoji.constant'
@@ -42,7 +42,7 @@ export interface BuildMentionBodyTokensInput {
  * mention 事实替换输入。
  */
 export interface ReplaceMentionsInTxInput {
-  tx: Db
+  tx: DbExecutor
   sourceType: MentionSourceTypeEnum
   sourceId: number
   content: string
@@ -76,7 +76,7 @@ export interface DispatchTopicMentionsInTxInput {
  * 删除 mention 事实输入。
  */
 export interface DeleteMentionsInTxInput {
-  tx: Db
+  tx: DbExecutor
   sourceType: MentionSourceTypeEnum
   sourceIds: number[]
 }

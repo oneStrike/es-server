@@ -1,10 +1,7 @@
-import type {
-  CheckInConfigSelect,
-  CheckInRecordSelect,
-  CheckInStreakGrantSelect,
-} from '@db/schema'
+import type { CheckInRecordSelect, CheckInStreakGrantSelect } from '@db/schema'
 import type { PageDto } from '@libs/platform/dto'
 import type { SQL } from 'drizzle-orm'
+import type { CheckInConfigRuntimeRow } from './check-in.service.support'
 import type {
   CheckInGrantItemView,
   CheckInGrantItemWithoutSettlement,
@@ -24,6 +21,41 @@ import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
 import { CheckInStreakService } from './check-in-streak.service'
 import { CheckInServiceSupport } from './check-in.service.support'
+
+type CheckInAppRecordSource = Pick<
+  CheckInRecordSelect,
+  | 'id'
+  | 'userId'
+  | 'signDate'
+  | 'recordType'
+  | 'resolvedRewardSourceType'
+  | 'resolvedRewardRuleKey'
+  | 'resolvedRewardItems'
+  | 'resolvedRewardOverviewIconUrl'
+  | 'resolvedMakeupIconUrl'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type CheckInAdminRecordSource = CheckInAppRecordSource &
+  Pick<CheckInRecordSelect, 'rewardSettlementId'>
+
+type CheckInAppGrantSource = Pick<
+  CheckInStreakGrantSelect,
+  | 'id'
+  | 'userId'
+  | 'ruleId'
+  | 'ruleCode'
+  | 'streakDays'
+  | 'repeatable'
+  | 'rewardOverviewIconUrl'
+  | 'triggerSignDate'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type CheckInAdminGrantSource = CheckInAppGrantSource &
+  Pick<CheckInStreakGrantSelect, 'rewardSettlementId'>
 
 /**
  * 签到运行时读模型服务。
@@ -64,6 +96,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     )
     const progress = await this.db.query.checkInStreakProgress.findFirst({
       where: { userId },
+      columns: {
+        currentStreak: true,
+        streakStartedAt: true,
+        lastSignedDate: true,
+      },
     })
     const effectiveCurrentStreak =
       this.checkInStreakService.resolveEffectiveCurrentStreak(
@@ -113,6 +150,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     )
     const progress = await this.db.query.checkInStreakProgress.findFirst({
       where: { userId },
+      columns: {
+        currentStreak: true,
+        streakStartedAt: true,
+        lastSignedDate: true,
+      },
     })
     const effectiveCurrentStreak =
       this.checkInStreakService.resolveEffectiveCurrentStreak(
@@ -169,7 +211,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     )
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildAppRecordSelect())
         .from(this.checkInRecordTable)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -355,7 +397,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildAdminRecordSelect())
         .from(this.checkInRecordTable)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -376,7 +418,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     return {
       ...page,
       list: page.list.map(
-        (record) =>
+        (record: CheckInAdminRecordSource) =>
           ({
             recordId: record.id,
             userId: record.userId,
@@ -426,7 +468,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   // 查询用户最近一条签到记录。
   private async getLatestRecord(userId: number) {
     const [record] = await this.db
-      .select()
+      .select(this.buildAppRecordSelect())
       .from(this.checkInRecordTable)
       .where(eq(this.checkInRecordTable.userId, userId))
       .orderBy(
@@ -438,7 +480,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   // 构建 app 侧签到记录展示视图，不加载补偿结算诊断字段。
-  private async buildAppRecordItemView(record: CheckInRecordSelect) {
+  private async buildAppRecordItemView(record: CheckInAppRecordSource) {
     const grants = await this.listAppGrantsForRecord(
       record.userId,
       this.toDateOnlyValue(record.signDate),
@@ -448,10 +490,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   private toAppRecordItemView(
-    record: CheckInRecordSelect,
-    grants: Array<
-      CheckInGrantItemWithoutSettlement
-    >,
+    record: CheckInAppRecordSource,
+    grants: Array<CheckInGrantItemWithoutSettlement>,
   ) {
     return {
       id: record.id,
@@ -479,11 +519,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   private async listAppGrantsForRecord(
     userId: number,
     signDate: string,
-  ): Promise<
-    Array<CheckInGrantItemWithoutSettlement>
-  > {
-    const grants = await this.db
-      .select()
+  ): Promise<Array<CheckInGrantItemWithoutSettlement>> {
+    const grants: CheckInAppGrantSource[] = await this.db
+      .select(this.buildAppGrantSelect())
       .from(this.checkInStreakGrantTable)
       .where(
         and(
@@ -505,14 +543,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   // 批量查询 app 记录列表所需连续奖励，不读取补偿结算诊断字段。
   private async buildAppGrantMapForRecords(
     records: CheckInRecordGrantLookup[],
-  ): Promise<
-    Map<
-      string,
-      Array<
-        CheckInGrantItemWithoutSettlement
-      >
-    >
-  > {
+  ): Promise<Map<string, Array<CheckInGrantItemWithoutSettlement>>> {
     if (records.length === 0) {
       return new Map()
     }
@@ -523,7 +554,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       ),
     ]
     const grants = await this.db
-      .select()
+      .select(this.buildAppGrantSelect())
       .from(this.checkInStreakGrantTable)
       .where(
         and(
@@ -541,12 +572,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         grants.map((grant) => grant.id),
       )
 
-    const grantMap = new Map<
-      string,
-      Array<
-        CheckInGrantItemWithoutSettlement
-      >
-    >()
+    const grantMap = new Map<string, Array<CheckInGrantItemWithoutSettlement>>()
     for (const grant of grants) {
       const key = `${grant.userId}:${this.toDateOnlyValue(grant.triggerSignDate)}`
       const items = grantMap.get(key) ?? []
@@ -571,8 +597,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         records.map((record) => this.toDateOnlyValue(record.signDate)),
       ),
     ]
-    const grants = await this.db
-      .select()
+    const grants: CheckInAdminGrantSource[] = await this.db
+      .select(this.buildAdminGrantSelect())
       .from(this.checkInStreakGrantTable)
       .where(
         and(
@@ -625,7 +651,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   private toAppGrantItemView(
-    grant: CheckInStreakGrantSelect,
+    grant: CheckInAppGrantSource,
     rewardItems: CheckInRewardItems,
   ) {
     return {
@@ -704,7 +730,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   // 把配置表记录映射成 app 摘要所需的最小配置结构。
-  private toAppConfigSummaryView(config: CheckInConfigSelect) {
+  private toAppConfigSummaryView(config: CheckInConfigRuntimeRow) {
     const rewardDefinition =
       this.checkInRewardPolicyService.parseRewardDefinition(config)
     return {
@@ -714,6 +740,78 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       makeupIconUrl: rewardDefinition.makeupIconUrl ?? null,
       rewardOverviewIconUrl: rewardDefinition.rewardOverviewIconUrl ?? null,
       baseRewardItems: rewardDefinition.baseRewardItems ?? null,
+    }
+  }
+
+  // app 签到记录列表、摘要只读取展示和奖励关联所需字段。
+  private buildAppRecordSelect() {
+    return {
+      id: this.checkInRecordTable.id,
+      userId: this.checkInRecordTable.userId,
+      signDate: this.checkInRecordTable.signDate,
+      recordType: this.checkInRecordTable.recordType,
+      resolvedRewardSourceType:
+        this.checkInRecordTable.resolvedRewardSourceType,
+      resolvedRewardRuleKey: this.checkInRecordTable.resolvedRewardRuleKey,
+      resolvedRewardItems: this.checkInRecordTable.resolvedRewardItems,
+      resolvedRewardOverviewIconUrl:
+        this.checkInRecordTable.resolvedRewardOverviewIconUrl,
+      resolvedMakeupIconUrl: this.checkInRecordTable.resolvedMakeupIconUrl,
+      createdAt: this.checkInRecordTable.createdAt,
+      updatedAt: this.checkInRecordTable.updatedAt,
+    }
+  }
+
+  // admin 对账保留结算关联，其余诊断与幂等字段不进入读模型。
+  private buildAdminRecordSelect() {
+    return {
+      id: this.checkInRecordTable.id,
+      userId: this.checkInRecordTable.userId,
+      signDate: this.checkInRecordTable.signDate,
+      recordType: this.checkInRecordTable.recordType,
+      resolvedRewardSourceType:
+        this.checkInRecordTable.resolvedRewardSourceType,
+      resolvedRewardRuleKey: this.checkInRecordTable.resolvedRewardRuleKey,
+      resolvedRewardItems: this.checkInRecordTable.resolvedRewardItems,
+      resolvedRewardOverviewIconUrl:
+        this.checkInRecordTable.resolvedRewardOverviewIconUrl,
+      resolvedMakeupIconUrl: this.checkInRecordTable.resolvedMakeupIconUrl,
+      rewardSettlementId: this.checkInRecordTable.rewardSettlementId,
+      createdAt: this.checkInRecordTable.createdAt,
+      updatedAt: this.checkInRecordTable.updatedAt,
+    }
+  }
+
+  // app 连续奖励展示不读取结算诊断、幂等键和扩展上下文。
+  private buildAppGrantSelect() {
+    return {
+      id: this.checkInStreakGrantTable.id,
+      userId: this.checkInStreakGrantTable.userId,
+      ruleId: this.checkInStreakGrantTable.ruleId,
+      ruleCode: this.checkInStreakGrantTable.ruleCode,
+      streakDays: this.checkInStreakGrantTable.streakDays,
+      repeatable: this.checkInStreakGrantTable.repeatable,
+      rewardOverviewIconUrl: this.checkInStreakGrantTable.rewardOverviewIconUrl,
+      triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
+      createdAt: this.checkInStreakGrantTable.createdAt,
+      updatedAt: this.checkInStreakGrantTable.updatedAt,
+    }
+  }
+
+  // admin 对账仅额外读取结算关联。
+  private buildAdminGrantSelect() {
+    return {
+      id: this.checkInStreakGrantTable.id,
+      userId: this.checkInStreakGrantTable.userId,
+      ruleId: this.checkInStreakGrantTable.ruleId,
+      ruleCode: this.checkInStreakGrantTable.ruleCode,
+      streakDays: this.checkInStreakGrantTable.streakDays,
+      repeatable: this.checkInStreakGrantTable.repeatable,
+      rewardOverviewIconUrl: this.checkInStreakGrantTable.rewardOverviewIconUrl,
+      triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
+      rewardSettlementId: this.checkInStreakGrantTable.rewardSettlementId,
+      createdAt: this.checkInStreakGrantTable.createdAt,
+      updatedAt: this.checkInStreakGrantTable.updatedAt,
     }
   }
 }

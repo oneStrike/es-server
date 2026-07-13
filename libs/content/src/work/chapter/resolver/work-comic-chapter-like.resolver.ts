@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { ILikeTargetResolver } from '@libs/interaction/like/interfaces/like-target-resolver.type'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
@@ -33,7 +33,7 @@ export class WorkComicChapterLikeResolver
   }
 
   // 解析目标漫画章节的场景元数据，验证章节存在性并返回场景类型和场景ID，用于统一交互记录的场景标识。
-  async resolveMeta(tx: Db, targetId: number) {
+  async resolveMeta(tx: DbExecutor, targetId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
@@ -57,7 +57,7 @@ export class WorkComicChapterLikeResolver
   }
 
   // 应用点赞计数增量，当用户点赞或取消点赞时，更新漫画章节的点赞计数。
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     await this.workCounterService.updateWorkChapterLikeCount(
       tx,
       targetId,

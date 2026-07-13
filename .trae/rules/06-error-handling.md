@@ -18,7 +18,7 @@
 - 平台层共享错误码以 `PlatformErrorCode` 为单一来源；业务层共享错误码以 `BusinessErrorCode` 为单一来源。
 - 数据库错误在 Drizzle 边界统一分类；controller 不重复发明数据库语义。
 - 幂等优先使用数据库原生约束、原子更新和唯一键设计，不以异常驱动正常流程。
-- 读接口附带的非关键写入、统计补记或外部副作用只有进入有 owner、指标与永久测试的 resilience allowlist 后才可降级；安全边界与事实写入不得 fail-open。
+- 读接口附带的非关键写入、统计补记或外部副作用只有进入有 owner、指标与可重复验证的 resilience allowlist 后才可降级；安全边界与事实写入不得 fail-open。
 
 ## 默认动作
 
@@ -57,7 +57,7 @@
 - 数据库错误若被转换为业务异常，必须保留原始 `cause`，不能丢失底层上下文。
 - 新增错误码必须同步更新 `libs/platform/src/constant/error-code.constant.ts` 常量定义与本规范文档的错误码列表。
 - 不允许只改代码不更新规范，也不允许只更新规范不补充代码。
-- 当前 development epoch 删除的旧错误码、旧 HTTP status 或旧 WS ACK 形状不得保留 alias、翻译表或双输出；canonical mapper、OpenAPI 与永久 e2e 必须同轮切换。授权范围见[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
+- 删除的旧错误码、旧 HTTP status 或旧 WS ACK 形状不得保留 alias、翻译表或双输出；canonical mapper、OpenAPI 与可重复验证必须同轮切换，临时代码按 `AGENTS.md` 删除。
 
 ## 日志与诊断
 

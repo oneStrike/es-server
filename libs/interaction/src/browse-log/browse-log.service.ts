@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -19,10 +19,6 @@ export class BrowseLogService {
     private readonly browseLogGrowthService: BrowseLogGrowthService,
     private readonly drizzle: DrizzleService,
   ) {}
-
-  private get db() {
-    return this.drizzle.db
-  }
 
   private get userBrowseLog() {
     return this.drizzle.schema.userBrowseLog
@@ -49,16 +45,16 @@ export class BrowseLogService {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BusinessException(
-      BusinessErrorCode.INVALID_OPERATION_TARGET,
-      '不支持的浏览目标类型',
-    )
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        '不支持的浏览目标类型',
+      )
     }
     return resolver
   }
 
   // 应用浏览数量变更到目标对象
   private async applyTargetCountDelta(
-    tx: Db,
+    tx: DbExecutor,
     targetType: BrowseLogTargetTypeEnum,
     targetId: number,
     delta: number,
@@ -101,8 +97,8 @@ export class BrowseLogService {
     const resolver = this.getResolver(targetType)
 
     // 2. 核心逻辑执行（事务内）
-    await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
         if (!options.skipTargetValidation) {
           await resolver.ensureTargetValid(tx, targetId)
         }
@@ -118,8 +114,8 @@ export class BrowseLogService {
         })
 
         await this.applyTargetCountDelta(tx, targetType, targetId, 1)
-      }),
-    )
+      },
+    })
 
     const runPostProcess = async () => {
       await this.browseLogInteractionService.handleBrowseLogRecorded()

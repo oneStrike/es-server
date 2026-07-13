@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type {
   ILikeTargetResolver,
   LikeTargetMeta,
@@ -51,7 +51,7 @@ export class ForumTopicLikeResolver
   }
 
   // 校验主题公开可见，并返回点赞场景、所有者和标题元数据。
-  async resolveMeta(tx: Db, targetId: number) {
+  async resolveMeta(tx: DbExecutor, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
@@ -99,7 +99,7 @@ export class ForumTopicLikeResolver
   }
 
   // 点赞或取消点赞后同步主题与作者收到点赞计数。
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     if (delta === 0) {
       return
     }
@@ -129,7 +129,7 @@ export class ForumTopicLikeResolver
 
   // 点赞后记录用户动作，并向主题作者发送点赞通知。
   async postLikeHook(
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
     meta: LikeTargetMeta,
@@ -165,7 +165,7 @@ export class ForumTopicLikeResolver
   }
 
   // 取消点赞后写入论坛用户操作日志。
-  async postUnlikeHook(tx: Db, targetId: number, actorUserId: number) {
+  async postUnlikeHook(tx: DbExecutor, targetId: number, actorUserId: number) {
     await this.actionLogService.createActionLogInTx(tx, {
       userId: actorUserId,
       actionType: ForumUserActionTypeEnum.UNLIKE_TOPIC,

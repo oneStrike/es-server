@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
@@ -40,39 +40,40 @@ export class WorkNovelChapterBrowseLogResolver
   }
 
   // 应用浏览计数增量，更新小说章节的浏览数。
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
-    async (tx, targetId, delta) => {
-      await this.workCounterService.updateWorkChapterViewCount(
-        tx,
-        targetId,
-        this.workType,
-        delta,
-        '小说章节不存在',
-      )
-    }
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void> = async (tx, targetId, delta) => {
+    await this.workCounterService.updateWorkChapterViewCount(
+      tx,
+      targetId,
+      this.workType,
+      delta,
+      '小说章节不存在',
+    )
+  }
 
   // 校验小说章节是否有效。
-  ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
-    tx,
-    targetId,
-  ) => {
-    const chapter = await tx
-      .select({ id: this.workChapter.id })
-      .from(this.workChapter)
-      .where(
-        and(
-          eq(this.workChapter.id, targetId),
-          eq(this.workChapter.workType, this.workType),
-          isNull(this.workChapter.deletedAt),
-        ),
-      )
-      .limit(1)
+  ensureTargetValid: (tx: DbExecutor, targetId: number) => Promise<void> =
+    async (tx, targetId) => {
+      const chapter = await tx
+        .select({ id: this.workChapter.id })
+        .from(this.workChapter)
+        .where(
+          and(
+            eq(this.workChapter.id, targetId),
+            eq(this.workChapter.workType, this.workType),
+            isNull(this.workChapter.deletedAt),
+          ),
+        )
+        .limit(1)
 
-    if (!chapter[0]) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '小说章节不存在',
-      )
+      if (!chapter[0]) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '小说章节不存在',
+        )
+      }
     }
-  }
 }

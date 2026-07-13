@@ -1,159 +1,157 @@
-import { existsSync, readdirSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import type { PoolClient } from 'pg'
 import process from 'node:process'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { Pool } from 'pg'
 import { applySchemaComments } from './comments/schema-comments'
+import {
+  acquireMigrationSessionLock,
+  readMigrationLockTimeoutMs,
+  releaseMigrationSessionLock,
+} from './migration-session-lock'
+import {
+  DEFAULT_ACTIVE_MIGRATIONS_DIRECTORY,
+  inspectActiveDrizzleMigrationHistory,
+} from './operations/migration/active-history'
+import { hashCanonicalJson } from './operations/migration/canonical-json'
+import { readRegisteredDisposableDatabaseTarget } from './targets/registered-disposable-target'
 
 const MIGRATIONS_SCHEMA = 'public'
 const MIGRATIONS_TABLE = '__drizzle_migrations__'
 
-type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS'
-type LogValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | Error
-  | Record<string, string | number | boolean | null>
-  | Array<string | number | boolean | null>
-
-interface LocalMigrationMeta {
-  name: string
-  hasMigrationSql: boolean
-  hasSnapshot: boolean
+interface ActiveMigrationCommand {
+  checkEnvironmentOnly: boolean
+  mode: 'active'
+  targetId: string
 }
 
+export type MigrationCommand = ActiveMigrationCommand
+
 interface DbMigrationRecord {
-  id: number
-  hash: string
-  createdAt: string
-  name: string | null
   appliedAt: string | null
+  createdAt: string
+  hash: string
+  id: number
+  name: string | null
 }
 
 interface MigrationTableSnapshot {
-  exists: boolean
   columns: string[]
+  exists: boolean
   records: DbMigrationRecord[]
 }
 
-function hasRunnableLocalMigrations(localMigrations: LocalMigrationMeta[]) {
-  return localMigrations.some((migration) => migration.hasMigrationSql)
+interface ActiveMigrationInput {
+  activeHistory: ReturnType<typeof inspectActiveDrizzleMigrationHistory>
+  migrationsDirectory: string
+  mode: 'active'
 }
 
-function log(
-  level: LogLevel,
-  message: string,
-  details?: Record<string, LogValue>,
-) {
-  console.log(`[${new Date().toISOString()}] [${level}] ${message}`)
+type MigrationInput = ActiveMigrationInput
 
-  if (!details) {
-    return
+interface MigrationRunResultBase {
+  comments: {
+    appliedStatementCount: number
+    sqlSha256: string
   }
-
-  for (const [key, value] of Object.entries(details)) {
-    console.log(`  - ${key}: ${formatLogValue(value)}`)
-  }
+  journalAfterDigest: string
+  journalBeforeDigest: string
+  journalChanged: boolean
+  migrationFolderDigest: string
+  targetId: string
 }
 
-function formatLogValue(value: LogValue) {
-  if (value === undefined) {
-    return 'undefined'
-  }
-
-  if (value === null) {
-    return 'null'
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return '(empty)'
-    }
-
-    const isPrimitiveList = value.every(
-      (item) =>
-        item === null || ['string', 'number', 'boolean'].includes(typeof item),
-    )
-
-    return isPrimitiveList
-      ? value.map((item) => String(item)).join(', ')
-      : JSON.stringify(value)
-  }
-
-  if (typeof value === 'object') {
-    return JSON.stringify(value)
-  }
-
-  return String(value)
+/** 正常 append-only active history 的 migration 结果。 */
+export interface ActiveMigrationRunResult extends MigrationRunResultBase {
+  migrationCount: number
+  migrationDigest: string
+  mode: 'active'
 }
 
-function formatDuration(ms: number) {
-  if (ms < 1000) {
-    return `${ms}ms`
-  }
+export type MigrationRunResult = ActiveMigrationRunResult
 
-  if (ms < 60_000) {
-    return `${(ms / 1000).toFixed(2)}s`
-  }
+function readMigrationCommand(argv = process.argv): MigrationCommand {
+  const args = argv.slice(2)
+  let checkEnvironmentOnly = false
+  let mode: MigrationCommand['mode'] | undefined
+  let targetId: string | undefined
 
-  const minutes = Math.floor(ms / 60_000)
-  const seconds = ((ms % 60_000) / 1000).toFixed(2)
-  return `${minutes}m ${seconds}s`
-}
-
-function getRuntimeLabel() {
-  return process.versions.bun
-    ? `bun ${process.versions.bun}`
-    : `node ${process.version}`
-}
-
-function serializeError(error: unknown): string {
-  if (error instanceof Error) {
-    const parts: string[] = []
-    parts.push(error.stack ?? `${error.name}: ${error.message}`)
-
-    // 处理嵌套错误（如 DrizzleQueryError 的 cause）
-    let cause = (error as Error & { cause?: unknown }).cause
-    let depth = 0
-    while (cause instanceof Error && depth < 5) {
-      parts.push(
-        `\n  Caused by: ${cause.stack ?? `${cause.name}: ${cause.message}`}`,
-      )
-      cause = (cause as Error & { cause?: unknown }).cause
-      depth++
-    }
-
-    return parts.join('')
-  }
-
-  return String(error)
-}
-
-function readLocalMigrations(migrationsFolder: string) {
-  if (!existsSync(migrationsFolder)) {
-    return []
-  }
-
-  return readdirSync(migrationsFolder, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .sort((left, right) => left.name.localeCompare(right.name))
-    .map((entry) => {
-      const directoryPath = join(migrationsFolder, entry.name)
-
-      return {
-        name: entry.name,
-        hasMigrationSql: existsSync(join(directoryPath, 'migration.sql')),
-        hasSnapshot: existsSync(join(directoryPath, 'snapshot.json')),
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]
+    switch (argument) {
+      case '--check-env': {
+        if (checkEnvironmentOnly) {
+          throw new Error('--check-env may be specified only once')
+        }
+        checkEnvironmentOnly = true
+        break
       }
-    })
+      case '--mode': {
+        if (mode) {
+          throw new Error('--mode may be specified only once')
+        }
+        const value = args[index + 1]
+        if (value !== 'active') {
+          throw new Error('--mode must be active')
+        }
+        mode = value
+        index += 1
+        break
+      }
+      case '--target-id': {
+        if (targetId) {
+          throw new Error('--target-id may be specified only once')
+        }
+        const value = args[index + 1]
+        if (!value || value.startsWith('--')) {
+          throw new Error('--target-id requires a registered target id')
+        }
+        targetId = value
+        index += 1
+        break
+      }
+      default:
+        throw new Error(`Unknown migration argument: ${argument}`)
+    }
+  }
+
+  if (!mode || !targetId) {
+    throw new Error('--mode and --target-id are both required')
+  }
+  return { checkEnvironmentOnly, mode, targetId }
 }
 
-async function getMigrationTableSnapshot(pool: Pool) {
-  const columnResult = await pool.query<{ column_name: string }>(
+function readMigrationInput(): MigrationInput {
+  return {
+    activeHistory: inspectActiveDrizzleMigrationHistory(
+      DEFAULT_ACTIVE_MIGRATIONS_DIRECTORY,
+    ),
+    migrationsDirectory: DEFAULT_ACTIVE_MIGRATIONS_DIRECTORY,
+    mode: 'active',
+  }
+}
+
+async function readTargetIdentity(client: PoolClient) {
+  const result = await client.query<{
+    backend_pid: number
+    database_name: string
+  }>(
+    'SELECT current_database() AS database_name, pg_backend_pid() AS backend_pid',
+  )
+  const identity = result.rows[0]
+  if (!identity) {
+    throw new Error('Unable to read migration database identity')
+  }
+  return {
+    backendPid: Number(identity.backend_pid),
+    databaseName: identity.database_name,
+  }
+}
+
+async function getMigrationTableSnapshot(
+  client: PoolClient,
+): Promise<MigrationTableSnapshot> {
+  const columnsResult = await client.query<{ column_name: string }>(
     `
       SELECT column_name
       FROM information_schema.columns
@@ -163,241 +161,297 @@ async function getMigrationTableSnapshot(pool: Pool) {
     `,
     [MIGRATIONS_SCHEMA, MIGRATIONS_TABLE],
   )
-
-  const columns = columnResult.rows.map((row) => row.column_name)
-
+  const columns = columnsResult.rows.map((row) => row.column_name)
   if (columns.length === 0) {
-    return {
-      exists: false,
-      columns: [],
-      records: [],
-    }
+    return { columns: [], exists: false, records: [] }
   }
 
-  const selectedColumns = ['id', 'hash', 'created_at']
-
-  if (columns.includes('name')) {
-    selectedColumns.push('name')
-  }
-
-  if (columns.includes('applied_at')) {
-    selectedColumns.push('applied_at')
-  }
-
-  const qualifiedTable = `"${MIGRATIONS_SCHEMA}"."${MIGRATIONS_TABLE}"`
-  const recordResult = await pool.query<Record<string, unknown>>(
-    `SELECT ${selectedColumns.map((column) => `"${column}"`).join(', ')} FROM ${qualifiedTable} ORDER BY "id" ASC`,
+  const requiredColumns = ['id', 'hash', 'created_at', 'name', 'applied_at']
+  const missingColumns = requiredColumns.filter(
+    (column) => !columns.includes(column),
   )
+  if (missingColumns.length > 0) {
+    throw new Error(
+      `Migration journal must use the current Drizzle RC shape: ${missingColumns.join(', ')}`,
+    )
+  }
 
+  const recordsResult = await client.query<{
+    applied_at: Date | string | null
+    created_at: Date | number | string
+    hash: string
+    id: number | string
+    name: string | null
+  }>(
+    `
+      SELECT "id", "hash", "created_at", "name", "applied_at"
+      FROM "public"."__drizzle_migrations__"
+      ORDER BY "id" ASC
+    `,
+  )
   return {
-    exists: true,
     columns,
-    records: recordResult.rows.map((row) => ({
-      id: Number(row.id ?? 0),
-      hash: String(row.hash ?? ''),
-      createdAt: String(row.created_at ?? ''),
-      name: row.name == null ? null : String(row.name),
-      appliedAt: row.applied_at == null ? null : String(row.applied_at),
+    exists: true,
+    records: recordsResult.rows.map((record) => ({
+      appliedAt: record.applied_at === null ? null : String(record.applied_at),
+      createdAt: String(record.created_at),
+      hash: String(record.hash),
+      id: Number(record.id),
+      name: record.name === null ? null : String(record.name),
     })),
   }
 }
 
-function getPendingLocalMigrationNames(
-  localMigrations: LocalMigrationMeta[],
-  snapshot: MigrationTableSnapshot,
-): string[] | null {
+function assertCurrentJournalShape(snapshot: MigrationTableSnapshot): void {
   if (!snapshot.exists) {
-    return localMigrations
-      .filter((migration) => migration.hasMigrationSql)
-      .map((migration) => migration.name)
+    throw new Error('Migration journal was not created')
   }
-
-  if (!snapshot.columns.includes('name')) {
-    return null
-  }
-
-  const appliedNames = new Set(
-    snapshot.records
-      .map((record) => record.name)
-      .filter((name): name is string => Boolean(name)),
+  const requiredColumns = ['id', 'hash', 'created_at', 'name', 'applied_at']
+  const missingColumns = requiredColumns.filter(
+    (column) => !snapshot.columns.includes(column),
   )
-
-  return localMigrations
-    .filter(
-      (migration) =>
-        migration.hasMigrationSql && !appliedNames.has(migration.name),
+  if (missingColumns.length > 0) {
+    throw new Error(
+      `Drizzle migration journal is not in the current RC shape: ${missingColumns.join(', ')}`,
     )
-    .map((migration) => migration.name)
+  }
 }
 
-function getNewMigrationRecords(
-  beforeSnapshot: MigrationTableSnapshot,
-  afterSnapshot: MigrationTableSnapshot,
-): DbMigrationRecord[] {
-  const appliedIds = new Set(beforeSnapshot.records.map((record) => record.id))
-
-  return afterSnapshot.records.filter((record) => !appliedIds.has(record.id))
+function assertActiveMigrationJournal(
+  snapshot: MigrationTableSnapshot,
+  input: ActiveMigrationInput,
+): void {
+  assertActiveMigrationJournalPrefix(snapshot, input)
+  if (snapshot.records.length !== input.activeHistory.migrations.length) {
+    throw new Error(
+      `Active migration journal count ${snapshot.records.length} does not match local history ${input.activeHistory.migrations.length}`,
+    )
+  }
 }
 
-async function runMigration() {
-  const startedAt = Date.now()
-  log('INFO', '开始执行数据库迁移', {
-    runtime: getRuntimeLabel(),
-    pid: process.pid,
-    cwd: process.cwd(),
-  })
-  const migrationsFolder = resolve(__dirname, 'migration')
-  const localMigrations = readLocalMigrations(migrationsFolder)
-  const invalidLocalMigrations = localMigrations.filter(
-    (migration) => !migration.hasMigrationSql,
-  )
-
-  log('INFO', '迁移脚本配置已解析', {
-    migrationsFolder,
-    migrationsTable: MIGRATIONS_TABLE,
-    localMigrationCount: localMigrations.length,
-  })
-
-  if (invalidLocalMigrations.length > 0) {
-    log('WARN', '检测到缺少 migration.sql 的 migration 目录', {
-      invalidMigrationDirectories: invalidLocalMigrations.map(
-        (migration) => migration.name,
-      ),
-    })
+function assertActiveMigrationJournalPrefix(
+  snapshot: MigrationTableSnapshot,
+  input: ActiveMigrationInput,
+): void {
+  assertCurrentJournalShape(snapshot)
+  const expectedMigrations = input.activeHistory.migrations
+  if (snapshot.records.length > expectedMigrations.length) {
+    throw new Error(
+      `Active migration journal count ${snapshot.records.length} exceeds local history ${expectedMigrations.length}`,
+    )
   }
 
-  if (!hasRunnableLocalMigrations(localMigrations)) {
-    log('SUCCESS', '未检测到本地 migration 文件，跳过数据库迁移流程', {
-      totalCost: formatDuration(Date.now() - startedAt),
-    })
+  for (const [index, record] of snapshot.records.entries()) {
+    const expected = expectedMigrations[index]
+    if (!expected || record.name !== expected.name) {
+      throw new Error(
+        `Active migration journal is not an append-only prefix at position ${index + 1}`,
+      )
+    }
+    if (record.hash !== expected.sha256) {
+      throw new Error(
+        `Active migration SQL hash changed after application: ${record.name}`,
+      )
+    }
+  }
+}
+
+function assertMigrationJournalPreflight(
+  snapshot: MigrationTableSnapshot,
+  input: MigrationInput,
+): void {
+  if (!snapshot.exists || snapshot.records.length === 0) {
     return
   }
+  assertActiveMigrationJournalPrefix(snapshot, input)
+}
 
-  if (!process.env.DATABASE_URL) {
-    log('ERROR', 'DATABASE_URL 环境变量未设置')
-    throw new Error('DATABASE_URL 环境变量未设置')
+function migrationJournalDigest(snapshot: MigrationTableSnapshot): string {
+  return hashCanonicalJson({
+    columns: [...snapshot.columns].sort((left, right) =>
+      left.localeCompare(right),
+    ),
+    exists: snapshot.exists,
+    // `applied_at` is populated by the database clock for each independent
+    // execution. It remains a required current-RC journal column, but it is
+    // not part of migration identity and therefore cannot participate in a
+    // cross-cluster logical journal comparison.
+    records: snapshot.records.map(({ createdAt, hash, id, name }) => ({
+      createdAt,
+      hash,
+      id,
+      name,
+    })),
+  })
+}
+
+function buildEnvironmentReadyOutput(
+  input: MigrationInput,
+  target: ReturnType<typeof readRegisteredDisposableDatabaseTarget>,
+): Record<string, unknown> {
+  return {
+    migrationCount: input.activeHistory.migrationCount,
+    migrationDigest: input.activeHistory.migrationDigest,
+    migrationsDirectory: input.activeHistory.migrationsDirectory,
+    mode: input.mode,
+    status: 'environment-ready',
+    target: target.safeLabel,
   }
+}
 
-  const databaseUrl = process.env.DATABASE_URL
+function buildRunResult(
+  input: MigrationInput,
+  targetId: string,
+  comments: Awaited<ReturnType<typeof applySchemaComments>>,
+  beforeJournal: MigrationTableSnapshot,
+  afterJournal: MigrationTableSnapshot,
+): MigrationRunResult {
+  const base = {
+    comments: {
+      appliedStatementCount: comments.appliedStatementCount,
+      sqlSha256: comments.sqlSha256,
+    },
+    journalAfterDigest: migrationJournalDigest(afterJournal),
+    journalBeforeDigest: migrationJournalDigest(beforeJournal),
+    journalChanged:
+      migrationJournalDigest(beforeJournal) !==
+      migrationJournalDigest(afterJournal),
+    migrationFolderDigest: input.activeHistory.migrationDigest,
+    targetId,
+  }
+  return {
+    ...base,
+    migrationCount: input.activeHistory.migrationCount,
+    migrationDigest: input.activeHistory.migrationDigest,
+    mode: 'active',
+  }
+}
+
+export function runMigration(
+  command: ActiveMigrationCommand,
+): Promise<ActiveMigrationRunResult>
+export function runMigration(
+  command: MigrationCommand,
+): Promise<MigrationRunResult>
+export async function runMigration(
+  command: MigrationCommand,
+): Promise<MigrationRunResult> {
+  const migrationInput = readMigrationInput()
+  const target = readRegisteredDisposableDatabaseTarget(command.targetId)
+  const lockTimeoutMs = readMigrationLockTimeoutMs()
+
+  if (command.checkEnvironmentOnly) {
+    process.stdout.write(
+      `${JSON.stringify(buildEnvironmentReadyOutput(migrationInput, target))}\n`,
+    )
+    return {
+      comments: { appliedStatementCount: 0, sqlSha256: '' },
+      journalAfterDigest: '',
+      journalBeforeDigest: '',
+      journalChanged: false,
+      migrationCount: migrationInput.activeHistory.migrationCount,
+      migrationDigest: migrationInput.activeHistory.migrationDigest,
+      migrationFolderDigest: migrationInput.activeHistory.migrationDigest,
+      mode: 'active',
+      targetId: target.id,
+    }
+  }
 
   const pool = new Pool({
-    connectionString: databaseUrl,
+    connectionString: target.url,
+    max: 1,
   })
-
-  const db = drizzle({
-    client: pool,
-  })
-
-  let isFreshDb = false
-  let beforeSnapshot: MigrationTableSnapshot = {
-    exists: false,
-    columns: [],
-    records: [],
-  }
+  let client: PoolClient | undefined
+  let lockAcquired = false
+  let primaryError: unknown
+  let releaseError: unknown
+  let result: MigrationRunResult | undefined
 
   try {
-    const connectStartedAt = Date.now()
-    log('INFO', '检查数据库连接')
-    await pool.query('SELECT 1')
-    log('SUCCESS', '数据库连接可用', {
-      cost: formatDuration(Date.now() - connectStartedAt),
-    })
-
-    beforeSnapshot = await getMigrationTableSnapshot(pool)
-    isFreshDb = !beforeSnapshot.exists
-
-    if (isFreshDb) {
-      log('INFO', '检测到全新的空数据库，迁移流程不会自动执行 Seed')
-    } else {
-      log('INFO', '迁移记录表状态', {
-        appliedCount: beforeSnapshot.records.length,
-      })
+    client = await pool.connect()
+    const identity = await readTargetIdentity(client)
+    if (identity.databaseName !== target.databaseName) {
+      throw new Error(
+        `Connected database ${identity.databaseName} does not match registered target ${target.databaseName}`,
+      )
     }
 
-    const pendingLocalMigrationNames = getPendingLocalMigrationNames(
-      localMigrations,
-      beforeSnapshot,
-    )
-
-    if (pendingLocalMigrationNames === null) {
-      log('INFO', '当前无法精确推断待执行 migration 名称', {
-        reason: '迁移记录表缺少 name 列，继续交给 Drizzle 按内部状态处理',
-      })
-    } else if (pendingLocalMigrationNames.length === 0) {
-      log('INFO', '未检测到待执行的本地 migration')
-    } else {
-      log('INFO', '检测到待执行的本地 migration', {
-        pendingCount: pendingLocalMigrationNames.length,
-      })
-    }
-
-    const migrateStartedAt = Date.now()
-    log('INFO', '开始调用 Drizzle migrator')
-    await migrate(db, {
-      migrationsFolder,
+    const lock = await acquireMigrationSessionLock(client, lockTimeoutMs)
+    lockAcquired = true
+    const beforeJournal = await getMigrationTableSnapshot(client)
+    assertMigrationJournalPreflight(beforeJournal, migrationInput)
+    const db = drizzle({ client })
+    const migrationResult = await migrate(db, {
+      migrationsFolder: migrationInput.migrationsDirectory,
       migrationsSchema: MIGRATIONS_SCHEMA,
       migrationsTable: MIGRATIONS_TABLE,
     })
-
-    const afterSnapshot = await getMigrationTableSnapshot(pool)
-    const newRecords = getNewMigrationRecords(beforeSnapshot, afterSnapshot)
-
-    if (newRecords.length === 0) {
-      log('SUCCESS', '数据库迁移完成，未发现新增迁移记录', {
-        cost: formatDuration(Date.now() - migrateStartedAt),
-        appliedCount: afterSnapshot.records.length,
-      })
-    } else {
-      log('SUCCESS', '数据库迁移完成', {
-        cost: formatDuration(Date.now() - migrateStartedAt),
-        newlyAppliedCount: newRecords.length,
-        appliedCount: afterSnapshot.records.length,
-      })
+    if (migrationResult) {
+      throw new Error(
+        `Drizzle migrator returned initialization failure: ${migrationResult.exitCode}`,
+      )
     }
+
+    const afterJournal = await getMigrationTableSnapshot(client)
+    assertActiveMigrationJournal(afterJournal, migrationInput)
+    const comments = await applySchemaComments({ executor: client })
+    result = buildRunResult(
+      migrationInput,
+      target.id,
+      comments,
+      beforeJournal,
+      afterJournal,
+    )
+    const runDigest = hashCanonicalJson(result)
+    process.stdout.write(
+      `${JSON.stringify({
+        backendPid: identity.backendPid,
+        lockAttempts: lock.attempts,
+        mode: migrationInput.mode,
+        runDigest,
+        status: 'pass',
+        target: target.safeLabel,
+        migrationCount: result.migrationCount,
+        migrationDigest: result.migrationDigest,
+      })}\n`,
+    )
   } catch (error) {
-    log('ERROR', '数据库迁移失败', {
-      cost: formatDuration(Date.now() - startedAt),
-      error: serializeError(error),
-    })
+    primaryError = error
     throw error
   } finally {
-    const closeStartedAt = Date.now()
-    log('INFO', '关闭数据库连接池')
+    if (client && lockAcquired) {
+      try {
+        await releaseMigrationSessionLock(client)
+      } catch (error) {
+        if (primaryError) {
+          console.error('Migration session lock release failed', error)
+        } else {
+          releaseError = error
+        }
+      }
+    }
+    client?.release()
     await pool.end()
-    log('SUCCESS', '数据库连接池已关闭', {
-      cost: formatDuration(Date.now() - closeStartedAt),
-    })
   }
 
-  const commentStartedAt = Date.now()
-  log('INFO', '开始同步数据库注释')
-
-  try {
-    const result = await applySchemaComments({
-      databaseUrl,
-    })
-
-    log('SUCCESS', '数据库注释同步完成', {
-      cost: formatDuration(Date.now() - commentStartedAt),
-      appliedStatementCount: result.appliedStatementCount,
-    })
-  } catch (error) {
-    log('ERROR', '数据库注释同步失败', {
-      cost: formatDuration(Date.now() - commentStartedAt),
-      error: serializeError(error),
-    })
-    throw error
+  if (releaseError) {
+    throw releaseError
   }
+  if (!result) {
+    throw new Error('Migration did not produce a verification result')
+  }
+  return result
+}
 
-  log('SUCCESS', '数据库迁移流程结束', {
-    totalCost: formatDuration(Date.now() - startedAt),
-  })
+async function main(): Promise<void> {
+  await runMigration(readMigrationCommand())
 }
 
 if (require.main === module) {
-  runMigration().catch(() => {
+  main().catch((error) => {
+    console.error(error)
     process.exitCode = 1
   })
 }
 
-export { hasRunnableLocalMigrations, readLocalMigrations, runMigration }
+export { readMigrationCommand }

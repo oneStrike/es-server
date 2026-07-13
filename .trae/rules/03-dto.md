@@ -21,7 +21,7 @@
 - 输出 DTO 的 nullable 字段必须始终存在；即使值为 `null` 也不能缺字段。
 - Service 层赋值时，对可能为 `undefined` 的来源使用 `?? null`；不要让字段在 JSON 序列化时被省略。
 - HTTP 输入必须通过统一 ValidationPipe 明确拒绝未声明字段；`whitelist` 不能只静默删除 unknown field。
-- 当前 development epoch 只接受 canonical 字段、枚举和值域；删除的字段不得通过 alias、transform、deprecated DTO 或宽松索引签名继续进入业务层。授权范围见[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
+- 只接受当前 canonical 字段、枚举和值域；删除的字段不得通过 alias、transform、deprecated DTO 或宽松索引签名继续进入业务层。
 
 ## 分层与职责
 
@@ -68,8 +68,8 @@
 - 当输出字段只是输入字段的别名、左连接 nullable 视图或派生展示字段时，建立语义明确的字段块 DTO 作为当前 API contract owner。
 - 不得在 Query DTO 和 PageItem DTO 中各手写一份装饰器。
 - `validation: false` 与 `contract: false` 不是同一件事：前者保留对外文档但关闭请求校验元数据，后者隐藏对外文档并用于非对外字段。不要混用。
-- 验证输出 DTO contract 时，使用永久 unit/HTTP e2e 与 OpenAPI artifact 断言字段存在性和 nullability；不要用 class-validator 结果证明纯输出字段“有效”。
-- 输入 DTO 必须用永久测试覆盖 unknown field、转换、边界值和错误语义。
+- 验证输出 DTO contract 时，使用可重复的 unit/HTTP 验证与 OpenAPI artifact 断言字段存在性和 nullability；不要用 class-validator 结果证明纯输出字段“有效”。
+- 输入 DTO 必须用可重复验证覆盖 unknown field、转换、边界值和错误语义；临时测试代码按 `AGENTS.md` 删除。
 
 ## 禁止项
 

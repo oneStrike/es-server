@@ -1,4 +1,4 @@
-import type { CheckInRecordSelect } from '@db/schema'
+import type { CheckInRecordSelect, CheckInStreakGrantSelect } from '@db/schema'
 import type {
   CheckInAdminCalendarDayAggregate,
   CheckInCalendarGrantCountSource,
@@ -23,10 +23,54 @@ import { and, asc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { CheckInMakeupService } from './check-in-makeup.service'
 import { CheckInRewardPolicyService } from './check-in-reward-policy.service'
 import { CheckInSettlementService } from './check-in-settlement.service'
-import {
-  CheckInRecordTypeEnum,
-} from './check-in.constant'
+import { CheckInRecordTypeEnum } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
+
+interface CheckInUserCalendarRecordSource {
+  signDate: CheckInRecordSelect['signDate']
+  recordType: CheckInRecordSelect['recordType']
+  resolvedRewardItems: CheckInRecordSelect['resolvedRewardItems']
+  resolvedRewardOverviewIconUrl: CheckInRecordSelect['resolvedRewardOverviewIconUrl']
+  resolvedMakeupIconUrl: CheckInRecordSelect['resolvedMakeupIconUrl']
+  rewardSettlementId?: CheckInRecordSelect['rewardSettlementId']
+}
+
+interface CheckInSignedUserSummary {
+  id: number
+  nickname?: string | null
+  avatarUrl?: string | null
+}
+
+type CheckInAdminSignedUserRecordSource = Pick<
+  CheckInRecordSelect,
+  | 'id'
+  | 'userId'
+  | 'signDate'
+  | 'recordType'
+  | 'rewardSettlementId'
+  | 'resolvedRewardSourceType'
+  | 'resolvedRewardRuleKey'
+  | 'resolvedRewardItems'
+  | 'resolvedRewardOverviewIconUrl'
+  | 'resolvedMakeupIconUrl'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type CheckInAdminPageGrantSource = Pick<
+  CheckInStreakGrantSelect,
+  | 'id'
+  | 'userId'
+  | 'ruleId'
+  | 'ruleCode'
+  | 'streakDays'
+  | 'repeatable'
+  | 'rewardOverviewIconUrl'
+  | 'triggerSignDate'
+  | 'rewardSettlementId'
+  | 'createdAt'
+  | 'updatedAt'
+>
 
 /**
  * 签到日历专用读模型服务。
@@ -175,7 +219,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildAdminSignedUserRecordSelect())
         .from(this.checkInRecordTable)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -214,11 +258,17 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     const today = this.formatDateOnly(new Date())
     const { rewardDefinition, window } =
       await this.resolveCalendarContext(targetDate)
-    const records = await this.listUserCalendarRecordRows(
-      userId,
-      window.periodStartDate,
-      window.periodEndDate,
-    )
+    const records = options.includeSettlement
+      ? await this.listSpecifiedUserCalendarRecordRows(
+          userId,
+          window.periodStartDate,
+          window.periodEndDate,
+        )
+      : await this.listCurrentUserCalendarRecordRows(
+          userId,
+          window.periodStartDate,
+          window.periodEndDate,
+        )
     const settlementMap = options.includeSettlement
       ? await this.checkInSettlementService.buildSettlementMapById(
           records
@@ -298,9 +348,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     const config = await this.getRequiredConfig()
     const rewardDefinition =
       this.checkInRewardPolicyService.parseRewardDefinition(config)
-    const periodType = Number(
-      config.makeupPeriodType,
-    )
+    const periodType = Number(config.makeupPeriodType)
     const window = this.checkInMakeupService.buildMakeupWindow(
       targetDateValue,
       periodType,
@@ -314,14 +362,36 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     }
   }
 
-  // 查询单用户在目标周期内的签到事实。
-  private async listUserCalendarRecordRows(
+  // app 日历不读取奖励结算关联或事实诊断字段。
+  private async listCurrentUserCalendarRecordRows(
     userId: number,
     startDate: string,
     endDate: string,
-  ) {
+  ): Promise<CheckInUserCalendarRecordSource[]> {
     return this.db
-      .select()
+      .select(this.buildAppUserCalendarRecordSelect())
+      .from(this.checkInRecordTable)
+      .where(
+        and(
+          eq(this.checkInRecordTable.userId, userId),
+          gte(this.checkInRecordTable.signDate, startDate),
+          lte(this.checkInRecordTable.signDate, endDate),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInRecordTable.signDate),
+        asc(this.checkInRecordTable.id),
+      )
+  }
+
+  // 指定用户的后台日历仅额外读取奖励结算关联。
+  private async listSpecifiedUserCalendarRecordRows(
+    userId: number,
+    startDate: string,
+    endDate: string,
+  ): Promise<CheckInUserCalendarRecordSource[]> {
+    return this.db
+      .select(this.buildAdminUserCalendarRecordSelect())
       .from(this.checkInRecordTable)
       .where(
         and(
@@ -394,9 +464,18 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     return this.db
       .select({
         signDate: this.checkInRecordTable.signDate,
-        signedCount: sql<number>`count(distinct ${this.checkInRecordTable.userId})::int`,
-        normalSignCount: sql<number>`count(distinct case when ${this.checkInRecordTable.recordType} = ${CheckInRecordTypeEnum.NORMAL} then ${this.checkInRecordTable.userId} end)::int`,
-        makeupSignCount: sql<number>`count(distinct case when ${this.checkInRecordTable.recordType} = ${CheckInRecordTypeEnum.MAKEUP} then ${this.checkInRecordTable.userId} end)::int`,
+        signedCount:
+          sql<number>`count(distinct ${this.checkInRecordTable.userId})::int`.mapWith(
+            Number,
+          ),
+        normalSignCount:
+          sql<number>`count(distinct case when ${this.checkInRecordTable.recordType} = ${CheckInRecordTypeEnum.NORMAL} then ${this.checkInRecordTable.userId} end)::int`.mapWith(
+            Number,
+          ),
+        makeupSignCount:
+          sql<number>`count(distinct case when ${this.checkInRecordTable.recordType} = ${CheckInRecordTypeEnum.MAKEUP} then ${this.checkInRecordTable.userId} end)::int`.mapWith(
+            Number,
+          ),
       })
       .from(this.checkInRecordTable)
       .where(
@@ -420,7 +499,10 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
     return this.db
       .select({
         signDate: this.checkInStreakGrantTable.triggerSignDate,
-        streakRewardTriggerCount: sql<number>`count(${this.checkInStreakGrantTable.id})::int`,
+        streakRewardTriggerCount:
+          sql<number>`count(${this.checkInStreakGrantTable.id})::int`.mapWith(
+            Number,
+          ),
       })
       .from(this.checkInStreakGrantTable)
       .where(
@@ -611,10 +693,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
   private async buildSignedUserMap(userIds: number[]) {
     const distinctUserIds = [...new Set(userIds)]
     if (distinctUserIds.length === 0) {
-      return new Map<
-        number,
-        { id: number, nickname?: string | null, avatarUrl?: string | null }
-      >()
+      return new Map<number, CheckInSignedUserSummary>()
     }
 
     const users = await this.db
@@ -630,13 +709,15 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
   }
 
   // 构建分页记录到连续奖励列表的映射。
-  private async buildGrantMapForPageRecords(records: CheckInRecordSelect[]) {
+  private async buildGrantMapForPageRecords(
+    records: Pick<CheckInRecordSelect, 'userId' | 'signDate'>[],
+  ) {
     if (records.length === 0) {
       return new Map<string, CheckInGrantItemView[]>()
     }
 
-    const grants = await this.db
-      .select()
+    const grants: CheckInAdminPageGrantSource[] = await this.db
+      .select(this.buildAdminPageGrantSelect())
       .from(this.checkInStreakGrantTable)
       .where(
         and(
@@ -696,7 +777,7 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
 
   // 把单条签到事实映射成后台已签用户分页项。
   private toRecordItemView(
-    record: CheckInRecordSelect,
+    record: CheckInAdminSignedUserRecordSource,
     settlementMap: Map<number, CheckInRewardSettlementSummaryRecord>,
     grantMap: Map<string, CheckInGrantItemView[]>,
   ) {
@@ -726,6 +807,68 @@ export class CheckInCalendarReadModelService extends CheckInServiceSupport {
           )
         : null,
       grants: grantMap.get(`${record.userId}:${signDate}`) ?? [],
+    }
+  }
+
+  // 当前用户日历只需要渲染当日奖励和补签图标。
+  private buildAppUserCalendarRecordSelect() {
+    return {
+      signDate: this.checkInRecordTable.signDate,
+      recordType: this.checkInRecordTable.recordType,
+      resolvedRewardItems: this.checkInRecordTable.resolvedRewardItems,
+      resolvedRewardOverviewIconUrl:
+        this.checkInRecordTable.resolvedRewardOverviewIconUrl,
+      resolvedMakeupIconUrl: this.checkInRecordTable.resolvedMakeupIconUrl,
+    }
+  }
+
+  // 后台指定用户日历仅额外关联奖励结算摘要。
+  private buildAdminUserCalendarRecordSelect() {
+    return {
+      signDate: this.checkInRecordTable.signDate,
+      recordType: this.checkInRecordTable.recordType,
+      resolvedRewardItems: this.checkInRecordTable.resolvedRewardItems,
+      resolvedRewardOverviewIconUrl:
+        this.checkInRecordTable.resolvedRewardOverviewIconUrl,
+      resolvedMakeupIconUrl: this.checkInRecordTable.resolvedMakeupIconUrl,
+      rewardSettlementId: this.checkInRecordTable.rewardSettlementId,
+    }
+  }
+
+  // 后台已签用户分页保留当前稳定输出和结算关联，排除业务幂等与诊断字段。
+  private buildAdminSignedUserRecordSelect() {
+    return {
+      id: this.checkInRecordTable.id,
+      userId: this.checkInRecordTable.userId,
+      signDate: this.checkInRecordTable.signDate,
+      recordType: this.checkInRecordTable.recordType,
+      rewardSettlementId: this.checkInRecordTable.rewardSettlementId,
+      resolvedRewardSourceType:
+        this.checkInRecordTable.resolvedRewardSourceType,
+      resolvedRewardRuleKey: this.checkInRecordTable.resolvedRewardRuleKey,
+      resolvedRewardItems: this.checkInRecordTable.resolvedRewardItems,
+      resolvedRewardOverviewIconUrl:
+        this.checkInRecordTable.resolvedRewardOverviewIconUrl,
+      resolvedMakeupIconUrl: this.checkInRecordTable.resolvedMakeupIconUrl,
+      createdAt: this.checkInRecordTable.createdAt,
+      updatedAt: this.checkInRecordTable.updatedAt,
+    }
+  }
+
+  // 已签用户分页的连续奖励只读取展示与结算摘要所需字段。
+  private buildAdminPageGrantSelect() {
+    return {
+      id: this.checkInStreakGrantTable.id,
+      userId: this.checkInStreakGrantTable.userId,
+      ruleId: this.checkInStreakGrantTable.ruleId,
+      ruleCode: this.checkInStreakGrantTable.ruleCode,
+      streakDays: this.checkInStreakGrantTable.streakDays,
+      repeatable: this.checkInStreakGrantTable.repeatable,
+      rewardOverviewIconUrl: this.checkInStreakGrantTable.rewardOverviewIconUrl,
+      triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
+      rewardSettlementId: this.checkInStreakGrantTable.rewardSettlementId,
+      createdAt: this.checkInStreakGrantTable.createdAt,
+      updatedAt: this.checkInStreakGrantTable.updatedAt,
     }
   }
 }

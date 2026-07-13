@@ -1,10 +1,11 @@
-import type { AppUserSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { AppUserCountSnapshot } from './app-user-count.type'
 import type {
   AppUserAccessCheckResult,
+  AppUserResponseSource,
   UserBanAccessSource,
   UserBanGuardSource,
+  UserCenterSource,
   UserGrowthSnapshot,
   UserStatusSource,
 } from './user.type'
@@ -65,13 +66,97 @@ export class UserService {
     return this.drizzle.schema.userAssetBalance
   }
 
-  // 确保用户存在。
-  async ensureUserExists(userId: number): Promise<AppUserSelect> {
-    const [user] = await this.db
-      .select()
-      .from(this.appUser)
-      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
-      .limit(1)
+  private get appUserResponseColumns() {
+    return {
+      id: true,
+      account: true,
+      phoneNumber: true,
+      emailAddress: true,
+      levelId: true,
+      nickname: true,
+      avatarUrl: true,
+      profileBackgroundImageUrl: true,
+      signature: true,
+      bio: true,
+      isEnabled: true,
+      genderType: true,
+      birthDate: true,
+      status: true,
+      banReason: true,
+      banUntil: true,
+      lastLoginAt: true,
+      lastLoginIp: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  private get userCenterColumns() {
+    return {
+      id: true,
+      account: true,
+      phoneNumber: true,
+      nickname: true,
+      avatarUrl: true,
+      profileBackgroundImageUrl: true,
+      emailAddress: true,
+      genderType: true,
+      birthDate: true,
+      levelId: true,
+      signature: true,
+      bio: true,
+      status: true,
+      banReason: true,
+      banUntil: true,
+      lastLoginGeoCountry: true,
+      lastLoginGeoProvince: true,
+      lastLoginGeoCity: true,
+      lastLoginGeoIsp: true,
+    } as const
+  }
+
+  private get userStatusColumns() {
+    return {
+      isEnabled: true,
+      status: true,
+      banReason: true,
+      banUntil: true,
+    } as const
+  }
+
+  private get userPhoneColumns() {
+    return {
+      id: true,
+      phoneNumber: true,
+    } as const
+  }
+
+  private get userLevelColumns() {
+    return { levelId: true } as const
+  }
+
+  // 校验用户存在且未软删除；存在性校验不得承担读取用户资料的职责。
+  async assertActiveUserExists(userId: number): Promise<void> {
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      columns: { id: true },
+    })
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '应用用户不存在',
+      )
+    }
+  }
+
+  // 获取公共资料响应所需的完整稳定字段集。
+  async getAppUserResponseSource(
+    userId: number,
+  ): Promise<AppUserResponseSource> {
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      columns: this.appUserResponseColumns,
+    })
     if (!user) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -81,13 +166,69 @@ export class UserService {
     return user
   }
 
-  // 获取用户基础信息。
-  async findById(userId: number): Promise<AppUserSelect | undefined> {
-    const [user] = await this.db
-      .select()
-      .from(this.appUser)
-      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
-      .limit(1)
+  // 获取当前用户中心专用资料，地理快照仅限本人中心使用。
+  async getUserCenterSource(userId: number): Promise<UserCenterSource> {
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      columns: this.userCenterColumns,
+    })
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '应用用户不存在',
+      )
+    }
+    return user
+  }
+
+  // 换绑手机号仅需要当前手机号，不复用公共资料读模型。
+  async getUserPhoneSource(userId: number) {
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      columns: this.userPhoneColumns,
+    })
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '应用用户不存在',
+      )
+    }
+    return user
+  }
+
+  // 状态与会话校验共用同一最小字段集；nullable 版本保留刷新令牌既有错误语义。
+  async getUserStatusSource(userId: number): Promise<UserStatusSource> {
+    const user = await this.findUserStatusSource(userId)
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '应用用户不存在',
+      )
+    }
+    return user
+  }
+
+  async findUserStatusSource(
+    userId: number,
+  ): Promise<UserStatusSource | undefined> {
+    return this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      columns: this.userStatusColumns,
+    })
+  }
+
+  // 成长统计只依赖等级外键；保持存在性异常与原路径一致。
+  async getUserLevelSource(userId: number) {
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      columns: this.userLevelColumns,
+    })
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '应用用户不存在',
+      )
+    }
     return user
   }
 
@@ -332,35 +473,32 @@ export class UserService {
   }
 
   // 将数据库用户实体映射为安全的对外用户对象。
-  // 运行时明确排除 deletedAt 等内部审计字段，避免响应泄露只靠 Swagger 隐藏兜底。
-  // 排除敏感/内部字段：password、登录地理信息（lastLoginGeoCountry/Province/City/Isp）、deletedAt。
+  // 通过最小输入字段集避免查询侧为映射读取 password、登录地理信息或 deletedAt。
   mapBaseUser(
-    user: AppUserSelect,
+    user: AppUserResponseSource,
     growth?: UserGrowthSnapshot,
   ): AppUserResponseDto {
-    const {
-      password,
-      lastLoginGeoCountry,
-      lastLoginGeoProvince,
-      lastLoginGeoCity,
-      lastLoginGeoIsp,
-      deletedAt,
-      ...rest
-    } = user
     return {
-      ...rest,
+      id: user.id,
+      account: user.account,
       phoneNumber: user.phoneNumber ?? null,
       emailAddress: user.emailAddress ?? null,
       levelId: user.levelId ?? null,
+      nickname: user.nickname,
       avatarUrl: user.avatarUrl ?? null,
       profileBackgroundImageUrl: user.profileBackgroundImageUrl ?? null,
       signature: user.signature ?? null,
       bio: user.bio ?? null,
+      isEnabled: user.isEnabled,
+      genderType: user.genderType,
       birthDate: user.birthDate ?? null,
+      status: user.status,
       banReason: user.banReason ?? null,
       banUntil: user.banUntil ?? null,
       lastLoginAt: user.lastLoginAt ?? null,
       lastLoginIp: user.lastLoginIp ?? null,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
       points: growth?.points ?? 0,
       experience: growth?.experience ?? 0,
     }
@@ -403,7 +541,7 @@ export class UserService {
   // 获取用户徽章总数。
   async getBadgeCount(userId: number): Promise<number> {
     const [rows] = await this.db
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
       .from(this.userBadgeAssignment)
       .where(eq(this.userBadgeAssignment.userId, userId))
     return Number(rows?.count ?? 0)

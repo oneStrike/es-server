@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { FollowTargetTypeEnum } from '../follow.type'
 
 export interface IFollowTargetResolver {
@@ -14,7 +14,7 @@ export interface IFollowTargetResolver {
    * @param actorUserId 发起关注的用户 ID
    */
   ensureExists: (
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
   ) => Promise<{ ownerUserId?: number }>
@@ -25,13 +25,17 @@ export interface IFollowTargetResolver {
    * @param targetId 目标 ID
    * @param delta 增量 (+1 或 -1)
    */
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void>
 
   /**
    * 关注成功后的事务内钩子
    */
   postFollowHook?: (
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     actorUserId: number,
     options: { ownerUserId?: number },

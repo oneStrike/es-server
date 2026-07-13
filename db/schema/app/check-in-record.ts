@@ -68,10 +68,6 @@ export const checkInRecord = snakeCase.table(
       table.signDate,
     ),
     unique('check_in_record_user_biz_key_key').on(table.userId, table.bizKey),
-    index('check_in_record_user_id_sign_date_idx').on(
-      table.userId,
-      table.signDate,
-    ),
     index('check_in_record_reward_settlement_id_idx').on(
       table.rewardSettlementId,
     ),

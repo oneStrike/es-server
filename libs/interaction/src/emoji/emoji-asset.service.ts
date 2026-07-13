@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { EmojiAssetSelect, EmojiPackSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { ValidateEmojiAssetPayload } from './emoji.type'
@@ -24,9 +24,44 @@ import {
   normalizeEmojiShortcode,
   normalizeEmojiUnicodeSequence,
 } from './emoji-normalizer.helper'
-import {
-  EmojiAssetKindEnum as AssetKind,
-} from './emoji.constant'
+import { EmojiAssetKindEnum as AssetKind } from './emoji.constant'
+
+type EmojiPackOutputRow = Pick<
+  EmojiPackSelect,
+  | 'id'
+  | 'code'
+  | 'name'
+  | 'description'
+  | 'iconUrl'
+  | 'sortOrder'
+  | 'isEnabled'
+  | 'visibleInPicker'
+  | 'sceneType'
+  | 'createdById'
+  | 'updatedById'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type EmojiAssetOutputRow = Pick<
+  EmojiAssetSelect,
+  | 'id'
+  | 'packId'
+  | 'kind'
+  | 'shortcode'
+  | 'unicodeSequence'
+  | 'imageUrl'
+  | 'staticUrl'
+  | 'isAnimated'
+  | 'category'
+  | 'keywords'
+  | 'sortOrder'
+  | 'isEnabled'
+  | 'createdById'
+  | 'updatedById'
+  | 'createdAt'
+  | 'updatedAt'
+>
 
 /**
  * 表情后台管理服务，负责表情包与表情资源的 CRUD、排序和启用控制。
@@ -47,6 +82,84 @@ export class EmojiAssetService {
 
   private get emojiAsset() {
     return this.drizzle.schema.emojiAsset
+  }
+
+  private get emojiPackOutputSelect() {
+    return {
+      id: this.emojiPack.id,
+      code: this.emojiPack.code,
+      name: this.emojiPack.name,
+      description: this.emojiPack.description,
+      iconUrl: this.emojiPack.iconUrl,
+      sortOrder: this.emojiPack.sortOrder,
+      isEnabled: this.emojiPack.isEnabled,
+      visibleInPicker: this.emojiPack.visibleInPicker,
+      sceneType: this.emojiPack.sceneType,
+      createdById: this.emojiPack.createdById,
+      updatedById: this.emojiPack.updatedById,
+      createdAt: this.emojiPack.createdAt,
+      updatedAt: this.emojiPack.updatedAt,
+    }
+  }
+
+  private get emojiPackOutputColumns() {
+    return {
+      id: true,
+      code: true,
+      name: true,
+      description: true,
+      iconUrl: true,
+      sortOrder: true,
+      isEnabled: true,
+      visibleInPicker: true,
+      sceneType: true,
+      createdById: true,
+      updatedById: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  private get emojiAssetOutputSelect() {
+    return {
+      id: this.emojiAsset.id,
+      packId: this.emojiAsset.packId,
+      kind: this.emojiAsset.kind,
+      shortcode: this.emojiAsset.shortcode,
+      unicodeSequence: this.emojiAsset.unicodeSequence,
+      imageUrl: this.emojiAsset.imageUrl,
+      staticUrl: this.emojiAsset.staticUrl,
+      isAnimated: this.emojiAsset.isAnimated,
+      category: this.emojiAsset.category,
+      keywords: this.emojiAsset.keywords,
+      sortOrder: this.emojiAsset.sortOrder,
+      isEnabled: this.emojiAsset.isEnabled,
+      createdById: this.emojiAsset.createdById,
+      updatedById: this.emojiAsset.updatedById,
+      createdAt: this.emojiAsset.createdAt,
+      updatedAt: this.emojiAsset.updatedAt,
+    }
+  }
+
+  private get emojiAssetOutputColumns() {
+    return {
+      id: true,
+      packId: true,
+      kind: true,
+      shortcode: true,
+      unicodeSequence: true,
+      imageUrl: true,
+      staticUrl: true,
+      isAnimated: true,
+      category: true,
+      keywords: true,
+      sortOrder: true,
+      isEnabled: true,
+      createdById: true,
+      updatedById: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
   }
 
   // 分页查询表情包列表。 - 默认按 sortOrder 升序、id 升序排列。 - 自动排除已软删除的记录。
@@ -77,7 +190,7 @@ export class EmojiAssetService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.emojiPackOutputSelect)
         .from(this.emojiPack)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -99,6 +212,7 @@ export class EmojiAssetService {
         id,
         deletedAt: { isNull: true },
       },
+      columns: this.emojiPackOutputColumns,
     })
 
     if (!pack) {
@@ -112,9 +226,7 @@ export class EmojiAssetService {
 
   // 创建表情包。 - 自动计算 sortOrder（未指定时取当前最大排序值 +1）。 - sceneType 合法性由 DTO 负责校验。
   async createPack(dto: CreateEmojiPackDto, adminUserId: number) {
-    const sortOrder =
-      dto.sortOrder ??
-      (await this.getMaxPackSortOrder()) + 1
+    const sortOrder = dto.sortOrder ?? (await this.getMaxPackSortOrder()) + 1
 
     await this.drizzle.withErrorHandling(
       () =>
@@ -205,48 +317,63 @@ export class EmojiAssetService {
 
   // 交换两个表情包的排序值。 - 用于管理端的拖拽排序。
   async swapPackSortOrder(dragId: number, targetId: number) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const rows = await tx
-        .select({
-          id: this.emojiPack.id,
-          sortOrder: this.emojiPack.sortOrder,
-        })
-        .from(this.emojiPack)
-        .where(
-          and(
-            inArray(this.emojiPack.id, [dragId, targetId]),
-            isNull(this.emojiPack.deletedAt),
-          ),
-        )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const rows = await tx
+          .select({
+            id: this.emojiPack.id,
+            sortOrder: this.emojiPack.sortOrder,
+          })
+          .from(this.emojiPack)
+          .where(
+            and(
+              inArray(this.emojiPack.id, [dragId, targetId]),
+              isNull(this.emojiPack.deletedAt),
+            ),
+          )
 
-      const dragPack = rows.find((row) => row.id === dragId)
-      const targetPack = rows.find((row) => row.id === targetId)
-      if (!dragPack || !targetPack) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '表情包不存在',
-        )
-      }
-      if (dragPack.sortOrder === targetPack.sortOrder) {
+        const dragPack = rows.find((row) => row.id === dragId)
+        const targetPack = rows.find((row) => row.id === targetId)
+        if (!dragPack || !targetPack) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '表情包不存在',
+          )
+        }
+        if (dragPack.sortOrder === targetPack.sortOrder) {
+          return true
+        }
+
+        const temporarySortOrder = await this.getTemporaryPackSortOrder(tx)
+        await tx
+          .update(this.emojiPack)
+          .set({ sortOrder: temporarySortOrder })
+          .where(
+            and(
+              eq(this.emojiPack.id, dragId),
+              isNull(this.emojiPack.deletedAt),
+            ),
+          )
+        await tx
+          .update(this.emojiPack)
+          .set({ sortOrder: dragPack.sortOrder })
+          .where(
+            and(
+              eq(this.emojiPack.id, targetId),
+              isNull(this.emojiPack.deletedAt),
+            ),
+          )
+        await tx
+          .update(this.emojiPack)
+          .set({ sortOrder: targetPack.sortOrder })
+          .where(
+            and(
+              eq(this.emojiPack.id, dragId),
+              isNull(this.emojiPack.deletedAt),
+            ),
+          )
         return true
-      }
-
-      const temporarySortOrder = await this.getTemporaryPackSortOrder(tx)
-      await tx
-        .update(this.emojiPack)
-        .set({ sortOrder: temporarySortOrder })
-        .where(and(eq(this.emojiPack.id, dragId), isNull(this.emojiPack.deletedAt)))
-      await tx
-        .update(this.emojiPack)
-        .set({ sortOrder: dragPack.sortOrder })
-        .where(
-          and(eq(this.emojiPack.id, targetId), isNull(this.emojiPack.deletedAt)),
-        )
-      await tx
-        .update(this.emojiPack)
-        .set({ sortOrder: targetPack.sortOrder })
-        .where(and(eq(this.emojiPack.id, dragId), isNull(this.emojiPack.deletedAt)))
-      return true
+      },
     })
   }
 
@@ -259,7 +386,7 @@ export class EmojiAssetService {
         columns: { id: true },
       }),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.emojiAsset)
         .where(
           and(
@@ -333,7 +460,7 @@ export class EmojiAssetService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.emojiAssetOutputSelect)
         .from(this.emojiAsset)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -355,6 +482,7 @@ export class EmojiAssetService {
         id,
         deletedAt: { isNull: true },
       },
+      columns: this.emojiAssetOutputColumns,
     })
     if (!asset) {
       throw new BusinessException(
@@ -371,8 +499,7 @@ export class EmojiAssetService {
     const normalizedAsset = this.prepareAssetPayload(dto.kind, dto)
 
     const sortOrder =
-      dto.sortOrder ??
-      (await this.getMaxAssetSortOrder(dto.packId)) + 1
+      dto.sortOrder ?? (await this.getMaxAssetSortOrder(dto.packId)) + 1
 
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.emojiAsset).values({
@@ -396,6 +523,13 @@ export class EmojiAssetService {
 
     const current = await this.db.query.emojiAsset.findFirst({
       where: { id: dto.id, deletedAt: { isNull: true } },
+      columns: {
+        imageUrl: true,
+        keywords: true,
+        kind: true,
+        shortcode: true,
+        unicodeSequence: true,
+      },
     })
     if (!current) {
       throw new BusinessException(
@@ -452,62 +586,77 @@ export class EmojiAssetService {
 
   // 交换两个表情资源的排序值。 - 仅允许同一表情包（packId 相同）内的资源交换顺序。
   async swapAssetSortOrder(dragId: number, targetId: number) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const rows = await tx
-        .select({
-          id: this.emojiAsset.id,
-          packId: this.emojiAsset.packId,
-          sortOrder: this.emojiAsset.sortOrder,
-        })
-        .from(this.emojiAsset)
-        .where(
-          and(
-            inArray(this.emojiAsset.id, [dragId, targetId]),
-            isNull(this.emojiAsset.deletedAt),
-          ),
-        )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const rows = await tx
+          .select({
+            id: this.emojiAsset.id,
+            packId: this.emojiAsset.packId,
+            sortOrder: this.emojiAsset.sortOrder,
+          })
+          .from(this.emojiAsset)
+          .where(
+            and(
+              inArray(this.emojiAsset.id, [dragId, targetId]),
+              isNull(this.emojiAsset.deletedAt),
+            ),
+          )
 
-      const dragAsset = rows.find((row) => row.id === dragId)
-      const targetAsset = rows.find((row) => row.id === targetId)
-      if (!dragAsset || !targetAsset) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '表情资源不存在',
+        const dragAsset = rows.find((row) => row.id === dragId)
+        const targetAsset = rows.find((row) => row.id === targetId)
+        if (!dragAsset || !targetAsset) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '表情资源不存在',
+          )
+        }
+        if (dragAsset.packId !== targetAsset.packId) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '表情资源不属于同一表情包',
+          )
+        }
+        if (dragAsset.sortOrder === targetAsset.sortOrder) {
+          return true
+        }
+
+        const samePackWhere = and(
+          eq(this.emojiAsset.packId, dragAsset.packId),
+          isNull(this.emojiAsset.deletedAt),
+        )!
+        const temporarySortOrder = await this.getTemporaryAssetSortOrder(
+          tx,
+          samePackWhere,
         )
-      }
-      if (dragAsset.packId !== targetAsset.packId) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '表情资源不属于同一表情包',
-        )
-      }
-      if (dragAsset.sortOrder === targetAsset.sortOrder) {
+        await tx
+          .update(this.emojiAsset)
+          .set({ sortOrder: temporarySortOrder })
+          .where(
+            and(
+              eq(this.emojiAsset.id, dragId),
+              isNull(this.emojiAsset.deletedAt),
+            ),
+          )
+        await tx
+          .update(this.emojiAsset)
+          .set({ sortOrder: dragAsset.sortOrder })
+          .where(
+            and(
+              eq(this.emojiAsset.id, targetId),
+              isNull(this.emojiAsset.deletedAt),
+            ),
+          )
+        await tx
+          .update(this.emojiAsset)
+          .set({ sortOrder: targetAsset.sortOrder })
+          .where(
+            and(
+              eq(this.emojiAsset.id, dragId),
+              isNull(this.emojiAsset.deletedAt),
+            ),
+          )
         return true
-      }
-
-      const samePackWhere = and(
-        eq(this.emojiAsset.packId, dragAsset.packId),
-        isNull(this.emojiAsset.deletedAt),
-      )!
-      const temporarySortOrder = await this.getTemporaryAssetSortOrder(
-        tx,
-        samePackWhere,
-      )
-      await tx
-        .update(this.emojiAsset)
-        .set({ sortOrder: temporarySortOrder })
-        .where(and(eq(this.emojiAsset.id, dragId), isNull(this.emojiAsset.deletedAt)))
-      await tx
-        .update(this.emojiAsset)
-        .set({ sortOrder: dragAsset.sortOrder })
-        .where(
-          and(eq(this.emojiAsset.id, targetId), isNull(this.emojiAsset.deletedAt)),
-        )
-      await tx
-        .update(this.emojiAsset)
-        .set({ sortOrder: targetAsset.sortOrder })
-        .where(and(eq(this.emojiAsset.id, dragId), isNull(this.emojiAsset.deletedAt)))
-      return true
+      },
     })
   }
 
@@ -532,7 +681,9 @@ export class EmojiAssetService {
     payload: ValidateEmojiAssetPayload,
   ) {
     const shortcode = normalizeEmojiShortcode(payload.shortcode)
-    const unicodeSequence = normalizeEmojiUnicodeSequence(payload.unicodeSequence)
+    const unicodeSequence = normalizeEmojiUnicodeSequence(
+      payload.unicodeSequence,
+    )
     const keywords = normalizeEmojiKeywords(payload.keywords)
 
     if (kind === AssetKind.CUSTOM) {
@@ -583,7 +734,9 @@ export class EmojiAssetService {
   // 获取未删除表情包的最大排序值，供新增表情包追加到末尾。
   private async getMaxPackSortOrder() {
     const [row] = await this.db
-      .select({ value: sql<number>`max(${this.emojiPack.sortOrder})` })
+      .select({
+        value: sql<number>`max(${this.emojiPack.sortOrder})`.mapWith(Number),
+      })
       .from(this.emojiPack)
       .where(isNull(this.emojiPack.deletedAt))
     return Number(row?.value ?? 0)
@@ -592,34 +745,44 @@ export class EmojiAssetService {
   // 获取目标表情包内未删除资源的最大排序值，供新增资源追加到包内末尾。
   private async getMaxAssetSortOrder(packId: number) {
     const [row] = await this.db
-      .select({ value: sql<number>`max(${this.emojiAsset.sortOrder})` })
+      .select({
+        value: sql<number>`max(${this.emojiAsset.sortOrder})`.mapWith(Number),
+      })
       .from(this.emojiAsset)
-      .where(and(eq(this.emojiAsset.packId, packId), isNull(this.emojiAsset.deletedAt)))
+      .where(
+        and(
+          eq(this.emojiAsset.packId, packId),
+          isNull(this.emojiAsset.deletedAt),
+        ),
+      )
     return Number(row?.value ?? 0)
   }
 
   // 取小于当前最小值的临时排序值，避免交换过程触发潜在唯一约束。
-  private async getTemporaryPackSortOrder(tx: Db) {
+  private async getTemporaryPackSortOrder(tx: DbExecutor) {
     const [row] = await tx
-      .select({ value: sql<number>`min(${this.emojiPack.sortOrder})` })
+      .select({
+        value: sql<number>`min(${this.emojiPack.sortOrder})`.mapWith(Number),
+      })
       .from(this.emojiPack)
       .where(isNull(this.emojiPack.deletedAt))
     return Number(row?.value ?? 0) - 1
   }
 
   // 取包内小于当前最小值的临时排序值，保证交换只影响同包资源。
-  private async getTemporaryAssetSortOrder(tx: Db, where: SQL) {
+  private async getTemporaryAssetSortOrder(tx: DbExecutor, where: SQL) {
     const [row] = await tx
-      .select({ value: sql<number>`min(${this.emojiAsset.sortOrder})` })
+      .select({
+        value: sql<number>`min(${this.emojiAsset.sortOrder})`.mapWith(Number),
+      })
       .from(this.emojiAsset)
       .where(where)
     return Number(row?.value ?? 0) - 1
   }
 
-  private toEmojiPackOutputDto(pack: EmojiPackSelect): EmojiPackOutputDto {
-    const { deletedAt: _deletedAt, ...base } = pack
+  private toEmojiPackOutputDto(pack: EmojiPackOutputRow): EmojiPackOutputDto {
     return {
-      ...base,
+      ...pack,
       description: pack.description ?? null,
       iconUrl: pack.iconUrl ?? null,
       createdById: pack.createdById ?? null,
@@ -627,10 +790,11 @@ export class EmojiAssetService {
     }
   }
 
-  private toEmojiAssetOutputDto(asset: EmojiAssetSelect): EmojiAssetOutputDto {
-    const { deletedAt: _deletedAt, ...base } = asset
+  private toEmojiAssetOutputDto(
+    asset: EmojiAssetOutputRow,
+  ): EmojiAssetOutputDto {
     return {
-      ...base,
+      ...asset,
       shortcode: asset.shortcode ?? null,
       unicodeSequence: asset.unicodeSequence ?? null,
       imageUrl: asset.imageUrl ?? null,

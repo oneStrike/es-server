@@ -2,7 +2,11 @@ import { Global, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { DbLifecycleService } from './db-lifecycle.service'
 import { DbNotificationService } from './db-notification.service'
-import { DrizzleDbProvider, DrizzlePoolProvider } from './drizzle.provider'
+import {
+  DrizzleDbProvider,
+  DrizzlePoolProvider,
+  DrizzleRuntimeConfigProvider,
+} from './drizzle.provider'
 import { DrizzleService } from './drizzle.service'
 
 @Global()
@@ -12,6 +16,7 @@ import { DrizzleService } from './drizzle.service'
     DrizzleService,
     DbLifecycleService,
     DbNotificationService,
+    DrizzleRuntimeConfigProvider,
     DrizzlePoolProvider,
     DrizzleDbProvider,
   ],

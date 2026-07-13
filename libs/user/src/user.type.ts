@@ -11,6 +11,62 @@ export interface UserGrowthSnapshot {
 }
 
 /**
+ * 用户公共响应映射所需的最小字段集。
+ *
+ * 密码、登录地理信息和软删除审计字段不属于公共响应，因此调用方无需为了
+ * 复用 mapBaseUser 而读取这些列。
+ */
+export type AppUserResponseSource = Pick<
+  AppUserSelect,
+  | 'id'
+  | 'account'
+  | 'phoneNumber'
+  | 'emailAddress'
+  | 'levelId'
+  | 'nickname'
+  | 'avatarUrl'
+  | 'profileBackgroundImageUrl'
+  | 'signature'
+  | 'bio'
+  | 'isEnabled'
+  | 'genderType'
+  | 'birthDate'
+  | 'status'
+  | 'banReason'
+  | 'banUntil'
+  | 'lastLoginAt'
+  | 'lastLoginIp'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+/**
+ * 用户中心仅在本人视图展示登录地理快照；与公共资料读模型分离，避免扩散该字段集。
+ */
+export type UserCenterSource = Pick<
+  AppUserSelect,
+  | 'id'
+  | 'account'
+  | 'phoneNumber'
+  | 'nickname'
+  | 'avatarUrl'
+  | 'profileBackgroundImageUrl'
+  | 'emailAddress'
+  | 'genderType'
+  | 'birthDate'
+  | 'levelId'
+  | 'signature'
+  | 'bio'
+  | 'status'
+  | 'banReason'
+  | 'banUntil'
+  | 'lastLoginGeoCountry'
+  | 'lastLoginGeoProvince'
+  | 'lastLoginGeoCity'
+  | 'lastLoginGeoIsp'
+>
+
+/**
  * 封禁提示文案依赖的最小字段集。
  * 只保留原因与截止时间，避免服务方法签名内联匿名对象类型。
  */

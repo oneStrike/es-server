@@ -1,5 +1,6 @@
-import type { Db } from '@db/core'
+import type { Db, DbTransaction } from '@db/core'
 import type {
+  GrowthRewardSettlementSelect,
   TaskDefinitionSelect,
   TaskInstanceSelect,
   TaskStepSelect,
@@ -93,6 +94,55 @@ dayjs.extend(timezone)
 
 const TASK_REWARD_SETTLEMENT_CLAIM_LEASE_MS = 10 * 60 * 1000
 
+type TaskRewardSettlementSummaryRecord = Pick<
+  GrowthRewardSettlementSelect,
+  | 'id'
+  | 'settlementStatus'
+  | 'settlementResultType'
+  | 'retryCount'
+  | 'lastRetryAt'
+  | 'settledAt'
+  | 'lastError'
+  | 'ledgerRecordIds'
+>
+
+type TaskDefinitionEventExecutionRecord = Pick<
+  TaskDefinitionSelect,
+  | 'id'
+  | 'code'
+  | 'title'
+  | 'sceneType'
+  | 'claimMode'
+  | 'repeatType'
+  | 'endAt'
+  | 'rewardItems'
+>
+
+type TaskStepEventExecutionRecord = Pick<
+  TaskStepSelect,
+  | 'id'
+  | 'taskId'
+  | 'triggerMode'
+  | 'eventCode'
+  | 'targetValue'
+  | 'templateKey'
+  | 'filterPayload'
+  | 'dedupeScope'
+>
+
+type TaskInstanceEventApplyProjectionParams = Omit<
+  TaskInstanceEventApplyParams,
+  'task' | 'step'
+> & {
+  task: TaskDefinitionEventExecutionRecord
+  step: TaskStepEventExecutionRecord
+}
+
+type TaskReminderTaskRecord = Pick<
+  TaskDefinitionSelect,
+  'code' | 'title' | 'sceneType'
+>
+
 /**
  * 新任务模型中的执行服务。
  *
@@ -109,6 +159,121 @@ export class TaskExecutionService extends TaskServiceSupport {
     private readonly taskNotificationService: TaskNotificationService,
   ) {
     super(drizzle)
+  }
+
+  // App 我的任务页的实例最小读取投影。
+  private getTaskInstanceAppReadSelect() {
+    return {
+      id: this.taskInstanceTable.id,
+      taskId: this.taskInstanceTable.taskId,
+      cycleKey: this.taskInstanceTable.cycleKey,
+      status: this.taskInstanceTable.status,
+      rewardApplicable: this.taskInstanceTable.rewardApplicable,
+      rewardSettlementId: this.taskInstanceTable.rewardSettlementId,
+      claimedAt: this.taskInstanceTable.claimedAt,
+      completedAt: this.taskInstanceTable.completedAt,
+      expiredAt: this.taskInstanceTable.expiredAt,
+    }
+  }
+
+  // 管理端实例/对账页的实例最小读取投影。
+  private getTaskInstanceAdminReadSelect() {
+    return {
+      id: this.taskInstanceTable.id,
+      createdAt: this.taskInstanceTable.createdAt,
+      updatedAt: this.taskInstanceTable.updatedAt,
+      taskId: this.taskInstanceTable.taskId,
+      userId: this.taskInstanceTable.userId,
+      cycleKey: this.taskInstanceTable.cycleKey,
+      status: this.taskInstanceTable.status,
+      rewardApplicable: this.taskInstanceTable.rewardApplicable,
+      rewardSettlementId: this.taskInstanceTable.rewardSettlementId,
+      claimedAt: this.taskInstanceTable.claimedAt,
+      completedAt: this.taskInstanceTable.completedAt,
+      expiredAt: this.taskInstanceTable.expiredAt,
+    }
+  }
+
+  // App 与管理端共用的奖励结算摘要投影。
+  private getTaskRewardSettlementSummarySelect() {
+    return {
+      id: this.growthRewardSettlementTable.id,
+      settlementStatus: this.growthRewardSettlementTable.settlementStatus,
+      settlementResultType:
+        this.growthRewardSettlementTable.settlementResultType,
+      retryCount: this.growthRewardSettlementTable.retryCount,
+      lastRetryAt: this.growthRewardSettlementTable.lastRetryAt,
+      settledAt: this.growthRewardSettlementTable.settledAt,
+      lastError: this.growthRewardSettlementTable.lastError,
+      ledgerRecordIds: this.growthRewardSettlementTable.ledgerRecordIds,
+    }
+  }
+
+  // 事件推进链路所需的任务头最小读取投影。
+  private getTaskDefinitionEventExecutionSelect() {
+    return {
+      id: this.taskDefinitionTable.id,
+      code: this.taskDefinitionTable.code,
+      title: this.taskDefinitionTable.title,
+      sceneType: this.taskDefinitionTable.sceneType,
+      claimMode: this.taskDefinitionTable.claimMode,
+      repeatType: this.taskDefinitionTable.repeatType,
+      endAt: this.taskDefinitionTable.endAt,
+      rewardItems: this.taskDefinitionTable.rewardItems,
+    }
+  }
+
+  // 事件推进链路所需的步骤最小读取投影。
+  private getTaskStepEventExecutionSelect() {
+    return {
+      id: this.taskStepTable.id,
+      taskId: this.taskStepTable.taskId,
+      triggerMode: this.taskStepTable.triggerMode,
+      eventCode: this.taskStepTable.eventCode,
+      targetValue: this.taskStepTable.targetValue,
+      templateKey: this.taskStepTable.templateKey,
+      filterPayload: this.taskStepTable.filterPayload,
+      dedupeScope: this.taskStepTable.dedupeScope,
+    }
+  }
+
+  // 写链中的实例完整读取列；显式全列避免 RQB 隐式宽读。
+  private getTaskInstanceWriteColumns() {
+    return {
+      id: true,
+      taskId: true,
+      userId: true,
+      cycleKey: true,
+      status: true,
+      rewardApplicable: true,
+      rewardSettlementId: true,
+      snapshotPayload: true,
+      context: true,
+      version: true,
+      claimedAt: true,
+      completedAt: true,
+      expiredAt: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+    } as const
+  }
+
+  // 写链中的实例步骤完整读取列；显式全列避免 RQB 隐式宽读。
+  private getTaskInstanceStepWriteColumns() {
+    return {
+      id: true,
+      instanceId: true,
+      stepId: true,
+      status: true,
+      currentValue: true,
+      targetValue: true,
+      completedAt: true,
+      context: true,
+      version: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
   }
 
   // 分页查询可领取任务。
@@ -187,9 +352,9 @@ export class TaskExecutionService extends TaskServiceSupport {
     const [rows, totalRows] = await Promise.all([
       this.db
         .select({
-          instance: this.taskInstanceTable,
-          task: this.taskDefinitionTable,
-          rewardSettlement: this.growthRewardSettlementTable,
+          instance: this.getTaskInstanceAppReadSelect(),
+          task: this.getTaskDefinitionAppReadSelect(),
+          rewardSettlement: this.getTaskRewardSettlementSummarySelect(),
         })
         .from(this.taskInstanceTable)
         .leftJoin(
@@ -208,7 +373,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         .limit(pageParams.page.limit)
         .offset(pageParams.page.offset),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.taskInstanceTable)
         .leftJoin(
           this.taskDefinitionTable,
@@ -270,7 +435,7 @@ export class TaskExecutionService extends TaskServiceSupport {
           status: this.taskInstanceTable.status,
           rewardApplicable: this.taskInstanceTable.rewardApplicable,
           settlementStatus: this.growthRewardSettlementTable.settlementStatus,
-          count: sql<number>`count(*)::int`,
+          count: sql<number>`count(*)::int`.mapWith(Number),
         })
         .from(this.taskInstanceTable)
         .leftJoin(
@@ -316,45 +481,52 @@ export class TaskExecutionService extends TaskServiceSupport {
   // 领取一条手动任务。
   async claimTask(dto: IdDto, userId: number) {
     const now = new Date()
-    const task = await this.getAvailableTaskDefinitionOrThrow(dto.id)
-    const step = await this.getSingleTaskStepOrThrow(task.id)
-    this.ensureManualTaskActionAllowed(task, step)
-    const cycleKey = this.buildTaskCycleKey(task, now)
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const existingInstance = await this.findTaskInstance(
-        tx,
-        task.id,
-        userId,
-        cycleKey,
-      )
-      if (existingInstance) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '任务已领取',
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockTaskDefinitionForMutation(tx, dto.id)
+        const task = await this.getAvailableTaskDefinitionOrThrowInTx(
+          tx,
+          dto.id,
+          now,
         )
-      }
+        const step = await this.getSingleTaskStepOrThrowInTx(tx, task.id)
+        this.ensureManualTaskActionAllowed(task, step)
+        const cycleKey = this.buildTaskCycleKey(task, now)
+        const existingInstance = await this.findTaskInstance(
+          tx,
+          task.id,
+          userId,
+          cycleKey,
+        )
+        if (existingInstance) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '任务已领取',
+          )
+        }
 
-      const resolved = await this.createOrGetTaskInstance(
-        tx,
-        task,
-        userId,
-        cycleKey,
-        now,
-      )
-      await this.createOrGetTaskInstanceStep(tx, resolved.instance.id, step)
-      await this.writeTaskEventLog(tx, {
-        taskId: task.id,
-        instanceId: resolved.instance.id,
-        userId,
-        actionType: TaskEventActionTypeEnum.CLAIM,
-        progressSource: TaskEventProgressSourceEnum.MANUAL,
-        accepted: true,
-        delta: 0,
-        beforeValue: 0,
-        afterValue: 0,
-        occurredAt: now,
-      })
+        const resolved = await this.createOrGetTaskInstance(
+          tx,
+          task,
+          userId,
+          cycleKey,
+          now,
+        )
+        await this.createOrGetTaskInstanceStep(tx, resolved.instance.id, step)
+        await this.writeTaskEventLog(tx, {
+          taskId: task.id,
+          instanceId: resolved.instance.id,
+          userId,
+          actionType: TaskEventActionTypeEnum.CLAIM,
+          progressSource: TaskEventProgressSourceEnum.MANUAL,
+          accepted: true,
+          delta: 0,
+          beforeValue: 0,
+          afterValue: 0,
+          occurredAt: now,
+        })
+      },
     })
 
     return true
@@ -370,69 +542,76 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     const now = new Date()
-    const task = await this.getAvailableTaskDefinitionOrThrow(dto.id)
-    const step = await this.getSingleTaskStepOrThrow(task.id)
-    this.ensureManualTaskActionAllowed(task, step)
-    const cycleKey = this.buildTaskCycleKey(task, now)
-    const result = await this.drizzle.withTransaction(async (tx) => {
-      const instance = await this.findTaskInstance(
-        tx,
-        task.id,
-        userId,
-        cycleKey,
-      )
-      if (!instance) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '任务未领取',
+    const result = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockTaskDefinitionForMutation(tx, dto.id)
+        const task = await this.getAvailableTaskDefinitionOrThrowInTx(
+          tx,
+          dto.id,
+          now,
         )
-      }
-      this.ensureManualTaskInstanceUsable(instance)
+        const step = await this.getSingleTaskStepOrThrowInTx(tx, task.id)
+        this.ensureManualTaskActionAllowed(task, step)
+        const cycleKey = this.buildTaskCycleKey(task, now)
+        const instance = await this.findTaskInstance(
+          tx,
+          task.id,
+          userId,
+          cycleKey,
+        )
+        if (!instance) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '任务未领取',
+          )
+        }
+        this.ensureManualTaskInstanceUsable(instance)
 
-      const { instanceStep } = await this.createOrGetTaskInstanceStep(
-        tx,
-        instance.id,
-        step,
-      )
-      const progress = await this.applyTaskInstanceProgressInTx({
-        runner: tx,
-        instance,
-        instanceStep,
-        delta: dto.delta,
-        occurredAt: now,
-      })
+        const { instanceStep } = await this.createOrGetTaskInstanceStep(
+          tx,
+          instance.id,
+          step,
+        )
+        const progress = await this.applyTaskInstanceProgressInTx({
+          runner: tx,
+          instance,
+          instanceStep,
+          delta: dto.delta,
+          occurredAt: now,
+        })
 
-      await this.writeTaskEventLog(tx, {
-        taskId: task.id,
-        stepId: step.id,
-        instanceId: progress.instanceId,
-        instanceStepId: progress.instanceStepId,
-        userId,
-        actionType:
-          progress.status === TaskInstanceStatusEnum.COMPLETED
-            ? TaskEventActionTypeEnum.COMPLETE
-            : TaskEventActionTypeEnum.PROGRESS,
-        progressSource: TaskEventProgressSourceEnum.MANUAL,
-        accepted: true,
-        delta: progress.appliedDelta,
-        beforeValue: progress.beforeValue,
-        afterValue: progress.afterValue,
-        occurredAt: now,
-      })
+        await this.writeTaskEventLog(tx, {
+          taskId: task.id,
+          stepId: step.id,
+          instanceId: progress.instanceId,
+          instanceStepId: progress.instanceStepId,
+          userId,
+          actionType:
+            progress.status === TaskInstanceStatusEnum.COMPLETED
+              ? TaskEventActionTypeEnum.COMPLETE
+              : TaskEventActionTypeEnum.PROGRESS,
+          progressSource: TaskEventProgressSourceEnum.MANUAL,
+          accepted: true,
+          delta: progress.appliedDelta,
+          beforeValue: progress.beforeValue,
+          afterValue: progress.afterValue,
+          occurredAt: now,
+        })
 
-      return {
-        instanceId: instance.id,
-        completed: progress.completed,
-        rewardItems: this.resolveTaskRewardItems(
-          instance.snapshotPayload,
-          task.rewardItems,
-        ),
-      }
+        return {
+          instanceId: instance.id,
+          completed: progress.completed,
+          rewardItems: this.resolveTaskRewardItems(
+            instance.snapshotPayload,
+            task.rewardItems,
+          ),
+        }
+      },
     })
 
     if (result.completed && this.hasRewardItems(result.rewardItems)) {
       await this.settleTaskInstanceReward({
-        taskId: task.id,
+        taskId: dto.id,
         instanceId: result.instanceId,
         userId,
         rewardItems: result.rewardItems,
@@ -446,85 +625,92 @@ export class TaskExecutionService extends TaskServiceSupport {
   // 显式完成一条手动任务。
   async completeTask(dto: IdDto, userId: number) {
     const now = new Date()
-    const task = await this.getAvailableTaskDefinitionOrThrow(dto.id)
-    const step = await this.getSingleTaskStepOrThrow(task.id)
-    this.ensureManualTaskActionAllowed(task, step)
-    const cycleKey = this.buildTaskCycleKey(task, now)
-    const result = await this.drizzle.withTransaction(async (tx) => {
-      const instance = await this.findTaskInstance(
-        tx,
-        task.id,
-        userId,
-        cycleKey,
-      )
-      if (!instance) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '任务未领取',
+    const result = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockTaskDefinitionForMutation(tx, dto.id)
+        const task = await this.getAvailableTaskDefinitionOrThrowInTx(
+          tx,
+          dto.id,
+          now,
         )
-      }
-      this.ensureManualTaskInstanceUsable(instance)
-
-      const { instanceStep } = await this.createOrGetTaskInstanceStep(
-        tx,
-        instance.id,
-        step,
-      )
-      const canCompleteImmediately = instanceStep.targetValue === 1
-
-      if (
-        !canCompleteImmediately &&
-        instanceStep.currentValue < instanceStep.targetValue
-      ) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '任务进度未达成',
+        const step = await this.getSingleTaskStepOrThrowInTx(tx, task.id)
+        this.ensureManualTaskActionAllowed(task, step)
+        const cycleKey = this.buildTaskCycleKey(task, now)
+        const instance = await this.findTaskInstance(
+          tx,
+          task.id,
+          userId,
+          cycleKey,
         )
-      }
+        if (!instance) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '任务未领取',
+          )
+        }
+        this.ensureManualTaskInstanceUsable(instance)
 
-      const progress = canCompleteImmediately
-        ? await this.applyTaskInstanceProgressInTx({
-            runner: tx,
-            instance,
-            instanceStep,
-            delta: instanceStep.targetValue,
-            occurredAt: now,
-          })
-        : await this.completeReadyTaskInstanceStepInTx({
-            runner: tx,
-            instance,
-            instanceStep,
-            delta: 0,
-            occurredAt: now,
-          })
+        const { instanceStep } = await this.createOrGetTaskInstanceStep(
+          tx,
+          instance.id,
+          step,
+        )
+        const canCompleteImmediately = instanceStep.targetValue === 1
 
-      await this.writeTaskEventLog(tx, {
-        taskId: task.id,
-        stepId: step.id,
-        instanceId: progress.instanceId,
-        instanceStepId: progress.instanceStepId,
-        userId,
-        actionType: TaskEventActionTypeEnum.COMPLETE,
-        progressSource: TaskEventProgressSourceEnum.MANUAL,
-        accepted: true,
-        delta: progress.appliedDelta,
-        beforeValue: progress.beforeValue,
-        afterValue: progress.afterValue,
-        occurredAt: now,
-      })
+        if (
+          !canCompleteImmediately &&
+          instanceStep.currentValue < instanceStep.targetValue
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '任务进度未达成',
+          )
+        }
 
-      return {
-        instanceId: instance.id,
-        rewardItems: this.resolveTaskRewardItems(
-          instance.snapshotPayload,
-          task.rewardItems,
-        ),
-      }
+        const progress = canCompleteImmediately
+          ? await this.applyTaskInstanceProgressInTx({
+              runner: tx,
+              instance,
+              instanceStep,
+              delta: instanceStep.targetValue,
+              occurredAt: now,
+            })
+          : await this.completeReadyTaskInstanceStepInTx({
+              runner: tx,
+              instance,
+              instanceStep,
+              delta: 0,
+              occurredAt: now,
+            })
+
+        await this.writeTaskEventLog(tx, {
+          taskId: task.id,
+          stepId: step.id,
+          instanceId: progress.instanceId,
+          instanceStepId: progress.instanceStepId,
+          userId,
+          actionType: TaskEventActionTypeEnum.COMPLETE,
+          progressSource: TaskEventProgressSourceEnum.MANUAL,
+          accepted: true,
+          delta: progress.appliedDelta,
+          beforeValue: progress.beforeValue,
+          afterValue: progress.afterValue,
+          occurredAt: now,
+        })
+
+        return {
+          instanceId: instance.id,
+          rewardItems: this.resolveTaskRewardItems(
+            instance.snapshotPayload,
+            task.rewardItems,
+          ),
+        }
+      },
     })
 
     if (this.hasRewardItems(result.rewardItems)) {
       await this.settleTaskInstanceReward({
-        taskId: task.id,
+        taskId: dto.id,
         instanceId: result.instanceId,
         userId,
         rewardItems: result.rewardItems,
@@ -570,9 +756,9 @@ export class TaskExecutionService extends TaskServiceSupport {
     })
     const rows = await this.db
       .select({
-        instance: this.taskInstanceTable,
-        task: this.taskDefinitionTable,
-        rewardSettlement: this.growthRewardSettlementTable,
+        instance: this.getTaskInstanceAdminReadSelect(),
+        task: this.getTaskDefinitionAdminReadSelect(),
+        rewardSettlement: this.getTaskRewardSettlementSummarySelect(),
       })
       .from(this.taskInstanceTable)
       .leftJoin(
@@ -592,7 +778,7 @@ export class TaskExecutionService extends TaskServiceSupport {
       .offset(page.offset)
 
     const totalRows = await this.db
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
       .from(this.taskInstanceTable)
       .leftJoin(
         this.taskDefinitionTable,
@@ -684,9 +870,9 @@ export class TaskExecutionService extends TaskServiceSupport {
     })
     const rows = await this.db
       .select({
-        instance: this.taskInstanceTable,
-        task: this.taskDefinitionTable,
-        rewardSettlement: this.growthRewardSettlementTable,
+        instance: this.getTaskInstanceAdminReadSelect(),
+        task: this.getTaskDefinitionAdminReadSelect(),
+        rewardSettlement: this.getTaskRewardSettlementSummarySelect(),
       })
       .from(this.taskInstanceTable)
       .leftJoin(
@@ -706,7 +892,7 @@ export class TaskExecutionService extends TaskServiceSupport {
       .offset(page.offset)
 
     const totalRows = await this.db
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
       .from(this.taskInstanceTable)
       .leftJoin(
         this.growthRewardSettlementTable,
@@ -803,12 +989,25 @@ export class TaskExecutionService extends TaskServiceSupport {
     instanceId: number,
   ): Promise<TaskRewardRetryResultDto> {
     const instance = await this.db.query.taskInstance.findFirst({
+      columns: {
+        id: true,
+        taskId: true,
+        userId: true,
+        status: true,
+        rewardApplicable: true,
+        snapshotPayload: true,
+        completedAt: true,
+      },
       where: {
         id: instanceId,
         deletedAt: { isNull: true },
       },
       with: {
-        rewardSettlement: true,
+        rewardSettlement: {
+          columns: {
+            settlementStatus: true,
+          },
+        },
       },
     })
 
@@ -1053,34 +1252,6 @@ export class TaskExecutionService extends TaskServiceSupport {
     )
 
     for (const item of candidateSteps) {
-      if (
-        !this.taskEventTemplateRegistry.matchesFilterPayload(
-          item.step.filterPayload as Record<string, unknown> | null | undefined,
-          String(input.eventEnvelope.targetType),
-          input.eventEnvelope.targetId,
-          input.eventEnvelope.context,
-        )
-      ) {
-        await this.writeTaskEventLog(this.db, {
-          taskId: item.task.id,
-          stepId: item.step.id,
-          userId: input.eventEnvelope.subjectId,
-          eventCode: input.eventEnvelope.code,
-          eventBizKey: input.bizKey,
-          actionType: TaskEventActionTypeEnum.REJECT,
-          progressSource: TaskEventProgressSourceEnum.EVENT,
-          accepted: false,
-          rejectReason: 'filter_mismatch',
-          targetType: String(input.eventEnvelope.targetType),
-          targetId: input.eventEnvelope.targetId,
-          occurredAt,
-          context: input.eventEnvelope.context,
-        })
-        continue
-      }
-
-      result.matchedTaskIds.push(item.task.id)
-
       const instanceResult = await this.applyEventToTaskStep({
         task: item.task,
         step: item.step,
@@ -1093,6 +1264,10 @@ export class TaskExecutionService extends TaskServiceSupport {
         context: input.eventEnvelope.context,
       })
 
+      if (!instanceResult.matched) {
+        continue
+      }
+      result.matchedTaskIds.push(item.task.id)
       if (!instanceResult.instanceId) {
         continue
       }
@@ -1116,8 +1291,8 @@ export class TaskExecutionService extends TaskServiceSupport {
   private async listCandidateEventSteps(eventCode: number, occurredAt: Date) {
     return this.db
       .select({
-        task: this.taskDefinitionTable,
-        step: this.taskStepTable,
+        task: this.getTaskDefinitionEventExecutionSelect(),
+        step: this.getTaskStepEventExecutionSelect(),
       })
       .from(this.taskStepTable)
       .innerJoin(
@@ -1137,199 +1312,280 @@ export class TaskExecutionService extends TaskServiceSupport {
       )
   }
 
+  // 获得任务定义锁后重新确认候选事件步骤，避免使用锁前的可用任务快照。
+  private async findCurrentEventTaskStepInTx(
+    tx: DbTransaction,
+    params: TaskInstanceEventApplyProjectionParams,
+  ) {
+    const [current] = await tx
+      .select({
+        task: this.getTaskDefinitionEventExecutionSelect(),
+        step: this.getTaskStepEventExecutionSelect(),
+      })
+      .from(this.taskStepTable)
+      .innerJoin(
+        this.taskDefinitionTable,
+        eq(this.taskStepTable.taskId, this.taskDefinitionTable.id),
+      )
+      .where(
+        and(
+          eq(this.taskDefinitionTable.id, params.task.id),
+          eq(this.taskStepTable.id, params.step.id),
+          isNull(this.taskDefinitionTable.deletedAt),
+          eq(this.taskDefinitionTable.status, TaskDefinitionStatusEnum.ACTIVE),
+          eq(this.taskDefinitionTable.claimMode, TaskClaimModeEnum.AUTO),
+          eq(this.taskStepTable.triggerMode, TaskStepTriggerModeEnum.EVENT),
+          eq(this.taskStepTable.eventCode, params.eventCode),
+          sql`${this.taskDefinitionTable.startAt} is null or ${this.taskDefinitionTable.startAt} <= ${params.occurredAt}`,
+          sql`${this.taskDefinitionTable.endAt} is null or ${this.taskDefinitionTable.endAt} >= ${params.occurredAt}`,
+        ),
+      )
+      .limit(1)
+
+    return current ?? null
+  }
+
   // 把单次事件作用到某个步骤。
   private async applyEventToTaskStep(
-    params: TaskInstanceEventApplyParams,
+    params: TaskInstanceEventApplyProjectionParams,
   ): Promise<TaskInstanceEventApplyResult> {
-    const cycleKey = this.buildTaskCycleKey(params.task, params.occurredAt)
-    const result = await this.drizzle.withTransaction(async (tx) => {
-      const existingInstance = await this.findTaskInstance(
-        tx,
-        params.task.id,
-        params.userId,
-        cycleKey,
-      )
-      const existingInstanceStep = existingInstance
-        ? await this.findTaskInstanceStep(
-            tx,
-            existingInstance.id,
-            params.step.id,
-          )
-        : null
-
-      if (existingInstance?.status === TaskInstanceStatusEnum.COMPLETED) {
-        return {
-          instanceId: existingInstance.id,
-          progressed: false,
-          completed: false,
-          duplicate: false,
-        }
-      }
-
-      let dimension: TaskUniqueDimensionResolvedValue | null = null
-      let uniqueFactId: number | null = null
-
-      if (params.step.dedupeScope) {
-        dimension = this.taskEventTemplateRegistry.resolveUniqueDimensionValue(
-          params.step.templateKey ?? '',
-          params.targetId,
-          params.context,
-        )
-
-        if (!dimension) {
-          await this.writeTaskEventLog(tx, {
-            taskId: params.task.id,
-            stepId: params.step.id,
-            instanceId: existingInstance?.id ?? null,
-            instanceStepId: existingInstanceStep?.id ?? null,
-            userId: params.userId,
-            eventCode: params.eventCode,
-            eventBizKey: params.eventBizKey,
-            actionType: TaskEventActionTypeEnum.REJECT,
-            progressSource: TaskEventProgressSourceEnum.EVENT,
-            accepted: false,
-            rejectReason: 'unique_dimension_missing',
-            targetType: params.targetType,
-            targetId: params.targetId,
-            occurredAt: params.occurredAt,
-            context: params.context,
-          })
+    const result = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockTaskDefinitionForMutation(tx, params.task.id)
+        const current = await this.findCurrentEventTaskStepInTx(tx, params)
+        if (!current) {
           return {
-            instanceId: existingInstance?.id ?? null,
+            matched: false,
+            instanceId: null,
             progressed: false,
             completed: false,
             duplicate: false,
           }
         }
 
-        const inserted = await this.tryInsertTaskUniqueFact(tx, {
-          taskId: params.task.id,
-          stepId: params.step.id,
-          userId: params.userId,
-          cycleKey,
-          dedupeScope: params.step.dedupeScope ?? TaskStepDedupeScopeEnum.CYCLE,
-          dimension,
-          eventCode: params.eventCode,
-          eventBizKey: params.eventBizKey,
-          targetType: params.targetType,
-          targetId: params.targetId,
-          occurredAt: params.occurredAt,
-          context: params.context,
-        })
-
-        if (!inserted.created) {
+        const { task, step } = current
+        if (
+          !this.taskEventTemplateRegistry.matchesFilterPayload(
+            step.filterPayload as Record<string, unknown> | null | undefined,
+            params.targetType,
+            params.targetId,
+            params.context,
+          )
+        ) {
           await this.writeTaskEventLog(tx, {
-            taskId: params.task.id,
-            stepId: params.step.id,
-            instanceId: existingInstance?.id ?? null,
-            instanceStepId: existingInstanceStep?.id ?? null,
+            taskId: task.id,
+            stepId: step.id,
             userId: params.userId,
             eventCode: params.eventCode,
             eventBizKey: params.eventBizKey,
             actionType: TaskEventActionTypeEnum.REJECT,
             progressSource: TaskEventProgressSourceEnum.EVENT,
             accepted: false,
-            rejectReason: 'duplicate_unique_dimension',
+            rejectReason: 'filter_mismatch',
             targetType: params.targetType,
             targetId: params.targetId,
-            dimensionKey: dimension.key,
-            dimensionValue: dimension.value,
             occurredAt: params.occurredAt,
             context: params.context,
           })
           return {
-            instanceId: existingInstance?.id ?? null,
+            matched: false,
+            instanceId: null,
             progressed: false,
             completed: false,
-            duplicate: true,
+            duplicate: false,
           }
         }
-        uniqueFactId = inserted.id
-      }
 
-      const resolvedInstance: TaskInstanceResolveResult = existingInstance
-        ? {
-            instance: existingInstance,
-            created: false,
+        const cycleKey = this.buildTaskCycleKey(task, params.occurredAt)
+        const existingInstance = await this.findTaskInstance(
+          tx,
+          task.id,
+          params.userId,
+          cycleKey,
+        )
+        const existingInstanceStep = existingInstance
+          ? await this.findTaskInstanceStep(tx, existingInstance.id, step.id)
+          : null
+
+        if (existingInstance?.status === TaskInstanceStatusEnum.COMPLETED) {
+          return {
+            matched: true,
+            instanceId: existingInstance.id,
+            progressed: false,
+            completed: false,
+            duplicate: false,
           }
-        : await this.createOrGetTaskInstance(
-            tx,
-            params.task,
-            params.userId,
+        }
+
+        let dimension: TaskUniqueDimensionResolvedValue | null = null
+        let uniqueFactId: number | null = null
+
+        if (step.dedupeScope) {
+          dimension =
+            this.taskEventTemplateRegistry.resolveUniqueDimensionValue(
+              step.templateKey ?? '',
+              params.targetId,
+              params.context,
+            )
+
+          if (!dimension) {
+            await this.writeTaskEventLog(tx, {
+              taskId: task.id,
+              stepId: step.id,
+              instanceId: existingInstance?.id ?? null,
+              instanceStepId: existingInstanceStep?.id ?? null,
+              userId: params.userId,
+              eventCode: params.eventCode,
+              eventBizKey: params.eventBizKey,
+              actionType: TaskEventActionTypeEnum.REJECT,
+              progressSource: TaskEventProgressSourceEnum.EVENT,
+              accepted: false,
+              rejectReason: 'unique_dimension_missing',
+              targetType: params.targetType,
+              targetId: params.targetId,
+              occurredAt: params.occurredAt,
+              context: params.context,
+            })
+            return {
+              matched: true,
+              instanceId: existingInstance?.id ?? null,
+              progressed: false,
+              completed: false,
+              duplicate: false,
+            }
+          }
+
+          const inserted = await this.tryInsertTaskUniqueFact(tx, {
+            taskId: task.id,
+            stepId: step.id,
+            userId: params.userId,
             cycleKey,
-            params.occurredAt,
-          )
-      const instance = resolvedInstance.instance
-      const resolvedInstanceStep: TaskInstanceStepResolveResult =
-        existingInstanceStep
+            dedupeScope: step.dedupeScope ?? TaskStepDedupeScopeEnum.CYCLE,
+            dimension,
+            eventCode: params.eventCode,
+            eventBizKey: params.eventBizKey,
+            targetType: params.targetType,
+            targetId: params.targetId,
+            occurredAt: params.occurredAt,
+            context: params.context,
+          })
+
+          if (!inserted.created) {
+            await this.writeTaskEventLog(tx, {
+              taskId: task.id,
+              stepId: step.id,
+              instanceId: existingInstance?.id ?? null,
+              instanceStepId: existingInstanceStep?.id ?? null,
+              userId: params.userId,
+              eventCode: params.eventCode,
+              eventBizKey: params.eventBizKey,
+              actionType: TaskEventActionTypeEnum.REJECT,
+              progressSource: TaskEventProgressSourceEnum.EVENT,
+              accepted: false,
+              rejectReason: 'duplicate_unique_dimension',
+              targetType: params.targetType,
+              targetId: params.targetId,
+              dimensionKey: dimension.key,
+              dimensionValue: dimension.value,
+              occurredAt: params.occurredAt,
+              context: params.context,
+            })
+            return {
+              matched: true,
+              instanceId: existingInstance?.id ?? null,
+              progressed: false,
+              completed: false,
+              duplicate: true,
+            }
+          }
+          uniqueFactId = inserted.id
+        }
+
+        const resolvedInstance: TaskInstanceResolveResult = existingInstance
           ? {
-              instanceStep: existingInstanceStep,
+              instance: existingInstance,
               created: false,
             }
-          : await this.createOrGetTaskInstanceStep(tx, instance.id, params.step)
-      const instanceStep = resolvedInstanceStep.instanceStep
+          : await this.createOrGetTaskInstance(
+              tx,
+              task,
+              params.userId,
+              cycleKey,
+              params.occurredAt,
+            )
+        const instance = resolvedInstance.instance
+        const resolvedInstanceStep: TaskInstanceStepResolveResult =
+          existingInstanceStep
+            ? {
+                instanceStep: existingInstanceStep,
+                created: false,
+              }
+            : await this.createOrGetTaskInstanceStep(tx, instance.id, step)
+        const instanceStep = resolvedInstanceStep.instanceStep
 
-      if (
-        resolvedInstance.created &&
-        params.task.claimMode === TaskClaimModeEnum.AUTO
-      ) {
-        await this.publishAutoAssignedReminderInTx(
-          tx,
-          params.task,
+        if (
+          resolvedInstance.created &&
+          task.claimMode === TaskClaimModeEnum.AUTO
+        ) {
+          await this.publishAutoAssignedReminderInTx(
+            tx,
+            task,
+            instance,
+            params.occurredAt,
+          )
+        }
+
+        const progress = await this.applyTaskInstanceProgressInTx({
+          runner: tx,
           instance,
-          params.occurredAt,
-        )
-      }
+          instanceStep,
+          delta: 1,
+          occurredAt: params.occurredAt,
+        })
 
-      const progress = await this.applyTaskInstanceProgressInTx({
-        runner: tx,
-        instance,
-        instanceStep,
-        delta: 1,
-        occurredAt: params.occurredAt,
-      })
+        if (progress.appliedDelta <= 0 && uniqueFactId) {
+          await tx
+            .delete(this.taskStepUniqueFactTable)
+            .where(eq(this.taskStepUniqueFactTable.id, uniqueFactId))
+        }
 
-      if (progress.appliedDelta <= 0 && uniqueFactId) {
-        await tx
-          .delete(this.taskStepUniqueFactTable)
-          .where(eq(this.taskStepUniqueFactTable.id, uniqueFactId))
-      }
+        await this.writeTaskEventLog(tx, {
+          taskId: task.id,
+          stepId: step.id,
+          instanceId: progress.instanceId,
+          instanceStepId: progress.instanceStepId,
+          userId: params.userId,
+          eventCode: params.eventCode,
+          eventBizKey: params.eventBizKey,
+          actionType:
+            progress.status === TaskInstanceStatusEnum.COMPLETED
+              ? TaskEventActionTypeEnum.COMPLETE
+              : TaskEventActionTypeEnum.PROGRESS,
+          progressSource: TaskEventProgressSourceEnum.EVENT,
+          accepted: true,
+          delta: progress.appliedDelta,
+          beforeValue: progress.beforeValue,
+          afterValue: progress.afterValue,
+          targetType: params.targetType,
+          targetId: params.targetId,
+          dimensionKey: dimension?.key ?? null,
+          dimensionValue: dimension?.value ?? null,
+          occurredAt: params.occurredAt,
+          context: params.context,
+        })
 
-      await this.writeTaskEventLog(tx, {
-        taskId: params.task.id,
-        stepId: params.step.id,
-        instanceId: progress.instanceId,
-        instanceStepId: progress.instanceStepId,
-        userId: params.userId,
-        eventCode: params.eventCode,
-        eventBizKey: params.eventBizKey,
-        actionType:
-          progress.status === TaskInstanceStatusEnum.COMPLETED
-            ? TaskEventActionTypeEnum.COMPLETE
-            : TaskEventActionTypeEnum.PROGRESS,
-        progressSource: TaskEventProgressSourceEnum.EVENT,
-        accepted: true,
-        delta: progress.appliedDelta,
-        beforeValue: progress.beforeValue,
-        afterValue: progress.afterValue,
-        targetType: params.targetType,
-        targetId: params.targetId,
-        dimensionKey: dimension?.key ?? null,
-        dimensionValue: dimension?.value ?? null,
-        occurredAt: params.occurredAt,
-        context: params.context,
-      })
-
-      return {
-        instanceId: instance.id,
-        progressed: progress.status !== TaskInstanceStatusEnum.COMPLETED,
-        completed: progress.completed,
-        duplicate: false,
-        rewardItems: this.resolveTaskRewardItems(
-          instance.snapshotPayload,
-          params.task.rewardItems,
-        ),
-      }
+        return {
+          matched: true,
+          instanceId: instance.id,
+          progressed: progress.status !== TaskInstanceStatusEnum.COMPLETED,
+          completed: progress.completed,
+          duplicate: false,
+          rewardItems: this.resolveTaskRewardItems(
+            instance.snapshotPayload,
+            task.rewardItems,
+          ),
+        }
+      },
     })
 
     if (
@@ -1359,6 +1615,10 @@ export class TaskExecutionService extends TaskServiceSupport {
         '进度增量必须是大于 0 的整数',
       )
     }
+    const completedStatus = sql`${TaskInstanceStatusEnum.COMPLETED}::smallint`
+    const inProgressStatus = sql`${TaskInstanceStatusEnum.IN_PROGRESS}::smallint`
+    const occurredAt = sql`${params.occurredAt}::timestamptz`
+    const pendingStatus = sql`${TaskInstanceStatusEnum.PENDING}::smallint`
 
     const result = await params.runner.execute(sql`
       WITH locked_progress AS (
@@ -1375,8 +1635,8 @@ export class TaskExecutionService extends TaskServiceSupport {
           AND s.instance_id = ${params.instance.id}
           AND i.id = ${params.instance.id}
           AND i.deleted_at IS NULL
-          AND s.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
-          AND i.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+          AND s.status IN (${pendingStatus}, ${inProgressStatus})
+          AND i.status IN (${pendingStatus}, ${inProgressStatus})
         FOR UPDATE OF s, i
       ),
       updated_step AS (
@@ -1385,14 +1645,15 @@ export class TaskExecutionService extends TaskServiceSupport {
           current_value = locked_progress.after_value,
           status = CASE
             WHEN locked_progress.after_value >= locked_progress.target_value
-              THEN ${TaskInstanceStatusEnum.COMPLETED}
-            ELSE ${TaskInstanceStatusEnum.IN_PROGRESS}
+              THEN ${completedStatus}
+            ELSE ${inProgressStatus}
           END,
           completed_at = CASE
             WHEN locked_progress.after_value >= locked_progress.target_value
-              THEN ${params.occurredAt}
+              THEN ${occurredAt}
             ELSE NULL
           END,
+          updated_at = ${occurredAt},
           version = s.version + 1
         FROM locked_progress
         WHERE s.id = locked_progress.instance_step_id
@@ -1409,10 +1670,11 @@ export class TaskExecutionService extends TaskServiceSupport {
         SET
           status = updated_step.status,
           completed_at = CASE
-            WHEN updated_step.status = ${TaskInstanceStatusEnum.COMPLETED}
-              THEN ${params.occurredAt}
+            WHEN updated_step.status = ${completedStatus}
+              THEN ${occurredAt}
             ELSE NULL
           END,
+          updated_at = ${occurredAt},
           version = i.version + 1
         FROM updated_step
         WHERE i.id = updated_step.instance_id
@@ -1438,6 +1700,10 @@ export class TaskExecutionService extends TaskServiceSupport {
   private async completeReadyTaskInstanceStepInTx(
     params: TaskInstanceProgressApplyInput,
   ): Promise<TaskInstanceProgressApplyResult> {
+    const completedStatus = sql`${TaskInstanceStatusEnum.COMPLETED}::smallint`
+    const occurredAt = sql`${params.occurredAt}::timestamptz`
+    const inProgressStatus = sql`${TaskInstanceStatusEnum.IN_PROGRESS}::smallint`
+    const pendingStatus = sql`${TaskInstanceStatusEnum.PENDING}::smallint`
     const result = await params.runner.execute(sql`
       WITH locked_progress AS (
         SELECT
@@ -1452,16 +1718,17 @@ export class TaskExecutionService extends TaskServiceSupport {
           AND s.instance_id = ${params.instance.id}
           AND i.id = ${params.instance.id}
           AND i.deleted_at IS NULL
-          AND s.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
-          AND i.status IN (${TaskInstanceStatusEnum.PENDING}, ${TaskInstanceStatusEnum.IN_PROGRESS})
+          AND s.status IN (${pendingStatus}, ${inProgressStatus})
+          AND i.status IN (${pendingStatus}, ${inProgressStatus})
           AND s.current_value >= s.target_value
         FOR UPDATE OF s, i
       ),
       updated_step AS (
         UPDATE task_instance_step s
         SET
-          status = ${TaskInstanceStatusEnum.COMPLETED},
-          completed_at = ${params.occurredAt},
+          status = ${completedStatus},
+          completed_at = ${occurredAt},
+          updated_at = ${occurredAt},
           version = s.version + 1
         FROM locked_progress
         WHERE s.id = locked_progress.instance_step_id
@@ -1476,8 +1743,9 @@ export class TaskExecutionService extends TaskServiceSupport {
       updated_instance AS (
         UPDATE task_instance i
         SET
-          status = ${TaskInstanceStatusEnum.COMPLETED},
-          completed_at = ${params.occurredAt},
+          status = ${completedStatus},
+          completed_at = ${occurredAt},
+          updated_at = ${occurredAt},
           version = i.version + 1
         FROM updated_step
         WHERE i.id = updated_step.instance_id
@@ -1526,8 +1794,9 @@ export class TaskExecutionService extends TaskServiceSupport {
   // 修复旧数据中已领取但缺失步骤快照的活跃实例。
   async repairMissingActiveTaskInstanceSteps(limit = 500) {
     const cappedLimit = Math.max(1, Math.min(Math.floor(limit), 500))
-    return this.drizzle.withTransaction(async (tx) => {
-      const result = await tx.execute(sql`
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await tx.execute(sql`
         WITH missing_steps AS (
           SELECT
             i.id AS instance_id,
@@ -1567,15 +1836,16 @@ export class TaskExecutionService extends TaskServiceSupport {
         SELECT count(*)::int AS "insertedCount"
         FROM inserted
       `)
-      const row = extractRows<{ insertedCount: number }>(result)[0]
-      return Number(row?.insertedCount ?? 0)
+        const row = extractRows<{ insertedCount: number }>(result)[0]
+        return Number(row?.insertedCount ?? 0)
+      },
     })
   }
 
   // 创建或复用任务实例。
   private async createOrGetTaskInstance(
     runner: Db,
-    task: TaskDefinitionSelect,
+    task: TaskDefinitionEventExecutionRecord,
     userId: number,
     cycleKey: string,
     now: Date,
@@ -1609,6 +1879,7 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     const existing = await runner.query.taskInstance.findFirst({
+      columns: this.getTaskInstanceWriteColumns(),
       where: {
         taskId: task.id,
         userId,
@@ -1638,6 +1909,7 @@ export class TaskExecutionService extends TaskServiceSupport {
     cycleKey: string,
   ) {
     return runner.query.taskInstance.findFirst({
+      columns: this.getTaskInstanceWriteColumns(),
       where: {
         taskId,
         userId,
@@ -1651,7 +1923,7 @@ export class TaskExecutionService extends TaskServiceSupport {
   private async createOrGetTaskInstanceStep(
     runner: Db,
     instanceId: number,
-    step: TaskStepSelect,
+    step: Pick<TaskStepSelect, 'id' | 'targetValue'>,
   ): Promise<TaskInstanceStepResolveResult> {
     const [created] = await runner
       .insert(this.taskInstanceStepTable)
@@ -1673,6 +1945,7 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     const existing = await runner.query.taskInstanceStep.findFirst({
+      columns: this.getTaskInstanceStepWriteColumns(),
       where: {
         instanceId,
         stepId: step.id,
@@ -1699,6 +1972,7 @@ export class TaskExecutionService extends TaskServiceSupport {
     stepId: number,
   ) {
     return runner.query.taskInstanceStep.findFirst({
+      columns: this.getTaskInstanceStepWriteColumns(),
       where: {
         instanceId,
         stepId,
@@ -1776,8 +2050,8 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 校验当前任务是否允许走手动执行链路。
   private ensureManualTaskActionAllowed(
-    task: TaskDefinitionSelect,
-    step: TaskStepSelect,
+    task: Pick<TaskDefinitionSelect, 'claimMode'>,
+    step: Pick<TaskStepSelect, 'triggerMode'>,
   ) {
     if (task.claimMode !== TaskClaimModeEnum.MANUAL) {
       throw new BusinessException(
@@ -1816,7 +2090,10 @@ export class TaskExecutionService extends TaskServiceSupport {
   }
 
   // 计算任务周期键。
-  private buildTaskCycleKey(task: TaskDefinitionSelect, now: Date) {
+  private buildTaskCycleKey(
+    task: Pick<TaskDefinitionSelect, 'repeatType'>,
+    now: Date,
+  ) {
     const dateParts = this.getTaskCycleDateParts(now)
 
     if (task.repeatType === TaskRepeatCycleEnum.DAILY) {
@@ -1867,7 +2144,10 @@ export class TaskExecutionService extends TaskServiceSupport {
   }
 
   // 计算任务实例过期时间。
-  private buildTaskExpiredAt(task: TaskDefinitionSelect, now: Date) {
+  private buildTaskExpiredAt(
+    task: Pick<TaskDefinitionSelect, 'repeatType' | 'endAt'>,
+    now: Date,
+  ) {
     const timeZone = getAppTimeZone()
     const anchor = dayjs(now).tz(timeZone)
     let cycleExpiredAt: Date | null = null
@@ -1894,43 +2174,12 @@ export class TaskExecutionService extends TaskServiceSupport {
     return cycleExpiredAt ?? task.endAt ?? null
   }
 
-  // 读取一条当前仍可用的任务头。
-  private async getAvailableTaskDefinitionOrThrow(taskId: number) {
-    const now = new Date()
-    const task = await this.db.query.taskDefinition.findFirst({
-      where: {
-        id: taskId,
-        deletedAt: { isNull: true },
-        status: TaskDefinitionStatusEnum.ACTIVE,
-      },
-    })
-
-    if (!task) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '任务不存在',
-      )
-    }
-
-    if (task.startAt && task.startAt.getTime() > now.getTime()) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '任务未开始',
-      )
-    }
-    if (task.endAt && task.endAt.getTime() < now.getTime()) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '任务已结束',
-      )
-    }
-
-    return task
-  }
-
   // 读取奖励补偿需要的任务头，不受当前上架状态影响。
   private async getTaskDefinitionForRewardOrThrow(taskId: number) {
     const task = await this.db.query.taskDefinition.findFirst({
+      columns: {
+        rewardItems: true,
+      },
       where: {
         id: taskId,
       },
@@ -1944,24 +2193,6 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     return task
-  }
-
-  // 查询单步骤任务的唯一步骤。
-  private async getSingleTaskStepOrThrow(taskId: number) {
-    const step = await this.db.query.taskStep.findFirst({
-      where: {
-        taskId,
-      },
-    })
-
-    if (!step) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '任务步骤不存在',
-      )
-    }
-
-    return step
   }
 
   // 数据库侧查询当前用户仍可领取的任务 ID。
@@ -2088,14 +2319,14 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     const rows = await this.db
-      .select()
+      .select(this.getTaskDefinitionAppReadSelect())
       .from(this.taskDefinitionTable)
       .where(inArray(this.taskDefinitionTable.id, ids))
     const rowMap = new Map(rows.map((row) => [row.id, row]))
 
     return ids
       .map((id) => rowMap.get(id))
-      .filter((row): row is TaskDefinitionSelect => Boolean(row))
+      .filter((row): row is (typeof rows)[number] => Boolean(row))
   }
 
   // 构建与 buildTaskCycleKey 同源的当前周期键。
@@ -2166,7 +2397,7 @@ export class TaskExecutionService extends TaskServiceSupport {
 
   // 将左连接得到的奖励结算事实收敛为稳定输出 DTO。
   private toTaskRewardSettlementSummary(
-    settlement: typeof this.growthRewardSettlementTable.$inferSelect | null,
+    settlement: TaskRewardSettlementSummaryRecord | null,
   ): TaskRewardSettlementSummaryDto | null {
     if (!settlement?.id) {
       return null
@@ -2212,7 +2443,17 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     const rows = await this.db
-      .select()
+      .select({
+        id: this.taskInstanceStepTable.id,
+        createdAt: this.taskInstanceStepTable.createdAt,
+        updatedAt: this.taskInstanceStepTable.updatedAt,
+        instanceId: this.taskInstanceStepTable.instanceId,
+        stepId: this.taskInstanceStepTable.stepId,
+        status: this.taskInstanceStepTable.status,
+        currentValue: this.taskInstanceStepTable.currentValue,
+        targetValue: this.taskInstanceStepTable.targetValue,
+        completedAt: this.taskInstanceStepTable.completedAt,
+      })
       .from(this.taskInstanceStepTable)
       .where(inArray(this.taskInstanceStepTable.instanceId, uniqueInstanceIds))
 
@@ -2261,7 +2502,14 @@ export class TaskExecutionService extends TaskServiceSupport {
           target_id AS "targetId"
         FROM (
           SELECT
-            l.*,
+            l.instance_id,
+            l.event_biz_key,
+            l.occurred_at,
+            l.accepted,
+            l.reject_reason,
+            l.target_type,
+            l.target_id,
+            l.created_at,
             row_number() OVER (
               PARTITION BY l.instance_id
               ORDER BY l.occurred_at DESC NULLS LAST, l.created_at DESC
@@ -2549,25 +2797,27 @@ export class TaskExecutionService extends TaskServiceSupport {
         }),
       })
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const updateResult = await this.updateRewardSettlementResultInTx(
-        tx,
-        settlement.id,
-        executionClaim.token,
-        rewardResult,
-      )
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const updateResult = await this.updateRewardSettlementResultInTx(
+          tx,
+          settlement.id,
+          executionClaim.token,
+          rewardResult,
+        )
 
-      if (rewardResult.success && updateResult.updated) {
-        await this.publishRewardGrantedReminderInTx(tx, {
-          taskId: params.taskId,
-          instanceId: params.instanceId,
-          userId: params.userId,
-          rewardItems: (this.normalizeRewardItems(params.rewardItems) ??
-            []) as GrowthRewardItem[],
-          ledgerRecordIds: rewardResult.ledgerRecordIds,
-          occurredAt: rewardResult.settledAt,
-        })
-      }
+        if (rewardResult.success && updateResult.updated) {
+          await this.publishRewardGrantedReminderInTx(tx, {
+            taskId: params.taskId,
+            instanceId: params.instanceId,
+            userId: params.userId,
+            rewardItems: (this.normalizeRewardItems(params.rewardItems) ??
+              []) as GrowthRewardItem[],
+            ledgerRecordIds: rewardResult.ledgerRecordIds,
+            occurredAt: rewardResult.settledAt,
+          })
+        }
+      },
     })
   }
 
@@ -2661,7 +2911,7 @@ export class TaskExecutionService extends TaskServiceSupport {
   // 在任务实例首次自动创建时写入自动加入提醒 outbox。
   private async publishAutoAssignedReminderInTx(
     runner: Db,
-    task: TaskDefinitionSelect,
+    task: TaskDefinitionEventExecutionRecord,
     instance: TaskInstanceSelect,
     occurredAt: Date,
   ) {
@@ -2691,8 +2941,15 @@ export class TaskExecutionService extends TaskServiceSupport {
   ) {
     const [row] = await runner
       .select({
-        instance: this.taskInstanceTable,
-        task: this.taskDefinitionTable,
+        instance: {
+          snapshotPayload: this.taskInstanceTable.snapshotPayload,
+          cycleKey: this.taskInstanceTable.cycleKey,
+        },
+        task: {
+          code: this.taskDefinitionTable.code,
+          title: this.taskDefinitionTable.title,
+          sceneType: this.taskDefinitionTable.sceneType,
+        },
       })
       .from(this.taskInstanceTable)
       .leftJoin(
@@ -2725,7 +2982,7 @@ export class TaskExecutionService extends TaskServiceSupport {
   // 解析提醒所需的任务信息，优先使用实例快照以保护历史合同。
   private resolveReminderTaskInfo(
     snapshotPayload: unknown,
-    task: TaskDefinitionSelect | null,
+    task: TaskReminderTaskRecord | null,
     taskId: number,
   ) {
     const snapshot = this.resolveTaskReminderSnapshot(snapshotPayload)

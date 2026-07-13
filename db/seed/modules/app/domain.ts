@@ -1,6 +1,5 @@
 import type { Db } from '../../db-client'
 import {
-  adminUser,
   adProviderConfig,
   appAgreement,
   appAgreementLog,
@@ -56,13 +55,20 @@ import {
   GrowthLedgerActionEnum,
   GrowthRuleUsageSlotTypeEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { BodyHtmlCodecService } from '@libs/interaction/body/body-html-codec.service'
+import { createBodyDocFromPlainText } from '@libs/interaction/body/body-text.helper'
+import { BodyValidatorService } from '@libs/interaction/body/body-validator.service'
+import {
+  BODY_VERSION_V1,
+  BodySceneEnum,
+} from '@libs/interaction/body/body.constant'
 import {
   MembershipBenefitGrantPolicyEnum,
   MembershipBenefitTypeEnum,
   MembershipPlanTierEnum,
 } from '@libs/interaction/membership/membership.constant'
 import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray } from 'drizzle-orm'
 import {
   addHours,
   addMinutes,
@@ -87,6 +93,20 @@ const DEFAULT_APP_CONFIG = {
   maintenanceMessage: '系统维护中，请稍后再试',
   version: '1.0.0',
 } as const
+
+const seedCommentBodyHtmlCodec = new BodyHtmlCodecService(
+  new BodyValidatorService(),
+)
+
+function buildSeedCommentBody(content: string) {
+  const body = createBodyDocFromPlainText(content)
+  return {
+    body,
+    bodyVersion: BODY_VERSION_V1,
+    content,
+    html: seedCommentBodyHtmlCodec.renderHtml(body, BodySceneEnum.COMMENT),
+  }
+}
 
 const LEVEL_FIXTURES = [
   {
@@ -1055,12 +1075,14 @@ export async function seedAppCoreDomain(db: Db) {
   console.log('🌱 初始化应用核心数据...')
 
   const admin = await db.query.adminUser.findFirst({
-    where: eq(adminUser.username, SEED_ADMIN_USERNAME),
+    where: { username: SEED_ADMIN_USERNAME },
+    columns: { id: true },
   })
 
   for (const levelFixture of LEVEL_FIXTURES) {
     const existing = await db.query.userLevelRule.findFirst({
-      where: eq(userLevelRule.name, levelFixture.name),
+      where: { name: levelFixture.name },
+      columns: { id: true },
     })
 
     if (!existing) {
@@ -1082,7 +1104,7 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const ruleFixture of REWARD_RULE_FIXTURES) {
     const [existing] = await db
-      .select()
+      .select({ id: growthRewardRule.id })
       .from(growthRewardRule)
       .where(
         and(
@@ -1112,7 +1134,7 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const planFixture of MEMBERSHIP_PLAN_FIXTURES) {
     const [existing] = await db
-      .select()
+      .select({ id: membershipPlan.id })
       .from(membershipPlan)
       .where(eq(membershipPlan.planKey, planFixture.planKey))
       .limit(1)
@@ -1129,7 +1151,7 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const benefitFixture of MEMBERSHIP_BENEFIT_FIXTURES) {
     const [existing] = await db
-      .select()
+      .select({ id: membershipBenefitDefinition.id })
       .from(membershipBenefitDefinition)
       .where(eq(membershipBenefitDefinition.code, benefitFixture.code))
       .limit(1)
@@ -1146,7 +1168,7 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const pageConfigFixture of MEMBERSHIP_PAGE_CONFIG_FIXTURES) {
     const [existing] = await db
-      .select()
+      .select({ id: membershipPageConfig.id })
       .from(membershipPageConfig)
       .where(eq(membershipPageConfig.pageKey, pageConfigFixture.pageKey))
       .limit(1)
@@ -1161,9 +1183,21 @@ export async function seedAppCoreDomain(db: Db) {
     }
   }
 
-  const benefitRows = await db.select().from(membershipBenefitDefinition)
-  const planRows = await db.select().from(membershipPlan)
-  const pageConfigRows = await db.select().from(membershipPageConfig)
+  const benefitRows = await db
+    .select({
+      id: membershipBenefitDefinition.id,
+      code: membershipBenefitDefinition.code,
+    })
+    .from(membershipBenefitDefinition)
+  const planRows = await db
+    .select({ id: membershipPlan.id, planKey: membershipPlan.planKey })
+    .from(membershipPlan)
+  const pageConfigRows = await db
+    .select({
+      id: membershipPageConfig.id,
+      pageKey: membershipPageConfig.pageKey,
+    })
+    .from(membershipPageConfig)
   const benefitByCode = new Map(benefitRows.map((row) => [row.code, row]))
   const planByKey = new Map(planRows.map((row) => [row.planKey, row]))
   const pageConfigByKey = new Map(
@@ -1220,7 +1254,7 @@ export async function seedAppCoreDomain(db: Db) {
       continue
     }
     const [existing] = await db
-      .select()
+      .select({ id: membershipPlanBenefit.id })
       .from(membershipPlanBenefit)
       .where(
         and(
@@ -1249,7 +1283,7 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const packageFixture of CURRENCY_PACKAGE_FIXTURES) {
     const [existing] = await db
-      .select()
+      .select({ id: currencyPackage.id })
       .from(currencyPackage)
       .where(eq(currencyPackage.packageKey, packageFixture.packageKey))
       .limit(1)
@@ -1266,7 +1300,7 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const configFixture of PAYMENT_PROVIDER_CONFIG_FIXTURES) {
     const [existing] = await db
-      .select()
+      .select({ id: paymentProviderConfig.id })
       .from(paymentProviderConfig)
       .where(
         and(
@@ -1293,7 +1327,7 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const configFixture of AD_PROVIDER_CONFIG_FIXTURES) {
     const [existing] = await db
-      .select()
+      .select({ id: adProviderConfig.id })
       .from(adProviderConfig)
       .where(
         and(
@@ -1319,7 +1353,7 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const couponFixture of COUPON_DEFINITION_FIXTURES) {
     const [existing] = await db
-      .select()
+      .select({ id: couponDefinition.id })
       .from(couponDefinition)
       .where(
         and(
@@ -1340,7 +1374,7 @@ export async function seedAppCoreDomain(db: Db) {
   }
 
   const [readingCoupon] = await db
-    .select()
+    .select({ id: couponDefinition.id })
     .from(couponDefinition)
     .where(eq(couponDefinition.name, '章节阅读券'))
     .limit(1)
@@ -1368,7 +1402,7 @@ export async function seedAppCoreDomain(db: Db) {
       continue
     }
     const [existing] = await db
-      .select()
+      .select({ id: membershipPlanBenefit.id })
       .from(membershipPlanBenefit)
       .where(
         and(
@@ -1398,7 +1432,8 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const badgeFixture of BADGE_FIXTURES) {
     const existing = await db.query.userBadge.findFirst({
-      where: eq(userBadge.name, badgeFixture.name),
+      where: { name: badgeFixture.name },
+      columns: { id: true },
     })
 
     if (!existing) {
@@ -1420,7 +1455,8 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const pageFixture of PAGE_FIXTURES) {
     const existing = await db.query.appPage.findFirst({
-      where: eq(appPage.code, pageFixture.code),
+      where: { code: pageFixture.code },
+      columns: { id: true },
     })
 
     if (!existing) {
@@ -1442,7 +1478,9 @@ export async function seedAppCoreDomain(db: Db) {
   }
   console.log('  ✓ 页面完成')
 
-  const levelRules = await db.query.userLevelRule.findMany()
+  const levelRules = await db.query.userLevelRule.findMany({
+    columns: { id: true, name: true },
+  })
   const levelIdByName = new Map<string, number>(
     levelRules.map((item) => [item.name, item.id]),
   )
@@ -1450,7 +1488,8 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const userFixture of USER_FIXTURES) {
     const existing = await db.query.appUser.findFirst({
-      where: eq(appUser.account, userFixture.account),
+      where: { account: userFixture.account },
+      columns: { id: true },
     })
 
     const payload: typeof appUser.$inferInsert = {
@@ -1489,7 +1528,8 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const userFixture of USER_FIXTURES) {
     const user = await db.query.appUser.findFirst({
-      where: eq(appUser.account, userFixture.account),
+      where: { account: userFixture.account },
+      columns: { id: true },
     })
     if (!user) {
       continue
@@ -1518,11 +1558,14 @@ export async function seedAppCoreDomain(db: Db) {
 
     for (const balanceFixture of balanceFixtures) {
       const existingBalance = await db.query.userAssetBalance.findFirst({
-        where: and(
-          eq(userAssetBalance.userId, balanceFixture.userId),
-          eq(userAssetBalance.assetType, balanceFixture.assetType),
-          eq(userAssetBalance.assetKey, balanceFixture.assetKey),
-        ),
+        where: {
+          AND: [
+            { userId: balanceFixture.userId },
+            { assetType: balanceFixture.assetType },
+            { assetKey: balanceFixture.assetKey },
+          ],
+        },
+        columns: { id: true },
       })
 
       if (!existingBalance) {
@@ -1538,21 +1581,23 @@ export async function seedAppCoreDomain(db: Db) {
   console.log('  ✓ 用户资产余额完成')
 
   const [seedVipPlan] = await db
-    .select()
+    .select({
+      id: membershipPlan.id,
+      planKey: membershipPlan.planKey,
+      durationDays: membershipPlan.durationDays,
+    })
     .from(membershipPlan)
     .where(eq(membershipPlan.planKey, 'vip_monthly'))
     .limit(1)
   const vipSeedUsers = await db.query.appUser.findMany({
-    where: inArray(appUser.account, [
-      SEED_ACCOUNTS.readerA,
-      SEED_ACCOUNTS.readerB,
-    ]),
+    where: { account: { in: [SEED_ACCOUNTS.readerA, SEED_ACCOUNTS.readerB] } },
+    columns: { id: true },
   })
 
   if (seedVipPlan) {
     for (const user of vipSeedUsers) {
       const [existingSubscription] = await db
-        .select()
+        .select({ id: userMembershipSubscription.id })
         .from(userMembershipSubscription)
         .where(
           and(
@@ -1589,12 +1634,34 @@ export async function seedAppCoreDomain(db: Db) {
   }
 
   const [readingCouponDefinition] = await db
-    .select()
+    .select({
+      id: couponDefinition.id,
+      couponType: couponDefinition.couponType,
+      usageLimit: couponDefinition.usageLimit,
+      name: couponDefinition.name,
+      targetScope: couponDefinition.targetScope,
+      discountRateBps: couponDefinition.discountRateBps,
+      discountAmount: couponDefinition.discountAmount,
+      benefitDays: couponDefinition.benefitDays,
+      benefitCount: couponDefinition.benefitCount,
+      validDays: couponDefinition.validDays,
+    })
     .from(couponDefinition)
     .where(eq(couponDefinition.name, '章节阅读券'))
     .limit(1)
   const [discountCouponDefinition] = await db
-    .select()
+    .select({
+      id: couponDefinition.id,
+      couponType: couponDefinition.couponType,
+      usageLimit: couponDefinition.usageLimit,
+      name: couponDefinition.name,
+      targetScope: couponDefinition.targetScope,
+      discountRateBps: couponDefinition.discountRateBps,
+      discountAmount: couponDefinition.discountAmount,
+      benefitDays: couponDefinition.benefitDays,
+      benefitCount: couponDefinition.benefitCount,
+      validDays: couponDefinition.validDays,
+    })
     .from(couponDefinition)
     .where(eq(couponDefinition.name, '章节九折券'))
     .limit(1)
@@ -1607,7 +1674,7 @@ export async function seedAppCoreDomain(db: Db) {
   if (couponSeedUser) {
     for (const definition of seedCouponDefinitions) {
       const [existingCoupon] = await db
-        .select()
+        .select({ id: userCouponInstance.id })
         .from(userCouponInstance)
         .where(
           and(
@@ -1681,14 +1748,16 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const tokenFixture of tokenFixtures) {
     const user = await db.query.appUser.findFirst({
-      where: eq(appUser.account, tokenFixture.account),
+      where: { account: tokenFixture.account },
+      columns: { id: true },
     })
     if (!user) {
       continue
     }
 
     const existing = await db.query.appUserToken.findFirst({
-      where: eq(appUserToken.jti, tokenFixture.jti),
+      where: { jti: tokenFixture.jti },
+      columns: { id: true },
     })
 
     if (!existing) {
@@ -1709,7 +1778,7 @@ export async function seedAppCoreDomain(db: Db) {
   console.log('  ✓ 用户令牌完成')
 
   const [latestConfig] = await db
-    .select()
+    .select({ id: appConfig.id })
     .from(appConfig)
     .orderBy(desc(appConfig.id))
     .limit(1)
@@ -1741,7 +1810,8 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const agreementFixture of AGREEMENT_FIXTURES) {
     const existing = await db.query.appAgreement.findFirst({
-      where: eq(appAgreement.title, agreementFixture.title),
+      where: { title: agreementFixture.title },
+      columns: { id: true },
     })
 
     if (!existing) {
@@ -1756,12 +1826,12 @@ export async function seedAppCoreDomain(db: Db) {
   console.log('  ✓ 协议完成')
 
   const [vipAgreementPageConfig] = await db
-    .select()
+    .select({ id: membershipPageConfig.id })
     .from(membershipPageConfig)
     .where(eq(membershipPageConfig.pageKey, 'vip_subscription'))
     .limit(1)
   const membershipAgreementRows = await db
-    .select()
+    .select({ id: appAgreement.id, title: appAgreement.title })
     .from(appAgreement)
     .where(inArray(appAgreement.title, ['用户协议', '隐私政策']))
   const membershipAgreementByTitle = new Map(
@@ -1801,12 +1871,14 @@ export async function seedAppCoreDomain(db: Db) {
   for (const announcementFixture of ANNOUNCEMENT_FIXTURES) {
     const page = announcementFixture.pageCode
       ? await db.query.appPage.findFirst({
-          where: eq(appPage.code, announcementFixture.pageCode),
+          where: { code: announcementFixture.pageCode },
+          columns: { id: true },
         })
       : null
 
     const existing = await db.query.appAnnouncement.findFirst({
-      where: eq(appAnnouncement.title, announcementFixture.title),
+      where: { title: announcementFixture.title },
+      columns: { id: true, viewCount: true },
     })
 
     const payload = {
@@ -1839,7 +1911,8 @@ export async function seedAppCoreDomain(db: Db) {
 
   for (const taskFixture of TASK_FIXTURES) {
     const existing = await db.query.taskDefinition.findFirst({
-      where: eq(taskDefinition.code, taskFixture.code),
+      where: { code: taskFixture.code },
+      columns: { id: true },
     })
 
     const payload = {
@@ -1885,7 +1958,8 @@ export async function seedAppCoreDomain(db: Db) {
         .where(eq(taskDefinition.id, existing.id))
 
       const existingStep = await db.query.taskStep.findFirst({
-        where: and(eq(taskStep.taskId, existing.id), eq(taskStep.stepNo, 1)),
+        where: { AND: [{ taskId: existing.id }, { stepNo: 1 }] },
+        columns: { id: true },
       })
       const stepPayload = {
         taskId: existing.id,
@@ -1919,13 +1993,16 @@ export async function seedAppActivityDomain(db: Db) {
   console.log('🌱 初始化应用互动数据...')
 
   const userA = await db.query.appUser.findFirst({
-    where: eq(appUser.account, SEED_ACCOUNTS.readerA),
+    where: { account: SEED_ACCOUNTS.readerA },
+    columns: { id: true, account: true },
   })
   const userB = await db.query.appUser.findFirst({
-    where: eq(appUser.account, SEED_ACCOUNTS.readerB),
+    where: { account: SEED_ACCOUNTS.readerB },
+    columns: { id: true, account: true },
   })
   const userC = await db.query.appUser.findFirst({
-    where: eq(appUser.account, SEED_ACCOUNTS.readerC),
+    where: { account: SEED_ACCOUNTS.readerC },
+    columns: { id: true },
   })
 
   if (!userA || !userB || !userC) {
@@ -1934,38 +2011,42 @@ export async function seedAppActivityDomain(db: Db) {
   }
 
   const aotWork = await db.query.work.findFirst({
-    where: and(eq(work.name, '进击的巨人'), eq(work.type, 1)),
+    where: { AND: [{ name: '进击的巨人' }, { type: 1 }] },
+    columns: { id: true },
   })
   const whiteNightWork = await db.query.work.findFirst({
-    where: and(eq(work.name, '白夜行'), eq(work.type, 2)),
+    where: { AND: [{ name: '白夜行' }, { type: 2 }] },
+    columns: { id: true },
   })
   const aotChapterTwo = aotWork
     ? await db.query.workChapter.findFirst({
-        where: and(
-          eq(workChapter.workId, aotWork.id),
-          eq(workChapter.sortOrder, 2),
-        ),
+        where: { AND: [{ workId: aotWork.id }, { sortOrder: 2 }] },
+        columns: { id: true },
       })
     : null
   const whiteNightChapterTwo = whiteNightWork
     ? await db.query.workChapter.findFirst({
-        where: and(
-          eq(workChapter.workId, whiteNightWork.id),
-          eq(workChapter.sortOrder, 2),
-        ),
+        where: { AND: [{ workId: whiteNightWork.id }, { sortOrder: 2 }] },
+        columns: { id: true },
       })
     : null
   const aotTopic = await db.query.forumTopic.findFirst({
-    where: and(
-      eq(forumTopic.title, '进击的巨人：前三卷伏笔整理'),
-      isNull(forumTopic.deletedAt),
-    ),
+    where: {
+      AND: [
+        { title: '进击的巨人：前三卷伏笔整理' },
+        { deletedAt: { isNull: true } },
+      ],
+    },
+    columns: { id: true, sectionId: true, createdAt: true },
   })
   const whiteNightTopic = await db.query.forumTopic.findFirst({
-    where: and(
-      eq(forumTopic.title, '白夜行：你更在意悬疑线还是人物线？'),
-      isNull(forumTopic.deletedAt),
-    ),
+    where: {
+      AND: [
+        { title: '白夜行：你更在意悬疑线还是人物线？' },
+        { deletedAt: { isNull: true } },
+      ],
+    },
+    columns: { id: true, sectionId: true, createdAt: true },
   })
 
   if (
@@ -1982,16 +2063,16 @@ export async function seedAppActivityDomain(db: Db) {
 
   const moderatorUser = userC
 
-  const agreements = await db.query.appAgreement.findMany()
+  const agreements = await db.query.appAgreement.findMany({
+    columns: { id: true, title: true, version: true },
+  })
   for (const agreement of agreements) {
     const agreementUsers =
       agreement.title === '隐私政策' ? [userA, userB] : [userA]
     for (const user of agreementUsers) {
       const existingLog = await db.query.appAgreementLog.findFirst({
-        where: and(
-          eq(appAgreementLog.userId, user.id),
-          eq(appAgreementLog.agreementId, agreement.id),
-        ),
+        where: { AND: [{ userId: user.id }, { agreementId: agreement.id }] },
+        columns: { id: true },
       })
 
       const payload = {
@@ -2015,14 +2096,16 @@ export async function seedAppActivityDomain(db: Db) {
   }
   console.log('  ✓ 协议签署记录完成')
 
-  const announcements = await db.query.appAnnouncement.findMany()
+  const announcements = await db.query.appAnnouncement.findMany({
+    columns: { id: true },
+  })
   for (const [index, announcement] of announcements.entries()) {
     const targetUser = index % 2 === 0 ? userA : userB
     const existingRead = await db.query.appAnnouncementRead.findFirst({
-      where: and(
-        eq(appAnnouncementRead.announcementId, announcement.id),
-        eq(appAnnouncementRead.userId, targetUser.id),
-      ),
+      where: {
+        AND: [{ announcementId: announcement.id }, { userId: targetUser.id }],
+      },
+      columns: { announcementId: true },
     })
 
     if (!existingRead) {
@@ -2048,15 +2131,15 @@ export async function seedAppActivityDomain(db: Db) {
   console.log('  ✓ 公告已读记录完成')
 
   const existingWorkComment = await db.query.userComment.findFirst({
-    where: and(
-      eq(userComment.targetType, 1),
-      eq(userComment.targetId, aotWork.id),
-      eq(userComment.userId, userB.id),
-      eq(
-        userComment.content,
-        '墙内外的信息差在这部作品里几乎从第一话就埋下了。',
-      ),
-    ),
+    where: {
+      AND: [
+        { targetType: 1 },
+        { targetId: aotWork.id },
+        { userId: userB.id },
+        { content: '墙内外的信息差在这部作品里几乎从第一话就埋下了。' },
+      ],
+    },
+    columns: { id: true, likeCount: true },
   })
 
   let workComment = existingWorkComment
@@ -2064,12 +2147,12 @@ export async function seedAppActivityDomain(db: Db) {
     targetType: 1,
     targetId: aotWork.id,
     userId: userB.id,
-    content: '墙内外的信息差在这部作品里几乎从第一话就埋下了。',
+    ...buildSeedCommentBody('墙内外的信息差在这部作品里几乎从第一话就埋下了。'),
     floor: 1,
     isHidden: false,
     auditStatus: 1,
     auditById: moderatorUser.id,
-    auditRole: 2,
+    auditRole: 0,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 2),
     likeCount: existingWorkComment?.likeCount ?? 0,
@@ -2091,12 +2174,15 @@ export async function seedAppActivityDomain(db: Db) {
   }
 
   const existingChapterComment = await db.query.userComment.findFirst({
-    where: and(
-      eq(userComment.targetType, 2),
-      eq(userComment.targetId, aotChapterTwo.id),
-      eq(userComment.userId, userA.id),
-      eq(userComment.content, '第二话的节奏明显收紧，购买后继续读的体验很顺。'),
-    ),
+    where: {
+      AND: [
+        { targetType: 2 },
+        { targetId: aotChapterTwo.id },
+        { userId: userA.id },
+        { content: '第二话的节奏明显收紧，购买后继续读的体验很顺。' },
+      ],
+    },
+    columns: { id: true, likeCount: true },
   })
 
   let chapterComment = existingChapterComment
@@ -2104,12 +2190,12 @@ export async function seedAppActivityDomain(db: Db) {
     targetType: 2,
     targetId: aotChapterTwo.id,
     userId: userA.id,
-    content: '第二话的节奏明显收紧，购买后继续读的体验很顺。',
+    ...buildSeedCommentBody('第二话的节奏明显收紧，购买后继续读的体验很顺。'),
     floor: 1,
     isHidden: false,
     auditStatus: 1,
     auditById: moderatorUser.id,
-    auditRole: 2,
+    auditRole: 0,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 3),
     likeCount: existingChapterComment?.likeCount ?? 0,
@@ -2131,12 +2217,15 @@ export async function seedAppActivityDomain(db: Db) {
   }
 
   const existingForumRootComment = await db.query.userComment.findFirst({
-    where: and(
-      eq(userComment.targetType, 3),
-      eq(userComment.targetId, aotTopic.id),
-      eq(userComment.userId, userB.id),
-      eq(userComment.content, '我觉得第一卷就把未来冲突埋得很深。'),
-    ),
+    where: {
+      AND: [
+        { targetType: 3 },
+        { targetId: aotTopic.id },
+        { userId: userB.id },
+        { content: '我觉得第一卷就把未来冲突埋得很深。' },
+      ],
+    },
+    columns: { id: true, likeCount: true },
   })
 
   let forumRootComment = existingForumRootComment
@@ -2144,12 +2233,12 @@ export async function seedAppActivityDomain(db: Db) {
     targetType: 3,
     targetId: aotTopic.id,
     userId: userB.id,
-    content: '我觉得第一卷就把未来冲突埋得很深。',
+    ...buildSeedCommentBody('我觉得第一卷就把未来冲突埋得很深。'),
     floor: 1,
     isHidden: false,
     auditStatus: 1,
     auditById: moderatorUser.id,
-    auditRole: 2,
+    auditRole: 0,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 4),
     likeCount: existingForumRootComment?.likeCount ?? 0,
@@ -2171,26 +2260,29 @@ export async function seedAppActivityDomain(db: Db) {
   }
 
   const existingForumComment = await db.query.userComment.findFirst({
-    where: and(
-      eq(userComment.targetType, 3),
-      eq(userComment.targetId, aotTopic.id),
-      eq(userComment.userId, userA.id),
-      eq(userComment.content, '而且艾伦和调查兵团的立场差异很早就有预警。'),
-    ),
+    where: {
+      AND: [
+        { targetType: 3 },
+        { targetId: aotTopic.id },
+        { userId: userA.id },
+        { content: '而且艾伦和调查兵团的立场差异很早就有预警。' },
+      ],
+    },
+    columns: { id: true, likeCount: true },
   })
 
   const forumCommentPayload = {
     targetType: 3,
     targetId: aotTopic.id,
     userId: userA.id,
-    content: '而且艾伦和调查兵团的立场差异很早就有预警。',
+    ...buildSeedCommentBody('而且艾伦和调查兵团的立场差异很早就有预警。'),
     floor: 2,
     replyToId: forumRootComment.id,
     actualReplyToId: forumRootComment.id,
     isHidden: false,
     auditStatus: 1,
     auditById: moderatorUser.id,
-    auditRole: 2,
+    auditRole: 0,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 5),
     likeCount: existingForumComment?.likeCount ?? 0,
@@ -2209,20 +2301,26 @@ export async function seedAppActivityDomain(db: Db) {
   console.log('  ✓ 论坛评论完成')
 
   const forumTopicComments = await db.query.userComment.findMany({
-    where: and(
-      eq(userComment.targetType, 3),
-      eq(userComment.targetId, aotTopic.id),
-      isNull(userComment.deletedAt),
-    ),
+    where: {
+      AND: [
+        { targetType: 3 },
+        { targetId: aotTopic.id },
+        { deletedAt: { isNull: true } },
+      ],
+    },
+    columns: { id: true, userId: true, content: true, createdAt: true },
   })
 
   for (const comment of forumTopicComments) {
     const existingAction = await db.query.forumUserActionLog.findFirst({
-      where: and(
-        eq(forumUserActionLog.userId, comment.userId),
-        eq(forumUserActionLog.targetId, comment.id),
-        eq(forumUserActionLog.actionType, 3),
-      ),
+      where: {
+        AND: [
+          { userId: comment.userId },
+          { targetId: comment.id },
+          { actionType: 3 },
+        ],
+      },
+      columns: { id: true },
     })
 
     if (!existingAction) {
@@ -2277,11 +2375,14 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const likeFixture of likeFixtures) {
     const existingLike = await db.query.userLike.findFirst({
-      where: and(
-        eq(userLike.targetType, likeFixture.targetType),
-        eq(userLike.targetId, likeFixture.targetId),
-        eq(userLike.userId, likeFixture.userId),
-      ),
+      where: {
+        AND: [
+          { targetType: likeFixture.targetType },
+          { targetId: likeFixture.targetId },
+          { userId: likeFixture.userId },
+        ],
+      },
+      columns: { id: true },
     })
 
     if (!existingLike) {
@@ -2310,11 +2411,14 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const favoriteFixture of favoriteFixtures) {
     const existingFavorite = await db.query.userFavorite.findFirst({
-      where: and(
-        eq(userFavorite.targetType, favoriteFixture.targetType),
-        eq(userFavorite.targetId, favoriteFixture.targetId),
-        eq(userFavorite.userId, favoriteFixture.userId),
-      ),
+      where: {
+        AND: [
+          { targetType: favoriteFixture.targetType },
+          { targetId: favoriteFixture.targetId },
+          { userId: favoriteFixture.userId },
+        ],
+      },
+      columns: { id: true },
     })
 
     if (!existingFavorite) {
@@ -2340,11 +2444,14 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const downloadFixture of downloadFixtures) {
     const existingDownload = await db.query.userDownloadRecord.findFirst({
-      where: and(
-        eq(userDownloadRecord.targetType, downloadFixture.targetType),
-        eq(userDownloadRecord.targetId, downloadFixture.targetId),
-        eq(userDownloadRecord.userId, downloadFixture.userId),
-      ),
+      where: {
+        AND: [
+          { targetType: downloadFixture.targetType },
+          { targetId: downloadFixture.targetId },
+          { userId: downloadFixture.userId },
+        ],
+      },
+      columns: { id: true },
     })
 
     if (!existingDownload) {
@@ -2395,12 +2502,15 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const purchaseFixture of purchaseFixtures) {
     const existingPurchase = await db.query.userPurchaseRecord.findFirst({
-      where: and(
-        eq(userPurchaseRecord.userId, purchaseFixture.userId),
-        eq(userPurchaseRecord.targetType, purchaseFixture.targetType),
-        eq(userPurchaseRecord.targetId, purchaseFixture.targetId),
-        eq(userPurchaseRecord.status, purchaseFixture.status),
-      ),
+      where: {
+        AND: [
+          { userId: purchaseFixture.userId },
+          { targetType: purchaseFixture.targetType },
+          { targetId: purchaseFixture.targetId },
+          { status: purchaseFixture.status },
+        ],
+      },
+      columns: { id: true, targetType: true, targetId: true, userId: true },
     })
 
     if (!existingPurchase) {
@@ -2433,7 +2543,7 @@ export async function seedAppActivityDomain(db: Db) {
         .set(purchaseFixture)
         .where(eq(userPurchaseRecord.id, existingPurchase.id))
       const [existingEntitlement] = await db
-        .select()
+        .select({ id: userContentEntitlement.id })
         .from(userContentEntitlement)
         .where(
           and(
@@ -2507,11 +2617,14 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const browseFixture of browseFixtures) {
     const existingBrowse = await db.query.userBrowseLog.findFirst({
-      where: and(
-        eq(userBrowseLog.targetType, browseFixture.targetType),
-        eq(userBrowseLog.targetId, browseFixture.targetId),
-        eq(userBrowseLog.userId, browseFixture.userId),
-      ),
+      where: {
+        AND: [
+          { targetType: browseFixture.targetType },
+          { targetId: browseFixture.targetId },
+          { userId: browseFixture.userId },
+        ],
+      },
+      columns: { id: true },
     })
 
     if (!existingBrowse) {
@@ -2539,11 +2652,14 @@ export async function seedAppActivityDomain(db: Db) {
   }
 
   const existingReport = await db.query.userReport.findFirst({
-    where: and(
-      eq(userReport.reporterId, reportFixture.reporterId),
-      eq(userReport.targetType, reportFixture.targetType),
-      eq(userReport.targetId, reportFixture.targetId),
-    ),
+    where: {
+      AND: [
+        { reporterId: reportFixture.reporterId },
+        { targetType: reportFixture.targetType },
+        { targetId: reportFixture.targetId },
+      ],
+    },
+    columns: { id: true },
   })
 
   if (!existingReport) {
@@ -2575,10 +2691,13 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const readingFixture of readingFixtures) {
     const existingState = await db.query.userWorkReadingState.findFirst({
-      where: and(
-        eq(userWorkReadingState.userId, readingFixture.userId),
-        eq(userWorkReadingState.workId, readingFixture.workId),
-      ),
+      where: {
+        AND: [
+          { userId: readingFixture.userId },
+          { workId: readingFixture.workId },
+        ],
+      },
+      columns: { userId: true },
     })
 
     if (!existingState) {
@@ -2597,7 +2716,9 @@ export async function seedAppActivityDomain(db: Db) {
   }
   console.log('  ✓ 阅读状态完成')
 
-  const badges = await db.query.userBadge.findMany()
+  const badges = await db.query.userBadge.findMany({
+    columns: { id: true, name: true },
+  })
   const badgeByName = new Map<string, (typeof badges)[number]>(
     badges.map((item) => [item.name, item]),
   )
@@ -2613,10 +2734,8 @@ export async function seedAppActivityDomain(db: Db) {
     }
 
     const existingAssignment = await db.query.userBadgeAssignment.findFirst({
-      where: and(
-        eq(userBadgeAssignment.userId, assignment.userId),
-        eq(userBadgeAssignment.badgeId, badge.id),
-      ),
+      where: { AND: [{ userId: assignment.userId }, { badgeId: badge.id }] },
+      columns: { userId: true },
     })
 
     if (!existingAssignment) {
@@ -2629,7 +2748,7 @@ export async function seedAppActivityDomain(db: Db) {
   console.log('  ✓ 徽章发放完成')
 
   const [currencyPurchaseRule] = await db
-    .select()
+    .select({ id: growthRewardRule.id })
     .from(growthRewardRule)
     .where(
       and(
@@ -2639,7 +2758,7 @@ export async function seedAppActivityDomain(db: Db) {
     )
     .limit(1)
   const [experienceTopicRule] = await db
-    .select()
+    .select({ id: growthRewardRule.id })
     .from(growthRewardRule)
     .where(
       and(
@@ -2685,10 +2804,13 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const ledgerFixture of ledgerFixtures) {
     const existingLedger = await db.query.growthLedgerRecord.findFirst({
-      where: and(
-        eq(growthLedgerRecord.userId, ledgerFixture.userId),
-        eq(growthLedgerRecord.bizKey, ledgerFixture.bizKey),
-      ),
+      where: {
+        AND: [
+          { userId: ledgerFixture.userId },
+          { bizKey: ledgerFixture.bizKey },
+        ],
+      },
+      columns: { id: true },
     })
 
     if (!existingLedger) {
@@ -2733,10 +2855,10 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const auditFixture of auditFixtures) {
     const existingAudit = await db.query.growthAuditLog.findFirst({
-      where: and(
-        eq(growthAuditLog.userId, auditFixture.userId),
-        eq(growthAuditLog.bizKey, auditFixture.bizKey),
-      ),
+      where: {
+        AND: [{ userId: auditFixture.userId }, { bizKey: auditFixture.bizKey }],
+      },
+      columns: { id: true },
     })
 
     if (!existingAudit) {
@@ -2772,14 +2894,17 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const slotFixture of slotFixtures) {
     const existingSlot = await db.query.growthRuleUsageCounter.findFirst({
-      where: and(
-        eq(growthRuleUsageCounter.userId, slotFixture.userId),
-        eq(growthRuleUsageCounter.assetType, slotFixture.assetType),
-        eq(growthRuleUsageCounter.assetKey, slotFixture.assetKey),
-        eq(growthRuleUsageCounter.ruleKey, slotFixture.ruleKey),
-        eq(growthRuleUsageCounter.scopeType, slotFixture.scopeType),
-        eq(growthRuleUsageCounter.scopeKey, slotFixture.scopeKey),
-      ),
+      where: {
+        AND: [
+          { userId: slotFixture.userId },
+          { assetType: slotFixture.assetType },
+          { assetKey: slotFixture.assetKey },
+          { ruleKey: slotFixture.ruleKey },
+          { scopeType: slotFixture.scopeType },
+          { scopeKey: slotFixture.scopeKey },
+        ],
+      },
+      columns: { userId: true },
     })
 
     if (!existingSlot) {
@@ -2789,10 +2914,12 @@ export async function seedAppActivityDomain(db: Db) {
   console.log('  ✓ 成长流水完成')
 
   const readChapterTask = await db.query.taskDefinition.findFirst({
-    where: eq(taskDefinition.code, 'daily_read_chapter'),
+    where: { code: 'daily_read_chapter' },
+    columns: { id: true, code: true, title: true },
   })
   const forumTask = await db.query.taskDefinition.findFirst({
-    where: eq(taskDefinition.code, 'daily_forum_interaction'),
+    where: { code: 'daily_forum_interaction' },
+    columns: { id: true, code: true, title: true },
   })
 
   if (readChapterTask) {
@@ -2815,11 +2942,14 @@ export async function seedAppActivityDomain(db: Db) {
     }
 
     const existingAssignment = await db.query.taskInstance.findFirst({
-      where: and(
-        eq(taskInstance.taskId, readChapterTask.id),
-        eq(taskInstance.userId, userA.id),
-        eq(taskInstance.cycleKey, '20260320'),
-      ),
+      where: {
+        AND: [
+          { taskId: readChapterTask.id },
+          { userId: userA.id },
+          { cycleKey: '20260320' },
+        ],
+      },
+      columns: { id: true },
     })
 
     let currentAssignment = existingAssignment
@@ -2837,17 +2967,20 @@ export async function seedAppActivityDomain(db: Db) {
     }
 
     const [readChapterStep] = await db
-      .select()
+      .select({ id: taskStep.id })
       .from(taskStep)
       .where(eq(taskStep.taskId, readChapterTask.id))
       .limit(1)
 
     if (readChapterStep) {
       const existingStep = await db.query.taskInstanceStep.findFirst({
-        where: and(
-          eq(taskInstanceStep.instanceId, currentAssignment.id),
-          eq(taskInstanceStep.stepId, readChapterStep.id),
-        ),
+        where: {
+          AND: [
+            { instanceId: currentAssignment.id },
+            { stepId: readChapterStep.id },
+          ],
+        },
+        columns: { id: true },
       })
       const stepPayload = {
         instanceId: currentAssignment.id,
@@ -2933,11 +3066,14 @@ export async function seedAppActivityDomain(db: Db) {
 
     for (const progressLog of progressLogs) {
       const existingLog = await db.query.taskEventLog.findFirst({
-        where: and(
-          eq(taskEventLog.instanceId, progressLog.instanceId),
-          eq(taskEventLog.actionType, progressLog.actionType),
-          eq(taskEventLog.afterValue, progressLog.afterValue),
-        ),
+        where: {
+          AND: [
+            { instanceId: progressLog.instanceId },
+            { actionType: progressLog.actionType },
+            { afterValue: progressLog.afterValue },
+          ],
+        },
+        columns: { id: true },
       })
 
       if (!existingLog) {
@@ -2948,11 +3084,14 @@ export async function seedAppActivityDomain(db: Db) {
 
   if (forumTask) {
     const existingAssignment = await db.query.taskInstance.findFirst({
-      where: and(
-        eq(taskInstance.taskId, forumTask.id),
-        eq(taskInstance.userId, userB.id),
-        eq(taskInstance.cycleKey, '20260320'),
-      ),
+      where: {
+        AND: [
+          { taskId: forumTask.id },
+          { userId: userB.id },
+          { cycleKey: '20260320' },
+        ],
+      },
+      columns: { id: true },
     })
 
     const forumAssignmentPayload = {
@@ -2985,17 +3124,17 @@ export async function seedAppActivityDomain(db: Db) {
     }
 
     const [forumStep] = await db
-      .select()
+      .select({ id: taskStep.id })
       .from(taskStep)
       .where(eq(taskStep.taskId, forumTask.id))
       .limit(1)
 
     if (forumStep) {
       const existingStep = await db.query.taskInstanceStep.findFirst({
-        where: and(
-          eq(taskInstanceStep.instanceId, currentAssignment.id),
-          eq(taskInstanceStep.stepId, forumStep.id),
-        ),
+        where: {
+          AND: [{ instanceId: currentAssignment.id }, { stepId: forumStep.id }],
+        },
+        columns: { id: true },
       })
       const stepPayload = {
         instanceId: currentAssignment.id,
@@ -3018,10 +3157,8 @@ export async function seedAppActivityDomain(db: Db) {
     }
 
     const existingClaimLog = await db.query.taskEventLog.findFirst({
-      where: and(
-        eq(taskEventLog.instanceId, currentAssignment.id),
-        eq(taskEventLog.actionType, 1),
-      ),
+      where: { AND: [{ instanceId: currentAssignment.id }, { actionType: 1 }] },
+      columns: { id: true },
     })
 
     if (!existingClaimLog) {
@@ -3051,11 +3188,14 @@ export async function seedAppActivityDomain(db: Db) {
   const touchedTopics = [aotTopic, whiteNightTopic]
   for (const topicItem of touchedTopics) {
     const topicComments = await db.query.userComment.findMany({
-      where: and(
-        eq(userComment.targetType, 3),
-        eq(userComment.targetId, topicItem.id),
-        isNull(userComment.deletedAt),
-      ),
+      where: {
+        AND: [
+          { targetType: 3 },
+          { targetId: topicItem.id },
+          { deletedAt: { isNull: true } },
+        ],
+      },
+      columns: { userId: true, createdAt: true },
     })
     const latestComment = [...topicComments]
       .sort(
@@ -3064,16 +3204,12 @@ export async function seedAppActivityDomain(db: Db) {
       )
       .at(-1)
     const topicLikes = await db.query.userLike.findMany({
-      where: and(
-        eq(userLike.targetType, 3),
-        eq(userLike.targetId, topicItem.id),
-      ),
+      where: { AND: [{ targetType: 3 }, { targetId: topicItem.id }] },
+      columns: { id: true },
     })
     const topicFavorites = await db.query.userFavorite.findMany({
-      where: and(
-        eq(userFavorite.targetType, 3),
-        eq(userFavorite.targetId, topicItem.id),
-      ),
+      where: { AND: [{ targetType: 3 }, { targetId: topicItem.id }] },
+      columns: { id: true },
     })
 
     await db
@@ -3097,16 +3233,22 @@ export async function seedAppActivityDomain(db: Db) {
   )
   const touchedSections = touchedSectionIds.length
     ? await db.query.forumSection.findMany({
-        where: inArray(forumSection.id, touchedSectionIds),
+        where: { id: { in: touchedSectionIds } },
+        columns: { id: true, lastPostAt: true },
       })
     : []
 
   for (const section of touchedSections) {
     const sectionTopics = await db.query.forumTopic.findMany({
-      where: and(
-        eq(forumTopic.sectionId, section.id),
-        isNull(forumTopic.deletedAt),
-      ),
+      where: {
+        AND: [{ sectionId: section.id }, { deletedAt: { isNull: true } }],
+      },
+      columns: {
+        id: true,
+        commentCount: true,
+        lastCommentAt: true,
+        createdAt: true,
+      },
     })
     const lastTopic = [...sectionTopics]
       .sort((a, b) => {
@@ -3153,32 +3295,45 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const target of workTargets) {
     const likes = await db.query.userLike.findMany({
-      where: and(
-        eq(userLike.targetType, target.likeTargetType),
-        eq(userLike.targetId, target.row.id),
-      ),
+      where: {
+        AND: [
+          { targetType: target.likeTargetType },
+          { targetId: target.row.id },
+        ],
+      },
+      columns: { id: true },
     })
     const favorites = await db.query.userFavorite.findMany({
-      where: and(
-        eq(userFavorite.targetType, target.favoriteTargetType),
-        eq(userFavorite.targetId, target.row.id),
-      ),
+      where: {
+        AND: [
+          { targetType: target.favoriteTargetType },
+          { targetId: target.row.id },
+        ],
+      },
+      columns: { id: true },
     })
     const comments = await db.query.userComment.findMany({
-      where: and(
-        eq(userComment.targetType, target.contentType),
-        eq(userComment.targetId, target.row.id),
-        isNull(userComment.deletedAt),
-      ),
+      where: {
+        AND: [
+          { targetType: target.contentType },
+          { targetId: target.row.id },
+          { deletedAt: { isNull: true } },
+        ],
+      },
+      columns: { id: true },
     })
     const browseLogs = await db.query.userBrowseLog.findMany({
-      where: and(
-        eq(userBrowseLog.targetType, target.browseTargetType),
-        eq(userBrowseLog.targetId, target.row.id),
-      ),
+      where: {
+        AND: [
+          { targetType: target.browseTargetType },
+          { targetId: target.row.id },
+        ],
+      },
+      columns: { id: true },
     })
     const chapters = await db.query.workChapter.findMany({
-      where: eq(workChapter.workId, target.row.id),
+      where: { workId: target.row.id },
+      columns: { downloadCount: true },
     })
 
     await db
@@ -3217,32 +3372,44 @@ export async function seedAppActivityDomain(db: Db) {
 
   for (const target of chapterTargets) {
     const likes = await db.query.userLike.findMany({
-      where: and(
-        eq(userLike.targetType, target.likeTargetType),
-        eq(userLike.targetId, target.row.id),
-      ),
+      where: {
+        AND: [
+          { targetType: target.likeTargetType },
+          { targetId: target.row.id },
+        ],
+      },
+      columns: { id: true },
     })
     const comments = await db.query.userComment.findMany({
-      where: and(
-        eq(userComment.targetType, target.commentTargetType),
-        eq(userComment.targetId, target.row.id),
-        isNull(userComment.deletedAt),
-      ),
+      where: {
+        AND: [
+          { targetType: target.commentTargetType },
+          { targetId: target.row.id },
+          { deletedAt: { isNull: true } },
+        ],
+      },
+      columns: { id: true },
     })
     const browseLogs = await db.query.userBrowseLog.findMany({
-      where: and(
-        eq(userBrowseLog.targetType, target.browseTargetType),
-        eq(userBrowseLog.targetId, target.row.id),
-      ),
+      where: {
+        AND: [
+          { targetType: target.browseTargetType },
+          { targetId: target.row.id },
+        ],
+      },
+      columns: { id: true },
     })
     const downloads = await db.query.userDownloadRecord.findMany({
-      where: and(
-        eq(userDownloadRecord.targetType, target.downloadTargetType),
-        eq(userDownloadRecord.targetId, target.row.id),
-      ),
+      where: {
+        AND: [
+          { targetType: target.downloadTargetType },
+          { targetId: target.row.id },
+        ],
+      },
+      columns: { id: true },
     })
     const purchases = await db
-      .select()
+      .select({ id: userContentEntitlement.id })
       .from(userContentEntitlement)
       .where(
         and(
@@ -3267,24 +3434,26 @@ export async function seedAppActivityDomain(db: Db) {
   console.log('  ✓ 作品统计完成')
 
   const appUsers = await db.query.appUser.findMany({
-    where: inArray(appUser.id, [userA.id, userB.id, userC.id]),
+    where: { id: { in: [userA.id, userB.id, userC.id] } },
+    columns: { id: true },
   })
 
   for (const user of appUsers) {
     const comments = await db.query.userComment.findMany({
-      where: and(
-        eq(userComment.userId, user.id),
-        isNull(userComment.deletedAt),
-      ),
+      where: { AND: [{ userId: user.id }, { deletedAt: { isNull: true } }] },
+      columns: { id: true },
     })
     const likes = await db.query.userLike.findMany({
-      where: eq(userLike.userId, user.id),
+      where: { userId: user.id },
+      columns: { id: true },
     })
     const favorites = await db.query.userFavorite.findMany({
-      where: eq(userFavorite.userId, user.id),
+      where: { userId: user.id },
+      columns: { id: true },
     })
     const topics = await db.query.forumTopic.findMany({
-      where: and(eq(forumTopic.userId, user.id), isNull(forumTopic.deletedAt)),
+      where: { AND: [{ userId: user.id }, { deletedAt: { isNull: true } }] },
+      columns: { id: true },
     })
 
     const commentIds = comments.map((item) => item.id)
@@ -3292,31 +3461,26 @@ export async function seedAppActivityDomain(db: Db) {
 
     const commentReceivedLikes = commentIds.length
       ? await db.query.userLike.findMany({
-          where: and(
-            eq(userLike.targetType, 4),
-            inArray(userLike.targetId, commentIds),
-          ),
+          where: { AND: [{ targetType: 4 }, { targetId: { in: commentIds } }] },
+          columns: { id: true },
         })
       : []
     const topicReceivedLikes = topicIds.length
       ? await db.query.userLike.findMany({
-          where: and(
-            eq(userLike.targetType, 3),
-            inArray(userLike.targetId, topicIds),
-          ),
+          where: { AND: [{ targetType: 3 }, { targetId: { in: topicIds } }] },
+          columns: { id: true },
         })
       : []
     const topicReceivedFavorites = topicIds.length
       ? await db.query.userFavorite.findMany({
-          where: and(
-            eq(userFavorite.targetType, 3),
-            inArray(userFavorite.targetId, topicIds),
-          ),
+          where: { AND: [{ targetType: 3 }, { targetId: { in: topicIds } }] },
+          columns: { id: true },
         })
       : []
 
     const existingCount = await db.query.appUserCount.findFirst({
-      where: eq(appUserCount.userId, user.id),
+      where: { userId: user.id },
+      columns: { userId: true },
     })
 
     const countPayload = {

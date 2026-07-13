@@ -15,7 +15,12 @@ import type {
   UpdateForumHashtagHiddenInput,
   UpdateForumHashtagInput,
 } from './forum-hashtag.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
@@ -43,6 +48,30 @@ import {
   ForumHashtagCreateSourceTypeEnum,
   ForumHashtagReferenceSourceTypeEnum,
 } from './forum-hashtag.constant'
+
+type ForumHashtagAdminViewSource = Pick<
+  ForumHashtagSelect,
+  | 'id'
+  | 'slug'
+  | 'displayName'
+  | 'description'
+  | 'manualBoost'
+  | 'auditStatus'
+  | 'isHidden'
+  | 'auditById'
+  | 'auditRole'
+  | 'auditReason'
+  | 'auditAt'
+  | 'createSourceType'
+  | 'createdByUserId'
+  | 'sensitiveWordHits'
+  | 'topicRefCount'
+  | 'commentRefCount'
+  | 'followerCount'
+  | 'lastReferencedAt'
+  | 'createdAt'
+  | 'updatedAt'
+>
 
 /**
  * forum 话题资源服务。
@@ -94,10 +123,12 @@ export class ForumHashtagService {
 
   // 生成热门分值 SQL。
   private buildHotScoreSql() {
-    return sql<number>`(${this.forumHashtag.manualBoost} * 1000 + ${this.forumHashtag.topicRefCount} * 8 + ${this.forumHashtag.commentRefCount} * 3 + ${this.forumHashtag.followerCount} * 5)::int`
+    return sql<number>`(${this.forumHashtag.manualBoost} * 1000 + ${this.forumHashtag.topicRefCount} * 8 + ${this.forumHashtag.commentRefCount} * 3 + ${this.forumHashtag.followerCount} * 5)::int`.mapWith(
+      Number,
+    )
   }
 
-  private toAdminForumHashtagDto(hashtag: ForumHashtagSelect) {
+  private toAdminForumHashtagDto(hashtag: ForumHashtagAdminViewSource) {
     return {
       id: hashtag.id,
       slug: hashtag.slug,
@@ -138,7 +169,9 @@ export class ForumHashtagService {
   // 获取公开 topic 列表装配所需的用户简要信息。
   private async getTopicUserBriefMap(
     userIds: number[],
-  ): Promise<Map<number, Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl'>>> {
+  ): Promise<
+    Map<number, Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl'>>
+  > {
     const uniqueUserIds = [...new Set(userIds)]
     if (uniqueUserIds.length === 0) {
       return new Map()
@@ -161,7 +194,9 @@ export class ForumHashtagService {
   // 获取公开 topic 列表装配所需的板块简要信息。
   private async getTopicSectionBriefMap(
     sectionIds: number[],
-  ): Promise<Map<number, Pick<ForumSectionSelect, 'id' | 'name' | 'icon' | 'cover'>>> {
+  ): Promise<
+    Map<number, Pick<ForumSectionSelect, 'id' | 'name' | 'icon' | 'cover'>>
+  > {
     const uniqueSectionIds = [...new Set(sectionIds)]
     if (uniqueSectionIds.length === 0) {
       return new Map()
@@ -236,19 +271,36 @@ export class ForumHashtagService {
 
   // 更新话题隐藏状态。
   async updateHashtagHidden(input: UpdateForumHashtagHiddenInput) {
-    const result = await this.db
-      .update(this.forumHashtag)
-      .set({
-        isHidden: input.isHidden,
-      })
-      .where(
-        and(
-          eq(this.forumHashtag.id, input.id),
-          isNull(this.forumHashtag.deletedAt),
-        ),
-      )
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('forum_hashtag', input.id),
+        ])
+        const hashtag = await tx.query.forumHashtag.findFirst({
+          where: { id: input.id, deletedAt: { isNull: true } },
+          columns: { id: true },
+        })
+        if (!hashtag) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '话题不存在',
+          )
+        }
+        const result = await tx
+          .update(this.forumHashtag)
+          .set({
+            isHidden: input.isHidden,
+          })
+          .where(
+            and(
+              eq(this.forumHashtag.id, input.id),
+              isNull(this.forumHashtag.deletedAt),
+            ),
+          )
 
-    this.drizzle.assertAffectedRows(result, '话题不存在')
+        this.drizzle.assertAffectedRows(result, '话题不存在')
+      },
+    })
     return true
   }
 
@@ -257,23 +309,40 @@ export class ForumHashtagService {
     input: UpdateForumHashtagAuditStatusInput,
     options?: UpdateForumHashtagAuditStatusOptions,
   ) {
-    const result = await this.db
-      .update(this.forumHashtag)
-      .set({
-        auditStatus: input.auditStatus,
-        auditReason: input.auditReason?.trim() || null,
-        auditById: options?.auditById ?? null,
-        auditRole: options?.auditRole ?? null,
-        auditAt: new Date(),
-      })
-      .where(
-        and(
-          eq(this.forumHashtag.id, input.id),
-          isNull(this.forumHashtag.deletedAt),
-        ),
-      )
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('forum_hashtag', input.id),
+        ])
+        const hashtag = await tx.query.forumHashtag.findFirst({
+          where: { id: input.id, deletedAt: { isNull: true } },
+          columns: { id: true },
+        })
+        if (!hashtag) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '话题不存在',
+          )
+        }
+        const result = await tx
+          .update(this.forumHashtag)
+          .set({
+            auditStatus: input.auditStatus,
+            auditReason: input.auditReason?.trim() || null,
+            auditById: options?.auditById ?? null,
+            auditRole: options?.auditRole ?? null,
+            auditAt: new Date(),
+          })
+          .where(
+            and(
+              eq(this.forumHashtag.id, input.id),
+              isNull(this.forumHashtag.deletedAt),
+            ),
+          )
 
-    this.drizzle.assertAffectedRows(result, '话题不存在')
+        this.drizzle.assertAffectedRows(result, '话题不存在')
+      },
+    })
     return true
   }
 
@@ -305,7 +374,28 @@ export class ForumHashtagService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.forumHashtag.id,
+          slug: this.forumHashtag.slug,
+          displayName: this.forumHashtag.displayName,
+          description: this.forumHashtag.description,
+          manualBoost: this.forumHashtag.manualBoost,
+          auditStatus: this.forumHashtag.auditStatus,
+          isHidden: this.forumHashtag.isHidden,
+          auditById: this.forumHashtag.auditById,
+          auditRole: this.forumHashtag.auditRole,
+          auditReason: this.forumHashtag.auditReason,
+          auditAt: this.forumHashtag.auditAt,
+          createSourceType: this.forumHashtag.createSourceType,
+          createdByUserId: this.forumHashtag.createdByUserId,
+          sensitiveWordHits: this.forumHashtag.sensitiveWordHits,
+          topicRefCount: this.forumHashtag.topicRefCount,
+          commentRefCount: this.forumHashtag.commentRefCount,
+          followerCount: this.forumHashtag.followerCount,
+          lastReferencedAt: this.forumHashtag.lastReferencedAt,
+          createdAt: this.forumHashtag.createdAt,
+          updatedAt: this.forumHashtag.updatedAt,
+        })
         .from(this.forumHashtag)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -327,6 +417,28 @@ export class ForumHashtagService {
       where: {
         id,
         deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        slug: true,
+        displayName: true,
+        description: true,
+        manualBoost: true,
+        auditStatus: true,
+        isHidden: true,
+        auditById: true,
+        auditRole: true,
+        auditReason: true,
+        auditAt: true,
+        createSourceType: true,
+        createdByUserId: true,
+        sensitiveWordHits: true,
+        topicRefCount: true,
+        commentRefCount: true,
+        followerCount: true,
+        lastReferencedAt: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
 

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.type'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
@@ -32,52 +32,53 @@ export class ForumTopicBrowseLogResolver
   }
 
   // 在浏览日志事务中同步主题浏览计数增量。
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
-    async (tx, targetId, delta) => {
-      await this.forumCounterService.updateTopicViewCount(tx, targetId, delta)
-    }
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void> = async (tx, targetId, delta) => {
+    await this.forumCounterService.updateTopicViewCount(tx, targetId, delta)
+  }
 
   // 校验主题仍公开可见，否则按资源不存在处理。
-  ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
-    tx,
-    targetId,
-  ) => {
-    const topic = await tx.query.forumTopic.findFirst({
-      where: {
-        id: targetId,
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-      with: {
-        section: {
-          columns: {
-            groupId: true,
-            deletedAt: true,
-            isEnabled: true,
-          },
-          with: {
-            group: {
-              columns: {
-                isEnabled: true,
-                deletedAt: true,
+  ensureTargetValid: (tx: DbExecutor, targetId: number) => Promise<void> =
+    async (tx, targetId) => {
+      const topic = await tx.query.forumTopic.findFirst({
+        where: {
+          id: targetId,
+          auditStatus: AuditStatusEnum.APPROVED,
+          isHidden: false,
+          deletedAt: { isNull: true },
+        },
+        columns: { id: true },
+        with: {
+          section: {
+            columns: {
+              groupId: true,
+              deletedAt: true,
+              isEnabled: true,
+            },
+            with: {
+              group: {
+                columns: {
+                  isEnabled: true,
+                  deletedAt: true,
+                },
               },
             },
           },
         },
-      },
-    })
+      })
 
-    if (
-      !topic ||
-      !topic.section ||
-      !this.forumPermissionService.isSectionPubliclyAvailable(topic.section)
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '帖子不存在',
-      )
+      if (
+        !topic ||
+        !topic.section ||
+        !this.forumPermissionService.isSectionPubliclyAvailable(topic.section)
+      ) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '帖子不存在',
+        )
+      }
     }
-  }
 }

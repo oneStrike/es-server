@@ -1,12 +1,15 @@
 import type { Db } from '@db/core'
 import type { AppConfigSelect } from '@db/schema'
-import { DrizzleService } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  relationIntegrityLock,
+} from '@db/core'
 import { Injectable } from '@nestjs/common'
-import { eq, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { DEFAULT_APP_CONFIG } from './config.constant'
 import { UpdateAppConfigDto } from './dto/config.dto'
 
-const APP_CONFIG_INIT_LOCK_KEY = 1_048_001
 const APP_CONFIG_KEY = 'global'
 
 /**
@@ -25,6 +28,27 @@ export class AppConfigService {
   // 应用配置表
   private get appConfig() {
     return this.drizzle.schema.appConfig
+  }
+
+  // 全局配置的稳定完整 read contract；禁止单例表新增列被隐式读取。
+  private buildAppConfigReadSelect() {
+    return {
+      id: this.appConfig.id,
+      configKey: this.appConfig.configKey,
+      appName: this.appConfig.appName,
+      appDesc: this.appConfig.appDesc,
+      appLogo: this.appConfig.appLogo,
+      onboardingImage: this.appConfig.onboardingImage,
+      themeColor: this.appConfig.themeColor,
+      secondaryColor: this.appConfig.secondaryColor,
+      optionalThemeColors: this.appConfig.optionalThemeColors,
+      enableMaintenanceMode: this.appConfig.enableMaintenanceMode,
+      maintenanceMessage: this.appConfig.maintenanceMessage,
+      version: this.appConfig.version,
+      updatedById: this.appConfig.updatedById,
+      createdAt: this.appConfig.createdAt,
+      updatedAt: this.appConfig.updatedAt,
+    }
   }
 
   // 获取当前生效配置。 若数据库中尚未存在配置记录，会先落一条默认配置并返回，避免上层处理“未初始化”分支。
@@ -56,7 +80,7 @@ export class AppConfigService {
   // 读取当前最新一条配置记录。 所有公开读写入口都基于这条记录工作，保持“单例配置”的稳定语义。
   private async findLatestConfig(db: Db = this.db) {
     const configs = await db
-      .select()
+      .select(this.buildAppConfigReadSelect())
       .from(this.appConfig)
       .where(eq(this.appConfig.configKey, APP_CONFIG_KEY))
       .limit(1)
@@ -64,27 +88,29 @@ export class AppConfigService {
     return configs[0] ?? null
   }
 
-  // 空表初始化时使用事务级 advisory lock 收口并发竞争，避免首访并发插入多条默认配置。
+  // 空表初始化时使用规范化关系锁收口并发竞争，避免首访并发插入多条默认配置。
   private async ensureActiveConfig() {
-    return this.drizzle.withTransaction(async (tx) => {
-      await tx.execute(
-        sql`SELECT pg_advisory_xact_lock(${APP_CONFIG_INIT_LOCK_KEY})`,
-      )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          relationIntegrityLock('app-config', APP_CONFIG_KEY),
+        ])
 
-      const existingConfig = await this.findLatestConfig(tx)
-      if (existingConfig) {
-        return existingConfig
-      }
+        const existingConfig = await this.findLatestConfig(tx)
+        if (existingConfig) {
+          return existingConfig
+        }
 
-      const [newConfig] = await tx
-        .insert(this.appConfig)
-        .values({
-          ...DEFAULT_APP_CONFIG,
-          configKey: APP_CONFIG_KEY,
-        })
-        .returning()
+        const [newConfig] = await tx
+          .insert(this.appConfig)
+          .values({
+            ...DEFAULT_APP_CONFIG,
+            configKey: APP_CONFIG_KEY,
+          })
+          .returning()
 
-      return newConfig
+        return newConfig
+      },
     })
   }
 

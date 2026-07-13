@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type {
   PaymentOrderSelect,
   PaymentProviderConfigInsert,
@@ -20,7 +20,7 @@ import type {
 } from '../payment.constant'
 
 /** 支付域事务上下文，供结算链路显式透传。 */
-export type PaymentTx = Db
+export type PaymentTx = DbTransaction
 
 /**
  * 创建支付订单的内部聚合输入，外部 DTO 字段与业务目标快照在 service 内收敛。
@@ -86,12 +86,37 @@ export interface PaymentProviderSignatureInput {
   signature: string
 }
 
+/** Provider 下单、验签、查询和退款实际消费的订单不可变快照。 */
+export type PaymentProviderOrderSnapshot = Pick<
+  PaymentOrderSelect,
+  | 'channel'
+  | 'credentialVersionRef'
+  | 'orderNo'
+  | 'payableAmount'
+  | 'paymentScene'
+  | 'providerConfigId'
+  | 'status'
+>
+
+/** Provider 下单和验签实际消费的配置快照，不包含管理端写入字段。 */
+export type PaymentProviderConfigSnapshot = Pick<
+  PaymentProviderConfigSelect,
+  | 'appId'
+  | 'channel'
+  | 'configMetadata'
+  | 'credentialVersionRef'
+  | 'id'
+  | 'mchId'
+  | 'notifyUrl'
+  | 'returnUrl'
+>
+
 /**
  * 支付 provider 创建订单所需的订单、配置和客户端场景上下文。
  */
 export interface PaymentProviderCreateOrderInput {
-  order: PaymentOrderSelect
-  config: PaymentProviderConfigSelect
+  order: PaymentProviderOrderSnapshot
+  config: PaymentProviderConfigSnapshot
   sceneContext: CreatePaymentOrderBaseDto
   credentialMaterial?: PaymentProviderCredentialMaterial
 }
@@ -100,8 +125,8 @@ export interface PaymentProviderCreateOrderInput {
  * 支付 provider 回调、查询和退款解析所需的订单配置上下文。
  */
 export interface PaymentProviderNotifyInput {
-  order: PaymentOrderSelect
-  config: PaymentProviderConfigSelect
+  order: PaymentProviderOrderSnapshot
+  config: PaymentProviderConfigSnapshot
   payload?: Record<string, unknown>
   credentialMaterial?: PaymentProviderCredentialMaterial
 }
@@ -166,8 +191,8 @@ export interface PaymentProviderAdapter {
   parseNotify: (
     input: PaymentProviderNotifyInput,
   ) => PaymentProviderParsedNotify
-  queryOrder: (order: PaymentOrderSelect) => Record<string, unknown>
-  refund: (order: PaymentOrderSelect) => Record<string, unknown>
+  queryOrder: (order: PaymentProviderOrderSnapshot) => Record<string, unknown>
+  refund: (order: PaymentProviderOrderSnapshot) => Record<string, unknown>
   parseRefundNotify: (
     input: PaymentProviderNotifyInput,
   ) => PaymentRefundParsedNotify
@@ -175,8 +200,7 @@ export interface PaymentProviderAdapter {
 
 /** 支付提供者配置写入 DTO 联合类型，涵盖创建和更新两种输入。 */
 export type PaymentProviderConfigWriteDto =
-  | CreatePaymentProviderConfigDto
-  | Omit<UpdatePaymentProviderConfigDto, 'id'>
+  CreatePaymentProviderConfigDto | Omit<UpdatePaymentProviderConfigDto, 'id'>
 
 /** 支付提供者配置写入值，用于落库前的部分字段组装。 */
 export type PaymentProviderConfigWriteValues =

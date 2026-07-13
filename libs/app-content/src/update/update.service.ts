@@ -44,6 +44,70 @@ export class AppUpdateService {
     return this.drizzle.schema.appUpdateRelease
   }
 
+  // 后台版本列表只读取当前列表 contract，安装包地址仅用于派生 hasPackageUrl。
+  private buildAppUpdateReleasePageSelect() {
+    return {
+      id: this.appUpdateRelease.id,
+      platform: this.appUpdateRelease.platform,
+      versionName: this.appUpdateRelease.versionName,
+      buildCode: this.appUpdateRelease.buildCode,
+      forceUpdate: this.appUpdateRelease.forceUpdate,
+      isPublished: this.appUpdateRelease.isPublished,
+      publishedAt: this.appUpdateRelease.publishedAt,
+      createdAt: this.appUpdateRelease.createdAt,
+      updatedAt: this.appUpdateRelease.updatedAt,
+      packageUrl: this.appUpdateRelease.packageUrl,
+    }
+  }
+
+  // 后台详情的完整当前 contract，逐项固定，避免 release 表演进时默认查询新增字段。
+  private getAppUpdateReleaseDetailColumns() {
+    return {
+      id: true,
+      platform: true,
+      versionName: true,
+      buildCode: true,
+      releaseNotes: true,
+      forceUpdate: true,
+      packageSourceType: true,
+      packageUrl: true,
+      packageOriginalName: true,
+      packageFileSize: true,
+      packageMimeType: true,
+      popupBackgroundImage: true,
+      popupBackgroundPosition: true,
+      isPublished: true,
+      publishedAt: true,
+      createdById: true,
+      updatedById: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  // 写链只需要发布状态、平台和分发地址，不能借后台详情读取完整发布行。
+  private getAppUpdateReleaseLifecycleColumns() {
+    return {
+      id: true,
+      platform: true,
+      isPublished: true,
+      packageUrl: true,
+    } as const
+  }
+
+  // app 更新检查只取客户端响应真正消费的字段。
+  private getLatestPublishedReleaseColumns() {
+    return {
+      forceUpdate: true,
+      versionName: true,
+      buildCode: true,
+      releaseNotes: true,
+      packageUrl: true,
+      popupBackgroundImage: true,
+      popupBackgroundPosition: true,
+    } as const
+  }
+
   // 分页查询版本发布列表。 列表接口只返回后台概览字段，并补齐分发目标摘要。
   async findPage(queryDto: QueryAppUpdateReleaseDto) {
     const conditions: SQL[] = []
@@ -83,7 +147,7 @@ export class AppUpdateService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildAppUpdateReleasePageSelect())
         .from(this.appUpdateRelease)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -112,7 +176,7 @@ export class AppUpdateService {
 
   // 查询版本发布详情。 详情接口直接回填版本配置，避免管理端自行补默认值。
   async findDetail(dto: IdDto): Promise<AppUpdateReleaseDetailDto> {
-    const release = await this.findReleaseById(dto.id)
+    const release = await this.findReleaseDetailById(dto.id)
     if (!release) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -129,12 +193,14 @@ export class AppUpdateService {
 
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          await tx.insert(this.appUpdateRelease).values({
-            ...normalized.release,
-            createdById: userId,
-            updatedById: userId,
-          })
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await tx.insert(this.appUpdateRelease).values({
+              ...normalized.release,
+              createdById: userId,
+              updatedById: userId,
+            })
+          },
         }),
       { duplicate: '同平台构建号已存在' },
     )
@@ -163,16 +229,18 @@ export class AppUpdateService {
 
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          const result = await tx
-            .update(this.appUpdateRelease)
-            .set({
-              ...normalized.release,
-              updatedById: userId,
-            })
-            .where(eq(this.appUpdateRelease.id, id))
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const result = await tx
+              .update(this.appUpdateRelease)
+              .set({
+                ...normalized.release,
+                updatedById: userId,
+              })
+              .where(eq(this.appUpdateRelease.id, id))
 
-          this.drizzle.assertAffectedRows(result, '更新版本不存在')
+            this.drizzle.assertAffectedRows(result, '更新版本不存在')
+          },
         }),
       { duplicate: '同平台构建号已存在' },
     )
@@ -219,30 +287,32 @@ export class AppUpdateService {
 
     this.assertDistributionTargets(release)
 
-    await this.drizzle.withTransaction(async (tx) => {
-      await tx
-        .update(this.appUpdateRelease)
-        .set({
-          isPublished: false,
-          updatedById: userId,
-        })
-        .where(
-          and(
-            eq(this.appUpdateRelease.platform, release.platform),
-            eq(this.appUpdateRelease.isPublished, true),
-          ),
-        )
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await tx
+          .update(this.appUpdateRelease)
+          .set({
+            isPublished: false,
+            updatedById: userId,
+          })
+          .where(
+            and(
+              eq(this.appUpdateRelease.platform, release.platform),
+              eq(this.appUpdateRelease.isPublished, true),
+            ),
+          )
 
-      const result = await tx
-        .update(this.appUpdateRelease)
-        .set({
-          isPublished: true,
-          publishedAt: new Date(),
-          updatedById: userId,
-        })
-        .where(eq(this.appUpdateRelease.id, dto.id))
+        const result = await tx
+          .update(this.appUpdateRelease)
+          .set({
+            isPublished: true,
+            publishedAt: new Date(),
+            updatedById: userId,
+          })
+          .where(eq(this.appUpdateRelease.id, dto.id))
 
-      this.drizzle.assertAffectedRows(result, '更新版本不存在')
+        this.drizzle.assertAffectedRows(result, '更新版本不存在')
+      },
     })
 
     return true
@@ -286,9 +356,18 @@ export class AppUpdateService {
   private async findReleaseById(id: number) {
     const release = await this.db.query.appUpdateRelease.findFirst({
       where: { id },
+      columns: this.getAppUpdateReleaseLifecycleColumns(),
     })
 
     return release
+  }
+
+  // 仅供后台详情使用的读取器；与 mutation 生命周期读取分离，防止写链被详情 contract 绑死。
+  private async findReleaseDetailById(id: number) {
+    return this.db.query.appUpdateRelease.findFirst({
+      where: { id },
+      columns: this.getAppUpdateReleaseDetailColumns(),
+    })
   }
 
   // 查询指定平台当前最新发布版本。 若同平台历史上存在多个已发布版本，统一以 buildCode 和 id 倒序收口到最新一条。
@@ -302,6 +381,7 @@ export class AppUpdateService {
         operators.desc(appUpdateRelease.buildCode),
         operators.desc(appUpdateRelease.id),
       ],
+      columns: this.getLatestPublishedReleaseColumns(),
     })
 
     return release
@@ -389,7 +469,9 @@ export class AppUpdateService {
   }
 
   // 发布前校验至少存在一种分发目标。
-  private assertDistributionTargets(release: AppUpdateReleaseSelect) {
+  private assertDistributionTargets(
+    release: Pick<AppUpdateReleaseSelect, 'packageUrl'>,
+  ) {
     const hasDistributionTarget = Boolean(release.packageUrl)
 
     if (!hasDistributionTarget) {

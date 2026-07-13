@@ -56,11 +56,27 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
   },
   forumHashtag: {
     references: r.many.forumHashtagReference(),
+    createdByUser: r.one.appUser({
+      from: r.forumHashtag.createdByUserId,
+      to: r.appUser.id,
+    }),
   },
   forumHashtagReference: {
     hashtag: r.one.forumHashtag({
       from: r.forumHashtagReference.hashtagId,
       to: r.forumHashtag.id,
+    }),
+    section: r.one.forumSection({
+      from: r.forumHashtagReference.sectionId,
+      to: r.forumSection.id,
+    }),
+    topic: r.one.forumTopic({
+      from: r.forumHashtagReference.topicId,
+      to: r.forumTopic.id,
+    }),
+    user: r.one.appUser({
+      from: r.forumHashtagReference.userId,
+      to: r.appUser.id,
     }),
   },
   forumModeratorSection: {
@@ -94,6 +110,10 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumModerator.id.through(r.forumModeratorSection.moderatorId),
     }),
     applications: r.many.forumModeratorApplication(),
+    hashtagReferences: r.many.forumHashtagReference({
+      from: r.forumSection.id,
+      to: r.forumHashtagReference.sectionId,
+    }),
     work: r.one.work({
       from: r.forumSection.id,
       to: r.work.forumSectionId,
@@ -122,6 +142,10 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       from: r.forumTopic.id,
       to: r.forumSection.lastTopicId,
       alias: 'LastTopic',
+    }),
+    hashtagReferences: r.many.forumHashtagReference({
+      from: r.forumTopic.id,
+      to: r.forumHashtagReference.topicId,
     }),
   },
   forumUserActionLog: {

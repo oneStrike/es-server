@@ -134,14 +134,18 @@ export const appUser = snakeCase.table(
     index('app_user_gender_type_idx').on(table.genderType),
     index('app_user_created_at_idx').on(table.createdAt),
     index('app_user_last_login_at_idx').on(table.lastLoginAt),
-    index('app_user_phone_number_idx').on(table.phoneNumber),
-    index('app_user_email_address_idx').on(table.emailAddress),
     index('app_user_status_idx').on(table.status),
     index('app_user_level_id_idx').on(table.levelId),
     index('app_user_deleted_at_idx').on(table.deletedAt),
     index('app_user_active_fanout_scan_idx')
       .on(table.id)
       .where(sql`${table.isEnabled} = true and ${table.deletedAt} is null`),
+    /**
+     * 后台用户目录默认分页索引：匹配 active scope 的 id 稳定倒序与 exact total。
+     */
+    index('app_user_active_page_id_idx')
+      .on(table.id.desc())
+      .where(sql`${table.deletedAt} is null`),
     check(
       'app_user_gender_type_valid_chk',
       sql`${table.genderType} in (0, 1, 2, 3, 4)`,

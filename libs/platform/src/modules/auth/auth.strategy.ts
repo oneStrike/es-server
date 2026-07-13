@@ -1,4 +1,7 @@
-import type { AuthConfigInterface, RsaConfigInterface } from '@libs/platform/types'
+import type {
+  AuthConfigInterface,
+  RsaConfigInterface,
+} from '@libs/platform/types'
 import type { ITokenStorageService, JwtPayload } from './auth.type'
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'

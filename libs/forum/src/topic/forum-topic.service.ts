@@ -1,5 +1,4 @@
-import type { Db } from '@db/core'
-import type { ForumTopicSelect } from '@db/schema'
+import type { DbExecutor, DbTransaction } from '@db/core'
 import type {
   ApprovedTopicRewardParams,
   FollowingPublicForumTopicQuery,
@@ -8,6 +7,8 @@ import type {
   PublicForumTopicQueryWithUser,
   TopicAuditActorOptions,
   TopicGovernanceSnapshot,
+  TopicMutationSnapshot,
+  TopicUpdatedSnapshot,
   UpdateTopicStatusData,
   UpdateTopicStatusOptions,
 } from './forum-topic.type'
@@ -39,7 +40,7 @@ export class ForumTopicService {
   ) {}
 
   // 在既有事务中获取仍可治理的主题快照。
-  async getActiveTopicByIdInTx(tx: Db, id: number) {
+  async getActiveTopicByIdInTx(tx: DbTransaction, id: number) {
     return this.commandService.getActiveTopicByIdInTx(tx, id)
   }
 
@@ -101,7 +102,10 @@ export class ForumTopicService {
     actorUserId?: number,
     options: {
       recordUserActionLog?: boolean
-      afterUpdateInTx?: (tx: Db, nextTopic: ForumTopicSelect) => Promise<void>
+      afterUpdateInTx?: (
+        tx: DbExecutor,
+        nextTopic: TopicUpdatedSnapshot,
+      ) => Promise<void>
     } = {},
   ) {
     return this.commandService.updateTopic(
@@ -114,8 +118,8 @@ export class ForumTopicService {
 
   // 在既有事务中删除当前主题快照。
   async deleteTopicWithCurrentInTx(
-    tx: Db,
-    topic: ForumTopicSelect,
+    tx: DbTransaction,
+    topic: TopicMutationSnapshot,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
     options: { recordUserActionLog?: boolean } = {},
@@ -131,8 +135,8 @@ export class ForumTopicService {
 
   // 在既有事务中恢复当前已删除主题快照。
   async restoreTopicWithCurrentInTx(
-    tx: Db,
-    topic: ForumTopicSelect,
+    tx: DbTransaction,
+    topic: TopicMutationSnapshot,
     input: RestoreForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
@@ -164,7 +168,7 @@ export class ForumTopicService {
 
   // 在既有事务中移动主题。
   async moveTopicInTx(
-    tx: Db,
+    tx: DbTransaction,
     input: MoveForumTopicDto,
     currentSectionId?: number,
   ) {
@@ -173,7 +177,7 @@ export class ForumTopicService {
 
   // 在既有事务中更新主题治理状态字段。
   async updateTopicStatusInTx(
-    tx: Db,
+    tx: DbTransaction,
     id: number,
     updateData: UpdateTopicStatusData,
     options?: UpdateTopicStatusOptions,
@@ -195,7 +199,7 @@ export class ForumTopicService {
 
   // 在既有事务中更新主题置顶状态。
   async updateTopicPinnedInTx(
-    tx: Db,
+    tx: DbTransaction,
     updateTopicPinnedDto: UpdateForumTopicPinnedDto,
   ) {
     return this.commandService.updateTopicPinnedInTx(tx, updateTopicPinnedDto)
@@ -210,7 +214,7 @@ export class ForumTopicService {
 
   // 在既有事务中更新主题精华状态。
   async updateTopicFeaturedInTx(
-    tx: Db,
+    tx: DbTransaction,
     updateTopicFeaturedDto: UpdateForumTopicFeaturedDto,
   ) {
     return this.commandService.updateTopicFeaturedInTx(
@@ -226,7 +230,7 @@ export class ForumTopicService {
 
   // 在既有事务中更新主题锁定状态。
   async updateTopicLockedInTx(
-    tx: Db,
+    tx: DbTransaction,
     updateTopicLockedDto: UpdateForumTopicLockedDto,
   ) {
     return this.commandService.updateTopicLockedInTx(tx, updateTopicLockedDto)
@@ -239,7 +243,7 @@ export class ForumTopicService {
 
   // 在既有事务中更新主题隐藏状态。
   async updateTopicHiddenInTx(
-    tx: Db,
+    tx: DbTransaction,
     updateTopicHiddenDto: UpdateForumTopicHiddenDto,
     currentTopic?: TopicGovernanceSnapshot,
   ) {
@@ -263,7 +267,7 @@ export class ForumTopicService {
 
   // 在既有事务中更新主题审核状态。
   async updateTopicAuditStatusInTx(
-    tx: Db,
+    tx: DbTransaction,
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
     options?: TopicAuditActorOptions,
     currentTopic?: TopicGovernanceSnapshot,

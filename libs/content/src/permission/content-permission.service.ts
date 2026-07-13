@@ -1,3 +1,4 @@
+import type { WorkChapterSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import {
   BusinessErrorCode,
@@ -23,6 +24,10 @@ import {
   ResolvedChapterPermission,
 } from './content-permission.type'
 import { MembershipEntitlementService } from './membership-entitlement.service'
+
+type ChapterAccessColumnSelection = Partial<
+  Record<keyof WorkChapterSelect, boolean>
+>
 
 /**
  * 内容权限服务
@@ -68,6 +73,23 @@ export class ContentPermissionService {
   // 章节表。
   get workChapter() {
     return this.drizzle.schema.workChapter
+  }
+
+  private getChapterAccessColumns(select?: ChapterAccessColumnSelection) {
+    const selectedColumns = Object.fromEntries(
+      Object.keys(select ?? {}).map((key) => [key, true]),
+    ) as ChapterAccessColumnSelection
+
+    return {
+      ...selectedColumns,
+      workId: true,
+      workType: true,
+      viewRule: true,
+      price: true,
+      canDownload: true,
+      canComment: true,
+      isPreview: true,
+    } as const
   }
 
   // 解析作品级访问权限，仅读取未软删除作品的权限快照，缺失时直接抛出业务异常，避免下游在空对象上继续推导权限。
@@ -243,13 +265,14 @@ export class ContentPermissionService {
   }
 
   // 检查章节访问权限（公开接口），用于业务层调用，校验用户是否有权访问指定章节。
-  async checkChapterAccess<T extends Record<string, boolean>>(
+  async checkChapterAccess(
     chapterId: number,
     userId?: number,
-    select?: T,
+    select?: ChapterAccessColumnSelection,
   ): Promise<ChapterAccessResult<Record<string, unknown>>> {
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId, deletedAt: { isNull: true } },
+      columns: this.getChapterAccessColumns(select),
     })
 
     if (!chapter) {
@@ -260,9 +283,7 @@ export class ContentPermissionService {
     }
 
     // 解析权限配置
-    const permission = await this.resolveChapterPermissionFromData(
-      chapter,
-    )
+    const permission = await this.resolveChapterPermissionFromData(chapter)
     if (
       !userId &&
       !permission.isPreview &&
@@ -291,7 +312,7 @@ export class ContentPermissionService {
               (chapter as Record<string, unknown>)[key],
             ]),
           )
-        : (chapter),
+        : chapter,
     }
   }
 
@@ -301,8 +322,8 @@ export class ContentPermissionService {
   ): ResolvedChapterPermission {
     const viewRule =
       chapter.viewRule === WorkViewPermissionEnum.INHERIT && inheritedWork
-        ? (inheritedWork.viewRule)
-        : (chapter.viewRule)
+        ? inheritedWork.viewRule
+        : chapter.viewRule
     const purchasePrice =
       chapter.viewRule === WorkViewPermissionEnum.INHERIT && inheritedWork
         ? inheritedWork.chapterPrice

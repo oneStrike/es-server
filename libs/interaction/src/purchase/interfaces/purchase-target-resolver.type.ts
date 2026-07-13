@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { PurchaseTargetTypeEnum } from '../purchase.constant'
 
 /**
@@ -20,5 +20,9 @@ export interface IPurchaseTargetResolver {
   /**
    * 更新目标的购买统计数
    */
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void>
 }

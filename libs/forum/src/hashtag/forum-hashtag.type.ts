@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { ForumHashtagSelect } from '@db/schema'
 import type { BodyDoc, BodyInlineNode } from '@libs/interaction/body/body.type'
 import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
@@ -101,7 +101,7 @@ export interface ForumHashtagLinkedContentPageQuery {
  * forum 话题正文物化输入。
  */
 export interface MaterializeForumHashtagBodyInTxInput {
-  tx: Db
+  tx: DbExecutor
   body: BodyDoc
   actorUserId: number
   createSourceType: ForumHashtagCreateSourceTypeEnum
@@ -119,7 +119,7 @@ export interface MaterializeForumHashtagBodyResult {
  * forum 话题引用事实替换输入。
  */
 export interface ReplaceForumHashtagReferencesInTxInput {
-  tx: Db
+  tx: DbExecutor
   sourceType: ForumHashtagReferenceSourceTypeEnum
   sourceId: number
   topicId: number
@@ -135,7 +135,7 @@ export interface ReplaceForumHashtagReferencesInTxInput {
  * forum 话题引用事实删除输入。
  */
 export interface DeleteForumHashtagReferencesInTxInput {
-  tx: Db
+  tx: DbExecutor
   sourceType: ForumHashtagReferenceSourceTypeEnum
   sourceIds: number[]
 }
@@ -144,7 +144,7 @@ export interface DeleteForumHashtagReferencesInTxInput {
  * forum 话题引用可见性同步输入。
  */
 export interface SyncForumHashtagReferenceVisibilityInTxInput {
-  tx: Db
+  tx: DbExecutor
   sourceType: ForumHashtagReferenceSourceTypeEnum
   sourceId: number
   sourceAuditStatus: AuditStatusEnum

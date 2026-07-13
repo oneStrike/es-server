@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 
 import type { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.type'
 import { DrizzleService } from '@db/core'
@@ -40,7 +40,7 @@ export class WorkNovelCommentResolver
   }
 
   // 应用评论计数增量，更新小说作品的评论数。
-  async applyCountDelta(tx: Db, targetId: number, delta: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number, delta: number) {
     await this.workCounterService.updateWorkCommentCount(
       tx,
       targetId,
@@ -51,7 +51,7 @@ export class WorkNovelCommentResolver
   }
 
   // 校验是否允许对该小说作品发表评论，检查作品是否存在、是否允许评论。
-  async ensureCanComment(tx: Db, targetId: number) {
+  async ensureCanComment(tx: DbExecutor, targetId: number) {
     const target = await tx.query.work.findFirst({
       where: {
         id: targetId,
@@ -77,7 +77,7 @@ export class WorkNovelCommentResolver
   }
 
   // 解析小说作品的元信息，获取作品作者ID，用于发送被评论通知。
-  async resolveMeta(tx: Db, targetId: number) {
+  async resolveMeta(tx: DbExecutor, targetId: number) {
     const [author] = await tx
       .select({
         authorId: this.workAuthorRelation.authorId,

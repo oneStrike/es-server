@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type {
   ContentImportAttemptCounters,
   ContentImportAttemptCountersWithRetry,
@@ -69,7 +69,7 @@ export class ThirdPartyComicSyncWorkflowHandler
   async prepareRetry(
     context: WorkflowRetryContext,
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) {
     return this.contentImportService.prepareRetryItems(
       context.jobId,
@@ -83,7 +83,7 @@ export class ThirdPartyComicSyncWorkflowHandler
   async recoverExpiredAttempt(
     context: ThirdPartyComicSyncExpiredAttemptContext,
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) {
     return this.contentImportService.recoverExpiredAttempt(
       context.jobId,
@@ -133,8 +133,8 @@ export class ThirdPartyComicSyncWorkflowHandler
         )
         await this.contentImportService.replaceThirdPartySyncItems(
           context.jobId,
+          context.attemptId,
           prepared.plans,
-          context.attemptNo,
         )
         target = {
           sourceBindingId: prepared.sourceBindingId,

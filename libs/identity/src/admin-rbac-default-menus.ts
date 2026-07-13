@@ -1,5 +1,32 @@
-import type { AdminDefaultMenu } from './admin-rbac.type'
-import { AdminMenuType } from '@libs/identity/admin-rbac.constant'
+import { AdminMenuType } from './admin-rbac.constant'
+
+/** 管理端首次 bootstrap 使用的默认菜单配置。 */
+export interface AdminDefaultMenu {
+  /** 菜单编码。 */
+  code: string
+  /** 父级菜单编码。 */
+  parentCode?: string
+  /** 菜单类型（1=目录，2=菜单）。 */
+  type: AdminMenuType
+  /** 菜单标题。 */
+  title: string
+  /** 路由路径。 */
+  path: string
+  /** 路由名称。 */
+  name: string
+  /** 前端组件键。 */
+  component?: string
+  /** 重定向路径。 */
+  redirect?: string
+  /** 菜单图标。 */
+  icon?: string
+  /** 排序值。 */
+  sortOrder: number
+  /** 是否显示。 */
+  isVisible?: boolean
+  /** 是否缓存页面。 */
+  keepAlive?: boolean
+}
 
 /**
  * 管理端首次启动时补齐的默认菜单骨架。

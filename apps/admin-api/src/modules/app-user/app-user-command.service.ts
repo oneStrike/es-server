@@ -1,5 +1,10 @@
+import type { DbTransaction } from '@db/core'
 import type { AppUserProfileUpdateInput } from './app-user-command.type'
-import { DrizzleService } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+} from '@db/core'
 import { AppUserTokenStorageService } from '@libs/identity/token/app-user-token-storage.service'
 import { BusinessErrorCode, GenderEnum } from '@libs/platform/constant'
 
@@ -50,7 +55,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     try {
       await this.drizzle.withErrorHandling(async () =>
         this.db.transaction(async (tx) => {
-          const [defaultLevel] = await tx
+          let [defaultLevel] = await tx
             .select({ id: this.userLevelRuleTable.id })
             .from(this.userLevelRuleTable)
             .where(eq(this.userLevelRuleTable.isEnabled, true))
@@ -59,6 +64,23 @@ export class AppUserCommandService extends AppUserServiceSupport {
               asc(this.userLevelRuleTable.id),
             )
             .limit(1)
+
+          if (defaultLevel) {
+            await acquireIntegrityLocks(tx, [
+              tableIntegrityLock('user_level_rule', defaultLevel.id),
+            ])
+            const [lockedDefaultLevel] = await tx
+              .select({ id: this.userLevelRuleTable.id })
+              .from(this.userLevelRuleTable)
+              .where(
+                and(
+                  eq(this.userLevelRuleTable.id, defaultLevel.id),
+                  eq(this.userLevelRuleTable.isEnabled, true),
+                ),
+              )
+              .limit(1)
+            defaultLevel = lockedDefaultLevel
+          }
 
           const [created] = await tx
             .insert(this.appUserTable)
@@ -102,7 +124,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     adminUserId: number,
     dto: UpdateAdminAppUserProfileDto,
   ) {
-    await this.userCoreService.ensureUserExists(dto.id)
+    await this.userCoreService.assertActiveUserExists(dto.id)
 
     const userData: AppUserProfileUpdateInput = {}
     if (dto.nickname !== undefined) {
@@ -163,18 +185,30 @@ export class AppUserCommandService extends AppUserServiceSupport {
     adminUserId: number,
     dto: UpdateAdminAppUserEnabledDto,
   ) {
-    await this.userCoreService.ensureUserExists(dto.id)
+    await this.userCoreService.assertActiveUserExists(dto.id)
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockAndRecheckAppUserReferenceState(
+          tx,
+          dto.id,
+          false,
+          '应用用户不存在',
+        )
+        const updatedRows = await tx
           .update(this.appUserTable)
           .set({
             isEnabled: dto.isEnabled,
           })
-          .where(eq(this.appUserTable.id, dto.id)),
-      { notFound: '用户不存在' },
-    )
+          .where(
+            and(
+              eq(this.appUserTable.id, dto.id),
+              isNull(this.appUserTable.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(updatedRows, '用户不存在')
+      },
+    })
     if (!dto.isEnabled) {
       await this.appUserTokenStorageService.revokeAllByUserId(
         dto.id,
@@ -189,7 +223,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     adminUserId: number,
     dto: UpdateAdminAppUserStatusDto,
   ) {
-    await this.userCoreService.ensureUserExists(dto.id)
+    await this.userCoreService.assertActiveUserExists(dto.id)
 
     const isNormal = dto.status === UserStatusEnum.NORMAL
     const isTimed =
@@ -208,18 +242,30 @@ export class AppUserCommandService extends AppUserServiceSupport {
       throw new BadRequestException('截止时间必须晚于当前时间')
     }
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockAndRecheckAppUserReferenceState(
+          tx,
+          dto.id,
+          false,
+          '应用用户不存在',
+        )
+        const updatedRows = await tx
           .update(this.appUserTable)
           .set({
             status: dto.status,
             banReason: isNormal ? null : dto.banReason?.trim(),
             banUntil: isNormal || isPermanent ? null : dto.banUntil,
           })
-          .where(eq(this.appUserTable.id, dto.id)),
-      { notFound: '用户不存在' },
-    )
+          .where(
+            and(
+              eq(this.appUserTable.id, dto.id),
+              isNull(this.appUserTable.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(updatedRows, '用户不存在')
+      },
+    })
     if (
       dto.status === UserStatusEnum.BANNED ||
       dto.status === UserStatusEnum.PERMANENT_BANNED
@@ -234,9 +280,15 @@ export class AppUserCommandService extends AppUserServiceSupport {
 
   // 软删除 APP 用户。
   async deleteAppUser(adminUserId: number, userId: number) {
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockAndRecheckAppUserReferenceState(
+          tx,
+          userId,
+          false,
+          '用户不存在',
+        )
+        const updatedRows = await tx
           .update(this.appUserTable)
           .set({ deletedAt: new Date() })
           .where(
@@ -244,9 +296,10 @@ export class AppUserCommandService extends AppUserServiceSupport {
               eq(this.appUserTable.id, userId),
               isNull(this.appUserTable.deletedAt),
             ),
-          ),
-      { notFound: '用户不存在' },
-    )
+          )
+        this.drizzle.assertAffectedRows(updatedRows, '用户不存在')
+      },
+    })
     await this.appUserTokenStorageService.revokeAllByUserId(
       userId,
       RevokeTokenReasonEnum.ADMIN_REVOKE,
@@ -256,9 +309,15 @@ export class AppUserCommandService extends AppUserServiceSupport {
 
   // 恢复已软删除的 APP 用户。
   async restoreAppUser(adminUserId: number, userId: number) {
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockAndRecheckAppUserReferenceState(
+          tx,
+          userId,
+          true,
+          '用户不存在或未删除',
+        )
+        const updatedRows = await tx
           .update(this.appUserTable)
           .set({ deletedAt: null })
           .where(
@@ -266,9 +325,10 @@ export class AppUserCommandService extends AppUserServiceSupport {
               eq(this.appUserTable.id, userId),
               isNotNull(this.appUserTable.deletedAt),
             ),
-          ),
-      { notFound: '用户不存在或未删除' },
-    )
+          )
+        this.drizzle.assertAffectedRows(updatedRows, '用户不存在或未删除')
+      },
+    })
     return true
   }
 
@@ -277,7 +337,7 @@ export class AppUserCommandService extends AppUserServiceSupport {
     adminUserId: number,
     dto: ResetAdminAppUserPasswordDto,
   ) {
-    await this.userCoreService.ensureUserExists(dto.id)
+    await this.userCoreService.assertActiveUserExists(dto.id)
     const plainPassword = this.rsaService.decryptWith(dto.password)
     const encryptedPassword =
       await this.scryptService.encryptPassword(plainPassword)
@@ -301,9 +361,41 @@ export class AppUserCommandService extends AppUserServiceSupport {
     return true
   }
 
+  /**
+   * app_user 是优惠券任务与关注目标的物理父表。子写入路径已按同一
+   * app_user/id record lock 加锁，因此状态变更必须先取得该精确 record lock，
+   * 再在同一事务内确认用户仍处于目标软删除状态。
+   */
+  private async lockAndRecheckAppUserReferenceState(
+    tx: DbTransaction,
+    userId: number,
+    requireDeleted: boolean,
+    notFoundMessage: string,
+  ) {
+    await acquireIntegrityLocks(tx, [tableIntegrityLock('app_user', userId)])
+    const [user] = await tx
+      .select({ id: this.appUserTable.id })
+      .from(this.appUserTable)
+      .where(
+        and(
+          eq(this.appUserTable.id, userId),
+          requireDeleted
+            ? isNotNull(this.appUserTable.deletedAt)
+            : isNull(this.appUserTable.deletedAt),
+        ),
+      )
+      .limit(1)
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        notFoundMessage,
+      )
+    }
+  }
+
   // 重建单个 APP 用户关注相关计数。
   async rebuildAppUserFollowCounts(adminUserId: number, userId: number) {
-    await this.userCoreService.ensureUserExists(userId)
+    await this.userCoreService.assertActiveUserExists(userId)
     return this.appUserCountService.rebuildFollowCounts(undefined, userId)
   }
 

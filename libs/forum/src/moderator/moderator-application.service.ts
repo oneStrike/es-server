@@ -1,6 +1,9 @@
 import type { Db, DrizzleMutationResult } from '@db/core'
 import type { ForumModeratorApplicationSelect } from '@db/schema'
-import type { ModeratorApplicantBrief, ModeratorApplicationSnapshotInput } from './moderator.type'
+import type {
+  ModeratorApplicantBrief,
+  ModeratorApplicationSnapshotInput,
+} from './moderator.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -23,6 +26,22 @@ import {
 } from './moderator.constant'
 import { ForumModeratorService } from './moderator.service'
 
+type ForumModeratorApplicationViewSource = Pick<
+  ForumModeratorApplicationSelect,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'applicantId'
+  | 'sectionId'
+  | 'auditById'
+  | 'status'
+  | 'permissions'
+  | 'reason'
+  | 'auditReason'
+  | 'remark'
+  | 'auditAt'
+>
+
 /**
  * 论坛版主申请服务。
  * 负责用户申请、后台审核以及申请详情/分页视图装配，并与版主服务协同完成审批落库。
@@ -43,6 +62,55 @@ export class ForumModeratorApplicationService {
   // forum_moderator_application 表访问入口。
   private get forumModeratorApplication() {
     return this.drizzle.schema.forumModeratorApplication
+  }
+
+  private getApplicationViewColumns() {
+    return {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      applicantId: true,
+      sectionId: true,
+      auditById: true,
+      status: true,
+      permissions: true,
+      reason: true,
+      auditReason: true,
+      remark: true,
+      auditAt: true,
+    } as const
+  }
+
+  private getApplicationViewSelection() {
+    return {
+      id: this.forumModeratorApplication.id,
+      createdAt: this.forumModeratorApplication.createdAt,
+      updatedAt: this.forumModeratorApplication.updatedAt,
+      applicantId: this.forumModeratorApplication.applicantId,
+      sectionId: this.forumModeratorApplication.sectionId,
+      auditById: this.forumModeratorApplication.auditById,
+      status: this.forumModeratorApplication.status,
+      permissions: this.forumModeratorApplication.permissions,
+      reason: this.forumModeratorApplication.reason,
+      auditReason: this.forumModeratorApplication.auditReason,
+      remark: this.forumModeratorApplication.remark,
+      auditAt: this.forumModeratorApplication.auditAt,
+    }
+  }
+
+  private getApplicationSnapshotColumns() {
+    return {
+      id: true,
+      applicantId: true,
+      sectionId: true,
+      status: true,
+      permissions: true,
+      reason: true,
+      auditReason: true,
+      remark: true,
+      auditById: true,
+      auditAt: true,
+    } as const
   }
 
   // 归一化申请权限数组。 仅保留系统支持的权限值，防止重复值或非法值进入审核与授权路径。
@@ -158,7 +226,9 @@ export class ForumModeratorApplicationService {
   }
 
   // 批量装配版主申请视图。 统一补齐申请人、审核人、板块和权限名称，避免 controller 层再做拼装。
-  private async buildApplicationViews(rows: ForumModeratorApplicationSelect[]) {
+  private async buildApplicationViews(
+    rows: ForumModeratorApplicationViewSource[],
+  ) {
     if (rows.length === 0) {
       return []
     }
@@ -255,6 +325,7 @@ export class ForumModeratorApplicationService {
           id,
           deletedAt: { isNull: true },
         },
+        columns: this.getApplicationViewColumns(),
       },
     )
 
@@ -278,6 +349,7 @@ export class ForumModeratorApplicationService {
           applicantId: userId,
           deletedAt: { isNull: true },
         },
+        columns: this.getApplicationViewColumns(),
       },
     )
 
@@ -313,6 +385,11 @@ export class ForumModeratorApplicationService {
       where: {
         applicantId,
         sectionId: input.sectionId,
+      },
+      columns: {
+        id: true,
+        deletedAt: true,
+        status: true,
       },
     })
 
@@ -405,7 +482,7 @@ export class ForumModeratorApplicationService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.getApplicationViewSelection())
         .from(this.forumModeratorApplication)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -458,7 +535,7 @@ export class ForumModeratorApplicationService {
     const where = and(...conditions)
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.getApplicationViewSelection())
         .from(this.forumModeratorApplication)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -492,6 +569,7 @@ export class ForumModeratorApplicationService {
           id: input.id,
           deletedAt: { isNull: true },
         },
+        columns: this.getApplicationSnapshotColumns(),
       },
     )
 

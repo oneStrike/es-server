@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
@@ -51,7 +51,7 @@ export interface IReportTargetResolver {
    * @returns 目标元信息
    * @throws 目标不存在时抛出异常
    */
-  resolveMeta: (tx: Db, targetId: number) => Promise<ReportTargetMeta>
+  resolveMeta: (tx: DbExecutor, targetId: number) => Promise<ReportTargetMeta>
 
   /**
    * 举报成功后钩子（可选）
@@ -62,7 +62,7 @@ export interface IReportTargetResolver {
    * @param meta - 目标元信息
    */
   postReportHook?: (
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     reporterId: number,
     meta: ReportTargetMeta,
@@ -73,7 +73,7 @@ export interface IReportTargetResolver {
    * 实现方必须调用自身 owner service 的 InTx 入口，不能在这里开启独立事务。
    */
   applyDisposition?: (
-    tx: Db,
+    tx: DbExecutor,
     input: {
       reportId: number
       targetId: number

@@ -1,4 +1,4 @@
-import type { Db, SQL } from '@db/core'
+import type { Db, DbExecutor, SQL } from '@db/core'
 import type {
   RebuiltWorkChapterCounts,
   RebuiltWorkCounts,
@@ -81,7 +81,7 @@ export class WorkCounterService {
 
   // 在可选事务内执行计数更新，未传事务时统一进入共享错误处理。
   private async runCountUpdate(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     operation: (client: Db) => Promise<void>,
   ) {
     if (tx) {
@@ -210,7 +210,7 @@ export class WorkCounterService {
 
   // 更新 work Count Field。
   private async updateWorkCountField(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     workId: number,
     workType: number,
     field: WorkCountField,
@@ -234,7 +234,7 @@ export class WorkCounterService {
 
   // 更新 work Chapter Count Field。
   private async updateWorkChapterCountField(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     chapterId: number,
     workType: number,
     field: WorkChapterCountField,
@@ -475,7 +475,7 @@ export class WorkCounterService {
 
   // 更新 work Like Count。
   async updateWorkLikeCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     workId: number,
     workType: number,
     delta: number,
@@ -493,7 +493,7 @@ export class WorkCounterService {
 
   // 更新 work Favorite Count。
   async updateWorkFavoriteCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     workId: number,
     workType: number,
     delta: number,
@@ -511,7 +511,7 @@ export class WorkCounterService {
 
   // 更新 work Comment Count。
   async updateWorkCommentCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     workId: number,
     workType: number,
     delta: number,
@@ -529,7 +529,7 @@ export class WorkCounterService {
 
   // 更新 work View Count。
   async updateWorkViewCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     workId: number,
     workType: number,
     delta: number,
@@ -547,7 +547,7 @@ export class WorkCounterService {
 
   // 更新 work Download Count。
   async updateWorkDownloadCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     workId: number,
     workType: number,
     delta: number,
@@ -565,7 +565,7 @@ export class WorkCounterService {
 
   // 更新 work Chapter Like Count。
   async updateWorkChapterLikeCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     chapterId: number,
     workType: number,
     delta: number,
@@ -583,7 +583,7 @@ export class WorkCounterService {
 
   // 更新 work Chapter Comment Count。
   async updateWorkChapterCommentCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     chapterId: number,
     workType: number,
     delta: number,
@@ -601,7 +601,7 @@ export class WorkCounterService {
 
   // 更新 work Chapter View Count。
   async updateWorkChapterViewCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     chapterId: number,
     workType: number,
     delta: number,
@@ -619,7 +619,7 @@ export class WorkCounterService {
 
   // 更新 work Chapter Purchase Count。
   async updateWorkChapterPurchaseCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     chapterId: number,
     workType: number,
     delta: number,
@@ -637,7 +637,7 @@ export class WorkCounterService {
 
   // 更新 work Chapter Download Count。
   async updateWorkChapterDownloadCount(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     chapterId: number,
     workType: number,
     delta: number,
@@ -655,7 +655,7 @@ export class WorkCounterService {
 
   // 下载记录写入后，同时维护章节与所属作品的下载计数，作品级 downloadCount 的口径定义为“作品下所有章节下载记录总数”。
   async updateWorkDownloadCountsByChapter(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     chapterId: number,
     workType: number,
     delta: number,
@@ -723,7 +723,7 @@ export class WorkCounterService {
 
   // 根据点赞/收藏/浏览/评论/下载事实表重建作品对象计数，评分属于作品元数据，不由计数 owner service 维护。
   async rebuildWorkCounts(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     workId: number,
     workType: number,
   ): Promise<RebuiltWorkCounts> {
@@ -769,7 +769,7 @@ export class WorkCounterService {
         ),
         client
           .select({
-            count: sql<number>`count(*)::int`,
+            count: sql<number>`count(*)::int`.mapWith(Number),
           })
           .from(this.userDownloadRecord)
           .innerJoin(
@@ -822,7 +822,7 @@ export class WorkCounterService {
 
   // 根据点赞/浏览/评论/购买/下载事实表重建章节对象计数。
   async rebuildWorkChapterCounts(
-    tx: Db | undefined,
+    tx: DbExecutor | undefined,
     chapterId: number,
     workType: number,
   ): Promise<RebuiltWorkChapterCounts> {

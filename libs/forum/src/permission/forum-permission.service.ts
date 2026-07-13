@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type {
   ForumAccessUserContext,
   ForumPostingUserContext,
@@ -105,9 +105,7 @@ export class ForumPermissionService {
   }
 
   // 判断板块在公开访问语义下是否可用。 板块本身必须启用；若挂载分组，则分组也必须启用且未删除。
-  isSectionPubliclyAvailable(
-    section: SectionPublicAvailabilityInput,
-  ) {
+  isSectionPubliclyAvailable(section: SectionPublicAvailabilityInput) {
     if (section.deletedAt) {
       return false
     }
@@ -126,9 +124,7 @@ export class ForumPermissionService {
   }
 
   // 将板块查询结果归一化为访问状态计算所需字段。 统一在这里补齐 requiredExperience 与公开可见性，避免各入口各自复制同一套映射。
-  private buildSectionAccessContext(
-    section: SectionAccessContextInput,
-  ) {
+  private buildSectionAccessContext(section: SectionAccessContextInput) {
     return {
       groupId: section.groupId,
       deletedAt: section.deletedAt,
@@ -226,10 +222,7 @@ export class ForumPermissionService {
   // 校验用户等级是否满足板块访问要求。 - 无等级限制的板块直接放行 - 有等级限制时，未登录用户需先登录，已登录用户需经验值达标
   ensureSectionLevelAccess(
     section: ForumSectionPermissionContext,
-    user?:
-      | ForumAccessUserContext
-      | PostingUserExperienceRef
-      | null,
+    user?: ForumAccessUserContext | PostingUserExperienceRef | null,
   ) {
     const accessState = this.resolveSectionAccessState(section, user)
     if (!accessState.canAccess) {
@@ -249,7 +242,10 @@ export class ForumPermissionService {
       case 'LEVEL_REQUIRED':
         throw new BusinessException(BusinessErrorCode.QUOTA_NOT_ENOUGH, reason)
       case 'SECTION_UNAVAILABLE':
-        throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, reason)
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          reason,
+        )
       case 'USER_DISABLED':
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -268,10 +264,7 @@ export class ForumPermissionService {
       | 'userLevelRuleId'
       | 'requiredExperience'
     >,
-    user?:
-      | ForumAccessUserContext
-      | PostingUserExperienceRef
-      | null,
+    user?: ForumAccessUserContext | PostingUserExperienceRef | null,
   ): ForumSectionAccessState {
     const requiredExperience =
       section.userLevelRuleId && section.requiredExperience !== null
@@ -340,7 +333,7 @@ export class ForumPermissionService {
     return section
   }
 
-  async ensureTopicRateLimitInTx(tx: Db, userId: number) {
+  async ensureTopicRateLimitInTx(tx: DbTransaction, userId: number) {
     await this.userLevelRuleService.ensureForumTopicRateLimitInTx(tx, {
       userId,
     })

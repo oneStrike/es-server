@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 
 /**
  * 公告通知扇出端口。
@@ -6,10 +6,10 @@ import type { Db } from '@db/core'
 export interface AnnouncementFanoutPort {
   enqueueAnnouncementFanout: (
     announcementId: number,
-    tx?: Db,
+    tx?: DbExecutor,
   ) => Promise<boolean>
   retryFailedAnnouncementFanout: (
     announcementId: number,
-    tx?: Db,
+    tx?: DbExecutor,
   ) => Promise<boolean>
 }

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   EmojiAssetSnapshot,
@@ -325,7 +325,7 @@ export class EmojiCatalogService {
     const { userId } = input
     const limit = this.normalizeRecentLimit(input.limit)
     const lastUsedAtSql = sql<Date>`max(${this.emojiRecentUsage.lastUsedAt})`
-    const useCountSql = sql<number>`sum(${this.emojiRecentUsage.useCount})::int`
+    const useCountSql = sql<number>`sum(${this.emojiRecentUsage.useCount})::int`.mapWith(Number)
 
     const rows = await this.db
       .select({
@@ -389,7 +389,7 @@ export class EmojiCatalogService {
 
   // 在既有事务中批量写入最近使用记录。 - 调用方需先完成事实写入，确保"消息发送成功才记 recent"的口径。 - 同一 userId+scene+emojiAssetId 只保留一条聚合记录，冲突时原子累加 useCount。 - 会再次校验资产在当前场景下仍然可见，避免脏 token 写入 recent。
   async recordRecentUsageInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: RecordEmojiRecentUsageInput,
   ): Promise<void> {
     const { items, scene, userId } = input
@@ -429,7 +429,7 @@ export class EmojiCatalogService {
 
   // 过滤出当前场景仍可用的最近使用聚合项。 - 只保留启用、未删除、且对 scene 可见的表情资源。 - 同时过滤掉非正数 useCount，避免异常 token 产生脏数据。
   private async filterActiveRecentUsageItems(
-    tx: Db,
+    tx: DbExecutor,
     scene: EmojiSceneEnum,
     items: EmojiRecentUsageItem[],
   ): Promise<EmojiRecentUsageItem[]> {

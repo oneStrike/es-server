@@ -20,7 +20,6 @@ import {
   and,
   arrayOverlaps,
   eq,
-  getColumns,
   gt,
   gte,
   isNull,
@@ -115,8 +114,8 @@ export class AppAnnouncementService {
       }
     }
 
-    await this.drizzle.withTransaction(
-      async (tx) => {
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
         const createdAnnouncements = await tx
           .insert(this.appAnnouncement)
           .values({
@@ -138,8 +137,8 @@ export class AppAnnouncementService {
           tx,
         )
       },
-      { duplicate: '公告已存在' },
-    )
+      messages: { duplicate: '公告已存在' },
+    })
     return true
   }
 
@@ -177,12 +176,9 @@ export class AppAnnouncementService {
       fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       maxPageSize: 100,
     })
-    const { where } = this.buildAnnouncementPageQuery(
-      queryAnnouncementDto,
-      {
-        appVisibleOnly: true,
-      },
-    )
+    const { where } = this.buildAnnouncementPageQuery(queryAnnouncementDto, {
+      appVisibleOnly: true,
+    })
     const conditions: SQL[] = where ? [where] : []
     if (pageParams.dateRange?.gte) {
       conditions.push(
@@ -279,34 +275,38 @@ export class AppAnnouncementService {
       nextUpdateData.pageId = pageId
     }
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const result = await tx
-        .update(this.appAnnouncement)
-        .set(nextUpdateData)
-        .where(eq(this.appAnnouncement.id, id))
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await tx
+          .update(this.appAnnouncement)
+          .set(nextUpdateData)
+          .where(eq(this.appAnnouncement.id, id))
 
-      this.drizzle.assertAffectedRows(result, '公告不存在')
-      await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
-        id,
-        tx,
-      )
+        this.drizzle.assertAffectedRows(result, '公告不存在')
+        await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
+          id,
+          tx,
+        )
+      },
     })
     return true
   }
 
   // 切换公告发布状态，并在成功后重新入队公告通知 fanout 任务。
   async updateAnnouncementStatus(dto: UpdatePublishedStatusDto) {
-    await this.drizzle.withTransaction(async (tx) => {
-      const result = await tx
-        .update(this.appAnnouncement)
-        .set({ isPublished: dto.isPublished })
-        .where(eq(this.appAnnouncement.id, dto.id))
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await tx
+          .update(this.appAnnouncement)
+          .set({ isPublished: dto.isPublished })
+          .where(eq(this.appAnnouncement.id, dto.id))
 
-      this.drizzle.assertAffectedRows(result, '公告不存在')
-      await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
-        dto.id,
-        tx,
-      )
+        this.drizzle.assertAffectedRows(result, '公告不存在')
+        await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
+          dto.id,
+          tx,
+        )
+      },
     })
     return true
   }
@@ -314,17 +314,19 @@ export class AppAnnouncementService {
   // 通过 `isPublished=false` 逻辑下线公告，不执行物理删除。
   async deleteAnnouncement(dto: IdDto) {
     const { id } = dto
-    await this.drizzle.withTransaction(async (tx) => {
-      const result = await tx
-        .update(this.appAnnouncement)
-        .set({ isPublished: false })
-        .where(eq(this.appAnnouncement.id, id))
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await tx
+          .update(this.appAnnouncement)
+          .set({ isPublished: false })
+          .where(eq(this.appAnnouncement.id, id))
 
-      this.drizzle.assertAffectedRows(result, '公告不存在')
-      await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
-        id,
-        tx,
-      )
+        this.drizzle.assertAffectedRows(result, '公告不存在')
+        await this.getAnnouncementNotificationFanoutService().enqueueAnnouncementFanout(
+          id,
+          tx,
+        )
+      },
     })
     return true
   }
@@ -351,6 +353,7 @@ export class AppAnnouncementService {
   async findAnnouncementDetail(dto: IdDto) {
     const announcement = await this.db.query.appAnnouncement.findFirst({
       where: { id: dto.id },
+      columns: this.getAnnouncementDetailColumns(),
       with: {
         appPage: {
           columns: {
@@ -370,29 +373,36 @@ export class AppAnnouncementService {
       )
     }
 
-    const {
-      appPage,
-      notificationEndBoundaryAt: _notificationEndBoundaryAt,
-      notificationFanoutDesiredEventKey,
-      notificationFanoutLastError,
-      notificationFanoutStatus,
-      notificationFanoutTaskId: _notificationFanoutTaskId,
-      notificationFanoutUpdatedAt,
-      notificationStartBoundaryAt: _notificationStartBoundaryAt,
-      ...announcementResponse
-    } = announcement
     const [runtime] = await this.hydrateAdminAnnouncementRows([
       {
-        ...announcementResponse,
-        fanoutDesiredEventKey: notificationFanoutDesiredEventKey,
-        fanoutLastError: notificationFanoutLastError,
-        fanoutStatus: notificationFanoutStatus,
-        fanoutUpdatedAt: notificationFanoutUpdatedAt,
+        id: announcement.id,
+        pageId: announcement.pageId,
+        title: announcement.title,
+        content: announcement.content,
+        summary: announcement.summary,
+        announcementType: announcement.announcementType,
+        priorityLevel: announcement.priorityLevel,
+        isPublished: announcement.isPublished,
+        isRealtime: announcement.isRealtime,
+        isPinned: announcement.isPinned,
+        showAsPopup: announcement.showAsPopup,
+        popupBackgroundImage: announcement.popupBackgroundImage,
+        popupBackgroundPosition: announcement.popupBackgroundPosition,
+        enablePlatform: announcement.enablePlatform,
+        publishStartTime: announcement.publishStartTime,
+        publishEndTime: announcement.publishEndTime,
+        viewCount: announcement.viewCount,
+        createdAt: announcement.createdAt,
+        updatedAt: announcement.updatedAt,
+        fanoutDesiredEventKey: announcement.notificationFanoutDesiredEventKey,
+        fanoutLastError: announcement.notificationFanoutLastError,
+        fanoutStatus: announcement.notificationFanoutStatus,
+        fanoutUpdatedAt: announcement.notificationFanoutUpdatedAt,
       },
     ])
     return {
       ...runtime,
-      appPage: appPage ?? null,
+      appPage: announcement.appPage ?? null,
     }
   }
 
@@ -421,49 +431,51 @@ export class AppAnnouncementService {
 
   // 以原子自增方式累加 APP 公开公告浏览量，避免并发读改写覆盖。
   async incrementPublicAnnouncementViewCount(dto: IdDto, userId: number) {
-    await this.drizzle.withTransaction(async (tx) => {
-      const visibleRows = await tx
-        .select({ id: this.appAnnouncement.id })
-        .from(this.appAnnouncement)
-        .where(
-          and(
-            eq(this.appAnnouncement.id, dto.id),
-            ...this.buildAppVisibilityConditions(new Date()),
-          ),
-        )
-        .limit(1)
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const visibleRows = await tx
+          .select({ id: this.appAnnouncement.id })
+          .from(this.appAnnouncement)
+          .where(
+            and(
+              eq(this.appAnnouncement.id, dto.id),
+              ...this.buildAppVisibilityConditions(new Date()),
+            ),
+          )
+          .limit(1)
 
-      if (!visibleRows[0]) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '公告不存在',
-        )
-      }
+        if (!visibleRows[0]) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '公告不存在',
+          )
+        }
 
-      const insertedRows = await tx
-        .insert(this.appAnnouncementView)
-        .values({
-          announcementId: dto.id,
-          userId,
-          viewedAt: new Date(),
-        })
-        .onConflictDoNothing()
-        .returning({
-          announcementId: this.appAnnouncementView.announcementId,
-        })
+        const insertedRows = await tx
+          .insert(this.appAnnouncementView)
+          .values({
+            announcementId: dto.id,
+            userId,
+            viewedAt: new Date(),
+          })
+          .onConflictDoNothing()
+          .returning({
+            announcementId: this.appAnnouncementView.announcementId,
+          })
 
-      if (!insertedRows[0]) {
-        return
-      }
+        if (!insertedRows[0]) {
+          return
+        }
 
-      const result = await tx
-        .update(this.appAnnouncement)
-        .set({
-          viewCount: sql`${this.appAnnouncement.viewCount} + 1`,
-        })
-        .where(eq(this.appAnnouncement.id, dto.id))
+        const result = await tx
+          .update(this.appAnnouncement)
+          .set({
+            viewCount: sql`${this.appAnnouncement.viewCount} + 1`,
+          })
+          .where(eq(this.appAnnouncement.id, dto.id))
 
-      this.drizzle.assertAffectedRows(result, '公告不存在')
+        this.drizzle.assertAffectedRows(result, '公告不存在')
+      },
     })
     return true
   }
@@ -613,56 +625,107 @@ export class AppAnnouncementService {
   }
 
   private buildPublicAnnouncementListSelect() {
-    const {
-      // 正文大字段只允许详情接口返回，避免公开列表拖垮分页和泄露完整内容。
-      content,
-      // 内部生命周期标记只用于服务端调度，不暴露给 APP。
-      notificationEndBoundaryAt,
-      notificationFanoutDesiredEventKey,
-      notificationFanoutLastError,
-      notificationFanoutStatus,
-      notificationFanoutTaskId,
-      notificationFanoutUpdatedAt,
-      notificationStartBoundaryAt,
-      ...rest
-    } = getColumns(this.appAnnouncement)
-    return rest
+    return {
+      id: this.appAnnouncement.id,
+      pageId: this.appAnnouncement.pageId,
+      title: this.appAnnouncement.title,
+      summary: this.appAnnouncement.summary,
+      announcementType: this.appAnnouncement.announcementType,
+      priorityLevel: this.appAnnouncement.priorityLevel,
+      isPublished: this.appAnnouncement.isPublished,
+      isRealtime: this.appAnnouncement.isRealtime,
+      isPinned: this.appAnnouncement.isPinned,
+      showAsPopup: this.appAnnouncement.showAsPopup,
+      popupBackgroundImage: this.appAnnouncement.popupBackgroundImage,
+      popupBackgroundPosition: this.appAnnouncement.popupBackgroundPosition,
+      enablePlatform: this.appAnnouncement.enablePlatform,
+      publishStartTime: this.appAnnouncement.publishStartTime,
+      publishEndTime: this.appAnnouncement.publishEndTime,
+      viewCount: this.appAnnouncement.viewCount,
+      createdAt: this.appAnnouncement.createdAt,
+      updatedAt: this.appAnnouncement.updatedAt,
+    } as const
   }
 
   private buildAnnouncementResponseSelect() {
-    const {
-      // 内部投递生命周期标记只用于服务端调度，不暴露给 APP；排除后重命名部分字段用于响应。
-      notificationEndBoundaryAt,
-      notificationFanoutDesiredEventKey,
-      notificationFanoutLastError,
-      notificationFanoutStatus,
-      notificationFanoutTaskId,
-      notificationFanoutUpdatedAt,
-      notificationStartBoundaryAt,
-      ...rest
-    } = getColumns(this.appAnnouncement)
     return {
-      ...rest,
-      fanoutDesiredEventKey: notificationFanoutDesiredEventKey,
-      fanoutLastError: notificationFanoutLastError,
-      fanoutStatus: notificationFanoutStatus,
-      fanoutUpdatedAt: notificationFanoutUpdatedAt,
-    }
+      id: this.appAnnouncement.id,
+      pageId: this.appAnnouncement.pageId,
+      title: this.appAnnouncement.title,
+      content: this.appAnnouncement.content,
+      summary: this.appAnnouncement.summary,
+      announcementType: this.appAnnouncement.announcementType,
+      priorityLevel: this.appAnnouncement.priorityLevel,
+      isPublished: this.appAnnouncement.isPublished,
+      isRealtime: this.appAnnouncement.isRealtime,
+      isPinned: this.appAnnouncement.isPinned,
+      showAsPopup: this.appAnnouncement.showAsPopup,
+      popupBackgroundImage: this.appAnnouncement.popupBackgroundImage,
+      popupBackgroundPosition: this.appAnnouncement.popupBackgroundPosition,
+      enablePlatform: this.appAnnouncement.enablePlatform,
+      publishStartTime: this.appAnnouncement.publishStartTime,
+      publishEndTime: this.appAnnouncement.publishEndTime,
+      viewCount: this.appAnnouncement.viewCount,
+      createdAt: this.appAnnouncement.createdAt,
+      updatedAt: this.appAnnouncement.updatedAt,
+      fanoutDesiredEventKey:
+        this.appAnnouncement.notificationFanoutDesiredEventKey,
+      fanoutLastError: this.appAnnouncement.notificationFanoutLastError,
+      fanoutStatus: this.appAnnouncement.notificationFanoutStatus,
+      fanoutUpdatedAt: this.appAnnouncement.notificationFanoutUpdatedAt,
+    } as const
   }
 
   private buildPublicAnnouncementDetailSelect() {
-    const {
-      // 内部投递生命周期标记只用于服务端调度，不暴露给 APP。
-      notificationEndBoundaryAt,
-      notificationFanoutDesiredEventKey,
-      notificationFanoutLastError,
-      notificationFanoutStatus,
-      notificationFanoutTaskId,
-      notificationFanoutUpdatedAt,
-      notificationStartBoundaryAt,
-      ...rest
-    } = getColumns(this.appAnnouncement)
-    return rest
+    return {
+      id: this.appAnnouncement.id,
+      pageId: this.appAnnouncement.pageId,
+      title: this.appAnnouncement.title,
+      content: this.appAnnouncement.content,
+      summary: this.appAnnouncement.summary,
+      announcementType: this.appAnnouncement.announcementType,
+      priorityLevel: this.appAnnouncement.priorityLevel,
+      isPublished: this.appAnnouncement.isPublished,
+      isRealtime: this.appAnnouncement.isRealtime,
+      isPinned: this.appAnnouncement.isPinned,
+      showAsPopup: this.appAnnouncement.showAsPopup,
+      popupBackgroundImage: this.appAnnouncement.popupBackgroundImage,
+      popupBackgroundPosition: this.appAnnouncement.popupBackgroundPosition,
+      enablePlatform: this.appAnnouncement.enablePlatform,
+      publishStartTime: this.appAnnouncement.publishStartTime,
+      publishEndTime: this.appAnnouncement.publishEndTime,
+      viewCount: this.appAnnouncement.viewCount,
+      createdAt: this.appAnnouncement.createdAt,
+      updatedAt: this.appAnnouncement.updatedAt,
+    } as const
+  }
+
+  private getAnnouncementDetailColumns() {
+    return {
+      id: true,
+      pageId: true,
+      title: true,
+      content: true,
+      summary: true,
+      announcementType: true,
+      priorityLevel: true,
+      isPublished: true,
+      isRealtime: true,
+      isPinned: true,
+      showAsPopup: true,
+      popupBackgroundImage: true,
+      popupBackgroundPosition: true,
+      enablePlatform: true,
+      publishStartTime: true,
+      publishEndTime: true,
+      viewCount: true,
+      createdAt: true,
+      updatedAt: true,
+      notificationFanoutDesiredEventKey: true,
+      notificationFanoutLastError: true,
+      notificationFanoutStatus: true,
+      notificationFanoutUpdatedAt: true,
+    } as const
   }
 
   private async findVisiblePublicAnnouncement(id: number) {

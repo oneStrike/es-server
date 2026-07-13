@@ -104,7 +104,7 @@ export class MessageMonitorService {
     )
 
     const [totalRow] = await this.db
-      .select({ count: sql<number>`COUNT(*)::int` })
+      .select({ count: sql<number>`COUNT(*)::int`.mapWith(Number) })
       .from(domainEventDispatch)
       .leftJoin(domainEvent, eq(domainEventDispatch.eventId, domainEvent.id))
       .leftJoin(
@@ -234,15 +234,15 @@ export class MessageMonitorService {
 
     const aggregateRows = await this.db
       .select({
-        requestCount: sql<number>`COALESCE(SUM(${messageWsMetric.requestCount}), 0)::int`,
-        ackSuccessCount: sql<number>`COALESCE(SUM(${messageWsMetric.ackSuccessCount}), 0)::int`,
-        ackErrorCount: sql<number>`COALESCE(SUM(${messageWsMetric.ackErrorCount}), 0)::int`,
-        ackLatencyTotalMs: sql<bigint>`COALESCE(SUM(${messageWsMetric.ackLatencyTotalMs}), 0)::bigint`,
-        reconnectCount: sql<number>`COALESCE(SUM(${messageWsMetric.reconnectCount}), 0)::int`,
-        resyncTriggerCount: sql<number>`COALESCE(SUM(${messageWsMetric.resyncTriggerCount}), 0)::int`,
-        resyncSuccessCount: sql<number>`COALESCE(SUM(${messageWsMetric.resyncSuccessCount}), 0)::int`,
-        fanoutSkippedCount: sql<number>`COALESCE(SUM(${messageWsMetric.fanoutSkippedCount}), 0)::int`,
-        fanoutPublishErrorCount: sql<number>`COALESCE(SUM(${messageWsMetric.fanoutPublishErrorCount}), 0)::int`,
+        requestCount: sql<number>`COALESCE(SUM(${messageWsMetric.requestCount}), 0)::int`.mapWith(Number),
+        ackSuccessCount: sql<number>`COALESCE(SUM(${messageWsMetric.ackSuccessCount}), 0)::int`.mapWith(Number),
+        ackErrorCount: sql<number>`COALESCE(SUM(${messageWsMetric.ackErrorCount}), 0)::int`.mapWith(Number),
+        ackLatencyTotalMs: sql<bigint>`COALESCE(SUM(${messageWsMetric.ackLatencyTotalMs}), 0)::bigint`.mapWith(BigInt),
+        reconnectCount: sql<number>`COALESCE(SUM(${messageWsMetric.reconnectCount}), 0)::int`.mapWith(Number),
+        resyncTriggerCount: sql<number>`COALESCE(SUM(${messageWsMetric.resyncTriggerCount}), 0)::int`.mapWith(Number),
+        resyncSuccessCount: sql<number>`COALESCE(SUM(${messageWsMetric.resyncSuccessCount}), 0)::int`.mapWith(Number),
+        fanoutSkippedCount: sql<number>`COALESCE(SUM(${messageWsMetric.fanoutSkippedCount}), 0)::int`.mapWith(Number),
+        fanoutPublishErrorCount: sql<number>`COALESCE(SUM(${messageWsMetric.fanoutPublishErrorCount}), 0)::int`.mapWith(Number),
       })
       .from(messageWsMetric)
       .where(gte(messageWsMetric.bucketAt, windowStartAt))
@@ -290,7 +290,7 @@ export class MessageMonitorService {
     const rows = await this.db
       .select({
         status: this.notificationDelivery.status,
-        count: sql<number>`COUNT(*)::int`,
+        count: sql<number>`COUNT(*)::int`.mapWith(Number),
       })
       .from(this.notificationDelivery)
       .where(
@@ -310,7 +310,7 @@ export class MessageMonitorService {
     const rows = await this.db
       .select({
         status: this.domainEventDispatch.status,
-        count: sql<number>`COUNT(*)::int`,
+        count: sql<number>`COUNT(*)::int`.mapWith(Number),
       })
       .from(this.domainEventDispatch)
       .where(

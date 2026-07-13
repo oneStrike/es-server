@@ -8,9 +8,7 @@ import type {
   MessageNotificationPreferenceSourceEnum,
 } from './notification.constant'
 
-import type {
-  MessageNotificationCategoryKey,
-} from './notification.type'
+import type { MessageNotificationCategoryKey } from './notification.type'
 
 /** 稳定领域类型 `EffectiveMessageNotificationPreference`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EffectiveMessageNotificationPreference {
@@ -32,5 +30,5 @@ export interface CreateNotificationFromOutboxResult {
 /** 稳定领域类型 `NotificationPreferenceSnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type NotificationPreferenceSnapshot = Pick<
   NotificationPreferenceSelect,
-  'id' | 'categoryKey' | 'isEnabled' | 'updatedAt'
+  'categoryKey' | 'isEnabled' | 'updatedAt'
 >

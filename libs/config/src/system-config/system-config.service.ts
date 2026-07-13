@@ -1,8 +1,13 @@
 import type { Db } from '@db/core'
+import type { SystemConfigSelect } from '@db/schema'
 import type { StructuredValue } from '@libs/platform/utils'
 import type { Cache } from 'cache-manager'
 import type { ConfigAllowedTemplate } from './system-config.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  relationIntegrityLock,
+} from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AesService } from '@libs/platform/modules/crypto/aes.service'
@@ -16,7 +21,7 @@ import {
   Injectable,
   OnModuleInit,
 } from '@nestjs/common'
-import { desc, sql } from 'drizzle-orm'
+import { desc } from 'drizzle-orm'
 import { ConfigReader } from './config-reader'
 import { SystemConfigDetailDto, UpdateSystemConfigDto } from './dto/config.dto'
 import {
@@ -26,8 +31,24 @@ import {
   DEFAULT_CONFIG,
 } from './system-config.constant'
 
-const SYSTEM_CONFIG_UPDATE_LOCK_KEY = 1_048_002
 const SYSTEM_CONFIG_CONFLICT_MESSAGE = '系统配置已更新，请刷新后重试'
+
+type SystemConfigRuntimeRow = Pick<
+  SystemConfigSelect,
+  | 'id'
+  | 'updatedById'
+  | 'aliyunConfig'
+  | 'siteConfig'
+  | 'operationConfig'
+  | 'securityConfig'
+  | 'thirdPartyResourceParseConfig'
+  | 'walletCurrencyDisplayConfig'
+  | 'maintenanceConfig'
+  | 'contentReviewPolicy'
+  | 'uploadConfig'
+  | 'createdAt'
+  | 'updatedAt'
+>
 
 /**
  * 系统配置管理服务（管理端专用）
@@ -69,6 +90,26 @@ export class SystemConfigService implements OnModuleInit {
     return this.drizzle.schema.systemConfig
   }
 
+  private get systemConfigRuntimeSelect() {
+    return {
+      id: this.systemConfig.id,
+      updatedById: this.systemConfig.updatedById,
+      aliyunConfig: this.systemConfig.aliyunConfig,
+      siteConfig: this.systemConfig.siteConfig,
+      operationConfig: this.systemConfig.operationConfig,
+      securityConfig: this.systemConfig.securityConfig,
+      thirdPartyResourceParseConfig:
+        this.systemConfig.thirdPartyResourceParseConfig,
+      walletCurrencyDisplayConfig:
+        this.systemConfig.walletCurrencyDisplayConfig,
+      maintenanceConfig: this.systemConfig.maintenanceConfig,
+      contentReviewPolicy: this.systemConfig.contentReviewPolicy,
+      uploadConfig: this.systemConfig.uploadConfig,
+      createdAt: this.systemConfig.createdAt,
+      updatedAt: this.systemConfig.updatedAt,
+    }
+  }
+
   // 获取系统配置（内部使用，解密为明文）
   async findActiveConfig() {
     return this.configReader.get()
@@ -90,72 +131,74 @@ export class SystemConfigService implements OnModuleInit {
 
   // 更新系统配置（自动处理加密和掩码忽略） 处理逻辑： 1. 字段过滤：只更新 DEFAULT_CONFIG 中定义的字段 2. 敏感字段加密：前端传输的明文或 RSA 加密数据会被 AES 加密后存储 3. 掩码忽略：前端传回的掩码值（****）会被忽略，保留原值 4. 缓存刷新：更新后自动刷新缓存并通知 ConfigReader 管理端只允许更新 DTO 明确定义的顶层配置节点；未知字段会在进入该方法前被 whitelist 过滤。
   async updateConfig(dto: UpdateSystemConfigDto, userId: number) {
-    const result = await this.drizzle.withTransaction(async (tx) => {
-      await tx.execute(
-        sql`SELECT pg_advisory_xact_lock(${SYSTEM_CONFIG_UPDATE_LOCK_KEY})`,
-      )
+    const result = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          relationIntegrityLock('system-config', 'global'),
+        ])
 
-      const latestConfig = await this.findLatestConfig(tx)
-      if (!latestConfig || latestConfig.id !== dto.id) {
-        throw new BusinessException(
-          BusinessErrorCode.STATE_CONFLICT,
-          SYSTEM_CONFIG_CONFLICT_MESSAGE,
-        )
-      }
-
-      const currentConfig = this.cloneConfig(
-        this.mergeWithDefaults(latestConfig),
-      )
-      const nextConfig = this.cloneConfig(currentConfig)
-
-      for (const key of Object.keys(dto)) {
-        if (key === 'id' || !(key in DEFAULT_CONFIG)) {
-          continue
+        const latestConfig = await this.findLatestConfig(tx)
+        if (!latestConfig || latestConfig.id !== dto.id) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            SYSTEM_CONFIG_CONFLICT_MESSAGE,
+          )
         }
 
-        const allowedTemplate = (DEFAULT_CONFIG as ConfigAllowedTemplate)[
-          key
-        ] as ConfigAllowedTemplate | undefined
-        const filteredInput = this.filterAllowedFields(
-          dto[key as keyof UpdateSystemConfigDto],
-          allowedTemplate ?? {},
+        const currentConfig = this.cloneConfig(
+          this.mergeWithDefaults(latestConfig),
         )
-        const meta = CONFIG_SECURITY_META[key]
-        const currentItem = (latestConfig as Record<string, unknown>)[
-          key
-        ] as Record<string, unknown> | null
+        const nextConfig = this.cloneConfig(currentConfig)
 
-        const processedInput = meta
-          ? await this.processSensitiveFields(
-              filteredInput,
-              currentItem,
-              meta.sensitivePaths,
-            )
-          : filteredInput
+        for (const key of Object.keys(dto)) {
+          if (key === 'id' || !(key in DEFAULT_CONFIG)) {
+            continue
+          }
 
-        const mergedValue = this.deepMerge(
-          this.cloneConfig(
-            (currentConfig[key] ??
-              (DEFAULT_CONFIG as Record<string, unknown>)[key]) as Record<
-              string,
-              unknown
-            >,
-          ),
-          processedInput,
+          const allowedTemplate = (DEFAULT_CONFIG as ConfigAllowedTemplate)[
+            key
+          ] as ConfigAllowedTemplate | undefined
+          const filteredInput = this.filterAllowedFields(
+            dto[key as keyof UpdateSystemConfigDto],
+            allowedTemplate ?? {},
+          )
+          const meta = CONFIG_SECURITY_META[key]
+          const currentItem = (latestConfig as Record<string, unknown>)[
+            key
+          ] as Record<string, unknown> | null
+
+          const processedInput = meta
+            ? await this.processSensitiveFields(
+                filteredInput,
+                currentItem,
+                meta.sensitivePaths,
+              )
+            : filteredInput
+
+          const mergedValue = this.deepMerge(
+            this.cloneConfig(
+              (currentConfig[key] ??
+                (DEFAULT_CONFIG as Record<string, unknown>)[key]) as Record<
+                string,
+                unknown
+              >,
+            ),
+            processedInput,
+          )
+
+          nextConfig[key] = mergedValue
+        }
+
+        this.validateUploadConfig(nextConfig.uploadConfig)
+
+        const snapshot = this.buildPersistedSnapshot(nextConfig, userId)
+
+        const [insertedSnapshot] = await this.drizzle.withErrorHandling(() =>
+          tx.insert(this.systemConfig).values(snapshot).returning(),
         )
 
-        nextConfig[key] = mergedValue
-      }
-
-      this.validateUploadConfig(nextConfig.uploadConfig)
-
-      const snapshot = this.buildPersistedSnapshot(nextConfig, userId)
-
-      const [insertedSnapshot] = await this.drizzle.withErrorHandling(() =>
-        tx.insert(this.systemConfig).values(snapshot).returning(),
-      )
-
-      return insertedSnapshot
+        return insertedSnapshot
+      },
     })
 
     await this.refreshCache(result)
@@ -269,39 +312,13 @@ export class SystemConfigService implements OnModuleInit {
 
   // 读取最新一条系统配置快照。
   private async findLatestConfig(db: Db = this.db) {
-    const configs = await db
-      .select()
+    const [config] = await db
+      .select(this.systemConfigRuntimeSelect)
       .from(this.systemConfig)
       .orderBy(desc(this.systemConfig.id))
       .limit(1)
 
-    return configs[0] ?? null
-  }
-
-  // 获取配置历史分页。 历史页保留原始快照，供后台追溯每次配置变更的落库结果。
-  async findConfigHistory(page = 1, pageSize = 10) {
-    const pageQuery = this.drizzle.buildPage({ pageIndex: page, pageSize })
-    const orderQuery = this.drizzle.buildOrderBy(
-      { createdAt: 'desc' as const },
-      { table: this.systemConfig },
-    )
-    const [list, total] = await Promise.all([
-      this.db
-        .select()
-        .from(this.systemConfig)
-        .orderBy(...orderQuery.orderBySql)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
-      this.db.$count(this.systemConfig),
-    ])
-    const result = toPageResult(list, total, pageQuery)
-
-    return {
-      list: result.list,
-      total: result.total,
-      page: result.pageIndex,
-      pageSize: result.pageSize,
-    }
+    return (config as SystemConfigRuntimeRow | undefined) ?? null
   }
 
   // 解密快照中的敏感字段。 解密失败时保留原值，避免单个字段损坏导致整份配置不可读。

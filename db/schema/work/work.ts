@@ -238,10 +238,6 @@ export const work = snakeCase.table(
      */
     index('work_required_view_level_id_idx').on(table.requiredViewLevelId),
     /**
-     * 索引: forumSectionId
-     */
-    index('work_forum_section_id_idx').on(table.forumSectionId),
-    /**
      * 唯一约束: forumSectionId
      */
     unique('work_forum_section_id_key').on(table.forumSectionId),

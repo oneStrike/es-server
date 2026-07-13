@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { GrowthRewardSettlementSelect } from '@db/schema'
 import type { CheckInRewardResultTypeEnum } from '../../check-in/check-in.constant'
 import type { GrowthLedgerSourceEnum } from '../../growth-ledger/growth-ledger.constant'
@@ -21,8 +21,7 @@ export type ManualGrowthRewardSettlementPayload =
 
 /** 手工补偿链路允许接收的结果类型。 */
 export type ManualGrowthRewardSettlementResultType =
-  | GrowthRewardSettlementResultTypeEnum
-  | CheckInRewardResultTypeEnum
+  GrowthRewardSettlementResultTypeEnum | CheckInRewardResultTypeEnum
 
 /** 签到基础奖励补偿事实创建入参。 */
 export interface EnsureCheckInRecordRewardSettlementParams {
@@ -54,7 +53,7 @@ export interface SyncManualSettlementResultInput {
 /** 手工补偿结果同步选项。 */
 export interface SyncManualSettlementResultOptions {
   isRetry?: boolean
-  tx?: Db
+  tx?: DbExecutor
 }
 
 /** 手工补偿事实补建入参。 */

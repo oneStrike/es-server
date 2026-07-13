@@ -7,7 +7,7 @@
 - 何时看：改导入路径、文件放置、barrel、`libs/platform` / `db` 入口时先看本篇。
 - 必做：业务域默认直连 owner 文件；命中 `libs/platform`、`db` 时只走白名单公共入口；所有 runtime edge 同时遵循唯一 package DAG。
 - 不要：新增转发入口、反向 package edge 或循环依赖，不要用目录语义路径代替具体文件，也不要直连 `libs/platform` / `db` 具体文件。
-- 最低验证：`pnpm type-check`、`pnpm boundaries:check`。
+- 最低验证：`pnpm type-check` 与对应 import/owner static gate；不得引用不存在的 `pnpm boundaries:check`。
 
 本篇只定义导入路径形状与 public API 白名单；package 方向、provider owner、port/event 和 composition root 以 [09-nestjs-architecture.md](./09-nestjs-architecture.md) 为单一事实源。
 
@@ -21,7 +21,7 @@
 - Service、Resolver、Module、Controller 直接依赖 owner 文件，不通过中间入口“顺手带出”其他符号。
 - 文件直连不等于允许跨越 package DAG；任何 runtime import 都必须同时满足 09 规则定义的方向。
 - 禁止通过“调整导出顺序”、`forwardRef()`、动态 lookup 或 barrel 掩盖循环依赖；应删除反向边并收敛 owner。
-- 当前 development epoch 不保留 deprecated import alias、旧 module 入口或第二套公共路径；授权范围见[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
+- 不保留 deprecated import alias、旧 module 入口或第二套公共路径。
 
 ## 明确禁止
 

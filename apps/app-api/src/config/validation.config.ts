@@ -21,6 +21,11 @@ export const appConfigValidationSchema = {
    */
   APP_VERSION: Joi.string().default('1.0.0'),
 
+  /**
+   * 聊天历史分页游标专用签名密钥。
+   */
+  CHAT_MESSAGE_CURSOR_SECRET: Joi.string().min(32).required(),
+
   SMS_PHONE_TEMPLATE_COOLDOWN_SECONDS: Joi.number()
     .integer()
     .positive()

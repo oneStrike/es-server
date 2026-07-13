@@ -45,7 +45,7 @@ export abstract class BaseDrizzleTokenStorageService<
             geoIsp: data.geoIsp,
             geoSource: data.geoSource,
           })
-          .returning(),
+          .returning({ id: this.tokenTable.id }),
       {
         duplicate: '登录状态创建失败，请重试',
       },
@@ -84,7 +84,10 @@ export abstract class BaseDrizzleTokenStorageService<
 
   protected async findOneByJti(jti: string) {
     const [token] = await this.drizzle.db
-      .select()
+      .select({
+        revokedAt: this.tokenTable.revokedAt,
+        expiresAt: this.tokenTable.expiresAt,
+      })
       .from(this.tokenTable)
       .where(eq(this.tokenTable.jti, jti))
       .limit(1)
@@ -108,19 +111,12 @@ export abstract class BaseDrizzleTokenStorageService<
 
   protected async findManyItems(
     where: TokenStorageWhereInput,
-    options?: TokenStorageFindManyOptions,
+    _options?: TokenStorageFindManyOptions,
   ) {
     const condition = this.buildWhere(where)
 
-    if (options?.select?.jti) {
-      return this.drizzle.db
-        .select({ jti: this.tokenTable.jti })
-        .from(this.tokenTable)
-        .where(condition) as Promise<TEntity[]>
-    }
-
     return this.drizzle.db
-      .select()
+      .select({ jti: this.tokenTable.jti })
       .from(this.tokenTable)
       .where(condition) as Promise<TEntity[]>
   }

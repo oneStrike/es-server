@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.type'
 import { DrizzleService } from '@db/core'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
@@ -28,7 +28,7 @@ export class ForumHashtagFollowResolver
     this.followService.registerResolver(this)
   }
 
-  async ensureExists(tx: Db, targetId: number) {
+  async ensureExists(tx: DbExecutor, targetId: number) {
     const hashtag = await tx.query.forumHashtag.findFirst({
       where: {
         id: targetId,
@@ -51,7 +51,7 @@ export class ForumHashtagFollowResolver
     return {}
   }
 
-  async applyCountDelta(tx: Db, targetId: number) {
+  async applyCountDelta(tx: DbExecutor, targetId: number) {
     await this.forumHashtagCounterService.rebuildHashtagStatsInTx(tx, [
       targetId,
     ])

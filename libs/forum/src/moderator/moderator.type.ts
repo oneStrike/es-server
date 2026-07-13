@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type {
   AppUserSelect,
   ForumModeratorApplicationSelect,
@@ -42,7 +42,7 @@ export interface NormalizeModeratorScopeOptions {
     'id' | 'roleType' | 'groupId' | 'permissions' | 'isEnabled'
   >
   currentSectionIds?: number[]
-  client?: Db
+  client: DbTransaction
   isCreate?: boolean
 }
 
@@ -51,7 +51,7 @@ export interface NormalizeModeratorScopeOptions {
  * 用于控制是否计入当前版主自身，以及禁用路径是否跳过上限检查。
  */
 export interface ForumModeratorGroupLimitOptions {
-  client?: Db
+  client: DbTransaction
   excludeModeratorId?: number
   nextIsEnabled: boolean
 }
@@ -123,11 +123,22 @@ export type ModeratorLifecycleSnapshotInput = Pick<
   | 'deletedAt'
 >
 
-/** 版主板块视图入参，仅承载展示所需的板块 ID 和名称。 */
-export type ModeratorSectionViewInput = Pick<
-  ForumSectionSelect,
-  'id' | 'name'
+/** 后台版主列表/详情视图的稳定原始字段。 */
+export type ModeratorViewSource = Pick<
+  ForumModeratorSelect,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'userId'
+  | 'groupId'
+  | 'roleType'
+  | 'permissions'
+  | 'isEnabled'
+  | 'remark'
 >
+
+/** 版主板块视图入参，仅承载展示所需的板块 ID 和名称。 */
+export type ModeratorSectionViewInput = Pick<ForumSectionSelect, 'id' | 'name'>
 
 /** 版主申请/审核人简要信息，仅承载展示所需的 ID、昵称和头像。 */
 export type ModeratorApplicantBrief = Pick<

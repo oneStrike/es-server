@@ -10,7 +10,7 @@ import type {
   UserRegisterDto,
 } from '@libs/identity/dto/admin-user.dto'
 import type { SQL } from 'drizzle-orm'
-import type { AdminRbacDb } from '../rbac/admin-rbac.type'
+import type { AdminRbacTransaction } from '../rbac/admin-rbac.type'
 import type {
   AdminUserProfileUpdateData,
   AdminUserResponseRow,
@@ -201,26 +201,29 @@ export class AdminUserService {
     const normalizedRoleIds = this.normalizeRequiredRoleIds(roleIds)
     const nextRoles = await this.assertRoleIdsExist(normalizedRoleIds)
 
-    const shouldRevokeTokens = await this.drizzle.withTransaction(async (tx) => {
-      const lockedTarget = await this.ensureSafeAdminAccountUpdateInTransaction(
-        tx,
-        operatorId,
-        user,
-        updateData,
-        nextRoles,
-      )
-      const updatedRows = await tx
-        .update(this.adminUser)
-        .set(data)
-        .where(eq(this.adminUser.id, updateData.id))
-        .returning({ id: this.adminUser.id })
-      this.drizzle.assertAffectedRows(updatedRows, '用户不存在')
-      await this.rbacService.bindUserRolesInTransaction(
-        tx,
-        updateData.id,
-        normalizedRoleIds,
-      )
-      return updateData.isEnabled === false && lockedTarget.isEnabled
+    const shouldRevokeTokens = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const lockedTarget =
+          await this.ensureSafeAdminAccountUpdateInTransaction(
+            tx,
+            operatorId,
+            user,
+            updateData,
+            nextRoles,
+          )
+        const updatedRows = await tx
+          .update(this.adminUser)
+          .set(data)
+          .where(eq(this.adminUser.id, updateData.id))
+          .returning({ id: this.adminUser.id })
+        this.drizzle.assertAffectedRows(updatedRows, '用户不存在')
+        await this.rbacService.bindUserRolesInTransaction(
+          tx,
+          updateData.id,
+          normalizedRoleIds,
+        )
+        return updateData.isEnabled === false && lockedTarget.isEnabled
+      },
     })
     await this.rbacService.invalidateUserAccess(updateData.id)
     if (shouldRevokeTokens) {
@@ -234,7 +237,8 @@ export class AdminUserService {
 
   // 注册新的管理员账号。
   async register(operatorId: number, data: UserRegisterDto) {
-    const { username, password, avatar, mobile, confirmPassword, roleIds } = data
+    const { username, password, avatar, mobile, confirmPassword, roleIds } =
+      data
 
     if (password !== confirmPassword) {
       throw new BusinessException(
@@ -272,30 +276,32 @@ export class AdminUserService {
     }
 
     const encryptedPassword = await this.scryptService.encryptPassword(password)
-    const created = await this.drizzle.withTransaction(async (tx) => {
-      await this.assertOperatorCanGrantSuperAdminRoleInTransaction(
-        tx,
-        operatorId,
-        [],
-        nextRoles,
-      )
-      const [createdUser] = await tx
-        .insert(this.adminUser)
-        .values({
-          username,
-          password: encryptedPassword,
-          avatar,
-          mobile,
-          isEnabled: true,
-        })
-        .returning({ id: this.adminUser.id })
-      this.drizzle.assertAffectedRows([createdUser], '用户创建失败')
-      await this.rbacService.bindUserRolesInTransaction(
-        tx,
-        createdUser.id,
-        normalizedRoleIds,
-      )
-      return createdUser
+    const created = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.assertOperatorCanGrantSuperAdminRoleInTransaction(
+          tx,
+          operatorId,
+          [],
+          nextRoles,
+        )
+        const [createdUser] = await tx
+          .insert(this.adminUser)
+          .values({
+            username,
+            password: encryptedPassword,
+            avatar,
+            mobile,
+            isEnabled: true,
+          })
+          .returning({ id: this.adminUser.id })
+        this.drizzle.assertAffectedRows([createdUser], '用户创建失败')
+        await this.rbacService.bindUserRolesInTransaction(
+          tx,
+          createdUser.id,
+          normalizedRoleIds,
+        )
+        return createdUser
+      },
     })
     await this.rbacService.invalidateUserAccess(created.id)
     return true
@@ -541,7 +547,7 @@ export class AdminUserService {
 
   // 防止禁用或移除最后一个可用超级管理员。
   private async ensureSafeAdminAccountUpdateInTransaction(
-    tx: AdminRbacDb,
+    tx: AdminRbacTransaction,
     operatorId: number,
     target: AdminUserSafeUpdateTarget,
     updateData: AdminAccountUpdateDto,
@@ -559,10 +565,11 @@ export class AdminUserService {
         '用户不存在',
       )
     }
-    const currentRoles = await this.rbacService.getUserRoleSummariesInTransaction(
-      tx,
-      lockedTarget.id,
-    )
+    const currentRoles =
+      await this.rbacService.getUserRoleSummariesInTransaction(
+        tx,
+        lockedTarget.id,
+      )
     await this.assertOperatorCanGrantSuperAdminRoleInTransaction(
       tx,
       operatorId,
@@ -576,9 +583,13 @@ export class AdminUserService {
     }
 
     const removesSuperRole = !this.hasSuperAdminRole(nextRoles)
-    const disablesTarget = updateData.isEnabled === false && lockedTarget.isEnabled
+    const disablesTarget =
+      updateData.isEnabled === false && lockedTarget.isEnabled
 
-    if (lockedTarget.id === operatorId && (disablesTarget || removesSuperRole)) {
+    if (
+      lockedTarget.id === operatorId &&
+      (disablesTarget || removesSuperRole)
+    ) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '不能禁用或移除当前登录超级管理员的超级管理员角色',
@@ -595,7 +606,7 @@ export class AdminUserService {
 
   // 在事务内校验只有超级管理员可以授予超级管理员角色。
   private async assertOperatorCanGrantSuperAdminRoleInTransaction(
-    tx: AdminRbacDb,
+    tx: AdminRbacTransaction,
     operatorId: number,
     currentRoles: AdminRoleSummaryDto[],
     nextRoles: AdminRoleSummaryDto[],
@@ -607,10 +618,8 @@ export class AdminUserService {
     }
 
     await this.rbacService.lockSuperAdminMutationInTransaction(tx)
-    const operatorRoles = await this.rbacService.getUserRoleSummariesInTransaction(
-      tx,
-      operatorId,
-    )
+    const operatorRoles =
+      await this.rbacService.getUserRoleSummariesInTransaction(tx, operatorId)
     if (!this.hasSuperAdminRole(operatorRoles)) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -657,7 +666,10 @@ export class AdminUserService {
         isEnabled: this.adminRole.isEnabled,
       })
       .from(this.adminUserRole)
-      .innerJoin(this.adminRole, eq(this.adminRole.id, this.adminUserRole.roleId))
+      .innerJoin(
+        this.adminRole,
+        eq(this.adminRole.id, this.adminUserRole.roleId),
+      )
       .where(inArray(this.adminUserRole.adminUserId, normalized))
       .orderBy(
         asc(this.adminUserRole.adminUserId),
@@ -713,7 +725,10 @@ export class AdminUserService {
   private async assertRoleIdsExist(ids: number[]) {
     const roles = await this.getRoleSummariesByIds(ids)
     if (roles.length !== ids.length) {
-      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, '角色不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '角色不存在',
+      )
     }
     return roles
   }

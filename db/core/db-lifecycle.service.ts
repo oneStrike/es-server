@@ -11,6 +11,7 @@ export class DbLifecycleService implements OnApplicationShutdown {
   private isClosed = false
 
   constructor(
+    @Inject(DbNotificationService)
     private readonly dbNotificationService: DbNotificationService,
     @Inject(DRIZZLE_POOL) private readonly pool: Pool,
   ) {}

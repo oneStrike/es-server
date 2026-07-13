@@ -62,6 +62,56 @@ export type WorkChapterPublicDetailRow = Pick<
   purchasePricing?: ContentPurchasePricingDto | null
 }
 
+/**
+ * app/admin 章节详情共同的持久化读取字段。
+ * 正文按作品类型拆列；查询层只读取此稳定 contract，避免新 schema 列被详情端点隐式带入。
+ */
+export type WorkChapterDetailReadRow = Pick<
+  WorkChapterSelect,
+  | 'id'
+  | 'workId'
+  | 'workType'
+  | 'title'
+  | 'subtitle'
+  | 'cover'
+  | 'description'
+  | 'sortOrder'
+  | 'isPublished'
+  | 'isPreview'
+  | 'publishAt'
+  | 'viewRule'
+  | 'requiredViewLevelId'
+  | 'price'
+  | 'canDownload'
+  | 'canComment'
+  | 'novelContentPath'
+  | 'comicContentManifest'
+  | 'wordCount'
+  | 'viewCount'
+  | 'likeCount'
+  | 'commentCount'
+  | 'purchaseCount'
+  | 'downloadCount'
+  | 'remark'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+/** 后台章节详情在共同读取字段外追加已加载的关系摘要。 */
+export type WorkChapterAdminDetailRow = WorkChapterDetailReadRow & {
+  content: string | string[] | null
+  work: {
+    id: number
+    name: string
+    type: number
+  } | null
+  requiredViewLevel: {
+    id: number
+    name: string
+    color: string | null
+  } | null
+}
+
 /** app 章节分页查询使用的章节字段投影，避免公开列表依赖完整章节行。 */
 export type AppChapterPageRow = Pick<
   WorkChapterSelect,

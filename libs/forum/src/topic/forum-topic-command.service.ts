@@ -1,5 +1,4 @@
-import type { Db } from '@db/core'
-import type { ForumTopicSelect } from '@db/schema'
+import type { DbExecutor, DbTransaction } from '@db/core'
 
 import type { DispatchDefinedGrowthEventPayload } from '@libs/growth/growth-reward/types/growth-event-dispatch.type'
 import type { BodyDoc } from '@libs/interaction/body/body.type'
@@ -9,11 +8,19 @@ import type {
   ForumTopicClientContext,
   TopicAuditActorOptions,
   TopicGovernanceSnapshot,
+  TopicMutationSnapshot,
+  TopicSectionSnapshot,
+  TopicUpdateCurrentSnapshot,
+  TopicUpdatedSnapshot,
   UpdateTopicStatusData,
   UpdateTopicStatusOptions,
 } from './forum-topic.type'
 import { randomUUID } from 'node:crypto'
-import { DrizzleService } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+} from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.helper'
 import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
@@ -98,6 +105,14 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       interactionSummaryReadService,
       growthBalanceQueryService,
     )
+  }
+
+  // 串行化主题可见性、锁定和删除状态的切换与其多态子引用写入。
+  // 子写路径使用同一 forum_topic/id record lock，并在取得锁后重新读取主题。
+  private async lockTopicForMutation(tx: DbTransaction, topicId: number) {
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('forum_topic', topicId),
+    ])
   }
 
   // 创建论坛主题；写入正文、话题引用、计数、行为日志与成长事件。
@@ -185,7 +200,15 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         const [newTopic] = await tx
           .insert(this.forumTopicTable)
           .values(createPayload)
-          .returning()
+          .returning({
+            id: this.forumTopicTable.id,
+            userId: this.forumTopicTable.userId,
+            title: this.forumTopicTable.title,
+            auditStatus: this.forumTopicTable.auditStatus,
+            isHidden: this.forumTopicTable.isHidden,
+            deletedAt: this.forumTopicTable.deletedAt,
+            createdAt: this.forumTopicTable.createdAt,
+          })
         if (decision.recordHits && decision.statisticsHits.length) {
           await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
             entityType: 'topic',
@@ -280,13 +303,16 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 基于当前主题快照更新主题内容，并同步审核、话题、mention 与日志。
   private async updateTopicWithCurrent(
-    topic: ForumTopicSelect,
+    topic: TopicUpdateCurrentSnapshot,
     updateForumTopicDto: UpdateForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
     options: {
       recordUserActionLog?: boolean
-      afterUpdateInTx?: (tx: Db, nextTopic: ForumTopicSelect) => Promise<void>
+      afterUpdateInTx?: (
+        tx: DbExecutor,
+        nextTopic: TopicUpdatedSnapshot,
+      ) => Promise<void>
     } = {},
   ) {
     const {
@@ -302,14 +328,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         '主题已锁定，无法编辑',
       )
     }
-    const reviewPolicy = await this.getSectionTopicReviewPolicy(
-      topic.sectionId,
-      { notFoundMessage: '主题所属板块不存在' },
-    )
-    const media = this.normalizeTopicMedia(
-      { images, videos },
-      { images: topic.images, videos: topic.videos },
-    )
+    let beforeTopic = topic
     const updatedTopic = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const compiledBody = await this.materializeTopicBodyInTx(
@@ -317,8 +336,39 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           { html },
           actorUserId,
         )
+        await this.lockTopicForMutation(tx, id)
+        const lockedTopic = await tx.query.forumTopic.findFirst({
+          where: {
+            id,
+            deletedAt: { isNull: true },
+          },
+        })
+        if (!lockedTopic) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '主题不存在',
+          )
+        }
+        if (lockedTopic.isLocked) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '主题已锁定，无法编辑',
+          )
+        }
+        beforeTopic = lockedTopic
+        const reviewPolicy = await this.getSectionTopicReviewPolicy(
+          lockedTopic.sectionId,
+          {
+            client: tx,
+            notFoundMessage: '主题所属板块不存在',
+          },
+        )
+        const media = this.normalizeTopicMedia(
+          { images, videos },
+          { images: lockedTopic.images, videos: lockedTopic.videos },
+        )
         const nextTitle = this.resolveUpdateTopicTitle(
-          topic.title,
+          lockedTopic.title,
           nextTitleInput,
         )
         const nextContent = compiledBody.plainText
@@ -351,7 +401,16 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
               isNull(this.forumTopicTable.deletedAt),
             ),
           )
-          .returning()
+          .returning({
+            id: this.forumTopicTable.id,
+            sectionId: this.forumTopicTable.sectionId,
+            userId: this.forumTopicTable.userId,
+            title: this.forumTopicTable.title,
+            auditStatus: this.forumTopicTable.auditStatus,
+            isHidden: this.forumTopicTable.isHidden,
+            deletedAt: this.forumTopicTable.deletedAt,
+            updatedAt: this.forumTopicTable.updatedAt,
+          })
         if (!nextTopic) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -384,7 +443,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
           sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
           sourceId: nextTopic.id,
           topicId: nextTopic.id,
-          sectionId: topic.sectionId,
+          sectionId: lockedTopic.sectionId,
           userId: nextTopic.userId,
           sourceAuditStatus: nextTopic.auditStatus,
           sourceIsHidden: nextTopic.isHidden,
@@ -397,7 +456,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         })
         await this.forumCounterService.syncSectionVisibleState(
           tx,
-          topic.sectionId,
+          lockedTopic.sectionId,
         )
         await this.forumHashtagReferenceService.syncCommentVisibilityByTopicInTx(
           tx,
@@ -427,11 +486,11 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     )
     if (options.recordUserActionLog !== false) {
       await this.actionLogService.createActionLog({
-        userId: topic.userId,
+        userId: beforeTopic.userId,
         actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
         targetType: ForumUserActionTargetTypeEnum.TOPIC,
         targetId: id,
-        beforeData: JSON.stringify(topic),
+        beforeData: JSON.stringify(beforeTopic),
         afterData: JSON.stringify(updatedTopic),
         ipAddress: context.ipAddress,
         userAgent: context.userAgent,
@@ -452,7 +511,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     actorUserId?: number,
     options: {
       recordUserActionLog?: boolean
-      afterUpdateInTx?: (tx: Db, nextTopic: ForumTopicSelect) => Promise<void>
+      afterUpdateInTx?: (
+        tx: DbExecutor,
+        nextTopic: TopicUpdatedSnapshot,
+      ) => Promise<void>
     } = {},
   ) {
     const topic = await this.getActiveTopicOrThrow(updateForumTopicDto.id)
@@ -467,7 +529,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 基于当前主题快照删除主题，并在事务中同步评论、引用和计数。
   private async deleteTopicWithCurrent(
-    topic: ForumTopicSelect,
+    topic: TopicMutationSnapshot,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
   ) {
@@ -481,8 +543,8 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 在既有事务中删除主题；供治理链路复用同一事务边界。
   async deleteTopicWithCurrentInTx(
-    tx: Db,
-    topic: ForumTopicSelect,
+    tx: DbTransaction,
+    topic: TopicMutationSnapshot,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
     options: { recordUserActionLog?: boolean } = {},
@@ -490,11 +552,27 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     const { id } = topic
     const deletedAt = new Date()
     const topicDeleteCascadeId = `topic-delete:${id}:${randomUUID()}`
+    await this.lockTopicForMutation(tx, id)
+    const lockedTopic = await tx.query.forumTopic.findFirst({
+      where: {
+        id,
+        deletedAt: { isNull: true },
+      },
+    })
+    if (!lockedTopic) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
     const commentUserSummaries = await tx
       .select({
         userId: this.userCommentTable.userId,
-        commentCount: sql<number>`count(*)::int`,
-        receivedLikeCount: sql<number>`coalesce(sum(${this.userCommentTable.likeCount}), 0)::int`,
+        commentCount: sql<number>`count(*)::int`.mapWith(Number),
+        receivedLikeCount:
+          sql<number>`coalesce(sum(${this.userCommentTable.likeCount}), 0)::int`.mapWith(
+            Number,
+          ),
       })
       .from(this.userCommentTable)
       .where(
@@ -550,21 +628,21 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
     await this.forumCounterService.updateUserForumTopicCount(
       tx,
-      topic.userId,
+      lockedTopic.userId,
       -1,
     )
-    if (topic.likeCount > 0) {
+    if (lockedTopic.likeCount > 0) {
       await this.forumCounterService.updateUserForumTopicReceivedLikeCount(
         tx,
-        topic.userId,
-        -topic.likeCount,
+        lockedTopic.userId,
+        -lockedTopic.likeCount,
       )
     }
-    if (topic.favoriteCount > 0) {
+    if (lockedTopic.favoriteCount > 0) {
       await this.forumCounterService.updateUserForumTopicReceivedFavoriteCount(
         tx,
-        topic.userId,
-        -topic.favoriteCount,
+        lockedTopic.userId,
+        -lockedTopic.favoriteCount,
       )
     }
     const commentCountTasks: Promise<void>[] = []
@@ -587,14 +665,17 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       }
     }
     await Promise.all(commentCountTasks)
-    await this.forumCounterService.syncSectionVisibleState(tx, topic.sectionId)
+    await this.forumCounterService.syncSectionVisibleState(
+      tx,
+      lockedTopic.sectionId,
+    )
     if (options.recordUserActionLog !== false) {
       await this.actionLogService.createActionLogInTx(tx, {
         userId: actorUserId,
         actionType: ForumUserActionTypeEnum.DELETE_TOPIC,
         targetType: ForumUserActionTargetTypeEnum.TOPIC,
-        targetId: topic.id,
-        beforeData: JSON.stringify(topic),
+        targetId: lockedTopic.id,
+        beforeData: JSON.stringify(lockedTopic),
         afterData: JSON.stringify({ topicDeleteCascadeId }),
         ipAddress: context.ipAddress,
         userAgent: context.userAgent,
@@ -626,6 +707,11 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
         id,
+      },
+      columns: {
+        id: true,
+        userId: true,
+        deletedAt: true,
       },
     })
 
@@ -660,14 +746,40 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
   }
 
   async restoreTopicWithCurrentInTx(
-    tx: Db,
-    topic: ForumTopicSelect,
+    tx: DbTransaction,
+    topic: TopicMutationSnapshot,
     input: RestoreForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
     options: { recordUserActionLog?: boolean } = {},
   ) {
-    const nextSectionId = input.sectionId ?? topic.sectionId
+    await this.lockTopicForMutation(tx, topic.id)
+    const currentTopic = await tx.query.forumTopic.findFirst({
+      where: { id: topic.id },
+      columns: {
+        id: true,
+        sectionId: true,
+        userId: true,
+        title: true,
+        body: true,
+        isHidden: true,
+        auditStatus: true,
+        likeCount: true,
+        favoriteCount: true,
+        deletedAt: true,
+      },
+    })
+    if (!currentTopic || currentTopic.deletedAt === null) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '已删除主题不存在',
+      )
+    }
+    const nextSectionId = input.sectionId ?? currentTopic.sectionId
+    await this.lockSectionsForMutation(tx, [
+      currentTopic.sectionId,
+      nextSectionId,
+    ])
     await this.getSectionTopicReviewPolicy(nextSectionId, {
       client: tx,
       requireEnabled: true,
@@ -685,7 +797,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
             this.userCommentTable.targetType,
             CommentTargetTypeEnum.FORUM_TOPIC,
           ),
-          eq(this.userCommentTable.targetId, topic.id),
+          eq(this.userCommentTable.targetId, currentTopic.id),
           isNotNull(this.userCommentTable.deletedAt),
           isNotNull(this.userCommentTable.topicDeleteCascadeId),
         ),
@@ -709,7 +821,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
                 this.userCommentTable.targetType,
                 CommentTargetTypeEnum.FORUM_TOPIC,
               ),
-              eq(this.userCommentTable.targetId, topic.id),
+              eq(this.userCommentTable.targetId, currentTopic.id),
               eq(
                 this.userCommentTable.topicDeleteCascadeId,
                 topicDeleteCascadeId,
@@ -722,8 +834,11 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       ? await tx
           .select({
             userId: this.userCommentTable.userId,
-            commentCount: sql<number>`count(*)::int`,
-            receivedLikeCount: sql<number>`coalesce(sum(${this.userCommentTable.likeCount}), 0)::int`,
+            commentCount: sql<number>`count(*)::int`.mapWith(Number),
+            receivedLikeCount:
+              sql<number>`coalesce(sum(${this.userCommentTable.likeCount}), 0)::int`.mapWith(
+                Number,
+              ),
           })
           .from(this.userCommentTable)
           .where(
@@ -732,7 +847,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
                 this.userCommentTable.targetType,
                 CommentTargetTypeEnum.FORUM_TOPIC,
               ),
-              eq(this.userCommentTable.targetId, topic.id),
+              eq(this.userCommentTable.targetId, currentTopic.id),
               eq(
                 this.userCommentTable.topicDeleteCascadeId,
                 topicDeleteCascadeId,
@@ -748,7 +863,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       .set({ deletedAt: null, sectionId: nextSectionId })
       .where(
         and(
-          eq(this.forumTopicTable.id, topic.id),
+          eq(this.forumTopicTable.id, currentTopic.id),
           isNotNull(this.forumTopicTable.deletedAt),
         ),
       )
@@ -764,7 +879,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
               this.userCommentTable.targetType,
               CommentTargetTypeEnum.FORUM_TOPIC,
             ),
-            eq(this.userCommentTable.targetId, topic.id),
+            eq(this.userCommentTable.targetId, currentTopic.id),
             eq(
               this.userCommentTable.topicDeleteCascadeId,
               topicDeleteCascadeId,
@@ -777,7 +892,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     const materialized = await this.forumHashtagBodyService.materializeBodyInTx(
       {
         tx,
-        body: topic.body as BodyDoc,
+        body: currentTopic.body as BodyDoc,
         actorUserId,
         createSourceType: ForumHashtagCreateSourceTypeEnum.TOPIC_BODY,
       },
@@ -787,33 +902,33 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       BodySceneEnum.TOPIC,
     )
     const isVisible = this.isTopicVisible({
-      auditStatus: topic.auditStatus,
-      isHidden: topic.isHidden,
+      auditStatus: currentTopic.auditStatus,
+      isHidden: currentTopic.isHidden,
       deletedAt: null,
     })
     await this.mentionService.replaceMentionsInTx({
       tx,
       sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
-      sourceId: topic.id,
+      sourceId: currentTopic.id,
       content: compiledBody.plainText,
       mentions: compiledBody.mentionFacts,
     })
     await this.forumHashtagReferenceService.replaceReferencesInTx({
       tx,
       sourceType: ForumHashtagReferenceSourceTypeEnum.TOPIC,
-      sourceId: topic.id,
-      topicId: topic.id,
+      sourceId: currentTopic.id,
+      topicId: currentTopic.id,
       sectionId: nextSectionId,
-      userId: topic.userId,
-      sourceAuditStatus: topic.auditStatus,
-      sourceIsHidden: topic.isHidden,
+      userId: currentTopic.userId,
+      sourceAuditStatus: currentTopic.auditStatus,
+      sourceIsHidden: currentTopic.isHidden,
       isSourceVisible: isVisible,
       hashtagFacts: materialized.hashtagFacts,
     })
     await this.rebuildRestoredCommentReferencesInTx({
       tx,
       comments: restoredComments,
-      topicId: topic.id,
+      topicId: currentTopic.id,
       sectionId: nextSectionId,
       parentTopicVisible: isVisible,
       actorUserId,
@@ -821,21 +936,21 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
     await this.forumCounterService.updateUserForumTopicCount(
       tx,
-      topic.userId,
+      currentTopic.userId,
       1,
     )
-    if (topic.likeCount > 0) {
+    if (currentTopic.likeCount > 0) {
       await this.forumCounterService.updateUserForumTopicReceivedLikeCount(
         tx,
-        topic.userId,
-        topic.likeCount,
+        currentTopic.userId,
+        currentTopic.likeCount,
       )
     }
-    if (topic.favoriteCount > 0) {
+    if (currentTopic.favoriteCount > 0) {
       await this.forumCounterService.updateUserForumTopicReceivedFavoriteCount(
         tx,
-        topic.userId,
-        topic.favoriteCount,
+        currentTopic.userId,
+        currentTopic.favoriteCount,
       )
     }
     const commentCountTasks: Promise<void>[] = []
@@ -858,15 +973,18 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       }
     }
     await Promise.all(commentCountTasks)
-    await this.forumCounterService.syncSectionVisibleState(tx, topic.sectionId)
-    if (nextSectionId !== topic.sectionId) {
+    await this.forumCounterService.syncSectionVisibleState(
+      tx,
+      currentTopic.sectionId,
+    )
+    if (nextSectionId !== currentTopic.sectionId) {
       await this.forumCounterService.syncSectionVisibleState(tx, nextSectionId)
     }
     if (isVisible) {
       await this.mentionService.dispatchTopicMentionsInTx(tx, {
-        topicId: topic.id,
+        topicId: currentTopic.id,
         actorUserId,
-        topicTitle: topic.title,
+        topicTitle: currentTopic.title,
       })
     }
     if (options.recordUserActionLog !== false) {
@@ -874,10 +992,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         userId: actorUserId,
         actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
         targetType: ForumUserActionTargetTypeEnum.TOPIC,
-        targetId: topic.id,
+        targetId: currentTopic.id,
         beforeData: JSON.stringify({
-          deletedAt: topic.deletedAt,
-          sectionId: topic.sectionId,
+          deletedAt: currentTopic.deletedAt,
+          sectionId: currentTopic.sectionId,
         }),
         afterData: JSON.stringify({
           deletedAt: null,
@@ -897,7 +1015,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
   }
 
   private async rebuildRestoredCommentReferencesInTx(input: {
-    tx: Db
+    tx: DbExecutor
     comments: Array<{
       auditStatus: number
       body: unknown
@@ -971,7 +1089,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     })
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        await this.moveTopicInTx(tx, input, currentTopic.sectionId)
+        await this.moveTopicInTx(tx, input)
       }),
     )
     return true
@@ -979,24 +1097,22 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 在既有事务中移动主题；用于治理批量操作保持事务一致性。
   async moveTopicInTx(
-    tx: Db,
+    tx: DbTransaction,
     input: MoveForumTopicDto,
-    currentSectionId?: number,
+    _currentSectionId?: number,
   ) {
-    const sourceSectionId =
-      currentSectionId ??
-      (
-        await tx.query.forumTopic.findFirst({
-          where: { id: input.id, deletedAt: { isNull: true } },
-          columns: { sectionId: true },
-        })
-      )?.sectionId
-    if (!sourceSectionId) {
+    await this.lockTopicForMutation(tx, input.id)
+    const currentTopic = await tx.query.forumTopic.findFirst({
+      where: { id: input.id, deletedAt: { isNull: true } },
+      columns: { sectionId: true },
+    })
+    if (!currentTopic) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '主题不存在',
       )
     }
+    const sourceSectionId = currentTopic.sectionId
     if (sourceSectionId === input.sectionId) {
       return true
     }
@@ -1060,13 +1176,19 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 在既有事务中更新主题状态字段，供治理链路复用。
   async updateTopicStatusInTx(
-    tx: Db,
+    tx: DbTransaction,
     id: number,
     updateData: UpdateTopicStatusData,
     options?: UpdateTopicStatusOptions,
     sectionId?: number,
   ) {
+    let lockedTopic: TopicSectionSnapshot | null = null
+    if (updateData.isLocked !== undefined) {
+      await this.lockTopicForMutation(tx, id)
+      lockedTopic = await this.getActiveTopicByIdInTx(tx, id)
+    }
     const currentSectionId =
+      lockedTopic?.sectionId ??
       sectionId ??
       (
         await tx.query.forumTopic.findFirst({
@@ -1108,7 +1230,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 在既有事务中更新主题置顶状态。
   async updateTopicPinnedInTx(
-    tx: Db,
+    tx: DbTransaction,
     updateTopicPinnedDto: UpdateForumTopicPinnedDto,
   ) {
     return this.updateTopicStatusInTx(tx, updateTopicPinnedDto.id, {
@@ -1127,7 +1249,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 在既有事务中更新主题精华状态。
   async updateTopicFeaturedInTx(
-    tx: Db,
+    tx: DbTransaction,
     updateTopicFeaturedDto: UpdateForumTopicFeaturedDto,
   ) {
     return this.updateTopicStatusInTx(tx, updateTopicFeaturedDto.id, {
@@ -1144,7 +1266,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 在既有事务中更新主题锁定状态。
   async updateTopicLockedInTx(
-    tx: Db,
+    tx: DbTransaction,
     updateTopicLockedDto: UpdateForumTopicLockedDto,
   ) {
     return this.updateTopicStatusInTx(tx, updateTopicLockedDto.id, {
@@ -1154,7 +1276,22 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 更新主题隐藏状态，并同步可见性相关引用与 mention。
   async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenDto) {
-    const currentTopic = await this.db.query.forumTopic.findFirst({
+    await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) =>
+        this.updateTopicHiddenInTx(tx, updateTopicHiddenDto),
+      ),
+    )
+    return true
+  }
+
+  // 在既有事务中更新主题隐藏状态；供治理链路复用。
+  async updateTopicHiddenInTx(
+    tx: DbTransaction,
+    updateTopicHiddenDto: UpdateForumTopicHiddenDto,
+    _currentTopic?: TopicGovernanceSnapshot,
+  ) {
+    await this.lockTopicForMutation(tx, updateTopicHiddenDto.id)
+    const topic = await tx.query.forumTopic.findFirst({
       where: { id: updateTopicHiddenDto.id, deletedAt: { isNull: true } },
       columns: {
         id: true,
@@ -1165,39 +1302,6 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         isHidden: true,
       },
     })
-    if (!currentTopic) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '主题不存在',
-      )
-    }
-    await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) =>
-        this.updateTopicHiddenInTx(tx, updateTopicHiddenDto, currentTopic),
-      ),
-    )
-    return true
-  }
-
-  // 在既有事务中更新主题隐藏状态；供治理链路复用。
-  async updateTopicHiddenInTx(
-    tx: Db,
-    updateTopicHiddenDto: UpdateForumTopicHiddenDto,
-    currentTopic?: TopicGovernanceSnapshot,
-  ) {
-    const topic =
-      currentTopic ??
-      (await tx.query.forumTopic.findFirst({
-        where: { id: updateTopicHiddenDto.id, deletedAt: { isNull: true } },
-        columns: {
-          id: true,
-          sectionId: true,
-          userId: true,
-          title: true,
-          auditStatus: true,
-          isHidden: true,
-        },
-      }))
     if (!topic) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1299,8 +1403,30 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
     options?: TopicAuditActorOptions,
   ) {
-    const { id, auditStatus } = updateTopicAuditStatusDto
-    const currentTopic = await this.db.query.forumTopic.findFirst({
+    const previousTopic = await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) =>
+        this.updateTopicAuditStatusInTx(tx, updateTopicAuditStatusDto, options),
+      ),
+    )
+    await this.dispatchApprovedTopicRewardIfNeeded({
+      topicId: previousTopic.id,
+      userId: previousTopic.userId,
+      previousAuditStatus: previousTopic.auditStatus,
+      nextAuditStatus: updateTopicAuditStatusDto.auditStatus,
+    })
+    return true
+  }
+
+  // 在既有事务中更新主题审核状态并同步可见性。
+  async updateTopicAuditStatusInTx(
+    tx: DbTransaction,
+    updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
+    options?: TopicAuditActorOptions,
+    _currentTopic?: TopicGovernanceSnapshot,
+  ) {
+    const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
+    await this.lockTopicForMutation(tx, id)
+    const topic = await tx.query.forumTopic.findFirst({
       where: { id, deletedAt: { isNull: true } },
       columns: {
         id: true,
@@ -1311,52 +1437,6 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         isHidden: true,
       },
     })
-    if (!currentTopic) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '主题不存在',
-      )
-    }
-    await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) =>
-        this.updateTopicAuditStatusInTx(
-          tx,
-          updateTopicAuditStatusDto,
-          options,
-          currentTopic,
-        ),
-      ),
-    )
-    await this.dispatchApprovedTopicRewardIfNeeded({
-      topicId: currentTopic.id,
-      userId: currentTopic.userId,
-      previousAuditStatus: currentTopic.auditStatus,
-      nextAuditStatus: auditStatus,
-    })
-    return true
-  }
-
-  // 在既有事务中更新主题审核状态并同步可见性。
-  async updateTopicAuditStatusInTx(
-    tx: Db,
-    updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
-    options?: TopicAuditActorOptions,
-    currentTopic?: TopicGovernanceSnapshot,
-  ) {
-    const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
-    const topic =
-      currentTopic ??
-      (await tx.query.forumTopic.findFirst({
-        where: { id, deletedAt: { isNull: true } },
-        columns: {
-          id: true,
-          sectionId: true,
-          userId: true,
-          title: true,
-          auditStatus: true,
-          isHidden: true,
-        },
-      }))
     if (!topic) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1410,7 +1490,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       nextAuditStatus: auditStatus,
       nextIsHidden: topic.isHidden,
     })
-    return true
+    return topic
   }
 
   // 对外暴露审核通过奖励补发能力，供治理批量流程复用。

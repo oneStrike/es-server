@@ -12,92 +12,64 @@ import {
   isNotNull,
   isNull,
   or,
-  placeholder,
   sql,
 } from 'drizzle-orm'
 
 @Injectable()
 export class MessageInboxSummaryQueryService {
-  private readonly notificationUnreadSummaryQuery: ReturnType<
-    MessageInboxSummaryQueryService['buildNotificationUnreadSummaryQuery']
-  >
+  constructor(private readonly drizzle: DrizzleService) {}
 
-  private readonly chatUnreadAggregateQuery: ReturnType<
-    MessageInboxSummaryQueryService['buildChatUnreadAggregateQuery']
-  >
-
-  private readonly latestNotificationQuery: ReturnType<
-    MessageInboxSummaryQueryService['buildLatestNotificationQuery']
-  >
-
-  private readonly latestConversationQuery: ReturnType<
-    MessageInboxSummaryQueryService['buildLatestConversationQuery']
-  >
-
-  private readonly latestChatMessageQuery: ReturnType<
-    MessageInboxSummaryQueryService['buildLatestChatMessageQuery']
-  >
-
-  constructor(private readonly drizzle: DrizzleService) {
-    this.notificationUnreadSummaryQuery =
-      this.buildNotificationUnreadSummaryQuery()
-    this.chatUnreadAggregateQuery = this.buildChatUnreadAggregateQuery()
-    this.latestNotificationQuery = this.buildLatestNotificationQuery()
-    this.latestConversationQuery = this.buildLatestConversationQuery()
-    this.latestChatMessageQuery = this.buildLatestChatMessageQuery()
-  }
-
-  // 构建通知未读分类汇总 prepared query。
-  private buildNotificationUnreadSummaryQuery() {
+  // 构建通知未读分类汇总查询。
+  private buildNotificationUnreadSummaryQuery(
+    params: InboxUserTimeQueryInput,
+  ) {
     return this.drizzle.db
       .select({
         categoryKey: this.drizzle.schema.userNotification.categoryKey,
-        count: sql<number>`count(*)::int`,
+        count: sql<number>`count(*)::int`.mapWith(Number),
       })
       .from(this.drizzle.schema.userNotification)
       .where(
         and(
           eq(
             this.drizzle.schema.userNotification.receiverUserId,
-            placeholder('userId'),
+            params.userId,
           ),
           eq(this.drizzle.schema.userNotification.isHidden, false),
           or(
             isNull(this.drizzle.schema.userNotification.expiresAt),
             gt(
               this.drizzle.schema.userNotification.expiresAt,
-              placeholder('now'),
+              params.now,
             ),
           ),
           eq(this.drizzle.schema.userNotification.isRead, false),
         ),
       )
       .groupBy(this.drizzle.schema.userNotification.categoryKey)
-      .prepare('message_inbox_notification_unread_summary')
   }
 
-  // 构建聊天未读总数 prepared query。
-  private buildChatUnreadAggregateQuery() {
+  // 构建聊天未读总数查询。
+  private buildChatUnreadAggregateQuery(params: InboxUserQueryInput) {
     return this.drizzle.db
       .select({
-        unreadCount: sql<number>`coalesce(sum(${this.drizzle.schema.chatConversationMember.unreadCount}), 0)`,
+        unreadCount: sql<number>`coalesce(sum(${this.drizzle.schema.chatConversationMember.unreadCount}), 0)`.mapWith(Number),
       })
       .from(this.drizzle.schema.chatConversationMember)
       .where(
         and(
           eq(
             this.drizzle.schema.chatConversationMember.userId,
-            placeholder('userId'),
+            params.userId,
           ),
           isNull(this.drizzle.schema.chatConversationMember.leftAt),
           isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
         ),
       )
-      .prepare('message_inbox_chat_unread_aggregate')
   }
 
-  // 构建最新未过期通知 prepared query。
-  private buildLatestNotificationQuery() {
+  // 构建最新未过期通知查询。
+  private buildLatestNotificationQuery(params: InboxUserTimeQueryInput) {
     return this.drizzle.db
       .select({
         id: this.drizzle.schema.userNotification.id,
@@ -112,14 +84,14 @@ export class MessageInboxSummaryQueryService {
         and(
           eq(
             this.drizzle.schema.userNotification.receiverUserId,
-            placeholder('userId'),
+            params.userId,
           ),
           eq(this.drizzle.schema.userNotification.isHidden, false),
           or(
             isNull(this.drizzle.schema.userNotification.expiresAt),
             gt(
               this.drizzle.schema.userNotification.expiresAt,
-              placeholder('now'),
+              params.now,
             ),
           ),
         ),
@@ -129,11 +101,10 @@ export class MessageInboxSummaryQueryService {
         sql`${this.drizzle.schema.userNotification.id} desc`,
       )
       .limit(1)
-      .prepare('message_inbox_latest_notification')
   }
 
-  // 构建最新活跃聊天会话 prepared query。
-  private buildLatestConversationQuery() {
+  // 构建最新活跃聊天会话查询。
+  private buildLatestConversationQuery(params: InboxUserQueryInput) {
     return this.drizzle.db
       .select({
         id: this.drizzle.schema.chatConversation.id,
@@ -151,7 +122,7 @@ export class MessageInboxSummaryQueryService {
           ),
           eq(
             this.drizzle.schema.chatConversationMember.userId,
-            placeholder('userId'),
+            params.userId,
           ),
           isNull(this.drizzle.schema.chatConversationMember.leftAt),
           isNull(this.drizzle.schema.chatConversationMember.hiddenAt),
@@ -163,45 +134,45 @@ export class MessageInboxSummaryQueryService {
         sql`${this.drizzle.schema.chatConversation.id} desc`,
       )
       .limit(1)
-      .prepare('message_inbox_latest_conversation')
   }
 
-  // 构建最新聊天消息正文 prepared query。
-  private buildLatestChatMessageQuery() {
+  // 构建最新聊天消息正文查询。
+  private buildLatestChatMessageQuery(
+    params: InboxLatestChatMessageQueryInput,
+  ) {
     return this.drizzle.db.query.chatMessage
       .findFirst({
         where: {
-          id: placeholder('messageId'),
+          id: params.messageId,
         },
         columns: {
           content: true,
         },
       })
-      .prepare('message_inbox_latest_chat_message')
   }
 
   // 查询通知中心未读分类汇总。
   async getNotificationUnreadSummary(params: InboxUserTimeQueryInput) {
-    return this.notificationUnreadSummaryQuery.execute(params)
+    return this.buildNotificationUnreadSummaryQuery(params)
   }
 
   // 查询当前用户所有活跃会话的聊天未读总数。
   async getChatUnreadAggregate(params: InboxUserQueryInput) {
-    return this.chatUnreadAggregateQuery.execute(params)
+    return this.buildChatUnreadAggregateQuery(params)
   }
 
   // 查询当前用户最新一条未过期通知。
   async getLatestNotification(params: InboxUserTimeQueryInput) {
-    return this.latestNotificationQuery.execute(params)
+    return this.buildLatestNotificationQuery(params)
   }
 
   // 查询当前用户最新一条活跃聊天会话。
   async getLatestConversation(params: InboxUserQueryInput) {
-    return this.latestConversationQuery.execute(params)
+    return this.buildLatestConversationQuery(params)
   }
 
   // 查询最新聊天会话对应的最后消息正文。
   async getLatestChatMessage(params: InboxLatestChatMessageQueryInput) {
-    return this.latestChatMessageQuery.execute(params)
+    return this.buildLatestChatMessageQuery(params)
   }
 }

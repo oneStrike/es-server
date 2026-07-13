@@ -51,9 +51,9 @@ export class DownloadService {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BusinessException(
-      BusinessErrorCode.INVALID_OPERATION_TARGET,
-      '不支持的下载业务类型',
-    )
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        '不支持的下载业务类型',
+      )
     }
     return resolver
   }
@@ -81,26 +81,28 @@ export class DownloadService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    return this.drizzle.withTransaction(async (tx) => {
-      // 校验下载权限并获取内容（由各个业务方 Resolver 实现）
-      const content = await resolver.ensureDownloadable(tx, targetId, userId)
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        // 校验下载权限并获取内容（由各个业务方 Resolver 实现）
+        const content = await resolver.ensureDownloadable(tx, targetId, userId)
 
-      // 通过唯一键保证下载记录幂等，避免重复计数
-      const inserted = await tx
-        .insert(this.userDownloadRecord)
-        .values({
-          targetType,
-          targetId,
-          userId,
-        })
-        .onConflictDoNothing()
-        .returning({ id: this.userDownloadRecord.id })
+        // 通过唯一键保证下载记录幂等，避免重复计数
+        const inserted = await tx
+          .insert(this.userDownloadRecord)
+          .values({
+            targetType,
+            targetId,
+            userId,
+          })
+          .onConflictDoNothing()
+          .returning({ id: this.userDownloadRecord.id })
 
-      if (inserted.length > 0) {
-        await resolver.applyCountDelta(tx, targetId, 1)
-      }
+        if (inserted.length > 0) {
+          await resolver.applyCountDelta(tx, targetId, 1)
+        }
 
-      return content
+        return content
+      },
     })
   }
 
@@ -112,7 +114,11 @@ export class DownloadService {
   // 检查下载状态
   async checkDownloadStatus(input: DownloadTargetCommandDto) {
     const record = await this.db.query.userDownloadRecord.findFirst({
-      where: input,
+      where: {
+        targetId: input.targetId,
+        targetType: input.targetType,
+        userId: input.userId,
+      },
       columns: {
         id: true,
       },

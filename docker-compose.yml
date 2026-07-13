@@ -33,6 +33,7 @@ services:
     environment:
       # 注入当前服务特定的配置
       - APP_NAME=admin-api
+      - DB_PROCESS_ROLE=admin-api
       # 如果代码中没有处理 DATABASE_URL 组合逻辑，则需在此显式声明
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
@@ -58,22 +59,6 @@ services:
       - /tmp # 使用匿名卷挂载临时目录，避免写入容器层
     networks:
       - 1panel-network # 使用外部网络，确保 DNS 解析稳定
-
-  # 数据库迁移服务
-  migrator:
-    image: es/app/server:${SERVER_VERSION}
-    pull_policy: never
-    user: '1001:1001'
-    # 覆盖默认启动命令，执行生产环境离线迁移脚本
-    command: [bun, run, db:migrate:prod]
-    # 任务执行完成后退出，不重启
-    restart: no
-    env_file:
-      - ./.env
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-    networks:
-      - 1panel-network
 
   # App API 后端服务
   app-server:
@@ -108,6 +93,7 @@ services:
       - ./.env
     environment:
       - APP_NAME=app-api
+      - DB_PROCESS_ROLE=app-api
       - APP_PORT=8081
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}

@@ -69,8 +69,7 @@ export interface TaskVisibleStatusInput {
   status: number
   rewardApplicable: number
   rewardSettlementStatus?:
-    | GrowthRewardSettlementSelect['settlementStatus']
-    | null
+    GrowthRewardSettlementSelect['settlementStatus'] | null
 }
 
 /** 按任务周期切分时使用的日期片段。 */
@@ -149,6 +148,8 @@ export interface TaskInstanceEventApplyParams {
 
 /** 单次事件命中某步骤后的内部结果。 */
 export interface TaskInstanceEventApplyResult {
+  /** 当前定义仍有效且事件过滤条件命中。 */
+  matched: boolean
   instanceId: number | null
   progressed: boolean
   completed: boolean

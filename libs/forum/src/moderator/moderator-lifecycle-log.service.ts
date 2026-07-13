@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type { QueryForumModeratorLifecycleLogDto } from './dto/moderator-lifecycle-log.dto'
 import type { CreateForumModeratorLifecycleLogInput } from './moderator.type'
@@ -20,7 +20,7 @@ export class ForumModeratorLifecycleLogService {
   }
 
   async createLifecycleLogInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: CreateForumModeratorLifecycleLogInput,
   ) {
     await this.drizzle.withErrorHandling(() =>
@@ -90,7 +90,17 @@ export class ForumModeratorLifecycleLogService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.forumModeratorLifecycleLog.id,
+          eventType: this.forumModeratorLifecycleLog.eventType,
+          moderatorId: this.forumModeratorLifecycleLog.moderatorId,
+          applicationId: this.forumModeratorLifecycleLog.applicationId,
+          actorAdminUserId: this.forumModeratorLifecycleLog.actorAdminUserId,
+          reason: this.forumModeratorLifecycleLog.reason,
+          beforeData: this.forumModeratorLifecycleLog.beforeData,
+          afterData: this.forumModeratorLifecycleLog.afterData,
+          createdAt: this.forumModeratorLifecycleLog.createdAt,
+        })
         .from(this.forumModeratorLifecycleLog)
         .where(where)
         .orderBy(...orderQuery.orderBySql)

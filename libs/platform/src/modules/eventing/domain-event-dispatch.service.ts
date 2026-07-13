@@ -29,6 +29,22 @@ export class DomainEventDispatchService {
     return this.drizzle.schema.domainEventDispatch
   }
 
+  // dispatch 公开记录不暴露归档保留维护字段。
+  private buildDomainEventDispatchRecordSelect() {
+    return {
+      id: this.domainEventDispatch.id,
+      eventId: this.domainEventDispatch.eventId,
+      consumer: this.domainEventDispatch.consumer,
+      status: this.domainEventDispatch.status,
+      retryCount: this.domainEventDispatch.retryCount,
+      nextRetryAt: this.domainEventDispatch.nextRetryAt,
+      lastError: this.domainEventDispatch.lastError,
+      processedAt: this.domainEventDispatch.processedAt,
+      createdAt: this.domainEventDispatch.createdAt,
+      updatedAt: this.domainEventDispatch.updatedAt,
+    }
+  }
+
   buildProcessingDeadline() {
     const deadline = new Date()
     deadline.setSeconds(
@@ -57,7 +73,7 @@ export class DomainEventDispatchService {
           ),
         ),
       )
-      .returning()
+      .returning(this.buildDomainEventDispatchRecordSelect())
 
     return claimedRows[0] ?? null
   }
@@ -65,7 +81,7 @@ export class DomainEventDispatchService {
   async claimPendingDispatchBatch(consumers: DomainEventConsumerEnum[]) {
     const now = new Date()
     const candidateRows = await this.db
-      .select()
+      .select({ id: this.domainEventDispatch.id })
       .from(this.domainEventDispatch)
       .where(
         and(
@@ -109,13 +125,14 @@ export class DomainEventDispatchService {
           ),
         ),
       )
-      .returning()
+      .returning(this.buildDomainEventDispatchRecordSelect())
 
     if (claimedRows.length === 0) {
       return []
     }
 
     const uniqueEventIds = [...new Set(claimedRows.map((row) => row.eventId))]
+    // 领域事件是不可变完整事实；仅 dispatch 记录需要排除后台维护字段。
     const events = await this.db.query.domainEvent.findMany({
       where: {
         id: {
@@ -216,7 +233,7 @@ export class DomainEventDispatchService {
   async recoverStaleDispatches(consumers: DomainEventConsumerEnum[]) {
     const now = new Date()
     const staleRows = await this.db
-      .select()
+      .select(this.buildDomainEventDispatchRecordSelect())
       .from(this.domainEventDispatch)
       .where(
         and(

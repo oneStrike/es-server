@@ -1,7 +1,9 @@
+import type { DbExecutor } from '@db/core'
 import type {
   MembershipPageConfigSelect,
   MembershipPlanSelect,
   PaymentOrderSelect,
+  UserMembershipSubscriptionSelect,
 } from '@db/schema'
 import type { BusinessErrorCodeValue } from '@libs/platform/constant'
 import type { SQL } from 'drizzle-orm'
@@ -54,6 +56,31 @@ import {
   PaymentOrderTypeEnum,
   PaymentSubscriptionModeEnum,
 } from '../payment/payment.constant'
+
+interface AgreementListItemSource {
+  pageConfigId?: number
+  publishedAt?: Date | null
+}
+
+type VipSubscriptionOrderPlan = Pick<
+  MembershipPlanSelect,
+  | 'id'
+  | 'priceAmount'
+  | 'planKey'
+  | 'tier'
+  | 'durationDays'
+  | 'bonusPointAmount'
+>
+
+type PaidOrderActivationPlan = Pick<
+  MembershipPlanSelect,
+  'id' | 'planKey' | 'tier' | 'durationDays' | 'bonusPointAmount'
+>
+
+type ActiveMembershipSubscription = Pick<
+  UserMembershipSubscriptionSelect,
+  'endsAt'
+>
 
 @Injectable()
 export class MembershipService {
@@ -109,6 +136,87 @@ export class MembershipService {
     return this.drizzle.schema.userMembershipSubscription
   }
 
+  // 会员订阅页的稳定完整读模型；禁止列表与详情因表演进隐式增加字段。
+  private buildMembershipPageConfigSelect() {
+    return {
+      id: this.membershipPageConfig.id,
+      pageKey: this.membershipPageConfig.pageKey,
+      title: this.membershipPageConfig.title,
+      memberNoticeItems: this.membershipPageConfig.memberNoticeItems,
+      checkoutAgreementText: this.membershipPageConfig.checkoutAgreementText,
+      submitButtonTemplate: this.membershipPageConfig.submitButtonTemplate,
+      isEnabled: this.membershipPageConfig.isEnabled,
+      sortOrder: this.membershipPageConfig.sortOrder,
+      createdAt: this.membershipPageConfig.createdAt,
+      updatedAt: this.membershipPageConfig.updatedAt,
+    }
+  }
+
+  // 会员套餐的稳定完整读模型；app 列表与 admin 分页共用同一明确 contract。
+  private buildMembershipPlanSelect() {
+    return {
+      id: this.membershipPlan.id,
+      name: this.membershipPlan.name,
+      planKey: this.membershipPlan.planKey,
+      tier: this.membershipPlan.tier,
+      priceAmount: this.membershipPlan.priceAmount,
+      originalPriceAmount: this.membershipPlan.originalPriceAmount,
+      durationDays: this.membershipPlan.durationDays,
+      displayTag: this.membershipPlan.displayTag,
+      bonusPointAmount: this.membershipPlan.bonusPointAmount,
+      sortOrder: this.membershipPlan.sortOrder,
+      isEnabled: this.membershipPlan.isEnabled,
+      createdAt: this.membershipPlan.createdAt,
+      updatedAt: this.membershipPlan.updatedAt,
+    }
+  }
+
+  // VIP 下单只冻结支付与套餐快照实际消费的字段。
+  private get vipSubscriptionOrderPlanColumns() {
+    return {
+      id: true,
+      priceAmount: true,
+      planKey: true,
+      tier: true,
+      durationDays: true,
+      bonusPointAmount: true,
+    } as const
+  }
+
+  // 支付履约只需要生成订阅和积分流水所需的套餐字段。
+  private get paidOrderActivationPlanColumns() {
+    return {
+      id: true,
+      planKey: true,
+      tier: true,
+      durationDays: true,
+      bonusPointAmount: true,
+    } as const
+  }
+
+  // 续期起点只依赖当前有效订阅的结束时间。
+  private get activeSubscriptionEndColumns() {
+    return {
+      endsAt: true,
+    } as const
+  }
+
+  // 会员权益定义的稳定完整管理 contract。
+  private buildMembershipBenefitDefinitionSelect() {
+    return {
+      id: this.membershipBenefitDefinition.id,
+      code: this.membershipBenefitDefinition.code,
+      name: this.membershipBenefitDefinition.name,
+      icon: this.membershipBenefitDefinition.icon,
+      benefitType: this.membershipBenefitDefinition.benefitType,
+      description: this.membershipBenefitDefinition.description,
+      isEnabled: this.membershipBenefitDefinition.isEnabled,
+      sortOrder: this.membershipBenefitDefinition.sortOrder,
+      createdAt: this.membershipBenefitDefinition.createdAt,
+      updatedAt: this.membershipBenefitDefinition.updatedAt,
+    }
+  }
+
   // 启用或停用会员订阅页配置。
   async updateMembershipPageConfigStatus(id: number, isEnabled: boolean) {
     if (isEnabled) {
@@ -132,6 +240,7 @@ export class MembershipService {
   ) {
     const pageConfig = await this.db.query.membershipPageConfig.findFirst({
       where: { id: pageConfigId },
+      columns: { id: true },
     })
     if (!pageConfig) {
       throw new BusinessException(
@@ -205,6 +314,7 @@ export class MembershipService {
   ) {
     const pageConfig = await this.db.query.membershipPageConfig.findFirst({
       where: { id: pageConfigId },
+      columns: { id: true },
     })
     if (!pageConfig) {
       throw new BusinessException(
@@ -278,6 +388,7 @@ export class MembershipService {
     const { id, agreementIds, planIds, ...data } = dto
     const existing = await this.db.query.membershipPageConfig.findFirst({
       where: { id },
+      columns: { isEnabled: true },
     })
     if (!existing) {
       throw new BusinessException(
@@ -287,49 +398,51 @@ export class MembershipService {
     }
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          const normalizedAgreementIds =
-            agreementIds === undefined
-              ? undefined
-              : await this.assertMembershipAgreementIdsWritable(
-                  tx,
-                  agreementIds,
-                )
-          const normalizedPlanIds =
-            planIds === undefined
-              ? undefined
-              : await this.assertMembershipPlanIdsWritable(tx, planIds)
-          const nextEnabled = data.isEnabled ?? existing.isEnabled
-          if (nextEnabled) {
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const normalizedAgreementIds =
+              agreementIds === undefined
+                ? undefined
+                : await this.assertMembershipAgreementIdsWritable(
+                    tx,
+                    agreementIds,
+                  )
+            const normalizedPlanIds =
+              planIds === undefined
+                ? undefined
+                : await this.assertMembershipPlanIdsWritable(tx, planIds)
+            const nextEnabled = data.isEnabled ?? existing.isEnabled
+            if (nextEnabled) {
+              if (normalizedAgreementIds !== undefined) {
+                this.assertMembershipAgreementCount(normalizedAgreementIds)
+              } else {
+                await this.assertMembershipPageConfigHasPublishedAgreements(id)
+              }
+              if (normalizedPlanIds !== undefined) {
+                this.assertMembershipPlanCount(normalizedPlanIds)
+              } else {
+                await this.assertMembershipPageConfigHasEnabledPlans(id)
+              }
+            }
+            await tx
+              .update(this.membershipPageConfig)
+              .set(data)
+              .where(eq(this.membershipPageConfig.id, id))
             if (normalizedAgreementIds !== undefined) {
-              this.assertMembershipAgreementCount(normalizedAgreementIds)
-            } else {
-              await this.assertMembershipPageConfigHasPublishedAgreements(id)
+              await this.replaceMembershipPageConfigAgreements(
+                tx,
+                id,
+                normalizedAgreementIds,
+              )
             }
             if (normalizedPlanIds !== undefined) {
-              this.assertMembershipPlanCount(normalizedPlanIds)
-            } else {
-              await this.assertMembershipPageConfigHasEnabledPlans(id)
+              await this.replaceMembershipPageConfigPlans(
+                tx,
+                id,
+                normalizedPlanIds,
+              )
             }
-          }
-          await tx
-            .update(this.membershipPageConfig)
-            .set(data)
-            .where(eq(this.membershipPageConfig.id, id))
-          if (normalizedAgreementIds !== undefined) {
-            await this.replaceMembershipPageConfigAgreements(
-              tx,
-              id,
-              normalizedAgreementIds,
-            )
-          }
-          if (normalizedPlanIds !== undefined) {
-            await this.replaceMembershipPageConfigPlans(
-              tx,
-              id,
-              normalizedPlanIds,
-            )
-          }
+          },
         }),
       {
         notFound: '会员订阅页配置不存在',
@@ -518,42 +631,45 @@ export class MembershipService {
     const { agreementIds, planIds, ...data } = dto
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          const normalizedAgreementIds =
-            await this.assertMembershipAgreementIdsWritable(tx, agreementIds)
-          const normalizedPlanIds = await this.assertMembershipPlanIdsWritable(
-            tx,
-            planIds,
-          )
-          if ((data.isEnabled ?? true) && normalizedAgreementIds.length === 0) {
-            throw new BusinessException(
-              BusinessErrorCode.OPERATION_NOT_ALLOWED,
-              '启用的会员订阅页必须关联至少一个已发布协议',
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const normalizedAgreementIds =
+              await this.assertMembershipAgreementIdsWritable(tx, agreementIds)
+            const normalizedPlanIds =
+              await this.assertMembershipPlanIdsWritable(tx, planIds)
+            if (
+              (data.isEnabled ?? true) &&
+              normalizedAgreementIds.length === 0
+            ) {
+              throw new BusinessException(
+                BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                '启用的会员订阅页必须关联至少一个已发布协议',
+              )
+            }
+            if ((data.isEnabled ?? true) && normalizedPlanIds.length === 0) {
+              throw new BusinessException(
+                BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                '启用的会员订阅页必须绑定至少一个已启用套餐',
+              )
+            }
+            const [pageConfig] = await tx
+              .insert(this.membershipPageConfig)
+              .values({
+                ...data,
+                pageKey: this.generateBusinessKey('vip_page', data.title, 80),
+              })
+              .returning({ id: this.membershipPageConfig.id })
+            await this.replaceMembershipPageConfigAgreements(
+              tx,
+              pageConfig.id,
+              normalizedAgreementIds,
             )
-          }
-          if ((data.isEnabled ?? true) && normalizedPlanIds.length === 0) {
-            throw new BusinessException(
-              BusinessErrorCode.OPERATION_NOT_ALLOWED,
-              '启用的会员订阅页必须绑定至少一个已启用套餐',
+            await this.replaceMembershipPageConfigPlans(
+              tx,
+              pageConfig.id,
+              normalizedPlanIds,
             )
-          }
-          const [pageConfig] = await tx
-            .insert(this.membershipPageConfig)
-            .values({
-              ...data,
-              pageKey: this.generateBusinessKey('vip_page', data.title, 80),
-            })
-            .returning({ id: this.membershipPageConfig.id })
-          await this.replaceMembershipPageConfigAgreements(
-            tx,
-            pageConfig.id,
-            normalizedAgreementIds,
-          )
-          await this.replaceMembershipPageConfigPlans(
-            tx,
-            pageConfig.id,
-            normalizedPlanIds,
-          )
+          },
         }),
       { duplicate: '会员订阅页配置生成业务键冲突，请重试' },
     )
@@ -601,7 +717,7 @@ export class MembershipService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildMembershipPageConfigSelect())
         .from(this.membershipPageConfig)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -708,34 +824,36 @@ export class MembershipService {
     this.assertSupportedBenefitType(data.benefitType)
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          const existing = await tx.query.membershipBenefitDefinition.findFirst(
-            {
-              where: { id },
-            },
-          )
-          if (!existing) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_NOT_FOUND,
-              '会员权益不存在',
-            )
-          }
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const existing =
+              await tx.query.membershipBenefitDefinition.findFirst({
+                where: { id },
+                columns: { benefitType: true },
+              })
+            if (!existing) {
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                '会员权益不存在',
+              )
+            }
 
-          if (
-            data.benefitType !== undefined &&
-            data.benefitType !== existing.benefitType
-          ) {
-            await this.assertBenefitTypeChangeKeepsPlanBenefitsValid(
-              tx,
-              id,
-              data.benefitType,
-            )
-          }
+            if (
+              data.benefitType !== undefined &&
+              data.benefitType !== existing.benefitType
+            ) {
+              await this.assertBenefitTypeChangeKeepsPlanBenefitsValid(
+                tx,
+                id,
+                data.benefitType,
+              )
+            }
 
-          await tx
-            .update(this.membershipBenefitDefinition)
-            .set(data)
-            .where(eq(this.membershipBenefitDefinition.id, id))
+            await tx
+              .update(this.membershipBenefitDefinition)
+              .set(data)
+              .where(eq(this.membershipBenefitDefinition.id, id))
+          },
         }),
       { notFound: '会员权益不存在' },
     )
@@ -781,7 +899,7 @@ export class MembershipService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildMembershipBenefitDefinitionSelect())
         .from(this.membershipBenefitDefinition)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -796,26 +914,29 @@ export class MembershipService {
   async updateMembershipPlanStatus(id: number, isEnabled: boolean) {
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          const existing = await tx.query.membershipPlan.findFirst({
-            where: { id },
-          })
-          if (!existing) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_NOT_FOUND,
-              'VIP 套餐不存在',
-            )
-          }
-          if (!isEnabled && existing.isEnabled) {
-            await this.assertMembershipPlanDisableKeepsEnabledPagesPurchasable(
-              tx,
-              id,
-            )
-          }
-          await tx
-            .update(this.membershipPlan)
-            .set({ isEnabled })
-            .where(eq(this.membershipPlan.id, id))
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const existing = await tx.query.membershipPlan.findFirst({
+              where: { id },
+              columns: { isEnabled: true },
+            })
+            if (!existing) {
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                'VIP 套餐不存在',
+              )
+            }
+            if (!isEnabled && existing.isEnabled) {
+              await this.assertMembershipPlanDisableKeepsEnabledPagesPurchasable(
+                tx,
+                id,
+              )
+            }
+            await tx
+              .update(this.membershipPlan)
+              .set({ isEnabled })
+              .where(eq(this.membershipPlan.id, id))
+          },
         }),
       { notFound: 'VIP 套餐不存在' },
     )
@@ -896,6 +1017,10 @@ export class MembershipService {
     }
     const existing = await this.db.query.membershipPlan.findFirst({
       where: { id },
+      columns: {
+        originalPriceAmount: true,
+        priceAmount: true,
+      },
     })
     if (!existing) {
       throw new BusinessException(
@@ -905,15 +1030,17 @@ export class MembershipService {
     }
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          await tx
-            .update(this.membershipPlan)
-            .set(this.normalizeMembershipPlanUpdate(data, existing))
-            .where(eq(this.membershipPlan.id, id))
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await tx
+              .update(this.membershipPlan)
+              .set(this.normalizeMembershipPlanUpdate(data, existing))
+              .where(eq(this.membershipPlan.id, id))
 
-          if (benefits !== undefined) {
-            await this.replaceMembershipPlanBenefits(tx, id, benefits)
-          }
+            if (benefits !== undefined) {
+              await this.replaceMembershipPlanBenefits(tx, id, benefits)
+            }
+          },
         }),
       { notFound: 'VIP 套餐不存在' },
     )
@@ -960,12 +1087,16 @@ export class MembershipService {
   // 校验套餐权益配置的目标存在性和 v1 权益矩阵，防止 admin 配置服务端无法兑现的付费承诺。
   private async assertMembershipPlanBenefitWritable(
     dto: MembershipPlanBenefitInputDto & { planId: number },
-    runner: MembershipTx = this.db,
+    runner: DbExecutor = this.db,
   ) {
     const [plan, benefit] = await Promise.all([
-      runner.query.membershipPlan.findFirst({ where: { id: dto.planId } }),
+      runner.query.membershipPlan.findFirst({
+        where: { id: dto.planId },
+        columns: { id: true },
+      }),
       runner.query.membershipBenefitDefinition.findFirst({
         where: { id: dto.benefitId },
+        columns: { benefitType: true },
       }),
     ])
     if (!plan) {
@@ -994,6 +1125,7 @@ export class MembershipService {
           id: Number(value?.couponDefinitionId),
           isEnabled: true,
         },
+        columns: { id: true },
       })
       if (!couponDefinition) {
         throw new BusinessException(
@@ -1100,6 +1232,7 @@ export class MembershipService {
             id: Number(value?.couponDefinitionId),
             isEnabled: true,
           },
+          columns: { id: true },
         })
         if (!couponDefinition) {
           throw new BusinessException(
@@ -1181,7 +1314,7 @@ export class MembershipService {
   // 更新套餐时用现有值补齐价格约束，保证 priceAmount 与 originalPriceAmount 始终同轮一致。
   private normalizeMembershipPlanUpdate(
     data: MembershipPlanUpdateData,
-    existing: MembershipPlanSelect,
+    existing: Pick<MembershipPlanSelect, 'originalPriceAmount' | 'priceAmount'>,
   ) {
     const { benefits: _benefits, ...planData } = data
     const nextPriceAmount = data.priceAmount ?? existing.priceAmount
@@ -1211,18 +1344,20 @@ export class MembershipService {
     this.assertMembershipPlanBenefitIdsDistinct(normalizedBenefits)
     await this.drizzle.withErrorHandling(
       async () =>
-        this.drizzle.withTransaction(async (tx) => {
-          const [plan] = await tx
-            .insert(this.membershipPlan)
-            .values(this.normalizeMembershipPlanCreate(data))
-            .returning({ id: this.membershipPlan.id })
+        this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const [plan] = await tx
+              .insert(this.membershipPlan)
+              .values(this.normalizeMembershipPlanCreate(data))
+              .returning({ id: this.membershipPlan.id })
 
-          await this.replaceMembershipPlanBenefits(
-            tx,
-            plan.id,
-            normalizedBenefits,
-            false,
-          )
+            await this.replaceMembershipPlanBenefits(
+              tx,
+              plan.id,
+              normalizedBenefits,
+              false,
+            )
+          },
         }),
       { duplicate: 'VIP 套餐生成业务键冲突，请重试' },
     )
@@ -1262,7 +1397,7 @@ export class MembershipService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildMembershipPlanSelect())
         .from(this.membershipPlan)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -1304,7 +1439,7 @@ export class MembershipService {
   private async getPlanBenefitItems(
     planIds: number[],
     enabledOnly: boolean,
-    runner: MembershipTx = this.db,
+    runner: DbExecutor = this.db,
   ) {
     const conditions: SQL[] = [
       inArray(this.membershipPlanBenefit.planId, planIds),
@@ -1374,12 +1509,14 @@ export class MembershipService {
         'VIP 下单只支持一次性订阅',
       )
     }
-    const plan = await this.db.query.membershipPlan.findFirst({
-      where: {
-        id: dto.planId,
-        isEnabled: true,
-      },
-    })
+    const plan: VipSubscriptionOrderPlan | undefined =
+      await this.db.query.membershipPlan.findFirst({
+        where: {
+          id: dto.planId,
+          isEnabled: true,
+        },
+        columns: this.vipSubscriptionOrderPlanColumns,
+      })
     if (!plan) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1477,7 +1614,7 @@ export class MembershipService {
       conditions.push(eq(this.membershipPageConfig.pageKey, pageKey))
     }
     const [pageConfig] = await this.db
-      .select()
+      .select(this.buildMembershipPageConfigSelect())
       .from(this.membershipPageConfig)
       .where(and(...conditions))
       .orderBy(
@@ -1568,7 +1705,7 @@ export class MembershipService {
   // 读取启用套餐的权益项并携带权益定义，供 app 订阅页复用。
   private async getEnabledPlanBenefitItems(
     planIds: number[],
-    runner: MembershipTx = this.db,
+    runner: DbExecutor = this.db,
   ) {
     return this.getPlanBenefitItems(planIds, true, runner)
   }
@@ -1588,7 +1725,7 @@ export class MembershipService {
   // 获取 App 可展示的会员套餐列表。
   async getMembershipPlanList() {
     return this.db
-      .select()
+      .select(this.buildMembershipPlanSelect())
       .from(this.membershipPlan)
       .where(eq(this.membershipPlan.isEnabled, true))
       .orderBy(
@@ -1600,9 +1737,11 @@ export class MembershipService {
 
   // 支付成功后开通会员订阅。
   async activatePaidOrder(tx: MembershipTx, order: PaymentOrderSelect) {
-    const plan = await tx.query.membershipPlan.findFirst({
-      where: { id: order.targetId },
-    })
+    const plan: PaidOrderActivationPlan | undefined =
+      await tx.query.membershipPlan.findFirst({
+        where: { id: order.targetId },
+        columns: this.paidOrderActivationPlanColumns,
+      })
     if (!plan) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1611,13 +1750,15 @@ export class MembershipService {
     }
 
     const now = new Date()
-    const active = await tx.query.userMembershipSubscription.findFirst({
-      where: {
-        userId: order.userId,
-        status: MembershipSubscriptionStatusEnum.ACTIVE,
-      },
-      orderBy: { endsAt: 'desc' },
-    })
+    const active: ActiveMembershipSubscription | undefined =
+      await tx.query.userMembershipSubscription.findFirst({
+        where: {
+          userId: order.userId,
+          status: MembershipSubscriptionStatusEnum.ACTIVE,
+        },
+        orderBy: { endsAt: 'desc' },
+        columns: this.activeSubscriptionEndColumns,
+      })
     const startsAt = active && active.endsAt > now ? active.endsAt : now
     await tx
       .insert(this.userMembershipSubscription)
@@ -1729,13 +1870,9 @@ export class MembershipService {
     }
   }
 
-  private toAgreementListItemOutput<
-    TAgreement extends {
-      pageConfigId?: number
-      publishedAt?: Date | null
-    },
-  >(agreement: TAgreement
-) {
+  private toAgreementListItemOutput<TAgreement extends AgreementListItemSource>(
+    agreement: TAgreement,
+  ) {
     const { pageConfigId: _pageConfigId, publishedAt, ...output } = agreement
     return {
       ...output,

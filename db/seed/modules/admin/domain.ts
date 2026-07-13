@@ -1,5 +1,6 @@
 import type { Db } from '../../db-client'
-import { adminUser, adminUserToken } from '@db/schema'
+import { adminRole, adminUser, adminUserRole, adminUserToken } from '@db/schema'
+import { AdminSystemRoleCode } from '@libs/identity/admin-rbac.constant'
 import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
 import { eq } from 'drizzle-orm'
 import {
@@ -13,7 +14,6 @@ const ADMIN_FIXTURE = {
   username: SEED_ADMIN_USERNAME,
   mobile: '13800138099',
   avatar: createAvatar('seed-admin'),
-  role: 1,
   isEnabled: true,
   lastLoginAt: SEED_TIMELINE.seedAt,
   lastLoginIp: '127.0.0.1',
@@ -40,7 +40,11 @@ export async function seedAdminDomain(db: Db) {
   }
 
   let admin = await db.query.adminUser.findFirst({
-    where: eq(adminUser.username, adminFixture.username),
+    where: { username: adminFixture.username },
+    columns: {
+      id: true,
+      username: true,
+    },
   })
 
   if (!admin) {
@@ -55,8 +59,26 @@ export async function seedAdminDomain(db: Db) {
     console.log(`  ↺ 管理员更新: ${admin.username}`)
   }
 
+  const [superAdminRole] = await db
+    .select({ id: adminRole.id })
+    .from(adminRole)
+    .where(eq(adminRole.code, AdminSystemRoleCode.SUPER_ADMIN))
+    .limit(1)
+  if (!superAdminRole) {
+    throw new Error(
+      'Demo seed requires reference bootstrap to create the super_admin role first',
+    )
+  }
+  await db
+    .insert(adminUserRole)
+    .values({ adminUserId: admin.id, roleId: superAdminRole.id })
+    .onConflictDoNothing()
+
   const existingToken = await db.query.adminUserToken.findFirst({
-    where: eq(adminUserToken.jti, ADMIN_TOKEN_FIXTURE.jti),
+    where: { jti: ADMIN_TOKEN_FIXTURE.jti },
+    columns: {
+      id: true,
+    },
   })
 
   if (!existingToken) {

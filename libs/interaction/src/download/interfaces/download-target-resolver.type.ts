@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { DownloadTargetTypeEnum } from '../download.constant'
 
 /**
@@ -20,7 +20,7 @@ export interface IDownloadTargetResolver {
    * @throws BadRequestException 如果目标不存在或不可下载
    */
   ensureDownloadable: (
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     userId: number,
   ) => Promise<string>
@@ -31,5 +31,9 @@ export interface IDownloadTargetResolver {
    * @param targetId - 目标 ID
    * @param delta - 增量 (+1)
    */
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void>
 }

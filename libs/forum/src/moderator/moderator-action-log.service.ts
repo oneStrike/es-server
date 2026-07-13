@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, DbExecutor } from '@db/core'
 import type { AppDateRange } from '@libs/platform/utils'
 import type { SQL } from 'drizzle-orm'
 import type { ForumModeratorActionLogInput } from './moderator.type'
@@ -119,7 +119,10 @@ export class ForumModeratorActionLogService {
   }
 
   // 在现有事务中写入版主操作日志，保证治理写入和审计事实同生共死。
-  async createActionLogInTx(tx: Db, input: ForumModeratorActionLogInput) {
+  async createActionLogInTx(
+    tx: DbExecutor,
+    input: ForumModeratorActionLogInput,
+  ) {
     return this.insertActionLog(tx, input)
   }
 
@@ -176,7 +179,19 @@ export class ForumModeratorActionLogService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.forumModeratorActionLog.id,
+          moderatorId: this.forumModeratorActionLog.moderatorId,
+          actorType: this.forumModeratorActionLog.actorType,
+          actorUserId: this.forumModeratorActionLog.actorUserId,
+          targetId: this.forumModeratorActionLog.targetId,
+          actionType: this.forumModeratorActionLog.actionType,
+          targetType: this.forumModeratorActionLog.targetType,
+          actionDescription: this.forumModeratorActionLog.actionDescription,
+          beforeData: this.forumModeratorActionLog.beforeData,
+          afterData: this.forumModeratorActionLog.afterData,
+          createdAt: this.forumModeratorActionLog.createdAt,
+        })
         .from(this.forumModeratorActionLog)
         .where(where)
         .orderBy(...orderQuery.orderBySql)

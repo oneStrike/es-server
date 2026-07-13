@@ -1,5 +1,11 @@
-import type { Db } from '@db/core'
-import type { ContentImportItemSelect } from '@db/schema'
+import type { DbExecutor, DbTransaction } from '@db/core'
+import type {
+  ContentImportItemAttemptSelect,
+  ContentImportItemSelect,
+  ContentImportJobSelect,
+  WorkflowAttemptSelect,
+  WorkflowJobSelect,
+} from '@db/schema'
 import type { ThirdPartyComicSyncChapterPlan } from '@libs/content/work/third-party/third-party-comic-sync.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
 import type { WorkflowItemPageRequestDto } from '@libs/platform/modules/workflow/dto'
@@ -19,7 +25,13 @@ import type {
   CreateThirdPartySyncContentJobInput,
 } from './content-import.type'
 import { randomUUID } from 'node:crypto'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
+import { workCatalogWorkLock } from '@libs/content/work/core/work-integrity-lock'
 import { resolveThirdPartyComicImportImageTotals } from '@libs/content/work/third-party/third-party-comic-import-image-total'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -47,6 +59,52 @@ import {
   ContentImportSourceTypeEnum,
 } from './content-import.constant'
 import { ContentImportItemPageRequestDto } from './dto/content-import.dto'
+
+interface ContentImportJobContext {
+  importJob: ContentImportJobSelect
+  workflowJob: WorkflowJobSelect
+}
+
+interface ContentImportItemContext extends ContentImportJobContext {
+  item: ContentImportItemSelect
+}
+
+interface CurrentContentImportItemAttemptContext extends ContentImportItemContext {
+  itemAttempt: ContentImportItemAttemptSelect
+  workflowAttempt: WorkflowAttemptSelect
+}
+
+type ContentImportAggregateItem = Pick<
+  ContentImportItemSelect,
+  'imageSuccessCount' | 'imageTotal' | 'status'
+>
+
+type ContentImportAggregateItemWithRetryState = ContentImportAggregateItem &
+  Pick<ContentImportItemSelect, 'nextRetryAt'>
+
+type ContentImportItemAttemptIdSnapshot = Pick<
+  ContentImportItemAttemptSelect,
+  'id'
+>
+
+type WorkflowAttemptIdSnapshot = Pick<WorkflowAttemptSelect, 'id'>
+
+type WorkflowAttemptIdentitySnapshot = Pick<
+  WorkflowAttemptSelect,
+  'attemptNo' | 'id' | 'workflowJobId'
+>
+
+type WorkflowJobIdSnapshot = Pick<WorkflowJobSelect, 'id'>
+
+interface ContentImportImageCounterPatch {
+  imageSuccessCount?: number
+  imageTotal?: number
+}
+
+interface ContentImportItemAttemptMutationInput {
+  attemptNo: number
+  itemId: string
+}
 
 /**
  * 内容导入领域服务。
@@ -82,6 +140,37 @@ export class ContentImportService {
     return this.drizzle.schema.contentImportItem
   }
 
+  // 管理端条目与 workflow 通用条目页共用的稳定读模型；诊断与 attempt 内部字段不进入分页链。
+  private get contentImportItemPageSelect() {
+    return {
+      id: this.contentImportItem.id,
+      itemId: this.contentImportItem.itemId,
+      itemType: this.contentImportItem.itemType,
+      providerChapterId: this.contentImportItem.providerChapterId,
+      localChapterId: this.contentImportItem.localChapterId,
+      title: this.contentImportItem.title,
+      sortOrder: this.contentImportItem.sortOrder,
+      status: this.contentImportItem.status,
+      stage: this.contentImportItem.stage,
+      failureCount: this.contentImportItem.failureCount,
+      lastErrorCode: this.contentImportItem.lastErrorCode,
+      lastErrorDomain: this.contentImportItem.lastErrorDomain,
+      lastErrorStage: this.contentImportItem.lastErrorStage,
+      lastErrorSeverity: this.contentImportItem.lastErrorSeverity,
+      lastErrorRetryable: this.contentImportItem.lastErrorRetryable,
+      lastErrorContext: this.contentImportItem.lastErrorContext,
+      nextRetryAt: this.contentImportItem.nextRetryAt,
+      autoRetryCount: this.contentImportItem.autoRetryCount,
+      maxAutoRetries: this.contentImportItem.maxAutoRetries,
+      lastRetryCode: this.contentImportItem.lastRetryCode,
+      lastRetryContext: this.contentImportItem.lastRetryContext,
+      imageTotal: this.contentImportItem.imageTotal,
+      imageSuccessCount: this.contentImportItem.imageSuccessCount,
+      metadata: this.contentImportItem.metadata,
+      updatedAt: this.contentImportItem.updatedAt,
+    }
+  }
+
   // 读取 contentImportItemAttempt。
   private get contentImportItemAttempt() {
     return this.drizzle.schema.contentImportItemAttempt
@@ -92,21 +181,28 @@ export class ContentImportService {
     return this.drizzle.schema.contentImportResidue
   }
 
-  // 创建三方导入领域任务和章节条目。
-  async createThirdPartyImportJob(
+  // 读取 work。
+  private get work() {
+    return this.drizzle.schema.work
+  }
+
+  // 在创建 workflow 草稿的同一事务内创建三方导入领域任务和章节条目。
+  async createThirdPartyImportJobWithDb(
+    tx: DbTransaction,
+    workflowJob: WorkflowJobSelect,
     input: CreateThirdPartyImportContentJobInput,
   ) {
+    this.assertWorkflowJobIdentity(workflowJob, input.jobId)
     const chapterImageTotals = resolveThirdPartyComicImportImageTotals(
       input.dto.chapters,
     )
     const imageTotal = chapterImageTotals.reduce((sum, total) => sum + total, 0)
-    const workflowJob = await this.readWorkflowJob(input.jobId)
     const now = new Date()
     const providerGroupPathWord =
       input.dto.sourceSnapshot.providerGroupPathWord ??
       input.dto.chapters.at(0)?.group ??
       null
-    const [job] = await this.db
+    const [job] = await tx
       .insert(this.contentImportJob)
       .values({
         workflowJobId: workflowJob.id,
@@ -128,7 +224,7 @@ export class ContentImportService {
       .returning()
 
     if (input.dto.chapters.length > 0) {
-      await this.db.insert(this.contentImportItem).values(
+      await tx.insert(this.contentImportItem).values(
         input.dto.chapters.map((chapter, index) => ({
           itemId: randomUUID(),
           contentImportJobId: job.id,
@@ -160,11 +256,15 @@ export class ContentImportService {
     return job
   }
 
-  // 创建三方同步领域任务，章节条目由执行期扫描后补齐。
-  async createThirdPartySyncJob(input: CreateThirdPartySyncContentJobInput) {
-    const workflowJob = await this.readWorkflowJob(input.jobId)
+  // 在创建 workflow 草稿的同一事务内创建三方同步领域任务，章节条目由执行期扫描后补齐。
+  async createThirdPartySyncJobWithDb(
+    tx: DbTransaction,
+    workflowJob: WorkflowJobSelect,
+    input: CreateThirdPartySyncContentJobInput,
+  ) {
+    this.assertWorkflowJobIdentity(workflowJob, input.jobId)
     const now = new Date()
-    const [job] = await this.db
+    const [job] = await tx
       .insert(this.contentImportJob)
       .values({
         workflowJobId: workflowJob.id,
@@ -192,87 +292,167 @@ export class ContentImportService {
   // 用执行期扫描出的最新章节计划重建三方同步条目。
   async replaceThirdPartySyncItems(
     jobId: string,
+    attemptId: string,
     plans: ThirdPartyComicSyncChapterPlan[],
-    attemptNo: number,
   ) {
-    const workflowJob = await this.readWorkflowJob(jobId)
-    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
-    const now = new Date()
-    await this.db
-      .delete(this.contentImportItem)
-      .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
-    if (plans.length > 0) {
-      await this.db.insert(this.contentImportItem).values(
-        plans.map((plan) => ({
-          itemId: randomUUID(),
-          contentImportJobId: importJob.id,
-          itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
-          providerChapterId: plan.providerChapterId,
-          targetChapterId: null,
-          localChapterId: null,
-          title: plan.title,
-          sortOrder: plan.localSortOrder,
-          status: ContentImportItemStatusEnum.PENDING,
-          stage: ContentImportItemStageEnum.READING_SOURCE,
-          failureCount: 0,
-          ...toWorkflowLastErrorColumns(null),
-          lastFailedAt: null,
-          nextRetryAt: null,
-          autoRetryCount: 0,
-          maxAutoRetries: 3,
-          ...toWorkflowRetryColumns(null),
-          imageTotal: plan.imageTotal,
-          imageSuccessCount: 0,
-          currentAttemptNo: null,
-          metadata: { plan },
-          createdAt: now,
-          updatedAt: now,
-        })),
-      )
-    }
-    await this.db
-      .update(this.contentImportJob)
-      .set({
-        selectedItemCount: plans.length,
-        imageTotal: plans.reduce((sum, plan) => sum + plan.imageTotal, 0),
-        updatedAt: now,
-      })
-      .where(eq(this.contentImportJob.id, importJob.id))
-    await this.db
-      .update(this.workflowJob)
-      .set({
-        selectedItemCount: plans.length,
-        updatedAt: now,
-      })
-      .where(eq(this.workflowJob.id, workflowJob.id))
-    await this.db
-      .update(this.workflowAttempt)
-      .set({
-        selectedItemCount: plans.length,
-        updatedAt: now,
-      })
-      .where(
-        and(
-          eq(this.workflowAttempt.workflowJobId, workflowJob.id),
-          eq(this.workflowAttempt.attemptNo, attemptNo),
-        ),
-      )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const located = await this.requireWorkflowImportJobContext(jobId, tx)
+        const locatedAttempt = await this.readWorkflowAttempt(attemptId, tx)
+        this.assertWorkflowAttemptBelongsToJob(
+          locatedAttempt,
+          located.workflowJob,
+        )
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('workflow_job', located.workflowJob.id),
+          tableIntegrityLock('workflow_attempt', locatedAttempt.id),
+          tableIntegrityLock('content_import_job', located.importJob.id),
+        ])
+
+        const context = await this.requireWorkflowImportJobContext(jobId, tx)
+        const workflowAttempt = await this.readWorkflowAttempt(attemptId, tx)
+        this.assertWorkflowAttemptBelongsToJob(
+          workflowAttempt,
+          context.workflowJob,
+        )
+
+        const now = new Date()
+        const existingItems = await tx
+          .select({ id: this.contentImportItem.id })
+          .from(this.contentImportItem)
+          .where(
+            eq(this.contentImportItem.contentImportJobId, context.importJob.id),
+          )
+        const existingItemIds = existingItems.map((item) => item.id)
+        if (existingItemIds.length > 0) {
+          const [itemAttempt] = await tx
+            .select({ id: this.contentImportItemAttempt.id })
+            .from(this.contentImportItemAttempt)
+            .where(
+              inArray(
+                this.contentImportItemAttempt.contentImportItemId,
+                existingItemIds,
+              ),
+            )
+            .limit(1)
+          const [residue] = await tx
+            .select({ id: this.contentImportResidue.id })
+            .from(this.contentImportResidue)
+            .where(
+              inArray(
+                this.contentImportResidue.contentImportItemId,
+                existingItemIds,
+              ),
+            )
+            .limit(1)
+          if (itemAttempt || residue) {
+            throw new BusinessException(
+              BusinessErrorCode.STATE_CONFLICT,
+              '存在已执行或待清理的导入条目，不能重建同步计划',
+            )
+          }
+        }
+        await tx
+          .delete(this.contentImportItem)
+          .where(
+            eq(this.contentImportItem.contentImportJobId, context.importJob.id),
+          )
+        if (plans.length > 0) {
+          await tx.insert(this.contentImportItem).values(
+            plans.map((plan) => ({
+              itemId: randomUUID(),
+              contentImportJobId: context.importJob.id,
+              itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
+              providerChapterId: plan.providerChapterId,
+              targetChapterId: null,
+              localChapterId: null,
+              title: plan.title,
+              sortOrder: plan.localSortOrder,
+              status: ContentImportItemStatusEnum.PENDING,
+              stage: ContentImportItemStageEnum.READING_SOURCE,
+              failureCount: 0,
+              ...toWorkflowLastErrorColumns(null),
+              lastFailedAt: null,
+              nextRetryAt: null,
+              autoRetryCount: 0,
+              maxAutoRetries: 3,
+              ...toWorkflowRetryColumns(null),
+              imageTotal: plan.imageTotal,
+              imageSuccessCount: 0,
+              currentAttemptNo: null,
+              metadata: { plan },
+              createdAt: now,
+              updatedAt: now,
+            })),
+          )
+        }
+        await tx
+          .update(this.contentImportJob)
+          .set({
+            selectedItemCount: plans.length,
+            imageTotal: plans.reduce((sum, plan) => sum + plan.imageTotal, 0),
+            updatedAt: now,
+          })
+          .where(eq(this.contentImportJob.id, context.importJob.id))
+        await tx
+          .update(this.workflowJob)
+          .set({
+            selectedItemCount: plans.length,
+            updatedAt: now,
+          })
+          .where(eq(this.workflowJob.id, context.workflowJob.id))
+        await tx
+          .update(this.workflowAttempt)
+          .set({
+            selectedItemCount: plans.length,
+            updatedAt: now,
+          })
+          .where(eq(this.workflowAttempt.id, workflowAttempt.id))
+      },
+    })
   }
 
   // 记录三方导入首次 prepare 生成的本地作品，供后续自动重试 attempt 复用。
   async markThirdPartyImportTargetPrepared(
     input: ContentImportPreparedThirdPartyImportTargetInput,
   ) {
-    const importJob = await this.readContentImportJobByWorkflowJobId(
-      input.jobId,
-    )
-    await this.db
-      .update(this.contentImportJob)
-      .set({
-        workId: input.workId,
-        updatedAt: new Date(),
-      })
-      .where(eq(this.contentImportJob.id, importJob.id))
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const located = await this.requireWorkflowImportJobContext(
+          input.jobId,
+          tx,
+        )
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('workflow_job', located.workflowJob.id),
+          tableIntegrityLock('content_import_job', located.importJob.id),
+          workCatalogWorkLock(input.workId),
+        ])
+        const context = await this.requireWorkflowImportJobContext(
+          input.jobId,
+          tx,
+        )
+        const [work] = await tx
+          .select({ id: this.work.id })
+          .from(this.work)
+          .where(
+            and(eq(this.work.id, input.workId), isNull(this.work.deletedAt)),
+          )
+          .limit(1)
+        if (!work) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '导入目标作品不存在',
+          )
+        }
+        await tx
+          .update(this.contentImportJob)
+          .set({
+            workId: input.workId,
+            updatedAt: new Date(),
+          })
+          .where(eq(this.contentImportJob.id, context.importJob.id))
+      },
+    })
   }
 
   // 校验并准备人工重试条目。
@@ -280,15 +460,20 @@ export class ContentImportService {
     jobId: string,
     selectedItemIds: string[],
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) {
-    const importJob = await this.readContentImportJobByWorkflowJobId(jobId, tx)
+    const located = await this.requireWorkflowImportJobContext(jobId, tx)
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('workflow_job', located.workflowJob.id),
+      tableIntegrityLock('content_import_job', located.importJob.id),
+    ])
+    const context = await this.requireWorkflowImportJobContext(jobId, tx)
     const items = await tx
-      .select()
+      .select({ status: this.contentImportItem.status })
       .from(this.contentImportItem)
       .where(
         and(
-          eq(this.contentImportItem.contentImportJobId, importJob.id),
+          eq(this.contentImportItem.contentImportJobId, context.importJob.id),
           inArray(this.contentImportItem.itemId, selectedItemIds),
         ),
       )
@@ -322,12 +507,12 @@ export class ContentImportService {
       })
       .where(
         and(
-          eq(this.contentImportItem.contentImportJobId, importJob.id),
+          eq(this.contentImportItem.contentImportJobId, context.importJob.id),
           inArray(this.contentImportItem.itemId, selectedItemIds),
         ),
       )
 
-    const counters = await this.aggregateJobWithDb(importJob.id, tx)
+    const counters = await this.aggregateJobWithDb(context.importJob.id, tx)
     return {
       jobCounters: this.toWorkflowCounterPatch(counters),
     }
@@ -345,8 +530,14 @@ export class ContentImportService {
           ]
         : [ContentImportItemStatusEnum.RETRYING]
 
-    const rows = await this.db
-      .select()
+    const rows: ContentImportExecutableItem[] = await this.db
+      .select({
+        itemId: this.contentImportItem.itemId,
+        providerChapterId: this.contentImportItem.providerChapterId,
+        metadata: this.contentImportItem.metadata,
+        autoRetryCount: this.contentImportItem.autoRetryCount,
+        maxAutoRetries: this.contentImportItem.maxAutoRetries,
+      })
       .from(this.contentImportItem)
       .where(
         and(
@@ -369,106 +560,113 @@ export class ContentImportService {
         asc(this.contentImportItem.id),
       )
 
-    return rows as ContentImportExecutableItem[]
-  }
-
-  // 读取内容导入任务的全部条目，供执行期恢复历史任务快照使用。
-  async listJobItems(jobId: string) {
-    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
-    const rows = await this.db
-      .select()
-      .from(this.contentImportItem)
-      .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
-      .orderBy(
-        asc(this.contentImportItem.sortOrder),
-        asc(this.contentImportItem.id),
-      )
-
-    return rows as ContentImportExecutableItem[]
+    return rows
   }
 
   // 开始处理单个条目，并创建条目 attempt。
   async startItemAttempt(jobId: string, attemptId: string, itemId: string) {
-    const workflowAttempt = await this.readWorkflowAttempt(attemptId)
-    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
-    const [item] = await this.db
-      .update(this.contentImportItem)
-      .set({
-        status: ContentImportItemStatusEnum.RUNNING,
-        currentAttemptNo: workflowAttempt.attemptNo,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(this.contentImportItem.contentImportJobId, importJob.id),
-          eq(this.contentImportItem.itemId, itemId),
-        ),
-      )
-      .returning()
-    if (!item) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '内容导入条目不存在',
-      )
-    }
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const located = await this.requireContentImportItemContextInTransaction(
+          tx,
+          itemId,
+        )
+        const locatedAttempt = await this.readWorkflowAttemptInTransaction(
+          tx,
+          attemptId,
+        )
+        this.assertWorkflowAttemptBelongsToJob(
+          locatedAttempt,
+          located.workflowJob,
+        )
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('workflow_job', located.workflowJob.id),
+          tableIntegrityLock('workflow_attempt', locatedAttempt.id),
+          tableIntegrityLock('content_import_job', located.importJob.id),
+          tableIntegrityLock('content_import_item', located.item.id),
+        ])
 
-    const [itemAttempt] = await this.db
-      .insert(this.contentImportItemAttempt)
-      .values({
-        itemAttemptId: randomUUID(),
-        workflowAttemptId: workflowAttempt.id,
-        contentImportItemId: item.id,
-        attemptNo: workflowAttempt.attemptNo,
-        status: ContentImportItemAttemptStatusEnum.RUNNING,
-        stage: item.stage,
-        imageTotal: item.imageTotal,
-        imageSuccessCount: 0,
-        ...toWorkflowErrorColumns(null),
-        startedAt: new Date(),
-        finishedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning()
+        const context = await this.requireContentImportItemContextInTransaction(
+          tx,
+          itemId,
+        )
+        const workflowAttempt = await this.readWorkflowAttemptInTransaction(
+          tx,
+          attemptId,
+        )
+        this.assertWorkflowAttemptBelongsToJob(
+          workflowAttempt,
+          context.workflowJob,
+        )
+        if (
+          context.item.currentAttemptNo !== null &&
+          context.item.currentAttemptNo !== workflowAttempt.attemptNo
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '内容导入条目已归属其他执行 attempt',
+          )
+        }
+        const now = new Date()
+        const [item] = await tx
+          .update(this.contentImportItem)
+          .set({
+            status: ContentImportItemStatusEnum.RUNNING,
+            currentAttemptNo: workflowAttempt.attemptNo,
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(this.contentImportItem.id, context.item.id),
+              context.item.currentAttemptNo === null
+                ? isNull(this.contentImportItem.currentAttemptNo)
+                : eq(
+                    this.contentImportItem.currentAttemptNo,
+                    workflowAttempt.attemptNo,
+                  ),
+            ),
+          )
+          .returning()
+        if (!item) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '内容导入条目状态已变更，无法开始处理',
+          )
+        }
 
-    return { item, itemAttempt }
+        const [itemAttempt] = await tx
+          .insert(this.contentImportItemAttempt)
+          .values({
+            itemAttemptId: randomUUID(),
+            workflowAttemptId: workflowAttempt.id,
+            contentImportItemId: item.id,
+            attemptNo: workflowAttempt.attemptNo,
+            status: ContentImportItemAttemptStatusEnum.RUNNING,
+            stage: item.stage,
+            imageTotal: item.imageTotal,
+            imageSuccessCount: 0,
+            ...toWorkflowErrorColumns(null),
+            startedAt: now,
+            finishedAt: null,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning()
+
+        return { item, itemAttempt }
+      },
+    })
   }
 
   // 标记条目成功。
   async markItemSuccess(input: ContentImportMarkItemSuccessInput) {
     const now = new Date()
-    const imageCounters = this.buildImageCounterPatch(input)
-    const [item] = await this.db
-      .update(this.contentImportItem)
-      .set({
-        status: ContentImportItemStatusEnum.SUCCESS,
-        stage: ContentImportItemStageEnum.DONE,
-        localChapterId: input.localChapterId ?? undefined,
-        ...imageCounters,
-        ...toWorkflowLastErrorColumns(null),
-        lastFailedAt: null,
-        updatedAt: now,
-      })
-      .where(eq(this.contentImportItem.itemId, input.itemId))
-      .returning()
-    if (!item) {
-      return
-    }
-    await this.db
-      .update(this.contentImportItemAttempt)
-      .set({
-        status: ContentImportItemAttemptStatusEnum.SUCCESS,
-        stage: ContentImportItemStageEnum.DONE,
-        ...imageCounters,
-        finishedAt: now,
-        updatedAt: now,
-      })
-      .where(
-        and(
-          eq(this.contentImportItemAttempt.contentImportItemId, item.id),
-          eq(this.contentImportItemAttempt.attemptNo, input.attemptNo),
-        ),
-      )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await this.markItemSuccessInTransaction(tx, input, now)
+        return result
+      },
+    })
   }
 
   // 标记条目失败。
@@ -483,39 +681,19 @@ export class ContentImportService {
       input.error,
       input.errorDiagnostic,
     )
-    const [item] = await this.db
-      .update(this.contentImportItem)
-      .set({
-        status: ContentImportItemStatusEnum.FAILED,
-        stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
-        failureCount: sql`${this.contentImportItem.failureCount} + 1`,
-        ...lastErrorColumns,
-        lastFailedAt: now,
-        nextRetryAt: null,
-        ...imageCounters,
-        updatedAt: now,
-      })
-      .where(eq(this.contentImportItem.itemId, input.itemId))
-      .returning()
-    if (!item) {
-      return
-    }
-    await this.db
-      .update(this.contentImportItemAttempt)
-      .set({
-        status: ContentImportItemAttemptStatusEnum.FAILED,
-        stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
-        ...imageCounters,
-        ...attemptErrorColumns,
-        finishedAt: now,
-        updatedAt: now,
-      })
-      .where(
-        and(
-          eq(this.contentImportItemAttempt.contentImportItemId, item.id),
-          eq(this.contentImportItemAttempt.attemptNo, input.attemptNo),
-        ),
-      )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await this.markItemFailedInTransaction(
+          tx,
+          input,
+          now,
+          imageCounters,
+          lastErrorColumns,
+          attemptErrorColumns,
+        )
+        return result
+      },
+    })
   }
 
   // 标记条目进入限流自动重试等待。
@@ -536,40 +714,20 @@ export class ContentImportService {
       input.error,
       input.errorDiagnostic,
     )
-    const [item] = await this.db
-      .update(this.contentImportItem)
-      .set({
-        status: ContentImportItemStatusEnum.RETRYING,
-        stage: ContentImportItemStageEnum.READING_SOURCE,
-        autoRetryCount: sql`${this.contentImportItem.autoRetryCount} + 1`,
-        ...lastErrorColumns,
-        lastFailedAt: now,
-        nextRetryAt: input.nextRetryAt,
-        ...retryColumns,
-        ...imageCounters,
-        updatedAt: now,
-      })
-      .where(eq(this.contentImportItem.itemId, input.itemId))
-      .returning()
-    if (!item) {
-      return
-    }
-    await this.db
-      .update(this.contentImportItemAttempt)
-      .set({
-        status: ContentImportItemAttemptStatusEnum.SCHEDULED_RETRY,
-        stage: ContentImportItemStageEnum.READING_SOURCE,
-        ...imageCounters,
-        ...attemptErrorColumns,
-        finishedAt: now,
-        updatedAt: now,
-      })
-      .where(
-        and(
-          eq(this.contentImportItemAttempt.contentImportItemId, item.id),
-          eq(this.contentImportItemAttempt.attemptNo, input.attemptNo),
-        ),
-      )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await this.markItemRateLimitRetryingInTransaction(
+          tx,
+          input,
+          now,
+          imageCounters,
+          lastErrorColumns,
+          retryColumns,
+          attemptErrorColumns,
+        )
+        return result
+      },
+    })
   }
 
   // 标记限流自动重试耗尽。
@@ -593,7 +751,276 @@ export class ContentImportService {
       input.errorDiagnostic,
     )
     const imageCounters = this.buildImageCounterPatch(input)
-    const [item] = await this.db
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await this.markItemRetryExhaustedInTransaction(
+          tx,
+          input,
+          now,
+          imageCounters,
+          lastErrorColumns,
+          retryColumns,
+          attemptErrorColumns,
+        )
+        return result
+      },
+    })
+  }
+
+  /**
+   * 在锁定并重查当前 item attempt 的同一事务内标记成功。
+   * 过期 worker 仍保持原有的静默 no-op 语义。
+   */
+  private async markItemSuccessInTransaction(
+    tx: DbTransaction,
+    input: ContentImportMarkItemSuccessInput,
+    now: Date,
+  ) {
+    const locatedAttempt =
+      await this.findCurrentItemAttemptContextForMutationInTransaction(
+        tx,
+        input,
+      )
+    if (!locatedAttempt) {
+      return
+    }
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
+      tableIntegrityLock('workflow_attempt', locatedAttempt.workflowAttempt.id),
+      tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
+      tableIntegrityLock('content_import_item', locatedAttempt.item.id),
+      tableIntegrityLock(
+        'content_import_item_attempt',
+        locatedAttempt.itemAttempt.id,
+      ),
+    ])
+    const context =
+      await this.findCurrentItemAttemptContextForMutationInTransaction(
+        tx,
+        input,
+      )
+    if (!context) {
+      return
+    }
+    const imageCounters = this.buildImageCounterPatch(input)
+    const [item] = await tx
+      .update(this.contentImportItem)
+      .set({
+        status: ContentImportItemStatusEnum.SUCCESS,
+        stage: ContentImportItemStageEnum.DONE,
+        localChapterId: input.localChapterId ?? undefined,
+        ...imageCounters,
+        ...toWorkflowLastErrorColumns(null),
+        lastFailedAt: null,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(this.contentImportItem.id, context.item.id),
+          eq(this.contentImportItem.currentAttemptNo, input.attemptNo),
+        ),
+      )
+      .returning()
+    if (!item) {
+      return
+    }
+    const [itemAttempt] = await tx
+      .update(this.contentImportItemAttempt)
+      .set({
+        status: ContentImportItemAttemptStatusEnum.SUCCESS,
+        stage: ContentImportItemStageEnum.DONE,
+        ...imageCounters,
+        finishedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(this.contentImportItemAttempt.id, context.itemAttempt.id))
+      .returning({ id: this.contentImportItemAttempt.id })
+    this.assertItemAttemptUpdated(itemAttempt)
+  }
+
+  /** 在锁定并重查当前 item attempt 的同一事务内标记失败。 */
+  private async markItemFailedInTransaction(
+    tx: DbTransaction,
+    input: ContentImportMarkItemFailedInput,
+    now: Date,
+    imageCounters: ContentImportImageCounterPatch,
+    lastErrorColumns: ReturnType<typeof toWorkflowLastErrorColumns>,
+    attemptErrorColumns: ReturnType<typeof toWorkflowErrorColumns>,
+  ) {
+    const locatedAttempt =
+      await this.findCurrentItemAttemptContextForMutationInTransaction(
+        tx,
+        input,
+      )
+    if (!locatedAttempt) {
+      return
+    }
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
+      tableIntegrityLock('workflow_attempt', locatedAttempt.workflowAttempt.id),
+      tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
+      tableIntegrityLock('content_import_item', locatedAttempt.item.id),
+      tableIntegrityLock(
+        'content_import_item_attempt',
+        locatedAttempt.itemAttempt.id,
+      ),
+    ])
+    const context =
+      await this.findCurrentItemAttemptContextForMutationInTransaction(
+        tx,
+        input,
+      )
+    if (!context) {
+      return
+    }
+    const [item] = await tx
+      .update(this.contentImportItem)
+      .set({
+        status: ContentImportItemStatusEnum.FAILED,
+        stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
+        failureCount: sql`${this.contentImportItem.failureCount} + 1`,
+        ...lastErrorColumns,
+        lastFailedAt: now,
+        nextRetryAt: null,
+        ...imageCounters,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(this.contentImportItem.id, context.item.id),
+          eq(this.contentImportItem.currentAttemptNo, input.attemptNo),
+        ),
+      )
+      .returning()
+    if (!item) {
+      return
+    }
+    const [itemAttempt] = await tx
+      .update(this.contentImportItemAttempt)
+      .set({
+        status: ContentImportItemAttemptStatusEnum.FAILED,
+        stage: ContentImportItemStageEnum.CLEANING_RESIDUE,
+        ...imageCounters,
+        ...attemptErrorColumns,
+        finishedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(this.contentImportItemAttempt.id, context.itemAttempt.id))
+      .returning({ id: this.contentImportItemAttempt.id })
+    this.assertItemAttemptUpdated(itemAttempt)
+  }
+
+  /** 在锁定并重查当前 item attempt 的同一事务内安排限流自动重试。 */
+  private async markItemRateLimitRetryingInTransaction(
+    tx: DbTransaction,
+    input: ContentImportMarkItemRateLimitRetryingInput,
+    now: Date,
+    imageCounters: ContentImportImageCounterPatch,
+    lastErrorColumns: ReturnType<typeof toWorkflowLastErrorColumns>,
+    retryColumns: ReturnType<typeof toWorkflowRetryColumns>,
+    attemptErrorColumns: ReturnType<typeof toWorkflowErrorColumns>,
+  ) {
+    const locatedAttempt =
+      await this.findCurrentItemAttemptContextForMutationInTransaction(
+        tx,
+        input,
+      )
+    if (!locatedAttempt) {
+      return
+    }
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
+      tableIntegrityLock('workflow_attempt', locatedAttempt.workflowAttempt.id),
+      tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
+      tableIntegrityLock('content_import_item', locatedAttempt.item.id),
+      tableIntegrityLock(
+        'content_import_item_attempt',
+        locatedAttempt.itemAttempt.id,
+      ),
+    ])
+    const context =
+      await this.findCurrentItemAttemptContextForMutationInTransaction(
+        tx,
+        input,
+      )
+    if (!context) {
+      return
+    }
+    const [item] = await tx
+      .update(this.contentImportItem)
+      .set({
+        status: ContentImportItemStatusEnum.RETRYING,
+        stage: ContentImportItemStageEnum.READING_SOURCE,
+        autoRetryCount: sql`${this.contentImportItem.autoRetryCount} + 1`,
+        ...lastErrorColumns,
+        lastFailedAt: now,
+        nextRetryAt: input.nextRetryAt,
+        ...retryColumns,
+        ...imageCounters,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(this.contentImportItem.id, context.item.id),
+          eq(this.contentImportItem.currentAttemptNo, input.attemptNo),
+        ),
+      )
+      .returning()
+    if (!item) {
+      return
+    }
+    const [itemAttempt] = await tx
+      .update(this.contentImportItemAttempt)
+      .set({
+        status: ContentImportItemAttemptStatusEnum.SCHEDULED_RETRY,
+        stage: ContentImportItemStageEnum.READING_SOURCE,
+        ...imageCounters,
+        ...attemptErrorColumns,
+        finishedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(this.contentImportItemAttempt.id, context.itemAttempt.id))
+      .returning({ id: this.contentImportItemAttempt.id })
+    this.assertItemAttemptUpdated(itemAttempt)
+  }
+
+  /** 在锁定并重查当前 item attempt 的同一事务内写入重试耗尽状态。 */
+  private async markItemRetryExhaustedInTransaction(
+    tx: DbTransaction,
+    input: ContentImportMarkItemRetryExhaustedInput,
+    now: Date,
+    imageCounters: ContentImportImageCounterPatch,
+    lastErrorColumns: ReturnType<typeof toWorkflowLastErrorColumns>,
+    retryColumns: ReturnType<typeof toWorkflowRetryColumns>,
+    attemptErrorColumns: ReturnType<typeof toWorkflowErrorColumns>,
+  ) {
+    const locatedAttempt =
+      await this.findCurrentItemAttemptContextForMutationInTransaction(
+        tx,
+        input,
+      )
+    if (!locatedAttempt) {
+      return
+    }
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
+      tableIntegrityLock('workflow_attempt', locatedAttempt.workflowAttempt.id),
+      tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
+      tableIntegrityLock('content_import_item', locatedAttempt.item.id),
+      tableIntegrityLock(
+        'content_import_item_attempt',
+        locatedAttempt.itemAttempt.id,
+      ),
+    ])
+    const context =
+      await this.findCurrentItemAttemptContextForMutationInTransaction(
+        tx,
+        input,
+      )
+    if (!context) {
+      return
+    }
+    const [item] = await tx
       .update(this.contentImportItem)
       .set({
         status: ContentImportItemStatusEnum.FAILED,
@@ -606,12 +1033,17 @@ export class ContentImportService {
         ...imageCounters,
         updatedAt: now,
       })
-      .where(eq(this.contentImportItem.itemId, input.itemId))
+      .where(
+        and(
+          eq(this.contentImportItem.id, context.item.id),
+          eq(this.contentImportItem.currentAttemptNo, input.attemptNo),
+        ),
+      )
       .returning()
     if (!item) {
       return
     }
-    await this.db
+    const [itemAttempt] = await tx
       .update(this.contentImportItemAttempt)
       .set({
         status: ContentImportItemAttemptStatusEnum.FAILED,
@@ -621,12 +1053,9 @@ export class ContentImportService {
         finishedAt: now,
         updatedAt: now,
       })
-      .where(
-        and(
-          eq(this.contentImportItemAttempt.contentImportItemId, item.id),
-          eq(this.contentImportItemAttempt.attemptNo, input.attemptNo),
-        ),
-      )
+      .where(eq(this.contentImportItemAttempt.id, context.itemAttempt.id))
+      .returning({ id: this.contentImportItemAttempt.id })
+    this.assertItemAttemptUpdated(itemAttempt)
   }
 
   // 持久化单个条目的图片级进度，并返回任务级聚合计数。
@@ -636,26 +1065,56 @@ export class ContentImportService {
       imageTotal,
       this.normalizeImageCount(input.imageSuccessCount),
     )
-    return this.db.transaction(async (tx) => {
-      const now = new Date()
-      const [item] = await tx
-        .update(this.contentImportItem)
-        .set({
-          imageTotal,
-          imageSuccessCount,
-          updatedAt: now,
-        })
-        .where(eq(this.contentImportItem.itemId, input.itemId))
-        .returning()
-      if (!item) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '内容导入条目不存在',
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const located = await this.requireContentImportItemContextInTransaction(
+          tx,
+          input.itemId,
         )
-      }
-      if (item.currentAttemptNo !== null) {
-        await tx
-          .update(this.contentImportItemAttempt)
+        const locatedAttempt =
+          located.item.currentAttemptNo === null
+            ? null
+            : await this.findCurrentItemAttemptContextForMutationInTransaction(
+                tx,
+                {
+                  attemptNo: located.item.currentAttemptNo,
+                  itemId: input.itemId,
+                },
+              )
+        if (located.item.currentAttemptNo !== null && !locatedAttempt) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '内容导入条目 attempt 不存在或已失效',
+          )
+        }
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('workflow_job', located.workflowJob.id),
+          tableIntegrityLock('content_import_job', located.importJob.id),
+          tableIntegrityLock('content_import_item', located.item.id),
+          ...(locatedAttempt
+            ? [
+                tableIntegrityLock(
+                  'workflow_attempt',
+                  locatedAttempt.workflowAttempt.id,
+                ),
+                tableIntegrityLock(
+                  'content_import_item_attempt',
+                  locatedAttempt.itemAttempt.id,
+                ),
+              ]
+            : []),
+        ])
+
+        const context = await this.requireContentImportItemContextInTransaction(
+          tx,
+          input.itemId,
+        )
+        if (context.item.currentAttemptNo !== located.item.currentAttemptNo) {
+          return
+        }
+        const now = new Date()
+        const [item] = await tx
+          .update(this.contentImportItem)
           .set({
             imageTotal,
             imageSuccessCount,
@@ -663,26 +1122,70 @@ export class ContentImportService {
           })
           .where(
             and(
-              eq(this.contentImportItemAttempt.contentImportItemId, item.id),
-              eq(
-                this.contentImportItemAttempt.attemptNo,
-                item.currentAttemptNo,
-              ),
+              eq(this.contentImportItem.id, context.item.id),
+              context.item.currentAttemptNo === null
+                ? isNull(this.contentImportItem.currentAttemptNo)
+                : eq(
+                    this.contentImportItem.currentAttemptNo,
+                    context.item.currentAttemptNo,
+                  ),
             ),
           )
-      }
-      return this.aggregateJobWithDb(item.contentImportJobId, tx)
+          .returning()
+        if (!item) {
+          return
+        }
+        if (locatedAttempt) {
+          const currentAttempt =
+            await this.findCurrentItemAttemptContextForMutationInTransaction(
+              tx,
+              {
+                attemptNo: locatedAttempt.workflowAttempt.attemptNo,
+                itemId: input.itemId,
+              },
+            )
+          if (!currentAttempt) {
+            throw new BusinessException(
+              BusinessErrorCode.STATE_CONFLICT,
+              '内容导入条目 attempt 不存在或已失效',
+            )
+          }
+          const [itemAttempt] = await tx
+            .update(this.contentImportItemAttempt)
+            .set({
+              imageTotal,
+              imageSuccessCount,
+              updatedAt: now,
+            })
+            .where(
+              eq(
+                this.contentImportItemAttempt.id,
+                currentAttempt.itemAttempt.id,
+              ),
+            )
+            .returning({ id: this.contentImportItemAttempt.id })
+          this.assertItemAttemptUpdated(itemAttempt)
+        }
+        return this.aggregateJobWithDb(item.contentImportJobId, tx)
+      },
     })
   }
 
   // 聚合内容导入任务计数。
   async aggregateJob(jobId: string) {
-    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
-    const rows = await this.db
-      .select()
-      .from(this.contentImportItem)
-      .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
-    return this.aggregateRows(importJob.id, rows, this.db)
+    return this.withLockedWorkflowImportJob(jobId, async (tx, context) => {
+      const rows = await tx
+        .select({
+          status: this.contentImportItem.status,
+          imageTotal: this.contentImportItem.imageTotal,
+          imageSuccessCount: this.contentImportItem.imageSuccessCount,
+        })
+        .from(this.contentImportItem)
+        .where(
+          eq(this.contentImportItem.contentImportJobId, context.importJob.id),
+        )
+      return this.aggregateRows(context.importJob.id, rows, tx)
+    })
   }
 
   // 聚合指定 workflow attempt 内实际处理过的条目计数。
@@ -714,56 +1217,158 @@ export class ContentImportService {
   async aggregateJobWithRetryState(
     jobId: string,
   ): Promise<ContentImportAttemptCountersWithRetry> {
-    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
-    const rows = await this.db
-      .select()
-      .from(this.contentImportItem)
-      .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
-    return this.aggregateRowsWithRetryState(importJob.id, rows, this.db)
+    return this.withLockedWorkflowImportJob(jobId, async (tx, context) => {
+      const rows = await tx
+        .select({
+          status: this.contentImportItem.status,
+          imageTotal: this.contentImportItem.imageTotal,
+          imageSuccessCount: this.contentImportItem.imageSuccessCount,
+          nextRetryAt: this.contentImportItem.nextRetryAt,
+        })
+        .from(this.contentImportItem)
+        .where(
+          eq(this.contentImportItem.contentImportJobId, context.importJob.id),
+        )
+      return this.aggregateRowsWithRetryState(context.importJob.id, rows, tx)
+    })
   }
 
   // 记录已上传文件残留，供失败补偿和崩溃后清理使用。
   async recordUploadedFileResidue(
     input: ContentImportRecordUploadedFileResidueInput,
   ) {
-    const workflowJob = await this.readWorkflowJob(input.jobId)
-    const workflowAttempt = input.attemptId
-      ? await this.readWorkflowAttempt(input.attemptId)
-      : null
-    const item = input.itemId
-      ? await this.readContentImportItemByItemId(input.itemId)
-      : null
-    const itemAttempt =
-      item && workflowAttempt
-        ? await this.readContentImportItemAttempt(
-            item.id,
-            workflowAttempt.attemptNo,
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const locatedJob = await this.requireWorkflowImportJobContext(
+          input.jobId,
+          tx,
+        )
+        const locatedWorkflowAttempt = input.attemptId
+          ? await this.readWorkflowAttempt(input.attemptId, tx)
+          : null
+        const locatedItem = input.itemId
+          ? await this.requireContentImportItemContext(input.itemId, tx)
+          : null
+        if (locatedWorkflowAttempt) {
+          this.assertWorkflowAttemptBelongsToJob(
+            locatedWorkflowAttempt,
+            locatedJob.workflowJob,
           )
-        : null
-    const [residue] = await this.db
-      .insert(this.contentImportResidue)
-      .values({
-        residueId: randomUUID(),
-        workflowJobId: workflowJob.id,
-        workflowAttemptId: workflowAttempt?.id ?? null,
-        contentImportItemId: item?.id ?? null,
-        contentImportItemAttemptId: itemAttempt?.id ?? null,
-        residueType: ContentImportResidueTypeEnum.UPLOADED_FILE,
-        provider: String(input.deleteTarget.provider),
-        filePath: input.deleteTarget.filePath,
-        localPath: input.deleteTarget.objectKey ?? null,
-        metadata: input.deleteTarget,
-        cleanupStatus: ContentImportResidueCleanupStatusEnum.PENDING,
-        cleanupError: null,
-        createdAt: new Date(),
-        cleanedAt: null,
-      })
-      .returning()
-    return residue.residueId
+        }
+        if (
+          locatedItem &&
+          (locatedItem.workflowJob.id !== locatedJob.workflowJob.id ||
+            locatedItem.importJob.id !== locatedJob.importJob.id)
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '内容导入条目不属于当前工作流任务',
+          )
+        }
+        const locatedItemAttempt =
+          locatedItem && locatedWorkflowAttempt
+            ? await this.findContentImportItemAttemptByContext(
+                locatedItem.item.id,
+                locatedWorkflowAttempt.id,
+                locatedWorkflowAttempt.attemptNo,
+                tx,
+              )
+            : null
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('workflow_job', locatedJob.workflowJob.id),
+          tableIntegrityLock('content_import_job', locatedJob.importJob.id),
+          ...(locatedWorkflowAttempt
+            ? [
+                tableIntegrityLock(
+                  'workflow_attempt',
+                  locatedWorkflowAttempt.id,
+                ),
+              ]
+            : []),
+          ...(locatedItem
+            ? [tableIntegrityLock('content_import_item', locatedItem.item.id)]
+            : []),
+          ...(locatedItemAttempt
+            ? [
+                tableIntegrityLock(
+                  'content_import_item_attempt',
+                  locatedItemAttempt.id,
+                ),
+              ]
+            : []),
+        ])
+
+        const context = await this.requireWorkflowImportJobContext(
+          input.jobId,
+          tx,
+        )
+        const workflowAttempt = input.attemptId
+          ? await this.readWorkflowAttempt(input.attemptId, tx)
+          : null
+        if (workflowAttempt) {
+          this.assertWorkflowAttemptBelongsToJob(
+            workflowAttempt,
+            context.workflowJob,
+          )
+        }
+        const itemContext = input.itemId
+          ? await this.requireContentImportItemContextInTransaction(
+              tx,
+              input.itemId,
+            )
+          : null
+        if (
+          itemContext &&
+          (itemContext.workflowJob.id !== context.workflowJob.id ||
+            itemContext.importJob.id !== context.importJob.id)
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '内容导入条目不属于当前工作流任务',
+          )
+        }
+        const itemAttempt =
+          itemContext && workflowAttempt
+            ? await this.findContentImportItemAttemptByContextInTransaction(
+                tx,
+                itemContext.item.id,
+                workflowAttempt.id,
+                workflowAttempt.attemptNo,
+              )
+            : null
+        if (itemContext && workflowAttempt && !itemAttempt) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '内容导入条目 attempt 不存在或已失效',
+          )
+        }
+
+        const [residue] = await tx
+          .insert(this.contentImportResidue)
+          .values({
+            residueId: randomUUID(),
+            workflowJobId: context.workflowJob.id,
+            workflowAttemptId: workflowAttempt?.id ?? null,
+            contentImportItemId: itemContext?.item.id ?? null,
+            contentImportItemAttemptId: itemAttempt?.id ?? null,
+            residueType: ContentImportResidueTypeEnum.UPLOADED_FILE,
+            provider: String(input.deleteTarget.provider),
+            filePath: input.deleteTarget.filePath,
+            localPath: input.deleteTarget.objectKey ?? null,
+            metadata: input.deleteTarget,
+            cleanupStatus: ContentImportResidueCleanupStatusEnum.PENDING,
+            cleanupError: null,
+            createdAt: new Date(),
+            cleanedAt: null,
+          })
+          .returning()
+        return residue.residueId
+      },
+    })
   }
 
   // 将残留标记为已处理。
-  async markResiduesCleaned(residueIds: string[], db: Db = this.db) {
+  async markResiduesCleaned(residueIds: string[], db: DbExecutor = this.db) {
     if (residueIds.length === 0) {
       return
     }
@@ -855,16 +1460,40 @@ export class ContentImportService {
     jobId: string,
     expiredAttemptNo: number,
     nextAttemptNo: number,
-    tx: Db,
+    tx: DbTransaction,
   ) {
-    const importJob = await this.readContentImportJobByWorkflowJobId(jobId, tx)
+    const located = await this.requireWorkflowImportJobContext(jobId, tx)
+    const locatedAttempt = await this.findWorkflowAttemptByJobAndNumber(
+      located.workflowJob.id,
+      expiredAttemptNo,
+      tx,
+    )
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('workflow_job', located.workflowJob.id),
+      tableIntegrityLock('content_import_job', located.importJob.id),
+      ...(locatedAttempt
+        ? [tableIntegrityLock('workflow_attempt', locatedAttempt.id)]
+        : []),
+    ])
+    const context = await this.requireWorkflowImportJobContext(jobId, tx)
+    const expiredAttempt = await this.findWorkflowAttemptByJobAndNumber(
+      context.workflowJob.id,
+      expiredAttemptNo,
+      tx,
+    )
+    if (!expiredAttempt) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '过期工作流 attempt 不存在',
+      )
+    }
     const now = new Date()
     const runningItems = await tx
-      .select()
+      .select({ id: this.contentImportItem.id })
       .from(this.contentImportItem)
       .where(
         and(
-          eq(this.contentImportItem.contentImportJobId, importJob.id),
+          eq(this.contentImportItem.contentImportJobId, context.importJob.id),
           eq(
             this.contentImportItem.status,
             ContentImportItemStatusEnum.RUNNING,
@@ -914,11 +1543,14 @@ export class ContentImportService {
     }
 
     const recoverableItems = await tx
-      .select()
+      .select({
+        id: this.contentImportItem.id,
+        currentAttemptNo: this.contentImportItem.currentAttemptNo,
+      })
       .from(this.contentImportItem)
       .where(
         and(
-          eq(this.contentImportItem.contentImportJobId, importJob.id),
+          eq(this.contentImportItem.contentImportJobId, context.importJob.id),
           inArray(this.contentImportItem.status, [
             ContentImportItemStatusEnum.PENDING,
             ContentImportItemStatusEnum.RETRYING,
@@ -943,7 +1575,7 @@ export class ContentImportService {
         .where(inArray(this.contentImportItem.id, recoverableIds))
     }
 
-    const counters = await this.aggregateJobWithDb(importJob.id, tx)
+    const counters = await this.aggregateJobWithDb(context.importJob.id, tx)
     const attemptCounters = {
       successItemCount: 0,
       failedItemCount: runningItemIds.length,
@@ -959,8 +1591,7 @@ export class ContentImportService {
 
   // 汇总 job 是否仍有未来自动重试 item。
   async readRetryState(jobId: string) {
-    const importJob = await this.readContentImportJobByWorkflowJobId(jobId)
-    return this.aggregateJobWithRetryStateWithDb(importJob.id, this.db)
+    return this.aggregateJobWithRetryState(jobId)
   }
 
   // 分页查询内容导入条目。
@@ -991,7 +1622,7 @@ export class ContentImportService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.contentImportItemPageSelect)
         .from(this.contentImportItem)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -1054,7 +1685,7 @@ export class ContentImportService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.contentImportItemPageSelect)
         .from(this.contentImportItem)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -1098,8 +1729,279 @@ export class ContentImportService {
     }
   }
 
+  // 使用公开 workflow jobId 读取 workflow 与内容导入任务的完整上下文。
+  private async findWorkflowImportJobContext(
+    jobId: string,
+    db: DbTransaction,
+  ): Promise<ContentImportJobContext | null> {
+    const [row] = await db
+      .select({
+        importJob: this.contentImportJob,
+        workflowJob: this.workflowJob,
+      })
+      .from(this.workflowJob)
+      .innerJoin(
+        this.contentImportJob,
+        eq(this.contentImportJob.workflowJobId, this.workflowJob.id),
+      )
+      .where(eq(this.workflowJob.jobId, jobId))
+      .limit(1)
+    return row ?? null
+  }
+
+  // 使用公开 workflow jobId 读取内容导入任务上下文；调用方在锁后必须再次调用。
+  private async requireWorkflowImportJobContext(
+    jobId: string,
+    db: DbTransaction,
+  ): Promise<ContentImportJobContext> {
+    const context = await this.findWorkflowImportJobContext(jobId, db)
+    if (!context) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '内容导入任务不存在',
+      )
+    }
+    return context
+  }
+
+  // 对内容导入聚合根加锁，并在同一事务内重新读取其归属链。
+  private async withLockedWorkflowImportJob<T>(
+    jobId: string,
+    execute: (
+      tx: DbTransaction,
+      context: ContentImportJobContext,
+    ) => Promise<T>,
+  ): Promise<T> {
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const located = await this.requireWorkflowImportJobContext(jobId, tx)
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('workflow_job', located.workflowJob.id),
+          tableIntegrityLock('content_import_job', located.importJob.id),
+        ])
+        const context = await this.requireWorkflowImportJobContext(jobId, tx)
+        return execute(tx, context)
+      },
+    })
+  }
+
+  // 使用公开 itemId 读取其全部归属上下文；该查询只用于定位锁或锁后重查。
+  private async findContentImportItemContext(
+    itemId: string,
+    db: DbExecutor,
+  ): Promise<ContentImportItemContext | null> {
+    const [row] = await db
+      .select({
+        importJob: this.contentImportJob,
+        item: this.contentImportItem,
+        workflowJob: this.workflowJob,
+      })
+      .from(this.contentImportItem)
+      .innerJoin(
+        this.contentImportJob,
+        eq(this.contentImportItem.contentImportJobId, this.contentImportJob.id),
+      )
+      .innerJoin(
+        this.workflowJob,
+        eq(this.contentImportJob.workflowJobId, this.workflowJob.id),
+      )
+      .where(eq(this.contentImportItem.itemId, itemId))
+      .limit(1)
+    return row ?? null
+  }
+
+  /** 使用同一 DbTransaction 读取条目完整归属链，供锁后重查和状态写入使用。 */
+  private async findContentImportItemContextInTransaction(
+    tx: DbTransaction,
+    itemId: string,
+  ): Promise<ContentImportItemContext | null> {
+    const [row] = await tx
+      .select({
+        importJob: this.contentImportJob,
+        item: this.contentImportItem,
+        workflowJob: this.workflowJob,
+      })
+      .from(this.contentImportItem)
+      .innerJoin(
+        this.contentImportJob,
+        eq(this.contentImportItem.contentImportJobId, this.contentImportJob.id),
+      )
+      .innerJoin(
+        this.workflowJob,
+        eq(this.contentImportJob.workflowJobId, this.workflowJob.id),
+      )
+      .where(eq(this.contentImportItem.itemId, itemId))
+      .limit(1)
+    return row ?? null
+  }
+
+  /** 锁后在同一 DbTransaction 中重查条目归属；保留既有 not-found 错误语义。 */
+  private async requireContentImportItemContextInTransaction(
+    tx: DbTransaction,
+    itemId: string,
+  ): Promise<ContentImportItemContext> {
+    const context = await this.findContentImportItemContextInTransaction(
+      tx,
+      itemId,
+    )
+    if (!context) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '内容导入条目不存在',
+      )
+    }
+    return context
+  }
+
+  // 读取指定 workflow job 内的 attempt 序号。
+  private async findWorkflowAttemptByJobAndNumber(
+    workflowJobId: bigint,
+    attemptNo: number,
+    db: DbExecutor,
+  ): Promise<WorkflowAttemptIdSnapshot | null> {
+    const [row] = await db
+      .select({ id: this.workflowAttempt.id })
+      .from(this.workflowAttempt)
+      .where(
+        and(
+          eq(this.workflowAttempt.workflowJobId, workflowJobId),
+          eq(this.workflowAttempt.attemptNo, attemptNo),
+        ),
+      )
+      .limit(1)
+    return row ?? null
+  }
+
+  // 读取与 workflow attempt 严格对应的内容条目 attempt。
+  private async findContentImportItemAttemptByContext(
+    contentImportItemId: bigint,
+    workflowAttemptId: bigint,
+    attemptNo: number,
+    db: DbExecutor,
+  ): Promise<ContentImportItemAttemptIdSnapshot | null> {
+    const [row] = await db
+      .select({ id: this.contentImportItemAttempt.id })
+      .from(this.contentImportItemAttempt)
+      .where(
+        and(
+          eq(
+            this.contentImportItemAttempt.contentImportItemId,
+            contentImportItemId,
+          ),
+          eq(
+            this.contentImportItemAttempt.workflowAttemptId,
+            workflowAttemptId,
+          ),
+          eq(this.contentImportItemAttempt.attemptNo, attemptNo),
+        ),
+      )
+      .limit(1)
+    return row ?? null
+  }
+
+  /** 在同一 DbTransaction 中重查条目 attempt，供锁后残留记录写入使用。 */
+  private async findContentImportItemAttemptByContextInTransaction(
+    tx: DbTransaction,
+    contentImportItemId: bigint,
+    workflowAttemptId: bigint,
+    attemptNo: number,
+  ): Promise<ContentImportItemAttemptIdSnapshot | null> {
+    const [row] = await tx
+      .select({ id: this.contentImportItemAttempt.id })
+      .from(this.contentImportItemAttempt)
+      .where(
+        and(
+          eq(
+            this.contentImportItemAttempt.contentImportItemId,
+            contentImportItemId,
+          ),
+          eq(
+            this.contentImportItemAttempt.workflowAttemptId,
+            workflowAttemptId,
+          ),
+          eq(this.contentImportItemAttempt.attemptNo, attemptNo),
+        ),
+      )
+      .limit(1)
+    return row ?? null
+  }
+
+  /**
+   * 以公开 itemId 和 attemptNo 在同一 DbTransaction 中一次性重查完整 attempt 归属链。
+   * 返回 null 继续沿用过期 worker 静默 no-op 的原有语义。
+   */
+  private async findCurrentItemAttemptContextForMutationInTransaction(
+    tx: DbTransaction,
+    input: ContentImportItemAttemptMutationInput,
+  ): Promise<CurrentContentImportItemAttemptContext | null> {
+    const [row] = await tx
+      .select({
+        importJob: this.contentImportJob,
+        item: this.contentImportItem,
+        itemAttempt: this.contentImportItemAttempt,
+        workflowAttempt: this.workflowAttempt,
+        workflowJob: this.workflowJob,
+      })
+      .from(this.contentImportItem)
+      .innerJoin(
+        this.contentImportJob,
+        eq(this.contentImportItem.contentImportJobId, this.contentImportJob.id),
+      )
+      .innerJoin(
+        this.workflowJob,
+        eq(this.contentImportJob.workflowJobId, this.workflowJob.id),
+      )
+      .innerJoin(
+        this.workflowAttempt,
+        and(
+          eq(this.workflowAttempt.workflowJobId, this.workflowJob.id),
+          eq(this.workflowAttempt.attemptNo, input.attemptNo),
+        ),
+      )
+      .innerJoin(
+        this.contentImportItemAttempt,
+        and(
+          eq(
+            this.contentImportItemAttempt.contentImportItemId,
+            this.contentImportItem.id,
+          ),
+          eq(
+            this.contentImportItemAttempt.workflowAttemptId,
+            this.workflowAttempt.id,
+          ),
+          eq(this.contentImportItemAttempt.attemptNo, input.attemptNo),
+        ),
+      )
+      .where(
+        and(
+          eq(this.contentImportItem.itemId, input.itemId),
+          eq(this.contentImportItem.currentAttemptNo, input.attemptNo),
+        ),
+      )
+      .limit(1)
+    return row ?? null
+  }
+
+  // 使用公开 itemId 读取内容导入条目上下文。
+  private async requireContentImportItemContext(
+    itemId: string,
+    db: DbExecutor,
+  ): Promise<ContentImportItemContext> {
+    const context = await this.findContentImportItemContext(itemId, db)
+    if (!context) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '内容导入条目不存在',
+      )
+    }
+    return context
+  }
+
   // 使用公开 workflow jobId 读取内容导入任务。
-  async readContentImportJobByWorkflowJobId(jobId: string, db: Db = this.db) {
+  async readContentImportJobByWorkflowJobId(
+    jobId: string,
+    db: DbExecutor = this.db,
+  ) {
     const [row] = await db
       .select({ contentImportJob: this.contentImportJob })
       .from(this.contentImportJob)
@@ -1119,9 +2021,12 @@ export class ContentImportService {
   }
 
   // 使用公开 workflow jobId 读取 workflow job。
-  private async readWorkflowJob(jobId: string) {
-    const [row] = await this.db
-      .select()
+  private async readWorkflowJob(
+    jobId: string,
+    db: DbExecutor = this.db,
+  ): Promise<WorkflowJobIdSnapshot> {
+    const [row] = await db
+      .select({ id: this.workflowJob.id })
       .from(this.workflowJob)
       .where(eq(this.workflowJob.jobId, jobId))
       .limit(1)
@@ -1135,9 +2040,16 @@ export class ContentImportService {
   }
 
   // 使用公开 workflow attemptId 读取 workflow attempt。
-  private async readWorkflowAttempt(attemptId: string) {
-    const [row] = await this.db
-      .select()
+  private async readWorkflowAttempt(
+    attemptId: string,
+    db: DbTransaction,
+  ): Promise<WorkflowAttemptIdentitySnapshot> {
+    const [row] = await db
+      .select({
+        id: this.workflowAttempt.id,
+        workflowJobId: this.workflowAttempt.workflowJobId,
+        attemptNo: this.workflowAttempt.attemptNo,
+      })
       .from(this.workflowAttempt)
       .where(eq(this.workflowAttempt.attemptId, attemptId))
       .limit(1)
@@ -1150,68 +2062,82 @@ export class ContentImportService {
     return row
   }
 
-  // 使用公开 itemId 读取内容导入条目。
-  private async readContentImportItemByItemId(itemId: string) {
-    const [row] = await this.db
-      .select()
-      .from(this.contentImportItem)
-      .where(eq(this.contentImportItem.itemId, itemId))
+  /** 使用同一 DbTransaction 重查公开 workflow attempt，供引用写入继承锁后证据。 */
+  private async readWorkflowAttemptInTransaction(
+    tx: DbTransaction,
+    attemptId: string,
+  ): Promise<WorkflowAttemptIdentitySnapshot> {
+    const [row] = await tx
+      .select({
+        id: this.workflowAttempt.id,
+        workflowJobId: this.workflowAttempt.workflowJobId,
+        attemptNo: this.workflowAttempt.attemptNo,
+      })
+      .from(this.workflowAttempt)
+      .where(eq(this.workflowAttempt.attemptId, attemptId))
       .limit(1)
     if (!row) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '内容导入条目不存在',
+        '工作流 attempt 不存在',
       )
     }
     return row
   }
 
-  // 读取内容导入条目 attempt。
-  private async readContentImportItemAttempt(
-    contentImportItemId: bigint,
-    attemptNo: number,
+  // 资源初始化回调只允许操作其刚创建的 workflow job。
+  private assertWorkflowJobIdentity(
+    workflowJob: WorkflowJobSelect,
+    jobId: string,
   ) {
-    const [row] = await this.db
-      .select()
-      .from(this.contentImportItemAttempt)
-      .where(
-        and(
-          eq(
-            this.contentImportItemAttempt.contentImportItemId,
-            contentImportItemId,
-          ),
-          eq(this.contentImportItemAttempt.attemptNo, attemptNo),
-        ),
+    if (workflowJob.jobId !== jobId) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '内容导入任务与工作流任务不匹配',
       )
-      .limit(1)
-    return row ?? null
+    }
+  }
+
+  // 确保 attempt 不会被跨工作流任务复用。
+  private assertWorkflowAttemptBelongsToJob(
+    workflowAttempt: Pick<WorkflowAttemptSelect, 'workflowJobId'>,
+    workflowJob: Pick<WorkflowJobSelect, 'id'>,
+  ) {
+    if (workflowAttempt.workflowJobId !== workflowJob.id) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '工作流 attempt 不属于当前内容导入任务',
+      )
+    }
+  }
+
+  // 两行状态转换必须作为一个整体提交，第二行缺失时回滚第一行。
+  private assertItemAttemptUpdated(itemAttempt: { id: bigint } | undefined) {
+    if (!itemAttempt) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '内容导入条目 attempt 状态已变更',
+      )
+    }
   }
 
   // 在指定 db 中聚合内容导入任务计数。
-  private async aggregateJobWithDb(contentImportJobId: bigint, db: Db) {
+  private async aggregateJobWithDb(contentImportJobId: bigint, db: DbExecutor) {
     const rows = await db
-      .select()
+      .select({
+        status: this.contentImportItem.status,
+        imageTotal: this.contentImportItem.imageTotal,
+        imageSuccessCount: this.contentImportItem.imageSuccessCount,
+      })
       .from(this.contentImportItem)
       .where(eq(this.contentImportItem.contentImportJobId, contentImportJobId))
     return this.aggregateRows(contentImportJobId, rows, db)
   }
 
-  // 在指定 db 中聚合内容导入任务计数并返回未来重试状态。
-  private async aggregateJobWithRetryStateWithDb(
-    contentImportJobId: bigint,
-    db: Db,
-  ) {
-    const rows = await db
-      .select()
-      .from(this.contentImportItem)
-      .where(eq(this.contentImportItem.contentImportJobId, contentImportJobId))
-    return this.aggregateRowsWithRetryState(contentImportJobId, rows, db)
-  }
-
   private async aggregateRows(
     contentImportJobId: bigint,
-    rows: ContentImportItemSelect[],
-    db: Db,
+    rows: ContentImportAggregateItem[],
+    db: DbExecutor,
   ) {
     const imageTotal = rows.reduce(
       (sum, row) => sum + this.normalizeImageCount(row.imageTotal),
@@ -1288,8 +2214,8 @@ export class ContentImportService {
 
   private async aggregateRowsWithRetryState(
     contentImportJobId: bigint,
-    rows: ContentImportItemSelect[],
-    db: Db,
+    rows: ContentImportAggregateItemWithRetryState[],
+    db: DbExecutor,
   ): Promise<ContentImportAttemptCountersWithRetry> {
     const counters = await this.aggregateRows(contentImportJobId, rows, db)
     const now = new Date()

@@ -16,7 +16,12 @@ import type {
   ChatMessageCreatedDomainEventPayload,
   ChatMessageOutput,
 } from './chat.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 
 import {
   appUser,
@@ -49,6 +54,7 @@ import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
 import { buildChatMediaOriginPolicy } from './chat-media-origin-policy'
 import { assertChatMessageSendInput } from './chat-message-boundary'
+import { ChatMessageCursor } from './chat-message-cursor'
 import { MessageChatReadQueryService } from './chat-read-query.service'
 import {
   CHAT_MESSAGE_PAGE_LIMIT_DEFAULT,
@@ -70,6 +76,25 @@ import {
 /** 数字字符串正则表达式（模块作用域，避免重复编译） */
 const DIGIT_STRING_REGEX = /^\d+$/
 
+type ChatMessageOutputSource = Pick<
+  typeof chatMessage.$inferSelect,
+  | 'id'
+  | 'conversationId'
+  | 'messageSeq'
+  | 'senderId'
+  | 'clientMessageId'
+  | 'messageType'
+  | 'content'
+  | 'bodyTokens'
+  | 'payload'
+  | 'createdAt'
+>
+
+type ChatSendMessageResultSource = Pick<
+  typeof chatMessage.$inferSelect,
+  'id' | 'messageSeq' | 'createdAt'
+>
+
 /**
  * 私聊聊天服务
  *
@@ -84,12 +109,13 @@ const DIGIT_STRING_REGEX = /^\d+$/
  * 1. 使用 bizKey 实现私聊会话的唯一性（基于两个用户ID生成）
  * 2. 消息序列号(messageSeq)用于消息排序和游标分页
  * 3. clientMessageId 支持消息幂等性，防止重复发送
- * 4. 使用 PostgreSQL 咨询锁(pg_advisory_xact_lock)保证消息序列号的并发安全
+ * 4. 使用规范化事务锁保证消息序列号的并发安全
  */
 @Injectable()
 export class MessageChatService {
   private readonly logger = new Logger(MessageChatService.name)
   private readonly uploadConfig: UploadConfigInterface
+  private readonly chatMessageCursor: ChatMessageCursor
 
   constructor(
     private readonly drizzle: DrizzleService,
@@ -107,10 +133,29 @@ export class MessageChatService {
     private readonly uploadConfigProvider?: UploadConfigProvider,
   ) {
     this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
+    this.chatMessageCursor = new ChatMessageCursor(
+      this.configService.getOrThrow<string>('CHAT_MESSAGE_CURSOR_SECRET'),
+    )
   }
 
   private get db() {
     return this.drizzle.db
+  }
+
+  private get chatSendMessageResultColumns() {
+    return {
+      id: true,
+      messageSeq: true,
+      createdAt: true,
+    } as const
+  }
+
+  private get chatSendMessageResultReturning() {
+    return {
+      id: chatMessage.id,
+      messageSeq: chatMessage.messageSeq,
+      createdAt: chatMessage.createdAt,
+    } as const
   }
 
   // 打开或创建私聊会话 业务逻辑： 1. 校验目标用户存在且未被封禁 2. 基于双方用户ID生成唯一的 bizKey 3. 使用事务原子性地执行： - upsert 会话记录（已存在则不创建新的） - upsert 发起者成员记录（如果是已退出的会话，重置 leftAt 为 null） - upsert 目标用户成员记录（如果是已退出的会话，重置 leftAt 为 null）
@@ -356,13 +401,21 @@ export class MessageChatService {
       dto.conversationId,
       'conversationId',
     )
-    const cursor = this.parseBigintCursor(dto.cursor, 'cursor')
-    const afterSeq = this.parseBigintCursor(dto.afterSeq, 'afterSeq')
+    const cursor = dto.cursor?.trim() || undefined
+    const afterSeq = this.parseBigintSequence(dto.afterSeq, 'afterSeq')
     const limit = this.normalizeMessageLimit(dto.limit)
     if (cursor !== undefined && afterSeq !== undefined) {
       throw new BadRequestException('cursor 和 afterSeq 不能同时使用')
     }
     await this.ensureConversationMember(conversationId, userId)
+    const historyCursor =
+      cursor === undefined
+        ? undefined
+        : this.chatMessageCursor.decode({
+            authenticatedUserId: userId,
+            conversationId,
+            cursor,
+          })
     if (afterSeq !== undefined) {
       this.recordResyncTriggeredMetric()
       const messages =
@@ -383,10 +436,10 @@ export class MessageChatService {
       }
     }
     const messages =
-      cursor !== undefined
+      historyCursor !== undefined
         ? await this.chatReadQueryService.getConversationMessagesBefore({
             conversationId,
-            cursor,
+            cursor: historyCursor,
             limit: limit + 1,
           })
         : await this.chatReadQueryService.getConversationMessages({
@@ -394,12 +447,17 @@ export class MessageChatService {
             limit: limit + 1,
           })
     const hasMore = messages.length > limit
-    const list = messages
-      .slice(0, limit)
-      .map((item) => this.toMessageOutput(item))
+    const pageMessages = messages.slice(0, limit)
+    const list = pageMessages.map((item) => this.toMessageOutput(item))
     return {
       list,
-      nextCursor: list.length ? list.at(-1)?.messageSeq : null,
+      nextCursor: pageMessages.length
+        ? this.chatMessageCursor.encode({
+            authenticatedUserId: userId,
+            conversationId,
+            boundaryMessageSeq: pageMessages.at(-1)!.messageSeq,
+          })
+        : null,
       hasMore,
     }
   }
@@ -434,7 +492,11 @@ export class MessageChatService {
       normalizedInput.clientMessageId,
     )
 
-    const message = this.toMessageOutput(result.message)
+    const response = this.toChatSendMessageResult(
+      result.message,
+      normalizedInput.conversationId,
+      !result.isNew,
+    )
     if (result.isNew && result.domainEventId && result.domainEventPayload) {
       await this.tryDispatchMessageCreatedDomainEvent(
         result.domainEventId,
@@ -442,14 +504,7 @@ export class MessageChatService {
       )
     }
 
-    return {
-      id: message.id,
-      conversationId: normalizedInput.conversationId,
-      messageId: message.id,
-      messageSeq: message.messageSeq,
-      createdAt: message.createdAt,
-      deduplicated: !result.isNew,
-    }
+    return response
   }
 
   // 分发 CHAT 域“消息已创建”领域事件。 - 由 sendMessage 在提交后做一次即时补偿，worker 失败重试时也会复用同一入口 - 读取当前 chat 事实表而不是信任历史快照，避免旧未读数覆盖新状态
@@ -487,18 +542,20 @@ export class MessageChatService {
           createdAt: true,
         },
       }),
-      this.db.query.chatConversationMember.findMany({
-        where: {
-          conversationId,
-          leftAt: { isNull: true },
-        },
-        columns: {
-          userId: true,
-          unreadCount: true,
-          lastReadAt: true,
-          lastReadMessageId: true,
-        },
-      }),
+      this.db
+        .select({
+          userId: chatConversationMember.userId,
+          unreadCount: chatConversationMember.unreadCount,
+          lastReadAt: chatConversationMember.lastReadAt,
+          lastReadMessageId: chatConversationMember.lastReadMessageId,
+        })
+        .from(chatConversationMember)
+        .where(
+          and(
+            eq(chatConversationMember.conversationId, conversationId),
+            isNull(chatConversationMember.leftAt),
+          ),
+        ),
     ])
 
     if (!message) {
@@ -518,9 +575,7 @@ export class MessageChatService {
       return
     }
 
-    const messageOutput = this.toMessageOutput(
-      message as typeof chatMessage.$inferSelect,
-    )
+    const messageOutput = this.toMessageOutput(message)
     await Promise.all(
       memberStates.map(async (member) => {
         this.messageNotificationRealtimeService.emitChatConversationUpdate(
@@ -720,7 +775,7 @@ export class MessageChatService {
     return true
   }
 
-  // 创建消息（带重试机制） 核心设计： 1. 使用 PostgreSQL 咨询锁（pg_advisory_xact_lock）保证消息序列号的并发安全 2. 支持幂等性：通过 clientMessageId 检查是否已发送过相同消息 3. 重试机制：处理并发时的唯一约束冲突（唯一约束冲突） 4. 文本消息成功落库后，在同一事务中同步最近使用表情聚合记录 并发控制说明： - 咨询锁在事务级别生效，事务结束后自动释放 - 同一会话的消息创建会串行执行，避免序列号冲突
+  // 创建消息（带重试机制） 核心设计： 1. 使用规范化事务锁保证消息序列号的并发安全 2. 支持幂等性：通过 clientMessageId 检查是否已发送过相同消息 3. 重试机制：处理并发时的唯一约束冲突（唯一约束冲突） 4. 文本消息成功落库后，在同一事务中同步最近使用表情聚合记录 并发控制说明： - 锁在事务结束后自动释放 - 同一会话的消息创建会串行执行，避免序列号冲突
   private async createMessageWithRetry(
     conversationId: number,
     userId: number,
@@ -730,7 +785,7 @@ export class MessageChatService {
     payload?: ChatSendMessagePayload,
     clientMessageId?: string,
   ): Promise<{
-    message: typeof chatMessage.$inferSelect
+    message: ChatSendMessageResultSource
     isNew: boolean
     domainEventId?: bigint
     domainEventPayload?: ChatMessageCreatedDomainEventPayload
@@ -742,6 +797,9 @@ export class MessageChatService {
     for (let index = 0; index < maxRetry; index += 1) {
       try {
         return await this.db.transaction(async (tx) => {
+          await acquireIntegrityLocks(tx, [
+            tableIntegrityLock('chat_conversation', conversationId),
+          ])
           const member = await tx.query.chatConversationMember.findFirst({
             where: {
               conversationId,
@@ -781,8 +839,6 @@ export class MessageChatService {
               'Conversation not found',
             )
           }
-          // 使用 PostgreSQL advisory lock 防止同一会话并发发送消息产生序号空洞；Drizzle 不支持 advisory lock 函数。
-          await tx.execute(sql`SELECT pg_advisory_xact_lock(${conversationId})`)
           if (clientMessageId) {
             const existedMessage = await tx.query.chatMessage.findFirst({
               where: {
@@ -790,6 +846,7 @@ export class MessageChatService {
                 senderId: userId,
                 clientMessageId,
               },
+              columns: this.chatSendMessageResultColumns,
             })
             if (existedMessage) {
               return {
@@ -817,7 +874,7 @@ export class MessageChatService {
               payload,
               status: ChatMessageStatusEnum.NORMAL,
             })
-            .returning()
+            .returning(this.chatSendMessageResultReturning)
           const message = insertedMessage[0]
           if (!message) {
             throw new BusinessException(
@@ -916,13 +973,14 @@ export class MessageChatService {
     conversationId: number,
     userId: number,
     clientMessageId: string,
-  ) {
+  ): Promise<ChatSendMessageResultSource | undefined> {
     return this.db.query.chatMessage.findFirst({
       where: {
         conversationId,
         senderId: userId,
         clientMessageId,
       },
+      columns: this.chatSendMessageResultColumns,
     })
   }
 
@@ -1122,9 +1180,7 @@ export class MessageChatService {
   }
 
   // 转换消息数据为输出格式 主要处理 bigint 类型转换为字符串，避免前端精度丢失
-  private toMessageOutput(
-    item: typeof chatMessage.$inferSelect,
-  ): ChatMessageOutput {
+  private toMessageOutput(item: ChatMessageOutputSource): ChatMessageOutput {
     return {
       id: item.id.toString(),
       conversationId: item.conversationId,
@@ -1139,6 +1195,22 @@ export class MessageChatService {
         item.payload,
       ),
       createdAt: item.createdAt,
+    }
+  }
+
+  private toChatSendMessageResult(
+    item: ChatSendMessageResultSource,
+    conversationId: number,
+    deduplicated: boolean,
+  ) {
+    const id = item.id.toString()
+    return {
+      id,
+      conversationId,
+      messageId: id,
+      messageSeq: item.messageSeq.toString(),
+      createdAt: item.createdAt,
+      deduplicated,
     }
   }
 
@@ -1451,15 +1523,15 @@ export class MessageChatService {
     return BigInt(value.trim())
   }
 
-  // 解析游标参数 游标为可选参数，空值返回 undefined
-  private parseBigintCursor(cursor: string | undefined, fieldName: string) {
-    if (!cursor || !cursor.trim()) {
+  // 解析可选的消息序列号参数，空值返回 undefined。
+  private parseBigintSequence(value: string | undefined, fieldName: string) {
+    if (!value || !value.trim()) {
       return undefined
     }
-    if (!DIGIT_STRING_REGEX.test(cursor.trim())) {
+    if (!DIGIT_STRING_REGEX.test(value.trim())) {
       throw new BadRequestException(`${fieldName} 必须是合法的整数字符串`)
     }
-    return BigInt(cursor.trim())
+    return BigInt(value.trim())
   }
 
   // 将 clientMessageId 附加到消息载荷中 如果载荷不存在，创建新的载荷对象 如果载荷已存在，合并 clientMessageId 字段

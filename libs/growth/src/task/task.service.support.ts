@@ -1,4 +1,5 @@
-import type { Db, DrizzleService } from '@db/core'
+import type { Db, DbTransaction, DrizzleService } from '@db/core'
+import type { TaskDefinitionSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateTaskDefinitionDto,
@@ -18,7 +19,11 @@ import type {
   TaskStepWriteInput,
   TaskVisibleStatusInput,
 } from './types/task.type'
-import { buildILikeCondition } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  tableIntegrityLock,
+} from '@db/core'
 import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
@@ -36,6 +41,43 @@ import {
   TaskVisibleStatusEnum,
 } from './task.constant'
 
+type TaskDefinitionAdminReadRecord = Pick<
+  TaskDefinitionSelect,
+  | 'id'
+  | 'code'
+  | 'title'
+  | 'description'
+  | 'cover'
+  | 'sceneType'
+  | 'status'
+  | 'sortOrder'
+  | 'claimMode'
+  | 'completionPolicy'
+  | 'repeatType'
+  | 'startAt'
+  | 'endAt'
+  | 'rewardItems'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type TaskDefinitionAppReadRecord = Pick<
+  TaskDefinitionSelect,
+  | 'id'
+  | 'code'
+  | 'title'
+  | 'description'
+  | 'cover'
+  | 'sceneType'
+  | 'sortOrder'
+  | 'claimMode'
+  | 'completionPolicy'
+  | 'repeatType'
+  | 'startAt'
+  | 'endAt'
+  | 'rewardItems'
+>
+
 /**
  * 新任务模型读链路共享支撑类。
  *
@@ -48,6 +90,20 @@ export abstract class TaskServiceSupport {
   // 数据库访问入口。
   protected get db() {
     return this.drizzle.db
+  }
+
+  /**
+   * task_definition 不使用物理外键。定义失效（暂停、归档、软删除、执行合同
+   * 更新）与新实例写入必须争用同一 canonical record lock；调用方必须在获得
+   * 锁后重新读取任务和步骤，不能复用锁前快照。
+   */
+  protected async lockTaskDefinitionForMutation(
+    tx: DbTransaction,
+    taskId: number,
+  ) {
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('task_definition', taskId),
+    ])
   }
 
   // 新任务头表。
@@ -90,6 +146,133 @@ export abstract class TaskServiceSupport {
     return this.drizzle.schema.growthRewardSettlement
   }
 
+  // 管理端任务头列表/详情的稳定读取投影。
+  protected getTaskDefinitionAdminReadSelect() {
+    return {
+      id: this.taskDefinitionTable.id,
+      code: this.taskDefinitionTable.code,
+      title: this.taskDefinitionTable.title,
+      description: this.taskDefinitionTable.description,
+      cover: this.taskDefinitionTable.cover,
+      sceneType: this.taskDefinitionTable.sceneType,
+      status: this.taskDefinitionTable.status,
+      sortOrder: this.taskDefinitionTable.sortOrder,
+      claimMode: this.taskDefinitionTable.claimMode,
+      completionPolicy: this.taskDefinitionTable.completionPolicy,
+      repeatType: this.taskDefinitionTable.repeatType,
+      startAt: this.taskDefinitionTable.startAt,
+      endAt: this.taskDefinitionTable.endAt,
+      rewardItems: this.taskDefinitionTable.rewardItems,
+      createdAt: this.taskDefinitionTable.createdAt,
+      updatedAt: this.taskDefinitionTable.updatedAt,
+    }
+  }
+
+  // App 可领取任务卡片的稳定读取投影。
+  protected getTaskDefinitionAppReadSelect() {
+    return {
+      id: this.taskDefinitionTable.id,
+      code: this.taskDefinitionTable.code,
+      title: this.taskDefinitionTable.title,
+      description: this.taskDefinitionTable.description,
+      cover: this.taskDefinitionTable.cover,
+      sceneType: this.taskDefinitionTable.sceneType,
+      sortOrder: this.taskDefinitionTable.sortOrder,
+      claimMode: this.taskDefinitionTable.claimMode,
+      completionPolicy: this.taskDefinitionTable.completionPolicy,
+      repeatType: this.taskDefinitionTable.repeatType,
+      startAt: this.taskDefinitionTable.startAt,
+      endAt: this.taskDefinitionTable.endAt,
+      rewardItems: this.taskDefinitionTable.rewardItems,
+    }
+  }
+
+  // 管理端任务头详情 RQB V2 显式列集。
+  protected getTaskDefinitionAdminReadColumns() {
+    return {
+      id: true,
+      code: true,
+      title: true,
+      description: true,
+      cover: true,
+      sceneType: true,
+      status: true,
+      sortOrder: true,
+      claimMode: true,
+      completionPolicy: true,
+      repeatType: true,
+      startAt: true,
+      endAt: true,
+      rewardItems: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  // 写链需要完整任务头快照；显式全列避免 RQB 隐式宽读。
+  protected getTaskDefinitionWriteColumns() {
+    return {
+      id: true,
+      code: true,
+      title: true,
+      description: true,
+      cover: true,
+      sceneType: true,
+      status: true,
+      sortOrder: true,
+      claimMode: true,
+      completionPolicy: true,
+      repeatType: true,
+      startAt: true,
+      endAt: true,
+      rewardItems: true,
+      createdById: true,
+      updatedById: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+    } as const
+  }
+
+  // 写链需要完整步骤快照；显式全列避免 RQB 隐式宽读。
+  protected getTaskStepWriteColumns() {
+    return {
+      id: true,
+      taskId: true,
+      stepKey: true,
+      title: true,
+      description: true,
+      stepNo: true,
+      triggerMode: true,
+      eventCode: true,
+      targetValue: true,
+      templateKey: true,
+      filterPayload: true,
+      dedupeScope: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  // 任务步骤摘要的最小读取投影。
+  protected getTaskStepSummarySelect() {
+    return {
+      id: this.taskStepTable.id,
+      taskId: this.taskStepTable.taskId,
+      createdAt: this.taskStepTable.createdAt,
+      updatedAt: this.taskStepTable.updatedAt,
+      stepKey: this.taskStepTable.stepKey,
+      title: this.taskStepTable.title,
+      description: this.taskStepTable.description,
+      stepNo: this.taskStepTable.stepNo,
+      triggerMode: this.taskStepTable.triggerMode,
+      targetValue: this.taskStepTable.targetValue,
+      templateKey: this.taskStepTable.templateKey,
+      filterPayload: this.taskStepTable.filterPayload,
+      dedupeScope: this.taskStepTable.dedupeScope,
+    }
+  }
+
   // 构建任务头分页查询条件。
   protected buildTaskDefinitionWhere(params: QueryTaskDefinitionPageDto) {
     const conditions: SQL[] = [isNull(this.taskDefinitionTable.deletedAt)]
@@ -129,7 +312,7 @@ export abstract class TaskServiceSupport {
     }
 
     const rows = await this.db
-      .select()
+      .select(this.getTaskStepSummarySelect())
       .from(this.taskStepTable)
       .where(inArray(this.taskStepTable.taskId, uniqueTaskIds))
       .orderBy(this.taskStepTable.taskId, this.taskStepTable.stepNo)
@@ -169,7 +352,7 @@ export abstract class TaskServiceSupport {
       this.db
         .select({
           taskId: this.taskInstanceTable.taskId,
-          count: sql<number>`count(*)::int`,
+          count: sql<number>`count(*)::int`.mapWith(Number),
         })
         .from(this.taskInstanceTable)
         .where(
@@ -183,7 +366,7 @@ export abstract class TaskServiceSupport {
       this.db
         .select({
           taskId: this.taskInstanceTable.taskId,
-          count: sql<number>`count(*)::int`,
+          count: sql<number>`count(*)::int`.mapWith(Number),
         })
         .from(this.taskInstanceTable)
         .leftJoin(
@@ -240,7 +423,7 @@ export abstract class TaskServiceSupport {
   // 断言任务没有仍在执行中的实例，避免运营侧改写已领取实例的执行合同。
   protected async ensureNoActiveTaskInstances(runner: Db, taskId: number) {
     const rows = await runner
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
       .from(this.taskInstanceTable)
       .where(
         and(
@@ -263,7 +446,7 @@ export abstract class TaskServiceSupport {
 
   // 把任务头记录映射成管理端列表投影。
   protected toAdminTaskDefinitionListItem(
-    taskRecord: typeof this.taskDefinitionTable.$inferSelect,
+    taskRecord: TaskDefinitionAdminReadRecord,
     stepCount: number,
     runtimeSummary?: TaskDefinitionRuntimeSummary,
   ): AdminTaskDefinitionListItemDto {
@@ -295,7 +478,7 @@ export abstract class TaskServiceSupport {
 
   // 把任务头记录映射成管理端详情投影。
   protected toAdminTaskDefinitionDetail(
-    taskRecord: typeof this.taskDefinitionTable.$inferSelect,
+    taskRecord: TaskDefinitionAdminReadRecord,
     steps: TaskStepSummaryDto[],
     runtimeSummary?: TaskDefinitionRuntimeSummary,
   ): AdminTaskDefinitionDetailDto {
@@ -310,8 +493,9 @@ export abstract class TaskServiceSupport {
   }
 
   // 读取任务头详情，不存在则抛业务异常。
-  protected async getTaskDefinitionRecordOrThrow(id: number) {
+  protected async getTaskDefinitionDetailRecordOrThrow(id: number) {
     const taskRecord = await this.db.query.taskDefinition.findFirst({
+      columns: this.getTaskDefinitionAdminReadColumns(),
       where: {
         id,
         deletedAt: { isNull: true },
@@ -326,6 +510,111 @@ export abstract class TaskServiceSupport {
     }
 
     return taskRecord
+  }
+
+  // 写链读取完整任务头，不存在则抛业务异常。
+  protected async getTaskDefinitionRecordOrThrow(id: number) {
+    const taskRecord = await this.db.query.taskDefinition.findFirst({
+      columns: this.getTaskDefinitionWriteColumns(),
+      where: {
+        id,
+        deletedAt: { isNull: true },
+      },
+    })
+
+    if (!taskRecord) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务不存在',
+      )
+    }
+
+    return taskRecord
+  }
+
+  // 在已取得任务定义完整性锁的事务内读取仍有效的任务头。
+  protected async getTaskDefinitionRecordOrThrowInTx(
+    tx: DbTransaction,
+    id: number,
+  ) {
+    const taskRecord = await tx.query.taskDefinition.findFirst({
+      columns: this.getTaskDefinitionWriteColumns(),
+      where: {
+        id,
+        deletedAt: { isNull: true },
+      },
+    })
+
+    if (!taskRecord) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务不存在',
+      )
+    }
+
+    return taskRecord
+  }
+
+  // 在已取得任务定义完整性锁的事务内读取唯一步骤。
+  protected async getSingleTaskStepOrThrowInTx(
+    tx: DbTransaction,
+    taskId: number,
+    stepNo?: number,
+  ) {
+    const step = await tx.query.taskStep.findFirst({
+      columns: this.getTaskStepWriteColumns(),
+      where: {
+        taskId,
+        ...(stepNo === undefined ? {} : { stepNo }),
+      },
+    })
+
+    if (!step) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务步骤不存在',
+      )
+    }
+
+    return step
+  }
+
+  // 在已取得任务定义完整性锁的事务内确认当前任务仍可领取/执行。
+  protected async getAvailableTaskDefinitionOrThrowInTx(
+    tx: DbTransaction,
+    taskId: number,
+    now: Date,
+  ) {
+    const task = await tx.query.taskDefinition.findFirst({
+      columns: this.getTaskDefinitionWriteColumns(),
+      where: {
+        id: taskId,
+        deletedAt: { isNull: true },
+        status: TaskDefinitionStatusEnum.ACTIVE,
+      },
+    })
+
+    if (!task) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务不存在',
+      )
+    }
+
+    if (task.startAt && task.startAt.getTime() > now.getTime()) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务未开始',
+      )
+    }
+    if (task.endAt && task.endAt.getTime() < now.getTime()) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务已结束',
+      )
+    }
+
+    return task
   }
 
   // 构建任务头分页默认排序。
@@ -596,7 +885,7 @@ export abstract class TaskServiceSupport {
 
   // 映射 app 可领取任务卡片。
   protected toAppAvailableTaskItem(
-    taskRecord: typeof this.taskDefinitionTable.$inferSelect,
+    taskRecord: TaskDefinitionAppReadRecord,
     steps: TaskStepSummaryDto[],
   ): AppAvailableTaskPageItemDto {
     return {

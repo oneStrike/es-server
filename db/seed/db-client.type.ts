@@ -1,7 +1,11 @@
 /**
- * Seed 脚本使用的数据库客户端类型。
- * 传入完整 schema（表 + relations），使 db.query 拥有完整的类型推导。
+ * 演示 seed 的所有领域写入必须位于同一原子事务中，避免 root client 意外绕过
+ * rollback 和 advisory-lock 边界。
  */
-import type { SeedDb } from '@db/core'
+import type { DbExecutor, DbTransaction } from '@db/core'
 
-export type Db = SeedDb
+/** 仅供 seed domain / cleanup helper 使用的事务客户端。 */
+export type Db = DbTransaction
+
+/** 建连工厂持有的根客户端；只用于开启最外层 demo seed 事务。 */
+export type SeedClientDb = DbExecutor

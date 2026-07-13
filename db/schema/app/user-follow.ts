@@ -55,7 +55,8 @@ export const userFollow = snakeCase.table(
     index('user_follow_user_id_target_type_created_at_idx').on(
       table.userId,
       table.targetType,
-      table.createdAt,
+      table.createdAt.desc(),
+      table.id.desc(),
     ),
     /**
      * 目标粉丝列表索引
@@ -63,7 +64,8 @@ export const userFollow = snakeCase.table(
     index('user_follow_target_type_target_id_created_at_idx').on(
       table.targetType,
       table.targetId,
-      table.createdAt,
+      table.createdAt.desc(),
+      table.id.desc(),
     ),
     /**
      * 目标存在性/状态查询索引

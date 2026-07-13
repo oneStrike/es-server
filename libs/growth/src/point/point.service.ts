@@ -1,4 +1,4 @@
-import type { Db, SQL } from '@db/core'
+import type { DbExecutor, DbTransaction, SQL } from '@db/core'
 import type { LedgerRecordShape } from './point.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -54,6 +54,26 @@ export class UserPointService {
     return this.drizzle.schema.appUser
   }
 
+  // 后台积分流水的稳定 read-model；归档/资产内部列不进入用户记录分页。
+  private buildPointRecordPageSelect() {
+    return {
+      id: this.growthLedgerRecord.id,
+      userId: this.growthLedgerRecord.userId,
+      ruleId: this.growthLedgerRecord.ruleId,
+      ruleType: this.growthLedgerRecord.ruleType,
+      source: this.growthLedgerRecord.source,
+      targetType: this.growthLedgerRecord.targetType,
+      targetId: this.growthLedgerRecord.targetId,
+      delta: this.growthLedgerRecord.delta,
+      beforeValue: this.growthLedgerRecord.beforeValue,
+      afterValue: this.growthLedgerRecord.afterValue,
+      bizKey: this.growthLedgerRecord.bizKey,
+      remark: this.growthLedgerRecord.remark,
+      context: this.growthLedgerRecord.context,
+      createdAt: this.growthLedgerRecord.createdAt,
+    }
+  }
+
   // 增加积分
   async addPoints(
     addPointsDto: UserGrowthRuleActionDto & {
@@ -83,25 +103,27 @@ export class UserPointService {
         source: addPointsDto.source,
       })
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const result = await this.growthLedgerService.applyByRule(tx, {
-        userId,
-        assetType: GrowthAssetTypeEnum.POINTS,
-        ruleType,
-        bizKey,
-        source: addPointsDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE,
-        context: buildOperationNoteContext(operationNote),
-      })
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const result = await this.growthLedgerService.applyByRule(tx, {
+          userId,
+          assetType: GrowthAssetTypeEnum.POINTS,
+          ruleType,
+          bizKey,
+          source: addPointsDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE,
+          context: buildOperationNoteContext(operationNote),
+        })
 
-      if (!result.success && !result.duplicated) {
-        this.throwPointGrantFailure(result.reason)
-      }
+        if (!result.success && !result.duplicated) {
+          this.throwPointGrantFailure(result.reason)
+        }
 
-      const recordId = result.recordId
-      if (!recordId) {
-        throw new InternalServerErrorException('积分发放失败')
-      }
-      await this.findLedgerRecordById(tx, recordId)
+        const recordId = result.recordId
+        if (!recordId) {
+          throw new InternalServerErrorException('积分发放失败')
+        }
+        await this.findLedgerRecordById(tx, recordId)
+      },
     })
     return true
   }
@@ -113,13 +135,15 @@ export class UserPointService {
       source?: string
     },
   ) {
-    return this.drizzle.withTransaction(async (transaction) => {
-      return this.consumePointsInTx(transaction, consumePointsDto)
+    return this.drizzle.withTransaction({
+      execute: async (transaction) => {
+        return this.consumePointsInTx(transaction, consumePointsDto)
+      },
     })
   }
 
   async consumePointsInTx(
-    tx: Db,
+    tx: DbTransaction,
     consumePointsDto: ConsumeUserPointsDto & {
       bizKey?: string
       source?: string
@@ -132,7 +156,7 @@ export class UserPointService {
      * 在既有事务中执行积分扣减。
      * 扣减结果必须立即回查账本记录，确保事务内后续流程拿到的是已落库的稳定快照。
      */
-    const applyConsume = async (trx: Db) => {
+    const applyConsume = async (trx: DbTransaction) => {
       const bizKey =
         consumePointsDto.bizKey ??
         this.buildStableBizKey('point:consume', {
@@ -287,7 +311,7 @@ export class UserPointService {
     const where = and(...conditions)
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildPointRecordPageSelect())
         .from(this.growthLedgerRecord)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -352,7 +376,20 @@ export class UserPointService {
     const where = and(...conditions)
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.growthLedgerRecord.id,
+          userId: this.growthLedgerRecord.userId,
+          ruleId: this.growthLedgerRecord.ruleId,
+          ruleType: this.growthLedgerRecord.ruleType,
+          source: this.growthLedgerRecord.source,
+          targetType: this.growthLedgerRecord.targetType,
+          targetId: this.growthLedgerRecord.targetId,
+          delta: this.growthLedgerRecord.delta,
+          beforeValue: this.growthLedgerRecord.beforeValue,
+          afterValue: this.growthLedgerRecord.afterValue,
+          remark: this.growthLedgerRecord.remark,
+          createdAt: this.growthLedgerRecord.createdAt,
+        })
         .from(this.growthLedgerRecord)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -364,38 +401,7 @@ export class UserPointService {
 
     return {
       ...page,
-      list: page.list.map((item) =>
-        this.toPointRecord(
-          item as typeof item & { context?: Record<string, unknown> | null },
-        ),
-      ),
-    }
-  }
-
-  // 获取用户积分记录详情
-  async getPointRecordDetail(id: number) {
-    const record = await this.db.query.growthLedgerRecord.findFirst({
-      where: {
-        id,
-        assetType: GrowthAssetTypeEnum.POINTS,
-      },
-      with: {
-        user: true,
-      },
-    })
-
-    if (!record) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '积分记录不存在',
-      )
-    }
-
-    return {
-      ...this.toPointRecord(
-        record as typeof record & { context?: Record<string, unknown> | null },
-      ),
-      user: record.user,
+      list: page.list.map((item) => this.toPointRecord(item)),
     }
   }
 
@@ -417,8 +423,14 @@ export class UserPointService {
 
     const [todayStats] = await this.db
       .select({
-        earned: sql<number>`coalesce(sum(case when ${this.growthLedgerRecord.delta} > 0 then ${this.growthLedgerRecord.delta} else 0 end), 0)`,
-        consumed: sql<number>`coalesce(sum(case when ${this.growthLedgerRecord.delta} < 0 then -${this.growthLedgerRecord.delta} else 0 end), 0)`,
+        earned:
+          sql<number>`coalesce(sum(case when ${this.growthLedgerRecord.delta} > 0 then ${this.growthLedgerRecord.delta} else 0 end), 0)`.mapWith(
+            Number,
+          ),
+        consumed:
+          sql<number>`coalesce(sum(case when ${this.growthLedgerRecord.delta} < 0 then -${this.growthLedgerRecord.delta} else 0 end), 0)`.mapWith(
+            Number,
+          ),
       })
       .from(this.growthLedgerRecord)
       .where(
@@ -457,40 +469,42 @@ export class UserPointService {
     points: number,
     operation: 'add' | 'consume',
   ) {
-    const result = await this.drizzle.withTransaction(async (tx) => {
-      const action =
-        operation === 'add'
-          ? GrowthLedgerActionEnum.GRANT
-          : GrowthLedgerActionEnum.CONSUME
+    const result = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const action =
+          operation === 'add'
+            ? GrowthLedgerActionEnum.GRANT
+            : GrowthLedgerActionEnum.CONSUME
 
-      const ledger = await this.growthLedgerService.applyDelta(tx, {
-        userId,
-        assetType: GrowthAssetTypeEnum.POINTS,
-        action,
-        amount: points,
-        bizKey: this.buildStableBizKey('point:comic-sync', {
+        const ledger = await this.growthLedgerService.applyDelta(tx, {
           userId,
-          operation,
+          assetType: GrowthAssetTypeEnum.POINTS,
+          action,
+          amount: points,
+          bizKey: this.buildStableBizKey('point:comic-sync', {
+            userId,
+            operation,
+            points,
+          }),
+          source: 'comic_sync',
+        })
+
+        if (!ledger.success && !ledger.duplicated) {
+          throw new BusinessException(
+            BusinessErrorCode.QUOTA_NOT_ENOUGH,
+            ledger.reason === 'insufficient_balance'
+              ? '积分不足'
+              : '积分同步失败',
+          )
+        }
+
+        return {
+          success: true,
+          beforePoints: ledger.beforeValue,
+          afterPoints: ledger.afterValue,
           points,
-        }),
-        source: 'comic_sync',
-      })
-
-      if (!ledger.success && !ledger.duplicated) {
-        throw new BusinessException(
-          BusinessErrorCode.QUOTA_NOT_ENOUGH,
-          ledger.reason === 'insufficient_balance'
-            ? '积分不足'
-            : '积分同步失败',
-        )
-      }
-
-      return {
-        success: true,
-        beforePoints: ledger.beforeValue,
-        afterPoints: ledger.afterValue,
-        points,
-      }
+        }
+      },
     })
 
     return result
@@ -498,7 +512,7 @@ export class UserPointService {
 
   // 根据账本记录 ID 回查积分流水。 用于在发放 / 扣减成功后确认记录已落库，避免下游继续处理不存在的 recordId。
   private async findLedgerRecordById(
-    tx: Db,
+    tx: DbExecutor,
     id: number,
   ): Promise<LedgerRecordShape> {
     const record = await tx.query.growthLedgerRecord.findFirst({

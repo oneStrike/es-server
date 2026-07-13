@@ -21,14 +21,9 @@
 
 ## canonical contract
 
-- 当前唯一被代码、OpenAPI、DTO、错误码、schema、comments 与测试共同声明的合同。
+- 当前唯一被代码、OpenAPI、DTO、错误码、schema、comments、RQB v2 relations 与验证证据共同声明的合同。
 - 字段存在性、nullability、路由、错误语义、分页、闭集值域和 transport 行为都属于 contract。
 - 当前 development epoch 以新 canonical contract 原子替换旧合同；旧输入、旧输出与旧数据解释不构成第二套合同。
-
-## development epoch
-
-- 从不可变起点 tag 到完成 tag 的一次原子变更窗口；可分阶段提交，但中间状态不发布。
-- 当前 epoch 的范围、数据库 gate、回退与关闭条件以[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md) 为唯一事实源。
 
 ## no-compat
 
@@ -36,10 +31,12 @@
 - 禁止 shim、alias、版本路由、静默转换、旧值 fallback、双读、双写与旧 migration 解释器。
 - 可观察故障降级、确定性默认排序与状态机补偿不属于旧合同解释能力，但必须进入有 owner 和测试的 resilience allowlist。
 
-## migration baseline reset
+## registered disposable target
 
-- 当前 development epoch 内、只针对已证明可销毁的 dev/test 数据库执行的一次性 migration 历史重建。
-- 它必须通过 ADR 定义的三重 guard 与 Gate A/B/C；epoch 完成后自动恢复 append-only，不是未来改写历史的通用许可。
+- `db/database-targets.json` 中明确标为 `disposable` / `explicit-local-only`，且 source URL
+  解析到登记 loopback host 的 database target。
+- 只有它可作为受控 migrate、bootstrap 或内部 demo seed 的写入目标；每个脚本还必须在已连接
+  session 上验证 `current_database()`。
 
 ## consumer-owned port
 
@@ -73,8 +70,10 @@
 
 ## 长期测试资产
 
-- 能防止行为、contract、事务、架构边界或性能回归的 unit/integration/e2e/architecture/performance 测试、fixture 与 benchmark。
-- 这类资产必须提交并持续维护；一次性诊断探针不属于长期测试，使用后删除。
+- 在本仓库是可长期运行的 operation/static gate 与脱敏 evidence，而不是保留在仓库中的
+  `*.spec.ts`/`test/**` 测试代码；具体约束见 [08-testing.md](./08-testing.md) 与
+  `AGENTS.md`。
+- 一次性诊断测试、fixture 与 probe 不属于长期资产，使用后删除。
 
 ## 最低验证
 

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type {
   CheckInGrantTriggerView,
   CheckInMakeupWindowView,
@@ -114,46 +114,48 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     dto: RepairCheckInStreakDto,
     adminUserId: number,
   ): Promise<CheckInStreakRepairResult> {
-    const repairResult = await this.drizzle.withTransaction(async (tx) => {
-      await this.ensureUserExists(dto.userId, tx)
-      const progress =
-        await this.checkInStreakService.getOrCreateStreakProgress(
+    const repairResult = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.ensureUserExists(dto.userId, tx)
+        const progress =
+          await this.checkInStreakService.getOrCreateStreakProgress(
+            dto.userId,
+            tx,
+          )
+        const records = await this.checkInStreakService.listUserRecords(
           dto.userId,
           tx,
         )
-      const records = await this.checkInStreakService.listUserRecords(
-        dto.userId,
-        tx,
-      )
-      const aggregation =
-        this.checkInStreakService.recomputeStreakAggregation(records)
-      const retryableGrantIds = await this.listRetryableStreakGrantIds(
-        dto.userId,
-        aggregation,
-        tx,
-      )
-      const createdGrantIds = await this.upsertStreakGrantsForAggregation(
-        dto.userId,
-        aggregation,
-        tx,
-        new Date(),
-        'repair',
-      )
+        const aggregation =
+          this.checkInStreakService.recomputeStreakAggregation(records)
+        const retryableGrantIds = await this.listRetryableStreakGrantIds(
+          dto.userId,
+          aggregation,
+          tx,
+        )
+        const createdGrantIds = await this.upsertStreakGrantsForAggregation(
+          dto.userId,
+          aggregation,
+          tx,
+          new Date(),
+          'repair',
+        )
 
-      await this.checkInStreakService.updateStreakProgress(
-        progress,
-        aggregation,
-        tx,
-      )
+        await this.checkInStreakService.updateStreakProgress(
+          progress,
+          aggregation,
+          tx,
+        )
 
-      return {
-        userId: dto.userId,
-        currentStreak: aggregation.currentStreak,
-        streakStartedAt: aggregation.streakStartedAt ?? null,
-        lastSignedDate: aggregation.lastSignedDate ?? null,
-        createdGrantIds,
-        retryableGrantIds,
-      }
+        return {
+          userId: dto.userId,
+          currentStreak: aggregation.currentStreak,
+          streakStartedAt: aggregation.streakStartedAt ?? null,
+          lastSignedDate: aggregation.lastSignedDate ?? null,
+          createdGrantIds,
+          retryableGrantIds,
+        }
+      },
     })
 
     const settledGrantIds: number[] = []
@@ -210,95 +212,17 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     for (let attempt = 0; attempt < CHECK_IN_WRITE_RETRY_LIMIT; attempt++) {
       try {
-        action = await this.drizzle.withTransaction(async (tx) => {
-          await this.ensureUserExists(input.userId, tx)
-          const existing = await tx.query.checkInRecord.findFirst({
-            where: {
-              userId: input.userId,
-              signDate: input.signDate,
-            },
-          })
-          if (existing) {
-            throw new BusinessException(
-              BusinessErrorCode.OPERATION_NOT_ALLOWED,
-              input.recordType === CheckInRecordTypeEnum.NORMAL
-                ? '今日已签到，请勿重复操作'
-                : '该日期已签到，请勿重复补签',
-            )
-          }
-
-          let account =
-            await this.checkInMakeupService.ensureCurrentMakeupAccount(
-              input.userId,
-              config,
-              today,
-              tx,
-            )
-          const window = this.checkInMakeupService.buildMakeupWindow(
-            today,
-            config.makeupPeriodType,
-          )
-
-          if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
-            this.assertMakeupAllowed(input.signDate, today, window)
-            const consumePlan =
-              this.checkInMakeupService.buildMakeupConsumePlan(account)
-            account = await this.checkInMakeupService.consumeMakeupAllowance(
-              account,
-              consumePlan,
-              tx,
-            )
-          }
-
-          const rewardResolution =
-            this.checkInRewardPolicyService.resolveRewardForDate(
-              rewardDefinition,
-              input.signDate,
-              config.makeupPeriodType,
-            )
-
-          const [record] = await tx
-            .insert(this.checkInRecordTable)
-            .values({
-              userId: input.userId,
-              signDate: input.signDate,
-              recordType: input.recordType,
-              resolvedRewardSourceType: rewardResolution.resolvedRewardItems
-                ? (rewardResolution.resolvedRewardSourceType ?? null)
-                : null,
-              resolvedRewardRuleKey: rewardResolution.resolvedRewardItems
-                ? (rewardResolution.resolvedRewardRuleKey ?? null)
-                : null,
-              resolvedRewardItems: rewardResolution.resolvedRewardItems ?? null,
-              resolvedRewardOverviewIconUrl:
-                rewardResolution.resolvedRewardItems
-                  ? rewardResolution.resolvedRewardOverviewIconUrl
-                  : null,
-              resolvedMakeupIconUrl:
-                input.recordType === CheckInRecordTypeEnum.MAKEUP
-                  ? rewardDefinition.makeupIconUrl
-                  : null,
-              rewardSettlementId: null,
-              bizKey: this.buildRecordBizKey(input.userId, input.signDate),
-              operatorType: input.operatorType,
-              context: input.context,
-            })
-            .onConflictDoNothing({
-              target: [
-                this.checkInRecordTable.userId,
-                this.checkInRecordTable.signDate,
-              ],
-            })
-            .returning()
-
-          if (!record) {
-            const concurrentRecord = await tx.query.checkInRecord.findFirst({
+        action = await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await this.ensureUserExists(input.userId, tx)
+            const existing = await tx.query.checkInRecord.findFirst({
+              columns: { id: true },
               where: {
                 userId: input.userId,
                 signDate: input.signDate,
               },
             })
-            if (concurrentRecord) {
+            if (existing) {
               throw new BusinessException(
                 BusinessErrorCode.OPERATION_NOT_ALLOWED,
                 input.recordType === CheckInRecordTypeEnum.NORMAL
@@ -306,25 +230,108 @@ export class CheckInExecutionService extends CheckInServiceSupport {
                   : '该日期已签到，请勿重复补签',
               )
             }
-            throw new BusinessException(
-              BusinessErrorCode.STATE_CONFLICT,
-              '签到写入冲突，请稍后重试',
+
+            let account =
+              await this.checkInMakeupService.ensureCurrentMakeupAccount(
+                input.userId,
+                config,
+                today,
+                tx,
+              )
+            const window = this.checkInMakeupService.buildMakeupWindow(
+              today,
+              config.makeupPeriodType,
             )
-          }
 
-          const triggeredGrantIds = await this.processStreakGrants(
-            input.userId,
-            input.signDate,
-            input.recordType,
-            window,
-            tx,
-            now,
-          )
+            if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
+              this.assertMakeupAllowed(input.signDate, today, window)
+              const consumePlan =
+                this.checkInMakeupService.buildMakeupConsumePlan(account)
+              account = await this.checkInMakeupService.consumeMakeupAllowance(
+                account,
+                consumePlan,
+                tx,
+              )
+            }
 
-          return {
-            recordId: record.id,
-            triggeredGrantIds,
-          }
+            const rewardResolution =
+              this.checkInRewardPolicyService.resolveRewardForDate(
+                rewardDefinition,
+                input.signDate,
+                config.makeupPeriodType,
+              )
+
+            const [record] = await tx
+              .insert(this.checkInRecordTable)
+              .values({
+                userId: input.userId,
+                signDate: input.signDate,
+                recordType: input.recordType,
+                resolvedRewardSourceType: rewardResolution.resolvedRewardItems
+                  ? (rewardResolution.resolvedRewardSourceType ?? null)
+                  : null,
+                resolvedRewardRuleKey: rewardResolution.resolvedRewardItems
+                  ? (rewardResolution.resolvedRewardRuleKey ?? null)
+                  : null,
+                resolvedRewardItems:
+                  rewardResolution.resolvedRewardItems ?? null,
+                resolvedRewardOverviewIconUrl:
+                  rewardResolution.resolvedRewardItems
+                    ? rewardResolution.resolvedRewardOverviewIconUrl
+                    : null,
+                resolvedMakeupIconUrl:
+                  input.recordType === CheckInRecordTypeEnum.MAKEUP
+                    ? rewardDefinition.makeupIconUrl
+                    : null,
+                rewardSettlementId: null,
+                bizKey: this.buildRecordBizKey(input.userId, input.signDate),
+                operatorType: input.operatorType,
+                context: input.context,
+              })
+              .onConflictDoNothing({
+                target: [
+                  this.checkInRecordTable.userId,
+                  this.checkInRecordTable.signDate,
+                ],
+              })
+              .returning()
+
+            if (!record) {
+              const concurrentRecord = await tx.query.checkInRecord.findFirst({
+                columns: { id: true },
+                where: {
+                  userId: input.userId,
+                  signDate: input.signDate,
+                },
+              })
+              if (concurrentRecord) {
+                throw new BusinessException(
+                  BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                  input.recordType === CheckInRecordTypeEnum.NORMAL
+                    ? '今日已签到，请勿重复操作'
+                    : '该日期已签到，请勿重复补签',
+                )
+              }
+              throw new BusinessException(
+                BusinessErrorCode.STATE_CONFLICT,
+                '签到写入冲突，请稍后重试',
+              )
+            }
+
+            const triggeredGrantIds = await this.processStreakGrants(
+              input.userId,
+              input.signDate,
+              input.recordType,
+              window,
+              tx,
+              now,
+            )
+
+            return {
+              recordId: record.id,
+              triggeredGrantIds,
+            }
+          },
         })
         break
       } catch (error) {
@@ -360,7 +367,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     signDate: string,
     recordType: CheckInRecordTypeEnum,
     makeupWindow: CheckInMakeupWindowView,
-    tx: Db,
+    tx: DbExecutor,
     now: Date,
   ) {
     const progress = await this.checkInStreakService.getOrCreateStreakProgress(
@@ -412,7 +419,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   private async upsertStreakGrantsForAggregation(
     userId: number,
     aggregation: CheckInStreakAggregation,
-    tx: Db,
+    tx: DbExecutor,
     now: Date,
     source: 'sign' | 'repair',
   ) {
@@ -522,7 +529,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   private async listRetryableStreakGrantIds(
     userId: number,
     aggregation: CheckInStreakAggregation,
-    tx: Db,
+    tx: DbExecutor,
   ) {
     if (!aggregation.lastSignedDate) {
       return []
@@ -591,7 +598,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     userId: number,
     ruleCodes: string[],
     streakStartedAt: string | undefined,
-    tx: Db,
+    tx: DbExecutor,
     cache: Map<string, CheckInGrantTriggerView[]>,
   ) {
     const uniqueRuleCodes = [...new Set(ruleCodes)].sort()
@@ -680,6 +687,19 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   // 组装签到动作响应，补齐账户、奖励和连续签到摘要。
   private async buildActionResponse(recordId: number) {
     const record = await this.db.query.checkInRecord.findFirst({
+      columns: {
+        id: true,
+        userId: true,
+        signDate: true,
+        recordType: true,
+        resolvedRewardSourceType: true,
+        resolvedRewardRuleKey: true,
+        resolvedRewardItems: true,
+        resolvedRewardOverviewIconUrl: true,
+        resolvedMakeupIconUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       where: { id: recordId },
     })
     if (!record) {
@@ -697,6 +717,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         this.formatDateOnly(new Date()),
       )
     const progress = await this.db.query.checkInStreakProgress.findFirst({
+      columns: { currentStreak: true },
       where: { userId: record.userId },
     })
 

@@ -10,10 +10,7 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, inArray, lt } from 'drizzle-orm'
-import {
-  LikeRecordDto,
-  LikeTargetDetailDto,
-} from './dto/like.dto'
+import { LikeRecordDto, LikeTargetDetailDto } from './dto/like.dto'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeTargetTypeEnum } from './like.constant'
 
@@ -48,6 +45,20 @@ export class LikeService {
   // 复用用户点赞表。
   private get userLike() {
     return this.drizzle.schema.userLike
+  }
+
+  // 点赞分页对外 contract；显式固定所有当前可见字段，避免表扩展被列表接口隐式带出。
+  private buildUserLikeReadSelect() {
+    return {
+      id: this.userLike.id,
+      targetType: this.userLike.targetType,
+      targetId: this.userLike.targetId,
+      sceneType: this.userLike.sceneType,
+      sceneId: this.userLike.sceneId,
+      commentLevel: this.userLike.commentLevel,
+      userId: this.userLike.userId,
+      createdAt: this.userLike.createdAt,
+    }
   }
 
   // 对目标 ID 数组去重。
@@ -127,9 +138,9 @@ export class LikeService {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BusinessException(
-      BusinessErrorCode.INVALID_OPERATION_TARGET,
-      '不支持的点赞目标类型',
-    )
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        '不支持的点赞目标类型',
+      )
     }
     return resolver
   }
@@ -186,7 +197,7 @@ export class LikeService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildUserLikeReadSelect())
         .from(this.userLike)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -215,34 +226,37 @@ export class LikeService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const targetMeta = await resolver.resolveMeta(tx, targetId)
-      await this.userLevelRuleService.ensureDailyLikeQuotaInTx(tx, {
-        userId,
-        business: this.resolveLevelBusiness(targetType, targetMeta),
-      })
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const targetMeta = await resolver.resolveMeta(tx, targetId)
 
-      await this.drizzle.withErrorHandling(
-        () =>
-          tx.insert(this.userLike).values({
-            targetType,
-            targetId,
-            sceneType: targetMeta.sceneType,
-            sceneId: targetMeta.sceneId,
-            commentLevel: targetMeta.commentLevel,
-            userId,
-          }),
-        {
-          duplicate: '已点赞',
-        },
-      )
+        await this.userLevelRuleService.ensureDailyLikeQuotaInTx(tx, {
+          userId,
+          business: this.resolveLevelBusiness(targetType, targetMeta),
+        })
 
-      await this.appUserCountService.updateLikeCount(tx, userId, 1)
-      await resolver.applyCountDelta(tx, targetId, 1)
+        await this.drizzle.withErrorHandling(
+          () =>
+            tx.insert(this.userLike).values({
+              targetType,
+              targetId,
+              sceneType: targetMeta.sceneType,
+              sceneId: targetMeta.sceneId,
+              commentLevel: targetMeta.commentLevel,
+              userId,
+            }),
+          {
+            duplicate: '已点赞',
+          },
+        )
 
-      if (resolver.postLikeHook) {
-        await resolver.postLikeHook(tx, targetId, userId, targetMeta)
-      }
+        await this.appUserCountService.updateLikeCount(tx, userId, 1)
+        await resolver.applyCountDelta(tx, targetId, 1)
+
+        if (resolver.postLikeHook) {
+          await resolver.postLikeHook(tx, targetId, userId, targetMeta)
+        }
+      },
     })
 
     await this.likeGrowthService.rewardLikeCreated(targetType, targetId, userId)
@@ -253,24 +267,26 @@ export class LikeService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const deleted = await tx
-        .delete(this.userLike)
-        .where(
-          and(
-            eq(this.userLike.targetType, targetType),
-            eq(this.userLike.targetId, targetId),
-            eq(this.userLike.userId, userId),
-          ),
-        )
-      this.drizzle.assertAffectedRows(deleted, '点赞记录不存在')
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const deleted = await tx
+          .delete(this.userLike)
+          .where(
+            and(
+              eq(this.userLike.targetType, targetType),
+              eq(this.userLike.targetId, targetId),
+              eq(this.userLike.userId, userId),
+            ),
+          )
+        this.drizzle.assertAffectedRows(deleted, '点赞记录不存在')
 
-      await this.appUserCountService.updateLikeCount(tx, userId, -1)
-      await resolver.applyCountDelta(tx, targetId, -1)
+        await this.appUserCountService.updateLikeCount(tx, userId, -1)
+        await resolver.applyCountDelta(tx, targetId, -1)
 
-      if (resolver.postUnlikeHook) {
-        await resolver.postUnlikeHook(tx, targetId, userId)
-      }
+        if (resolver.postUnlikeHook) {
+          await resolver.postUnlikeHook(tx, targetId, userId)
+        }
+      },
     })
   }
 
@@ -309,7 +325,7 @@ export class LikeService {
     )
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildUserLikeReadSelect())
         .from(this.userLike)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)

@@ -1,7 +1,5 @@
 import type { Db } from '../../db-client'
 import {
-  adminUser,
-  appUser,
   dictionary,
   dictionaryItem,
   requestLog,
@@ -125,7 +123,10 @@ export async function seedSystemReferenceData(db: Db) {
 
   for (const dictFixture of DICTIONARY_FIXTURES) {
     const existingDictionary = await db.query.dictionary.findFirst({
-      where: eq(dictionary.code, dictFixture.code),
+      where: { code: dictFixture.code },
+      columns: {
+        id: true,
+      },
     })
 
     let currentDictionary = existingDictionary
@@ -156,10 +157,15 @@ export async function seedSystemReferenceData(db: Db) {
 
     for (const itemFixture of dictFixture.items) {
       const existingItem = await db.query.dictionaryItem.findFirst({
-        where: and(
-          eq(dictionaryItem.dictionaryCode, dictFixture.code),
-          eq(dictionaryItem.code, itemFixture.code),
-        ),
+        where: {
+          AND: [
+            { dictionaryCode: dictFixture.code },
+            { code: itemFixture.code },
+          ],
+        },
+        columns: {
+          id: true,
+        },
       })
 
       if (!existingItem) {
@@ -192,14 +198,24 @@ export async function seedSystemOperationalData(db: Db) {
   console.log('🌱 初始化系统运行数据...')
 
   const admin = await db.query.adminUser.findFirst({
-    where: eq(adminUser.username, SEED_ADMIN_USERNAME),
+    where: { username: SEED_ADMIN_USERNAME },
+    columns: {
+      id: true,
+      username: true,
+    },
   })
   const readerA = await db.query.appUser.findFirst({
-    where: eq(appUser.account, SEED_ACCOUNTS.readerA),
+    where: { account: SEED_ACCOUNTS.readerA },
+    columns: {
+      id: true,
+      account: true,
+    },
   })
 
   const [latestConfig] = await db
-    .select()
+    .select({
+      id: systemConfig.id,
+    })
     .from(systemConfig)
     .orderBy(desc(systemConfig.id))
     .limit(1)
@@ -243,7 +259,9 @@ export async function seedSystemOperationalData(db: Db) {
 
   for (const wordFixture of SENSITIVE_WORD_FIXTURES) {
     const [existingWord] = await db
-      .select()
+      .select({
+        id: sensitiveWord.id,
+      })
       .from(sensitiveWord)
       .where(eq(sensitiveWord.word, wordFixture.word))
       .limit(1)
@@ -302,7 +320,9 @@ export async function seedSystemOperationalData(db: Db) {
 
   for (const logFixture of requestFixtures) {
     const [existingLog] = await db
-      .select()
+      .select({
+        id: requestLog.id,
+      })
       .from(requestLog)
       .where(
         and(

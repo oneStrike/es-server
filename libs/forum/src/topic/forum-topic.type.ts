@@ -1,8 +1,5 @@
 import type { Db } from '@db/core'
-import type {
-  ForumSectionSelect,
-  ForumTopicSelect,
-} from '@db/schema'
+import type { ForumSectionSelect, ForumTopicSelect } from '@db/schema'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
 import type { CommentTargetHookPayload } from '@libs/interaction/comment/interfaces/comment-target-resolver.type'
 import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
@@ -191,7 +188,30 @@ export interface PublicTopicInteractionSnapshot {
 /**
  * 公开主题详情关系查询返回的内部行结构。
  */
-export type VisiblePublicTopicDetailRow = ForumTopicSelect & {
+export type VisiblePublicTopicDetailRow = Pick<
+  ForumTopicSelect,
+  | 'id'
+  | 'sectionId'
+  | 'userId'
+  | 'title'
+  | 'html'
+  | 'images'
+  | 'videos'
+  | 'isPinned'
+  | 'isFeatured'
+  | 'isLocked'
+  | 'geoCountry'
+  | 'geoProvince'
+  | 'geoCity'
+  | 'geoIsp'
+  | 'viewCount'
+  | 'likeCount'
+  | 'commentCount'
+  | 'favoriteCount'
+  | 'lastCommentAt'
+  | 'createdAt'
+  | 'updatedAt'
+> & {
   section: {
     id: number
     groupId: number | null
@@ -330,6 +350,38 @@ export type TopicGovernanceSnapshot = Pick<
   ForumTopicSelect,
   'auditStatus' | 'id' | 'isHidden' | 'sectionId' | 'title' | 'userId'
 >
+
+/**
+ * 主题写路径在加锁前持有的身份快照。
+ * 后续事务必须基于 `id` 重新读取当前事实，调用方不可据此承载持久化全行。
+ */
+export type TopicMutationSnapshot = Pick<ForumTopicSelect, 'id' | 'userId'>
+
+/**
+ * 内容更新入口在加锁前需要的主题状态快照。
+ */
+export type TopicUpdateCurrentSnapshot = TopicMutationSnapshot &
+  Pick<ForumTopicSelect, 'isLocked'>
+
+/**
+ * 事务内主题内容更新完成后可传给扩展回调的最小状态快照。
+ */
+export type TopicUpdatedSnapshot = Pick<
+  ForumTopicSelect,
+  | 'id'
+  | 'sectionId'
+  | 'userId'
+  | 'title'
+  | 'auditStatus'
+  | 'isHidden'
+  | 'deletedAt'
+  | 'updatedAt'
+>
+
+/**
+ * 锁定主题状态切换时用于同步板块可见性的最小快照。
+ */
+export type TopicSectionSnapshot = Pick<ForumTopicSelect, 'id' | 'sectionId'>
 
 /**
  * 审核通过后补发主题奖励所需的状态跃迁。

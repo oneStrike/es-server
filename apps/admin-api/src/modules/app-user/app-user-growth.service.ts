@@ -42,13 +42,13 @@ export class AppUserGrowthService extends AppUserServiceSupport {
 
   // 获取 APP 用户积分统计。
   async getAppUserPointStats(userId: number) {
-    await this.userCoreService.ensureUserExists(userId)
+    await this.userCoreService.assertActiveUserExists(userId)
     return this.userPointService.getUserPointStats(userId)
   }
 
   // 获取 APP 用户积分记录分页。
   async getAppUserPointRecords(query: QueryUserPointRecordDto) {
-    await this.userCoreService.ensureUserExists(query.userId)
+    await this.userCoreService.assertActiveUserExists(query.userId)
     return this.userPointService.getPointRecordPage(query)
   }
 
@@ -57,7 +57,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     adminUserId: number,
     dto: AdminAppUserGrowthRuleActionDto,
   ) {
-    await this.userCoreService.ensureUserExists(dto.userId)
+    await this.userCoreService.assertActiveUserExists(dto.userId)
 
     return this.userPointService.addPoints({
       ...dto,
@@ -76,7 +76,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     adminUserId: number,
     dto: ConsumeAdminAppUserPointsDto,
   ) {
-    await this.userCoreService.ensureUserExists(dto.userId)
+    await this.userCoreService.assertActiveUserExists(dto.userId)
 
     return this.userPointService.consumePoints({
       ...dto,
@@ -92,7 +92,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
 
   // 获取 APP 用户经验统计，含当日新增、当前等级和下一等级差值。
   async getAppUserExperienceStats(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
+    const user = await this.userCoreService.getUserLevelSource(userId)
     const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
 
     const today = startOfTodayInAppTimeZone()
@@ -100,7 +100,9 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     const [todayEarnedRows, level, nextLevelRows] = await Promise.all([
       this.db
         .select({
-          sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecordTable.delta}), 0)::int`,
+          sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecordTable.delta}), 0)::int`.mapWith(
+            Number,
+          ),
         })
         .from(this.growthLedgerRecordTable)
         .where(
@@ -161,13 +163,13 @@ export class AppUserGrowthService extends AppUserServiceSupport {
 
   // 获取 APP 用户经验记录分页。
   async getAppUserExperienceRecords(query: QueryScopedUserExperienceRecordDto) {
-    await this.userCoreService.ensureUserExists(query.userId)
+    await this.userCoreService.assertActiveUserExists(query.userId)
     return this.userExperienceService.getExperienceRecordPage(query)
   }
 
   // 获取 APP 用户混合成长流水分页。
   async getAppUserGrowthLedgerRecords(query: QueryAdminAppUserGrowthLedgerDto) {
-    await this.userCoreService.ensureUserExists(query.userId)
+    await this.userCoreService.assertActiveUserExists(query.userId)
     return this.growthLedgerService.getGrowthLedgerPage(query)
   }
 
@@ -176,7 +178,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     adminUserId: number,
     dto: AdminAppUserGrowthRuleActionDto,
   ) {
-    await this.userCoreService.ensureUserExists(dto.userId)
+    await this.userCoreService.assertActiveUserExists(dto.userId)
 
     return this.userExperienceService.addExperience({
       ...dto,
@@ -192,7 +194,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
 
   // 获取 APP 用户徽章分页，在分配表分页查询中关联徽章过滤。
   async getAppUserBadges(query: QueryAdminAppUserBadgeDto) {
-    await this.userCoreService.ensureUserExists(query.userId)
+    await this.userCoreService.assertActiveUserExists(query.userId)
 
     const { userId, name, type, isEnabled, business, eventKey, ...pageQuery } =
       query
@@ -244,24 +246,18 @@ export class AppUserGrowthService extends AppUserServiceSupport {
         .from(this.userBadgeAssignmentTable)
         .innerJoin(
           this.userBadgeTable,
-          eq(
-            this.userBadgeAssignmentTable.badgeId,
-            this.userBadgeTable.id,
-          ),
+          eq(this.userBadgeAssignmentTable.badgeId, this.userBadgeTable.id),
         )
         .where(where)
         .orderBy(...orderQuery.orderBySql)
         .limit(pageParams.limit)
         .offset(pageParams.offset),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
         .from(this.userBadgeAssignmentTable)
         .innerJoin(
           this.userBadgeTable,
-          eq(
-            this.userBadgeAssignmentTable.badgeId,
-            this.userBadgeTable.id,
-          ),
+          eq(this.userBadgeAssignmentTable.badgeId, this.userBadgeTable.id),
         )
         .where(where),
     ])
@@ -285,7 +281,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
 
   // 为 APP 用户分配徽章，入口层先拦截软删除用户。
   async assignAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
-    await this.userCoreService.ensureUserExists(dto.userId)
+    await this.userCoreService.assertActiveUserExists(dto.userId)
 
     await this.userBadgeService.assignBadge(dto)
     return true
@@ -293,7 +289,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
 
   // 撤销 APP 用户徽章，入口层先拦截软删除用户。
   async revokeAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
-    await this.userCoreService.ensureUserExists(dto.userId)
+    await this.userCoreService.assertActiveUserExists(dto.userId)
 
     await this.userBadgeService.revokeBadge(dto)
     return true

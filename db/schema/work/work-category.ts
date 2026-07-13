@@ -72,10 +72,6 @@ export const workCategory = snakeCase.table(
      */
     index('work_category_sort_order_idx').on(table.sortOrder),
     /**
-     * 名称索引
-     */
-    index('work_category_name_idx').on(table.name),
-    /**
      * 内容类型索引
      */
     index('work_category_content_type_idx').using('gin', table.contentType),

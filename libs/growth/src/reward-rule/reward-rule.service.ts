@@ -32,6 +32,27 @@ export class GrowthRewardRuleService {
     return this.drizzle.schema.growthRewardRule
   }
 
+  // 管理端奖励规则输出字段；归档元数据属于既有详情与编辑状态判定的一部分，显式保留。
+  private buildRewardRuleOutputSelect() {
+    return {
+      id: this.growthRewardRule.id,
+      type: this.growthRewardRule.type,
+      assetType: this.growthRewardRule.assetType,
+      assetKey: this.growthRewardRule.assetKey,
+      delta: this.growthRewardRule.delta,
+      dailyLimit: this.growthRewardRule.dailyLimit,
+      totalLimit: this.growthRewardRule.totalLimit,
+      isEnabled: this.growthRewardRule.isEnabled,
+      remark: this.growthRewardRule.remark,
+      archivedAt: this.growthRewardRule.archivedAt,
+      archivedBy: this.growthRewardRule.archivedBy,
+      archiveReasonCode: this.growthRewardRule.archiveReasonCode,
+      archiveReason: this.growthRewardRule.archiveReason,
+      createdAt: this.growthRewardRule.createdAt,
+      updatedAt: this.growthRewardRule.updatedAt,
+    }
+  }
+
   async createRewardRule(dto: CreateGrowthRewardRuleDto) {
     const normalizedDto = this.normalizeWriteDto(dto)
     this.validateRewardRuleWrite(normalizedDto)
@@ -56,8 +77,7 @@ export class GrowthRewardRuleService {
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.growthRewardRule.isEnabled, dto.isEnabled))
     }
-    const archiveStatus =
-      dto.status ?? GrowthRewardRuleArchiveStatusEnum.ACTIVE
+    const archiveStatus = dto.status ?? GrowthRewardRuleArchiveStatusEnum.ACTIVE
     if (archiveStatus === GrowthRewardRuleArchiveStatusEnum.ACTIVE) {
       conditions.push(isNull(this.growthRewardRule.archivedAt))
     } else if (archiveStatus === GrowthRewardRuleArchiveStatusEnum.ARCHIVED) {
@@ -71,7 +91,7 @@ export class GrowthRewardRuleService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildRewardRuleOutputSelect())
         .from(this.growthRewardRule)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -89,7 +109,7 @@ export class GrowthRewardRuleService {
 
   async getRewardRuleDetail(id: number) {
     const [rule] = await this.db
-      .select()
+      .select(this.buildRewardRuleOutputSelect())
       .from(this.growthRewardRule)
       .where(eq(this.growthRewardRule.id, id))
       .limit(1)
@@ -174,41 +194,57 @@ export class GrowthRewardRuleService {
     }
   }
 
-  private validateRewardRuleWrite(
-    dto: GrowthRewardRuleWriteInput,
-  ) {
+  private validateRewardRuleWrite(dto: GrowthRewardRuleWriteInput) {
     if (
       dto.type !== undefined &&
       !Object.values(GrowthRuleTypeEnum).includes(dto.type)
     ) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则类型无效')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '成长奖励规则类型无效',
+      )
     }
     if (
       dto.assetType !== undefined &&
       !Object.values(GrowthRewardRuleAssetTypeEnum).includes(dto.assetType)
     ) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励资产类型无效')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '成长奖励资产类型无效',
+      )
     }
     if (dto.delta !== undefined) {
       if (!Number.isInteger(dto.delta) || dto.delta <= 0) {
-        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则 delta 必须是正整数')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '成长奖励规则 delta 必须是正整数',
+        )
       }
     }
     if (dto.dailyLimit !== undefined) {
       if (!Number.isInteger(dto.dailyLimit) || dto.dailyLimit < 0) {
-        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则每日上限必须是大于等于 0 的整数')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '成长奖励规则每日上限必须是大于等于 0 的整数',
+        )
       }
     }
     if (dto.totalLimit !== undefined) {
       if (!Number.isInteger(dto.totalLimit) || dto.totalLimit < 0) {
-        throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则总上限必须是大于等于 0 的整数')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '成长奖励规则总上限必须是大于等于 0 的整数',
+        )
       }
     }
     if (
       dto.assetKey !== undefined &&
       (typeof dto.assetKey !== 'string' || dto.assetKey.length > 64)
     ) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '成长奖励规则 assetKey 非法')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '成长奖励规则 assetKey 非法',
+      )
     }
 
     if (dto.assetType === undefined) {
@@ -217,11 +253,9 @@ export class GrowthRewardRuleService {
 
     const normalizedAssetKey = dto.assetKey ?? ''
     if (
-      (
-        dto.assetType === GrowthRewardRuleAssetTypeEnum.POINTS
-        || dto.assetType === GrowthRewardRuleAssetTypeEnum.EXPERIENCE
-      )
-      && normalizedAssetKey !== ''
+      (dto.assetType === GrowthRewardRuleAssetTypeEnum.POINTS ||
+        dto.assetType === GrowthRewardRuleAssetTypeEnum.EXPERIENCE) &&
+        normalizedAssetKey !== ''
     ) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -230,12 +264,10 @@ export class GrowthRewardRuleService {
     }
 
     if (
-      (
-        dto.assetType === GrowthRewardRuleAssetTypeEnum.ITEM
-        || dto.assetType === GrowthRewardRuleAssetTypeEnum.CURRENCY
-        || dto.assetType === GrowthRewardRuleAssetTypeEnum.LEVEL
-      )
-      && normalizedAssetKey === ''
+      (dto.assetType === GrowthRewardRuleAssetTypeEnum.ITEM ||
+        dto.assetType === GrowthRewardRuleAssetTypeEnum.CURRENCY ||
+        dto.assetType === GrowthRewardRuleAssetTypeEnum.LEVEL) &&
+        normalizedAssetKey === ''
     ) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,

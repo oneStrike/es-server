@@ -43,6 +43,17 @@ export class FollowService {
     return this.drizzle.schema.userFollow
   }
 
+  // 关注分页对外 contract；表中字段必须逐项声明，禁止宽读后由页面 mapper 隐式透传。
+  private buildUserFollowReadSelect() {
+    return {
+      id: this.userFollow.id,
+      targetType: this.userFollow.targetType,
+      targetId: this.userFollow.targetId,
+      userId: this.userFollow.userId,
+      createdAt: this.userFollow.createdAt,
+    }
+  }
+
   // 对目标 ID 数组去重。
   private uniqueTargetIds(targetIds: number[]) {
     return [...new Set(targetIds)]
@@ -68,9 +79,9 @@ export class FollowService {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BusinessException(
-      BusinessErrorCode.INVALID_OPERATION_TARGET,
-      `不支持的关注类型: ${targetType}`,
-    )
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        `不支持的关注类型: ${targetType}`,
+      )
     }
     return resolver
   }
@@ -138,43 +149,49 @@ export class FollowService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    const record = await this.drizzle.withTransaction(async (tx) => {
-      const { ownerUserId } = await resolver.ensureExists(tx, targetId, userId)
-      const rows = await this.drizzle.withErrorHandling(
-        () =>
-          tx
-            .insert(this.userFollow)
-            .values({
-              targetType,
-              targetId,
-              userId,
-            })
-            .returning({
-              id: this.userFollow.id,
-            }),
-        {
-          duplicate: '无法重复关注',
-        },
-      )
-      const followRecord = rows[0]
-      if (!followRecord) {
-        throw new InternalServerErrorException('关注失败')
-      }
+    const record = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const { ownerUserId } = await resolver.ensureExists(
+          tx,
+          targetId,
+          userId,
+        )
+        const rows = await this.drizzle.withErrorHandling(
+          () =>
+            tx
+              .insert(this.userFollow)
+              .values({
+                targetType,
+                targetId,
+                userId,
+              })
+              .returning({
+                id: this.userFollow.id,
+              }),
+          {
+            duplicate: '无法重复关注',
+          },
+        )
+        const followRecord = rows[0]
+        if (!followRecord) {
+          throw new InternalServerErrorException('关注失败')
+        }
 
-      await this.appUserCountService.updateFollowingCountByTargetType(
-        tx,
-        userId,
-        targetType,
-        1,
-      )
-      await resolver.applyCountDelta(tx, targetId, 1)
+        await this.appUserCountService.updateFollowingCountByTargetType(
+          tx,
+          userId,
+          targetType,
+          1,
+        )
+        await resolver.applyCountDelta(tx, targetId, 1)
 
-      if (resolver.postFollowHook) {
-        await resolver.postFollowHook(tx, targetId, userId, {
-          ownerUserId,
-        })
-      }
-      return followRecord
+        if (resolver.postFollowHook) {
+          await resolver.postFollowHook(tx, targetId, userId, {
+            ownerUserId,
+          })
+        }
+        return followRecord
+      },
     })
 
     await this.followGrowthService.rewardFollowCreated(
@@ -190,25 +207,27 @@ export class FollowService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const deleted = await tx
-        .delete(this.userFollow)
-        .where(
-          and(
-            eq(this.userFollow.targetType, targetType),
-            eq(this.userFollow.targetId, targetId),
-            eq(this.userFollow.userId, userId),
-          ),
-        )
-      this.drizzle.assertAffectedRows(deleted, '关注记录不存在')
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const deleted = await tx
+          .delete(this.userFollow)
+          .where(
+            and(
+              eq(this.userFollow.targetType, targetType),
+              eq(this.userFollow.targetId, targetId),
+              eq(this.userFollow.userId, userId),
+            ),
+          )
+        this.drizzle.assertAffectedRows(deleted, '关注记录不存在')
 
-      await this.appUserCountService.updateFollowingCountByTargetType(
-        tx,
-        userId,
-        targetType,
-        -1,
-      )
-      await resolver.applyCountDelta(tx, targetId, -1)
+        await this.appUserCountService.updateFollowingCountByTargetType(
+          tx,
+          userId,
+          targetType,
+          -1,
+        )
+        await resolver.applyCountDelta(tx, targetId, -1)
+      },
     })
 
     return true
@@ -283,7 +302,7 @@ export class FollowService {
     )
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildUserFollowReadSelect())
         .from(this.userFollow)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -438,7 +457,7 @@ export class FollowService {
     )
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildUserFollowReadSelect())
         .from(this.userFollow)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -496,7 +515,7 @@ export class FollowService {
     )
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildUserFollowReadSelect())
         .from(this.userFollow)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)

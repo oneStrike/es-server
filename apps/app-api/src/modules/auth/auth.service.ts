@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 import type { SessionClientContext } from '@libs/identity/session.type'
 import type { UserGrowthSnapshot } from '@libs/user/user.type'
@@ -42,6 +42,26 @@ const APP_USER_ACCOUNT_UNIQUE_CONSTRAINT = 'app_user_account_key'
 const APP_USER_ACCOUNT_MAX_RETRIES = 5
 const APP_LOGIN_ALIYUN_VERIFY_DISABLED =
   env.APP_LOGIN_ALIYUN_VERIFY_DISABLED === 'true'
+
+type AppLoginUserRow = Pick<
+  AppUserSelect,
+  | 'account'
+  | 'avatarUrl'
+  | 'banReason'
+  | 'banUntil'
+  | 'bio'
+  | 'birthDate'
+  | 'emailAddress'
+  | 'genderType'
+  | 'id'
+  | 'isEnabled'
+  | 'nickname'
+  | 'password'
+  | 'phoneNumber'
+  | 'profileBackgroundImageUrl'
+  | 'signature'
+  | 'status'
+>
 
 /**
  * 应用端认证服务。
@@ -87,7 +107,7 @@ export class AuthService {
   }
 
   // 生成唯一的 6 位数字账号，最多重试指定次数。
-  async generateUniqueAccount(tx: Db) {
+  async generateUniqueAccount(tx: DbExecutor) {
     for (
       let attempt = 0;
       attempt < APP_USER_ACCOUNT_MAX_RETRIES;
@@ -162,10 +182,10 @@ export class AuthService {
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN,
       )
     }
-    let user: AppUserSelect | undefined
+    let user: AppLoginUserRow | undefined
     if (body.phone) {
       ;[user] = await this.db
-        .select()
+        .select(this.buildLoginUserSelect())
         .from(this.appUserTable)
         .where(
           and(
@@ -177,7 +197,7 @@ export class AuthService {
     } else {
       const accountInput = body.account!
       ;[user] = await this.db
-        .select()
+        .select(this.buildLoginUserSelect())
         .from(this.appUserTable)
         .where(
           and(
@@ -300,7 +320,9 @@ export class AuthService {
       clientContext,
     )
     const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
-    const user = await this.userCoreService.findById(Number(payload.sub))
+    const user = await this.userCoreService.findUserStatusSource(
+      Number(payload.sub),
+    )
 
     if (!user) {
       await this.authSessionService.logout(tokens, { revokeDbTokens: true })
@@ -319,7 +341,7 @@ export class AuthService {
 
   // 登录成功后的统一处理：更新登录信息、签发令牌、返回脱敏用户对象。
   private async handleLoginSuccess(
-    user: AppUserSelect,
+    user: AppLoginUserRow,
     clientContext: SessionClientContext,
   ) {
     await this.updateUserLoginInfo(user.id, clientContext)
@@ -339,7 +361,7 @@ export class AuthService {
   }
 
   // 脱敏返回用户信息，只保留安全字段。
-  private sanitizeUser(user: AppUserSelect, growth: UserGrowthSnapshot) {
+  private sanitizeUser(user: AppLoginUserRow, growth: UserGrowthSnapshot) {
     return {
       id: user.id,
       account: user.account,
@@ -413,6 +435,28 @@ export class AuthService {
     }
 
     throw lastError
+  }
+
+  // 登录链路只读取鉴权、令牌与安全用户视图所需字段。
+  private buildLoginUserSelect() {
+    return {
+      id: this.appUserTable.id,
+      account: this.appUserTable.account,
+      phoneNumber: this.appUserTable.phoneNumber,
+      emailAddress: this.appUserTable.emailAddress,
+      nickname: this.appUserTable.nickname,
+      password: this.appUserTable.password,
+      avatarUrl: this.appUserTable.avatarUrl,
+      profileBackgroundImageUrl: this.appUserTable.profileBackgroundImageUrl,
+      signature: this.appUserTable.signature,
+      bio: this.appUserTable.bio,
+      isEnabled: this.appUserTable.isEnabled,
+      genderType: this.appUserTable.genderType,
+      birthDate: this.appUserTable.birthDate,
+      status: this.appUserTable.status,
+      banReason: this.appUserTable.banReason,
+      banUntil: this.appUserTable.banUntil,
+    }
   }
 
   // 判断异常是否为 app_user_account_key 唯一约束冲突。

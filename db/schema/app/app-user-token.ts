@@ -104,10 +104,6 @@ export const appUserToken = snakeCase.table(
      */
     index('app_user_token_user_id_idx').on(table.userId),
     /**
-     * JTI 索引（黑名单检查）
-     */
-    index('app_user_token_jti_idx').on(table.jti),
-    /**
      * 类型索引
      */
     index('app_user_token_token_type_idx').on(table.tokenType),

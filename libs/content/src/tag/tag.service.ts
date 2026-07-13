@@ -1,13 +1,20 @@
+import type { DbTransaction } from '@db/core'
 import type { WorkTagSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { WorkTagAdminView } from './tag.type'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  DrizzleService,
+  toPageResult,
+} from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm'
+import { workCatalogTagLock } from '../work/core/work-integrity-lock'
 import {
   CreateTagDto,
   QueryAppTagPageDto,
@@ -45,6 +52,62 @@ export class WorkTagService {
     return this.drizzle.schema.work
   }
 
+  // app/public 标签读取完整当前 contract，禁止表新增列通过默认查询隐式外送。
+  private buildTagReadSelect() {
+    return {
+      id: this.workTag.id,
+      name: this.workTag.name,
+      icon: this.workTag.icon,
+      description: this.workTag.description,
+      sortOrder: this.workTag.sortOrder,
+      isEnabled: this.workTag.isEnabled,
+      popularity: this.workTag.popularity,
+      createdAt: this.workTag.createdAt,
+      updatedAt: this.workTag.updatedAt,
+    }
+  }
+
+  private getTagReadColumns() {
+    return {
+      id: true,
+      name: true,
+      icon: true,
+      description: true,
+      sortOrder: true,
+      isEnabled: true,
+      popularity: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
+  // 后台标签页面明确排除 popularity，避免指标字段混入运营 contract。
+  private buildAdminTagReadSelect() {
+    return {
+      id: this.workTag.id,
+      name: this.workTag.name,
+      icon: this.workTag.icon,
+      description: this.workTag.description,
+      sortOrder: this.workTag.sortOrder,
+      isEnabled: this.workTag.isEnabled,
+      createdAt: this.workTag.createdAt,
+      updatedAt: this.workTag.updatedAt,
+    }
+  }
+
+  private getAdminTagReadColumns() {
+    return {
+      id: true,
+      name: true,
+      icon: true,
+      description: true,
+      sortOrder: true,
+      isEnabled: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
+  }
+
   // 创建标签，未指定排序值时自动追加到末尾；人气值沿用数据库默认值，由后续互动数据驱动更新。
   async createTag(createTagDto: CreateTagDto) {
     if (!createTagDto.sortOrder) {
@@ -64,7 +127,7 @@ export class WorkTagService {
 
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildTagReadSelect())
         .from(this.workTag)
         .where(where)
         .orderBy(...orderBySql)
@@ -101,7 +164,7 @@ export class WorkTagService {
     const where = and(...conditions)
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildTagReadSelect())
         .from(this.workTag)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -123,16 +186,7 @@ export class WorkTagService {
 
     const [list, total] = await Promise.all([
       this.db
-        .select({
-          id: this.workTag.id,
-          name: this.workTag.name,
-          icon: this.workTag.icon,
-          sortOrder: this.workTag.sortOrder,
-          isEnabled: this.workTag.isEnabled,
-          description: this.workTag.description,
-          createdAt: this.workTag.createdAt,
-          updatedAt: this.workTag.updatedAt,
-        })
+        .select(this.buildAdminTagReadSelect())
         .from(this.workTag)
         .where(where)
         .orderBy(...orderBySql)
@@ -177,6 +231,7 @@ export class WorkTagService {
   async getTagDetail(input: IdDto) {
     const tag = await this.db.query.workTag.findFirst({
       where: { id: input.id },
+      columns: this.getTagReadColumns(),
     })
     if (!tag) {
       throw new BusinessException(
@@ -191,7 +246,7 @@ export class WorkTagService {
   async getAdminTagDetail(input: IdDto) {
     const tag = await this.db.query.workTag.findFirst({
       where: { id: input.id },
-      columns: { popularity: false },
+      columns: this.getAdminTagReadColumns(),
     })
     if (!tag) {
       throw new BusinessException(
@@ -222,99 +277,106 @@ export class WorkTagService {
 
   // 交换两个标签的排序值，在事务中使用临时排序值保持单次请求内的原子性。
   async updateTagSort(updateSortDto: UpdateTagSortDto) {
-    await this.drizzle.withTransaction(async (tx) => {
-      const rows = await tx
-        .select({
-          id: this.workTag.id,
-          sortOrder: this.workTag.sortOrder,
-        })
-        .from(this.workTag)
-        .where(
-          inArray(this.workTag.id, [
-            updateSortDto.dragId,
-            updateSortDto.targetId,
-          ]),
-        )
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const rows = await tx
+          .select({
+            id: this.workTag.id,
+            sortOrder: this.workTag.sortOrder,
+          })
+          .from(this.workTag)
+          .where(
+            inArray(this.workTag.id, [
+              updateSortDto.dragId,
+              updateSortDto.targetId,
+            ]),
+          )
 
-      const dragTag = rows.find((row) => row.id === updateSortDto.dragId)
-      const targetTag = rows.find((row) => row.id === updateSortDto.targetId)
+        const dragTag = rows.find((row) => row.id === updateSortDto.dragId)
+        const targetTag = rows.find((row) => row.id === updateSortDto.targetId)
 
-      if (!dragTag || !targetTag) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '标签不存在',
-        )
-      }
-      if (dragTag.sortOrder === targetTag.sortOrder) {
+        if (!dragTag || !targetTag) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '标签不存在',
+          )
+        }
+        if (dragTag.sortOrder === targetTag.sortOrder) {
+          return true
+        }
+
+        const temporarySortOrder =
+          (await this.resolveMinimumTagSortOrder(tx)) - 1
+
+        await tx
+          .update(this.workTag)
+          .set({ sortOrder: temporarySortOrder })
+          .where(eq(this.workTag.id, dragTag.id))
+        await tx
+          .update(this.workTag)
+          .set({ sortOrder: dragTag.sortOrder })
+          .where(eq(this.workTag.id, targetTag.id))
+        await tx
+          .update(this.workTag)
+          .set({ sortOrder: targetTag.sortOrder })
+          .where(eq(this.workTag.id, dragTag.id))
+
         return true
-      }
-
-      const temporarySortOrder = (await this.resolveMinimumTagSortOrder(tx)) - 1
-
-      await tx
-        .update(this.workTag)
-        .set({ sortOrder: temporarySortOrder })
-        .where(eq(this.workTag.id, dragTag.id))
-      await tx
-        .update(this.workTag)
-        .set({ sortOrder: dragTag.sortOrder })
-        .where(eq(this.workTag.id, targetTag.id))
-      await tx
-        .update(this.workTag)
-        .set({ sortOrder: targetTag.sortOrder })
-        .where(eq(this.workTag.id, dragTag.id))
-
-      return true
+      },
     })
     return true
   }
 
   // 更新标签启用状态，禁用入口与编辑入口共享同一套“存在关联作品时不可禁用”的完整性约束。
   async updateTagStatus(input: UpdateEnabledStatusDto) {
-    if (!input.isEnabled && (await this.checkTagHasWorks(input.id))) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '标签存在关联的作品，不能禁用',
-      )
-    }
-
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [workCatalogTagLock(input.id)])
+        if (!input.isEnabled && (await this.checkTagHasWorks(input.id, tx))) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '标签存在关联的作品，不能禁用',
+          )
+        }
+        const result = await tx
           .update(this.workTag)
           .set({ isEnabled: input.isEnabled })
-          .where(eq(this.workTag.id, input.id)),
-      { notFound: '标签不存在' },
-    )
+          .where(eq(this.workTag.id, input.id))
+        this.drizzle.assertAffectedRows(result, '标签不存在')
+      },
+    })
     return true
   }
 
   // 删除单个标签，删除前会校验标签存在且未关联任何未软删作品，避免线上作品标签语义失真。
   async deleteTagBatch(dto: IdDto) {
-    if (!(await this.tagExists(dto.id))) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '标签不存在',
-      )
-    }
-
-    if (await this.checkTagHasWorks(dto.id)) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '标签存在关联的作品，不能删除',
-      )
-    }
-
-    await this.drizzle.withErrorHandling(
-      () => this.db.delete(this.workTag).where(eq(this.workTag.id, dto.id)),
-      { notFound: '标签不存在' },
-    )
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [workCatalogTagLock(dto.id)])
+        if (!(await this.tagExists(dto.id, tx))) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '标签不存在',
+          )
+        }
+        if (await this.checkTagHasWorks(dto.id, tx)) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '标签存在关联的作品，不能删除',
+          )
+        }
+        const result = await tx
+          .delete(this.workTag)
+          .where(eq(this.workTag.id, dto.id))
+        this.drizzle.assertAffectedRows(result, '标签不存在')
+      },
+    })
     return true
   }
 
   // 校验标签是否仍关联未软删作品，该约束用于阻止标签被禁用或删除后导致线上作品标签语义失真。
-  private async checkTagHasWorks(tagId: number) {
-    const rows = await this.db
+  private async checkTagHasWorks(tagId: number, runner: DbTransaction) {
+    const rows = await runner
       .select({ workId: this.workTagRelation.workId })
       .from(this.workTagRelation)
       .innerJoin(this.work, eq(this.work.id, this.workTagRelation.workId))
@@ -326,8 +388,8 @@ export class WorkTagService {
     return rows.length > 0
   }
 
-  private async tagExists(tagId: number) {
-    const rows = await this.db
+  private async tagExists(tagId: number, runner: DbTransaction) {
+    const rows = await runner
       .select({ id: this.workTag.id })
       .from(this.workTag)
       .where(eq(this.workTag.id, tagId))
@@ -338,7 +400,9 @@ export class WorkTagService {
 
   private async resolveNextTagSortOrder() {
     const [row] = await this.db
-      .select({ value: sql<number>`max(${this.workTag.sortOrder})` })
+      .select({
+        value: sql<number>`max(${this.workTag.sortOrder})`.mapWith(Number),
+      })
       .from(this.workTag)
 
     return row?.value ?? 0
@@ -346,7 +410,9 @@ export class WorkTagService {
 
   private async resolveMinimumTagSortOrder(db = this.db) {
     const [row] = await db
-      .select({ value: sql<number>`min(${this.workTag.sortOrder})` })
+      .select({
+        value: sql<number>`min(${this.workTag.sortOrder})`.mapWith(Number),
+      })
       .from(this.workTag)
 
     return row?.value ?? 0

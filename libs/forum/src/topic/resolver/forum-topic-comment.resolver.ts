@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type {
   CommentTargetHookPayload,
   CommentTargetMeta,
@@ -46,7 +46,7 @@ export class ForumTopicCommentResolver
 
   // 读取评论目标主题快照；用户写入链要求公开可见，治理链只要求主题与板块存在。
   private async getTopicCommentTargetSnapshot(
-    tx: Db,
+    tx: DbExecutor,
     targetId: number,
     options: ForumTopicCommentTargetSnapshotOptions,
   ) {
@@ -109,10 +109,10 @@ export class ForumTopicCommentResolver
   }
 
   // 评论计数由 CommentService 统一维护，这里只满足 resolver 协议。
-  async applyCountDelta(_tx: Db, _targetId: number, _delta: number) {}
+  async applyCountDelta(_tx: DbExecutor, _targetId: number, _delta: number) {}
 
   // 校验主题存在、公开可见且未锁定，失败时抛业务异常。
-  async ensureCanComment(tx: Db, targetId: number) {
+  async ensureCanComment(tx: DbExecutor, targetId: number) {
     const topic = await this.getTopicCommentTargetSnapshot(tx, targetId, {
       requirePublicVisible: true,
     })
@@ -126,7 +126,7 @@ export class ForumTopicCommentResolver
   }
 
   // 解析主题作者、板块和标题，供评论通知与计数同步复用。
-  async resolveMeta(tx: Db, targetId: number) {
+  async resolveMeta(tx: DbExecutor, targetId: number) {
     const topic = await this.getTopicCommentTargetSnapshot(tx, targetId, {
       requirePublicVisible: false,
     })
@@ -140,7 +140,7 @@ export class ForumTopicCommentResolver
 
   // 评论创建后同步主题/板块计数、记录操作日志并发送主题被评论通知。
   async postCommentHook(
-    tx: Db,
+    tx: DbExecutor,
     comment: ForumTopicCommentHookPayload,
     meta: CommentTargetMeta,
   ) {
@@ -198,7 +198,7 @@ export class ForumTopicCommentResolver
 
   // 评论删除后同步主题/板块计数并记录操作日志。
   async postDeleteCommentHook(
-    tx: Db,
+    tx: DbExecutor,
     comment: CommentTargetHookPayload,
     meta: CommentTargetMeta,
   ) {

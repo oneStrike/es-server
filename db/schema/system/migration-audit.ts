@@ -1,8 +1,8 @@
 import {
   bigint,
+  primaryKey,
   snakeCase,
   timestamp,
-  unique,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -25,10 +25,10 @@ export const migrationAudit = snakeCase.table(
       .notNull(),
   },
   (table) => [
-    unique('migration_audit_migration_key_metric_key').on(
-      table.migrationKey,
-      table.metric,
-    ),
+    primaryKey({
+      columns: [table.migrationKey, table.metric],
+      name: 'migration_audit_pkey',
+    }),
   ],
 )
 

@@ -1,3 +1,4 @@
+import type { DbTransaction } from '@db/core'
 import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
@@ -7,7 +8,11 @@ import type {
   NotificationProjectionApplyResult,
   NotificationProjectionCommand,
 } from './message-event.type'
-import { DrizzleService } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  tableIntegrityLock,
+} from '@db/core'
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { EnablePlatformEnum, WorkTypeEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
@@ -82,6 +87,10 @@ export class NotificationProjectionService {
     return this.drizzle.schema.userNotification
   }
 
+  private get notificationDelivery() {
+    return this.drizzle.schema.notificationDelivery
+  }
+
   async applyCommand(
     command: NotificationProjectionCommand,
     _event: DomainEventRecord,
@@ -106,21 +115,10 @@ export class NotificationProjectionService {
         }
       }
 
-      const deletedRows = await this.db
-        .delete(this.notification)
-        .where(
-          and(
-            eq(this.notification.receiverUserId, command.receiverUserId),
-            eq(this.notification.projectionKey, command.projectionKey),
-          ),
-        )
-        .returning({
-          id: this.notification.id,
-          receiverUserId: this.notification.receiverUserId,
-          projectionKey: this.notification.projectionKey,
-        })
-
-      const deleted = deletedRows[0]
+      const deleted = await this.deleteNotificationProjection(
+        command.receiverUserId,
+        command.projectionKey,
+      )
       return {
         action: 'delete',
         receiverUserId: command.receiverUserId,
@@ -222,6 +220,21 @@ export class NotificationProjectionService {
           receiverUserId: command.receiverUserId,
           projectionKey: command.projectionKey,
         },
+        columns: {
+          actorUserId: true,
+          categoryKey: true,
+          content: true,
+          createdAt: true,
+          expiresAt: true,
+          id: true,
+          isRead: true,
+          payload: true,
+          projectionKey: true,
+          readAt: true,
+          receiverUserId: true,
+          title: true,
+          updatedAt: true,
+        },
       })
       if (!existing) {
         throw new Error('通知投影幂等命中后未找到既有通知')
@@ -297,6 +310,87 @@ export class NotificationProjectionService {
         gt(this.notification.expiresAt, now),
       ),
     )
+  }
+
+  /**
+   * 删除可见通知时，先与投递记录写入共享父通知的记录锁。
+   * 在同一事务内清空历史投递引用，保留投递审计而不留下悬挂 notificationId。
+   */
+  private async deleteNotificationProjection(
+    receiverUserId: number,
+    projectionKey: string,
+  ) {
+    return this.drizzle.withTransaction({
+      execute: async (tx) =>
+        this.deleteNotificationProjectionInTransaction(
+          tx,
+          receiverUserId,
+          projectionKey,
+        ),
+    })
+  }
+
+  private async deleteNotificationProjectionInTransaction(
+    tx: DbTransaction,
+    receiverUserId: number,
+    projectionKey: string,
+  ) {
+    const located = await this.findNotificationProjectionInTransaction(
+      tx,
+      receiverUserId,
+      projectionKey,
+    )
+    if (!located) {
+      return undefined
+    }
+
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock('user_notification', located.id),
+    ])
+
+    const current = await this.findNotificationProjectionInTransaction(
+      tx,
+      receiverUserId,
+      projectionKey,
+    )
+    if (!current || current.id !== located.id) {
+      return undefined
+    }
+
+    await tx
+      .update(this.notificationDelivery)
+      .set({ notificationId: null })
+      .where(eq(this.notificationDelivery.notificationId, current.id))
+
+    const [deleted] = await tx
+      .delete(this.notification)
+      .where(eq(this.notification.id, current.id))
+      .returning({
+        id: this.notification.id,
+        receiverUserId: this.notification.receiverUserId,
+        projectionKey: this.notification.projectionKey,
+      })
+
+    return deleted
+  }
+
+  private async findNotificationProjectionInTransaction(
+    tx: DbTransaction,
+    receiverUserId: number,
+    projectionKey: string,
+  ) {
+    const [notification] = await tx
+      .select({ id: this.notification.id })
+      .from(this.notification)
+      .where(
+        and(
+          eq(this.notification.receiverUserId, receiverUserId),
+          eq(this.notification.projectionKey, projectionKey),
+        ),
+      )
+      .limit(1)
+
+    return notification
   }
 
   private async normalizeNotificationPayload(

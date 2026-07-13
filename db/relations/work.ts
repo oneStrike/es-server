@@ -89,6 +89,21 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       to: r.userWorkReadingState.lastReadChapterId,
       alias: 'UserWorkReadingStateLastReadChapter',
     }),
+    targetImportItems: r.many.contentImportItem({
+      from: r.workChapter.id,
+      to: r.contentImportItem.targetChapterId,
+      alias: 'ContentImportItemTargetChapter',
+    }),
+    localImportItems: r.many.contentImportItem({
+      from: r.workChapter.id,
+      to: r.contentImportItem.localChapterId,
+      alias: 'ContentImportItemLocalChapter',
+    }),
+    targetImportPreviewItems: r.many.contentImportPreviewItem({
+      from: r.workChapter.id,
+      to: r.contentImportPreviewItem.targetChapterId,
+      alias: 'ContentImportPreviewItemTargetChapter',
+    }),
   },
   contentImportJob: {
     workflowJob: r.one.workflowJob({
@@ -113,6 +128,11 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       from: r.contentImportPreviewItem.contentImportJobId,
       to: r.contentImportJob.id,
     }),
+    targetChapter: r.one.workChapter({
+      from: r.contentImportPreviewItem.targetChapterId,
+      to: r.workChapter.id,
+      alias: 'ContentImportPreviewItemTargetChapter',
+    }),
   },
   contentImportItem: {
     job: r.one.contentImportJob({
@@ -123,6 +143,20 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       from: r.contentImportItem.id,
       to: r.contentImportItemAttempt.contentImportItemId,
     }),
+    targetChapter: r.one.workChapter({
+      from: r.contentImportItem.targetChapterId,
+      to: r.workChapter.id,
+      alias: 'ContentImportItemTargetChapter',
+    }),
+    localChapter: r.one.workChapter({
+      from: r.contentImportItem.localChapterId,
+      to: r.workChapter.id,
+      alias: 'ContentImportItemLocalChapter',
+    }),
+    residues: r.many.contentImportResidue({
+      from: r.contentImportItem.id,
+      to: r.contentImportResidue.contentImportItemId,
+    }),
   },
   contentImportItemAttempt: {
     workflowAttempt: r.one.workflowAttempt({
@@ -132,6 +166,28 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
     item: r.one.contentImportItem({
       from: r.contentImportItemAttempt.contentImportItemId,
       to: r.contentImportItem.id,
+    }),
+    residues: r.many.contentImportResidue({
+      from: r.contentImportItemAttempt.id,
+      to: r.contentImportResidue.contentImportItemAttemptId,
+    }),
+  },
+  contentImportResidue: {
+    workflowJob: r.one.workflowJob({
+      from: r.contentImportResidue.workflowJobId,
+      to: r.workflowJob.id,
+    }),
+    workflowAttempt: r.one.workflowAttempt({
+      from: r.contentImportResidue.workflowAttemptId,
+      to: r.workflowAttempt.id,
+    }),
+    item: r.one.contentImportItem({
+      from: r.contentImportResidue.contentImportItemId,
+      to: r.contentImportItem.id,
+    }),
+    itemAttempt: r.one.contentImportItemAttempt({
+      from: r.contentImportResidue.contentImportItemAttemptId,
+      to: r.contentImportItemAttempt.id,
     }),
   },
   workThirdPartySourceBinding: {

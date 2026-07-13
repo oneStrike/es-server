@@ -11,3 +11,16 @@ export interface DbNotificationSubscriptionOptions {
 export interface DbNotificationSubscription {
   close: () => Promise<void>
 }
+
+/** 独立 PostgreSQL LISTEN client 的运行时可观测快照。 */
+export interface DbNotificationMetrics {
+  configuredListenerConnections: 0 | 1
+  activeListenerConnections: 0 | 1
+  connected: boolean
+  channelCount: number
+  subscriptionCount: number
+  reconnectCount: number
+  errorCount: number
+  reconnectDelayMs: number | null
+  isShuttingDown: boolean
+}

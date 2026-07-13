@@ -4,11 +4,31 @@ import type { AdProviderEnum } from '../ad-reward.constant'
 import type { AdRewardVerificationDto } from '../dto/ad-reward.dto'
 
 /**
+ * 广告回调验签与奖励写入实际消费的 provider 配置字段。
+ */
+export type AdRewardProviderVerificationConfig = Pick<
+  AdProviderConfigSelect,
+  | 'id'
+  | 'provider'
+  | 'platform'
+  | 'environment'
+  | 'clientAppKey'
+  | 'appId'
+  | 'placementKey'
+  | 'targetScope'
+  | 'dailyLimit'
+  | 'configVersion'
+  | 'credentialVersionRef'
+  | 'configMetadata'
+  | 'isEnabled'
+>
+
+/**
  * 激励广告 provider 核查奖励回调所需的配置和客户端 payload。
  */
 export interface AdRewardProviderVerifyInput {
   userId: number
-  config: AdProviderConfigSelect
+  config: AdRewardProviderVerificationConfig
   payload: AdRewardVerificationDto
 }
 

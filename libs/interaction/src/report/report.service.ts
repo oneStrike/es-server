@@ -1,7 +1,5 @@
-import type { Db } from '@db/core'
-import type {
-  UserReportDispositionAttemptSelect,
-} from '@db/schema'
+import type { DbExecutor, DbTransaction } from '@db/core'
+import type { UserReportDispositionAttemptSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { IReportTargetResolver } from './interfaces/report-target-resolver.type'
 import type {
@@ -39,6 +37,18 @@ import {
   ReportTargetTypeEnum,
 } from './report.constant'
 
+type LatestFailedDispositionAttempt = Pick<
+  UserReportDispositionAttemptSelect,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'targetAction'
+  | 'reportId'
+  | 'failureCode'
+  | 'failureMessage'
+  | 'attemptedAt'
+>
+
 /**
  * 举报服务
  * 提供举报创建、查询、后台处理等核心业务逻辑
@@ -68,6 +78,47 @@ export class ReportService {
 
   private get userReportDispositionAttempt() {
     return this.drizzle.schema.userReportDispositionAttempt
+  }
+
+  // 举报列表与详情的稳定完整 contract。即使当前接口需要全部业务字段，也禁止隐式读取随表演进的列。
+  private buildUserReportReadSelect() {
+    return {
+      id: this.userReport.id,
+      reporterId: this.userReport.reporterId,
+      handlerId: this.userReport.handlerId,
+      targetType: this.userReport.targetType,
+      targetId: this.userReport.targetId,
+      sceneType: this.userReport.sceneType,
+      sceneId: this.userReport.sceneId,
+      commentLevel: this.userReport.commentLevel,
+      reasonType: this.userReport.reasonType,
+      description: this.userReport.description,
+      evidenceUrl: this.userReport.evidenceUrl,
+      status: this.userReport.status,
+      handlingNote: this.userReport.handlingNote,
+      targetAction: this.userReport.targetAction,
+      targetActionReason: this.userReport.targetActionReason,
+      targetActionStatus: this.userReport.targetActionStatus,
+      targetActionResult: this.userReport.targetActionResult,
+      targetActionAppliedAt: this.userReport.targetActionAppliedAt,
+      handledAt: this.userReport.handledAt,
+      createdAt: this.userReport.createdAt,
+      updatedAt: this.userReport.updatedAt,
+    }
+  }
+
+  // 后台举报页仅展示最新未解决失败处置的公开摘要，禁止把补偿状态与诊断结果整行外送。
+  private buildLatestFailedDispositionAttemptSelect() {
+    return {
+      id: this.userReportDispositionAttempt.id,
+      createdAt: this.userReportDispositionAttempt.createdAt,
+      updatedAt: this.userReportDispositionAttempt.updatedAt,
+      targetAction: this.userReportDispositionAttempt.targetAction,
+      reportId: this.userReportDispositionAttempt.reportId,
+      failureCode: this.userReportDispositionAttempt.failureCode,
+      failureMessage: this.userReportDispositionAttempt.failureMessage,
+      attemptedAt: this.userReportDispositionAttempt.attemptedAt,
+    }
   }
 
   // 构建举报裁决事件 envelope。 统一表达举报正式成立后的 code / target / operator / governanceStatus 语义。
@@ -115,7 +166,10 @@ export class ReportService {
   private getResolver(targetType: ReportTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '不支持的举报目标类型')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '不支持的举报目标类型',
+      )
     }
     return resolver
   }
@@ -136,37 +190,39 @@ export class ReportService {
 
     const resolver = this.getResolver(targetType)
 
-    const report = await this.drizzle.withTransaction(async (tx: Db) => {
-      await this.ensureReporterExists(reporterId)
-      const targetMeta = await resolver.resolveMeta(tx, targetId)
+    const report = await this.drizzle.withTransaction({
+      execute: async (tx: DbTransaction) => {
+        await this.ensureReporterExists(reporterId)
+        const targetMeta = await resolver.resolveMeta(tx, targetId)
 
-      this.ensureCanReportOwnTarget(reporterId, targetMeta.ownerUserId)
+        this.ensureCanReportOwnTarget(reporterId, targetMeta.ownerUserId)
 
-      const created = await this.createUserReport(
-        tx,
-        {
-          reporterId,
-          targetType,
-          targetId,
-          sceneType: targetMeta.sceneType,
-          sceneId: targetMeta.sceneId,
-          commentLevel: targetMeta.commentLevel,
-          reasonType,
-          description,
-          evidenceUrl,
-          status: ReportStatusEnum.PENDING,
-        },
-        {
-          duplicateMessage:
-            options.duplicateMessage ?? this.getDuplicateMessage(targetType),
-        },
-      )
+        const created = await this.createUserReport(
+          tx,
+          {
+            reporterId,
+            targetType,
+            targetId,
+            sceneType: targetMeta.sceneType,
+            sceneId: targetMeta.sceneId,
+            commentLevel: targetMeta.commentLevel,
+            reasonType,
+            description,
+            evidenceUrl,
+            status: ReportStatusEnum.PENDING,
+          },
+          {
+            duplicateMessage:
+              options.duplicateMessage ?? this.getDuplicateMessage(targetType),
+          },
+        )
 
-      if (resolver.postReportHook) {
-        await resolver.postReportHook(tx, targetId, reporterId, targetMeta)
-      }
+        if (resolver.postReportHook) {
+          await resolver.postReportHook(tx, targetId, reporterId, targetMeta)
+        }
 
-      return created
+        return created
+      },
     })
 
     return report
@@ -202,7 +258,7 @@ export class ReportService {
     const where = and(...conditions)
     const [rows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildUserReportReadSelect())
         .from(this.userReport)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -240,7 +296,7 @@ export class ReportService {
   // 获取用户举报详情
   async getReportDetail(reportId: number, reporterId: number) {
     const [report] = await this.db
-      .select()
+      .select(this.buildUserReportReadSelect())
       .from(this.userReport)
       .where(
         and(
@@ -379,7 +435,7 @@ export class ReportService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildUserReportReadSelect())
         .from(this.userReport)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -442,7 +498,7 @@ export class ReportService {
   // 获取管理端举报详情。 该接口不限制举报人，用于后台处理时查看完整举报记录。
   async getAdminReportDetail(reportId: number) {
     const [report] = await this.db
-      .select()
+      .select(this.buildUserReportReadSelect())
       .from(this.userReport)
       .where(eq(this.userReport.id, reportId))
       .limit(1)
@@ -660,9 +716,7 @@ export class ReportService {
       eventEnvelope: handledReportEvent,
     })
 
-    const resolver = this.getResolver(
-      handledReport.targetType,
-    )
+    const resolver = this.getResolver(handledReport.targetType)
     if (resolver.postDispositionCommit) {
       for (const event of handledReport.dispositionEvents ?? []) {
         await resolver.postDispositionCommit(event)
@@ -675,11 +729,11 @@ export class ReportService {
   private async getLatestFailedDispositionAttemptMap(reportIds: number[]) {
     const uniqueReportIds = [...new Set(reportIds)]
     if (uniqueReportIds.length === 0) {
-      return new Map<number, UserReportDispositionAttemptSelect>()
+      return new Map<number, LatestFailedDispositionAttempt>()
     }
 
     const attempts = await this.db
-      .select()
+      .select(this.buildLatestFailedDispositionAttemptSelect())
       .from(this.userReportDispositionAttempt)
       .where(
         and(
@@ -697,7 +751,7 @@ export class ReportService {
         desc(this.userReportDispositionAttempt.id),
       )
 
-    const map = new Map<number, UserReportDispositionAttemptSelect>()
+    const map = new Map<number, LatestFailedDispositionAttempt>()
     for (const attempt of attempts) {
       if (!map.has(attempt.reportId)) {
         map.set(attempt.reportId, attempt)
@@ -708,17 +762,26 @@ export class ReportService {
 
   private ensureHandleContract(input: HandleAdminReportCommandDto) {
     if (input.targetAction === undefined || input.targetAction === null) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '必须选择目标处置动作')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '必须选择目标处置动作',
+      )
     }
     if (input.handlerId === undefined || input.handlerId === null) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '缺少处理人')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '缺少处理人',
+      )
     }
 
     if (
       input.status === ReportStatusEnum.REJECTED &&
       input.targetAction !== ReportDispositionActionEnum.NO_ACTION_REQUIRED
     ) {
-      throw new BusinessException(BusinessErrorCode.STATE_CONFLICT, '驳回举报时不能处置目标')
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '驳回举报时不能处置目标',
+      )
     }
 
     const reason = input.targetActionReason?.trim()
@@ -727,14 +790,20 @@ export class ReportService {
       input.targetAction === ReportDispositionActionEnum.NO_ACTION_REQUIRED &&
       !reason
     ) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '有效举报无需处置时必须填写原因')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '有效举报无需处置时必须填写原因',
+      )
     }
 
     if (
       input.targetAction !== ReportDispositionActionEnum.NO_ACTION_REQUIRED &&
       !reason
     ) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '目标处置原因不能为空')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '目标处置原因不能为空',
+      )
     }
   }
 
@@ -776,10 +845,16 @@ export class ReportService {
       ) {
         return
       }
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '评论举报不支持该目标处置动作')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '评论举报不支持该目标处置动作',
+      )
     }
 
-    throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '该举报目标类型暂不支持目标写入处置')
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '该举报目标类型暂不支持目标写入处置',
+    )
   }
 
   private resolveTargetActionStatus(input: HandleAdminReportCommandDto) {
@@ -789,7 +864,7 @@ export class ReportService {
   }
 
   private async applyTargetDispositionInTx(
-    tx: Db,
+    tx: DbExecutor,
     report: ReportTargetKeyFields,
     input: HandleAdminReportCommandDto,
   ): Promise<ReportDispositionTxResult | null> {
@@ -799,7 +874,10 @@ export class ReportService {
 
     const resolver = this.getResolver(report.targetType)
     if (!resolver.applyDisposition) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '该举报目标类型暂不支持目标写入处置')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该举报目标类型暂不支持目标写入处置',
+      )
     }
 
     const disposition = await resolver.applyDisposition(tx, {
@@ -822,7 +900,7 @@ export class ReportService {
   }
 
   private async markFailedAttemptsRetrySucceededInTx(
-    tx: Db,
+    tx: DbExecutor,
     reportId: number,
     resolvedAt: Date,
   ) {
@@ -891,7 +969,7 @@ export class ReportService {
 
   // 真正执行举报落库 该方法只负责写库，不再承担目标校验职责
   private async createUserReport(
-    tx: Db,
+    tx: DbExecutor,
     dto: CreateUserReportPayload,
     options: CreateUserReportOptions = {},
   ) {
@@ -972,7 +1050,10 @@ export class ReportService {
       nextStatus !== ReportStatusEnum.RESOLVED &&
       nextStatus !== ReportStatusEnum.REJECTED
     ) {
-      throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, '举报处理结果只允许为已解决或已驳回')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '举报处理结果只允许为已解决或已驳回',
+      )
     }
 
     if (

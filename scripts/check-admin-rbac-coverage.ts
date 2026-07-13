@@ -46,10 +46,22 @@ const ADMIN_RBAC_CACHE_SERVICE_FILE = join(
   ROOT,
   'apps/admin-api/src/modules/rbac/admin-rbac-cache.service.ts',
 )
-const ADMIN_AUTH_SERVICE_FILE = join(ROOT, 'apps/admin-api/src/modules/auth/auth.service.ts')
-const ADMIN_AUTH_DTO_FILE = join(ROOT, 'libs/identity/src/dto/admin-auth.dto.ts')
-const ADMIN_USER_DTO_FILE = join(ROOT, 'libs/identity/src/dto/admin-user.dto.ts')
-const ADMIN_RBAC_CONSTANT_FILE = join(ROOT, 'libs/identity/src/admin-rbac.constant.ts')
+const ADMIN_AUTH_SERVICE_FILE = join(
+  ROOT,
+  'apps/admin-api/src/modules/auth/auth.service.ts',
+)
+const ADMIN_AUTH_DTO_FILE = join(
+  ROOT,
+  'libs/identity/src/dto/admin-auth.dto.ts',
+)
+const ADMIN_USER_DTO_FILE = join(
+  ROOT,
+  'libs/identity/src/dto/admin-user.dto.ts',
+)
+const ADMIN_RBAC_CONSTANT_FILE = join(
+  ROOT,
+  'libs/identity/src/admin-rbac.constant.ts',
+)
 const LEGACY_ROLE_TARGETS = [
   join(ROOT, 'apps/admin-api/src'),
   join(ROOT, 'libs/identity/src'),
@@ -162,7 +174,12 @@ function expectNotMatches(
 
 // 创建 TypeScript SourceFile。
 function createSourceFile(file: string) {
-  return ts.createSourceFile(file, readSource(file), ts.ScriptTarget.Latest, true)
+  return ts.createSourceFile(
+    file,
+    readSource(file),
+    ts.ScriptTarget.Latest,
+    true,
+  )
 }
 
 // 查找顶层 class。
@@ -188,7 +205,11 @@ function readClassText(file: string, className: string) {
 }
 
 // 获取 class method 源码和起始行。
-function readClassMethodText(file: string, className: string, methodName: string) {
+function readClassMethodText(
+  file: string,
+  className: string,
+  methodName: string,
+) {
   const sourceFile = createSourceFile(file)
   const classNode = findClass(sourceFile, className)
   if (!classNode) {
@@ -199,7 +220,9 @@ function readClassMethodText(file: string, className: string, methodName: string
       ts.isMethodDeclaration(member) &&
       member.name.getText(sourceFile) === methodName
     ) {
-      const { line } = sourceFile.getLineAndCharacterOfPosition(member.getStart())
+      const { line } = sourceFile.getLineAndCharacterOfPosition(
+        member.getStart(),
+      )
       return {
         text: member.getText(sourceFile),
         line: line + 1,
@@ -217,7 +240,10 @@ function readStringArrayConst(file: string, constName: string) {
       continue
     }
     for (const declaration of statement.declarationList.declarations) {
-      if (!ts.isIdentifier(declaration.name) || declaration.name.text !== constName) {
+      if (
+        !ts.isIdentifier(declaration.name) ||
+        declaration.name.text !== constName
+      ) {
         continue
       }
       let initializer = declaration.initializer
@@ -342,7 +368,12 @@ function readAdminPermissionCode(decorators: ts.Decorator[]): string | null {
 // 收集 admin controller 中所有 HTTP route handler。
 function collectAdminRoutes(file: string): AdminRouteMetadata[] {
   const source = readFileSync(file, 'utf8')
-  const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true)
+  const sourceFile = ts.createSourceFile(
+    file,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+  )
   const controllerPath = readControllerPath(sourceFile)
   if (!controllerPath?.startsWith('admin')) {
     return []
@@ -352,7 +383,9 @@ function collectAdminRoutes(file: string): AdminRouteMetadata[] {
     if (ts.isMethodDeclaration(node)) {
       const decorators = getDecorators(node)
       if (hasDecorator(decorators, HTTP_DECORATORS)) {
-        const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart())
+        const { line } = sourceFile.getLineAndCharacterOfPosition(
+          node.getStart(),
+        )
         const methodName = ts.isIdentifier(node.name)
           ? node.name.text
           : node.name.getText(sourceFile)
@@ -797,8 +830,15 @@ function checkAtomicAdminUserMutationContract(): Finding[] {
     findings,
     ADMIN_RBAC_SERVICE_FILE,
     rbacServiceSource,
-    'pg_advisory_xact_lock',
-    'last-super-admin protection must use a transaction-level advisory lock',
+    'acquireIntegrityLocks',
+    'last-super-admin protection must acquire the canonical transaction lock',
+  )
+  expectIncludes(
+    findings,
+    ADMIN_RBAC_SERVICE_FILE,
+    rbacServiceSource,
+    'ADMIN_RBAC_RELATION_INTEGRITY_LOCKS.superAdminMembership',
+    'last-super-admin protection must reference the canonical relation lock scope',
   )
   expectNotIncludes(
     findings,
@@ -1032,7 +1072,11 @@ function checkRbacFailClosedContract(): Finding[] {
 // 防止登录失败路径先写入 token 再读取 RBAC 授权视图。
 function checkAuthLoginContract(): Finding[] {
   const findings: Finding[] = []
-  const login = readClassMethodText(ADMIN_AUTH_SERVICE_FILE, 'AuthService', 'login')
+  const login = readClassMethodText(
+    ADMIN_AUTH_SERVICE_FILE,
+    'AuthService',
+    'login',
+  )
 
   if (!login) {
     findings.push({
@@ -1043,8 +1087,12 @@ function checkAuthLoginContract(): Finding[] {
     return findings
   }
 
-  const snapshotIndex = login.text.indexOf('this.rbacService.getSubjectSnapshot')
-  const persistIndex = login.text.indexOf('this.authSessionService.persistTokens')
+  const snapshotIndex = login.text.indexOf(
+    'this.rbacService.getSubjectSnapshot',
+  )
+  const persistIndex = login.text.indexOf(
+    'this.authSessionService.persistTokens',
+  )
   if (snapshotIndex < 0) {
     findings.push({
       file: ADMIN_AUTH_SERVICE_FILE,
@@ -1061,7 +1109,10 @@ function checkAuthLoginContract(): Finding[] {
   }
   if (snapshotIndex >= 0 && persistIndex >= 0 && snapshotIndex > persistIndex) {
     const authSource = readSource(ADMIN_AUTH_SERVICE_FILE)
-    const line = lineOfNeedle(authSource, 'this.authSessionService.persistTokens')
+    const line = lineOfNeedle(
+      authSource,
+      'this.authSessionService.persistTokens',
+    )
     findings.push({
       file: ADMIN_AUTH_SERVICE_FILE,
       line,

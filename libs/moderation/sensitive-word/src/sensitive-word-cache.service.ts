@@ -12,6 +12,11 @@ import {
   SENSITIVE_WORD_CACHE_TTL,
 } from './sensitive-word-cache.constant'
 
+export type SensitiveWordDetectorRow = Pick<
+  SensitiveWordSelect,
+  'id' | 'word' | 'replaceWord' | 'level' | 'type' | 'matchMode' | 'isEnabled'
+>
+
 /**
  * 敏感词缓存服务
  * 负责敏感词数据的缓存管理，提供基于不同维度的缓存查询和失效功能
@@ -53,17 +58,29 @@ export class SensitiveWordCacheService {
   // 直接从数据库读取启用中的敏感词，供缓存降级场景复用。
   async loadAllWordsFromDb() {
     return this.db
-      .select()
+      .select(this.buildSensitiveWordDetectorSelect())
       .from(this.sensitiveWord)
       .where(eq(this.sensitiveWord.isEnabled, true))
   }
 
   // 正常路径优先读缓存，缓存未命中时回源数据库。
   async getAllWords() {
-    return this.getFromCache<SensitiveWordSelect>({
+    return this.getFromCache<SensitiveWordDetectorRow>({
       cacheKey: SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS,
       queryFn: async () => this.loadAllWordsFromDb(),
     })
+  }
+
+  private buildSensitiveWordDetectorSelect() {
+    return {
+      id: this.sensitiveWord.id,
+      word: this.sensitiveWord.word,
+      replaceWord: this.sensitiveWord.replaceWord,
+      level: this.sensitiveWord.level,
+      type: this.sensitiveWord.type,
+      matchMode: this.sensitiveWord.matchMode,
+      isEnabled: this.sensitiveWord.isEnabled,
+    } as const
   }
 
   // 写路径变更后统一清理全量词缓存。

@@ -20,10 +20,11 @@ admin repair pass.
 
 ## Default path
 
-`db:migrate:prod` and `db:migrate` run this SQL through Drizzle migrators, so
-pending migration statements execute inside a transaction. The checked-in SQL
-therefore uses ordinary `ALTER TABLE`, `DROP INDEX IF EXISTS`, and
-`CREATE INDEX IF NOT EXISTS` statements.
+`pnpm db:migrate -- --mode active --target-id <registered-local-target>` runs
+this SQL through the guarded Drizzle migrator against registered disposable
+targets only, so pending migration statements execute inside a transaction.
+The checked-in SQL therefore uses ordinary `ALTER TABLE`, `DROP INDEX IF
+EXISTS`, and `CREATE INDEX IF NOT EXISTS` statements.
 
 This checked-in default path assumes the migration has not been partially
 applied. If any added column already exists before Drizzle records this

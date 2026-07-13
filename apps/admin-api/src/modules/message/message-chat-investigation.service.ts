@@ -57,7 +57,7 @@ export class MessageChatInvestigationService {
 
     const [total, rows] = await Promise.all([
       this.db
-        .select({ count: sql<number>`COUNT(*)::int` })
+        .select({ count: sql<number>`COUNT(*)::int`.mapWith(Number) })
         .from(this.conversation)
         .innerJoin(
           this.conversationMember,
@@ -170,7 +170,7 @@ export class MessageChatInvestigationService {
 
     const [total, rows] = await Promise.all([
       this.db
-        .select({ count: sql<number>`COUNT(*)::int` })
+        .select({ count: sql<number>`COUNT(*)::int`.mapWith(Number) })
         .from(this.chatMessage)
         .innerJoin(
           this.conversationMember,

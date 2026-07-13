@@ -15,14 +15,14 @@ interface DemoSeedEnvironment extends DatabaseTarget {
   nodeEnv: string
 }
 
-interface ReferenceBootstrapAdmin {
+export interface ReferenceBootstrapAdmin {
   username: string
   password: string
   mobile?: string
   avatar?: string
 }
 
-interface ReferenceBootstrapEnvironment extends DatabaseTarget {
+export interface ReferenceBootstrapOptions {
   admin?: ReferenceBootstrapAdmin
 }
 
@@ -61,12 +61,9 @@ export function assertSafeDemoSeedEnvironment(
   }
 }
 
-export function assertReferenceBootstrapEnvironment(
+export function readReferenceBootstrapOptions(
   env: NodeJS.ProcessEnv,
-): ReferenceBootstrapEnvironment {
-  const target = parseDatabaseTarget(
-    requireEnv(env, 'DATABASE_URL', 'Reference bootstrap 需要 DATABASE_URL'),
-  )
+): ReferenceBootstrapOptions {
   const username = normalizeEnvValue(env.BOOTSTRAP_ADMIN_USERNAME)
   const password = normalizeEnvValue(env.BOOTSTRAP_ADMIN_PASSWORD)
 
@@ -77,7 +74,7 @@ export function assertReferenceBootstrapEnvironment(
   }
 
   if (!username || !password) {
-    return target
+    return {}
   }
 
   if (username.length > 20) {
@@ -100,7 +97,6 @@ export function assertReferenceBootstrapEnvironment(
   }
 
   return {
-    ...target,
     admin: {
       username,
       password,

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 
 import type { RecordSensitiveWordEntityHitsInput } from './sensitive-word.type'
@@ -116,7 +116,7 @@ export class SensitiveWordStatisticsService {
   // 获取敏感词总数
   private async getTotalWords() {
     const [result] = await this.db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(this.sensitiveWord)
     return Number(result?.count ?? 0)
   }
@@ -124,7 +124,7 @@ export class SensitiveWordStatisticsService {
   // 获取启用的敏感词数量
   private async getEnabledWords() {
     const [result] = await this.db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(this.sensitiveWord)
       .where(eq(this.sensitiveWord.isEnabled, true))
     return Number(result?.count ?? 0)
@@ -133,7 +133,7 @@ export class SensitiveWordStatisticsService {
   // 获取禁用的敏感词数量
   private async getDisabledWords() {
     const [result] = await this.db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(this.sensitiveWord)
       .where(eq(this.sensitiveWord.isEnabled, false))
     return Number(result?.count ?? 0)
@@ -142,7 +142,9 @@ export class SensitiveWordStatisticsService {
   // 获取总命中次数 统计所有敏感词的命中次数总和
   private async getTotalHits() {
     const [result] = await this.db
-      .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
+      .select({
+        sum: sql<number>`sum(${this.sensitiveWord.hitCount})`.mapWith(Number),
+      })
       .from(this.sensitiveWord)
     return Number(result?.sum ?? 0)
   }
@@ -150,7 +152,7 @@ export class SensitiveWordStatisticsService {
   // 获取指定时间范围内的命中次数 统计指定时间范围内所有敏感词的命中次数总和
   private async getHitsInDateRange(startDate: Date) {
     const [result] = await this.db
-      .select({ sum: sql<number>`count(*)` })
+      .select({ sum: sql<number>`count(*)`.mapWith(Number) })
       .from(this.sensitiveWordHitLog)
       .where(sql`${this.sensitiveWordHitLog.createdAt} >= ${startDate}`)
     return Number(result?.sum ?? 0)
@@ -179,8 +181,10 @@ export class SensitiveWordStatisticsService {
     const results = await this.db
       .select({
         level: this.sensitiveWord.level,
-        count: sql<number>`count(*)`,
-        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
+        count: sql<number>`count(*)`.mapWith(Number),
+        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`.mapWith(
+          Number,
+        ),
       })
       .from(this.sensitiveWord)
       .groupBy(this.sensitiveWord.level)
@@ -199,8 +203,10 @@ export class SensitiveWordStatisticsService {
     const results = await this.db
       .select({
         type: this.sensitiveWord.type,
-        count: sql<number>`count(*)`,
-        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
+        count: sql<number>`count(*)`.mapWith(Number),
+        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`.mapWith(
+          Number,
+        ),
       })
       .from(this.sensitiveWord)
       .groupBy(this.sensitiveWord.type)
@@ -303,10 +309,7 @@ export class SensitiveWordStatisticsService {
         .from(this.sensitiveWordHitLog)
         .leftJoin(
           this.sensitiveWord,
-          eq(
-            this.sensitiveWord.id,
-            this.sensitiveWordHitLog.sensitiveWordId,
-          ),
+          eq(this.sensitiveWord.id, this.sensitiveWordHitLog.sensitiveWordId),
         )
         .leftJoin(
           this.forumTopic,
@@ -355,14 +358,11 @@ export class SensitiveWordStatisticsService {
         .limit(page.limit)
         .offset(page.offset),
       this.db
-        .select({ count: sql<number>`count(*)` })
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
         .from(this.sensitiveWordHitLog)
         .leftJoin(
           this.sensitiveWord,
-          eq(
-            this.sensitiveWord.id,
-            this.sensitiveWordHitLog.sensitiveWordId,
-          ),
+          eq(this.sensitiveWord.id, this.sensitiveWordHitLog.sensitiveWordId),
         )
         .where(where),
     ])
@@ -474,9 +474,7 @@ export class SensitiveWordStatisticsService {
         title: hideContent ? null : (row.topicTitle ?? null),
         snippet: hideContent ? null : this.buildSnippet(row.topicContent),
         auditStatus:
-          row.topicAuditStatus === null
-            ? null
-            : (row.topicAuditStatus),
+          row.topicAuditStatus === null ? null : row.topicAuditStatus,
         isHidden: row.topicIsHidden ?? null,
         targetType: null,
         targetId: null,
@@ -496,9 +494,7 @@ export class SensitiveWordStatisticsService {
       title: null,
       snippet: hideContent ? null : this.buildSnippet(row.commentContent),
       auditStatus:
-        row.commentAuditStatus === null
-          ? null
-          : (row.commentAuditStatus),
+        row.commentAuditStatus === null ? null : row.commentAuditStatus,
       isHidden: row.commentIsHidden ?? null,
       targetType: row.commentTargetType ?? null,
       targetId: row.commentTargetId ?? null,
@@ -547,9 +543,7 @@ export class SensitiveWordStatisticsService {
     return SensitiveWordHitLogEntityStatusEnum.AVAILABLE
   }
 
-  private canOpenAdminDisposition(
-    status: SensitiveWordHitLogEntityStatusEnum,
-  ) {
+  private canOpenAdminDisposition(status: SensitiveWordHitLogEntityStatusEnum) {
     return !this.shouldHideEntityContent(status)
   }
 
@@ -567,7 +561,7 @@ export class SensitiveWordStatisticsService {
 
   // 在业务写事务中记录敏感词命中，并同步词表累计快照。 管理端检测/替换接口不调用该方法，避免把调试流量混入业务统计。
   async recordEntityHitsInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: RecordSensitiveWordEntityHitsInput,
   ) {
     if (input.hits.length === 0) {
@@ -607,7 +601,8 @@ export class SensitiveWordStatisticsService {
         UPDATE "sensitive_word" AS sw
         SET
           "hit_count" = sw."hit_count" + delta."hit_count"::integer,
-          "last_hit_at" = ${occurredAt}
+          "last_hit_at" = ${occurredAt},
+          "updated_at" = ${occurredAt}
         FROM (
           VALUES ${sql.join(aggregateRows, sql`, `)}
         ) AS delta("id", "hit_count")

@@ -6,8 +6,6 @@ import type { FastifyRequest } from 'fastify'
 import type { RequestLogInsert } from './audit.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { BusinessException } from '@libs/platform/exceptions'
 import { GeoService } from '@libs/platform/modules/geo/geo.service'
 import { buildRequestLogFields } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
@@ -39,6 +37,26 @@ export class AuditService {
     return this.drizzle.db
   }
 
+  private get auditPageSelect() {
+    return {
+      id: this.requestLog.id,
+      createdAt: this.requestLog.createdAt,
+      updatedAt: this.requestLog.updatedAt,
+      userId: this.requestLog.userId,
+      username: this.requestLog.username,
+      apiType: this.requestLog.apiType,
+      ip: this.requestLog.ip,
+      method: this.requestLog.method,
+      path: this.requestLog.path,
+      params: this.requestLog.params,
+      actionType: this.requestLog.actionType,
+      isSuccess: this.requestLog.isSuccess,
+      userAgent: this.requestLog.userAgent,
+      device: this.requestLog.device,
+      content: this.requestLog.content,
+    }
+  }
+
   // 创建请求日志，自动填充 IP 属地等请求上下文。
   async createRequestLog(createDto: CreateRequestLogDto, req: FastifyRequest) {
     const normalizedActionType = normalizeAuditActionType(createDto.actionType)
@@ -57,24 +75,6 @@ export class AuditService {
         .returning({ id: this.requestLog.id }),
     )
     return created
-  }
-
-  // 按 ID 获取请求日志详情，不存在时抛出业务异常。
-  async getRequestLogById(id: number) {
-    const [requestLog] = await this.db
-      .select()
-      .from(this.requestLog)
-      .where(eq(this.requestLog.id, id))
-      .limit(1)
-
-    if (!requestLog) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '请求日志不存在',
-      )
-    }
-
-    return this.decorateRequestLog(requestLog)
   }
 
   // 分页获取请求日志列表，支持多维度过滤。
@@ -120,7 +120,7 @@ export class AuditService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.auditPageSelect)
         .from(this.requestLog)
         .where(where)
         .orderBy(...orderQuery.orderBySql)

@@ -1,48 +1,24 @@
-import type { Db } from '@db/core'
+import type { DbExecutor, DbTransaction } from '@db/core'
 import type { AdminRoleSelect } from '@db/schema'
-import type { AdminMenuType } from '@libs/identity/admin-rbac.constant'
+import type { AdminReferencePermission } from '@libs/identity/admin-rbac.reference'
 import type { AdminCurrentMenuDto } from '@libs/identity/dto/admin-rbac.dto'
 import type { AdminPermissionMetadata } from '../../common/decorators/admin-permission.decorator'
 
-/** 管理端 RBAC 事务上下文，统一复用 DrizzleService 提供的数据库类型。 */
-export type AdminRbacDb = Db
+/** 管理端 RBAC 可查询上下文；只读 helper 可以接受根客户端或事务客户端。 */
+export type AdminRbacDb = DbExecutor
+
+/** 管理端 RBAC 写入事务上下文；完整性锁和跨表写入不得退化为根客户端。 */
+export type AdminRbacTransaction = DbTransaction
 
 /** 后端装饰器扫描得到的管理端权限定义。 */
-export interface AdminPermissionDefinition extends AdminPermissionMetadata {
+export interface AdminPermissionDefinition
+  extends AdminReferencePermission, AdminPermissionMetadata {
   controllerName: string
   handlerName: string
 }
 
 /** 管理端权限元数据扫描只接受函数式 controller handler。 */
 export type AdminRbacHandler = (...args: unknown[]) => unknown
-
-/** 管理端首次 bootstrap 使用的默认菜单配置。 */
-export interface AdminDefaultMenu {
-  /** 菜单编码。 */
-  code: string
-  /** 父级菜单编码。 */
-  parentCode?: string
-  /** 菜单类型（1=目录，2=菜单）。 */
-  type: AdminMenuType
-  /** 菜单标题。 */
-  title: string
-  /** 路由路径。 */
-  path: string
-  /** 路由名称。 */
-  name: string
-  /** 前端组件键。 */
-  component?: string
-  /** 重定向路径。 */
-  redirect?: string
-  /** 菜单图标。 */
-  icon?: string
-  /** 排序值。 */
-  sortOrder: number
-  /** 是否显示。 */
-  isVisible?: boolean
-  /** 是否缓存页面。 */
-  keepAlive?: boolean
-}
 
 /** 菜单树组装所需的最小节点结构。 */
 export interface AdminMenuTreeNode<TNode> {

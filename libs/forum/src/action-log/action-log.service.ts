@@ -1,4 +1,4 @@
-import type { Db, SQL } from '@db/core'
+import type { Db, DbExecutor, SQL } from '@db/core'
 import { DrizzleService, toPageResult } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
@@ -68,7 +68,7 @@ export class ForumUserActionLogService {
           geoIsp,
           geoSource,
         })
-        .returning(),
+        .returning({ id: this.forumUserActionLog.id }),
     )
 
     return data[0]
@@ -80,7 +80,7 @@ export class ForumUserActionLogService {
   }
 
   // 在现有事务中写入一条用户操作日志。 供论坛交互链路在事务内复用，避免日志脱离主写入上下文。
-  async createActionLogInTx(tx: Db, dto: CreateForumActionLogDto) {
+  async createActionLogInTx(tx: DbExecutor, dto: CreateForumActionLogDto) {
     return this.insertActionLog(tx, dto)
   }
 
@@ -110,7 +110,23 @@ export class ForumUserActionLogService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.forumUserActionLog.id,
+          userId: this.forumUserActionLog.userId,
+          actionType: this.forumUserActionLog.actionType,
+          targetType: this.forumUserActionLog.targetType,
+          targetId: this.forumUserActionLog.targetId,
+          beforeData: this.forumUserActionLog.beforeData,
+          afterData: this.forumUserActionLog.afterData,
+          ipAddress: this.forumUserActionLog.ipAddress,
+          userAgent: this.forumUserActionLog.userAgent,
+          geoCountry: this.forumUserActionLog.geoCountry,
+          geoProvince: this.forumUserActionLog.geoProvince,
+          geoCity: this.forumUserActionLog.geoCity,
+          geoIsp: this.forumUserActionLog.geoIsp,
+          geoSource: this.forumUserActionLog.geoSource,
+          createdAt: this.forumUserActionLog.createdAt,
+        })
         .from(this.forumUserActionLog)
         .where(where)
         .orderBy(...orderQuery.orderBySql)

@@ -4,6 +4,7 @@ import type {
   Db,
   DrizzleErrorMessages,
   DrizzleMutationResult,
+  DrizzleTransactionOptions,
 } from './drizzle.type'
 import type { PostgresError } from './error/postgres-error'
 import type {
@@ -209,12 +210,13 @@ export class DrizzleService {
   /**
    * 启动事务并复用统一异常翻译，要求调用链继续显式透传 tx。
    */
-  async withTransaction<T>(
-    fn: (tx: Db) => Promise<T>,
-    messages?: DrizzleErrorMessages,
-  ): Promise<T> {
+  async withTransaction<T>({
+    execute,
+    config,
+    messages,
+  }: DrizzleTransactionOptions<T>): Promise<T> {
     return this.executeWithErrorHandling(
-      async () => this.db.transaction(fn),
+      async () => this.db.transaction(execute, config),
       messages,
     )
   }

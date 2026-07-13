@@ -12,7 +12,77 @@ import {
   WorkflowJobStatusEnum,
 } from './workflow.constant'
 
-export function toWorkflowJobDto(row: WorkflowJobSelect) {
+export type WorkflowJobDtoRow = Pick<
+  WorkflowJobSelect,
+  | 'id'
+  | 'jobId'
+  | 'workflowType'
+  | 'displayName'
+  | 'operatorType'
+  | 'operatorUserId'
+  | 'status'
+  | 'progressPercent'
+  | 'progressCode'
+  | 'progressContext'
+  | 'progressDetail'
+  | 'selectedItemCount'
+  | 'successItemCount'
+  | 'failedItemCount'
+  | 'skippedItemCount'
+  | 'cancelRequestedAt'
+  | 'startedAt'
+  | 'finishedAt'
+  | 'expiresAt'
+  | 'archivedAt'
+  | 'summary'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+export type WorkflowAttemptDtoRow = Pick<
+  WorkflowAttemptSelect,
+  | 'id'
+  | 'attemptId'
+  | 'attemptNo'
+  | 'triggerType'
+  | 'status'
+  | 'notBeforeAt'
+  | 'selectedItemCount'
+  | 'successItemCount'
+  | 'failedItemCount'
+  | 'skippedItemCount'
+  | 'claimedBy'
+  | 'claimExpiresAt'
+  | 'heartbeatAt'
+  | 'errorCode'
+  | 'errorDomain'
+  | 'errorStage'
+  | 'errorSeverity'
+  | 'errorRetryable'
+  | 'errorContext'
+  | 'errorDiagnostic'
+  | 'startedAt'
+  | 'finishedAt'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type WorkflowRecordEventRow = Pick<
+  WorkflowEventSelect,
+  | 'id'
+  | 'workflowAttemptId'
+  | 'eventType'
+  | 'eventCode'
+  | 'detail'
+  | 'createdAt'
+>
+
+type WorkflowRecordAttemptRow = Pick<
+  WorkflowAttemptSelect,
+  'attemptId' | 'attemptNo'
+>
+
+export function toWorkflowJobDto(row: WorkflowJobDtoRow) {
   return {
     id: Number(row.id),
     jobId: row.jobId,
@@ -40,7 +110,7 @@ export function toWorkflowJobDto(row: WorkflowJobSelect) {
   }
 }
 
-export function toWorkflowAttemptDto(row: WorkflowAttemptSelect) {
+export function toWorkflowAttemptDto(row: WorkflowAttemptDtoRow) {
   return {
     id: Number(row.id),
     attemptId: row.attemptId,
@@ -64,7 +134,12 @@ export function toWorkflowAttemptDto(row: WorkflowAttemptSelect) {
   }
 }
 
-export function toWorkflowEventDto(row: WorkflowEventSelect) {
+export function toWorkflowEventDto(
+  row: Pick<
+    WorkflowEventSelect,
+    'id' | 'eventType' | 'eventCode' | 'detail' | 'createdAt'
+  >,
+) {
   return {
     id: Number(row.id),
     eventType: row.eventType,
@@ -75,8 +150,8 @@ export function toWorkflowEventDto(row: WorkflowEventSelect) {
 }
 
 export function toWorkflowRecordDto(
-  row: WorkflowEventSelect,
-  attempt?: WorkflowAttemptSelect,
+  row: WorkflowRecordEventRow,
+  attempt?: WorkflowRecordAttemptRow,
 ) {
   return {
     ...toWorkflowEventDto(row),
@@ -99,11 +174,7 @@ export function toWorkflowErrorObject(error: unknown) {
 }
 
 export function normalizeWorkflowJobStatus(status: number) {
-  if (
-    Object.values(WorkflowJobStatusEnum).includes(
-      status,
-    )
-  ) {
+  if (Object.values(WorkflowJobStatusEnum).includes(status)) {
     return status
   }
   throw new BusinessException(
@@ -113,11 +184,7 @@ export function normalizeWorkflowJobStatus(status: number) {
 }
 
 function normalizeWorkflowAttemptStatus(status: number) {
-  if (
-    Object.values(WorkflowAttemptStatusEnum).includes(
-      status,
-    )
-  ) {
+  if (Object.values(WorkflowAttemptStatusEnum).includes(status)) {
     return status
   }
   throw new BusinessException(

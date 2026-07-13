@@ -1,8 +1,14 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -24,6 +30,31 @@ import {
   ProfileUserCountRow,
   PublicUserProfileTopicPageQuery,
 } from './profile.type'
+
+type ProfileUserRow = Pick<
+  AppUserSelect,
+  | 'id'
+  | 'account'
+  | 'phoneNumber'
+  | 'emailAddress'
+  | 'levelId'
+  | 'nickname'
+  | 'avatarUrl'
+  | 'profileBackgroundImageUrl'
+  | 'signature'
+  | 'bio'
+  | 'isEnabled'
+  | 'genderType'
+  | 'birthDate'
+  | 'status'
+  | 'banReason'
+  | 'banUntil'
+  | 'lastLoginAt'
+  | 'lastLoginIp'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'deletedAt'
+>
 
 /**
  * 用户资料服务
@@ -102,7 +133,7 @@ export class UserProfileService {
   }
 
   // 将 app_user 行与成长快照映射为 profile 侧稳定用户视图。
-  private mapUser(user: AppUserSelect, growth: ProfileGrowthSnapshot) {
+  private mapUser(user: ProfileUserRow, growth: ProfileGrowthSnapshot) {
     return {
       id: user.id,
       account: user.account,
@@ -141,6 +172,77 @@ export class UserProfileService {
         avatarUrl: true,
       },
     })
+  }
+
+  // 资料页只读取 API 聚合实际需要的用户列，避免后台分页把认证等无关字段带入内存。
+  private getProfileUserColumns() {
+    return {
+      id: true,
+      account: true,
+      phoneNumber: true,
+      emailAddress: true,
+      levelId: true,
+      nickname: true,
+      avatarUrl: true,
+      profileBackgroundImageUrl: true,
+      signature: true,
+      bio: true,
+      isEnabled: true,
+      genderType: true,
+      birthDate: true,
+      status: true,
+      banReason: true,
+      banUntil: true,
+      lastLoginAt: true,
+      lastLoginIp: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+    } as const
+  }
+
+  // Core 查询与 RQB 查询共用同一资料聚合字段集，避免投影随调用方式漂移。
+  private buildProfileUserSelect() {
+    return {
+      id: this.appUser.id,
+      account: this.appUser.account,
+      phoneNumber: this.appUser.phoneNumber,
+      emailAddress: this.appUser.emailAddress,
+      levelId: this.appUser.levelId,
+      nickname: this.appUser.nickname,
+      avatarUrl: this.appUser.avatarUrl,
+      profileBackgroundImageUrl: this.appUser.profileBackgroundImageUrl,
+      signature: this.appUser.signature,
+      bio: this.appUser.bio,
+      isEnabled: this.appUser.isEnabled,
+      genderType: this.appUser.genderType,
+      birthDate: this.appUser.birthDate,
+      status: this.appUser.status,
+      banReason: this.appUser.banReason,
+      banUntil: this.appUser.banUntil,
+      lastLoginAt: this.appUser.lastLoginAt,
+      lastLoginIp: this.appUser.lastLoginIp,
+      createdAt: this.appUser.createdAt,
+      updatedAt: this.appUser.updatedAt,
+      deletedAt: this.appUser.deletedAt,
+    }
+  }
+
+  // 徽章是 profile 聚合的一部分；显式保持其当前公开 read-model，避免 schema 扩列后被隐式带出。
+  private buildProfileBadgeSelect() {
+    return {
+      id: this.userBadge.id,
+      name: this.userBadge.name,
+      type: this.userBadge.type,
+      description: this.userBadge.description,
+      icon: this.userBadge.icon,
+      business: this.userBadge.business,
+      eventKey: this.userBadge.eventKey,
+      sortOrder: this.userBadge.sortOrder,
+      isEnabled: this.userBadge.isEnabled,
+      createdAt: this.userBadge.createdAt,
+      updatedAt: this.userBadge.updatedAt,
+    }
   }
 
   // 复用 profile 模块统一的用户计数查询字段，避免多处手写后再次漂移。
@@ -242,7 +344,7 @@ export class UserProfileService {
       conditions.length > 0 ? and(...conditions) : undefined
     const [profileRows, profileTotal] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildProfileUserSelect())
         .from(this.appUser)
         .where(effectiveWhere)
         .orderBy(...pageParams.order.orderBySql)
@@ -259,7 +361,7 @@ export class UserProfileService {
           .select({
             userId: this.userBadgeAssignment.userId,
             createdAt: this.userBadgeAssignment.createdAt,
-            badge: this.userBadge,
+            badge: this.buildProfileBadgeSelect(),
           })
           .from(this.userBadgeAssignment)
           .innerJoin(
@@ -301,6 +403,7 @@ export class UserProfileService {
   async getProfile(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
+      columns: this.getProfileUserColumns(),
     })
 
     if (!user) {
@@ -316,7 +419,7 @@ export class UserProfileService {
         userId: this.userBadgeAssignment.userId,
         badgeId: this.userBadgeAssignment.badgeId,
         createdAt: this.userBadgeAssignment.createdAt,
-        badge: this.userBadge,
+        badge: this.buildProfileBadgeSelect(),
       })
       .from(this.userBadgeAssignment)
       .innerJoin(
@@ -340,24 +443,30 @@ export class UserProfileService {
   // 仅允许修改状态及其封禁附属字段。
   async updateProfileStatus(updateDto: UpdateUserStatusDto): Promise<void> {
     const { id: userId, status, banReason, banUntil } = updateDto
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          tableIntegrityLock('app_user', userId),
+        ])
+        const user = await tx.query.appUser.findFirst({
+          where: { id: userId },
+          columns: { id: true },
+        })
 
-    const user = await this.db.query.appUser.findFirst({
-      where: { id: userId },
+        if (!user) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '用户不存在',
+          )
+        }
+
+        const result = await tx
+          .update(this.appUser)
+          .set({ status, banReason, banUntil })
+          .where(eq(this.appUser.id, userId))
+        this.drizzle.assertAffectedRows(result, '用户不存在')
+      },
     })
-
-    if (!user) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '用户不存在',
-      )
-    }
-
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({ status, banReason, banUntil })
-        .where(eq(this.appUser.id, userId)),
-    )
   }
 
   // 查看指定用户发布的公开主题。
@@ -631,14 +740,31 @@ export class UserProfileService {
 
   // 初始化用户资料。
   // 为新用户补齐默认等级、成长余额与计数读模型。
-  async initUserProfile(tx: Db | undefined, userId: number) {
-    const client = tx ?? this.db
-    const [defaultLevel] = await client
+  async initUserProfile(tx: DbTransaction, userId: number) {
+    const client = tx
+    let [defaultLevel] = await client
       .select({ id: this.userLevelRule.id })
       .from(this.userLevelRule)
       .where(eq(this.userLevelRule.isEnabled, true))
       .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
       .limit(1)
+
+    if (defaultLevel) {
+      await acquireIntegrityLocks(tx, [
+        tableIntegrityLock('user_level_rule', defaultLevel.id),
+      ])
+      const [lockedDefaultLevel] = await tx
+        .select({ id: this.userLevelRule.id })
+        .from(this.userLevelRule)
+        .where(
+          and(
+            eq(this.userLevelRule.id, defaultLevel.id),
+            eq(this.userLevelRule.isEnabled, true),
+          ),
+        )
+        .limit(1)
+      defaultLevel = lockedDefaultLevel
+    }
 
     await client
       .update(this.appUser)

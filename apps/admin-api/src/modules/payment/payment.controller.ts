@@ -5,6 +5,7 @@ import {
   CreatePaymentProviderConfigDto,
   PaymentOrderResultDto,
   PaymentProviderAccountOptionDto,
+  PaymentProviderAccountOptionQueryDto,
   PaymentProviderCertificateOptionDto,
   PaymentProviderCertificateOptionQueryDto,
   PaymentProviderCredentialOptionDto,
@@ -59,7 +60,7 @@ export class PaymentController {
     isArray: true,
   })
   async getPaymentProviderAccountOptions(
-    @Query() query: QueryPaymentProviderConfigDto,
+    @Query() query: PaymentProviderAccountOptionQueryDto,
   ) {
     return this.paymentService.getPaymentProviderAccountOptions(query)
   }

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { BrowseLogTargetTypeEnum } from '../browse-log.constant'
 
 /**
@@ -15,12 +15,16 @@ export interface IBrowseLogTargetResolver {
    * @param targetId - 目标ID
    * @param delta - 变更量
    */
-  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
+  applyCountDelta: (
+    tx: DbExecutor,
+    targetId: number,
+    delta: number,
+  ) => Promise<void>
 
   /**
    * 校验目标是否有效且可以计入浏览日志
    * @param tx - 事务客户端
    * @param targetId - 目标ID
    */
-  ensureTargetValid: (tx: Db, targetId: number) => Promise<void>
+  ensureTargetValid: (tx: DbExecutor, targetId: number) => Promise<void>
 }

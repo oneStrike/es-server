@@ -34,6 +34,24 @@ export class ReadingStateService {
     return this.drizzle.schema.userWorkReadingState
   }
 
+  // 作品详情仅需恢复继续阅读位置，不读取用户或作品标识等已由查询条件限定的列。
+  private getReadingStateColumns() {
+    return {
+      lastReadAt: true,
+      lastReadChapterId: true,
+    } as const
+  }
+
+  // 阅读历史分页只返回当前 facade 消费的阅读快照字段。
+  private buildReadingHistoryReadSelect() {
+    return {
+      workId: this.userWorkReadingState.workId,
+      workType: this.userWorkReadingState.workType,
+      lastReadAt: this.userWorkReadingState.lastReadAt,
+      lastReadChapterId: this.userWorkReadingState.lastReadChapterId,
+    }
+  }
+
   private buildFallbackWorkSnapshot(
     workId: number,
     workType: number,
@@ -63,9 +81,9 @@ export class ReadingStateService {
     const resolver = this.resolvers.get(workType)
     if (!resolver) {
       throw new BusinessException(
-      BusinessErrorCode.INVALID_OPERATION_TARGET,
-      '不支持的阅读状态业务类型',
-    )
+        BusinessErrorCode.INVALID_OPERATION_TARGET,
+        '不支持的阅读状态业务类型',
+      )
     }
     return resolver
   }
@@ -84,6 +102,7 @@ export class ReadingStateService {
         workId,
         workType,
       },
+      columns: this.getReadingStateColumns(),
     })
 
     if (!state) {
@@ -222,7 +241,7 @@ export class ReadingStateService {
     const where = and(...conditions)
     const [rawRows, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildReadingHistoryReadSelect())
         .from(this.userWorkReadingState)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)

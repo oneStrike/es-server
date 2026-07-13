@@ -27,6 +27,33 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       alias: 'announcements',
     }),
     announcementReads: r.many.appAnnouncementRead(),
+    notificationFanoutTasks: r.many.appAnnouncementNotificationFanoutTask({
+      from: r.appAnnouncement.id,
+      to: r.appAnnouncementNotificationFanoutTask.announcementId,
+      alias: 'AnnouncementFanoutHistory',
+    }),
+    currentNotificationFanoutTask: r.one.appAnnouncementNotificationFanoutTask({
+      from: r.appAnnouncement.notificationFanoutTaskId,
+      to: r.appAnnouncementNotificationFanoutTask.id,
+      alias: 'AnnouncementCurrentFanout',
+    }),
+    views: r.many.appAnnouncementView(),
+    userNotifications: r.many.userNotification({
+      from: r.appAnnouncement.id,
+      to: r.userNotification.announcementId,
+    }),
+  },
+  appAnnouncementNotificationFanoutTask: {
+    announcement: r.one.appAnnouncement({
+      from: r.appAnnouncementNotificationFanoutTask.announcementId,
+      to: r.appAnnouncement.id,
+      alias: 'AnnouncementFanoutHistory',
+    }),
+    currentForAnnouncements: r.many.appAnnouncement({
+      from: r.appAnnouncementNotificationFanoutTask.id,
+      to: r.appAnnouncement.notificationFanoutTaskId,
+      alias: 'AnnouncementCurrentFanout',
+    }),
   },
   appAnnouncementRead: {
     announcement: r.one.appAnnouncement({
@@ -75,6 +102,7 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.appUserCount.userId,
     }),
     announcementReads: r.many.appAnnouncementRead(),
+    announcementViews: r.many.appAnnouncementView(),
     tokens: r.many.appUserToken(),
     forumTopics: r.many.forumTopic({
       from: r.appUser.id,
@@ -145,6 +173,14 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.appUser.id,
       to: r.forumUserActionLog.userId,
     }),
+    createdForumHashtags: r.many.forumHashtag({
+      from: r.appUser.id,
+      to: r.forumHashtag.createdByUserId,
+    }),
+    forumHashtagReferences: r.many.forumHashtagReference({
+      from: r.appUser.id,
+      to: r.forumHashtagReference.userId,
+    }),
     badgeAssignments: r.many.userBadgeAssignment(),
     badges: r.many.userBadge({
       from: r.appUser.id.through(r.userBadgeAssignment.userId),
@@ -163,8 +199,11 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     taskInstances: r.many.taskInstance(),
     taskStepUniqueFacts: r.many.taskStepUniqueFact(),
     taskEventLogs: r.many.taskEventLog(),
+    taskEventFailures: r.many.taskEventFailure(),
     userLikes: r.many.userLike(),
     userFavorites: r.many.userFavorite(),
+    userFollows: r.many.userFollow(),
+    receivedMentions: r.many.userMention(),
     browseLogs: r.many.userBrowseLog(),
     workReadingStates: r.many.userWorkReadingState(),
     userComments: r.many.userComment(),
@@ -189,6 +228,7 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     paymentOrders: r.many.paymentOrder(),
     userCouponInstances: r.many.userCouponInstance(),
     couponRedemptionRecords: r.many.couponRedemptionRecord(),
+    couponAdminGrantItems: r.many.couponAdminGrantItem(),
     adRewardRecords: r.many.adRewardRecord(),
     emojiRecentUsageRecords: r.many.emojiRecentUsage(),
   },
@@ -197,10 +237,30 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.emojiAsset.packId,
       to: r.emojiPack.id,
     }),
+    createdBy: r.one.adminUser({
+      from: r.emojiAsset.createdById,
+      to: r.adminUser.id,
+      alias: 'EmojiAssetCreatedBy',
+    }),
+    updatedBy: r.one.adminUser({
+      from: r.emojiAsset.updatedById,
+      to: r.adminUser.id,
+      alias: 'EmojiAssetUpdatedBy',
+    }),
     recentUsageRecords: r.many.emojiRecentUsage(),
   },
   emojiPack: {
     assets: r.many.emojiAsset(),
+    createdBy: r.one.adminUser({
+      from: r.emojiPack.createdById,
+      to: r.adminUser.id,
+      alias: 'EmojiPackCreatedBy',
+    }),
+    updatedBy: r.one.adminUser({
+      from: r.emojiPack.updatedById,
+      to: r.adminUser.id,
+      alias: 'EmojiPackUpdatedBy',
+    }),
   },
   emojiRecentUsage: {
     user: r.one.appUser({
@@ -289,11 +349,19 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.checkInMakeupFact.userId,
       to: r.appUser.id,
     }),
+    synchronizedAccounts: r.many.checkInMakeupAccount({
+      from: r.checkInMakeupFact.id,
+      to: r.checkInMakeupAccount.lastSyncedFactId,
+    }),
   },
   checkInMakeupAccount: {
     user: r.one.appUser({
       from: r.checkInMakeupAccount.userId,
       to: r.appUser.id,
+    }),
+    lastSyncedFact: r.one.checkInMakeupFact({
+      from: r.checkInMakeupAccount.lastSyncedFactId,
+      to: r.checkInMakeupFact.id,
     }),
   },
   checkInRecord: {
@@ -331,6 +399,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   taskDefinition: {
     steps: r.many.taskStep(),
     instances: r.many.taskInstance(),
+    notificationDeliveries: r.many.notificationDelivery({
+      from: r.taskDefinition.id,
+      to: r.notificationDelivery.taskId,
+    }),
     createdBy: r.one.adminUser({
       from: r.taskDefinition.createdById,
       to: r.adminUser.id,
@@ -366,6 +438,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     }),
     steps: r.many.taskInstanceStep(),
     eventLogs: r.many.taskEventLog(),
+    notificationDeliveries: r.many.notificationDelivery({
+      from: r.taskInstance.id,
+      to: r.notificationDelivery.instanceId,
+    }),
   },
   taskInstanceStep: {
     instance: r.one.taskInstance({
@@ -466,6 +542,21 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   userFavorite: {
     user: r.one.appUser({ from: r.userFavorite.userId, to: r.appUser.id }),
   },
+  userFollow: {
+    user: r.one.appUser({ from: r.userFollow.userId, to: r.appUser.id }),
+  },
+  userMention: {
+    mentionedUser: r.one.appUser({
+      from: r.userMention.mentionedUserId,
+      to: r.appUser.id,
+    }),
+  },
+  taskEventFailure: {
+    user: r.one.appUser({
+      from: r.taskEventFailure.userId,
+      to: r.appUser.id,
+    }),
+  },
   userLevelRule: {
     users: r.many.appUser(),
     sections: r.many.forumSection({
@@ -491,10 +582,15 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.userPurchaseRecord.userId,
       to: r.appUser.id,
     }),
+    couponInstance: r.one.userCouponInstance({
+      from: r.userPurchaseRecord.couponInstanceId,
+      to: r.userCouponInstance.id,
+    }),
     purchaseEntitlements: r.many.userContentEntitlement({
       from: r.userPurchaseRecord.id,
       to: r.userContentEntitlement.sourceId,
       alias: 'PurchaseEntitlements',
+      where: { grantSource: 1 },
     }),
   },
   userContentEntitlement: {
@@ -502,10 +598,15 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.userContentEntitlement.userId,
       to: r.appUser.id,
     }),
-    purchaseRecord: r.one.userPurchaseRecord({
-      from: r.userContentEntitlement.sourceId,
-      to: r.userPurchaseRecord.id,
-      alias: 'PurchaseEntitlementRecord',
+  },
+  appAnnouncementView: {
+    announcement: r.one.appAnnouncement({
+      from: r.appAnnouncementView.announcementId,
+      to: r.appAnnouncement.id,
+    }),
+    user: r.one.appUser({
+      from: r.appAnnouncementView.userId,
+      to: r.appUser.id,
     }),
   },
   membershipPlan: {
@@ -587,9 +688,86 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.paymentProviderConfig.id,
     }),
     orders: r.many.paymentOrder(),
+    appPrivateCredential: r.one.paymentProviderCredential({
+      from: r.paymentProviderConfigVersion.appPrivateCredentialId,
+      to: r.paymentProviderCredential.id,
+      alias: 'PaymentProviderConfigVersionAppPrivateCredential',
+    }),
+    alipayPublicCredential: r.one.paymentProviderCredential({
+      from: r.paymentProviderConfigVersion.alipayPublicCredentialId,
+      to: r.paymentProviderCredential.id,
+      alias: 'PaymentProviderConfigVersionAlipayPublicCredential',
+    }),
+    wechatApiV3Credential: r.one.paymentProviderCredential({
+      from: r.paymentProviderConfigVersion.wechatApiV3CredentialId,
+      to: r.paymentProviderCredential.id,
+      alias: 'PaymentProviderConfigVersionWechatApiV3Credential',
+    }),
+    appCertificate: r.one.paymentProviderCertificate({
+      from: r.paymentProviderConfigVersion.appCertificateId,
+      to: r.paymentProviderCertificate.id,
+      alias: 'PaymentProviderConfigVersionAppCertificate',
+    }),
+    platformCertificate: r.one.paymentProviderCertificate({
+      from: r.paymentProviderConfigVersion.platformCertificateId,
+      to: r.paymentProviderCertificate.id,
+      alias: 'PaymentProviderConfigVersionPlatformCertificate',
+    }),
+    rootCertificate: r.one.paymentProviderCertificate({
+      from: r.paymentProviderConfigVersion.rootCertificateId,
+      to: r.paymentProviderCertificate.id,
+      alias: 'PaymentProviderConfigVersionRootCertificate',
+    }),
   },
-  paymentProviderCredential: {},
-  paymentProviderCertificate: {},
+  paymentProviderCredential: {
+    appPrivateCredentialOrders: r.many.paymentOrder({
+      from: r.paymentProviderCredential.id,
+      to: r.paymentOrder.appPrivateCredentialId,
+      alias: 'PaymentOrderAppPrivateCredential',
+    }),
+    alipayPublicCredentialOrders: r.many.paymentOrder({
+      from: r.paymentProviderCredential.id,
+      to: r.paymentOrder.alipayPublicCredentialId,
+      alias: 'PaymentOrderAlipayPublicCredential',
+    }),
+    wechatApiV3CredentialOrders: r.many.paymentOrder({
+      from: r.paymentProviderCredential.id,
+      to: r.paymentOrder.wechatApiV3CredentialId,
+      alias: 'PaymentOrderWechatApiV3Credential',
+    }),
+    appPrivateCredentialVersions: r.many.paymentProviderConfigVersion({
+      from: r.paymentProviderCredential.id,
+      to: r.paymentProviderConfigVersion.appPrivateCredentialId,
+      alias: 'PaymentProviderConfigVersionAppPrivateCredential',
+    }),
+    alipayPublicCredentialVersions: r.many.paymentProviderConfigVersion({
+      from: r.paymentProviderCredential.id,
+      to: r.paymentProviderConfigVersion.alipayPublicCredentialId,
+      alias: 'PaymentProviderConfigVersionAlipayPublicCredential',
+    }),
+    wechatApiV3CredentialVersions: r.many.paymentProviderConfigVersion({
+      from: r.paymentProviderCredential.id,
+      to: r.paymentProviderConfigVersion.wechatApiV3CredentialId,
+      alias: 'PaymentProviderConfigVersionWechatApiV3Credential',
+    }),
+  },
+  paymentProviderCertificate: {
+    appCertificateVersions: r.many.paymentProviderConfigVersion({
+      from: r.paymentProviderCertificate.id,
+      to: r.paymentProviderConfigVersion.appCertificateId,
+      alias: 'PaymentProviderConfigVersionAppCertificate',
+    }),
+    platformCertificateVersions: r.many.paymentProviderConfigVersion({
+      from: r.paymentProviderCertificate.id,
+      to: r.paymentProviderConfigVersion.platformCertificateId,
+      alias: 'PaymentProviderConfigVersionPlatformCertificate',
+    }),
+    rootCertificateVersions: r.many.paymentProviderConfigVersion({
+      from: r.paymentProviderCertificate.id,
+      to: r.paymentProviderConfigVersion.rootCertificateId,
+      alias: 'PaymentProviderConfigVersionRootCertificate',
+    }),
+  },
   paymentOrder: {
     user: r.one.appUser({
       from: r.paymentOrder.userId,
@@ -602,6 +780,21 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     providerConfigVersionRecord: r.one.paymentProviderConfigVersion({
       from: r.paymentOrder.providerConfigVersionId,
       to: r.paymentProviderConfigVersion.id,
+    }),
+    appPrivateCredential: r.one.paymentProviderCredential({
+      from: r.paymentOrder.appPrivateCredentialId,
+      to: r.paymentProviderCredential.id,
+      alias: 'PaymentOrderAppPrivateCredential',
+    }),
+    alipayPublicCredential: r.one.paymentProviderCredential({
+      from: r.paymentOrder.alipayPublicCredentialId,
+      to: r.paymentProviderCredential.id,
+      alias: 'PaymentOrderAlipayPublicCredential',
+    }),
+    wechatApiV3Credential: r.one.paymentProviderCredential({
+      from: r.paymentOrder.wechatApiV3CredentialId,
+      to: r.paymentProviderCredential.id,
+      alias: 'PaymentOrderWechatApiV3Credential',
     }),
     notifyEvents: r.many.paymentNotifyEvent(),
     reconciliationRecords: r.many.paymentReconciliationRecord(),
@@ -633,6 +826,33 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   },
   couponDefinition: {
     instances: r.many.userCouponInstance(),
+    adminGrantJobs: r.many.couponAdminGrantJob(),
+  },
+  couponAdminGrantJob: {
+    workflowJob: r.one.workflowJob({
+      from: r.couponAdminGrantJob.workflowJobId,
+      to: r.workflowJob.id,
+    }),
+    couponDefinition: r.one.couponDefinition({
+      from: r.couponAdminGrantJob.couponDefinitionId,
+      to: r.couponDefinition.id,
+    }),
+    operator: r.one.adminUser({
+      from: r.couponAdminGrantJob.operatorUserId,
+      to: r.adminUser.id,
+      alias: 'CouponAdminGrantOperator',
+    }),
+    items: r.many.couponAdminGrantItem(),
+  },
+  couponAdminGrantItem: {
+    job: r.one.couponAdminGrantJob({
+      from: r.couponAdminGrantItem.couponAdminGrantJobId,
+      to: r.couponAdminGrantJob.id,
+    }),
+    user: r.one.appUser({
+      from: r.couponAdminGrantItem.userId,
+      to: r.appUser.id,
+    }),
   },
   userCouponInstance: {
     user: r.one.appUser({
@@ -644,6 +864,7 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.couponDefinition.id,
     }),
     redemptionRecords: r.many.couponRedemptionRecord(),
+    purchaseRecords: r.many.userPurchaseRecord(),
   },
   couponRedemptionRecord: {
     user: r.one.appUser({

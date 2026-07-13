@@ -80,11 +80,26 @@ export const contentImportItemAttempt = snakeCase.table(
     index('content_import_item_attempt_item_id_idx').on(
       table.contentImportItemId,
     ),
-    check('content_import_item_attempt_attempt_no_positive_chk', sql`${table.attemptNo} > 0`),
-    check('content_import_item_attempt_status_valid_chk', sql`${table.status} in (1, 2, 3, 4, 5, 6)`),
-    check('content_import_item_attempt_stage_valid_chk', sql`${table.stage} in (1, 2, 3, 4, 5, 6, 7, 8)`),
-    check('content_import_item_attempt_image_total_non_negative_chk', sql`${table.imageTotal} >= 0`),
-    check('content_import_item_attempt_image_success_count_non_negative_chk', sql`${table.imageSuccessCount} >= 0`),
+    check(
+      'content_import_item_attempt_attempt_no_positive_chk',
+      sql`${table.attemptNo} > 0`,
+    ),
+    check(
+      'content_import_item_attempt_status_valid_chk',
+      sql`${table.status} in (1, 2, 3, 4, 5, 6)`,
+    ),
+    check(
+      'content_import_item_attempt_stage_valid_chk',
+      sql`${table.stage} in (1, 2, 3, 4, 5, 6, 7, 8)`,
+    ),
+    check(
+      'content_import_item_attempt_image_total_non_negative_chk',
+      sql`${table.imageTotal} >= 0`,
+    ),
+    check(
+      'content_import_item_attempt_image_success_nonnegative_chk',
+      sql`${table.imageSuccessCount} >= 0`,
+    ),
   ],
 )
 

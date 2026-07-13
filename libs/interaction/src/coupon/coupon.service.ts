@@ -1,7 +1,11 @@
+import type {
+  CouponDefinitionSelect,
+  CouponRedemptionRecordSelect,
+  UserCouponInstanceSelect,
+} from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   ConsumeCouponRedemptionInput,
-  ConsumeCouponRedemptionResult,
   CouponAbilityDefinition,
   CouponDefinitionUpdateInput,
   CouponGrantSnapshot,
@@ -14,7 +18,13 @@ import type {
   WritableCouponDefinition,
 } from '../coupon/types/coupon.type'
 import { createHash } from 'node:crypto'
-import { DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  relationIntegrityLock,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 import {
   ContentEntitlementGrantSourceEnum,
   ContentEntitlementTargetTypeEnum,
@@ -27,7 +37,18 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, isNull, lt, or, sql } from 'drizzle-orm'
+import {
+  and,
+  eq,
+  getTableName,
+  gt,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  or,
+  sql,
+} from 'drizzle-orm'
 import {
   CouponInstanceStatusEnum,
   CouponRedemptionStatusEnum,
@@ -46,6 +67,74 @@ import {
   RedeemCouponCommandDto,
   UpdateCouponDefinitionDto,
 } from '../coupon/dto/coupon.dto'
+
+const COUPON_GRANT_INSERT_CHUNK_SIZE = 500
+
+type CouponDefinitionPageRow = Pick<
+  CouponDefinitionSelect,
+  | 'id'
+  | 'name'
+  | 'couponType'
+  | 'targetScope'
+  | 'discountAmount'
+  | 'discountRateBps'
+  | 'usageLimit'
+  | 'validDays'
+  | 'benefitDays'
+  | 'benefitCount'
+  | 'isEnabled'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+type CouponDefinitionUpdateSource = Pick<
+  CouponDefinitionSelect,
+  | 'name'
+  | 'couponType'
+  | 'discountAmount'
+  | 'discountRateBps'
+  | 'usageLimit'
+  | 'validDays'
+  | 'benefitDays'
+  | 'benefitCount'
+  | 'isEnabled'
+>
+
+type CouponGrantDefinitionSource = Pick<
+  CouponDefinitionSelect,
+  | 'id'
+  | 'name'
+  | 'couponType'
+  | 'targetScope'
+  | 'discountAmount'
+  | 'discountRateBps'
+  | 'usageLimit'
+  | 'validDays'
+  | 'benefitDays'
+  | 'benefitCount'
+>
+
+type CouponGrantReplaySource = Pick<
+  UserCouponInstanceSelect,
+  'couponDefinitionId' | 'sourceType' | 'sourceId' | 'grantKey'
+>
+
+type CouponRedemptionResultSource = Pick<
+  CouponRedemptionRecordSelect,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'couponInstanceId'
+  | 'couponType'
+  | 'targetType'
+  | 'targetId'
+  | 'status'
+>
+
+interface CouponRedemptionConsumeResult {
+  redemption: CouponRedemptionResultSource
+  created: boolean
+}
 
 @Injectable()
 export class CouponService {
@@ -75,58 +164,258 @@ export class CouponService {
     return this.drizzle.schema.couponRedemptionRecord
   }
 
+  private get couponDefinitionExistsColumns() {
+    return {
+      id: true,
+    } as const
+  }
+
+  private get couponDefinitionUpdateColumns() {
+    return {
+      name: true,
+      couponType: true,
+      discountAmount: true,
+      discountRateBps: true,
+      usageLimit: true,
+      validDays: true,
+      benefitDays: true,
+      benefitCount: true,
+      isEnabled: true,
+    } as const
+  }
+
+  private get couponGrantDefinitionColumns() {
+    return {
+      id: true,
+      name: true,
+      couponType: true,
+      targetScope: true,
+      discountAmount: true,
+      discountRateBps: true,
+      usageLimit: true,
+      validDays: true,
+      benefitDays: true,
+      benefitCount: true,
+    } as const
+  }
+
+  private get couponGrantReplayProjection() {
+    return {
+      couponDefinitionId: this.userCouponInstance.couponDefinitionId,
+      sourceType: this.userCouponInstance.sourceType,
+      sourceId: this.userCouponInstance.sourceId,
+      grantKey: this.userCouponInstance.grantKey,
+    } as const
+  }
+
+  private get couponRedemptionResultColumns() {
+    return {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      couponInstanceId: true,
+      couponType: true,
+      targetType: true,
+      targetId: true,
+      status: true,
+    } as const
+  }
+
+  private get couponRedemptionResultProjection() {
+    return {
+      id: this.couponRedemptionRecord.id,
+      createdAt: this.couponRedemptionRecord.createdAt,
+      updatedAt: this.couponRedemptionRecord.updatedAt,
+      couponInstanceId: this.couponRedemptionRecord.couponInstanceId,
+      couponType: this.couponRedemptionRecord.couponType,
+      targetType: this.couponRedemptionRecord.targetType,
+      targetId: this.couponRedemptionRecord.targetId,
+      status: this.couponRedemptionRecord.status,
+    } as const
+  }
+
+  private get couponDefinitionPageSelect() {
+    return {
+      id: this.couponDefinition.id,
+      name: this.couponDefinition.name,
+      couponType: this.couponDefinition.couponType,
+      targetScope: this.couponDefinition.targetScope,
+      discountAmount: this.couponDefinition.discountAmount,
+      discountRateBps: this.couponDefinition.discountRateBps,
+      usageLimit: this.couponDefinition.usageLimit,
+      validDays: this.couponDefinition.validDays,
+      benefitDays: this.couponDefinition.benefitDays,
+      benefitCount: this.couponDefinition.benefitCount,
+      isEnabled: this.couponDefinition.isEnabled,
+      createdAt: this.couponDefinition.createdAt,
+      updatedAt: this.couponDefinition.updatedAt,
+    }
+  }
+
   // 获取用户会员订阅事实表定义。
   private get userMembershipSubscription() {
     return this.drizzle.schema.userMembershipSubscription
   }
 
+  /** 在同一事务中锁定并重查发券所依赖的券定义和用户。 */
+  private async lockAndRecheckCouponGrantParents(
+    tx: CouponTx,
+    input: Pick<GrantCouponsForSourceInput, 'couponDefinitionId' | 'userId'>,
+  ) {
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock(
+        getTableName(this.couponDefinition),
+        input.couponDefinitionId,
+      ),
+      tableIntegrityLock(
+        getTableName(this.drizzle.schema.appUser),
+        input.userId,
+      ),
+    ])
+  }
+
+  /** 券定义写入与发券使用同一把锁，避免停用或能力更新穿插进发券快照构建。 */
+  private async lockCouponDefinition(tx: CouponTx, couponDefinitionId: number) {
+    await acquireIntegrityLocks(tx, [
+      tableIntegrityLock(
+        getTableName(this.couponDefinition),
+        couponDefinitionId,
+      ),
+    ])
+  }
+
+  /** 锁后确认券定义仍然存在，状态切换只依赖此最小事实。 */
+  private async assertCouponDefinitionExistsForUpdate(
+    tx: CouponTx,
+    couponDefinitionId: number,
+  ) {
+    const definition = await tx.query.couponDefinition.findFirst({
+      where: { id: couponDefinitionId },
+      columns: this.couponDefinitionExistsColumns,
+    })
+    if (!definition) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '券定义不存在',
+      )
+    }
+  }
+
+  /** 锁后读取券定义更新归一化所需的最小字段。 */
+  private async readCouponDefinitionForUpdate(
+    tx: CouponTx,
+    couponDefinitionId: number,
+  ): Promise<CouponDefinitionUpdateSource> {
+    const definition = await tx.query.couponDefinition.findFirst({
+      where: { id: couponDefinitionId },
+      columns: this.couponDefinitionUpdateColumns,
+    })
+    if (!definition) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '券定义不存在',
+      )
+    }
+    return definition
+  }
+
+  // 核销前锁定券实例与用户；券种业务分支自行校验目标契约。
+  private async lockCouponInstanceAndUserForRedemption(
+    tx: CouponTx,
+    input: {
+      couponInstanceId: number
+      userId: number
+    },
+  ) {
+    const locks = [
+      tableIntegrityLock(
+        getTableName(this.userCouponInstance),
+        input.couponInstanceId,
+      ),
+      tableIntegrityLock(
+        getTableName(this.drizzle.schema.appUser),
+        input.userId,
+      ),
+    ]
+    await acquireIntegrityLocks(tx, locks)
+    const [user] = await tx
+      .select({ id: this.drizzle.schema.appUser.id })
+      .from(this.drizzle.schema.appUser)
+      .where(eq(this.drizzle.schema.appUser.id, input.userId))
+      .limit(1)
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
+    }
+  }
+
   // 向用户发放指定券定义的券实例。
   async grantCoupon(dto: GrantCouponDto) {
-    await this.drizzle.withTransaction(async (tx) => {
-      const operationId = dto.operationId?.trim() ?? ''
-      if (!operationId) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '后台发券操作幂等 ID 不能为空',
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const operationId = dto.operationId?.trim() ?? ''
+        if (!operationId) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '后台发券操作幂等 ID 不能为空',
+          )
+        }
+        const quantity = dto.quantity ?? 1
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '发券数量必须为正整数',
+          )
+        }
+        const grantKeyPrefix = this.buildAdminGrantKeyPrefix(operationId)
+        const grantKeys = Array.from(
+          { length: quantity },
+          (_, index) => `${grantKeyPrefix}${index}`,
         )
-      }
-      const quantity = dto.quantity ?? 1
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '发券数量必须为正整数',
+        const grantInput: GrantCouponsForSourceInput = {
+          couponDefinitionId: dto.couponDefinitionId,
+          grantKeys,
+          quantity,
+          sourceId: dto.sourceId,
+          sourceType: CouponSourceTypeEnum.ADMIN_GRANT,
+          userId: dto.userId,
+        }
+        await this.ensureAdminGrantOperationLock(tx, {
+          operationId,
+          userId: dto.userId,
+        })
+        await this.ensureAdminGrantOperationReplayCompatible(
+          tx,
+          grantInput,
+          grantKeys,
+          grantKeyPrefix,
         )
-      }
-      const grantKeyPrefix = this.buildAdminGrantKeyPrefix(operationId)
-      const grantKeys = Array.from(
-        { length: quantity },
-        (_, index) => `${grantKeyPrefix}${index}`,
-      )
-      const grantInput: GrantCouponsForSourceInput = {
-        couponDefinitionId: dto.couponDefinitionId,
-        grantKeys,
-        quantity,
-        sourceId: dto.sourceId,
-        sourceType: CouponSourceTypeEnum.ADMIN_GRANT,
-        userId: dto.userId,
-      }
-      await this.ensureAdminGrantOperationLock(tx, {
-        operationId,
-        userId: dto.userId,
-      })
-      await this.ensureAdminGrantOperationReplayCompatible(
-        tx,
-        grantInput,
-        grantKeys,
-        grantKeyPrefix,
-      )
-      await this.grantCouponsForSource(tx, grantInput)
+        await this.grantCouponsForSource(tx, grantInput)
+      },
     })
     return true
   }
 
   // 通用发券入口，支持数量、有效期覆盖和 grantKey 幂等。
   async grantCouponsForSource(
+    tx: CouponTx,
+    input: GrantCouponsForSourceInput,
+  ): Promise<GrantCouponsForSourceResult> {
+    return tx.transaction(async (grantTx) => {
+      const result = await this.grantCouponsForSourceInSavepoint(grantTx, input)
+      return result
+    })
+  }
+
+  /**
+   * 将一批券实例的校验、插入和幂等回放收敛到同一个 savepoint。
+   *
+   * 批量工作流会在外层事务中捕获单个用户的失败并持久化 FAILED 状态；这里必须
+   * 保证任何失败都会先回滚本批已经插入的券实例，不能让前一个分块随失败状态提交。
+   */
+  private async grantCouponsForSourceInSavepoint(
     tx: CouponTx,
     input: GrantCouponsForSourceInput,
   ): Promise<GrantCouponsForSourceResult> {
@@ -161,9 +450,13 @@ export class CouponService {
       )
     }
 
-    const definition = await tx.query.couponDefinition.findFirst({
-      where: { id: input.couponDefinitionId, isEnabled: true },
-    })
+    await this.lockAndRecheckCouponGrantParents(tx, input)
+
+    const definition: CouponGrantDefinitionSource | undefined =
+      await tx.query.couponDefinition.findFirst({
+        where: { id: input.couponDefinitionId, isEnabled: true },
+        columns: this.couponGrantDefinitionColumns,
+      })
     if (!definition) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -188,13 +481,170 @@ export class CouponService {
       validDays,
     })
     const expiresAt = validDays > 0 ? this.addDays(new Date(), validDays) : null
-    const items: GrantCouponsForSourceResult['items'] = []
+    let createdCount = 0
+    const seenGrantKeys = new Set<string>()
+    const hasGrantKeys = grantKeys.length > 0
 
-    for (let index = 0; index < quantity; index += 1) {
-      const grantKey = grantKeys[index] ?? null
-      const insertRows = await tx
-        .insert(this.userCouponInstance)
-        .values({
+    for (
+      let offset = 0;
+      offset < quantity;
+      offset += COUPON_GRANT_INSERT_CHUNK_SIZE
+    ) {
+      const chunkLength = Math.min(
+        COUPON_GRANT_INSERT_CHUNK_SIZE,
+        quantity - offset,
+      )
+      const chunkGrantKeys: Array<string | null> = hasGrantKeys
+        ? grantKeys.slice(offset, offset + chunkLength)
+        : Array.from<string | null>({ length: chunkLength }).fill(null)
+
+      if (!hasGrantKeys) {
+        const insertRows = await this.insertCouponInstanceChunk(
+          tx,
+          input,
+          definition,
+          expiresAt,
+          grantSnapshot,
+          chunkGrantKeys,
+        )
+        if (insertRows.length !== chunkLength) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '发券幂等记录状态异常',
+          )
+        }
+        createdCount += insertRows.length
+        continue
+      }
+
+      const requestedGrantKeys = chunkGrantKeys.filter(
+        (grantKey): grantKey is string => grantKey !== null,
+      )
+      const existingRows = await this.findCouponInstancesByGrantKeys(
+        tx,
+        input.userId,
+        [...new Set(requestedGrantKeys)],
+      )
+      const existingByGrantKey = new Map<string, CouponGrantReplaySource>()
+      for (const couponInstance of existingRows) {
+        if (couponInstance.grantKey) {
+          existingByGrantKey.set(couponInstance.grantKey, couponInstance)
+        }
+      }
+
+      for (let index = 0; index < chunkGrantKeys.length; index += 1) {
+        const grantKey = chunkGrantKeys[index]
+        if (!grantKey) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '发券幂等记录状态异常',
+          )
+        }
+        const existing = existingByGrantKey.get(grantKey)
+        if (
+          existing &&
+          !this.isGrantKeyReplayCompatible(existing, input, grantKey)
+        ) {
+          this.assertGrantKeyReplayShape(existing, input, grantKey)
+        }
+      }
+
+      const insertRows = await this.insertCouponInstanceChunk(
+        tx,
+        input,
+        definition,
+        expiresAt,
+        grantSnapshot,
+        chunkGrantKeys,
+      )
+      const insertedByGrantKey = new Map<string, CouponGrantReplaySource>()
+      for (const couponInstance of insertRows) {
+        if (!couponInstance.grantKey) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '发券幂等记录状态异常',
+          )
+        }
+        insertedByGrantKey.set(couponInstance.grantKey, couponInstance)
+      }
+
+      const replayGrantKeys = [
+        ...new Set(
+          chunkGrantKeys.filter(
+            (grantKey): grantKey is string =>
+              grantKey !== null &&
+              !insertedByGrantKey.has(grantKey) &&
+              !existingByGrantKey.has(grantKey),
+          ),
+        ),
+      ]
+      const replayByGrantKey = new Map(existingByGrantKey)
+      if (replayGrantKeys.length > 0) {
+        const replayRows = await this.findCouponInstancesByGrantKeys(
+          tx,
+          input.userId,
+          replayGrantKeys,
+        )
+        for (const couponInstance of replayRows) {
+          if (couponInstance.grantKey) {
+            replayByGrantKey.set(couponInstance.grantKey, couponInstance)
+          }
+        }
+      }
+
+      for (const grantKey of chunkGrantKeys) {
+        if (!grantKey) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '发券幂等记录状态异常',
+          )
+        }
+        const couponInstance =
+          insertedByGrantKey.get(grantKey) ?? replayByGrantKey.get(grantKey)
+        if (!couponInstance) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '发券幂等记录状态异常',
+          )
+        }
+        const created =
+          insertedByGrantKey.has(grantKey) && !seenGrantKeys.has(grantKey)
+        if (!created) {
+          this.assertGrantKeyReplayShape(couponInstance, input, grantKey)
+        } else {
+          createdCount += 1
+        }
+        seenGrantKeys.add(grantKey)
+      }
+    }
+
+    return {
+      createdCount,
+    }
+  }
+
+  /**
+   * 在已锁定并重查券定义、用户的同一 savepoint 中写入单个发券分块。
+   * 保持事务参数显式，避免发券写入脱离父记录的锁与重查证据链。
+   */
+  private async insertCouponInstanceChunk(
+    tx: CouponTx,
+    input: Pick<
+      GrantCouponsForSourceInput,
+      'sourceId' | 'sourceType' | 'userId'
+    >,
+    definition: Pick<
+      CouponDefinitionSelect,
+      'couponType' | 'id' | 'usageLimit'
+    >,
+    expiresAt: Date | null,
+    grantSnapshot: CouponGrantSnapshot,
+    chunkGrantKeys: ReadonlyArray<string | null>,
+  ) {
+    return tx
+      .insert(this.userCouponInstance)
+      .values(
+        chunkGrantKeys.map((grantKey) => ({
           userId: input.userId,
           couponDefinitionId: definition.id,
           couponType: definition.couponType,
@@ -205,34 +655,16 @@ export class CouponService {
           grantKey,
           expiresAt,
           grantSnapshot,
-        })
-        .onConflictDoNothing()
-        .returning()
-      const couponInstance =
-        insertRows[0] ??
-        (grantKey
-          ? await this.findCouponInstanceByGrantKey(tx, input.userId, grantKey)
-          : null)
-      if (!couponInstance) {
-        throw new BusinessException(
-          BusinessErrorCode.STATE_CONFLICT,
-          '发券幂等记录状态异常',
-        )
-      }
-      if (!insertRows[0] && grantKey) {
-        this.assertGrantKeyReplayShape(couponInstance, input, grantKey)
-      }
-      items.push({
-        grantKey,
-        couponInstance,
-        created: insertRows.length > 0,
+        })),
+      )
+      .onConflictDoNothing({
+        target: [
+          this.userCouponInstance.userId,
+          this.userCouponInstance.grantKey,
+        ],
+        where: sql`${this.userCouponInstance.grantKey} is not null`,
       })
-    }
-
-    return {
-      items,
-      createdCount: items.filter((item) => item.created).length,
-    }
+      .returning(this.couponGrantReplayProjection)
   }
 
   // 基于输入时间增加指定天数。
@@ -256,10 +688,14 @@ export class CouponService {
       userId: number
     },
   ) {
-    await this.drizzle.withErrorHandling(() =>
-      tx.execute(
-        sql`SELECT pg_advisory_xact_lock(${input.userId}, hashtext(${input.operationId}))`,
-      ),
+    await this.drizzle.withErrorHandling(async () =>
+      acquireIntegrityLocks(tx, [
+        relationIntegrityLock(
+          'coupon-admin-grant-operation',
+          input.userId,
+          input.operationId,
+        ),
+      ]),
     )
   }
 
@@ -303,7 +739,7 @@ export class CouponService {
     grantKeyPrefix: string,
   ) {
     return tx
-      .select()
+      .select(this.couponGrantReplayProjection)
       .from(this.userCouponInstance)
       .where(
         and(
@@ -313,22 +749,20 @@ export class CouponService {
       )
   }
 
-  private async findCouponInstanceByGrantKey(
+  private async findCouponInstancesByGrantKeys(
     tx: CouponTx,
     userId: number,
-    grantKey: string,
+    grantKeys: string[],
   ) {
-    const [row] = await tx
-      .select()
+    return tx
+      .select(this.couponGrantReplayProjection)
       .from(this.userCouponInstance)
       .where(
         and(
           eq(this.userCouponInstance.userId, userId),
-          eq(this.userCouponInstance.grantKey, grantKey),
+          inArray(this.userCouponInstance.grantKey, grantKeys),
         ),
       )
-      .limit(1)
-    return row ?? null
   }
 
   private assertGrantKeyReplayShape(
@@ -341,21 +775,7 @@ export class CouponService {
     input: GrantCouponsForSourceInput,
     grantKey: string,
   ) {
-    if (
-      existing.grantKey !== undefined &&
-      existing.grantKey !== null &&
-      existing.grantKey !== grantKey
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '发券幂等键已被不同发券请求使用',
-      )
-    }
-    if (
-      existing.couponDefinitionId !== input.couponDefinitionId ||
-      existing.sourceType !== input.sourceType ||
-      (existing.sourceId ?? null) !== (input.sourceId ?? null)
-    ) {
+    if (!this.isGrantKeyReplayCompatible(existing, input, grantKey)) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
         '发券幂等键已被不同发券请求使用',
@@ -363,40 +783,64 @@ export class CouponService {
     }
   }
 
+  private isGrantKeyReplayCompatible(
+    existing: {
+      couponDefinitionId: number
+      sourceType: number
+      sourceId?: number | null
+      grantKey?: string | null
+    },
+    input: GrantCouponsForSourceInput,
+    grantKey: string,
+  ) {
+    const grantKeyMatches = !(
+      existing.grantKey !== undefined &&
+      existing.grantKey !== null &&
+      existing.grantKey !== grantKey
+    )
+    const sourceMatches =
+      existing.couponDefinitionId === input.couponDefinitionId &&
+      existing.sourceType === input.sourceType &&
+      (existing.sourceId ?? null) === (input.sourceId ?? null)
+    return grantKeyMatches && sourceMatches
+  }
+
   // 启用或停用券定义。
   async updateCouponDefinitionStatus(id: number, isEnabled: boolean) {
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockCouponDefinition(tx, id)
+        await this.assertCouponDefinitionExistsForUpdate(tx, id)
+        const updated = await tx
           .update(this.couponDefinition)
           .set({ isEnabled })
-          .where(eq(this.couponDefinition.id, id)),
-      { notFound: '券定义不存在' },
-    )
+          .where(eq(this.couponDefinition.id, id))
+          .returning({ id: this.couponDefinition.id })
+        this.drizzle.assertAffectedRows(updated, '券定义不存在')
+      },
+    })
     return true
   }
 
   // 更新券定义。
   async updateCouponDefinition(dto: UpdateCouponDefinitionDto) {
     const { id, ...data } = dto
-    const existing = await this.db.query.couponDefinition.findFirst({
-      where: { id },
-    })
-    if (!existing) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '券定义不存在',
-      )
-    }
-    const normalizedData = this.normalizeCouponDefinitionUpdate(data, existing)
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockCouponDefinition(tx, id)
+        const existing = await this.readCouponDefinitionForUpdate(tx, id)
+        const normalizedData = this.normalizeCouponDefinitionUpdate(
+          data,
+          existing,
+        )
+        const updated = await tx
           .update(this.couponDefinition)
           .set(normalizedData)
-          .where(eq(this.couponDefinition.id, id)),
-      { notFound: '券定义不存在' },
-    )
+          .where(eq(this.couponDefinition.id, id))
+          .returning({ id: this.couponDefinition.id })
+        this.drizzle.assertAffectedRows(updated, '券定义不存在')
+      },
+    })
     return true
   }
 
@@ -413,7 +857,7 @@ export class CouponService {
   // 更新券类型时不继承旧能力字段，避免保存出新类型下不完整的券能力。
   private normalizeCouponDefinitionUpdate(
     data: CouponDefinitionUpdateInput,
-    existing: CreateCouponDefinitionDto,
+    existing: CouponDefinitionUpdateSource,
   ) {
     const nextCouponType = data.couponType ?? existing.couponType
     const base = {
@@ -676,7 +1120,7 @@ export class CouponService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.couponDefinitionPageSelect)
         .from(this.couponDefinition)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -693,7 +1137,7 @@ export class CouponService {
   }
 
   private toCouponDefinitionOutputDto(
-    coupon: typeof this.couponDefinition.$inferSelect,
+    coupon: CouponDefinitionPageRow,
   ): CouponDefinitionOutputDto {
     return {
       ...coupon,
@@ -709,6 +1153,7 @@ export class CouponService {
 
   // 购买章节前预留折扣券并返回优惠后的应付价格。
   async reserveDiscountCoupon(tx: CouponTx, input: ReserveDiscountCouponInput) {
+    await this.lockCouponInstanceAndUserForRedemption(tx, input)
     const coupon = await this.getCouponInstanceWithDefinition(tx, {
       userId: input.userId,
       couponInstanceId: input.couponInstanceId,
@@ -753,7 +1198,7 @@ export class CouponService {
   private async consumeCouponAndWriteRedemption(
     tx: CouponTx,
     input: ConsumeCouponRedemptionInput,
-  ): Promise<ConsumeCouponRedemptionResult> {
+  ): Promise<CouponRedemptionConsumeResult> {
     const [insertedRedemption] = await tx
       .insert(this.couponRedemptionRecord)
       .values({
@@ -772,7 +1217,7 @@ export class CouponService {
           this.couponRedemptionRecord.bizKey,
         ],
       })
-      .returning()
+      .returning(this.couponRedemptionResultProjection)
 
     if (!insertedRedemption) {
       const existing = await tx.query.couponRedemptionRecord.findFirst({
@@ -780,6 +1225,7 @@ export class CouponService {
           userId: input.userId,
           bizKey: input.bizKey,
         },
+        columns: this.couponRedemptionResultColumns,
       })
       if (!existing) {
         throw new BusinessException(
@@ -840,12 +1286,30 @@ export class CouponService {
         expiresAt: this.userCouponInstance.expiresAt,
         grantSnapshot: this.userCouponInstance.grantSnapshot,
         name: sql<string>`${this.userCouponInstance.grantSnapshot}->>'name'`,
-        targetScope: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'targetScope')::int`,
-        discountAmount: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'discountAmount')::int`,
-        discountRateBps: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'discountRateBps')::int`,
-        validDays: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'validDays')::int`,
-        benefitDays: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'benefitDays')::int`,
-        benefitCount: sql<number>`(${this.userCouponInstance.grantSnapshot}->>'benefitCount')::int`,
+        targetScope:
+          sql<number>`(${this.userCouponInstance.grantSnapshot}->>'targetScope')::int`.mapWith(
+            Number,
+          ),
+        discountAmount:
+          sql<number>`(${this.userCouponInstance.grantSnapshot}->>'discountAmount')::int`.mapWith(
+            Number,
+          ),
+        discountRateBps:
+          sql<number>`(${this.userCouponInstance.grantSnapshot}->>'discountRateBps')::int`.mapWith(
+            Number,
+          ),
+        validDays:
+          sql<number>`(${this.userCouponInstance.grantSnapshot}->>'validDays')::int`.mapWith(
+            Number,
+          ),
+        benefitDays:
+          sql<number>`(${this.userCouponInstance.grantSnapshot}->>'benefitDays')::int`.mapWith(
+            Number,
+          ),
+        benefitCount:
+          sql<number>`(${this.userCouponInstance.grantSnapshot}->>'benefitCount')::int`.mapWith(
+            Number,
+          ),
       })
       .from(this.userCouponInstance)
       .where(
@@ -889,14 +1353,17 @@ export class CouponService {
 
   // 核销用户券并在同一事务中执行对应权益发放。
   async redeemCoupon(dto: RedeemCouponCommandDto) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const redemption = await this.redeemCouponInTx(tx, dto)
-      return this.toCouponRedemptionResultDto(redemption)
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const redemption = await this.redeemCouponInTx(tx, dto)
+        return this.toCouponRedemptionResultDto(redemption)
+      },
     })
   }
 
   // 在外部事务中核销券，并仅在首次核销时执行权益发放副作用。
   private async redeemCouponInTx(tx: CouponTx, dto: RedeemCouponCommandDto) {
+    await this.lockCouponInstanceAndUserForRedemption(tx, dto)
     const coupon = await this.getCouponInstanceWithDefinition(tx, dto)
     this.assertSnapshotCouponType(coupon)
     if (coupon.couponType === CouponTypeEnum.DISCOUNT) {

@@ -45,6 +45,33 @@ export class WalletService {
     return this.drizzle.schema.currencyPackage
   }
 
+  // 后台充值包分页的稳定 contract。
+  private buildCurrencyPackagePageSelect() {
+    return {
+      id: this.currencyPackage.id,
+      packageKey: this.currencyPackage.packageKey,
+      name: this.currencyPackage.name,
+      price: this.currencyPackage.price,
+      currencyAmount: this.currencyPackage.currencyAmount,
+      bonusAmount: this.currencyPackage.bonusAmount,
+      sortOrder: this.currencyPackage.sortOrder,
+      isEnabled: this.currencyPackage.isEnabled,
+      createdAt: this.currencyPackage.createdAt,
+      updatedAt: this.currencyPackage.updatedAt,
+    }
+  }
+
+  // 创建充值订单只需写入目标快照所依赖的字段。
+  private buildEnabledCurrencyPackageForRechargeSelect() {
+    return {
+      id: this.currencyPackage.id,
+      packageKey: this.currencyPackage.packageKey,
+      price: this.currencyPackage.price,
+      currencyAmount: this.currencyPackage.currencyAmount,
+      bonusAmount: this.currencyPackage.bonusAmount,
+    }
+  }
+
   // 启用或停用虚拟币充值包。
   async updateCurrencyPackageStatus(id: number, isEnabled: boolean) {
     await this.drizzle.withErrorHandling(
@@ -99,7 +126,7 @@ export class WalletService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildCurrencyPackagePageSelect())
         .from(this.currencyPackage)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -130,7 +157,7 @@ export class WalletService {
     dto: CreateCurrencyRechargeOrderDto,
   ) {
     const [pack] = await this.db
-      .select()
+      .select(this.buildEnabledCurrencyPackageForRechargeSelect())
       .from(this.currencyPackage)
       .where(
         and(

@@ -1,6 +1,12 @@
-import type { WorkChapterSelect } from '@db/schema'
+import type { DbTransaction } from '@db/core'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  DrizzleService,
+  tableIntegrityLock,
+  toPageResult,
+} from '@db/core'
 
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
@@ -32,6 +38,7 @@ import {
   AdminChapterPageRow,
   AppChapterPageRow,
   SwapWorkChapterNumbersInput,
+  WorkChapterAdminDetailRow,
   WorkChapterDetailContext,
   WorkChapterPublicDetailRow,
 } from './work-chapter.type'
@@ -72,6 +79,31 @@ export class WorkChapterService {
     return this.drizzle.schema.appUser
   }
 
+  // 用户等级规则表访问入口。
+  get userLevelRule() {
+    return this.drizzle.schema.userLevelRule
+  }
+
+  /**
+   * work_chapter.required_read_level_id 没有物理外键。调用方先取得与父删除
+   * 相同的 canonical lock，再在当前事务内复查引用目标。
+   */
+  private async assertRequiredViewLevelInTx(
+    tx: DbTransaction,
+    requiredViewLevelId: number,
+  ) {
+    const levelRule = await tx.query.userLevelRule.findFirst({
+      where: { id: requiredViewLevelId },
+      columns: { id: true },
+    })
+    if (!levelRule) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '阅读等级规则不存在',
+      )
+    }
+  }
+
   // 构建 app/public 章节详情响应，明确裁剪 remark、删除标记和后台挂载对象，避免公开接口直接暴露内部字段。
   private buildPublicChapterDetail(chapter: WorkChapterPublicDetailRow) {
     return {
@@ -107,19 +139,7 @@ export class WorkChapterService {
   }
 
   private buildAdminChapterDetail(
-    chapter: WorkChapterSelect & {
-      content: string | string[] | null
-      work: {
-        id: number
-        name: string
-        type: number
-      } | null
-      requiredViewLevel: {
-        id: number
-        name: string
-        color: string | null
-      } | null
-    },
+    chapter: WorkChapterAdminDetailRow,
   ): AdminWorkChapterDetailDto {
     if (!chapter.work) {
       throw new BusinessException(
@@ -193,16 +213,26 @@ export class WorkChapterService {
       )
     }
 
-    if (!(await this.workExists(workId, expectedType))) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '关联的作品不存在',
-      )
-    }
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const requiredViewLevelId = createDto.requiredViewLevelId
+        if (requiredViewLevelId !== undefined && requiredViewLevelId !== null) {
+          await acquireIntegrityLocks(tx, [
+            tableIntegrityLock('user_level_rule', requiredViewLevelId),
+          ])
+        }
 
-    return this.drizzle.withErrorHandling(
-      async () => {
-        const [createdChapter] = await this.db
+        if (!(await this.workExists(tx, workId, expectedType))) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '关联的作品不存在',
+          )
+        }
+        if (requiredViewLevelId !== undefined && requiredViewLevelId !== null) {
+          await this.assertRequiredViewLevelInTx(tx, requiredViewLevelId)
+        }
+
+        const [createdChapter] = await tx
           .insert(this.workChapter)
           .values(createDto)
           .returning({ id: this.workChapter.id })
@@ -216,8 +246,8 @@ export class WorkChapterService {
 
         return createdChapter.id
       },
-      { duplicate: '该作品下章节号已存在' },
-    )
+      messages: { duplicate: '该作品下章节号已存在' },
+    })
   }
 
   private buildAdminChapterPageConditions(
@@ -453,6 +483,7 @@ export class WorkChapterService {
         ...(expectedType ? { workType: expectedType } : {}),
         deletedAt: { isNull: true },
       },
+      columns: this.getChapterDetailColumns(),
       with: {
         work: {
           columns: {
@@ -653,20 +684,15 @@ export class WorkChapterService {
     }
 
     const adjacentChapter = await this.db.query.workChapter.findFirst({
-      where:
-        direction === 'previous'
-          ? {
-              workId: currentChapter.workId,
-              ...(expectedType ? { workType: expectedType } : {}),
-              sortOrder: { lt: currentChapter.sortOrder },
-              deletedAt: { isNull: true },
-            }
-          : {
-              workId: currentChapter.workId,
-              ...(expectedType ? { workType: expectedType } : {}),
-              sortOrder: { gt: currentChapter.sortOrder },
-              deletedAt: { isNull: true },
-            },
+      where: {
+        workId: currentChapter.workId,
+        ...(expectedType ? { workType: expectedType } : {}),
+        sortOrder:
+          direction === 'previous'
+            ? { lt: currentChapter.sortOrder }
+            : { gt: currentChapter.sortOrder },
+        deletedAt: { isNull: true },
+      },
       orderBy:
         direction === 'previous' ? { sortOrder: 'desc' } : { sortOrder: 'asc' },
       columns: {
@@ -693,9 +719,17 @@ export class WorkChapterService {
       workType?: WorkTypeEnum
     }
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const requiredViewLevelId = updateData.requiredViewLevelId
+        if (requiredViewLevelId !== undefined && requiredViewLevelId !== null) {
+          await acquireIntegrityLocks(tx, [
+            tableIntegrityLock('user_level_rule', requiredViewLevelId),
+          ])
+          await this.assertRequiredViewLevelInTx(tx, requiredViewLevelId)
+        }
+
+        const result = await tx
           .update(this.workChapter)
           .set(updateData)
           .where(
@@ -704,12 +738,11 @@ export class WorkChapterService {
               eq(this.workChapter.workType, expectedType),
               isNull(this.workChapter.deletedAt),
             ),
-          ),
-      {
-        duplicate: '该作品下章节号已存在',
-        notFound: '章节不存在',
+          )
+        this.drizzle.assertAffectedRows(result, '章节不存在')
       },
-    )
+      messages: { duplicate: '该作品下章节号已存在' },
+    })
     return true
   }
 
@@ -733,27 +766,29 @@ export class WorkChapterService {
       return true
     }
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const updatedRows = await tx
-        .update(this.workChapter)
-        .set({ isPublished: dto.isPublished })
-        .where(
-          and(
-            inArray(this.workChapter.id, uniqueIds),
-            eq(this.workChapter.workType, workType),
-            isNull(this.workChapter.deletedAt),
-          ),
-        )
-        .returning({
-          id: this.workChapter.id,
-        })
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const updatedRows = await tx
+          .update(this.workChapter)
+          .set({ isPublished: dto.isPublished })
+          .where(
+            and(
+              inArray(this.workChapter.id, uniqueIds),
+              eq(this.workChapter.workType, workType),
+              isNull(this.workChapter.deletedAt),
+            ),
+          )
+          .returning({
+            id: this.workChapter.id,
+          })
 
-      if (updatedRows.length !== uniqueIds.length) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '章节不存在',
-        )
-      }
+        if (updatedRows.length !== uniqueIds.length) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '章节不存在',
+          )
+        }
+      },
     })
 
     return true
@@ -769,27 +804,53 @@ export class WorkChapterService {
       return true
     }
 
-    await this.drizzle.withTransaction(async (tx) => {
-      const deletedRows = await tx
-        .update(this.workChapter)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            inArray(this.workChapter.id, uniqueIds),
-            eq(this.workChapter.workType, expectedType),
-            isNull(this.workChapter.deletedAt),
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(
+          tx,
+          uniqueIds.map((chapterId) =>
+            tableIntegrityLock('work_chapter', chapterId),
           ),
         )
-        .returning({
-          id: this.workChapter.id,
-        })
+        const activeChapters = await tx
+          .select({ id: this.workChapter.id })
+          .from(this.workChapter)
+          .where(
+            and(
+              inArray(this.workChapter.id, uniqueIds),
+              eq(this.workChapter.workType, expectedType),
+              isNull(this.workChapter.deletedAt),
+            ),
+          )
 
-      if (deletedRows.length !== uniqueIds.length) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '章节不存在',
-        )
-      }
+        if (activeChapters.length !== uniqueIds.length) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '章节不存在',
+          )
+        }
+
+        const deletedRows = await tx
+          .update(this.workChapter)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              inArray(this.workChapter.id, uniqueIds),
+              eq(this.workChapter.workType, expectedType),
+              isNull(this.workChapter.deletedAt),
+            ),
+          )
+          .returning({
+            id: this.workChapter.id,
+          })
+
+        if (deletedRows.length !== uniqueIds.length) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '章节不存在',
+          )
+        }
+      },
     })
 
     return true
@@ -800,87 +861,91 @@ export class WorkChapterService {
     dto: SwapWorkChapterNumbersInput,
     expectedType: WorkTypeEnum,
   ) {
-    return this.drizzle.withTransaction(async (tx) => {
-      const rows = await tx
-        .select({
-          id: this.workChapter.id,
-          workId: this.workChapter.workId,
-          sortOrder: this.workChapter.sortOrder,
-        })
-        .from(this.workChapter)
-        .where(
-          and(
-            inArray(this.workChapter.id, [dto.dragId, dto.targetId]),
-            eq(this.workChapter.workType, expectedType),
-            isNull(this.workChapter.deletedAt),
-          ),
-        )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const rows = await tx
+          .select({
+            id: this.workChapter.id,
+            workId: this.workChapter.workId,
+            sortOrder: this.workChapter.sortOrder,
+          })
+          .from(this.workChapter)
+          .where(
+            and(
+              inArray(this.workChapter.id, [dto.dragId, dto.targetId]),
+              eq(this.workChapter.workType, expectedType),
+              isNull(this.workChapter.deletedAt),
+            ),
+          )
 
-      const dragChapter = rows.find((row) => row.id === dto.dragId)
-      const targetChapter = rows.find((row) => row.id === dto.targetId)
+        const dragChapter = rows.find((row) => row.id === dto.dragId)
+        const targetChapter = rows.find((row) => row.id === dto.targetId)
 
-      if (!dragChapter || !targetChapter) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '章节不存在',
-        )
-      }
-      if (dragChapter.workId !== targetChapter.workId) {
-        throw new BusinessException(
-          BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '章节不是同一作品',
-        )
-      }
-      if (dragChapter.sortOrder === targetChapter.sortOrder) {
+        if (!dragChapter || !targetChapter) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '章节不存在',
+          )
+        }
+        if (dragChapter.workId !== targetChapter.workId) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '章节不是同一作品',
+          )
+        }
+        if (dragChapter.sortOrder === targetChapter.sortOrder) {
+          return true
+        }
+
+        const [minimumSortOrder] = await tx
+          .select({
+            value: sql<number>`min(${this.workChapter.sortOrder})`.mapWith(
+              Number,
+            ),
+          })
+          .from(this.workChapter)
+          .where(
+            and(
+              eq(this.workChapter.workId, dragChapter.workId),
+              eq(this.workChapter.workType, expectedType),
+              isNull(this.workChapter.deletedAt),
+            ),
+          )
+        const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
+
+        await tx
+          .update(this.workChapter)
+          .set({ sortOrder: temporarySortOrder })
+          .where(
+            and(
+              eq(this.workChapter.id, dragChapter.id),
+              eq(this.workChapter.workType, expectedType),
+              isNull(this.workChapter.deletedAt),
+            ),
+          )
+        await tx
+          .update(this.workChapter)
+          .set({ sortOrder: dragChapter.sortOrder })
+          .where(
+            and(
+              eq(this.workChapter.id, targetChapter.id),
+              eq(this.workChapter.workType, expectedType),
+              isNull(this.workChapter.deletedAt),
+            ),
+          )
+        await tx
+          .update(this.workChapter)
+          .set({ sortOrder: targetChapter.sortOrder })
+          .where(
+            and(
+              eq(this.workChapter.id, dragChapter.id),
+              eq(this.workChapter.workType, expectedType),
+              isNull(this.workChapter.deletedAt),
+            ),
+          )
+
         return true
-      }
-
-      const [minimumSortOrder] = await tx
-        .select({
-          value: sql<number>`min(${this.workChapter.sortOrder})`,
-        })
-        .from(this.workChapter)
-        .where(
-          and(
-            eq(this.workChapter.workId, dragChapter.workId),
-            eq(this.workChapter.workType, expectedType),
-            isNull(this.workChapter.deletedAt),
-          ),
-        )
-      const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
-
-      await tx
-        .update(this.workChapter)
-        .set({ sortOrder: temporarySortOrder })
-        .where(
-          and(
-            eq(this.workChapter.id, dragChapter.id),
-            eq(this.workChapter.workType, expectedType),
-            isNull(this.workChapter.deletedAt),
-          ),
-        )
-      await tx
-        .update(this.workChapter)
-        .set({ sortOrder: dragChapter.sortOrder })
-        .where(
-          and(
-            eq(this.workChapter.id, targetChapter.id),
-            eq(this.workChapter.workType, expectedType),
-            isNull(this.workChapter.deletedAt),
-          ),
-        )
-      await tx
-        .update(this.workChapter)
-        .set({ sortOrder: targetChapter.sortOrder })
-        .where(
-          and(
-            eq(this.workChapter.id, dragChapter.id),
-            eq(this.workChapter.workType, expectedType),
-            isNull(this.workChapter.deletedAt),
-          ),
-        )
-
-      return true
+      },
     })
   }
 
@@ -903,6 +968,39 @@ export class WorkChapterService {
       createdAt: this.workChapter.createdAt,
       updatedAt: this.workChapter.updatedAt,
     }
+  }
+
+  // app/admin 章节详情的稳定读取 contract。删除标记仅用于 where，不应进入详情模型。
+  private getChapterDetailColumns() {
+    return {
+      id: true,
+      workId: true,
+      workType: true,
+      title: true,
+      subtitle: true,
+      cover: true,
+      description: true,
+      sortOrder: true,
+      isPublished: true,
+      isPreview: true,
+      publishAt: true,
+      viewRule: true,
+      requiredViewLevelId: true,
+      price: true,
+      canDownload: true,
+      canComment: true,
+      novelContentPath: true,
+      comicContentManifest: true,
+      wordCount: true,
+      viewCount: true,
+      likeCount: true,
+      commentCount: true,
+      purchaseCount: true,
+      downloadCount: true,
+      remark: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
   }
 
   private adminChapterPageColumns() {
@@ -951,8 +1049,12 @@ export class WorkChapterService {
     return toPageResult<AdminChapterPageRow>(list, total, page)
   }
 
-  private async workExists(workId: number, expectedType?: WorkTypeEnum) {
-    const [row] = await this.db
+  private async workExists(
+    tx: DbTransaction,
+    workId: number,
+    expectedType?: WorkTypeEnum,
+  ) {
+    const [row] = await tx
       .select({ id: this.work.id })
       .from(this.work)
       .where(

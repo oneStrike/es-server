@@ -3,7 +3,7 @@
 本文件只记录当前仍有效的现实差距。
 
 - 它不是放宽规则的许可，也不得用于新增同类债务。
-- 当前零债务 development epoch 已把下列差距纳入闭集；执行者应按阶段关闭，不得把“仓库目前如此”解释成目标状态。
+- 下列差距应按既定计划关闭，不得把“仓库目前如此”解释成目标状态。
 - 仓库现状变化时，与相关规则或配置同轮更新本文件。
 
 ## TypeScript / ESLint 基线差距
@@ -16,10 +16,13 @@
 
 ## 测试工具链过渡差距
 
-- 当前状态：纪元起点的长期测试为 0；仓库已有 Jest、ts-jest、Supertest 和 `jest.config.cjs`，但分层长期测试、Jest 30 + SWC 与 `test:*`/`pnpm check` 聚合入口尚未完成。
+- 当前状态：仓库级硬约束不保留测试文件；因此不以 `test:*`、Jest 聚合或 `pnpm check`
+  作为交付入口。可长期保留的是 operation/static gate 与脱敏 `.omx` evidence。
 - 关联规则：[08-testing.md](./08-testing.md)、[AGENTS.md](../../AGENTS.md)。
-- 处理：从当前 epoch 起允许且要求提交有回归价值的长期测试；不得继续删除它们。Phase 1 统一 Jest 30 + SWC，脚本就绪前使用当前可执行的定点 Jest/tsc/build 入口并记录命令。
-- 关闭条件：unit/integration/e2e/architecture/performance 入口、覆盖率与 CI 门禁全部可运行，ts-jest 删除。
+- 处理：临时测试只在系统临时目录或显式 ephemeral location 运行并删除；将可重复的
+  contract/DB/performance proof 收敛为受控脚本和 evidence，不得伪造不存在的聚合命令。
+- 关闭条件：所有 required gate 均有真实、无隐式写入的 command/evidence，且仓库中没有
+  遗留测试文件或临时 probe。
 
 ## NestJS 架构基线差距
 
@@ -27,13 +30,6 @@
 - 关联规则：[09-nestjs-architecture.md](./09-nestjs-architecture.md)、[01-import-boundaries.md](./01-import-boundaries.md)。
 - 处理：只允许按唯一 DAG 删除边和显式装配；不得新增 `forwardRef()`、service locator、中央万能 port 或新的 business global 作为过渡方案。
 - 关闭条件：architecture gate 证明 0 business global、0 strict:false、0 duplicate provider、0 runtime SCC，HTTP/WS composition e2e 通过。
-
-## Development epoch migration 例外
-
-- 当前状态：仓库有 127 条 migration 历史；常规 append-only 规则与当前一次性 baseline reset 授权同时存在。
-- 关联规则：[07-drizzle.md](./07-drizzle.md)、[07-drizzle-operations.md](./07-drizzle-operations.md)、[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md)。
-- 处理：只有本 epoch 在 schema/index/comments 冻结、三重 guard 与 Gate A/B/C 全部通过后才能删除旧链并重建已授权 dev/test 数据库。普通任务继续 append-only。
-- 关闭条件：唯一 baseline 固化、目标开发库重建、完成 tag 与证据记录后，删除本节并恢复无例外 append-only。
 
 ## Drizzle RC 风险
 
@@ -51,7 +47,7 @@
 
 - 当前状态：平台层把未显式声明状态码的 `POST` 成功响应归一为 `200`；创建/上传等明确需要 `201` 的接口才使用 `@HttpCode(201)` 并同步 Swagger。
 - 关联规则：[02-controller.md](./02-controller.md)、[06-error-handling.md](./06-error-handling.md)。
-- 处理：不要机械补 `@HttpCode(200)`；状态变化必须同步 canonical contract 与永久 HTTP e2e。
+- 处理：不要机械补 `@HttpCode(200)`；状态变化必须同步 canonical contract 与可重复 HTTP 验证，临时代码按 `AGENTS.md` 删除。
 
 ## Markdown 文档检查路径
 

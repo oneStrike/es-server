@@ -1,9 +1,9 @@
-import type { Db } from '@db/core'
+import type { DbTransaction } from '@db/core'
 import type { AppAgreementSelect } from '@db/schema'
 import type { CreateMembershipPlanDto } from '../dto/membership.dto'
 
 /** 会员域事务上下文，供支付结算链路显式透传。 */
-export type MembershipTx = Db
+export type MembershipTx = DbTransaction
 
 /**
  * VIP 协议快照字段，写入订单时冻结用户下单时看到的协议版本。

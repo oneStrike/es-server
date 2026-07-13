@@ -70,7 +70,7 @@ export const workThirdPartySourceBinding = snakeCase.table(
       sql`length(trim(${table.providerPathWord})) > 0`,
     ),
     check(
-      'work_third_party_source_binding_provider_group_path_word_nonblank_chk',
+      'work_tp_source_binding_group_path_nonblank_chk',
       sql`length(trim(${table.providerGroupPathWord})) > 0`,
     ),
   ],

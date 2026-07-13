@@ -16,6 +16,8 @@ export const PostgresErrorCode = {
   CHECK_VIOLATION: '23514',
   /** 事务序列化失败 */
   SERIALIZATION_FAILURE: '40001',
+  /** 事务死锁 */
+  DEADLOCK_DETECTED: '40P01',
 } as const
 
 export type PostgresErrorCodeValue =
@@ -82,6 +84,13 @@ const POSTGRES_ERROR_DESCRIPTORS: Record<
     messageKey: 'check',
   },
   [PostgresErrorCode.SERIALIZATION_FAILURE]: {
+    message: '操作冲突，请重试',
+    status: HttpStatus.CONFLICT,
+    responseCode: BusinessErrorCode.STATE_CONFLICT,
+    exceptionKind: 'business',
+    messageKey: 'conflict',
+  },
+  [PostgresErrorCode.DEADLOCK_DETECTED]: {
     message: '操作冲突，请重试',
     status: HttpStatus.CONFLICT,
     responseCode: BusinessErrorCode.STATE_CONFLICT,

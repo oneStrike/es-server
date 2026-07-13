@@ -1,9 +1,7 @@
 import type { Db, DrizzleService } from '@db/core'
+import type { CheckInConfigSelect } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import type {
-  CheckInDateLike,
-  CheckInNullableDateLike,
-} from './check-in.type'
+import type { CheckInDateLike, CheckInNullableDateLike } from './check-in.type'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -14,6 +12,22 @@ import { BadRequestException, Logger } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 
 const CHECK_IN_CONFIG_KEY = 'global'
+
+/** 签到运行时读取配置所需的最小字段集。 */
+export type CheckInConfigRuntimeRow = Pick<
+  CheckInConfigSelect,
+  | 'id'
+  | 'isEnabled'
+  | 'makeupPeriodType'
+  | 'periodicAllowance'
+  | 'makeupIconUrl'
+  | 'rewardOverviewIconUrl'
+  | 'baseRewardItems'
+  | 'dateRewardRules'
+  | 'patternRewardRules'
+  | 'createdAt'
+  | 'updatedAt'
+>
 
 /**
  * 统一签到域 support 基类。
@@ -126,15 +140,32 @@ export abstract class CheckInServiceSupport {
   }
 
   // 读取当前唯一的签到配置；配置缺失时返回空值。
-  protected async getCurrentConfig(db: Db = this.db) {
+  protected async getCurrentConfig(
+    db: Db = this.db,
+  ): Promise<CheckInConfigRuntimeRow | undefined> {
     const [config] = await db
-      .select()
+      .select(this.buildConfigRuntimeSelect())
       .from(this.checkInConfigTable)
-      .where(
-        eq(this.checkInConfigTable.configKey, this.checkInConfigKey),
-      )
+      .where(eq(this.checkInConfigTable.configKey, this.checkInConfigKey))
       .limit(1)
     return config
+  }
+
+  // 配置运行时只读取奖励解析、补签和管理详情所需字段。
+  private buildConfigRuntimeSelect() {
+    return {
+      id: this.checkInConfigTable.id,
+      isEnabled: this.checkInConfigTable.isEnabled,
+      makeupPeriodType: this.checkInConfigTable.makeupPeriodType,
+      periodicAllowance: this.checkInConfigTable.periodicAllowance,
+      makeupIconUrl: this.checkInConfigTable.makeupIconUrl,
+      rewardOverviewIconUrl: this.checkInConfigTable.rewardOverviewIconUrl,
+      baseRewardItems: this.checkInConfigTable.baseRewardItems,
+      dateRewardRules: this.checkInConfigTable.dateRewardRules,
+      patternRewardRules: this.checkInConfigTable.patternRewardRules,
+      createdAt: this.checkInConfigTable.createdAt,
+      updatedAt: this.checkInConfigTable.updatedAt,
+    } as const
   }
 
   // 读取当前签到配置；缺失时统一抛资源不存在异常。

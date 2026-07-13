@@ -11,7 +11,11 @@ import {
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service'
 import { GrowthRewardSettlementRetryService } from '@libs/growth/growth-reward/growth-reward-settlement-retry.service'
 import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
-import { normalizeTaskType, TaskDefinitionStatusEnum, TaskStepTriggerModeEnum } from '@libs/growth/task/task.constant'
+import {
+  normalizeTaskType,
+  TaskDefinitionStatusEnum,
+  TaskStepTriggerModeEnum,
+} from '@libs/growth/task/task.constant'
 
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
@@ -69,6 +73,20 @@ export class GrowthService {
   // 复用任务步骤表。
   private get taskStepTable() {
     return this.drizzle.schema.taskStep
+  }
+
+  private get growthRewardEventSelect() {
+    return {
+      id: this.growthRewardRule.id,
+      type: this.growthRewardRule.type,
+      assetType: this.growthRewardRule.assetType,
+      assetKey: this.growthRewardRule.assetKey,
+      delta: this.growthRewardRule.delta,
+      dailyLimit: this.growthRewardRule.dailyLimit,
+      totalLimit: this.growthRewardRule.totalLimit,
+      isEnabled: this.growthRewardRule.isEnabled,
+      remark: this.growthRewardRule.remark,
+    }
   }
 
   // 按事件聚合基础奖励与任务 bonus 关联关系，只负责读模型解释力。
@@ -211,7 +229,7 @@ export class GrowthService {
       return []
     }
     return this.db
-      .select()
+      .select(this.growthRewardEventSelect)
       .from(this.growthRewardRule)
       .where(
         and(

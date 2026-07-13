@@ -7,9 +7,9 @@
 - 何时看：改 module imports/exports、provider 注册、`@Global()`、`ModuleRef`、跨域调用、事件、事务或 HTTP/WS enhancer 时先看本篇。
 - 必做：所有 runtime edge 遵循唯一 package DAG；一个 provider 只有一个 owner module；跨域同步能力使用 consumer-owned port，异步事实使用 producer-owned event；HTTP 与 WS 显式独立装配。
 - 不要：新增业务 global、service locator、重复 provider、循环依赖、中央万能 integration/repository 或隐式事务。
-- 最低验证：`pnpm type-check`、模块编译测试、`pnpm boundaries:check`；协议装配变化再跑对应 HTTP/WS e2e。
+- 最低验证：`pnpm type-check`、对应 module/import static gate 与 ephemeral module/HTTP/WS 验证；不得引用不存在的 `pnpm boundaries:check`。
 
-本篇是 NestJS 架构约束的单一事实源。导入路径形状仍以 [01-import-boundaries.md](./01-import-boundaries.md) 为准，测试门禁以 [08-testing.md](./08-testing.md) 为准，当前破坏性授权以[零债务开发纪元 ADR](../../docs/architecture/zero-debt-development-epoch.md) 为准。
+本篇是 NestJS 架构约束的单一事实源。导入路径形状仍以 [01-import-boundaries.md](./01-import-boundaries.md) 为准，测试门禁以 [08-testing.md](./08-testing.md) 为准；破坏性更新必须先形成明确决策。
 
 ## 唯一 runtime package DAG
 
@@ -32,7 +32,7 @@ apps/* 与 operational CLI composition
 ```
 
 - 箭头表示唯一允许的依赖方向：左侧可以依赖右侧，右侧不得反向导入左侧；不要求每个相邻节点直接依赖。
-- operational CLI composition 明确包括 `db/bootstrap/**`、`db/seed/**`、`db/migrate.ts` 与 `scripts/**`。它们与 `apps/*` 一样只能装配并向下依赖 runtime owner；任何业务 runtime package 都不得反向导入这些可执行入口。
+- operational CLI composition 明确包括 `db/operations/**`、`db/targets/**`、`db/bootstrap/**`、`db/seed/**`、`db/migrate.ts` 与保留的 `scripts/**` 注释/RBAC 入口。它们与 `apps/*` 一样只能装配并向下依赖 runtime owner；任何业务 runtime package 都不得反向导入这些可执行入口。`db/operations/**` 只承载数据库 operation/static gate，不得被 `apps/**`、`libs/**`、`db/core/**` 或 `db/schema/**` 反向导入，也不得新增 barrel。
 - package group 必须覆盖全部 runtime owner：`content/app-content` 对应 `libs/content` 与 `libs/app-content`，`moderation` 对应 `libs/moderation`（包括物理目录 `libs/moderation/sensitive-word` 和别名 `@libs/sensitive-word`），`system-config` 对应 `libs/config`，`user/identity` 对应 `libs/user` 与 `libs/identity`。`account/read-model`、`eventing/workflow` 是本纪元收敛后的 owner 组；从 `libs/platform` 抽离前仍按目标组而不是物理旧目录判定。
 - `db/core → db/relations → db/schema` 是数据库内部的唯一运行方向；业务代码只通过受控 `@db/core` / `@db/schema` public API 使用数据库能力，不把 `@db/relations` 暴露为业务入口。
 - 新增顶层 `apps/*`、`libs/*` 或 `db/*` runtime package 前，必须先把它登记到上述唯一顺序及 machine-readable boundary 配置；未映射 package 直接使边界门禁失败，不允许默认放行。
@@ -73,7 +73,7 @@ apps/* 与 operational CLI composition
 - HTTP application global enhancer 只服务 HTTP；Gateway/adapter 不得假设会继承正确的 HTTP global 行为。
 - WS 必须显式装配专用 auth、validation、throttling、exception/ACK chain；不得执行依赖 HTTP response、header 或 request lifecycle 的逻辑。
 - HTTP 与 WS 可以复用纯 policy/service，但必须各自拥有 transport adapter 与错误映射。
-- transport contract 变化必须由永久 HTTP/WS e2e 证明实际调用链、鉴权、失败码与副作用，而不是依赖 Nest 隐式行为假设。
+- transport contract 变化必须由可重复 HTTP/WS e2e proof 证明实际调用链、鉴权、失败码与副作用，而不是依赖 Nest 隐式行为假设；临时代码按 `AGENTS.md` 删除。
 
 ## Service 职责
 
@@ -85,6 +85,6 @@ apps/* 与 operational CLI composition
 ## 架构门禁
 
 - 静态扫描必须证明唯一 package 顺序、0 runtime SCC、0 business global、0 `strict:false`、0 forbidden barrel 与 0 重复 provider。
-- 每个 feature module 必须有永久 TestingModule 编译测试，证明 imports/exports 与 provider token 完整且唯一。
-- HTTP/WS composition 必须有协议级 e2e；跨 port 事务必须有提交、回滚与失败分支集成测试；event/outbox 必须有幂等与投递失败测试。
+- 每个 feature module 必须有可重复的 module compilation proof，证明 imports/exports 与 provider token 完整且唯一；按 `AGENTS.md`，临时测试代码在验证后删除。
+- HTTP/WS composition 必须有协议级 proof；跨 port 事务必须有提交、回滚与失败分支验证；event/outbox 必须有幂等与投递失败验证。仓库中不得遗留 test 文件或临时 probe。
 - 任何例外必须先修改本篇或 `AI_EXCEPTIONS.md`，写明 owner、理由、验证与到期条件；实现中的局部注释不能替代规则决策。

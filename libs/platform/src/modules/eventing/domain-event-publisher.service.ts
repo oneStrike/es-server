@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type {
   PublishDomainEventBatchResult,
   PublishDomainEventInput,
@@ -25,16 +25,32 @@ export class DomainEventPublisher {
     return this.drizzle.schema.domainEventDispatch
   }
 
+  // dispatch 返回面严格限定为稳定领域记录，归档保留字段仅供后台维护。
+  private buildDomainEventDispatchRecordSelect() {
+    return {
+      id: this.domainEventDispatch.id,
+      eventId: this.domainEventDispatch.eventId,
+      consumer: this.domainEventDispatch.consumer,
+      status: this.domainEventDispatch.status,
+      retryCount: this.domainEventDispatch.retryCount,
+      nextRetryAt: this.domainEventDispatch.nextRetryAt,
+      lastError: this.domainEventDispatch.lastError,
+      processedAt: this.domainEventDispatch.processedAt,
+      createdAt: this.domainEventDispatch.createdAt,
+      updatedAt: this.domainEventDispatch.updatedAt,
+    }
+  }
+
   async publish(
     input: PublishDomainEventInput,
   ): Promise<PublishDomainEventResult> {
-    return this.drizzle.withTransaction(async (tx) =>
-      this.publishInTx(tx, input),
-    )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => this.publishInTx(tx, input),
+    })
   }
 
   async publishInTx(
-    tx: Db,
+    tx: DbExecutor,
     input: PublishDomainEventInput,
   ): Promise<PublishDomainEventResult> {
     if (!input.consumers.length) {
@@ -42,6 +58,7 @@ export class DomainEventPublisher {
     }
 
     const occurredAt = input.occurredAt ?? new Date()
+    // 领域事件是不可变完整事实，发布结果必须保留完整载荷。
     const insertedEvents = await tx
       .insert(this.domainEvent)
       .values({
@@ -67,6 +84,7 @@ export class DomainEventPublisher {
         throw new Error('领域事件写入失败')
       }
 
+      // 幂等命中时同样读取完整领域事实，避免丢失原始 context。
       const existingEvents = await tx
         .select()
         .from(this.domainEvent)
@@ -83,7 +101,7 @@ export class DomainEventPublisher {
       }
 
       const existingDispatches = await tx
-        .select()
+        .select(this.buildDomainEventDispatchRecordSelect())
         .from(this.domainEventDispatch)
         .where(eq(this.domainEventDispatch.eventId, existingEvent.id))
 
@@ -106,7 +124,7 @@ export class DomainEventPublisher {
           status: DomainEventDispatchStatusEnum.PENDING,
         })),
       )
-      .returning()
+      .returning(this.buildDomainEventDispatchRecordSelect())
 
     return {
       duplicated: false,
@@ -121,13 +139,13 @@ export class DomainEventPublisher {
   async publishManyByIdempotencyKey(
     inputs: PublishDomainEventInput[],
   ): Promise<PublishDomainEventBatchResult> {
-    return this.drizzle.withTransaction(async (tx) =>
-      this.publishManyByIdempotencyKeyInTx(tx, inputs),
-    )
+    return this.drizzle.withTransaction({
+      execute: async (tx) => this.publishManyByIdempotencyKeyInTx(tx, inputs),
+    })
   }
 
   async publishManyByIdempotencyKeyInTx(
-    tx: Db,
+    tx: DbExecutor,
     inputs: PublishDomainEventInput[],
   ): Promise<PublishDomainEventBatchResult> {
     if (inputs.length === 0) {
@@ -154,6 +172,7 @@ export class DomainEventPublisher {
       }
     })
 
+    // 批量发布的领域事件与单条发布一致，返回完整不可变事实。
     const insertedEvents = await tx
       .insert(this.domainEvent)
       .values(
@@ -201,7 +220,7 @@ export class DomainEventPublisher {
       ? await tx
           .insert(this.domainEventDispatch)
           .values(dispatchValues)
-          .returning()
+          .returning(this.buildDomainEventDispatchRecordSelect())
       : []
 
     return {

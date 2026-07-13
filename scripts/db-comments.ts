@@ -1,16 +1,25 @@
 import { readFileSync } from 'node:fs'
 import process from 'node:process'
 import {
-  applySchemaComments,
   buildSchemaCommentsArtifact,
   getSchemaCommentsOutputPath,
   writeSchemaCommentsFile,
 } from '../db/comments/schema-comments'
 
 async function main() {
-  const args = new Set(process.argv.slice(2))
-  const shouldCheck = args.has('--check')
-  const shouldApply = args.has('--apply')
+  const args = process.argv.slice(2)
+  const unknownArguments = args.filter(
+    (argument) => argument !== '--apply' && argument !== '--check',
+  )
+  if (unknownArguments.length > 0) {
+    throw new Error(`未知参数: ${unknownArguments.join(' ')}`)
+  }
+  if (args.includes('--apply')) {
+    throw new Error(
+      '数据库注释只能由受会话锁保护的 db/migrate.ts 同步，独立 --apply 已移除',
+    )
+  }
+  const shouldCheck = args.includes('--check')
   const artifact = buildSchemaCommentsArtifact()
 
   console.log(`Schema comments SQL: ${artifact.outputPath}`)
@@ -51,28 +60,13 @@ async function main() {
     return
   }
 
-  if (!shouldApply) {
-    const writeResult = writeSchemaCommentsFile(artifact)
+  const writeResult = writeSchemaCommentsFile(artifact)
 
-    if (writeResult.changed) {
-      console.log('Generated SQL file updated.')
-    } else {
-      console.log('Generated SQL file already up to date.')
-    }
-    return
+  if (writeResult.changed) {
+    console.log('Generated SQL file updated.')
+  } else {
+    console.log('Generated SQL file already up to date.')
   }
-
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL 环境变量未设置，无法应用数据库注释')
-  }
-
-  const result = await applySchemaComments({
-    databaseUrl: process.env.DATABASE_URL,
-  })
-
-  console.log(
-    `Applied ${result.appliedStatementCount} COMMENT statements to database.`,
-  )
 }
 
 main().catch((error) => {

@@ -1,6 +1,12 @@
+import type { DbTransaction } from '@db/core'
 import type { WorkCategorySelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  buildILikeCondition,
+  DrizzleService,
+  toPageResult,
+} from '@db/core'
 
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto'
@@ -17,6 +23,7 @@ import {
   lt,
   sql,
 } from 'drizzle-orm'
+import { workCatalogCategoryLock } from '../work/core/work-integrity-lock'
 import {
   CreateCategoryDto,
   QueryAppCategoryPageDto,
@@ -55,6 +62,37 @@ export class WorkCategoryService {
   // 作品表。
   get work() {
     return this.drizzle.schema.work
+  }
+
+  // 分类列表与详情的完整当前 contract；分类表新增列不会经默认查询泄露到 app/admin。
+  private buildCategoryReadSelect() {
+    return {
+      id: this.workCategory.id,
+      name: this.workCategory.name,
+      description: this.workCategory.description,
+      icon: this.workCategory.icon,
+      contentType: this.workCategory.contentType,
+      sortOrder: this.workCategory.sortOrder,
+      isEnabled: this.workCategory.isEnabled,
+      popularity: this.workCategory.popularity,
+      createdAt: this.workCategory.createdAt,
+      updatedAt: this.workCategory.updatedAt,
+    }
+  }
+
+  private getCategoryReadColumns() {
+    return {
+      id: true,
+      name: true,
+      description: true,
+      icon: true,
+      contentType: true,
+      sortOrder: true,
+      isEnabled: true,
+      popularity: true,
+      createdAt: true,
+      updatedAt: true,
+    } as const
   }
 
   // 创建分类，未指定排序时自动追加到末尾；popularity 初始化为 0，由作品关联或外部事件驱动更新。
@@ -101,7 +139,7 @@ export class WorkCategoryService {
     })
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildCategoryReadSelect())
         .from(this.workCategory)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -146,7 +184,7 @@ export class WorkCategoryService {
     const where = and(...conditions)
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select(this.buildCategoryReadSelect())
         .from(this.workCategory)
         .where(where)
         .orderBy(...pageParams.order.orderBySql)
@@ -166,6 +204,7 @@ export class WorkCategoryService {
   async getCategoryDetail(input: IdDto) {
     const category = await this.db.query.workCategory.findFirst({
       where: { id: input.id },
+      columns: this.getCategoryReadColumns(),
     })
     if (!category) {
       throw new BusinessException(
@@ -180,125 +219,135 @@ export class WorkCategoryService {
   async updateCategory(updateCategoryDto: UpdateCategoryDto) {
     const { id, ...updateData } = updateCategoryDto
 
-    if (
-      updateData.isEnabled === false &&
-      (await this.checkCategoryHasWorks(id))
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '该分类存在关联作品，不能禁用。',
-      )
-    }
-
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [workCatalogCategoryLock(id)])
+        if (
+          updateData.isEnabled === false &&
+          (await this.checkCategoryHasWorks(id, tx))
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '该分类存在关联作品，不能禁用。',
+          )
+        }
+        const result = await tx
           .update(this.workCategory)
           .set(updateData)
-          .where(eq(this.workCategory.id, id)),
-      {
-        duplicate: '分类名称已存在',
-        notFound: '分类不存在',
+          .where(eq(this.workCategory.id, id))
+        this.drizzle.assertAffectedRows(result, '分类不存在')
       },
-    )
+      messages: { duplicate: '分类名称已存在' },
+    })
     return true
   }
 
   // 更新分类启用状态，禁用前同样要校验没有未删除作品关联，避免通过状态入口绕过完整性约束。
   async updateCategoryStatus(updateStatusDto: UpdateCategoryStatusDto) {
-    if (
-      !updateStatusDto.isEnabled &&
-      (await this.checkCategoryHasWorks(updateStatusDto.id))
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '该分类存在关联作品，不能禁用。',
-      )
-    }
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          workCatalogCategoryLock(updateStatusDto.id),
+        ])
+        if (
+          !updateStatusDto.isEnabled &&
+          (await this.checkCategoryHasWorks(updateStatusDto.id, tx))
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '该分类存在关联作品，不能禁用。',
+          )
+        }
+        const result = await tx
           .update(this.workCategory)
           .set({ isEnabled: updateStatusDto.isEnabled })
-          .where(eq(this.workCategory.id, updateStatusDto.id)),
-      { notFound: '分类不存在' },
-    )
+          .where(eq(this.workCategory.id, updateStatusDto.id))
+        this.drizzle.assertAffectedRows(result, '分类不存在')
+      },
+    })
     return true
   }
 
   // 交换两个分类的排序值，在事务中使用临时排序值避免唯一约束或并发中间态。
   async updateCategorySort(updateSortDto: UpdateCategorySortDto) {
-    await this.drizzle.withTransaction(async (tx) => {
-      const rows = await tx
-        .select({
-          id: this.workCategory.id,
-          sortOrder: this.workCategory.sortOrder,
-        })
-        .from(this.workCategory)
-        .where(
-          inArray(this.workCategory.id, [
-            updateSortDto.dragId,
-            updateSortDto.targetId,
-          ]),
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const rows = await tx
+          .select({
+            id: this.workCategory.id,
+            sortOrder: this.workCategory.sortOrder,
+          })
+          .from(this.workCategory)
+          .where(
+            inArray(this.workCategory.id, [
+              updateSortDto.dragId,
+              updateSortDto.targetId,
+            ]),
+          )
+
+        const dragCategory = rows.find((row) => row.id === updateSortDto.dragId)
+        const targetCategory = rows.find(
+          (row) => row.id === updateSortDto.targetId,
         )
 
-      const dragCategory = rows.find((row) => row.id === updateSortDto.dragId)
-      const targetCategory = rows.find(
-        (row) => row.id === updateSortDto.targetId,
-      )
+        if (!dragCategory || !targetCategory) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '分类不存在',
+          )
+        }
+        if (dragCategory.sortOrder === targetCategory.sortOrder) {
+          return true
+        }
 
-      if (!dragCategory || !targetCategory) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '分类不存在',
-        )
-      }
-      if (dragCategory.sortOrder === targetCategory.sortOrder) {
+        const temporarySortOrder =
+          (await this.resolveMinimumCategorySortOrder(tx)) - 1
+
+        await tx
+          .update(this.workCategory)
+          .set({ sortOrder: temporarySortOrder })
+          .where(eq(this.workCategory.id, dragCategory.id))
+        await tx
+          .update(this.workCategory)
+          .set({ sortOrder: dragCategory.sortOrder })
+          .where(eq(this.workCategory.id, targetCategory.id))
+        await tx
+          .update(this.workCategory)
+          .set({ sortOrder: targetCategory.sortOrder })
+          .where(eq(this.workCategory.id, dragCategory.id))
+
         return true
-      }
-
-      const temporarySortOrder =
-        (await this.resolveMinimumCategorySortOrder(tx)) - 1
-
-      await tx
-        .update(this.workCategory)
-        .set({ sortOrder: temporarySortOrder })
-        .where(eq(this.workCategory.id, dragCategory.id))
-      await tx
-        .update(this.workCategory)
-        .set({ sortOrder: dragCategory.sortOrder })
-        .where(eq(this.workCategory.id, targetCategory.id))
-      await tx
-        .update(this.workCategory)
-        .set({ sortOrder: targetCategory.sortOrder })
-        .where(eq(this.workCategory.id, dragCategory.id))
-
-      return true
+      },
     })
     return true
   }
 
   // 删除分类，删除前校验无关联作品，保证数据完整性。
   async deleteCategory(input: IdDto) {
-    if (await this.checkCategoryHasWorks(input.id)) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '该分类存在关联作品，不能删除。',
-      )
-    }
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [workCatalogCategoryLock(input.id)])
+        if (await this.checkCategoryHasWorks(input.id, tx)) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '该分类存在关联作品，不能删除。',
+          )
+        }
+        const result = await tx
           .delete(this.workCategory)
-          .where(eq(this.workCategory.id, input.id)),
-      { notFound: '分类不存在' },
-    )
+          .where(eq(this.workCategory.id, input.id))
+        this.drizzle.assertAffectedRows(result, '分类不存在')
+      },
+    })
     return true
   }
 
   // 检查分类是否存在未软删的关联作品，用于删除或禁用分类前的完整性校验。仅统计未软删作品，已软删作品不计入。
-  private async checkCategoryHasWorks(categoryId: number) {
-    const rows = await this.db
+  private async checkCategoryHasWorks(
+    categoryId: number,
+    runner: DbTransaction,
+  ) {
+    const rows = await runner
       .select({ workId: this.workCategoryRelation.workId })
       .from(this.workCategoryRelation)
       .innerJoin(this.work, eq(this.work.id, this.workCategoryRelation.workId))
@@ -315,7 +364,9 @@ export class WorkCategoryService {
 
   private async resolveNextCategorySortOrder() {
     const [row] = await this.db
-      .select({ value: sql<number>`max(${this.workCategory.sortOrder})` })
+      .select({
+        value: sql<number>`max(${this.workCategory.sortOrder})`.mapWith(Number),
+      })
       .from(this.workCategory)
 
     return row?.value ?? 0
@@ -323,7 +374,9 @@ export class WorkCategoryService {
 
   private async resolveMinimumCategorySortOrder(db = this.db) {
     const [row] = await db
-      .select({ value: sql<number>`min(${this.workCategory.sortOrder})` })
+      .select({
+        value: sql<number>`min(${this.workCategory.sortOrder})`.mapWith(Number),
+      })
       .from(this.workCategory)
 
     return row?.value ?? 0

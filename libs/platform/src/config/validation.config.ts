@@ -1,5 +1,5 @@
-import { isValidTrustedProxyEntry } from '@libs/platform/bootstrap'
 import Joi from 'joi'
+import { isValidTrustedProxyEntry } from '../bootstrap/fastify-trust-proxy'
 
 // 校验 TRUSTED_PROXY_IPS 是否为逗号分隔的 IP/CIDR 列表，并返回规范化后的值。
 function validateTrustedProxyIps(value: string) {
@@ -43,7 +43,23 @@ export const environmentValidationSchema = Joi.object({
 
   // 数据库配置
   DATABASE_URL: Joi.string().required(),
-  DB_POOL_MAX: Joi.number().integer().min(2).default(20),
+  DB_PROCESS_ROLE: Joi.string().valid('admin-api', 'app-api').optional(),
+  DB_POOL_CONNECTION_TIMEOUT_MS: Joi.number()
+    .integer()
+    .positive()
+    .default(5000),
+  DB_POOL_IDLE_TIMEOUT_MS: Joi.number().integer().positive().default(30000),
+  DB_POOL_MAX_LIFETIME_SECONDS: Joi.number().integer().positive().default(1800),
+  DB_MAX_CONNECTIONS: Joi.number().integer().min(1).default(100),
+  DB_ADMIN_API_REPLICAS: Joi.number().integer().min(0).default(1),
+  DB_ADMIN_API_POOL_MAX: Joi.number().integer().min(2).default(20),
+  DB_ADMIN_API_LISTENER_CONNECTIONS: Joi.number().valid(0, 1).default(0),
+  DB_APP_API_REPLICAS: Joi.number().integer().min(0).default(1),
+  DB_APP_API_POOL_MAX: Joi.number().integer().min(2).default(20),
+  DB_APP_API_LISTENER_CONNECTIONS: Joi.number().valid(0, 1).default(1),
+  DB_CONCURRENT_MIGRATORS: Joi.number().integer().min(0).default(1),
+  DB_OPS_HEADROOM: Joi.number().integer().min(0).default(5),
+  DB_SUPERUSER_RESERVE: Joi.number().integer().min(0).default(3),
 
   // Redis配置
   REDIS_URL: Joi.string().required(),

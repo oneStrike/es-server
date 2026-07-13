@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, DbExecutor } from '@db/core'
 import type { AppAnnouncementNotificationFanoutTaskSelect } from '@db/schema'
 import type {
   AnnouncementDecisionSnapshot,
@@ -74,7 +74,10 @@ export class AnnouncementNotificationFanoutService {
   }
 
   // 在公告写事务内复用同一 fanout 入队逻辑，避免内容状态与任务状态分裂。
-  async enqueueAnnouncementFanout(announcementId: number, tx: Db = this.db) {
+  async enqueueAnnouncementFanout(
+    announcementId: number,
+    tx: DbExecutor = this.db,
+  ) {
     const announcement = await this.loadAnnouncementDecisionSnapshot(
       announcementId,
       tx,
@@ -133,7 +136,7 @@ export class AnnouncementNotificationFanoutService {
 
   async retryFailedAnnouncementFanout(
     announcementId: number,
-    tx: Db = this.db,
+    tx: DbExecutor = this.db,
   ) {
     const latestRows = await tx
       .select({
@@ -217,7 +220,7 @@ export class AnnouncementNotificationFanoutService {
       desiredEventKey: AnnouncementFanoutEventKey
       eventBoundaryKey: string
     },
-    tx: Db = this.db,
+    tx: DbExecutor = this.db,
   ) {
     const now = new Date()
     const fanoutKey = this.buildFanoutKey(input)
@@ -253,18 +256,20 @@ export class AnnouncementNotificationFanoutService {
     id: number
     publishStartTime: Date
   }) {
-    await this.drizzle.withTransaction(async (tx) => {
-      await this.insertFanoutTask(
-        {
-          announcementId: announcement.id,
-          desiredEventKey: 'announcement.published',
-          eventBoundaryKey: this.buildStartBoundaryKey(
-            announcement.publishStartTime,
-          ),
-        },
-        tx,
-      )
-      await this.markLifecycleStartBoundaryEnqueued(announcement, tx)
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.insertFanoutTask(
+          {
+            announcementId: announcement.id,
+            desiredEventKey: 'announcement.published',
+            eventBoundaryKey: this.buildStartBoundaryKey(
+              announcement.publishStartTime,
+            ),
+          },
+          tx,
+        )
+        await this.markLifecycleStartBoundaryEnqueued(announcement, tx)
+      },
     })
   }
 
@@ -272,18 +277,20 @@ export class AnnouncementNotificationFanoutService {
     id: number
     publishEndTime: Date
   }) {
-    await this.drizzle.withTransaction(async (tx) => {
-      await this.insertFanoutTask(
-        {
-          announcementId: announcement.id,
-          desiredEventKey: 'announcement.unpublished',
-          eventBoundaryKey: this.buildEndBoundaryKey(
-            announcement.publishEndTime,
-          ),
-        },
-        tx,
-      )
-      await this.markLifecycleEndBoundaryEnqueued(announcement, tx)
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.insertFanoutTask(
+          {
+            announcementId: announcement.id,
+            desiredEventKey: 'announcement.unpublished',
+            eventBoundaryKey: this.buildEndBoundaryKey(
+              announcement.publishEndTime,
+            ),
+          },
+          tx,
+        )
+        await this.markLifecycleEndBoundaryEnqueued(announcement, tx)
+      },
     })
   }
 
@@ -428,7 +435,10 @@ export class AnnouncementNotificationFanoutService {
     const now = new Date()
     const runnableWhere = this.buildRunnableTaskWhere(now)
     const rows = await this.db
-      .select()
+      .select({
+        id: this.fanoutTask.id,
+        startedAt: this.fanoutTask.startedAt,
+      })
       .from(this.fanoutTask)
       .where(runnableWhere)
       .orderBy(
@@ -459,7 +469,7 @@ export class AnnouncementNotificationFanoutService {
               then ${this.fanoutTask.attemptCount}
               else ${this.fanoutTask.attemptCount} + 1
             end
-          `,
+          `.mapWith(Number),
           startedAt: pendingTask.startedAt ?? now,
           finishedAt: null,
           lastError: null,
@@ -601,7 +611,7 @@ export class AnnouncementNotificationFanoutService {
 
   private async promoteAnnouncementFanoutRuntime(
     task: AppAnnouncementNotificationFanoutTaskSelect,
-    tx: Db = this.db,
+    tx: DbExecutor = this.db,
   ) {
     await tx
       .update(this.appAnnouncement)
@@ -611,7 +621,7 @@ export class AnnouncementNotificationFanoutService {
 
   private async syncCurrentAnnouncementFanoutRuntime(
     task: AppAnnouncementNotificationFanoutTaskSelect,
-    tx: Db = this.db,
+    tx: DbExecutor = this.db,
   ) {
     await tx
       .update(this.appAnnouncement)
@@ -773,7 +783,7 @@ export class AnnouncementNotificationFanoutService {
       id: number
       publishStartTime: Date
     },
-    tx: Db,
+    tx: DbExecutor,
   ) {
     await tx
       .update(this.appAnnouncement)
@@ -796,7 +806,7 @@ export class AnnouncementNotificationFanoutService {
       id: number
       publishEndTime: Date
     },
-    tx: Db,
+    tx: DbExecutor,
   ) {
     await tx
       .update(this.appAnnouncement)
@@ -879,17 +889,21 @@ export class AnnouncementNotificationFanoutService {
       return task.eventBoundaryKey !== this.buildManualBoundaryKey(announcement)
     }
     if (task.eventBoundaryKey.startsWith('start:')) {
+      const startBoundaryKey = this.buildStartBoundaryKey(
+        announcement.publishStartTime,
+      )
       return (
         task.desiredEventKey !== 'announcement.published' ||
-        task.eventBoundaryKey !==
-        this.buildStartBoundaryKey(announcement.publishStartTime)
+        task.eventBoundaryKey !== startBoundaryKey
       )
     }
     if (task.eventBoundaryKey.startsWith('end:')) {
+      const endBoundaryKey = this.buildEndBoundaryKey(
+        announcement.publishEndTime,
+      )
       return (
         task.desiredEventKey !== 'announcement.unpublished' ||
-        task.eventBoundaryKey !==
-        this.buildEndBoundaryKey(announcement.publishEndTime)
+        task.eventBoundaryKey !== endBoundaryKey
       )
     }
     return false

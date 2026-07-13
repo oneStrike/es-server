@@ -13,9 +13,11 @@ import type {
   PaymentOrderPublicResult,
   PaymentOrderStatusResult,
   PaymentProviderAdapter,
+  PaymentProviderConfigSnapshot,
   PaymentProviderConfigWriteDto,
   PaymentProviderConfigWriteValues,
   PaymentProviderCredentialMaterial,
+  PaymentProviderOrderSnapshot,
   PaymentTx,
   ProviderPaymentNotifyRequest,
 } from '../payment/types/payment.type'
@@ -35,6 +37,7 @@ import {
   ConfirmPaymentOrderDto,
   CreatePaymentProviderConfigDto,
   PaymentProviderAccountOptionDto,
+  PaymentProviderAccountOptionQueryDto,
   PaymentProviderCertificateOptionDto,
   PaymentProviderCertificateOptionQueryDto,
   PaymentProviderCredentialOptionDto,
@@ -78,6 +81,272 @@ const PAYMENT_NOTIFY_VERIFY_STATUS = {
   SUCCESS: 2,
   FAILED: 3,
 } as const
+
+type PaymentProviderConfigFilter = Pick<
+  QueryPaymentProviderConfigDto,
+  | 'channel'
+  | 'paymentScene'
+  | 'platform'
+  | 'environment'
+  | 'clientAppKey'
+  | 'isEnabled'
+>
+
+type PaymentProviderAccountOptionSource = Pick<
+  PaymentProviderConfigSelect,
+  | 'id'
+  | 'configName'
+  | 'appId'
+  | 'mchId'
+  | 'channel'
+  | 'paymentScene'
+  | 'platform'
+  | 'environment'
+  | 'clientAppKey'
+  | 'configVersion'
+  | 'isEnabled'
+>
+
+type PaymentProviderAccountLabelConfigSource = Pick<
+  PaymentProviderConfigSelect,
+  'id' | 'configName' | 'appId' | 'mchId'
+>
+
+type PaymentProviderAccountLabelOrderSource = Pick<
+  PaymentOrderSelect,
+  'id' | 'providerConfigId' | 'configSnapshot'
+>
+
+type AdminPaymentOrderPageSource = Pick<
+  PaymentOrderSelect,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'orderNo'
+  | 'userId'
+  | 'orderType'
+  | 'channel'
+  | 'paymentScene'
+  | 'platform'
+  | 'environment'
+  | 'clientAppKey'
+  | 'subscriptionMode'
+  | 'status'
+  | 'payableAmount'
+  | 'paidAmount'
+  | 'targetId'
+  | 'providerConfigId'
+  | 'providerConfigVersion'
+  | 'configSnapshot'
+  | 'providerTradeNo'
+  | 'paidAt'
+  | 'closedAt'
+  | 'refundedAt'
+>
+
+type PaymentProviderCredentialOptionSource = Pick<
+  PaymentProviderCredentialSelect,
+  | 'id'
+  | 'displayName'
+  | 'versionLabel'
+  | 'maskedIdentifier'
+  | 'channel'
+  | 'credentialType'
+  | 'fingerprint'
+  | 'status'
+  | 'expiredAt'
+>
+
+type PaymentProviderCertificateOptionSource = Pick<
+  PaymentProviderCertificateSelect,
+  | 'id'
+  | 'displayName'
+  | 'versionLabel'
+  | 'serialNo'
+  | 'channel'
+  | 'certificateType'
+  | 'fingerprint'
+  | 'status'
+  | 'expiredAt'
+>
+
+type PaymentProviderCredentialSelectionSource = Pick<
+  PaymentProviderCredentialSelect,
+  | 'id'
+  | 'channel'
+  | 'credentialType'
+  | 'credentialRef'
+  | 'versionLabel'
+  | 'displayName'
+  | 'maskedIdentifier'
+  | 'fingerprint'
+  | 'status'
+>
+
+type PaymentProviderCertificateSelectionSource = Pick<
+  PaymentProviderCertificateSelect,
+  | 'id'
+  | 'channel'
+  | 'certificateType'
+  | 'certificateRef'
+  | 'serialNo'
+  | 'versionLabel'
+  | 'displayName'
+  | 'fingerprint'
+  | 'status'
+>
+
+type PaymentProviderCredentialMaterialSource = Pick<
+  PaymentProviderCredentialSelect,
+  'metadata'
+>
+
+type PaymentProviderCertificateMaterialSource = Pick<
+  PaymentProviderCertificateSelect,
+  'metadata' | 'serialNo'
+>
+
+type AdminPaymentProviderConfigPageSource = Pick<
+  PaymentProviderConfigSelect,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'channel'
+  | 'paymentScene'
+  | 'platform'
+  | 'environment'
+  | 'clientAppKey'
+  | 'configName'
+  | 'appId'
+  | 'mchId'
+  | 'notifyUrl'
+  | 'returnUrl'
+  | 'allowedReturnDomains'
+  | 'certMode'
+  | 'configMetadata'
+  | 'sortOrder'
+  | 'isEnabled'
+>
+
+type PaymentReconciliationPageSource = Pick<
+  PaymentReconciliationRecordSelect,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'paymentOrderId'
+  | 'orderNo'
+  | 'channel'
+  | 'mismatchType'
+  | 'status'
+  | 'localStatus'
+  | 'providerStatus'
+  | 'providerTradeNo'
+  | 'localAmount'
+  | 'providerAmount'
+  | 'currency'
+  | 'evidence'
+  | 'handledRemark'
+>
+
+type PaymentProviderConfigVersionWriteSource = Pick<
+  PaymentProviderConfigSelect,
+  | 'allowedReturnDomains'
+  | 'apiV3KeyRef'
+  | 'appCertRef'
+  | 'appId'
+  | 'certMode'
+  | 'channel'
+  | 'clientAppKey'
+  | 'configMetadata'
+  | 'configName'
+  | 'configVersion'
+  | 'credentialVersionRef'
+  | 'environment'
+  | 'id'
+  | 'isEnabled'
+  | 'mchId'
+  | 'notifyUrl'
+  | 'paymentScene'
+  | 'platform'
+  | 'platformCertRef'
+  | 'privateKeyRef'
+  | 'publicKeyRef'
+  | 'returnUrl'
+  | 'rootCertRef'
+>
+
+type PaymentProviderConfigVersionIdSnapshot = Pick<
+  PaymentProviderConfigVersionSelect,
+  'id'
+>
+
+type PaymentProviderConfigWriteSnapshot = Pick<
+  PaymentProviderConfigSelect,
+  'channel' | 'configMetadata'
+>
+
+type PaymentRepairReconciliationSnapshot = Pick<
+  PaymentReconciliationRecordSelect,
+  | 'id'
+  | 'localStatus'
+  | 'mismatchType'
+  | 'orderNo'
+  | 'providerAmount'
+  | 'providerStatus'
+  | 'providerTradeNo'
+  | 'status'
+>
+
+type PaymentProviderConfigVersionOrderSnapshot = Pick<
+  PaymentProviderConfigVersionSelect,
+  | 'appId'
+  | 'channel'
+  | 'configSnapshot'
+  | 'configVersion'
+  | 'isActive'
+  | 'mchId'
+  | 'notifyUrl'
+  | 'providerConfigId'
+  | 'returnUrl'
+  | 'status'
+>
+
+type PaymentProviderConfigForOrderSnapshot = PaymentProviderConfigSnapshot &
+  Pick<
+    PaymentProviderConfigSelect,
+    'apiV3KeyRef' | 'platformCertRef' | 'publicKeyRef'
+  >
+
+type PaymentNotifyOrderSnapshot = PaymentProviderOrderSnapshot &
+  Pick<
+    PaymentOrderSelect,
+    | 'alipayPublicCredentialId'
+    | 'id'
+    | 'paidAmount'
+    | 'providerConfigVersion'
+    | 'providerConfigVersionId'
+    | 'providerTradeNo'
+    | 'wechatApiV3CredentialId'
+  >
+
+type PaymentNotifyEventOrderSnapshot = Pick<
+  PaymentOrderSelect,
+  'id' | 'orderNo'
+>
+
+type PaymentOrderPaidStateSnapshot = PaymentNotifyEventOrderSnapshot &
+  Pick<PaymentOrderSelect, 'paidAmount' | 'providerTradeNo' | 'status'>
+
+type PaymentOrderConfirmationSnapshot = PaymentNotifyOrderSnapshot &
+  Pick<PaymentOrderSelect, 'orderType' | 'subscriptionMode' | 'userId'>
+
+type PaymentOrderManualConfirmationSnapshot = PaymentOrderPaidStateSnapshot &
+  Pick<PaymentOrderSelect, 'orderType' | 'payableAmount' | 'subscriptionMode'>
+
+type PaymentOrderPublicResultSource = Pick<
+  PaymentOrderSelect,
+  'orderNo' | 'orderType' | 'payableAmount' | 'status' | 'subscriptionMode'
+>
 
 @Injectable()
 export class PaymentService {
@@ -124,6 +393,143 @@ export class PaymentService {
     return this.drizzle.schema.paymentProviderCertificate
   }
 
+  private get paymentProviderCredentialSelectionColumns() {
+    return {
+      id: true,
+      channel: true,
+      credentialType: true,
+      credentialRef: true,
+      versionLabel: true,
+      displayName: true,
+      maskedIdentifier: true,
+      fingerprint: true,
+      status: true,
+    } as const
+  }
+
+  private get paymentProviderCertificateSelectionColumns() {
+    return {
+      id: true,
+      channel: true,
+      certificateType: true,
+      certificateRef: true,
+      serialNo: true,
+      versionLabel: true,
+      displayName: true,
+      fingerprint: true,
+      status: true,
+    } as const
+  }
+
+  private get paymentProviderCredentialMaterialColumns() {
+    return {
+      metadata: true,
+    } as const
+  }
+
+  private get paymentProviderCertificateMaterialColumns() {
+    return {
+      metadata: true,
+      serialNo: true,
+    } as const
+  }
+
+  private get paymentProviderConfigVersionWriteSourceSelect() {
+    return {
+      id: this.paymentProviderConfig.id,
+      channel: this.paymentProviderConfig.channel,
+      paymentScene: this.paymentProviderConfig.paymentScene,
+      platform: this.paymentProviderConfig.platform,
+      environment: this.paymentProviderConfig.environment,
+      clientAppKey: this.paymentProviderConfig.clientAppKey,
+      configName: this.paymentProviderConfig.configName,
+      appId: this.paymentProviderConfig.appId,
+      mchId: this.paymentProviderConfig.mchId,
+      notifyUrl: this.paymentProviderConfig.notifyUrl,
+      returnUrl: this.paymentProviderConfig.returnUrl,
+      allowedReturnDomains: this.paymentProviderConfig.allowedReturnDomains,
+      certMode: this.paymentProviderConfig.certMode,
+      publicKeyRef: this.paymentProviderConfig.publicKeyRef,
+      privateKeyRef: this.paymentProviderConfig.privateKeyRef,
+      apiV3KeyRef: this.paymentProviderConfig.apiV3KeyRef,
+      appCertRef: this.paymentProviderConfig.appCertRef,
+      platformCertRef: this.paymentProviderConfig.platformCertRef,
+      rootCertRef: this.paymentProviderConfig.rootCertRef,
+      configVersion: this.paymentProviderConfig.configVersion,
+      credentialVersionRef: this.paymentProviderConfig.credentialVersionRef,
+      configMetadata: this.paymentProviderConfig.configMetadata,
+      isEnabled: this.paymentProviderConfig.isEnabled,
+    } as const
+  }
+
+  private get paymentNotifyOrderColumns() {
+    return {
+      id: true,
+      orderNo: true,
+      channel: true,
+      paymentScene: true,
+      status: true,
+      payableAmount: true,
+      paidAmount: true,
+      providerConfigId: true,
+      providerConfigVersionId: true,
+      providerConfigVersion: true,
+      alipayPublicCredentialId: true,
+      wechatApiV3CredentialId: true,
+      credentialVersionRef: true,
+      providerTradeNo: true,
+    } as const
+  }
+
+  private get paymentOrderPaidStateColumns() {
+    return {
+      id: true,
+      orderNo: true,
+      status: true,
+      paidAmount: true,
+      providerTradeNo: true,
+    } as const
+  }
+
+  private get paymentOrderConfirmationColumns() {
+    return {
+      ...this.paymentNotifyOrderColumns,
+      orderType: true,
+      subscriptionMode: true,
+      userId: true,
+    } as const
+  }
+
+  private get paymentOrderManualConfirmationColumns() {
+    return {
+      ...this.paymentOrderPaidStateColumns,
+      orderType: true,
+      payableAmount: true,
+      subscriptionMode: true,
+    } as const
+  }
+
+  private get paymentProviderConfigVersionOrderColumns() {
+    return {
+      providerConfigId: true,
+      configVersion: true,
+      channel: true,
+      appId: true,
+      mchId: true,
+      notifyUrl: true,
+      returnUrl: true,
+      configSnapshot: true,
+      status: true,
+      isActive: true,
+    } as const
+  }
+
+  private get paymentProviderCredentialNotifyMaterialSelect() {
+    return {
+      metadata: this.paymentProviderCredential.metadata,
+    } as const
+  }
+
   // 获取支付对账记录表定义。
   private get paymentReconciliationRecord() {
     return this.drizzle.schema.paymentReconciliationRecord
@@ -140,7 +546,31 @@ export class PaymentService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.paymentOrder.id,
+          createdAt: this.paymentOrder.createdAt,
+          updatedAt: this.paymentOrder.updatedAt,
+          orderNo: this.paymentOrder.orderNo,
+          userId: this.paymentOrder.userId,
+          orderType: this.paymentOrder.orderType,
+          channel: this.paymentOrder.channel,
+          paymentScene: this.paymentOrder.paymentScene,
+          platform: this.paymentOrder.platform,
+          environment: this.paymentOrder.environment,
+          clientAppKey: this.paymentOrder.clientAppKey,
+          subscriptionMode: this.paymentOrder.subscriptionMode,
+          status: this.paymentOrder.status,
+          payableAmount: this.paymentOrder.payableAmount,
+          paidAmount: this.paymentOrder.paidAmount,
+          targetId: this.paymentOrder.targetId,
+          providerConfigId: this.paymentOrder.providerConfigId,
+          providerConfigVersion: this.paymentOrder.providerConfigVersion,
+          configSnapshot: this.paymentOrder.configSnapshot,
+          providerTradeNo: this.paymentOrder.providerTradeNo,
+          paidAt: this.paymentOrder.paidAt,
+          closedAt: this.paymentOrder.closedAt,
+          refundedAt: this.paymentOrder.refundedAt,
+        })
         .from(this.paymentOrder)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -157,7 +587,7 @@ export class PaymentService {
 
   // 将支付订单行映射为后台分页视图，分页契约禁止透出原始上下文和 provider payload。
   private toAdminPaymentOrderPageItem(
-    order: PaymentOrderSelect,
+    order: AdminPaymentOrderPageSource,
   ): AdminPaymentOrderPageItemDto {
     return {
       id: order.id,
@@ -199,7 +629,7 @@ export class PaymentService {
             isEnabled,
           })
           .where(eq(this.paymentProviderConfig.id, id))
-          .returning()
+          .returning(this.paymentProviderConfigVersionWriteSourceSelect)
         if (!updatedConfig) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -251,7 +681,7 @@ export class PaymentService {
                 : this.normalizeKey(data.mchId),
           })
           .where(eq(this.paymentProviderConfig.id, id))
-          .returning()
+          .returning(this.paymentProviderConfigVersionWriteSourceSelect)
         if (!updatedConfig) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -295,7 +725,7 @@ export class PaymentService {
 
   private async buildPaymentProviderConfigWriteValues(
     dto: PaymentProviderConfigWriteDto,
-    currentConfig?: PaymentProviderConfigSelect,
+    currentConfig?: PaymentProviderConfigWriteSnapshot,
   ): Promise<PaymentProviderConfigWriteValues> {
     const channel = dto.channel ?? currentConfig?.channel
     if (channel === undefined) {
@@ -421,7 +851,12 @@ export class PaymentService {
         isActive: false,
         status: 3,
       })
-      .where(eq(this.paymentProviderConfigVersion.providerConfigId, providerConfigId))
+      .where(
+        eq(
+          this.paymentProviderConfigVersion.providerConfigId,
+          providerConfigId,
+        ),
+      )
     await this.db
       .update(this.paymentProviderConfigVersion)
       .set({
@@ -440,19 +875,20 @@ export class PaymentService {
   }
 
   private async writePaymentProviderConfigVersion(
-    config: PaymentProviderConfigSelect,
+    config: PaymentProviderConfigVersionWriteSource,
   ) {
     const selection = this.readPaymentProviderSelectionSnapshot(config)
     const values = this.buildPaymentProviderConfigVersionValues(
       config,
       selection,
     )
-    const existing =
+    const existing: PaymentProviderConfigVersionIdSnapshot | undefined =
       await this.db.query.paymentProviderConfigVersion.findFirst({
         where: {
           configVersion: config.configVersion,
           providerConfigId: config.id,
         },
+        columns: { id: true },
       })
     if (existing) {
       throw new BusinessException(
@@ -464,8 +900,10 @@ export class PaymentService {
   }
 
   private buildPaymentProviderConfigVersionValues(
-    config: PaymentProviderConfigSelect,
-    selection: ReturnType<PaymentService['readPaymentProviderSelectionSnapshot']>,
+    config: PaymentProviderConfigVersionWriteSource,
+    selection: ReturnType<
+      PaymentService['readPaymentProviderSelectionSnapshot']
+    >,
   ) {
     return {
       alipayPublicCredentialId: selection.alipayPublicCredentialId,
@@ -511,7 +949,7 @@ export class PaymentService {
   }
 
   private buildPaymentProviderConfigSnapshot(
-    config: PaymentProviderConfigSelect,
+    config: PaymentProviderConfigVersionWriteSource,
   ) {
     return {
       allowedReturnDomains: config.allowedReturnDomains,
@@ -539,7 +977,7 @@ export class PaymentService {
   }
 
   private readPaymentProviderSelectionSnapshot(
-    config: PaymentProviderConfigSelect,
+    config: Pick<PaymentProviderConfigVersionWriteSource, 'configMetadata'>,
   ) {
     const metadata = this.asRecord(config.configMetadata)
     const credentialOptions = this.asRecord(metadata?.credentialOptions)
@@ -674,6 +1112,7 @@ export class PaymentService {
     }
     const credential = await this.db.query.paymentProviderCredential.findFirst({
       where: { id },
+      columns: this.paymentProviderCredentialSelectionColumns,
     })
     if (!credential) {
       throw new BusinessException(
@@ -711,9 +1150,11 @@ export class PaymentService {
     expectedType: number,
     label: string,
   ) {
-    const certificate = await this.db.query.paymentProviderCertificate.findFirst(
-      { where: { id } },
-    )
+    const certificate =
+      await this.db.query.paymentProviderCertificate.findFirst({
+        where: { id },
+        columns: this.paymentProviderCertificateSelectionColumns,
+      })
     if (!certificate) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -744,7 +1185,7 @@ export class PaymentService {
   private writeCredentialMetadata(
     metadataPatch: Record<string, unknown>,
     field: string,
-    credential: PaymentProviderCredentialSelect,
+    credential: PaymentProviderCredentialSelectionSource,
   ) {
     const credentialOptions = this.ensureMetadataRecord(
       metadataPatch,
@@ -768,7 +1209,7 @@ export class PaymentService {
   private writeCertificateMetadata(
     metadataPatch: Record<string, unknown>,
     field: string,
-    certificate: PaymentProviderCertificateSelect,
+    certificate: PaymentProviderCertificateSelectionSource,
   ) {
     const certificateOptions = this.ensureMetadataRecord(
       metadataPatch,
@@ -863,7 +1304,7 @@ export class PaymentService {
         const [createdConfig] = await this.db
           .insert(this.paymentProviderConfig)
           .values(insertValues)
-          .returning()
+          .returning(this.paymentProviderConfigVersionWriteSourceSelect)
         if (!createdConfig) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -878,11 +1319,25 @@ export class PaymentService {
   }
 
   // 查询支付 provider 账号选项；选项只暴露展示名、掩码账号和配置 ID。
-  async getPaymentProviderAccountOptions(dto: QueryPaymentProviderConfigDto) {
+  async getPaymentProviderAccountOptions(
+    dto: PaymentProviderAccountOptionQueryDto,
+  ) {
     const conditions = this.buildPaymentProviderConfigConditions(dto)
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const list = await this.db
-      .select()
+      .select({
+        id: this.paymentProviderConfig.id,
+        configName: this.paymentProviderConfig.configName,
+        appId: this.paymentProviderConfig.appId,
+        mchId: this.paymentProviderConfig.mchId,
+        channel: this.paymentProviderConfig.channel,
+        paymentScene: this.paymentProviderConfig.paymentScene,
+        platform: this.paymentProviderConfig.platform,
+        environment: this.paymentProviderConfig.environment,
+        clientAppKey: this.paymentProviderConfig.clientAppKey,
+        configVersion: this.paymentProviderConfig.configVersion,
+        isEnabled: this.paymentProviderConfig.isEnabled,
+      })
       .from(this.paymentProviderConfig)
       .where(where)
       .orderBy(
@@ -901,7 +1356,17 @@ export class PaymentService {
     const conditions = this.buildPaymentCredentialOptionConditions(dto)
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const list = await this.db
-      .select()
+      .select({
+        id: this.paymentProviderCredential.id,
+        displayName: this.paymentProviderCredential.displayName,
+        versionLabel: this.paymentProviderCredential.versionLabel,
+        maskedIdentifier: this.paymentProviderCredential.maskedIdentifier,
+        channel: this.paymentProviderCredential.channel,
+        credentialType: this.paymentProviderCredential.credentialType,
+        fingerprint: this.paymentProviderCredential.fingerprint,
+        status: this.paymentProviderCredential.status,
+        expiredAt: this.paymentProviderCredential.expiredAt,
+      })
       .from(this.paymentProviderCredential)
       .where(where)
       .orderBy(
@@ -921,7 +1386,17 @@ export class PaymentService {
     const conditions = this.buildPaymentCertificateOptionConditions(dto)
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const list = await this.db
-      .select()
+      .select({
+        id: this.paymentProviderCertificate.id,
+        displayName: this.paymentProviderCertificate.displayName,
+        versionLabel: this.paymentProviderCertificate.versionLabel,
+        serialNo: this.paymentProviderCertificate.serialNo,
+        channel: this.paymentProviderCertificate.channel,
+        certificateType: this.paymentProviderCertificate.certificateType,
+        fingerprint: this.paymentProviderCertificate.fingerprint,
+        status: this.paymentProviderCertificate.status,
+        expiredAt: this.paymentProviderCertificate.expiredAt,
+      })
       .from(this.paymentProviderCertificate)
       .where(where)
       .orderBy(
@@ -945,7 +1420,26 @@ export class PaymentService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.paymentProviderConfig.id,
+          createdAt: this.paymentProviderConfig.createdAt,
+          updatedAt: this.paymentProviderConfig.updatedAt,
+          channel: this.paymentProviderConfig.channel,
+          paymentScene: this.paymentProviderConfig.paymentScene,
+          platform: this.paymentProviderConfig.platform,
+          environment: this.paymentProviderConfig.environment,
+          clientAppKey: this.paymentProviderConfig.clientAppKey,
+          configName: this.paymentProviderConfig.configName,
+          appId: this.paymentProviderConfig.appId,
+          mchId: this.paymentProviderConfig.mchId,
+          notifyUrl: this.paymentProviderConfig.notifyUrl,
+          returnUrl: this.paymentProviderConfig.returnUrl,
+          allowedReturnDomains: this.paymentProviderConfig.allowedReturnDomains,
+          certMode: this.paymentProviderConfig.certMode,
+          configMetadata: this.paymentProviderConfig.configMetadata,
+          sortOrder: this.paymentProviderConfig.sortOrder,
+          isEnabled: this.paymentProviderConfig.isEnabled,
+        })
         .from(this.paymentProviderConfig)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -972,7 +1466,24 @@ export class PaymentService {
     )
     const [list, total] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: this.paymentReconciliationRecord.id,
+          createdAt: this.paymentReconciliationRecord.createdAt,
+          updatedAt: this.paymentReconciliationRecord.updatedAt,
+          paymentOrderId: this.paymentReconciliationRecord.paymentOrderId,
+          orderNo: this.paymentReconciliationRecord.orderNo,
+          channel: this.paymentReconciliationRecord.channel,
+          mismatchType: this.paymentReconciliationRecord.mismatchType,
+          status: this.paymentReconciliationRecord.status,
+          localStatus: this.paymentReconciliationRecord.localStatus,
+          providerStatus: this.paymentReconciliationRecord.providerStatus,
+          providerTradeNo: this.paymentReconciliationRecord.providerTradeNo,
+          localAmount: this.paymentReconciliationRecord.localAmount,
+          providerAmount: this.paymentReconciliationRecord.providerAmount,
+          currency: this.paymentReconciliationRecord.currency,
+          evidence: this.paymentReconciliationRecord.evidence,
+          handledRemark: this.paymentReconciliationRecord.handledRemark,
+        })
         .from(this.paymentReconciliationRecord)
         .where(where)
         .orderBy(...orderQuery.orderBySql)
@@ -989,10 +1500,7 @@ export class PaymentService {
   }
 
   // 受审计异常修复入口：必须带原因和证据，并复用内部幂等结算核心。
-  async repairPaidOrder(
-    dto: RepairPaidPaymentOrderDto,
-    adminUserId: number,
-  ) {
+  async repairPaidOrder(dto: RepairPaidPaymentOrderDto, adminUserId: number) {
     const reason = dto.reason.trim()
     if (!reason) {
       throw new BusinessException(
@@ -1034,9 +1542,19 @@ export class PaymentService {
   private async resolveRepairReconciliationRecord(
     dto: RepairPaidPaymentOrderDto,
   ) {
-    const record =
+    const record: PaymentRepairReconciliationSnapshot | null =
       (await this.db.query.paymentReconciliationRecord.findFirst({
         where: { id: dto.reconciliationRecordId },
+        columns: {
+          id: true,
+          orderNo: true,
+          mismatchType: true,
+          status: true,
+          localStatus: true,
+          providerStatus: true,
+          providerTradeNo: true,
+          providerAmount: true,
+        },
       })) ?? null
     if (
       !record ||
@@ -1059,7 +1577,7 @@ export class PaymentService {
 
   // 构建支付 provider 配置分页查询条件。
   private buildPaymentProviderConfigConditions(
-    dto: QueryPaymentProviderConfigDto,
+    dto: PaymentProviderConfigFilter,
   ) {
     const conditions: SQL[] = []
     if (dto.channel !== undefined) {
@@ -1157,10 +1675,7 @@ export class PaymentService {
     }
     if (dto.credentialType !== undefined) {
       conditions.push(
-        eq(
-          this.paymentProviderCredential.credentialType,
-          dto.credentialType,
-        ),
+        eq(this.paymentProviderCredential.credentialType, dto.credentialType),
       )
     }
     if (dto.status !== undefined) {
@@ -1239,7 +1754,7 @@ export class PaymentService {
   async handleProviderPaymentNotify(input: ProviderPaymentNotifyRequest) {
     const adapter = this.getPaymentAdapter(input.channel)
     const payloadHash = this.buildProviderNotifyPayloadHash(input)
-    let order: PaymentOrderSelect | null = null
+    let order: PaymentNotifyOrderSnapshot | null = null
     let orderNo: string | undefined
     let providerTradeNo: string | undefined
     let verified = false
@@ -1257,7 +1772,8 @@ export class PaymentService {
 
       order =
         (await this.db.query.paymentOrder.findFirst({
-        where: { orderNo },
+          where: { orderNo },
+          columns: this.paymentNotifyOrderColumns,
         })) ?? null
       if (!order || order.channel !== input.channel) {
         throw new BusinessException(
@@ -1272,9 +1788,8 @@ export class PaymentService {
         paymentOrder,
       )
 
-      const configVersion = await this.getPaymentProviderConfigVersionForOrder(
-        paymentOrder,
-      )
+      const configVersion =
+        await this.getPaymentProviderConfigVersionForOrder(paymentOrder)
       const config =
         this.buildPaymentProviderConfigForOrderVersion(configVersion)
       const credentialMaterial =
@@ -1335,63 +1850,71 @@ export class PaymentService {
         )
       }
 
-      await this.drizzle.withTransaction(async (tx) => {
-        const [paidOrder] = await tx
-          .update(this.paymentOrder)
-          .set({
-            status: PaymentOrderStatusEnum.PAID,
-            paidAmount,
-            providerTradeNo,
-            notifyPayload: this.redactProviderNotifyPayload(input.body.raw),
-            paidAt: new Date(),
-          })
-          .where(
-            and(
-              eq(this.paymentOrder.id, paymentOrder.id),
-              eq(this.paymentOrder.status, PaymentOrderStatusEnum.PENDING),
-            ),
-          )
-          .returning()
-
-        if (!paidOrder) {
-          const latestOrder = await tx.query.paymentOrder.findFirst({
-            where: { id: paymentOrder.id },
-          })
-          if (latestOrder?.status === PaymentOrderStatusEnum.PAID) {
-            this.assertPaidOrderMatchesNotify(
-              latestOrder,
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          const [paidOrder] = await tx
+            .update(this.paymentOrder)
+            .set({
+              status: PaymentOrderStatusEnum.PAID,
               paidAmount,
-              verifiedProviderTradeNo,
+              providerTradeNo,
+              notifyPayload: this.redactProviderNotifyPayload(input.body.raw),
+              paidAt: new Date(),
+            })
+            .where(
+              and(
+                eq(this.paymentOrder.id, paymentOrder.id),
+                eq(this.paymentOrder.status, PaymentOrderStatusEnum.PENDING),
+              ),
             )
-            await this.markPaymentNotifyEventProcessed(
-              input.channel,
-              payloadHash,
-              {
-                eventType: 1,
-                order: latestOrder,
-                processStatus: PAYMENT_NOTIFY_PROCESS_STATUS.DUPLICATE,
-                providerTradeNo: verifiedProviderTradeNo,
-              },
+            .returning()
+
+          if (!paidOrder) {
+            const latestOrder: PaymentOrderPaidStateSnapshot | undefined =
+              await tx.query.paymentOrder.findFirst({
+                where: { id: paymentOrder.id },
+                columns: this.paymentOrderPaidStateColumns,
+              })
+            if (latestOrder?.status === PaymentOrderStatusEnum.PAID) {
+              this.assertPaidOrderMatchesNotify(
+                latestOrder,
+                paidAmount,
+                verifiedProviderTradeNo,
+              )
+              await this.markPaymentNotifyEventProcessed(
+                input.channel,
+                payloadHash,
+                {
+                  eventType: 1,
+                  order: latestOrder,
+                  processStatus: PAYMENT_NOTIFY_PROCESS_STATUS.DUPLICATE,
+                  providerTradeNo: verifiedProviderTradeNo,
+                },
+              )
+              return
+            }
+            throw new BusinessException(
+              BusinessErrorCode.STATE_CONFLICT,
+              '当前订单状态不允许支付通知确认',
             )
-            return
           }
-          throw new BusinessException(
-            BusinessErrorCode.STATE_CONFLICT,
-            '当前订单状态不允许支付通知确认',
+
+          await this.settlePaidOrder(tx, paidOrder)
+          await this.markPaymentNotifyEventProcessed(
+            input.channel,
+            payloadHash,
+            {
+              eventType: 1,
+              order: paidOrder,
+              processStatus: PAYMENT_NOTIFY_PROCESS_STATUS.PROCESSED,
+              providerTradeNo: verifiedProviderTradeNo,
+            },
           )
-        }
 
-        await this.settlePaidOrder(tx, paidOrder)
-        await this.markPaymentNotifyEventProcessed(input.channel, payloadHash, {
-          eventType: 1,
-          order: paidOrder,
-          processStatus: PAYMENT_NOTIFY_PROCESS_STATUS.PROCESSED,
-          providerTradeNo: verifiedProviderTradeNo,
-        })
-
-        this.logger.log(
-          `payment_order_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerTradeNo=${paidOrder.providerTradeNo}`,
-        )
+          this.logger.log(
+            `payment_order_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerTradeNo=${paidOrder.providerTradeNo}`,
+          )
+        },
       })
 
       return this.buildProviderNotifyAck(input.channel)
@@ -1455,7 +1978,7 @@ export class PaymentService {
   private async markPaymentNotifyEventOrder(
     channel: PaymentChannelEnum,
     payloadHash: string,
-    order: PaymentOrderSelect,
+    order: PaymentNotifyEventOrderSnapshot,
   ) {
     await this.db
       .update(this.paymentNotifyEvent)
@@ -1476,7 +1999,7 @@ export class PaymentService {
     payloadHash: string,
     input: {
       eventType: number
-      order: PaymentOrderSelect
+      order: PaymentNotifyEventOrderSnapshot
       processStatus: number
       providerTradeNo: string
     },
@@ -1505,7 +2028,7 @@ export class PaymentService {
     payloadHash: string,
     input: {
       error: unknown
-      order: PaymentOrderSelect | null
+      order: PaymentNotifyEventOrderSnapshot | null
       orderNo?: string
       providerTradeNo?: string
       verified: boolean
@@ -1537,8 +2060,7 @@ export class PaymentService {
   }
 
   private sanitizePaymentNotifyError(error: unknown) {
-    const message =
-      error instanceof Error ? error.message : '支付通知处理失败'
+    const message = error instanceof Error ? error.message : '支付通知处理失败'
     return message.replace(/secret|private|key|cert|signature/gi, '[REDACTED]')
   }
 
@@ -1575,7 +2097,7 @@ export class PaymentService {
     channel: PaymentChannelEnum,
   ) {
     const credentials = await this.db
-      .select()
+      .select(this.paymentProviderCredentialNotifyMaterialSelect)
       .from(this.paymentProviderCredential)
       .where(
         and(
@@ -1612,6 +2134,19 @@ export class PaymentService {
   ): Promise<PaymentOrderStatusResult> {
     const order = await this.db.query.paymentOrder.findFirst({
       where: { orderNo },
+      columns: {
+        userId: true,
+        orderNo: true,
+        status: true,
+        orderType: true,
+        channel: true,
+        paymentScene: true,
+        payableAmount: true,
+        paidAmount: true,
+        paidAt: true,
+        closedAt: true,
+        clientPayPayload: true,
+      },
     })
     if (!order || order.userId !== userId) {
       throw new BusinessException(
@@ -1641,9 +2176,11 @@ export class PaymentService {
     dto: ConfirmPaymentOrderDto,
     context?: ConfirmPaymentOrderContext,
   ) {
-    const order = await this.db.query.paymentOrder.findFirst({
-      where: { orderNo: dto.orderNo },
-    })
+    const order: PaymentOrderConfirmationSnapshot | undefined =
+      await this.db.query.paymentOrder.findFirst({
+        where: { orderNo: dto.orderNo },
+        columns: this.paymentOrderConfirmationColumns,
+      })
     if (!order) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1657,11 +2194,9 @@ export class PaymentService {
       )
     }
 
-    const configVersion = await this.getPaymentProviderConfigVersionForOrder(
-      order,
-    )
-    const config =
-      this.buildPaymentProviderConfigForOrderVersion(configVersion)
+    const configVersion =
+      await this.getPaymentProviderConfigVersionForOrder(order)
+    const config = this.buildPaymentProviderConfigForOrderVersion(configVersion)
     const credentialMaterial =
       await this.resolvePaymentProviderCredentialMaterial(order, config)
     const adapter = this.getPaymentAdapter(order.channel)
@@ -1709,63 +2244,70 @@ export class PaymentService {
       )
     }
 
-    return this.drizzle.withTransaction(async (tx) => {
-      const [paidOrder] = await tx
-        .update(this.paymentOrder)
-        .set({
-          status: PaymentOrderStatusEnum.PAID,
-          paidAmount,
-          providerTradeNo,
-          notifyPayload: dto.notifyPayload,
-          paidAt: new Date(),
-        })
-        .where(
-          and(
-            eq(this.paymentOrder.id, order.id),
-            eq(this.paymentOrder.status, PaymentOrderStatusEnum.PENDING),
-          ),
-        )
-        .returning()
-
-      if (!paidOrder) {
-        const latestOrder = await tx.query.paymentOrder.findFirst({
-          where: { id: order.id },
-        })
-        if (latestOrder?.status === PaymentOrderStatusEnum.PAID) {
-          this.assertPaidOrderMatchesNotify(
-            latestOrder,
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const [paidOrder] = await tx
+          .update(this.paymentOrder)
+          .set({
+            status: PaymentOrderStatusEnum.PAID,
             paidAmount,
             providerTradeNo,
+            notifyPayload: dto.notifyPayload,
+            paidAt: new Date(),
+          })
+          .where(
+            and(
+              eq(this.paymentOrder.id, order.id),
+              eq(this.paymentOrder.status, PaymentOrderStatusEnum.PENDING),
+            ),
           )
-          return this.toPaymentOrderResult(latestOrder, {})
-        }
-        if (latestOrder) {
+          .returning()
+
+        if (!paidOrder) {
+          const latestOrder:
+            PaymentOrderManualConfirmationSnapshot | undefined =
+            await tx.query.paymentOrder.findFirst({
+              where: { id: order.id },
+              columns: this.paymentOrderManualConfirmationColumns,
+            })
+          if (latestOrder?.status === PaymentOrderStatusEnum.PAID) {
+            this.assertPaidOrderMatchesNotify(
+              latestOrder,
+              paidAmount,
+              providerTradeNo,
+            )
+            return this.toPaymentOrderResult(latestOrder, {})
+          }
+          if (latestOrder) {
+            throw new BusinessException(
+              BusinessErrorCode.STATE_CONFLICT,
+              '当前订单状态不允许支付确认',
+            )
+          }
           throw new BusinessException(
-            BusinessErrorCode.STATE_CONFLICT,
-            '当前订单状态不允许支付确认',
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '支付订单不存在',
           )
         }
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '支付订单不存在',
+
+        await this.settlePaidOrder(tx, paidOrder)
+
+        this.logger.log(
+          `payment_order_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerConfigId=${paidOrder.providerConfigId} providerConfigVersion=${paidOrder.providerConfigVersion}`,
         )
-      }
 
-      await this.settlePaidOrder(tx, paidOrder)
-
-      this.logger.log(
-        `payment_order_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerConfigId=${paidOrder.providerConfigId} providerConfigVersion=${paidOrder.providerConfigVersion}`,
-      )
-
-      return this.toPaymentOrderResult(paidOrder, {})
+        return this.toPaymentOrderResult(paidOrder, {})
+      },
     })
   }
 
   // 后台手工确认只用于运营审计入口，禁止绕过金额、交易号和幂等校验。
   async confirmPaymentOrderManually(dto: ConfirmPaymentOrderDto) {
-    const order = await this.db.query.paymentOrder.findFirst({
-      where: { orderNo: dto.orderNo },
-    })
+    const order: PaymentOrderManualConfirmationSnapshot | undefined =
+      await this.db.query.paymentOrder.findFirst({
+        where: { orderNo: dto.orderNo },
+        columns: this.paymentOrderManualConfirmationColumns,
+      })
     if (!order) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1800,61 +2342,66 @@ export class PaymentService {
       )
     }
 
-    return this.drizzle.withTransaction(async (tx) => {
-      const [paidOrder] = await tx
-        .update(this.paymentOrder)
-        .set({
-          status: PaymentOrderStatusEnum.PAID,
-          paidAmount,
-          providerTradeNo,
-          notifyPayload: dto.notifyPayload ?? null,
-          paidAt: new Date(),
-        })
-        .where(
-          and(
-            eq(this.paymentOrder.id, order.id),
-            eq(this.paymentOrder.status, PaymentOrderStatusEnum.PENDING),
-          ),
-        )
-        .returning()
-
-      if (!paidOrder) {
-        const latestOrder = await tx.query.paymentOrder.findFirst({
-          where: { id: order.id },
-        })
-        if (latestOrder?.status === PaymentOrderStatusEnum.PAID) {
-          this.assertPaidOrderMatchesNotify(
-            latestOrder,
+    return this.drizzle.withTransaction({
+      execute: async (tx) => {
+        const [paidOrder] = await tx
+          .update(this.paymentOrder)
+          .set({
+            status: PaymentOrderStatusEnum.PAID,
             paidAmount,
             providerTradeNo,
+            notifyPayload: dto.notifyPayload ?? null,
+            paidAt: new Date(),
+          })
+          .where(
+            and(
+              eq(this.paymentOrder.id, order.id),
+              eq(this.paymentOrder.status, PaymentOrderStatusEnum.PENDING),
+            ),
           )
-          return this.toPaymentOrderResult(latestOrder, {})
-        }
-        if (latestOrder) {
+          .returning()
+
+        if (!paidOrder) {
+          const latestOrder:
+            PaymentOrderManualConfirmationSnapshot | undefined =
+            await tx.query.paymentOrder.findFirst({
+              where: { id: order.id },
+              columns: this.paymentOrderManualConfirmationColumns,
+            })
+          if (latestOrder?.status === PaymentOrderStatusEnum.PAID) {
+            this.assertPaidOrderMatchesNotify(
+              latestOrder,
+              paidAmount,
+              providerTradeNo,
+            )
+            return this.toPaymentOrderResult(latestOrder, {})
+          }
+          if (latestOrder) {
+            throw new BusinessException(
+              BusinessErrorCode.STATE_CONFLICT,
+              '当前订单状态不允许支付确认',
+            )
+          }
           throw new BusinessException(
-            BusinessErrorCode.STATE_CONFLICT,
-            '当前订单状态不允许支付确认',
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '支付订单不存在',
           )
         }
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_NOT_FOUND,
-          '支付订单不存在',
+
+        await this.settlePaidOrder(tx, paidOrder)
+
+        this.logger.log(
+          `payment_order_manually_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerTradeNo=${paidOrder.providerTradeNo}`,
         )
-      }
 
-      await this.settlePaidOrder(tx, paidOrder)
-
-      this.logger.log(
-        `payment_order_manually_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerTradeNo=${paidOrder.providerTradeNo}`,
-      )
-
-      return this.toPaymentOrderResult(paidOrder, {})
+        return this.toPaymentOrderResult(paidOrder, {})
+      },
     })
   }
 
   // 将支付订单行映射为 App 公开支付结果，禁止透出 provider 内部字段。
   private toPaymentOrderResult(
-    order: PaymentOrderSelect,
+    order: PaymentOrderPublicResultSource,
     clientPayPayload: Record<string, unknown>,
   ): PaymentOrderPublicResult {
     return {
@@ -1869,7 +2416,10 @@ export class PaymentService {
 
   // 已支付幂等分支仍必须与本次已验签回调事实一致。
   private assertPaidOrderMatchesNotify(
-    order: PaymentOrderSelect,
+    order: Pick<
+      PaymentOrderPaidStateSnapshot,
+      'paidAmount' | 'providerTradeNo'
+    >,
     paidAmount: number,
     providerTradeNo: string,
   ) {
@@ -1940,7 +2490,7 @@ export class PaymentService {
   }
 
   private toPaymentProviderAccountOption(
-    config: PaymentProviderConfigSelect,
+    config: PaymentProviderAccountOptionSource,
   ): PaymentProviderAccountOptionDto {
     return {
       label: this.buildPaymentProviderAccountLabel(config),
@@ -1958,7 +2508,7 @@ export class PaymentService {
   }
 
   private toAdminPaymentProviderConfigPageItem(
-    config: PaymentProviderConfigSelect,
+    config: AdminPaymentProviderConfigPageSource,
   ): AdminPaymentProviderConfigPageItemDto {
     return {
       id: config.id,
@@ -1994,7 +2544,7 @@ export class PaymentService {
   }
 
   private toPaymentCredentialOption(
-    credential: PaymentProviderCredentialSelect,
+    credential: PaymentProviderCredentialOptionSource,
   ): PaymentProviderCredentialOptionDto {
     return {
       label: this.buildOptionLabel(
@@ -2015,7 +2565,7 @@ export class PaymentService {
   }
 
   private toPaymentCertificateOption(
-    certificate: PaymentProviderCertificateSelect,
+    certificate: PaymentProviderCertificateOptionSource,
   ): PaymentProviderCertificateOptionDto {
     return {
       label: this.buildOptionLabel(
@@ -2036,7 +2586,7 @@ export class PaymentService {
   }
 
   private toPaymentReconciliationPageItem(
-    record: PaymentReconciliationRecordSelect,
+    record: PaymentReconciliationPageSource,
   ): AdminPaymentReconciliationPageItemDto {
     return {
       id: record.id,
@@ -2064,7 +2614,9 @@ export class PaymentService {
   }
 
   private buildPaymentProviderAccountLabel(
-    source: PaymentOrderSelect | PaymentProviderConfigSelect,
+    source:
+      | PaymentProviderAccountLabelOrderSource
+      | PaymentProviderAccountLabelConfigSource,
   ) {
     const snapshot =
       'configSnapshot' in source
@@ -2079,7 +2631,8 @@ export class PaymentService {
     const mchId =
       this.readStringField(snapshot ?? {}, 'mchId') ||
       ('mchId' in source ? source.mchId : '')
-    const fallbackId = 'providerConfigId' in source ? source.providerConfigId : source.id
+    const fallbackId =
+      'providerConfigId' in source ? source.providerConfigId : source.id
     const name = configName || `支付账号 ${fallbackId}`
     const maskedAccount = this.maskIdentifier(mchId || appId)
     return maskedAccount ? `${name} / ${maskedAccount}` : name
@@ -2142,7 +2695,10 @@ export class PaymentService {
   }
 
   private async getPaymentProviderConfigVersionForOrder(
-    order: PaymentOrderSelect,
+    order: Pick<
+      PaymentNotifyOrderSnapshot,
+      'providerConfigId' | 'providerConfigVersion' | 'providerConfigVersionId'
+    >,
   ) {
     if (order.providerConfigVersionId == null) {
       throw new BusinessException(
@@ -2150,9 +2706,10 @@ export class PaymentService {
         '支付订单缺少 provider 配置版本',
       )
     }
-    const configVersion =
+    const configVersion: PaymentProviderConfigVersionOrderSnapshot | null =
       (await this.db.query.paymentProviderConfigVersion.findFirst({
         where: { id: order.providerConfigVersionId },
+        columns: this.paymentProviderConfigVersionOrderColumns,
       })) ?? null
     if (
       !configVersion ||
@@ -2169,33 +2726,19 @@ export class PaymentService {
 
   // 用订单下单时不可变版本行还原 provider 配置视图；验签不得被当前 admin 配置轮换影响。
   private buildPaymentProviderConfigForOrderVersion(
-    version: PaymentProviderConfigVersionSelect,
-  ): PaymentProviderConfigSelect {
+    version: PaymentProviderConfigVersionOrderSnapshot,
+  ): PaymentProviderConfigForOrderSnapshot {
     const snapshot = this.asRecord(version.configSnapshot)
     return {
       id: version.providerConfigId,
-      createdAt: version.createdAt,
-      updatedAt: version.updatedAt,
       channel: version.channel,
-      paymentScene: version.paymentScene,
-      platform: version.platform,
-      environment: version.environment,
-      clientAppKey: version.clientAppKey,
-      configName: version.configName,
       appId: version.appId,
       mchId: version.mchId,
       notifyUrl: version.notifyUrl,
       returnUrl: version.returnUrl,
-      allowedReturnDomains: version.allowedReturnDomains,
-      certMode: version.certMode,
       publicKeyRef: this.readSnapshotNullableString(
         snapshot,
         'publicKeyRef',
-        null,
-      ),
-      privateKeyRef: this.readSnapshotNullableString(
-        snapshot,
-        'privateKeyRef',
         null,
       ),
       apiV3KeyRef: this.readSnapshotNullableString(
@@ -2203,22 +2746,11 @@ export class PaymentService {
         'apiV3KeyRef',
         null,
       ),
-      appCertRef: this.readSnapshotNullableString(
-        snapshot,
-        'appCertRef',
-        null,
-      ),
       platformCertRef: this.readSnapshotNullableString(
         snapshot,
         'platformCertRef',
         null,
       ),
-      rootCertRef: this.readSnapshotNullableString(
-        snapshot,
-        'rootCertRef',
-        null,
-      ),
-      configVersion: version.configVersion,
       credentialVersionRef:
         this.readSnapshotNullableString(
           snapshot,
@@ -2226,22 +2758,25 @@ export class PaymentService {
           null,
         ) ?? '',
       configMetadata: snapshot?.configMetadata ?? null,
-      sortOrder: 0,
-      isEnabled: version.status === 1 && version.isActive,
     }
   }
 
   // 凭据材料按订单不可变快照解析，缺少真实材料时 adapter fail closed。
   private async resolvePaymentProviderCredentialMaterial(
-    order: PaymentOrderSelect,
-    config: PaymentProviderConfigSelect,
+    order: Pick<
+      PaymentNotifyOrderSnapshot,
+      'alipayPublicCredentialId' | 'wechatApiV3CredentialId'
+    >,
+    config: Pick<
+      PaymentProviderConfigForOrderSnapshot,
+      'apiV3KeyRef' | 'configMetadata' | 'platformCertRef' | 'publicKeyRef'
+    >,
   ): Promise<PaymentProviderCredentialMaterial> {
     const metadata = this.asRecord(config.configMetadata)
-    const alipayPublicCredential =
-      await this.resolvePaymentCredentialByIdOrRef(
-        order.alipayPublicCredentialId,
-        config.publicKeyRef,
-      )
+    const alipayPublicCredential = await this.resolvePaymentCredentialByIdOrRef(
+      order.alipayPublicCredentialId,
+      config.publicKeyRef,
+    )
     const wechatApiV3Credential = await this.resolvePaymentCredentialByIdOrRef(
       order.wechatApiV3CredentialId,
       config.apiV3KeyRef,
@@ -2271,20 +2806,20 @@ export class PaymentService {
           'materialEnvKey',
         ],
       ),
-      wechatPlatformSerialNo: this.readStringField(
-        metadata ?? {},
-        'wechatPlatformSerialNo',
-      ) ?? platformCertificate?.serialNo,
+      wechatPlatformSerialNo:
+        this.readStringField(metadata ?? {}, 'wechatPlatformSerialNo') ??
+        platformCertificate?.serialNo,
     }
   }
 
   private async resolvePaymentCredentialByIdOrRef(
     id: number | null,
     credentialRef: string | null,
-  ) {
+  ): Promise<PaymentProviderCredentialMaterialSource | null | undefined> {
     if (id != null) {
       return this.db.query.paymentProviderCredential.findFirst({
         where: { id },
+        columns: this.paymentProviderCredentialMaterialColumns,
       })
     }
     if (!credentialRef) {
@@ -2292,15 +2827,19 @@ export class PaymentService {
     }
     return this.db.query.paymentProviderCredential.findFirst({
       where: { credentialRef },
+      columns: this.paymentProviderCredentialMaterialColumns,
     })
   }
 
-  private async resolvePaymentCertificateByRef(certificateRef: string | null) {
+  private async resolvePaymentCertificateByRef(
+    certificateRef: string | null,
+  ): Promise<PaymentProviderCertificateMaterialSource | null | undefined> {
     if (!certificateRef) {
       return null
     }
     return this.db.query.paymentProviderCertificate.findFirst({
       where: { certificateRef },
+      columns: this.paymentProviderCertificateMaterialColumns,
     })
   }
 
@@ -2362,9 +2901,14 @@ export class PaymentService {
 
   // 根据 ID 读取支付 provider 配置。
   private async getPaymentProviderConfigById(id: number) {
-    const config = await this.db.query.paymentProviderConfig.findFirst({
-      where: { id },
-    })
+    const config: PaymentProviderConfigWriteSnapshot | undefined =
+      await this.db.query.paymentProviderConfig.findFirst({
+        where: { id },
+        columns: {
+          channel: true,
+          configMetadata: true,
+        },
+      })
     if (!config) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,

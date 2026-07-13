@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { DbExecutor } from '@db/core'
 import type { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.type'
 import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
 import { ReportService } from '@libs/interaction/report/report.service'
@@ -34,7 +34,7 @@ export class ForumTopicReportResolver
   }
 
   // 校验主题公开可见，并返回举报场景和主题作者。
-  async resolveMeta(tx: Db, targetId: number) {
+  async resolveMeta(tx: DbExecutor, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
