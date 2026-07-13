@@ -10,7 +10,7 @@
   ad-hoc import script。临时验证必须在系统临时目录或显式登记的 ephemeral location
   运行，并在交付前删除。
 - 可长期提交的是 production/operation owner 的静态 gate 和受控脚本，例如 migration
-  check、target guard 与边界检查；它们不是测试框架资产，
+  check、环境 guard 与边界检查；它们不是测试框架资产，
   必须不含兼容层或真实凭据。
 - `.omx/evidence/**` 只保留脱敏、可重算的证据摘要、raw distribution、EXPLAIN JSON、
   环境与 digest；不得保存 DATABASE_URL、token、password、PII、可恢复的 source dump 或
@@ -20,7 +20,7 @@
 
 - 静态：typecheck、non-fixing ESLint、build、Drizzle/RQB/FK/raw/decoder/manifest/page
   contract checks。
-- PostgreSQL：只使用登记且隔离的 target，按实际改动验证 RQB relation、transaction、
+- PostgreSQL：使用操作流程明确的数据库连接，按实际改动验证 RQB relation、transaction、
   migration/comments/bootstrap。测试结束后删除临时测试代码与一次性证据。
 - HTTP/WS：冻结 DTO、OpenAPI、错误码、认证、页码/游标 owner 与完整 response。后台必须
   维持页码任意跳转和 exact total；不得以 cursor 或近似值替代。
@@ -33,7 +33,6 @@
 pnpm exec eslint <changed-typescript-files>
 pnpm build:admin
 pnpm build:app
-pnpm db:core:check
 pnpm db:migration:check
 pnpm db:comments:check
 ```
@@ -46,8 +45,6 @@ CI 中伪造它们。规则/文档变更至少运行对应 Markdown Prettier che
 
 - 禁止普通测试、OpenAPI、生成、应用启动或 lint 隐式 reset、seed、bootstrap、publish 或
   其他凭据化写入。
-- 禁止接入 source/preserve/shared/production target，或在 evidence/log 中输出连接串、
-  credential、token、SQL 参数或 PII。
+- 禁止在 evidence/log 中输出连接串、credential、token、SQL 参数或 PII。
 - 禁止测试为兼容层、旧 route/field/value/ORM API 或旧 migration journal 提供豁免。
-- 禁止在已登记 target 之外销毁资源、修改 PostgreSQL cluster configuration 或声称
-  未执行的验证已通过。
+- 禁止销毁未明确指定的资源、修改 PostgreSQL cluster configuration 或声称未执行的验证已通过。

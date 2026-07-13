@@ -19,8 +19,10 @@ import {
   readMigrationLockTimeoutMs,
   releaseMigrationSessionLock,
 } from '../migration-session-lock'
-import { readReferenceBootstrapOptions } from '../runtime-guard'
-import { readRegisteredDisposableDatabaseTarget } from '../targets/registered-disposable-target'
+import {
+  readDatabaseConnection,
+  readReferenceBootstrapOptions,
+} from '../runtime-guard'
 import {
   ADMIN_REFERENCE_PERMISSION_MANIFEST_DIGEST,
   ADMIN_REFERENCE_PERMISSIONS,
@@ -38,7 +40,6 @@ const scrypt = promisify(_scrypt)
 export interface ReferenceBootstrapCommand {
   checkEnvironmentOnly: boolean
   createAdmin?: boolean
-  targetId: string
 }
 
 export interface ReferenceBootstrapResult {
@@ -47,7 +48,6 @@ export interface ReferenceBootstrapResult {
     count: number
     digest: string
   }
-  targetId: string
 }
 
 function readReferenceBootstrapCommand(
@@ -55,7 +55,6 @@ function readReferenceBootstrapCommand(
 ): ReferenceBootstrapCommand {
   const args = argv.slice(2)
   let checkEnvironmentOnly = false
-  let targetId: string | undefined
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
@@ -70,27 +69,12 @@ function readReferenceBootstrapCommand(
         checkEnvironmentOnly = true
         break
       }
-      case '--target-id': {
-        if (targetId) {
-          throw new Error('--target-id may be specified only once')
-        }
-        const value = args[index + 1]
-        if (!value || value.startsWith('--')) {
-          throw new Error('--target-id requires a registered target id')
-        }
-        targetId = value
-        index += 1
-        break
-      }
       default:
         throw new Error(`Unknown reference bootstrap argument: ${argument}`)
     }
   }
 
-  if (!targetId) {
-    throw new Error('--target-id is required')
-  }
-  return { checkEnvironmentOnly, targetId }
+  return { checkEnvironmentOnly }
 }
 
 async function assertTargetIdentity(client: PoolClient, databaseName: string) {
@@ -98,9 +82,7 @@ async function assertTargetIdentity(client: PoolClient, databaseName: string) {
     'SELECT current_database() AS database_name',
   )
   if (result.rows[0]?.database_name !== databaseName) {
-    throw new Error(
-      'Connected database does not match the registered reference bootstrap target',
-    )
+    throw new Error('Connected database does not match DATABASE_URL')
   }
 }
 
@@ -163,7 +145,10 @@ async function createBootstrapAdministrator(
 export async function runReferenceBootstrap(
   command: ReferenceBootstrapCommand,
 ): Promise<ReferenceBootstrapResult> {
-  const target = readRegisteredDisposableDatabaseTarget(command.targetId)
+  const database = readDatabaseConnection(
+    process.env,
+    'Reference bootstrap 需要 DATABASE_URL',
+  )
   const manifest = assertAdminRbacReferencePermissionManifestCurrent()
   if (
     manifest.count !== ADMIN_REFERENCE_PERMISSIONS.length ||
@@ -184,13 +169,13 @@ export async function runReferenceBootstrap(
         permissionCount: manifest.count,
         permissionManifestDigest: manifest.digest,
         status: 'environment-ready',
-        target: target.safeLabel,
+        database: database.safeLabel,
       })}\n`,
     )
-    return { adminCreated: false, manifest, targetId: target.id }
+    return { adminCreated: false, manifest }
   }
 
-  const pool = new Pool({ connectionString: target.url, max: 1 })
+  const pool = new Pool({ connectionString: database.databaseUrl, max: 1 })
   let client: PoolClient | undefined
   let lockAcquired = false
   let primaryError: unknown
@@ -199,7 +184,7 @@ export async function runReferenceBootstrap(
 
   try {
     client = await pool.connect()
-    await assertTargetIdentity(client, target.databaseName)
+    await assertTargetIdentity(client, database.databaseName)
     const lock = await acquireMigrationSessionLock(
       client,
       readMigrationLockTimeoutMs(),
@@ -217,7 +202,7 @@ export async function runReferenceBootstrap(
       await grantAdminRbacBuiltInRoleDefaults(tx)
       return admin ? createBootstrapAdministrator(tx, admin) : false
     })
-    result = { adminCreated, manifest, targetId: target.id }
+    result = { adminCreated, manifest }
     process.stdout.write(
       `${JSON.stringify({
         adminCreated,
@@ -225,7 +210,7 @@ export async function runReferenceBootstrap(
         permissionCount: manifest.count,
         permissionManifestDigest: manifest.digest,
         status: 'pass',
-        target: target.safeLabel,
+        database: database.safeLabel,
       })}\n`,
     )
   } catch (error) {

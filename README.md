@@ -54,11 +54,11 @@ pnpm publish-api:app
 
 ## 数据库迁移与初始化
 
-- `pnpm db:migrate` 只面向明确登记的本地 disposable target，必须显式传入 `--mode active` 和 `--target-id`；它不是生产部署别名。
-- 数据库 migration/static gate 的 operational owner 位于 `db/operations/**`，target guard 位于 `db/targets/**`；`scripts/` 只保留数据库注释与 Admin RBAC 入口。
+- `pnpm db:migrate` 必须显式传入 `--mode active`，并从 `DATABASE_URL` 读取连接；它不是生产部署别名。
+- 数据库 migration/static gate 的 operational owner 位于 `db/operations/**`；`scripts/` 只保留数据库注释与 Admin RBAC 入口。
 - 本仓库不使用数据库外键，不使用 `drizzle-kit push` / `push --force` 作为交付路径。
 - 迁移、停写、数据导入、发布与回滚都不是 compose 或本地脚本的隐式副作用，必须由对应环境的操作流程明确执行。
-- reference bootstrap 可通过 `pnpm db:bootstrap:reference -- --target-id <target>` 显式执行；demo seed 仅能通过 `pnpm db:seed:demo:target -- --target-id <target>` 对登记的本地 target 执行，并要求 `ALLOW_DB_SEED=true`。
+- reference bootstrap 可通过 `pnpm db:bootstrap:reference` 显式执行；demo seed 仅能通过 `pnpm db:seed:demo` 显式执行，并要求 `ALLOW_DB_SEED=true`。
 
 ## 规范入口
 

@@ -2,7 +2,7 @@ const TRUE_ENV_VALUES = new Set(['1', 'true', 'yes', 'y'])
 const PRODUCTION_ENV_NAMES = new Set(['prod', 'production'])
 const DEFAULT_DEMO_SEED_DENY_TOKENS = ['prod', 'production']
 
-interface DatabaseTarget {
+export interface DatabaseConnection {
   databaseUrl: string
   protocol: string
   hostname: string
@@ -11,7 +11,7 @@ interface DatabaseTarget {
   safeLabel: string
 }
 
-interface DemoSeedEnvironment extends DatabaseTarget {
+interface DemoSeedEnvironment extends DatabaseConnection {
   nodeEnv: string
 }
 
@@ -43,11 +43,9 @@ export function assertSafeDemoSeedEnvironment(
     throw new Error('Demo seed 必须显式设置 ALLOW_DB_SEED=true')
   }
 
-  const target = parseDatabaseTarget(
-    requireEnv(env, 'DATABASE_URL', 'Demo seed 需要 DATABASE_URL'),
-  )
+  const database = readDatabaseConnection(env, 'Demo seed 需要 DATABASE_URL')
   const matchedDenyToken = findMatchedDenyToken(
-    target,
+    database,
     readListEnv(env.DB_SEED_DENYLIST_TOKENS, DEFAULT_DEMO_SEED_DENY_TOKENS),
   )
 
@@ -56,9 +54,18 @@ export function assertSafeDemoSeedEnvironment(
   }
 
   return {
-    ...target,
+    ...database,
     nodeEnv,
   }
+}
+
+export function readDatabaseConnection(
+  env: NodeJS.ProcessEnv,
+  missingUrlMessage: string,
+): DatabaseConnection {
+  return parseDatabaseConnection(
+    requireEnv(env, 'DATABASE_URL', missingUrlMessage),
+  )
 }
 
 export function readReferenceBootstrapOptions(
@@ -134,7 +141,7 @@ function readListEnv(value: string | undefined, defaults: string[]) {
   )
 }
 
-function parseDatabaseTarget(databaseUrl: string): DatabaseTarget {
+function parseDatabaseConnection(databaseUrl: string): DatabaseConnection {
   let url: URL
 
   try {
@@ -160,14 +167,16 @@ function parseDatabaseTarget(databaseUrl: string): DatabaseTarget {
 }
 
 function formatSafeDatabaseLabel(url: URL, databaseName: string) {
-  const username = url.username ? `${decodeURIComponent(url.username)}@` : ''
   const port = url.port ? `:${url.port}` : ''
 
-  return `${url.protocol}//${username}${url.hostname}${port}/${databaseName}`
+  return `${url.protocol}//${url.hostname}${port}/${databaseName}`
 }
 
-function findMatchedDenyToken(target: DatabaseTarget, denyTokens: string[]) {
-  const haystack = [target.hostname, target.databaseName, target.username]
+function findMatchedDenyToken(
+  database: DatabaseConnection,
+  denyTokens: string[],
+) {
+  const haystack = [database.hostname, database.databaseName, database.username]
     .join('/')
     .toLowerCase()
 

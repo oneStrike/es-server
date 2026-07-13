@@ -15,7 +15,6 @@ import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { sql } from 'drizzle-orm'
 import { assertSafeDemoSeedEnvironment } from '../runtime-guard'
-import { readRegisteredDisposableDatabaseTarget } from '../targets/registered-disposable-target'
 import { createDbClient, disconnectDbClient } from './db-client'
 import { acquirePublicSchemaMaintenanceTableLocks } from './maintenance-table-lock'
 import { seedAdminDomain } from './modules/admin/domain'
@@ -32,28 +31,10 @@ import {
 const DATABASE_INITIALIZATION_JOB_LOCK = 'reference-data-bootstrap'
 
 /**
- * 在通过环境与目标身份校验后写入本地 demo 数据。
- *
- * 入口必须传入登记 target；函数会重新解析 registry，并在连接 session 中核验
- * current_database()，不接受任意 DATABASE_URL 或无 target 的 generic 调用。
+ * 在通过环境和连接身份校验后写入本地 demo 数据。
  */
 export async function runDemoSeed(options: DemoSeedRunOptions) {
-  const target = readRegisteredDisposableDatabaseTarget(options.target.id)
-  if (
-    target.databaseName !== options.target.databaseName ||
-    target.url !== options.target.url
-  ) {
-    throw new Error('Demo seed target no longer matches the registered target')
-  }
-  const environment = assertSafeDemoSeedEnvironment({
-    ...options.environment,
-    DATABASE_URL: target.url,
-  })
-  if (environment.databaseName !== target.databaseName) {
-    throw new Error(
-      'Demo seed environment does not match the registered target',
-    )
-  }
+  const environment = assertSafeDemoSeedEnvironment(options.environment)
   console.log('🌱 开始初始化 Drizzle 种子数据...\n')
 
   const client = createDbClient(environment.databaseUrl)
@@ -63,7 +44,7 @@ export async function runDemoSeed(options: DemoSeedRunOptions) {
     const sessionIdentity = await client.pool.query<{ database_name: string }>(
       'SELECT current_database() AS database_name',
     )
-    if (sessionIdentity.rows[0]?.database_name !== target.databaseName) {
+    if (sessionIdentity.rows[0]?.database_name !== environment.databaseName) {
       throw new Error('Demo seed connected to an unexpected database')
     }
     await db.transaction(async (tx) => {

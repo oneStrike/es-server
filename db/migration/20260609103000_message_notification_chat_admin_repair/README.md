@@ -20,9 +20,9 @@ admin repair pass.
 
 ## Default path
 
-`pnpm db:migrate -- --mode active --target-id <registered-local-target>` runs
-this SQL through the guarded Drizzle migrator against registered disposable
-targets only, so pending migration statements execute inside a transaction.
+`pnpm db:migrate -- --mode active` runs this SQL through the guarded Drizzle
+migrator using `DATABASE_URL`, so pending migration statements execute inside
+a transaction.
 The checked-in SQL therefore uses ordinary `ALTER TABLE`, `DROP INDEX IF
 EXISTS`, and `CREATE INDEX IF NOT EXISTS` statements.
 

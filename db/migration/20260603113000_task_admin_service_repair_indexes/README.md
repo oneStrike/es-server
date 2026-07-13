@@ -22,10 +22,9 @@ Owner queries:
 - `task_event_log_instance_latest_idx`: reconciliation latest-event window query by instance.
 - `task_step_unique_fact_reconcile_summary_idx`: reconciliation unique-fact summary by task/user/scope/step.
 
-`pnpm db:migrate -- --mode active --target-id <registered-local-target>` runs
-migrations through the guarded Drizzle migrator against registered disposable
-targets only, so the checked-in SQL uses normal `CREATE INDEX IF NOT EXISTS`
-statements. For a large disposable production-like dataset, create these
+`pnpm db:migrate -- --mode active` runs migrations through the guarded Drizzle
+migrator using `DATABASE_URL`, so the checked-in SQL uses normal `CREATE INDEX
+IF NOT EXISTS` statements. For a large production-like dataset, create these
 indexes manually with `CONCURRENTLY` outside the migration transaction first,
 then apply this migration during a maintenance window so the statements are
 no-ops.

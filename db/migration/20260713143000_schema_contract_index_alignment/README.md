@@ -15,15 +15,16 @@ nulls become `0` before the column becomes `integer NOT NULL DEFAULT 0`.
 
 ## Operational path
 
-The repository only permits migrations against a registered disposable target:
+The repository runs migrations through the guarded Drizzle command using
+`DATABASE_URL`:
 
 ```bash
-pnpm db:migrate -- --mode active --target-id <registered-local-target>
+pnpm db:migrate -- --mode active
 ```
 
 The migration contains ordinary transactional index operations. For a large
-production-like disposable dataset, estimate lock and I/O impact before the
-run; do not bypass the registered-target guard with direct database commands.
+production-like dataset, estimate lock and I/O impact before the run; do not
+bypass the guarded migration command with direct database commands.
 
 ## Scope
 

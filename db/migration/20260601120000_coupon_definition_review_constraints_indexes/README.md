@@ -47,7 +47,7 @@ The migration validates the constraints after adding them. On large `coupon_defi
 
 ## Large table online path
 
-`pnpm db:migrate -- --mode active --target-id <registered-local-target>` runs the
+`pnpm db:migrate -- --mode active` runs the
 checked-in SQL through the guarded Drizzle migrator against registered
 disposable targets only. The SQL therefore uses regular `CREATE INDEX IF NOT
 EXISTS` rather than `CREATE INDEX CONCURRENTLY`. For a large disposable

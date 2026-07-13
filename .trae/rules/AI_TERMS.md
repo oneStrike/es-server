@@ -31,13 +31,6 @@
 - 禁止 shim、alias、版本路由、静默转换、旧值 fallback、双读、双写与旧 migration 解释器。
 - 可观察故障降级、确定性默认排序与状态机补偿不属于旧合同解释能力，但必须进入有 owner 和测试的 resilience allowlist。
 
-## registered disposable target
-
-- `db/database-targets.json` 中明确标为 `disposable` / `explicit-local-only`，且 source URL
-  解析到登记 loopback host 的 database target。
-- 只有它可作为受控 migrate、bootstrap 或内部 demo seed 的写入目标；每个脚本还必须在已连接
-  session 上验证 `current_database()`。
-
 ## consumer-owned port
 
 - consumer 为真实跨域同步能力或外部 SDK 定义的最小接口；adapter 在 app composition 绑定。

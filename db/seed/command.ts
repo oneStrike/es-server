@@ -1,17 +1,14 @@
 import process from 'node:process'
 import { assertSafeDemoSeedEnvironment } from '../runtime-guard'
-import { readRegisteredDisposableDatabaseTarget } from '../targets/registered-disposable-target'
 import { runDemoSeed } from './index'
 
 interface DemoSeedCommand {
   checkEnvironmentOnly: boolean
-  targetId: string
 }
 
 function readCommand(argv = process.argv): DemoSeedCommand {
   const args = argv.slice(2)
   let checkEnvironmentOnly = false
-  let targetId: string | undefined
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
@@ -23,60 +20,37 @@ function readCommand(argv = process.argv): DemoSeedCommand {
         checkEnvironmentOnly = true
         break
       }
-      case '--target-id': {
-        if (targetId) {
-          throw new Error('--target-id may be specified only once')
-        }
-        const value = args[index + 1]
-        if (!value || value.startsWith('--')) {
-          throw new Error('--target-id requires a registered target id')
-        }
-        targetId = value
-        index += 1
-        break
-      }
       default:
-        throw new Error(`Unknown demo seed target argument: ${argument}`)
+        throw new Error(`Unknown demo seed argument: ${argument}`)
     }
   }
 
-  if (!targetId) {
-    throw new Error('--target-id is required')
-  }
-  return { checkEnvironmentOnly, targetId }
+  return { checkEnvironmentOnly }
 }
 
 async function main(): Promise<void> {
   const command = readCommand()
-  const target = readRegisteredDisposableDatabaseTarget(command.targetId)
-  const environment = {
-    ...process.env,
-    DATABASE_URL: target.url,
-  }
-  assertSafeDemoSeedEnvironment(environment)
+  const environment = assertSafeDemoSeedEnvironment(process.env)
 
   if (command.checkEnvironmentOnly) {
     process.stdout.write(
       `${JSON.stringify({
-        databaseName: target.databaseName,
+        databaseName: environment.databaseName,
+        database: environment.safeLabel,
         status: 'environment-ready',
-        target: target.safeLabel,
-        targetId: target.id,
       })}\n`,
     )
     return
   }
 
   await runDemoSeed({
-    environment,
-    target,
+    environment: process.env,
   })
   process.stdout.write(
     `${JSON.stringify({
-      databaseName: target.databaseName,
+      databaseName: environment.databaseName,
+      database: environment.safeLabel,
       status: 'pass',
-      target: target.safeLabel,
-      targetId: target.id,
     })}\n`,
   )
 }

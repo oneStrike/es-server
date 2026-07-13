@@ -64,7 +64,7 @@
 
 ## Schema 与 migration 联动
 
-- 常规 schema 差异必须先生成 migration，再通过受控 check / migrate 入口执行；具体命令见 [07-drizzle-operations.md](./07-drizzle-operations.md)。`db:migrate` 要求显式 `mode active` 与 target，不存在无参数或 production 别名入口。
+- 常规 schema 差异必须先生成 migration，再通过受控 check / migrate 入口执行；具体命令见 [07-drizzle-operations.md](./07-drizzle-operations.md)。`db:migrate` 要求显式 `mode active` 与 `DATABASE_URL`，不存在无参数或 production 别名入口。
 - 若生成过程中出现交互，必须停止并由用户亲自执行；不要替用户继续回答交互提示。
 - 常规 migration 采用 append-only：只允许新建，不允许修改、删除或在已存在、已提交、已执行的 migration 文件中追加 DDL。
 - 无法自动生成的 DDL 可手写补充，但必须说明原因、范围与风险。

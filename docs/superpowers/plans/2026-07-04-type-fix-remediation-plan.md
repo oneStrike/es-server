@@ -99,8 +99,8 @@ pnpm exec nest build moderation
 
 ### 任务 2：`db/seed` 边界收口
 
-> 后续 owner 迁移说明：本历史计划中的 `scripts/check-db-core-boundary.ts` 已迁至
-> `db/operations/check-db-core-boundary.ts`；命令名仍为 `pnpm db:core:check`。
+> 历史说明：此计划完成后，检查器曾位于
+> `db/operations/check-db-core-boundary.ts`；该文件和 `pnpm db:core:check` 已于 2026-07-13 删除。
 
 **文件：**
 

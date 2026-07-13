@@ -32,7 +32,7 @@ apps/* 与 operational CLI composition
 ```
 
 - 箭头表示唯一允许的依赖方向：左侧可以依赖右侧，右侧不得反向导入左侧；不要求每个相邻节点直接依赖。
-- operational CLI composition 明确包括 `db/operations/**`、`db/targets/**`、`db/bootstrap/**`、`db/seed/**`、`db/migrate.ts` 与保留的 `scripts/**` 注释/RBAC 入口。它们与 `apps/*` 一样只能装配并向下依赖 runtime owner；任何业务 runtime package 都不得反向导入这些可执行入口。`db/operations/**` 只承载数据库 operation/static gate，不得被 `apps/**`、`libs/**`、`db/core/**` 或 `db/schema/**` 反向导入，也不得新增 barrel。
+- operational CLI composition 明确包括 `db/targets/**`、`db/bootstrap/**`、`db/seed/**`、`db/migrate.ts` 与保留的 `scripts/**` 注释/RBAC 入口。它们与 `apps/*` 一样只能装配并向下依赖 runtime owner；任何业务 runtime package 都不得反向导入这些可执行入口。
 - package group 必须覆盖全部 runtime owner：`content/app-content` 对应 `libs/content` 与 `libs/app-content`，`moderation` 对应 `libs/moderation`（包括物理目录 `libs/moderation/sensitive-word` 和别名 `@libs/sensitive-word`），`system-config` 对应 `libs/config`，`user/identity` 对应 `libs/user` 与 `libs/identity`。`account/read-model`、`eventing/workflow` 是本纪元收敛后的 owner 组；从 `libs/platform` 抽离前仍按目标组而不是物理旧目录判定。
 - `db/core → db/relations → db/schema` 是数据库内部的唯一运行方向；业务代码只通过受控 `@db/core` / `@db/schema` public API 使用数据库能力，不把 `@db/relations` 暴露为业务入口。
 - 新增顶层 `apps/*`、`libs/*` 或 `db/*` runtime package 前，必须先把它登记到上述唯一顺序及 machine-readable boundary 配置；未映射 package 直接使边界门禁失败，不允许默认放行。
