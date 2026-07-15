@@ -12,15 +12,15 @@
 
 ## 任务总览
 
-| 任务 | 目标                           | 关键文件                                                                                         | 独立 gate                         |
-| ---- | ------------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------- |
-| 0    | 环境恢复与验证门定义           | `package.json`                                                                                   | `pnpm type-check` 可归因启动      |
-| 1    | `moderation` 结构收口          | `nest-cli.json`、`libs/moderation/tsconfig.lib.json`                                             | `pnpm exec nest build moderation` |
-| 2    | `db/seed` 边界收口             | `db/core/index.ts`、`db/core/drizzle.type.ts`、`db/seed/*`、`scripts/check-db-core-boundary.ts`  | `pnpm db:core:check`              |
-| 3    | `CurrentUser` owner 收口       | `current-user.type.ts`、`current-user.decorator.ts`、`apps/*/global.d.ts`、3 个 direct consumers | `pnpm type-check` + app builds    |
-| 4    | `cache.module.ts` 假配置值清除 | `libs/platform/src/modules/cache/cache.module.ts`                                                | 生产态缺 Redis 配置 smoke         |
-| 5    | `rsa.service.ts` 协议异常恢复  | `rsa.service.ts` + 5 个 caller                                                                   | caller matrix 验证                |
-| 6    | 汇总验证与交接                 | 无新增写集                                                                                       | 四类 gate 全通过                  |
+| 任务 | 目标                           | 关键文件                                                                                         | 独立 gate                             |
+| ---- | ------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| 0    | 环境恢复与验证门定义           | `package.json`                                                                                   | `pnpm type-check` 可归因启动          |
+| 1    | `moderation` 结构收口          | （历史）`nest-cli.json`、`libs/moderation/tsconfig.lib.json`                                     | `pnpm build:admin` + `pnpm build:app` |
+| 2    | `db/seed` 边界收口             | `db/core/index.ts`、`db/core/drizzle.type.ts`、`db/seed/*`、`scripts/check-db-core-boundary.ts`  | `pnpm db:core:check`                  |
+| 3    | `CurrentUser` owner 收口       | `current-user.type.ts`、`current-user.decorator.ts`、`apps/*/global.d.ts`、3 个 direct consumers | `pnpm type-check` + app builds        |
+| 4    | `cache.module.ts` 假配置值清除 | `libs/platform/src/modules/cache/cache.module.ts`                                                | 生产态缺 Redis 配置 smoke             |
+| 5    | `rsa.service.ts` 协议异常恢复  | `rsa.service.ts` + 5 个 caller                                                                   | caller matrix 验证                    |
+| 6    | 汇总验证与交接                 | 无新增写集                                                                                       | 四类 gate 全通过                      |
 
 ## 全局硬约束
 
@@ -73,10 +73,12 @@ pnpm type-check
 
 ### 任务 1：`moderation` 结构收口
 
+> 当前说明（2026-07-15）：仓库已统一为仅构建 `admin-api` 与 `app-api`；所有 `libs` 随应用编译，且不再保留 Nest CLI 的独立 library 项目或 `tsconfig.lib.json`。本任务的原始独立构建配置与命令仅保留为历史记录。
+
 **文件：**
 
-- 修改：`nest-cli.json:112-119`
-- 修改：`libs/moderation/tsconfig.lib.json:3-8`
+- 历史修改：`nest-cli.json:112-119`
+- 历史修改：`libs/moderation/tsconfig.lib.json:3-8`
 
 - [ ] **步骤 1：对齐 `nest-cli.json`**
 
@@ -88,14 +90,18 @@ pnpm type-check
 
 - [ ] **步骤 3：验证**
 
-运行：
+当时运行：
 
 ```powershell
 pnpm exec nest build moderation
 ```
 
-预期：通过。  
-停止条件：若仍报入口不存在、`sourceRoot` 不匹配、`include` 漏扫，停在任务 1。
+当前替代验证：
+
+```powershell
+pnpm build:admin
+pnpm build:app
+```
 
 ### 任务 2：`db/seed` 边界收口
 
@@ -265,7 +271,6 @@ rg -n "request\\.user|user\\?: JwtUserInfoInterface" apps/admin-api/src/global.d
 pnpm type-check
 pnpm build:admin
 pnpm build:app
-pnpm exec nest build moderation
 ```
 
 - [ ] **步骤 3：执行边界脚本门**
