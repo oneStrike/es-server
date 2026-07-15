@@ -32,7 +32,6 @@ import type {
   TopicSectionSnapshot,
   TopicUpdateCurrentSnapshot,
 } from './forum-topic.type'
-import { acquireIntegrityLocks, tableIntegrityLock } from '@db/core'
 import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.helper'
 import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
@@ -92,26 +91,6 @@ export abstract class ForumTopicServiceSupport {
   protected uniquePositiveIds(ids: ForumTopicRelationIdCandidates) {
     return [...new Set(ids)].filter(
       (id): id is number => typeof id === 'number' && id > 0,
-    )
-  }
-
-  // 串行化同一板块的删板块与发帖写路径，避免删除后仍写入新主题。
-  protected async lockSectionForMutation(tx: DbTransaction, sectionId: number) {
-    await this.lockSectionsForMutation(tx, [sectionId])
-  }
-
-  protected async lockSectionsForMutation(
-    tx: DbTransaction,
-    sectionIds: Array<number | null | undefined>,
-  ) {
-    const uniqueSectionIds = [
-      ...new Set(sectionIds.filter(Boolean) as number[]),
-    ]
-    await acquireIntegrityLocks(
-      tx,
-      uniqueSectionIds.map((sectionId) =>
-        tableIntegrityLock('forum_section', sectionId),
-      ),
     )
   }
 

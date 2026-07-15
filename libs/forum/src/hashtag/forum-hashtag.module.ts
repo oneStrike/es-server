@@ -1,6 +1,7 @@
+import { DrizzleModule } from '@db/core'
+import { SystemConfigModule } from '@libs/config/system-config/system-config.module'
 import { FollowModule } from '@libs/interaction/follow/follow.module'
 import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module'
-import { SystemConfigModule } from '@libs/system-config/system-config.module'
 import { Module } from '@nestjs/common'
 import { ForumPermissionModule } from '../permission/forum-permission.module'
 import { ForumHashtagBodyService } from './forum-hashtag-body.service'
@@ -15,6 +16,7 @@ import { ForumHashtagFollowResolver } from './resolver/forum-hashtag-follow.reso
  */
 @Module({
   imports: [
+    DrizzleModule,
     FollowModule,
     ForumPermissionModule,
     SensitiveWordModule,

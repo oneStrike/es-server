@@ -225,7 +225,7 @@ export interface BodyCompileInput {
 
 /**
  * body 校验输入。
- * - rawBody 允许来自 HTTP payload 或 migration helper 的未知值。
+ * - rawBody 允许承载外部输入的未知值。
  */
 export interface BodyValidationInput {
   rawBody: unknown
@@ -268,8 +268,8 @@ interface BodyEmojiCustomSegment {
 }
 
 /**
- * plain text / legacy token 进入 canonical body 前的线性 segment。
- * - 供纯文本构造和 migration helper 复用同一输入边界。
+ * 纯文本进入 canonical body 前的线性 segment。
+ * - 供纯文本构造复用同一输入边界。
  */
 export type BodySegment =
   | BodyTextSegment
@@ -288,45 +288,3 @@ export interface CompiledBodyResult {
   mentionFacts: NormalizedMentionDraft[]
   emojiRecentUsageItems: EmojiRecentUsageItem[]
 }
-
-/**
- * migration 辅助输入。
- * - 只承载旧模型到 canonical body 的最小事实。
- */
-export interface LegacyMentionFactInput {
-  userId: number
-  start: number
-  end: number
-}
-
-interface LegacyBodyTextTokenNode {
-  type: 'text'
-  text: string
-}
-
-interface LegacyBodyMentionUserTokenNode {
-  type: 'mentionUser'
-  userId: number
-  nickname: string
-  text: string
-}
-
-interface LegacyBodyEmojiUnicodeTokenNode {
-  type: 'emojiUnicode'
-  unicodeSequence: string
-}
-
-interface LegacyBodyEmojiCustomTokenNode {
-  type: 'emojiCustom'
-  shortcode: string
-}
-
-/**
- * legacy token 节点。
- * - 供 migration helper 识别旧 bodyTokens 中的最小可用结构。
- */
-export type LegacyBodyTokenNode =
-  | LegacyBodyTextTokenNode
-  | LegacyBodyMentionUserTokenNode
-  | LegacyBodyEmojiUnicodeTokenNode
-  | LegacyBodyEmojiCustomTokenNode

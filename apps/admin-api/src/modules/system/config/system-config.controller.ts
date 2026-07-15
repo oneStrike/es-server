@@ -1,11 +1,11 @@
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
-
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   SystemConfigDetailDto,
   UpdateSystemConfigDto,
-} from '@libs/system-config/dto/config.dto'
-import { SystemConfigService } from '@libs/system-config/system-config.service'
+} from '@libs/config/system-config/dto/config.dto'
+
+import { SystemConfigService } from '@libs/config/system-config/system-config.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
+import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'

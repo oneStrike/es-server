@@ -9,9 +9,9 @@ import type {
   ReplaceMentionsInTxInput,
 } from './mention.type'
 import { DrizzleService } from '@db/core'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
 import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
-import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
-import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
+import { InteractionNotificationEventFactoryService } from '@libs/interaction/eventing/interaction-notification-event.factory'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { UserService } from '@libs/user/user.service'
@@ -30,8 +30,8 @@ export class MentionService {
     private readonly drizzle: DrizzleService,
     private readonly emojiParserService: EmojiParserService,
     private readonly userService: UserService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
-    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
+    private readonly domainEventPublisher: DomainEventPublisher,
+    private readonly interactionNotificationEventFactoryService: InteractionNotificationEventFactoryService,
   ) {}
 
   private get userMention() {
@@ -200,18 +200,20 @@ export class MentionService {
     if (receiverUserIds.length > 0) {
       const actor = await this.getActorSnapshot(tx, input.actorUserId)
       for (const receiverUserId of receiverUserIds) {
-        await this.messageDomainEventPublisher.publishInTx(
+        await this.domainEventPublisher.publishInTx(
           tx,
-          this.messageDomainEventFactoryService.buildCommentMentionEvent({
-            receiverUserId,
-            actorUserId: input.actorUserId,
-            commentId: input.commentId,
-            targetType: input.targetType,
-            targetId: input.targetId,
-            actorNickname: actor?.nickname,
-            commentExcerpt: input.content,
-            targetDisplayTitle: input.targetDisplayTitle,
-          }),
+          this.interactionNotificationEventFactoryService.buildCommentMentionEvent(
+            {
+              receiverUserId,
+              actorUserId: input.actorUserId,
+              commentId: input.commentId,
+              targetType: input.targetType,
+              targetId: input.targetId,
+              actorNickname: actor?.nickname,
+              commentExcerpt: input.content,
+              targetDisplayTitle: input.targetDisplayTitle,
+            },
+          ),
         )
       }
     }
@@ -246,15 +248,17 @@ export class MentionService {
     if (receiverUserIds.length > 0) {
       const actor = await this.getActorSnapshot(tx, input.actorUserId)
       for (const receiverUserId of receiverUserIds) {
-        await this.messageDomainEventPublisher.publishInTx(
+        await this.domainEventPublisher.publishInTx(
           tx,
-          this.messageDomainEventFactoryService.buildTopicMentionEvent({
-            receiverUserId,
-            actorUserId: input.actorUserId,
-            topicId: input.topicId,
-            actorNickname: actor?.nickname,
-            topicTitle: input.topicTitle,
-          }),
+          this.interactionNotificationEventFactoryService.buildTopicMentionEvent(
+            {
+              receiverUserId,
+              actorUserId: input.actorUserId,
+              topicId: input.topicId,
+              actorNickname: actor?.nickname,
+              topicTitle: input.topicTitle,
+            },
+          ),
         )
       }
     }
@@ -314,9 +318,9 @@ export class MentionService {
         const nickname = mention.nickname.trim()
         if (!nickname) {
           throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '提及昵称不能为空',
-    )
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '提及昵称不能为空',
+          )
         }
         if (
           !Number.isInteger(mention.start) ||
@@ -326,17 +330,17 @@ export class MentionService {
           mention.end > content.length
         ) {
           throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '提及位置非法',
-    )
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '提及位置非法',
+          )
         }
 
         const text = content.slice(mention.start, mention.end)
         if (text !== `@${nickname}`) {
           throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '提及位置与正文不匹配',
-    )
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '提及位置与正文不匹配',
+          )
         }
 
         return {
@@ -353,9 +357,9 @@ export class MentionService {
     for (const mention of normalizedMentions) {
       if (mention.start < previousEnd) {
         throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '提及区间不能重叠',
-    )
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '提及区间不能重叠',
+        )
       }
       previousEnd = mention.end
     }

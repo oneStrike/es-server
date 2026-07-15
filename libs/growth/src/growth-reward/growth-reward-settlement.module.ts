@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { GrowthRewardSettlementService } from './growth-reward-settlement.service'
 
@@ -7,6 +8,7 @@ import { GrowthRewardSettlementService } from './growth-reward-settlement.servic
  * 只承载 settlement 事实的持久化、查询与状态同步能力，不负责跨域重试编排。
  */
 @Module({
+  imports: [DrizzleModule],
   providers: [GrowthRewardSettlementService],
   exports: [GrowthRewardSettlementService],
 })

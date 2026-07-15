@@ -1,12 +1,12 @@
-import type { ITokenStorageService } from '@libs/platform/modules/auth/types';
+import type { ITokenStorageService } from '@libs/platform/modules/auth/types'
 import type { SessionClientContext } from './session.type'
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
 import {
   AuthDefaultValue,
   AuthErrorMessages,
   RevokeTokenReasonEnum,
-} from '@libs/platform/modules/auth/helpers';
-import { TokenTypeEnum } from '@libs/platform/modules/auth/types';
+} from '@libs/platform/modules/auth/helpers'
+import { TokenTypeEnum } from '@libs/platform/modules/auth/types'
 
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 
@@ -20,7 +20,7 @@ export class AuthSessionService {
 
   async persistTokens(
     userId: number,
-    tokens: { accessToken: string, refreshToken: string },
+    tokens: { accessToken: string; refreshToken: string },
     clientContext: SessionClientContext,
   ) {
     const [accessPayload, refreshPayload] = await Promise.all([
@@ -28,8 +28,7 @@ export class AuthSessionService {
       this.baseJwtService.decodeToken(tokens.refreshToken),
     ])
 
-    const ipAddress =
-      clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN
+    const ipAddress = clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN
     const userAgent = clientContext.userAgent
     const deviceInfo = clientContext.deviceInfo
     const geoCountry = clientContext.geoCountry
@@ -89,22 +88,26 @@ export class AuthSessionService {
   }
 
   async logout(
-    dto: { accessToken: string, refreshToken: string },
+    dto: { accessToken: string; refreshToken: string },
     options?: { revokeDbTokens?: boolean },
   ) {
     const { accessToken, refreshToken } = dto
 
     if (options?.revokeDbTokens) {
       const [accessPayload, refreshPayload] = await Promise.all([
-        this.baseJwtService.verifyToken(accessToken, { ignoreExpiration: true }),
-        this.baseJwtService.verifyToken(refreshToken, { ignoreExpiration: true }),
+        this.baseJwtService.verifyToken(accessToken, {
+          ignoreExpiration: true,
+        }),
+        this.baseJwtService.verifyToken(refreshToken, {
+          ignoreExpiration: true,
+        }),
       ])
 
       if (
-        !accessPayload?.jti
-        || typeof accessPayload.jti !== 'string'
-        || !refreshPayload?.jti
-        || typeof refreshPayload.jti !== 'string'
+        !accessPayload?.jti ||
+        typeof accessPayload.jti !== 'string' ||
+        !refreshPayload?.jti ||
+        typeof refreshPayload.jti !== 'string'
       ) {
         throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
       }

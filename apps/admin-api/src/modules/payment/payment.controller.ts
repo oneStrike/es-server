@@ -17,9 +17,9 @@ import {
   UpdatePaymentProviderConfigDto,
 } from '@libs/interaction/payment/dto/payment.dto'
 import { PaymentService } from '@libs/interaction/payment/payment.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'

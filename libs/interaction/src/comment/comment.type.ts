@@ -1,5 +1,4 @@
 import type { AppUserSelect, UserCommentSelect } from '@db/schema'
-import type { MaterializedForumHashtagFact } from '@libs/forum/hashtag/forum-hashtag.type'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import type { CompiledBodyResult } from '@libs/interaction/body/body.type'
@@ -89,15 +88,8 @@ export type CommentModerationState = Pick<
  * 评论正文解析结果。
  * - 评论写链路统一通过 canonical body 编译后再落库。
  */
-export interface CommentBodyWriteResult extends CompiledBodyResult {}
-
-/**
- * 评论正文物化结果。
- * - 在 body compiler 结果上补充 hashtag 引用事实，供 forum-topic comment 写链路复用。
- */
-export interface MaterializedCommentBodyWriteResult extends CommentBodyWriteResult {
+export interface CommentBodyWriteResult extends CompiledBodyResult {
   html: string
-  hashtagFacts: MaterializedForumHashtagFact[]
 }
 
 /**

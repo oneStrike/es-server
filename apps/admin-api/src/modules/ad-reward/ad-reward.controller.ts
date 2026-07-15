@@ -11,9 +11,9 @@ import {
   QueryAdRewardRecordDto,
   UpdateAdProviderConfigDto,
 } from '@libs/interaction/ad-reward/dto/ad-reward.dto'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'

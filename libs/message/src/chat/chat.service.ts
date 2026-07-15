@@ -1,5 +1,5 @@
+import type { DomainEventRecord } from '@libs/eventing/eventing/domain-event.type'
 import type { UploadConfigInterface } from '@libs/platform/config'
-import type { DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { JsonObject } from '@libs/platform/utils'
 import type {
@@ -19,6 +19,7 @@ import type {
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -29,6 +30,9 @@ import {
   chatConversationMember,
   chatMessage,
 } from '@db/schema'
+import { DomainEventDispatchService } from '@libs/eventing/eventing/domain-event-dispatch.service'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
+import { DomainEventConsumerEnum } from '@libs/eventing/eventing/eventing.constant'
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
 import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
 import { buildRecentEmojiUsageItems } from '@libs/interaction/emoji/emoji-recent-usage.helper'
@@ -36,8 +40,6 @@ import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { PageDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
-import { DomainEventDispatchService } from '@libs/platform/modules/eventing/domain-event-dispatch.service'
-import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing/eventing.constant'
 import { UPLOAD_CONFIG_PROVIDER } from '@libs/platform/modules/upload/upload.type'
 import {
   BadRequestException,
@@ -48,7 +50,6 @@ import {
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { and, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm'
-import { MessageDomainEventPublisher } from '../eventing/message-domain-event.publisher'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
@@ -124,7 +125,7 @@ export class MessageChatService {
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
     private readonly messageWsMonitorService: MessageWsMonitorService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
+    private readonly domainEventPublisher: DomainEventPublisher,
     private readonly domainEventDispatchService: DomainEventDispatchService,
     private readonly chatReadQueryService: MessageChatReadQueryService,
     private readonly configService: ConfigService,
@@ -798,7 +799,9 @@ export class MessageChatService {
       try {
         return await this.db.transaction(async (tx) => {
           await acquireIntegrityLocks(tx, [
-            tableIntegrityLock('chat_conversation', conversationId),
+            exclusiveIntegrityLock(
+              tableIntegrityLock('chat_conversation', conversationId),
+            ),
           ])
           const member = await tx.query.chatConversationMember.findFirst({
             where: {
@@ -924,17 +927,23 @@ export class MessageChatService {
               ),
             )
 
-          const publishedEvent =
-            await this.messageDomainEventPublisher.publishInTx(tx, {
+          const publishedEvent = await this.domainEventPublisher.publishInTx(
+            tx,
+            {
               eventKey: 'chat.message.created',
+              domain: 'message',
+              idempotencyKey:
+                this.resolveProjectionKeyIdempotencyKey(domainEventPayload),
               subjectType: 'user',
               subjectId: userId,
               targetType: 'chat_conversation',
               targetId: conversationId,
               operatorId: userId,
               occurredAt: message.createdAt,
+              consumers: [DomainEventConsumerEnum.CHAT_REALTIME],
               context: domainEventPayload,
-            })
+            },
+          )
 
           return {
             message,
@@ -982,6 +991,18 @@ export class MessageChatService {
       },
       columns: this.chatSendMessageResultColumns,
     })
+  }
+
+  // 与已移除的消息事件发布封装保持一致：没有显式键时，仅以 context.projectionKey 作为幂等键。
+  private resolveProjectionKeyIdempotencyKey(context: object) {
+    if (!('projectionKey' in context)) {
+      return undefined
+    }
+
+    const projectionKey = context.projectionKey
+    return typeof projectionKey === 'string' && projectionKey.trim()
+      ? projectionKey.trim()
+      : undefined
   }
 
   // 确保用户是会话成员 权限校验方法，检查用户是否为会话成员且未退出

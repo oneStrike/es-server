@@ -1,7 +1,7 @@
 import type { DbExecutor } from '@db/core'
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import type { WorkflowExecutionContext } from '@libs/platform/modules/workflow/workflow.type'
+import type { WorkflowExecutionContext } from '@libs/workflow/workflow/workflow.type'
 import type { FastifyRequest } from 'fastify'
 import type { Dirent } from 'node:fs'
 import type {
@@ -18,6 +18,7 @@ import { pipeline } from 'node:stream/promises'
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   tableIntegrityLock,
 } from '@db/core'
 import {
@@ -39,13 +40,13 @@ import {
   toWorkflowLastErrorView,
   toWorkflowRetryColumns,
   WorkflowErrorCodeEnum,
-} from '@libs/platform/modules/workflow/workflow-error-facts'
+} from '@libs/workflow/workflow/workflow-error-facts'
 import {
   WorkflowAttemptStatusEnum,
   WorkflowJobStatusEnum,
   WorkflowOperatorTypeEnum,
-} from '@libs/platform/modules/workflow/workflow.constant'
-import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
+} from '@libs/workflow/workflow/workflow.constant'
+import { WorkflowService } from '@libs/workflow/workflow/workflow.service'
 import {
   BadRequestException,
   Injectable,
@@ -75,6 +76,8 @@ const ARCHIVE_TASK_TTL_MS = 24 * 60 * 60 * 1000
 const AUTO_IGNORED_ENTRY_NAMES = new Set(['__MACOSX', '.DS_Store', 'Thumbs.db'])
 const CHAPTER_ID_DIRECTORY_RE = /^\d+$/
 const WINDOWS_ABSOLUTE_PATH_RE = /^[a-z]:/i
+
+class ComicArchiveSnapshotDriftError extends Error {}
 
 interface UploadedFileResidue {
   residueId?: string
@@ -353,7 +356,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  // 确认漫画压缩包导入任务，用户确认后仅把草稿任务推进到 pending，由 workflow worker 执行正式导入。
+  // 确认漫画压缩包导入任务；事务外发现完整锁集合，锁后权威重读再原子写入确认结果。
   async confirmArchive(input: ConfirmComicArchiveDto) {
     const confirmedChapterIds = [...new Set(input.confirmedChapterIds)]
     if (confirmedChapterIds.length === 0) {
@@ -363,96 +366,132 @@ export class ComicArchiveImportService {
       )
     }
 
-    return this.drizzle.withTransaction({
-      execute: async (tx) => {
-        const initialWorkflowJob = await this.readWorkflowJob(input.jobId, tx)
-        const initialImportJob =
-          await this.contentImportService.readContentImportJobByWorkflowJobId(
-            input.jobId,
-            tx,
-          )
-        await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('workflow_job', initialWorkflowJob.id),
-          tableIntegrityLock('content_import_job', initialImportJob.id),
-        ])
-        const { importJob } = await this.assertArchiveDraftOpen(
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const discoveredWorkflowJob = await this.readWorkflowJob(input.jobId)
+      const discoveredImportJob =
+        await this.contentImportService.readContentImportJobByWorkflowJobId(
           input.jobId,
-          initialImportJob.workId ?? undefined,
-          tx,
         )
-        const previewItems = await tx
-          .select({
-            targetChapterId: this.contentImportPreviewItem.targetChapterId,
-            title: this.contentImportPreviewItem.title,
-            sortOrder: this.contentImportPreviewItem.sortOrder,
-            imageTotal: this.contentImportPreviewItem.imageTotal,
-            metadata: this.contentImportPreviewItem.metadata,
-          })
-          .from(this.contentImportPreviewItem)
-          .where(
-            and(
-              eq(
-                this.contentImportPreviewItem.contentImportJobId,
-                importJob.id,
-              ),
-              inArray(
-                this.contentImportPreviewItem.targetChapterId,
-                confirmedChapterIds,
-              ),
-            ),
-          )
-        if (previewItems.length !== confirmedChapterIds.length) {
-          throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            '存在未通过预解析确认的章节',
-          )
+
+      try {
+        if (discoveredImportJob.workflowJobId !== discoveredWorkflowJob.id) {
+          throw new ComicArchiveSnapshotDriftError()
         }
 
-        const now = new Date()
-        await tx
-          .delete(this.contentImportItem)
-          .where(eq(this.contentImportItem.contentImportJobId, importJob.id))
-        await tx.insert(this.contentImportItem).values(
-          previewItems.map((item) => ({
-            itemId: uuidv4(),
-            contentImportJobId: importJob.id,
-            itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
-            providerChapterId: null,
-            targetChapterId: item.targetChapterId,
-            localChapterId: item.targetChapterId,
-            title: item.title,
-            sortOrder: item.sortOrder,
-            status: ContentImportItemStatusEnum.PENDING,
-            stage: ContentImportItemStageEnum.READING_SOURCE,
-            failureCount: 0,
-            ...toWorkflowLastErrorColumns(null),
-            lastFailedAt: null,
-            ...toWorkflowRetryColumns(null),
-            imageTotal: item.imageTotal,
-            imageSuccessCount: 0,
-            currentAttemptNo: null,
-            metadata: item.metadata as Record<string, unknown>,
-            createdAt: now,
-            updatedAt: now,
-          })),
-        )
-        await tx
-          .update(this.contentImportJob)
-          .set({
-            selectedItemCount: previewItems.length,
-            imageTotal: previewItems.reduce(
-              (sum, item) => sum + item.imageTotal,
-              0,
-            ),
-            updatedAt: now,
-          })
-          .where(eq(this.contentImportJob.id, importJob.id))
-        return this.workflowService.confirmDraftInTransaction(
-          { jobId: input.jobId },
-          tx,
-        )
-      },
-    })
+        return await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await acquireIntegrityLocks(tx, [
+              exclusiveIntegrityLock(
+                tableIntegrityLock('workflow_job', discoveredWorkflowJob.id),
+              ),
+              exclusiveIntegrityLock(
+                tableIntegrityLock(
+                  'content_import_job',
+                  discoveredImportJob.id,
+                ),
+              ),
+            ])
+            const { importJob, workflowJob } =
+              await this.assertArchiveDraftOpen(input.jobId, undefined, tx)
+            if (
+              workflowJob.id !== discoveredWorkflowJob.id ||
+              importJob.id !== discoveredImportJob.id ||
+              importJob.workflowJobId !== workflowJob.id ||
+              importJob.sourceType !== discoveredImportJob.sourceType ||
+              importJob.workId !== discoveredImportJob.workId
+            ) {
+              throw new ComicArchiveSnapshotDriftError()
+            }
+
+            const previewItems = await tx
+              .select({
+                targetChapterId: this.contentImportPreviewItem.targetChapterId,
+                title: this.contentImportPreviewItem.title,
+                sortOrder: this.contentImportPreviewItem.sortOrder,
+                imageTotal: this.contentImportPreviewItem.imageTotal,
+                metadata: this.contentImportPreviewItem.metadata,
+              })
+              .from(this.contentImportPreviewItem)
+              .where(
+                and(
+                  eq(
+                    this.contentImportPreviewItem.contentImportJobId,
+                    importJob.id,
+                  ),
+                  inArray(
+                    this.contentImportPreviewItem.targetChapterId,
+                    confirmedChapterIds,
+                  ),
+                ),
+              )
+            if (previewItems.length !== confirmedChapterIds.length) {
+              throw new BusinessException(
+                BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                '存在未通过预解析确认的章节',
+              )
+            }
+
+            const now = new Date()
+            await tx
+              .delete(this.contentImportItem)
+              .where(
+                eq(this.contentImportItem.contentImportJobId, importJob.id),
+              )
+            await tx.insert(this.contentImportItem).values(
+              previewItems.map((item) => ({
+                itemId: uuidv4(),
+                contentImportJobId: importJob.id,
+                itemType: ContentImportItemTypeEnum.COMIC_CHAPTER,
+                providerChapterId: null,
+                targetChapterId: item.targetChapterId,
+                localChapterId: item.targetChapterId,
+                title: item.title,
+                sortOrder: item.sortOrder,
+                status: ContentImportItemStatusEnum.PENDING,
+                stage: ContentImportItemStageEnum.READING_SOURCE,
+                failureCount: 0,
+                ...toWorkflowLastErrorColumns(null),
+                lastFailedAt: null,
+                ...toWorkflowRetryColumns(null),
+                imageTotal: item.imageTotal,
+                imageSuccessCount: 0,
+                currentAttemptNo: null,
+                metadata: item.metadata as Record<string, unknown>,
+                createdAt: now,
+                updatedAt: now,
+              })),
+            )
+            await tx
+              .update(this.contentImportJob)
+              .set({
+                selectedItemCount: previewItems.length,
+                imageTotal: previewItems.reduce(
+                  (sum, item) => sum + item.imageTotal,
+                  0,
+                ),
+                updatedAt: now,
+              })
+              .where(eq(this.contentImportJob.id, importJob.id))
+            return this.workflowService.applyConfirmDraft(workflowJob, tx)
+          },
+        })
+      } catch (error) {
+        if (!(error instanceof ComicArchiveSnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '压缩包导入会话状态已变化，请重试',
+          )
+        }
+      }
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '压缩包导入会话状态已变化，请重试',
+    )
   }
 
   // 丢弃预确认漫画压缩包导入会话，先关闭草稿状态再移除本地临时目录，避免迟到上传复活预览。
@@ -585,8 +624,7 @@ export class ComicArchiveImportService {
         context.attemptId,
         item.itemId,
       )
-      const matchedItem =
-        item.metadata as ComicArchiveMatchedItemRecord
+      const matchedItem = item.metadata as ComicArchiveMatchedItemRecord
       try {
         await this.cleanupPendingUploadedFileResidues(
           context.jobId,
@@ -685,6 +723,8 @@ export class ComicArchiveImportService {
     const [row] = await db
       .select({
         id: this.workflowJob.id,
+        jobId: this.workflowJob.jobId,
+        selectedItemCount: this.workflowJob.selectedItemCount,
         status: this.workflowJob.status,
       })
       .from(this.workflowJob)

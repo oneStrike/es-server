@@ -2,15 +2,6 @@ import type { AppUserSelect } from '@db/schema'
 import type { BusinessErrorCodeValue } from '@libs/platform/constant'
 
 /**
- * 用户成长余额快照。
- * 仅承载跨表读取出来的积分与经验热余额，不承担 HTTP 文档职责。
- */
-export interface UserGrowthSnapshot {
-  points: number
-  experience: number
-}
-
-/**
  * 用户公共响应映射所需的最小字段集。
  *
  * 密码、登录地理信息和软删除审计字段不属于公共响应，因此调用方无需为了

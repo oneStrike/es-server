@@ -98,6 +98,26 @@ export interface ForumTopicCommentTargetSnapshotOptions {
 }
 
 /**
+ * 主题被点赞或收藏时生成通知事件所需的最小事实。
+ */
+export interface ForumTopicReactionEventInput {
+  receiverUserId: number
+  actorUserId: number
+  targetType: number
+  targetId: number
+  actorNickname?: string
+  topicTitle?: string
+}
+
+/**
+ * 主题收到一级评论时生成通知事件所需的最小事实。
+ */
+export interface ForumTopicCommentedEventInput extends ForumTopicReactionEventInput {
+  commentId: number
+  commentExcerpt?: string
+}
+
+/**
  * 评论创建 hook 中需要带正文快照的主题评论载荷。
  */
 export type ForumTopicCommentHookPayload = CommentTargetHookPayload &
@@ -356,6 +376,10 @@ export type TopicGovernanceSnapshot = Pick<
  * 后续事务必须基于 `id` 重新读取当前事实，调用方不可据此承载持久化全行。
  */
 export type TopicMutationSnapshot = Pick<ForumTopicSelect, 'id' | 'userId'>
+
+/** 恢复主题在首次锁 union 前发现的板块归属快照。 */
+export type TopicRestoreMutationSnapshot = TopicMutationSnapshot &
+  Pick<ForumTopicSelect, 'sectionId'>
 
 /**
  * 内容更新入口在加锁前需要的主题状态快照。

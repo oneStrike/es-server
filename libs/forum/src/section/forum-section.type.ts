@@ -2,6 +2,18 @@ import type { ForumSectionSelect } from '@db/schema'
 
 export type ForumSectionBatchHandler = (batchIds: number[]) => Promise<void>
 
+/** 完整性锁获取前发现、锁后复核的板块引用快照。 */
+export type ForumSectionMutationSnapshot = Pick<
+  ForumSectionSelect,
+  'groupId' | 'id' | 'userLevelRuleId'
+>
+
+/** 作品托管板块的完整性锁计划事实。 */
+export type ManagedForumSectionMutationSnapshot =
+  ForumSectionMutationSnapshot & {
+    workId: number
+  }
+
 export interface ForumVisibleSectionQueryOptions {
   groupId?: number
   isUngrouped?: boolean

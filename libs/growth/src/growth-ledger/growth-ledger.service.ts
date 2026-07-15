@@ -1,8 +1,11 @@
-import type { DbExecutor, DbTransaction } from '@db/core'
+import type { DbExecutor, DbTransaction, IntegrityLockRequest } from '@db/core'
 import type {
   ApplyDeltaParams,
+  ApplyNonExperienceDeltaParams,
   ApplyRuleParams,
   GrowthLedgerApplyResult,
+  GrowthLedgerLevelSyncCandidate,
+  GrowthLedgerOperationLockInput,
   PublicGrowthLedgerContext,
   PublicGrowthLedgerContextKey,
   PublicGrowthLedgerContextValue,
@@ -11,7 +14,9 @@ import type {
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   relationIntegrityLock,
+  sharedIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -103,8 +108,45 @@ export class GrowthLedgerService {
   private readonly publicGrowthLedgerContextKeys: readonly PublicGrowthLedgerContextKey[] =
     PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS
 
-  // 按规则结算（发放） 流程： 1. 根据资产类型查询对应规则表 2. 检查规则是否启用、数值是否有效 3. 创建账本记录（幂等检查） 4. 检查每日限额和总限额 5. 更新用户余额 6. 写入审计日志
+  // 单笔规则结算复用批处理协议，确保账本锁先于终端等级规则锁。
   async applyByRule(
+    tx: DbTransaction,
+    params: ApplyRuleParams,
+  ): Promise<GrowthLedgerApplyResult> {
+    const [result] = await this.applyByRuleBatch(tx, [params])
+    if (!result) {
+      throw new Error('growth ledger rule batch returned no result')
+    }
+    return result
+  }
+
+  // 先一次性取得完整账本业务键集合，再逐项结算，最后同步受影响用户的等级。
+  async applyByRuleBatch(
+    tx: DbTransaction,
+    paramsList: readonly ApplyRuleParams[],
+  ): Promise<GrowthLedgerApplyResult[]> {
+    await this.acquireLedgerOperationLocks(tx, paramsList)
+    const results: GrowthLedgerApplyResult[] = []
+    const experienceUserIds = new Set<number>()
+    for (const params of paramsList) {
+      const result = await this.applyByRuleAfterOperationLock(tx, params)
+      results.push(result)
+      if (
+        result.success &&
+        params.assetType === GrowthAssetTypeEnum.EXPERIENCE
+      ) {
+        experienceUserIds.add(params.userId)
+      }
+      if (!result.success) {
+        break
+      }
+    }
+    await this.syncExperienceUsersAfterLedgerBatch(tx, experienceUserIds)
+    return results
+  }
+
+  // 在调用方已持有完整账本业务键集合后执行单项规则结算。
+  private async applyByRuleAfterOperationLock(
     tx: DbTransaction,
     params: ApplyRuleParams,
   ): Promise<GrowthLedgerApplyResult> {
@@ -122,18 +164,11 @@ export class GrowthLedgerService {
     } = params
     const normalizedAssetKey = this.normalizeAssetKey(assetType, assetKey)
 
-    await this.ensureLedgerOperationLock(tx, {
-      userId,
-      bizKey,
-    })
     const existing = await this.findLedgerByUserBizKey(tx, {
       userId,
       bizKey,
     })
     if (existing) {
-      if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
-        await this.syncUserLevelByCurrentExperience(tx, userId)
-      }
       return {
         success: true,
         duplicated: true,
@@ -322,10 +357,6 @@ export class GrowthLedgerService {
       context,
     })
 
-    if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
-      await this.syncUserLevelByExperience(tx, userId, afterValue)
-    }
-
     return {
       success: true,
       assetKey: normalizedAssetKey,
@@ -337,8 +368,76 @@ export class GrowthLedgerService {
     }
   }
 
-  // 直接结算（不走规则表） 流程： 1. 验证变动金额 2. 创建账本记录（幂等检查） 3. 消费时检查余额是否充足 4. 更新用户余额 5. 写入审计日志
+  // 单笔直接结算复用批处理协议，确保账本锁先于终端等级规则锁。
   async applyDelta(
+    tx: DbTransaction,
+    params: ApplyDeltaParams,
+  ): Promise<GrowthLedgerApplyResult> {
+    const [result] = await this.applyDeltaBatch(tx, [params])
+    if (!result) {
+      throw new Error('growth ledger delta batch returned no result')
+    }
+    return result
+  }
+
+  // 先一次性取得完整账本业务键集合，再逐项直接结算并执行终端等级同步。
+  async applyDeltaBatch(
+    tx: DbTransaction,
+    paramsList: readonly ApplyDeltaParams[],
+  ): Promise<GrowthLedgerApplyResult[]> {
+    await this.acquireLedgerOperationLocks(tx, paramsList)
+    const results: GrowthLedgerApplyResult[] = []
+    const experienceUserIds = new Set<number>()
+    for (const params of paramsList) {
+      const result = await this.applyDeltaAfterOperationLock(tx, params)
+      results.push(result)
+      if (
+        result.success &&
+        params.assetType === GrowthAssetTypeEnum.EXPERIENCE
+      ) {
+        experienceUserIds.add(params.userId)
+      }
+      if (!result.success) {
+        break
+      }
+    }
+    await this.syncExperienceUsersAfterLedgerBatch(tx, experienceUserIds)
+    return results
+  }
+
+  /** 为外层业务根构造稳定的账本幂等键互斥锁请求。 */
+  buildOperationLockRequest(
+    input: GrowthLedgerOperationLockInput,
+  ): IntegrityLockRequest {
+    return exclusiveIntegrityLock(
+      relationIntegrityLock(
+        'growth-ledger-biz-key',
+        input.userId,
+        input.bizKey,
+      ),
+    )
+  }
+
+  /**
+   * 在业务根已经取得账本幂等键锁后结算非经验资产。
+   * EXPERIENCE 必须走带终端等级同步的批处理入口，运行时继续拒绝越界调用。
+   */
+  async applyNonExperienceDeltaAfterOperationLock(
+    tx: DbTransaction,
+    params: ApplyNonExperienceDeltaParams,
+  ): Promise<GrowthLedgerApplyResult> {
+    if (
+      (params as ApplyDeltaParams).assetType === GrowthAssetTypeEnum.EXPERIENCE
+    ) {
+      throw new TypeError(
+        'experience delta must use the terminal level-sync settlement path',
+      )
+    }
+    return this.applyDeltaAfterOperationLock(tx, params)
+  }
+
+  // 在调用方已持有完整账本业务键集合后执行单项直接结算。
+  private async applyDeltaAfterOperationLock(
     tx: DbTransaction,
     params: ApplyDeltaParams,
   ): Promise<GrowthLedgerApplyResult> {
@@ -375,18 +474,11 @@ export class GrowthLedgerService {
     const signedDelta =
       action === GrowthLedgerActionEnum.CONSUME ? -amount : amount
 
-    await this.ensureLedgerOperationLock(tx, {
-      userId,
-      bizKey,
-    })
     const existing = await this.findLedgerByUserBizKey(tx, {
       userId,
       bizKey,
     })
     if (existing) {
-      if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
-        await this.syncUserLevelByCurrentExperience(tx, userId)
-      }
       return {
         success: true,
         duplicated: true,
@@ -469,10 +561,6 @@ export class GrowthLedgerService {
       deltaApplied: signedDelta,
       context,
     })
-
-    if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
-      await this.syncUserLevelByExperience(tx, userId, afterValue)
-    }
 
     return {
       success: true,
@@ -681,7 +769,7 @@ export class GrowthLedgerService {
       assetKey: string
       amount: number
     },
-  ): Promise<{ ok: boolean, afterValue: number }> {
+  ): Promise<{ ok: boolean; afterValue: number }> {
     const rows = await this.drizzle.withErrorHandling(() =>
       tx
         .update(this.userAssetBalance)
@@ -743,48 +831,6 @@ export class GrowthLedgerService {
     )
   }
 
-  private async syncUserLevelByExperience(
-    tx: DbTransaction,
-    userId: number,
-    experience?: number,
-  ): Promise<void> {
-    if (experience === undefined) {
-      return
-    }
-
-    const levelRule = await this.findTargetLevelRule(tx, experience)
-
-    if (!levelRule) {
-      return
-    }
-
-    await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('user_level_rule', levelRule.id),
-    ])
-    const lockedLevelRule = await this.findEligibleLevelRuleById(
-      tx,
-      levelRule.id,
-      experience,
-    )
-    if (!lockedLevelRule) {
-      return
-    }
-
-    await this.syncUserLevel(tx, userId, lockedLevelRule.id)
-  }
-
-  private async syncUserLevelByCurrentExperience(
-    tx: DbTransaction,
-    userId: number,
-  ): Promise<void> {
-    const experience = await this.getUserAssetBalance(tx, {
-      userId,
-      assetType: GrowthAssetTypeEnum.EXPERIENCE,
-      assetKey: '',
-    })
-    await this.syncUserLevelByExperience(tx, userId, experience)
-  }
-
   // 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键
   private formatDateKey(input: Date) {
     return formatDateKeyInAppTimeZone(input)
@@ -819,7 +865,7 @@ export class GrowthLedgerService {
 
   private async findLedgerByUserBizKey(
     tx: DbExecutor,
-    params: { userId: number, bizKey: string },
+    params: { userId: number; bizKey: string },
   ) {
     return tx.query.growthLedgerRecord.findFirst({
       where: {
@@ -836,19 +882,60 @@ export class GrowthLedgerService {
     })
   }
 
-  private async ensureLedgerOperationLock(
+  // 一次性取得当前业务根的完整账本幂等键集合，避免终端规则锁后的后续取锁。
+  private async acquireLedgerOperationLocks(
     tx: DbTransaction,
-    params: { userId: number, bizKey: string },
+    paramsList: readonly GrowthLedgerOperationLockInput[],
   ) {
     await this.drizzle.withErrorHandling(async () =>
-      acquireIntegrityLocks(tx, [
-        relationIntegrityLock(
-          'growth-ledger-biz-key',
-          params.userId,
-          params.bizKey,
-        ),
-      ]),
+      acquireIntegrityLocks(
+        tx,
+        paramsList.map((params) => this.buildOperationLockRequest(params)),
+      ),
     )
+  }
+
+  // 所有账本键均已持有后，按用户顺序执行唯一的终端等级同步阶段。
+  private async syncExperienceUsersAfterLedgerBatch(
+    tx: DbTransaction,
+    userIds: ReadonlySet<number>,
+  ) {
+    if (userIds.size === 0) {
+      return
+    }
+
+    const candidates: GrowthLedgerLevelSyncCandidate[] = []
+    for (const userId of [...userIds].sort((left, right) => left - right)) {
+      const experience = await this.getUserAssetBalance(tx, {
+        userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+      })
+      const levelRule = await this.findTargetLevelRule(tx, experience)
+      if (levelRule) {
+        candidates.push({ experience, ruleId: levelRule.id, userId })
+      }
+    }
+
+    await acquireIntegrityLocks(
+      tx,
+      candidates.map((candidate) =>
+        sharedIntegrityLock(
+          tableIntegrityLock('user_level_rule', candidate.ruleId),
+        ),
+      ),
+    )
+
+    for (const candidate of candidates) {
+      const lockedLevelRule = await this.findEligibleLevelRuleById(
+        tx,
+        candidate.ruleId,
+        candidate.experience,
+      )
+      if (lockedLevelRule) {
+        await this.syncUserLevel(tx, candidate.userId, lockedLevelRule.id)
+      }
+    }
   }
 
   private normalizeAssetKey(assetType: GrowthAssetTypeEnum, assetKey?: string) {
@@ -856,7 +943,7 @@ export class GrowthLedgerService {
     if (
       (assetType === GrowthAssetTypeEnum.POINTS ||
         assetType === GrowthAssetTypeEnum.EXPERIENCE) &&
-        normalizedAssetKey !== ''
+      normalizedAssetKey !== ''
     ) {
       throw new Error('points/experience assetKey must be empty')
     }

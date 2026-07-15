@@ -7,13 +7,13 @@ import type {
   SmsRateLimitConfig,
   SmsRateLimitConfigPartial,
 } from './sms.type'
-import { DrizzleService } from '@db/core'
 import {
   CheckVerifyCodeDto,
   SendVerifyCodeDto,
 } from '@libs/platform/modules/sms/dto'
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import { SmsService as LibSmsService } from '@libs/platform/modules/sms/sms.service'
+import { UserService as UserCoreService } from '@libs/user/user.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 
 import {
@@ -25,7 +25,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
 
 const DEFAULT_SMS_RATE_LIMIT: SmsRateLimitConfig = {
@@ -47,22 +46,12 @@ export class SmsService {
   private readonly rateLimitLocks = new Map<string, Promise<void>>()
 
   constructor(
-    private readonly drizzle: DrizzleService,
+    private readonly userCoreService: UserCoreService,
     private readonly libSmsService: LibSmsService,
     private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
   ) {}
-
-  // 复用当前模块共享数据库连接。
-  private get db() {
-    return this.drizzle.db
-  }
-
-  // 复用应用用户表。
-  get appUser() {
-    return this.drizzle.schema.appUser
-  }
 
   // 发送验证码，根据模板做手机号存在性校验与多维度频控。
   async sendVerifyCode(dto: SendVerifyCodeDto, clientIp = UNKNOWN_IP) {
@@ -74,20 +63,13 @@ export class SmsService {
       SmsTemplateCodeEnum.RESET_PASSWORD === normalizedDto.templateCode ||
       SmsTemplateCodeEnum.BIND_NEW_PHONE === normalizedDto.templateCode
     ) {
-      const [user] = await this.db
-        .select({ id: this.appUser.id })
-        .from(this.appUser)
-        .where(
-          and(
-            eq(this.appUser.phoneNumber, normalizedDto.phone),
-            isNull(this.appUser.deletedAt),
-          ),
-        )
-        .limit(1)
+      const hasUser = await this.userCoreService.hasActiveUserWithPhone(
+        normalizedDto.phone,
+      )
       if (
         SmsTemplateCodeEnum.BIND_NEW_PHONE === normalizedDto.templateCode
-          ? user
-          : !user
+          ? hasUser
+          : !hasUser
       ) {
         // 对外统一返回，避免通过发送验证码接口枚举手机号是否存在。
         return true
@@ -308,7 +290,8 @@ export class SmsService {
     }
 
     return this.withSingleRateLimitLock(key, async () =>
-      this.withRateLimitLocks(remainingKeys, action),)
+      this.withRateLimitLocks(remainingKeys, action),
+    )
   }
 
   // 单 key 进程内锁：排队等待前一个 Promise 完成后再执行。

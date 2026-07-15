@@ -10,10 +10,10 @@ import {
   UpdateWorkStatusDto,
 } from '@libs/content/work/core/dto/work.dto'
 import { WorkService } from '@libs/content/work/core/work.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../../common/decorators/admin-permission.decorator'

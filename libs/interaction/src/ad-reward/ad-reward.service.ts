@@ -1,6 +1,10 @@
 import type { AdProviderConfigSelect, AdRewardRecordSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
+  AdRewardContentAccessProjection,
+  AdRewardContentPort,
+} from './types/ad-reward-content-port.type'
+import type {
   AdProviderConfigUpdateInput,
   AdRewardCredentialOptionDefinition,
   AdRewardProviderVerificationConfig,
@@ -9,24 +13,15 @@ import type {
 import { createHash } from 'node:crypto'
 import process from 'node:process'
 import { DrizzleService, toPageResult } from '@db/core'
-import {
-  ContentEntitlementGrantSourceEnum,
-  ContentEntitlementStatusEnum,
-  ContentEntitlementTargetTypeEnum,
-} from '@libs/content/permission/content-entitlement.constant'
-import { ContentEntitlementService } from '@libs/content/permission/content-entitlement.service'
-import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
-import {
-  BusinessErrorCode,
-  WorkViewPermissionEnum,
-} from '@libs/platform/constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
   buildDateOnlyRangeInAppTimeZone,
   startOfTodayInAppTimeZone,
 } from '@libs/platform/utils'
-import { Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
+import { AD_REWARD_CONTENT_PORT } from '../ad-reward/ad-reward-content.port'
 import { AD_REWARD_PROVIDER_ADAPTERS } from '../ad-reward/ad-reward-provider.adapter'
 import {
   AdProviderEnum,
@@ -44,7 +39,6 @@ import {
   QueryAdRewardRecordDto,
   UpdateAdProviderConfigDto,
 } from '../ad-reward/dto/ad-reward.dto'
-import { CouponRedemptionTargetTypeEnum } from '../coupon/coupon.constant'
 import { ProviderEnvironmentEnum } from '../payment/payment.constant'
 
 const AD_REWARD_CREDENTIAL_OPTIONS: AdRewardCredentialOptionDefinition[] = [
@@ -143,8 +137,8 @@ export class AdRewardService {
 
   constructor(
     private readonly drizzle: DrizzleService,
-    private readonly contentPermissionService: ContentPermissionService,
-    private readonly contentEntitlementService: ContentEntitlementService,
+    @Inject(AD_REWARD_CONTENT_PORT)
+    private readonly adRewardContentPort: AdRewardContentPort,
   ) {}
 
   // 获取当前请求使用的 Drizzle 查询实例。
@@ -160,11 +154,6 @@ export class AdRewardService {
   // 获取广告奖励记录表定义。
   private get adRewardRecord() {
     return this.drizzle.schema.adRewardRecord
-  }
-
-  // 获取用户内容权益表定义。
-  private get userContentEntitlement() {
-    return this.drizzle.schema.userContentEntitlement
   }
 
   private get adRewardRecordPageSelect() {
@@ -511,10 +500,10 @@ export class AdRewardService {
             .where(eq(this.adRewardRecord.id, dto.id))
         }
 
-        await this.contentEntitlementService.revokeEntitlementBySource(tx, {
-          grantSource: ContentEntitlementGrantSourceEnum.AD,
-          sourceId: record.id,
-        })
+        await this.adRewardContentPort.revokeTemporaryAccessByReward(
+          tx,
+          record.id,
+        )
         return true
       },
     })
@@ -525,32 +514,9 @@ export class AdRewardService {
     const conditions = this.buildAdRewardRecordConditions(dto)
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const page = this.drizzle.buildPage(dto)
-    const rows = await this.db
-      .select({
-        ...this.adRewardRecordPageSelect,
-        entitlementStatus: this.userContentEntitlement.status,
-        entitlementExpiresAt: this.userContentEntitlement.expiresAt,
-      })
+    const records = await this.db
+      .select(this.adRewardRecordPageSelect)
       .from(this.adRewardRecord)
-      .leftJoin(
-        this.userContentEntitlement,
-        and(
-          eq(
-            this.userContentEntitlement.grantSource,
-            ContentEntitlementGrantSourceEnum.AD,
-          ),
-          eq(this.userContentEntitlement.sourceId, this.adRewardRecord.id),
-          eq(this.userContentEntitlement.userId, this.adRewardRecord.userId),
-          eq(
-            this.userContentEntitlement.targetType,
-            this.adRewardRecord.targetType,
-          ),
-          eq(
-            this.userContentEntitlement.targetId,
-            this.adRewardRecord.targetId,
-          ),
-        ),
-      )
       .where(where)
       .orderBy(
         desc(this.adRewardRecord.createdAt),
@@ -558,15 +524,16 @@ export class AdRewardService {
       )
       .limit(page.limit)
       .offset(page.offset)
+    const accessProjections =
+      await this.adRewardContentPort.getAccessProjections(records)
     const total = await this.db.$count(this.adRewardRecord, where)
 
     return toPageResult(
-      rows.map(({ entitlementStatus, entitlementExpiresAt, ...record }) => ({
+      records.map((record) => ({
         ...record,
         ...this.resolveAdRewardReconcileStatus(
           record.status,
-          entitlementStatus,
-          entitlementExpiresAt,
+          accessProjections.get(record.id),
         ),
       })),
       total,
@@ -589,7 +556,11 @@ export class AdRewardService {
       config,
       payload: dto,
     })
-    const targetType = await this.assertAdTargetAllowed(dto)
+    const { targetType } = await this.adRewardContentPort.resolveTarget({
+      targetScope: dto.targetScope,
+      requestedTargetType: dto.targetType,
+      targetId: dto.targetId,
+    })
 
     return this.drizzle.withTransaction({
       execute: async (tx) => {
@@ -679,11 +650,10 @@ export class AdRewardService {
           )
         }
 
-        await this.contentEntitlementService.grantEntitlement(tx, {
+        await this.adRewardContentPort.grantTemporaryAccess(tx, {
           userId,
           targetType,
           targetId: dto.targetId,
-          grantSource: ContentEntitlementGrantSourceEnum.AD,
           sourceId: record.id,
           sourceKey: rewardPayload.providerRewardId,
           expiresAt: this.addDays(new Date(), 1),
@@ -720,69 +690,6 @@ export class AdRewardService {
     const output = new Date(input)
     output.setDate(output.getDate() + days)
     return output
-  }
-
-  // 将券和广告目标类型映射为内容权益目标类型。
-  private resolveContentEntitlementTargetType(
-    targetType: CouponRedemptionTargetTypeEnum,
-  ) {
-    if (targetType === CouponRedemptionTargetTypeEnum.COMIC_CHAPTER) {
-      return ContentEntitlementTargetTypeEnum.COMIC_CHAPTER
-    }
-    if (targetType === CouponRedemptionTargetTypeEnum.NOVEL_CHAPTER) {
-      return ContentEntitlementTargetTypeEnum.NOVEL_CHAPTER
-    }
-    throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '目标类型不支持内容权益',
-    )
-  }
-
-  // 校验广告奖励目标当前需要广告解锁，并返回章节真实权益目标类型。
-  private async assertAdTargetAllowed(dto: AdRewardVerificationDto) {
-    if (dto.targetScope !== AdTargetScopeEnum.LOW_PRICE_CHAPTER) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '目标范围暂未支持广告解锁',
-      )
-    }
-    const permission =
-      await this.contentPermissionService.resolveChapterPermission(dto.targetId)
-    const expectedTargetType =
-      this.contentPermissionService.resolveChapterEntitlementTargetType(
-        permission.workType,
-      )
-    if (!expectedTargetType) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '目标类型不支持内容权益',
-      )
-    }
-    if (
-      expectedTargetType !==
-      this.resolveContentEntitlementTargetType(dto.targetType)
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '广告奖励目标类型与章节类型不一致',
-      )
-    }
-    if (permission.viewRule === WorkViewPermissionEnum.VIP) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '广告解锁不能用于 VIP 内容',
-      )
-    }
-    if (
-      permission.viewRule === WorkViewPermissionEnum.PURCHASE &&
-      (permission.purchasePricing?.originalPrice ?? 0) > 100
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '广告解锁不能用于高价章节',
-      )
-    }
-    return expectedTargetType
   }
 
   // 获取指定广告 provider 的奖励适配器。
@@ -918,7 +825,7 @@ export class AdRewardService {
     expected: {
       userId: number
       targetScope: AdTargetScopeEnum
-      targetType: ContentEntitlementTargetTypeEnum
+      targetType: number
       targetId: number
     },
   ) {
@@ -937,12 +844,11 @@ export class AdRewardService {
 
   private resolveAdRewardReconcileStatus(
     rewardStatus: AdRewardStatusEnum,
-    entitlementStatus: number | null | undefined,
-    entitlementExpiresAt: Date | null,
+    accessProjection: AdRewardContentAccessProjection | undefined,
     now = new Date(),
   ) {
-    const entitlementIsActive =
-      entitlementStatus === ContentEntitlementStatusEnum.ACTIVE
+    const entitlementIsActive = accessProjection?.isActive ?? false
+    const entitlementExpiresAt = accessProjection?.expiresAt ?? null
     const entitlementIsExpired = this.isEntitlementExpired(
       entitlementExpiresAt,
       now,
@@ -982,7 +888,7 @@ export class AdRewardService {
         entitlementExpiresAt,
       }
     }
-    if (entitlementStatus === undefined || entitlementStatus === null) {
+    if (!accessProjection) {
       return {
         reconcileStatus: 'entitlement_missing',
         reconcileMessage: '广告奖励成功但未找到对应内容权益',

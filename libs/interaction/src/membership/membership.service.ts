@@ -2,7 +2,6 @@ import type { DbExecutor } from '@db/core'
 import type {
   MembershipPageConfigSelect,
   MembershipPlanSelect,
-  PaymentOrderSelect,
   UserMembershipSubscriptionSelect,
 } from '@db/schema'
 import type { BusinessErrorCodeValue } from '@libs/platform/constant'
@@ -14,13 +13,13 @@ import type {
   MembershipPlanUpdateData,
   MembershipTx,
   MembershipPageConfigIdentity as PageConfigIdentity,
+  PaidOrderActivationOrder,
+  PaidOrderActivationPlanSnapshot,
+  PaidOrderCouponBenefitGrant,
+  PreparedPaidOrderActivation,
 } from '../membership/types/membership.type'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService, toPageResult } from '@db/core'
-import {
-  MembershipSubscriptionSourceTypeEnum,
-  MembershipSubscriptionStatusEnum,
-} from '@libs/content/permission/content-entitlement.constant'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -50,6 +49,8 @@ import {
   MembershipBenefitGrantPolicyEnum,
   MembershipBenefitTypeEnum,
   MembershipPlanTierEnum,
+  MembershipSubscriptionSourceTypeEnum,
+  MembershipSubscriptionStatusEnum,
 } from '../membership/membership.constant'
 import { PaymentOrderService } from '../payment/payment-order.service'
 import {
@@ -72,15 +73,13 @@ type VipSubscriptionOrderPlan = Pick<
   | 'bonusPointAmount'
 >
 
-type PaidOrderActivationPlan = Pick<
-  MembershipPlanSelect,
-  'id' | 'planKey' | 'tier' | 'durationDays' | 'bonusPointAmount'
->
-
 type ActiveMembershipSubscription = Pick<
   UserMembershipSubscriptionSelect,
   'endsAt'
 >
+
+/** 只标记事务外发现与锁后权威重读不一致，支付根据此开启全新事务重试。 */
+export class MembershipPaidOrderActivationSnapshotDriftError extends Error {}
 
 @Injectable()
 export class MembershipService {
@@ -1735,18 +1734,61 @@ export class MembershipService {
       )
   }
 
-  // 支付成功后开通会员订阅。
-  async activatePaidOrder(tx: MembershipTx, order: PaymentOrderSelect) {
-    const plan: PaidOrderActivationPlan | undefined =
-      await tx.query.membershipPlan.findFirst({
-        where: { id: order.targetId },
-        columns: this.paidOrderActivationPlanColumns,
-      })
+  /** 支付事务外发现会员套餐、券权益与全部后续锁请求。 */
+  async preparePaidOrderActivation(
+    order: PaidOrderActivationOrder,
+  ): Promise<PreparedPaidOrderActivation> {
+    const plan = await this.readPaidOrderActivationPlan(order.targetId, this.db)
     if (!plan) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         'VIP 套餐不存在',
       )
+    }
+    const couponBenefits = await this.readPaidOrderCouponBenefits(
+      plan.id,
+      this.db,
+    )
+    const lockRequests = couponBenefits.flatMap((benefit) =>
+      this.couponService.buildGrantParentLockRequests({
+        userId: order.userId,
+        couponDefinitionId: benefit.couponDefinitionId,
+      }),
+    )
+    if (plan.bonusPointAmount > 0) {
+      lockRequests.push(
+        this.growthLedgerService.buildOperationLockRequest({
+          userId: order.userId,
+          bizKey: this.buildPaidOrderBonusPointsBizKey(order.id),
+        }),
+      )
+    }
+
+    return { plan, couponBenefits, lockRequests }
+  }
+
+  /**
+   * 支付根已取得完整锁并集后权威重读并完成订阅、积分和券权益履约。
+   * 本方法及其调用的 apply 路径禁止再次获取 advisory lock。
+   */
+  async activatePaidOrderAfterLocks(
+    tx: MembershipTx,
+    order: PaidOrderActivationOrder,
+    prepared: PreparedPaidOrderActivation,
+  ) {
+    const plan = await this.readPaidOrderActivationPlan(order.targetId, tx)
+    const couponBenefits = plan
+      ? await this.readPaidOrderCouponBenefits(plan.id, tx)
+      : []
+    if (
+      !plan ||
+      !this.isSamePaidOrderActivationPlan(plan, prepared.plan) ||
+      !this.isSamePaidOrderCouponBenefits(
+        couponBenefits,
+        prepared.couponBenefits,
+      )
+    ) {
+      throw new MembershipPaidOrderActivationSnapshotDriftError()
     }
 
     const now = new Date()
@@ -1782,22 +1824,26 @@ export class MembershipService {
       .returning()
 
     if (plan.bonusPointAmount > 0) {
-      const result = await this.growthLedgerService.applyDelta(tx, {
-        userId: order.userId,
-        assetType: GrowthAssetTypeEnum.POINTS,
-        assetKey: '',
-        action: GrowthLedgerActionEnum.GRANT,
-        amount: plan.bonusPointAmount,
-        bizKey: `payment:${order.id}:vip_bonus_points`,
-        source: 'membership_plan',
-        targetType: order.orderType,
-        targetId: plan.id,
-        context: {
-          orderNo: order.orderNo,
-          planKey: plan.planKey,
-          tier: plan.tier,
-        },
-      })
+      const result =
+        await this.growthLedgerService.applyNonExperienceDeltaAfterOperationLock(
+          tx,
+          {
+            userId: order.userId,
+            assetType: GrowthAssetTypeEnum.POINTS,
+            assetKey: '',
+            action: GrowthLedgerActionEnum.GRANT,
+            amount: plan.bonusPointAmount,
+            bizKey: this.buildPaidOrderBonusPointsBizKey(order.id),
+            source: 'membership_plan',
+            targetType: order.orderType,
+            targetId: plan.id,
+            context: {
+              orderNo: order.orderNo,
+              planKey: plan.planKey,
+              tier: plan.tier,
+            },
+          },
+        )
       if (!result.success && !result.duplicated) {
         throw new BusinessException(
           BusinessErrorCode.STATE_CONFLICT,
@@ -1805,16 +1851,45 @@ export class MembershipService {
         )
       }
     }
-    await this.grantAutoCouponBenefits(tx, order, plan.id)
+    for (const benefit of couponBenefits) {
+      const grantKeys = Array.from(
+        { length: benefit.quantity },
+        (_item, index) =>
+          `membership:order:${order.id}:benefit:${benefit.planBenefitId}:coupon:${benefit.couponDefinitionId}:index:${index}`,
+      )
+
+      await this.couponService.grantCouponsForSourceAfterLocks(tx, {
+        userId: order.userId,
+        couponDefinitionId: benefit.couponDefinitionId,
+        sourceType: CouponSourceTypeEnum.MEMBERSHIP_BENEFIT,
+        sourceId: order.id,
+        quantity: benefit.quantity,
+        ...(benefit.validDays === undefined
+          ? {}
+          : { validDays: benefit.validDays }),
+        grantKeys,
+      })
+    }
   }
 
-  // 会员支付开通后自动发放套餐配置的券权益，grantKey 保证支付回调重试不重复发券。
-  private async grantAutoCouponBenefits(
-    tx: MembershipTx,
-    order: PaymentOrderSelect,
+  /** 读取支付履约所需的套餐最小快照。 */
+  private async readPaidOrderActivationPlan(
     planId: number,
-  ) {
-    const benefits = await this.getEnabledPlanBenefitItems([planId], tx)
+    runner: DbExecutor,
+  ): Promise<PaidOrderActivationPlanSnapshot | undefined> {
+    return runner.query.membershipPlan.findFirst({
+      where: { id: planId },
+      columns: this.paidOrderActivationPlanColumns,
+    })
+  }
+
+  /** 将启用中的开放权益 JSON 收窄为支付履约可执行的券权益闭集。 */
+  private async readPaidOrderCouponBenefits(
+    planId: number,
+    runner: DbExecutor,
+  ): Promise<PaidOrderCouponBenefitGrant[]> {
+    const benefits = await this.getEnabledPlanBenefitItems([planId], runner)
+    const couponBenefits: PaidOrderCouponBenefitGrant[] = []
     for (const benefit of benefits) {
       const value = this.asBenefitValueRecord(benefit.benefitValue)
       this.assertMembershipBenefitContract(
@@ -1826,32 +1901,48 @@ export class MembershipService {
       if (benefit.benefit.benefitType === MembershipBenefitTypeEnum.DISPLAY) {
         continue
       }
-
-      const couponDefinitionId = this.readPositiveInteger(
-        value?.couponDefinitionId,
-        '券定义 ID',
-      )
-      const quantity = this.readPositiveInteger(value?.grantCount, '发券数量')
       const validDays = this.readOptionalPositiveInteger(
         value?.validDays,
         '发券有效天数',
       )
-      const grantKeys = Array.from(
-        { length: quantity },
-        (_item, index) =>
-          `membership:order:${order.id}:benefit:${benefit.id}:coupon:${couponDefinitionId}:index:${index}`,
-      )
-
-      await this.couponService.grantCouponsForSource(tx, {
-        userId: order.userId,
-        couponDefinitionId,
-        sourceType: CouponSourceTypeEnum.MEMBERSHIP_BENEFIT,
-        sourceId: order.id,
-        quantity,
+      couponBenefits.push({
+        planBenefitId: benefit.id,
+        couponDefinitionId: this.readPositiveInteger(
+          value?.couponDefinitionId,
+          '券定义 ID',
+        ),
+        quantity: this.readPositiveInteger(value?.grantCount, '发券数量'),
         ...(validDays === undefined ? {} : { validDays }),
-        grantKeys,
       })
     }
+    return couponBenefits
+  }
+
+  /** 套餐积分幂等键仅由已存在的支付订单稳定事实构造。 */
+  private buildPaidOrderBonusPointsBizKey(orderId: number) {
+    return `payment:${orderId}:vip_bonus_points`
+  }
+
+  /** 比较事务外发现与锁后重读的套餐履约字段。 */
+  private isSamePaidOrderActivationPlan(
+    actual: PaidOrderActivationPlanSnapshot,
+    expected: PaidOrderActivationPlanSnapshot,
+  ) {
+    return (
+      actual.id === expected.id &&
+      actual.planKey === expected.planKey &&
+      actual.tier === expected.tier &&
+      actual.durationDays === expected.durationDays &&
+      actual.bonusPointAmount === expected.bonusPointAmount
+    )
+  }
+
+  /** 比较排序稳定的券权益执行闭集。 */
+  private isSamePaidOrderCouponBenefits(
+    actual: readonly PaidOrderCouponBenefitGrant[],
+    expected: readonly PaidOrderCouponBenefitGrant[],
+  ) {
+    return JSON.stringify(actual) === JSON.stringify(expected)
   }
 
   // 基于输入时间增加指定天数。

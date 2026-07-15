@@ -1,4 +1,6 @@
 import type { DbExecutor } from '@db/core'
+import type { BodyDoc } from '@libs/interaction/body/body.type'
+import type { AuditStatusEnum } from '@libs/platform/constant'
 import type { CommentTargetTypeEnum } from '../comment.constant'
 
 /**
@@ -30,6 +32,53 @@ export interface CommentTargetHookPayload {
 }
 
 /**
+ * 评论正文物化输入。
+ * - target owner 只能在调用方已开启的事务中改写 canonical BodyDoc。
+ * - 不承载 target 专有的任意上下文，避免把跨域副作用重新藏回 interaction。
+ */
+export interface CommentTargetBodyMaterializationInput {
+  tx: DbExecutor
+  body: BodyDoc
+  actorUserId: number
+}
+
+/**
+ * 评论持久化后的目标事实。
+ * - body 已完成 target materialization，但尚未由 interaction 编译并写入回复/通知副作用。
+ * - isVisible 是评论自身可见性，不包含 target 父对象的可见性。
+ */
+export interface CommentTargetPersistedCommentPayload extends CommentTargetHookPayload {
+  content: string
+  body: BodyDoc
+  auditStatus: AuditStatusEnum
+  isHidden: boolean
+  isVisible: boolean
+}
+
+/**
+ * 评论治理状态变更后的目标事实。
+ * 目标 owner 据此同步自身派生事实；无论评论可见性是否改变都必须调用。
+ */
+export interface CommentTargetVisibilitySyncPayload {
+  id: number
+  targetType: CommentTargetTypeEnum
+  targetId: number
+  auditStatus: AuditStatusEnum
+  isHidden: boolean
+  isVisible: boolean
+}
+
+/**
+ * 评论删除范围。
+ * 同一删除事务内的所有评论均属于同一 target，目标 owner 必须无条件清理其派生事实。
+ */
+export interface CommentTargetDeletionPayload {
+  targetType: CommentTargetTypeEnum
+  targetId: number
+  commentIds: number[]
+}
+
+/**
  * 评论目标解析器接口
  * 定义各类型评论目标需要实现的校验和解析方法
  */
@@ -48,6 +97,24 @@ export interface ICommentTargetResolver {
    * @throws 当不允许评论时抛出 BadRequestException
    */
   ensureCanComment: (tx: DbExecutor, targetId: number) => Promise<void>
+
+  /**
+   * 校验当前行为人对目标的专有访问权限。
+   * 在目标已锁定并完成通用可评论校验的同一事务内执行。
+   */
+  ensureActorCanComment?: (
+    tx: DbExecutor,
+    targetId: number,
+    actorUserId: number,
+  ) => Promise<void>
+
+  /**
+   * 对已解析的 canonical 正文执行目标专有物化。
+   * 返回值仍是 interaction owner 的 BodyDoc，随后由 CommentService 统一编译与渲染。
+   */
+  materializeCommentBodyInTx?: (
+    input: CommentTargetBodyMaterializationInput,
+  ) => Promise<BodyDoc>
 
   /**
    * 应用评论计数增量
@@ -85,6 +152,40 @@ export interface ICommentTargetResolver {
     comment: CommentTargetHookPayload & { content: string },
     meta: CommentTargetMeta,
   ) => Promise<void>
+
+  /**
+   * 新评论写入后的目标事实 hook。
+   * 在同一事务中执行，适合写 target owner 的引用或索引事实。
+   */
+  postPersistedCommentHook?: (
+    tx: DbExecutor,
+    comment: CommentTargetPersistedCommentPayload,
+    meta: CommentTargetMeta,
+  ) => Promise<void>
+
+  /**
+   * 评论审核或隐藏状态变更后的目标事实同步。
+   * 即使前后评论自身可见性相同也会执行。
+   */
+  syncCommentVisibilityHook?: (
+    tx: DbExecutor,
+    comment: CommentTargetVisibilitySyncPayload,
+  ) => Promise<void>
+
+  /**
+   * 评论软删除后的目标事实清理。
+   * 无论被删评论是否对外可见都在同一事务中执行。
+   */
+  deleteCommentsHook?: (
+    tx: DbExecutor,
+    payload: CommentTargetDeletionPayload,
+  ) => Promise<void>
+
+  /**
+   * 读取目标作者，用于“仅作者评论”筛选与作者标记。
+   * 目标不存在时返回 undefined，不改变评论读路径的既有空结果语义。
+   */
+  resolveTargetAuthorUserId?: (targetId: number) => Promise<number | undefined>
 
   /**
    * 可见评论删除后的钩子（可选）

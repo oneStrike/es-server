@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 import { MessageChatModule } from './chat/chat.module'
-import { MessageDomainEventModule } from './eventing/message-domain-event.module'
+import { MessageEventConsumerModule } from './eventing/message-event-consumer.module'
 import { MessageInboxModule } from './inbox/inbox.module'
 import { MessageMonitorModule } from './monitor/monitor.module'
 import { MessageNotificationModule } from './notification/notification.module'
@@ -14,14 +14,14 @@ import { MessageNotificationModule } from './notification/notification.module'
     MessageInboxModule,
     MessageMonitorModule,
     MessageNotificationModule,
-    MessageDomainEventModule,
+    MessageEventConsumerModule,
     MessageChatModule,
   ],
   exports: [
     MessageInboxModule,
     MessageMonitorModule,
     MessageNotificationModule,
-    MessageDomainEventModule,
+    MessageEventConsumerModule,
     MessageChatModule,
   ],
 })

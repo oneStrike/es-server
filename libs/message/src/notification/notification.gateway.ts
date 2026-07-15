@@ -16,6 +16,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets'
+import { MessageChatWsCommandService } from './notification-chat-ws-command.service'
 import { MessageWebSocketService } from './notification-websocket.service'
 
 const MESSAGE_WS_CORS_ORIGINS_ENV = 'MESSAGE_WS_CORS_ORIGINS'
@@ -55,6 +56,7 @@ export class MessageGateway
 {
   constructor(
     private readonly messageWebSocketService: MessageWebSocketService,
+    private readonly messageChatWsCommandService: MessageChatWsCommandService,
   ) {}
 
   // 建立 native ws 连接后先进入未鉴权状态，浏览器客户端随后发送 auth 事件。
@@ -93,12 +95,12 @@ export class MessageGateway
     @ConnectedSocket() client: WebSocket,
     @MessageBody() body: WsRequestEnvelope<WsSendPayload>,
   ) {
-    const ack = await this.messageWebSocketService.handleChatSend(
+    const ack = await this.messageChatWsCommandService.handleChatSend(
       this.messageWebSocketService.getNativeClientUserId(client),
       body,
     )
     client.send(this.messageWebSocketService.createNativeAckMessage(ack))
-    if (this.messageWebSocketService.shouldDisconnectAfterAck(ack)) {
+    if (this.messageChatWsCommandService.shouldDisconnectAfterAck(ack)) {
       client.close()
     }
   }
@@ -108,12 +110,12 @@ export class MessageGateway
     @ConnectedSocket() client: WebSocket,
     @MessageBody() body: WsRequestEnvelope<WsReadPayload>,
   ) {
-    const ack = await this.messageWebSocketService.handleChatRead(
+    const ack = await this.messageChatWsCommandService.handleChatRead(
       this.messageWebSocketService.getNativeClientUserId(client),
       body,
     )
     client.send(this.messageWebSocketService.createNativeAckMessage(ack))
-    if (this.messageWebSocketService.shouldDisconnectAfterAck(ack)) {
+    if (this.messageChatWsCommandService.shouldDisconnectAfterAck(ack)) {
       client.close()
     }
   }

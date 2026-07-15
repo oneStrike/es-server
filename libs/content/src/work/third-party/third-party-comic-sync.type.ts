@@ -7,7 +7,7 @@ import type {
   WorkflowExecutionContext,
   WorkflowExpiredAttemptRecoveryContext,
   WorkflowObject,
-} from '@libs/platform/modules/workflow/workflow.type'
+} from '@libs/workflow/workflow/workflow.type'
 import type {
   ThirdPartyComicImportProgressReporter,
   ThirdPartyComicImportProgressReporterOptions,
@@ -38,9 +38,7 @@ export type ThirdPartyComicSyncResidue = WorkflowObject & {
 /** 第三方漫画最新章节同步 workflow 执行上下文。 */
 export type ThirdPartyComicSyncTaskContext = Pick<
   WorkflowExecutionContext,
-  | 'assertNotCancelled'
-  | 'isCancelRequested'
-  | 'updateProgress'
+  'assertNotCancelled' | 'isCancelRequested' | 'updateProgress'
 > & {
   jobId: string
   workflowType: string

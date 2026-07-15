@@ -1,13 +1,14 @@
+import type { AdminPermissionDefinition } from '@libs/identity/admin-rbac.type'
 import type { Type } from '@nestjs/common'
 import type { AdminPermissionMetadata } from '../../common/decorators/admin-permission.decorator'
-import type {
-  AdminPermissionDefinition,
-  AdminRbacHandler,
-} from './admin-rbac.type'
+import type { AdminRbacHandler } from './admin-rbac-metadata.type'
 import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
 import { Injectable } from '@nestjs/common'
 import { DiscoveryService, Reflector } from '@nestjs/core'
-import { ADMIN_AUTH_ONLY_KEY, ADMIN_PERMISSION_KEY } from '../../common/decorators/admin-permission.decorator'
+import {
+  ADMIN_AUTH_ONLY_KEY,
+  ADMIN_PERMISSION_KEY,
+} from '../../common/decorators/admin-permission.decorator'
 
 // 收窄 controller prototype 上的未知属性，避免把非函数成员当成 handler。
 function isAdminRbacHandler(value: unknown): value is AdminRbacHandler {
@@ -29,7 +30,10 @@ export class AdminRbacMetadataService {
       if (!instance) {
         continue
       }
-      const prototype = Object.getPrototypeOf(instance) as Record<string, unknown> | null
+      const prototype = Object.getPrototypeOf(instance) as Record<
+        string,
+        unknown
+      > | null
       const controllerClass = instance.constructor as Type<unknown>
       if (!prototype) {
         continue

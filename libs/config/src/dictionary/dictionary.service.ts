@@ -1,10 +1,11 @@
-import type { DbTransaction } from '@db/core'
+import type { DbExecutor, DbTransaction } from '@db/core'
 import type { DictionaryItemSelect, DictionarySelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
   relationIntegrityLock,
   tableIntegrityLock,
   toPageResult,
@@ -36,6 +37,14 @@ const DICTIONARY_ITEM_PARENT_RELATION = 'sys_dictionary_item.dictionary_code'
 const DICTIONARY_ITEM_SORT_ORDER_ALLOCATION =
   'sys_dictionary_item.sort_order_allocation'
 
+class DictionarySnapshotDriftError extends Error {}
+
+type DictionaryMutationSnapshot = Pick<DictionarySelect, 'id' | 'code'>
+type DictionaryItemMutationSnapshot = Pick<
+  DictionaryItemSelect,
+  'id' | 'dictionaryCode' | 'sortOrder'
+>
+
 /**
  * 字典服务
  *
@@ -58,6 +67,104 @@ export class LibDictionaryService {
   // 字典项表
   private get dictionaryItem() {
     return this.drizzle.schema.dictionaryItem
+  }
+
+  private async withSnapshotRetry<T>(
+    execute: () => Promise<T>,
+    conflictMessage: string,
+  ): Promise<T> {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        return await execute()
+      } catch (error) {
+        if (!(error instanceof DictionarySnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            conflictMessage,
+          )
+        }
+      }
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      conflictMessage,
+    )
+  }
+
+  private async readDictionaryMutationSnapshot(
+    id: number,
+    client: DbExecutor = this.db,
+  ): Promise<DictionaryMutationSnapshot | undefined> {
+    const [snapshot] = await client
+      .select({
+        id: this.dictionary.id,
+        code: this.dictionary.code,
+      })
+      .from(this.dictionary)
+      .where(eq(this.dictionary.id, id))
+      .limit(1)
+
+    return snapshot
+  }
+
+  private async readDictionaryItemMutationSnapshot(
+    id: number,
+    client: DbExecutor = this.db,
+  ): Promise<DictionaryItemMutationSnapshot | undefined> {
+    const [snapshot] = await this.readDictionaryItemsMutationSnapshot(
+      [id],
+      client,
+    )
+    return snapshot
+  }
+
+  private async readDictionaryItemsMutationSnapshot(
+    ids: readonly number[],
+    client: DbExecutor = this.db,
+  ): Promise<DictionaryItemMutationSnapshot[]> {
+    return client
+      .select({
+        id: this.dictionaryItem.id,
+        dictionaryCode: this.dictionaryItem.dictionaryCode,
+        sortOrder: this.dictionaryItem.sortOrder,
+      })
+      .from(this.dictionaryItem)
+      .where(inArray(this.dictionaryItem.id, [...new Set(ids)]))
+      .orderBy(this.dictionaryItem.id)
+  }
+
+  private isSameDictionaryMutationSnapshot(
+    left: DictionaryMutationSnapshot,
+    right: DictionaryMutationSnapshot | undefined,
+  ) {
+    return left.id === right?.id && left.code === right?.code
+  }
+
+  private isSameDictionaryItemMutationSnapshot(
+    left: DictionaryItemMutationSnapshot,
+    right: DictionaryItemMutationSnapshot | undefined,
+  ) {
+    return (
+      left.id === right?.id &&
+      left.dictionaryCode === right?.dictionaryCode &&
+      left.sortOrder === right?.sortOrder
+    )
+  }
+
+  private areSameDictionaryItemMutationSnapshots(
+    left: DictionaryItemMutationSnapshot[],
+    right: DictionaryItemMutationSnapshot[],
+  ) {
+    return (
+      left.length === right.length &&
+      left.every((snapshot, index) =>
+        this.isSameDictionaryItemMutationSnapshot(snapshot, right[index]),
+      )
+    )
   }
 
   // 字典列表与详情的完整稳定 contract，字段新增不能通过默认查询自动进入接口。
@@ -168,12 +275,9 @@ export class LibDictionaryService {
     }
   }
 
-  // 未显式排序的字典项沿用“追加到现有排序末尾”的业务语义。分配锁替代
-  // serial sequence，确保并发创建不会取得相同的排序值。
+  // 未显式排序的字典项沿用“追加到现有排序末尾”的业务语义。调用方必须在
+  // 初始完整并集中持有全局排序分配锁，确保并发创建不会取得相同的排序值。
   private async allocateDictionaryItemSortOrder(tx: DbTransaction) {
-    await acquireIntegrityLocks(tx, [
-      relationIntegrityLock(DICTIONARY_ITEM_SORT_ORDER_ALLOCATION, 'global'),
-    ])
     const [row] = await tx
       .select({
         value:
@@ -233,7 +337,9 @@ export class LibDictionaryService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          relationIntegrityLock(DICTIONARY_ITEM_PARENT_RELATION, dto.code),
+          exclusiveIntegrityLock(
+            relationIntegrityLock(DICTIONARY_ITEM_PARENT_RELATION, dto.code),
+          ),
         ])
         await tx.insert(this.dictionary).values({
           ...dto,
@@ -248,55 +354,67 @@ export class LibDictionaryService {
   async updateDictionary(dto: UpdateDictionaryDto) {
     const { id, code, ...otherUpdateData } = dto
 
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [
-          tableIntegrityLock(DICTIONARY_TABLE, id),
-        ])
-        const currentDictionary = await tx.query.dictionary.findFirst({
-          where: { id },
-          columns: { code: true },
-        })
+    return this.withSnapshotRetry(async () => {
+      const discoveredDictionary = await this.readDictionaryMutationSnapshot(id)
+      if (!discoveredDictionary) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '字典不存在',
+        )
+      }
 
-        if (!currentDictionary) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '字典不存在',
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          await acquireIntegrityLocks(tx, [
+            exclusiveIntegrityLock(tableIntegrityLock(DICTIONARY_TABLE, id)),
+            ...[discoveredDictionary.code, code]
+              .filter((value): value is string => value !== undefined)
+              .map((value) =>
+                exclusiveIntegrityLock(
+                  relationIntegrityLock(DICTIONARY_ITEM_PARENT_RELATION, value),
+                ),
+              ),
+          ])
+
+          const lockedDictionary = await this.readDictionaryMutationSnapshot(
+            id,
+            tx,
           )
-        }
-
-        await acquireIntegrityLocks(tx, [
-          relationIntegrityLock(
-            DICTIONARY_ITEM_PARENT_RELATION,
-            currentDictionary.code,
-          ),
-          ...(code === undefined
-            ? []
-            : [relationIntegrityLock(DICTIONARY_ITEM_PARENT_RELATION, code)]),
-        ])
-
-        const updateData =
-          code === undefined ? otherUpdateData : { ...otherUpdateData, code }
-        const result = await tx
-          .update(this.dictionary)
-          .set(updateData)
-          .where(eq(this.dictionary.id, id))
-
-        this.drizzle.assertAffectedRows(result, '字典不存在')
-
-        // 字典编码变更时，同步刷新子项绑定编码，避免父子关系失联。
-        if (code && code !== currentDictionary.code) {
-          await tx
-            .update(this.dictionaryItem)
-            .set({ dictionaryCode: code })
-            .where(
-              eq(this.dictionaryItem.dictionaryCode, currentDictionary.code),
+          if (
+            !this.isSameDictionaryMutationSnapshot(
+              discoveredDictionary,
+              lockedDictionary,
             )
-        }
-      },
-    })
+          ) {
+            throw new DictionarySnapshotDriftError()
+          }
 
-    return true
+          const updateData =
+            code === undefined ? otherUpdateData : { ...otherUpdateData, code }
+          const result = await tx
+            .update(this.dictionary)
+            .set(updateData)
+            .where(eq(this.dictionary.id, id))
+
+          this.drizzle.assertAffectedRows(result, '字典不存在')
+
+          // 字典编码变更时，同步刷新子项绑定编码，避免父子关系失联。
+          if (code !== undefined && code !== discoveredDictionary.code) {
+            await tx
+              .update(this.dictionaryItem)
+              .set({ dictionaryCode: code })
+              .where(
+                eq(
+                  this.dictionaryItem.dictionaryCode,
+                  discoveredDictionary.code,
+                ),
+              )
+          }
+        },
+      })
+
+      return true
+    }, '字典状态已变化，请重试')
   }
 
   // 切换字典启用状态。
@@ -304,7 +422,7 @@ export class LibDictionaryService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock(DICTIONARY_TABLE, dto.id),
+          exclusiveIntegrityLock(tableIntegrityLock(DICTIONARY_TABLE, dto.id)),
         ])
         const result = await tx
           .update(this.dictionary)
@@ -318,46 +436,63 @@ export class LibDictionaryService {
 
   // 删除字典。 若仍存在关联字典项则拒绝删除，避免破坏字典项的父级语义。
   async deleteDictionary(dto: IdDto) {
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [
-          tableIntegrityLock(DICTIONARY_TABLE, dto.id),
-        ])
-        const dictionary = await tx.query.dictionary.findFirst({
-          where: { id: dto.id },
-          columns: { code: true },
-        })
-        if (!dictionary) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '字典不存在',
-          )
-        }
+    return this.withSnapshotRetry(async () => {
+      const discoveredDictionary = await this.readDictionaryMutationSnapshot(
+        dto.id,
+      )
+      if (!discoveredDictionary) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '字典不存在',
+        )
+      }
 
-        await acquireIntegrityLocks(tx, [
-          relationIntegrityLock(
-            DICTIONARY_ITEM_PARENT_RELATION,
-            dictionary.code,
-          ),
-        ])
-        const hasItems = await tx.query.dictionaryItem.findFirst({
-          where: { dictionaryCode: dictionary.code },
-          columns: { id: true },
-        })
-        if (hasItems) {
-          throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            '该字典还有关联字典项，无法删除',
-          )
-        }
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          await acquireIntegrityLocks(tx, [
+            exclusiveIntegrityLock(
+              tableIntegrityLock(DICTIONARY_TABLE, dto.id),
+            ),
+            exclusiveIntegrityLock(
+              relationIntegrityLock(
+                DICTIONARY_ITEM_PARENT_RELATION,
+                discoveredDictionary.code,
+              ),
+            ),
+          ])
 
-        const result = await tx
-          .delete(this.dictionary)
-          .where(eq(this.dictionary.id, dto.id))
-        this.drizzle.assertAffectedRows(result, '字典不存在')
-      },
-    })
-    return true
+          const lockedDictionary = await this.readDictionaryMutationSnapshot(
+            dto.id,
+            tx,
+          )
+          if (
+            !this.isSameDictionaryMutationSnapshot(
+              discoveredDictionary,
+              lockedDictionary,
+            )
+          ) {
+            throw new DictionarySnapshotDriftError()
+          }
+
+          const hasItems = await tx.query.dictionaryItem.findFirst({
+            where: { dictionaryCode: discoveredDictionary.code },
+            columns: { id: true },
+          })
+          if (hasItems) {
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
+              '该字典还有关联字典项，无法删除',
+            )
+          }
+
+          const result = await tx
+            .delete(this.dictionary)
+            .where(eq(this.dictionary.id, dto.id))
+          this.drizzle.assertAffectedRows(result, '字典不存在')
+        },
+      })
+      return true
+    }, '字典状态已变化，请重试')
   }
 
   // 分页查询字典项列表。 `dictionaryCode` 支持逗号分隔的多值筛选，默认按 `sortOrder asc` 返回。
@@ -417,10 +552,22 @@ export class LibDictionaryService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          relationIntegrityLock(
-            DICTIONARY_ITEM_PARENT_RELATION,
-            dto.dictionaryCode,
+          exclusiveIntegrityLock(
+            relationIntegrityLock(
+              DICTIONARY_ITEM_PARENT_RELATION,
+              dto.dictionaryCode,
+            ),
           ),
+          ...(dto.sortOrder === undefined
+            ? [
+                exclusiveIntegrityLock(
+                  relationIntegrityLock(
+                    DICTIONARY_ITEM_SORT_ORDER_ALLOCATION,
+                    'global',
+                  ),
+                ),
+              ]
+            : []),
         ])
         await this.assertDictionaryExists(tx, dto.dictionaryCode)
         await tx.insert(this.dictionaryItem).values({
@@ -439,50 +586,61 @@ export class LibDictionaryService {
   // 更新字典项主体字段。 若请求中带了新的 `dictionaryCode`，会先校验目标字典存在。
   async updateDictionaryItem(dto: UpdateDictionaryItemDto) {
     const { id, sortOrder, dictionaryCode, ...data } = dto
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [
-          tableIntegrityLock(DICTIONARY_ITEM_TABLE, id),
-        ])
-        const currentItem = await tx.query.dictionaryItem.findFirst({
-          where: { id },
-          columns: { dictionaryCode: true },
-        })
-        if (!currentItem) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '字典项不存在',
+    return this.withSnapshotRetry(async () => {
+      const discoveredItem = await this.readDictionaryItemMutationSnapshot(id)
+      if (!discoveredItem) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '字典项不存在',
+        )
+      }
+
+      const targetDictionaryCode =
+        dictionaryCode ?? discoveredItem.dictionaryCode
+      await this.drizzle.withTransaction({
+        execute: async (tx) => {
+          await acquireIntegrityLocks(tx, [
+            exclusiveIntegrityLock(
+              tableIntegrityLock(DICTIONARY_ITEM_TABLE, id),
+            ),
+            ...[discoveredItem.dictionaryCode, targetDictionaryCode].map(
+              (value) =>
+                exclusiveIntegrityLock(
+                  relationIntegrityLock(DICTIONARY_ITEM_PARENT_RELATION, value),
+                ),
+            ),
+          ])
+
+          const lockedItem = await this.readDictionaryItemMutationSnapshot(
+            id,
+            tx,
           )
-        }
+          if (
+            !this.isSameDictionaryItemMutationSnapshot(
+              discoveredItem,
+              lockedItem,
+            )
+          ) {
+            throw new DictionarySnapshotDriftError()
+          }
 
-        const targetDictionaryCode =
-          dictionaryCode ?? currentItem.dictionaryCode
-        await acquireIntegrityLocks(tx, [
-          relationIntegrityLock(
-            DICTIONARY_ITEM_PARENT_RELATION,
-            currentItem.dictionaryCode,
-          ),
-          relationIntegrityLock(
-            DICTIONARY_ITEM_PARENT_RELATION,
-            targetDictionaryCode,
-          ),
-        ])
-        if (dictionaryCode) {
-          await this.assertDictionaryExists(tx, dictionaryCode)
-        }
+          if (dictionaryCode !== undefined) {
+            await this.assertDictionaryExists(tx, dictionaryCode)
+          }
 
-        const result = await tx
-          .update(this.dictionaryItem)
-          .set({
-            ...data,
-            ...(dictionaryCode === undefined ? {} : { dictionaryCode }),
-            ...(sortOrder === undefined ? {} : { sortOrder }),
-          })
-          .where(eq(this.dictionaryItem.id, id))
-        this.drizzle.assertAffectedRows(result, '字典项不存在')
-      },
-    })
-    return true
+          const result = await tx
+            .update(this.dictionaryItem)
+            .set({
+              ...data,
+              ...(dictionaryCode === undefined ? {} : { dictionaryCode }),
+              ...(sortOrder === undefined ? {} : { sortOrder }),
+            })
+            .where(eq(this.dictionaryItem.id, id))
+          this.drizzle.assertAffectedRows(result, '字典项不存在')
+        },
+      })
+      return true
+    }, '字典项状态已变化，请重试')
   }
 
   // 切换字典项启用状态。
@@ -490,7 +648,9 @@ export class LibDictionaryService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock(DICTIONARY_ITEM_TABLE, dto.id),
+          exclusiveIntegrityLock(
+            tableIntegrityLock(DICTIONARY_ITEM_TABLE, dto.id),
+          ),
         ])
         const result = await tx
           .update(this.dictionaryItem)
@@ -504,90 +664,115 @@ export class LibDictionaryService {
 
   // 交换两条字典项的排序位置。 排序操作要求两条记录属于同一 `dictionaryCode`，并在同一事务内完成三步交换。
   async updateDictionaryItemSort(dto: DragReorderDto) {
-    return this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [
-          tableIntegrityLock(DICTIONARY_ITEM_TABLE, dto.dragId),
-          tableIntegrityLock(DICTIONARY_ITEM_TABLE, dto.targetId),
-        ])
-        const rows = await tx
-          .select({
-            id: this.dictionaryItem.id,
-            dictionaryCode: this.dictionaryItem.dictionaryCode,
-            sortOrder: this.dictionaryItem.sortOrder,
-          })
-          .from(this.dictionaryItem)
-          .where(inArray(this.dictionaryItem.id, [dto.dragId, dto.targetId]))
+    return this.withSnapshotRetry(async () => {
+      const discoveredItems = await this.readDictionaryItemsMutationSnapshot([
+        dto.dragId,
+        dto.targetId,
+      ])
+      const discoveredDragItem = discoveredItems.find(
+        (row) => row.id === dto.dragId,
+      )
+      const discoveredTargetItem = discoveredItems.find(
+        (row) => row.id === dto.targetId,
+      )
+      if (!discoveredDragItem || !discoveredTargetItem) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '字典项不存在',
+        )
+      }
 
-        const dragItem = rows.find((row) => row.id === dto.dragId)
-        const targetItem = rows.find((row) => row.id === dto.targetId)
+      return this.drizzle.withTransaction({
+        execute: async (tx) => {
+          await acquireIntegrityLocks(tx, [
+            exclusiveIntegrityLock(
+              tableIntegrityLock(DICTIONARY_ITEM_TABLE, dto.dragId),
+            ),
+            exclusiveIntegrityLock(
+              tableIntegrityLock(DICTIONARY_ITEM_TABLE, dto.targetId),
+            ),
+            ...discoveredItems.map((item) =>
+              exclusiveIntegrityLock(
+                relationIntegrityLock(
+                  DICTIONARY_ITEM_PARENT_RELATION,
+                  item.dictionaryCode,
+                ),
+              ),
+            ),
+          ])
 
-        if (!dragItem || !targetItem) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '字典项不存在',
+          const lockedItems = await this.readDictionaryItemsMutationSnapshot(
+            [dto.dragId, dto.targetId],
+            tx,
           )
-        }
-        if (dragItem.dictionaryCode !== targetItem.dictionaryCode) {
-          throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            '字典项不是同一字典',
-          )
-        }
-        if (dragItem.sortOrder === targetItem.sortOrder) {
+          if (
+            !this.areSameDictionaryItemMutationSnapshots(
+              discoveredItems,
+              lockedItems,
+            )
+          ) {
+            throw new DictionarySnapshotDriftError()
+          }
+
+          const dragItem = lockedItems.find((row) => row.id === dto.dragId)
+          const targetItem = lockedItems.find((row) => row.id === dto.targetId)
+          if (!dragItem || !targetItem) {
+            throw new DictionarySnapshotDriftError()
+          }
+          if (dragItem.dictionaryCode !== targetItem.dictionaryCode) {
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
+              '字典项不是同一字典',
+            )
+          }
+          if (dragItem.sortOrder === targetItem.sortOrder) {
+            return true
+          }
+
+          const [minimumSortOrder] = await tx
+            .select({
+              value: sql<number>`min(${this.dictionaryItem.sortOrder})`.mapWith(
+                Number,
+              ),
+            })
+            .from(this.dictionaryItem)
+            .where(
+              eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
+            )
+          const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
+
+          await tx
+            .update(this.dictionaryItem)
+            .set({ sortOrder: temporarySortOrder })
+            .where(
+              and(
+                eq(this.dictionaryItem.id, dragItem.id),
+                eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
+              ),
+            )
+          await tx
+            .update(this.dictionaryItem)
+            .set({ sortOrder: dragItem.sortOrder })
+            .where(
+              and(
+                eq(this.dictionaryItem.id, targetItem.id),
+                eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
+              ),
+            )
+          await tx
+            .update(this.dictionaryItem)
+            .set({ sortOrder: targetItem.sortOrder })
+            .where(
+              and(
+                eq(this.dictionaryItem.id, dragItem.id),
+                eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
+              ),
+            )
+
           return true
-        }
-
-        await acquireIntegrityLocks(tx, [
-          relationIntegrityLock(
-            DICTIONARY_ITEM_PARENT_RELATION,
-            dragItem.dictionaryCode,
-          ),
-        ])
-
-        const [minimumSortOrder] = await tx
-          .select({
-            value: sql<number>`min(${this.dictionaryItem.sortOrder})`.mapWith(
-              Number,
-            ),
-          })
-          .from(this.dictionaryItem)
-          .where(
-            eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
-          )
-        const temporarySortOrder = (minimumSortOrder?.value ?? 0) - 1
-
-        await tx
-          .update(this.dictionaryItem)
-          .set({ sortOrder: temporarySortOrder })
-          .where(
-            and(
-              eq(this.dictionaryItem.id, dragItem.id),
-              eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
-            ),
-          )
-        await tx
-          .update(this.dictionaryItem)
-          .set({ sortOrder: dragItem.sortOrder })
-          .where(
-            and(
-              eq(this.dictionaryItem.id, targetItem.id),
-              eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
-            ),
-          )
-        await tx
-          .update(this.dictionaryItem)
-          .set({ sortOrder: targetItem.sortOrder })
-          .where(
-            and(
-              eq(this.dictionaryItem.id, dragItem.id),
-              eq(this.dictionaryItem.dictionaryCode, dragItem.dictionaryCode),
-            ),
-          )
-
-        return true
-      },
-    })
+        },
+      })
+    }, '字典项状态已变化，请重试')
   }
 
   // 删除字典项。
@@ -595,7 +780,9 @@ export class LibDictionaryService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock(DICTIONARY_ITEM_TABLE, dto.id),
+          exclusiveIntegrityLock(
+            tableIntegrityLock(DICTIONARY_ITEM_TABLE, dto.id),
+          ),
         ])
         const result = await tx
           .delete(this.dictionaryItem)

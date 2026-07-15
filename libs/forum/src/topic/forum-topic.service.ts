@@ -8,6 +8,7 @@ import type {
   TopicAuditActorOptions,
   TopicGovernanceSnapshot,
   TopicMutationSnapshot,
+  TopicRestoreMutationSnapshot,
   TopicUpdatedSnapshot,
   UpdateTopicStatusData,
   UpdateTopicStatusOptions,
@@ -136,7 +137,7 @@ export class ForumTopicService {
   // 在既有事务中恢复当前已删除主题快照。
   async restoreTopicWithCurrentInTx(
     tx: DbTransaction,
-    topic: TopicMutationSnapshot,
+    topic: TopicRestoreMutationSnapshot,
     input: RestoreForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
@@ -170,7 +171,7 @@ export class ForumTopicService {
   async moveTopicInTx(
     tx: DbTransaction,
     input: MoveForumTopicDto,
-    currentSectionId?: number,
+    currentSectionId: number,
   ) {
     return this.commandService.moveTopicInTx(tx, input, currentSectionId)
   }

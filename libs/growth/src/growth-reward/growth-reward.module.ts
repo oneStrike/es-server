@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { GrowthLedgerModule } from '../growth-ledger/growth-ledger.module'
 import { UserGrowthRewardService } from './growth-reward.service'
@@ -7,7 +8,7 @@ import { UserGrowthRewardService } from './growth-reward.service'
  * 统一协调积分和经验的奖励发放
  */
 @Module({
-  imports: [GrowthLedgerModule],
+  imports: [DrizzleModule, GrowthLedgerModule],
   providers: [UserGrowthRewardService],
   exports: [UserGrowthRewardService],
 })

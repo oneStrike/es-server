@@ -402,24 +402,20 @@ export class CheckInSettlementService extends CheckInServiceSupport {
     tx: DbTransaction,
     input: CheckInRewardApplyInput,
   ) {
-    const results: GrowthLedgerApplyResult[] = []
-
-    for (const rewardItem of input.rewardItems) {
-      const assetType = this.resolveLedgerAssetType(rewardItem.assetType)
-      results.push(
-        await this.growthLedgerService.applyDelta(tx, {
-          userId: input.userId,
-          assetType,
-          action: GrowthLedgerActionEnum.GRANT,
-          amount: rewardItem.amount,
-          bizKey: `${input.baseBizKey}:${rewardItem.assetType}`,
-          source: input.source,
-          context: {
-            actorUserId: input.actorUserId,
-          },
-        }),
-      )
-    }
+    const results = await this.growthLedgerService.applyDeltaBatch(
+      tx,
+      input.rewardItems.map((rewardItem) => ({
+        userId: input.userId,
+        assetType: this.resolveLedgerAssetType(rewardItem.assetType),
+        action: GrowthLedgerActionEnum.GRANT,
+        amount: rewardItem.amount,
+        bizKey: `${input.baseBizKey}:${rewardItem.assetType}`,
+        source: input.source,
+        context: {
+          actorUserId: input.actorUserId,
+        },
+      })),
+    )
 
     for (const result of results) {
       if (!result.success) {

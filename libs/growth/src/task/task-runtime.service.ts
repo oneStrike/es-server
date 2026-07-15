@@ -1,6 +1,6 @@
 import type { TaskExpiredInstanceRawRow } from './types/task.type'
 import { DrizzleService, extractRows } from '@db/core'
-import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
 import { Injectable } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
@@ -25,7 +25,7 @@ export class TaskRuntimeService extends TaskServiceSupport {
   // 注入运行时调度需要的数据库、消息和执行服务。
   constructor(
     drizzle: DrizzleService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
+    private readonly domainEventPublisher: DomainEventPublisher,
     private readonly taskExecutionService: TaskExecutionService,
     private readonly taskNotificationService: TaskNotificationService,
   ) {
@@ -157,7 +157,7 @@ export class TaskRuntimeService extends TaskServiceSupport {
       (item): item is typeof item & { expiredAt: Date } =>
         Boolean(item.expiredAt),
     )) {
-      await this.messageDomainEventPublisher.publish(
+      await this.domainEventPublisher.publish(
         this.taskNotificationService.createExpiringSoonReminderEvent({
           bizKey: this.taskNotificationService.buildExpiringSoonReminderBizKey(
             row.instanceId,

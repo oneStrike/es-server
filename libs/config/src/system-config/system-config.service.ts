@@ -6,6 +6,7 @@ import type { ConfigAllowedTemplate } from './system-config.type'
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   relationIntegrityLock,
 } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -134,7 +135,9 @@ export class SystemConfigService implements OnModuleInit {
     const result = await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          relationIntegrityLock('system-config', 'global'),
+          exclusiveIntegrityLock(
+            relationIntegrityLock('system-config', 'global'),
+          ),
         ])
 
         const latestConfig = await this.findLatestConfig(tx)

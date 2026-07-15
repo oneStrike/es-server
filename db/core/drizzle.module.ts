@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { DbLifecycleService } from './db-lifecycle.service'
 import { DbNotificationService } from './db-notification.service'
@@ -9,7 +9,6 @@ import {
 } from './drizzle.provider'
 import { DrizzleService } from './drizzle.service'
 
-@Global()
 @Module({
   imports: [ConfigModule],
   providers: [

@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import {
   UploadFileDto,
   UploadResponseDto,

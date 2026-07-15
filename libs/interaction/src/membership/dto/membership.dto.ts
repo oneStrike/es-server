@@ -1,4 +1,3 @@
-import { AgreementListItemDto } from '@libs/app-content/agreement/dto/agreement.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -10,11 +9,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { CreatePaymentOrderBaseDto } from '../../payment/dto/payment.dto'
 import { PaymentSubscriptionModeEnum } from '../../payment/payment.constant'
 import {
@@ -80,7 +75,10 @@ export class BaseMembershipBenefitDefinitionDto extends BaseDto {
 export class MembershipBenefitDefinitionOutputDto extends BaseMembershipBenefitDefinitionDto {}
 
 export class CreateMembershipBenefitDefinitionDto extends IntersectionType(
-  PickType(BaseMembershipBenefitDefinitionDto, ['name', 'benefitType'] as const),
+  PickType(BaseMembershipBenefitDefinitionDto, [
+    'name',
+    'benefitType',
+  ] as const),
   PartialType(
     PickType(BaseMembershipBenefitDefinitionDto, [
       'icon',
@@ -249,7 +247,11 @@ export class BaseMembershipPlanDto extends BaseDto {
 export class MembershipPlanOutputDto extends BaseMembershipPlanDto {}
 
 export class CreateMembershipPlanDto extends IntersectionType(
-  PickType(BaseMembershipPlanDto, ['name', 'priceAmount', 'durationDays'] as const),
+  PickType(BaseMembershipPlanDto, [
+    'name',
+    'priceAmount',
+    'durationDays',
+  ] as const),
   PartialType(
     PickType(BaseMembershipPlanDto, [
       'tier',
@@ -395,16 +397,6 @@ export class MembershipPageConfigPlanIdsDto {
   planIds?: number[] | null
 }
 
-export class MembershipPageConfigAgreementsDto {
-  @ArrayProperty({
-    description: '关联协议列表',
-    itemClass: AgreementListItemDto,
-    required: true,
-    validation: false,
-  })
-  agreements!: AgreementListItemDto[]
-}
-
 export class MembershipPageConfigPlansDto {
   @ArrayProperty({
     description: '绑定套餐列表',
@@ -418,16 +410,6 @@ export class MembershipPageConfigPlansDto {
 export class MembershipPageConfigRelationsDto extends IntersectionType(
   MembershipPageConfigAgreementIdsDto,
   MembershipPageConfigPlanIdsDto,
-) {}
-
-export class MembershipPageConfigDisplayRelationsDto extends IntersectionType(
-  MembershipPageConfigAgreementsDto,
-  MembershipPageConfigPlansDto,
-) {}
-
-export class MembershipPageConfigItemDto extends IntersectionType(
-  MembershipPageConfigOutputBaseDto,
-  MembershipPageConfigDisplayRelationsDto,
 ) {}
 
 export class CreateMembershipPageConfigDto extends IntersectionType(
@@ -515,34 +497,4 @@ export class MembershipSubscriptionSummaryDto {
     validation: false,
   })
   expiresAt!: Date | null
-}
-
-export class VipSubscriptionPageDto {
-  @NestedProperty({
-    description: '页面配置',
-    type: MembershipPageConfigItemDto,
-    validation: false,
-  })
-  pageConfig!: MembershipPageConfigItemDto
-
-  @ArrayProperty({
-    description: '启用 VIP 套餐列表',
-    itemClass: MembershipPlanOutputDto,
-    validation: false,
-  })
-  plans!: MembershipPlanOutputDto[]
-
-  @ArrayProperty({
-    description: '套餐权益列表',
-    itemClass: MembershipPlanBenefitItemDto,
-    validation: false,
-  })
-  benefits!: MembershipPlanBenefitItemDto[]
-
-  @NestedProperty({
-    description: '当前用户订阅摘要',
-    type: MembershipSubscriptionSummaryDto,
-    validation: false,
-  })
-  currentSubscription!: MembershipSubscriptionSummaryDto
 }

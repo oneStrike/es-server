@@ -1,5 +1,6 @@
+import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.type'
+import type { DeviceInfo } from '@libs/platform/utils'
 import type { RevokeTokenReasonEnum } from './auth.constant'
-import type { CreateTokenInput, ITokenEntity } from './token-storage.type'
 
 type JwtPayloadField =
   | string
@@ -40,6 +41,30 @@ export interface TokenGenerateInput {
   [key: string]: JwtPayloadField | undefined
 }
 
+/** 认证层可见的最小 token 会话记录，不暴露具体持久化模型。 */
+export interface TokenSessionRecord {
+  jti: string
+  expiresAt: Date
+  revokedAt: Date | null
+}
+
+/** 认证层写入 token 会话所需的稳定数据。 */
+export interface TokenSessionCreateInput extends GeoSnapshot {
+  userId: number
+  jti: string
+  tokenType: TokenTypeEnum
+  expiresAt: Date
+  deviceInfo?: DeviceInfo | null
+  ipAddress?: string
+  userAgent?: string
+}
+
+/** 认证协议中的 token 类型。 */
+export enum TokenTypeEnum {
+  ACCESS = 1,
+  REFRESH = 2,
+}
+
 /**
  * Token 存储服务接口
  */
@@ -49,7 +74,7 @@ export interface ITokenStorageService {
    * @param jti JWT Token ID
    * @returns Token 记录或 null
    */
-  findByJti: (jti: string) => Promise<ITokenEntity | null>
+  findByJti: (jti: string) => Promise<TokenSessionRecord | null>
 
   /**
    * 检查 Token 是否有效
@@ -59,9 +84,9 @@ export interface ITokenStorageService {
    */
   isTokenValid: (jti: string) => Promise<boolean>
 
-  createToken: (data: CreateTokenInput) => Promise<ITokenEntity>
+  createToken: (data: TokenSessionCreateInput) => Promise<TokenSessionRecord>
 
-  createTokens: (data: CreateTokenInput[]) => Promise<number>
+  createTokens: (data: TokenSessionCreateInput[]) => Promise<number>
 
   revokeByJti: (
     jti: string,
@@ -85,7 +110,7 @@ export interface ITokenStorageService {
     reason: RevokeTokenReasonEnum,
   ) => Promise<void> | void
 
-  findActiveTokensByUserId: (userId: number) => Promise<ITokenEntity[]>
+  findActiveTokensByUserId: (userId: number) => Promise<TokenSessionRecord[]>
 
   /**
    * 清理过期 Token

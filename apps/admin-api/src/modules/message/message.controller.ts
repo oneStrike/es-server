@@ -11,16 +11,16 @@ import {
   QueryMessageWsMonitorDto,
   RetryMessageNotificationDeliveryDto,
 } from '@libs/message/monitor/dto/message-monitor.dto'
+import { MessageChatInvestigationService } from '@libs/message/monitor/message-chat-investigation.service'
+import { MessageMonitorService } from '@libs/message/monitor/message-monitor.service'
 import { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../common/decorators/audit.decorator'
-import { MessageChatInvestigationService } from './message-chat-investigation.service'
-import { MessageMonitorService } from './message-monitor.service'
 
 @ApiTags('消息中心/监控')
 @Controller('admin/message')

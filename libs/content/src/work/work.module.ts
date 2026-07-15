@@ -1,11 +1,10 @@
+import { DrizzleModule } from '@db/core'
 import { ForumSectionModule } from '@libs/forum/section/forum-section.module'
 import { UserPermissionModule } from '@libs/growth/permission/permission.module'
 import { UserPointModule } from '@libs/growth/point/point.module'
 import { InteractionModule } from '@libs/interaction/interaction.module'
 import { ReportModule } from '@libs/interaction/report/report.module'
-import { UploadModule } from '@libs/platform/modules/upload/upload.module'
-import { WorkflowModule } from '@libs/platform/modules/workflow/workflow.module'
-import { SystemConfigModule } from '@libs/system-config/system-config.module'
+import { WorkflowModule } from '@libs/workflow/workflow/workflow.module'
 import { Module } from '@nestjs/common'
 import { WorkAuthorModule } from '../author/author.module'
 import { ContentPermissionModule } from '../permission/content-permission.module'
@@ -22,10 +21,6 @@ import { WorkNovelChapterLikeResolver } from './chapter/resolver/work-novel-chap
 import { WorkNovelChapterReportResolver } from './chapter/resolver/work-novel-chapter-report.resolver'
 import { WorkChapterService } from './chapter/work-chapter.service'
 import { ContentImportModule } from './content-import/content-import.module'
-import { ComicArchiveImportWorkflowHandler } from './content/comic-archive-import-workflow.handler'
-import { ComicArchiveImportService } from './content/comic-archive-import.service'
-import { ComicContentService } from './content/comic-content.service'
-import { NovelContentService } from './content/novel-content.service'
 import { WorkComicBrowseLogResolver } from './core/resolver/work-comic-browse-log.resolver'
 import { WorkComicCommentResolver } from './core/resolver/work-comic-comment.resolver'
 import { WorkComicFavoriteResolver } from './core/resolver/work-comic-favorite.resolver'
@@ -45,6 +40,7 @@ import { WorkService } from './core/work.service'
  */
 @Module({
   imports: [
+    DrizzleModule,
     WorkCounterModule,
     ForumSectionModule,
     WorkAuthorModule,
@@ -55,17 +51,10 @@ import { WorkService } from './core/work.service'
     UserPointModule,
     ContentImportModule,
     WorkflowModule,
-    UploadModule.register({
-      imports: [SystemConfigModule],
-    }),
   ],
   providers: [
     WorkService,
     WorkChapterService,
-    NovelContentService,
-    ComicContentService,
-    ComicArchiveImportService,
-    ComicArchiveImportWorkflowHandler,
     WorkComicFavoriteResolver,
     WorkNovelFavoriteResolver,
     WorkComicLikeResolver,
@@ -92,9 +81,6 @@ import { WorkService } from './core/work.service'
     WorkService,
     WorkCounterModule,
     WorkChapterService,
-    NovelContentService,
-    ComicContentService,
-    ComicArchiveImportService,
     ContentImportModule,
   ],
 })

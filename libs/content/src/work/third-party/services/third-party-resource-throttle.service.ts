@@ -2,9 +2,9 @@ import type {
   ThirdPartyResourceThrottleChannelKind,
   ThirdPartyResourceThrottleState,
 } from '../third-party-resource-throttle.type'
+import { ConfigReader } from '@libs/config/system-config/config-reader'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { ConfigReader } from '@libs/system-config/config-reader'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()

@@ -1,8 +1,8 @@
+import { ReadingHistoryWorkDto } from '@libs/content/work/core/dto/reading-history-work.dto'
 import {
   ClearReadingHistoryDto,
   DeleteReadingHistoryDto,
   QueryReadingHistoryDto,
-  ReadingHistoryWorkDto,
 } from '@libs/interaction/reading-state/dto/reading-state.dto'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'

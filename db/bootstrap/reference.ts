@@ -7,6 +7,7 @@ import { promisify } from 'node:util'
 import {
   acquireIntegrityLocks,
   ADMIN_RBAC_RELATION_INTEGRITY_LOCKS,
+  exclusiveIntegrityLock,
   jobIntegrityLock,
 } from '@db/core'
 import { adminRole, adminUser, adminUserRole } from '@db/schema'
@@ -193,9 +194,13 @@ export async function runReferenceBootstrap(
     const db = drizzle({ client })
     const adminCreated = await db.transaction(async (tx) => {
       await acquireIntegrityLocks(tx, [
-        jobIntegrityLock(DATABASE_INITIALIZATION_JOB_LOCK),
-        ADMIN_RBAC_RELATION_INTEGRITY_LOCKS.mutation,
-        ADMIN_RBAC_RELATION_INTEGRITY_LOCKS.superAdminMembership,
+        exclusiveIntegrityLock(
+          jobIntegrityLock(DATABASE_INITIALIZATION_JOB_LOCK),
+        ),
+        exclusiveIntegrityLock(ADMIN_RBAC_RELATION_INTEGRITY_LOCKS.mutation),
+        exclusiveIntegrityLock(
+          ADMIN_RBAC_RELATION_INTEGRITY_LOCKS.superAdminMembership,
+        ),
       ])
       await ensureAdminRbacReferenceFoundation(tx)
       await syncAdminRbacReferencePermissions(tx, ADMIN_REFERENCE_PERMISSIONS)

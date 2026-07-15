@@ -6,25 +6,26 @@ import type {
   UserBanAccessSource,
   UserBanGuardSource,
   UserCenterSource,
-  UserGrowthSnapshot,
   UserStatusSource,
 } from './user.type'
 import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { formatDateTimeInAppTimeZone } from '@libs/platform/utils'
+import {
+  formatDateOnlyInAppTimeZone,
+  formatDateTimeInAppTimeZone,
+} from '@libs/platform/utils'
 import {
   AppUserAccessMessages,
   UserStatusEnum,
 } from '@libs/user/app-user.constant'
 import { HttpStatus, Injectable } from '@nestjs/common'
-import { and, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, lt } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
-import { AppUserResponseDto } from './dto/base-app-user.dto'
+import { BaseAppUserDto } from './dto/base-app-user.dto'
 import {
   QueryUserMentionPageDto,
-  UserLevelSummaryDto,
+  UpdateMyProfileDto,
   UserMentionCandidateDto,
   UserStatusSummaryDto,
 } from './dto/user-self.dto'
@@ -49,21 +50,6 @@ export class UserService {
   // 复用应用用户表。
   private get appUser() {
     return this.drizzle.schema.appUser
-  }
-
-  // 复用等级规则表。
-  private get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
-  }
-
-  // 复用用户徽章分配表。
-  private get userBadgeAssignment() {
-    return this.drizzle.schema.userBadgeAssignment
-  }
-
-  // 复用用户资产余额表。
-  private get userAssetBalance() {
-    return this.drizzle.schema.userAssetBalance
   }
 
   private get appUserResponseColumns() {
@@ -129,10 +115,6 @@ export class UserService {
       id: true,
       phoneNumber: true,
     } as const
-  }
-
-  private get userLevelColumns() {
-    return { levelId: true } as const
   }
 
   // 校验用户存在且未软删除；存在性校验不得承担读取用户资料的职责。
@@ -217,19 +199,77 @@ export class UserService {
     })
   }
 
-  // 成长统计只依赖等级外键；保持存在性异常与原路径一致。
-  async getUserLevelSource(userId: number) {
+  // 判断手机号是否仍绑定在未删除的应用用户上，供短信入口使用防枚举分支。
+  async hasActiveUserWithPhone(phone: string): Promise<boolean> {
     const user = await this.db.query.appUser.findFirst({
-      where: { id: userId, deletedAt: { isNull: true } },
-      columns: this.userLevelColumns,
+      where: { phoneNumber: phone, deletedAt: { isNull: true } },
+      columns: { id: true },
     })
-    if (!user) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '应用用户不存在',
+    return Boolean(user)
+  }
+
+  // 更新用户资料，邮箱唯一冲突使用稳定业务文案。
+  async updateUserProfile(userId: number, dto: UpdateMyProfileDto) {
+    await this.assertActiveUserExists(userId)
+
+    try {
+      await this.drizzle.withErrorHandling(
+        () =>
+          this.db
+            .update(this.appUser)
+            .set({
+              nickname: dto.nickname,
+              avatarUrl: dto.avatarUrl,
+              profileBackgroundImageUrl: dto.profileBackgroundImageUrl,
+              emailAddress: dto.emailAddress,
+              genderType: dto.genderType,
+              signature: dto.signature,
+              bio: dto.bio,
+              birthDate:
+                dto.birthDate === undefined
+                  ? undefined
+                  : dto.birthDate === null
+                    ? null
+                    : formatDateOnlyInAppTimeZone(dto.birthDate),
+            })
+            .where(eq(this.appUser.id, userId)),
+        { notFound: '用户不存在' },
       )
+      return true
+    } catch (error) {
+      if (this.drizzle.isUniqueViolation(error)) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '邮箱已被使用',
+          { cause: error },
+        )
+      }
+      throw error
     }
-    return user
+  }
+
+  // 写入换绑后的手机号，新号已存在时返回稳定业务错误。
+  async changeUserPhoneNumber(userId: number, phoneNumber: string) {
+    try {
+      await this.drizzle.withErrorHandling(
+        () =>
+          this.db
+            .update(this.appUser)
+            .set({ phoneNumber })
+            .where(eq(this.appUser.id, userId)),
+        { notFound: '用户不存在' },
+      )
+      return true
+    } catch (error) {
+      if (this.drizzle.isUniqueViolation(error)) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '手机号已注册',
+          { cause: error },
+        )
+      }
+      throw error
+    }
   }
 
   // 检查 APP 用户是否可访问应用入口。
@@ -278,36 +318,6 @@ export class UserService {
     return {
       allowed: true,
       user,
-    }
-  }
-
-  // 读取用户成长余额快照。
-  // 当前统一返回积分与经验两类热余额，供用户域和权限域复用。
-  async getUserGrowthSnapshot(userId: number): Promise<UserGrowthSnapshot> {
-    const rows = await this.db
-      .select({
-        assetType: this.userAssetBalance.assetType,
-        balance: this.userAssetBalance.balance,
-      })
-      .from(this.userAssetBalance)
-      .where(
-        and(
-          eq(this.userAssetBalance.userId, userId),
-          inArray(this.userAssetBalance.assetType, [
-            GrowthAssetTypeEnum.POINTS,
-            GrowthAssetTypeEnum.EXPERIENCE,
-          ]),
-          eq(this.userAssetBalance.assetKey, ''),
-        ),
-      )
-
-    return {
-      points:
-        rows.find((item) => item.assetType === GrowthAssetTypeEnum.POINTS)
-          ?.balance ?? 0,
-      experience:
-        rows.find((item) => item.assetType === GrowthAssetTypeEnum.EXPERIENCE)
-          ?.balance ?? 0,
     }
   }
 
@@ -474,10 +484,10 @@ export class UserService {
 
   // 将数据库用户实体映射为安全的对外用户对象。
   // 通过最小输入字段集避免查询侧为映射读取 password、登录地理信息或 deletedAt。
-  mapBaseUser(
+  mapBaseUser<TDetails extends object = Record<never, never>>(
     user: AppUserResponseSource,
-    growth?: UserGrowthSnapshot,
-  ): AppUserResponseDto {
+    details?: TDetails,
+  ): BaseAppUserDto & TDetails {
     return {
       id: user.id,
       account: user.account,
@@ -499,9 +509,8 @@ export class UserService {
       lastLoginIp: user.lastLoginIp ?? null,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      points: growth?.points ?? 0,
-      experience: growth?.experience ?? 0,
-    }
+      ...details,
+    } as BaseAppUserDto & TDetails
   }
 
   // 构建用户状态摘要。
@@ -536,41 +545,5 @@ export class UserService {
   // 获取用户计数。
   async getUserCounts(userId: number): Promise<AppUserCountSnapshot> {
     return this.appUserCountService.getUserCounts(userId)
-  }
-
-  // 获取用户徽章总数。
-  async getBadgeCount(userId: number): Promise<number> {
-    const [rows] = await this.db
-      .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
-      .from(this.userBadgeAssignment)
-      .where(eq(this.userBadgeAssignment.userId, userId))
-    return Number(rows?.count ?? 0)
-  }
-
-  // 获取等级信息。
-  async getLevelInfo(
-    levelId: number,
-  ): Promise<UserLevelSummaryDto | undefined> {
-    const [level] = await this.db
-      .select({
-        id: this.userLevelRule.id,
-        name: this.userLevelRule.name,
-        icon: this.userLevelRule.icon,
-        color: this.userLevelRule.color,
-        requiredExperience: this.userLevelRule.requiredExperience,
-      })
-      .from(this.userLevelRule)
-      .where(eq(this.userLevelRule.id, levelId))
-      .limit(1)
-
-    return level
-      ? {
-          id: level.id,
-          name: level.name,
-          icon: level.icon ?? null,
-          color: level.color ?? null,
-          requiredExperience: level.requiredExperience,
-        }
-      : undefined
   }
 }

@@ -8,6 +8,7 @@ import {
   QueryAgreementDto,
   UpdateAgreementDto,
 } from '@libs/app-content/agreement/dto/agreement.dto'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import {
   ApiDoc,
   ApiHtmlDoc,
@@ -15,15 +16,7 @@ import {
   Public,
 } from '@libs/platform/decorators'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  Res,
-} from '@nestjs/common'
+import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'

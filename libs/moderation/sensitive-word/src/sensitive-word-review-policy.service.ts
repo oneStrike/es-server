@@ -3,9 +3,9 @@ import type {
   ResolveSensitiveWordReviewDecisionInput,
   SensitiveWordReviewDecision,
 } from './sensitive-word.type'
+import { ConfigReader } from '@libs/config/system-config/config-reader'
+import { DEFAULT_CONFIG } from '@libs/config/system-config/system-config.constant'
 import { AuditStatusEnum } from '@libs/platform/constant'
-import { ConfigReader } from '@libs/system-config/config-reader'
-import { DEFAULT_CONFIG } from '@libs/system-config/system-config.constant'
 import { Injectable, Logger } from '@nestjs/common'
 import { SensitiveWordLevelEnum } from './sensitive-word-constant'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'

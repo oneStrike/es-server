@@ -1,4 +1,4 @@
-import type { WorkflowObject } from '@libs/platform/modules/workflow/workflow.type'
+import type { WorkflowObject } from '@libs/workflow/workflow/workflow.type'
 
 /** 三方漫画来源作用域字段，供绑定幂等和同步任务去重复用。 */
 export interface ThirdPartyComicSourceScopeInput {

@@ -1,4 +1,4 @@
-import type { DbTransaction } from '@db/core'
+import type { DbTransaction, IntegrityLockRequest } from '@db/core'
 import type {
   AppUserSelect,
   CouponDefinitionSelect,
@@ -109,6 +109,33 @@ export interface ReserveDiscountCouponInput {
   targetId: number
   originalPrice: number
 }
+
+/** 购买事务外冻结的折扣券可用事实与计价结果。 */
+export interface PreparedDiscountCouponReservation {
+  readonly coupon: CouponInstanceWithDefinition
+  readonly paidPrice: number
+  readonly discountAmount: number
+  readonly lockRequests: readonly IntegrityLockRequest[]
+}
+
+/** 折扣券完成预留后返回给购买域的核销事实。 */
+export interface DiscountCouponReservationResult {
+  paidPrice: number
+  discountAmount: number
+  couponInstanceId: number
+  redemptionRecordId: number
+  discountSource: CouponTypeEnum.DISCOUNT
+}
+
+/** 锁后预留只允许成功或快照漂移两种闭集结果。 */
+export type DiscountCouponReservationApplyResult =
+  | {
+      status: 'applied'
+      reservation: DiscountCouponReservationResult
+    }
+  | {
+      status: 'snapshot_drift'
+    }
 
 /** 券定义中可由规则归一化函数校正的可写字段集合。 */
 export interface WritableCouponDefinition {

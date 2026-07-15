@@ -2,15 +2,15 @@ import type { UserNotificationSelect } from '@db/schema'
 import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
-} from '@libs/platform/modules/eventing/domain-event.type'
+} from '@libs/eventing/eventing/domain-event.type'
 import type { NotificationActorSource } from '../notification/notification-public.type'
-import type { NotificationEventHandler } from './message-event.type'
+import type { NotificationEventHandler } from './message-consumer-event.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { MessageNotificationDeliveryService } from '../notification/notification-delivery.service'
 import { mapUserNotificationToPublicView } from '../notification/notification-public.mapper'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
-import { getMessageDomainEventDefinition } from './message-event.constant'
+import { getMessageConsumerEventMetadata } from './message-consumer-event.constant'
 import { NotificationProjectionService } from './notification-projection.service'
 
 export function getNotificationEventPayload(
@@ -84,19 +84,19 @@ function createNotificationEventHandler(
   mode: 'append' | 'upsert',
   includeExpiresAt = false,
 ): NotificationEventHandler {
-  return ({ definition, event }) => {
+  return ({ metadata, event }) => {
     const command = {
       mode,
       receiverUserId: requireNotificationContextPositiveInteger(
         event,
         'receiverUserId',
       ),
-      categoryKey: definition.notification!.categoryKey,
+      categoryKey: metadata.notification!.categoryKey,
       projectionKey: requireNotificationContextNonEmptyString(
         event,
         'projectionKey',
       ),
-      mandatory: definition.notification!.mandatory,
+      mandatory: metadata.notification!.mandatory,
       actorUserId: event.operatorId ?? undefined,
       title: requireNotificationContextNonEmptyString(event, 'title'),
       content: requireNotificationContextNonEmptyString(event, 'content'),
@@ -167,7 +167,7 @@ export class NotificationEventConsumer {
   }
 
   async consume(event: DomainEventRecord, dispatch: DomainEventDispatchRecord) {
-    const definition = getMessageDomainEventDefinition(event.eventKey as never)
+    const metadata = getMessageConsumerEventMetadata(event.eventKey as never)
     const handler = NOTIFICATION_EVENT_HANDLERS[event.eventKey]
     if (!handler) {
       const result = await this.notificationProjectionService.applyCommand(
@@ -187,7 +187,7 @@ export class NotificationEventConsumer {
     }
 
     const command = await handler({
-      definition,
+      metadata,
       event,
       dispatch,
     })

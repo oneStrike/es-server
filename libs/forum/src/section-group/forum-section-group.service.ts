@@ -4,6 +4,7 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -108,7 +109,9 @@ export class ForumSectionGroupService {
     groupId: number,
   ) {
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('forum_section_group', groupId),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('forum_section_group', groupId),
+      ),
     ])
   }
 
@@ -278,9 +281,11 @@ export class ForumSectionGroupService {
   // 更新板块分组。 写后校验受影响行数，确保分组存在且未被软删除。
   async updateSectionGroup(updateSectionGroupDto: UpdateForumSectionGroupDto) {
     const { id, ...updateData } = updateSectionGroupDto
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockSectionGroupForMutation(tx, id)
+
+        const result = await tx
           .update(this.forumSectionGroup)
           .set(updateData)
           .where(
@@ -288,12 +293,13 @@ export class ForumSectionGroupService {
               eq(this.forumSectionGroup.id, id),
               isNull(this.forumSectionGroup.deletedAt),
             ),
-          ),
-      {
-        duplicate: '板块分组名称已存在',
-        notFound: '板块分组不存在',
+          )
+        this.drizzle.assertAffectedRows(result, '板块分组不存在')
       },
-    )
+      messages: {
+        duplicate: '板块分组名称已存在',
+      },
+    })
     return true
   }
 
@@ -433,9 +439,11 @@ export class ForumSectionGroupService {
     updateSectionGroupEnabledDto: UpdateForumSectionGroupEnabledDto,
   ) {
     const { id, isEnabled } = updateSectionGroupEnabledDto
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await this.lockSectionGroupForMutation(tx, id)
+
+        const result = await tx
           .update(this.forumSectionGroup)
           .set({ isEnabled })
           .where(
@@ -443,9 +451,10 @@ export class ForumSectionGroupService {
               eq(this.forumSectionGroup.id, id),
               isNull(this.forumSectionGroup.deletedAt),
             ),
-          ),
-      { notFound: '板块分组不存在' },
-    )
+          )
+        this.drizzle.assertAffectedRows(result, '板块分组不存在')
+      },
+    })
     return true
   }
 

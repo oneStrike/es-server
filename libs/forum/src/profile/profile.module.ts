@@ -1,6 +1,5 @@
-import { UserLevelRuleModule } from '@libs/growth/level-rule/level-rule.module'
+import { DrizzleModule } from '@db/core'
 import { InteractionModule } from '@libs/interaction/interaction.module'
-import { UserModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
 import { ForumPermissionModule } from '../permission/forum-permission.module'
 import { UserProfileService } from './profile.service'
@@ -10,12 +9,7 @@ import { UserProfileService } from './profile.service'
  * 提供用户资料、积分、经验等管理功能
  */
 @Module({
-  imports: [
-    InteractionModule,
-    ForumPermissionModule,
-    UserLevelRuleModule,
-    UserModule,
-  ],
+  imports: [DrizzleModule, InteractionModule, ForumPermissionModule],
   providers: [UserProfileService],
   exports: [UserProfileService],
 })

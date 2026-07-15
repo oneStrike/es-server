@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { GrowthLedgerModule } from '../growth-ledger/growth-ledger.module'
 import { UserPointService } from './point.service'
@@ -7,7 +8,7 @@ import { UserPointService } from './point.service'
  * 提供用户积分管理的完整功能
  */
 @Module({
-  imports: [GrowthLedgerModule],
+  imports: [DrizzleModule, GrowthLedgerModule],
   providers: [UserPointService],
   exports: [UserPointService],
 })

@@ -1,6 +1,6 @@
 import type { FavoriteCreateResult } from './favorite.type'
 import type { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import { acquireIntegrityLocks, DrizzleService, toPageResult } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -127,17 +127,24 @@ export class FavoriteService {
   async favorite(input: FavoriteRecordDto): Promise<FavoriteCreateResult> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
+    const quotaPlan = this.userLevelRuleService.buildDailyFavoriteQuotaLockPlan(
+      {
+        userId,
+        business: this.resolveLevelBusiness(targetType),
+      },
+    )
 
     const record = await this.drizzle.withTransaction({
       execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [...quotaPlan.lockRequests])
         const { ownerUserId, targetTitle } = await resolver.ensureExists(
           tx,
           targetId,
         )
-        await this.userLevelRuleService.ensureDailyFavoriteQuotaInTx(tx, {
-          userId,
-          business: this.resolveLevelBusiness(targetType),
-        })
+        await this.userLevelRuleService.ensureDailyFavoriteQuotaAfterLockInTx(
+          tx,
+          quotaPlan,
+        )
         const rows = await this.drizzle.withErrorHandling(
           () =>
             tx

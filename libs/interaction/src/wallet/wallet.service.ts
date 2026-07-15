@@ -1,7 +1,11 @@
+import type { IntegrityLockRequest } from '@db/core'
 import type { PaymentOrderSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { PaymentTx } from '../payment/types/payment.type'
-import type { ConsumeForPurchaseInput } from './types/wallet.type'
+import type {
+  PurchaseConsumptionInput,
+  PurchaseSuccessFactIdentity,
+} from './types/wallet.type'
 import { DrizzleService, toPageResult } from '@db/core'
 import {
   GrowthAssetTypeEnum,
@@ -291,24 +295,49 @@ export class WalletService {
     return this.getWalletLedgerPageByUser(dto.userId, dto)
   }
 
-  // 章节购买扣减虚拟币余额，供 PurchaseService 在同一事务内调用。
-  async consumeForPurchase(tx: PaymentTx, input: ConsumeForPurchaseInput) {
-    const result = await this.growthLedgerService.applyDelta(tx, {
+  /**
+   * 构造购买扣款幂等键；身份严格绑定成功购买唯一事实
+   * (targetType, targetId, userId)，不同 outTradeNo 必须收敛到同一键。
+   */
+  buildPurchaseConsumptionBizKey(input: PurchaseSuccessFactIdentity) {
+    return `purchase:${input.userId}:${input.targetType}:${input.targetId}:consume`
+  }
+
+  /** 为购买根预构造虚拟币扣款账本业务键锁请求。 */
+  buildPurchaseConsumptionLockRequest(
+    input: PurchaseSuccessFactIdentity,
+  ): IntegrityLockRequest {
+    return this.growthLedgerService.buildOperationLockRequest({
       userId: input.userId,
-      assetType: GrowthAssetTypeEnum.CURRENCY,
-      assetKey: READING_COIN_ASSET_KEY,
-      action: GrowthLedgerActionEnum.CONSUME,
-      amount: input.amount,
-      bizKey: `purchase:${input.purchaseId}:consume`,
-      source: 'purchase',
-      targetType: input.targetType,
-      targetId: input.targetId,
-      context: {
-        purchaseId: input.purchaseId,
-        paymentMethod: input.paymentMethod,
-        outTradeNo: input.outTradeNo,
-      },
+      bizKey: this.buildPurchaseConsumptionBizKey(input),
     })
+  }
+
+  /** 购买根已取得账本业务键锁后扣减虚拟币余额。 */
+  async applyPurchaseConsumptionAfterOperationLock(
+    tx: PaymentTx,
+    input: PurchaseConsumptionInput,
+  ) {
+    const result =
+      await this.growthLedgerService.applyNonExperienceDeltaAfterOperationLock(
+        tx,
+        {
+          userId: input.userId,
+          assetType: GrowthAssetTypeEnum.CURRENCY,
+          assetKey: READING_COIN_ASSET_KEY,
+          action: GrowthLedgerActionEnum.CONSUME,
+          amount: input.amount,
+          bizKey: this.buildPurchaseConsumptionBizKey(input),
+          source: 'purchase',
+          targetType: input.targetType,
+          targetId: input.targetId,
+          context: {
+            purchaseId: input.purchaseId,
+            paymentMethod: input.paymentMethod,
+            outTradeNo: input.outTradeNo,
+          },
+        },
+      )
     if (!result.success && !result.duplicated) {
       if (result.reason === 'insufficient_balance') {
         this.logger.warn(

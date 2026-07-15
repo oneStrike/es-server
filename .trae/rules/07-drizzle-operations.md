@@ -16,14 +16,28 @@ pnpm db:comments:check
 `db:migration:check` 使用 Drizzle Kit 检查当前 migration 图；它不再检查 local active
 history 或数据库 journal。
 
-`db:migrate` 不是无参数命令，必须显式提供 mode，并从 `DATABASE_URL` 读取连接：
+底层 migrator 必须显式使用 `active` mode；`pnpm db:migrate` 已在
+`package.json` 中固定传入该参数，并从 `DATABASE_URL` 读取连接：
 
 ```bash
-pnpm db:migrate -- --mode active
+pnpm db:migrate
 ```
 
 不存在 `db:migrate:prod`、`db:studio`、`db:push`、`pnpm check` 或自动 seed 的替代
 入口；不得用 shell、`drizzle-kit push` 或直接连库绕过这一限制。
+
+## Canonical baseline boundary
+
+`db/migration` 仅保留从当前 `db/schema/index.ts` 生成的一条全量 baseline。它只可
+初始化 `public` schema 中不存在应用表的 PostgreSQL 数据库；`pnpm db:migrate` 不会也
+不得推断、修复或接管旧 migration journal、已有表或历史业务数据。
+
+已经运行旧 migration line 的数据库不具备原地升级路径。必须恢复与该历史匹配的备份，
+或经明确授权清空数据库后再执行 baseline；不得添加转换 migration、兼容 view、双读写
+或迁移别名来规避该边界。
+
+baseline 在 GIN trigram 索引之前显式执行 `CREATE EXTENSION IF NOT EXISTS pg_trgm`；迁移
+角色必须拥有创建该扩展的权限。
 
 ## Reference bootstrap
 

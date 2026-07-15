@@ -1,9 +1,9 @@
-import { ContentPermissionModule } from '@libs/content/permission/content-permission.module';
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { DownloadService } from './download.service'
 
 @Module({
-  imports: [ContentPermissionModule],
+  imports: [DrizzleModule],
   providers: [DownloadService],
   exports: [DownloadService],
 })

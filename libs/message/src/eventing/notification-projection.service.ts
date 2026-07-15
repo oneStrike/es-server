@@ -2,15 +2,16 @@ import type { DbTransaction } from '@db/core'
 import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
-} from '@libs/platform/modules/eventing/domain-event.type'
+} from '@libs/eventing/eventing/domain-event.type'
 import type { MessageNotificationCategoryKey } from '../notification/notification.type'
 import type {
   NotificationProjectionApplyResult,
   NotificationProjectionCommand,
-} from './message-event.type'
+} from './message-consumer-event.type'
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   tableIntegrityLock,
 } from '@db/core'
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
@@ -345,7 +346,9 @@ export class NotificationProjectionService {
     }
 
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('user_notification', located.id),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('user_notification', located.id),
+      ),
     ])
 
     const current = await this.findNotificationProjectionInTransaction(

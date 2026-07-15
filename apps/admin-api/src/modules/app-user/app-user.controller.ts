@@ -1,37 +1,41 @@
-import {
-  AssignUserBadgeDto,
-  UserBadgeItemDto,
-} from '@libs/growth/badge/dto/user-badge-management.dto'
-import { QueryScopedUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
-import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto, UserIdDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
+import { AdminAppUserCommandService } from '@libs/account/admin-app-user/admin-app-user-command.service'
+import { AdminAppUserQueryService } from '@libs/account/admin-app-user/admin-app-user-query.service'
 import {
   AdminAppUserDetailDto,
-  AdminAppUserExperienceRecordDto,
-  AdminAppUserExperienceStatsDto,
   AdminAppUserFollowCountRepairResultDto,
-  AdminAppUserGrowthLedgerRecordDto,
-  AdminAppUserGrowthRuleActionDto,
   AdminAppUserPageItemDto,
-  AdminAppUserPointRecordDto,
-  ConsumeAdminAppUserPointsDto,
   CreateAdminAppUserDto,
-  QueryAdminAppUserBadgeDto,
-  QueryAdminAppUserGrowthLedgerDto,
   QueryAdminAppUserPageDto,
   ResetAdminAppUserPasswordDto,
   UpdateAdminAppUserEnabledDto,
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
-} from '@libs/user/dto/admin-app-user.dto'
-import { UserPointStatsFieldsDto } from '@libs/user/dto/app-user-growth-shared.dto'
+} from '@libs/account/admin-app-user/dto/admin-app-user.dto'
+import { AdminAppUserGrowthService } from '@libs/growth/admin-app-user/admin-app-user-growth.service'
+import {
+  AdminAppUserExperienceRecordDto,
+  AdminAppUserExperienceStatsDto,
+  AdminAppUserGrowthLedgerRecordDto,
+  AdminAppUserGrowthRuleActionDto,
+  AdminAppUserPointRecordDto,
+  ConsumeAdminAppUserPointsDto,
+  QueryAdminAppUserBadgeDto,
+  QueryAdminAppUserGrowthLedgerDto,
+} from '@libs/growth/admin-app-user/dto/admin-app-user-growth.dto'
+import {
+  AssignUserBadgeDto,
+  UserBadgeItemDto,
+} from '@libs/growth/badge/dto/user-badge-management.dto'
+import { UserPointStatsFieldsDto } from '@libs/growth/dto/app-user-growth-shared.dto'
+import { QueryScopedUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
+import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto, UserIdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
-import { AppUserService } from './app-user.service'
 
 /**
  * APP 用户管理控制器
@@ -40,7 +44,11 @@ import { AppUserService } from './app-user.service'
 @ApiTags('APP管理/用户管理')
 @Controller('admin/app-users')
 export class AppUserController {
-  constructor(private readonly appUserService: AppUserService) {}
+  constructor(
+    private readonly adminAppUserQueryService: AdminAppUserQueryService,
+    private readonly adminAppUserCommandService: AdminAppUserCommandService,
+    private readonly adminAppUserGrowthService: AdminAppUserGrowthService,
+  ) {}
 
   /**
    * 获取 APP 用户分页列表
@@ -56,7 +64,7 @@ export class AppUserController {
     model: AdminAppUserPageItemDto,
   })
   async getAppUserPage(@Query() query: QueryAdminAppUserPageDto) {
-    return this.appUserService.getAppUserPage(query)
+    return this.adminAppUserQueryService.getAppUserPage(query)
   }
 
   /**
@@ -73,7 +81,7 @@ export class AppUserController {
     model: AdminAppUserDetailDto,
   })
   async getAppUserDetail(@Query() query: IdDto) {
-    return this.appUserService.getAppUserDetail(query.id)
+    return this.adminAppUserQueryService.getAppUserDetail(query.id)
   }
 
   @Post('create')
@@ -93,7 +101,7 @@ export class AppUserController {
     @Body() body: CreateAdminAppUserDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.createAppUser(userId, body)
+    return this.adminAppUserCommandService.createAppUser(userId, body)
   }
 
   /**
@@ -116,7 +124,7 @@ export class AppUserController {
     @Body() body: UpdateAdminAppUserProfileDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.updateAppUserProfile(userId, body)
+    return this.adminAppUserCommandService.updateAppUserProfile(userId, body)
   }
 
   /**
@@ -139,7 +147,7 @@ export class AppUserController {
     @Body() body: UpdateAdminAppUserEnabledDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.updateAppUserEnabled(userId, body)
+    return this.adminAppUserCommandService.updateAppUserEnabled(userId, body)
   }
 
   /**
@@ -162,7 +170,7 @@ export class AppUserController {
     @Body() body: UpdateAdminAppUserStatusDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.updateAppUserStatus(userId, body)
+    return this.adminAppUserCommandService.updateAppUserStatus(userId, body)
   }
 
   @Post('delete')
@@ -179,7 +187,7 @@ export class AppUserController {
     },
   })
   async deleteAppUser(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
-    return this.appUserService.deleteAppUser(userId, body.id)
+    return this.adminAppUserCommandService.deleteAppUser(userId, body.id)
   }
 
   @Post('restore')
@@ -199,7 +207,7 @@ export class AppUserController {
     @Body() body: IdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.restoreAppUser(userId, body.id)
+    return this.adminAppUserCommandService.restoreAppUser(userId, body.id)
   }
 
   @Post('rebuild-follow-count')
@@ -219,7 +227,10 @@ export class AppUserController {
     @Body() body: UserIdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.rebuildAppUserFollowCounts(userId, body.userId)
+    return this.adminAppUserCommandService.rebuildAppUserFollowCounts(
+      userId,
+      body.userId,
+    )
   }
 
   @Post('rebuild-follow-count-all')
@@ -236,7 +247,7 @@ export class AppUserController {
     },
   })
   async rebuildFollowCountAll(@CurrentUser('sub') userId: number) {
-    return this.appUserService.rebuildAllAppUserFollowCounts(userId)
+    return this.adminAppUserCommandService.rebuildAllAppUserFollowCounts(userId)
   }
 
   @Post('password/reset')
@@ -256,7 +267,7 @@ export class AppUserController {
     @Body() body: ResetAdminAppUserPasswordDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.resetAppUserPassword(userId, body)
+    return this.adminAppUserCommandService.resetAppUserPassword(userId, body)
   }
 
   /**
@@ -273,7 +284,7 @@ export class AppUserController {
     model: UserPointStatsFieldsDto,
   })
   async getAppUserPointStats(@Query() query: UserIdDto) {
-    return this.appUserService.getAppUserPointStats(query.userId)
+    return this.adminAppUserGrowthService.getAppUserPointStats(query.userId)
   }
 
   /**
@@ -290,7 +301,7 @@ export class AppUserController {
     model: AdminAppUserPointRecordDto,
   })
   async getAppUserPointRecords(@Query() query: QueryUserPointRecordDto) {
-    return this.appUserService.getAppUserPointRecords(query)
+    return this.adminAppUserGrowthService.getAppUserPointRecords(query)
   }
 
   /**
@@ -313,7 +324,7 @@ export class AppUserController {
     @Body() body: AdminAppUserGrowthRuleActionDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.addAppUserPoints(userId, body)
+    return this.adminAppUserGrowthService.addAppUserPoints(userId, body)
   }
 
   /**
@@ -336,7 +347,7 @@ export class AppUserController {
     @Body() body: ConsumeAdminAppUserPointsDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.consumeAppUserPoints(userId, body)
+    return this.adminAppUserGrowthService.consumeAppUserPoints(userId, body)
   }
 
   /**
@@ -353,7 +364,9 @@ export class AppUserController {
     model: AdminAppUserExperienceStatsDto,
   })
   async getAppUserExperienceStats(@Query() query: UserIdDto) {
-    return this.appUserService.getAppUserExperienceStats(query.userId)
+    return this.adminAppUserGrowthService.getAppUserExperienceStats(
+      query.userId,
+    )
   }
 
   /**
@@ -372,7 +385,7 @@ export class AppUserController {
   async getAppUserExperienceRecords(
     @Query() query: QueryScopedUserExperienceRecordDto,
   ) {
-    return this.appUserService.getAppUserExperienceRecords(query)
+    return this.adminAppUserGrowthService.getAppUserExperienceRecords(query)
   }
 
   /**
@@ -391,7 +404,7 @@ export class AppUserController {
   async getAppUserGrowthLedgerRecords(
     @Query() query: QueryAdminAppUserGrowthLedgerDto,
   ) {
-    return this.appUserService.getAppUserGrowthLedgerRecords(query)
+    return this.adminAppUserGrowthService.getAppUserGrowthLedgerRecords(query)
   }
 
   /**
@@ -414,7 +427,7 @@ export class AppUserController {
     @Body() body: AdminAppUserGrowthRuleActionDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.addAppUserExperience(userId, body)
+    return this.adminAppUserGrowthService.addAppUserExperience(userId, body)
   }
 
   /**
@@ -431,7 +444,7 @@ export class AppUserController {
     model: UserBadgeItemDto,
   })
   async getAppUserBadges(@Query() query: QueryAdminAppUserBadgeDto) {
-    return this.appUserService.getAppUserBadges(query)
+    return this.adminAppUserGrowthService.getAppUserBadges(query)
   }
 
   /**
@@ -454,7 +467,7 @@ export class AppUserController {
     @Body() body: AssignUserBadgeDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.assignAppUserBadge(userId, body)
+    return this.adminAppUserGrowthService.assignAppUserBadge(userId, body)
   }
 
   /**
@@ -477,6 +490,6 @@ export class AppUserController {
     @Body() body: AssignUserBadgeDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.revokeAppUserBadge(userId, body)
+    return this.adminAppUserGrowthService.revokeAppUserBadge(userId, body)
   }
 }

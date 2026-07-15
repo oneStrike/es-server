@@ -1,11 +1,11 @@
 import type { FastifyRequest } from 'fastify'
+import { AppLoginResponseDto } from '@libs/identity/dto/app-auth.dto'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
   LoginDto,
-  LoginResponseDto,
   RefreshTokenDto,
   RsaPublicKeyDto,
   TokenDto,
@@ -61,7 +61,7 @@ export class AuthController {
   @Post('login')
   @ApiDoc({
     summary: '用户登录',
-    model: LoginResponseDto,
+    model: AppLoginResponseDto,
   })
   @Public()
   async login(@Body() body: LoginDto, @Req() req: FastifyRequest) {
@@ -101,7 +101,7 @@ export class AuthController {
   @Post('password/forgot')
   @ApiDoc({
     summary: '找回密码',
-    model: LoginResponseDto,
+    model: AppLoginResponseDto,
   })
   @Public()
   async forgotPassword(@Body() body: ForgotPasswordDto) {

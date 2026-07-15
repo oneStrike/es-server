@@ -1,11 +1,6 @@
-import { ContentPurchasePricingFieldsDto } from '@libs/content/permission/dto/content-purchase-pricing.dto'
-import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import {
-  DateProperty,
   EnumProperty,
-  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -54,7 +49,7 @@ export class BasePurchaseRecordDto extends BaseDto {
   status!: PurchaseStatusEnum
 
   @EnumProperty({
-    description: '支付方式（1=虚拟币余额；2=支付宝；3=微信；4=历史积分购买）',
+    description: '支付方式（1=虚拟币余额；2=支付宝；3=微信）',
     enum: PaymentMethodEnum,
     example: PaymentMethodEnum.CURRENCY,
     required: true,
@@ -149,70 +144,4 @@ export class QueryPurchasedWorkChapterDto extends QueryPurchasedWorkDto {
 export class QueryPurchasedWorkChapterCommandDto extends IntersectionType(
   QueryPurchasedWorkChapterDto,
   PickType(BasePurchaseRecordDto, ['userId'] as const),
-) {}
-
-export class PurchasedWorkInfoDto extends PickType(BaseWorkDto, [
-  'id',
-  'type',
-  'name',
-  'cover',
-] as const) {}
-
-export class PurchasedWorkItemDto {
-  @NestedProperty({
-    description: '作品信息',
-    type: PurchasedWorkInfoDto,
-    required: true,
-    validation: false,
-    nullable: false,
-  })
-  work!: PurchasedWorkInfoDto
-
-  @NumberProperty({
-    description: '已购章节数',
-    example: 12,
-    required: true,
-    min: 0,
-    validation: false,
-  })
-  purchasedChapterCount!: number
-
-  @DateProperty({
-    description: '最近购买时间',
-    example: '2026-03-04T09:00:00.000Z',
-    required: true,
-    validation: false,
-  })
-  lastPurchasedAt!: Date
-}
-
-export class PurchasedChapterInfoDto extends PickType(BaseWorkChapterDto, [
-  'id',
-  'workId',
-  'workType',
-  'title',
-  'subtitle',
-  'cover',
-  'sortOrder',
-  'isPublished',
-  'publishAt',
-] as const) {}
-
-export class PurchasedWorkChapterItemDto extends IntersectionType(
-  PurchaseRecordResponseDto,
-  ContentPurchasePricingFieldsDto,
-) {
-  @NestedProperty({
-    description: '章节信息',
-    type: PurchasedChapterInfoDto,
-    required: true,
-    validation: false,
-    nullable: false,
-  })
-  chapter!: PurchasedChapterInfoDto
-}
-
-export class PurchaseChapterResultDto extends IntersectionType(
-  PurchaseRecordResponseDto,
-  ContentPurchasePricingFieldsDto,
 ) {}

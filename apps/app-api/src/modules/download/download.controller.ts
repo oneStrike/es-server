@@ -1,7 +1,7 @@
+import { DownloadedWorkChapterItemDto } from '@libs/content/work/chapter/dto/downloaded-work-chapter.dto'
+import { DownloadedWorkItemDto } from '@libs/content/work/core/dto/downloaded-work.dto'
 import { DownloadService } from '@libs/interaction/download/download.service'
 import {
-  DownloadedWorkChapterItemDto,
-  DownloadedWorkItemDto,
   DownloadTargetDto,
   QueryDownloadedWorkChapterDto,
   QueryDownloadedWorkDto,

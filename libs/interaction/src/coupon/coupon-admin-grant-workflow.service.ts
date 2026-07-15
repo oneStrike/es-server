@@ -14,19 +14,20 @@ import { createHash, randomUUID } from 'node:crypto'
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  sharedIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { UserStatusEnum } from '@libs/user/app-user.constant'
 import {
   WorkflowItemStatusEnum,
   WorkflowJobStatusEnum,
   WorkflowOperatorTypeEnum,
-} from '@libs/platform/modules/workflow/workflow.constant'
-import { toWorkflowJobDto } from '@libs/platform/modules/workflow/workflow.mapper'
-import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
-import { UserStatusEnum } from '@libs/user/app-user.constant'
+} from '@libs/workflow/workflow/workflow.constant'
+import { toWorkflowJobDto } from '@libs/workflow/workflow/workflow.mapper'
+import { WorkflowService } from '@libs/workflow/workflow/workflow.service'
 import { Injectable } from '@nestjs/common'
 import { and, count, eq, getTableName, inArray, isNull } from 'drizzle-orm'
 import {
@@ -433,12 +434,16 @@ export class CouponAdminGrantWorkflowService {
   ) {
     const userIds = [...new Set([command.operatorUserId, ...command.userIds])]
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock(
-        getTableName(this.couponDefinition),
-        command.couponDefinitionId,
+      sharedIntegrityLock(
+        tableIntegrityLock(
+          getTableName(this.couponDefinition),
+          command.couponDefinitionId,
+        ),
       ),
       ...userIds.map((userId) =>
-        tableIntegrityLock(getTableName(this.appUser), userId),
+        sharedIntegrityLock(
+          tableIntegrityLock(getTableName(this.appUser), userId),
+        ),
       ),
     ])
 

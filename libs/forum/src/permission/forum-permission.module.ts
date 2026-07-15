@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { UserLevelRuleModule } from '@libs/growth/level-rule/level-rule.module'
 import { Module } from '@nestjs/common'
 import { ForumPermissionService } from './forum-permission.service'
@@ -7,7 +8,7 @@ import { ForumPermissionService } from './forum-permission.service'
  * 提供板块访问与发帖权限校验。
  */
 @Module({
-  imports: [UserLevelRuleModule],
+  imports: [DrizzleModule, UserLevelRuleModule],
   providers: [ForumPermissionService],
   exports: [ForumPermissionService],
 })

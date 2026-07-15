@@ -1,12 +1,9 @@
 import type { DbNotificationSubscription } from '@db/core'
-import type { UploadConfigInterface } from '@libs/platform/config'
-import type { ApiErrorCode, ApiResponseCode } from '@libs/platform/constant'
+import type { ApiErrorCode } from '@libs/platform/constant'
 import type { JwtPayload } from '@libs/platform/modules/auth/types'
-import type { UploadConfigProvider } from '@libs/platform/modules/upload/upload.type'
 import type { AuthConfigInterface } from '@libs/platform/types'
 import type { Notification } from 'pg'
 import type { WebSocket } from 'ws'
-import type { MessageChatService } from '../chat/chat.service'
 import type {
   MessageWsFanoutEnvelope,
   NativeWsAuthResult,
@@ -14,40 +11,18 @@ import type {
   NativeWsGatewaySendResult,
   WsAckPayload,
   WsAuthPayload,
-  WsReadPayload,
-  WsRequestEnvelope,
-  WsSendPayload,
 } from './notification-websocket.type'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { DbNotificationService } from '@db/core'
-import {
-  ApiSuccessCode,
-  BusinessErrorCode,
-  getPlatformErrorCode,
-  PlatformErrorCode,
-} from '@libs/platform/constant'
-import { BusinessException } from '@libs/platform/exceptions'
+import { PlatformErrorCode } from '@libs/platform/constant'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
-import { UPLOAD_CONFIG_PROVIDER } from '@libs/platform/modules/upload/upload.type'
 import { UserService } from '@libs/user/user.service'
-import {
-  HttpException,
-  Inject,
-  Injectable,
-  Logger,
-  OnApplicationShutdown,
-  Optional,
-} from '@nestjs/common'
+import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { ModuleRef } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
-import { buildChatMediaOriginPolicy } from '../chat/chat-media-origin-policy'
-import { normalizeChatMessageSendInput } from '../chat/chat-message-boundary'
-import { MESSAGE_CHAT_SERVICE_TOKEN } from '../chat/chat.constant'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 
-const DIGIT_STRING_REGEX = /^\d+$/
 const NATIVE_WS_OPEN = 1
 const MESSAGE_WS_FANOUT_CHANNEL = 'message_ws_fanout'
 const POSTGRES_NOTIFY_PAYLOAD_LIMIT_BYTES = 7_600
@@ -56,7 +31,6 @@ const POSTGRES_NOTIFY_PAYLOAD_LIMIT_BYTES = 7_600
 export class MessageWebSocketService implements OnApplicationShutdown {
   private readonly logger = new Logger(MessageWebSocketService.name)
   private readonly instanceId = randomUUID()
-  private readonly uploadConfig: UploadConfigInterface
   private readonly nativeClientsByUserId = new Map<number, Set<WebSocket>>()
   private readonly nativeClientState = new WeakMap<
     WebSocket,
@@ -85,21 +59,13 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     this.emitToLocalUser(envelope.userId, envelope.event, envelope.payload)
   }
 
-  private messageChatService?: MessageChatService
-
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly moduleRef: ModuleRef,
     private readonly messageWsMonitorService: MessageWsMonitorService,
     private readonly userCoreService: UserService,
     private readonly dbNotificationService: DbNotificationService,
-    @Optional()
-    @Inject(UPLOAD_CONFIG_PROVIDER)
-    private readonly uploadConfigProvider?: UploadConfigProvider,
-  ) {
-    this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
-  }
+  ) {}
 
   async onApplicationShutdown(): Promise<void> {
     this.isShuttingDown = true
@@ -231,39 +197,6 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       return userId
     } catch {
       return null
-    }
-  }
-
-  // 构造事件级用户状态拒绝 ack，供 chat.send/read 前置拦截复用。
-  private async buildAccessDeniedAck(
-    userId: number,
-    requestId: string,
-  ): Promise<WsAckPayload | null> {
-    const accessCheck = await this.userCoreService.getAppUserAccessCheck(userId)
-    if (accessCheck.allowed) {
-      return null
-    }
-
-    if (accessCheck.reason === 'not_found') {
-      return {
-        requestId,
-        code: PlatformErrorCode.UNAUTHORIZED,
-        message: 'Unauthorized',
-      }
-    }
-
-    if (accessCheck.reason === 'disabled') {
-      return {
-        requestId,
-        code: PlatformErrorCode.FORBIDDEN,
-        message: accessCheck.message,
-      }
-    }
-
-    return {
-      requestId,
-      code: accessCheck.code,
-      message: accessCheck.message,
     }
   }
 
@@ -478,191 +411,6 @@ export class MessageWebSocketService implements OnApplicationShutdown {
     }
   }
 
-  // 处理聊天发送请求。 负责鉴权、参数校验、发送消息并统一封装 ack。
-  async handleChatSend(
-    userId: number | null,
-    body: WsRequestEnvelope<WsSendPayload>,
-  ): Promise<WsAckPayload> {
-    const requestStartAt = Date.now()
-    this.recordRequestMetric()
-
-    const requestId = this.normalizeRequestId(body?.requestId)
-    if (!requestId) {
-      return this.finishAck(
-        {
-          requestId: null,
-          code: PlatformErrorCode.BAD_REQUEST,
-          message: 'requestId is required',
-        },
-        requestStartAt,
-      )
-    }
-
-    if (!userId) {
-      return this.finishAck(
-        {
-          requestId,
-          code: PlatformErrorCode.UNAUTHORIZED,
-          message: 'Unauthorized',
-        },
-        requestStartAt,
-      )
-    }
-
-    const accessDeniedAck = await this.buildAccessDeniedAck(userId, requestId)
-    if (accessDeniedAck) {
-      return this.finishAck(accessDeniedAck, requestStartAt)
-    }
-
-    const payload = body?.payload
-    if (!payload) {
-      return this.finishAck(
-        {
-          requestId,
-          code: PlatformErrorCode.BAD_REQUEST,
-          message: 'Invalid chat.send payload',
-        },
-        requestStartAt,
-      )
-    }
-
-    const normalizedPayload = normalizeChatMessageSendInput(
-      payload,
-      this.createMediaOriginPolicy(),
-    )
-    if (!normalizedPayload.ok) {
-      return this.finishAck(
-        {
-          requestId,
-          code: PlatformErrorCode.BAD_REQUEST,
-          message: 'Invalid chat.send payload',
-        },
-        requestStartAt,
-      )
-    }
-
-    try {
-      const result = await this.getMessageChatService().sendMessage(userId, {
-        conversationId: normalizedPayload.value.conversationId,
-        messageType: normalizedPayload.value.messageType,
-        content: normalizedPayload.value.content,
-        clientMessageId: normalizedPayload.value.clientMessageId,
-        payload: normalizedPayload.value.payload,
-      })
-
-      return this.finishAck(
-        {
-          requestId,
-          code: ApiSuccessCode,
-          message: 'ok',
-          data: {
-            ...result,
-            clientMessageId: normalizedPayload.value.clientMessageId,
-          },
-        },
-        requestStartAt,
-      )
-    } catch (error) {
-      return this.finishAck(
-        {
-          requestId,
-          ...this.mapErrorToAck(error),
-        },
-        requestStartAt,
-      )
-    }
-  }
-
-  // 构造聊天媒体上传来源校验策略，保持 WS 预校验与 service 入口一致。
-  private createMediaOriginPolicy() {
-    return buildChatMediaOriginPolicy({
-      uploadConfig: this.uploadConfig,
-      systemUploadConfig: this.uploadConfigProvider?.getUploadConfig(),
-    })
-  }
-
-  // 处理会话已读请求。 对 conversationId 与 messageId 做最小校验后委托聊天服务执行。
-  async handleChatRead(
-    userId: number | null,
-    body: WsRequestEnvelope<WsReadPayload>,
-  ): Promise<WsAckPayload> {
-    const requestStartAt = Date.now()
-    this.recordRequestMetric()
-
-    const requestId = this.normalizeRequestId(body?.requestId)
-    if (!requestId) {
-      return this.finishAck(
-        {
-          requestId: null,
-          code: PlatformErrorCode.BAD_REQUEST,
-          message: 'requestId is required',
-        },
-        requestStartAt,
-      )
-    }
-
-    if (!userId) {
-      return this.finishAck(
-        {
-          requestId,
-          code: PlatformErrorCode.UNAUTHORIZED,
-          message: 'Unauthorized',
-        },
-        requestStartAt,
-      )
-    }
-
-    const accessDeniedAck = await this.buildAccessDeniedAck(userId, requestId)
-    if (accessDeniedAck) {
-      return this.finishAck(accessDeniedAck, requestStartAt)
-    }
-
-    const payload = body?.payload
-    if (
-      !payload ||
-      !this.isPositiveInteger(payload.conversationId) ||
-      typeof payload.messageId !== 'string' ||
-      !DIGIT_STRING_REGEX.test(payload.messageId.trim())
-    ) {
-      return this.finishAck(
-        {
-          requestId,
-          code: PlatformErrorCode.BAD_REQUEST,
-          message: 'Invalid chat.read payload',
-        },
-        requestStartAt,
-      )
-    }
-
-    try {
-      const result = await this.getMessageChatService().markConversationRead(
-        userId,
-        {
-          conversationId: payload.conversationId,
-          messageId: payload.messageId.trim(),
-        },
-      )
-
-      return this.finishAck(
-        {
-          requestId,
-          code: ApiSuccessCode,
-          message: 'ok',
-          data: result,
-        },
-        requestStartAt,
-      )
-    } catch (error) {
-      return this.finishAck(
-        {
-          requestId,
-          ...this.mapErrorToAck(error),
-        },
-        requestStartAt,
-      )
-    }
-  }
-
   /**
    * 构造原生 WS 事件消息体。
    */
@@ -716,127 +464,6 @@ export class MessageWebSocketService implements OnApplicationShutdown {
       code,
       message,
     })
-  }
-
-  // 判断 ack 后是否需要主动断开客户端连接。
-  shouldDisconnectAfterAck(ack: WsAckPayload) {
-    return (
-      ack.code === PlatformErrorCode.UNAUTHORIZED ||
-      ack.code === PlatformErrorCode.FORBIDDEN ||
-      ack.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
-    )
-  }
-
-  // 记录 ack 延迟指标并返回最终 ack 载荷。
-  private finishAck(payload: WsAckPayload, requestStartAt: number) {
-    const latencyMs = Math.max(0, Date.now() - requestStartAt)
-    this.recordAckMetric(payload.code, latencyMs)
-    return payload
-  }
-
-  // 惰性解析聊天服务实例。 避免 websocket 服务初始化阶段形成强耦合依赖。
-  private getMessageChatService() {
-    if (!this.messageChatService) {
-      this.messageChatService = this.moduleRef.get<MessageChatService>(
-        MESSAGE_CHAT_SERVICE_TOKEN,
-        { strict: false },
-      )
-    }
-
-    if (!this.messageChatService) {
-      throw new Error('MessageChatService is unavailable')
-    }
-
-    return this.messageChatService
-  }
-
-  // 标准化客户端 requestId。 空字符串会被视为缺失，并统一限制最大长度。
-  private normalizeRequestId(requestId?: string) {
-    if (typeof requestId !== 'string' || !requestId.trim()) {
-      return undefined
-    }
-    return requestId.trim().slice(0, 100)
-  }
-
-  // 判断输入值是否为正整数。
-  private isPositiveInteger(value: unknown): boolean {
-    const normalized = Number(value)
-    return Number.isInteger(normalized) && normalized > 0
-  }
-
-  // 把领域异常映射为 websocket ack 错误码。
-  private mapErrorToAck(error: unknown) {
-    if (error instanceof BusinessException) {
-      return {
-        code: error.code,
-        message: error.message,
-      }
-    }
-
-    if (error instanceof HttpException) {
-      const message = this.getErrorMessage(error, 'Bad request')
-      return {
-        code: getPlatformErrorCode(error.getStatus()),
-        message,
-      }
-    }
-
-    this.logger.error(
-      'WebSocket request failed',
-      error instanceof Error ? error.stack : String(error),
-    )
-    return {
-      code: PlatformErrorCode.INTERNAL_SERVER_ERROR,
-      message: 'Internal server error',
-    }
-  }
-
-  // 从 Nest 异常对象中提取用户可读错误信息。
-  private getErrorMessage(
-    error: { getResponse: () => unknown },
-    fallback: string,
-  ) {
-    const response = error.getResponse()
-    if (typeof response === 'string' && response.trim()) {
-      return response
-    }
-    if (
-      typeof response === 'object' &&
-      response !== null &&
-      'message' in response
-    ) {
-      const { message } = response as { message?: string | string[] | null }
-      if (typeof message === 'string' && message.trim()) {
-        return message
-      }
-      if (Array.isArray(message) && message.length) {
-        const first = message[0]
-        if (typeof first === 'string' && first.trim()) {
-          return first
-        }
-      }
-    }
-    return fallback
-  }
-
-  // 记录 websocket 请求总数指标。
-  private recordRequestMetric() {
-    void this.messageWsMonitorService.recordRequest().catch((error) => {
-      this.logger.warn(
-        `Failed to record WS request metric: ${this.stringifyError(error)}`,
-      )
-    })
-  }
-
-  // 记录 websocket ack 结果与延迟指标。
-  private recordAckMetric(code: ApiResponseCode, latencyMs: number) {
-    void this.messageWsMonitorService
-      .recordAck(code, latencyMs)
-      .catch((error) => {
-        this.logger.warn(
-          `Failed to record WS ack metric: ${this.stringifyError(error)}`,
-        )
-      })
   }
 
   // 记录 websocket 重连指标。

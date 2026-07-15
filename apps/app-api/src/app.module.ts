@@ -1,3 +1,5 @@
+import { HealthModule } from '@libs/observability/health/health.module'
+import { HttpExceptionFilter } from '@libs/observability/http-exception/http-exception.filter'
 import { PlatformModule } from '@libs/platform/bootstrap'
 import {
   AliyunConfigRegister,
@@ -9,7 +11,6 @@ import {
   RsaConfigRegister,
   UploadConfigRegister,
 } from '@libs/platform/config'
-import { HttpExceptionFilter } from '@libs/platform/filters'
 import { JwtAuthGuard } from '@libs/platform/modules/auth/auth.guard'
 import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
 import { getEnv } from '@libs/platform/utils'
@@ -54,6 +55,7 @@ import { AppUserStatusGuard } from './modules/auth/app-user-status.guard'
      */
     ScheduleModule.forRoot(),
     PlatformModule.forRoot(),
+    HealthModule,
     JwtAuthModule,
     UserCoreModule,
 

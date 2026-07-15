@@ -19,12 +19,14 @@ apps/* 与 operational CLI composition
   → message
   → content/app-content
   → forum
+  → commerce
   → interaction
   → growth
   → moderation
   → user/identity
   → system-config
   → eventing/workflow
+  → observability
   → db/core
   → db/relations
   → db/schema
@@ -33,11 +35,12 @@ apps/* 与 operational CLI composition
 
 - 箭头表示唯一允许的依赖方向：左侧可以依赖右侧，右侧不得反向导入左侧；不要求每个相邻节点直接依赖。
 - operational CLI composition 明确包括 `db/targets/**`、`db/bootstrap/**`、`db/seed/**`、`db/migrate.ts` 与保留的 `scripts/**` 注释/RBAC 入口。它们与 `apps/*` 一样只能装配并向下依赖 runtime owner；任何业务 runtime package 都不得反向导入这些可执行入口。
-- package group 必须覆盖全部 runtime owner：`content/app-content` 对应 `libs/content` 与 `libs/app-content`，`moderation` 对应 `libs/moderation`（包括物理目录 `libs/moderation/sensitive-word` 和别名 `@libs/sensitive-word`），`system-config` 对应 `libs/config`，`user/identity` 对应 `libs/user` 与 `libs/identity`。`account/read-model`、`eventing/workflow` 是本纪元收敛后的 owner 组；从 `libs/platform` 抽离前仍按目标组而不是物理旧目录判定。
+- package group 必须覆盖全部 runtime owner：`account/read-model` 对应 `libs/account`，`content/app-content` 对应 `libs/content` 与 `libs/app-content`，`commerce` 对应 `libs/commerce`，`moderation` 对应 `libs/moderation`（包括物理目录 `libs/moderation/sensitive-word` 和别名 `@libs/sensitive-word`），`system-config` 对应 `libs/config`，`user/identity` 对应 `libs/user` 与 `libs/identity`，`eventing/workflow` 对应 `libs/eventing` 与 `libs/workflow`，`observability` 对应 `libs/observability`。不得把这些 DB owner 留在 `libs/platform`。
 - `db/core → db/relations → db/schema` 是数据库内部的唯一运行方向；业务代码只通过受控 `@db/core` / `@db/schema` public API 使用数据库能力，不把 `@db/relations` 暴露为业务入口。
 - 新增顶层 `apps/*`、`libs/*` 或 `db/*` runtime package 前，必须先把它登记到上述唯一顺序及 machine-readable boundary 配置；未映射 package 直接使边界门禁失败，不允许默认放行。
 - runtime package graph、Nest imports graph 与文件级 runtime import graph 都必须无 SCC。
 - `apps/*` 只负责 composition、transport、启动与 adapter 绑定，不承载可复用领域逻辑。
+- `apps/*` 不直接注入 `DrizzleService`、持有 schema table 或 import 任意 `@db/*`；它们只调用显式导入的 domain owner provider。
 - `account/read-model` 是复杂用户聚合读模型的唯一 owner；不得把聚合查询回塞 `user/identity` 或建成业务 global。
 - `libs/platform` 不依赖 `db/core`；数据库健康检查归 DB adapter 或 app composition。
 - `forwardRef()`、调整导出顺序或动态 service lookup 不得用于掩盖反向边；必须删除导致环的依赖。
@@ -45,7 +48,8 @@ apps/* 与 operational CLI composition
 ## Module 与 provider owner
 
 - 自定义业务 `@Global()` 必须为 0。
-- 全局基础设施 allowlist 仅包含框架 `ConfigModule` 与 CLS request-context module；新增 allowlist 项必须修改本篇并形成架构决策，不得由 feature module 自行声明。
+- 全局基础设施 allowlist 仅包含框架 `ConfigModule`、CLS request-context module，以及无 DB 依赖的 `libs/platform` 基础设施 `JwtAuthModule`、`CryptoModule`、`GeoModule`、`LoggerModule`；新增 allowlist 项必须修改本篇并形成架构决策，不得由 feature module 自行声明。
+- `DrizzleModule` 不在 global allowlist。每个数据库 consumer 所在 owner module 必须显式 import 它；`PlatformModule` 和任何 facade 不得替 feature module 隐式提供数据库 provider。
 - 一个 provider 只能在一个 owner module 的 `providers` 中注册。其他模块通过显式 `imports` 消费 owner module 暴露的最小稳定 provider。
 - 禁止在多个 module 重复注册同一 provider、token、guard、storage 或 adapter 实现。
 - 禁止 `ModuleRef.get(..., { strict: false })`、字符串 service locator、容器全局查找或运行期补依赖。
@@ -84,7 +88,7 @@ apps/* 与 operational CLI composition
 
 ## 架构门禁
 
-- 静态扫描必须证明唯一 package 顺序、0 runtime SCC、0 business global、0 `strict:false`、0 forbidden barrel 与 0 重复 provider。
+- 静态扫描必须通过真实入口 `pnpm architecture:check`，证明唯一 package 顺序、0 runtime SCC、0 business global、0 `forwardRef()`、0 `ModuleRef` / `strict:false`、0 forbidden barrel 与 0 重复 provider。门禁还必须从每个 `apps/*/src/app.module.ts` 组合根展开真实 Nest module import 闭包：仓库自有 `DynamicModule` 静态工厂的 `module`、`imports`、`providers`、`exports` 与传入 options 必须可静态解释；无法解释的动态结构直接失败，禁止忽略。闭包内必须同时为 0 module import SCC、0 裸导入 provider-owning dynamic module、0 同 token/provider 重复注册；合法的已导入 module re-export 不计作新注册。涉及 DB 领域边界时，必须运行真实入口 `pnpm db:boundary:check`，证明 0 app direct DB import、0 DB internal-path import、0 generic persistence filename、0 legacy schema/relation path、0 `DrizzleModule @Global()` 与 0 public relation registry export。
 - 每个 feature module 必须有可重复的 module compilation proof，证明 imports/exports 与 provider token 完整且唯一；按 `AGENTS.md`，临时测试代码在验证后删除。
 - HTTP/WS composition 必须有协议级 proof；跨 port 事务必须有提交、回滚与失败分支验证；event/outbox 必须有幂等与投递失败验证。仓库中不得遗留 test 文件或临时 probe。
 - 任何例外必须先修改本篇或 `AI_EXCEPTIONS.md`，写明 owner、理由、验证与到期条件；实现中的局部注释不能替代规则决策。

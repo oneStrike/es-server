@@ -47,9 +47,11 @@ export default antfu(
       'style/space-before-function-paren': 'off',
       'style/operator-linebreak': 'off',
       'style/arrow-parens': 'off', // 禁用箭头函数参数括号规则，交给 Prettier 处理
+      'style/member-delimiter-style': 'off',
+      'antfu/consistent-list-newline': 'off',
 
       // 确保花括号规则与 Prettier 一致
-      curly: ['error', 'all'],
+      "curly": ['error', 'all'],
       'nonblock-statement-body-position': 'off',
     },
   },

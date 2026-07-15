@@ -1,14 +1,10 @@
-import { ForumModule } from '@libs/forum/forum.module'
+import { SystemConfigModule } from '@libs/config/system-config/system-config.module'
+import { AppUserGrowthProfileModule } from '@libs/growth/app-user-growth-profile.module'
 import { IdentityModule } from '@libs/identity/identity.module'
 import { AppUserTokenStorageService } from '@libs/identity/token/app-user-token-storage.service'
-import { AuthCronService } from '@libs/platform/modules/auth/auth-cron.service'
 import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
-import { AuthStrategy } from '@libs/platform/modules/auth/auth.strategy'
-import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service'
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
-import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+import { CaptchaModule } from '@libs/platform/modules/captcha/captcha.module'
 import { SmsModule } from '@libs/platform/modules/sms/sms.module'
-import { SystemConfigModule } from '@libs/system-config/system-config.module'
 import { UserModule as UserCoreModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
 import { AppUserStatusGuard } from './app-user-status.guard'
@@ -21,42 +17,17 @@ import { SmsService } from './sms.service'
   controllers: [AuthController],
   imports: [
     JwtAuthModule,
+    CaptchaModule,
     IdentityModule.register({
-      tokenStorageProvider: {
-        provide: 'ITokenStorageService',
-        useClass: AppUserTokenStorageService,
-      },
+      tokenStorageService: AppUserTokenStorageService,
     }),
-    ForumModule,
+    AppUserGrowthProfileModule,
     UserCoreModule,
     SmsModule.register({
       imports: [SystemConfigModule],
     }),
   ],
-  providers: [
-    AuthService,
-    PasswordService,
-    CaptchaService,
-    RsaService,
-    ScryptService,
-    AppUserTokenStorageService,
-    AuthCronService,
-    AuthStrategy,
-    AppUserStatusGuard,
-    SmsService,
-    /**
-     * 复用模块内同一个 AppUserTokenStorageService 实例，避免本地 provider 重复实例化。
-     */
-    {
-      provide: 'ITokenStorageService',
-      useExisting: AppUserTokenStorageService,
-    },
-  ],
-  exports: [
-    AuthService,
-    PasswordService,
-    AppUserTokenStorageService,
-    SmsService,
-  ],
+  providers: [AuthService, PasswordService, AppUserStatusGuard, SmsService],
+  exports: [AuthService, PasswordService, IdentityModule, SmsService],
 })
 export class AuthModule {}

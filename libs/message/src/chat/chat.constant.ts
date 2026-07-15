@@ -63,5 +63,3 @@ export const CHAT_MESSAGE_CLIENT_MESSAGE_ID_MAX_LENGTH = 64
 export const CHAT_MESSAGE_PAYLOAD_MAX_BYTES = 16 * 1024
 /** 聊天消息扩展载荷最大嵌套深度 */
 export const CHAT_MESSAGE_PAYLOAD_MAX_DEPTH = 6
-/** 聊天服务注入令牌 */
-export const MESSAGE_CHAT_SERVICE_TOKEN = 'MESSAGE_CHAT_SERVICE'

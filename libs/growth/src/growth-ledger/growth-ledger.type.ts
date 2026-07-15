@@ -65,6 +65,27 @@ export interface ApplyDeltaParams {
 }
 
 /**
+ * 已由业务根取得幂等键锁的非经验资产直接结算参数。
+ * EXPERIENCE 必须保留账本后的终端等级同步阶段，禁止通过零加锁入口绕过。
+ */
+export interface ApplyNonExperienceDeltaParams extends ApplyDeltaParams {
+  assetType: Exclude<GrowthAssetTypeEnum, GrowthAssetTypeEnum.EXPERIENCE>
+}
+
+/** 业务根在进入账本阶段前需要一次性锁定的幂等键。 */
+export interface GrowthLedgerOperationLockInput {
+  userId: number
+  bizKey: string
+}
+
+/** 终端等级同步阶段在取得规则共享锁前发现的候选事实。 */
+export interface GrowthLedgerLevelSyncCandidate {
+  userId: number
+  experience: number
+  ruleId: number
+}
+
+/**
  * 公开时间线记录结构。
  * 供 service 内部映射与外部消费保持统一字段语义。
  */

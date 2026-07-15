@@ -1,8 +1,10 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { MessageInboxSummaryQueryService } from './inbox-summary-query.service'
 import { MessageInboxService } from './inbox.service'
 
 @Module({
+  imports: [DrizzleModule],
   providers: [MessageInboxSummaryQueryService, MessageInboxService],
   exports: [MessageInboxService],
 })

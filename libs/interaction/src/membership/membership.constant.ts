@@ -27,3 +27,29 @@ export enum MembershipBenefitGrantPolicyEnum {
   /** 订阅开通时自动发放。 */
   AUTO_GRANT_ON_SUBSCRIBE = 2,
 }
+
+/**
+ * VIP 订阅来源类型。
+ */
+export enum MembershipSubscriptionSourceTypeEnum {
+  /** 支付订单 */
+  PAYMENT_ORDER = 1,
+  /** VIP 试用卡 */
+  VIP_TRIAL_COUPON = 2,
+  /** 后台补偿 */
+  ADMIN_GRANT = 3,
+}
+
+/**
+ * VIP 订阅状态。
+ */
+export enum MembershipSubscriptionStatusEnum {
+  /** 有效 */
+  ACTIVE = 1,
+  /** 已取消 */
+  CANCELLED = 2,
+  /** 已退款 */
+  REFUNDED = 3,
+  /** 已过期 */
+  EXPIRED = 4,
+}

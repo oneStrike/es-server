@@ -1,8 +1,8 @@
 import type { DbExecutor } from '@db/core'
 import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.type'
 import { DrizzleService } from '@db/core'
-import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
-import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
+import { InteractionNotificationEventFactoryService } from '@libs/interaction/eventing/interaction-notification-event.factory'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
@@ -23,8 +23,8 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
     private readonly drizzle: DrizzleService,
     private readonly followService: FollowService,
     private readonly appUserCountService: AppUserCountService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
-    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
+    private readonly domainEventPublisher: DomainEventPublisher,
+    private readonly interactionNotificationEventFactoryService: InteractionNotificationEventFactoryService,
   ) {}
 
   private get appUserCount() {
@@ -101,9 +101,9 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
       columns: { nickname: true },
     })
 
-    await this.messageDomainEventPublisher.publishInTx(
+    await this.domainEventPublisher.publishInTx(
       tx,
-      this.messageDomainEventFactoryService.buildUserFollowedEvent({
+      this.interactionNotificationEventFactoryService.buildUserFollowedEvent({
         receiverUserId,
         actorUserId,
         targetType: this.targetType,

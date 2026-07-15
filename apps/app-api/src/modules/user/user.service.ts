@@ -1,84 +1,48 @@
-import type { SQL } from 'drizzle-orm'
+import type {
+  QueryMyBadgeDto,
+  QueryMyExperienceRecordDto,
+  QueryMyPointRecordDto,
+} from '@libs/growth/app-user-growth-profile/dto/app-user-growth-profile.dto'
 import type {
   UserAssetsSummaryPartial,
   UserCenterTaskPartial,
   UserCountPartial,
 } from './user.type'
+import { UserCenterDto } from '@libs/account/app-user-self/dto/app-user-self.dto'
+import { UserAssetsService } from '@libs/account/user-assets/user-assets.service'
+import { AppUserGrowthProfileService } from '@libs/growth/app-user-growth-profile/app-user-growth-profile.service'
 /**
  * 应用端用户服务。
  * 提供用户中心相关的业务逻辑，包括资料获取/更新、用户中心汇总、状态判断、资产统计与成长信息。
  */
-import { buildILikeCondition, DrizzleService, toPageResult } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience/experience.service'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { UserPointService } from '@libs/growth/point/point.service'
 import { TaskService } from '@libs/growth/task/task.service'
-import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.service'
 import { MessageInboxService } from '@libs/message/inbox/inbox.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
 import {
-  formatDateOnlyInAppTimeZone,
-  startOfTodayInAppTimeZone,
-} from '@libs/platform/utils'
-import {
   ChangeMyPhoneDto,
-  QueryMyBadgeDto,
-  QueryMyExperienceRecordDto,
-  QueryMyPointRecordDto,
   QueryUserMentionPageDto,
   UpdateMyProfileDto,
-  UserCenterDto,
 } from '@libs/user/dto/user-self.dto'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, lt, sql } from 'drizzle-orm'
-import { AppAuthErrorMessages } from '../auth/auth.constant'
 import { SmsService } from '../auth/sms.service'
 
 @Injectable()
 export class UserService {
   constructor(
-    private readonly drizzle: DrizzleService,
     private readonly userCoreService: UserCoreService,
     private readonly smsService: SmsService,
     private readonly userAssetsService: UserAssetsService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
+    private readonly appUserGrowthProfileService: AppUserGrowthProfileService,
     private readonly taskService: TaskService,
     private readonly messageInboxService: MessageInboxService,
   ) {}
-
-  // 复用当前模块共享数据库连接。
-  private get db() {
-    return this.drizzle.db
-  }
-
-  // 复用应用用户表。
-  private get appUser() {
-    return this.drizzle.schema.appUser
-  }
-
-  // 复用用户徽章分配表。
-  private get userBadgeAssignment() {
-    return this.drizzle.schema.userBadgeAssignment
-  }
-
-  // 复用用户徽章表。
-  private get userBadge() {
-    return this.drizzle.schema.userBadge
-  }
-
-  // 复用用户等级规则表。
-  private get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
-  }
-
-  // 复用成长台账记录表。
-  private get growthLedgerRecord() {
-    return this.drizzle.schema.growthLedgerRecord
-  }
 
   // 将共享用户计数读模型收敛为用户中心 DTO 约定结构，显式排除内部字段并为缺失值兜底为 0。
   private mapUserCenterCounts(counts?: UserCountPartial) {
@@ -129,56 +93,14 @@ export class UserService {
   // 获取用户资料，包含成长快照。
   async getUserProfile(userId: number) {
     const user = await this.userCoreService.getAppUserResponseSource(userId)
-    const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
+    const growth =
+      await this.appUserGrowthProfileService.getUserGrowthSnapshot(userId)
     return this.userCoreService.mapBaseUser(user, growth)
-  }
-
-  // 规范化生日更新值，保留显式 null 以支持前端清空字段。
-  private normalizeBirthDateForUpdate(
-    birthDate: UpdateMyProfileDto['birthDate'],
-  ) {
-    if (birthDate === undefined) {
-      return undefined
-    }
-    if (birthDate === null) {
-      return null
-    }
-    return formatDateOnlyInAppTimeZone(birthDate)
   }
 
   // 更新用户资料，邮箱唯一冲突时抛出业务异常。
   async updateUserProfile(userId: number, dto: UpdateMyProfileDto) {
-    await this.userCoreService.assertActiveUserExists(userId)
-
-    try {
-      await this.drizzle.withErrorHandling(
-        () =>
-          this.db
-            .update(this.appUser)
-            .set({
-              nickname: dto.nickname,
-              avatarUrl: dto.avatarUrl,
-              profileBackgroundImageUrl: dto.profileBackgroundImageUrl,
-              emailAddress: dto.emailAddress,
-              genderType: dto.genderType,
-              signature: dto.signature,
-              bio: dto.bio,
-              birthDate: this.normalizeBirthDateForUpdate(dto.birthDate),
-            })
-            .where(eq(this.appUser.id, userId)),
-        { notFound: '用户不存在' },
-      )
-      return true
-    } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-          '邮箱已被使用',
-          { cause: error },
-        )
-      }
-      throw error
-    }
+    return this.userCoreService.updateUserProfile(userId, dto)
   }
 
   // 换绑手机号：需先校验旧手机号再校验新手机号，新号占用冲突统一翻译为稳定业务文案。
@@ -215,28 +137,7 @@ export class UserService {
       templateCode: SmsTemplateCodeEnum.BIND_NEW_PHONE,
     })
 
-    try {
-      await this.drizzle.withErrorHandling(
-        () =>
-          this.db
-            .update(this.appUser)
-            .set({
-              phoneNumber: dto.newPhone,
-            })
-            .where(eq(this.appUser.id, userId)),
-        { notFound: '用户不存在' },
-      )
-      return true
-    } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
-        throw new BusinessException(
-          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-          AppAuthErrorMessages.PHONE_EXISTS,
-          { cause: error },
-        )
-      }
-      throw error
-    }
+    return this.userCoreService.changeUserPhoneNumber(userId, dto.newPhone)
   }
 
   // 获取用户中心汇总信息：用户、成长、计数、徽章、资产、消息、任务。
@@ -251,16 +152,16 @@ export class UserService {
       taskSummary,
     ] = await Promise.all([
       this.userCoreService.getUserCenterSource(userId),
-      this.userCoreService.getUserGrowthSnapshot(userId),
+      this.appUserGrowthProfileService.getUserGrowthSnapshot(userId),
       this.userCoreService.getUserCounts(userId),
-      this.userCoreService.getBadgeCount(userId),
+      this.appUserGrowthProfileService.getBadgeCount(userId),
       this.userAssetsService.getUserAssetsSummary(userId),
       this.messageInboxService.getUnreadSummary(userId),
       this.taskService.getUserTaskSummary(userId),
     ])
 
     const level = user.levelId
-      ? await this.userCoreService.getLevelInfo(user.levelId)
+      ? await this.appUserGrowthProfileService.getLevelInfo(user.levelId)
       : undefined
 
     return {
@@ -336,90 +237,7 @@ export class UserService {
 
   // 获取用户经验统计，含今日已获经验、当前等级与下一等级信息。
   async getUserExperienceStats(userId: number) {
-    const user = await this.userCoreService.getUserLevelSource(userId)
-    const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
-
-    // 获取今日开始时间
-    const today = startOfTodayInAppTimeZone()
-
-    const [todayEarnedRows, levelRows, nextLevelRows] = await Promise.all([
-      this.db
-        .select({
-          sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int`.mapWith(
-            Number,
-          ),
-        })
-        .from(this.growthLedgerRecord)
-        .where(
-          and(
-            eq(this.growthLedgerRecord.userId, userId),
-            eq(
-              this.growthLedgerRecord.assetType,
-              GrowthAssetTypeEnum.EXPERIENCE,
-            ),
-            gt(this.growthLedgerRecord.delta, 0),
-            gte(this.growthLedgerRecord.createdAt, today),
-          ),
-        ),
-      user.levelId
-        ? this.db
-            .select({
-              id: this.userLevelRule.id,
-              name: this.userLevelRule.name,
-              icon: this.userLevelRule.icon,
-              color: this.userLevelRule.color,
-              requiredExperience: this.userLevelRule.requiredExperience,
-            })
-            .from(this.userLevelRule)
-            .where(eq(this.userLevelRule.id, user.levelId))
-        : [],
-      this.db
-        .select({
-          id: this.userLevelRule.id,
-          name: this.userLevelRule.name,
-          icon: this.userLevelRule.icon,
-          color: this.userLevelRule.color,
-          requiredExperience: this.userLevelRule.requiredExperience,
-        })
-        .from(this.userLevelRule)
-        .where(
-          and(
-            eq(this.userLevelRule.isEnabled, true),
-            gt(this.userLevelRule.requiredExperience, growth.experience),
-          ),
-        )
-        .orderBy(this.userLevelRule.requiredExperience)
-        .limit(1),
-    ])
-    const todayEarned = Number(todayEarnedRows[0]?.sum ?? 0)
-    const level = levelRows[0]
-    const nextLevel = nextLevelRows[0]
-
-    return {
-      currentExperience: growth.experience,
-      todayEarned,
-      level: level
-        ? {
-            id: level.id,
-            name: level.name,
-            icon: level.icon,
-            color: level.color,
-            requiredExperience: level.requiredExperience,
-          }
-        : null,
-      nextLevel: nextLevel
-        ? {
-            id: nextLevel.id,
-            name: nextLevel.name,
-            icon: nextLevel.icon,
-            color: nextLevel.color,
-            requiredExperience: nextLevel.requiredExperience,
-          }
-        : null,
-      gapToNextLevel: nextLevel
-        ? Math.max(nextLevel.requiredExperience - growth.experience, 0)
-        : null,
-    }
+    return this.appUserGrowthProfileService.getUserExperienceStats(userId)
   }
 
   // 分页获取用户经验记录，剥离内部字段后返回。
@@ -448,127 +266,7 @@ export class UserService {
 
   // 分页获取用户徽章列表，支持按名称/类型/启用状态过滤。
   async getUserBadges(userId: number, query: QueryMyBadgeDto) {
-    await this.userCoreService.assertActiveUserExists(userId)
-
-    const { name, type, isEnabled } = query
-    const pageParams = this.drizzle.buildPageParams(query, {
-      table: this.userBadgeAssignment,
-      fallbackOrderBy: [{ createdAt: 'desc' }, { badgeId: 'desc' }],
-    })
-    const badgeConditions: SQL[] = []
-
-    if (name) {
-      badgeConditions.push(buildILikeCondition(this.userBadge.name, name)!)
-    }
-    if (type !== undefined) {
-      badgeConditions.push(eq(this.userBadge.type, type))
-    }
-    if (isEnabled !== undefined) {
-      badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
-    }
-
-    const badgeWhere =
-      badgeConditions.length > 0 ? and(...badgeConditions) : undefined
-    const badges = await this.db
-      .select({ id: this.userBadge.id })
-      .from(this.userBadge)
-      .where(badgeWhere)
-    const badgeIds = badges.map((item) => item.id)
-    if (badgeIds.length === 0) {
-      return toPageResult([], 0, pageParams.page)
-    }
-
-    const assignmentConditions: SQL[] = [
-      eq(this.userBadgeAssignment.userId, userId),
-      inArray(this.userBadgeAssignment.badgeId, badgeIds),
-    ]
-    if (pageParams.dateRange?.gte) {
-      assignmentConditions.push(
-        gte(this.userBadgeAssignment.createdAt, pageParams.dateRange.gte),
-      )
-    }
-    if (pageParams.dateRange?.lt) {
-      assignmentConditions.push(
-        lt(this.userBadgeAssignment.createdAt, pageParams.dateRange.lt),
-      )
-    }
-    const assignmentCountWhere = and(...assignmentConditions)
-    const [rows, total] = await Promise.all([
-      this.db.query.userBadgeAssignment.findMany({
-        where: {
-          userId,
-          badgeId: { in: badgeIds },
-          ...(pageParams.dateRange?.gte || pageParams.dateRange?.lt
-            ? {
-                createdAt: {
-                  ...(pageParams.dateRange?.gte
-                    ? { gte: pageParams.dateRange.gte }
-                    : {}),
-                  ...(pageParams.dateRange?.lt
-                    ? { lt: pageParams.dateRange.lt }
-                    : {}),
-                },
-              }
-            : {}),
-        },
-        orderBy: pageParams.order.orderBy,
-        limit: pageParams.page.limit,
-        offset: pageParams.page.offset,
-        columns: {
-          createdAt: true,
-        },
-        with: {
-          badge: {
-            columns: {
-              id: true,
-              name: true,
-              type: true,
-              description: true,
-              icon: true,
-              business: true,
-              eventKey: true,
-              sortOrder: true,
-              isEnabled: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-        },
-      }),
-      this.db.$count(this.userBadgeAssignment, assignmentCountWhere),
-    ])
-    const page = toPageResult(rows, total, pageParams.page)
-
-    return {
-      ...page,
-      list: page.list.map((item) => {
-        const badge = item.badge
-
-        if (!badge) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '徽章不存在',
-          )
-        }
-
-        return {
-          createdAt: item.createdAt,
-          badge: {
-            ...badge,
-            description: badge.description ?? null,
-            icon: badge.icon ?? null,
-            business: badge.business ?? null,
-            eventKey: badge.eventKey ?? null,
-          },
-        }
-      }),
-    }
-  }
-
-  // 获取用户资产统计，包括购买、下载、收藏、点赞、浏览、评论等。
-  async getUserAssetsSummary(userId: number) {
-    await this.userCoreService.assertActiveUserExists(userId)
-    return this.userAssetsService.getUserAssetsSummary(userId)
+    return this.appUserGrowthProfileService.getUserBadgePage(userId, query)
   }
 
   // 获取 @ 提及候选用户，代理共享用户域的轻量搜索。

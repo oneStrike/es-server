@@ -4,10 +4,10 @@ import type {
   WorkflowExpiredAttemptRecoveryContext,
   WorkflowHandler,
   WorkflowItemPageContext,
-} from '@libs/platform/modules/workflow/workflow.type'
+} from '@libs/workflow/workflow/workflow.type'
 import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
 import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
-import { WorkflowRegistry } from '@libs/platform/modules/workflow/workflow.registry'
+import { WorkflowRegistry } from '@libs/workflow/workflow/workflow.registry'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ComicArchiveImportService } from './comic-archive-import.service'
 

@@ -94,7 +94,7 @@ services:
     environment:
       - APP_NAME=app-api
       - DB_PROCESS_ROLE=app-api
-      - APP_PORT=8081
+      - APP_API_PORT=8081
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
       - APP_LOGIN_ALIYUN_VERIFY_DISABLED=${APP_LOGIN_ALIYUN_VERIFY_DISABLED:-false}

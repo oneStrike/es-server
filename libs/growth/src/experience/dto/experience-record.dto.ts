@@ -1,4 +1,3 @@
-import { ForumAppUserInfoDto } from '@libs/forum/profile/dto/profile.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
 import {
   BooleanProperty,
@@ -11,6 +10,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { PageDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION } from '../../event-definition/event-definition.constant'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
@@ -22,7 +22,7 @@ export enum ExperienceDeltaDirectionEnum {
   DECREASE = 2,
 }
 
-export class UserExperienceRecordUserDto extends PickType(ForumAppUserInfoDto, [
+export class UserExperienceRecordUserDto extends PickType(BaseAppUserDto, [
   'id',
   'account',
   'nickname',

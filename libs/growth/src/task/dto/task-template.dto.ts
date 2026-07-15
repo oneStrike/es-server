@@ -2,7 +2,12 @@ import {
   EventDefinitionEntityTypeEnum,
   EventDefinitionImplStatusEnum,
 } from '@libs/growth/event-definition/event-definition.constant'
-import { ArrayProperty, BooleanProperty, EnumProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 export class TaskTemplateFilterFieldOptionDto {
   @StringProperty({
@@ -117,8 +122,7 @@ export class TaskEventTemplateOptionDto {
   label!: string
 
   @EnumProperty({
-    description:
-      '底层事件实现状态（已声明但未接线；已正式接线；仅保留历史兼容）',
+    description: '底层事件实现状态（已声明但未接线；已正式接线）',
     example: EventDefinitionImplStatusEnum.IMPLEMENTED,
     enum: EventDefinitionImplStatusEnum,
   })
@@ -186,9 +190,7 @@ export class TaskTemplateOptionsResponseDto {
             description: '用于限制同一模板下只统计特定目标类型。',
           },
         ],
-        warningHints: [
-          '若启用按不同对象累计，将按模板默认唯一维度自动去重。',
-        ],
+        warningHints: ['若启用按不同对象累计，将按模板默认唯一维度自动去重。'],
       },
     ],
   })

@@ -1,4 +1,4 @@
-import type { PublishMessageDomainEventInput } from '@libs/message/eventing/message-event.type'
+import type { PublishDomainEventInput } from '@libs/eventing/eventing/domain-event.type'
 import type {
   TaskAutoAssignedReminderEventInput,
   TaskExpiringSoonReminderEventInput,
@@ -11,6 +11,7 @@ import type {
   TaskReminderRewardSummary,
   TaskRewardGrantedReminderEventInput,
 } from './types/task.type'
+import { DomainEventConsumerEnum } from '@libs/eventing/eventing/eventing.constant'
 import { Injectable } from '@nestjs/common'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import { normalizeTaskType, TaskReminderKindEnum } from './task.constant'
@@ -24,7 +25,7 @@ export class TaskNotificationService {
   // 生成自动加入任务提醒事件。
   createAutoAssignedReminderEvent(
     params: TaskAutoAssignedReminderEventInput,
-  ): PublishMessageDomainEventInput {
+  ): PublishDomainEventInput {
     return this.buildTaskReminderDomainEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.AUTO_ASSIGNED,
@@ -34,7 +35,7 @@ export class TaskNotificationService {
   // 生成即将过期提醒事件。
   createExpiringSoonReminderEvent(
     params: TaskExpiringSoonReminderEventInput,
-  ): PublishMessageDomainEventInput {
+  ): PublishDomainEventInput {
     return this.buildTaskReminderDomainEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.EXPIRING_SOON,
@@ -45,7 +46,7 @@ export class TaskNotificationService {
   // 生成奖励到账提醒事件。
   createRewardGrantedReminderEvent(
     params: TaskRewardGrantedReminderEventInput,
-  ): PublishMessageDomainEventInput {
+  ): PublishDomainEventInput {
     return this.buildTaskReminderDomainEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.REWARD_GRANTED,
@@ -72,7 +73,7 @@ export class TaskNotificationService {
   // 组装统一的任务提醒领域事件。
   private buildTaskReminderDomainEvent(
     params: TaskReminderNotificationEventInput,
-  ): PublishMessageDomainEventInput {
+  ): PublishDomainEventInput {
     const message = this.buildTaskReminderMessage(params)
     const normalizedTaskType = normalizeTaskType(params.task.type)
     const normalizedReminderKind = this.mapReminderKind(params.reminderKind)
@@ -113,11 +114,14 @@ export class TaskNotificationService {
 
     return {
       eventKey: this.resolveTaskReminderEventKey(params),
+      domain: 'growth',
+      idempotencyKey: params.bizKey,
       subjectType: 'user',
       subjectId: params.receiverUserId,
       targetType: 'task',
       targetId: params.task.id,
       operatorId: undefined,
+      consumers: [DomainEventConsumerEnum.NOTIFICATION],
       context: {
         receiverUserId: params.receiverUserId,
         projectionKey: params.bizKey,

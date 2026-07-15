@@ -18,6 +18,7 @@ import type {
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -274,7 +275,7 @@ export class ForumHashtagService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('forum_hashtag', input.id),
+          exclusiveIntegrityLock(tableIntegrityLock('forum_hashtag', input.id)),
         ])
         const hashtag = await tx.query.forumHashtag.findFirst({
           where: { id: input.id, deletedAt: { isNull: true } },
@@ -312,7 +313,7 @@ export class ForumHashtagService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('forum_hashtag', input.id),
+          exclusiveIntegrityLock(tableIntegrityLock('forum_hashtag', input.id)),
         ])
         const hashtag = await tx.query.forumHashtag.findFirst({
           where: { id: input.id, deletedAt: { isNull: true } },

@@ -1,325 +1,111 @@
-import type { ContentPurchasePricingDto } from '@libs/content/permission/dto/content-purchase-pricing.dto'
-import { DrizzleService, toPageResult } from '@db/core'
-import {
-  ContentEntitlementGrantSourceEnum,
-  ContentEntitlementTargetTypeEnum,
-} from '@libs/content/permission/content-entitlement.constant'
-import { ContentEntitlementService } from '@libs/content/permission/content-entitlement.service'
-import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
-import { WorkCounterService } from '@libs/content/work/counter/work-counter.service'
+import type { IntegrityLockRequest } from '@db/core'
+import type { LevelPurchasePricing } from '@libs/growth/level-rule/level-rule.type'
+import type { DiscountCouponReservationResult } from '../coupon/types/coupon.type'
+import type { PurchaseContentPort } from './types/purchase-content-port.type'
+import type { PreparedPurchaseAttempt } from './types/purchase.type'
+import { acquireIntegrityLocks, DrizzleService } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
-import {
-  BusinessErrorCode,
-  ContentTypeEnum,
-  WorkViewPermissionEnum,
-} from '@libs/platform/constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { Injectable, Logger } from '@nestjs/common'
-import { sql } from 'drizzle-orm'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { CouponRedemptionTargetTypeEnum } from '../coupon/coupon.constant'
 import { CouponService } from '../coupon/coupon.service'
 import { WalletService } from '../wallet/wallet.service'
 import {
-  PurchaseChapterResultDto,
   PurchaseTargetCommandDto,
   QueryPurchasedWorkChapterCommandDto,
   QueryPurchasedWorkCommandDto,
 } from './dto/purchase.dto'
+import { PURCHASE_CONTENT_PORT } from './purchase-content.port'
 import {
   PaymentMethodEnum,
-  PURCHASE_WORK_CHAPTER_TARGET_TYPES,
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from './purchase.constant'
 
-const PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL = sql.join(
-  PURCHASE_WORK_CHAPTER_TARGET_TYPES.map((targetType) => sql`${targetType}`),
-  sql`, `,
-)
+/** 只标记事务外计价发现与锁后权威重读不一致。 */
+class PurchaseSnapshotDriftError extends Error {}
 
+/** 购买订单、钱包和优惠券的事务 owner。 */
 @Injectable()
 export class PurchaseService {
   private readonly logger = new Logger(PurchaseService.name)
 
+  // 初始化购买事务 owner 及其最小跨域内容端口。
   constructor(
     private readonly drizzle: DrizzleService,
-    private readonly contentPermissionService: ContentPermissionService,
-    private readonly contentEntitlementService: ContentEntitlementService,
-    private readonly workCounterService: WorkCounterService,
+    @Inject(PURCHASE_CONTENT_PORT)
+    private readonly purchaseContentPort: PurchaseContentPort,
     private readonly userLevelRuleService: UserLevelRuleService,
     private readonly couponService: CouponService,
     private readonly walletService: WalletService,
   ) {}
 
+  // 读取默认 db，购买流程在此处创建唯一事务。
   private get db() {
     return this.drizzle.db
   }
 
+  // 读取购买记录表定义。
   private get userPurchaseRecord() {
     return this.drizzle.schema.userPurchaseRecord
   }
 
+  // 判断底层异常是否为购买唯一约束冲突。
   private isUniqueConstraintError(error: unknown) {
     return this.drizzle.isUniqueViolation(error)
   }
 
-  private extractRows<T>(
-    result: { rows?: T[] | null } | object | null | undefined,
-  ) {
-    if (!result || typeof result !== 'object' || !('rows' in result)) {
-      return []
-    }
-    const rows = (result).rows
-    return Array.isArray(rows) ? rows : []
-  }
-
-  private extractTotal(
-    result: { rows?: unknown[] | null } | object | null | undefined,
-  ) {
-    const [row] = this.extractRows<{
-      total?: bigint | number | string | null
-    }>(result)
-
-    return Number(row?.total ?? 0)
-  }
-
-  private buildPurchaseCreatedAtExpression() {
-    return sql`COALESCE(upr.created_at, uce.created_at)`
-  }
-
-  // 校验购买条件并获取价格
+  // 委托内容域校验章节可购买性并读取订单冻结原价。
   async checkNeedPurchase(
     targetType: PurchaseTargetTypeEnum,
     targetId: number,
   ) {
-    return this.ensureChapterPurchaseable(targetType, targetId)
-  }
-
-  // 将购买目标类型映射为内容作品类型。
-  private resolveWorkType(targetType: PurchaseTargetTypeEnum) {
-    if (targetType === PurchaseTargetTypeEnum.COMIC_CHAPTER) {
-      return ContentTypeEnum.COMIC
-    }
-    if (targetType === PurchaseTargetTypeEnum.NOVEL_CHAPTER) {
-      return ContentTypeEnum.NOVEL
-    }
-    throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '不支持的购买业务类型',
-    )
-  }
-
-  // 将购买目标类型映射为内容权益目标类型。
-  private resolveEntitlementTargetType(targetType: PurchaseTargetTypeEnum) {
-    if (targetType === PurchaseTargetTypeEnum.COMIC_CHAPTER) {
-      return ContentEntitlementTargetTypeEnum.COMIC_CHAPTER
-    }
-    if (targetType === PurchaseTargetTypeEnum.NOVEL_CHAPTER) {
-      return ContentEntitlementTargetTypeEnum.NOVEL_CHAPTER
-    }
-    throw new BusinessException(
-      BusinessErrorCode.OPERATION_NOT_ALLOWED,
-      '不支持的购买权益目标类型',
-    )
-  }
-
-  // 校验章节可购买并返回价格快照所需的原价。
-  private async ensureChapterPurchaseable(
-    targetType: PurchaseTargetTypeEnum,
-    targetId: number,
-  ) {
-    const permission =
-      await this.contentPermissionService.resolveChapterPermission(targetId)
-    const expectedWorkType = this.resolveWorkType(targetType)
-
-    if (permission.workType !== expectedWorkType) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '章节不存在',
-      )
-    }
-
-    if (permission.viewRule !== WorkViewPermissionEnum.PURCHASE) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '该章节不支持购买',
-      )
-    }
-
-    if (
-      !permission.purchasePricing ||
-      permission.purchasePricing.originalPrice < 0
-    ) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '章节价格配置错误',
-      )
-    }
-
-    return {
-      originalPrice: permission.purchasePricing.originalPrice,
-      workType: expectedWorkType,
-    }
-  }
-
-  // 将订单快照映射为统一价格读模型。 历史订单展示统一读取冻结值，避免后续等级变动导致已购记录漂移。
-  private toPurchasePricingSnapshot(input: {
-    originalPrice: number
-    paidPrice: number
-    payableRate: number | string
-  }): ContentPurchasePricingDto {
-    const payableRate = Number(input.payableRate)
-
-    return {
-      originalPrice: input.originalPrice,
-      payableRate,
-      payablePrice: input.paidPrice,
-      discountAmount: input.originalPrice - input.paidPrice,
-    }
-  }
-
-  // 执行购买逻辑
-  async purchaseTarget(
-    input: PurchaseTargetCommandDto,
-  ): Promise<PurchaseChapterResultDto> {
-    const {
+    return this.purchaseContentPort.ensureChapterPurchaseable(
       targetType,
       targetId,
-      userId,
-      paymentMethod,
-      outTradeNo,
-      couponInstanceId,
-    } = input
-    if (paymentMethod !== PaymentMethodEnum.CURRENCY) {
+    )
+  }
+
+  // 执行购买事务，订单、余额、权益和计数必须原子提交或回滚。
+  async purchaseTarget(input: PurchaseTargetCommandDto) {
+    if (input.paymentMethod !== PaymentMethodEnum.CURRENCY) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '章节购买仅支持虚拟币余额支付',
       )
     }
 
-    const { originalPrice, workType } = await this.ensureChapterPurchaseable(
-      targetType,
-      targetId,
-    )
-    const entitlementTargetType = this.resolveEntitlementTargetType(targetType)
-
-    this.logger.log(
-      `purchase_start userId=${userId} targetType=${targetType} targetId=${targetId} originalPrice=${originalPrice} couponInstanceId=${couponInstanceId ?? 'none'}`,
-    )
-
     try {
-      return await this.db.transaction(async (tx) => {
-        const levelPricing =
-          await this.userLevelRuleService.resolveLevelPurchasePricingInTx(tx, {
-            userId,
-            originalPrice,
-            business: null,
-          })
-        const discount = couponInstanceId
-          ? await this.couponService.reserveDiscountCoupon(tx, {
-              userId,
-              couponInstanceId,
-              targetType:
-                targetType === PurchaseTargetTypeEnum.COMIC_CHAPTER
-                  ? CouponRedemptionTargetTypeEnum.COMIC_CHAPTER
-                  : CouponRedemptionTargetTypeEnum.NOVEL_CHAPTER,
-              targetId,
-              originalPrice: levelPricing.levelPayablePrice,
-            })
-          : undefined
-        const paidPrice = discount?.paidPrice ?? levelPricing.levelPayablePrice
-        const purchasePricing = {
-          originalPrice,
-          payableRate:
-            originalPrice > 0
-              ? Number((paidPrice / originalPrice).toFixed(2))
-              : 1,
-          payablePrice: paidPrice,
-          discountAmount: originalPrice - paidPrice,
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const prepared = await this.preparePurchaseAttempt(input)
+        if (attempt === 0) {
+          this.logger.log(
+            `purchase_start userId=${input.userId} targetType=${input.targetType} targetId=${input.targetId} originalPrice=${prepared.originalPrice} couponInstanceId=${input.couponInstanceId ?? 'none'}`,
+          )
         }
-        const payableRate =
-          originalPrice > 0 ? (paidPrice / originalPrice).toFixed(2) : '1.00'
-
-        const [record] = await tx
-          .insert(this.userPurchaseRecord)
-          .values({
-            targetType,
-            targetId,
-            userId,
-            originalPrice,
-            paidPrice,
-            payableRate,
-            discountAmount: purchasePricing.discountAmount,
-            couponInstanceId,
-            discountSource: discount ? 1 : 0,
-            status: PurchaseStatusEnum.SUCCESS,
-            paymentMethod,
-            outTradeNo,
-          })
-          .returning()
-
-        if (paidPrice > 0) {
-          await this.walletService.consumeForPurchase(tx, {
-            userId,
-            amount: paidPrice,
-            purchaseId: record.id,
-            paymentMethod,
-            outTradeNo,
-            targetType,
-            targetId,
-          })
+        try {
+          return await this.executePurchaseAttempt(input, prepared)
+        } catch (error) {
+          if (!(error instanceof PurchaseSnapshotDriftError)) {
+            throw error
+          }
+          if (attempt === 1) {
+            throw new BusinessException(
+              BusinessErrorCode.STATE_CONFLICT,
+              '购买计价或优惠券状态并发变化，请稍后重试',
+            )
+          }
         }
-
-        await this.contentEntitlementService.grantPurchaseEntitlement(tx, {
-          userId,
-          targetType: entitlementTargetType,
-          targetId,
-          sourceId: record.id,
-          grantSnapshot: {
-            originalPrice,
-            paidPrice,
-            payableRate,
-            paymentMethod,
-            outTradeNo,
-            couponInstanceId,
-            discountAmount: purchasePricing.discountAmount,
-            levelPayableRate: levelPricing.levelPayableRate,
-            levelDiscountAmount: levelPricing.levelDiscountAmount,
-            couponDiscountAmount: discount?.discountAmount ?? 0,
-            discountSource: discount ? 1 : 0,
-          },
-        })
-
-        // 更新各业务方购买计数
-        await this.workCounterService.updateWorkChapterPurchaseCount(
-          tx,
-          targetId,
-          workType,
-          1,
-          '章节不存在',
-        )
-
-        this.logger.log(
-          `purchase_success userId=${userId} targetType=${targetType} targetId=${targetId} originalPrice=${originalPrice} paidPrice=${paidPrice} purchaseId=${record.id}`,
-        )
-
-        // 排除内部计价快照字段，返回 DTO 不暴露原始价格/支付比例。
-        const {
-          originalPrice: _originalPrice,
-          paidPrice: _paidPrice,
-          payableRate: _payableRate,
-          ...purchaseRecord
-        } = record
-
-        return {
-          ...purchaseRecord,
-          purchasePricing,
-        }
-      })
+      }
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '购买计价或优惠券状态并发变化，请稍后重试',
+      )
     } catch (error) {
       if (this.isUniqueConstraintError(error)) {
         this.logger.warn(
-          `purchase_failed_duplicate userId=${userId} targetType=${targetType} targetId=${targetId}`,
+          `purchase_failed_duplicate userId=${input.userId} targetType=${input.targetType} targetId=${input.targetId}`,
         )
         await this.drizzle.withErrorHandling(
           async () => {
@@ -332,272 +118,218 @@ export class PurchaseService {
       }
 
       this.logger.error(
-        `purchase_failed_unknown userId=${userId} targetType=${targetType} targetId=${targetId}`,
+        `purchase_failed_unknown userId=${input.userId} targetType=${input.targetType} targetId=${input.targetId}`,
         error instanceof Error ? error.stack : undefined,
       )
       throw error
     }
   }
 
-  // 购买章节（对外通用接口）
+  /** 每个全新事务前发现内容价格、等级价、折扣券快照与完整锁并集。 */
+  private async preparePurchaseAttempt(
+    input: PurchaseTargetCommandDto,
+  ): Promise<PreparedPurchaseAttempt> {
+    const { originalPrice } =
+      await this.purchaseContentPort.ensureChapterPurchaseable(
+        input.targetType,
+        input.targetId,
+      )
+    const levelPricing =
+      await this.userLevelRuleService.resolveLevelPurchasePricingInTx(this.db, {
+        userId: input.userId,
+        originalPrice,
+        business: null,
+      })
+    const coupon = input.couponInstanceId
+      ? await this.couponService.prepareDiscountCouponReservation({
+          userId: input.userId,
+          couponInstanceId: input.couponInstanceId,
+          targetType: this.toCouponRedemptionTargetType(input.targetType),
+          targetId: input.targetId,
+          originalPrice: levelPricing.levelPayablePrice,
+        })
+      : undefined
+    const paidPrice = coupon?.paidPrice ?? levelPricing.levelPayablePrice
+    const lockRequests: IntegrityLockRequest[] = [
+      ...(coupon?.lockRequests ?? []),
+    ]
+    if (paidPrice > 0) {
+      lockRequests.push(
+        this.walletService.buildPurchaseConsumptionLockRequest(input),
+      )
+    }
+    return {
+      originalPrice,
+      levelPricing,
+      coupon,
+      paidPrice,
+      lockRequests,
+    }
+  }
+
+  /**
+   * 单次购买事务只取得一次完整并集，随后执行权威重读和全部零加锁 apply。
+   */
+  private async executePurchaseAttempt(
+    input: PurchaseTargetCommandDto,
+    prepared: PreparedPurchaseAttempt,
+  ) {
+    return this.db.transaction(async (tx) => {
+      if (prepared.lockRequests.length > 0) {
+        await acquireIntegrityLocks(tx, prepared.lockRequests)
+      }
+      const levelPricing =
+        await this.userLevelRuleService.resolveLevelPurchasePricingInTx(tx, {
+          userId: input.userId,
+          originalPrice: prepared.originalPrice,
+          business: null,
+        })
+      if (
+        !this.isSameLevelPurchasePricing(levelPricing, prepared.levelPricing)
+      ) {
+        throw new PurchaseSnapshotDriftError()
+      }
+
+      let discount: DiscountCouponReservationResult | undefined
+      const couponInstanceId = input.couponInstanceId
+      if (couponInstanceId != null) {
+        if (!prepared.coupon) {
+          throw new PurchaseSnapshotDriftError()
+        }
+        const couponResult =
+          await this.couponService.reserveDiscountCouponAfterLocks(
+            tx,
+            {
+              userId: input.userId,
+              couponInstanceId,
+              targetType: this.toCouponRedemptionTargetType(input.targetType),
+              targetId: input.targetId,
+              originalPrice: levelPricing.levelPayablePrice,
+            },
+            prepared.coupon,
+          )
+        if (couponResult.status === 'snapshot_drift') {
+          throw new PurchaseSnapshotDriftError()
+        }
+        discount = couponResult.reservation
+      }
+      const paidPrice = discount?.paidPrice ?? levelPricing.levelPayablePrice
+      if (paidPrice !== prepared.paidPrice) {
+        throw new PurchaseSnapshotDriftError()
+      }
+      const purchasePricing = {
+        originalPrice: prepared.originalPrice,
+        payableRate:
+          prepared.originalPrice > 0
+            ? Number((paidPrice / prepared.originalPrice).toFixed(2))
+            : 1,
+        payablePrice: paidPrice,
+        discountAmount: prepared.originalPrice - paidPrice,
+      }
+      const payableRate =
+        prepared.originalPrice > 0
+          ? (paidPrice / prepared.originalPrice).toFixed(2)
+          : '1.00'
+
+      const [record] = await tx
+        .insert(this.userPurchaseRecord)
+        .values({
+          targetType: input.targetType,
+          targetId: input.targetId,
+          userId: input.userId,
+          originalPrice: prepared.originalPrice,
+          paidPrice,
+          payableRate,
+          discountAmount: purchasePricing.discountAmount,
+          couponInstanceId: input.couponInstanceId,
+          discountSource: discount ? 1 : 0,
+          status: PurchaseStatusEnum.SUCCESS,
+          paymentMethod: input.paymentMethod,
+          outTradeNo: input.outTradeNo,
+        })
+        .returning()
+
+      if (paidPrice > 0) {
+        await this.walletService.applyPurchaseConsumptionAfterOperationLock(
+          tx,
+          {
+            userId: input.userId,
+            amount: paidPrice,
+            purchaseId: record.id,
+            paymentMethod: input.paymentMethod,
+            outTradeNo: input.outTradeNo,
+            targetType: input.targetType,
+            targetId: input.targetId,
+          },
+        )
+      }
+
+      await this.purchaseContentPort.grantPurchaseEntitlement(tx, {
+        userId: input.userId,
+        targetType: input.targetType,
+        targetId: input.targetId,
+        sourceId: record.id,
+        grantSnapshot: {
+          originalPrice: prepared.originalPrice,
+          paidPrice,
+          payableRate,
+          paymentMethod: input.paymentMethod,
+          outTradeNo: input.outTradeNo,
+          couponInstanceId: input.couponInstanceId,
+          discountAmount: purchasePricing.discountAmount,
+          levelPayableRate: levelPricing.levelPayableRate,
+          levelDiscountAmount: levelPricing.levelDiscountAmount,
+          couponDiscountAmount: discount?.discountAmount ?? 0,
+          discountSource: discount ? 1 : 0,
+        },
+      })
+
+      this.logger.log(
+        `purchase_success userId=${input.userId} targetType=${input.targetType} targetId=${input.targetId} originalPrice=${prepared.originalPrice} paidPrice=${paidPrice} purchaseId=${record.id}`,
+      )
+
+      const {
+        originalPrice: _originalPrice,
+        paidPrice: _paidPrice,
+        payableRate: _payableRate,
+        ...purchaseRecord
+      } = record
+      return { ...purchaseRecord, purchasePricing }
+    })
+  }
+
+  /** 将购买目标映射到折扣券核销目标闭集。 */
+  private toCouponRedemptionTargetType(targetType: PurchaseTargetTypeEnum) {
+    return targetType === PurchaseTargetTypeEnum.COMIC_CHAPTER
+      ? CouponRedemptionTargetTypeEnum.COMIC_CHAPTER
+      : CouponRedemptionTargetTypeEnum.NOVEL_CHAPTER
+  }
+
+  /** 比较事务外等级计价与锁后权威重读结果。 */
+  private isSameLevelPurchasePricing(
+    actual: LevelPurchasePricing,
+    expected: LevelPurchasePricing,
+  ) {
+    return (
+      actual.originalPrice === expected.originalPrice &&
+      actual.levelPayableRate === expected.levelPayableRate &&
+      actual.levelPayablePrice === expected.levelPayablePrice &&
+      actual.levelDiscountAmount === expected.levelDiscountAmount
+    )
+  }
+
+  // 购买章节（对外通用接口）。
   async purchaseChapter(input: PurchaseTargetCommandDto) {
     return this.purchaseTarget(input)
   }
 
-  // 获取已购作品列表 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
-  // 使用原生 SQL：涉及跨表 JOIN + GROUP BY + COALESCE 表达式，Drizzle query builder 表达能力不足。
+  // 委托内容域查询已购作品历史，保留内容表的历史展示口径。
   async getPurchasedWorks(query: QueryPurchasedWorkCommandDto) {
-    const { userId, workType, status = PurchaseStatusEnum.SUCCESS } = query
-    const purchaseCreatedAt = this.buildPurchaseCreatedAtExpression()
-    const pageParams = this.drizzle.buildPageParams(query, {
-      allowlistedOrderBy: {
-        columns: {
-          lastPurchasedAt: sql`MAX(${purchaseCreatedAt})`,
-          purchasedChapterCount: sql`COUNT(*)::bigint`,
-          workId: sql`wc.work_id`,
-          workType: sql`w.type`,
-        },
-        fallbackOrderBy: [{ lastPurchasedAt: 'desc' }, { workId: 'desc' }],
-      },
-    })
-    const workTypeFilter = workType
-      ? sql` AND w.type = ${workType}`
-      : sql.empty()
-    const startDateFilter = pageParams.dateRange?.gte
-      ? sql` AND ${purchaseCreatedAt} >= ${pageParams.dateRange.gte}`
-      : sql.empty()
-    const endDateFilter = pageParams.dateRange?.lt
-      ? sql` AND ${purchaseCreatedAt} < ${pageParams.dateRange.lt}`
-      : sql.empty()
-
-    const [rowsResult, totalResult] = await Promise.all([
-      this.db.execute(sql`
-        SELECT
-          wc.work_id AS "workId",
-          w.type AS "workType",
-          w.name AS "workName",
-          w.cover AS "workCover",
-          COUNT(*)::bigint AS "purchasedChapterCount",
-          MAX(${purchaseCreatedAt}) AS "lastPurchasedAt"
-        FROM user_content_entitlement uce
-        LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
-        INNER JOIN work_chapter wc ON wc.id = uce.target_id
-        INNER JOIN work w ON w.id = wc.work_id
-        WHERE uce.user_id = ${userId}
-          AND uce.status = 1
-          AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
-          AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
-          AND (upr.id IS NULL OR upr.status = ${status})
-          ${workTypeFilter}
-          ${startDateFilter}
-          ${endDateFilter}
-        GROUP BY wc.work_id, w.type, w.name, w.cover
-        ORDER BY ${pageParams.order.orderByClause}
-        LIMIT ${pageParams.page.limit}
-        OFFSET ${pageParams.page.offset}
-      `),
-      this.db.execute(sql`
-        SELECT COUNT(*)::bigint AS "total"
-        FROM (
-          SELECT wc.work_id
-          FROM user_content_entitlement uce
-          LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
-          INNER JOIN work_chapter wc ON wc.id = uce.target_id
-          INNER JOIN work w ON w.id = wc.work_id
-          WHERE uce.user_id = ${userId}
-            AND uce.status = 1
-            AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
-            AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
-            AND (upr.id IS NULL OR upr.status = ${status})
-            ${workTypeFilter}
-            ${startDateFilter}
-            ${endDateFilter}
-          GROUP BY wc.work_id, w.type, w.name, w.cover
-        ) grouped_purchased_works
-      `),
-    ])
-    const rows = this.extractRows<{
-      workId: number
-      workType: number
-      workName: string
-      workCover: string
-      purchasedChapterCount: bigint
-      lastPurchasedAt: Date
-    }>(rowsResult)
-    const total = this.extractTotal(totalResult)
-
-    return toPageResult(
-      rows.map((row) => ({
-        work: {
-          id: row.workId,
-          type: row.workType,
-          name: row.workName,
-          cover: row.workCover,
-        },
-        purchasedChapterCount: Number(row.purchasedChapterCount),
-        lastPurchasedAt: row.lastPurchasedAt,
-      })),
-      total,
-      pageParams.page,
-    )
+    return this.purchaseContentPort.getPurchasedWorks(query)
   }
 
-  // 获取已购章节列表 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
-  // 使用原生 SQL：涉及跨表 JOIN + GROUP BY + COALESCE 表达式，Drizzle query builder 表达能力不足。
+  // 委托内容域查询已购章节历史，保留内容表的历史展示口径。
   async getPurchasedWorkChapters(query: QueryPurchasedWorkChapterCommandDto) {
-    const {
-      userId,
-      workId,
-      workType,
-      status = PurchaseStatusEnum.SUCCESS,
-    } = query
-    const purchaseCreatedAt = this.buildPurchaseCreatedAtExpression()
-    const pageParams = this.drizzle.buildPageParams(query, {
-      allowlistedOrderBy: {
-        columns: {
-          createdAt: purchaseCreatedAt,
-          updatedAt: sql`COALESCE(upr.updated_at, uce.updated_at)`,
-          id: sql`COALESCE(upr.id, uce.id)`,
-          targetId: sql`uce.target_id`,
-          chapterId: sql`wc.id`,
-          chapterSortOrder: sql`wc.sort_order`,
-          chapterPublishAt: sql`wc.publish_at`,
-        },
-        fallbackOrderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      },
-    })
-    const workTypeFilter = workType
-      ? sql` AND wc.work_type = ${workType}`
-      : sql.empty()
-    const startDateFilter = pageParams.dateRange?.gte
-      ? sql` AND ${purchaseCreatedAt} >= ${pageParams.dateRange.gte}`
-      : sql.empty()
-    const endDateFilter = pageParams.dateRange?.lt
-      ? sql` AND ${purchaseCreatedAt} < ${pageParams.dateRange.lt}`
-      : sql.empty()
-
-    const [rowsResult, totalResult] = await Promise.all([
-      this.db.execute(sql`
-        SELECT
-          COALESCE(upr.id, uce.id) AS "id",
-          uce.target_type AS "targetType",
-          uce.target_id AS "targetId",
-          uce.user_id AS "userId",
-          COALESCE(upr.original_price, 0) AS "originalPrice",
-          COALESCE(upr.paid_price, 0) AS "paidPrice",
-          COALESCE(upr.payable_rate, 1.00) AS "payableRate",
-          COALESCE(upr.status, 1) AS "status",
-          COALESCE(upr.payment_method, 1) AS "paymentMethod",
-          upr.out_trade_no AS "outTradeNo",
-          COALESCE(upr.discount_amount, 0) AS "discountAmount",
-          upr.coupon_instance_id AS "couponInstanceId",
-          COALESCE(upr.discount_source, 0) AS "discountSource",
-          ${purchaseCreatedAt} AS "createdAt",
-          COALESCE(upr.updated_at, uce.updated_at) AS "updatedAt",
-          wc.id AS "chapterId",
-          wc.work_id AS "chapterWorkId",
-          wc.work_type AS "chapterWorkType",
-          wc.title AS "chapterTitle",
-          wc.subtitle AS "chapterSubtitle",
-          wc.cover AS "chapterCover",
-          wc.sort_order AS "chapterSortOrder",
-          wc.is_published AS "chapterIsPublished",
-          wc.publish_at AS "chapterPublishAt"
-        FROM user_content_entitlement uce
-        LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
-        INNER JOIN work_chapter wc ON wc.id = uce.target_id
-        INNER JOIN work w ON w.id = wc.work_id
-        WHERE uce.user_id = ${userId}
-          AND uce.status = 1
-          AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
-          AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
-          AND (upr.id IS NULL OR upr.status = ${status})
-          AND wc.work_id = ${workId}
-          ${workTypeFilter}
-          ${startDateFilter}
-          ${endDateFilter}
-        ORDER BY ${pageParams.order.orderByClause}
-        LIMIT ${pageParams.page.limit}
-        OFFSET ${pageParams.page.offset}
-      `),
-      this.db.execute(sql`
-        SELECT COUNT(*)::bigint AS "total"
-        FROM user_content_entitlement uce
-        LEFT JOIN user_purchase_record upr ON upr.id = uce.source_id
-        INNER JOIN work_chapter wc ON wc.id = uce.target_id
-        INNER JOIN work w ON w.id = wc.work_id
-        WHERE uce.user_id = ${userId}
-          AND uce.status = 1
-          AND uce.grant_source = ${ContentEntitlementGrantSourceEnum.PURCHASE}
-          AND uce.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
-          AND (upr.id IS NULL OR upr.status = ${status})
-          AND wc.work_id = ${workId}
-          ${workTypeFilter}
-          ${startDateFilter}
-          ${endDateFilter}
-      `),
-    ])
-    const rows = this.extractRows<{
-      id: number
-      targetType: number
-      targetId: number
-      userId: number
-      originalPrice: number
-      paidPrice: number
-      payableRate: string | number
-      status: number
-      paymentMethod: number
-      outTradeNo: string | null
-      discountAmount: number
-      couponInstanceId: number | null
-      discountSource: number
-      createdAt: Date
-      updatedAt: Date
-      chapterId: number
-      chapterWorkId: number
-      chapterWorkType: number
-      chapterTitle: string
-      chapterSubtitle: string | null
-      chapterCover: string | null
-      chapterSortOrder: number
-      chapterIsPublished: boolean
-      chapterPublishAt: Date | null
-    }>(rowsResult)
-    const total = this.extractTotal(totalResult)
-
-    return toPageResult(
-      rows.map((row) => ({
-        id: row.id,
-        targetType: row.targetType,
-        targetId: row.targetId,
-        userId: row.userId,
-        purchasePricing: this.toPurchasePricingSnapshot({
-          originalPrice: row.originalPrice,
-          paidPrice: row.paidPrice,
-          payableRate: row.payableRate,
-        }),
-        status: row.status,
-        paymentMethod: row.paymentMethod,
-        outTradeNo: row.outTradeNo,
-        discountAmount: row.discountAmount,
-        couponInstanceId: row.couponInstanceId,
-        discountSource: row.discountSource,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        chapter: {
-          id: row.chapterId,
-          workId: row.chapterWorkId,
-          workType: row.chapterWorkType,
-          title: row.chapterTitle,
-          subtitle: row.chapterSubtitle ?? null,
-          cover: row.chapterCover ?? null,
-          sortOrder: row.chapterSortOrder,
-          isPublished: row.chapterIsPublished,
-          publishAt: row.chapterPublishAt ?? null,
-        },
-      })),
-      total,
-      pageParams.page,
-    )
+    return this.purchaseContentPort.getPurchasedWorkChapters(query)
   }
 }

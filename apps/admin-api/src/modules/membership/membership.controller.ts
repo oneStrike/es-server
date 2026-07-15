@@ -1,9 +1,9 @@
+import { MembershipPageConfigItemDto } from '@libs/app-content/agreement/dto/membership-page-config.dto'
 import {
   CreateMembershipBenefitDefinitionDto,
   CreateMembershipPageConfigDto,
   CreateMembershipPlanDto,
   MembershipBenefitDefinitionOutputDto,
-  MembershipPageConfigItemDto,
   MembershipPlanItemDto,
   QueryMembershipBenefitDefinitionDto,
   QueryMembershipPageConfigDto,
@@ -13,9 +13,9 @@ import {
   UpdateMembershipPlanDto,
 } from '@libs/interaction/membership/dto/membership.dto'
 import { MembershipService } from '@libs/interaction/membership/membership.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiPageDoc } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'

@@ -5,6 +5,7 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
   toPageResult,
 } from '@db/core'
 
@@ -221,7 +222,9 @@ export class WorkCategoryService {
 
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogCategoryLock(id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogCategoryLock(id)),
+        ])
         if (
           updateData.isEnabled === false &&
           (await this.checkCategoryHasWorks(id, tx))
@@ -247,7 +250,7 @@ export class WorkCategoryService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          workCatalogCategoryLock(updateStatusDto.id),
+          exclusiveIntegrityLock(workCatalogCategoryLock(updateStatusDto.id)),
         ])
         if (
           !updateStatusDto.isEnabled &&
@@ -326,7 +329,9 @@ export class WorkCategoryService {
   async deleteCategory(input: IdDto) {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogCategoryLock(input.id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogCategoryLock(input.id)),
+        ])
         if (await this.checkCategoryHasWorks(input.id, tx)) {
           throw new BusinessException(
             BusinessErrorCode.OPERATION_NOT_ALLOWED,

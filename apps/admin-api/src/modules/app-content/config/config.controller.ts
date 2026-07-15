@@ -3,9 +3,9 @@ import {
   AppConfigOutputDto,
   UpdateAppConfigDto,
 } from '@libs/app-config/dto/config.dto'
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
+import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'

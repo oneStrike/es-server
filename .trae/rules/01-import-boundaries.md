@@ -72,14 +72,13 @@
 - 允许：`import { UploadModule } from '@libs/platform/modules/upload/upload.module'`
 - 允许：`import { UploadService } from '@libs/platform/modules/upload/upload.service'`
 - 允许：`import { setupApp, logStartupInfo } from '@libs/platform/bootstrap'`
-- 允许：`import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'`
-- 允许：`import { AuditItemDto } from '@libs/platform/modules/audit/dto'`
+- 允许：`import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'`
+- 允许：`import { AuditItemDto } from '@libs/observability/audit/dto'`
 - 禁止：`import { BaseDto } from '@libs/platform/dto/base.dto'`
 - 禁止：`import { StringProperty } from '@libs/platform/decorators/validate/string-property'`
 - 禁止：`import { GeoService } from '@libs/platform/modules/geo'`
 - 禁止：`import { JwtAuthModule } from '@libs/platform/modules/auth'`
 - 禁止：`import { UploadService } from '@libs/platform/modules/upload'`
-- 禁止：`import { AuditActionTypeEnum } from '@libs/platform/modules/audit'`
 - 禁止：`import { TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto'`
 - 禁止：`import { createAuthRedisKeys } from '@libs/platform/modules/auth/auth.helpers'`
 - 禁止：`import type { ITokenStorageService } from '@libs/platform/modules/auth/token-storage.type'`

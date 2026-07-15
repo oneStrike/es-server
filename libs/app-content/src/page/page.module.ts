@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { AppPageService } from './page.service'
 
@@ -6,6 +7,7 @@ import { AppPageService } from './page.service'
  * 提供页面配置的管理功能
  */
 @Module({
+  imports: [DrizzleModule],
   providers: [AppPageService],
   exports: [AppPageService],
 })

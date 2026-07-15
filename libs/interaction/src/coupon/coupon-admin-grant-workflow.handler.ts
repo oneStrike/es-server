@@ -6,17 +6,20 @@ import type {
   WorkflowHandler,
   WorkflowItemPageContext,
   WorkflowRetryContext,
-} from '@libs/platform/modules/workflow/workflow.type'
-import type { CouponAdminGrantItemCounters } from './types/coupon.type'
-import { DrizzleService } from '@db/core'
+} from '@libs/workflow/workflow/workflow.type'
+import type {
+  CouponAdminGrantItemCounters,
+  GrantCouponsForSourceInput,
+} from './types/coupon.type'
+import { acquireIntegrityLocks, DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { WorkflowCancellationError } from '@libs/platform/modules/workflow/workflow-cancellation'
+import { WorkflowCancellationError } from '@libs/workflow/workflow/workflow-cancellation'
 import {
   WorkflowAttemptStatusEnum,
   WorkflowEventTypeEnum,
-} from '@libs/platform/modules/workflow/workflow.constant'
-import { WorkflowRegistry } from '@libs/platform/modules/workflow/workflow.registry'
+} from '@libs/workflow/workflow/workflow.constant'
+import { WorkflowRegistry } from '@libs/workflow/workflow/workflow.registry'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import { CouponAdminGrantWorkflowService } from './coupon-admin-grant-workflow.service'
@@ -388,8 +391,25 @@ export class CouponAdminGrantWorkflowHandler
     item: CouponAdminGrantExecutionItem,
     attemptNo: number,
   ) {
+    const grantKeys = this.grantWorkflowService.buildGrantKeys({
+      operationHash: grantJob.operationHash,
+      quantity: grantJob.perUserQuantity,
+      userId: item.userId,
+    })
+    const grantInput: GrantCouponsForSourceInput = {
+      userId: item.userId,
+      couponDefinitionId: grantJob.couponDefinitionId,
+      sourceType: CouponSourceTypeEnum.ADMIN_GRANT,
+      sourceId: grantJob.id,
+      quantity: grantJob.perUserQuantity,
+      grantKeys,
+    }
+    const lockRequests =
+      this.couponService.buildGrantParentLockRequests(grantInput)
+
     return this.drizzle.withTransaction({
       execute: async (tx) => {
+        await acquireIntegrityLocks(tx, lockRequests)
         const now = new Date()
         const [runningItem] = await tx
           .update(this.drizzle.schema.couponAdminGrantItem)
@@ -413,19 +433,11 @@ export class CouponAdminGrantWorkflowHandler
         }
 
         try {
-          const grantKeys = this.grantWorkflowService.buildGrantKeys({
-            operationHash: grantJob.operationHash,
-            quantity: grantJob.perUserQuantity,
-            userId: item.userId,
-          })
-          const result = await this.couponService.grantCouponsForSource(tx, {
-            userId: item.userId,
-            couponDefinitionId: grantJob.couponDefinitionId,
-            sourceType: CouponSourceTypeEnum.ADMIN_GRANT,
-            sourceId: grantJob.id,
-            quantity: grantJob.perUserQuantity,
-            grantKeys,
-          })
+          const result =
+            await this.couponService.grantCouponsForSourceAfterLocks(
+              tx,
+              grantInput,
+            )
           await tx
             .update(this.drizzle.schema.couponAdminGrantItem)
             .set({

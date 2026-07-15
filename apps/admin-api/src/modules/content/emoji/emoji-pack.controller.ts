@@ -6,6 +6,8 @@ import {
   UpdateEmojiPackSceneTypeDto,
 } from '@libs/interaction/emoji/dto/emoji.dto'
 import { EmojiAssetService } from '@libs/interaction/emoji/emoji-asset.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
+
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
 import {
@@ -13,8 +15,6 @@ import {
   IdDto,
   UpdateEnabledStatusDto,
 } from '@libs/platform/dto'
-
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'

@@ -1,3 +1,4 @@
+import { AdminUserManagementService } from '@libs/identity/admin-user-management.service'
 import {
   AdminAccountUpdateDto,
   AdminCurrentUserDto,
@@ -9,16 +10,14 @@ import {
   UserPageDto,
   UserRegisterDto,
 } from '@libs/identity/dto/admin-user.dto'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
-import { AdminSelfProfileLegacyFieldsGuard } from './admin-self-profile-legacy-fields.guard'
-import { AdminUserService } from './admin-user.service'
 
 /**
  * 管理端用户控制器。
@@ -27,7 +26,9 @@ import { AdminUserService } from './admin-user.service'
 @ApiTags('认证与账号/管理员账号')
 @Controller('admin/system-user')
 export class AdminUserController {
-  constructor(private readonly adminUserService: AdminUserService) {}
+  constructor(
+    private readonly adminUserManagementService: AdminUserManagementService,
+  ) {}
 
   // 注册新管理员账号。
   @Post('create')
@@ -47,12 +48,11 @@ export class AdminUserController {
     @Body() body: UserRegisterDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.register(userId, body)
+    return this.adminUserManagementService.register(userId, body)
   }
 
   // 更新当前登录管理员资料。
   @Post('profile/update')
-  @UseGuards(AdminSelfProfileLegacyFieldsGuard)
   @AdminPermission({
     code: 'system:user:profile:update',
     name: '更新当前用户资料',
@@ -69,7 +69,7 @@ export class AdminUserController {
     @Body() body: AdminSelfProfileUpdateDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.updateSelfProfile(userId, body)
+    return this.adminUserManagementService.updateSelfProfile(userId, body)
   }
 
   // 更新指定管理员账号信息与角色。
@@ -90,7 +90,7 @@ export class AdminUserController {
     @Body() body: AdminAccountUpdateDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.updateAdminAccount(userId, body)
+    return this.adminUserManagementService.updateAdminAccount(userId, body)
   }
 
   // 获取当前登录管理员信息。
@@ -105,7 +105,7 @@ export class AdminUserController {
     model: AdminCurrentUserDto,
   })
   async getUserInfo(@CurrentUser('sub') userId: number) {
-    return this.adminUserService.getCurrentUserInfo(userId)
+    return this.adminUserManagementService.getCurrentUserInfo(userId)
   }
 
   // 按 ID 获取管理员用户信息。
@@ -120,7 +120,7 @@ export class AdminUserController {
     model: AdminUserDetailDto,
   })
   async getUserById(@Query() query: IdDto) {
-    return this.adminUserService.getUserDetail(query.id)
+    return this.adminUserManagementService.getUserDetail(query.id)
   }
 
   // 分页查询管理员用户列表。
@@ -135,7 +135,7 @@ export class AdminUserController {
     model: AdminUserListItemDto,
   })
   async getUsers(@Query() query: UserPageDto) {
-    return this.adminUserService.getUsers(query)
+    return this.adminUserManagementService.getUsers(query)
   }
 
   // 修改当前管理员密码。
@@ -157,7 +157,7 @@ export class AdminUserController {
     @Body() body: ChangePasswordDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.changePassword(userId, body)
+    return this.adminUserManagementService.changePassword(userId, body)
   }
 
   // 重置指定管理员密码为临时密码。
@@ -178,7 +178,7 @@ export class AdminUserController {
     @Body() query: IdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.resetPassword(userId, query.id)
+    return this.adminUserManagementService.resetPassword(userId, query.id)
   }
 
   // 解锁指定管理员的登录锁定状态。
@@ -196,6 +196,6 @@ export class AdminUserController {
     },
   })
   async unlockUser(@Body() query: IdDto, @CurrentUser('sub') userId: number) {
-    return this.adminUserService.unlockUser(userId, query.id)
+    return this.adminUserManagementService.unlockUser(userId, query.id)
   }
 }

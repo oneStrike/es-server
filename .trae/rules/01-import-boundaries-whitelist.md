@@ -18,8 +18,6 @@
   - `@libs/platform/types`
   - `@libs/platform/utils`
 - `modules` 具体子模块入口：
-  - `@libs/platform/modules/audit/audit-action.constant`
-  - `@libs/platform/modules/audit/dto`
   - `@libs/platform/modules/auth/auth-cron.service`
   - `@libs/platform/modules/auth/auth.guard`
   - `@libs/platform/modules/auth/auth.module`
@@ -31,16 +29,12 @@
   - `@libs/platform/modules/auth/helpers`
   - `@libs/platform/modules/auth/types`
   - `@libs/platform/modules/captcha/captcha.service`
+  - `@libs/platform/modules/captcha/captcha.module`
   - `@libs/platform/modules/captcha/dto`
   - `@libs/platform/modules/crypto/aes.service`
   - `@libs/platform/modules/crypto/crypto.module`
   - `@libs/platform/modules/crypto/rsa.service`
   - `@libs/platform/modules/crypto/scrypt.service`
-  - `@libs/platform/modules/eventing/domain-event-dispatch.service`
-  - `@libs/platform/modules/eventing/domain-event-publisher.service`
-  - `@libs/platform/modules/eventing/domain-event.type`
-  - `@libs/platform/modules/eventing/eventing.constant`
-  - `@libs/platform/modules/eventing/eventing.module`
   - `@libs/platform/modules/geo/dto`
   - `@libs/platform/modules/geo/geo.module`
   - `@libs/platform/modules/geo/geo.service`
@@ -58,15 +52,6 @@
   - `@libs/platform/modules/upload/upload.module`
   - `@libs/platform/modules/upload/upload.service`
   - `@libs/platform/modules/upload/upload.type`
-  - `@libs/platform/modules/workflow/dto`
-  - `@libs/platform/modules/workflow/workflow-cancellation`
-  - `@libs/platform/modules/workflow/workflow-error-facts`
-  - `@libs/platform/modules/workflow/workflow.mapper`
-  - `@libs/platform/modules/workflow/workflow.constant`
-  - `@libs/platform/modules/workflow/workflow.module`
-  - `@libs/platform/modules/workflow/workflow.registry`
-  - `@libs/platform/modules/workflow/workflow.service`
-  - `@libs/platform/modules/workflow/workflow.type`
 
 ## `db` 允许入口
 

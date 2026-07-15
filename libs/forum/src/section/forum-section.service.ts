@@ -1,15 +1,19 @@
-import type { DbTransaction, SQL } from '@db/core'
+import type { DbExecutor, DbTransaction, SQL } from '@db/core'
 import type { ForumSectionSelect } from '@db/schema'
 import type {
   ForumSectionBatchHandler,
+  ForumSectionMutationSnapshot,
   ForumVisibleSectionQueryOptions,
   ForumVisibleSectionRow,
+  ManagedForumSectionMutationSnapshot,
 } from './forum-section.type'
 
 import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
+  sharedIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -35,6 +39,8 @@ import {
   UpdateForumSectionDto,
   UpdateForumSectionEnabledDto,
 } from './dto/forum-section.dto'
+
+class ForumSectionSnapshotDriftError extends Error {}
 
 const DEFAULT_REBUILD_ALL_SECTION_LIMIT = 5000
 
@@ -179,32 +185,50 @@ export class ForumSectionService {
     }
   }
 
-  /**
-   * forum_section.user_level_rule_id 没有物理外键；和等级规则删除使用同一个
-   * record lock，并在取得锁后于当前事务重新校验论坛等级规则仍可引用。
-   */
-  private async lockAndAssertForumLevelRuleInTx(
-    tx: DbTransaction,
-    userLevelRuleId: number,
-  ) {
-    await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('user_level_rule', userLevelRuleId),
-    ])
-    await this.assertForumLevelRuleInTx(tx, userLevelRuleId)
+  private async readSectionMutationSnapshot(
+    sectionId: number,
+    client: DbExecutor = this.db,
+  ): Promise<ForumSectionMutationSnapshot | undefined> {
+    const [snapshot] = await client
+      .select({
+        id: this.forumSection.id,
+        groupId: this.forumSection.groupId,
+        userLevelRuleId: this.forumSection.userLevelRuleId,
+      })
+      .from(this.forumSection)
+      .where(
+        and(
+          eq(this.forumSection.id, sectionId),
+          isNull(this.forumSection.deletedAt),
+        ),
+      )
+      .limit(1)
+
+    return snapshot
   }
 
-  // 对会写 forum_section.group_id 的路径加规范化事务锁，和删分组共用同一资源键。
-  private async lockSectionGroupsForMutation(
-    tx: DbTransaction,
-    groupIds: Array<number | null | undefined>,
+  private isSameSectionMutationSnapshot(
+    left: ForumSectionMutationSnapshot | undefined,
+    right: ForumSectionMutationSnapshot | undefined,
   ) {
-    const uniqueGroupIds = [...new Set(groupIds.filter(Boolean) as number[])]
-    await acquireIntegrityLocks(
-      tx,
-      uniqueGroupIds.map((groupId) =>
-        tableIntegrityLock('forum_section_group', groupId),
-      ),
+    return (
+      left?.id === right?.id &&
+      left?.groupId === right?.groupId &&
+      left?.userLevelRuleId === right?.userLevelRuleId
     )
+  }
+
+  private async assertSectionGroupInTx(tx: DbTransaction, groupId: number) {
+    const group = await tx.query.forumSectionGroup.findFirst({
+      where: { id: groupId, deletedAt: { isNull: true } },
+      columns: { id: true },
+    })
+    if (!group) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块分组不存在',
+      )
+    }
   }
 
   // 串行化板块删改、发帖和移动写路径；锁注册表按规范化资源键排序避免死锁。
@@ -218,13 +242,49 @@ export class ForumSectionService {
     await acquireIntegrityLocks(
       tx,
       uniqueSectionIds.map((sectionId) =>
-        tableIntegrityLock('forum_section', sectionId),
+        exclusiveIntegrityLock(tableIntegrityLock('forum_section', sectionId)),
       ),
     )
   }
 
   private async lockSectionForMutation(tx: DbTransaction, sectionId: number) {
     await this.lockSectionsForMutation(tx, [sectionId])
+  }
+
+  /**
+   * 读取作品托管板块的锁计划事实。调用方在事务外发现一次，并在取得完整锁并集后
+   * 使用同一查询复核；任何字段漂移都必须回滚并以新事务重试。
+   */
+  async readManagedSectionMutationSnapshot(
+    workId: number,
+    sectionId: number,
+    client: DbExecutor = this.db,
+  ): Promise<ManagedForumSectionMutationSnapshot | undefined> {
+    const [snapshot] = await client
+      .select({
+        id: this.forumSection.id,
+        groupId: this.forumSection.groupId,
+        userLevelRuleId: this.forumSection.userLevelRuleId,
+        workId: this.drizzle.schema.work.id,
+      })
+      .from(this.forumSection)
+      .innerJoin(
+        this.drizzle.schema.work,
+        and(
+          eq(this.drizzle.schema.work.id, workId),
+          eq(this.drizzle.schema.work.forumSectionId, this.forumSection.id),
+          isNull(this.drizzle.schema.work.deletedAt),
+        ),
+      )
+      .where(
+        and(
+          eq(this.forumSection.id, sectionId),
+          isNull(this.forumSection.deletedAt),
+        ),
+      )
+      .limit(1)
+
+    return snapshot
   }
 
   async createManagedSectionForWork(
@@ -252,6 +312,7 @@ export class ForumSectionService {
     return createdSection.id
   }
 
+  // 在 Work 根事务已完成 S-07A 全量锁获取后，同步托管板块；本 apply 阶段禁止再次取锁。
   async syncManagedSectionForWork(
     tx: DbTransaction,
     input: {
@@ -262,7 +323,6 @@ export class ForumSectionService {
       workId: number
     },
   ) {
-    await this.lockSectionForMutation(tx, input.sectionId)
     await this.assertSectionManagedByWorkInTx(tx, input.workId, input.sectionId)
 
     const updatePayload: Record<string, unknown> = {}
@@ -293,6 +353,7 @@ export class ForumSectionService {
     return true
   }
 
+  // 在 Work 根事务已完成 S-07A 全量锁获取后释放托管板块，并原子清空等级规则引用。
   async releaseManagedSectionForWork(
     tx: DbTransaction,
     input: {
@@ -301,13 +362,13 @@ export class ForumSectionService {
       workId: number
     },
   ) {
-    await this.lockSectionForMutation(tx, input.sectionId)
     await this.assertSectionManagedByWorkInTx(tx, input.workId, input.sectionId)
 
     const result = await tx
       .update(this.forumSection)
       .set({
         isEnabled: false,
+        userLevelRuleId: null,
         deletedAt: input.deletedAt ?? new Date(),
       })
       .where(
@@ -711,21 +772,27 @@ export class ForumSectionService {
 
     await this.drizzle.withTransaction({
       execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          ...(groupId === undefined || groupId === null
+            ? []
+            : [
+                sharedIntegrityLock(
+                  tableIntegrityLock('forum_section_group', groupId),
+                ),
+              ]),
+          ...(userLevelRuleId === undefined || userLevelRuleId === null
+            ? []
+            : [
+                sharedIntegrityLock(
+                  tableIntegrityLock('user_level_rule', userLevelRuleId),
+                ),
+              ]),
+        ])
         if (groupId !== undefined && groupId !== null) {
-          await this.lockSectionGroupsForMutation(tx, [groupId])
-          const group = await tx.query.forumSectionGroup.findFirst({
-            where: { id: groupId, deletedAt: { isNull: true } },
-            columns: { id: true },
-          })
-          if (!group) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_NOT_FOUND,
-              '板块分组不存在',
-            )
-          }
+          await this.assertSectionGroupInTx(tx, groupId)
         }
         if (userLevelRuleId !== undefined && userLevelRuleId !== null) {
-          await this.lockAndAssertForumLevelRuleInTx(tx, userLevelRuleId)
+          await this.assertForumLevelRuleInTx(tx, userLevelRuleId)
         }
 
         await tx.insert(this.forumSection).values({
@@ -926,158 +993,223 @@ export class ForumSectionService {
   // 更新论坛板块。 - 名称变更时校验全局唯一性 - 分组与等级规则变更时校验目标存在性 - 写后校验受影响行数，确保板块存在
   async updateSection(updateSectionDto: UpdateForumSectionDto) {
     const { id, name, groupId, ...updateData } = updateSectionDto
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await this.lockSectionForMutation(tx, id)
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const discoveredSection = await this.readSectionMutationSnapshot(id)
+      if (!discoveredSection) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '论坛板块不存在',
+        )
+      }
 
-        const existingSection = await tx.query.forumSection.findFirst({
-          where: { id, deletedAt: { isNull: true } },
-          columns: { groupId: true },
+      try {
+        await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const requestedRuleId = updateData.userLevelRuleId
+            await acquireIntegrityLocks(tx, [
+              exclusiveIntegrityLock(tableIntegrityLock('forum_section', id)),
+              ...[discoveredSection.groupId, groupId]
+                .filter(
+                  (value): value is number =>
+                    value !== null && value !== undefined,
+                )
+                .map((value) =>
+                  sharedIntegrityLock(
+                    tableIntegrityLock('forum_section_group', value),
+                  ),
+                ),
+              ...[discoveredSection.userLevelRuleId, requestedRuleId]
+                .filter(
+                  (value): value is number =>
+                    value !== null && value !== undefined,
+                )
+                .map((value) =>
+                  sharedIntegrityLock(
+                    tableIntegrityLock('user_level_rule', value),
+                  ),
+                ),
+            ])
+
+            const lockedSection = await this.readSectionMutationSnapshot(id, tx)
+            if (
+              !this.isSameSectionMutationSnapshot(
+                discoveredSection,
+                lockedSection,
+              )
+            ) {
+              throw new ForumSectionSnapshotDriftError()
+            }
+
+            const updatePayload: Record<string, unknown> = { ...updateData }
+            if (name !== undefined) {
+              updatePayload.name = name
+            }
+            if (requestedRuleId !== undefined) {
+              if (requestedRuleId === null) {
+                updatePayload.userLevelRuleId = null
+              } else {
+                await this.assertForumLevelRuleInTx(tx, requestedRuleId)
+              }
+            }
+            if (
+              groupId !== undefined &&
+              groupId !== null &&
+              groupId !== lockedSection?.groupId
+            ) {
+              await this.assertSectionGroupInTx(tx, groupId)
+              updatePayload.groupId = groupId
+            } else if (groupId === null && lockedSection?.groupId !== null) {
+              updatePayload.groupId = null
+            }
+
+            const result = await tx
+              .update(this.forumSection)
+              .set(updatePayload)
+              .where(
+                and(
+                  eq(this.forumSection.id, id),
+                  isNull(this.forumSection.deletedAt),
+                ),
+              )
+            this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+          },
+          messages: { duplicate: '板块名称已存在' },
         })
-
-        if (!existingSection) {
+        return true
+      } catch (error) {
+        if (!(error instanceof ForumSectionSnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
           throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '论坛板块不存在',
+            BusinessErrorCode.STATE_CONFLICT,
+            '论坛板块状态已变化，请重试',
           )
         }
+      }
+    }
 
-        if (groupId !== undefined) {
-          await this.lockSectionGroupsForMutation(tx, [
-            existingSection.groupId,
-            groupId,
-          ])
-        }
-
-        const updatePayload: Record<string, unknown> = {
-          ...updateData,
-        }
-        if (name !== undefined) {
-          updatePayload.name = name
-        }
-
-        if (updateData.userLevelRuleId !== undefined) {
-          if (updateData.userLevelRuleId === null) {
-            updatePayload.userLevelRuleId = null
-          } else {
-            await this.lockAndAssertForumLevelRuleInTx(
-              tx,
-              updateData.userLevelRuleId,
-            )
-          }
-        }
-
-        if (
-          groupId !== undefined &&
-          groupId !== null &&
-          groupId !== existingSection.groupId
-        ) {
-          const group = await tx.query.forumSectionGroup.findFirst({
-            where: { id: groupId, deletedAt: { isNull: true } },
-            columns: { id: true },
-          })
-          if (!group) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_NOT_FOUND,
-              '板块分组不存在',
-            )
-          }
-          updatePayload.groupId = groupId
-        } else if (groupId === null && existingSection.groupId !== null) {
-          updatePayload.groupId = null
-        }
-
-        const result = await tx
-          .update(this.forumSection)
-          .set(updatePayload)
-          .where(
-            and(
-              eq(this.forumSection.id, id),
-              isNull(this.forumSection.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '论坛板块不存在')
-      },
-      messages: { duplicate: '板块名称已存在' },
-    })
-    return true
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '论坛板块状态已变化，请重试',
+    )
   }
 
   // 软删除论坛板块。 存在主题时禁止删除，避免孤立数据。
   async deleteSection(id: number) {
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await this.lockSectionForMutation(tx, id)
-
-        const section = await tx.query.forumSection.findFirst({
-          where: { id, deletedAt: { isNull: true } },
-          columns: { id: true },
-        })
-
-        if (!section) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '论坛板块不存在',
-          )
-        }
-
-        const liveTopic = await tx.query.forumTopic.findFirst({
-          where: {
-            sectionId: id,
-            deletedAt: { isNull: true },
-          },
-          columns: { id: true },
-        })
-
-        if (liveTopic) {
-          throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            '该板块还有主题，无法删除',
-          )
-        }
-
-        const activeWork = await tx.query.work.findFirst({
-          where: {
-            forumSectionId: id,
-            deletedAt: { isNull: true },
-          },
-          columns: { id: true },
-        })
-
-        if (activeWork) {
-          throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            '该板块仍被作品绑定，无法删除',
-          )
-        }
-
-        const moderatorSection = await tx.query.forumModeratorSection.findFirst(
-          {
-            where: { sectionId: id },
-            columns: { moderatorId: true, sectionId: true },
-          },
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const discoveredSection = await this.readSectionMutationSnapshot(id)
+      if (!discoveredSection) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '论坛板块不存在',
         )
+      }
 
-        if (moderatorSection) {
+      try {
+        await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await acquireIntegrityLocks(tx, [
+              exclusiveIntegrityLock(tableIntegrityLock('forum_section', id)),
+              ...[discoveredSection.groupId]
+                .filter((value): value is number => value !== null)
+                .map((value) =>
+                  sharedIntegrityLock(
+                    tableIntegrityLock('forum_section_group', value),
+                  ),
+                ),
+              ...[discoveredSection.userLevelRuleId]
+                .filter((value): value is number => value !== null)
+                .map((value) =>
+                  sharedIntegrityLock(
+                    tableIntegrityLock('user_level_rule', value),
+                  ),
+                ),
+            ])
+
+            const lockedSection = await this.readSectionMutationSnapshot(id, tx)
+            if (
+              !this.isSameSectionMutationSnapshot(
+                discoveredSection,
+                lockedSection,
+              )
+            ) {
+              throw new ForumSectionSnapshotDriftError()
+            }
+
+            const liveTopic = await tx.query.forumTopic.findFirst({
+              where: {
+                sectionId: id,
+                deletedAt: { isNull: true },
+              },
+              columns: { id: true },
+            })
+
+            if (liveTopic) {
+              throw new BusinessException(
+                BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                '该板块还有主题，无法删除',
+              )
+            }
+
+            const activeWork = await tx.query.work.findFirst({
+              where: {
+                forumSectionId: id,
+                deletedAt: { isNull: true },
+              },
+              columns: { id: true },
+            })
+
+            if (activeWork) {
+              throw new BusinessException(
+                BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                '该板块仍被作品绑定，无法删除',
+              )
+            }
+
+            const moderatorSection =
+              await tx.query.forumModeratorSection.findFirst({
+                where: { sectionId: id },
+                columns: { moderatorId: true, sectionId: true },
+              })
+
+            if (moderatorSection) {
+              throw new BusinessException(
+                BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                '该板块仍被版主作用域引用，无法删除',
+              )
+            }
+
+            const result = await tx
+              .update(this.forumSection)
+              .set({ userLevelRuleId: null, deletedAt: new Date() })
+              .where(
+                and(
+                  eq(this.forumSection.id, id),
+                  isNull(this.forumSection.deletedAt),
+                ),
+              )
+            this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+          },
+        })
+        return true
+      } catch (error) {
+        if (!(error instanceof ForumSectionSnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
           throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            '该板块仍被版主作用域引用，无法删除',
+            BusinessErrorCode.STATE_CONFLICT,
+            '论坛板块状态已变化，请重试',
           )
         }
+      }
+    }
 
-        const result = await tx
-          .update(this.forumSection)
-          .set({ deletedAt: new Date() })
-          .where(
-            and(
-              eq(this.forumSection.id, id),
-              isNull(this.forumSection.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '论坛板块不存在')
-      },
-    })
-    return true
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '论坛板块状态已变化，请重试',
+    )
   }
 
   // 更新板块启用状态。 写后校验受影响行数，确保板块存在。

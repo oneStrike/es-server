@@ -8,7 +8,7 @@ import type {
 } from '@db/schema'
 import type { ThirdPartyComicSyncChapterPlan } from '@libs/content/work/third-party/third-party-comic-sync.type'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import type { WorkflowItemPageRequestDto } from '@libs/platform/modules/workflow/dto'
+import type { WorkflowItemPageRequestDto } from '@libs/workflow/workflow/dto/workflow.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   ContentImportAttemptCounters,
@@ -28,6 +28,8 @@ import { randomUUID } from 'node:crypto'
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
+  sharedIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -43,8 +45,8 @@ import {
   toWorkflowRetryColumns,
   toWorkflowRetryView,
   WorkflowErrorCodeEnum,
-} from '@libs/platform/modules/workflow/workflow-error-facts'
-import { WorkflowItemStatusEnum } from '@libs/platform/modules/workflow/workflow.constant'
+} from '@libs/workflow/workflow/workflow-error-facts'
+import { WorkflowItemStatusEnum } from '@libs/workflow/workflow/workflow.constant'
 import { Injectable } from '@nestjs/common'
 import { and, asc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
@@ -304,9 +306,15 @@ export class ContentImportService {
           located.workflowJob,
         )
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('workflow_job', located.workflowJob.id),
-          tableIntegrityLock('workflow_attempt', locatedAttempt.id),
-          tableIntegrityLock('content_import_job', located.importJob.id),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('workflow_job', located.workflowJob.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('workflow_attempt', locatedAttempt.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('content_import_job', located.importJob.id),
+          ),
         ])
 
         const context = await this.requireWorkflowImportJobContext(jobId, tx)
@@ -423,9 +431,13 @@ export class ContentImportService {
           tx,
         )
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('workflow_job', located.workflowJob.id),
-          tableIntegrityLock('content_import_job', located.importJob.id),
-          workCatalogWorkLock(input.workId),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('workflow_job', located.workflowJob.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('content_import_job', located.importJob.id),
+          ),
+          sharedIntegrityLock(workCatalogWorkLock(input.workId)),
         ])
         const context = await this.requireWorkflowImportJobContext(
           input.jobId,
@@ -464,8 +476,12 @@ export class ContentImportService {
   ) {
     const located = await this.requireWorkflowImportJobContext(jobId, tx)
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('workflow_job', located.workflowJob.id),
-      tableIntegrityLock('content_import_job', located.importJob.id),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('workflow_job', located.workflowJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_job', located.importJob.id),
+      ),
     ])
     const context = await this.requireWorkflowImportJobContext(jobId, tx)
     const items = await tx
@@ -580,10 +596,18 @@ export class ContentImportService {
           located.workflowJob,
         )
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('workflow_job', located.workflowJob.id),
-          tableIntegrityLock('workflow_attempt', locatedAttempt.id),
-          tableIntegrityLock('content_import_job', located.importJob.id),
-          tableIntegrityLock('content_import_item', located.item.id),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('workflow_job', located.workflowJob.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('workflow_attempt', locatedAttempt.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('content_import_job', located.importJob.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('content_import_item', located.item.id),
+          ),
         ])
 
         const context = await this.requireContentImportItemContextInTransaction(
@@ -785,13 +809,26 @@ export class ContentImportService {
       return
     }
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
-      tableIntegrityLock('workflow_attempt', locatedAttempt.workflowAttempt.id),
-      tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
-      tableIntegrityLock('content_import_item', locatedAttempt.item.id),
-      tableIntegrityLock(
-        'content_import_item_attempt',
-        locatedAttempt.itemAttempt.id,
+      exclusiveIntegrityLock(
+        tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock(
+          'workflow_attempt',
+          locatedAttempt.workflowAttempt.id,
+        ),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_item', locatedAttempt.item.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock(
+          'content_import_item_attempt',
+          locatedAttempt.itemAttempt.id,
+        ),
       ),
     ])
     const context =
@@ -856,13 +893,26 @@ export class ContentImportService {
       return
     }
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
-      tableIntegrityLock('workflow_attempt', locatedAttempt.workflowAttempt.id),
-      tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
-      tableIntegrityLock('content_import_item', locatedAttempt.item.id),
-      tableIntegrityLock(
-        'content_import_item_attempt',
-        locatedAttempt.itemAttempt.id,
+      exclusiveIntegrityLock(
+        tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock(
+          'workflow_attempt',
+          locatedAttempt.workflowAttempt.id,
+        ),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_item', locatedAttempt.item.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock(
+          'content_import_item_attempt',
+          locatedAttempt.itemAttempt.id,
+        ),
       ),
     ])
     const context =
@@ -929,13 +979,26 @@ export class ContentImportService {
       return
     }
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
-      tableIntegrityLock('workflow_attempt', locatedAttempt.workflowAttempt.id),
-      tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
-      tableIntegrityLock('content_import_item', locatedAttempt.item.id),
-      tableIntegrityLock(
-        'content_import_item_attempt',
-        locatedAttempt.itemAttempt.id,
+      exclusiveIntegrityLock(
+        tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock(
+          'workflow_attempt',
+          locatedAttempt.workflowAttempt.id,
+        ),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_item', locatedAttempt.item.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock(
+          'content_import_item_attempt',
+          locatedAttempt.itemAttempt.id,
+        ),
       ),
     ])
     const context =
@@ -1003,13 +1066,26 @@ export class ContentImportService {
       return
     }
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
-      tableIntegrityLock('workflow_attempt', locatedAttempt.workflowAttempt.id),
-      tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
-      tableIntegrityLock('content_import_item', locatedAttempt.item.id),
-      tableIntegrityLock(
-        'content_import_item_attempt',
-        locatedAttempt.itemAttempt.id,
+      exclusiveIntegrityLock(
+        tableIntegrityLock('workflow_job', locatedAttempt.workflowJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock(
+          'workflow_attempt',
+          locatedAttempt.workflowAttempt.id,
+        ),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_job', locatedAttempt.importJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_item', locatedAttempt.item.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock(
+          'content_import_item_attempt',
+          locatedAttempt.itemAttempt.id,
+        ),
       ),
     ])
     const context =
@@ -1088,18 +1164,28 @@ export class ContentImportService {
           )
         }
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('workflow_job', located.workflowJob.id),
-          tableIntegrityLock('content_import_job', located.importJob.id),
-          tableIntegrityLock('content_import_item', located.item.id),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('workflow_job', located.workflowJob.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('content_import_job', located.importJob.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('content_import_item', located.item.id),
+          ),
           ...(locatedAttempt
             ? [
-                tableIntegrityLock(
-                  'workflow_attempt',
-                  locatedAttempt.workflowAttempt.id,
+                exclusiveIntegrityLock(
+                  tableIntegrityLock(
+                    'workflow_attempt',
+                    locatedAttempt.workflowAttempt.id,
+                  ),
                 ),
-                tableIntegrityLock(
-                  'content_import_item_attempt',
-                  locatedAttempt.itemAttempt.id,
+                exclusiveIntegrityLock(
+                  tableIntegrityLock(
+                    'content_import_item_attempt',
+                    locatedAttempt.itemAttempt.id,
+                  ),
                 ),
               ]
             : []),
@@ -1275,24 +1361,39 @@ export class ContentImportService {
               )
             : null
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('workflow_job', locatedJob.workflowJob.id),
-          tableIntegrityLock('content_import_job', locatedJob.importJob.id),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('workflow_job', locatedJob.workflowJob.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('content_import_job', locatedJob.importJob.id),
+          ),
           ...(locatedWorkflowAttempt
             ? [
-                tableIntegrityLock(
-                  'workflow_attempt',
-                  locatedWorkflowAttempt.id,
+                exclusiveIntegrityLock(
+                  tableIntegrityLock(
+                    'workflow_attempt',
+                    locatedWorkflowAttempt.id,
+                  ),
                 ),
               ]
             : []),
           ...(locatedItem
-            ? [tableIntegrityLock('content_import_item', locatedItem.item.id)]
+            ? [
+                exclusiveIntegrityLock(
+                  tableIntegrityLock(
+                    'content_import_item',
+                    locatedItem.item.id,
+                  ),
+                ),
+              ]
             : []),
           ...(locatedItemAttempt
             ? [
-                tableIntegrityLock(
-                  'content_import_item_attempt',
-                  locatedItemAttempt.id,
+                exclusiveIntegrityLock(
+                  tableIntegrityLock(
+                    'content_import_item_attempt',
+                    locatedItemAttempt.id,
+                  ),
                 ),
               ]
             : []),
@@ -1469,10 +1570,18 @@ export class ContentImportService {
       tx,
     )
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('workflow_job', located.workflowJob.id),
-      tableIntegrityLock('content_import_job', located.importJob.id),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('workflow_job', located.workflowJob.id),
+      ),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('content_import_job', located.importJob.id),
+      ),
       ...(locatedAttempt
-        ? [tableIntegrityLock('workflow_attempt', locatedAttempt.id)]
+        ? [
+            exclusiveIntegrityLock(
+              tableIntegrityLock('workflow_attempt', locatedAttempt.id),
+            ),
+          ]
         : []),
     ])
     const context = await this.requireWorkflowImportJobContext(jobId, tx)
@@ -1776,8 +1885,12 @@ export class ContentImportService {
       execute: async (tx) => {
         const located = await this.requireWorkflowImportJobContext(jobId, tx)
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('workflow_job', located.workflowJob.id),
-          tableIntegrityLock('content_import_job', located.importJob.id),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('workflow_job', located.workflowJob.id),
+          ),
+          exclusiveIntegrityLock(
+            tableIntegrityLock('content_import_job', located.importJob.id),
+          ),
         ])
         const context = await this.requireWorkflowImportJobContext(jobId, tx)
         return execute(tx, context)

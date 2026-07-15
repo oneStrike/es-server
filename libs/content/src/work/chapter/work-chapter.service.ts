@@ -4,6 +4,8 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
+  sharedIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -42,6 +44,8 @@ import {
   WorkChapterDetailContext,
   WorkChapterPublicDetailRow,
 } from './work-chapter.type'
+
+class WorkChapterSnapshotDriftError extends Error {}
 
 /**
  * 作品章节服务
@@ -216,11 +220,16 @@ export class WorkChapterService {
     return this.drizzle.withTransaction({
       execute: async (tx) => {
         const requiredViewLevelId = createDto.requiredViewLevelId
-        if (requiredViewLevelId !== undefined && requiredViewLevelId !== null) {
-          await acquireIntegrityLocks(tx, [
-            tableIntegrityLock('user_level_rule', requiredViewLevelId),
-          ])
-        }
+        await acquireIntegrityLocks(tx, [
+          sharedIntegrityLock(tableIntegrityLock('work', workId)),
+          ...(requiredViewLevelId === undefined || requiredViewLevelId === null
+            ? []
+            : [
+                sharedIntegrityLock(
+                  tableIntegrityLock('user_level_rule', requiredViewLevelId),
+                ),
+              ]),
+        ])
 
         if (!(await this.workExists(tx, workId, expectedType))) {
           throw new BusinessException(
@@ -719,31 +728,104 @@ export class WorkChapterService {
       workType?: WorkTypeEnum
     }
 
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        const requiredViewLevelId = updateData.requiredViewLevelId
-        if (requiredViewLevelId !== undefined && requiredViewLevelId !== null) {
-          await acquireIntegrityLocks(tx, [
-            tableIntegrityLock('user_level_rule', requiredViewLevelId),
-          ])
-          await this.assertRequiredViewLevelInTx(tx, requiredViewLevelId)
-        }
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const discoveredChapter = await this.db.query.workChapter.findFirst({
+        where: { id, workType: expectedType, deletedAt: { isNull: true } },
+        columns: { id: true, workId: true },
+      })
+      if (!discoveredChapter) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '章节不存在',
+        )
+      }
 
-        const result = await tx
-          .update(this.workChapter)
-          .set(updateData)
-          .where(
-            and(
-              eq(this.workChapter.id, id),
-              eq(this.workChapter.workType, expectedType),
-              isNull(this.workChapter.deletedAt),
-            ),
+      try {
+        await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const requiredViewLevelId = updateData.requiredViewLevelId
+            await acquireIntegrityLocks(tx, [
+              exclusiveIntegrityLock(
+                tableIntegrityLock('work_chapter', discoveredChapter.id),
+              ),
+              sharedIntegrityLock(
+                tableIntegrityLock('work', discoveredChapter.workId),
+              ),
+              ...(requiredViewLevelId === undefined ||
+              requiredViewLevelId === null
+                ? []
+                : [
+                    sharedIntegrityLock(
+                      tableIntegrityLock(
+                        'user_level_rule',
+                        requiredViewLevelId,
+                      ),
+                    ),
+                  ]),
+            ])
+
+            const lockedChapter = await tx.query.workChapter.findFirst({
+              where: {
+                id,
+                workType: expectedType,
+                deletedAt: { isNull: true },
+              },
+              columns: { id: true, workId: true },
+            })
+            if (
+              !lockedChapter ||
+              lockedChapter.workId !== discoveredChapter.workId
+            ) {
+              throw new WorkChapterSnapshotDriftError()
+            }
+            if (
+              !(await this.workExists(tx, lockedChapter.workId, expectedType))
+            ) {
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                '关联的作品不存在',
+              )
+            }
+            if (
+              requiredViewLevelId !== undefined &&
+              requiredViewLevelId !== null
+            ) {
+              await this.assertRequiredViewLevelInTx(tx, requiredViewLevelId)
+            }
+
+            const result = await tx
+              .update(this.workChapter)
+              .set(updateData)
+              .where(
+                and(
+                  eq(this.workChapter.id, id),
+                  eq(this.workChapter.workId, lockedChapter.workId),
+                  eq(this.workChapter.workType, expectedType),
+                  isNull(this.workChapter.deletedAt),
+                ),
+              )
+            this.drizzle.assertAffectedRows(result, '章节不存在')
+          },
+          messages: { duplicate: '该作品下章节号已存在' },
+        })
+        return true
+      } catch (error) {
+        if (!(error instanceof WorkChapterSnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '章节状态已变化，请重试',
           )
-        this.drizzle.assertAffectedRows(result, '章节不存在')
-      },
-      messages: { duplicate: '该作品下章节号已存在' },
-    })
-    return true
+        }
+      }
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '章节状态已变化，请重试',
+    )
   }
 
   // 删除章节。
@@ -804,56 +886,118 @@ export class WorkChapterService {
       return true
     }
 
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await acquireIntegrityLocks(
-          tx,
-          uniqueIds.map((chapterId) =>
-            tableIntegrityLock('work_chapter', chapterId),
+    const signature = (rows: Array<{ id: number; workId: number }>) =>
+      rows
+        .map((row) => `${row.id}:${row.workId}`)
+        .sort()
+        .join('|')
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const discoveredChapters = await this.db
+        .select({ id: this.workChapter.id, workId: this.workChapter.workId })
+        .from(this.workChapter)
+        .where(
+          and(
+            inArray(this.workChapter.id, uniqueIds),
+            eq(this.workChapter.workType, expectedType),
+            isNull(this.workChapter.deletedAt),
           ),
         )
-        const activeChapters = await tx
-          .select({ id: this.workChapter.id })
-          .from(this.workChapter)
-          .where(
-            and(
-              inArray(this.workChapter.id, uniqueIds),
-              eq(this.workChapter.workType, expectedType),
-              isNull(this.workChapter.deletedAt),
-            ),
-          )
+      if (discoveredChapters.length !== uniqueIds.length) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '章节不存在',
+        )
+      }
+      const workIds = [
+        ...new Set(discoveredChapters.map((chapter) => chapter.workId)),
+      ]
 
-        if (activeChapters.length !== uniqueIds.length) {
+      try {
+        await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await acquireIntegrityLocks(tx, [
+              ...uniqueIds.map((chapterId) =>
+                exclusiveIntegrityLock(
+                  tableIntegrityLock('work_chapter', chapterId),
+                ),
+              ),
+              ...workIds.map((workId) =>
+                sharedIntegrityLock(tableIntegrityLock('work', workId)),
+              ),
+            ])
+            const lockedChapters = await tx
+              .select({
+                id: this.workChapter.id,
+                workId: this.workChapter.workId,
+              })
+              .from(this.workChapter)
+              .where(
+                and(
+                  inArray(this.workChapter.id, uniqueIds),
+                  eq(this.workChapter.workType, expectedType),
+                  isNull(this.workChapter.deletedAt),
+                ),
+              )
+            if (signature(lockedChapters) !== signature(discoveredChapters)) {
+              throw new WorkChapterSnapshotDriftError()
+            }
+
+            const liveWorks = await tx
+              .select({ id: this.work.id })
+              .from(this.work)
+              .where(
+                and(
+                  inArray(this.work.id, workIds),
+                  eq(this.work.type, expectedType),
+                  isNull(this.work.deletedAt),
+                ),
+              )
+            if (liveWorks.length !== workIds.length) {
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                '关联的作品不存在',
+              )
+            }
+
+            const deletedRows = await tx
+              .update(this.workChapter)
+              .set({ deletedAt: new Date() })
+              .where(
+                and(
+                  inArray(this.workChapter.id, uniqueIds),
+                  eq(this.workChapter.workType, expectedType),
+                  isNull(this.workChapter.deletedAt),
+                ),
+              )
+              .returning({ id: this.workChapter.id })
+
+            if (deletedRows.length !== uniqueIds.length) {
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                '章节不存在',
+              )
+            }
+          },
+        })
+        return true
+      } catch (error) {
+        if (!(error instanceof WorkChapterSnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
           throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '章节不存在',
+            BusinessErrorCode.STATE_CONFLICT,
+            '章节状态已变化，请重试',
           )
         }
+      }
+    }
 
-        const deletedRows = await tx
-          .update(this.workChapter)
-          .set({ deletedAt: new Date() })
-          .where(
-            and(
-              inArray(this.workChapter.id, uniqueIds),
-              eq(this.workChapter.workType, expectedType),
-              isNull(this.workChapter.deletedAt),
-            ),
-          )
-          .returning({
-            id: this.workChapter.id,
-          })
-
-        if (deletedRows.length !== uniqueIds.length) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '章节不存在',
-          )
-        }
-      },
-    })
-
-    return true
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '章节状态已变化，请重试',
+    )
   }
 
   // 交换章节排序（拖拽重排）。

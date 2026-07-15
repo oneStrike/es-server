@@ -141,8 +141,7 @@ export class BaseReportDto extends BaseDto {
   targetActionReason!: string | null
 
   @EnumProperty({
-    description:
-      '目标处置状态（1=无需处置；2=已处置；3=历史已处理但无处置记录）',
+    description: '目标处置状态（1=无需处置；2=已处置）',
     enum: ReportDispositionStatusEnum,
     example: ReportDispositionStatusEnum.APPLIED,
     required: true,
@@ -234,8 +233,7 @@ export class QueryAdminReportPageDto extends IntersectionType(
   ),
 ) {
   @EnumProperty({
-    description:
-      '处置状态筛选（1=无需处置；2=处置成功；3=历史未处置；99=最新处置失败）',
+    description: '处置状态筛选（1=无需处置；2=处置成功；99=最新处置失败）',
     enum: ReportDispositionStatusFilterEnum,
     example: ReportDispositionStatusFilterEnum.APPLIED,
     required: false,

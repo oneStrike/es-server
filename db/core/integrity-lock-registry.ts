@@ -21,8 +21,15 @@ export type IntegrityLockNamespaceValue =
 export type IntegrityLockOwnerPart = bigint | boolean | number | string | null
 
 export interface IntegrityLock {
-  canonicalOwnerKey: string
-  namespace: IntegrityLockNamespaceValue
+  readonly canonicalOwnerKey: string
+  readonly namespace: IntegrityLockNamespaceValue
+}
+
+export type IntegrityLockMode = 'exclusive' | 'shared'
+
+export interface IntegrityLockRequest {
+  readonly mode: IntegrityLockMode
+  readonly resource: IntegrityLock
 }
 
 /**
@@ -34,12 +41,21 @@ export interface IntegrityLockExecutor {
   execute: (query: SQLWrapper) => unknown
 }
 
-/**
- * 用于脚本中已显式打开事务的 node-postgres client。业务写路径必须优先使用
- * `acquireIntegrityLocks`；此接口只避免维护脚本重写锁的哈希与排序协议。
- */
-export interface IntegrityLockQueryExecutor {
+/** 只读运维探针使用独立 autocommit 连接，不参与业务锁获取。 */
+export interface IntegrityLockObserver {
   query: (statement: string, values: unknown[]) => Promise<unknown>
+}
+
+export function sharedIntegrityLock(
+  resource: IntegrityLock,
+): IntegrityLockRequest {
+  return { mode: 'shared', resource }
+}
+
+export function exclusiveIntegrityLock(
+  resource: IntegrityLock,
+): IntegrityLockRequest {
+  return { mode: 'exclusive', resource }
 }
 
 /**
@@ -87,37 +103,35 @@ export function jobIntegrityLock(jobName: string): IntegrityLock {
 }
 
 /**
- * 对所有锁按 `(namespace, canonicalOwnerKey)` 去重排序后取得 transaction-level
- * advisory locks。排序是死锁避免协议的一部分，调用方不得自行循环加锁。
+ * 先按完整 canonical resource 归并最强模式，再按
+ * `(namespace, canonicalOwnerKey)` 排序并逐锁获取 transaction-level advisory
+ * lock。完整归一化发生在首条 SQL 之前，避免持锁后升级。
  */
 export async function acquireIntegrityLocks(
   tx: IntegrityLockExecutor,
-  locks: readonly IntegrityLock[],
+  requests: readonly IntegrityLockRequest[],
 ): Promise<void> {
-  for (const lock of normalizeIntegrityLocks(locks)) {
+  for (const request of normalizeIntegrityLockRequests(requests)) {
+    const hashInput = buildIntegrityLockHashInput(request.resource)
+    if (request.mode === 'shared') {
+      await tx.execute(sql`
+        SELECT pg_advisory_xact_lock_shared(
+          hashtextextended(
+            ${hashInput},
+            ${INTEGRITY_LOCK_HASH_SEED}::bigint
+          )
+        )
+      `)
+      continue
+    }
     await tx.execute(sql`
       SELECT pg_advisory_xact_lock(
         hashtextextended(
-          ${buildIntegrityLockHashInput(lock)},
+          ${hashInput},
           ${INTEGRITY_LOCK_HASH_SEED}::bigint
         )
       )
     `)
-  }
-}
-
-/**
- * 为 node-postgres 事务复用完全相同的锁资源、哈希和顺序协议。
- */
-export async function acquireIntegrityLocksWithQueryExecutor(
-  client: IntegrityLockQueryExecutor,
-  locks: readonly IntegrityLock[],
-): Promise<void> {
-  for (const lock of normalizeIntegrityLocks(locks)) {
-    await client.query(
-      'SELECT pg_advisory_xact_lock(hashtextextended($1::text, $2::bigint))',
-      [buildIntegrityLockHashInput(lock), INTEGRITY_LOCK_HASH_SEED],
-    )
   }
 }
 
@@ -130,7 +144,7 @@ export async function acquireIntegrityLocksWithQueryExecutor(
  * 锁被占用时则返回 `true`，从而不向调用方泄露 registry 的 hash/serialization 细节。
  */
 export async function isIntegrityLockHeldByAnotherTransaction(
-  observer: IntegrityLockQueryExecutor,
+  observer: IntegrityLockObserver,
   lock: IntegrityLock,
 ): Promise<boolean> {
   const result = await observer.query(
@@ -177,19 +191,50 @@ function canonicalizeOwnerPart(value: IntegrityLockOwnerPart): string {
   return `string:${value}`
 }
 
-function normalizeIntegrityLocks(
-  locks: readonly IntegrityLock[],
-): IntegrityLock[] {
-  const unique = new Map<string, IntegrityLock>()
-  for (const lock of locks) {
-    unique.set(buildIntegrityLockHashInput(lock), lock)
+function normalizeIntegrityLockRequests(
+  requests: readonly IntegrityLockRequest[],
+): IntegrityLockRequest[] {
+  const strongestByResource = new Map<string, IntegrityLockRequest>()
+  for (const request of requests) {
+    assertIntegrityLockRequest(request)
+    const resourceKey = buildIntegrityLockHashInput(request.resource)
+    const current = strongestByResource.get(resourceKey)
+    if (!current || request.mode === 'exclusive') {
+      strongestByResource.set(resourceKey, request)
+    }
   }
 
-  return [...unique.values()].sort(
+  return [...strongestByResource.values()].sort(
     (left, right) =>
-      left.namespace.localeCompare(right.namespace) ||
-      left.canonicalOwnerKey.localeCompare(right.canonicalOwnerKey),
+      left.resource.namespace.localeCompare(right.resource.namespace) ||
+      left.resource.canonicalOwnerKey.localeCompare(
+        right.resource.canonicalOwnerKey,
+      ),
   )
+}
+
+function assertIntegrityLockRequest(
+  request: IntegrityLockRequest,
+): asserts request is IntegrityLockRequest {
+  if (!isRecord(request)) {
+    throw new TypeError('Integrity lock request must be an object')
+  }
+  if (request.mode !== 'shared' && request.mode !== 'exclusive') {
+    throw new TypeError(
+      'Integrity lock request mode must be shared or exclusive',
+    )
+  }
+  if (!isRecord(request.resource)) {
+    throw new TypeError('Integrity lock request resource must be an object')
+  }
+  if (
+    !Object.values(IntegrityLockNamespace).includes(
+      request.resource.namespace,
+    ) ||
+    typeof request.resource.canonicalOwnerKey !== 'string'
+  ) {
+    throw new TypeError('Integrity lock request resource is invalid')
+  }
 }
 
 function buildIntegrityLockHashInput(lock: IntegrityLock): string {

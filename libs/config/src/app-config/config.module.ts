@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { AppConfigService } from './config.service'
 
@@ -6,6 +7,7 @@ import { AppConfigService } from './config.service'
  * 提供应用基础配置的管理功能
  */
 @Module({
+  imports: [DrizzleModule],
   controllers: [],
   providers: [AppConfigService],
   exports: [AppConfigService],

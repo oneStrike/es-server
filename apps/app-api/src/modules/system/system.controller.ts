@@ -20,6 +20,8 @@ import {
   AppUpdateCheckResponseDto,
 } from '@libs/app-content/update/dto/update.dto'
 import { AppUpdateService } from '@libs/app-content/update/update.service'
+import { ConfigReader } from '@libs/config/system-config/config-reader'
+import { WalletCurrencyDisplayConfigOutputDto } from '@libs/config/system-config/dto/config.dto'
 import {
   ApiDoc,
   ApiHtmlDoc,
@@ -27,10 +29,8 @@ import {
   CurrentUser,
   Public,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
-import { ConfigReader } from '@libs/system-config/config-reader'
 
-import { WalletCurrencyDisplayConfigOutputDto } from '@libs/system-config/dto/config.dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import {
   Body,
   Controller,

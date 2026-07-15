@@ -2,6 +2,8 @@ import {
   PurchaseChapterResultDto,
   PurchasedWorkChapterItemDto,
   PurchasedWorkItemDto,
+} from '@libs/content/permission/dto/content-purchase-history.dto'
+import {
   PurchaseTargetBodyDto,
   QueryPurchasedWorkChapterDto,
   QueryPurchasedWorkDto,

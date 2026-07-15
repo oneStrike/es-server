@@ -1,4 +1,3 @@
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -108,9 +107,7 @@ class LikeTargetUserDto extends PickType(BaseAppUserDto, [
 /**
  * 点赞目标摘要 DTO。
  */
-export class LikeTargetDetailDto extends PickType(BaseWorkDto, [
-  'id',
-] as const) {
+export class LikeTargetDetailDto extends IdDto {
   @StringProperty({
     description: '作品名称；目标为作品时返回',
     example: '示例漫画',

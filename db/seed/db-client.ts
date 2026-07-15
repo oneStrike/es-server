@@ -1,8 +1,8 @@
 import type { SeedClientDb } from './db-client.type'
 import process from 'node:process'
-import { relations } from '@db/core'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
+import { relations } from '../core/drizzle-relations'
 
 export type { Db } from './db-client.type'
 

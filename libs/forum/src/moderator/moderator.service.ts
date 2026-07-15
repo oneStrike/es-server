@@ -1,5 +1,9 @@
 import type { Db, DbExecutor, DbTransaction } from '@db/core'
-import type { ForumSectionGroupSelect, ForumSectionSelect } from '@db/schema'
+import type {
+  ForumModeratorSelect,
+  ForumSectionGroupSelect,
+  ForumSectionSelect,
+} from '@db/schema'
 
 import type { SQL } from 'drizzle-orm'
 import type {
@@ -16,6 +20,7 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  sharedIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -38,6 +43,23 @@ import {
   ForumModeratorPermissionEnum,
   ForumModeratorRoleTypeEnum,
 } from './moderator.constant'
+
+class ForumModeratorSnapshotDriftError extends Error {}
+
+interface ForumModeratorMutationSnapshot {
+  moderator: Pick<
+    ForumModeratorSelect,
+    | 'id'
+    | 'userId'
+    | 'groupId'
+    | 'roleType'
+    | 'permissions'
+    | 'isEnabled'
+    | 'remark'
+    | 'deletedAt'
+  >
+  sectionIds: number[]
+}
 
 /**
  * 论坛版主服务。
@@ -131,6 +153,50 @@ export class ForumModeratorService {
     } as const
   }
 
+  private async readModeratorMutationSnapshot(
+    moderatorId: number,
+    client: Db = this.db,
+  ): Promise<ForumModeratorMutationSnapshot | undefined> {
+    const moderator = await client.query.forumModerator.findFirst({
+      where: { id: moderatorId, deletedAt: { isNull: true } },
+      columns: this.getModeratorLifecycleColumns(),
+    })
+    if (!moderator) {
+      return undefined
+    }
+
+    const sectionIds = (
+      await this.getModeratorSectionScopes(moderatorId, client)
+    )
+      .map((scope) => scope.sectionId)
+      .sort((left, right) => left - right)
+
+    return { moderator, sectionIds }
+  }
+
+  private isSameModeratorMutationSnapshot(
+    left: ForumModeratorMutationSnapshot,
+    right: ForumModeratorMutationSnapshot | undefined,
+  ) {
+    if (!right) {
+      return false
+    }
+
+    return (
+      left.moderator.id === right.moderator.id &&
+      left.moderator.userId === right.moderator.userId &&
+      left.moderator.groupId === right.moderator.groupId &&
+      left.moderator.roleType === right.moderator.roleType &&
+      left.moderator.isEnabled === right.moderator.isEnabled &&
+      left.moderator.remark === right.moderator.remark &&
+      left.moderator.deletedAt?.getTime() ===
+        right.moderator.deletedAt?.getTime() &&
+      JSON.stringify(left.moderator.permissions) ===
+        JSON.stringify(right.moderator.permissions) &&
+      JSON.stringify(left.sectionIds) === JSON.stringify(right.sectionIds)
+    )
+  }
+
   // 对同一分组的治理写路径加规范化事务锁，避免并发删除和配额校验互相穿透。
   private async lockSectionGroupsForMutation(
     tx: DbTransaction,
@@ -140,7 +206,7 @@ export class ForumModeratorService {
     await acquireIntegrityLocks(
       tx,
       uniqueGroupIds.map((groupId) =>
-        tableIntegrityLock('forum_section_group', groupId),
+        sharedIntegrityLock(tableIntegrityLock('forum_section_group', groupId)),
       ),
     )
   }
@@ -251,7 +317,6 @@ export class ForumModeratorService {
     options: ForumModeratorGroupLimitOptions,
   ) {
     const client = options.client
-    await this.lockSectionGroupsForMutation(client, [groupId])
     const group = await this.ensureGroupExists(groupId, client)
 
     if (!options.nextIsEnabled || group.maxModerators === 0) {
@@ -782,6 +847,9 @@ export class ForumModeratorService {
       'applicationId' | 'reason'
     > = {},
   ) {
+    if (input.roleType === ForumModeratorRoleTypeEnum.GROUP && input.groupId) {
+      await this.lockSectionGroupsForMutation(tx, [input.groupId])
+    }
     await this.ensureUserExists(input.userId, tx)
 
     const existing = await tx.query.forumModerator.findFirst({
@@ -1244,124 +1312,147 @@ export class ForumModeratorService {
     input: UpdateForumModeratorDto,
     actorAdminUserId?: number,
   ) {
-    await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const moderator = await tx.query.forumModerator.findFirst({
-          where: { id: input.id, deletedAt: { isNull: true } },
-          columns: this.getModeratorLifecycleColumns(),
-        })
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const discovered = await this.readModeratorMutationSnapshot(input.id)
+      if (!discovered) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '版主不存在',
+        )
+      }
 
-        if (!moderator) {
+      const discoveredModerator = discovered.moderator
+      const targetRoleType = (input.roleType ??
+        discoveredModerator.roleType) as ForumModeratorRoleTypeEnum | undefined
+      const targetGroupId =
+        targetRoleType === ForumModeratorRoleTypeEnum.GROUP
+          ? input.groupId === undefined
+            ? discoveredModerator.groupId
+            : input.groupId
+          : null
+
+      try {
+        await this.drizzle.withErrorHandling(async () =>
+          this.db.transaction(async (tx) => {
+            await this.lockSectionGroupsForMutation(tx, [
+              discoveredModerator.roleType === ForumModeratorRoleTypeEnum.GROUP
+                ? discoveredModerator.groupId
+                : null,
+              targetGroupId,
+            ])
+
+            const locked = await this.readModeratorMutationSnapshot(
+              input.id,
+              tx,
+            )
+            if (
+              !locked ||
+              !this.isSameModeratorMutationSnapshot(discovered, locked)
+            ) {
+              throw new ForumModeratorSnapshotDriftError()
+            }
+
+            const moderator = locked.moderator
+            const beforeData = this.buildLifecycleSnapshot(
+              moderator,
+              locked.sectionIds,
+            )
+            const scope = await this.normalizeScope(input, {
+              client: tx,
+              current: moderator,
+              currentSectionIds: locked.sectionIds,
+            })
+
+            const result = await tx
+              .update(this.forumModerator)
+              .set({
+                groupId: scope.groupId,
+                roleType: scope.roleType,
+                permissions: scope.permissions,
+                isEnabled: input.isEnabled ?? moderator.isEnabled,
+                remark: input.remark ?? moderator.remark,
+              })
+              .where(
+                and(
+                  eq(this.forumModerator.id, input.id),
+                  isNull(this.forumModerator.deletedAt),
+                ),
+              )
+            this.drizzle.assertAffectedRows(result, '版主不存在')
+
+            if (scope.roleType === ForumModeratorRoleTypeEnum.SECTION) {
+              await this.syncModeratorSections(
+                tx,
+                input.id,
+                scope.sectionIds,
+                null,
+                {
+                  preserveExistingPermissions: true,
+                },
+              )
+            } else {
+              await this.clearModeratorSections(tx, input.id)
+            }
+
+            const nextIsEnabled = input.isEnabled ?? moderator.isEnabled
+            const afterData = this.buildLifecycleSnapshot(
+              {
+                ...moderator,
+                groupId: scope.groupId,
+                roleType: scope.roleType,
+                permissions: scope.permissions,
+                isEnabled: nextIsEnabled,
+                remark: input.remark ?? moderator.remark,
+              },
+              scope.sectionIds,
+            )
+            const sectionIdsChanged =
+              JSON.stringify(beforeData.sectionIds) !==
+              JSON.stringify(afterData.sectionIds)
+            const scopeChanged =
+              beforeData.roleType !== afterData.roleType ||
+              beforeData.groupId !== afterData.groupId ||
+              Boolean(
+                JSON.stringify(beforeData.permissions) !==
+                JSON.stringify(afterData.permissions),
+              ) ||
+              beforeData.remark !== afterData.remark ||
+              sectionIdsChanged
+            const eventType =
+              !scopeChanged && moderator.isEnabled !== nextIsEnabled
+                ? nextIsEnabled
+                  ? ForumModeratorLifecycleEventTypeEnum.ENABLE
+                  : ForumModeratorLifecycleEventTypeEnum.DISABLE
+                : ForumModeratorLifecycleEventTypeEnum.UPDATE_SCOPE
+            if (actorAdminUserId !== undefined) {
+              await this.lifecycleLogService.createLifecycleLogInTx(tx, {
+                eventType,
+                moderatorId: input.id,
+                actorAdminUserId,
+                reason: input.remark ?? null,
+                beforeData,
+                afterData,
+              })
+            }
+          }),
+        )
+        return true
+      } catch (error) {
+        if (!(error instanceof ForumModeratorSnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
           throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '版主不存在',
+            BusinessErrorCode.STATE_CONFLICT,
+            '版主状态已变化，请重试',
           )
         }
+      }
+    }
 
-        const targetRoleType = (input.roleType ?? moderator.roleType) as
-          ForumModeratorRoleTypeEnum | undefined
-        const targetGroupId =
-          targetRoleType === ForumModeratorRoleTypeEnum.GROUP
-            ? input.groupId === undefined
-              ? moderator.groupId
-              : input.groupId
-            : null
-
-        await this.lockSectionGroupsForMutation(tx, [
-          moderator.roleType === ForumModeratorRoleTypeEnum.GROUP
-            ? moderator.groupId
-            : null,
-          targetGroupId,
-        ])
-
-        const currentSectionScopes = await this.getModeratorSectionScopes(
-          input.id,
-          tx,
-        )
-        const beforeData = this.buildLifecycleSnapshot(
-          moderator,
-          currentSectionScopes.map((item) => item.sectionId),
-        )
-        const scope = await this.normalizeScope(input, {
-          client: tx,
-          current: moderator,
-          currentSectionIds: currentSectionScopes.map((item) => item.sectionId),
-        })
-
-        const result = await tx
-          .update(this.forumModerator)
-          .set({
-            groupId: scope.groupId,
-            roleType: scope.roleType,
-            permissions: scope.permissions,
-            isEnabled: input.isEnabled ?? moderator.isEnabled,
-            remark: input.remark ?? moderator.remark,
-          })
-          .where(
-            and(
-              eq(this.forumModerator.id, input.id),
-              isNull(this.forumModerator.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '版主不存在')
-
-        if (scope.roleType === ForumModeratorRoleTypeEnum.SECTION) {
-          await this.syncModeratorSections(
-            tx,
-            input.id,
-            scope.sectionIds,
-            null,
-            {
-              preserveExistingPermissions: true,
-            },
-          )
-        } else {
-          await this.clearModeratorSections(tx, input.id)
-        }
-
-        const nextIsEnabled = input.isEnabled ?? moderator.isEnabled
-        const afterData = this.buildLifecycleSnapshot(
-          {
-            ...moderator,
-            groupId: scope.groupId,
-            roleType: scope.roleType,
-            permissions: scope.permissions,
-            isEnabled: nextIsEnabled,
-            remark: input.remark ?? moderator.remark,
-          },
-          scope.sectionIds,
-        )
-        const sectionIdsChanged =
-          JSON.stringify(beforeData.sectionIds) !==
-          JSON.stringify(afterData.sectionIds)
-        const scopeChanged =
-          beforeData.roleType !== afterData.roleType ||
-          beforeData.groupId !== afterData.groupId ||
-          Boolean(
-            JSON.stringify(beforeData.permissions) !==
-            JSON.stringify(afterData.permissions),
-          ) ||
-          beforeData.remark !== afterData.remark ||
-          sectionIdsChanged
-        const eventType =
-          !scopeChanged && moderator.isEnabled !== nextIsEnabled
-            ? nextIsEnabled
-              ? ForumModeratorLifecycleEventTypeEnum.ENABLE
-              : ForumModeratorLifecycleEventTypeEnum.DISABLE
-            : ForumModeratorLifecycleEventTypeEnum.UPDATE_SCOPE
-        if (actorAdminUserId !== undefined) {
-          await this.lifecycleLogService.createLifecycleLogInTx(tx, {
-            eventType,
-            moderatorId: input.id,
-            actorAdminUserId,
-            reason: input.remark ?? null,
-            beforeData,
-            afterData,
-          })
-        }
-      }),
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '版主状态已变化，请重试',
     )
-
-    return true
   }
 }

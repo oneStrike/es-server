@@ -1,22 +1,13 @@
-import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
-  BooleanProperty,
   DateProperty,
   EnumProperty,
-  NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
 import { PageDto, UserIdDto } from '@libs/platform/dto'
 
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
  * 基础阅读状态 DTO
@@ -100,57 +91,3 @@ export class ClearReadingHistoryCommandDto extends IntersectionType(
   ClearReadingHistoryDto,
   PickType(BaseReadingStateDto, ['userId'] as const),
 ) {}
-
-export class ReadingHistoryWorkSnapshotDto extends PickType(BaseWorkDto, [
-  'id',
-  'type',
-  'name',
-  'cover',
-  'serialStatus',
-] as const) {
-  @BooleanProperty({
-    description: '作品是否应从历史中移除',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  shouldDelete!: boolean
-}
-
-export class ReadingHistoryChapterSnapshotDto extends PickType(
-  BaseWorkChapterDto,
-  ['id', 'title', 'subtitle', 'cover', 'sortOrder'] as const,
-) {
-  @BooleanProperty({
-    description: '章节是否应从历史中移除',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  shouldDelete!: boolean
-}
-
-class ReadingHistoryContinueChapterFieldDto {
-  @NestedProperty({
-    description: '继续阅读章节',
-    type: ReadingHistoryChapterSnapshotDto,
-    required: true,
-    nullable: true,
-    validation: false,
-  })
-  continueChapter!: ReadingHistoryChapterSnapshotDto | null
-}
-
-export class ReadingHistoryWorkDto extends IntersectionType(
-  OmitType(BaseReadingStateDto, ['userId'] as const),
-  ReadingHistoryContinueChapterFieldDto,
-) {
-  @NestedProperty({
-    description: '作品信息',
-    type: ReadingHistoryWorkSnapshotDto,
-    required: true,
-    validation: false,
-    nullable: false,
-  })
-  work!: ReadingHistoryWorkSnapshotDto
-}

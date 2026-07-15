@@ -3,10 +3,9 @@ import type {
   FavoriteTargetContext,
   IFavoriteTargetResolver,
 } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.type'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
-import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
-import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
@@ -18,6 +17,7 @@ import {
 import { ForumUserActionLogService } from '../../action-log/action-log.service'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 import { ForumPermissionService } from '../../permission/forum-permission.service'
+import { ForumTopicEventFactoryService } from '../forum-topic-event-factory.service'
 import { ForumTopicService } from '../forum-topic.service'
 
 /**
@@ -33,8 +33,8 @@ export class ForumTopicFavoriteResolver
 
   constructor(
     private readonly favoriteService: FavoriteService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
-    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
+    private readonly domainEventPublisher: DomainEventPublisher,
+    private readonly forumTopicEventFactoryService: ForumTopicEventFactoryService,
     private readonly forumCounterService: ForumCounterService,
     private readonly forumPermissionService: ForumPermissionService,
     private readonly forumTopicService: ForumTopicService,
@@ -146,9 +146,9 @@ export class ForumTopicFavoriteResolver
       columns: { nickname: true },
     })
 
-    await this.messageDomainEventPublisher.publishInTx(
+    await this.domainEventPublisher.publishInTx(
       tx,
-      this.messageDomainEventFactoryService.buildTopicFavoritedEvent({
+      this.forumTopicEventFactoryService.buildTopicFavoritedEvent({
         receiverUserId,
         actorUserId,
         targetType: this.targetType,

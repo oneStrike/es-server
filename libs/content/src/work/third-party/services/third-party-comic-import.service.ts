@@ -1,0 +1,1982 @@
+import type {
+  DetailComicRequestDto,
+  ThirdPartyComicChapterDto,
+  ThirdPartyComicDetailDto,
+  ThirdPartyComicImageDto,
+  ThirdPartyComicImportChapterItemDto,
+  ThirdPartyComicImportChapterResultDto,
+  ThirdPartyComicImportRequestDto,
+  ThirdPartyComicImportResultDto,
+  ThirdPartyComicImportWorkDraftDto,
+  ThirdPartyComicSourceSnapshotDto,
+} from '@libs/content/work/content/dto/content.dto'
+import type {
+  ThirdPartyComicChapterBindingInput,
+  ThirdPartyComicSourceScopeInput,
+} from '@libs/content/work/third-party/third-party-comic-binding.type'
+import type {
+  HydratedThirdPartyComicImportChapterItem,
+  HydratedThirdPartyComicImportRequest,
+  RemoteImageImportSuccessPayload,
+  ThirdPartyComicChapterImportPlan,
+  ThirdPartyComicImageImportProgressDetail,
+  ThirdPartyComicImportPlannedWork,
+  ThirdPartyComicImportPreflightInput,
+  ThirdPartyComicImportProgressReporter,
+  ThirdPartyComicImportReservation,
+  ThirdPartyComicImportReservationContext,
+  ThirdPartyComicImportResidue,
+  ThirdPartyComicImportTaskContext,
+  ThirdPartyComicImportTaskDraft,
+  ThirdPartyComicPreparedImportTarget,
+  ThirdPartyComicPreparedWorkflowImport,
+  ThirdPartyComicRetryReservationSnapshot,
+  ThirdPartyComicUpdatedChapterSnapshot,
+} from '@libs/content/work/third-party/third-party-comic-import.type'
+import type { ThirdPartyProviderPolicy } from '@libs/content/work/third-party/third-party-provider-policy.type'
+import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  exclusiveIntegrityLock,
+  sharedIntegrityLock,
+  tableIntegrityLock,
+} from '@db/core'
+import { AuthorTypeEnum } from '@libs/content/author/author.constant'
+import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
+import { ContentImportWorkflowType } from '@libs/content/work/content-import/content-import.constant'
+import { ContentImportService } from '@libs/content/work/content-import/content-import.service'
+import { ComicContentService } from '@libs/content/work/content/comic-content.service'
+import {
+  ThirdPartyComicImportChapterActionEnum,
+  ThirdPartyComicImportChapterStatusEnum,
+  ThirdPartyComicImportCoverModeEnum,
+  ThirdPartyComicImportCoverStatusEnum,
+  ThirdPartyComicImportModeEnum,
+  ThirdPartyComicImportStatusEnum,
+  ThirdPartyComicImportWorkStatusEnum,
+} from '@libs/content/work/content/dto/content.dto'
+import { WorkService } from '@libs/content/work/core/work.service'
+import { ComicThirdPartyRegistry } from '@libs/content/work/third-party/providers/comic-third-party.registry'
+import { RemoteImageImportService } from '@libs/content/work/third-party/services/remote-image-import.service'
+import { ThirdPartyComicBindingService } from '@libs/content/work/third-party/services/third-party-comic-binding.service'
+import {
+  resolveThirdPartyComicImportImageTotal,
+  resolveThirdPartyComicImportImageTotals,
+} from '@libs/content/work/third-party/third-party-comic-import-image-total'
+import {
+  BusinessErrorCode,
+  WorkTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
+import { WorkflowErrorCodeEnum } from '@libs/workflow/workflow/workflow-error-facts'
+import { WorkflowOperatorTypeEnum } from '@libs/workflow/workflow/workflow.constant'
+import { WorkflowService } from '@libs/workflow/workflow/workflow.service'
+import { Injectable } from '@nestjs/common'
+import { and, eq, isNull, ne, sql } from 'drizzle-orm'
+
+const SOURCE_COMIC_CONFLICT_MESSAGE =
+  '同源三方作品已有导入任务，请等待任务完成后重试'
+const SOURCE_SCOPE_CONFLICT_MESSAGE =
+  '同一三方来源分组已有导入任务，请等待任务完成后重试'
+const WORK_NAME_CONFLICT_MESSAGE =
+  '同名漫画作品已有导入任务，请等待任务完成后重试'
+const CHAPTER_TITLE_CONFLICT_MESSAGE =
+  '同名漫画章节已有导入任务，请等待任务完成后重试'
+const INVALID_RETRY_RESERVATION_SNAPSHOT_MESSAGE =
+  '破坏性更新前的三方导入任务缺少或不匹配 reservation snapshot，请重新提交导入任务'
+const INVALID_RETRY_RESERVATION_SNAPSHOT_CAUSE_CODE =
+  'third_party_import_retry_invalid_reservation_snapshot'
+
+class ThirdPartyChapterSnapshotDriftError extends Error {}
+
+@Injectable()
+export class ThirdPartyComicImportService {
+  // 注入导入所需的 provider、作品、章节、内容和远程图片服务。
+  constructor(
+    private readonly registry: ComicThirdPartyRegistry,
+    private readonly workService: WorkService,
+    private readonly workChapterService: WorkChapterService,
+    private readonly comicContentService: ComicContentService,
+    private readonly remoteImageImportService: RemoteImageImportService,
+    private readonly bindingService: ThirdPartyComicBindingService,
+    private readonly workflowService: WorkflowService,
+    private readonly contentImportService: ContentImportService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  // 读取 db。
+  private get db() {
+    return this.drizzle.db
+  }
+
+  // 读取 workChapter。
+  private get workChapter() {
+    return this.drizzle.schema.workChapter
+  }
+
+  // 读取 work。
+  private get work() {
+    return this.drizzle.schema.work
+  }
+
+  // 读取 workAuthor。
+  private get workAuthor() {
+    return this.drizzle.schema.workAuthor
+  }
+
+  // 读取 workCategory。
+  private get workCategory() {
+    return this.drizzle.schema.workCategory
+  }
+
+  // 读取 workTag。
+  private get workTag() {
+    return this.drizzle.schema.workTag
+  }
+
+  // 预览第三方漫画导入方案，只读取 provider 数据不写入本地。
+  async previewImport(dto: DetailComicRequestDto) {
+    const provider = this.registry.resolve(dto.platform)
+    const detail = await provider.getDetail(dto)
+    const chapters = await provider.getChapters(dto)
+    const displayPolicy = provider.policy.display
+    const relationCandidates = await this.resolvePreviewRelationCandidates(
+      detail.authors,
+      detail.taxonomies,
+    )
+
+    return {
+      platform: dto.platform,
+      comicId: dto.comicId,
+      sourceSnapshot: {
+        providerComicId: detail.id,
+        providerPathWord: detail.pathWord,
+        providerGroupPathWord: this.resolvePreviewGroup(dto.group),
+        uuid: detail.uuid,
+        fetchedAt: new Date().toISOString(),
+      },
+      detail,
+      groups: detail.groups,
+      chapters,
+      workDraft: {
+        name: detail.name,
+        alias: detail.alias ?? null,
+        description: detail.brief || detail.name,
+        originalSource: `${displayPolicy.sourceLabel}:${detail.pathWord}`,
+        remark: `${displayPolicy.workRemarkPrefix}：${displayPolicy.displayName} ${detail.pathWord}`,
+        suggestedRegion: detail.region ?? null,
+        suggestedSerialStatus:
+          this.resolveSuggestedSerialStatus(detail.status) ?? null,
+      },
+      coverOptions: {
+        provider: detail.cover
+          ? {
+              providerImageId: this.buildCoverProviderImageId(detail),
+              url: detail.cover,
+            }
+          : null,
+        localRequired: !detail.cover,
+      },
+      relationCandidates,
+      missingLocalFields: [
+        'authorIds',
+        'categoryIds',
+        'tagIds',
+        'language',
+        'region',
+        'serialStatus',
+        'viewRule',
+      ],
+    }
+  }
+
+  private async resolvePreviewRelationCandidates(
+    authorNames: string[],
+    taxonomyNames: string[],
+  ) {
+    const [authors, categories, tags] = await Promise.all([
+      Promise.all(
+        authorNames.map(async (providerName) => ({
+          providerName,
+          localCandidates: await this.findPreviewAuthorCandidates(providerName),
+        })),
+      ),
+      Promise.all(
+        taxonomyNames.map(async (providerName) => ({
+          providerName,
+          localCandidates:
+            await this.findPreviewCategoryCandidates(providerName),
+        })),
+      ),
+      Promise.all(
+        taxonomyNames.map(async (providerName) => ({
+          providerName,
+          localCandidates: await this.findPreviewTagCandidates(providerName),
+        })),
+      ),
+    ])
+
+    return {
+      authors,
+      categories,
+      tags,
+    }
+  }
+
+  private async findPreviewAuthorCandidates(providerName: string) {
+    return this.db
+      .select({
+        id: this.workAuthor.id,
+        name: this.workAuthor.name,
+      })
+      .from(this.workAuthor)
+      .where(
+        and(
+          eq(this.workAuthor.name, providerName),
+          eq(this.workAuthor.isEnabled, true),
+          isNull(this.workAuthor.deletedAt),
+          sql`${this.workAuthor.type} @> ARRAY[${AuthorTypeEnum.MANGA}]::smallint[]`,
+        ),
+      )
+      .orderBy(this.workAuthor.id)
+  }
+
+  private async findPreviewCategoryCandidates(providerName: string) {
+    return this.db
+      .select({
+        id: this.workCategory.id,
+        name: this.workCategory.name,
+      })
+      .from(this.workCategory)
+      .where(
+        and(
+          eq(this.workCategory.name, providerName),
+          eq(this.workCategory.isEnabled, true),
+          sql`${this.workCategory.contentType} @> ARRAY[${WorkTypeEnum.COMIC}]::smallint[]`,
+        ),
+      )
+      .orderBy(this.workCategory.id)
+  }
+
+  private async findPreviewTagCandidates(providerName: string) {
+    return this.db
+      .select({
+        id: this.workTag.id,
+        name: this.workTag.name,
+      })
+      .from(this.workTag)
+      .where(
+        and(
+          eq(this.workTag.name, providerName),
+          eq(this.workTag.isEnabled, true),
+        ),
+      )
+      .orderBy(this.workTag.id)
+  }
+
+  // 确认第三方漫画导入，只创建工作流任务，不在 HTTP 请求内执行重型导入。
+  async confirmImport(dto: ThirdPartyComicImportRequestDto, userId: number) {
+    const hydratedDto = await this.hydrateImportRequestFromProvider(dto)
+    resolveThirdPartyComicImportImageTotals(hydratedDto.chapters)
+    const draft = await this.buildImportTaskDraft(hydratedDto)
+    const job = await this.workflowService.createDraftWithResources(
+      {
+        workflowType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+        displayName: draft.displayName,
+        operator: {
+          type: WorkflowOperatorTypeEnum.ADMIN,
+          userId,
+        },
+        selectedItemCount: hydratedDto.chapters.length,
+        summary: {
+          sourceType: ContentImportWorkflowType.THIRD_PARTY_IMPORT,
+        },
+        conflictKeys: draft.reservation.conflictKeys,
+      },
+      async ({ tx, workflowJob }) => {
+        await this.contentImportService.createThirdPartyImportJobWithDb(
+          tx,
+          workflowJob,
+          {
+            jobId: workflowJob.jobId,
+            dto: hydratedDto,
+          },
+        )
+      },
+    )
+    return this.workflowService.confirmDraft({ jobId: job.jobId })
+  }
+
+  // 确认创建 workflow 时重新读取 provider 章节列表，前端只提交用户选择。
+  private async hydrateImportRequestFromProvider(
+    dto: ThirdPartyComicImportRequestDto,
+  ): Promise<HydratedThirdPartyComicImportRequest> {
+    const provider = this.registry.resolve(dto.platform)
+    const group = this.resolveSourceGroupFromSnapshot(dto.sourceSnapshot)
+    const providerChapters = await provider.getChapters({
+      comicId: dto.comicId,
+      group,
+      platform: dto.platform,
+    })
+    const providerChapterById = new Map(
+      providerChapters.map((chapter) => [chapter.providerChapterId, chapter]),
+    )
+    const chapters = dto.chapters.map((chapter) => {
+      const providerChapter = providerChapterById.get(chapter.providerChapterId)
+      if (!providerChapter) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '三方章节不存在或已变化，请重新预览后再导入',
+        )
+      }
+      return this.hydrateImportChapter(chapter, providerChapter)
+    })
+
+    return {
+      ...dto,
+      chapters,
+    }
+  }
+
+  private hydrateImportChapter(
+    chapter: ThirdPartyComicImportChapterItemDto,
+    providerChapter: ThirdPartyComicChapterDto,
+  ): HydratedThirdPartyComicImportChapterItem {
+    const hydratedChapter = {
+      ...chapter,
+      imageCount: providerChapter.imageCount,
+      group: providerChapter.group ?? undefined,
+      chapterApiVersion: providerChapter.chapterApiVersion ?? undefined,
+      datetimeCreated: providerChapter.datetimeCreated ?? undefined,
+    }
+    resolveThirdPartyComicImportImageTotal(hydratedChapter)
+    return hydratedChapter
+  }
+
+  // 校验重试任务持久化的 reservation snapshot 与 payload 当前规则完全一致。
+  async validateRetryReservationSnapshot(
+    dto: HydratedThirdPartyComicImportRequest,
+    snapshot: ThirdPartyComicRetryReservationSnapshot,
+  ) {
+    let expectedReservation: ThirdPartyComicImportReservation
+    try {
+      expectedReservation = await this.buildImportReservationSnapshot(dto)
+    } catch (error) {
+      this.throwInvalidRetryReservationSnapshot(error)
+    }
+
+    if (
+      snapshot.dedupeKey !== expectedReservation.dedupeKey ||
+      snapshot.serialKey !== expectedReservation.serialKey ||
+      !this.areSameStringSets(
+        snapshot.conflictKeys,
+        expectedReservation.conflictKeys,
+      )
+    ) {
+      this.throwInvalidRetryReservationSnapshot({
+        expectedConflictKeys: expectedReservation.conflictKeys,
+        expectedDedupeKey: expectedReservation.dedupeKey,
+        expectedSerialKey: expectedReservation.serialKey,
+        receivedConflictKeys: snapshot.conflictKeys,
+        receivedDedupeKey: snapshot.dedupeKey,
+        receivedSerialKey: snapshot.serialKey,
+      })
+    }
+  }
+
+  // 执行第三方漫画导入 workflow，任一失败都会抛出并交由 workflow 处理回滚。
+  async executeImportTask(
+    dto: HydratedThirdPartyComicImportRequest,
+    context: ThirdPartyComicImportTaskContext,
+  ): Promise<ThirdPartyComicImportResultDto> {
+    const prepared = await this.prepareWorkflowImport(dto, context)
+    const chapterResults: ThirdPartyComicImportChapterResultDto[] = []
+    for (const chapterPlan of prepared.chapterPlans) {
+      await context.assertNotCancelled()
+      chapterResults.push(
+        await this.importWorkflowChapter(prepared, chapterPlan, context),
+      )
+    }
+
+    await context.updateProgress({
+      percent: 100,
+      code: WorkflowErrorCodeEnum.THIRD_PARTY_IMPORT_COMPLETED,
+      context: { workflowType: context.workflowType },
+      detail: null,
+    })
+
+    return {
+      mode: dto.mode,
+      status: ThirdPartyComicImportStatusEnum.SUCCESS,
+      work: prepared.work,
+      cover: prepared.cover ?? null,
+      chapters: chapterResults,
+    }
+  }
+
+  // 准备 workflow 导入的共享作品、来源绑定和章节图片计划。
+  async prepareWorkflowImport(
+    dto: HydratedThirdPartyComicImportRequest,
+    context: ThirdPartyComicImportTaskContext,
+  ): Promise<ThirdPartyComicPreparedWorkflowImport> {
+    const provider = this.registry.resolve(dto.platform)
+    const detail = await provider.getDetail({
+      comicId: dto.comicId,
+      platform: dto.platform,
+    })
+    await context.assertNotCancelled()
+    const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
+      dto.sourceSnapshot,
+    )
+    await this.assertImportStillAllowed(dto, providerGroupPathWord)
+    const preparedWork = await this.prepareWork(
+      dto,
+      detail,
+      provider.policy,
+      context,
+    )
+    const workResult = preparedWork.work
+
+    if (!workResult.id) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        workResult.message ?? '作品导入准备失败',
+      )
+    }
+
+    const sourceBinding = await this.bindWorkSource(
+      dto,
+      detail,
+      workResult.id,
+      providerGroupPathWord,
+      context,
+    )
+    const chapterPlans = await this.buildChapterImportPlans(dto, context)
+    return {
+      cover: preparedWork.cover,
+      mode: dto.mode,
+      providerPolicy: provider.policy,
+      work: workResult,
+      sourceBinding,
+      chapterPlans,
+    }
+  }
+
+  // 从已持久化的导入目标恢复 workflow prepare 结果，供自动重试 attempt 复用。
+  async restorePreparedWorkflowImport(
+    dto: HydratedThirdPartyComicImportRequest,
+    target: ThirdPartyComicPreparedImportTarget,
+    context: ThirdPartyComicImportTaskContext,
+  ): Promise<ThirdPartyComicPreparedWorkflowImport> {
+    const chapterPlans = await this.buildChapterImportPlans(dto, context)
+    return {
+      cover: target.cover,
+      mode: dto.mode,
+      providerPolicy: this.registry.resolve(dto.platform).policy,
+      work: target.work,
+      sourceBinding: target.sourceBinding,
+      chapterPlans,
+    }
+  }
+
+  // 为 workflow 导入创建图片进度 reporter。
+  createImportImageProgressReporter(
+    context: ThirdPartyComicImportTaskContext,
+    chapterPlans: ThirdPartyComicChapterImportPlan[],
+  ) {
+    return context.createProgressReporter({
+      code: WorkflowErrorCodeEnum.CONTENT_IMPORT_IMAGE_PROGRESS_UPDATED,
+      startPercent: 10,
+      endPercent: 95,
+      total: this.countPlannedImages(chapterPlans),
+      stage: 'image-import',
+      unit: 'image',
+    })
+  }
+
+  // 执行 workflow 中的单章节导入，调用方负责按章节回滚和标记条目状态。
+  async importWorkflowChapter(
+    prepared: ThirdPartyComicPreparedWorkflowImport,
+    chapterPlan: ThirdPartyComicChapterImportPlan,
+    context: ThirdPartyComicImportTaskContext,
+    _imageProgressReporter?: ThirdPartyComicImportProgressReporter,
+  ) {
+    if (!prepared.work.id) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '作品导入准备失败',
+      )
+    }
+    const chapterPlanWithContent = await this.readChapterImportContent(
+      chapterPlan,
+      context,
+    )
+    const imageProgressReporter = this.createImportImageProgressReporter(
+      context,
+      [chapterPlanWithContent],
+    )
+    return this.importChapter(
+      chapterPlanWithContent,
+      prepared.work.id,
+      prepared.sourceBinding.id,
+      prepared.sourceBinding.providerGroupPathWord,
+      context,
+      imageProgressReporter,
+      prepared.providerPolicy,
+    )
+  }
+
+  // 回滚失败或取消的第三方漫画导入任务。
+  async rollbackImportTask(
+    context: ThirdPartyComicImportTaskContext,
+    _error?: unknown,
+  ) {
+    const residue = await context.getResidue()
+    const createdChapterBindingIds = [
+      ...(residue.createdChapterBindingIds ?? []),
+    ].reverse()
+    if (createdChapterBindingIds.length > 0) {
+      await context.assertStillOwned()
+      await this.bindingService.softDeleteChapterBindings(
+        createdChapterBindingIds,
+      )
+    }
+
+    const createdChapterIds = [...(residue.createdChapterIds ?? [])].reverse()
+    if (createdChapterIds.length > 0) {
+      await context.assertStillOwned()
+      await this.workChapterService.deleteChapters(
+        createdChapterIds,
+        WorkTypeEnum.COMIC,
+      )
+    }
+
+    for (const snapshot of [...(residue.updatedChapters ?? [])].reverse()) {
+      await context.assertStillOwned()
+      await this.restoreChapterSnapshot(snapshot)
+    }
+
+    const createdSourceBindingIds = [
+      ...(residue.createdSourceBindingIds ?? []),
+    ].reverse()
+    if (createdSourceBindingIds.length > 0) {
+      await context.assertStillOwned()
+      await this.bindingService.softDeleteSourceBindings(
+        createdSourceBindingIds,
+      )
+    }
+
+    const createdWorkIds = [...(residue.createdWorkIds ?? [])].reverse()
+    for (const workId of createdWorkIds) {
+      await context.assertStillOwned()
+      await this.workService.deleteWork(workId, WorkTypeEnum.COMIC)
+    }
+
+    const cleanupFailures: string[] = []
+    for (const uploadedFile of [...(residue.uploadedFiles ?? [])].reverse()) {
+      try {
+        await context.assertStillOwned()
+        await this.remoteImageImportService.deleteImportedFile(uploadedFile)
+        await context.markUploadedFileResidueCleaned(uploadedFile)
+      } catch (error) {
+        await context
+          .markUploadedFileResidueCleanupFailed(
+            uploadedFile,
+            this.stringifyUnknownError(error),
+          )
+          .catch(() => undefined)
+        cleanupFailures.push(
+          `${uploadedFile.provider}:${uploadedFile.filePath} (${this.stringifyUnknownError(
+            error,
+          )})`,
+        )
+      }
+    }
+
+    if (cleanupFailures.length > 0) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        `存在无法自动清理的上传文件: ${cleanupFailures.join(', ')}`,
+      )
+    }
+  }
+
+  // 准备本地作品和封面，失败时抛出并交由 workflow 回滚。
+  private async prepareWork(
+    dto: HydratedThirdPartyComicImportRequest,
+    detail: ThirdPartyComicDetailDto,
+    providerPolicy: ThirdPartyProviderPolicy,
+    context: ThirdPartyComicImportTaskContext,
+  ) {
+    if (dto.mode === ThirdPartyComicImportModeEnum.ATTACH_TO_EXISTING) {
+      if (!dto.targetWorkId) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '挂载已有作品必须选择目标作品',
+        )
+      }
+
+      await this.workService.getWorkDetail(dto.targetWorkId, {
+        bypassVisibilityCheck: true,
+        expectedType: WorkTypeEnum.COMIC,
+      })
+      return {
+        cover: {
+          status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+          filePath: null,
+          errorCode: null,
+          message: '挂载已有作品不修改作品封面',
+        },
+        work: {
+          id: dto.targetWorkId,
+          status: ThirdPartyComicImportWorkStatusEnum.ATTACHED,
+          errorCode: null,
+          message: '已挂载到本地作品',
+        },
+      }
+    }
+
+    if (!dto.workDraft) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '新建作品必须提交作品草稿',
+      )
+    }
+
+    let coverFailureMessage = '新建作品封面处理失败'
+    let coverFailureCause: Error | string | undefined
+    let coverPath: string | undefined
+    try {
+      const coverImport = await this.resolveWorkCover(
+        dto,
+        detail,
+        context,
+        providerPolicy,
+      )
+      coverPath = coverImport?.filePath
+      if (coverImport?.deleteTarget) {
+        await this.recordUploadedFile(context, coverImport.deleteTarget)
+      }
+    } catch (error) {
+      coverPath = undefined
+      if (error instanceof Error) {
+        coverFailureMessage = error.message
+        coverFailureCause = error
+      } else {
+        coverFailureCause = this.stringifyUnknownError(error)
+      }
+    }
+
+    if (!coverPath) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        coverFailureMessage,
+        { cause: coverFailureCause },
+      )
+    }
+
+    await this.assertWorkNameAvailable(dto.workDraft.name)
+    await context.assertStillOwned()
+    const workId = await this.workService.createWorkReturningId(
+      this.toCreateWorkDto(dto.workDraft, coverPath),
+    )
+    await this.recordCreatedWork(context, workId)
+
+    return {
+      cover: {
+        status:
+          dto.cover?.mode === ThirdPartyComicImportCoverModeEnum.LOCAL
+            ? ThirdPartyComicImportCoverStatusEnum.LOCAL
+            : ThirdPartyComicImportCoverStatusEnum.UPLOADED,
+        filePath: coverPath,
+        errorCode: null,
+        message: '作品封面处理成功',
+      },
+      work: {
+        id: workId,
+        status: ThirdPartyComicImportWorkStatusEnum.CREATED,
+        errorCode: null,
+        message: '作品创建成功',
+      },
+    }
+  }
+
+  // 为本次导入确认本地作品的三方来源绑定。
+  private async bindWorkSource(
+    dto: HydratedThirdPartyComicImportRequest,
+    detail: ThirdPartyComicDetailDto,
+    workId: number,
+    providerGroupPathWord: string,
+    context: ThirdPartyComicImportTaskContext,
+  ) {
+    const sourceSnapshot = {
+      ...dto.sourceSnapshot,
+      providerComicId: detail.id,
+      providerPathWord: detail.pathWord,
+      providerGroupPathWord,
+      uuid: detail.uuid,
+      fetchedAt:
+        typeof dto.sourceSnapshot.fetchedAt === 'string'
+          ? dto.sourceSnapshot.fetchedAt
+          : new Date().toISOString(),
+    }
+    await this.assertSourceScopeAvailable(
+      {
+        platform: dto.platform,
+        providerComicId: detail.id,
+        providerGroupPathWord,
+      },
+      workId,
+    )
+    await context.assertStillOwned()
+    const sourceBinding = await this.bindingService.createOrGetSourceBinding({
+      workId,
+      platform: dto.platform,
+      providerComicId: detail.id,
+      providerPathWord: detail.pathWord,
+      providerGroupPathWord,
+      providerUuid: detail.uuid,
+      sourceSnapshot,
+    })
+
+    if (sourceBinding.created) {
+      await this.recordCreatedSourceBinding(context, sourceBinding.id)
+    }
+
+    return {
+      id: sourceBinding.id,
+      providerGroupPathWord,
+    }
+  }
+
+  // 导入单个章节，章节失败会中断当前 item 并交由 workflow 回滚。
+  private async importChapter(
+    chapterPlan: ThirdPartyComicChapterImportPlan,
+    workId: number,
+    sourceBindingId: number,
+    sourceGroup: string,
+    context: ThirdPartyComicImportTaskContext,
+    imageProgressReporter: ThirdPartyComicImportProgressReporter,
+    providerPolicy: ThirdPartyProviderPolicy,
+  ) {
+    const { chapter } = chapterPlan
+    const localChapterId = await this.prepareChapter(
+      chapter,
+      workId,
+      sourceBindingId,
+      sourceGroup,
+      context,
+    )
+    const cover = await this.importChapterCover(chapter, providerPolicy)
+
+    if (!chapter.importImages) {
+      return {
+        providerChapterId: chapter.providerChapterId,
+        localChapterId,
+        action: chapter.action,
+        status: ThirdPartyComicImportChapterStatusEnum.METADATA_ONLY,
+        cover,
+        imageTotal: 0,
+        imageSucceeded: 0,
+        errorCode: null,
+        message: '章节元数据已处理，未导入图片',
+      }
+    }
+
+    await context.assertNotCancelled()
+    const filePaths = await this.remoteImageImportService.importImages(
+      chapterPlan.images,
+      ['work', 'comic', String(workId), 'chapter', String(localChapterId)],
+      async (importedFile) => {
+        await this.recordUploadedFile(context, importedFile.deleteTarget)
+        await imageProgressReporter.advance({
+          detail: this.toImageProgressDetail(chapterPlan, importedFile),
+        })
+      },
+      {
+        hostPolicy: providerPolicy.imageHostPolicy,
+        throttleChannel: providerPolicy.throttle.imageChannel,
+        assertNotCancelled: async () => context.assertNotCancelled(),
+      },
+    )
+    await context.assertNotCancelled()
+    await context.assertStillOwned()
+    await this.comicContentService.replaceChapterContents(
+      localChapterId,
+      filePaths,
+    )
+
+    return {
+      providerChapterId: chapter.providerChapterId,
+      localChapterId,
+      action: chapter.action,
+      status: ThirdPartyComicImportChapterStatusEnum.CONTENT_IMPORTED,
+      cover,
+      imageTotal: chapterPlan.imageTotal,
+      imageSucceeded: filePaths.length,
+      errorCode: null,
+      message: '章节图片导入成功',
+    }
+  }
+
+  // 只生成章节元数据计划；章节内容在 item 执行期逐章读取。
+  private async buildChapterImportPlans(
+    dto: HydratedThirdPartyComicImportRequest,
+    context: ThirdPartyComicImportTaskContext,
+  ): Promise<ThirdPartyComicChapterImportPlan[]> {
+    const chapterTotal = dto.chapters.length
+    const plans: ThirdPartyComicChapterImportPlan[] = []
+    for (const [index, chapter] of dto.chapters.entries()) {
+      await context.assertNotCancelled()
+      this.assertChapterContentOverwriteAllowed(chapter)
+      plans.push({
+        chapter,
+        chapterIndex: index + 1,
+        chapterTotal,
+        images: [],
+        imageTotal: resolveThirdPartyComicImportImageTotal(chapter),
+      })
+    }
+    return plans
+  }
+
+  // 在 item 执行期读取章节图片，保持预览阶段只冻结章节元数据。
+  private async readChapterImportContent(
+    chapterPlan: ThirdPartyComicChapterImportPlan,
+    context: ThirdPartyComicImportTaskContext,
+  ) {
+    const { chapter } = chapterPlan
+    if (!chapter.importImages) {
+      return chapterPlan
+    }
+    await context.assertNotCancelled()
+    const content = await this.registry
+      .resolve(context.payload.platform)
+      .getChapterContent({
+        chapterId: chapter.providerChapterId,
+        chapterApiVersion: chapter.chapterApiVersion,
+        comicId: context.payload.comicId,
+        platform: context.payload.platform,
+      })
+    const images = this.sortImages(content.images)
+    chapterPlan.images = images
+    chapterPlan.imageTotal = images.length
+    return chapterPlan
+  }
+
+  // 更新章节内容前必须显式确认覆盖，且校验早于远端内容读取。
+  private assertChapterContentOverwriteAllowed(
+    chapter: ThirdPartyComicImportChapterItemDto,
+  ) {
+    if (
+      chapter.action === ThirdPartyComicImportChapterActionEnum.UPDATE &&
+      !chapter.overwriteContent
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '更新章节内容必须确认覆盖',
+      )
+    }
+  }
+
+  // 统计计划中的全局图片总量，作为 workflow 整体进度分母。
+  private countPlannedImages(plans: ThirdPartyComicChapterImportPlan[]) {
+    return plans.reduce((total, plan) => total + plan.imageTotal, 0)
+  }
+
+  // 将单张图片导入结果转换为可展示且不含敏感 query 的进度详情。
+  private toImageProgressDetail(
+    chapterPlan: ThirdPartyComicChapterImportPlan,
+    importedFile: RemoteImageImportSuccessPayload,
+  ): ThirdPartyComicImageImportProgressDetail {
+    return {
+      providerChapterId: chapterPlan.chapter.providerChapterId,
+      chapterIndex: chapterPlan.chapterIndex,
+      chapterTotal: chapterPlan.chapterTotal,
+      providerImageId: importedFile.image.providerImageId,
+      imageIndex: importedFile.imageIndex,
+      imageTotal: importedFile.imageTotal,
+      safeSourceUrl: importedFile.safeSourceUrl,
+      filePath: importedFile.filePath,
+      fileSize: importedFile.fileSize,
+      mimeType: importedFile.mimeType,
+    }
+  }
+
+  // 创建或更新本地章节元数据，并返回本地章节 ID。
+  private async prepareChapter(
+    chapter: ThirdPartyComicImportChapterItemDto,
+    workId: number,
+    sourceBindingId: number,
+    sourceGroup: string,
+    context: ThirdPartyComicImportTaskContext,
+  ) {
+    let localChapterId: number
+    if (chapter.action === ThirdPartyComicImportChapterActionEnum.UPDATE) {
+      if (!chapter.targetChapterId) {
+        throw new Error('更新章节必须选择目标章节')
+      }
+      await this.assertChapterTitleAvailable(
+        workId,
+        chapter.title,
+        chapter.targetChapterId,
+      )
+      await this.appendResidueList(
+        context,
+        'updatedChapters',
+        await this.readChapterSnapshot(chapter.targetChapterId, workId),
+      )
+      await context.assertStillOwned()
+      await this.workChapterService.updateChapter(
+        {
+          id: chapter.targetChapterId,
+          ...this.toChapterUpdate(chapter),
+        },
+        WorkTypeEnum.COMIC,
+      )
+      localChapterId = chapter.targetChapterId
+    } else {
+      await this.assertChapterTitleAvailable(workId, chapter.title)
+      await context.assertStillOwned()
+      const createdChapterId =
+        await this.workChapterService.createChapterReturningId(
+          {
+            ...this.toChapterUpdate(chapter),
+            isPublished: false,
+            workId,
+            workType: WorkTypeEnum.COMIC,
+          },
+          WorkTypeEnum.COMIC,
+        )
+      await this.recordCreatedChapter(context, createdChapterId)
+      localChapterId = createdChapterId
+    }
+
+    await this.recordChapterBinding(context, {
+      chapterId: localChapterId,
+      providerChapterId: chapter.providerChapterId,
+      remoteSortOrder: chapter.sortOrder,
+      snapshot: this.toChapterBindingSnapshot(chapter, sourceGroup),
+      workThirdPartySourceBindingId: sourceBindingId,
+    })
+
+    return localChapterId
+  }
+
+  // 按 provider 声明的章节封面能力解析导入结果。
+  private async importChapterCover(
+    chapter: ThirdPartyComicImportChapterItemDto,
+    providerPolicy: ThirdPartyProviderPolicy,
+  ) {
+    if (
+      !chapter.cover ||
+      chapter.cover.mode === ThirdPartyComicImportCoverModeEnum.SKIP
+    ) {
+      return {
+        status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+        filePath: null,
+        errorCode: null,
+        message: '章节封面未导入',
+      }
+    }
+    if (chapter.cover.mode === ThirdPartyComicImportCoverModeEnum.LOCAL) {
+      return {
+        status: ThirdPartyComicImportCoverStatusEnum.LOCAL,
+        filePath: chapter.cover.localPath ?? null,
+        errorCode: null,
+        message: '使用本地章节封面',
+      }
+    }
+
+    if (providerPolicy.chapterCover.mode === 'unsupported') {
+      return {
+        status: ThirdPartyComicImportCoverStatusEnum.FAILED,
+        filePath: null,
+        errorCode: 'CHAPTER_COVER_UNAVAILABLE',
+        message: providerPolicy.chapterCover.reason,
+      }
+    }
+
+    return {
+      status: ThirdPartyComicImportCoverStatusEnum.FAILED,
+      filePath: null,
+      errorCode: 'CHAPTER_COVER_UNAVAILABLE',
+      message: '章节封面远程导入缺少 provider 图片地址',
+    }
+  }
+
+  // 根据用户选择解析作品封面路径，provider 封面会先下载到本地上传并返回删除句柄。
+  private async resolveWorkCover(
+    dto: HydratedThirdPartyComicImportRequest,
+    detail: ThirdPartyComicDetailDto,
+    context: ThirdPartyComicImportTaskContext,
+    providerPolicy: ThirdPartyProviderPolicy,
+  ) {
+    if (dto.cover?.mode === ThirdPartyComicImportCoverModeEnum.LOCAL) {
+      return {
+        filePath: dto.cover.localPath,
+      }
+    }
+
+    if (
+      dto.cover?.mode !== ThirdPartyComicImportCoverModeEnum.PROVIDER ||
+      dto.cover.providerImageId !== this.buildCoverProviderImageId(detail) ||
+      !detail.cover
+    ) {
+      return undefined
+    }
+
+    const importedCover = await this.remoteImageImportService.importImage(
+      detail.cover,
+      ['comic', 'image', formatDateOnlyInAppTimeZone(new Date())],
+      {
+        hostPolicy: providerPolicy.imageHostPolicy,
+        throttleChannel: providerPolicy.throttle.imageChannel,
+        assertNotCancelled: async () => context.assertNotCancelled(),
+      },
+    )
+    return {
+      filePath: importedCover.upload.filePath,
+      deleteTarget: importedCover.deleteTarget,
+    }
+  }
+
+  // 解析预览和绑定使用的三方分组标识。
+  private resolvePreviewGroup(group?: string) {
+    return group?.trim() || 'default'
+  }
+
+  // 确认导入必须携带预览时生成的三方分组标识。
+  private resolveSourceGroupFromSnapshot(
+    sourceSnapshot: ThirdPartyComicSourceSnapshotDto,
+  ) {
+    const providerGroupPathWord = sourceSnapshot.providerGroupPathWord
+    if (typeof providerGroupPathWord === 'string') {
+      const normalizedGroup = providerGroupPathWord.trim()
+      if (normalizedGroup) {
+        return normalizedGroup
+      }
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '三方来源分组缺失，请重新预览后再导入',
+    )
+  }
+
+  // 构建导入任务 reservation，并在入队前完成本地冲突预检。
+  async buildImportReservationSnapshot(
+    dto: HydratedThirdPartyComicImportRequest,
+  ): Promise<ThirdPartyComicImportReservation> {
+    const context = await this.resolveImportReservationContext(dto)
+    return this.buildImportReservationFromContext(context)
+  }
+
+  // 构建导入 workflow 草稿，复用预检结果生成展示名与 reservation。
+  private async buildImportTaskDraft(
+    dto: HydratedThirdPartyComicImportRequest,
+  ): Promise<ThirdPartyComicImportTaskDraft> {
+    const context = await this.resolveImportReservationContext(dto)
+    await this.assertImportPreflight({
+      dto,
+      plannedWork: context.plannedWork,
+      providerComicId: context.providerComicId,
+      providerGroupPathWord: context.providerGroupPathWord,
+    })
+    return {
+      displayName: context.plannedWork.name,
+      reservation: this.buildImportReservationFromContext(context),
+    }
+  }
+
+  private async resolveImportReservationContext(
+    dto: HydratedThirdPartyComicImportRequest,
+  ): Promise<ThirdPartyComicImportReservationContext> {
+    const platform = this.normalizeReservationText(dto.platform, '平台代码')
+    const providerComicId = this.resolveProviderComicId(dto)
+    const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
+      dto.sourceSnapshot,
+    )
+    const plannedWork = await this.resolvePlannedWork(dto)
+    const chapterTitles = this.resolveSubmittedChapterTitles(dto.chapters)
+
+    return {
+      dto,
+      platform,
+      providerComicId,
+      providerGroupPathWord,
+      plannedWork,
+      chapterTitles,
+    }
+  }
+
+  private buildImportReservationFromContext(
+    context: ThirdPartyComicImportReservationContext,
+  ): ThirdPartyComicImportReservation {
+    const {
+      chapterTitles,
+      plannedWork,
+      platform,
+      providerComicId,
+      providerGroupPathWord,
+    } = context
+    const sourceComicKey = this.buildSourceComicConflictKey(
+      platform,
+      providerComicId,
+    )
+    const sourceScopeKey = this.buildSourceScopeConflictKey(
+      platform,
+      providerComicId,
+      providerGroupPathWord,
+    )
+    const conflictMessageByKey: Record<string, string> = {
+      [sourceComicKey]: SOURCE_COMIC_CONFLICT_MESSAGE,
+      [sourceScopeKey]: SOURCE_SCOPE_CONFLICT_MESSAGE,
+    }
+
+    const conflictKeys = [sourceComicKey, sourceScopeKey]
+    const workNameKey = this.buildWorkNameConflictKey(plannedWork.name)
+    conflictKeys.push(workNameKey)
+    conflictMessageByKey[workNameKey] = WORK_NAME_CONFLICT_MESSAGE
+
+    for (const chapterTitle of chapterTitles) {
+      const workNameChapterKey = this.buildChapterTitleWorkNameConflictKey(
+        plannedWork.name,
+        chapterTitle,
+      )
+      conflictKeys.push(workNameChapterKey)
+      conflictMessageByKey[workNameChapterKey] = CHAPTER_TITLE_CONFLICT_MESSAGE
+
+      if (plannedWork.id !== null) {
+        const workIdChapterKey = this.buildChapterTitleWorkIdConflictKey(
+          plannedWork.id,
+          chapterTitle,
+        )
+        conflictKeys.push(workIdChapterKey)
+        conflictMessageByKey[workIdChapterKey] = CHAPTER_TITLE_CONFLICT_MESSAGE
+      }
+    }
+
+    return {
+      dedupeKey: sourceComicKey,
+      dedupeConflictMessage: SOURCE_COMIC_CONFLICT_MESSAGE,
+      serialKey: `platform:${platform}`,
+      conflictKeys,
+      conflictMessageByKey,
+    }
+  }
+
+  private areSameStringSets(left: string[], right: string[]) {
+    if (left.length !== right.length) {
+      return false
+    }
+    const leftSet = new Set(left)
+    if (leftSet.size !== left.length) {
+      return false
+    }
+    return right.every((item) => leftSet.has(item))
+  }
+
+  private throwInvalidRetryReservationSnapshot(cause: unknown): never {
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      INVALID_RETRY_RESERVATION_SNAPSHOT_MESSAGE,
+      {
+        cause: {
+          code: INVALID_RETRY_RESERVATION_SNAPSHOT_CAUSE_CODE,
+          detail:
+            cause instanceof Error
+              ? cause.message
+              : 'reservation snapshot mismatch',
+          value: cause,
+        },
+      },
+    )
+  }
+
+  // 入队前按导入模式执行本地事实预检。
+  private async assertImportPreflight(
+    input: ThirdPartyComicImportPreflightInput,
+  ) {
+    const { dto, plannedWork, providerComicId, providerGroupPathWord } = input
+    if (dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW) {
+      await this.assertWorkNameAvailable(plannedWork.name)
+      await this.assertSourceScopeAvailable(
+        {
+          platform: dto.platform,
+          providerComicId,
+          providerGroupPathWord,
+        },
+        null,
+      )
+      return
+    }
+
+    if (plannedWork.id === null) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '挂载已有作品必须选择目标作品',
+      )
+    }
+
+    await this.assertSourceScopeAvailable(
+      {
+        platform: dto.platform,
+        providerComicId,
+        providerGroupPathWord,
+      },
+      plannedWork.id,
+    )
+    for (const chapter of dto.chapters) {
+      await this.assertChapterTitleAvailable(
+        plannedWork.id,
+        chapter.title,
+        chapter.action === ThirdPartyComicImportChapterActionEnum.UPDATE
+          ? chapter.targetChapterId
+          : undefined,
+      )
+    }
+  }
+
+  // 执行期在真实写入前重新检查本地冲突，避免排队期间状态漂移。
+  private async assertImportStillAllowed(
+    dto: HydratedThirdPartyComicImportRequest,
+    providerGroupPathWord: string,
+  ) {
+    const plannedWork = await this.resolvePlannedWork(dto)
+    this.resolveSubmittedChapterTitles(dto.chapters)
+
+    if (dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW) {
+      await this.assertWorkNameAvailable(plannedWork.name)
+      await this.assertSourceScopeAvailable(
+        {
+          platform: dto.platform,
+          providerComicId: this.resolveProviderComicId(dto),
+          providerGroupPathWord,
+        },
+        null,
+      )
+      return
+    }
+
+    if (plannedWork.id === null) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '挂载已有作品必须选择目标作品',
+      )
+    }
+
+    await this.assertSourceScopeAvailable(
+      {
+        platform: dto.platform,
+        providerComicId: this.resolveProviderComicId(dto),
+        providerGroupPathWord,
+      },
+      plannedWork.id,
+    )
+    for (const chapter of dto.chapters) {
+      await this.assertChapterTitleAvailable(
+        plannedWork.id,
+        chapter.title,
+        chapter.action === ThirdPartyComicImportChapterActionEnum.UPDATE
+          ? chapter.targetChapterId
+          : undefined,
+      )
+    }
+  }
+
+  // 解析本次导入计划要影响的本地作品。
+  private async resolvePlannedWork(
+    dto: HydratedThirdPartyComicImportRequest | ThirdPartyComicImportRequestDto,
+  ): Promise<ThirdPartyComicImportPlannedWork> {
+    if (dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW) {
+      if (!dto.workDraft?.name) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '新建作品必须提交作品名称',
+        )
+      }
+      return {
+        id: null,
+        name: this.normalizeReservationText(dto.workDraft.name, '作品名称'),
+      }
+    }
+
+    if (!dto.targetWorkId) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '挂载已有作品必须选择目标作品',
+      )
+    }
+    const work = await this.readLiveComicWork(dto.targetWorkId)
+    return {
+      id: work.id,
+      name: this.normalizeReservationText(work.name, '作品名称'),
+    }
+  }
+
+  // 解析提交章节标题并阻断同一提交内的重复标题。
+  private resolveSubmittedChapterTitles(
+    chapters: ThirdPartyComicImportChapterItemDto[],
+  ) {
+    const titles: string[] = []
+    const seenTitles = new Set<string>()
+    for (const chapter of chapters) {
+      const title = this.normalizeReservationText(chapter.title, '章节标题')
+      if (seenTitles.has(title)) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          `提交章节存在同名标题：${title}`,
+        )
+      }
+      seenTitles.add(title)
+      titles.push(title)
+    }
+    return titles
+  }
+
+  // 确认同名漫画作品当前不存在。
+  private async assertWorkNameAvailable(workName: string) {
+    const existingWork = await this.findLiveComicWorkByName(workName)
+    if (existingWork) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '同名漫画作品已存在，不能重复导入',
+      )
+    }
+  }
+
+  // 确认三方来源作用域未被其他作品占用，允许目标作品上的同 scope 幂等复用。
+  private async assertSourceScopeAvailable(
+    source: ThirdPartyComicSourceScopeInput,
+    allowedWorkId: number | null,
+  ) {
+    const binding =
+      await this.bindingService.getActiveSourceBindingByScope(source)
+    if (!binding) {
+      return
+    }
+    if (allowedWorkId !== null && binding.workId === allowedWorkId) {
+      return
+    }
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '三方来源已绑定其他作品，不能重复绑定',
+    )
+  }
+
+  // 读取已持久化导入目标的 active 来源绑定。
+  async readPreparedImportTarget(
+    dto: HydratedThirdPartyComicImportRequest,
+    workId: number,
+  ): Promise<ThirdPartyComicPreparedImportTarget> {
+    const work = await this.readLiveComicWork(workId)
+    const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
+      dto.sourceSnapshot,
+    )
+    const sourceBinding =
+      await this.bindingService.getActiveSourceBindingByScope({
+        platform: dto.platform,
+        providerComicId: this.resolveProviderComicId(dto),
+        providerGroupPathWord,
+      })
+    if (!sourceBinding || sourceBinding.workId !== work.id) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '三方导入自动重试缺少已准备的来源绑定',
+      )
+    }
+    return {
+      cover: {
+        status: ThirdPartyComicImportCoverStatusEnum.SKIPPED,
+        filePath: null,
+        errorCode: null,
+        message: '自动重试复用已准备作品封面',
+      },
+      work: {
+        id: work.id,
+        status:
+          dto.mode === ThirdPartyComicImportModeEnum.CREATE_NEW
+            ? ThirdPartyComicImportWorkStatusEnum.CREATED
+            : ThirdPartyComicImportWorkStatusEnum.ATTACHED,
+        errorCode: null,
+        message: '自动重试复用已准备本地作品',
+      },
+      sourceBinding: {
+        id: sourceBinding.id,
+        providerGroupPathWord,
+      },
+    }
+  }
+
+  // 清理已持久化的新建导入目标，用于跨自动重试 attempt 的零成功补偿。
+  async cleanupPreparedNewWorkImportTarget(
+    dto: HydratedThirdPartyComicImportRequest,
+    workId: number,
+    context: ThirdPartyComicImportTaskContext,
+  ) {
+    if (dto.mode !== ThirdPartyComicImportModeEnum.CREATE_NEW) {
+      return
+    }
+    const uploadResidues =
+      await this.contentImportService.listJobUploadedFileResidues(context.jobId)
+    const providerGroupPathWord = this.resolveSourceGroupFromSnapshot(
+      dto.sourceSnapshot,
+    )
+    const sourceBinding =
+      await this.bindingService.getActiveSourceBindingByScope({
+        platform: dto.platform,
+        providerComicId: this.resolveProviderComicId(dto),
+        providerGroupPathWord,
+      })
+    if (sourceBinding?.workId === workId) {
+      await this.bindingService.softDeleteSourceBindings([sourceBinding.id])
+    }
+    await this.workService.deleteWork(workId, WorkTypeEnum.COMIC)
+    for (const residue of uploadResidues.reverse()) {
+      await this.remoteImageImportService.deleteImportedFile(
+        residue.deleteTarget,
+      )
+      await this.contentImportService.markResiduesCleaned([residue.residueId])
+    }
+  }
+
+  // 确认目标作品下没有同名 live 章节，更新时允许目标章节自身。
+  private async assertChapterTitleAvailable(
+    workId: number,
+    chapterTitle: string,
+    allowedChapterId?: number,
+  ) {
+    const existingChapter = await this.findLiveChapterByTitle(
+      workId,
+      chapterTitle,
+      allowedChapterId,
+    )
+    if (existingChapter) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '目标作品下已存在同名章节，不能重复导入',
+      )
+    }
+  }
+
+  // 读取 live 漫画作品。
+  private async readLiveComicWork(workId: number) {
+    const [work] = await this.db
+      .select({
+        id: this.work.id,
+        name: this.work.name,
+        type: this.work.type,
+      })
+      .from(this.work)
+      .where(and(eq(this.work.id, workId), isNull(this.work.deletedAt)))
+      .limit(1)
+
+    if (!work || work.type !== WorkTypeEnum.COMIC) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '漫画作品不存在',
+      )
+    }
+    return work
+  }
+
+  // 按规范化作品名读取 live 漫画作品。
+  private async findLiveComicWorkByName(workName: string) {
+    const normalizedName = this.normalizeReservationText(workName, '作品名称')
+    const [work] = await this.db
+      .select({ id: this.work.id })
+      .from(this.work)
+      .where(
+        and(
+          eq(this.work.type, WorkTypeEnum.COMIC),
+          isNull(this.work.deletedAt),
+          sql`regexp_replace(trim(${this.work.name}), '\s+', ' ', 'g') = ${normalizedName}`,
+        ),
+      )
+      .limit(1)
+
+    return work ?? null
+  }
+
+  // 按规范化标题读取目标作品下的 live 章节。
+  private async findLiveChapterByTitle(
+    workId: number,
+    chapterTitle: string,
+    allowedChapterId?: number,
+  ) {
+    const normalizedTitle = this.normalizeReservationText(
+      chapterTitle,
+      '章节标题',
+    )
+    const conditions = [
+      eq(this.workChapter.workId, workId),
+      eq(this.workChapter.workType, WorkTypeEnum.COMIC),
+      isNull(this.workChapter.deletedAt),
+      sql`regexp_replace(trim(${this.workChapter.title}), '\s+', ' ', 'g') = ${normalizedTitle}`,
+    ]
+    if (allowedChapterId) {
+      conditions.push(ne(this.workChapter.id, allowedChapterId))
+    }
+
+    const [chapter] = await this.db
+      .select({ id: this.workChapter.id })
+      .from(this.workChapter)
+      .where(and(...conditions))
+      .limit(1)
+
+    return chapter ?? null
+  }
+
+  // 解析三方漫画 ID，优先使用预览快照里的 providerComicId。
+  private resolveProviderComicId(
+    dto: HydratedThirdPartyComicImportRequest | ThirdPartyComicImportRequestDto,
+  ) {
+    return this.normalizeReservationText(
+      dto.sourceSnapshot.providerComicId || dto.comicId,
+      '三方漫画ID',
+    )
+  }
+
+  // 归一化 reservation 文本，保持 trim 和连续空白折叠一致。
+  private normalizeReservationText(value: string | undefined, label: string) {
+    const normalizedValue = value?.trim().replace(/\s+/g, ' ')
+    if (!normalizedValue) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        `${label}不能为空`,
+      )
+    }
+    return normalizedValue
+  }
+
+  // 构建同源三方作品冲突键。
+  private buildSourceComicConflictKey(
+    platform: string,
+    providerComicId: string,
+  ) {
+    return `source-comic:${platform}:${providerComicId}`
+  }
+
+  // 构建三方来源作用域冲突键。
+  private buildSourceScopeConflictKey(
+    platform: string,
+    providerComicId: string,
+    providerGroupPathWord: string,
+  ) {
+    return `source-scope:${platform}:${providerComicId}:${providerGroupPathWord}`
+  }
+
+  // 构建漫画作品名冲突键。
+  private buildWorkNameConflictKey(workName: string) {
+    return `work-name:comic:${workName}`
+  }
+
+  // 构建按作品名聚合的章节标题冲突键。
+  private buildChapterTitleWorkNameConflictKey(
+    workName: string,
+    chapterTitle: string,
+  ) {
+    return `chapter-title:comic:work-name:${workName}:${chapterTitle}`
+  }
+
+  // 构建按作品 ID 聚合的章节标题冲突键。
+  private buildChapterTitleWorkIdConflictKey(
+    workId: number,
+    chapterTitle: string,
+  ) {
+    return `chapter-title:comic:work-id:${workId}:${chapterTitle}`
+  }
+
+  // 将导入草稿转换为本地作品创建 DTO。
+  private toCreateWorkDto(
+    workDraft: ThirdPartyComicImportWorkDraftDto,
+    cover: string,
+  ) {
+    return {
+      ...workDraft,
+      canComment: workDraft.canComment ?? true,
+      chapterPrice: workDraft.chapterPrice ?? 0,
+      cover,
+      isHot: workDraft.isHot ?? false,
+      isNew: workDraft.isNew ?? false,
+      isPublished: false,
+      isRecommended: workDraft.isRecommended ?? false,
+      recommendWeight: workDraft.recommendWeight ?? 0,
+      type: WorkTypeEnum.COMIC,
+    }
+  }
+
+  // 将导入章节条目转换为本地章节创建或更新字段。
+  private toChapterUpdate(chapter: ThirdPartyComicImportChapterItemDto) {
+    return {
+      canComment: chapter.canComment ?? true,
+      canDownload: chapter.canDownload ?? true,
+      cover:
+        chapter.cover?.mode === ThirdPartyComicImportCoverModeEnum.LOCAL
+          ? chapter.cover.localPath
+          : undefined,
+      isPreview: chapter.isPreview ?? false,
+      price: chapter.price ?? 0,
+      sortOrder: chapter.sortOrder,
+      title: chapter.title,
+      subtitle: chapter.subtitle,
+      viewRule: chapter.viewRule ?? WorkViewPermissionEnum.INHERIT,
+    }
+  }
+
+  // 将三方章节信息落入 binding 快照，后续同步不依赖章节标题猜测。
+  private toChapterBindingSnapshot(
+    chapter: ThirdPartyComicImportChapterItemDto,
+    sourceGroup: string,
+  ) {
+    return {
+      title: chapter.title,
+      group: chapter.group?.trim() || sourceGroup,
+      sortOrder: chapter.sortOrder,
+      chapterApiVersion: chapter.chapterApiVersion ?? null,
+      datetimeCreated: chapter.datetimeCreated ?? null,
+    }
+  }
+
+  // 读取章节回滚快照。
+  private async readChapterSnapshot(
+    chapterId: number,
+    workId: number,
+  ): Promise<ThirdPartyComicUpdatedChapterSnapshot> {
+    const row = await this.db.query.workChapter.findFirst({
+      where: {
+        id: chapterId,
+        workId,
+        workType: WorkTypeEnum.COMIC,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        title: true,
+        subtitle: true,
+        cover: true,
+        description: true,
+        sortOrder: true,
+        isPublished: true,
+        isPreview: true,
+        publishAt: true,
+        viewRule: true,
+        requiredViewLevelId: true,
+        price: true,
+        canDownload: true,
+        canComment: true,
+        comicContentManifest: true,
+      },
+    })
+    if (!row) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
+    }
+    const { comicContentManifest, ...snapshot } = row
+    return {
+      ...snapshot,
+      content: Array.isArray(comicContentManifest)
+        ? comicContentManifest.filter(
+            (item): item is string => typeof item === 'string',
+          )
+        : null,
+    }
+  }
+
+  // 还原章节元数据和内容快照。
+  private async restoreChapterSnapshot(
+    snapshot: ThirdPartyComicUpdatedChapterSnapshot,
+  ) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const discoveredChapter = await this.db.query.workChapter.findFirst({
+        where: {
+          id: snapshot.id,
+          workType: WorkTypeEnum.COMIC,
+          deletedAt: { isNull: true },
+        },
+        columns: { id: true, workId: true },
+      })
+      if (!discoveredChapter) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '章节不存在',
+        )
+      }
+
+      try {
+        await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await acquireIntegrityLocks(tx, [
+              exclusiveIntegrityLock(
+                tableIntegrityLock('work_chapter', snapshot.id),
+              ),
+              sharedIntegrityLock(
+                tableIntegrityLock('work', discoveredChapter.workId),
+              ),
+              ...(snapshot.requiredViewLevelId === null
+                ? []
+                : [
+                    sharedIntegrityLock(
+                      tableIntegrityLock(
+                        'user_level_rule',
+                        snapshot.requiredViewLevelId,
+                      ),
+                    ),
+                  ]),
+            ])
+
+            const chapter = await tx.query.workChapter.findFirst({
+              where: {
+                id: snapshot.id,
+                workType: WorkTypeEnum.COMIC,
+                deletedAt: { isNull: true },
+              },
+              columns: { id: true, workId: true },
+            })
+            if (!chapter || chapter.workId !== discoveredChapter.workId) {
+              throw new ThirdPartyChapterSnapshotDriftError()
+            }
+            const work = await tx.query.work.findFirst({
+              where: {
+                id: chapter.workId,
+                type: WorkTypeEnum.COMIC,
+                deletedAt: { isNull: true },
+              },
+              columns: { id: true },
+            })
+            if (!work) {
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                '关联的作品不存在',
+              )
+            }
+
+            if (snapshot.requiredViewLevelId !== null) {
+              const levelRule = await tx.query.userLevelRule.findFirst({
+                where: { id: snapshot.requiredViewLevelId },
+                columns: { id: true },
+              })
+              if (!levelRule) {
+                throw new BusinessException(
+                  BusinessErrorCode.RESOURCE_NOT_FOUND,
+                  '阅读等级规则不存在',
+                )
+              }
+            }
+
+            const restoredRows = await tx
+              .update(this.workChapter)
+              .set({
+                title: snapshot.title,
+                subtitle: snapshot.subtitle,
+                cover: snapshot.cover,
+                description: snapshot.description,
+                sortOrder: snapshot.sortOrder,
+                isPublished: snapshot.isPublished,
+                isPreview: snapshot.isPreview,
+                publishAt: snapshot.publishAt,
+                viewRule: snapshot.viewRule,
+                requiredViewLevelId: snapshot.requiredViewLevelId,
+                price: snapshot.price,
+                canDownload: snapshot.canDownload,
+                canComment: snapshot.canComment,
+                comicContentManifest: snapshot.content,
+              })
+              .where(
+                and(
+                  eq(this.workChapter.id, snapshot.id),
+                  eq(this.workChapter.workId, chapter.workId),
+                  eq(this.workChapter.workType, WorkTypeEnum.COMIC),
+                  isNull(this.workChapter.deletedAt),
+                ),
+              )
+              .returning({ id: this.workChapter.id })
+            this.drizzle.assertAffectedRows(restoredRows, '章节不存在')
+          },
+        })
+        return
+      } catch (error) {
+        if (!(error instanceof ThirdPartyChapterSnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '章节状态已变化，请重试',
+          )
+        }
+      }
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '章节状态已变化，请重试',
+    )
+  }
+
+  // 向残留对象中的数组字段追加一项。
+  private async appendResidueList<
+    TKey extends keyof ThirdPartyComicImportResidue,
+  >(
+    context: ThirdPartyComicImportTaskContext,
+    key: TKey,
+    value: NonNullable<ThirdPartyComicImportResidue[TKey]> extends Array<
+      infer TItem
+    >
+      ? TItem
+      : never,
+  ) {
+    const residue = await context.getResidue()
+    const currentList = Array.isArray(residue[key]) ? residue[key] : []
+    await context.recordResidue({
+      [key]: [...currentList, value],
+    })
+  }
+
+  // 记录已上传文件的删除句柄；若记录失败则立即同步清理，避免丢失回滚依据。
+  private async recordUploadedFile(
+    context: ThirdPartyComicImportTaskContext,
+    uploadedFile: UploadDeleteTarget,
+  ) {
+    try {
+      await this.appendResidueList(context, 'uploadedFiles', uploadedFile)
+    } catch (error) {
+      await this.tryCleanupUploadedFile(uploadedFile, error)
+      throw error
+    }
+  }
+
+  // 记录新建作品；若记录失败则立即删除刚创建的作品。
+  private async recordCreatedWork(
+    context: ThirdPartyComicImportTaskContext,
+    workId: number,
+  ) {
+    try {
+      await this.appendResidueList(context, 'createdWorkIds', workId)
+    } catch (error) {
+      await this.workService.deleteWork(workId, WorkTypeEnum.COMIC)
+      throw error
+    }
+  }
+
+  // 记录新建章节；若记录失败则立即删除刚创建的章节。
+  private async recordCreatedChapter(
+    context: ThirdPartyComicImportTaskContext,
+    chapterId: number,
+  ) {
+    try {
+      await this.appendResidueList(context, 'createdChapterIds', chapterId)
+    } catch (error) {
+      await this.workChapterService.deleteChapters(
+        [chapterId],
+        WorkTypeEnum.COMIC,
+      )
+      throw error
+    }
+  }
+
+  // 记录新建来源绑定；若记录失败则立即软删除刚创建的绑定。
+  private async recordCreatedSourceBinding(
+    context: ThirdPartyComicImportTaskContext,
+    sourceBindingId: number,
+  ) {
+    try {
+      await this.appendResidueList(
+        context,
+        'createdSourceBindingIds',
+        sourceBindingId,
+      )
+    } catch (error) {
+      await this.bindingService.softDeleteSourceBindings([sourceBindingId])
+      throw error
+    }
+  }
+
+  // 创建并记录章节绑定；若残留记录失败则立即软删除刚创建的绑定。
+  private async recordChapterBinding(
+    context: ThirdPartyComicImportTaskContext,
+    input: ThirdPartyComicChapterBindingInput,
+  ) {
+    await context.assertStillOwned()
+    const binding = await this.bindingService.createOrGetChapterBinding(input)
+    if (!binding.created) {
+      return
+    }
+
+    try {
+      await this.appendResidueList(
+        context,
+        'createdChapterBindingIds',
+        binding.id,
+      )
+    } catch (error) {
+      await this.bindingService.softDeleteChapterBindings([binding.id])
+      throw error
+    }
+  }
+
+  // 残留写入失败时同步删除已上传文件；若删除也失败则显式抛出冲突错误。
+  private async tryCleanupUploadedFile(
+    uploadedFile: UploadDeleteTarget,
+    residueError: unknown,
+  ) {
+    try {
+      await this.remoteImageImportService.deleteImportedFile(uploadedFile)
+    } catch (cleanupError) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        `上传文件残留记录失败且同步清理失败: ${uploadedFile.provider}:${uploadedFile.filePath}; cleanup=${this.stringifyUnknownError(
+          cleanupError,
+        )}`,
+        {
+          cause: {
+            residueError,
+            cleanupError,
+          },
+        },
+      )
+    }
+  }
+
+  // 将非 Error 异常保留为可诊断文本。
+  private stringifyUnknownError(error: unknown) {
+    if (typeof error === 'string') {
+      return error
+    }
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return 'unknown error'
+    }
+  }
+
+  // 按三方 sortOrder 保持图片导入顺序稳定。
+  private sortImages(images: ThirdPartyComicImageDto[]) {
+    return [...images].sort((a, b) => a.sortOrder - b.sortOrder)
+  }
+
+  // 为 provider 封面生成导入请求中的稳定图片 ID。
+  private buildCoverProviderImageId(detail: ThirdPartyComicDetailDto) {
+    return `cover:${detail.id}`
+  }
+
+  // 将三方连载状态文本映射为本地作品连载状态值。
+  private resolveSuggestedSerialStatus(status?: string | null) {
+    if (!status) {
+      return undefined
+    }
+    if (status.includes('完') || status.toLowerCase().includes('finish')) {
+      return 2
+    }
+    if (status.includes('停') || status.toLowerCase().includes('pause')) {
+      return 3
+    }
+    return 1
+  }
+}

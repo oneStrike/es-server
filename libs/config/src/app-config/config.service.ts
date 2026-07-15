@@ -3,6 +3,7 @@ import type { AppConfigSelect } from '@db/schema'
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   relationIntegrityLock,
 } from '@db/core'
 import { Injectable } from '@nestjs/common'
@@ -93,7 +94,9 @@ export class AppConfigService {
     return this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          relationIntegrityLock('app-config', APP_CONFIG_KEY),
+          exclusiveIntegrityLock(
+            relationIntegrityLock('app-config', APP_CONFIG_KEY),
+          ),
         ])
 
         const existingConfig = await this.findLatestConfig(tx)

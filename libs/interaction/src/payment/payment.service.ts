@@ -9,6 +9,10 @@ import type {
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
+  PaidOrderActivationOrder,
+  PreparedPaidOrderActivation,
+} from '../membership/types/membership.type'
+import type {
   ConfirmPaymentOrderContext,
   PaymentOrderPublicResult,
   PaymentOrderStatusResult,
@@ -23,13 +27,16 @@ import type {
 } from '../payment/types/payment.type'
 import { createHash } from 'node:crypto'
 import process from 'node:process'
-import { DrizzleService, toPageResult } from '@db/core'
+import { acquireIntegrityLocks, DrizzleService, toPageResult } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
 import { and, asc, eq, gte, lt, sql } from 'drizzle-orm'
-import { MembershipService } from '../membership/membership.service'
+import {
+  MembershipPaidOrderActivationSnapshotDriftError,
+  MembershipService,
+} from '../membership/membership.service'
 import {
   AdminPaymentOrderPageItemDto,
   AdminPaymentProviderConfigPageItemDto,
@@ -326,6 +333,9 @@ type PaymentNotifyOrderSnapshot = PaymentProviderOrderSnapshot &
     | 'providerConfigVersion'
     | 'providerConfigVersionId'
     | 'providerTradeNo'
+    | 'orderType'
+    | 'targetId'
+    | 'userId'
     | 'wechatApiV3CredentialId'
   >
 
@@ -341,7 +351,10 @@ type PaymentOrderConfirmationSnapshot = PaymentNotifyOrderSnapshot &
   Pick<PaymentOrderSelect, 'orderType' | 'subscriptionMode' | 'userId'>
 
 type PaymentOrderManualConfirmationSnapshot = PaymentOrderPaidStateSnapshot &
-  Pick<PaymentOrderSelect, 'orderType' | 'payableAmount' | 'subscriptionMode'>
+  Pick<
+    PaymentOrderSelect,
+    'orderType' | 'payableAmount' | 'subscriptionMode' | 'targetId' | 'userId'
+  >
 
 type PaymentOrderPublicResultSource = Pick<
   PaymentOrderSelect,
@@ -478,6 +491,9 @@ export class PaymentService {
       wechatApiV3CredentialId: true,
       credentialVersionRef: true,
       providerTradeNo: true,
+      orderType: true,
+      targetId: true,
+      userId: true,
     } as const
   }
 
@@ -506,6 +522,8 @@ export class PaymentService {
       orderType: true,
       payableAmount: true,
       subscriptionMode: true,
+      targetId: true,
+      userId: true,
     } as const
   }
 
@@ -1850,8 +1868,9 @@ export class PaymentService {
         )
       }
 
-      await this.drizzle.withTransaction({
-        execute: async (tx) => {
+      await this.executePaidOrderMutationWithMembershipRetry(
+        paymentOrder,
+        async (tx, membershipActivation) => {
           const [paidOrder] = await tx
             .update(this.paymentOrder)
             .set({
@@ -1899,7 +1918,11 @@ export class PaymentService {
             )
           }
 
-          await this.settlePaidOrder(tx, paidOrder)
+          await this.applyPaidOrderSettlementAfterLocks(
+            tx,
+            paidOrder,
+            membershipActivation,
+          )
           await this.markPaymentNotifyEventProcessed(
             input.channel,
             payloadHash,
@@ -1915,7 +1938,7 @@ export class PaymentService {
             `payment_order_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerTradeNo=${paidOrder.providerTradeNo}`,
           )
         },
-      })
+      )
 
       return this.buildProviderNotifyAck(input.channel)
     } catch (error) {
@@ -2244,8 +2267,9 @@ export class PaymentService {
       )
     }
 
-    return this.drizzle.withTransaction({
-      execute: async (tx) => {
+    return this.executePaidOrderMutationWithMembershipRetry(
+      order,
+      async (tx, membershipActivation) => {
         const [paidOrder] = await tx
           .update(this.paymentOrder)
           .set({
@@ -2290,7 +2314,11 @@ export class PaymentService {
           )
         }
 
-        await this.settlePaidOrder(tx, paidOrder)
+        await this.applyPaidOrderSettlementAfterLocks(
+          tx,
+          paidOrder,
+          membershipActivation,
+        )
 
         this.logger.log(
           `payment_order_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerConfigId=${paidOrder.providerConfigId} providerConfigVersion=${paidOrder.providerConfigVersion}`,
@@ -2298,7 +2326,7 @@ export class PaymentService {
 
         return this.toPaymentOrderResult(paidOrder, {})
       },
-    })
+    )
   }
 
   // 后台手工确认只用于运营审计入口，禁止绕过金额、交易号和幂等校验。
@@ -2342,8 +2370,9 @@ export class PaymentService {
       )
     }
 
-    return this.drizzle.withTransaction({
-      execute: async (tx) => {
+    return this.executePaidOrderMutationWithMembershipRetry(
+      order,
+      async (tx, membershipActivation) => {
         const [paidOrder] = await tx
           .update(this.paymentOrder)
           .set({
@@ -2388,7 +2417,11 @@ export class PaymentService {
           )
         }
 
-        await this.settlePaidOrder(tx, paidOrder)
+        await this.applyPaidOrderSettlementAfterLocks(
+          tx,
+          paidOrder,
+          membershipActivation,
+        )
 
         this.logger.log(
           `payment_order_manually_paid orderNo=${paidOrder.orderNo} userId=${paidOrder.userId} orderType=${paidOrder.orderType} providerTradeNo=${paidOrder.providerTradeNo}`,
@@ -2396,7 +2429,7 @@ export class PaymentService {
 
         return this.toPaymentOrderResult(paidOrder, {})
       },
-    })
+    )
   }
 
   // 将支付订单行映射为 App 公开支付结果，禁止透出 provider 内部字段。
@@ -2918,14 +2951,77 @@ export class PaymentService {
     return config
   }
 
-  // 已支付订单的资产/会员结算统一从这里分派，避免 admin 和 app 出现两套发放路径。
-  private async settlePaidOrder(tx: PaymentTx, order: PaymentOrderSelect) {
+  /**
+   * VIP 支付状态推进前在事务外发现完整锁计划；快照漂移时回滚并最多开启一次全新事务。
+   * 非 VIP 订单没有会员锁计划，继续只执行一次事务。
+   */
+  private async executePaidOrderMutationWithMembershipRetry<TResult>(
+    order: PaidOrderActivationOrder,
+    execute: (
+      tx: PaymentTx,
+      membershipActivation: PreparedPaidOrderActivation | undefined,
+    ) => Promise<TResult>,
+  ): Promise<TResult> {
+    if (order.orderType !== PaymentOrderTypeEnum.VIP_SUBSCRIPTION) {
+      return this.drizzle.withTransaction({
+        execute: async (tx) => execute(tx, undefined),
+      })
+    }
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const membershipActivation =
+        await this.membershipService.preparePaidOrderActivation(order)
+      try {
+        return await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            if (membershipActivation.lockRequests.length > 0) {
+              await acquireIntegrityLocks(tx, membershipActivation.lockRequests)
+            }
+            return execute(tx, membershipActivation)
+          },
+        })
+      } catch (error) {
+        if (
+          !(error instanceof MembershipPaidOrderActivationSnapshotDriftError)
+        ) {
+          throw error
+        }
+        if (attempt === 1) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            'VIP 套餐履约配置并发变化，请稍后重试',
+          )
+        }
+      }
+    }
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      'VIP 套餐履约配置并发变化，请稍后重试',
+    )
+  }
+
+  /** 已支付订单在业务根完成锁获取后按订单类型执行唯一履约路径。 */
+  private async applyPaidOrderSettlementAfterLocks(
+    tx: PaymentTx,
+    order: PaymentOrderSelect,
+    membershipActivation: PreparedPaidOrderActivation | undefined,
+  ) {
     if (order.orderType === PaymentOrderTypeEnum.CURRENCY_RECHARGE) {
       await this.walletService.applyRechargeSettlement(tx, order)
       return
     }
     if (order.orderType === PaymentOrderTypeEnum.VIP_SUBSCRIPTION) {
-      await this.membershipService.activatePaidOrder(tx, order)
+      if (!membershipActivation) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          'VIP 套餐履约锁计划缺失',
+        )
+      }
+      await this.membershipService.activatePaidOrderAfterLocks(
+        tx,
+        order,
+        membershipActivation,
+      )
       return
     }
     throw new BusinessException(

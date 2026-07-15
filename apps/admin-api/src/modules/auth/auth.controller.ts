@@ -3,9 +3,9 @@ import {
   LoginResponseDto,
   UserLoginDto,
 } from '@libs/identity/dto/admin-auth.dto'
-import { ApiDoc, Public } from '@libs/platform/decorators'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
+import { ApiDoc, Public } from '@libs/platform/decorators'
 import {
   RefreshTokenDto,
   RsaPublicKeyDto,

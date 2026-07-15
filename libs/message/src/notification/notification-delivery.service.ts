@@ -2,17 +2,18 @@ import type { DbTransaction } from '@db/core'
 import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
-} from '@libs/platform/modules/eventing/domain-event.type'
+} from '@libs/eventing/eventing/domain-event.type'
 import type { SQL } from 'drizzle-orm'
 import type {
-  MessageDomainEventKey,
+  MessageConsumerEventKey,
   NotificationProjectionApplyResult,
-} from '../eventing/message-event.type'
+} from '../eventing/message-consumer-event.type'
 import type { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import type { MessageNotificationCategoryKey } from './notification.type'
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -24,9 +25,9 @@ import {
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, lt } from 'drizzle-orm'
 import {
-  getMessageDomainEventDefinition,
-  getMessageDomainEventLabel,
-} from '../eventing/message-event.constant'
+  getMessageConsumerEventLabel,
+  getMessageConsumerEventMetadata,
+} from '../eventing/message-consumer-event.constant'
 import { parsePositiveBigintQueryId } from './notification-query-id.util'
 import {
   getMessageNotificationCategoryLabel,
@@ -276,7 +277,7 @@ export class MessageNotificationDeliveryService {
         ...item,
         eventId: item.eventId.toString(),
         dispatchId: item.dispatchId.toString(),
-        eventLabel: getMessageDomainEventLabel(item.eventKey),
+        eventLabel: getMessageConsumerEventLabel(item.eventKey),
         failureReason: this.sanitizeDiagnosticText(item.failureReason),
         fallbackReason: this.sanitizeDiagnosticText(item.fallbackReason),
         categoryLabel:
@@ -369,7 +370,9 @@ export class MessageNotificationDeliveryService {
     notificationId: number,
   ) {
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('user_notification', notificationId),
+      exclusiveIntegrityLock(
+        tableIntegrityLock('user_notification', notificationId),
+      ),
     ])
 
     const [notification] = await tx
@@ -429,11 +432,11 @@ export class MessageNotificationDeliveryService {
     }
 
     try {
-      const definition = getMessageDomainEventDefinition(
-        event.eventKey as MessageDomainEventKey,
+      const metadata = getMessageConsumerEventMetadata(
+        event.eventKey as MessageConsumerEventKey,
       )
-      return 'notification' in definition
-        ? definition.notification?.categoryKey
+      return 'notification' in metadata
+        ? metadata.notification?.categoryKey
         : undefined
     } catch {
       return undefined

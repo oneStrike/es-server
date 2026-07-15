@@ -7,13 +7,13 @@ import type {
   ThirdPartyComicSourceSnapshotDto,
 } from '@libs/content/work/content/dto/content.dto'
 import type { UploadDeleteTarget } from '@libs/platform/modules/upload/upload.type'
-import type { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
+import type { WorkflowErrorCodeEnum } from '@libs/workflow/workflow/workflow-error-facts'
 import type {
   WorkflowExecutionContext,
   WorkflowExpiredAttemptRecoveryContext,
   WorkflowObject,
   WorkflowProgress,
-} from '@libs/platform/modules/workflow/workflow.type'
+} from '@libs/workflow/workflow/workflow.type'
 import type { Buffer } from 'node:buffer'
 import type { LookupAddress } from 'node:dns'
 import type {

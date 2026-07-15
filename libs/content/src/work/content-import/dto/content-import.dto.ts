@@ -7,7 +7,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
-import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto'
+import { WorkflowErrorFactsDto } from '@libs/workflow/workflow/dto/workflow.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ContentImportItemStageEnum,

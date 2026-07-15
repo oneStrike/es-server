@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { WorkCounterService } from '../work/counter/work-counter.service'
 
@@ -6,6 +7,7 @@ import { WorkCounterService } from '../work/counter/work-counter.service'
  * 作为独立的轻量 public API 暴露作品计数 owner service。
  */
 @Module({
+  imports: [DrizzleModule],
   providers: [WorkCounterService],
   exports: [WorkCounterService],
 })

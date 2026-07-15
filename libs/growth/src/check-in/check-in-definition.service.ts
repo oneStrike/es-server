@@ -22,6 +22,7 @@ import type {
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
   relationIntegrityLock,
 } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
@@ -271,7 +272,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [CHECK_IN_STREAK_MUTATION_LOCK])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(CHECK_IN_STREAK_MUTATION_LOCK),
+        ])
 
         const latest =
           await this.checkInStreakService.findLatestStreakRuleVersion(
@@ -359,7 +362,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   async terminateStreakRule(query: CheckInRuleIdQuery, adminUserId: number) {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [CHECK_IN_STREAK_MUTATION_LOCK])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(CHECK_IN_STREAK_MUTATION_LOCK),
+        ])
 
         const current = await tx.query.checkInStreakRule.findFirst({
           where: { id: query.id },

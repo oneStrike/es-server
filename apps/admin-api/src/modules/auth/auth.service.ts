@@ -3,7 +3,12 @@ import type {
   UserLoginDto,
 } from '@libs/identity/dto/admin-auth.dto'
 import type { SessionClientContext } from '@libs/identity/session.type'
-import { DrizzleService } from '@db/core'
+import {
+  AdminAuthCacheKeys,
+  AdminAuthRedisKeys,
+} from '@libs/identity/admin-auth.constant'
+import { AdminRbacService } from '@libs/identity/admin-rbac.service'
+import { AdminUserIdentityService } from '@libs/identity/admin-user.service'
 import { AuthSessionService } from '@libs/identity/session.service'
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
 import { RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto'
@@ -24,9 +29,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
-import { AdminRbacService } from '../rbac/admin-rbac.service'
-import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
 
 /**
  * 管理端认证服务。
@@ -35,7 +37,7 @@ import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly drizzle: DrizzleService,
+    private readonly adminUserIdentityService: AdminUserIdentityService,
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
@@ -44,16 +46,6 @@ export class AuthService {
     private readonly loginGuardService: LoginGuardService,
     private readonly rbacService: AdminRbacService,
   ) {}
-
-  // 复用当前模块共享数据库连接。
-  private get db() {
-    return this.drizzle.db
-  }
-
-  // 复用管理员用户表。
-  private get adminUserTable() {
-    return this.drizzle.schema.adminUser
-  }
 
   // 生成 SVG 验证码供管理端登录使用。
   async getCaptcha() {
@@ -90,22 +82,9 @@ export class AuthService {
     await this.captchaService.remove(AdminAuthCacheKeys.CAPTCHA, body.captchaId)
 
     // 查找用户
-    const [user] = await this.db
-      .select({
-        id: this.adminUserTable.id,
-        username: this.adminUserTable.username,
-        password: this.adminUserTable.password,
-        mobile: this.adminUserTable.mobile,
-        avatar: this.adminUserTable.avatar,
-        isEnabled: this.adminUserTable.isEnabled,
-        lastLoginAt: this.adminUserTable.lastLoginAt,
-        lastLoginIp: this.adminUserTable.lastLoginIp,
-        createdAt: this.adminUserTable.createdAt,
-        updatedAt: this.adminUserTable.updatedAt,
-      })
-      .from(this.adminUserTable)
-      .where(eq(this.adminUserTable.username, body.username))
-      .limit(1)
+    const user = await this.adminUserIdentityService.findLoginUserByUsername(
+      body.username,
+    )
     if (!user) {
       throw new UnauthorizedException('账号或密码错误')
     }
@@ -161,14 +140,10 @@ export class AuthService {
     const lastLoginIp = clientContext.ip || 'unknown'
 
     // 更新登录信息
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.adminUserTable)
-        .set({
-          lastLoginAt,
-          lastLoginIp,
-        })
-        .where(eq(this.adminUserTable.id, user.id)),
+    await this.adminUserIdentityService.updateLoginInfo(
+      user.id,
+      lastLoginAt,
+      lastLoginIp,
     )
     const [roles, snapshot] = await Promise.all([
       this.rbacService.getUserRoleSummaries(user.id),
@@ -225,14 +200,7 @@ export class AuthService {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
-    const [user] = await this.db
-      .select({
-        id: this.adminUserTable.id,
-        isEnabled: this.adminUserTable.isEnabled,
-      })
-      .from(this.adminUserTable)
-      .where(eq(this.adminUserTable.id, userId))
-      .limit(1)
+    const user = await this.adminUserIdentityService.findAdminUserStatus(userId)
 
     if (!user) {
       await this.authSessionService.logout(tokens, { revokeDbTokens: true })

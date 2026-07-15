@@ -1,5 +1,5 @@
 import type { CurrentUserRequest } from '@libs/platform/decorators'
-import { DrizzleService } from '@db/core'
+import { AdminUserIdentityService } from '@libs/identity/admin-user.service'
 import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/helpers'
 import {
@@ -10,13 +10,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { eq } from 'drizzle-orm'
 
 @Injectable()
 export class AdminUserStatusGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly drizzle: DrizzleService,
+    private readonly adminUserIdentityService: AdminUserIdentityService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -34,14 +33,7 @@ export class AdminUserStatusGuard implements CanActivate {
       return true
     }
 
-    const [user] = await this.drizzle.db
-      .select({
-        id: this.drizzle.schema.adminUser.id,
-        isEnabled: this.drizzle.schema.adminUser.isEnabled,
-      })
-      .from(this.drizzle.schema.adminUser)
-      .where(eq(this.drizzle.schema.adminUser.id, userId))
-      .limit(1)
+    const user = await this.adminUserIdentityService.findAdminUserStatus(userId)
 
     if (!user) {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)

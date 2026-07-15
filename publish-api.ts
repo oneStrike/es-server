@@ -8,6 +8,7 @@ const env = parseEnv(fs.readFileSync('.env', 'utf8'))
 interface AppConfig {
   name: string
   port: string
+  portEnvironmentVariable: 'ADMIN_API_PORT' | 'APP_API_PORT'
   envPath: string
   startCommand: string
   swaggerPath: string
@@ -18,6 +19,7 @@ const APPS: Record<string, AppConfig> = {
   admin: {
     name: 'admin',
     port: '8080',
+    portEnvironmentVariable: 'ADMIN_API_PORT',
     envPath: 'apps/admin-api/.env.development',
     startCommand: 'start:admin',
     swaggerPath: 'api-doc-json',
@@ -26,6 +28,7 @@ const APPS: Record<string, AppConfig> = {
   app: {
     name: 'app',
     port: '8081',
+    portEnvironmentVariable: 'APP_API_PORT',
     envPath: 'apps/app-api/.env.development',
     startCommand: 'start:app',
     swaggerPath: 'api-doc-json',
@@ -174,7 +177,7 @@ async function publishToApifox(
         headers: {
           'Content-Type': 'application/json',
           'X-Apifox-Api-Version': '2024-03-28',
-          "Authorization": `Bearer ${env.APIFOX_API_KEY}`,
+          'Authorization': `Bearer ${env.APIFOX_API_KEY}`,
         },
         body: JSON.stringify(postData),
         signal: controller.signal,
@@ -258,7 +261,7 @@ async function main() {
   let isAppStartedByScript = false
 
   try {
-    const port = env.APP_PORT || appConfig.port
+    const port = env[appConfig.portEnvironmentVariable] || appConfig.port
     const isPortInUse = await checkPortInUse(port)
 
     if (isPortInUse) {

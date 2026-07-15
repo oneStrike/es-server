@@ -1,10 +1,7 @@
-import { PageWorkDto } from '@libs/content/work/core/dto/work.dto'
-import { PublicForumTopicPageItemDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
@@ -65,34 +62,6 @@ export class FavoriteStatusResponseDto {
     validation: false,
   })
   isFavorited!: boolean
-}
-
-/**
- * 收藏作品分页项 DTO。
- */
-export class FavoriteWorkPageItemDto extends BaseFavoriteDto {
-  @NestedProperty({
-    description: '作品详情',
-    type: PageWorkDto,
-    required: true,
-    nullable: true,
-    validation: false,
-  })
-  work!: PageWorkDto | null
-}
-
-/**
- * 收藏主题分页项 DTO。
- */
-export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
-  @NestedProperty({
-    description: '论坛主题详情',
-    type: PublicForumTopicPageItemDto,
-    required: true,
-    nullable: true,
-    validation: false,
-  })
-  topic!: PublicForumTopicPageItemDto | null
 }
 
 export class QueryUserFavoriteDto extends IntersectionType(

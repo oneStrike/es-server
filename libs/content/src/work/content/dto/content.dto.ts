@@ -9,8 +9,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
-import { WorkflowErrorFactsDto } from '@libs/platform/modules/workflow/dto'
-import { WorkflowErrorCodeEnum } from '@libs/platform/modules/workflow/workflow-error-facts'
+import { WorkflowErrorFactsDto } from '@libs/workflow/workflow/dto/workflow.dto'
+import { WorkflowErrorCodeEnum } from '@libs/workflow/workflow/workflow-error-facts'
 import { PickType } from '@nestjs/swagger'
 import {
   ComicArchiveIgnoreReasonEnum,

@@ -36,6 +36,7 @@ import type {
 } from './types/task.type'
 import { randomUUID } from 'node:crypto'
 import { DrizzleService, extractRows, toPageResult } from '@db/core'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
 import {
   canConsumeEventEnvelopeByConsumer,
@@ -47,7 +48,6 @@ import {
   GrowthRewardSettlementTypeEnum,
 } from '@libs/growth/growth-reward/growth-reward.constant'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward/growth-reward.service'
-import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto } from '@libs/platform/dto'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -155,7 +155,7 @@ export class TaskExecutionService extends TaskServiceSupport {
     drizzle: DrizzleService,
     private readonly taskEventTemplateRegistry: TaskEventTemplateRegistry,
     private readonly userGrowthRewardService: UserGrowthRewardService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
+    private readonly domainEventPublisher: DomainEventPublisher,
     private readonly taskNotificationService: TaskNotificationService,
   ) {
     super(drizzle)
@@ -2915,7 +2915,7 @@ export class TaskExecutionService extends TaskServiceSupport {
     instance: TaskInstanceSelect,
     occurredAt: Date,
   ) {
-    await this.messageDomainEventPublisher.publishInTx(runner, {
+    await this.domainEventPublisher.publishInTx(runner, {
       ...this.taskNotificationService.createAutoAssignedReminderEvent({
         bizKey: this.taskNotificationService.buildAutoAssignedReminderBizKey(
           instance.id,
@@ -2959,7 +2959,7 @@ export class TaskExecutionService extends TaskServiceSupport {
       .where(eq(this.taskInstanceTable.id, params.instanceId))
       .limit(1)
 
-    await this.messageDomainEventPublisher.publishInTx(runner, {
+    await this.domainEventPublisher.publishInTx(runner, {
       ...this.taskNotificationService.createRewardGrantedReminderEvent({
         bizKey: this.taskNotificationService.buildRewardGrantedReminderBizKey(
           params.instanceId,

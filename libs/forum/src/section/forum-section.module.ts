@@ -1,7 +1,8 @@
-import { InteractionModule } from '@libs/interaction/interaction.module';
+import { DrizzleModule } from '@db/core'
+import { InteractionModule } from '@libs/interaction/interaction.module'
 import { Module } from '@nestjs/common'
-import { ForumCounterModule } from '../counter/forum-counter.module';
-import { ForumPermissionModule } from '../permission/forum-permission.module';
+import { ForumCounterModule } from '../counter/forum-counter.module'
+import { ForumPermissionModule } from '../permission/forum-permission.module'
 import { ForumSectionGroupModule } from '../section-group/forum-section-group.module'
 import { ForumSectionService } from './forum-section.service'
 import { ForumSectionFollowResolver } from './resolver/forum-section-follow.resolver'
@@ -12,6 +13,7 @@ import { ForumSectionFollowResolver } from './resolver/forum-section-follow.reso
  */
 @Module({
   imports: [
+    DrizzleModule,
     InteractionModule,
     ForumPermissionModule,
     ForumCounterModule,

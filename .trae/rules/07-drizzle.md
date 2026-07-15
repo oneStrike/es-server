@@ -14,6 +14,7 @@
 ## 仓库约定
 
 - 数据库能力统一通过注入的 `DrizzleService` 使用；不在业务层自行创建新的 Drizzle 实例。
+- `DrizzleModule` 不是 global module。每个实际注入 `DrizzleService` 的 owner module 必须显式 import `DrizzleModule`；`PlatformModule` 不得导入它或以 register 选项间接装配它。
 - 版本精确固定为 `drizzle-orm@1.0.0-rc.4` 与 `drizzle-kit@1.0.0-rc.3`；不得以范围版本、未验证 Kit RC4 能力或旧 RQB API 代替当前 contract。
 - canonical relations 唯一 owner 是 `db/core/drizzle-relations.ts`：`baseRelations` 必须最先展开，随后每个 domain relation part 恰好一次。所有 schema table 与 `db.query` key 必须一一对应。
 - Node PostgreSQL client 使用 `drizzle({ client: pool, relations, jit: true })`。不得传入旧 `schema:` option、构造模块局部 relation 聚合或为 seed/script 另建不一致的 relations contract。
@@ -49,6 +50,8 @@
 
 ## 查询与写路径
 
+- `apps/*` 只做 transport/composition：不得直接 import `@db/core`、`@db/schema`、`DrizzleService`、`DbExecutor` 或 `DbTransaction`，也不得直接持有表。所有读写由对应 `libs/*` domain owner service 完成。
+- domain owner service 直接注入 `DrizzleService` 并显式表达查询、写入、锁与事务语义；不得用 adapter 或 forwarding service 保留 app 旧调用面。
 - `count`、余额、库存、计数器、乐观锁版本号等增减，必须使用原子更新并与事实写入位于同一事务。
 - 0 行 update / delete 若业务语义是“目标不存在”，通过 `assertAffectedRows(...)` 或 `withErrorHandling(..., { notFound: ... })` 收口。
 - 分页结果组装只允许复用薄的 `toPageResult(...)`。
@@ -96,6 +99,9 @@
 ## 禁止项
 
 - 禁止在业务层直接 new Drizzle 或绕开 `DrizzleService` 访问数据库。
+- 禁止 `apps/*` 直接 import 任意 `@db/*` 入口或数据库类型；禁止业务代码 import `@db/core/*`、`@db/schema/*`、`@db/relations` 或相对 DB 内部路径。
+- 禁止新增或保留 `Repository`、`DAO`、`TableManager`、通用 CRUD/persistence 层；业务 owner service 才是查询与事务语义 owner。
+- 禁止将 `DrizzleModule` 标记为 `@Global()`，也不得通过 `PlatformModule` 或其他 facade 重新隐式提供数据库能力。
 - 禁止重新引入 RQB v1 callback/filter shape、`schema:` 初始化、局部 relations 聚合、旧 Drizzle extension/shim，或为迁移期保留任何 ORM API fallback。
 - 禁止隐式事务；事务上下文必须显式透传。
 - 禁止分页不写排序字段。

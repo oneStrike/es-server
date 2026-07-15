@@ -1,7 +1,7 @@
 import { DrizzleService } from '@db/core'
+import { MembershipSubscriptionStatusEnum } from '@libs/interaction/membership/membership.constant'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt } from 'drizzle-orm'
-import { MembershipSubscriptionStatusEnum } from './content-entitlement.constant'
 
 @Injectable()
 export class MembershipEntitlementService {

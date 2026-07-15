@@ -1,5 +1,5 @@
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   WorkflowItemDto,
   WorkflowItemPageRequestDto,
@@ -13,8 +13,8 @@ import {
   WorkflowRecordPageRequestDto,
   WorkflowRetryItemsDto,
   WorkflowTypeOptionsResponseDto,
-} from '@libs/platform/modules/workflow/dto'
-import { WorkflowService } from '@libs/platform/modules/workflow/workflow.service'
+} from '@libs/workflow/workflow/dto/workflow.dto'
+import { WorkflowService } from '@libs/workflow/workflow/workflow.service'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'

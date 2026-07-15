@@ -1,6 +1,7 @@
 import type { JsonValue } from '@libs/platform/utils'
 import { ForumHashtagBriefDto } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
 import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
+import { UserGrowthSnapshotFieldsDto } from '@libs/growth/dto/app-user-growth-shared.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
 import { HtmlBodyInputDto } from '@libs/interaction/body/dto/body.dto'
 import {
@@ -25,10 +26,7 @@ import { BaseDto, IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 import { SensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
-import {
-  AppUserResponseDto,
-  BaseAppUserDto,
-} from '@libs/user/dto/base-app-user.dto'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   IntersectionType,
   OmitType,
@@ -805,7 +803,12 @@ class AdminForumTopicUserLevelDto extends PickType(BaseUserLevelRuleDto, [
   'sortOrder',
 ] as const) {}
 
-class AdminForumTopicUserDto extends PickType(AppUserResponseDto, [
+class ForumTopicUserWithGrowthDto extends IntersectionType(
+  BaseAppUserDto,
+  UserGrowthSnapshotFieldsDto,
+) {}
+
+class AdminForumTopicUserDto extends PickType(ForumTopicUserWithGrowthDto, [
   'id',
   'nickname',
   'avatarUrl',

@@ -6,10 +6,12 @@ import type {
   AppUserFollowingCountAggregation,
 } from './app-user-count.type'
 import { DrizzleService } from '@db/core'
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
-import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
-import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
-import { BusinessErrorCode } from '@libs/platform/constant'
+import {
+  BusinessErrorCode,
+  FavoriteTargetTypeContractEnum,
+  FollowTargetTypeContractEnum,
+  LikeTargetTypeContractEnum,
+} from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, sql } from 'drizzle-orm'
@@ -62,13 +64,13 @@ export class AppUserCountService {
   // 若出现未知类型，抛出稳定业务异常，避免把计数写进错误字段。
   private resolveFollowingCountField(targetType: FollowTargetType) {
     switch (targetType) {
-      case FollowTargetTypeEnum.USER:
+      case FollowTargetTypeContractEnum.USER:
         return 'followingUserCount'
-      case FollowTargetTypeEnum.AUTHOR:
+      case FollowTargetTypeContractEnum.AUTHOR:
         return 'followingAuthorCount'
-      case FollowTargetTypeEnum.FORUM_SECTION:
+      case FollowTargetTypeContractEnum.FORUM_SECTION:
         return 'followingSectionCount'
-      case FollowTargetTypeEnum.FORUM_HASHTAG:
+      case FollowTargetTypeContractEnum.FORUM_HASHTAG:
         return 'followingHashtagCount'
       default:
         throw new BusinessException(
@@ -422,7 +424,7 @@ export class AppUserCountService {
         .from(this.userFollow)
         .where(
           and(
-            eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+            eq(this.userFollow.targetType, FollowTargetTypeContractEnum.USER),
             eq(this.userFollow.targetId, userId),
           ),
         )
@@ -504,7 +506,7 @@ export class AppUserCountService {
         .from(this.userFollow)
         .where(
           and(
-            eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+            eq(this.userFollow.targetType, FollowTargetTypeContractEnum.USER),
             eq(this.userFollow.targetId, userId),
           ),
         )
@@ -530,7 +532,7 @@ export class AppUserCountService {
             isNull(this.userComment.deletedAt),
           ),
         )
-        .where(eq(this.userLike.targetType, LikeTargetTypeEnum.COMMENT))
+        .where(eq(this.userLike.targetType, LikeTargetTypeContractEnum.COMMENT))
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
@@ -543,7 +545,9 @@ export class AppUserCountService {
             isNull(this.forumTopic.deletedAt),
           ),
         )
-        .where(eq(this.userLike.targetType, LikeTargetTypeEnum.FORUM_TOPIC))
+        .where(
+          eq(this.userLike.targetType, LikeTargetTypeContractEnum.FORUM_TOPIC),
+        )
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int`.mapWith(Number) })
@@ -557,7 +561,10 @@ export class AppUserCountService {
           ),
         )
         .where(
-          eq(this.userFavorite.targetType, FavoriteTargetTypeEnum.FORUM_TOPIC),
+          eq(
+            this.userFavorite.targetType,
+            FavoriteTargetTypeContractEnum.FORUM_TOPIC,
+          ),
         )
         .then((rows) => rows[0]),
     ])

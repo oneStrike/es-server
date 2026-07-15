@@ -6,16 +6,16 @@ import {
   UpdateWorkChapterDto,
 } from '@libs/content/work/chapter/dto/work-chapter.dto'
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+
 import {
   BatchUpdatePublishedStatusDto,
   DragReorderDto,
   IdDto,
   IdsDto,
 } from '@libs/platform/dto'
-
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../../common/decorators/admin-permission.decorator'

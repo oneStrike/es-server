@@ -9,15 +9,15 @@ import {
   GrowthRuleEventPageItemDto,
   QueryGrowthRuleEventPageDto,
 } from '@libs/growth/growth/dto/growth.dto'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { GrowthService } from '@libs/growth/growth/growth.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
-import { GrowthService } from './growth.service'
 
 @ApiTags('用户成长/规则聚合视图')
 @Controller('admin/growth')

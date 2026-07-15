@@ -29,10 +29,10 @@ import {
 } from '@libs/growth/task/dto/task-view.dto'
 import { TaskRewardRetryService } from '@libs/growth/task/task-reward-retry.service'
 import { TaskService } from '@libs/growth/task/task.service'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiBody, ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'

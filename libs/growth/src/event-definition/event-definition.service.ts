@@ -47,7 +47,7 @@ export class EventDefinitionService {
     })
   }
 
-  // 枚举允许继续用于规则配置的事件定义，并排除未实现与历史兼容编码。
+  // 枚举已正式接入且允许用于规则配置的事件定义。
   listRuleConfigurableEventDefinitions(): EventDefinition[] {
     return this.listEventDefinitions({
       consumer: EventDefinitionConsumerEnum.GROWTH,
@@ -106,7 +106,7 @@ export class EventDefinitionService {
     if (
       filters.isImplemented !== undefined &&
       (definition.implStatus === EventDefinitionImplStatusEnum.IMPLEMENTED) !==
-      filters.isImplemented
+        filters.isImplemented
     ) {
       return false
     }

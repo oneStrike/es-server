@@ -1,5 +1,6 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
-import { ForumPermissionModule } from '../permission/forum-permission.module';
+import { ForumPermissionModule } from '../permission/forum-permission.module'
 import { ForumSearchService } from './search.service'
 
 /**
@@ -7,7 +8,7 @@ import { ForumSearchService } from './search.service'
  * 提供论坛搜索的完整功能
  */
 @Module({
-  imports: [ForumPermissionModule],
+  imports: [DrizzleModule, ForumPermissionModule],
   providers: [ForumSearchService],
   exports: [ForumSearchService],
 })

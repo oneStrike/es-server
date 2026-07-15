@@ -6,6 +6,7 @@ import { Module } from '@nestjs/common'
 import { WorkCategoryController } from './work-category.controller'
 import { WorkChapterController } from './work-chapter.controller'
 import { WorkTagController } from './work-tag.controller'
+import { AppWorkUploadRuntimeModule } from './work-upload-runtime.module'
 import { WorkController } from './work.controller'
 
 @Module({
@@ -14,6 +15,7 @@ import { WorkController } from './work.controller'
     WorkCategoryCoreModule,
     WorkTagCoreModule,
     CommentCoreModule,
+    AppWorkUploadRuntimeModule,
   ],
   controllers: [
     WorkController,

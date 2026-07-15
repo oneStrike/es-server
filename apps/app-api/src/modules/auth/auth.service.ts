@@ -1,12 +1,10 @@
-import type { DbExecutor } from '@db/core'
-import type { AppUserSelect } from '@db/schema'
+import type { AppUserGrowthSnapshot } from '@libs/growth/app-user-growth-profile/app-user-growth-profile.type'
+import type { AppLoginUserSource } from '@libs/identity/app-user-credential.type'
 import type { SessionClientContext } from '@libs/identity/session.type'
-import type { UserGrowthSnapshot } from '@libs/user/user.type'
 import type { LoginVerifyCodeInput, RegisterOptions } from './auth.type'
-import { randomInt } from 'node:crypto'
 import { env } from 'node:process'
-import { DrizzleService } from '@db/core'
-import { UserProfileService } from '@libs/forum/profile/profile.service'
+import { AppUserGrowthProfileService } from '@libs/growth/app-user-growth-profile/app-user-growth-profile.service'
+import { AppUserCredentialService } from '@libs/identity/app-user-credential.service'
 import { AuthSessionService } from '@libs/identity/session.service'
 import { BusinessErrorCode, GenderEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -18,7 +16,6 @@ import {
 } from '@libs/platform/modules/auth/dto'
 import {
   AuthConstants,
-  AuthDefaultValue,
   AuthErrorMessages,
 } from '@libs/platform/modules/auth/helpers'
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
@@ -33,35 +30,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { and, eq, isNull, or } from 'drizzle-orm'
 import { AppAuthErrorMessages, AppAuthRedisKeys } from './auth.constant'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 
-const APP_USER_ACCOUNT_UNIQUE_CONSTRAINT = 'app_user_account_key'
-const APP_USER_ACCOUNT_MAX_RETRIES = 5
 const APP_LOGIN_ALIYUN_VERIFY_DISABLED =
   env.APP_LOGIN_ALIYUN_VERIFY_DISABLED === 'true'
-
-type AppLoginUserRow = Pick<
-  AppUserSelect,
-  | 'account'
-  | 'avatarUrl'
-  | 'banReason'
-  | 'banUntil'
-  | 'bio'
-  | 'birthDate'
-  | 'emailAddress'
-  | 'genderType'
-  | 'id'
-  | 'isEnabled'
-  | 'nickname'
-  | 'password'
-  | 'phoneNumber'
-  | 'profileBackgroundImageUrl'
-  | 'signature'
-  | 'status'
->
 
 /**
  * 应用端认证服务。
@@ -70,27 +44,17 @@ type AppLoginUserRow = Pick<
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly drizzle: DrizzleService,
+    private readonly credentialService: AppUserCredentialService,
     private readonly rsaService: RsaService,
     private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
     private readonly authSessionService: AuthSessionService,
     private readonly passwordService: PasswordService,
-    private readonly profileService: UserProfileService,
     private readonly loginGuardService: LoginGuardService,
     private readonly userCoreService: UserCoreService,
+    private readonly appUserGrowthProfileService: AppUserGrowthProfileService,
   ) {}
-
-  // 复用当前模块共享数据库连接。
-  private get db() {
-    return this.drizzle.db
-  }
-
-  // 复用应用用户表。
-  get appUserTable() {
-    return this.drizzle.schema.appUser
-  }
 
   // 校验用户是否允许建立会话，禁用或封禁态会抛出对应异常。
   private ensureSessionAllowed(user: {
@@ -104,31 +68,6 @@ export class AuthService {
     }
 
     this.userCoreService.ensureAppUserNotBanned(user)
-  }
-
-  // 生成唯一的 6 位数字账号，最多重试指定次数。
-  async generateUniqueAccount(tx: DbExecutor) {
-    for (
-      let attempt = 0;
-      attempt < APP_USER_ACCOUNT_MAX_RETRIES;
-      attempt += 1
-    ) {
-      const randomAccount = randomInt(100000, 1000000)
-      const [existingUser] = await tx
-        .select({ id: this.appUserTable.id })
-        .from(this.appUserTable)
-        .where(eq(this.appUserTable.account, String(randomAccount)))
-        .limit(1)
-
-      if (!existingUser) {
-        return randomAccount
-      }
-    }
-
-    throw new BusinessException(
-      BusinessErrorCode.STATE_CONFLICT,
-      AppAuthErrorMessages.REGISTER_RETRY_FAILED,
-    )
   }
 
   // 用户注册：校验短信验证码后创建用户并初始化资料。
@@ -158,9 +97,38 @@ export class AuthService {
       this.passwordService.generateSecureRandomPassword(),
     )
 
-    const user = await this.createRegisteredUser(body.phone, hashedPassword)
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const plan =
+        await this.appUserGrowthProfileService.discoverNewUserDefaultLevelLockPlan()
+      const registration = await this.credentialService.registerAppUser(
+        body.phone,
+        hashedPassword,
+        async (tx, userId) =>
+          this.appUserGrowthProfileService.initializeNewUser(tx, userId, plan),
+      )
+      if (registration.outcome === 'initialization-snapshot-drift') {
+        if (attempt === 0) {
+          continue
+        }
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          AppAuthErrorMessages.REGISTER_RETRY_FAILED,
+        )
+      }
+      if (registration.outcome !== 'registered') {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          AppAuthErrorMessages.REGISTER_RETRY_FAILED,
+        )
+      }
 
-    return this.handleLoginSuccess(user, clientContext)
+      return this.handleLoginSuccess(registration.user, clientContext)
+    }
+
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      AppAuthErrorMessages.REGISTER_RETRY_FAILED,
+    )
   }
 
   // 用户登录：支持验证码与密码两种方式，验证码登录找不到用户时自动注册。
@@ -182,34 +150,11 @@ export class AuthService {
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN,
       )
     }
-    let user: AppLoginUserRow | undefined
-    if (body.phone) {
-      ;[user] = await this.db
-        .select(this.buildLoginUserSelect())
-        .from(this.appUserTable)
-        .where(
-          and(
-            eq(this.appUserTable.phoneNumber, body.phone),
-            isNull(this.appUserTable.deletedAt),
-          ),
+    const user = body.phone
+      ? await this.credentialService.findLoginUserByPhone(body.phone)
+      : await this.credentialService.findLoginUserByAccountOrPhone(
+          body.account!,
         )
-        .limit(1)
-    } else {
-      const accountInput = body.account!
-      ;[user] = await this.db
-        .select(this.buildLoginUserSelect())
-        .from(this.appUserTable)
-        .where(
-          and(
-            or(
-              eq(this.appUserTable.phoneNumber, accountInput),
-              eq(this.appUserTable.account, accountInput),
-            ),
-            isNull(this.appUserTable.deletedAt),
-          ),
-        )
-        .limit(1)
-    }
 
     if (!user) {
       if (body.code) {
@@ -290,19 +235,7 @@ export class AuthService {
     userId: number,
     clientContext: SessionClientContext,
   ) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUserTable)
-        .set({
-          lastLoginAt: new Date(),
-          lastLoginIp: clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
-          lastLoginGeoCountry: clientContext.geoCountry ?? null,
-          lastLoginGeoProvince: clientContext.geoProvince ?? null,
-          lastLoginGeoCity: clientContext.geoCity ?? null,
-          lastLoginGeoIsp: clientContext.geoIsp ?? null,
-        })
-        .where(eq(this.appUserTable.id, userId)),
-    )
+    await this.credentialService.updateLoginInfo(userId, clientContext)
   }
 
   // 用户退出登录，撤销数据库令牌。
@@ -341,7 +274,7 @@ export class AuthService {
 
   // 登录成功后的统一处理：更新登录信息、签发令牌、返回脱敏用户对象。
   private async handleLoginSuccess(
-    user: AppLoginUserRow,
+    user: AppLoginUserSource,
     clientContext: SessionClientContext,
   ) {
     await this.updateUserLoginInfo(user.id, clientContext)
@@ -352,7 +285,9 @@ export class AuthService {
     })
 
     await this.authSessionService.persistTokens(user.id, tokens, clientContext)
-    const growth = await this.userCoreService.getUserGrowthSnapshot(user.id)
+    const growth = await this.appUserGrowthProfileService.getUserGrowthSnapshot(
+      user.id,
+    )
 
     return {
       user: this.sanitizeUser(user, growth),
@@ -361,7 +296,10 @@ export class AuthService {
   }
 
   // 脱敏返回用户信息，只保留安全字段。
-  private sanitizeUser(user: AppLoginUserRow, growth: UserGrowthSnapshot) {
+  private sanitizeUser(
+    user: AppLoginUserSource,
+    growth: AppUserGrowthSnapshot,
+  ) {
     return {
       id: user.id,
       account: user.account,
@@ -379,96 +317,6 @@ export class AuthService {
       status: user.status ?? UserStatusEnum.NORMAL,
       isEnabled: user.isEnabled,
     }
-  }
-
-  // 在事务中创建注册用户，账号冲突时重试。
-  private async createRegisteredUser(
-    phone: string,
-    hashedPassword: string,
-  ): Promise<AppUserSelect> {
-    let lastError: Error = new BusinessException(
-      BusinessErrorCode.STATE_CONFLICT,
-      AppAuthErrorMessages.REGISTER_RETRY_FAILED,
-    )
-
-    for (
-      let attempt = 0;
-      attempt < APP_USER_ACCOUNT_MAX_RETRIES;
-      attempt += 1
-    ) {
-      try {
-        return await this.drizzle.db.transaction(async (tx) => {
-          const uid = await this.generateUniqueAccount(tx)
-
-          const [newUser] = await tx
-            .insert(this.appUserTable)
-            .values({
-              account: String(uid),
-              nickname: `用户${uid}`,
-              password: hashedPassword,
-              phoneNumber: phone,
-              genderType: GenderEnum.UNKNOWN,
-              isEnabled: true,
-            })
-            .returning()
-
-          await this.profileService.initUserProfile(tx, newUser.id)
-          return newUser
-        })
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error))
-
-        if (!this.isAccountUniqueViolation(error)) {
-          this.drizzle.handleError(error)
-        }
-
-        if (attempt >= APP_USER_ACCOUNT_MAX_RETRIES - 1) {
-          throw new BusinessException(
-            BusinessErrorCode.STATE_CONFLICT,
-            AppAuthErrorMessages.REGISTER_RETRY_FAILED,
-            {
-              cause: error ?? lastError,
-            },
-          )
-        }
-      }
-    }
-
-    throw lastError
-  }
-
-  // 登录链路只读取鉴权、令牌与安全用户视图所需字段。
-  private buildLoginUserSelect() {
-    return {
-      id: this.appUserTable.id,
-      account: this.appUserTable.account,
-      phoneNumber: this.appUserTable.phoneNumber,
-      emailAddress: this.appUserTable.emailAddress,
-      nickname: this.appUserTable.nickname,
-      password: this.appUserTable.password,
-      avatarUrl: this.appUserTable.avatarUrl,
-      profileBackgroundImageUrl: this.appUserTable.profileBackgroundImageUrl,
-      signature: this.appUserTable.signature,
-      bio: this.appUserTable.bio,
-      isEnabled: this.appUserTable.isEnabled,
-      genderType: this.appUserTable.genderType,
-      birthDate: this.appUserTable.birthDate,
-      status: this.appUserTable.status,
-      banReason: this.appUserTable.banReason,
-      banUntil: this.appUserTable.banUntil,
-    }
-  }
-
-  // 判断异常是否为 app_user_account_key 唯一约束冲突。
-  private isAccountUniqueViolation(error: unknown) {
-    if (!this.drizzle.isUniqueViolation(error)) {
-      return false
-    }
-
-    return (
-      this.drizzle.extractError(error)?.constraint ===
-      APP_USER_ACCOUNT_UNIQUE_CONSTRAINT
-    )
   }
 
   // 记录密码登录失败并抛出统一错误。

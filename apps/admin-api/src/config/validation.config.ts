@@ -7,11 +7,6 @@ export const appConfigValidationSchema = {
   ADMIN_API_PORT: Joi.number().port().default(8080),
 
   /**
-   * 旧版通用端口变量，保留兼容。
-   */
-  APP_PORT: Joi.number().port(),
-
-  /**
    * 应用名称
    */
   APP_NAME: Joi.string().default('admin-api'),

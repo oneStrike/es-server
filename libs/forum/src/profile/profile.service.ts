@@ -1,4 +1,3 @@
-import type { DbTransaction } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 
 import type { SQL } from 'drizzle-orm'
@@ -6,6 +5,7 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -16,8 +16,6 @@ import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { AppUserCountService } from '@libs/user/app-user-count.service'
-import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, inArray, isNull, lt } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission/forum-permission.service'
@@ -68,7 +66,6 @@ export class UserProfileService {
     protected readonly favoriteService: FavoriteService,
     /** 点赞服务 */
     protected readonly likeService: LikeService,
-    private readonly appUserCountService: AppUserCountService,
     private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
@@ -106,10 +103,6 @@ export class UserProfileService {
 
   get userBadgeAssignment() {
     return this.drizzle.schema.userBadgeAssignment
-  }
-
-  get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
   }
 
   // 将用户计数读模型映射为稳定的 profile 聚合结构。
@@ -446,7 +439,7 @@ export class UserProfileService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('app_user', userId),
+          exclusiveIntegrityLock(tableIntegrityLock('app_user', userId)),
         ])
         const user = await tx.query.appUser.findFirst({
           where: { id: userId },
@@ -736,65 +729,6 @@ export class UserProfileService {
       }
     })
     return { ...page, list }
-  }
-
-  // 初始化用户资料。
-  // 为新用户补齐默认等级、成长余额与计数读模型。
-  async initUserProfile(tx: DbTransaction, userId: number) {
-    const client = tx
-    let [defaultLevel] = await client
-      .select({ id: this.userLevelRule.id })
-      .from(this.userLevelRule)
-      .where(eq(this.userLevelRule.isEnabled, true))
-      .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
-      .limit(1)
-
-    if (defaultLevel) {
-      await acquireIntegrityLocks(tx, [
-        tableIntegrityLock('user_level_rule', defaultLevel.id),
-      ])
-      const [lockedDefaultLevel] = await tx
-        .select({ id: this.userLevelRule.id })
-        .from(this.userLevelRule)
-        .where(
-          and(
-            eq(this.userLevelRule.id, defaultLevel.id),
-            eq(this.userLevelRule.isEnabled, true),
-          ),
-        )
-        .limit(1)
-      defaultLevel = lockedDefaultLevel
-    }
-
-    await client
-      .update(this.appUser)
-      .set({
-        levelId: defaultLevel?.id ?? null,
-        status: UserStatusEnum.NORMAL,
-        signature: '',
-        bio: '',
-      })
-      .where(eq(this.appUser.id, userId))
-
-    await client
-      .insert(this.userAssetBalance)
-      .values([
-        {
-          userId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          assetKey: '',
-          balance: UserDefaults.INITIAL_POINTS,
-        },
-        {
-          userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          assetKey: '',
-          balance: UserDefaults.INITIAL_EXPERIENCE,
-        },
-      ])
-      .onConflictDoNothing()
-
-    await this.appUserCountService.initUserCounts(client, userId)
   }
 
   // 读取单个用户的成长余额快照。

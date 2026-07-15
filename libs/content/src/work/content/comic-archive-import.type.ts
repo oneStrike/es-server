@@ -1,5 +1,5 @@
-import type { WorkflowErrorFacts } from '@libs/platform/modules/workflow/workflow-error-facts'
-import type { WorkflowExecutionContext } from '@libs/platform/modules/workflow/workflow.type'
+import type { WorkflowErrorFacts } from '@libs/workflow/workflow/workflow-error-facts'
+import type { WorkflowExecutionContext } from '@libs/workflow/workflow/workflow.type'
 import type {
   ComicArchiveIgnoreReasonEnum,
   ComicArchiveImportItemStatusEnum,

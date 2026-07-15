@@ -1,9 +1,55 @@
-import type { WorkSelect } from '@db/schema'
+import type {
+  workAuthorRelation,
+  workCategoryRelation,
+  WorkSelect,
+  workTagRelation,
+} from '@db/schema'
 import type { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
 import type { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
 import type { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
+import type { ManagedForumSectionMutationSnapshot } from '@libs/forum/section/forum-section.type'
 import type { WorkTypeEnum } from '@libs/platform/constant'
 import type { ContentPurchasePricingDto } from '../../permission/dto/content-purchase-pricing.dto'
+
+type WorkAuthorRelationIdRow = Pick<
+  typeof workAuthorRelation.$inferSelect,
+  'authorId'
+>
+
+type WorkCategoryRelationIdRow = Pick<
+  typeof workCategoryRelation.$inferSelect,
+  'categoryId'
+>
+
+type WorkTagRelationIdRow = Pick<typeof workTagRelation.$inferSelect, 'tagId'>
+
+/** 作品更新与删除在取锁前后比对的最小作品快照。 */
+export type WorkMutationSnapshotRow = Pick<
+  WorkSelect,
+  'forumSectionId' | 'id' | 'name' | 'type'
+> & {
+  authorRelations: WorkAuthorRelationIdRow[]
+  categoryRelations: WorkCategoryRelationIdRow[]
+  tagRelations: WorkTagRelationIdRow[]
+}
+
+/** 作品更新与删除用于规划完整锁集合的发现结果。 */
+export interface WorkMutationDiscovery {
+  managedSection: ManagedForumSectionMutationSnapshot | undefined
+  work: WorkMutationSnapshotRow
+}
+
+/** 发布状态变更只需识别作品与其托管板块。 */
+export type WorkStatusMutationSnapshotRow = Pick<
+  WorkSelect,
+  'forumSectionId' | 'id'
+>
+
+/** 发布状态变更用于规划完整锁集合的窄发现结果。 */
+export interface WorkStatusMutationDiscovery {
+  managedSection: ManagedForumSectionMutationSnapshot | undefined
+  work: WorkStatusMutationSnapshotRow
+}
 
 /**
  * 作品详情请求上下文。
@@ -124,3 +170,6 @@ export interface WorkReadingChapterRef {
 
 /** app 作品流分页类型，用于区分默认、热门和推荐三套排序口径。 */
 export type AppWorkFeedKind = 'default' | 'hot' | 'recommended'
+
+/** app 作品流在未指定排序时交给分页构建器的确定性排序序列。 */
+export type AppWorkFallbackOrderBy = Array<Record<string, 'asc' | 'desc'>>

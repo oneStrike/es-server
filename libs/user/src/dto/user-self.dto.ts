@@ -1,16 +1,6 @@
 import {
-  BaseUserExperienceRecordDto,
-  QueryUserExperienceRecordFilterDto,
-} from '@libs/growth/experience/dto/experience-record.dto'
-import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
-import { BaseUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
-import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets/dto/user-assets.dto'
-import { BaseNotificationUnreadDto } from '@libs/message/notification/dto/notification-unread.dto'
-import {
   BooleanProperty,
   DateProperty,
-  NestedProperty,
-  NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
@@ -20,24 +10,10 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import {
-  UserExperienceDeltaFieldsDto,
-  UserGrowthRemarkFieldDto,
-  UserGrowthSnapshotFieldsDto,
-  UserPointDeltaFieldsDto,
-} from './app-user-growth-shared.dto'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
 import { BaseAppUserDto } from './base-app-user.dto'
 
-export {
-  QueryUserBadgePublicDto as QueryMyBadgeDto,
-  UserBadgePublicItemDto as UserBadgeItemDto,
-} from '@libs/growth/badge/dto/user-badge-management.dto'
-
-/**
- * app 端提及候选检索字段。
- * 仅提供轻量昵称检索，不承担完整用户搜索能力。
- */
+/** app 端提及候选检索字段。 */
 class UserMentionQueryFilterDto {
   @StringProperty({
     description: '昵称关键字',
@@ -48,26 +24,20 @@ class UserMentionQueryFilterDto {
   q?: string
 }
 
-/**
- * app 端提及候选分页查询 DTO。
- */
+/** app 端提及候选分页查询。 */
 export class QueryUserMentionPageDto extends IntersectionType(
   PageDto,
   UserMentionQueryFilterDto,
 ) {}
 
-/**
- * 提及候选用户 DTO。
- */
+/** 提及候选用户。 */
 export class UserMentionCandidateDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',
   'avatarUrl',
 ] as const) {}
 
-/**
- * 更新用户资料 DTO。
- */
+/** 更新本人资料。 */
 export class UpdateMyProfileDto extends PartialType(
   PickType(BaseAppUserDto, [
     'nickname',
@@ -81,9 +51,7 @@ export class UpdateMyProfileDto extends PartialType(
   ] as const),
 ) {}
 
-/**
- * 换绑当前用户手机号 DTO。
- */
+/** 换绑手机号。 */
 export class ChangeMyPhoneDto {
   @StringProperty({
     description: '当前已绑定手机号',
@@ -116,76 +84,14 @@ export class ChangeMyPhoneDto {
   newCode!: string
 }
 
-/**
- * 查询我的积分记录 DTO。
- */
-export class QueryMyPointRecordDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseUserPointRecordDto, [
-      'ruleId',
-      'targetType',
-      'targetId',
-    ] as const),
-  ),
-) {}
-
-/**
- * 用户积分记录 DTO。
- */
-export class UserPointRecordDto extends IntersectionType(
-  OmitType(BaseUserPointRecordDto, [
-    'assetType',
-    'delta',
-    'beforeValue',
-    'afterValue',
-    'bizKey',
-    'context',
-    'remark',
-    'updatedAt',
-  ] as const),
-  UserGrowthRemarkFieldDto,
-  UserPointDeltaFieldsDto,
-) {}
-
-/**
- * 查询我的经验记录 DTO。
- */
-export class QueryMyExperienceRecordDto extends IntersectionType(
-  PageDto,
-  QueryUserExperienceRecordFilterDto,
-) {}
-
-/**
- * 用户经验记录 DTO。
- */
-export class UserExperienceRecordDto extends IntersectionType(
-  OmitType(BaseUserExperienceRecordDto, [
-    'assetType',
-    'delta',
-    'beforeValue',
-    'afterValue',
-    'bizKey',
-    'context',
-    'remark',
-    'updatedAt',
-  ] as const),
-  UserGrowthRemarkFieldDto,
-  UserExperienceDeltaFieldsDto,
-) {}
-
-/**
- * 用户计数 DTO。
- */
+/** 用户计数。 */
 export class UserCountDto extends OmitType(BaseAppUserCountDto, [
   'userId',
   'createdAt',
   'updatedAt',
 ] as const) {}
 
-/**
- * 用户状态摘要 DTO。
- */
+/** 用户状态摘要。 */
 export class UserStatusSummaryDto extends PickType(BaseAppUserDto, [
   'isEnabled',
   'status',
@@ -247,291 +153,4 @@ export class UserStatusSummaryDto extends PickType(BaseAppUserDto, [
     validation: false,
   })
   until!: Date | null
-}
-
-/**
- * 用户等级摘要 DTO。
- */
-export class UserLevelSummaryDto extends PickType(BaseUserLevelRuleDto, [
-  'id',
-  'name',
-  'icon',
-  'color',
-  'requiredExperience',
-] as const) {}
-
-/**
- * 用户经验统计 DTO。
- */
-export class UserExperienceStatsDto {
-  @NumberProperty({
-    description: '当前经验值',
-    example: 350,
-    validation: false,
-  })
-  currentExperience!: number
-
-  @NumberProperty({
-    description: '今日获得经验值',
-    example: 20,
-    validation: false,
-  })
-  todayEarned!: number
-
-  @NestedProperty({
-    description: '当前等级信息',
-    type: UserLevelSummaryDto,
-    validation: false,
-    nullable: true,
-  })
-  level!: UserLevelSummaryDto | null
-
-  @NestedProperty({
-    description: '下一等级信息',
-    type: UserLevelSummaryDto,
-    validation: false,
-    nullable: true,
-  })
-  nextLevel!: UserLevelSummaryDto | null
-
-  @NumberProperty({
-    description: '距离下一等级的经验值差距',
-    example: 50,
-    nullable: true,
-    validation: false,
-  })
-  gapToNextLevel!: number | null
-}
-
-/**
- * 用户中心用户信息 DTO。
- */
-export class UserCenterUserDto extends PickType(BaseAppUserDto, [
-  'id',
-  'account',
-  'phoneNumber',
-  'nickname',
-  'avatarUrl',
-  'profileBackgroundImageUrl',
-  'emailAddress',
-  'genderType',
-  'birthDate',
-] as const) {}
-
-/**
- * 用户中心成长信息 DTO。
- */
-export class UserCenterGrowthDto extends UserGrowthSnapshotFieldsDto {
-  @NumberProperty({
-    description: '当前等级ID',
-    example: 1,
-    nullable: true,
-    validation: false,
-  })
-  levelId!: number | null
-
-  @StringProperty({
-    description: '当前等级名称',
-    example: '新手',
-    nullable: true,
-    validation: false,
-  })
-  levelName!: string | null
-
-  @StringProperty({
-    description: '当前等级图标 URL',
-    example: 'https://cdn.example.com/level/rookie.png',
-    nullable: true,
-    validation: false,
-  })
-  levelIcon!: string | null
-
-  @StringProperty({
-    description: '当前等级颜色',
-    example: '#FF5733',
-    nullable: true,
-    validation: false,
-  })
-  levelColor!: string | null
-
-  @NumberProperty({
-    description: '徽章数量',
-    example: 3,
-    validation: false,
-  })
-  badgeCount!: number
-}
-
-/**
- * 用户中心任务摘要 DTO。
- */
-export class UserCenterTaskDto {
-  @NumberProperty({
-    description: '当前仍可领取的手动任务数',
-    example: 2,
-    validation: false,
-  })
-  claimableCount!: number
-
-  @NumberProperty({
-    description: '已领取待开始的任务数',
-    example: 1,
-    validation: false,
-  })
-  claimedCount!: number
-
-  @NumberProperty({
-    description: '进行中的任务数',
-    example: 3,
-    validation: false,
-  })
-  inProgressCount!: number
-
-  @NumberProperty({
-    description: '已完成但奖励待补偿的任务数',
-    example: 1,
-    validation: false,
-  })
-  rewardPendingCount!: number
-}
-
-/**
- * 用户中心资料 DTO。
- */
-export class UserCenterProfileDto extends PickType(BaseAppUserDto, [
-  'signature',
-  'bio',
-  'status',
-  'banReason',
-  'banUntil',
-] as const) {
-  @NestedProperty({
-    description: '用户计数',
-    type: UserCountDto,
-    validation: false,
-    nullable: false,
-  })
-  counts!: UserCountDto
-}
-
-/**
- * 用户中心最近一次登录IP属地 DTO。
- */
-export class UserCenterLastLoginGeoDto {
-  @StringProperty({
-    description: '最近一次登录IP归属国家/地区',
-    example: '中国',
-    nullable: true,
-    maxLength: 100,
-    validation: false,
-  })
-  geoCountry!: string | null
-
-  @StringProperty({
-    description: '最近一次登录IP归属省份',
-    example: '广东省',
-    nullable: true,
-    maxLength: 100,
-    validation: false,
-  })
-  geoProvince!: string | null
-
-  @StringProperty({
-    description: '最近一次登录IP归属城市',
-    example: '深圳市',
-    nullable: true,
-    maxLength: 100,
-    validation: false,
-  })
-  geoCity!: string | null
-
-  @StringProperty({
-    description: '最近一次登录IP归属运营商',
-    example: '电信',
-    nullable: true,
-    maxLength: 100,
-    validation: false,
-  })
-  geoIsp!: string | null
-}
-
-/**
- * 用户中心消息摘要 DTO。
- */
-export class UserCenterMessageDto {
-  @NestedProperty({
-    description: '通知未读摘要',
-    type: BaseNotificationUnreadDto,
-    validation: false,
-    nullable: false,
-  })
-  notificationUnread!: BaseNotificationUnreadDto
-
-  @NumberProperty({
-    description: '收件箱未读消息总数',
-    example: 5,
-    validation: false,
-  })
-  totalUnreadCount!: number
-}
-
-/**
- * 用户中心汇总 DTO。
- */
-export class UserCenterDto {
-  @NestedProperty({
-    description: '用户基本信息',
-    type: UserCenterUserDto,
-    validation: false,
-    nullable: false,
-  })
-  user!: UserCenterUserDto
-
-  @NestedProperty({
-    description: '成长信息',
-    type: UserCenterGrowthDto,
-    validation: false,
-    nullable: false,
-  })
-  growth!: UserCenterGrowthDto
-
-  @NestedProperty({
-    description: '用户资料',
-    type: UserCenterProfileDto,
-    validation: false,
-    nullable: false,
-  })
-  profile!: UserCenterProfileDto
-
-  @NestedProperty({
-    description: '最近一次登录IP属地',
-    type: UserCenterLastLoginGeoDto,
-    validation: false,
-    nullable: false,
-  })
-  lastLoginGeo!: UserCenterLastLoginGeoDto
-
-  @NestedProperty({
-    description: '资产统计',
-    type: BaseUserAssetsSummaryDto,
-    validation: false,
-    nullable: false,
-  })
-  assets!: BaseUserAssetsSummaryDto
-
-  @NestedProperty({
-    description: '消息统计',
-    type: UserCenterMessageDto,
-    validation: false,
-    nullable: false,
-  })
-  message!: UserCenterMessageDto
-
-  @NestedProperty({
-    description: '任务摘要',
-    type: UserCenterTaskDto,
-    validation: false,
-    nullable: false,
-  })
-  task!: UserCenterTaskDto
 }

@@ -1,6 +1,7 @@
-import { InteractionModule } from '@libs/interaction/interaction.module';
+import { DrizzleModule } from '@db/core'
+import { InteractionModule } from '@libs/interaction/interaction.module'
 import { Module } from '@nestjs/common'
-import { ForumPermissionModule } from '../permission/forum-permission.module';
+import { ForumPermissionModule } from '../permission/forum-permission.module'
 import { ForumSectionGroupService } from './forum-section-group.service'
 
 /**
@@ -8,7 +9,7 @@ import { ForumSectionGroupService } from './forum-section-group.service'
  * 提供论坛板块分组管理的完整功能
  */
 @Module({
-  imports: [InteractionModule, ForumPermissionModule],
+  imports: [DrizzleModule, InteractionModule, ForumPermissionModule],
   controllers: [],
   providers: [ForumSectionGroupService],
   exports: [ForumSectionGroupService],

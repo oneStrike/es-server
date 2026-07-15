@@ -1,7 +1,7 @@
+import { FollowAuthorPageItemDto } from '@libs/content/author/dto/follow-author.dto'
+import { FollowHashtagPageItemDto } from '@libs/forum/hashtag/dto/follow-forum-hashtag.dto'
+import { FollowSectionPageItemDto } from '@libs/forum/section/dto/follow-forum-section.dto'
 import {
-  FollowAuthorPageItemDto,
-  FollowHashtagPageItemDto,
-  FollowSectionPageItemDto,
   FollowStatusResponseDto,
   FollowTargetDto,
   FollowUserPageItemDto,

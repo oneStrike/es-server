@@ -16,14 +16,14 @@ import {
   ThirdPartyComicImportRequestDto,
   ThirdPartyComicSyncLatestRequestDto,
 } from '@libs/content/work/content/dto/content.dto'
+import { ComicThirdPartyService } from '@libs/content/work/third-party/services/comic-third-party.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
-import { WorkflowJobDto } from '@libs/platform/modules/workflow/dto'
+import { WorkflowJobDto } from '@libs/workflow/workflow/dto/workflow.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
-import { ComicThirdPartyService } from './third-party-service'
 
 @ApiTags('内容管理/漫画管理/三方平台解析')
 @Controller('admin/content/comic/third-party')

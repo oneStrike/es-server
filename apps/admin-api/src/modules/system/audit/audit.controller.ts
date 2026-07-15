@@ -1,9 +1,12 @@
+import { AuditService } from '@libs/observability/audit/audit.service'
+import {
+  AuditItemDto,
+  AuditPageRequestDto,
+} from '@libs/observability/audit/dto/audit.dto'
 import { ApiPageDoc } from '@libs/platform/decorators'
-import { AuditItemDto, AuditPageRequestDto } from '@libs/platform/modules/audit/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'
-import { AuditService } from './audit.service'
 
 @Controller('admin/audit')
 @ApiTags('系统管理/审计日志')

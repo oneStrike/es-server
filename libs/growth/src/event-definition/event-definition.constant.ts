@@ -109,15 +109,12 @@ export enum EventDefinitionConsumerEnum {
  *
  * - declared: 已声明稳定编码，但当前仓没有正式 producer
  * - implemented: 已有正式 producer 接入
- * - legacy_compat: 仅保留历史兼容语义，不建议继续作为新口径扩散
  */
 export enum EventDefinitionImplStatusEnum {
   /** 已声明稳定编码，但当前没有正式 producer。 */
   DECLARED = 'declared',
   /** 已有正式 producer 接入。 */
   IMPLEMENTED = 'implemented',
-  /** 仅保留历史兼容语义。 */
-  LEGACY_COMPAT = 'legacy_compat',
 }
 
 const GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION = [
@@ -129,34 +126,28 @@ const GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION = [
   '6=每日签到',
   '7=后台人工调整',
   '8=主题浏览',
-  '9=主题举报历史口径',
   '10=评论奖励',
   '11=评论获赞',
-  '12=评论举报历史口径',
   '16=主题被评论',
   '100=漫画作品浏览',
   '101=漫画作品点赞',
   '102=漫画作品收藏',
-  '103=漫画作品举报历史口径',
   '104=漫画作品评论',
   '200=小说作品浏览',
   '201=小说作品点赞',
   '202=小说作品收藏',
-  '203=小说作品举报历史口径',
   '204=小说作品评论',
   '300=漫画章节阅读',
   '301=漫画章节点赞',
   '302=漫画章节购买',
   '303=漫画章节下载',
   '304=漫画章节兑换',
-  '305=漫画章节举报历史口径',
   '306=漫画章节评论',
   '400=小说章节阅读',
   '401=小说章节点赞',
   '402=小说章节购买',
   '403=小说章节下载',
   '404=小说章节兑换',
-  '405=小说章节举报历史口径',
   '406=小说章节评论',
   '600=获得徽章',
   '601=完善资料',
@@ -170,13 +161,10 @@ const GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION = [
 ].join('；')
 
 /** 成长规则配置 DTO 中的事件编码字段说明。 */
-export const GROWTH_RULE_TYPE_RULE_DTO_DESCRIPTION =
-  `成长规则类型（${GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION}）`
+export const GROWTH_RULE_TYPE_RULE_DTO_DESCRIPTION = `成长规则类型（${GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION}）`
 
 /** 成长记录 DTO 中的事件编码字段说明。 */
-export const GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION =
-  `成长记录关联的事件编码（${GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION}）`
+export const GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION = `成长记录关联的事件编码（${GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION}）`
 
 /** 管理端人工操作 DTO 中的事件编码字段说明。 */
-export const GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION =
-  `人工操作目标规则类型（${GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION}）`
+export const GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION = `人工操作目标规则类型（${GROWTH_RULE_TYPE_DTO_VALUE_DESCRIPTION}）`

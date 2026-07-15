@@ -27,8 +27,8 @@ export function createBodyDocFromPlainText(
 }
 
 /**
- * 将 legacy segment 流重建为 canonical body。
- * - 统一按段落 / hardBreak 规则拆分，供 migration helper 复用。
+ * 将 segment 流重建为 canonical body。
+ * - 统一按段落 / hardBreak 规则拆分。
  */
 export function createBodyDocFromSegments(segments: BodySegment[]): BodyDoc {
   const blocks: BodyBlockNode[] = []
@@ -89,8 +89,7 @@ export function createBodyDocFromSegments(segments: BodySegment[]): BodyDoc {
 }
 
 /**
- * 规范化 legacy 列表项文本为 list item。
- * - 供 future migration 或 body 构造扩展时复用。
+ * 规范化列表项文本为 list item。
  */
 export function createListItemFromPlainText(text: string): BodyListItemNode {
   return {

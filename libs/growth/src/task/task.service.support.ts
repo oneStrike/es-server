@@ -22,6 +22,7 @@ import type {
 import {
   acquireIntegrityLocks,
   buildILikeCondition,
+  exclusiveIntegrityLock,
   tableIntegrityLock,
 } from '@db/core'
 import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
@@ -102,7 +103,7 @@ export abstract class TaskServiceSupport {
     taskId: number,
   ) {
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('task_definition', taskId),
+      exclusiveIntegrityLock(tableIntegrityLock('task_definition', taskId)),
     ])
   }
 

@@ -1,4 +1,5 @@
-import { SystemConfigModule } from '@libs/system-config/system-config.module'
+import { DrizzleModule } from '@db/core'
+import { SystemConfigModule } from '@libs/config/system-config/system-config.module'
 import { Module } from '@nestjs/common'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'
@@ -7,7 +8,7 @@ import { SensitiveWordStatisticsService } from './sensitive-word-statistics.serv
 import { SensitiveWordService } from './sensitive-word.service'
 
 @Module({
-  imports: [SystemConfigModule],
+  imports: [DrizzleModule, SystemConfigModule],
   controllers: [],
   providers: [
     SensitiveWordService,

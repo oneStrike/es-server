@@ -1,4 +1,5 @@
-import { MessageDomainEventModule } from '@libs/message/eventing/message-domain-event.module'
+import { DrizzleModule } from '@db/core'
+import { EventingModule } from '@libs/eventing/eventing/eventing.module'
 import { Module } from '@nestjs/common'
 import { EventDefinitionModule } from '../event-definition/event-definition.module'
 import { UserGrowthRewardModule } from '../growth-reward/growth-reward.module'
@@ -13,8 +14,9 @@ import { TaskService } from './task.service'
 
 @Module({
   imports: [
+    DrizzleModule,
     UserGrowthRewardModule,
-    MessageDomainEventModule,
+    EventingModule,
     EventDefinitionModule,
   ],
   providers: [

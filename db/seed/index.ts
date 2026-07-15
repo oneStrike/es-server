@@ -1,6 +1,10 @@
 import type { Db } from './db-client'
 import type { DemoSeedRunOptions } from './seed.type'
-import { acquireIntegrityLocks, jobIntegrityLock } from '@db/core'
+import {
+  acquireIntegrityLocks,
+  exclusiveIntegrityLock,
+  jobIntegrityLock,
+} from '@db/core'
 import * as schema from '@db/schema'
 import { ForumUserActionTargetTypeEnum } from '@libs/forum/action-log/action-log.constant'
 import { ForumModeratorActionTargetTypeEnum } from '@libs/forum/moderator/moderator-action-log.constant'
@@ -49,7 +53,9 @@ export async function runDemoSeed(options: DemoSeedRunOptions) {
     }
     await db.transaction(async (tx) => {
       await acquireIntegrityLocks(tx, [
-        jobIntegrityLock(DATABASE_INITIALIZATION_JOB_LOCK),
+        exclusiveIntegrityLock(
+          jobIntegrityLock(DATABASE_INITIALIZATION_JOB_LOCK),
+        ),
       ])
 
       // advisory job lock 只串行化 seed 任务；应用写入由下面的表锁隔离。

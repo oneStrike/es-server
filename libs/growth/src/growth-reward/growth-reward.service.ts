@@ -100,8 +100,9 @@ export class UserGrowthRewardService {
 
     try {
       await this.runWithOptionalTransaction(params.tx, async (tx) => {
-        for (const rewardRule of enabledRules) {
-          const result = await this.growthLedgerService.applyByRule(tx, {
+        const ledgerResults = await this.growthLedgerService.applyByRuleBatch(
+          tx,
+          enabledRules.map((rewardRule) => ({
             userId: params.userId,
             assetType: this.toLedgerRuleAssetType(rewardRule.assetType),
             assetKey: rewardRule.assetKey,
@@ -112,7 +113,10 @@ export class UserGrowthRewardService {
             targetId: params.targetId,
             context: this.buildRuleRewardContext(params),
             occurredAt: params.occurredAt,
-          })
+          })),
+        )
+        for (const [index, result] of ledgerResults.entries()) {
+          const rewardRule = enabledRules[index]
           rewardResults.push({
             assetType: rewardRule.assetType,
             assetKey: rewardRule.assetKey,
@@ -132,6 +136,7 @@ export class UserGrowthRewardService {
           error instanceof Error ? error.message : String(error)
         }`,
       )
+      const failureResult = rewardResults.find((item) => item.result.reason)
 
       return {
         success: false,
@@ -142,7 +147,7 @@ export class UserGrowthRewardService {
         ledgerRecordIds: rewardResults
           .map((item) => item.result.recordId)
           .filter((id): id is number => typeof id === 'number'),
-        failureReason: rewardResults.find((item) => item.result.reason)?.result.reason,
+        failureReason: failureResult?.result.reason,
         rewardResults,
         errorMessage:
           error instanceof Error
@@ -230,19 +235,21 @@ export class UserGrowthRewardService {
 
       await this.drizzle.withTransaction({
         execute: async (tx) => {
-          for (const rewardItem of rewardItems) {
-            const ledgerAssetType = this.toLedgerAssetType(rewardItem.assetType)
-            const applyResult = await this.growthLedgerService.applyDelta(tx, {
+          const applyResults = await this.growthLedgerService.applyDeltaBatch(
+            tx,
+            rewardItems.map((rewardItem) => ({
               userId: params.userId,
-              assetType: ledgerAssetType,
+              assetType: this.toLedgerAssetType(rewardItem.assetType),
               action: GrowthLedgerActionEnum.GRANT,
               amount: rewardItem.amount,
               bizKey: this.buildTaskRewardItemBizKey(baseBizKey, rewardItem),
               source: GrowthLedgerSourceEnum.TASK_BONUS,
               targetId: params.taskId,
               context,
-            })
-
+            })),
+          )
+          for (const [index, applyResult] of applyResults.entries()) {
+            const rewardItem = rewardItems[index]
             this.ensureTaskRewardApplySucceeded(rewardItem, applyResult)
             rewardResults.push(
               this.toTaskRewardAssetResult(rewardItem, applyResult),

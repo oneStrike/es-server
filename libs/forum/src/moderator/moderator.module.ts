@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { GrowthRewardSettlementModule } from '@libs/growth/growth-reward/growth-reward-settlement.module'
 import { CommentModule } from '@libs/interaction/comment/comment.module'
 import { Module } from '@nestjs/common'
@@ -15,6 +16,7 @@ import { ForumModeratorService } from './moderator.service'
  */
 @Module({
   imports: [
+    DrizzleModule,
     CommentModule,
     ForumSectionModule,
     ForumTopicModule,

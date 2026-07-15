@@ -1,10 +1,7 @@
-import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,
   EnumProperty,
-  NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
@@ -77,61 +74,3 @@ export class QueryDownloadedWorkChapterCommandDto extends IntersectionType(
   QueryDownloadedWorkChapterDto,
   PickType(BaseDownloadRecordDto, ['userId'] as const),
 ) {}
-
-export class DownloadedWorkInfoDto extends PickType(BaseWorkDto, [
-  'id',
-  'type',
-  'name',
-  'cover',
-] as const) {}
-
-export class DownloadedWorkItemDto {
-  @NestedProperty({
-    description: '作品信息',
-    type: DownloadedWorkInfoDto,
-    required: true,
-    nullable: false,
-    validation: false,
-  })
-  work!: DownloadedWorkInfoDto
-
-  @NumberProperty({
-    description: '已下载章节数',
-    example: 12,
-    required: true,
-    min: 0,
-    validation: false,
-  })
-  downloadedChapterCount!: number
-
-  @DateProperty({
-    description: '最近下载时间',
-    example: '2026-03-04T09:00:00.000Z',
-    required: true,
-    validation: false,
-  })
-  lastDownloadedAt!: Date
-}
-
-export class DownloadedChapterInfoDto extends PickType(BaseWorkChapterDto, [
-  'id',
-  'workId',
-  'workType',
-  'title',
-  'subtitle',
-  'cover',
-  'sortOrder',
-  'isPublished',
-  'publishAt',
-] as const) {}
-
-export class DownloadedWorkChapterItemDto extends BaseDownloadRecordDto {
-  @NestedProperty({
-    description: '章节信息',
-    type: DownloadedChapterInfoDto,
-    required: true,
-    nullable: false,
-    validation: false,
-  })
-  chapter!: DownloadedChapterInfoDto
-}

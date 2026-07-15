@@ -1,18 +1,25 @@
 import type { DbExecutor, DbTransaction } from '@db/core'
 import type { WorkSelect } from '@db/schema'
+import type { ManagedForumSectionMutationSnapshot } from '@libs/forum/section/forum-section.type'
 import type { SQL } from 'drizzle-orm'
 import type {
+  AppWorkFallbackOrderBy,
   AppWorkFeedKind,
   BuildPublicWorkDetailParams,
   WorkDetailContext,
   WorkFlagUpdateInput,
+  WorkMutationDiscovery,
   WorkPageConditionOptions,
+  WorkStatusMutationDiscovery,
+  WorkStatusMutationSnapshotRow,
 } from './work.type'
 
 import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
+  sharedIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -50,26 +57,8 @@ import {
   workCatalogWorkLock,
 } from './work-integrity-lock'
 
-/** 作品存在性检查只需主键。 */
-type WorkExistenceRow = Pick<WorkSelect, 'id'>
-
-/** 作品写路径关联作者时只需作者 ID。 */
-interface WorkAuthorRelationIdRow {
-  authorId: number
-}
-
-/** 更新作品基础资料、同步板块和更新作者计数所需的当前快照。 */
-type WorkUpdateSnapshotRow = Pick<
-  WorkSelect,
-  'name' | 'type' | 'forumSectionId'
-> & {
-  authorRelations: WorkAuthorRelationIdRow[]
-}
-
-/** 删除作品、释放板块和扣减作者计数所需的当前快照。 */
-type WorkDeleteSnapshotRow = Pick<WorkSelect, 'forumSectionId'> & {
-  authorRelations: WorkAuthorRelationIdRow[]
-}
+// 仅标记取锁前后快照发生漂移，外层只对这一类并发变化执行一次全新重试。
+class WorkSnapshotDriftError extends Error {}
 
 /**
  * 作品服务类
@@ -166,18 +155,166 @@ export class WorkService {
     return { authorId: true } as const
   }
 
-  // 更新时只读取后续分支使用的名称、类型、论坛板块和作者关系。
-  private getWorkUpdateSnapshotColumns() {
+  // 作品写路径只以分类 ID 计算关系差集和锁集合。
+  private getWorkCategoryRelationIdColumns() {
+    return { categoryId: true } as const
+  }
+
+  // 作品写路径只以标签 ID 计算关系差集和锁集合。
+  private getWorkTagRelationIdColumns() {
+    return { tagId: true } as const
+  }
+
+  // 更新与删除只读取名称、类型、托管板块和关系差集所需字段。
+  private getWorkMutationSnapshotColumns() {
     return {
       name: true,
       type: true,
       forumSectionId: true,
+      id: true,
     } as const
   }
 
-  // 删除时只读取板块释放和作者计数所需的字段。
-  private getWorkDeleteSnapshotColumns() {
-    return { forumSectionId: true } as const
+  // 发布状态变更只读取作品主键和托管板块主键。
+  private getWorkStatusMutationSnapshotColumns() {
+    return { forumSectionId: true, id: true } as const
+  }
+
+  // 读取作品托管板块快照；缺失快照视为并发漂移并交由外层全新重试。
+  private async readManagedSectionMutationSnapshotForWork(
+    work: WorkStatusMutationSnapshotRow,
+    client: DbExecutor,
+  ) {
+    if (!work.forumSectionId) {
+      return undefined
+    }
+
+    const managedSection =
+      await this.forumSectionService.readManagedSectionMutationSnapshot(
+        work.id,
+        work.forumSectionId,
+        client,
+      )
+    if (!managedSection) {
+      throw new WorkSnapshotDriftError()
+    }
+    return managedSection
+  }
+
+  // 读取作品更新或删除规划完整锁集合所需的关系与托管板块快照。
+  private async readWorkMutationDiscovery(
+    id: number,
+    expectedType: WorkTypeEnum,
+    client: DbExecutor = this.db,
+  ): Promise<WorkMutationDiscovery | undefined> {
+    const work = await client.query.work.findFirst({
+      where: { id, type: expectedType, deletedAt: { isNull: true } },
+      columns: this.getWorkMutationSnapshotColumns(),
+      with: {
+        authorRelations: {
+          columns: this.getWorkAuthorRelationIdColumns(),
+        },
+        categoryRelations: {
+          columns: this.getWorkCategoryRelationIdColumns(),
+        },
+        tagRelations: {
+          columns: this.getWorkTagRelationIdColumns(),
+        },
+      },
+    })
+    if (!work) {
+      return undefined
+    }
+
+    const managedSection = await this.readManagedSectionMutationSnapshotForWork(
+      work,
+      client,
+    )
+    return { work, managedSection }
+  }
+
+  // 读取发布状态变更规划锁集合所需的窄作品与托管板块快照。
+  private async readWorkStatusMutationDiscovery(
+    id: number,
+    expectedType: WorkTypeEnum,
+    client: DbExecutor = this.db,
+  ): Promise<WorkStatusMutationDiscovery | undefined> {
+    const work = await client.query.work.findFirst({
+      where: { id, type: expectedType, deletedAt: { isNull: true } },
+      columns: this.getWorkStatusMutationSnapshotColumns(),
+    })
+    if (!work) {
+      return undefined
+    }
+
+    const managedSection = await this.readManagedSectionMutationSnapshotForWork(
+      work,
+      client,
+    )
+    return { work, managedSection }
+  }
+
+  // 比对取锁前后的托管板块身份及其父级引用是否一致。
+  private isSameManagedSectionMutationSnapshot(
+    left: ManagedForumSectionMutationSnapshot | undefined,
+    right: ManagedForumSectionMutationSnapshot | undefined,
+  ) {
+    if (!left || !right) {
+      return left === right
+    }
+    return (
+      left.workId === right.workId &&
+      left.id === right.id &&
+      left.groupId === right.groupId &&
+      left.userLevelRuleId === right.userLevelRuleId
+    )
+  }
+
+  // 比对更新或删除在取锁前后的作品、关系与托管板块快照。
+  private isSameWorkMutationDiscovery(
+    left: WorkMutationDiscovery | undefined,
+    right: WorkMutationDiscovery | undefined,
+  ) {
+    if (!left || !right) {
+      return left === right
+    }
+
+    const ids = (values: readonly number[]) =>
+      [...new Set(values)].sort((a, b) => a - b).join(',')
+    return (
+      left.work.id === right.work.id &&
+      left.work.name === right.work.name &&
+      left.work.type === right.work.type &&
+      left.work.forumSectionId === right.work.forumSectionId &&
+      ids(left.work.authorRelations.map((row) => row.authorId)) ===
+        ids(right.work.authorRelations.map((row) => row.authorId)) &&
+      ids(left.work.categoryRelations.map((row) => row.categoryId)) ===
+        ids(right.work.categoryRelations.map((row) => row.categoryId)) &&
+      ids(left.work.tagRelations.map((row) => row.tagId)) ===
+        ids(right.work.tagRelations.map((row) => row.tagId)) &&
+      this.isSameManagedSectionMutationSnapshot(
+        left.managedSection,
+        right.managedSection,
+      )
+    )
+  }
+
+  // 比对发布状态变更在取锁前后的作品与托管板块快照。
+  private isSameWorkStatusMutationDiscovery(
+    left: WorkStatusMutationDiscovery | undefined,
+    right: WorkStatusMutationDiscovery | undefined,
+  ) {
+    if (!left || !right) {
+      return left === right
+    }
+    return (
+      left.work.id === right.work.id &&
+      left.work.forumSectionId === right.work.forumSectionId &&
+      this.isSameManagedSectionMutationSnapshot(
+        left.managedSection,
+        right.managedSection,
+      )
+    )
   }
 
   // 构建作品列表页的最小字段投影，列表查询统一复用这一组 select 字段，避免不同分页接口出现字段面不一致。
@@ -252,6 +389,7 @@ export class WorkService {
     } as const
   }
 
+  // 作品详情统一加载公开作者、分类和标签字段，避免入口间关系投影漂移。
   private getWorkDetailRelations() {
     return {
       authors: {
@@ -303,6 +441,7 @@ export class WorkService {
     }
   }
 
+  // 校验显式提交的关系集合非空，创建场景可将缺省值一并视为非法。
   private assertNonEmptyRelationIds(
     ids: number[] | undefined,
     relationName: string,
@@ -316,6 +455,7 @@ export class WorkService {
     }
   }
 
+  // 将作品类型映射为作者必须具备的领域角色。
   private getRequiredAuthorType(workType: WorkTypeEnum): AuthorTypeEnum {
     if (workType === WorkTypeEnum.COMIC) {
       return AuthorTypeEnum.MANGA
@@ -329,15 +469,13 @@ export class WorkService {
     )
   }
 
+  // 查询当前有效且未删除的作者及其角色，用于事务内外同口径校验。
   private async findEnabledAuthors(
     authorIds?: number[],
     runner: DbExecutor = this.db,
   ) {
     if (authorIds === undefined) {
-      return [] as Array<{
-        id: number
-        type: null | number[]
-      }>
+      return []
     }
 
     return runner.query.workAuthor.findMany({
@@ -350,12 +488,13 @@ export class WorkService {
     })
   }
 
+  // 查询当前已启用的作品分类，用于确认完整关系集合。
   private async findEnabledCategories(
     categoryIds?: number[],
     runner: DbExecutor = this.db,
   ) {
     if (categoryIds === undefined) {
-      return [] as Array<{ id: number }>
+      return []
     }
 
     return runner.query.workCategory.findMany({
@@ -367,12 +506,13 @@ export class WorkService {
     })
   }
 
+  // 查询当前已启用的作品标签，用于确认完整关系集合。
   private async findEnabledTags(
     tagIds?: number[],
     runner: DbExecutor = this.db,
   ) {
     if (tagIds === undefined) {
-      return [] as Array<{ id: number }>
+      return []
     }
 
     return runner.query.workTag.findMany({
@@ -484,15 +624,14 @@ export class WorkService {
     const requiredViewLevelId = normalizedWorkData.requiredViewLevelId
 
     // 同类型作品名称必须保持唯一，软删除作品不参与冲突判断。
-    const existingWork: WorkExistenceRow | undefined =
-      await this.db.query.work.findFirst({
-        where: {
-          name: normalizedWorkData.name,
-          type: normalizedWorkData.type,
-          deletedAt: { isNull: true },
-        },
-        columns: this.getWorkExistenceColumns(),
-      })
+    const existingWork = await this.db.query.work.findFirst({
+      where: {
+        name: normalizedWorkData.name,
+        type: normalizedWorkData.type,
+        deletedAt: { isNull: true },
+      },
+      columns: this.getWorkExistenceColumns(),
+    })
 
     if (existingWork) {
       throw new BusinessException(
@@ -514,20 +653,23 @@ export class WorkService {
             authorIds,
             categoryIds,
             tagIds,
-          }),
+          }).map(sharedIntegrityLock),
           ...(requiredViewLevelId === undefined || requiredViewLevelId === null
             ? []
-            : [tableIntegrityLock('user_level_rule', requiredViewLevelId)]),
+            : [
+                sharedIntegrityLock(
+                  tableIntegrityLock('user_level_rule', requiredViewLevelId),
+                ),
+              ]),
         ])
-        const lockedExistingWork: WorkExistenceRow | undefined =
-          await tx.query.work.findFirst({
-            where: {
-              name: normalizedWorkData.name,
-              type: normalizedWorkData.type,
-              deletedAt: { isNull: true },
-            },
-            columns: this.getWorkExistenceColumns(),
-          })
+        const lockedExistingWork = await tx.query.work.findFirst({
+          where: {
+            name: normalizedWorkData.name,
+            type: normalizedWorkData.type,
+            deletedAt: { isNull: true },
+          },
+          columns: this.getWorkExistenceColumns(),
+        })
         if (lockedExistingWork) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
@@ -617,303 +759,406 @@ export class WorkService {
         : updateData.publishAt,
     }
 
-    return this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const requestedRequiredViewLevelId =
-          normalizedUpdateData.requiredViewLevelId
-        const integrityLocks = [workCatalogWorkLock(id)]
-        if (
-          requestedRequiredViewLevelId !== undefined &&
-          requestedRequiredViewLevelId !== null
-        ) {
-          integrityLocks.push(
-            tableIntegrityLock('user_level_rule', requestedRequiredViewLevelId),
-          )
-        }
-        await acquireIntegrityLocks(tx, integrityLocks)
-        const existingWork: WorkUpdateSnapshotRow | undefined =
-          await tx.query.work.findFirst({
-            where: {
-              id,
-              type: expectedType,
-              deletedAt: { isNull: true },
-            },
-            columns: this.getWorkUpdateSnapshotColumns(),
-            with: {
-              authorRelations: {
-                columns: this.getWorkAuthorRelationIdColumns(),
-              },
-            },
-          })
-        if (!existingWork) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const discovered = await this.readWorkMutationDiscovery(
+          id,
+          expectedType,
+        )
+        if (!discovered) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
             '作品不存在',
           )
         }
+        const result = await this.drizzle.withErrorHandling(async () =>
+          this.db.transaction(async (tx) => {
+            const requestedRequiredViewLevelId =
+              normalizedUpdateData.requiredViewLevelId
+            const discoveredWork = discovered.work
+            const discoveredManagedSection = discovered.managedSection
+            const originalAuthorIds = discoveredWork.authorRelations.map(
+              (relation) => relation.authorId,
+            )
+            const originalCategoryIds = discoveredWork.categoryRelations.map(
+              (relation) => relation.categoryId,
+            )
+            const originalTagIds = discoveredWork.tagRelations.map(
+              (relation) => relation.tagId,
+            )
 
-        if (
-          requestedRequiredViewLevelId !== undefined &&
-          requestedRequiredViewLevelId !== null
-        ) {
-          await this.assertRequiredViewLevelInTx(
-            tx,
-            requestedRequiredViewLevelId,
-          )
-        }
+            await acquireIntegrityLocks(tx, [
+              exclusiveIntegrityLock(workCatalogWorkLock(id)),
+              ...workCatalogRelationEndpointLocks({
+                authorIds: [...originalAuthorIds, ...(authorIds ?? [])],
+                categoryIds: [...originalCategoryIds, ...(categoryIds ?? [])],
+                tagIds: [...originalTagIds, ...(tagIds ?? [])],
+              }).map(sharedIntegrityLock),
+              ...(requestedRequiredViewLevelId === undefined ||
+              requestedRequiredViewLevelId === null
+                ? []
+                : [
+                    sharedIntegrityLock(
+                      tableIntegrityLock(
+                        'user_level_rule',
+                        requestedRequiredViewLevelId,
+                      ),
+                    ),
+                  ]),
+              ...(discoveredManagedSection
+                ? [
+                    exclusiveIntegrityLock(
+                      tableIntegrityLock(
+                        'forum_section',
+                        discoveredManagedSection.id,
+                      ),
+                    ),
+                    ...(discoveredManagedSection.groupId === null
+                      ? []
+                      : [
+                          sharedIntegrityLock(
+                            tableIntegrityLock(
+                              'forum_section_group',
+                              discoveredManagedSection.groupId,
+                            ),
+                          ),
+                        ]),
+                    ...(discoveredManagedSection.userLevelRuleId === null
+                      ? []
+                      : [
+                          sharedIntegrityLock(
+                            tableIntegrityLock(
+                              'user_level_rule',
+                              discoveredManagedSection.userLevelRuleId,
+                            ),
+                          ),
+                        ]),
+                  ]
+                : []),
+            ])
 
-        const resultingWorkName = updateData.name ?? existingWork.name
-        const originalAuthorIds = existingWork.authorRelations.map(
-          (rel) => rel.authorId,
-        )
-        const [originalCategoryIds, originalTagIds] = await Promise.all([
-          categoryIds === undefined
-            ? Promise.resolve<number[]>([])
-            : tx
-                .select({ id: this.workCategoryRelation.categoryId })
-                .from(this.workCategoryRelation)
+            const lockedDiscovery = await this.readWorkMutationDiscovery(
+              id,
+              expectedType,
+              tx,
+            )
+            if (
+              !lockedDiscovery ||
+              !this.isSameWorkMutationDiscovery(discovered, lockedDiscovery)
+            ) {
+              throw new WorkSnapshotDriftError()
+            }
+            const existingWork = lockedDiscovery.work
+
+            if (
+              requestedRequiredViewLevelId !== undefined &&
+              requestedRequiredViewLevelId !== null
+            ) {
+              await this.assertRequiredViewLevelInTx(
+                tx,
+                requestedRequiredViewLevelId,
+              )
+            }
+
+            const resultingWorkName = updateData.name ?? existingWork.name
+            const lockedOriginalAuthorIds = existingWork.authorRelations.map(
+              (rel) => rel.authorId,
+            )
+            if (
+              isNotNil(updateData.name) &&
+              updateData.name !== existingWork.name
+            ) {
+              const duplicateWork = await tx.query.work.findFirst({
+                where: {
+                  name: resultingWorkName,
+                  type: existingWork.type,
+                  deletedAt: { isNull: true },
+                  id: { ne: id },
+                },
+                columns: this.getWorkExistenceColumns(),
+              })
+              if (duplicateWork) {
+                throw new BusinessException(
+                  BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+                  '同类型作品名称已存在',
+                )
+              }
+            }
+
+            if (
+              authorIds !== undefined ||
+              categoryIds !== undefined ||
+              tagIds !== undefined
+            ) {
+              await this.validateWorkRelations(
+                authorIds,
+                categoryIds,
+                tagIds,
+                { workType: existingWork.type },
+                tx,
+              )
+            }
+
+            const shouldSyncSectionName =
+              isNotNil(updateData.name) && updateData.name !== existingWork.name
+            const shouldSyncSectionDescription = isNotNil(
+              updateData.description,
+            )
+            const shouldSyncSectionEnabled = isNotNil(updateData.isPublished)
+            const hasScalarUpdate = Object.values(normalizedUpdateData).some(
+              (value) => value !== undefined,
+            )
+            const workWhere = and(
+              eq(this.work.id, id),
+              eq(this.work.type, expectedType),
+              isNull(this.work.deletedAt),
+            )
+
+            if (hasScalarUpdate) {
+              const result = await tx
+                .update(this.work)
+                .set(normalizedUpdateData)
+                .where(workWhere)
+              this.drizzle.assertAffectedRows(result, '作品不存在')
+            } else {
+              // 关联关系单独更新时仍锁定目标行，保留事务内的存在性与并发语义。
+              const lockedRows = await tx
+                .select({ id: this.work.id })
+                .from(this.work)
+                .where(workWhere)
+                .for('update')
+              this.drizzle.assertAffectedRows(lockedRows, '作品不存在')
+            }
+
+            if (
+              existingWork.forumSectionId &&
+              (shouldSyncSectionName ||
+                shouldSyncSectionDescription ||
+                shouldSyncSectionEnabled)
+            ) {
+              const sectionUpdateData: Record<string, unknown> = {}
+              if (shouldSyncSectionName) {
+                sectionUpdateData.name = updateData.name
+              }
+              if (shouldSyncSectionDescription) {
+                sectionUpdateData.description = updateData.description?.slice(
+                  0,
+                  500,
+                )
+              }
+              if (shouldSyncSectionEnabled) {
+                sectionUpdateData.isEnabled = updateData.isPublished
+              }
+              await this.forumSectionService.syncManagedSectionForWork(tx, {
+                workId: id,
+                sectionId: existingWork.forumSectionId,
+                name: sectionUpdateData.name as string | undefined,
+                description: sectionUpdateData.description as
+                  string | undefined,
+                isEnabled: sectionUpdateData.isEnabled as boolean | undefined,
+              })
+            }
+
+            // 更新作者关联（先删除后重建）
+            if (authorIds !== undefined) {
+              await tx
+                .delete(this.workAuthorRelation)
+                .where(eq(this.workAuthorRelation.workId, id))
+
+              if (authorIds.length > 0) {
+                await tx.insert(this.workAuthorRelation).values(
+                  authorIds.map((authorId, index) => ({
+                    workId: id,
+                    authorId,
+                    sortOrder: index,
+                  })),
+                )
+              }
+
+              const addedAuthorIds = authorIds.filter(
+                (aid) => !lockedOriginalAuthorIds.includes(aid),
+              )
+              const removedAuthorIds = lockedOriginalAuthorIds.filter(
+                (aid) => !authorIds.includes(aid),
+              )
+
+              if (addedAuthorIds.length > 0) {
+                await this.workAuthorService.updateAuthorWorkCounts(
+                  tx,
+                  addedAuthorIds,
+                  1,
+                )
+              }
+
+              if (removedAuthorIds.length > 0) {
+                await this.workAuthorService.updateAuthorWorkCounts(
+                  tx,
+                  removedAuthorIds,
+                  -1,
+                )
+              }
+            }
+
+            // 更新分类关联（先删除后重建）
+            if (categoryIds !== undefined) {
+              await tx
+                .delete(this.workCategoryRelation)
                 .where(eq(this.workCategoryRelation.workId, id))
-                .then((rows) => rows.map((row) => row.id)),
-          tagIds === undefined
-            ? Promise.resolve<number[]>([])
-            : tx
-                .select({ id: this.workTagRelation.tagId })
-                .from(this.workTagRelation)
+
+              if (categoryIds.length > 0) {
+                await tx.insert(this.workCategoryRelation).values(
+                  categoryIds.map((categoryId, index) => ({
+                    workId: id,
+                    categoryId,
+                    sortOrder: categoryIds.length - index,
+                  })),
+                )
+              }
+            }
+
+            // 更新标签关联（先删除后重建）
+            if (tagIds !== undefined) {
+              await tx
+                .delete(this.workTagRelation)
                 .where(eq(this.workTagRelation.workId, id))
-                .then((rows) => rows.map((row) => row.id)),
-        ])
-        await acquireIntegrityLocks(
-          tx,
-          workCatalogRelationEndpointLocks({
-            authorIds:
-              authorIds === undefined
-                ? []
-                : [...originalAuthorIds, ...authorIds],
-            categoryIds:
-              categoryIds === undefined
-                ? []
-                : [...originalCategoryIds, ...categoryIds],
-            tagIds: tagIds === undefined ? [] : [...originalTagIds, ...tagIds],
-            workIds: [id],
+
+              if (tagIds.length > 0) {
+                await tx.insert(this.workTagRelation).values(
+                  tagIds.map((tagId, index) => ({
+                    workId: id,
+                    tagId,
+                    sortOrder: index,
+                  })),
+                )
+              }
+            }
+
+            return true
           }),
         )
-        if (
-          isNotNil(updateData.name) &&
-          updateData.name !== existingWork.name
-        ) {
-          const duplicateWork: WorkExistenceRow | undefined =
-            await tx.query.work.findFirst({
-              where: {
-                name: resultingWorkName,
-                type: existingWork.type,
-                deletedAt: { isNull: true },
-                id: { ne: id },
-              },
-              columns: this.getWorkExistenceColumns(),
-            })
-          if (duplicateWork) {
-            throw new BusinessException(
-              BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-              '同类型作品名称已存在',
-            )
-          }
+        return result
+      } catch (error) {
+        if (!(error instanceof WorkSnapshotDriftError)) {
+          throw error
         }
-
-        if (
-          authorIds !== undefined ||
-          categoryIds !== undefined ||
-          tagIds !== undefined
-        ) {
-          await this.validateWorkRelations(
-            authorIds,
-            categoryIds,
-            tagIds,
-            { workType: existingWork.type },
-            tx,
+        if (attempt === 1) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '作品状态已变化，请重试',
           )
         }
+      }
+    }
 
-        const shouldSyncSectionName =
-          isNotNil(updateData.name) && updateData.name !== existingWork.name
-        const shouldSyncSectionDescription = isNotNil(updateData.description)
-        const shouldSyncSectionEnabled = isNotNil(updateData.isPublished)
-        const hasScalarUpdate = Object.values(normalizedUpdateData).some(
-          (value) => value !== undefined,
-        )
-        const workWhere = and(
-          eq(this.work.id, id),
-          eq(this.work.type, expectedType),
-          isNull(this.work.deletedAt),
-        )
-
-        if (hasScalarUpdate) {
-          const result = await tx
-            .update(this.work)
-            .set(normalizedUpdateData)
-            .where(workWhere)
-          this.drizzle.assertAffectedRows(result, '作品不存在')
-        } else {
-          // 关联关系单独更新时仍锁定目标行，保留事务内的存在性与并发语义。
-          const lockedRows = await tx
-            .select({ id: this.work.id })
-            .from(this.work)
-            .where(workWhere)
-            .for('update')
-          this.drizzle.assertAffectedRows(lockedRows, '作品不存在')
-        }
-
-        if (
-          existingWork.forumSectionId &&
-          (shouldSyncSectionName ||
-            shouldSyncSectionDescription ||
-            shouldSyncSectionEnabled)
-        ) {
-          const sectionUpdateData: Record<string, unknown> = {}
-          if (shouldSyncSectionName) {
-            sectionUpdateData.name = updateData.name
-          }
-          if (shouldSyncSectionDescription) {
-            sectionUpdateData.description = updateData.description?.slice(
-              0,
-              500,
-            )
-          }
-          if (shouldSyncSectionEnabled) {
-            sectionUpdateData.isEnabled = updateData.isPublished
-          }
-          await this.forumSectionService.syncManagedSectionForWork(tx, {
-            workId: id,
-            sectionId: existingWork.forumSectionId,
-            name: sectionUpdateData.name as string | undefined,
-            description: sectionUpdateData.description as string | undefined,
-            isEnabled: sectionUpdateData.isEnabled as boolean | undefined,
-          })
-        }
-
-        // 更新作者关联（先删除后重建）
-        if (authorIds !== undefined) {
-          await tx
-            .delete(this.workAuthorRelation)
-            .where(eq(this.workAuthorRelation.workId, id))
-
-          if (authorIds.length > 0) {
-            await tx.insert(this.workAuthorRelation).values(
-              authorIds.map((authorId, index) => ({
-                workId: id,
-                authorId,
-                sortOrder: index,
-              })),
-            )
-          }
-
-          const addedAuthorIds = authorIds.filter(
-            (aid) => !originalAuthorIds.includes(aid),
-          )
-          const removedAuthorIds = originalAuthorIds.filter(
-            (aid) => !authorIds.includes(aid),
-          )
-
-          if (addedAuthorIds.length > 0) {
-            await this.workAuthorService.updateAuthorWorkCounts(
-              tx,
-              addedAuthorIds,
-              1,
-            )
-          }
-
-          if (removedAuthorIds.length > 0) {
-            await this.workAuthorService.updateAuthorWorkCounts(
-              tx,
-              removedAuthorIds,
-              -1,
-            )
-          }
-        }
-
-        // 更新分类关联（先删除后重建）
-        if (categoryIds !== undefined) {
-          await tx
-            .delete(this.workCategoryRelation)
-            .where(eq(this.workCategoryRelation.workId, id))
-
-          if (categoryIds.length > 0) {
-            await tx.insert(this.workCategoryRelation).values(
-              categoryIds.map((categoryId, index) => ({
-                workId: id,
-                categoryId,
-                sortOrder: categoryIds.length - index,
-              })),
-            )
-          }
-        }
-
-        // 更新标签关联（先删除后重建）
-        if (tagIds !== undefined) {
-          await tx
-            .delete(this.workTagRelation)
-            .where(eq(this.workTagRelation.workId, id))
-
-          if (tagIds.length > 0) {
-            await tx.insert(this.workTagRelation).values(
-              tagIds.map((tagId, index) => ({
-                workId: id,
-                tagId,
-                sortOrder: index,
-              })),
-            )
-          }
-        }
-
-        return true
-      }),
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '作品状态已变化，请重试',
     )
   }
 
   // 更新作品发布状态。
   async updateStatus(body: UpdateWorkStatusDto, expectedType: WorkTypeEnum) {
-    return this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogWorkLock(body.id)])
-        const work = await tx.query.work.findFirst({
-          where: {
-            id: body.id,
-            type: expectedType,
-            deletedAt: { isNull: true },
-          },
-          columns: {
-            id: true,
-            forumSectionId: true,
-          },
-        })
-        if (!work) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const discovered = await this.readWorkStatusMutationDiscovery(
+          body.id,
+          expectedType,
+        )
+        if (!discovered) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
             '作品不存在',
           )
         }
-        const result = await tx
-          .update(this.work)
-          .set({ isPublished: body.isPublished })
-          .where(
-            and(
-              eq(this.work.id, body.id),
-              eq(this.work.type, expectedType),
-              isNull(this.work.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '作品不存在')
+        const updated = await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            const managedSection = discovered.managedSection
+            await acquireIntegrityLocks(tx, [
+              exclusiveIntegrityLock(workCatalogWorkLock(body.id)),
+              ...(managedSection
+                ? [
+                    exclusiveIntegrityLock(
+                      tableIntegrityLock('forum_section', managedSection.id),
+                    ),
+                    ...(managedSection.groupId === null
+                      ? []
+                      : [
+                          sharedIntegrityLock(
+                            tableIntegrityLock(
+                              'forum_section_group',
+                              managedSection.groupId,
+                            ),
+                          ),
+                        ]),
+                    ...(managedSection.userLevelRuleId === null
+                      ? []
+                      : [
+                          sharedIntegrityLock(
+                            tableIntegrityLock(
+                              'user_level_rule',
+                              managedSection.userLevelRuleId,
+                            ),
+                          ),
+                        ]),
+                  ]
+                : []),
+            ])
+            const lockedDiscovery = await this.readWorkStatusMutationDiscovery(
+              body.id,
+              expectedType,
+              tx,
+            )
+            if (
+              !lockedDiscovery ||
+              !this.isSameWorkStatusMutationDiscovery(
+                discovered,
+                lockedDiscovery,
+              )
+            ) {
+              throw new WorkSnapshotDriftError()
+            }
 
-        if (work.forumSectionId) {
-          await this.forumSectionService.syncManagedSectionForWork(tx, {
-            workId: body.id,
-            sectionId: work.forumSectionId,
-            isEnabled: body.isPublished,
-          })
+            const result = await tx
+              .update(this.work)
+              .set({ isPublished: body.isPublished })
+              .where(
+                and(
+                  eq(this.work.id, body.id),
+                  eq(this.work.type, expectedType),
+                  isNull(this.work.deletedAt),
+                ),
+              )
+            this.drizzle.assertAffectedRows(result, '作品不存在')
+
+            if (lockedDiscovery.work.forumSectionId) {
+              await this.forumSectionService.syncManagedSectionForWork(tx, {
+                workId: body.id,
+                sectionId: lockedDiscovery.work.forumSectionId,
+                isEnabled: body.isPublished,
+              })
+            }
+
+            return true
+          },
+        })
+        return updated
+      } catch (error) {
+        if (!(error instanceof WorkSnapshotDriftError)) {
+          throw error
         }
+        if (attempt === 1) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '作品状态已变化，请重试',
+          )
+        }
+      }
+    }
 
-        return true
-      },
-    })
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '作品状态已变化，请重试',
+    )
   }
 
   // 批量更新作品标志位（发布/推荐/热门/新作），用于管理端快速切换作品的展示状态。
@@ -924,7 +1169,9 @@ export class WorkService {
   ) {
     return this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogWorkLock(id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogWorkLock(id)),
+        ])
         const work = await tx.query.work.findFirst({
           where: {
             id,
@@ -1173,6 +1420,7 @@ export class WorkService {
     )
   }
 
+  // 根据显式筛选参数确定 app 作品流唯一排序场景。
   private getAppWorkFeedKind(dto: QueryAppWorkDto): AppWorkFeedKind {
     if (dto.isHot === true) {
       return 'hot'
@@ -1183,9 +1431,10 @@ export class WorkService {
     return 'default'
   }
 
+  // 为未指定排序的 app 作品流提供确定性场景排序和主键兜底。
   private getAppWorkFallbackOrderBy(
     kind: AppWorkFeedKind,
-  ): Array<Record<string, 'asc' | 'desc'>> {
+  ): AppWorkFallbackOrderBy {
     if (kind === 'hot') {
       return [
         { popularity: 'desc' as const },
@@ -1204,6 +1453,7 @@ export class WorkService {
     return [{ publishAt: 'desc' as const }, { id: 'desc' as const }]
   }
 
+  // 只向分页排序构建器暴露当前作品流场景允许使用的列。
   private getAppWorkOrderColumns(kind: AppWorkFeedKind) {
     const columns = {
       publishAt: sql`coalesce(${this.work.publishAt}, '-infinity'::timestamptz)`,
@@ -1663,74 +1913,143 @@ export class WorkService {
 
   // 软删除作品，并在同一事务中停用关联论坛板块和扣减作者作品数。
   async deleteWork(id: number, expectedType: WorkTypeEnum) {
-    return this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogWorkLock(id)])
-        const work: WorkDeleteSnapshotRow | undefined =
-          await tx.query.work.findFirst({
-            where: {
-              id,
-              type: expectedType,
-              deletedAt: { isNull: true },
-            },
-            columns: this.getWorkDeleteSnapshotColumns(),
-            with: {
-              authorRelations: {
-                columns: this.getWorkAuthorRelationIdColumns(),
-              },
-            },
-          })
-        if (!work) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const discovered = await this.readWorkMutationDiscovery(
+          id,
+          expectedType,
+        )
+        if (!discovered) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
             '作品不存在',
           )
         }
+        const deleted = await this.drizzle.withErrorHandling(async () =>
+          this.db.transaction(async (tx) => {
+            const discoveredWork = discovered.work
+            const managedSection = discovered.managedSection
+            await acquireIntegrityLocks(tx, [
+              exclusiveIntegrityLock(workCatalogWorkLock(id)),
+              ...workCatalogRelationEndpointLocks({
+                authorIds: discoveredWork.authorRelations.map(
+                  (relation) => relation.authorId,
+                ),
+                categoryIds: discoveredWork.categoryRelations.map(
+                  (relation) => relation.categoryId,
+                ),
+                tagIds: discoveredWork.tagRelations.map(
+                  (relation) => relation.tagId,
+                ),
+              }).map(sharedIntegrityLock),
+              ...(managedSection
+                ? [
+                    exclusiveIntegrityLock(
+                      tableIntegrityLock('forum_section', managedSection.id),
+                    ),
+                    ...(managedSection.groupId === null
+                      ? []
+                      : [
+                          sharedIntegrityLock(
+                            tableIntegrityLock(
+                              'forum_section_group',
+                              managedSection.groupId,
+                            ),
+                          ),
+                        ]),
+                    ...(managedSection.userLevelRuleId === null
+                      ? []
+                      : [
+                          sharedIntegrityLock(
+                            tableIntegrityLock(
+                              'user_level_rule',
+                              managedSection.userLevelRuleId,
+                            ),
+                          ),
+                        ]),
+                  ]
+                : []),
+            ])
 
-        const chapterCount = await tx.$count(
-          this.workChapter,
-          and(
-            eq(this.workChapter.workId, id),
-            isNull(this.workChapter.deletedAt),
-          ),
+            const lockedDiscovery = await this.readWorkMutationDiscovery(
+              id,
+              expectedType,
+              tx,
+            )
+            if (
+              !lockedDiscovery ||
+              !this.isSameWorkMutationDiscovery(discovered, lockedDiscovery)
+            ) {
+              throw new WorkSnapshotDriftError()
+            }
+            const work = lockedDiscovery.work
+
+            const chapterCount = await tx.$count(
+              this.workChapter,
+              and(
+                eq(this.workChapter.workId, id),
+                isNull(this.workChapter.deletedAt),
+              ),
+            )
+            if (chapterCount > 0) {
+              throw new BusinessException(
+                BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                `该作品还有 ${chapterCount} 个关联章节，无法删除`,
+              )
+            }
+
+            const now = new Date()
+            await this.softDeleteThirdPartyBindingsForWork(id, tx, now)
+
+            const result = await tx
+              .update(this.work)
+              .set({ deletedAt: now })
+              .where(
+                and(
+                  eq(this.work.id, id),
+                  eq(this.work.type, expectedType),
+                  isNull(this.work.deletedAt),
+                ),
+              )
+            this.drizzle.assertAffectedRows(result, '作品不存在')
+
+            if (work.forumSectionId) {
+              await this.forumSectionService.releaseManagedSectionForWork(tx, {
+                workId: id,
+                sectionId: work.forumSectionId,
+                deletedAt: now,
+              })
+            }
+
+            const authorIds = work.authorRelations.map((rel) => rel.authorId)
+            if (authorIds.length > 0) {
+              await this.workAuthorService.updateAuthorWorkCounts(
+                tx,
+                authorIds,
+                -1,
+              )
+            }
+
+            return true
+          }),
         )
-        if (chapterCount > 0) {
+        return deleted
+      } catch (error) {
+        if (!(error instanceof WorkSnapshotDriftError)) {
+          throw error
+        }
+        if (attempt === 1) {
           throw new BusinessException(
-            BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            `该作品还有 ${chapterCount} 个关联章节，无法删除`,
+            BusinessErrorCode.STATE_CONFLICT,
+            '作品状态已变化，请重试',
           )
         }
+      }
+    }
 
-        const now = new Date()
-        await this.softDeleteThirdPartyBindingsForWork(id, tx, now)
-
-        const result = await tx
-          .update(this.work)
-          .set({ deletedAt: now })
-          .where(
-            and(
-              eq(this.work.id, id),
-              eq(this.work.type, expectedType),
-              isNull(this.work.deletedAt),
-            ),
-          )
-        this.drizzle.assertAffectedRows(result, '作品不存在')
-
-        if (work.forumSectionId) {
-          await this.forumSectionService.releaseManagedSectionForWork(tx, {
-            workId: id,
-            sectionId: work.forumSectionId,
-            deletedAt: now,
-          })
-        }
-
-        const authorIds = work.authorRelations.map((rel) => rel.authorId)
-        if (authorIds.length > 0) {
-          await this.workAuthorService.updateAuthorWorkCounts(tx, authorIds, -1)
-        }
-
-        return true
-      }),
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '作品状态已变化，请重试',
     )
   }
 

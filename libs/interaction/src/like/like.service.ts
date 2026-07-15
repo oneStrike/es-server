@@ -3,7 +3,7 @@ import type {
   LikeTargetMeta,
 } from './interfaces/like-target-resolver.type'
 import type { LikePageUserQuery } from './like.type'
-import { DrizzleService, toPageResult } from '@db/core'
+import { acquireIntegrityLocks, DrizzleService, toPageResult } from '@db/core'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { BusinessErrorCode, SceneTypeEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -123,6 +123,22 @@ export class LikeService {
     return null
   }
 
+  // 在事务外解析构建锁计划所需的稳定业务域；仅评论目标需要读取其所属场景。
+  private async resolvePlannedLevelBusiness(
+    targetType: LikeTargetTypeEnum,
+    targetId: number,
+    resolver: ILikeTargetResolver,
+  ) {
+    if (targetType !== LikeTargetTypeEnum.COMMENT) {
+      return targetType === LikeTargetTypeEnum.FORUM_TOPIC
+        ? this.forumBusiness
+        : null
+    }
+
+    const targetMeta = await resolver.resolveMeta(this.db, targetId)
+    return this.resolveLevelBusiness(targetType, targetMeta)
+  }
+
   // 供其他模块在应用启动时注册自己的点赞目标解析器。
   registerResolver(resolver: ILikeTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
@@ -225,15 +241,32 @@ export class LikeService {
   async like(input: LikeRecordDto): Promise<void> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
+    const plannedBusiness = await this.resolvePlannedLevelBusiness(
+      targetType,
+      targetId,
+      resolver,
+    )
+    const quotaPlan = this.userLevelRuleService.buildDailyLikeQuotaLockPlan({
+      userId,
+      business: plannedBusiness,
+    })
 
     await this.drizzle.withTransaction({
       execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [...quotaPlan.lockRequests])
         const targetMeta = await resolver.resolveMeta(tx, targetId)
+        const liveBusiness = this.resolveLevelBusiness(targetType, targetMeta)
+        if (liveBusiness !== quotaPlan.business) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '点赞目标业务域已变化，请重试',
+          )
+        }
 
-        await this.userLevelRuleService.ensureDailyLikeQuotaInTx(tx, {
-          userId,
-          business: this.resolveLevelBusiness(targetType, targetMeta),
-        })
+        await this.userLevelRuleService.ensureDailyLikeQuotaAfterLockInTx(
+          tx,
+          quotaPlan,
+        )
 
         await this.drizzle.withErrorHandling(
           () =>

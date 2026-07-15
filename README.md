@@ -54,7 +54,9 @@ pnpm publish-api:app
 
 ## 数据库迁移与初始化
 
-- `pnpm db:migrate` 必须显式传入 `--mode active`，并从 `DATABASE_URL` 读取连接；它不是生产部署别名。
+- `pnpm db:migrate` 是唯一的 schema migration 入口：脚本固定传入 `--mode active` 并从 `DATABASE_URL` 读取连接；它不是生产部署别名。
+- 当前 migration line 是从 `db/schema/index.ts` 生成的单一全量 baseline，只能初始化 `public` schema 中没有应用表的 PostgreSQL 数据库。已有数据库必须从匹配的备份恢复，或在明确授权后重置；不存在原增量历史的原地升级、数据转换或兼容层。
+- baseline 会创建 `pg_trgm`，执行 migration 的数据库角色必须具有创建该扩展的权限。
 - 数据库 migration/static gate 的 operational owner 位于 `db/operations/**`；`scripts/` 只保留数据库注释与 Admin RBAC 入口。
 - 本仓库不使用数据库外键，不使用 `drizzle-kit push` / `push --force` 作为交付路径。
 - 迁移、停写、数据导入、发布与回滚都不是 compose 或本地脚本的隐式副作用，必须由对应环境的操作流程明确执行。

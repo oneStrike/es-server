@@ -38,9 +38,6 @@ export const environmentValidationSchema = Joi.object({
     .valid('development', 'production', 'test', 'provision')
     .default('development'),
 
-  // 兼容端口配置
-  PORT: Joi.number().port().optional(),
-
   // 数据库配置
   DATABASE_URL: Joi.string().required(),
   DB_PROCESS_ROLE: Joi.string().valid('admin-api', 'app-api').optional(),

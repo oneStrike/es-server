@@ -1,6 +1,6 @@
 import type { DbTransaction } from '@db/core'
+import type { CommentRateLimitLockPlan } from '@libs/growth/level-rule/level-rule.type'
 import { DrizzleService } from '@db/core'
-import { ForumPermissionService } from '@libs/forum/permission/forum-permission.service'
 import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -12,7 +12,6 @@ import { CommentTargetTypeEnum } from './comment.constant'
 export class CommentPermissionService {
   constructor(
     private readonly drizzle: DrizzleService,
-    private readonly forumPermissionService: ForumPermissionService,
     private readonly userLevelRuleService: UserLevelRuleService,
   ) {}
 
@@ -22,19 +21,11 @@ export class CommentPermissionService {
     return this.drizzle.db
   }
 
-  async ensureCanComment(
-    userId: number,
-    targetType: CommentTargetTypeEnum,
-    targetId: number,
-  ) {
-    await this.ensureUserCanComment(userId, targetType, targetId)
+  async ensureCanComment(userId: number) {
+    await this.ensureUserCanComment(userId)
   }
 
-  async ensureUserCanComment(
-    userId: number,
-    targetType?: CommentTargetTypeEnum,
-    targetId?: number,
-  ) {
+  async ensureUserCanComment(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
       columns: {
@@ -64,27 +55,28 @@ export class CommentPermissionService {
         '用户已被禁言或封禁，无法评论',
       )
     }
-
-    if (
-      targetType === CommentTargetTypeEnum.FORUM_TOPIC &&
-      typeof targetId === 'number'
-    ) {
-      await this.forumPermissionService.ensureUserCanAccessTopicSection(
-        targetId,
-        userId,
-      )
-    }
   }
 
-  async ensureCommentRateLimitInTx(
-    tx: DbTransaction,
+  // 在评论事务外构建等级额度与发帖间隔锁计划。
+  buildCommentRateLimitLockPlan(
     userId: number,
     targetType: CommentTargetTypeEnum,
-  ) {
-    await this.userLevelRuleService.ensureCommentRateLimitInTx(tx, {
+  ): CommentRateLimitLockPlan {
+    return this.userLevelRuleService.buildCommentRateLimitLockPlan({
       userId,
       business: this.resolveLevelBusiness(targetType),
     })
+  }
+
+  // outer owner 持有完整 union 后执行评论等级频控校验。
+  async ensureCommentRateLimitAfterLockInTx(
+    tx: DbTransaction,
+    plan: CommentRateLimitLockPlan,
+  ) {
+    await this.userLevelRuleService.ensureCommentRateLimitAfterLockInTx(
+      tx,
+      plan,
+    )
   }
 
   private resolveLevelBusiness(targetType?: CommentTargetTypeEnum) {

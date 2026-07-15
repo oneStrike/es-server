@@ -4,6 +4,7 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
   toPageResult,
 } from '@db/core'
 
@@ -570,7 +571,9 @@ export class WorkAuthorService {
 
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogAuthorLock(id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogAuthorLock(id)),
+        ])
         const existingAuthor = await tx.query.workAuthor.findFirst({
           where: { id, deletedAt: { isNull: true } },
           columns: { id: true },
@@ -596,7 +599,9 @@ export class WorkAuthorService {
   async updateAuthorStatus(input: UpdateAuthorStatusDto) {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogAuthorLock(input.id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogAuthorLock(input.id)),
+        ])
         const existingAuthor = await tx.query.workAuthor.findFirst({
           where: { id: input.id, deletedAt: { isNull: true } },
           columns: { id: true },
@@ -634,7 +639,9 @@ export class WorkAuthorService {
   async deleteAuthor(input: IdDto) {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogAuthorLock(input.id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogAuthorLock(input.id)),
+        ])
         const existingAuthor = await tx.query.workAuthor.findFirst({
           where: { id: input.id, deletedAt: { isNull: true } },
           columns: { id: true },

@@ -1,5 +1,5 @@
+import { UserAssetsService } from '@libs/account/user-assets/user-assets.service'
 import { PaymentOrderResultDto } from '@libs/interaction/payment/dto/payment.dto'
-import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.service'
 import {
   AppCurrencyPackageDto,
   CreateCurrencyRechargeOrderDto,

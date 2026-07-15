@@ -5,8 +5,6 @@ import type {
   PlatformModuleOptions,
   RequestIdHeaderCarrier,
 } from './platform.module.type'
-import { DrizzleModule } from '@db/core'
-import { EventingModule } from '@libs/platform/modules/eventing/eventing.module'
 import { LoggerModule } from '@libs/platform/modules/logger/logger.module'
 import {
   BadRequestException,
@@ -21,7 +19,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { PostSuccessStatusInterceptor } from './interceptors/post-success-status.interceptor'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
 import { CustomCacheModule } from './modules/cache/cache.module'
-import { HealthModule } from './modules/health/health.module'
 
 function flattenValidationErrors(
   errors: ValidationError[],
@@ -56,10 +53,8 @@ export class PlatformModule {
     // 默认配置
     const defaultOptions = {
       enableLogger: true,
-      enableDatabase: true,
       enableCache: true,
       enableThrottler: true,
-      enableHealth: true,
       enableGlobalValidationPipe: true,
       enableGlobalPostSuccessStatusInterceptor: true,
       enableGlobalTransformInterceptor: true,
@@ -79,7 +74,6 @@ export class PlatformModule {
             req.headers?.['x-request-id'] || uuidv4(),
         },
       }),
-      EventingModule,
     ]
 
     // 全局验证管道 - 数据格式校验
@@ -88,11 +82,6 @@ export class PlatformModule {
     // 日志模块
     if (mergedOptions.enableLogger) {
       imports.push(LoggerModule)
-    }
-
-    // 数据库模块
-    if (mergedOptions.enableDatabase) {
-      imports.push(DrizzleModule)
     }
 
     // 缓存模块
@@ -113,11 +102,6 @@ export class PlatformModule {
         provide: APP_GUARD,
         useClass: ThrottlerGuard, // 限流守卫
       })
-    }
-
-    // 健康检查模块
-    if (mergedOptions.enableHealth) {
-      imports.push(HealthModule)
     }
 
     if (mergedOptions.enableGlobalPostSuccessStatusInterceptor) {

@@ -7,7 +7,8 @@ import type {
   AnnouncementFanoutEventKey,
 } from './announcement.type'
 import { DrizzleService } from '@db/core'
-import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
+import { DomainEventConsumerEnum } from '@libs/eventing/eventing/eventing.constant'
 import { BusinessErrorCode, EnablePlatformEnum } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -50,7 +51,7 @@ export class AnnouncementNotificationFanoutService {
 
   constructor(
     private readonly drizzle: DrizzleService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
+    private readonly domainEventPublisher: DomainEventPublisher,
   ) {}
 
   private get db() {
@@ -364,20 +365,9 @@ export class AnnouncementNotificationFanoutService {
       let lastProcessedUserId = cursorUserId ?? null
 
       try {
-        await this.messageDomainEventPublisher.publishMany(
-          receiverUserIds.map((receiverUserId) => ({
-            eventKey,
-            idempotencyKey: this.buildDomainEventIdempotencyKey({
-              announcementId: task.announcementId,
-              receiverUserId,
-              eventKey,
-              eventBoundaryKey: task.eventBoundaryKey,
-            }),
-            subjectType: 'system',
-            subjectId: task.announcementId,
-            targetType: 'announcement',
-            targetId: task.announcementId,
-            context: this.buildAnnouncementNotificationContext({
+        await this.domainEventPublisher.publishManyByIdempotencyKey(
+          receiverUserIds.map((receiverUserId) => {
+            const context = this.buildAnnouncementNotificationContext({
               announcementId: task.announcementId,
               receiverUserId,
               eventKey,
@@ -390,8 +380,20 @@ export class AnnouncementNotificationFanoutService {
                 : undefined,
               announcementType: announcement?.announcementType,
               priorityLevel: announcement?.priorityLevel,
-            }),
-          })),
+            })
+
+            return {
+              eventKey,
+              domain: 'app-content',
+              idempotencyKey: context.projectionKey,
+              subjectType: 'system',
+              subjectId: task.announcementId,
+              targetType: 'announcement',
+              targetId: task.announcementId,
+              consumers: [DomainEventConsumerEnum.NOTIFICATION],
+              context,
+            }
+          }),
         )
         lastProcessedUserId = receiverUserIds.at(-1) ?? lastProcessedUserId
         processedBatchCount += 1
@@ -882,9 +884,6 @@ export class AnnouncementNotificationFanoutService {
     task: AppAnnouncementNotificationFanoutTaskSelect,
     announcement: AnnouncementDecisionSnapshot,
   ) {
-    if (task.eventBoundaryKey.startsWith('manual:legacy:')) {
-      return false
-    }
     if (task.eventBoundaryKey.startsWith('manual:')) {
       return task.eventBoundaryKey !== this.buildManualBoundaryKey(announcement)
     }
@@ -918,22 +917,6 @@ export class AnnouncementNotificationFanoutService {
       'announcement',
       input.announcementId,
       input.desiredEventKey,
-      input.eventBoundaryKey,
-    ].join(':')
-  }
-
-  private buildDomainEventIdempotencyKey(input: {
-    announcementId: number
-    receiverUserId: number
-    eventKey: AnnouncementFanoutEventKey
-    eventBoundaryKey: string
-  }) {
-    return [
-      'announcement',
-      input.announcementId,
-      'user',
-      input.receiverUserId,
-      input.eventKey,
       input.eventBoundaryKey,
     ].join(':')
   }

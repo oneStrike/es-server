@@ -22,29 +22,22 @@ const ADMIN_USER_CONTROLLER_FILE = join(
   ROOT,
   'apps/admin-api/src/modules/admin-user/admin-user.controller.ts',
 )
-const ADMIN_USER_MODULE_FILE = join(
+const ADMIN_USER_MANAGEMENT_SERVICE_FILE = join(
   ROOT,
-  'apps/admin-api/src/modules/admin-user/admin-user.module.ts',
+  'libs/identity/src/admin-user-management.service.ts',
 )
-const ADMIN_USER_SERVICE_FILE = join(
+const ADMIN_USER_IDENTITY_SERVICE_FILE = join(
   ROOT,
-  'apps/admin-api/src/modules/admin-user/admin-user.service.ts',
+  'libs/identity/src/admin-user.service.ts',
 )
-const ADMIN_USER_TYPE_FILE = join(
-  ROOT,
-  'apps/admin-api/src/modules/admin-user/admin-user.type.ts',
-)
-const ADMIN_SELF_PROFILE_LEGACY_FIELDS_GUARD_FILE = join(
-  ROOT,
-  'apps/admin-api/src/modules/admin-user/admin-self-profile-legacy-fields.guard.ts',
-)
+const ADMIN_USER_TYPE_FILE = join(ROOT, 'libs/identity/src/admin-user.type.ts')
 const ADMIN_RBAC_SERVICE_FILE = join(
   ROOT,
-  'apps/admin-api/src/modules/rbac/admin-rbac.service.ts',
+  'libs/identity/src/admin-rbac.service.ts',
 )
 const ADMIN_RBAC_CACHE_SERVICE_FILE = join(
   ROOT,
-  'apps/admin-api/src/modules/rbac/admin-rbac-cache.service.ts',
+  'libs/identity/src/admin-rbac-cache.service.ts',
 )
 const ADMIN_AUTH_SERVICE_FILE = join(
   ROOT,
@@ -65,7 +58,7 @@ const ADMIN_RBAC_CONSTANT_FILE = join(
 const LEGACY_ROLE_TARGETS = [
   join(ROOT, 'apps/admin-api/src'),
   join(ROOT, 'libs/identity/src'),
-  join(ROOT, 'db/schema/admin'),
+  join(ROOT, 'db/schema/identity'),
 ]
 const HTTP_DECORATORS = new Set(['Get', 'Post', 'Put', 'Patch', 'Delete'])
 const BYPASS_DECORATORS = new Set(['Public', 'AdminAuthOnly'])
@@ -470,14 +463,13 @@ function checkAdminUserContract(): Finding[] {
   const findings: Finding[] = []
   const authDtoSource = readSource(ADMIN_AUTH_DTO_FILE)
   const controllerSource = readSource(ADMIN_USER_CONTROLLER_FILE)
-  const moduleSource = readSource(ADMIN_USER_MODULE_FILE)
-  const guardSource = readSource(ADMIN_SELF_PROFILE_LEGACY_FIELDS_GUARD_FILE)
 
   for (const sourceFile of [
     ADMIN_USER_DTO_FILE,
     ADMIN_AUTH_DTO_FILE,
     ADMIN_USER_CONTROLLER_FILE,
-    ADMIN_USER_SERVICE_FILE,
+    ADMIN_USER_MANAGEMENT_SERVICE_FILE,
+    ADMIN_USER_IDENTITY_SERVICE_FILE,
   ]) {
     const source = readSource(sourceFile)
     expectNotIncludes(
@@ -570,13 +562,6 @@ function checkAdminUserContract(): Finding[] {
     findings,
     ADMIN_USER_CONTROLLER_FILE,
     controllerSource,
-    'AdminSelfProfileLegacyFieldsGuard',
-    'profile/update must keep legacy-field guard',
-  )
-  expectIncludes(
-    findings,
-    ADMIN_USER_CONTROLLER_FILE,
-    controllerSource,
     'AdminSelfProfileUpdateDto',
     'profile/update must use AdminSelfProfileUpdateDto',
   )
@@ -608,112 +593,123 @@ function checkAdminUserContract(): Finding[] {
     "@Post('update')",
     'admin account update route must keep update handler path',
   )
-  expectIncludes(
-    findings,
-    ADMIN_USER_MODULE_FILE,
-    moduleSource,
-    'AdminSelfProfileLegacyFieldsGuard',
-    'admin-user module must provide AdminSelfProfileLegacyFieldsGuard',
-  )
-  for (const field of ['id', 'roleIds', 'isEnabled']) {
-    expectIncludes(
-      findings,
-      ADMIN_SELF_PROFILE_LEGACY_FIELDS_GUARD_FILE,
-      guardSource,
-      field,
-      `legacy profile guard must reject ${field}`,
-    )
-  }
-
   return findings
 }
 
 // 防止管理员列表退回 N+1、权限快照过曝或密码列过取。
 function checkAdminUserListContract(): Finding[] {
   const findings: Finding[] = []
-  const serviceSource = readSource(ADMIN_USER_SERVICE_FILE)
+  const identityServiceSource = readSource(ADMIN_USER_IDENTITY_SERVICE_FILE)
   const typeSource = readSource(ADMIN_USER_TYPE_FILE)
   const getUsers = readClassMethodText(
-    ADMIN_USER_SERVICE_FILE,
-    'AdminUserService',
+    ADMIN_USER_MANAGEMENT_SERVICE_FILE,
+    'AdminUserManagementService',
     'getUsers',
+  )
+  const getAdminUserPage = readClassMethodText(
+    ADMIN_USER_IDENTITY_SERVICE_FILE,
+    'AdminUserIdentityService',
+    'getAdminUserPage',
   )
 
   if (!getUsers) {
     findings.push({
-      file: ADMIN_USER_SERVICE_FILE,
+      file: ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       line: 1,
-      message: `${fileRef(ADMIN_USER_SERVICE_FILE, 1)} missing getUsers`,
+      message: `${fileRef(ADMIN_USER_MANAGEMENT_SERVICE_FILE, 1)} missing getUsers`,
     })
   } else {
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       getUsers.text,
-      'this.buildRoleFilterExists(roleId)',
-      'getUsers must filter roleId through exists instead of preloading user ids',
+      'this.adminUserIdentityService.getAdminUserPage',
+      'getUsers must delegate list loading to the identity owner',
+    )
+  }
+
+  if (!getAdminUserPage) {
+    findings.push({
+      file: ADMIN_USER_IDENTITY_SERVICE_FILE,
+      line: 1,
+      message: `${fileRef(ADMIN_USER_IDENTITY_SERVICE_FILE, 1)} missing getAdminUserPage`,
+    })
+  } else {
+    expectIncludes(
+      findings,
+      ADMIN_USER_IDENTITY_SERVICE_FILE,
+      getAdminUserPage.text,
+      'exists(',
+      'getAdminUserPage must filter roleId through exists instead of preloading user ids',
     )
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
-      getUsers.text,
+      ADMIN_USER_IDENTITY_SERVICE_FILE,
+      getAdminUserPage.text,
+      'eq(this.adminUserRole.roleId, roleId)',
+      'getAdminUserPage must correlate roleId exists filter to adminUserRole',
+    )
+    expectIncludes(
+      findings,
+      ADMIN_USER_IDENTITY_SERVICE_FILE,
+      getAdminUserPage.text,
       'this.getRoleSummariesByUserIds',
-      'getUsers must batch-load role summaries for the current page',
+      'getAdminUserPage must batch-load role summaries for the current page',
     )
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
-      getUsers.text,
+      ADMIN_USER_IDENTITY_SERVICE_FILE,
+      getAdminUserPage.text,
       '.select(this.adminUserResponseColumns)',
-      'getUsers must select explicit non-password response columns',
+      'getAdminUserPage must select explicit non-password response columns',
     )
     expectNotMatches(
       findings,
-      ADMIN_USER_SERVICE_FILE,
-      getUsers.text,
-      /list\.map\(\s*async/,
-      'getUsers must not map current page items through async N+1 loaders',
+      ADMIN_USER_IDENTITY_SERVICE_FILE,
+      getAdminUserPage.text,
+      /users\.map\(\s*async/,
+      'getAdminUserPage must not map current page items through async N+1 loaders',
     )
     expectNotMatches(
       findings,
-      ADMIN_USER_SERVICE_FILE,
-      getUsers.text,
-      /const\s+rows\s*=\s*await\s+this\.db[\s\S]*?roleId[\s\S]*?const\s+userIds\s*=/,
-      'getUsers must not materialize all admin user ids for role filtering',
+      ADMIN_USER_IDENTITY_SERVICE_FILE,
+      getAdminUserPage.text,
+      /\b(?:userIds|adminUserIds)\s*=/,
+      'getAdminUserPage must not materialize all admin user ids for role filtering',
     )
   }
 
   expectIncludes(
     findings,
-    ADMIN_USER_SERVICE_FILE,
-    serviceSource,
+    ADMIN_USER_IDENTITY_SERVICE_FILE,
+    identityServiceSource,
     'private get adminUserResponseColumns()',
-    'AdminUserService must keep an explicit response column selector',
+    'AdminUserIdentityService must keep an explicit response column selector',
   )
-  const responseColumnsStart = serviceSource.indexOf(
+  const responseColumnsStart = identityServiceSource.indexOf(
     'private get adminUserResponseColumns()',
   )
   if (responseColumnsStart >= 0) {
-    const responseColumnsEnd = serviceSource.indexOf(
-      '// 更新当前管理员账号的自助资料。',
+    const responseColumnsEnd = identityServiceSource.indexOf(
+      '// 按用户名读取登录所需凭据与基础资料。',
       responseColumnsStart,
     )
-    const responseColumnsSource = serviceSource.slice(
+    const responseColumnsSource = identityServiceSource.slice(
       responseColumnsStart,
       responseColumnsEnd > responseColumnsStart
         ? responseColumnsEnd
-        : serviceSource.length,
+        : identityServiceSource.length,
     )
     const passwordIndex = responseColumnsSource.indexOf('password')
     if (passwordIndex >= 0) {
       const line = lineOfIndex(
-        serviceSource,
+        identityServiceSource,
         responseColumnsStart + passwordIndex,
       )
       findings.push({
-        file: ADMIN_USER_SERVICE_FILE,
+        file: ADMIN_USER_IDENTITY_SERVICE_FILE,
         line,
-        message: `${fileRef(ADMIN_USER_SERVICE_FILE, line)} adminUserResponseColumns must not include password`,
+        message: `${fileRef(ADMIN_USER_IDENTITY_SERVICE_FILE, line)} adminUserResponseColumns must not include password`,
       })
     }
   }
@@ -731,16 +727,18 @@ function checkAdminUserListContract(): Finding[] {
 // 防止账号资料和角色绑定退回非事务或静默角色兜底。
 function checkAtomicAdminUserMutationContract(): Finding[] {
   const findings: Finding[] = []
-  const adminUserServiceSource = readSource(ADMIN_USER_SERVICE_FILE)
+  const adminUserManagementServiceSource = readSource(
+    ADMIN_USER_MANAGEMENT_SERVICE_FILE,
+  )
   const rbacServiceSource = readSource(ADMIN_RBAC_SERVICE_FILE)
   const updateAdminAccount = readClassMethodText(
-    ADMIN_USER_SERVICE_FILE,
-    'AdminUserService',
+    ADMIN_USER_MANAGEMENT_SERVICE_FILE,
+    'AdminUserManagementService',
     'updateAdminAccount',
   )
   const register = readClassMethodText(
-    ADMIN_USER_SERVICE_FILE,
-    'AdminUserService',
+    ADMIN_USER_MANAGEMENT_SERVICE_FILE,
+    'AdminUserManagementService',
     'register',
   )
   const normalizeRoleIds = readClassMethodText(
@@ -755,29 +753,29 @@ function checkAtomicAdminUserMutationContract(): Finding[] {
   ]) {
     if (!method.node) {
       findings.push({
-        file: ADMIN_USER_SERVICE_FILE,
+        file: ADMIN_USER_MANAGEMENT_SERVICE_FILE,
         line: 1,
-        message: `${fileRef(ADMIN_USER_SERVICE_FILE, 1)} missing ${method.name}`,
+        message: `${fileRef(ADMIN_USER_MANAGEMENT_SERVICE_FILE, 1)} missing ${method.name}`,
       })
       continue
     }
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       method.node.text,
-      'this.drizzle.withTransaction',
+      'this.adminUserIdentityService.withAdminAccountTransaction',
       `${method.name} must update account and role binding in one transaction`,
     )
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       method.node.text,
       'bindUserRolesInTransaction',
       `${method.name} must bind roles inside the account mutation transaction`,
     )
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       method.node.text,
       'normalizedRoleIds',
       `${method.name} must use normalized role ids for validation and binding`,
@@ -786,8 +784,8 @@ function checkAtomicAdminUserMutationContract(): Finding[] {
 
   expectIncludes(
     findings,
-    ADMIN_USER_SERVICE_FILE,
-    adminUserServiceSource,
+    ADMIN_USER_MANAGEMENT_SERVICE_FILE,
+    adminUserManagementServiceSource,
     'invalidateUserAccess',
     'account role mutation must invalidate RBAC cache after commit',
   )
@@ -842,50 +840,50 @@ function checkAtomicAdminUserMutationContract(): Finding[] {
   )
   expectNotIncludes(
     findings,
-    ADMIN_USER_SERVICE_FILE,
-    adminUserServiceSource,
+    ADMIN_USER_MANAGEMENT_SERVICE_FILE,
+    adminUserManagementServiceSource,
     'private async assertOperatorCanGrantSuperAdminRole(',
     'super-admin grant authorization must not have a pre-transaction helper',
   )
   if (updateAdminAccount) {
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       updateAdminAccount.text,
       'ensureSafeAdminAccountUpdateInTransaction',
       'updateAdminAccount must run last-super-admin protection in the mutation transaction',
     )
     expectNotIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       updateAdminAccount.text,
       'ensureSafeAdminAccountUpdate(',
       'updateAdminAccount must not use the old pre-transaction safety check',
     )
   }
   const ensureSafeAdminAccountUpdateInTransaction = readClassMethodText(
-    ADMIN_USER_SERVICE_FILE,
-    'AdminUserService',
+    ADMIN_USER_MANAGEMENT_SERVICE_FILE,
+    'AdminUserManagementService',
     'ensureSafeAdminAccountUpdateInTransaction',
   )
   if (ensureSafeAdminAccountUpdateInTransaction) {
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       ensureSafeAdminAccountUpdateInTransaction.text,
       'lockSuperAdminMutationInTransaction',
       'updateAdminAccount safety checks must acquire the shared lock before role-state reads',
     )
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       ensureSafeAdminAccountUpdateInTransaction.text,
       'lockedTarget',
       'updateAdminAccount safety checks must re-read target account state after the shared lock',
     )
     expectNotIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       ensureSafeAdminAccountUpdateInTransaction.text,
       'target.isEnabled',
       'updateAdminAccount safety checks must not use pre-transaction target.isEnabled',
@@ -894,14 +892,14 @@ function checkAtomicAdminUserMutationContract(): Finding[] {
   if (register) {
     expectIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       register.text,
       'assertOperatorCanGrantSuperAdminRoleInTransaction',
       'register must authorize super-admin grants in the account creation transaction',
     )
     expectNotIncludes(
       findings,
-      ADMIN_USER_SERVICE_FILE,
+      ADMIN_USER_MANAGEMENT_SERVICE_FILE,
       register.text,
       'assertOperatorCanGrantSuperAdminRole(',
       'register must not authorize super-admin grants before the account creation transaction',

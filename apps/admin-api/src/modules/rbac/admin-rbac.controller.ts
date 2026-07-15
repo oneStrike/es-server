@@ -1,3 +1,4 @@
+import { AdminRbacService } from '@libs/identity/admin-rbac.service'
 import {
   AdminMenuCreateDto,
   AdminMenuDragReorderDto,
@@ -13,14 +14,13 @@ import {
   AdminRolePermissionBindDto,
   AdminRoleUpdateDto,
 } from '@libs/identity/dto/admin-rbac.dto'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
-import { AdminRbacService } from './admin-rbac.service'
 
 @ApiTags('系统管理/RBAC')
 @Controller('admin/rbac')

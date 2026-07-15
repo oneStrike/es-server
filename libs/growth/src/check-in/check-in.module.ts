@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { GrowthLedgerModule } from '@libs/growth/growth-ledger/growth-ledger.module'
 import { GrowthRewardSettlementModule } from '@libs/growth/growth-reward/growth-reward-settlement.module'
 import { Module } from '@nestjs/common'
@@ -12,7 +13,7 @@ import { CheckInStreakService } from './check-in-streak.service'
 import { CheckInService } from './check-in.service'
 
 @Module({
-  imports: [GrowthLedgerModule, GrowthRewardSettlementModule],
+  imports: [DrizzleModule, GrowthLedgerModule, GrowthRewardSettlementModule],
   providers: [
     CheckInRewardPolicyService,
     CheckInMakeupService,

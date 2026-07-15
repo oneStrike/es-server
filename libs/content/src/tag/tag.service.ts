@@ -6,6 +6,7 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
   toPageResult,
 } from '@db/core'
 
@@ -261,17 +262,22 @@ export class WorkTagService {
   async updateTag(updateTagDto: UpdateTagDto) {
     const { id, ...updateData } = updateTagDto
 
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
+    await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogTagLock(id)),
+        ])
+
+        const result = await tx
           .update(this.workTag)
           .set(updateData)
-          .where(eq(this.workTag.id, id)),
-      {
-        duplicate: '标签名称已存在',
-        notFound: '标签不存在',
+          .where(eq(this.workTag.id, id))
+        this.drizzle.assertAffectedRows(result, '标签不存在')
       },
-    )
+      messages: {
+        duplicate: '标签名称已存在',
+      },
+    })
     return true
   }
 
@@ -331,7 +337,9 @@ export class WorkTagService {
   async updateTagStatus(input: UpdateEnabledStatusDto) {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogTagLock(input.id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogTagLock(input.id)),
+        ])
         if (!input.isEnabled && (await this.checkTagHasWorks(input.id, tx))) {
           throw new BusinessException(
             BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -352,7 +360,9 @@ export class WorkTagService {
   async deleteTagBatch(dto: IdDto) {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [workCatalogTagLock(dto.id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(workCatalogTagLock(dto.id)),
+        ])
         if (!(await this.tagExists(dto.id, tx))) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,

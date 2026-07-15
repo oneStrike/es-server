@@ -1,4 +1,5 @@
-import { UserModule } from '@libs/user/user.module';
+import { DrizzleModule } from '@db/core'
+import { UserModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
 import { ForumCounterService } from './forum-counter.service'
 
@@ -7,7 +8,7 @@ import { ForumCounterService } from './forum-counter.service'
  * 负责论坛实体计数，并委托全局用户计数服务维护用户计数字段
  */
 @Module({
-  imports: [UserModule],
+  imports: [DrizzleModule, UserModule],
   providers: [ForumCounterService],
   exports: [ForumCounterService],
 })

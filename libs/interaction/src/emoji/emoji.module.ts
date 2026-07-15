@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { Module } from '@nestjs/common'
 import { EmojiAssetService } from './emoji-asset.service'
 import { EmojiCatalogService } from './emoji-catalog.service'
@@ -9,6 +10,7 @@ import { EmojiParserService } from './emoji-parser.service'
  * - 依赖 DrizzleService 访问数据库，无其他外部模块依赖。
  */
 @Module({
+  imports: [DrizzleModule],
   providers: [EmojiCatalogService, EmojiParserService, EmojiAssetService],
   exports: [EmojiCatalogService, EmojiParserService, EmojiAssetService],
 })

@@ -12,22 +12,15 @@ import {
   UpdateComicContentDto,
   UploadContentDto,
 } from '@libs/content/work/content/dto/content.dto'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto'
 import {
   WorkflowJobDto,
   WorkflowJobIdDto,
-} from '@libs/platform/modules/workflow/dto'
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  Req,
-} from '@nestjs/common'
+} from '@libs/workflow/workflow/dto/workflow.dto'
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../../common/decorators/admin-permission.decorator'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'

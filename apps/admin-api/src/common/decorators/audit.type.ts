@@ -1,5 +1,5 @@
+import type { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import type { ApiDocOptions } from '@libs/platform/decorators'
-import type { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 
 /**
  * 审计日志装饰器元数据

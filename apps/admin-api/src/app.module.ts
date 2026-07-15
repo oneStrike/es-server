@@ -1,3 +1,6 @@
+import { ObservabilityAuditModule } from '@libs/observability/audit/audit.module'
+import { HealthModule } from '@libs/observability/health/health.module'
+import { HttpExceptionFilter } from '@libs/observability/http-exception/http-exception.filter'
 import { PlatformModule } from '@libs/platform/bootstrap'
 import {
   AuthConfigRegister,
@@ -8,7 +11,6 @@ import {
   RsaConfigRegister,
   UploadConfigRegister,
 } from '@libs/platform/config'
-import { HttpExceptionFilter } from '@libs/platform/filters'
 import { JwtAuthGuard } from '@libs/platform/modules/auth/auth.guard'
 import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
 import { getEnv } from '@libs/platform/utils'
@@ -21,6 +23,7 @@ import { AppConfigRegister } from './config/app.config'
 import { appConfigValidationSchema } from './config/validation.config'
 import { AdminModule } from './modules/admin.module'
 import { AdminUserStatusGuard } from './modules/auth/admin-user-status.guard'
+import { AuthModule } from './modules/auth/auth.module'
 import { AdminRbacGuard } from './modules/rbac/admin-rbac.guard'
 import { AdminRbacModule } from './modules/rbac/admin-rbac.module'
 import { AuditModule } from './modules/system/audit/audit.module'
@@ -51,7 +54,10 @@ import { AuditModule } from './modules/system/audit/audit.module'
       ),
     }),
     PlatformModule.forRoot(),
+    ObservabilityAuditModule,
+    HealthModule,
     JwtAuthModule,
+    AuthModule,
     ScheduleModule.forRoot(),
     AdminRbacModule,
     // 业务功能模块

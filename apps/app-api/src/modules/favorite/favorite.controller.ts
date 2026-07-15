@@ -1,8 +1,8 @@
+import { FavoriteWorkPageItemDto } from '@libs/content/work/core/dto/favorite-work.dto'
+import { FavoriteTopicPageItemDto } from '@libs/forum/topic/dto/favorite-forum-topic.dto'
 import {
   FavoriteStatusResponseDto,
   FavoriteTargetDto,
-  FavoriteTopicPageItemDto,
-  FavoriteWorkPageItemDto,
   QueryUserFavoriteDto,
 } from '@libs/interaction/favorite/dto/favorite.dto'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'

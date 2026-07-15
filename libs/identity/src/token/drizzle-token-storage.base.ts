@@ -1,21 +1,23 @@
 import type {
-  CreateTokenInput,
-  ITokenEntity,
-  TokenStorageFindManyOptions,
-  TokenStorageUpdateInput,
-  TokenStorageWhereInput,
+  TokenSessionCreateInput,
+  TokenSessionRecord,
 } from '@libs/platform/modules/auth/types'
 import type { Cache } from 'cache-manager'
 import type { SQL } from 'drizzle-orm'
 import type { TokenTable } from './drizzle-token-storage.type'
+import type {
+  TokenStorageFindManyOptions,
+  TokenStorageUpdateInput,
+  TokenStorageWhereInput,
+} from './token-storage.type'
 import { DrizzleService } from '@db/core'
-import { BaseTokenStorageService } from '@libs/platform/modules/auth/base-token-storage.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject } from '@nestjs/common'
 import { and, eq, gt, inArray, isNotNull, isNull, lt } from 'drizzle-orm'
+import { BaseTokenStorageService } from './base-token-storage.service'
 
 export abstract class BaseDrizzleTokenStorageService<
-  TEntity extends ITokenEntity,
+  TEntity extends TokenSessionRecord,
 > extends BaseTokenStorageService<TEntity> {
   constructor(
     protected readonly drizzle: DrizzleService,
@@ -26,7 +28,7 @@ export abstract class BaseDrizzleTokenStorageService<
 
   protected abstract get tokenTable(): TokenTable
 
-  protected async createOne(data: CreateTokenInput) {
+  protected async createOne(data: TokenSessionCreateInput) {
     const rows = await this.drizzle.withErrorHandling(
       () =>
         this.drizzle.db
@@ -53,7 +55,7 @@ export abstract class BaseDrizzleTokenStorageService<
     return rows[0] as TEntity & (typeof rows)[number]
   }
 
-  protected async createManyItems(data: CreateTokenInput[]) {
+  protected async createManyItems(data: TokenSessionCreateInput[]) {
     const rows = await this.drizzle.withErrorHandling(
       () =>
         this.drizzle.db

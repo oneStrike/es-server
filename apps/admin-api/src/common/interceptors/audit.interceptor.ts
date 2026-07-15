@@ -1,6 +1,7 @@
 import type { CurrentUserRequest } from '@libs/platform/decorators'
 import type { AuditMetadata } from '../decorators/audit.type'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
+import { AuditService } from '@libs/observability/audit/audit.service'
 import {
   CallHandler,
   ExecutionContext,
@@ -9,7 +10,6 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { catchError, tap } from 'rxjs'
-import { AuditService } from '../../modules/system/audit/audit.service'
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {

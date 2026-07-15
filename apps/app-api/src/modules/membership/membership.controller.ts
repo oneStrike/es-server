@@ -1,8 +1,8 @@
+import { VipSubscriptionPageDto } from '@libs/app-content/agreement/dto/membership-page-config.dto'
 import {
   CreateVipSubscriptionOrderDto,
   MembershipPlanOutputDto,
   QueryVipSubscriptionPageDto,
-  VipSubscriptionPageDto,
 } from '@libs/interaction/membership/dto/membership.dto'
 import { MembershipService } from '@libs/interaction/membership/membership.service'
 import { PaymentOrderResultDto } from '@libs/interaction/payment/dto/payment.dto'

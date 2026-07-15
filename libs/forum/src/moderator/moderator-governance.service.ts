@@ -31,6 +31,7 @@ import {
   UpdateForumTopicLockedDto,
   UpdateForumTopicPinnedDto,
 } from '../topic/dto/forum-topic.dto'
+import { ForumTopicSnapshotDriftError } from '../topic/forum-topic-command.service'
 import { ForumTopicService } from '../topic/forum-topic.service'
 import {
   ForumModeratorActionTargetTypeEnum,
@@ -522,45 +523,54 @@ export class ForumModeratorGovernanceService {
     actor: ForumModeratorGovernanceActor,
     context: ForumTopicClientContext = {},
   ) {
-    const current = await this.getDeletedTopicGovernanceSnapshot(input.id)
-    const grant = await this.resolveModeratorGrant(
-      actor,
-      current.sectionId,
-      ForumModeratorPermissionEnum.DELETE,
-    )
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const current = await this.getDeletedTopicGovernanceSnapshot(input.id)
+      const grant = await this.resolveModeratorGrant(
+        actor,
+        current.sectionId,
+        ForumModeratorPermissionEnum.DELETE,
+      )
 
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await this.forumTopicService.restoreTopicWithCurrentInTx(
-          tx,
-          current,
-          input,
-          context,
-          actor.actorUserId,
-          { recordUserActionLog: false },
-        )
-        await this.createTopicActionLog({
-          tx,
-          actor,
-          grant,
-          topicId: current.id,
-          actionType: ForumModeratorActionTypeEnum.RESTORE_TOPIC,
-          actionDescription: '恢复主题',
-          beforeData: {
-            deletedAt: current.deletedAt,
-            sectionId: current.sectionId,
-            title: current.title,
-            userId: current.userId,
-          },
-          afterData: {
-            deletedAt: null,
-            sectionId: input.sectionId ?? current.sectionId,
+      try {
+        await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await this.forumTopicService.restoreTopicWithCurrentInTx(
+              tx,
+              current,
+              input,
+              context,
+              actor.actorUserId,
+              { recordUserActionLog: false },
+            )
+            await this.createTopicActionLog({
+              tx,
+              actor,
+              grant,
+              topicId: current.id,
+              actionType: ForumModeratorActionTypeEnum.RESTORE_TOPIC,
+              actionDescription: '恢复主题',
+              beforeData: {
+                deletedAt: current.deletedAt,
+                sectionId: current.sectionId,
+                title: current.title,
+                userId: current.userId,
+              },
+              afterData: {
+                deletedAt: null,
+                sectionId: input.sectionId ?? current.sectionId,
+              },
+            })
           },
         })
-      },
-    })
+        return true
+      } catch (error) {
+        if (!(error instanceof ForumTopicSnapshotDriftError) || attempt === 1) {
+          throw error
+        }
+      }
+    }
 
-    return true
+    throw new ForumTopicSnapshotDriftError()
   }
 
   // 更新主题内容。 admin/moderator 内容治理写入 canonical governance log，不写 user action log。
@@ -615,34 +625,47 @@ export class ForumModeratorGovernanceService {
     input: MoveForumTopicDto,
     actor: ForumModeratorGovernanceActor,
   ) {
-    const current = await this.getTopicGovernanceSnapshot(input.id)
-    const grant = await this.resolveTopicMoveGrant(
-      actor,
-      current.sectionId,
-      input.sectionId,
-    )
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const current = await this.getTopicGovernanceSnapshot(input.id)
+      const grant = await this.resolveTopicMoveGrant(
+        actor,
+        current.sectionId,
+        input.sectionId,
+      )
 
-    if (current.sectionId === input.sectionId) {
-      return true
+      if (current.sectionId === input.sectionId) {
+        return true
+      }
+
+      try {
+        await this.drizzle.withTransaction({
+          execute: async (tx) => {
+            await this.forumTopicService.moveTopicInTx(
+              tx,
+              input,
+              current.sectionId,
+            )
+            await this.createTopicActionLog({
+              tx,
+              actor,
+              grant,
+              topicId: current.id,
+              actionType: ForumModeratorActionTypeEnum.MOVE_TOPIC,
+              actionDescription: '移动主题',
+              beforeData: { sectionId: current.sectionId },
+              afterData: { sectionId: input.sectionId },
+            })
+          },
+        })
+        return true
+      } catch (error) {
+        if (!(error instanceof ForumTopicSnapshotDriftError) || attempt === 1) {
+          throw error
+        }
+      }
     }
 
-    await this.drizzle.withTransaction({
-      execute: async (tx) => {
-        await this.forumTopicService.moveTopicInTx(tx, input, current.sectionId)
-        await this.createTopicActionLog({
-          tx,
-          actor,
-          grant,
-          topicId: current.id,
-          actionType: ForumModeratorActionTypeEnum.MOVE_TOPIC,
-          actionDescription: '移动主题',
-          beforeData: { sectionId: current.sectionId },
-          afterData: { sectionId: input.sectionId },
-        })
-      },
-    })
-
-    return true
+    throw new ForumTopicSnapshotDriftError()
   }
 
   // 更新主题隐藏状态。 当前把隐藏/取消隐藏视为 moderator 的 DELETE 权限语义。

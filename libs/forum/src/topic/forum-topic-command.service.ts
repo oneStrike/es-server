@@ -9,6 +9,7 @@ import type {
   TopicAuditActorOptions,
   TopicGovernanceSnapshot,
   TopicMutationSnapshot,
+  TopicRestoreMutationSnapshot,
   TopicSectionSnapshot,
   TopicUpdateCurrentSnapshot,
   TopicUpdatedSnapshot,
@@ -19,6 +20,8 @@ import { randomUUID } from 'node:crypto'
 import {
   acquireIntegrityLocks,
   DrizzleService,
+  exclusiveIntegrityLock,
+  sharedIntegrityLock,
   tableIntegrityLock,
 } from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.constant'
@@ -71,6 +74,12 @@ import {
 } from './dto/forum-topic.dto'
 import { ForumTopicServiceSupport } from './forum-topic.service.support'
 
+export class ForumTopicSnapshotDriftError extends BusinessException {
+  constructor() {
+    super(BusinessErrorCode.STATE_CONFLICT, '主题状态已变化，请重试')
+  }
+}
+
 @Injectable()
 export class ForumTopicCommandService extends ForumTopicServiceSupport {
   constructor(
@@ -111,7 +120,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
   // 子写路径使用同一 forum_topic/id record lock，并在取得锁后重新读取主题。
   private async lockTopicForMutation(tx: DbTransaction, topicId: number) {
     await acquireIntegrityLocks(tx, [
-      tableIntegrityLock('forum_topic', topicId),
+      exclusiveIntegrityLock(tableIntegrityLock('forum_topic', topicId)),
     ])
   }
 
@@ -133,14 +142,19 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       sectionId,
     )
     const media = this.normalizeTopicMedia({ images, videos })
+    const rateLimitPlan =
+      this.forumPermissionService.buildTopicRateLimitLockPlan(userId)
     const topic = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          sharedIntegrityLock(tableIntegrityLock('forum_section', sectionId)),
+          ...rateLimitPlan.lockRequests,
+        ])
         const compiledBody = await this.materializeTopicBodyInTx(
           tx,
           { html },
           userId,
         )
-        await this.lockSectionForMutation(tx, sectionId)
         const liveSection = await tx.query.forumSection.findFirst({
           where: {
             id: sectionId,
@@ -165,7 +179,10 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
             '板块不存在或已禁用',
           )
         }
-        await this.forumPermissionService.ensureTopicRateLimitInTx(tx, userId)
+        await this.forumPermissionService.ensureTopicRateLimitAfterLockInTx(
+          tx,
+          rateLimitPlan,
+        )
         const title = this.resolveCreateTopicTitle(
           inputTitle,
           compiledBody.plainText,
@@ -710,6 +727,7 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
       },
       columns: {
         id: true,
+        sectionId: true,
         userId: true,
         deletedAt: true,
       },
@@ -730,30 +748,45 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
     context: ForumTopicClientContext = {},
     actorUserId?: number,
   ) {
-    const topic = await this.getDeletedTopicOrThrow(input.id)
-    await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) =>
-        this.restoreTopicWithCurrentInTx(
-          tx,
-          topic,
-          input,
-          context,
-          actorUserId ?? topic.userId,
-        ),
-      ),
-    )
-    return true
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const topic = await this.getDeletedTopicOrThrow(input.id)
+      try {
+        await this.drizzle.withErrorHandling(async () =>
+          this.db.transaction(async (tx) =>
+            this.restoreTopicWithCurrentInTx(
+              tx,
+              topic,
+              input,
+              context,
+              actorUserId ?? topic.userId,
+            ),
+          ),
+        )
+        return true
+      } catch (error) {
+        if (!(error instanceof ForumTopicSnapshotDriftError) || attempt === 1) {
+          throw error
+        }
+      }
+    }
+
+    throw new ForumTopicSnapshotDriftError()
   }
 
   async restoreTopicWithCurrentInTx(
     tx: DbTransaction,
-    topic: TopicMutationSnapshot,
+    topic: TopicRestoreMutationSnapshot,
     input: RestoreForumTopicDto,
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
     options: { recordUserActionLog?: boolean } = {},
   ) {
-    await this.lockTopicForMutation(tx, topic.id)
+    const nextSectionId = input.sectionId ?? topic.sectionId
+    await acquireIntegrityLocks(tx, [
+      exclusiveIntegrityLock(tableIntegrityLock('forum_topic', topic.id)),
+      sharedIntegrityLock(tableIntegrityLock('forum_section', topic.sectionId)),
+      sharedIntegrityLock(tableIntegrityLock('forum_section', nextSectionId)),
+    ])
     const currentTopic = await tx.query.forumTopic.findFirst({
       where: { id: topic.id },
       columns: {
@@ -775,11 +808,9 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         '已删除主题不存在',
       )
     }
-    const nextSectionId = input.sectionId ?? currentTopic.sectionId
-    await this.lockSectionsForMutation(tx, [
-      currentTopic.sectionId,
-      nextSectionId,
-    ])
+    if (currentTopic.sectionId !== topic.sectionId) {
+      throw new ForumTopicSnapshotDriftError()
+    }
     await this.getSectionTopicReviewPolicy(nextSectionId, {
       client: tx,
       requireEnabled: true,
@@ -1070,38 +1101,55 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
 
   // 移动主题到目标板块，并同步源板块与目标板块的可见计数。
   async moveTopic(input: MoveForumTopicDto) {
-    const currentTopic = await this.db.query.forumTopic.findFirst({
-      where: { id: input.id, deletedAt: { isNull: true } },
-      columns: { id: true, sectionId: true },
-    })
-    if (!currentTopic) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '主题不存在',
-      )
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const currentTopic = await this.db.query.forumTopic.findFirst({
+        where: { id: input.id, deletedAt: { isNull: true } },
+        columns: { id: true, sectionId: true },
+      })
+      if (!currentTopic) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '主题不存在',
+        )
+      }
+      if (currentTopic.sectionId === input.sectionId) {
+        return true
+      }
+      await this.getSectionTopicReviewPolicy(input.sectionId, {
+        requireEnabled: true,
+        notFoundMessage: '目标板块不存在或已禁用',
+      })
+
+      try {
+        await this.drizzle.withErrorHandling(async () =>
+          this.db.transaction(async (tx) => {
+            await this.moveTopicInTx(tx, input, currentTopic.sectionId)
+          }),
+        )
+        return true
+      } catch (error) {
+        if (!(error instanceof ForumTopicSnapshotDriftError) || attempt === 1) {
+          throw error
+        }
+      }
     }
-    if (currentTopic.sectionId === input.sectionId) {
-      return true
-    }
-    await this.getSectionTopicReviewPolicy(input.sectionId, {
-      requireEnabled: true,
-      notFoundMessage: '目标板块不存在或已禁用',
-    })
-    await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        await this.moveTopicInTx(tx, input)
-      }),
-    )
-    return true
+
+    throw new ForumTopicSnapshotDriftError()
   }
 
   // 在既有事务中移动主题；用于治理批量操作保持事务一致性。
   async moveTopicInTx(
     tx: DbTransaction,
     input: MoveForumTopicDto,
-    _currentSectionId?: number,
+    currentSectionId: number,
   ) {
-    await this.lockTopicForMutation(tx, input.id)
+    await acquireIntegrityLocks(tx, [
+      exclusiveIntegrityLock(tableIntegrityLock('forum_topic', input.id)),
+      sharedIntegrityLock(
+        tableIntegrityLock('forum_section', currentSectionId),
+      ),
+      sharedIntegrityLock(tableIntegrityLock('forum_section', input.sectionId)),
+    ])
     const currentTopic = await tx.query.forumTopic.findFirst({
       where: { id: input.id, deletedAt: { isNull: true } },
       columns: { sectionId: true },
@@ -1112,11 +1160,13 @@ export class ForumTopicCommandService extends ForumTopicServiceSupport {
         '主题不存在',
       )
     }
-    const sourceSectionId = currentTopic.sectionId
+    if (currentTopic.sectionId !== currentSectionId) {
+      throw new ForumTopicSnapshotDriftError()
+    }
+    const sourceSectionId = currentSectionId
     if (sourceSectionId === input.sectionId) {
       return true
     }
-    await this.lockSectionsForMutation(tx, [sourceSectionId, input.sectionId])
     await this.getSectionTopicReviewPolicy(input.sectionId, {
       client: tx,
       requireEnabled: true,

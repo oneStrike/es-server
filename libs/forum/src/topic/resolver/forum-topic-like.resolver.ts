@@ -4,10 +4,9 @@ import type {
   LikeTargetMeta,
 } from '@libs/interaction/like/interfaces/like-target-resolver.type'
 import { DrizzleService } from '@db/core'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
-import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
-import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import {
   AuditStatusEnum,
   BusinessErrorCode,
@@ -23,6 +22,7 @@ import {
 import { ForumUserActionLogService } from '../../action-log/action-log.service'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 import { ForumPermissionService } from '../../permission/forum-permission.service'
+import { ForumTopicEventFactoryService } from '../forum-topic-event-factory.service'
 
 /**
  * 论坛主题点赞解析器
@@ -38,8 +38,8 @@ export class ForumTopicLikeResolver
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
-    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
+    private readonly domainEventPublisher: DomainEventPublisher,
+    private readonly forumTopicEventFactoryService: ForumTopicEventFactoryService,
     private readonly forumCounterService: ForumCounterService,
     private readonly forumPermissionService: ForumPermissionService,
     private readonly actionLogService: ForumUserActionLogService,
@@ -151,9 +151,9 @@ export class ForumTopicLikeResolver
       columns: { nickname: true },
     })
 
-    await this.messageDomainEventPublisher.publishInTx(
+    await this.domainEventPublisher.publishInTx(
       tx,
-      this.messageDomainEventFactoryService.buildTopicLikedEvent({
+      this.forumTopicEventFactoryService.buildTopicLikedEvent({
         receiverUserId,
         actorUserId,
         targetType: this.targetType,

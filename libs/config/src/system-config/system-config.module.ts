@@ -1,3 +1,4 @@
+import { DrizzleModule } from '@db/core'
 import { CryptoModule } from '@libs/platform/modules/crypto/crypto.module'
 import { SMS_CONFIG_PROVIDER } from '@libs/platform/modules/sms/sms.type'
 import { UPLOAD_CONFIG_PROVIDER } from '@libs/platform/modules/upload/upload.type'
@@ -10,7 +11,7 @@ import { SystemConfigService } from './system-config.service'
  * 提供系统配置的管理和读取功能
  */
 @Module({
-  imports: [CryptoModule],
+  imports: [DrizzleModule, CryptoModule],
   providers: [
     ConfigReader,
     SystemConfigService,

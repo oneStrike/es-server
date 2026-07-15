@@ -1,3 +1,5 @@
+import { DrizzleModule } from '@db/core'
+import { EventingModule } from '@libs/eventing/eventing/eventing.module'
 import { GrowthLedgerModule } from '@libs/growth/growth-ledger/growth-ledger.module'
 import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module'
 import { BodyModule } from '@libs/interaction/body/body.module'
@@ -10,7 +12,6 @@ import { LikeModule } from '@libs/interaction/like/like.module'
 import { MentionModule } from '@libs/interaction/mention/mention.module'
 import { ReportModule } from '@libs/interaction/report/report.module'
 import { InteractionSummaryModule } from '@libs/interaction/summary/interaction-summary.module'
-import { MessageDomainEventModule } from '@libs/message/eventing/message-domain-event.module'
 import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module'
 import { UserModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
@@ -19,6 +20,7 @@ import { ForumCounterModule } from '../counter/forum-counter.module'
 import { ForumHashtagModule } from '../hashtag/forum-hashtag.module'
 import { ForumPermissionModule } from '../permission/forum-permission.module'
 import { ForumTopicCommandService } from './forum-topic-command.service'
+import { ForumTopicEventFactoryService } from './forum-topic-event-factory.service'
 import { ForumTopicQueryService } from './forum-topic-query.service'
 import { ForumTopicService } from './forum-topic.service'
 import { ForumTopicBrowseLogResolver } from './resolver/forum-topic-browse-log.resolver'
@@ -33,10 +35,11 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
  */
 @Module({
   imports: [
+    DrizzleModule,
     GrowthEventBridgeModule,
     GrowthLedgerModule,
     SensitiveWordModule,
-    MessageDomainEventModule,
+    EventingModule,
     BodyModule,
     BrowseLogModule,
     CommentModule,
@@ -57,6 +60,7 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
   providers: [
     ForumTopicQueryService,
     ForumTopicCommandService,
+    ForumTopicEventFactoryService,
     ForumTopicService,
     ForumTopicFavoriteResolver,
     ForumTopicLikeResolver,

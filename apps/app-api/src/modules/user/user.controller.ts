@@ -1,19 +1,23 @@
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { UserPointStatsFieldsDto } from '@libs/user/dto/app-user-growth-shared.dto'
-import { AppUserResponseDto } from '@libs/user/dto/base-app-user.dto'
 import {
-  ChangeMyPhoneDto,
+  AppUserProfileDto,
+  UserCenterDto,
+} from '@libs/account/app-user-self/dto/app-user-self.dto'
+import {
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
   QueryMyPointRecordDto,
-  QueryUserMentionPageDto,
-  UpdateMyProfileDto,
   UserBadgeItemDto,
-  UserCenterDto,
   UserExperienceRecordDto,
   UserExperienceStatsDto,
-  UserMentionCandidateDto,
   UserPointRecordDto,
+} from '@libs/growth/app-user-growth-profile/dto/app-user-growth-profile.dto'
+import { UserPointStatsFieldsDto } from '@libs/growth/dto/app-user-growth-shared.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import {
+  ChangeMyPhoneDto,
+  QueryUserMentionPageDto,
+  UpdateMyProfileDto,
+  UserMentionCandidateDto,
   UserStatusSummaryDto,
 } from '@libs/user/dto/user-self.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -31,7 +35,7 @@ export class UserController {
   @Get('profile')
   @ApiDoc({
     summary: '获取当前用户资料',
-    model: AppUserResponseDto,
+    model: AppUserProfileDto,
   })
   async getProfile(@CurrentUser('sub') userId: number) {
     return this.userService.getUserProfile(userId)

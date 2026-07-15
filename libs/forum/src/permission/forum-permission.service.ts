@@ -1,4 +1,5 @@
-import type { DbTransaction } from '@db/core'
+import type { DbExecutor, DbTransaction } from '@db/core'
+import type { ForumTopicRateLimitLockPlan } from '@libs/growth/level-rule/level-rule.type'
 import type {
   ForumAccessUserContext,
   ForumPostingUserContext,
@@ -67,8 +68,11 @@ export class ForumPermissionService {
   }
 
   // 获取访问权限校验所需的用户上下文。 用户不存在时返回 null，由调用方决定如何处理。
-  private async getAccessUserContext(userId: number) {
-    const user = await this.db.query.appUser.findFirst({
+  private async getAccessUserContext(
+    userId: number,
+    executor: DbExecutor = this.db,
+  ) {
+    const user = await executor.query.appUser.findFirst({
       where: {
         id: userId,
         deletedAt: { isNull: true },
@@ -85,12 +89,15 @@ export class ForumPermissionService {
 
     return {
       ...user,
-      experience: await this.getUserExperience(userId),
+      experience: await this.getUserExperience(userId, executor),
     }
   }
 
-  private async getUserExperience(userId: number) {
-    const balance = await this.db.query.userAssetBalance.findFirst({
+  private async getUserExperience(
+    userId: number,
+    executor: DbExecutor = this.db,
+  ) {
+    const balance = await executor.query.userAssetBalance.findFirst({
       where: {
         userId,
         assetType: GrowthAssetTypeEnum.EXPERIENCE,
@@ -142,8 +149,9 @@ export class ForumPermissionService {
       requireEnabled?: boolean
       notFoundMessage?: string
     },
+    executor: DbExecutor = this.db,
   ) {
-    const section = await this.db.query.forumSection.findFirst({
+    const section = await executor.query.forumSection.findFirst({
       where: {
         id: sectionId,
         deletedAt: { isNull: true },
@@ -333,15 +341,31 @@ export class ForumPermissionService {
     return section
   }
 
-  async ensureTopicRateLimitInTx(tx: DbTransaction, userId: number) {
-    await this.userLevelRuleService.ensureForumTopicRateLimitInTx(tx, {
+  // 在主题事务外构建论坛等级频控锁计划。
+  buildTopicRateLimitLockPlan(userId: number): ForumTopicRateLimitLockPlan {
+    return this.userLevelRuleService.buildForumTopicRateLimitLockPlan({
       userId,
     })
   }
 
+  // outer owner 持有完整 union 后执行论坛等级频控校验。
+  async ensureTopicRateLimitAfterLockInTx(
+    tx: DbTransaction,
+    plan: ForumTopicRateLimitLockPlan,
+  ) {
+    await this.userLevelRuleService.ensureForumTopicRateLimitAfterLockInTx(
+      tx,
+      plan,
+    )
+  }
+
   // 校验当前用户是否可访问指定主题所属板块。 供评论等目标链路复用 forum 侧统一的板块公开访问事实源。
-  async ensureUserCanAccessTopicSection(topicId: number, userId: number) {
-    const topic = await this.db.query.forumTopic.findFirst({
+  async ensureUserCanAccessTopicSection(
+    topicId: number,
+    userId: number,
+    executor: DbExecutor = this.db,
+  ) {
+    const topic = await executor.query.forumTopic.findFirst({
       where: {
         id: topicId,
         deletedAt: { isNull: true },
@@ -364,10 +388,15 @@ export class ForumPermissionService {
       )
     }
 
-    return this.ensureUserCanAccessSection(topic.sectionId, userId, {
-      requireEnabled: true,
-      notFoundMessage: '帖子不存在',
-    })
+    return this.ensureUserCanAccessSection(
+      topic.sectionId,
+      userId,
+      {
+        requireEnabled: true,
+        notFoundMessage: '帖子不存在',
+      },
+      executor,
+    )
   }
 
   // 校验当前用户是否可访问指定板块。 仅检查板块等级限制，不涉及发帖频控。
@@ -378,10 +407,13 @@ export class ForumPermissionService {
       requireEnabled?: boolean
       notFoundMessage?: string
     },
+    executor: DbExecutor = this.db,
   ) {
     const [section, user] = await Promise.all([
-      this.getSectionPermissionContext(sectionId, options),
-      userId ? this.getAccessUserContext(userId) : Promise.resolve(null),
+      this.getSectionPermissionContext(sectionId, options, executor),
+      userId
+        ? this.getAccessUserContext(userId, executor)
+        : Promise.resolve(null),
     ])
 
     this.ensureSectionLevelAccess(section, user)

@@ -164,20 +164,6 @@ export const EVENT_DEFINITION_MAP = {
       isRuleConfigurable: true,
     },
   ),
-  [GrowthRuleTypeEnum.TOPIC_REPORT]: createEventDefinition(
-    GrowthRuleTypeEnum.TOPIC_REPORT,
-    {
-      label: '主题举报提交（历史兼容）',
-      ledgerRemark: '举报帖子',
-      domain: EventDefinitionDomainEnum.FORUM,
-      subjectType: EventDefinitionEntityTypeEnum.USER,
-      targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
-      governanceGate: EventDefinitionGovernanceGateEnum.NONE,
-      consumers: GROWTH_TASK_GOVERNANCE,
-      implStatus: EventDefinitionImplStatusEnum.LEGACY_COMPAT,
-      isRuleConfigurable: false,
-    },
-  ),
   [GrowthRuleTypeEnum.TOPIC_COMMENT]: createEventDefinition(
     GrowthRuleTypeEnum.TOPIC_COMMENT,
     {
@@ -216,20 +202,6 @@ export const EVENT_DEFINITION_MAP = {
       consumers: GROWTH_TASK_NOTIFICATION,
       implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
       isRuleConfigurable: true,
-    },
-  ),
-  [GrowthRuleTypeEnum.COMMENT_REPORT]: createEventDefinition(
-    GrowthRuleTypeEnum.COMMENT_REPORT,
-    {
-      label: '评论举报提交（历史兼容）',
-      ledgerRemark: '举报评论',
-      domain: EventDefinitionDomainEnum.COMMENT,
-      subjectType: EventDefinitionEntityTypeEnum.USER,
-      targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
-      governanceGate: EventDefinitionGovernanceGateEnum.NONE,
-      consumers: GROWTH_TASK_GOVERNANCE,
-      implStatus: EventDefinitionImplStatusEnum.LEGACY_COMPAT,
-      isRuleConfigurable: false,
     },
   ),
   [GrowthRuleTypeEnum.COMIC_WORK_VIEW]: createEventDefinition(
@@ -272,20 +244,6 @@ export const EVENT_DEFINITION_MAP = {
       consumers: GROWTH_TASK_NOTIFICATION,
       implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
       isRuleConfigurable: true,
-    },
-  ),
-  [GrowthRuleTypeEnum.COMIC_WORK_REPORT]: createEventDefinition(
-    GrowthRuleTypeEnum.COMIC_WORK_REPORT,
-    {
-      label: '漫画作品举报提交（历史兼容）',
-      ledgerRemark: '举报漫画作品',
-      domain: EventDefinitionDomainEnum.COMIC_WORK,
-      subjectType: EventDefinitionEntityTypeEnum.USER,
-      targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
-      governanceGate: EventDefinitionGovernanceGateEnum.NONE,
-      consumers: GROWTH_TASK_GOVERNANCE,
-      implStatus: EventDefinitionImplStatusEnum.LEGACY_COMPAT,
-      isRuleConfigurable: false,
     },
   ),
   [GrowthRuleTypeEnum.COMIC_WORK_COMMENT]: createEventDefinition(
@@ -341,20 +299,6 @@ export const EVENT_DEFINITION_MAP = {
       consumers: GROWTH_TASK_NOTIFICATION,
       implStatus: EventDefinitionImplStatusEnum.IMPLEMENTED,
       isRuleConfigurable: true,
-    },
-  ),
-  [GrowthRuleTypeEnum.NOVEL_WORK_REPORT]: createEventDefinition(
-    GrowthRuleTypeEnum.NOVEL_WORK_REPORT,
-    {
-      label: '小说作品举报提交（历史兼容）',
-      ledgerRemark: '举报小说作品',
-      domain: EventDefinitionDomainEnum.NOVEL_WORK,
-      subjectType: EventDefinitionEntityTypeEnum.USER,
-      targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
-      governanceGate: EventDefinitionGovernanceGateEnum.NONE,
-      consumers: GROWTH_TASK_GOVERNANCE,
-      implStatus: EventDefinitionImplStatusEnum.LEGACY_COMPAT,
-      isRuleConfigurable: false,
     },
   ),
   [GrowthRuleTypeEnum.NOVEL_WORK_COMMENT]: createEventDefinition(
@@ -440,20 +384,6 @@ export const EVENT_DEFINITION_MAP = {
       isRuleConfigurable: true,
     },
   ),
-  [GrowthRuleTypeEnum.COMIC_CHAPTER_REPORT]: createEventDefinition(
-    GrowthRuleTypeEnum.COMIC_CHAPTER_REPORT,
-    {
-      label: '漫画章节举报提交（历史兼容）',
-      ledgerRemark: '举报漫画章节',
-      domain: EventDefinitionDomainEnum.COMIC_CHAPTER,
-      subjectType: EventDefinitionEntityTypeEnum.USER,
-      targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
-      governanceGate: EventDefinitionGovernanceGateEnum.NONE,
-      consumers: GROWTH_TASK_GOVERNANCE,
-      implStatus: EventDefinitionImplStatusEnum.LEGACY_COMPAT,
-      isRuleConfigurable: false,
-    },
-  ),
   [GrowthRuleTypeEnum.COMIC_CHAPTER_COMMENT]: createEventDefinition(
     GrowthRuleTypeEnum.COMIC_CHAPTER_COMMENT,
     {
@@ -535,20 +465,6 @@ export const EVENT_DEFINITION_MAP = {
       consumers: GROWTH_TASK,
       implStatus: EventDefinitionImplStatusEnum.DECLARED,
       isRuleConfigurable: true,
-    },
-  ),
-  [GrowthRuleTypeEnum.NOVEL_CHAPTER_REPORT]: createEventDefinition(
-    GrowthRuleTypeEnum.NOVEL_CHAPTER_REPORT,
-    {
-      label: '小说章节举报提交（历史兼容）',
-      ledgerRemark: '举报小说章节',
-      domain: EventDefinitionDomainEnum.NOVEL_CHAPTER,
-      subjectType: EventDefinitionEntityTypeEnum.USER,
-      targetType: EventDefinitionEntityTypeEnum.REPORTED_TARGET,
-      governanceGate: EventDefinitionGovernanceGateEnum.NONE,
-      consumers: GROWTH_TASK_GOVERNANCE,
-      implStatus: EventDefinitionImplStatusEnum.LEGACY_COMPAT,
-      isRuleConfigurable: false,
     },
   ),
   [GrowthRuleTypeEnum.NOVEL_CHAPTER_COMMENT]: createEventDefinition(

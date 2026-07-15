@@ -1,17 +1,24 @@
 import type {
   DbExecutor,
   DbTransaction,
+  IntegrityLockRequest,
   PgTable,
   SQL,
   TableConfig,
 } from '@db/core'
-import type { UserLevelRuleSelect } from '@db/schema'
 import type { AnyColumn } from 'drizzle-orm'
 import type {
+  CommentRateLimitLockPlan,
+  DailyFavoriteQuotaLockPlan,
+  DailyLikeQuotaLockPlan,
   DailyQuotaInput,
+  ForumTopicRateLimitLockPlan,
   LevelBusiness,
   LevelPurchasePricing,
   LevelResolveInput,
+  LevelRuleOutputRow,
+  LevelRuleRateLimitKind,
+  LevelRuleRateLimitLockPlan,
   LevelRuleResolveInput,
   PurchasePricingInput,
 } from './level-rule.type'
@@ -19,6 +26,7 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
   relationIntegrityLock,
   tableIntegrityLock,
   toPageResult,
@@ -52,27 +60,6 @@ import {
   UserLevelStatisticsDto,
 } from './dto/level-rule.dto'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
-
-type LevelRuleOutputRow = Pick<
-  UserLevelRuleSelect,
-  | 'id'
-  | 'name'
-  | 'requiredExperience'
-  | 'description'
-  | 'icon'
-  | 'color'
-  | 'sortOrder'
-  | 'isEnabled'
-  | 'business'
-  | 'dailyTopicLimit'
-  | 'dailyReplyCommentLimit'
-  | 'postInterval'
-  | 'dailyLikeLimit'
-  | 'dailyFavoriteLimit'
-  | 'purchasePayableRate'
-  | 'createdAt'
-  | 'updatedAt'
->
 
 @Injectable()
 export class UserLevelRuleService {
@@ -304,7 +291,7 @@ export class UserLevelRuleService {
         await this.lockLevelRulesForMutation(tx, [id])
         const existing = await tx.query.userLevelRule.findFirst({
           where: { id },
-          columns: { business: true },
+          columns: { business: true, isEnabled: true },
         })
         if (!existing) {
           throw new BusinessException(
@@ -314,6 +301,46 @@ export class UserLevelRuleService {
         }
 
         const payload = this.normalizeRulePayload(updateData)
+        const nextBusiness =
+          'business' in payload ? payload.business : existing.business
+        const nextIsEnabled =
+          'isEnabled' in payload ? payload.isEnabled : existing.isEnabled
+
+        if (!(nextBusiness === 'forum' && nextIsEnabled)) {
+          const [referencingSection] = await tx
+            .select({ id: this.forumSection.id })
+            .from(this.forumSection)
+            .where(
+              and(
+                eq(this.forumSection.userLevelRuleId, id),
+                isNull(this.forumSection.deletedAt),
+              ),
+            )
+            .limit(1)
+          if (referencingSection) {
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
+              '该等级规则仍被论坛板块引用，无法停用或变更业务域',
+            )
+          }
+        }
+
+        if (!(nextBusiness === null && nextIsEnabled)) {
+          const [referencingUser] = await tx
+            .select({ id: this.appUser.id })
+            .from(this.appUser)
+            .where(
+              and(eq(this.appUser.levelId, id), isNull(this.appUser.deletedAt)),
+            )
+            .limit(1)
+          if (referencingUser) {
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
+              '该等级规则仍被用户引用，无法停用或变更业务域',
+            )
+          }
+        }
+
         await this.drizzle.withErrorHandling(
           () =>
             tx
@@ -355,14 +382,32 @@ export class UserLevelRuleService {
           )
         }
 
-        const [activeUsers] = await tx
-          .select({ total: sql<number>`count(*)`.mapWith(Number) })
+        const [referencingSection] = await tx
+          .select({ id: this.forumSection.id })
+          .from(this.forumSection)
+          .where(
+            and(
+              eq(this.forumSection.userLevelRuleId, id),
+              isNull(this.forumSection.deletedAt),
+            ),
+          )
+          .limit(1)
+        if (referencingSection) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '该等级规则仍被论坛板块引用，无法删除',
+          )
+        }
+
+        const [activeUser] = await tx
+          .select({ id: this.appUser.id })
           .from(this.appUser)
           .where(
             and(eq(this.appUser.levelId, id), isNull(this.appUser.deletedAt)),
           )
+          .limit(1)
 
-        if (Number(activeUsers?.total ?? 0) > 0) {
+        if (activeUser) {
           throw new BusinessException(
             BusinessErrorCode.OPERATION_NOT_ALLOWED,
             '该等级规则下还有用户，无法删除',
@@ -534,151 +579,128 @@ export class UserLevelRuleService {
     }
   }
 
-  async ensureDailyLikeQuotaInTx(tx: DbTransaction, input: DailyQuotaInput) {
-    const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
-    await this.acquireDailyQuotaLockInTx(tx, {
-      userId: input.userId,
-      permissionType: UserLevelRulePermissionEnum.DAILY_LIKE_LIMIT,
-      business: input.business,
-    })
-    await this.assertDailyQuotaInTx(tx, {
-      userId: input.userId,
+  // 在事务外构建每日点赞额度锁计划。
+  buildDailyLikeQuotaLockPlan(input: DailyQuotaInput): DailyLikeQuotaLockPlan {
+    return this.buildRateLimitLockPlan(
+      'daily-like-quota',
+      input,
+      UserLevelRulePermissionEnum.DAILY_LIKE_LIMIT,
+      false,
+    )
+  }
+
+  // 在事务外构建每日收藏额度锁计划。
+  buildDailyFavoriteQuotaLockPlan(
+    input: DailyQuotaInput,
+  ): DailyFavoriteQuotaLockPlan {
+    return this.buildRateLimitLockPlan(
+      'daily-favorite-quota',
+      input,
+      UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
+      false,
+    )
+  }
+
+  // 在事务外构建评论额度与发帖间隔锁计划。
+  buildCommentRateLimitLockPlan(
+    input: DailyQuotaInput,
+  ): CommentRateLimitLockPlan {
+    return this.buildRateLimitLockPlan(
+      'comment-rate-limit',
+      input,
+      UserLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT,
+      true,
+    )
+  }
+
+  // 在事务外构建论坛主题额度与发帖间隔锁计划。
+  buildForumTopicRateLimitLockPlan(input: {
+    userId: number
+  }): ForumTopicRateLimitLockPlan {
+    return this.buildRateLimitLockPlan(
+      'forum-topic-rate-limit',
+      { userId: input.userId, business: 'forum' },
+      UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT,
+      true,
+    )
+  }
+
+  // 外层持有完整锁计划后校验每日点赞额度。
+  async ensureDailyLikeQuotaAfterLockInTx(
+    tx: DbTransaction,
+    plan: DailyLikeQuotaLockPlan,
+  ) {
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, plan)
+    this.assertDailyQuota({
       limit: level.dailyLikeLimit,
       used: await this.countTodayByConditionInTx(
         tx,
         this.userLike,
         this.userLike.createdAt,
-        this.buildLikeQuotaWhere(input.userId, input.business),
+        this.buildLikeQuotaWhere(plan.userId, plan.business),
+        plan.dayStartMs,
       ),
       message: '已达到每日点赞上限',
     })
   }
 
-  async ensureDailyFavoriteQuotaInTx(
+  // 外层持有完整锁计划后校验每日收藏额度。
+  async ensureDailyFavoriteQuotaAfterLockInTx(
     tx: DbTransaction,
-    input: DailyQuotaInput,
+    plan: DailyFavoriteQuotaLockPlan,
   ) {
-    const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
-    await this.acquireDailyQuotaLockInTx(tx, {
-      userId: input.userId,
-      permissionType: UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
-      business: input.business,
-    })
-    await this.assertDailyQuotaInTx(tx, {
-      userId: input.userId,
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, plan)
+    this.assertDailyQuota({
       limit: level.dailyFavoriteLimit,
       used: await this.countTodayByConditionInTx(
         tx,
         this.userFavorite,
         this.userFavorite.createdAt,
-        this.buildFavoriteQuotaWhere(input.userId, input.business),
+        this.buildFavoriteQuotaWhere(plan.userId, plan.business),
+        plan.dayStartMs,
       ),
       message: '已达到每日收藏上限',
     })
   }
 
-  async ensureCommentRateLimitInTx(tx: DbTransaction, input: DailyQuotaInput) {
-    const { level } = await this.resolveEffectiveUserLevelInTx(tx, input)
-    await this.acquireDailyQuotaLockInTx(tx, {
-      userId: input.userId,
-      permissionType: UserLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT,
-      business: input.business,
-    })
-    await this.assertDailyQuotaInTx(tx, {
-      userId: input.userId,
+  // 外层持有完整锁计划后校验评论额度与发帖间隔。
+  async ensureCommentRateLimitAfterLockInTx(
+    tx: DbTransaction,
+    plan: CommentRateLimitLockPlan,
+  ) {
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, plan)
+    this.assertDailyQuota({
       limit: level.dailyReplyCommentLimit,
       used: await this.countTodayByConditionInTx(
         tx,
         this.userComment,
         this.userComment.createdAt,
-        this.buildCommentQuotaWhere(input.userId, input.business),
+        this.buildCommentQuotaWhere(plan.userId, plan.business),
+        plan.dayStartMs,
       ),
       message: `今日评论次数已达上限（${level.dailyReplyCommentLimit}）`,
     })
-
-    if (level.postInterval <= 0) {
-      return
-    }
-
-    await this.acquirePermissionLockInTx(tx, {
-      userId: input.userId,
-      permissionType: UserLevelRulePermissionEnum.POST_INTERVAL,
-      business: input.business,
-      scopeKey: 'post-interval',
-    })
-    const lastPostAt = await this.getLatestPostAtInTx(tx, input)
-
-    if (!lastPostAt) {
-      return
-    }
-
-    const secondsSinceLastPost = Math.floor(
-      (Date.now() - lastPostAt.getTime()) / 1000,
-    )
-
-    if (secondsSinceLastPost < level.postInterval) {
-      throw new HttpException(
-        `操作过于频繁，请 ${level.postInterval - secondsSinceLastPost} 秒后再试`,
-        HttpStatus.TOO_MANY_REQUESTS,
-      )
-    }
+    await this.ensurePostIntervalAfterLockInTx(tx, plan, level.postInterval)
   }
 
-  async ensureForumTopicRateLimitInTx(
+  // 外层持有完整锁计划后校验论坛主题额度与发帖间隔。
+  async ensureForumTopicRateLimitAfterLockInTx(
     tx: DbTransaction,
-    input: { userId: number },
+    plan: ForumTopicRateLimitLockPlan,
   ) {
-    const business = 'forum'
-    const { level } = await this.resolveEffectiveUserLevelInTx(tx, {
-      userId: input.userId,
-      business,
-    })
-    await this.acquireDailyQuotaLockInTx(tx, {
-      userId: input.userId,
-      permissionType: UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT,
-      business,
-    })
-    await this.assertDailyQuotaInTx(tx, {
-      userId: input.userId,
+    const { level } = await this.resolveEffectiveUserLevelInTx(tx, plan)
+    this.assertDailyQuota({
       limit: level.dailyTopicLimit,
       used: await this.countTodayByConditionInTx(
         tx,
         this.forumTopic,
         this.forumTopic.createdAt,
-        eq(this.forumTopic.userId, input.userId),
+        eq(this.forumTopic.userId, plan.userId),
+        plan.dayStartMs,
       ),
       message: `今日发帖次数已达上限（${level.dailyTopicLimit}）`,
     })
-
-    if (level.postInterval <= 0) {
-      return
-    }
-
-    await this.acquirePermissionLockInTx(tx, {
-      userId: input.userId,
-      permissionType: UserLevelRulePermissionEnum.POST_INTERVAL,
-      business,
-      scopeKey: 'post-interval',
-    })
-    const lastPostAt = await this.getLatestPostAtInTx(tx, {
-      userId: input.userId,
-      business,
-    })
-
-    if (!lastPostAt) {
-      return
-    }
-
-    const secondsSinceLastPost = Math.floor(
-      (Date.now() - lastPostAt.getTime()) / 1000,
-    )
-
-    if (secondsSinceLastPost < level.postInterval) {
-      throw new HttpException(
-        `操作过于频繁，请 ${level.postInterval - secondsSinceLastPost} 秒后再试`,
-        HttpStatus.TOO_MANY_REQUESTS,
-      )
-    }
+    await this.ensurePostIntervalAfterLockInTx(tx, plan, level.postInterval)
   }
 
   // 检查用户等级权限
@@ -939,32 +961,60 @@ export class UserLevelRuleService {
     }
   }
 
-  private async acquireDailyQuotaLockInTx(
-    tx: DbTransaction,
-    input: {
-      userId: number
-      permissionType: UserLevelRulePermissionEnum
-      business?: LevelBusiness
-    },
-  ) {
-    const dateKey = startOfTodayInAppTimeZone().toISOString().slice(0, 10)
-    await this.acquirePermissionLockInTx(tx, { ...input, scopeKey: dateKey })
+  // 用一次捕获的业务域与日界线构建完整配额/频控请求集。
+  private buildRateLimitLockPlan<TKind extends LevelRuleRateLimitKind>(
+    kind: TKind,
+    input: DailyQuotaInput,
+    dailyPermissionType: UserLevelRulePermissionEnum,
+    includePostInterval: boolean,
+  ): LevelRuleRateLimitLockPlan<TKind> {
+    const business = this.normalizeBusiness(input.business)
+    const dayStartMs = startOfTodayInAppTimeZone().getTime()
+    const lockRequests = [
+      this.buildPermissionLockRequest({
+        userId: input.userId,
+        permissionType: dailyPermissionType,
+        business,
+        scopeKey: dayStartMs,
+      }),
+      ...(includePostInterval
+        ? [
+            this.buildPermissionLockRequest({
+              userId: input.userId,
+              permissionType: UserLevelRulePermissionEnum.POST_INTERVAL,
+              business,
+              scopeKey: 'post-interval',
+            }),
+          ]
+        : []),
+    ]
+
+    return {
+      kind,
+      userId: input.userId,
+      business,
+      dayStartMs,
+      lockRequests,
+    }
   }
 
-  private async acquirePermissionLockInTx(
-    tx: DbTransaction,
-    input: {
-      userId: number
-      permissionType: UserLevelRulePermissionEnum
-      business?: LevelBusiness
-      scopeKey: string
-    },
-  ) {
+  // 构建 canonical 等级配额锁请求；实际获取只能由事务 outer owner 完成。
+  private buildPermissionLockRequest(input: {
+    userId: number
+    permissionType: UserLevelRulePermissionEnum
+    business?: LevelBusiness
+    scopeKey: number | string
+  }): IntegrityLockRequest {
     const business = this.normalizeBusiness(input.business) ?? 'default'
-    const lockKey = `${input.userId}:${input.permissionType}:${business}:${input.scopeKey}`
-    await acquireIntegrityLocks(tx, [
-      relationIntegrityLock('level-rule-quota', lockKey),
-    ])
+    return exclusiveIntegrityLock(
+      relationIntegrityLock(
+        'level-rule-quota',
+        input.userId,
+        input.permissionType,
+        business,
+        input.scopeKey,
+      ),
+    )
   }
 
   /**
@@ -978,7 +1028,7 @@ export class UserLevelRuleService {
     await acquireIntegrityLocks(
       tx,
       [...new Set(ruleIds)].map((ruleId) =>
-        tableIntegrityLock('user_level_rule', ruleId),
+        exclusiveIntegrityLock(tableIntegrityLock('user_level_rule', ruleId)),
       ),
     )
   }
@@ -1022,10 +1072,12 @@ export class UserLevelRuleService {
     )
   }
 
-  private async assertDailyQuotaInTx(
-    _tx: DbExecutor,
-    input: { userId: number, limit: number, used: number, message: string },
-  ) {
+  // 保留既有“正数上限才生效”的业务语义。
+  private assertDailyQuota(input: {
+    limit: number
+    used: number
+    message: string
+  }) {
     if (input.limit > 0 && input.used >= input.limit) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -1039,13 +1091,39 @@ export class UserLevelRuleService {
     table: PgTable<TableConfig>,
     createdAt: AnyColumn,
     where: SQL | undefined,
+    dayStartMs: number,
   ) {
-    const today = startOfTodayInAppTimeZone()
     const [result] = await tx
       .select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(table)
-      .where(and(where, gte(createdAt, today)))
+      .where(and(where, gte(createdAt, new Date(dayStartMs))))
     return Number(result?.total ?? 0)
+  }
+
+  // 外层持有 post-interval 锁后校验最近一次发帖或评论时间。
+  private async ensurePostIntervalAfterLockInTx(
+    tx: DbExecutor,
+    plan: CommentRateLimitLockPlan | ForumTopicRateLimitLockPlan,
+    postInterval: number,
+  ) {
+    if (postInterval <= 0) {
+      return
+    }
+
+    const lastPostAt = await this.getLatestPostAtInTx(tx, plan)
+    if (!lastPostAt) {
+      return
+    }
+
+    const secondsSinceLastPost = Math.floor(
+      (Date.now() - lastPostAt.getTime()) / 1000,
+    )
+    if (secondsSinceLastPost < postInterval) {
+      throw new HttpException(
+        `操作过于频繁，请 ${postInterval - secondsSinceLastPost} 秒后再试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
+    }
   }
 
   private buildLikeQuotaWhere(userId: number, business: LevelBusiness) {

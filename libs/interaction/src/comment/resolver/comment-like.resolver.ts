@@ -2,8 +2,8 @@ import type { DbExecutor } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { appUser, userComment } from '@db/schema'
 
-import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
-import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
+import { DomainEventPublisher } from '@libs/eventing/eventing/domain-event-publisher.service'
+import { InteractionNotificationEventFactoryService } from '@libs/interaction/eventing/interaction-notification-event.factory'
 import { BusinessErrorCode, CommentLevelEnum } from '@libs/platform/constant'
 
 import { BusinessException } from '@libs/platform/exceptions'
@@ -33,8 +33,8 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
 
   constructor(
     private readonly likeService: LikeService,
-    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
-    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
+    private readonly domainEventPublisher: DomainEventPublisher,
+    private readonly interactionNotificationEventFactoryService: InteractionNotificationEventFactoryService,
     private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
   ) {}
@@ -156,9 +156,9 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
       columns: { nickname: true },
     })
 
-    await this.messageDomainEventPublisher.publishInTx(
+    await this.domainEventPublisher.publishInTx(
       tx,
-      this.messageDomainEventFactoryService.buildCommentLikeEvent({
+      this.interactionNotificationEventFactoryService.buildCommentLikeEvent({
         receiverUserId: comment.userId,
         actorUserId,
         commentId: comment.id,

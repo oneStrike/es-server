@@ -7,10 +7,10 @@ import {
   UpdateForumHashtagHiddenDto,
 } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
 import { ForumHashtagService } from '@libs/forum/hashtag/forum-hashtag.service'
+import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { AuditRoleEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AdminPermission } from '../../../common/decorators/admin-permission.decorator'

@@ -14,23 +14,17 @@ export enum GrowthRuleTypeEnum {
   DAILY_CHECK_IN = 6,
   ADMIN = 7,
   TOPIC_VIEW = 8,
-  /** 历史兼容：主题举报提交即奖励口径，当前正式链路改为裁决后奖励。 */
-  TOPIC_REPORT = 9,
   /** 帖子被评论 */
   TOPIC_COMMENT = 16,
 
   // Comment
   CREATE_COMMENT = 10,
   COMMENT_LIKED = 11,
-  /** 历史兼容：评论举报提交即奖励口径，当前正式链路改为裁决后奖励。 */
-  COMMENT_REPORT = 12,
 
   // Comic work
   COMIC_WORK_VIEW = 100,
   COMIC_WORK_LIKE = 101,
   COMIC_WORK_FAVORITE = 102,
-  /** 历史兼容：作品举报提交即奖励口径，当前正式链路改为裁决后奖励。 */
-  COMIC_WORK_REPORT = 103,
   /** 漫画作品评论 */
   COMIC_WORK_COMMENT = 104,
 
@@ -38,8 +32,6 @@ export enum GrowthRuleTypeEnum {
   NOVEL_WORK_VIEW = 200,
   NOVEL_WORK_LIKE = 201,
   NOVEL_WORK_FAVORITE = 202,
-  /** 历史兼容：作品举报提交即奖励口径，当前正式链路改为裁决后奖励。 */
-  NOVEL_WORK_REPORT = 203,
   /** 小说作品评论 */
   NOVEL_WORK_COMMENT = 204,
 
@@ -49,8 +41,6 @@ export enum GrowthRuleTypeEnum {
   COMIC_CHAPTER_PURCHASE = 302,
   COMIC_CHAPTER_DOWNLOAD = 303,
   COMIC_CHAPTER_EXCHANGE = 304,
-  /** 历史兼容：章节举报提交即奖励口径，当前正式链路改为裁决后奖励。 */
-  COMIC_CHAPTER_REPORT = 305,
   /** 漫画章节评论 */
   COMIC_CHAPTER_COMMENT = 306,
 
@@ -60,8 +50,6 @@ export enum GrowthRuleTypeEnum {
   NOVEL_CHAPTER_PURCHASE = 402,
   NOVEL_CHAPTER_DOWNLOAD = 403,
   NOVEL_CHAPTER_EXCHANGE = 404,
-  /** 历史兼容：章节举报提交即奖励口径，当前正式链路改为裁决后奖励。 */
-  NOVEL_CHAPTER_REPORT = 405,
   /** 小说章节评论 */
   NOVEL_CHAPTER_COMMENT = 406,
 

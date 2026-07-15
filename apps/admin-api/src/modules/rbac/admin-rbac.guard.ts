@@ -1,4 +1,5 @@
 import type { CurrentUserRequest } from '@libs/platform/decorators'
+import { AdminRbacService } from '@libs/identity/admin-rbac.service'
 import {
   CanActivate,
   ExecutionContext,
@@ -6,7 +7,6 @@ import {
   Injectable,
 } from '@nestjs/common'
 import { AdminRbacMetadataService } from './admin-rbac-metadata.service'
-import { AdminRbacService } from './admin-rbac.service'
 
 @Injectable()
 export class AdminRbacGuard implements CanActivate {

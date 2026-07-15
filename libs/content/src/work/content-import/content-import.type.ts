@@ -9,7 +9,7 @@ import type {
   WorkflowErrorDiagnosticInput,
   WorkflowErrorFacts,
   WorkflowErrorFactsInput,
-} from '@libs/platform/modules/workflow/workflow-error-facts'
+} from '@libs/workflow/workflow/workflow-error-facts'
 
 /** 创建三方导入领域任务入参。 */
 export interface CreateThirdPartyImportContentJobInput {

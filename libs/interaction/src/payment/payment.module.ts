@@ -1,12 +1,24 @@
-import { Module } from '@nestjs/common'
-import { MembershipModule } from '../membership/membership.module'
+import type { PaymentModuleRegisterOptions } from './payment.module.type'
+import { DrizzleModule } from '@db/core'
+import { DynamicModule, Module } from '@nestjs/common'
 import { WalletModule } from '../wallet/wallet.module'
 import { PaymentOrderModule } from './payment-order.module'
 import { PaymentService } from './payment.service'
 
-@Module({
-  imports: [PaymentOrderModule, WalletModule, MembershipModule],
-  providers: [PaymentService],
-  exports: [PaymentService, PaymentOrderModule],
-})
-export class PaymentModule {}
+@Module({})
+export class PaymentModule {
+  // 组合根必须传入已配置的会员 runtime，禁止依赖父/兄弟模块的隐式 provider 可见性。
+  static register(options: PaymentModuleRegisterOptions): DynamicModule {
+    return {
+      module: PaymentModule,
+      imports: [
+        DrizzleModule,
+        PaymentOrderModule,
+        WalletModule,
+        options.membershipRuntimeModule,
+      ],
+      providers: [PaymentService],
+      exports: [PaymentService, PaymentOrderModule],
+    }
+  }
+}

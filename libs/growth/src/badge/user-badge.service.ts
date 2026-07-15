@@ -15,6 +15,8 @@ import {
   acquireIntegrityLocks,
   buildILikeCondition,
   DrizzleService,
+  exclusiveIntegrityLock,
+  sharedIntegrityLock,
   tableIntegrityLock,
   toPageResult,
 } from '@db/core'
@@ -120,7 +122,9 @@ export class UserBadgeService {
 
     await this.drizzle.withTransaction({
       execute: async (tx) => {
-        await acquireIntegrityLocks(tx, [tableIntegrityLock('user_badge', id)])
+        await acquireIntegrityLocks(tx, [
+          exclusiveIntegrityLock(tableIntegrityLock('user_badge', id)),
+        ])
         if (
           updateData.isEnabled === false &&
           (await this.checkBadgeHasAssignments(tx, id))
@@ -146,7 +150,7 @@ export class UserBadgeService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('user_badge', dto.id),
+          exclusiveIntegrityLock(tableIntegrityLock('user_badge', dto.id)),
         ])
         if (await this.checkBadgeHasAssignments(tx, dto.id)) {
           throw new BusinessException(
@@ -169,7 +173,7 @@ export class UserBadgeService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('user_badge', dto.id),
+          exclusiveIntegrityLock(tableIntegrityLock('user_badge', dto.id)),
         ])
         if (
           !dto.isEnabled &&
@@ -280,8 +284,8 @@ export class UserBadgeService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('app_user', userId),
-          tableIntegrityLock('user_badge', badgeId),
+          sharedIntegrityLock(tableIntegrityLock('app_user', userId)),
+          sharedIntegrityLock(tableIntegrityLock('user_badge', badgeId)),
         ])
         const badge = await tx.query.userBadge.findFirst({
           where: { id: badgeId },
@@ -322,8 +326,8 @@ export class UserBadgeService {
     await this.drizzle.withTransaction({
       execute: async (tx) => {
         await acquireIntegrityLocks(tx, [
-          tableIntegrityLock('app_user', userId),
-          tableIntegrityLock('user_badge', badgeId),
+          sharedIntegrityLock(tableIntegrityLock('app_user', userId)),
+          sharedIntegrityLock(tableIntegrityLock('user_badge', badgeId)),
         ])
         const result = await tx
           .delete(this.userBadgeAssignment)

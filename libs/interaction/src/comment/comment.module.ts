@@ -1,5 +1,6 @@
-import { ForumHashtagModule } from '@libs/forum/hashtag/forum-hashtag.module'
-import { ForumPermissionModule } from '@libs/forum/permission/forum-permission.module'
+import { DrizzleModule } from '@db/core'
+import { SystemConfigModule } from '@libs/config/system-config/system-config.module'
+import { EventingModule } from '@libs/eventing/eventing/eventing.module'
 import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module'
 import { UserLevelRuleModule } from '@libs/growth/level-rule/level-rule.module'
 import { BodyModule } from '@libs/interaction/body/body.module'
@@ -8,11 +9,10 @@ import { LikeModule } from '@libs/interaction/like/like.module'
 import { MentionModule } from '@libs/interaction/mention/mention.module'
 import { ReportModule } from '@libs/interaction/report/report.module'
 import { InteractionSummaryModule } from '@libs/interaction/summary/interaction-summary.module'
-import { MessageDomainEventModule } from '@libs/message/eventing/message-domain-event.module'
 import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module'
-import { SystemConfigModule } from '@libs/system-config/system-config.module'
 import { UserModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
+import { InteractionNotificationEventModule } from '../eventing/interaction-notification-event.module'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentService } from './comment.service'
@@ -21,19 +21,19 @@ import { CommentReportResolver } from './resolver/comment-report.resolver'
 
 @Module({
   imports: [
+    DrizzleModule,
+    EventingModule,
     SensitiveWordModule,
     SystemConfigModule,
     GrowthEventBridgeModule,
     UserLevelRuleModule,
-    ForumHashtagModule,
-    ForumPermissionModule,
     BodyModule,
     EmojiModule,
     LikeModule,
     MentionModule,
     ReportModule,
     InteractionSummaryModule,
-    MessageDomainEventModule,
+    InteractionNotificationEventModule,
     UserModule,
   ],
   providers: [

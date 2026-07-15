@@ -4,7 +4,6 @@ export type {
   DbNotificationSubscription,
   DbNotificationSubscriptionOptions,
 } from './db-notification.type'
-export { relations } from './drizzle-relations'
 export { DrizzleModule } from './drizzle.module'
 export { DrizzleService } from './drizzle.service'
 export type {
@@ -24,22 +23,26 @@ export { extractError } from './error/error-handler'
 export { getPostgresErrorResponseDescriptor } from './error/postgres-error'
 export {
   acquireIntegrityLocks,
-  acquireIntegrityLocksWithQueryExecutor,
   ADMIN_RBAC_RELATION_INTEGRITY_LOCKS,
+  exclusiveIntegrityLock,
   integrityLock,
   IntegrityLockNamespace,
   isIntegrityLockHeldByAnotherTransaction,
   jobIntegrityLock,
   relationIntegrityLock,
+  sharedIntegrityLock,
   tableIntegrityLock,
 } from './integrity-lock-registry'
 export type {
   IntegrityLock,
   IntegrityLockExecutor,
+  IntegrityLockMode,
   IntegrityLockNamespaceValue,
+  IntegrityLockObserver,
   IntegrityLockOwnerPart,
-  IntegrityLockQueryExecutor,
+  IntegrityLockRequest,
 } from './integrity-lock-registry'
 export { buildILikeCondition, buildLikePattern } from './query/like-pattern'
 export { toPageResult } from './query/page-result'
+export type { PageResult } from './query/page-result'
 export { extractRows } from './query/raw-result.helper'

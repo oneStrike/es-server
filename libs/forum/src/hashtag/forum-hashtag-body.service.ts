@@ -7,14 +7,15 @@ import type {
   ForumHashtagCandidate,
   ForumHashtagRecordMap,
   ForumHashtagTextNode,
+  MaterializedForumHashtagFact,
   MaterializeForumHashtagBodyInTxInput,
   MaterializeForumHashtagBodyResult,
 } from './forum-hashtag.type'
 import { DrizzleService } from '@db/core'
+import { ConfigReader } from '@libs/config/system-config/config-reader'
 import { AuditStatusEnum, BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { SensitiveWordReviewPolicyService } from '@libs/sensitive-word/sensitive-word-review-policy.service'
-import { ConfigReader } from '@libs/system-config/config-reader'
 import { Injectable } from '@nestjs/common'
 import { inArray } from 'drizzle-orm'
 import {
@@ -156,8 +157,7 @@ export class ForumHashtagBodyService {
     const existingMap = new Map(
       existingRows.map((row) => [row.slug, row] as const),
     )
-    const creationMode = this.configReader.getForumHashtagConfig()
-      .creationMode
+    const creationMode = this.configReader.getForumHashtagConfig().creationMode
 
     if (creationMode === ForumHashtagCreationModeEnum.EXISTING_ONLY) {
       const invalidCandidate = uniqueCandidates.find((candidate) => {
@@ -376,6 +376,40 @@ export class ForumHashtagBodyService {
       },
       occurrenceMap,
     }
+  }
+
+  // 从已物化的 canonical body 重建引用事实，避免 interaction 保存 forum 专有的并行事实结构。
+  getMaterializedHashtagFacts(body: BodyDoc): MaterializedForumHashtagFact[] {
+    const facts = new Map<number, MaterializedForumHashtagFact>()
+
+    const collectInlineNodes = (nodes: BodyInlineNode[]) => {
+      for (const node of nodes) {
+        if (node.type !== 'forumHashtag') {
+          continue
+        }
+
+        const current = facts.get(node.hashtagId)
+        facts.set(node.hashtagId, {
+          hashtagId: node.hashtagId,
+          slug: node.slug,
+          displayName: node.displayName,
+          occurrenceCount: (current?.occurrenceCount ?? 0) + 1,
+        })
+      }
+    }
+
+    for (const block of body.content) {
+      if (block.type === 'bulletList' || block.type === 'orderedList') {
+        for (const item of block.content) {
+          collectInlineNodes(item.content)
+        }
+        continue
+      }
+
+      collectInlineNodes(block.content)
+    }
+
+    return [...facts.values()]
   }
 
   // 在事务内物化 forum 正文中的 hashtag。

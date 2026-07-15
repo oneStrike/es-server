@@ -49,3 +49,20 @@ export enum FollowTargetTypeContractEnum {
   /** 论坛话题（hashtag） */
   FORUM_HASHTAG = 4,
 }
+
+/** 点赞目标类型的跨域值域契约。 */
+export enum LikeTargetTypeContractEnum {
+  WORK_COMIC = 1,
+  WORK_NOVEL = 2,
+  FORUM_TOPIC = 3,
+  WORK_COMIC_CHAPTER = 4,
+  WORK_NOVEL_CHAPTER = 5,
+  COMMENT = 6,
+}
+
+/** 收藏目标类型的跨域值域契约。 */
+export enum FavoriteTargetTypeContractEnum {
+  WORK_COMIC = 1,
+  WORK_NOVEL = 2,
+  FORUM_TOPIC = 3,
+}

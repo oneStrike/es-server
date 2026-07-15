@@ -1,10 +1,4 @@
 import {
-  AuthorNullableOutputFieldsDto,
-  BaseAuthorDto,
-} from '@libs/content/author/dto/author.dto'
-import { ForumHashtagBriefDto } from '@libs/forum/hashtag/dto/forum-hashtag.dto'
-import { PublicForumSectionListItemDto } from '@libs/forum/section/dto/forum-section.dto'
-import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
@@ -138,63 +132,6 @@ export class FollowUserBriefDto extends PickType(BaseAppUserDto, [
     validation: false,
   })
   followersCount!: number
-}
-
-/**
- * 关注作者摘要 DTO。
- */
-export class FollowAuthorBriefDto extends IntersectionType(
-  PickType(BaseAuthorDto, ['id', 'name', 'followersCount'] as const),
-  PickType(AuthorNullableOutputFieldsDto, ['avatar', 'type'] as const),
-) {
-  @BooleanProperty({
-    description: '当前用户是否已关注该作者',
-    example: true,
-    validation: false,
-  })
-  isFollowed!: boolean
-}
-
-/**
- * 关注作者分页项 DTO。
- */
-export class FollowAuthorPageItemDto extends BaseFollowDto {
-  @NestedProperty({
-    description: '作者信息',
-    type: FollowAuthorBriefDto,
-    required: true,
-    validation: false,
-    nullable: true,
-  })
-  author!: FollowAuthorBriefDto | null
-}
-
-/**
- * 关注板块分页项 DTO。
- */
-export class FollowSectionPageItemDto extends BaseFollowDto {
-  @NestedProperty({
-    description: '板块信息',
-    type: PublicForumSectionListItemDto,
-    required: true,
-    validation: false,
-    nullable: true,
-  })
-  section!: PublicForumSectionListItemDto | null
-}
-
-/**
- * 关注话题分页项 DTO。
- */
-export class FollowHashtagPageItemDto extends BaseFollowDto {
-  @NestedProperty({
-    description: '话题信息',
-    type: ForumHashtagBriefDto,
-    required: true,
-    validation: false,
-    nullable: true,
-  })
-  hashtag!: ForumHashtagBriefDto | null
 }
 
 /**

@@ -36,7 +36,6 @@ export enum ReportDispositionActionEnum {
 export enum ReportDispositionStatusEnum {
   NOT_REQUIRED = 1,
   APPLIED = 2,
-  LEGACY_NO_DISPOSITION = 3,
 }
 
 export enum ReportDispositionAttemptStatusEnum {
@@ -47,6 +46,5 @@ export enum ReportDispositionAttemptStatusEnum {
 export enum ReportDispositionStatusFilterEnum {
   NOT_REQUIRED = 1,
   APPLIED = 2,
-  LEGACY_NO_DISPOSITION = 3,
   FAILED = 99,
 }
