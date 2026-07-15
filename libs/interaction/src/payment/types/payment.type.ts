@@ -1,17 +1,9 @@
 import type { DbTransaction } from '@db/core'
 import type {
   PaymentOrderSelect,
-  PaymentProviderConfigInsert,
   PaymentProviderConfigSelect,
 } from '@db/schema'
-import type {
-  CreatePaymentOrderBaseDto,
-  CreatePaymentProviderConfigDto,
-  ProviderPaymentNotifyBodyDto,
-  ProviderPaymentNotifyHeadersDto,
-  ProviderPaymentNotifyQueryDto,
-  UpdatePaymentProviderConfigDto,
-} from '../dto/payment.dto'
+import type { CreatePaymentOrderBaseDto } from '../dto/payment.dto'
 import type {
   PaymentChannelEnum,
   PaymentOrderStatusEnum,
@@ -61,17 +53,6 @@ export interface PaymentOrderStatusResult {
   paidAt: Date | null
   closedAt: Date | null
   clientPayPayload: Record<string, unknown> | null
-}
-
-/**
- * Provider 原生通知入口原始请求数据。
- */
-export interface ProviderPaymentNotifyRequest {
-  channel: PaymentChannelEnum
-  headers: ProviderPaymentNotifyHeadersDto
-  query: ProviderPaymentNotifyQueryDto
-  body: ProviderPaymentNotifyBodyDto
-  rawBody?: string
 }
 
 /** Provider 签名串允许参与规范化的基础字段值。 */
@@ -158,6 +139,8 @@ export interface PaymentProviderCredentialMaterial {
  * 支付 provider 已验签回调字段，service 只能消费这里解析出的可信事实。
  */
 export interface PaymentProviderParsedNotify {
+  /** Provider 为此次通知分配的稳定事件标识。 */
+  providerEventId?: string
   providerTradeNo?: string
   paidAmount?: number
 }
@@ -167,13 +150,6 @@ export interface PaymentProviderParsedNotify {
  */
 export interface PaymentRefundParsedNotify {
   providerTradeNo?: string
-}
-
-/**
- * 支付确认入口上下文，用于 app 侧把订单访问限定在当前用户。
- */
-export interface ConfirmPaymentOrderContext {
-  userId?: number
 }
 
 /**
@@ -197,11 +173,3 @@ export interface PaymentProviderAdapter {
     input: PaymentProviderNotifyInput,
   ) => PaymentRefundParsedNotify
 }
-
-/** 支付提供者配置写入 DTO 联合类型，涵盖创建和更新两种输入。 */
-export type PaymentProviderConfigWriteDto =
-  CreatePaymentProviderConfigDto | Omit<UpdatePaymentProviderConfigDto, 'id'>
-
-/** 支付提供者配置写入值，用于落库前的部分字段组装。 */
-export type PaymentProviderConfigWriteValues =
-  Partial<PaymentProviderConfigInsert>

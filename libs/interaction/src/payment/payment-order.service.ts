@@ -1,83 +1,36 @@
 import type {
-  PaymentOrderSelect,
-  PaymentProviderCertificateSelect,
-  PaymentProviderConfigSelect,
-  PaymentProviderConfigVersionSelect,
-  PaymentProviderCredentialSelect,
-} from '@db/schema'
-import type {
   CreatePaymentOrderInput,
   PaymentOrderPublicResult,
-  PaymentProviderCredentialMaterial,
-  PaymentProviderOrderSnapshot,
 } from '../payment/types/payment.type'
-import process from 'node:process'
-import { DrizzleService } from '@db/core'
+import type {
+  PaymentOrderCreateSnapshot,
+  PaymentOrderPublicResultSource,
+  PaymentProviderConfigOrderSnapshot,
+} from './types/payment-order.type'
+import {
+  acquireIntegrityLocks,
+  DrizzleService,
+  sharedIntegrityLock,
+  tableIntegrityLock,
+} from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import { and, asc, eq } from 'drizzle-orm'
 import { CreatePaymentOrderBaseDto } from '../payment/dto/payment.dto'
-import { PAYMENT_PROVIDER_ADAPTERS } from '../payment/payment-provider.adapter'
 import {
   PaymentOrderStatusEnum,
   PaymentSceneEnum,
   PaymentSubscriptionModeEnum,
 } from '../payment/payment.constant'
-
-type PaymentProviderCredentialMaterialSource = Pick<
-  PaymentProviderCredentialSelect,
-  'metadata'
->
-
-type PaymentProviderCertificateMaterialSource = Pick<
-  PaymentProviderCertificateSelect,
-  'metadata' | 'serialNo'
->
-
-type PaymentOrderCreateSnapshot = PaymentProviderOrderSnapshot &
-  Pick<PaymentOrderSelect, 'id' | 'orderType' | 'subscriptionMode'>
-
-type PaymentOrderPublicResultSource = Pick<
-  PaymentOrderSelect,
-  'orderNo' | 'orderType' | 'payableAmount' | 'status' | 'subscriptionMode'
->
-
-type PaymentProviderConfigOrderSnapshot = Pick<
-  PaymentProviderConfigSelect,
-  | 'allowedReturnDomains'
-  | 'apiV3KeyRef'
-  | 'appCertRef'
-  | 'appId'
-  | 'certMode'
-  | 'channel'
-  | 'clientAppKey'
-  | 'configMetadata'
-  | 'configName'
-  | 'configVersion'
-  | 'credentialVersionRef'
-  | 'environment'
-  | 'id'
-  | 'isEnabled'
-  | 'mchId'
-  | 'notifyUrl'
-  | 'paymentScene'
-  | 'platform'
-  | 'platformCertRef'
-  | 'privateKeyRef'
-  | 'publicKeyRef'
-  | 'returnUrl'
-  | 'rootCertRef'
->
-
-type PaymentProviderConfigVersionIdSnapshot = Pick<
-  PaymentProviderConfigVersionSelect,
-  'id'
->
+import { PaymentProviderRuntimeService } from './payment-provider-runtime.service'
 
 @Injectable()
 export class PaymentOrderService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly paymentProviderRuntimeService: PaymentProviderRuntimeService,
+  ) {}
 
   // 获取支付订单表定义。
   private get paymentOrder() {
@@ -94,11 +47,7 @@ export class PaymentOrderService {
     return this.drizzle.schema.paymentProviderConfig
   }
 
-  // 获取支付 provider 配置不可变版本表定义。
-  private get paymentProviderConfigVersion() {
-    return this.drizzle.schema.paymentProviderConfigVersion
-  }
-
+  // 获取创建订单后需要回传和调用适配器的最小订单投影。
   private get paymentOrderCreateSnapshotSelect() {
     return {
       id: this.paymentOrder.id,
@@ -114,44 +63,13 @@ export class PaymentOrderService {
     } as const
   }
 
+  // 获取按场景匹配当前可用配置所需的最小字段投影。
   private get paymentProviderConfigOrderSelect() {
     return {
       id: this.paymentProviderConfig.id,
-      channel: this.paymentProviderConfig.channel,
       paymentScene: this.paymentProviderConfig.paymentScene,
-      platform: this.paymentProviderConfig.platform,
-      environment: this.paymentProviderConfig.environment,
-      clientAppKey: this.paymentProviderConfig.clientAppKey,
-      configName: this.paymentProviderConfig.configName,
-      appId: this.paymentProviderConfig.appId,
-      mchId: this.paymentProviderConfig.mchId,
-      notifyUrl: this.paymentProviderConfig.notifyUrl,
-      returnUrl: this.paymentProviderConfig.returnUrl,
       allowedReturnDomains: this.paymentProviderConfig.allowedReturnDomains,
-      certMode: this.paymentProviderConfig.certMode,
-      publicKeyRef: this.paymentProviderConfig.publicKeyRef,
-      privateKeyRef: this.paymentProviderConfig.privateKeyRef,
-      apiV3KeyRef: this.paymentProviderConfig.apiV3KeyRef,
-      appCertRef: this.paymentProviderConfig.appCertRef,
-      platformCertRef: this.paymentProviderConfig.platformCertRef,
-      rootCertRef: this.paymentProviderConfig.rootCertRef,
       configVersion: this.paymentProviderConfig.configVersion,
-      credentialVersionRef: this.paymentProviderConfig.credentialVersionRef,
-      configMetadata: this.paymentProviderConfig.configMetadata,
-      isEnabled: this.paymentProviderConfig.isEnabled,
-    } as const
-  }
-
-  private get paymentProviderCredentialMaterialColumns() {
-    return {
-      metadata: true,
-    } as const
-  }
-
-  private get paymentProviderCertificateMaterialColumns() {
-    return {
-      metadata: true,
-      serialNo: true,
     } as const
   }
 
@@ -168,15 +86,6 @@ export class PaymentOrderService {
     }
     const config = await this.resolvePaymentProviderConfig(input)
     this.assertPaymentReturnUrlAllowed(input.returnUrl, config)
-    const credentialSnapshot = this.readPaymentProviderSelectionSnapshot(config)
-    const configVersion = await this.ensurePaymentProviderConfigVersion(
-      config,
-      credentialSnapshot,
-    )
-    const credentialMaterial = await this.resolveCreateOrderCredentialMaterial(
-      config,
-      credentialSnapshot,
-    )
     const orderNo = this.generateOrderNo()
     const clientAppKey = this.normalizeKey(input.clientAppKey)
     const clientContext = {
@@ -191,39 +100,78 @@ export class PaymentOrderService {
       targetSnapshot: input.targetSnapshot,
     }
 
-    const [order]: PaymentOrderCreateSnapshot[] = await this.db
-      .insert(this.paymentOrder)
-      .values({
-        orderNo,
-        userId,
-        orderType: input.orderType,
-        channel: input.channel,
-        paymentScene: input.paymentScene,
-        platform: input.platform,
-        environment: input.environment,
-        clientAppKey,
-        subscriptionMode,
-        status: PaymentOrderStatusEnum.PENDING,
-        payableAmount: input.payableAmount,
-        targetId: input.targetId,
-        providerConfigId: config.id,
-        providerConfigVersionId: configVersion.id,
-        providerConfigVersion: config.configVersion,
-        appPrivateCredentialId: credentialSnapshot.appPrivateCredentialId,
-        alipayPublicCredentialId: credentialSnapshot.alipayPublicCredentialId,
-        wechatApiV3CredentialId: credentialSnapshot.wechatApiV3CredentialId,
-        providerCertificateIds: credentialSnapshot.providerCertificateIds,
-        credentialVersionRef: config.credentialVersionRef,
-        configSnapshot: this.buildProviderConfigSnapshot(config),
-        clientContext,
-      })
-      .returning(this.paymentOrderCreateSnapshotSelect)
+    const { order, runtime } = await this.drizzle.withTransaction({
+      execute: async (tx) => {
+        await acquireIntegrityLocks(tx, [
+          sharedIntegrityLock(
+            tableIntegrityLock('payment_provider_config', config.id),
+          ),
+        ])
+        const activeConfig = await tx.query.paymentProviderConfig.findFirst({
+          where: {
+            configVersion: config.configVersion,
+            id: config.id,
+            isEnabled: true,
+          },
+          columns: { id: true },
+        })
+        if (!activeConfig) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '支付 provider 配置已冻结或已轮换，请重新发起下单',
+          )
+        }
+        const runtime =
+          await this.paymentProviderRuntimeService.getCurrentConfigVersionForCreateOrder(
+            config.id,
+            config.configVersion,
+          )
+        const credentialSnapshot = runtime.credentialSnapshot
+        const [order]: PaymentOrderCreateSnapshot[] = await tx
+          .insert(this.paymentOrder)
+          .values({
+            orderNo,
+            userId,
+            orderType: input.orderType,
+            channel: input.channel,
+            paymentScene: input.paymentScene,
+            platform: input.platform,
+            environment: input.environment,
+            clientAppKey,
+            subscriptionMode,
+            status: PaymentOrderStatusEnum.PENDING,
+            payableAmount: input.payableAmount,
+            targetId: input.targetId,
+            providerConfigId: config.id,
+            providerConfigVersionId: runtime.id,
+            providerConfigVersion: runtime.configVersion,
+            appPrivateCredentialId: credentialSnapshot.appPrivateCredentialId,
+            alipayPublicCredentialId:
+              credentialSnapshot.alipayPublicCredentialId,
+            wechatApiV3CredentialId: credentialSnapshot.wechatApiV3CredentialId,
+            providerCertificateIds: credentialSnapshot.providerCertificateIds,
+            credentialVersionRef: runtime.credentialVersionRef,
+            configSnapshot: runtime.configSnapshot,
+            clientContext,
+          })
+          .returning(this.paymentOrderCreateSnapshotSelect)
+        if (!order) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '支付订单创建失败',
+          )
+        }
+        return { order, runtime }
+      },
+    })
 
-    const adapter = this.getPaymentAdapter(input.channel)
+    const adapter = this.paymentProviderRuntimeService.getPaymentAdapter(
+      input.channel,
+    )
     const clientPayPayload = await adapter.createOrder({
-      credentialMaterial,
+      credentialMaterial: runtime.credentialMaterial,
       order,
-      config,
+      config: runtime.adapterConfig,
       sceneContext: input,
     })
     const updatedRows = await this.db
@@ -253,273 +201,6 @@ export class PaymentOrderService {
       payableAmount: order.payableAmount,
       clientPayPayload,
     }
-  }
-
-  // 获取指定支付渠道的 provider 适配器。
-  private getPaymentAdapter(channel: number) {
-    const adapter = PAYMENT_PROVIDER_ADAPTERS.find(
-      (candidate) => candidate.channel === channel,
-    )
-    if (!adapter) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '不支持的支付渠道',
-      )
-    }
-    return adapter
-  }
-
-  // 构建不含明文密钥的 provider 配置快照。
-  private buildProviderConfigSnapshot(
-    config: PaymentProviderConfigOrderSnapshot,
-  ) {
-    return {
-      channel: config.channel,
-      paymentScene: config.paymentScene,
-      platform: config.platform,
-      environment: config.environment,
-      clientAppKey: config.clientAppKey,
-      configName: config.configName,
-      appId: config.appId,
-      mchId: config.mchId,
-      notifyUrl: config.notifyUrl,
-      returnUrl: config.returnUrl,
-      allowedReturnDomains: config.allowedReturnDomains,
-      certMode: config.certMode,
-      publicKeyRef: config.publicKeyRef,
-      privateKeyRef: config.privateKeyRef,
-      apiV3KeyRef: config.apiV3KeyRef,
-      appCertRef: config.appCertRef,
-      platformCertRef: config.platformCertRef,
-      rootCertRef: config.rootCertRef,
-      configVersion: config.configVersion,
-      credentialVersionRef: config.credentialVersionRef,
-      configMetadata: config.configMetadata,
-    }
-  }
-
-  private async ensurePaymentProviderConfigVersion(
-    config: PaymentProviderConfigOrderSnapshot,
-    credentialSnapshot: ReturnType<
-      PaymentOrderService['readPaymentProviderSelectionSnapshot']
-    >,
-  ) {
-    const existing: PaymentProviderConfigVersionIdSnapshot | undefined =
-      await this.db.query.paymentProviderConfigVersion.findFirst({
-        where: {
-          configVersion: config.configVersion,
-          providerConfigId: config.id,
-        },
-        columns: { id: true },
-      })
-    if (existing) {
-      return existing
-    }
-
-    const [created] = await this.db
-      .insert(this.paymentProviderConfigVersion)
-      .values({
-        alipayPublicCredentialId: credentialSnapshot.alipayPublicCredentialId,
-        allowedReturnDomains: config.allowedReturnDomains,
-        appCertificateId: credentialSnapshot.appCertificateId,
-        appId: config.appId,
-        appPrivateCredentialId: credentialSnapshot.appPrivateCredentialId,
-        certMode: config.certMode,
-        channel: config.channel,
-        clientAppKey: config.clientAppKey,
-        configName: config.configName,
-        configSnapshot: this.buildProviderConfigSnapshot(config),
-        configVersion: config.configVersion,
-        credentialSnapshot: this.buildCredentialSnapshot(
-          config,
-          credentialSnapshot,
-        ),
-        environment: config.environment,
-        isActive: config.isEnabled,
-        mchId: config.mchId,
-        notifyUrl: config.notifyUrl,
-        paymentScene: config.paymentScene,
-        platform: config.platform,
-        platformCertificateId: credentialSnapshot.platformCertificateId,
-        providerConfigId: config.id,
-        returnUrl: config.returnUrl,
-        rootCertificateId: credentialSnapshot.rootCertificateId,
-        status: config.isEnabled ? 1 : 2,
-        updatedAt: new Date(),
-        wechatApiV3CredentialId: credentialSnapshot.wechatApiV3CredentialId,
-      })
-      .onConflictDoNothing()
-      .returning({ id: this.paymentProviderConfigVersion.id })
-    if (created) {
-      return created
-    }
-    const raced: PaymentProviderConfigVersionIdSnapshot | undefined =
-      await this.db.query.paymentProviderConfigVersion.findFirst({
-        where: {
-          configVersion: config.configVersion,
-          providerConfigId: config.id,
-        },
-        columns: { id: true },
-      })
-    if (!raced) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '支付 provider 配置版本不可用',
-      )
-    }
-    return raced
-  }
-
-  private buildCredentialSnapshot(
-    config: PaymentProviderConfigOrderSnapshot,
-    credentialSnapshot: ReturnType<
-      PaymentOrderService['readPaymentProviderSelectionSnapshot']
-    >,
-  ) {
-    return {
-      alipayPublicCredentialId: credentialSnapshot.alipayPublicCredentialId,
-      apiV3KeyRef: config.apiV3KeyRef,
-      appCertRef: config.appCertRef,
-      appCertificateId: credentialSnapshot.appCertificateId,
-      appPrivateCredentialId: credentialSnapshot.appPrivateCredentialId,
-      credentialVersionRef: config.credentialVersionRef,
-      platformCertRef: config.platformCertRef,
-      platformCertificateId: credentialSnapshot.platformCertificateId,
-      privateKeyRef: config.privateKeyRef,
-      publicKeyRef: config.publicKeyRef,
-      rootCertRef: config.rootCertRef,
-      rootCertificateId: credentialSnapshot.rootCertificateId,
-      wechatApiV3CredentialId: credentialSnapshot.wechatApiV3CredentialId,
-    }
-  }
-
-  private async resolveCreateOrderCredentialMaterial(
-    config: PaymentProviderConfigOrderSnapshot,
-    credentialSnapshot: ReturnType<
-      PaymentOrderService['readPaymentProviderSelectionSnapshot']
-    >,
-  ): Promise<PaymentProviderCredentialMaterial> {
-    const appPrivateCredential = await this.resolvePaymentCredentialByIdOrRef(
-      credentialSnapshot.appPrivateCredentialId,
-      config.privateKeyRef,
-    )
-    const alipayPublicCredential = await this.resolvePaymentCredentialByIdOrRef(
-      credentialSnapshot.alipayPublicCredentialId,
-      config.publicKeyRef,
-    )
-    const wechatApiV3Credential = await this.resolvePaymentCredentialByIdOrRef(
-      credentialSnapshot.wechatApiV3CredentialId,
-      config.apiV3KeyRef,
-    )
-    const appCertificate = await this.resolvePaymentCertificateByIdOrRef(
-      credentialSnapshot.appCertificateId,
-      config.appCertRef,
-    )
-    const metadata = this.asRecord(config.configMetadata)
-
-    return {
-      alipayKeyType: this.readAlipayKeyType(appPrivateCredential?.metadata),
-      alipayPublicKeyPem: this.resolvePaymentMaterialFromMetadata(
-        alipayPublicCredential?.metadata,
-        ['alipayPublicKeyPem', 'publicKeyPem'],
-        ['alipayPublicKeyPemEnvKey', 'publicKeyPemEnvKey', 'materialEnvKey'],
-      ),
-      appPrivateKeyPem: this.resolvePaymentMaterialFromMetadata(
-        appPrivateCredential?.metadata,
-        ['appPrivateKeyPem', 'privateKeyPem', 'merchantPrivateKeyPem'],
-        [
-          'appPrivateKeyPemEnvKey',
-          'privateKeyPemEnvKey',
-          'merchantPrivateKeyPemEnvKey',
-          'materialEnvKey',
-        ],
-      ),
-      wechatApiV3Key: this.resolvePaymentMaterialFromMetadata(
-        wechatApiV3Credential?.metadata,
-        ['wechatApiV3Key', 'apiV3Key'],
-        ['wechatApiV3KeyEnvKey', 'apiV3KeyEnvKey', 'materialEnvKey'],
-      ),
-      wechatMerchantSerialNo:
-        this.readStringField(metadata ?? {}, 'wechatMerchantSerialNo') ??
-        appCertificate?.serialNo,
-    }
-  }
-
-  private async resolvePaymentCredentialByIdOrRef(
-    id: number | null,
-    credentialRef: string | null,
-  ): Promise<PaymentProviderCredentialMaterialSource | null> {
-    if (id != null) {
-      return (
-        (await this.db.query.paymentProviderCredential.findFirst({
-          where: { id },
-          columns: this.paymentProviderCredentialMaterialColumns,
-        })) ?? null
-      )
-    }
-    if (!credentialRef) {
-      return null
-    }
-    return (
-      (await this.db.query.paymentProviderCredential.findFirst({
-        where: { credentialRef },
-        columns: this.paymentProviderCredentialMaterialColumns,
-      })) ?? null
-    )
-  }
-
-  private async resolvePaymentCertificateByIdOrRef(
-    id: number | null,
-    certificateRef: string | null,
-  ): Promise<PaymentProviderCertificateMaterialSource | null> {
-    if (id != null) {
-      return (
-        (await this.db.query.paymentProviderCertificate.findFirst({
-          where: { id },
-          columns: this.paymentProviderCertificateMaterialColumns,
-        })) ?? null
-      )
-    }
-    if (!certificateRef) {
-      return null
-    }
-    return (
-      (await this.db.query.paymentProviderCertificate.findFirst({
-        where: { certificateRef },
-        columns: this.paymentProviderCertificateMaterialColumns,
-      })) ?? null
-    )
-  }
-
-  private resolvePaymentMaterialFromMetadata(
-    metadata: unknown,
-    materialFields: string[],
-    envKeyFields: string[],
-  ) {
-    const record = this.asRecord(metadata)
-    for (const envKeyField of envKeyFields) {
-      const envKey = this.readStringField(record ?? {}, envKeyField)
-      if (envKey && process.env[envKey]) {
-        return process.env[envKey]
-      }
-    }
-    if (process.env.NODE_ENV === 'test') {
-      for (const materialField of materialFields) {
-        const material = this.readStringField(record ?? {}, materialField)
-        if (material) {
-          return material
-        }
-      }
-    }
-    return undefined
-  }
-
-  private readAlipayKeyType(metadata: unknown) {
-    const keyType = this.readStringField(
-      this.asRecord(metadata) ?? {},
-      'alipayKeyType',
-    )
-    return keyType === 'PKCS1' || keyType === 'PKCS8' ? keyType : undefined
   }
 
   // 标准化可选业务键，空值统一落为空字符串。
@@ -601,6 +282,7 @@ export class PaymentOrderService {
     }
   }
 
+  // 校验 H5 returnUrl 的域名位于当前配置白名单。
   private assertPaymentReturnUrlAllowed(
     returnUrl: string | null | undefined,
     config: Pick<
@@ -640,6 +322,7 @@ export class PaymentOrderService {
     }
   }
 
+  // 解析并限制 returnUrl 为无认证信息的 HTTP(S) 地址。
   private parseReturnUrl(returnUrl: string) {
     try {
       const parsedUrl = new URL(returnUrl)
@@ -659,6 +342,7 @@ export class PaymentOrderService {
     }
   }
 
+  // 规范化允许域名，兼容配置中填写域名或完整 URL 的情况。
   private normalizeAllowedReturnDomain(domain: string) {
     const trimmed = domain.trim().toLowerCase()
     if (!trimmed) {
@@ -672,68 +356,7 @@ export class PaymentOrderService {
     }
   }
 
-  private readPaymentProviderSelectionSnapshot(
-    config: Pick<PaymentProviderConfigOrderSnapshot, 'configMetadata'>,
-  ) {
-    const metadata = this.asRecord(config.configMetadata)
-    const credentialOptions = this.asRecord(metadata?.credentialOptions)
-    const certificateOptions = this.asRecord(metadata?.certificateOptions)
-    const appCertificateId = this.readSelectionId(
-      certificateOptions,
-      'appCertificateId',
-    )
-    const platformCertificateId = this.readSelectionId(
-      certificateOptions,
-      'platformCertificateId',
-    )
-    const rootCertificateId = this.readSelectionId(
-      certificateOptions,
-      'rootCertificateId',
-    )
-
-    return {
-      alipayPublicCredentialId: this.readSelectionId(
-        credentialOptions,
-        'publicKeyCredentialId',
-      ),
-      appCertificateId,
-      appPrivateCredentialId:
-        this.readSelectionId(credentialOptions, 'privateKeyCredentialId') ??
-        this.readSelectionId(credentialOptions, 'credentialOptionId'),
-      platformCertificateId,
-      providerCertificateIds: [
-        appCertificateId,
-        platformCertificateId,
-        rootCertificateId,
-      ].filter((id): id is number => typeof id === 'number'),
-      rootCertificateId,
-      wechatApiV3CredentialId: this.readSelectionId(
-        credentialOptions,
-        'apiV3KeyCredentialId',
-      ),
-    }
-  }
-
-  private readSelectionId(
-    options: Record<string, unknown> | null,
-    field: string,
-  ) {
-    const value = this.asRecord(options?.[field])?.id
-    return typeof value === 'number' ? value : null
-  }
-
-  private readStringField(input: Record<string, unknown>, field: string) {
-    const value = input[field]
-    return typeof value === 'string' && value.trim() ? value.trim() : null
-  }
-
-  private asRecord(input: unknown): Record<string, unknown> | null {
-    if (!input || typeof input !== 'object' || Array.isArray(input)) {
-      return null
-    }
-    return input as Record<string, unknown>
-  }
-
+  // 从 JSON 字段读取非空字符串数组。
   private toStringArray(input: unknown) {
     if (!Array.isArray(input)) {
       return []

@@ -26,6 +26,7 @@ import {
   membershipPlan,
   membershipPlanBenefit,
   paymentProviderConfig,
+  paymentProviderConfigVersion,
   taskDefinition,
   taskEventLog,
   taskInstance,
@@ -325,6 +326,7 @@ const CURRENCY_PACKAGE_FIXTURES = [
   },
 ] as const
 
+// 演示 seed 不得伪造可用支付凭据；仅保留禁用配置以展示规范回调 URL，启用前必须由后台绑定真实凭据。
 const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
   {
     channel: 1,
@@ -332,18 +334,26 @@ const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
     platform: 1,
     environment: 1,
     clientAppKey: 'default-app',
+    configName: '演示支付宝支付配置',
     appId: 'seed-alipay-app',
     mchId: 'seed-alipay-mch',
-    notifyUrl: 'https://example.com/app/payment/provider/alipay/notify',
+    notifyUrl: 'https://example.com/app/payment-webhook/alipay/notify',
     returnUrl: null,
-    configVersion: 1,
+    allowedReturnDomains: [],
+    certMode: 1,
+    publicKeyRef: null,
+    privateKeyRef: null,
+    apiV3KeyRef: null,
+    appCertRef: null,
+    platformCertRef: null,
+    rootCertRef: null,
     credentialVersionRef: 'seed://payment/alipay/v1',
     configMetadata: {
       keyFingerprint: 'seed-alipay',
       alipayPublicKeyPemEnvKey: 'ES_PAYMENT_ALIPAY_PUBLIC_KEY_PEM',
     },
     sortOrder: 1,
-    isEnabled: true,
+    isEnabled: false,
   },
   {
     channel: 2,
@@ -351,11 +361,19 @@ const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
     platform: 1,
     environment: 1,
     clientAppKey: 'default-app',
+    configName: '演示微信支付配置',
     appId: 'seed-wechat-app',
     mchId: 'seed-wechat-mch',
-    notifyUrl: 'https://example.com/app/payment/provider/wechat/notify',
+    notifyUrl: 'https://example.com/app/payment-webhook/wechat/notify',
     returnUrl: null,
-    configVersion: 1,
+    allowedReturnDomains: [],
+    certMode: 1,
+    publicKeyRef: null,
+    privateKeyRef: null,
+    apiV3KeyRef: null,
+    appCertRef: null,
+    platformCertRef: null,
+    rootCertRef: null,
     credentialVersionRef: 'seed://payment/wechat/v1',
     configMetadata: {
       keyFingerprint: 'seed-wechat',
@@ -364,7 +382,7 @@ const PAYMENT_PROVIDER_CONFIG_FIXTURES = [
         'ES_PAYMENT_WECHAT_PLATFORM_PUBLIC_KEY_PEM',
     },
     sortOrder: 2,
-    isEnabled: true,
+    isEnabled: false,
   },
 ] as const
 
@@ -1071,6 +1089,144 @@ const TASK_FIXTURES = [
   },
 ] as const
 
+type PaymentProviderConfigFixture =
+  (typeof PAYMENT_PROVIDER_CONFIG_FIXTURES)[number]
+
+// 受控 bootstrap：seed 已由最外层事务包裹，必须同时维护当前配置与不可变版本，不能模拟业务写路径。
+async function seedPaymentProviderConfig(
+  db: Db,
+  fixture: PaymentProviderConfigFixture,
+) {
+  const findCurrentConfig = () =>
+    db.query.paymentProviderConfig.findFirst({
+      where: {
+        appId: fixture.appId,
+        channel: fixture.channel,
+        clientAppKey: fixture.clientAppKey,
+        environment: fixture.environment,
+        mchId: fixture.mchId,
+        paymentScene: fixture.paymentScene,
+        platform: fixture.platform,
+      },
+    })
+  const current = await findCurrentConfig()
+  const isCurrentFixture =
+    current !== undefined &&
+    current.allowedReturnDomains !== null &&
+    JSON.stringify(current.allowedReturnDomains) ===
+      JSON.stringify(fixture.allowedReturnDomains) &&
+    current.apiV3KeyRef === fixture.apiV3KeyRef &&
+    current.appCertRef === fixture.appCertRef &&
+    current.certMode === fixture.certMode &&
+    current.configName === fixture.configName &&
+    JSON.stringify(current.configMetadata) ===
+      JSON.stringify(fixture.configMetadata) &&
+    current.credentialVersionRef === fixture.credentialVersionRef &&
+    current.isEnabled === fixture.isEnabled &&
+    current.notifyUrl === fixture.notifyUrl &&
+    current.platformCertRef === fixture.platformCertRef &&
+    current.privateKeyRef === fixture.privateKeyRef &&
+    current.publicKeyRef === fixture.publicKeyRef &&
+    current.returnUrl === fixture.returnUrl &&
+    current.rootCertRef === fixture.rootCertRef &&
+    current.sortOrder === fixture.sortOrder
+
+  if (!current) {
+    await db
+      .insert(paymentProviderConfig)
+      .values({ ...fixture, configVersion: 1 })
+  } else if (!isCurrentFixture) {
+    await db
+      .update(paymentProviderConfig)
+      .set({ ...fixture, configVersion: current.configVersion + 1 })
+      .where(eq(paymentProviderConfig.id, current.id))
+  }
+
+  const config = await findCurrentConfig()
+  if (!config) {
+    throw new Error('支付 provider 演示配置写入后不存在')
+  }
+  const existingVersion = await db.query.paymentProviderConfigVersion.findFirst(
+    {
+      where: {
+        configVersion: config.configVersion,
+        providerConfigId: config.id,
+      },
+      columns: { id: true },
+    },
+  )
+  if (existingVersion) {
+    return
+  }
+
+  await db
+    .update(paymentProviderConfigVersion)
+    .set({ isActive: false, status: 3 })
+    .where(eq(paymentProviderConfigVersion.providerConfigId, config.id))
+  await db.insert(paymentProviderConfigVersion).values({
+    alipayPublicCredentialId: null,
+    allowedReturnDomains: config.allowedReturnDomains,
+    appCertificateId: null,
+    appId: config.appId,
+    appPrivateCredentialId: null,
+    certMode: config.certMode,
+    channel: config.channel,
+    clientAppKey: config.clientAppKey,
+    configName: config.configName,
+    configSnapshot: {
+      allowedReturnDomains: config.allowedReturnDomains,
+      apiV3KeyRef: config.apiV3KeyRef,
+      appCertRef: config.appCertRef,
+      appId: config.appId,
+      certMode: config.certMode,
+      channel: config.channel,
+      clientAppKey: config.clientAppKey,
+      configMetadata: config.configMetadata,
+      configName: config.configName,
+      configVersion: config.configVersion,
+      credentialVersionRef: config.credentialVersionRef,
+      environment: config.environment,
+      mchId: config.mchId,
+      notifyUrl: config.notifyUrl,
+      paymentScene: config.paymentScene,
+      platform: config.platform,
+      platformCertRef: config.platformCertRef,
+      privateKeyRef: config.privateKeyRef,
+      publicKeyRef: config.publicKeyRef,
+      returnUrl: config.returnUrl,
+      rootCertRef: config.rootCertRef,
+    },
+    configVersion: config.configVersion,
+    credentialSnapshot: {
+      alipayPublicCredentialId: null,
+      apiV3KeyRef: config.apiV3KeyRef,
+      appCertRef: config.appCertRef,
+      appCertificateId: null,
+      appPrivateCredentialId: null,
+      credentialVersionRef: config.credentialVersionRef,
+      platformCertRef: config.platformCertRef,
+      platformCertificateId: null,
+      privateKeyRef: config.privateKeyRef,
+      publicKeyRef: config.publicKeyRef,
+      rootCertRef: config.rootCertRef,
+      rootCertificateId: null,
+      wechatApiV3CredentialId: null,
+    },
+    environment: config.environment,
+    isActive: config.isEnabled,
+    mchId: config.mchId,
+    notifyUrl: config.notifyUrl,
+    paymentScene: config.paymentScene,
+    platform: config.platform,
+    platformCertificateId: null,
+    providerConfigId: config.id,
+    returnUrl: config.returnUrl,
+    rootCertificateId: null,
+    status: config.isEnabled ? 1 : 2,
+    wechatApiV3CredentialId: null,
+  })
+}
+
 export async function seedAppCoreDomain(db: Db) {
   console.log('🌱 初始化应用核心数据...')
 
@@ -1299,30 +1455,7 @@ export async function seedAppCoreDomain(db: Db) {
   }
 
   for (const configFixture of PAYMENT_PROVIDER_CONFIG_FIXTURES) {
-    const [existing] = await db
-      .select({ id: paymentProviderConfig.id })
-      .from(paymentProviderConfig)
-      .where(
-        and(
-          eq(paymentProviderConfig.channel, configFixture.channel),
-          eq(paymentProviderConfig.paymentScene, configFixture.paymentScene),
-          eq(paymentProviderConfig.platform, configFixture.platform),
-          eq(paymentProviderConfig.clientAppKey, configFixture.clientAppKey),
-          eq(paymentProviderConfig.appId, configFixture.appId),
-          eq(paymentProviderConfig.mchId, configFixture.mchId),
-          eq(paymentProviderConfig.environment, configFixture.environment),
-        ),
-      )
-      .limit(1)
-
-    if (!existing) {
-      await db.insert(paymentProviderConfig).values(configFixture)
-    } else {
-      await db
-        .update(paymentProviderConfig)
-        .set(configFixture)
-        .where(eq(paymentProviderConfig.id, existing.id))
-    }
+    await seedPaymentProviderConfig(db, configFixture)
   }
 
   for (const configFixture of AD_PROVIDER_CONFIG_FIXTURES) {

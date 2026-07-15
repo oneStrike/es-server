@@ -1,6 +1,7 @@
 import { PaymentModule as InteractionPaymentModule } from '@libs/interaction/payment/payment.module'
 import { Module } from '@nestjs/common'
 import { AppMembershipModule } from '../membership/membership.module'
+import { PaymentProviderNotifyController } from './payment-provider-notify.controller'
 import { PaymentController } from './payment.controller'
 
 @Module({
@@ -9,6 +10,6 @@ import { PaymentController } from './payment.controller'
       membershipRuntimeModule: AppMembershipModule,
     }),
   ],
-  controllers: [PaymentController],
+  controllers: [PaymentController, PaymentProviderNotifyController],
 })
 export class AppPaymentModule {}

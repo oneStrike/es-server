@@ -2,8 +2,13 @@ import type { PaymentModuleRegisterOptions } from './payment.module.type'
 import { DrizzleModule } from '@db/core'
 import { DynamicModule, Module } from '@nestjs/common'
 import { WalletModule } from '../wallet/wallet.module'
+import { PaymentNotifyService } from './payment-notify.service'
+import { PaymentOrderReadService } from './payment-order-read.service'
 import { PaymentOrderModule } from './payment-order.module'
-import { PaymentService } from './payment.service'
+import { PaymentProviderConfigService } from './payment-provider-config.service'
+import { PaymentProviderRuntimeModule } from './payment-provider-runtime.module'
+import { PaymentReconciliationService } from './payment-reconciliation.service'
+import { PaymentSettlementService } from './payment-settlement.service'
 
 @Module({})
 export class PaymentModule {
@@ -13,12 +18,24 @@ export class PaymentModule {
       module: PaymentModule,
       imports: [
         DrizzleModule,
+        PaymentProviderRuntimeModule,
         PaymentOrderModule,
         WalletModule,
         options.membershipRuntimeModule,
       ],
-      providers: [PaymentService],
-      exports: [PaymentService, PaymentOrderModule],
+      providers: [
+        PaymentProviderConfigService,
+        PaymentOrderReadService,
+        PaymentSettlementService,
+        PaymentReconciliationService,
+        PaymentNotifyService,
+      ],
+      exports: [
+        PaymentProviderConfigService,
+        PaymentOrderReadService,
+        PaymentReconciliationService,
+        PaymentNotifyService,
+      ],
     }
   }
 }

@@ -16,7 +16,9 @@ import {
   RepairPaidPaymentOrderDto,
   UpdatePaymentProviderConfigDto,
 } from '@libs/interaction/payment/dto/payment.dto'
-import { PaymentService } from '@libs/interaction/payment/payment.service'
+import { PaymentOrderReadService } from '@libs/interaction/payment/payment-order-read.service'
+import { PaymentProviderConfigService } from '@libs/interaction/payment/payment-provider-config.service'
+import { PaymentReconciliationService } from '@libs/interaction/payment/payment-reconciliation.service'
 import { AuditActionTypeEnum } from '@libs/observability/audit/audit-action.constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto'
@@ -28,7 +30,11 @@ import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 @ApiTags('支付管理')
 @Controller('admin/payment')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(
+    private readonly paymentProviderConfigService: PaymentProviderConfigService,
+    private readonly paymentOrderReadService: PaymentOrderReadService,
+    private readonly paymentReconciliationService: PaymentReconciliationService,
+  ) {}
 
   // 分页查询支付 provider 配置。
   @Get('provider/page')
@@ -44,7 +50,7 @@ export class PaymentController {
   async getPaymentProviderConfigPage(
     @Query() query: QueryPaymentProviderConfigDto,
   ) {
-    return this.paymentService.getPaymentProviderConfigPage(query)
+    return this.paymentProviderConfigService.getPaymentProviderConfigPage(query)
   }
 
   // 查询支付 provider 账号选项。
@@ -62,7 +68,9 @@ export class PaymentController {
   async getPaymentProviderAccountOptions(
     @Query() query: PaymentProviderAccountOptionQueryDto,
   ) {
-    return this.paymentService.getPaymentProviderAccountOptions(query)
+    return this.paymentProviderConfigService.getPaymentProviderAccountOptions(
+      query,
+    )
   }
 
   // 查询支付凭据选项。
@@ -80,7 +88,7 @@ export class PaymentController {
   async getPaymentCredentialOptions(
     @Query() query: PaymentProviderCredentialOptionQueryDto,
   ) {
-    return this.paymentService.getPaymentCredentialOptions(query)
+    return this.paymentProviderConfigService.getPaymentCredentialOptions(query)
   }
 
   // 查询支付证书选项。
@@ -98,7 +106,7 @@ export class PaymentController {
   async getPaymentCertificateOptions(
     @Query() query: PaymentProviderCertificateOptionQueryDto,
   ) {
-    return this.paymentService.getPaymentCertificateOptions(query)
+    return this.paymentProviderConfigService.getPaymentCertificateOptions(query)
   }
 
   // 创建支付 provider 配置。
@@ -116,7 +124,7 @@ export class PaymentController {
   async createPaymentProviderConfig(
     @Body() body: CreatePaymentProviderConfigDto,
   ) {
-    return this.paymentService.createPaymentProviderConfig(body)
+    return this.paymentProviderConfigService.createPaymentProviderConfig(body)
   }
 
   // 更新支付 provider 配置。
@@ -134,7 +142,7 @@ export class PaymentController {
   async updatePaymentProviderConfig(
     @Body() body: UpdatePaymentProviderConfigDto,
   ) {
-    return this.paymentService.updatePaymentProviderConfig(body)
+    return this.paymentProviderConfigService.updatePaymentProviderConfig(body)
   }
 
   // 更新支付 provider 启用状态。
@@ -150,7 +158,7 @@ export class PaymentController {
     audit: { actionType: AuditActionTypeEnum.UPDATE },
   })
   async updatePaymentProviderStatus(@Body() body: UpdateEnabledStatusDto) {
-    return this.paymentService.updatePaymentProviderStatus(
+    return this.paymentProviderConfigService.updatePaymentProviderStatus(
       body.id,
       body.isEnabled,
     )
@@ -168,7 +176,7 @@ export class PaymentController {
     model: AdminPaymentOrderPageItemDto,
   })
   async getPaymentOrderPage(@Query() query: QueryPaymentOrderDto) {
-    return this.paymentService.getPaymentOrderPage(query)
+    return this.paymentOrderReadService.getPaymentOrderPage(query)
   }
 
   // 分页查询支付对账记录。
@@ -185,7 +193,7 @@ export class PaymentController {
   async getPaymentReconciliationPage(
     @Query() query: QueryPaymentReconciliationDto,
   ) {
-    return this.paymentService.getPaymentReconciliationPage(query)
+    return this.paymentReconciliationService.getPaymentReconciliationPage(query)
   }
 
   // 异常修复支付订单为已支付，并复用支付结算幂等核心。
@@ -204,6 +212,6 @@ export class PaymentController {
     @Body() body: RepairPaidPaymentOrderDto,
     @CurrentUser('sub') adminUserId: number,
   ) {
-    return this.paymentService.repairPaidOrder(body, adminUserId)
+    return this.paymentReconciliationService.repairPaidOrder(body, adminUserId)
   }
 }

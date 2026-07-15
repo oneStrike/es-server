@@ -100,6 +100,7 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
     const payload = this.readProviderNotifyBody(input)
     if (this.channel === PaymentChannelEnum.ALIPAY) {
       return {
+        providerEventId: readStringField(payload, 'notify_id') ?? undefined,
         providerTradeNo: readStringField(payload, 'trade_no') ?? undefined,
         paidAmount:
           this.readAlipayAmountCents(payload, 'total_amount') ?? undefined,
@@ -110,6 +111,7 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
       const resource = this.decryptWechatNotifyResource(input)
       const amount = readRecord(resource?.amount)
       return {
+        providerEventId: readStringField(payload, 'id') ?? undefined,
         providerTradeNo:
           readStringField(resource, 'transaction_id') ?? undefined,
         paidAmount: readNumberField(amount, 'payer_total') ?? undefined,
@@ -117,6 +119,7 @@ abstract class BasePaymentProviderAdapter implements PaymentProviderAdapter {
     }
 
     return {
+      providerEventId: readStringField(payload, 'providerEventId') ?? undefined,
       providerTradeNo: readStringField(payload, 'providerTradeNo') ?? undefined,
       paidAmount: readNumberField(payload, 'paidAmount') ?? undefined,
     }

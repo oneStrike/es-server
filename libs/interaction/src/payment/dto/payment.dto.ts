@@ -14,6 +14,9 @@ import {
   PaymentChannelEnum,
   PaymentOrderStatusEnum,
   PaymentOrderTypeEnum,
+  PaymentProviderNotifyChannelEnum,
+  PaymentReconciliationMismatchTypeEnum,
+  PaymentReconciliationStatusEnum,
   PaymentSceneEnum,
   PaymentSubscriptionModeEnum,
   ProviderEnvironmentEnum,
@@ -816,11 +819,12 @@ export class PaymentOrderStatusDto extends PickType(BasePaymentOrderDto, [
 }
 
 export class ProviderPaymentNotifyParamsDto {
-  @StringProperty({
-    description: '支付渠道路径值，支持支付宝或微信的数字值与文本值',
-    example: 'wechat',
+  @EnumProperty({
+    description: '支付渠道路径值（alipay=支付宝；wechat=微信）',
+    enum: PaymentProviderNotifyChannelEnum,
+    example: PaymentProviderNotifyChannelEnum.WECHAT,
   })
-  channel!: string
+  channel!: PaymentProviderNotifyChannelEnum
 }
 
 /**
@@ -866,22 +870,6 @@ export class ProviderPaymentNotifyBodyDto {
     additionalProperties: true,
   })
   raw!: Record<string, unknown>
-}
-
-export class ProviderPaymentNotifyAckDto {
-  @StringProperty({
-    description: 'Provider 回调确认码',
-    example: 'SUCCESS',
-    validation: false,
-  })
-  code!: string
-
-  @StringProperty({
-    description: 'Provider 回调确认消息',
-    example: '成功',
-    validation: false,
-  })
-  message!: string
 }
 
 export class AdminPaymentOrderPageItemDto extends PickType(
@@ -1011,22 +999,22 @@ export class QueryPaymentReconciliationDto extends PageDto {
   })
   channel?: PaymentChannelEnum
 
-  @NumberProperty({
+  @EnumProperty({
     description:
       '差异类型（1=本地已支付 provider 未支付；2=本地待支付 provider 已支付；3=金额不一致；4=重复交易号；5=验签失败；6=退款差异）',
-    example: 2,
-    min: 1,
+    enum: PaymentReconciliationMismatchTypeEnum,
+    example: PaymentReconciliationMismatchTypeEnum.LOCAL_PENDING_PROVIDER_PAID,
     required: false,
   })
-  mismatchType?: number
+  mismatchType?: PaymentReconciliationMismatchTypeEnum
 
-  @NumberProperty({
+  @EnumProperty({
     description: '对账状态（1=待处理；2=已确认；3=已修复；4=忽略）',
-    example: 1,
-    min: 1,
+    enum: PaymentReconciliationStatusEnum,
+    example: PaymentReconciliationStatusEnum.PENDING,
     required: false,
   })
-  status?: number
+  status?: PaymentReconciliationStatusEnum
 
   @StringProperty({
     description: '第三方交易号',
@@ -1060,20 +1048,22 @@ export class AdminPaymentReconciliationPageItemDto extends BaseDto {
   })
   channel!: PaymentChannelEnum
 
-  @NumberProperty({
+  @EnumProperty({
     description:
       '差异类型（1=本地已支付 provider 未支付；2=本地待支付 provider 已支付；3=金额不一致；4=重复交易号；5=验签失败；6=退款差异）',
-    example: 2,
+    enum: PaymentReconciliationMismatchTypeEnum,
+    example: PaymentReconciliationMismatchTypeEnum.LOCAL_PENDING_PROVIDER_PAID,
     validation: false,
   })
-  mismatchType!: number
+  mismatchType!: PaymentReconciliationMismatchTypeEnum
 
-  @NumberProperty({
+  @EnumProperty({
     description: '对账状态（1=待处理；2=已确认；3=已修复；4=忽略）',
-    example: 1,
+    enum: PaymentReconciliationStatusEnum,
+    example: PaymentReconciliationStatusEnum.PENDING,
     validation: false,
   })
-  status!: number
+  status!: PaymentReconciliationStatusEnum
 
   @EnumProperty({
     description:
