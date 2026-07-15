@@ -82,7 +82,7 @@ pnpm type-check
 
 - [ ] **步骤 1：对齐 `nest-cli.json`**
 
-把 `moderation` 项目的 `root` / `entryFile` / `sourceRoot` 对齐到真实的 `libs/moderation/sensitive-word/src` owner 结构。
+把 `moderation` 项目的 `root` / `entryFile` / `sourceRoot` 对齐到真实的 `libs/moderation/src` owner 结构。
 
 - [ ] **步骤 2：对齐 `tsconfig.lib.json`**
 
