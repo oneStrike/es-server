@@ -37,11 +37,11 @@
 | 测试/性能                  | 08                        | 遗留测试文件；真实外网/共享 DB；共享 CI 噪声充当性能证据           | 对应 gate/evidence；type-check 与必要 build           |
 | 纯文档/规则                | AGENTS、PROJECT_RULES     | 只改文档就跳过检查；拿 ESLint 当 Markdown 检查                     | Prettier check；规则文档再跑 type-check               |
 
-## 当前 epoch 快速判断
+## 破坏性更新快速判断
 
-- 旧客户端、旧配置、旧数据库值域、旧 ORM API 或旧 migration log 是否被请求继续解释？若是，停止新增运行时分支，回到 epoch ADR 的 no-compat 边界。
-- 是否准备销毁数据库或改写 migration 历史？若是，先证明三重 guard 和 Gate A/B/C 顺序；普通 `db:migrate` 与 `pnpm check` 不得隐式执行 reset。
-- 是否准备调用 `publish-api:*` 或其他凭据化外部写操作？当前 ADR 不授权；必须满足 Gate D 并取得当次明确授权。
+- 旧客户端、旧配置、旧数据库值域、旧 ORM API 或旧 migration log 是否被请求继续解释？若是，停止新增运行时分支；当前 canonical contract 不保留旧合同兼容能力。
+- 是否准备销毁数据库或重置 migration history？若是，先完成精确资源 allowlist、脱敏只读 preflight、源码静态 gate、维护窗口隔离与终态验证；普通 `db:migrate`、应用启动、compose 与验证命令不得隐式执行 reset。
+- 是否准备调用 `publish-api:*` 或其他凭据化外部写操作？若是，先确认本次用户授权、准确目标与最小必要验证；不得把历史 gate 名称或旧 ADR 当作自动授权。
 
 ## 固定执行顺序
 

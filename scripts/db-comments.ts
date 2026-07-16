@@ -15,9 +15,7 @@ async function main() {
     throw new Error(`未知参数: ${unknownArguments.join(' ')}`)
   }
   if (args.includes('--apply')) {
-    throw new Error(
-      '数据库注释只能由受会话锁保护的 db/migrate.ts 同步，独立 --apply 已移除',
-    )
+    throw new Error('数据库注释只能随受控 migration 同步，独立 --apply 已移除')
   }
   const shouldCheck = args.includes('--check')
   const artifact = buildSchemaCommentsArtifact()
@@ -25,6 +23,7 @@ async function main() {
   console.log(`Schema comments SQL: ${artifact.outputPath}`)
   console.log(`Table comments: ${artifact.tableCommentCount}`)
   console.log(`Column comments: ${artifact.columnCommentCount}`)
+  console.log(`Comment statements: ${artifact.commentStatements.length}`)
   console.log(`Warnings: ${artifact.warnings.length}`)
 
   if (artifact.warnings.length > 0) {

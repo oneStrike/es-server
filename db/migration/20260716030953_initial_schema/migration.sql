@@ -1,0 +1,7091 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public VERSION '1.6';
+--> statement-breakpoint
+CREATE TABLE "app_agreement" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_agreement_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"title" varchar(100) NOT NULL,
+	"content" text NOT NULL,
+	"version" varchar(50) NOT NULL,
+	"is_force" boolean DEFAULT false NOT NULL,
+	"show_in_auth" boolean DEFAULT false NOT NULL,
+	"is_published" boolean DEFAULT false NOT NULL,
+	"published_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "app_agreement_title_version_key" UNIQUE("title","version")
+);
+--> statement-breakpoint
+CREATE TABLE "app_agreement_log" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_agreement_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"agreement_id" integer NOT NULL,
+	"version" varchar(50) NOT NULL,
+	"agreed_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"ip_address" varchar(45),
+	"device_info" varchar(500)
+);
+--> statement-breakpoint
+CREATE TABLE "app_announcement" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_announcement_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"page_id" integer,
+	"title" varchar(100) NOT NULL,
+	"content" text NOT NULL,
+	"summary" varchar(500),
+	"announcement_type" smallint DEFAULT 0 NOT NULL,
+	"priority_level" smallint DEFAULT 1 NOT NULL,
+	"is_published" boolean DEFAULT false NOT NULL,
+	"is_realtime" boolean DEFAULT false NOT NULL,
+	"is_pinned" boolean DEFAULT false NOT NULL,
+	"show_as_popup" boolean DEFAULT false NOT NULL,
+	"popup_background_image" varchar(200),
+	"popup_background_position" varchar(20) DEFAULT 'center' NOT NULL,
+	"enable_platform" smallint[] DEFAULT ARRAY[1,2,3]::smallint[] NOT NULL,
+	"publish_start_time" timestamp(6) with time zone,
+	"publish_end_time" timestamp(6) with time zone,
+	"notification_start_boundary_at" timestamp(6) with time zone,
+	"notification_end_boundary_at" timestamp(6) with time zone,
+	"notification_fanout_task_id" integer,
+	"notification_fanout_desired_event_key" varchar(120),
+	"notification_fanout_status" smallint,
+	"notification_fanout_last_error" varchar(500),
+	"notification_fanout_updated_at" timestamp(6) with time zone,
+	"view_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "app_announcement_type_valid_chk" CHECK ("announcement_type" in (0, 1, 2, 3, 4)),
+	CONSTRAINT "app_announcement_priority_level_valid_chk" CHECK ("priority_level" in (0, 1, 2, 3)),
+	CONSTRAINT "app_announcement_enable_platform_valid_chk" CHECK ("enable_platform" <@ ARRAY[1,2,3]::smallint[] and cardinality("enable_platform") > 0),
+	CONSTRAINT "app_announcement_publish_window_valid_chk" CHECK ("publish_start_time" is null or "publish_end_time" is null or "publish_start_time" < "publish_end_time"),
+	CONSTRAINT "app_announcement_popup_position_valid_chk" CHECK ("popup_background_position" in ('center', 'top center', 'top left', 'top right', 'bottom center', 'bottom left', 'bottom right', 'left center', 'right center')),
+	CONSTRAINT "app_announcement_view_count_non_negative_chk" CHECK ("view_count" >= 0),
+	CONSTRAINT "app_announcement_notification_fanout_status_valid_chk" CHECK ("notification_fanout_status" is null or "notification_fanout_status" in (0, 1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "app_announcement_notification_fanout_task" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_announcement_notification_fanout_task_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"announcement_id" integer NOT NULL,
+	"desired_event_key" varchar(120) NOT NULL,
+	"event_boundary_key" varchar(160) NOT NULL,
+	"fanout_key" varchar(320) NOT NULL CONSTRAINT "app_announcement_notification_fanout_task_fanout_key_key" UNIQUE,
+	"status" smallint NOT NULL,
+	"attempt_count" integer DEFAULT 0 NOT NULL,
+	"cursor_user_id" integer,
+	"last_error" varchar(500),
+	"started_at" timestamp(6) with time zone,
+	"processing_lease_expires_at" timestamp(6) with time zone,
+	"next_attempt_at" timestamp(6) with time zone,
+	"finished_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "app_ann_fanout_task_status_valid_chk" CHECK ("status" in (0, 1, 2, 3)),
+	CONSTRAINT "app_ann_fanout_task_attempt_count_chk" CHECK ("attempt_count" >= 0),
+	CONSTRAINT "app_ann_fanout_task_fanout_key_not_blank_chk" CHECK (btrim("fanout_key") <> ''),
+	CONSTRAINT "app_ann_fanout_task_boundary_key_not_blank_chk" CHECK (btrim("event_boundary_key") <> ''),
+	CONSTRAINT "app_ann_fanout_task_manual_boundary_format_chk" CHECK ("event_boundary_key" !~ '^manual:legacy:')
+);
+--> statement-breakpoint
+CREATE TABLE "app_announcement_read" (
+	"announcement_id" integer,
+	"user_id" integer,
+	"read_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "app_announcement_read_pkey" PRIMARY KEY("announcement_id","user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "app_announcement_view" (
+	"announcement_id" integer,
+	"user_id" integer,
+	"viewed_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "app_announcement_view_pkey" PRIMARY KEY("announcement_id","user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "app_page" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_page_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"code" varchar(50) NOT NULL CONSTRAINT "app_page_code_key" UNIQUE,
+	"path" varchar(300) NOT NULL CONSTRAINT "app_page_path_key" UNIQUE,
+	"name" varchar(100) NOT NULL,
+	"title" varchar(200) NOT NULL,
+	"description" varchar(500),
+	"access_level" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"enable_platform" smallint[] DEFAULT ARRAY[1,2,3]::smallint[],
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "app_page_access_level_valid_chk" CHECK ("access_level" in (0, 1, 2, 3)),
+	CONSTRAINT "app_page_enable_platform_valid_chk" CHECK ("enable_platform" is null or "enable_platform" <@ ARRAY[1,2,3]::smallint[])
+);
+--> statement-breakpoint
+CREATE TABLE "app_update_release" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_update_release_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"platform" smallint NOT NULL,
+	"version_name" varchar(50) NOT NULL,
+	"build_code" integer NOT NULL,
+	"release_notes" varchar(5000),
+	"force_update" boolean DEFAULT false NOT NULL,
+	"package_source_type" smallint,
+	"package_url" varchar(1000),
+	"package_original_name" varchar(255),
+	"package_file_size" integer,
+	"package_mime_type" varchar(100),
+	"popup_background_image" varchar(255),
+	"popup_background_position" varchar(20) DEFAULT 'center',
+	"is_published" boolean DEFAULT false NOT NULL,
+	"published_at" timestamp(6) with time zone,
+	"created_by_id" integer,
+	"updated_by_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "app_update_release_platform_build_code_key" UNIQUE("platform","build_code"),
+	CONSTRAINT "app_update_release_build_code_positive_chk" CHECK ("build_code" > 0),
+	CONSTRAINT "app_update_release_platform_valid_chk" CHECK ("platform" in (1, 2)),
+	CONSTRAINT "app_update_release_package_source_type_valid_chk" CHECK ("package_source_type" is null or "package_source_type" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "coupon_admin_grant_item" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "coupon_admin_grant_item_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"item_id" varchar(36) NOT NULL CONSTRAINT "coupon_admin_grant_item_item_id_key" UNIQUE,
+	"coupon_admin_grant_job_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"status" smallint NOT NULL,
+	"grant_count" integer NOT NULL,
+	"created_count" integer DEFAULT 0 NOT NULL,
+	"current_attempt_no" integer,
+	"failure_count" integer DEFAULT 0 NOT NULL,
+	"last_error" jsonb,
+	"last_failed_at" timestamp(6) with time zone,
+	"next_retry_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "coupon_admin_grant_item_job_user_key" UNIQUE("coupon_admin_grant_job_id","user_id"),
+	CONSTRAINT "coupon_admin_grant_item_status_valid_chk" CHECK ("status" in (1, 2, 3, 4, 5, 6)),
+	CONSTRAINT "coupon_admin_grant_item_grant_count_positive_chk" CHECK ("grant_count" > 0),
+	CONSTRAINT "coupon_admin_grant_item_created_count_non_negative_chk" CHECK ("created_count" >= 0),
+	CONSTRAINT "coupon_admin_grant_item_failure_count_non_negative_chk" CHECK ("failure_count" >= 0),
+	CONSTRAINT "coupon_admin_grant_item_current_attempt_no_positive_chk" CHECK ("current_attempt_no" is null or "current_attempt_no" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "coupon_admin_grant_job" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "coupon_admin_grant_job_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"workflow_job_id" bigint NOT NULL CONSTRAINT "coupon_admin_grant_job_workflow_job_id_key" UNIQUE,
+	"coupon_definition_id" integer NOT NULL,
+	"operation_id" varchar(120) NOT NULL CONSTRAINT "coupon_admin_grant_job_operation_id_key" UNIQUE,
+	"operation_hash" varchar(64) NOT NULL,
+	"payload_hash" varchar(64) NOT NULL,
+	"operator_user_id" integer NOT NULL,
+	"per_user_quantity" integer NOT NULL,
+	"selected_user_count" integer NOT NULL,
+	"requested_grant_count" integer NOT NULL,
+	"remark" varchar(500),
+	"coupon_snapshot" jsonb NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "coupon_admin_grant_job_operation_id_nonblank_chk" CHECK (length(trim("operation_id")) > 0),
+	CONSTRAINT "coupon_admin_grant_job_operation_hash_nonblank_chk" CHECK (length(trim("operation_hash")) > 0),
+	CONSTRAINT "coupon_admin_grant_job_payload_hash_nonblank_chk" CHECK (length(trim("payload_hash")) > 0),
+	CONSTRAINT "coupon_admin_grant_job_per_user_quantity_positive_chk" CHECK ("per_user_quantity" > 0),
+	CONSTRAINT "coupon_admin_grant_job_selected_user_count_positive_chk" CHECK ("selected_user_count" > 0),
+	CONSTRAINT "coupon_admin_grant_job_requested_grant_count_positive_chk" CHECK ("requested_grant_count" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "coupon_definition" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "coupon_definition_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(80) NOT NULL,
+	"coupon_type" smallint NOT NULL,
+	"target_scope" smallint NOT NULL,
+	"discount_amount" integer DEFAULT 0 NOT NULL,
+	"discount_rate_bps" integer DEFAULT 10000 NOT NULL,
+	"usage_limit" integer DEFAULT 1 NOT NULL,
+	"valid_days" integer DEFAULT 7 NOT NULL,
+	"benefit_days" integer DEFAULT 0 NOT NULL,
+	"benefit_count" integer DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "coupon_definition_coupon_type_valid_chk" CHECK ("coupon_type" in (1, 2, 3, 4)),
+	CONSTRAINT "coupon_definition_target_scope_valid_chk" CHECK ("target_scope" in (1, 2, 3)),
+	CONSTRAINT "coupon_definition_discount_amount_non_negative_chk" CHECK ("discount_amount" >= 0),
+	CONSTRAINT "coupon_definition_discount_rate_range_chk" CHECK ("discount_rate_bps" >= 0 and "discount_rate_bps" <= 10000),
+	CONSTRAINT "coupon_definition_usage_limit_positive_chk" CHECK ("usage_limit" >= 1),
+	CONSTRAINT "coupon_definition_valid_days_non_negative_chk" CHECK ("valid_days" >= 0),
+	CONSTRAINT "coupon_definition_benefit_days_non_negative_chk" CHECK ("benefit_days" >= 0),
+	CONSTRAINT "coupon_definition_benefit_count_non_negative_chk" CHECK ("benefit_count" >= 0),
+	CONSTRAINT "coupon_definition_reading_ability_chk" CHECK ("coupon_type" != 1 or ("target_scope" = 1 and "usage_limit" >= 1)),
+	CONSTRAINT "coupon_definition_discount_ability_chk" CHECK ("coupon_type" != 2 or ("target_scope" = 1 and ("discount_amount" > 0 or "discount_rate_bps" < 10000))),
+	CONSTRAINT "coupon_definition_vip_trial_ability_chk" CHECK ("coupon_type" != 3 or ("target_scope" = 2 and "benefit_days" >= 1)),
+	CONSTRAINT "coupon_definition_check_in_makeup_ability_chk" CHECK ("coupon_type" != 4 or ("target_scope" = 3 and "benefit_count" >= 1))
+);
+--> statement-breakpoint
+CREATE TABLE "coupon_redemption_record" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "coupon_redemption_record_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"coupon_instance_id" integer NOT NULL,
+	"coupon_type" smallint NOT NULL,
+	"target_type" smallint NOT NULL,
+	"target_id" integer,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"biz_key" varchar(120) NOT NULL,
+	"redemption_snapshot" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "coupon_redemption_record_user_biz_key_key" UNIQUE("user_id","biz_key"),
+	CONSTRAINT "coupon_redemption_record_coupon_type_valid_chk" CHECK ("coupon_type" in (1, 2, 3, 4)),
+	CONSTRAINT "coupon_redemption_record_target_type_valid_chk" CHECK ("target_type" in (1, 2, 3, 4)),
+	CONSTRAINT "coupon_redemption_record_target_reference_shape_chk" CHECK (
+        ("target_type" in (1, 2) and "target_id" is not null)
+        or ("target_type" in (3, 4) and "target_id" is null)
+      ),
+	CONSTRAINT "coupon_redemption_record_status_valid_chk" CHECK ("status" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "currency_package" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "currency_package_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"package_key" varchar(64) NOT NULL CONSTRAINT "currency_package_package_key_key" UNIQUE,
+	"name" varchar(80) NOT NULL,
+	"price" integer NOT NULL,
+	"currency_amount" integer NOT NULL,
+	"bonus_amount" integer DEFAULT 0 NOT NULL,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "currency_package_price_non_negative_chk" CHECK ("price" >= 0),
+	CONSTRAINT "currency_package_currency_amount_positive_chk" CHECK ("currency_amount" > 0),
+	CONSTRAINT "currency_package_bonus_amount_non_negative_chk" CHECK ("bonus_amount" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "membership_benefit_definition" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "membership_benefit_definition_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"code" varchar(80) NOT NULL CONSTRAINT "membership_benefit_definition_code_key" UNIQUE,
+	"name" varchar(80) NOT NULL,
+	"icon" varchar(300) DEFAULT '' NOT NULL,
+	"benefit_type" smallint NOT NULL,
+	"description" varchar(500) DEFAULT '' NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "membership_benefit_definition_type_valid_chk" CHECK ("benefit_type" in (1, 2)),
+	CONSTRAINT "membership_benefit_definition_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "membership_page_config" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "membership_page_config_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"page_key" varchar(80) NOT NULL CONSTRAINT "membership_page_config_page_key_key" UNIQUE,
+	"title" varchar(80) NOT NULL,
+	"member_notice_items" jsonb,
+	"checkout_agreement_text" text DEFAULT '' NOT NULL,
+	"submit_button_template" varchar(120) DEFAULT '' NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "membership_page_config_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "membership_page_config_agreement" (
+	"page_config_id" integer,
+	"agreement_id" integer,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	CONSTRAINT "membership_page_config_agreement_pkey" PRIMARY KEY("page_config_id","agreement_id"),
+	CONSTRAINT "membership_page_config_agreement_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "membership_page_config_plan" (
+	"page_config_id" integer,
+	"plan_id" integer,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	CONSTRAINT "membership_page_config_plan_pkey" PRIMARY KEY("page_config_id","plan_id"),
+	CONSTRAINT "membership_page_config_plan_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "membership_plan" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "membership_plan_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(80) NOT NULL,
+	"plan_key" varchar(64) NOT NULL CONSTRAINT "membership_plan_plan_key_key" UNIQUE,
+	"tier" smallint DEFAULT 1 NOT NULL,
+	"price_amount" integer NOT NULL,
+	"original_price_amount" integer DEFAULT 0 NOT NULL,
+	"duration_days" integer NOT NULL,
+	"display_tag" varchar(32) DEFAULT '' NOT NULL,
+	"bonus_point_amount" integer DEFAULT 0 NOT NULL,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "membership_plan_tier_valid_chk" CHECK ("tier" in (1, 2)),
+	CONSTRAINT "membership_plan_price_amount_non_negative_chk" CHECK ("price_amount" >= 0),
+	CONSTRAINT "membership_plan_original_price_amount_valid_chk" CHECK ("original_price_amount" >= "price_amount"),
+	CONSTRAINT "membership_plan_duration_days_positive_chk" CHECK ("duration_days" > 0),
+	CONSTRAINT "membership_plan_bonus_point_amount_non_negative_chk" CHECK ("bonus_point_amount" >= 0),
+	CONSTRAINT "membership_plan_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "membership_plan_benefit" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "membership_plan_benefit_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"plan_id" integer NOT NULL,
+	"benefit_id" integer NOT NULL,
+	"grant_policy" smallint NOT NULL,
+	"benefit_value" jsonb,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "membership_plan_benefit_plan_benefit_key" UNIQUE("plan_id","benefit_id"),
+	CONSTRAINT "membership_plan_benefit_grant_policy_valid_chk" CHECK ("grant_policy" in (1, 2)),
+	CONSTRAINT "membership_plan_benefit_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "payment_notify_event" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "payment_notify_event_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"channel" smallint NOT NULL,
+	"event_type" smallint DEFAULT 4 NOT NULL,
+	"payment_order_id" integer,
+	"order_no" varchar(80),
+	"provider_trade_no" varchar(120),
+	"provider_event_id" varchar(160),
+	"payload_hash" varchar(128) NOT NULL,
+	"headers" jsonb,
+	"redacted_payload" jsonb,
+	"verify_status" smallint DEFAULT 1 NOT NULL,
+	"process_status" smallint DEFAULT 1 NOT NULL,
+	"error_code" varchar(80),
+	"error_message" varchar(500),
+	"received_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"processed_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '730 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "payment_notify_event_channel_valid_chk" CHECK ("channel" in (1, 2)),
+	CONSTRAINT "payment_notify_event_type_valid_chk" CHECK ("event_type" in (1, 2, 3, 4)),
+	CONSTRAINT "payment_notify_event_verify_status_valid_chk" CHECK ("verify_status" in (1, 2, 3)),
+	CONSTRAINT "payment_notify_event_process_status_valid_chk" CHECK ("process_status" in (1, 2, 3, 4))
+);
+--> statement-breakpoint
+CREATE TABLE "payment_order" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "payment_order_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"order_no" varchar(80) NOT NULL CONSTRAINT "payment_order_order_no_key" UNIQUE,
+	"user_id" integer NOT NULL,
+	"order_type" smallint NOT NULL,
+	"channel" smallint NOT NULL,
+	"payment_scene" smallint NOT NULL,
+	"platform" smallint NOT NULL,
+	"environment" smallint NOT NULL,
+	"client_app_key" varchar(80) DEFAULT '' NOT NULL,
+	"subscription_mode" smallint DEFAULT 1 NOT NULL,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"payable_amount" integer NOT NULL,
+	"paid_amount" integer DEFAULT 0 NOT NULL,
+	"target_id" integer NOT NULL,
+	"provider_config_id" integer NOT NULL,
+	"provider_config_version_id" integer,
+	"provider_config_version" integer NOT NULL,
+	"app_private_credential_id" integer,
+	"alipay_public_credential_id" integer,
+	"wechat_api_v3_credential_id" integer,
+	"provider_certificate_ids" jsonb,
+	"credential_version_ref" varchar(160) NOT NULL,
+	"config_snapshot" jsonb,
+	"client_context" jsonb,
+	"client_pay_payload" jsonb,
+	"provider_trade_no" varchar(120) CONSTRAINT "payment_order_provider_trade_no_key" UNIQUE,
+	"notify_payload" jsonb,
+	"paid_at" timestamp(6) with time zone,
+	"closed_at" timestamp(6) with time zone,
+	"refunded_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "payment_order_type_valid_chk" CHECK ("order_type" in (1, 2)),
+	CONSTRAINT "payment_order_channel_valid_chk" CHECK ("channel" in (1, 2)),
+	CONSTRAINT "payment_order_scene_valid_chk" CHECK ("payment_scene" in (1, 2, 3)),
+	CONSTRAINT "payment_order_platform_valid_chk" CHECK ("platform" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "payment_order_environment_valid_chk" CHECK ("environment" in (1, 2)),
+	CONSTRAINT "payment_order_subscription_mode_valid_chk" CHECK ("subscription_mode" in (1)),
+	CONSTRAINT "payment_order_status_valid_chk" CHECK ("status" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "payment_order_payable_amount_non_negative_chk" CHECK ("payable_amount" >= 0),
+	CONSTRAINT "payment_order_paid_amount_non_negative_chk" CHECK ("paid_amount" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "payment_provider_certificate" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "payment_provider_certificate_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"channel" smallint NOT NULL,
+	"certificate_type" smallint NOT NULL,
+	"certificate_ref" varchar(180) NOT NULL,
+	"serial_no" varchar(160) DEFAULT '' NOT NULL,
+	"version_label" varchar(80) DEFAULT '' NOT NULL,
+	"display_name" varchar(160) DEFAULT '' NOT NULL,
+	"fingerprint" varchar(160) DEFAULT '' NOT NULL,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"expired_at" timestamp(6) with time zone,
+	"metadata" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "payment_provider_certificate_channel_valid_chk" CHECK ("channel" in (1, 2)),
+	CONSTRAINT "payment_provider_certificate_type_valid_chk" CHECK ("certificate_type" in (1, 2, 3, 4)),
+	CONSTRAINT "payment_provider_certificate_status_valid_chk" CHECK ("status" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "payment_provider_config" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "payment_provider_config_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"channel" smallint NOT NULL,
+	"payment_scene" smallint NOT NULL,
+	"platform" smallint NOT NULL,
+	"environment" smallint NOT NULL,
+	"client_app_key" varchar(80) DEFAULT '' NOT NULL,
+	"config_name" varchar(120) DEFAULT '' NOT NULL,
+	"app_id" varchar(120) DEFAULT '' NOT NULL,
+	"mch_id" varchar(120) DEFAULT '' NOT NULL,
+	"notify_url" varchar(500),
+	"return_url" varchar(500),
+	"allowed_return_domains" jsonb,
+	"cert_mode" smallint DEFAULT 1 NOT NULL,
+	"public_key_ref" varchar(160),
+	"private_key_ref" varchar(160),
+	"api_v3_key_ref" varchar(160),
+	"app_cert_ref" varchar(160),
+	"platform_cert_ref" varchar(160),
+	"root_cert_ref" varchar(160),
+	"config_version" integer DEFAULT 1 NOT NULL,
+	"credential_version_ref" varchar(160) NOT NULL,
+	"config_metadata" jsonb,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "payment_provider_config_channel_valid_chk" CHECK ("channel" in (1, 2)),
+	CONSTRAINT "payment_provider_config_scene_valid_chk" CHECK ("payment_scene" in (1, 2, 3)),
+	CONSTRAINT "payment_provider_config_platform_valid_chk" CHECK ("platform" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "payment_provider_config_environment_valid_chk" CHECK ("environment" in (1, 2)),
+	CONSTRAINT "payment_provider_config_cert_mode_valid_chk" CHECK ("cert_mode" in (1, 2)),
+	CONSTRAINT "payment_provider_config_version_positive_chk" CHECK ("config_version" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "payment_provider_config_version" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "payment_provider_config_version_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"provider_config_id" integer NOT NULL,
+	"config_version" integer NOT NULL,
+	"channel" smallint NOT NULL,
+	"payment_scene" smallint NOT NULL,
+	"platform" smallint NOT NULL,
+	"environment" smallint NOT NULL,
+	"client_app_key" varchar(80) DEFAULT '' NOT NULL,
+	"config_name" varchar(120) DEFAULT '' NOT NULL,
+	"app_id" varchar(120) DEFAULT '' NOT NULL,
+	"mch_id" varchar(120) DEFAULT '' NOT NULL,
+	"notify_url" varchar(500),
+	"return_url" varchar(500),
+	"allowed_return_domains" jsonb,
+	"cert_mode" smallint DEFAULT 1 NOT NULL,
+	"app_private_credential_id" integer,
+	"alipay_public_credential_id" integer,
+	"wechat_api_v3_credential_id" integer,
+	"app_certificate_id" integer,
+	"platform_certificate_id" integer,
+	"root_certificate_id" integer,
+	"credential_snapshot" jsonb,
+	"config_snapshot" jsonb,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "payment_provider_config_version_number_positive_chk" CHECK ("config_version" > 0),
+	CONSTRAINT "payment_provider_config_version_channel_valid_chk" CHECK ("channel" in (1, 2)),
+	CONSTRAINT "payment_provider_config_version_scene_valid_chk" CHECK ("payment_scene" in (1, 2, 3)),
+	CONSTRAINT "payment_provider_config_version_platform_valid_chk" CHECK ("platform" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "payment_provider_config_version_environment_valid_chk" CHECK ("environment" in (1, 2)),
+	CONSTRAINT "payment_provider_config_version_cert_mode_valid_chk" CHECK ("cert_mode" in (1, 2)),
+	CONSTRAINT "payment_provider_config_version_status_valid_chk" CHECK ("status" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "payment_provider_credential" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "payment_provider_credential_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"channel" smallint NOT NULL,
+	"credential_type" smallint NOT NULL,
+	"credential_ref" varchar(180) NOT NULL,
+	"version_label" varchar(80) DEFAULT '' NOT NULL,
+	"display_name" varchar(160) DEFAULT '' NOT NULL,
+	"masked_identifier" varchar(160) DEFAULT '' NOT NULL,
+	"fingerprint" varchar(160) DEFAULT '' NOT NULL,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"expired_at" timestamp(6) with time zone,
+	"metadata" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "payment_provider_credential_channel_valid_chk" CHECK ("channel" in (1, 2)),
+	CONSTRAINT "payment_provider_credential_type_valid_chk" CHECK ("credential_type" in (1, 2, 3, 4)),
+	CONSTRAINT "payment_provider_credential_status_valid_chk" CHECK ("status" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "payment_reconciliation_record" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "payment_reconciliation_record_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"payment_order_id" integer,
+	"order_no" varchar(80) NOT NULL,
+	"channel" smallint NOT NULL,
+	"mismatch_type" smallint NOT NULL,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"local_status" smallint NOT NULL,
+	"provider_status" varchar(80) DEFAULT '' NOT NULL,
+	"provider_trade_no" varchar(120),
+	"local_amount" integer NOT NULL,
+	"provider_amount" integer,
+	"currency" varchar(16) DEFAULT 'CNY' NOT NULL,
+	"evidence" jsonb,
+	"handled_remark" varchar(500),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "payment_reconciliation_record_channel_valid_chk" CHECK ("channel" in (1, 2)),
+	CONSTRAINT "payment_reconciliation_record_mismatch_type_valid_chk" CHECK ("mismatch_type" in (1, 2, 3, 4, 5, 6)),
+	CONSTRAINT "payment_reconciliation_record_status_valid_chk" CHECK ("status" in (1, 2, 3, 4))
+);
+--> statement-breakpoint
+CREATE TABLE "user_asset_balance" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_asset_balance_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"asset_type" smallint NOT NULL,
+	"asset_key" varchar(64) DEFAULT '' NOT NULL,
+	"balance" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_asset_balance_user_id_asset_type_asset_key_key" UNIQUE("user_id","asset_type","asset_key"),
+	CONSTRAINT "user_asset_balance_asset_type_valid_chk" CHECK ("asset_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "user_asset_balance_asset_key_not_blank_chk" CHECK ((
+      ("asset_type" in (1, 2) and btrim("asset_key") = '')
+      or ("asset_type" in (3, 4, 5) and btrim("asset_key") <> '')
+    )),
+	CONSTRAINT "user_asset_balance_balance_non_negative_chk" CHECK ("balance" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "user_coupon_instance" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_coupon_instance_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"coupon_definition_id" integer NOT NULL,
+	"coupon_type" smallint NOT NULL,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"remaining_uses" integer NOT NULL,
+	"source_type" smallint NOT NULL,
+	"source_id" integer,
+	"grant_key" varchar(180),
+	"expires_at" timestamp(6) with time zone,
+	"grant_snapshot" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_coupon_instance_coupon_type_valid_chk" CHECK ("coupon_type" in (1, 2, 3, 4)),
+	CONSTRAINT "user_coupon_instance_status_valid_chk" CHECK ("status" in (1, 2, 3, 4)),
+	CONSTRAINT "user_coupon_instance_source_type_valid_chk" CHECK ("source_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "user_coupon_instance_remaining_uses_non_negative_chk" CHECK ("remaining_uses" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "user_membership_subscription" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_membership_subscription_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"plan_id" integer,
+	"source_type" smallint NOT NULL,
+	"source_id" integer,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"starts_at" timestamp(6) with time zone NOT NULL,
+	"ends_at" timestamp(6) with time zone NOT NULL,
+	"cancelled_at" timestamp(6) with time zone,
+	"refunded_at" timestamp(6) with time zone,
+	"source_snapshot" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_membership_subscription_source_type_valid_chk" CHECK ("source_type" in (1, 2, 3)),
+	CONSTRAINT "user_membership_subscription_status_valid_chk" CHECK ("status" in (1, 2, 3, 4)),
+	CONSTRAINT "user_membership_subscription_time_range_chk" CHECK ("ends_at" > "starts_at")
+);
+--> statement-breakpoint
+CREATE TABLE "app_config" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_config_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"config_key" varchar(32) DEFAULT 'global' NOT NULL CONSTRAINT "app_config_config_key_key" UNIQUE,
+	"app_name" varchar(100) NOT NULL,
+	"app_desc" varchar(500),
+	"app_logo" varchar(500),
+	"onboarding_image" varchar(1000),
+	"theme_color" varchar(20) DEFAULT '#007AFF' NOT NULL,
+	"secondary_color" varchar(20),
+	"optional_theme_colors" varchar(500),
+	"enable_maintenance_mode" boolean DEFAULT false NOT NULL,
+	"maintenance_message" varchar(500),
+	"version" varchar(50) DEFAULT '1.0.0' NOT NULL,
+	"updated_by_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "app_config_config_key_valid_chk" CHECK ("config_key" = 'global')
+);
+--> statement-breakpoint
+CREATE TABLE "sys_config" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "sys_config_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"updated_by_id" integer,
+	"aliyun_config" jsonb,
+	"site_config" jsonb,
+	"operation_config" jsonb,
+	"security_config" jsonb,
+	"third_party_resource_parse_config" jsonb,
+	"wallet_currency_display_config" jsonb,
+	"maintenance_config" jsonb,
+	"content_review_policy" jsonb,
+	"upload_config" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "sys_dictionary" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "sys_dictionary_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(50) NOT NULL CONSTRAINT "sys_dictionary_name_key" UNIQUE,
+	"code" varchar(50) NOT NULL CONSTRAINT "sys_dictionary_code_key" UNIQUE,
+	"cover" varchar(200),
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"description" varchar(255),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "sys_dictionary_item" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "sys_dictionary_item_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"dictionary_code" text NOT NULL,
+	"name" varchar(50) NOT NULL,
+	"code" varchar(50) NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"cover" varchar(200),
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"description" varchar(255),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "sys_dictionary_item_dictionary_code_code_key" UNIQUE("dictionary_code","code")
+);
+--> statement-breakpoint
+CREATE TABLE "content_import_item" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "content_import_item_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"item_id" varchar(36) NOT NULL CONSTRAINT "content_import_item_item_id_key" UNIQUE,
+	"content_import_job_id" bigint NOT NULL,
+	"item_type" smallint NOT NULL,
+	"provider_chapter_id" varchar(100),
+	"target_chapter_id" integer,
+	"local_chapter_id" integer,
+	"title" varchar(200) NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"status" smallint NOT NULL,
+	"stage" smallint NOT NULL,
+	"failure_count" integer DEFAULT 0 NOT NULL,
+	"last_error_code" varchar(120),
+	"last_error_domain" varchar(80),
+	"last_error_stage" varchar(80),
+	"last_error_severity" varchar(40),
+	"last_error_retryable" boolean,
+	"last_error_context" jsonb,
+	"last_error_diagnostic" jsonb,
+	"last_failed_at" timestamp(6) with time zone,
+	"next_retry_at" timestamp(6) with time zone,
+	"auto_retry_count" integer DEFAULT 0 NOT NULL,
+	"max_auto_retries" integer DEFAULT 3 NOT NULL,
+	"last_retry_code" varchar(120),
+	"last_retry_context" jsonb,
+	"last_retry_diagnostic" jsonb,
+	"image_total" integer DEFAULT 0 NOT NULL,
+	"image_success_count" integer DEFAULT 0 NOT NULL,
+	"current_attempt_no" integer,
+	"metadata" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "content_import_item_item_type_valid_chk" CHECK ("item_type" in (1)),
+	CONSTRAINT "content_import_item_status_valid_chk" CHECK ("status" in (1, 2, 3, 4, 5, 6)),
+	CONSTRAINT "content_import_item_stage_valid_chk" CHECK ("stage" in (1, 2, 3, 4, 5, 6, 7, 8)),
+	CONSTRAINT "content_import_item_title_nonblank_chk" CHECK (length(trim("title")) > 0),
+	CONSTRAINT "content_import_item_failure_count_non_negative_chk" CHECK ("failure_count" >= 0),
+	CONSTRAINT "content_import_item_auto_retry_count_non_negative_chk" CHECK ("auto_retry_count" >= 0),
+	CONSTRAINT "content_import_item_max_auto_retries_non_negative_chk" CHECK ("max_auto_retries" >= 0),
+	CONSTRAINT "content_import_item_image_total_non_negative_chk" CHECK ("image_total" >= 0),
+	CONSTRAINT "content_import_item_image_success_count_non_negative_chk" CHECK ("image_success_count" >= 0),
+	CONSTRAINT "content_import_item_current_attempt_no_positive_chk" CHECK ("current_attempt_no" is null or "current_attempt_no" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "content_import_item_attempt" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "content_import_item_attempt_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"item_attempt_id" varchar(36) NOT NULL CONSTRAINT "content_import_item_attempt_item_attempt_id_key" UNIQUE,
+	"workflow_attempt_id" bigint NOT NULL,
+	"content_import_item_id" bigint NOT NULL,
+	"attempt_no" integer NOT NULL,
+	"status" smallint NOT NULL,
+	"stage" smallint NOT NULL,
+	"image_total" integer DEFAULT 0 NOT NULL,
+	"image_success_count" integer DEFAULT 0 NOT NULL,
+	"error_code" varchar(120),
+	"error_domain" varchar(80),
+	"error_stage" varchar(80),
+	"error_severity" varchar(40),
+	"error_retryable" boolean,
+	"error_context" jsonb,
+	"error_diagnostic" jsonb,
+	"started_at" timestamp(6) with time zone,
+	"finished_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "content_import_item_attempt_item_attempt_no_key" UNIQUE("content_import_item_id","attempt_no"),
+	CONSTRAINT "content_import_item_attempt_attempt_no_positive_chk" CHECK ("attempt_no" > 0),
+	CONSTRAINT "content_import_item_attempt_status_valid_chk" CHECK ("status" in (1, 2, 3, 4, 5, 6)),
+	CONSTRAINT "content_import_item_attempt_stage_valid_chk" CHECK ("stage" in (1, 2, 3, 4, 5, 6, 7, 8)),
+	CONSTRAINT "content_import_item_attempt_image_total_non_negative_chk" CHECK ("image_total" >= 0),
+	CONSTRAINT "content_import_item_attempt_image_success_nonnegative_chk" CHECK ("image_success_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "content_import_job" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "content_import_job_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"workflow_job_id" bigint NOT NULL CONSTRAINT "content_import_job_workflow_job_id_key" UNIQUE,
+	"content_type" smallint NOT NULL,
+	"source_type" smallint NOT NULL,
+	"work_id" integer,
+	"platform" varchar(30),
+	"provider_comic_id" varchar(100),
+	"provider_path_word" varchar(100),
+	"provider_group_path_word" varchar(100),
+	"archive_name" varchar(255),
+	"archive_path" varchar(1000),
+	"extract_path" varchar(1000),
+	"preview_mode" smallint,
+	"source_snapshot" jsonb,
+	"publish_boundary_status" smallint DEFAULT 1 NOT NULL,
+	"selected_item_count" integer DEFAULT 0 NOT NULL,
+	"success_item_count" integer DEFAULT 0 NOT NULL,
+	"failed_item_count" integer DEFAULT 0 NOT NULL,
+	"skipped_item_count" integer DEFAULT 0 NOT NULL,
+	"image_total" integer DEFAULT 0 NOT NULL,
+	"image_success_count" integer DEFAULT 0 NOT NULL,
+	"image_failed_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "content_import_job_content_type_valid_chk" CHECK ("content_type" in (1)),
+	CONSTRAINT "content_import_job_source_type_valid_chk" CHECK ("source_type" in (1, 2, 3)),
+	CONSTRAINT "content_import_job_preview_mode_valid_chk" CHECK ("preview_mode" is null or "preview_mode" in (1, 2)),
+	CONSTRAINT "content_import_job_publish_boundary_status_valid_chk" CHECK ("publish_boundary_status" in (1, 2)),
+	CONSTRAINT "content_import_job_selected_item_count_non_negative_chk" CHECK ("selected_item_count" >= 0),
+	CONSTRAINT "content_import_job_success_item_count_non_negative_chk" CHECK ("success_item_count" >= 0),
+	CONSTRAINT "content_import_job_failed_item_count_non_negative_chk" CHECK ("failed_item_count" >= 0),
+	CONSTRAINT "content_import_job_skipped_item_count_non_negative_chk" CHECK ("skipped_item_count" >= 0),
+	CONSTRAINT "content_import_job_image_total_non_negative_chk" CHECK ("image_total" >= 0),
+	CONSTRAINT "content_import_job_image_success_count_non_negative_chk" CHECK ("image_success_count" >= 0),
+	CONSTRAINT "content_import_job_image_failed_count_non_negative_chk" CHECK ("image_failed_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "content_import_preview_item" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "content_import_preview_item_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"preview_item_id" varchar(36) NOT NULL CONSTRAINT "content_import_preview_item_preview_item_id_key" UNIQUE,
+	"content_import_job_id" bigint NOT NULL,
+	"item_type" smallint NOT NULL,
+	"source_path" varchar(1000),
+	"provider_chapter_id" varchar(100),
+	"target_chapter_id" integer,
+	"title" varchar(200) NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"image_total" integer DEFAULT 0 NOT NULL,
+	"status" smallint NOT NULL,
+	"ignore_reason" varchar(300),
+	"warning_message" varchar(500),
+	"metadata" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "content_import_preview_item_item_type_valid_chk" CHECK ("item_type" in (1)),
+	CONSTRAINT "content_import_preview_item_status_valid_chk" CHECK ("status" in (1, 2, 3)),
+	CONSTRAINT "content_import_preview_item_title_nonblank_chk" CHECK (length(trim("title")) > 0),
+	CONSTRAINT "content_import_preview_item_image_total_non_negative_chk" CHECK ("image_total" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "content_import_residue" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "content_import_residue_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"residue_id" varchar(36) NOT NULL CONSTRAINT "content_import_residue_residue_id_key" UNIQUE,
+	"workflow_job_id" bigint NOT NULL,
+	"workflow_attempt_id" bigint,
+	"content_import_item_id" bigint,
+	"content_import_item_attempt_id" bigint,
+	"residue_type" smallint NOT NULL,
+	"provider" varchar(60),
+	"file_path" varchar(1000),
+	"local_path" varchar(1000),
+	"metadata" jsonb,
+	"cleanup_status" smallint NOT NULL,
+	"cleanup_error" varchar(500),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"cleaned_at" timestamp(6) with time zone,
+	CONSTRAINT "content_import_residue_type_valid_chk" CHECK ("residue_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "content_import_residue_cleanup_status_valid_chk" CHECK ("cleanup_status" in (1, 2, 3, 4))
+);
+--> statement-breakpoint
+CREATE TABLE "user_content_entitlement" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_content_entitlement_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"grant_source" smallint NOT NULL,
+	"source_id" integer,
+	"source_key" varchar(120),
+	"status" smallint DEFAULT 1 NOT NULL,
+	"starts_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"expires_at" timestamp(6) with time zone,
+	"revoked_at" timestamp(6) with time zone,
+	"grant_snapshot" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_content_entitlement_target_type_valid_chk" CHECK ("target_type" in (1, 2)),
+	CONSTRAINT "user_content_entitlement_grant_source_valid_chk" CHECK ("grant_source" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "user_content_entitlement_grant_source_reference_shape_chk" CHECK (
+        ("grant_source" in (1, 2, 3) and "source_id" is not null)
+        or (
+          "grant_source" in (4, 5)
+          and "source_key" is not null
+          and length(btrim("source_key")) > 0
+        )
+      ),
+	CONSTRAINT "user_content_entitlement_status_valid_chk" CHECK ("status" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "user_download_record" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_download_record_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_download_record_target_type_target_id_user_id_key" UNIQUE("target_type","target_id","user_id"),
+	CONSTRAINT "user_download_record_target_type_valid_chk" CHECK ("target_type" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "user_purchase_record" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_purchase_record_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"original_price" integer NOT NULL,
+	"paid_price" integer NOT NULL,
+	"payable_rate" numeric(3,2) DEFAULT '1.00' NOT NULL,
+	"discount_amount" integer DEFAULT 0 NOT NULL,
+	"coupon_instance_id" integer,
+	"discount_source" smallint DEFAULT 0 NOT NULL,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"payment_method" smallint NOT NULL,
+	"out_trade_no" varchar(100),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_purchase_record_target_type_valid_chk" CHECK ("target_type" in (1, 2)),
+	CONSTRAINT "user_purchase_record_status_valid_chk" CHECK ("status" in (1, 2, 3, 4)),
+	CONSTRAINT "user_purchase_record_payment_method_valid_chk" CHECK ("payment_method" in (1, 2, 3)),
+	CONSTRAINT "user_purchase_record_original_price_non_negative_chk" CHECK ("original_price" >= 0),
+	CONSTRAINT "user_purchase_record_paid_price_non_negative_chk" CHECK ("paid_price" >= 0),
+	CONSTRAINT "user_purchase_record_payable_rate_range_chk" CHECK ("payable_rate" >= 0 and "payable_rate" <= 1),
+	CONSTRAINT "user_purchase_record_discount_amount_non_negative_chk" CHECK ("discount_amount" >= 0),
+	CONSTRAINT "user_purchase_record_discount_source_valid_chk" CHECK ("discount_source" in (0, 1))
+);
+--> statement-breakpoint
+CREATE TABLE "user_work_reading_state" (
+	"user_id" integer,
+	"work_id" integer,
+	"work_type" smallint NOT NULL,
+	"last_read_at" timestamp(6) with time zone NOT NULL,
+	"last_read_chapter_id" integer,
+	CONSTRAINT "user_work_reading_state_pkey" PRIMARY KEY("user_id","work_id"),
+	CONSTRAINT "user_work_reading_state_work_type_valid_chk" CHECK ("work_type" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "work" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"type" smallint NOT NULL,
+	"name" varchar(80) NOT NULL,
+	"alias" varchar(200),
+	"cover" varchar(500) NOT NULL,
+	"description" text NOT NULL,
+	"language" varchar(10) NOT NULL,
+	"region" varchar(10) NOT NULL,
+	"age_rating" varchar(10),
+	"serial_status" smallint DEFAULT 0 NOT NULL,
+	"publisher" varchar(100),
+	"original_source" varchar(100),
+	"copyright" varchar(500),
+	"disclaimer" text,
+	"remark" varchar(1000),
+	"is_published" boolean DEFAULT true NOT NULL,
+	"is_recommended" boolean DEFAULT false NOT NULL,
+	"is_hot" boolean DEFAULT false NOT NULL,
+	"is_new" boolean DEFAULT false NOT NULL,
+	"publish_at" date,
+	"last_updated" timestamp(6) with time zone,
+	"view_rule" smallint DEFAULT 0 NOT NULL,
+	"required_view_level_id" integer,
+	"forum_section_id" integer CONSTRAINT "work_forum_section_id_key" UNIQUE,
+	"chapter_price" integer DEFAULT 0 NOT NULL,
+	"can_comment" boolean DEFAULT true NOT NULL,
+	"recommend_weight" double precision DEFAULT 1 NOT NULL,
+	"view_count" integer DEFAULT 0 NOT NULL,
+	"favorite_count" integer DEFAULT 0 NOT NULL,
+	"like_count" integer DEFAULT 0 NOT NULL,
+	"comment_count" integer DEFAULT 0 NOT NULL,
+	"download_count" integer DEFAULT 0 NOT NULL,
+	"rating" double precision,
+	"popularity" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "work_type_valid_chk" CHECK ("type" in (1, 2)),
+	CONSTRAINT "work_serial_status_valid_chk" CHECK ("serial_status" in (0, 1, 2, 3, 4)),
+	CONSTRAINT "work_view_rule_valid_chk" CHECK ("view_rule" in (0, 1, 2, 3)),
+	CONSTRAINT "work_view_count_non_negative_chk" CHECK ("view_count" >= 0),
+	CONSTRAINT "work_favorite_count_non_negative_chk" CHECK ("favorite_count" >= 0),
+	CONSTRAINT "work_like_count_non_negative_chk" CHECK ("like_count" >= 0),
+	CONSTRAINT "work_comment_count_non_negative_chk" CHECK ("comment_count" >= 0),
+	CONSTRAINT "work_download_count_non_negative_chk" CHECK ("download_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "work_author" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_author_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(100) NOT NULL,
+	"avatar" varchar(500),
+	"description" varchar(1000),
+	"nationality" varchar(50),
+	"gender" smallint DEFAULT 0 NOT NULL,
+	"type" smallint[],
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"is_recommended" boolean DEFAULT false NOT NULL,
+	"remark" varchar(1000),
+	"work_count" integer DEFAULT 0 NOT NULL,
+	"followers_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "work_author_gender_valid_chk" CHECK ("gender" in (0, 1, 2, 3, 4)),
+	CONSTRAINT "work_author_type_valid_chk" CHECK ("type" is null or "type" <@ '{1,2}'::smallint[])
+);
+--> statement-breakpoint
+CREATE TABLE "work_author_relation" (
+	"work_id" integer,
+	"author_id" integer,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	CONSTRAINT "work_author_relation_pkey" PRIMARY KEY("work_id","author_id")
+);
+--> statement-breakpoint
+CREATE TABLE "work_category" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_category_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(20) NOT NULL CONSTRAINT "work_category_name_key" UNIQUE,
+	"description" varchar(200),
+	"icon" varchar(255),
+	"content_type" smallint[],
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"popularity" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "work_category_content_type_valid_chk" CHECK ("content_type" is null or "content_type" <@ '{1,2,3}'::smallint[])
+);
+--> statement-breakpoint
+CREATE TABLE "work_category_relation" (
+	"work_id" integer,
+	"category_id" integer,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	CONSTRAINT "work_category_relation_pkey" PRIMARY KEY("work_id","category_id")
+);
+--> statement-breakpoint
+CREATE TABLE "work_chapter" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_chapter_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"work_id" integer NOT NULL,
+	"work_type" smallint NOT NULL,
+	"title" varchar(100) NOT NULL,
+	"subtitle" varchar(200),
+	"cover" varchar(500),
+	"description" varchar(1000),
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"is_published" boolean DEFAULT false NOT NULL,
+	"is_preview" boolean DEFAULT false NOT NULL,
+	"publish_at" timestamp(6) with time zone,
+	"view_rule" smallint DEFAULT -1 NOT NULL,
+	"required_read_level_id" integer,
+	"price" integer DEFAULT 0 NOT NULL,
+	"can_download" boolean DEFAULT true NOT NULL,
+	"can_comment" boolean DEFAULT true NOT NULL,
+	"novel_content_path" varchar(1000),
+	"comic_content_manifest" jsonb,
+	"word_count" integer DEFAULT 0 NOT NULL,
+	"view_count" integer DEFAULT 0 NOT NULL,
+	"like_count" integer DEFAULT 0 NOT NULL,
+	"comment_count" integer DEFAULT 0 NOT NULL,
+	"purchase_count" integer DEFAULT 0 NOT NULL,
+	"download_count" integer DEFAULT 0 NOT NULL,
+	"remark" varchar(1000),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "work_chapter_work_type_valid_chk" CHECK ("work_type" in (1, 2)),
+	CONSTRAINT "work_chapter_view_rule_valid_chk" CHECK ("view_rule" in (-1, 0, 1, 2, 3)),
+	CONSTRAINT "work_chapter_content_type_valid_chk" CHECK (("work_type" = 1 and "novel_content_path" is null) or ("work_type" = 2 and "comic_content_manifest" is null)),
+	CONSTRAINT "work_chapter_novel_content_path_non_blank_chk" CHECK ("novel_content_path" is null or btrim("novel_content_path") <> ''),
+	CONSTRAINT "work_chapter_comic_manifest_array_chk" CHECK ("comic_content_manifest" is null or jsonb_typeof("comic_content_manifest") = 'array'),
+	CONSTRAINT "work_chapter_view_count_non_negative_chk" CHECK ("view_count" >= 0),
+	CONSTRAINT "work_chapter_like_count_non_negative_chk" CHECK ("like_count" >= 0),
+	CONSTRAINT "work_chapter_comment_count_non_negative_chk" CHECK ("comment_count" >= 0),
+	CONSTRAINT "work_chapter_purchase_count_non_negative_chk" CHECK ("purchase_count" >= 0),
+	CONSTRAINT "work_chapter_download_count_non_negative_chk" CHECK ("download_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "work_comic" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_comic_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"work_id" integer NOT NULL CONSTRAINT "work_comic_work_id_key" UNIQUE,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "work_novel" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_novel_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"work_id" integer NOT NULL CONSTRAINT "work_novel_work_id_key" UNIQUE,
+	"word_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "work_tag" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_tag_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(20) NOT NULL CONSTRAINT "work_tag_name_key" UNIQUE,
+	"icon" varchar(255),
+	"description" varchar(200),
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"popularity" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "work_tag_relation" (
+	"work_id" integer,
+	"tag_id" integer,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	CONSTRAINT "work_tag_relation_pkey" PRIMARY KEY("work_id","tag_id")
+);
+--> statement-breakpoint
+CREATE TABLE "work_third_party_chapter_binding" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_third_party_chapter_binding_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"work_third_party_source_binding_id" integer NOT NULL,
+	"chapter_id" integer NOT NULL,
+	"provider_chapter_id" varchar(100) NOT NULL,
+	"remote_sort_order" integer,
+	"snapshot" jsonb NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "work_tp_chapter_binding_provider_chapter_nonblank_chk" CHECK (length(trim("provider_chapter_id")) > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "work_third_party_source_binding" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_third_party_source_binding_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"work_id" integer NOT NULL,
+	"platform" varchar(30) NOT NULL,
+	"provider_comic_id" varchar(100) NOT NULL,
+	"provider_path_word" varchar(100) NOT NULL,
+	"provider_group_path_word" varchar(100) NOT NULL,
+	"provider_uuid" varchar(100),
+	"source_snapshot" jsonb NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "work_third_party_source_binding_platform_nonblank_chk" CHECK (length(trim("platform")) > 0),
+	CONSTRAINT "work_third_party_source_binding_provider_comic_id_nonblank_chk" CHECK (length(trim("provider_comic_id")) > 0),
+	CONSTRAINT "work_third_party_source_binding_provider_path_word_nonblank_chk" CHECK (length(trim("provider_path_word")) > 0),
+	CONSTRAINT "work_tp_source_binding_group_path_nonblank_chk" CHECK (length(trim("provider_group_path_word")) > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "domain_event" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "domain_event_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"event_key" varchar(120) NOT NULL,
+	"domain" varchar(40) NOT NULL,
+	"idempotency_key" varchar(180),
+	"subject_type" varchar(40) NOT NULL,
+	"subject_id" integer NOT NULL,
+	"target_type" varchar(40) NOT NULL,
+	"target_id" integer NOT NULL,
+	"operator_id" integer,
+	"occurred_at" timestamp(6) with time zone NOT NULL,
+	"context" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "domain_event_domain_idempotency_key_key" UNIQUE("domain","idempotency_key")
+);
+--> statement-breakpoint
+CREATE TABLE "domain_event_dispatch" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "domain_event_dispatch_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"event_id" bigint NOT NULL,
+	"consumer" varchar(40) NOT NULL,
+	"status" smallint DEFAULT 0 NOT NULL,
+	"retry_count" integer DEFAULT 0 NOT NULL,
+	"next_retry_at" timestamp(6) with time zone,
+	"last_error" varchar(500),
+	"processed_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '90 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "domain_event_dispatch_event_id_consumer_key" UNIQUE("event_id","consumer"),
+	CONSTRAINT "domain_event_dispatch_status_valid_chk" CHECK ("status" in (0, 1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "forum_hashtag" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_hashtag_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"slug" varchar(64) NOT NULL CONSTRAINT "forum_hashtag_slug_key" UNIQUE,
+	"display_name" varchar(64) NOT NULL,
+	"description" varchar(200),
+	"manual_boost" smallint DEFAULT 0 NOT NULL,
+	"audit_status" smallint DEFAULT 0 NOT NULL,
+	"is_hidden" boolean DEFAULT false NOT NULL,
+	"audit_by_id" integer,
+	"audit_role" smallint,
+	"audit_reason" varchar(500),
+	"audit_at" timestamp(6) with time zone,
+	"create_source_type" smallint NOT NULL,
+	"created_by_user_id" integer,
+	"sensitive_word_hits" jsonb,
+	"topic_ref_count" integer DEFAULT 0 NOT NULL,
+	"comment_ref_count" integer DEFAULT 0 NOT NULL,
+	"follower_count" integer DEFAULT 0 NOT NULL,
+	"last_referenced_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "forum_hashtag_audit_status_valid_chk" CHECK ("audit_status" in (0, 1, 2)),
+	CONSTRAINT "forum_hashtag_audit_role_valid_chk" CHECK ("audit_role" is null or "audit_role" in (0, 1)),
+	CONSTRAINT "forum_hashtag_audit_actor_pair_chk" CHECK (("audit_role" is null) = ("audit_by_id" is null)),
+	CONSTRAINT "forum_hashtag_create_source_type_valid_chk" CHECK ("create_source_type" in (1, 2, 3)),
+	CONSTRAINT "forum_hashtag_manual_boost_non_negative_chk" CHECK ("manual_boost" >= 0),
+	CONSTRAINT "forum_hashtag_topic_ref_count_non_negative_chk" CHECK ("topic_ref_count" >= 0),
+	CONSTRAINT "forum_hashtag_comment_ref_count_non_negative_chk" CHECK ("comment_ref_count" >= 0),
+	CONSTRAINT "forum_hashtag_follower_count_non_negative_chk" CHECK ("follower_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "forum_hashtag_reference" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_hashtag_reference_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"hashtag_id" integer NOT NULL,
+	"source_type" smallint NOT NULL,
+	"source_id" integer NOT NULL,
+	"topic_id" integer NOT NULL,
+	"section_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"occurrence_count" smallint DEFAULT 1 NOT NULL,
+	"source_audit_status" smallint NOT NULL,
+	"source_is_hidden" boolean DEFAULT false NOT NULL,
+	"is_source_visible" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "forum_hashtag_reference_unique_key" UNIQUE("hashtag_id","source_type","source_id"),
+	CONSTRAINT "forum_hashtag_reference_source_type_valid_chk" CHECK ("source_type" in (1, 2)),
+	CONSTRAINT "forum_hashtag_reference_source_audit_status_valid_chk" CHECK ("source_audit_status" in (0, 1, 2)),
+	CONSTRAINT "forum_hashtag_reference_occurrence_count_positive_chk" CHECK ("occurrence_count" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "forum_moderator" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_moderator_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL CONSTRAINT "forum_moderator_user_id_key" UNIQUE,
+	"group_id" integer,
+	"role_type" smallint DEFAULT 3 NOT NULL,
+	"permissions" smallint[] DEFAULT ARRAY[]::smallint[],
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"remark" varchar(500),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "forum_moderator_role_type_valid_chk" CHECK ("role_type" in (1, 2, 3)),
+	CONSTRAINT "forum_moderator_permissions_valid_chk" CHECK ("permissions" is null or "permissions" <@ ARRAY[1,2,3,4,5,6]::smallint[])
+);
+--> statement-breakpoint
+CREATE TABLE "forum_moderator_action_log" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_moderator_action_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"moderator_id" integer,
+	"actor_type" smallint DEFAULT 1 NOT NULL,
+	"actor_user_id" integer,
+	"target_id" integer NOT NULL,
+	"action_type" smallint NOT NULL,
+	"target_type" smallint NOT NULL,
+	"action_description" varchar(200) NOT NULL,
+	"before_data" text,
+	"after_data" text,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "forum_moderator_action_log_action_type_valid_chk" CHECK ("action_type" in (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17)),
+	CONSTRAINT "forum_governance_action_log_actor_type_valid_chk" CHECK ("actor_type" in (1, 2)),
+	CONSTRAINT "forum_governance_action_log_actor_user_present_chk" CHECK ("actor_user_id" is not null),
+	CONSTRAINT "forum_governance_action_log_moderator_presence_chk" CHECK (("actor_type" = 1 and "moderator_id" is not null) or ("actor_type" = 2 and "moderator_id" is null)),
+	CONSTRAINT "forum_moderator_action_log_target_type_valid_chk" CHECK ("target_type" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "forum_moderator_application" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_moderator_application_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"applicant_id" integer NOT NULL,
+	"section_id" integer NOT NULL,
+	"audit_by_id" integer,
+	"status" smallint DEFAULT 0 NOT NULL,
+	"permissions" smallint[] DEFAULT ARRAY[]::smallint[],
+	"reason" varchar(500) NOT NULL,
+	"audit_reason" varchar(500),
+	"remark" varchar(500),
+	"audit_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "forum_moderator_application_applicant_id_section_id_key" UNIQUE("applicant_id","section_id"),
+	CONSTRAINT "forum_moderator_application_status_valid_chk" CHECK ("status" in (0, 1, 2)),
+	CONSTRAINT "forum_moderator_application_permissions_valid_chk" CHECK ("permissions" is null or "permissions" <@ ARRAY[1,2,3,4,5,6]::smallint[])
+);
+--> statement-breakpoint
+CREATE TABLE "forum_moderator_lifecycle_log" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_moderator_lifecycle_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"event_type" smallint NOT NULL,
+	"moderator_id" integer,
+	"application_id" integer,
+	"actor_admin_user_id" integer NOT NULL,
+	"reason" varchar(500),
+	"before_data" jsonb,
+	"after_data" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "forum_moderator_lifecycle_log_event_type_valid_chk" CHECK ("event_type" in (1,2,3,4,5,6,7,8,9)),
+	CONSTRAINT "forum_moderator_lifecycle_log_actor_admin_user_id_positive_chk" CHECK ("actor_admin_user_id" > 0),
+	CONSTRAINT "forum_moderator_lifecycle_log_moderator_id_positive_chk" CHECK ("moderator_id" is null or "moderator_id" > 0),
+	CONSTRAINT "forum_moderator_lifecycle_log_application_id_positive_chk" CHECK ("application_id" is null or "application_id" > 0),
+	CONSTRAINT "forum_moderator_lifecycle_log_subject_present_chk" CHECK ("moderator_id" is not null or "application_id" is not null)
+);
+--> statement-breakpoint
+CREATE TABLE "forum_moderator_section" (
+	"moderator_id" integer,
+	"section_id" integer,
+	"permissions" smallint[] DEFAULT ARRAY[]::smallint[],
+	CONSTRAINT "forum_moderator_section_pkey" PRIMARY KEY("moderator_id","section_id"),
+	CONSTRAINT "forum_moderator_section_permissions_valid_chk" CHECK ("permissions" is null or "permissions" <@ ARRAY[1,2,3,4,5,6]::smallint[])
+);
+--> statement-breakpoint
+CREATE TABLE "forum_section" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_section_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"group_id" integer,
+	"user_level_rule_id" integer,
+	"last_topic_id" integer,
+	"name" varchar(100) NOT NULL,
+	"description" varchar(500),
+	"icon" varchar(500) NOT NULL,
+	"cover" varchar(500) NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"topic_review_policy" smallint DEFAULT 1 NOT NULL,
+	"remark" varchar(500),
+	"topic_count" integer DEFAULT 0 NOT NULL,
+	"comment_count" integer DEFAULT 0 NOT NULL,
+	"followers_count" integer DEFAULT 0 NOT NULL,
+	"last_post_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "forum_section_topic_review_policy_valid_chk" CHECK ("topic_review_policy" in (0, 1, 2, 3, 4))
+);
+--> statement-breakpoint
+CREATE TABLE "forum_section_group" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_section_group_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(50) NOT NULL CONSTRAINT "forum_section_group_name_key" UNIQUE,
+	"description" varchar(500),
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"max_moderators" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "forum_topic" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_topic_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"section_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"last_comment_user_id" integer,
+	"audit_by_id" integer,
+	"title" varchar(200) NOT NULL,
+	"html" text NOT NULL,
+	"content" text NOT NULL,
+	"content_preview" jsonb NOT NULL,
+	"body" jsonb NOT NULL,
+	"body_version" smallint DEFAULT 1 NOT NULL,
+	"images" varchar(500)[] DEFAULT ARRAY[]::varchar(500)[] NOT NULL,
+	"videos" jsonb DEFAULT '[]' NOT NULL,
+	"is_pinned" boolean DEFAULT false NOT NULL,
+	"is_featured" boolean DEFAULT false NOT NULL,
+	"is_locked" boolean DEFAULT false NOT NULL,
+	"is_hidden" boolean DEFAULT false NOT NULL,
+	"audit_status" smallint DEFAULT 1 NOT NULL,
+	"audit_role" smallint,
+	"audit_reason" varchar(500),
+	"audit_at" timestamp(6) with time zone,
+	"version" integer DEFAULT 0 NOT NULL,
+	"sensitive_word_hits" jsonb,
+	"geo_country" varchar(100),
+	"geo_province" varchar(100),
+	"geo_city" varchar(100),
+	"geo_isp" varchar(100),
+	"geo_source" varchar(50),
+	"view_count" integer DEFAULT 0 NOT NULL,
+	"like_count" integer DEFAULT 0 NOT NULL,
+	"comment_count" integer DEFAULT 0 NOT NULL,
+	"favorite_count" integer DEFAULT 0 NOT NULL,
+	"last_comment_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "forum_topic_view_count_non_negative_chk" CHECK ("view_count" >= 0),
+	CONSTRAINT "forum_topic_like_count_non_negative_chk" CHECK ("like_count" >= 0),
+	CONSTRAINT "forum_topic_comment_count_non_negative_chk" CHECK ("comment_count" >= 0),
+	CONSTRAINT "forum_topic_favorite_count_non_negative_chk" CHECK ("favorite_count" >= 0),
+	CONSTRAINT "forum_topic_body_version_valid_chk" CHECK ("body_version" in (1)),
+	CONSTRAINT "forum_topic_audit_status_valid_chk" CHECK ("audit_status" in (0, 1, 2)),
+	CONSTRAINT "forum_topic_audit_role_valid_chk" CHECK ("audit_role" is null or "audit_role" in (0, 1)),
+	CONSTRAINT "forum_topic_audit_actor_pair_chk" CHECK (("audit_role" is null) = ("audit_by_id" is null))
+);
+--> statement-breakpoint
+CREATE TABLE "forum_user_action_log" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_user_action_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"target_id" integer NOT NULL,
+	"action_type" smallint NOT NULL,
+	"target_type" smallint NOT NULL,
+	"before_data" text,
+	"after_data" text,
+	"ip_address" varchar(45),
+	"user_agent" varchar(500),
+	"geo_country" varchar(100),
+	"geo_province" varchar(100),
+	"geo_city" varchar(100),
+	"geo_isp" varchar(100),
+	"geo_source" varchar(50),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '180 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "forum_user_action_log_action_type_valid_chk" CHECK ("action_type" in (1,2,3,4,5,6,7,8,9,10,11,12)),
+	CONSTRAINT "forum_user_action_log_target_type_valid_chk" CHECK ("target_type" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_config" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_config_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"config_key" varchar(32) DEFAULT 'global' NOT NULL CONSTRAINT "check_in_config_config_key_key" UNIQUE,
+	"is_enabled" smallint DEFAULT 1 NOT NULL,
+	"makeup_period_type" smallint NOT NULL,
+	"periodic_allowance" integer DEFAULT 0 NOT NULL,
+	"makeup_icon_url" varchar(500),
+	"reward_overview_icon_url" varchar(500),
+	"base_reward_items" jsonb,
+	"date_reward_rules" jsonb DEFAULT '[]' NOT NULL,
+	"pattern_reward_rules" jsonb DEFAULT '[]' NOT NULL,
+	"updated_by_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "check_in_config_config_key_valid_chk" CHECK ("config_key" = 'global'),
+	CONSTRAINT "check_in_config_is_enabled_valid_chk" CHECK ("is_enabled" in (0, 1)),
+	CONSTRAINT "check_in_config_makeup_period_type_valid_chk" CHECK ("makeup_period_type" in (1, 2)),
+	CONSTRAINT "check_in_config_periodic_allowance_non_negative_chk" CHECK ("periodic_allowance" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_makeup_account" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_makeup_account_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"period_type" smallint NOT NULL,
+	"period_key" varchar(32) NOT NULL,
+	"periodic_granted" integer DEFAULT 0 NOT NULL,
+	"periodic_used" integer DEFAULT 0 NOT NULL,
+	"event_available" integer DEFAULT 0 NOT NULL,
+	"version" integer DEFAULT 0 NOT NULL,
+	"last_synced_fact_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "check_in_makeup_account_user_period_key_key" UNIQUE("user_id","period_type","period_key"),
+	CONSTRAINT "check_in_makeup_account_period_type_valid_chk" CHECK ("period_type" in (1, 2)),
+	CONSTRAINT "check_in_makeup_account_period_key_not_blank_chk" CHECK (btrim("period_key") <> ''),
+	CONSTRAINT "check_in_makeup_account_periodic_granted_non_negative_chk" CHECK ("periodic_granted" >= 0),
+	CONSTRAINT "check_in_makeup_account_periodic_used_non_negative_chk" CHECK ("periodic_used" >= 0),
+	CONSTRAINT "check_in_makeup_account_event_available_non_negative_chk" CHECK ("event_available" >= 0),
+	CONSTRAINT "check_in_makeup_account_periodic_used_not_gt_granted_chk" CHECK ("periodic_used" <= "periodic_granted"),
+	CONSTRAINT "check_in_makeup_account_version_non_negative_chk" CHECK ("version" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_makeup_fact" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_makeup_fact_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"fact_type" smallint NOT NULL,
+	"source_type" smallint NOT NULL,
+	"amount" integer DEFAULT 0 NOT NULL,
+	"consumed_amount" integer DEFAULT 0 NOT NULL,
+	"effective_at" timestamp(6) with time zone NOT NULL,
+	"expires_at" timestamp(6) with time zone,
+	"period_type" smallint,
+	"period_key" varchar(32),
+	"source_ref" varchar(64),
+	"biz_key" varchar(180) NOT NULL,
+	"context" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "check_in_makeup_fact_user_biz_key_key" UNIQUE("user_id","biz_key"),
+	CONSTRAINT "check_in_makeup_fact_type_valid_chk" CHECK ("fact_type" in (1, 2, 3)),
+	CONSTRAINT "check_in_makeup_fact_source_type_valid_chk" CHECK ("source_type" in (1, 2, 3)),
+	CONSTRAINT "check_in_makeup_fact_period_type_valid_chk" CHECK ("period_type" is null or "period_type" in (1, 2)),
+	CONSTRAINT "check_in_makeup_fact_amount_non_negative_chk" CHECK ("amount" >= 0),
+	CONSTRAINT "check_in_makeup_fact_consumed_amount_non_negative_chk" CHECK ("consumed_amount" >= 0),
+	CONSTRAINT "check_in_makeup_fact_biz_key_not_blank_chk" CHECK (btrim("biz_key") <> ''),
+	CONSTRAINT "check_in_makeup_fact_source_ref_not_blank_chk" CHECK ("source_ref" is null or btrim("source_ref") <> '')
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_record" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_record_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"sign_date" date NOT NULL,
+	"record_type" smallint NOT NULL,
+	"resolved_reward_source_type" smallint,
+	"resolved_reward_rule_key" varchar(32),
+	"resolved_reward_items" jsonb,
+	"resolved_reward_overview_icon_url" varchar(500),
+	"resolved_makeup_icon_url" varchar(500),
+	"reward_settlement_id" integer,
+	"biz_key" varchar(180) NOT NULL,
+	"operator_type" smallint NOT NULL,
+	"remark" varchar(500),
+	"context" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "check_in_record_user_sign_date_key" UNIQUE("user_id","sign_date"),
+	CONSTRAINT "check_in_record_user_biz_key_key" UNIQUE("user_id","biz_key"),
+	CONSTRAINT "check_in_record_record_type_valid_chk" CHECK ("record_type" in (1, 2)),
+	CONSTRAINT "check_in_record_operator_type_valid_chk" CHECK ("operator_type" in (1, 2, 3)),
+	CONSTRAINT "check_in_record_reward_source_type_valid_chk" CHECK ("resolved_reward_source_type" is null or "resolved_reward_source_type" in (1, 2, 3)),
+	CONSTRAINT "check_in_record_reward_settlement_id_positive_chk" CHECK ("reward_settlement_id" is null or "reward_settlement_id" > 0),
+	CONSTRAINT "check_in_record_reward_resolution_consistent_chk" CHECK ((
+      "resolved_reward_items" is null
+      and "resolved_reward_source_type" is null
+      and "resolved_reward_rule_key" is null
+    ) or (
+      "resolved_reward_items" is not null
+      and "resolved_reward_source_type" in (1, 2, 3)
+    ))
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_streak_grant" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_streak_grant_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"rule_id" integer NOT NULL,
+	"rule_code" varchar(50) NOT NULL,
+	"streak_days" integer NOT NULL,
+	"repeatable" boolean DEFAULT false NOT NULL,
+	"reward_overview_icon_url" varchar(500),
+	"trigger_sign_date" date NOT NULL,
+	"reward_settlement_id" integer,
+	"biz_key" varchar(200) NOT NULL,
+	"context" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "check_in_streak_grant_user_biz_key_key" UNIQUE("user_id","biz_key"),
+	CONSTRAINT "check_in_streak_grant_rule_id_positive_chk" CHECK ("rule_id" > 0),
+	CONSTRAINT "check_in_streak_grant_streak_days_positive_chk" CHECK ("streak_days" > 0),
+	CONSTRAINT "check_in_streak_grant_reward_settlement_id_positive_chk" CHECK ("reward_settlement_id" is null or "reward_settlement_id" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_streak_grant_reward_item" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_streak_grant_reward_item_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"grant_id" integer NOT NULL,
+	"asset_type" smallint NOT NULL,
+	"asset_key" varchar(50) DEFAULT '' NOT NULL,
+	"amount" integer NOT NULL,
+	"icon_url" varchar(500),
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	CONSTRAINT "check_in_streak_grant_reward_item_grant_id_positive_chk" CHECK ("grant_id" > 0),
+	CONSTRAINT "check_in_streak_grant_reward_item_asset_type_valid_chk" CHECK ("asset_type" in (1, 2)),
+	CONSTRAINT "check_in_streak_grant_reward_item_amount_positive_chk" CHECK ("amount" > 0),
+	CONSTRAINT "check_in_streak_grant_reward_item_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_streak_progress" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_streak_progress_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL CONSTRAINT "check_in_streak_progress_user_id_key" UNIQUE,
+	"current_streak" integer DEFAULT 0 NOT NULL,
+	"streak_started_at" date,
+	"last_signed_date" date,
+	"version" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "check_in_streak_progress_current_streak_non_negative_chk" CHECK ("current_streak" >= 0),
+	CONSTRAINT "check_in_streak_progress_version_non_negative_chk" CHECK ("version" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_streak_rule" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_streak_rule_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"rule_code" varchar(50) NOT NULL,
+	"streak_days" integer NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	"status" smallint DEFAULT 0 NOT NULL,
+	"publish_strategy" smallint NOT NULL,
+	"effective_from" timestamp(6) with time zone NOT NULL,
+	"effective_to" timestamp(6) with time zone,
+	"repeatable" boolean DEFAULT false NOT NULL,
+	"reward_overview_icon_url" varchar(500),
+	"updated_by_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "check_in_streak_rule_rule_code_version_key" UNIQUE("rule_code","version"),
+	CONSTRAINT "check_in_streak_rule_rule_code_effective_from_key" UNIQUE("rule_code","effective_from"),
+	CONSTRAINT "check_in_streak_rule_streak_days_positive_chk" CHECK ("streak_days" > 0),
+	CONSTRAINT "check_in_streak_rule_version_positive_chk" CHECK ("version" > 0),
+	CONSTRAINT "check_in_streak_rule_status_valid_chk" CHECK ("status" in (0, 1, 2, 3, 4)),
+	CONSTRAINT "check_in_streak_rule_publish_strategy_valid_chk" CHECK ("publish_strategy" in (1, 2, 3)),
+	CONSTRAINT "check_in_streak_rule_effective_window_valid_chk" CHECK ("effective_to" is null or "effective_to" > "effective_from"),
+	CONSTRAINT "check_in_streak_rule_rule_code_not_blank_chk" CHECK (btrim("rule_code") <> '')
+);
+--> statement-breakpoint
+CREATE TABLE "check_in_streak_rule_reward_item" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "check_in_streak_rule_reward_item_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"rule_id" integer NOT NULL,
+	"asset_type" smallint NOT NULL,
+	"asset_key" varchar(50) DEFAULT '' NOT NULL,
+	"amount" integer NOT NULL,
+	"icon_url" varchar(500),
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	CONSTRAINT "check_in_streak_rule_reward_item_rule_id_positive_chk" CHECK ("rule_id" > 0),
+	CONSTRAINT "check_in_streak_rule_reward_item_asset_type_valid_chk" CHECK ("asset_type" in (1, 2)),
+	CONSTRAINT "check_in_streak_rule_reward_item_amount_positive_chk" CHECK ("amount" > 0),
+	CONSTRAINT "check_in_streak_rule_reward_item_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "growth_audit_log" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "growth_audit_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"request_id" varchar(80),
+	"user_id" integer NOT NULL,
+	"biz_key" varchar(120) NOT NULL,
+	"asset_type" smallint NOT NULL,
+	"asset_key" varchar(64) DEFAULT '' NOT NULL,
+	"action" smallint NOT NULL,
+	"rule_type" smallint,
+	"decision" smallint NOT NULL,
+	"reason" varchar(80),
+	"delta_requested" integer,
+	"delta_applied" integer,
+	"context" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '365 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "growth_audit_log_asset_type_valid_chk" CHECK ("asset_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "growth_audit_log_action_valid_chk" CHECK ("action" in (1, 2, 3, 4)),
+	CONSTRAINT "growth_audit_log_decision_valid_chk" CHECK ("decision" in (1, 2)),
+	CONSTRAINT "growth_audit_log_rule_type_valid_chk" CHECK ("rule_type" is null or "rule_type" in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 100, 101, 102, 104, 200, 201, 202, 204, 300, 301, 302, 303, 304, 306, 400, 401, 402, 403, 404, 406, 600, 601, 602, 700, 701, 702, 703, 800, 801))
+);
+--> statement-breakpoint
+CREATE TABLE "growth_ledger_record" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "growth_ledger_record_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"asset_type" smallint NOT NULL,
+	"asset_key" varchar(64) DEFAULT '' NOT NULL,
+	"delta" integer NOT NULL,
+	"before_value" integer NOT NULL,
+	"after_value" integer NOT NULL,
+	"biz_key" varchar(120) NOT NULL,
+	"source" varchar(40) NOT NULL,
+	"rule_type" smallint,
+	"rule_id" integer,
+	"target_type" smallint,
+	"target_id" integer,
+	"remark" varchar(500),
+	"context" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '730 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "growth_ledger_record_user_id_biz_key_key" UNIQUE("user_id","biz_key"),
+	CONSTRAINT "growth_ledger_record_rule_type_valid_chk" CHECK ("rule_type" is null or "rule_type" in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 100, 101, 102, 104, 200, 201, 202, 204, 300, 301, 302, 303, 304, 306, 400, 401, 402, 403, 404, 406, 600, 601, 602, 700, 701, 702, 703, 800, 801))
+);
+--> statement-breakpoint
+CREATE TABLE "growth_reward_rule" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "growth_reward_rule_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"type" smallint NOT NULL,
+	"asset_type" smallint NOT NULL,
+	"asset_key" varchar(64) DEFAULT '' NOT NULL,
+	"delta" integer NOT NULL,
+	"daily_limit" integer DEFAULT 0 NOT NULL,
+	"total_limit" integer DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"remark" varchar(500),
+	"archived_at" timestamp(6) with time zone,
+	"archived_by" integer,
+	"archive_reason_code" varchar(80),
+	"archive_reason" varchar(500),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "growth_reward_rule_asset_type_valid_chk" CHECK ("asset_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "growth_reward_rule_type_valid_chk" CHECK ("type" in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 100, 101, 102, 104, 200, 201, 202, 204, 300, 301, 302, 303, 304, 306, 400, 401, 402, 403, 404, 406, 600, 601, 602, 700, 701, 702, 703, 800, 801)),
+	CONSTRAINT "growth_reward_rule_asset_key_not_blank_chk" CHECK ((
+      ("asset_type" in (1, 2) and btrim("asset_key") = '')
+      or ("asset_type" in (3, 4, 5) and btrim("asset_key") <> '')
+    )),
+	CONSTRAINT "growth_reward_rule_daily_limit_non_negative_chk" CHECK ("daily_limit" >= 0),
+	CONSTRAINT "growth_reward_rule_total_limit_non_negative_chk" CHECK ("total_limit" >= 0),
+	CONSTRAINT "growth_reward_rule_delta_positive_chk" CHECK ("delta" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "growth_reward_settlement" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "growth_reward_settlement_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"biz_key" varchar(160) NOT NULL,
+	"settlement_type" smallint NOT NULL,
+	"source" varchar(40) NOT NULL,
+	"source_record_id" integer,
+	"event_code" smallint,
+	"event_key" varchar(80),
+	"target_type" smallint,
+	"target_id" integer,
+	"event_occurred_at" timestamp(6) with time zone NOT NULL,
+	"settlement_status" smallint DEFAULT 0 NOT NULL,
+	"settlement_result_type" smallint,
+	"ledger_record_ids" integer[] DEFAULT ARRAY[]::integer[] NOT NULL,
+	"retry_count" integer DEFAULT 0 NOT NULL,
+	"last_retry_at" timestamp(6) with time zone,
+	"processing_token" varchar(64),
+	"processing_started_at" timestamp(6) with time zone,
+	"settled_at" timestamp(6) with time zone,
+	"last_error" varchar(500),
+	"request_payload" jsonb NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "growth_reward_settlement_user_biz_key_key" UNIQUE("user_id","biz_key"),
+	CONSTRAINT "growth_reward_settlement_user_id_positive_chk" CHECK ("user_id" > 0),
+	CONSTRAINT "growth_reward_settlement_event_code_valid_chk" CHECK ("event_code" is null or "event_code" in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 100, 101, 102, 104, 200, 201, 202, 204, 300, 301, 302, 303, 304, 306, 400, 401, 402, 403, 404, 406, 600, 601, 602, 700, 701, 702, 703, 800, 801)),
+	CONSTRAINT "growth_reward_settlement_biz_key_not_blank_chk" CHECK (btrim("biz_key") <> ''),
+	CONSTRAINT "growth_reward_settlement_type_valid_chk" CHECK ("settlement_type" in (1, 2, 3, 4)),
+	CONSTRAINT "growth_reward_settlement_event_key_not_blank_chk" CHECK ("event_key" is null or btrim("event_key") <> ''),
+	CONSTRAINT "growth_reward_settlement_source_not_blank_chk" CHECK (btrim("source") <> ''),
+	CONSTRAINT "growth_reward_settlement_source_record_id_positive_chk" CHECK ("source_record_id" is null or "source_record_id" > 0),
+	CONSTRAINT "growth_reward_settlement_status_valid_chk" CHECK ("settlement_status" in (0, 1, 2)),
+	CONSTRAINT "growth_reward_settlement_result_type_valid_chk" CHECK ("settlement_result_type" is null or "settlement_result_type" in (1, 2, 3)),
+	CONSTRAINT "growth_reward_settlement_retry_count_non_negative_chk" CHECK ("retry_count" >= 0),
+	CONSTRAINT "growth_reward_settlement_processing_token_not_blank_chk" CHECK ("processing_token" is null or btrim("processing_token") <> ''),
+	CONSTRAINT "growth_reward_settlement_processing_lease_pair_chk" CHECK (("processing_token" is null and "processing_started_at" is null) or ("processing_token" is not null and "processing_started_at" is not null))
+);
+--> statement-breakpoint
+CREATE TABLE "growth_rule_usage_counter" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "growth_rule_usage_counter_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"asset_type" smallint NOT NULL,
+	"asset_key" varchar(64) DEFAULT '' NOT NULL,
+	"rule_key" varchar(80) NOT NULL,
+	"scope_type" smallint NOT NULL,
+	"scope_key" varchar(60) NOT NULL,
+	"used_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "growth_rule_usage_counter_user_id_asset_type_asset_key_rul_key" UNIQUE("user_id","asset_type","asset_key","rule_key","scope_type","scope_key"),
+	CONSTRAINT "growth_rule_usage_counter_asset_type_valid_chk" CHECK ("asset_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "growth_rule_usage_counter_scope_type_valid_chk" CHECK ("scope_type" in (1, 2, 3)),
+	CONSTRAINT "growth_rule_usage_counter_used_count_positive_chk" CHECK ("used_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "task_definition" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "task_definition_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"code" varchar(50) NOT NULL CONSTRAINT "task_definition_code_key" UNIQUE,
+	"title" varchar(200) NOT NULL,
+	"description" varchar(1000),
+	"cover" varchar(255),
+	"scene_type" smallint NOT NULL,
+	"status" smallint NOT NULL,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"claim_mode" smallint NOT NULL,
+	"completion_policy" smallint DEFAULT 1 NOT NULL,
+	"repeat_type" smallint DEFAULT 0 NOT NULL,
+	"start_at" timestamp(6) with time zone,
+	"end_at" timestamp(6) with time zone,
+	"reward_items" jsonb,
+	"created_by_id" integer,
+	"updated_by_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "task_definition_scene_type_valid_chk" CHECK ("scene_type" in (1, 2, 4)),
+	CONSTRAINT "task_definition_status_valid_chk" CHECK ("status" in (0, 1, 2, 3)),
+	CONSTRAINT "task_definition_sort_order_non_negative_chk" CHECK ("sort_order" >= 0),
+	CONSTRAINT "task_definition_claim_mode_valid_chk" CHECK ("claim_mode" in (1, 2)),
+	CONSTRAINT "task_definition_completion_policy_valid_chk" CHECK ("completion_policy" in (1)),
+	CONSTRAINT "task_definition_repeat_type_valid_chk" CHECK ("repeat_type" in (0, 1, 2, 3)),
+	CONSTRAINT "task_definition_code_not_blank_chk" CHECK (btrim("code") <> ''),
+	CONSTRAINT "task_definition_title_not_blank_chk" CHECK (btrim("title") <> ''),
+	CONSTRAINT "task_definition_publish_window_valid_chk" CHECK ("start_at" is null or "end_at" is null or "start_at" <= "end_at")
+);
+--> statement-breakpoint
+CREATE TABLE "task_event_failure" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "task_event_failure_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"idempotency_key" varchar(255) NOT NULL CONSTRAINT "task_event_failure_idempotency_key_key" UNIQUE,
+	"event_key" varchar(80) NOT NULL,
+	"event_biz_key" varchar(180) NOT NULL,
+	"event_code" smallint NOT NULL,
+	"template_key" varchar(80),
+	"user_id" integer NOT NULL,
+	"target_type" varchar(80),
+	"target_id" integer,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"retry_count" integer DEFAULT 0 NOT NULL,
+	"last_retry_at" timestamp(6) with time zone,
+	"last_error_message" varchar(1000),
+	"resolved_at" timestamp(6) with time zone,
+	"terminal_error_at" timestamp(6) with time zone,
+	"terminal_reason" varchar(500),
+	"processing_token" varchar(64),
+	"processing_started_at" timestamp(6) with time zone,
+	"processing_expired_at" timestamp(6) with time zone,
+	"request_payload" jsonb NOT NULL,
+	"occurred_at" timestamp(6) with time zone NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "task_event_failure_idempotency_key_not_blank_chk" CHECK (btrim("idempotency_key") <> ''),
+	CONSTRAINT "task_event_failure_event_key_not_blank_chk" CHECK (btrim("event_key") <> ''),
+	CONSTRAINT "task_event_failure_event_biz_key_not_blank_chk" CHECK (btrim("event_biz_key") <> ''),
+	CONSTRAINT "task_event_failure_event_code_valid_chk" CHECK ("event_code" in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 100, 101, 102, 104, 200, 201, 202, 204, 300, 301, 302, 303, 304, 306, 400, 401, 402, 403, 404, 406, 600, 601, 602, 700, 701, 702, 703, 800, 801)),
+	CONSTRAINT "task_event_failure_template_key_not_blank_chk" CHECK ("template_key" is null or btrim("template_key") <> ''),
+	CONSTRAINT "task_event_failure_user_id_positive_chk" CHECK ("user_id" > 0),
+	CONSTRAINT "task_event_failure_target_type_not_blank_chk" CHECK ("target_type" is null or btrim("target_type") <> ''),
+	CONSTRAINT "task_event_failure_target_id_positive_chk" CHECK ("target_id" is null or "target_id" > 0),
+	CONSTRAINT "task_event_failure_status_valid_chk" CHECK ("status" in (1, 2, 3, 4)),
+	CONSTRAINT "task_event_failure_retry_count_non_negative_chk" CHECK ("retry_count" >= 0),
+	CONSTRAINT "task_event_failure_processing_token_not_blank_chk" CHECK ("processing_token" is null or btrim("processing_token") <> ''),
+	CONSTRAINT "task_event_failure_processing_lease_pair_chk" CHECK (("processing_token" is null and "processing_started_at" is null and "processing_expired_at" is null) or ("processing_token" is not null and "processing_started_at" is not null and "processing_expired_at" is not null))
+);
+--> statement-breakpoint
+CREATE TABLE "task_event_log" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "task_event_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"task_id" integer NOT NULL,
+	"step_id" integer,
+	"instance_id" integer,
+	"instance_step_id" integer,
+	"user_id" integer NOT NULL,
+	"event_code" smallint,
+	"event_biz_key" varchar(180),
+	"action_type" smallint NOT NULL,
+	"progress_source" smallint DEFAULT 1 NOT NULL,
+	"accepted" boolean DEFAULT true NOT NULL,
+	"reject_reason" varchar(120),
+	"delta" integer DEFAULT 0 NOT NULL,
+	"before_value" integer DEFAULT 0 NOT NULL,
+	"after_value" integer DEFAULT 0 NOT NULL,
+	"target_type" varchar(80),
+	"target_id" integer,
+	"dimension_key" varchar(80),
+	"dimension_value" varchar(255),
+	"occurred_at" timestamp(6) with time zone,
+	"context" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '180 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "task_event_log_action_type_valid_chk" CHECK ("action_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "task_event_log_progress_source_valid_chk" CHECK ("progress_source" in (1, 2, 3)),
+	CONSTRAINT "task_event_log_delta_non_negative_chk" CHECK ("delta" >= 0),
+	CONSTRAINT "task_event_log_before_value_non_negative_chk" CHECK ("before_value" >= 0),
+	CONSTRAINT "task_event_log_after_value_non_negative_chk" CHECK ("after_value" >= 0),
+	CONSTRAINT "task_event_log_event_code_valid_chk" CHECK ("event_code" is null or "event_code" in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 100, 101, 102, 104, 200, 201, 202, 204, 300, 301, 302, 303, 304, 306, 400, 401, 402, 403, 404, 406, 600, 601, 602, 700, 701, 702, 703, 800, 801)),
+	CONSTRAINT "task_event_log_event_biz_key_not_blank_chk" CHECK ("event_biz_key" is null or btrim("event_biz_key") <> ''),
+	CONSTRAINT "task_event_log_reject_reason_not_blank_chk" CHECK ("reject_reason" is null or btrim("reject_reason") <> ''),
+	CONSTRAINT "task_event_log_target_type_not_blank_chk" CHECK ("target_type" is null or btrim("target_type") <> ''),
+	CONSTRAINT "task_event_log_target_id_positive_chk" CHECK ("target_id" is null or "target_id" > 0),
+	CONSTRAINT "task_event_log_dimension_key_not_blank_chk" CHECK ("dimension_key" is null or btrim("dimension_key") <> ''),
+	CONSTRAINT "task_event_log_dimension_value_not_blank_chk" CHECK ("dimension_value" is null or btrim("dimension_value") <> '')
+);
+--> statement-breakpoint
+CREATE TABLE "task_instance" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "task_instance_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"task_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"cycle_key" varchar(64) NOT NULL,
+	"status" smallint NOT NULL,
+	"reward_applicable" smallint DEFAULT 0 NOT NULL,
+	"reward_settlement_id" integer,
+	"snapshot_payload" jsonb,
+	"context" jsonb,
+	"version" integer DEFAULT 0 NOT NULL,
+	"claimed_at" timestamp(6) with time zone,
+	"completed_at" timestamp(6) with time zone,
+	"expired_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "task_instance_task_id_user_id_cycle_key_key" UNIQUE("task_id","user_id","cycle_key"),
+	CONSTRAINT "task_instance_cycle_key_not_blank_chk" CHECK (btrim("cycle_key") <> ''),
+	CONSTRAINT "task_instance_status_valid_chk" CHECK ("status" in (0, 1, 2, 3)),
+	CONSTRAINT "task_instance_reward_applicable_valid_chk" CHECK ("reward_applicable" in (0, 1)),
+	CONSTRAINT "task_instance_version_non_negative_chk" CHECK ("version" >= 0),
+	CONSTRAINT "task_instance_reward_settlement_id_positive_chk" CHECK ("reward_settlement_id" is null or "reward_settlement_id" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "task_instance_step" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "task_instance_step_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"instance_id" integer NOT NULL,
+	"step_id" integer NOT NULL,
+	"status" smallint NOT NULL,
+	"current_value" integer DEFAULT 0 NOT NULL,
+	"target_value" integer DEFAULT 1 NOT NULL,
+	"completed_at" timestamp(6) with time zone,
+	"context" jsonb,
+	"version" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "task_instance_step_instance_id_step_id_key" UNIQUE("instance_id","step_id"),
+	CONSTRAINT "task_instance_step_status_valid_chk" CHECK ("status" in (0, 1, 2, 3)),
+	CONSTRAINT "task_instance_step_current_value_non_negative_chk" CHECK ("current_value" >= 0),
+	CONSTRAINT "task_instance_step_target_value_positive_chk" CHECK ("target_value" > 0),
+	CONSTRAINT "task_instance_step_version_non_negative_chk" CHECK ("version" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "task_step" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "task_step_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"task_id" integer NOT NULL,
+	"step_key" varchar(50) NOT NULL,
+	"title" varchar(200) NOT NULL,
+	"description" varchar(1000),
+	"step_no" smallint NOT NULL,
+	"trigger_mode" smallint NOT NULL,
+	"event_code" smallint,
+	"target_value" integer DEFAULT 1 NOT NULL,
+	"template_key" varchar(80),
+	"filter_payload" jsonb,
+	"dedupe_scope" smallint,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "task_step_task_id_step_key_key" UNIQUE("task_id","step_key"),
+	CONSTRAINT "task_step_task_id_step_no_key" UNIQUE("task_id","step_no"),
+	CONSTRAINT "task_step_step_no_positive_chk" CHECK ("step_no" > 0),
+	CONSTRAINT "task_step_trigger_mode_valid_chk" CHECK ("trigger_mode" in (1, 2)),
+	CONSTRAINT "task_step_target_value_positive_chk" CHECK ("target_value" > 0),
+	CONSTRAINT "task_step_event_code_valid_chk" CHECK ("event_code" is null or "event_code" in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 100, 101, 102, 104, 200, 201, 202, 204, 300, 301, 302, 303, 304, 306, 400, 401, 402, 403, 404, 406, 600, 601, 602, 700, 701, 702, 703, 800, 801)),
+	CONSTRAINT "task_step_step_key_not_blank_chk" CHECK (btrim("step_key") <> ''),
+	CONSTRAINT "task_step_title_not_blank_chk" CHECK (btrim("title") <> ''),
+	CONSTRAINT "task_step_template_key_not_blank_chk" CHECK ("template_key" is null or btrim("template_key") <> ''),
+	CONSTRAINT "task_step_dedupe_scope_valid_chk" CHECK ("dedupe_scope" is null or "dedupe_scope" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "task_step_unique_fact" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "task_step_unique_fact_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"task_id" integer NOT NULL,
+	"step_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"cycle_key" varchar(64),
+	"dedupe_scope" smallint NOT NULL,
+	"scope_key" varchar(64) NOT NULL,
+	"dimension_key" varchar(80) NOT NULL,
+	"dimension_value" varchar(255) NOT NULL,
+	"dimension_hash" varchar(120) NOT NULL,
+	"first_event_code" smallint,
+	"first_event_biz_key" varchar(180),
+	"first_target_type" varchar(80),
+	"first_target_id" integer,
+	"first_occurred_at" timestamp(6) with time zone NOT NULL,
+	"first_context" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "task_step_unique_fact_step_user_scope_dim_key" UNIQUE("step_id","user_id","scope_key","dimension_hash"),
+	CONSTRAINT "task_step_unique_fact_dedupe_scope_valid_chk" CHECK ("dedupe_scope" in (1, 2)),
+	CONSTRAINT "task_step_unique_fact_scope_key_not_blank_chk" CHECK (btrim("scope_key") <> ''),
+	CONSTRAINT "task_step_unique_fact_dimension_key_not_blank_chk" CHECK (btrim("dimension_key") <> ''),
+	CONSTRAINT "task_step_unique_fact_dimension_value_not_blank_chk" CHECK (btrim("dimension_value") <> ''),
+	CONSTRAINT "task_step_unique_fact_dimension_hash_not_blank_chk" CHECK (btrim("dimension_hash") <> ''),
+	CONSTRAINT "task_step_unique_fact_cycle_key_not_blank_chk" CHECK ("cycle_key" is null or btrim("cycle_key") <> ''),
+	CONSTRAINT "task_step_unique_fact_event_code_valid_chk" CHECK ("first_event_code" is null or "first_event_code" in (1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 100, 101, 102, 104, 200, 201, 202, 204, 300, 301, 302, 303, 304, 306, 400, 401, 402, 403, 404, 406, 600, 601, 602, 700, 701, 702, 703, 800, 801)),
+	CONSTRAINT "task_step_unique_fact_event_biz_key_not_blank_chk" CHECK ("first_event_biz_key" is null or btrim("first_event_biz_key") <> ''),
+	CONSTRAINT "task_step_unique_fact_target_type_not_blank_chk" CHECK ("first_target_type" is null or btrim("first_target_type") <> ''),
+	CONSTRAINT "task_step_unique_fact_target_id_positive_chk" CHECK ("first_target_id" is null or "first_target_id" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "user_badge" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_badge_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(20) NOT NULL,
+	"type" smallint NOT NULL,
+	"description" varchar(200),
+	"icon" varchar(255),
+	"business" varchar(20),
+	"event_key" varchar(50),
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_badge_type_valid_chk" CHECK ("type" in (1, 2, 3)),
+	CONSTRAINT "user_badge_sort_order_non_negative_chk" CHECK ("sort_order" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "user_badge_assignment" (
+	"user_id" integer,
+	"badge_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_badge_assignment_pkey" PRIMARY KEY("user_id","badge_id")
+);
+--> statement-breakpoint
+CREATE TABLE "user_level_rule" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_level_rule_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(20) NOT NULL CONSTRAINT "user_level_rule_name_key" UNIQUE,
+	"required_experience" integer NOT NULL,
+	"description" varchar(200),
+	"icon" varchar(255),
+	"color" varchar(20),
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"business" varchar(20),
+	"daily_topic_limit" smallint DEFAULT 0 NOT NULL,
+	"daily_reply_comment_limit" smallint DEFAULT 0 NOT NULL,
+	"post_interval" smallint DEFAULT 0 NOT NULL,
+	"daily_like_limit" smallint DEFAULT 0 NOT NULL,
+	"daily_favorite_limit" smallint DEFAULT 0 NOT NULL,
+	"purchase_payable_rate" numeric(3,2) DEFAULT '1.00' NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_level_rule_required_experience_non_negative_chk" CHECK ("required_experience" >= 0),
+	CONSTRAINT "user_level_rule_sort_order_non_negative_chk" CHECK ("sort_order" >= 0),
+	CONSTRAINT "user_level_rule_daily_topic_limit_non_negative_chk" CHECK ("daily_topic_limit" >= 0),
+	CONSTRAINT "user_level_rule_daily_reply_comment_limit_non_negative_chk" CHECK ("daily_reply_comment_limit" >= 0),
+	CONSTRAINT "user_level_rule_post_interval_non_negative_chk" CHECK ("post_interval" >= 0),
+	CONSTRAINT "user_level_rule_daily_like_limit_non_negative_chk" CHECK ("daily_like_limit" >= 0),
+	CONSTRAINT "user_level_rule_daily_favorite_limit_non_negative_chk" CHECK ("daily_favorite_limit" >= 0),
+	CONSTRAINT "user_level_rule_purchase_payable_rate_range_chk" CHECK ("purchase_payable_rate" >= 0 and "purchase_payable_rate" <= 1),
+	CONSTRAINT "user_level_rule_business_trimmed_not_blank_chk" CHECK ("business" is null or ("business" = btrim("business") and "business" <> ''))
+);
+--> statement-breakpoint
+CREATE TABLE "admin_menu" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "admin_menu_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"code" varchar(120) NOT NULL CONSTRAINT "admin_menu_code_key" UNIQUE,
+	"parent_id" integer,
+	"type" smallint DEFAULT 2 NOT NULL,
+	"title" varchar(80) NOT NULL,
+	"path" varchar(200) NOT NULL,
+	"name" varchar(120),
+	"component" varchar(240),
+	"redirect" varchar(200),
+	"icon" varchar(80),
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"is_visible" boolean DEFAULT true NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"keep_alive" boolean DEFAULT false NOT NULL,
+	"external_link" varchar(300),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "admin_menu_type_chk" CHECK ("type" in (1, 2)),
+	CONSTRAINT "admin_menu_code_not_blank_chk" CHECK (length(trim("code")) > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "admin_permission" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "admin_permission_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"code" varchar(160) NOT NULL CONSTRAINT "admin_permission_code_key" UNIQUE,
+	"name" varchar(120) NOT NULL,
+	"group_code" varchar(120) NOT NULL,
+	"description" varchar(300),
+	"source" smallint DEFAULT 1 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "admin_permission_code_not_blank_chk" CHECK (length(trim("code")) > 0),
+	CONSTRAINT "admin_permission_source_chk" CHECK ("source" in (1))
+);
+--> statement-breakpoint
+CREATE TABLE "admin_rbac_revision" (
+	"code" varchar(30) PRIMARY KEY,
+	"revision" integer DEFAULT 1 NOT NULL,
+	"menu_seeded_at" timestamp(6) with time zone,
+	"updated_at" timestamp(6) with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "admin_role" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "admin_role_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"code" varchar(80) NOT NULL CONSTRAINT "admin_role_code_key" UNIQUE,
+	"name" varchar(80) NOT NULL,
+	"description" varchar(300),
+	"is_system" boolean DEFAULT false NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "admin_role_code_not_blank_chk" CHECK (length(trim("code")) > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "admin_role_menu" (
+	"role_id" integer,
+	"menu_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "admin_role_menu_pkey" PRIMARY KEY("role_id","menu_id")
+);
+--> statement-breakpoint
+CREATE TABLE "admin_role_permission" (
+	"role_id" integer,
+	"permission_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "admin_role_permission_pkey" PRIMARY KEY("role_id","permission_id")
+);
+--> statement-breakpoint
+CREATE TABLE "admin_user_role" (
+	"admin_user_id" integer,
+	"role_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "admin_user_role_pkey" PRIMARY KEY("admin_user_id","role_id")
+);
+--> statement-breakpoint
+CREATE TABLE "admin_user" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "admin_user_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"username" varchar(20) NOT NULL CONSTRAINT "admin_user_username_key" UNIQUE,
+	"password" varchar(500) NOT NULL,
+	"mobile" varchar(11) CONSTRAINT "admin_user_mobile_key" UNIQUE,
+	"avatar" varchar(200),
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"last_login_at" timestamp(6) with time zone,
+	"last_login_ip" varchar(45),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "admin_user_token" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "admin_user_token_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"jti" varchar(255) NOT NULL CONSTRAINT "admin_user_token_jti_key" UNIQUE,
+	"user_id" integer NOT NULL,
+	"token_type" smallint NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"revoked_at" timestamp with time zone,
+	"revoke_reason" smallint,
+	"device_info" jsonb,
+	"ip_address" varchar(45),
+	"user_agent" varchar(500),
+	"geo_country" varchar(100),
+	"geo_province" varchar(100),
+	"geo_city" varchar(100),
+	"geo_isp" varchar(100),
+	"geo_source" varchar(50),
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
+	CONSTRAINT "admin_user_token_token_type_valid_chk" CHECK ("token_type" in (1, 2)),
+	CONSTRAINT "admin_user_token_revoke_reason_valid_chk" CHECK ("revoke_reason" is null or "revoke_reason" in (1, 2, 3, 4, 5, 6))
+);
+--> statement-breakpoint
+CREATE TABLE "app_user" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_user_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"account" varchar(20) NOT NULL CONSTRAINT "app_user_account_key" UNIQUE,
+	"phone_number" varchar(20) CONSTRAINT "app_user_phone_number_key" UNIQUE,
+	"email_address" varchar(255) CONSTRAINT "app_user_email_address_key" UNIQUE,
+	"level_id" integer,
+	"nickname" varchar(100) NOT NULL,
+	"password" varchar(500) NOT NULL,
+	"avatar_url" varchar(500),
+	"profile_background_image_url" varchar(500),
+	"signature" varchar(200),
+	"bio" varchar(500),
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"gender_type" smallint DEFAULT 0 NOT NULL,
+	"birth_date" date,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"ban_reason" varchar(500),
+	"ban_until" timestamp(6) with time zone,
+	"last_login_at" timestamp with time zone,
+	"last_login_ip" varchar(45),
+	"last_login_geo_country" varchar(100),
+	"last_login_geo_province" varchar(100),
+	"last_login_geo_city" varchar(100),
+	"last_login_geo_isp" varchar(100),
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
+	"deleted_at" timestamp with time zone,
+	CONSTRAINT "app_user_gender_type_valid_chk" CHECK ("gender_type" in (0, 1, 2, 3, 4)),
+	CONSTRAINT "app_user_status_valid_chk" CHECK ("status" in (1, 2, 3, 4, 5))
+);
+--> statement-breakpoint
+CREATE TABLE "app_user_count" (
+	"user_id" integer PRIMARY KEY,
+	"comment_count" integer DEFAULT 0 NOT NULL,
+	"like_count" integer DEFAULT 0 NOT NULL,
+	"favorite_count" integer DEFAULT 0 NOT NULL,
+	"following_user_count" integer DEFAULT 0 NOT NULL,
+	"following_author_count" integer DEFAULT 0 NOT NULL,
+	"following_section_count" integer DEFAULT 0 NOT NULL,
+	"following_hashtag_count" integer DEFAULT 0 NOT NULL,
+	"followers_count" integer DEFAULT 0 NOT NULL,
+	"forum_topic_count" integer DEFAULT 0 NOT NULL,
+	"comment_received_like_count" integer DEFAULT 0 NOT NULL,
+	"forum_topic_received_like_count" integer DEFAULT 0 NOT NULL,
+	"forum_topic_received_favorite_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "app_user_count_comment_count_non_negative_chk" CHECK ("comment_count" >= 0),
+	CONSTRAINT "app_user_count_like_count_non_negative_chk" CHECK ("like_count" >= 0),
+	CONSTRAINT "app_user_count_favorite_count_non_negative_chk" CHECK ("favorite_count" >= 0),
+	CONSTRAINT "app_user_count_following_user_count_non_negative_chk" CHECK ("following_user_count" >= 0),
+	CONSTRAINT "app_user_count_following_author_count_non_negative_chk" CHECK ("following_author_count" >= 0),
+	CONSTRAINT "app_user_count_following_section_count_non_negative_chk" CHECK ("following_section_count" >= 0),
+	CONSTRAINT "app_user_count_following_hashtag_count_non_negative_chk" CHECK ("following_hashtag_count" >= 0),
+	CONSTRAINT "app_user_count_followers_count_non_negative_chk" CHECK ("followers_count" >= 0),
+	CONSTRAINT "app_user_count_forum_topic_count_non_negative_chk" CHECK ("forum_topic_count" >= 0),
+	CONSTRAINT "app_user_count_comment_received_like_count_non_negative_chk" CHECK ("comment_received_like_count" >= 0),
+	CONSTRAINT "app_user_count_forum_topic_received_like_count_non_negative_chk" CHECK ("forum_topic_received_like_count" >= 0),
+	CONSTRAINT "app_user_count_forum_topic_received_fav_nonnegative_chk" CHECK ("forum_topic_received_favorite_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "app_user_token" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "app_user_token_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"jti" varchar(255) NOT NULL CONSTRAINT "app_user_token_jti_key" UNIQUE,
+	"user_id" integer NOT NULL,
+	"token_type" smallint NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"revoked_at" timestamp with time zone,
+	"revoke_reason" smallint,
+	"device_info" jsonb,
+	"ip_address" varchar(45),
+	"user_agent" varchar(500),
+	"geo_country" varchar(100),
+	"geo_province" varchar(100),
+	"geo_city" varchar(100),
+	"geo_isp" varchar(100),
+	"geo_source" varchar(50),
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
+	CONSTRAINT "app_user_token_token_type_valid_chk" CHECK ("token_type" in (1, 2)),
+	CONSTRAINT "app_user_token_revoke_reason_valid_chk" CHECK ("revoke_reason" is null or "revoke_reason" in (1, 2, 3, 4, 5, 6))
+);
+--> statement-breakpoint
+CREATE TABLE "ad_provider_config" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "ad_provider_config_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"provider" smallint NOT NULL,
+	"platform" smallint NOT NULL,
+	"environment" smallint NOT NULL,
+	"client_app_key" varchar(80) DEFAULT '' NOT NULL,
+	"app_id" varchar(120) DEFAULT '' NOT NULL,
+	"placement_key" varchar(120) NOT NULL,
+	"target_scope" smallint NOT NULL,
+	"daily_limit" smallint DEFAULT 0 NOT NULL,
+	"config_version" integer DEFAULT 1 NOT NULL,
+	"credential_version_ref" varchar(160) NOT NULL,
+	"callback_url" varchar(500),
+	"config_metadata" jsonb,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "ad_provider_config_provider_valid_chk" CHECK ("provider" in (1, 2)),
+	CONSTRAINT "ad_provider_config_platform_valid_chk" CHECK ("platform" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "ad_provider_config_environment_valid_chk" CHECK ("environment" in (1, 2)),
+	CONSTRAINT "ad_provider_config_target_scope_valid_chk" CHECK ("target_scope" in (1, 2, 3)),
+	CONSTRAINT "ad_provider_config_daily_limit_chk" CHECK ("daily_limit" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "ad_reward_record" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "ad_reward_record_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"ad_provider_config_id" integer NOT NULL,
+	"ad_provider_config_version" integer NOT NULL,
+	"credential_version_ref" varchar(160) NOT NULL,
+	"provider_reward_id" varchar(160) NOT NULL,
+	"placement_key" varchar(120) NOT NULL,
+	"target_scope" smallint NOT NULL,
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"status" smallint DEFAULT 1 NOT NULL,
+	"client_context" jsonb,
+	"raw_notify_payload" jsonb,
+	"verify_payload" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "ad_reward_record_config_reward_key" UNIQUE("ad_provider_config_id","provider_reward_id"),
+	CONSTRAINT "ad_reward_record_target_scope_valid_chk" CHECK ("target_scope" in (1, 2, 3)),
+	CONSTRAINT "ad_reward_record_target_type_valid_chk" CHECK ("target_type" in (1, 2)),
+	CONSTRAINT "ad_reward_record_status_valid_chk" CHECK ("status" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "emoji_asset" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "emoji_asset_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"pack_id" integer NOT NULL,
+	"kind" smallint NOT NULL,
+	"shortcode" varchar(32),
+	"unicode_sequence" varchar(191),
+	"image_url" varchar(500),
+	"static_url" varchar(500),
+	"is_animated" boolean DEFAULT false NOT NULL,
+	"category" varchar(32),
+	"keywords" jsonb,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_by_id" integer,
+	"updated_by_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "emoji_asset_kind_chk" CHECK ("kind" in (1, 2)),
+	CONSTRAINT "emoji_asset_kind_unicode_required_chk" CHECK (("kind" <> 1) or ("unicode_sequence" is not null)),
+	CONSTRAINT "emoji_asset_kind_custom_required_chk" CHECK (("kind" <> 2) or ("shortcode" is not null and "image_url" is not null)),
+	CONSTRAINT "emoji_asset_shortcode_format_chk" CHECK ("shortcode" is null or "shortcode" ~ '^[a-z0-9_]{2,32}$')
+);
+--> statement-breakpoint
+CREATE TABLE "emoji_pack" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "emoji_pack_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"code" varchar(64) NOT NULL CONSTRAINT "emoji_pack_code_key" UNIQUE,
+	"name" varchar(100) NOT NULL,
+	"description" varchar(500),
+	"icon_url" varchar(500),
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"visible_in_picker" boolean DEFAULT true NOT NULL,
+	"scene_type" smallint[] DEFAULT ARRAY[1,2,3]::smallint[] NOT NULL,
+	"created_by_id" integer,
+	"updated_by_id" integer,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "emoji_pack_scene_type_valid_chk" CHECK ("scene_type" <@ ARRAY[1,2,3]::smallint[]),
+	CONSTRAINT "emoji_pack_scene_type_non_empty_chk" CHECK (cardinality("scene_type") > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "emoji_recent_usage" (
+	"user_id" integer,
+	"scene" smallint,
+	"emoji_asset_id" integer,
+	"use_count" integer DEFAULT 1 NOT NULL,
+	"last_used_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "emoji_recent_usage_pkey" PRIMARY KEY("user_id","scene","emoji_asset_id"),
+	CONSTRAINT "emoji_recent_usage_scene_chk" CHECK ("scene" in (1, 2, 3)),
+	CONSTRAINT "emoji_recent_usage_use_count_chk" CHECK ("use_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "user_browse_log" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_browse_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"ip_address" varchar(45),
+	"device" varchar(200),
+	"user_agent" varchar(500),
+	"viewed_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '180 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "user_browse_log_target_type_valid_chk" CHECK ("target_type" in (1, 2, 3, 4, 5))
+);
+--> statement-breakpoint
+CREATE TABLE "user_comment" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_comment_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"html" text NOT NULL,
+	"content" text NOT NULL,
+	"body" jsonb NOT NULL,
+	"body_version" smallint DEFAULT 1 NOT NULL,
+	"floor" integer,
+	"reply_to_id" integer,
+	"actual_reply_to_id" integer,
+	"is_hidden" boolean DEFAULT false NOT NULL,
+	"audit_status" smallint DEFAULT 0 NOT NULL,
+	"audit_by_id" integer,
+	"audit_role" smallint,
+	"audit_reason" varchar(500),
+	"audit_at" timestamp(6) with time zone,
+	"like_count" integer DEFAULT 0 NOT NULL,
+	"sensitive_word_hits" jsonb,
+	"geo_country" varchar(100),
+	"geo_province" varchar(100),
+	"geo_city" varchar(100),
+	"geo_isp" varchar(100),
+	"geo_source" varchar(50),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '365 days',
+	"archived_at" timestamp(6) with time zone,
+	"topic_delete_cascade_id" varchar(80),
+	CONSTRAINT "user_comment_body_version_valid_chk" CHECK ("body_version" in (1)),
+	CONSTRAINT "user_comment_target_type_valid_chk" CHECK ("target_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "user_comment_audit_role_valid_chk" CHECK ("audit_role" is null or "audit_role" in (0, 1)),
+	CONSTRAINT "user_comment_audit_actor_pair_chk" CHECK (("audit_role" is null) = ("audit_by_id" is null)),
+	CONSTRAINT "user_comment_like_count_non_negative_chk" CHECK ("like_count" >= 0),
+	CONSTRAINT "user_comment_root_floor_required_chk" CHECK ("reply_to_id" is not null or "floor" is not null)
+);
+--> statement-breakpoint
+CREATE TABLE "user_comment_floor_counter" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_comment_floor_counter_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"next_floor" integer DEFAULT 1 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_comment_floor_counter_target_key" UNIQUE("target_type","target_id"),
+	CONSTRAINT "user_comment_floor_counter_target_type_valid_chk" CHECK ("target_type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "user_comment_floor_counter_target_id_positive_chk" CHECK ("target_id" > 0),
+	CONSTRAINT "user_comment_floor_counter_next_floor_positive_chk" CHECK ("next_floor" > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "user_favorite" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_favorite_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_favorite_target_type_target_id_user_id_key" UNIQUE("target_type","target_id","user_id"),
+	CONSTRAINT "user_favorite_target_type_valid_chk" CHECK ("target_type" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "user_follow" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_follow_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_follow_target_type_target_id_user_id_key" UNIQUE("target_type","target_id","user_id"),
+	CONSTRAINT "user_follow_target_type_valid_chk" CHECK ("target_type" in (1, 2, 3, 4))
+);
+--> statement-breakpoint
+CREATE TABLE "user_like" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_like_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"scene_type" smallint NOT NULL,
+	"scene_id" integer NOT NULL,
+	"comment_level" smallint,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_like_target_type_target_id_user_id_key" UNIQUE("target_type","target_id","user_id"),
+	CONSTRAINT "user_like_target_type_valid_chk" CHECK ("target_type" in (1, 2, 3, 4, 5, 6)),
+	CONSTRAINT "user_like_scene_type_valid_chk" CHECK ("scene_type" in (1, 2, 3, 10, 11, 12)),
+	CONSTRAINT "user_like_comment_level_valid_chk" CHECK ("comment_level" is null or "comment_level" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "user_mention" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_mention_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"source_type" smallint NOT NULL,
+	"source_id" integer NOT NULL,
+	"mentioned_user_id" integer NOT NULL,
+	"start_offset" integer NOT NULL,
+	"end_offset" integer NOT NULL,
+	"notified_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_mention_source_user_offset_key" UNIQUE("source_type","source_id","mentioned_user_id","start_offset","end_offset"),
+	CONSTRAINT "user_mention_source_type_valid_chk" CHECK ("source_type" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "user_report" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_report_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"reporter_id" integer NOT NULL,
+	"handler_id" integer,
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"scene_type" smallint NOT NULL,
+	"scene_id" integer NOT NULL,
+	"comment_level" smallint,
+	"reason_type" smallint NOT NULL,
+	"description" varchar(500),
+	"evidence_url" varchar(500),
+	"status" smallint DEFAULT 1 NOT NULL,
+	"handling_note" varchar(500),
+	"target_action" smallint DEFAULT 1 NOT NULL,
+	"target_action_reason" varchar(500),
+	"target_action_status" smallint DEFAULT 1 NOT NULL,
+	"target_action_result" jsonb,
+	"target_action_applied_at" timestamp(6) with time zone,
+	"handled_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "user_report_reporter_id_target_type_target_id_key" UNIQUE("reporter_id","target_type","target_id"),
+	CONSTRAINT "user_report_target_type_valid_chk" CHECK ("target_type" in (1, 2, 3, 4, 5, 6, 7)),
+	CONSTRAINT "user_report_scene_type_valid_chk" CHECK ("scene_type" in (1, 2, 3, 10, 11, 12)),
+	CONSTRAINT "user_report_comment_level_valid_chk" CHECK ("comment_level" is null or "comment_level" in (1, 2)),
+	CONSTRAINT "user_report_reason_type_valid_chk" CHECK ("reason_type" in (1, 2, 3, 4, 99)),
+	CONSTRAINT "user_report_status_valid_chk" CHECK ("status" in (1, 2, 3, 4)),
+	CONSTRAINT "user_report_target_action_valid_chk" CHECK ("target_action" in (1, 2, 3, 4, 5, 6, 7)),
+	CONSTRAINT "user_report_target_action_status_valid_chk" CHECK ("target_action_status" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "user_report_disposition_attempt" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_report_disposition_attempt_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"report_id" integer NOT NULL,
+	"target_action" smallint NOT NULL,
+	"attempt_status" smallint NOT NULL,
+	"failure_code" varchar(120),
+	"failure_message" varchar(500),
+	"retryable" boolean DEFAULT true NOT NULL,
+	"actor_user_id" integer NOT NULL,
+	"attempted_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"resolved_at" timestamp(6) with time zone,
+	"result" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_report_disposition_attempt_action_valid_chk" CHECK ("target_action" in (1, 2, 3, 4, 5, 6, 7)),
+	CONSTRAINT "user_report_disposition_attempt_status_valid_chk" CHECK ("attempt_status" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "chat_conversation" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "chat_conversation_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"biz_key" varchar(100) NOT NULL CONSTRAINT "chat_conversation_biz_key_key" UNIQUE,
+	"last_message_id" bigint,
+	"last_message_at" timestamp(6) with time zone,
+	"last_sender_id" integer,
+	"has_messages" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '365 days',
+	"archived_at" timestamp(6) with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "chat_conversation_member" (
+	"conversation_id" integer,
+	"user_id" integer,
+	"role" smallint NOT NULL,
+	"joined_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"left_at" timestamp(6) with time zone,
+	"hidden_at" timestamp(6) with time zone,
+	"is_muted" boolean DEFAULT false NOT NULL,
+	"is_pinned" boolean DEFAULT false NOT NULL,
+	"last_read_message_id" bigint,
+	"last_read_at" timestamp(6) with time zone,
+	"unread_count" integer DEFAULT 0 NOT NULL,
+	CONSTRAINT "chat_conversation_member_pkey" PRIMARY KEY("conversation_id","user_id"),
+	CONSTRAINT "chat_conversation_member_role_valid_chk" CHECK ("role" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "chat_message" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "chat_message_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"conversation_id" integer NOT NULL,
+	"message_seq" bigint NOT NULL,
+	"sender_id" integer NOT NULL,
+	"client_message_id" varchar(64),
+	"message_type" smallint NOT NULL,
+	"content" text NOT NULL,
+	"body_tokens" jsonb,
+	"payload" jsonb,
+	"status" smallint NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"edited_at" timestamp(6) with time zone,
+	"revoked_at" timestamp(6) with time zone,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '365 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "chat_message_conversation_id_message_seq_key" UNIQUE("conversation_id","message_seq"),
+	CONSTRAINT "chat_message_conversation_id_sender_id_client_message_id_key" UNIQUE("conversation_id","sender_id","client_message_id"),
+	CONSTRAINT "chat_message_message_type_valid_chk" CHECK ("message_type" in (1, 2, 3, 4, 99)),
+	CONSTRAINT "chat_message_status_valid_chk" CHECK ("status" in (1, 2, 3))
+);
+--> statement-breakpoint
+CREATE TABLE "message_ws_metric" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "message_ws_metric_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"bucket_at" timestamp(6) with time zone NOT NULL CONSTRAINT "message_ws_metric_bucket_at_key" UNIQUE,
+	"request_count" integer DEFAULT 0 NOT NULL,
+	"ack_success_count" integer DEFAULT 0 NOT NULL,
+	"ack_error_count" integer DEFAULT 0 NOT NULL,
+	"ack_latency_total_ms" bigint DEFAULT 0 NOT NULL,
+	"reconnect_count" integer DEFAULT 0 NOT NULL,
+	"resync_trigger_count" integer DEFAULT 0 NOT NULL,
+	"resync_success_count" integer DEFAULT 0 NOT NULL,
+	"fanout_skipped_count" integer DEFAULT 0 NOT NULL,
+	"fanout_publish_error_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "notification_delivery" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "notification_delivery_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"event_id" bigint NOT NULL,
+	"dispatch_id" bigint NOT NULL CONSTRAINT "notification_delivery_dispatch_id_key" UNIQUE,
+	"event_key" varchar(120) NOT NULL,
+	"receiver_user_id" integer,
+	"projection_key" varchar(180),
+	"category_key" varchar(80),
+	"task_id" integer,
+	"assignment_id" integer,
+	"reminder_kind" varchar(40),
+	"notification_id" integer,
+	"status" smallint NOT NULL,
+	"template_id" integer,
+	"used_template" boolean DEFAULT false NOT NULL,
+	"fallback_reason" varchar(64),
+	"failure_reason" varchar(500),
+	"last_attempt_at" timestamp(6) with time zone NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '180 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "notification_delivery_status_valid_chk" CHECK ("status" in (1, 2, 3, 4)),
+	CONSTRAINT "notification_delivery_task_reminder_lookup_required_chk" CHECK ("category_key" <> 'task_reminder' OR ("task_id" IS NOT NULL AND "assignment_id" IS NOT NULL AND "reminder_kind" IS NOT NULL))
+);
+--> statement-breakpoint
+CREATE TABLE "notification_preference" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "notification_preference_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer NOT NULL,
+	"category_key" varchar(80) NOT NULL,
+	"is_enabled" boolean NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "notification_preference_user_id_category_key_key" UNIQUE("user_id","category_key")
+);
+--> statement-breakpoint
+CREATE TABLE "notification_template" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "notification_template_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"category_key" varchar(80) NOT NULL CONSTRAINT "notification_template_category_key_key" UNIQUE,
+	"title_template" varchar(200) NOT NULL,
+	"content_template" varchar(1000) NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"remark" varchar(500),
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "user_notification" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_notification_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"category_key" varchar(80) NOT NULL,
+	"projection_key" varchar(180) NOT NULL,
+	"receiver_user_id" integer NOT NULL,
+	"actor_user_id" integer,
+	"title" varchar(200) NOT NULL,
+	"content" varchar(1000) NOT NULL,
+	"payload" jsonb,
+	"announcement_id" integer,
+	"is_read" boolean DEFAULT false NOT NULL,
+	"is_hidden" boolean DEFAULT false NOT NULL,
+	"read_at" timestamp(6) with time zone,
+	"expires_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '180 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "user_notification_receiver_user_id_projection_key_key" UNIQUE("receiver_user_id","projection_key"),
+	CONSTRAINT "user_notification_system_announcement_requires_id_chk" CHECK ("category_key" <> 'system_announcement' OR "announcement_id" IS NOT NULL)
+);
+--> statement-breakpoint
+CREATE TABLE "sensitive_word" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "sensitive_word_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"word" varchar(100) NOT NULL CONSTRAINT "sensitive_word_word_key" UNIQUE,
+	"replace_word" varchar(100),
+	"level" smallint DEFAULT 2 NOT NULL,
+	"type" smallint DEFAULT 5 NOT NULL,
+	"match_mode" smallint DEFAULT 1 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"remark" varchar(500),
+	"created_by" integer,
+	"updated_by" integer,
+	"hit_count" integer DEFAULT 0 NOT NULL,
+	"last_hit_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "sensitive_word_level_valid_chk" CHECK ("level" in (1, 2, 3)),
+	CONSTRAINT "sensitive_word_type_valid_chk" CHECK ("type" in (1, 2, 3, 4, 5)),
+	CONSTRAINT "sensitive_word_match_mode_valid_chk" CHECK ("match_mode" in (1, 2))
+);
+--> statement-breakpoint
+CREATE TABLE "sensitive_word_hit_log" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "sensitive_word_hit_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"sensitive_word_id" integer NOT NULL,
+	"entity_type" smallint NOT NULL,
+	"entity_id" integer NOT NULL,
+	"operation_type" smallint NOT NULL,
+	"matched_word" varchar(100) NOT NULL,
+	"level" smallint NOT NULL,
+	"type" smallint NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '180 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "sensitive_word_hit_log_entity_type_valid_chk" CHECK ("entity_type" in (1, 2)),
+	CONSTRAINT "sensitive_word_hit_log_operation_type_valid_chk" CHECK ("operation_type" in (1, 2)),
+	CONSTRAINT "sensitive_word_hit_log_level_valid_chk" CHECK ("level" in (1, 2, 3)),
+	CONSTRAINT "sensitive_word_hit_log_type_valid_chk" CHECK ("type" in (1, 2, 3, 4, 5))
+);
+--> statement-breakpoint
+CREATE TABLE "migration_audit" (
+	"migration_key" varchar(160),
+	"metric" varchar(160),
+	"value" bigint NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "migration_audit_pkey" PRIMARY KEY("migration_key","metric")
+);
+--> statement-breakpoint
+CREATE TABLE "sys_request_log" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "sys_request_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"user_id" integer,
+	"username" text,
+	"api_type" smallint,
+	"method" varchar(10) NOT NULL,
+	"path" varchar(255) NOT NULL,
+	"params" jsonb,
+	"ip" varchar(45),
+	"user_agent" varchar(255),
+	"device" jsonb,
+	"geo_country" varchar(100),
+	"geo_province" varchar(100),
+	"geo_city" varchar(100),
+	"geo_isp" varchar(100),
+	"geo_source" varchar(50),
+	"action_type" smallint,
+	"is_success" boolean NOT NULL,
+	"content" text NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"retention_until" timestamp(6) with time zone DEFAULT now() + interval '180 days',
+	"archived_at" timestamp(6) with time zone,
+	CONSTRAINT "sys_request_log_api_type_valid_chk" CHECK ("api_type" is null or "api_type" in (1, 2, 3, 4)),
+	CONSTRAINT "sys_request_log_action_type_valid_chk" CHECK ("action_type" is null or "action_type" in (1, 2, 3, 4, 5, 6, 7, 8, 9))
+);
+--> statement-breakpoint
+CREATE TABLE "workflow_attempt" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "workflow_attempt_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"attempt_id" varchar(36) NOT NULL CONSTRAINT "workflow_attempt_attempt_id_key" UNIQUE,
+	"workflow_job_id" bigint NOT NULL,
+	"attempt_no" integer NOT NULL,
+	"trigger_type" smallint NOT NULL,
+	"status" smallint NOT NULL,
+	"not_before_at" timestamp(6) with time zone,
+	"selected_item_count" integer DEFAULT 0 NOT NULL,
+	"success_item_count" integer DEFAULT 0 NOT NULL,
+	"failed_item_count" integer DEFAULT 0 NOT NULL,
+	"skipped_item_count" integer DEFAULT 0 NOT NULL,
+	"claimed_by" varchar(120),
+	"claim_expires_at" timestamp(6) with time zone,
+	"heartbeat_at" timestamp(6) with time zone,
+	"error_code" varchar(120),
+	"error_domain" varchar(80),
+	"error_stage" varchar(80),
+	"error_severity" varchar(40),
+	"error_retryable" boolean,
+	"error_context" jsonb,
+	"error_diagnostic" jsonb,
+	"started_at" timestamp(6) with time zone,
+	"finished_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "workflow_attempt_job_attempt_no_key" UNIQUE("workflow_job_id","attempt_no"),
+	CONSTRAINT "workflow_attempt_attempt_no_positive_chk" CHECK ("attempt_no" > 0),
+	CONSTRAINT "workflow_attempt_trigger_type_valid_chk" CHECK ("trigger_type" in (1, 2, 3)),
+	CONSTRAINT "workflow_attempt_status_valid_chk" CHECK ("status" in (1, 2, 3, 4, 5, 6)),
+	CONSTRAINT "workflow_attempt_selected_item_count_non_negative_chk" CHECK ("selected_item_count" >= 0),
+	CONSTRAINT "workflow_attempt_success_item_count_non_negative_chk" CHECK ("success_item_count" >= 0),
+	CONSTRAINT "workflow_attempt_failed_item_count_non_negative_chk" CHECK ("failed_item_count" >= 0),
+	CONSTRAINT "workflow_attempt_skipped_item_count_non_negative_chk" CHECK ("skipped_item_count" >= 0)
+);
+--> statement-breakpoint
+CREATE TABLE "workflow_conflict_key" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "workflow_conflict_key_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"workflow_job_id" bigint NOT NULL,
+	"workflow_type" varchar(120) NOT NULL,
+	"conflict_key" varchar(300) NOT NULL,
+	"released_at" timestamp(6) with time zone,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "workflow_conflict_key_workflow_type_nonblank_chk" CHECK (length(trim("workflow_type")) > 0),
+	CONSTRAINT "workflow_conflict_key_nonblank_chk" CHECK (length(trim("conflict_key")) > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "workflow_event" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "workflow_event_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"workflow_job_id" bigint NOT NULL,
+	"workflow_attempt_id" bigint,
+	"event_type" smallint NOT NULL,
+	"event_code" varchar(120) NOT NULL,
+	"detail" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "workflow_event_type_valid_chk" CHECK ("event_type" in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)),
+	CONSTRAINT "workflow_event_code_nonblank_chk" CHECK (length(trim("event_code")) > 0)
+);
+--> statement-breakpoint
+CREATE TABLE "workflow_job" (
+	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "workflow_job_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"job_id" varchar(36) NOT NULL CONSTRAINT "workflow_job_job_id_key" UNIQUE,
+	"workflow_type" varchar(120) NOT NULL,
+	"display_name" varchar(180) NOT NULL,
+	"operator_type" smallint NOT NULL,
+	"operator_user_id" integer,
+	"status" smallint NOT NULL,
+	"progress_percent" integer DEFAULT 0 NOT NULL,
+	"progress_code" varchar(120),
+	"progress_context" jsonb,
+	"progress_detail" jsonb,
+	"current_attempt_fk" bigint,
+	"selected_item_count" integer DEFAULT 0 NOT NULL,
+	"success_item_count" integer DEFAULT 0 NOT NULL,
+	"failed_item_count" integer DEFAULT 0 NOT NULL,
+	"skipped_item_count" integer DEFAULT 0 NOT NULL,
+	"cancel_requested_at" timestamp(6) with time zone,
+	"started_at" timestamp(6) with time zone,
+	"finished_at" timestamp(6) with time zone,
+	"expires_at" timestamp(6) with time zone,
+	"archived_at" timestamp(6) with time zone,
+	"summary" jsonb,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	CONSTRAINT "workflow_job_workflow_type_nonblank_chk" CHECK (length(trim("workflow_type")) > 0),
+	CONSTRAINT "workflow_job_display_name_nonblank_chk" CHECK (length(trim("display_name")) > 0),
+	CONSTRAINT "workflow_job_operator_type_valid_chk" CHECK ("operator_type" in (1, 2)),
+	CONSTRAINT "workflow_job_operator_user_id_scope_chk" CHECK (("operator_type" = 1 and "operator_user_id" is not null) or ("operator_type" = 2 and "operator_user_id" is null)),
+	CONSTRAINT "workflow_job_status_valid_chk" CHECK ("status" in (1, 2, 3, 4, 5, 6, 7, 8)),
+	CONSTRAINT "workflow_job_progress_percent_range_chk" CHECK ("progress_percent" between 0 and 100),
+	CONSTRAINT "workflow_job_selected_item_count_non_negative_chk" CHECK ("selected_item_count" >= 0),
+	CONSTRAINT "workflow_job_success_item_count_non_negative_chk" CHECK ("success_item_count" >= 0),
+	CONSTRAINT "workflow_job_failed_item_count_non_negative_chk" CHECK ("failed_item_count" >= 0),
+	CONSTRAINT "workflow_job_skipped_item_count_non_negative_chk" CHECK ("skipped_item_count" >= 0)
+);
+--> statement-breakpoint
+CREATE INDEX "app_agreement_title_is_published_idx" ON "app_agreement" ("title","is_published");--> statement-breakpoint
+CREATE INDEX "app_agreement_log_user_id_agreement_id_idx" ON "app_agreement_log" ("user_id","agreement_id");--> statement-breakpoint
+CREATE INDEX "app_agreement_log_agreement_id_idx" ON "app_agreement_log" ("agreement_id");--> statement-breakpoint
+CREATE INDEX "app_agreement_log_agreed_at_idx" ON "app_agreement_log" ("agreed_at");--> statement-breakpoint
+CREATE INDEX "app_announcement_is_published_publish_start_time_publish_en_idx" ON "app_announcement" ("is_published","publish_start_time","publish_end_time");--> statement-breakpoint
+CREATE INDEX "app_announcement_app_visible_window_idx" ON "app_announcement" ("is_published","publish_start_time","publish_end_time","is_pinned" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "app_announcement_enable_platform_gin_idx" ON "app_announcement" USING gin ("enable_platform");--> statement-breakpoint
+CREATE INDEX "app_announcement_announcement_type_is_published_idx" ON "app_announcement" ("announcement_type","is_published");--> statement-breakpoint
+CREATE INDEX "app_announcement_is_realtime_is_published_idx" ON "app_announcement" ("is_realtime","is_published");--> statement-breakpoint
+CREATE INDEX "app_announcement_realtime_publish_start_pending_idx" ON "app_announcement" ("publish_start_time","id") WHERE "is_realtime" = true and "is_published" = true and "enable_platform" && ARRAY[2]::smallint[] and "publish_start_time" is not null and "notification_start_boundary_at" is distinct from "publish_start_time";--> statement-breakpoint
+CREATE INDEX "app_announcement_realtime_publish_end_pending_idx" ON "app_announcement" ("publish_end_time","id") WHERE "is_realtime" = true and "is_published" = true and "enable_platform" && ARRAY[2]::smallint[] and "publish_end_time" is not null and "notification_end_boundary_at" is distinct from "publish_end_time";--> statement-breakpoint
+CREATE INDEX "app_announcement_notification_fanout_status_idx" ON "app_announcement" ("notification_fanout_status","notification_fanout_updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "app_announcement_priority_level_is_pinned_idx" ON "app_announcement" ("priority_level","is_pinned");--> statement-breakpoint
+CREATE INDEX "app_announcement_created_at_idx" ON "app_announcement" ("created_at");--> statement-breakpoint
+CREATE INDEX "app_announcement_page_id_idx" ON "app_announcement" ("page_id");--> statement-breakpoint
+CREATE INDEX "app_announcement_show_as_popup_is_published_idx" ON "app_announcement" ("show_as_popup","is_published");--> statement-breakpoint
+CREATE INDEX "app_announcement_fanout_pending_idx" ON "app_announcement_notification_fanout_task" ("status","updated_at","id") WHERE "status" = 0;--> statement-breakpoint
+CREATE INDEX "app_announcement_fanout_failed_retry_idx" ON "app_announcement_notification_fanout_task" ("status","next_attempt_at","attempt_count","updated_at","id") WHERE "status" = 3;--> statement-breakpoint
+CREATE INDEX "app_announcement_fanout_lease_expired_idx" ON "app_announcement_notification_fanout_task" ("status","processing_lease_expires_at","updated_at","id") WHERE "status" = 1;--> statement-breakpoint
+CREATE INDEX "app_announcement_notification_fanout_task_announcement_idx" ON "app_announcement_notification_fanout_task" ("announcement_id","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "app_announcement_read_user_id_read_at_idx" ON "app_announcement_read" ("user_id","read_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "app_announcement_view_user_id_viewed_at_idx" ON "app_announcement_view" ("user_id","viewed_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "app_page_access_level_is_enabled_idx" ON "app_page" ("access_level","is_enabled");--> statement-breakpoint
+CREATE UNIQUE INDEX "app_update_release_platform_published_live_key" ON "app_update_release" ("platform") WHERE "is_published" = true;--> statement-breakpoint
+CREATE INDEX "app_update_release_platform_is_published_build_code_idx" ON "app_update_release" ("platform","is_published","build_code");--> statement-breakpoint
+CREATE INDEX "app_update_release_published_at_idx" ON "app_update_release" ("published_at");--> statement-breakpoint
+CREATE INDEX "app_update_release_created_by_id_idx" ON "app_update_release" ("created_by_id");--> statement-breakpoint
+CREATE INDEX "app_update_release_updated_by_id_idx" ON "app_update_release" ("updated_by_id");--> statement-breakpoint
+CREATE INDEX "coupon_admin_grant_item_job_status_updated_id_idx" ON "coupon_admin_grant_item" ("coupon_admin_grant_job_id","status","updated_at","id");--> statement-breakpoint
+CREATE INDEX "coupon_admin_grant_item_user_created_at_idx" ON "coupon_admin_grant_item" ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "coupon_admin_grant_job_coupon_definition_created_at_idx" ON "coupon_admin_grant_job" ("coupon_definition_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "coupon_definition_type_enabled_idx" ON "coupon_definition" ("coupon_type","is_enabled");--> statement-breakpoint
+CREATE INDEX "coupon_definition_created_at_idx" ON "coupon_definition" ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "coupon_redemption_record_instance_status_idx" ON "coupon_redemption_record" ("coupon_instance_id","status");--> statement-breakpoint
+CREATE INDEX "coupon_redemption_record_target_idx" ON "coupon_redemption_record" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "currency_package_enabled_sort_order_idx" ON "currency_package" ("is_enabled","sort_order");--> statement-breakpoint
+CREATE INDEX "membership_benefit_definition_enabled_sort_order_idx" ON "membership_benefit_definition" ("is_enabled","sort_order");--> statement-breakpoint
+CREATE INDEX "membership_page_config_enabled_sort_order_idx" ON "membership_page_config" ("is_enabled","sort_order");--> statement-breakpoint
+CREATE INDEX "membership_page_config_agreement_page_sort_idx" ON "membership_page_config_agreement" ("page_config_id","sort_order");--> statement-breakpoint
+CREATE INDEX "membership_page_config_agreement_agreement_id_idx" ON "membership_page_config_agreement" ("agreement_id");--> statement-breakpoint
+CREATE INDEX "membership_page_config_plan_page_sort_idx" ON "membership_page_config_plan" ("page_config_id","sort_order");--> statement-breakpoint
+CREATE INDEX "membership_page_config_plan_plan_id_idx" ON "membership_page_config_plan" ("plan_id");--> statement-breakpoint
+CREATE INDEX "membership_plan_enabled_sort_order_idx" ON "membership_plan" ("is_enabled","tier","sort_order");--> statement-breakpoint
+CREATE INDEX "membership_plan_benefit_plan_enabled_sort_order_idx" ON "membership_plan_benefit" ("plan_id","is_enabled","sort_order");--> statement-breakpoint
+CREATE INDEX "membership_plan_benefit_benefit_id_idx" ON "membership_plan_benefit" ("benefit_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "payment_notify_event_provider_event_key" ON "payment_notify_event" ("channel","provider_event_id") WHERE "provider_event_id" is not null;--> statement-breakpoint
+CREATE UNIQUE INDEX "payment_notify_event_payload_hash_key" ON "payment_notify_event" ("channel","payload_hash");--> statement-breakpoint
+CREATE INDEX "payment_notify_event_order_idx" ON "payment_notify_event" ("order_no","created_at");--> statement-breakpoint
+CREATE INDEX "payment_notify_event_trade_idx" ON "payment_notify_event" ("provider_trade_no","created_at");--> statement-breakpoint
+CREATE INDEX "payment_notify_event_status_idx" ON "payment_notify_event" ("verify_status","process_status","created_at");--> statement-breakpoint
+CREATE INDEX "payment_notify_event_channel_process_created_id_idx" ON "payment_notify_event" ("channel","process_status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "payment_notify_event_retention_until_id_idx" ON "payment_notify_event" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "payment_notify_event_payment_order_id_idx" ON "payment_notify_event" ("payment_order_id");--> statement-breakpoint
+CREATE INDEX "payment_order_user_status_created_at_idx" ON "payment_order" ("user_id","status","created_at");--> statement-breakpoint
+CREATE INDEX "payment_order_provider_config_status_idx" ON "payment_order" ("provider_config_id","status");--> statement-breakpoint
+CREATE INDEX "payment_order_status_created_at_id_idx" ON "payment_order" ("status","created_at","id");--> statement-breakpoint
+CREATE INDEX "payment_order_channel_status_created_at_idx" ON "payment_order" ("channel","status","created_at");--> statement-breakpoint
+CREATE INDEX "payment_order_provider_config_status_created_at_idx" ON "payment_order" ("provider_config_id","status","created_at");--> statement-breakpoint
+CREATE INDEX "payment_order_provider_config_version_id_idx" ON "payment_order" ("provider_config_version_id");--> statement-breakpoint
+CREATE INDEX "payment_order_user_created_at_idx" ON "payment_order" ("user_id","created_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "payment_provider_certificate_ref_key" ON "payment_provider_certificate" ("certificate_ref");--> statement-breakpoint
+CREATE INDEX "payment_provider_certificate_option_idx" ON "payment_provider_certificate" ("channel","certificate_type","status","expired_at");--> statement-breakpoint
+CREATE INDEX "payment_provider_certificate_serial_idx" ON "payment_provider_certificate" ("channel","serial_no");--> statement-breakpoint
+CREATE UNIQUE INDEX "payment_provider_config_enabled_unique_idx" ON "payment_provider_config" ("channel","payment_scene","platform","client_app_key","app_id","mch_id","environment") WHERE "is_enabled" = true;--> statement-breakpoint
+CREATE INDEX "payment_provider_config_selection_idx" ON "payment_provider_config" ("channel","payment_scene","platform","client_app_key","environment","is_enabled","sort_order");--> statement-breakpoint
+CREATE UNIQUE INDEX "payment_provider_config_version_key" ON "payment_provider_config_version" ("provider_config_id","config_version");--> statement-breakpoint
+CREATE INDEX "payment_provider_config_version_active_idx" ON "payment_provider_config_version" ("provider_config_id","is_active","config_version");--> statement-breakpoint
+CREATE INDEX "payment_provider_config_version_selection_idx" ON "payment_provider_config_version" ("channel","payment_scene","platform","client_app_key","environment","status","is_active");--> statement-breakpoint
+CREATE UNIQUE INDEX "payment_provider_credential_ref_key" ON "payment_provider_credential" ("credential_ref");--> statement-breakpoint
+CREATE INDEX "payment_provider_credential_option_idx" ON "payment_provider_credential" ("channel","credential_type","status","expired_at");--> statement-breakpoint
+CREATE INDEX "payment_reconciliation_record_status_created_at_idx" ON "payment_reconciliation_record" ("status","created_at","id");--> statement-breakpoint
+CREATE INDEX "payment_reconciliation_record_order_idx" ON "payment_reconciliation_record" ("order_no","created_at");--> statement-breakpoint
+CREATE INDEX "payment_reconciliation_record_payment_order_id_idx" ON "payment_reconciliation_record" ("payment_order_id");--> statement-breakpoint
+CREATE INDEX "payment_reconciliation_record_channel_status_idx" ON "payment_reconciliation_record" ("channel","status","created_at");--> statement-breakpoint
+CREATE INDEX "payment_reconciliation_record_mismatch_status_idx" ON "payment_reconciliation_record" ("mismatch_type","status","created_at");--> statement-breakpoint
+CREATE INDEX "user_asset_balance_user_id_asset_type_idx" ON "user_asset_balance" ("user_id","asset_type");--> statement-breakpoint
+CREATE INDEX "user_coupon_instance_user_status_expires_at_idx" ON "user_coupon_instance" ("user_id","status","expires_at");--> statement-breakpoint
+CREATE INDEX "user_coupon_instance_user_available_type_created_idx" ON "user_coupon_instance" ("user_id","status","coupon_type","created_at" DESC NULLS LAST) WHERE "remaining_uses" > 0;--> statement-breakpoint
+CREATE INDEX "user_coupon_instance_source_idx" ON "user_coupon_instance" ("source_type","source_id");--> statement-breakpoint
+CREATE INDEX "user_coupon_instance_coupon_definition_id_idx" ON "user_coupon_instance" ("coupon_definition_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "user_coupon_instance_user_grant_key_unique_idx" ON "user_coupon_instance" ("user_id","grant_key") WHERE "grant_key" is not null;--> statement-breakpoint
+CREATE INDEX "user_membership_subscription_user_status_ends_at_idx" ON "user_membership_subscription" ("user_id","status","ends_at");--> statement-breakpoint
+CREATE INDEX "user_membership_subscription_plan_id_idx" ON "user_membership_subscription" ("plan_id");--> statement-breakpoint
+CREATE INDEX "user_membership_subscription_source_idx" ON "user_membership_subscription" ("source_type","source_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "user_membership_subscription_payment_order_source_key" ON "user_membership_subscription" ("source_type","source_id") WHERE "source_type" = 1 AND "source_id" IS NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "user_membership_subscription_vip_trial_coupon_source_key" ON "user_membership_subscription" ("source_type","source_id") WHERE "source_type" = 2 AND "source_id" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "app_config_updated_by_id_idx" ON "app_config" ("updated_by_id");--> statement-breakpoint
+CREATE INDEX "sys_config_updated_by_id_idx" ON "sys_config" ("updated_by_id");--> statement-breakpoint
+CREATE INDEX "sys_config_created_at_idx" ON "sys_config" ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sys_dictionary_item_dictionary_code_sort_order_id_idx" ON "sys_dictionary_item" ("dictionary_code","sort_order","id");--> statement-breakpoint
+CREATE INDEX "content_import_item_job_status_sort_idx" ON "content_import_item" ("content_import_job_id","status","sort_order","id");--> statement-breakpoint
+CREATE INDEX "content_import_item_job_status_next_retry_idx" ON "content_import_item" ("content_import_job_id","status","next_retry_at","id");--> statement-breakpoint
+CREATE INDEX "content_import_item_job_provider_chapter_idx" ON "content_import_item" ("content_import_job_id","provider_chapter_id");--> statement-breakpoint
+CREATE INDEX "content_import_item_job_local_chapter_idx" ON "content_import_item" ("content_import_job_id","local_chapter_id");--> statement-breakpoint
+CREATE INDEX "content_import_item_attempt_workflow_attempt_status_idx" ON "content_import_item_attempt" ("workflow_attempt_id","status");--> statement-breakpoint
+CREATE INDEX "content_import_item_attempt_item_id_idx" ON "content_import_item_attempt" ("content_import_item_id");--> statement-breakpoint
+CREATE INDEX "content_import_job_source_type_work_id_idx" ON "content_import_job" ("source_type","work_id");--> statement-breakpoint
+CREATE INDEX "content_import_job_work_id_idx" ON "content_import_job" ("work_id");--> statement-breakpoint
+CREATE INDEX "content_import_job_platform_source_idx" ON "content_import_job" ("platform","provider_comic_id","provider_group_path_word");--> statement-breakpoint
+CREATE INDEX "content_import_preview_item_job_status_sort_idx" ON "content_import_preview_item" ("content_import_job_id","status","sort_order","id");--> statement-breakpoint
+CREATE INDEX "content_import_residue_job_cleanup_status_idx" ON "content_import_residue" ("workflow_job_id","cleanup_status");--> statement-breakpoint
+CREATE INDEX "content_import_residue_attempt_idx" ON "content_import_residue" ("workflow_attempt_id");--> statement-breakpoint
+CREATE INDEX "content_import_residue_item_idx" ON "content_import_residue" ("content_import_item_id");--> statement-breakpoint
+CREATE INDEX "content_import_residue_item_attempt_idx" ON "content_import_residue" ("content_import_item_attempt_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "user_content_entitlement_purchase_active_unique_idx" ON "user_content_entitlement" ("user_id","target_type","target_id") WHERE "grant_source" = 1 and "status" = 1;--> statement-breakpoint
+CREATE UNIQUE INDEX "user_content_entitlement_coupon_source_unique_idx" ON "user_content_entitlement" ("grant_source","source_id") WHERE "grant_source" = 2 and "source_id" is not null;--> statement-breakpoint
+CREATE UNIQUE INDEX "user_content_entitlement_ad_source_unique_idx" ON "user_content_entitlement" ("grant_source","source_id") WHERE "grant_source" = 3 and "source_id" is not null;--> statement-breakpoint
+CREATE INDEX "user_content_entitlement_user_target_status_idx" ON "user_content_entitlement" ("user_id","target_type","target_id","status");--> statement-breakpoint
+CREATE INDEX "user_content_entitlement_source_idx" ON "user_content_entitlement" ("grant_source","source_id");--> statement-breakpoint
+CREATE INDEX "user_content_entitlement_target_status_idx" ON "user_content_entitlement" ("target_type","target_id","status");--> statement-breakpoint
+CREATE INDEX "user_download_record_target_type_target_id_idx" ON "user_download_record" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "user_download_record_user_id_idx" ON "user_download_record" ("user_id");--> statement-breakpoint
+CREATE INDEX "user_download_record_created_at_idx" ON "user_download_record" ("created_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "user_purchase_record_success_unique_idx" ON "user_purchase_record" ("target_type","target_id","user_id") WHERE "status" = 1;--> statement-breakpoint
+CREATE INDEX "user_purchase_record_target_type_target_id_idx" ON "user_purchase_record" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "user_purchase_record_user_id_idx" ON "user_purchase_record" ("user_id");--> statement-breakpoint
+CREATE INDEX "user_purchase_record_status_idx" ON "user_purchase_record" ("status");--> statement-breakpoint
+CREATE INDEX "user_purchase_record_created_at_idx" ON "user_purchase_record" ("created_at");--> statement-breakpoint
+CREATE INDEX "user_purchase_record_user_id_status_target_type_created_at__idx" ON "user_purchase_record" ("user_id","status","target_type","created_at","target_id");--> statement-breakpoint
+CREATE INDEX "user_work_reading_state_user_id_work_type_last_read_at_idx" ON "user_work_reading_state" ("user_id","work_type","last_read_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_work_reading_state_user_id_last_read_at_idx" ON "user_work_reading_state" ("user_id","last_read_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_work_reading_state_work_id_idx" ON "user_work_reading_state" ("work_id");--> statement-breakpoint
+CREATE INDEX "user_work_reading_state_last_read_chapter_id_idx" ON "user_work_reading_state" ("last_read_chapter_id");--> statement-breakpoint
+CREATE INDEX "work_is_published_publish_at_idx" ON "work" ("is_published","publish_at");--> statement-breakpoint
+CREATE INDEX "work_popularity_idx" ON "work" ("popularity");--> statement-breakpoint
+CREATE INDEX "work_language_region_idx" ON "work" ("language","region");--> statement-breakpoint
+CREATE INDEX "work_serial_status_idx" ON "work" ("serial_status");--> statement-breakpoint
+CREATE INDEX "work_last_updated_idx" ON "work" ("last_updated");--> statement-breakpoint
+CREATE INDEX "work_name_idx" ON "work" ("name");--> statement-breakpoint
+CREATE INDEX "work_is_recommended_idx" ON "work" ("is_recommended");--> statement-breakpoint
+CREATE INDEX "work_is_hot_is_new_idx" ON "work" ("is_hot","is_new");--> statement-breakpoint
+CREATE INDEX "work_type_idx" ON "work" ("type");--> statement-breakpoint
+CREATE INDEX "work_view_rule_idx" ON "work" ("view_rule");--> statement-breakpoint
+CREATE INDEX "work_required_view_level_id_idx" ON "work" ("required_view_level_id");--> statement-breakpoint
+CREATE INDEX "work_comment_count_idx" ON "work" ("comment_count");--> statement-breakpoint
+CREATE INDEX "work_deleted_at_idx" ON "work" ("deleted_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "work_author_active_name_key" ON "work_author" ("name") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "work_author_type_idx" ON "work_author" USING gin ("type");--> statement-breakpoint
+CREATE INDEX "work_author_is_enabled_idx" ON "work_author" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "work_author_is_enabled_is_recommended_idx" ON "work_author" ("is_enabled","is_recommended");--> statement-breakpoint
+CREATE INDEX "work_author_is_enabled_deleted_at_idx" ON "work_author" ("is_enabled","deleted_at");--> statement-breakpoint
+CREATE INDEX "work_author_deleted_at_idx" ON "work_author" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "work_author_nationality_idx" ON "work_author" ("nationality");--> statement-breakpoint
+CREATE INDEX "work_author_gender_idx" ON "work_author" ("gender");--> statement-breakpoint
+CREATE INDEX "work_author_is_recommended_work_count_idx" ON "work_author" ("is_recommended","work_count" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "work_author_created_at_idx" ON "work_author" ("created_at");--> statement-breakpoint
+CREATE INDEX "work_author_relation_author_id_idx" ON "work_author_relation" ("author_id");--> statement-breakpoint
+CREATE INDEX "work_author_relation_work_id_sort_order_idx" ON "work_author_relation" ("work_id","sort_order");--> statement-breakpoint
+CREATE INDEX "work_category_sort_order_idx" ON "work_category" ("sort_order");--> statement-breakpoint
+CREATE INDEX "work_category_content_type_idx" ON "work_category" USING gin ("content_type");--> statement-breakpoint
+CREATE INDEX "work_category_relation_category_id_idx" ON "work_category_relation" ("category_id");--> statement-breakpoint
+CREATE INDEX "work_category_relation_work_id_sort_order_idx" ON "work_category_relation" ("work_id","sort_order");--> statement-breakpoint
+CREATE UNIQUE INDEX "work_chapter_work_id_sort_order_live_idx" ON "work_chapter" ("work_id","sort_order") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "work_chapter_deleted_at_idx" ON "work_chapter" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "work_chapter_work_id_idx" ON "work_chapter" ("work_id");--> statement-breakpoint
+CREATE INDEX "work_chapter_work_id_sort_order_idx" ON "work_chapter" ("work_id","sort_order");--> statement-breakpoint
+CREATE INDEX "work_chapter_work_published_publish_sort_idx" ON "work_chapter" ("work_id","is_published","publish_at","deleted_at","sort_order","id");--> statement-breakpoint
+CREATE INDEX "work_chapter_is_published_publish_at_idx" ON "work_chapter" ("is_published","publish_at");--> statement-breakpoint
+CREATE INDEX "work_chapter_view_rule_idx" ON "work_chapter" ("view_rule");--> statement-breakpoint
+CREATE INDEX "work_chapter_is_preview_idx" ON "work_chapter" ("is_preview");--> statement-breakpoint
+CREATE INDEX "work_chapter_view_count_idx" ON "work_chapter" ("view_count");--> statement-breakpoint
+CREATE INDEX "work_chapter_like_count_idx" ON "work_chapter" ("like_count");--> statement-breakpoint
+CREATE INDEX "work_chapter_created_at_idx" ON "work_chapter" ("created_at");--> statement-breakpoint
+CREATE INDEX "work_chapter_publish_at_idx" ON "work_chapter" ("publish_at");--> statement-breakpoint
+CREATE INDEX "work_chapter_required_read_level_id_idx" ON "work_chapter" ("required_read_level_id");--> statement-breakpoint
+CREATE INDEX "work_chapter_work_type_idx" ON "work_chapter" ("work_type");--> statement-breakpoint
+CREATE INDEX "work_tag_sort_order_idx" ON "work_tag" ("sort_order");--> statement-breakpoint
+CREATE INDEX "work_tag_is_enabled_idx" ON "work_tag" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "work_tag_relation_tag_id_idx" ON "work_tag_relation" ("tag_id");--> statement-breakpoint
+CREATE INDEX "work_tag_relation_work_id_sort_order_idx" ON "work_tag_relation" ("work_id","sort_order","tag_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "work_tp_chapter_binding_source_provider_chapter_live_uidx" ON "work_third_party_chapter_binding" ("work_third_party_source_binding_id","provider_chapter_id") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE UNIQUE INDEX "work_third_party_chapter_binding_chapter_id_live_idx" ON "work_third_party_chapter_binding" ("chapter_id") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "work_third_party_chapter_binding_source_created_at_idx" ON "work_third_party_chapter_binding" ("work_third_party_source_binding_id","created_at");--> statement-breakpoint
+CREATE INDEX "work_third_party_chapter_binding_deleted_at_idx" ON "work_third_party_chapter_binding" ("deleted_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "work_third_party_source_binding_work_id_live_idx" ON "work_third_party_source_binding" ("work_id") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE UNIQUE INDEX "work_third_party_source_binding_platform_comic_group_live_idx" ON "work_third_party_source_binding" ("platform","provider_comic_id","provider_group_path_word") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "work_third_party_source_binding_platform_path_group_idx" ON "work_third_party_source_binding" ("platform","provider_path_word","provider_group_path_word");--> statement-breakpoint
+CREATE INDEX "work_third_party_source_binding_deleted_at_idx" ON "work_third_party_source_binding" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "domain_event_event_key_created_at_idx" ON "domain_event" ("event_key","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "domain_event_domain_occurred_at_idx" ON "domain_event" ("domain","occurred_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "domain_event_subject_type_subject_id_idx" ON "domain_event" ("subject_type","subject_id");--> statement-breakpoint
+CREATE INDEX "domain_event_target_type_target_id_idx" ON "domain_event" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "domain_event_dispatch_consumer_status_next_retry_at_id_idx" ON "domain_event_dispatch" ("consumer","status","next_retry_at","id");--> statement-breakpoint
+CREATE INDEX "domain_event_dispatch_status_next_retry_id_idx" ON "domain_event_dispatch" ("status","next_retry_at","id");--> statement-breakpoint
+CREATE INDEX "domain_event_dispatch_retention_until_id_idx" ON "domain_event_dispatch" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "domain_event_dispatch_event_id_idx" ON "domain_event_dispatch" ("event_id");--> statement-breakpoint
+CREATE INDEX "domain_event_dispatch_updated_at_id_idx" ON "domain_event_dispatch" ("updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "domain_event_dispatch_consumer_status_updated_at_id_idx" ON "domain_event_dispatch" ("consumer","status","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_hashtag_audit_hidden_last_ref_idx" ON "forum_hashtag" ("audit_status","is_hidden","last_referenced_at");--> statement-breakpoint
+CREATE INDEX "forum_hashtag_follower_last_ref_idx" ON "forum_hashtag" ("follower_count","last_referenced_at");--> statement-breakpoint
+CREATE INDEX "forum_hashtag_created_at_idx" ON "forum_hashtag" ("created_at");--> statement-breakpoint
+CREATE INDEX "forum_hashtag_deleted_at_idx" ON "forum_hashtag" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "forum_hashtag_slug_lower_trgm_idx" ON "forum_hashtag" USING gin (lower("slug") gin_trgm_ops) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_hashtag_display_name_lower_trgm_idx" ON "forum_hashtag" USING gin (lower("display_name") gin_trgm_ops) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_hashtag_reference_hashtag_visible_created_idx" ON "forum_hashtag_reference" ("hashtag_id","is_source_visible","created_at");--> statement-breakpoint
+CREATE INDEX "forum_hashtag_reference_source_idx" ON "forum_hashtag_reference" ("source_type","source_id");--> statement-breakpoint
+CREATE INDEX "forum_hashtag_reference_topic_created_idx" ON "forum_hashtag_reference" ("topic_id","created_at");--> statement-breakpoint
+CREATE INDEX "forum_hashtag_reference_section_created_idx" ON "forum_hashtag_reference" ("section_id","created_at");--> statement-breakpoint
+CREATE INDEX "forum_hashtag_ref_visible_topic_feed_idx" ON "forum_hashtag_reference" ("hashtag_id","section_id","topic_id") WHERE "source_type" = 1 and "is_source_visible" = true;--> statement-breakpoint
+CREATE INDEX "forum_hashtag_ref_comment_topic_cleanup_idx" ON "forum_hashtag_reference" ("topic_id","source_id") WHERE "source_type" = 2;--> statement-breakpoint
+CREATE INDEX "forum_moderator_group_id_idx" ON "forum_moderator" ("group_id");--> statement-breakpoint
+CREATE INDEX "forum_moderator_role_type_idx" ON "forum_moderator" ("role_type");--> statement-breakpoint
+CREATE INDEX "forum_moderator_is_enabled_idx" ON "forum_moderator" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "forum_moderator_created_at_idx" ON "forum_moderator" ("created_at");--> statement-breakpoint
+CREATE INDEX "forum_moderator_deleted_at_idx" ON "forum_moderator" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "forum_moderator_action_log_moderator_id_idx" ON "forum_moderator_action_log" ("moderator_id");--> statement-breakpoint
+CREATE INDEX "forum_governance_action_log_actor_created_at_idx" ON "forum_moderator_action_log" ("actor_type","actor_user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_action_log_moderator_created_at_idx" ON "forum_moderator_action_log" ("moderator_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_action_log_action_type_idx" ON "forum_moderator_action_log" ("action_type");--> statement-breakpoint
+CREATE INDEX "forum_moderator_action_log_action_type_created_at_idx" ON "forum_moderator_action_log" ("action_type","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_action_log_target_type_target_id_idx" ON "forum_moderator_action_log" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "forum_moderator_action_log_target_created_at_idx" ON "forum_moderator_action_log" ("target_type","target_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_action_log_created_at_idx" ON "forum_moderator_action_log" ("created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_application_applicant_id_idx" ON "forum_moderator_application" ("applicant_id");--> statement-breakpoint
+CREATE INDEX "forum_moderator_application_section_id_idx" ON "forum_moderator_application" ("section_id");--> statement-breakpoint
+CREATE INDEX "forum_moderator_application_status_idx" ON "forum_moderator_application" ("status");--> statement-breakpoint
+CREATE INDEX "forum_moderator_application_audit_by_id_idx" ON "forum_moderator_application" ("audit_by_id");--> statement-breakpoint
+CREATE INDEX "forum_moderator_application_created_at_idx" ON "forum_moderator_application" ("created_at");--> statement-breakpoint
+CREATE INDEX "forum_moderator_application_deleted_at_idx" ON "forum_moderator_application" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "forum_moderator_lifecycle_log_moderator_created_at_idx" ON "forum_moderator_lifecycle_log" ("moderator_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_lifecycle_log_application_created_at_idx" ON "forum_moderator_lifecycle_log" ("application_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_lifecycle_log_event_type_created_at_idx" ON "forum_moderator_lifecycle_log" ("event_type","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_lifecycle_log_actor_admin_user_id_idx" ON "forum_moderator_lifecycle_log" ("actor_admin_user_id");--> statement-breakpoint
+CREATE INDEX "forum_moderator_lifecycle_log_created_at_idx" ON "forum_moderator_lifecycle_log" ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_moderator_section_section_id_idx" ON "forum_moderator_section" ("section_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "forum_section_name_live_key" ON "forum_section" ("name") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_section_group_id_idx" ON "forum_section" ("group_id");--> statement-breakpoint
+CREATE INDEX "forum_section_user_level_rule_id_idx" ON "forum_section" ("user_level_rule_id");--> statement-breakpoint
+CREATE INDEX "forum_section_last_topic_id_idx" ON "forum_section" ("last_topic_id");--> statement-breakpoint
+CREATE INDEX "forum_section_sort_order_idx" ON "forum_section" ("sort_order");--> statement-breakpoint
+CREATE INDEX "forum_section_is_enabled_idx" ON "forum_section" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "forum_section_topic_count_idx" ON "forum_section" ("topic_count");--> statement-breakpoint
+CREATE INDEX "forum_section_last_post_at_idx" ON "forum_section" ("last_post_at");--> statement-breakpoint
+CREATE INDEX "forum_section_created_at_idx" ON "forum_section" ("created_at");--> statement-breakpoint
+CREATE INDEX "forum_section_deleted_at_idx" ON "forum_section" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "forum_section_group_sort_order_idx" ON "forum_section_group" ("sort_order");--> statement-breakpoint
+CREATE INDEX "forum_section_group_is_enabled_idx" ON "forum_section_group" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "forum_section_group_created_at_idx" ON "forum_section_group" ("created_at");--> statement-breakpoint
+CREATE INDEX "forum_section_group_deleted_at_idx" ON "forum_section_group" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_section_id_idx" ON "forum_topic" ("section_id");--> statement-breakpoint
+CREATE INDEX "forum_topic_user_id_idx" ON "forum_topic" ("user_id");--> statement-breakpoint
+CREATE INDEX "forum_topic_last_comment_user_id_idx" ON "forum_topic" ("last_comment_user_id");--> statement-breakpoint
+CREATE INDEX "forum_topic_user_id_created_at_live_idx" ON "forum_topic" ("user_id","created_at" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_user_id_section_id_created_at_live_idx" ON "forum_topic" ("user_id","section_id","created_at" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_is_pinned_created_at_idx" ON "forum_topic" ("is_pinned","created_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_is_featured_created_at_idx" ON "forum_topic" ("is_featured","created_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_is_locked_idx" ON "forum_topic" ("is_locked");--> statement-breakpoint
+CREATE INDEX "forum_topic_is_hidden_idx" ON "forum_topic" ("is_hidden");--> statement-breakpoint
+CREATE INDEX "forum_topic_audit_status_idx" ON "forum_topic" ("audit_status");--> statement-breakpoint
+CREATE INDEX "forum_topic_view_count_idx" ON "forum_topic" ("view_count");--> statement-breakpoint
+CREATE INDEX "forum_topic_like_count_idx" ON "forum_topic" ("like_count");--> statement-breakpoint
+CREATE INDEX "forum_topic_comment_count_idx" ON "forum_topic" ("comment_count");--> statement-breakpoint
+CREATE INDEX "forum_topic_favorite_count_idx" ON "forum_topic" ("favorite_count");--> statement-breakpoint
+CREATE INDEX "forum_topic_last_comment_at_idx" ON "forum_topic" ("last_comment_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_created_at_idx" ON "forum_topic" ("created_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_updated_at_idx" ON "forum_topic" ("updated_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_deleted_at_idx" ON "forum_topic" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_section_id_is_pinned_created_at_idx" ON "forum_topic" ("section_id","is_pinned","created_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_section_id_is_featured_created_at_idx" ON "forum_topic" ("section_id","is_featured","created_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_section_id_last_comment_at_idx" ON "forum_topic" ("section_id","last_comment_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_visible_default_feed_idx" ON "forum_topic" ("section_id","is_pinned" DESC NULLS LAST,"last_comment_at" DESC NULLS LAST,"created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null and "audit_status" = 1 and "is_hidden" = false;--> statement-breakpoint
+CREATE INDEX "forum_topic_visible_global_default_feed_idx" ON "forum_topic" ("is_pinned" DESC NULLS LAST,"last_comment_at" DESC NULLS LAST,"created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null and "audit_status" = 1 and "is_hidden" = false;--> statement-breakpoint
+CREATE INDEX "forum_topic_visible_section_count_idx" ON "forum_topic" ("section_id") WHERE "deleted_at" is null and "audit_status" = 1 and "is_hidden" = false;--> statement-breakpoint
+CREATE INDEX "forum_topic_visible_hot_feed_idx" ON "forum_topic" ("section_id","comment_count" DESC NULLS LAST,"like_count" DESC NULLS LAST,"view_count" DESC NULLS LAST,"created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null and "audit_status" = 1 and "is_hidden" = false;--> statement-breakpoint
+CREATE INDEX "forum_topic_section_visible_activity_idx" ON "forum_topic" ("section_id",coalesce("last_comment_at", "created_at") desc,"id" DESC NULLS LAST) WHERE "deleted_at" is null and "audit_status" = 1 and "is_hidden" = false;--> statement-breakpoint
+CREATE INDEX "forum_topic_admin_active_updated_idx" ON "forum_topic" ("updated_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_admin_active_audit_updated_idx" ON "forum_topic" ("audit_status","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_admin_active_section_updated_idx" ON "forum_topic" ("section_id","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_admin_active_section_audit_updated_idx" ON "forum_topic" ("section_id","audit_status","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_admin_active_user_updated_idx" ON "forum_topic" ("user_id","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_admin_active_created_updated_idx" ON "forum_topic" ("created_at","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_admin_deleted_review_idx" ON "forum_topic" ("deleted_at" DESC NULLS LAST,"updated_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is not null;--> statement-breakpoint
+CREATE INDEX "forum_topic_admin_deleted_updated_idx" ON "forum_topic" ("updated_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is not null;--> statement-breakpoint
+CREATE INDEX "forum_topic_title_trgm_idx" ON "forum_topic" USING gin ("title" gin_trgm_ops) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_content_trgm_idx" ON "forum_topic" USING gin ("content" gin_trgm_ops) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_user_id_idx" ON "forum_user_action_log" ("user_id");--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_action_type_idx" ON "forum_user_action_log" ("action_type");--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_target_type_target_id_idx" ON "forum_user_action_log" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_ip_address_idx" ON "forum_user_action_log" ("ip_address");--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_created_at_idx" ON "forum_user_action_log" ("created_at");--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_retention_until_id_idx" ON "forum_user_action_log" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_user_created_id_idx" ON "forum_user_action_log" ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_target_created_id_idx" ON "forum_user_action_log" ("target_type","target_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "forum_user_action_log_user_id_created_at_idx" ON "forum_user_action_log" ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "check_in_config_updated_by_id_idx" ON "check_in_config" ("updated_by_id");--> statement-breakpoint
+CREATE INDEX "check_in_makeup_account_user_id_idx" ON "check_in_makeup_account" ("user_id");--> statement-breakpoint
+CREATE INDEX "check_in_makeup_fact_user_id_created_at_idx" ON "check_in_makeup_fact" ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "check_in_makeup_fact_user_period_idx" ON "check_in_makeup_fact" ("user_id","period_type","period_key");--> statement-breakpoint
+CREATE INDEX "check_in_record_reward_settlement_id_idx" ON "check_in_record" ("reward_settlement_id");--> statement-breakpoint
+CREATE INDEX "check_in_record_sign_date_idx" ON "check_in_record" ("sign_date");--> statement-breakpoint
+CREATE INDEX "check_in_streak_grant_rule_id_idx" ON "check_in_streak_grant" ("rule_id");--> statement-breakpoint
+CREATE INDEX "check_in_streak_grant_user_trigger_sign_date_idx" ON "check_in_streak_grant" ("user_id","trigger_sign_date");--> statement-breakpoint
+CREATE INDEX "check_in_streak_grant_trigger_sign_date_idx" ON "check_in_streak_grant" ("trigger_sign_date");--> statement-breakpoint
+CREATE INDEX "check_in_streak_grant_reward_settlement_id_idx" ON "check_in_streak_grant" ("reward_settlement_id");--> statement-breakpoint
+CREATE INDEX "check_in_streak_grant_reward_item_grant_id_idx" ON "check_in_streak_grant_reward_item" ("grant_id");--> statement-breakpoint
+CREATE INDEX "check_in_streak_progress_active_leaderboard_idx" ON "check_in_streak_progress" ("current_streak" DESC NULLS LAST,"last_signed_date" DESC NULLS LAST,"id") WHERE "current_streak" > 0;--> statement-breakpoint
+CREATE INDEX "check_in_streak_rule_rule_code_idx" ON "check_in_streak_rule" ("rule_code");--> statement-breakpoint
+CREATE INDEX "check_in_streak_rule_streak_days_idx" ON "check_in_streak_rule" ("streak_days");--> statement-breakpoint
+CREATE INDEX "check_in_streak_rule_status_idx" ON "check_in_streak_rule" ("status");--> statement-breakpoint
+CREATE INDEX "check_in_streak_rule_effective_from_idx" ON "check_in_streak_rule" ("effective_from");--> statement-breakpoint
+CREATE INDEX "check_in_streak_rule_effective_to_idx" ON "check_in_streak_rule" ("effective_to");--> statement-breakpoint
+CREATE INDEX "check_in_streak_rule_updated_by_id_idx" ON "check_in_streak_rule" ("updated_by_id");--> statement-breakpoint
+CREATE INDEX "check_in_streak_rule_reward_item_rule_id_idx" ON "check_in_streak_rule_reward_item" ("rule_id");--> statement-breakpoint
+CREATE INDEX "growth_audit_log_user_id_biz_key_idx" ON "growth_audit_log" ("user_id","biz_key");--> statement-breakpoint
+CREATE INDEX "growth_audit_log_asset_type_action_decision_created_at_idx" ON "growth_audit_log" ("asset_type","action","decision","created_at");--> statement-breakpoint
+CREATE INDEX "growth_audit_log_request_id_idx" ON "growth_audit_log" ("request_id");--> statement-breakpoint
+CREATE INDEX "growth_audit_log_user_created_id_idx" ON "growth_audit_log" ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "growth_audit_log_asset_type_created_id_idx" ON "growth_audit_log" ("asset_type","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "growth_audit_log_retention_until_id_idx" ON "growth_audit_log" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_user_id_asset_type_created_at_idx" ON "growth_ledger_record" ("user_id","asset_type","created_at");--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_user_id_asset_type_asset_key_created_idx" ON "growth_ledger_record" ("user_id","asset_type","asset_key","created_at");--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_wallet_user_asset_created_id_idx" ON "growth_ledger_record" ("user_id","asset_type","asset_key","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_user_created_id_idx" ON "growth_ledger_record" ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_user_asset_id_desc_idx" ON "growth_ledger_record" ("user_id","asset_type","id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_retention_until_id_idx" ON "growth_ledger_record" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_asset_type_created_id_idx" ON "growth_ledger_record" ("asset_type","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_target_type_target_id_idx" ON "growth_ledger_record" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "growth_ledger_record_rule_type_asset_type_created_at_idx" ON "growth_ledger_record" ("rule_type","asset_type","created_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "growth_reward_rule_type_asset_type_asset_key_active_key" ON "growth_reward_rule" ("type","asset_type","asset_key") WHERE "archived_at" is null;--> statement-breakpoint
+CREATE INDEX "growth_reward_rule_type_idx" ON "growth_reward_rule" ("type");--> statement-breakpoint
+CREATE INDEX "growth_reward_rule_asset_type_idx" ON "growth_reward_rule" ("asset_type");--> statement-breakpoint
+CREATE INDEX "growth_reward_rule_is_enabled_idx" ON "growth_reward_rule" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "growth_reward_rule_archived_at_idx" ON "growth_reward_rule" ("archived_at");--> statement-breakpoint
+CREATE INDEX "growth_reward_settlement_status_created_at_idx" ON "growth_reward_settlement" ("settlement_status","created_at");--> statement-breakpoint
+CREATE INDEX "growth_reward_settlement_type_status_created_at_idx" ON "growth_reward_settlement" ("settlement_type","settlement_status","created_at");--> statement-breakpoint
+CREATE INDEX "growth_reward_settlement_user_id_status_created_at_idx" ON "growth_reward_settlement" ("user_id","settlement_status","created_at");--> statement-breakpoint
+CREATE INDEX "growth_reward_settlement_source_record_id_idx" ON "growth_reward_settlement" ("source_record_id");--> statement-breakpoint
+CREATE INDEX "growth_reward_settlement_event_code_created_at_idx" ON "growth_reward_settlement" ("event_code","created_at");--> statement-breakpoint
+CREATE INDEX "growth_rule_usage_counter_user_id_asset_type_rule_key_idx" ON "growth_rule_usage_counter" ("user_id","asset_type","rule_key","updated_at");--> statement-breakpoint
+CREATE INDEX "task_definition_status_idx" ON "task_definition" ("status");--> statement-breakpoint
+CREATE INDEX "task_definition_scene_type_idx" ON "task_definition" ("scene_type");--> statement-breakpoint
+CREATE INDEX "task_definition_sort_order_idx" ON "task_definition" ("sort_order");--> statement-breakpoint
+CREATE INDEX "task_definition_created_at_idx" ON "task_definition" ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "task_definition_created_by_id_idx" ON "task_definition" ("created_by_id");--> statement-breakpoint
+CREATE INDEX "task_definition_updated_by_id_idx" ON "task_definition" ("updated_by_id");--> statement-breakpoint
+CREATE INDEX "task_definition_active_manual_lookup_idx" ON "task_definition" ("scene_type","sort_order","id") WHERE "deleted_at" is null and "status" = 1 and "claim_mode" = 2;--> statement-breakpoint
+CREATE INDEX "task_definition_start_at_idx" ON "task_definition" ("start_at");--> statement-breakpoint
+CREATE INDEX "task_definition_end_at_idx" ON "task_definition" ("end_at");--> statement-breakpoint
+CREATE INDEX "task_definition_deleted_at_idx" ON "task_definition" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "task_event_failure_status_created_at_idx" ON "task_event_failure" ("status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "task_event_failure_event_status_created_at_idx" ON "task_event_failure" ("event_key","status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "task_event_failure_event_key_biz_key_idx" ON "task_event_failure" ("event_key","event_biz_key");--> statement-breakpoint
+CREATE INDEX "task_event_failure_user_created_at_idx" ON "task_event_failure" ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "task_event_log_task_id_created_at_idx" ON "task_event_log" ("task_id","created_at");--> statement-breakpoint
+CREATE INDEX "task_event_log_step_id_idx" ON "task_event_log" ("step_id");--> statement-breakpoint
+CREATE INDEX "task_event_log_instance_id_idx" ON "task_event_log" ("instance_id");--> statement-breakpoint
+CREATE INDEX "task_event_log_instance_created_at_id_idx" ON "task_event_log" ("instance_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "task_event_log_retention_until_id_idx" ON "task_event_log" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "task_event_log_instance_latest_idx" ON "task_event_log" ("instance_id","occurred_at" DESC NULLS LAST,"created_at" DESC NULLS LAST) WHERE "instance_id" is not null;--> statement-breakpoint
+CREATE INDEX "task_event_log_instance_step_id_idx" ON "task_event_log" ("instance_step_id");--> statement-breakpoint
+CREATE INDEX "task_event_log_user_id_created_at_idx" ON "task_event_log" ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "task_event_log_event_code_created_at_idx" ON "task_event_log" ("event_code","created_at");--> statement-breakpoint
+CREATE INDEX "task_instance_user_id_status_idx" ON "task_instance" ("user_id","status");--> statement-breakpoint
+CREATE INDEX "task_instance_user_task_cycle_live_idx" ON "task_instance" ("user_id","task_id","cycle_key") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "task_instance_task_id_idx" ON "task_instance" ("task_id");--> statement-breakpoint
+CREATE INDEX "task_instance_live_task_created_idx" ON "task_instance" ("task_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "task_instance_live_created_at_idx" ON "task_instance" ("created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "task_instance_live_user_status_created_idx" ON "task_instance" ("user_id","status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "task_instance_reward_retry_scan_idx" ON "task_instance" ("status","reward_applicable","id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "task_instance_completed_at_idx" ON "task_instance" ("completed_at");--> statement-breakpoint
+CREATE INDEX "task_instance_expired_at_idx" ON "task_instance" ("expired_at");--> statement-breakpoint
+CREATE INDEX "task_instance_reward_settlement_id_idx" ON "task_instance" ("reward_settlement_id");--> statement-breakpoint
+CREATE INDEX "task_instance_deleted_at_idx" ON "task_instance" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "task_instance_step_instance_id_idx" ON "task_instance_step" ("instance_id");--> statement-breakpoint
+CREATE INDEX "task_instance_step_step_id_idx" ON "task_instance_step" ("step_id");--> statement-breakpoint
+CREATE INDEX "task_instance_step_completed_at_idx" ON "task_instance_step" ("completed_at");--> statement-breakpoint
+CREATE INDEX "task_step_task_id_idx" ON "task_step" ("task_id");--> statement-breakpoint
+CREATE INDEX "task_step_template_key_idx" ON "task_step" ("template_key");--> statement-breakpoint
+CREATE INDEX "task_step_event_code_idx" ON "task_step" ("event_code");--> statement-breakpoint
+CREATE INDEX "task_step_unique_fact_user_id_step_id_idx" ON "task_step_unique_fact" ("user_id","step_id");--> statement-breakpoint
+CREATE INDEX "task_step_unique_fact_task_id_idx" ON "task_step_unique_fact" ("task_id");--> statement-breakpoint
+CREATE INDEX "task_step_unique_fact_reconcile_summary_idx" ON "task_step_unique_fact" ("task_id","user_id","scope_key","step_id","first_occurred_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "task_step_unique_fact_first_event_biz_key_idx" ON "task_step_unique_fact" ("first_event_biz_key");--> statement-breakpoint
+CREATE INDEX "user_badge_type_idx" ON "user_badge" ("type");--> statement-breakpoint
+CREATE INDEX "user_badge_business_event_key_idx" ON "user_badge" ("business","event_key");--> statement-breakpoint
+CREATE INDEX "user_badge_sort_order_idx" ON "user_badge" ("sort_order");--> statement-breakpoint
+CREATE INDEX "user_badge_is_enabled_idx" ON "user_badge" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "user_badge_created_at_idx" ON "user_badge" ("created_at");--> statement-breakpoint
+CREATE INDEX "user_badge_assignment_badge_id_created_at_idx" ON "user_badge_assignment" ("badge_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_badge_assignment_user_id_created_at_idx" ON "user_badge_assignment" ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_badge_assignment_user_created_badge_idx" ON "user_badge_assignment" ("user_id","created_at" DESC NULLS LAST,"badge_id");--> statement-breakpoint
+CREATE INDEX "user_level_rule_is_enabled_sort_order_idx" ON "user_level_rule" ("is_enabled","sort_order");--> statement-breakpoint
+CREATE INDEX "user_level_rule_business_enabled_exp_id_idx" ON "user_level_rule" ("business","is_enabled","required_experience" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE UNIQUE INDEX "user_level_rule_enabled_business_exp_unique_idx" ON "user_level_rule" (COALESCE("business", ''),"required_experience") WHERE "is_enabled" = true;--> statement-breakpoint
+CREATE UNIQUE INDEX "user_level_rule_enabled_business_base_unique_idx" ON "user_level_rule" (COALESCE("business", '')) WHERE "is_enabled" = true and "required_experience" = 0;--> statement-breakpoint
+CREATE INDEX "admin_menu_parent_sort_idx" ON "admin_menu" ("parent_id","sort_order");--> statement-breakpoint
+CREATE INDEX "admin_menu_is_enabled_idx" ON "admin_menu" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "admin_permission_group_code_idx" ON "admin_permission" ("group_code");--> statement-breakpoint
+CREATE INDEX "admin_permission_is_enabled_idx" ON "admin_permission" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "admin_role_is_enabled_idx" ON "admin_role" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "admin_role_sort_order_idx" ON "admin_role" ("sort_order");--> statement-breakpoint
+CREATE INDEX "admin_role_menu_role_id_idx" ON "admin_role_menu" ("role_id");--> statement-breakpoint
+CREATE INDEX "admin_role_menu_menu_id_idx" ON "admin_role_menu" ("menu_id");--> statement-breakpoint
+CREATE INDEX "admin_role_permission_role_id_idx" ON "admin_role_permission" ("role_id");--> statement-breakpoint
+CREATE INDEX "admin_role_permission_permission_id_idx" ON "admin_role_permission" ("permission_id");--> statement-breakpoint
+CREATE INDEX "admin_user_role_admin_user_id_idx" ON "admin_user_role" ("admin_user_id");--> statement-breakpoint
+CREATE INDEX "admin_user_role_role_id_idx" ON "admin_user_role" ("role_id");--> statement-breakpoint
+CREATE INDEX "admin_user_is_enabled_idx" ON "admin_user" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "admin_user_created_at_idx" ON "admin_user" ("created_at");--> statement-breakpoint
+CREATE INDEX "admin_user_last_login_at_idx" ON "admin_user" ("last_login_at");--> statement-breakpoint
+CREATE INDEX "admin_user_token_user_id_idx" ON "admin_user_token" ("user_id");--> statement-breakpoint
+CREATE INDEX "admin_user_token_token_type_idx" ON "admin_user_token" ("token_type");--> statement-breakpoint
+CREATE INDEX "admin_user_token_expires_at_idx" ON "admin_user_token" ("expires_at");--> statement-breakpoint
+CREATE INDEX "admin_user_token_revoked_at_idx" ON "admin_user_token" ("revoked_at");--> statement-breakpoint
+CREATE INDEX "admin_user_token_user_id_token_type_idx" ON "admin_user_token" ("user_id","token_type");--> statement-breakpoint
+CREATE INDEX "app_user_is_enabled_idx" ON "app_user" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "app_user_gender_type_idx" ON "app_user" ("gender_type");--> statement-breakpoint
+CREATE INDEX "app_user_created_at_idx" ON "app_user" ("created_at");--> statement-breakpoint
+CREATE INDEX "app_user_last_login_at_idx" ON "app_user" ("last_login_at");--> statement-breakpoint
+CREATE INDEX "app_user_status_idx" ON "app_user" ("status");--> statement-breakpoint
+CREATE INDEX "app_user_level_id_idx" ON "app_user" ("level_id");--> statement-breakpoint
+CREATE INDEX "app_user_deleted_at_idx" ON "app_user" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "app_user_active_fanout_scan_idx" ON "app_user" ("id") WHERE "is_enabled" = true and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "app_user_active_page_id_idx" ON "app_user" ("id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "app_user_token_user_id_idx" ON "app_user_token" ("user_id");--> statement-breakpoint
+CREATE INDEX "app_user_token_token_type_idx" ON "app_user_token" ("token_type");--> statement-breakpoint
+CREATE INDEX "app_user_token_expires_at_idx" ON "app_user_token" ("expires_at");--> statement-breakpoint
+CREATE INDEX "app_user_token_revoked_at_idx" ON "app_user_token" ("revoked_at");--> statement-breakpoint
+CREATE INDEX "app_user_token_user_id_token_type_idx" ON "app_user_token" ("user_id","token_type");--> statement-breakpoint
+CREATE UNIQUE INDEX "ad_provider_config_enabled_unique_idx" ON "ad_provider_config" ("provider","platform","client_app_key","app_id","placement_key","environment","target_scope") WHERE "is_enabled" = true;--> statement-breakpoint
+CREATE INDEX "ad_provider_config_selection_idx" ON "ad_provider_config" ("provider","platform","client_app_key","app_id","placement_key","environment","target_scope","is_enabled","sort_order","id");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_user_target_status_idx" ON "ad_reward_record" ("user_id","target_scope","target_type","target_id","status");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_config_scope_status_idx" ON "ad_reward_record" ("ad_provider_config_id","target_scope","status");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_user_config_status_created_at_idx" ON "ad_reward_record" ("user_id","ad_provider_config_id","status","created_at");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_status_created_at_id_idx" ON "ad_reward_record" ("status","created_at","id");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_target_scope_status_created_at_idx" ON "ad_reward_record" ("target_scope","status","created_at");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_target_status_idx" ON "ad_reward_record" ("target_type","target_id","status");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_user_created_at_idx" ON "ad_reward_record" ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_config_created_at_idx" ON "ad_reward_record" ("ad_provider_config_id","created_at");--> statement-breakpoint
+CREATE INDEX "ad_reward_record_created_at_idx" ON "ad_reward_record" ("created_at");--> statement-breakpoint
+CREATE INDEX "emoji_asset_pack_id_sort_order_idx" ON "emoji_asset" ("pack_id","sort_order");--> statement-breakpoint
+CREATE INDEX "emoji_asset_pack_id_is_enabled_deleted_at_sort_order_idx" ON "emoji_asset" ("pack_id","is_enabled","deleted_at","sort_order");--> statement-breakpoint
+CREATE INDEX "emoji_asset_kind_idx" ON "emoji_asset" ("kind");--> statement-breakpoint
+CREATE INDEX "emoji_asset_category_idx" ON "emoji_asset" ("category");--> statement-breakpoint
+CREATE INDEX "emoji_asset_unicode_sequence_idx" ON "emoji_asset" ("unicode_sequence");--> statement-breakpoint
+CREATE INDEX "emoji_asset_deleted_at_idx" ON "emoji_asset" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "emoji_asset_created_by_id_idx" ON "emoji_asset" ("created_by_id");--> statement-breakpoint
+CREATE INDEX "emoji_asset_updated_by_id_idx" ON "emoji_asset" ("updated_by_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "emoji_asset_shortcode_live_key" ON "emoji_asset" ("shortcode") WHERE "shortcode" is not null and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "emoji_pack_is_enabled_idx" ON "emoji_pack" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "emoji_pack_sort_order_idx" ON "emoji_pack" ("sort_order");--> statement-breakpoint
+CREATE INDEX "emoji_pack_deleted_at_idx" ON "emoji_pack" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "emoji_pack_created_by_id_idx" ON "emoji_pack" ("created_by_id");--> statement-breakpoint
+CREATE INDEX "emoji_pack_updated_by_id_idx" ON "emoji_pack" ("updated_by_id");--> statement-breakpoint
+CREATE INDEX "emoji_pack_scene_type_idx" ON "emoji_pack" USING gin ("scene_type");--> statement-breakpoint
+CREATE INDEX "emoji_pack_is_enabled_deleted_at_idx" ON "emoji_pack" ("is_enabled","deleted_at");--> statement-breakpoint
+CREATE INDEX "emoji_pack_is_enabled_deleted_at_sort_order_idx" ON "emoji_pack" ("is_enabled","deleted_at","sort_order");--> statement-breakpoint
+CREATE INDEX "emoji_recent_usage_user_id_scene_last_used_at_idx" ON "emoji_recent_usage" ("user_id","scene","last_used_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "emoji_recent_usage_emoji_asset_id_idx" ON "emoji_recent_usage" ("emoji_asset_id");--> statement-breakpoint
+CREATE INDEX "user_browse_log_target_type_target_id_idx" ON "user_browse_log" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "user_browse_log_user_id_idx" ON "user_browse_log" ("user_id");--> statement-breakpoint
+CREATE INDEX "user_browse_log_viewed_at_idx" ON "user_browse_log" ("viewed_at");--> statement-breakpoint
+CREATE INDEX "user_browse_log_target_type_target_id_user_id_idx" ON "user_browse_log" ("target_type","target_id","user_id");--> statement-breakpoint
+CREATE INDEX "user_browse_log_user_id_viewed_at_idx" ON "user_browse_log" ("user_id","viewed_at");--> statement-breakpoint
+CREATE INDEX "user_browse_log_user_viewed_at_id_idx" ON "user_browse_log" ("user_id","viewed_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_browse_log_target_viewed_at_id_idx" ON "user_browse_log" ("target_type","target_id","viewed_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_browse_log_retention_until_id_idx" ON "user_browse_log" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "user_comment_target_type_target_id_created_at_idx" ON "user_comment" ("target_type","target_id","created_at");--> statement-breakpoint
+CREATE INDEX "user_comment_target_type_target_id_reply_to_id_floor_idx" ON "user_comment" ("target_type","target_id","reply_to_id","floor");--> statement-breakpoint
+CREATE INDEX "user_comment_target_root_floor_id_idx" ON "user_comment" ("target_type","target_id","floor","id") WHERE "reply_to_id" is null and "audit_status" = 1 and "is_hidden" = false and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_target_visible_created_id_idx" ON "user_comment" ("target_type","target_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "audit_status" = 1 and "is_hidden" = false and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_target_visible_like_id_idx" ON "user_comment" ("target_type","target_id","like_count" DESC NULLS LAST,"created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "audit_status" = 1 and "is_hidden" = false and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_retention_until_id_idx" ON "user_comment" ("retention_until","id");--> statement-breakpoint
+CREATE UNIQUE INDEX "user_comment_root_floor_live_key" ON "user_comment" ("target_type","target_id","floor") WHERE "reply_to_id" is null and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_target_type_target_id_audit_status_is_hidden_d_idx" ON "user_comment" ("target_type","target_id","audit_status","is_hidden","deleted_at");--> statement-breakpoint
+CREATE INDEX "user_comment_actual_reply_to_id_audit_status_is_hidden_dele_idx" ON "user_comment" ("actual_reply_to_id","audit_status","is_hidden","deleted_at","created_at");--> statement-breakpoint
+CREATE INDEX "user_comment_target_type_target_id_deleted_at_created_at_idx" ON "user_comment" ("target_type","target_id","deleted_at","created_at");--> statement-breakpoint
+CREATE INDEX "user_comment_user_id_idx" ON "user_comment" ("user_id");--> statement-breakpoint
+CREATE INDEX "user_comment_user_id_created_at_desc_idx" ON "user_comment" ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_comment_user_id_deleted_at_created_at_desc_idx" ON "user_comment" ("user_id","deleted_at","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_comment_created_at_idx" ON "user_comment" ("created_at");--> statement-breakpoint
+CREATE INDEX "user_comment_admin_live_created_id_idx" ON "user_comment" ("created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_admin_live_user_created_id_idx" ON "user_comment" ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_admin_live_audit_created_id_idx" ON "user_comment" ("audit_status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_audit_status_idx" ON "user_comment" ("audit_status");--> statement-breakpoint
+CREATE INDEX "user_comment_is_hidden_idx" ON "user_comment" ("is_hidden");--> statement-breakpoint
+CREATE INDEX "user_comment_reply_to_id_idx" ON "user_comment" ("reply_to_id");--> statement-breakpoint
+CREATE INDEX "user_comment_actual_reply_to_id_idx" ON "user_comment" ("actual_reply_to_id");--> statement-breakpoint
+CREATE INDEX "user_comment_deleted_at_idx" ON "user_comment" ("deleted_at");--> statement-breakpoint
+CREATE INDEX "user_comment_topic_delete_cascade_id_idx" ON "user_comment" ("topic_delete_cascade_id");--> statement-breakpoint
+CREATE INDEX "user_comment_forum_topic_restore_batch_idx" ON "user_comment" ("target_id","topic_delete_cascade_id","deleted_at") WHERE "target_type" = 5 and "topic_delete_cascade_id" is not null;--> statement-breakpoint
+CREATE INDEX "user_comment_body_version_idx" ON "user_comment" ("body_version");--> statement-breakpoint
+CREATE INDEX "user_comment_forum_topic_visible_latest_idx" ON "user_comment" ("target_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "target_type" = 5 and "audit_status" = 1 and "is_hidden" = false and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_forum_topic_live_user_agg_idx" ON "user_comment" ("target_id","user_id") WHERE "target_type" = 5 and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_forum_topic_content_trgm_idx" ON "user_comment" USING gin ("content" gin_trgm_ops) WHERE "target_type" = 5 and "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "user_comment_floor_counter_target_next_floor_idx" ON "user_comment_floor_counter" ("target_type","target_id","next_floor");--> statement-breakpoint
+CREATE INDEX "user_favorite_target_type_target_id_idx" ON "user_favorite" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "user_favorite_user_id_idx" ON "user_favorite" ("user_id");--> statement-breakpoint
+CREATE INDEX "user_favorite_user_id_created_at_idx" ON "user_favorite" ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "user_favorite_created_at_idx" ON "user_favorite" ("created_at");--> statement-breakpoint
+CREATE INDEX "user_follow_user_id_target_type_created_at_idx" ON "user_follow" ("user_id","target_type","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_follow_target_type_target_id_created_at_idx" ON "user_follow" ("target_type","target_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_follow_target_type_target_id_idx" ON "user_follow" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "user_like_target_type_target_id_idx" ON "user_like" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "user_like_scene_type_scene_id_idx" ON "user_like" ("scene_type","scene_id");--> statement-breakpoint
+CREATE INDEX "user_like_user_id_scene_type_created_at_idx" ON "user_like" ("user_id","scene_type","created_at");--> statement-breakpoint
+CREATE INDEX "user_like_user_id_created_at_idx" ON "user_like" ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "user_like_created_at_idx" ON "user_like" ("created_at");--> statement-breakpoint
+CREATE INDEX "user_mention_source_idx" ON "user_mention" ("source_type","source_id");--> statement-breakpoint
+CREATE INDEX "user_mention_receiver_created_at_idx" ON "user_mention" ("mentioned_user_id","created_at");--> statement-breakpoint
+CREATE INDEX "user_mention_notified_at_idx" ON "user_mention" ("notified_at");--> statement-breakpoint
+CREATE INDEX "user_report_target_type_target_id_idx" ON "user_report" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "user_report_target_created_at_id_idx" ON "user_report" ("target_type","target_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_report_scene_type_scene_id_status_idx" ON "user_report" ("scene_type","scene_id","status");--> statement-breakpoint
+CREATE INDEX "user_report_scene_type_status_created_at_idx" ON "user_report" ("scene_type","status","created_at");--> statement-breakpoint
+CREATE INDEX "user_report_reason_type_status_created_at_idx" ON "user_report" ("reason_type","status","created_at");--> statement-breakpoint
+CREATE INDEX "user_report_handler_id_status_handled_at_idx" ON "user_report" ("handler_id","status","handled_at");--> statement-breakpoint
+CREATE INDEX "user_report_status_created_at_id_idx" ON "user_report" ("status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_report_reporter_created_at_id_idx" ON "user_report" ("reporter_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_report_handler_status_created_at_id_idx" ON "user_report" ("handler_id","status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_report_disposition_status_created_at_id_idx" ON "user_report" ("target_action_status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_report_created_at_idx" ON "user_report" ("created_at");--> statement-breakpoint
+CREATE INDEX "user_report_disposition_attempt_report_created_at_idx" ON "user_report_disposition_attempt" ("report_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_report_disposition_attempt_status_created_at_idx" ON "user_report_disposition_attempt" ("attempt_status","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_report_disposition_attempt_actor_user_id_idx" ON "user_report_disposition_attempt" ("actor_user_id");--> statement-breakpoint
+CREATE INDEX "user_report_disposition_attempt_failed_latest_idx" ON "user_report_disposition_attempt" ("report_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "attempt_status" = 1 and "resolved_at" is null;--> statement-breakpoint
+CREATE INDEX "chat_conversation_last_message_at_idx" ON "chat_conversation" ("last_message_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "chat_conversation_last_message_at_id_idx" ON "chat_conversation" ("last_message_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "chat_conversation_retention_until_id_idx" ON "chat_conversation" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "chat_conversation_last_message_id_idx" ON "chat_conversation" ("last_message_id");--> statement-breakpoint
+CREATE INDEX "chat_conversation_last_sender_id_idx" ON "chat_conversation" ("last_sender_id");--> statement-breakpoint
+CREATE INDEX "chat_conversation_member_last_read_message_id_idx" ON "chat_conversation_member" ("last_read_message_id");--> statement-breakpoint
+CREATE INDEX "chat_conversation_member_user_id_joined_at_idx" ON "chat_conversation_member" ("user_id","is_pinned" DESC NULLS LAST,"joined_at","conversation_id");--> statement-breakpoint
+CREATE INDEX "chat_conversation_member_user_id_unread_count_conversation__idx" ON "chat_conversation_member" ("user_id","unread_count","conversation_id");--> statement-breakpoint
+CREATE INDEX "chat_conversation_member_active_user_idx" ON "chat_conversation_member" ("user_id","is_pinned" DESC NULLS LAST,"conversation_id") WHERE "left_at" is null and "hidden_at" is null;--> statement-breakpoint
+CREATE INDEX "chat_conversation_member_active_unread_idx" ON "chat_conversation_member" ("user_id","unread_count","conversation_id") WHERE "left_at" is null and "hidden_at" is null;--> statement-breakpoint
+CREATE INDEX "chat_conversation_member_hidden_user_idx" ON "chat_conversation_member" ("user_id","hidden_at" DESC NULLS LAST,"conversation_id") WHERE "left_at" is null and "hidden_at" is not null;--> statement-breakpoint
+CREATE INDEX "chat_message_conversation_id_created_at_idx" ON "chat_message" ("conversation_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "chat_message_conversation_created_at_id_idx" ON "chat_message" ("conversation_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "chat_message_conversation_live_seq_idx" ON "chat_message" ("conversation_id","message_seq") WHERE "status" in (1, 2);--> statement-breakpoint
+CREATE INDEX "chat_message_conversation_seq_desc_idx" ON "chat_message" ("conversation_id","message_seq" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "chat_message_retention_until_id_idx" ON "chat_message" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "chat_message_sender_id_created_at_idx" ON "chat_message" ("sender_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_status_updated_at_idx" ON "notification_delivery" ("status","updated_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_status_updated_at_id_idx" ON "notification_delivery" ("status","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_updated_at_id_idx" ON "notification_delivery" ("updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_event_key_updated_at_idx" ON "notification_delivery" ("event_key","updated_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_receiver_user_id_updated_at_idx" ON "notification_delivery" ("receiver_user_id","updated_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_receiver_updated_at_id_idx" ON "notification_delivery" ("receiver_user_id","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_receiver_created_at_id_idx" ON "notification_delivery" ("receiver_user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_retention_until_id_idx" ON "notification_delivery" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "notification_delivery_projection_key_idx" ON "notification_delivery" ("projection_key");--> statement-breakpoint
+CREATE INDEX "notification_delivery_notification_id_idx" ON "notification_delivery" ("notification_id");--> statement-breakpoint
+CREATE INDEX "notification_delivery_category_key_status_updated_at_idx" ON "notification_delivery" ("category_key","status","updated_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_category_status_updated_at_id_idx" ON "notification_delivery" ("category_key","status","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_event_category_status_updated_id_idx" ON "notification_delivery" ("event_key","category_key","status","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_task_lookup_idx" ON "notification_delivery" ("category_key","task_id","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_assignment_kind_idx" ON "notification_delivery" ("category_key","assignment_id","reminder_kind","id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_delivery_kind_status_assignment_idx" ON "notification_delivery" ("category_key","reminder_kind","status","assignment_id");--> statement-breakpoint
+CREATE INDEX "notification_delivery_event_id_idx" ON "notification_delivery" ("event_id");--> statement-breakpoint
+CREATE INDEX "notification_preference_user_id_idx" ON "notification_preference" ("user_id");--> statement-breakpoint
+CREATE INDEX "notification_preference_user_id_is_enabled_idx" ON "notification_preference" ("user_id","is_enabled");--> statement-breakpoint
+CREATE INDEX "notification_template_is_enabled_idx" ON "notification_template" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "notification_template_updated_at_idx" ON "notification_template" ("updated_at");--> statement-breakpoint
+CREATE INDEX "notification_template_enabled_updated_at_id_idx" ON "notification_template" ("is_enabled","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "notification_template_category_updated_at_id_idx" ON "notification_template" ("category_key","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_notification_receiver_user_id_is_read_created_at_idx" ON "user_notification" ("receiver_user_id","is_hidden","is_read","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_notification_receiver_user_id_category_key_created_at_idx" ON "user_notification" ("receiver_user_id","is_hidden","category_key","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_notification_receiver_user_id_created_at_idx" ON "user_notification" ("receiver_user_id","is_hidden","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_notification_receiver_read_category_created_id_idx" ON "user_notification" ("receiver_user_id","is_hidden","is_read","category_key","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_notification_receiver_created_at_id_idx" ON "user_notification" ("receiver_user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "user_notification_retention_until_id_idx" ON "user_notification" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "user_notification_receiver_user_id_expires_at_idx" ON "user_notification" ("receiver_user_id","expires_at");--> statement-breakpoint
+CREATE INDEX "user_notification_category_announcement_receiver_idx" ON "user_notification" ("category_key","announcement_id","receiver_user_id");--> statement-breakpoint
+CREATE INDEX "user_notification_actor_user_id_idx" ON "user_notification" ("actor_user_id");--> statement-breakpoint
+CREATE INDEX "sensitive_word_type_idx" ON "sensitive_word" ("type");--> statement-breakpoint
+CREATE INDEX "sensitive_word_level_idx" ON "sensitive_word" ("level");--> statement-breakpoint
+CREATE INDEX "sensitive_word_is_enabled_idx" ON "sensitive_word" ("is_enabled");--> statement-breakpoint
+CREATE INDEX "sensitive_word_match_mode_idx" ON "sensitive_word" ("match_mode");--> statement-breakpoint
+CREATE INDEX "sensitive_word_created_at_idx" ON "sensitive_word" ("created_at");--> statement-breakpoint
+CREATE INDEX "sensitive_word_hit_count_desc_idx" ON "sensitive_word" ("hit_count" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sensitive_word_last_hit_at_desc_idx" ON "sensitive_word" ("last_hit_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sensitive_word_hit_log_sensitive_word_id_created_at_idx" ON "sensitive_word_hit_log" ("sensitive_word_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sensitive_word_hit_log_entity_type_entity_id_created_at_idx" ON "sensitive_word_hit_log" ("entity_type","entity_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sensitive_word_hit_log_created_at_id_desc_idx" ON "sensitive_word_hit_log" ("created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sensitive_word_hit_log_level_created_at_id_idx" ON "sensitive_word_hit_log" ("level","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sensitive_word_hit_log_type_created_at_id_idx" ON "sensitive_word_hit_log" ("type","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sensitive_word_hit_log_created_at_idx" ON "sensitive_word_hit_log" ("created_at");--> statement-breakpoint
+CREATE INDEX "sensitive_word_hit_log_retention_until_id_idx" ON "sensitive_word_hit_log" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "sys_request_log_created_at_idx" ON "sys_request_log" ("created_at");--> statement-breakpoint
+CREATE INDEX "sys_request_log_created_at_id_idx" ON "sys_request_log" ("created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sys_request_log_retention_until_id_idx" ON "sys_request_log" ("retention_until","id");--> statement-breakpoint
+CREATE INDEX "sys_request_log_api_action_created_id_idx" ON "sys_request_log" ("api_type","action_type","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sys_request_log_api_action_id_idx" ON "sys_request_log" ("api_type","action_type","id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sys_request_log_user_created_id_idx" ON "sys_request_log" ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sys_request_log_success_created_id_idx" ON "sys_request_log" ("is_success","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "sys_request_log_user_id_idx" ON "sys_request_log" ("user_id");--> statement-breakpoint
+CREATE INDEX "sys_request_log_username_idx" ON "sys_request_log" ("username");--> statement-breakpoint
+CREATE INDEX "sys_request_log_is_success_idx" ON "sys_request_log" ("is_success");--> statement-breakpoint
+CREATE INDEX "workflow_attempt_status_created_at_id_idx" ON "workflow_attempt" ("status","created_at","id");--> statement-breakpoint
+CREATE INDEX "workflow_attempt_status_not_before_created_at_id_idx" ON "workflow_attempt" ("status","not_before_at","created_at","id");--> statement-breakpoint
+CREATE INDEX "workflow_attempt_status_claim_expires_at_idx" ON "workflow_attempt" ("status","claim_expires_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "workflow_conflict_key_workflow_type_active_key_uidx" ON "workflow_conflict_key" ("workflow_type","conflict_key") WHERE "released_at" is null;--> statement-breakpoint
+CREATE INDEX "workflow_conflict_key_job_id_idx" ON "workflow_conflict_key" ("workflow_job_id");--> statement-breakpoint
+CREATE INDEX "workflow_conflict_key_workflow_type_key_idx" ON "workflow_conflict_key" ("workflow_type","conflict_key");--> statement-breakpoint
+CREATE INDEX "workflow_conflict_key_released_created_at_idx" ON "workflow_conflict_key" ("released_at","created_at");--> statement-breakpoint
+CREATE INDEX "workflow_event_job_created_at_id_idx" ON "workflow_event" ("workflow_job_id","created_at","id");--> statement-breakpoint
+CREATE INDEX "workflow_event_attempt_created_at_id_idx" ON "workflow_event" ("workflow_attempt_id","created_at","id");--> statement-breakpoint
+CREATE INDEX "workflow_event_notification_created_at_id_idx" ON "workflow_event" ("created_at","id") WHERE "event_type" in (8, 10);--> statement-breakpoint
+CREATE INDEX "workflow_job_workflow_type_status_updated_at_id_idx" ON "workflow_job" ("workflow_type","status","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "workflow_job_status_updated_at_id_idx" ON "workflow_job" ("status","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "workflow_job_operator_updated_at_id_idx" ON "workflow_job" ("operator_type","operator_user_id","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "workflow_job_status_created_at_id_idx" ON "workflow_job" ("status","created_at","id");--> statement-breakpoint
+CREATE INDEX "workflow_job_archived_updated_at_id_idx" ON "workflow_job" ("archived_at","updated_at" DESC NULLS LAST,"id" DESC NULLS LAST);
+--> statement-breakpoint
+COMMENT ON TABLE "public"."ad_provider_config" IS E'广告 provider 配置表。\n支持穿山甲和腾讯优量汇广告位的 admin 自配置。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."provider" IS E'广告 provider（1=穿山甲；2=腾讯优量汇）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."platform" IS E'客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."environment" IS E'运行环境（1=沙箱；2=正式）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."client_app_key" IS E'客户端应用键，同一部署内区分多应用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."app_id" IS E'provider 应用 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."placement_key" IS E'广告位 key。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."target_scope" IS E'目标范围（1=低价章节；2=新用户冷启动；3=运营白名单）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."daily_limit" IS E'每日次数上限，0=不限制。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."config_version" IS E'配置版本，配置更新时单调递增。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."credential_version_ref" IS E'SSV 密钥版本引用，不存明文密钥。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."callback_url" IS E'回调地址。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."config_metadata" IS E'配置摘要快照，存放安全指纹等非明文信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_provider_config"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."ad_reward_record" IS E'广告奖励记录表。\n广告只写临时内容权益，不进入购买记录和购买计数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."ad_provider_config_id" IS E'广告 provider 配置 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."ad_provider_config_version" IS E'下发奖励时配置版本快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."credential_version_ref" IS E'密钥版本引用快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."provider_reward_id" IS E'广告 provider 奖励唯一 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."placement_key" IS E'广告位 key。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."target_scope" IS E'目标范围快照（1=低价章节；2=新用户冷启动；3=运营白名单）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."target_type" IS E'目标类型（1=漫画章节；2=小说章节）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."target_id" IS E'目标 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."status" IS E'奖励状态（1=成功；2=失败；3=已撤销）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."client_context" IS E'客户端上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."raw_notify_payload" IS E'原始通知 payload。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."verify_payload" IS E'验证结果 payload。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."ad_reward_record"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_menu" IS E'管理端菜单。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."id" IS E'主键id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."code" IS E'菜单编码';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."parent_id" IS E'父级菜单id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."type" IS E'菜单类型（1=目录，2=菜单）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."title" IS E'菜单标题';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."path" IS E'路由路径';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."name" IS E'路由名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."component" IS E'前端组件键';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."redirect" IS E'重定向路径';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."icon" IS E'图标';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."sort_order" IS E'排序值';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."is_visible" IS E'是否显示';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."keep_alive" IS E'是否缓存页面';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."external_link" IS E'外链地址';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_menu"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_permission" IS E'管理端接口权限。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."id" IS E'主键id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."code" IS E'权限编码，由后端代码装饰器定义';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."name" IS E'权限名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."group_code" IS E'权限分组编码';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."description" IS E'权限说明';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."source" IS E'权限来源（1=后端接口装饰器同步）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_permission"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_rbac_revision" IS E'管理端 RBAC 全局版本。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_rbac_revision"."code" IS E'单例编码';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_rbac_revision"."revision" IS E'当前权限版本';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_rbac_revision"."menu_seeded_at" IS E'默认菜单完成首次种子的时间；菜单配置之后由后台配置权威维护。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_rbac_revision"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_role" IS E'管理端角色。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."id" IS E'主键id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."code" IS E'角色编码';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."name" IS E'角色名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."description" IS E'角色说明';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."is_system" IS E'是否系统内置角色';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."sort_order" IS E'排序值';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_role_menu" IS E'管理端角色菜单关系。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role_menu"."role_id" IS E'角色id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role_menu"."menu_id" IS E'菜单id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role_menu"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_role_permission" IS E'管理端角色权限关系。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role_permission"."role_id" IS E'角色id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role_permission"."permission_id" IS E'权限id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_role_permission"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_user" IS E'管理端用户';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."id" IS E'主键id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."username" IS E'账号';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."password" IS E'密码';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."mobile" IS E'手机号码；为空表示未绑定，非空时在管理端账号内必须唯一';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."avatar" IS E'头像';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."is_enabled" IS E'是否启用账号';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."last_login_at" IS E'最后登录时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."last_login_ip" IS E'最后登录IP';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_user_role" IS E'管理端用户角色关系。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_role"."admin_user_id" IS E'管理员用户id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_role"."role_id" IS E'角色id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_role"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."admin_user_token" IS E'管理端用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."id" IS E'令牌ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."jti" IS E'JWT Token ID（唯一标识，用于黑名单和撤销）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."user_id" IS E'用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."token_type" IS E'令牌类型（1=访问令牌，2=刷新令牌）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."expires_at" IS E'令牌过期时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."revoked_at" IS E'令牌撤销时间（null表示未撤销）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."revoke_reason" IS E'撤销原因（1=密码修改后强制下线，2=刷新令牌轮换，3=用户主动退出登录，4=管理员强制下线，5=安全风控撤销，6=令牌自然过期）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."device_info" IS E'设备信息（JSON格式，包含设备类型、操作系统、浏览器等）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."ip_address" IS E'IP地址';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."user_agent" IS E'用户代理';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."geo_country" IS E'登录态创建时解析到的国家/地区\n仅记录新写入 token 的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."geo_province" IS E'登录态创建时解析到的省份/州\n仅记录新写入 token 的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."geo_city" IS E'登录态创建时解析到的城市\n仅记录新写入 token 的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."geo_isp" IS E'登录态创建时解析到的网络运营商\n仅记录新写入 token 的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."geo_source" IS E'属地解析来源\n当前固定为 ip2region；历史记录或未补齐属地快照时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."admin_user_token"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_agreement" IS E'应用协议表 - 存储隐私政策、用户协议等';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."title" IS E'协议标题';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."content" IS E'协议内容 (HTML/Markdown)';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."version" IS E'版本号 (如 1.0.0, 20231027)';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."is_force" IS E'是否强制重新同意 (用于重大更新，true则用户必须再次点击同意)';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."show_in_auth" IS E'是否展示在登录注册页 (true:展示, false:不展示)';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."is_published" IS E'是否已发布';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."published_at" IS E'发布时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_agreement_log" IS E'应用协议签署记录表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement_log"."id" IS E'主键ID (使用BigInt防止记录过多)';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement_log"."user_id" IS E'用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement_log"."agreement_id" IS E'协议ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement_log"."version" IS E'签署时的协议版本快照';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement_log"."agreed_at" IS E'签署时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement_log"."ip_address" IS E'签署IP';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_agreement_log"."device_info" IS E'设备信息/UserAgent';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_announcement" IS E'系统公告表 - 存储平台公告、活动公告、维护公告等信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."page_id" IS E'关联的页面ID（可选）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."title" IS E'公告标题';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."content" IS E'公告内容';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."summary" IS E'公告摘要';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."announcement_type" IS E'公告类型（0=平台公告, 1=活动公告, 2=维护公告, 3=更新公告, 4=政策公告）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."priority_level" IS E'优先级（0=低优先级，1=中优先级，2=高优先级，3=紧急）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."is_published" IS E'是否已发布';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."is_realtime" IS E'是否实时公告，开启后在发布窗口内同步到消息中心';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."is_pinned" IS E'是否置顶';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."show_as_popup" IS E'是否以弹窗形式显示';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."popup_background_image" IS E'弹窗背景图片URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."popup_background_position" IS E'弹窗背景图片位置（CSS background-position 值，支持多方位定位）\n默认值为 center（居中）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."enable_platform" IS E'启用的平台列表（1=H5, 2=App, 3=小程序；默认值为全部平台）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."publish_start_time" IS E'发布开始时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."publish_end_time" IS E'发布结束时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."notification_start_boundary_at" IS E'最近已入队的消息中心开始边界时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."notification_end_boundary_at" IS E'最近已入队的消息中心结束边界时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."notification_fanout_task_id" IS E'当前消息中心扇出任务 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."notification_fanout_desired_event_key" IS E'当前消息中心扇出目标事件键';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."notification_fanout_status" IS E'当前消息中心扇出任务状态（0=待处理，1=处理中，2=成功，3=失败）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."notification_fanout_last_error" IS E'当前消息中心扇出错误信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."notification_fanout_updated_at" IS E'当前消息中心扇出更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."view_count" IS E'浏览次数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_announcement_notification_fanout_task" IS E'公告通知扇出任务表。\n用于记录公告消息中心通知的扇出进度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."announcement_id" IS E'公告 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."desired_event_key" IS E'目标事件键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."event_boundary_key" IS E'生命周期边界键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."fanout_key" IS E'扇出任务幂等键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."status" IS E'任务状态（0=待处理，1=处理中，2=成功，3=失败）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."attempt_count" IS E'处理尝试次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."cursor_user_id" IS E'当前游标用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."last_error" IS E'最近一次错误信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."started_at" IS E'开始处理时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."processing_lease_expires_at" IS E'处理租约过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."next_attempt_at" IS E'下次允许重试时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."finished_at" IS E'完成处理时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_notification_fanout_task"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_announcement_read" IS E'系统公告阅读记录表 - 记录用户已读的公告';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_read"."announcement_id" IS E'关联的公告ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_read"."user_id" IS E'关联的用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_read"."read_at" IS E'阅读时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_announcement_view" IS E'系统公告浏览记录表。\n用于按用户去重公告浏览次数，避免接口重试或刷新重复累加。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_view"."announcement_id" IS E'关联的公告 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_view"."user_id" IS E'浏览用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_announcement_view"."viewed_at" IS E'首次浏览时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_config" IS E'应用配置表 - 存储应用的基础配置信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."config_key" IS E'固定配置键。\n- 全局配置只允许 `global` 一行，避免靠“最新一条”约定维持单例。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."app_name" IS E'应用名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."app_desc" IS E'应用描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."app_logo" IS E'应用Logo URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."onboarding_image" IS E'引导页图片 URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."theme_color" IS E'主题色';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."secondary_color" IS E'第二主题色';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."optional_theme_colors" IS E'可选的主题色';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."enable_maintenance_mode" IS E'是否启用维护模式';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."maintenance_message" IS E'维护模式提示信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."version" IS E'配置版本号';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."updated_by_id" IS E'最后修改人ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_config"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_page" IS E'应用页面表 - 管理应用内的页面配置和路由';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."code" IS E'页面代码（唯一标识）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."path" IS E'页面路径（唯一）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."name" IS E'页面名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."title" IS E'页面标题';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."description" IS E'页面描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."access_level" IS E'访问级别（0=游客, 1=登录, 2=会员, 3=高级会员）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."enable_platform" IS E'启用的平台列表（1=H5, 2=App, 3=小程序；默认值为全部平台）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_page"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_update_release" IS E'App 更新发布表。\n每个平台维护多条历史版本，只有一条可处于发布态。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."platform" IS E'发布平台（1=苹果端，2=安卓端）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."version_name" IS E'展示版本号。\n用于后台管理与客户端提示。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."build_code" IS E'内部构建号。\n用于客户端更新比较，必须为正整数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."release_notes" IS E'更新说明。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."force_update" IS E'是否强制更新。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."package_source_type" IS E'安装包来源类型（1=后台上传，2=外部下载地址，3=外部中间页）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."package_url" IS E'安装包地址。\nupload 模式下可为本地 `/files/...` 或 CDN 绝对地址；\nurl / custom 模式下为外部下载地址或中转页地址。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."package_original_name" IS E'上传安装包原始文件名。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."package_file_size" IS E'上传安装包大小（字节）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."package_mime_type" IS E'上传安装包 MIME 类型。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."popup_background_image" IS E'更新弹窗背景图地址。\n仅在客户端需要展示品牌化更新弹窗时使用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."popup_background_position" IS E'更新弹窗背景图位置。\n直接复用 CSS `background-position` 语义。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."is_published" IS E'是否已发布。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."published_at" IS E'发布时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."created_by_id" IS E'创建人 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."updated_by_id" IS E'更新人 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_update_release"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_user" IS E'应用用户表\n存储应用端用户信息及其关联关系';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."id" IS E'用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."account" IS E'账号（唯一）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."phone_number" IS E'手机号（唯一）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."email_address" IS E'邮箱（唯一）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."level_id" IS E'等级ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."nickname" IS E'昵称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."password" IS E'密码（加密存储）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."avatar_url" IS E'头像URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."profile_background_image_url" IS E'个人主页背景图片URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."signature" IS E'个性签名';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."bio" IS E'个人简介';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."gender_type" IS E'性别（0=未知，1=男性，2=女性，3=其他，4=保密）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."birth_date" IS E'出生日期';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."status" IS E'用户状态（1=正常，2=禁言，3=永久禁言，4=封禁，5=永久封禁）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."ban_reason" IS E'封禁原因';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."ban_until" IS E'封禁到期时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."last_login_at" IS E'最后登录时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."last_login_ip" IS E'最后登录IP';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."last_login_geo_country" IS E'最后登录IP归属国家/地区';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."last_login_geo_province" IS E'最后登录IP归属省份';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."last_login_geo_city" IS E'最后登录IP归属城市';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."last_login_geo_isp" IS E'最后登录IP归属运营商';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user"."deleted_at" IS E'删除时间（软删除）';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_user_count" IS E'应用用户计数表\n承载高频读取的用户聚合读模型字段';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."user_id" IS E'用户 ID，同时作为一对一主键';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."comment_count" IS E'发出的评论总数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."like_count" IS E'发出的点赞总数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."favorite_count" IS E'发出的收藏总数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."following_user_count" IS E'关注用户总数\n基于 user_follow 事实表中 targetType=1 的记录可重建';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."following_author_count" IS E'关注作者总数\n基于 user_follow 事实表中 targetType=2 的记录可重建';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."following_section_count" IS E'关注论坛板块总数\n基于 user_follow 事实表中 targetType=3 的记录可重建';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."following_hashtag_count" IS E'关注论坛话题总数\n基于 user_follow 事实表中 targetType=4 的记录可重建';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."followers_count" IS E'被关注总数\n当前仅统计其他用户对本用户的关注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."forum_topic_count" IS E'发布的论坛主题总数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."comment_received_like_count" IS E'评论收到的点赞总数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."forum_topic_received_like_count" IS E'论坛主题收到的点赞总数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."forum_topic_received_favorite_count" IS E'论坛主题收到的收藏总数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_count"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."app_user_token" IS E'应用用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."id" IS E'令牌ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."jti" IS E'JWT Token ID（唯一标识，用于黑名单和撤销）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."user_id" IS E'用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."token_type" IS E'令牌类型（1=访问令牌，2=刷新令牌）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."expires_at" IS E'令牌过期时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."revoked_at" IS E'令牌撤销时间（null表示未撤销）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."revoke_reason" IS E'撤销原因（1=密码修改后强制下线，2=刷新令牌轮换，3=用户主动退出登录，4=管理员强制下线，5=安全风控撤销，6=令牌自然过期）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."device_info" IS E'设备信息（JSON格式，包含设备类型、操作系统、浏览器等）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."ip_address" IS E'IP地址';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."user_agent" IS E'用户代理';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."geo_country" IS E'登录态创建时解析到的国家/地区\n仅记录新写入 token 的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."geo_province" IS E'登录态创建时解析到的省份/州\n仅记录新写入 token 的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."geo_city" IS E'登录态创建时解析到的城市\n仅记录新写入 token 的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."geo_isp" IS E'登录态创建时解析到的网络运营商\n仅记录新写入 token 的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."geo_source" IS E'属地解析来源\n当前固定为 ip2region；历史记录或未补齐属地快照时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."app_user_token"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."chat_conversation" IS E'聊天会话表（仅私聊）。\n主要承载会话级快照字段，供会话列表与消息中心快速读取。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."biz_key" IS E'业务键（direct:{minUserId}:{maxUserId}）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."last_message_id" IS E'最后一条消息ID（快照字段）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."last_message_at" IS E'最后一条消息时间（快照字段）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."last_sender_id" IS E'最后发言人ID（快照字段）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."has_messages" IS E'是否曾经成功发送过消息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."retention_until" IS E'保留截止时间；仅隐藏且无保留消息的会话可进入清理窗口。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."chat_conversation_member" IS E'聊天会话成员表（仅私聊）。\n读路径高度依赖“活跃成员（leftAt is null）”语义，因此活跃成员查询必须有独立索引支撑。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."conversation_id" IS E'会话ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."user_id" IS E'用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."role" IS E'成员角色（1=会话所有者,2=普通成员）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."joined_at" IS E'加入时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."left_at" IS E'离开时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."hidden_at" IS E'隐藏时间（用户维度列表隐藏，不代表退出会话）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."is_muted" IS E'是否静音';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."is_pinned" IS E'是否置顶';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."last_read_message_id" IS E'最后已读消息ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."last_read_at" IS E'最后已读时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_conversation_member"."unread_count" IS E'未读数缓存';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."chat_message" IS E'聊天消息表（仅私聊）。\n同时承担消息回放、游标分页与会话快照更新的事实源职责。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."conversation_id" IS E'会话ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."message_seq" IS E'会话内递增序号';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."sender_id" IS E'发送用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."client_message_id" IS E'客户端幂等键（同发送者同会话下唯一）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."message_type" IS E'消息类型（1=文本,2=图片,3=语音,4=视频,99=系统）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."content" IS E'文本内容';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."body_tokens" IS E'正文解析 token 缓存\n持久化 EmojiParser 输出，供消息渲染与回放使用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."payload" IS E'扩展载荷';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."status" IS E'消息状态（1=正常,2=撤回,3=删除）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."edited_at" IS E'编辑时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."revoked_at" IS E'撤回时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."retention_until" IS E'保留截止时间；未读、法务保留或仍需展示的消息必须由清理任务排除。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."chat_message"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_config" IS E'全局签到配置。\n\n当前签到域只允许存在一套全局配置，不再保留多计划和未来生效时间窗语义。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."id" IS E'全局签到配置主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."config_key" IS E'固定配置键；全局签到配置只允许 `global` 一行。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."is_enabled" IS E'是否启用签到功能（0=关闭，1=启用）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."makeup_period_type" IS E'补签周期类型（1=按自然周，2=按自然月）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."periodic_allowance" IS E'每周期系统发放的补签额度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."makeup_icon_url" IS E'补签图标 URL。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."reward_overview_icon_url" IS E'基础奖励日历汇总图标 URL。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."base_reward_items" IS E'默认基础奖励项；reward item 允许携带签到域专属图标元数据。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."date_reward_rules" IS E'具体日期奖励规则列表；每条规则允许独立配置奖励概览图标。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."pattern_reward_rules" IS E'周期模式奖励规则列表；每条规则允许独立配置奖励概览图标。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."updated_by_id" IS E'最近更新人 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."created_at" IS E'配置创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_config"."updated_at" IS E'配置更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_makeup_account" IS E'补签额度账户。\n\n作为补签资格判断和高频读取的唯一 owner，按当前周期 bucket 保存系统额度，\n并与活动补签卡余额同表维护。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."id" IS E'补签账户主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."user_id" IS E'归属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."period_type" IS E'当前周期类型（1=按自然周，2=按自然月）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."period_key" IS E'当前周期键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."periodic_granted" IS E'当前周期系统发放额度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."periodic_used" IS E'当前周期已消费系统额度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."event_available" IS E'当前活动补签卡可用额度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."version" IS E'乐观锁版本。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."last_synced_fact_id" IS E'最近同步的事实 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."created_at" IS E'账户创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_account"."updated_at" IS E'账户更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_makeup_fact" IS E'补签额度事实账本。\n\n统一记录补签额度的发放、消费和过期，作为补签额度的唯一事实来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."id" IS E'补签事实主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."user_id" IS E'归属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."fact_type" IS E'事实类型（1=发放，2=消费，3=过期）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."source_type" IS E'来源类型（1=周期额度，2=活动补签卡，3=管理员调整）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."amount" IS E'本次发放额度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."consumed_amount" IS E'本次消费额度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."effective_at" IS E'生效时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."expires_at" IS E'失效时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."period_type" IS E'周期类型（1=按自然周，2=按自然月）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."period_key" IS E'周期键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."source_ref" IS E'关联业务来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."biz_key" IS E'幂等业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."context" IS E'扩展上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_makeup_fact"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_record" IS E'每日签到事实。\n\n同一用户在同一自然日只能拥有一条签到事实。奖励配置在写入时直接冻结到\n`resolvedRewardItems` 和相关图标快照字段，后续配置更新不回溯影响历史事实。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."id" IS E'签到记录主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."user_id" IS E'记录归属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."sign_date" IS E'签到自然日。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."record_type" IS E'签到类型（1=正常签到，2=补签）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."resolved_reward_source_type" IS E'本次基础奖励解析来源（1=默认基础奖励，2=具体日期奖励，3=周期模式奖励）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."resolved_reward_rule_key" IS E'本次基础奖励命中的规则键。\n\n`null` 表示默认基础奖励；日期/模式奖励分别使用稳定字符串键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."resolved_reward_items" IS E'本次基础奖励解析结果快照；签到奖励项允许携带图标元数据。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."resolved_reward_overview_icon_url" IS E'本次基础奖励概览图标快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."resolved_makeup_icon_url" IS E'本次补签图标快照；普通签到时为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."reward_settlement_id" IS E'关联的奖励结算事实 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."biz_key" IS E'业务幂等键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."operator_type" IS E'操作来源类型（1=用户主动操作，2=管理员补偿或修复，3=系统任务补偿）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."remark" IS E'备注。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."context" IS E'签到扩展上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."created_at" IS E'签到事实创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_record"."updated_at" IS E'签到记录最近更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_streak_grant" IS E'连续签到奖励发放事实。\n\n统一记录单一连续签到模型下的奖励发放头信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."id" IS E'发放事实主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."user_id" IS E'发放归属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."rule_id" IS E'归属规则 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."rule_code" IS E'命中的规则编码快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."streak_days" IS E'命中的连续签到阈值快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."repeatable" IS E'是否允许重复发放。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."reward_overview_icon_url" IS E'连续奖励概览图标快照 URL。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."trigger_sign_date" IS E'触发本次奖励的签到日期。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."reward_settlement_id" IS E'关联的奖励结算记录 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."biz_key" IS E'幂等业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."context" IS E'扩展上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant"."updated_at" IS E'最近更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_streak_grant_reward_item" IS E'连续签到奖励发放快照奖励项。\n\n一条 grant 下的每个奖励项单独持久化，避免继续使用 JSON snapshot。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant_reward_item"."id" IS E'奖励项主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant_reward_item"."grant_id" IS E'所属发放记录 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant_reward_item"."asset_type" IS E'奖励资产类型（1=积分；2=经验）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant_reward_item"."asset_key" IS E'奖励资产键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant_reward_item"."amount" IS E'奖励数量。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant_reward_item"."icon_url" IS E'连续奖励项图标 URL。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_grant_reward_item"."sort_order" IS E'排序值。0=默认顺序。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_streak_progress" IS E'连续签到用户进度。\n\n运行时只记录用户当前连续状态，不再区分日常与活动两套进度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_progress"."id" IS E'进度主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_progress"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_progress"."current_streak" IS E'当前连续签到天数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_progress"."streak_started_at" IS E'当前连续区间开始日期。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_progress"."last_signed_date" IS E'最近一次有效签到日期。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_progress"."version" IS E'乐观锁版本号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_progress"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_progress"."updated_at" IS E'最近更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_streak_rule" IS E'连续签到按天规则。\n\n每条记录独立维护某个连续签到天阈值的生命周期与奖励定义。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."id" IS E'规则主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."rule_code" IS E'规则稳定编码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."streak_days" IS E'连续签到天数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."version" IS E'规则版本号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."status" IS E'生命周期状态（0=草稿；1=已排期；2=生效中；3=已过期；4=已终止）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."publish_strategy" IS E'发布策略（1=立即生效；2=次日生效；3=指定时间生效）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."effective_from" IS E'生效开始时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."effective_to" IS E'生效结束时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."repeatable" IS E'是否允许重复发放。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."reward_overview_icon_url" IS E'连续奖励概览图标 URL。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."updated_by_id" IS E'最近更新人 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule"."updated_at" IS E'最近更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."check_in_streak_rule_reward_item" IS E'连续签到规则奖励项。\n\n一条奖励项一条记录，按 `sortOrder` 保持展示顺序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule_reward_item"."id" IS E'奖励项主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule_reward_item"."rule_id" IS E'所属规则 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule_reward_item"."asset_type" IS E'奖励资产类型（1=积分；2=经验）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule_reward_item"."asset_key" IS E'奖励资产键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule_reward_item"."amount" IS E'奖励数量。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule_reward_item"."icon_url" IS E'连续奖励项图标 URL。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."check_in_streak_rule_reward_item"."sort_order" IS E'排序值。0=默认顺序。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."content_import_item" IS E'内容导入正式条目表。\n漫画场景以章节为原子导入与重试单位。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."item_id" IS E'对外暴露的条目 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."content_import_job_id" IS E'内容导入任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."item_type" IS E'条目类型（1=漫画章节）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."provider_chapter_id" IS E'三方章节 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."target_chapter_id" IS E'目标章节 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."local_chapter_id" IS E'本地章节 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."title" IS E'展示标题。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."sort_order" IS E'排序值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."status" IS E'条目状态（1=待处理，2=处理中，3=成功，4=失败，5=重试中，6=已跳过）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."stage" IS E'当前阶段（1=预览中，2=读取来源，3=准备元数据，4=读取内容，5=导入图片，6=写入内容，7=清理残留，8=已完成）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."failure_count" IS E'失败次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_error_code" IS E'最近错误码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_error_domain" IS E'最近错误领域。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_error_stage" IS E'最近错误阶段。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_error_severity" IS E'最近错误严重级别。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_error_retryable" IS E'最近错误是否可重试。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_error_context" IS E'最近错误事实。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_error_diagnostic" IS E'最近错误内部诊断。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_failed_at" IS E'最近失败时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."next_retry_at" IS E'自动重试下次可执行时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."auto_retry_count" IS E'已安排自动重试次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."max_auto_retries" IS E'最大自动重试次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_retry_code" IS E'最近自动重试错误码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_retry_context" IS E'最近自动重试事实。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."last_retry_diagnostic" IS E'最近自动重试内部诊断。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."image_total" IS E'图片总数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."image_success_count" IS E'图片成功数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."current_attempt_no" IS E'当前 attempt 序号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."metadata" IS E'条目元数据。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."content_import_item_attempt" IS E'内容导入条目 attempt 表。\n记录每个章节条目在每个工作流 attempt 中的执行结果。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."item_attempt_id" IS E'对外暴露的条目 attempt ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."workflow_attempt_id" IS E'工作流 attempt 内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."content_import_item_id" IS E'内容导入条目内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."attempt_no" IS E'工作流 attempt 序号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."status" IS E'条目 attempt 状态（1=待处理，2=处理中，3=成功，4=失败，5=已跳过，6=已安排自动重试）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."stage" IS E'当前阶段（1=预览中，2=读取来源，3=准备元数据，4=读取内容，5=导入图片，6=写入内容，7=清理残留，8=已完成）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."image_total" IS E'图片总数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."image_success_count" IS E'图片成功数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."error_code" IS E'错误码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."error_domain" IS E'错误领域。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."error_stage" IS E'错误阶段。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."error_severity" IS E'错误严重级别。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."error_retryable" IS E'错误是否可重试。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."error_context" IS E'可公开给前端表达层使用的错误事实。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."error_diagnostic" IS E'内部诊断信息，不作为前端表达来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."started_at" IS E'开始处理时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."finished_at" IS E'完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_item_attempt"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."content_import_job" IS E'内容导入工作流领域任务表。\n通过 workflowJobId 关联通用工作流任务，不重复存储公开 jobId。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."workflow_job_id" IS E'归属工作流任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."content_type" IS E'内容类型（1=漫画）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."source_type" IS E'来源类型（1=三方导入，2=三方同步，3=压缩包导入）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."work_id" IS E'本地作品 ID；新建作品导入前可为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."platform" IS E'三方平台代码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."provider_comic_id" IS E'三方漫画 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."provider_path_word" IS E'三方漫画路径标识。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."provider_group_path_word" IS E'三方章节分组路径标识。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."archive_name" IS E'原始压缩包文件名。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."archive_path" IS E'原始压缩包本地存储路径。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."extract_path" IS E'解压目录本地路径。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."preview_mode" IS E'预览模式（1=单章节，2=多章节）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."source_snapshot" IS E'来源快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."publish_boundary_status" IS E'发布边界状态（1=不变，2=需要人工复核）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."selected_item_count" IS E'选中条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."success_item_count" IS E'成功条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."failed_item_count" IS E'失败条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."skipped_item_count" IS E'跳过条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."image_total" IS E'图片总数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."image_success_count" IS E'图片成功数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."image_failed_count" IS E'图片失败数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_job"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."content_import_preview_item" IS E'内容导入预览条目表。\n存储压缩包和三方导入预览候选，替代旧 archive JSONB 预览结果。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."preview_item_id" IS E'对外暴露的预览条目 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."content_import_job_id" IS E'内容导入任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."item_type" IS E'条目类型（1=漫画章节）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."source_path" IS E'源文件或源路径。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."provider_chapter_id" IS E'三方章节 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."target_chapter_id" IS E'目标章节 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."title" IS E'展示标题。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."sort_order" IS E'排序值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."image_total" IS E'图片总数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."status" IS E'预览状态（1=匹配，2=忽略，3=警告）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."ignore_reason" IS E'忽略原因。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."warning_message" IS E'警告信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."metadata" IS E'预览元数据。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_preview_item"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."content_import_residue" IS E'内容导入残留表。\n记录图片上传、压缩包解压目录、临时文件和补偿对象的清理状态。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."residue_id" IS E'对外暴露的残留 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."workflow_job_id" IS E'工作流任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."workflow_attempt_id" IS E'工作流 attempt 内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."content_import_item_id" IS E'内容导入条目内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."content_import_item_attempt_id" IS E'内容导入条目 attempt 内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."residue_type" IS E'残留类型（1=已上传文件，2=压缩包文件，3=解压目录，4=已创建作品，5=已创建章节）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."provider" IS E'外部服务或存储提供方。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."file_path" IS E'远程文件路径。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."local_path" IS E'本地文件路径。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."metadata" IS E'残留元数据。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."cleanup_status" IS E'清理状态（1=待清理，2=已清理，3=清理失败，4=保留待重试）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."cleanup_error" IS E'清理错误信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."content_import_residue"."cleaned_at" IS E'清理时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."coupon_admin_grant_item" IS E'后台批量发券工作流用户条目表。\n每个选中用户一行，worker 以条目为重试、取消和观测原子单位。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."item_id" IS E'对外暴露的条目 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."coupon_admin_grant_job_id" IS E'批量发券任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."user_id" IS E'APP 用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."status" IS E'条目状态（1=待处理，2=处理中，3=成功，4=失败，5=重试中，6=已跳过）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."grant_count" IS E'应发券数量。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."created_count" IS E'本条目实际新建券实例数量；幂等命中时可小于 grantCount。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."current_attempt_no" IS E'当前 attempt 序号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."failure_count" IS E'失败次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."last_error" IS E'最近错误事实。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."last_failed_at" IS E'最近失败时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."next_retry_at" IS E'下次可重试时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_item"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."coupon_admin_grant_job" IS E'后台批量发券工作流领域任务表。\n通过 workflowJobId 关联通用工作流任务，operationId 承载 admin 提交幂等契约。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."id" IS E'主键 ID，作为 user_coupon_instance.sourceId 使用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."workflow_job_id" IS E'归属工作流任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."coupon_definition_id" IS E'券定义 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."operation_id" IS E'后台提交幂等 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."operation_hash" IS E'operationId 的稳定哈希。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."payload_hash" IS E'创建载荷的稳定哈希。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."operator_user_id" IS E'后台管理员操作者 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."per_user_quantity" IS E'每个用户发券数量。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."selected_user_count" IS E'选中用户数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."requested_grant_count" IS E'请求发券总数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."remark" IS E'后台备注。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."coupon_snapshot" IS E'券定义发放快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_admin_grant_job"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."coupon_definition" IS E'券定义表。\n统一承载阅读券、折扣券、VIP 试用卡和补签卡定义。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."name" IS E'券名称。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."coupon_type" IS E'券类型（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."target_scope" IS E'适用目标范围（1=章节；2=VIP；3=签到）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."discount_amount" IS E'折扣金额，单位为虚拟币或分。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."discount_rate_bps" IS E'折扣率基点，10000=不打折。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."usage_limit" IS E'单张券可用次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."valid_days" IS E'有效天数；历史值 0 表示按实例过期时间控制。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."benefit_days" IS E'VIP 试用天数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."benefit_count" IS E'补签次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_definition"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."coupon_redemption_record" IS E'券核销记录表。\n券扣减和权益写入必须在同一事务中完成。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."coupon_instance_id" IS E'券实例 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."coupon_type" IS E'券类型快照（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."target_type" IS E'目标类型（1=漫画章节；2=小说章节；3=VIP；4=签到）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."target_id" IS E'目标 ID，VIP 和补签等无目标核销场景为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."status" IS E'核销状态（1=成功；2=失败；3=已撤销）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."biz_key" IS E'幂等业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."redemption_snapshot" IS E'核销快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."coupon_redemption_record"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."currency_package" IS E'虚拟币充值包表。\n支付成功后按套餐快照发放虚拟币资产。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."package_key" IS E'充值包业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."name" IS E'充值包名称。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."price" IS E'支付价格，单位为分。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."currency_amount" IS E'发放虚拟币数量。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."bonus_amount" IS E'赠送虚拟币数量。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."currency_package"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."domain_event" IS E'通用领域事件表。\n只存放“发生了什么”的事实，不存放按 consumer 拆开的处理状态。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."event_key" IS E'领域事件键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."domain" IS E'事件所属业务域。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."idempotency_key" IS E'主题内幂等键。为空时表示该事件不参与发布侧幂等。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."subject_type" IS E'事件主体类型。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."subject_id" IS E'事件主体 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."target_type" IS E'事件目标类型。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."target_id" IS E'事件目标 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."operator_id" IS E'操作人 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."occurred_at" IS E'事件发生时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."context" IS E'事件上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."domain_event_dispatch" IS E'通用领域事件分发表。\n一条领域事件会按 consumer 拆分成多条 dispatch 记录，分别追踪处理状态。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."event_id" IS E'关联的领域事件 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."consumer" IS E'消费者标识。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."status" IS E'处理状态（0=待处理，1=处理中，2=处理成功，3=处理失败）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."retry_count" IS E'已重试次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."next_retry_at" IS E'下次允许重试时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."last_error" IS E'最近一次错误信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."processed_at" IS E'最终处理完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."retention_until" IS E'保留截止时间；pending/processing 行必须由清理任务排除。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."domain_event_dispatch"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."emoji_asset" IS E'表情资源表。\n- 存储每一个可渲染表情条目（unicode/custom）。\n- 通过 packId 归属到具体表情包。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."id" IS E'主键 ID（自增）。\n- 作为表情资源的唯一标识。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."pack_id" IS E'所属表情包 ID。\n- 关联 emoji_pack.id。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."kind" IS E'资源类型。\n- 1=unicode（系统字符）\n- 2=custom（自定义图片）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."shortcode" IS E'短码。\n- custom 表情必填。\n- 用于 `:smile:` 这类解析与检索。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."unicode_sequence" IS E'Unicode 序列。\n- unicode 表情必填。\n- 例如 😀 或组合序列。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."image_url" IS E'主资源 URL。\n- custom 表情必填。\n- 可指向 gif/webp/png 等可展示资源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."static_url" IS E'静态资源 URL。\n- 可选字段，常用于动图降级静态图。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."is_animated" IS E'是否为动图。\n- 用于客户端播放策略与渲染逻辑判断。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."category" IS E'分类标签。\n- 用于筛选、分组展示（如 people/animals）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."keywords" IS E'多语言关键词 JSON。\n- 典型结构：{"zh-CN":["微笑"],"en-US":["smile"]}。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."sort_order" IS E'排序值。\n- 在同一个表情包内按值升序展示。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."is_enabled" IS E'启用状态。\n- false 时该资源不参与目录、搜索与解析。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."created_by_id" IS E'创建人后台用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."updated_by_id" IS E'最后更新人后台用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."created_at" IS E'创建时间（UTC）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."updated_at" IS E'更新时间（UTC）。\n- 每次更新时自动刷新。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_asset"."deleted_at" IS E'软删除时间（UTC）。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."emoji_pack" IS E'表情包主表。\n- 管理表情包基础信息、展示排序与可见场景。\n- sceneType 使用 smallint[] 存储支持场景集合，当前取值：1(chat)/2(comment)/3(forum)。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."id" IS E'主键 ID（自增）。\n- 作为表情包的唯一标识。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."code" IS E'表情包业务编码。\n- 用于程序内稳定引用，要求全局唯一。\n- 典型值：default、animals、meme。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."name" IS E'表情包名称。\n- 用于管理端与客户端展示。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."description" IS E'表情包描述。\n- 可选字段，用于补充包的来源、用途或说明信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."icon_url" IS E'表情包图标 URL。\n- 在客户端选择器中展示分组图标。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."sort_order" IS E'排序值。\n- 值越小越靠前。\n- 同值时以 id 作为次序兜底。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."is_enabled" IS E'启用状态。\n- false 时该表情包整体不可用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."visible_in_picker" IS E'是否在选择器可见。\n- false 时允许业务侧保留数据，但不在常规选择器展示。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."scene_type" IS E'场景集合。\n- 使用 smallint[] 存储生效场景。\n- 1=聊天，2=评论，3=论坛。\n- 默认对聊天、评论、论坛全场景可见。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."created_by_id" IS E'创建人后台用户 ID。\n- 为空表示历史数据或未记录来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."updated_by_id" IS E'最后更新人后台用户 ID。\n- 为空表示历史数据或未记录来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."created_at" IS E'创建时间（UTC）。\n- 默认写入当前数据库时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."updated_at" IS E'更新时间（UTC）。\n- 每次更新记录时自动刷新。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_pack"."deleted_at" IS E'软删除时间（UTC）。\n- 非空表示该记录已逻辑删除。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."emoji_recent_usage" IS E'最近使用表情表。\n- 记录用户在不同场景的最近使用轨迹与累计次数。\n- 采用 (userId, scene, emojiAssetId) 复合主键做幂等聚合更新。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_recent_usage"."user_id" IS E'用户 ID。\n- 对应 app_user.id。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_recent_usage"."scene" IS E'业务场景。\n- 1=chat，2=comment，3=forum。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_recent_usage"."emoji_asset_id" IS E'表情资源 ID。\n- 对应 emoji_asset.id。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_recent_usage"."use_count" IS E'累计使用次数。\n- 每次上报命中后原子递增。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."emoji_recent_usage"."last_used_at" IS E'最近一次使用时间（UTC）。\n- 用于最近使用列表排序。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_hashtag" IS E'forum 话题（hashtag）资源表\n统一承载 forum 域内全局唯一、跨版块归一聚合的话题资源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."id" IS E'主键 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."slug" IS E'归一化 slug\n去掉前导 `#` 后做标准化处理，作为全局唯一键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."display_name" IS E'展示名称\n当前 v1 视为创建后不可变，避免历史正文 plainText 漂移。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."description" IS E'运营描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."manual_boost" IS E'人工热度加权\n0=无人工加权。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."audit_status" IS E'审核状态\n0=待审核，1=已通过，2=已拒绝。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."is_hidden" IS E'是否隐藏';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."audit_by_id" IS E'审核人 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."audit_role" IS E'审核角色\n0=版主，1=管理员。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."audit_reason" IS E'审核原因';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."audit_at" IS E'审核时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."create_source_type" IS E'创建来源\n1=管理员创建，2=topic 正文自动创建，3=comment 正文自动创建。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."created_by_user_id" IS E'创建该话题资源的用户 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."sensitive_word_hits" IS E'敏感词命中记录';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."topic_ref_count" IS E'可见主题引用数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."comment_ref_count" IS E'可见评论引用数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."follower_count" IS E'关注人数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."last_referenced_at" IS E'最近一次被引用时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag"."deleted_at" IS E'删除时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_hashtag_reference" IS E'forum 话题引用事实表\n记录 hashtag 与 forum topic / forum topic comment 的当前引用关系。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."id" IS E'主键 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."hashtag_id" IS E'话题资源 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."source_type" IS E'来源类型\n1=forum_topic，2=forum_topic_comment。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."source_id" IS E'来源 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."topic_id" IS E'所属主题 ID\ntopic 引用时等于 sourceId；comment 引用时指向根 topic。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."section_id" IS E'所属板块 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."user_id" IS E'来源作者用户 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."occurrence_count" IS E'同一来源内的出现次数\n仅记录 occurrence，不直接参与聚合累乘。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."source_audit_status" IS E'来源审核状态\n0=待审核，1=已通过，2=已拒绝。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."source_is_hidden" IS E'来源是否隐藏';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."is_source_visible" IS E'来源当前是否公开可见';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_hashtag_reference"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_moderator" IS E'论坛版主表 - 管理论坛版主信息，包括角色类型、权限设置、启用状态等';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."user_id" IS E'关联的用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."group_id" IS E'关联的分组ID（分组版主时必填）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."role_type" IS E'版主角色类型（1=超级版主，2=分组版主，3=板块版主）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."permissions" IS E'权限数组（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."remark" IS E'备注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator"."deleted_at" IS E'软删除时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_moderator_action_log" IS E'论坛版主操作日志表 - 记录版主的所有操作行为，包括主题管理、回复管理、审核等操作';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."moderator_id" IS E'关联的版主ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."actor_type" IS E'治理动作来源（1=版主；2=后台管理员）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."actor_user_id" IS E'治理动作发起用户ID。\nmoderator 来源写 moderatorUserId，admin 来源写后台管理员用户ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."target_id" IS E'目标ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."action_type" IS E'操作类型（1=置顶主题, 2=取消置顶, 3=加精主题, 4=取消加精, 5=锁定主题, 6=取消锁定主题, 7=删除主题, 8=移动主题, 9=审核主题, 10=删除评论, 11=隐藏主题, 12=取消隐藏主题, 13=审核评论, 14=隐藏评论, 15=取消隐藏评论）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."target_type" IS E'目标类型（1=论坛主题, 2=论坛评论）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."action_description" IS E'操作描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."before_data" IS E'操作前数据（JSON格式）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."after_data" IS E'操作后数据（JSON格式）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_action_log"."created_at" IS E'操作时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_moderator_application" IS E'论坛版主申请表 - 管理用户申请成为版主的申请记录，包括申请信息、审核状态、审核结果等';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."applicant_id" IS E'申请人用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."section_id" IS E'申请的板块ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."audit_by_id" IS E'审核人ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."status" IS E'申请状态（0=待审核, 1=已通过, 2=已拒绝）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."permissions" IS E'申请的权限数组（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."reason" IS E'申请理由';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."audit_reason" IS E'审核原因（通过或拒绝的原因）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."remark" IS E'备注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."audit_at" IS E'审核时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_application"."deleted_at" IS E'软删除时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_moderator_lifecycle_log" IS E'论坛版主生命周期日志表。\n\n独立记录版主身份创建、恢复、授权变更、禁用、移除和申请审核事实，\n不与 topic/comment 治理操作日志混用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."event_type" IS E'生命周期事件类型。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."moderator_id" IS E'关联版主 ID；申请拒绝场景可为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."application_id" IS E'关联申请 ID；非申请来源场景可为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."actor_admin_user_id" IS E'后台操作者用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."reason" IS E'操作原因或审核意见。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."before_data" IS E'操作前快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."after_data" IS E'操作后快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_lifecycle_log"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_moderator_section" IS E'论坛版主板块关联表 - 管理板块版主与板块的多对多关系，一个板块版主可以管理多个板块';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_section"."moderator_id" IS E'关联的版主ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_section"."section_id" IS E'关联的板块ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_moderator_section"."permissions" IS E'自定义权限数组（1=置顶，2=加精，3=锁定，4=删除，5=审核，6=移动）';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_section" IS E'论坛板块表 - 管理论坛板块信息，包括板块名称、描述、统计信息等';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."group_id" IS E'板块分组ID（可选，用于将板块分组管理）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."user_level_rule_id" IS E'用户的论坛等级规则ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."last_topic_id" IS E'最后发表主题ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."name" IS E'板块名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."description" IS E'板块描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."icon" IS E'板块图标URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."cover" IS E'板块封面URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."sort_order" IS E'排序值（数值越小越靠前）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."topic_review_policy" IS E'主题审核策略（0=不审核；1=严重敏感词触发审核；2=一般敏感词触发审核；3=轻度敏感词触发审核；4=强制人工审核）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."remark" IS E'备注信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."topic_count" IS E'主题数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."comment_count" IS E'评论数（包含所有可见主题下的评论）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."followers_count" IS E'关注人数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."last_post_at" IS E'最后发表时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section"."deleted_at" IS E'软删除时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_section_group" IS E'论坛板块分组表 - 管理论坛板块分组信息，用于对板块进行分类组织';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."name" IS E'分组名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."description" IS E'分组描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."sort_order" IS E'排序值（数值越小越靠前）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."max_moderators" IS E'分组版主数量限制（0表示不限制）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_section_group"."deleted_at" IS E'软删除时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_topic" IS E'论坛主题表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."section_id" IS E'版块ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."user_id" IS E'发帖用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."last_comment_user_id" IS E'最后评论用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."audit_by_id" IS E'审核人ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."title" IS E'标题';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."html" IS E'正文 HTML。\n对外唯一正文表示，纯文本编辑器也需输出最小 HTML。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."content" IS E'正文纯文本派生列。\n供搜索、摘要、审核与摘录链路复用，不再表示客户端原始输入。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."content_preview" IS E'列表预览派生 JSON。\n写入时由 canonical body 生成，供 topic 列表渲染用户提及、话题标签与表情语义片段；不作为详情正文来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."body" IS E'canonical 正文文档。\n主题正文的唯一真相源；运行时不再依赖原始 content 作为输入来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."body_version" IS E'正文版本。\n1=当前 canonical body v1';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."images" IS E'图片列表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."videos" IS E'视频列表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."is_pinned" IS E'是否置顶';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."is_featured" IS E'是否精选';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."is_locked" IS E'是否锁定';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."is_hidden" IS E'是否隐藏';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."audit_status" IS E'审核状态（0=待审核；1=已通过；2=已拒绝）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."audit_role" IS E'审核角色（0=版主；1=管理员）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."audit_reason" IS E'审核原因';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."audit_at" IS E'审核时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."version" IS E'乐观锁版本号';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."sensitive_word_hits" IS E'敏感词命中记录';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."geo_country" IS E'发帖时解析到的国家/地区\n仅记录新写入主题的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."geo_province" IS E'发帖时解析到的省份/州\n仅记录新写入主题的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."geo_city" IS E'发帖时解析到的城市\n仅记录新写入主题的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."geo_isp" IS E'发帖时解析到的网络运营商\n仅记录新写入主题的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."geo_source" IS E'属地解析来源\n当前固定为 ip2region；历史记录或未补齐属地快照时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."view_count" IS E'浏览数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."like_count" IS E'点赞数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."comment_count" IS E'评论数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."favorite_count" IS E'收藏数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."last_comment_at" IS E'最后评论时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_topic"."deleted_at" IS E'删除时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."forum_user_action_log" IS E'论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、评论、点赞、收藏等操作';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."user_id" IS E'关联的用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."target_id" IS E'目标ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."action_type" IS E'操作类型（1=创建主题, 2=创建评论, 3=点赞主题, 4=取消点赞主题, 5=点赞评论, 6=取消点赞评论, 7=收藏主题, 8=取消收藏主题, 9=更新主题, 10=更新评论, 11=删除主题, 12=删除评论）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."target_type" IS E'目标类型（1=主题, 2=评论）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."before_data" IS E'操作前数据（JSON格式）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."after_data" IS E'操作后数据（JSON格式）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."ip_address" IS E'IP地址';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."user_agent" IS E'User Agent';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."geo_country" IS E'操作发生时解析到的国家/地区\n仅记录新写入操作日志的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."geo_province" IS E'操作发生时解析到的省份/州\n仅记录新写入操作日志的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."geo_city" IS E'操作发生时解析到的城市\n仅记录新写入操作日志的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."geo_isp" IS E'操作发生时解析到的网络运营商\n仅记录新写入操作日志的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."geo_source" IS E'属地解析来源\n当前固定为 ip2region；历史记录或未补齐属地快照时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."created_at" IS E'操作时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."retention_until" IS E'保留截止时间；清理任务按该字段做有界批处理。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."forum_user_action_log"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."growth_audit_log" IS E'成长结算审计日志表\n记录规则判定与结算结果，便于排障和运营追踪';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."request_id" IS E'请求链路ID（可选）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."user_id" IS E'用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."biz_key" IS E'幂等业务键';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."asset_type" IS E'资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."asset_key" IS E'资产键。\n积分/经验等无需附加主键的资产固定为空字符串；扩展资产使用稳定业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."action" IS E'动作（1=发放资产，2=扣减资产，3=规则判定过程，4=授予徽章）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."rule_type" IS E'规则类型（可选，取值见成长规则枚举）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."decision" IS E'判定结果（1=允许执行，2=拒绝执行）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."reason" IS E'拒绝或处理原因';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."delta_requested" IS E'请求变更值（可选）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."delta_applied" IS E'实际变更值（可选）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."context" IS E'扩展上下文';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."retention_until" IS E'保留截止时间；未解决结算关联审计必须由清理任务排除。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_audit_log"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."growth_ledger_record" IS E'统一成长流水表\n记录积分、经验等可计量资产的变更流水';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."user_id" IS E'用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."asset_type" IS E'资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."asset_key" IS E'资产键。\n积分/经验等无需附加主键的资产固定为空字符串；扩展资产使用稳定业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."delta" IS E'变更值（正数发放，负数扣减）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."before_value" IS E'变更前余额';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."after_value" IS E'变更后余额';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."biz_key" IS E'幂等业务键（同用户下全局唯一）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."source" IS E'账本来源\n用于区分基础成长规则奖励、任务 bonus 和其他手工/业务来源';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."rule_type" IS E'规则类型（可选，取值见成长规则枚举）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."rule_id" IS E'规则ID（可选）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."target_type" IS E'目标类型（可选，按业务目标类型枚举存储；取值见对应业务模块的目标类型定义）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."target_id" IS E'目标ID（可选）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."remark" IS E'备注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."context" IS E'扩展上下文';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."retention_until" IS E'保留截止时间；流水不自动硬删，本字段用于冷数据标记和归档扫描。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_ledger_record"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."growth_reward_rule" IS E'通用成长奖励规则表。\n\n使用 `type + assetType + assetKey` 统一描述成长事件对应的资产规则，\n替代历史 `user_point_rule` / `user_experience_rule` 双表模型。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."type" IS E'规则类型（取值见成长规则枚举）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."asset_type" IS E'资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."asset_key" IS E'资产键。\n对积分/经验等无需附加主键的资产固定为空字符串；道具/货币/等级等扩展资产可使用稳定业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."delta" IS E'规则变动值。\n奖励值必须为正整数；消费类扣减不再复用本表表达。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."daily_limit" IS E'每日上限（0=无限制）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."total_limit" IS E'总上限（0=无限制）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."remark" IS E'备注。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."archived_at" IS E'归档时间；为空表示当前 active 规则。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."archived_by" IS E'归档操作者；系统迁移自动归档为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."archive_reason_code" IS E'归档原因码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."archive_reason" IS E'归档原因说明。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_rule"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."growth_reward_settlement" IS E'通用成长奖励补偿事实表。\n\n统一承载通用成长事件、任务奖励、签到基础奖励、签到连续奖励的补偿事实，\n用于保留 durable 失败事实、支持后台分页排障与后续补偿重试。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."user_id" IS E'奖励归属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."biz_key" IS E'幂等业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."settlement_type" IS E'补偿记录类型（1=通用成长事件；2=任务奖励；3=签到基础奖励；4=签到连续奖励）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."source" IS E'奖励来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."source_record_id" IS E'来源事实主键（可选）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."event_code" IS E'成长事件编码（任务奖励可为空）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."event_key" IS E'成长事件 key（任务奖励可为空）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."target_type" IS E'目标类型（可选）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."target_id" IS E'目标 ID（可选）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."event_occurred_at" IS E'事件发生时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."settlement_status" IS E'补偿状态。\n0=待补偿重试，1=已补偿成功，2=终态失败无需再重试。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."settlement_result_type" IS E'本次补偿结果类型（1=本次真实落账，2=命中幂等未重复落账，3=本次处理失败）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."ledger_record_ids" IS E'本次补偿关联到账本记录 ID 列表。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."retry_count" IS E'已执行的补偿重试次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."last_retry_at" IS E'最近一次重试时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."processing_token" IS E'当前补偿执行租约 token，用于阻止并发重复执行。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."processing_started_at" IS E'当前补偿执行租约开始时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."settled_at" IS E'最近一次补偿状态落定时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."last_error" IS E'最近一次失败原因。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."request_payload" IS E'重试所需的原始派发载荷快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."created_at" IS E'记录创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_reward_settlement"."updated_at" IS E'记录更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."growth_rule_usage_counter" IS E'成长规则使用计数表。\n\n以单行累计值替代历史槽位扫描，实现规则维度的 daily/total/cooldown 计数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."asset_type" IS E'资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."asset_key" IS E'资产键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."rule_key" IS E'规则键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."scope_type" IS E'计数作用域类型（1=每日；2=总量；3=冷却）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."scope_key" IS E'计数作用域值（如 2026-04-17 / all / 2026-04-17T09:15）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."used_count" IS E'当前已使用次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."growth_rule_usage_counter"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."membership_benefit_definition" IS E'会员权益定义表。\n定义 v1 可展示会员权益和开通自动发券权益。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."code" IS E'权益业务键，由服务端生成。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."name" IS E'权益名称。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."icon" IS E'权益图标资源键或 URL。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."benefit_type" IS E'权益类型（1=纯展示；2=券发放）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."description" IS E'权益说明。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_benefit_definition"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."membership_page_config" IS E'会员订阅页配置表。\n会员说明和协议引用由服务端配置输出，避免客户端硬编码法务文案。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."page_key" IS E'页面业务键，由服务端生成。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."title" IS E'页面标题。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."member_notice_items" IS E'会员说明条目。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."checkout_agreement_text" IS E'确认开通协议提示文案。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."submit_button_template" IS E'支付按钮文案模板。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."membership_page_config_agreement" IS E'会员订阅页协议关联表。\n协议类型不在 VIP 模块建模，由 admin 直接选择 app_agreement 中的已发布协议。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config_agreement"."page_config_id" IS E'会员订阅页配置 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config_agreement"."agreement_id" IS E'应用协议 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config_agreement"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."membership_page_config_plan" IS E'会员订阅页套餐关联表。\n订阅页通过显式绑定套餐决定展示和下单范围，支持 VIP、超级 VIP 单独配置或混合配置。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config_plan"."page_config_id" IS E'会员订阅页配置 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config_plan"."plan_id" IS E'VIP 套餐 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_page_config_plan"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."membership_plan" IS E'VIP 套餐表。\n由 admin 配置可售 VIP 套餐，订阅开通后写入用户订阅事实。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."name" IS E'套餐名称。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."plan_key" IS E'套餐业务键，由服务端生成，供客户端和订单快照稳定引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."tier" IS E'套餐层级（1=VIP；2=超级 VIP）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."price_amount" IS E'套餐售价，单位为分。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."original_price_amount" IS E'划线原价，单位为分。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."duration_days" IS E'有效天数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."display_tag" IS E'订阅页营销标签，空字符串表示不展示。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."bonus_point_amount" IS E'开通后赠送积分数量，0=不赠送。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."membership_plan_benefit" IS E'会员套餐权益关联表。\n约束套餐内权益展示和开通自动发券规则。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."plan_id" IS E'VIP 套餐 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."benefit_id" IS E'会员权益定义 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."grant_policy" IS E'发放策略（1=仅展示；2=开通时自动发放）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."benefit_value" IS E'权益配置值，结构由 benefitType 与 grantPolicy 共同约束。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."membership_plan_benefit"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."message_ws_metric" IS E'WebSocket 监控分钟聚合表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."bucket_at" IS E'统计桶时间（按分钟截断）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."request_count" IS E'WS 请求总数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."ack_success_count" IS E'ack 成功数量（code=SUCCESS）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."ack_error_count" IS E'ack 失败数量（code!=SUCCESS）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."ack_latency_total_ms" IS E'ack 延迟累积毫秒';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."reconnect_count" IS E'连接/重连次数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."resync_trigger_count" IS E'补偿触发次数（afterSeq 查询触发）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."resync_success_count" IS E'补偿成功次数（afterSeq 查询成功返回）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."fanout_skipped_count" IS E'跨实例实时推送因载荷过大被跳过次数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."fanout_publish_error_count" IS E'跨实例实时推送发布失败次数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."message_ws_metric"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."migration_audit" IS E'数据库迁移审计表。\n记录破坏性迁移的计数指标，供发布后 reconcile SQL 输出数据影响。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."migration_audit"."migration_key" IS E'迁移唯一键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."migration_audit"."metric" IS E'指标名称。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."migration_audit"."value" IS E'指标值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."migration_audit"."created_at" IS E'记录创建或刷新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."notification_delivery" IS E'通知 consumer 处理结果表。\n记录 notification consumer 对单条 dispatch 的最终业务处理结果。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."event_id" IS E'关联的领域事件 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."dispatch_id" IS E'关联的 dispatch ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."event_key" IS E'领域事件键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."receiver_user_id" IS E'接收用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."projection_key" IS E'通知投影键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."category_key" IS E'通知分类键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."task_id" IS E'任务 ID（task_reminder 场景冗余列，用于对账与查询）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."assignment_id" IS E'任务实例 ID（task_reminder 场景冗余列，用于对账与查询）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."reminder_kind" IS E'提醒子类型（task_reminder 场景冗余列，用于对账与查询）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."notification_id" IS E'关联的站内通知 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."status" IS E'业务投递状态（1=已投递，2=投递失败，3=重试中，4=因偏好关闭而跳过）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."template_id" IS E'命中的模板 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."used_template" IS E'是否命中启用模板。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."fallback_reason" IS E'模板回退原因。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."failure_reason" IS E'最近一次失败原因。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."last_attempt_at" IS E'最近一次投递尝试时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."retention_until" IS E'保留截止时间；pending/retrying 行必须由清理任务排除。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_delivery"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."notification_preference" IS E'通知偏好表。\n只按用户与通知分类维度保存显式覆盖值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_preference"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_preference"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_preference"."category_key" IS E'通知分类键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_preference"."is_enabled" IS E'是否启用该分类通知。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_preference"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_preference"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."notification_template" IS E'通知模板表。\n以 categoryKey 为唯一稳定配置键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_template"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_template"."category_key" IS E'通知分类键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_template"."title_template" IS E'标题模板。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_template"."content_template" IS E'正文模板。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_template"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_template"."remark" IS E'备注。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_template"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."notification_template"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."payment_notify_event" IS E'支付 provider 通知事件表。\n记录验签、去重、处理状态和脱敏 payload，作为支付事实审计来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."channel" IS E'支付渠道（1=支付宝；2=微信）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."event_type" IS E'通知类型（1=支付成功；2=支付失败；3=关闭；4=未知）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."payment_order_id" IS E'支付订单 ID，无法关联订单时为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."order_no" IS E'站内订单号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."provider_trade_no" IS E'第三方交易号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."provider_event_id" IS E'provider 事件 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."payload_hash" IS E'原始 payload 哈希。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."headers" IS E'请求头快照，必须脱敏。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."redacted_payload" IS E'原始 payload 的脱敏副本。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."verify_status" IS E'验签状态（1=待验签；2=成功；3=失败）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."process_status" IS E'处理状态（1=待处理；2=已处理；3=重复；4=失败）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."error_code" IS E'错误编码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."error_message" IS E'错误摘要，禁止写入密钥或完整 payload。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."received_at" IS E'接收时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."processed_at" IS E'处理时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."retention_until" IS E'保留截止时间；失败或未处理事件必须由清理任务排除。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_notify_event"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."payment_order" IS E'支付订单表。\n第三方支付只产生订单，回调成功后再发放虚拟币或 VIP 订阅权益。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."order_no" IS E'站内订单号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."order_type" IS E'订单业务类型（1=虚拟币充值；2=VIP 订阅）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."channel" IS E'支付渠道（1=支付宝；2=微信）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."payment_scene" IS E'支付场景（1=App；2=H5；3=小程序）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."platform" IS E'客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."environment" IS E'运行环境（1=沙箱；2=正式）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."client_app_key" IS E'客户端应用键，同一部署内区分多应用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."subscription_mode" IS E'订阅模式（1=一次性）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."status" IS E'订单状态（1=待支付；2=已支付；3=已关闭；4=退款中；5=已退款）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."payable_amount" IS E'应付金额，单位为分。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."paid_amount" IS E'实付金额，单位为分。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."target_id" IS E'业务目标 ID，例如充值包 ID 或 VIP 套餐 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."provider_config_id" IS E'支付 provider 配置 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."provider_config_version_id" IS E'下单时 provider 配置版本 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."provider_config_version" IS E'下单时 provider 配置版本快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."app_private_credential_id" IS E'下单时应用私钥凭据 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."alipay_public_credential_id" IS E'下单时支付宝公钥凭据 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."wechat_api_v3_credential_id" IS E'下单时微信 APIv3 key 凭据 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."provider_certificate_ids" IS E'下单时证书 ID 快照集合。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."credential_version_ref" IS E'下单时密钥版本引用快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."config_snapshot" IS E'配置摘要快照，不包含明文密钥。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."client_context" IS E'客户端上下文，例如 platform、clientAppKey、openId。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."client_pay_payload" IS E'下单时生成的客户端支付参数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."provider_trade_no" IS E'第三方交易号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."notify_payload" IS E'原始通知 payload。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."paid_at" IS E'支付完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."closed_at" IS E'关闭时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."refunded_at" IS E'退款完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_order"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."payment_provider_certificate" IS E'支付 provider 证书注册表。\n只保存证书引用、序列号、指纹和过期时间，不保存证书私钥明文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."channel" IS E'支付渠道（1=支付宝；2=微信）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."certificate_type" IS E'证书用途（1=应用证书；2=平台证书；3=根证书；4=公钥证书）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."certificate_ref" IS E'外部证书引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."serial_no" IS E'provider 证书序列号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."version_label" IS E'证书版本标签。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."display_name" IS E'运营展示名称。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."fingerprint" IS E'证书指纹。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."status" IS E'证书状态（1=启用；2=禁用；3=过期）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."expired_at" IS E'过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."metadata" IS E'非敏感扩展信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_certificate"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."payment_provider_config" IS E'支付 provider 配置表。\n单客户独立部署内按渠道、场景、端、应用和环境确定性选择配置。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."channel" IS E'支付渠道（1=支付宝；2=微信）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."payment_scene" IS E'支付场景（1=App；2=H5；3=小程序）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."platform" IS E'客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."environment" IS E'运行环境（1=沙箱；2=正式）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."client_app_key" IS E'客户端应用键，同一部署内区分多应用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."config_name" IS E'配置名称，供 admin 识别。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."app_id" IS E'provider 应用 ID，空字符串表示该维度不参与选择。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."mch_id" IS E'provider 商户 ID，空字符串表示该维度不参与选择。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."notify_url" IS E'通知回调地址。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."return_url" IS E'H5 返回地址。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."allowed_return_domains" IS E'H5 允许返回域名列表。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."cert_mode" IS E'证书模式（1=普通密钥；2=证书模式）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."public_key_ref" IS E'支付宝公钥引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."private_key_ref" IS E'应用私钥引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."api_v3_key_ref" IS E'微信 APIv3 key 引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."app_cert_ref" IS E'应用证书引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."platform_cert_ref" IS E'平台证书引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."root_cert_ref" IS E'根证书引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."config_version" IS E'配置版本，配置更新时单调递增。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."credential_version_ref" IS E'密钥版本引用，不存明文密钥。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."config_metadata" IS E'配置摘要快照，存放证书指纹、域名约束等非明文信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."sort_order" IS E'排序值，0=默认排序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."is_enabled" IS E'是否启用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."payment_provider_config_version" IS E'支付 provider 配置不可变版本表。\n每次运营更新配置都会产生新版本，历史订单按下单时版本验签。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."provider_config_id" IS E'支付 provider 配置 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."config_version" IS E'单配置内单调递增版本号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."channel" IS E'支付渠道（1=支付宝；2=微信）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."payment_scene" IS E'支付场景（1=App；2=H5；3=小程序）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."platform" IS E'客户端平台（1=Android；2=iOS；3=HarmonyOS；4=Web；5=小程序）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."environment" IS E'运行环境（1=沙箱；2=正式）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."client_app_key" IS E'客户端应用键，同一部署内区分多应用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."config_name" IS E'配置名称快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."app_id" IS E'provider 应用 ID 快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."mch_id" IS E'provider 商户 ID 快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."notify_url" IS E'通知回调地址快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."return_url" IS E'H5 返回地址快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."allowed_return_domains" IS E'H5 允许返回域名列表快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."cert_mode" IS E'证书模式（1=普通密钥；2=证书模式）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."app_private_credential_id" IS E'应用私钥凭据 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."alipay_public_credential_id" IS E'支付宝公钥凭据 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."wechat_api_v3_credential_id" IS E'微信 APIv3 key 凭据 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."app_certificate_id" IS E'应用证书 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."platform_certificate_id" IS E'平台证书 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."root_certificate_id" IS E'根证书 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."credential_snapshot" IS E'版本证书引用摘要，不包含证书或密钥明文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."config_snapshot" IS E'配置摘要快照，不包含明文密钥。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."status" IS E'版本状态（1=启用；2=禁用；3=已轮换）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."is_active" IS E'是否可被新订单选择。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_config_version"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."payment_provider_credential" IS E'支付 provider 凭据注册表。\n只保存外部密钥引用和运营可读元数据，不保存明文密钥。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."channel" IS E'支付渠道（1=支付宝；2=微信）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."credential_type" IS E'凭据用途（1=应用私钥；2=支付宝公钥；3=微信 APIv3 key；4=商户私钥）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."credential_ref" IS E'外部 secret/KMS 引用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."version_label" IS E'凭据版本标签。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."display_name" IS E'运营展示名称。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."masked_identifier" IS E'掩码标识，禁止存放明文密钥。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."fingerprint" IS E'指纹或摘要，用于核对轮换。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."status" IS E'凭据状态（1=启用；2=禁用；3=过期）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."expired_at" IS E'过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."metadata" IS E'运营备注和非敏感扩展信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_provider_credential"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."payment_reconciliation_record" IS E'支付对账记录表。\n记录本地订单与 provider 查询结果差异，退款差异仅展示不执行。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."payment_order_id" IS E'支付订单 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."order_no" IS E'站内订单号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."channel" IS E'支付渠道（1=支付宝；2=微信）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."mismatch_type" IS E'差异类型（1=本地已支付 provider 未支付；2=本地待支付 provider 已支付；3=金额不一致；4=重复交易号；5=验签失败；6=退款差异）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."status" IS E'对账状态（1=待处理；2=已确认；3=已修复；4=忽略）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."local_status" IS E'本地订单状态。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."provider_status" IS E'provider 订单状态。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."provider_trade_no" IS E'第三方交易号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."local_amount" IS E'本地金额，单位为分。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."provider_amount" IS E'provider 金额，单位为分。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."currency" IS E'币种。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."evidence" IS E'对账证据摘要，必须脱敏。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."handled_remark" IS E'处理备注。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."payment_reconciliation_record"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."sensitive_word" IS E'通用敏感词表 - 存储敏感词信息，用于内容过滤和审核';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."word" IS E'敏感词';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."replace_word" IS E'替换词';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."level" IS E'敏感词级别（1=严重；2=一般；3=轻微）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."type" IS E'敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."match_mode" IS E'匹配模式（1=精确匹配；2=模糊匹配）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."remark" IS E'备注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."created_by" IS E'创建人ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."updated_by" IS E'更新人ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."hit_count" IS E'命中次数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."last_hit_at" IS E'最后命中时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."sensitive_word_hit_log" IS E'敏感词命中明细表 - 记录业务审核流量中的实际命中';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."sensitive_word_id" IS E'敏感词ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."entity_type" IS E'命中实体类型（1=主题；2=评论）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."entity_id" IS E'命中实体ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."operation_type" IS E'命中操作类型（1=创建；2=更新）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."matched_word" IS E'命中的敏感词文本';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."level" IS E'敏感词级别（1=严重；2=一般；3=轻微）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."type" IS E'敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."retention_until" IS E'保留截止时间；用于审核命中日志的有界清理扫描。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sensitive_word_hit_log"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."sys_config" IS E'系统配置';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."id" IS E'主键id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."updated_by_id" IS E'最后修改人ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."aliyun_config" IS E'阿里云配置（JSON格式，包含 accessKeyId/accessKeySecret）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."site_config" IS E'站点基础配置（JSON格式，名称/描述/关键词/Logo等）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."operation_config" IS E'运营配置（JSON格式，包含话题创建模式等运营侧配置）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."security_config" IS E'安全配置（JSON格式，包含远程图片导入安全开关）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."third_party_resource_parse_config" IS E'三方资源解析配置（JSON格式，包含 API/图片节流、host 缓存 TTL 与队列上限）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."wallet_currency_display_config" IS E'钱包虚拟币展示配置（JSON格式，包含展示名称、单位与图标）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."maintenance_config" IS E'维护模式配置（JSON格式，开关与提示文案）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."content_review_policy" IS E'内容审核策略（JSON格式，敏感词等级处理策略）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."upload_config" IS E'上传配置（JSON格式，包含 provider/七牛/Superbed 配置）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_config"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."sys_dictionary" IS E'数据字典';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary"."name" IS E'字典名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary"."code" IS E'字典编码';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary"."cover" IS E'字典封面图片URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary"."is_enabled" IS E'字典状态：true=启用，false=禁用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary"."description" IS E'字典描述信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."sys_dictionary_item" IS E'数据字典项';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."dictionary_code" IS E'所属字典编码';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."name" IS E'字典项名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."code" IS E'字典项编码';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."sort_order" IS E'显示排序（数值越小越靠前）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."cover" IS E'字典项图标URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."is_enabled" IS E'字典项状态：true=启用，false=禁用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."description" IS E'字典项描述信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_dictionary_item"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."sys_request_log" IS E'请求日志';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."id" IS E'主键id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."user_id" IS E'用户ID（可空）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."username" IS E'用户名（可空）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."api_type" IS E'接口类型（1=管理端，2=应用端，3=系统端，4=公共端）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."method" IS E'请求方法（GET/POST等）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."path" IS E'请求路径';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."params" IS E'请求参数（JSON格式）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."ip" IS E'IP地址（自动获取）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."user_agent" IS E'设备信息（User-Agent 原始字符串）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."device" IS E'设备信息（User-Agent 解析结果，JSON）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."geo_country" IS E'请求发起时解析到的国家/地区\n仅记录新写入请求日志的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."geo_province" IS E'请求发起时解析到的省份/州\n仅记录新写入请求日志的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."geo_city" IS E'请求发起时解析到的城市\n仅记录新写入请求日志的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."geo_isp" IS E'请求发起时解析到的网络运营商\n仅记录新写入请求日志的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."geo_source" IS E'属地解析来源\n当前固定为 ip2region；历史记录或未补齐属地快照时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."action_type" IS E'操作类型（1=登录，2=登出，3=创建，4=更新，5=删除，6=上传，7=下载，8=导出，9=导入）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."is_success" IS E'操作结果';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."content" IS E'自定义日志内容（必填）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."retention_until" IS E'保留截止时间；清理任务仅处理早于该时间且满足业务边界的日志。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."sys_request_log"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."task_definition" IS E'新任务模型中的任务头定义。\n\n只承载运营侧可管理的任务头信息；步骤、实例和唯一计数事实分别由独立表承载。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."id" IS E'任务头主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."code" IS E'任务稳定编码；由服务端自动生成。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."title" IS E'任务标题。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."description" IS E'任务描述。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."cover" IS E'任务封面。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."scene_type" IS E'任务场景类型。1=新手引导；2=日常；4=活动。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."status" IS E'任务状态。0=草稿；1=生效中；2=已暂停；3=已归档。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."sort_order" IS E'排序值。0=默认排序，数值越小越靠前。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."claim_mode" IS E'领取方式。1=自动领取；2=手动领取。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."completion_policy" IS E'完成聚合策略。1=所有步骤完成即完成。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."repeat_type" IS E'重复周期类型。0=一次性；1=每日；2=每周；3=每月。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."start_at" IS E'生效开始时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."end_at" IS E'生效结束时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."reward_items" IS E'完成任务后统一发放的奖励项列表。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."created_by_id" IS E'创建人 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."updated_by_id" IS E'更新人 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."updated_at" IS E'最近更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_definition"."deleted_at" IS E'软删除时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."task_event_failure" IS E'任务事件消费失败事实。\n\n记录成长事件进入 task consumer 后的失败事实，用于管理端查询与重试补偿。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."idempotency_key" IS E'幂等键，格式为 task:event:{eventKey}:{bizKey}。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."event_key" IS E'成长事件 key。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."event_biz_key" IS E'事件业务幂等键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."event_code" IS E'成长事件编码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."template_key" IS E'事件模板 key。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."user_id" IS E'归属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."target_type" IS E'目标类型快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."target_id" IS E'目标 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."status" IS E'重试状态。1=待重试；2=重试中；3=已解决；4=终态失败。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."retry_count" IS E'已执行重试次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."last_retry_at" IS E'最近一次重试时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."last_error_message" IS E'最近一次失败原因。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."resolved_at" IS E'解决时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."terminal_error_at" IS E'终态失败时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."terminal_reason" IS E'终态失败原因。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."processing_token" IS E'当前处理租约 token。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."processing_started_at" IS E'当前处理租约开始时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."processing_expired_at" IS E'当前处理租约过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."request_payload" IS E'重放所需事件快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."occurred_at" IS E'事件发生时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."updated_at" IS E'最近更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_failure"."deleted_at" IS E'软删除时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."task_event_log" IS E'新任务模型中的事件与推进日志。\n\n统一记录步骤推进、手动操作、拒绝原因与事件上下文，兼顾排障与对账。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."id" IS E'日志主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."task_id" IS E'所属任务头 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."step_id" IS E'所属步骤 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."instance_id" IS E'关联的任务实例 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."instance_step_id" IS E'关联的实例步骤 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."user_id" IS E'归属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."event_code" IS E'关联事件编码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."event_biz_key" IS E'关联事件业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."action_type" IS E'日志动作类型。1=领取；2=进度推进；3=完成；4=过期；5=拒绝。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."progress_source" IS E'推进来源。1=手动；2=事件驱动；3=系统。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."accepted" IS E'本次日志是否被接受并真正计入状态推进。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."reject_reason" IS E'拒绝原因；开放值，由任务执行层约束。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."delta" IS E'变更值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."before_value" IS E'变更前值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."after_value" IS E'变更后值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."target_type" IS E'目标类型；开放值，由事件定义层约束。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."target_id" IS E'目标 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."dimension_key" IS E'命中的唯一维度键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."dimension_value" IS E'命中的唯一维度值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."occurred_at" IS E'业务事件真实发生时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."context" IS E'日志上下文快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."retention_until" IS E'保留截止时间；非终态任务关联日志必须由清理任务排除。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_event_log"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."task_instance" IS E'新任务模型中的用户任务实例。\n\n表示某用户在某个周期内命中的一次任务实例；具体步骤进度由 `task_instance_step` 承载。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."id" IS E'实例主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."task_id" IS E'归属任务头 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."user_id" IS E'归属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."cycle_key" IS E'周期键；一次性任务仍使用稳定常量值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."status" IS E'实例状态。0=已领取待开始；1=进行中；2=已完成；3=已过期。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."reward_applicable" IS E'是否需要奖励结算。0=无奖励；1=需要奖励结算。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."reward_settlement_id" IS E'关联的奖励结算事实 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."snapshot_payload" IS E'任务头快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."context" IS E'实例上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."version" IS E'乐观锁版本号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."claimed_at" IS E'领取时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."completed_at" IS E'完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."expired_at" IS E'过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."updated_at" IS E'最近更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance"."deleted_at" IS E'软删除时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."task_instance_step" IS E'新任务模型中的实例步骤进度。\n\n表示某个任务实例下，某个步骤当前的独立进度事实。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."id" IS E'实例步骤主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."instance_id" IS E'归属任务实例 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."step_id" IS E'归属步骤定义 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."status" IS E'步骤状态。0=待开始；1=进行中；2=已完成；3=已过期。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."current_value" IS E'当前进度值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."target_value" IS E'目标值快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."completed_at" IS E'完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."context" IS E'步骤上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."version" IS E'乐观锁版本号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_instance_step"."updated_at" IS E'最近更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."task_step" IS E'新任务模型中的步骤定义。\n\n第一步正式能力仍只开放单步骤任务，但模型层保留步骤边界，便于未来扩展。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."id" IS E'步骤主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."task_id" IS E'所属任务头 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."step_key" IS E'任务内稳定步骤键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."title" IS E'步骤标题。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."description" IS E'步骤描述。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."step_no" IS E'步骤顺序。1=第一个步骤，依次递增。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."trigger_mode" IS E'触发方式。1=手动；2=事件驱动。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."event_code" IS E'目标事件编码；手动步骤为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."target_value" IS E'完成次数；必须为大于 0 的整数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."template_key" IS E'事件模板键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."filter_payload" IS E'步骤过滤配置；只允许由模板层生成的结构写入。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."dedupe_scope" IS E'去重范围。1=按周期唯一；2=终身唯一。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step"."updated_at" IS E'最近更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."task_step_unique_fact" IS E'新任务模型中的唯一计数事实。\n\n显式记录某用户在某步骤下已计入过的唯一对象，避免把“同对象只算一次”隐藏在事件幂等键语义里。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."id" IS E'唯一计数事实主键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."task_id" IS E'所属任务头 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."step_id" IS E'所属步骤 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."user_id" IS E'所属用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."cycle_key" IS E'原始周期键；终身唯一时可为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."dedupe_scope" IS E'去重范围。1=按周期唯一；2=终身唯一。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."scope_key" IS E'去重作用域键；按周期唯一时取周期键，终身唯一时取固定常量。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."dimension_key" IS E'唯一维度键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."dimension_value" IS E'唯一维度值快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."dimension_hash" IS E'唯一维度哈希。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."first_event_code" IS E'首次命中事件编码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."first_event_biz_key" IS E'首次命中事件业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."first_target_type" IS E'首次命中目标类型；开放值，由事件定义层约束。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."first_target_id" IS E'首次命中目标 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."first_occurred_at" IS E'首次命中发生时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."first_context" IS E'首次命中上下文快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."task_step_unique_fact"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_asset_balance" IS E'用户资产余额表。\n\n作为积分、经验、道具、虚拟货币、等级等可计量资产的统一热余额来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_asset_balance"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_asset_balance"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_asset_balance"."asset_type" IS E'资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_asset_balance"."asset_key" IS E'资产键。\n积分/经验等无需附加主键的资产固定为空字符串；扩展资产使用稳定业务键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_asset_balance"."balance" IS E'当前余额。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_asset_balance"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_asset_balance"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_badge" IS E'用户徽章表 - 存储通用用户徽章信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."name" IS E'徽章名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."type" IS E'徽章类型（1=系统徽章, 2=成就徽章, 3=活动徽章）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."description" IS E'徽章描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."icon" IS E'徽章图标URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."business" IS E'业务域标识（如 forum/comic）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."event_key" IS E'事件键（如 forum.topic.create）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."sort_order" IS E'排序值（0=默认排序，数值越小越靠前）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_badge_assignment" IS E'用户徽章关联表 - 管理用户获得的徽章';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge_assignment"."user_id" IS E'关联的用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge_assignment"."badge_id" IS E'关联的徽章ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_badge_assignment"."created_at" IS E'获得时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_browse_log" IS E'用户浏览记录表\n记录用户对各类目标（漫画、小说、章节、论坛主题）的浏览行为\n用于浏览历史查询、热度统计、推荐算法等\n支持用户删除浏览记录';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."id" IS E'主键ID（自增）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."target_type" IS E'目标类型\n1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题\n注意：作品必须区分漫画(1)和小说(2)，不能使用通用类型';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."target_id" IS E'目标ID\n关联的具体目标记录ID\n- targetType=1/2 时：work.id\n- targetType=3/4 时：work_chapter.id\n- targetType=5 时：forum_topic.id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."user_id" IS E'用户ID（关联 app_user.id）\n执行浏览操作的用户';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."ip_address" IS E'IP地址\n用户浏览时的IP地址，用于地域统计、风控等';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."device" IS E'设备类型\n用户使用的设备类型，如：mobile、desktop、tablet\n用于设备统计和适配分析';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."user_agent" IS E'用户代理\n浏览器User-Agent字符串，用于详细的设备和浏览器分析';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."viewed_at" IS E'浏览时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."retention_until" IS E'保留截止时间；浏览历史默认按 viewedAt 推导清理窗口。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_browse_log"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_comment" IS E'用户评论表\n统一存储作品评论、章节评论和论坛回复';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."target_type" IS E'目标类型（1=漫画，2=小说，3=漫画章节，4=小说章节，5=论坛主题）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."target_id" IS E'目标ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."user_id" IS E'评论用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."html" IS E'评论正文 HTML。\n对外唯一正文表示，纯文本编辑器也需输出最小 HTML。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."content" IS E'评论纯文本派生列。\n供搜索、摘录和审核链路复用，不再表示客户端原始输入。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."body" IS E'canonical 正文文档。\n评论正文的唯一真相源；运行时不再依赖原始 content 作为输入来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."body_version" IS E'正文版本（1=v1）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."floor" IS E'楼层号';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."reply_to_id" IS E'回复目标评论ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."actual_reply_to_id" IS E'实际回复的根评论ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."is_hidden" IS E'是否隐藏';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."audit_status" IS E'审核状态（0=待审核，1=通过，2=拒绝）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."audit_by_id" IS E'审核人ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."audit_role" IS E'审核角色（0=版主，1=管理员）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."audit_reason" IS E'审核原因';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."audit_at" IS E'审核时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."like_count" IS E'点赞数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."sensitive_word_hits" IS E'敏感词命中记录';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."geo_country" IS E'评论提交时解析到的国家/地区\n仅记录新写入评论的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."geo_province" IS E'评论提交时解析到的省份/州\n仅记录新写入评论的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."geo_city" IS E'评论提交时解析到的城市\n仅记录新写入评论的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."geo_isp" IS E'评论提交时解析到的网络运营商\n仅记录新写入评论的属地快照，无法解析或历史记录时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."geo_source" IS E'属地解析来源\n当前固定为 ip2region；历史记录或未补齐属地快照时为空';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."deleted_at" IS E'删除时间（软删除）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."retention_until" IS E'保留截止时间；可见评论不会被硬删除清理。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment"."topic_delete_cascade_id" IS E'主题删除级联批次。\n仅论坛主题删除链路写入；恢复时只复活匹配批次的评论，避免误恢复独立删除的评论。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_comment_floor_counter" IS E'用户评论根楼层计数表。\n\n以目标维度单行计数替代 user_comment 的 max(floor)+1 扫描，\n保证同一评论目标下根评论楼层在并发写入时单调且不重复。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment_floor_counter"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment_floor_counter"."target_type" IS E'评论目标类型。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment_floor_counter"."target_id" IS E'评论目标 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment_floor_counter"."next_floor" IS E'下一次分配的根评论楼层号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment_floor_counter"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_comment_floor_counter"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_content_entitlement" IS E'用户内容权益事实表。\n阅读放行、已购状态和购买计数统一读取这里的有效权益。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."target_type" IS E'权益目标类型（1=漫画章节；2=小说章节）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."target_id" IS E'权益目标 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."grant_source" IS E'授权来源（1=购买；2=阅读券；3=广告；4=后台补偿；5=VIP 试用）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."source_id" IS E'来源 ID，例如购买记录、券实例、广告奖励或补偿记录 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."source_key" IS E'来源业务键，供广告奖励、补偿批次等开放来源追踪。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."status" IS E'权益状态（1=有效；2=已撤销；3=已过期）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."starts_at" IS E'生效开始时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."expires_at" IS E'生效结束时间，永久权益为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."revoked_at" IS E'撤销时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."grant_snapshot" IS E'来源快照，记录价格、券、广告或补偿上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_content_entitlement"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_coupon_instance" IS E'用户券实例表。\n发放到用户后的券以实例为准核销，支持次数、过期和撤销。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."coupon_definition_id" IS E'券定义 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."coupon_type" IS E'券类型快照（1=阅读券；2=折扣券；3=VIP 试用卡；4=补签卡）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."status" IS E'状态（1=可用；2=已用完；3=已过期；4=已撤销）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."remaining_uses" IS E'剩余可用次数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."source_type" IS E'来源类型（1=任务；2=积分兑换；3=后台发放；4=购买补偿；5=会员权益）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."source_id" IS E'来源 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."grant_key" IS E'发放幂等键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."expires_at" IS E'过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."grant_snapshot" IS E'发放快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_coupon_instance"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_download_record" IS E'用户下载记录表\n记录用户对作品、章节等内容的下载操作\n支持下载计数统计和用户下载历史查询';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_download_record"."id" IS E'主键ID（自增）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_download_record"."target_type" IS E'目标类型 1=漫画章节, 2=小说章节';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_download_record"."target_id" IS E'目标ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_download_record"."user_id" IS E'用户ID（关联 app_user.id）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_download_record"."created_at" IS E'创建时间（下载时间）';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_favorite" IS E'用户收藏记录表\n记录用户对各类目标（漫画、小说、论坛主题）的收藏操作\n支持收藏计数统计和用户收藏列表查询';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_favorite"."id" IS E'主键ID（自增）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_favorite"."target_type" IS E'目标类型 1=漫画, 2=小说, 3=论坛主题';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_favorite"."target_id" IS E'目标ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_favorite"."user_id" IS E'用户ID（关联 app_user.id）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_favorite"."created_at" IS E'创建时间（收藏时间）';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_follow" IS E'用户关注事实表\n统一记录用户对用户、作者、论坛板块等目标的单向关注关系';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_follow"."id" IS E'主键 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_follow"."target_type" IS E'关注目标类型\n1=用户，2=作者，3=论坛板块，4=论坛话题（hashtag）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_follow"."target_id" IS E'关注目标 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_follow"."user_id" IS E'发起关注的用户 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_follow"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_level_rule" IS E'用户等级规则表 - 定义用户等级规则，包括等级名称、所需经验、等级权益等';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."name" IS E'等级名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."required_experience" IS E'所需经验值';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."description" IS E'等级描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."icon" IS E'等级图标URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."color" IS E'等级专属颜色（十六进制）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."sort_order" IS E'排序值（0=默认排序，数值越小越靠前）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."business" IS E'业务域标识（可选）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."daily_topic_limit" IS E'每日发帖数量上限（0=不限制）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."daily_reply_comment_limit" IS E'每日回复和评论数量上限（0=不限制）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."post_interval" IS E'发帖间隔秒数（0=不限制）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."daily_like_limit" IS E'每日点赞次数上限（0=不限制）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."daily_favorite_limit" IS E'每日收藏次数上限（0=不限制）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."purchase_payable_rate" IS E'积分支付比例（0-1之间的小数，1表示原价支付）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_level_rule"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_like" IS E'用户点赞记录表\n统一存储作品、章节、论坛主题、评论的点赞行为';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_like"."id" IS E'主键 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_like"."target_type" IS E'点赞直接目标类型（1=漫画作品，2=小说作品，3=论坛主题，4=漫画章节，5=小说章节，6=评论）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_like"."target_id" IS E'点赞直接目标 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_like"."scene_type" IS E'目标所属业务场景类型（1=漫画作品场景，2=小说作品场景，3=论坛主题场景，10=漫画章节场景，11=小说章节场景，12=用户主页场景）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_like"."scene_id" IS E'目标所属业务场景根对象 ID\n例如评论点赞时，这里存评论挂载的作品、章节或主题 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_like"."comment_level" IS E'评论层级类型（1=根评论，2=回复评论）\n仅当 targetType=评论时有值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_like"."user_id" IS E'点赞用户 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_like"."created_at" IS E'点赞时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_membership_subscription" IS E'用户 VIP 订阅事实表。\nVIP 权限只读取有效订阅事实，不再读取用户等级。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."user_id" IS E'用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."plan_id" IS E'VIP 套餐 ID，可为空表示试用卡或补偿订阅。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."source_type" IS E'来源类型（1=支付订单；2=VIP 试用卡；3=后台补偿）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."source_id" IS E'来源 ID，例如订单 ID、券实例 ID 或后台补偿记录 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."status" IS E'订阅状态（1=有效；2=已取消；3=已退款；4=已过期）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."starts_at" IS E'订阅开始时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."ends_at" IS E'订阅结束时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."cancelled_at" IS E'取消时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."refunded_at" IS E'退款时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."source_snapshot" IS E'来源快照，记录开通时的套餐、券或补偿上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_membership_subscription"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_mention" IS E'用户提及事实表\n统一记录评论与论坛主题中的 @ 用户事实，并标记通知是否已补发。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."source_type" IS E'来源类型（1=评论，2=论坛主题）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."source_id" IS E'来源ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."mentioned_user_id" IS E'被提及用户ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."start_offset" IS E'提及开始偏移（基于正文 [start, end)）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."end_offset" IS E'提及结束偏移（基于正文 [start, end)）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."notified_at" IS E'已通知时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_mention"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_notification" IS E'用户通知投影表。\n只承载通知中心对用户可见的读模型，不再承担 producer 侧通知类型事实源职责。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."category_key" IS E'通知分类键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."projection_key" IS E'通知投影键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."receiver_user_id" IS E'接收用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."actor_user_id" IS E'触发用户 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."title" IS E'通知标题。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."content" IS E'通知正文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."payload" IS E'通知扩展载荷。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."announcement_id" IS E'公告 ID（system_announcement 场景冗余列，用于反查已通知用户）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."is_read" IS E'是否已读。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."is_hidden" IS E'当前接收用户是否已隐藏。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."read_at" IS E'已读时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."expires_at" IS E'过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."retention_until" IS E'保留截止时间；未读或仍可见通知必须由清理任务排除。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_notification"."archived_at" IS E'归档时间；为空表示仍处于热数据窗口。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_purchase_record" IS E'用户购买记录表\n记录用户对作品、章节等内容的购买操作\n支持购买历史查询和消费统计';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."id" IS E'主键ID（自增）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."target_type" IS E'目标类型 1=漫画章节, 2=小说章节';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."target_id" IS E'目标ID（作品ID或章节ID）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."user_id" IS E'用户ID（关联 app_user.id）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."original_price" IS E'原价快照';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."paid_price" IS E'实付价格快照';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."payable_rate" IS E'支付比例快照（1=原价支付，0.9=9折）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."discount_amount" IS E'折扣金额快照';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."coupon_instance_id" IS E'折扣券实例 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."discount_source" IS E'折扣来源（0=无折扣, 1=折扣券）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."status" IS E'购买状态（1=成功, 2=失败, 3=退款中, 4=已退款）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."payment_method" IS E'支付方式（1=余额, 2=支付宝, 3=微信）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."out_trade_no" IS E'第三方支付订单号';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."created_at" IS E'创建时间（购买时间）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_purchase_record"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_report" IS E'用户举报记录表\n统一存储作品、章节、论坛主题、评论、用户的举报行为';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."id" IS E'主键 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."reporter_id" IS E'举报人 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."handler_id" IS E'处理人 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."target_type" IS E'举报直接目标类型（1=漫画作品，2=小说作品，3=漫画章节，4=小说章节，5=论坛主题，6=评论，7=用户）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."target_id" IS E'举报直接目标 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."scene_type" IS E'目标所属业务场景类型（1=漫画作品场景，2=小说作品场景，3=论坛主题场景，10=漫画章节场景，11=小说章节场景，12=用户主页场景）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."scene_id" IS E'目标所属业务场景根对象 ID\n例如评论举报时，这里存评论挂载的作品、章节或主题 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."comment_level" IS E'评论层级类型（1=根评论，2=回复评论）\n仅当 targetType=评论时有值。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."reason_type" IS E'举报原因类型（1=垃圾信息，2=不当内容，3=骚扰，4=版权侵权，99=其他）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."description" IS E'举报补充说明';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."evidence_url" IS E'证据链接';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."status" IS E'举报状态（1=待处理，2=处理中，3=已解决，4=已驳回）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."handling_note" IS E'处理备注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."target_action" IS E'目标处置动作（1=无需处置，2=隐藏评论，3=拒绝评论，4=隐藏论坛主题，5=拒绝论坛主题，6=禁用用户，7=禁言用户）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."target_action_reason" IS E'目标处置原因。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."target_action_status" IS E'最终目标处置状态（1=无需处置，2=已处置）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."target_action_result" IS E'owner service 返回的结构化处置结果。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."target_action_applied_at" IS E'目标处置完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."handled_at" IS E'处理时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_report_disposition_attempt" IS E'举报目标处置尝试记录。\n仅记录 owner 处置执行失败和后续重试恢复证据；最终成功结果写回 user_report。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."report_id" IS E'举报 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."target_action" IS E'本次尝试的目标处置动作。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."attempt_status" IS E'尝试状态（1=失败，2=重试已成功）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."failure_code" IS E'失败码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."failure_message" IS E'失败信息。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."retryable" IS E'是否可重试。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."actor_user_id" IS E'操作管理员 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."attempted_at" IS E'尝试发生时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."resolved_at" IS E'被重试成功解决的时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."result" IS E'结构化结果或诊断。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_report_disposition_attempt"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."user_work_reading_state" IS E'用户作品阅读状态表\n用于保存用户对作品（漫画/小说）的阅读进度状态';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_work_reading_state"."user_id" IS E'用户 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_work_reading_state"."work_id" IS E'作品 ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_work_reading_state"."work_type" IS E'作品类型（1=漫画, 2=小说）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_work_reading_state"."last_read_at" IS E'最近一次阅读时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."user_work_reading_state"."last_read_chapter_id" IS E'最近一次阅读到的章节 ID，用于继续阅读';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work" IS E'作品表\n统一存储漫画与小说的基础信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."type" IS E'作品类型（1=漫画，2=小说）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."name" IS E'作品名称';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."alias" IS E'别名';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."cover" IS E'封面';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."description" IS E'简介';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."language" IS E'语言';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."region" IS E'地区';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."age_rating" IS E'年龄分级';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."serial_status" IS E'连载状态（0=未开始，1=连载中，2=已完结，3=暂停更新，4=已停更）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."publisher" IS E'出版方';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."original_source" IS E'原作来源';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."copyright" IS E'版权信息';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."disclaimer" IS E'免责声明';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."remark" IS E'备注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."is_published" IS E'是否发布';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."is_recommended" IS E'是否推荐';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."is_hot" IS E'是否热门';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."is_new" IS E'是否最新';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."publish_at" IS E'发布日期';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."last_updated" IS E'最近更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."view_rule" IS E'阅读规则（0=所有人可见，1=登录用户可见，2=VIP可见，3=需购买可见）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."required_view_level_id" IS E'阅读等级限制ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."forum_section_id" IS E'关联论坛板块ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."chapter_price" IS E'章节价格';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."can_comment" IS E'是否可评论';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."recommend_weight" IS E'推荐权重';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."view_count" IS E'浏览数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."favorite_count" IS E'收藏数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."like_count" IS E'点赞数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."comment_count" IS E'评论数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."download_count" IS E'下载数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."rating" IS E'评分';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."popularity" IS E'热度值';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work"."deleted_at" IS E'删除时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_author" IS E'作者信息模型';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."name" IS E'作者姓名';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."avatar" IS E'作者头像URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."description" IS E'作者描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."nationality" IS E'国籍';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."gender" IS E'性别（0=未知，1=男性，2=女性，3=其他，4=保密）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."type" IS E'作者类型（1=漫画家，2=轻小说作者）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."is_enabled" IS E'启用状态（true: 启用, false: 禁用）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."is_recommended" IS E'是否为推荐作者（用于前台推荐展示）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."remark" IS E'管理员备注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."work_count" IS E'作品数量（冗余字段，用于提升查询性能）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."followers_count" IS E'粉丝数量（冗余字段，用于前台展示）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author"."deleted_at" IS E'软删除时间（用于数据恢复或归档）';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_author_relation" IS E'作品作者关联表（多对多关系中间表）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author_relation"."work_id" IS E'作品ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author_relation"."author_id" IS E'作者ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_author_relation"."sort_order" IS E'排序顺序（用于展示顺序）';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_category" IS E'作品分类模型';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."name" IS E'分类名称（唯一）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."description" IS E'分类描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."icon" IS E'分类图标URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."content_type" IS E'关联内容类型（1=漫画，2=小说，3=帖子）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."sort_order" IS E'排序值（0=默认排序，数值越小越靠前）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."popularity" IS E'人气值（用于展示和排序）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_category_relation" IS E'作品分类关联表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category_relation"."work_id" IS E'作品ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category_relation"."category_id" IS E'分类ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_category_relation"."sort_order" IS E'排序顺序（用于展示顺序）';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_chapter" IS E'作品章节表\n存储漫画/小说章节信息与统计数据';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."work_id" IS E'作品ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."work_type" IS E'作品类型（1=漫画，2=小说）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."title" IS E'章节标题';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."subtitle" IS E'章节副标题';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."cover" IS E'章节封面';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."description" IS E'章节简介';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."sort_order" IS E'排序值';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."is_published" IS E'是否发布';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."is_preview" IS E'是否预览章节';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."publish_at" IS E'发布时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."view_rule" IS E'阅读规则（-1=继承作品，0=所有人可见，1=登录用户可见，2=VIP可见，3=需购买可见）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."required_read_level_id" IS E'阅读等级限制ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."price" IS E'章节价格';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."can_download" IS E'是否可下载';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."can_comment" IS E'是否可评论';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."novel_content_path" IS E'小说章节内容文件路径。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."comic_content_manifest" IS E'漫画章节内容清单。\n- 固定为图片路径数组 JSON，不再与小说路径混用同一 text 字段。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."word_count" IS E'字数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."view_count" IS E'浏览数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."like_count" IS E'点赞数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."comment_count" IS E'评论数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."purchase_count" IS E'购买数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."download_count" IS E'下载数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."remark" IS E'备注';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_chapter"."deleted_at" IS E'删除时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_comic" IS E'漫画作品扩展表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_comic"."id" IS E'主键id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_comic"."work_id" IS E'关联的作品ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_comic"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_comic"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_novel" IS E'小说作品扩展表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_novel"."id" IS E'主键id';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_novel"."work_id" IS E'关联的作品ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_novel"."word_count" IS E'总字数';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_novel"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_novel"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_tag" IS E'标签模型';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."id" IS E'主键ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."name" IS E'标签名称（唯一）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."icon" IS E'标签图标URL';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."description" IS E'标签描述';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."sort_order" IS E'排序值（0=默认排序，数值越小越靠前）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."is_enabled" IS E'是否启用';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."popularity" IS E'人气值（用于展示和排序）';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."created_at" IS E'创建时间';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag"."updated_at" IS E'更新时间';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_tag_relation" IS E'作品标签关联表';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag_relation"."work_id" IS E'作品ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag_relation"."tag_id" IS E'标签ID';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_tag_relation"."sort_order" IS E'排序顺序（用于展示顺序）';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_third_party_chapter_binding" IS E'作品三方章节绑定表。\n用 provider 章节 ID 提供后续同步幂等依据。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."work_third_party_source_binding_id" IS E'三方来源绑定 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."chapter_id" IS E'本地章节 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."provider_chapter_id" IS E'三方章节 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."remote_sort_order" IS E'三方章节原始排序。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."snapshot" IS E'三方章节快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_chapter_binding"."deleted_at" IS E'删除时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."work_third_party_source_binding" IS E'作品三方来源绑定表。\n只承载结构化三方来源身份，不从作品展示字段推断同步资格。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."work_id" IS E'本地作品 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."platform" IS E'三方平台代码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."provider_comic_id" IS E'三方漫画 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."provider_path_word" IS E'三方漫画路径标识。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."provider_group_path_word" IS E'三方章节分组路径标识。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."provider_uuid" IS E'三方 UUID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."source_snapshot" IS E'三方来源快照。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."work_third_party_source_binding"."deleted_at" IS E'删除时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."workflow_attempt" IS E'通用工作流执行 attempt 表。\n每次初始确认、人工重试或系统恢复都会创建一个新的 attempt。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."attempt_id" IS E'对外暴露的 attempt ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."workflow_job_id" IS E'归属工作流任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."attempt_no" IS E'同一任务内 attempt 序号。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."trigger_type" IS E'触发类型（1=首次确认，2=人工重试，3=系统恢复）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."status" IS E'当前 attempt 状态（1=待处理，2=处理中，3=成功，4=部分失败，5=失败，6=已取消）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."not_before_at" IS E'最早可被 worker 消费的时间，空表示立即可消费。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."selected_item_count" IS E'选中条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."success_item_count" IS E'成功条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."failed_item_count" IS E'失败条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."skipped_item_count" IS E'跳过条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."claimed_by" IS E'当前 claim 的 worker 标识。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."claim_expires_at" IS E'当前 claim 过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."heartbeat_at" IS E'最近心跳时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."error_code" IS E'错误码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."error_domain" IS E'错误领域。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."error_stage" IS E'错误阶段。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."error_severity" IS E'错误严重级别。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."error_retryable" IS E'错误是否可重试。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."error_context" IS E'可公开给前端表达层使用的错误事实。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."error_diagnostic" IS E'内部诊断信息，不作为前端表达来源。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."started_at" IS E'开始处理时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."finished_at" IS E'完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_attempt"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."workflow_conflict_key" IS E'工作流业务冲突键表。\n记录活动任务占用的业务范围，并保留同任务重试时重新占用所需的历史 key。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_conflict_key"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_conflict_key"."workflow_job_id" IS E'归属工作流任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_conflict_key"."workflow_type" IS E'工作流类型。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_conflict_key"."conflict_key" IS E'业务冲突键。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_conflict_key"."released_at" IS E'释放时间；为空表示仍然占用。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_conflict_key"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_conflict_key"."updated_at" IS E'更新时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."workflow_event" IS E'通用工作流事件表。\n事件保持业务无关；领域条目时间线通过领域投影表关联。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_event"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_event"."workflow_job_id" IS E'归属工作流任务内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_event"."workflow_attempt_id" IS E'归属 attempt 内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_event"."event_type" IS E'事件类型（1=创建草稿，2=确认任务，3=claim attempt，4=心跳，5=进度更新，6=条目成功，7=条目失败，8=attempt 完成，9=请求取消，10=人工重试，11=草稿过期，12=资源清理）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_event"."event_code" IS E'事件码。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_event"."detail" IS E'事件诊断详情。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_event"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON TABLE "public"."workflow_job" IS E'通用工作流任务表。\n只承载跨业务的任务生命周期、操作者、进度和当前 attempt 指针。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."id" IS E'主键 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."job_id" IS E'对外暴露的工作流任务 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."workflow_type" IS E'工作流类型。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."display_name" IS E'面向运营展示的任务名称。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."operator_type" IS E'操作者类型（1=后台管理员，2=系统）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."operator_user_id" IS E'后台管理员操作者 ID；系统任务为空。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."status" IS E'当前任务状态（1=草稿，2=待处理，3=处理中，4=成功，5=部分失败，6=失败，7=已取消，8=已过期）。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."progress_percent" IS E'进度百分比。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."progress_code" IS E'当前进度展示代码；后台根据代码和上下文生成文案。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."progress_context" IS E'当前进度展示上下文。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."progress_detail" IS E'结构化进度详情快照；用于展示当前运行中的子进度。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."current_attempt_fk" IS E'当前 attempt 内部 ID。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."selected_item_count" IS E'选中条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."success_item_count" IS E'成功条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."failed_item_count" IS E'失败条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."skipped_item_count" IS E'跳过条目数。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."cancel_requested_at" IS E'取消请求时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."started_at" IS E'开始处理时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."finished_at" IS E'完成时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."expires_at" IS E'草稿过期时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."archived_at" IS E'归档时间；仅用于后台列表隐藏，不改变任务生命周期。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."summary" IS E'运行时非查询诊断摘要。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."created_at" IS E'创建时间。';
+--> statement-breakpoint
+COMMENT ON COLUMN "public"."workflow_job"."updated_at" IS E'更新时间。';

@@ -11,13 +11,6 @@ export interface DatabaseConnection {
   safeLabel: string
 }
 
-export interface CanonicalMigrationConnection extends DatabaseConnection {
-  disposableAuthorization: string
-  epoch: string
-  initializeAuthorization?: string
-  targetFingerprint: string
-}
-
 interface DemoSeedEnvironment extends DatabaseConnection {
   nodeEnv: string
 }
@@ -75,43 +68,6 @@ export function readDatabaseConnection(
   )
 }
 
-/**
- * 读取 canonical epoch 的显式目标授权。
- *
- * 这些值只用于绑定本次连接的目标身份和 epoch，不进入日志、清单或错误信息。
- */
-export function readCanonicalMigrationAuthorization(
-  env: NodeJS.ProcessEnv,
-  missingUrlMessage: string,
-): CanonicalMigrationConnection {
-  const database = readDatabaseConnection(env, missingUrlMessage)
-  const epoch = requireEnv(
-    env,
-    'CANONICAL_MIGRATION_EPOCH',
-    '缺少 CANONICAL_MIGRATION_EPOCH',
-  )
-  const targetFingerprint = requireUpperSha256Env(
-    env,
-    'CANONICAL_TARGET_FINGERPRINT',
-  )
-  const disposableAuthorization = requireLowerSha256Env(
-    env,
-    'CANONICAL_DISPOSABLE_AUTHORIZATION',
-  )
-  const initializeAuthorization = optionalLowerSha256Env(
-    env,
-    'CANONICAL_INITIALIZE_AUTHORIZATION',
-  )
-
-  return {
-    ...database,
-    disposableAuthorization,
-    epoch,
-    ...(initializeAuthorization ? { initializeAuthorization } : {}),
-    targetFingerprint,
-  }
-}
-
 export function readReferenceBootstrapOptions(
   env: NodeJS.ProcessEnv,
 ): ReferenceBootstrapOptions {
@@ -164,33 +120,6 @@ function requireEnv(env: NodeJS.ProcessEnv, key: string, message: string) {
     throw new Error(message)
   }
 
-  return value
-}
-
-function requireUpperSha256Env(env: NodeJS.ProcessEnv, key: string) {
-  const value = requireEnv(env, key, `缺少 ${key}`)
-  if (!/^[A-F0-9]{64}$/u.test(value)) {
-    throw new Error(`${key} 必须是 64 位大写 SHA-256`)
-  }
-  return value
-}
-
-function requireLowerSha256Env(env: NodeJS.ProcessEnv, key: string) {
-  const value = requireEnv(env, key, `缺少 ${key}`)
-  if (!/^[a-f0-9]{64}$/u.test(value)) {
-    throw new Error(`${key} 必须是 64 位小写 SHA-256`)
-  }
-  return value
-}
-
-function optionalLowerSha256Env(env: NodeJS.ProcessEnv, key: string) {
-  const value = normalizeEnvValue(env[key])
-  if (!value) {
-    return undefined
-  }
-  if (!/^[a-f0-9]{64}$/u.test(value)) {
-    throw new Error(`${key} 必须是 64 位小写 SHA-256`)
-  }
   return value
 }
 

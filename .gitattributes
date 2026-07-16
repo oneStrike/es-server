@@ -1,5 +1,1 @@
-db/canonical-*.ts text eol=lf
 db/comments/generated.sql text eol=lf
-db/migration/20260714004452_canonical_empty_db_baseline/*.json text eol=lf
-db/migration/20260714004452_canonical_empty_db_baseline/*.sql text eol=lf
-scripts/db-catalog-manifest.ts text eol=lf

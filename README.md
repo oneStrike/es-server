@@ -35,7 +35,8 @@ pnpm build:app
 pnpm type-check
 
 # 数据库：只读检查
-pnpm db:core:check
+pnpm db:boundary:check
+pnpm db:integrity:check
 pnpm db:migration:check
 pnpm db:comments:check
 
@@ -54,12 +55,11 @@ pnpm publish-api:app
 
 ## 数据库迁移与初始化
 
-- `pnpm db:migrate` 是唯一的 schema migration 入口：脚本固定传入 `--mode active` 并从 `DATABASE_URL` 读取连接；它不是生产部署别名。
-- 当前 migration line 是从 `db/schema/index.ts` 生成的单一全量 baseline，只能初始化 `public` schema 中没有应用表的 PostgreSQL 数据库。已有数据库必须从匹配的备份恢复，或在明确授权后重置；不存在原增量历史的原地升级、数据转换或兼容层。
-- baseline 会创建 `pg_trgm`，执行 migration 的数据库角色必须具有创建该扩展的权限。
-- 数据库 migration/static gate 的 operational owner 位于 `db/operations/**`；`scripts/` 只保留数据库注释与 Admin RBAC 入口。
-- 本仓库不使用数据库外键，不使用 `drizzle-kit push` / `push --force` 作为交付路径。
-- 迁移、停写、数据导入、发布与回滚都不是 compose 或本地脚本的隐式副作用，必须由对应环境的操作流程明确执行。
+- 所有应用与迁移只使用 `DATABASE_URL` 指向唯一业务数据库 `foo`；`.env.example` 仅提供无凭据占位形式。
+- 标准流程是 `pnpm db:generate` → 审查新增 SQL → `pnpm db:migration:check` → `pnpm db:comments:check` → `pnpm db:migrate`。`db:migrate` 直接运行 `drizzle-kit migrate --config=drizzle.migrate.config.ts`，并要求 `DATABASE_URL`。
+- 当前 initial migration 从 `db/schema/index.ts` 生成；提交后 migration history 严格 append-only。已有旧 migration line 的数据库没有原地升级、数据转换、旧 journal 接管、兼容 view 或双读写路径；需要重置时必须取得明确授权并在独立维护流程中执行。
+- initial migration 会在首个 trigram index 前创建 `pg_trgm` version `1.6`；执行迁移的角色必须拥有相应权限。migration SQL 不得包含自己的 transaction control，schema comments 必须作为受审查的 `COMMENT ON` DDL 进入 migration。
+- 本仓库不使用数据库外键，也不使用 `drizzle-kit push` / `push --force`。部署编排必须保证单一 migration job，应用启动、compose 与普通验证均不隐式执行 migration、reset、seed 或 bootstrap。
 - reference bootstrap 可通过 `pnpm db:bootstrap:reference` 显式执行；demo seed 仅能通过 `pnpm db:seed:demo` 显式执行，并要求 `ALLOW_DB_SEED=true`。
 
 ## 规范入口

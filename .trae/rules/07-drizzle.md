@@ -67,18 +67,19 @@
 
 ## Schema 与 migration 联动
 
-- 常规 schema 差异必须先生成 migration，再通过受控 check / migrate 入口执行；具体命令见 [07-drizzle-operations.md](./07-drizzle-operations.md)。`db:migrate` 要求显式 `mode active` 与 `DATABASE_URL`，不存在无参数或 production 别名入口。
+- 常规 schema 差异必须先生成 migration，再通过受控 check / migrate 入口执行；具体命令见 [07-drizzle-operations.md](./07-drizzle-operations.md)。`db:migrate` 直接使用 `drizzle.migrate.config.ts`，要求 `DATABASE_URL`，不存在 mode、目标别名或 production alias。
 - 若生成过程中出现交互，必须停止并由用户亲自执行；不要替用户继续回答交互提示。
-- 常规 migration 采用 append-only：只允许新建，不允许修改、删除或在已存在、已提交、已执行的 migration 文件中追加 DDL。
+- 当前 initial migration 由已授权的 history reset 建立；此例外不提供可复用 reset 命令、旧 journal 解释或兼容路径。initial migration 提交后，常规 migration 严格 append-only：只允许新增直接 sibling migration directory，不允许修改、删除、移动或向已存在 migration 文件追加 DDL。
 - 无法自动生成的 DDL 可手写补充，但必须说明原因、范围与风险。
 - 字段改类型、改值域、改数组元素、改 JSON 内部枚举、改约束时，migration 必须同步处理历史数据；不能依赖清库、丢字段、跳过旧值或要求人工补数据。
-- 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并通过受控注释检查入口确认生成结果 `Warnings: 0`。
+- 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并通过受控注释检查入口确认生成结果 `Warnings: 0`；相同的结构化 `COMMENT ON` statements 必须进入审查过的 migration SQL，不能在 migrate 后回写。
 - `db/schema`、migration、`db/comments/generated.sql` 三者必须同轮一致，不能只改其中一层。
+- migration SQL 不得自行控制事务；`BEGIN`、`START TRANSACTION`、`COMMIT`、`ROLLBACK`、savepoint、prepared transaction 与等价语句均由完整性 gate 拒绝。
 - 本仓库数据库层禁止使用数据库外键。
 - `db/schema` 与手写 migration 都不得新增 `references(...)`、`foreign key` 或 `alter table ... add constraint ... foreign key`。
 - Drizzle relations 只用于查询组织与类型推导，不代表数据库约束。
 - 禁止使用 `drizzle-kit push`、`drizzle-kit push --force` 或重新引入 `db:push` 作为迁移路径；所有结构变更必须落为可审计 migration。
-- 生产迁移脚本只负责 migration 与注释同步，不得在全新数据库上自动执行 seed。
+- 直接 Drizzle migration 只应用版本化 SQL，不得自动执行 bootstrap、seed 或任何 schema comments 回写。
 
 ## Seed 与 bootstrap
 
@@ -112,7 +113,7 @@
 - 禁止 schema、DTO、常量 / 枚举、migration 四层脱节。
 - 禁止新增数据库外键或把 Drizzle relations 误写成数据库 FK 约束。
 - 禁止绕过 `db:migration:check` 直接迁移。
-- 禁止删除、改写或移动已存在、已提交或已执行的 migration。
+- 除本次已授权的 initial history reset 外，禁止删除、改写或移动已存在、已提交或已执行的 migration。
 - 禁止 `--ignore-conflicts`、旧 migration fallback、reconcile/rollback helper 或普通 `pnpm check` 隐式触发写入。
 - 禁止在生产迁移中自动 seed 或执行 demo 数据清理。
 - 禁止在 `db/schema` 中为 `inferSelect` / `inferInsert` 再套一层仅做改名的别名链。

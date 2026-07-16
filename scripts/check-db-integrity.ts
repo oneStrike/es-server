@@ -1,15 +1,18 @@
+import type { SchemaCommentTarget } from '../db/comments/schema-comments'
 import { createHash } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import process from 'node:process'
 import ts from 'typescript'
+import {
+  buildSchemaCommentsArtifact,
+  getSchemaCommentTargetKey,
+} from '../db/comments/schema-comments'
 
 const SOURCE_ROOTS = ['apps', 'db', 'libs', 'scripts'] as const
 const SKIPPED_DIRECTORIES = new Set(['.git', '.omx', 'dist', 'node_modules'])
 const REGISTRY_PATH = 'db/core/integrity-lock-registry.ts'
 const MIGRATION_SESSION_LOCK_PATH = 'db/migration-session-lock.ts'
-const BASELINE_NAME = '20260714004452_canonical_empty_db_baseline'
-const BASELINE_DIRECTORY = `db/migration/${BASELINE_NAME}`
 const RETIRED_ROUTINES = new Set([
   'enforce_work_chapter_domain_boundary',
   'enforce_work_domain_boundary',
@@ -94,8 +97,8 @@ interface IntegrityCounts {
 interface IntegritySummaries {
   acquisitionDigest: string
   apiDigest: string
-  catalogDigest: string
   dagDigest: string
+  migrationDigest: string
   qxDigest: string
   writerDigest: string
 }
@@ -113,6 +116,32 @@ interface ProjectContext {
   program: ts.Program
   root: string
   sourceFiles: ts.SourceFile[]
+}
+
+type SqlTokenKind = 'identifier' | 'quoted-identifier' | 'string' | 'symbol'
+
+interface SqlToken {
+  end: number
+  kind: SqlTokenKind
+  start: number
+  value: string
+}
+
+interface SqlStatement {
+  sql: string
+  tokens: SqlToken[]
+}
+
+interface MigrationCommentStatement {
+  migrationPath: string
+  sql: string
+  target: SchemaCommentTarget
+}
+
+interface MigrationTreeAudit {
+  entries: Array<{ kind: 'directory' | 'file' | 'other'; path: string }>
+  invalidEntries: string[]
+  migrationSqlPaths: string[]
 }
 
 interface AcquisitionAnalysis {
@@ -477,13 +506,37 @@ addLockSites(
   'complete quota/target union',
 )
 addLockSites(
-  'libs/interaction/src/payment/payment.service.ts',
-  'PaymentService',
+  'libs/interaction/src/payment/payment-order.service.ts',
+  'PaymentOrderService',
+  ['createPaymentOrder'],
+  'payment order provider configuration reference',
+  'PaymentOrderService.createPaymentOrder',
+  'shared provider configuration snapshot',
+)
+addLockSites(
+  'libs/interaction/src/payment/payment-settlement.service.ts',
+  'PaymentSettlementService',
   ['executePaidOrderMutationWithMembershipRetry'],
   'paid membership activation',
-  'PaymentService paid-order mutation roots',
+  'PaymentSettlementService paid-order mutation roots',
   'complete membership/coupon/ledger union',
   'libs/interaction/src/membership/membership.service.ts#MembershipService.preparePaidOrderActivation',
+)
+addLockSites(
+  'libs/interaction/src/payment/payment-notify.service.ts',
+  'PaymentNotifyService',
+  ['resolveVerifiedPaymentNotifyEvent'],
+  'payment notification provider event deduplication',
+  'PaymentNotifyService.resolveVerifiedPaymentNotifyEvent',
+  'exclusive payment notification provider-event relation',
+)
+addLockSites(
+  'libs/interaction/src/payment/payment-provider-config.service.ts',
+  'PaymentProviderConfigService',
+  ['updatePaymentProviderConfig', 'updatePaymentProviderStatus'],
+  'payment provider configuration mutation',
+  'PaymentProviderConfigService mutation roots',
+  'exclusive payment provider configuration record',
 )
 addLockSites(
   'libs/interaction/src/purchase/purchase.service.ts',
@@ -842,9 +895,9 @@ const NON_EXPERIENCE_LEDGER_CALLS = new Set([
 ])
 
 const EXPECTED_ACQUISITION_DIGEST =
-  '4d501ee616bd6483f83532c7c6d2a9134643dd35293131fbe7251ca4b541018e'
+  '359ba898a4ac6f6d69d0eb1a2149d68395f3a4ac77435bb2a2e4881d0f772dbf'
 const EXPECTED_WRITER_DIGEST =
-  '327d38819639eb6e19410d0410ebe429bf746ed179a44b503b5e570f2f4d475d'
+  '92eb8a9118e4657e6399892371ac5f16a8bdcc560f69da57569d681403e4a0fe'
 
 /**
  * 以 TypeScript AST 与结构化 SQL token 重新计算完整性门禁；不连接数据库，也不读取环境变量。
@@ -857,7 +910,7 @@ export function collectDbIntegrityReport(root: string): DbIntegrityReport {
   const writers = auditWriters(context, violations)
   const dag = auditDags(context, api.acquirer, acquisitions, violations)
   const qx = auditQxQueries(context, violations)
-  const catalog = auditRetiredCatalog(context, violations)
+  const migration = auditMigrationsAndSchema(context, violations)
 
   const acquisitionDigest = digest(acquisitions.inventory)
   const writerDigest = digest(writers.records)
@@ -877,8 +930,8 @@ export function collectDbIntegrityReport(root: string): DbIntegrityReport {
   const summaries: IntegritySummaries = {
     acquisitionDigest,
     apiDigest: digest(api.summary),
-    catalogDigest: digest(catalog.summary),
     dagDigest: digest(dag.summary),
+    migrationDigest: digest(migration.summary),
     qxDigest: digest(qx.summary),
     writerDigest,
   }
@@ -890,11 +943,11 @@ export function collectDbIntegrityReport(root: string): DbIntegrityReport {
     directIntegrityAdvisoryOutsideOwner:
       api.directIntegrityAdvisoryOutsideOwner,
     dynamicLockRequests: acquisitions.dynamicCount,
-    foreignKeys: catalog.foreignKeyCount,
+    foreignKeys: migration.foreignKeyCount,
     qxChangedQueries: qx.changedCount,
     rawModeObjects: api.rawModeObjectCount,
-    retiredRoutines: catalog.retiredRoutineCount,
-    retiredTriggers: catalog.retiredTriggerCount,
+    retiredRoutines: migration.retiredRoutineCount,
+    retiredTriggers: migration.retiredTriggerCount,
     s07aRoots: dag.s07aRootCount,
     s07bLogicalRoots: dag.s07bLogicalRootCount,
     unknownLockSites: acquisitions.unknownSiteCount,
@@ -1340,32 +1393,44 @@ function auditQxQueries(context: ProjectContext, violations: string[]) {
   }
 }
 
-function auditRetiredCatalog(context: ProjectContext, violations: string[]) {
-  const migrationRoot = join(context.root, 'db/migration')
-  const migrationDirectories = existsSync(migrationRoot)
-    ? readdirSync(migrationRoot, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name)
-        .sort()
-    : []
-  if (!sameStrings(migrationDirectories, [BASELINE_NAME])) {
-    violations.push('CATALOG_MIGRATION_LINE_NOT_SINGLE_BASELINE')
-  }
-  const sqlPath = join(context.root, BASELINE_DIRECTORY, 'migration.sql')
-  const manifestPath = join(
-    context.root,
-    BASELINE_DIRECTORY,
-    'catalog-manifest.json',
+function auditMigrationsAndSchema(
+  context: ProjectContext,
+  violations: string[],
+) {
+  const migrationTree = auditMigrationTree(context.root)
+  const { migrationSqlPaths } = migrationTree
+  const commentArtifact = buildSchemaCommentsArtifact()
+  const expectedCommentsByTarget = new Map(
+    commentArtifact.commentStatements.map((statement) => [
+      statement.target.targetKey,
+      statement,
+    ]),
   )
+  const finalCommentsByTarget = new Map<string, MigrationCommentStatement>()
+  const targetlessCommentStatements: string[] = []
+  const transactionControlStatements: string[] = []
   let foreignKeyCount = 0
+  let migrationCommentStatementCount = 0
   let retiredRoutineCount = 0
   let retiredTriggerCount = 0
   let routineDeclarationCount = 0
   let triggerDeclarationCount = 0
-  if (!existsSync(sqlPath)) {
-    violations.push('CATALOG_BASELINE_SQL_MISSING')
-  } else {
-    const tokens = tokenizeSql(readFileSync(sqlPath, 'utf8'))
+
+  if (migrationSqlPaths.length === 0) {
+    violations.push('MIGRATION_SQL_MISSING')
+  }
+  if (migrationTree.invalidEntries.length > 0) {
+    violations.push('MIGRATION_TREE_NOT_STANDARD_DRIZZLE')
+  }
+  if (
+    expectedCommentsByTarget.size !== commentArtifact.commentStatements.length
+  ) {
+    violations.push('MIGRATION_SCHEMA_COMMENT_ARTIFACT_DUPLICATE_TARGET')
+  }
+
+  for (const migrationPath of migrationSqlPaths) {
+    const source = readFileSync(join(context.root, migrationPath), 'utf8')
+    const tokens = tokenizeSql(source)
     foreignKeyCount += countSqlForeignKeys(tokens)
     routineDeclarationCount += countSqlObjectDeclarations(
       tokens,
@@ -1381,7 +1446,30 @@ function auditRetiredCatalog(context: ProjectContext, violations: string[]) {
     retiredTriggerCount += tokens.filter((token) =>
       RETIRED_TRIGGERS.has(token),
     ).length
+
+    for (const statement of splitPostgresSqlStatements(source)) {
+      if (isTransactionControlStatement(statement)) {
+        transactionControlStatements.push(`${migrationPath}:${statement.sql}`)
+      }
+
+      const target = parseSchemaCommentTarget(statement)
+      if (target === 'targetless') {
+        targetlessCommentStatements.push(`${migrationPath}:${statement.sql}`)
+        continue
+      }
+      if (!target) {
+        continue
+      }
+
+      migrationCommentStatementCount += 1
+      finalCommentsByTarget.set(target.targetKey, {
+        migrationPath,
+        sql: statement.sql,
+        target,
+      })
+    }
   }
+
   for (const sourceFile of context.sourceFiles) {
     if (!repoPath(context, sourceFile).startsWith('db/schema/')) {
       continue
@@ -1404,63 +1492,181 @@ function auditRetiredCatalog(context: ProjectContext, violations: string[]) {
       }
     })
   }
-  if (!existsSync(manifestPath)) {
-    violations.push('CATALOG_MANIFEST_MISSING')
-  } else {
-    const manifest = parseJsonRecord(manifestPath)
-    const catalog = isRecord(manifest.catalog) ? manifest.catalog : undefined
-    const constraints =
-      catalog && Array.isArray(catalog.constraints) ? catalog.constraints : []
-    const routines =
-      catalog && Array.isArray(catalog.routines) ? catalog.routines : []
-    const triggers =
-      catalog && Array.isArray(catalog.triggers) ? catalog.triggers : []
-    foreignKeyCount += constraints.filter(
-      (value) => isRecord(value) && value.type === 'f',
-    ).length
-    routineDeclarationCount += routines.length
-    triggerDeclarationCount += triggers.length
-    retiredRoutineCount += routines.filter(
-      (value) =>
-        isRecord(value) &&
-        typeof value.name === 'string' &&
-        RETIRED_ROUTINES.has(value.name),
-    ).length
-    retiredTriggerCount += triggers.filter(
-      (value) =>
-        isRecord(value) &&
-        typeof value.name === 'string' &&
-        RETIRED_TRIGGERS.has(value.name),
-    ).length
-  }
+
+  const missingCommentTargetKeys = commentArtifact.commentStatements
+    .filter(
+      (statement) => !finalCommentsByTarget.has(statement.target.targetKey),
+    )
+    .map((statement) => statement.target.targetKey)
+  const unexpectedCommentTargetKeys = [...finalCommentsByTarget.keys()]
+    .filter((targetKey) => !expectedCommentsByTarget.has(targetKey))
+    .sort((left, right) => left.localeCompare(right))
+  const sqlMismatches = commentArtifact.commentStatements
+    .flatMap((expected) => {
+      const actual = finalCommentsByTarget.get(expected.target.targetKey)
+      if (!actual || actual.sql === expected.sql) {
+        return []
+      }
+      return [
+        {
+          actual: actual.sql,
+          expected: expected.sql,
+          migrationPath: actual.migrationPath,
+          targetKey: expected.target.targetKey,
+        },
+      ]
+    })
+    .sort((left, right) => left.targetKey.localeCompare(right.targetKey))
+
   if (foreignKeyCount > 0) {
-    violations.push('CATALOG_FOREIGN_KEY_PRESENT')
+    violations.push('MIGRATION_FOREIGN_KEY_PRESENT')
   }
   if (routineDeclarationCount > 0) {
-    violations.push('CATALOG_BUSINESS_ROUTINE_PRESENT')
+    violations.push('MIGRATION_BUSINESS_ROUTINE_PRESENT')
   }
   if (triggerDeclarationCount > 0) {
-    violations.push('CATALOG_TRIGGER_PRESENT')
+    violations.push('MIGRATION_TRIGGER_PRESENT')
   }
   if (retiredRoutineCount > 0) {
-    violations.push('CATALOG_RETIRED_ROUTINE_PRESENT')
+    violations.push('MIGRATION_RETIRED_ROUTINE_PRESENT')
   }
   if (retiredTriggerCount > 0) {
-    violations.push('CATALOG_RETIRED_TRIGGER_PRESENT')
+    violations.push('MIGRATION_RETIRED_TRIGGER_PRESENT')
   }
+  if (transactionControlStatements.length > 0) {
+    violations.push('MIGRATION_TRANSACTION_CONTROL_PRESENT')
+  }
+  if (targetlessCommentStatements.length > 0) {
+    violations.push('MIGRATION_SCHEMA_COMMENT_TARGETLESS')
+  }
+  if (missingCommentTargetKeys.length > 0) {
+    violations.push('MIGRATION_SCHEMA_COMMENT_TARGET_MISSING')
+  }
+  if (unexpectedCommentTargetKeys.length > 0) {
+    violations.push('MIGRATION_SCHEMA_COMMENT_TARGET_UNEXPECTED')
+  }
+  if (sqlMismatches.length > 0) {
+    violations.push('MIGRATION_SCHEMA_COMMENT_SQL_MISMATCH')
+  }
+
   return {
     foreignKeyCount,
     retiredRoutineCount,
     retiredTriggerCount,
     summary: {
-      baseline: migrationDirectories,
+      artifactWarningCount: commentArtifact.warnings.length,
+      expectedCommentTargetKeys: [...expectedCommentsByTarget.keys()].sort(
+        (left, right) => left.localeCompare(right),
+      ),
       foreignKeyCount,
+      migrationCommentStatementCount,
+      migrationSqlPaths,
+      migrationTree: {
+        entries: migrationTree.entries,
+        invalidEntries: migrationTree.invalidEntries,
+      },
+      missingCommentTargetKeys,
       retiredRoutineCount,
       retiredTriggerCount,
       routineDeclarationCount,
+      sqlMismatches,
+      targetlessCommentStatements,
+      transactionControlStatements,
       triggerDeclarationCount,
+      unexpectedCommentTargetKeys,
     },
   }
+}
+
+// 审计并记录受支持的 Drizzle migration tree，拒绝非直接目录、嵌套目录和额外工件。
+function auditMigrationTree(root: string): MigrationTreeAudit {
+  const migrationRoot = join(root, 'db/migration')
+  if (!existsSync(migrationRoot)) {
+    return {
+      entries: [],
+      invalidEntries: ['db/migration:missing-directory'],
+      migrationSqlPaths: [],
+    }
+  }
+  if (!statSync(migrationRoot).isDirectory()) {
+    return {
+      entries: [],
+      invalidEntries: ['db/migration:not-directory'],
+      migrationSqlPaths: [],
+    }
+  }
+
+  const entries = collectMigrationTreeEntries(migrationRoot)
+    .map((entry) => ({
+      ...entry,
+      path: relative(root, entry.path).replaceAll('\\', '/'),
+    }))
+    .sort((left, right) => left.path.localeCompare(right.path))
+  const directEntries = readdirSync(migrationRoot, { withFileTypes: true })
+  const invalidEntries: string[] = []
+
+  if (directEntries.length === 0) {
+    invalidEntries.push('db/migration:missing-migration-directory')
+  }
+
+  for (const entry of directEntries) {
+    const entryPath = join(migrationRoot, entry.name)
+    const relativeEntryPath = relative(root, entryPath).replaceAll('\\', '/')
+    if (!entry.isDirectory()) {
+      invalidEntries.push(`${relativeEntryPath}:root-entry-must-be-directory`)
+      continue
+    }
+
+    const childEntries = readdirSync(entryPath, { withFileTypes: true })
+    const childFiles = childEntries
+      .filter((child) => child.isFile())
+      .map((child) => child.name)
+      .sort((left, right) => left.localeCompare(right))
+    const childDirectories = childEntries
+      .filter((child) => !child.isFile())
+      .map((child) => child.name)
+      .sort((left, right) => left.localeCompare(right))
+    if (!sameStrings(childFiles, ['migration.sql', 'snapshot.json'])) {
+      invalidEntries.push(`${relativeEntryPath}:unexpected-files`)
+    }
+    for (const childDirectory of childDirectories) {
+      invalidEntries.push(`${relativeEntryPath}/${childDirectory}:nested-entry`)
+    }
+  }
+
+  return {
+    entries,
+    invalidEntries: invalidEntries.sort((left, right) =>
+      left.localeCompare(right),
+    ),
+    migrationSqlPaths: entries
+      .filter(
+        (entry) =>
+          entry.kind === 'file' && entry.path.endsWith('/migration.sql'),
+      )
+      .map((entry) => entry.path)
+      .sort((left, right) => left.localeCompare(right)),
+  }
+}
+
+// 递归收集 migration tree 的完整相对结构，使摘要能感知任何目录或文件漂移。
+function collectMigrationTreeEntries(
+  directory: string,
+): MigrationTreeAudit['entries'] {
+  const result: MigrationTreeAudit['entries'] = []
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const entryPath = join(directory, entry.name)
+    if (entry.isDirectory()) {
+      result.push({ kind: 'directory', path: entryPath })
+      result.push(...collectMigrationTreeEntries(entryPath))
+      continue
+    }
+    result.push({
+      kind: entry.isFile() ? 'file' : 'other',
+      path: entryPath,
+    })
+  }
+  return result
 }
 
 function createProjectContext(root: string): ProjectContext {
@@ -2968,84 +3174,442 @@ function countSqlObjectDeclarations(
   return count
 }
 
+function splitPostgresSqlStatements(source: string): SqlStatement[] {
+  const tokens = lexPostgresSql(source)
+  const statements: SqlStatement[] = []
+  let statementStart = 0
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]
+    if (token?.kind !== 'symbol' || token.value !== ';') {
+      continue
+    }
+
+    appendSqlStatement(
+      source,
+      tokens.slice(statementStart, index),
+      token.end,
+      statements,
+    )
+    statementStart = index + 1
+  }
+
+  appendSqlStatement(
+    source,
+    tokens.slice(statementStart),
+    undefined,
+    statements,
+  )
+  return statements
+}
+
+function appendSqlStatement(
+  source: string,
+  tokens: SqlToken[],
+  statementEnd: number | undefined,
+  statements: SqlStatement[],
+) {
+  const firstToken = tokens[0]
+  const lastToken = tokens.at(-1)
+  if (!firstToken || !lastToken) {
+    return
+  }
+
+  const sql = source
+    .slice(firstToken.start, statementEnd ?? lastToken.end)
+    .trim()
+  if (sql.length > 0) {
+    statements.push({ sql, tokens })
+  }
+}
+
+// 禁止 migration 自行控制事务，避免与 Drizzle Kit 的迁移事务语义嵌套或漂移。
+function isTransactionControlStatement(statement: SqlStatement): boolean {
+  const firstKeyword = readSqlKeyword(statement.tokens[0])
+  const secondKeyword = readSqlKeyword(statement.tokens[1])
+  if (
+    firstKeyword === 'abort' ||
+    firstKeyword === 'begin' ||
+    firstKeyword === 'commit' ||
+    firstKeyword === 'end' ||
+    firstKeyword === 'rollback' ||
+    firstKeyword === 'savepoint'
+  ) {
+    return true
+  }
+  if (firstKeyword === 'release') {
+    return true
+  }
+  if (firstKeyword === 'start' && secondKeyword === 'transaction') {
+    return true
+  }
+  if (firstKeyword === 'prepare' && secondKeyword === 'transaction') {
+    return true
+  }
+  if (
+    firstKeyword === 'set' &&
+    (secondKeyword === 'constraints' || secondKeyword === 'transaction')
+  ) {
+    return true
+  }
+  return false
+}
+
+function parseSchemaCommentTarget(
+  statement: SqlStatement,
+): SchemaCommentTarget | 'targetless' | undefined {
+  const tokens = statement.tokens
+  if (!isSqlKeyword(tokens[0], 'comment') || !isSqlKeyword(tokens[1], 'on')) {
+    return undefined
+  }
+
+  const kind = readSqlKeyword(tokens[2])
+  if (kind !== 'table' && kind !== 'column') {
+    return undefined
+  }
+
+  const parts: string[] = []
+  let cursor = 3
+  while (true) {
+    const identifier = readSqlIdentifier(tokens[cursor])
+    if (!identifier) {
+      break
+    }
+    parts.push(identifier)
+    cursor += 1
+    if (tokens[cursor]?.kind !== 'symbol' || tokens[cursor].value !== '.') {
+      break
+    }
+    cursor += 1
+  }
+
+  if (!isSqlKeyword(tokens[cursor], 'is')) {
+    return 'targetless'
+  }
+
+  if (kind === 'table') {
+    if (parts.length === 1) {
+      const [tableName] = parts
+      if (!tableName) {
+        return 'targetless'
+      }
+      return {
+        kind,
+        schemaName: 'public',
+        tableName,
+        targetKey: getSchemaCommentTargetKey(kind, 'public', tableName),
+      }
+    }
+    if (parts.length === 2) {
+      const [schemaName, tableName] = parts
+      if (!schemaName || !tableName) {
+        return 'targetless'
+      }
+      return {
+        kind,
+        schemaName,
+        tableName,
+        targetKey: getSchemaCommentTargetKey(kind, schemaName, tableName),
+      }
+    }
+    return 'targetless'
+  }
+
+  if (parts.length === 2) {
+    const [tableName, columnName] = parts
+    if (!tableName || !columnName) {
+      return 'targetless'
+    }
+    return {
+      columnName,
+      kind,
+      schemaName: 'public',
+      tableName,
+      targetKey: getSchemaCommentTargetKey(
+        kind,
+        'public',
+        tableName,
+        columnName,
+      ),
+    }
+  }
+  if (parts.length === 3) {
+    const [schemaName, tableName, columnName] = parts
+    if (!schemaName || !tableName || !columnName) {
+      return 'targetless'
+    }
+    return {
+      columnName,
+      kind,
+      schemaName,
+      tableName,
+      targetKey: getSchemaCommentTargetKey(
+        kind,
+        schemaName,
+        tableName,
+        columnName,
+      ),
+    }
+  }
+  return 'targetless'
+}
+
+function readSqlKeyword(token: SqlToken | undefined): string | undefined {
+  return token?.kind === 'identifier' ? token.value : undefined
+}
+
+function isSqlKeyword(token: SqlToken | undefined, keyword: string): boolean {
+  return readSqlKeyword(token) === keyword
+}
+
+function readSqlIdentifier(token: SqlToken | undefined): string | undefined {
+  if (token?.kind === 'identifier' || token?.kind === 'quoted-identifier') {
+    return token.value
+  }
+  return undefined
+}
+
 function tokenizeSql(source: string) {
-  const tokens: string[] = []
+  return lexPostgresSql(source)
+    .filter(
+      (token) =>
+        token.kind === 'identifier' || token.kind === 'quoted-identifier',
+    )
+    .map((token) => token.value.toLowerCase())
+}
+
+function lexPostgresSql(source: string): SqlToken[] {
+  const tokens: SqlToken[] = []
   let index = 0
+
   while (index < source.length) {
-    const character = source[index]
-    const next = source[index + 1]
-    if (/\s/u.test(character ?? '')) {
+    const character = source[index] ?? ''
+    const next = source[index + 1] ?? ''
+    if (/\s/u.test(character)) {
       index += 1
       continue
     }
     if (character === '-' && next === '-') {
-      index = source.indexOf('\n', index + 2)
-      if (index < 0) {
-        break
-      }
+      index = skipLineComment(source, index)
       continue
     }
     if (character === '/' && next === '*') {
-      const end = source.indexOf('*/', index + 2)
-      index = end < 0 ? source.length : end + 2
+      index = skipBlockComment(source, index)
       continue
     }
-    if (character === "'") {
-      index += 1
-      while (index < source.length) {
-        if (source[index] === "'" && source[index + 1] === "'") {
-          index += 2
-          continue
-        }
-        if (source[index] === "'") {
-          index += 1
-          break
-        }
-        index += 1
-      }
+
+    const stringEnd = readPostgresStringEnd(source, index)
+    if (stringEnd !== undefined) {
+      tokens.push({ end: stringEnd, kind: 'string', start: index, value: '' })
+      index = stringEnd
       continue
     }
-    if (character === '"') {
-      let value = ''
-      index += 1
-      while (index < source.length) {
-        if (source[index] === '"' && source[index + 1] === '"') {
-          value += '"'
-          index += 2
-          continue
-        }
-        if (source[index] === '"') {
-          index += 1
-          break
-        }
-        value += source[index]
-        index += 1
-      }
-      if (value.length > 0) {
-        tokens.push(value.toLowerCase())
-      }
+
+    const dollarQuotedStringEnd = readDollarQuotedStringEnd(source, index)
+    if (dollarQuotedStringEnd !== undefined) {
+      tokens.push({
+        end: dollarQuotedStringEnd,
+        kind: 'string',
+        start: index,
+        value: '',
+      })
+      index = dollarQuotedStringEnd
       continue
     }
-    if (/[A-Za-z_]/u.test(character ?? '')) {
+
+    const quotedIdentifier = readPostgresQuotedIdentifier(source, index)
+    if (quotedIdentifier) {
+      tokens.push({
+        end: quotedIdentifier.end,
+        kind: 'quoted-identifier',
+        start: index,
+        value: quotedIdentifier.value,
+      })
+      index = quotedIdentifier.end
+      continue
+    }
+
+    if (isSqlIdentifierStart(character)) {
       const start = index
       index += 1
-      while (/[\w$]/u.test(source[index] ?? '')) {
+      while (isSqlIdentifierPart(source[index] ?? '')) {
         index += 1
       }
-      tokens.push(source.slice(start, index).toLowerCase())
+      tokens.push({
+        end: index,
+        kind: 'identifier',
+        start,
+        value: source.slice(start, index).toLowerCase(),
+      })
+      continue
+    }
+
+    tokens.push({
+      end: index + 1,
+      kind: 'symbol',
+      start: index,
+      value: character,
+    })
+    index += 1
+  }
+
+  return tokens
+}
+
+function skipLineComment(source: string, start: number): number {
+  const lineEnd = source.indexOf('\n', start + 2)
+  return lineEnd < 0 ? source.length : lineEnd + 1
+}
+
+function skipBlockComment(source: string, start: number): number {
+  let depth = 1
+  let index = start + 2
+  while (index < source.length && depth > 0) {
+    if (source[index] === '/' && source[index + 1] === '*') {
+      depth += 1
+      index += 2
+      continue
+    }
+    if (source[index] === '*' && source[index + 1] === '/') {
+      depth -= 1
+      index += 2
       continue
     }
     index += 1
   }
-  return tokens
+  return index
 }
 
-function parseJsonRecord(path: string) {
-  const value: unknown = JSON.parse(readFileSync(path, 'utf8'))
-  if (!isRecord(value)) {
-    throw new TypeError(`JSON root must be an object: ${path}`)
+function readPostgresStringEnd(
+  source: string,
+  start: number,
+): number | undefined {
+  const character = source[start]
+  if (character === "'") {
+    return readSingleQuotedStringEnd(source, start, false)
   }
-  return value
+  if ((character === 'e' || character === 'E') && source[start + 1] === "'") {
+    return readSingleQuotedStringEnd(source, start + 1, true)
+  }
+  if (
+    (character === 'u' || character === 'U') &&
+    source[start + 1] === '&' &&
+    source[start + 2] === "'"
+  ) {
+    return readSingleQuotedStringEnd(source, start + 2, true)
+  }
+  if (
+    ['b', 'B', 'n', 'N', 'x', 'X'].includes(character ?? '') &&
+    source[start + 1] === "'"
+  ) {
+    return readSingleQuotedStringEnd(source, start + 1, false)
+  }
+  return undefined
+}
+
+function readSingleQuotedStringEnd(
+  source: string,
+  quoteStart: number,
+  supportsBackslashEscapes: boolean,
+): number {
+  let index = quoteStart + 1
+  while (index < source.length) {
+    if (supportsBackslashEscapes && source[index] === '\\') {
+      index += 2
+      continue
+    }
+    if (source[index] !== "'") {
+      index += 1
+      continue
+    }
+    if (source[index + 1] === "'") {
+      index += 2
+      continue
+    }
+    return index + 1
+  }
+  return source.length
+}
+
+function readDollarQuotedStringEnd(
+  source: string,
+  start: number,
+): number | undefined {
+  if (source[start] !== '$') {
+    return undefined
+  }
+
+  let cursor = start + 1
+  if (source[cursor] !== '$') {
+    if (!isSqlIdentifierStart(source[cursor] ?? '')) {
+      return undefined
+    }
+    cursor += 1
+    while (isDollarQuoteTagPart(source[cursor] ?? '')) {
+      cursor += 1
+    }
+    if (source[cursor] !== '$') {
+      return undefined
+    }
+  }
+
+  const delimiter = source.slice(start, cursor + 1)
+  const close = source.indexOf(delimiter, cursor + 1)
+  return close < 0 ? source.length : close + delimiter.length
+}
+
+function readPostgresQuotedIdentifier(
+  source: string,
+  start: number,
+): { end: number; value: string } | undefined {
+  const isUnicodeQuotedIdentifier =
+    (source[start] === 'u' || source[start] === 'U') &&
+    source[start + 1] === '&' &&
+    source[start + 2] === '"'
+  const quoteStart = isUnicodeQuotedIdentifier ? start + 2 : start
+  if (source[quoteStart] !== '"') {
+    return undefined
+  }
+
+  let index = quoteStart + 1
+  let value = ''
+  while (index < source.length) {
+    if (source[index] === '"' && source[index + 1] === '"') {
+      value += '"'
+      index += 2
+      continue
+    }
+    if (source[index] === '"') {
+      return { end: index + 1, value }
+    }
+    value += source[index]
+    index += 1
+  }
+  return { end: source.length, value }
+}
+
+function isSqlIdentifierStart(value: string): boolean {
+  return (
+    value === '_' ||
+    isAsciiLatinLetter(value) ||
+    (value.codePointAt(0) ?? 0) >= 0x80
+  )
+}
+
+function isSqlIdentifierPart(value: string): boolean {
+  return isSqlIdentifierStart(value) || isAsciiDigit(value) || value === '$'
+}
+
+function isDollarQuoteTagPart(value: string): boolean {
+  return isSqlIdentifierStart(value) || isAsciiDigit(value)
+}
+
+function isAsciiLatinLetter(value: string): boolean {
+  return (value >= 'A' && value <= 'Z') || (value >= 'a' && value <= 'z')
+}
+
+function isAsciiDigit(value: string): boolean {
+  return value >= '0' && value <= '9'
 }
 
 function readTemplateText(template: ts.TemplateLiteral) {
