@@ -15,12 +15,8 @@ coverage
 *.lcov
 .nyc_output
 
-# 环境变量文件
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# 环境变量文件（包括各应用目录内的环境文件）
+**/.env*
 
 # 日志文件
 *.log

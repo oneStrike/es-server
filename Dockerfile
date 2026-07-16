@@ -70,12 +70,12 @@ RUN --mount=type=cache,target=/root/.cache/corepack \
     pnpm config set registry "${NPM_REGISTRY}" && \
     pnpm install --prod --frozen-lockfile --config.node-linker=hoisted && \
     # 清理优化
-    find node_modules -type f \( \
+    ( find node_modules -type f \( \
         -name "*.md" -o -name "*.ts" -o -name "*.map" -o \
         -name "*.test.js" -o -name "*.spec.js" -o -name "*.d.ts" \
-    \) -print0 | xargs -0 rm -f 2>/dev/null || true && \
-    find node_modules -type d \( -name "test" -o -name "tests" -o -name "@types" \) -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -empty -delete 2>/dev/null || true
+    \) -print0 | xargs -0 rm -f 2>/dev/null || true ) && \
+    ( find node_modules -type d \( -name "test" -o -name "tests" -o -name "@types" \) -exec rm -rf {} + 2>/dev/null || true ) && \
+    ( find node_modules -type d -empty -delete 2>/dev/null || true )
 
 # --------------------------------
 # 阶段 3: Node 运行时 (Runtime)
