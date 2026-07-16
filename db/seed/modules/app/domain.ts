@@ -2309,7 +2309,7 @@ export async function seedAppActivityDomain(db: Db) {
   const existingChapterComment = await db.query.userComment.findFirst({
     where: {
       AND: [
-        { targetType: 2 },
+        { targetType: 3 },
         { targetId: aotChapterTwo.id },
         { userId: userA.id },
         { content: '第二话的节奏明显收紧，购买后继续读的体验很顺。' },
@@ -2320,7 +2320,7 @@ export async function seedAppActivityDomain(db: Db) {
 
   let chapterComment = existingChapterComment
   const chapterCommentPayload = {
-    targetType: 2,
+    targetType: 3,
     targetId: aotChapterTwo.id,
     userId: userA.id,
     ...buildSeedCommentBody('第二话的节奏明显收紧，购买后继续读的体验很顺。'),
@@ -2352,7 +2352,7 @@ export async function seedAppActivityDomain(db: Db) {
   const existingForumRootComment = await db.query.userComment.findFirst({
     where: {
       AND: [
-        { targetType: 3 },
+        { targetType: 5 },
         { targetId: aotTopic.id },
         { userId: userB.id },
         { content: '我觉得第一卷就把未来冲突埋得很深。' },
@@ -2363,7 +2363,7 @@ export async function seedAppActivityDomain(db: Db) {
 
   let forumRootComment = existingForumRootComment
   const forumRootCommentPayload = {
-    targetType: 3,
+    targetType: 5,
     targetId: aotTopic.id,
     userId: userB.id,
     ...buildSeedCommentBody('我觉得第一卷就把未来冲突埋得很深。'),
@@ -2395,7 +2395,7 @@ export async function seedAppActivityDomain(db: Db) {
   const existingForumComment = await db.query.userComment.findFirst({
     where: {
       AND: [
-        { targetType: 3 },
+        { targetType: 5 },
         { targetId: aotTopic.id },
         { userId: userA.id },
         { content: '而且艾伦和调查兵团的立场差异很早就有预警。' },
@@ -2405,7 +2405,7 @@ export async function seedAppActivityDomain(db: Db) {
   })
 
   const forumCommentPayload = {
-    targetType: 3,
+    targetType: 5,
     targetId: aotTopic.id,
     userId: userA.id,
     ...buildSeedCommentBody('而且艾伦和调查兵团的立场差异很早就有预警。'),
@@ -2450,7 +2450,7 @@ export async function seedAppActivityDomain(db: Db) {
         AND: [
           { userId: comment.userId },
           { targetId: comment.id },
-          { actionType: 3 },
+          { actionType: 2 },
         ],
       },
       columns: { id: true },
@@ -2481,9 +2481,9 @@ export async function seedAppActivityDomain(db: Db) {
       commentLevel: null,
     },
     {
-      targetType: 4,
+      targetType: 6,
       targetId: forumRootComment.id,
-      sceneType: 3,
+      sceneType: 12,
       sceneId: aotTopic.id,
       userId: userA.id,
       commentLevel: 1,
@@ -2497,9 +2497,9 @@ export async function seedAppActivityDomain(db: Db) {
       commentLevel: null,
     },
     {
-      targetType: 2,
+      targetType: 4,
       targetId: aotChapterTwo.id,
-      sceneType: 2,
+      sceneType: 10,
       sceneId: aotChapterTwo.id,
       userId: userA.id,
       commentLevel: null,
@@ -2773,7 +2773,7 @@ export async function seedAppActivityDomain(db: Db) {
 
   const reportFixture = {
     reporterId: userC.id,
-    targetType: 4,
+    targetType: 6,
     targetId: forumRootComment.id,
     sceneType: 3,
     sceneId: aotTopic.id,
@@ -3105,6 +3105,7 @@ export async function seedAppActivityDomain(db: Db) {
       .where(eq(taskStep.taskId, readChapterTask.id))
       .limit(1)
 
+    let readChapterInstanceStepId: number | null = null
     if (readChapterStep) {
       const existingStep = await db.query.taskInstanceStep.findFirst({
         where: {
@@ -3126,12 +3127,17 @@ export async function seedAppActivityDomain(db: Db) {
         version: 1,
       }
       if (!existingStep) {
-        await db.insert(taskInstanceStep).values(stepPayload)
+        const [createdStep] = await db
+          .insert(taskInstanceStep)
+          .values(stepPayload)
+          .returning({ id: taskInstanceStep.id })
+        readChapterInstanceStepId = createdStep?.id ?? null
       } else {
         await db
           .update(taskInstanceStep)
           .set(stepPayload)
           .where(eq(taskInstanceStep.id, existingStep.id))
+        readChapterInstanceStepId = existingStep.id
       }
     }
 
@@ -3140,7 +3146,7 @@ export async function seedAppActivityDomain(db: Db) {
         taskId: readChapterTask.id,
         stepId: readChapterStep?.id ?? null,
         instanceId: currentAssignment.id,
-        instanceStepId: currentAssignment.id,
+        instanceStepId: readChapterInstanceStepId,
         userId: userA.id,
         actionType: 1,
         progressSource: 1,
@@ -3159,7 +3165,7 @@ export async function seedAppActivityDomain(db: Db) {
         taskId: readChapterTask.id,
         stepId: readChapterStep?.id ?? null,
         instanceId: currentAssignment.id,
-        instanceStepId: currentAssignment.id,
+        instanceStepId: readChapterInstanceStepId,
         userId: userA.id,
         eventCode: 300,
         eventBizKey: 'seed:read:daily_read_chapter:userA:20260320',
@@ -3180,7 +3186,7 @@ export async function seedAppActivityDomain(db: Db) {
         taskId: readChapterTask.id,
         stepId: readChapterStep?.id ?? null,
         instanceId: currentAssignment.id,
-        instanceStepId: currentAssignment.id,
+        instanceStepId: readChapterInstanceStepId,
         userId: userA.id,
         actionType: 3,
         progressSource: 3,
@@ -3238,7 +3244,7 @@ export async function seedAppActivityDomain(db: Db) {
       context: { source: 'seed', topicId: whiteNightTopic.id },
       version: 1,
       claimedAt: addHours(SEED_TIMELINE.seedAt, -1),
-      completedAt: null,
+      completedAt: addHours(SEED_TIMELINE.seedAt, -1),
       expiredAt: null,
     }
 
@@ -3262,6 +3268,7 @@ export async function seedAppActivityDomain(db: Db) {
       .where(eq(taskStep.taskId, forumTask.id))
       .limit(1)
 
+    let forumInstanceStepId: number | null = null
     if (forumStep) {
       const existingStep = await db.query.taskInstanceStep.findFirst({
         where: {
@@ -3280,12 +3287,17 @@ export async function seedAppActivityDomain(db: Db) {
         version: 1,
       }
       if (!existingStep) {
-        await db.insert(taskInstanceStep).values(stepPayload)
+        const [createdStep] = await db
+          .insert(taskInstanceStep)
+          .values(stepPayload)
+          .returning({ id: taskInstanceStep.id })
+        forumInstanceStepId = createdStep?.id ?? null
       } else {
         await db
           .update(taskInstanceStep)
           .set(stepPayload)
           .where(eq(taskInstanceStep.id, existingStep.id))
+        forumInstanceStepId = existingStep.id
       }
     }
 
@@ -3299,7 +3311,7 @@ export async function seedAppActivityDomain(db: Db) {
         taskId: forumTask.id,
         stepId: forumStep?.id ?? null,
         instanceId: currentAssignment.id,
-        instanceStepId: currentAssignment.id,
+        instanceStepId: forumInstanceStepId,
         userId: userB.id,
         actionType: 1,
         progressSource: 1,

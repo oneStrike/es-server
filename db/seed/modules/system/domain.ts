@@ -103,7 +103,6 @@ const SENSITIVE_WORD_FIXTURES = [
     type: 5,
     matchMode: 1,
     isEnabled: true,
-    version: 1,
     remark: 'seed: 高风险违规内容',
   },
   {
@@ -113,7 +112,6 @@ const SENSITIVE_WORD_FIXTURES = [
     type: 5,
     matchMode: 2,
     isEnabled: true,
-    version: 1,
     remark: 'seed: 诈骗场景命中词',
   },
 ] as const

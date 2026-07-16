@@ -371,6 +371,7 @@ export async function seedMessageDomain(db: Db) {
     {
       receiverUserId: userC.id,
       categoryKey: 'system_announcement',
+      announcementId: announcement?.id ?? null,
       projectionKey: `announcement:notify:${announcement?.id ?? 42}:user:${userC.id}`,
       actorUserId: null,
       title: '春季版本更新公告',

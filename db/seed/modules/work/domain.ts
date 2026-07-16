@@ -660,7 +660,17 @@ export async function seedWorkDomain(db: Db) {
         price: chapterFixture.price,
         canDownload: true,
         canComment: true,
-        content: chapterFixture.content,
+        novelContentPath:
+          workFixture.type === 2 ? chapterFixture.content : null,
+        comicContentManifest:
+          workFixture.type === 1
+            ? [
+                {
+                  page: 1,
+                  url: `https://static.example.com/works/${workFixture.key}/chapters/${chapterFixture.sortOrder}/page-1.png`,
+                },
+              ]
+            : null,
         wordCount: chapterFixture.wordCount,
         viewCount: existingChapter?.viewCount ?? 0,
         likeCount: existingChapter?.likeCount ?? 0,
