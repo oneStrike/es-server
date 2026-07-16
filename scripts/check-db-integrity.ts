@@ -136,6 +136,45 @@ interface MigrationCommentStatement {
   migrationPath: string
   sql: string
   target: SchemaCommentTarget
+  valueSql: string
+}
+
+interface SchemaCommentTableReference {
+  schemaName: string
+  tableName: string
+}
+
+type SchemaCommentTargetMutation =
+  | {
+      columnName: string
+      operation: 'drop-column'
+      table: SchemaCommentTableReference
+    }
+  | {
+      operation: 'drop-table'
+      tables: SchemaCommentTableReference[]
+    }
+  | {
+      newSchemaName: string
+      operation: 'move-table'
+      table: SchemaCommentTableReference
+    }
+  | {
+      columnName: string
+      newColumnName: string
+      operation: 'rename-column'
+      table: SchemaCommentTableReference
+    }
+  | {
+      newTableName: string
+      operation: 'rename-table'
+      table: SchemaCommentTableReference
+    }
+
+interface ParsedSchemaCommentStatement {
+  removesComment: boolean
+  target: SchemaCommentTarget
+  valueSql: string
 }
 
 interface MigrationTreeAudit {
@@ -1403,7 +1442,10 @@ function auditMigrationsAndSchema(
   const expectedCommentsByTarget = new Map(
     commentArtifact.commentStatements.map((statement) => [
       statement.target.targetKey,
-      statement,
+      {
+        sql: statement.sql,
+        valueSql: readSchemaCommentValueSql(statement.sql),
+      },
     ]),
   )
   const finalCommentsByTarget = new Map<string, MigrationCommentStatement>()
@@ -1452,21 +1494,29 @@ function auditMigrationsAndSchema(
         transactionControlStatements.push(`${migrationPath}:${statement.sql}`)
       }
 
-      const target = parseSchemaCommentTarget(statement)
-      if (target === 'targetless') {
+      const comment = parseSchemaCommentStatement(statement)
+      if (comment === 'targetless') {
         targetlessCommentStatements.push(`${migrationPath}:${statement.sql}`)
         continue
       }
-      if (!target) {
+      if (comment) {
+        migrationCommentStatementCount += 1
+        if (comment.removesComment) {
+          finalCommentsByTarget.delete(comment.target.targetKey)
+        } else {
+          finalCommentsByTarget.set(comment.target.targetKey, {
+            migrationPath,
+            sql: statement.sql,
+            target: comment.target,
+            valueSql: comment.valueSql,
+          })
+        }
         continue
       }
 
-      migrationCommentStatementCount += 1
-      finalCommentsByTarget.set(target.targetKey, {
-        migrationPath,
-        sql: statement.sql,
-        target,
-      })
+      for (const mutation of parseSchemaCommentTargetMutations(statement)) {
+        applySchemaCommentTargetMutation(finalCommentsByTarget, mutation)
+      }
     }
   }
 
@@ -1501,10 +1551,10 @@ function auditMigrationsAndSchema(
   const unexpectedCommentTargetKeys = [...finalCommentsByTarget.keys()]
     .filter((targetKey) => !expectedCommentsByTarget.has(targetKey))
     .sort((left, right) => left.localeCompare(right))
-  const sqlMismatches = commentArtifact.commentStatements
-    .flatMap((expected) => {
-      const actual = finalCommentsByTarget.get(expected.target.targetKey)
-      if (!actual || actual.sql === expected.sql) {
+  const sqlMismatches = [...expectedCommentsByTarget]
+    .flatMap(([targetKey, expected]) => {
+      const actual = finalCommentsByTarget.get(targetKey)
+      if (!actual || actual.valueSql === expected.valueSql) {
         return []
       }
       return [
@@ -1512,7 +1562,7 @@ function auditMigrationsAndSchema(
           actual: actual.sql,
           expected: expected.sql,
           migrationPath: actual.migrationPath,
-          targetKey: expected.target.targetKey,
+          targetKey,
         },
       ]
     })
@@ -3255,9 +3305,9 @@ function isTransactionControlStatement(statement: SqlStatement): boolean {
   return false
 }
 
-function parseSchemaCommentTarget(
+function parseSchemaCommentStatement(
   statement: SqlStatement,
-): SchemaCommentTarget | 'targetless' | undefined {
+): ParsedSchemaCommentStatement | 'targetless' | undefined {
   const tokens = statement.tokens
   if (!isSqlKeyword(tokens[0], 'comment') || !isSqlKeyword(tokens[1], 'on')) {
     return undefined
@@ -3287,56 +3337,51 @@ function parseSchemaCommentTarget(
     return 'targetless'
   }
 
-  if (kind === 'table') {
-    if (parts.length === 1) {
-      const [tableName] = parts
-      if (!tableName) {
-        return 'targetless'
-      }
-      return {
-        kind,
-        schemaName: 'public',
-        tableName,
-        targetKey: getSchemaCommentTargetKey(kind, 'public', tableName),
-      }
-    }
-    if (parts.length === 2) {
-      const [schemaName, tableName] = parts
-      if (!schemaName || !tableName) {
-        return 'targetless'
-      }
-      return {
-        kind,
-        schemaName,
-        tableName,
-        targetKey: getSchemaCommentTargetKey(kind, schemaName, tableName),
-      }
-    }
+  const target = createSchemaCommentTargetFromParts(kind, parts)
+  const valueToken = tokens[cursor + 1]
+  if (!target || !valueToken) {
     return 'targetless'
   }
 
-  if (parts.length === 2) {
-    const [tableName, columnName] = parts
-    if (!tableName || !columnName) {
-      return 'targetless'
-    }
-    return {
-      columnName,
-      kind,
-      schemaName: 'public',
-      tableName,
-      targetKey: getSchemaCommentTargetKey(
-        kind,
-        'public',
-        tableName,
-        columnName,
-      ),
-    }
+  return {
+    removesComment: isSqlKeyword(valueToken, 'null'),
+    target,
+    valueSql: readSqlStatementSuffix(statement, valueToken),
   }
-  if (parts.length === 3) {
-    const [schemaName, tableName, columnName] = parts
-    if (!schemaName || !tableName || !columnName) {
-      return 'targetless'
+}
+
+function createSchemaCommentTargetFromParts(
+  kind: SchemaCommentTarget['kind'],
+  parts: string[],
+): SchemaCommentTarget | undefined {
+  if (kind === 'table') {
+    if (parts.length === 1 && parts[0]) {
+      return createSchemaCommentTarget('table', 'public', parts[0])
+    }
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      return createSchemaCommentTarget('table', parts[0], parts[1])
+    }
+    return undefined
+  }
+
+  if (parts.length === 2 && parts[0] && parts[1]) {
+    return createSchemaCommentTarget('column', 'public', parts[0], parts[1])
+  }
+  if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+    return createSchemaCommentTarget('column', parts[0], parts[1], parts[2])
+  }
+  return undefined
+}
+
+function createSchemaCommentTarget(
+  kind: SchemaCommentTarget['kind'],
+  schemaName: string,
+  tableName: string,
+  columnName?: string,
+): SchemaCommentTarget {
+  if (kind === 'column') {
+    if (!columnName) {
+      throw new Error('Column comment target requires a column name')
     }
     return {
       columnName,
@@ -3351,7 +3396,329 @@ function parseSchemaCommentTarget(
       ),
     }
   }
-  return 'targetless'
+  return {
+    kind,
+    schemaName,
+    tableName,
+    targetKey: getSchemaCommentTargetKey(kind, schemaName, tableName),
+  }
+}
+
+function readSchemaCommentValueSql(sql: string): string {
+  const statements = splitPostgresSqlStatements(sql)
+  const statement = statements[0]
+  const parsed = statement ? parseSchemaCommentStatement(statement) : undefined
+  if (!parsed || parsed === 'targetless') {
+    throw new Error(
+      'Schema comment artifact contains an invalid comment statement',
+    )
+  }
+  return parsed.valueSql
+}
+
+function readSqlStatementSuffix(
+  statement: SqlStatement,
+  token: SqlToken,
+): string {
+  const firstToken = statement.tokens[0]
+  if (!firstToken) {
+    return ''
+  }
+  return statement.sql
+    .slice(token.start - firstToken.start)
+    .replace(/;\s*$/u, '')
+}
+
+function parseSchemaCommentTargetMutations(
+  statement: SqlStatement,
+): SchemaCommentTargetMutation[] {
+  const dropTable = parseDropTableCommentTargetMutation(statement.tokens)
+  if (dropTable) {
+    return [dropTable]
+  }
+  return parseAlterTableCommentTargetMutations(statement.tokens)
+}
+
+function parseDropTableCommentTargetMutation(
+  tokens: SqlToken[],
+): SchemaCommentTargetMutation | undefined {
+  if (!isSqlKeyword(tokens[0], 'drop') || !isSqlKeyword(tokens[1], 'table')) {
+    return undefined
+  }
+
+  const tables: SchemaCommentTableReference[] = []
+  let cursor = skipIfExists(tokens, 2)
+  while (cursor < tokens.length) {
+    const parsed = readSchemaCommentTableReference(tokens, cursor)
+    if (!parsed) {
+      break
+    }
+    tables.push(parsed.table)
+    cursor = parsed.cursor
+    if (tokens[cursor]?.kind !== 'symbol' || tokens[cursor].value !== ',') {
+      break
+    }
+    cursor += 1
+  }
+
+  return tables.length > 0 ? { operation: 'drop-table', tables } : undefined
+}
+
+function parseAlterTableCommentTargetMutations(
+  tokens: SqlToken[],
+): SchemaCommentTargetMutation[] {
+  if (!isSqlKeyword(tokens[0], 'alter') || !isSqlKeyword(tokens[1], 'table')) {
+    return []
+  }
+
+  let cursor = skipIfExists(tokens, 2)
+  if (isSqlKeyword(tokens[cursor], 'only')) {
+    cursor += 1
+  }
+  const parsedTable = readSchemaCommentTableReference(tokens, cursor)
+  if (!parsedTable) {
+    return []
+  }
+  cursor = parsedTable.cursor
+  if (tokens[cursor]?.kind === 'symbol' && tokens[cursor].value === '*') {
+    cursor += 1
+  }
+
+  return splitAlterTableActions(tokens.slice(cursor)).flatMap((action) => {
+    const mutation = parseAlterTableCommentTargetMutation(
+      parsedTable.table,
+      action,
+    )
+    return mutation ? [mutation] : []
+  })
+}
+
+function parseAlterTableCommentTargetMutation(
+  table: SchemaCommentTableReference,
+  tokens: SqlToken[],
+): SchemaCommentTargetMutation | undefined {
+  if (isSqlKeyword(tokens[0], 'drop')) {
+    let cursor = 1
+    const explicitlyColumn = isSqlKeyword(tokens[cursor], 'column')
+    if (explicitlyColumn) {
+      cursor += 1
+    }
+    cursor = skipIfExists(tokens, cursor)
+    const columnName = readSqlIdentifier(tokens[cursor])
+    if (
+      !columnName ||
+      (!explicitlyColumn &&
+        ['constraint', 'default', 'expression', 'identity'].includes(
+          columnName,
+        ))
+    ) {
+      return undefined
+    }
+    return { columnName, operation: 'drop-column', table }
+  }
+
+  if (isSqlKeyword(tokens[0], 'rename')) {
+    let cursor = 1
+    if (isSqlKeyword(tokens[cursor], 'to')) {
+      const newTableName = readSqlIdentifier(tokens[cursor + 1])
+      return newTableName
+        ? { newTableName, operation: 'rename-table', table }
+        : undefined
+    }
+    if (isSqlKeyword(tokens[cursor], 'column')) {
+      cursor += 1
+    } else if (isSqlKeyword(tokens[cursor], 'constraint')) {
+      return undefined
+    }
+    const columnName = readSqlIdentifier(tokens[cursor])
+    if (!columnName || !isSqlKeyword(tokens[cursor + 1], 'to')) {
+      return undefined
+    }
+    const newColumnName = readSqlIdentifier(tokens[cursor + 2])
+    return newColumnName
+      ? { columnName, newColumnName, operation: 'rename-column', table }
+      : undefined
+  }
+
+  if (isSqlKeyword(tokens[0], 'set') && isSqlKeyword(tokens[1], 'schema')) {
+    const newSchemaName = readSqlIdentifier(tokens[2])
+    return newSchemaName
+      ? { newSchemaName, operation: 'move-table', table }
+      : undefined
+  }
+
+  return undefined
+}
+
+function skipIfExists(tokens: SqlToken[], cursor: number): number {
+  return isSqlKeyword(tokens[cursor], 'if') &&
+    isSqlKeyword(tokens[cursor + 1], 'exists')
+    ? cursor + 2
+    : cursor
+}
+
+function readSchemaCommentTableReference(
+  tokens: SqlToken[],
+  cursor: number,
+): { cursor: number; table: SchemaCommentTableReference } | undefined {
+  const parts: string[] = []
+  const first = readSqlIdentifier(tokens[cursor])
+  if (!first) {
+    return undefined
+  }
+  parts.push(first)
+  cursor += 1
+  if (tokens[cursor]?.kind === 'symbol' && tokens[cursor].value === '.') {
+    const second = readSqlIdentifier(tokens[cursor + 1])
+    if (!second) {
+      return undefined
+    }
+    parts.push(second)
+    cursor += 2
+  }
+
+  if (parts.length === 1) {
+    return { cursor, table: { schemaName: 'public', tableName: parts[0] } }
+  }
+  const [schemaName, tableName] = parts
+  return schemaName && tableName
+    ? { cursor, table: { schemaName, tableName } }
+    : undefined
+}
+
+function splitAlterTableActions(tokens: SqlToken[]): SqlToken[][] {
+  const actions: SqlToken[][] = []
+  let actionStart = 0
+  let parenthesisDepth = 0
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]
+    if (token?.kind !== 'symbol') {
+      continue
+    }
+    if (token.value === '(') {
+      parenthesisDepth += 1
+      continue
+    }
+    if (token.value === ')') {
+      parenthesisDepth = Math.max(0, parenthesisDepth - 1)
+      continue
+    }
+    if (token.value === ',' && parenthesisDepth === 0) {
+      const action = tokens.slice(actionStart, index)
+      if (action.length > 0) {
+        actions.push(action)
+      }
+      actionStart = index + 1
+    }
+  }
+  const finalAction = tokens.slice(actionStart)
+  if (finalAction.length > 0) {
+    actions.push(finalAction)
+  }
+  return actions
+}
+
+function applySchemaCommentTargetMutation(
+  comments: Map<string, MigrationCommentStatement>,
+  mutation: SchemaCommentTargetMutation,
+) {
+  if (mutation.operation === 'drop-table') {
+    for (const table of mutation.tables) {
+      deleteSchemaCommentsForTable(comments, table)
+    }
+    return
+  }
+  if (mutation.operation === 'drop-column') {
+    comments.delete(
+      getSchemaCommentTargetKey(
+        'column',
+        mutation.table.schemaName,
+        mutation.table.tableName,
+        mutation.columnName,
+      ),
+    )
+    return
+  }
+  if (mutation.operation === 'rename-column') {
+    const targetKey = getSchemaCommentTargetKey(
+      'column',
+      mutation.table.schemaName,
+      mutation.table.tableName,
+      mutation.columnName,
+    )
+    const comment = comments.get(targetKey)
+    if (!comment) {
+      return
+    }
+    const target = createSchemaCommentTarget(
+      'column',
+      mutation.table.schemaName,
+      mutation.table.tableName,
+      mutation.newColumnName,
+    )
+    comments.delete(targetKey)
+    comments.set(target.targetKey, { ...comment, target })
+    return
+  }
+
+  const newSchemaName =
+    mutation.operation === 'move-table'
+      ? mutation.newSchemaName
+      : mutation.table.schemaName
+  const newTableName =
+    mutation.operation === 'rename-table'
+      ? mutation.newTableName
+      : mutation.table.tableName
+  rewriteSchemaCommentTableTargets(
+    comments,
+    mutation.table,
+    newSchemaName,
+    newTableName,
+  )
+}
+
+function deleteSchemaCommentsForTable(
+  comments: Map<string, MigrationCommentStatement>,
+  table: SchemaCommentTableReference,
+) {
+  for (const [targetKey, comment] of comments) {
+    if (isSchemaCommentTargetForTable(comment.target, table)) {
+      comments.delete(targetKey)
+    }
+  }
+}
+
+function rewriteSchemaCommentTableTargets(
+  comments: Map<string, MigrationCommentStatement>,
+  table: SchemaCommentTableReference,
+  newSchemaName: string,
+  newTableName: string,
+) {
+  const matches = [...comments.values()].filter((comment) =>
+    isSchemaCommentTargetForTable(comment.target, table),
+  )
+  for (const comment of matches) {
+    comments.delete(comment.target.targetKey)
+  }
+  for (const comment of matches) {
+    const target = createSchemaCommentTarget(
+      comment.target.kind,
+      newSchemaName,
+      newTableName,
+      comment.target.kind === 'column' ? comment.target.columnName : undefined,
+    )
+    comments.set(target.targetKey, { ...comment, target })
+  }
+}
+
+function isSchemaCommentTargetForTable(
+  target: SchemaCommentTarget,
+  table: SchemaCommentTableReference,
+) {
+  return (
+    target.schemaName === table.schemaName &&
+    target.tableName === table.tableName
+  )
 }
 
 function readSqlKeyword(token: SqlToken | undefined): string | undefined {
