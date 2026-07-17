@@ -14,6 +14,28 @@ export type ManagedForumSectionMutationSnapshot =
     workId: number
   }
 
+/** 作品托管板块同步允许写入的闭集字段。 */
+export type ManagedForumSectionUpdatePayload = Partial<
+  Pick<ForumSectionSelect, 'description' | 'isEnabled' | 'name'>
+>
+
+/** 管理端板块更新允许写入的闭集字段。 */
+export type ForumSectionUpdatePayload = Partial<
+  Pick<
+    ForumSectionSelect,
+    | 'cover'
+    | 'description'
+    | 'groupId'
+    | 'icon'
+    | 'isEnabled'
+    | 'name'
+    | 'remark'
+    | 'sortOrder'
+    | 'topicReviewPolicy'
+    | 'userLevelRuleId'
+  >
+>
+
 export interface ForumVisibleSectionQueryOptions {
   groupId?: number
   isUngrouped?: boolean

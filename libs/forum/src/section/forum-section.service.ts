@@ -3,9 +3,11 @@ import type { ForumSectionSelect } from '@db/schema'
 import type {
   ForumSectionBatchHandler,
   ForumSectionMutationSnapshot,
+  ForumSectionUpdatePayload,
   ForumVisibleSectionQueryOptions,
   ForumVisibleSectionRow,
   ManagedForumSectionMutationSnapshot,
+  ManagedForumSectionUpdatePayload,
 } from './forum-section.type'
 
 import {
@@ -325,7 +327,7 @@ export class ForumSectionService {
   ) {
     await this.assertSectionManagedByWorkInTx(tx, input.workId, input.sectionId)
 
-    const updatePayload: Record<string, unknown> = {}
+    const updatePayload: ManagedForumSectionUpdatePayload = {}
     if (input.name !== undefined && input.name !== null) {
       updatePayload.name = input.name
     }
@@ -1040,7 +1042,7 @@ export class ForumSectionService {
               throw new ForumSectionSnapshotDriftError()
             }
 
-            const updatePayload: Record<string, unknown> = { ...updateData }
+            const updatePayload: ForumSectionUpdatePayload = { ...updateData }
             if (name !== undefined) {
               updatePayload.name = name
             }

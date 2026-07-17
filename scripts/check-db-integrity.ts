@@ -77,6 +77,25 @@ interface WriterRecord {
   table: string
 }
 
+interface PayloadAudit {
+  fields: Map<string, PayloadFieldState>
+  hasUnknownShape: boolean
+}
+
+interface PayloadFieldState {
+  mayBeNonNull: boolean
+}
+
+interface PayloadTypeAnalysis {
+  hasUnknownShape: boolean
+  rowTypes: ts.Type[]
+}
+
+interface PayloadValueAnalysis {
+  hasUnknownValue: boolean
+  mayBeNonNull: boolean
+}
+
 interface IntegrityCounts {
   acquisitionCalls: number
   acquisitionFiles: number
@@ -936,7 +955,7 @@ const NON_EXPERIENCE_LEDGER_CALLS = new Set([
 const EXPECTED_ACQUISITION_DIGEST =
   '359ba898a4ac6f6d69d0eb1a2149d68395f3a4ac77435bb2a2e4881d0f772dbf'
 const EXPECTED_WRITER_DIGEST =
-  '92eb8a9118e4657e6399892371ac5f16a8bdcc560f69da57569d681403e4a0fe'
+  '42ecc1d2efc1065f4b09ea51290e15e291c43a4d9938f85f01404ef273c04d32'
 
 /**
  * 以 TypeScript AST 与结构化 SQL token 重新计算完整性门禁；不连接数据库，也不读取环境变量。
@@ -1240,17 +1259,22 @@ function auditWriters(context: ProjectContext, violations: string[]) {
       if (drizzleWrite && CRITICAL_TABLES.has(drizzleWrite.table)) {
         const owner = `${file}#${declarationOwner(context, node)}`
         const category = writerOwners.get(owner)
+        const payloadAudit = readWritePayloadAudit(context, node)
         if (!category) {
           unknownCount += 1
           violations.push('WRITER_UNKNOWN_DRIZZLE_OWNER')
         }
+        if (payloadAudit.hasUnknownShape) {
+          unknownCount += 1
+          violations.push('WRITER_UNKNOWN_PAYLOAD_SHAPE')
+        }
         records.push({
           category: category ?? 'non-integrity',
           kind: 'drizzle',
-          nonNullPayloadKeys: readWriteNonNullPayloadKeys(context, node),
+          nonNullPayloadKeys: readPotentiallyNonNullPayloadKeys(payloadAudit),
           operation: drizzleWrite.operation,
           owner,
-          payloadKeys: readWritePayloadKeys(context, node),
+          payloadKeys: readKnownPayloadKeys(payloadAudit),
           table: drizzleWrite.table,
         })
       }
@@ -2449,13 +2473,14 @@ function readDrizzleWrite(context: ProjectContext, node: ts.CallExpression) {
   return { operation: node.expression.name.text, table }
 }
 
-function readWritePayloadKeys(
+// 沿 Drizzle 写入链定位 set/values payload，并将无法定位的 payload 标记为未知。
+function readWritePayloadAudit(
   context: ProjectContext,
   writeCall: ts.CallExpression,
-) {
+): PayloadAudit {
   const operation = readCallName(writeCall)
   if (operation === 'delete') {
-    return []
+    return createPayloadAudit()
   }
   let current: ts.Node | undefined = writeCall.parent
   while (current && !ts.isStatement(current)) {
@@ -2465,92 +2490,146 @@ function readWritePayloadKeys(
       ['set', 'values'].includes(current.expression.name.text) &&
       current.arguments[0]
     ) {
-      return readPayloadKeys(context, current.arguments[0])
+      return readPayloadAudit(context, current.arguments[0])
     }
     current = current.parent
   }
-  return ['unknown']
+  return createUnknownPayloadAudit()
 }
 
-function readWriteNonNullPayloadKeys(
-  context: ProjectContext,
-  writeCall: ts.CallExpression,
-) {
-  if (readCallName(writeCall) === 'delete') {
-    return []
-  }
-  let current: ts.Node | undefined = writeCall.parent
-  while (current && !ts.isStatement(current)) {
-    if (
-      ts.isCallExpression(current) &&
-      ts.isPropertyAccessExpression(current.expression) &&
-      ['set', 'values'].includes(current.expression.name.text) &&
-      current.arguments[0]
-    ) {
-      return readNonNullPayloadKeys(context, current.arguments[0])
-    }
-    current = current.parent
-  }
-  return ['unknown']
-}
-
-function readNonNullPayloadKeys(
+// 将字面量与类型驱动 payload 归一化为字段、可为非空字段和未知形状。
+function readPayloadAudit(
   context: ProjectContext,
   expression: ts.Expression,
-) {
+): PayloadAudit {
   expression = unwrapExpression(expression)
-  const keys = new Set<string>()
-  if (!ts.isObjectLiteralExpression(expression)) {
-    for (const key of readTypePropertyNames(context, expression)) {
-      keys.add(key)
-    }
-    return [...keys].sort()
-  }
-  for (const property of expression.properties) {
-    if (ts.isPropertyAssignment(property)) {
-      if (
-        unwrapExpression(property.initializer).kind !==
-        ts.SyntaxKind.NullKeyword
-      ) {
-        keys.add(readPropertyName(property.name))
+  if (ts.isArrayLiteralExpression(expression)) {
+    const audits: PayloadAudit[] = []
+    for (const element of expression.elements) {
+      if (ts.isOmittedExpression(element)) {
+        continue
       }
-    } else if (
+      const nestedExpression = ts.isSpreadElement(element)
+        ? element.expression
+        : element
+      audits.push(readPayloadAudit(context, nestedExpression))
+    }
+    return combinePayloadAudits(audits)
+  }
+  if (ts.isObjectLiteralExpression(expression)) {
+    return readObjectLiteralPayloadAudit(context, expression)
+  }
+  return readPayloadTypeAudit(
+    context.checker,
+    context.checker.getTypeAtLocation(expression),
+    expression,
+  )
+}
+
+// 按对象字面量的声明顺序覆盖字段，避免 spread 后显式 null 被误记为非空。
+function readObjectLiteralPayloadAudit(
+  context: ProjectContext,
+  expression: ts.ObjectLiteralExpression,
+): PayloadAudit {
+  const audit = createPayloadAudit()
+  for (const property of expression.properties) {
+    if (
+      ts.isPropertyAssignment(property) ||
       ts.isShorthandPropertyAssignment(property) ||
       ts.isMethodDeclaration(property)
     ) {
-      keys.add(readPropertyName(property.name))
-    } else if (ts.isSpreadAssignment(property)) {
-      for (const key of readTypePropertyNames(context, property.expression)) {
-        keys.add(key)
+      const name = readStaticPropertyName(property.name)
+      if (!name) {
+        audit.hasUnknownShape = true
+        continue
       }
+      const value = ts.isPropertyAssignment(property)
+        ? analyzePayloadValueExpression(context, property.initializer)
+        : ts.isShorthandPropertyAssignment(property)
+          ? analyzePayloadValueExpression(context, property.name)
+          : { hasUnknownValue: false, mayBeNonNull: true }
+      audit.fields.set(name, { mayBeNonNull: value.mayBeNonNull })
+      audit.hasUnknownShape ||= value.hasUnknownValue
+    } else if (ts.isSpreadAssignment(property)) {
+      overlayPayloadAudit(
+        audit,
+        readPayloadObjectSpreadAudit(context, property.expression),
+      )
+    } else {
+      audit.hasUnknownShape = true
     }
   }
-  return [...keys].sort()
+  return audit
 }
 
-function readPayloadKeys(context: ProjectContext, expression: ts.Expression) {
-  expression = unwrapExpression(expression)
-  const keys = new Set<string>()
-  if (ts.isObjectLiteralExpression(expression)) {
-    for (const property of expression.properties) {
-      if (
-        ts.isPropertyAssignment(property) ||
-        ts.isShorthandPropertyAssignment(property) ||
-        ts.isMethodDeclaration(property)
-      ) {
-        keys.add(readPropertyName(property.name))
-      } else if (ts.isSpreadAssignment(property)) {
-        for (const key of readTypePropertyNames(context, property.expression)) {
-          keys.add(key)
-        }
-      }
-    }
-  } else {
-    for (const key of readTypePropertyNames(context, expression)) {
-      keys.add(key)
+// 对数组作对象 spread 时无法安全映射为列字段，直接保守标记为未知。
+function readPayloadObjectSpreadAudit(
+  context: ProjectContext,
+  expression: ts.Expression,
+): PayloadAudit {
+  const type = context.checker.getTypeAtLocation(unwrapExpression(expression))
+  return containsArrayLikeType(context.checker, type)
+    ? createUnknownPayloadAudit()
+    : readPayloadAudit(context, expression)
+}
+
+// 合并批量 payload 的所有可能字段；任一元素可写入即保留为可能写入。
+function combinePayloadAudits(audits: readonly PayloadAudit[]): PayloadAudit {
+  const combined = createPayloadAudit()
+  for (const audit of audits) {
+    combined.hasUnknownShape ||= audit.hasUnknownShape
+    for (const [name, state] of audit.fields) {
+      const existing = combined.fields.get(name)
+      combined.fields.set(name, {
+        mayBeNonNull: existing?.mayBeNonNull || state.mayBeNonNull,
+      })
     }
   }
-  return [...keys].sort()
+  return combined
+}
+
+// 将对象 spread 的已知字段按覆盖语义写入目标审计结果。
+function overlayPayloadAudit(target: PayloadAudit, source: PayloadAudit) {
+  target.hasUnknownShape ||= source.hasUnknownShape
+  for (const [name, state] of source.fields) {
+    target.fields.set(name, state)
+  }
+}
+
+// 创建不含字段的已知 payload 审计结果。
+function createPayloadAudit(): PayloadAudit {
+  return {
+    fields: new Map<string, PayloadFieldState>(),
+    hasUnknownShape: false,
+  }
+}
+
+// 创建未知 payload 形状，禁止以字段名哨兵掩盖无法审计的写入。
+function createUnknownPayloadAudit(): PayloadAudit {
+  return { fields: new Map<string, PayloadFieldState>(), hasUnknownShape: true }
+}
+
+// 从审计结果读取所有已知字段名。
+function readKnownPayloadKeys(audit: PayloadAudit): string[] {
+  return [...audit.fields.keys()].sort()
+}
+
+// 从审计结果读取可能写入非空值的字段名。
+function readPotentiallyNonNullPayloadKeys(audit: PayloadAudit): string[] {
+  return [...audit.fields]
+    .filter(([, state]) => state.mayBeNonNull)
+    .map(([name]) => name)
+    .sort()
+}
+
+// 基于表达式实际类型判断属性值是否可能为非空，并传播未知值类型。
+function analyzePayloadValueExpression(
+  context: ProjectContext,
+  expression: ts.Expression,
+): PayloadValueAnalysis {
+  return analyzePayloadValueType(
+    context.checker.getTypeAtLocation(unwrapExpression(expression)),
+  )
 }
 
 function collectRawSqlWriters(
@@ -3123,14 +3202,203 @@ function readPropertyName(name: ts.PropertyName) {
   return name.getText()
 }
 
-function readTypePropertyNames(
-  context: ProjectContext,
-  expression: ts.Expression,
-) {
-  return context.checker
-    .getPropertiesOfType(context.checker.getTypeAtLocation(expression))
-    .map((property) => property.name)
-    .sort()
+// 从静态类型构建 payload 审计，并保留类型无法闭集推导的未知状态。
+function readPayloadTypeAudit(
+  checker: ts.TypeChecker,
+  type: ts.Type,
+  location: ts.Node,
+): PayloadAudit {
+  const analysis = collectPayloadRowTypes(checker, type)
+  const audit = combinePayloadAudits(
+    analysis.rowTypes.map((rowType) =>
+      readPayloadRowTypeAudit(checker, rowType, location),
+    ),
+  )
+  audit.hasUnknownShape ||= analysis.hasUnknownShape
+  return audit
+}
+
+// 审计单行对象类型的命名字段；开放索引和不可读符号字段一律视为未知。
+function readPayloadRowTypeAudit(
+  checker: ts.TypeChecker,
+  rowType: ts.Type,
+  location: ts.Node,
+): PayloadAudit {
+  const audit = createPayloadAudit()
+  if ((rowType.flags & ts.TypeFlags.Object) === 0) {
+    audit.hasUnknownShape = true
+    return audit
+  }
+  const properties = checker.getPropertiesOfType(rowType)
+  if (
+    properties.length === 0 ||
+    checker.getIndexTypeOfType(rowType, ts.IndexKind.String) !== undefined ||
+    checker.getIndexTypeOfType(rowType, ts.IndexKind.Number) !== undefined
+  ) {
+    audit.hasUnknownShape = true
+  }
+  for (const property of properties) {
+    const name = readAuditableSymbolPropertyName(property)
+    if (!name) {
+      audit.hasUnknownShape = true
+      continue
+    }
+    const value = analyzePayloadSymbolValue(checker, property, location)
+    audit.fields.set(name, { mayBeNonNull: value.mayBeNonNull })
+    audit.hasUnknownShape ||= value.hasUnknownValue
+  }
+  return audit
+}
+
+// 递归归一化联合、数组和元组 payload；活动路径检测避免递归别名导致栈溢出。
+function collectPayloadRowTypes(
+  checker: ts.TypeChecker,
+  type: ts.Type,
+  activeTypes = new Set<ts.Type>(),
+): PayloadTypeAnalysis {
+  if (isUnknownPayloadType(type)) {
+    return { hasUnknownShape: true, rowTypes: [] }
+  }
+  if (type.flags & ts.TypeFlags.Never) {
+    return { hasUnknownShape: true, rowTypes: [] }
+  }
+  if (activeTypes.has(type)) {
+    return { hasUnknownShape: true, rowTypes: [] }
+  }
+  activeTypes.add(type)
+  try {
+    if (type.isUnion()) {
+      const analysis: PayloadTypeAnalysis = {
+        hasUnknownShape: false,
+        rowTypes: [],
+      }
+      for (const member of type.types) {
+        const memberAnalysis = collectPayloadRowTypes(
+          checker,
+          member,
+          activeTypes,
+        )
+        analysis.hasUnknownShape ||= memberAnalysis.hasUnknownShape
+        analysis.rowTypes.push(...memberAnalysis.rowTypes)
+      }
+      return analysis
+    }
+    if (!checker.isArrayLikeType(type)) {
+      return { hasUnknownShape: false, rowTypes: [type] }
+    }
+    const elementType = checker.getIndexTypeOfType(type, ts.IndexKind.Number)
+    return elementType
+      ? collectPayloadRowTypes(checker, elementType, activeTypes)
+      : { hasUnknownShape: true, rowTypes: [] }
+  } finally {
+    activeTypes.delete(type)
+  }
+}
+
+// 判断对象 spread 的类型中是否出现数组或元组，避免把索引元素误作对象字段。
+function containsArrayLikeType(
+  checker: ts.TypeChecker,
+  type: ts.Type,
+): boolean {
+  if (type.isUnion()) {
+    return type.types.some((member) => containsArrayLikeType(checker, member))
+  }
+  return checker.isArrayLikeType(type)
+}
+
+// 分析属性声明的值类型；缺失声明同样属于不可审计状态。
+function analyzePayloadSymbolValue(
+  checker: ts.TypeChecker,
+  property: ts.Symbol,
+  location: ts.Node,
+): PayloadValueAnalysis {
+  const declaration = property.valueDeclaration ?? property.declarations?.[0]
+  return analyzePayloadValueType(
+    checker.getTypeOfSymbolAtLocation(property, declaration ?? location),
+  )
+}
+
+// 判断值类型是否可能为非空；不确定类型会显式传播为未知。
+function analyzePayloadValueType(type: ts.Type): PayloadValueAnalysis {
+  if (isUnknownPayloadType(type)) {
+    return { hasUnknownValue: true, mayBeNonNull: true }
+  }
+  if (type.flags & ts.TypeFlags.Never) {
+    return { hasUnknownValue: true, mayBeNonNull: true }
+  }
+  if (
+    type.flags &
+    (ts.TypeFlags.Null | ts.TypeFlags.Undefined | ts.TypeFlags.Void)
+  ) {
+    return { hasUnknownValue: false, mayBeNonNull: false }
+  }
+  if (type.isUnion()) {
+    const analysis: PayloadValueAnalysis = {
+      hasUnknownValue: false,
+      mayBeNonNull: false,
+    }
+    for (const member of type.types) {
+      const memberAnalysis = analyzePayloadValueType(member)
+      analysis.hasUnknownValue ||= memberAnalysis.hasUnknownValue
+      analysis.mayBeNonNull ||= memberAnalysis.mayBeNonNull
+    }
+    return analysis
+  }
+  return { hasUnknownValue: false, mayBeNonNull: true }
+}
+
+// 将 any、unknown 与尚未具化的类型参数视为不可静态闭集的 payload 类型。
+function isUnknownPayloadType(type: ts.Type): boolean {
+  return (
+    (type.flags &
+      (ts.TypeFlags.Any |
+        ts.TypeFlags.Unknown |
+        ts.TypeFlags.TypeParameter |
+        ts.TypeFlags.Conditional |
+        ts.TypeFlags.IndexedAccess |
+        ts.TypeFlags.Substitution)) !==
+    0
+  )
+}
+
+// 仅接受可稳定还原为字符串的属性声明，避免 Symbol 等内部名称进入摘要。
+function readAuditableSymbolPropertyName(
+  property: ts.Symbol,
+): string | undefined {
+  const declarations = property.declarations ?? []
+  if (declarations.length === 0) {
+    return property.flags & ts.SymbolFlags.Transient
+      ? readSyntheticStringPropertyName(property.name)
+      : undefined
+  }
+  const names = declarations.map((declaration) => {
+    if (!('name' in declaration) || !declaration.name) {
+      return undefined
+    }
+    return readStaticPropertyName(declaration.name)
+  })
+  return names.every((name) => name === property.name)
+    ? property.name
+    : undefined
+}
+
+// 仅解析标识符、字面量与字面量 computed key，动态 key 必须显式进入未知状态。
+function readStaticPropertyName(name: ts.PropertyName): string | undefined {
+  if (
+    ts.isIdentifier(name) ||
+    ts.isStringLiteral(name) ||
+    ts.isNumericLiteral(name) ||
+    ts.isNoSubstitutionTemplateLiteral(name)
+  ) {
+    return name.text
+  }
+  if (!ts.isComputedPropertyName(name)) {
+    return undefined
+  }
+  const expression = unwrapExpression(name.expression)
+  return ts.isStringLiteral(expression) || ts.isNumericLiteral(expression)
+    ? expression.text
+    : undefined
 }
 
 function findCallInChain(call: ts.CallExpression, name: string) {
@@ -4136,6 +4404,57 @@ function main() {
   if (report.status === 'fail') {
     process.exitCode = 1
   }
+}
+
+// 映射类型的 transient 字段没有声明节点，只接受公开可表示的字符串字段名。
+function readSyntheticStringPropertyName(name: string): string | undefined {
+  return isPublicIdentifierPropertyName(name) || isDecimalPropertyName(name)
+    ? name
+    : undefined
+}
+
+// 使用公开 parser API 验证标识符，避免依赖 TypeScript 未声明的内部辅助函数。
+function isPublicIdentifierPropertyName(name: string): boolean {
+  const escapedName = [...name]
+    .map((character) => {
+      const codePoint = character.codePointAt(0)!
+      return codePoint <= 65535
+        ? `\\u${codePoint.toString(16).padStart(4, '0')}`
+        : `\\u{${codePoint.toString(16)}}`
+    })
+    .join('')
+  const sourceFile = ts.createSourceFile(
+    'payload-property.ts',
+    `type Payload = { ${escapedName}: unknown }`,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  )
+  const statement = sourceFile.statements[0]
+  if (
+    sourceFile.statements.length !== 1 ||
+    !statement ||
+    !ts.isTypeAliasDeclaration(statement) ||
+    !ts.isTypeLiteralNode(statement.type)
+  ) {
+    return false
+  }
+  const member = statement.type.members[0]
+  return (
+    statement.type.members.length === 1 &&
+    !!member &&
+    ts.isPropertySignature(member) &&
+    ts.isIdentifier(member.name) &&
+    member.name.text === name
+  )
+}
+
+// 判断字符串是否为十进制属性名，不依赖 TypeScript 内部 symbol 编码。
+function isDecimalPropertyName(name: string): boolean {
+  return (
+    name.length > 0 &&
+    [...name].every((character) => character >= '0' && character <= '9')
+  )
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(__filename)) {

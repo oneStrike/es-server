@@ -8,6 +8,7 @@ import type { BodyHtmlCodecService } from '@libs/interaction/body/body-html-code
 import type { MentionService } from '@libs/interaction/mention/mention.service'
 import type { InteractionSummaryReadService } from '@libs/interaction/summary/interaction-summary-read.service'
 import type { InteractionAuditorSummaryKey } from '@libs/interaction/summary/interaction-summary.type'
+import type { JsonValue } from '@libs/platform/utils'
 import type { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import type { ForumCounterService } from '../counter/forum-counter.service'
 import type { ForumHashtagBodyService } from '../hashtag/forum-hashtag-body.service'
@@ -623,12 +624,8 @@ export abstract class ForumTopicServiceSupport {
   protected normalizeVideoValue(
     value: ForumTopicSelect['videos'] | null | undefined,
     options: NormalizeVideoValueOptions,
-  ) {
-    if (value === undefined) {
-      return options.fallback
-    }
-
-    const candidate = value ?? []
+  ): JsonValue {
+    const candidate = value === undefined ? options.fallback : (value ?? [])
 
     try {
       const serialized = JSON.stringify(candidate)
@@ -636,7 +633,7 @@ export abstract class ForumTopicServiceSupport {
         throw new Error('invalid json')
       }
 
-      return JSON.parse(serialized) as ForumTopicSelect['videos']
+      return JSON.parse(serialized) as JsonValue
     } catch {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
