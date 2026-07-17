@@ -1,6 +1,8 @@
 import { DrizzleModule } from '@db/core'
 import { SystemConfigModule } from '@libs/config/system-config/system-config.module'
+import { FavoriteModule } from '@libs/interaction/favorite/favorite.module'
 import { FollowModule } from '@libs/interaction/follow/follow.module'
+import { LikeModule } from '@libs/interaction/like/like.module'
 import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module'
 import { Module } from '@nestjs/common'
 import { ForumPermissionModule } from '../permission/forum-permission.module'
@@ -18,6 +20,8 @@ import { ForumHashtagFollowResolver } from './resolver/forum-hashtag-follow.reso
   imports: [
     DrizzleModule,
     FollowModule,
+    LikeModule,
+    FavoriteModule,
     ForumPermissionModule,
     SensitiveWordModule,
     SystemConfigModule,

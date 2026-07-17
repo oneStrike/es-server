@@ -917,6 +917,7 @@ interface SourceExpression {
 }
 
 interface ModuleMetadataDefinition {
+  controllers?: SourceExpression
   exports?: SourceExpression
   imports?: SourceExpression
   providers?: SourceExpression
@@ -927,6 +928,7 @@ interface ModuleDefinition {
   className: string
   dynamicFactories: Map<string, DynamicFactoryDefinition>
   id: string
+  isGlobal: boolean
   metadata: ModuleMetadataDefinition
   sourceFile: ts.SourceFile
 }
@@ -964,18 +966,23 @@ interface EvaluationContext {
 }
 
 interface DynamicModuleMetadata {
+  controllers: EvaluatedValue[]
   exports: EvaluatedValue[]
   imports: EvaluatedValue[]
+  isGlobal: boolean
   moduleDefinition: ModuleDefinition
   providers: EvaluatedValue[]
 }
 
 interface CompositionModuleInstance {
+  controllers: EvaluatedValue[]
   exports: EvaluatedValue[]
   id: string
   imports: EvaluatedValue[]
+  isGlobal: boolean
   label: string
   location: ArchitectureViolation
+  moduleDefinition: ModuleDefinition
   providers: EvaluatedValue[]
 }
 
@@ -1027,6 +1034,7 @@ function getModuleMetadataDefinition(
     expression === undefined ? undefined : { expression, sourceFile }
 
   return {
+    controllers: toSourceExpression(getPropertyExpression('controllers')),
     exports: toSourceExpression(getPropertyExpression('exports')),
     imports: toSourceExpression(getPropertyExpression('imports')),
     providers: toSourceExpression(getPropertyExpression('providers')),
@@ -1079,6 +1087,11 @@ function createNestModuleModel(
         className: statement.name.text,
         dynamicFactories: new Map(),
         id: `${toRepoPath(root, sourceFile.fileName)}#${statement.name.text}`,
+        isGlobal:
+          ts
+            .getDecorators(statement)
+            ?.some((decorator) => isDecoratorNamed(decorator, 'Global')) ??
+          false,
         metadata,
         sourceFile,
       }
@@ -1257,6 +1270,202 @@ function resolveModuleDefinitionIdentifier(
       )
 }
 
+interface RuntimeDeclaration {
+  declaration: ts.Declaration
+  name: string
+  sourceFile: ts.SourceFile
+}
+
+// 沿显式导出链解析可参与 Nest 组合的运行时声明。
+function resolveExportedRuntimeDeclaration(
+  model: NestModuleModel,
+  sourceFile: ts.SourceFile,
+  exportName: string,
+  visited = new Set<string>(),
+): RuntimeDeclaration | undefined {
+  const visitKey = `${sourceFileKey(sourceFile.fileName)}#${exportName}`
+  if (visited.has(visitKey)) {
+    return undefined
+  }
+  visited.add(visitKey)
+
+  for (const statement of sourceFile.statements) {
+    if (
+      (ts.isClassDeclaration(statement) ||
+        ts.isFunctionDeclaration(statement) ||
+        ts.isEnumDeclaration(statement)) &&
+      statement.name?.text === exportName
+    ) {
+      return { declaration: statement, name: exportName, sourceFile }
+    }
+    if (ts.isVariableStatement(statement)) {
+      const declaration = statement.declarationList.declarations.find(
+        (candidate) =>
+          ts.isIdentifier(candidate.name) && candidate.name.text === exportName,
+      )
+      if (declaration !== undefined) {
+        return { declaration, name: exportName, sourceFile }
+      }
+    }
+  }
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isExportDeclaration(statement)) {
+      continue
+    }
+    if (statement.moduleSpecifier === undefined) {
+      if (
+        statement.exportClause !== undefined &&
+        ts.isNamedExports(statement.exportClause)
+      ) {
+        const local = statement.exportClause.elements.find(
+          (element) => element.name.text === exportName,
+        )
+        if (local !== undefined) {
+          return resolveExportedRuntimeDeclaration(
+            model,
+            sourceFile,
+            (local.propertyName ?? local.name).text,
+            visited,
+          )
+        }
+      }
+      continue
+    }
+    if (!ts.isStringLiteral(statement.moduleSpecifier)) {
+      continue
+    }
+    const targetSourceFile = getResolvedSourceFile(
+      model,
+      sourceFile,
+      statement.moduleSpecifier.text,
+    )
+    if (targetSourceFile === undefined) {
+      continue
+    }
+    if (statement.exportClause === undefined) {
+      const reExported = resolveExportedRuntimeDeclaration(
+        model,
+        targetSourceFile,
+        exportName,
+        visited,
+      )
+      if (reExported !== undefined) {
+        return reExported
+      }
+      continue
+    }
+    if (!ts.isNamedExports(statement.exportClause)) {
+      continue
+    }
+    const element = statement.exportClause.elements.find(
+      (candidate) => candidate.name.text === exportName,
+    )
+    if (element !== undefined) {
+      return resolveExportedRuntimeDeclaration(
+        model,
+        targetSourceFile,
+        (element.propertyName ?? element.name).text,
+        visited,
+      )
+    }
+  }
+  return undefined
+}
+
+// 将本地标识符或导入绑定解析为其规范运行时声明。
+function resolveRuntimeDeclarationIdentifier(
+  model: NestModuleModel,
+  sourceFile: ts.SourceFile,
+  identifier: ts.Identifier,
+) {
+  const binding = getImportBindings(sourceFile).get(identifier.text)
+  if (binding === undefined) {
+    return resolveExportedRuntimeDeclaration(model, sourceFile, identifier.text)
+  }
+  if (binding.importedName === '*') {
+    return undefined
+  }
+  const targetSourceFile = getResolvedSourceFile(
+    model,
+    sourceFile,
+    binding.moduleName,
+  )
+  return targetSourceFile === undefined
+    ? undefined
+    : resolveExportedRuntimeDeclaration(
+        model,
+        targetSourceFile,
+        binding.importedName,
+      )
+}
+
+// 为类、字符串和 Symbol 依赖生成跨文件稳定的组合令牌。
+function getCanonicalCompositionToken(
+  model: NestModuleModel,
+  sourceFile: ts.SourceFile,
+  expression: ts.Expression,
+) {
+  if (
+    ts.isStringLiteral(expression) ||
+    ts.isNoSubstitutionTemplateLiteral(expression)
+  ) {
+    return `string:${expression.text}`
+  }
+  if (!ts.isIdentifier(expression)) {
+    return undefined
+  }
+  const binding = getImportBindings(sourceFile).get(expression.text)
+  if (binding?.moduleName.startsWith('@nestjs/')) {
+    return undefined
+  }
+  if (binding !== undefined) {
+    const resolvedFileName = resolveModule(
+      binding.moduleName,
+      sourceFile.fileName,
+      model.compilerOptions,
+      model.resolutionCache,
+    )
+    if (
+      resolvedFileName === undefined ||
+      !/^(?:apps|db|libs)\//.test(toRepoPath(model.root, resolvedFileName))
+    ) {
+      return undefined
+    }
+  }
+  const declaration = resolveRuntimeDeclarationIdentifier(
+    model,
+    sourceFile,
+    expression,
+  )
+  if (declaration !== undefined) {
+    if (
+      ts.isVariableDeclaration(declaration.declaration) &&
+      declaration.declaration.initializer !== undefined &&
+      (ts.isStringLiteral(declaration.declaration.initializer) ||
+        ts.isNoSubstitutionTemplateLiteral(declaration.declaration.initializer))
+    ) {
+      return `string:${declaration.declaration.initializer.text}`
+    }
+    const declarationPath = toRepoPath(
+      model.root,
+      declaration.sourceFile.fileName,
+    )
+    if (!/^(?:apps|db|libs)\//.test(declarationPath)) {
+      return undefined
+    }
+    return `class:${declarationPath}#${declaration.name}`
+  }
+  return getProviderToken(
+    model.root,
+    sourceFile,
+    expression,
+    getImportBindings(sourceFile),
+    model.compilerOptions,
+    model.resolutionCache,
+  )
+}
+
 function primitiveValue(
   sourceFile: ts.SourceFile,
   node: ts.Node,
@@ -1400,6 +1609,43 @@ function evaluateExpression(
         node: expression,
         sourceFile: context.sourceFile,
       }
+    }
+    const runtimeDeclaration = resolveRuntimeDeclarationIdentifier(
+      model,
+      context.sourceFile,
+      expression,
+    )
+    if (
+      runtimeDeclaration !== undefined &&
+      ts.isVariableDeclaration(runtimeDeclaration.declaration) &&
+      runtimeDeclaration.declaration.initializer !== undefined &&
+      runtimeDeclaration.declaration.initializer !== expression &&
+      (ts.isArrayLiteralExpression(
+        runtimeDeclaration.declaration.initializer,
+      ) ||
+        ts.isObjectLiteralExpression(
+          runtimeDeclaration.declaration.initializer,
+        ) ||
+        ts.isStringLiteral(runtimeDeclaration.declaration.initializer) ||
+        ts.isNoSubstitutionTemplateLiteral(
+          runtimeDeclaration.declaration.initializer,
+        ) ||
+        ts.isNumericLiteral(runtimeDeclaration.declaration.initializer) ||
+        runtimeDeclaration.declaration.initializer.kind ===
+          ts.SyntaxKind.TrueKeyword ||
+        runtimeDeclaration.declaration.initializer.kind ===
+          ts.SyntaxKind.FalseKeyword ||
+        runtimeDeclaration.declaration.initializer.kind ===
+          ts.SyntaxKind.NullKeyword)
+    ) {
+      return evaluateExpression(
+        model,
+        runtimeDeclaration.declaration.initializer,
+        {
+          environment: new Map(),
+          sourceFile: runtimeDeclaration.sourceFile,
+        },
+      )
     }
     return { kind: 'symbol', node: expression, sourceFile: context.sourceFile }
   }
@@ -1557,6 +1803,7 @@ function ensureStaticallyExplainableDynamicValues(
   return values
 }
 
+// 静态执行受支持的 DynamicModule 工厂并合并类级模块元数据。
 function executeDynamicFactory(
   model: NestModuleModel,
   dynamicValue: EvaluatedValue,
@@ -1747,44 +1994,76 @@ function executeDynamicFactory(
     )
     return undefined
   }
+  const staticMetadata = getStaticModuleMetadata(
+    model,
+    moduleValue.classDefinition,
+  )
+  const globalValue = returned.properties?.get('global')
   return {
-    exports: ensureStaticallyExplainableDynamicValues(
-      model,
-      factory,
-      'exports',
-      toStaticArray(
+    controllers: [
+      ...staticMetadata.controllers,
+      ...ensureStaticallyExplainableDynamicValues(
         model,
-        returned.properties?.get('exports'),
+        factory,
+        'controllers',
+        toStaticArray(
+          model,
+          returned.properties?.get('controllers'),
+          'controllers',
+          returned.sourceFile,
+          returned.node,
+        ),
+      ),
+    ],
+    exports: [
+      ...staticMetadata.exports,
+      ...ensureStaticallyExplainableDynamicValues(
+        model,
+        factory,
         'exports',
-        returned.sourceFile,
-        returned.node,
+        toStaticArray(
+          model,
+          returned.properties?.get('exports'),
+          'exports',
+          returned.sourceFile,
+          returned.node,
+        ),
       ),
-    ),
-    imports: ensureStaticallyExplainableDynamicValues(
-      model,
-      factory,
-      'imports',
-      toStaticArray(
+    ],
+    imports: [
+      ...staticMetadata.imports,
+      ...ensureStaticallyExplainableDynamicValues(
         model,
-        returned.properties?.get('imports'),
+        factory,
         'imports',
-        returned.sourceFile,
-        returned.node,
+        toStaticArray(
+          model,
+          returned.properties?.get('imports'),
+          'imports',
+          returned.sourceFile,
+          returned.node,
+        ),
       ),
-    ),
+    ],
+    isGlobal:
+      moduleValue.classDefinition.isGlobal ||
+      (globalValue?.kind === 'primitive' && globalValue.value === true),
     moduleDefinition: moduleValue.classDefinition,
-    providers: ensureStaticallyExplainableDynamicValues(
-      model,
-      factory,
-      'providers',
-      toStaticArray(
+    providers: [
+      ...staticMetadata.providers,
+      ...ensureStaticallyExplainableDynamicValues(
         model,
-        returned.properties?.get('providers'),
+        factory,
         'providers',
-        returned.sourceFile,
-        returned.node,
+        toStaticArray(
+          model,
+          returned.properties?.get('providers'),
+          'providers',
+          returned.sourceFile,
+          returned.node,
+        ),
       ),
-    ),
+    ],
   }
 }
 
@@ -1810,6 +2089,7 @@ function getStaticModuleMetadata(
         )
   }
   return {
+    controllers: getArray('controllers'),
     exports: getArray('exports'),
     imports: getArray('imports'),
     providers: getArray('providers'),
@@ -1840,14 +2120,7 @@ function getCompositionProviderToken(
     return `class:${value.classDefinition.id}`
   }
   if (value.kind === 'symbol' && ts.isIdentifier(value.node)) {
-    return getProviderToken(
-      model.root,
-      value.sourceFile,
-      value.node,
-      getImportBindings(value.sourceFile),
-      model.compilerOptions,
-      model.resolutionCache,
-    )
+    return getCanonicalCompositionToken(model, value.sourceFile, value.node)
   }
   if (value.kind === 'external') {
     return undefined
@@ -1859,6 +2132,388 @@ function getCompositionProviderToken(
     'dynamic module provider must resolve to a class or static provide token',
   )
   return undefined
+}
+
+interface CompositionDependency {
+  injection: string
+  node: ts.Node
+  optional: boolean
+  token?: string
+}
+
+interface CompositionHost {
+  dependencies: CompositionDependency[]
+  kind: 'controller' | 'factory' | 'provider'
+  label: string
+  sourceFile: ts.SourceFile
+}
+
+// 获取指定名称的装饰器调用表达式。
+function getDecoratorCall(
+  node: ts.Node,
+  name: string,
+): ts.CallExpression | undefined {
+  const decorator = ts
+    .getDecorators(node)
+    ?.find((candidate) => isDecoratorNamed(candidate, name))
+  return decorator !== undefined && ts.isCallExpression(decorator.expression)
+    ? decorator.expression
+    : undefined
+}
+
+// 从构造参数类型提取可用于组合校验的依赖令牌。
+function getDependencyTokenFromType(
+  model: NestModuleModel,
+  sourceFile: ts.SourceFile,
+  type: ts.TypeNode | undefined,
+) {
+  if (
+    type === undefined ||
+    !ts.isTypeReferenceNode(type) ||
+    !ts.isIdentifier(type.typeName)
+  ) {
+    return undefined
+  }
+  return getCanonicalCompositionToken(model, sourceFile, type.typeName)
+}
+
+// 收集类的构造器与属性注入依赖。
+function collectClassDependencies(
+  model: NestModuleModel,
+  classDeclaration: ts.ClassDeclaration,
+) {
+  const sourceFile = classDeclaration.getSourceFile()
+  const dependencies: CompositionDependency[] = []
+  const constructor = classDeclaration.members.find(ts.isConstructorDeclaration)
+  if (constructor !== undefined) {
+    for (const [index, parameter] of constructor.parameters.entries()) {
+      const inject = getDecoratorCall(parameter, 'Inject')
+      const explicitToken = inject?.arguments[0]
+      dependencies.push({
+        injection: `constructor[${index}]`,
+        node: explicitToken ?? parameter.type ?? parameter,
+        optional: getDecoratorCall(parameter, 'Optional') !== undefined,
+        token:
+          explicitToken !== undefined
+            ? getCanonicalCompositionToken(model, sourceFile, explicitToken)
+            : getDependencyTokenFromType(model, sourceFile, parameter.type),
+      })
+    }
+  }
+  for (const member of classDeclaration.members) {
+    if (!ts.isPropertyDeclaration(member)) {
+      continue
+    }
+    const inject = getDecoratorCall(member, 'Inject')
+    const explicitToken = inject?.arguments[0]
+    if (explicitToken === undefined) {
+      continue
+    }
+    dependencies.push({
+      injection: `property:${member.name.getText(sourceFile)}`,
+      node: explicitToken,
+      optional: getDecoratorCall(member, 'Optional') !== undefined,
+      token: getCanonicalCompositionToken(model, sourceFile, explicitToken),
+    })
+  }
+  return dependencies
+}
+
+// 将控制器或提供者值解析到实际宿主类。
+function resolveHostClass(
+  model: NestModuleModel,
+  value: EvaluatedValue | undefined,
+) {
+  if (value?.kind === 'symbol' && ts.isIdentifier(value.node)) {
+    const declaration = resolveRuntimeDeclarationIdentifier(
+      model,
+      value.sourceFile,
+      value.node,
+    )
+    return declaration !== undefined &&
+      ts.isClassDeclaration(declaration.declaration)
+      ? declaration.declaration
+      : undefined
+  }
+  if (value?.kind === 'module') {
+    return value.classDefinition?.classDeclaration
+  }
+  return undefined
+}
+
+// 建立控制器或类提供者的依赖宿主描述。
+function createClassHost(
+  model: NestModuleModel,
+  value: EvaluatedValue,
+  kind: 'controller' | 'provider',
+): CompositionHost | undefined {
+  const classDeclaration = resolveHostClass(model, value)
+  if (classDeclaration?.name === undefined) {
+    return undefined
+  }
+  return {
+    dependencies: collectClassDependencies(model, classDeclaration),
+    kind,
+    label: classDeclaration.name.text,
+    sourceFile: classDeclaration.getSourceFile(),
+  }
+}
+
+// 解析工厂提供者 inject 数组中的单个令牌。
+function getFactoryInjectionToken(
+  model: NestModuleModel,
+  value: EvaluatedValue,
+) {
+  if (value.kind === 'object') {
+    const token = value.properties?.get('token')
+    return {
+      optional:
+        value.properties?.get('optional')?.kind === 'primitive' &&
+        value.properties.get('optional')?.value === true,
+      token:
+        token === undefined
+          ? undefined
+          : getCompositionProviderToken(model, token),
+    }
+  }
+  return {
+    optional: false,
+    token: getCompositionProviderToken(model, value),
+  }
+}
+
+// 生成人类可读的自定义提供者令牌标签。
+function getCustomProviderLabel(provider: EvaluatedValue, fallback: string) {
+  return (
+    provider.properties?.get('provide')?.node.getText(provider.sourceFile) ??
+    fallback
+  )
+}
+
+// 收集模块实例中需要验证依赖可达性的全部宿主。
+function collectInstanceHosts(
+  model: NestModuleModel,
+  instance: CompositionModuleInstance,
+) {
+  const hosts: CompositionHost[] = []
+  for (const controller of instance.controllers) {
+    const host = createClassHost(model, controller, 'controller')
+    if (host !== undefined) {
+      hosts.push(host)
+    }
+  }
+  for (const provider of instance.providers) {
+    if (provider.kind !== 'object') {
+      const host = createClassHost(model, provider, 'provider')
+      if (host !== undefined) {
+        hosts.push(host)
+      }
+      continue
+    }
+    const useClass = provider.properties?.get('useClass')
+    if (useClass !== undefined) {
+      const host = createClassHost(model, useClass, 'provider')
+      if (host !== undefined) {
+        hosts.push(host)
+      }
+      continue
+    }
+    const useExisting = provider.properties?.get('useExisting')
+    if (useExisting !== undefined) {
+      hosts.push({
+        dependencies: [
+          {
+            injection: 'useExisting',
+            node: useExisting.node,
+            optional: false,
+            token: getCompositionProviderToken(model, useExisting),
+          },
+        ],
+        kind: 'provider',
+        label: getCustomProviderLabel(provider, '<useExisting-provider>'),
+        sourceFile: provider.sourceFile,
+      })
+      continue
+    }
+    const inject = provider.properties?.get('inject')
+    if (provider.properties?.has('useFactory') && inject?.kind === 'array') {
+      const dependencies = (inject.values ?? []).map((value, index) => {
+        const resolved = getFactoryInjectionToken(model, value)
+        return {
+          injection: `factory[${index}]`,
+          node: value.node,
+          optional: resolved.optional,
+          token: resolved.token,
+        }
+      })
+      hosts.push({
+        dependencies,
+        kind: 'factory',
+        label: getCustomProviderLabel(provider, '<factory-provider>'),
+        sourceFile: provider.sourceFile,
+      })
+    }
+  }
+  return hosts
+}
+
+// 按 Nest 模块可见性规则验证宿主依赖是否可达且唯一注册。
+function collectCompositionDependencyViolations(
+  model: NestModuleModel,
+  rootDefinition: ModuleDefinition,
+  instances: Map<string, CompositionModuleInstance>,
+  edges: CompositionEdge[],
+) {
+  const children = new Map<string, Set<string>>()
+  const parents = new Map<string, string>()
+  for (const edge of edges) {
+    const targets = children.get(edge.from) ?? new Set<string>()
+    targets.add(edge.to)
+    children.set(edge.from, targets)
+    parents.set(edge.to, parents.get(edge.to) ?? edge.from)
+  }
+
+  const exportedTokenCache = new Map<string, Set<string>>()
+  // 递归展开模块导出并缓存其对外可见令牌。
+  const getExportedTokens = (
+    instanceId: string,
+    visiting = new Set<string>(),
+  ): Set<string> => {
+    const cached = exportedTokenCache.get(instanceId)
+    if (cached !== undefined) {
+      return cached
+    }
+    if (visiting.has(instanceId)) {
+      return new Set()
+    }
+    visiting.add(instanceId)
+    const tokens = new Set<string>()
+    const instance = instances.get(instanceId)
+    if (instance !== undefined) {
+      for (const exported of instance.exports) {
+        if (
+          exported.kind === 'module' &&
+          exported.classDefinition !== undefined
+        ) {
+          for (const childId of children.get(instanceId) ?? []) {
+            const child = instances.get(childId)
+            if (child?.moduleDefinition.id === exported.classDefinition.id) {
+              for (const token of getExportedTokens(childId, visiting)) {
+                tokens.add(token)
+              }
+            }
+          }
+          continue
+        }
+        if (
+          exported.kind === 'dynamic' &&
+          exported.dynamicFactory !== undefined
+        ) {
+          const exportedInstanceId = `dynamic:${exported.dynamicFactory.id}@${formatLocation(
+            getLocation(model.root, exported.sourceFile, exported.node, ''),
+          )}`
+          if ((children.get(instanceId) ?? new Set()).has(exportedInstanceId)) {
+            for (const token of getExportedTokens(
+              exportedInstanceId,
+              visiting,
+            )) {
+              tokens.add(token)
+            }
+          }
+          continue
+        }
+        if (exported.kind === 'external' || exported.kind === 'unknown') {
+          continue
+        }
+        const token = getCompositionProviderToken(model, exported)
+        if (token !== undefined) {
+          tokens.add(token)
+        }
+      }
+    }
+    visiting.delete(instanceId)
+    exportedTokenCache.set(instanceId, tokens)
+    return tokens
+  }
+
+  const globalTokens = new Set<string>()
+  for (const instance of instances.values()) {
+    if (!instance.isGlobal) {
+      continue
+    }
+    for (const token of getExportedTokens(instance.id)) {
+      globalTokens.add(token)
+    }
+  }
+
+  const registrations = new Map<string, CompositionModuleInstance[]>()
+  for (const instance of instances.values()) {
+    for (const provider of instance.providers) {
+      const token = getCompositionProviderToken(model, provider)
+      if (token === undefined) {
+        continue
+      }
+      const owners = registrations.get(token) ?? []
+      owners.push(instance)
+      registrations.set(token, owners)
+    }
+  }
+
+  const rootInstanceId = `static:${rootDefinition.id}`
+  // 生成从组合根到当前模块的最短导入轨迹。
+  const getImportTrace = (instance: CompositionModuleInstance) => {
+    const labels = [instance.label]
+    let current = instance.id
+    const visited = new Set<string>([current])
+    while (current !== rootInstanceId) {
+      const parent = parents.get(current)
+      if (parent === undefined || visited.has(parent)) {
+        break
+      }
+      visited.add(parent)
+      labels.unshift(instances.get(parent)?.label ?? parent)
+      current = parent
+    }
+    return labels.join(' -> ')
+  }
+
+  for (const instance of instances.values()) {
+    const visibleTokens = new Set<string>(globalTokens)
+    for (const provider of instance.providers) {
+      const token = getCompositionProviderToken(model, provider)
+      if (token !== undefined) {
+        visibleTokens.add(token)
+      }
+    }
+    for (const childId of children.get(instance.id) ?? []) {
+      for (const token of getExportedTokens(childId)) {
+        visibleTokens.add(token)
+      }
+    }
+
+    for (const host of collectInstanceHosts(model, instance)) {
+      for (const dependency of host.dependencies) {
+        if (dependency.optional) {
+          continue
+        }
+        if (dependency.token === undefined) {
+          continue
+        }
+        if (visibleTokens.has(dependency.token)) {
+          continue
+        }
+        const owner = registrations.get(dependency.token)?.[0]
+        model.violations.push(
+          getLocation(
+            model.root,
+            host.sourceFile,
+            dependency.node,
+            `Nest DI unreachable provider token root=${rootDefinition.className} rootFile=${toRepoPath(model.root, rootDefinition.sourceFile.fileName)} module=${instance.label} moduleFile=${toRepoPath(model.root, instance.moduleDefinition.sourceFile.fileName)} host=${host.label} hostFile=${toRepoPath(model.root, host.sourceFile.fileName)} hostKind=${host.kind} injection=${dependency.injection} token=${dependency.token} tokenSource=${dependency.token.slice('class:'.length).split('#')[0] ?? dependency.token} ownerModule=${owner?.label ?? '<none>'} ownerFile=${owner === undefined ? '<none>' : toRepoPath(model.root, owner.moduleDefinition.sourceFile.fileName)} reason=token is not reachable from module imports/providers/exports importTrace=${getImportTrace(instance)}`,
+          ),
+        )
+      }
+    }
+  }
 }
 
 function collectCompositionProviderDuplicateViolations(
@@ -2024,6 +2679,7 @@ function collectNestCompositionViolations(
       instance = {
         ...metadata,
         id: `static:${value.classDefinition.id}`,
+        isGlobal: value.classDefinition.isGlobal,
         label: value.classDefinition.className,
         location: getLocation(
           model.root,
@@ -2031,6 +2687,7 @@ function collectNestCompositionViolations(
           value.node,
           `module ${value.classDefinition.className} is imported here`,
         ),
+        moduleDefinition: value.classDefinition,
       }
     } else if (value.kind === 'dynamic') {
       const metadata = executeDynamicFactory(model, value)
@@ -2050,6 +2707,7 @@ function collectNestCompositionViolations(
           value.node,
           `dynamic module ${metadata.moduleDefinition.className}.${factory.name}() is imported here`,
         ),
+        moduleDefinition: metadata.moduleDefinition,
       }
     } else if (value.kind === 'external') {
       return
@@ -2086,6 +2744,12 @@ function collectNestCompositionViolations(
       sourceFile: rootDefinition.sourceFile,
     },
     undefined,
+  )
+  collectCompositionDependencyViolations(
+    model,
+    rootDefinition,
+    instances,
+    edges,
   )
   collectCompositionProviderDuplicateViolations(
     model,

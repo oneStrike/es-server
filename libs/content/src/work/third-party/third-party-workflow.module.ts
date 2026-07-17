@@ -3,6 +3,7 @@ import { DrizzleModule } from '@db/core'
 import { WorkflowModule } from '@libs/workflow/workflow/workflow.module'
 import { DynamicModule, Module } from '@nestjs/common'
 import { ContentImportModule } from '../content-import/content-import.module'
+import { WorkModule } from '../work.module'
 import { ComicThirdPartyService } from './services/comic-third-party.service'
 import { ThirdPartyComicImportWorkflowHandler } from './services/third-party-comic-import-workflow.handler'
 import { ThirdPartyComicImportService } from './services/third-party-comic-import.service'
@@ -25,6 +26,7 @@ export class ComicThirdPartyWorkflowModule {
         DrizzleModule,
         options.workUploadRuntimeModule,
         ContentImportModule,
+        WorkModule,
         WorkflowModule,
         options.thirdPartyRuntimeModule,
       ],

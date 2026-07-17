@@ -41,7 +41,7 @@ export class IdentityModule {
         AppUserCredentialService,
         AdminUserIdentityService,
         AdminUserManagementService,
-        options.tokenStorageService,
+        IdentityTokenStorageModule,
         'ITokenStorageService',
       ],
     }
