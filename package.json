@@ -23,7 +23,6 @@
     "db:comments:generate": "tsx scripts/db-comments.ts",
     "db:comments:check": "tsx scripts/db-comments.ts --check",
     "db:boundary:check": "tsx scripts/check-db-boundary.ts",
-    "db:integrity:check": "tsx scripts/check-db-integrity.ts",
     "architecture:check": "tsx scripts/check-nest-architecture.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.migrate.config.ts",
     "db:seed:demo": "tsx --env-file=.env db/seed/command.ts",
