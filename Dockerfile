@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/corepack \
 WORKDIR /app
 
 # 复制配置文件 - 保持原有优化
-COPY pnpm-lock.yaml package.json nest-cli.json tsconfig*.json drizzle.config.ts drizzle.migrate.config.ts drizzle.shared.config.ts webpack.config.js ./
+COPY pnpm-lock.yaml package.json nest-cli.json tsconfig*.json drizzle.config.ts webpack.config.js ./
 
 # 安装依赖 - 统一缓存ID，提高命中率
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
@@ -103,8 +103,6 @@ COPY --from=deps --chown=nestjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nestjs:nodejs /app/tsconfig.json ./tsconfig.json
 COPY --from=builder --chown=nestjs:nodejs /app/db ./db
 COPY --from=builder --chown=nestjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
-COPY --from=builder --chown=nestjs:nodejs /app/drizzle.migrate.config.ts ./drizzle.migrate.config.ts
-COPY --from=builder --chown=nestjs:nodejs /app/drizzle.shared.config.ts ./drizzle.shared.config.ts
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/${APP_TYPE}-api/ ./
 
 EXPOSE 8080

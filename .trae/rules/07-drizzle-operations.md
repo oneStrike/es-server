@@ -24,13 +24,13 @@ Drizzle 生成的 `migration.sql` 与 `snapshot.json`。生成过程出现交互
 `db:migrate` 直接执行：
 
 ```bash
-drizzle-kit migrate --config=drizzle.migrate.config.ts
+drizzle-kit migrate --config=drizzle.config.ts
 ```
 
-迁移 config 与 schema/check config 共享唯一的 schema、migration directory 和
-`public.__drizzle_migrations__` 合同；它读取本地 `.env`（若存在）并要求
-`DATABASE_URL`。不提供 `mode`、目标别名、旧 journal 解释器、reconcile/rollback
-helper 或迁移兼容分支。
+所有 drizzle-kit 子命令共用 `drizzle.config.ts`。该配置 best-effort 加载 `.env`，
+并在 `DATABASE_URL` 可用时注入 `dbCredentials`；generate/check 不连库也不要求
+`DATABASE_URL`，migrate 连库。不提供 `mode`、目标别名、旧 journal 解释器、
+reconcile/rollback helper 或迁移兼容分支。
 
 部署编排必须保证每个环境同一时间只有一个 migration job，应用启动不得执行 migration。
 `pnpm db:migrate`、compose 和普通验证命令都不执行 reset、seed 或 bootstrap。
@@ -72,20 +72,3 @@ demo seed 要求 `ALLOW_DB_SEED=true`，且在 `NODE_ENV=production/prod` 或连
 
 禁止 `drizzle-kit push`、`drizzle-kit push --force`、`db:push`、`--ignore-conflicts`、
 未登记临时写入和任何旧 migration fallback。任何失败都停止并记录必要的脱敏诊断。
-
-## 本地数据浏览
-
-```bash
-pnpm db:studio
-```
-
-`db:studio` 启动 [Drizzle Studio](https://local.drizzle.studio) 本地代理，默认监听
-`127.0.0.1:4983`，在浏览器打开 `https://local.drizzle.studio` 即可浏览表结构与数据。
-
-它使用 `drizzle.studio.config.ts`，与 `db:migrate` 共享同一份 `drizzleKitConfig` 与
-`DATABASE_URL` 合同。脚本显式指定 `--host=127.0.0.1`，因为当前 `drizzle-kit@1.0.0-rc.3`
-的 `studio` 子命令默认 `--host=0.0.0.0`，不显式绑定回环会暴露到局域网。
-
-`db:studio` 是只读浏览与查询工具，不生成 migration、不修改 schema、不执行 seed/bootstrap。
-结构变更仍必须走 `db:generate` → `db:migration:check` → `db:migrate`。禁止用 Studio
-直连生产库；它只用于本地开发数据库。

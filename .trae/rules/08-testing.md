@@ -1,7 +1,7 @@
 # 测试与验证规范
 
 适用范围：行为/contract/数据库验证、一次性探针和交付证据。本文件服从
-`AGENTS.md` 的“仓库不保留测试文件”硬约束；不得以历史测试策略覆盖该约束。
+`AGENTS.md` 的"仓库不保留测试文件"硬约束；不得以历史测试策略覆盖该约束。
 
 ## TL;DR
 
@@ -38,7 +38,7 @@ pnpm db:comments:check
 ```
 
 只运行实际存在的命令。当前不存在 `pnpm check`、`pnpm lint:check`、
-`pnpm test:*`、`pnpm boundaries:check` 或可作为交付依据的 `db:studio`；不得在文档或
+`pnpm test:*`、`pnpm boundaries:check`；不得在文档或
 CI 中伪造它们。规则/文档变更至少运行对应 Markdown Prettier check 与 `pnpm type-check`。
 
 ## 禁止项
