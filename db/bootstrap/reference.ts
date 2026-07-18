@@ -1,7 +1,7 @@
 import type { Buffer } from 'node:buffer'
 import type { PoolClient } from 'pg'
 import type { ReferenceBootstrapTransaction } from './reference-rbac'
-import { scrypt as _scrypt, randomBytes } from 'node:crypto'
+import { scrypt as _scrypt, createHash, randomBytes } from 'node:crypto'
 import process from 'node:process'
 import { promisify } from 'node:util'
 import {
@@ -14,7 +14,6 @@ import { adminRole, adminUser, adminUserRole } from '@db/schema'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { assertAdminRbacReferencePermissionManifestCurrent } from '../../scripts/generate-admin-rbac-reference-permissions'
 import {
   acquireMigrationSessionLock,
   readMigrationLockTimeoutMs,
@@ -150,14 +149,19 @@ export async function runReferenceBootstrap(
     process.env,
     'Reference bootstrap 需要 DATABASE_URL',
   )
-  const manifest = assertAdminRbacReferencePermissionManifestCurrent()
-  if (
-    manifest.count !== ADMIN_REFERENCE_PERMISSIONS.length ||
-    manifest.digest !== ADMIN_REFERENCE_PERMISSION_MANIFEST_DIGEST
-  ) {
+  // Docker 构建时 manifest:write 已保证 generated 文件与 controller 装饰器一致；
+  // runtime 只需校验 digest 自洽，防止文件被篡改或损坏，不再依赖源码扫描。
+  const computedDigest = createHash('sha256')
+    .update(JSON.stringify(ADMIN_REFERENCE_PERMISSIONS), 'utf8')
+    .digest('hex')
+  if (computedDigest !== ADMIN_REFERENCE_PERMISSION_MANIFEST_DIGEST) {
     throw new Error(
-      'Admin RBAC reference permission manifest integrity check failed',
+      'Admin RBAC reference permission manifest digest mismatch',
     )
+  }
+  const manifest = {
+    count: ADMIN_REFERENCE_PERMISSIONS.length,
+    digest: ADMIN_REFERENCE_PERMISSION_MANIFEST_DIGEST,
   }
   const admin =
     command.createAdmin === false

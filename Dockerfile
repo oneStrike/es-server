@@ -41,6 +41,10 @@ COPY db db
 ARG APP_TYPE=admin
 COPY apps/${APP_TYPE}-api apps/${APP_TYPE}-api
 
+# admin-api: 从 controller 装饰器生成 RBAC 权限清单，保证镜像内 manifest 与源码一致
+# app-api 跳过（脚本硬编码扫描 apps/admin-api/src，且 app-api 不跑 bootstrap）
+RUN if [ "${APP_TYPE}" = "admin" ]; then pnpm db:bootstrap:reference:manifest:write; fi
+
 # 构建应用
 RUN pnpm exec cross-env NODE_ENV=production nest build ${APP_TYPE}-api --webpack --webpackPath webpack.config.js
 
