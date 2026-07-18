@@ -7,7 +7,7 @@
 - 何时看：改 module imports/exports、provider 注册、`@Global()`、`ModuleRef`、跨域调用、事件、事务或 HTTP/WS enhancer 时先看本篇。
 - 必做：所有 runtime edge 遵循唯一 package DAG；一个 provider 只有一个 owner module；跨域同步能力使用 consumer-owned port，异步事实使用 producer-owned event；HTTP 与 WS 显式独立装配。
 - 不要：新增业务 global、service locator、重复 provider、循环依赖、中央万能 integration/repository 或隐式事务。
-- 最低验证：`pnpm type-check`、对应 module/import static gate 与 ephemeral module/HTTP/WS 验证；不得引用不存在的 `pnpm boundaries:check`。
+- 最低验证：`pnpm type-check` 与 ephemeral module/HTTP/WS 验证；不得引用不存在的命令。
 
 本篇是 NestJS 架构约束的单一事实源。导入路径形状仍以 [01-import-boundaries.md](./01-import-boundaries.md) 为准，测试门禁以 [08-testing.md](./08-testing.md) 为准；破坏性更新必须先形成明确决策。
 
@@ -86,9 +86,9 @@ apps/* 与 operational CLI composition
 - `>=500` 行 service 必须登记职责复审；`>800` 行或构造依赖 `>8` 是强制复审触发器，不是机械拆分验收条件。
 - 复审只能以 `split` 或有 reviewer 证据的 `cohesive` 关闭；不得记录“以后再拆”。
 
-## 架构门禁
+## 架构约束
 
-- 静态扫描必须通过真实入口 `pnpm architecture:check`，证明唯一 package 顺序、0 runtime SCC、0 business global、0 `forwardRef()`、0 `ModuleRef` / `strict:false`、0 forbidden barrel 与 0 重复 provider。门禁还必须从每个 `apps/*/src/app.module.ts` 组合根展开真实 Nest module import 闭包：仓库自有 `DynamicModule` 静态工厂的 `module`、`imports`、`providers`、`exports` 与传入 options 必须可静态解释；无法解释的动态结构直接失败，禁止忽略。闭包内必须同时为 0 module import SCC、0 裸导入 provider-owning dynamic module、0 同 token/provider 重复注册；合法的已导入 module re-export 不计作新注册。涉及 DB 领域边界时，必须运行真实入口 `pnpm db:boundary:check`，证明 0 app direct DB import、0 DB internal-path import、0 generic persistence filename、0 legacy schema/relation path、0 `DrizzleModule @Global()` 与 0 public relation registry export。
+- 仓库必须维持唯一 package 顺序、0 runtime SCC、0 business global、0 `forwardRef()`、0 `ModuleRef` / `strict:false`、0 forbidden barrel 与 0 重复 provider。从每个 `apps/*/src/app.module.ts` 组合根展开真实 Nest module import 闭包时：仓库自有 `DynamicModule` 静态工厂的 `module`、`imports`、`providers`、`exports` 与传入 options 必须可静态解释；无法解释的动态结构直接失败。闭包内必须同时为 0 module import SCC、0 裸导入 provider-owning dynamic module、0 同 token/provider 重复注册；合法的已导入 module re-export 不计作新注册。涉及 DB 领域边界时，必须保证 0 app direct DB import、0 DB internal-path import、0 generic persistence filename、0 legacy schema/relation path、0 `DrizzleModule @Global()` 与 0 public relation registry export。
 - 每个 feature module 必须有可重复的 module compilation proof，证明 imports/exports 与 provider token 完整且唯一；按 `AGENTS.md`，临时测试代码在验证后删除。
 - HTTP/WS composition 必须有协议级 proof；跨 port 事务必须有提交、回滚与失败分支验证；event/outbox 必须有幂等与投递失败验证。仓库中不得遗留 test 文件或临时 probe。
 - 任何例外必须先修改本篇或 `AI_EXCEPTIONS.md`，写明 owner、理由、验证与到期条件；实现中的局部注释不能替代规则决策。

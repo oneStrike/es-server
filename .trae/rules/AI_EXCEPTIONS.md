@@ -29,7 +29,7 @@
 - 当前状态：纪元起点存在 10 个自定义 global、`ModuleRef strict:false`、provider 重复注册、package SCC、HTTP global 与 WS transport 隐式耦合。
 - 关联规则：[09-nestjs-architecture.md](./09-nestjs-architecture.md)、[01-import-boundaries.md](./01-import-boundaries.md)。
 - 处理：只允许按唯一 DAG 删除边和显式装配；不得新增 `forwardRef()`、service locator、中央万能 port 或新的 business global 作为过渡方案。
-- 关闭条件：architecture gate 证明 0 business global、0 strict:false、0 duplicate provider、0 runtime SCC，HTTP/WS composition e2e 通过。
+- 关闭条件：代码审查证明 0 business global、0 strict:false、0 duplicate provider、0 runtime SCC，HTTP/WS composition e2e 通过。
 
 ## Drizzle RC 风险
 

@@ -35,7 +35,6 @@ pnpm build:app
 pnpm type-check
 
 # 数据库：只读检查
-pnpm db:boundary:check
 pnpm db:migration:check
 pnpm db:comments:check
 
