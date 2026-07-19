@@ -18,8 +18,8 @@ import { PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.cons
 import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { sql } from 'drizzle-orm'
-import { assertSafeDemoSeedEnvironment } from '../runtime-guard'
 import { createDbClient, disconnectDbClient } from './db-client'
+import { assertSafeDemoSeedEnvironment } from './environment-guard'
 import { acquirePublicSchemaMaintenanceTableLocks } from './maintenance-table-lock'
 import { seedAdminDomain } from './modules/admin/domain'
 import { seedAppCoreDomain } from './modules/app/domain'
@@ -32,7 +32,7 @@ import {
   seedSystemReferenceData,
 } from './modules/system/domain'
 
-const DATABASE_INITIALIZATION_JOB_LOCK = 'reference-data-bootstrap'
+const DATABASE_INITIALIZATION_JOB_LOCK = 'demo-seed'
 
 /**
  * 在通过环境和连接身份校验后写入本地 demo 数据。

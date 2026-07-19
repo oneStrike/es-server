@@ -15,21 +15,6 @@ interface DemoSeedEnvironment extends DatabaseConnection {
   nodeEnv: string
 }
 
-export interface ReferenceBootstrapAdmin {
-  username: string
-  password: string
-  mobile?: string
-  avatar?: string
-}
-
-export interface ReferenceBootstrapOptions {
-  admin?: ReferenceBootstrapAdmin
-}
-
-export function shouldCheckDatabaseToolEnvironmentOnly(argv: string[]) {
-  return argv.includes('--check-env') || argv.includes('--dry-run')
-}
-
 export function assertSafeDemoSeedEnvironment(
   env: NodeJS.ProcessEnv,
 ): DemoSeedEnvironment {
@@ -66,51 +51,6 @@ export function readDatabaseConnection(
   return parseDatabaseConnection(
     requireEnv(env, 'DATABASE_URL', missingUrlMessage),
   )
-}
-
-export function readReferenceBootstrapOptions(
-  env: NodeJS.ProcessEnv,
-): ReferenceBootstrapOptions {
-  const username = normalizeEnvValue(env.BOOTSTRAP_ADMIN_USERNAME)
-  const password = normalizeEnvValue(env.BOOTSTRAP_ADMIN_PASSWORD)
-
-  if ((username && !password) || (!username && password)) {
-    throw new Error(
-      'BOOTSTRAP_ADMIN_USERNAME 与 BOOTSTRAP_ADMIN_PASSWORD 必须同时设置或同时省略',
-    )
-  }
-
-  if (!username || !password) {
-    return {}
-  }
-
-  if (username.length > 20) {
-    throw new Error('BOOTSTRAP_ADMIN_USERNAME 长度不能超过 20')
-  }
-
-  if (password.length < 8) {
-    throw new Error('BOOTSTRAP_ADMIN_PASSWORD 长度至少为 8')
-  }
-
-  const mobile = normalizeEnvValue(env.BOOTSTRAP_ADMIN_MOBILE)
-  const avatar = normalizeEnvValue(env.BOOTSTRAP_ADMIN_AVATAR)
-
-  if (mobile && mobile.length > 11) {
-    throw new Error('BOOTSTRAP_ADMIN_MOBILE 长度不能超过 11')
-  }
-
-  if (avatar && avatar.length > 200) {
-    throw new Error('BOOTSTRAP_ADMIN_AVATAR 长度不能超过 200')
-  }
-
-  return {
-    admin: {
-      username,
-      password,
-      ...(mobile ? { mobile } : {}),
-      ...(avatar ? { avatar } : {}),
-    },
-  }
 }
 
 function requireEnv(env: NodeJS.ProcessEnv, key: string, message: string) {

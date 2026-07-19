@@ -55,20 +55,20 @@ schema comments 是版本化 DDL：修改 schema comments 时，先刷新
 `db/comments/generated.sql`，再把相同结构化 `COMMENT ON` statements 作为审查过的 migration
 SQL 提交。generated artifact 不可在 migrate 后回写数据库，`--apply` 不是受支持入口。
 
-## Reference bootstrap 与 demo seed
+## 启动期 RBAC 同步与 demo seed
 
 ```bash
-pnpm db:bootstrap:reference:check
-pnpm db:bootstrap:reference
 pnpm db:seed:demo -- --check-env
 pnpm db:seed:demo
 ```
 
-reference bootstrap 可重复同步 RBAC reference data；migrator 永不自动调用它。写入前会在
-session 中核验 `current_database()` 是否与 `DATABASE_URL` 一致。
+迁移完成后，`admin-api` 在监听端口前扫描已加载 Controller 的权限装饰器，并在事务内同步
+RBAC revision、内置角色、默认菜单、权限和角色默认授权。该启动期同步不创建管理员账号，
+也不执行 migration、reset 或 demo seed。`app-api` 不执行管理端 RBAC 同步。
 
 demo seed 要求 `ALLOW_DB_SEED=true`，且在 `NODE_ENV=production/prod` 或连接信息命中
-生产危险关键字时失败；它不会被 migrator 或 bootstrap 隐式调用。
+生产危险关键字时失败；它不会被 migrator 或应用启动隐式调用。demo seed 依赖启动期同步
+创建的 `super_admin` 角色，必须在至少一次成功的 `admin-api` 启动之后执行。
 
 禁止 `drizzle-kit push`、`drizzle-kit push --force`、`db:push`、`--ignore-conflicts`、
 未登记临时写入和任何旧 migration fallback。任何失败都停止并记录必要的脱敏诊断。

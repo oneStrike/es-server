@@ -81,13 +81,12 @@
 - 禁止使用 `drizzle-kit push`、`drizzle-kit push --force` 或重新引入 `db:push` 作为迁移路径；所有结构变更必须落为可审计 migration。
 - 直接 Drizzle migration 只应用版本化 SQL，不得自动执行 bootstrap、seed 或任何 schema comments 回写。
 
-## Seed 与 bootstrap
+## Demo seed 与启动期 RBAC 同步
 
 - `db/seed` 是本地 demo/联调用的破坏性数据脚本，包含清理演示数据、固定演示账号、演示 token 等行为；只能通过附录列出的受控 demo seed 入口显式执行。
 - 执行 demo seed 前必须先通过环境检查，并显式设置 `ALLOW_DB_SEED=true`；`NODE_ENV=production/prod` 或目标库名、主机名、用户名命中生产危险关键字时必须失败。
-- 生产或准生产初始化只允许使用附录列出的 bootstrap 入口；bootstrap 不得复用 demo seed，不得创建固定 token，不得内置固定生产密码。
-- 初始化管理员账号时必须由操作员提供 `BOOTSTRAP_ADMIN_USERNAME` 与 `BOOTSTRAP_ADMIN_PASSWORD`。
-- bootstrap 只能创建缺失账号，不得静默重置已有账号密码。
+- 管理端 RBAC reference data 的唯一初始化路径是 `admin-api` 启动期扫描 Controller 权限元数据；它只同步 revision、内置角色、默认菜单、权限与角色默认授权，不创建管理员账号。
+- demo seed 不得承担 RBAC 初始化；执行前必须至少成功启动一次 `admin-api`，以保证 `super_admin` 角色已经由启动期同步创建。
 
 ## Canonical contract 与破坏性更新
 

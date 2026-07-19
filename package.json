@@ -23,11 +23,7 @@
     "db:comments:generate": "tsx scripts/db-comments.ts",
     "db:comments:check": "tsx scripts/db-comments.ts --check",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
-    "db:seed:demo": "tsx --env-file=.env db/seed/command.ts",
-    "db:bootstrap:reference:manifest:write": "tsx scripts/generate-admin-rbac-reference-permissions.ts --write",
-    "db:bootstrap:reference:manifest:check": "tsx scripts/generate-admin-rbac-reference-permissions.ts",
-    "db:bootstrap:reference": "pnpm db:bootstrap:reference:manifest:check && tsx --env-file=.env db/bootstrap/reference.ts",
-    "db:bootstrap:reference:check": "pnpm db:bootstrap:reference:manifest:check && tsx --env-file=.env db/bootstrap/reference.ts --check-env"
+    "db:seed:demo": "tsx --env-file=.env db/seed/command.ts"
   },
   "dependencies": {
     "@alicloud/credentials": "^2.4.5",

@@ -66,7 +66,7 @@ export async function seedAdminDomain(db: Db) {
     .limit(1)
   if (!superAdminRole) {
     throw new Error(
-      'Demo seed requires reference bootstrap to create the super_admin role first',
+      'Demo seed requires admin-api startup RBAC synchronization to create the super_admin role first',
     )
   }
   await db

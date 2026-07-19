@@ -1,5 +1,5 @@
 import process from 'node:process'
-import { assertSafeDemoSeedEnvironment } from '../runtime-guard'
+import { assertSafeDemoSeedEnvironment } from './environment-guard'
 import { runDemoSeed } from './index'
 
 interface DemoSeedCommand {
